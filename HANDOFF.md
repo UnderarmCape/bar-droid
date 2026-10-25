@@ -114,8 +114,11 @@ Only `arm64-v8a` is built.
   `MESA_GL_VERSION_OVERRIDE=4.5COMPAT` (checkboxes in the app).
 - proot on the phone (seccomp; `PROOT_NO_SECCOMP` checkbox) and its speed loading 3.4 GB of archives.
 - RAM: BAR wants 12 GB; measure on device.
-- Touch: "simulated touchscreen" gives left clicks; right-click/drag for an RTS needs testing and probably a Lua or
-  gesture layer.
+- Touch (Termux:X11 "simulated touchscreen", from its TouchInputHandler; untested with BAR): 1-finger tap = left
+  click at the finger, 2-finger tap = right click (orders), 3-finger tap = middle click, long-press then drag = left
+  drag (box select), 2-finger long-press drag = right drag (formation move), 3-finger long-press drag = middle drag
+  (camera pan), 2-finger swipe = mouse wheel (zoom), 3-finger swipe down = toggle the extra-keys bar (Esc/Ctrl/Alt).
+  Whether this is playable needs the phone; a Lua gesture layer may follow.
 
 ## Phone requirements
 Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 GB free, Android 10+.
