@@ -157,8 +157,10 @@ Pair Phone.bat [pair-port code connect-port]  wireless adb over Tailscale (phone
 Get Logs.bat phone                            logs from the phone while the emulator also runs
 ```
 Kailil's phone: Galaxy Z Fold7 (Snapdragon 8 Elite / Adreno 830, so the Freedreno/Turnip path), Tailscale name
-`kailils-z-fold7` (100.103.32.18). No USB adb; wireless debugging over Tailscale only. Samsung's Auto Blocker can
-block adb installs.
+`kailils-z-fold7` (100.103.32.18). No USB adb; wireless debugging over Tailscale only, and Android enables it only
+while the phone is connected to some Wi-Fi (its own hotspot does not count; Wi-Fi without internet is fine). The
+phone already lists `kaili@KAILILLAPTOP` under Paired devices, so usually only the connect port is needed:
+`Pair Phone.bat - - <port>`. Samsung's Auto Blocker can block adb installs. Waiting for Kailil to be on Wi-Fi.
 In the app: **Install / Update** (Debian + engine + BAR content, ~4 GB, ~10 min) → **Play vs AI**.
 Native helper binaries: `tools/fetch-prebuilts.py <abi>` (proot, busybox, ANGLE) and `tools/build-virgl.py <abi>`
 (virgl server); both run with the toolchain's Python inside `toolchain\env.bat`. Their output is committed under
