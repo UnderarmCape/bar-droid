@@ -152,8 +152,13 @@ Install Toolchain.bat --accept-licenses   one time; ~1.5 GB into toolchain\ (And
 Build APK.bat                             emulator build (x86_64) -> apk\bar-droid-emulator-debug.apk
 Run in Emulator.bat                       boots the emulator (first time ~1.8 GB download), installs + opens the app
 Get Logs.bat                              launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\device-<time>\
-Build APK.bat phone / Install on Phone.bat   the arm64 phone build, for later
+Build APK.bat phone / Install on Phone.bat   the arm64 phone build
+Pair Phone.bat [pair-port code connect-port]  wireless adb over Tailscale (phone: Wireless debugging, needs Wi-Fi)
+Get Logs.bat phone                            logs from the phone while the emulator also runs
 ```
+Kailil's phone: Galaxy Z Fold7 (Snapdragon 8 Elite / Adreno 830, so the Freedreno/Turnip path), Tailscale name
+`kailils-z-fold7` (100.103.32.18). No USB adb; wireless debugging over Tailscale only. Samsung's Auto Blocker can
+block adb installs.
 In the app: **Install / Update** (Debian + engine + BAR content, ~4 GB, ~10 min) → **Play vs AI**.
 Native helper binaries: `tools/fetch-prebuilts.py <abi>` (proot, busybox, ANGLE) and `tools/build-virgl.py <abi>`
 (virgl server); both run with the toolchain's Python inside `toolchain\env.bat`. Their output is committed under
