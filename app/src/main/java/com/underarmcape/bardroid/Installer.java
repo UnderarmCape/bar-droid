@@ -93,6 +93,7 @@ public final class Installer {
         if (!p.libXlorie().exists()) Log.e("install", "libXlorie.so not found in " + p.nativeLibDir + " (X server will not start)");
         proot.writeFakeProc();
         extractAssets();
+        proot.writeShellScript(new File(p.filesDir, "container.sh"));
         if (new File(p.rootfs, "usr/bin").isDirectory()) installScripts();
     }
 

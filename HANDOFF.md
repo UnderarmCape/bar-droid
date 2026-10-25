@@ -81,6 +81,21 @@ Emulator smoke test (Android 14 x86_64 with ARM translation; `tools\emulator-tes
 - Stop during install and during play kills X server + proot and closes the display. Audio FIFO is created.
 - Not testable there: container (proot), apt, Mesa, engine, GL, audio playback.
 
+Static checks of the container side (scripts kept in the session scratchpad; easy to redo with Python):
+- All 37 packages in `setup-container.sh apt` exist in Debian trixie arm64. `p7zip-full` is now a transitional
+  package for `7zip` 25.01, which still ships `/usr/bin/7z`.
+- Every `DT_NEEDED` of the 9 ELF files in `recoil_2026.07.04_arm64-linux.7z` (spring: SDL2, X11, Xcursor, OpenAL,
+  glibc) and of the Mesa tarball's 7 ELF files is provided by the container (base image + dependency closure of the
+  apt list = 295 packages).
+- The Mesa tarball carries `dri/kgsl_dri.so`, `dri/zink_dri.so`, Turnip (`libvulkan_freedreno.so` + ICD json) and
+  `libgallium-26.2.0-devel.so`; it overwrites Debian's Mesa files in place as intended.
+- glxinfo, vulkaninfo, pulseaudio (+ module-pipe-sink / module-native-protocol-unix), 7z, ldconfig, fc-cache are all
+  in installed packages.
+
+Debugging on the phone: the app writes `files/container.sh` before every install/launch, so
+`bar-droid-app\tools\container-shell.bat` gives a root shell in the phone's container (or runs one command:
+`container-shell.bat "glxinfo -B"`).
+
 ## Build / install (Windows laptop)
 
 ```

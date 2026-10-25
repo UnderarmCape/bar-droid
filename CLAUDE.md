@@ -22,6 +22,7 @@ FIFO → `AudioTrack`.
   patch with `git diff` from inside `termux-x11/` (LF endings; run git through `toolchain\env.bat`).
 - `patches/circuitai-cmake-arm64-linux.patch` — upstream fix for the AI crash on arm64 Linux.
 - `tools/emulator-test.bat`, `tools/build-emulator-x11.bat` — x86_64 emulator smoke test (Android side only).
+- `tools/container-shell.bat` — root shell (or one command) inside the phone's Debian container via `files/container.sh`.
 
 ## Build / run (Windows; everything portable under `C:\Tools\BARANDROID\toolchain`)
 ```
