@@ -1,12 +1,14 @@
-# BAR Droid — hand-off (updated 2026-10-25 ~16:45 EDT)
+# BAR Droid — hand-off (updated 2026-10-25 ~20:00 EDT)
 
 Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
 
-**Target right now: the Android emulator** (Kailil, 2026-10-25: "run exclusively on the Android emulator first, test on
-real phones much later"). The default build is x86_64: amd64 Debian + the official amd64 engine, with the container's
-OpenGL drawn on the laptop's GPU (Mesa virpipe → virgl server → ANGLE → Vulkan → the emulator's gfxstream → host GPU).
-The arm64 phone build (Adreno via Mesa Freedreno/Turnip) still builds: `Build APK.bat phone`.
+**BAR plays on Kailil's Galaxy Z Fold7** (since the evening of 2026-10-25): ~30 fps, "100 percent fully playable"
+against the AI (Kailil). The emulator build (x86_64, the default of `Build APK.bat`) is still the quick test bench:
+amd64 Debian + the official amd64 engine, OpenGL through Mesa virpipe → virgl server → ANGLE → host GPU. Phone build:
+`Build APK.bat phone` (arm64, Adreno via Mesa Freedreno on KGSL). adb to the phone: USB, or Wi-Fi
+`adb connect 192.168.1.196:5555` after `adb tcpip 5555` (until the phone reboots; NordVPN on the laptop blocks it
+unless its local-network access is on; Tailscale times out).
 
 Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 
@@ -18,10 +20,59 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Portable Windows toolchain | `..\toolchain\`, `..\Install Toolchain.bat` | Done; nothing in AppData or the profile |
 | Emulator build (x86_64, default) | `..\Build APK.bat` → `..\apk\bar-droid-emulator-debug.apk` | **BAR plays in the emulator**: install from BAR's CDN, Play vs AI, BARb AI, units + full BAR UI, sim x1.00, **~20 fps** at 1256×568 at the start camera with the laptop awake (~8 fps while Windows is in Modern Standby), ~1 min to load a skirmish |
 | Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
-| Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | Builds (checked 16:37); never run on a phone. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
+| Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
 | Share logs | launcher button | Zips the logs into Android's share sheet (Taildrop, Drive, mail): phone debugging without adb |
 | virgl GPU server | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black, see below) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+
+## Phone session (2026-10-25, 17:00–20:00): first runs on the Fold7
+
+Results on the Galaxy Z Fold7 (SM-F966N, SM8750 / Adreno 830, Android 17, 11.4 GB RAM; inner display 2184×1968 at
+up to 120 Hz, cover 1080×2520 at 60 Hz):
+- **Flicker** (frames shown before the GPU finished them): lfdevs' Mesa before 27.0.0-devel-20261025 lacks the KGSL
+  present-wait fence. `Prefs.mesaUrl` is now that build; `Installer.mesaOutdated()` reinstalls Mesa when the saved
+  URL is older (Play runs the install first). Kailil: "flicker is solved fully".
+- **14–15 fps → ~30 fps**: Termux's proot puts `ioctl` in its seccomp filter with an exit stop on Android, so every
+  KGSL GPU-driver ioctl cost two ptrace stops (18,600 proot wake-ups/s, libproot 48% CPU). `tools/build-proot.py`
+  builds proot (termux/proot `b27d81a`, sha256-pinned) with the NDK and patches `syscall/seccomp.c` so `ioctl` traps
+  only for the requests proot handles (SIOCGIFINDEX, TCSETSF, TCGETS2/TCSETS*2, FICLONE). Checked on the phone and the
+  emulator with a perl loop: 0 of 200 `TCGETS` ioctls stop, 50 of 50 `TCSETSF` still do, futex untouched. The
+  loader is built like Termux's (`-Ttext=<LOADER_ADDRESS>,--rosegment`, same segment layout). `fetch-prebuilts.py`
+  no longer writes proot.
+- **Audio gaps**: the chain was engine → SDL → PulseAudio `module-pipe-sink` → FIFO → `AudioTrack`. AudioFlinger
+  showed 0 underruns with ~380 ms queued, so the holes were already in the stream: whenever SDL's audio callback was
+  late, PulseAudio rendered silence. Now `UseSDLAudio = 0` and OpenAL Soft's **wave writer** writes straight into the
+  FIFO (`/root/.alsoftrc`: `drivers = wave`, 48 kHz stereo int16); its mixer thread is paced by the clock and catches
+  up after a stall. `AudioPump` parses the WAV header and starts the track with 200 ms queued (also less latency than
+  the ~700 ms before). PulseAudio is no longer started. Verified on the emulator (stream opens, game runs); **Kailil
+  has not heard it yet**.
+- **Lobby black screen**: Chobby needs `chobby_config.json` (BAR's launcher writes it from its config's
+  `json_files`: server4.beyondallreason.info:8200, game `byar`); without it Chobby finds no game config and shuts
+  down. `launch-bar.sh` writes it for lobby mode. Verified on the emulator (main menu + login window). Not tried on the
+  phone yet.
+- Frame cap: `VSync = VSyncGame × VSyncFraction` like BAR's options (BAR rewrites `VSync`); the app asks for a 60 Hz
+  display mode and the widget picks the swap interval from the real refresh rate (30 fps default, 60 experimental).
+- Fold/unfold: the activity is not recreated; `GameActivity` reports the new X screen size and `bardroid_touch.lua`
+  calls `Spring.SetWindowGeometry`. Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover
+  screen" must allow BAR Droid.
+- RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
+
+**Touch controls** (`RtsTouch`, on by default; off = Termux:X11's touch modes), Kailil's spec of 19:30:
+tap = left click (double tap = double click); one-finger drag = pan (grab, with a fling); tap-then-drag = box select;
+long press = right button (lift = order, drag = formation); two fingers = pan + pinch zoom (mouse wheel at the centre)
++ twist rotate; two fingers moving up/down side by side = tilt; two-finger tap = right click; three-finger tap =
+keyboard; Back = Escape. The app talks to `bardroid_touch.lua` through files under `LuaUI/Config` (BAR's sandbox gives
+user widgets no sockets). A one-finger drag that starts on the interface is a mouse drag instead: the widget is the
+last `IsAbove` in line, so it hears about the pointer only where no widget claimed it, and answers through
+`bardroid_hover.txt` (+ `Spring.IsAboveMiniMap`). That catches the minimap and modal windows (options); BAR's top bar,
+build and order menus do not implement `IsAbove`, so a drag there pans (taps are fine). `CamSpringLockCardinalDirections
+= 0`, or small twist steps never leave north. Tested on the emulator with injected multitouch (pan, twist, tilt);
+not on the phone yet.
+
+Next: Kailil checks audio, gestures, lobby and fold/unfold on the phone; then RAM, BAR's UI on the near-square inner
+display (ui_scale), and touch-only play (later, Kailil).
 
 ## Afternoon session (2026-10-25, 12:40–16:45): units, speed, Share logs
 
@@ -116,8 +167,8 @@ downloads `recoil_2026.07.04_arm64-linux.7z`, then `pr-downloader` fetches `byar
 map from BAR's own CDN (nothing of BAR's CC-BY-NC-ND art is bundled). **Play**: `XServer` starts
 `com.termux.x11.CmdEntryPoint` (compiled into *our* APK) via `/system/bin/app_process` with `TMPDIR=<rootfs>/tmp`
 so the socket is the container's `/tmp/.X11-unix/X0`; `GameActivity` (extends Termux:X11's `MainActivity`) shows the
-display and handles touch/mouse/keyboard; `launch-bar.sh` runs inside proot: waits for the socket, starts PulseAudio
-with `module-pipe-sink` → FIFO → `AudioPump` → `AudioTrack`, runs a one-time `glxinfo` probe, then
+display and handles touch/mouse/keyboard; `launch-bar.sh` runs inside proot: waits for the socket, points OpenAL
+Soft's wave writer at the FIFO (→ `AudioPump` → `AudioTrack`), runs a one-time `glxinfo` probe, then
 `spring --isolation --write-dir /root/bar skirmish.txt` (or `--menu rapid://byar-chobby:test`). Gamepad events are
 intercepted in `GameActivity` and sent as `BARCTRL1|...` UDP packets to 127.0.0.1:28777 (UnderarmCape's controller
 companion protocol).

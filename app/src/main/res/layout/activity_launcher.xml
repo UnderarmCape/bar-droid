@@ -76,6 +76,8 @@
             <CheckBox android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
             <CheckBox android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
             <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
+            <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
+            <CheckBox android:id="@+id/cbFps60" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_fps60" />
             <CheckBox android:id="@+id/cbShadows" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_shadows" />
             <CheckBox android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
             <CheckBox android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />

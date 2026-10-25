@@ -96,7 +96,7 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append("Free storage: ").append(Downloader.human(st.getAvailableBytes())).append(" (need ~6 GB)\n");
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
         android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
-        if (am != null) { am.getMemoryInfo(mi); sb.append("RAM: ").append(Downloader.human(mi.totalMem)).append(" (BAR wants 12 GB)\n"); }
+        if (am != null) { am.getMemoryInfo(mi); sb.append("RAM: ").append(Downloader.human(mi.totalMem)).append(" (a match uses about 5-6 GB, part of it in swap)\n"); }
         sb.append("Engine: ").append(Prefs.engineVersion).append("  Driver: ").append(Prefs.mesaDriver);
         return sb.toString();
     }
@@ -114,6 +114,8 @@ public class LauncherActivity extends AppCompatActivity {
         }
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
+        ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
+        ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
         ((CheckBox) findViewById(R.id.cbShadows)).setChecked(Prefs.shadows);
         ((CheckBox) findViewById(R.id.cbNoSeccomp)).setChecked(Prefs.noSeccomp);
         ((CheckBox) findViewById(R.id.cbVerboseX)).setChecked(Prefs.verboseX);
@@ -130,6 +132,8 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
+        Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
+        Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
         Prefs.shadows = ((CheckBox) findViewById(R.id.cbShadows)).isChecked();
         Prefs.noSeccomp = ((CheckBox) findViewById(R.id.cbNoSeccomp)).isChecked();
         Prefs.verboseX = ((CheckBox) findViewById(R.id.cbVerboseX)).isChecked();

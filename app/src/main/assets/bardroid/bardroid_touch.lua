@@ -1,0 +1,219 @@
+-- BAR Droid touch camera: the Android app (RtsTouch.java) reports finger drags, twists and tilts, and the camera
+-- follows the fingers; pinch zoom needs nothing here (it is the mouse wheel). The app needs to know whether a drag
+-- starts on the interface (a mouse drag) or on the map (a pan), so this widget also reports that for the pointer.
+-- It also keeps the game window the size of the X screen (there is no window manager, and the X screen changes size
+-- when a foldable folds or unfolds) and the frame cap at the display's refresh rate. Installed into LuaUI/Widgets by
+-- the app.
+--
+-- BAR's sandbox gives user widgets no sockets, only files under LuaUI/, so (paths relative to the write dir, X screen
+-- pixels with the origin at the top left):
+--   LuaUI/Config/bardroid_touch.txt   app, appended:  pan <x0> <y0> <x1> <y1>   (the map point under x0,y0 goes to x1,y1)
+--                                                     rot <radians>             (fingers twisted, clockwise > 0)
+--                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
+--   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz, frame cap)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+
+function widget:GetInfo()
+	return {
+		name = "BAR Droid touch camera",
+		desc = "Touch camera, fold/unfold window size and frame cap from the BAR Droid app",
+		author = "BAR Droid",
+		license = "GPL-3.0-or-later",
+		-- last of all: IsAbove reaches this widget only where no other widget claims the pointer
+		layer = 1000000,
+		enabled = true,
+	}
+end
+
+local TOUCH = "LuaUI/Config/bardroid_touch.txt"
+local SCREEN = "LuaUI/Config/bardroid_screen.txt"
+local HOVER = "LuaUI/Config/bardroid_hover.txt"
+local TILT_RANGE = math.pi / 2 -- a drag over the whole screen height tilts this much
+
+local spTraceScreenRay = Spring.TraceScreenRay
+local spGetCameraState = Spring.GetCameraState
+local spSetCameraState = Spring.SetCameraState
+local spGetViewGeometry = Spring.GetViewGeometry
+local spGetMouseState = Spring.GetMouseState
+local spIsAboveMiniMap = Spring.IsAboveMiniMap
+local spGetTimer = Spring.GetTimer
+local spDiffTimers = Spring.DiffTimers
+
+local touchPos, partial = 0, ""
+local lastScreen, screenCheck = nil, 0
+local updates = 0
+local seenX, seenY, seenAt = -1, -1, -1000
+local mouseX, mouseY, mouseSince = -1, -1, 0
+local lastHover, hoverTimer = nil, nil
+
+local function fileSize(path)
+	local f = io.open(path, "r")
+	if not f then
+		return 0
+	end
+	local size = f:seek("end")
+	f:close()
+	return size
+end
+
+function widget:Initialize()
+	touchPos = fileSize(TOUCH) -- old gestures are not replayed
+	local cs = spGetCameraState()
+	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s)", tostring(cs.name), tostring(cs.rx), tostring(cs.ry)))
+end
+
+-- Called for the pointer position only when no widget before this one (the whole interface) claimed it.
+function widget:IsAbove(x, y)
+	seenX, seenY, seenAt = x, y, updates
+	return false
+end
+
+-- Complete new lines of the touch log since the last call.
+local function newTouchLines()
+	local f = io.open(TOUCH, "r")
+	if not f then
+		return nil
+	end
+	local size = f:seek("end")
+	if size < touchPos then -- the app started a new log
+		touchPos, partial = 0, ""
+	end
+	if size == touchPos then
+		f:close()
+		return nil
+	end
+	f:seek("set", touchPos)
+	local data = partial .. (f:read("*a") or "")
+	touchPos = f:seek()
+	f:close()
+	local cut = data:match(".*\n()") -- just after the last newline
+	if not cut then
+		partial = data
+		return nil
+	end
+	partial = data:sub(cut)
+	return data:sub(1, cut - 1)
+end
+
+-- The map point under an X screen pixel, or nil (sky).
+local function ground(x, y)
+	local _, vsy = spGetViewGeometry()
+	local kind, pos = spTraceScreenRay(x, vsy - y, true)
+	if kind == "ground" and pos then
+		return pos[1], pos[3]
+	end
+end
+
+local function applyTouch(lines)
+	local dx, dz, rot, tilt = 0, 0, 0, 0
+	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
+		local ax, az = ground(tonumber(x0), tonumber(y0))
+		local bx, bz = ground(tonumber(x1), tonumber(y1))
+		if ax and bx then
+			-- grab: the point that was under the fingers moves with them
+			dx, dz = dx + ax - bx, dz + az - bz
+		end
+	end
+	for a in lines:gmatch("rot (%S+)") do
+		rot = rot + (tonumber(a) or 0)
+	end
+	for t in lines:gmatch("tilt (%S+)") do
+		tilt = tilt + (tonumber(t) or 0)
+	end
+	if dx == 0 and dz == 0 and rot == 0 and tilt == 0 then
+		return
+	end
+	local cs = spGetCameraState()
+	if cs.px and cs.pz then
+		cs.px, cs.pz = cs.px + dx, cs.pz + dz
+	end
+	-- Spring camera (BAR's default): ry turns around the vertical axis, rx is the pitch (the engine clamps it).
+	-- The map turns with the fingers, so the camera turns the other way.
+	if rot ~= 0 and cs.ry then
+		cs.ry = cs.ry - rot
+	end
+	-- fingers down: look more from above
+	if tilt ~= 0 and cs.rx then
+		cs.rx = cs.rx + tilt * TILT_RANGE
+	end
+	spSetCameraState(cs, 0)
+end
+
+local function applyScreen(w, h, hz, fps)
+	if w > 0 and h > 0 then
+		local cw, ch = Spring.GetWindowGeometry()
+		if cw ~= w or ch ~= h then
+			-- borderless window on display 1 (BAR's resolution switcher uses the same call)
+			Spring.SetWindowGeometry(1, 0, 0, w, h, false, true)
+			Spring.Echo(string.format("[bardroid-touch] window %dx%d -> %dx%d", cw, ch, w, h))
+		end
+	end
+	if hz > 0 and fps > 0 then
+		local fraction = math.max(1, math.floor(hz / fps + 0.5))
+		if Spring.GetConfigInt("VSync", 0) ~= fraction or Spring.GetConfigInt("VSyncFraction", 1) ~= fraction then
+			-- as BAR's options do: VSync = VSyncGame (1) x VSyncFraction
+			Spring.SetConfigInt("VSyncGame", 1)
+			Spring.SetConfigInt("VSyncFraction", fraction)
+			Spring.SetConfigInt("VSync", fraction)
+			Spring.Echo(string.format("[bardroid-touch] %d Hz display, %d fps cap: swap interval %d", hz, fps, fraction))
+		end
+	end
+end
+
+-- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
+-- and this widget, last in line, only hears of it where nothing else answered.
+local function updateHover()
+	local mx, my = spGetMouseState()
+	if mx ~= mouseX or my ~= mouseY then
+		mouseX, mouseY, mouseSince = mx, my, updates
+	end
+	local onInterface
+	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
+		onInterface = spIsAboveMiniMap(mx, my) and 1 or 0
+	elseif updates - seenAt > 300 then
+		onInterface = 0 -- no IsAbove for a long time (a window that hides the interface?): the map
+	elseif updates - mouseSince >= 2 then
+		onInterface = 1
+	else
+		return -- not asked yet for this position
+	end
+	local _, vsy = spGetViewGeometry()
+	local line = string.format("%d %d %d\n", mx, vsy - my - 1, onInterface)
+	local now = spGetTimer()
+	if line == lastHover and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
+		return
+	end
+	-- also once a second: the app takes an old file for "no widget" (the lobby)
+	local f = io.open(HOVER, "w")
+	if f then
+		f:write(line)
+		f:close()
+	end
+	lastHover, hoverTimer = line, now
+end
+
+function widget:Update(dt)
+	updates = updates + 1
+	local lines = newTouchLines()
+	if lines then
+		applyTouch(lines)
+	end
+	updateHover()
+
+	screenCheck = screenCheck - dt
+	if screenCheck <= 0 then
+		screenCheck = 0.5
+		local f = io.open(SCREEN, "r")
+		if f then
+			local s = f:read("*l")
+			f:close()
+			if s and s ~= lastScreen then
+				local w, h, hz, fps = s:match("^(%d+) (%d+) (%d+) (%d+)")
+				if w then
+					lastScreen = s
+					applyScreen(tonumber(w), tonumber(h), tonumber(hz), tonumber(fps))
+				end
+			end
+		end
+	end
+end

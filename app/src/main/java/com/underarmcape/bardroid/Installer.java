@@ -54,7 +54,16 @@ public final class Installer {
         try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, "bardroid install state"); }
     }
     public boolean isDone(String step) { return "done".equals(state.getProperty(step)); }
-    public boolean isInstalled() { for (String s : STEPS) if (!isDone(s) && !s.equals("import")) return false; return true; }
+    public boolean isInstalled() {
+        for (String s : STEPS) if (!isDone(s) && !s.equals("import")) return false;
+        return !mesaOutdated();
+    }
+
+    /** The installed Mesa is not the one this build ships with (installs from before the URL was recorded: the first default). */
+    private boolean mesaOutdated() {
+        if (!isDone("mesa") || Prefs.mesaUrl.isEmpty()) return false;
+        return !Prefs.mesaUrl.equals(state.getProperty("mesaUrl", Prefs.OLD_MESA_URLS[0]));
+    }
     public void reset(String step) throws IOException { state.remove(step); try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, ""); } }
     public void cancel() { cancelled = true; dl.cancel(); }
 
@@ -70,7 +79,8 @@ public final class Installer {
         }
         step("rootfs", st, () -> installRootfs(st));
         step("apt", st, () -> runSetup("apt", st, "apt"));
-        step("mesa", st, () -> installMesa(st));
+        if (mesaOutdated()) { Log.i("install", "Mesa changed to " + Prefs.mesaUrl); state.remove("mesa"); save(); }
+        step("mesa", st, () -> { installMesa(st); state.setProperty("mesaUrl", Prefs.mesaUrl); });
         step("engine", st, () -> installEngine(st));
         // import is optional: only when the user pushed content from a PC
         if (hasImport()) runSetup("import", st, "import", Prefs.engineVersion);
@@ -204,7 +214,8 @@ public final class Installer {
 
     private void installMesa(Status st) throws Exception {
         if (Prefs.mesaUrl.isEmpty()) { Log.i("install", "emulator build: keeping Debian's Mesa (llvmpipe software GL)"); return; }
-        File tgz = dl.download(Prefs.mesaUrl, new File(p.downloads, "mesa.tar.gz"), null,
+        String name = Prefs.mesaUrl.substring(Prefs.mesaUrl.lastIndexOf('/') + 1);   // one file per release: no stale reuse
+        File tgz = dl.download(Prefs.mesaUrl, new File(p.downloads, name), null,
                 (done, total) -> st.status("mesa", "downloading Mesa " + Downloader.human(done) + " / " + Downloader.human(total), 40));
         runSetup("mesa", st, "mesa", "/root/downloads/" + tgz.getName());
         //noinspection ResultOfMethodCallIgnored
@@ -233,6 +244,12 @@ public final class Installer {
         if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
             stub.delete();
         } else try (InputStream in = new FileInputStream(new File(assets, "libasarm64.so")); OutputStream o = new FileOutputStream(stub)) { copy(in, o); }
+        // Our own widget (not BAR content): the camera side of the two-finger pan (RtsTouch).
+        File widgets = new File(p.bar, "LuaUI/Widgets");
+        //noinspection ResultOfMethodCallIgnored
+        widgets.mkdirs();
+        try (InputStream in = new FileInputStream(new File(assets, "bardroid_touch.lua"));
+             OutputStream o = new FileOutputStream(new File(widgets, "bardroid_touch.lua"))) { copy(in, o); }
         // springsettings.cfg from the template plus the user's knobs (each key replaced in place, never duplicated)
         Map<String, String> set = new java.util.LinkedHashMap<>();
         set.put("WorkerThreadCount", String.valueOf(Prefs.workerThreads));
@@ -240,6 +257,12 @@ public final class Installer {
         set.put("Shadows", Prefs.shadows ? "2" : "-1");
         set.put("CompressTextures", Prefs.compressTextures ? "1" : "0");
         set.put("RapidTagResolutionOrder", "repos-cdn.beyondallreason.dev;repos.beyondallreason.dev");
+        // Frame cap. BAR sets VSync = VSyncGame (1 on) x VSyncFraction; at 60 Hz a fraction of 2 is 30 fps. The touch
+        // widget adjusts the fraction to the display's real refresh rate (the Fold7's screens run 60 and 120 Hz).
+        // The emulator overrides VSync.
+        set.put("VSyncGame", "1");
+        set.put("VSyncFraction", Prefs.fps60 ? "1" : "2");
+        set.put("VSync", Prefs.fps60 ? "1" : "2");
         if (Prefs.EMULATOR_BUILD) set.putAll(EMULATOR_GRAPHICS);
         StringBuilder cfg = new StringBuilder();
         try (BufferedReader r = new BufferedReader(new FileReader(new File(assets, "springsettings.cfg")))) {

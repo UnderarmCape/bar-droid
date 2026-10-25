@@ -1,16 +1,21 @@
 # CLAUDE.md — BAR Droid (Beyond All Reason on Android)
 
 Working folder on the laptop: `C:\Tools\BARANDROID\` (this project is `bar-droid-app/` inside it).
-Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **Current target: the Android emulator
-on this laptop** (Kailil, 2026-10-25); real phones much later, and Kailil cannot use adb with a phone for now.
+Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **It plays on Kailil's Galaxy Z Fold7**
+(~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB (serial R3CY70B9VRH) or Wi-Fi
+`adb connect 192.168.1.196:5555` (after `adb tcpip 5555`, until the phone reboots). Kailil checks fps and sound
+themselves: do not run monitoring on the phone while Kailil plays.
 
 ## Architecture in one breath
 Unmodified official **Recoil engine** (amd64 build for the emulator, arm64 for phones) runs inside a **Debian trixie
-proot container** (Termux's proot bundled as `libproot.so`) and draws onto **Termux:X11's X server compiled into this
-APK** (`:lorie` module, GPL-3), shown by `GameActivity extends com.termux.x11.MainActivity`. OpenGL: on the emulator,
+proot container** (Termux's proot, built by `tools/build-proot.py`, bundled as `libproot.so`) and draws onto
+**Termux:X11's X server compiled into this APK** (`:lorie` module, GPL-3), shown by
+`GameActivity extends com.termux.x11.MainActivity`. OpenGL: on the emulator,
 Mesa `virpipe` → our virgl server (`VirglServer`, built by `tools/build-virgl.py`) → ANGLE → Vulkan → host GPU, with
 llvmpipe as CPU fallback; on phones, Mesa for Android containers (Freedreno `kgsl` / Turnip+Zink). Content comes from
-BAR's own CDN via `pr-downloader`. Gamepad → UDP `BARCTRL1` packets. Audio: PulseAudio pipe-sink → FIFO → `AudioTrack`.
+BAR's own CDN via `pr-downloader`. Gamepad → UDP `BARCTRL1` packets. Audio: the engine's OpenAL Soft wave writer →
+FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch: `RtsTouch` ↔ `bardroid_touch.lua`
+(files under `LuaUI/Config`).
 
 ## Key files
 - `app/src/main/java/com/underarmcape/bardroid/` — `Installer` (first run), `Proot` (command builder, mirrors proot-distro),
@@ -18,8 +23,12 @@ BAR's own CDN via `pr-downloader`. Gamepad → UDP `BARCTRL1` packets. Audio: Pu
   (display + gamepad), `Prefs` (`EMULATOR_BUILD`, URLs per ABI, `putGpuEnv`), `ControllerBridge`, `AudioPump`.
 - `app/src/main/assets/bardroid/` — `setup-container.sh` (apt/mesa/engine/content/import), `launch-bar.sh` (GPU env,
   glcheck, pulseaudio, spring), `springsettings.cfg` (preset; emulator overrides in `Installer.EMULATOR_GRAPHICS`).
-- `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux proot +
-  ANGLE, Debian busybox) and `tools/build-virgl.py <abi>` (virglrenderer + libepoxy, NDK build with our DXT fix).
+- `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux talloc,
+  shmem and ANGLE, Debian busybox), `tools/build-proot.py <abi>` (proot + loader, NDK build with our ioctl filter; run
+  after fetch-prebuilts, it links its talloc/shmem) and `tools/build-virgl.py <abi>` (virglrenderer + libepoxy, NDK
+  build with our DXT fix).
+- `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (camera, window size on fold/unfold, frame cap,
+  "is the pointer on the interface" answers); `GameActivity` wires them up.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
@@ -53,9 +62,12 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNa
   its tracees). `XServer`/`VirglServer` inherit the app environment (app_process and EGL need it).
 - No `--kernel-release` for proot on kernels >= 4 (its kompat extension traps every futex: half the render thread).
 - `MaxParticles` stays >= 10000 (BAR's minimum): lower values kill unsynced LuaRules and no unit is drawn.
+- proot's seccomp filter must not trap syscalls proot does not act on (each trap = two ptrace stops; GPU drivers make
+  hundreds of ioctls per frame). Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
+- The lobby needs `chobby_config.json` in the write dir (launch-bar.sh writes it, as BAR's launcher does).
 - Compare frame rates with the developer fps widget (HANDOFF.md) and the laptop awake: Modern Standby throttles ~2.5x.
 
 ## Open risks (see HANDOFF.md)
-Emulator: ~20 fps (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little host RAM
-left; the low-memory killer once took the app). Phones (later): Freedreno compat-profile GL version, proot on real
-hardware, RAM, RTS touch input.
+Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little
+host RAM left; the low-memory killer once took the app). Phone: RAM (~5–6 GB a match), BAR's UI on the near-square
+inner display, drags on BAR's top bar/menus pan instead of dragging (they have no `IsAbove`), touch-only play (later).

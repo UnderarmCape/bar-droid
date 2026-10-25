@@ -1,8 +1,8 @@
-"""Fetches the native helpers BAR Droid execs (proot + its libs and ANGLE from Termux, a static busybox from Debian;
-the virgl GPU server comes from tools/build-virgl.py) for one
+"""Fetches the native helpers BAR Droid execs (proot's libraries and ANGLE from Termux, a static busybox from Debian;
+proot comes from tools/build-proot.py, the virgl GPU server from tools/build-virgl.py) for one
 Android ABI and writes them into app/src/main/jniLibs/<abi>/ under the lib*.so names Android extracts and lets
-the app exec. Termux's proot looks for libtalloc.so.2 in Termux's prefix; it is patched in place to load
-libtalloc.so from its own directory ($ORIGIN), the same way the bundled arm64 copies were prepared.
+the app exec. Termux's libtalloc has the SONAME libtalloc.so.2; it is patched in place to libtalloc.so, the name
+proot loads from its own directory ($ORIGIN).
 
   python -I tools/fetch-prebuilts.py x86_64        (or arm64-v8a)
 """
@@ -84,16 +84,11 @@ def main():
         print(f"termux {name} {p['Version']}")
         return deb_files(get(f"{TERMUX}/{p['Filename']}"))
 
-    proot = termux_pkg("proot")
+    # proot itself is built by tools/build-proot.py (Termux's traps every ioctl, i.e. every GPU driver call); it
+    # links these two.
     talloc = termux_pkg("libtalloc")
     shmem = termux_pkg("libandroid-shmem")
     prefix = "data/data/com.termux/files/usr/"
-
-    exe = proot[prefix + "bin/proot"]
-    exe, ok = replace_dynstr(exe, "libtalloc.so.2", "libtalloc.so"); print("  proot NEEDED libtalloc.so.2 -> libtalloc.so:", ok)
-    exe, ok = replace_dynstr(exe, "/data/data/com.termux/files/usr/lib", "$ORIGIN"); print("  proot RUNPATH -> $ORIGIN:", ok)
-    written.append(("libproot.so", exe))
-    written.append(("libproot-loader.so", proot[prefix + "libexec/proot/loader"]))
 
     lib = next(v for k, v in talloc.items() if re.match(re.escape(prefix) + r"lib/libtalloc\.so\.2\.\d+\.\d+$", k))
     lib, ok = replace_dynstr(lib, "libtalloc.so.2", "libtalloc.so"); print("  talloc SONAME -> libtalloc.so:", ok)

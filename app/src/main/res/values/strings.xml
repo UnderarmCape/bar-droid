@@ -18,6 +18,8 @@
     <string name="cb_llvmpipe">Render on the CPU (llvmpipe) instead of the GPU (virgl): slow, for comparison</string>
     <string name="cb_compat45">Force OpenGL 4.5 compatibility profile (MESA_GL_VERSION_OVERRIDE)</string>
     <string name="cb_audio">Sound (PulseAudio pipe)</string>
+    <string name="cb_fps60">60 fps (experimental; the default caps the game at 30 fps)</string>
+    <string name="cb_rts_touch">BAR touch controls (drag pans, pinch zooms, twist rotates, two fingers up/down tilt, tap then drag selects, long press orders); off = Termux:X11 touch modes</string>
     <string name="cb_shadows">Shadows</string>
     <string name="cb_noseccomp">proot: disable seccomp acceleration (PROOT_NO_SECCOMP)</string>
     <string name="cb_verbosex">Verbose X server logging</string>

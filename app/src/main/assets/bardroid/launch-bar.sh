@@ -43,19 +43,18 @@ done
 if [ ! -S "/tmp/.X11-unix/X${DISPLAY#:}" ]; then log "X socket /tmp/.X11-unix/X${DISPLAY#:} never appeared"; exit 10; fi
 log "X socket present"
 
-# 2. Audio: PulseAudio inside the container writing raw PCM to a FIFO that the app plays through AudioTrack.
+# 2. Audio: the engine's OpenAL Soft writes the mixed sound (a WAV header, then raw PCM) into a FIFO that the app
+#    plays through AudioTrack (springsettings: UseSDLAudio = 0). OpenAL's mixer thread paces itself by the clock and
+#    catches up after a stall, so a busy CPU only delays sound. (SDL + PulseAudio's pipe sink cut a hole into the
+#    sound every time the engine's audio callback was late.)
+pulseaudio --kill >/dev/null 2>&1 || true   # left over from an older BAR Droid
 if [ "${BARDROID_AUDIO:-1}" = "1" ]; then
-  mkdir -p /tmp/pulse
   [ -p /tmp/bardroid-audio.fifo ] || mkfifo /tmp/bardroid-audio.fifo 2>/dev/null || true
-  pulseaudio --kill >/dev/null 2>&1 || true
-  pulseaudio --daemonize=yes --exit-idle-time=-1 --disallow-exit --disallow-module-loading=0 \
-    --log-target=file:/tmp/pulse/pulse.log --realtime=no --high-priority=no \
-    -L "module-pipe-sink file=/tmp/bardroid-audio.fifo format=s16le rate=48000 channels=2 sink_name=bardroid" \
-    -L "module-native-protocol-unix socket=/tmp/pulse/native auth-anonymous=1" \
-    -n 2>/dev/null \
-    && export PULSE_SERVER=unix:/tmp/pulse/native \
-    || log "pulseaudio failed to start; continuing without sound"
+  printf '[general]\ndrivers = wave\nfrequency = 48000\nchannels = stereo\nsample-type = int16\nperiod_size = 512\n[wave]\nfile = /tmp/bardroid-audio.fifo\n' > /root/.alsoftrc
+else
+  printf '[general]\ndrivers = null\n' > /root/.alsoftrc   # nobody reads the FIFO: opening it would block
 fi
+export ALSOFT_CONF=/root/.alsoftrc
 
 # 3. One-time GL probe, saved for the findings/bug reports.
 if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
@@ -86,6 +85,10 @@ case "$MODE" in
     log "spring skirmish: $BAR/skirmish.txt"
     ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
   lobby)
+    # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
+    # config and shuts down (a black screen).
+    printf '%s\n' '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "byar"}' \
+      > "$BAR/chobby_config.json"
     log "spring lobby: rapid://${LOBBY_TAG:-byar-chobby:test}"
     ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
   shell)
@@ -95,5 +98,4 @@ esac
 log "spring exited with $rc"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 grep -E "GL version|GLSL version|GL4 support|S3TC|GL_VENDOR|GL_RENDERER|Video RAM|Error|error|OOM|Segmentation|desync" "$BAR/infolog.txt" 2>/dev/null | head -n 60
-pulseaudio --kill >/dev/null 2>&1 || true
 exit $rc

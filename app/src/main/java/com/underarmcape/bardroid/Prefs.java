@@ -20,8 +20,16 @@ public final class Prefs {
     public static String engineUrl = "https://github.com/beyond-all-reason/RecoilEngine/releases/download/2026.07.04/recoil_2026.07.04_" + ENGINE_ARCH + ".7z";
     public static String rootfsManifestUrl = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-" + DEBIAN_ARCH + "/trixie/oci/blobs/image-manifest.json";
     public static String rootfsBlobUrl = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-" + DEBIAN_ARCH + "/trixie/oci/blobs/rootfs.tar.gz";
-    /** Adreno-only Mesa build; the emulator build keeps Debian's Mesa (llvmpipe) and skips this download. */
-    public static String mesaUrl = EMULATOR_BUILD ? "" : "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-26.2.0-devel-20260709/mesa-for-android-container_26.2.0-devel-20260709_debian_trixie_arm64.tar.gz";
+    /**
+     * Adreno-only Mesa build; the emulator build keeps Debian's Mesa and skips this download. 27.0.0-devel-20261025 is
+     * the first release with the KGSL Present wait fence (lfdevs PR #96): older ones flash black frames under
+     * Termux:X11 because the X server reads frames before the GPU has finished them.
+     */
+    public static String mesaUrl = EMULATOR_BUILD ? "" : "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-27.0.0-devel-20261025/mesa-for-android-container_27.0.0-devel-20261025_debian_trixie_arm64.tar.gz";
+    /** Earlier defaults: a saved one of these follows the build's default instead of pinning the old Mesa. */
+    static final String[] OLD_MESA_URLS = {
+            "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-26.2.0-devel-20260709/mesa-for-android-container_26.2.0-devel-20260709_debian_trixie_arm64.tar.gz",
+    };
     public static String gameTag = "byar:test";
     public static String lobbyTag = "byar-chobby:test";
     public static String mapName = "Supreme Isthmus v2.1";
@@ -43,6 +51,10 @@ public final class Prefs {
     public static String aiName = "BARb";
     public static String aiDifficulty = "Normal";
     public static int controllerPort = 28777;
+    /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
+    public static boolean rtsTouch = true;
+    /** Frame cap (phone build): 30 fps (VSync 2 on a 60 Hz window), or experimental 60 fps (VSync 1). */
+    public static boolean fps60 = false;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -66,7 +78,10 @@ public final class Prefs {
     public static void load(Context ctx) {
         SharedPreferences s = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE);
         // Engine version/URL are not user settings: they follow the build (and its ABI).
-        if (!EMULATOR_BUILD) mesaUrl = s.getString("mesaUrl", mesaUrl);
+        if (!EMULATOR_BUILD) {
+            String saved = s.getString("mesaUrl", mesaUrl);
+            if (!java.util.Arrays.asList(OLD_MESA_URLS).contains(saved)) mesaUrl = saved;
+        }
         gameTag = s.getString("gameTag", gameTag);
         lobbyTag = s.getString("lobbyTag", lobbyTag);
         mapName = s.getString("mapName", mapName);
@@ -82,6 +97,8 @@ public final class Prefs {
         noSeccomp = s.getBoolean("noSeccomp", noSeccomp);
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
+        rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
+        fps60 = s.getBoolean("fps60", fps60);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -101,6 +118,8 @@ public final class Prefs {
                 .putBoolean("noSeccomp", noSeccomp)
                 .putBoolean("verboseX", verboseX)
                 .putBoolean("audio", audio)
+                .putBoolean("rtsTouch", rtsTouch)
+                .putBoolean("fps60", fps60)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

@@ -91,7 +91,12 @@ public class GameService extends Service {
 
     private void play(String mode) {
         Installer inst = new Installer(this, paths);
-        if (!inst.isInstalled() && !"shell".equals(mode)) { setStatus("not installed yet"); return; }
+        if (!inst.isInstalled() && !"shell".equals(mode)) {
+            // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
+            install();
+            inst = new Installer(this, paths);
+            if (!inst.isInstalled()) return;
+        }
         try {
             inst.refreshHostFiles();                        // scripts/assets of this app version
             inst.writeGameFiles();                          // refresh settings + start script
