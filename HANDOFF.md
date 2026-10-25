@@ -1,4 +1,4 @@
-# BAR Droid — hand-off (updated 2026-10-25 ~11:10 EDT)
+# BAR Droid — hand-off (updated 2026-10-25 ~16:45 EDT)
 
 Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
@@ -16,11 +16,51 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | --- | --- | --- |
 | Research + plan | `RESEARCH.md`, claude.ai doc | Done |
 | Portable Windows toolchain | `..\toolchain\`, `..\Install Toolchain.bat` | Done; nothing in AppData or the profile |
-| Emulator build (x86_64, default) | `..\Build APK.bat` → `..\apk\bar-droid-emulator-debug.apk` | **BAR plays in the emulator**: install from BAR's CDN, Play vs AI, BARb AI, textured map, full sim speed (x1.00), **3–4 fps** at 1256×568 on the GPU path |
-| Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB), boots, installs, opens the app |
-| Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | Builds; never run on a phone. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| Emulator build (x86_64, default) | `..\Build APK.bat` → `..\apk\bar-droid-emulator-debug.apk` | **BAR plays in the emulator**: install from BAR's CDN, Play vs AI, BARb AI, units + full BAR UI, sim x1.00, **~20 fps** at 1256×568 at the start camera with the laptop awake (~8 fps while Windows is in Modern Standby), ~1 min to load a skirmish |
+| Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
+| Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | Builds (checked 16:37); never run on a phone. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| Share logs | launcher button | Zips the logs into Android's share sheet (Taildrop, Drive, mail): phone debugging without adb |
 | virgl GPU server | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black, see below) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+
+## Afternoon session (2026-10-25, 12:40–16:45): units, speed, Share logs
+
+**Invisible units (would have hit phones too).** Our presets set `MaxParticles` 2000 (phones) / 600 (emulator).
+BAR's `gfx_fire_smoke_gl4` sizes a VBO at `(MaxParticles - 7000) * 2 + 10000`; at ≤ 0 `LuaVBOImpl::Define` throws while
+unsynced LuaRules loads, the whole unsynced LuaRules dies and CUS GL4 (BAR's unit renderer) with it: no units, no
+command panel. Now `MaxParticles = 10000` (bottom of BAR's own slider); the emulator no longer overrides particles,
+LOD or icon distance. Commander, build menu, unit info and orders all work (`..\logs\emulator-units-ingame.png`).
+
+**Frame rate, measured the same way each time** (developer widget `files/bar/LuaUI/Widgets/bardroid_fps.lua` logs
+`[bardroid-fps]` to infolog every 10 s; not shipped by the app). All with the laptop in Modern Standby unless noted:
+| Change | Result |
+| --- | --- |
+| Before | 2 fps, sim x0.5–0.7, skirmish load 3:21 |
+| proot without `--kernel-release` (its kompat extension traps every `futex()`; spring's render thread spent ~45% in ptrace stops) | load 1:46, sim x1.00 |
+| Emulator `hw.gltransport=asg` (shared-memory ring instead of the goldfish kernel pipe; 87% of the virgl server's CPU was in `goldfish_pipe_read_write`) | 7 fps (X server 45%→11% CPU), load 1:13 |
+| virgl: no timer-query cap, deferred query polls, no per-command `glGetError` | ~8–9 fps; **~20 fps with the laptop awake** |
+Not worth it (measured): `mesa_glthread=true` (≤5%), half the pixels (`displayScale` 270: +18%), ANGLE
+`asyncCommandQueue` (not in this ANGLE build). Where the time goes now: spring's render thread waits in
+`glXSwapBuffers` for virgl to finish and read back the frame; virgl waits on the host (ANGLE checks a fence after
+every submit = a host round trip; vrend's fallback blit for the engine's per-frame Z24S8→Z32 depth copy switches GL
+contexts twice per frame, each a flush + submit). Ideas left: avoid that context switch (an experiment storing
+Z32_UNORM as DEPTH24_STENCIL8 showed no clear gain while throttled; not kept), fewer ANGLE submits.
+**Host power matters**: Windows Modern Standby (lid/screen off) throttles the laptop to ~40% of the awake frame rate.
+Check `Get-WinEvent` Kernel-Power 506/507 before comparing numbers.
+
+Experiment, not usable yet: the emulator's own GLES driver instead of ANGLE (developer switch file
+`files/bar/dev-virgl-native`; build-virgl.py adds a pbuffer fallback for EGL without surfaceless contexts). It lacks
+geometry shaders and `OES_texture_3D` framebuffer attachments; libepoxy aborts the server on
+`glFramebufferTexture3DOES` while BAR loads.
+
+Developer hooks (none created by the app): `files/bar/dev-env.sh` (sourced by `launch-bar.sh`),
+`files/bar/dev-springsettings.cfg` (appended to springsettings), `files/bar/dev-virgl-native`, `LuaUI/Widgets/*.lua`
+in `files/bar`. Profiling: `adb root` works on the google_apis image; NDK `simpleperf` (pushed to `/data/local/tmp`)
+with `--call-graph dwarf --trace-offcpu` shows wall time; the unstripped virgl library for symbols is
+`build/virgl/build-x86_64/src/libvirglrenderer.so`.
+
+Memory: once, the low-memory killer took the whole app ~40 s into a match (guest swap full). Later runs held at
+~0.7 GB available. The laptop has 31.6 GB; other programs (llama-server ~14 GB, a Windows BAR) leave little room.
 
 ## Emulator-first session (2026-10-25, 08:50–11:10)
 
@@ -59,10 +99,7 @@ has the GL4.3 features BAR uses). The engine reports `GL 4.3 (Compatibility Prof
 - CPU rendering (llvmpipe, checkbox "Render on the CPU") works too: x0.70 speed, ~1 fps.
 
 Emulator caveats
-- 3–4 fps. Where it goes (guest `top` in game): X server ~85% CPU, virgl server ~60%, spring ~15%: the frame transport
-  (virgl readback → XPutImage → Termux:X11 → Android surface), not the GPU. Memory is tight: spring 8.9 GB RSS, guest
-  free 271 MB, 1.3 GB swapped; the host had 3.4 GB free with the emulator at 14.4 GB.
-- Unit models not visually confirmed yet (the start camera shows the map; units appear as icons/markers).
+- (11:10) 3–4 fps, units invisible: both fixed in the afternoon session above.
 - A host crash (PC restart) corrupted the emulator's data disk (kernel panic, ext4). Recovery: start the emulator once
   with `-wipe-data` (`Run in Emulator.bat -wipe-data`), then Install / Update again (~10 min, 4 GB download).
 - Developer hook: long-press **GL check** = display + GPU server stay up for an hour without the game, for testing GL
@@ -184,17 +221,17 @@ Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 G
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
 ## Next steps (in order)
-1. Emulator frame rate (3–4 fps): profile the frame transport (X server ~85% CPU). Ideas: MIT-SHM/DRI3 for the
-   virpipe present path, a lower X resolution, BAR's graphics presets; free host RAM before playing.
-2. Confirm unit models render on the GPU path (move the camera to a start position).
-3. Touch/keyboard feel in the emulator window (mouse works as mouse there; see the touch mapping below).
-4. Controller widgets. The earlier plan was to copy attempt-01's `controller_socket_bridge.lua` + `gui_controller_*`
+1. Emulator frame rate beyond ~20 fps: the per-frame depth-copy context switch in vrend's fallback blitter and
+   ANGLE's per-submit fence checks (see the afternoon session). Measure with the laptop awake.
+2. Touch/keyboard feel in the emulator window (mouse works as mouse there; see the touch mapping below).
+3. Controller widgets. The earlier plan was to copy attempt-01's `controller_socket_bridge.lua` + `gui_controller_*`
    into `files/bar/LuaUI/Widgets`. **Not done on purpose**: `C:\Tools\BARGAMEPAD\docs\lessons-from-attempt-01.md`
    (restarted 2026-10-25) lists the companion bridge and the 19k-line widget under "do not repeat". Decide which widget
    set the phone should use; the app's UDP side (`BARCTRL1`) is ready either way.
-5. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per
+4. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per
    `AI_POLICY.md`; report the virglrenderer-android DXT bug to Termux.
-6. Later, phones: `Build APK.bat phone`, `Install on Phone.bat`, Install / Update, GL check, Play vs AI.
+5. Later, phones: `Build APK.bat phone`, `Install on Phone.bat`, Install / Update, GL check, Play vs AI; **Share logs**
+   sends the logs back without adb.
 
 ## Licensing
 Engine GPL-2.0+; BAR game code GPL-2.0; BAR art CC-BY-NC-ND 4.0 (never bundle, never re-encode; download from the

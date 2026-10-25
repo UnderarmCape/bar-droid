@@ -51,7 +51,11 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNa
 - Never keep exec'able paths into `nativeLibraryDir` on disk (symlinks, saved paths): it moves on every app update.
 - Child processes go through `Proc`; Stop SIGKILLs every process of the app's UID (proot ignores SIGTERM and orphans
   its tracees). `XServer`/`VirglServer` inherit the app environment (app_process and EGL need it).
+- No `--kernel-release` for proot on kernels >= 4 (its kompat extension traps every futex: half the render thread).
+- `MaxParticles` stays >= 10000 (BAR's minimum): lower values kill unsynced LuaRules and no unit is drawn.
+- Compare frame rates with the developer fps widget (HANDOFF.md) and the laptop awake: Modern Standby throttles ~2.5x.
 
 ## Open risks (see HANDOFF.md)
-Emulator: 3–4 fps (frame transport: X server ~85% CPU), memory tight (12 GB guest, little host RAM left), unit models
-not visually confirmed. Phones (later): Freedreno compat-profile GL version, proot on real hardware, RAM, RTS touch input.
+Emulator: ~20 fps (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little host RAM
+left; the low-memory killer once took the app). Phones (later): Freedreno compat-profile GL version, proot on real
+hardware, RAM, RTS touch input.
