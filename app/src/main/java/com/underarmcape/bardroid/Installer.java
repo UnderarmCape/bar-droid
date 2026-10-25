@@ -251,23 +251,20 @@ public final class Installer {
                 cfg.append(l).append('\n');
             }
         }
-        if (Prefs.EMULATOR_BUILD) cfg.append("# emulator build (software OpenGL)\n");
+        if (Prefs.EMULATOR_BUILD) cfg.append("# emulator build\n");
         for (Map.Entry<String, String> kv : set.entrySet()) cfg.append(kv.getKey()).append(" = ").append(kv.getValue()).append('\n');
         writeFile(new File(p.bar, "springsettings.cfg"), cfg.toString());
         writeStartScript();
     }
 
-    /** Emulator build: OpenGL runs on the CPU (llvmpipe), so trade looks for frame time. */
+    /** Emulator build: OpenGL goes through virgl (or the CPU), so trade looks for frame time.
+     *  MaxParticles stays at the template's 10000: BAR's Lua breaks below that (see springsettings.cfg). */
     private static final Map<String, String> EMULATOR_GRAPHICS = new java.util.LinkedHashMap<String, String>() {{
         put("VSync", "0");
         put("Water", "0");
         put("AdvMapShading", "0");
         put("AdvUnitShading", "0");
         put("GroundDetail", "20");
-        put("MaxParticles", "600");
-        put("MaxNanoParticles", "200");
-        put("UnitLodDist", "100");
-        put("UnitIconDist", "100");
     }};
 
     /** Human (team 0) vs one AI (team 1). GameType uses the rapid tag; the engine resolves it from the local rapid index. */
