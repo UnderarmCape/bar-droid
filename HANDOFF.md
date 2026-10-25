@@ -31,8 +31,8 @@ unsynced LuaRules loads, the whole unsynced LuaRules dies and CUS GL4 (BAR's uni
 command panel. Now `MaxParticles = 10000` (bottom of BAR's own slider); the emulator no longer overrides particles,
 LOD or icon distance. Commander, build menu, unit info and orders all work (`..\logs\emulator-units-ingame.png`).
 
-**Frame rate, measured the same way each time** (developer widget `files/bar/LuaUI/Widgets/bardroid_fps.lua` logs
-`[bardroid-fps]` to infolog every 10 s; not shipped by the app). All with the laptop in Modern Standby unless noted:
+**Frame rate, measured the same way each time** (developer widget `tools/dev/bardroid_fps.lua`, copied to the
+device's `files/bar/LuaUI/Widgets/`, logs `[bardroid-fps]` to infolog every 10 s; not shipped by the app). All with the laptop in Modern Standby unless noted:
 | Change | Result |
 | --- | --- |
 | Before | 2 fps, sim x0.5–0.7, skirmish load 3:21 |
