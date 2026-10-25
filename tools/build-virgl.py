@@ -75,6 +75,71 @@ def edit(path, old, new, count=1):
     open(path, "w", encoding="utf-8", newline="\n").write(s)
 
 
+def patch_pbuffer_fallback(e):
+    """EGL without EGL_KHR_surfaceless_context (the emulator's own GLES driver): bind a 1x1 pbuffer per context.
+    vrend renders into its own FBOs, so the surface is never drawn to. A surface can be current in one thread only,
+    hence one per context (the fence thread has its own)."""
+    edit(e, "   bool different_gpu;\n   struct egl_funcs funcs;",
+         "   bool different_gpu;\n   struct egl_funcs funcs;\n"
+         "   bool pbuffer_fallback;   /* BAR Droid */\n"
+         "   pthread_mutex_t pbuf_mutex;\n"
+         "   struct { EGLContext ctx; EGLSurface surf; } pbufs[64];")
+    edit(e, "static bool virgl_egl_check_extensions(struct virgl_egl *egl)\n{\n"
+            "   if (!has_bits(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT | EGL_KHR_CREATE_CONTEXT)) {",
+         "/* BAR Droid: per-context pbuffer when the driver has no surfaceless contexts */\n"
+         "static EGLSurface virgl_egl_surface_for(struct virgl_egl *egl, EGLContext ctx)\n{\n"
+         "   static const EGLint att[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };\n"
+         "   EGLSurface s = EGL_NO_SURFACE;\n"
+         "   unsigned i;\n"
+         "   if (!egl->pbuffer_fallback || ctx == EGL_NO_CONTEXT)\n      return EGL_NO_SURFACE;\n"
+         "   pthread_mutex_lock(&egl->pbuf_mutex);\n"
+         "   for (i = 0; i < ARRAY_SIZE(egl->pbufs); i++)\n"
+         "      if (egl->pbufs[i].ctx == ctx) { s = egl->pbufs[i].surf; goto out; }\n"
+         "   for (i = 0; i < ARRAY_SIZE(egl->pbufs); i++)\n"
+         "      if (!egl->pbufs[i].ctx) {\n"
+         "         s = eglCreatePbufferSurface(egl->egl_display, egl->egl_conf, att);\n"
+         "         if (s == EGL_NO_SURFACE)\n            virgl_error(\"eglCreatePbufferSurface failed: 0x%x\\n\", eglGetError());\n"
+         "         egl->pbufs[i].ctx = ctx;\n         egl->pbufs[i].surf = s;\n         break;\n      }\n"
+         "out:\n   pthread_mutex_unlock(&egl->pbuf_mutex);\n   return s;\n}\n\n"
+         "static void virgl_egl_release_surface(struct virgl_egl *egl, EGLContext ctx)\n{\n"
+         "   unsigned i;\n"
+         "   if (!egl->pbuffer_fallback)\n      return;\n"
+         "   pthread_mutex_lock(&egl->pbuf_mutex);\n"
+         "   for (i = 0; i < ARRAY_SIZE(egl->pbufs); i++)\n"
+         "      if (egl->pbufs[i].ctx == ctx) {\n"
+         "         if (egl->pbufs[i].surf != EGL_NO_SURFACE)\n            eglDestroySurface(egl->egl_display, egl->pbufs[i].surf);\n"
+         "         egl->pbufs[i].ctx = EGL_NO_CONTEXT;\n         egl->pbufs[i].surf = EGL_NO_SURFACE;\n      }\n"
+         "   pthread_mutex_unlock(&egl->pbuf_mutex);\n}\n\n"
+         "static bool virgl_egl_check_extensions(struct virgl_egl *egl)\n{\n"
+         "   if (!has_bit(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT) &&\n"
+         "       has_bit(egl->extension_bits, EGL_KHR_CREATE_CONTEXT)) {\n"
+         "      virgl_info(\"no EGL_KHR_surfaceless_context: using pbuffers\\n\");   /* BAR Droid */\n"
+         "      egl->pbuffer_fallback = true;\n"
+         "      pthread_mutex_init(&egl->pbuf_mutex, NULL);\n"
+         "      return true;\n   }\n"
+         "   if (!has_bits(egl->extension_bits, EGL_KHR_SURFACELESS_CONTEXT | EGL_KHR_CREATE_CONTEXT)) {")
+    # ES 3 contexts need an ES3-capable config on drivers that check (EGL_OPENGL_ES3_BIT_KHR).
+    edit(e, "   success = eglChooseConfig(egl->egl_display, conf_att, &egl->egl_conf,",
+         "   if (gles && egl->pbuffer_fallback)   /* BAR Droid */\n"
+         "      conf_att[3] = EGL_OPENGL_ES2_BIT | 0x0040 /* EGL_OPENGL_ES3_BIT_KHR */;\n"
+         "   success = eglChooseConfig(egl->egl_display, conf_att, &egl->egl_conf,")
+    edit(e, "   eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,\n                  egl->egl_ctx);",
+         "   eglMakeCurrent(egl->egl_display, virgl_egl_surface_for(egl, egl->egl_ctx),\n"
+         "                  virgl_egl_surface_for(egl, egl->egl_ctx), egl->egl_ctx);")
+    edit(e, "   eglDestroyContext(egl->egl_display, egl->egl_ctx);\n   eglTerminate(egl->egl_display);",
+         "   virgl_egl_release_surface(egl, egl->egl_ctx);\n"
+         "   eglDestroyContext(egl->egl_display, egl->egl_ctx);\n   eglTerminate(egl->egl_display);")
+    edit(e, "   EGLContext egl_ctx = (EGLContext)virglctx;\n   eglDestroyContext(egl->egl_display, egl_ctx);",
+         "   EGLContext egl_ctx = (EGLContext)virglctx;\n   virgl_egl_release_surface(egl, egl_ctx);\n"
+         "   eglDestroyContext(egl->egl_display, egl_ctx);")
+    edit(e, "   return eglMakeCurrent(egl->egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE,\n                         egl_ctx) ? 0 : -1;",
+         "   EGLSurface s = virgl_egl_surface_for(egl, egl_ctx);\n"
+         "   return eglMakeCurrent(egl->egl_display, s, s, egl_ctx) ? 0 : -1;")
+    s = open(e, encoding="utf-8").read()
+    if "#include <pthread.h>" not in s:
+        open(e, "w", encoding="utf-8", newline="\n").write("#include <pthread.h>   /* BAR Droid */\n" + s)
+
+
 def main():
     os.makedirs(DL, exist_ok=True)
     src_root = os.path.join(WORK, "src")
@@ -149,6 +214,23 @@ def main():
         edit(r, "   if (has_feature(feat_timer_query)) {\n      caps->v1.bset.timer_query = 1;",
              "   if (has_feature(feat_timer_query) && getenv(\"BARDROID_VIRGL_TIMER_QUERY\")) {   /* BAR Droid */\n"
              "      caps->v1.bset.timer_query = 1;")
+        # vrend calls glGetError() after every command and a GL error kills the guest's context (spring aborts). On the
+        # emulator's own GLES driver each call is also a host round trip. Check only when asked to.
+        edit(r, "bool vrend_check_no_error(struct vrend_context *ctx)\n{\n   GLenum err;\n",
+             "bool vrend_check_no_error(struct vrend_context *ctx)\n{\n   GLenum err;\n"
+             "   static int check = -1;   /* BAR Droid */\n"
+             "   if (check < 0)\n      check = getenv(\"BARDROID_VIRGL_GL_ERRORS\") != NULL;\n"
+             "   if (!check)\n      return true;\n")
+        patch_pbuffer_fallback(os.path.join(virgl, "src", "vrend", "vrend_winsys_egl.c"))
+        # GLES hosts without EXT_clip_cull_distance: the vertex shader body still writes clip_dist_temp, so declare
+        # it (the clip distances are then dropped) instead of failing to compile.
+        edit(os.path.join(virgl, "src", "vrend", "vrend_shader.c"),
+             '      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\\n");      \n   }\n\n'
+             '   const char *psize_buf',
+             '      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\\n");\n'
+             '   } else if (ctx->num_out_clip_dist) {   /* BAR Droid */\n'
+             '      emit_hdr(glsl_strbufs, "vec4 clip_dist_temp[2];\\n");\n   }\n\n'
+             '   const char *psize_buf')
         v = os.path.join(virgl, "vtest", "vtest_server.c")
         for flavor in ("gl", "vulkan-null", "vulkan"):
             edit(v, f'epoxy_set_library_path("@TERMUX_PREFIX@/opt/angle-android/{flavor}");',

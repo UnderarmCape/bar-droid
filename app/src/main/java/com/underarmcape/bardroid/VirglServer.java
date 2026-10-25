@@ -36,7 +36,10 @@ public final class VirglServer {
         env.put("TMPDIR", p.rootfsTmp.getAbsolutePath());
         List<String> cmd = new ArrayList<>();
         cmd.add(exe.getAbsolutePath());
-        cmd.add("--angle-vulkan");     // ANGLE = GLES on Vulkan: has the surfaceless EGL virglrenderer needs
+        // Developer switch (files/bar/dev-virgl-native): the system's own EGL/GLES instead of ANGLE, with a pbuffer
+        // per context where surfaceless contexts are missing (tools/build-virgl.py).
+        if (new File(p.bar, "dev-virgl-native").exists()) Log.i("virgl", "using the system GLES driver (dev switch)");
+        else cmd.add("--angle-vulkan");   // ANGLE = GLES on Vulkan, surfaceless EGL
         cmd.add("--socket-path");
         cmd.add(socket().getAbsolutePath());
         proc = new Proc("virgl").start(cmd, env, p.filesDir, null);
