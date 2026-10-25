@@ -125,6 +125,30 @@ def main():
         s = s[:m.start()] + (f"\n{m.group(1)}/* BAR Droid: decompress only when the host cannot sample S3TC itself. */\n"
                              f"{m.group(1)}dxtn_decompress = !({native} ||\n{m.group(1)}    {angle});\n") + s[m.start():]
         open(f, "w", encoding="utf-8", newline="\n").write(s)
+        # Non-blocking query polls: on ANGLE/Vulkan each availability check flushes, submits and waits on the host
+        # for a fence status. While a fence is pending, leave the query on the waiting list; vrend checks that list
+        # when the fence retires.
+        edit(r, "int vrend_get_query_result(struct vrend_context *ctx, uint32_t handle,",
+             "/* BAR Droid */\n"
+             "static bool vrend_fence_pending(void)\n"
+             "{\n"
+             "   bool pending;\n"
+             "   if (!vrend_state.sync_thread)\n"
+             "      return !list_is_empty(&vrend_state.fence_list);\n"
+             "   mtx_lock(&vrend_state.fence_mutex);\n"
+             "   pending = !list_is_empty(&vrend_state.fence_wait_list) || vrend_state.fence_waiting;\n"
+             "   mtx_unlock(&vrend_state.fence_mutex);\n"
+             "   return pending;\n"
+             "}\n\n"
+             "int vrend_get_query_result(struct vrend_context *ctx, uint32_t handle,")
+        edit(r, "   ret = vrend_check_query(q);\n   if (ret) {\n      list_delinit(&q->waiting_queries);",
+             "   ret = (!wait && vrend_fence_pending()) ? false : vrend_check_query(q);   /* BAR Droid */\n"
+             "   if (ret) {\n      list_delinit(&q->waiting_queries);")
+        # The engine polls GL_TIMESTAMP GPU timers every frame; on ANGLE each check costs a submit and a host round
+        # trip (~1/5 of the server's time). Without the cap Mesa hides ARB_timer_query and the engine skips them.
+        edit(r, "   if (has_feature(feat_timer_query)) {\n      caps->v1.bset.timer_query = 1;",
+             "   if (has_feature(feat_timer_query) && getenv(\"BARDROID_VIRGL_TIMER_QUERY\")) {   /* BAR Droid */\n"
+             "      caps->v1.bset.timer_query = 1;")
         v = os.path.join(virgl, "vtest", "vtest_server.c")
         for flavor in ("gl", "vulkan-null", "vulkan"):
             edit(v, f'epoxy_set_library_path("@TERMUX_PREFIX@/opt/angle-android/{flavor}");',

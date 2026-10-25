@@ -46,7 +46,9 @@ public final class Proot {
         c.add("--link2symlink");
         c.add("-L");
         if (fullBinds) c.add("--sysvipc");
-        c.add("--kernel-release=6.6.0-bardroid");
+        // proot-distro fakes the kernel release; that loads proot's kompat extension, which traps every futex()
+        // (half the engine's render-thread time on the emulator). glibc only needs >= 3.2, so fake it only below that.
+        if (kernelMajor() < 4) c.add("--kernel-release=6.6.0-bardroid");
         c.add("--root-id");
         c.add("--rootfs=" + p.rootfs.getAbsolutePath());
         c.add("--cwd=/root");
@@ -70,6 +72,11 @@ public final class Proot {
             // Our app-private storage is also where Android keeps the extracted APK libraries; nothing else needed.
         }
         return c;
+    }
+
+    private static int kernelMajor() {
+        try { return Integer.parseInt(System.getProperty("os.version", "0").split("\\.")[0]); }
+        catch (NumberFormatException e) { return 0; }
     }
 
     /** `proot ... /usr/bin/env -i KEY=VAL ... cmd args` with a clean guest environment. */
