@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">BAR Droid</string>
+    <string name="display_prefs_title">Display &amp; touch preferences</string>
+    <string name="btn_install">Install / Update</string>
+    <string name="btn_play">Play vs AI</string>
+    <string name="btn_lobby">Lobby</string>
+    <string name="btn_glcheck">GL check</string>
+    <string name="btn_display_prefs">Display prefs</string>
+    <string name="btn_stop">Stop</string>
+    <string name="btn_save">Save settings</string>
+    <string name="settings_title">Settings</string>
+    <string name="lbl_workers">Worker threads</string>
+    <string name="lbl_uiscale">UI scale</string>
+    <string name="lbl_map">Map (skirmish)</string>
+    <string name="lbl_mesa_url">Mesa for Android tarball URL (debian_trixie_arm64)</string>
+    <string name="cb_zink">Use Turnip + Zink instead of Freedreno (kgsl)</string>
+    <string name="cb_compat45">Force OpenGL 4.5 compatibility profile (MESA_GL_VERSION_OVERRIDE)</string>
+    <string name="cb_audio">Sound (PulseAudio pipe)</string>
+    <string name="cb_shadows">Shadows</string>
+    <string name="cb_noseccomp">proot: disable seccomp acceleration (PROOT_NO_SECCOMP)</string>
+    <string name="cb_verbosex">Verbose X server logging</string>
+    <string name="log_title">Log</string>
+</resources>

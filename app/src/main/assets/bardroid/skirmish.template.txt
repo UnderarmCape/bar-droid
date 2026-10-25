@@ -1,0 +1,69 @@
+// bar-droid phase 1 — human (Armada) vs BARb (Cortex). Template: debian-bootstrap.sh replaces
+// @GAME@ with the resolved byar:test archive name and @MAP@ with the map name.
+// Derived from BAR's tools/headless_testing/startscript_barb_smoke.txt.
+[GAME]
+{
+	MapName=@MAP@;
+	GameType=@GAME@;
+	GameStartDelay=3;
+	// StartPosType 1 = random start positions (no pregame placement taps); BAR normally uses 2
+	StartPosType=1;
+	RecordDemo=1;
+	MyPlayerName=Phone;
+	IsHost=1;
+	NumPlayers=1;
+	NumUsers=1;
+	HostIP=127.0.0.1;
+	HostPort=0;
+	NoHelperAIs=0;
+
+	[MODOPTIONS]
+	{
+		deathmode=com;
+	}
+
+	[ALLYTEAM0]
+	{
+		NumAllies=0;
+	}
+
+	[ALLYTEAM1]
+	{
+		NumAllies=0;
+	}
+
+	[TEAM0]
+	{
+		Side=Armada;
+		Handicap=0;
+		AllyTeam=0;
+		TeamLeader=0;
+	}
+
+	[TEAM1]
+	{
+		Side=Cortex;
+		Handicap=0;
+		AllyTeam=1;
+		TeamLeader=0;
+	}
+
+	[AI0]
+	{
+		Host=0;
+		IsFromDemo=0;
+		Name=BARbarianAI(1);
+		ShortName=BARb;
+		Team=1;
+		Version=stable;
+	}
+
+	[PLAYER0]
+	{
+		IsFromDemo=0;
+		Name=Phone;
+		Team=0;
+		Spectator=0;
+		Rank=0;
+	}
+}

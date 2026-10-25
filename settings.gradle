@@ -1,0 +1,15 @@
+// BAR Droid — Beyond All Reason on Android.
+// :lorie and :shell-loader:stub are Termux:X11's X-server library and hidden-API stubs,
+// consumed in-tree from the termux-x11 checkout (GPL-3.0). :app is our launcher.
+rootProject.name = 'bar-droid'
+
+// :lorie depends on ':shell-loader:stub' (hidden-API stubs). The intermediate ':shell-loader' project is given an
+// empty directory so that termux-x11's shell-loader/build.gradle (which needs :lorie-app) is never evaluated.
+include ':shell-loader:stub'
+project(':shell-loader').projectDir = file('tools/gradle-empty/shell-loader')
+project(':shell-loader:stub').projectDir = file('termux-x11/shell-loader/stub')
+
+include ':lorie'
+project(':lorie').projectDir = file('termux-x11/lorie')
+
+include ':app'

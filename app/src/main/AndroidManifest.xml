@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:installLocation="internalOnly">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
+    <uses-feature android:name="android.hardware.gamepad" android:required="false" />
+
+    <application
+        android:name=".BarApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:theme="@style/Theme.BarDroid"
+        android:largeHeap="true"
+        android:hardwareAccelerated="true"
+        android:supportsRtl="true"
+        tools:replace="android:name,android:icon,android:roundIcon,android:label,android:theme">
+
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode|smallestScreenSize|screenLayout">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- The X display + input surface, inherited from Termux:X11's MainActivity. -->
+        <activity
+            android:name=".GameActivity"
+            android:exported="false"
+            android:taskAffinity=".GameActivity"
+            android:theme="@style/LorieAppTheme"
+            android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
+            android:configChanges="fontScale|orientation|screenSize|keyboard|keyboardHidden|layoutDirection|locale|mcc|mnc|navigation|screenLayout|touchscreen|uiMode|smallestScreenSize|density"
+            android:resizeableActivity="true"
+            android:windowSoftInputMode="stateHidden|adjustNothing" />
+
+        <!-- Keep Termux:X11's own activity (internal intents reference it) but take it out of the launcher. -->
+        <activity android:name="com.termux.x11.MainActivity" tools:node="merge" android:label="@string/app_name" tools:replace="android:label">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+        <activity android:name="com.termux.x11.LoriePreferences" tools:node="merge" android:label="@string/display_prefs_title" tools:replace="android:label">
+            <intent-filter tools:node="removeAll" />
+        </activity>
+
+        <service
+            android:name=".GameService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Runs the Linux game container (installer, X server and the Recoil engine) while the game is open" />
+        </service>
+    </application>
+</manifest>

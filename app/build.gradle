@@ -1,0 +1,59 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.underarmcape.bardroid'
+    compileSdkVersion 34
+
+    defaultConfig {
+        applicationId "com.underarmcape.bardroid"
+        minSdkVersion 28
+        targetSdkVersion 34
+        versionCode 1
+        versionName "0.1.0"
+        ndk { abiFilters 'arm64-v8a' }
+    }
+
+    // proot, busybox and friends live in jniLibs and must be real files on disk so that they can be
+    // exec'd (Android 10+ only allows executing files from the app's native library directory).
+    packagingOptions.jniLibs.useLegacyPackaging true
+
+    signingConfigs {
+        debug {
+            // Reproducible dev signing key; replace with your own keystore for release builds.
+            storeFile file('bardroid-debug.jks')
+            storePassword 'bardroid'
+            keyAlias 'bardroid'
+            keyPassword 'bardroid'
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+        }
+        release {
+            signingConfig signingConfigs.debug
+            minifyEnabled false
+        }
+    }
+
+    compileOptions.sourceCompatibility JavaVersion.VERSION_17
+    compileOptions.targetCompatibility JavaVersion.VERSION_17
+    buildFeatures.buildConfig true
+}
+
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.outputs.each { output ->
+            output.outputFileName.set("bar-droid-${variant.buildType}.apk")
+        }
+    }
+}
+
+dependencies {
+    implementation project(':lorie')
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.preference:preference:1.2.1'
+    implementation 'com.google.android.material:material:1.12.0'
+}
