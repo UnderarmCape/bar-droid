@@ -1,8 +1,12 @@
-# BAR Droid — hand-off (updated 2026-10-25 ~03:50 EDT, laptop session)
+# BAR Droid — hand-off (updated 2026-10-25 ~11:10 EDT)
 
-Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official arm64 Recoil engine**
-inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa (Freedreno/Turnip)
-for desktop OpenGL.
+Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
+inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
+
+**Target right now: the Android emulator** (Kailil, 2026-10-25: "run exclusively on the Android emulator first, test on
+real phones much later"). The default build is x86_64: amd64 Debian + the official amd64 engine, with the container's
+OpenGL drawn on the laptop's GPU (Mesa virpipe → virgl server → ANGLE → Vulkan → the emulator's gfxstream → host GPU).
+The arm64 phone build (Adreno via Mesa Freedreno/Turnip) still builds: `Build APK.bat phone`.
 
 Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 
@@ -10,14 +14,59 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 
 | Piece | Path | State |
 | --- | --- | --- |
-| Research + plan | `RESEARCH.md`, claude.ai doc | Done, verified against cloned sources and live endpoints |
-| Phase-1 manual kit (Termux + proot + Mesa, no app) | `../phase1-kit/` | Written, never run on a phone |
-| ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Verified under qemu-aarch64 (cloud session); not filed upstream yet |
-| Engine-on-ARM proof | `../logs/emulated-run*.log` | arm64 `spring-headless` + BAR + map + 2 AIs reach "now ingame" under qemu (no GPU) |
-| Portable Windows toolchain | `..\toolchain\`, `..\Install Toolchain.bat` | **Done.** JDK 21, MinGit, Android SDK 34 / NDK 29 / CMake 3.22.1, host Python/bison/gcc, all inside `toolchain\`; nothing in AppData or the profile |
-| APK | `..\Build APK.bat` → `..\apk\bar-droid-0.1.1-debug.apk` | **Builds on the laptop** (17.8 MB). `..\apk\superseded\bar-droid-0.1.0-debug.apk` is the cloud build from before tonight's fixes; do not use it (its X server cannot start) |
-| Android-side runtime | app | **Smoke-tested on an Android 14 x86_64 emulator** (below). Container/engine side untested: needs a real arm64 phone |
-| Phone test | — | **Not done: no phone was connected.** This is the next step |
+| Research + plan | `RESEARCH.md`, claude.ai doc | Done |
+| Portable Windows toolchain | `..\toolchain\`, `..\Install Toolchain.bat` | Done; nothing in AppData or the profile |
+| Emulator build (x86_64, default) | `..\Build APK.bat` → `..\apk\bar-droid-emulator-debug.apk` | **BAR plays in the emulator**: install from BAR's CDN, Play vs AI, BARb AI, textured map, full sim speed (x1.00), **3–4 fps** at 1256×568 on the GPU path |
+| Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB), boots, installs, opens the app |
+| Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | Builds; never run on a phone. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| virgl GPU server | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black, see below) |
+| ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+
+## Emulator-first session (2026-10-25, 08:50–11:10)
+
+Why x86_64: Google's emulator cannot run ARM64 Android images on an Intel host, and on x86_64 images with ARM
+translation proot cannot trace translated processes (it hangs). So the emulator build is x86_64 end to end:
+- `tools/fetch-prebuilts.py <abi>`: Termux proot/talloc/shmem + Termux's ANGLE + Debian static busybox for any ABI,
+  patched like the original arm64 set (`libtalloc.so`, `RUNPATH=$ORIGIN`).
+- `-PbardroidAbi=x86_64|arm64-v8a` (root `build.gradle`) picks the ABI; `BuildConfig.TARGET_ABI` → `Prefs.EMULATOR_BUILD`
+  switches the Debian image (dist-amd64), engine (`recoil_2026.07.04_amd64-linux.7z`), skips the Adreno Mesa tarball
+  and the ARM64 AI stub, and selects the GPU path.
+
+Fixed on the way (all would also have hit phones):
+- **App processes see `/data/user/0` as a symlink to `/data/data`** (Android 11+ data isolation). proot canonicalizes
+  its rootfs, so the hard-link symlinks written by `--link2symlink` (from `PROOT_L2S_DIR`) were unresolvable inside the
+  app: Perl and every hard-linked file vanished, apt's maintainer scripts failed. `Paths` now uses canonical paths;
+  the rootfs completion marker is versioned so older trees are rebuilt.
+- proot's `.l2s` directory must exist before extraction, busybox tar aborts at the first error (a partial tree was
+  accepted before), Debian's static busybox has no `--exclude`: rootfs extraction is now strict (exit code + loader
+  check + completion marker; an incomplete tree is wiped).
+- **Stop did not stop the game**: proot ignores SIGTERM (what `Process.destroy*` sends on Android) and leaves its
+  tracees running when SIGKILLed. Stop now SIGKILLs every other process of the app's UID.
+- `AudioPump` keeps draining the FIFO when no `AudioTrack` can be created (an emulator without audio).
+
+GPU path (virpipe): `VirglServer` starts the virgl server next to the X server; Mesa inside the container uses
+`GALLIUM_DRIVER=virpipe` + `MESA_GL_VERSION_OVERRIDE=4.3COMPAT` (virgl on GLES only advertises 2.1 compat; the host
+has the GL4.3 features BAR uses). The engine reports `GL 4.3 (Compatibility Profile)`, renderer
+`virgl (ANGLE (NVIDIA, Vulkan 1.3.0 (NVIDIA GeForce RTX ...)))`, "GL4 support: 1". Findings:
+- The emulator's own EGL lacks `EGL_KHR_surfaceless_context`, so the server uses ANGLE (GLES on Vulkan, Termux's
+  `angle-android`, bundled) via `--angle-vulkan` + `BARDROID_ANGLE_DIR`.
+- **Termux's virglrenderer-android always decompresses DXT on the server and re-uploads with `glTexImage2D` into
+  immutable compressed storage → GL_INVALID_OPERATION → every DXT texture black** (BAR's map tiles, minimap, unit
+  skins). `tools/build-virgl.py` rebuilds virglrenderer 1.3.0 + libepoxy 1.5.10 with Termux's patches (pinned commit)
+  and decompresses only when the host lacks S3TC, also recognizing ANGLE's per-format DXT extension names (upstream
+  does not). Verified with a DXT1 test texture (`[255,0,0]` instead of `[0,0,0]`) and a textured map in game.
+  Worth reporting to Termux.
+- CPU rendering (llvmpipe, checkbox "Render on the CPU") works too: x0.70 speed, ~1 fps.
+
+Emulator caveats
+- 3–4 fps. Where it goes (guest `top` in game): X server ~85% CPU, virgl server ~60%, spring ~15%: the frame transport
+  (virgl readback → XPutImage → Termux:X11 → Android surface), not the GPU. Memory is tight: spring 8.9 GB RSS, guest
+  free 271 MB, 1.3 GB swapped; the host had 3.4 GB free with the emulator at 14.4 GB.
+- Unit models not visually confirmed yet (the start camera shows the map; units appear as icons/markers).
+- A host crash (PC restart) corrupted the emulator's data disk (kernel panic, ext4). Recovery: start the emulator once
+  with `-wipe-data` (`Run in Emulator.bat -wipe-data`), then Install / Update again (~10 min, 4 GB download).
+- Developer hook: long-press **GL check** = display + GPU server stay up for an hour without the game, for testing GL
+  inside the container (`tools\container-shell.bat`).
 
 ## How the app works (one paragraph)
 
@@ -36,7 +85,7 @@ with `module-pipe-sink` → FIFO → `AudioPump` → `AudioTrack`, runs a one-ti
 intercepted in `GameActivity` and sent as `BARCTRL1|...` UDP packets to 127.0.0.1:28777 (UnderarmCape's controller
 companion protocol).
 
-## Laptop session (2026-10-25, 02:40–03:50)
+## Laptop session, night (2026-10-25, 02:40–03:50) — history
 
 Toolchain + build
 - Nothing was installed on the laptop. Added `toolchain\env.bat` (process-local: JAVA_HOME, ANDROID_HOME,
@@ -96,18 +145,21 @@ Debugging on the phone: the app writes `files/container.sh` before every install
 `bar-droid-app\tools\container-shell.bat` gives a root shell in the phone's container (or runs one command:
 `container-shell.bat "glxinfo -B"`).
 
-## Build / install (Windows laptop)
+## Build / run (Windows laptop)
 
 ```
 Install Toolchain.bat --accept-licenses   one time; ~1.5 GB into toolchain\ (Android SDK terms)
-Build APK.bat                             first build ~5 min (X server via NDK), then ~1 min
-Install on Phone.bat                      adb install -r + start (USB debugging on, one device connected)
-Phone Logs.bat                            launcher.log, infolog.txt, glcheck, pulse.log, logcat → logs\phone-<time>\
+Build APK.bat                             emulator build (x86_64) -> apk\bar-droid-emulator-debug.apk
+Run in Emulator.bat                       boots the emulator (first time ~1.8 GB download), installs + opens the app
+Get Logs.bat                              launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\device-<time>\
+Build APK.bat phone / Install on Phone.bat   the arm64 phone build, for later
 ```
-Developer: `bar-droid-app\tools\emulator-test.bat` (builds the emulator variant, which replaces the APK in
-`app\build`; rebuild before installing on a phone). Linux/WSL: `tools/fetch-termux-x11.sh` + `./gradlew :app:assembleDebug`.
-Toolchain pinned by termux-x11: AGP 9.3.1, Gradle 9.8.2 (wrapper), NDK 29.0.14206865, CMake 3.22.1, JDK 17+ (21 used).
-Only `arm64-v8a` is built.
+In the app: **Install / Update** (Debian + engine + BAR content, ~4 GB, ~10 min) → **Play vs AI**.
+Native helper binaries: `tools/fetch-prebuilts.py <abi>` (proot, busybox, ANGLE) and `tools/build-virgl.py <abi>`
+(virgl server); both run with the toolchain's Python inside `toolchain\env.bat`. Their output is committed under
+`app/src/main/jniLibs/<abi>/`, so a normal build needs neither.
+Toolchain pinned by termux-x11: AGP 9.3.1, Gradle 9.8.2 (wrapper), NDK 29.0.14206865, CMake 3.22.1, JDK 21.
+One ABI per APK.
 
 ## Open risks
 - Freedreno (`MESA_LOADER_DRIVER_OVERRIDE=kgsl`) compat-profile GL version on the phone; fallback `zink`, then
@@ -125,17 +177,17 @@ Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 G
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
 ## Next steps (in order)
-1. Phone: `Install on Phone.bat`, tap **Install / Update**, then `Phone Logs.bat`. Expect proot/rootfs/apt issues
-   first. To skip the 4 GB content download, push the PC's BAR data before Install:
-   `adb push "%LOCALAPPDATA%\Programs\Beyond-All-Reason\data\pool" /sdcard/Android/data/com.underarmcape.bardroid/files/import/pool`
-   (same for `packages`, `rapid`, `maps`).
-2. **GL check**; read `glcheck.txt` from `Phone Logs.bat`. Goal: GL 4.x compat + S3TC.
-3. **Play vs AI**; `infolog.txt` is the engine log. Expect env issues (fonts, GL context, audio).
+1. Emulator frame rate (3–4 fps): profile the frame transport (X server ~85% CPU). Ideas: MIT-SHM/DRI3 for the
+   virpipe present path, a lower X resolution, BAR's graphics presets; free host RAM before playing.
+2. Confirm unit models render on the GPU path (move the camera to a start position).
+3. Touch/keyboard feel in the emulator window (mouse works as mouse there; see the touch mapping below).
 4. Controller widgets. The earlier plan was to copy attempt-01's `controller_socket_bridge.lua` + `gui_controller_*`
    into `files/bar/LuaUI/Widgets`. **Not done on purpose**: `C:\Tools\BARGAMEPAD\docs\lessons-from-attempt-01.md`
    (restarted 2026-10-25) lists the companion bridge and the 19k-line widget under "do not repeat". Decide which widget
    set the phone should use; the app's UDP side (`BARCTRL1`) is ready either way.
-5. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per `AI_POLICY.md`.
+5. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per
+   `AI_POLICY.md`; report the virglrenderer-android DXT bug to Termux.
+6. Later, phones: `Build APK.bat phone`, `Install on Phone.bat`, Install / Update, GL check, Play vs AI.
 
 ## Licensing
 Engine GPL-2.0+; BAR game code GPL-2.0; BAR art CC-BY-NC-ND 4.0 (never bundle, never re-encode; download from the

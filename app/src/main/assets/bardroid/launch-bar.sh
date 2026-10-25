@@ -1,14 +1,26 @@
 #!/bin/bash
 # BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|glcheck|shell),
-# MESA_LOADER_DRIVER_OVERRIDE, MESA_GL_VERSION_OVERRIDE (optional), BARDROID_AUDIO (0/1), DISPLAY.
+# BARDROID_GPU (kgsl|zink|llvmpipe) with the matching Mesa variables, MESA_GL_VERSION_OVERRIDE (optional),
+# BARDROID_AUDIO (0/1), DISPLAY.
 set -u
 BAR=/root/bar
 ENGINE="$BAR/engine/recoil_${ENGINE_VER:?}"
 LOGS="$BAR/logs"; mkdir -p "$LOGS"
 MODE="${MODE:-skirmish}"
+GPU="${BARDROID_GPU:-kgsl}"
 export DISPLAY="${DISPLAY:-:0}"
 export XDG_RUNTIME_DIR=/tmp
-export MESA_LOADER_DRIVER_OVERRIDE="${MESA_LOADER_DRIVER_OVERRIDE:-kgsl}"
+if [ "$GPU" = llvmpipe ]; then
+  # Emulator build, CPU rendering: Mesa's software rasterizer (GL 4.5 compatibility profile).
+  export LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe
+  unset MESA_LOADER_DRIVER_OVERRIDE
+elif [ "$GPU" = virpipe ]; then
+  # Emulator build, GPU: Mesa's virgl client; the app runs the virgl server on Android's GLES.
+  export LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=virpipe VTEST_SOCKET_NAME="${VTEST_SOCKET_NAME:-/tmp/.virgl_test}"
+  unset MESA_LOADER_DRIVER_OVERRIDE
+else
+  export MESA_LOADER_DRIVER_OVERRIDE="$GPU"
+fi
 export MESA_VK_WSI_PRESENT_MODE="${MESA_VK_WSI_PRESENT_MODE:-mailbox}"
 export vblank_mode="${vblank_mode:-3}"
 export XCURSOR_SIZE=32
@@ -19,7 +31,7 @@ export PRD_HTTP_SEARCH_URL="https://files-cdn.beyondallreason.dev/find"
 export PRD_RAPID_USE_STREAMER=false
 export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see arm64-ai-fix/README.md).
-[ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
+[ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
 
 log() { echo "[launch] $*"; }
 
@@ -46,9 +58,9 @@ if [ "${BARDROID_AUDIO:-1}" = "1" ]; then
 fi
 
 # 3. One-time GL probe, saved for the findings/bug reports.
-if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$MESA_LOADER_DRIVER_OVERRIDE.txt" ]; then
+if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
   {
-    echo "driver=$MESA_LOADER_DRIVER_OVERRIDE gl_override=${MESA_GL_VERSION_OVERRIDE:-none} date=$(date)"
+    echo "driver=$GPU gl_override=${MESA_GL_VERSION_OVERRIDE:-none} date=$(date)"
     glxinfo -B 2>&1
     echo "--- extensions of interest"
     for e in GL_EXT_texture_compression_s3tc GL_ARB_multi_draw_indirect GL_ARB_shader_storage_buffer_object \
@@ -57,8 +69,8 @@ if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$MESA_LOADER_DRIVER_OVERRIDE
       glxinfo 2>/dev/null | grep -q "$e" && echo "yes $e" || echo "NO  $e"
     done
     echo "--- vulkan"; vulkaninfo --summary 2>&1 | grep -E "deviceName|apiVersion|driverName" | head -n 6
-  } > "$LOGS/glcheck-$MESA_LOADER_DRIVER_OVERRIDE.txt" 2>&1
-  cat "$LOGS/glcheck-$MESA_LOADER_DRIVER_OVERRIDE.txt"
+  } > "$LOGS/glcheck-$GPU.txt" 2>&1
+  cat "$LOGS/glcheck-$GPU.txt"
   [ "$MODE" = "glcheck" ] && exit 0
 fi
 

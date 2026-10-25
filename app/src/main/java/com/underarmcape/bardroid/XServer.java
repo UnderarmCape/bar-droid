@@ -1,7 +1,5 @@
 package com.underarmcape.bardroid;
 
-import android.os.Build;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,9 +36,6 @@ public final class XServer {
         File xkb = inRootfs("/usr/share/X11/xkb");
         if (!xkb.isDirectory()) throw new IOException("xkb-data missing in rootfs (" + xkb + "); run the installer first");
         File lib = p.libXlorie();
-        // Emulator test builds carry an x86_64 X server too: app_process there is x86_64 (no native bridge).
-        File emuLib = p.nativeLib("libXlorie_x86_64.so");
-        if (Build.SUPPORTED_ABIS[0].startsWith("x86") && emuLib.exists()) lib = emuLib;
         if (!lib.exists()) throw new IOException("libXlorie.so missing: " + lib);
 
         // app_process needs the runtime's own environment (BOOTCLASSPATH, ANDROID_ART_ROOT, ANDROID_I18N_ROOT, ...).

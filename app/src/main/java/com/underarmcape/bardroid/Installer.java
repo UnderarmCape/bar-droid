@@ -48,6 +48,9 @@ public final class Installer {
     }
     private void mark(String step) throws IOException {
         state.setProperty(step, "done");
+        save();
+    }
+    private void save() throws IOException {
         try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, "bardroid install state"); }
     }
     public boolean isDone(String step) { return "done".equals(state.getProperty(step)); }
@@ -59,6 +62,12 @@ public final class Installer {
     public void installAll(Status st) throws Exception {
         p.mkdirs();
         refreshHostFiles();
+        if (!new File(p.rootfs, ROOTFS_OK).exists() && isDone("rootfs")) {
+            // A rootfs from before the completion marker existed (or a damaged one): redo it and everything on top.
+            Log.e("install", "rootfs has no completion marker; reinstalling the container");
+            for (String s : STEPS) state.remove(s);
+            save();
+        }
         step("rootfs", st, () -> installRootfs(st));
         step("apt", st, () -> runSetup("apt", st, "apt"));
         step("mesa", st, () -> installMesa(st));
@@ -110,8 +119,20 @@ public final class Installer {
         }
     }
 
+    /**
+     * Written into the rootfs only after a clean extraction; without it the rootfs is wiped and extracted again.
+     * v2: trees from before Paths became canonical hold hard-link symlinks proot cannot resolve in the app.
+     */
+    private static final String ROOTFS_OK = ".bardroid-rootfs-ok-v2";
+
     private void installRootfs(Status st) throws Exception {
-        if (new File(p.rootfs, "usr/bin/apt-get").exists()) { Log.i("install", "rootfs already extracted"); installScripts(); return; }
+        if (new File(p.rootfs, ROOTFS_OK).exists()) { Log.i("install", "rootfs already extracted"); installScripts(); return; }
+        String[] leftovers = p.rootfs.list((dir, name) -> !name.equals(".l2s"));
+        if (leftovers != null && leftovers.length > 0) {
+            Log.i("install", "removing an incomplete rootfs");
+            int rm = Proc.run("rm", Arrays.asList("/system/bin/rm", "-rf", p.rootfs.getAbsolutePath()), null, p.filesDir);
+            if (rm != 0 && p.rootfs.exists()) throw new IOException("could not remove the incomplete rootfs (rc=" + rm + ")");
+        }
         st.status("rootfs", "fetching Debian image manifest", 10);
         String sha = null;
         try {
@@ -126,9 +147,13 @@ public final class Installer {
         st.status("rootfs", "extracting Debian", 15);
         //noinspection ResultOfMethodCallIgnored
         p.rootfs.mkdirs();
+        //noinspection ResultOfMethodCallIgnored
+        p.l2s().mkdirs();          // proot --link2symlink keeps hard-link targets here; without it link() fails
         int rc = proot.extractRootfs(tgz);
-        if (rc != 0 && !new File(p.rootfs, "usr/bin/apt-get").exists()) throw new IOException("rootfs extraction failed (rc=" + rc + ")");
-        if (rc != 0) Log.e("install", "tar returned " + rc + " but the rootfs looks usable; continuing");
+        // busybox tar stops at the first error, so a non-zero exit means a partial tree.
+        File loader = new File(p.rootfs, Prefs.EMULATOR_BUILD ? "usr/lib64/ld-linux-x86-64.so.2" : "usr/lib/ld-linux-aarch64.so.1");
+        if (rc != 0) throw new IOException("rootfs extraction failed (tar exit code " + rc + "; see log)");
+        if (!loader.exists()) throw new IOException("rootfs incomplete: " + loader + " missing");
         // proot leaves empty placeholder files where the busybox and tarball were bound in.
         //noinspection ResultOfMethodCallIgnored
         new File(p.rootfs, "busybox-bardroid").delete();
@@ -151,6 +176,7 @@ public final class Installer {
         // Debian's docker rootfs has no /etc/machine-id; some tools want one.
         writeFile(new File(p.rootfs, "etc/machine-id"), "bardroidbardroidbardroidbardroid\n");
         installScripts();
+        writeFile(new File(p.rootfs, ROOTFS_OK), Prefs.rootfsBlobUrl + "\n");
         //noinspection ResultOfMethodCallIgnored
         tgz.delete();
     }
@@ -177,6 +203,7 @@ public final class Installer {
     }
 
     private void installMesa(Status st) throws Exception {
+        if (Prefs.mesaUrl.isEmpty()) { Log.i("install", "emulator build: keeping Debian's Mesa (llvmpipe software GL)"); return; }
         File tgz = dl.download(Prefs.mesaUrl, new File(p.downloads, "mesa.tar.gz"), null,
                 (done, total) -> st.status("mesa", "downloading Mesa " + Downloader.human(done) + " / " + Downloader.human(total), 40));
         runSetup("mesa", st, "mesa", "/root/downloads/" + tgz.getName());
@@ -201,23 +228,47 @@ public final class Installer {
     /** springsettings.cfg, the AI stub, start script. Re-run whenever settings change. */
     public void writeGameFiles() throws IOException {
         File assets = new File(p.filesDir, "assets-bardroid");
-        try (InputStream in = new FileInputStream(new File(assets, "libasarm64.so")); OutputStream o = new FileOutputStream(new File(p.bar, "libasarm64.so"))) { copy(in, o); }
-        // springsettings.cfg from the template plus the user's knobs
+        // The AngelScript ARM64 call stub fixes the official arm64 AI build; the amd64 engine needs nothing.
+        File stub = new File(p.bar, "libasarm64.so");
+        if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
+            stub.delete();
+        } else try (InputStream in = new FileInputStream(new File(assets, "libasarm64.so")); OutputStream o = new FileOutputStream(stub)) { copy(in, o); }
+        // springsettings.cfg from the template plus the user's knobs (each key replaced in place, never duplicated)
+        Map<String, String> set = new java.util.LinkedHashMap<>();
+        set.put("WorkerThreadCount", String.valueOf(Prefs.workerThreads));
+        set.put("ui_scale", String.valueOf(Prefs.uiScale));
+        set.put("Shadows", Prefs.shadows ? "2" : "-1");
+        set.put("CompressTextures", Prefs.compressTextures ? "1" : "0");
+        set.put("RapidTagResolutionOrder", "repos-cdn.beyondallreason.dev;repos.beyondallreason.dev");
+        if (Prefs.EMULATOR_BUILD) set.putAll(EMULATOR_GRAPHICS);
         StringBuilder cfg = new StringBuilder();
         try (BufferedReader r = new BufferedReader(new FileReader(new File(assets, "springsettings.cfg")))) {
             String l;
             while ((l = r.readLine()) != null) {
-                if (l.startsWith("WorkerThreadCount")) l = "WorkerThreadCount = " + Prefs.workerThreads;
-                else if (l.startsWith("ui_scale")) l = "ui_scale = " + Prefs.uiScale;
-                else if (l.startsWith("Shadows ")) l = "Shadows = " + (Prefs.shadows ? 2 : -1);
-                else if (l.startsWith("CompressTextures")) l = "CompressTextures = " + (Prefs.compressTextures ? 1 : 0);
+                int eq = l.indexOf('=');
+                String key = eq > 0 && !l.startsWith("#") ? l.substring(0, eq).trim() : null;
+                if (key != null && set.containsKey(key)) l = key + " = " + set.remove(key);
                 cfg.append(l).append('\n');
             }
         }
-        cfg.append("RapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev\n");
+        if (Prefs.EMULATOR_BUILD) cfg.append("# emulator build (software OpenGL)\n");
+        for (Map.Entry<String, String> kv : set.entrySet()) cfg.append(kv.getKey()).append(" = ").append(kv.getValue()).append('\n');
         writeFile(new File(p.bar, "springsettings.cfg"), cfg.toString());
         writeStartScript();
     }
+
+    /** Emulator build: OpenGL runs on the CPU (llvmpipe), so trade looks for frame time. */
+    private static final Map<String, String> EMULATOR_GRAPHICS = new java.util.LinkedHashMap<String, String>() {{
+        put("VSync", "0");
+        put("Water", "0");
+        put("AdvMapShading", "0");
+        put("AdvUnitShading", "0");
+        put("GroundDetail", "20");
+        put("MaxParticles", "600");
+        put("MaxNanoParticles", "200");
+        put("UnitLodDist", "100");
+        put("UnitIconDist", "100");
+    }};
 
     /** Human (team 0) vs one AI (team 1). GameType uses the rapid tag; the engine resolves it from the local rapid index. */
     public void writeStartScript() throws IOException {

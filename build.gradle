@@ -20,14 +20,18 @@ allprojects {
     }
 }
 
-// Only the 64-bit ARM ABI is meaningful here: the bundled proot, busybox and the Recoil engine
-// are all aarch64. Restricting :lorie's native build to it cuts the Xorg compile by 4x.
+// One ABI per APK. x86_64 (the default) runs natively on the Android emulator: amd64 Debian + amd64 Recoil engine,
+// OpenGL in software (llvmpipe). arm64-v8a is the phone build (Adreno via Mesa Freedreno/Turnip):
+//   gradlew :app:assembleDebug -PbardroidAbi=arm64-v8a
+// Building a single ABI also keeps :lorie's Xorg compile short.
+ext.bardroidAbi = (project.findProperty('bardroidAbi') ?: 'x86_64').toString()
+if (!(bardroidAbi in ['x86_64', 'arm64-v8a'])) throw new GradleException("bardroidAbi must be x86_64 or arm64-v8a, not ${bardroidAbi}")
 subprojects {
     plugins.withId('com.android.library') {
-        android.defaultConfig.ndk.abiFilters 'arm64-v8a'
+        android.defaultConfig.ndk.abiFilters rootProject.ext.bardroidAbi
     }
     plugins.withId('com.android.application') {
-        android.defaultConfig.ndk.abiFilters 'arm64-v8a'
+        android.defaultConfig.ndk.abiFilters rootProject.ext.bardroidAbi
     }
 }
 

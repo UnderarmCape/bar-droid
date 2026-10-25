@@ -49,6 +49,9 @@ public class LauncherActivity extends AppCompatActivity {
         play.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "skirmish"));
         lobby.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "lobby"));
         glcheck.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "glcheck"));
+        // Developer hook: long-press keeps the X display (and GPU server) up for an hour without starting the game,
+        // so GL programs can be tried inside the container with tools\container-shell.bat.
+        glcheck.setOnLongClickListener(v -> { GameService.start(this, GameService.ACTION_PLAY, "shell"); return true; });
         stop.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
         prefs.setOnClickListener(v -> startActivity(new Intent(this, com.termux.x11.LoriePreferences.class)));
         save.setOnClickListener(v -> saveSettings());
@@ -81,8 +84,13 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append(", Android ").append(Build.VERSION.RELEASE)
           .append(", SoC ").append(Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
         boolean adreno = new File("/dev/kgsl-3d0").exists();
-        sb.append(adreno ? "GPU: Qualcomm Adreno (/dev/kgsl-3d0 present) — supported\n"
-                         : "GPU: no /dev/kgsl-3d0 — not an Adreno GPU; Mesa Freedreno/Turnip will not work on this phone\n");
+        if (Prefs.EMULATOR_BUILD)
+            sb.append("Emulator build (x86_64): OpenGL ")
+              .append("virpipe".equals(Prefs.mesaDriver) ? "on the GPU through Android's GLES (virgl)" : "on the CPU (llvmpipe), slow")
+              .append("; ").append(Runtime.getRuntime().availableProcessors()).append(" CPU cores\n");
+        else
+            sb.append(adreno ? "GPU: Qualcomm Adreno (/dev/kgsl-3d0 present) — supported\n"
+                             : "GPU: no /dev/kgsl-3d0 — not an Adreno GPU; Mesa Freedreno/Turnip will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
         sb.append("Free storage: ").append(Downloader.human(st.getAvailableBytes())).append(" (need ~6 GB)\n");
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
@@ -97,7 +105,12 @@ public class LauncherActivity extends AppCompatActivity {
         ((EditText) findViewById(R.id.edUiScale)).setText(String.valueOf(Prefs.uiScale));
         ((EditText) findViewById(R.id.edMap)).setText(Prefs.mapName);
         ((EditText) findViewById(R.id.edMesaUrl)).setText(Prefs.mesaUrl);
-        ((CheckBox) findViewById(R.id.cbZink)).setChecked("zink".equals(Prefs.mesaDriver));
+        CheckBox alt = findViewById(R.id.cbZink);
+        alt.setChecked("zink".equals(Prefs.mesaDriver) || "llvmpipe".equals(Prefs.mesaDriver));
+        if (Prefs.EMULATOR_BUILD) {   // no Adreno: GPU via virgl, or CPU rendering for comparison
+            alt.setText(R.string.cb_llvmpipe);
+            findViewById(R.id.edMesaUrl).setEnabled(false);
+        }
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbShadows)).setChecked(Prefs.shadows);
@@ -112,7 +125,8 @@ public class LauncherActivity extends AppCompatActivity {
         } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
         Prefs.mapName = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
         Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().trim();
-        Prefs.mesaDriver = ((CheckBox) findViewById(R.id.cbZink)).isChecked() ? "zink" : "kgsl";
+        boolean alt = ((CheckBox) findViewById(R.id.cbZink)).isChecked();
+        Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.shadows = ((CheckBox) findViewById(R.id.cbShadows)).isChecked();

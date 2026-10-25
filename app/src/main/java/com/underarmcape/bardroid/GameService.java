@@ -34,6 +34,7 @@ public class GameService extends Service {
 
     private Paths paths;
     private XServer xserver;
+    private VirglServer virgl;
     private Proc engine;
     private Installer installer;
     private PowerManager.WakeLock wakeLock;
@@ -49,6 +50,7 @@ public class GameService extends Service {
         super.onCreate();
         paths = BarApp.get().paths();
         xserver = new XServer(paths);
+        virgl = new VirglServer(paths);
         createChannel();
     }
 
@@ -96,6 +98,11 @@ public class GameService extends Service {
             setStatus("starting X server");
             xserver.start();
             if (!xserver.waitForSocket(15000)) { setStatus("X server did not start (see log)"); xserver.stop(); return; }
+            if ("virpipe".equals(Prefs.mesaDriver)) {
+                setStatus("starting GPU server (virgl)");
+                virgl.start();
+                if (!virgl.waitForSocket(10000)) { setStatus("virgl server did not start (see log)"); return; }
+            }
             // Bring the display up
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(ui);
@@ -106,8 +113,7 @@ public class GameService extends Service {
             env.put("MODE", mode);
             env.put("DISPLAY", ":0");
             env.put("LOBBY_TAG", Prefs.lobbyTag);
-            env.put("MESA_LOADER_DRIVER_OVERRIDE", Prefs.mesaDriver);
-            if (Prefs.forceCompat45) { env.put("MESA_GL_VERSION_OVERRIDE", "4.5COMPAT"); env.put("MESA_GLSL_VERSION_OVERRIDE", "450"); }
+            Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
             Proot proot = new Proot(paths);
             List<String> cmd = new ArrayList<>();
@@ -125,6 +131,7 @@ public class GameService extends Service {
             Log.e("svc", "play failed", e);
             setStatus("launch failed: " + e.getMessage());
         } finally {
+            virgl.stop();
             xserver.stop();
             engine = null;
             closeDisplay();

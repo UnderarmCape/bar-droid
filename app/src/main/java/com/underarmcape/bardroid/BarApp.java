@@ -30,21 +30,24 @@ public class BarApp extends LorieApp {
      */
     private void applyDisplayDefaults() {
         android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
-        if (sp.getBoolean("bardroid_display_defaults_v1", false)) return;
+        if (sp.getBoolean("bardroid_display_defaults_v3", false)) return;
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         int shortSide = Math.min(dm.widthPixels, dm.heightPixels);
-        int scale = Math.max(100, Math.min(300, Math.round(shortSide * 100f / 720f / 10f) * 10));
+        // The emulator build renders on the CPU (llvmpipe): every pixel costs, so aim lower there.
+        float targetLines = Prefs.EMULATOR_BUILD ? 540f : 720f;
+        int scale = Math.max(100, Math.min(300, Math.round(shortSide * 100f / targetLines / 10f) * 10));
         sp.edit()
                 .putBoolean("fullscreen", true)
                 .putBoolean("hideCutout", true)
                 .putString("forceOrientation", "landscape")
                 .putBoolean("showAdditionalKbd", false)
                 .putBoolean("additionalKbdVisible", false)
+                .putBoolean("showIMEWhileExternalConnected", false)   // no soft keyboard popping up over the game
                 .putString("screenIdleTimeout", "never")
                 .putString("touchMode", "2")                    // simulated touchscreen
                 .putString("displayResolutionMode", "scaled")
                 .putInt("displayScale", scale)
-                .putBoolean("bardroid_display_defaults_v1", true)
+                .putBoolean("bardroid_display_defaults_v3", true)
                 .apply();
     }
 

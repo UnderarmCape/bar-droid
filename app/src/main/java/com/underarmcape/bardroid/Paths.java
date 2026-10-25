@@ -21,7 +21,10 @@ public final class Paths {
     public final File stateFile;
 
     public Paths(Context ctx) {
-        filesDir = ctx.getFilesDir();
+        // Canonical on purpose: inside an app's mount namespace (Android 11+ data isolation) /data/user/0 is a
+        // symlink to /data/data. proot canonicalizes its rootfs, so every path we hand it (and the hard-link
+        // symlinks --link2symlink writes from PROOT_L2S_DIR) must use the same spelling, or they cannot be resolved.
+        filesDir = canonical(ctx.getFilesDir());
         rootfs = new File(filesDir, "rootfs");
         rootfsTmp = new File(rootfs, "tmp");
         bar = new File(filesDir, "bar");
@@ -37,12 +40,18 @@ public final class Paths {
         stateFile = new File(filesDir, "install-state.properties");
     }
 
+    private static File canonical(File f) {
+        try { return f.getCanonicalFile(); } catch (java.io.IOException e) { return f.getAbsoluteFile(); }
+    }
+
     public File nativeLib(String name) { return new File(nativeLibDir, name); }
     // Executed in place: the native-lib dir is the only exec-allowed location, and it moves on every app update,
     // so links to it would dangle.
     public File proot() { return nativeLib("libproot.so"); }
     public File prootLoader() { return nativeLib("libproot-loader.so"); }
     public File busybox() { return nativeLib("libbusybox.so"); }
+    /** proot --link2symlink stores hard-link targets here (PROOT_L2S_DIR); it must exist. */
+    public File l2s() { return new File(rootfs, ".l2s"); }
     public File libXlorie() { return nativeLib("libXlorie.so"); }
 
     public File engineDir(String version) { return new File(bar, "engine/recoil_" + version); }

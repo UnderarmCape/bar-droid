@@ -27,6 +27,34 @@ public final class Proc {
         List<Proc> all;
         synchronized (live) { all = new ArrayList<>(live); }
         for (Proc p : all) p.kill();
+        killStrays();
+    }
+
+    /**
+     * SIGKILLs every other process running under this app's UID. Needed because proot ignores SIGTERM (what
+     * Process.destroy* sends on Android) and, when it is SIGKILLed, leaves its tracees (the engine, a daemonized
+     * PulseAudio) running. Everything the app launches runs under its UID, so this takes down the whole tree.
+     */
+    static void killStrays() {
+        int me = android.os.Process.myPid(), uid = android.os.Process.myUid();
+        File[] procs = new File("/proc").listFiles();
+        if (procs == null) return;
+        for (File d : procs) {
+            int pid;
+            try { pid = Integer.parseInt(d.getName()); } catch (NumberFormatException e) { continue; }
+            if (pid == me) continue;
+            try (BufferedReader r = new BufferedReader(new java.io.FileReader(new File(d, "status")))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    if (!line.startsWith("Uid:")) continue;
+                    if (Integer.parseInt(line.substring(4).trim().split("\\s+")[0]) == uid) {
+                        android.system.Os.kill(pid, android.system.OsConstants.SIGKILL);
+                        Log.i("proc", "killed pid " + pid);
+                    }
+                    break;
+                }
+            } catch (Exception ignored) {}   // gone already, or not ours to read
+        }
     }
 
     public static int run(String tag, List<String> cmd, Map<String, String> env, File cwd) throws IOException, InterruptedException {
