@@ -12,7 +12,6 @@ public final class Paths {
     public final File bar;           // Recoil write-dir: engine/, pool/, packages/, maps/, games/, infolog.txt ... bound at /root/bar
     public final File downloads;     // partial downloads
     public final File logs;          // launcher + engine logs copied here
-    public final File bin;           // symlinks with proper argv[0] names into nativeLibraryDir
     public final File prootTmp;      // PROOT_TMP_DIR
     public final File shm;           // bound at /dev/shm
     public final File fakeProc;      // fake /proc files proot binds over the real ones Android hides
@@ -28,7 +27,6 @@ public final class Paths {
         bar = new File(filesDir, "bar");
         downloads = new File(filesDir, "downloads");
         logs = new File(filesDir, "logs");
-        bin = new File(filesDir, "bin");
         prootTmp = new File(filesDir, "proot-tmp");
         shm = new File(filesDir, "shm");
         fakeProc = new File(filesDir, "fakeproc");
@@ -40,15 +38,17 @@ public final class Paths {
     }
 
     public File nativeLib(String name) { return new File(nativeLibDir, name); }
-    public File proot() { return new File(bin, "proot"); }
+    // Executed in place: the native-lib dir is the only exec-allowed location, and it moves on every app update,
+    // so links to it would dangle.
+    public File proot() { return nativeLib("libproot.so"); }
     public File prootLoader() { return nativeLib("libproot-loader.so"); }
-    public File busybox() { return new File(bin, "busybox"); }
+    public File busybox() { return nativeLib("libbusybox.so"); }
     public File libXlorie() { return nativeLib("libXlorie.so"); }
 
     public File engineDir(String version) { return new File(bar, "engine/recoil_" + version); }
 
     public void mkdirs() {
-        for (File f : new File[]{rootfs, bar, downloads, logs, bin, prootTmp, shm, fakeProc, importDir,
+        for (File f : new File[]{rootfs, bar, downloads, logs, prootTmp, shm, fakeProc, importDir,
                 new File(bar, "maps"), new File(bar, "games"), new File(bar, "engine"), new File(bar, "LuaUI/Widgets")}) {
             //noinspection ResultOfMethodCallIgnored
             f.mkdirs();

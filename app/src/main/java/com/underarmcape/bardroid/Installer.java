@@ -2,8 +2,6 @@ package com.underarmcape.bardroid;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.system.ErrnoException;
-import android.system.Os;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -29,7 +27,7 @@ import java.util.zip.GZIPInputStream;
 public final class Installer {
     public interface Status { void status(String step, String detail, int percent); }
 
-    public static final String[] STEPS = {"bins", "rootfs", "apt", "mesa", "engine", "import", "content", "files"};
+    public static final String[] STEPS = {"rootfs", "apt", "mesa", "engine", "import", "content", "files"};
 
     private final Context ctx;
     private final Paths p;
@@ -60,7 +58,7 @@ public final class Installer {
     /** Runs every step that is not done yet. Throws on failure with a readable message. */
     public void installAll(Status st) throws Exception {
         p.mkdirs();
-        step("bins", st, () -> prepareBins());
+        refreshHostFiles();
         step("rootfs", st, () -> installRootfs(st));
         step("apt", st, () -> runSetup("apt", st, "apt"));
         step("mesa", st, () -> installMesa(st));
@@ -85,24 +83,18 @@ public final class Installer {
 
     // ---- steps -------------------------------------------------------------------------------------
 
-    /** Symlinks with sane argv[0] names into the app's native library dir, fake /proc data, asset extraction. */
-    public void prepareBins() throws IOException {
+    /**
+     * Fake /proc data, asset extraction and (once the rootfs exists) the container scripts. Cheap, so it runs
+     * before every install and every launch: an app update must replace the scripts of the previous version.
+     */
+    public void refreshHostFiles() throws IOException {
         p.mkdirs();
-        link(p.nativeLib("libproot.so"), p.proot());
-        link(p.nativeLib("libbusybox.so"), p.busybox());
-        proot.writeFakeProc();
+        if (!p.proot().exists() || !p.prootLoader().exists()) throw new IOException("proot missing from " + p.nativeLibDir);
         if (!p.libXlorie().exists()) Log.e("install", "libXlorie.so not found in " + p.nativeLibDir + " (X server will not start)");
-        if (!p.prootLoader().exists()) throw new IOException("proot loader missing from native libs");
+        proot.writeFakeProc();
         extractAssets();
+        if (new File(p.rootfs, "usr/bin").isDirectory()) installScripts();
     }
-
-    private void link(File target, File link) throws IOException {
-        if (link.exists() || isSymlink(link)) //noinspection ResultOfMethodCallIgnored
-            link.delete();
-        try { Os.symlink(target.getAbsolutePath(), link.getAbsolutePath()); }
-        catch (ErrnoException e) { throw new IOException("symlink " + link + " -> " + target + ": " + e.getMessage()); }
-    }
-    private static boolean isSymlink(File f) { try { return !f.getCanonicalPath().equals(f.getAbsolutePath()); } catch (IOException e) { return false; } }
 
     /** Copies assets/bardroid/* into files/assets-bardroid (host side) — the scripts are then installed into the rootfs. */
     private void extractAssets() throws IOException {
@@ -136,6 +128,11 @@ public final class Installer {
         int rc = proot.extractRootfs(tgz);
         if (rc != 0 && !new File(p.rootfs, "usr/bin/apt-get").exists()) throw new IOException("rootfs extraction failed (rc=" + rc + ")");
         if (rc != 0) Log.e("install", "tar returned " + rc + " but the rootfs looks usable; continuing");
+        // proot leaves empty placeholder files where the busybox and tarball were bound in.
+        //noinspection ResultOfMethodCallIgnored
+        new File(p.rootfs, "busybox-bardroid").delete();
+        //noinspection ResultOfMethodCallIgnored
+        new File(p.rootfs, ".bardroid-rootfs.tar.gz").delete();
         // Basic container config
         //noinspection ResultOfMethodCallIgnored
         new File(p.rootfs, "tmp").mkdirs();
@@ -225,7 +222,7 @@ public final class Installer {
     public void writeStartScript() throws IOException {
         File assets = new File(p.filesDir, "assets-bardroid");
         String tpl;
-        try (InputStream in = new FileInputStream(new File(assets, "skirmish.template.txt"))) { tpl = new String(in.readAllBytes(), StandardCharsets.UTF_8); }
+        try (InputStream in = new FileInputStream(new File(assets, "skirmish.template.txt"))) { tpl = new String(readAll(in), StandardCharsets.UTF_8); }
         String game = resolveGameName();
         tpl = tpl.replace("@GAME@", game).replace("@MAP@", Prefs.mapName);
         // AI difficulty is a BARb option; keep ShortName=BARb (the only native AI shipped in the arm64 engine archive).
@@ -262,5 +259,11 @@ public final class Installer {
     static void copy(InputStream in, OutputStream out) throws IOException {
         byte[] b = new byte[1 << 16]; int n;
         while ((n = in.read(b)) > 0) out.write(b, 0, n);
+    }
+    /** InputStream.readAllBytes() only exists on Android 13+; minSdk is 28. */
+    static byte[] readAll(InputStream in) throws IOException {
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        copy(in, out);
+        return out.toByteArray();
     }
 }

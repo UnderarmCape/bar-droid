@@ -5,8 +5,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /** Runs a child process, streams merged stdout/stderr to the Log, returns the exit code. */
 public final class Proc {
@@ -15,8 +18,16 @@ public final class Proc {
     private Process process;
     private final String tag;
     private volatile boolean killed;
+    private static final Set<Proc> live = new HashSet<>();
 
     public Proc(String tag) { this.tag = tag; }
+
+    /** Kills every child process still running (Stop button, service teardown). */
+    public static void killAll() {
+        List<Proc> all;
+        synchronized (live) { all = new ArrayList<>(live); }
+        for (Proc p : all) p.kill();
+    }
 
     public static int run(String tag, List<String> cmd, Map<String, String> env, File cwd) throws IOException, InterruptedException {
         return new Proc(tag).start(cmd, env, cwd, null).waitFor();
@@ -33,6 +44,7 @@ public final class Proc {
         }
         Log.i(tag, "exec: " + String.join(" ", cmd));
         process = pb.start();
+        synchronized (live) { live.add(this); }
         Thread t = new Thread(() -> {
             try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
@@ -48,7 +60,10 @@ public final class Proc {
     }
 
     public int waitFor() throws InterruptedException {
-        int rc = process.waitFor();
+        int rc;
+        try { rc = process.waitFor(); }
+        catch (InterruptedException e) { kill(); throw e; }   // never leave an orphaned proot behind
+        synchronized (live) { live.remove(this); }
         Log.i(tag, killed ? "killed" : ("exit code " + rc));
         return rc;
     }
@@ -58,6 +73,7 @@ public final class Proc {
     public void kill() {
         killed = true;
         if (process != null) process.destroyForcibly();
+        synchronized (live) { live.remove(this); }
     }
 
     public Process process() { return process; }

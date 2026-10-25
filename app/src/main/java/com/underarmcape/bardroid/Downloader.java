@@ -21,7 +21,7 @@ public final class Downloader {
     public static String fetchText(String url) throws IOException {
         HttpURLConnection c = open(url, 0);
         try (InputStream in = c.getInputStream()) {
-            byte[] buf = in.readAllBytes();
+            byte[] buf = Installer.readAll(in);
             return new String(buf, StandardCharsets.UTF_8);
         } finally { c.disconnect(); }
     }

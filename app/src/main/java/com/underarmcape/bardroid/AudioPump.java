@@ -29,7 +29,15 @@ public final class AudioPump {
         thread.start();
     }
 
-    public void stop() { running = false; if (thread != null) thread.interrupt(); }
+    public void stop() {
+        running = false;
+        if (thread != null) thread.interrupt();
+        // A reader blocked in open() ignores interrupts; a non-blocking writer open wakes it so the thread can exit.
+        try {
+            java.io.FileDescriptor fd = Os.open(fifo.getAbsolutePath(), OsConstants.O_WRONLY | OsConstants.O_NONBLOCK, 0);
+            Os.close(fd);
+        } catch (Exception ignored) {}
+    }
 
     private void run() {
         try {

@@ -79,6 +79,8 @@ public class GameService extends Service {
         try {
             installer.installAll((step, detail, pct) -> setStatus("install " + step + ": " + detail + (pct >= 0 ? " (" + pct + "%)" : "")));
             setStatus("installed");
+        } catch (InterruptedException e) {
+            setStatus("install stopped");
         } catch (Exception e) {
             Log.e("install", "failed", e);
             setStatus("install failed: " + e.getMessage());
@@ -89,6 +91,7 @@ public class GameService extends Service {
         Installer inst = new Installer(this, paths);
         if (!inst.isInstalled() && !"shell".equals(mode)) { setStatus("not installed yet"); return; }
         try {
+            inst.refreshHostFiles();                        // scripts/assets of this app version
             inst.writeGameFiles();                          // refresh settings + start script
             setStatus("starting X server");
             xserver.start();
@@ -116,18 +119,31 @@ public class GameService extends Service {
             int rc = engine.waitFor();
             if (audio != null) audio.stop();
             setStatus("engine exited (" + rc + ")");
+        } catch (InterruptedException e) {
+            setStatus("stopped");
         } catch (Exception e) {
             Log.e("svc", "play failed", e);
             setStatus("launch failed: " + e.getMessage());
         } finally {
             xserver.stop();
             engine = null;
+            closeDisplay();
         }
+    }
+
+    /** Closes the X display activity (Termux:X11's ACTION_STOP) and brings the launcher back with the result. */
+    private void closeDisplay() {
+        sendBroadcast(new Intent(com.termux.x11.MainActivity.ACTION_STOP).setPackage(getPackageName()));
+        try {
+            startActivity(new Intent(this, LauncherActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));
+        } catch (Exception e) { Log.e("svc", "could not reopen the launcher", e); }
     }
 
     private void stopEverything() {
         if (installer != null) installer.cancel();
         if (engine != null) engine.kill();
+        Proc.killAll();          // container setup steps (proot) started by the installer
         xserver.stop();
         if (worker != null) worker.interrupt();
         setStatus("stopped");

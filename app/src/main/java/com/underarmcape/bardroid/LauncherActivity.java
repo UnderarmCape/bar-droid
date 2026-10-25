@@ -79,7 +79,7 @@ public class LauncherActivity extends AppCompatActivity {
     private String deviceSummary() {
         StringBuilder sb = new StringBuilder();
         sb.append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append(", Android ").append(Build.VERSION.RELEASE)
-          .append(", SoC ").append(Build.SOC_MODEL != null ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
+          .append(", SoC ").append(Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
         boolean adreno = new File("/dev/kgsl-3d0").exists();
         sb.append(adreno ? "GPU: Qualcomm Adreno (/dev/kgsl-3d0 present) — supported\n"
                          : "GPU: no /dev/kgsl-3d0 — not an Adreno GPU; Mesa Freedreno/Turnip will not work on this phone\n");

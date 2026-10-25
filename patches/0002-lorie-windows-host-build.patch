@@ -1,0 +1,172 @@
+diff --git a/lorie/src/main/cpp/CMakeLists.txt b/lorie/src/main/cpp/CMakeLists.txt
+index 7c96a8a..979bf33 100644
+--- a/lorie/src/main/cpp/CMakeLists.txt
++++ b/lorie/src/main/cpp/CMakeLists.txt
+@@ -20,7 +20,23 @@ find_package(Python3 REQUIRED)
+ find_package(BISON REQUIRED)
+ 
+ function(target_apply_patch patch_target d p)
+-    execute_process(COMMAND "bash" "-c" "patch -p1 -d ${d} -i ${p} -R --dry-run > /dev/null 2>&1 || patch -p1 -N -d ${d} -i ${p} -r -")
++    if(CMAKE_HOST_WIN32)
++        # Windows hosts have no bash/patch; use git (the checkout needs it anyway) on a copy of the patch
++        # normalized to what git accepts. --unidiff-zero: some hunks have no trailing context. Skip if applied.
++        get_filename_component(pname "${p}" NAME)
++        set(fixed "${CMAKE_CURRENT_BINARY_DIR}/patches/${pname}")
++        file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/patches")
++        execute_process(COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/recipes/fix-patch-headers.py" "${p}" "${fixed}" COMMAND_ERROR_IS_FATAL ANY)
++        execute_process(COMMAND git -C "${d}" apply --unidiff-zero --reverse --check "${fixed}" RESULT_VARIABLE already_applied OUTPUT_QUIET ERROR_QUIET)
++        if(NOT already_applied EQUAL 0)
++            execute_process(COMMAND git -C "${d}" apply --unidiff-zero "${fixed}" RESULT_VARIABLE apply_result)
++            if(NOT apply_result EQUAL 0)
++                message(FATAL_ERROR "Could not apply ${p} to ${d}")
++            endif()
++        endif()
++    else()
++        execute_process(COMMAND "bash" "-c" "patch -p1 -d ${d} -i ${p} -R --dry-run > /dev/null 2>&1 || patch -p1 -N -d ${d} -i ${p} -r -")
++    endif()
+ endfunction()
+ 
+ set(test_compile_options
+diff --git a/lorie/src/main/cpp/recipes/fix-patch-headers.py b/lorie/src/main/cpp/recipes/fix-patch-headers.py
+new file mode 100644
+index 0000000..f93acd3
+--- /dev/null
++++ b/lorie/src/main/cpp/recipes/fix-patch-headers.py
+@@ -0,0 +1,36 @@
++# Copies a patch into the strict form `git apply` wants (used on Windows hosts, which have no GNU patch):
++#  - adds the "--- <path>" line that some of these patches omit before "+++ <path>";
++#  - restores the leading space of blank context lines that lost it (GNU patch tolerates both).
++import re
++import sys
++
++HUNK = re.compile(rb"^@@ -\d+(?:,(\d+))? \+\d+(?:,(\d+))? @@")
++
++src, dst = sys.argv[1], sys.argv[2]
++with open(src, "rb") as f:
++    lines = f.read().split(b"\n")
++out = []
++old = new = 0
++for line in lines:
++    if old > 0 or new > 0:  # inside a hunk: count lines against the header
++        if line == b"":
++            line = b" "
++        tag = line[:1]
++        if tag == b" ":
++            old -= 1
++            new -= 1
++        elif tag == b"-":
++            old -= 1
++        elif tag == b"+":
++            new -= 1
++        out.append(line)
++        continue
++    m = HUNK.match(line)
++    if m:
++        old = int(m.group(1) or 1)
++        new = int(m.group(2) or 1)
++    elif line.startswith(b"+++ ") and not (out and out[-1].startswith(b"--- ")):
++        out.append(b"--- " + line[4:])
++    out.append(line)
++with open(dst, "wb") as f:
++    f.write(b"\n".join(out))
+diff --git a/lorie/src/main/cpp/recipes/run-makekeys.cmake b/lorie/src/main/cpp/recipes/run-makekeys.cmake
+new file mode 100644
+index 0000000..73865e5
+--- /dev/null
++++ b/lorie/src/main/cpp/recipes/run-makekeys.cmake
+@@ -0,0 +1,10 @@
++# Runs makekeys on the keysym headers in the current directory and writes its stdout to ${OUT}.
++# Used on Windows hosts, where the custom command cannot rely on a POSIX shell for "> file".
++execute_process(
++        COMMAND "${MAKEKEYS}" "keysymdef.h" "XF86keysym.h" "Sunkeysym.h" "DECkeysym.h" "HPkeysym.h"
++        OUTPUT_FILE "${OUT}"
++        RESULT_VARIABLE rc)
++if(NOT rc EQUAL 0)
++    file(REMOVE "${OUT}")
++    message(FATAL_ERROR "makekeys failed (${rc})")
++endif()
+diff --git a/lorie/src/main/cpp/recipes/xkbcomp.cmake b/lorie/src/main/cpp/recipes/xkbcomp.cmake
+index a7a2a33..5988718 100644
+--- a/lorie/src/main/cpp/recipes/xkbcomp.cmake
++++ b/lorie/src/main/cpp/recipes/xkbcomp.cmake
+@@ -2,6 +2,7 @@
+ 
+ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/X11")
+ 
++if(NOT CMAKE_HOST_WIN32)
+ add_custom_command(
+         OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ks_tables.h"
+         COMMAND "/usr/bin/gcc" "-o" "${CMAKE_CURRENT_BINARY_DIR}/makekeys" "${CMAKE_CURRENT_SOURCE_DIR}/libx11/src/util/makekeys.c" "&&"
+@@ -9,6 +10,23 @@ add_custom_command(
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xorgproto/include/X11"
+         COMMENT "Generating source code (ks_tables.h)"
+         VERBATIM)
++else()
++# Windows host: no /usr/bin/gcc and no POSIX shell. Use the host gcc from $LORIE_HOST_CC (or PATH) and
++# let a CMake script do the output redirection.
++if(DEFINED ENV{LORIE_HOST_CC})
++    set(LORIE_HOST_CC "$ENV{LORIE_HOST_CC}")
++else()
++    find_program(LORIE_HOST_CC NAMES gcc cc REQUIRED)
++endif()
++add_custom_command(
++        OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ks_tables.h"
++        COMMAND "${LORIE_HOST_CC}" "-o" "${CMAKE_CURRENT_BINARY_DIR}/makekeys.exe" "${CMAKE_CURRENT_SOURCE_DIR}/libx11/src/util/makekeys.c"
++        COMMAND "${CMAKE_COMMAND}" "-DMAKEKEYS=${CMAKE_CURRENT_BINARY_DIR}/makekeys.exe" "-DOUT=${CMAKE_CURRENT_BINARY_DIR}/ks_tables.h"
++            -P "${CMAKE_CURRENT_LIST_DIR}/run-makekeys.cmake"
++        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/xorgproto/include/X11"
++        COMMENT "Generating source code (ks_tables.h)"
++        VERBATIM)
++endif()
+ 
+ BISON_TARGET(xkbcomp_parser xkbcomp/xkbparse.y ${CMAKE_CURRENT_BINARY_DIR}/xkbparse.c)
+ add_library(xkbcomp STATIC
+@@ -69,3 +87,12 @@ target_compile_options(xkbcomp PRIVATE ${common_compile_options} "-fvisibility=h
+ target_apply_patch(xkbcomp "${CMAKE_CURRENT_SOURCE_DIR}/xkbcomp" "${CMAKE_CURRENT_SOURCE_DIR}/patches/xkbcomp.patch")
+ target_apply_patch(xkbfile "${CMAKE_CURRENT_SOURCE_DIR}/libxkbfile" "${CMAKE_CURRENT_SOURCE_DIR}/patches/xkbfile.patch")
+ target_apply_patch(X11 "${CMAKE_CURRENT_SOURCE_DIR}/libx11" "${CMAKE_CURRENT_SOURCE_DIR}/patches/x11.patch")
++if(CMAKE_HOST_WIN32)
++    # Windows file names are case-insensitive: with libx11/include/X11 on the include path, the NDK's
++    # <xlocale.h> (included by <time.h>) resolves to X11's Xlocale.h. Use a copy of that directory without it.
++    set(x11_nocase_dir "${CMAKE_CURRENT_BINARY_DIR}/libx11-include-X11")
++    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/libx11/include/X11/" DESTINATION "${x11_nocase_dir}" PATTERN "Xlocale.h" EXCLUDE)
++    get_target_property(xkbcomp_includes xkbcomp INCLUDE_DIRECTORIES)
++    list(TRANSFORM xkbcomp_includes REPLACE "^.*libx11/include/X11$" "${x11_nocase_dir}")
++    set_target_properties(xkbcomp PROPERTIES INCLUDE_DIRECTORIES "${xkbcomp_includes}")
++endif()
+diff --git a/lorie/src/main/cpp/recipes/xorgproto.cmake b/lorie/src/main/cpp/recipes/xorgproto.cmake
+index 8325f05..b590d53 100644
+--- a/lorie/src/main/cpp/recipes/xorgproto.cmake
++++ b/lorie/src/main/cpp/recipes/xorgproto.cmake
+@@ -1,9 +1,15 @@
+ file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/X11")
+ file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/X11/XlibConf.h" CONTENT "\n#pragma once\n#define XTHREADS 1\n#define XUSE_MTSAFE_API 1")
+-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/libxtrans" "${CMAKE_CURRENT_BINARY_DIR}/X11/Xtrans")
++if(NOT CMAKE_HOST_WIN32)
++    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/libxtrans" "${CMAKE_CURRENT_BINARY_DIR}/X11/Xtrans")
++endif()
+ 
+ add_library(xorgproto INTERFACE)
+ target_include_directories(xorgproto INTERFACE "xorgproto/include")
+ set(USE_FDS_BITS 1)
+ configure_file("xorgproto/include/X11/Xpoll.h.in" "${CMAKE_CURRENT_BINARY_DIR}/X11/Xpoll.h" @ONLY)
+-target_apply_patch(Xtrans "${CMAKE_CURRENT_SOURCE_DIR}/libxtrans" "${CMAKE_CURRENT_SOURCE_DIR}/patches/Xtrans.patch")
+\ No newline at end of file
++target_apply_patch(Xtrans "${CMAKE_CURRENT_SOURCE_DIR}/libxtrans" "${CMAKE_CURRENT_SOURCE_DIR}/patches/Xtrans.patch")
++if(CMAKE_HOST_WIN32)
++    # Windows hosts without Developer Mode cannot create symlinks: copy the (now patched) Xtrans sources instead.
++    file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/libxtrans/" DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/X11/Xtrans" PATTERN ".git" EXCLUDE)
++endif()
+\ No newline at end of file
+diff --git a/lorie/src/main/cpp/recipes/xshmfence.cmake b/lorie/src/main/cpp/recipes/xshmfence.cmake
+index 1ff4e9c..d06110e 100644
+--- a/lorie/src/main/cpp/recipes/xshmfence.cmake
++++ b/lorie/src/main/cpp/recipes/xshmfence.cmake
+@@ -1,5 +1,6 @@
+ file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/values.h" CONTENT "#include <limits.h>")
+-execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_CURRENT_SOURCE_DIR}/libxshmfence/src/xshmfence.h" "${CMAKE_CURRENT_BINARY_DIR}/X11/xshmfence.h")
++# Symlink where possible; Windows hosts without Developer Mode cannot create symlinks, so fall back to a copy.
++file(CREATE_LINK "${CMAKE_CURRENT_SOURCE_DIR}/libxshmfence/src/xshmfence.h" "${CMAKE_CURRENT_BINARY_DIR}/X11/xshmfence.h" SYMBOLIC COPY_ON_ERROR)
+ add_library(xshmfence_pthread STATIC "libxshmfence/src/xshmfence_alloc.c" "libxshmfence/src/xshmfence_pthread.c")
+ target_include_directories(xshmfence_pthread PRIVATE "xorgproto/include" "${CMAKE_CURRENT_BINARY_DIR}")
+ target_compile_options(xshmfence_pthread PRIVATE "-DSHMDIR=\"/\"" "-DHAVE_PTHREAD" "-DMAXINT=INT_MAX" "-Dxshmfence_trigger=xshmfence_pthread_trigger" "-Dxshmfence_await=xshmfence_pthread_await" "-Dxshmfence_query=xshmfence_pthread_query" "-Dxshmfence_reset=xshmfence_pthread_reset" "-Dxshmfence_alloc_shm=xshmfence_pthread_alloc_shm" "-Dxshmfence_map_shm=xshmfence_pthread_map_shm" "-Dxshmfence_unmap_shm=xshmfence_pthread_unmap_shm")

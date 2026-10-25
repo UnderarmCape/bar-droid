@@ -5,3 +5,4 @@ local.properties
 .idea/
 *.iml
 termux-x11/lorie/.cxx/
+termux-x11/

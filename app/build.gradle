@@ -3,19 +3,32 @@ apply plugin: 'com.android.application'
 android {
     namespace 'com.underarmcape.bardroid'
     compileSdkVersion 34
+    // Same NDK as :lorie; AGP uses it to strip debug symbols from the packaged .so files.
+    ndkVersion "29.0.14206865"
 
     defaultConfig {
         applicationId "com.underarmcape.bardroid"
         minSdkVersion 28
         targetSdkVersion 34
-        versionCode 1
-        versionName "0.1.0"
+        versionCode 2
+        versionName "0.1.1"
         ndk { abiFilters 'arm64-v8a' }
     }
 
     // proot, busybox and friends live in jniLibs and must be real files on disk so that they can be
     // exec'd (Android 10+ only allows executing files from the app's native library directory).
     packagingOptions.jniLibs.useLegacyPackaging true
+    // The prebuilt binaries (Termux proot + friends, patchelf'd; static busybox) ship as published: llvm-strip
+    // re-lays them out. Only our own build output (libXlorie.so) gets stripped.
+    packagingOptions.jniLibs.keepDebugSymbols += ['**/libproot.so', '**/libproot-loader.so', '**/libtalloc.so',
+                                                  '**/libandroid-shmem.so', '**/libbusybox.so']
+
+    // Emulator test builds only (gradlew -PbardroidEmulatorX11): also package an x86_64 X server, built by
+    // tools\build-emulator-x11.bat, because app_process on an x86_64 emulator cannot load the arm64 one.
+    if (project.hasProperty('bardroidEmulatorX11')) {
+        sourceSets.main.jniLibs.srcDirs += "${rootDir}/build/emu-x86_64/jnilibs"
+        packagingOptions.jniLibs.keepDebugSymbols += ['**/libXlorie_x86_64.so']
+    }
 
     signingConfigs {
         debug {

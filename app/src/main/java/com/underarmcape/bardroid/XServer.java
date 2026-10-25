@@ -1,5 +1,7 @@
 package com.underarmcape.bardroid;
 
+import android.os.Build;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,18 +35,22 @@ public final class XServer {
         sockDir.mkdirs();
         //noinspection ResultOfMethodCallIgnored
         new File(sockDir, "X0").delete();
-        File xkb = new File(p.rootfs, "usr/share/X11/xkb");
+        File xkb = inRootfs("/usr/share/X11/xkb");
         if (!xkb.isDirectory()) throw new IOException("xkb-data missing in rootfs (" + xkb + "); run the installer first");
-        if (!p.libXlorie().exists()) throw new IOException("libXlorie.so missing: " + p.libXlorie());
+        File lib = p.libXlorie();
+        // Emulator test builds carry an x86_64 X server too: app_process there is x86_64 (no native bridge).
+        File emuLib = p.nativeLib("libXlorie_x86_64.so");
+        if (Build.SUPPORTED_ABIS[0].startsWith("x86") && emuLib.exists()) lib = emuLib;
+        if (!lib.exists()) throw new IOException("libXlorie.so missing: " + lib);
 
-        Map<String, String> env = new HashMap<>();
+        // app_process needs the runtime's own environment (BOOTCLASSPATH, ANDROID_ART_ROOT, ANDROID_I18N_ROOT, ...).
+        Map<String, String> env = new HashMap<>(System.getenv());
+        env.remove("LD_PRELOAD");
+        env.remove("LD_LIBRARY_PATH");
         env.put("CLASSPATH", p.apkPath);
         env.put("TMPDIR", p.rootfsTmp.getAbsolutePath());
         env.put("XKB_CONFIG_ROOT", xkb.getAbsolutePath());
-        env.put("TERMUX_X11_LIBXLORIE_PATH", p.libXlorie().getAbsolutePath());
-        env.put("PATH", "/system/bin");
-        env.put("ANDROID_DATA", "/data");
-        env.put("ANDROID_ROOT", "/system");
+        env.put("TERMUX_X11_LIBXLORIE_PATH", lib.getAbsolutePath());
         if (Prefs.verboseX) env.put("TERMUX_X11_DEBUG", "1");
 
         List<String> cmd = new ArrayList<>();
@@ -56,6 +62,22 @@ public final class XServer {
         cmd.add(":0");
         cmd.add("-ac");                 // standard Xorg flag: no xauth inside the container
         proc =new Proc("x11").start(cmd, env, p.filesDir, null);
+    }
+
+    /**
+     * Host path of a guest path, following symlinks the way the guest would: the X server runs outside proot,
+     * and Debian's /usr/share/X11/xkb is a symlink (an absolute one would otherwise point into Android's /).
+     */
+    File inRootfs(String guestPath) {
+        String path = guestPath;
+        for (int hop = 0; hop < 16; hop++) {
+            File f = new File(p.rootfs, path);
+            String target;
+            try { target = android.system.Os.readlink(f.getAbsolutePath()); }
+            catch (Exception notALink) { return f; }
+            path = target.startsWith("/") ? target : new File(new File(path).getParent(), target).getPath();
+        }
+        return new File(p.rootfs, path);
     }
 
     /** Waits for the unix socket to appear (the Debian client side needs it). */

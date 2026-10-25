@@ -111,16 +111,17 @@ public final class Proot {
      */
     public int extractRootfs(File tarball) throws IOException, InterruptedException {
         List<String> c = base(false);
-        c.add("--bind=" + p.busybox().getAbsolutePath() + ":/.bardroid-busybox");
+        // busybox picks the applet from argv[0]; a name starting with "busybox" makes it take the applet from argv[1].
+        c.add("--bind=" + p.busybox().getAbsolutePath() + ":/busybox-bardroid");
         c.add("--bind=" + tarball.getAbsolutePath() + ":/.bardroid-rootfs.tar.gz");
-        c.add("/.bardroid-busybox");
+        c.add("/busybox-bardroid");
         c.add("tar");
+        c.add("--exclude=./dev/*");
+        c.add("--exclude=dev/*");
         c.add("-xzf");
         c.add("/.bardroid-rootfs.tar.gz");
         c.add("-C");
         c.add("/");
-        c.add("--exclude=./dev/*");
-        c.add("--exclude=dev/*");
         return Proc.run("rootfs", c, hostEnv(), p.filesDir);
     }
 
