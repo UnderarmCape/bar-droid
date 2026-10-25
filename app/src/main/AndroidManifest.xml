@@ -62,6 +62,15 @@
         <receiver android:name="com.termux.x11.LorieApp$Receiver" android:exported="false" tools:replace="android:exported" />
         <receiver android:name="com.termux.x11.LoriePreferences$Receiver" android:exported="false" tools:replace="android:exported" />
 
+        <!-- Share logs button (LogShare): zips in cache/share, handed out read-only. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.logs"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/bardroid_share_paths" />
+        </provider>
+
         <service
             android:name=".GameService"
             android:exported="false"

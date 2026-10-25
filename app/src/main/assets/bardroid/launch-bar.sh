@@ -74,6 +74,10 @@ if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
   [ "$MODE" = "glcheck" ] && exit 0
 fi
 
+# Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
+[ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
+[ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
+
 # 4. Launch the engine.
 cd "$ENGINE" || { log "engine dir missing: $ENGINE"; exit 11; }
 rm -f "$BAR/infolog.txt"

@@ -45,6 +45,7 @@
         android:orientation="horizontal">
         <Button android:id="@+id/btnGlCheck" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_glcheck" />
         <Button android:id="@+id/btnDisplayPrefs" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_display_prefs" />
+        <Button android:id="@+id/btnShareLogs" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_share_logs" />
         <Button android:id="@+id/btnStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_stop" />
     </LinearLayout>
 

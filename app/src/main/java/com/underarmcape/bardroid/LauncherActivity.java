@@ -55,6 +55,7 @@ public class LauncherActivity extends AppCompatActivity {
         stop.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
         prefs.setOnClickListener(v -> startActivity(new Intent(this, com.termux.x11.LoriePreferences.class)));
         save.setOnClickListener(v -> saveSettings());
+        findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
         loadSettingsIntoUi();
         deviceView.setText(deviceSummary());
