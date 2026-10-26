@@ -11,6 +11,7 @@ param(
   [double]$UiScale = 0,   # another interface scale than the phone's for that screen
   [string]$WidgetData = "",   # widget settings for BYAR.lua's data table, e.g. 'AdvPlayersList = { customScale = 0.8 },'
   [string]$Name = "",     # added to the screenshot's file name
+  [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
   [string]$Engine = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1"
@@ -48,11 +49,23 @@ try {
   "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
-  $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
-  $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
-  $game = $null
-  while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
-  $reader.Close()
+  $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
+  if (Test-Path $gameLink) { cmd /c rmdir "$gameLink" }   # a junction left by a killed run: the link only
+  if ($GamepadGame) {
+    $sdd = Join-Path $App "build\profile\data\games\BAR-gamepad.sdd"
+    if (-not (Test-Path "$sdd\modinfo.lua")) { throw "no ${sdd}: run tools\profile-gamepad-game.ps1 once" }
+    New-Item -ItemType Directory -Force -Path "$Data\games" | Out-Null
+    cmd /c mklink /J "$gameLink" "$sdd" | Out-Null
+    $links = @($links) + $gameLink
+    $game = "Beyond All Reason `$VERSION"
+    $layer = "gamepad-$layer"
+  } else {
+    $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
+    $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
+    $game = $null
+    while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
+    $reader.Close()
+  }
   $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
   $startscript = Join-Path $Work "skirmish.txt"
   $script | Set-Content $startscript -Encoding ascii
