@@ -59,6 +59,16 @@ local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
 local lastHover, hoverTimer = nil, nil
 local padCamera = true   -- false in the controller game
+
+-- Long queues of the selected units: the engine draws every building a selected builder has queued once more, one model
+-- at a time (CommandDrawer -> CCursorIcons::DrawBuilds), over BAR's "Show Builder Queue", which has drawn them all
+-- already (Fold7, 2026-10-26: a ~150 wind turbine queue ran 29-30 fps with nothing selected, 17 with the commander
+-- selected). Past QUEUE_LIMIT orders the selection's queue is drawn only while Shift is held (cmdcolors
+-- alwaysDrawQueue, the engine's own switch); BAR's widget keeps showing the queued buildings.
+local QUEUE_LIMIT = 40
+local queueDrawn, queueCheck = true, 0
+local spGetUnitCommandCount = Spring.GetUnitCommandCount
+local spGetSelectedUnits = Spring.GetSelectedUnits
 local pad = { lx = 0, ly = 0, rx = 0, ry = 0, lt = 0, lb = false }
 local smooth = { panX = 0, panY = 0, rotate = 0, pitch = 0, zoom = 0, boost = 0 }
 
@@ -259,6 +269,58 @@ local function applyPad(dt)
 	spSetCameraState(cs, 0)
 end
 
+local function updateQueueDrawing()
+	if not spGetUnitCommandCount then
+		return
+	end
+	local orders = 0
+	for _, unitID in ipairs(spGetSelectedUnits() or {}) do
+		orders = orders + (spGetUnitCommandCount(unitID) or 0)
+		if orders > QUEUE_LIMIT then
+			break
+		end
+	end
+	local draw = orders <= QUEUE_LIMIT
+	if draw ~= queueDrawn then
+		queueDrawn = draw
+		Spring.LoadCmdColorsConfig("alwaysDrawQueue " .. (draw and 1 or 0))
+	end
+end
+
+function widget:SelectionChanged()
+	updateQueueDrawing()
+end
+
+-- Long sessions (the target is 30 fps for hours on a hot phone): once a minute the average frame rate and the slowest
+-- frame go to the log, next to the app's thermal lines ("[perf]" in launcher.log).
+local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
+local function logPerf()
+	local now = spGetTimer()
+	if perfLast then
+		local frame = spDiffTimers(now, perfLast)
+		if frame > perfWorst then
+			perfWorst = frame
+		end
+	end
+	perfLast, perfFrames = now, perfFrames + 1
+	if not perfStart then
+		perfStart = now
+		return
+	end
+	local seconds = spDiffTimers(now, perfStart)
+	if seconds >= 60 then
+		Spring.Echo(string.format("[bardroid-perf] %.1f fps over %.0f s, slowest frame %.0f ms, %d units", perfFrames / seconds,
+			seconds, perfWorst * 1000, #(Spring.GetAllUnits() or {})))
+		perfFrames, perfStart, perfWorst = 0, now, 0
+	end
+end
+
+function widget:Shutdown()
+	if not queueDrawn then
+		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
+	end
+end
+
 -- The window size is the X server's job (BAR Droid's lorie patch 0003 keeps the game window the size of the screen).
 -- Never Spring.SetWindowGeometry here: the engine clamps it to the screen size SDL saw at startup, so on the other
 -- screen of a foldable it would shrink the window again.
@@ -317,6 +379,12 @@ function widget:Update(dt)
 		applyPad(dt)
 	end
 	updateHover()
+	queueCheck = queueCheck - dt
+	if queueCheck <= 0 then -- queues grow and shrink without a selection change
+		queueCheck = 0.5
+		updateQueueDrawing()
+	end
+	logPerf()
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then

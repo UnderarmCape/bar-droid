@@ -181,7 +181,9 @@ public class GameService extends Service {
                 engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
                 setStatus("running (" + mode + ")");
                 started = android.os.SystemClock.elapsedRealtime();
-                rc = engine.waitFor();
+                PerfLog perf = new PerfLog(this);
+                perf.start();
+                try { rc = engine.waitFor(); } finally { perf.stop(); }
                 if (audio != null) audio.stop();
                 setStatus("engine exited (" + rc + ")");
                 if (up == null || closing) break;
