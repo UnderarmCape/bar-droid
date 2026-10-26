@@ -30,6 +30,7 @@ param(
   [string]$Detail = "Controller Camera Test",
   [switch]$Pad,
   [switch]$Functions, # time each of the detail widget's functions instead of each widget
+  [switch]$Radial, # open v0.8.5's build radial on the commander, twice, and log frame times per second
   [switch]$Released # BAR's released game of the base (no v0.8.5) for comparison
 )
 
@@ -89,6 +90,7 @@ bardroid_profile_warmup = $Warmup
 bardroid_profile_window = $Window
 bardroid_profile_detail = $Detail
 bardroid_profile_functions = $(if ($Functions) { 1 } else { 0 })
+bardroid_profile_radial = $(if ($Radial) { 1 } else { 0 })
 "@ | Set-Content -Path (Join-Path $Data "springsettings.cfg") -Encoding ascii
 
 $template = Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw

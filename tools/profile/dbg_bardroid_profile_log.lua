@@ -23,6 +23,9 @@ local warmup = tonumber(Spring.GetConfigString("bardroid_profile_warmup", "40"))
 local window = tonumber(Spring.GetConfigString("bardroid_profile_window", "60")) or 60
 local detailName = Spring.GetConfigString("bardroid_profile_detail", "Controller Camera Test")
 local functions = Spring.GetConfigInt("bardroid_profile_functions", 0) == 1
+--   bardroid_profile_radial  1: after the warmup, select the commander and open v0.8.5's build radial for 8 s, close it
+--                            for 4 s, open it again for 8 s; log frame times and Lua allocations per second, then quit
+local radial = Spring.GetConfigInt("bardroid_profile_radial", 0) == 1
 local elapsed, measured, frames = 0, 0, 0
 local acc, detailAcc, samples = {}, {}, 0
 local fstats, measuring = {}, false
@@ -171,7 +174,66 @@ local function report()
 	end
 end
 
+-- radial mode: a script of {seconds after the warmup, action}; per-second frame stats while it runs
+local radialScript = { { 0, "select" }, { 1, "open" }, { 9, "close" }, { 13, "open" }, { 21, "close" }, { 24, "quit" } }
+local rStart, rStep, rSecond, rFrames, rWorst, rSum, rLast, rMem = nil, 1, 0, 0, 0, 0, nil, 0
+local startClock = spGetTimerMicros()
+local function cameraWidget()
+	for _, w in ipairs(widgetHandler.widgets) do
+		if w.whInfo and w.whInfo.name == "Controller Camera Test" then return w end
+	end
+end
+local function radialAction(action)
+	local cam = cameraWidget()
+	if action == "select" then
+		local myTeam = Spring.GetMyTeamID()
+		for _, unitID in ipairs(Spring.GetTeamUnits(myTeam) or {}) do
+			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+			if def and def.customParams and def.customParams.iscommander then
+				Spring.SelectUnitArray({ unitID })
+				local x, y, z = Spring.GetUnitPosition(unitID)
+				Spring.SetCameraTarget(x, y, z, 0)
+			end
+		end
+	elseif action == "open" and cam then
+		Spring.Echo("[bardroid-profile] radial open: " .. tostring(cam.ControllerCameraTestOpenBuildMenu()))
+	elseif action == "close" and cam then
+		cam.ControllerCameraTestCloseBuildMenu("profile")
+		Spring.Echo("[bardroid-profile] radial closed")
+	elseif action == "quit" then
+		Spring.SendCommands("quitforce")
+		widgetHandler:RemoveWidget(widget)
+	end
+end
+local function radialUpdate()
+	local now = spGetTimerMicros()
+	if not rStart then
+		if spDiffTimers(now, startClock, false, microTimers) < warmup then return end
+		rStart, rLast, rMem = now, now, collectgarbage("count")
+		collectgarbage("stop")
+		return
+	end
+	local frame = spDiffTimers(now, rLast, true, microTimers)
+	rLast, rFrames, rSum = now, rFrames + 1, rSum + frame
+	if frame > rWorst then rWorst = frame end
+	local t = spDiffTimers(now, rStart, false, microTimers)
+	while radialScript[rStep] and t >= radialScript[rStep][1] do
+		radialAction(radialScript[rStep][2])
+		rStep = rStep + 1
+	end
+	if t >= rSecond + 1 then
+		local mem = collectgarbage("count")
+		Spring.Echo(string.format("[bardroid-profile] radial t=%2ds %3d frames avg %5.1f ms worst %6.1f ms, Lua %7.0f kB allocated",
+			rSecond, rFrames, rSum / math.max(1, rFrames), rWorst, mem - rMem))
+		rSecond, rFrames, rWorst, rSum, rMem = rSecond + 1, 0, 0, 0, mem
+	end
+end
+
 function widget:Update(dt)
+	if radial then
+		radialUpdate()
+		return
+	end
 	if functions then
 		functionsUpdate()
 		return
