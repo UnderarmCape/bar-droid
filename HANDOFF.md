@@ -126,7 +126,8 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   With `CompressTextures = 1` Freedreno picks a compressed format, which is not color-renderable:
   `FBO-TEXTURE-RENDER-ATLAS: None/Unsupported textures/buffers attached`, `atlasRendered=0`, every icon black (also
   `FBO-PROJECTILE-DRAWER-PERLIN`). The emulator's virgl does not compress, so it never showed there. Now
-  `CompressTextures = 0` always (the app setting is gone). Not yet seen on the phone.
+  `CompressTextures = 0` always (the app setting is gone). Confirmed on the phone: no atlas warning in the last eight
+  engine runs (2026-10-26). (The engine drops the key when it saves springsettings.cfg, 0 being its default.)
 - Lobby: `launch-bar.sh` turns Chobby's `drawAtFullSpeed` on once (`LuaMenu/Config/IGL_data.lua`, marker
   `.bardroid-lobby-fullspeed`); the player can turn it off again in the lobby's Settings.
 - Mouse: `HardwareCursor = 1`, so lorie draws the pointer on every display frame instead of the engine once per game
