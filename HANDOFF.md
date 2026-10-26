@@ -357,14 +357,15 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
   thread is busy ~50% and blocked in `0x400c0907` 42%; GPU 342 MHz of 1200, 61-76% busy (no thermal cap); the prime
   cores (cpu6-7) idle at 1017 MHz, the main thread runs on cpu0-5. Its stack while blocked (read from
   `/proc/<pid>/mem` at the SP in `/proc/<pid>/task/<tid>/syscall`; simpleperf has no off-CPU events on this phone;
-  `stackparse.py`/`symchain.py`-style scan, libgallium has a symtab): 29 of 30 samples in immediate mode,
-  `_mesa_Color4fv` → `vbo_exec_wrap_upgrade_vertex` → `_mesa_bufferobj_map_range` → `tc_buffer_map` (`_tc_sync`) →
-  `fd_resource_transfer_map` → `__fd_resource_wait` → `fd_bo_cpu_prep` → KGSL wait. So the GL immediate-mode
-  vertex buffer (Lua `gl.BeginEnd`/`gl.Color`/`gl.Vertex` and the engine's own `glBegin` paths) is mapped while the
-  GPU still uses it, and the CPU waits for the GPU each time. Untested ideas: `mesa_glthread=true` (moves the waits
-  off the main thread), `GALLIUM_THREAD=0`, `MESA_EXTENSION_OVERRIDE=-GL_ARB_buffer_storage` (vbo's other map path);
-  try them through `files/bar/dev-env.sh` on a replay of the same game and compare the `[bardroid-perf]` seconds.
-
+  walk the aarch64 frame records x29 -> {x29, x30}, libgallium has a symtab; a plain scan for code addresses mostly
+  finds stale words): 24 of 30 samples `SDL_GL_SwapWindow` → `__glXSwapBuffers` → `loader_dri3_swap_buffers_msc` →
+  `dri_flush` → `st_context_flush` → `tc_flush` → `_tc_sync` → `tc_batch_execute` → `__fd_resource_wait` →
+  `fd_bo_cpu_prep` → KGSL wait, the rest in `_tc_sync`. So at every swap the driver waits for the GPU to finish with a
+  resource the frame queued (likely this Mesa's Present-fence path waiting for the frame itself): CPU and GPU take
+  turns, the GPU idles ~35% and its governor stays at the bottom clock. Ideas: less GPU work (MSAA was 4x until
+  launch-bar.sh forced 0; shadows; terrain detail; features at any distance from Chobby's `FeatureDrawDistance =
+  600000`), a Mesa that does not wait at the swap, ADPF hints. Kailil: a top-down camera runs much faster than a
+  tilted one. A second 8v8 an hour later: 15 fps, blocked 51%, GPU capped at 443-525 MHz and CPUs at ~2 GHz (hot).
 **Pad as a mouse in the lobby** (Kailil: "just simple mouse movement, scroll and A and B as left and right click"):
 `ControllerBridge.Mouse` (GameActivity `lobbyMouse`) is on while no game widget writes the hover file (older than
 3 s: the lobby, loading screens): left stick moves the X pointer, right stick scrolls, A/B left/right button.
