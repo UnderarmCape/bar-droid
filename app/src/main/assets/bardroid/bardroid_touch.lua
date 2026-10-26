@@ -425,11 +425,14 @@ end
 -- Update runs on. A gap of more than 5 s (the game screen hidden, a reload) starts a new minute.
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
 local perSecond, secondStart, secondFrames = {}, nil, 0
+local catchup -- while catching up with a running game (below): the engine's own settings, where the last log line was
 local function logPerf()
 	local now = spGetTimer()
 	if perfLast and spDiffTimers(now, perfLast) > 5 then
-		Spring.Echo(string.format("[bardroid-perf] no frame drawn for %.0f s (game screen hidden, or a reload)",
-			spDiffTimers(now, perfLast)))
+		if not catchup then -- (catching up, the engine draws one picture every 30 s on purpose: its own log lines say so)
+			Spring.Echo(string.format("[bardroid-perf] no frame drawn for %.0f s (game screen hidden, or a reload)",
+				spDiffTimers(now, perfLast)))
+		end
 		perfFrames, perfStart, perfLast, perfWorst, secondStart, secondFrames = 0, nil, nil, 0, nil, 0
 		for i = #perSecond, 1, -1 do
 			perSecond[i] = nil
@@ -490,7 +493,7 @@ local CATCHUP_PAUSE = 0.05 -- seconds between two simulated frames that count as
 local CATCHUP_GIVE_UP, CATCHUP_RETRY = 60, 300
 local catchupGaveUp, catchupRetry = nil, CATCHUP_RETRY -- timer of the last give-up, wait before the next try
 local serverFrame, serverFrameAt -- GameProgress: the server's frame, every 150 frames
-local catchup -- while catching up: the engine's own settings, and where the last log line was
+-- (catchup, declared above logPerf: while catching up, the engine's own settings and where the last log line was)
 local catchupChecked, checkedFrame, lastGameFrameAt
 local fastChecks, slowChecks = 0, 0
 local speedFrame, speedAt, speedNow = nil, nil, 0 -- game speed over the last few seconds, for the app's progress
