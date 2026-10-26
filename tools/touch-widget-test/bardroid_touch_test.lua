@@ -100,6 +100,25 @@ cases = {
 		local miss = g and groundBefore and math.sqrt((g[1] - groundBefore[1]) ^ 2 + (g[3] - groundBefore[3]) ^ 2)
 		near("drag: the map point follows the finger (elmos off)", miss, 0, 8)
 	end,
+	-- the gamepad camera (online games; ControllerBridge sends "pad" lines when the sticks change)
+	function()
+		before = Spring.GetCameraState()
+		touch("pad 32767 0 0 0 0 0") -- left stick full right
+	end,
+	function() touch("pad 0 0 0 0 0 0") end,
+	function()
+		local cs = Spring.GetCameraState()
+		local right = Spring.GetCameraVectors().right
+		local dx, dz = cs.px - before.px, cs.pz - before.pz
+		local along = dx * right[1] + dz * right[3]
+		local len = math.sqrt(right[1] ^ 2 + right[3] ^ 2)
+		near("left stick right pans to the camera's right (elmos)", along / len > 100 and 1 or 0, 1, 0)
+		before = cs
+	end,
+	function()
+		local cs = Spring.GetCameraState()
+		near("sticks at rest: the camera stays (elmos)", math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2), 0, 1)
+	end,
 	-- the interface answers (bardroid_hover.txt)
 	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
 	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
