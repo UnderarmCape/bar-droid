@@ -203,7 +203,8 @@ public class GameActivity extends MainActivity {
                 long frame = Long.parseLong(v[0]), server = Long.parseLong(v[1]);   // server 0: not known yet
                 float speed = Float.parseFloat(v[2]);                               // 0: not measured yet
                 text = "Catching up\n" + gameClock(frame) + (server > 0 ? " of " + gameClock(server) : "")
-                        + (speed > 0 ? String.format(java.util.Locale.US, "   x%.1f", speed) : "");
+                        + (speed > 0 ? String.format(java.util.Locale.US, "   x%.1f", speed) : "")
+                        + timeLeft(server - frame, speed);
             } catch (java.io.IOException | RuntimeException e) {
                 return;   // the file changing under the read: keep what is shown, the next poll reads it again
             }
@@ -212,6 +213,13 @@ public class GameActivity extends MainActivity {
         if (catchupView == null) return;
         if (on) catchupView.setText(text);
         catchupView.setVisibility(on ? View.VISIBLE : View.GONE);
+    }
+
+    /** "about N min left": the gap shrinks by (speed - 1) game seconds a second (the live game runs on at 1x). */
+    private static String timeLeft(long behindFrames, float speed) {
+        if (behindFrames <= 0 || speed < 1.1f) return "";
+        long seconds = Math.round(behindFrames / 30.0 / (speed - 1));
+        return seconds < 90 ? "\nunder 2 min left" : "\nabout " + Math.round(seconds / 60.0) + " min left";
     }
 
     private static String gameClock(long frame) {
