@@ -67,8 +67,8 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   the picture and sound come back at once ("game screen hidden/shown" in launcher.log). Off: `export
   BARDROID_HIDDEN_PAUSE=0` in `files/bar/dev-env.sh`.
 - launch-bar.sh as it is now, dry-run on the phone (in the container, on copies of Kailil's BYAR.lua, IGL_data.lua,
-  IGL_order.lua and springsettings.cfg, a stub engine): no layer miss; it sets the Spring camera (springsettings had
-  CamMode 3, the lobby's copy 1), GroundDetail 200 → 60, the VSync keys the old touch widget left (VSync 2, VSyncGame 1)
+  IGL_order.lua and springsettings.cfg, a stub engine): no layer miss; it sets the Spring camera (Kailil's pick and the
+  default he wants, `CamMode = 2`; springsettings had CamMode 3, the lobby's copy 1), GroundDetail 200 → 60, the VSync keys the old touch widget left (VSync 2, VSyncGame 1)
   off, MSAA/features, Snow/SSAO/Keys/Changes off, the Build menu, the lobby's panels and 120%; a second run changes
   nothing. (The container's `/opt/bardroid` copy is refreshed only when a game starts.)
 - The engine update path (never run on the phone: BAR has been on 2026.07.04 all along) checked with BAR's test engine
@@ -82,9 +82,9 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   Place Blueprint): BAR sizes the order menu by 1/aspect ratio, so on a near-square screen the info panel and order
   menu take 89% of the width. The player list at 75% (`AdvPlayersList.customScale`) uncovers most of it
   (`inner-phone-1.3-list075.png`); moving the order menu off the bottom does nothing there.
-- From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
-  "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
-  layer resets them at the next start. "lowest" is the preset closest to the phone layer.
+- The last 8v8's late slowdown (29.6 → 19.6 fps as it grew to ~1300 units) is the load, not BAR's presets: Kailil
+  switched to "medium" and back to "lowest" mid-game and it stayed at ~19 fps as the game got busier. The `[perf]`
+  lines of those minutes: GPU 90-93% busy at its thermal cap (525-607 MHz). Next lead for big late games.
 - Tests that run on the laptop, all in `tools/laptop-tests.ps1` (~5 min, all PASS): Downloader, the springsettings
   merge (`SettingsMerge`, with Kailil's file: 147 of BAR's keys kept), the updater's rollback decision, the lobby bridge
   against the real lobby, the touch widget in BAR's game and the controller game. `tools/pace-test.ps1` checks the
@@ -368,9 +368,9 @@ One ABI per APK.
 - The explicit Present fence (`libbardroid_pace.so`'s ioctl answer) is new: watch for flicker or a stall on
   fold/unfold and in the floating window.
 - The lobby runs without BAR's launcher behind it ("WrapperLoopback", below): some lobby features fail quietly.
-- BAR's graphics presets in its settings menu undo the phone layer for the rest of that game ("medium" switched
-  shadows, bloom, snow, distortion and decals back on in the last 8v8); the next start resets them. "lowest" is the
-  closest to the phone layer.
+- BAR's graphics presets in its settings menu undo the phone layer for the rest of that game ("medium" switches
+  shadows, bloom, snow, distortion and decals back on); the next start resets them. They were not what slowed the
+  last 8v8 (above): late games with ~1300 units run ~19 fps on a hot phone, GPU-bound at its thermal cap.
 
 ## Gamepad (2026-10-26)
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
