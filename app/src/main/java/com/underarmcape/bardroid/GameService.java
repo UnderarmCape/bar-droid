@@ -97,6 +97,7 @@ public class GameService extends Service {
             inst = new Installer(this, paths);
             if (!inst.isInstalled()) return;
         }
+        boolean showLauncher = true;
         try {
             inst.refreshHostFiles();                        // scripts/assets of this app version
             inst.writeGameFiles();                          // refresh settings + start script
@@ -131,8 +132,10 @@ public class GameService extends Service {
             int rc = engine.waitFor();
             if (audio != null) audio.stop();
             setStatus("engine exited (" + rc + ")");
-            if ("lobby".equals(mode))   // a lobby that dies at once is not started again from the app icon
+            if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
                 Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
+                showLauncher = rc != 0;   // quitting the lobby closes the app; a failure shows the launcher and its log
+            }
         } catch (InterruptedException e) {
             setStatus("stopped");
         } catch (Exception e) {
@@ -142,13 +145,14 @@ public class GameService extends Service {
             virgl.stop();
             xserver.stop();
             engine = null;
-            closeDisplay();
+            closeDisplay(showLauncher);
         }
     }
 
-    /** Closes the X display activity (Termux:X11's ACTION_STOP) and brings the launcher back with the result. */
-    private void closeDisplay() {
+    /** Closes the X display activity (Termux:X11's ACTION_STOP) and, if asked, brings the launcher back with the result. */
+    private void closeDisplay(boolean showLauncher) {
         sendBroadcast(new Intent(com.termux.x11.MainActivity.ACTION_STOP).setPackage(getPackageName()));
+        if (!showLauncher) return;
         try {
             startActivity(new Intent(this, LauncherActivity.class)
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT));

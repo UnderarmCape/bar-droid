@@ -25,10 +25,11 @@
         android:supportsRtl="true"
         tools:replace="android:name,android:icon,android:roundIcon,android:label,android:theme">
 
+        <!-- The app icon: straight into the lobby, BAR's icon on black meanwhile. -->
         <activity
-            android:name=".LauncherActivity"
+            android:name=".StartActivity"
             android:exported="true"
-            android:launchMode="singleTask"
+            android:theme="@style/Theme.BarDroid.Start"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode|smallestScreenSize|screenLayout">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -36,6 +37,13 @@
             </intent-filter>
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- Install, settings, logs: long-press the app icon → Launcher (res/xml/shortcuts.xml). -->
+        <activity
+            android:name=".LauncherActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode|smallestScreenSize|screenLayout" />
 
         <!-- The X display + input surface, inherited from Termux:X11's MainActivity. -->
         <activity

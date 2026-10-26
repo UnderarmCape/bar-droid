@@ -20,7 +20,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
 
-/** Home screen: device check, install, play, settings, live log. */
+/**
+ * Device check, install, play, settings, live log. The app icon opens StartActivity (straight into the lobby); this
+ * screen is long-press the icon → "Launcher", a first install, or what is left when something failed.
+ */
 public class LauncherActivity extends AppCompatActivity {
     private TextView statusView, deviceView, logView;
     private ScrollView logScroll;
@@ -63,30 +66,6 @@ public class LauncherActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
-        if (savedInstanceState == null) openFromIcon(getIntent());
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-        openFromIcon(intent);
-    }
-
-    /**
-     * Opened from the app icon: straight into the lobby, or back to a game that is running. This screen stays for a
-     * first install, an install step an update added, a lobby that failed right away, or with the setting off; the
-     * icon's long-press shortcut "Launcher" (res/xml/shortcuts.xml) always opens it.
-     */
-    private void openFromIcon(Intent i) {
-        if (i == null || !Intent.ACTION_MAIN.equals(i.getAction()) || !i.hasCategory(Intent.CATEGORY_LAUNCHER)) return;
-        if (GameService.busy()) {
-            if (GameService.status().startsWith("running"))
-                startActivity(new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            return;
-        }
-        if (!Prefs.autoLobby || !new Installer(this, BarApp.get().paths()).isInstalled()) return;
-        if (Prefs.lobbyFailedFast(this)) { Log.i("app", "the lobby failed on its last start: staying on the launcher"); return; }
-        GameService.start(this, GameService.ACTION_PLAY, "lobby");
     }
 
     @Override protected void onStart() { super.onStart(); Log.addListener(logListener); handler.post(ticker); }
