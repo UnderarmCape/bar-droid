@@ -143,13 +143,23 @@ local function newTouchLines()
 	return data:sub(1, cut - 1)
 end
 
--- The map point under an X screen pixel, or nil (sky).
+-- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
+-- of the ground the camera looks at, so dragging and pinching keep working there; nil only above the horizon.
 local function ground(x, y)
 	local _, vsy = spGetViewGeometry()
 	local kind, pos = spTraceScreenRay(x, vsy - y, true)
 	if kind == "ground" and pos then
 		return pos[1], pos[3]
 	end
+	local dx, dy, dz = Spring.GetPixelDir(x, vsy - y)
+	if not dy or dy > -0.01 then
+		return nil
+	end
+	local cx, cy, cz = Spring.GetCameraPosition()
+	local cs = spGetCameraState()
+	local h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
+	local t = (h - cy) / dy
+	return cx + dx * t, cz + dz * t
 end
 
 -- Zoom by this factor (> 1 = closer) keeping the ground point under X screen pixel (x, y) where it is on screen: the
