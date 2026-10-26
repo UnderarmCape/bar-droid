@@ -23,11 +23,26 @@ public final class Log {
     private static File file;
     private static final SimpleDateFormat fmt = new SimpleDateFormat("HH:mm:ss", Locale.US);
 
+    private static final long ROTATE_BYTES = 4L * 1024 * 1024;
+    private static int sinceCheck;
+
     public static synchronized void init(File logDir) {
         //noinspection ResultOfMethodCallIgnored
         logDir.mkdirs();
         file = new File(logDir, "launcher.log");
-        if (file.length() > 4L * 1024 * 1024) //noinspection ResultOfMethodCallIgnored
+        rotateIfBig();
+    }
+
+    /**
+     * A full log becomes launcher.old.log (Share logs sends both): the session that went wrong is still there after
+     * the app restarts. Checked at start and every 2000 lines (the app can live for days behind the launcher).
+     */
+    private static void rotateIfBig() {
+        if (file.length() <= ROTATE_BYTES) return;
+        File old = new File(file.getParentFile(), "launcher.old.log");
+        //noinspection ResultOfMethodCallIgnored
+        old.delete();
+        if (!file.renameTo(old)) //noinspection ResultOfMethodCallIgnored
             file.delete();
     }
 
@@ -49,6 +64,7 @@ public final class Log {
             while (lines.size() > MAX_LINES) lines.removeFirst();
             ls = new ArrayList<>(listeners);
             if (file != null) {
+                if (++sinceCheck >= 2000) { sinceCheck = 0; rotateIfBig(); }
                 try (FileWriter w = new FileWriter(file, true)) { w.write(s); w.write('\n'); } catch (IOException ignored) {}
             }
         }

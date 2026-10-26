@@ -37,6 +37,7 @@ final class LogShare {
         File zip = new File(dir, "bardroid-logs-" + stamp + ".zip");
         try (ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zip))) {
             add(out, new File(p.logs, "launcher.log"), "launcher.log");
+            add(out, new File(p.logs, "launcher.old.log"), "launcher.old.log");
             add(out, new File(p.bar, "infolog.txt"), "infolog.txt");
             add(out, new File(p.bar, "springsettings.cfg"), "springsettings.cfg");
             add(out, p.stateFile, "install-state.properties");

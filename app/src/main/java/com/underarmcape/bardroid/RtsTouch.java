@@ -156,6 +156,8 @@ final class RtsTouch {
 
     void close() {
         ui.removeCallbacks(fling);
+        ui.removeCallbacks(longPress);
+        ui.removeCallbacks(hoverTimeout);
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
