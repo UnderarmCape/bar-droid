@@ -20,6 +20,14 @@
  * below answers ENOTTY for that request, and Mesa takes the explicit path (our lorie has the X server's Present
  * wait-fence fix, termux-x11 b36dac08). BARDROID_PRESENT_FENCE=0 leaves the ioctl alone.
  *
+ * While nobody sees the game (the app's game screen stopped: phone locked, another app in front), the app keeps
+ * /tmp/bardroid-hidden. The engine stops drawing by itself when its window is hidden or minimized (SpringApp's
+ * SDL_WINDOWEVENT_HIDDEN: Game::Draw returns early, two frames a minute; sound muted, as minimizing BAR on a PC does),
+ * but without a window manager nothing ever hides its window, so it drew 30 frames a second for nobody: heat the next
+ * minutes of play pay for. SDL_PollEvent below hands the engine SDL2's HIDDEN / SHOWN window event when the flag comes
+ * and goes (checked twice a second; the engine polls events every loop, drawn or not). The simulation and the
+ * network keep running. Only with SDL2 (its event layout); BARDROID_HIDDEN_PAUSE=0 turns it off.
+ *
  * Built by tools/build-pace.py without glibc headers: the few declarations it needs are below, and the symbols
  * resolve against the engine's libc at load time.
  */
@@ -29,6 +37,10 @@ extern int clock_nanosleep(int clock, int flags, const struct timespec *request,
 extern void *dlsym(void *handle, const char *symbol);
 extern char *getenv(const char *name);
 extern int *__errno_location(void);
+extern int access(const char *path, int mode);
+#define F_OK 0
+#define RTLD_DEFAULT ((void *) 0)
+#define HIDDEN_FLAG "/tmp/bardroid-hidden"
 #define RTLD_NEXT ((void *) -1L)
 #define CLOCK_MONOTONIC 1
 #define TIMER_ABSTIME 1
@@ -80,8 +92,59 @@ static long long read_interval(void) {
     return fps > 0 ? 1000000000LL / fps : 0;
 }
 
+/* SDL2's SDL_WindowEvent (SDL_events.h), the start of the 56-byte SDL_Event union */
+struct sdl2_window_event {
+    unsigned type, timestamp, window_id;
+    unsigned char event, padding1, padding2, padding3;
+    int data1, data2;
+};
+#define SDL2_EVENT_SIZE 56
+#define SDL2_WINDOWEVENT 0x200
+#define SDL2_WINDOWEVENT_SHOWN 1
+#define SDL2_WINDOWEVENT_HIDDEN 2
+
+typedef int (*poll_fn)(void *event);
+typedef unsigned (*window_id_fn)(void *window);
+static poll_fn real_poll;
+static unsigned game_window;      /* the engine's window (SDL id), known after its first swap; 0 = do nothing */
+static long long hidden_checked_ns;
+static int engine_hidden;         /* what the engine was told last */
+
+static void learn_window(void *window) {
+    const char *s = getenv("BARDROID_HIDDEN_PAUSE");
+    /* SDL_GetWindowWMInfo exists in SDL2 only: SDL3's events look different */
+    if ((s && s[0] == '0') || !dlsym(RTLD_DEFAULT, "SDL_GetWindowWMInfo")) return;
+    window_id_fn id = (window_id_fn) dlsym(RTLD_DEFAULT, "SDL_GetWindowID");
+    if (id) game_window = id(window);
+}
+
+int SDL_PollEvent(void *event) {
+    if (!real_poll) real_poll = (poll_fn) dlsym(RTLD_NEXT, "SDL_PollEvent");
+    if (event && game_window) {
+        long long now = now_ns();
+        if (now - hidden_checked_ns >= 500000000LL) {
+            hidden_checked_ns = now;
+            int hidden = access(HIDDEN_FLAG, F_OK) == 0;
+            if (hidden != engine_hidden) {
+                engine_hidden = hidden;
+                unsigned char *b = (unsigned char *) event;
+                for (int i = 0; i < SDL2_EVENT_SIZE; i++) b[i] = 0;
+                struct sdl2_window_event *w = (struct sdl2_window_event *) event;
+                w->type = SDL2_WINDOWEVENT;
+                w->window_id = game_window;
+                w->event = hidden ? SDL2_WINDOWEVENT_HIDDEN : SDL2_WINDOWEVENT_SHOWN;
+                return 1;
+            }
+        }
+    }
+    return real_poll(event);
+}
+
 void SDL_GL_SwapWindow(void *window) {
-    if (!real_swap) real_swap = (swap_fn) dlsym(RTLD_NEXT, "SDL_GL_SwapWindow");
+    if (!real_swap) {
+        real_swap = (swap_fn) dlsym(RTLD_NEXT, "SDL_GL_SwapWindow");
+        learn_window(window);
+    }
     if (interval_ns < 0) interval_ns = read_interval();
     real_swap(window);
     if (interval_ns == 0) return;

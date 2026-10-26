@@ -155,7 +155,9 @@ public class GameService extends Service {
                 virgl.start();
                 if (!virgl.waitForSocket(10000)) { setStatus("virgl server did not start (see log)"); return; }
             }
-            // Bring the display up
+            // Bring the display up (a hidden flag left by the last game screen must not hide this one)
+            //noinspection ResultOfMethodCallIgnored
+            GameActivity.hiddenFlag(paths).delete();
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(ui);
 

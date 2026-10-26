@@ -120,7 +120,25 @@ public class GameActivity extends MainActivity {
         getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
         pad.stop();
         touch.close();
+        setHidden(false);
         super.onDestroy();
+    }
+
+    // Nobody sees the game while this screen is stopped (phone locked, another app in front; the floating window only
+    // pauses it): libbardroid_pace.so then tells the engine its window is hidden, and the engine stops drawing and
+    // mutes its sound as a minimized BAR does on a PC. The game itself runs on.
+    @Override protected void onStart() { super.onStart(); setHidden(false); }
+    @Override protected void onStop() { setHidden(true); super.onStop(); }
+
+    /** The flag libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden). */
+    static java.io.File hiddenFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-hidden"); }
+
+    private void setHidden(boolean hidden) {
+        java.io.File flag = hiddenFlag(BarApp.get().paths());
+        try {
+            if (hidden ? flag.createNewFile() : flag.delete())
+                Log.i("display", hidden ? "game screen hidden: the engine stops drawing" : "game screen shown: the engine draws");
+        } catch (java.io.IOException e) { Log.e("display", "hidden flag: " + e); }
     }
 
     @Override
