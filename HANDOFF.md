@@ -340,6 +340,9 @@ One ABI per APK.
 - The explicit Present fence (`libbardroid_pace.so`'s ioctl answer) is new: watch for flicker or a stall on
   fold/unfold and in the floating window.
 - The lobby runs without BAR's launcher behind it ("WrapperLoopback", below): some lobby features fail quietly.
+- BAR's graphics presets in its settings menu undo the phone layer for the rest of that game ("medium" switched
+  shadows, bloom, snow, distortion and decals back on in the last 8v8); the next start resets them. "lowest" is the
+  closest to the phone layer.
 
 ## Gamepad (2026-10-26)
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
