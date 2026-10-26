@@ -318,6 +318,11 @@ widgets together ~1.6 → ~0.8 ms/frame. What it was and what changed:
   what it shows changes (drawn directly when it changes and while it fades in, re-recorded once a second), and the
   renderer/glyph code allocates nothing (5384 gl calls compared identical to the release branch).
 - A resting stick read the camera state each frame only for the hidden debug panel.
+- The build radial (RB) rebuilt its tables, text and BAR's unit cells in immediate mode every frame it was open
+  (Kailil: 20-23 fps on opening, ~10 s to recover): now a display list, recorded once its inputs (options, selection,
+  page, affordability, queues, progress, availability text, position, settings) held for a frame, replayed until one
+  changes. Laptop (`-Radial`): 355 of 358 frames per open replayed, garbage while open 1.8 → 0.33 MB/s (as when
+  closed), first-open worst frame 46 → 37 ms; its screenshot shows the same radial.
 v0.8.5's own suite (`BARGAMEPAD scripts\codex-tests.ps1 -GameDir src\bar-codex-perf`): 20 pass + the 6 known
 attempt-01 failures, as on the release branch. Profiling: `tools/profile-gamepad-game.ps1 [-Functions -Detail <widget>]`
 (per widget, or every function of one widget with exact allocations); `-Released` measures BAR without v0.8.5.

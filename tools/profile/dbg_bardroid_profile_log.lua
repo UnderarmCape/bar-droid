@@ -23,8 +23,9 @@ local warmup = tonumber(Spring.GetConfigString("bardroid_profile_warmup", "40"))
 local window = tonumber(Spring.GetConfigString("bardroid_profile_window", "60")) or 60
 local detailName = Spring.GetConfigString("bardroid_profile_detail", "Controller Camera Test")
 local functions = Spring.GetConfigInt("bardroid_profile_functions", 0) == 1
---   bardroid_profile_radial  1: after the warmup, select the commander and open v0.8.5's build radial for 8 s, close it
---                            for 4 s, open it again for 8 s; log frame times and Lua allocations per second, then quit
+--   bardroid_profile_radial  1: after the warmup, select the commander and open v0.8.5's build radial for 8 s (a
+--                            screenshot after 5 s), close it for 4 s, open it again for 8 s; log frame times and Lua
+--                            allocations per second, then quit
 local radial = Spring.GetConfigInt("bardroid_profile_radial", 0) == 1
 local elapsed, measured, frames = 0, 0, 0
 local acc, detailAcc, samples = {}, {}, 0
@@ -175,7 +176,7 @@ local function report()
 end
 
 -- radial mode: a script of {seconds after the warmup, action}; per-second frame stats while it runs
-local radialScript = { { 0, "select" }, { 1, "open" }, { 9, "close" }, { 13, "open" }, { 21, "close" }, { 24, "quit" } }
+local radialScript = { { 0, "select" }, { 1, "open" }, { 6, "screenshot" }, { 9, "close" }, { 13, "open" }, { 21, "close" }, { 24, "quit" } }
 local rStart, rStep, rSecond, rFrames, rWorst, rSum, rLast, rMem = nil, 1, 0, 0, 0, 0, nil, 0
 local startClock = spGetTimerMicros()
 local function cameraWidget()
@@ -199,7 +200,13 @@ local function radialAction(action)
 		Spring.Echo("[bardroid-profile] radial open: " .. tostring(cam.ControllerCameraTestOpenBuildMenu()))
 	elseif action == "close" and cam then
 		cam.ControllerCameraTestCloseBuildMenu("profile")
-		Spring.Echo("[bardroid-profile] radial closed")
+		local stats = cam.ControllerCameraTestBuildRadialDrawStats
+		local recorded, replayed, drawn
+		if stats then recorded, replayed, drawn = stats() end
+		Spring.Echo(string.format("[bardroid-profile] radial closed; frames recorded %s, replayed %s, drawn directly %s",
+			tostring(recorded), tostring(replayed), tostring(drawn)))
+	elseif action == "screenshot" then
+		Spring.SendCommands("screenshot png")
 	elseif action == "quit" then
 		Spring.SendCommands("quitforce")
 		widgetHandler:RemoveWidget(widget)
