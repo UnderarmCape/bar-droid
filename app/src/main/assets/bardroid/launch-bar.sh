@@ -157,6 +157,11 @@ done
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
   sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
+  # (the widget saves its settings after its first game; until then there is nothing to set)
+  if grep -q '\["Deferred rendering GL4"\] *= *{' "$BAR/LuaUI/Config/BYAR.lua"; then
+    grep -q '^[[:space:]]*screenSpaceShadows = 0,' "$BAR/LuaUI/Config/BYAR.lua" \
+      || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
+  fi
 fi
 log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension"
 

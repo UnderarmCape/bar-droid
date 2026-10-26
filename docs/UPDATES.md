@@ -55,7 +55,9 @@ updates off.
    `[0-9A-Za-z._-]+`; anything else is logged as an error and ignored. A new version is downloaded (resumable) and
    extracted by `setup-container.sh engine` into `engine/recoil_<ver>.new`, which must hold `spring` and
    `pr-downloader` and pass `spring --version`; then it is renamed to `engine/recoil_<ver>`, beside the old one.
-   Download or extraction failure: logged, the old engine stays.
+   Download or extraction failure: logged, the old engine stays. A partial download resumes at the next start; a whole
+   archive that failed to extract is deleted (there is no checksum to tell a damaged one), so the next start fetches
+   it again. Checked on the Fold7 with 2026.09.01 under a scratch name (2026-10-26).
 3. **Game and lobby** — the rapid tags of `downloads.games` (today `byar:test`, `byar-chobby:test`; `Prefs.gameTag` /
    `lobbyTag` follow them). Fast path, so an unchanged start costs two small requests instead of a pr-downloader run
    in proot: GET `<repo>/versions.gz` with the saved ETag (304 = unchanged), read the tag's md5, compare with the tag in
@@ -98,7 +100,12 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 
 | Part | Where | Re-applied | Target check (miss = loud) |
 | --- | --- | --- | --- |
-| `springsettings.cfg` (Android keys) | `Installer.writeGameFiles` | every launch | after an engine update, `spring --list-config-vars` of the old and new engine: a key of our template the old engine knew and the new one does not is an error |
+| `springsettings.cfg` (Android keys) | `Installer.writeGameFiles`: the existing file is kept (BAR's and the player's settings), the template's missing keys added, the `ALWAYS` keys set | every launch | after an engine update, `spring --list-config-vars` of the old and new engine: a key of our template the old engine knew and the new one does not is an error |
+| Phone graphics `PHONE_GFX` (no MSAA, shadows, far features, water passes, engine grass, line smoothing; Spring camera; VSync off) | `launch-bar.sh`: `springsettings.cfg` and the lobby's `game_settings` in `IGL_data.lua` | every launch | set, or appended when missing; the lobby's copy where it has the key |
+| BAR's full-screen effects off (bloom, SSAO, distortion, snow, map edge extension); top bar Keys/Changes off | `launch-bar.sh` `widget_order`, `LuaUI/Config/BYAR.lua` | every lobby/skirmish start | a missing entry is inserted |
+| Lights' screen-space shadows 0 | `launch-bar.sh`, BYAR.lua `["Deferred rendering GL4"]` | every lobby/skirmish start | the widget's saved data without `screenSpaceShadows` = miss |
+| Interface scale per Fold screen (2.0 cover, 1.3 inner, 1.0 cover upright) | `launch-bar.sh` at start; `bardroid_touch.lua` on fold/unfold (one LuaUI reload) | every launch / screen change | set or appended (`tools/touch-widget-test.ps1`) |
+| Lobby: split panels Autodetect, interface 120% | `launch-bar.sh`, `IGL_data.lua` | every lobby start | not set afterwards = miss |
 | BAR's `launch.springsettings` | `Updater.applyLauncherSettings` | every launch | keys our layer does not set are added; where ours differ, ours win (logged) |
 | `bardroid_touch.lua` widget | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
 | `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |
