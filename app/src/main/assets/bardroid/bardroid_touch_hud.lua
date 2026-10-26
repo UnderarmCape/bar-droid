@@ -110,7 +110,8 @@ local function wantedMods()
 	local build = WG.bardroidTouchBuild
 	if not active then
 		shift, ctrl = false, false -- a mouse or keyboard in use: hands off the keys
-	elseif build and build.armed and (build.mode == "line" or build.mode == "grid") then
+	elseif build and build.armed then
+		-- Shift keeps the building armed after each placement (chained placement, rows) and queues the builds
 		shift, alt = true, build.mode == "grid"
 	end
 	return string.format("mods %d %d %d", shift and 1 or 0, ctrl and 1 or 0, alt and 1 or 0)
@@ -124,8 +125,20 @@ local function sendMods(force)
 	end
 end
 
+-- The build menu's placement mode, for the app: in ONE taps and drags move the ghost, in LINE/GRID drags lay rows.
+local sentPlace
+local function sendPlace(force)
+	local build = WG.bardroidTouchBuild
+	local place = build and build.mode or "one"
+	if force or place ~= sentPlace then
+		send("place " .. place)
+		sentPlace = place
+	end
+end
+
 local function sendLatches()
 	sendMods(true)
+	sendPlace(true)
 	send("box " .. (latch.box and 1 or 0))
 end
 
@@ -910,7 +923,8 @@ function widget:Update(dt)
 			boxRect = nil
 		end
 	end
-	sendMods() -- a building armed or put away in LINE/GRID mode holds or releases Shift (+Alt)
+	sendMods() -- a building armed or put away holds or releases Shift (+Alt for GRID)
+	sendPlace()
 
 	checkTimer = checkTimer - dt
 	if checkTimer <= 0 then

@@ -118,10 +118,14 @@ there at once. LINE / GRID: drag over the map; the engine lays out and previews 
 
 1. **v1 (done, tested once):** smart tap, latches, box select, build drawer with ONE/LINE/GRID. Kailil: "not good
    enough", "far too rudimentary".
-2. **v2 stage A — the dock:** selection cards, command bar, quick-select rail with ☰ menu, two-finger tap = cancel /
-   deselect.
-3. **v2 stage B — press and hold radial menu** with haptics.
-4. **v2 stage C — ghost placement** with ✓ ↻ ✕ beside the ghost, tap to move it, chained placement, double tap to place.
+2. **v2 stage A (eb313c9) — the dock:** selection cards, command bar, quick-select rail with ☰ menu, two-finger tap =
+   cancel / deselect.
+3. **v2 stage B (815bb6f) — press and hold radial menu** with haptics; orders go straight to the selected units
+   (`Spring.GiveOrder`, QUEUE queues), or arm + click where the game forbids widget orders.
+4. **v2 stage C — ghost placement:** BUILD / ROTATE / CANCEL beside the ghost, tap to move it, drag it from on top,
+   pan under it, chained placement, double tap to build. While a building is armed the app holds Shift (chaining,
+   queueing; Shift+Alt in GRID) and knows the mode (`place one|line|grid`).
+   None of the v2 stages is tested on the phone yet.
 5. Later: health/progress on cards, minimap size per screen, per-screen `ui_scale`, lobby (Chobby) by touch.
 
 ## 7. Test plan (phone only, Kailil drives; logs: `files/bar/infolog.txt` `[bardroid-*]`, `files/logs/launcher.log`

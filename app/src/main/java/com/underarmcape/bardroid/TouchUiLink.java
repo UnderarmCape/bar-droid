@@ -33,6 +33,7 @@ import java.util.Locale;
  *                               building: they go through the engine like a mouse click, so BAR's own handling applies)
  *   move <x> <y>                the pointer only (the building ghost follows it)
  *   buzz                        a haptic tick
+ *   place <one|line|grid>       the build menu's placement mode (read by RtsTouch: what a drag does to a building)
  *
  * It also keeps LuaUI/Config/bardroid_touchui.txt current ("1 <X screen pixels per millimetre> <input>"), so the HUD
  * sizes its buttons in millimetres on either screen of a foldable, and steps aside while another input is in use:
@@ -50,6 +51,7 @@ final class TouchUiLink {
     private long readPos;                                   // observer thread
     private final StringBuilder partial = new StringBuilder();
     private boolean shift, ctrl, alt, box;                  // UI thread: what the HUD wants
+    private String placeMode = "one";
     private boolean heldShift, heldCtrl, heldAlt;           // UI thread: what the X server has
     private String lastInfo;
     private String input = "touch";                         // UI thread: the input used last
@@ -98,6 +100,9 @@ final class TouchUiLink {
 
     /** BOX is latched: one-finger drags on the map select. */
     boolean boxSelect() { return box; }
+
+    /** A building armed in the build menu's ONE mode: taps and drags position its ghost (LINE/GRID drag rows). */
+    boolean placeOne() { return "one".equals(placeMode); }
 
     /** View (physical) pixels per millimetre on the current display. */
     float viewPxPerMm() {
@@ -167,6 +172,9 @@ final class TouchUiLink {
             }
             case "buzz":
                 activity.getLorieView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                break;
+            case "place":
+                if (f.length > 1) placeMode = f[1];
                 break;
             default:
                 Log.e("touchui", "unknown request: " + line);

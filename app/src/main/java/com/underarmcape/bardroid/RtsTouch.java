@@ -40,12 +40,16 @@ import java.util.Locale;
  *   two fingers up/down  tilt the camera (both fingers moving the same way, side by side)
  *   three-finger tap     show / hide the keyboard
  *
- * Touch-only mode (launcher option, TOUCH-UI.md) adds, with the touch HUD widget in the game:
- *   drag on the map      with a command armed: a left drag (formation line, area circle; a line of buildings with
- *                        QUEUE); with a building armed and QUEUE off: the ghost follows a centimetre above the finger
- *                        and lifting places it; with BOX latched: box select
+ * Touch-only mode (launcher option, TOUCH-UI.md: a phone RTS) adds, with the touch widgets in the game:
+ *   drag on the map      with a command armed: a left drag (formation line, area circle); with a building armed in
+ *                        LINE/GRID: a left drag (the engine lays the row/rectangle); in ONE: a drag that starts on
+ *                        the ghost moves it (a centimetre above the finger), any other drag pans; SELECT latched:
+ *                        box select
+ *   tap                  with a building armed in ONE: moves the ghost there; a double tap builds it there
+ *   press and hold       on the map: the HUD's radial menu (radial lines); on the interface still the right button
  *   tap, then drag       box select drawn by the HUD (no mouse button: a left press on the map is always a tap there)
  *   two fingers          zoom is a camera line (smooth, unaffected by a held Shift/Ctrl); on the interface: scroll
+ *   two-finger tap       cancel (the HUD puts away what is armed, else deselects)
  *
  * Camera moves go to bardroid_touch.lua in the game through files (BAR's sandbox gives user widgets no sockets); the
  * widget answers through bardroid_hover.txt whether the pointer is over the game's interface and what is armed.
@@ -212,6 +216,7 @@ final class RtsTouch {
                 if (velocity != null) velocity.recycle();
                 velocity = VelocityTracker.obtain();
                 velocity.addMovement(e);
+                ghost = ghostMode() ? pointer() : null;   // the building ghost before the cursor jumps to the finger
                 moveCursor(downX, downY);   // the widget reports whether this point is on the game's interface
                 ui.postDelayed(longPress, LONG_PRESS_MS);
                 break;
@@ -348,6 +353,7 @@ final class RtsTouch {
         curX = e.getX(); curY = e.getY();
         switch (state) {
             case PENDING:
+                if (ghostTap()) break;
                 tap(downX, downY);
                 break;
             case DRAG_WAIT:
@@ -375,12 +381,8 @@ final class RtsTouch {
             case RADIAL:
                 send(String.format(Locale.US, "radialup %.0f %.0f", toX(curX), toY(curY)));
                 break;
-            case GHOST: {   // place the building where its ghost is
-                float y = curY - ghostOffset();
-                press(curX, y, InputStub.BUTTON_LEFT, true);
-                press(curX, y, InputStub.BUTTON_LEFT, false);
+            case GHOST:   // the ghost stays where it was dragged; the HUD's PLACE (or a double tap) builds it
                 break;
-            }
             case MULTI_PENDING:
                 if (e.getEventTime() - downTime <= MULTI_TAP_MS) {
                     if (maxFingers == 2 && touchOnly) {
@@ -413,7 +415,8 @@ final class RtsTouch {
     /**
      * A one-finger drag: a left drag where it started on the game's interface, else a pan; null = not known yet.
      * Touch-only mode, on the map: box select with BOX latched; with a command armed a left drag (formation line,
-     * area circle, a line of buildings with QUEUE), with a building armed and QUEUE off the ghost follows the finger.
+     * area circle); with a building armed in LINE/GRID a left drag (the engine lays the row or rectangle, the HUD
+     * holds Shift/Alt), in ONE mode a drag that starts on the ghost moves it and any other drag pans under it.
      */
     private void decideDrag(int[] hover) {
         if (hover == null) {
@@ -428,9 +431,47 @@ final class RtsTouch {
         if (hover[0] == 1) startLeftDrag();
         else if (!touchOnly) startPan();
         else if (link.boxSelect()) startBox();
-        else if (armed == ARMED_OTHER || (armed == ARMED_BUILD && link.shift())) startLeftDrag();
-        else if (armed == ARMED_BUILD) startGhost();
-        else startPan();
+        else if (armed == ARMED_OTHER || (armed == ARMED_BUILD && !link.placeOne())) startLeftDrag();
+        else if (armed == ARMED_BUILD && nearGhost()) startGhost();
+        else {
+            startPan();
+            if (armed == ARMED_BUILD && ghost != null) view().sendMouseEvent(ghost[0], ghost[1], InputStub.BUTTON_UNDEFINED, false, false);
+        }
+    }
+
+    /** Where the building ghost was when this touch began (X screen pixels), in ONE mode; else null. */
+    private float[] ghost;
+    private static final float GHOST_GRAB_MM = 15;   // a touch this close to the ghost grabs it
+
+    private boolean ghostMode() {
+        if (!touchOnly || !link.placeOne()) return false;
+        int[] h = hoverState();
+        return h != null && h[3] == ARMED_BUILD;
+    }
+
+    private boolean nearGhost() {
+        if (ghost == null) return false;
+        float reach = GHOST_GRAB_MM * link.viewPxPerMm() * xPerViewPixel();
+        return Math.hypot(toX(downX) - ghost[0], toY(downY) - ghost[1]) <= reach;
+    }
+
+    /**
+     * A tap on the map with a building armed in ONE mode moves its ghost there (the cursor already went there); a
+     * double tap builds it there. False: not that case, an ordinary tap.
+     */
+    private boolean ghostTap() {
+        if (ghost == null || !Boolean.FALSE.equals(overInterface(downX, downY))) return false;
+        float x = toX(downX), y = toY(downY);
+        if (secondTap) {
+            x = lastTapX; y = lastTapY;
+            lastTapX = -1;
+            view().sendMouseEvent(x, y, InputStub.BUTTON_UNDEFINED, false, false);
+            view().sendMouseEvent(x, y, InputStub.BUTTON_LEFT, true, false);
+            view().sendMouseEvent(x, y, InputStub.BUTTON_LEFT, false, false);
+        } else {
+            lastTapX = x; lastTapY = y; lastTapTime = SystemClock.uptimeMillis();
+        }
+        return true;
     }
 
     private void startBox() {
@@ -575,6 +616,26 @@ final class RtsTouch {
             if (Math.abs(Integer.parseInt(f[0]) - toX(vx)) > 2 || Math.abs(Integer.parseInt(f[1]) - toY(vy)) > 2) return null;
             return new int[]{f[2].equals("1") ? 1 : 0, f.length > 3 ? Integer.parseInt(f[3]) : 0};
         } catch (NumberFormatException e) { return null; }
+    }
+
+    /** The widget's last answer as it stands: {pointer x, pointer y (X screen pixels), onInterface, armed}; null if none. */
+    private int[] hoverState() {
+        if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return null;
+        byte[] b = new byte[64];
+        int n;
+        try (FileInputStream in = new FileInputStream(hoverFile)) { n = in.read(b); } catch (IOException e) { return null; }
+        if (n <= 0) return null;
+        String[] f = new String(b, 0, n, StandardCharsets.US_ASCII).trim().split(" ");
+        if (f.length < 4) return null;
+        try {
+            return new int[]{Integer.parseInt(f[0]), Integer.parseInt(f[1]), Integer.parseInt(f[2]), Integer.parseInt(f[3])};
+        } catch (NumberFormatException e) { return null; }
+    }
+
+    /** Where the game's pointer is (X screen pixels): the building ghost in ONE mode. */
+    private float[] pointer() {
+        int[] h = hoverState();
+        return h == null ? null : new float[]{h[0], h[1]};
     }
 
     /** Whether the game's interface is under view pixel (x, y); null = not known yet (see {@link #hover}). */

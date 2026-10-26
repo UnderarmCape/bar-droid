@@ -20,8 +20,10 @@ function widget:GetInfo()
 end
 
 local TOUCHUI = "LuaUI/Config/bardroid_touchui.txt"
+local APP = "LuaUI/Config/bardroid_app.txt"
 local ICON_MM, MIN_ICON_MM, MAX_ICON_MM = 12, 9, 13
 local GAP_MM, MARGIN_MM, LABEL_MM, COST_MM = 1.2, 1.5, 2.6, 2.1
+local FLOAT_MM = 10 -- PLACE / ROTATE / CANCEL beside the ghost
 local BAR_ROW = 0.6 -- tab, mode and action rows, as a fraction of the icon size
 local COLUMNS, ROWS = 4, 3 -- BAR's build grid
 local REFRESH_SECONDS = 0.25
@@ -39,6 +41,9 @@ local spGetSpectatingState = Spring.GetSpectatingState
 local spGetMyTeamID = Spring.GetMyTeamID
 local spSendCommands = Spring.SendCommands
 local spIsGUIHidden = Spring.IsGUIHidden
+local spGetMouseState = Spring.GetMouseState
+local spIsAboveMiniMap = Spring.IsAboveMiniMap
+local spTraceScreenRay = Spring.TraceScreenRay
 local glColor = gl.Color
 local glRect = gl.Rect
 local glTexture = gl.Texture
@@ -83,7 +88,10 @@ do
 	end
 end
 
-local vsy = 1
+local vsx, vsy = 1, 1
+local ghostX, ghostY -- GL pixels of the building ghost in ONE mode
+local floating = {} -- PLACE / ROTATE / CANCEL beside it
+local lastArmed
 local touchOnly, pxmm, input = true, nil, "touch"
 local mode, collapsed, category = "one", false, 1
 local page = 1
@@ -309,6 +317,11 @@ local function hit(x, y)
 	if not shown() then
 		return nil
 	end
+	for _, b in ipairs(floating) do
+		if x >= b[1] and x <= b[3] and y >= b[2] and y <= b[4] then
+			return b
+		end
+	end
 	for _, b in ipairs(buttons) do
 		if x >= b[1] and x <= b[3] and y >= b[2] and y <= b[4] then
 			return b
@@ -353,12 +366,97 @@ local function cancel()
 	end
 end
 
+-- ONE mode: the ghost and PLACE / TURN / X beside it --------------------------------------------------------------------
+
+local function send(line) -- a request for the app (bardroid_touch_hud.lua lists them)
+	local f = io.open(APP, "a")
+	if f then
+		f:write(line, "\n")
+		f:close()
+	end
+end
+
+local function moveGhost() -- the pointer (and with it the engine's ghost) to the ghost's place
+	if ghostX then
+		send(string.format("move %d %d", ghostX, vsy - 1 - ghostY))
+	end
+end
+
+-- Whether GL pixel (x, y) is open map (not this menu, the dock, the touch rail or the minimap).
+local function overMap(x, y)
+	if spIsAboveMiniMap(x, y) or hit(x, y) then
+		return false
+	end
+	local dock = WG.bardroidTouchDock and WG.bardroidTouchDock.rect
+	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
+		return false
+	end
+	local rail = WG.bardroidTouchHud and WG.bardroidTouchHud.railLeft
+	if rail and x >= rail then
+		return false
+	end
+	return spTraceScreenRay(x, y, true) == "ground"
+end
+
+-- After PLACE the next ghost goes right beside the last building (along the screen's horizontal, on the build grid):
+-- four wind turbines are pick, PLACE, PLACE, PLACE, PLACE.
+local function nextGhost(udid)
+	local _, pos = spTraceScreenRay(ghostX, ghostY, true)
+	local ud = UnitDefs[udid]
+	if not (pos and ud) then
+		return
+	end
+	local xs, zs = (ud.xsize or 4) * 8, (ud.zsize or 4) * 8
+	if (Spring.GetBuildFacing() or 0) % 2 == 1 then
+		xs, zs = zs, xs
+	end
+	local spacing = (Spring.GetBuildSpacing() or 0) * 16
+	local right = (Spring.GetCameraVectors() or {}).right or { 1, 0, 0 }
+	local wx, wz = pos[1], pos[3]
+	if math.abs(right[1]) >= math.abs(right[3]) then
+		wx = wx + (right[1] >= 0 and 1 or -1) * (xs + spacing)
+	else
+		wz = wz + (right[3] >= 0 and 1 or -1) * (zs + spacing)
+	end
+	local sx, sy = Spring.WorldToScreenCoords(wx, Spring.GetGroundHeight(wx, wz), wz)
+	if sx and sx > 0 and sx < vsx and sy > 0 and sy < vsy then
+		ghostX, ghostY = math.floor(sx), math.floor(sy)
+	end
+end
+
+local function layoutFloating()
+	floating = {}
+	if not ghostX then
+		return
+	end
+	local mm = L.mm
+	local s, gap = math.floor(FLOAT_MM * mm), math.floor(GAP_MM * mm)
+	local wide = math.floor(s * 1.4)
+	local total = wide + 2 * s + 2 * gap
+	local x = ghostX + math.floor(9 * mm)
+	if x + total > vsx - gap then
+		x = ghostX - math.floor(9 * mm) - total -- no room on the right
+	end
+	local y = math.max(gap, math.min(vsy - s - gap, ghostY + math.floor(5 * mm)))
+	floating[1] = { x, y, x + wide, y + s, "place" }
+	floating[2] = { x + wide + gap, y, x + wide + gap + s, y + s, "rotate" }
+	floating[3] = { x + wide + 2 * gap + s, y, x + total, y + s, "cancel" }
+end
+
 local flash -- the button pressed last, briefly lit
 local flashTime = 0
 
 local function press(b, button)
 	local kind, value = b[5], b[6]
-	if kind == "unit" then
+	if kind == "place" then
+		if button == 1 and ghostX and armedDefID then
+			-- a real click at the ghost: BAR's own placement rules apply (mex snapping, pregame queue); Shift held by the
+			-- HUD keeps the building armed for the next one
+			send(string.format("click %d %d", ghostX, vsy - 1 - ghostY))
+			nextGhost(armedDefID)
+			send("buzz")
+		end
+	elseif kind == "unit" then
 		if value[2] then
 			return -- disabled (unit limit, restrictions)
 		end
@@ -395,7 +493,7 @@ end
 -- Call-ins -------------------------------------------------------------------------------------------------------------
 
 function widget:Initialize()
-	vsy = select(2, spGetViewGeometry())
+	vsx, vsy = spGetViewGeometry()
 	WG.bardroidTouchBuild = shared
 	readTouchUi()
 	layout()
@@ -410,7 +508,7 @@ function widget:Shutdown()
 end
 
 function widget:ViewResize()
-	vsy = select(2, spGetViewGeometry())
+	vsx, vsy = spGetViewGeometry()
 	layout()
 	buildButtons()
 end
@@ -439,6 +537,23 @@ function widget:Update(dt)
 	updateArmed()
 	buildButtons()
 	shared.rect = shown() and not collapsed and { L.x1, L.y1, L.x2, L.y2 } or nil
+	-- ONE mode: the ghost starts at the centre of the screen, then follows where the pointer goes on the map (a tap
+	-- moves it, a drag on it moves it); PLACE / TURN / X stay beside it
+	if shown() and armedDefID and mode == "one" then
+		if armedDefID ~= lastArmed or not ghostX then
+			ghostX, ghostY = math.floor(vsx / 2), math.floor(vsy / 2)
+			moveGhost()
+		else
+			local mx, my = spGetMouseState()
+			if overMap(mx, my) then
+				ghostX, ghostY = mx, my
+			end
+		end
+		layoutFloating()
+	else
+		ghostX, floating = nil, {}
+	end
+	lastArmed = armedDefID
 	flashTime = flashTime - dt
 end
 
@@ -453,6 +568,9 @@ function widget:MousePress(x, y, button)
 	end
 	if b[5] ~= "panel" then
 		press(b, button)
+	end
+	if ghostX and armedDefID and mode == "one" then
+		moveGhost() -- the press moved the pointer onto this menu: back to the ghost (or the next one after PLACE)
 	end
 	return true
 end
@@ -487,6 +605,7 @@ local LABELS = {
 	rotate = "ROTATE",
 	cancel = "CANCEL",
 	hide = "<",
+	place = "BUILD",
 	expand = "BUILD >",
 	page = "MORE",
 }
@@ -564,6 +683,11 @@ function widget:DrawScreen()
 		roundRect(L.x1, L.y1, L.x2, L.y2, r, COLOR_PANEL)
 	end
 	local ls = L.mm * LABEL_MM
+	for _, b in ipairs(floating) do
+		local lit = flashTime > 0 and flash == b[5] .. tostring(b[6])
+		roundRect(b[1], b[2], b[3], b[4], r, (lit or b[5] == "place") and COLOR_ON or COLOR_BUTTON)
+		text(label(b), (b[1] + b[3]) / 2, (b[2] + b[4]) / 2, ls, "cv", 1)
+	end
 	for _, b in ipairs(buttons) do
 		if b[5] == "unit" then
 			drawUnit(b)
