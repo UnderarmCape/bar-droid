@@ -30,6 +30,10 @@ import java.util.Locale;
  *
  * BAR's released game (online, spectating) has no v0.8.5: there the sticks drive the camera through
  * bardroid_touch.lua ({@link CameraSink}, "pad" lines, sent only when the sticks change).
+ *
+ * Where no game runs (the lobby, a loading screen) the pad is a mouse ({@link Mouse}, Kailil 2026-10-26: "just simple
+ * mouse movement, scroll and A and B as left and right click"): the left stick moves the pointer, the right stick
+ * scrolls, A and B are the left and right buttons.
  */
 public final class ControllerBridge {
     // SDL GameController button order, as the Windows companion sends it:
@@ -46,8 +50,26 @@ public final class ControllerBridge {
     /** Receives "pad lx ly rx ry lt lb" lines for the camera widget. */
     public interface CameraSink { void padLine(String line); }
 
+    /** The X pointer, for screens without a game. Called on the pump thread. */
+    public interface Mouse {
+        boolean active();                       // no game widget answers: the lobby or a loading screen
+        float pixelsPerSecond();                // pointer speed at full stick
+        void move(int dx, int dy);              // relative, X screen pixels
+        void button(boolean left, boolean down);
+        void wheel(float dy);                   // Termux:X11 scroll units, 120 per click, > 0 scrolls down
+    }
+    private static final float MOUSE_CURVE = 2f, SCROLL_CLICKS_PER_SECOND = 10f;
+    private static final long MOUSE_CHECK_MS = 250;
+
     private final int port;
     private final CameraSink camera;
+    private Mouse mouse;
+    // pointer state, pump thread only
+    private boolean mouseOn, leftDown, rightDown;
+    private long mouseCheckAt, lastMouseTick;
+    private float fracX, fracY, scrollAcc;
+    // presses shorter than a pump tick still click (main thread sets, pump thread clears; guarded by this)
+    private boolean aPressed, bPressed;
     private final InputManager inputs;
     private final Handler main = new Handler(Looper.getMainLooper());
     private DatagramSocket socket;
@@ -71,6 +93,9 @@ public final class ControllerBridge {
         this.camera = camera;
         this.inputs = ctx.getSystemService(InputManager.class);
     }
+
+    /** Before {@link #start}. */
+    public void setMouse(Mouse mouse) { this.mouse = mouse; }
 
     public synchronized void start() {
         if (running) return;
@@ -144,7 +169,10 @@ public final class ControllerBridge {
         if (idx == IGNORED) return true;
         synchronized (this) {
             connected = true;
-            buttons[idx] = e.getAction() == KeyEvent.ACTION_DOWN;
+            boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
+            buttons[idx] = down;
+            if (down && idx == BTN_A) aPressed = true;
+            if (down && idx == BTN_B) bPressed = true;
             dirty = true;
         }
         return true;
@@ -194,13 +222,61 @@ public final class ControllerBridge {
                 try { socket.send(new DatagramPacket(data, data.length, loopback, port)); } catch (IOException ignored) {}
                 lastSend = now;
             }
-            if (cameraLine != null && !cameraLine.equals(cameraSent)) {
+            if (mouse != null) mouseTick(now);
+            if (cameraLine != null && !mouseOn && !cameraLine.equals(cameraSent)) {
                 camera.padLine(cameraLine);
                 cameraSent = cameraLine;
                 lastCamera = now;
             }
             try { Thread.sleep(TICK_MS); } catch (InterruptedException e) { break; }
         }
+    }
+
+    private void mouseTick(long now) {
+        if (now >= mouseCheckAt) {
+            boolean on = mouse.active();
+            if (on != mouseOn) Log.i("pad", on ? "pad mouse on (no game running)" : "pad mouse off (a game runs)");
+            mouseOn = on;
+            mouseCheckAt = now + MOUSE_CHECK_MS;
+        }
+        float dt = lastMouseTick == 0 ? 0 : Math.min(0.1f, (now - lastMouseTick) / 1000f);
+        lastMouseTick = now;
+        boolean a, b, aTap, bTap;
+        float x, y, scroll;
+        synchronized (this) {
+            a = buttons[BTN_A]; b = buttons[BTN_B]; aTap = aPressed; bTap = bPressed;
+            aPressed = bPressed = false;
+            x = stick(lx); y = stick(ly); scroll = stick(ry);
+        }
+        if (!mouseOn) { a = b = aTap = bTap = false; x = y = scroll = 0; }
+        if ((a || aTap) && !leftDown) { leftDown = true; mouse.button(true, true); }
+        if (!a && leftDown) { leftDown = false; mouse.button(true, false); }
+        if ((b || bTap) && !rightDown) { rightDown = true; mouse.button(false, true); }
+        if (!b && rightDown) { rightDown = false; mouse.button(false, false); }
+        if (x != 0 || y != 0) {
+            float step = mouse.pixelsPerSecond() * dt;
+            fracX += x * step; fracY += y * step;
+            int ix = (int) fracX, iy = (int) fracY;
+            fracX -= ix; fracY -= iy;
+            if (ix != 0 || iy != 0) mouse.move(ix, iy);
+        } else {
+            fracX = fracY = 0;
+        }
+        if (scroll != 0) {   // stick up scrolls up
+            scrollAcc += scroll * SCROLL_CLICKS_PER_SECOND * dt;
+            while (scrollAcc >= 1) { mouse.wheel(120); scrollAcc -= 1; }
+            while (scrollAcc <= -1) { mouse.wheel(-120); scrollAcc += 1; }
+        } else {
+            scrollAcc = 0;
+        }
+    }
+
+    /** -1..1 past v0.8.5's deadzone, squared for fine control near the centre. */
+    private static float stick(int raw) {
+        float m = Math.abs(raw);
+        if (m < STICK_DEADZONE) return 0;
+        float n = (float) Math.pow(Math.min(1f, (m - STICK_DEADZONE) / (32767f - STICK_DEADZONE)), MOUSE_CURVE);
+        return raw < 0 ? -n : n;
     }
 
     private String packet() {

@@ -440,6 +440,11 @@ final class RtsTouch {
     /** The gamepad camera's stick state (ControllerBridge, any thread): the widget moves the camera every frame. */
     void padLine(String line) { send(line); }
 
+    /** A game's widget answers (it writes the hover file at least once a second); not in the lobby. Any thread. */
+    boolean gameWidgetRunning() {
+        return System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS;
+    }
+
     /** Appends one line to the touch log (the widget reads complete lines each frame). */
     private void send(String msg) {
         byte[] data = (msg + "\n").getBytes(StandardCharsets.US_ASCII);

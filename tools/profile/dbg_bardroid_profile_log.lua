@@ -30,6 +30,15 @@ local spGetTimer, spDiffTimers = Spring.GetTimer, Spring.DiffTimers
 local spGetTimerMicros = Spring.GetTimerMicros or Spring.GetTimer
 local microTimers = Spring.GetTimerMicros ~= nil
 
+local function hintDiagnostics()
+	local registry = WG.ControllerHintRegistry
+	local d = registry and type(registry.GetDiagnostics) == "function" and registry.GetDiagnostics()
+	if type(d) == "table" then
+		Spring.Echo(string.format("[bardroid-profile] hint panel: %s rebuilds, drawn directly %s, recorded %s, replayed %s",
+			tostring(d.rebuildCount), tostring(d.drawDirect), tostring(d.drawRecorded), tostring(d.drawReplayed)))
+	end
+end
+
 local function finish(s, t0, m0, ...)
 	if measuring then
 		s[1] = s[1] + spDiffTimers(spGetTimerMicros(), t0, true, microTimers) -- ms
@@ -131,15 +140,6 @@ end
 function widget:Shutdown()
 	if profiling then
 		profiling.unsubscribe(widget)
-	end
-end
-
-local function hintDiagnostics()
-	local registry = WG.ControllerHintRegistry
-	local d = registry and type(registry.GetDiagnostics) == "function" and registry.GetDiagnostics()
-	if type(d) == "table" then
-		Spring.Echo(string.format("[bardroid-profile] hint panel: %s rebuilds, drawn directly %s, recorded %s, replayed %s",
-			tostring(d.rebuildCount), tostring(d.drawDirect), tostring(d.drawRecorded), tostring(d.drawReplayed)))
 	end
 end
 

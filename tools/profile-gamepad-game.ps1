@@ -18,7 +18,7 @@
 #>
 [CmdletBinding()]
 param(
-  [string]$Branch = "controller/codex-v085-release",
+  [string]$Branch = "controller/codex-v085-perf", # what the app packages; controller/codex-v085-release = the original
   [string]$Repo = "C:\Tools\BARGAMEPAD\src\bar-codex",
   [string]$EngineDir = "C:\Tools\BARGAMEPAD\builds\engine-2026.07.04",
   [string]$Companion = "C:\Tools\BARGAMEPAD\tools\companion\BARGamepadCompanion.exe",

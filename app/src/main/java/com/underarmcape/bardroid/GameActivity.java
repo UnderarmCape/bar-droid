@@ -13,6 +13,7 @@ import android.view.WindowManager;
 import com.termux.x11.BarDroidAccess;
 import com.termux.x11.LorieView;
 import com.termux.x11.MainActivity;
+import com.termux.x11.input.InputStub;
 import com.termux.x11.input.TouchInputHandler;
 
 /**
@@ -30,6 +31,7 @@ public class GameActivity extends MainActivity {
         super.onCreate(savedInstanceState);
         touch = new RtsTouch(this);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
+        pad.setMouse(lobbyMouse);
         pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
         LorieView lorieView = getLorieView();
         View lorieParent = (View) lorieView.getParent();
@@ -53,7 +55,22 @@ public class GameActivity extends MainActivity {
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
     }
 
-    private int screenW, screenH;
+    private volatile int screenW, screenH;
+
+    /** The pad as a mouse where no game runs (the lobby, loading screens); events go to the X server on the UI thread. */
+    private final ControllerBridge.Mouse lobbyMouse = new ControllerBridge.Mouse() {
+        private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
+        @Override public boolean active() { return !touch.gameWidgetRunning(); }
+        @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
+        @Override public void move(int dx, int dy) { send(dx, dy, InputStub.BUTTON_UNDEFINED, false); }
+        @Override public void button(boolean left, boolean down) { send(0, 0, left ? InputStub.BUTTON_LEFT : InputStub.BUTTON_RIGHT, down); }
+        @Override public void wheel(float dy) {
+            ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseWheelEvent(0, dy); });
+        }
+        private void send(int dx, int dy, int button, boolean down) {
+            ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
+        }
+    };
     private final DisplayManager.DisplayListener displayListener = new DisplayManager.DisplayListener() {
         @Override public void onDisplayAdded(int id) {}
         @Override public void onDisplayRemoved(int id) {}

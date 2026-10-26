@@ -12,6 +12,11 @@ Not packaged: BAR artwork v0.8.5 copied under new names (LICENSE.md next to them
 those from the downloaded release (gamepad.properties "copy.N = <destination> <source>"). Changed on the way, for
 Android: the controller's "companion status" panel is off (the app is the companion and always runs).
 
+Stripped for the phone (Kailil, 2026-10-26: "we can get rid of the debug stuff and the hints menu all together. and
+remove bindings menu and UI and all that bloat ... its too clunky to use on mobile"): the button hints are off, and
+the bindings menu, the UI layout editor, the SmartX mouse audit, v0.8.5's tests and its test-runner change are left
+out (MOBILE_LEFT_OUT). The game keeps everything that plays: the camera widget, its radials and the pad bridge.
+
   python -I tools/build-gamepad-game.py [--repo DIR] [--branch NAME] [--out DIR]
 """
 import argparse, gzip, hashlib, io, json, os, re, subprocess, sys, urllib.request, zipfile
@@ -28,6 +33,17 @@ REPO, BRANCH, OUT = ARGS.repo, ARGS.branch, ARGS.out
 BASE_COMMIT = "a61703336e586233f242376ec3b7855d00855ff5"   # BAR Release 2026.10.20-1, what v0.8.5 was ported to
 BASE_TAG = "byar:git:" + BASE_COMMIT
 VERSIONS = "https://repos-cdn.beyondallreason.dev/byar/versions.gz"
+# Left out of the phone's game: menus and tools too clunky on a phone, and test code (the widgets that use them check
+# for them first). A left-out change to one of BAR's own files means BAR's file plays.
+MOBILE_LEFT_OUT = (
+    "luaui/Widgets/gui_controller_bindings_ui.lua",
+    "luaui/Widgets/gui_controller_ui_layout.lua",
+    "luaui/Include/controller_ui_editor_input.lua",
+    "luaui/Include/controller_ui_editor_workspace.lua",
+    "luaui/Widgets/gui_controller_smartx_mouse_audit.lua",
+    "luaui/Widgets/dbg_test_runner.lua",
+    "luaui/Tests/",
+)
 # Copies of BAR artwork in v0.8.5 (luaui/images/controller/stat-icons/LICENSE.md): destination <- BAR's file
 BAR_COPIES = {
     "luaui/images/controller/stat-icons/metal.png": "luaui/images/metal.png",
@@ -55,7 +71,7 @@ def main():
     if git("merge-base", BASE_COMMIT, commit).decode().strip() != BASE_COMMIT:
         sys.exit(f"{BRANCH} is not based on {BASE_COMMIT}")
     names = git("diff", "--name-only", "--diff-filter=AM", BASE_COMMIT, commit, "--", "luaui", "controller-ui").decode().split("\n")
-    names = sorted(n for n in names if n)
+    names = sorted(n for n in names if n and not n.startswith(MOBILE_LEFT_OUT))
     if git("diff", "--name-only", "--diff-filter=DR", BASE_COMMIT, commit, "--", "luaui", "controller-ui").strip():
         sys.exit("v0.8.5 deletes or renames BAR files: an overlay cannot express that")
     base_name, base_md5 = base_package()
@@ -75,6 +91,7 @@ def main():
             if n == "controller-ui/shipping-defaults.json":
                 doc = json.loads(data)
                 doc["settings"]["components"]["companionStatus"]["enabled"] = False
+                doc["settings"]["components"]["hints"]["enabled"] = False
                 data = (json.dumps(doc, indent=2) + "\n").encode()
             put(n, data)
         put("modinfo.lua", MODINFO.format(commit=commit, base=base_name).encode())
