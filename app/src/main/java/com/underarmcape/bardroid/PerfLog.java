@@ -54,6 +54,7 @@ final class PerfLog {
         sb.append("; memory available ").append(meminfo("MemAvailable:")).append(" MB, swap free ")
           .append(meminfo("SwapFree:")).append(" MB, engine ").append(engineRss()).append(" MB");
         if (GameActivity.hiddenFlag(BarApp.get().paths()).exists()) sb.append("; game screen hidden (engine not drawing)");
+        else if (GameActivity.catchupFlag(BarApp.get().paths()).exists()) sb.append("; catching up (engine not drawing)");
         Log.i("perf", sb.toString());
     }
 
@@ -67,12 +68,17 @@ final class PerfLog {
         return "?";
     }
 
-    /** Resident memory of the engine ("spring", one of this app's processes) in MB, or "?". */
+    /**
+     * Resident memory of the engine (one of this app's processes) in MB, or "?". Recoil names its main thread, and so
+     * the process, "recoil-main" (it was always "?" while this looked for "spring", the binary's name).
+     */
     private static String engineRss() {
         File[] procs = new File("/proc").listFiles();
         if (procs == null) return "?";
         for (File p : procs) {
-            if (!p.getName().matches("\\d+") || !"spring".equals(readFile(p + "/comm"))) continue;
+            if (!p.getName().matches("\\d+")) continue;
+            String comm = readFile(p + "/comm");
+            if (!"recoil-main".equals(comm) && !"spring".equals(comm)) continue;
             try (BufferedReader r = new BufferedReader(new FileReader(p + "/status"))) {
                 for (String s; (s = r.readLine()) != null; ) {
                     if (s.startsWith("VmRSS:")) return String.valueOf(Long.parseLong(s.replaceAll("[^0-9]", "")) / 1024);
