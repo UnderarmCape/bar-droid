@@ -208,6 +208,10 @@ local function updateHover()
 	-- what a one-finger drag on the map does in touch-only mode depends on the armed command (RtsTouch)
 	local _, cmdID = spGetActiveCommand()
 	local armed = not cmdID and 0 or cmdID < 0 and 1 or 2
+	local pregame = WG["pregame-build"]
+	if armed == 0 and pregame and pregame.getPreGameDefID and (pregame.getPreGameDefID() or 0) > 0 then
+		armed = 1 -- a building picked before the game starts (BAR's pregame queue)
+	end
 	local line = string.format("%d %d %d %d\n", mx, vsy - my - 1, onInterface, armed)
 	local now = spGetTimer()
 	if line == lastHover and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then

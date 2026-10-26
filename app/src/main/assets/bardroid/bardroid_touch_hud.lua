@@ -100,8 +100,30 @@ local function send(line)
 	end
 end
 
+-- The keys the app holds: the QUEUE/CTRL latches, plus while a building is armed in the build menu's LINE mode Shift
+-- (the engine lays a row along a drag) and in GRID mode Shift+Alt (it fills the dragged rectangle).
+local sentMods
+local function wantedMods()
+	local shift, ctrl, alt = latch.shift, latch.ctrl, false
+	local build = WG.bardroidTouchBuild
+	if not active then
+		shift, ctrl = false, false -- a mouse or keyboard in use: hands off the keys
+	elseif build and build.armed and (build.mode == "line" or build.mode == "grid") then
+		shift, alt = true, build.mode == "grid"
+	end
+	return string.format("mods %d %d %d", shift and 1 or 0, ctrl and 1 or 0, alt and 1 or 0)
+end
+
+local function sendMods(force)
+	local mods = wantedMods()
+	if force or mods ~= sentMods then
+		send(mods)
+		sentMods = mods
+	end
+end
+
 local function sendLatches()
-	send(string.format("mods %d %d 0", latch.shift and 1 or 0, latch.ctrl and 1 or 0))
+	sendMods(true)
 	send("box " .. (latch.box and 1 or 0))
 end
 
@@ -415,6 +437,10 @@ local function groupButtons()
 	local counts = spGetGroupList() or {}
 	local x = groups.x
 	local y2 = groups.top
+	local buildMenu = WG.bardroidTouchBuild and WG.bardroidTouchBuild.rect
+	if buildMenu and buildMenu[4] > y2 - groups.h then
+		x = math.max(x, buildMenu[3] + groups.gap) -- the build menu covers the minimap on a short screen
+	end
 	local function add(label, press, hold)
 		if x + groups.w <= groups.right then
 			list[#list + 1] = { x, y2 - groups.h, x + groups.w, y2, label, press, hold }
@@ -442,7 +468,8 @@ local function visibleButtons()
 		list[#list + 1] = b
 	end
 	local _, activeID = spGetActiveCommand()
-	if activeID then
+	local buildMenu = WG.bardroidTouchBuild and WG.bardroidTouchBuild.rect -- it has its own ROTATE and CANCEL
+	if activeID and not (activeID < 0 and buildMenu) then
 		if activeID < 0 and context.rotate then
 			list[#list + 1] = context.rotate
 		end
@@ -589,6 +616,7 @@ function widget:Update(dt)
 			boxRect = nil
 		end
 	end
+	sendMods() -- a building armed or put away in LINE/GRID mode holds or releases Shift (+Alt)
 
 	checkTimer = checkTimer - dt
 	if checkTimer <= 0 then

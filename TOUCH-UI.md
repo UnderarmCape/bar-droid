@@ -89,7 +89,7 @@ the app behaves exactly as before (RtsTouch mouse emulation + camera).
 | Box / area select | double-tap-drag, or latch **BOX** and drag; QUEUE latched adds to the selection |
 | Move / attack / guard / reclaim / repair (default order) | tap the target (smart tap) or long press |
 | Explicit orders (move, attack, patrol, fight, stop, wait, D-gun, area mex, fire/move states...) | BAR's order menu (tap), then tap or drag on the map |
-| Build placement | BAR's build menu (tap a category, tap a building), then tap the spot, or drag the ghost and lift; **ROTATE** in the context bar (`buildfacing inc`); **CANCEL** (or two-finger tap / Back) |
+| Build placement | **Touch build menu** (`bardroid_touch_build.lua`, see 5a): tap a building (big icons, BAR's categories and grid order), then by the mode (always visible): **ONE** = tap the spot, or drag the ghost and lift; **LINE** = drag a row; **GRID** = drag a rectangle to fill. ROTATE, SPACE −/+, CANCEL (or two-finger tap / Back) |
 | Factory queues | build menu with the factory selected: tap = +1, QUEUE latched = +5, long press = −1 |
 | Queueing (Shift) | **QUEUE** latch: real Shift held in the X server while lit. Waypoints, build lines, build queues, add-to-selection all work as with a keyboard |
 | Control groups | group row under the top bar: tap = select, tap again = camera to the group, long press = assign the selection, **+** = assign to the first free group |
@@ -110,6 +110,26 @@ the app behaves exactly as before (RtsTouch mouse emulation + camera).
 | Idle builders | kept; HUD **IDLE** does the same with a big target |
 | Smart select, selection box | kept; our tap logic runs after them and steps aside for presses they or the engine own |
 | Replacing a BAR widget | not possible from a user widget (no DisableWidget). If one ever must go, the app can edit `LuaUI/Config/BYAR.lua` (order 0) before the game starts and restore it afterwards — not needed so far |
+
+### 5a. Touch build menu (Kailil: "the com build menu needs to be bigger ... easy touch focused options to quickly build a grid or line or single item ... intuitive and less clicks")
+
+`bardroid_touch_build.lua`, layer −10: drawn over BAR's grid menu (layers 0–1) and takes presses first, under BAR's
+windows, top bar and chat. Shown while a builder is selected (or before the game starts, for the start unit), fingers
+are the input, and the player is not spectating; with a mouse, keyboard or gamepad BAR's own menu shows instead.
+- Left edge, anchored at the bottom: a tab row (ECON, COMBAT, UTILITY, BUILD — BAR's categories from
+  `customParams.unitgroup`, and BAR's own 4×3 grid positions through `luaui/configs/gridmenu_config.lua` when it
+  loads), the 4×3 icons (12 mm, 9–13 mm; unit build pictures `#<unitDefID>`, metal and energy cost), a mode row
+  (ONE / LINE / GRID, remembered between games), and while a building is armed an action row (ROTATE, SPACE −,
+  SPACE +, CANCEL). "<" collapses it to a BUILD button. MORE pages through more than 12 options.
+- It sits under the minimap where 12 mm icons fit (inner display), else over the minimap (cover display, 720 px tall).
+- LINE and GRID are the engine's own build layouts (`CGuiHandler::GetBuildPositions`: Shift+drag = row,
+  Shift+Alt+drag = filled rectangle, also in BAR's pregame queue). The HUD asks the app to hold Shift (+Alt) while a
+  building is armed in those modes; RtsTouch then turns a one-finger drag into a left drag, so the engine lays out and
+  previews the buildings. ONE uses the ghost drag.
+- A factory: its units in BAR's lab order, no tabs; tap = queue one (QUEUE latched = five), long press = one less;
+  queue counts on the icons.
+- Pregame: icons pick through `WG["pregame-build"].setPreGamestartDefID`, and the hover answer reports the pick as an
+  armed building so drags place it.
 
 ## 6. Sizes for a 7–8" foldable
 
@@ -160,8 +180,9 @@ Launcher: **Touch-only mode (experimental)** is ticked by default; Play vs AI. T
 1. HUD column on the right; on the cover screen two columns. Buttons light up when tapped.
 2. Tap the commander (selects), tap ground (walks there), tap a wreck (reclaims), tap an enemy (attacks).
 3. QUEUE on: tap three spots (three waypoints); QUEUE off.
-4. Build menu: pick a building, drag on the map: ghost above the finger, lift places it. ROTATE before placing.
-   QUEUE on + drag: a line of buildings.
+4. Touch build menu (left, with the commander selected): ONE: tap a building, tap the map (placed, done); or drag:
+   ghost above the finger, lift places it. LINE: tap a building, drag a row. GRID: drag a rectangle. ROTATE,
+   SPACE −/+, CANCEL. "<" hides the menu.
 5. Order menu: Move, then drag a line on the map (formation). Patrol/Fight the same.
 6. Select some units, long press group **+** … then CLEAR, tap the group (selects), tap again (camera goes there).
 7. BOX on: drag a box. ALL / IDLE / COM buttons.
