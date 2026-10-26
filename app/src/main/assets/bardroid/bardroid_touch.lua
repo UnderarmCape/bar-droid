@@ -352,10 +352,20 @@ end
 
 -- Long sessions (the target is 30 fps for hours on a hot phone): once a minute the average frame rate, the slowest
 -- frame and the frames of each second go to the log, next to the app's thermal lines ("[perf]" in launcher.log).
+-- Counted in the world pass (DrawWorld), i.e. drawn frames: while nobody sees the game the engine stops drawing and
+-- Update runs on. A gap of more than 5 s (the game screen hidden, a reload) starts a new minute.
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
 local perSecond, secondStart, secondFrames = {}, nil, 0
 local function logPerf()
 	local now = spGetTimer()
+	if perfLast and spDiffTimers(now, perfLast) > 5 then
+		Spring.Echo(string.format("[bardroid-perf] no frame drawn for %.0f s (game screen hidden, or a reload)",
+			spDiffTimers(now, perfLast)))
+		perfFrames, perfStart, perfLast, perfWorst, secondStart, secondFrames = 0, nil, nil, 0, nil, 0
+		for i = #perSecond, 1, -1 do
+			perSecond[i] = nil
+		end
+	end
 	if perfLast then
 		local frame = spDiffTimers(now, perfLast)
 		if frame > perfWorst then
@@ -500,7 +510,6 @@ local function update(dt)
 		queueCheck = 0.5
 		updateQueueDrawing()
 	end
-	logPerf()
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then
@@ -521,10 +530,19 @@ end
 -- An error would make BAR's widget handler remove the widget for the rest of the game: no finger camera, and the app
 -- would take the missing pointer answers for the lobby. Logged a few times instead, and the next frame tries again.
 local errorsLogged = 0
-function widget:Update(dt)
-	local ok, err = pcall(update, dt)
+local function guarded(fn, ...)
+	local ok, err = pcall(fn, ...)
 	if not ok and errorsLogged < 5 then
 		errorsLogged = errorsLogged + 1
 		Spring.Echo("[bardroid-touch] error, the widget keeps running: " .. tostring(err))
 	end
+end
+
+function widget:Update(dt)
+	guarded(update, dt)
+end
+
+-- the world pass: once per drawn frame, and (unlike DrawScreen) also with the interface hidden or a window open
+function widget:DrawWorld()
+	guarded(logPerf)
 end
