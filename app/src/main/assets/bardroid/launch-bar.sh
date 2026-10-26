@@ -122,6 +122,14 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   log "singleplayer game: $LOBBY_GAME"
 fi
 
+# MSAA off at every start (Kailil's target: 30 fps for hours on a hot phone). The lobby keeps MSAALevel = 4 among its
+# game settings (Chobby's game_settings in IGL_data.lua) and writes it into springsettings.cfg whenever a game starts;
+# the engine reads it only at startup, so every game drew a 4x multisampled screen at the phone's resolution, which
+# costs more the more of the map a tilted camera shows.
+sed -i 's/^MSAALevel *=.*/MSAALevel = 0/' "$BAR/springsettings.cfg"
+grep -q '^MSAALevel = 0' "$BAR/springsettings.cfg" || echo "MSAALevel = 0" >> "$BAR/springsettings.cfg"
+[ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i 's/^\([[:space:]]*MSAALevel = \)[0-9-]*,/\10,/' "$BAR/LuaMenu/Config/IGL_data.lua"
+
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"

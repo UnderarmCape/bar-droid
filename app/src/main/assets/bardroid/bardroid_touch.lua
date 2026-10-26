@@ -35,7 +35,7 @@ end
 local TOUCH = "LuaUI/Config/bardroid_touch.txt"
 local SCREEN = "LuaUI/Config/bardroid_screen.txt"
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
-local TILT_RANGE = math.pi / 2 * 1.75 -- a drag over the whole screen height tilts this much (Kailil: 75% more)
+local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- a drag over the screen height tilts this much (Kailil: +75%, then +50%)
 -- Finger moves reach the camera over a few frames instead of in whatever batch each frame happened to collect
 -- (Kailil, 2026-10-26: "super juttery", "like a super cheap touch screen mp3 player"); seconds.
 local TOUCH_SMOOTHING = 0.05
