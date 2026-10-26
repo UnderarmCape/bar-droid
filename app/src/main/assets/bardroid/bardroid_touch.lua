@@ -9,8 +9,11 @@
 --   LuaUI/Config/bardroid_touch.txt   app, appended:  pan <x0> <y0> <x1> <y1>   (the map point under x0,y0 goes to x1,y1)
 --                                                     rot <radians>             (fingers twisted, clockwise > 0)
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
+--                                                     zoom <factor> <x> <y>     (touch-only mode: fingers spread by this
+--                                                                                factor around x,y; > 1 = closer)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz, frame cap)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1> <cmd>       (pointer position; 1 = on the interface;
+--                                                                                armed command: 0 none, 1 build, 2 other)
 
 function widget:GetInfo()
 	return {
@@ -35,6 +38,7 @@ local spSetCameraState = Spring.SetCameraState
 local spGetViewGeometry = Spring.GetViewGeometry
 local spGetMouseState = Spring.GetMouseState
 local spIsAboveMiniMap = Spring.IsAboveMiniMap
+local spGetActiveCommand = Spring.GetActiveCommand
 local spGetTimer = Spring.GetTimer
 local spDiffTimers = Spring.DiffTimers
 
@@ -103,7 +107,36 @@ local function ground(x, y)
 	end
 end
 
+-- Zoom by this factor (> 1 = closer) keeping the ground point under X screen pixel (x, y) where it is on screen: the
+-- camera target moves towards that point as the distance shrinks (a scaling centred on it keeps its direction).
+local function applyZoom(factor, x, y)
+	local cs = spGetCameraState()
+	if cs.dist then -- spring camera (BAR's default)
+		local gx, gz = ground(x, y)
+		local before = cs.dist
+		cs.dist = before / factor
+		spSetCameraState(cs, 0)
+		local after = spGetCameraState() -- the engine clamps the distance
+		local k = after.dist and before > 0 and after.dist / before or 1
+		if gx and k ~= 1 and after.px and after.pz then
+			after.px = gx + (cs.px - gx) * k
+			after.pz = gz + (cs.pz - gz) * k
+			spSetCameraState(after, 0)
+		end
+	elseif cs.height then -- overhead camera
+		cs.height = cs.height / factor
+		spSetCameraState(cs, 0)
+	end
+end
+
 local function applyTouch(lines)
+	local zoom, zx, zy = 1, nil, nil
+	for f, x, y in lines:gmatch("zoom (%S+) (%S+) (%S+)") do
+		zoom, zx, zy = zoom * (tonumber(f) or 1), tonumber(x), tonumber(y)
+	end
+	if zoom ~= 1 and zx and zy then
+		applyZoom(zoom, zx, zy)
+	end
 	local dx, dz, rot, tilt = 0, 0, 0, 0
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		local ax, az = ground(tonumber(x0), tonumber(y0))
@@ -172,7 +205,10 @@ local function updateHover()
 		return -- not asked yet for this position
 	end
 	local _, vsy = spGetViewGeometry()
-	local line = string.format("%d %d %d\n", mx, vsy - my - 1, onInterface)
+	-- what a one-finger drag on the map does in touch-only mode depends on the armed command (RtsTouch)
+	local _, cmdID = spGetActiveCommand()
+	local armed = not cmdID and 0 or cmdID < 0 and 1 or 2
+	local line = string.format("%d %d %d %d\n", mx, vsy - my - 1, onInterface, armed)
 	local now = spGetTimer()
 	if line == lastHover and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
 		return

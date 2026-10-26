@@ -40,11 +40,20 @@ import java.util.Locale;
  *   two fingers up/down  tilt the camera (both fingers moving the same way, side by side)
  *   three-finger tap     show / hide the keyboard
  *
+ * Touch-only mode (launcher option, TOUCH-UI.md) adds, with the touch HUD widget in the game:
+ *   drag on the map      with a command armed: a left drag (formation line, area circle; a line of buildings with
+ *                        QUEUE); with a building armed and QUEUE off: the ghost follows a centimetre above the finger
+ *                        and lifting places it; with BOX latched: box select
+ *   tap, then drag       box select drawn by the HUD (no mouse button: a left press on the map is always a tap there)
+ *   two fingers          zoom is a camera line (smooth, unaffected by a held Shift/Ctrl); on the interface: scroll
+ *
  * Camera moves go to bardroid_touch.lua in the game through files (BAR's sandbox gives user widgets no sockets); the
- * widget answers through bardroid_hover.txt whether the pointer is over the game's interface.
+ * widget answers through bardroid_hover.txt whether the pointer is over the game's interface and what is armed.
  */
 final class RtsTouch {
     private static final long LONG_PRESS_MS = 450, MULTI_TAP_MS = 500;
+    private static final float GHOST_MM = 10;                  // building ghost above the finger (touch-only)
+    private static final float SCROLL_MM = 5;                  // two-finger travel per wheel click on the interface
     private static final long HOVER_WAIT_MS = 250;            // a drag waits this long at most for the widget's answer
     private static final long HOVER_STALE_MS = 3000;          // older answers: the widget is not running
     private static final long LOG_RESTART_BYTES = 256 * 1024;
@@ -54,7 +63,8 @@ final class RtsTouch {
     private static final long FLING_FRAME_MS = 16;
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
 
-    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT, DONE }
+    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT, DONE,
+                         BOX, GHOST, SCROLL }   // the last three: touch-only mode
 
     private final MainActivity activity;
     private final float slop, minFling;
@@ -68,6 +78,8 @@ final class RtsTouch {
     private final File hoverFile = new File(widgetDir, "bardroid_hover.txt");
     private FileOutputStream log;
     private long logBytes;
+    private final TouchUiLink link;                 // touch-only mode: the HUD's requests; null when off
+    private final boolean touchOnly;
 
     private State state = State.IDLE;
     private int firstId;
@@ -82,6 +94,7 @@ final class RtsTouch {
     private float lastCx, lastCy, lastDist;         // two-finger gesture, view pixels
     private double zoomAcc, lastAngle, rotateAcc;
     private boolean rotating;
+    private float scrollAcc;                        // two-finger scroll on the interface, view pixels
     private float lastTapX = -1, lastTapY;          // X screen pixels
     private long lastTapTime;
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
@@ -114,6 +127,8 @@ final class RtsTouch {
         ioThread.start();
         io = new Handler(ioThread.getLooper());
         io.post(this::restartLog);
+        link = Prefs.touchOnly ? new TouchUiLink(activity, widgetDir, io) : null;
+        touchOnly = link != null;
     }
 
     /** A new, empty touch log (the widget sees it shrink and reads from the start). */
@@ -153,6 +168,7 @@ final class RtsTouch {
 
     void close() {
         ui.removeCallbacks(fling);
+        if (link != null) link.close();
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -160,7 +176,7 @@ final class RtsTouch {
     /** Finger touches on the touchscreen are ours (and the rest of a gesture we started). */
     boolean handles(MotionEvent e) {
         if (state != State.IDLE && state != State.DONE) return true;
-        return Prefs.rtsTouch && e.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)
+        return (Prefs.rtsTouch || touchOnly) && e.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)
                 && e.getToolType(e.getActionIndex()) == MotionEvent.TOOL_TYPE_FINGER;
     }
 
@@ -193,8 +209,9 @@ final class RtsTouch {
                 if (state == State.PENDING) {
                     ui.removeCallbacks(longPress);
                     state = State.MULTI_PENDING;
-                } else if (state == State.PAN || state == State.DRAG_WAIT) {
+                } else if (state == State.PAN || state == State.DRAG_WAIT || state == State.GHOST || state == State.BOX) {
                     ui.removeCallbacks(hoverTimeout);
+                    if (state == State.BOX) send("boxcancel");
                     beginTwoFinger(e, State.TWO_FINGER);   // a second finger joins a pan: pinch/twist from here
                 }
                 break;
@@ -203,7 +220,7 @@ final class RtsTouch {
                 onMove(e);
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                if ((state == State.TWO_FINGER || state == State.TILT) && e.getPointerCount() <= 2)
+                if ((state == State.TWO_FINGER || state == State.TILT || state == State.SCROLL) && e.getPointerCount() <= 2)
                     state = State.DONE;   // one finger left: stop
                 break;
             case MotionEvent.ACTION_UP:
@@ -225,12 +242,13 @@ final class RtsTouch {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
                 ui.removeCallbacks(longPress);
-                if (secondTap) startLeftDrag();
-                else decideDrag(overInterface(downX, downY));
+                if (!secondTap) decideDrag(hover(downX, downY));
+                else if (touchOnly && !Boolean.TRUE.equals(overInterface(downX, downY))) startBox();
+                else startLeftDrag();
                 return;
             }
             case DRAG_WAIT:
-                decideDrag(overInterface(downX, downY));
+                decideDrag(hover(downX, downY));
                 return;
             case PAN:
                 panTo(curX, curY);
@@ -239,9 +257,27 @@ final class RtsTouch {
             case RIGHT_HOLD:
                 if (i >= 0) moveCursor(curX, curY);
                 return;
+            case BOX:
+                if (i >= 0) { moveCursor(curX, curY); sendBox("box"); }
+                return;
+            case GHOST:
+                if (i >= 0) moveCursor(curX, curY - ghostOffset());
+                return;
             case MULTI_PENDING: {
                 if (e.getPointerCount() < 2 || !movedPastSlop(e)) return;
-                beginTwoFinger(e, isTilt(e) ? State.TILT : State.TWO_FINGER);
+                if (touchOnly && Boolean.TRUE.equals(overInterface(downX, downY))) beginTwoFinger(e, State.SCROLL);
+                else beginTwoFinger(e, isTilt(e) ? State.TILT : State.TWO_FINGER);
+                return;
+            }
+            case SCROLL: {
+                int a = e.findPointerIndex(idA), b = e.findPointerIndex(idB);
+                if (a < 0 || b < 0) return;
+                float cx = (e.getX(a) + e.getX(b)) / 2, cy = (e.getY(a) + e.getY(b)) / 2;
+                float step = SCROLL_MM * link.viewPxPerMm();
+                scrollAcc += cy - lastCy;
+                while (scrollAcc >= step) { wheel(cx, cy, -WHEEL_CLICK); scrollAcc -= step; }   // fingers down: scroll up
+                while (scrollAcc <= -step) { wheel(cx, cy, WHEEL_CLICK); scrollAcc += step; }
+                lastCx = cx; lastCy = cy;
                 return;
             }
             case TWO_FINGER: {
@@ -249,7 +285,10 @@ final class RtsTouch {
                 if (a < 0 || b < 0) return;
                 float cx = (e.getX(a) + e.getX(b)) / 2, cy = (e.getY(a) + e.getY(b)) / 2, d = dist(e, a, b);
                 if (cx != lastCx || cy != lastCy) sendPan(lastCx, lastCy, cx, cy);
-                if (lastDist > 0 && d > 0) {
+                if (touchOnly && lastDist > 0 && d > 0 && d != lastDist) {
+                    // a camera line, not the wheel: a latched Shift/Ctrl turns the wheel into fast zoom / tilt
+                    send(String.format(Locale.US, "zoom %.5f %.1f %.1f", d / lastDist, toX(cx), toY(cy)));
+                } else if (!touchOnly && lastDist > 0 && d > 0) {
                     zoomAcc += Math.log(d / lastDist);
                     while (zoomAcc >= ZOOM_STEP) { wheel(cx, cy, -WHEEL_CLICK); zoomAcc -= ZOOM_STEP; }   // spread: zoom in
                     while (zoomAcc <= -ZOOM_STEP) { wheel(cx, cy, WHEEL_CLICK); zoomAcc += ZOOM_STEP; }   // pinch: zoom out
@@ -305,6 +344,15 @@ final class RtsTouch {
             case RIGHT_HOLD:
                 press(curX, curY, InputStub.BUTTON_RIGHT, false);
                 break;
+            case BOX:
+                sendBox("boxend");
+                break;
+            case GHOST: {   // place the building where its ghost is
+                float y = curY - ghostOffset();
+                press(curX, y, InputStub.BUTTON_LEFT, true);
+                press(curX, y, InputStub.BUTTON_LEFT, false);
+                break;
+            }
             case MULTI_PENDING:
                 if (e.getEventTime() - downTime <= MULTI_TAP_MS) {
                     if (maxFingers == 2) {
@@ -327,12 +375,17 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
+        if (state == State.BOX) send("boxcancel");
         state = State.IDLE;
     }
 
-    /** A one-finger drag: a left drag where it started on the game's interface, else a pan; null = not known yet. */
-    private void decideDrag(Boolean onInterface) {
-        if (onInterface == null) {
+    /**
+     * A one-finger drag: a left drag where it started on the game's interface, else a pan; null = not known yet.
+     * Touch-only mode, on the map: box select with BOX latched; with a command armed a left drag (formation line,
+     * area circle, a line of buildings with QUEUE), with a building armed and QUEUE off the ghost follows the finger.
+     */
+    private void decideDrag(int[] hover) {
+        if (hover == null) {
             if (state != State.DRAG_WAIT) {
                 state = State.DRAG_WAIT;
                 ui.postDelayed(hoverTimeout, HOVER_WAIT_MS);
@@ -340,9 +393,34 @@ final class RtsTouch {
             return;
         }
         ui.removeCallbacks(hoverTimeout);
-        if (onInterface) startLeftDrag();
+        int armed = hover[1];
+        if (hover[0] == 1) startLeftDrag();
+        else if (!touchOnly) startPan();
+        else if (link.boxSelect()) startBox();
+        else if (armed == ARMED_OTHER || (armed == ARMED_BUILD && link.shift())) startLeftDrag();
+        else if (armed == ARMED_BUILD) startGhost();
         else startPan();
     }
+
+    private void startBox() {
+        state = State.BOX;
+        if (secondTap) lastTapX = -1;
+        moveCursor(curX, curY);
+        sendBox("box");
+    }
+
+    /** The selection box from the touch's start to the finger, for the HUD (X screen pixels). */
+    private void sendBox(String kind) {
+        send(String.format(Locale.US, "%s %.0f %.0f %.0f %.0f", kind, toX(downX), toY(downY), toX(curX), toY(curY)));
+    }
+
+    private void startGhost() {
+        state = State.GHOST;
+        moveCursor(curX, curY - ghostOffset());
+    }
+
+    /** The building ghost floats this far (view pixels) above the finger, where the finger does not hide it. */
+    private float ghostOffset() { return GHOST_MM * link.viewPxPerMm(); }
 
     private void startLeftDrag() {
         state = State.LEFT_DRAG;
@@ -382,7 +460,7 @@ final class RtsTouch {
         lastCx = (e.getX(0) + e.getX(1)) / 2; lastCy = (e.getY(0) + e.getY(1)) / 2;
         lastDist = dist(e, 0, 1);
         lastAngle = angle(e, 0, 1);
-        zoomAcc = 0; rotateAcc = 0; rotating = false;
+        zoomAcc = 0; rotateAcc = 0; rotating = false; scrollAcc = 0;
     }
 
     /** Both fingers moving up or down together, side by side: a tilt (as in map apps), not a pan. */
@@ -446,24 +524,32 @@ final class RtsTouch {
         });
     }
 
+    private static final int ARMED_BUILD = 1, ARMED_OTHER = 2;   // hover()[1]; 0 = no command armed
+
     /**
-     * Whether the game's interface (or the minimap) is under view pixel (x, y), from the widget's last answer
-     * ("x y 0|1" in X screen pixels, written when the pointer moves and every second); null while it has not
-     * answered for that point. Without a widget (the lobby, a game still loading) everything is interface: drags
-     * stay mouse drags.
+     * The widget's last answer for view pixel (x, y): {1 if the game's interface (or the minimap) is there else 0,
+     * the armed command: 0 none, ARMED_BUILD, ARMED_OTHER}; null while it has not answered for that point. The answer
+     * is "x y 0|1 cmd" in X screen pixels, written when the pointer moves and every second. Without a widget (the
+     * lobby, a game still loading) everything is interface: drags stay mouse drags.
      */
-    private Boolean overInterface(float vx, float vy) {
-        if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return Boolean.TRUE;
+    private int[] hover(float vx, float vy) {
+        if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return new int[]{1, 0};
         byte[] b = new byte[64];
         int n;
         try (FileInputStream in = new FileInputStream(hoverFile)) { n = in.read(b); } catch (IOException e) { return null; }
         if (n <= 0) return null;
         String[] f = new String(b, 0, n, StandardCharsets.US_ASCII).trim().split(" ");
-        if (f.length != 3) return null;
+        if (f.length < 3) return null;
         try {
             if (Math.abs(Integer.parseInt(f[0]) - toX(vx)) > 2 || Math.abs(Integer.parseInt(f[1]) - toY(vy)) > 2) return null;
-            return f[2].equals("1");
+            return new int[]{f[2].equals("1") ? 1 : 0, f.length > 3 ? Integer.parseInt(f[3]) : 0};
         } catch (NumberFormatException e) { return null; }
+    }
+
+    /** Whether the game's interface is under view pixel (x, y); null = not known yet (see {@link #hover}). */
+    private Boolean overInterface(float vx, float vy) {
+        int[] h = hover(vx, vy);
+        return h == null ? null : h[0] == 1;
     }
 
     private boolean movedPastSlop(MotionEvent e) {

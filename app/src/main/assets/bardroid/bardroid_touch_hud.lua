@@ -1,0 +1,685 @@
+-- BAR Droid touch HUD (touch-only mode, see TOUCH-UI.md): big buttons for what fingers cannot do otherwise (Shift,
+-- Ctrl, selection, control groups, chat, pause), and "smart tap": a tap on the map gives the selected units the order
+-- a right click would. Installed into LuaUI/Widgets by the app only while the launcher's Touch-only mode is on.
+--
+-- BAR's sandbox lets user widgets neither make input nor open sockets, so the app holds keys and shows the keyboard
+-- for the HUD. Files (relative to the write dir; X screen pixels, origin at the top left):
+--   LuaUI/Config/bardroid_app.txt      widget, appended:  mods <shift> <ctrl> <alt>   (hold 1 / release 0 in the X server)
+--                                                         key <name>                 (enter, escape: press and release)
+--                                                         keyboard <0|1>             (soft keyboard)
+--                                                         box <0|1>                  (BOX latch: one-finger drags select)
+--   LuaUI/Config/bardroid_touchui.txt  app, replaced:     <touchOnly 0|1> <X pixels per millimetre>
+--   LuaUI/Config/bardroid_touch.txt    app, appended:     box <x0> <y0> <x1> <y1>    (selection box being dragged)
+--                                                         boxend <x0> <y0> <x1> <y1> | boxcancel
+--                                                         (and the camera lines bardroid_touch.lua reads)
+
+function widget:GetInfo()
+	return {
+		name = "BAR Droid touch HUD",
+		desc = "Touch-only controls from the BAR Droid app: big buttons, tap to order, control groups",
+		author = "BAR Droid",
+		license = "GPL-3.0-or-later",
+		-- After BAR's interface: a press reaches MousePress here only when no BAR widget took it (so it is on the map),
+		-- and DrawScreen draws this under BAR's windows. Before bardroid_touch.lua (1000000), which must stay last for
+		-- IsAbove: the HUD's buttons count as interface.
+		layer = 999999,
+		enabled = true,
+	}
+end
+
+local APP = "LuaUI/Config/bardroid_app.txt"
+local TOUCHUI = "LuaUI/Config/bardroid_touchui.txt"
+local TOUCH = "LuaUI/Config/bardroid_touch.txt"
+
+local BUTTON_MM, MIN_BUTTON_MM, GAP_MM, MARGIN_MM, LABEL_MM = 9, 7.5, 1.5, 1.5, 2.6
+local REFOCUS_SECONDS = 0.6 -- a second tap on the group just selected moves the camera to it
+local FLASH_SECONDS = 0.25
+
+local spGetViewGeometry = Spring.GetViewGeometry
+local spGetActiveCommand = Spring.GetActiveCommand
+local spSetActiveCommand = Spring.SetActiveCommand
+local spGetDefaultCommand = Spring.GetDefaultCommand
+local spGetSelectedUnitsCount = Spring.GetSelectedUnitsCount
+local spSelectUnitArray = Spring.SelectUnitArray
+local spGetModKeyState = Spring.GetModKeyState
+local spGetMouseState = Spring.GetMouseState
+local spTraceScreenRay = Spring.TraceScreenRay
+local spIsAboveMiniMap = Spring.IsAboveMiniMap
+local spGetMiniMapGeometry = Spring.GetMiniMapGeometry
+local spGetGameFrame = Spring.GetGameFrame
+local spGetUnitTeam = Spring.GetUnitTeam
+local spGetUnitDefID = Spring.GetUnitDefID
+local spGetMyTeamID = Spring.GetMyTeamID
+local spGetSpectatingState = Spring.GetSpectatingState
+local spGetTeamUnits = Spring.GetTeamUnits
+local spGetUnitHealth = Spring.GetUnitHealth
+local spGetUnitCommands = Spring.GetUnitCommands
+local spGetUnitPosition = Spring.GetUnitPosition
+local spSetCameraTarget = Spring.SetCameraTarget
+local spGetGroupList = Spring.GetGroupList
+local spGetUnitsInScreenRectangle = Spring.GetUnitsInScreenRectangle
+local spSendCommands = Spring.SendCommands
+local spGetTimer = Spring.GetTimer
+local spDiffTimers = Spring.DiffTimers
+local spIsGUIHidden = Spring.IsGUIHidden
+local glColor = gl.Color
+local glRect = gl.Rect
+
+local vsx, vsy = 1, 1
+local touchOnly, pxmm = true, nil
+local latch = { shift = false, ctrl = false, box = false }
+local column, context, groups = {}, {}, {} -- buttons: { x1, y1, x2, y2, label, press, hold, latch, enabled }
+local flashes = {}
+local font
+local layoutKey
+local checkTimer = 0
+local touchPos, partial = 0, ""
+local boxRect -- { x1, y1, x2, y2 } GL pixels while the app drags a selection box
+local smartCmdID -- the order a smart tap armed; disarmed once the tap is done
+local lastGroup, lastGroupTimer
+local comIndex, idleIndex = 0, 0
+
+local isCommander, isMobileBuilder, isCombat = {}, {}, {}
+for udid, ud in pairs(UnitDefs) do
+	local mobile = ud.canMove and not ud.isBuilding and (ud.speed or 0) > 0
+	isCommander[udid] = ud.customParams and ud.customParams.iscommander and true or nil
+	isMobileBuilder[udid] = (mobile and ud.isBuilder) or nil
+	isCombat[udid] = (mobile and not ud.isBuilder and #(ud.weapons or {}) > 0) or nil
+end
+
+-- The app's side --------------------------------------------------------------------------------------------------
+
+local function send(line)
+	local f = io.open(APP, "a")
+	if f then
+		f:write(line, "\n")
+		f:close()
+	end
+end
+
+local function sendLatches()
+	send(string.format("mods %d %d 0", latch.shift and 1 or 0, latch.ctrl and 1 or 0))
+	send("box " .. (latch.box and 1 or 0))
+end
+
+local function readTouchUi()
+	local f = io.open(TOUCHUI, "r")
+	if not f then
+		return
+	end
+	local s = f:read("*l")
+	f:close()
+	local mode, mm = (s or ""):match("^(%d) ([%d%.]+)")
+	if mode then
+		touchOnly = mode == "1"
+		pxmm = tonumber(mm)
+	end
+end
+
+-- Complete new lines of the app's touch log since the last call (bardroid_touch.lua reads the same log).
+local function newTouchLines()
+	local f = io.open(TOUCH, "r")
+	if not f then
+		return nil
+	end
+	local size = f:seek("end")
+	if size < touchPos then -- the app started a new log
+		touchPos, partial = 0, ""
+	end
+	if size == touchPos then
+		f:close()
+		return nil
+	end
+	f:seek("set", touchPos)
+	local data = partial .. (f:read("*a") or "")
+	touchPos = f:seek()
+	f:close()
+	local cut = data:match(".*\n()")
+	if not cut then
+		partial = data
+		return nil
+	end
+	partial = data:sub(cut)
+	return data:sub(1, cut - 1)
+end
+
+-- Units --------------------------------------------------------------------------------------------------------------
+
+local function canSelect(unitID)
+	local spec, fullView = spGetSpectatingState()
+	return (spec and fullView) or spGetUnitTeam(unitID) == spGetMyTeamID()
+end
+
+local function finished(unitID)
+	local _, _, _, _, progress = spGetUnitHealth(unitID)
+	return progress == nil or progress >= 1
+end
+
+local function ownUnits(filter)
+	local list = {}
+	for _, unitID in ipairs(spGetTeamUnits(spGetMyTeamID()) or {}) do
+		if filter[spGetUnitDefID(unitID)] and finished(unitID) then
+			list[#list + 1] = unitID
+		end
+	end
+	table.sort(list)
+	return list
+end
+
+-- Selects the next of these units (cycling) and points the camera at it.
+local function cycleTo(list, index)
+	if #list == 0 then
+		return index
+	end
+	index = index % #list + 1
+	local unitID = list[index]
+	spSelectUnitArray({ unitID })
+	local x, y, z = spGetUnitPosition(unitID)
+	if x then
+		spSetCameraTarget(x, y, z, 0.5)
+	end
+	return index
+end
+
+local function selectArmy()
+	spSelectUnitArray(ownUnits(isCombat), latch.shift)
+end
+
+local function selectIdleBuilder()
+	local idle = {}
+	for _, unitID in ipairs(ownUnits(isMobileBuilder)) do
+		local cmds = spGetUnitCommands(unitID, 1)
+		if cmds and #cmds == 0 then
+			idle[#idle + 1] = unitID
+		end
+	end
+	idleIndex = cycleTo(idle, idleIndex)
+end
+
+local function selectCommander()
+	comIndex = cycleTo(ownUnits(isCommander), comIndex)
+end
+
+local function openChat()
+	latch.shift, latch.ctrl = false, false -- typed letters must not come out shifted
+	sendLatches()
+	send("key enter") -- BAR's chat opens its input on a real Enter key press
+	send("keyboard 1")
+end
+
+local function toggleMenu()
+	if WG.options and WG.options.toggle then
+		WG.options.toggle()
+	else
+		send("key escape")
+	end
+end
+
+local function groupPress(n)
+	local now = spGetTimer()
+	if lastGroup == n and lastGroupTimer and spDiffTimers(now, lastGroupTimer) < REFOCUS_SECONDS then
+		spSendCommands("group focus " .. n)
+		lastGroup = nil
+	else
+		spSendCommands("group select " .. n)
+		lastGroup, lastGroupTimer = n, now
+	end
+end
+
+local function groupAssign(n)
+	if spGetSelectedUnitsCount() > 0 then
+		spSendCommands("group set " .. n)
+		Spring.Echo("[bardroid-hud] control group " .. n .. " = " .. spGetSelectedUnitsCount() .. " units")
+	end
+end
+
+local function newGroup()
+	local used = spGetGroupList() or {}
+	for _, n in ipairs({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }) do
+		if not used[n] then
+			groupAssign(n)
+			return
+		end
+	end
+end
+
+-- Layout -------------------------------------------------------------------------------------------------------------
+
+local function toggle(name)
+	return function()
+		latch[name] = not latch[name]
+		sendLatches()
+	end
+end
+
+local function hasSelection()
+	return spGetSelectedUnitsCount() > 0
+end
+
+-- In priority order: on a short screen the last ones are left out.
+local COLUMN = {
+	{ "QUEUE", toggle("shift"), latch = "shift" },
+	{ "ALL", selectArmy },
+	{ "IDLE", selectIdleBuilder },
+	{ "COM", selectCommander },
+	{
+		"CLEAR",
+		function()
+			spSelectUnitArray({})
+		end,
+		enabled = hasSelection,
+	},
+	{ "BOX", toggle("box"), latch = "box" },
+	{ "CHAT", openChat },
+	{
+		"PAUSE",
+		function()
+			spSendCommands("pause")
+		end,
+	},
+	{ "MENU", toggleMenu },
+	{ "CTRL", toggle("ctrl"), latch = "ctrl" },
+}
+
+local function topOf(api)
+	local ok, p = pcall(api)
+	if ok and type(p) == "table" and type(p[1]) == "number" then
+		return p[1]
+	end
+end
+
+-- Where the HUD may go: under the top bar, above BAR's bottom-right panels (player list and friends).
+local function freeArea(margin)
+	local top, bottom = vsy - margin, margin
+	if WG.topbar and WG.topbar.GetPosition then
+		local ok, p = pcall(WG.topbar.GetPosition)
+		if ok and type(p) == "table" and type(p[2]) == "number" and p[2] > vsy / 2 then
+			top = math.min(top, p[2] - margin)
+		end
+	end
+	for _, name in ipairs({ "advplayerlist_api", "displayinfo", "music", "unittotals", "converter_usage" }) do
+		local api = WG[name] and WG[name].GetPosition
+		local t = api and topOf(api)
+		if t and t < vsy * 0.75 then
+			bottom = math.max(bottom, t + margin)
+		end
+	end
+	local mmRight = 0
+	local mx, _, msx, _, minimized = spGetMiniMapGeometry()
+	if mx and not minimized then
+		mmRight = mx + msx
+	end
+	return top, bottom, mmRight
+end
+
+local function layout()
+	local mm = pxmm or (vsy / 75) -- about right for a phone if the app has not said
+	local margin, gap = math.floor(MARGIN_MM * mm + 0.5), math.floor(GAP_MM * mm + 0.5)
+	local top, bottom, mmRight = freeArea(margin)
+	local key = table.concat({ vsx, vsy, mm, top, bottom, mmRight }, " ")
+	if key == layoutKey then
+		return
+	end
+	layoutKey = key
+
+	-- Column(s) on the right edge: as few columns as hold every button, buttons never below MIN_BUTTON_MM.
+	local maxSize = math.floor(BUTTON_MM * mm + 0.5)
+	local minSize = math.floor(MIN_BUTTON_MM * mm + 0.5)
+	local height = math.max(0, top - bottom)
+	local function rows(s)
+		return math.max(1, math.floor((height + gap) / (s + gap)))
+	end
+	local size, cols
+	for c = 1, 3 do
+		size, cols = maxSize, c
+		while rows(size) * cols < #COLUMN and size > minSize do
+			size = size - 1
+		end
+		if rows(size) * cols >= #COLUMN then
+			break
+		end
+	end
+	local perCol = rows(size)
+	column = {}
+	for i, def in ipairs(COLUMN) do
+		local c = math.floor((i - 1) / perCol) -- 0 = rightmost
+		local r = (i - 1) % perCol
+		if c < cols then
+			local x2 = vsx - margin - c * (size + gap)
+			local y2 = top - r * (size + gap)
+			column[#column + 1] = {
+				x2 - size,
+				y2 - size,
+				x2,
+				y2,
+				def[1],
+				def[2],
+				nil,
+				def.latch,
+				def.enabled,
+			}
+		end
+	end
+	if #column < #COLUMN then
+		Spring.Echo(string.format("[bardroid-hud] only %d of %d buttons fit (%dx%d)", #column, #COLUMN, vsx, vsy))
+	end
+	local columnLeft = vsx - margin - cols * (size + gap) + gap
+
+	-- Context bar left of the column's bottom: ROTATE / CANCEL while a command is armed.
+	local w = math.floor(size * 1.4)
+	local cy1 = bottom
+	context = {
+		rotate = { columnLeft - gap - 2 * w - gap, cy1, columnLeft - gap - w - gap, cy1 + size, "ROTATE" },
+		cancel = { columnLeft - gap - w, cy1, columnLeft - gap, cy1 + size, "CANCEL" },
+	}
+	context.rotate[6] = function()
+		spSendCommands("buildfacing inc")
+	end
+	context.cancel[6] = function()
+		spSetActiveCommand(nil)
+	end
+
+	-- Group row under the top bar, right of the minimap.
+	groups = {
+		x = mmRight + margin,
+		right = columnLeft - gap,
+		top = top,
+		w = size,
+		h = math.floor(size * 0.8),
+		gap = gap,
+	}
+	Spring.Echo(
+		string.format(
+			"[bardroid-hud] layout %dx%d, %.1f px/mm, buttons %d px in %d column(s), free %d..%d",
+			vsx,
+			vsy,
+			mm,
+			size,
+			cols,
+			bottom,
+			top
+		)
+	)
+end
+
+-- The group row's buttons for the groups that exist now, plus "+".
+local function groupButtons()
+	local list = {}
+	if not groups.x then
+		return list
+	end
+	local counts = spGetGroupList() or {}
+	local x = groups.x
+	local y2 = groups.top
+	local function add(label, press, hold)
+		if x + groups.w <= groups.right then
+			list[#list + 1] = { x, y2 - groups.h, x + groups.w, y2, label, press, hold }
+		end
+		x = x + groups.w + groups.gap
+	end
+	for _, n in ipairs({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }) do
+		if counts[n] then
+			add(n .. "\n" .. counts[n], function()
+				groupPress(n)
+			end, function()
+				groupAssign(n)
+			end)
+		end
+	end
+	if hasSelection() then
+		add("+", newGroup)
+	end
+	return list
+end
+
+local function visibleButtons()
+	local list = {}
+	for _, b in ipairs(column) do
+		list[#list + 1] = b
+	end
+	local _, activeID = spGetActiveCommand()
+	if activeID then
+		if activeID < 0 and context.rotate then
+			list[#list + 1] = context.rotate
+		end
+		if context.cancel then
+			list[#list + 1] = context.cancel
+		end
+	end
+	for _, b in ipairs(groups.list or {}) do
+		list[#list + 1] = b
+	end
+	return list
+end
+
+local function hit(x, y)
+	if not touchOnly or spIsGUIHidden() then
+		return nil
+	end
+	for _, b in ipairs(visibleButtons()) do
+		if x >= b[1] and x <= b[3] and y >= b[2] and y <= b[4] then
+			return b
+		end
+	end
+end
+
+-- Smart tap ----------------------------------------------------------------------------------------------------------
+
+-- A left press on the map that no BAR widget wanted. With units selected and no command armed, arm the order a right
+-- click would give here; the engine then carries it out when the press is released (CGuiHandler::MouseRelease).
+local function smartTap(x, y)
+	if spGetGameFrame() <= 0 or spIsAboveMiniMap(x, y) or spGetSpectatingState() then
+		return
+	end
+	local _, activeID = spGetActiveCommand()
+	if activeID or spGetSelectedUnitsCount() == 0 then
+		return
+	end
+	local alt, ctrl, meta, shift = spGetModKeyState()
+	if alt or ctrl then
+		return -- Ctrl/Alt clicks keep their own meaning
+	end
+	local kind, id = spTraceScreenRay(x, y)
+	if kind == "unit" and canSelect(id) then
+		return -- a tap on one of ours selects it
+	end
+	local index, cmdID = spGetDefaultCommand()
+	if cmdID and spSetActiveCommand(index, 1, true, false, alt, ctrl, meta, shift) then
+		smartCmdID = cmdID
+	end
+end
+
+-- Call-ins -----------------------------------------------------------------------------------------------------------
+
+function widget:Initialize()
+	vsx, vsy = spGetViewGeometry()
+	touchPos = 0
+	local f = io.open(TOUCH, "r")
+	if f then
+		touchPos = f:seek("end") -- old gestures are not replayed
+		f:close()
+	end
+	readTouchUi()
+	sendLatches() -- nothing latched: also releases keys a previous HUD left held
+	layout()
+	Spring.Echo("[bardroid-hud] touch-only HUD on")
+end
+
+function widget:Shutdown()
+	latch.shift, latch.ctrl, latch.box = false, false, false
+	sendLatches()
+end
+
+function widget:ViewResize()
+	vsx, vsy = spGetViewGeometry()
+	layoutKey = nil
+	layout()
+end
+
+-- Selects what is inside the box the app is dragging (one-finger drag with BOX latched, or tap-then-drag): drawn and
+-- applied here instead of the engine's selection box, so a left press on the map is always a tap (smart tap).
+local function selectInBox(x0, y0, x1, y1)
+	if not boxRect and WG.SmartSelect_SetReference then
+		WG.SmartSelect_SetReference() -- what Shift adds to / Ctrl removes from
+	end
+	-- X screen pixels (top left) -> GL pixels (bottom left)
+	boxRect = { math.min(x0, x1), vsy - 1 - math.max(y0, y1), math.max(x0, x1), vsy - 1 - math.min(y0, y1) }
+	local spec = spGetSpectatingState()
+	local units = spGetUnitsInScreenRectangle(boxRect[1], boxRect[2], boxRect[3], boxRect[4], not spec and -2 or nil) or {}
+	if WG.SmartSelect_SelectUnits then
+		WG.SmartSelect_SelectUnits(units) -- BAR's own rules: no buildings with mobile units, Shift adds, Ctrl removes
+	else
+		spSelectUnitArray(units, latch.shift)
+	end
+end
+
+local function applyBox(lines)
+	local last -- only the newest box of this frame is worth selecting
+	for line in lines:gmatch("[^\n]+") do
+		local kind, x0, y0, x1, y1 = line:match("^(box%a*) ?(%S*) ?(%S*) ?(%S*) ?(%S*)")
+		x0, y0, x1, y1 = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
+		if kind == "box" and y1 then
+			last = { x0, y0, x1, y1 }
+		elseif kind == "boxend" and y1 then
+			selectInBox(x0, y0, x1, y1)
+			boxRect, last = nil, nil
+			if WG.SmartSelect_ClearReference then
+				WG.SmartSelect_ClearReference()
+			end
+		elseif kind == "boxcancel" then
+			boxRect, last = nil, nil
+		end
+	end
+	if last then
+		selectInBox(last[1], last[2], last[3], last[4])
+	end
+end
+
+function widget:Update(dt)
+	-- the order a smart tap armed is done once the press is released (Shift would keep it armed for the next tap)
+	if smartCmdID then
+		local _, _, lmb = spGetMouseState()
+		if not lmb then
+			local _, activeID = spGetActiveCommand()
+			if activeID == smartCmdID then
+				spSetActiveCommand(nil)
+			end
+			smartCmdID = nil
+		end
+	end
+
+	local lines = newTouchLines()
+	if lines then
+		applyBox(lines)
+	end
+
+	checkTimer = checkTimer - dt
+	if checkTimer <= 0 then
+		checkTimer = 0.5
+		readTouchUi()
+		layout() -- the screen (fold/unfold) or BAR's panels may have moved
+	end
+	groups.list = groupButtons()
+
+	for label, t in pairs(flashes) do
+		flashes[label] = t > dt and t - dt or nil
+	end
+end
+
+function widget:IsAbove(x, y)
+	return hit(x, y) ~= nil
+end
+
+function widget:MousePress(x, y, button)
+	local b = hit(x, y)
+	if b then
+		if button == 1 and b[6] then
+			if not b[9] or b[9]() then
+				b[6]()
+			end
+		elseif button == 3 and b[7] then
+			b[7]() -- long press: the button's second action (assign a control group)
+		end
+		flashes[b[5]] = FLASH_SECONDS
+		return true
+	end
+	if button == 1 and touchOnly then
+		smartTap(x, y)
+	end
+	return false
+end
+
+function widget:MouseRelease()
+	return false
+end
+
+-- Drawing ------------------------------------------------------------------------------------------------------------
+
+local function roundRect(x1, y1, x2, y2, r, color)
+	local rr = WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.RectRound
+	if rr then
+		rr(x1, y1, x2, y2, r, 1, 1, 1, 1, color, color)
+	else
+		glColor(color)
+		glRect(x1, y1, x2, y2)
+	end
+end
+
+local COLOR_BUTTON = { 0.08, 0.09, 0.1, 0.72 }
+local COLOR_LATCHED = { 0.12, 0.45, 0.9, 0.9 }
+local COLOR_FLASH = { 1, 1, 1, 0.35 }
+local COLOR_BORDER = { 1, 1, 1, 0.18 }
+
+local function drawLabel(text, cx, cy, size, alpha)
+	if font then
+		font:Begin()
+		font:SetTextColor(1, 1, 1, alpha)
+		font:SetOutlineColor(0, 0, 0, 0.8 * alpha)
+		local lineCount = select(2, text:gsub("\n", "")) + 1
+		font:Print(text, cx, cy + (lineCount - 1) * size * 0.5, size, "cvo")
+		font:End()
+	else
+		glColor(1, 1, 1, alpha)
+		gl.Text(text, cx, cy, size, "cv")
+	end
+end
+
+local function drawButton(b)
+	local x1, y1, x2, y2 = b[1], b[2], b[3], b[4]
+	local r = math.floor((x2 - x1) * 0.12)
+	local on = b[8] and latch[b[8]]
+	roundRect(x1, y1, x2, y2, r, COLOR_BORDER)
+	roundRect(x1 + 1, y1 + 1, x2 - 1, y2 - 1, r, on and COLOR_LATCHED or COLOR_BUTTON)
+	if flashes[b[5]] then
+		roundRect(x1, y1, x2, y2, r, COLOR_FLASH)
+	end
+	local enabled = not b[9] or b[9]()
+	local size = (pxmm or (vsy / 75)) * LABEL_MM
+	drawLabel(b[5], (x1 + x2) / 2, (y1 + y2) / 2, size, enabled and 1 or 0.4)
+end
+
+function widget:DrawScreen()
+	if not touchOnly or spIsGUIHidden() then
+		return
+	end
+	if not font and WG.fonts and WG.fonts.getFont then
+		font = WG.fonts.getFont(2, 1.5) -- BAR's font widget may start after this one
+	end
+	for _, b in ipairs(visibleButtons()) do
+		drawButton(b)
+	end
+	if boxRect then
+		glColor(1, 1, 1, 0.08)
+		glRect(boxRect[1], boxRect[2], boxRect[3], boxRect[4])
+		glColor(1, 1, 1, 0.7)
+		gl.LineWidth(2)
+		gl.Shape(GL.LINE_LOOP, {
+			{ v = { boxRect[1], boxRect[2] } },
+			{ v = { boxRect[3], boxRect[2] } },
+			{ v = { boxRect[3], boxRect[4] } },
+			{ v = { boxRect[1], boxRect[4] } },
+		})
+		gl.LineWidth(1)
+	end
+	glColor(1, 1, 1, 1)
+end
