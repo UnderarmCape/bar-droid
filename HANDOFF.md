@@ -48,8 +48,8 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   took "11102MB RAM" for the CPU. The container now gets a `model name` line.
 - The interface scale ignores the floating window (no reload when the app goes to the background).
 - `[perf]` logs memory now (Android reported low memory all through an 8v8).
-Found, not ours: BAR's save-load crash also happens on Windows (upstream). Written up, not built: the lobby's missing
-launcher bridge (Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
+Found, not ours: BAR's save-load crash also happens on Windows (upstream). Built but off by default and untested
+in the lobby: the lobby bridge (launcher setting; Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
 and the touch widget's cost (none measurable).
 
 ## Phone session (2026-10-25, 17:00–20:00): first runs on the Fold7
@@ -449,9 +449,12 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    dir, `{"name":…,"command":…}` JSON lines over TCP) and `luamenu/widgets/sl_loopback.lua` (`WrapperLoopback`):
    OpenFile (web links), Download (with it on, maps and games too; "resource" files such as the OpenSkill ratings CSV
    only through it: "Download aborted (no wrapper, unsupported VFS type)" every start), ReadReplayInfo (Replays tab),
-   ParseMiniMap (map thumbnails), StartNewSpring (games and replays on another engine), UploadLog, Discord. The app
-   could serve it on loopback; with it on every download goes through the app, so it needs the whole set answered
-   (never a request left without a reply) and a test with Kailil.
+   ParseMiniMap (map thumbnails), StartNewSpring (games and replays on another engine), UploadLog, Discord.
+   **Built overnight as `LobbyBridge`, launcher setting "Lobby bridge (beta)", off by default**: web links, game/map
+   downloads through pr-downloader (`setup-container.sh` steps rapid/map), resource downloads by HTTP, replay info
+   from the replay's header and start script (checked on three of Kailil's replays on the laptop JDK). Never run
+   against the real lobby yet: tick it, open the Replays tab, download a map, open a link; `bridge` lines in
+   launcher.log. Thumbnails, other engines and Discord stay unanswered (the lobby does not wait for those).
 3. Upstream, with Kailil's go-ahead: the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
    takes the CPU-wait path on KGSL whenever the kernel supports `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, though KGSL never
    attaches fences to the dma-buf (our ioctl answer is the workaround); the ARM64 AI bug (RecoilEngine issue, then
