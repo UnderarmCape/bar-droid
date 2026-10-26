@@ -291,9 +291,10 @@ function widget:SelectionChanged()
 	updateQueueDrawing()
 end
 
--- Long sessions (the target is 30 fps for hours on a hot phone): once a minute the average frame rate and the slowest
--- frame go to the log, next to the app's thermal lines ("[perf]" in launcher.log).
+-- Long sessions (the target is 30 fps for hours on a hot phone): once a minute the average frame rate, the slowest
+-- frame and the frames of each second go to the log, next to the app's thermal lines ("[perf]" in launcher.log).
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
+local perSecond, secondStart, secondFrames = {}, nil, 0
 local function logPerf()
 	local now = spGetTimer()
 	if perfLast then
@@ -302,16 +303,25 @@ local function logPerf()
 			perfWorst = frame
 		end
 	end
-	perfLast, perfFrames = now, perfFrames + 1
+	perfLast, perfFrames, secondFrames = now, perfFrames + 1, secondFrames + 1
+	if not secondStart then
+		secondStart = now
+	elseif spDiffTimers(now, secondStart) >= 1 then
+		perSecond[#perSecond + 1] = secondFrames
+		secondStart, secondFrames = now, 0
+	end
 	if not perfStart then
 		perfStart = now
 		return
 	end
 	local seconds = spDiffTimers(now, perfStart)
 	if seconds >= 60 then
-		Spring.Echo(string.format("[bardroid-perf] %.1f fps over %.0f s, slowest frame %.0f ms, %d units", perfFrames / seconds,
-			seconds, perfWorst * 1000, #(Spring.GetAllUnits() or {})))
+		Spring.Echo(string.format("[bardroid-perf] %.1f fps over %.0f s, slowest frame %.0f ms, %d units; each second: %s",
+			perfFrames / seconds, seconds, perfWorst * 1000, #(Spring.GetAllUnits() or {}), table.concat(perSecond, " ")))
 		perfFrames, perfStart, perfWorst = 0, now, 0
+		for i = #perSecond, 1, -1 do
+			perSecond[i] = nil
+		end
 	end
 end
 

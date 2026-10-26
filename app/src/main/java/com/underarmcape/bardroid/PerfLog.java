@@ -9,7 +9,7 @@ import java.io.FileReader;
 
 /**
  * Once a minute while a game runs: Android's thermal status and headroom, the GPU's clock, its thermal cap and how
- * busy it is ("[perf]" lines in launcher.log; the game's widget logs its frame rate next to them). The target is 30 fps
+ * busy it is, the CPU clusters' clocks and caps ("[perf]" lines in launcher.log; the game's widget logs its frame rate next to them). The target is 30 fps
  * for hours on a hot phone (Kailil, 2026-10-26), so long sessions have to show when and why it stops holding.
  */
 final class PerfLog {
@@ -43,17 +43,27 @@ final class PerfLog {
         sb.append("; GPU ").append(mhz(read("devfreq/cur_freq"))).append(" MHz of ").append(mhz(read("devfreq/max_freq")))
           .append(" (thermal level ").append(read("thermal_pwrlevel")).append("), busy ").append(read("gpu_busy_percentage"))
           .append(", ").append(read("temp")).append(" mC");
+        // the Fold7's two CPU clusters: cpu0-5 and cpu6-7 (the engine's main thread); thermal lowers scaling_max_freq
+        for (int cpu : new int[] {0, 6}) {
+            String dir = "/sys/devices/system/cpu/cpu" + cpu + "/cpufreq/";
+            sb.append("; cpu").append(cpu).append(' ').append(mhz(readFile(dir + "scaling_cur_freq"), 1000)).append(" MHz of ")
+              .append(mhz(readFile(dir + "scaling_max_freq"), 1000));
+        }
         Log.i("perf", sb.toString());
     }
 
-    private static String read(String name) {
-        try (BufferedReader r = new BufferedReader(new FileReader(KGSL + name))) {
+    private static String read(String name) { return readFile(KGSL + name); }
+
+    private static String readFile(String path) {
+        try (BufferedReader r = new BufferedReader(new FileReader(path))) {
             String s = r.readLine();
             return s == null ? "?" : s.trim();
         } catch (Exception e) { return "?"; }
     }
 
-    private static String mhz(String hz) {
-        try { return String.valueOf(Long.parseLong(hz) / 1_000_000); } catch (NumberFormatException e) { return hz; }
+    private static String mhz(String hz) { return mhz(hz, 1_000_000); }
+
+    private static String mhz(String value, long perMhz) {
+        try { return String.valueOf(Long.parseLong(value) / perMhz); } catch (NumberFormatException e) { return value; }
     }
 }
