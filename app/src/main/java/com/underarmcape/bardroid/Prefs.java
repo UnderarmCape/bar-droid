@@ -52,8 +52,11 @@ public final class Prefs {
     public static int controllerPort = 28777;
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
-    /** Touch-only play (TOUCH-UI.md): the touch HUD widget in the game and RtsTouch's touch-only gestures. */
-    public static boolean touchOnly = false;
+    /**
+     * Touch-only play (TOUCH-UI.md): the touch HUD widget in the game and RtsTouch's touch-only gestures. On by default
+     * (Kailil): the HUD steps aside while a mouse, keyboard or gamepad is used, so every input works together.
+     */
+    public static boolean touchOnly = true;
     /** Frame cap (phone build): 30 fps (VSync 2 on a 60 Hz window), or experimental 60 fps (VSync 1). */
     public static boolean fps60 = false;
 

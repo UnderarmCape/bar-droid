@@ -37,6 +37,7 @@ public class GameActivity extends MainActivity {
             if (e.getAction() == MotionEvent.ACTION_DOWN)
                 lorieParent.requestUnbufferedDispatch(e);   // as Termux:X11 does: no batching, less latency
             if (touch.handles(e)) return touch.onTouch(e);
+            if (e.isFromSource(InputDevice.SOURCE_MOUSE)) touch.otherInput("mouse");
             return termux.handleTouchEvent(lorieParent, lorieView, e);
         });
         // Same as Termux:X11's callback, plus: the game window follows the X screen (fold / unfold).
@@ -101,13 +102,37 @@ public class GameActivity extends MainActivity {
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-        if (pad != null && pad.onMotion(ev)) return true;
+        if (pad != null && pad.onMotion(ev)) {
+            if (touch != null && padMoved(ev)) touch.otherInput("gamepad");
+            return true;
+        }
+        if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) touch.otherInput("mouse");
         return super.dispatchGenericMotionEvent(ev);
+    }
+
+    /** A stick, trigger or d-pad pushed well past rest (a resting stick reports small values). */
+    private static boolean padMoved(MotionEvent ev) {
+        for (int axis : new int[]{MotionEvent.AXIS_X, MotionEvent.AXIS_Y, MotionEvent.AXIS_Z, MotionEvent.AXIS_RZ,
+                MotionEvent.AXIS_HAT_X, MotionEvent.AXIS_HAT_Y, MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER})
+            if (Math.abs(ev.getAxisValue(axis)) > 0.5f) return true;
+        return false;
+    }
+
+    /** A real keyboard's key (not the on-screen keyboard, the Back gesture or volume keys). */
+    private static boolean physicalKeyboard(KeyEvent e) {
+        InputDevice d = e.getDevice();
+        return d != null && !d.isVirtual() && e.isFromSource(InputDevice.SOURCE_KEYBOARD)
+                && d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (pad != null && pad.onKey(event)) return true;
+        if (pad != null && pad.onKey(event)) {
+            if (touch != null && event.getAction() == KeyEvent.ACTION_DOWN) touch.otherInput("gamepad");
+            return true;
+        }
+        // The touch HUD steps aside while a mouse, keyboard or gamepad is in use (it returns with the next touch).
+        if (touch != null && physicalKeyboard(event)) touch.otherInput("keyboard");
         // The system Back button/gesture (not a keyboard's or a mouse's back key) becomes Escape.
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !event.isFromSource(InputDevice.SOURCE_MOUSE)
                 && getLorieView().connected()) {

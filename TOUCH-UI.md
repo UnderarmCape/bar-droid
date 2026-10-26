@@ -2,7 +2,11 @@
 
 Goal (Kailil): "eventually ... we will implement touch controls to play the full game touch only". Fingers only: no
 mouse, keyboard or gamepad, on the Galaxy Z Fold7 (inner display and cover display). It is a launcher option,
-**Touch-only mode**, off by default; with it off the app behaves exactly as before (RtsTouch mouse emulation + camera).
+**Touch-only mode**, **on by default** (Kailil, 2026-10-25: "enabled by default ... if keyboard and mouse is used and
+detected, or if gamepad is detected and moving anything, then touch screen ui goes away allowing for all the input
+methods to freely work together"). The app reports which input was used last (touch, mouse, keyboard, gamepad); the
+HUD and smart tap are active only while it is touch, and come back with the next finger touch. With the option off
+the app behaves exactly as before (RtsTouch mouse emulation + camera).
 
 ## 1. Constraints that shape the design
 
@@ -44,8 +48,12 @@ mouse, keyboard or gamepad, on the Galaxy Z Fold7 (inner display and cover displ
   instead of mouse-wheel clicks (latched Shift/Ctrl would otherwise turn the wheel into fast zoom / tilt: the spring
   camera reads `movefast`/`movetilt`).
 - `TouchUiLink` (app, new) executes what the HUD asks for: hold or release Shift/Ctrl/Alt in the X server, press a
-  key, show the soft keyboard, latch box select. It also writes the touch-UI mode and the X-pixels-per-millimetre of
-  the current screen, so the HUD can size buttons in millimetres on either display.
+  key, show the soft keyboard, latch box select. It also writes the touch-UI mode, the X-pixels-per-millimetre of
+  the current screen (so the HUD sizes buttons in millimetres on either display) and the input used last:
+  `GameActivity` reports a mouse (any mouse event), a physical alphabetic keyboard (not the on-screen keyboard, Back
+  or volume keys) and a gamepad (a button, or a stick/trigger past half way); `RtsTouch` reports each finger touch.
+  While the input is not touch the HUD is hidden, its latches are released and a mouse's left click keeps its
+  desktop meaning (no smart tap).
 - `bardroid_touch.lua` (existing, always installed) keeps the camera, frame cap and "is the pointer on the interface"
   answer; the answer gains the active-command kind (0 none, 1 build, 2 other).
 - `bardroid_touch_hud.lua` (new, installed only in touch-only mode) draws the touch HUD and turns map taps into
@@ -148,7 +156,7 @@ In `bardroid_touch_hud.lua`'s `MousePress(x, y, 1)`, reached only when no BAR wi
 
 ## 9. Test plan (phone only, Kailil drives)
 
-Launcher: tick **Touch-only mode (experimental)**, Save, Play vs AI. Then:
+Launcher: **Touch-only mode (experimental)** is ticked by default; Play vs AI. Then:
 1. HUD column on the right; on the cover screen two columns. Buttons light up when tapped.
 2. Tap the commander (selects), tap ground (walks there), tap a wreck (reclaims), tap an enemy (attacks).
 3. QUEUE on: tap three spots (three waypoints); QUEUE off.
@@ -159,4 +167,5 @@ Launcher: tick **Touch-only mode (experimental)**, Save, Play vs AI. Then:
 7. BOX on: drag a box. ALL / IDLE / COM buttons.
 8. Two fingers on the options window or chat history: scroll. Pinch: smooth zoom with QUEUE on (no fast zoom).
 9. CHAT: keyboard opens, type, Enter sends. PAUSE, MENU.
+10. With a mouse, keyboard or gamepad attached: using it hides the buttons; touching the screen brings them back.
 Logs: `files/bar/infolog.txt` (`[bardroid-hud]`, `[bardroid-touch]`), `files/logs/launcher.log` (`touch`/`touchui`).

@@ -28,8 +28,9 @@ import java.util.Locale;
  *   keyboard <0|1>              hide / show the soft keyboard
  *   box <0|1>                   BOX latch: a one-finger drag on the map selects instead of panning (read by RtsTouch)
  *
- * It also keeps LuaUI/Config/bardroid_touchui.txt current ("1 <X screen pixels per millimetre>"), so the HUD sizes
- * its buttons in millimetres on either screen of a foldable.
+ * It also keeps LuaUI/Config/bardroid_touchui.txt current ("1 <X screen pixels per millimetre> <input>"), so the HUD
+ * sizes its buttons in millimetres on either screen of a foldable, and steps aside while another input is in use:
+ * input is touch, mouse, keyboard or gamepad, whichever was used last (Kailil: all input methods work together).
  */
 final class TouchUiLink {
     private static final String APP = "bardroid_app.txt";
@@ -45,6 +46,7 @@ final class TouchUiLink {
     private boolean shift, ctrl, alt, box;                  // UI thread: what the HUD wants
     private boolean heldShift, heldCtrl, heldAlt;           // UI thread: what the X server has
     private String lastInfo;
+    private String input = "touch";                         // UI thread: the input used last
 
     private final Runnable info = new Runnable() {
         @Override public void run() {
@@ -76,6 +78,13 @@ final class TouchUiLink {
         observer.stopWatching();
         ui.removeCallbacks(info);
         ui.post(() -> { shift = ctrl = alt = false; applyMods(); });
+    }
+
+    /** Fingers, a mouse, a keyboard or a gamepad was just used (UI thread): the HUD shows only for touch. */
+    void inputUsed(String kind) {
+        if (kind.equals(input)) return;
+        input = kind;
+        writeInfo();
     }
 
     /** QUEUE is latched: Shift is held. */
@@ -166,10 +175,10 @@ final class TouchUiLink {
         Rect vp = v.getInputViewport();
         RectF src = v.getInputSourceRect();
         if (vp.width() <= 0 || src.width() <= 0) return;
-        String line = String.format(Locale.US, "1 %.2f\n", viewPxPerMm() * src.width() / vp.width());
+        String line = String.format(Locale.US, "1 %.2f %s\n", viewPxPerMm() * src.width() / vp.width(), input);
         if (line.equals(lastInfo)) return;
         lastInfo = line;
-        Log.i("touchui", "screen " + Math.round(src.width()) + "x" + Math.round(src.height()) + ", " + line.trim().substring(2) + " px/mm");
+        Log.i("touchui", "screen " + Math.round(src.width()) + "x" + Math.round(src.height()) + ": " + line.trim().substring(2));
         byte[] data = line.getBytes(StandardCharsets.US_ASCII);
         io.post(() -> {
             try {

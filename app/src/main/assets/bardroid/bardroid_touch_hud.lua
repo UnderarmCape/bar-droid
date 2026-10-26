@@ -8,7 +8,9 @@
 --                                                         key <name>                 (enter, escape: press and release)
 --                                                         keyboard <0|1>             (soft keyboard)
 --                                                         box <0|1>                  (BOX latch: one-finger drags select)
---   LuaUI/Config/bardroid_touchui.txt  app, replaced:     <touchOnly 0|1> <X pixels per millimetre>
+--   LuaUI/Config/bardroid_touchui.txt  app, replaced:     <touchOnly 0|1> <X pixels per millimetre> <input>
+--                                                         (input used last: touch, mouse, keyboard, gamepad; the HUD
+--                                                         shows only for touch, so every input works together)
 --   LuaUI/Config/bardroid_touch.txt    app, appended:     box <x0> <y0> <x1> <y1>    (selection box being dragged)
 --                                                         boxend <x0> <y0> <x1> <y1> | boxcancel
 --                                                         (and the camera lines bardroid_touch.lua reads)
@@ -66,7 +68,8 @@ local glColor = gl.Color
 local glRect = gl.Rect
 
 local vsx, vsy = 1, 1
-local touchOnly, pxmm = true, nil
+local touchOnly, pxmm, input = true, nil, "touch"
+local active = true -- touch-only mode and fingers used last: HUD shown, smart tap on
 local latch = { shift = false, ctrl = false, box = false }
 local column, context, groups = {}, {}, {} -- buttons: { x1, y1, x2, y2, label, press, hold, latch, enabled }
 local flashes = {}
@@ -109,10 +112,11 @@ local function readTouchUi()
 	end
 	local s = f:read("*l")
 	f:close()
-	local mode, mm = (s or ""):match("^(%d) ([%d%.]+)")
+	local mode, mm, used = (s or ""):match("^(%d) ([%d%.]+) ?(%a*)")
 	if mode then
 		touchOnly = mode == "1"
 		pxmm = tonumber(mm)
+		input = used ~= "" and used or "touch"
 	end
 end
 
@@ -453,7 +457,7 @@ local function visibleButtons()
 end
 
 local function hit(x, y)
-	if not touchOnly or spIsGUIHidden() then
+	if not active or spIsGUIHidden() then
 		return nil
 	end
 	for _, b in ipairs(visibleButtons()) do
@@ -573,10 +577,22 @@ function widget:Update(dt)
 		applyBox(lines)
 	end
 
+	-- every frame: a tap right after a mouse was used must find the HUD active again
+	readTouchUi()
+	local nowActive = touchOnly and input == "touch"
+	if nowActive ~= active then
+		active = nowActive
+		Spring.Echo("[bardroid-hud] input: " .. input .. (active and ", touch HUD shown" or ", touch HUD hidden"))
+		if not active then -- the latches are touch tools; a keyboard has its own Shift
+			latch.shift, latch.ctrl, latch.box = false, false, false
+			sendLatches()
+			boxRect = nil
+		end
+	end
+
 	checkTimer = checkTimer - dt
 	if checkTimer <= 0 then
 		checkTimer = 0.5
-		readTouchUi()
 		layout() -- the screen (fold/unfold) or BAR's panels may have moved
 	end
 	groups.list = groupButtons()
@@ -603,7 +619,7 @@ function widget:MousePress(x, y, button)
 		flashes[b[5]] = FLASH_SECONDS
 		return true
 	end
-	if button == 1 and touchOnly then
+	if button == 1 and active then -- not for a real mouse: its left click keeps its desktop meaning
 		smartTap(x, y)
 	end
 	return false
@@ -659,7 +675,7 @@ local function drawButton(b)
 end
 
 function widget:DrawScreen()
-	if not touchOnly or spIsGUIHidden() then
+	if not active or spIsGUIHidden() then
 		return
 	end
 	if not font and WG.fonts and WG.fonts.getFont then
@@ -671,15 +687,12 @@ function widget:DrawScreen()
 	if boxRect then
 		glColor(1, 1, 1, 0.08)
 		glRect(boxRect[1], boxRect[2], boxRect[3], boxRect[4])
+		local x1, y1, x2, y2 = boxRect[1], boxRect[2], boxRect[3], boxRect[4]
 		glColor(1, 1, 1, 0.7)
-		gl.LineWidth(2)
-		gl.Shape(GL.LINE_LOOP, {
-			{ v = { boxRect[1], boxRect[2] } },
-			{ v = { boxRect[3], boxRect[2] } },
-			{ v = { boxRect[3], boxRect[4] } },
-			{ v = { boxRect[1], boxRect[4] } },
-		})
-		gl.LineWidth(1)
+		glRect(x1, y1, x2, y1 + 2)
+		glRect(x1, y2 - 2, x2, y2)
+		glRect(x1, y1, x1 + 2, y2)
+		glRect(x2 - 2, y1, x2, y2)
 	end
 	glColor(1, 1, 1, 1)
 end

@@ -173,6 +173,9 @@ final class RtsTouch {
         ioThread.quitSafely();
     }
 
+    /** A mouse, keyboard or gamepad was used: the touch HUD steps aside until the next finger touch. */
+    void otherInput(String kind) { if (link != null) link.inputUsed(kind); }
+
     /** Finger touches on the touchscreen are ours (and the rest of a gesture we started). */
     boolean handles(MotionEvent e) {
         if (state != State.IDLE && state != State.DONE) return true;
@@ -187,6 +190,7 @@ final class RtsTouch {
             case MotionEvent.ACTION_DOWN: {
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
+                if (link != null) link.inputUsed("touch");   // the touch HUD comes back
                 state = State.PENDING;
                 firstId = e.getPointerId(0);
                 downX = curX = e.getX(); downY = curY = e.getY();
