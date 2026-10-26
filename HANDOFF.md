@@ -473,7 +473,7 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    arrive, a web link goes to the browser, no lobby error. Not yet on the phone: tick it, open the Replays tab,
    download a map (pr-downloader in the container: not in the laptop test), open a link; `bridge` lines in
    launcher.log. Thumbnails, other engines and Discord stay unanswered (the lobby does not wait for those).
-3. Upstream, with Kailil's go-ahead: the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
+3. Upstream, with Kailil's go-ahead (drafts ready in `docs/upstream/`): the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
    takes the CPU-wait path on KGSL whenever the kernel supports `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, though KGSL never
    attaches fences to the dma-buf (our ioctl answer is the workaround); the ARM64 AI bug (RecoilEngine issue, then
    the CircuitAI patch), disclosing AI assistance per `AI_POLICY.md`.
