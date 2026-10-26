@@ -55,8 +55,9 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNa
 
 ## Rules of the road
 - Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.
-  One exception, Kailil's call (2026-10-25): the app icon is BAR's launcher icon, unmodified (resized only), credited
-  in `NOTICE.md`. The app is named "Beyond All Reason".
+  One exception, Kailil's call (2026-10-25): the app icon is Kailil's edit of BAR's launcher icon (an Android robot
+  added), credited in `NOTICE.md`; personal use only (NoDerivatives), so an APK with it must not be published. The
+  app is named "Beyond All Reason".
 - Keep the engine binary unmodified and pinned to the version BAR's servers run (launcher config: https://launcher-config.beyondallreason.dev/config.json).
 - Upstream PRs to RecoilEngine/CircuitAI must reference an accepted issue and disclose AI assistance (their `AI_POLICY.md`).
 - Device data layout: `files/rootfs` (container), `files/bar` (engine write-dir, bound at `/root/bar`), `files/logs`, `Android/data/<pkg>/files/import`.
