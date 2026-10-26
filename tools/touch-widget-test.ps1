@@ -1,4 +1,4 @@
-# bardroid_touch.lua in a real BAR skirmish on the laptop (BAR's released game, byar:test, vs BARb): a user widget
+﻿# bardroid_touch.lua in a real BAR skirmish on the laptop (BAR's released game, byar:test, vs BARb): a user widget
 # (tools\touch-widget-test\bardroid_touch_test.lua) moves the pointer over the map, the top bar and an open settings
 # window and checks the touch widget's "interface or map" answers. Isolated write dir build\touch-widget-test\data (the
 # live install's packages, pool and rapid index joined read-only by junctions, removed again at the end).
@@ -34,7 +34,7 @@ try {
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
   $orders = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") | ForEach-Object { "`t`t[`"$_`"] = 0," }
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") | ForEach-Object { "`t`t[`"$_`"] = 0," }
   $orders += "`t`t[`"Minimap`"] = 1,"
   # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
   if ($GamepadGame) { $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 165,", "`t`t[`"BAR Droid profile log`"] = 0," }

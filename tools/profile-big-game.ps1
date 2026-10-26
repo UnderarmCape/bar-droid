@@ -1,4 +1,4 @@
-# Where a big game's CPU time goes, on the laptop the way the phone runs BAR's released game: a windowed spectator hosts
+﻿# Where a big game's CPU time goes, on the laptop the way the phone runs BAR's released game: a windowed spectator hosts
 # -AIs BARb (teams alternating), fast-forwarded (-Speed) to -FastMinutes of game, then at 1x BAR's widget profiler
 # (tools/profile/dbg_bardroid_profile_log.lua, in a tiny game overlay of its own: it needs a game widget's rights)
 # measures every widget for -Window seconds, and the engine's own timers (/debuginfo profiling: simulation, drawing,
@@ -16,6 +16,7 @@ param(
   [string]$MapName = "Supreme Isthmus v2.1",
   [string[]]$AlsoOff = @(),  # more widgets off (by name), to compare
   [string]$Detail = "BAR Droid touch camera",
+  [int]$ProfileFastAtMinute = 0,  # measure while still fast-forwarding, from this game minute (per-frame costs)
   [switch]$Functions         # time each callin/global function of -Detail instead of each widget
 )
 $ErrorActionPreference = "Stop"
@@ -55,7 +56,7 @@ try {
   # the widget orders launch-bar.sh sets on the phone
   $off = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") + $AlsoOff
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") + $AlsoOff
   $orders = @($off | ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"BAR Droid profile log`"] = 1,"
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
@@ -90,6 +91,7 @@ bardroid_profile_functions = $(if ($Functions) { 1 } else { 0 })
 bardroid_host_speed = $Speed
 bardroid_host_fast_until = $($FastMinutes * 1800)
 bardroid_host_engine_profile_after = $([Math]::Max(10, $Window - 10))
+bardroid_host_profile_fast_at = $($ProfileFastAtMinute * 1800)
 "@ | Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $teams = for ($i = 0; $i -lt $AIs; $i++) {

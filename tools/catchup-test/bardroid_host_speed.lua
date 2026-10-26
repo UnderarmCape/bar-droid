@@ -14,10 +14,17 @@ local readyFrame
 -- (tools/profile-big-game.ps1: the profile widget waits for bardroid_profile_go; the engine's own timers are logged
 -- 50 s into the measurement)
 local engineProfileAfter = tonumber(Spring.GetConfigString("bardroid_host_engine_profile_after", "0")) or 0
+-- (bardroid_host_profile_fast_at: frame at which the profile widget goes while still fast: per-simulated-frame costs)
+local profileFastAt = tonumber(Spring.GetConfigString("bardroid_host_profile_fast_at", "0")) or 0
 
 function widget:GameFrame(frame)
 	if frame % 30 ~= 0 then
 		return
+	end
+	if profileFastAt > 0 and frame == profileFastAt then
+		Spring.Echo(string.format("[catchup-host] profiling at speed %.1f, %d units", Spring.GetGameSpeed(), #Spring.GetAllUnits()))
+		Spring.SetConfigString("bardroid_profile_go", "1", true)
+		readyFrame = frame -- (the engine timers then follow as after "ready")
 	end
 	local speed = Spring.GetGameSpeed()
 	local want = frame < fastUntil and target or 1

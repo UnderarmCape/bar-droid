@@ -1,4 +1,4 @@
-# BAR's in-game interface at a Fold screen's layout, on the laptop: a skirmish (byar:test, vs BARb) in a window of the
+﻿# BAR's in-game interface at a Fold screen's layout, on the laptop: a skirmish (byar:test, vs BARb) in a window of the
 # screen's shape, BAR's interface scale as the phone sets it, with or without the phone layer's widget changes
 # (Keys/Changes off, BAR's full-screen effects off), and a screenshot after ~5 s of game. BAR sizes its interface by
 # the window height and places it by the width, so a smaller window of the same shape shows the same layout.
@@ -42,7 +42,7 @@ try {
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
     (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
-        "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Keybind/Mouse Info",
+        "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info",
         "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }

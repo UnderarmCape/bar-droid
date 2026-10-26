@@ -169,6 +169,11 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   # the ground), scorch marks, the shadow plates under units and wrecks, the map's grass, the animated order lines
   for w in "Deferred rendering GL4" "Decals GL4" "Ground AO Plates GL4" "Ground AO Plates Features GL4" "Map Grass GL4" \
     "Commands FX"; do widget_order "$w" 0; done
+  # Profiled on the laptop with the phone's set (tools/profile-big-game.ps1, 2026-10-26): BAR's full-screen sharpening
+  # pass (Contrast Adaptive Sharpen, GPU); and Jammed Units Highlight, a faint red tint on units inside jammer cover that
+  # checks every unit every 6 simulated frames (a spectator: every unit of the game), the costliest widget per
+  # simulated frame (13.8 ms/s at 10x on the laptop): catching up and late games run on the CPU
+  widget_order "Contrast Adaptive Sharpen" 0; widget_order "Jammed Units Highlight" 0
   sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
   # (the widget saves its settings after its first game; until then there is nothing to set)
   if grep -q '\["Deferred rendering GL4"\] *= *{' "$BAR/LuaUI/Config/BYAR.lua"; then
@@ -176,7 +181,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects; queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint; queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
