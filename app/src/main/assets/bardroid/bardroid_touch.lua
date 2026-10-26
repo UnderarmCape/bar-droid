@@ -459,11 +459,6 @@ end
 
 function widget:Update(dt)
 	updates = updates + 1
-	if updates == 1 then
-		-- phone graphics (launch-bar.sh sets the rest): the lights' screen-space shadows, BAR's default 2, cost a full
-		-- screen pass. The first update: BAR's options widget has registered its "option" command by then.
-		Spring.SendCommands("option lighteffects_screenspaceshadows 0")
-	end
 	local lines = newTouchLines()
 	if lines then
 		readTouch(lines)

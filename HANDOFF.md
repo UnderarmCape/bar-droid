@@ -378,8 +378,9 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
 - **Phone graphics at every start** (`launch-bar.sh` `PHONE_GFX`, Kailil: "disable msaa on every graphics profile",
   "we can still cut more things"): no MSAA, no shadows, features drawn to 6000, GroundDetail 60, no water
   reflection/refraction passes, no engine grass or line smoothing, in springsettings.cfg and Chobby's game_settings;
-  BAR's bloom/SSAO/distortion/snow/map edge extension widgets off; the lights' screen-space shadows 0
-  (`bardroid_touch.lua`, `/option`). BAR's settings menu can change them until the next start.
+  BAR's bloom/SSAO/distortion/snow/map edge extension widgets off; the lights' screen-space shadows 0 (in
+  `LuaUI/Config/BYAR.lua`: BAR refuses `/option` from user widgets, "User widgets cannot control other widgets or
+  execute remote code"). BAR's settings menu can change them until the next start.
 
 **Pad as a mouse in the lobby** (Kailil: "just simple mouse movement, scroll and A and B as left and right click"):
 `ControllerBridge.Mouse` (GameActivity `lobbyMouse`) is on while no game widget writes the hover file (older than

@@ -146,10 +146,12 @@ for kv in $PHONE_GFX; do
   [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i "s/^\([[:space:]]*$k = \)[0-9.-]*,/\1$v,/" "$BAR/LuaMenu/Config/IGL_data.lua"
 done
 # and BAR's full-screen effects off (order 0 = disabled; BAR's settings can switch them on again until the next start):
-# bloom, ambient occlusion, heat distortion, snow, the mirrored map beyond its edges. bardroid_touch.lua turns the
-# lights' screen-space shadows off.
+# bloom, ambient occlusion, heat distortion, snow, the mirrored map beyond its edges; and the lights' screen-space
+# shadows (a full-screen pass, BAR's default 2) in that widget's saved settings. (A user widget cannot do it: BAR
+# refuses "/option" from user widgets.)
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
+  sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
 fi
 log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension"
 
@@ -241,5 +243,7 @@ log "spring exited with $rc"
 touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
+# the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
+ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f
 grep -E "GL version|GLSL version|GL4 support|S3TC|GL_VENDOR|GL_RENDERER|Video RAM|Error|error|OOM|Segmentation|desync" "$BAR/infolog.txt" 2>/dev/null | head -n 60
 exit $rc
