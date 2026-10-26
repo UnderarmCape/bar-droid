@@ -48,6 +48,12 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   took "11102MB RAM" for the CPU. The container now gets a `model name` line.
 - The interface scale ignores the floating window (no reload when the app goes to the background).
 - `[perf]` logs memory now (Android reported low memory all through an 8v8).
+- Later that night, from reading the code: a pad that reports its D-pad as keys lost a held direction at every stick
+  move; Stop left the audio pump on the FIFO (the next game's sound split between two readers); springsettings.cfg
+  is written atomically now that it holds the player's settings; an error in `bardroid_touch.lua` no longer removes
+  it for the rest of the game (pcall); a full launcher.log becomes launcher.old.log instead of being deleted; a
+  download whose `.part` was already whole (HTTP 416) or a damaged engine/Mesa archive no longer blocks the install
+  or update for good.
 Found, not ours: BAR's save-load crash also happens on Windows (upstream). Built but off by default and untested
 in the lobby: the lobby bridge (launcher setting; Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
 and the touch widget's cost (none measurable).

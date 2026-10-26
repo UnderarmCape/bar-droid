@@ -61,12 +61,24 @@ public final class Downloader {
             return dest;
         }
         Log.i("dl", "GET " + url + (have > 0 ? " (resume at " + have + ")" : ""));
-        HttpURLConnection c = open(url, have);
+        HttpURLConnection c;
+        try {
+            c = open(url, have);
+        } catch (IOException e) {
+            // 416: the .part is already whole (the app was killed before the rename) or longer than the file now.
+            if (have == 0 || !String.valueOf(e.getMessage()).startsWith("HTTP 416")) throw e;
+            Log.i("dl", "partial " + part.getName() + " not resumable: starting over");
+            //noinspection ResultOfMethodCallIgnored
+            part.delete();
+            have = 0;
+            c = open(url, 0);
+        }
         boolean resumed = have > 0 && c.getResponseCode() == 206;
         if (!resumed) { have = 0; }
         long total = c.getContentLengthLong();
         if (total > 0) total += have;
         try (InputStream in = c.getInputStream(); RandomAccessFile out = new RandomAccessFile(part, "rw")) {
+            out.setLength(have);   // a server that ignored the range sends it all again: no old bytes after it
             out.seek(have);
             byte[] buf = new byte[256 * 1024];
             long done = have; int n; long lastReport = 0;
@@ -76,6 +88,8 @@ public final class Downloader {
                 done += n;
                 if (progress != null && (done - lastReport > 2 * 1024 * 1024 || done == total)) { progress.onProgress(done, total); lastReport = done; }
             }
+            // the .part stays for the next try to resume
+            if (total > 0 && done != total) throw new IOException("download of " + dest.getName() + " ended at " + done + " of " + total + " bytes");
         } finally { c.disconnect(); }
         if (expectedSha256 != null) {
             String got = sha256(part);

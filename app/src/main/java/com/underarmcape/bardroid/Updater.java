@@ -307,6 +307,9 @@ public final class Updater {
         } catch (IOException e) {
             Log.e("update", "!!! engine " + ver + " not installed, staying on " + old + ": " + e.getMessage());
             removeTree(tmp);
+            // A whole but damaged archive would otherwise be taken as downloaded at every later try (a .part resumes)
+            if (z.isFile()) //noinspection ResultOfMethodCallIgnored
+                z.delete();
             return false;
         }
         if (!old.equals(ver) && new File(p.engineDir(old), "spring").exists()) checkConfigKeys(old, ver);

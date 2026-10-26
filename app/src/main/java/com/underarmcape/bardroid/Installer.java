@@ -227,18 +227,21 @@ public final class Installer {
         String name = Prefs.mesaUrl.substring(Prefs.mesaUrl.lastIndexOf('/') + 1);   // one file per release: no stale reuse
         File tgz = dl.download(Prefs.mesaUrl, new File(p.downloads, name), null,
                 (done, total) -> st.status("mesa", "downloading Mesa " + Downloader.human(done) + " / " + Downloader.human(total), 40));
-        runSetup("mesa", st, "mesa", "/root/downloads/" + tgz.getName());
-        //noinspection ResultOfMethodCallIgnored
-        tgz.delete();
+        try { runSetup("mesa", st, "mesa", "/root/downloads/" + tgz.getName()); }
+        finally { //noinspection ResultOfMethodCallIgnored
+            tgz.delete(); }   // a damaged download must not be taken for a finished one on the next try
     }
 
     private void installEngine(Status st) throws Exception {
-        File z = dl.download(Prefs.engineUrl, new File(p.downloads, "engine.7z"), null,
+        // Named after the release (a partial download of another version must not be resumed into it)
+        String name = Prefs.engineUrl.substring(Prefs.engineUrl.lastIndexOf('/') + 1);
+        File z = dl.download(Prefs.engineUrl, new File(p.downloads, name), null,
                 (done, total) -> st.status("engine", "downloading engine " + Downloader.human(done) + " / " + Downloader.human(total), 55));
-        runSetup("engine", st, "engine", "/root/downloads/" + z.getName(), Prefs.engineVersion);
-        if (!new File(p.engineDir(Prefs.engineVersion), "spring").exists()) throw new IOException("engine binary missing after extraction");
-        //noinspection ResultOfMethodCallIgnored
-        z.delete();
+        try {
+            runSetup("engine", st, "engine", "/root/downloads/" + z.getName(), Prefs.engineVersion);
+            if (!new File(p.engineDir(Prefs.engineVersion), "spring").exists()) throw new IOException("engine binary missing after extraction");
+        } finally { //noinspection ResultOfMethodCallIgnored
+            z.delete(); }   // as Mesa: a failed extraction downloads again
     }
 
     private boolean hasImport() {
