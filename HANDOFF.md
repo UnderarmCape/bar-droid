@@ -59,6 +59,13 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   (`WG.topbar.GetPosition`) and any open window (`WG.<window>.isvisible`) as interface. Checked in a real skirmish on
   the laptop (`tools/touch-widget-test.ps1`: the old widget fails the top bar and settings cases, the new one passes).
 - The lobby bridge sends the replays' winners (Won/Lost in the Replays tab), checked against BAR's own launcher cache.
+- **New: the engine stops drawing while nobody sees the game** (phone locked, another app in front; not the floating
+  window). It already does so when its window is hidden (as minimized on a PC: two frames a minute, sound muted), but
+  without a window manager nothing hid it, so a locked phone kept drawing 30 fps. GameActivity keeps
+  `/tmp/bardroid-hidden` while stopped; `libbardroid_pace.so` hands the engine SDL2's HIDDEN/SHOWN window events.
+  Checked on the phone with its SDL2 (`tools/pace-test.ps1`), not yet in a game: lock the phone mid-game, unlock,
+  the picture and sound come back at once ("game screen hidden/shown" in launcher.log). Off: `export
+  BARDROID_HIDDEN_PAUSE=0` in `files/bar/dev-env.sh`.
 - launch-bar.sh as it is now, dry-run on the phone (in the container, on copies of Kailil's BYAR.lua, IGL_data.lua,
   IGL_order.lua and springsettings.cfg, a stub engine): no layer miss; it sets the Spring camera (springsettings had
   CamMode 3, the lobby's copy 1), GroundDetail 200 → 60, the VSync keys the old touch widget left (VSync 2, VSyncGame 1)
@@ -477,7 +484,9 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 ## Next steps (2026-10-26)
 1. Kailil checks the overnight builds on the phone: BAR's interface at 2.0 folded and 1.3 unfolded (one LuaUI reload
    on fold/unfold), the top bar without Keys/Changes, finger twist and tilt in singleplayer (now the Spring
-   camera), no flicker with the explicit Present fence, the lobby's Autodetect panels and 120% scale.
+   camera), no flicker with the explicit Present fence, the lobby's Autodetect panels and 120% scale. New since:
+   lock the phone mid-game and unlock (picture and sound back at once), drag the top bar's sliders and the
+   settings' sliders with a finger, BAR settings (e.g. volume) kept after a restart.
 2. **The lobby without BAR's launcher.** Chobby talks to BAR's PC launcher through `WG.Connector`
    (`libs/spring-launcher/luaui/widgets/api_spring_launcher.lua`: host/port from `sl-connection.json` in the write
    dir, `{"name":…,"command":…}` JSON lines over TCP) and `luamenu/widgets/sl_loopback.lua` (`WrapperLoopback`):

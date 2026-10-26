@@ -27,8 +27,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   glcheck, the Android layer over BAR's and the lobby's saved settings at every start: phone graphics `PHONE_GFX`,
   interface scale, widget orders; spring), `springsettings.cfg` (preset; emulator overrides in
   `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
-  into the engine: the frame cap after `SDL_GL_SwapWindow`, and the ioctl answer that puts lfdevs' Mesa on its
-  explicit Present fence, so the swap never waits for the GPU; HANDOFF "Busy scenes").
+  into the engine: the frame cap after `SDL_GL_SwapWindow`, the ioctl answer that puts lfdevs' Mesa on its
+  explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), and SDL2 HIDDEN/SHOWN window
+  events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing); `tools/pace-test.ps1`).
 - `LobbyBridge` — opt-in stand-in for BAR's PC launcher behind the lobby (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
