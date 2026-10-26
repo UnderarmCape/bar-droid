@@ -45,6 +45,16 @@ public class GameService extends Service {
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
+    /** Swiping the game (or the app) away in the recent-apps screen closes it, like Stop in the notification. */
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        Log.i("svc", "removed from recent apps: stopping");
+        stopEverything();
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        stopSelf();
+        super.onTaskRemoved(rootIntent);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
