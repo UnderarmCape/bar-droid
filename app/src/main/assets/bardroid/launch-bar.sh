@@ -22,9 +22,9 @@ else
   export MESA_LOADER_DRIVER_OVERRIDE="$GPU"
 fi
 export MESA_VK_WSI_PRESENT_MODE="${MESA_VK_WSI_PRESENT_MODE:-mailbox}"
-# Never wait for vblank: with swap interval 0 the phone's Mesa (KGSL Present-fence path) keeps a third back buffer, so
-# the CPU builds the next frame while the GPU draws the last. The frame cap is libbardroid_pace.so below instead of
-# VSync (swap interval 2 left two buffers: the main thread waited for the GPU 43-58% of each frame, measured).
+# Never wait for vblank: the frame cap is libbardroid_pace.so below instead of VSync. With swap interval 0 and the
+# explicit Present fence (which pace.c steers lfdevs' Mesa onto, see there) Mesa keeps a third back buffer and never
+# waits for the GPU at the swap, so the CPU builds the next frame while the GPU draws the last.
 export vblank_mode="${vblank_mode:-0}"
 export XCURSOR_SIZE=32
 export SDL_VIDEODRIVER=x11

@@ -290,16 +290,14 @@ Native helper binaries: `tools/fetch-prebuilts.py <abi>` (proot, busybox, ANGLE)
 Toolchain pinned by termux-x11: AGP 9.3.1, Gradle 9.8.2 (wrapper), NDK 29.0.14206865, CMake 3.22.1, JDK 21.
 One ABI per APK.
 
-## Open risks
-- Freedreno (`MESA_LOADER_DRIVER_OVERRIDE=kgsl`) compat-profile GL version on the phone; fallback `zink`, then
-  `MESA_GL_VERSION_OVERRIDE=4.5COMPAT` (checkboxes in the app).
-- proot on the phone (seccomp; `PROOT_NO_SECCOMP` checkbox) and its speed loading 3.4 GB of archives.
-- RAM: BAR wants 12 GB; measure on device.
-- Touch (Termux:X11 "simulated touchscreen", from its TouchInputHandler; untested with BAR): 1-finger tap = left
-  click at the finger, 2-finger tap = right click (orders), 3-finger tap = middle click, long-press then drag = left
-  drag (box select), 2-finger long-press drag = right drag (formation move), 3-finger long-press drag = middle drag
-  (camera pan), 2-finger swipe = mouse wheel (zoom), 3-finger swipe down = toggle the extra-keys bar (Esc/Ctrl/Alt).
-  Whether this is playable needs the phone; a Lua gesture layer may follow.
+## Open risks (2026-10-26)
+- RAM: Android logged low memory all through a spectated 8v8 (~1000 units); its killer has taken the game before.
+  The `[perf]` minute line now has MemAvailable, SwapFree and the engine's resident size.
+- Heat: after an hour the GPU is capped at 443-900 MHz of 1200 and the CPUs at ~2 GHz; `[perf]` shows when.
+- BAR's saved games crash the engine when loaded, on Windows too (Gamepad section, "Busy scenes"): upstream.
+- The explicit Present fence (`libbardroid_pace.so`'s ioctl answer) is new: watch for flicker or a stall on
+  fold/unfold and in the floating window.
+- The lobby runs without BAR's launcher behind it ("WrapperLoopback", below): some lobby features fail quietly.
 
 ## Gamepad (2026-10-26)
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
@@ -417,15 +415,23 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
 Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 GB free, Android 10+.
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
-## Next steps (in order)
-1. Emulator frame rate beyond ~20 fps: the per-frame depth-copy context switch in vrend's fallback blitter and
-   ANGLE's per-submit fence checks (see the afternoon session). Measure with the laptop awake.
-2. Touch/keyboard feel in the emulator window (mouse works as mouse there; see the touch mapping below).
-3. Gamepad: done as Kailil chose (2026-10-26), see "Gamepad". Measure v0.8.5's frame cost on the phone.
-4. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per
-   `AI_POLICY.md`; report the virglrenderer-android DXT bug to Termux.
-5. Later, phones: `Build APK.bat phone`, `Install on Phone.bat`, Install / Update, GL check, Play vs AI; **Share logs**
-   sends the logs back without adb.
+## Next steps (2026-10-26)
+1. Kailil checks the overnight builds on the phone: BAR's interface at 2.0 folded and 1.3 unfolded (one LuaUI reload
+   on fold/unfold), the top bar without Keys/Changes, finger twist and tilt in singleplayer (now the Spring
+   camera), no flicker with the explicit Present fence, the lobby's Autodetect panels and 120% scale.
+2. **The lobby without BAR's launcher.** Chobby talks to BAR's PC launcher through `WG.Connector`
+   (`libs/spring-launcher/luaui/widgets/api_spring_launcher.lua`: host/port from `sl-connection.json` in the write
+   dir, `{"name":…,"command":…}` JSON lines over TCP) and `luamenu/widgets/sl_loopback.lua` (`WrapperLoopback`):
+   OpenFile (web links), Download (with it on, maps and games too; "resource" files such as the OpenSkill ratings CSV
+   only through it: "Download aborted (no wrapper, unsupported VFS type)" every start), ReadReplayInfo (Replays tab),
+   ParseMiniMap (map thumbnails), StartNewSpring (games and replays on another engine), UploadLog, Discord. The app
+   could serve it on loopback; with it on every download goes through the app, so it needs the whole set answered
+   (never a request left without a reply) and a test with Kailil.
+3. Upstream, with Kailil's go-ahead: the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
+   takes the CPU-wait path on KGSL whenever the kernel supports `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, though KGSL never
+   attaches fences to the dma-buf (our ioctl answer is the workaround); the ARM64 AI bug (RecoilEngine issue, then
+   the CircuitAI patch), disclosing AI assistance per `AI_POLICY.md`.
+4. 30 fps for hours: read the `[perf]`/`[bardroid-perf]` lines of long sessions; a potato/default switch in game.
 
 ## Licensing
 Engine GPL-2.0+; BAR game code GPL-2.0; BAR art CC-BY-NC-ND 4.0 (never bundle, never re-encode; download from the
