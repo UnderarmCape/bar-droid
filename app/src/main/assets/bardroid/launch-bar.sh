@@ -122,13 +122,34 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   log "singleplayer game: $LOBBY_GAME"
 fi
 
-# MSAA off at every start (Kailil's target: 30 fps for hours on a hot phone). The lobby keeps MSAALevel = 4 among its
-# game settings (Chobby's game_settings in IGL_data.lua) and writes it into springsettings.cfg whenever a game starts;
-# the engine reads it only at startup, so every game drew a 4x multisampled screen at the phone's resolution, which
-# costs more the more of the map a tilted camera shows.
-sed -i 's/^MSAALevel *=.*/MSAALevel = 0/' "$BAR/springsettings.cfg"
-grep -q '^MSAALevel = 0' "$BAR/springsettings.cfg" || echo "MSAALevel = 0" >> "$BAR/springsettings.cfg"
-[ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i 's/^\([[:space:]]*MSAALevel = \)[0-9-]*,/\10,/' "$BAR/LuaMenu/Config/IGL_data.lua"
+# Phone graphics at every start, whatever preset BAR's settings hold (Kailil's target: 30 fps for hours on a hot
+# phone; "disable msaa on every graphics profile or setting", "we can still cut more things"). Every one of these
+# costs more the more of the map a tilted camera shows. The lobby keeps its own copy of the engine's settings
+# (Chobby's game_settings in IGL_data.lua) and writes it into springsettings.cfg whenever a game starts, so both get
+# them; the engine reads MSAALevel only at startup.
+#   MSAALevel, FSAA        no multisampling (the lobby's MSAALevel = 4 drew every game 4x multisampled)
+#   Shadows, ShadowQuality off (BAR's shadow slider reads ShadowQuality and sets Shadows from it)
+#   FeatureDrawDistance    trees and rocks fade out from 4800 and are gone at 6000 (the lobby's 600000: every one on
+#   FeatureFadeDistance    the map in a tilted view)
+#   GroundDetail           60, the engine's default
+#   BumpWater*             BAR's "high" water without the reflection and refraction passes (each draws the scene again)
+#   GrassDetail            0 (the engine's grass; BAR draws its own)
+#   SmoothLines/Points     0
+PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
+  BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0"
+for kv in $PHONE_GFX; do
+  k=${kv%%=*}; v=${kv#*=}
+  if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
+  else echo "$k = $v" >> "$BAR/springsettings.cfg"; fi
+  [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i "s/^\([[:space:]]*$k = \)[0-9.-]*,/\1$v,/" "$BAR/LuaMenu/Config/IGL_data.lua"
+done
+# and BAR's full-screen effects off (order 0 = disabled; BAR's settings can switch them on again until the next start):
+# bloom, ambient occlusion, heat distortion, snow, the mirrored map beyond its edges. bardroid_touch.lua turns the
+# lights' screen-space shadows off.
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+  for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
+fi
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension"
 
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
