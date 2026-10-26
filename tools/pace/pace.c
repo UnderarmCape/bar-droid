@@ -48,10 +48,12 @@ void SDL_GL_SwapWindow(void *window) {
     real_swap(window);
     if (interval_ns == 0) return;
     long long now = now_ns();
-    if (next_ns == 0 || now - next_ns > interval_ns) next_ns = now;   /* first frame, or late: no catching up */
-    next_ns += interval_ns;
-    if (next_ns > now) {
-        struct timespec until = { (long) (next_ns / 1000000000LL), (long) (next_ns % 1000000000LL) };
-        while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &until, 0) == EINTR) {}
+    if (next_ns == 0) next_ns = now;
+    next_ns += interval_ns;   /* when this frame's slot ends */
+    if (now >= next_ns) {     /* the frame took the whole slot or more: no sleep, pace from here */
+        next_ns = now;
+        return;
     }
+    struct timespec until = { (long) (next_ns / 1000000000LL), (long) (next_ns % 1000000000LL) };
+    while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &until, 0) == EINTR) {}
 }
