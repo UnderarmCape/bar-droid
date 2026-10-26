@@ -2,7 +2,9 @@ package com.underarmcape.bardroid;
 
 import android.os.Build;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -173,6 +175,7 @@ public final class Proot {
             {"version", "/proc/version"},
             {"vmstat", "/proc/vmstat"},
             {"cap_last_cap", "/proc/sys/kernel/cap_last_cap"},
+            {"cpuinfo", "/proc/cpuinfo"},
     };
 
     /** Writes the fake /proc files Android hides from apps (proot-distro does the same). */
@@ -187,9 +190,27 @@ public final class Proot {
         write("vmstat", "nr_free_pages 100000\nnr_zone_inactive_anon 0\nnr_zone_active_anon 0\nnr_zone_inactive_file 0\n"
                 + "nr_zone_active_file 0\nnr_mlock 0\npgpgin 0\npgpgout 0\npswpin 0\npswpout 0\n");
         write("cap_last_cap", "40\n");
+        // Recoil names the CPU after the first "model name" line, which ARM kernels do not write: the engine's hardware
+        // string was "11102MB RAM" (the lobby's analytics threw on it, BAR's system info took the RAM for the CPU).
+        String cpuinfo = readText("/proc/cpuinfo");
+        if (!cpuinfo.contains("model name")) {
+            String vendor = Build.VERSION.SDK_INT >= 31 ? Build.SOC_MANUFACTURER : "";
+            String soc = (("QTI".equals(vendor) ? "Qualcomm" : vendor) + " "
+                    + (Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE)).trim();
+            cpuinfo = "model name\t: " + soc + "\n" + cpuinfo;
+        }
+        write("cpuinfo", cpuinfo);
     }
 
     private void write(String name, String content) throws IOException {
         try (FileWriter w = new FileWriter(new File(p.fakeProc, name))) { w.write(content); }
+    }
+
+    private static String readText(String path) {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader r = new BufferedReader(new FileReader(path))) {
+            for (String l; (l = r.readLine()) != null; ) sb.append(l).append('\n');
+        } catch (IOException ignored) {}
+        return sb.toString();
     }
 }
