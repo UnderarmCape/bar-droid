@@ -252,6 +252,11 @@ public final class Installer {
         if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
             stub.delete();
         } else try (InputStream in = new FileInputStream(new File(assets, "libasarm64.so")); OutputStream o = new FileOutputStream(stub)) { copy(in, o); }
+        // The frame cap (tools/pace/pace.c), preloaded into the engine by launch-bar.sh; phone build only.
+        File pace = new File(p.bar, "libbardroid_pace.so");
+        if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
+            pace.delete();
+        } else try (InputStream in = new FileInputStream(new File(assets, "libbardroid_pace.so")); OutputStream o = new FileOutputStream(pace)) { copy(in, o); }
         // Our own widget (not BAR content): the camera side of the two-finger pan (RtsTouch).
         File widgets = new File(p.bar, "LuaUI/Widgets");
         //noinspection ResultOfMethodCallIgnored

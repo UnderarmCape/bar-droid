@@ -1,7 +1,7 @@
 #!/bin/bash
 # BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|glcheck|shell),
 # BARDROID_GPU (kgsl|zink|llvmpipe) with the matching Mesa variables, MESA_GL_VERSION_OVERRIDE (optional),
-# BARDROID_AUDIO (0/1), GAMEPAD_GAME (0/1: singleplayer plays the controller game), DISPLAY.
+# BARDROID_AUDIO (0/1), GAMEPAD_GAME (0/1: singleplayer plays the controller game), BARDROID_FPS (frame cap), DISPLAY.
 set -u
 BAR=/root/bar
 ENGINE="$BAR/engine/recoil_${ENGINE_VER:?}"
@@ -22,7 +22,10 @@ else
   export MESA_LOADER_DRIVER_OVERRIDE="$GPU"
 fi
 export MESA_VK_WSI_PRESENT_MODE="${MESA_VK_WSI_PRESENT_MODE:-mailbox}"
-export vblank_mode="${vblank_mode:-3}"
+# Never wait for vblank: with swap interval 0 the phone's Mesa (KGSL Present-fence path) keeps a third back buffer, so
+# the CPU builds the next frame while the GPU draws the last. The frame cap is libbardroid_pace.so below instead of
+# VSync (swap interval 2 left two buffers: the main thread waited for the GPU 43-58% of each frame, measured).
+export vblank_mode="${vblank_mode:-0}"
 export XCURSOR_SIZE=32
 export SDL_VIDEODRIVER=x11
 export SDL_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR=0
@@ -32,6 +35,10 @@ export PRD_RAPID_USE_STREAMER=false
 export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see arm64-ai-fix/README.md).
 [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
+# Frame cap: sleeps after each buffer swap to BARDROID_FPS (from the app's 30/60 fps setting; 0 = none).
+if [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libbardroid_pace.so" ]; then
+  export LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$BAR/libbardroid_pace.so" BARDROID_FPS="${BARDROID_FPS:-30}"
+fi
 
 log() { echo "[launch] $*"; }
 # Android layer (docs/UPDATES.md): a tweak of BAR's files that no longer finds its target is never skipped silently.

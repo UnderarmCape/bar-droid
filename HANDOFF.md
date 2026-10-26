@@ -333,6 +333,22 @@ sim kept real time through a 31-minute skirmish, so the 15-30 fps Kailil sees is
 BAR's own options widget re-applies its saved shadow setting at every start (`Set "shadows" config-parameter to 1`)
 over our `Shadows = -1`.
 
+**Busy scenes (2026-10-26, measured on the Fold7 with simpleperf and /proc while Kailil played).** On BAR's Lowest
+preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not the limit. What was:
+- CPU and GPU took turns: the engine's main thread sat in `IOCTL_KGSL_DEVICE_WAITTIMESTAMP_CTXTID` (waiting for the GPU)
+  43-58% of each frame and was busy only ~36%; the GPU, idle in between, read ~72% busy and its governor kept it at
+  342-443 MHz of 1200. Cause: lfdevs Mesa's Present-fence path only keeps a third back buffer at swap interval 0, and
+  our 30 fps cap was VSync (swap interval 2, `vblank_mode=3`). Now `vblank_mode=0` plus our own cap,
+  `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOAD, sleeps after `SDL_GL_SwapWindow` to
+  `BARDROID_FPS`). With `vblank_mode=0` alone the GPU ran at 832 MHz in a similar scene.
+- After hours of play the phone was hot (skin 42 °C, thermal status 2): the GPU was capped at 607 MHz
+  (`/sys/class/kgsl/kgsl-3d0/thermal_pwrlevel` 8, `devfreq/max_freq`). Power per frame is what keeps the clocks: the
+  cap matters, and potato mode should cut work and resolution.
+- Simpleperf on the phone: `adb shell setprop security.perf_harden 0`, then from the shell
+  `/data/local/tmp/simpleperf record --app com.underarmcape.bardroid -p <spring,proot,x11 pids> -e cpu-clock:u`
+  (kernel samples are refused; `--app` alone only catches the Java process).
+- Loading BAR saves crashed (SIGSEGV in "Loading Saved Game", no stack): Recoil's save support; not investigated.
+
 **Pad as a mouse in the lobby** (Kailil: "just simple mouse movement, scroll and A and B as left and right click"):
 `ControllerBridge.Mouse` (GameActivity `lobbyMouse`) is on while no game widget writes the hover file (older than
 3 s: the lobby, loading screens): left stick moves the X pointer, right stick scrolls, A/B left/right button.

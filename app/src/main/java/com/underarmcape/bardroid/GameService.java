@@ -168,6 +168,7 @@ public class GameService extends Service {
             env.put("GAMEPAD_GAME", inst.useGamepadGame() ? "1" : "0");
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
+            env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : Prefs.fps60 ? "60" : "30");   // libbardroid_pace.so
             Proot proot = new Proot(paths);
             List<String> cmd = new ArrayList<>();
             cmd.add("/bin/bash"); cmd.add("/opt/bardroid/launch-bar.sh");
