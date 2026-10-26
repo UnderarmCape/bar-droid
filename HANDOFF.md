@@ -372,6 +372,9 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
   no fences, so the export is empty), the engine had no `present` thread. `libbardroid_pace.so` now answers ENOTTY
   for that ioctl (`BARDROID_PRESENT_FENCE=0` = off); lorie has the X server half (termux-x11 b36dac08). Check: a
   `present` thread in `/proc/<engine>/task/*/comm`, no `0x400c0907` waits in the main thread, no flicker.
+  Result (Kailil: "HOLY SHIT THAT WORKED", spectating an 8v8 with 829 units, hot phone): `sprin:present0` runs, the
+  main thread no longer waits for the GPU (0 of 200 samples, was 42-51%; 63% running), the GPU 78-91% busy at its
+  thermal maximum (734-900 MHz, was stuck at 342), 28.8 fps over the minute, nearly every second at 30.
 - **Phone graphics at every start** (`launch-bar.sh` `PHONE_GFX`, Kailil: "disable msaa on every graphics profile",
   "we can still cut more things"): no MSAA, no shadows, features drawn to 6000, GroundDetail 60, no water
   reflection/refraction passes, no engine grass or line smoothing, in springsettings.cfg and Chobby's game_settings;
