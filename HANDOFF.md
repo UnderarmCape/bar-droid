@@ -85,9 +85,13 @@ Found in the phone's logs and code and fixed, each installed on the phone:
 - From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
   "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
   layer resets them at the next start. "lowest" is the preset closest to the phone layer.
-Found, not ours: BAR's save-load crash also happens on Windows (upstream). Built but off by default and untested
-in the lobby: the lobby bridge (launcher setting; Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
-and the touch widget's cost (none measurable).
+- `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
+  `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
+  reports a miss if an order did not land.
+Found, not ours: BAR's save-load crash also happens on Windows (upstream; draft report in `docs/upstream/`). The lobby
+bridge stays off by default (launcher setting) until Kailil has tried it in the phone's lobby; it passed against the
+real lobby on the laptop (Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no
+loop), the touch camera in BAR's game and the controller game, and the touch widget's cost (none measurable).
 
 ## Phone session (2026-10-25, 17:00–20:00): first runs on the Fold7
 
