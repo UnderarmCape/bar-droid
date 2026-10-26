@@ -85,6 +85,10 @@ Found in the phone's logs and code and fixed, each installed on the phone:
 - From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
   "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
   layer resets them at the next start. "lowest" is the preset closest to the phone layer.
+- Tests that run on the laptop, all in `tools/laptop-tests.ps1` (~5 min, all PASS): Downloader, the springsettings
+  merge (`SettingsMerge`, with Kailil's file: 147 of BAR's keys kept), the updater's rollback decision, the lobby bridge
+  against the real lobby, the touch widget in BAR's game and the controller game. `tools/pace-test.ps1` checks the
+  pace library on the phone.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
