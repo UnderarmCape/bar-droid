@@ -30,7 +30,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   into the engine: the frame cap after `SDL_GL_SwapWindow`, and the ioctl answer that puts lfdevs' Mesa on its
   explicit Present fence, so the swap never waits for the GPU; HANDOFF "Busy scenes").
 - `LobbyBridge` — opt-in stand-in for BAR's PC launcher behind the lobby (Chobby's `WG.Connector`, sl-connection.json):
-  web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps").
+  web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
+  lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
 - `PerfLog` — once a minute while a game runs, `[perf]` in launcher.log: thermal status, GPU/CPU clocks and caps,
   memory; `bardroid_touch.lua` logs `[bardroid-perf]` (fps, slowest frame, frames of each second) to infolog.
 - `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux talloc,
