@@ -95,6 +95,15 @@ case "$MODE" in
       sed -i 's/drawAtFullSpeed = false/drawAtFullSpeed = true/' "$BAR/LuaMenu/Config/IGL_data.lua" \
         && touch "$BAR/.bardroid-lobby-fullspeed" && log "lobby: draw at full speed"
     fi
+    # Chobby's "Resolution limiter" shrinks the window to Spring.GetScreenGeometry() on every resize, but SDL keeps the
+    # screen size it saw at startup: after a fold or unfold it fought the X server (which keeps the window at the screen
+    # size, patch 0003) twice a second, toggling fullscreen each time (black flicker). 0 disables a LuaMenu widget.
+    order="$BAR/LuaMenu/Config/IGL_order.lua"
+    if [ -f "$order" ]; then
+      sed -i 's/\["Resolution limiter"\] = [0-9]*/["Resolution limiter"] = 0/' "$order"
+    else
+      mkdir -p "$BAR/LuaMenu/Config" && printf 'return {\n\t["Resolution limiter"] = 0,\n}\n' > "$order"
+    fi
     log "spring lobby: rapid://${LOBBY_TAG:-byar-chobby:test}"
     ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
   shell)
