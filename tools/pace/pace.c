@@ -41,6 +41,10 @@ extern int access(const char *path, int mode);
 #define F_OK 0
 #define RTLD_DEFAULT ((void *) 0)
 #define HIDDEN_FLAG "/tmp/bardroid-hidden"
+/* The floating window (picture-in-picture): the X screen shrinks to it, so the engine already draws few pixels; the
+   app keeps this flag meanwhile and the cap drops to FLOATING_FPS too (Kailil, 2026-10-26). Checked twice a second. */
+#define FLOATING_FLAG "/tmp/bardroid-floating"
+#define FLOATING_FPS 15
 #define RTLD_NEXT ((void *) -1L)
 #define CLOCK_MONOTONIC 1
 #define TIMER_ABSTIME 1
@@ -140,6 +144,9 @@ int SDL_PollEvent(void *event) {
     return real_poll(event);
 }
 
+static long long floating_checked_ns;
+static int floating;
+
 void SDL_GL_SwapWindow(void *window) {
     if (!real_swap) {
         real_swap = (swap_fn) dlsym(RTLD_NEXT, "SDL_GL_SwapWindow");
@@ -147,10 +154,16 @@ void SDL_GL_SwapWindow(void *window) {
     }
     if (interval_ns < 0) interval_ns = read_interval();
     real_swap(window);
-    if (interval_ns == 0) return;
     long long now = now_ns();
+    if (now - floating_checked_ns >= 500000000LL) {
+        floating_checked_ns = now;
+        floating = access(FLOATING_FLAG, F_OK) == 0;
+    }
+    long long interval = interval_ns;
+    if (floating && interval < 1000000000LL / FLOATING_FPS) interval = 1000000000LL / FLOATING_FPS;
+    if (interval == 0) return;
     if (next_ns == 0) next_ns = now;
-    next_ns += interval_ns;   /* when this frame's slot ends */
+    next_ns += interval;   /* when this frame's slot ends */
     if (now >= next_ns) {     /* the frame took the whole slot or more: no sleep, pace from here */
         next_ns = now;
         return;

@@ -72,7 +72,7 @@ end
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
-local before, groundBefore
+local before, groundBefore, edgeView, edgeExpect
 cases = {
 	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
 	function()
@@ -107,6 +107,43 @@ cases = {
 		local g = groundAt(cx - 100, cy)
 		local miss = g and groundBefore and math.sqrt((g[1] - groundBefore[1]) ^ 2 + (g[3] - groundBefore[3]) ^ 2)
 		near("drag: the map point follows the finger (elmos off)", miss, 0, 8)
+	end,
+	-- at the map's edge, looking out over it: a drag high on the screen (over the void) moves the camera like the same
+	-- drag in the middle of the screen (no jump from points near the horizon)
+	function()
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, 200, 2500, 1.9, 0
+		Spring.SetCameraState(cs, 0)
+	end,
+	function()
+		local forward = Spring.GetCameraVectors().forward
+		if forward[3] > 0 then -- looking into the map (+z): turn round to look out over the z = 0 edge
+			local cs = Spring.GetCameraState()
+			cs.ry = cs.ry + math.pi
+			Spring.SetCameraState(cs, 0)
+		end
+	end,
+	function()
+		local row = math.floor(vsy * 0.3) -- X pixels from the top: past the edge, below the horizon
+		local _, dy = Spring.GetPixelDir(cx, vsy - row)
+		edgeView = Spring.TraceScreenRay(cx, vsy - row, true) ~= "ground" and dy and dy < -0.01
+		local a, b = groundAt(cx, cy), groundAt(cx + 100, cy)
+		edgeExpect = a and b and math.sqrt((a[1] - b[1]) ^ 2 + (a[3] - b[3]) ^ 2)
+		before = Spring.GetCameraState()
+		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, row, cx + 100, row))
+	end,
+	function()
+		if not edgeView then
+			fails = fails + 1
+			log("FAIL edge setup: that row shows the map, or the sky")
+			return
+		end
+		local cs = Spring.GetCameraState()
+		local moved = math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2)
+		log(string.format("     edge drag: before %.0f,%.0f ry %.2f rx %.2f, after %.0f,%.0f, expected %s", before.px, before.pz,
+			before.ry, before.rx, cs.px, cs.pz, tostring(edgeExpect)))
+		near("drag over the void past the edge moves like one mid-screen (moved / expected)",
+			edgeExpect and moved / edgeExpect, 1, 0.15)
 	end,
 	-- the gamepad camera (online games; ControllerBridge sends "pad" lines when the sticks change)
 	function()

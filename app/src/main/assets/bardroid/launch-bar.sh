@@ -142,9 +142,13 @@ fi
 #                          CamMode = 1 started singleplayer games with the overhead camera, which has neither
 #   VSync*                 off: libbardroid_pace.so caps the frame rate (bardroid_touch.lua once set VSyncGame 1 and
 #                          VSyncFraction 2, which BAR multiplies into VSync at every game start)
+#   UnitIconFade*          1, the strictest unit LOD BAR has (its "Unit icon distance" slider at its minimum): a unit is
+#                          an icon whenever its model would look smaller than the icon, so only units close to the
+#                          camera are drawn as models (Kailil, 2026-10-26, late games: "a max distance something is
+#                          animated ... like a lod system"; a test, see HANDOFF)
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
   BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2
-  VSync=0 VSyncGame=0 VSyncFraction=1"
+  VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1"
 for kv in $PHONE_GFX; do
   k=${kv%%=*}; v=${kv#*=}
   if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
@@ -218,7 +222,8 @@ case "$MODE" in
         layer_miss "lobby full speed: no drawAtFullSpeed in LuaMenu/Config/IGL_data.lua"
       fi
     fi
-    # Every start (Kailil): Split Panel Mode "Autodetect" (panel_layout 1) and interface scale 120%. Chobby keeps the
+    # Every start (Kailil): Split Panel Mode "Always One" (panel_layout 3; 1 Autodetect, 2 Always Two; Kailil corrected
+    # Autodetect to Always One, 2026-10-26) and interface scale 120%. Chobby keeps the
     # scale per window size (key vsx/500 x vsy/250) and falls back to 100% for a size it has not saved; the Fold's two
     # displays and every resolution scale differ, so each size up to 3000x3000 gets 1.2. Its saved settings exist after
     # the first lobby run. One-line tables first: Chobby saves an empty one as "{}".
@@ -228,9 +233,9 @@ case "$MODE" in
       for x in 0 1 2 3 4 5; do for y in 0 1 2 3 4 5 6 7 8 9 10 11; do scales="$scales[\"${x}x$y\"] = 1.2, "; done; done
       sed -i -e '/^\t\tpanel_layout = /d' -e '/^\t\tuiScalesForScreenSizes = {.*}/d' \
         -e '/^\t\tuiScalesForScreenSizes = {$/,/^\t\t},*$/d' \
-        -e "s/^\t\[\"Chili lobby\"\] *= *{$/&\n\t\tpanel_layout = 1,\n\t\tuiScalesForScreenSizes = { $scales},/" "$igl"
-      if grep -q '^[[:space:]]*panel_layout = 1,' "$igl" && grep -q '\["2x5"\] = 1.2' "$igl"; then
-        log "lobby: split panels autodetect, interface scale 120%"
+        -e "s/^\t\[\"Chili lobby\"\] *= *{$/&\n\t\tpanel_layout = 3,\n\t\tuiScalesForScreenSizes = { $scales},/" "$igl"
+      if grep -q '^[[:space:]]*panel_layout = 3,' "$igl" && grep -q '\["2x5"\] = 1.2' "$igl"; then
+        log "lobby: split panels always one, interface scale 120%"
       else
         layer_miss "lobby panels and scale: no [\"Chili lobby\"] settings in LuaMenu/Config/IGL_data.lua"
       fi

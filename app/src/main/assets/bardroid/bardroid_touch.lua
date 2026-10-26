@@ -133,8 +133,8 @@ local function newTouchLines()
 	return data:sub(1, cut - 1)
 end
 
--- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
--- of the ground the camera looks at, so dragging keeps working there; nil only above the horizon.
+-- The map point under an X screen pixel, and whether the view ray really met the map there. Off the map (the void
+-- around it) the ray meets the plane at the height of the ground the camera looks at; nil only above the horizon.
 local function ground(x, y)
 	if not (x and y) then
 		return nil -- a line that is not numbers
@@ -142,7 +142,7 @@ local function ground(x, y)
 	local _, vsy = spGetViewGeometry()
 	local kind, pos = spTraceScreenRay(x, vsy - y, true)
 	if kind == "ground" and pos then
-		return pos[1], pos[3]
+		return pos[1], pos[3], true
 	end
 	local dx, dy, dz = Spring.GetPixelDir(x, vsy - y)
 	if not dy or dy > -0.01 then
@@ -159,23 +159,59 @@ end
 -- (log of the distance factor) about the map point under the pinch.
 local pending = { dx = 0, dz = 0, rot = 0, tilt = 0, zoom = 0, pivotX = nil, pivotZ = nil }
 
+local function clamp(v, lo, hi)
+	return math.max(lo, math.min(hi, v))
+end
+
+-- How much a drag from a map point is measured mid-screen instead: 0 deeper than EDGE_BLEND elmos in the map, rising
+-- to 1 at its edge; 1 off the map (the ray met no map) or above the horizon.
+local EDGE_BLEND = 400
+local function edgeWeight(x, z, onMap)
+	if not (x and onMap) then
+		return 1
+	end
+	local inside = math.min(x, Game.mapSizeX - x, z, Game.mapSizeZ - z)
+	return clamp(1 - inside / EDGE_BLEND, 0, 1)
+end
+
+-- A finger drag from X pixel (x0, y0) to (x1, y1) as a camera move. In the map the point under the finger stays under
+-- it. Off the map (the void past its edge: a stand-in plane whose height does not match the terrain at the edge, and
+-- near the horizon a few pixels are miles) the drag is measured in the middle of the screen instead, which the engine
+-- keeps on the map (Kailil, 2026-10-26: at the edge "the cursor grabs the center ... as the anchor"). The handoff
+-- happens in the last EDGE_BLEND elmos before the edge, so leaving the map does not jump.
+local function dragMove(x0, y0, x1, y1)
+	local ax, az, aOn = ground(x0, y0)
+	local bx, bz, bOn = ground(x1, y1)
+	local w = math.max(edgeWeight(ax, az, aOn), edgeWeight(bx, bz, bOn))
+	local dx, dz = 0, 0
+	if w < 1 then
+		dx, dz = ax - bx, az - bz
+	end
+	if w > 0 and x0 and y0 and x1 and y1 then
+		local vsx, vsy = spGetViewGeometry()
+		local cx, cy = vsx / 2, vsy / 2
+		local cax, caz = ground(cx, cy)
+		local cbx, cbz = ground(cx + x1 - x0, cy + y1 - y0)
+		if cax and cbx then
+			dx, dz = dx * (1 - w) + (cax - cbx) * w, dz * (1 - w) + (caz - cbz) * w
+		end
+	end
+	return dx, dz
+end
+
 local function readTouch(lines)
 	local p = pending
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
-		local ax, az = ground(tonumber(x0), tonumber(y0))
-		local bx, bz = ground(tonumber(x1), tonumber(y1))
-		if ax and bx then
-			-- grab: the point that was under the fingers moves with them
-			p.dx, p.dz = p.dx + ax - bx, p.dz + az - bz
-		end
+		local dx, dz = dragMove(tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1))
+		p.dx, p.dz = p.dx + dx, p.dz + dz
 	end
 	for r, x, y in lines:gmatch("zoom (%S+) (%S+) (%S+)") do
 		local ratio = tonumber(r)
 		if ratio and ratio > 0 then
 			p.zoom = p.zoom + math.log(ratio)
 			local gx, gz = ground(tonumber(x), tonumber(y))
-			if gx then
-				p.pivotX, p.pivotZ = gx, gz
+			if gx then -- a pinch over the void zooms about the nearest point of the map
+				p.pivotX, p.pivotZ = clamp(gx, 0, Game.mapSizeX), clamp(gz, 0, Game.mapSizeZ)
 			end
 		end
 	end
@@ -214,7 +250,16 @@ local function applyTouch(dt)
 	zoom, p.zoom = portion(p.zoom, f, 0.0005)
 	local cs = spGetCameraState()
 	if cs.px and cs.pz then
-		cs.px, cs.pz = cs.px + dx, cs.pz + dz
+		-- The engine keeps the camera's target on the map. At its edge, what is still pending outward would only be eaten
+		-- by that clamp, and a drag back in would first have to cancel it (a dead zone): dropped.
+		local nx, nz = clamp(cs.px + dx, 0, Game.mapSizeX), clamp(cs.pz + dz, 0, Game.mapSizeZ)
+		if nx ~= cs.px + dx and p.dx * dx > 0 then
+			p.dx = 0
+		end
+		if nz ~= cs.pz + dz and p.dz * dz > 0 then
+			p.dz = 0
+		end
+		cs.px, cs.pz = nx, nz
 		-- spread the fingers: closer; the map point under the pinch stays under it
 		local key = cs.dist and "dist" or cs.height and "height"
 		if zoom ~= 0 and key then
@@ -262,10 +307,6 @@ end
 local function approach(current, target, dt)
 	local value = current + (target - current) * (1 - math.exp(-dt / PAD_SMOOTHING))
 	return math.abs(value) < 0.001 and 0 or value
-end
-
-local function clamp(v, lo, hi)
-	return math.max(lo, math.min(hi, v))
 end
 
 local function horizontal(v)

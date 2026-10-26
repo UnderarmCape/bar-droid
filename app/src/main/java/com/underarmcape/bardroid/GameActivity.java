@@ -127,18 +127,32 @@ public class GameActivity extends MainActivity {
     // pauses it): libbardroid_pace.so then tells the engine its window is hidden, and the engine stops drawing and
     // mutes its sound as a minimized BAR does on a PC. The game itself runs on. The flag outlives this screen when it
     // is closed while the game goes on (the app icon brings a new one); GameService clears it before each game.
-    @Override protected void onStart() { super.onStart(); setHidden(false); }
-    @Override protected void onStop() { setHidden(true); super.onStop(); }
+    @Override protected void onStart() {
+        super.onStart();
+        setFlag(hiddenFlag(BarApp.get().paths()), false, "game screen shown: the engine draws");
+        if (!isInPictureInPictureMode()) setFlag(floatingFlag(BarApp.get().paths()), false, "full screen: 30 fps cap");
+    }
+    @Override protected void onStop() {
+        setFlag(hiddenFlag(BarApp.get().paths()), true, "game screen hidden: the engine stops drawing");
+        super.onStop();
+    }
 
-    /** The flag libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden). */
+    // The floating window: the X screen shrinks to it (the engine draws few pixels), and libbardroid_pace.so caps the
+    // frame rate at 15 while this flag is there (Kailil, 2026-10-26).
+    @Override
+    public void onPictureInPictureModeChanged(boolean inPip, android.content.res.Configuration newConfig) {
+        super.onPictureInPictureModeChanged(inPip, newConfig);
+        setFlag(floatingFlag(BarApp.get().paths()), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
+    }
+
+    /** The flags libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden, /tmp/bardroid-floating). */
     static java.io.File hiddenFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-hidden"); }
+    static java.io.File floatingFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-floating"); }
 
-    private void setHidden(boolean hidden) {
-        java.io.File flag = hiddenFlag(BarApp.get().paths());
+    private static void setFlag(java.io.File flag, boolean on, String change) {
         try {
-            if (hidden ? flag.createNewFile() : flag.delete())
-                Log.i("display", hidden ? "game screen hidden: the engine stops drawing" : "game screen shown: the engine draws");
-        } catch (java.io.IOException e) { Log.e("display", "hidden flag: " + e); }
+            if (on ? flag.createNewFile() : flag.delete()) Log.i("display", change);
+        } catch (java.io.IOException e) { Log.e("display", flag.getName() + ": " + e); }
     }
 
     @Override

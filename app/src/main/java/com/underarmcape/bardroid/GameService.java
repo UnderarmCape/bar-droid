@@ -158,6 +158,8 @@ public class GameService extends Service {
             // Bring the display up (a hidden flag left by the last game screen must not hide this one)
             //noinspection ResultOfMethodCallIgnored
             GameActivity.hiddenFlag(paths).delete();
+            //noinspection ResultOfMethodCallIgnored
+            GameActivity.floatingFlag(paths).delete();
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(ui);
 

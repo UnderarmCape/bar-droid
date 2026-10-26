@@ -109,6 +109,19 @@ __attribute__((constructor)) static void pace_test(void) {
        time: 300 ms; a dozing one wakes ~20 ms late, which the cap cannot beat) */
     check("frame cap: 30 fps at most, as exact as this phone's sleeps", ms >= 290 && ms <= plain + 90);
 
+    /* the floating window: with /tmp/bardroid-floating the cap is 15 fps (checked twice a second) */
+    fd = open("/tmp/bardroid-floating", O_WRONLY | O_CREAT, 0600);
+    close(fd);
+    usleep(600000);
+    swap(win);   /* sees the flag */
+    clock_gettime(1, &t0);
+    for (int i = 0; i < 6; i++) swap(win);
+    clock_gettime(1, &t1);
+    unlink("/tmp/bardroid-floating");
+    ms = (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_nsec - t0.tv_nsec) / 1000000;
+    printf("     floating: 6 frames in %ld ms\n", ms);
+    check("floating window: 15 fps (6 frames in 380-500 ms)", ms >= 380 && ms <= 500 + (plain - 300) * 6 / 9);
+
     printf("%s\n", fails ? "FAILED" : "ALL PASS");
     fflush(0);
 }

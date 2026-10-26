@@ -105,7 +105,7 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | BAR's full-screen effects off (bloom, SSAO, distortion, snow, map edge extension); top bar Keys/Changes off | `launch-bar.sh` `widget_order`, `LuaUI/Config/BYAR.lua` | every lobby/skirmish start | a missing entry is inserted |
 | Lights' screen-space shadows 0 | `launch-bar.sh`, BYAR.lua `["Deferred rendering GL4"]` | every lobby/skirmish start | the widget's saved data without `screenSpaceShadows` = miss |
 | Interface scale per Fold screen (2.0 cover, 1.3 inner, 1.0 cover upright) | `launch-bar.sh` at start; `bardroid_touch.lua` on fold/unfold (one LuaUI reload) | every launch / screen change | set or appended (`tools/touch-widget-test.ps1`) |
-| Lobby: split panels Autodetect, interface 120% | `launch-bar.sh`, `IGL_data.lua` | every lobby start | not set afterwards = miss |
+| Lobby: split panels Always One, interface 120% | `launch-bar.sh`, `IGL_data.lua` | every lobby start | not set afterwards = miss |
 | BAR's `launch.springsettings` | `Updater.applyLauncherSettings` | every launch | keys our layer does not set are added; where ours differ, ours win (logged) |
 | `bardroid_touch.lua` widget | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
 | `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |

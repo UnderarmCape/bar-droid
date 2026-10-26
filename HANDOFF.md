@@ -22,7 +22,7 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
 | Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
 | Frame pacing, swap | `tools/pace/pace.c` → `libbardroid_pace.so` | The frame cap without VSync, and Mesa on its explicit Present fence: CPU and GPU work at the same time (a spectated 8v8 with 829 units: 15-24 → 28.8 fps) |
-| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; the lobby on Autodetect at 120% |
+| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; units drawn as icons unless close (icon distance 1, a test); the lobby on Always One panel at 120% |
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera (see "Gamepad" below) |
@@ -89,6 +89,17 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   merge (`SettingsMerge`, with Kailil's file: 147 of BAR's keys kept), the updater's rollback decision, the lobby bridge
   against the real lobby, the touch widget in BAR's game and the controller game. `tools/pace-test.ps1` checks the
   pace library on the phone.
+- Morning of 2026-10-26, from Kailil's tests: (1) **map-edge drags** felt jarring: off the map the finger's point fell
+  on a stand-in plane whose height does not match the terrain at the edge (a jump when crossing it) and near the
+  horizon a few pixels are miles. Now a drag from off the map is measured in the middle of the screen, which the
+  engine keeps on the map, and the last 400 elmos before the edge blend from finger to centre (Kailil's rule); a
+  pending move against the edge clamp is dropped (no dead zone when dragging back). touch-widget-test has an edge case
+  (old widget 0.67 of the right distance, new 1.00). (2) **Late-game LOD test**: `UnitIconFadeStart/Vanish = 1` in
+  `PHONE_GFX` (BAR's "Unit icon distance" slider at its minimum; BAR forces `UnitIconsAsUI`, so a unit is an icon
+  whenever its model would look smaller than the icon): only close units are drawn as models. BAR has no "N units"
+  limit, and unit animation runs in the synced simulation for every unit. Kailil to judge in a late game. (3) **The
+  floating window** draws at 15 fps (`/tmp/bardroid-floating`, pace library); its resolution already drops with the
+  window (584x530). (4) The lobby's split panels: "Always One" (panel_layout 3), Kailil's correction.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
@@ -492,7 +503,7 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 ## Next steps (2026-10-26)
 1. Kailil checks the overnight builds on the phone: BAR's interface at 2.0 folded and 1.3 unfolded (one LuaUI reload
    on fold/unfold), the top bar without Keys/Changes, finger twist and tilt in singleplayer (now the Spring
-   camera), no flicker with the explicit Present fence, the lobby's Autodetect panels and 120% scale. New since:
+   camera), no flicker with the explicit Present fence, the lobby's Always One panel and 120% scale. New since:
    lock the phone mid-game and unlock (picture and sound back at once), drag the top bar's sliders and the
    settings' sliders with a finger, BAR settings (e.g. volume) kept after a restart.
 2. **The lobby without BAR's launcher.** Chobby talks to BAR's PC launcher through `WG.Connector`
