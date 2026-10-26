@@ -22,7 +22,7 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
 | Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
 | Frame pacing, swap | `tools/pace/pace.c` → `libbardroid_pace.so` | The frame cap without VSync, and Mesa on its explicit Present fence: CPU and GPU work at the same time (a spectated 8v8 with 829 units: 15-24 → 28.8 fps) |
-| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; units drawn as icons unless close (icon distance 1, a test); queued buildings drawn near the camera only; the classic minimap; the lobby on Always One panel at 120% |
+| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; units drawn as icons unless close (icon distance 1, a test); queued buildings drawn near the camera only; the classic minimap; no lights, decals, AO plates, grass, order effects; unfolded at the folded pixel count; the lobby on Always One panel at 120% |
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera (see "Gamepad" below) |
@@ -110,6 +110,12 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   (its hover button bar ignores its own "no buttons" setting, and a finger always puts the pointer there): off, the
   classic Minimap instead. touch-widget-test runs with the phone's widget orders and checks the void answer, a void
   drag, the queue near and far, and the minimap answer.
+- **GPU cuts for late games** (Kailil: "All four"; the GPU is the limit there, 90-93% busy at its thermal cap): (1)
+  unfolded, the X screen has about the folded pixel count, ~1152x1044 instead of 1456x1312 (patch 0006,
+  `LorieView.maxScaledViewPixels`, set by `GameActivity.MAX_SCREEN_PIXELS` = the cover screen's 2520x1080; the
+  "scaled" display treats a bigger screen as one of that many pixels); (2) BAR's lights (Deferred rendering GL4) off;
+  (3) scorch marks (Decals GL4), the shadow plates under units and wrecks (Ground AO Plates GL4, … Features GL4) and
+  BAR's grass (Map Grass GL4) off; (4) the animated order lines (Commands FX) off. Kailil to compare fps in a late game.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

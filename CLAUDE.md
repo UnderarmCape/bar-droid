@@ -51,7 +51,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
   top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on
   loopback (the Termux:X11 app, if installed, knocks on 7892 every 250 ms); 0005 `LorieView.setCursorVisible`
-  (`RtsTouch` hides the pointer while two or more fingers are down).
+  (`RtsTouch` hides the pointer while two or more fingers are down); 0006 `LorieView.maxScaledViewPixels` (unfolded,
+  the X screen keeps the cover screen's pixel count: `GameActivity.MAX_SCREEN_PIXELS`).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
