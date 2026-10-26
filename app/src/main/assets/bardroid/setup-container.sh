@@ -5,7 +5,8 @@
 #   setup-container.sh engine  /root/downloads/engine.7z  2026.07.04
 #   setup-container.sh content byar:test byar-chobby:test "Supreme Isthmus v2.1"  2026.07.04
 #   setup-container.sh gamepad byar:git:<commit> 2026.07.04
-#   setup-container.sh rapid   byar:test 2026.07.04          (Updater: one rapid tag, docs/UPDATES.md)
+#   setup-container.sh rapid   byar:test 2026.07.04          (Updater: one rapid tag, docs/UPDATES.md; lobby bridge games)
+#   setup-container.sh map     "Supreme Isthmus v2.1" 2026.07.04   (lobby bridge)
 #   setup-container.sh import  2026.07.04
 #   setup-container.sh check
 set -u
@@ -100,6 +101,16 @@ case "$step" in
     prd_setup "$ver"
     log "updating $tag (only files missing from the pool)"
     "$prd" --filesystem-writepath "$BAR" --download-game "$tag"; rc=$?
+    [ $rc -eq 0 ] && log "ok" || log "pr-downloader exited with $rc"
+    exit $rc
+    ;;
+
+  map)
+    # A map the lobby asked for through the lobby bridge (LobbyBridge.java); exits with pr-downloader's code.
+    name="${1:?map name}"; ver="${2:?engine version}"
+    prd_setup "$ver"
+    log "downloading map $name"
+    "$prd" --filesystem-writepath "$BAR" --download-map "$name"; rc=$?
     [ $rc -eq 0 ] && log "ok" || log "pr-downloader exited with $rc"
     exit $rc
     ;;

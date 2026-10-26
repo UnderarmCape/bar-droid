@@ -79,6 +79,7 @@
             <CheckBox android:id="@+id/cbGamepadGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_gamepad_game" />
             <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
             <CheckBox android:id="@+id/cbFps60" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_fps60" />
+            <CheckBox android:id="@+id/cbLobbyBridge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_lobby_bridge" />
             <CheckBox android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
             <CheckBox android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
             <Button android:id="@+id/btnSave" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/btn_save" />

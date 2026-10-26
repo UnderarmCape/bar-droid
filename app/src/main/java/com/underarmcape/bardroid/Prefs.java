@@ -62,6 +62,8 @@ public final class Prefs {
     public static boolean gamepadGame = true;
     /** Each lobby/skirmish start first updates BAR like its PC launcher (Updater, docs/UPDATES.md). */
     public static boolean autoUpdate = true;
+    /** The app stands in for BAR's PC launcher behind the lobby (LobbyBridge): replays, web links, resource downloads. */
+    public static boolean lobbyBridge = false;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -106,6 +108,7 @@ public final class Prefs {
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
+        lobbyBridge = s.getBoolean("lobbyBridge", lobbyBridge);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -130,6 +133,7 @@ public final class Prefs {
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
                 .putBoolean("autoUpdate", autoUpdate)
+                .putBoolean("lobbyBridge", lobbyBridge)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

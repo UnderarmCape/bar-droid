@@ -174,25 +174,35 @@ public class GameService extends Service {
             cmd.add("/bin/bash"); cmd.add("/opt/bardroid/launch-bar.sh");
             long started;
             int rc;
-            for (boolean again = false; ; again = true) {
-                env.put("ENGINE_VER", Prefs.engineVersion);
-                AudioPump audio = Prefs.audio ? new AudioPump(new java.io.File(paths.rootfsTmp, "bardroid-audio.fifo")) : null;
-                if (audio != null) audio.start();
-                engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
-                setStatus("running (" + mode + ")");
-                started = android.os.SystemClock.elapsedRealtime();
-                PerfLog perf = new PerfLog(this);
-                perf.start();
-                try { rc = engine.waitFor(); } finally { perf.stop(); }
-                if (audio != null) audio.stop();
-                setStatus("engine exited (" + rc + ")");
-                if (up == null || closing) break;
-                // The first start of a BAR update failed fast: once more on the last good version, same display.
-                Updater.Result r = up.launchEnded(rc, android.os.SystemClock.elapsedRealtime() - started);
-                if (again || r != Updater.Result.ROLLED_BACK) break;
-                setStatus("BAR update failed to start: back to engine " + Prefs.engineVersion);
-                inst.writeGameFiles();
-                up.applyLauncherSettings();
+            LobbyBridge bridge = null;
+            LobbyBridge.removeConnectionFile(paths);
+            if ("lobby".equals(mode) && Prefs.lobbyBridge) {
+                bridge = new LobbyBridge(this, paths);
+                try { bridge.start(); } catch (Exception e) { Log.e("svc", "lobby bridge not started", e); bridge = null; }
+            }
+            try {
+                for (boolean again = false; ; again = true) {
+                    env.put("ENGINE_VER", Prefs.engineVersion);
+                    AudioPump audio = Prefs.audio ? new AudioPump(new java.io.File(paths.rootfsTmp, "bardroid-audio.fifo")) : null;
+                    if (audio != null) audio.start();
+                    engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
+                    setStatus("running (" + mode + ")");
+                    started = android.os.SystemClock.elapsedRealtime();
+                    PerfLog perf = new PerfLog(this);
+                    perf.start();
+                    try { rc = engine.waitFor(); } finally { perf.stop(); }
+                    if (audio != null) audio.stop();
+                    setStatus("engine exited (" + rc + ")");
+                    if (up == null || closing) break;
+                    // The first start of a BAR update failed fast: once more on the last good version, same display.
+                    Updater.Result r = up.launchEnded(rc, android.os.SystemClock.elapsedRealtime() - started);
+                    if (again || r != Updater.Result.ROLLED_BACK) break;
+                    setStatus("BAR update failed to start: back to engine " + Prefs.engineVersion);
+                    inst.writeGameFiles();
+                    up.applyLauncherSettings();
+                }
+            } finally {
+                if (bridge != null) bridge.stop();
             }
             if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
                 Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
