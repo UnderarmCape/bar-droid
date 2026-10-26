@@ -28,8 +28,17 @@ try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
   if (-not $Widget) { $Widget = Join-Path $App "app\src\main\assets\bardroid\bardroid_touch.lua" }
   Copy-Item $Widget "$Data\LuaUI\Widgets\bardroid_touch.lua" -Force
+  Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_queue.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
+  # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
+  $orders = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
+    "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") | ForEach-Object { "`t`t[`"$_`"] = 0," }
+  $orders += "`t`t[`"Minimap`"] = 1,"
+  # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
+  if ($GamepadGame) { $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 165,", "`t`t[`"BAR Droid profile log`"] = 0," }
+  "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
+    Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
   "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 

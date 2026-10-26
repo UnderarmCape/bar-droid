@@ -102,12 +102,12 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | --- | --- | --- | --- |
 | `springsettings.cfg` (Android keys) | `Installer.writeGameFiles`: the existing file is kept (BAR's and the player's settings), the template's missing keys added, the `ALWAYS` keys set | every launch | after an engine update, `spring --list-config-vars` of the old and new engine: a key of our template the old engine knew and the new one does not is an error |
 | Phone graphics `PHONE_GFX` (no MSAA, shadows, far features, water passes, engine grass, line smoothing; Spring camera; VSync off) | `launch-bar.sh`: `springsettings.cfg` and the lobby's `game_settings` in `IGL_data.lua` | every launch | set, or appended when missing; the lobby's copy where it has the key |
-| BAR's full-screen effects off (bloom, SSAO, distortion, snow, map edge extension); top bar Keys/Changes off | `launch-bar.sh` `widget_order`, `LuaUI/Config/BYAR.lua` | every lobby/skirmish start | a missing entry is inserted |
+| BAR's full-screen effects off (bloom, SSAO, distortion, snow, map edge extension); top bar Keys/Changes off; Show Builder Queue off (the app's `bardroid_queue.lua` instead); the classic Minimap instead of the Picture-in-Picture Minimap | `launch-bar.sh` `widget_order`, `LuaUI/Config/BYAR.lua` | every lobby/skirmish start | a missing entry is inserted; not set afterwards = miss |
 | Lights' screen-space shadows 0 | `launch-bar.sh`, BYAR.lua `["Deferred rendering GL4"]` | every lobby/skirmish start | the widget's saved data without `screenSpaceShadows` = miss |
 | Interface scale per Fold screen (2.0 cover, 1.3 inner, 1.0 cover upright) | `launch-bar.sh` at start; `bardroid_touch.lua` on fold/unfold (one LuaUI reload) | every launch / screen change | set or appended (`tools/touch-widget-test.ps1`) |
 | Lobby: split panels Always One, interface 120% | `launch-bar.sh`, `IGL_data.lua` | every lobby start | not set afterwards = miss |
 | BAR's `launch.springsettings` | `Updater.applyLauncherSettings` | every launch | keys our layer does not set are added; where ours differ, ours win (logged) |
-| `bardroid_touch.lua` widget | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
+| `bardroid_touch.lua` and `bardroid_queue.lua` widgets | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
 | `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |
 | Resolution limiter off | `launch-bar.sh`, `LuaMenu/Config/IGL_order.lua` | every lobby start | entry missing → inserted; still not `= 0` = miss |
 | `drawAtFullSpeed` on (once) | `launch-bar.sh`, `LuaMenu/Config/IGL_data.lua` | until done | no `drawAtFullSpeed` in the file = miss (marker not set) |

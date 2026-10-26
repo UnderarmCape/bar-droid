@@ -264,8 +264,10 @@ public final class Installer {
         File widgets = new File(p.bar, "LuaUI/Widgets");
         //noinspection ResultOfMethodCallIgnored
         widgets.mkdirs();
-        try (InputStream in = new FileInputStream(new File(assets, "bardroid_touch.lua"));
-             OutputStream o = new FileOutputStream(new File(widgets, "bardroid_touch.lua"))) { copy(in, o); }
+        // and the queued buildings near where the camera looks (launch-bar.sh turns BAR's Show Builder Queue off)
+        for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua"})
+            try (InputStream in = new FileInputStream(new File(assets, name));
+                 OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         // Widgets of the removed touch-only mode (Kailil, 2026-10-25): gone from earlier installs too.
         for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"})
             //noinspection ResultOfMethodCallIgnored

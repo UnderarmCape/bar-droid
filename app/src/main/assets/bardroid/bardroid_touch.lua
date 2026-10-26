@@ -13,7 +13,8 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
+--                                                                               0 = map, 2 = off the map: void or sky)
 --
 -- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
 -- build (BAR Controller Support v0.8.5, the app's singleplayer game) does: left stick pans (LT up to 2.75x faster),
@@ -133,6 +134,18 @@ local function newTouchLines()
 	return data:sub(1, cut - 1)
 end
 
+-- Where the view ray through X screen pixel (x, y) meets the level plane at height h; nil above the horizon.
+local function planePoint(x, y, h)
+	local _, vsy = spGetViewGeometry()
+	local dx, dy, dz = Spring.GetPixelDir(x, vsy - y)
+	if not dy or dy > -0.01 then
+		return nil
+	end
+	local cx, cy, cz = Spring.GetCameraPosition()
+	local t = (h - cy) / dy
+	return cx + dx * t, cz + dz * t
+end
+
 -- The map point under an X screen pixel, and whether the view ray really met the map there. Off the map (the void
 -- around it) the ray meets the plane at the height of the ground the camera looks at; nil only above the horizon.
 local function ground(x, y)
@@ -144,15 +157,8 @@ local function ground(x, y)
 	if kind == "ground" and pos then
 		return pos[1], pos[3], true
 	end
-	local dx, dy, dz = Spring.GetPixelDir(x, vsy - y)
-	if not dy or dy > -0.01 then
-		return nil
-	end
-	local cx, cy, cz = Spring.GetCameraPosition()
 	local cs = spGetCameraState()
-	local h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
-	local t = (h - cy) / dy
-	return cx + dx * t, cz + dz * t
+	return planePoint(x, y, cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0)
 end
 
 -- Camera moves the fingers asked for and the camera has not made yet: pan (map units), twist and tilt (radians), zoom
@@ -188,10 +194,14 @@ local function dragMove(x0, y0, x1, y1)
 		dx, dz = ax - bx, az - bz
 	end
 	if w > 0 and x0 and y0 and x1 and y1 then
+		-- measured on the level plane through the camera's target, not the terrain: with the target at the map's edge
+		-- the terrain stops right beside the middle of the screen
 		local vsx, vsy = spGetViewGeometry()
 		local cx, cy = vsx / 2, vsy / 2
-		local cax, caz = ground(cx, cy)
-		local cbx, cbz = ground(cx + x1 - x0, cy + y1 - y0)
+		local cs = spGetCameraState()
+		local h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
+		local cax, caz = planePoint(cx, cy, h)
+		local cbx, cbz = planePoint(cx + x1 - x0, cy + y1 - y0, h)
 		if cax and cbx then
 			dx, dz = dx * (1 - w) + (cax - cbx) * w, dz * (1 - w) + (caz - cbz) * w
 		end
@@ -502,6 +512,15 @@ local function overBarInterface(mx, my)
 	return barAnswer
 end
 
+-- Whether the pointer (bottom-left origin) shows no map: the void past its edge, or the sky.
+local function offMapAt(mx, my)
+	local kind, pos = spTraceScreenRay(mx, my, true)
+	if kind ~= "ground" or not pos then
+		return true
+	end
+	return pos[1] < 0 or pos[1] > Game.mapSizeX or pos[3] < 0 or pos[3] > Game.mapSizeZ
+end
+
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
 local function updateHover()
@@ -511,7 +530,8 @@ local function updateHover()
 	end
 	local onInterface
 	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
-		onInterface = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or 0
+		-- 1 interface, 0 map, 2 neither (the void past the map's edge, or the sky): there the app ignores the finger
+		onInterface = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or offMapAt(mx, my) and 2 or 0
 	elseif updates - seenAt > 300 then
 		-- no IsAbove for a long time: a window that holds the pointer for itself, else the map
 		onInterface = overBarInterface(mx, my) and 1 or 0

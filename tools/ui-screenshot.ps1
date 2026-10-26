@@ -41,8 +41,9 @@ try {
   # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
-    (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Keybind/Mouse Info", "Changelog Info", "Grid menu") |
-      ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Build menu`"] = 165,") -join "`n"
+    (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue", "Keybind/Mouse Info",
+        "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") |
+      ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii

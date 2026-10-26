@@ -69,6 +69,31 @@ local function groundAt(x, y) -- bottom-left origin
 	return pos
 end
 
+-- bardroid_queue.lua shows the queued buildings within its radius of the camera's target, up to its maximum
+local function queueCheck(where)
+	local q, api = WG.bardroidQueue, WG.BuilderQueueApi
+	if not (q and api) then
+		fails = fails + 1
+		log("FAIL builder queue (" .. where .. "): " .. (q and "no BuilderQueueApi" or "bardroid_queue.lua not running"))
+		return
+	end
+	local cs = Spring.GetCameraState()
+	local inRange = 0
+	api.ForEachActiveBuildCommand(function(_, c)
+		local dx, dz = c.positionX - cs.px, c.positionZ - cs.pz
+		if dx * dx + dz * dz <= q.radius * q.radius then
+			inRange = inRange + 1
+		end
+	end)
+	local want = math.min(inRange, q.max)
+	local ok = q.total() > 0 and q.shown() == want
+	if not ok then
+		fails = fails + 1
+	end
+	log(string.format("%s builder queue, %s: %d of %d queued buildings drawn, %d in range", ok and "PASS" or "FAIL",
+		where, q.shown(), q.total(), inRange))
+end
+
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
@@ -144,6 +169,42 @@ cases = {
 			before.ry, before.rx, cs.px, cs.pz, tostring(edgeExpect)))
 		near("drag over the void past the edge moves like one mid-screen (moved / expected)",
 			edgeExpect and moved / edgeExpect, 1, 0.15)
+		Spring.WarpMouse(cx, vsy - math.floor(vsy * 0.3)) -- the pointer into that void
+	end,
+	function() expect("pointer off the map (the void): answer 2", 2) end,
+	-- the builder queue (bardroid_queue.lua): only queued buildings near the camera's target are drawn
+	function()
+		local myTeam = Spring.GetMyTeamID()
+		local com = (Spring.GetTeamUnits(myTeam) or {})[1]
+		local wind = UnitDefNames and UnitDefNames.armwin
+		if not (com and wind) then
+			return
+		end
+		local x, _, z = Spring.GetUnitPosition(com)
+		for i = 1, 12 do -- around the commander, and far across the map
+			local nx, nz = x + (i % 4) * 96 - 150, z + math.floor(i / 4) * 96 + 200
+			Spring.GiveOrderToUnit(com, -wind.id, { nx, Spring.GetGroundHeight(nx, nz), nz, 0 }, { "shift" })
+		end
+		for i = 1, 12 do
+			local fx, fz = Game.mapSizeX - 600 - (i % 4) * 96, Game.mapSizeZ - 600 - math.floor(i / 4) * 96
+			Spring.GiveOrderToUnit(com, -wind.id, { fx, Spring.GetGroundHeight(fx, fz), fz, 0 }, { "shift" })
+		end
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz, cs.dist, cs.rx = x, z, 2500, 2.6
+		Spring.SetCameraState(cs, 0)
+	end,
+	function() end,
+	function() queueCheck("camera at the commander") end,
+	function()
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz = Game.mapSizeX - 700, Game.mapSizeZ - 700
+		Spring.SetCameraState(cs, 0)
+	end,
+	function() queueCheck("camera at the far corner") end,
+	function() -- back over the middle of the map for the cases below
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz = Game.mapSizeX / 2, Game.mapSizeZ / 2
+		Spring.SetCameraState(cs, 0)
 	end,
 	-- the gamepad camera (online games; ControllerBridge sends "pad" lines when the sticks change)
 	function()
@@ -182,6 +243,23 @@ cases = {
 		Spring.WarpMouse(math.floor((p[1] + p[3]) / 2), math.floor((p[2] + p[4]) / 2))
 	end,
 	function() expect("top bar", 1) end,
+	function() -- the classic minimap (the phone layer switches BAR's Picture-in-Picture Minimap off)
+		local found
+		for y = 0, vsy - 1, 8 do
+			for x = 0, vsx - 1, 8 do
+				if not found and Spring.IsAboveMiniMap(x, y) then
+					found = { x + 8, y + 8 }
+				end
+			end
+		end
+		if not found then
+			fails = fails + 1
+			log("FAIL no minimap on the screen")
+			return
+		end
+		Spring.WarpMouse(found[1], found[2])
+	end,
+	function() expect("minimap", 1) end,
 	function()
 		if WG.options and WG.options.toggle then
 			WG.options.toggle(true)

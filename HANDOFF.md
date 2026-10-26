@@ -22,7 +22,7 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
 | Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
 | Frame pacing, swap | `tools/pace/pace.c` → `libbardroid_pace.so` | The frame cap without VSync, and Mesa on its explicit Present fence: CPU and GPU work at the same time (a spectated 8v8 with 829 units: 15-24 → 28.8 fps) |
-| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; units drawn as icons unless close (icon distance 1, a test); the lobby on Always One panel at 120% |
+| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; units drawn as icons unless close (icon distance 1, a test); queued buildings drawn near the camera only; the classic minimap; the lobby on Always One panel at 120% |
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera (see "Gamepad" below) |
@@ -100,6 +100,16 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   limit, and unit animation runs in the synced simulation for every unit. Kailil to judge in a late game. (3) **The
   floating window** draws at 15 fps (`/tmp/bardroid-floating`, pace library); its resolution already drops with the
   window (584x530). (4) The lobby's split panels: "Always One" (panel_layout 3), Kailil's correction.
+- Later that morning: (5) **a touch in the void** (off the map, over the sky) selected empty space and threw the
+  camera. The touch widget now answers 2 there (`bardroid_hover.txt`); `RtsTouch` ignores such a finger: no click,
+  right-click or box select, the pointer goes to the middle of the screen and a drag pans from there
+  (`startPanFromMap`). (6) **Queued buildings far away**: BAR's Show Builder Queue draws every queued building on the
+  map every frame (a thousand queued wind turbines across the map, a tilted camera). Off; the app's
+  `bardroid_queue.lua` draws them from BAR's own builder queue API and shape drawer only within 2000 elmos of where
+  the camera looks (at most 400). (7) **The buttons under the minimap** come from BAR's Picture-in-Picture Minimap
+  (its hover button bar ignores its own "no buttons" setting, and a finger always puts the pointer there): off, the
+  classic Minimap instead. touch-widget-test runs with the phone's widget orders and checks the void answer, a void
+  drag, the queue near and far, and the minimap answer.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

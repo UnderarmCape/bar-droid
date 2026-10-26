@@ -161,6 +161,9 @@ done
 # refuses "/option" from user widgets.)
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
+  # BAR's Show Builder Queue draws every queued building on the map every frame: the app's "BAR Droid builder queue"
+  # (bardroid_queue.lua) draws only those near where the camera looks
+  widget_order "Show Builder Queue" 0
   sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
   # (the widget saves its settings after its first game; until then there is nothing to set)
   if grep -q '\["Deferred rendering GL4"\] *= *{' "$BAR/LuaUI/Config/BYAR.lua"; then
@@ -168,7 +171,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension; queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
@@ -187,6 +190,10 @@ fi
 # phone: their widgets off, the rest has room.
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   widget_order "Keybind/Mouse Info" 0; widget_order "Changelog Info" 0
+  # BAR's Picture-in-Picture Minimap shows a row of buttons under the map whenever the pointer is over it, and every
+  # touch puts the pointer there (Kailil: "useless and in the way even when they autohide"): the classic Minimap
+  # widget instead (the PIP minimap switches it off while it runs)
+  widget_order "Picture-in-Picture Minimap" 0; widget_order "Minimap" 1
 fi
 
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
@@ -260,6 +267,8 @@ esac
 log "spring exited with $rc"
 touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
+queue_err=$(grep -iE 'bardroid_queue|BAR Droid builder queue' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$queue_err" ] && layer_miss "builder queue widget (bardroid_queue.lua): $queue_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f
