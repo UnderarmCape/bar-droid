@@ -165,7 +165,9 @@ log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map e
 scr="$BAR/LuaUI/Config/bardroid_screen.txt"
 if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -ge 600 ] && [ "${sh:-0}" -ge 600 ]; then   # not the floating window
   if [ "$sw" -gt "$sh" ]; then long=$sw short=$sh; else long=$sh short=$sw; fi
-  if [ $((long * 10)) -ge $((short * 16)) ]; then uis=2.0; else uis=1.3; fi
+  if [ $((long * 10)) -lt $((short * 16)) ]; then uis=1.3      # inner screen
+  elif [ "$sw" -gt "$sh" ]; then uis=2.0                        # cover screen
+  else uis=1.0; fi                                              # cover screen held upright: BAR scales by the tall side
   if grep -q '^ui_scale *=' "$BAR/springsettings.cfg"; then sed -i "s/^ui_scale *=.*/ui_scale = $uis/" "$BAR/springsettings.cfg"
   else echo "ui_scale = $uis" >> "$BAR/springsettings.cfg"; fi
   log "interface scale $uis (${sw}x${sh} screen)"

@@ -123,12 +123,14 @@ final class LobbyBridge {
             }
             case "Download": {
                 final JSONObject c = cmd;
-                downloads.execute(() -> download(c, out));
+                try { downloads.execute(() -> download(c, out)); }
+                catch (java.util.concurrent.RejectedExecutionException e) { Log.i("bridge", "stopped: download not started"); }
                 break;
             }
             case "ReadReplayInfo": {
                 final String rel = cmd.optString("relativePath");
-                replays.execute(() -> replayInfo(rel, out));
+                try { replays.execute(() -> replayInfo(rel, out)); }
+                catch (java.util.concurrent.RejectedExecutionException e) { Log.i("bridge", "stopped: replay not read"); }
                 break;
             }
             default:

@@ -391,13 +391,14 @@ end
 -- TOO SMALL ... interface 2.0 is necessary", on the inner one "1.3 scale is good"). BAR's slider stops at 1.3, and
 -- most of its widgets read ui_scale only when they load, so a fold or unfold that changes it reloads LuaUI, as BAR's
 -- own slider does. launch-bar.sh sets it for the screen a game starts on, so a start needs no reload.
-local UI_SCALE_COVER, UI_SCALE_INNER = 2.0, 1.3
+local UI_SCALE_COVER, UI_SCALE_INNER, UI_SCALE_COVER_UPRIGHT = 2.0, 1.3, 1.0
 local function applyUiScale(w, h)
 	local long, short = math.max(w, h), math.min(w, h)
 	if short < 600 then
 		return -- the floating window while the app is in the background (584x530): no reload on the way out and back
 	end
-	local want = long / short >= 1.6 and UI_SCALE_COVER or UI_SCALE_INNER -- cover: 2520x1080
+	-- cover screen 2520x1080; held upright BAR already sizes its interface by the tall side (and 2.0 overflows the width)
+	local want = long / short < 1.6 and UI_SCALE_INNER or w > h and UI_SCALE_COVER or UI_SCALE_COVER_UPRIGHT
 	local screen = w .. "x" .. h
 	if math.abs((Spring.GetConfigFloat("ui_scale", 1) or 1) - want) <= 0.001 then
 		Spring.SetConfigString("bardroid_ui_scale_reload", "")
