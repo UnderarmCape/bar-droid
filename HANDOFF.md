@@ -322,7 +322,20 @@ v0.8.5's own suite (`BARGAMEPAD scripts\codex-tests.ps1 -GameDir src\bar-codex-p
 attempt-01 failures, as on the release branch. Profiling: `tools/profile-gamepad-game.ps1 [-Functions -Detail <widget>]`
 (per widget, or every function of one widget with exact allocations); `-Released` measures BAR without v0.8.5.
 Remaining controller costs (laptop): the camera widget ~0.4 ms/frame, 0.45 MB/s, spread over many functions
-(selected-unit status panel, control groups, packet parsing); replaying the hint panel's list ~0.3 ms.
+(selected-unit status panel, control groups, packet parsing).
+
+**Stripped for the phone** (Kailil, 2026-10-26: "get rid of the debug stuff and the hints menu all together. and
+remove bindings menu and UI ... its too clunky to use on mobile"; the hints were too small to read anyway):
+`build-gamepad-game.py` turns the hints off (the runtime then polls nothing) and leaves out the bindings menu, the UI
+layout editor, the SmartX audit and v0.8.5's tests (`MOBILE_LEFT_OUT`). Laptop: LuaUI garbage 0.67 MB/s. The phone
+after the first optimization: LuaUI memory changes 20-79 MB/min (before 79-268; BAR's released game 0-44) and the
+sim kept real time through a 31-minute skirmish, so the 15-30 fps Kailil sees is rendering: the potato pass.
+BAR's own options widget re-applies its saved shadow setting at every start (`Set "shadows" config-parameter to 1`)
+over our `Shadows = -1`.
+
+**Pad as a mouse in the lobby** (Kailil: "just simple mouse movement, scroll and A and B as left and right click"):
+`ControllerBridge.Mouse` (GameActivity `lobbyMouse`) is on while no game widget writes the hover file (older than
+3 s: the lobby, loading screens): left stick moves the X pointer, right stick scrolls, A/B left/right button.
 - **Why a developer game:** BAR Controller Support v0.8.5 (`C:\Tools\BARGAMEPAD`, branch
   `controller/codex-v085-release`) is BAR's own game with the controller added (new widgets, edits inside ten of BAR's
   widgets), ported onto BAR Release 2026.10.20-1 (`a61703336e`). BAR's user-widget sandbox (BAR PR #9547) blocks its
