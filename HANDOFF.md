@@ -59,6 +59,10 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   (`WG.topbar.GetPosition`) and any open window (`WG.<window>.isvisible`) as interface. Checked in a real skirmish on
   the laptop (`tools/touch-widget-test.ps1`: the old widget fails the top bar and settings cases, the new one passes).
 - The lobby bridge sends the replays' winners (Won/Lost in the Replays tab), checked against BAR's own launcher cache.
+- The engine update path (never run on the phone: BAR has been on 2026.07.04 all along) checked with BAR's test engine
+  2026.09.01 under a scratch name: its arm64 archive downloads, the container step extracts it, `spring --version`
+  runs, and it still knows every springsettings key of ours. Removed again. When BAR's launcher config moves
+  `manual-linux` to it, the phone follows at the next start.
 - From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
   "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
   layer resets them at the next start. "lowest" is the preset closest to the phone layer.
