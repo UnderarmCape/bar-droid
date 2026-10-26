@@ -54,6 +54,14 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   it for the rest of the game (pcall); a full launcher.log becomes launcher.old.log instead of being deleted; a
   download whose `.part` was already whole (HTTP 416) or a damaged engine/Mesa archive no longer blocks the install
   or update for good.
+- A finger drag on BAR's top bar (the share and conversion sliders) or in an open BAR window (the settings and their
+  sliders) panned the map underneath: they answer no `IsAbove`. The touch widget now counts the top bar
+  (`WG.topbar.GetPosition`) and any open window (`WG.<window>.isvisible`) as interface. Checked in a real skirmish on
+  the laptop (`tools/touch-widget-test.ps1`: the old widget fails the top bar and settings cases, the new one passes).
+- The lobby bridge sends the replays' winners (Won/Lost in the Replays tab), checked against BAR's own launcher cache.
+- From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
+  "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
+  layer resets them at the next start. "lowest" is the preset closest to the phone layer.
 Found, not ours: BAR's save-load crash also happens on Windows (upstream). Built but off by default and untested
 in the lobby: the lobby bridge (launcher setting; Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
 and the touch widget's cost (none measurable).

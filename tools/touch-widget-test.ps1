@@ -1,0 +1,58 @@
+# bardroid_touch.lua in a real BAR skirmish on the laptop (BAR's released game, byar:test, vs BARb): a user widget
+# (tools\touch-widget-test\bardroid_touch_test.lua) moves the pointer over the map, the top bar and an open settings
+# window and checks the touch widget's "interface or map" answers. Isolated write dir build\touch-widget-test\data (the
+# live install's packages, pool and rapid index joined read-only by junctions, removed again at the end).
+#   powershell -ExecutionPolicy Bypass -File tools\touch-widget-test.ps1 [-Engine recoil_2026.09.01]
+param(
+  [string]$Engine = "",
+  [string]$Map = "supreme_isthmus_v2.1.sd7",
+  [string]$MapName = "Supreme Isthmus v2.1",
+  [string]$Widget = ""   # another bardroid_touch.lua to test (default: the app's)
+)
+$ErrorActionPreference = "Stop"
+$App = Split-Path -Parent $PSScriptRoot
+$Work = Join-Path $App "build\touch-widget-test"
+$Data = Join-Path $Work "data"
+$Bar = Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"
+if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
+$EngineDir = Join-Path $Bar "engine\$Engine"
+
+New-Item -ItemType Directory -Force -Path "$Data\LuaUI\Widgets", "$Data\LuaUI\Config", "$Data\maps" | Out-Null
+$links = foreach ($d in "packages", "pool", "rapid") {
+  $link = Join-Path $Data $d
+  if (-not (Test-Path $link)) { cmd /c mklink /J "$link" "$(Join-Path $Bar $d)" | Out-Null }
+  $link
+}
+try {
+  if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
+  if (-not $Widget) { $Widget = Join-Path $App "app\src\main\assets\bardroid\bardroid_touch.lua" }
+  Copy-Item $Widget "$Data\LuaUI\Widgets\bardroid_touch.lua" -Force
+  Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
+  Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
+  "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+    Set-Content "$Data\springsettings.cfg" -Encoding ascii
+
+  # byar:test -> the archive name the start script needs
+  $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
+  $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
+  $game = $null
+  while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
+  $reader.Close()
+  if (-not $game) { throw "byar:test not in $gz" }
+  $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
+  $startscript = Join-Path $Work "skirmish.txt"
+  $script | Set-Content $startscript -Encoding ascii
+
+  $log = Join-Path $Data "infolog.txt"
+  Remove-Item $log -ErrorAction SilentlyContinue
+  Write-Host "[touch-test] $game on $MapName, engine $Engine"
+  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
+    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`""
+  $deadline = (Get-Date).AddSeconds(240)
+  while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
+         -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[touchtest\] done' -Quiet))) { Start-Sleep 1 }
+  if (-not $p.HasExited) { $p.Kill() }
+  Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch" | ForEach-Object { $_.Line }
+} finally {
+  foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }   # the junction only, never the live install's files
+}

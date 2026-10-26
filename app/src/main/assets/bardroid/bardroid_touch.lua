@@ -423,6 +423,34 @@ end
 -- Never Spring.SetWindowGeometry here: the engine clamps it to the screen size SDL saw at startup, so on the other
 -- screen of a foldable it would shrink the window again. The frame cap is libbardroid_pace.so's (no VSync).
 
+-- Most of BAR's interface answers no IsAbove: its windows (the settings with their sliders) and the top bar (the
+-- share and conversion sliders) would take a finger drag for a pan of the map underneath. A window that is open
+-- makes the whole screen interface (BAR closes it on a click outside); the top bar tells where it is. Checked again
+-- when the pointer moves, else every 10 frames (a window opened by a tap that left the pointer where it was).
+local BAR_WINDOWS = { "options", "gameinfo", "teamstats", "keybinds", "changelog", "widgetselector", "missioninfo",
+	"scavengerinfo" }
+local barX, barY, barAt, barAnswer = nil, nil, -1000, false
+local function overBarInterface(mx, my)
+	if mx == barX and my == barY and updates - barAt < 10 then
+		return barAnswer
+	end
+	barX, barY, barAt, barAnswer = mx, my, updates, false
+	for i = 1, #BAR_WINDOWS do
+		local w = WG[BAR_WINDOWS[i]]
+		if type(w) == "table" and type(w.isvisible) == "function" and w.isvisible() then
+			barAnswer = true
+			return true
+		end
+	end
+	local tb = WG.topbar
+	local p = type(tb) == "table" and type(tb.GetPosition) == "function" and tb.GetPosition()
+	if type(p) == "table" and p[1] and p[2] and p[3] and p[4] then -- left, bottom, right, top (+ scale, buttons' bottom)
+		local bottom = math.min(p[2], tonumber(p[6]) or p[2])
+		barAnswer = mx >= p[1] and mx <= p[3] and my >= bottom and my <= p[4]
+	end
+	return barAnswer
+end
+
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
 local function updateHover()
@@ -432,9 +460,10 @@ local function updateHover()
 	end
 	local onInterface
 	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
-		onInterface = spIsAboveMiniMap(mx, my) and 1 or 0
+		onInterface = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or 0
 	elseif updates - seenAt > 300 then
-		onInterface = 0 -- no IsAbove for a long time (a window that hides the interface?): the map
+		-- no IsAbove for a long time: a window that holds the pointer for itself, else the map
+		onInterface = overBarInterface(mx, my) and 1 or 0
 	elseif updates - mouseSince >= 2 then
 		onInterface = 1
 	else

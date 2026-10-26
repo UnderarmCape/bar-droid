@@ -101,4 +101,5 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNa
 ## Open risks (see HANDOFF.md)
 Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little
 host RAM left; the low-memory killer once took the app). Phone: RAM (~5–6 GB a match), BAR's UI on the near-square
-inner display, drags on BAR's top bar/menus pan instead of dragging (they have no `IsAbove`), touch-only play (later).
+inner display, a drag that starts on BAR's build/order menus pans (they have no `IsAbove`; the top bar and BAR's
+windows are covered: `bardroid_touch.lua` overBarInterface, `tools/touch-widget-test.ps1`), touch-only play (later).
