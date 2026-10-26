@@ -61,6 +61,14 @@ Principles taken from them:
 - **Control groups** under the top bar: tap = select, tap again = camera to the group, long press = assign, + = new.
 - The rail and the dock dock against BAR's top bar and bottom-right panels (`WG.topbar.GetPosition`,
   `WG.advplayerlist_api.GetPosition` ...). On the short cover screen the build drawer covers the minimap.
+- **BAR's own panels per screen** (`bardroid_touch.lua`, every mode): BAR sizes its panels by screen height ×
+  `ui_scale`, but its top bar shares out the width (resource bars 0.7 × width ÷ 4.4 each, buttons a quarter), so on
+  the near-square inner display `ui_scale` 1.4 pushes the top bar's buttons over its own counters. BAR offers
+  `ui_scale` up to 1.3 on 16:9 screens; a narrower screen gets the same proportions: `ui_scale` ≤ 1.3 × 1080/1920 ×
+  width ÷ height = 0.81 on the inner display (BAR's elements end up about the physical size of the cover's at 1.4),
+  the launcher's 1.4 on the cover. Applied at game start and 1.5 s after a fold/unfold settles, with
+  `luarules reloadluaui` (as BAR's options menu applies `ui_scale`); `LuaUI/Config/bardroid_uiscale.txt` keeps the
+  launcher's/player's setting as the base.
 
 ## 3. Gestures
 

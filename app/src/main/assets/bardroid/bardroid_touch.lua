@@ -59,10 +59,55 @@ local function fileSize(path)
 	return size
 end
 
+-- BAR's interface scale on the screen at hand. BAR sizes its panels by the screen height times ui_scale, but its top
+-- bar shares out the width: on the near-square inner display of a foldable (1456x1312) ui_scale 1.4 pushes the top
+-- bar's buttons over its own counters. BAR offers ui_scale up to 1.3 on 16:9 screens, so a screen narrower than that
+-- gets the same proportions: ui_scale <= 1.3 * (1080 / 1920) * width / height (0.81 inner, 1.4 stays on the cover).
+-- The app's (or the player's) setting is the base; the file remembers it across the reload that applies a new scale
+-- (BAR applies ui_scale with "luarules reloadluaui", as its options menu does).
+local UISCALE = "LuaUI/Config/bardroid_uiscale.txt" -- "<base> <applied>"
+local UI_FIT = 1.3 * 1080 / 1920
+local UI_SETTLE_SECONDS = 1.5 -- a fold passes through in-between sizes: wait for the last one
+local uiPending
+
+local function fitUiScale()
+	local vsx, vsy = spGetViewGeometry()
+	if vsx < 200 or vsy < 200 then
+		return
+	end
+	local current = Spring.GetConfigFloat("ui_scale", 1)
+	local base, applied
+	local f = io.open(UISCALE, "r")
+	if f then
+		base, applied = (f:read("*l") or ""):match("^([%d%.]+) ([%d%.]+)")
+		f:close()
+		base, applied = tonumber(base), tonumber(applied)
+	end
+	if not (applied and math.abs(current - applied) < 0.005) then
+		base = current -- set by the app at launch, or by the player in BAR's options
+	end
+	local want = math.floor(math.min(base, UI_FIT * vsx / vsy) * 100) / 100
+	f = io.open(UISCALE, "w")
+	if f then
+		f:write(string.format("%.2f %.2f\n", base, want))
+		f:close()
+	end
+	if math.abs(want - current) >= 0.02 then
+		Spring.Echo(string.format("[bardroid-touch] %dx%d screen: ui_scale %.2f -> %.2f (setting %.2f)", vsx, vsy, current, want, base))
+		Spring.SetConfigFloat("ui_scale", want)
+		Spring.SendCommands("luarules reloadluaui")
+	end
+end
+
 function widget:Initialize()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
 	local cs = spGetCameraState()
 	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s)", tostring(cs.name), tostring(cs.rx), tostring(cs.ry)))
+	fitUiScale()
+end
+
+function widget:ViewResize()
+	uiPending = spGetTimer() -- fold / unfold: fit the scale once the size has settled
 end
 
 -- Called for the pointer position only when no widget before this one (the whole interface) claimed it.
@@ -233,6 +278,11 @@ function widget:Update(dt)
 		applyTouch(lines)
 	end
 	updateHover()
+
+	if uiPending and spDiffTimers(spGetTimer(), uiPending) >= UI_SETTLE_SECONDS then
+		uiPending = nil
+		fitUiScale()
+	end
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then
