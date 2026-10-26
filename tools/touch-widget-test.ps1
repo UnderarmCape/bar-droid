@@ -65,7 +65,7 @@ try {
   while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
          -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[touchtest\] done' -Quiet))) { Start-Sleep 1 }
   if (-not $p.HasExited) { $p.Kill() }
-  Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch" | ForEach-Object { $_.Line }
+  Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch|bardroid-perf" | ForEach-Object { $_.Line }
 } finally {
   foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }   # the junction only, never the live install's files
 }
