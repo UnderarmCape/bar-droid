@@ -43,8 +43,6 @@ public final class Prefs {
     public static String mesaDriver = EMULATOR_BUILD ? "virpipe" : "kgsl";
     public static boolean forceCompat45 = false;    // MESA_GL_VERSION_OVERRIDE=4.5COMPAT
     public static int workerThreads = 4;
-    public static float uiScale = 1.4f;
-    public static boolean shadows = false;
     public static boolean noSeccomp = false;
     public static boolean verboseX = false;
     public static boolean audio = true;
@@ -53,7 +51,7 @@ public final class Prefs {
     public static int controllerPort = 28777;
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
-    /** Frame cap (phone build): 30 fps (VSync 2 on a 60 Hz window), or experimental 60 fps (VSync 1). */
+    /** Frame cap (phone build, libbardroid_pace.so): 30 fps, or experimental 60 fps. */
     public static boolean fps60 = false;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
     public static boolean autoLobby = true;
@@ -100,8 +98,6 @@ public final class Prefs {
         if (valid) mesaDriver = driver;
         forceCompat45 = s.getBoolean("forceCompat45", forceCompat45);
         workerThreads = s.getInt("workerThreads", workerThreads);
-        uiScale = s.getFloat("uiScale", uiScale);
-        shadows = s.getBoolean("shadows", shadows);
         noSeccomp = s.getBoolean("noSeccomp", noSeccomp);
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
@@ -123,8 +119,7 @@ public final class Prefs {
                 .putString("mesaDriver", mesaDriver)
                 .putBoolean("forceCompat45", forceCompat45)
                 .putInt("workerThreads", workerThreads)
-                .putFloat("uiScale", uiScale)
-                .putBoolean("shadows", shadows)
+                .remove("uiScale").remove("shadows")   // gone: launch-bar.sh sets ui_scale per Fold screen, shadows off
                 .remove("compressTextures")   // gone: CompressTextures is always 0 (springsettings.cfg)
                 .putBoolean("noSeccomp", noSeccomp)
                 .putBoolean("verboseX", verboseX)

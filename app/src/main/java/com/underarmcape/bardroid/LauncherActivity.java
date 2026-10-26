@@ -106,7 +106,6 @@ public class LauncherActivity extends AppCompatActivity {
 
     private void loadSettingsIntoUi() {
         ((EditText) findViewById(R.id.edWorkers)).setText(String.valueOf(Prefs.workerThreads));
-        ((EditText) findViewById(R.id.edUiScale)).setText(String.valueOf(Prefs.uiScale));
         ((EditText) findViewById(R.id.edMap)).setText(Prefs.mapName);
         ((EditText) findViewById(R.id.edMesaUrl)).setText(Prefs.mesaUrl);
         CheckBox alt = findViewById(R.id.cbZink);
@@ -122,7 +121,6 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
         ((CheckBox) findViewById(R.id.cbAutoUpdate)).setChecked(Prefs.autoUpdate);
-        ((CheckBox) findViewById(R.id.cbShadows)).setChecked(Prefs.shadows);
         ((CheckBox) findViewById(R.id.cbNoSeccomp)).setChecked(Prefs.noSeccomp);
         ((CheckBox) findViewById(R.id.cbVerboseX)).setChecked(Prefs.verboseX);
     }
@@ -130,7 +128,6 @@ public class LauncherActivity extends AppCompatActivity {
     private void saveSettings() {
         try {
             Prefs.workerThreads = Integer.parseInt(((EditText) findViewById(R.id.edWorkers)).getText().toString().trim());
-            Prefs.uiScale = Float.parseFloat(((EditText) findViewById(R.id.edUiScale)).getText().toString().trim());
         } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
         Prefs.mapName = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
         Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().trim();
@@ -143,7 +140,6 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();
         Prefs.autoUpdate = ((CheckBox) findViewById(R.id.cbAutoUpdate)).isChecked();
-        Prefs.shadows = ((CheckBox) findViewById(R.id.cbShadows)).isChecked();
         Prefs.noSeccomp = ((CheckBox) findViewById(R.id.cbNoSeccomp)).isChecked();
         Prefs.verboseX = ((CheckBox) findViewById(R.id.cbVerboseX)).isChecked();
         Prefs.save(this);
