@@ -4,7 +4,8 @@ Working folder on the laptop: `C:\Tools\BARANDROID\` (this project is `bar-droid
 Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **It plays on Kailil's Galaxy Z Fold7**
 (~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB (serial R3CY70B9VRH) or Wi-Fi
 `adb connect 192.168.1.196:5555` (after `adb tcpip 5555`, until the phone reboots). Kailil checks fps and sound
-themselves: do not run monitoring on the phone while Kailil plays.
+themselves: do not run monitoring on the phone while Kailil plays. Install every new phone build right away, even
+over a running game; never ask first (Kailil).
 
 ## Architecture in one breath
 Unmodified official **Recoil engine** (amd64 build for the emulator, arm64 for phones) runs inside a **Debian trixie
