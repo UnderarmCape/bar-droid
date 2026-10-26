@@ -741,7 +741,13 @@ public final class Updater {
         f.getParentFile().mkdirs();
         File tmp = new File(f.getPath() + ".tmp");
         try (OutputStream o = new FileOutputStream(tmp)) { o.write(data); }
-        if (!tmp.renameTo(f)) throw new IOException("rename failed: " + tmp);
+        replace(tmp, f);
+    }
+
+    /** rename(2) over the target (File.renameTo does not replace an existing file on Windows: tools/updater-test). */
+    static void replace(File from, File to) throws IOException {
+        java.nio.file.Files.move(from.toPath(), to.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
     }
 
     private static void load(File f, Properties into) {

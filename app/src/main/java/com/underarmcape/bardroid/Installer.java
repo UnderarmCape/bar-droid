@@ -283,7 +283,7 @@ public final class Installer {
         // Replaced whole: the app killed mid-write must not cut off the player's BAR settings.
         File tmp = new File(out.getPath() + ".tmp");
         writeFile(tmp, cfg);
-        if (!tmp.renameTo(out)) throw new IOException("could not replace " + out);
+        Updater.replace(tmp, out);
         writeStartScript();
     }
 
