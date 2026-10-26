@@ -154,7 +154,8 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   its catch-up speed says nothing about the phone's. The emulator build now ships the x86_64 pace library
   (`libbardroid_pace-x86_64.so`, no frame cap, `BARDROID_PRESENT_FENCE=0`) for the hidden window.
   A game the phone cannot run at its own speed never catches up: no ground gained in 60 s, the mode ends (it draws
-  again, "not gaining" in the log) and tries again 5 min later.
+  again, "not gaining" in the log) and tries again 5 min later, twice as long after each further give-up
+  (`tools/catchup-test.ps1 -HostSpeed 4 -BurnMs 10 -Modes 1`: a host that stays fast, a deliberately slow spectator).
 - **Where a big game's CPU goes** (`tools/profile-big-game.ps1`: a BARb game fast-forwarded, BAR's widget profiler at
   1x with the phone's widget orders, the engine's timers via `/debuginfo profiling`; `-ProfileFastAtMinute` measures
   at 10x, i.e. per simulated frame; `-Functions` times one widget's callins). 6 BARb, 753 units, laptop: all widgets
@@ -166,6 +167,11 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   big ones, all gameplay information, left on (Kailil's call): Defense Range GL4 (5 ms/s at 1x), Top Bar, AdvPlayersList,
   Sensor Ranges Jammer Preview, Ecostats, Metalspots, BuildETA. `[perf]` now finds the engine (its process is
   `recoil-main`, the memory column was always "?").
+- **More worker threads do not speed up the simulation** (a headless 6-BARb host at max speed, `catchup-test.ps1
+  -HostOnly -Workers 4|7`): at 680-700 units x14.3-15.1 with 4 workers, x13.6 with 7. The app's `WorkerThreadCount =
+  4` stays (fewer busy cores, less heat). Load-time pathing setup ("PFS", 4.1 s of the phone's ~45 s load) is the
+  only place that uses them much. Phone load after the game data: map 7 s, map tiles 4 s, projectile textures 4 s,
+  radar icons 4 s, PFS 4 s, LuaRules 8 s.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

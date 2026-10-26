@@ -11,6 +11,7 @@ local target = tonumber(Spring.GetConfigString("bardroid_host_speed", "1")) or 1
 local fastUntil = tonumber(Spring.GetConfigString("bardroid_host_fast_until", "0")) or 0
 local announced = false
 local readyFrame
+local minuteAt -- real time of the last game minute
 -- (tools/profile-big-game.ps1: the profile widget waits for bardroid_profile_go; the engine's own timers are logged
 -- 50 s into the measurement)
 local engineProfileAfter = tonumber(Spring.GetConfigString("bardroid_host_engine_profile_after", "0")) or 0
@@ -44,7 +45,10 @@ function widget:GameFrame(frame)
 		Spring.SendCommands("debuginfo profiling")
 	end
 	if frame % 1800 == 0 then
-		Spring.Echo(string.format("[catchup-host] game %d:00, speed %.1f, %d units", math.floor(frame / 1800), speed,
-			#Spring.GetAllUnits()))
+		local now = Spring.GetTimer()
+		local actual = minuteAt and 60 / math.max(0.001, Spring.DiffTimers(now, minuteAt)) or 0 -- game minute per real minute
+		minuteAt = now
+		Spring.Echo(string.format("[catchup-host] game %d:00, speed %.1f (reached x%.1f), %d units", math.floor(frame / 1800),
+			speed, actual, #Spring.GetAllUnits()))
 	end
 end

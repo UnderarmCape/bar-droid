@@ -21,7 +21,8 @@ param(
   [double]$HostSpeed = 0,   # > 0: the host runs at this speed for good (a game the spectator cannot catch up with)
   [int[]]$Modes = @(0, 1),  # the joins: catch-up mode off (0) and/or on (1)
   [double]$BurnMs = 0,     # the spectator burns this much CPU per simulated frame (slower than the host: a hopeless catch-up)
-  [int]$ProbeLimit = 600   # seconds the spectator stays at most
+  [int]$ProbeLimit = 600,  # seconds the spectator stays at most
+  [int]$Workers = 0        # the host's WorkerThreadCount (0: the engine's default)
 )
 if ($HostSpeed -gt 0) { $Speed = $HostSpeed; $FastMinutes = 100000 }
 $ErrorActionPreference = "Stop"
@@ -83,7 +84,7 @@ $($teams -join "`n")
 $hostProc = $null
 try {
   $hostDir = Join-Path $Work "host"; New-WriteDir $hostDir
-  "LogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_host_speed = $Speed`nbardroid_host_fast_until = $($FastMinutes * 1800)" |
+  "LogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_host_speed = $Speed`nbardroid_host_fast_until = $($FastMinutes * 1800)$(if ($Workers -gt 0) { "`nWorkerThreadCount = $Workers" })" |
     Set-Content "$hostDir\springsettings.cfg" -Encoding ascii
   Copy-Item (Join-Path $PSScriptRoot "catchup-test\bardroid_host_speed.lua") "$hostDir\LuaUI\Widgets\" -Force
   $hostScript | Set-Content "$Work\host.txt" -Encoding ascii
