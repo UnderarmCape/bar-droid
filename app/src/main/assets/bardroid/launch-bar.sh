@@ -155,6 +155,23 @@ case "$MODE" in
         layer_miss "lobby full speed: no drawAtFullSpeed in LuaMenu/Config/IGL_data.lua"
       fi
     fi
+    # Every start (Kailil): Split Panel Mode "Autodetect" (panel_layout 1) and interface scale 120%. Chobby keeps the
+    # scale per window size (key vsx/500 x vsy/250) and falls back to 100% for a size it has not saved; the Fold's two
+    # displays and every resolution scale differ, so each size up to 3000x3000 gets 1.2. Its saved settings exist after
+    # the first lobby run. One-line tables first: Chobby saves an empty one as "{}".
+    igl="$BAR/LuaMenu/Config/IGL_data.lua"
+    if [ -f "$igl" ]; then
+      scales=""
+      for x in 0 1 2 3 4 5; do for y in 0 1 2 3 4 5 6 7 8 9 10 11; do scales="$scales[\"${x}x$y\"] = 1.2, "; done; done
+      sed -i -e '/^\t\tpanel_layout = /d' -e '/^\t\tuiScalesForScreenSizes = {.*}/d' \
+        -e '/^\t\tuiScalesForScreenSizes = {$/,/^\t\t},*$/d' \
+        -e "s/^\t\[\"Chili lobby\"\] *= *{$/&\n\t\tpanel_layout = 1,\n\t\tuiScalesForScreenSizes = { $scales},/" "$igl"
+      if grep -q '^[[:space:]]*panel_layout = 1,' "$igl" && grep -q '\["2x5"\] = 1.2' "$igl"; then
+        log "lobby: split panels autodetect, interface scale 120%"
+      else
+        layer_miss "lobby panels and scale: no [\"Chili lobby\"] settings in LuaMenu/Config/IGL_data.lua"
+      fi
+    fi
     # Chobby's "Resolution limiter" shrinks the window to Spring.GetScreenGeometry() on every resize, but SDL keeps the
     # screen size it saw at startup: after a fold or unfold it fought the X server (which keeps the window at the screen
     # size, patch 0003) twice a second, toggling fullscreen each time (black flicker). 0 disables a LuaMenu widget.
