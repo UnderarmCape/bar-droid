@@ -305,7 +305,10 @@ public final class Installer {
             if (seen.add(kv.getKey())) cfg.append(kv.getKey()).append(" = ").append(set.containsKey(kv.getKey()) ? set.get(kv.getKey()) : kv.getValue()).append('\n');
         for (Map.Entry<String, String> kv : set.entrySet())
             if (seen.add(kv.getKey())) cfg.append(kv.getKey()).append(" = ").append(kv.getValue()).append('\n');
-        writeFile(out, cfg.toString());
+        // Replaced whole: the app killed mid-write must not cut off the player's BAR settings.
+        File tmp = new File(out.getPath() + ".tmp");
+        writeFile(tmp, cfg.toString());
+        if (!tmp.renameTo(out)) throw new IOException("could not replace " + out);
         writeStartScript();
     }
 

@@ -136,6 +136,9 @@ end
 -- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
 -- of the ground the camera looks at, so dragging keeps working there; nil only above the horizon.
 local function ground(x, y)
+	if not (x and y) then
+		return nil -- a line that is not numbers
+	end
 	local _, vsy = spGetViewGeometry()
 	local kind, pos = spTraceScreenRay(x, vsy - y, true)
 	if kind == "ground" and pos then
@@ -452,7 +455,7 @@ local function updateHover()
 	lastHover, hoverTimer = line, now
 end
 
-function widget:Update(dt)
+local function update(dt)
 	updates = updates + 1
 	local lines = newTouchLines()
 	if lines then
@@ -483,5 +486,16 @@ function widget:Update(dt)
 				applyUiScale(tonumber(w), tonumber(h))
 			end
 		end
+	end
+end
+
+-- An error would make BAR's widget handler remove the widget for the rest of the game: no finger camera, and the app
+-- would take the missing pointer answers for the lobby. Logged a few times instead, and the next frame tries again.
+local errorsLogged = 0
+function widget:Update(dt)
+	local ok, err = pcall(update, dt)
+	if not ok and errorsLogged < 5 then
+		errorsLogged = errorsLogged + 1
+		Spring.Echo("[bardroid-touch] error, the widget keeps running: " .. tostring(err))
 	end
 end
