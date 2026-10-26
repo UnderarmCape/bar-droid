@@ -573,6 +573,14 @@ Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 G
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
 ## Next steps (2026-10-26)
+0. **Afternoon run (Kailil away, phone off the home Wi-Fi):** builds 1884d80..93550e9 are not on the phone yet
+   (`..\apk\bar-droid-phone-debug.apk` is current; install over adb when it is back). To check: joining a running
+   game, the "Catching up" box within seconds (not minutes) and the picture frozen behind it; in a game too big to
+   catch up, drawing back after a minute ("not gaining" in infolog); late-game fps with the sharpening pass and the
+   jammed-unit tint off; `[perf]` lines now with the engine's memory. Unfolded resolution cap (887b97e) not judged
+   yet. Ideas that need Kailil's call: more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats,
+   BuildETA: CPU per frame), Outline Shader GL4 / Orb Effects / Fog Diagonal Lines (GPU), a lower resolution while the
+   phone is hot (dynamic: the lorie pixel cap from Android's thermal status), MaxSounds lower (OpenAL mixing).
 1. Kailil checks the overnight builds on the phone: BAR's interface at 2.0 folded and 1.3 unfolded (one LuaUI reload
    on fold/unfold), the top bar without Keys/Changes, finger twist and tilt in singleplayer (now the Spring
    camera), no flicker with the explicit Present fence, the lobby's Always One panel and 120% scale. New since:
