@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">BAR Droid</string>
+    <string name="app_name">Beyond All Reason</string>
     <string name="display_prefs_title">Display &amp; touch preferences</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
