@@ -44,7 +44,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (smoothed camera, continuous pinch zoom, BAR's
   interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers); `GameActivity`
   wires them up. BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
-  in through `launch-bar.sh` instead.
+  in through `launch-bar.sh` instead. `tools/touch-widget-test.ps1` runs the widget in a real skirmish on the laptop
+  (~1.5 min): pinch, twist, tilt and drag on the camera, and the map/interface answers; run it after touching either.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
   top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on

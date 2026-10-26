@@ -47,8 +47,61 @@ function widget:Update()
 	end
 end
 
+-- The app's side of the touch log: lines appended to LuaUI/Config/bardroid_touch.txt (X pixels, top-left origin).
+local function touch(line)
+	local f = io.open("LuaUI/Config/bardroid_touch.txt", "a")
+	f:write(line .. "\n")
+	f:close()
+end
+
+local function near(case, got, want, tolerance)
+	local ok = got and math.abs(got - want) <= tolerance
+	if not ok then
+		fails = fails + 1
+	end
+	log((ok and "PASS " or "FAIL ") .. case .. string.format(": %s, expected %.3f +- %.3f", tostring(got), want, tolerance))
+end
+
+local function groundAt(x, y) -- bottom-left origin
+	local _, pos = Spring.TraceScreenRay(x, y, true)
+	return pos
+end
+
+local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
+local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
+local before, groundBefore
 cases = {
+	-- the touch camera (bardroid_touch.lua applyTouch), smoothed over ~0.05 s: 20 frames later it has arrived
+	function()
+		before = Spring.GetCameraState()
+		touch(string.format("zoom 2.00000 %.1f %.1f", cx, cy))
+	end,
+	function()
+		local cs = Spring.GetCameraState()
+		near("pinch 2x halves the distance", cs.dist and before.dist and cs.dist / before.dist, 0.5, 0.03)
+	end,
+	function()
+		before = Spring.GetCameraState()
+		touch("rot 0.5000")
+	end,
+	function() near("twist 0.5 turns the camera -0.5", Spring.GetCameraState().ry - before.ry, -0.5, 0.01) end,
+	function()
+		before = Spring.GetCameraState()
+		touch("tilt -0.0500")
+	end,
+	function() near("tilt -0.05 of the screen", Spring.GetCameraState().rx - before.rx, -0.05 * TILT_RANGE, 0.01) end,
+	function()
+		groundBefore = groundAt(cx, cy)
+		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, vsy - cy, cx - 100, vsy - cy))
+	end,
+	function()
+		local g = groundAt(cx - 100, cy)
+		local miss = g and groundBefore and math.sqrt((g[1] - groundBefore[1]) ^ 2 + (g[3] - groundBefore[3]) ^ 2)
+		near("drag: the map point follows the finger (elmos off)", miss, 0, 8)
+	end,
+	-- the interface answers (bardroid_hover.txt)
+	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
 	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
 	function() expect("map in the middle", 0) end,
 	function()
