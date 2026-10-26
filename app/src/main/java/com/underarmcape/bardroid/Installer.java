@@ -255,11 +255,12 @@ public final class Installer {
         if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
             stub.delete();
         } else try (InputStream in = new FileInputStream(new File(assets, "libasarm64.so")); OutputStream o = new FileOutputStream(stub)) { copy(in, o); }
-        // The frame cap (tools/pace/pace.c), preloaded into the engine by launch-bar.sh; phone build only.
+        // The frame cap and the hidden-window events (tools/pace/pace.c), preloaded into the engine by launch-bar.sh. The
+        // emulator build has its x86_64 build: no cap there (BARDROID_FPS 0), but the hidden window (screen off, catching
+        // up) works the same, so catch-up can be tried on the laptop.
         File pace = new File(p.bar, "libbardroid_pace.so");
-        if (Prefs.EMULATOR_BUILD) { //noinspection ResultOfMethodCallIgnored
-            pace.delete();
-        } else try (InputStream in = new FileInputStream(new File(assets, "libbardroid_pace.so")); OutputStream o = new FileOutputStream(pace)) { copy(in, o); }
+        String paceAsset = Prefs.EMULATOR_BUILD ? "libbardroid_pace-x86_64.so" : "libbardroid_pace.so";
+        try (InputStream in = new FileInputStream(new File(assets, paceAsset)); OutputStream o = new FileOutputStream(pace)) { copy(in, o); }
         // Our own widget (not BAR content): the camera side of the two-finger pan (RtsTouch).
         File widgets = new File(p.bar, "LuaUI/Widgets");
         //noinspection ResultOfMethodCallIgnored

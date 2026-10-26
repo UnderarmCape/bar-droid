@@ -35,8 +35,9 @@ export PRD_RAPID_USE_STREAMER=false
 export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see arm64-ai-fix/README.md).
 [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
-# Frame cap: sleeps after each buffer swap to BARDROID_FPS (from the app's 30/60 fps setting; 0 = none).
-if [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libbardroid_pace.so" ]; then
+# Frame cap: sleeps after each buffer swap to BARDROID_FPS (from the app's 30/60 fps setting; 0 = none), and the
+# hidden window (screen off, catching up). The emulator build's x86_64 copy (no cap, no Present-fence answer).
+if [ -f "$BAR/libbardroid_pace.so" ]; then
   export LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$BAR/libbardroid_pace.so" BARDROID_FPS="${BARDROID_FPS:-30}"
 fi
 

@@ -137,6 +137,22 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   `bardroid_catchup = 0` in springsettings turns it off. `tools/catchup-test.ps1` (~6 min): a headless host plays
   BARb vs BARb on 127.0.0.1, a windowed spectator joins twice (mode off, on); it checks the widget's side (the
   engine on Windows has no pace library). `tools/pace-test.ps1` checks the catch-up flag on the phone.
+  Kailil's next join (15:50, 6a1160c) started the mode only at 11:20 game time: GameProgress reaches a late joiner
+  behind the whole backlog. Since 6bb52ae the game's own pace starts it (faster than 1.5x its speed for 2 s, until
+  the first GameProgress). That join's numbers, drawing off, phone at thermal status 2 (CPUs capped at ~1.4 GHz of
+  3.5/4.5 the whole time, GPU down from ~55% to 3-15% busy, 2 °C cooler): x2.0 at 2,400 units, x1.6-1.9 at
+  3,000-3,400, x1.2-1.5 at 4,000-4,500, x0.9-1.0 past 5,000, x0.6-0.7 at 6,000-6,800 (it stayed 9 min behind: the
+  phone cannot run such a game at 1x at all). Frames there take over 50 ms each: the CPU is the limit.
+  **Catch-up on the laptop's emulator, end to end** (Kailil logged in there for online tests, but the lobby lost the
+  saved login when Android's low-memory killer took the app while loading a big game in a 10 GB guest; 12 GB is
+  the AVD's size): `tools/catchup-test.ps1 -HostOnly -AIs 4 -FastMinutes 20 -Engine recoil_2026.07.04 -Game "Beyond
+  All Reason test-31723-95ab750"` hosts a 2v2 BARb game on the laptop, fast-forwarded (the host widget
+  `tools/catchup-test/bardroid_host_speed.lua` sends speedup/slowdown), then held at 1x; the emulator app joins it as
+  the spectator "Phone" through a temporary `files/bar/dev-env.sh` that copies `join.txt` (HostIP 10.0.2.2, port
+  8452) over skirmish.txt before PLAY VS AI (remove both afterwards). Seen: the overlay "Catching up 0:50 of 27:18
+  x3.6" over the last picture, the engine not drawing. The emulator's network (SLIRP UDP) stalls ~1 s at a time, so
+  its catch-up speed says nothing about the phone's. The emulator build now ships the x86_64 pace library
+  (`libbardroid_pace-x86_64.so`, no frame cap, `BARDROID_PRESENT_FENCE=0`) for the hidden window.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

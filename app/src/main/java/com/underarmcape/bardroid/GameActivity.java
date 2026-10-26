@@ -166,7 +166,8 @@ public class GameActivity extends MainActivity {
     // of real time. Meanwhile the engine draws nothing (the catch-up flag: a hidden window for the engine) and this
     // screen shows the progress over the last picture. A file not written for CATCHUP_STALE_MS (the widget gone, the
     // game ended) counts as caught up.
-    private static final long CATCHUP_STALE_MS = 10000;
+    // (the first frames after joining can take over 10 s: the emulator's join showed the progress switch off once)
+    private static final long CATCHUP_STALE_MS = 30000;
     private android.widget.TextView catchupView;
     private final android.os.Handler catchupHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable catchupCheck = new Runnable() {

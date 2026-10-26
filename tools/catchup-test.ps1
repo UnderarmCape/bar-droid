@@ -4,11 +4,20 @@
 # Isolated write dirs under build\catchup-test (the live install's packages, pool and rapid index joined read-only by
 # junctions, removed again at the end).
 #   powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]
+# -HostOnly: only the host, fast-forwarded (-Speed) to -FastMinutes of game, then at 1x for -HoldMinutes, for a client
+# elsewhere to join as the spectator "Phone" (the emulator app: HostIP 10.0.2.2, see HANDOFF "Catch-up"). -AIs 4 = 2v2.
+# -Game "Beyond All Reason test-..." picks the game (the client's must match, as must -Engine).
 param(
   [int]$Warmup = 300,   # seconds of game before the first join (game time = real time on the host)
   [string]$Engine = "",
+  [string]$Game = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
-  [string]$MapName = "Supreme Isthmus v2.1"
+  [string]$MapName = "Supreme Isthmus v2.1",
+  [switch]$HostOnly,
+  [int]$AIs = 2,
+  [int]$FastMinutes = 0,
+  [double]$Speed = 10,
+  [int]$HoldMinutes = 60
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -24,6 +33,7 @@ $game = $null
 while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
 $reader.Close()
 if (-not $game) { throw "byar:test not in $gz" }
+if ($Game) { $game = $Game }
 
 $links = @()
 function New-WriteDir($dir) {
@@ -36,6 +46,12 @@ function New-WriteDir($dir) {
   if (-not (Test-Path "$dir\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$dir\maps\$Map" }
 }
 
+# Teams alternate between the two ally teams, one BARb each. The host's own player is a spectator (as a player the
+# headless host never readies up and the game never starts).
+$teams = for ($i = 0; $i -lt $AIs; $i++) {
+  "`t[TEAM$i] { Side=$(if ($i % 2) { 'Cortex' } else { 'Armada' }); Handicap=0; AllyTeam=$($i % 2); TeamLeader=0; }"
+  "`t[AI$i] { Host=0; Name=BARb$($i + 1); ShortName=BARb; Team=$i; Version=stable; }"
+}
 $hostScript = @"
 [GAME]
 {
@@ -47,32 +63,45 @@ $hostScript = @"
 	IsHost=1;
 	HostIP=127.0.0.1;
 	HostPort=$Port;
+	MaxSpeed=20;
 	[MODOPTIONS] { deathmode=com; }
 	[ALLYTEAM0] { NumAllies=0; }
 	[ALLYTEAM1] { NumAllies=0; }
-	[TEAM0] { Side=Armada; Handicap=0; AllyTeam=0; TeamLeader=0; }
-	[TEAM1] { Side=Cortex; Handicap=0; AllyTeam=1; TeamLeader=0; }
-	[AI0] { Host=0; Name=BARb1; ShortName=BARb; Team=0; Version=stable; }
-	[AI1] { Host=0; Name=BARb2; ShortName=BARb; Team=1; Version=stable; }
+$($teams -join "`n")
 	[PLAYER0] { Name=Host; Spectator=1; Team=0; }
 	[PLAYER1] { Name=Watcher1; Spectator=1; Team=0; }
 	[PLAYER2] { Name=Watcher2; Spectator=1; Team=0; }
+	[PLAYER3] { Name=Phone; Spectator=1; Team=0; }
 }
 "@
 
 $hostProc = $null
 try {
   $hostDir = Join-Path $Work "host"; New-WriteDir $hostDir
-  "LogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" | Set-Content "$hostDir\springsettings.cfg" -Encoding ascii
+  "LogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_host_speed = $Speed`nbardroid_host_fast_until = $($FastMinutes * 1800)" |
+    Set-Content "$hostDir\springsettings.cfg" -Encoding ascii
+  Copy-Item (Join-Path $PSScriptRoot "catchup-test\bardroid_host_speed.lua") "$hostDir\LuaUI\Widgets\" -Force
   $hostScript | Set-Content "$Work\host.txt" -Encoding ascii
   Remove-Item "$hostDir\infolog.txt" -ErrorAction SilentlyContinue
-  Write-Host "[catchup-test] host: $game on $MapName, engine $Engine, BARb vs BARb; first join after $Warmup s of game"
+  Write-Host "[catchup-test] host: $game on $MapName, engine $Engine, $AIs BARb; $(if ($HostOnly) { "fast to $FastMinutes min, then held $HoldMinutes min" } else { "first join after $Warmup s of game" })"
   $hostProc = Start-Process -FilePath (Join-Path $EngineDir "spring-headless.exe") -WorkingDirectory $EngineDir -PassThru -WindowStyle Hidden `
     -ArgumentList "--isolation", "--write-dir", "`"$hostDir`"", "`"$Work\host.txt`""
   $deadline = (Get-Date).AddSeconds(240)
   while (-not ((Test-Path "$hostDir\infolog.txt") -and (Select-String -Path "$hostDir\infolog.txt" -Pattern '\[Initial Spawn\]' -Quiet))) {
     if ($hostProc.HasExited -or (Get-Date) -gt $deadline) { throw "the host's game did not start (see $hostDir\infolog.txt)" }
     Start-Sleep 2
+  }
+  if ($HostOnly) {
+    $deadline = (Get-Date).AddMinutes($FastMinutes + 30)
+    while (-not (Select-String -Path "$hostDir\infolog.txt" -Pattern '\[catchup-host\] ready' -Quiet)) {
+      if ($hostProc.HasExited -or (Get-Date) -gt $deadline) { throw "the host never reached $FastMinutes min at 1x (see $hostDir\infolog.txt)" }
+      Start-Sleep 5
+    }
+    Select-String -Path "$hostDir\infolog.txt" -Pattern 'catchup-host' | ForEach-Object { "   " + $_.Line }
+    Write-Host "[catchup-test] host ready on 127.0.0.1:$Port (emulator: 10.0.2.2) for $HoldMinutes min"
+    $hostProc.WaitForExit($HoldMinutes * 60000) | Out-Null
+    Select-String -Path "$hostDir\infolog.txt" -Pattern 'catchup-host|Phone' | Select-Object -Last 20 | ForEach-Object { "   " + $_.Line }
+    return
   }
   Start-Sleep $Warmup
 

@@ -177,6 +177,8 @@ public class GameService extends Service {
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : Prefs.fps60 ? "60" : "30");   // libbardroid_pace.so
+            // (the explicit Present fence is for the phone's lfdevs Mesa on KGSL; the emulator's virgl keeps Mesa's own path)
+            if (Prefs.EMULATOR_BUILD) env.put("BARDROID_PRESENT_FENCE", "0");
             Proot proot = new Proot(paths);
             List<String> cmd = new ArrayList<>();
             cmd.add("/bin/bash"); cmd.add("/opt/bardroid/launch-bar.sh");

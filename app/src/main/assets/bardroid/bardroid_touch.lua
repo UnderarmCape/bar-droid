@@ -67,7 +67,7 @@ local lastScreen, screenCheck = nil, 0
 local updates = 0
 local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
-local lastHover, hoverTimer = nil, nil
+local hoverTimer = nil
 local padCamera = true   -- false in the controller game
 
 -- Long queues of the selected units: the engine draws every building a selected builder has queued once more, one model
@@ -111,24 +111,38 @@ function widget:IsAbove(x, y)
 	return false
 end
 
--- Complete new lines of the touch log since the last call.
+-- Complete new lines of the touch log since the last call. One handle across frames: an open is a path system call,
+-- which proot traps (two ptrace stops and a path translation) on the phone, once a frame. The app truncates the same
+-- file for a new log (the size shrinks); opened again every TOUCH_REOPEN updates in case the file itself was replaced.
+local TOUCH_REOPEN = 60
+local touchFile, touchFileAt = nil, -1000
 local function newTouchLines()
-	local f = io.open(TOUCH, "r")
+	-- (BAR's sandbox checks the path of every io.open too: a missing file is looked for again only that often)
+	if updates - touchFileAt >= TOUCH_REOPEN then
+		if touchFile then
+			touchFile:close()
+		end
+		touchFile, touchFileAt = io.open(TOUCH, "r"), updates
+	end
+	local f = touchFile
 	if not f then
 		return nil
 	end
 	local size = f:seek("end")
+	if not size then -- (the handle went bad: open it again next time)
+		f:close()
+		touchFile = nil
+		return nil
+	end
 	if size < touchPos then -- the app started a new log
 		touchPos, partial = 0, ""
 	end
 	if size == touchPos then
-		f:close()
 		return nil
 	end
 	f:seek("set", touchPos)
 	local data = partial .. (f:read("*a") or "")
 	touchPos = f:seek()
-	f:close()
 	local cut = data:match(".*\n()") -- just after the last newline
 	if not cut then
 		partial = data
@@ -578,6 +592,10 @@ function widget:Shutdown()
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
 	endCatchup() -- a LuaUI reload (fold/unfold) while catching up: the next start sees the gap again
+	if touchFile then
+		touchFile:close()
+		touchFile = nil
+	end
 end
 
 -- BAR's interface scale for the screen the game is on (Kailil, 2026-10-26: on the Fold's cover screen "EVERYTHING IS
@@ -652,6 +670,12 @@ end
 
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
+-- The map/interface answer for a pointer that stays put is worked out again every HOVER_RECHECK updates only (the
+-- camera moving under it can change it); a pointer that moves gets it at once. Profiled on the laptop (2026-10-26):
+-- this widget was BAR's most expensive one, 0.14 ms a frame (a view ray, a string and a file open every frame).
+local HOVER_RECHECK = 10
+local calcX, calcY, calcAt, calcAnswer = nil, nil, -1000, 0
+local hoverX, hoverY, hoverAnswer
 local function updateHover()
 	local mx, my = spGetMouseState()
 	if mx ~= mouseX or my ~= mouseY then
@@ -660,7 +684,11 @@ local function updateHover()
 	local onInterface
 	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
 		-- 1 interface, 0 map, 2 neither (the void past the map's edge, or the sky): there the app ignores the finger
-		onInterface = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or offMapAt(mx, my) and 2 or 0
+		if mx ~= calcX or my ~= calcY or updates - calcAt >= HOVER_RECHECK then
+			calcAnswer = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or offMapAt(mx, my) and 2 or 0
+			calcX, calcY, calcAt = mx, my, updates
+		end
+		onInterface = calcAnswer
 	elseif updates - seenAt > 300 then
 		-- no IsAbove for a long time: a window that holds the pointer for itself, else the map
 		onInterface = overBarInterface(mx, my) and 1 or 0
@@ -669,19 +697,18 @@ local function updateHover()
 	else
 		return -- not asked yet for this position
 	end
-	local _, vsy = spGetViewGeometry()
-	local line = string.format("%d %d %d\n", mx, vsy - my - 1, onInterface)
 	local now = spGetTimer()
-	if line == lastHover and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
+	if mx == hoverX and my == hoverY and onInterface == hoverAnswer and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
 		return
 	end
 	-- also once a second: the app takes an old file for "no widget" (the lobby)
+	local _, vsy = spGetViewGeometry()
 	local f = io.open(HOVER, "w")
 	if f then
-		f:write(line)
+		f:write(string.format("%d %d %d\n", mx, vsy - my - 1, onInterface))
 		f:close()
 	end
-	lastHover, hoverTimer = line, now
+	hoverX, hoverY, hoverAnswer, hoverTimer = mx, my, onInterface, now
 end
 
 local function update(dt)
