@@ -2,7 +2,8 @@
 # builds tools\pace\pace.c (as tools\build-pace.py does, into build\pace-test) and tools\pace\pace_test.c, pushes both
 # into files/bar, runs `perl -e 1` with both preloaded and SDL's dummy video driver, removes them again.
 # Needs the phone on adb (ANDROID_SERIAL) and an installed app with its container.
-#   powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1 [-Shipped]   (-Shipped: the .so in the app's assets)
+param([switch]$Shipped)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Out = Join-Path $App "build\pace-test"
@@ -15,6 +16,7 @@ foreach ($pair in @(@("pace.c", "libbardroid_pace.so"), @("pace_test.c", "pace_t
     -o (Join-Path $Out $pair[1]) (Join-Path $PSScriptRoot "pace\$($pair[0])")
   if ($LASTEXITCODE -ne 0) { throw "clang failed on $($pair[0])" }
 }
+if ($Shipped) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\libbardroid_pace.so") (Join-Path $Out "libbardroid_pace.so") -Force }
 if (-not $env:ANDROID_SERIAL) { $env:ANDROID_SERIAL = "192.168.1.196:5555" }
 $env:USERPROFILE = Join-Path $App "..\toolchain\home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
 $adb = Join-Path $App "..\toolchain\android-sdk\platform-tools\adb.exe"

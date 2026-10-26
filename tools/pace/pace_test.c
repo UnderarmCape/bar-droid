@@ -14,6 +14,10 @@ extern int usleep(unsigned usec);
 extern int open(const char *path, int flags, ...);
 extern int close(int fd);
 extern int unlink(const char *path);
+extern int *__errno_location(void);
+struct timespec { long tv_sec; long tv_nsec; };
+extern int clock_gettime(int clock, struct timespec *ts);
+extern int clock_nanosleep(int clock, int flags, const struct timespec *request, struct timespec *remain);
 #define RTLD_NOW 2
 #define RTLD_GLOBAL 0x100
 #define RTLD_DEFAULT ((void *) 0)
@@ -77,6 +81,34 @@ __attribute__((constructor)) static void pace_test(void) {
     check("then nothing more", !wait_window_event(poll, id, &ev));
     unlink("/tmp/bardroid-hidden");
     check("flag gone: SHOWN (1)", wait_window_event(poll, id, &ev) && ev == 1);
+
+    /* the ioctl answer: the sync-file export fails with ENOTTY, anything else reaches the kernel (EBADF on fd -1) */
+    int (*io)(int, unsigned long, ...) = (int (*)(int, unsigned long, ...)) dlsym(RTLD_DEFAULT, "ioctl");
+    long arg = 0;
+    int rc = io(-1, 0xc0086202UL, &arg);
+    check("DMA_BUF_IOCTL_EXPORT_SYNC_FILE: -1, ENOTTY", rc == -1 && *__errno_location() == 25);
+    rc = io(-1, 0x5401UL, &arg);   /* TCGETS */
+    check("another ioctl goes through (EBADF)", rc == -1 && *__errno_location() == 9);
+
+    /* how long nine plain 33.3 ms sleeps take here (a dozing phone wakes late: the cap cannot be more exact) */
+    struct timespec t0, t1, nap = { 0, 33333333 };
+    clock_gettime(1, &t0);
+    for (int i = 0; i < 9; i++) clock_nanosleep(1, 0, &nap, 0);
+    clock_gettime(1, &t1);
+    long plain = (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_nsec - t0.tv_nsec) / 1000000;
+    printf("     9 plain sleeps of 33.3 ms: %ld ms\n", plain);
+
+    /* the frame cap (BARDROID_FPS unset: 30): ten swaps take nine frame slots */
+    swap(win);
+    clock_gettime(1, &t0);
+    for (int i = 0; i < 9; i++) swap(win);
+    clock_gettime(1, &t1);
+    long ms = (t1.tv_sec - t0.tv_sec) * 1000 + (t1.tv_nsec - t0.tv_nsec) / 1000000;
+    printf("     9 frames in %ld ms\n", ms);
+    /* never faster than 30 fps; no slower than plain sleeps of a frame each, plus 10 ms a frame (an awake phone wakes on
+       time: 300 ms; a dozing one wakes ~20 ms late, which the cap cannot beat) */
+    check("frame cap: 30 fps at most, as exact as this phone's sleeps", ms >= 290 && ms <= plain + 90);
+
     printf("%s\n", fails ? "FAILED" : "ALL PASS");
     fflush(0);
 }
