@@ -14,8 +14,8 @@ same point on two platforms:
 - Windows, engine 2026.07.04: `spring.exe --isolation --write-dir <dir> 20261026_063343.ssf` → access violation in
   spring.exe right after "Loading Saved Game" (offsets from the image base: 0x965868, 0x9626f2, 0x5b3fd2, 0x535eae,
   0xd5d099; no symbols in the release build).
-- Linux arm64 (BAR's engine in a container on an Android phone, where the save was made): SIGSEGV at the same log
-  line, no stack. (Before posting: fill in that engine version from the phone's infolog.)
+- Linux arm64, the same engine 2026.07.04 (the official arm64 build in a container on an Android phone, where the save
+  was made): SIGSEGV at the same log line, no stack.
 
 The save file is attached. Game: a developer build of BAR (BAR's release of 2026-10-20 with a LuaUI-only controller
 overlay); map Death Valley v1.0.1; one human, one BARb.
