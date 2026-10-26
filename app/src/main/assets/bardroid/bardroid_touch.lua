@@ -223,6 +223,9 @@ local function applyTouch(dt)
 			end
 			cs[key] = value
 		end
+		if p.zoom == 0 then
+			p.pivotX, p.pivotZ = nil, nil -- a later pinch over the sky (no map point) zooms about the centre, not here
+		end
 	end
 	-- Spring camera (BAR's default): ry turns around the vertical axis, rx is the pitch (the engine clamps it).
 	-- The map turns with the fingers, so the camera turns the other way.
