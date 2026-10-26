@@ -490,9 +490,10 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    (`tools/lobby-bridge-test.ps1`: BAR's Windows engine runs byar-chobby:test in an isolated write dir, LobbyBridge on
    the JDK with stand-ins for Android and the container): it connects, the Replays tab lists Kailil's replays with
    engine, map, game time and both teams, the lobby's two resource downloads (widget manifest, skill ratings CSV)
-   arrive, a web link goes to the browser, no lobby error. Not yet on the phone: tick it, open the Replays tab,
-   download a map (pr-downloader in the container: not in the laptop test), open a link; `bridge` lines in
-   launcher.log. Thumbnails, other engines and Discord stay unanswered (the lobby does not wait for those).
+   arrive, a web link goes to the browser, no lobby error. The map step (`setup-container.sh map`, pr-downloader in
+   the container) ran on the phone: exit 0, the map in place (it downloads even a map already there; the lobby only
+   asks for missing ones). Not yet in the phone's lobby: tick it, open the Replays tab, download a map, open a link;
+   `bridge` lines in launcher.log. Thumbnails, other engines and Discord stay unanswered (the lobby does not wait for those).
 3. Upstream, with Kailil's go-ahead (drafts ready in `docs/upstream/`): the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
    takes the CPU-wait path on KGSL whenever the kernel supports `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, though KGSL never
    attaches fences to the dma-buf (our ioctl answer is the workaround); the ARM64 AI bug (RecoilEngine issue, then
