@@ -7,7 +7,8 @@ param(
   [string]$Engine = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1",
-  [string]$Widget = ""   # another bardroid_touch.lua to test (default: the app's)
+  [string]$Widget = "",   # another bardroid_touch.lua to test (default: the app's)
+  [switch]$GamepadGame    # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -32,13 +33,25 @@ try {
   "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
-  # byar:test -> the archive name the start script needs
-  $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
-  $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
-  $game = $null
-  while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
-  $reader.Close()
-  if (-not $game) { throw "byar:test not in $gz" }
+  if ($GamepadGame) {
+    $sdd = Join-Path $App "build\profile\data\games\BAR-gamepad.sdd"
+    if (-not (Test-Path "$sdd\modinfo.lua")) { throw "no ${sdd}: run tools\profile-gamepad-game.ps1 once" }
+    New-Item -ItemType Directory -Force -Path "$Data\games" | Out-Null
+    $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
+    if (-not (Test-Path $gameLink)) { cmd /c mklink /J "$gameLink" "$sdd" | Out-Null }
+    $links = @($links) + $gameLink
+    $game = "Beyond All Reason `$VERSION"
+  } else {
+    $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"   # a junction left by a killed -GamepadGame run: the link only
+    if (Test-Path $gameLink) { cmd /c rmdir "$gameLink" }
+    # byar:test -> the archive name the start script needs
+    $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
+    $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
+    $game = $null
+    while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
+    $reader.Close()
+    if (-not $game) { throw "byar:test not in $gz" }
+  }
   $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
   $startscript = Join-Path $Work "skirmish.txt"
   $script | Set-Content $startscript -Encoding ascii

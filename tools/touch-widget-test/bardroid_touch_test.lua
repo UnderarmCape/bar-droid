@@ -74,6 +74,12 @@ local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 local before, groundBefore
 cases = {
+	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
+	function()
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 2.6, 0
+		Spring.SetCameraState(cs, 0)
+	end,
 	-- the touch camera (bardroid_touch.lua applyTouch), smoothed over ~0.05 s: 20 frames later it has arrived
 	function()
 		before = Spring.GetCameraState()
@@ -114,7 +120,11 @@ cases = {
 		local dx, dz = cs.px - before.px, cs.pz - before.pz
 		local along = dx * right[1] + dz * right[3]
 		local len = math.sqrt(right[1] ^ 2 + right[3] ^ 2)
-		near("left stick right pans to the camera's right (elmos)", along / len > 100 and 1 or 0, 1, 0)
+		if Game.gameVersion == "$VERSION" then -- the controller game: v0.8.5 reads the pad, the widget leaves it alone
+			near("controller game: pad lines leave the camera alone (elmos)", math.abs(along / len), 0, 1)
+		else
+			near("left stick right pans to the camera's right (elmos)", along / len > 100 and 1 or 0, 1, 0)
+		end
 		before = cs
 	end,
 	function()
