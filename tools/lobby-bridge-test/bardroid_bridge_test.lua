@@ -28,7 +28,7 @@ function widget:Update() -- LuaMenu passes no dt
 					names[#names + 1] = tostring(p.name) .. "/a" .. tostring(p.allyTeamId) .. (p.aiId and "/ai" or "")
 				end
 				log("ReplayInfo", tostring(path), tostring(engine), tostring(game), tostring(map), tostring(time),
-					"players:", table.concat(names, ","))
+					"winners:", winners and table.concat(winners, ",") or "nil", "players:", table.concat(names, ","))
 				return orig(path, engine, game, map, players, time, winners)
 			end
 		else

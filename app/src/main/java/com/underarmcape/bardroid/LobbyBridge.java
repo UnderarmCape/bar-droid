@@ -203,18 +203,26 @@ final class LobbyBridge {
             if (!new String(h, 0, 15, StandardCharsets.US_ASCII).equals("spring demofile")) throw new IOException("not a demo file");
             int headerSize = le(h, 20);
             String engine = cString(h, 24, 256);
-            int scriptSize = le(h, 24 + 256 + 16 + 8);
-            int gameTime = le(h, 24 + 256 + 16 + 8 + 8);
+            int ints = 24 + 256 + 16 + 8;   // scriptSize, demoStreamSize, gameTime, ... winningAllyTeamsSize (the 12th)
+            int scriptSize = le(h, ints), demoStreamSize = le(h, ints + 4), gameTime = le(h, ints + 8);
+            int winnersSize = le(h, ints + 44);
             skip(in, headerSize - HEADER_FIXED);
             if (scriptSize <= 0 || scriptSize > 4 << 20) throw new IOException("start script size " + scriptSize);
             byte[] script = new byte[scriptSize];
             in.readFully(script);
             Map<String, Map<String, String>> sections = parseScript(new String(script, StandardCharsets.UTF_8));
             Map<String, String> game = sections.getOrDefault("game", new HashMap<>());
+            // The winning ally teams follow the demo stream, one byte each (the lobby shows Won/Lost for the player's
+            // own replays). An engine that did not end cleanly wrote neither (demoStreamSize 0): "Unknown Result".
+            JSONArray winners = new JSONArray();
+            if (demoStreamSize > 0 && winnersSize > 0 && winnersSize <= 255) {
+                skip(in, demoStreamSize);
+                for (int i = 0; i < winnersSize; i++) winners.put(in.readUnsignedByte());
+            }
             JSONObject r = new JSONObject();
             r.put("relativePath", rel).put("engine", engine).put("game", game.getOrDefault("gametype", ""))
                     .put("map", game.getOrDefault("mapname", "")).put("gameTime", gameTime)
-                    .put("players", players(sections));
+                    .put("players", players(sections)).put("winningAllyTeamIds", winners);
             send(out, "ReplayInfo", r);
         } catch (Exception e) {
             Log.i("bridge", "replay " + rel + " not read: " + e.getMessage());   // e.g. a game the app was closed in
