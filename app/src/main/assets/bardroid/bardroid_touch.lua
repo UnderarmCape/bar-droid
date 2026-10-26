@@ -1,5 +1,5 @@
--- BAR Droid touch camera: the Android app (RtsTouch.java) reports finger drags, twists and tilts, and the camera
--- follows the fingers; pinch zoom needs nothing here (it is the mouse wheel). The app needs to know whether a drag
+-- BAR Droid touch camera: the Android app (RtsTouch.java) reports finger drags, pinches, twists and tilts, and the
+-- camera follows the fingers, smoothed over a few frames. The app needs to know whether a drag
 -- starts on the interface (a mouse drag) or on the map (a pan), so this widget also reports that for the pointer.
 -- It also keeps the frame cap at the display's refresh rate (which changes when a foldable folds or unfolds; the
 -- window size follows the screen in the X server). Installed into LuaUI/Widgets by the app.
@@ -7,6 +7,7 @@
 -- BAR's sandbox gives user widgets no sockets, only files under LuaUI/, so (paths relative to the write dir, X screen
 -- pixels with the origin at the top left):
 --   LuaUI/Config/bardroid_touch.txt   app, appended:  pan <x0> <y0> <x1> <y1>   (the map point under x0,y0 goes to x1,y1)
+--                                                     zoom <ratio> <x> <y>      (finger distance grew by this factor; pinch centre)
 --                                                     rot <radians>             (fingers twisted, clockwise > 0)
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
@@ -34,7 +35,10 @@ end
 local TOUCH = "LuaUI/Config/bardroid_touch.txt"
 local SCREEN = "LuaUI/Config/bardroid_screen.txt"
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
-local TILT_RANGE = math.pi / 2 -- a drag over the whole screen height tilts this much
+local TILT_RANGE = math.pi / 2 * 1.75 -- a drag over the whole screen height tilts this much (Kailil: 75% more)
+-- Finger moves reach the camera over a few frames instead of in whatever batch each frame happened to collect
+-- (Kailil, 2026-10-26: "super juttery", "like a super cheap touch screen mp3 player"); seconds.
+local TOUCH_SMOOTHING = 0.05
 
 local spTraceScreenRay = Spring.TraceScreenRay
 local spGetCameraState = Spring.GetCameraState
@@ -51,6 +55,8 @@ local PAD_ZOOM_SCALE, PAD_ROTATION, PAD_PITCH = 0.9, 3.0, 3.0
 local PAD_STICK_CURVE, PAD_TRIGGER_CURVE, PAD_SMOOTHING = 1.175, 1.075, 0.06
 local PAD_STICK_DEADZONE, PAD_TRIGGER_DEADZONE = 5000, 3000
 local MIN_SPRING_DISTANCE, MIN_OVERHEAD_HEIGHT, MIN_CAMERA_RX, MAX_CAMERA_RX = 20, 60, 1.0, 3.05
+-- the engine's limits for the Spring camera's distance (SpringController.cpp), set in Initialize
+local zoomMinDistance, zoomMaxDistance = MIN_SPRING_DISTANCE, 100000
 
 local touchPos, partial = 0, ""
 local lastScreen, screenCheck = nil, 0
@@ -87,6 +93,8 @@ function widget:Initialize()
 	-- the controller game: BAR's developer game ("$VERSION") with v0.8.5's pad bridge
 	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
 	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
+	zoomMinDistance = math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", 0.1) or 0.1, 0.1)
+	zoomMaxDistance = math.max(Game.mapSizeX, Game.mapSizeZ) * 1.333
 	local cs = spGetCameraState()
 	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s), gamepad camera %s", tostring(cs.name),
 		tostring(cs.rx), tostring(cs.ry), padCamera and "on" or "off (the controller game reads the pad)"))
@@ -144,32 +152,77 @@ local function ground(x, y)
 	return cx + dx * t, cz + dz * t
 end
 
-local function applyTouch(lines)
-	local dx, dz, rot, tilt = 0, 0, 0, 0
+-- Camera moves the fingers asked for and the camera has not made yet: pan (map units), twist and tilt (radians), zoom
+-- (log of the distance factor) about the map point under the pinch.
+local pending = { dx = 0, dz = 0, rot = 0, tilt = 0, zoom = 0, pivotX = nil, pivotZ = nil }
+
+local function readTouch(lines)
+	local p = pending
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		local ax, az = ground(tonumber(x0), tonumber(y0))
 		local bx, bz = ground(tonumber(x1), tonumber(y1))
 		if ax and bx then
 			-- grab: the point that was under the fingers moves with them
-			dx, dz = dx + ax - bx, dz + az - bz
+			p.dx, p.dz = p.dx + ax - bx, p.dz + az - bz
+		end
+	end
+	for r, x, y in lines:gmatch("zoom (%S+) (%S+) (%S+)") do
+		local ratio = tonumber(r)
+		if ratio and ratio > 0 then
+			p.zoom = p.zoom + math.log(ratio)
+			local gx, gz = ground(tonumber(x), tonumber(y))
+			if gx then
+				p.pivotX, p.pivotZ = gx, gz
+			end
 		end
 	end
 	for a in lines:gmatch("rot (%S+)") do
-		rot = rot + (tonumber(a) or 0)
+		p.rot = p.rot + (tonumber(a) or 0)
 	end
 	for t in lines:gmatch("tilt (%S+)") do
-		tilt = tilt + (tonumber(t) or 0)
+		p.tilt = p.tilt + (tonumber(t) or 0)
 	end
 	for lx, ly, rx, ry, lt, lb in lines:gmatch("pad (%S+) (%S+) (%S+) (%S+) (%S+) (%S+)") do -- the last one counts
 		pad.lx, pad.ly, pad.rx, pad.ry = tonumber(lx) or 0, tonumber(ly) or 0, tonumber(rx) or 0, tonumber(ry) or 0
 		pad.lt, pad.lb = tonumber(lt) or 0, lb == "1"
 	end
-	if dx == 0 and dz == 0 and rot == 0 and tilt == 0 then
+end
+
+-- The part of a pending move made this frame, and what is left; the last bit all at once.
+local function portion(value, fraction, epsilon)
+	local part = value * fraction
+	if math.abs(value - part) < epsilon then
+		return value, 0
+	end
+	return part, value - part
+end
+
+local function applyTouch(dt)
+	local p = pending
+	if p.dx == 0 and p.dz == 0 and p.rot == 0 and p.tilt == 0 and p.zoom == 0 then
 		return
 	end
+	local f = 1 - math.exp(-dt / TOUCH_SMOOTHING)
+	local dx, dz, rot, tilt, zoom
+	dx, p.dx = portion(p.dx, f, 0.5)
+	dz, p.dz = portion(p.dz, f, 0.5)
+	rot, p.rot = portion(p.rot, f, 0.0005)
+	tilt, p.tilt = portion(p.tilt, f, 0.0005)
+	zoom, p.zoom = portion(p.zoom, f, 0.0005)
 	local cs = spGetCameraState()
 	if cs.px and cs.pz then
 		cs.px, cs.pz = cs.px + dx, cs.pz + dz
+		-- spread the fingers: closer; the map point under the pinch stays under it
+		local key = cs.dist and "dist" or cs.height and "height"
+		if zoom ~= 0 and key then
+			local low = key == "dist" and zoomMinDistance or MIN_OVERHEAD_HEIGHT
+			local value = math.max(low, math.min(zoomMaxDistance, cs[key] / math.exp(zoom)))
+			if p.pivotX then
+				local s = value / cs[key]
+				cs.px, cs.pz = p.pivotX + (cs.px - p.pivotX) * s, p.pivotZ + (cs.pz - p.pivotZ) * s
+			end
+			cs[key] = value
+		end
 	end
 	-- Spring camera (BAR's default): ry turns around the vertical axis, rx is the pitch (the engine clamps it).
 	-- The map turns with the fingers, so the camera turns the other way.
@@ -383,8 +436,9 @@ function widget:Update(dt)
 	updates = updates + 1
 	local lines = newTouchLines()
 	if lines then
-		applyTouch(lines)
+		readTouch(lines)
 	end
+	applyTouch(dt)
 	if padCamera then
 		applyPad(dt)
 	end

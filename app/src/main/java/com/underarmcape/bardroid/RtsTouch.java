@@ -35,10 +35,11 @@ import java.util.Locale;
  *   tap, then drag       left drag: box select
  *   long press           right button: lift = right click (move/attack order), keep dragging = right drag (formation)
  *   two-finger tap       right click at the first finger
- *   two fingers          move = pan, pinch = zoom (mouse wheel at the pinch centre; BAR zooms towards the cursor),
+ *   two fingers          move = pan, pinch = zoom about the pinch (in the lobby: the mouse wheel, which scrolls),
  *                        twist = rotate the camera
  *   two fingers up/down  tilt the camera (both fingers moving the same way, side by side)
  *   three-finger tap     show / hide the keyboard
+ * The X pointer is hidden while two or more fingers are down.
  *
  * Camera moves go to bardroid_touch.lua in the game through files (BAR's sandbox gives user widgets no sockets); the
  * widget answers through bardroid_hover.txt whether the pointer is over the game's interface.
@@ -85,6 +86,7 @@ final class RtsTouch {
     private float lastTapX = -1, lastTapY;          // X screen pixels
     private long lastTapTime;
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
+    private boolean cursorHidden;
 
     private final Runnable longPress = () -> {
         if (state != State.PENDING) return;
@@ -190,6 +192,7 @@ final class RtsTouch {
                 int i = e.getActionIndex();
                 starts.put(e.getPointerId(i), new float[]{e.getX(i), e.getY(i)});
                 maxFingers = Math.max(maxFingers, e.getPointerCount());
+                showCursor(false);   // Kailil: the pointer flickering between two fingers looked broken
                 if (state == State.PENDING) {
                     ui.removeCallbacks(longPress);
                     state = State.MULTI_PENDING;
@@ -249,10 +252,15 @@ final class RtsTouch {
                 if (a < 0 || b < 0) return;
                 float cx = (e.getX(a) + e.getX(b)) / 2, cy = (e.getY(a) + e.getY(b)) / 2, d = dist(e, a, b);
                 if (cx != lastCx || cy != lastCy) sendPan(lastCx, lastCy, cx, cy);
-                if (lastDist > 0 && d > 0) {
-                    zoomAcc += Math.log(d / lastDist);
-                    while (zoomAcc >= ZOOM_STEP) { wheel(cx, cy, -WHEEL_CLICK); zoomAcc -= ZOOM_STEP; }   // spread: zoom in
-                    while (zoomAcc <= -ZOOM_STEP) { wheel(cx, cy, WHEEL_CLICK); zoomAcc += ZOOM_STEP; }   // pinch: zoom out
+                if (lastDist > 0 && d > 0 && d != lastDist) {
+                    if (gameWidgetRunning()) {
+                        // in a game the widget zooms continuously about the pinch (wheel clicks zoomed in 12% steps)
+                        send(String.format(Locale.US, "zoom %.5f %.1f %.1f", d / lastDist, toX(cx), toY(cy)));
+                    } else {   // the lobby: the wheel scrolls its lists
+                        zoomAcc += Math.log(d / lastDist);
+                        while (zoomAcc >= ZOOM_STEP) { wheel(cx, cy, -WHEEL_CLICK); zoomAcc -= ZOOM_STEP; }   // spread
+                        while (zoomAcc <= -ZOOM_STEP) { wheel(cx, cy, WHEEL_CLICK); zoomAcc += ZOOM_STEP; }   // pinch
+                    }
                 }
                 double angle = angle(e, a, b), turn = Math.IEEEremainder(angle - lastAngle, 2 * Math.PI);
                 if (rotating) {
@@ -318,6 +326,7 @@ final class RtsTouch {
             default:
         }
         state = State.IDLE;
+        showCursor(true);
         if (velocity != null) { velocity.recycle(); velocity = null; }
         io.post(() -> { if (logBytes > LOG_RESTART_BYTES) restartLog(); });   // between gestures only
     }
@@ -328,6 +337,14 @@ final class RtsTouch {
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         state = State.IDLE;
+        showCursor(true);
+    }
+
+    /** The X pointer is hidden while two or more fingers are down. */
+    private void showCursor(boolean visible) {
+        if (cursorHidden == !visible) return;
+        cursorHidden = !visible;
+        view().setCursorVisible(visible);
     }
 
     /** A one-finger drag: a left drag where it started on the game's interface, else a pan; null = not known yet. */

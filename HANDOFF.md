@@ -353,6 +353,17 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
   `/data/local/tmp/simpleperf record --app com.underarmcape.bardroid -p <spring,proot,x11 pids> -e cpu-clock:u`
   (kernel samples are refused; `--app` alone only catches the Java process).
 - Loading BAR saves crashed (SIGSEGV in "Loading Saved Game", no stack): Recoil's save support; not investigated.
+- **Still waiting on the GPU (spectating an 8v8, 226-418 units, 23-24 fps; 2026-10-26, with the pace cap):** the main
+  thread is busy ~50% and blocked in `0x400c0907` 42%; GPU 342 MHz of 1200, 61-76% busy (no thermal cap); the prime
+  cores (cpu6-7) idle at 1017 MHz, the main thread runs on cpu0-5. Its stack while blocked (read from
+  `/proc/<pid>/mem` at the SP in `/proc/<pid>/task/<tid>/syscall`; simpleperf has no off-CPU events on this phone;
+  `stackparse.py`/`symchain.py`-style scan, libgallium has a symtab): 29 of 30 samples in immediate mode,
+  `_mesa_Color4fv` → `vbo_exec_wrap_upgrade_vertex` → `_mesa_bufferobj_map_range` → `tc_buffer_map` (`_tc_sync`) →
+  `fd_resource_transfer_map` → `__fd_resource_wait` → `fd_bo_cpu_prep` → KGSL wait. So the GL immediate-mode
+  vertex buffer (Lua `gl.BeginEnd`/`gl.Color`/`gl.Vertex` and the engine's own `glBegin` paths) is mapped while the
+  GPU still uses it, and the CPU waits for the GPU each time. Untested ideas: `mesa_glthread=true` (moves the waits
+  off the main thread), `GALLIUM_THREAD=0`, `MESA_EXTENSION_OVERRIDE=-GL_ARB_buffer_storage` (vbo's other map path);
+  try them through `files/bar/dev-env.sh` on a replay of the same game and compare the `[bardroid-perf]` seconds.
 
 **Pad as a mouse in the lobby** (Kailil: "just simple mouse movement, scroll and A and B as left and right click"):
 `ControllerBridge.Mouse` (GameActivity `lobbyMouse`) is on while no game widget writes the hover file (older than
