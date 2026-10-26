@@ -137,8 +137,10 @@ fi
 #   BumpWater*             BAR's "high" water without the reflection and refraction passes (each draws the scene again)
 #   GrassDetail            0 (the engine's grass; BAR draws its own)
 #   SmoothLines/Points     0
+#   CamMode                2, the Spring camera (BAR's default, the one finger twist and tilt turn): the lobby's
+#                          CamMode = 1 started singleplayer games with the overhead camera, which has neither
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
-  BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0"
+  BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2"
 for kv in $PHONE_GFX; do
   k=${kv%%=*}; v=${kv#*=}
   if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
@@ -158,7 +160,7 @@ log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map e
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
 scr="$BAR/LuaUI/Config/bardroid_screen.txt"
-if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -gt 0 ] && [ "${sh:-0}" -gt 0 ]; then
+if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -ge 600 ] && [ "${sh:-0}" -ge 600 ]; then   # not the floating window
   if [ "$sw" -gt "$sh" ]; then long=$sw short=$sh; else long=$sh short=$sw; fi
   if [ $((long * 10)) -ge $((short * 16)) ]; then uis=2.0; else uis=1.3; fi
   if grep -q '^ui_scale *=' "$BAR/springsettings.cfg"; then sed -i "s/^ui_scale *=.*/ui_scale = $uis/" "$BAR/springsettings.cfg"

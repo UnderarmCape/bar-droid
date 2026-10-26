@@ -391,7 +391,10 @@ end
 local UI_SCALE_COVER, UI_SCALE_INNER = 2.0, 1.3
 local function applyUiScale(w, h)
 	local long, short = math.max(w, h), math.min(w, h)
-	local want = (short > 0 and long / short >= 1.6) and UI_SCALE_COVER or UI_SCALE_INNER -- cover: 2520x1080
+	if short < 600 then
+		return -- the floating window while the app is in the background (584x530): no reload on the way out and back
+	end
+	local want = long / short >= 1.6 and UI_SCALE_COVER or UI_SCALE_INNER -- cover: 2520x1080
 	local screen = w .. "x" .. h
 	if math.abs((Spring.GetConfigFloat("ui_scale", 1) or 1) - want) <= 0.001 then
 		Spring.SetConfigString("bardroid_ui_scale_reload", "")
