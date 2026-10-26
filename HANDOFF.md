@@ -366,6 +366,12 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
   launch-bar.sh forced 0; shadows; terrain detail; features at any distance from Chobby's `FeatureDrawDistance =
   600000`), a Mesa that does not wait at the swap, ADPF hints. Kailil: a top-down camera runs much faster than a
   tilted one. A second 8v8 an hour later: 15 fps, blocked 51%, GPU capped at 443-525 MHz and CPUs at ~2 GHz (hot).
+- **The swap wait's cause** (lfdevs Mesa PR #96 source): `fd_flush_resource` on KGSL CPU-waits for the frame
+  (`FD_BO_PREP_READ`) unless the frontend uses the explicit Present fence, which `dri3_present_sync_init` enables
+  only when `DMA_BUF_IOCTL_EXPORT_SYNC_FILE` fails with ENOTTY/ENOSYS. The Fold7's kernel supports it (KGSL attaches
+  no fences, so the export is empty), the engine had no `present` thread. `libbardroid_pace.so` now answers ENOTTY
+  for that ioctl (`BARDROID_PRESENT_FENCE=0` = off); lorie has the X server half (termux-x11 b36dac08). Check: a
+  `present` thread in `/proc/<engine>/task/*/comm`, no `0x400c0907` waits in the main thread, no flicker.
 - **Phone graphics at every start** (`launch-bar.sh` `PHONE_GFX`, Kailil: "disable msaa on every graphics profile",
   "we can still cut more things"): no MSAA, no shadows, features drawn to 6000, GroundDetail 60, no water
   reflection/refraction passes, no engine grass or line smoothing, in springsettings.cfg and Chobby's game_settings;
