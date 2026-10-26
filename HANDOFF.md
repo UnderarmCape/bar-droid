@@ -65,7 +65,10 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   resizes while loading, in game); the ConfigNotify rule only on the phone (Kailil). Its first version called
   present's `ConfigNotify` without unwrapping, so present's own unwrap/rewrap dropped ours after one call (found with
   the `screen`/`fit window` lines lorie logs to logcat, tag LorieNative). The phone's logcat buffer is set to 5 MB
-  (`adb logcat -G 16M`; the app floods it otherwise).
+  (`adb logcat -G 16M`; the app floods it otherwise). Last piece: Chobby's LuaMenu widget "Resolution limiter" shrank
+  the window to SDL's stale screen size on every ViewResize and toggled fullscreen, fighting the fit twice a second
+  (black flicker); `launch-bar.sh` sets it to 0 in `LuaMenu/Config/IGL_order.lua`. **Kailil (21:50): folding and
+  unfolding works perfectly** (lobby, either starting screen).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
 - **Black squares for units zoomed out** (strategic icons): the engine builds its icon atlas (and the projectile
