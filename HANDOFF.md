@@ -61,6 +61,11 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three resizes while loading, in game).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
+- Mouse: `HardwareCursor = 1`, so lorie draws the pointer on every display frame instead of the engine once per game
+  frame (verified: with spring SIGSTOPped the pointer still follows). The lobby is slow by design on top of the
+  phone's speed: Chobby's `gfx_limit_idle_fps` runs it at VSync 2 (30 fps) while active and VSync 4 (15 fps) after
+  1–2 s idle (and it measures time with `os.clock()`, CPU time); its Settings checkbox `drawFullSpeed` makes the
+  active rate 60.
 
 **Touch controls** (`RtsTouch`, on by default; off = Termux:X11's touch modes), Kailil's spec of 19:30:
 tap = left click (double tap = double click); one-finger drag = pan (grab, with a fling); tap-then-drag = box select;
