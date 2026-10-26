@@ -127,9 +127,12 @@ public class GameService extends Service {
             if (audio != null) audio.start();
             engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
             setStatus("running (" + mode + ")");
+            long started = android.os.SystemClock.elapsedRealtime();
             int rc = engine.waitFor();
             if (audio != null) audio.stop();
             setStatus("engine exited (" + rc + ")");
+            if ("lobby".equals(mode))   // a lobby that dies at once is not started again from the app icon
+                Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
         } catch (InterruptedException e) {
             setStatus("stopped");
         } catch (Exception e) {

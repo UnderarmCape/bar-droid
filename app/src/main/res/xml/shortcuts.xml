@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Long-press the app icon: the launcher screen (install, settings, logs). The app icon itself opens the lobby. -->
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="launcher"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_launcher"
+        android:shortcutLongLabel="@string/shortcut_launcher_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.underarmcape.bardroid"
+            android:targetClass="com.underarmcape.bardroid.LauncherActivity" />
+    </shortcut>
+</shortcuts>

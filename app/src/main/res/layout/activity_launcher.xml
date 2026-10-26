@@ -75,6 +75,7 @@
 
             <CheckBox android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
             <CheckBox android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
+            <CheckBox android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
             <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
             <CheckBox android:id="@+id/cbTouchOnly" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_touch_only" />

@@ -59,6 +59,8 @@ public final class Prefs {
     public static boolean touchOnly = true;
     /** Frame cap (phone build): 30 fps (VSync 2 on a 60 Hz window), or experimental 60 fps (VSync 1). */
     public static boolean fps60 = false;
+    /** Opening the app from its icon starts the lobby (LauncherActivity). */
+    public static boolean autoLobby = true;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -103,6 +105,7 @@ public final class Prefs {
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
         touchOnly = s.getBoolean("touchOnly", touchOnly);
         fps60 = s.getBoolean("fps60", fps60);
+        autoLobby = s.getBoolean("autoLobby", autoLobby);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -125,8 +128,18 @@ public final class Prefs {
                 .putBoolean("rtsTouch", rtsTouch)
                 .putBoolean("touchOnly", touchOnly)
                 .putBoolean("fps60", fps60)
+                .putBoolean("autoLobby", autoLobby)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();
+    }
+
+    /** The last lobby the app started exited with an error within a minute: show the launcher instead of retrying. */
+    public static boolean lobbyFailedFast(Context ctx) {
+        return ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getBoolean("lobbyFailedFast", false);
+    }
+
+    public static void setLobbyFailedFast(Context ctx, boolean failed) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean("lobbyFailedFast", failed).apply();
     }
 }

@@ -1,0 +1,29 @@
+diff --git a/lorie/src/main/cpp/lorie/cmdentrypoint.cpp b/lorie/src/main/cpp/lorie/cmdentrypoint.cpp
+index 7b67e91..aaffa1c 100644
+--- a/lorie/src/main/cpp/lorie/cmdentrypoint.cpp
++++ b/lorie/src/main/cpp/lorie/cmdentrypoint.cpp
+@@ -617,7 +617,8 @@ static void reportFatalError(JNIEnv *env, __unused jobject cls, jstring message)
+ // Called from OsVendorInit() once the display number and "-tag" argument (if any) are resolved,
+ // so the port to knock on and the tag to report back to Java are already known.
+ void lorieListenForKnocks(int port, const char *tag) {
+-    struct sockaddr_in address = { .sin_family = AF_INET, .sin_port = htons(port), .sin_addr = { .s_addr = INADDR_ANY } };
++    // BAR Droid: loopback only; the knock comes from our own app on this device.
++    struct sockaddr_in address = { .sin_family = AF_INET, .sin_port = htons(port), .sin_addr = { .s_addr = htonl(INADDR_LOOPBACK) } };
+     int fd, reuse = 1;
+ 
+     serverEnv->CallVoidMethod(thiz, setDocumentTag, tag ? serverEnv->NewStringUTF(tag) : nullptr);
+diff --git a/lorie/src/main/cpp/lorie/lorie.h b/lorie/src/main/cpp/lorie/lorie.h
+index 54aa2c3..7b3a0ff 100644
+--- a/lorie/src/main/cpp/lorie/lorie.h
++++ b/lorie/src/main/cpp/lorie/lorie.h
+@@ -15,7 +15,9 @@
+ #include "linux/input-event-codes.h"
+ #include "buffer.h"
+ 
+-#define PORT 7892
++// BAR Droid: not Termux:X11's 7892, which the Termux:X11 app (when installed) knocks on every 250 ms while its
++// window waits for a server.
++#define PORT 17892
+ #define DOCUMENT_PORT_BASE 7900
+ #define MAGIC "0xDEADBEEF"
+ 

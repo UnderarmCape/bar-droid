@@ -33,7 +33,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   "is the pointer on the interface" answers); `GameActivity` wires them up.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
-  top-level windows with the screen (fold/unfold; there is no window manager). Regenerate a patch with `git diff`
+  top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on
+  loopback (the Termux:X11 app, if installed, knocks on 7892 every 250 ms).
+- The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
+  long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;
   long-press **GL check** in the app keeps X + GPU server up without the game.
