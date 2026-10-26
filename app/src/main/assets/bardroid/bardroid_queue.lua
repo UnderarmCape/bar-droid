@@ -42,7 +42,9 @@ local guiHidden = false
 local function hide(id)
 	local s = shapes[id]
 	if s then
-		WG.StopDrawUnitShapeGL4(s)
+		if WG.StopDrawUnitShapeGL4 then -- (gone when BAR's shape drawer shut down first, its shapes with it)
+			WG.StopDrawUnitShapeGL4(s)
+		end
 		shapes[id] = nil
 		shown = shown - 1
 	end

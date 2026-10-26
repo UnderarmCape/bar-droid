@@ -445,10 +445,74 @@ local function logPerf()
 	end
 end
 
+-- Joining a running game (spectating, a reconnect) replays it from the start as fast as the phone can (Kailil,
+-- 2026-10-26: a 40 min game "crawls at a 1-2x catch up speed"). While behind, the engine draws after every stretch of
+-- simulation so that drawing gets MinSimDrawBalance of the time (0.15: 9-21 pictures a second in that game, the GPU
+-- 50-86% busy on a phone already hot). Far behind, drawing gets 2% instead (one to two pictures a second; BAR's rejoin
+-- bar keeps counting): more time for the simulation and a cooler GPU, so the CPU keeps more of its clock. Set in
+-- memory only (the config overlay, never saved) and put back when caught up. Not for replays (watched at speed).
+local CATCHUP_ENTER, CATCHUP_LEAVE = 30 * 30, 5 * 30 -- game frames behind the server
+local CATCHUP_BALANCE, CATCHUP_MIN_DRAW_FPS = 0.02, 1
+local CATCHUP_LOG_EVERY = 30 -- seconds
+local serverFrame, serverFrameAt -- GameProgress: the server's frame, every 150 frames
+local catchup -- while catching up: the engine's own settings, and where the last log line was
+
+local function gameClock(frame)
+	local s = math.floor(frame / 30)
+	return string.format("%d:%02d", math.floor(s / 60), s % 60)
+end
+
+local function endCatchup()
+	if catchup then
+		Spring.SetConfigFloat("MinSimDrawBalance", catchup.balance, true)
+		Spring.SetConfigInt("MinDrawFPS", catchup.minDrawFps, true)
+		catchup = nil
+	end
+end
+
+function widget:GameProgress(frame)
+	serverFrame, serverFrameAt = frame, spGetTimer()
+end
+
+local function updateCatchup()
+	-- (springsettings bardroid_catchup = 0: the engine's own balance, for comparisons)
+	if not serverFrame or Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then
+		return
+	end
+	local now = spGetTimer()
+	local speed, _, paused = Spring.GetGameSpeed()
+	local server = serverFrame + (paused and 0 or (speed or 1) * 30 * spDiffTimers(now, serverFrameAt))
+	local frame = Spring.GetGameFrame()
+	local behind = server - frame
+	if not catchup then
+		if behind > CATCHUP_ENTER then
+			catchup = { balance = Spring.GetConfigFloat("MinSimDrawBalance", 0.15),
+				minDrawFps = Spring.GetConfigInt("MinDrawFPS", 2), frame = frame, time = now, logFrame = frame, logTime = now }
+			Spring.SetConfigFloat("MinSimDrawBalance", CATCHUP_BALANCE, true)
+			Spring.SetConfigInt("MinDrawFPS", CATCHUP_MIN_DRAW_FPS, true)
+			Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind: drawing less until caught up",
+				gameClock(frame), gameClock(behind)))
+		end
+		return
+	end
+	local logSeconds = spDiffTimers(now, catchup.logTime)
+	if behind < CATCHUP_LEAVE then
+		local seconds = spDiffTimers(now, catchup.time)
+		Spring.Echo(string.format("[bardroid-catchup] caught up at %s after %.0f s (x%.1f on average)", gameClock(frame),
+			seconds, (frame - catchup.frame) / 30 / math.max(seconds, 1)))
+		endCatchup()
+	elseif logSeconds >= CATCHUP_LOG_EVERY then
+		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind, x%.1f over %.0f s, %d units", gameClock(frame),
+			gameClock(behind), (frame - catchup.logFrame) / 30 / logSeconds, logSeconds, #(Spring.GetAllUnits() or {})))
+		catchup.logFrame, catchup.logTime = frame, now
+	end
+end
+
 function widget:Shutdown()
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
+	endCatchup() -- a LuaUI reload (fold/unfold) while catching up: the next start sees the gap again
 end
 
 -- BAR's interface scale for the screen the game is on (Kailil, 2026-10-26: on the Fold's cover screen "EVERYTHING IS
@@ -570,6 +634,7 @@ local function update(dt)
 	if queueCheck <= 0 then -- queues grow and shrink without a selection change
 		queueCheck = 0.5
 		updateQueueDrawing()
+		updateCatchup()
 	end
 
 	screenCheck = screenCheck - dt
