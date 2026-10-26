@@ -91,11 +91,13 @@ fi
 widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry (the widget's default)
   f="$BAR/LuaUI/Config/BYAR.lua"
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
-  if grep -q "\[\"$1\"\] *= *-\?[0-9][0-9]*" "$f"; then
-    if [ -n "$2" ]; then sed -i "s/\[\"$1\"\] *= *-\?[0-9][0-9]*/[\"$1\"] = $2/" "$f"
-    else sed -i "/\[\"$1\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
+  # the name as a regex and as replacement text ("Keybind/Mouse Info": a / would end the sed expression)
+  re=$(printf '%s' "$1" | sed 's/[][\/.*^$]/\\&/g'); rep=$(printf '%s' "$1" | sed 's/[\/&]/\\&/g')
+  if grep -q "\[\"$re\"\] *= *-\?[0-9][0-9]*" "$f"; then
+    if [ -n "$2" ]; then sed -i "s/\[\"$re\"\] *= *-\?[0-9][0-9]*/[\"$rep\"] = $2/" "$f"
+    else sed -i "/\[\"$re\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
   elif [ -n "$2" ]; then
-    sed -i "0,/order *= *{/s//order = {\n\t\t[\"$1\"] = $2,/" "$f"
+    sed -i "0,/order *= *{/s//order = {\n\t\t[\"$rep\"] = $2,/" "$f"
   fi
 }
 LOBBY_GAME=byar
@@ -150,6 +152,23 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
 fi
 log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension"
+
+# BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
+# one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
+scr="$BAR/LuaUI/Config/bardroid_screen.txt"
+if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -gt 0 ] && [ "${sh:-0}" -gt 0 ]; then
+  if [ "$sw" -gt "$sh" ]; then long=$sw short=$sh; else long=$sh short=$sw; fi
+  if [ $((long * 10)) -ge $((short * 16)) ]; then uis=2.0; else uis=1.3; fi
+  if grep -q '^ui_scale *=' "$BAR/springsettings.cfg"; then sed -i "s/^ui_scale *=.*/ui_scale = $uis/" "$BAR/springsettings.cfg"
+  else echo "ui_scale = $uis" >> "$BAR/springsettings.cfg"; fi
+  log "interface scale $uis (${sw}x${sh} screen)"
+fi
+# The top bar's button strip is laid out for wide screens: at 1.3 on the near-square inner screen it ran under the
+# wind/tidal/commander counters. Its Keys (keyboard shortcuts) and Changes (patch notes) buttons are no use on a
+# phone: their widgets off, the rest has room.
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+  widget_order "Keybind/Mouse Info" 0; widget_order "Changelog Info" 0
+fi
 
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"

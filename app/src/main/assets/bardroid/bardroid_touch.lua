@@ -384,6 +384,31 @@ function widget:Shutdown()
 	end
 end
 
+-- BAR's interface scale for the screen the game is on (Kailil, 2026-10-26: on the Fold's cover screen "EVERYTHING IS
+-- TOO SMALL ... interface 2.0 is necessary", on the inner one "1.3 scale is good"). BAR's slider stops at 1.3, and
+-- most of its widgets read ui_scale only when they load, so a fold or unfold that changes it reloads LuaUI, as BAR's
+-- own slider does. launch-bar.sh sets it for the screen a game starts on, so a start needs no reload.
+local UI_SCALE_COVER, UI_SCALE_INNER = 2.0, 1.3
+local function applyUiScale(w, h)
+	local long, short = math.max(w, h), math.min(w, h)
+	local want = (short > 0 and long / short >= 1.6) and UI_SCALE_COVER or UI_SCALE_INNER -- cover: 2520x1080
+	local screen = w .. "x" .. h
+	if math.abs((Spring.GetConfigFloat("ui_scale", 1) or 1) - want) <= 0.001 then
+		Spring.SetConfigString("bardroid_ui_scale_reload", "")
+		return
+	end
+	-- one reload per screen size: if something sets the scale back, the next widget load leaves it (no reload loop)
+	if Spring.GetConfigString("bardroid_ui_scale_reload", "") == screen then
+		Spring.Echo(string.format("[bardroid-touch] %s screen: interface scale stays %.2f (it was set to %.1f once)", screen,
+			Spring.GetConfigFloat("ui_scale", 1) or 1, want))
+		return
+	end
+	Spring.SetConfigString("bardroid_ui_scale_reload", screen)
+	Spring.SetConfigFloat("ui_scale", want)
+	Spring.Echo(string.format("[bardroid-touch] %s screen: interface scale %.1f, reloading the interface", screen, want))
+	Spring.SendCommands("luarules reloadluaui")
+end
+
 -- The window size is the X server's job (BAR Droid's lorie patch 0003 keeps the game window the size of the screen).
 -- Never Spring.SetWindowGeometry here: the engine clamps it to the screen size SDL saw at startup, so on the other
 -- screen of a foldable it would shrink the window again.
@@ -467,6 +492,7 @@ function widget:Update(dt)
 				if s ~= lastScreen then
 					lastScreen = s
 					applyFrameCap(tonumber(hz), tonumber(fps))
+					applyUiScale(tonumber(w), tonumber(h))
 				end
 			end
 		end
