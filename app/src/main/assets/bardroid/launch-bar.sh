@@ -96,9 +96,10 @@ widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry
   if grep -q "\[\"$re\"\] *= *-\?[0-9][0-9]*" "$f"; then
     if [ -n "$2" ]; then sed -i "s/\[\"$re\"\] *= *-\?[0-9][0-9]*/[\"$rep\"] = $2/" "$f"
     else sed -i "/\[\"$re\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
-  elif [ -n "$2" ]; then
-    sed -i "0,/order *= *{/s//order = {\n\t\t[\"$rep\"] = $2,/" "$f"
+  elif [ -n "$2" ]; then   # the top-level order table (one tab in, as BAR writes it), not a widget's "...order = {"
+    sed -i "0,/^\torder *= *{/s//\torder = {\n\t\t[\"$rep\"] = $2,/" "$f"
   fi
+  [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
 }
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
