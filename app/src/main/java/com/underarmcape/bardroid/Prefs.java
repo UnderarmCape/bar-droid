@@ -56,6 +56,11 @@ public final class Prefs {
     public static boolean fps60 = false;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
     public static boolean autoLobby = true;
+    /**
+     * Singleplayer (skirmish, the lobby's own games) plays Kailil's controller build, BAR Controller Support v0.8.5, as
+     * BAR's developer game (Installer.installGamepadGame); online games always play BAR's released game.
+     */
+    public static boolean gamepadGame = true;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -100,6 +105,7 @@ public final class Prefs {
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
         fps60 = s.getBoolean("fps60", fps60);
         autoLobby = s.getBoolean("autoLobby", autoLobby);
+        gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -123,6 +129,7 @@ public final class Prefs {
                 .remove("touchOnly")   // the touch-only mode is gone
                 .putBoolean("fps60", fps60)
                 .putBoolean("autoLobby", autoLobby)
+                .putBoolean("gamepadGame", gamepadGame)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

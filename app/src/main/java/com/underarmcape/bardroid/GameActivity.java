@@ -28,8 +28,9 @@ public class GameActivity extends MainActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        pad = new ControllerBridge(Prefs.controllerPort);
         touch = new RtsTouch(this);
+        pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
+        pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
         LorieView lorieView = getLorieView();
         View lorieParent = (View) lorieView.getParent();
         TouchInputHandler termux = BarDroidAccess.inputHandler(this);
@@ -97,10 +98,10 @@ public class GameActivity extends MainActivity {
         finishAndRemoveTask();
     }
 
-    @Override public void onResume() { super.onResume(); pad.start(); }
-    @Override public void onPause() { pad.stop(); super.onPause(); }
+    @Override public void onPause() { pad.release(); super.onPause(); }
     @Override protected void onDestroy() {
         getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
+        pad.stop();
         touch.close();
         super.onDestroy();
     }

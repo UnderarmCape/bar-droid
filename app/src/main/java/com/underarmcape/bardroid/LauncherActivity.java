@@ -117,6 +117,7 @@ public class LauncherActivity extends AppCompatActivity {
         }
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
+        ((CheckBox) findViewById(R.id.cbGamepadGame)).setChecked(Prefs.gamepadGame);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
         ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
@@ -136,6 +137,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
+        Prefs.gamepadGame = ((CheckBox) findViewById(R.id.cbGamepadGame)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
         Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();

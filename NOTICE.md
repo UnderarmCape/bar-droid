@@ -7,3 +7,9 @@ canvas (`app/src/main/res/drawable-xx*hdpi/ic_fg.png`). Because it adapts a NoDe
 Kailil's personal, non-commercial use: do not publish or share an APK carrying it without the BAR team's permission.
 It is the only BAR-derived artwork in this APK; everything else of BAR's is downloaded from BAR's own servers at
 install time.
+
+**Controller game (`app/src/main/assets/gamepad/`):** Kailil's BAR Controller Support v0.8.5 (UnderarmCape, branch
+`controller/codex-v085-release` of the BAR game repository): new Lua widgets and modified copies of ten of BAR's
+interface widgets, GPL-2.0-or-later like BAR's own Lua code, and controller glyph atlases made for it
+(GPL-2.0-or-later OR CC0-1.0, `luaui/images/controller-glyphs/LICENSE.md` inside the zip). The three BAR icons it shows
+are copied from BAR's downloaded release on the phone, not shipped.

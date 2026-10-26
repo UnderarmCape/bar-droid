@@ -9,8 +9,15 @@
 --   LuaUI/Config/bardroid_touch.txt   app, appended:  pan <x0> <y0> <x1> <y1>   (the map point under x0,y0 goes to x1,y1)
 --                                                     rot <radians>             (fingers twisted, clockwise > 0)
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
+--                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
+--                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz, frame cap)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+--
+-- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
+-- build (BAR Controller Support v0.8.5, the app's singleplayer game) does: left stick pans (LT up to 2.75x faster),
+-- right stick turns (x) and zooms (y; with LB held it tilts instead). In that game v0.8.5 reads the pad itself, so
+-- this part stays off there.
 
 function widget:GetInfo()
 	return {
@@ -38,12 +45,22 @@ local spIsAboveMiniMap = Spring.IsAboveMiniMap
 local spGetTimer = Spring.GetTimer
 local spDiffTimers = Spring.DiffTimers
 
+-- v0.8.5's camera defaults (gui_controller_camera_test.lua)
+local PAD_PAN_SPEED, PAD_FAST_PAN = 1400, 2.75
+local PAD_ZOOM_SCALE, PAD_ROTATION, PAD_PITCH = 0.9, 3.0, 3.0
+local PAD_STICK_CURVE, PAD_TRIGGER_CURVE, PAD_SMOOTHING = 1.175, 1.075, 0.06
+local PAD_STICK_DEADZONE, PAD_TRIGGER_DEADZONE = 5000, 3000
+local MIN_SPRING_DISTANCE, MIN_OVERHEAD_HEIGHT, MIN_CAMERA_RX, MAX_CAMERA_RX = 20, 60, 1.0, 3.05
+
 local touchPos, partial = 0, ""
 local lastScreen, screenCheck = nil, 0
 local updates = 0
 local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
 local lastHover, hoverTimer = nil, nil
+local padCamera = true   -- false in the controller game
+local pad = { lx = 0, ly = 0, rx = 0, ry = 0, lt = 0, lb = false }
+local smooth = { panX = 0, panY = 0, rotate = 0, pitch = 0, zoom = 0, boost = 0 }
 
 local function fileSize(path)
 	local f = io.open(path, "r")
@@ -57,8 +74,12 @@ end
 
 function widget:Initialize()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
+	-- the controller game: BAR's developer game ("$VERSION") with v0.8.5's pad bridge
+	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
+	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
 	local cs = spGetCameraState()
-	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s)", tostring(cs.name), tostring(cs.rx), tostring(cs.ry)))
+	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s), gamepad camera %s", tostring(cs.name),
+		tostring(cs.rx), tostring(cs.ry), padCamera and "on" or "off (the controller game reads the pad)"))
 end
 
 -- Called for the pointer position only when no widget before this one (the whole interface) claimed it.
@@ -129,6 +150,10 @@ local function applyTouch(lines)
 	for t in lines:gmatch("tilt (%S+)") do
 		tilt = tilt + (tonumber(t) or 0)
 	end
+	for lx, ly, rx, ry, lt, lb in lines:gmatch("pad (%S+) (%S+) (%S+) (%S+) (%S+) (%S+)") do -- the last one counts
+		pad.lx, pad.ly, pad.rx, pad.ry = tonumber(lx) or 0, tonumber(ly) or 0, tonumber(rx) or 0, tonumber(ry) or 0
+		pad.lt, pad.lb = tonumber(lt) or 0, lb == "1"
+	end
 	if dx == 0 and dz == 0 and rot == 0 and tilt == 0 then
 		return
 	end
@@ -145,6 +170,92 @@ local function applyTouch(lines)
 	if tilt ~= 0 and cs.rx then
 		cs.rx = cs.rx + tilt * TILT_RANGE
 	end
+	spSetCameraState(cs, 0)
+end
+
+-- v0.8.5's stick handling: deadzone, response curve, then smoothing towards the stick with a 0.06 s time constant.
+local function stick(v)
+	local m = math.abs(v)
+	if m < PAD_STICK_DEADZONE then
+		return 0
+	end
+	local n = math.min(1, (m - PAD_STICK_DEADZONE) / (32767 - PAD_STICK_DEADZONE)) ^ PAD_STICK_CURVE
+	return v < 0 and -n or n
+end
+
+local function triggerValue(v)
+	if v < PAD_TRIGGER_DEADZONE then
+		return 0
+	end
+	return math.min(1, (v - PAD_TRIGGER_DEADZONE) / (32767 - PAD_TRIGGER_DEADZONE)) ^ PAD_TRIGGER_CURVE
+end
+
+local function approach(current, target, dt)
+	local value = current + (target - current) * (1 - math.exp(-dt / PAD_SMOOTHING))
+	return math.abs(value) < 0.001 and 0 or value
+end
+
+local function clamp(v, lo, hi)
+	return math.max(lo, math.min(hi, v))
+end
+
+local function horizontal(v)
+	local x, z = v and tonumber(v[1]) or 0, v and tonumber(v[3]) or 0
+	local len = math.sqrt(x * x + z * z)
+	if len <= 0.001 then
+		return nil
+	end
+	return x / len, z / len
+end
+
+local function applyPad(dt)
+	local s = smooth
+	if pad.lx == 0 and pad.ly == 0 and pad.rx == 0 and pad.ry == 0 and pad.lt == 0
+		and s.panX == 0 and s.panY == 0 and s.rotate == 0 and s.pitch == 0 and s.zoom == 0 and s.boost == 0 then
+		return -- the sticks rest: nothing to do
+	end
+	local y = -stick(pad.ry) -- up zooms in (tilts with LB)
+	s.panX = approach(s.panX, stick(pad.lx), dt)
+	s.panY = approach(s.panY, stick(pad.ly), dt)
+	s.rotate = approach(s.rotate, stick(pad.rx), dt)
+	s.pitch = approach(s.pitch, pad.lb and y or 0, dt)
+	s.zoom = approach(s.zoom, pad.lb and 0 or y, dt)
+	s.boost = approach(s.boost, triggerValue(pad.lt), dt)
+	if s.panX == 0 and s.panY == 0 and s.rotate == 0 and s.pitch == 0 and s.zoom == 0 then
+		return
+	end
+	local cs = spGetCameraState()
+	if not (cs.px and cs.pz) then
+		return
+	end
+	local maxDistance = math.max(Game.mapSizeX, Game.mapSizeZ, 1000) * 1.5
+	if s.panX ~= 0 or s.panY ~= 0 then
+		local v = Spring.GetCameraVectors()
+		local rightX, rightZ = horizontal(v and v.right)
+		local forwardX, forwardZ = horizontal(v and v.forward)
+		local distance = PAD_PAN_SPEED * (1 + (PAD_FAST_PAN - 1) * s.boost) * dt
+		if rightX and forwardX then
+			cs.px = cs.px + (s.panX * rightX - s.panY * forwardX) * distance
+			cs.pz = cs.pz + (s.panX * rightZ - s.panY * forwardZ) * distance
+		else
+			cs.px, cs.pz = cs.px + s.panX * distance, cs.pz + s.panY * distance
+		end
+	end
+	if s.zoom ~= 0 then
+		local scale = 1 - s.zoom * PAD_ZOOM_SCALE * 3 * dt
+		if cs.dist then
+			cs.dist = clamp(cs.dist * scale, MIN_SPRING_DISTANCE, maxDistance)
+		elseif cs.height then
+			cs.height = clamp(cs.height * scale, MIN_OVERHEAD_HEIGHT, maxDistance)
+		end
+	end
+	if s.rotate ~= 0 and cs.ry then
+		cs.ry = cs.ry + s.rotate * PAD_ROTATION * dt
+	end
+	if s.pitch ~= 0 and cs.rx then
+		cs.rx = clamp(cs.rx + s.pitch * PAD_PITCH * dt, MIN_CAMERA_RX, MAX_CAMERA_RX)
+	end
+	cs.px, cs.pz = clamp(cs.px, 0, Game.mapSizeX), clamp(cs.pz, 0, Game.mapSizeZ)
 	spSetCameraState(cs, 0)
 end
 
@@ -201,6 +312,9 @@ function widget:Update(dt)
 	local lines = newTouchLines()
 	if lines then
 		applyTouch(lines)
+	end
+	if padCamera then
+		applyPad(dt)
 	end
 	updateHover()
 

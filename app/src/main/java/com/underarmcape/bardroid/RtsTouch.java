@@ -437,6 +437,9 @@ final class RtsTouch {
         send(String.format(Locale.US, "pan %.1f %.1f %.1f %.1f", toX(x0), toY(y0), toX(x1), toY(y1)));
     }
 
+    /** The gamepad camera's stick state (ControllerBridge, any thread): the widget moves the camera every frame. */
+    void padLine(String line) { send(line); }
+
     /** Appends one line to the touch log (the widget reads complete lines each frame). */
     private void send(String msg) {
         byte[] data = (msg + "\n").getBytes(StandardCharsets.US_ASCII);

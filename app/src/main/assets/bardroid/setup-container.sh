@@ -4,12 +4,23 @@
 #   setup-container.sh mesa    /root/downloads/mesa.tar.gz
 #   setup-container.sh engine  /root/downloads/engine.7z  2026.07.04
 #   setup-container.sh content byar:test byar-chobby:test "Supreme Isthmus v2.1"  2026.07.04
+#   setup-container.sh gamepad byar:git:<commit> 2026.07.04
 #   setup-container.sh import  2026.07.04
 #   setup-container.sh check
 set -u
 step="${1:-}"; shift || true
 BAR=/root/bar
 log() { echo "[setup:$step] $*"; }
+# pr-downloader of the engine, set up for BAR's servers (as BAR's launcher does)
+prd_setup() {
+  prd="$BAR/engine/recoil_$1/pr-downloader"
+  [ -x "$prd" ] || { log "pr-downloader missing"; exit 41; }
+  export PRD_RAPID_REPO_MASTER="https://repos-cdn.beyondallreason.dev/repos.gz"
+  export PRD_HTTP_SEARCH_URL="https://files-cdn.beyondallreason.dev/find"
+  export PRD_RAPID_USE_STREAMER=false
+  export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+  cd "$BAR"
+}
 
 case "$step" in
   apt)
@@ -60,13 +71,7 @@ case "$step" in
 
   content)
     game="${1:?game tag}"; lobby="${2:?lobby tag}"; map="${3:?map name}"; ver="${4:?engine version}"
-    prd="$BAR/engine/recoil_$ver/pr-downloader"
-    [ -x "$prd" ] || { log "pr-downloader missing"; exit 41; }
-    export PRD_RAPID_REPO_MASTER="https://repos-cdn.beyondallreason.dev/repos.gz"
-    export PRD_HTTP_SEARCH_URL="https://files-cdn.beyondallreason.dev/find"
-    export PRD_RAPID_USE_STREAMER=false
-    export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-    cd "$BAR"
+    prd_setup "$ver"
     log "downloading game $game (3.4 GB uncompressed; only missing files are fetched)"
     "$prd" --filesystem-writepath "$BAR" --download-game "$game" || { log "game download failed"; exit 42; }
     log "downloading lobby $lobby"
@@ -75,6 +80,15 @@ case "$step" in
       log "downloading map $map"
       "$prd" --filesystem-writepath "$BAR" --download-map "$map" || { log "map download failed"; exit 43; }
     fi
+    log "ok"
+    ;;
+
+  gamepad)
+    # The BAR release Kailil's controller build (v0.8.5) was ported to; the app unpacks v0.8.5 on top of it.
+    tag="${1:?rapid tag}"; ver="${2:?engine version}"
+    prd_setup "$ver"
+    log "downloading $tag (only files missing from the pool)"
+    "$prd" --filesystem-writepath "$BAR" --download-game "$tag" || { log "download failed"; exit 51; }
     log "ok"
     ;;
 

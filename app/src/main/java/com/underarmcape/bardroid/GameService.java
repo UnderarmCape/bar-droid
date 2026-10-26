@@ -128,6 +128,12 @@ public class GameService extends Service {
         boolean showLauncher = true;
         try {
             inst.refreshHostFiles();                        // scripts/assets of this app version
+            if (Prefs.gamepadGame && !inst.gamepadReady() && ("lobby".equals(mode) || "skirmish".equals(mode))) {
+                // New in this app version (or a newer v0.8.5): singleplayer plays BAR's released game until it is in.
+                try { inst.installGamepadGame((step, detail, pct) -> setStatus("controller game: " + detail)); }
+                catch (InterruptedException e) { throw e; }
+                catch (Exception e) { Log.e("svc", "controller game not installed", e); }
+            }
             inst.writeGameFiles();                          // refresh settings + start script
             setStatus("starting X server");
             xserver.start();
@@ -147,6 +153,7 @@ public class GameService extends Service {
             env.put("MODE", mode);
             env.put("DISPLAY", ":0");
             env.put("LOBBY_TAG", Prefs.lobbyTag);
+            env.put("GAMEPAD_GAME", inst.useGamepadGame() ? "1" : "0");
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
             Proot proot = new Proot(paths);

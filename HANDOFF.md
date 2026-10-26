@@ -23,6 +23,7 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
+| Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera (see "Gamepad" below) |
 | Share logs | launcher button | Zips the logs into Android's share sheet (Taildrop, Drive, mail): phone debugging without adb |
 | virgl GPU server | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black, see below) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
@@ -300,6 +301,32 @@ One ABI per APK.
   (camera pan), 2-finger swipe = mouse wheel (zoom), 3-finger swipe down = toggle the extra-keys bar (Esc/Ctrl/Alt).
   Whether this is playable needs the phone; a Lua gesture layer may follow.
 
+## Gamepad (2026-10-26)
+Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
+and spectating"; no "controller not connected" indicator on Android; keep it cheap.
+- **Why a developer game:** BAR Controller Support v0.8.5 (`C:\Tools\BARGAMEPAD`, branch
+  `controller/codex-v085-release`) is BAR's own game with the controller added (new widgets, edits inside ten of BAR's
+  widgets), ported onto BAR Release 2026.10.20-1 (`a61703336e`). BAR's user-widget sandbox (BAR PR #9547) blocks its
+  socket and input emulation, so like on Windows it runs as BAR's developer game, "Beyond All Reason $VERSION", which
+  the lobby plays with `gameConfigName = "byar-dev"` ("Beyond All Reason Dev"). Online games use BAR's released game.
+- **The archive:** `tools/build-gamepad-game.py` packs only v0.8.5's added/changed files (`luaui/`, `controller-ui/`)
+  into `assets/gamepad/gamepad.zip` plus a `modinfo.lua` that depends on "Beyond All Reason test-31691-a617033"
+  (rapid tag `byar:git:a61703336e…`). The engine adds an archive's own files before its dependencies' (Recoil
+  `CVFSHandler::AddArchiveWithDeps`, overwrite=false), so v0.8.5's files win. `Installer.installGamepadGame` downloads
+  that release (setup step `gamepad`, ~4 MB beyond byar:test), unpacks the zip to `files/bar/games/BAR-gamepad.sdd`, and
+  copies the three BAR icons v0.8.5 reuses from the downloaded pool (no BAR artwork in the APK). It runs at install and,
+  for an app update, before the next lobby/skirmish start (status in the notification); failures leave singleplayer on
+  BAR's released game. Launcher checkbox "Controller support v0.8.5 in singleplayer" (`Prefs.gamepadGame`, default on).
+- **Set up like the Windows installer** (`launch-bar.sh`, `GAMEPAD_GAME=1`): lobby game byar-dev (chobby_config.json and
+  `IGL_data.lua`), BAR's Build menu on and Grid menu off in `LuaUI/Config/BYAR.lua` (v0.8.5 drives the Build menu).
+  No `devmode.txt` (only Chobby's developer buttons). Off again: both go back.
+- **No indicator:** the shipped UI defaults turn v0.8.5's "companion status" panel off (the only Android change to it),
+  and `ControllerBridge` streams packets from the moment the game screen opens (heartbeat every 100 ms, v0.8.5 calls the
+  stream gone after 250 ms), pad or not, exactly as the Windows companion's `--codex` mode: raw axes, no Guide.
+- **Online gamepad camera:** `ControllerBridge` writes `pad …` lines (only when the sticks change) into the touch log;
+  `bardroid_touch.lua` moves the camera each frame with v0.8.5's camera constants (left stick pans, LT faster, right
+  stick turns/zooms, LB+right stick tilts). Off in the controller game (v0.8.5 reads the pad itself).
+
 ## Phone requirements
 Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 GB free, Android 10+.
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
@@ -308,10 +335,7 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 1. Emulator frame rate beyond ~20 fps: the per-frame depth-copy context switch in vrend's fallback blitter and
    ANGLE's per-submit fence checks (see the afternoon session). Measure with the laptop awake.
 2. Touch/keyboard feel in the emulator window (mouse works as mouse there; see the touch mapping below).
-3. Controller widgets. The earlier plan was to copy attempt-01's `controller_socket_bridge.lua` + `gui_controller_*`
-   into `files/bar/LuaUI/Widgets`. **Not done on purpose**: `C:\Tools\BARGAMEPAD\docs\lessons-from-attempt-01.md`
-   (restarted 2026-10-25) lists the companion bridge and the 19k-line widget under "do not repeat". Decide which widget
-   set the phone should use; the app's UDP side (`BARCTRL1`) is ready either way.
+3. Gamepad: done as Kailil chose (2026-10-26), see "Gamepad". Measure v0.8.5's frame cost on the phone.
 4. File the ARM64 AI bug upstream (RecoilEngine issue first, then the CircuitAI patch), disclosing AI assistance per
    `AI_POLICY.md`; report the virglrenderer-android DXT bug to Termux.
 5. Later, phones: `Build APK.bat phone`, `Install on Phone.bat`, Install / Update, GL check, Play vs AI; **Share logs**

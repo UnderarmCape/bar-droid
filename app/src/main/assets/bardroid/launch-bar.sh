@@ -1,7 +1,7 @@
 #!/bin/bash
 # BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|glcheck|shell),
 # BARDROID_GPU (kgsl|zink|llvmpipe) with the matching Mesa variables, MESA_GL_VERSION_OVERRIDE (optional),
-# BARDROID_AUDIO (0/1), DISPLAY.
+# BARDROID_AUDIO (0/1), GAMEPAD_GAME (0/1: singleplayer plays the controller game), DISPLAY.
 set -u
 BAR=/root/bar
 ENGINE="$BAR/engine/recoil_${ENGINE_VER:?}"
@@ -73,6 +73,41 @@ if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
   [ "$MODE" = "glcheck" ] && exit 0
 fi
 
+# Kailil's controller game (v0.8.5 as BAR's developer game, games/BAR-gamepad.sdd) for singleplayer, set up the way
+# its Windows installer does: the lobby's singleplayer game is "Beyond All Reason Dev" (Chobby's byar-dev config), and
+# BAR's Build menu replaces the Grid menu, which v0.8.5 does not drive (LuaUI/Config/BYAR.lua, shared with BAR's
+# released game). Switched off in the app (GAMEPAD_GAME=0): both go back.
+widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry (the widget's default)
+  f="$BAR/LuaUI/Config/BYAR.lua"
+  [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
+  if grep -q "\[\"$1\"\] *= *-\?[0-9][0-9]*" "$f"; then
+    if [ -n "$2" ]; then sed -i "s/\[\"$1\"\] *= *-\?[0-9][0-9]*/[\"$1\"] = $2/" "$f"
+    else sed -i "/\[\"$1\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
+  elif [ -n "$2" ]; then
+    sed -i "0,/order *= *{/s//order = {\n\t\t[\"$1\"] = $2,/" "$f"
+  fi
+}
+LOBBY_GAME=byar
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+  if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
+    LOBBY_GAME=byar-dev
+    widget_order "Build menu" 165; widget_order "Grid menu" 0
+    touch "$BAR/.bardroid-gamepad-menus"
+  elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
+    widget_order "Build menu" ""; widget_order "Grid menu" ""
+    rm -f "$BAR/.bardroid-gamepad-menus"
+  fi
+  igl="$BAR/LuaMenu/Config/IGL_data.lua"   # the lobby's saved settings: they override chobby_config.json's game
+  if [ -f "$igl" ]; then
+    if grep -q 'gameConfigName = "' "$igl"; then
+      sed -i "s/gameConfigName = \"[^\"]*\"/gameConfigName = \"$LOBBY_GAME\"/" "$igl"
+    else
+      sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tgameConfigName = \"$LOBBY_GAME\",/" "$igl"
+    fi
+  fi
+  log "singleplayer game: $LOBBY_GAME"
+fi
+
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
@@ -87,8 +122,8 @@ case "$MODE" in
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
     # config and shuts down (a black screen).
-    printf '%s\n' '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "byar"}' \
-      > "$BAR/chobby_config.json"
+    printf '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "%s"}\n' \
+      "$LOBBY_GAME" > "$BAR/chobby_config.json"
     # Once: Chobby's "draw at full speed" on (active lobby 60 fps instead of 30). Its settings exist after the first
     # lobby run; later changes in the lobby's Settings stay the player's.
     if [ ! -f "$BAR/.bardroid-lobby-fullspeed" ] && [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ]; then
