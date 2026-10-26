@@ -352,7 +352,12 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
 - Simpleperf on the phone: `adb shell setprop security.perf_harden 0`, then from the shell
   `/data/local/tmp/simpleperf record --app com.underarmcape.bardroid -p <spring,proot,x11 pids> -e cpu-clock:u`
   (kernel samples are refused; `--app` alone only catches the Java process).
-- Loading BAR saves crashed (SIGSEGV in "Loading Saved Game", no stack): Recoil's save support; not investigated.
+- Loading BAR saves crashed (SIGSEGV in "Loading Saved Game", no stack). **Not Android's** (2026-10-26, overnight):
+  Kailil's save `Saves/20261026_063343.ssf` (controller game, Death Valley, vs BARb, frame 88559) crashes the
+  Windows build of the same engine (2026.07.04, `spring.exe --isolation --write-dir build\profile\data <save>.ssf`)
+  at the same point: access violation in spring.exe at frame 88559 right after "Loading Saved Game" (offsets from
+  the image base: 0x965868, 0x9626f2, 0x5b3fd2, 0x535eae, 0xd5d099; no symbols). The controller game only changes
+  LuaUI, so the synced state is BAR's own. An upstream report (Recoil/BAR) needs Kailil's go-ahead.
 - **Still waiting on the GPU (spectating an 8v8, 226-418 units, 23-24 fps; 2026-10-26, with the pace cap):** the main
   thread is busy ~50% and blocked in `0x400c0907` 42%; GPU 342 MHz of 1200, 61-76% busy (no thermal cap); the prime
   cores (cpu6-7) idle at 1017 MHz, the main thread runs on cpu0-5. Its stack while blocked (read from
