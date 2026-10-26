@@ -24,7 +24,13 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `XServer` (app_process launcher), `VirglServer` (GPU server), `GameService` (foreground), `GameActivity`
   (display + gamepad), `Prefs` (`EMULATOR_BUILD`, URLs per ABI, `putGpuEnv`), `ControllerBridge`, `AudioPump`.
 - `app/src/main/assets/bardroid/` — `setup-container.sh` (apt/mesa/engine/content/import), `launch-bar.sh` (GPU env,
-  glcheck, pulseaudio, spring), `springsettings.cfg` (preset; emulator overrides in `Installer.EMULATOR_GRAPHICS`).
+  glcheck, the Android layer over BAR's and the lobby's saved settings at every start: phone graphics `PHONE_GFX`,
+  interface scale, widget orders; spring), `springsettings.cfg` (preset; emulator overrides in
+  `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
+  into the engine: the frame cap after `SDL_GL_SwapWindow`, and the ioctl answer that puts lfdevs' Mesa on its
+  explicit Present fence, so the swap never waits for the GPU; HANDOFF "Busy scenes").
+- `PerfLog` — once a minute while a game runs, `[perf]` in launcher.log: thermal status, GPU/CPU clocks and caps,
+  memory; `bardroid_touch.lua` logs `[bardroid-perf]` (fps, slowest frame, frames of each second) to infolog.
 - `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux talloc,
   shmem and ANGLE, Debian busybox), `tools/build-proot.py <abi>` (proot + loader, NDK build with our ioctl filter; run
   after fetch-prebuilts, it links its talloc/shmem) and `tools/build-virgl.py <abi>` (virglrenderer + libepoxy, NDK
@@ -32,8 +38,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `Updater` + `docs/UPDATES.md` — every lobby/skirmish start updates engine, game and lobby like BAR's PC launcher
   (its launcher config), re-applies the Android layer (each tweak logs `!!! ANDROID LAYER` when its target is gone)
   and rolls back a set that fails fast on its first start. Launcher setting "Update BAR at every start".
-- `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (camera, window size on fold/unfold, frame cap,
-  "is the pointer on the interface" answers); `GameActivity` wires them up.
+- `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (smoothed camera, continuous pinch zoom, BAR's
+  interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers); `GameActivity`
+  wires them up. BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
+  in through `launch-bar.sh` instead.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
   top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on
