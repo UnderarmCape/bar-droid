@@ -116,6 +116,9 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   "scaled" display treats a bigger screen as one of that many pixels); (2) BAR's lights (Deferred rendering GL4) off;
   (3) scorch marks (Decals GL4), the shadow plates under units and wrecks (Ground AO Plates GL4, … Features GL4) and
   BAR's grass (Map Grass GL4) off; (4) the animated order lines (Commands FX) off. Kailil to compare fps in a late game.
+  The pixel cap checked in the emulator with the inner screen's size (`adb shell wm size 2184x1968`, display prefs
+  "scaled" 150% for the test, restored after): X screen 1152x1044, interface scale 1.3, the lobby fills the screen,
+  a tap lands where it should.
 - **Catch-up when joining a running game** (Kailil: a 40 min game "crawls at a 1-2x catch up speed"). The phone's
   logs of that join (cover screen, the cuts above on): game speed x4 at 845 units falling to x1.6 at 3400 units by
   minute 25, 9-21 pictures a second all along, GPU 50-86% busy, thermal status 2-3 with the CPUs capped at 1.2-2.0
