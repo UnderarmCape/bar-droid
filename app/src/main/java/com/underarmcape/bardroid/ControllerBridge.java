@@ -153,9 +153,13 @@ public final class ControllerBridge {
             rx = axis(e, MotionEvent.AXIS_Z); ry = axis(e, MotionEvent.AXIS_RZ);
             lt = trigger(e, MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_BRAKE);
             rt = trigger(e, MotionEvent.AXIS_RTRIGGER, MotionEvent.AXIS_GAS);
-            float hx = e.getAxisValue(MotionEvent.AXIS_HAT_X), hy = e.getAxisValue(MotionEvent.AXIS_HAT_Y);
-            buttons[BTN_DPAD_LEFT] = hx < -0.5f; buttons[BTN_DPAD_RIGHT] = hx > 0.5f;
-            buttons[BTN_DPAD_UP] = hy < -0.5f; buttons[BTN_DPAD_DOWN] = hy > 0.5f;
+            // Only a pad with a hat reports its D-pad here; others send DPAD keys, which a stick move must not clear.
+            InputDevice d = e.getDevice();
+            if (d == null || d.getMotionRange(MotionEvent.AXIS_HAT_X) != null) {
+                float hx = e.getAxisValue(MotionEvent.AXIS_HAT_X), hy = e.getAxisValue(MotionEvent.AXIS_HAT_Y);
+                buttons[BTN_DPAD_LEFT] = hx < -0.5f; buttons[BTN_DPAD_RIGHT] = hx > 0.5f;
+                buttons[BTN_DPAD_UP] = hy < -0.5f; buttons[BTN_DPAD_DOWN] = hy > 0.5f;
+            }
             dirty = true;
         }
         return true;
