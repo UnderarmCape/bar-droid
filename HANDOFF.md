@@ -32,6 +32,10 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 
 ## Overnight hardening (2026-10-26, Kailil asleep; nothing here was checked on the phone by a person)
 Found in the phone's logs and code and fixed, each installed on the phone:
+- **BAR's settings did not survive a restart**: `Installer.writeGameFiles` rewrote `springsettings.cfg` from the
+  template at every start (BAR keeps sound volumes and many options there, and its migration counter, so BAR also
+  re-ran its first-start migrations every time). Now the file is kept and completed (`Installer.ALWAYS`). The
+  launcher's "UI scale" and "Shadows" controls are gone (launch-bar.sh owns both now).
 - BAR refuses `/option` from user widgets: the lights' screen-space shadows go off through `BYAR.lua` instead.
 - `widget_order` broke on names with "/" ("Keybind/Mouse Info").
 - The lobby wrote `CamMode = 1` at every game start: singleplayer had the overhead camera (no finger twist or tilt).
@@ -354,7 +358,8 @@ layout editor, the SmartX audit and v0.8.5's tests (`MOBILE_LEFT_OUT`). Laptop: 
 after the first optimization: LuaUI memory changes 20-79 MB/min (before 79-268; BAR's released game 0-44) and the
 sim kept real time through a 31-minute skirmish, so the 15-30 fps Kailil sees is rendering: the potato pass.
 BAR's own options widget re-applies its saved shadow setting at every start (`Set "shadows" config-parameter to 1`)
-over our `Shadows = -1`.
+over our `Shadows = -1` (it saw a fresh springsettings.cfg each start, see "Overnight hardening"; launch-bar.sh now
+sets ShadowQuality 0, which BAR's slider reads).
 
 **Busy scenes (2026-10-26, measured on the Fold7 with simpleperf and /proc while Kailil played).** On BAR's Lowest
 preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not the limit. What was:
