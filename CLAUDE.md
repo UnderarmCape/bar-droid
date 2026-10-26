@@ -71,6 +71,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 ..\Build APK.bat                              # emulator build (x86_64);  "Build APK.bat phone" = arm64
 ..\Run in Emulator.bat [-no-audio|-wipe-data] # AVD bardroid-x86_64: boot, install, open
 ..\Get Logs.bat                               # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> ..\logs
+powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
+powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
+powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\toolchain\env.bat && <command>"` (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
