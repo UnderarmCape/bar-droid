@@ -64,7 +64,7 @@ final class RtsTouch {
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT, DONE,
-                         BOX, GHOST, SCROLL }   // the last three: touch-only mode
+                         BOX, GHOST, SCROLL, RADIAL }   // the last four: touch-only mode
 
     private final MainActivity activity;
     private final float slop, minFling;
@@ -98,13 +98,23 @@ final class RtsTouch {
     private float lastTapX = -1, lastTapY;          // X screen pixels
     private long lastTapTime;
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
+    private float radialX, radialY;                 // X screen pixels of the finger, last sent to the radial menu
 
-    private final Runnable longPress = () -> {
+    private final Runnable longPress = this::onLongPress;
+
+    private void onLongPress() {
         if (state != State.PENDING) return;
-        state = State.RIGHT_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        if (touchOnly && Boolean.FALSE.equals(overInterface(downX, downY))) {
+            // press and hold on the map: the HUD's radial menu at the finger (slide to a choice, lift)
+            state = State.RADIAL;
+            radialX = toX(downX); radialY = toY(downY);
+            send(String.format(Locale.US, "radial %.0f %.0f", radialX, radialY));
+            return;
+        }
+        state = State.RIGHT_HOLD;
         press(downX, downY, InputStub.BUTTON_RIGHT, true);
-    };
+    }
 
     /** The game has not said in time whether the drag started on its interface: pan. */
     private final Runnable hoverTimeout = () -> { if (state == State.DRAG_WAIT) startPan(); };
@@ -213,6 +223,9 @@ final class RtsTouch {
                 if (state == State.PENDING) {
                     ui.removeCallbacks(longPress);
                     state = State.MULTI_PENDING;
+                } else if (state == State.RADIAL) {
+                    send("radialcancel");   // a second finger: never mind
+                    state = State.DONE;
                 } else if (state == State.PAN || state == State.DRAG_WAIT || state == State.GHOST || state == State.BOX) {
                     ui.removeCallbacks(hoverTimeout);
                     if (state == State.BOX) send("boxcancel");
@@ -267,6 +280,14 @@ final class RtsTouch {
             case GHOST:
                 if (i >= 0) moveCursor(curX, curY - ghostOffset());
                 return;
+            case RADIAL: {
+                float x = toX(curX), y = toY(curY);
+                if (i >= 0 && (Math.abs(x - radialX) >= 1 || Math.abs(y - radialY) >= 1)) {
+                    radialX = x; radialY = y;
+                    send(String.format(Locale.US, "radialmove %.0f %.0f", x, y));
+                }
+                return;
+            }
             case MULTI_PENDING: {
                 if (e.getPointerCount() < 2 || !movedPastSlop(e)) return;
                 if (touchOnly && Boolean.TRUE.equals(overInterface(downX, downY))) beginTwoFinger(e, State.SCROLL);
@@ -351,6 +372,9 @@ final class RtsTouch {
             case BOX:
                 sendBox("boxend");
                 break;
+            case RADIAL:
+                send(String.format(Locale.US, "radialup %.0f %.0f", toX(curX), toY(curY)));
+                break;
             case GHOST: {   // place the building where its ghost is
                 float y = curY - ghostOffset();
                 press(curX, y, InputStub.BUTTON_LEFT, true);
@@ -382,6 +406,7 @@ final class RtsTouch {
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         if (state == State.BOX) send("boxcancel");
+        if (state == State.RADIAL) send("radialcancel");
         state = State.IDLE;
     }
 

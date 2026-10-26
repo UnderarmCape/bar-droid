@@ -41,6 +41,7 @@ local spGetViewGeometry = Spring.GetViewGeometry
 local spGetActiveCommand = Spring.GetActiveCommand
 local spSetActiveCommand = Spring.SetActiveCommand
 local spGetDefaultCommand = Spring.GetDefaultCommand
+local spGetCmdDescIndex = Spring.GetCmdDescIndex
 local spGetSelectedUnitsCount = Spring.GetSelectedUnitsCount
 local spSelectUnitArray = Spring.SelectUnitArray
 local spGetModKeyState = Spring.GetModKeyState
@@ -619,11 +620,246 @@ local function selectInBox(x0, y0, x1, y1)
 	end
 end
 
+-- Press and hold: the radial menu ------------------------------------------------------------------------------------
+
+local RADIAL_DEAD_MM, RADIAL_RING_MM, RADIAL_LABEL_W_MM, RADIAL_LABEL_H_MM = 6, 16, 15, 8
+local MAX_RADIAL = 8
+local radial -- { x, y (GL pixels), sx, sy (X screen pixels), options = { { label, run } }, choice, title }
+
+local function haveCommand(id)
+	return id ~= nil and spGetCmdDescIndex(id) ~= nil
+end
+
+-- A game command known by its action name (BAR's set target), if the selection has it.
+local function commandByAction(action)
+	for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do
+		if cmd.action == action and not cmd.disabled then
+			return cmd.id
+		end
+	end
+end
+
+-- An order straight to the selected units (QUEUE adds it to their queues). If the game does not let widgets give
+-- orders, the engine's way: arm the command and click there through the app.
+local function order(id, params, sx, sy)
+	local ok = pcall(Spring.GiveOrder, id, params, latch.shift and { "shift" } or {})
+	if not ok then
+		local index = spGetCmdDescIndex(id)
+		if index then
+			local alt, ctrl, meta, shift = spGetModKeyState()
+			spSetActiveCommand(index, 1, true, false, alt, ctrl, meta, shift)
+			send(string.format("click %d %d", sx, sy))
+		end
+	end
+end
+
+-- World radius of an area order: about a thumb (12 mm on screen) around the point.
+local function areaRadius(x, y, pos)
+	local mm = pxmm or (vsy / 75)
+	local _, edge = spTraceScreenRay(x + 12 * mm, y, true)
+	if edge and pos then
+		return math.max(64, math.sqrt((edge[1] - pos[1]) ^ 2 + (edge[3] - pos[3]) ^ 2))
+	end
+	return 200
+end
+
+local function selectType(udid, wholeMap)
+	local list = {}
+	if wholeMap then
+		list = Spring.GetTeamUnitsByDefs(spGetMyTeamID(), udid) or {}
+	else
+		for _, u in ipairs(spGetUnitsInScreenRectangle(0, 0, vsx, vsy, -2) or {}) do
+			if spGetUnitDefID(u) == udid then
+				list[#list + 1] = u
+			end
+		end
+	end
+	spSelectUnitArray(list, latch.shift)
+end
+
+-- What the selection can do at GL pixel (x, y): only orders it has, the most likely first.
+local function radialOptions(x, y, sx, sy)
+	local opts = {}
+	local function add(label, run)
+		if #opts < MAX_RADIAL then
+			opts[#opts + 1] = { label, run }
+		end
+	end
+	local kind, target = spTraceScreenRay(x, y)
+	local _, ground = spTraceScreenRay(x, y, true)
+	local pos = ground and { ground[1], ground[2], ground[3] } or nil
+	local selected = spGetSelectedUnitsCount() > 0
+	local title = "GROUND"
+	if kind == "unit" then
+		local own = canSelect(target)
+		local allied = own or Spring.IsUnitAllied(target)
+		local udid = spGetUnitDefID(target)
+		title = own and "OURS" or allied and "ALLIED" or "ENEMY"
+		if selected and allied then
+			if haveCommand(CMD.GUARD) then
+				add("GUARD", function()
+					order(CMD.GUARD, { target }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.REPAIR) then
+				add("REPAIR", function()
+					order(CMD.REPAIR, { target }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.LOAD_UNITS) then
+				add("LOAD", function()
+					order(CMD.LOAD_UNITS, { target }, sx, sy)
+				end)
+			end
+		elseif selected then
+			if haveCommand(CMD.ATTACK) then
+				add("ATTACK", function()
+					order(CMD.ATTACK, { target }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.MANUALFIRE) then
+				add("D-GUN", function()
+					order(CMD.MANUALFIRE, { target }, sx, sy)
+				end)
+			end
+			local setTarget = commandByAction("settarget")
+			if setTarget then
+				add("SET TARGET", function()
+					order(setTarget, { target }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.CAPTURE) then
+				add("CAPTURE", function()
+					order(CMD.CAPTURE, { target }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.RECLAIM) then
+				add("RECLAIM", function()
+					order(CMD.RECLAIM, { target }, sx, sy)
+				end)
+			end
+		end
+		if own and udid then
+			add("SAME TYPE", function()
+				selectType(udid, false)
+			end)
+			add("ALL OF TYPE", function()
+				selectType(udid, true)
+			end)
+		end
+	elseif kind == "feature" and selected then
+		title = "WRECK"
+		if haveCommand(CMD.RECLAIM) then
+			add("RECLAIM", function()
+				order(CMD.RECLAIM, { target + Game.maxUnits }, sx, sy)
+			end)
+		end
+		if haveCommand(CMD.RESURRECT) then
+			add("REZ", function()
+				order(CMD.RESURRECT, { target + Game.maxUnits }, sx, sy)
+			end)
+		end
+	end
+	if selected and pos then
+		if haveCommand(CMD.MOVE) then
+			add("MOVE", function()
+				order(CMD.MOVE, pos, sx, sy)
+			end)
+		end
+		if haveCommand(CMD.FIGHT) then
+			add("FIGHT", function()
+				order(CMD.FIGHT, pos, sx, sy)
+			end)
+		end
+		if kind ~= "unit" then
+			if haveCommand(CMD.PATROL) then
+				add("PATROL", function()
+					order(CMD.PATROL, pos, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.ATTACK) then
+				add("FIRE HERE", function()
+					order(CMD.ATTACK, pos, sx, sy)
+				end)
+			end
+			local r = areaRadius(x, y, pos)
+			if haveCommand(CMD.RECLAIM) then
+				add("RECLAIM AREA", function()
+					order(CMD.RECLAIM, { pos[1], pos[2], pos[3], r }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.REPAIR) then
+				add("REPAIR AREA", function()
+					order(CMD.REPAIR, { pos[1], pos[2], pos[3], r }, sx, sy)
+				end)
+			end
+			if haveCommand(CMD.UNLOAD_UNITS) then
+				add("UNLOAD", function()
+					order(CMD.UNLOAD_UNITS, { pos[1], pos[2], pos[3], r }, sx, sy)
+				end)
+			end
+		end
+	end
+	return opts, title
+end
+
+-- The option the finger points at (GL pixels), or nil inside the dead zone.
+local function radialChoice(fx, fy)
+	local n = #radial.options
+	local dx, dy = fx - radial.x, fy - radial.y
+	local mm = pxmm or (vsy / 75)
+	if n == 0 or dx * dx + dy * dy < (RADIAL_DEAD_MM * mm) ^ 2 then
+		return nil
+	end
+	-- option i sits at 90 degrees minus i steps (clockwise from the top)
+	local a = math.atan2(dy, dx)
+	local step = 2 * math.pi / n
+	local i = math.floor(((math.pi / 2 - a) / step) + 0.5) % n
+	return i + 1
+end
+
+local function radialGesture(kind, sx, sy)
+	if kind == "radialcancel" then
+		radial = nil
+		return
+	end
+	if not (sx and sy) then
+		return
+	end
+	local x, y = sx, vsy - 1 - sy
+	if kind == "radial" then
+		local options, title = radialOptions(x, y, sx, sy)
+		radial = { x = x, y = y, sx = sx, sy = sy, options = options, title = title }
+	elseif radial and kind == "radialmove" then
+		local choice = radialChoice(x, y)
+		if choice ~= radial.choice then
+			radial.choice = choice
+			if choice then
+				send("buzz")
+			end
+		end
+	elseif radial and kind == "radialup" then
+		local choice = radialChoice(x, y)
+		local r = radial
+		radial = nil
+		if choice and r.options[choice] then
+			r.options[choice][2]()
+			send("buzz")
+		elseif spGetSelectedUnitsCount() > 0 then
+			send(string.format("rclick %d %d", r.sx, r.sy)) -- lifted without choosing: the right-click order there
+		end
+	end
+end
+
 local function applyBox(lines)
 	local last -- only the newest box of this frame is worth selecting
 	for line in lines:gmatch("[^\n]+") do
 		if line == "cancel" then
 			cancelGesture()
+		end
+		local rk, rx, ry = line:match("^(radial%a*) ?(%S*) ?(%S*)")
+		if rk then
+			radialGesture(rk, tonumber(rx), tonumber(ry))
 		end
 		local kind, x0, y0, x1, y1 = line:match("^(box%a*) ?(%S*) ?(%S*) ?(%S*) ?(%S*)")
 		x0, y0, x1, y1 = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
@@ -757,7 +993,28 @@ local function drawButton(b)
 	end
 	local enabled = not b[9] or b[9]()
 	local size = (pxmm or (vsy / 75)) * LABEL_MM
+	size = math.min(size, (x2 - x1) * 0.9 / math.max(1, #b[5] * 0.62)) -- long labels shrink to fit
 	drawLabel(b[5], (x1 + x2) / 2, (y1 + y2) / 2, size, enabled and 1 or 0.4)
+end
+
+-- The radial menu: the target in the middle, the options on a ring (the chosen one lit).
+local function drawRadial()
+	local mm = pxmm or (vsy / 75)
+	local n = #radial.options
+	local c = math.floor(5 * mm)
+	roundRect(radial.x - c, radial.y - c, radial.x + c, radial.y + c, c, { 0, 0, 0, 0.6 })
+	drawLabel(n > 0 and radial.title or "NO ORDERS", radial.x, radial.y, math.min(LABEL_MM * mm, c * 2 / 7), 0.9)
+	local w, h = RADIAL_LABEL_W_MM * mm, RADIAL_LABEL_H_MM * mm
+	local ring = math.max(RADIAL_RING_MM, 3.2 * n) * mm -- far enough out that the labels do not overlap
+	for i, opt in ipairs(radial.options) do
+		local a = math.pi / 2 - (i - 1) * 2 * math.pi / n
+		local cx = math.max(w / 2, math.min(vsx - w / 2, radial.x + math.cos(a) * ring))
+		local cy = math.max(h / 2, math.min(vsy - h / 2, radial.y + math.sin(a) * ring))
+		roundRect(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2, math.floor(h * 0.3), COLOR_BORDER)
+		roundRect(cx - w / 2 + 1, cy - h / 2 + 1, cx + w / 2 - 1, cy + h / 2 - 1, math.floor(h * 0.3),
+			radial.choice == i and COLOR_LATCHED or COLOR_BUTTON)
+		drawLabel(opt[1], cx, cy, math.min(LABEL_MM * mm, w * 0.9 / math.max(1, #opt[1] * 0.62)), 1)
+	end
 end
 
 function widget:DrawScreen()
@@ -769,6 +1026,9 @@ function widget:DrawScreen()
 	end
 	for _, b in ipairs(visibleButtons()) do
 		drawButton(b)
+	end
+	if radial then
+		drawRadial()
 	end
 	if boxRect then
 		glColor(1, 1, 1, 0.08)
