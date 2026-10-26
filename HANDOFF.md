@@ -61,6 +61,14 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three resizes while loading, in game).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
+- **Black squares for units zoomed out** (strategic icons): the engine builds its icon atlas (and the projectile
+  atlas the Perlin smoke draws into) as `GL::Texture2D(..., wantCompress = true)` and renders into it through an FBO.
+  With `CompressTextures = 1` Freedreno picks a compressed format, which is not color-renderable:
+  `FBO-TEXTURE-RENDER-ATLAS: None/Unsupported textures/buffers attached`, `atlasRendered=0`, every icon black (also
+  `FBO-PROJECTILE-DRAWER-PERLIN`). The emulator's virgl does not compress, so it never showed there. Now
+  `CompressTextures = 0` always (the app setting is gone). Not yet seen on the phone.
+- Lobby: `launch-bar.sh` turns Chobby's `drawAtFullSpeed` on once (`LuaMenu/Config/IGL_data.lua`, marker
+  `.bardroid-lobby-fullspeed`); the player can turn it off again in the lobby's Settings.
 - Mouse: `HardwareCursor = 1`, so lorie draws the pointer on every display frame instead of the engine once per game
   frame (verified: with spring SIGSTOPped the pointer still follows). The lobby is slow by design on top of the
   phone's speed: Chobby's `gfx_limit_idle_fps` runs it at VSync 2 (30 fps) while active and VSync 4 (15 fps) after

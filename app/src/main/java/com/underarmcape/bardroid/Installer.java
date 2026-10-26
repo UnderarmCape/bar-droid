@@ -255,7 +255,6 @@ public final class Installer {
         set.put("WorkerThreadCount", String.valueOf(Prefs.workerThreads));
         set.put("ui_scale", String.valueOf(Prefs.uiScale));
         set.put("Shadows", Prefs.shadows ? "2" : "-1");
-        set.put("CompressTextures", Prefs.compressTextures ? "1" : "0");
         set.put("RapidTagResolutionOrder", "repos-cdn.beyondallreason.dev;repos.beyondallreason.dev");
         // Frame cap. BAR sets VSync = VSyncGame (1 on) x VSyncFraction; at 60 Hz a fraction of 2 is 30 fps. The touch
         // widget adjusts the fraction to the display's real refresh rate (the Fold7's screens run 60 and 120 Hz).

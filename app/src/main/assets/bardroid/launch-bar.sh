@@ -89,6 +89,12 @@ case "$MODE" in
     # config and shuts down (a black screen).
     printf '%s\n' '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "byar"}' \
       > "$BAR/chobby_config.json"
+    # Once: Chobby's "draw at full speed" on (active lobby 60 fps instead of 30). Its settings exist after the first
+    # lobby run; later changes in the lobby's Settings stay the player's.
+    if [ ! -f "$BAR/.bardroid-lobby-fullspeed" ] && [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ]; then
+      sed -i 's/drawAtFullSpeed = false/drawAtFullSpeed = true/' "$BAR/LuaMenu/Config/IGL_data.lua" \
+        && touch "$BAR/.bardroid-lobby-fullspeed" && log "lobby: draw at full speed"
+    fi
     log "spring lobby: rapid://${LOBBY_TAG:-byar-chobby:test}"
     ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
   shell)

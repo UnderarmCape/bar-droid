@@ -44,7 +44,6 @@ public final class Prefs {
     public static int workerThreads = 4;
     public static float uiScale = 1.4f;
     public static boolean shadows = false;
-    public static boolean compressTextures = true;
     public static boolean noSeccomp = false;
     public static boolean verboseX = false;
     public static boolean audio = true;
@@ -93,7 +92,6 @@ public final class Prefs {
         workerThreads = s.getInt("workerThreads", workerThreads);
         uiScale = s.getFloat("uiScale", uiScale);
         shadows = s.getBoolean("shadows", shadows);
-        compressTextures = s.getBoolean("compressTextures", compressTextures);
         noSeccomp = s.getBoolean("noSeccomp", noSeccomp);
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
@@ -114,7 +112,7 @@ public final class Prefs {
                 .putInt("workerThreads", workerThreads)
                 .putFloat("uiScale", uiScale)
                 .putBoolean("shadows", shadows)
-                .putBoolean("compressTextures", compressTextures)
+                .remove("compressTextures")   // gone: CompressTextures is always 0 (springsettings.cfg)
                 .putBoolean("noSeccomp", noSeccomp)
                 .putBoolean("verboseX", verboseX)
                 .putBoolean("audio", audio)
