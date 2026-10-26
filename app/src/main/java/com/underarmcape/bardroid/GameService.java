@@ -31,6 +31,8 @@ public class GameService extends Service {
     private static final String CHANNEL = "bardroid";
     private static volatile String status = "idle";
     private static volatile boolean busy;
+    /** The app is being closed: no more notification updates, no launcher popping up. */
+    private static volatile boolean closing;
 
     private Paths paths;
     private XServer xserver;
@@ -45,14 +47,29 @@ public class GameService extends Service {
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
-    /** Swiping the game (or the app) away in the recent-apps screen closes it, like Stop in the notification. */
+    /**
+     * Swiping the game away in the recent-apps screen closes the app, like Stop in the notification. Android also
+     * reports tasks the app removes itself (StartActivity handing over to the game): only the game's task counts.
+     */
     @Override
     public void onTaskRemoved(Intent rootIntent) {
-        Log.i("svc", "removed from recent apps: stopping");
-        stopEverything();
-        stopForeground(STOP_FOREGROUND_REMOVE);
-        stopSelf();
+        android.content.ComponentName c = rootIntent != null ? rootIntent.getComponent() : null;
+        if (c != null && GameActivity.class.getName().equals(c.getClassName())) {
+            Log.i("svc", "game removed from recent apps: closing");
+            closing = true;
+            stopEverything();
+            close();
+        }
         super.onTaskRemoved(rootIntent);
+    }
+
+    /** Ends this foreground service and its notification. */
+    private void close() {
+        closing = true;
+        stopForeground(STOP_FOREGROUND_REMOVE);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.cancel(1);
+        stopSelf();
     }
 
     @Override
@@ -67,8 +84,9 @@ public class GameService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
+        if (!busy) closing = false;
         startForeground(1, notification("BAR Droid", status));
-        if (ACTION_STOP.equals(action)) { stopEverything(); stopSelf(); return START_NOT_STICKY; }
+        if (ACTION_STOP.equals(action)) { closing = true; stopEverything(); close(); return START_NOT_STICKY; }
         if (busy) { Log.i("svc", "busy; ignoring " + action); return START_NOT_STICKY; }
         if (ACTION_INSTALL.equals(action)) runAsync(this::install);
         else if (ACTION_PLAY.equals(action)) { String mode = intent.getStringExtra(EXTRA_MODE); runAsync(() -> play(mode == null ? "skirmish" : mode)); }
@@ -155,7 +173,8 @@ public class GameService extends Service {
             virgl.stop();
             xserver.stop();
             engine = null;
-            closeDisplay(showLauncher);
+            closeDisplay(showLauncher && !closing);
+            if (!showLauncher || closing) close();   // the lobby was quit, or the app closed: nothing left running
         }
     }
 
@@ -182,7 +201,7 @@ public class GameService extends Service {
         status = s;
         Log.i("svc", s);
         NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm != null) nm.notify(1, notification("BAR Droid", s));
+        if (nm != null && !closing) nm.notify(1, notification("BAR Droid", s));
     }
 
     private void acquireWakeLock() {

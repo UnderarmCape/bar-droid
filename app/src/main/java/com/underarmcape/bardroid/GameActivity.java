@@ -92,6 +92,12 @@ public class GameActivity extends MainActivity {
                 ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : requested);
     }
 
+    /** Termux:X11 closes the display with finishAffinity() (game over): also take the task out of recent apps. */
+    @Override
+    public void finishAffinity() {
+        finishAndRemoveTask();
+    }
+
     @Override public void onResume() { super.onResume(); pad.start(); }
     @Override public void onPause() { pad.stop(); super.onPause(); }
     @Override protected void onDestroy() {

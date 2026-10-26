@@ -15,16 +15,20 @@ import android.os.Looper;
 public class StartActivity extends Activity {
     private static final long GIVE_UP_MS = 30_000;   // no game screen by then: show the launcher (and its log)
     private final Handler handler = new Handler(Looper.getMainLooper());
+    /** The game screen (its own task) takes over: this task leaves recent apps, so the app shows there once. */
+    private boolean toGame;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (GameService.busy()) {
-            if (GameService.status().startsWith("running"))
+            if (GameService.status().startsWith("running")) {
                 startActivity(new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            else
+                finishAndRemoveTask();
+            } else {
                 openLauncher();   // installing
-            finish();
+                finish();
+            }
             return;
         }
         if (!Prefs.autoLobby || !new Installer(this, BarApp.get().paths()).isInstalled() || Prefs.lobbyFailedFast(this)) {
@@ -34,7 +38,8 @@ public class StartActivity extends Activity {
             return;
         }
         GameService.start(this, GameService.ACTION_PLAY, "lobby");
-        handler.postDelayed(() -> { if (!isFinishing()) { openLauncher(); finish(); } }, GIVE_UP_MS);
+        toGame = true;
+        handler.postDelayed(() -> { if (!isFinishing()) { toGame = false; openLauncher(); finish(); } }, GIVE_UP_MS);
     }
 
     /** The game screen (its own task) or the launcher now covers this one. */
@@ -42,7 +47,8 @@ public class StartActivity extends Activity {
     protected void onStop() {
         super.onStop();
         handler.removeCallbacksAndMessages(null);
-        finish();
+        if (toGame) finishAndRemoveTask();
+        else finish();
     }
 
     private void openLauncher() {
