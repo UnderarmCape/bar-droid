@@ -1,6 +1,7 @@
 # Every check that runs on the laptop, with a PASS/FAIL line each (about 5 minutes; BAR's Windows install is only
 # read). Run after changing what they cover:
 #   downloader-test      Downloader.java (install/update downloads)
+#   settings-merge-test  SettingsMerge.java (springsettings.cfg at every start)
 #   lobby-bridge-test    LobbyBridge.java against the real lobby
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
@@ -19,6 +20,7 @@ function Run($name, $script, $passPattern, [string[]]$extra = @()) {
 }
 
 Run "downloader" "downloader-test.ps1" "ALL PASS"
+Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
 Run "touch widget, BAR" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS"
 if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.lua")) {

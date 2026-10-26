@@ -16,11 +16,9 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -272,62 +270,29 @@ public final class Installer {
         for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"})
             //noinspection ResultOfMethodCallIgnored
             new File(widgets, name).delete();
-        // springsettings.cfg. BAR and the player change it during games (sound volumes, BAR's options; BAR's settings
-        // migrations count "version" up in it), so an existing one is kept and only completed: the template's keys
-        // where it has none, and at every start the keys the Android setup needs (ALWAYS) and the user's knobs.
-        // Rewriting it from the template at every start reset BAR's settings and re-ran BAR's first-start migrations
-        // each time (2026-10-26). launch-bar.sh sets the phone graphics and the interface scale on top.
-        Map<String, String> template = new java.util.LinkedHashMap<>();
-        StringBuilder fresh = new StringBuilder();
-        try (BufferedReader r = new BufferedReader(new FileReader(new File(assets, "springsettings.cfg")))) {
-            for (String l; (l = r.readLine()) != null; ) {
-                String key = configKey(l);
-                if (key != null) template.put(key, l.substring(l.indexOf('=') + 1).trim());
-                fresh.append(l).append('\n');
-            }
-        }
+        // springsettings.cfg: kept and completed (SettingsMerge), the Android keys and the user's knobs set
+        java.util.List<String> template = readLines(new File(assets, "springsettings.cfg"));
+        Map<String, String> templateKeys = SettingsMerge.keys(template);
         Map<String, String> set = new java.util.LinkedHashMap<>();
-        for (String key : ALWAYS) if (template.containsKey(key)) set.put(key, template.get(key));
+        for (String key : SettingsMerge.ALWAYS) if (templateKeys.containsKey(key)) set.put(key, templateKeys.get(key));
         set.put("WorkerThreadCount", String.valueOf(Prefs.workerThreads));
         set.put("RapidTagResolutionOrder", "repos-cdn.beyondallreason.dev;repos.beyondallreason.dev");
         if (Prefs.EMULATOR_BUILD) set.putAll(EMULATOR_GRAPHICS);
         File out = new File(p.bar, "springsettings.cfg");
-        StringBuilder cfg = new StringBuilder();
-        Set<String> seen = new HashSet<>();
-        try (BufferedReader r = new BufferedReader(new FileReader(out.exists() ? out : new File(assets, "springsettings.cfg")))) {
-            for (String l; (l = r.readLine()) != null; ) {
-                String key = configKey(l);
-                if (key != null) {
-                    if (!seen.add(key)) continue;   // a key twice: the first one counts
-                    if (set.containsKey(key)) l = key + " = " + set.get(key);
-                }
-                cfg.append(l).append('\n');
-            }
-        }
-        for (Map.Entry<String, String> kv : template.entrySet())
-            if (seen.add(kv.getKey())) cfg.append(kv.getKey()).append(" = ").append(set.containsKey(kv.getKey()) ? set.get(kv.getKey()) : kv.getValue()).append('\n');
-        for (Map.Entry<String, String> kv : set.entrySet())
-            if (seen.add(kv.getKey())) cfg.append(kv.getKey()).append(" = ").append(kv.getValue()).append('\n');
+        String cfg = SettingsMerge.merge(template, out.exists() ? readLines(out) : null, set);
         // Replaced whole: the app killed mid-write must not cut off the player's BAR settings.
         File tmp = new File(out.getPath() + ".tmp");
-        writeFile(tmp, cfg.toString());
+        writeFile(tmp, cfg);
         if (!tmp.renameTo(out)) throw new IOException("could not replace " + out);
         writeStartScript();
     }
 
-    /** springsettings.cfg keys (of the template) that the Android setup needs at every start. */
-    private static final String[] ALWAYS = {
-            "Fullscreen", "WindowBorderless", "WindowPosX", "WindowPosY", "XResolutionWindowed", "YResolutionWindowed",
-            "MinimizeOnFocusLoss", "BlockCompositing", "CompressTextures", "ForceDisableGL4", "ThreadPinPolicy",
-            "HardwareCursor", "WindowedEdgeMove", "FullscreenEdgeMove", "UseSDLAudio", "snd_device",
-            "VFSCacheArchiveFiles", "TextureMemPoolSize", "LogFlushLevel",
-    };
-
-    /** The key of a springsettings.cfg line, or null for comments and blank lines. */
-    private static String configKey(String line) {
-        int eq = line.indexOf('=');
-        String t = line.trim();
-        return eq > 0 && !t.isEmpty() && !t.startsWith("#") ? line.substring(0, eq).trim() : null;
+    private static java.util.List<String> readLines(File f) throws IOException {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        try (BufferedReader r = new BufferedReader(new FileReader(f))) {
+            for (String l; (l = r.readLine()) != null; ) lines.add(l);
+        }
+        return lines;
     }
 
     /** Emulator build: OpenGL goes through virgl (or the CPU), so trade looks for frame time.
