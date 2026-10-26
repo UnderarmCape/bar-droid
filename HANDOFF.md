@@ -63,6 +63,13 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   2026.09.01 under a scratch name: its arm64 archive downloads, the container step extracts it, `spring --version`
   runs, and it still knows every springsettings key of ours. Removed again. When BAR's launcher config moves
   `manual-linux` to it, the phone follows at the next start.
+- BAR's interface at the Fold's layouts, rendered on the laptop (`tools/ui-screenshot.ps1`, screenshots in
+  `build/ui-screenshot/`): the inner screen's top bar fits at 1.3 with the phone layer (BAR's own Changes/Keys ran
+  into the wind/tidal counters); the cover screen at 2.0 fits (the Build menu pages its two rows). **Open, Kailil's
+  call:** on the inner screen the player list (bottom right) covers the order menu's last column (Move, Reclaim,
+  Place Blueprint): BAR sizes the order menu by 1/aspect ratio, so on a near-square screen the info panel and order
+  menu take 89% of the width. The player list at 75% (`AdvPlayersList.customScale`) uncovers most of it
+  (`inner-phone-1.3-list075.png`); moving the order menu off the bottom does nothing there.
 - From the last 8v8's log: its late slowdown (29.6 → 19.6 fps with ~1300 units) came after BAR's graphics preset
   "medium" was picked in game at 5:25 (shadows, bloom, snow, distortion, decals back on for that game); the phone
   layer resets them at the next start. "lowest" is the preset closest to the phone layer.

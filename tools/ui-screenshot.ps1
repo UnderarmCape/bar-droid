@@ -9,6 +9,8 @@ param(
   [double]$Scale = 0.65,
   [switch]$NoPhoneLayer,
   [double]$UiScale = 0,   # another interface scale than the phone's for that screen
+  [string]$WidgetData = "",   # widget settings for BYAR.lua's data table, e.g. 'AdvPlayersList = { customScale = 0.8 },'
+  [string]$Name = "",     # added to the screenshot's file name
   [string]$Engine = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1"
@@ -23,7 +25,7 @@ $EngineDir = Join-Path $Bar "engine\$Engine"
 $size = @{ inner = @(1456, 1312, 1.3); cover = @(1680, 720, 2.0) }[$Screen]
 $w = [int]($size[0] * $Scale); $h = [int]($size[1] * $Scale)
 $uiScale = if ($UiScale -gt 0) { $UiScale } else { $size[2] }
-$layer = $(if ($NoPhoneLayer) { "bar" } else { "phone" }) + "-" + $uiScale
+$layer = $(if ($NoPhoneLayer) { "bar" } else { "phone" }) + "-" + $uiScale + $(if ($Name) { "-$Name" } else { "" })
 
 Remove-Item -Recurse -Force "$Data\LuaUI", "$Data\screenshots" -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path "$Data\LuaUI\Widgets", "$Data\LuaUI\Config", "$Data\maps" | Out-Null
@@ -41,7 +43,7 @@ try {
     (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Keybind/Mouse Info", "Changelog Info", "Grid menu") |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }
-  "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`torder = {`n$orders`n`t},`n}" |
+  "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
   "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
