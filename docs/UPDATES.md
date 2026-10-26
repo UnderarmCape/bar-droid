@@ -77,7 +77,8 @@ an old package is just restoring its `versions.gz`.
 - The first check snapshots what is installed as the last good set.
 - An update that changes the set marks it **pending**.
 - After the engine exits (`GameService`, not when the player pressed Stop or closed the app):
-  - pending and **failed fast** (exit code ≠ 0 within 120 s) → **rollback**: the current set goes on the bad list,
+  - pending and **failed fast** (exit code ≠ 0 within 120 s, and no game frame in `infolog.txt`: a game or a saved
+    game that ran and then crashed is not a failed start) → **rollback**: the current set goes on the bad list,
     the engine goes back to the last good version, the good `versions.gz` files are restored, and the game starts once
     more right away on the old set (same X server and game screen). Logged as an error.
   - pending and not failed fast → the set becomes the last good set; engine folders other than the last good and the

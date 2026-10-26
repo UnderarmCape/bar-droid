@@ -552,7 +552,9 @@ public final class Updater {
         List<String> tags = tags();
         if (state.getProperty("launched.engine") == null) return Result.NONE;
         String launched = set("launched", tags), good = set("good", tags);
-        boolean fast = rc != 0 && ms < FAST_FAIL_MS;
+        // A crash once a game ran (loading one of Kailil's saves crashes the engine on every platform, ~70 s after the
+        // app started) is not the update failing to start: it must not roll BAR back to a version online games reject.
+        boolean fast = rc != 0 && ms < FAST_FAIL_MS && !gameFrameRan();
         Result result = Result.NONE;
         if (!launched.equals(good) && fast) {
             Log.e("update", "!!! the update to " + launched + " failed to start (exit " + rc + " after " + ms / 1000
@@ -593,6 +595,16 @@ public final class Updater {
         save();
         if (result == Result.PROMOTED) cleanupEngines();
         return result;
+    }
+
+    private static final Pattern GAME_FRAME = Pattern.compile("^\\[t=[^\\]]*\\]\\[f=0*[1-9]");
+
+    /** Whether the engine's log of this run shows a game frame (a game or a loaded save ran). */
+    private boolean gameFrameRan() {
+        try (BufferedReader r = new BufferedReader(new FileReader(new File(p.bar, "infolog.txt")))) {
+            for (String l; (l = r.readLine()) != null; ) if (GAME_FRAME.matcher(l).find()) return true;
+        } catch (IOException ignored) {}
+        return false;
     }
 
     /** launch-bar.sh lists the Android tweaks that found no target in logs/android-layer.txt (docs/UPDATES.md). */
