@@ -75,6 +75,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
+powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\toolchain\env.bat && <command>"` (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with

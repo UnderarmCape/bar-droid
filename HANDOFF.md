@@ -116,6 +116,20 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   "scaled" display treats a bigger screen as one of that many pixels); (2) BAR's lights (Deferred rendering GL4) off;
   (3) scorch marks (Decals GL4), the shadow plates under units and wrecks (Ground AO Plates GL4, … Features GL4) and
   BAR's grass (Map Grass GL4) off; (4) the animated order lines (Commands FX) off. Kailil to compare fps in a late game.
+- **Catch-up when joining a running game** (Kailil: a 40 min game "crawls at a 1-2x catch up speed"). The phone's
+  logs of that join (cover screen, the cuts above on): game speed x4 at 845 units falling to x1.6 at 3400 units by
+  minute 25, 9-21 pictures a second all along, GPU 50-86% busy, thermal status 2-3 with the CPUs capped at 1.2-2.0
+  GHz (of 3.5/4.5) and ~1 GB of memory free. The engine's catch-up loop (Recoil `rts/Net/NetCommands.cpp`
+  `GetNetMessageProcessingTimeLimit`) simulates for `(1 - MinSimDrawBalance) / MinSimDrawBalance` times the last
+  picture's cost (at most `1000 / MinDrawFPS` ms) between pictures, so drawing gets 15%. Hiding the window would not
+  help: then `Game::Draw` sleeps 10 ms per pass while that stretch keeps the last picture's cost. Now
+  `bardroid_touch.lua` (from `GameProgress`, more than 30 s behind, not in replays) sets MinSimDrawBalance 0.02 and
+  MinDrawFPS 1 in the config overlay (never saved) until less than 5 s behind: 1-2 pictures a second, the rest to the
+  simulation and a cooler GPU. Logs `[bardroid-catchup]` every 30 s (game time, behind, speed, units);
+  `bardroid_catchup = 0` in springsettings turns it off. Expected: ~15% more simulation time plus whatever clock the
+  cooler GPU leaves the CPU; the simulation of a 3000-unit game on a hot phone stays the limit.
+  `tools/catchup-test.ps1` (~5 min): a headless host plays BARb vs BARb on 127.0.0.1, a windowed spectator joins
+  twice (mode off, on); on the laptop, 3 min behind: x34.7, MinSimDrawBalance 0.02 while behind, 0.15 after.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
