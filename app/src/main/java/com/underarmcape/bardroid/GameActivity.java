@@ -120,13 +120,13 @@ public class GameActivity extends MainActivity {
         getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
         pad.stop();
         touch.close();
-        setHidden(false);
         super.onDestroy();
     }
 
     // Nobody sees the game while this screen is stopped (phone locked, another app in front; the floating window only
     // pauses it): libbardroid_pace.so then tells the engine its window is hidden, and the engine stops drawing and
-    // mutes its sound as a minimized BAR does on a PC. The game itself runs on.
+    // mutes its sound as a minimized BAR does on a PC. The game itself runs on. The flag outlives this screen when it
+    // is closed while the game goes on (the app icon brings a new one); GameService clears it before each game.
     @Override protected void onStart() { super.onStart(); setHidden(false); }
     @Override protected void onStop() { setHidden(true); super.onStop(); }
 
