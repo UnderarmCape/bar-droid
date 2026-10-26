@@ -305,14 +305,24 @@ One ABI per APK.
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
 and spectating"; no "controller not connected" indicator on Android; keep it cheap.
 
-**Out of the builds for now** (Kailil, 2026-10-26: v0.8.5 "was working perfectly ingame", but fps dropped; "until we
-get the performance for it optimized, lets remove it from our builds"). `assets/gamepad/` is deleted, so
-`Installer.gamepadAvailable()` is false, singleplayer plays BAR's released game, an installed `BAR-gamepad.sdd` is
-removed at the next start, `launch-bar.sh` puts the lobby and the Grid menu back, and the pad camera works in every
-game. Measured on the phone: LuaUI garbage 79-268 MB/min with v0.8.5 against 0-44 MB/min on BAR's released game.
-The optimization runs on BARGAMEPAD branch `controller/codex-v085-perf` (worktree `src\bar-codex-perf`), profiled
-on the laptop with `tools/profile-gamepad-game.ps1`; to bring it back, run
-`tools/build-gamepad-game.py --branch <that branch>` and build.
+**Performance (2026-10-26).** Kailil: v0.8.5 "was working perfectly ingame", but fps dropped ("i neveer figured out
+using codex how to get the usage down"); it was out of the builds (a019af7) until it was cheaper. The phone's log:
+LuaUI garbage 79-268 MB/min with v0.8.5 against 0-44 MB/min on BAR's released game. Now packaged from BARGAMEPAD
+branch **`controller/codex-v085-perf`** (sparse worktree `src\bar-codex-perf`; release branch untouched), same
+behaviour and pixels. Laptop, v0.8.5 skirmish with the companion's scripted pad (`tools/profile-gamepad-game.ps1`):
+all LuaUI garbage 10.5 → 0.83 MB/s, the hint runtime 1.10 → 0.35 ms/frame and 9.8 MB/s → 0.12, the controller
+widgets together ~1.6 → ~0.8 ms/frame. What it was and what changed:
+- The hint runtime's 25 Hz context snapshot copied the engine's command list (and per-unit command lists) out of
+  the engine several times per poll: now cached until BAR's `CommandsChanged`/`SelectionChanged`.
+- The hint panel was laid out and drawn with ~150 kB of new tables every frame: now a display list replayed until
+  what it shows changes (drawn directly when it changes and while it fades in, re-recorded once a second), and the
+  renderer/glyph code allocates nothing (5384 gl calls compared identical to the release branch).
+- A resting stick read the camera state each frame only for the hidden debug panel.
+v0.8.5's own suite (`BARGAMEPAD scripts\codex-tests.ps1 -GameDir src\bar-codex-perf`): 20 pass + the 6 known
+attempt-01 failures, as on the release branch. Profiling: `tools/profile-gamepad-game.ps1 [-Functions -Detail <widget>]`
+(per widget, or every function of one widget with exact allocations); `-Released` measures BAR without v0.8.5.
+Remaining controller costs (laptop): the camera widget ~0.4 ms/frame, 0.45 MB/s, spread over many functions
+(selected-unit status panel, control groups, packet parsing); replaying the hint panel's list ~0.3 ms.
 - **Why a developer game:** BAR Controller Support v0.8.5 (`C:\Tools\BARGAMEPAD`, branch
   `controller/codex-v085-release`) is BAR's own game with the controller added (new widgets, edits inside ten of BAR's
   widgets), ported onto BAR Release 2026.10.20-1 (`a61703336e`). BAR's user-widget sandbox (BAR PR #9547) blocks its

@@ -1,5 +1,6 @@
 """Packages Kailil's controller support (BAR Controller Support v0.8.5, the BARGAMEPAD project's branch
-controller/codex-v085-release) for the phone: app/src/main/assets/gamepad/gamepad.zip plus gamepad.properties.
+controller/codex-v085-perf: controller/codex-v085-release plus performance work that keeps its behaviour) for the
+phone: app/src/main/assets/gamepad/gamepad.zip plus gamepad.properties.
 
 v0.8.5 is BAR's own game with the controller added (new widgets, edits inside ten of BAR's widgets), ported onto one
 BAR release. On the phone it runs as BAR's developer game ("Beyond All Reason $VERSION", what the lobby's
@@ -17,7 +18,8 @@ import argparse, gzip, hashlib, io, json, os, re, subprocess, sys, urllib.reques
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--repo", default=r"C:\Tools\BARGAMEPAD\src\bar-codex", help="any checkout of the BAR game repository")
-ap.add_argument("--branch", default="controller/codex-v085-release")
+# v0.8.5 with the performance work (same behaviour, ~92% less Lua garbage; HANDOFF.md "Gamepad")
+ap.add_argument("--branch", default="controller/codex-v085-perf")
 ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets", "gamepad"))
 ap.add_argument("--unpack", metavar="SDD", help="also unpack the package there, as the app does (needs --bar-data)")
 ap.add_argument("--bar-data", metavar="DIR", help="a BAR data folder with the base release's packages/ and pool/")
