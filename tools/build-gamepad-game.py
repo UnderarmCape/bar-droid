@@ -11,16 +11,21 @@ Not packaged: BAR artwork v0.8.5 copied under new names (LICENSE.md next to them
 those from the downloaded release (gamepad.properties "copy.N = <destination> <source>"). Changed on the way, for
 Android: the controller's "companion status" panel is off (the app is the companion and always runs).
 
-  python -I tools/build-gamepad-game.py [path to the bar-codex checkout]
+  python -I tools/build-gamepad-game.py [--repo DIR] [--branch NAME] [--out DIR]
 """
-import gzip, hashlib, io, json, os, re, subprocess, sys, urllib.request, zipfile
+import argparse, gzip, hashlib, io, json, os, re, subprocess, sys, urllib.request, zipfile
 
-REPO = sys.argv[1] if len(sys.argv) > 1 else r"C:\Tools\BARGAMEPAD\src\bar-codex"
-BRANCH = "controller/codex-v085-release"
+ap = argparse.ArgumentParser()
+ap.add_argument("--repo", default=r"C:\Tools\BARGAMEPAD\src\bar-codex", help="any checkout of the BAR game repository")
+ap.add_argument("--branch", default="controller/codex-v085-release")
+ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets", "gamepad"))
+ap.add_argument("--unpack", metavar="SDD", help="also unpack the package there, as the app does (needs --bar-data)")
+ap.add_argument("--bar-data", metavar="DIR", help="a BAR data folder with the base release's packages/ and pool/")
+ARGS = ap.parse_args()
+REPO, BRANCH, OUT = ARGS.repo, ARGS.branch, ARGS.out
 BASE_COMMIT = "a61703336e586233f242376ec3b7855d00855ff5"   # BAR Release 2026.10.20-1, what v0.8.5 was ported to
 BASE_TAG = "byar:git:" + BASE_COMMIT
 VERSIONS = "https://repos-cdn.beyondallreason.dev/byar/versions.gz"
-OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets", "gamepad")
 # Copies of BAR artwork in v0.8.5 (luaui/images/controller/stat-icons/LICENSE.md): destination <- BAR's file
 BAR_COPIES = {
     "luaui/images/controller/stat-icons/metal.png": "luaui/images/metal.png",
@@ -81,6 +86,7 @@ def main():
     props = [
         "# written by tools/build-gamepad-game.py",
         f"version = v0.8.5-{commit[:10]}-{hashlib.sha256(zbytes).hexdigest()[:10]}",
+        f"branch = {BRANCH}",
         f"commit = {commit}",
         f"base.tag = {BASE_TAG}",
         f"base.name = {base_name}",
@@ -90,6 +96,28 @@ def main():
         f.write("\n".join(props) + "\n")
     print(f"{len(names) - len(copies)} files from {commit[:10]} on {base_name} ({base_md5}): "
           f"gamepad.zip {len(zbytes) // 1024} KB")
+    if ARGS.unpack:
+        unpack(zbytes, ARGS.unpack, ARGS.bar_data, base_md5)
+
+
+def unpack(zbytes, sdd, bar_data, base_md5):
+    """What Installer.installGamepadGame does on the phone: the zip, then BAR's icons from the base release's pool."""
+    import shutil
+    shutil.rmtree(sdd, ignore_errors=True)
+    zipfile.ZipFile(io.BytesIO(zbytes)).extractall(sdd)
+    data = gzip.open(os.path.join(bar_data, "packages", base_md5 + ".sdp")).read()
+    pool, i = {}, 0
+    while i < len(data):
+        n = data[i]
+        name = data[i + 1:i + 1 + n].decode().lower()
+        pool[name] = data[i + 1 + n:i + 17 + n].hex()
+        i += 1 + n + 16 + 8
+    for dst, src in BAR_COPIES.items():
+        md5 = pool[src]
+        os.makedirs(os.path.dirname(os.path.join(sdd, dst)), exist_ok=True)
+        with gzip.open(os.path.join(bar_data, "pool", md5[:2], md5[2:] + ".gz")) as f, open(os.path.join(sdd, dst), "wb") as o:
+            o.write(f.read())
+    print("unpacked to", sdd)
 
 
 MODINFO = """-- BAR Droid: Kailil's BAR Controller Support v0.8.5 ({commit}) as BAR's developer game.

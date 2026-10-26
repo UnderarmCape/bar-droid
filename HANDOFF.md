@@ -304,6 +304,15 @@ One ABI per APK.
 ## Gamepad (2026-10-26)
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
 and spectating"; no "controller not connected" indicator on Android; keep it cheap.
+
+**Out of the builds for now** (Kailil, 2026-10-26: v0.8.5 "was working perfectly ingame", but fps dropped; "until we
+get the performance for it optimized, lets remove it from our builds"). `assets/gamepad/` is deleted, so
+`Installer.gamepadAvailable()` is false, singleplayer plays BAR's released game, an installed `BAR-gamepad.sdd` is
+removed at the next start, `launch-bar.sh` puts the lobby and the Grid menu back, and the pad camera works in every
+game. Measured on the phone: LuaUI garbage 79-268 MB/min with v0.8.5 against 0-44 MB/min on BAR's released game.
+The optimization runs on BARGAMEPAD branch `controller/codex-v085-perf` (worktree `src\bar-codex-perf`), profiled
+on the laptop with `tools/profile-gamepad-game.ps1`; to bring it back, run
+`tools/build-gamepad-game.py --branch <that branch>` and build.
 - **Why a developer game:** BAR Controller Support v0.8.5 (`C:\Tools\BARGAMEPAD`, branch
   `controller/codex-v085-release`) is BAR's own game with the controller added (new widgets, edits inside ten of BAR's
   widgets), ported onto BAR Release 2026.10.20-1 (`a61703336e`). BAR's user-widget sandbox (BAR PR #9547) blocks its

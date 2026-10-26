@@ -350,6 +350,15 @@ public final class Installer {
 
     private File gamepadDir() { return new File(p.bar, "games/BAR-gamepad.sdd"); }
 
+    /**
+     * This app build carries the controller game (`tools/build-gamepad-game.py` writes assets/gamepad). Kailil
+     * (2026-10-26): out of the builds until v0.8.5's frame cost is down; a build without it removes an installed one.
+     */
+    public boolean gamepadAvailable() {
+        try (InputStream ignored = ctx.getAssets().open("gamepad/gamepad.properties")) { return true; }
+        catch (IOException e) { return false; }
+    }
+
     /** games/BAR-gamepad.sdd is this app build's v0.8.5. */
     public boolean gamepadReady() {
         try {
@@ -366,6 +375,15 @@ public final class Installer {
      * unpacks v0.8.5 as games/BAR-gamepad.sdd. Optional: without it singleplayer plays BAR's released game.
      */
     public void installGamepadGame(Status st) throws Exception {
+        if (!gamepadAvailable()) {
+            if (gamepadDir().exists() || state.getProperty("gamepad") != null) {
+                deleteTree(gamepadDir());
+                state.remove("gamepad");
+                save();
+                Log.i("install", "controller game removed (not in this app build): singleplayer plays BAR's released game");
+            }
+            return;
+        }
         Properties info = gamepadInfo();
         Log.i("install", "==== controller game " + info.getProperty("version") + " on " + info.getProperty("base.name"));
         st.status("gamepad", "downloading " + info.getProperty("base.name"), -1);

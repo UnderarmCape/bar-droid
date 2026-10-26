@@ -43,6 +43,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `tools/build-gamepad-game.py` (rerun after a new v0.8.5 commit) → `assets/gamepad/`, `Installer.installGamepadGame`,
   `launch-bar.sh` (`GAMEPAD_GAME`). `ControllerBridge` is its companion (BARCTRL1 over UDP 28777, always streaming)
   and feeds the online gamepad camera in `bardroid_touch.lua`. Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
+  **Out of the builds until its frame cost is down** (Kailil, 2026-10-26; `assets/gamepad/` deleted, see HANDOFF.md).
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;
   long-press **GL check** in the app keeps X + GPU server up without the game.
 
