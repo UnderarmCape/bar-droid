@@ -1,0 +1,71 @@
+# BAR's in-game interface at a Fold screen's layout, on the laptop: a skirmish (byar:test, vs BARb) in a window of the
+# screen's shape, BAR's interface scale as the phone sets it, with or without the phone layer's widget changes
+# (Keys/Changes off, BAR's full-screen effects off), and a screenshot after ~5 s of game. BAR sizes its interface by
+# the window height and places it by the width, so a smaller window of the same shape shows the same layout.
+#   powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner [-Scale 0.65] [-NoPhoneLayer]
+#   -Screen inner = 1456x1312 at 1.3, cover = 1680x720 at 2.0. Writes build\ui-screenshot\<screen>-<layer>.png
+param(
+  [ValidateSet("inner", "cover")] [string]$Screen = "inner",
+  [double]$Scale = 0.65,
+  [switch]$NoPhoneLayer,
+  [double]$UiScale = 0,   # another interface scale than the phone's for that screen
+  [string]$Engine = "",
+  [string]$Map = "supreme_isthmus_v2.1.sd7",
+  [string]$MapName = "Supreme Isthmus v2.1"
+)
+$ErrorActionPreference = "Stop"
+$App = Split-Path -Parent $PSScriptRoot
+$Work = Join-Path $App "build\ui-screenshot"
+$Data = Join-Path $Work "data"
+$Bar = Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"
+if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
+$EngineDir = Join-Path $Bar "engine\$Engine"
+$size = @{ inner = @(1456, 1312, 1.3); cover = @(1680, 720, 2.0) }[$Screen]
+$w = [int]($size[0] * $Scale); $h = [int]($size[1] * $Scale)
+$uiScale = if ($UiScale -gt 0) { $UiScale } else { $size[2] }
+$layer = $(if ($NoPhoneLayer) { "bar" } else { "phone" }) + "-" + $uiScale
+
+Remove-Item -Recurse -Force "$Data\LuaUI", "$Data\screenshots" -ErrorAction SilentlyContinue
+New-Item -ItemType Directory -Force -Path "$Data\LuaUI\Widgets", "$Data\LuaUI\Config", "$Data\maps" | Out-Null
+$links = foreach ($d in "packages", "pool", "rapid") {
+  $link = Join-Path $Data $d
+  if (-not (Test-Path $link)) { cmd /c mklink /J "$link" "$(Join-Path $Bar $d)" | Out-Null }
+  $link
+}
+try {
+  if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
+  Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
+  # of the Grid menu, in BAR's released game too (one BYAR.lua)
+  $orders = if ($NoPhoneLayer) { "" } else {
+    (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Keybind/Mouse Info", "Changelog Info", "Grid menu") |
+      ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Build menu`"] = 165,") -join "`n"
+  }
+  "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`torder = {`n$orders`n`t},`n}" |
+    Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
+  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+    Set-Content "$Data\springsettings.cfg" -Encoding ascii
+
+  $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
+  $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
+  $game = $null
+  while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
+  $reader.Close()
+  $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
+  $startscript = Join-Path $Work "skirmish.txt"
+  $script | Set-Content $startscript -Encoding ascii
+
+  $log = Join-Path $Data "infolog.txt"
+  Remove-Item $log -ErrorAction SilentlyContinue
+  Write-Host "[ui-shot] $Screen ($($size[0])x$($size[1]) at $uiScale) as ${w}x$h, $layer layer, $game"
+  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
+    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`""
+  if (-not $p.WaitForExit(240000)) { $p.Kill() }
+  $shot = Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Select-Object -Last 1
+  if (-not $shot) { Select-String -Path $log -Pattern "uishot|screenshot|Error" | ForEach-Object { $_.Line }; throw "no screenshot" }
+  $out = Join-Path $Work "$Screen-$layer.png"
+  Copy-Item $shot.FullName $out -Force
+  Write-Host "[ui-shot] $out"
+} finally {
+  foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }   # the junction only, never the live install's files
+}
