@@ -1,4 +1,4 @@
-# Catch-up on the laptop: a headless host plays BARb vs BARb on 127.0.0.1, and after -Warmup seconds a windowed
+﻿# Catch-up on the laptop: a headless host plays BARb vs BARb on 127.0.0.1, and after -Warmup seconds a windowed
 # spectator joins and catches up, twice: with the touch widget's catch-up mode off (bardroid_catchup = 0) and on.
 # Logs the probe's lines (game frames and pictures per 5 s) and the widget's [bardroid-catchup] lines of each join.
 # Isolated write dirs under build\catchup-test (the live install's packages, pool and rapid index joined read-only by
@@ -17,8 +17,13 @@ param(
   [int]$AIs = 2,
   [int]$FastMinutes = 0,
   [double]$Speed = 10,
-  [int]$HoldMinutes = 60
+  [int]$HoldMinutes = 60,
+  [double]$HostSpeed = 0,   # > 0: the host runs at this speed for good (a game the spectator cannot catch up with)
+  [int[]]$Modes = @(0, 1),  # the joins: catch-up mode off (0) and/or on (1)
+  [double]$BurnMs = 0,     # the spectator burns this much CPU per simulated frame (slower than the host: a hopeless catch-up)
+  [int]$ProbeLimit = 600   # seconds the spectator stays at most
 )
+if ($HostSpeed -gt 0) { $Speed = $HostSpeed; $FastMinutes = 100000 }
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\catchup-test"
@@ -64,7 +69,7 @@ $hostScript = @"
 	HostIP=127.0.0.1;
 	HostPort=$Port;
 	MaxSpeed=20;
-	[MODOPTIONS] { deathmode=com; }
+	[MODOPTIONS] { deathmode=neverend; }
 	[ALLYTEAM0] { NumAllies=0; }
 	[ALLYTEAM1] { NumAllies=0; }
 $($teams -join "`n")
@@ -109,9 +114,9 @@ try {
   foreach ($f in "bardroid_touch.lua", "bardroid_queue.lua") { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") "$clientDir\LuaUI\Widgets\" -Force }
   Copy-Item (Join-Path $PSScriptRoot "catchup-test\bardroid_catchup_probe.lua") "$clientDir\LuaUI\Widgets\" -Force
   $n = 0
-  foreach ($mode in 0, 1) {
+  foreach ($mode in $Modes) {
     $n++
-    "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nbardroid_catchup = $mode`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+    "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nbardroid_catchup = $mode`nbardroid_probe_burn_ms = $BurnMs`nbardroid_probe_limit = $ProbeLimit`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
       Set-Content "$clientDir\springsettings.cfg" -Encoding ascii
     "[GAME]`n{`n`tHostIP=127.0.0.1;`n`tHostPort=$Port;`n`tIsHost=0;`n`tMyPlayerName=Watcher$n;`n`tMyPasswd=;`n}" | Set-Content "$Work\client.txt" -Encoding ascii
     $log = "$clientDir\infolog.txt"

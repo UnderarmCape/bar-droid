@@ -483,6 +483,12 @@ local CATCHUP_FAST, CATCHUP_FAST_SECONDS, CATCHUP_SLOW_SECONDS = 1.5, 2, 3 -- ga
 local CATCHUP_BALANCE, CATCHUP_MIN_DRAW_FPS = 0.02, 1
 local CATCHUP_LOG_EVERY = 30 -- seconds
 local CATCHUP_PAUSE = 0.05 -- seconds between two simulated frames that count as a pause (drawing, or no data yet)
+-- A game too big for the phone to run even at its own speed never catches up (Kailil's 6,000-unit join stayed 9 min
+-- behind at x0.6-0.9, the picture frozen all along): no ground gained over CATCHUP_GIVE_UP seconds, it draws again,
+-- and tries again CATCHUP_RETRY seconds later (the game may shrink, the phone cool down), then twice as long after
+-- each further give-up (a live game the phone keeps falling behind in is not blanked for a minute every 5 minutes).
+local CATCHUP_GIVE_UP, CATCHUP_RETRY = 60, 300
+local catchupGaveUp, catchupRetry = nil, CATCHUP_RETRY -- timer of the last give-up, wait before the next try
 local serverFrame, serverFrameAt -- GameProgress: the server's frame, every 150 frames
 local catchup -- while catching up: the engine's own settings, and where the last log line was
 local catchupChecked, checkedFrame, lastGameFrameAt
@@ -530,6 +536,9 @@ local function updateCatchup(now, frame, rate)
 		if not (behind and behind > CATCHUP_ENTER or not behind and fastChecks >= CATCHUP_FAST_SECONDS) then
 			return
 		end
+		if catchupGaveUp and spDiffTimers(now, catchupGaveUp) < catchupRetry then
+			return
+		end
 		catchup = { balance = Spring.GetConfigFloat("MinSimDrawBalance", 0.15),
 			minDrawFps = Spring.GetConfigInt("MinDrawFPS", 2), frame = frame, time = now, logFrame = frame, logTime = now,
 			pauses = 0, pauseTime = 0 }
@@ -543,7 +552,25 @@ local function updateCatchup(now, frame, rate)
 		Spring.Echo(string.format("[bardroid-catchup] caught up at %s after %.0f s (x%.1f on average)", gameClock(frame),
 			seconds, (frame - catchup.frame) / 30 / math.max(seconds, 1)))
 		endCatchup()
+		catchupGaveUp, catchupRetry = nil, CATCHUP_RETRY
 		return
+	end
+	if behind then -- ground gained over the last CATCHUP_GIVE_UP seconds
+		if not catchup.gainAt then
+			catchup.gainAt, catchup.gainBehind = now, behind
+		elseif spDiffTimers(now, catchup.gainAt) >= CATCHUP_GIVE_UP then
+			if behind >= catchup.gainBehind then
+				if catchupGaveUp then -- (a second give-up and later: twice the wait)
+					catchupRetry = catchupRetry * 2
+				end
+				Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind: not gaining (x%.1f), drawing again; next try in %d s",
+					gameClock(frame), gameClock(behind), speedNow, catchupRetry))
+				endCatchup()
+				catchupGaveUp = now
+				return
+			end
+			catchup.gainAt, catchup.gainBehind = now, behind
+		end
 	end
 	-- written whole, then renamed: the app never reads half a line
 	local f = io.open(CATCHUP .. ".tmp", "w")

@@ -18,6 +18,16 @@ function widget:DrawWorld()
 	draws = draws + 1
 end
 
+-- bardroid_probe_burn_ms: a slower spectator (CPU burnt every simulated frame), for a catch-up that cannot succeed
+local burn = (tonumber(Spring.GetConfigString("bardroid_probe_burn_ms", "0")) or 0) / 1000
+function widget:GameFrame()
+	if burn > 0 then
+		local t = Spring.GetTimer()
+		while Spring.DiffTimers(Spring.GetTimer(), t) < burn do
+		end
+	end
+end
+
 function widget:Update()
 	local now = Spring.GetTimer()
 	local frame = Spring.GetGameFrame()
@@ -44,7 +54,7 @@ function widget:Update()
 			Spring.SendCommands("quitforce")
 		end
 	end
-	if Spring.DiffTimers(now, started) > 600 then
+	if Spring.DiffTimers(now, started) > (tonumber(Spring.GetConfigString("bardroid_probe_limit", "600")) or 600) then
 		Spring.Echo("[catchup-probe] done (time limit)")
 		Spring.SendCommands("quitforce")
 	end

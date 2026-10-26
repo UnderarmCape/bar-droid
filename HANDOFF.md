@@ -153,6 +153,19 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   x3.6" over the last picture, the engine not drawing. The emulator's network (SLIRP UDP) stalls ~1 s at a time, so
   its catch-up speed says nothing about the phone's. The emulator build now ships the x86_64 pace library
   (`libbardroid_pace-x86_64.so`, no frame cap, `BARDROID_PRESENT_FENCE=0`) for the hidden window.
+  A game the phone cannot run at its own speed never catches up: no ground gained in 60 s, the mode ends (it draws
+  again, "not gaining" in the log) and tries again 5 min later.
+- **Where a big game's CPU goes** (`tools/profile-big-game.ps1`: a BARb game fast-forwarded, BAR's widget profiler at
+  1x with the phone's widget orders, the engine's timers via `/debuginfo profiling`; `-ProfileFastAtMinute` measures
+  at 10x, i.e. per simulated frame; `-Functions` times one widget's callins). 6 BARb, 753 units, laptop: all widgets
+  1.45 ms/frame at 1x; the engine's totals over the run (mostly at 10x) Sim 89 s, unsynced Lua callins 50 s (widgets
+  and the game's unsynced gadgets), drawing 29 s, synced Lua 11 s. Found and fixed: our own touch widget was the
+  costliest widget (0.14 ms/frame: a file open and a view ray every frame; now 0.035 ms Update); Jammed Units
+  Highlight (a red tint on units in jammer cover, every unit checked every 6 simulated frames) costs the most per
+  simulated frame (13.8 ms/s at 10x): off on the phone, with the full-screen Contrast Adaptive Sharpen pass. Other
+  big ones, all gameplay information, left on (Kailil's call): Defense Range GL4 (5 ms/s at 1x), Top Bar, AdvPlayersList,
+  Sensor Ranges Jammer Preview, Ecostats, Metalspots, BuildETA. `[perf]` now finds the engine (its process is
+  `recoil-main`, the memory column was always "?").
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
