@@ -139,15 +139,25 @@ local function applyTouch(lines)
 	spSetCameraState(cs, 0)
 end
 
-local function applyScreen(w, h, hz, fps)
-	if w > 0 and h > 0 then
-		local cw, ch = Spring.GetWindowGeometry()
-		if cw ~= w or ch ~= h then
-			-- borderless window on display 1 (BAR's resolution switcher uses the same call)
-			Spring.SetWindowGeometry(1, 0, 0, w, h, false, true)
-			Spring.Echo(string.format("[bardroid-touch] window %dx%d -> %dx%d", cw, ch, w, h))
-		end
+-- The X server itself resizes the game window with the screen (BAR Droid's lorie patch 0003); this only catches a
+-- window that still differs a second later (two polls), e.g. one the engine sized from a stale setting.
+local mismatches = 0
+local function fitWindow(w, h)
+	local cw, ch = Spring.GetWindowGeometry()
+	if w <= 0 or h <= 0 or (cw == w and ch == h) then
+		mismatches = 0
+		return
 	end
+	mismatches = mismatches + 1
+	if mismatches >= 2 then
+		mismatches = 0
+		-- borderless window on display 1 (BAR's resolution switcher uses the same call)
+		Spring.SetWindowGeometry(1, 0, 0, w, h, false, true)
+		Spring.Echo(string.format("[bardroid-touch] window %dx%d -> %dx%d", cw, ch, w, h))
+	end
+end
+
+local function applyFrameCap(hz, fps)
 	if hz > 0 and fps > 0 then
 		local fraction = math.max(1, math.floor(hz / fps + 0.5))
 		if Spring.GetConfigInt("VSync", 0) ~= fraction or Spring.GetConfigInt("VSyncFraction", 1) ~= fraction then
@@ -207,11 +217,12 @@ function widget:Update(dt)
 		if f then
 			local s = f:read("*l")
 			f:close()
-			if s and s ~= lastScreen then
-				local w, h, hz, fps = s:match("^(%d+) (%d+) (%d+) (%d+)")
-				if w then
+			local w, h, hz, fps = (s or ""):match("^(%d+) (%d+) (%d+) (%d+)")
+			if w then
+				fitWindow(tonumber(w), tonumber(h))
+				if s ~= lastScreen then
 					lastScreen = s
-					applyScreen(tonumber(w), tonumber(h), tonumber(hz), tonumber(fps))
+					applyFrameCap(tonumber(hz), tonumber(fps))
 				end
 			end
 		end

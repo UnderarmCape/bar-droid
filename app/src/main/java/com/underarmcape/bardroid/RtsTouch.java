@@ -136,6 +136,7 @@ final class RtsTouch {
      */
     void screenSize(int w, int h, int refreshHz) {
         if (w <= 0 || h <= 0 || (w == screenW && h == screenH && refreshHz == hz)) return;
+        Log.i("display", "X screen " + w + "x" + h + ", display " + refreshHz + " Hz");   // fold/unfold steps
         screenW = w; screenH = h; hz = refreshHz;
         int cap = Prefs.EMULATOR_BUILD ? 0 : Prefs.fps60 ? 60 : 30;   // 0: the widget leaves VSync alone
         byte[] line = (w + " " + h + " " + refreshHz + " " + cap + "\n").getBytes(StandardCharsets.US_ASCII);

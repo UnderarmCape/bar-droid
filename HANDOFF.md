@@ -46,17 +46,20 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   late, PulseAudio rendered silence. Now `UseSDLAudio = 0` and OpenAL Soft's **wave writer** writes straight into the
   FIFO (`/root/.alsoftrc`: `drivers = wave`, 48 kHz stereo int16); its mixer thread is paced by the clock and catches
   up after a stall. `AudioPump` parses the WAV header and starts the track with 200 ms queued (also less latency than
-  the ~700 ms before). PulseAudio is no longer started. Verified on the emulator (stream opens, game runs); **Kailil
-  has not heard it yet**.
+  the ~700 ms before). PulseAudio is no longer started. Kailil: "sound is perfect".
 - **Lobby black screen**: Chobby needs `chobby_config.json` (BAR's launcher writes it from its config's
   `json_files`: server4.beyondallreason.info:8200, game `byar`); without it Chobby finds no game config and shuts
-  down. `launch-bar.sh` writes it for lobby mode. Verified on the emulator (main menu + login window). Not tried on the
-  phone yet.
+  down. `launch-bar.sh` writes it for lobby mode. On the phone Kailil logged in, browsed servers and spectated a
+  multiplayer game.
 - Frame cap: `VSync = VSyncGame × VSyncFraction` like BAR's options (BAR rewrites `VSync`); the app asks for a 60 Hz
   display mode and the widget picks the swap interval from the real refresh rate (30 fps default, 60 experimental).
-- Fold/unfold: the activity is not recreated; `GameActivity` reports the new X screen size and `bardroid_touch.lua`
-  calls `Spring.SetWindowGeometry`. Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover
-  screen" must allow BAR Droid.
+- Fold/unfold: the activity is not recreated and the X screen follows the view. There is no window manager, so
+  `patches/0003-lorie-fit-windows-on-resize.patch` makes the X server resize mapped top-level windows at the origin
+  to the new screen size itself (in `lorieRRScreenSetSize`): works in the lobby, while a game loads (Flex/tent mode
+  first hands the app part of the inner screen, then all of it) and in game. `bardroid_touch.lua` only re-fits a
+  window that still differs after two polls. Each X screen size the app sees is logged (`[display]` in
+  launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three resizes while loading, in game).
+  Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
 
 **Touch controls** (`RtsTouch`, on by default; off = Termux:X11's touch modes), Kailil's spec of 19:30:

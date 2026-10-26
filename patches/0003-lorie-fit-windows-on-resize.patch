@@ -1,0 +1,44 @@
+diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
+index c4ad7f9..b0d12e7 100644
+--- a/lorie/src/main/cpp/lorie/InitOutput.c
++++ b/lorie/src/main/cpp/lorie/InitOutput.c
+@@ -40,6 +40,7 @@
+ #include "exa.h"
+ #include "drm_fourcc.h"
+ #include "opaque.h"
++#include "windowstr.h"
+ 
+ #include "lorie.h"
+ 
+@@ -689,6 +690,23 @@ static int lorieSetPixmapVisitWindow(WindowPtr window, void *data) {
+     return WT_DONTWALKCHILDREN;
+ }
+ 
++/* BAR Droid: no window manager runs, so a full-screen window would keep its old size when the screen changes size
++ * (a foldable folding or unfolding). Mapped top-level windows at the origin follow the screen, like maximized
++ * windows; the server resizes them right away, so this works even while the client is busy (a game loading). */
++static void lorieFitTopLevelWindows(ScreenPtr pScreen) {
++    WindowPtr pWin;
++    for (pWin = pScreen->root->firstChild; pWin; pWin = pWin->nextSib) {
++        XID vlist[4] = { 0, 0, pScreen->width, pScreen->height };
++        if (!pWin->mapped || pWin->overrideRedirect || pWin->drawable.class != InputOutput)
++            continue;
++        if (pWin->origin.x - wBorderWidth(pWin) != 0 || pWin->origin.y - wBorderWidth(pWin) != 0)
++            continue;
++        if (pWin->drawable.width == pScreen->width && pWin->drawable.height == pScreen->height)
++            continue;
++        ConfigureWindow(pWin, CWX | CWY | CWWidth | CWHeight, vlist, serverClient);
++    }
++}
++
+ static Bool lorieRRScreenSetSize(ScreenPtr pScreen, CARD16 width, CARD16 height, unused CARD32 mmWidth, unused CARD32 mmHeight) {
+     PixmapPtr oldPixmap, newPixmap;
+     BoxRec box = { 0, 0, width, height };
+@@ -741,6 +759,7 @@ static Bool lorieRRScreenSetSize(ScreenPtr pScreen, CARD16 width, CARD16 height,
+     RRScreenSizeNotify(pScreen);
+     update_desktop_dimensions();
+     pvfb->state->cursor.moved = TRUE;
++    lorieFitTopLevelWindows(pScreen);
+ 
+     return TRUE;
+ }

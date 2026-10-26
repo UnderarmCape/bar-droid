@@ -30,7 +30,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (camera, window size on fold/unfold, frame cap,
   "is the pointer on the interface" answers); `GameActivity` wires them up.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
-  libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build. Regenerate a patch with `git diff`
+  libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
+  top-level windows with the screen (fold/unfold; there is no window manager). Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;
   long-press **GL check** in the app keeps X + GPU server up without the game.
