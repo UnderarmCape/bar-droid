@@ -118,7 +118,6 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
-        ((CheckBox) findViewById(R.id.cbTouchOnly)).setChecked(Prefs.touchOnly);
         ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
         ((CheckBox) findViewById(R.id.cbShadows)).setChecked(Prefs.shadows);
@@ -138,7 +137,6 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
-        Prefs.touchOnly = ((CheckBox) findViewById(R.id.cbTouchOnly)).isChecked();
         Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();
         Prefs.shadows = ((CheckBox) findViewById(R.id.cbShadows)).isChecked();

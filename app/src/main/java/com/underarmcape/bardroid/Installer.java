@@ -250,14 +250,10 @@ public final class Installer {
         widgets.mkdirs();
         try (InputStream in = new FileInputStream(new File(assets, "bardroid_touch.lua"));
              OutputStream o = new FileOutputStream(new File(widgets, "bardroid_touch.lua"))) { copy(in, o); }
-        // The touch HUD, dock and build menu only in touch-only mode (TOUCH-UI.md); without them the game plays as before.
-        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"}) {
-            File w = new File(widgets, name);
-            if (Prefs.touchOnly) try (InputStream in = new FileInputStream(new File(assets, name));
-                                      OutputStream o = new FileOutputStream(w)) { copy(in, o); }
-            else //noinspection ResultOfMethodCallIgnored
-                w.delete();
-        }
+        // Widgets of the removed touch-only mode (Kailil, 2026-10-25): gone from earlier installs too.
+        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"})
+            //noinspection ResultOfMethodCallIgnored
+            new File(widgets, name).delete();
         // springsettings.cfg from the template plus the user's knobs (each key replaced in place, never duplicated)
         Map<String, String> set = new java.util.LinkedHashMap<>();
         set.put("WorkerThreadCount", String.valueOf(Prefs.workerThreads));

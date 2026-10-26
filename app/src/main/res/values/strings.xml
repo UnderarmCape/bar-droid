@@ -23,7 +23,6 @@
     <string name="cb_audio">Sound</string>
     <string name="cb_fps60">60 fps (experimental; the default caps the game at 30 fps)</string>
     <string name="cb_rts_touch">BAR touch controls (drag pans, pinch zooms, twist rotates, two fingers up/down tilt, tap then drag selects, long press orders); off = Termux:X11 touch modes</string>
-    <string name="cb_touch_only">Touch-only mode (experimental): big in-game buttons (queue, select, groups, chat, pause), tap the map to order, drag to place buildings; the buttons hide while a mouse, keyboard or gamepad is used</string>
     <string name="cb_shadows">Shadows</string>
     <string name="cb_noseccomp">proot: disable seccomp acceleration (PROOT_NO_SECCOMP)</string>
     <string name="cb_verbosex">Verbose X server logging</string>

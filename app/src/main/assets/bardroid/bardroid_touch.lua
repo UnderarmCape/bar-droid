@@ -9,11 +9,8 @@
 --   LuaUI/Config/bardroid_touch.txt   app, appended:  pan <x0> <y0> <x1> <y1>   (the map point under x0,y0 goes to x1,y1)
 --                                                     rot <radians>             (fingers twisted, clockwise > 0)
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
---                                                     zoom <factor> <x> <y>     (touch-only mode: fingers spread by this
---                                                                                factor around x,y; > 1 = closer)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz, frame cap)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1> <cmd>       (pointer position; 1 = on the interface;
---                                                                                armed command: 0 none, 1 build, 2 other)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
 
 function widget:GetInfo()
 	return {
@@ -38,7 +35,6 @@ local spSetCameraState = Spring.SetCameraState
 local spGetViewGeometry = Spring.GetViewGeometry
 local spGetMouseState = Spring.GetMouseState
 local spIsAboveMiniMap = Spring.IsAboveMiniMap
-local spGetActiveCommand = Spring.GetActiveCommand
 local spGetTimer = Spring.GetTimer
 local spDiffTimers = Spring.DiffTimers
 
@@ -59,55 +55,10 @@ local function fileSize(path)
 	return size
 end
 
--- BAR's interface scale on the screen at hand. BAR sizes its panels by the screen height times ui_scale, but its top
--- bar shares out the width: on the near-square inner display of a foldable (1456x1312) ui_scale 1.4 pushes the top
--- bar's buttons over its own counters. BAR offers ui_scale up to 1.3 on 16:9 screens, so a screen narrower than that
--- gets the same proportions: ui_scale <= 1.3 * (1080 / 1920) * width / height (0.81 inner, 1.4 stays on the cover).
--- The app's (or the player's) setting is the base; the file remembers it across the reload that applies a new scale
--- (BAR applies ui_scale with "luarules reloadluaui", as its options menu does).
-local UISCALE = "LuaUI/Config/bardroid_uiscale.txt" -- "<base> <applied>"
-local UI_FIT = 1.3 * 1080 / 1920
-local UI_SETTLE_SECONDS = 1.5 -- a fold passes through in-between sizes: wait for the last one
-local uiPending
-
-local function fitUiScale()
-	local vsx, vsy = spGetViewGeometry()
-	if vsx < 200 or vsy < 200 then
-		return
-	end
-	local current = Spring.GetConfigFloat("ui_scale", 1)
-	local base, applied
-	local f = io.open(UISCALE, "r")
-	if f then
-		base, applied = (f:read("*l") or ""):match("^([%d%.]+) ([%d%.]+)")
-		f:close()
-		base, applied = tonumber(base), tonumber(applied)
-	end
-	if not (applied and math.abs(current - applied) < 0.005) then
-		base = current -- set by the app at launch, or by the player in BAR's options
-	end
-	local want = math.floor(math.min(base, UI_FIT * vsx / vsy) * 100) / 100
-	f = io.open(UISCALE, "w")
-	if f then
-		f:write(string.format("%.2f %.2f\n", base, want))
-		f:close()
-	end
-	if math.abs(want - current) >= 0.02 then
-		Spring.Echo(string.format("[bardroid-touch] %dx%d screen: ui_scale %.2f -> %.2f (setting %.2f)", vsx, vsy, current, want, base))
-		Spring.SetConfigFloat("ui_scale", want)
-		Spring.SendCommands("luarules reloadluaui")
-	end
-end
-
 function widget:Initialize()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
 	local cs = spGetCameraState()
 	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s)", tostring(cs.name), tostring(cs.rx), tostring(cs.ry)))
-	fitUiScale()
-end
-
-function widget:ViewResize()
-	uiPending = spGetTimer() -- fold / unfold: fit the scale once the size has settled
 end
 
 -- Called for the pointer position only when no widget before this one (the whole interface) claimed it.
@@ -144,7 +95,7 @@ local function newTouchLines()
 end
 
 -- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
--- of the ground the camera looks at, so dragging and pinching keep working there; nil only above the horizon.
+-- of the ground the camera looks at, so dragging keeps working there; nil only above the horizon.
 local function ground(x, y)
 	local _, vsy = spGetViewGeometry()
 	local kind, pos = spTraceScreenRay(x, vsy - y, true)
@@ -162,36 +113,7 @@ local function ground(x, y)
 	return cx + dx * t, cz + dz * t
 end
 
--- Zoom by this factor (> 1 = closer) keeping the ground point under X screen pixel (x, y) where it is on screen: the
--- camera target moves towards that point as the distance shrinks (a scaling centred on it keeps its direction).
-local function applyZoom(factor, x, y)
-	local cs = spGetCameraState()
-	if cs.dist then -- spring camera (BAR's default)
-		local gx, gz = ground(x, y)
-		local before = cs.dist
-		cs.dist = before / factor
-		spSetCameraState(cs, 0)
-		local after = spGetCameraState() -- the engine clamps the distance
-		local k = after.dist and before > 0 and after.dist / before or 1
-		if gx and k ~= 1 and after.px and after.pz then
-			after.px = gx + (cs.px - gx) * k
-			after.pz = gz + (cs.pz - gz) * k
-			spSetCameraState(after, 0)
-		end
-	elseif cs.height then -- overhead camera
-		cs.height = cs.height / factor
-		spSetCameraState(cs, 0)
-	end
-end
-
 local function applyTouch(lines)
-	local zoom, zx, zy = 1, nil, nil
-	for f, x, y in lines:gmatch("zoom (%S+) (%S+) (%S+)") do
-		zoom, zx, zy = zoom * (tonumber(f) or 1), tonumber(x), tonumber(y)
-	end
-	if zoom ~= 1 and zx and zy then
-		applyZoom(zoom, zx, zy)
-	end
 	local dx, dz, rot, tilt = 0, 0, 0, 0
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		local ax, az = ground(tonumber(x0), tonumber(y0))
@@ -260,14 +182,7 @@ local function updateHover()
 		return -- not asked yet for this position
 	end
 	local _, vsy = spGetViewGeometry()
-	-- what a one-finger drag on the map does in touch-only mode depends on the armed command (RtsTouch)
-	local _, cmdID = spGetActiveCommand()
-	local armed = not cmdID and 0 or cmdID < 0 and 1 or 2
-	local pregame = WG["pregame-build"]
-	if armed == 0 and pregame and pregame.getPreGameDefID and (pregame.getPreGameDefID() or 0) > 0 then
-		armed = 1 -- a building picked before the game starts (BAR's pregame queue)
-	end
-	local line = string.format("%d %d %d %d\n", mx, vsy - my - 1, onInterface, armed)
+	local line = string.format("%d %d %d\n", mx, vsy - my - 1, onInterface)
 	local now = spGetTimer()
 	if line == lastHover and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
 		return
@@ -288,11 +203,6 @@ function widget:Update(dt)
 		applyTouch(lines)
 	end
 	updateHover()
-
-	if uiPending and spDiffTimers(spGetTimer(), uiPending) >= UI_SETTLE_SECONDS then
-		uiPending = nil
-		fitUiScale()
-	end
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then
