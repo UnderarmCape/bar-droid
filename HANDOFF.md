@@ -1,4 +1,4 @@
-# BAR Droid — hand-off (updated 2026-10-25 ~20:00 EDT)
+# BAR Droid — hand-off (updated 2026-10-26 overnight)
 
 Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
@@ -21,12 +21,32 @@ Read this file, then `CLAUDE.md`, then `RESEARCH.md`. Plan doc: https://claude.a
 | Emulator build (x86_64, default) | `..\Build APK.bat` → `..\apk\bar-droid-emulator-debug.apk` | **BAR plays in the emulator**: install from BAR's CDN, Play vs AI, BARb AI, units + full BAR UI, sim x1.00, **~20 fps** at 1256×568 at the start camera with the laptop awake (~8 fps while Windows is in Modern Standby), ~1 min to load a skirmish |
 | Emulator runner | `..\Run in Emulator.bat` | Done: creates the AVD (Android 14, 12 GB RAM, 6 cores — the emulator's maximum, 32 GB, `hw.gltransport=asg`), boots, installs, opens the app |
 | Phone build (arm64) | `..\Build APK.bat phone` → `..\apk\bar-droid-phone-debug.apk` | **Plays on the Galaxy Z Fold7** (Adreno 830, Android 17): ~30 fps capped (60 fps option), no flicker, lobby, touch controls, fold/unfold resize. Lacks the virgl/ANGLE GPU path (not needed with Adreno) |
+| Frame pacing, swap | `tools/pace/pace.c` → `libbardroid_pace.so` | The frame cap without VSync, and Mesa on its explicit Present fence: CPU and GPU work at the same time (a spectated 8v8 with 829 units: 15-24 → 28.8 fps) |
+| Phone settings layer | `launch-bar.sh` (`PHONE_GFX`, widget orders, interface scale) | No MSAA, shadows, far features, water reflections, BAR's full-screen effects; Spring camera; BAR's interface 2.0 folded / 1.3 unfolded; the lobby on Autodetect at 120% |
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch controls | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | One finger pans, pinch zooms, twist rotates, two fingers up/down tilt (see below) |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera (see "Gamepad" below) |
 | Share logs | launcher button | Zips the logs into Android's share sheet (Taildrop, Drive, mail): phone debugging without adb |
 | virgl GPU server | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black, see below) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+
+## Overnight hardening (2026-10-26, Kailil asleep; nothing here was checked on the phone by a person)
+Found in the phone's logs and code and fixed, each installed on the phone:
+- BAR refuses `/option` from user widgets: the lights' screen-space shadows go off through `BYAR.lua` instead.
+- `widget_order` broke on names with "/" ("Keybind/Mouse Info").
+- The lobby wrote `CamMode = 1` at every game start: singleplayer had the overhead camera (no finger twist or tilt).
+- The updater would have rolled BAR back after any crash in the first 120 s of an update (a save loading is one):
+  now only when no game frame ran.
+- Engine log copies were never deleted (now the newest 20); `files/container.sh` broke after every app update.
+- The touch widget rewrote VSync settings at every 60/120 Hz switch (pointless since the pace library); gone, and
+  VSync is off in the phone settings.
+- `/proc/cpuinfo` had no CPU name for the engine: the lobby's analytics threw at every start, BAR's system info
+  took "11102MB RAM" for the CPU. The container now gets a `model name` line.
+- The interface scale ignores the floating window (no reload when the app goes to the background).
+- `[perf]` logs memory now (Android reported low memory all through an 8v8).
+Found, not ours: BAR's save-load crash also happens on Windows (upstream). Written up, not built: the lobby's missing
+launcher bridge (Next steps). Verified on the laptop engine: the per-screen interface scale (one reload, no loop)
+and the touch widget's cost (none measurable).
 
 ## Phone session (2026-10-25, 17:00–20:00): first runs on the Fold7
 
