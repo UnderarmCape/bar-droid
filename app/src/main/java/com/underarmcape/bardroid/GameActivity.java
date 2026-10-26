@@ -58,6 +58,7 @@ public class GameActivity extends MainActivity {
             touch.screenSize(w, h, refreshHz());
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
+        addCatchupView();
         prefer60Hz();
         // The refresh rate settles after a mode request or a fold: keep the widget's frame cap in step.
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
@@ -139,9 +140,11 @@ public class GameActivity extends MainActivity {
         super.onStart();
         setFlag(hiddenFlag(BarApp.get().paths()), false, "game screen shown: the engine draws");
         if (!isInPictureInPictureMode()) setFlag(floatingFlag(BarApp.get().paths()), false, "full screen: 30 fps cap");
+        catchupHandler.post(catchupCheck);
     }
     @Override protected void onStop() {
         setFlag(hiddenFlag(BarApp.get().paths()), true, "game screen hidden: the engine stops drawing");
+        catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
         super.onStop();
     }
 
@@ -153,9 +156,66 @@ public class GameActivity extends MainActivity {
         setFlag(floatingFlag(BarApp.get().paths()), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
     }
 
-    /** The flags libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden, /tmp/bardroid-floating). */
+    /** The flags libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden, -floating, -catchup). */
     static java.io.File hiddenFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-hidden"); }
     static java.io.File floatingFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-floating"); }
+    static java.io.File catchupFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-catchup"); }
+
+    // Catching up with a running game far behind (spectating, a reconnect; Kailil: "The catchup is still slow"): the
+    // touch widget writes LuaUI/Config/bardroid_catchup.txt, "<game frame> <server frame> <speed>", about once a second
+    // of real time. Meanwhile the engine draws nothing (the catch-up flag: a hidden window for the engine) and this
+    // screen shows the progress over the last picture. A file not written for CATCHUP_STALE_MS (the widget gone, the
+    // game ended) counts as caught up.
+    private static final long CATCHUP_STALE_MS = 10000;
+    private android.widget.TextView catchupView;
+    private final android.os.Handler catchupHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable catchupCheck = new Runnable() {
+        @Override public void run() {
+            updateCatchup();
+            catchupHandler.postDelayed(this, 500);
+        }
+    };
+
+    private void addCatchupView() {
+        android.widget.TextView v = new android.widget.TextView(this);
+        float dp = getResources().getDisplayMetrics().density;
+        v.setTextColor(0xFFFFFFFF);
+        v.setBackgroundColor(0xC0000000);
+        v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
+        v.setGravity(android.view.Gravity.CENTER);
+        v.setPadding((int) (24 * dp), (int) (16 * dp), (int) (24 * dp), (int) (16 * dp));
+        v.setVisibility(View.GONE);
+        addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER));
+        catchupView = v;
+    }
+
+    private void updateCatchup() {
+        Paths p = BarApp.get().paths();
+        java.io.File f = new java.io.File(p.bar, "LuaUI/Config/bardroid_catchup.txt");
+        String[] v = null;
+        if (System.currentTimeMillis() - f.lastModified() < CATCHUP_STALE_MS) {
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
+                String line = r.readLine();
+                if (line != null) v = line.trim().split(" ");
+            } catch (java.io.IOException ignored) {}
+        }
+        boolean on = v != null && v.length == 3;
+        setFlag(catchupFlag(p), on, on ? "catching up: the engine draws nothing until caught up" : "caught up: the engine draws");
+        if (catchupView == null) return;
+        if (!on) { catchupView.setVisibility(View.GONE); return; }
+        try {
+            float speed = Float.parseFloat(v[2]);   // 0 until the widget has measured a few seconds
+            catchupView.setText(String.format(java.util.Locale.US, "Catching up\n%s of %s%s",
+                    gameClock(Long.parseLong(v[0])), gameClock(Long.parseLong(v[1])), speed > 0 ? "   x" + v[2] : ""));
+            catchupView.setVisibility(View.VISIBLE);
+        } catch (NumberFormatException e) { catchupView.setVisibility(View.GONE); }
+    }
+
+    private static String gameClock(long frame) {
+        long s = frame / 30;
+        return String.format(java.util.Locale.US, "%d:%02d", s / 60, s % 60);
+    }
 
     private static void setFlag(java.io.File flag, boolean on, String change) {
         try {

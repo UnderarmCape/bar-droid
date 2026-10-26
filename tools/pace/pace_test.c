@@ -81,6 +81,12 @@ __attribute__((constructor)) static void pace_test(void) {
     check("then nothing more", !wait_window_event(poll, id, &ev));
     unlink("/tmp/bardroid-hidden");
     check("flag gone: SHOWN (1)", wait_window_event(poll, id, &ev) && ev == 1);
+    /* catching up with a running game: the same with /tmp/bardroid-catchup */
+    fd = open("/tmp/bardroid-catchup", O_WRONLY | O_CREAT, 0600);
+    close(fd);
+    check("catch-up flag set: HIDDEN (2)", wait_window_event(poll, id, &ev) && ev == 2);
+    unlink("/tmp/bardroid-catchup");
+    check("catch-up flag gone: SHOWN (1)", wait_window_event(poll, id, &ev) && ev == 1);
 
     /* the ioctl answer: the sync-file export fails with ENOTTY, anything else reaches the kernel (EBADF on fd -1) */
     int (*io)(int, unsigned long, ...) = (int (*)(int, unsigned long, ...)) dlsym(RTLD_DEFAULT, "ioctl");

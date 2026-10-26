@@ -160,6 +160,10 @@ public class GameService extends Service {
             GameActivity.hiddenFlag(paths).delete();
             //noinspection ResultOfMethodCallIgnored
             GameActivity.floatingFlag(paths).delete();
+            //noinspection ResultOfMethodCallIgnored
+            GameActivity.catchupFlag(paths).delete();
+            //noinspection ResultOfMethodCallIgnored
+            new java.io.File(paths.bar, "LuaUI/Config/bardroid_catchup.txt").delete();
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(ui);
 

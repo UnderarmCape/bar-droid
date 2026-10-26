@@ -15,6 +15,8 @@
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
 --                                                                               0 = map, 2 = off the map: void or sky)
+--   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame> <speed>  (only while far behind a running
+--                                                                               game: the engine then draws nothing)
 --
 -- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
 -- build (BAR Controller Support v0.8.5, the app's singleplayer game) does: left stick pans (LT up to 2.75x faster),
@@ -91,6 +93,7 @@ end
 
 function widget:Initialize()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
+	pcall(os.remove, "LuaUI/Config/bardroid_catchup.txt") -- left by a reload while catching up: written again if still behind
 	-- the controller game: BAR's developer game ("$VERSION") with v0.8.5's pad bridge
 	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
 	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
@@ -446,16 +449,24 @@ local function logPerf()
 end
 
 -- Joining a running game (spectating, a reconnect) replays it from the start as fast as the phone can (Kailil,
--- 2026-10-26: a 40 min game "crawls at a 1-2x catch up speed"). While behind, the engine draws after every stretch of
--- simulation so that drawing gets MinSimDrawBalance of the time (0.15: 9-21 pictures a second in that game, the GPU
--- 50-86% busy on a phone already hot). Far behind, drawing gets 2% instead (one to two pictures a second; BAR's rejoin
--- bar keeps counting): more time for the simulation and a cooler GPU, so the CPU keeps more of its clock. Set in
--- memory only (the config overlay, never saved) and put back when caught up. Not for replays (watched at speed).
+-- 2026-10-26: a 40 min game "crawls at a 1-2x catch up speed"). Two joins on a hot phone: the engine kept drawing
+-- 9-26 pictures a second all along (the GPU 50-99% busy, at its lowest clock), CPUs capped at 1.0-2.0 GHz, x1.6-4.
+-- Lowering the engine's draw share (MinSimDrawBalance) alone did not stop that drawing. So far behind (more than 30 s,
+-- not in replays) this widget writes CATCHUP about once a second, "<game frame> <server frame> <speed>"; the app then
+-- shows the progress over the game and hands the engine a hidden window (libbardroid_pace.so, /tmp/bardroid-catchup):
+-- the engine draws nothing (a 10 ms sleep per pass, sound muted), as when the phone is locked, until this file is gone.
+-- The simulation gets the time and the GPU cools. Update stops with the drawing, so this runs from GameFrame.
+-- MinSimDrawBalance 0.02 / MinDrawFPS 1 (config overlay, never saved) make each stretch of simulation between those
+-- passes ~50 times the last picture's cost instead of ~6. springsettings bardroid_catchup = 0 turns it all off.
+local CATCHUP = "LuaUI/Config/bardroid_catchup.txt"
 local CATCHUP_ENTER, CATCHUP_LEAVE = 30 * 30, 5 * 30 -- game frames behind the server
 local CATCHUP_BALANCE, CATCHUP_MIN_DRAW_FPS = 0.02, 1
 local CATCHUP_LOG_EVERY = 30 -- seconds
+local CATCHUP_PAUSE = 0.05 -- seconds between two simulated frames that count as a pause (drawing, or no data yet)
 local serverFrame, serverFrameAt -- GameProgress: the server's frame, every 150 frames
 local catchup -- while catching up: the engine's own settings, and where the last log line was
+local catchupChecked, lastGameFrameAt
+local speedFrame, speedAt, speedNow = nil, nil, 0 -- game speed over the last few seconds, for the app's progress
 
 local function gameClock(frame)
 	local s = math.floor(frame / 30)
@@ -467,6 +478,7 @@ local function endCatchup()
 		Spring.SetConfigFloat("MinSimDrawBalance", catchup.balance, true)
 		Spring.SetConfigInt("MinDrawFPS", catchup.minDrawFps, true)
 		catchup = nil
+		pcall(os.remove, CATCHUP)
 	end
 end
 
@@ -474,37 +486,65 @@ function widget:GameProgress(frame)
 	serverFrame, serverFrameAt = frame, spGetTimer()
 end
 
-local function updateCatchup()
+local function updateCatchup(now, frame)
 	-- (springsettings bardroid_catchup = 0: the engine's own balance, for comparisons)
 	if not serverFrame or Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then
+		endCatchup()
 		return
 	end
-	local now = spGetTimer()
 	local speed, _, paused = Spring.GetGameSpeed()
 	local server = serverFrame + (paused and 0 or (speed or 1) * 30 * spDiffTimers(now, serverFrameAt))
-	local frame = Spring.GetGameFrame()
 	local behind = server - frame
-	if not catchup then
-		if behind > CATCHUP_ENTER then
-			catchup = { balance = Spring.GetConfigFloat("MinSimDrawBalance", 0.15),
-				minDrawFps = Spring.GetConfigInt("MinDrawFPS", 2), frame = frame, time = now, logFrame = frame, logTime = now }
-			Spring.SetConfigFloat("MinSimDrawBalance", CATCHUP_BALANCE, true)
-			Spring.SetConfigInt("MinDrawFPS", CATCHUP_MIN_DRAW_FPS, true)
-			Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind: drawing less until caught up",
-				gameClock(frame), gameClock(behind)))
-		end
-		return
+	if not speedAt or spDiffTimers(now, speedAt) >= 3 then
+		speedNow = speedAt and (frame - speedFrame) / 30 / spDiffTimers(now, speedAt) or 0
+		speedFrame, speedAt = frame, now
 	end
-	local logSeconds = spDiffTimers(now, catchup.logTime)
+	if not catchup then
+		if behind <= CATCHUP_ENTER then
+			return
+		end
+		catchup = { balance = Spring.GetConfigFloat("MinSimDrawBalance", 0.15),
+			minDrawFps = Spring.GetConfigInt("MinDrawFPS", 2), frame = frame, time = now, logFrame = frame, logTime = now,
+			pauses = 0, pauseTime = 0 }
+		Spring.SetConfigFloat("MinSimDrawBalance", CATCHUP_BALANCE, true)
+		Spring.SetConfigInt("MinDrawFPS", CATCHUP_MIN_DRAW_FPS, true)
+		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind: no drawing until caught up",
+			gameClock(frame), gameClock(behind)))
+	end
 	if behind < CATCHUP_LEAVE then
 		local seconds = spDiffTimers(now, catchup.time)
 		Spring.Echo(string.format("[bardroid-catchup] caught up at %s after %.0f s (x%.1f on average)", gameClock(frame),
 			seconds, (frame - catchup.frame) / 30 / math.max(seconds, 1)))
 		endCatchup()
-	elseif logSeconds >= CATCHUP_LOG_EVERY then
-		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind, x%.1f over %.0f s, %d units", gameClock(frame),
-			gameClock(behind), (frame - catchup.logFrame) / 30 / logSeconds, logSeconds, #(Spring.GetAllUnits() or {})))
-		catchup.logFrame, catchup.logTime = frame, now
+		return
+	end
+	local f = io.open(CATCHUP, "w")
+	if f then
+		f:write(string.format("%d %d %.1f\n", frame, math.floor(server), speedNow))
+		f:close()
+	end
+	local logSeconds = spDiffTimers(now, catchup.logTime)
+	if logSeconds >= CATCHUP_LOG_EVERY then
+		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind, x%.1f over %.0f s, %d units; %d pauses over %d ms"
+			.. " between frames, %.1f s in all", gameClock(frame), gameClock(behind),
+			(frame - catchup.logFrame) / 30 / logSeconds, logSeconds, #(Spring.GetAllUnits() or {}), catchup.pauses,
+			CATCHUP_PAUSE * 1000, catchup.pauseTime))
+		catchup.logFrame, catchup.logTime, catchup.pauses, catchup.pauseTime = frame, now, 0, 0
+	end
+end
+
+local function gameFrame(frame)
+	local now = spGetTimer()
+	if catchup and lastGameFrameAt then
+		local gap = spDiffTimers(now, lastGameFrameAt)
+		if gap > CATCHUP_PAUSE then
+			catchup.pauses, catchup.pauseTime = catchup.pauses + 1, catchup.pauseTime + gap
+		end
+	end
+	lastGameFrameAt = now
+	if not catchupChecked or spDiffTimers(now, catchupChecked) >= 1 then
+		catchupChecked = now
+		updateCatchup(now, frame)
 	end
 end
 
@@ -634,7 +674,6 @@ local function update(dt)
 	if queueCheck <= 0 then -- queues grow and shrink without a selection change
 		queueCheck = 0.5
 		updateQueueDrawing()
-		updateCatchup()
 	end
 
 	screenCheck = screenCheck - dt
@@ -671,4 +710,10 @@ end
 -- the world pass: once per drawn frame, and (unlike DrawScreen) also with the interface hidden or a window open
 function widget:DrawWorld()
 	guarded(logPerf)
+end
+
+-- once per simulated frame, drawn or not (Update stops while the engine does not draw): the catch-up check, about once
+-- a second of real time
+function widget:GameFrame(frame)
+	guarded(gameFrame, frame)
 end

@@ -27,6 +27,8 @@
  * minutes of play pay for. SDL_PollEvent below hands the engine SDL2's HIDDEN / SHOWN window event when the flag comes
  * and goes (checked twice a second; the engine polls events every loop, drawn or not). The simulation and the
  * network keep running. Only with SDL2 (its event layout); BARDROID_HIDDEN_PAUSE=0 turns it off.
+ * The same while the game catches up with a running game far behind (/tmp/bardroid-catchup, set by the app from the
+ * touch widget's progress file): no drawing, every pass of the engine's loop to the simulation, the GPU cool.
  *
  * Built by tools/build-pace.py without glibc headers: the few declarations it needs are below, and the symbols
  * resolve against the engine's libc at load time.
@@ -41,6 +43,7 @@ extern int access(const char *path, int mode);
 #define F_OK 0
 #define RTLD_DEFAULT ((void *) 0)
 #define HIDDEN_FLAG "/tmp/bardroid-hidden"
+#define CATCHUP_FLAG "/tmp/bardroid-catchup"
 /* The floating window (picture-in-picture): the X screen shrinks to it, so the engine already draws few pixels; the
    app keeps this flag meanwhile and the cap drops to FLOATING_FPS too (Kailil, 2026-10-26). Checked twice a second. */
 #define FLOATING_FLAG "/tmp/bardroid-floating"
@@ -128,7 +131,7 @@ int SDL_PollEvent(void *event) {
         long long now = now_ns();
         if (now - hidden_checked_ns >= 500000000LL) {
             hidden_checked_ns = now;
-            int hidden = access(HIDDEN_FLAG, F_OK) == 0;
+            int hidden = access(HIDDEN_FLAG, F_OK) == 0 || access(CATCHUP_FLAG, F_OK) == 0;
             if (hidden != engine_hidden) {
                 engine_hidden = hidden;
                 unsigned char *b = (unsigned char *) event;

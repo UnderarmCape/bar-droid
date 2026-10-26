@@ -30,8 +30,12 @@ function widget:Update()
 		return
 	end
 	local behind = serverFrame and (serverFrame + 30 * Spring.DiffTimers(now, serverAt) - frame) or -1
-	Spring.Echo(string.format("[catchup-probe] frame %d, %.0f behind, x%.1f, %.1f draws/s, MinSimDrawBalance %.2f",
-		frame, behind, (frame - lastFrame) / 30 / dt, (draws - lastDraws) / dt, Spring.GetConfigFloat("MinSimDrawBalance", -1)))
+	local f = io.open("LuaUI/Config/bardroid_catchup.txt", "r")   -- the touch widget's progress for the app
+	local progress = f and f:read("*l") or "none"
+	if f then f:close() end
+	Spring.Echo(string.format("[catchup-probe] frame %d, %.0f behind, x%.1f, %.1f draws/s, MinSimDrawBalance %.2f,"
+		.. " progress file: %s", frame, behind, (frame - lastFrame) / 30 / dt, (draws - lastDraws) / dt,
+		Spring.GetConfigFloat("MinSimDrawBalance", -1), progress))
 	lastTime, lastFrame, lastDraws = now, frame, draws
 	if serverFrame and behind < 150 then
 		caughtUpSince = caughtUpSince or now

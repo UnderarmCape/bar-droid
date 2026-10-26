@@ -121,15 +121,22 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   minute 25, 9-21 pictures a second all along, GPU 50-86% busy, thermal status 2-3 with the CPUs capped at 1.2-2.0
   GHz (of 3.5/4.5) and ~1 GB of memory free. The engine's catch-up loop (Recoil `rts/Net/NetCommands.cpp`
   `GetNetMessageProcessingTimeLimit`) simulates for `(1 - MinSimDrawBalance) / MinSimDrawBalance` times the last
-  picture's cost (at most `1000 / MinDrawFPS` ms) between pictures, so drawing gets 15%. Hiding the window would not
-  help: then `Game::Draw` sleeps 10 ms per pass while that stretch keeps the last picture's cost. Now
-  `bardroid_touch.lua` (from `GameProgress`, more than 30 s behind, not in replays) sets MinSimDrawBalance 0.02 and
-  MinDrawFPS 1 in the config overlay (never saved) until less than 5 s behind: 1-2 pictures a second, the rest to the
-  simulation and a cooler GPU. Logs `[bardroid-catchup]` every 30 s (game time, behind, speed, units);
-  `bardroid_catchup = 0` in springsettings turns it off. Expected: ~15% more simulation time plus whatever clock the
-  cooler GPU leaves the CPU; the simulation of a 3000-unit game on a hot phone stays the limit.
-  `tools/catchup-test.ps1` (~5 min): a headless host plays BARb vs BARb on 127.0.0.1, a windowed spectator joins
-  twice (mode off, on); on the laptop, 3 min behind: x34.7, MinSimDrawBalance 0.02 while behind, 0.15 after.
+  picture's cost (at most `1000 / MinDrawFPS` ms) between pictures, so drawing gets 15%. First try (0c3a2a7):
+  MinSimDrawBalance 0.02 / MinDrawFPS 1 in the config overlay while far behind. Kailil: "still slow"; its join
+  (15:23, phone at thermal status 3-4, CPUs capped at 960-1017 MHz, GPU at its 160 MHz floor 99% busy) still drew
+  15-26 pictures a second, x2.1-2.5. Not the network: the join's replay holds 5-6.5 KB of game messages per
+  game-second (`tools/demo-rate.py <replay.sdfz>`; msg 50 = Lua messages about half), which the server's default
+  64 KiB/s link (`LinkOutgoingBandwidth`) sends at 10-13x. Now (catch-up mode 2): more than 30 s behind (not in
+  replays) `bardroid_touch.lua` writes `LuaUI/Config/bardroid_catchup.txt` ("<frame> <server frame> <speed>", from
+  `GameFrame` about once a second: Update stops with the drawing); `GameActivity` polls it twice a second, shows
+  "Catching up 12:30 of 41:10 x2.5" over the game and keeps `/tmp/bardroid-catchup`, which `libbardroid_pace.so`
+  treats like the hidden flag (SDL HIDDEN: no drawing, a 10 ms sleep per loop pass, sound muted). The overlay
+  settings stay (each stretch of simulation ~50x the last picture's cost). A file older than 10 s counts as caught
+  up; GameService and the widget's Initialize remove leftovers. `[bardroid-catchup]` lines every 30 s also count
+  pauses over 50 ms between simulated frames: few = the CPU is the limit; many = waiting for data.
+  `bardroid_catchup = 0` in springsettings turns it off. `tools/catchup-test.ps1` (~6 min): a headless host plays
+  BARb vs BARb on 127.0.0.1, a windowed spectator joins twice (mode off, on); it checks the widget's side (the
+  engine on Windows has no pace library). `tools/pace-test.ps1` checks the catch-up flag on the phone.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
