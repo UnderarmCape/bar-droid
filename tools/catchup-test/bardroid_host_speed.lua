@@ -50,5 +50,12 @@ function widget:GameFrame(frame)
 		minuteAt = now
 		Spring.Echo(string.format("[catchup-host] game %d:00, speed %.1f (reached x%.1f), %d units", math.floor(frame / 1800),
 			speed, actual, #Spring.GetAllUnits()))
+		-- the phone's builder queue widget against BAR's API (a leak: its count runs away from the API's)
+		local q, api = WG.bardroidQueue, WG.BuilderQueueApi
+		if q and api and api.ForEachActiveBuildCommand then
+			local n = 0
+			api.ForEachActiveBuildCommand(function() n = n + 1 end)
+			Spring.Echo(string.format("[catchup-host] queue widget: %d commands, %d shapes; BAR's API: %d", q.total(), q.shown(), n))
+		end
 	end
 end
