@@ -59,6 +59,11 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   (`WG.topbar.GetPosition`) and any open window (`WG.<window>.isvisible`) as interface. Checked in a real skirmish on
   the laptop (`tools/touch-widget-test.ps1`: the old widget fails the top bar and settings cases, the new one passes).
 - The lobby bridge sends the replays' winners (Won/Lost in the Replays tab), checked against BAR's own launcher cache.
+- launch-bar.sh as it is now, dry-run on the phone (in the container, on copies of Kailil's BYAR.lua, IGL_data.lua,
+  IGL_order.lua and springsettings.cfg, a stub engine): no layer miss; it sets the Spring camera (springsettings had
+  CamMode 3, the lobby's copy 1), GroundDetail 200 → 60, the VSync keys the old touch widget left (VSync 2, VSyncGame 1)
+  off, MSAA/features, Snow/SSAO/Keys/Changes off, the Build menu, the lobby's panels and 120%; a second run changes
+  nothing. (The container's `/opt/bardroid` copy is refreshed only when a game starts.)
 - The engine update path (never run on the phone: BAR has been on 2026.07.04 all along) checked with BAR's test engine
   2026.09.01 under a scratch name: its arm64 archive downloads, the container step extracts it, `spring --version`
   runs, and it still knows every springsettings key of ours. Removed again. When BAR's launcher config moves
