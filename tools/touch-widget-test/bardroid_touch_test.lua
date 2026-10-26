@@ -8,7 +8,9 @@ end
 
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
 local frames, step, waitUntil = 0, 0, 0
-local fails = 0
+-- The interface-scale case reloads LuaUI (this widget too): the second half runs after the reload ("scale" phase).
+local phase = Spring.GetConfigString("bardroid_touchtest_phase", "")
+local fails = Spring.GetConfigInt("bardroid_touchtest_fails", 0)
 
 local function log(s)
 	Spring.Echo("[touchtest] " .. s)
@@ -149,5 +151,35 @@ cases = {
 		Spring.WarpMouse(math.floor(vsx * 0.5) + 3, math.floor(vsy * 0.45))
 	end,
 	function() expect("map after the window closed", 0) end,
+	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
+	function()
+		Spring.SetConfigString("bardroid_touchtest_phase", "scale")
+		Spring.SetConfigInt("bardroid_touchtest_fails", fails)
+		local f = io.open("LuaUI/Config/bardroid_screen.txt", "w")
+		f:write("1680 720 60 0\n")
+		f:close()
+	end,
+	function() end, -- the touch widget looks at the screen file every 0.5 s
+	function() end,
+	function()
+		fails = fails + 1
+		log("FAIL cover screen: no interface reload within 20 frames")
+	end,
 	function() log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED")) end,
 }
+
+if phase == "scale" then -- after the reload: the scale is set, and the next look at the screen file reloads nothing
+	cases = {
+		function() near("cover screen: interface scale", Spring.GetConfigFloat("ui_scale", 1), 2.0, 0.001) end,
+		function() -- the touch widget has read the screen file again by now (every 0.5 s)
+			local guard = Spring.GetConfigString("bardroid_ui_scale_reload", "?")
+			local ok = guard == ""
+			if not ok then
+				fails = fails + 1
+			end
+			log((ok and "PASS " or "FAIL ") .. "no second reload (guard '" .. guard .. "')")
+			Spring.SetConfigString("bardroid_touchtest_phase", "")
+		end,
+		function() log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED")) end,
+	}
+end
