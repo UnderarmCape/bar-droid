@@ -74,7 +74,7 @@ public class LauncherActivity extends AppCompatActivity {
     private void refresh() {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
-        statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s);
+        statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s + "\n" + Updater.summary(BarApp.get().paths()));
     }
 
     private void appendLog(String line) {
@@ -121,6 +121,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
         ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
+        ((CheckBox) findViewById(R.id.cbAutoUpdate)).setChecked(Prefs.autoUpdate);
         ((CheckBox) findViewById(R.id.cbShadows)).setChecked(Prefs.shadows);
         ((CheckBox) findViewById(R.id.cbNoSeccomp)).setChecked(Prefs.noSeccomp);
         ((CheckBox) findViewById(R.id.cbVerboseX)).setChecked(Prefs.verboseX);
@@ -141,6 +142,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
         Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();
+        Prefs.autoUpdate = ((CheckBox) findViewById(R.id.cbAutoUpdate)).isChecked();
         Prefs.shadows = ((CheckBox) findViewById(R.id.cbShadows)).isChecked();
         Prefs.noSeccomp = ((CheckBox) findViewById(R.id.cbNoSeccomp)).isChecked();
         Prefs.verboseX = ((CheckBox) findViewById(R.id.cbVerboseX)).isChecked();

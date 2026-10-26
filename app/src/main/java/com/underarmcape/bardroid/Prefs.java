@@ -15,7 +15,8 @@ public final class Prefs {
     private static final String DEBIAN_ARCH = EMULATOR_BUILD ? "amd64" : "arm64v8";       // debuerreotype branch names
     private static final String ENGINE_ARCH = EMULATOR_BUILD ? "amd64-linux" : "arm64-linux";
 
-    // Pinned content versions. The engine must match what BAR's servers run for online play.
+    // Pinned content versions for a first install. The engine must match what BAR's servers run for online play:
+    // after the install, Updater follows BAR's launcher config (engine and rapid tags, docs/UPDATES.md).
     public static String engineVersion = "2026.07.04";
     public static String engineUrl = "https://github.com/beyond-all-reason/RecoilEngine/releases/download/2026.07.04/recoil_2026.07.04_" + ENGINE_ARCH + ".7z";
     public static String rootfsManifestUrl = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-" + DEBIAN_ARCH + "/trixie/oci/blobs/image-manifest.json";
@@ -61,6 +62,8 @@ public final class Prefs {
      * BAR's developer game (Installer.installGamepadGame); online games always play BAR's released game.
      */
     public static boolean gamepadGame = true;
+    /** Each lobby/skirmish start first updates BAR like its PC launcher (Updater, docs/UPDATES.md). */
+    public static boolean autoUpdate = true;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -106,6 +109,7 @@ public final class Prefs {
         fps60 = s.getBoolean("fps60", fps60);
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
+        autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -130,6 +134,7 @@ public final class Prefs {
                 .putBoolean("fps60", fps60)
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
+                .putBoolean("autoUpdate", autoUpdate)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

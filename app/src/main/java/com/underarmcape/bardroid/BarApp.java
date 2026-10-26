@@ -20,6 +20,7 @@ public class BarApp extends LorieApp {
         paths.mkdirs();
         Log.init(paths.logs);
         Prefs.load(this);
+        Updater.useInstalled(paths);   // the engine and tags of the last BAR update
         Log.i("app", "BAR Droid " + BuildConfig.VERSION_NAME + " starting; nativeLibDir=" + paths.nativeLibDir);
     }
 

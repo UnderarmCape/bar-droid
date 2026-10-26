@@ -5,6 +5,10 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
+import android.view.Gravity;
+import android.view.ViewGroup;
+import android.widget.TextView;
 
 /**
  * What the app icon opens: straight into the lobby, or back to a game that is running, with BAR's icon on black in
@@ -17,6 +21,21 @@ public class StartActivity extends Activity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     /** The game screen (its own task) takes over: this task leaves recent apps, so the app shows there once. */
     private boolean toGame;
+    /** The BAR update check (Updater) shows its status under the icon; the give-up clock waits for it. */
+    private TextView updateView;
+    private long waitingSince;
+    private final Runnable tick = new Runnable() {
+        @Override public void run() {
+            if (isFinishing()) return;
+            String s = GameService.status();
+            long now = SystemClock.elapsedRealtime();
+            boolean updating = s.startsWith("update: ") || s.startsWith("BAR update");
+            if (updating) waitingSince = now;
+            updateView.setText(updating ? s.replaceFirst("^update: ", "") : "");
+            if (now - waitingSince > GIVE_UP_MS) { toGame = false; openLauncher(); finish(); return; }
+            handler.postDelayed(this, 500);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,7 +58,14 @@ public class StartActivity extends Activity {
         }
         GameService.start(this, GameService.ACTION_PLAY, "lobby");
         toGame = true;
-        handler.postDelayed(() -> { if (!isFinishing()) { toGame = false; openLauncher(); finish(); } }, GIVE_UP_MS);
+        updateView = new TextView(this);
+        updateView.setTextColor(0xffb0b0b0);
+        updateView.setTextSize(14);
+        updateView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        updateView.setPadding(0, 0, 0, 48);
+        setContentView(updateView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        waitingSince = SystemClock.elapsedRealtime();
+        handler.post(tick);
     }
 
     /** The game screen (its own task) or the launcher now covers this one. */

@@ -39,6 +39,7 @@ public class GameService extends Service {
     private VirglServer virgl;
     private Proc engine;
     private Installer installer;
+    private volatile Updater updater;
     private PowerManager.WakeLock wakeLock;
     private Thread worker;
 
@@ -108,6 +109,7 @@ public class GameService extends Service {
         installer = new Installer(this, paths);
         try {
             installer.installAll((step, detail, pct) -> setStatus("install " + step + ": " + detail + (pct >= 0 ? " (" + pct + "%)" : "")));
+            update(true);   // Install / Update also updates BAR, with automatic updates off too
             setStatus("installed");
         } catch (InterruptedException e) {
             setStatus("install stopped");
@@ -117,7 +119,15 @@ public class GameService extends Service {
         }
     }
 
+    /** BAR's PC launcher's update, then the Android layer on top (docs/UPDATES.md); its status shows on the splash. */
+    private Updater update(boolean online) throws InterruptedException {
+        Updater u = updater = new Updater(paths);
+        u.check(online, detail -> setStatus("update: " + detail));
+        return u;
+    }
+
     private void play(String mode) {
+        updater = null;
         Installer inst = new Installer(this, paths);
         if (!inst.isInstalled() && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
@@ -134,7 +144,9 @@ public class GameService extends Service {
                 catch (InterruptedException e) { throw e; }
                 catch (Exception e) { Log.e("svc", "controller game not installed", e); }
             }
+            Updater up = "lobby".equals(mode) || "skirmish".equals(mode) ? update(Prefs.autoUpdate) : null;
             inst.writeGameFiles();                          // refresh settings + start script
+            if (up != null) up.applyLauncherSettings();
             setStatus("starting X server");
             xserver.start();
             if (!xserver.waitForSocket(15000)) { setStatus("X server did not start (see log)"); xserver.stop(); return; }
@@ -159,14 +171,26 @@ public class GameService extends Service {
             Proot proot = new Proot(paths);
             List<String> cmd = new ArrayList<>();
             cmd.add("/bin/bash"); cmd.add("/opt/bardroid/launch-bar.sh");
-            AudioPump audio = Prefs.audio ? new AudioPump(new java.io.File(paths.rootfsTmp, "bardroid-audio.fifo")) : null;
-            if (audio != null) audio.start();
-            engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
-            setStatus("running (" + mode + ")");
-            long started = android.os.SystemClock.elapsedRealtime();
-            int rc = engine.waitFor();
-            if (audio != null) audio.stop();
-            setStatus("engine exited (" + rc + ")");
+            long started;
+            int rc;
+            for (boolean again = false; ; again = true) {
+                env.put("ENGINE_VER", Prefs.engineVersion);
+                AudioPump audio = Prefs.audio ? new AudioPump(new java.io.File(paths.rootfsTmp, "bardroid-audio.fifo")) : null;
+                if (audio != null) audio.start();
+                engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
+                setStatus("running (" + mode + ")");
+                started = android.os.SystemClock.elapsedRealtime();
+                rc = engine.waitFor();
+                if (audio != null) audio.stop();
+                setStatus("engine exited (" + rc + ")");
+                if (up == null || closing) break;
+                // The first start of a BAR update failed fast: once more on the last good version, same display.
+                Updater.Result r = up.launchEnded(rc, android.os.SystemClock.elapsedRealtime() - started);
+                if (again || r != Updater.Result.ROLLED_BACK) break;
+                setStatus("BAR update failed to start: back to engine " + Prefs.engineVersion);
+                inst.writeGameFiles();
+                up.applyLauncherSettings();
+            }
             if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
                 Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
                 showLauncher = rc != 0;   // quitting the lobby closes the app; a failure shows the launcher and its log
@@ -197,6 +221,7 @@ public class GameService extends Service {
 
     private void stopEverything() {
         if (installer != null) installer.cancel();
+        if (updater != null) updater.cancel();
         if (engine != null) engine.kill();
         Proc.killAll();          // container setup steps (proot) started by the installer
         xserver.stop();

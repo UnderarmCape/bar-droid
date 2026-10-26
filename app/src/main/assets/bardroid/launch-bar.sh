@@ -34,6 +34,10 @@ export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
 
 log() { echo "[launch] $*"; }
+# Android layer (docs/UPDATES.md): a tweak of BAR's files that no longer finds its target is never skipped silently.
+# The app reads the list after the engine exits and shows it in the launcher.
+: > "$LOGS/android-layer.txt"
+layer_miss() { log "!!! ANDROID LAYER: $* -- BAR changed this; fix launch-bar.sh"; echo "$*" >> "$LOGS/android-layer.txt"; }
 
 # 1. Wait for the X server socket (the app starts it right before us).
 for i in $(seq 1 100); do
@@ -92,6 +96,8 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
     widget_order "Build menu" 165; widget_order "Grid menu" 0
+    grep -q '\["Build menu"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
+      || layer_miss "controller game: Build menu / Grid menu order not set in LuaUI/Config/BYAR.lua"
     touch "$BAR/.bardroid-gamepad-menus"
   elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
     widget_order "Build menu" ""; widget_order "Grid menu" ""
@@ -104,6 +110,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
     else
       sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tgameConfigName = \"$LOBBY_GAME\",/" "$igl"
     fi
+    grep -q "gameConfigName = \"$LOBBY_GAME\"" "$igl" || layer_miss "singleplayer game: gameConfigName not set in LuaMenu/Config/IGL_data.lua"
   fi
   log "singleplayer game: $LOBBY_GAME"
 fi
@@ -121,21 +128,34 @@ case "$MODE" in
     ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
-    # config and shuts down (a black screen).
-    printf '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "%s"}\n' \
-      "$LOBBY_GAME" > "$BAR/chobby_config.json"
+    # config and shuts down (a black screen). The app's update check saves BAR's current one; the built-in copy is
+    # the fallback.
+    src="$BAR/.bardroid-chobby_config.json"
+    if [ -f "$src" ] && grep -q '"game": *"[^"]*"' "$src"; then
+      sed "s/\"game\": *\"[^\"]*\"/\"game\": \"$LOBBY_GAME\"/" "$src" > "$BAR/chobby_config.json"
+    else
+      [ -f "$src" ] && layer_miss "chobby_config.json: BAR's launcher config has no \"game\" key (built-in copy used)"
+      printf '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "%s"}\n' \
+        "$LOBBY_GAME" > "$BAR/chobby_config.json"
+    fi
     # Once: Chobby's "draw at full speed" on (active lobby 60 fps instead of 30). Its settings exist after the first
     # lobby run; later changes in the lobby's Settings stay the player's.
     if [ ! -f "$BAR/.bardroid-lobby-fullspeed" ] && [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ]; then
-      sed -i 's/drawAtFullSpeed = false/drawAtFullSpeed = true/' "$BAR/LuaMenu/Config/IGL_data.lua" \
-        && touch "$BAR/.bardroid-lobby-fullspeed" && log "lobby: draw at full speed"
+      if grep -q 'drawAtFullSpeed = ' "$BAR/LuaMenu/Config/IGL_data.lua"; then
+        sed -i 's/drawAtFullSpeed = false/drawAtFullSpeed = true/' "$BAR/LuaMenu/Config/IGL_data.lua" \
+          && touch "$BAR/.bardroid-lobby-fullspeed" && log "lobby: draw at full speed"
+      else
+        layer_miss "lobby full speed: no drawAtFullSpeed in LuaMenu/Config/IGL_data.lua"
+      fi
     fi
     # Chobby's "Resolution limiter" shrinks the window to Spring.GetScreenGeometry() on every resize, but SDL keeps the
     # screen size it saw at startup: after a fold or unfold it fought the X server (which keeps the window at the screen
     # size, patch 0003) twice a second, toggling fullscreen each time (black flicker). 0 disables a LuaMenu widget.
     order="$BAR/LuaMenu/Config/IGL_order.lua"
     if [ -f "$order" ]; then
-      sed -i 's/\["Resolution limiter"\] = [0-9]*/["Resolution limiter"] = 0/' "$order"
+      sed -i 's/\["Resolution limiter"\] *= *[0-9]*/["Resolution limiter"] = 0/' "$order"
+      grep -q '\["Resolution limiter"\]' "$order" || sed -i '0,/^return *{/s//&\n\t["Resolution limiter"] = 0,/' "$order"
+      grep -q '\["Resolution limiter"\] = 0' "$order" || layer_miss "Resolution limiter not off in LuaMenu/Config/IGL_order.lua"
     else
       mkdir -p "$BAR/LuaMenu/Config" && printf 'return {\n\t["Resolution limiter"] = 0,\n}\n' > "$order"
     fi
@@ -146,6 +166,8 @@ case "$MODE" in
   *) log "unknown MODE=$MODE"; rc=2 ;;
 esac
 log "spring exited with $rc"
+touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 grep -E "GL version|GLSL version|GL4 support|S3TC|GL_VENDOR|GL_RENDERER|Video RAM|Error|error|OOM|Segmentation|desync" "$BAR/infolog.txt" 2>/dev/null | head -n 60
 exit $rc

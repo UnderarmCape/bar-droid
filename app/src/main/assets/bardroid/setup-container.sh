@@ -5,6 +5,7 @@
 #   setup-container.sh engine  /root/downloads/engine.7z  2026.07.04
 #   setup-container.sh content byar:test byar-chobby:test "Supreme Isthmus v2.1"  2026.07.04
 #   setup-container.sh gamepad byar:git:<commit> 2026.07.04
+#   setup-container.sh rapid   byar:test 2026.07.04          (Updater: one rapid tag, docs/UPDATES.md)
 #   setup-container.sh import  2026.07.04
 #   setup-container.sh check
 set -u
@@ -90,6 +91,17 @@ case "$step" in
     log "downloading $tag (only files missing from the pool)"
     "$prd" --filesystem-writepath "$BAR" --download-game "$tag" || { log "download failed"; exit 51; }
     log "ok"
+    ;;
+
+  rapid)
+    # The update check at every start, as BAR's launcher runs pr-downloader on its games; exits with pr-downloader's
+    # code (5 = disk too full).
+    tag="${1:?rapid tag}"; ver="${2:?engine version}"
+    prd_setup "$ver"
+    log "updating $tag (only files missing from the pool)"
+    "$prd" --filesystem-writepath "$BAR" --download-game "$tag"; rc=$?
+    [ $rc -eq 0 ] && log "ok" || log "pr-downloader exited with $rc"
+    exit $rc
     ;;
 
   import)

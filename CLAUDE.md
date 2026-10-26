@@ -29,6 +29,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   shmem and ANGLE, Debian busybox), `tools/build-proot.py <abi>` (proot + loader, NDK build with our ioctl filter; run
   after fetch-prebuilts, it links its talloc/shmem) and `tools/build-virgl.py <abi>` (virglrenderer + libepoxy, NDK
   build with our DXT fix).
+- `Updater` + `docs/UPDATES.md` — every lobby/skirmish start updates engine, game and lobby like BAR's PC launcher
+  (its launcher config), re-applies the Android layer (each tweak logs `!!! ANDROID LAYER` when its target is gone)
+  and rolls back a set that fails fast on its first start. Launcher setting "Update BAR at every start".
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (camera, window size on fold/unfold, frame cap,
   "is the pointer on the interface" answers); `GameActivity` wires them up.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
