@@ -71,6 +71,13 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   unfolding works perfectly** (lobby, either starting screen).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
+- **Memory (spectated 8v8, one snapshot each):** `recoil-main` held 5.2 GB anonymous (3.4 GB swapped), GPU (kgsl)
+  only 341 MB; Android killed the app in the background for `LOW_MEMORY` (`dumpsys activity exit-info`).
+  `VFSCacheArchiveFiles = 0` (the engine kept every file read from the pool archive in memory, decompressed) and
+  `TextureMemPoolSize = 0` (512 MB image pool): 5.6 → 4.5 GB, phone free 1.1 → 1.5 GB. The rest is engine data
+  kept on purpose (largest anonymous region 652 MB, nearly all swapped; QTPFS 234 MB; mimalloc already purges
+  freed memory). Leaving the game now opens a floating window (Termux:X11 `PIP` pref, set once in
+  `BarApp.applyDisplayDefaults`): visible, so Android almost never kills it. Background survival not yet confirmed.
 - **Black squares for units zoomed out** (strategic icons): the engine builds its icon atlas (and the projectile
   atlas the Perlin smoke draws into) as `GL::Texture2D(..., wantCompress = true)` and renders into it through an FBO.
   With `CompressTextures = 1` Freedreno picks a compressed format, which is not color-renderable:

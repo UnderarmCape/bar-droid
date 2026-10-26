@@ -30,6 +30,11 @@ public class BarApp extends LorieApp {
      */
     private void applyDisplayDefaults() {
         android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        // Once, also for existing installs: leaving the game turns it into a floating window (Termux:X11's "PIP mode",
+        // X screen size kept). A visible window is almost never killed for memory; a background app with a
+        // notification is (a spectated match got LOW_MEMORY-killed). Switchable under Display settings.
+        if (!sp.getBoolean("bardroid_pip_default_v1", false))
+            sp.edit().putBoolean("PIP", true).putBoolean("bardroid_pip_default_v1", true).apply();
         if (sp.getBoolean("bardroid_display_defaults_v3", false)) return;
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         int shortSide = Math.min(dm.widthPixels, dm.heightPixels);
