@@ -5,7 +5,8 @@ Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **
 (~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB (serial R3CY70B9VRH) or Wi-Fi
 `adb connect 192.168.1.196:5555` (after `adb tcpip 5555`, until the phone reboots). Kailil checks fps and sound
 themselves: do not run monitoring on the phone while Kailil plays. Install every new phone build right away, even
-over a running game; never ask first (Kailil).
+over a running game; never ask first (Kailil). Test on the phone only (Kailil, 2026-10-25): Kailil does the check
+(fold, play, lobby), you read the logs; no emulator, and don't drive the phone's game yourself unless asked.
 
 ## Architecture in one breath
 Unmodified official **Recoil engine** (amd64 build for the emulator, arm64 for phones) runs inside a **Debian trixie

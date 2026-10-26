@@ -62,7 +62,10 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
   (`GetWindowPosSizeBounded`): started unfolded, the cover screen's 1680x720 became 1456x720. For the same reason the
   widget must never call `Spring.SetWindowGeometry` (it did as a fallback and kept re-clamping). Each X screen size
   the app sees is logged (`[display]` in launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three
-  resizes while loading, in game); the ConfigNotify rule only on the phone (Kailil).
+  resizes while loading, in game); the ConfigNotify rule only on the phone (Kailil). Its first version called
+  present's `ConfigNotify` without unwrapping, so present's own unwrap/rewrap dropped ours after one call (found with
+  the `screen`/`fit window` lines lorie logs to logcat, tag LorieNative). The phone's logcat buffer is set to 5 MB
+  (`adb logcat -G 16M`; the app floods it otherwise).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
 - **Black squares for units zoomed out** (strategic icons): the engine builds its icon atlas (and the projectile

@@ -1,5 +1,5 @@
 diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
-index c4ad7f9..17bbf94 100644
+index c4ad7f9..7d1d41c 100644
 --- a/lorie/src/main/cpp/lorie/InitOutput.c
 +++ b/lorie/src/main/cpp/lorie/InitOutput.c
 @@ -40,6 +40,7 @@
@@ -10,7 +10,7 @@ index c4ad7f9..17bbf94 100644
  
  #include "lorie.h"
  
-@@ -689,6 +690,43 @@ static int lorieSetPixmapVisitWindow(WindowPtr window, void *data) {
+@@ -689,10 +690,56 @@ static int lorieSetPixmapVisitWindow(WindowPtr window, void *data) {
      return WT_DONTWALKCHILDREN;
  }
  
@@ -27,6 +27,7 @@ index c4ad7f9..17bbf94 100644
 +            continue;
 +        if (pWin->drawable.width == pScreen->width && pWin->drawable.height == pScreen->height)
 +            continue;
++        log(INFO, "fit window 0x%x %dx%d -> %dx%d", (unsigned) pWin->drawable.id, pWin->drawable.width, pWin->drawable.height, pScreen->width, pScreen->height);
 +        ConfigureWindow(pWin, CWX | CWY | CWWidth | CWHeight, vlist, serverClient);
 +    }
 +}
@@ -43,7 +44,13 @@ index c4ad7f9..17bbf94 100644
 +static ConfigNotifyProcPtr lorieSavedConfigNotify;
 +static int lorieConfigNotify(WindowPtr pWin, int x, int y, int w, int h, int bw, WindowPtr pSib) {
 +    ScreenPtr pScreen = pWin->drawable.pScreen;
-+    int ret = lorieSavedConfigNotify ? lorieSavedConfigNotify(pWin, x, y, w, h, bw, pSib) : Success;
++    int ret = Success;
++    // Unwrap around the call: the wrapped function (present's) rewraps pScreen->ConfigNotify itself.
++    pScreen->ConfigNotify = lorieSavedConfigNotify;
++    if (pScreen->ConfigNotify)
++        ret = pScreen->ConfigNotify(pWin, x, y, w, h, bw, pSib);
++    lorieSavedConfigNotify = pScreen->ConfigNotify;
++    pScreen->ConfigNotify = lorieConfigNotify;
 +    if (ret == Success && pWin->parent == pScreen->root && pWin->mapped && !pWin->overrideRedirect
 +            && pWin->drawable.class == InputOutput && x == 0 && y == 0
 +            && (w != pScreen->width || h != pScreen->height))
@@ -54,7 +61,13 @@ index c4ad7f9..17bbf94 100644
  static Bool lorieRRScreenSetSize(ScreenPtr pScreen, CARD16 width, CARD16 height, unused CARD32 mmWidth, unused CARD32 mmHeight) {
      PixmapPtr oldPixmap, newPixmap;
      BoxRec box = { 0, 0, width, height };
-@@ -741,6 +779,7 @@ static Bool lorieRRScreenSetSize(ScreenPtr pScreen, CARD16 width, CARD16 height,
+ 
++    log(INFO, "screen %dx%d -> %dx%d", pScreen->width, pScreen->height, width, height);
++
+     // Drain all pending vblanks.
+     loriePerformVblanks();
+ 
+@@ -741,6 +788,7 @@ static Bool lorieRRScreenSetSize(ScreenPtr pScreen, CARD16 width, CARD16 height,
      RRScreenSizeNotify(pScreen);
      update_desktop_dimensions();
      pvfb->state->cursor.moved = TRUE;
@@ -62,7 +75,7 @@ index c4ad7f9..17bbf94 100644
  
      return TRUE;
  }
-@@ -839,6 +878,8 @@ static Bool lorieScreenInit(ScreenPtr pScreen, unused int argc, unused char **ar
+@@ -839,6 +887,8 @@ static Bool lorieScreenInit(ScreenPtr pScreen, unused int argc, unused char **ar
      pvfb->SetWindowPixmap = pScreenPtr->SetWindowPixmap;
      pScreen->CloseScreen = lorieCloseScreen;
      pScreen->SetWindowPixmap = lorieSetWindowPixmap;
