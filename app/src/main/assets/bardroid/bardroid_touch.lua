@@ -1,9 +1,8 @@
 -- BAR Droid touch camera: the Android app (RtsTouch.java) reports finger drags, twists and tilts, and the camera
 -- follows the fingers; pinch zoom needs nothing here (it is the mouse wheel). The app needs to know whether a drag
 -- starts on the interface (a mouse drag) or on the map (a pan), so this widget also reports that for the pointer.
--- It also keeps the game window the size of the X screen (there is no window manager, and the X screen changes size
--- when a foldable folds or unfolds) and the frame cap at the display's refresh rate. Installed into LuaUI/Widgets by
--- the app.
+-- It also keeps the frame cap at the display's refresh rate (which changes when a foldable folds or unfolds; the
+-- window size follows the screen in the X server). Installed into LuaUI/Widgets by the app.
 --
 -- BAR's sandbox gives user widgets no sockets, only files under LuaUI/, so (paths relative to the write dir, X screen
 -- pixels with the origin at the top left):
@@ -16,7 +15,7 @@
 function widget:GetInfo()
 	return {
 		name = "BAR Droid touch camera",
-		desc = "Touch camera, fold/unfold window size and frame cap from the BAR Droid app",
+		desc = "Touch camera and frame cap from the BAR Droid app",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
 		-- last of all: IsAbove reaches this widget only where no other widget claims the pointer
@@ -139,24 +138,9 @@ local function applyTouch(lines)
 	spSetCameraState(cs, 0)
 end
 
--- The X server itself resizes the game window with the screen (BAR Droid's lorie patch 0003); this only catches a
--- window that still differs a second later (two polls), e.g. one the engine sized from a stale setting.
-local mismatches = 0
-local function fitWindow(w, h)
-	local cw, ch = Spring.GetWindowGeometry()
-	if w <= 0 or h <= 0 or (cw == w and ch == h) then
-		mismatches = 0
-		return
-	end
-	mismatches = mismatches + 1
-	if mismatches >= 2 then
-		mismatches = 0
-		-- borderless window on display 1 (BAR's resolution switcher uses the same call)
-		Spring.SetWindowGeometry(1, 0, 0, w, h, false, true)
-		Spring.Echo(string.format("[bardroid-touch] window %dx%d -> %dx%d", cw, ch, w, h))
-	end
-end
-
+-- The window size is the X server's job (BAR Droid's lorie patch 0003 keeps the game window the size of the screen).
+-- Never Spring.SetWindowGeometry here: the engine clamps it to the screen size SDL saw at startup, so on the other
+-- screen of a foldable it would shrink the window again.
 local function applyFrameCap(hz, fps)
 	if hz > 0 and fps > 0 then
 		local fraction = math.max(1, math.floor(hz / fps + 0.5))
@@ -219,7 +203,6 @@ function widget:Update(dt)
 			f:close()
 			local w, h, hz, fps = (s or ""):match("^(%d+) (%d+) (%d+) (%d+)")
 			if w then
-				fitWindow(tonumber(w), tonumber(h))
 				if s ~= lastScreen then
 					lastScreen = s
 					applyFrameCap(tonumber(hz), tonumber(fps))

@@ -56,9 +56,13 @@ up to 120 Hz, cover 1080×2520 at 60 Hz):
 - Fold/unfold: the activity is not recreated and the X screen follows the view. There is no window manager, so
   `patches/0003-lorie-fit-windows-on-resize.patch` makes the X server resize mapped top-level windows at the origin
   to the new screen size itself (in `lorieRRScreenSetSize`): works in the lobby, while a game loads (Flex/tent mode
-  first hands the app part of the inner screen, then all of it) and in game. `bardroid_touch.lua` only re-fits a
-  window that still differs after two polls. Each X screen size the app sees is logged (`[display]` in
-  launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three resizes while loading, in game).
+  first hands the app part of the inner screen, then all of it) and in game. The patch also wraps `ConfigNotify`:
+  when a client resizes such a window to anything but the screen size, a work proc fits it again. Needed because
+  SDL keeps the display bounds it saw at startup and the engine clamps every window-attribute update to them
+  (`GetWindowPosSizeBounded`): started unfolded, the cover screen's 1680x720 became 1456x720. For the same reason the
+  widget must never call `Spring.SetWindowGeometry` (it did as a fallback and kept re-clamping). Each X screen size
+  the app sees is logged (`[display]` in launcher.log). Tested on the emulator with `adb shell wm size` (lobby, three
+  resizes while loading, in game); the ConfigNotify rule only on the phone (Kailil).
   Landscape only, both sides (`sensorLandscape`). Samsung's "continue apps on cover screen" must allow BAR Droid.
 - RAM: a match uses ~5–6 GB (1.1 GB resident + swap at the time); the launcher no longer says 12 GB.
 - **Black squares for units zoomed out** (strategic icons): the engine builds its icon atlas (and the projectile
