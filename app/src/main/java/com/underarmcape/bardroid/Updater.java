@@ -744,10 +744,17 @@ public final class Updater {
         replace(tmp, f);
     }
 
-    /** rename(2) over the target (File.renameTo does not replace an existing file on Windows: tools/updater-test). */
+    /**
+     * rename(2) over the target (File.renameTo does not replace an existing file on Windows: tools/updater-test).
+     * Every game start writes springsettings.cfg through here, so File.renameTo (also rename(2) on Android) backs it up.
+     */
     static void replace(File from, File to) throws IOException {
-        java.nio.file.Files.move(from.toPath(), to.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
-                java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        try {
+            java.nio.file.Files.move(from.toPath(), to.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+        } catch (IOException | RuntimeException e) {
+            if (!from.renameTo(to)) throw new IOException("could not replace " + to + ": " + e, e);
+        }
     }
 
     private static void load(File f, Properties into) {
