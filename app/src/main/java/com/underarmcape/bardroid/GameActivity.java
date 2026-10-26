@@ -193,23 +193,24 @@ public class GameActivity extends MainActivity {
     private void updateCatchup() {
         Paths p = BarApp.get().paths();
         java.io.File f = new java.io.File(p.bar, "LuaUI/Config/bardroid_catchup.txt");
-        String[] v = null;
-        if (System.currentTimeMillis() - f.lastModified() < CATCHUP_STALE_MS) {
+        boolean on = System.currentTimeMillis() - f.lastModified() < CATCHUP_STALE_MS;   // (0 when there is no file)
+        String text = null;
+        if (on) {
             try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
                 String line = r.readLine();
-                if (line != null) v = line.trim().split(" ");
-            } catch (java.io.IOException ignored) {}
+                String[] v = line == null ? new String[0] : line.trim().split(" ");
+                long frame = Long.parseLong(v[0]), server = Long.parseLong(v[1]);   // server 0: not known yet
+                float speed = Float.parseFloat(v[2]);                               // 0: not measured yet
+                text = "Catching up\n" + gameClock(frame) + (server > 0 ? " of " + gameClock(server) : "")
+                        + (speed > 0 ? String.format(java.util.Locale.US, "   x%.1f", speed) : "");
+            } catch (java.io.IOException | RuntimeException e) {
+                return;   // the file changing under the read: keep what is shown, the next poll reads it again
+            }
         }
-        boolean on = v != null && v.length == 3;
         setFlag(catchupFlag(p), on, on ? "catching up: the engine draws nothing until caught up" : "caught up: the engine draws");
         if (catchupView == null) return;
-        if (!on) { catchupView.setVisibility(View.GONE); return; }
-        try {
-            float speed = Float.parseFloat(v[2]);   // 0 until the widget has measured a few seconds
-            catchupView.setText(String.format(java.util.Locale.US, "Catching up\n%s of %s%s",
-                    gameClock(Long.parseLong(v[0])), gameClock(Long.parseLong(v[1])), speed > 0 ? "   x" + v[2] : ""));
-            catchupView.setVisibility(View.VISIBLE);
-        } catch (NumberFormatException e) { catchupView.setVisibility(View.GONE); }
+        if (on) catchupView.setText(text);
+        catchupView.setVisibility(on ? View.VISIBLE : View.GONE);
     }
 
     private static String gameClock(long frame) {

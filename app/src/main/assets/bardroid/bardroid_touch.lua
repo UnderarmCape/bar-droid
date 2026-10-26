@@ -15,8 +15,9 @@
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
 --                                                                               0 = map, 2 = off the map: void or sky)
---   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame> <speed>  (only while far behind a running
---                                                                               game: the engine then draws nothing)
+--   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
+--                                                                               with a running game: the engine then
+--                                                                               draws nothing)
 --
 -- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
 -- build (BAR Controller Support v0.8.5, the app's singleplayer game) does: left stick pans (LT up to 2.75x faster),
@@ -451,21 +452,27 @@ end
 -- Joining a running game (spectating, a reconnect) replays it from the start as fast as the phone can (Kailil,
 -- 2026-10-26: a 40 min game "crawls at a 1-2x catch up speed"). Two joins on a hot phone: the engine kept drawing
 -- 9-26 pictures a second all along (the GPU 50-99% busy, at its lowest clock), CPUs capped at 1.0-2.0 GHz, x1.6-4.
--- Lowering the engine's draw share (MinSimDrawBalance) alone did not stop that drawing. So far behind (more than 30 s,
--- not in replays) this widget writes CATCHUP about once a second, "<game frame> <server frame> <speed>"; the app then
+-- Lowering the engine's draw share (MinSimDrawBalance) alone did not stop that drawing. So while catching up (not in
+-- replays) this widget writes CATCHUP about once a second, "<game frame> <server frame or 0> <speed>"; the app then
 -- shows the progress over the game and hands the engine a hidden window (libbardroid_pace.so, /tmp/bardroid-catchup):
 -- the engine draws nothing (a 10 ms sleep per pass, sound muted), as when the phone is locked, until this file is gone.
 -- The simulation gets the time and the GPU cools. Update stops with the drawing, so this runs from GameFrame.
+-- Catching up = the game runs faster than its speed for 2 s in a row, or GameProgress says more than 30 s behind. The
+-- server's GameProgress reaches a late joiner only after the whole backlog of the game (3 min after joining a 24 min
+-- game: the mode started that late, Kailil saw nothing change), so the game's own pace starts it. Caught up = less
+-- than 5 s behind by GameProgress, or (no GameProgress yet) the game back at its speed for 3 s.
 -- MinSimDrawBalance 0.02 / MinDrawFPS 1 (config overlay, never saved) make each stretch of simulation between those
 -- passes ~50 times the last picture's cost instead of ~6. springsettings bardroid_catchup = 0 turns it all off.
 local CATCHUP = "LuaUI/Config/bardroid_catchup.txt"
 local CATCHUP_ENTER, CATCHUP_LEAVE = 30 * 30, 5 * 30 -- game frames behind the server
+local CATCHUP_FAST, CATCHUP_FAST_SECONDS, CATCHUP_SLOW_SECONDS = 1.5, 2, 3 -- game speed multiples, checks in a row
 local CATCHUP_BALANCE, CATCHUP_MIN_DRAW_FPS = 0.02, 1
 local CATCHUP_LOG_EVERY = 30 -- seconds
 local CATCHUP_PAUSE = 0.05 -- seconds between two simulated frames that count as a pause (drawing, or no data yet)
 local serverFrame, serverFrameAt -- GameProgress: the server's frame, every 150 frames
 local catchup -- while catching up: the engine's own settings, and where the last log line was
-local catchupChecked, lastGameFrameAt
+local catchupChecked, checkedFrame, lastGameFrameAt
+local fastChecks, slowChecks = 0, 0
 local speedFrame, speedAt, speedNow = nil, nil, 0 -- game speed over the last few seconds, for the app's progress
 
 local function gameClock(frame)
@@ -486,21 +493,27 @@ function widget:GameProgress(frame)
 	serverFrame, serverFrameAt = frame, spGetTimer()
 end
 
-local function updateCatchup(now, frame)
+local function updateCatchup(now, frame, rate)
 	-- (springsettings bardroid_catchup = 0: the engine's own balance, for comparisons)
-	if not serverFrame or Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then
+	if Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then
 		endCatchup()
 		return
 	end
 	local speed, _, paused = Spring.GetGameSpeed()
-	local server = serverFrame + (paused and 0 or (speed or 1) * 30 * spDiffTimers(now, serverFrameAt))
-	local behind = server - frame
+	speed = speed or 1
+	local behind -- game frames, by the last GameProgress; nil before the first
+	if serverFrame then
+		behind = serverFrame + (paused and 0 or speed * 30 * spDiffTimers(now, serverFrameAt)) - frame
+	end
+	fastChecks = rate > CATCHUP_FAST * speed and fastChecks + 1 or 0
+	slowChecks = rate < 1.2 * speed and slowChecks + 1 or 0
 	if not speedAt or spDiffTimers(now, speedAt) >= 3 then
 		speedNow = speedAt and (frame - speedFrame) / 30 / spDiffTimers(now, speedAt) or 0
 		speedFrame, speedAt = frame, now
 	end
 	if not catchup then
-		if behind <= CATCHUP_ENTER then
+		-- (once GameProgress is there it decides alone: a live game the phone briefly lags behind is not a catch-up)
+		if not (behind and behind > CATCHUP_ENTER or not behind and fastChecks >= CATCHUP_FAST_SECONDS) then
 			return
 		end
 		catchup = { balance = Spring.GetConfigFloat("MinSimDrawBalance", 0.15),
@@ -508,25 +521,31 @@ local function updateCatchup(now, frame)
 			pauses = 0, pauseTime = 0 }
 		Spring.SetConfigFloat("MinSimDrawBalance", CATCHUP_BALANCE, true)
 		Spring.SetConfigInt("MinDrawFPS", CATCHUP_MIN_DRAW_FPS, true)
-		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind: no drawing until caught up",
-			gameClock(frame), gameClock(behind)))
+		Spring.Echo(string.format("[bardroid-catchup] at %s, %s, x%.1f: no drawing until caught up", gameClock(frame),
+			behind and gameClock(behind) .. " behind" or "behind (no GameProgress yet)", rate))
 	end
-	if behind < CATCHUP_LEAVE then
+	if (behind and behind < CATCHUP_LEAVE) or (not behind and slowChecks >= CATCHUP_SLOW_SECONDS) then
 		local seconds = spDiffTimers(now, catchup.time)
 		Spring.Echo(string.format("[bardroid-catchup] caught up at %s after %.0f s (x%.1f on average)", gameClock(frame),
 			seconds, (frame - catchup.frame) / 30 / math.max(seconds, 1)))
 		endCatchup()
 		return
 	end
-	local f = io.open(CATCHUP, "w")
+	-- written whole, then renamed: the app never reads half a line
+	local f = io.open(CATCHUP .. ".tmp", "w")
 	if f then
-		f:write(string.format("%d %d %.1f\n", frame, math.floor(server), speedNow))
+		f:write(string.format("%d %d %.1f\n", frame, behind and math.floor(frame + behind) or 0, speedNow))
 		f:close()
+		local ok, renamed = pcall(os.rename, CATCHUP .. ".tmp", CATCHUP)
+		if not (ok and renamed) then -- (Windows, for tools/catchup-test.ps1: rename does not replace a file)
+			pcall(os.remove, CATCHUP)
+			pcall(os.rename, CATCHUP .. ".tmp", CATCHUP)
+		end
 	end
 	local logSeconds = spDiffTimers(now, catchup.logTime)
 	if logSeconds >= CATCHUP_LOG_EVERY then
-		Spring.Echo(string.format("[bardroid-catchup] at %s, %s behind, x%.1f over %.0f s, %d units; %d pauses over %d ms"
-			.. " between frames, %.1f s in all", gameClock(frame), gameClock(behind),
+		Spring.Echo(string.format("[bardroid-catchup] at %s, %s, x%.1f over %.0f s, %d units; %d pauses over %d ms"
+			.. " between frames, %.1f s in all", gameClock(frame), behind and gameClock(behind) .. " behind" or "no GameProgress yet",
 			(frame - catchup.logFrame) / 30 / logSeconds, logSeconds, #(Spring.GetAllUnits() or {}), catchup.pauses,
 			CATCHUP_PAUSE * 1000, catchup.pauseTime))
 		catchup.logFrame, catchup.logTime, catchup.pauses, catchup.pauseTime = frame, now, 0, 0
@@ -542,9 +561,15 @@ local function gameFrame(frame)
 		end
 	end
 	lastGameFrameAt = now
-	if not catchupChecked or spDiffTimers(now, catchupChecked) >= 1 then
-		catchupChecked = now
-		updateCatchup(now, frame)
+	if not catchupChecked then
+		catchupChecked, checkedFrame = now, frame
+		return
+	end
+	local seconds = spDiffTimers(now, catchupChecked)
+	if seconds >= 1 then
+		local rate = (frame - checkedFrame) / 30 / seconds -- game seconds per second over the last second
+		catchupChecked, checkedFrame = now, frame
+		updateCatchup(now, frame, rate)
 	end
 end
 
