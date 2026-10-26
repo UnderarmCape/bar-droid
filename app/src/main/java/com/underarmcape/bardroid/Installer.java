@@ -250,8 +250,8 @@ public final class Installer {
         widgets.mkdirs();
         try (InputStream in = new FileInputStream(new File(assets, "bardroid_touch.lua"));
              OutputStream o = new FileOutputStream(new File(widgets, "bardroid_touch.lua"))) { copy(in, o); }
-        // The touch HUD and build menu only in touch-only mode (TOUCH-UI.md); without them the game plays as before.
-        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_build.lua"}) {
+        // The touch HUD, dock and build menu only in touch-only mode (TOUCH-UI.md); without them the game plays as before.
+        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"}) {
             File w = new File(widgets, name);
             if (Prefs.touchOnly) try (InputStream in = new FileInputStream(new File(assets, name));
                                       OutputStream o = new FileOutputStream(w)) { copy(in, o); }

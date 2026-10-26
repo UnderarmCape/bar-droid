@@ -6,10 +6,12 @@ import android.os.FileObserver;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.DisplayMetrics;
+import android.view.HapticFeedbackConstants;
 import android.view.KeyEvent;
 
 import com.termux.x11.LorieView;
 import com.termux.x11.MainActivity;
+import com.termux.x11.input.InputStub;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -27,6 +29,10 @@ import java.util.Locale;
  *   key <name>                  press and release a key: enter, escape, tab, backspace
  *   keyboard <0|1>              hide / show the soft keyboard
  *   box <0|1>                   BOX latch: a one-finger drag on the map selects instead of panning (read by RtsTouch)
+ *   click <x> <y>, rclick <x> <y>   a left / right click at this X screen pixel (radial menu choices, placing a
+ *                               building: they go through the engine like a mouse click, so BAR's own handling applies)
+ *   move <x> <y>                the pointer only (the building ghost follows it)
+ *   buzz                        a haptic tick
  *
  * It also keeps LuaUI/Config/bardroid_touchui.txt current ("1 <X screen pixels per millimetre> <input>"), so the HUD
  * sizes its buttons in millimetres on either screen of a foldable, and steps aside while another input is in use:
@@ -143,6 +149,24 @@ final class TouchUiLink {
                 break;
             case "box":
                 box = f.length > 1 && "1".equals(f[1]);
+                break;
+            case "click":
+            case "rclick":
+            case "move": {
+                LorieView v = activity.getLorieView();
+                if (f.length < 3 || !v.connected()) break;
+                float x, y;
+                try { x = Float.parseFloat(f[1]); y = Float.parseFloat(f[2]); } catch (NumberFormatException e) { break; }
+                v.sendMouseEvent(x, y, InputStub.BUTTON_UNDEFINED, false, false);
+                if (!f[0].equals("move")) {
+                    int button = f[0].equals("click") ? InputStub.BUTTON_LEFT : InputStub.BUTTON_RIGHT;
+                    v.sendMouseEvent(x, y, button, true, false);
+                    v.sendMouseEvent(x, y, button, false, false);
+                }
+                break;
+            }
+            case "buzz":
+                activity.getLorieView().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
                 break;
             default:
                 Log.e("touchui", "unknown request: " + line);

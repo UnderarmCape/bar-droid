@@ -71,6 +71,7 @@ local vsx, vsy = 1, 1
 local touchOnly, pxmm, input = true, nil, "touch"
 local active = true -- touch-only mode and fingers used last: HUD shown, smart tap on
 local latch = { shift = false, ctrl = false, box = false }
+local shared = { railLeft = nil } -- WG.bardroidTouchHud, for the dock
 local column, context, groups = {}, {}, {} -- buttons: { x1, y1, x2, y2, label, press, hold, latch, enabled }
 local flashes = {}
 local font
@@ -282,30 +283,50 @@ local function hasSelection()
 	return spGetSelectedUnitsCount() > 0
 end
 
--- In priority order: on a short screen the last ones are left out.
+local menuOpen = false -- the rail's pop-out (chat, pause, settings, Ctrl)
+
+-- The rail, in priority order: on a short screen the last ones are left out (the menu button always fits).
 local COLUMN = {
 	{ "QUEUE", toggle("shift"), latch = "shift" },
-	{ "ALL", selectArmy },
+	{ "SELECT", toggle("box"), latch = "box" },
+	{ "ARMY", selectArmy },
 	{ "IDLE", selectIdleBuilder },
 	{ "COM", selectCommander },
 	{
-		"CLEAR",
+		"MENU",
 		function()
-			spSelectUnitArray({})
+			menuOpen = not menuOpen
 		end,
-		enabled = hasSelection,
+		latch = "menu",
 	},
-	{ "BOX", toggle("box"), latch = "box" },
-	{ "CHAT", openChat },
+}
+
+-- The pop-out beside the menu button; a choice closes it (CTRL stays, it is a latch).
+local MENU = {
+	{
+		"CHAT",
+		function()
+			menuOpen = false
+			openChat()
+		end,
+	},
 	{
 		"PAUSE",
 		function()
+			menuOpen = false
 			spSendCommands("pause")
 		end,
 	},
-	{ "MENU", toggleMenu },
+	{
+		"SETTINGS",
+		function()
+			menuOpen = false
+			toggleMenu()
+		end,
+	},
 	{ "CTRL", toggle("ctrl"), latch = "ctrl" },
 }
+local menuButtons = {}
 
 local function topOf(api)
 	local ok, p = pcall(api)
@@ -390,8 +411,21 @@ local function layout()
 		Spring.Echo(string.format("[bardroid-hud] only %d of %d buttons fit (%dx%d)", #column, #COLUMN, vsx, vsy))
 	end
 	local columnLeft = vsx - margin - cols * (size + gap) + gap
+	shared.railLeft = columnLeft -- the dock stops here
 
-	-- Context bar left of the column's bottom: ROTATE / CANCEL while a command is armed.
+	-- The menu's pop-out: a stack left of the menu button, upwards from its bottom.
+	menuButtons = {}
+	for _, b in ipairs(column) do
+		if b[8] == "menu" then
+			local w = math.floor(size * 1.5)
+			for i, def in ipairs(MENU) do
+				local y1 = b[2] + (i - 1) * (size + gap)
+				menuButtons[i] = { columnLeft - gap - w, y1, columnLeft - gap, y1 + size, def[1], def[2], nil, def.latch }
+			end
+		end
+	end
+
+	-- Context bar left of the column's bottom: ROTATE / CANCEL while a building is armed and the build menu is hidden.
 	local w = math.floor(size * 1.4)
 	local cy1 = bottom
 	context = {
@@ -467,15 +501,18 @@ local function visibleButtons()
 	for _, b in ipairs(column) do
 		list[#list + 1] = b
 	end
+	if menuOpen then
+		for _, b in ipairs(menuButtons) do
+			list[#list + 1] = b
+		end
+	end
+	-- ROTATE / CANCEL for a building when the build menu (which has its own) is folded away; the dock has CANCEL
+	-- for orders
 	local _, activeID = spGetActiveCommand()
-	local buildMenu = WG.bardroidTouchBuild and WG.bardroidTouchBuild.rect -- it has its own ROTATE and CANCEL
-	if activeID and not (activeID < 0 and buildMenu) then
-		if activeID < 0 and context.rotate then
-			list[#list + 1] = context.rotate
-		end
-		if context.cancel then
-			list[#list + 1] = context.cancel
-		end
+	local buildMenu = WG.bardroidTouchBuild and WG.bardroidTouchBuild.rect
+	if activeID and activeID < 0 and not buildMenu then
+		list[#list + 1] = context.rotate
+		list[#list + 1] = context.cancel
 	end
 	for _, b in ipairs(groups.list or {}) do
 		list[#list + 1] = b
@@ -530,6 +567,7 @@ function widget:Initialize()
 		touchPos = f:seek("end") -- old gestures are not replayed
 		f:close()
 	end
+	WG.bardroidTouchHud = shared
 	readTouchUi()
 	sendLatches() -- nothing latched: also releases keys a previous HUD left held
 	layout()
@@ -537,6 +575,7 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	WG.bardroidTouchHud = nil
 	latch.shift, latch.ctrl, latch.box = false, false, false
 	sendLatches()
 end
@@ -545,6 +584,22 @@ function widget:ViewResize()
 	vsx, vsy = spGetViewGeometry()
 	layoutKey = nil
 	layout()
+end
+
+-- Two-finger tap, a phone's "back": put away the armed order or building, else close the menu, else deselect.
+local function cancelGesture()
+	local _, activeID = spGetActiveCommand()
+	local pregame = WG["pregame-build"]
+	if activeID then
+		spSetActiveCommand(nil)
+	elseif pregame and pregame.getPreGameDefID and (pregame.getPreGameDefID() or 0) > 0 then
+		pregame.setPreGamestartDefID(nil)
+	elseif menuOpen then
+		menuOpen = false
+	else
+		spSelectUnitArray({})
+	end
+	send("buzz")
 end
 
 -- Selects what is inside the box the app is dragging (one-finger drag with BOX latched, or tap-then-drag): drawn and
@@ -567,6 +622,9 @@ end
 local function applyBox(lines)
 	local last -- only the newest box of this frame is worth selecting
 	for line in lines:gmatch("[^\n]+") do
+		if line == "cancel" then
+			cancelGesture()
+		end
 		local kind, x0, y0, x1, y1 = line:match("^(box%a*) ?(%S*) ?(%S*) ?(%S*) ?(%S*)")
 		x0, y0, x1, y1 = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
 		if kind == "box" and y1 then
@@ -691,7 +749,7 @@ end
 local function drawButton(b)
 	local x1, y1, x2, y2 = b[1], b[2], b[3], b[4]
 	local r = math.floor((x2 - x1) * 0.12)
-	local on = b[8] and latch[b[8]]
+	local on = b[8] and (b[8] == "menu" and menuOpen or latch[b[8]])
 	roundRect(x1, y1, x2, y2, r, COLOR_BORDER)
 	roundRect(x1 + 1, y1 + 1, x2 - 1, y2 - 1, r, on and COLOR_LATCHED or COLOR_BUTTON)
 	if flashes[b[5]] then

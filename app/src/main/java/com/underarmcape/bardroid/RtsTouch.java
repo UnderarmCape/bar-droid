@@ -359,7 +359,9 @@ final class RtsTouch {
             }
             case MULTI_PENDING:
                 if (e.getEventTime() - downTime <= MULTI_TAP_MS) {
-                    if (maxFingers == 2) {
+                    if (maxFingers == 2 && touchOnly) {
+                        send("cancel");   // the HUD: disarm the command or building, else deselect (phone RTS "back")
+                    } else if (maxFingers == 2) {
                         press(downX, downY, InputStub.BUTTON_RIGHT, true);
                         press(downX, downY, InputStub.BUTTON_RIGHT, false);
                     } else if (maxFingers == 3) {

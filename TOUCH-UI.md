@@ -1,192 +1,128 @@
-# BAR Droid — touch-only controls (design, 2026-10-25)
+# BAR Droid — touch controls that play like a phone RTS (design v2, 2026-10-25)
 
-Goal (Kailil): "eventually ... we will implement touch controls to play the full game touch only". Fingers only: no
-mouse, keyboard or gamepad, on the Galaxy Z Fold7 (inner display and cover display). It is a launcher option,
-**Touch-only mode**, **on by default** (Kailil, 2026-10-25: "enabled by default ... if keyboard and mouse is used and
-detected, or if gamepad is detected and moving anything, then touch screen ui goes away allowing for all the input
-methods to freely work together"). The app reports which input was used last (touch, mouse, keyboard, gamepad); the
-HUD and smart tap are active only while it is touch, and come back with the next finger touch. With the option off
-the app behaves exactly as before (RtsTouch mouse emulation + camera).
+Kailil: "the touch ui system needs a total overhaul and rework, it is far too rudimentary and basic as it stands. It
+needs to work like a phone rts." Earlier: "enabled by default ... if keyboard and mouse is used and detected, or if
+gamepad is detected and moving anything, then touch screen ui goes away allowing for all the input methods to freely
+work together", and "the com build menu needs to be bigger ... easy touch focused options to quickly build a grid or
+line or single item ... intuitive and less clicks".
 
-## 1. Constraints that shape the design
+v1 was a column of desktop shortcuts (QUEUE, CTRL, BOX...) on top of BAR's mouse UI. v2 starts from how phone RTS
+games are played and uses BAR's desktop panels only where nothing better exists.
 
-- **BAR's user-widget sandbox** (BAR PR #9547, in the game the phone runs: `Beyond All Reason test-31723-95ab750` =
-  Release 2026.10.24-1; read in `luaui/barwidgets.lua` of that commit). Our widgets load "from user":
-  - no sockets, no `debug.emulate*` (no synthetic mouse or keys from Lua), no RmlUi;
-  - files: read anywhere under `LuaUI/`, write only `LuaUI/Config/` and `LuaUI/Widgets/` (not `LuaUI/Config/BYAR.lua`,
-    `uikeys.txt`, `keybind_profiles.json`);
-  - reduced `widgetHandler`: no Enable/DisableWidget, no FindWidget; **no way to hide or replace BAR's own widgets
-    from Lua** (and loose copies of game widgets are ignored). Our widgets go *next to* BAR's, never instead;
-  - allowed and used here: `Spring.SetActiveCommand`, `Spring.GetDefaultCommand`, `Spring.GetActiveCommand`,
-    `Spring.SelectUnitArray`, `Spring.GiveOrder*` (unless the game sets `allowunitcontrolwidgets` off),
-    `Spring.SetCameraState`, `Spring.SendCommands` (all but widget/keybind/`execute`-type commands: `group select 3`,
-    `select AllMap+...`, `buildfacing inc`, `pause` pass), `widgetHandler.actionHandler:KeyAction(...)` (runs bound
-    LuaUI actions such as `selectcomm focus`, `gridmenu_key 1 1`; BAR PR #9675), the shared `WG` table (BAR's own
-    hooks: `WG.topbar.GetPosition`, `WG.advplayerlist_api.GetPosition`, `WG.ordermenu.getPosition`,
-    `WG.buildmenu.getSize`, `WG.minimap.setMaxHeight`, `WG.options.toggle`, `WG.fonts.getFont`, `WG.FlowUI.Draw.*`),
-    `gl.*` drawing, `IsAbove`/`MousePress` call-ins, `widgetHandler:RegisterModalWindow`, `Pause/Unpause`.
-  - **Never modify, bundle or re-encode BAR's game content** (CC-BY-NC-ND). Only our own widgets.
-- **Only the app can make real input.** Modifier keys (Shift = queue, Ctrl), Enter (open chat), the soft keyboard
-  must come from the app as X events (`LorieView.sendKeyEvent`). The engine reads Shift for queueing, build lines,
-  add-to-selection; BAR's chat opens on a real Enter key press.
-- Files are the only channel between the app and Lua (as for the touch camera). The game reads them every frame
-  (~30 fps); the app reads its file with a `FileObserver` (inotify).
+## 1. What phone RTS games do, and what we take
 
-## 2. Architecture
+| Game (platform) | Pattern | Why it matters for BAR |
+| --- | --- | --- |
+| Company of Heroes, Rome: Total War, XCOM (Feral's iPad/Android ports of desktop strategy games) | Unit cards at the bottom for the selection; a contextual command bar for the selected units; press-and-hold opens a **radial command menu** at the finger; build ghost placed by dragging, confirmed with a tick | The closest case to BAR: deep desktop games made playable by touch. Cards make selection precise without a mouse; the radial replaces right-click-with-modifiers |
+| Rusted Warfare (Android, TA-style RTS) | Tap unit = select, tap ground = move, one finger always pans; big build side panel for the selected builder; "select all army" / "idle builder" buttons; attack-move button | Same genre as BAR (Total Annihilation lineage): proves the economy+army loop works with these few rules |
+| Clash of Clans / Boom Beach (mobile base builders) | Pick a building: a **ghost appears on the map with ✓ / ✕ / rotate floating beside it**; drag the ghost to move it; tap elsewhere to move it there; walls chain: after ✓ the next ghost appears next to the last | The standard for precise placement under a finger that hides what it touches; chaining = fewer taps for rows of solars/winds |
+| Mindustry (mobile) | Drag to lay a line of blocks; rectangle drag for areas | LINE / GRID for walls, wind farms, solar fields |
+| Most mobile games | Two-finger tap = back/cancel; long press = more options; haptic tick on menu choices; nothing important needs precision taps | Small, consistent rules that need no tutorial |
+
+Principles taken from them:
+1. **The map is the screen.** One finger drag always moves the camera (with fling), pinch zooms, twist rotates. Panels
+   appear only when they have something to do, and step aside for the camera.
+2. **Tap is the verb.** Tap a unit to select it, tap anywhere else to give the order that makes sense there
+   (move / attack / reclaim / repair / guard). No modifier keys for the common case.
+3. **Press and hold for options.** A radial menu at the finger lists only what the selection can do at that spot.
+4. **Selection is managed with cards and quick-select buttons**, not with a mouse box (a box is still there).
+5. **Placement by ghost + confirm**, rows and grids by dragging, chained placement for repeats.
+6. **Big targets** (≥ 9 mm, 12 mm for build icons), sized in millimetres on both screens; text labels on everything.
+7. **Feedback:** the armed command is highlighted; haptic tick on radial choices and confirms.
+8. **Every input together:** while a mouse, keyboard or gamepad is used, the touch panels hide and BAR's desktop UI
+   is there as usual; the next finger touch brings them back.
+
+## 2. Screen layout (landscape; inner 1456×1312 X px ≈ 9.7 px/mm, cover 1680×720 ≈ 11.1 px/mm)
 
 ```
-                 X events (mouse, keys)                       files under files/bar/LuaUI/Config
- RtsTouch ───────────────────────────────▶ engine ──▶ LuaUI ──▶ bardroid_touch.lua      (camera, hover + command state)
-   ▲  │  bardroid_touch.txt  (pan/rot/tilt/zoom) ────────────▶                          
-   │  │  bardroid_touchui.txt (mode, px per mm) ──────────────▶ bardroid_touch_hud.lua  (touch HUD, smart tap)
-   │  └─ reads bardroid_hover.txt  ◀── "x y onInterface command"
-   └──── TouchUiLink reads bardroid_app.txt ◀── "mods 1 0 0" / "key enter" / "keyboard" / "box 1"
+┌ minimap (BAR) ─┬──────── BAR top bar (resources, menu buttons) ─────────┬─────────┐
+│                │ [1 12] [2 5] [+]          control groups               │ QUEUE   │
+├────────────────┘                                                         │ SELECT  │
+│ BUILD DRAWER          (camera: the whole screen)                         │ ARMY    │
+│ ECON COMBAT UTIL BUILD                                                   │ IDLE    │
+│ [icon][icon][icon][icon]          ghost ✓ ↻ ✕   (placement)              │ COM     │
+│ [icon][icon][icon][icon]                                                 │ ☰       │
+│ [icon][icon][icon][icon]   ┌──────────── ACTION DOCK ───────────────┐    ├─────────┤
+│ ONE  LINE  GRID            │ [card 4×tank][card 2×bot][card 1×com] ✕ │    │ BAR     │
+│ ROTATE SPACE- SPACE+ ✕     │ MOVE FIGHT ATTACK PATROL STOP REPAIR …  │    │ players │
+└────────────────────────────┴────────────────────────────────────────┴────┴─────────┘
 ```
-
-- `RtsTouch` (app) turns fingers into mouse events and camera lines, as today. In touch-only mode it also asks the
-  game what is active (command / build) to decide what a one-finger drag means, and sends pinch zoom as a camera line
-  instead of mouse-wheel clicks (latched Shift/Ctrl would otherwise turn the wheel into fast zoom / tilt: the spring
-  camera reads `movefast`/`movetilt`).
-- `TouchUiLink` (app, new) executes what the HUD asks for: hold or release Shift/Ctrl/Alt in the X server, press a
-  key, show the soft keyboard, latch box select. It also writes the touch-UI mode, the X-pixels-per-millimetre of
-  the current screen (so the HUD sizes buttons in millimetres on either display) and the input used last:
-  `GameActivity` reports a mouse (any mouse event), a physical alphabetic keyboard (not the on-screen keyboard, Back
-  or volume keys) and a gamepad (a button, or a stick/trigger past half way); `RtsTouch` reports each finger touch.
-  While the input is not touch the HUD is hidden, its latches are released and a mouse's left click keeps its
-  desktop meaning (no smart tap).
-- `bardroid_touch.lua` (existing, always installed) keeps the camera, frame cap and "is the pointer on the interface"
-  answer; the answer gains the active-command kind (0 none, 1 build, 2 other).
-- `bardroid_touch_hud.lua` (new, installed only in touch-only mode) draws the touch HUD and turns map taps into
-  orders ("smart tap", below). Layer 999999: second to last, so it hears a press only when BAR's interface declined
-  it, and draws under BAR's windows (options, menus stay on top).
+- **Action dock** (bottom centre, new `bardroid_touch_dock.lua`, drawn over BAR's order menu): with units selected,
+  a row of **selection cards** (unit picture, count; tap = keep only that type, long press = drop that type, ✕ =
+  deselect) and a **command bar** (the selection's commands as big labelled buttons: MOVE, FIGHT, ATTACK, PATROL,
+  STOP, WAIT, GUARD, REPAIR, RECLAIM, RESURRECT, D-GUN, LOAD/UNLOAD..., then state toggles like FIRE/MOVE state,
+  ON/OFF, CLOAK, REPEAT showing their current state). With nothing selected it is hidden.
+- **Build drawer** (left, `bardroid_touch_build.lua`): the builder's buildings, BAR's categories and grid order,
+  12 mm icons, placement mode ONE / LINE / GRID, ROTATE, spacing, CANCEL. A factory shows its units (tap = +1, with
+  QUEUE +5, long press = −1).
+- **Right rail** (`bardroid_touch_hud.lua`): QUEUE (Shift held, for waypoints and build queues), SELECT (one-finger
+  drags draw a selection box), ARMY (all combat units), IDLE (next idle builder, camera follows), COM (commander,
+  camera follows), ☰ (pops out CHAT, PAUSE, SETTINGS, CTRL).
+- **Control groups** under the top bar: tap = select, tap again = camera to the group, long press = assign, + = new.
+- The rail and the dock dock against BAR's top bar and bottom-right panels (`WG.topbar.GetPosition`,
+  `WG.advplayerlist_api.GetPosition` ...). On the short cover screen the build drawer covers the minimap.
 
 ## 3. Gestures
 
-| Gesture | Default (today) | Touch-only mode |
+| Gesture | On the map | On a touch panel |
 | --- | --- | --- |
-| Tap on the interface | left click | left click (BAR's buttons, build menu, order menu, minimap, our HUD) |
-| Tap on own unit | left click (select) | select it (with QUEUE latched: add to selection) |
-| Tap on map/enemy/wreck, units selected, no command armed | left click (deselects) | **smart tap**: the order a right click would give (move, attack, reclaim, repair, guard, load...) |
-| Tap with a command armed (move/attack/patrol/fight/build/...) | left click | left click: carries out the command (QUEUE latched: keeps queueing) |
-| Double tap on a unit | double click (all of its type in view) | same |
-| One-finger drag on the map | pan (with fling) | pan; **with a command armed: left drag** (formation line for move/fight/patrol, circle for area attack/reclaim/repair, line of buildings with QUEUE); **build armed, QUEUE off: the building ghost follows ~1 cm above the finger, lift places it** |
-| One-finger drag, BOX latched | — | box select |
-| Tap, then drag | box select | box select |
-| Drag starting on the interface | left drag | left drag |
-| Long press | right button (lift = order, drag = formation) | same: always "order here" (e.g. repair/guard a friendly unit) |
-| Long press on a HUD button | — | secondary action (control group: assign) |
-| Two fingers | pan + pinch zoom (wheel) + twist + tilt | same, zoom is smooth (camera line, keeps the point under the fingers) |
-| Two fingers on the interface | pan | **scroll** (mouse wheel: lists, chat history, options) |
-| Two-finger tap | right click | right click (cancels an armed command) |
-| Three-finger tap | keyboard | keyboard |
-| Back | Escape | Escape |
+| Tap | own unit: select it (QUEUE: add); with units selected anywhere else: **smart order** (what a right click would do); with a command armed: carry it out; with a building armed (ONE): move the ghost there | press the button |
+| Double tap | on a unit: all of its type on screen; with a building armed: place it here | — |
+| One-finger drag | pan (fling); command armed: draw it (formation line, area circle); building armed: drag the ghost (ONE), lay a row (LINE), fill a rectangle (GRID); SELECT latched: selection box | drag on a list = scroll |
+| Tap, then drag | selection box | — |
+| **Press and hold** | **radial menu** at the finger with what the selection can do there (move, fight, patrol, attack, set target, guard, repair, reclaim, resurrect, load...); slide to a choice and lift. Lift without sliding = the right-click order | long press = the button's second action (assign group, drop card, −1 in a factory) |
+| Two fingers | pan + pinch zoom + twist rotate; up/down together = tilt | scroll |
+| **Two-finger tap** | **cancel**: disarm the command or building; if nothing is armed, deselect | — |
+| Three-finger tap | keyboard | — |
+| Back | Escape (BAR's menu) | — |
 
-## 4. RTS actions by touch
+## 4. Placement (ONE mode, the Clash of Clans pattern)
 
-| Action | How |
-| --- | --- |
-| Select | tap a unit; double tap = all of that type on screen; HUD **ALL** = every mobile combat unit; **IDLE** = next idle builder (camera follows); **COM** = commander (BAR's `selectcomm focus`); **CLEAR** = deselect |
-| Box / area select | double-tap-drag, or latch **BOX** and drag; QUEUE latched adds to the selection |
-| Move / attack / guard / reclaim / repair (default order) | tap the target (smart tap) or long press |
-| Explicit orders (move, attack, patrol, fight, stop, wait, D-gun, area mex, fire/move states...) | BAR's order menu (tap), then tap or drag on the map |
-| Build placement | **Touch build menu** (`bardroid_touch_build.lua`, see 5a): tap a building (big icons, BAR's categories and grid order), then by the mode (always visible): **ONE** = tap the spot, or drag the ghost and lift; **LINE** = drag a row; **GRID** = drag a rectangle to fill. ROTATE, SPACE −/+, CANCEL (or two-finger tap / Back) |
-| Factory queues | build menu with the factory selected: tap = +1, QUEUE latched = +5, long press = −1 |
-| Queueing (Shift) | **QUEUE** latch: real Shift held in the X server while lit. Waypoints, build lines, build queues, add-to-selection all work as with a keyboard |
-| Control groups | group row under the top bar: tap = select, tap again = camera to the group, long press = assign the selection, **+** = assign to the first free group |
-| Camera | one-finger pan, pinch zoom, twist rotate, two-finger tilt; minimap tap/drag (BAR's minimap) |
-| Minimap orders | long press on the minimap = right click = move order there |
-| Chat | HUD **CHAT**: releases the latches, presses Enter (BAR opens its chat input) and shows the soft keyboard; Enter on the keyboard sends |
-| Menus / settings | HUD **MENU** (`WG.options.toggle`), BAR's top bar buttons (tap), Back = Escape |
-| Pause | HUD **PAUSE** (`pause`) |
+Pick a building in the drawer: the ghost appears at the centre of the screen with **✓ ↻ ✕** beside it.
+Drag the ghost (finger lands on or near it) to move it — it floats 1 cm above the finger; tap elsewhere to move it
+there; pan with a drag elsewhere (the ghost stays under the screen centre). ✓ places it and puts the next ghost right
+next to it (chained placement: four winds = pick, ✓ ✓ ✓ ✓). ↻ rotates, ✕ (or two-finger tap) stops. Double tap = place
+there at once. LINE / GRID: drag over the map; the engine lays out and previews the row or the filled rectangle
+(Shift / Shift+Alt held by the app). Mex: BAR's own snapping applies (the placement is a real click).
 
-## 5. BAR widgets: what we rely on, overlay or replace
+## 5. How it is built (constraints)
 
-| BAR widget | Touch-only plan |
-| --- | --- |
-| Grid menu (build menu), Order menu | kept; tap targets grow with `ui_scale`. They consume their own presses, so smart tap never fires on them |
-| Minimap | kept (engine minimap; tap = camera, long press = move order). Later: `WG.minimap.setMaxHeight` for a bigger one |
-| Top bar, player list, info, chat | kept; the HUD docks between the top bar (`WG.topbar.GetPosition`) and the player list (`WG.advplayerlist_api.GetPosition`) |
-| Unit groups (`gui_unitgroups`) | kept; overlaid by our larger group row |
-| Idle builders | kept; HUD **IDLE** does the same with a big target |
-| Smart select, selection box | kept; our tap logic runs after them and steps aside for presses they or the engine own |
-| Replacing a BAR widget | not possible from a user widget (no DisableWidget). If one ever must go, the app can edit `LuaUI/Config/BYAR.lua` (order 0) before the game starts and restore it afterwards — not needed so far |
+- **BAR's user-widget sandbox** (BAR PR #9547; the phone runs `Beyond All Reason test-31723-95ab750` = Release
+  2026.10.24-1, read in its `luaui/barwidgets.lua`): our widgets load "from user": no sockets, no `debug.emulate*`
+  (no synthetic input from Lua), no RmlUi; files only under `LuaUI/` (write in `LuaUI/Config`, `LuaUI/Widgets`); no
+  Enable/DisableWidget, so **BAR's widgets cannot be hidden or replaced** — ours draw over them (low layer) and take
+  presses first while fingers are used. Allowed and used: `Spring.SetActiveCommand`, `GetDefaultCommand`,
+  `GetActiveCmdDescs`, `SelectUnitArray`, `GetSelectedUnitsSorted`, `SetCameraState`, `SendCommands` (not
+  widget/keybind/execute commands), `GiveOrder*` (unless the game turns unit-control widgets off), `WG` (BAR's
+  positions, `WG["pregame-build"]`, `WG.SmartSelect_SelectUnits`, `WG.options.toggle`, `WG.fonts`, `WG.FlowUI`), `gl`.
+  **Never modify, bundle or re-encode BAR's game content** (CC-BY-NC-ND); unit pictures are drawn from the game
+  (`#<unitDefID>` textures).
+- **Only the app makes real input.** Lua asks the app (file `LuaUI/Config/bardroid_app.txt`): `mods <shift> <ctrl>
+  <alt>` (hold keys: QUEUE, LINE = Shift, GRID = Shift+Alt), `key enter|escape`, `keyboard <0|1>`, `box <0|1>`,
+  `click <x> <y>` / `rclick <x> <y>` (a left/right click at an X pixel: the radial's choices and ✓ go through the
+  engine like a mouse click, so BAR's own handling — formations, mex snapping, pregame queue — applies), `move <x> <y>`
+  (pointer only: the ghost), `buzz` (haptic tick). The app writes `bardroid_touchui.txt`: `1 <X px per mm> <input>`
+  (input used last: touch / mouse / keyboard / gamepad).
+- **The app's gestures** (`RtsTouch`) send camera and gesture lines to `LuaUI/Config/bardroid_touch.txt`: `pan`,
+  `rot`, `tilt`, `zoom`, `box`/`boxend`/`boxcancel`, `cancel` (two-finger tap), `radial`/`radialmove`/`radialup`/
+  `radialcancel` (press and hold). It asks the game what is under a touch and what is armed through
+  `bardroid_hover.txt` (`x y onInterface armed`, armed 0 none / 1 building / 2 other command).
+- **Smart tap**: the last-in-line HUD widget sees a left press only if no BAR widget took it; with units selected and
+  nothing armed it arms `Spring.GetDefaultCommand()` and the engine carries it out on release
+  (`CGuiHandler::MouseRelease`), then disarms it.
+- Widgets: `bardroid_touch.lua` (always: camera, frame cap, hover), and in touch-only mode `bardroid_touch_hud.lua`
+  (layer 999999: smart tap, radial, selection box, rail, groups, held keys), `bardroid_touch_dock.lua` and
+  `bardroid_touch_build.lua` (layer −10: over BAR's order and build menus, under its windows and chat).
 
-### 5a. Touch build menu (Kailil: "the com build menu needs to be bigger ... easy touch focused options to quickly build a grid or line or single item ... intuitive and less clicks")
+## 6. Stages
 
-`bardroid_touch_build.lua`, layer −10: drawn over BAR's grid menu (layers 0–1) and takes presses first, under BAR's
-windows, top bar and chat. Shown while a builder is selected (or before the game starts, for the start unit), fingers
-are the input, and the player is not spectating; with a mouse, keyboard or gamepad BAR's own menu shows instead.
-- Left edge, anchored at the bottom: a tab row (ECON, COMBAT, UTILITY, BUILD — BAR's categories from
-  `customParams.unitgroup`, and BAR's own 4×3 grid positions through `luaui/configs/gridmenu_config.lua` when it
-  loads), the 4×3 icons (12 mm, 9–13 mm; unit build pictures `#<unitDefID>`, metal and energy cost), a mode row
-  (ONE / LINE / GRID, remembered between games), and while a building is armed an action row (ROTATE, SPACE −,
-  SPACE +, CANCEL). "<" collapses it to a BUILD button. MORE pages through more than 12 options.
-- It sits under the minimap where 12 mm icons fit (inner display), else over the minimap (cover display, 720 px tall).
-- LINE and GRID are the engine's own build layouts (`CGuiHandler::GetBuildPositions`: Shift+drag = row,
-  Shift+Alt+drag = filled rectangle, also in BAR's pregame queue). The HUD asks the app to hold Shift (+Alt) while a
-  building is armed in those modes; RtsTouch then turns a one-finger drag into a left drag, so the engine lays out and
-  previews the buildings. ONE uses the ghost drag.
-- A factory: its units in BAR's lab order, no tabs; tap = queue one (QUEUE latched = five), long press = one less;
-  queue counts on the icons.
-- Pregame: icons pick through `WG["pregame-build"].setPreGamestartDefID`, and the hover answer reports the pick as an
-  armed building so drags place it.
+1. **v1 (done, tested once):** smart tap, latches, box select, build drawer with ONE/LINE/GRID. Kailil: "not good
+   enough", "far too rudimentary".
+2. **v2 stage A — the dock:** selection cards, command bar, quick-select rail with ☰ menu, two-finger tap = cancel /
+   deselect.
+3. **v2 stage B — press and hold radial menu** with haptics.
+4. **v2 stage C — ghost placement** with ✓ ↻ ✕ beside the ghost, tap to move it, chained placement, double tap to place.
+5. Later: health/progress on cards, minimap size per screen, per-screen `ui_scale`, lobby (Chobby) by touch.
 
-## 6. Sizes for a 7–8" foldable
-
-The app writes X pixels per millimetre (`DisplayMetrics` dpi × X-pixels per view pixel) to `bardroid_touchui.txt`:
-inner display 1456×1312 X px ≈ 9.7 px/mm, cover display 1680×720 X px ≈ 11.1 px/mm.
-
-- Buttons: 9 mm (≈ 87 px inner, ≈ 100 px cover), never below 7.5 mm; 1.5 mm gaps; labels 2.6 mm. Android's minimum
-  touch target is 48 dp ≈ 7.6 mm.
-- **Inner display** (near-square, lots of height): one column on the right edge, from under the top bar down to the
-  player list: QUEUE, CTRL, BOX, ALL, IDLE, COM, CLEAR, CHAT, PAUSE, MENU (≈ 10 × 10.5 mm = 1015 px of the ~1100 free).
-- **Cover display** (wide, 720 px tall): the same buttons in two columns (≈ 500 px of free height = 5 rows).
-- Context bar (build / command armed): ROTATE and CANCEL left of the column's bottom, 12 mm wide.
-- Group row: under the top bar, right of the minimap; only groups that exist, plus **+**.
-- The right edge is the thumb's side when the phone is held in landscape; BAR's own panels sit left and bottom.
-- BAR's own UI follows `ui_scale` (launcher setting, 1.4) and the screen height, so on the cover it is ~half the
-  physical size of the inner display. Per-screen `ui_scale` on fold/unfold is a later step (see 8), coordinated with
-  the fold/unfold work.
-
-## 7. Smart tap (the core of touch-only orders)
-
-In `bardroid_touch_hud.lua`'s `MousePress(x, y, 1)`, reached only when no BAR widget took the press:
-1. in game (frame > 0; pregame start boxes and the pregame queue keep plain clicks), not over the minimap,
-   no command armed, units selected, Ctrl/Alt not held, and the press is not on a unit we can select;
-2. `idx, id = Spring.GetDefaultCommand()` — exactly what a right click would do here (the engine's choice, including
-   BAR's `DefaultCommand` call-ins);
-3. `Spring.SetActiveCommand(idx, 1, true, false, Spring.GetModKeyState())` and return false: the engine's GUI handler
-   then sees a left press with that command armed and carries it out on release (`CGuiHandler::MousePress/
-   MouseRelease`, engine 2026.07.04);
-4. next frame, if our command is still armed (Shift keeps it), disarm it, so each tap picks its own order like a
-   shift-right-click.
-
-## 8. Stages
-
-1. **Done in this session (needs Kailil's test):** design; launcher checkbox; `TouchUiLink`; touch-only gestures in
-   `RtsTouch` (command drags, build ghost, scroll on the interface, smooth zoom); HUD column (QUEUE, CTRL, BOX, ALL,
-   IDLE, COM, CLEAR, CHAT, PAUSE, MENU), context bar (ROTATE, CANCEL), group row; smart tap.
-2. Feel: tune sizes/offsets from Kailil's test; haptics on HUD presses (the HUD would ask the app); a collapse handle.
-3. BAR's panels for touch: drags on the build/order menus pan today (they have no `IsAbove`; the hover answer can use
-   `WG.ordermenu.getPosition` / `WG.buildmenu.getSize`); per-screen `ui_scale` and a bigger minimap.
-4. Lobby (Chobby) by touch: it is a separate Lua UI (LuaMenu) where our widgets do not run; taps work, scrolling needs
-   the two-finger scroll outside the game too.
-5. Radial build menu at the finger (long press on empty ground with a builder selected) — only if the grid menu
-   proves too small.
-
-## 9. Test plan (phone only, Kailil drives)
-
-Launcher: **Touch-only mode (experimental)** is ticked by default; Play vs AI. Then:
-1. HUD column on the right; on the cover screen two columns. Buttons light up when tapped.
-2. Tap the commander (selects), tap ground (walks there), tap a wreck (reclaims), tap an enemy (attacks).
-3. QUEUE on: tap three spots (three waypoints); QUEUE off.
-4. Touch build menu (left, with the commander selected): ONE: tap a building, tap the map (placed, done); or drag:
-   ghost above the finger, lift places it. LINE: tap a building, drag a row. GRID: drag a rectangle. ROTATE,
-   SPACE −/+, CANCEL. "<" hides the menu.
-5. Order menu: Move, then drag a line on the map (formation). Patrol/Fight the same.
-6. Select some units, long press group **+** … then CLEAR, tap the group (selects), tap again (camera goes there).
-7. BOX on: drag a box. ALL / IDLE / COM buttons.
-8. Two fingers on the options window or chat history: scroll. Pinch: smooth zoom with QUEUE on (no fast zoom).
-9. CHAT: keyboard opens, type, Enter sends. PAUSE, MENU.
-10. With a mouse, keyboard or gamepad attached: using it hides the buttons; touching the screen brings them back.
-Logs: `files/bar/infolog.txt` (`[bardroid-hud]`, `[bardroid-touch]`), `files/logs/launcher.log` (`touch`/`touchui`).
+## 7. Test plan (phone only, Kailil drives; logs: `files/bar/infolog.txt` `[bardroid-*]`, `files/logs/launcher.log`
+`[touchui]`) — see the report for each stage.
