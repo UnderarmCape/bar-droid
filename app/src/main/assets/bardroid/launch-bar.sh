@@ -164,6 +164,10 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   # BAR's Show Builder Queue draws every queued building on the map every frame: the app's "BAR Droid builder queue"
   # (bardroid_queue.lua) draws only those near where the camera looks
   widget_order "Show Builder Queue" 0
+  # Late games are limited by the GPU (Kailil, 2026-10-26, "All four"): BAR's lights (every shot and explosion lights
+  # the ground), scorch marks, the shadow plates under units and wrecks, the map's grass, the animated order lines
+  for w in "Deferred rendering GL4" "Decals GL4" "Ground AO Plates GL4" "Ground AO Plates Features GL4" "Map Grass GL4" \
+    "Commands FX"; do widget_order "$w" 0; done
   sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
   # (the widget saves its settings after its first game; until then there is nothing to set)
   if grep -q '\["Deferred rendering GL4"\] *= *{' "$BAR/LuaUI/Config/BYAR.lua"; then
@@ -171,7 +175,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension; queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects; queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.

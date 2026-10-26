@@ -41,7 +41,8 @@ try {
   # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
-    (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue", "Keybind/Mouse Info",
+    (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
+        "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Keybind/Mouse Info",
         "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }

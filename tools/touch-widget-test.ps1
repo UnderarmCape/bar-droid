@@ -33,7 +33,8 @@ try {
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
   $orders = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
-    "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") | ForEach-Object { "`t`t[`"$_`"] = 0," }
+    "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
+    "Commands FX", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") | ForEach-Object { "`t`t[`"$_`"] = 0," }
   $orders += "`t`t[`"Minimap`"] = 1,"
   # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
   if ($GamepadGame) { $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 165,", "`t`t[`"BAR Droid profile log`"] = 0," }

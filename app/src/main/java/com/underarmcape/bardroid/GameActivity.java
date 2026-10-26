@@ -26,8 +26,16 @@ public class GameActivity extends MainActivity {
     private ControllerBridge pad;
     private RtsTouch touch;
 
+    /**
+     * Termux:X11's "scaled" display treats a bigger screen as one of the Fold7's cover screen's pixel count (patch 0006):
+     * unfolded (2184x1968) the game draws about as many pixels as folded (1680x720 at 150%) instead of 1.6x as many.
+     * Late games are limited by the GPU (Kailil, 2026-10-26: "What else can we do to save performance").
+     */
+    static final int MAX_SCREEN_PIXELS = 2520 * 1080;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        LorieView.maxScaledViewPixels = MAX_SCREEN_PIXELS;
         super.onCreate(savedInstanceState);
         touch = new RtsTouch(this);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);

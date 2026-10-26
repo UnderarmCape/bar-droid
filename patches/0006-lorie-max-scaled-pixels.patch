@@ -1,0 +1,25 @@
+diff --git a/lorie/src/main/java/com/termux/x11/LorieView.java b/lorie/src/main/java/com/termux/x11/LorieView.java
+--- a/lorie/src/main/java/com/termux/x11/LorieView.java
++++ b/lorie/src/main/java/com/termux/x11/LorieView.java
+@@ -367,6 +367,9 @@ public class LorieView extends SurfaceView implements InputStub {
+         }
+     }
+
++    /** "scaled" mode treats a bigger view as one of this many pixels, same shape (0 = no limit). Set by the embedding app. */
++    public static int maxScaledViewPixels = 0;
++
+     void getDimensionsFromSettings(int width, int height) {
+         Prefs prefs = activity.prefs;
+         int w = width;
+@@ -376,6 +379,11 @@ public class LorieView extends SurfaceView implements InputStub {
+                 int scale = prefs.displayScale.get();
+                 w = width * 100 / scale;
+                 h = height * 100 / scale;
++                if (maxScaledViewPixels > 0 && (long) width * height > maxScaledViewPixels) {
++                    double f = Math.sqrt(maxScaledViewPixels / ((double) width * height));
++                    w = (int) (w * f);
++                    h = (int) (h * f);
++                }
+                 break;
+             }
+             case "exact": {
