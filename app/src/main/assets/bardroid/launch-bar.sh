@@ -139,8 +139,11 @@ fi
 #   SmoothLines/Points     0
 #   CamMode                2, the Spring camera (BAR's default, the one finger twist and tilt turn): the lobby's
 #                          CamMode = 1 started singleplayer games with the overhead camera, which has neither
+#   VSync*                 off: libbardroid_pace.so caps the frame rate (bardroid_touch.lua once set VSyncGame 1 and
+#                          VSyncFraction 2, which BAR multiplies into VSync at every game start)
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
-  BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2"
+  BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2
+  VSync=0 VSyncGame=0 VSyncFraction=1"
 for kv in $PHONE_GFX; do
   k=${kv%%=*}; v=${kv#*=}
   if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"

@@ -1,8 +1,8 @@
 -- BAR Droid touch camera: the Android app (RtsTouch.java) reports finger drags, pinches, twists and tilts, and the
 -- camera follows the fingers, smoothed over a few frames. The app needs to know whether a drag
 -- starts on the interface (a mouse drag) or on the map (a pan), so this widget also reports that for the pointer.
--- It also keeps the frame cap at the display's refresh rate (which changes when a foldable folds or unfolds; the
--- window size follows the screen in the X server). Installed into LuaUI/Widgets by the app.
+-- It also sets BAR's interface scale for the Fold screen the game is on (the window size follows the screen in the
+-- X server). Installed into LuaUI/Widgets by the app.
 --
 -- BAR's sandbox gives user widgets no sockets, only files under LuaUI/, so (paths relative to the write dir, X screen
 -- pixels with the origin at the top left):
@@ -12,7 +12,7 @@
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
---   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz, frame cap)
+--   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
 --
 -- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
@@ -23,7 +23,7 @@
 function widget:GetInfo()
 	return {
 		name = "BAR Droid touch camera",
-		desc = "Touch camera and frame cap from the BAR Droid app",
+		desc = "Touch camera and interface scale from the BAR Droid app",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
 		-- last of all: IsAbove reaches this widget only where no other widget claims the pointer
@@ -414,19 +414,7 @@ end
 
 -- The window size is the X server's job (BAR Droid's lorie patch 0003 keeps the game window the size of the screen).
 -- Never Spring.SetWindowGeometry here: the engine clamps it to the screen size SDL saw at startup, so on the other
--- screen of a foldable it would shrink the window again.
-local function applyFrameCap(hz, fps)
-	if hz > 0 and fps > 0 then
-		local fraction = math.max(1, math.floor(hz / fps + 0.5))
-		if Spring.GetConfigInt("VSync", 0) ~= fraction or Spring.GetConfigInt("VSyncFraction", 1) ~= fraction then
-			-- as BAR's options do: VSync = VSyncGame (1) x VSyncFraction
-			Spring.SetConfigInt("VSyncGame", 1)
-			Spring.SetConfigInt("VSyncFraction", fraction)
-			Spring.SetConfigInt("VSync", fraction)
-			Spring.Echo(string.format("[bardroid-touch] %d Hz display, %d fps cap: swap interval %d", hz, fps, fraction))
-		end
-	end
-end
+-- screen of a foldable it would shrink the window again. The frame cap is libbardroid_pace.so's (no VSync).
 
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
@@ -485,13 +473,10 @@ function widget:Update(dt)
 		if f then
 			local s = f:read("*l")
 			f:close()
-			local w, h, hz, fps = (s or ""):match("^(%d+) (%d+) (%d+) (%d+)")
-			if w then
-				if s ~= lastScreen then
-					lastScreen = s
-					applyFrameCap(tonumber(hz), tonumber(fps))
-					applyUiScale(tonumber(w), tonumber(h))
-				end
+			local w, h = (s or ""):match("^(%d+) (%d+) ")
+			if w and w .. "x" .. h ~= lastScreen then -- the size: the display's 60/120 Hz switches change the rest
+				lastScreen = w .. "x" .. h
+				applyUiScale(tonumber(w), tonumber(h))
 			end
 		end
 	end

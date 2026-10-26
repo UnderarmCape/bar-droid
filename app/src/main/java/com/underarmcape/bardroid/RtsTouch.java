@@ -132,15 +132,16 @@ final class RtsTouch {
     private int screenW, screenH, hz;
 
     /**
-     * The X screen changed size or the display its refresh rate (a foldable folded or unfolded): the widget resizes
-     * the game window and keeps the frame cap (30 fps, or 60) at this refresh rate. The file stays, so a game that
-     * is still loading picks it up too.
+     * The X screen changed size or the display its refresh rate (a foldable folded or unfolded): the widget picks
+     * BAR's interface scale for the screen. The file stays, so a game that is still loading picks it up too.
      */
     void screenSize(int w, int h, int refreshHz) {
         if (w <= 0 || h <= 0 || (w == screenW && h == screenH && refreshHz == hz)) return;
         Log.i("display", "X screen " + w + "x" + h + ", display " + refreshHz + " Hz");   // fold/unfold steps
         screenW = w; screenH = h; hz = refreshHz;
-        int cap = Prefs.EMULATOR_BUILD ? 0 : Prefs.fps60 ? 60 : 30;   // 0: the widget leaves VSync alone
+        // 0: the widget leaves VSync alone. libbardroid_pace.so caps the frame rate; with vblank_mode=0 Mesa ignores
+        // the swap interval, and the widget re-setting VSync at each 60/120 Hz switch only rewrote springsettings.cfg.
+        int cap = 0;
         byte[] line = (w + " " + h + " " + refreshHz + " " + cap + "\n").getBytes(StandardCharsets.US_ASCII);
         io.post(() -> {
             File tmp = new File(widgetDir, "bardroid_screen.tmp");
