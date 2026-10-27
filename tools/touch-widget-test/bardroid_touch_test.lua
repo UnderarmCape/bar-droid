@@ -209,7 +209,12 @@ cases = {
 	end,
 	-- gesture actions ("act <name>" lines: RtsTouch's two-finger hold swipes, three-finger swipes, triple tap)
 	function() touch("act select_all") end,
-	function() near("act select_all: own units selected", #Spring.GetSelectedUnits() > 0 and 1 or 0, 1, 0) end,
+	function()
+		near("act select_all: own units selected", #Spring.GetSelectedUnits() > 0 and 1 or 0, 1, 0)
+		-- the app's info panel (bardroid_info.lua, in place of BAR's Info widget) shows the selection
+		local info = WG.info
+		near("info panel: shows the selection", (info and info.getIsShowing and info.getIsShowing()) and 1 or 0, 1, 0)
+	end,
 	function() touch("act deselect") end,
 	function() near("act deselect: nothing selected", #Spring.GetSelectedUnits(), 0, 0) end,
 	function()

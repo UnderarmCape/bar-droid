@@ -253,8 +253,15 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   - **The unit info panel's text** (bottom left; "too large and jumbled") is BAR's Info widget: its text size comes from
     the interface scale (2.0 cover / 1.3 inner) but the panel is made narrower on wide screens, and the text column
     starts 18% in while the unit picture is 4.4 text heights wide: at these scales the stats run under the picture and
-    off the bottom. No setting or WG API for it; options: a lower interface scale, our own info panel, an upstream
-    report (Kailil's call).
+    off the bottom. No setting or WG API for it. Kailil chose our own panel: `bardroid_info.lua` (launch-bar.sh turns
+    BAR's "Info" off) takes the same rectangle (BAR's build/order/grid menus hard-code it), shows BAR's numbers (its
+    refreshUnitInfo/drawUnitInfo stat logic ported: DPS min-max with its special cases, EMP, shields, ranges, XP),
+    picks the largest text size at which name, description, health bar and stats fit, and lets stats below the
+    picture use the full width. Several units: their types in a grid with counts (tap = keep only that type, long
+    press = drop it); tap the picture = camera to the unit. It provides BAR's `WG.info` API (build bar, PIP, idle
+    builders, options ask it) and does what BAR's widget does to the engine: `tooltip 0`,
+    `Spring.SetDrawSelectionInfo(false)` (else the engine's "Selected units N" text shows); it stands down if BAR's
+    Info runs anyway. `tools/ui-screenshot.ps1 -BarDroidInfo [-Select] [-NoInfo]`; the touch test checks it.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

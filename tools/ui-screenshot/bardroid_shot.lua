@@ -14,6 +14,8 @@ local CHAT = {
 }
 local chat = Spring.GetConfigInt("bardroid_shot_chat", 0) == 1
 local ships = Spring.GetConfigInt("bardroid_shot_ships", 0) == 1
+-- bardroid_shot_select = 1: a few kinds of units given next to the commander and all selected (the info panel's grid)
+local select = Spring.GetConfigInt("bardroid_shot_select", 0) == 1
 local SHOT_FRAME = ships and 330 or 150
 local shotAt, quitAt, water
 
@@ -37,6 +39,17 @@ end
 function widget:GameFrame(f)
 	if chat and f >= 40 and f < 40 + #CHAT * 15 and (f - 40) % 15 == 0 then
 		Spring.SendCommands("say " .. CHAT[(f - 40) / 15 + 1])
+	end
+	if select and f == 20 then
+		Spring.SendCommands("cheat 1")
+	elseif select and f == 60 then -- (cheats take effect some frames later)
+		local com = (Spring.GetTeamUnits(0) or {})[1]
+		local x, _, z = Spring.GetUnitPosition(com)
+		for i, name in ipairs({ "armpw", "armflash", "armck", "armrock", "armham", "armjeth", "armwar" }) do
+			Spring.SendCommands(string.format("give %d %s 0 @%d,0,%d", 9 - i, name, x + 150 + i * 40, z + 100))
+		end
+	elseif select and f == 100 then
+		Spring.SendCommands("select AllMap++_ClearSelection_SelectAll+")
 	end
 	if ships and f == 20 then
 		Spring.SendCommands("cheat 1") -- (takes effect a few frames later)

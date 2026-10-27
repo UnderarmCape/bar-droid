@@ -15,6 +15,9 @@ param(
   [switch]$Chat,          # chat lines before the screenshot
   [switch]$BarDroidChat,  # with the app's chat display (bardroid_chat.lua)
   [switch]$Ships,         # ships moving on the water, the camera on their wakes
+  [switch]$BarDroidInfo,  # the app's info panel (bardroid_info.lua) instead of BAR's Info widget
+  [switch]$NoInfo,        # BAR's Info widget off, nothing in its place (what it covers)
+  [switch]$Select,        # several kinds of units given and selected (cheats)
   [switch]$NoWakes,       # the app's transparent wake texture (Installer.writeNoWakes)
   [string]$PlayerName = "Phone",
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
@@ -50,18 +53,19 @@ try {
     $tga = New-Object byte[] (18 + 256); $tga[2] = 2; $tga[12] = 8; $tga[14] = 8; $tga[16] = 32; $tga[17] = 0x28
     [IO.File]::WriteAllBytes("$Data\bitmaps\projectiletextures\wakegrey.tga", $tga)
   }
+  if ($BarDroidInfo) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_info.lua") "$Data\LuaUI\Widgets\" -Force }
   if ($BarDroidChat) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force }
   # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
     (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
         "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info",
-        "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") |
+        "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") + $(if ($BarDroidInfo -or $NoInfo) { @("Info") } else { @() }) |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })`nbardroid_shot_ships = $(if ($Ships) { 1 } else { 0 })`nWater = 0`nAdvMapShading = 0" |
+  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })`nbardroid_shot_ships = $(if ($Ships) { 1 } else { 0 })`nbardroid_shot_select = $(if ($Select) { 1 } else { 0 })`nWater = 0`nAdvMapShading = 0" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"

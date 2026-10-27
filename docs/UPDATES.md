@@ -109,7 +109,7 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | BAR's `launch.springsettings` | `Updater.applyLauncherSettings` | every launch | keys our layer does not set are added; where ours differ, ours win (logged) |
 | `files/bar/bitmaps/projectiletextures/wakegrey.tga` (transparent: no ship wakes) | `Installer.writeNoWakes` | every launch | - |
 | `LuaMenu/Widgets/bardroid_lobby_touch.lua`; `loadLocalWidgets = true` in `LuaMenu/Config/IGL_data.lua` | `Installer.writeGameFiles`; `launch-bar.sh` | every launch; every lobby/skirmish start | not set afterwards = miss |
-| `bardroid_touch.lua`, `bardroid_queue.lua` and `bardroid_chat.lua` widgets | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
+| `bardroid_touch.lua`, `bardroid_queue.lua`, `bardroid_chat.lua` and `bardroid_info.lua` widgets (BAR's "Info" off in `BYAR.lua`) | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
 | `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |
 | Resolution limiter off | `launch-bar.sh`, `LuaMenu/Config/IGL_order.lua` | every lobby start | entry missing → inserted; still not `= 0` = miss |
 | `drawAtFullSpeed` on (once) | `launch-bar.sh`, `LuaMenu/Config/IGL_data.lua` | until done | no `drawAtFullSpeed` in the file = miss (marker not set) |

@@ -223,6 +223,10 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   # touch puts the pointer there (Kailil: "useless and in the way even when they autohide"): the classic Minimap
   # widget instead (the PIP minimap switches it off while it runs)
   widget_order "Picture-in-Picture Minimap" 0; widget_order "Minimap" 1
+  # BAR's unit info panel sizes its text by the interface scale but narrows the panel on wide screens: at 2.0 and 1.3
+  # the stats ran under the unit picture and off the screen (Kailil: "too large and it is jumbled up"). The app's
+  # bardroid_info.lua takes its place.
+  widget_order "Info" 0
 fi
 
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
@@ -300,6 +304,8 @@ queue_err=$(grep -iE 'bardroid_queue|BAR Droid builder queue' "$BAR/infolog.txt"
 [ -n "$queue_err" ] && layer_miss "builder queue widget (bardroid_queue.lua): $queue_err"
 chat_err=$(grep -iE 'bardroid_chat|BAR Droid chat' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
+info_err=$(grep -iE 'bardroid_info|BAR Droid info' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f
