@@ -234,7 +234,9 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    fences time out ("GPU fence wasn't signalled", tag gles-renderer, debug level: `adb logcat -s gles-renderer:D`),
    then the engine's Mesa gets EDEADLK on every submit (KGSL invalidated the engine's context: its work hung the GPU)
    and the engine freezes for good. SGSR built and drew (logcat "Xlorie: SGSR 1 upscaling on OpenGL ES 3.2"), lorie's
-   context survived. Map or build: a game on another map tells.
+   context survived. With the comparison off (12:23 build) Kailil played another map and then All That Glitters
+   again without a hang (12:29: 30 fps, 1151 units): both hangs were while "Compare upscaling" switched SGSR on and
+   off every 3 s, the suspect; it stays off (a diagnostic only).
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per

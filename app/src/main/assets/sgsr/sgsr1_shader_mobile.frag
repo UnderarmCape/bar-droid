@@ -11,7 +11,9 @@
 // BAR Droid (app/src/main/assets/sgsr): Qualcomm's sgsr/v1/include/glsl/sgsr1_shader_mobile.frag (snapdragon-gsr,
 // main, 2026-10-27) with three changes for strict GLSL ES compilers: #version 310 es (textureGather with a component
 // argument is GLSL ES 3.10), the operation mode a constant (textureGather's component must be one), and no precision
-// qualifiers in constructor calls (a plain vec2 constructor where Qualcomm's has a highp one).
+// qualifiers in constructor calls (a plain vec2 constructor where Qualcomm's has a highp one). And at its sharpest
+// (Kailil, 2026-10-27: "crank up the sharpness to max"): EdgeSharpness stays 2.0, the top of the README's 1.0-2.0
+// range; EdgeThreshold 4/255 (the README's value for VR, 8/255 for mobile) also sharpens fainter edges.
 
 precision mediump float;
 precision highp int;
@@ -28,7 +30,7 @@ precision highp int;
 */
 #define OperationMode 1
 
-#define EdgeThreshold 8.0/255.0
+#define EdgeThreshold 4.0/255.0
 
 #define EdgeSharpness 2.0
 
