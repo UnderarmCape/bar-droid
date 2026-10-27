@@ -192,10 +192,16 @@ local function hook()
 		chat.setChatInputHistory(false)
 	end
 	Spring.Echo("[bardroid-chat] BAR's chat lines drawn by BAR Droid chat")
+	WG.bardroidChat = { -- (tools/touch-widget-test.ps1)
+		lines = function()
+			return #entries
+		end,
+	}
 	return true
 end
 
 function widget:Shutdown()
+	WG.bardroidChat = nil
 	local chat = WG.chat
 	if hooked and chat then
 		if chat.setHide then

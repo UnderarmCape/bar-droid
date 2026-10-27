@@ -1,4 +1,4 @@
-﻿# bardroid_touch.lua in a real BAR skirmish on the laptop (BAR's released game, byar:test, vs BARb): a user widget
+# bardroid_touch.lua in a real BAR skirmish on the laptop (BAR's released game, byar:test, vs BARb): a user widget
 # (tools\touch-widget-test\bardroid_touch_test.lua) moves the pointer over the map, the top bar and an open settings
 # window and checks the touch widget's "interface or map" answers. Isolated write dir build\touch-widget-test\data (the
 # live install's packages, pool and rapid index joined read-only by junctions, removed again at the end).
@@ -29,6 +29,7 @@ try {
   if (-not $Widget) { $Widget = Join-Path $App "app\src\main\assets\bardroid\bardroid_touch.lua" }
   Copy-Item $Widget "$Data\LuaUI\Widgets\bardroid_touch.lua" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_queue.lua") "$Data\LuaUI\Widgets\" -Force
+  Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)

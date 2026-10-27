@@ -107,7 +107,7 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | Interface scale per Fold screen (2.0 cover, 1.3 inner, 1.0 cover upright) | `launch-bar.sh` at start; `bardroid_touch.lua` on fold/unfold (one LuaUI reload) | every launch / screen change | set or appended (`tools/touch-widget-test.ps1`) |
 | Lobby: split panels Always One, interface 120% | `launch-bar.sh`, `IGL_data.lua` | every lobby start | not set afterwards = miss |
 | BAR's `launch.springsettings` | `Updater.applyLauncherSettings` | every launch | keys our layer does not set are added; where ours differ, ours win (logged) |
-| `bardroid_touch.lua` and `bardroid_queue.lua` widgets | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
+| `bardroid_touch.lua`, `bardroid_queue.lua` and `bardroid_chat.lua` widgets | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
 | `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |
 | Resolution limiter off | `launch-bar.sh`, `LuaMenu/Config/IGL_order.lua` | every lobby start | entry missing → inserted; still not `= 0` = miss |
 | `drawAtFullSpeed` on (once) | `launch-bar.sh`, `LuaMenu/Config/IGL_data.lua` | until done | no `drawAtFullSpeed` in the file = miss (marker not set) |

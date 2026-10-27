@@ -265,8 +265,9 @@ public final class Installer {
         File widgets = new File(p.bar, "LuaUI/Widgets");
         //noinspection ResultOfMethodCallIgnored
         widgets.mkdirs();
-        // and the queued buildings near where the camera looks (launch-bar.sh turns BAR's Show Builder Queue off)
-        for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua"})
+        // and the queued buildings near where the camera looks (launch-bar.sh turns BAR's Show Builder Queue off), and
+        // BAR's chat lines laid out for the phone (names at the left edge, the text filling the box)
+        for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         // Widgets of the removed touch-only mode (Kailil, 2026-10-25): gone from earlier installs too.

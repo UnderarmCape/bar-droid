@@ -290,6 +290,8 @@ touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/
 [ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
 queue_err=$(grep -iE 'bardroid_queue|BAR Droid builder queue' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$queue_err" ] && layer_miss "builder queue widget (bardroid_queue.lua): $queue_err"
+chat_err=$(grep -iE 'bardroid_chat|BAR Droid chat' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

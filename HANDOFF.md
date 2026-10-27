@@ -225,8 +225,14 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   each line has a game-time column and a name column as wide as the longest player name in the game, so on the inner
   screen at 1.3 the text wraps in ~120 px (`tools/ui-screenshot.ps1 -Screen inner -Scale 1 -Chat -PlayerName
   LongPlayerName_2026`, new). BAR's only setting is the font size (`fontsizeMult`, slider 0.92-1.12; 0.6 and 0.5
-  tried: ~170-200 px of text). Names flush left with wrapping would need our own chat display: hide BAR's lines
-  (`WG.chat.setHide(true)`, its typing box stays), get parsed lines through `WG.chat.addChatProcessor`, draw them.
+  tried: ~170-200 px of text). So the app has its own chat display, `bardroid_chat.lua` (Kailil approved the
+  screenshots, installed 23:15): BAR's lines hidden (`WG.chat.setHide(true)`; its typing box, sounds and ignore list
+  stay; its history on typing off), the lines BAR parsed come through `WG.chat.addChatProcessor`; names at the box's
+  left edge in team colour, broken every 10 characters, the text filling the rest (BAR's box: top bar's left edge to
+  74%), 75% of BAR's font size, 8 rows (14 while typing), 40 s per line; paused / left / lagging console lines from
+  AddConsoleLine. Lost: tapping a map-marker line, emoji images, the lines from before a LuaUI reload (fold/unfold).
+  In the touch test (a said line arrives); `launch-bar.sh` reports its errors. In the controller game v0.8.5 clears
+  an armed command, so the fight gesture does not stay armed there (the test notes it).
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
