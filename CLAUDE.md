@@ -51,7 +51,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
   wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
   `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first
-  (`tools/lobby-touch-test.ps1`). BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
+  (`tools/lobby-touch-test.ps1`). `assets/bardroid/bardroid_players.lua`: BAR's player list small until tapped (WG.advplayerlist_api).
+  BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
   in through `launch-bar.sh` instead. `tools/touch-widget-test.ps1` runs the widget in a real skirmish on the laptop
   (~1.5 min): pinch, twist, tilt and drag on the camera, and the map/interface answers; run it after touching either.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads

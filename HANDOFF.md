@@ -239,7 +239,18 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    off every 3 s, the suspect; it stays off (a diagnostic only). **Uncapped for measuring** (Kailil: "Let's run
    fully uncapped to get a real gauge of full performance"): launcher "Frame cap" 30 / 60 / none, none by default
    for now (`Prefs.fpsCap`; the display at its fastest mode while uncapped). Read `[bardroid-perf]` (fps, slowest
-   frame) and `[perf]` (thermal, GPU clock) after his games; then back to 30 by default.
+   frame) and `[perf]` (thermal, GPU clock) after his games; then back to 30 by default. **Where the time goes**
+   (Kailil's uncapped 8v8, 2026-10-27): GPU-bound, 93-99% busy all game, the GPU's top clock throttled by heat from
+   1200 to ~400 MHz; 88 fps at 178 units, 26 at 1400; BAR's Lowest preset changed nothing (the phone already has
+   almost everything it turns off). Stress test: BAR's Scenarios → "Benchmark BAR" (1000 Grunts against 1000 Pawns,
+   4000 frames; "Benchmark Results" in infolog: Sim/Draw/Update ms per frame). Per-stage GPU timing needs
+   gl.QueryCounter/GetQueryDelta, which BAR's GPU Profiler widget expects but no Recoil has yet (master 2026-10-23
+   neither). Next lever: launcher "Game resolution" 100 / 85 / 70 % (`Prefs.renderScale`): run the benchmark at
+   100 and 70; much faster at 70 = pixel-bound, keep a lower resolution with SGSR. Map edge: the 2026-10-26 rules
+   (taps off the map clicking nothing, drags anchored mid-screen) removed at Kailil's word ("we will figure out how to
+   deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
+   (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
+   versions (like the info panel); designed with Kailil first, with touch placement.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per

@@ -205,8 +205,11 @@ log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map e
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
 scr="$BAR/LuaUI/Config/bardroid_screen.txt"
-if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -ge 600 ] && [ "${sh:-0}" -ge 600 ]; then   # not the floating window
+if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -gt 0 ] && [ "${sh:-0}" -gt 0 ]; then
   if [ "$sw" -gt "$sh" ]; then long=$sw short=$sh; else long=$sh short=$sw; fi
+fi
+# (not the floating window, 584x530: by the long side, as the cover screen at 70% render resolution is 1176x504)
+if [ "${long:-0}" -ge 640 ]; then
   if [ $((long * 10)) -lt $((short * 16)) ]; then uis=1.3      # inner screen
   elif [ "$sw" -gt "$sh" ]; then uis=2.0                        # cover screen
   else uis=1.0; fi                                              # cover screen held upright: BAR scales by the tall side

@@ -285,8 +285,10 @@ public final class Installer {
         widgets.mkdirs();
         // and the queued buildings near where the camera looks (launch-bar.sh turns BAR's Show Builder Queue off), and
         // BAR's chat lines laid out for the phone (names at the left edge, the text filling the box), and the unit info
-        // panel with its text sized to fit (launch-bar.sh turns BAR's Info widget off)
-        for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua"})
+        // panel with its text sized to fit (launch-bar.sh turns BAR's Info widget off), and BAR's player list small until
+        // touched
+        for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
+                "bardroid_players.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with

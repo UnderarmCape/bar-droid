@@ -14,8 +14,7 @@
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
---                                                                               0 = map, 2 = off the map: void or sky)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
 --                                                                               with a running game: the engine then
 --                                                                               draws nothing)
@@ -165,8 +164,8 @@ local function planePoint(x, y, h)
 	return cx + dx * t, cz + dz * t
 end
 
--- The map point under an X screen pixel, and whether the view ray really met the map there. Off the map (the void
--- around it) the ray meets the plane at the height of the ground the camera looks at; nil only above the horizon.
+-- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
+-- of the ground the camera looks at, so dragging keeps working there; nil only above the horizon.
 local function ground(x, y)
 	if not (x and y) then
 		return nil -- a line that is not numbers
@@ -174,7 +173,7 @@ local function ground(x, y)
 	local _, vsy = spGetViewGeometry()
 	local kind, pos = spTraceScreenRay(x, vsy - y, true)
 	if kind == "ground" and pos then
-		return pos[1], pos[3], true
+		return pos[1], pos[3]
 	end
 	local cs = spGetCameraState()
 	return planePoint(x, y, cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0)
@@ -188,45 +187,6 @@ local function clamp(v, lo, hi)
 	return math.max(lo, math.min(hi, v))
 end
 
--- How much a drag from a map point is measured mid-screen instead: 0 deeper than EDGE_BLEND elmos in the map, rising
--- to 1 at its edge; 1 off the map (the ray met no map) or above the horizon.
-local EDGE_BLEND = 400
-local function edgeWeight(x, z, onMap)
-	if not (x and onMap) then
-		return 1
-	end
-	local inside = math.min(x, Game.mapSizeX - x, z, Game.mapSizeZ - z)
-	return clamp(1 - inside / EDGE_BLEND, 0, 1)
-end
-
--- A finger drag from X pixel (x0, y0) to (x1, y1) as a camera move. In the map the point under the finger stays under
--- it. Off the map (the void past its edge: a stand-in plane whose height does not match the terrain at the edge, and
--- near the horizon a few pixels are miles) the drag is measured in the middle of the screen instead, which the engine
--- keeps on the map (Kailil, 2026-10-26: at the edge "the cursor grabs the center ... as the anchor"). The handoff
--- happens in the last EDGE_BLEND elmos before the edge, so leaving the map does not jump.
-local function dragMove(x0, y0, x1, y1)
-	local ax, az, aOn = ground(x0, y0)
-	local bx, bz, bOn = ground(x1, y1)
-	local w = math.max(edgeWeight(ax, az, aOn), edgeWeight(bx, bz, bOn))
-	local dx, dz = 0, 0
-	if w < 1 then
-		dx, dz = ax - bx, az - bz
-	end
-	if w > 0 and x0 and y0 and x1 and y1 then
-		-- measured on the level plane through the camera's target, not the terrain: with the target at the map's edge
-		-- the terrain stops right beside the middle of the screen
-		local vsx, vsy = spGetViewGeometry()
-		local cx, cy = vsx / 2, vsy / 2
-		local cs = spGetCameraState()
-		local h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
-		local cax, caz = planePoint(cx, cy, h)
-		local cbx, cbz = planePoint(cx + x1 - x0, cy + y1 - y0, h)
-		if cax and cbx then
-			dx, dz = dx * (1 - w) + (cax - cbx) * w, dz * (1 - w) + (caz - cbz) * w
-		end
-	end
-	return dx, dz
-end
 
 -- The next or previous mobile builder of the player's own team that has no orders (not one still being built), selected
 -- and looked at. Cycles by unit ID from the last one picked.
@@ -306,16 +266,20 @@ local ACTIONS = {
 local function readTouch(lines)
 	local p = pending
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
-		local dx, dz = dragMove(tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1))
-		p.dx, p.dz = p.dx + dx, p.dz + dz
+		local ax, az = ground(tonumber(x0), tonumber(y0))
+		local bx, bz = ground(tonumber(x1), tonumber(y1))
+		if ax and bx then
+			-- grab: the point that was under the fingers moves with them
+			p.dx, p.dz = p.dx + ax - bx, p.dz + az - bz
+		end
 	end
 	for r, x, y in lines:gmatch("zoom (%S+) (%S+) (%S+)") do
 		local ratio = tonumber(r)
 		if ratio and ratio > 0 then
 			p.zoom = p.zoom + math.log(ratio)
 			local gx, gz = ground(tonumber(x), tonumber(y))
-			if gx then -- a pinch over the void zooms about the nearest point of the map
-				p.pivotX, p.pivotZ = clamp(gx, 0, Game.mapSizeX), clamp(gz, 0, Game.mapSizeZ)
+			if gx then
+				p.pivotX, p.pivotZ = gx, gz
 			end
 		end
 	end
@@ -756,8 +720,10 @@ end
 local UI_SCALE_COVER, UI_SCALE_INNER, UI_SCALE_COVER_UPRIGHT = 2.0, 1.3, 1.0
 local function applyUiScale(w, h)
 	local long, short = math.max(w, h), math.min(w, h)
-	if short < 600 then
-		return -- the floating window while the app is in the background (584x530): no reload on the way out and back
+	if long < 640 then
+		-- the floating window while the app is in the background (584x530, 488x442): no reload on the way out and back.
+		-- (By the long side: at the lowest render resolution, 70%, the cover screen is 1176x504.)
+		return
 	end
 	-- cover screen 2520x1080; held upright BAR already sizes its interface by the tall side (and 2.0 overflows the width)
 	local want = long / short < 1.6 and UI_SCALE_INNER or w > h and UI_SCALE_COVER or UI_SCALE_COVER_UPRIGHT
@@ -810,15 +776,6 @@ local function overBarInterface(mx, my)
 	return barAnswer
 end
 
--- Whether the pointer (bottom-left origin) shows no map: the void past its edge, or the sky.
-local function offMapAt(mx, my)
-	local kind, pos = spTraceScreenRay(mx, my, true)
-	if kind ~= "ground" or not pos then
-		return true
-	end
-	return pos[1] < 0 or pos[1] > Game.mapSizeX or pos[3] < 0 or pos[3] > Game.mapSizeZ
-end
-
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
 -- The map/interface answer for a pointer that stays put is worked out again every HOVER_RECHECK updates only (the
@@ -834,9 +791,9 @@ local function updateHover()
 	end
 	local onInterface
 	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
-		-- 1 interface, 0 map, 2 neither (the void past the map's edge, or the sky): there the app ignores the finger
+		-- 1 interface, 0 map (the void past the map's edge too: fingers work there as on the map)
 		if mx ~= calcX or my ~= calcY or updates - calcAt >= HOVER_RECHECK then
-			calcAnswer = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or offMapAt(mx, my) and 2 or 0
+			calcAnswer = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or 0
 			calcX, calcY, calcAt = mx, my, updates
 		end
 		onInterface = calcAnswer

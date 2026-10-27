@@ -35,7 +35,9 @@ public class GameActivity extends MainActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        LorieView.maxScaledViewPixels = MAX_SCREEN_PIXELS;
+        // the render resolution setting scales both screens alike: folded the cap then applies too (2520x1080 is the cap)
+        float r = Prefs.renderScale / 100f;
+        LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
         super.onCreate(savedInstanceState);
         touch = new RtsTouch(this);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);

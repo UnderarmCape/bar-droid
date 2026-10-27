@@ -8,6 +8,7 @@ end
 
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
 local frames, step, waitUntil = 0, 0, 0
+local waitClock = 0 -- a case that returns a number: the next one waits that many seconds
 -- The interface-scale case reloads LuaUI (this widget too): the second half runs after the reload ("scale" phase).
 local phase = Spring.GetConfigString("bardroid_touchtest_phase", "")
 local fails = Spring.GetConfigInt("bardroid_touchtest_fails", 0)
@@ -39,14 +40,15 @@ local cases
 function widget:Update()
 	frames = frames + 1
 	-- (from 5 s of game: BAR's own camera move to the start position came after the first cases on a fast laptop)
-	if Spring.GetGameFrame() < 150 or frames < waitUntil then
+	if Spring.GetGameFrame() < 150 or frames < waitUntil or os.clock() < waitClock then
 		return
 	end
 	step = step + 1
 	local c = cases[step]
 	if c then
-		c()
+		local seconds = c()
 		waitUntil = frames + 20
+		waitClock = type(seconds) == "number" and os.clock() + seconds or 0
 	end
 end
 
@@ -98,7 +100,7 @@ end
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
-local before, groundBefore, edgeView, edgeExpect, com
+local before, groundBefore, edgeView, com
 cases = {
 	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
 	function()
@@ -134,8 +136,8 @@ cases = {
 		local miss = g and groundBefore and math.sqrt((g[1] - groundBefore[1]) ^ 2 + (g[3] - groundBefore[3]) ^ 2)
 		near("drag: the map point follows the finger (elmos off)", miss, 0, 8)
 	end,
-	-- at the map's edge, looking out over it: a drag high on the screen (over the void) moves the camera like the same
-	-- drag in the middle of the screen (no jump from points near the horizon)
+	-- at the map's edge, looking out over it: a drag high on the screen (over the void) still moves the camera, and a
+	-- pointer there answers "map" (taps work), now that the map-edge rules are gone (Kailil, 2026-10-27)
 	function()
 		local cs = Spring.GetCameraState()
 		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, 200, 2500, 1.9, 0
@@ -153,8 +155,6 @@ cases = {
 		local row = math.floor(vsy * 0.3) -- X pixels from the top: past the edge, below the horizon
 		local _, dy = Spring.GetPixelDir(cx, vsy - row)
 		edgeView = Spring.TraceScreenRay(cx, vsy - row, true) ~= "ground" and dy and dy < -0.01
-		local a, b = groundAt(cx, cy), groundAt(cx + 100, cy)
-		edgeExpect = a and b and math.sqrt((a[1] - b[1]) ^ 2 + (a[3] - b[3]) ^ 2)
 		before = Spring.GetCameraState()
 		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, row, cx + 100, row))
 	end,
@@ -166,13 +166,14 @@ cases = {
 		end
 		local cs = Spring.GetCameraState()
 		local moved = math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2)
-		log(string.format("     edge drag: before %.0f,%.0f ry %.2f rx %.2f, after %.0f,%.0f, expected %s", before.px, before.pz,
-			before.ry, before.rx, cs.px, cs.pz, tostring(edgeExpect)))
-		near("drag over the void past the edge moves like one mid-screen (moved / expected)",
-			edgeExpect and moved / edgeExpect, 1, 0.15)
+		log(string.format("     edge drag: before %.0f,%.0f ry %.2f rx %.2f, after %.0f,%.0f", before.px, before.pz,
+			before.ry, before.rx, cs.px, cs.pz))
+		local ok = moved > 1
+		fails = fails + (ok and 0 or 1)
+		log((ok and "PASS" or "FAIL") .. " drag over the void past the edge moves the camera: " .. string.format("%.0f", moved))
 		Spring.WarpMouse(cx, vsy - math.floor(vsy * 0.3)) -- the pointer into that void
 	end,
-	function() expect("pointer off the map (the void): answer 2", 2) end,
+	function() expect("pointer off the map (the void): answer 0, taps work there", 0) end,
 	-- the builder queue (bardroid_queue.lua): only queued buildings near the camera's target are drawn
 	function()
 		local myTeam = Spring.GetMyTeamID()
@@ -326,6 +327,27 @@ cases = {
 		Spring.WarpMouse(math.floor(vsx * 0.5) + 3, math.floor(vsy * 0.45))
 	end,
 	function() expect("map after the window closed", 0) end,
+	-- the app's player list (bardroid_players.lua): BAR's list small from the start, a tap on it opens it at the
+	-- player's own scale, and seven seconds without a tap make it small again
+	function()
+		local P, a = WG.BarDroidPlayers, WG.advplayerlist_api
+		near("player list: small at the start (scale)", a and P and P.minimized() and a.GetScale() or -1, 0.65, 0.001)
+	end,
+	function()
+		local P, a = WG.BarDroidPlayers, WG.advplayerlist_api
+		local pos = a and a.GetPosition()
+		local taken = P and pos and P.press(math.floor((pos[2] + pos[4]) / 2), math.floor((pos[1] + pos[3]) / 2))
+		near("player list: a tap on it is taken (opens it)", taken and 1 or 0, 1, 0)
+	end,
+	function()
+		local P, a = WG.BarDroidPlayers, WG.advplayerlist_api
+		near("player list: open at the player's own scale", a and P and not P.minimized() and a.GetScale() or -1, 1, 0.001)
+		return 8
+	end,
+	function()
+		local P = WG.BarDroidPlayers
+		near("player list: small again after 7 s untouched", P and P.minimized() and 1 or 0, 1, 0)
+	end,
 	-- the app's chat display (bardroid_chat.lua): BAR's chat hands it each line it parsed
 	function()
 		before = WG.bardroidChat and WG.bardroidChat.lines()

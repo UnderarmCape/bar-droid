@@ -69,7 +69,10 @@ final class LobbyBridge {
     }
 
     void start() throws IOException {
-        server = new ServerSocket(0, 8, InetAddress.getLoopbackAddress());
+        // 127.0.0.1 itself, as written below for the lobby: Android's InetAddress.getLoopbackAddress() is ::1 (the
+        // desktop JDK's, where tools/lobby-bridge-test.ps1 runs, is 127.0.0.1), so the lobby connected to nothing and
+        // every download it handed over stayed at "Connecting..." (2026-10-27)
+        server = new ServerSocket(0, 8, InetAddress.getByAddress(new byte[]{127, 0, 0, 1}));
         JSONObject info = new JSONObject();
         try {
             info.put("_sl_address", "127.0.0.1").put("_sl_port", server.getLocalPort()).put("_sl_write_path", "/root/bar");
@@ -85,7 +88,17 @@ final class LobbyBridge {
         }, "lobby-bridge");
         acceptThread.start();
         Log.i("bridge", "lobby bridge on 127.0.0.1:" + server.getLocalPort());
+        // (the lobby connects within seconds of starting; without it its downloads wait forever: say so)
+        Thread check = new Thread(() -> {
+            try { Thread.sleep(30000); } catch (InterruptedException e) { return; }
+            if (!connected && !server.isClosed())
+                Log.e("bridge", "!!! the lobby has not connected in 30 s: its downloads and the Replays tab will wait");
+        }, "lobby-bridge-check");
+        check.setDaemon(true);
+        check.start();
     }
+
+    private volatile boolean connected;
 
     void stop() {
         removeConnectionFile(p);
@@ -95,6 +108,7 @@ final class LobbyBridge {
     }
 
     private void serve(Socket s) {
+        connected = true;
         Log.i("bridge", "lobby connected");
         try (Socket sock = s; BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream(), StandardCharsets.UTF_8))) {
             OutputStream out = sock.getOutputStream();

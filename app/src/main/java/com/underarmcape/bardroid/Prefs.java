@@ -57,6 +57,12 @@ public final class Prefs {
      * measuring; then back to 30 (HANDOFF "Next steps"). Saved as "fpsCap" (the older "fps60" checkbox: 60 if ticked).
      */
     public static int fpsCap = 0;
+    /**
+     * The game's resolution, percent of the usual (GameActivity.MAX_SCREEN_PIXELS): 100, 85 or 70. Fewer pixels for the
+     * GPU, enlarged onto the display (SGSR when "Sharper upscaling" is on). For the benchmark: does the GPU-bound late
+     * game get faster with fewer pixels (Kailil, 2026-10-27: "find the best optimization to reduce that bottle neck")?
+     */
+    public static int renderScale = 100;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
     public static boolean autoLobby = true;
     /**
@@ -125,6 +131,8 @@ public final class Prefs {
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
         fpsCap = s.contains("fpsCap") ? s.getInt("fpsCap", fpsCap) : s.getBoolean("fps60", false) ? 60 : fpsCap;
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
+        renderScale = s.getInt("renderScale", renderScale);
+        if (renderScale != 85 && renderScale != 70) renderScale = 100;
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
@@ -153,6 +161,7 @@ public final class Prefs {
                 .remove("touchOnly")   // the touch-only mode is gone
                 .remove("fps60")   // now fpsCap
                 .putInt("fpsCap", fpsCap)
+                .putInt("renderScale", renderScale)
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
                 .putBoolean("autoUpdate", autoUpdate)

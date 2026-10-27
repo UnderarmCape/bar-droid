@@ -44,9 +44,9 @@ import java.util.Locale;
  *   three-finger tap     show / hide the keyboard
  *   three-finger swipe   up = overview of the whole map, down = back; left / right = previous / next idle builder
  * Actions go to the widget as "act <name>" lines (not in the lobby).
- * The X pointer is hidden while two or more fingers are down. A finger that comes down off the map (the void past its
- * edge, or the sky) does nothing there: a drag pans from the middle of the screen (the pointer goes there too), a tap
- * or long press clicks nothing.
+ * The X pointer is hidden while two or more fingers are down. Off the map (the void past its edge) fingers work as on
+ * it: the map-edge rules of 2026-10-26 (taps off the map clicking nothing, drags anchored mid-screen) are gone (Kailil,
+ * 2026-10-27: they made the edge "wonky" and the interface over the void untouchable; edge navigation comes later).
  *
  * Camera moves go to bardroid_touch.lua in the game through files (BAR's sandbox gives user widgets no sockets); the
  * widget answers through bardroid_hover.txt whether the pointer is over the game's interface.
@@ -104,15 +104,12 @@ final class RtsTouch {
     private boolean joinedPan;                      // this two-finger gesture began as a one-finger pan: no tap
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
     private boolean cursorHidden;
-    // A drag that started off the map is moved to the middle of the screen (view pixels added to the finger's)
-    private float panOffX, panOffY;
 
     // What the game's widget says is under a point (bardroid_hover.txt)
-    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1, HOVER_VOID = 2;
+    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1;
 
     private final Runnable longPress = () -> {
         if (state != State.PENDING) return;
-        if (hoverAt(downX, downY) == HOVER_VOID) return;   // no right click off the map
         state = State.RIGHT_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         press(downX, downY, InputStub.BUTTON_RIGHT, true);
@@ -210,7 +207,6 @@ final class RtsTouch {
                 state = State.PENDING;
                 firstId = e.getPointerId(0);
                 downX = curX = e.getX(); downY = curY = e.getY();
-                panOffX = panOffY = 0;
                 downTime = e.getEventTime();
                 secondTap = nearLastTap(toX(downX), toY(downY));
                 starts.clear();
@@ -273,10 +269,8 @@ final class RtsTouch {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
                 ui.removeCallbacks(longPress);
-                int hover = hoverAt(downX, downY);
-                if (hover == HOVER_VOID) startPanFromMap();   // no box selection in the void
-                else if (secondTap) startLeftDrag();
-                else decideDrag(hover);
+                if (secondTap) startLeftDrag();
+                else decideDrag(hoverAt(downX, downY));
                 return;
             }
             case DRAG_WAIT:
@@ -356,20 +350,17 @@ final class RtsTouch {
         curX = e.getX(); curY = e.getY();
         switch (state) {
             case PENDING:
-                if (hoverAt(downX, downY) == HOVER_VOID) moveCursorToMap();   // a tap off the map clicks nothing
-                else tap(downX, downY);
+                tap(downX, downY);
                 break;
-            case DRAG_WAIT: {
-                int hover = hoverAt(downX, downY);
-                if (hover == HOVER_INTERFACE) {   // a quick drag on the interface
+            case DRAG_WAIT:
+                if (hoverAt(downX, downY) == HOVER_INTERFACE) {   // a quick drag on the interface
                     press(downX, downY, InputStub.BUTTON_LEFT, true);
                     press(curX, curY, InputStub.BUTTON_LEFT, false);
                 } else {
-                    if (hover == HOVER_VOID) startPanFromMap(); else startPan();
+                    startPan();
                     flingIfFast();
                 }
                 break;
-            }
             case PAN:
                 panTo(curX, curY);
                 flingIfFast();
@@ -415,10 +406,7 @@ final class RtsTouch {
         view().setCursorVisible(visible);
     }
 
-    /**
-     * A one-finger drag: a left drag where it started on the game's interface, a pan on the map, and off the map a pan
-     * that ignores where the finger is (startPanFromMap); not known yet: wait for the widget's answer.
-     */
+    /** A one-finger drag: a left drag where it started on the game's interface, else a pan; not known yet: wait. */
     private void decideDrag(int hover) {
         if (hover == HOVER_UNKNOWN) {
             if (state != State.DRAG_WAIT) {
@@ -429,33 +417,7 @@ final class RtsTouch {
         }
         ui.removeCallbacks(hoverTimeout);
         if (hover == HOVER_INTERFACE) startLeftDrag();
-        else if (hover == HOVER_VOID) startPanFromMap();
         else startPan();
-    }
-
-    /** The middle of the game's picture, view pixels: the camera's target, which the engine keeps on the map. */
-    private float[] viewCenter() {
-        LorieView v = view();
-        Rect vp = v.getInputViewport();
-        return new float[]{v.getLeft() + vp.exactCenterX(), v.getTop() + vp.exactCenterY()};
-    }
-
-    /** Off the map the pointer would sit in the void (Kailil, 2026-10-26): it goes to the middle of the screen. */
-    private void moveCursorToMap() {
-        float[] c = viewCenter();
-        moveCursor(c[0], c[1]);
-    }
-
-    /**
-     * A drag that started off the map: the finger's position is ignored, the drag is anchored in the middle of the
-     * screen (on the map; Kailil: "spawn in the map instead and ignore my finger"), and the pointer goes there too.
-     */
-    private void startPanFromMap() {
-        float[] c = viewCenter();
-        panOffX = c[0] - downX;
-        panOffY = c[1] - downY;
-        moveCursor(c[0], c[1]);
-        startPan();
     }
 
     private void startLeftDrag() {
@@ -473,7 +435,7 @@ final class RtsTouch {
 
     private void panTo(float x, float y) {
         if (x == panX && y == panY) return;
-        sendPan(panX + panOffX, panY + panOffY, x + panOffX, y + panOffY);
+        sendPan(panX, panY, x, y);
         panX = x; panY = y;
     }
 
@@ -620,10 +582,10 @@ final class RtsTouch {
     }
 
     /**
-     * What is under view pixel (x, y) by the widget's last answer ("x y 0|1|2" in X screen pixels, written when the
-     * pointer moves and every second): HOVER_INTERFACE (the game's interface or the minimap), HOVER_MAP, HOVER_VOID
-     * (no map: past its edge, or the sky); HOVER_UNKNOWN while it has not answered for that point. Without a widget
-     * (the lobby, a game still loading) everything is interface: drags stay mouse drags.
+     * What is under view pixel (x, y) by the widget's last answer ("x y 0|1" in X screen pixels, written when the
+     * pointer moves and every second): HOVER_INTERFACE (the game's interface or the minimap) or HOVER_MAP;
+     * HOVER_UNKNOWN while it has not answered for that point. Without a widget (the lobby, a game still loading)
+     * everything is interface: drags stay mouse drags.
      */
     private int hoverAt(float vx, float vy) {
         if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return HOVER_INTERFACE;
@@ -635,11 +597,7 @@ final class RtsTouch {
         if (f.length != 3) return HOVER_UNKNOWN;
         try {
             if (Math.abs(Integer.parseInt(f[0]) - toX(vx)) > 2 || Math.abs(Integer.parseInt(f[1]) - toY(vy)) > 2) return HOVER_UNKNOWN;
-            switch (f[2]) {
-                case "1": return HOVER_INTERFACE;
-                case "2": return HOVER_VOID;
-                default: return HOVER_MAP;
-            }
+            return f[2].equals("1") ? HOVER_INTERFACE : HOVER_MAP;
         } catch (NumberFormatException e) { return HOVER_UNKNOWN; }
     }
 

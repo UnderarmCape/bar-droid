@@ -120,6 +120,8 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
         ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
                 Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
+        ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).check(
+                Prefs.renderScale == 85 ? R.id.rbRender85 : Prefs.renderScale == 70 ? R.id.rbRender70 : R.id.rbRender100);
         ((CheckBox) findViewById(R.id.cbUpscale)).setChecked(Prefs.upscale);
         ((CheckBox) findViewById(R.id.cbUpscaleCompare)).setChecked(Prefs.upscaleCompare);
         ((CheckBox) findViewById(R.id.cbLobbyBridge)).setChecked(Prefs.lobbyBridge);
@@ -143,6 +145,8 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
         int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
         Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;
+        int res = ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).getCheckedRadioButtonId();
+        Prefs.renderScale = res == R.id.rbRender85 ? 85 : res == R.id.rbRender70 ? 70 : 100;
         Prefs.upscale = ((CheckBox) findViewById(R.id.cbUpscale)).isChecked();
         Prefs.upscaleCompare = ((CheckBox) findViewById(R.id.cbUpscaleCompare)).isChecked();
         Prefs.lobbyBridge = ((CheckBox) findViewById(R.id.cbLobbyBridge)).isChecked();
