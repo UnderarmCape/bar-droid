@@ -29,7 +29,9 @@ $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\ui-screenshot"
 $Data = Join-Path $Work "data"
-$Bar = Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"
+. (Join-Path $PSScriptRoot "toolchain.ps1")
+Assert-BarData
+$Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
 $EngineDir = Join-Path $Bar "engine\$Engine"
 $size = @{ inner = @(1152, 1044, 1.3); cover = @(2520, 1080, 2.0) }[$Screen]

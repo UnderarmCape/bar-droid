@@ -22,7 +22,7 @@ param(
   [string]$Repo = "C:\Tools\BARGAMEPAD\src\bar-codex",
   [string]$EngineDir = "C:\Tools\BARGAMEPAD\builds\engine-2026.07.04",
   [string]$Companion = "C:\Tools\BARGAMEPAD\tools\companion\BARGamepadCompanion.exe",
-  [string]$BarData = (Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"),
+  [string]$BarData = (Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "Programs\Beyond-All-Reason\data"),
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1",
   [int]$Warmup = 40,

@@ -72,12 +72,15 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;
   long-press **GL check** in the app keeps X + GPU server up without the game.
 
-## Build / run (Windows; everything portable under `C:\Tools\BARANDROID\toolchain`)
+## Build / run (Windows; everything portable in the toolchain folder: `scripts\env.bat` picks `BARDROID_TOOLCHAIN`, else `..\toolchain` = `C:\Tools\BARANDROID\toolchain` here, else `toolchain\` in the checkout)
+The launchers are in the repository root (the copies in `C:\Tools\BARANDROID` only call them); README.md is the
+newcomer's version of this section. APKs land in `apk\` beside the toolchain folder (`BARDROID_OUT` overrides).
 ```
-..\Install Toolchain.bat --accept-licenses   # once
-..\Build APK.bat                              # emulator build (x86_64);  "Build APK.bat phone" = arm64
-..\Run in Emulator.bat [-no-audio|-wipe-data] # AVD bardroid-x86_64: boot, install, open
-..\Get Logs.bat                               # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> ..\logs
+"Install Toolchain.bat" --accept-licenses     # once; also fetches + patches termux-x11
+"Build APK.bat"                               # emulator build (x86_64);  "Build APK.bat phone" = arm64
+"Install on Phone.bat"                        # the phone build onto the adb-connected phone ("Pair Phone.bat": wireless)
+"Run in Emulator.bat" [-no-audio|-wipe-data]  # AVD bardroid-x86_64: boot, install, open
+"Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
@@ -87,7 +90,8 @@ powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-F
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
 ```
-Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\toolchain\env.bat && <command>"` (`%VARS%` on that line expand
+Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat && <command>"` (PowerShell tools: dot-source
+`tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
 `adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to

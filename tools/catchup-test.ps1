@@ -1,4 +1,4 @@
-﻿# Catch-up on the laptop: a headless host plays BARb vs BARb on 127.0.0.1, and after -Warmup seconds a windowed
+# Catch-up on the laptop: a headless host plays BARb vs BARb on 127.0.0.1, and after -Warmup seconds a windowed
 # spectator joins and catches up, twice: with the touch widget's catch-up mode off (bardroid_catchup = 0) and on.
 # Logs the probe's lines (game frames and pictures per 5 s) and the widget's [bardroid-catchup] lines of each join.
 # Isolated write dirs under build\catchup-test (the live install's packages, pool and rapid index joined read-only by
@@ -28,7 +28,9 @@ if ($HostSpeed -gt 0) { $Speed = $HostSpeed; $FastMinutes = 100000 }
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\catchup-test"
-$Bar = Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"
+. (Join-Path $PSScriptRoot "toolchain.ps1")
+Assert-BarData
+$Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
 $EngineDir = Join-Path $Bar "engine\$Engine"
 $Port = 8452

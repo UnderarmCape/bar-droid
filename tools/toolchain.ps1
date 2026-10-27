@@ -7,3 +7,15 @@ $TC = if ($env:BARDROID_TOOLCHAIN) {
 } else {
   [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\toolchain"))
 }
+
+# BAR's Windows install (the laptop checks read its engines, packages and pool, never change them): BAR_DATA if set,
+# else the BAR launcher's default place. The real Local AppData folder, not $env:LOCALAPPDATA, which scripts\env.bat
+# points into the toolchain.
+$BarData = if ($env:BAR_DATA) { $env:BAR_DATA } else {
+  Join-Path ([Environment]::GetFolderPath("LocalApplicationData")) "Programs\Beyond-All-Reason\data"
+}
+function Assert-BarData {
+  if (-not (Test-Path (Join-Path $BarData "engine"))) {
+    throw "BAR's Windows install was not found at $BarData (install BAR, or set BAR_DATA to its data folder)"
+  }
+}
