@@ -76,8 +76,8 @@ if (-not $have) { & $cli --no-metrics "--sdk=$sdk" sdk install platform-tools pl
 if ($LASTEXITCODE -ne 0) { throw "android sdk install failed" } }
 
 # 5. Host tools the X server's native build expects from a Linux box: Python 3 (libepoxy codegen),
-#    bison (xkbcomp parser) and a host gcc (libX11's makekeys). All portable zips.
-Write-Host "[5/5] Host build tools (Python, bison, gcc)"
+#    bison (xkbcomp parser) and a host gcc (libX11's makekeys). All portable zips. Plus luacheck for the checks.
+Write-Host "[5/5] Host build tools (Python, bison, gcc, luacheck)"
 $ht = "$TC\hosttools"
 New-Item -ItemType Directory $ht -Force | Out-Null
 if (-not (Test-Path "$ht\python\python.exe")) {
@@ -97,6 +97,14 @@ if (-not (Test-Path "$ht\w64devkit\bin\gcc.exe")) {
     $sfx = Get-File "https://github.com/skeeto/w64devkit/releases/download/v2.10.1/w64devkit-x64-2.10.1.7z.exe" "w64devkit-x64-2.10.1.7z.exe"
     & tar.exe -xf $sfx -C $ht
     if ($LASTEXITCODE -ne 0) { throw "extract failed: $sfx" }
+}
+# luacheck for the Lua lint step of tools\laptop-tests.ps1 (.luacheckrc); one self-contained exe
+if (-not (Test-Path "$ht\luacheck.exe")) {
+    $exe = Get-File "https://github.com/lunarmodules/luacheck/releases/download/v1.2.0/luacheck.exe" "luacheck-1.2.0.exe"
+    if ((Get-FileHash $exe -Algorithm SHA256).Hash -ne "0F1C69C4D09F1EBB4D8DF14C215E4553E2E639BD4CB7BF3C639B0DAA6198317B") {
+        Remove-Item $exe; throw "luacheck-1.2.0.exe: unexpected SHA-256"
+    }
+    Copy-Item $exe "$ht\luacheck.exe"
 }
 Write-Host ""
 Write-Host "Toolchain ready in $TC"

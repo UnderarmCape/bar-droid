@@ -78,7 +78,6 @@ public class StartActivity extends Activity {
     }
 
     private void openLauncher() {
-        startActivity(new Intent(this, LauncherActivity.class));
-        overridePendingTransition(0, 0);
+        startActivity(new Intent(this, LauncherActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));
     }
 }

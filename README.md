@@ -8,13 +8,15 @@ the engine and BAR's content from BAR's own servers at install time, as BAR's PC
 How it works, in one breath: the official arm64 Linux engine runs inside a Debian container (proot, no root needed)
 and draws through Mesa's Freedreno driver onto an X server compiled into the app (Termux:X11's `lorie` module);
 small Lua widgets and an LD_PRELOAD library adapt BAR to a phone (touch camera, interface scale per screen, catching
-up with running games, frame pacing). Details: [HANDOFF.md](HANDOFF.md) (state, measurements, decisions) and
-[CLAUDE.md](CLAUDE.md) (architecture, files, rules).
+up with running games, frame pacing). Details: [HANDOFF.md](HANDOFF.md) (state, risks, next steps),
+[CLAUDE.md](CLAUDE.md) (architecture, files, rules) and [docs/HISTORY.md](docs/HISTORY.md) (measurements and
+decisions, session by session).
 
 ## Phone requirements
 
-Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB RAM, about 6 GB free, Android 10 or
-newer. Mali, Xclipse and Tensor GPUs have no Mesa driver path: the app's device check says so.
+Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB RAM, about 6 GB free. The APK
+installs from Android 9; it was tested on Android 17 (Galaxy Z Fold7) and Android 14 (emulator). Mali, Xclipse and
+Tensor GPUs have no Mesa driver path: the app's device check says so.
 
 ## Build (Windows 10/11 x64)
 
@@ -49,7 +51,8 @@ widget in BAR's real lobby, and the in-game widgets in a real skirmish. The game
   the preload library), `src/main/jniLibs/` (prebuilt proot, busybox and friends; rebuilt by `tools/`).
 - `patches/` the changes to Termux:X11 (fetched into `termux-x11/` by `tools/fetch-termux-x11.ps1`).
 - `tools/` build scripts for the native helpers, the laptop checks and profiling tools.
-- `docs/` what the app changes in BAR's settings at every start (`UPDATES.md`) and drafts for upstream reports.
+- `docs/` what the app changes in BAR's settings at every start (`UPDATES.md`), the project's history
+  (`HISTORY.md`) and drafts for upstream reports (`upstream/`).
 
 ## Licences
 

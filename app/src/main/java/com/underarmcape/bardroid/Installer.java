@@ -390,7 +390,7 @@ public final class Installer {
      * (2026-10-26): out of the builds until v0.8.5's frame cost is down; a build without it removes an installed one.
      */
     public boolean gamepadAvailable() {
-        try (InputStream ignored = ctx.getAssets().open("gamepad/gamepad.properties")) { return true; }
+        try { ctx.getAssets().open("gamepad/gamepad.properties").close(); return true; }
         catch (IOException e) { return false; }
     }
 

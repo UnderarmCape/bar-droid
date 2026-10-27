@@ -1,55 +1,55 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace 'com.underarmcape.bardroid'
-    compileSdkVersion 34
+    namespace = 'com.underarmcape.bardroid'
+    compileSdk = 34
     // Same NDK as :lorie; AGP uses it to strip debug symbols from the packaged .so files.
-    ndkVersion "29.0.14206865"
+    ndkVersion = "29.0.14206865"
 
     defaultConfig {
-        applicationId "com.underarmcape.bardroid"
-        minSdkVersion 28
-        targetSdkVersion 34
-        versionCode 3
-        versionName "0.2.0"
+        applicationId = "com.underarmcape.bardroid"
+        minSdk = 28
+        targetSdk = 34
+        versionCode = 3
+        versionName = "0.2.0"
         // ABI filter comes from the root build.gradle (-PbardroidAbi, default x86_64 = emulator build).
         buildConfigField "String", "TARGET_ABI", "\"${rootProject.ext.bardroidAbi}\""
     }
 
     // proot, busybox and friends live in jniLibs and must be real files on disk so that they can be
     // exec'd (Android 10+ only allows executing files from the app's native library directory).
-    packagingOptions.jniLibs.useLegacyPackaging true
+    packaging.jniLibs.useLegacyPackaging = true
     // The prebuilt binaries (Termux proot + friends, patchelf'd; static busybox) ship as published: llvm-strip
     // re-lays them out. Only our own build output (libXlorie.so) gets stripped.
-    packagingOptions.jniLibs.keepDebugSymbols += ['**/libproot.so', '**/libproot-loader.so', '**/libtalloc.so',
-                                                  '**/libandroid-shmem.so', '**/libbusybox.so',
-                                                  '**/libvirgl_server.so', '**/libvirglrenderer.so', '**/libepoxy.so',
-                                                  '**/lib*_angle.so']
+    packaging.jniLibs.keepDebugSymbols += ['**/libproot.so', '**/libproot-loader.so', '**/libtalloc.so',
+                                           '**/libandroid-shmem.so', '**/libbusybox.so',
+                                           '**/libvirgl_server.so', '**/libvirglrenderer.so', '**/libepoxy.so',
+                                           '**/lib*_angle.so']
 
     signingConfigs {
         debug {
             // Reproducible dev signing key; replace with your own keystore for release builds.
-            storeFile file('bardroid-debug.jks')
-            storePassword 'bardroid'
-            keyAlias 'bardroid'
-            keyPassword 'bardroid'
+            storeFile = file('bardroid-debug.jks')
+            storePassword = 'bardroid'
+            keyAlias = 'bardroid'
+            keyPassword = 'bardroid'
         }
     }
 
     buildTypes {
         debug {
-            signingConfig signingConfigs.debug
-            minifyEnabled false
+            signingConfig = signingConfigs.debug
+            minifyEnabled = false
         }
         release {
-            signingConfig signingConfigs.debug
-            minifyEnabled false
+            signingConfig = signingConfigs.debug
+            minifyEnabled = false
         }
     }
 
-    compileOptions.sourceCompatibility JavaVersion.VERSION_17
-    compileOptions.targetCompatibility JavaVersion.VERSION_17
-    buildFeatures.buildConfig true
+    compileOptions.sourceCompatibility = JavaVersion.VERSION_17
+    compileOptions.targetCompatibility = JavaVersion.VERSION_17
+    buildFeatures.buildConfig = true
 }
 
 androidComponents {

@@ -92,7 +92,7 @@ public class GameActivity extends MainActivity {
      * whatever the display really runs at).
      */
     private void prefer60Hz() {
-        Display d = getWindowManager().getDefaultDisplay();
+        Display d = display();
         if (d == null) return;
         Display.Mode cur = d.getMode();
         WindowManager.LayoutParams lp = getWindow().getAttributes();
@@ -107,8 +107,14 @@ public class GameActivity extends MainActivity {
     }
 
     private int refreshHz() {
-        Display d = getWindowManager().getDefaultDisplay();
+        Display d = display();
         return d == null ? 60 : Math.round(d.getRefreshRate());
+    }
+
+    /** The display this screen is on (Android 11 deprecated getDefaultDisplay for Activity.getDisplay). */
+    @SuppressWarnings("deprecation")
+    private Display display() {
+        return android.os.Build.VERSION.SDK_INT >= 30 ? getDisplay() : getWindowManager().getDefaultDisplay();
     }
 
     /** Termux:X11 asks for fixed landscape; let the phone flip between the two landscape sides with the sensor. */

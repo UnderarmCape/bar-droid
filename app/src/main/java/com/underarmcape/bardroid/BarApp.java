@@ -30,7 +30,7 @@ public class BarApp extends LorieApp {
      * resolution is too heavy). Everything stays adjustable under "Display settings".
      */
     private void applyDisplayDefaults() {
-        android.content.SharedPreferences sp = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        android.content.SharedPreferences sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
         // Once, also for existing installs: leaving the game turns it into a floating window (Termux:X11's "PIP mode",
         // X screen size kept). A visible window is almost never killed for memory; a background app with a
         // notification is (a spectated match got LOW_MEMORY-killed). Switchable under Display settings.

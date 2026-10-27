@@ -1,20 +1,22 @@
 @echo off
 setlocal EnableExtensions
-title BAR Droid - pair phone (wireless debugging over Tailscale)
+title BAR Droid - pair phone (wireless debugging)
 cd /d "%~dp0"
 call "%~dp0scripts\env.bat"
 
-rem Wireless adb to the phone over Tailscale (no USB cable). On the phone:
-rem   Developer options > Wireless debugging ON (needs any Wi-Fi), then "Pair device with pairing code".
-rem Use the PORTS the phone shows; the IP is the phone's Tailscale address, found automatically.
-rem   Pair Phone.bat                                  asks for the ports and the code
+rem Wireless adb to the phone (no USB cable), on the same Wi-Fi as this PC or over Tailscale. On the phone:
+rem   Developer options > Wireless debugging ON (needs Wi-Fi), then "Pair device with pairing code".
+rem Use the IP address and PORTS the phone shows; with Tailscale on this PC the phone's Tailscale address is found
+rem automatically.
+rem   Pair Phone.bat                                  asks for the address, the ports and the code
 rem   Pair Phone.bat <pair-port> <code> <connect-port> [phone-ip]
-rem   Pair Phone.bat - - <connect-port>               already paired: connect only
+rem   Pair Phone.bat - - <connect-port> [phone-ip]    already paired: connect only
 set "TS=%ProgramFiles%\Tailscale\tailscale.exe"
 set "IP=%~4"
 if not defined IP if exist "%TS%" for /f "tokens=1,4" %%a in ('"%TS%" status') do if /i "%%b"=="android" if not defined IP set "IP=%%a"
-if not defined IP (echo  Could not find an Android device on Tailscale. Give its 100.x.y.z address as the 4th argument. & goto :end)
-echo  Phone on Tailscale: %IP%
+if not defined IP set /p "IP= Phone's IP address, as its Wireless debugging screen shows it (without the :port): "
+if not defined IP goto :end
+echo  Phone: %IP%
 
 set "PAIRPORT=%~1"
 set "CODE=%~2"

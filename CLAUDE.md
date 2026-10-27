@@ -117,7 +117,7 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNa
 - proot's seccomp filter must not trap syscalls proot does not act on (each trap = two ptrace stops; GPU drivers make
   hundreds of ioctls per frame). Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
 - The lobby needs `chobby_config.json` in the write dir (launch-bar.sh writes it, as BAR's launcher does).
-- Compare frame rates with the developer fps widget (HANDOFF.md) and the laptop awake: Modern Standby throttles ~2.5x.
+- Compare frame rates with the developer fps widget (`tools/dev/bardroid_fps.lua`, docs/HISTORY.md) and the laptop awake: Modern Standby throttles ~2.5x.
 
 ## Open risks (see HANDOFF.md)
 Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little

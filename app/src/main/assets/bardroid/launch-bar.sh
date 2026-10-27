@@ -154,7 +154,7 @@ fi
 #   UnitIconFade*          1, the strictest unit LOD BAR has (its "Unit icon distance" slider at its minimum): a unit is
 #                          an icon whenever its model would look smaller than the icon, so only units close to the
 #                          camera are drawn as models (Kailil, 2026-10-26, late games: "a max distance something is
-#                          animated ... like a lod system"; a test, see HANDOFF)
+#                          animated ... like a lod system"; a test, see docs/HISTORY.md)
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
   BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2
   VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1"

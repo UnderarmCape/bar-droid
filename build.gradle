@@ -3,7 +3,7 @@
 buildscript {
     repositories {
         google()
-        maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }   // Maven Central mirror (Google-hosted, fast)
+        maven { url = "https://maven-central.storage-download.googleapis.com/maven2/" }   // Maven Central mirror (Google-hosted, fast)
         mavenCentral()
     }
     dependencies {
@@ -14,9 +14,9 @@ buildscript {
 allprojects {
     repositories {
         google()
-        maven { url "https://maven-central.storage-download.googleapis.com/maven2/" }   // Maven Central mirror (Google-hosted, fast)
+        maven { url = "https://maven-central.storage-download.googleapis.com/maven2/" }   // Maven Central mirror (Google-hosted, fast)
         mavenCentral()
-        maven { url "https://jitpack.io" }
+        maven { url = "https://jitpack.io" }
     }
 }
 

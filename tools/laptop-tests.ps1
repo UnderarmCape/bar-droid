@@ -22,8 +22,12 @@ function Run($name, $script, $passPattern, [string[]]$extra = @()) {
   $script:results += "{0} {1}" -f $(if ($ok) { "PASS" } else { "FAIL" }), $name
 }
 
-# Lua lint (.luacheckrc): the app's widgets and the test widgets, when luacheck is around (LUACHECK, or on PATH)
-$luacheck = if ($env:LUACHECK) { $env:LUACHECK } else { (Get-Command luacheck -ErrorAction SilentlyContinue).Source }
+# Lua lint (.luacheckrc): the app's widgets and the test widgets, with the toolchain's luacheck (Install
+# Toolchain.bat), else LUACHECK, else one on PATH
+. (Join-Path $Tools "toolchain.ps1")
+$luacheck = if (Test-Path "$TC\hosttools\luacheck.exe") { "$TC\hosttools\luacheck.exe" } elseif ($env:LUACHECK) { $env:LUACHECK } else {
+  (Get-Command luacheck -ErrorAction SilentlyContinue).Source
+}
 if ($luacheck) {
   Write-Host "== lua lint"
   Push-Location $App
@@ -32,7 +36,7 @@ if ($luacheck) {
   $ok = $out | Select-String -Pattern "Total: 0 warnings / 0 errors" -Quiet
   if (-not $ok) { $out | Select-String -Pattern "\(W|\(E|Total:" | Select-Object -First 25 | ForEach-Object { Write-Host "   $_" } }
   $results += "{0} lua lint" -f $(if ($ok) { "PASS" } else { "FAIL" })
-} else { $results += "SKIP lua lint (no luacheck: set LUACHECK to luacheck.exe)" }
+} else { $results += "SKIP lua lint (no luacheck: run Install Toolchain.bat, or set LUACHECK to luacheck.exe)" }
 
 Run "downloader" "downloader-test.ps1" "ALL PASS"
 Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"

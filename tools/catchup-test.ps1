@@ -5,7 +5,7 @@
 # junctions, removed again at the end).
 #   powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]
 # -HostOnly: only the host, fast-forwarded (-Speed) to -FastMinutes of game, then at 1x for -HoldMinutes, for a client
-# elsewhere to join as the spectator "Phone" (the emulator app: HostIP 10.0.2.2, see HANDOFF "Catch-up"). -AIs 4 = 2v2.
+# elsewhere to join as the spectator "Phone" (the emulator app: HostIP 10.0.2.2, see docs/HISTORY.md "Catch-up when joining"). -AIs 4 = 2v2.
 # -Game "Beyond All Reason test-..." picks the game (the client's must match, as must -Engine).
 param(
   [int]$Warmup = 300,   # seconds of game before the first join (game time = real time on the host)
