@@ -24,8 +24,10 @@ starts; `tools/research/research-bench.ps1` puts `tools/research/dev-env.sh` the
 
 Each run goes through `tools/phone-bench.ps1` (same parsing, clocks, CSV: `build/phone-bench.csv`, labels `hm:*`).
 Before letting go of `phone-bench.lock` the harness removes the hook, the lever and the springsettings copy, puts the
-user's resolution/frame-cap prefs back and sets Game Mode standard. It waits (before taking the lock) while the phone
-is unreachable or in use (screen on, another app in front: a call blocked runs on 2026-10-27).
+user's resolution/frame-cap prefs back and sets Game Mode standard. It touches the phone only when it has been handed over (`hailmary-work\phone-ok`, made by hand when Kailil or the main
+session says the phone is free; Kailil's rule: no access, not even reading its state, while he has it), and then
+still waits, before taking the lock, while another app is in front. The warm-up into the throttled state is its own
+(recorded `hm:warmup-baseline` runs until thermal status ≥ 1 and skin ≥ 40 °C), so every lever is measured hot.
 Levers: `tools/research/levers.ps1`.
 
 ## Engine builds (laptop cross-build, no WSL, nothing installed)

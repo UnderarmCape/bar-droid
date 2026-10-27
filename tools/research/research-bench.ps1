@@ -55,6 +55,16 @@ function Thermal {
   [pscustomobject]@{ Status = $status; Skin = $skin }
 }
 
+# phone-bench.ps1's arguments: this script does the warm-up itself (hot, throttled runs: Kailil, 2026-10-27), so
+# phone-bench.ps1 neither warms (-NoWarm) nor waits for a cool phone (-NoCool), whichever of the two its version has
+function BenchArgs([hashtable]$a) {
+  $p = (Get-Command (Join-Path $App "tools\phone-bench.ps1")).Parameters
+  $a["Device"] = $Device
+  foreach ($s in "NoWarm", "NoCool") { if ($p.ContainsKey($s)) { $a[$s] = $true } }
+  $out = @{}; foreach ($k in $a.Keys) { if ($p.ContainsKey($k)) { $out[$k] = $a[$k] } }
+  $out
+}
+
 $lock = Join-Path (Split-Path $TC) "phone-bench.lock"
 function TakeLock {
   while (Test-Path $lock) {
@@ -90,6 +100,9 @@ ls $B/dev-env.sh $B/research 2>&1 | tr '\n' ' '; echo
   Adb shell "cmd game mode standard $pkg" 2>$null | Out-Null
 }
 
+# The phone is Kailil's: no adb at all (not even reading its state) unless it has been handed over for research runs
+# (hailmary-work\phone-ok, created by hand when Kailil or the main session says the phone is free, deleted when not)
+if (-not (Test-Path (Join-Path $HM "phone-ok"))) { Write-Host "[research] the phone has not been handed over (no $HM\phone-ok): no phone access"; exit 2 }
 WaitPhoneFree   # before the lock: a phone that is away or in use does not hold up other sessions' runs
 TakeLock
 try {
@@ -119,7 +132,8 @@ cat files/bar/research/prefs.saved | tr '\n' ' '; echo
       if ($h.Status -ge 1 -and $h.Skin -ge 40) { break }
       Write-Host "[research] warming up ($w): status $($h.Status), skin $($h.Skin) C"
       WaitPhoneFree
-      & (Join-Path $App "tools\phone-bench.ps1") -Scale $Scale -Cap $Cap -Label "hm:warmup-baseline" -NoWarm -Device $Device
+      $pb = Join-Path $App "tools\phone-bench.ps1"; $pbArgs = BenchArgs @{ Scale = $Scale; Cap = $Cap; Label = "hm:warmup-baseline" }
+      & $pb @pbArgs
       Set-Content -Path $lock -Value $PID -Encoding ascii
     }
   }
@@ -151,8 +165,8 @@ cat files/bar/research/prefs.saved | tr '\n' ' '; echo
         AppSh "rm -rf files/bar/research/pgo; grep -E 'Sim [0-9]+ frames|spring exited' files/logs/launcher.log | tail -n 2"
         continue
       }
-      & (Join-Path $App "tools\phone-bench.ps1") -Scale $(if ($L.Scale) { $L.Scale } else { $Scale }) -Cap $Cap `
-        -Label "hm:$name$(if ($Profile) { " profile $Profile" })" -NoWarm -Profile $Profile -Device $Device
+      $pbArgs = BenchArgs @{ Scale = $(if ($L.Scale) { $L.Scale } else { $Scale }); Cap = $Cap; Profile = $Profile; Label = "hm:$name$(if ($Profile) { " profile $Profile" })" }
+      & (Join-Path $App "tools\phone-bench.ps1") @pbArgs
       Set-Content -Path $lock -Value $PID -Encoding ascii   # phone-bench.ps1 drops the lock on an error
       if ($perfJob) { Finish-PerfJob $perfJob $name }
       if ($L.After) { & $L.After }
