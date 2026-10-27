@@ -617,11 +617,50 @@ local function gameFrame(frame)
 	end
 end
 
+-- Deferred passes nobody reads on the phone (their readers, BAR's lights, SSAO, bloom, distortion and unit outlines,
+-- are off). With BAR's advanced map shading off (its Lowest preset, the phone's) the engine still clears the map's
+-- G-buffer every frame, six screen-sized render targets that nothing draws into; and it draws every tree and rock a
+-- second time into the model G-buffer. Units stay in it (shields outline the units they touch, the radar and jammer
+-- placement previews hide behind them). Switched off after the first drawn frames, so the buffers hold a cleared
+-- picture rather than fresh memory (an engine buffer that is not drawn is not resized on fold/unfold either: it stays
+-- all cleared); the map's comes back within 60 frames if the map shading is turned on. (Spring.SetDrawGroundDeferred,
+-- SetDrawModelsDeferred: unsynced, allowed to user widgets.)
+local DEFERRED_FIRST, DEFERRED_EVERY = 3, 60 -- drawn frames
+local deferredFrames, groundDeferredOff, featuresDeferredOff = 0, false, false
+local function trimDeferred()
+	deferredFrames = deferredFrames + 1
+	if deferredFrames ~= DEFERRED_FIRST and deferredFrames % DEFERRED_EVERY ~= 0 then
+		return
+	end
+	local groundOff = Spring.GetConfigInt("AdvMapShading", 1) == 0
+	if groundOff ~= groundDeferredOff then
+		Spring.SetDrawGroundDeferred(not groundOff)
+		groundDeferredOff = groundOff
+		Spring.Echo("[bardroid-touch] map G-buffer pass " .. (groundOff and "off (advanced map shading is off)" or "on again"))
+	end
+	if not featuresDeferredOff then
+		Spring.SetDrawModelsDeferred(true, false)
+		featuresDeferredOff = true
+		Spring.Echo("[bardroid-touch] trees and rocks drawn once (no model G-buffer pass for features)")
+	end
+end
+local function restoreDeferred()
+	if groundDeferredOff then
+		Spring.SetDrawGroundDeferred(true)
+		groundDeferredOff = false
+	end
+	if featuresDeferredOff then
+		Spring.SetDrawModelsDeferred(true, true)
+		featuresDeferredOff = false
+	end
+end
+
 function widget:Shutdown()
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
 	endCatchup() -- a LuaUI reload (fold/unfold) while catching up: the next start sees the gap again
+	restoreDeferred() -- the engine's own passes back (a reload switches them off again)
 	if touchFile then
 		touchFile:close()
 		touchFile = nil
@@ -792,6 +831,7 @@ end
 -- the world pass: once per drawn frame, and (unlike DrawScreen) also with the interface hidden or a window open
 function widget:DrawWorld()
 	guarded(logPerf)
+	guarded(trimDeferred)
 end
 
 -- once per simulated frame, drawn or not (Update stops while the engine does not draw): the catch-up check, about once

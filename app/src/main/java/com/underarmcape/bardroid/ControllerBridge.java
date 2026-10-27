@@ -79,6 +79,7 @@ public final class ControllerBridge {
     private final boolean[] buttons = new boolean[BUTTON_COUNT];
     private int lx, ly, rx, ry, lt, rt;
     private boolean connected, dirty;
+    private boolean idle;   // the pump sleeps the heartbeat out (no pad); guarded by this
     private Thread pump;
     private volatile boolean running;
 
@@ -124,6 +125,7 @@ public final class ControllerBridge {
         java.util.Arrays.fill(buttons, false);
         lx = ly = rx = ry = lt = rt = 0;
         dirty = true;
+        wakeIdle();
     }
 
     public static boolean isGamepad(InputDevice d) {
@@ -140,6 +142,7 @@ public final class ControllerBridge {
             if (!any) release();
             connected = any;
             dirty = true;
+            wakeIdle();
         }
         Log.i("pad", any ? "gamepad connected" : "gamepad disconnected");
     }
@@ -161,6 +164,7 @@ public final class ControllerBridge {
                 buttons[BTN_DPAD_UP] = hy < -0.5f; buttons[BTN_DPAD_DOWN] = hy > 0.5f;
             }
             dirty = true;
+            wakeIdle();
         }
         return true;
     }
@@ -178,6 +182,7 @@ public final class ControllerBridge {
             if (down && idx == BTN_A) aPressed = true;
             if (down && idx == BTN_B) bPressed = true;
             dirty = true;
+            wakeIdle();
         }
         return true;
     }
@@ -232,9 +237,19 @@ public final class ControllerBridge {
                 cameraSent = cameraLine;
                 lastCamera = now;
             }
-            try { Thread.sleep(TICK_MS); } catch (InterruptedException e) { break; }
+            // No pad: only the heartbeat is due, so the thread wakes 10 times a second instead of 60 (a pad that
+            // connects or sends an event wakes it at once)
+            try {
+                synchronized (this) {
+                    if (connected || dirty) wait(TICK_MS);
+                    else { idle = true; wait(HEARTBEAT_MS); idle = false; }
+                }
+            } catch (InterruptedException e) { break; }
         }
     }
+
+    /** Called with the lock held whenever the pad state changes: ends the pump's idle sleep. */
+    private void wakeIdle() { if (idle) notifyAll(); }
 
     private void mouseTick(long now) {
         if (now >= mouseCheckAt) {

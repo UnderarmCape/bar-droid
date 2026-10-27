@@ -1,4 +1,4 @@
-﻿# Where a big game's CPU time goes, on the laptop the way the phone runs BAR's released game: a windowed spectator hosts
+# Where a big game's CPU time goes, on the laptop the way the phone runs BAR's released game: a windowed spectator hosts
 # -AIs BARb (teams alternating), fast-forwarded (-Speed) to -FastMinutes of game, then at 1x BAR's widget profiler
 # (tools/profile/dbg_bardroid_profile_log.lua, in a tiny game overlay of its own: it needs a game widget's rights)
 # measures every widget for -Window seconds, and the engine's own timers (/debuginfo profiling: simulation, drawing,
@@ -17,7 +17,9 @@ param(
   [string[]]$AlsoOff = @(),  # more widgets off (by name), to compare
   [string]$Detail = "BAR Droid touch camera",
   [int]$ProfileFastAtMinute = 0,  # measure while still fast-forwarding, from this game minute (per-frame costs)
-  [switch]$Functions         # time each callin/global function of -Detail instead of each widget
+  [switch]$Functions,        # time each callin/global function of -Detail instead of each widget
+  [switch]$Gadgets,          # also time every unsynced gadget (tools/profile/dbg_bardroid_gadget_profile.lua)
+  [hashtable]$Settings = @{} # extra springsettings lines, to compare (e.g. @{ MiniMapRefreshRate = 10 })
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -38,6 +40,10 @@ Remove-Item -Recurse -Force "$Data\LuaUI", "$Data\games" -ErrorAction SilentlyCo
 $Sdd = Join-Path $Data "games\BAR-profile.sdd"
 New-Item -ItemType Directory -Force -Path "$Data\LuaUI\Widgets", "$Data\LuaUI\Config", "$Data\maps", "$Sdd\luaui\Widgets" | Out-Null
 Copy-Item (Join-Path $PSScriptRoot "profile\dbg_bardroid_profile_log.lua") "$Sdd\luaui\Widgets\"
+if ($Gadgets) {
+  New-Item -ItemType Directory -Force -Path "$Sdd\luarules\gadgets" | Out-Null
+  Copy-Item (Join-Path $PSScriptRoot "profile\dbg_bardroid_gadget_profile.lua") "$Sdd\luarules\gadgets\"
+}
 "return { name = `"Beyond All Reason`", shortName = `"BYAR`", version = `"`$VERSION`", game = `"Beyond All Reason`", shortGame = `"BYAR`", modtype = 1, depend = { `"$base`" } }" |
   Set-Content -Path "$Sdd\modinfo.lua" -Encoding ascii
 
@@ -56,11 +62,13 @@ try {
   # the widget orders launch-bar.sh sets on the phone
   $off = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap") + $AlsoOff
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap",
+    "Fog Diagonal Lines GL4") + $AlsoOff
   $orders = @($off | ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"BAR Droid profile log`"] = 1,"
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  # the phone's graphics (launch-bar.sh PHONE_GFX), a phone-sized window
+  # the phone's graphics (launch-bar.sh PHONE_GFX; and from Kailil's own settings, BAR's Lowest preset: no advanced map
+  # shading, basic water, no nano particles), a phone-sized window
   @"
 Fullscreen = 0
 WindowBorderless = 0
@@ -82,6 +90,9 @@ BumpWaterRefraction = 0
 GrassDetail = 0
 UnitIconFadeStart = 1
 UnitIconFadeVanish = 1
+AdvMapShading = 0
+Water = 0
+MaxNanoParticles = 0
 RapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev
 bardroid_profile_wait_go = 1
 bardroid_profile_warmup = 5
@@ -92,6 +103,7 @@ bardroid_host_speed = $Speed
 bardroid_host_fast_until = $($FastMinutes * 1800)
 bardroid_host_engine_profile_after = $([Math]::Max(10, $Window - 10))
 bardroid_host_profile_fast_at = $($ProfileFastAtMinute * 1800)
+$(($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" }) -join "`n")
 "@ | Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $teams = for ($i = 0; $i -lt $AIs; $i++) {
@@ -124,7 +136,7 @@ $($teams -join "`n")
   $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
     -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$Work\script.txt`""
   if (-not $p.WaitForExit(($FastMinutes * 60 + $Window + 600) * 1000)) { $p.Kill(); Write-Host "[profile-big] timed out" }
-  Get-Content $log | Select-String -Pattern '\[bardroid-profile\]|\[catchup-host\]|Error in |Removed widget' |
+  Get-Content $log | Select-String -Pattern '\[bardroid-g?profile\]|\[bardroid-touch\]|\[catchup-host\]|Error in |Removed widget|Removed gadget' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   # the engine's timers (/debuginfo profiling): the table after the host widget's line
   $lines = Get-Content $log

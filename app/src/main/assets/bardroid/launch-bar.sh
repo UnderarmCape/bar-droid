@@ -174,6 +174,17 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   # checks every unit every 6 simulated frames (a spectator: every unit of the game), the costliest widget per
   # simulated frame (13.8 ms/s at 10x on the laptop): catching up and late games run on the CPU
   widget_order "Contrast Adaptive Sharpen" 0; widget_order "Jammed Units Highlight" 0
+  # BAR's fog-of-war stripes (Fog Diagonal Lines GL4) find the ground in the map's G-buffer, which the engine only
+  # clears with advanced map shading off (BAR's Lowest preset, the phone's): a full-screen pass every frame whose every
+  # pixel is discarded. Off while the lobby's or the engine's setting is 0 (the lobby's copy is what the next game
+  # gets), back to BAR's default when it is 1 again.
+  adv=$(grep -o 'AdvMapShading = [01]' "$BAR/LuaMenu/Config/IGL_data.lua" 2>/dev/null | head -n 1)
+  [ -n "$adv" ] || adv=$(grep -o '^AdvMapShading *= *[01]' "$BAR/springsettings.cfg" 2>/dev/null | head -n 1)
+  if [ "${adv##* }" = 0 ]; then
+    widget_order "Fog Diagonal Lines GL4" 0; touch "$BAR/.bardroid-fog-lines-off"
+  elif [ -f "$BAR/.bardroid-fog-lines-off" ]; then
+    widget_order "Fog Diagonal Lines GL4" ""; rm -f "$BAR/.bardroid-fog-lines-off"
+  fi
   sed -i 's/^\([[:space:]]*screenSpaceShadows = \)[0-9.]*,/\10,/' "$BAR/LuaUI/Config/BYAR.lua"
   # (the widget saves its settings after its first game; until then there is nothing to set)
   if grep -q '\["Deferred rendering GL4"\] *= *{' "$BAR/LuaUI/Config/BYAR.lua"; then
@@ -181,7 +192,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint; queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.

@@ -180,6 +180,33 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   4` stays (fewer busy cores, less heat). Load-time pathing setup ("PFS", 4.1 s of the phone's ~45 s load) is the
   only place that uses them much. Phone load after the game data: map 7 s, map tiles 4 s, projectile textures 4 s,
   radar icons 4 s, PFS 4 s, LuaRules 8 s.
+- **Second optimisation search (2026-10-26 evening, Kailil away).** The phone's own infolog (`logs/catchup3/infolog2.txt`)
+  shows what it runs: BAR's Lowest preset (Kailil's: `AdvMapShading = 0`, `Water = 0`, `MaxNanoParticles = 0`, GUI
+  Shader off), 225 widgets, 204 unsynced gadgets; Outline Shader GL4 removes itself there. Found, from Recoil's source
+  (2026.07.04 = the phone's engine): BAR forces `AllowDeferredMapRendering`/`AllowDeferredModelRendering = 1`
+  (`luaintro/springconfig.lua`), so every frame the engine (1) clears the map's G-buffer, six screen-sized targets, which
+  with advanced map shading off is all it ever does to it (`SMFGroundDrawer::DrawDeferredPass`), and (2) draws every
+  tree, rock and unit model a second time into the model G-buffer (`ModelDrawer::Draw` → `LuaObjectDrawer::
+  DrawDeferredPass`, CUS GL4's deferred shaders), for readers that are all off on the phone (lights, SSAO, bloom,
+  distortion, outlines) except shields (units touching them) and the radar/jammer placement previews.
+  `bardroid_touch.lua` now switches the map pass off while `AdvMapShading` is 0 (`Spring.SetDrawGroundDeferred`,
+  checked every 60 drawn frames) and the features' model pass off for good (`Spring.SetDrawModelsDeferred(true,
+  false)`: units stay, their pass clears the buffer every frame, so nothing stale is left), from the 3rd drawn frame
+  (both buffers hold a cleared picture by then; one that is not drawn is not resized either), restored in Shutdown.
+  And BAR's Fog Diagonal Lines GL4 reads the ground from that map buffer: with it only cleared its full-screen pass
+  discards every pixel, so `launch-bar.sh` turns it off while the lobby's (`IGL_data.lua` game_settings) or the
+  engine's `AdvMapShading` is 0 (marker `.bardroid-fog-lines-off`; back to BAR's default at 1). No visible change
+  expected; the GPU saving is unmeasured (the laptop's RTX says nothing about a tiler): check late-game fps on the
+  phone. `[bardroid-touch] map G-buffer pass off` / `trees and rocks drawn once` in infolog.
+  Measured on the laptop (`tools/profile-big-game.ps1 -Gadgets`, new: `tools/profile/dbg_bardroid_gadget_profile.lua`
+  times every unsynced gadget callin; 8 BARb, 989 units at 30 min): unsynced gadgets 6 ms/s at 1x, 0.19 ms per
+  simulated frame (Beam Laser GL4 0.074 of it, its GameFramePost scan; CUS GL4 1.2 ms/s; Team stats 0.5 ms/s); all
+  widgets ~12 ms/s plus BAR test's dev-only Engine Shader Auto Reloader (5.7 ms/s, not in the release the phone runs).
+  Lua is ~2% of the frame there: the phone's late game is the GPU, catch-up the simulation (Sim 110 s of the run).
+  Also: the pad thread (`ControllerBridge`) slept 16 ms in a loop with no pad; it now waits out the 100 ms heartbeat
+  and wakes on pad input. Not changed, for the record: `UseLuaMemPools = 0` comes from the lobby's own settings;
+  `MaxSounds` is reset to 128 by BAR's options; BAR's GPU Profiler needs `gl.QueryCounter`, in no released engine yet.
+  The laptop ran at ~6 fps the whole evening (also a 2-unit skirmish): its idle power state, not the game.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.
@@ -581,7 +608,9 @@ Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 G
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
 ## Next steps (2026-10-26)
-0. **Afternoon run (Kailil away, phone off the home Wi-Fi):** builds 1884d80..93550e9 are not on the phone yet
+0. **Evening (Kailil away):** also not on the phone yet: the deferred-pass trims and fog-lines switch (see "Second
+   optimisation search"); check late-game fps against the afternoon's, the infolog lines, and that shields and the
+   radar/jammer placement previews look as before. **Afternoon run (Kailil away, phone off the home Wi-Fi):** builds 1884d80..93550e9 are not on the phone yet
    (`..\apk\bar-droid-phone-debug.apk` is current; install over adb when it is back). To check: joining a running
    game, the "Catching up" box within seconds (not minutes) and the picture frozen behind it; in a game too big to
    catch up, drawing back after a minute ("not gaining" in infolog); late-game fps with the sharpening pass and the
