@@ -22,8 +22,8 @@ end
 
 local t, step, wait = 0, 0, 0
 local fails = 0
-local window, scroll, rows, clicked = nil, nil, {}, {}
-local startScroll, dragScroll
+local window, scroll, rows, maps, clicked = nil, nil, {}, {}, {}
+local startScroll, dragScroll, clicksBefore
 
 local function log(s)
 	Spring.Echo("[lobbytouch] " .. s)
@@ -36,11 +36,18 @@ local function check(case, ok, detail)
 	log((ok and "PASS " or "FAIL ") .. case .. (detail and (": " .. detail) or ""))
 end
 
--- Spring mouse coordinates of the middle of a Chili control (the inverse of the widget's chiliPoint)
-local function mouseAt(c)
-	local hx, hy = c:LocalToScreen(c.width / 2, c.height / 2)
+-- Spring mouse coordinates of a point on a Chili control (fx: across it, default the middle; the inverse of the
+-- widget's chiliPoint)
+local function mouseAt(c, fx)
+	local hx, hy = c:LocalToScreen(c.width * (fx or 0.5), c.height / 2)
 	local s = WG.uiScale or 1
 	return hx * s, (select(2, Spring.GetViewSizes()) - hy) * s
+end
+
+local function tap(c, fx)
+	local x, y = mouseAt(c, fx)
+	finger.press(x, y)
+	finger.release(x, y)
 end
 
 -- (Chili hands out its controls wrapped: compare what they show)
@@ -48,9 +55,21 @@ local function same(a, b)
 	return a ~= nil and b ~= nil and a.caption == b.caption
 end
 
+local function popup()
+	return WG.BarDroidLobbyTouch and WG.BarDroidLobbyTouch.popup()
+end
+
+local function clickTotal()
+	local n = 0
+	for _, v in pairs(clicked) do
+		n = n + v
+	end
+	return n
+end
+
 local function barButton(caption)
 	for _, c in ipairs(WG.Chili.Screen0.children) do
-		if c.name == "bardroidServerBar" then
+		if c.name == "bardroidServerBar" and c.visible ~= false then
 			for _, b in ipairs(c.children) do
 				if b.caption == caption then
 					return b
@@ -60,16 +79,27 @@ local function barButton(caption)
 	end
 end
 
+-- a finger on one of the server bar's buttons (it sits over the list: a tap that falls through clicks a row)
+local function tapBar(caption)
+	local b = barButton(caption)
+	if b then
+		tap(b)
+	end
+	return b ~= nil
+end
+
 local cases
 cases = {
 	function()
 		local Chili = WG.Chili
-		window = Chili.Window:New({ parent = Chili.Screen0, x = 100, y = 40, width = 420, height = 600, resizable = false,
+		-- (wide and tall: the server bar, at the bottom of the screen, sits over its rows)
+		window = Chili.Window:New({ parent = Chili.Screen0, x = 40, y = 40, width = 1000, height = 600, resizable = false,
 			draggable = false, caption = "touch test" })
 		scroll = Chili.ScrollPanel:New({ parent = window, x = 0, y = 20, right = 0, bottom = 0 })
 		for i = 1, 24 do
 			local server = i <= 10
-			-- (as Chobby's battle list: each row in a container of its own, the button named "battleButton")
+			-- (as Chobby's battle list: each row in a container of its own, the button named "battleButton", its map
+			-- picture in a panel of its own)
 			local holder = Chili.Control:New({ parent = scroll, name = "holder" .. i, x = 0, right = 0, y = (i - 1) * 40,
 				height = 38, padding = { 0, 0, 0, 0 } })
 			rows[i] = Chili.Button:New({
@@ -80,6 +110,10 @@ cases = {
 				x = 0, right = 0, y = 0, bottom = 0,
 				OnClick = { function() clicked[i] = (clicked[i] or 0) + 1 end },
 			})
+			if server then
+				maps[i] = Chili.Panel:New({ parent = rows[i], name = "minimap", x = "47%", y = 2, width = 34, bottom = 2,
+					padding = { 0, 0, 0, 0 } })
+			end
 		end
 		window:BringToFront()
 	end,
@@ -106,58 +140,57 @@ cases = {
 		check("a drag clicks nothing", not clicked[3])
 	end,
 	function()
-		local x, y = mouseAt(rows[12])
-		finger.press(x, y)
-		finger.release(x, y)
+		tap(rows[12])
 	end,
 	function() check("a tap on a plain row clicks it", clicked[12] == 1, tostring(clicked[12])) end,
 	function()
 		scroll:SetScrollPos(nil, 0, false, true)
 	end,
 	function()
-		local x, y = mouseAt(rows[2])
-		local s = WG.uiScale or 1
-		local hit = WG.Chili.Screen0:HitTest(x / s, select(2, Spring.GetViewSizes()) - y / s)
-		local chain, o = {}, hit
-		while o and #chain < 6 do
-			chain[#chain + 1] = tostring(o.name) .. "/" .. tostring(o.classname)
-			o = o.parent
-		end
-		log("     hit at server 2: " .. table.concat(chain, " < ") .. string.format(" (uiScale %s, scroll %d)", tostring(WG.uiScale), scroll.scrollPosY))
-
-		finger.press(x, y)
-		finger.release(x, y)
+		tap(rows[2], 0.15) -- on its title
 	end,
 	function()
-		local L = WG.BarDroidLobbyTouch
-		check("first tap on a server: its details, no join", same(L.popup(), rows[2]) and not clicked[2])
-		local next = barButton("Next")
-		check("the server bar is there", next ~= nil)
-		if next then
-			next:CallListeners(next.OnClick)
-		end
+		check("first tap on a server: its details, no join", same(popup(), rows[2]) and not clicked[2])
+		clicksBefore = clickTotal()
+		check("the server bar is there", tapBar("Next"))
 	end,
 	function()
-		check("Next: the server below", same(WG.BarDroidLobbyTouch.popup(), rows[3]))
-		local x, y = mouseAt(rows[3])
-		finger.press(x, y)
-		finger.release(x, y)
+		check("a finger on Next: the server below, nothing behind the bar clicked",
+			same(popup(), rows[3]) and clickTotal() == clicksBefore, string.format("popup %s, clicks %d -> %d",
+			tostring(popup() and popup().caption), clicksBefore, clickTotal()))
+		tapBar("Previous")
 	end,
 	function()
-		check("second tap on that server joins it", clicked[3] == 1 and WG.BarDroidLobbyTouch.popup() == nil,
-			tostring(clicked[3]))
-		local x, y = mouseAt(rows[5])
-		finger.press(x, y)
-		finger.release(x, y)
+		check("a finger on Previous: the server above, nothing clicked", same(popup(), rows[2])
+			and clickTotal() == clicksBefore, tostring(popup() and popup().caption))
+		tapBar("Next")
 	end,
 	function()
-		local close = barButton("Close")
-		if close then
-			close:CallListeners(close.OnClick)
-		end
+		tap(maps[3]) -- the second tap lands on its map picture
 	end,
 	function()
-		check("Close: the details go, nothing joined", WG.BarDroidLobbyTouch.popup() == nil and not clicked[5])
+		check("second tap on that server (on its map picture) joins it", clicked[3] == 1 and popup() == nil,
+			string.format("clicked %s, popup %s", tostring(clicked[3]), tostring(popup() and popup().caption)))
+		tap(rows[5], 0.15)
+	end,
+	function()
+		clicksBefore = clickTotal()
+		tapBar("Close")
+	end,
+	function()
+		check("a finger on Close: the details go, nothing clicked", popup() == nil and clickTotal() == clicksBefore,
+			string.format("clicks %d -> %d", clicksBefore, clickTotal()))
+		tap(maps[6]) -- a first tap on a map picture shows the details too
+	end,
+	function()
+		check("a tap on a server's map picture: its details", same(popup(), rows[6]) and not clicked[6])
+		clicksBefore = clickTotal()
+		tapBar("Join")
+	end,
+	function()
+		check("a finger on Join joins that server, nothing else", clicked[6] == 1 and popup() == nil
+			and clickTotal() == clicksBefore + 1, string.format("clicked %s, clicks %d -> %d", tostring(clicked[6]),
+			clicksBefore, clickTotal()))
 		window:Dispose()
 		log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED"))
 	end,

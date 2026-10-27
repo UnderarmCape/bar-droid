@@ -43,13 +43,21 @@ local function chiliPoint(x, y)
 	return sx, sy, sx, select(2, Spring.GetViewSizes()) - sy
 end
 
+-- Chili hands out each control behind proxies (New returns a hard link, every child's .parent is a weak link of its
+-- own): compare the controls themselves. (Without this a tap on the server bar never counted as ours: the bar closed
+-- and the tap went to whatever was behind it.)
+local function real(obj)
+	return obj and Chili.UnlinkSafe and Chili.UnlinkSafe(obj) or obj
+end
+
 local function battleIdOf(obj)
 	return type(obj.tooltip) == "string" and tonumber(obj.tooltip:match("^battle_tooltip_(%d+)$"))
 end
 
 local function isOurs(obj)
+	local ours = real(bar)
 	while obj do
-		if obj == bar then
+		if real(obj) == ours then
 			return true
 		end
 		obj = obj.parent
@@ -61,8 +69,8 @@ end
 -- a scroll bar, outside lists).
 local function classify(hit, hx, hy)
 	local panel, battle
-	local obj = hit
-	while obj and obj ~= screen0 do
+	local obj, top = real(hit), real(screen0)
+	while obj and obj ~= top do
 		if BLOCKERS[obj.classname] then
 			return nil, nil
 		end
@@ -71,7 +79,7 @@ local function classify(hit, hx, hy)
 		end
 		if obj.SetScrollPos and obj.contentArea and obj.clientArea and obj.verticalScrollbar ~= false
 			and obj.contentArea[4] > obj.clientArea[4] + 1 then
-			if obj == hit and obj.IsAboveVScrollbars then
+			if obj == real(hit) and obj.IsAboveVScrollbars then
 				local lx, ly = obj:ScreenToLocal(hx, hy)
 				if obj:IsAboveVScrollbars(lx, ly) then
 					return nil, nil -- the scroll bar itself: Chili drags it
@@ -80,7 +88,7 @@ local function classify(hit, hx, hy)
 			panel = obj
 			break
 		end
-		obj = obj.parent
+		obj = real(obj.parent)
 	end
 	return panel, battle
 end
@@ -144,7 +152,7 @@ end
 
 local makeBar
 local function openPopup(button)
-	popupButton = button
+	popupButton = real(button)
 	if WG.TooltipHandler and WG.TooltipHandler.TooltipOverride then
 		WG.TooltipHandler.TooltipOverride(button.tooltip)
 	end
@@ -160,7 +168,7 @@ local function step(dir)
 	end
 	local rows = serverRows(panel)
 	for i, r in ipairs(rows) do
-		if r.button == popupButton then
+		if real(r.button) == popupButton then
 			local next = rows[i + dir]
 			if next then
 				-- into view: its place in the list's content, centred
