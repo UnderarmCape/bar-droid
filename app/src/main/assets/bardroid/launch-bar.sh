@@ -134,6 +134,13 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   log "singleplayer game: $LOBBY_GAME"
 fi
 
+# A benchmark's own engine settings (tools/phone-bench.ps1 -Settings, the file .bardroid-bench-settings: key = value
+# lines) change springsettings.cfg for that run only: the file as it was before goes back at the next start, before
+# anything else here touches it (and phone-bench.ps1 puts it back after its run).
+if [ -f "$BAR/.springsettings.pre-bench" ]; then
+  mv "$BAR/.springsettings.pre-bench" "$BAR/springsettings.cfg" && log "settings from before the benchmark put back"
+fi
+
 # Phone graphics at every start, whatever preset BAR's settings hold (Kailil's target: 30 fps for hours on a hot
 # phone; "disable msaa on every graphics profile or setting", "we can still cut more things"). Every one of these
 # costs more the more of the map a tilted camera shows. The lobby keeps its own copy of the engine's settings
@@ -244,6 +251,15 @@ if [ "$MODE" = bench ]; then
   if [ "$prof" = widgets ]; then widget_order "Widget Profiler" 1; else widget_order "Widget Profiler" ""; fi
   [ "$prof" = gadgets ] && sed -i 's/|20:vsync 0|/|20:vsync 0|40:luarules profile|/' "$BAR/bench.txt"
   log "benchmark${prof:+, profiling $prof}"
+  if [ -s "$BAR/.bardroid-bench-settings" ]; then
+    [ -f "$BAR/.springsettings.pre-bench" ] || cp "$BAR/springsettings.cfg" "$BAR/.springsettings.pre-bench"
+    while IFS='=' read -r k v; do
+      k=$(echo $k); v=$(echo $v); [ -n "$k" ] || continue
+      if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
+      else echo "$k = $v" >> "$BAR/springsettings.cfg"; fi
+    done < "$BAR/.bardroid-bench-settings"
+    log "benchmark settings: $(tr '\n' ' ' < "$BAR/.bardroid-bench-settings")"
+  fi
 else
   widget_order "Mission Info" ""; widget_order "Widget Profiler" ""; rm -f "$BAR/LuaUI/Config/bardroid_bench.txt"
 fi

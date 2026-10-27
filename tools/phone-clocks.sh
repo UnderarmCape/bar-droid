@@ -5,7 +5,13 @@ end=$(( $(date +%s) + ${1:-900} ))
 rm -f /data/local/tmp/bardroid-clocks.stop
 k=/sys/class/kgsl/kgsl-3d0
 echo "time cpu0 cap0 cpu6 cap6 gpu gpucap busy status temps"
+n=0
+rm -f /data/local/tmp/bardroid-threads.txt
 while [ "$(date +%s)" -lt "$end" ] && [ ! -e /data/local/tmp/bardroid-clocks.stop ]; do
+  n=$((n + 1))
+  # ~70 s in (the battle at its biggest): the busiest threads over 3 s, every one of them heat
+  [ $n -eq 14 ] && top -H -b -n 2 -d 3 -m 30 -s 3 -o TID,USER,%CPU,CPU,NAME,CMD |
+    awk '/^ *TID/ { block++ } block == 2' > /data/local/tmp/bardroid-threads.txt
   c0=$(( $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq) / 1000 ))
   m0=$(( $(cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq) / 1000 ))
   c6=$(( $(cat /sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq) / 1000 ))

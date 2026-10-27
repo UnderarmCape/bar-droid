@@ -1,14 +1,18 @@
 # BAR's "Benchmark BAR" scenario on the phone, unattended (Kailil, 2026-10-27: "make optimizations and run benchmarks
-# over and over"): sets the app's game resolution and frame cap, waits until the phone has cooled (runs compare only
-# from the same start), starts the benchmark through the app (LauncherActivity "start bench": launch-bar.sh MODE=bench,
-# bardroid_bench.lua quits after the results), and prints the benchmark's Sim/Draw/Update ms per frame with the fps and
-# heat of the run. Each run is added to build\phone-bench.csv. The phone must be awake-able without a lock screen code.
+# over and over"): sets the app's game resolution and frame cap, warms the phone up into the throttled state a late
+# game plays in (Kailil: big unit counts come 10+ minutes in, on a hot phone; Samsung caps the CPU at ~2 GHz within
+# 20 s of a start anyway) with unrecorded runs until it is there, starts the benchmark through the app
+# (LauncherActivity "start bench": launch-bar.sh MODE=bench, bardroid_bench.lua quits after the results), and prints
+# the benchmark's Sim/Draw/Update ms per frame with the fps, game speed and heat of the run. Back-to-back runs keep the
+# phone hot. Each run is added to build\phone-bench.csv. The phone must be awake-able without a lock screen code.
 # -Profile widgets|gadgets: BAR's widget or gadget profiler on for the run (it costs time itself: not for comparing);
 # its table is in the benchmark's screenshot at frame 2015, copied to build\phone-bench-<widgets|gadgets>.png.
-#   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-NoCool]
-#     [-Profile widgets|gadgets]
-param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoCool, [string]$Profile = "",
-  [double]$MaxSkin = 35.0, [string]$Device = "192.168.1.196:5555")
+#   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text]
+#     [-Profile widgets|gadgets] [-Settings @{ WorkerThreadCount = 2 }] [-MinSkin 40] [-NoWarm]
+# -Settings: engine settings (springsettings.cfg keys) for this run only (launch-bar.sh .bardroid-bench-settings; the
+# file as it was goes back afterwards).
+param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoWarm, [string]$Profile = "",
+  [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "192.168.1.196:5555")
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -52,41 +56,52 @@ for kv in "$@"; do
 done
 '@ @("renderScale=$Scale", "fpsCap=$Cap") | Out-Null
 AppSh 'if [ -n "$1" ]; then echo "$1" > files/bar/.bardroid-bench-profile; else rm -f files/bar/.bardroid-bench-profile; fi' @($Profile) | Out-Null
+$kv = @($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" })
+AppSh 'rm -f files/bar/.bardroid-bench-settings; for l in "$@"; do echo "$l" >> files/bar/.bardroid-bench-settings; done' $kv | Out-Null
 
-if (-not $NoCool) {
-  $deadline = (Get-Date).AddMinutes(25)
-  while ($true) {
+function BenchCount { [int](AppSh "grep -c 'Benchmark Results' files/logs/launcher.log 2>/dev/null || echo 0" | Select-Object -Last 1) }
+function RunBench {   # one benchmark, start to quit (bardroid_bench.lua quits ~3 s after the results)
+  $n = BenchCount
+  Adb shell "input keyevent KEYCODE_WAKEUP" | Out-Null
+  Adb shell "am start -n $pkg/.LauncherActivity --es start bench" | Out-Null
+  $deadline = (Get-Date).AddMinutes(12)
+  while ((Get-Date) -lt $deadline) {
+    Start-Sleep 15
+    if ((BenchCount) -gt $n) { break }
+  }
+  Start-Sleep 6
+  Adb shell "am force-stop $pkg"
+}
+
+# into the throttled state first: the skin warms slowest and the thermal status follows it (a long session ended at
+# skin 42 C, status 2); a hot phone goes straight on
+if (-not $NoWarm) {
+  for ($i = 1; $i -le 4; $i++) {
     $h = Thermal
-    # the skin cools slowest, and Samsung caps the CPU at ~2 GHz within 20 s of a start that is still warm
-    if ($h.Status -eq 0 -and $h.Ap -le 37 -and $h.Skin -le $MaxSkin) { break }
-    if ((Get-Date) -gt $deadline) { Write-Host "[phone-bench] still warm after 25 min (status $($h.Status), AP $($h.Ap) C, skin $($h.Skin) C): running anyway"; break }
-    Write-Host "[phone-bench] cooling: status $($h.Status), AP $($h.Ap) C, skin $($h.Skin) C"
-    Start-Sleep 60
+    if ($h.Status -ge 1 -and $h.Skin -ge $MinSkin) { break }
+    Write-Host "[phone-bench] warming up ($i): status $($h.Status), AP $($h.Ap) C, skin $($h.Skin) C"
+    RunBench
   }
 }
 $start = Thermal
 $since = (Get-Date).ToString("HH:mm:ss")
-$before = [int](AppSh "grep -c 'Benchmark Results' files/logs/launcher.log")
 # the clocks every 5 s through the run (tools/phone-clocks.sh): what the CPU and GPU were allowed and the heat
 $clkFile = Join-Path $App "build\phone-bench-clocks.txt"
 Adb push (Join-Path $PSScriptRoot "phone-clocks.sh") /data/local/tmp/bardroid-clocks.sh | Out-Null
 Adb shell "sed -i 's/\r$//' /data/local/tmp/bardroid-clocks.sh"
 $clk = Start-Process -FilePath $adb -ArgumentList "-s", $Device, "shell", "sh /data/local/tmp/bardroid-clocks.sh 900" `
   -RedirectStandardOutput $clkFile -NoNewWindow -PassThru
-Adb shell "input keyevent KEYCODE_WAKEUP" | Out-Null
-Adb shell "am start -n $pkg/.LauncherActivity --es start bench" | Out-Null
 Write-Host "[phone-bench] started ${since}: resolution $Scale%, frame cap $(if ($Cap) { $Cap } else { 'none' }), status $($start.Status), AP $($start.Ap) C, skin $($start.Skin) C"
-
-$deadline = (Get-Date).AddMinutes(12)
-while ((Get-Date) -lt $deadline) {
-  Start-Sleep 15
-  if ([int](AppSh "grep -c 'Benchmark Results' files/logs/launcher.log") -gt $before) { break }
-}
-Start-Sleep 6
+RunBench
 $end = Thermal
-Adb shell "am force-stop $pkg"
 Adb shell "touch /data/local/tmp/bardroid-clocks.stop" | Out-Null
 if (-not $clk.WaitForExit(15000)) { $clk.Kill() }
+$threads = @(Adb shell "cat /data/local/tmp/bardroid-threads.txt 2>/dev/null")
+if ($threads.Count -gt 1) {
+  Write-Host "[phone-bench] busiest threads ~70 s in:"
+  $threads | Select-Object -First 16 | ForEach-Object { Write-Host "  $_" }
+  $threads | Set-Content (Join-Path $App "build\phone-bench-threads.txt")
+}
 $clocks = @(Get-Content $clkFile | Select-Object -Skip 1 | ForEach-Object { $f = $_ -split ' '; if ($f.Count -ge 9) {
   [pscustomobject]@{ cpu6 = [int]$f[3]; cap6 = [int]$f[4]; cap0 = [int]$f[2]; gpu = [int]$f[5]; busy = [int]$f[7]; status = [int]$f[8] } } })
 function Med($v) { $s = @($v | Sort-Object); if ($s.Count) { $s[[int][math]::Floor($s.Count / 2)] } else { $null } }
@@ -98,11 +113,20 @@ $lines | ForEach-Object { Write-Host "  $_" }
 
 function Ms([string]$name) { $m = $lines | Select-String "$name \d+ frames, ([\d.]+)ms per frame" | Select-Object -Last 1; if ($m) { [double]$m.Matches[0].Groups[1].Value } else { $null } }
 $sim, $draw, $upd = (Ms "Sim"), (Ms "Draw"), (Ms "Update")
+# the game's speed over the benchmark: simulated frames per second of Sim + Draw + Update time (the main thread's
+# whole run; its "s total" figures are milliseconds), as a multiple of real time (30 frames a second)
+$tot = @($lines | Select-String '(Sim|Draw|Update) (\d+) frames, [\d.]+ms per frame, ([\d.]+)s total' | Select-Object -Last 3)
+$speed = $null
+if ($tot.Count -eq 3) {
+  $simFrames = [int](($tot | Where-Object { $_.Matches[0].Groups[1].Value -eq "Sim" }).Matches[0].Groups[2].Value)
+  $ms = ($tot | ForEach-Object { [double]$_.Matches[0].Groups[3].Value } | Measure-Object -Sum).Sum
+  if ($ms -gt 0) { $speed = [math]::Round($simFrames / ($ms / 1000) / 30, 2) }
+}
 $fps = @($lines | Select-String 'bardroid-perf\] ([\d.]+) fps' | ForEach-Object { [double]$_.Matches[0].Groups[1].Value })
 $gpu = @($lines | Select-String 'busy (\d+) %' | ForEach-Object { [int]$_.Matches[0].Groups[1].Value })
 $row = [pscustomobject]@{
   when = (Get-Date).ToString("yyyy-MM-dd HH:mm"); label = $Label; scale = $Scale; cap = $Cap
-  sim_ms = $sim; draw_ms = $draw; update_ms = $upd
+  sim_ms = $sim; draw_ms = $draw; update_ms = $upd; speed_x = $speed; settings = ($kv -join "; ")
   fps_last = $(if ($fps.Count) { $fps[-1] } else { $null }); gpu_busy_max = $(if ($gpu.Count) { ($gpu | Measure-Object -Maximum).Maximum } else { $null })
   ap_start = $start.Ap; ap_end = $end.Ap; status_end = $end.Status; skin_start = $start.Skin; skin_end = $end.Skin
   cpu6_med = (Med $clocks.cpu6); cap6_min = ($clocks.cap6 | Measure-Object -Minimum).Minimum; cap0_min = ($clocks.cap0 | Measure-Object -Minimum).Minimum
@@ -117,12 +141,16 @@ if ($Profile) {   # the newest screenshot: the benchmark's, with the profiler's 
   }
   AppSh 'rm -f files/bar/.bardroid-bench-profile' | Out-Null
 }
+# BAR's settings as they were before this run's -Settings
+AppSh 'rm -f files/bar/.bardroid-bench-settings; [ -f files/bar/.springsettings.pre-bench ] && mv files/bar/.springsettings.pre-bench files/bar/springsettings.cfg; true' | Out-Null
 Remove-Item $lock -ErrorAction SilentlyContinue
 $csv = Join-Path $App "build\phone-bench.csv"
 New-Item -ItemType Directory -Force -Path (Split-Path $csv) | Out-Null
-$row | Export-Csv -Path $csv -Append -NoTypeInformation
+$old = @(if (Test-Path $csv) { Import-Csv $csv })
+$cols = @($(if ($old.Count) { $old[0].PSObject.Properties.Name }) + $row.PSObject.Properties.Name | Select-Object -Unique)
+@($old) + $row | Select-Object $cols | Export-Csv -Path $csv -NoTypeInformation   # new columns join older rows empty
 if ($null -eq $sim) { Write-Host "[phone-bench] no results: see files/logs/launcher.log"; exit 1 }
-Write-Host ("[phone-bench] {0}: Sim {1} ms, Draw {2} ms, Update {3} ms per frame; last minute {4} fps; GPU busy up to {5}%; AP {6} -> {7} C" -f
-  $(if ($Label) { $Label } else { "$Scale%" }), $sim, $draw, $upd, $row.fps_last, $row.gpu_busy_max, $start.Ap, $end.Ap)
+Write-Host ("[phone-bench] {0}: Sim {1} ms, Draw {2} ms, Update {3} ms per frame; game speed x{8}; last minute {4} fps; GPU busy up to {5}%; AP {6} -> {7} C" -f
+  $(if ($Label) { $Label } else { "$Scale%" }), $sim, $draw, $upd, $row.fps_last, $row.gpu_busy_max, $start.Ap, $end.Ap, $speed)
 Write-Host ("[phone-bench] clocks: prime CPU median {0} MHz, its cap down to {1} MHz (others {2}); GPU median {3} MHz, {4}% busy; {5}" -f
   $row.cpu6_med, $row.cap6_min, $row.cap0_min, $row.gpu_med, $row.busy_med, $clkFile)

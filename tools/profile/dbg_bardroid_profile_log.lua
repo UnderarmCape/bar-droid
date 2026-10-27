@@ -280,7 +280,10 @@ function widget:Update()
 	end
 	if measured >= window then
 		report()
-		Spring.SendCommands("quitforce")
+		-- bardroid_profile_quit 0: the game goes on (tools/profile-benchmark.ps1: BAR's benchmark prints its results)
+		if Spring.GetConfigInt("bardroid_profile_quit", 1) ~= 0 then
+			Spring.SendCommands("quitforce")
+		end
 		widgetHandler:RemoveWidget(widget)
 	end
 end
