@@ -164,8 +164,8 @@ public class GameActivity extends MainActivity {
     // Catching up with a running game far behind (spectating, a reconnect; Kailil: "The catchup is still slow"): the
     // touch widget writes LuaUI/Config/bardroid_catchup.txt, "<game frame> <server frame> <speed>", about once a second
     // of real time. Meanwhile the engine draws nothing (the catch-up flag: a hidden window for the engine) and this
-    // screen shows the progress over the last picture. A file not written for CATCHUP_STALE_MS (the widget gone, the
-    // game ended) counts as caught up.
+    // screen shows the progress on black (Kailil: "no game render shown"; the last picture stood still behind it). A
+    // file not written for CATCHUP_STALE_MS (the widget gone, the game ended) counts as caught up.
     // (the first frames after joining can take over 10 s: the emulator's join showed the progress switch off once)
     private static final long CATCHUP_STALE_MS = 30000;
     private android.widget.TextView catchupView;
@@ -181,13 +181,13 @@ public class GameActivity extends MainActivity {
         android.widget.TextView v = new android.widget.TextView(this);
         float dp = getResources().getDisplayMetrics().density;
         v.setTextColor(0xFFFFFFFF);
-        v.setBackgroundColor(0xC0000000);
+        v.setBackgroundColor(0xFF000000);   // the whole screen: touches still reach the game below (not clickable)
         v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 22);
         v.setGravity(android.view.Gravity.CENTER);
         v.setPadding((int) (24 * dp), (int) (16 * dp), (int) (24 * dp), (int) (16 * dp));
         v.setVisibility(View.GONE);
-        addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER));
+        addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT));
         catchupView = v;
     }
 

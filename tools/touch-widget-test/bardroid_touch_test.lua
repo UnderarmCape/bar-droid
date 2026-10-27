@@ -97,7 +97,7 @@ end
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
-local before, groundBefore, edgeView, edgeExpect
+local before, groundBefore, edgeView, edgeExpect, com
 cases = {
 	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
 	function()
@@ -206,6 +206,46 @@ cases = {
 		cs.px, cs.pz = Game.mapSizeX / 2, Game.mapSizeZ / 2
 		Spring.SetCameraState(cs, 0)
 	end,
+	-- gesture actions ("act <name>" lines: RtsTouch's two-finger hold swipes, three-finger swipes, triple tap)
+	function() touch("act select_all") end,
+	function() near("act select_all: own units selected", #Spring.GetSelectedUnits() > 0 and 1 or 0, 1, 0) end,
+	function() touch("act deselect") end,
+	function() near("act deselect: nothing selected", #Spring.GetSelectedUnits(), 0, 0) end,
+	function()
+		com = (Spring.GetTeamUnits(Spring.GetMyTeamID()) or {})[1]
+		Spring.SelectUnitArray({ com }) -- (the interface lists the selection's orders by the next frame)
+	end,
+	function() touch("act stop") end, -- the commander still has the queue above
+	function() near("act stop: the selected commander's orders gone", com and Spring.GetUnitCommandCount(com), 0, 0) end,
+	function()
+		Spring.SelectUnitArray({})
+		touch("act idle_next")
+	end,
+	function()
+		local sel = Spring.GetSelectedUnits()
+		near("act idle_next: the idle commander selected", (#sel == 1 and sel[1] == com) and 1 or 0, 1, 0)
+		touch("act type_all")
+	end,
+	function()
+		local sel, def, same = Spring.GetSelectedUnits(), com and Spring.GetUnitDefID(com), true
+		for _, u in ipairs(sel) do
+			same = same and Spring.GetUnitDefID(u) == def
+		end
+		near("act type_all: the commander's type selected", (#sel >= 1 and same) and 1 or 0, 1, 0)
+	end,
+	function() touch("act fight") end,
+	function()
+		local _, cmd = Spring.GetActiveCommand()
+		near("act fight: fight armed", cmd == CMD.FIGHT and 1 or 0, 1, 0)
+		Spring.SelectUnitArray({})
+		touch("act overview_in")
+	end,
+	function()
+		near("act overview_in: overview camera", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
+		touch("act overview_out")
+	end,
+	function() near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0) end,
+	function() end, -- the camera's way back from the overview
 	-- the gamepad camera (online games; ControllerBridge sends "pad" lines when the sticks change)
 	function()
 		before = Spring.GetCameraState()

@@ -29,7 +29,8 @@ import java.util.Locale;
  * the Android view and nothing pans the map), so fingers are handled here and everything else (mouse, stylus,
  * touchpad, keyboard) stays with Termux:X11:
  *
- *   tap                  left click (select, buttons, place a building); a quick second tap is a double click
+ *   tap                  left click (select, buttons, place a building); a quick second tap is a double click (BAR:
+ *                        the unit's type on screen); a quick third tap selects that type on the whole map
  *   drag                 pan: the map follows the finger, and keeps gliding after a flick. A drag that starts on the
  *                        game's interface (minimap, sliders, windows) is a left drag instead
  *   tap, then drag       left drag: box select
@@ -37,8 +38,12 @@ import java.util.Locale;
  *   two-finger tap       right click at the first finger
  *   two fingers          move = pan, pinch = zoom about the pinch (in the lobby: the mouse wheel, which scrolls),
  *                        twist = rotate the camera
- *   two fingers up/down  tilt the camera (both fingers moving the same way, side by side)
+ *   two fingers up/down  tilt the camera (both fingers moving up or down together, however they sit)
+ *   two fingers held     (half a second, a buzz) then swiped: up = select all own units, down = deselect, left = stop,
+ *                        right = fight (attack-move: the next tap places it)
  *   three-finger tap     show / hide the keyboard
+ *   three-finger swipe   up = overview of the whole map, down = back; left / right = previous / next idle builder
+ * Actions go to the widget as "act <name>" lines (not in the lobby).
  * The X pointer is hidden while two or more fingers are down. A finger that comes down off the map (the void past its
  * edge, or the sky) does nothing there: a drag pans from the middle of the screen (the pointer goes there too), a tap
  * or long press clicks nothing.
@@ -56,8 +61,15 @@ final class RtsTouch {
     private static final double ROTATE_START = Math.toRadians(8);   // twist before the camera starts to turn
     private static final long FLING_FRAME_MS = 16;
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
+    private static final long TWO_HOLD_MS = 450;               // two fingers held still this long: the swipe menu
+    // A second finger this soon after the first is one two-finger gesture even if the first already slid a little
+    // (fingers never land together; the first one's slide used to lock the gesture into pan/zoom: no tilt)
+    private static final long JOIN_MS = 250;
+    private static final float TILT_DECIDE_SLOPS = 3;          // how far the fingers may move before a tilt is ruled out
+    private static final float SWIPE_SCREEN = 0.08f;           // a swipe: this much of the screen's shorter side
 
-    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT, DONE }
+    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
+        TWO_HOLD, THREE, DONE }
 
     private final MainActivity activity;
     private final float slop, minFling;
@@ -87,6 +99,9 @@ final class RtsTouch {
     private boolean rotating;
     private float lastTapX = -1, lastTapY;          // X screen pixels
     private long lastTapTime;
+    private float doubleTapX = -1, doubleTapY;      // the last double click (a third tap: the type on the whole map)
+    private long doubleTapTime;
+    private boolean joinedPan;                      // this two-finger gesture began as a one-finger pan: no tap
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
     private boolean cursorHidden;
     // A drag that started off the map is moved to the middle of the screen (view pixels added to the finger's)
@@ -101,6 +116,13 @@ final class RtsTouch {
         state = State.RIGHT_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         press(downX, downY, InputStub.BUTTON_RIGHT, true);
+    };
+
+    /** Two fingers held still: the next swipe picks an action (twoHoldSwipe). */
+    private final Runnable twoHold = () -> {
+        if (state != State.MULTI_PENDING || maxFingers != 2) return;
+        state = State.TWO_HOLD;
+        view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
     };
 
     /** The game has not said in time whether the drag started on its interface: pan. */
@@ -166,6 +188,7 @@ final class RtsTouch {
         ui.removeCallbacks(fling);
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
+        ui.removeCallbacks(twoHold);
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -208,6 +231,16 @@ final class RtsTouch {
                 if (state == State.PENDING) {
                     ui.removeCallbacks(longPress);
                     state = State.MULTI_PENDING;
+                    joinedPan = false;
+                    ui.postDelayed(twoHold, TWO_HOLD_MS);
+                } else if (state == State.MULTI_PENDING) {
+                    ui.removeCallbacks(twoHold);   // a third finger
+                } else if ((state == State.PAN || state == State.DRAG_WAIT) && e.getEventTime() - downTime <= JOIN_MS) {
+                    // the first finger slid before the second landed: still one two-finger gesture, measured from here
+                    ui.removeCallbacks(hoverTimeout);
+                    state = State.MULTI_PENDING;
+                    joinedPan = true;
+                    for (int p = 0; p < e.getPointerCount(); p++) starts.put(e.getPointerId(p), new float[]{e.getX(p), e.getY(p)});
                 } else if (state == State.PAN || state == State.DRAG_WAIT) {
                     ui.removeCallbacks(hoverTimeout);
                     beginTwoFinger(e, State.TWO_FINGER);   // a second finger joins a pan: pinch/twist from here
@@ -218,7 +251,7 @@ final class RtsTouch {
                 onMove(e);
                 break;
             case MotionEvent.ACTION_POINTER_UP:
-                if ((state == State.TWO_FINGER || state == State.TILT) && e.getPointerCount() <= 2)
+                if ((state == State.TWO_FINGER || state == State.TILT || state == State.TWO_HOLD) && e.getPointerCount() <= 2)
                     state = State.DONE;   // one finger left: stop
                 break;
             case MotionEvent.ACTION_UP:
@@ -258,9 +291,25 @@ final class RtsTouch {
                 return;
             case MULTI_PENDING: {
                 if (e.getPointerCount() < 2 || !movedPastSlop(e)) return;
-                beginTwoFinger(e, isTilt(e) ? State.TILT : State.TWO_FINGER);
+                ui.removeCallbacks(twoHold);
+                if (maxFingers >= 3) {   // three fingers: a swipe, measured from where they came down
+                    state = State.THREE;
+                    swipe(e);
+                    return;
+                }
+                State kind = twoFingerKind(e);
+                if (kind == null) return;
+                beginTwoFinger(e, kind);
+                if (kind == State.TILT) {   // the tilt counts from where the fingers came down
+                    float[] sa = starts.get(idA), sb = starts.get(idB);
+                    if (sa != null && sb != null) lastCy = (sa[1] + sb[1]) / 2;
+                }
                 return;
             }
+            case TWO_HOLD:
+            case THREE:
+                swipe(e);
+                return;
             case TWO_FINGER: {
                 int a = e.findPointerIndex(idA), b = e.findPointerIndex(idB);
                 if (a < 0 || b < 0) return;
@@ -303,6 +352,7 @@ final class RtsTouch {
     private void onLastUp(MotionEvent e) {
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
+        ui.removeCallbacks(twoHold);
         curX = e.getX(); curY = e.getY();
         switch (state) {
             case PENDING:
@@ -331,7 +381,7 @@ final class RtsTouch {
                 press(curX, curY, InputStub.BUTTON_RIGHT, false);
                 break;
             case MULTI_PENDING:
-                if (e.getEventTime() - downTime <= MULTI_TAP_MS) {
+                if (!joinedPan && e.getEventTime() - downTime <= MULTI_TAP_MS) {
                     if (maxFingers == 2) {
                         press(downX, downY, InputStub.BUTTON_RIGHT, true);
                         press(downX, downY, InputStub.BUTTON_RIGHT, false);
@@ -351,6 +401,7 @@ final class RtsTouch {
     private void cancelGesture() {
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
+        ui.removeCallbacks(twoHold);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         state = State.IDLE;
@@ -448,14 +499,54 @@ final class RtsTouch {
         zoomAcc = 0; rotateAcc = 0; rotating = false;
     }
 
-    /** Both fingers moving up or down together, side by side: a tilt (as in map apps), not a pan. */
-    private boolean isTilt(MotionEvent e) {
+    /**
+     * Which two-finger gesture this is, once a finger has moved past the slop (null: not clear yet). Both fingers moving
+     * up or down together, without pinching or twisting, is a tilt (as in map apps), however the fingers sit; the rest
+     * pans, zooms and twists. Kailil (2026-10-26): tilting took "super careful and deliberate" fingers side by side,
+     * decided at the first finger's first slop: now the slower finger gets up to TILT_DECIDE_SLOPS slops to follow.
+     */
+    private State twoFingerKind(MotionEvent e) {
         float[] sa = starts.get(e.getPointerId(0)), sb = starts.get(e.getPointerId(1));
-        if (sa == null || sb == null) return false;
+        if (sa == null || sb == null) return State.TWO_FINGER;
         float ax = e.getX(0) - sa[0], ay = e.getY(0) - sa[1], bx = e.getX(1) - sb[0], by = e.getY(1) - sb[1];
-        boolean sideBySide = Math.abs(sa[0] - sb[0]) > Math.abs(sa[1] - sb[1]);
-        return sideBySide && Math.signum(ay) == Math.signum(by) && Math.abs(ay) > slop / 2 && Math.abs(by) > slop / 2
-                && Math.abs(ay) > 2 * Math.abs(ax) && Math.abs(by) > 2 * Math.abs(bx);
+        float cx = (ax + bx) / 2, cy = (ay + by) / 2;
+        double spread = Math.abs(dist(e, 0, 1) - Math.hypot(sa[0] - sb[0], sa[1] - sb[1]));
+        double twist = Math.abs(Math.IEEEremainder(angle(e, 0, 1) - Math.atan2(sb[1] - sa[1], sb[0] - sa[0]), 2 * Math.PI));
+        boolean vertical = Math.abs(cy) > 1.2f * Math.abs(cx) && spread < 0.6 * Math.abs(cy) && twist < ROTATE_START;
+        if (vertical && ay * by > 0 && Math.min(Math.abs(ay), Math.abs(by)) > slop / 3) return State.TILT;
+        double most = Math.max(Math.hypot(ax, ay), Math.hypot(bx, by));
+        if (vertical && ay * by >= 0 && most < TILT_DECIDE_SLOPS * slop) return null;   // the other finger may follow
+        return State.TWO_FINGER;
+    }
+
+    /**
+     * Two fingers after the hold, or three fingers: once the middle of the fingers has moved SWIPE_SCREEN of the screen's
+     * shorter side, the direction picks the action (once a gesture).
+     */
+    private void swipe(MotionEvent e) {
+        float sx = 0, sy = 0, x = 0, y = 0;
+        int n = 0;
+        for (int i = 0; i < e.getPointerCount(); i++) {
+            float[] s = starts.get(e.getPointerId(i));
+            if (s == null) continue;
+            sx += s[0]; sy += s[1]; x += e.getX(i); y += e.getY(i); n++;
+        }
+        if (n == 0) return;
+        float dx = (x - sx) / n, dy = (y - sy) / n;
+        LorieView v = view();
+        if (Math.hypot(dx, dy) < Math.max(3 * slop, SWIPE_SCREEN * Math.min(v.getWidth(), v.getHeight()))) return;
+        boolean three = state == State.THREE;
+        String name = Math.abs(dx) > Math.abs(dy)
+                ? (dx > 0 ? (three ? "idle_next" : "fight") : (three ? "idle_prev" : "stop"))
+                : (dy < 0 ? (three ? "overview_in" : "select_all") : (three ? "overview_out" : "deselect"));
+        state = State.DONE;
+        v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+        act(name);
+    }
+
+    /** A game action for the widget (bardroid_touch.lua ACTIONS); in the lobby there is none. */
+    private void act(String name) {
+        if (gameWidgetRunning()) send("act " + name);
     }
 
     private boolean nearLastTap(float x, float y) {
@@ -466,11 +557,22 @@ final class RtsTouch {
 
     private void tap(float vx, float vy) {
         float x = toX(vx), y = toY(vy);
+        float tol = slop * 2 * xPerViewPixel();
+        long now = SystemClock.uptimeMillis();
+        // A third quick tap: the double click's unit types on the whole map. No click (it would select one unit).
+        if (doubleTapX >= 0 && now - doubleTapTime <= doubleTapMs && Math.abs(x - doubleTapX) <= tol
+                && Math.abs(y - doubleTapY) <= tol && gameWidgetRunning()) {
+            doubleTapX = -1;
+            act("type_all");
+            return;
+        }
         // A double click needs both clicks on the same pixel; fingers land a few pixels apart.
         if (nearLastTap(x, y)) {
             x = lastTapX; y = lastTapY;
             lastTapX = -1;
+            doubleTapX = x; doubleTapY = y; doubleTapTime = now;
         } else {
+            doubleTapX = -1;
             lastTapX = x; lastTapY = y; lastTapTime = SystemClock.uptimeMillis();
         }
         LorieView v = view();

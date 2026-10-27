@@ -1,9 +1,10 @@
-﻿# BAR's in-game interface at a Fold screen's layout, on the laptop: a skirmish (byar:test, vs BARb) in a window of the
+# BAR's in-game interface at a Fold screen's layout, on the laptop: a skirmish (byar:test, vs BARb) in a window of the
 # screen's shape, BAR's interface scale as the phone sets it, with or without the phone layer's widget changes
 # (Keys/Changes off, BAR's full-screen effects off), and a screenshot after ~5 s of game. BAR sizes its interface by
 # the window height and places it by the width, so a smaller window of the same shape shows the same layout.
 #   powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner [-Scale 0.65] [-NoPhoneLayer]
-#   -Screen inner = 1456x1312 at 1.3, cover = 1680x720 at 2.0. Writes build\ui-screenshot\<screen>-<layer>.png
+#   -Screen inner = 1152x1044 at 1.3, cover = 2520x1080 at 2.0 (the X screen sizes since the unfolded pixel cap);
+#   -Chat: a few chat lines from a player with a long name first. Writes build\ui-screenshot\<screen>-<layer>.png
 param(
   [ValidateSet("inner", "cover")] [string]$Screen = "inner",
   [double]$Scale = 0.65,
@@ -11,6 +12,8 @@ param(
   [double]$UiScale = 0,   # another interface scale than the phone's for that screen
   [string]$WidgetData = "",   # widget settings for BYAR.lua's data table, e.g. 'AdvPlayersList = { customScale = 0.8 },'
   [string]$Name = "",     # added to the screenshot's file name
+  [switch]$Chat,          # chat lines before the screenshot
+  [string]$PlayerName = "Phone",
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
   [string]$Engine = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
@@ -23,7 +26,7 @@ $Data = Join-Path $Work "data"
 $Bar = Join-Path $env:LOCALAPPDATA "Programs\Beyond-All-Reason\data"
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
 $EngineDir = Join-Path $Bar "engine\$Engine"
-$size = @{ inner = @(1456, 1312, 1.3); cover = @(1680, 720, 2.0) }[$Screen]
+$size = @{ inner = @(1152, 1044, 1.3); cover = @(2520, 1080, 2.0) }[$Screen]
 $w = [int]($size[0] * $Scale); $h = [int]($size[1] * $Scale)
 $uiScale = if ($UiScale -gt 0) { $UiScale } else { $size[2] }
 $layer = $(if ($NoPhoneLayer) { "bar" } else { "phone" }) + "-" + $uiScale + $(if ($Name) { "-$Name" } else { "" })
@@ -48,7 +51,7 @@ try {
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
@@ -68,7 +71,7 @@ try {
     while (($l = $reader.ReadLine()) -ne $null) { if ($l.StartsWith("byar:test,")) { $game = $l.Split(",", 4)[3] } }
     $reader.Close()
   }
-  $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
+  $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName).Replace("=Phone;", "=$PlayerName;")
   $startscript = Join-Path $Work "skirmish.txt"
   $script | Set-Content $startscript -Encoding ascii
 

@@ -207,6 +207,26 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   and wakes on pad input. Not changed, for the record: `UseLuaMemPools = 0` comes from the lobby's own settings;
   `MaxSounds` is reset to 128 by BAR's options; BAR's GPU Profiler needs `gl.QueryCounter`, in no released engine yet.
   The laptop ran at ~6 fps the whole evening (also a 2-unit skirmish): its idle power state, not the game.
+- **Kailil back, evening of 2026-10-26** (build 09e6e74 on the phone): a 16-17 min game caught up in 164 s (x6.1 on
+  average, 0:21 → 17:07), then 29-30 fps with 2,500-3,900 units (dips to 16-20 for a few seconds). Asked for and
+  done: the catch-up screen is black (the progress over a full-screen black view; the last picture stood still behind
+  a 75% black box before); tilt is forgiving (`RtsTouch.twoFingerKind`: both fingers moving up or down together,
+  without pinch or twist, however they sit; the slower finger gets 3 slops to follow; a second finger within 250 ms
+  of the first is one two-finger gesture even if the first already slid; the tilt counts from where the fingers came
+  down); new gestures (RtsTouch → "act <name>" lines → `bardroid_touch.lua` ACTIONS, checked by
+  `tools/touch-widget-test.ps1`): triple tap = the double tap's types on the whole map (`select
+  AllMap+_InPrevSel+_ClearSelection_SelectAll+`), two fingers held 450 ms (buzz) then swiped: up select all / down
+  deselect / left stop / right fight (armed), three-finger swipe: up overview / down back / left-right previous-next
+  idle builder (own mobile builders without orders, camera to it). Stop and fight go through
+  `Spring.SetActiveCommand` (BAR's order buttons do the same; `SendCommands("stop")` reaches no order). Three-finger
+  tap still toggles the keyboard (Kailil: keep it, but as a small floating keyboard in the bottom left: that is
+  Samsung Keyboard's Floating mode, the user's setting; LorieView already asks for no full-screen editor).
+  **Chat** (not changed yet, Kailil's call): BAR's chat box runs from the top bar's left edge to 74% of the width;
+  each line has a game-time column and a name column as wide as the longest player name in the game, so on the inner
+  screen at 1.3 the text wraps in ~120 px (`tools/ui-screenshot.ps1 -Screen inner -Scale 1 -Chat -PlayerName
+  LongPlayerName_2026`, new). BAR's only setting is the font size (`fontsizeMult`, slider 0.92-1.12; 0.6 and 0.5
+  tried: ~170-200 px of text). Names flush left with wrapping would need our own chat display: hide BAR's lines
+  (`WG.chat.setHide(true)`, its typing box stays), get parsed lines through `WG.chat.addChatProcessor`, draw them.
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

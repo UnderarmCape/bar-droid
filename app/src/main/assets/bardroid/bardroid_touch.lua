@@ -12,6 +12,7 @@
 --                                                     tilt <fraction>           (fingers moved down by this much of the screen height)
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
+--                                                     act <name>                (a gesture's action: ACTIONS below)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
 --                                                                               0 = map, 2 = off the map: void or sky)
@@ -227,6 +228,81 @@ local function dragMove(x0, y0, x1, y1)
 	return dx, dz
 end
 
+-- The next or previous mobile builder of the player's own team that has no orders (not one still being built), selected
+-- and looked at. Cycles by unit ID from the last one picked.
+local lastIdleBuilder = 0
+local function idleBuilder(step)
+	if Spring.GetSpectatingState() then
+		return
+	end
+	local idle = {}
+	for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+		if def and def.isBuilder and not def.isFactory and (def.speed or 0) > 0 and spGetUnitCommandCount(unitID) == 0
+			and not Spring.GetUnitIsBeingBuilt(unitID) then
+			idle[#idle + 1] = unitID
+		end
+	end
+	if #idle == 0 then
+		return
+	end
+	table.sort(idle)
+	local pick = step > 0 and idle[1] or idle[#idle] -- wrapping around
+	for i = 1, #idle do
+		local id = step > 0 and idle[i] or idle[#idle + 1 - i]
+		if (step > 0 and id > lastIdleBuilder) or (step < 0 and id < lastIdleBuilder) then
+			pick = id
+			break
+		end
+	end
+	lastIdleBuilder = pick
+	Spring.SelectUnitArray({ pick })
+	local x, y, z = Spring.GetUnitPosition(pick)
+	if x then
+		Spring.SetCameraTarget(x, y, z, 0.3)
+	end
+end
+
+local function inOverview()
+	return spGetCameraState().name == "ov"
+end
+
+-- Gesture actions from the app ("act <name>", RtsTouch.java): the same commands BAR's keys send.
+local ACTIONS = {
+	type_all = function() -- a triple tap: the types of the selection (a double tap's) on the whole map
+		Spring.SendCommands("select AllMap+_InPrevSel+_ClearSelection_SelectAll+")
+	end,
+	select_all = function()
+		Spring.SendCommands("select AllMap++_ClearSelection_SelectAll+")
+	end,
+	deselect = function()
+		Spring.SelectUnitArray({})
+	end,
+	-- (as BAR's order buttons do: an order key's action sent as a command reaches no order)
+	stop = function()
+		Spring.SetActiveCommand("stop")
+	end,
+	fight = function() -- armed: the next tap places it
+		Spring.SetActiveCommand("fight")
+	end,
+	overview_in = function()
+		if not inOverview() then
+			Spring.SendCommands("toggleoverview")
+		end
+	end,
+	overview_out = function()
+		if inOverview() then
+			Spring.SendCommands("toggleoverview")
+		end
+	end,
+	idle_next = function()
+		idleBuilder(1)
+	end,
+	idle_prev = function()
+		idleBuilder(-1)
+	end,
+}
+
 local function readTouch(lines)
 	local p = pending
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
@@ -252,6 +328,12 @@ local function readTouch(lines)
 	for lx, ly, rx, ry, lt, lb in lines:gmatch("pad (%S+) (%S+) (%S+) (%S+) (%S+) (%S+)") do -- the last one counts
 		pad.lx, pad.ly, pad.rx, pad.ry = tonumber(lx) or 0, tonumber(ly) or 0, tonumber(rx) or 0, tonumber(ry) or 0
 		pad.lt, pad.lb = tonumber(lt) or 0, lb == "1"
+	end
+	for name in lines:gmatch("act (%S+)") do
+		local action = ACTIONS[name]
+		if action then
+			action()
+		end
 	end
 end
 
