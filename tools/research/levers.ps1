@@ -90,6 +90,8 @@ R_DEBUGCMDS="16:luaui disable|17:hideinterface 1"'; Scale = 70 }
   "eng-oryon-lto-fast" = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-fast"; Prepare = { PushEngine "oryon-lto-fast" } }
   # SYNCCHECK off (no checksum of synced state: desyncs go undetected; online play refused/unsafe)
   "eng-oryon-lto-nosync" = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-nosync"; Prepare = { PushEngine "oryon-lto-nosync" } }
+  # every compile-time lever without a phone profile: oryon + ThinLTO + fast-math + no sync hashing
+  "eng-max-nopgo"   = @{ Conf = "R_ENGINE=$RA/engine-max-nopgo"; Prepare = { PushEngine "max-nopgo" } }
   "eng-max"         = @{ Conf = "R_ENGINE=$RA/engine-max"; Prepare = { PushEngine "max" } }
 }
 
