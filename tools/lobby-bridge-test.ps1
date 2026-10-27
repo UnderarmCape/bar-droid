@@ -10,6 +10,7 @@ param(
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "toolchain.ps1")
 $Src = Join-Path $PSScriptRoot "lobby-bridge-test"
 $Work = Join-Path $App "build\lobby-bridge-test"
 $Data = Join-Path $Work "data"
@@ -35,9 +36,9 @@ try {
 
   $classes = Join-Path $Work "classes"
   Remove-Item -Recurse -Force $classes -ErrorAction SilentlyContinue
-  $javac = (Get-ChildItem (Join-Path $App "..\toolchain\jdk") -Recurse -Filter javac.exe | Select-Object -First 1).FullName
+  $javac = (Get-ChildItem (Join-Path $TC "jdk") -Recurse -Filter javac.exe | Select-Object -First 1).FullName
   $java = Join-Path (Split-Path $javac) "java.exe"
-  $env:JAVA_TOOL_OPTIONS = "-Duser.home=$(Join-Path $App '..\toolchain\home') -Djava.io.tmpdir=$Work"
+  $env:JAVA_TOOL_OPTIONS = "-Duser.home=$(Join-Path $TC 'home') -Djava.io.tmpdir=$Work"
   $sources = @(Get-ChildItem (Join-Path $Src "src") -Recurse -Filter *.java | ForEach-Object FullName) +
     (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\LobbyBridge.java")
   & $javac -nowarn -d $classes $sources

@@ -6,9 +6,10 @@
 param([switch]$Shipped)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "toolchain.ps1")
 $Out = Join-Path $App "build\pace-test"
 New-Item -ItemType Directory -Force -Path $Out | Out-Null
-$ndk = Get-ChildItem (Join-Path $App "..\toolchain\android-sdk\ndk") -Directory | Sort-Object Name | Select-Object -Last 1
+$ndk = Get-ChildItem (Join-Path $TC "android-sdk\ndk") -Directory | Sort-Object Name | Select-Object -Last 1
 $clang = Join-Path $ndk.FullName "toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe"
 foreach ($pair in @(@("pace.c", "libbardroid_pace.so"), @("pace_test.c", "pace_test.so"))) {
   & $clang --target=aarch64-linux-gnu -O2 -fPIC -shared -nostdlib -fuse-ld=lld -ffreestanding -fno-stack-protector `
@@ -17,9 +18,9 @@ foreach ($pair in @(@("pace.c", "libbardroid_pace.so"), @("pace_test.c", "pace_t
   if ($LASTEXITCODE -ne 0) { throw "clang failed on $($pair[0])" }
 }
 if ($Shipped) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\libbardroid_pace.so") (Join-Path $Out "libbardroid_pace.so") -Force }
-if (-not $env:ANDROID_SERIAL) { $env:ANDROID_SERIAL = "192.168.1.196:5555" }
-$env:USERPROFILE = Join-Path $App "..\toolchain\home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
-$adb = Join-Path $App "..\toolchain\android-sdk\platform-tools\adb.exe"
+
+$env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
+$adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 $pkg = "com.underarmcape.bardroid"
 foreach ($f in "libbardroid_pace.so", "pace_test.so") {
   & $adb push (Join-Path $Out $f) "/data/local/tmp/$f" | Out-Null

@@ -6,3 +6,7 @@ local.properties
 *.iml
 termux-x11/lorie/.cxx/
 termux-x11/
+# the portable toolchain, APKs and logs when installed inside the checkout (scripts\env.bat)
+/toolchain/
+/apk/
+/logs/

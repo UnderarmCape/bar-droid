@@ -36,13 +36,14 @@ param(
 
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
+. (Join-Path $PSScriptRoot "toolchain.ps1")
 $Work = Join-Path $App "build\profile"
 $Data = Join-Path $Work "data"
 $Sdd = Join-Path $Data "games\BAR-gamepad.sdd"
 New-Item -ItemType Directory -Force -Path (Join-Path $Data "games"), (Join-Path $Data "maps"), (Join-Path $Data "LuaUI\Config") | Out-Null
 
 # the game: v0.8.5's overlay, laid out as the app does, plus the logging profiler
-$py = "call C:\Tools\BARANDROID\toolchain\env.bat >nul && python -I `"$App\tools\build-gamepad-game.py`" --repo `"$Repo`" --branch $Branch --out `"$Work\pkg`" --unpack `"$Sdd`" --bar-data `"$BarData`""
+$py = "call `"$App\scripts\env.bat`" >nul && python -I `"$App\tools\build-gamepad-game.py`" --repo `"$Repo`" --branch $Branch --out `"$Work\pkg`" --unpack `"$Sdd`" --bar-data `"$BarData`""
 cmd /c $py
 if ($LASTEXITCODE -ne 0) { throw "build-gamepad-game.py failed" }
 Copy-Item (Join-Path $App "tools\profile\dbg_bardroid_profile_log.lua") (Join-Path $Sdd "luaui\Widgets\")

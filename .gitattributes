@@ -1,0 +1,8 @@
+# Line endings as each file's consumer needs them, whatever the checkout's core.autocrlf
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.sh    text eol=lf
+gradlew text eol=lf
+*.lua   text eol=lf
+*.java  text eol=lf
+*.patch -text
