@@ -176,19 +176,19 @@ cases = {
 	-- the builder queue (bardroid_queue.lua): only queued buildings near the camera's target are drawn
 	function()
 		local myTeam = Spring.GetMyTeamID()
-		local com = (Spring.GetTeamUnits(myTeam) or {})[1]
+		local builder = (Spring.GetTeamUnits(myTeam) or {})[1]
 		local wind = UnitDefNames and UnitDefNames.armwin
-		if not (com and wind) then
+		if not (builder and wind) then
 			return
 		end
-		local x, _, z = Spring.GetUnitPosition(com)
+		local x, _, z = Spring.GetUnitPosition(builder)
 		for i = 1, 12 do -- around the commander, and far across the map
 			local nx, nz = x + (i % 4) * 96 - 150, z + math.floor(i / 4) * 96 + 200
-			Spring.GiveOrderToUnit(com, -wind.id, { nx, Spring.GetGroundHeight(nx, nz), nz, 0 }, { "shift" })
+			Spring.GiveOrderToUnit(builder, -wind.id, { nx, Spring.GetGroundHeight(nx, nz), nz, 0 }, { "shift" })
 		end
 		for i = 1, 12 do
 			local fx, fz = Game.mapSizeX - 600 - (i % 4) * 96, Game.mapSizeZ - 600 - math.floor(i / 4) * 96
-			Spring.GiveOrderToUnit(com, -wind.id, { fx, Spring.GetGroundHeight(fx, fz), fz, 0 }, { "shift" })
+			Spring.GiveOrderToUnit(builder, -wind.id, { fx, Spring.GetGroundHeight(fx, fz), fz, 0 }, { "shift" })
 		end
 		local cs = Spring.GetCameraState()
 		cs.px, cs.pz, cs.dist, cs.rx = x, z, 2500, 2.6

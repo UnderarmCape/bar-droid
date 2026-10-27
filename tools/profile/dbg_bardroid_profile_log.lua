@@ -240,7 +240,7 @@ end
 -- set by the host widget once the game has been fast-forwarded to its target time and runs at 1x)
 local waitGo = Spring.GetConfigInt("bardroid_profile_wait_go", 0) == 1
 
-function widget:Update(dt)
+function widget:Update()
 	if waitGo then
 		if Spring.GetConfigString("bardroid_profile_go", "") ~= "1" then
 			return

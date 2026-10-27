@@ -246,7 +246,7 @@ function widget:MousePress(x, y, button)
 	return true
 end
 
-function widget:MouseMove(x, y)
+function widget:MouseMove(_, y)
 	local p = press
 	if not p then
 		return false
