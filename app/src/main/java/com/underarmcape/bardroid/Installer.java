@@ -288,7 +288,7 @@ public final class Installer {
         // panel with its text sized to fit (launch-bar.sh turns BAR's Info widget off), and BAR's player list small until
         // touched
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
-                "bardroid_players.lua"})
+                "bardroid_players.lua", "bardroid_bench.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
@@ -347,7 +347,15 @@ public final class Installer {
         tpl = tpl.replace("@GAME@", game).replace("@MAP@", Prefs.mapName);
         // AI difficulty is a BARb option; keep ShortName=BARb (the only native AI shipped in the arm64 engine archive).
         writeFile(new File(p.bar, "skirmish.txt"), tpl);
+        // BAR's "Benchmark BAR" scenario as its lobby starts it (the lobby's _script.txt, 2026-10-27: 650 Grunts against
+        // 650 Pawns on Starwatcher 1.0, 2000 frames), with the singleplayer game: launch-bar.sh MODE=bench
+        String bench;
+        try (InputStream in = new FileInputStream(new File(assets, "benchmark.template.txt"))) { bench = new String(readAll(in), StandardCharsets.UTF_8); }
+        writeFile(new File(p.bar, "bench.txt"), bench.replace("@GAME@", game));
     }
+
+    /** The benchmark's map (benchmark.template.txt). */
+    public static final String BENCH_MAP = "Starwatcher 1.0";
 
     /** Looks up the display name for the game tag in the downloaded rapid index; falls back to the tag itself. */
     private String resolveGameName() {

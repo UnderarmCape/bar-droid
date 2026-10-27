@@ -1,5 +1,5 @@
 #!/bin/bash
-# BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|glcheck|shell),
+# BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|bench|glcheck|shell),
 # BARDROID_GPU (kgsl|zink|llvmpipe) with the matching Mesa variables, MESA_GL_VERSION_OVERRIDE (optional),
 # BARDROID_AUDIO (0/1), GAMEPAD_GAME (0/1: singleplayer plays the controller game), BARDROID_FPS (frame cap), DISPLAY.
 set -u
@@ -103,7 +103,7 @@ widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry
   [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
 }
 LOBBY_GAME=byar
-if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
     widget_order "Build menu" 165; widget_order "Grid menu" 0
@@ -168,7 +168,7 @@ done
 # bloom, ambient occlusion, heat distortion, snow, the mirrored map beyond its edges; and the lights' screen-space
 # shadows (a full-screen pass, BAR's default 2) in that widget's saved settings. (A user widget cannot do it: BAR
 # refuses "/option" from user widgets.)
-if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   for w in "Bloom Shader Deferred" "SSAO" "Distortion GL4" "Snow" "Map Edge Extension"; do widget_order "$w" 0; done
   # BAR's Show Builder Queue draws every queued building on the map every frame: the app's "BAR Droid builder queue"
   # (bardroid_queue.lua) draws only those near where the camera looks
@@ -220,7 +220,7 @@ fi
 # The top bar's button strip is laid out for wide screens: at 1.3 on the near-square inner screen it ran under the
 # wind/tidal/commander counters. Its Keys (keyboard shortcuts) and Changes (patch notes) buttons are no use on a
 # phone: their widgets off, the rest has room.
-if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
+if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Keybind/Mouse Info" 0; widget_order "Changelog Info" 0
   # BAR's Picture-in-Picture Minimap shows a row of buttons under the map whenever the pointer is over it, and every
   # touch puts the pointer there (Kailil: "useless and in the way even when they autohide"): the classic Minimap
@@ -230,6 +230,22 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
   # the stats ran under the unit picture and off the screen (Kailil: "too large and it is jumbled up"). The app's
   # bardroid_info.lua takes its place.
   widget_order "Info" 0
+fi
+
+# The app's benchmark (MODE=bench, Installer's bench.txt): BAR's "Benchmark BAR" scenario, unattended. BAR pauses a
+# singleplayer game while its Mission Info window (the scenario's briefing) is open: off for benchmarks, BAR's own
+# default otherwise; bardroid_bench.lua (by its flag file) resumes a paused start and quits after the results.
+# A profiling run (tools/phone-bench.ps1 -Profile, the file .bardroid-bench-profile): BAR's Widget Profiler (LuaUI CPU
+# per widget) or the gadget profiler (game logic CPU per gadget, "luarules profile") on, their tables caught by the
+# benchmark's own screenshot at frame 2015.
+prof=$(cat "$BAR/.bardroid-bench-profile" 2>/dev/null)
+if [ "$MODE" = bench ]; then
+  widget_order "Mission Info" 0; echo 1 > "$BAR/LuaUI/Config/bardroid_bench.txt"
+  if [ "$prof" = widgets ]; then widget_order "Widget Profiler" 1; else widget_order "Widget Profiler" ""; fi
+  [ "$prof" = gadgets ] && sed -i 's/|20:vsync 0|/|20:vsync 0|40:luarules profile|/' "$BAR/bench.txt"
+  log "benchmark${prof:+, profiling $prof}"
+else
+  widget_order "Mission Info" ""; widget_order "Widget Profiler" ""; rm -f "$BAR/LuaUI/Config/bardroid_bench.txt"
 fi
 
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
@@ -243,6 +259,9 @@ case "$MODE" in
   skirmish)
     log "spring skirmish: $BAR/skirmish.txt"
     ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
+  bench)
+    log "spring benchmark: $BAR/bench.txt"
+    ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$? ;;
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
     # config and shuts down (a black screen). The app's update check saves BAR's current one; the built-in copy is
