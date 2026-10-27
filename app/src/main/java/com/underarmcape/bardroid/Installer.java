@@ -436,7 +436,8 @@ public final class Installer {
                 try (OutputStream o = new FileOutputStream(f)) { copy(z, o); }
             }
         }
-        // BAR artwork v0.8.5 shows under its own names: copied from the downloaded release, never shipped in the APK.
+        // BAR artwork v0.8.5 shows under its own names, and BAR files the lobby reads from this archive alone
+        // (modoptions.lua: the Skirmish screen): copied from the downloaded release, never shipped in the APK.
         Map<String, String> files = sdpFiles(new File(p.bar, "packages/" + info.getProperty("base.md5") + ".sdp"));
         for (String key : info.stringPropertyNames()) {
             if (!key.startsWith("copy.")) continue;

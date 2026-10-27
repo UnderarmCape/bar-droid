@@ -150,13 +150,14 @@ local function serverRows(panel)
 	return rows
 end
 
-local makeBar
+local makeBar, placeBar
 local function openPopup(button)
 	popupButton = real(button)
 	if WG.TooltipHandler and WG.TooltipHandler.TooltipOverride then
 		WG.TooltipHandler.TooltipOverride(button.tooltip)
 	end
 	makeBar()
+	placeBar()
 	bar:Show()
 	bar:BringToFront()
 end
@@ -190,19 +191,26 @@ local function join()
 	end
 end
 
+-- centred at the bottom of the screen as it is now (folding or unfolding the phone resizes the lobby's screen)
+local barSize
+placeBar = function()
+	local sw, sh = screen0.width, screen0.height
+	local w, h = math.min(sw - 16, 760), 70
+	bar:SetPos(math.floor((sw - w) / 2), sh - h - 10, w, h)
+	barSize = sw .. "x" .. sh
+end
+
 makeBar = function()
 	if bar then
 		return
 	end
-	local sw, sh = screen0.width, screen0.height
-	local w, h = math.min(sw - 16, 760), 70
 	bar = Chili.Window:New({
 		name = "bardroidServerBar",
 		parent = screen0,
-		x = math.floor((sw - w) / 2),
-		y = sh - h - 10,
-		width = w,
-		height = h,
+		x = 0,
+		y = 0,
+		width = 100,
+		height = 70,
 		resizable = false,
 		draggable = false,
 		padding = { 6, 6, 6, 6 },
@@ -324,6 +332,8 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	end
 	if popupButton and (popupButton.disposed or not popupButton.parent or popupButton.visible == false) then
 		closePopup() -- the list went away (another screen, the server closed)
+	elseif popupButton and barSize ~= screen0.width .. "x" .. screen0.height then
+		placeBar() -- folded or unfolded
 	end
 end
 

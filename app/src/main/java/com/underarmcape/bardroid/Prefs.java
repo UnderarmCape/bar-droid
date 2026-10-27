@@ -62,8 +62,12 @@ public final class Prefs {
     public static boolean gamepadGame = true;
     /** Each lobby/skirmish start first updates BAR like its PC launcher (Updater, docs/UPDATES.md). */
     public static boolean autoUpdate = true;
-    /** The app stands in for BAR's PC launcher behind the lobby (LobbyBridge): replays, web links, resource downloads. */
-    public static boolean lobbyBridge = false;
+    /**
+     * The app stands in for BAR's PC launcher behind the lobby (LobbyBridge): replays, web links, resource downloads.
+     * On by default since 2026-10-27: the lobby assumes its launcher (the Replays tab hung on "Loading" without it).
+     * Saved as "lobbyBridgeOn": the old key held the old default (off) on every phone that saved settings.
+     */
+    public static boolean lobbyBridge = true;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -108,7 +112,7 @@ public final class Prefs {
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
-        lobbyBridge = s.getBoolean("lobbyBridge", lobbyBridge);
+        lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -133,7 +137,8 @@ public final class Prefs {
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
                 .putBoolean("autoUpdate", autoUpdate)
-                .putBoolean("lobbyBridge", lobbyBridge)
+                .remove("lobbyBridge")   // the old default (off), see lobbyBridge
+                .putBoolean("lobbyBridgeOn", lobbyBridge)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

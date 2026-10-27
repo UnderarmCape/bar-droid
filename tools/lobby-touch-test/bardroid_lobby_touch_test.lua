@@ -23,7 +23,7 @@ end
 local t, step, wait = 0, 0, 0
 local fails = 0
 local window, scroll, rows, maps, clicked = nil, nil, {}, {}, {}
-local startScroll, dragScroll, clicksBefore
+local startScroll, dragScroll, clicksBefore, screenSize
 
 local function log(s)
 	Spring.Echo("[lobbytouch] " .. s)
@@ -67,14 +67,18 @@ local function clickTotal()
 	return n
 end
 
-local function barButton(caption)
+local function barWindow()
 	for _, c in ipairs(WG.Chili.Screen0.children) do
 		if c.name == "bardroidServerBar" and c.visible ~= false then
-			for _, b in ipairs(c.children) do
-				if b.caption == caption then
-					return b
-				end
-			end
+			return c
+		end
+	end
+end
+
+local function barButton(caption)
+	for _, b in ipairs(barWindow() and barWindow().children or {}) do
+		if b.caption == caption then
+			return b
 		end
 	end
 end
@@ -184,6 +188,18 @@ cases = {
 	end,
 	function()
 		check("a tap on a server's map picture: its details", same(popup(), rows[6]) and not clicked[6])
+		local s0 = WG.Chili.Screen0
+		screenSize = { s0.width, s0.height }
+		s0:Resize(s0.width + 300, s0.height + 200) -- the phone unfolds: the lobby's screen grows
+	end,
+	function()
+		local b, s0 = barWindow(), WG.Chili.Screen0
+		check("the server bar follows the screen when the phone unfolds (bottom, centred)", b ~= nil
+			and b.y + b.height + 10 == s0.height and math.abs(b.x * 2 + b.width - s0.width) <= 1,
+			b and string.format("bar %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
+		s0:Resize(screenSize[1], screenSize[2])
+	end,
+	function()
 		clicksBefore = clickTotal()
 		tapBar("Join")
 	end,

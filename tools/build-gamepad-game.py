@@ -8,8 +8,9 @@ BAR release. On the phone it runs as BAR's developer game ("Beyond All Reason $V
 modinfo.lua depends on that BAR release, which the app downloads from BAR's servers. The engine loads an archive's own
 files before its dependencies', so v0.8.5's files win.
 
-Not packaged: BAR artwork v0.8.5 copied under new names (LICENSE.md next to them names the originals); the app copies
-those from the downloaded release (gamepad.properties "copy.N = <destination> <source>"). Changed on the way, for
+Not packaged: BAR artwork v0.8.5 copied under new names (LICENSE.md next to them names the originals), and BAR files
+the lobby reads from the game's own archive (modoptions.lua); the app copies those from the downloaded release
+(gamepad.properties "copy.N = <destination> <source>"). Changed on the way, for
 Android: the controller's "companion status" panel is off (the app is the companion and always runs).
 
 Stripped for the phone (Kailil, 2026-10-26: "we can get rid of the debug stuff and the hints menu all together. and
@@ -17,7 +18,8 @@ remove bindings menu and UI and all that bloat ... its too clunky to use on mobi
 the bindings menu, the UI layout editor, the SmartX mouse audit, v0.8.5's tests and its test-runner change are left
 out (MOBILE_LEFT_OUT). The game keeps everything that plays: the camera widget, its radials and the pad bridge.
 
-  python -I tools/build-gamepad-game.py [--repo DIR] [--branch NAME] [--out DIR]
+  python -I tools/build-gamepad-game.py [--repo DIR] [--branch NAME] [--out DIR] [--unpack SDD --bar-data DIR]
+  python -I tools/build-gamepad-game.py --unpack-only --unpack SDD --bar-data DIR   # the committed package, as installed
 """
 import argparse, gzip, hashlib, io, json, os, re, subprocess, sys, urllib.request, zipfile
 
@@ -28,6 +30,8 @@ ap.add_argument("--branch", default="controller/codex-v085-perf")
 ap.add_argument("--out", default=os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "app", "src", "main", "assets", "gamepad"))
 ap.add_argument("--unpack", metavar="SDD", help="also unpack the package there, as the app does (needs --bar-data)")
 ap.add_argument("--bar-data", metavar="DIR", help="a BAR data folder with the base release's packages/ and pool/")
+ap.add_argument("--unpack-only", action="store_true",
+                help="with --unpack: unpack the package already in --out, no rebuild (no git, no network)")
 ARGS = ap.parse_args()
 REPO, BRANCH, OUT = ARGS.repo, ARGS.branch, ARGS.out
 BASE_COMMIT = "a61703336e586233f242376ec3b7855d00855ff5"   # BAR Release 2026.10.20-1, what v0.8.5 was ported to
@@ -49,6 +53,11 @@ BAR_COPIES = {
     "luaui/images/controller/stat-icons/metal.png": "luaui/images/metal.png",
     "luaui/images/controller/stat-icons/energy.png": "luaui/images/energy.png",
     "luaui/images/controller/stat-icons/health.png": "luaui/images/info_health.png",
+}
+# BAR files the lobby reads from the game's own archive, without its dependencies (Chobby's modoptions panel:
+# VFS.UseArchive(game) then modoptions.lua; without it the Skirmish screen stays empty). The release's own copy.
+LOBBY_COPIES = {
+    "modoptions.lua": "modoptions.lua",
 }
 
 
@@ -102,37 +111,50 @@ def main():
     zbytes = buf.getvalue()
     with open(os.path.join(OUT, "gamepad.zip"), "wb") as f:
         f.write(zbytes)
+    all_copies = {**BAR_COPIES, **LOBBY_COPIES}
+    copy_lines = [f"{dst} {all_copies[dst]}" for dst in sorted(all_copies)]
+    # (the version covers the copies too: a phone with the same zip but fewer copies installs it again)
+    digest = hashlib.sha256(zbytes + "\n".join(copy_lines).encode()).hexdigest()[:10]
     props = [
         "# written by tools/build-gamepad-game.py",
-        f"version = v0.8.5-{commit[:10]}-{hashlib.sha256(zbytes).hexdigest()[:10]}",
+        f"version = v0.8.5-{commit[:10]}-{digest}",
         f"branch = {BRANCH}",
         f"commit = {commit}",
         f"base.tag = {BASE_TAG}",
         f"base.name = {base_name}",
         f"base.md5 = {base_md5}",
-    ] + [f"copy.{i} = {dst} {BAR_COPIES[dst]}" for i, dst in enumerate(copies)]
+    ] + [f"copy.{i} = {line}" for i, line in enumerate(copy_lines)]
     with open(os.path.join(OUT, "gamepad.properties"), "w", newline="\n") as f:
         f.write("\n".join(props) + "\n")
     print(f"{len(names) - len(copies)} files from {commit[:10]} on {base_name} ({base_md5}): "
           f"gamepad.zip {len(zbytes) // 1024} KB")
     if ARGS.unpack:
-        unpack(zbytes, ARGS.unpack, ARGS.bar_data, base_md5)
+        unpack(ARGS.unpack, ARGS.bar_data)
 
 
-def unpack(zbytes, sdd, bar_data, base_md5):
-    """What Installer.installGamepadGame does on the phone: the zip, then BAR's icons from the base release's pool."""
+def unpack(sdd, bar_data):
+    """What Installer.installGamepadGame does on the phone, from gamepad.zip and gamepad.properties in --out: the zip,
+    then the copies (BAR's icons, modoptions.lua) from the base release's pool."""
     import shutil
+    props = {}
+    for line in open(os.path.join(OUT, "gamepad.properties"), encoding="utf-8"):
+        if "=" in line and not line.startswith("#"):
+            k, v = line.split("=", 1)
+            props[k.strip()] = v.strip()
     shutil.rmtree(sdd, ignore_errors=True)
-    zipfile.ZipFile(io.BytesIO(zbytes)).extractall(sdd)
-    data = gzip.open(os.path.join(bar_data, "packages", base_md5 + ".sdp")).read()
+    zipfile.ZipFile(os.path.join(OUT, "gamepad.zip")).extractall(sdd)
+    data = gzip.open(os.path.join(bar_data, "packages", props["base.md5"] + ".sdp")).read()
     pool, i = {}, 0
     while i < len(data):
         n = data[i]
         name = data[i + 1:i + 1 + n].decode().lower()
         pool[name] = data[i + 1 + n:i + 17 + n].hex()
         i += 1 + n + 16 + 8
-    for dst, src in BAR_COPIES.items():
-        md5 = pool[src]
+    for key, value in props.items():
+        if not key.startswith("copy."):
+            continue
+        dst, src = value.split()
+        md5 = pool[src.lower()]
         os.makedirs(os.path.dirname(os.path.join(sdd, dst)), exist_ok=True)
         with gzip.open(os.path.join(bar_data, "pool", md5[:2], md5[2:] + ".gz")) as f, open(os.path.join(sdd, dst), "wb") as o:
             o.write(f.read())
@@ -156,4 +178,9 @@ return {{
 """
 
 if __name__ == "__main__":
-    main()
+    if ARGS.unpack_only:
+        if not (ARGS.unpack and ARGS.bar_data):
+            sys.exit("--unpack-only needs --unpack and --bar-data")
+        unpack(ARGS.unpack, ARGS.bar_data)
+    else:
+        main()

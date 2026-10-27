@@ -33,7 +33,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing) or a joined game is
   being caught up far behind (`/tmp/bardroid-catchup`, from `bardroid_touch.lua`'s `bardroid_catchup.txt` via
   `GameActivity`); `tools/pace-test.ps1`).
-- `LobbyBridge` — opt-in stand-in for BAR's PC launcher behind the lobby (Chobby's `WG.Connector`, sl-connection.json):
+- `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
 - `PerfLog` — once a minute while a game runs, `[perf]` in launcher.log: thermal status, GPU/CPU clocks and caps,
@@ -86,6 +86,7 @@ powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace lib
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s
+powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second

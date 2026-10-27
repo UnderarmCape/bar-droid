@@ -32,12 +32,12 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | Unit info panel | `assets/bardroid/bardroid_info.lua` | Replaces BAR's Info widget (its text ran under the picture at phone scales): BAR's numbers, the largest text that fits, a type grid with counts for several units (tap keeps a type, long press drops it), BAR's `WG.info` API |
 | Catch-up | `bardroid_touch.lua`, `GameActivity`, `libbardroid_pace.so` | Joining a running game: a black screen with "Catching up 12:30 of 41:10 x2.5", the engine not drawing (a 17-minute game caught up in 164 s); a game too big to catch up draws again after a minute |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera; the pad is a mouse in the lobby (see "Gamepad" below) |
-| Lobby bridge (beta, off) | `LobbyBridge.java` | Stands in for BAR's PC launcher behind the lobby (web links, downloads, replay info); checked against the real lobby on the laptop, not tried in the phone's lobby yet (Next steps) |
+| Lobby bridge (on) | `LobbyBridge.java` | Stands in for BAR's PC launcher behind the lobby (web links, downloads, replay info); on by default since 2026-10-27 (without it the Replays tab hung on "Loading"); checked against the real lobby on the laptop, first phone check pending (Next steps) |
 | Updates | `Updater`, [docs/UPDATES.md](docs/UPDATES.md) | Every start updates engine, game and lobby like BAR's PC launcher and rolls back a set that fails on its first start |
 | Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb |
 | virgl GPU server (emulator) | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
-| Checks | `tools/laptop-tests.ps1`, `tools/pace-test.ps1` | Every laptop check passes (Lua lint, downloader, settings merge, updater rollback, lobby bridge and lobby touch in the real lobby, the touch, chat and info widgets in a real skirmish and in the controller game) |
+| Checks | `tools/laptop-tests.ps1`, `tools/pace-test.ps1` | Every laptop check passes (Lua lint, downloader, settings merge, updater rollback, lobby bridge, lobby touch and the lobby's Skirmish screen with the controller game in the real lobby, the touch, chat and info widgets in a real skirmish and in the controller game) |
 
 ## How the app works (one paragraph)
 
@@ -237,7 +237,8 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    OpenFile (web links), Download (with it on, maps and games too; "resource" files such as the OpenSkill ratings CSV
    only through it: "Download aborted (no wrapper, unsupported VFS type)" every start), ReadReplayInfo (Replays tab),
    ParseMiniMap (map thumbnails), StartNewSpring (games and replays on another engine), UploadLog, Discord.
-   **Built overnight as `LobbyBridge`, launcher setting "Lobby bridge (beta)", off by default**: web links, game/map
+   **Built overnight as `LobbyBridge`, launcher setting "Lobby bridge", on by default since 2026-10-27** (off, the
+   Replays tab hangs on "Loading": `gui_replay_handler.lua` calls `WG.WrapperLoopback` unchecked): web links, game/map
    downloads through pr-downloader (`setup-container.sh` steps rapid/map), resource downloads by HTTP, replay info
    from the replay's header and start script. **Checked against the real lobby on the laptop**
    (`tools/lobby-bridge-test.ps1`: BAR's Windows engine runs byar-chobby:test in an isolated write dir, LobbyBridge on
@@ -245,7 +246,7 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    engine, map, game time and both teams, the lobby's two resource downloads (widget manifest, skill ratings CSV)
    arrive, a web link goes to the browser, no lobby error. The map step (`setup-container.sh map`, pr-downloader in
    the container) ran on the phone: exit 0, the map in place (it downloads even a map already there; the lobby only
-   asks for missing ones). Not yet in the phone's lobby: tick it, open the Replays tab, download a map, open a link;
+   asks for missing ones). Not yet checked in the phone's lobby: the Replays tab, a map download, a link;
    `bridge` lines in launcher.log. Thumbnails, other engines and Discord stay unanswered (the lobby does not wait for those).
 4. Upstream, with Kailil's go-ahead (drafts ready in `docs/upstream/`): the save-load crash (Recoil/BAR); lfdevs Mesa: `dri3_dmabuf_sync_file_unavailable`
    takes the CPU-wait path on KGSL whenever the kernel supports `DMA_BUF_IOCTL_EXPORT_SYNC_FILE`, though KGSL never
