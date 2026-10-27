@@ -236,7 +236,10 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    and the engine freezes for good. SGSR built and drew (logcat "Xlorie: SGSR 1 upscaling on OpenGL ES 3.2"), lorie's
    context survived. With the comparison off (12:23 build) Kailil played another map and then All That Glitters
    again without a hang (12:29: 30 fps, 1151 units): both hangs were while "Compare upscaling" switched SGSR on and
-   off every 3 s, the suspect; it stays off (a diagnostic only).
+   off every 3 s, the suspect; it stays off (a diagnostic only). **Uncapped for measuring** (Kailil: "Let's run
+   fully uncapped to get a real gauge of full performance"): launcher "Frame cap" 30 / 60 / none, none by default
+   for now (`Prefs.fpsCap`; the display at its fastest mode while uncapped). Read `[bardroid-perf]` (fps, slowest
+   frame) and `[perf]` (thermal, GPU clock) after his games; then back to 30 by default.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per

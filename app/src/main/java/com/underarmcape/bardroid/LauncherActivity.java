@@ -118,7 +118,8 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbGamepadGame)).setChecked(Prefs.gamepadGame);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
-        ((CheckBox) findViewById(R.id.cbFps60)).setChecked(Prefs.fps60);
+        ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
+                Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
         ((CheckBox) findViewById(R.id.cbUpscale)).setChecked(Prefs.upscale);
         ((CheckBox) findViewById(R.id.cbUpscaleCompare)).setChecked(Prefs.upscaleCompare);
         ((CheckBox) findViewById(R.id.cbLobbyBridge)).setChecked(Prefs.lobbyBridge);
@@ -140,7 +141,8 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.gamepadGame = ((CheckBox) findViewById(R.id.cbGamepadGame)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
-        Prefs.fps60 = ((CheckBox) findViewById(R.id.cbFps60)).isChecked();
+        int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
+        Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;
         Prefs.upscale = ((CheckBox) findViewById(R.id.cbUpscale)).isChecked();
         Prefs.upscaleCompare = ((CheckBox) findViewById(R.id.cbUpscaleCompare)).isChecked();
         Prefs.lobbyBridge = ((CheckBox) findViewById(R.id.cbLobbyBridge)).isChecked();

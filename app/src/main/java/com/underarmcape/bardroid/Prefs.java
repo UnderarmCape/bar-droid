@@ -51,8 +51,12 @@ public final class Prefs {
     public static int controllerPort = 28777;
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
-    /** Frame cap (phone build, libbardroid_pace.so): 30 fps, or experimental 60 fps. */
-    public static boolean fps60 = false;
+    /**
+     * Frame cap (phone build, libbardroid_pace.so): 30 or 60 fps, or 0 = none, the game drawing as fast as it can
+     * (Kailil, 2026-10-27: "Let's run fully uncapped to get a real gauge of full performance"). None by default while
+     * measuring; then back to 30 (HANDOFF "Next steps"). Saved as "fpsCap" (the older "fps60" checkbox: 60 if ticked).
+     */
+    public static int fpsCap = 0;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
     public static boolean autoLobby = true;
     /**
@@ -119,7 +123,8 @@ public final class Prefs {
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
-        fps60 = s.getBoolean("fps60", fps60);
+        fpsCap = s.contains("fpsCap") ? s.getInt("fpsCap", fpsCap) : s.getBoolean("fps60", false) ? 60 : fpsCap;
+        if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
@@ -146,7 +151,8 @@ public final class Prefs {
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
                 .remove("touchOnly")   // the touch-only mode is gone
-                .putBoolean("fps60", fps60)
+                .remove("fps60")   // now fpsCap
+                .putInt("fpsCap", fpsCap)
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
                 .putBoolean("autoUpdate", autoUpdate)

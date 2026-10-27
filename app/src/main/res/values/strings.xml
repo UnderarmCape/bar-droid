@@ -22,7 +22,10 @@
     <string name="shortcut_launcher_long">Launcher and settings</string>
     <string name="cb_audio">Sound</string>
     <string name="cb_gamepad_game">Controller support v0.8.5 in singleplayer (skirmish and the lobby\'s own games; online games play BAR\'s released game)</string>
-    <string name="cb_fps60">60 fps (experimental; the default caps the game at 30 fps)</string>
+    <string name="lbl_fps_cap">Frame cap:</string>
+    <string name="rb_fps30">30 fps</string>
+    <string name="rb_fps60">60 fps</string>
+    <string name="rb_fps_none">none (measuring: hot)</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR): the game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
     <string name="cb_upscale_compare">Compare upscaling (diagnostic): SGSR on and off every 3 seconds, with a label; the two game freezes of 2026-10-27 were with it on</string>
     <string name="cb_lobby_bridge">Lobby bridge: the app stands in for BAR\'s PC launcher, for the Replays tab, web links and skill ratings; the lobby\'s downloads go through the app (off: the Replays tab cannot list replays)</string>

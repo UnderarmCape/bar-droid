@@ -54,13 +54,13 @@ public class GameActivity extends MainActivity {
         lorieView.setCallback((w, h, transform) -> {
             termux.handleInputTransformChanged(w, h, transform);
             screenW = w; screenH = h;
-            prefer60Hz();
+            preferRefreshRate();
             touch.screenSize(w, h, refreshHz());
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
         addCatchupView();
         setUpUpscale();
-        prefer60Hz();
+        preferRefreshRate();
         // The refresh rate settles after a mode request or a fold: keep the widget's frame cap in step.
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
     }
@@ -88,22 +88,26 @@ public class GameActivity extends MainActivity {
     };
 
     /**
-     * The X server's vblank counts display frames and the game's swap interval counts vblanks, so the frame cap
-     * depends on the refresh rate: ask for a 60 Hz mode of the current display (the widget adapts the interval to
-     * whatever the display really runs at).
+     * A 60 Hz mode of the current display: enough for the 30 and 60 fps caps, and half the display's own work of
+     * 120 Hz. Uncapped (Prefs.fpsCap 0) its fastest mode, so the display never limits a measurement.
      */
-    private void prefer60Hz() {
+    private void preferRefreshRate() {
         Display d = display();
         if (d == null) return;
         Display.Mode cur = d.getMode();
         WindowManager.LayoutParams lp = getWindow().getAttributes();
+        boolean fastest = Prefs.fpsCap == 0;
         int want = 0;
-        for (Display.Mode m : d.getSupportedModes())
-            if (m.getPhysicalWidth() == cur.getPhysicalWidth() && m.getPhysicalHeight() == cur.getPhysicalHeight()
-                    && Math.abs(m.getRefreshRate() - 60f) < 1f) want = m.getModeId();
-        if (lp.preferredDisplayModeId == want && lp.preferredRefreshRate == 60f) return;
+        float wantHz = 0f;
+        for (Display.Mode m : d.getSupportedModes()) {
+            if (m.getPhysicalWidth() != cur.getPhysicalWidth() || m.getPhysicalHeight() != cur.getPhysicalHeight()) continue;
+            float hz = m.getRefreshRate();
+            if (fastest ? hz > wantHz : Math.abs(hz - 60f) < 1f) { want = m.getModeId(); wantHz = hz; }
+        }
+        float rate = fastest ? wantHz : 60f;
+        if (lp.preferredDisplayModeId == want && lp.preferredRefreshRate == rate) return;
         lp.preferredDisplayModeId = want;
-        lp.preferredRefreshRate = 60f;
+        lp.preferredRefreshRate = rate;
         getWindow().setAttributes(lp);
     }
 
