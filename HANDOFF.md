@@ -233,6 +233,28 @@ Found in the phone's logs and code and fixed, each installed on the phone:
   AddConsoleLine. Lost: tapping a map-marker line, emoji images, the lines from before a LuaUI reload (fold/unfold).
   In the touch test (a said line arrives); `launch-bar.sh` reports its errors. In the controller game v0.8.5 clears
   an armed command, so the fight gesture does not stay armed there (the test notes it).
+- **2026-10-27, after a full 30-min game spectated** (Kailil: performance "really good", catch-up "worked well"):
+  - **No ship wakes** (Kailil: "hideous on the lowest graphics settings"; his screenshot 23:55 showed grey smoke trails
+    over basic water). They are BAR's `waterwake-*` CEGs (CBitmapMuzzleFlame, texture `wakegrey`) that ship scripts
+    emit every few frames (`emit-sfx 1024+1`), and the Wade Effects gadget for wading units: synced, game content, no
+    switch. But the engine loads projectile textures by path raw-first (`CBitmap::Load` → `CFileHandler`, default
+    `SPRING_VFS_RAW_FIRST`): `Installer.writeNoWakes` writes a transparent 8x8 TGA of our own to
+    `files/bar/bitmaps/projectiletextures/wakegrey.tga` and the wakes are invisible (drawing only: sync and online
+    unaffected; the particles are still made and drawn, so no fps to gain). Seen on the laptop:
+    `tools/ui-screenshot.ps1 -Screen cover -Scale 0.6 -Ships [-NoWakes]` (cheats, six armpship moving east).
+  - **Lobby for fingers** (`LuaMenu/Widgets/bardroid_lobby_touch.lua`, Chobby loads local widgets with its
+    `["Chili lobby"].loadLocalWidgets` in `IGL_data.lua`, which `launch-bar.sh` sets): ahead of Chili's input widget it
+    holds back a press on a list: a drag (14 px) scrolls the list with the finger and glides after a flick, a tap is
+    replayed to Chili on release; a tap on a server row (Chobby's `battleButton`, tooltip `battle_tooltip_<id>`) shows
+    Chobby's own server tooltip (`WG.TooltipHandler.TooltipOverride`) and a bar Close / Previous / Next / Join; a second
+    tap on the same row joins (its OnClick). Sliders, text boxes and scroll bars go to Chili as before.
+    `tools/lobby-touch-test.ps1` (real lobby, no login: a fake list of servers and plain rows) is in laptop-tests.
+    Chili hands out controls wrapped: compare what they show, not the tables.
+  - **The unit info panel's text** (bottom left; "too large and jumbled") is BAR's Info widget: its text size comes from
+    the interface scale (2.0 cover / 1.3 inner) but the panel is made narrower on wide screens, and the text column
+    starts 18% in while the unit picture is 4.4 text heights wide: at these scales the stats run under the picture and
+    off the bottom. No setting or WG API for it; options: a lower interface scale, our own info panel, an upstream
+    report (Kailil's call).
 - `[bardroid-perf]` counts drawn frames now (the world pass), not Update calls, which go on while nothing is drawn;
   `[perf]` says when the game screen is hidden. `widget_order` only writes into BYAR.lua's top-level order table and
   reports a miss if an order did not land.

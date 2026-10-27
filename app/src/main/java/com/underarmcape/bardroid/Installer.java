@@ -247,6 +247,24 @@ public final class Installer {
         return false;
     }
 
+    /**
+     * No ship wakes (Kailil, 2026-10-27: "the sea wave trails behind ships is hideous on the lowest graphics settings"):
+     * BAR's wake effects (waterwake-* CEGs from the ship scripts, and units wading) all draw the "wakegrey" particle
+     * texture, which the engine loads by path with the write dir before the game archive (CBitmap::Load, VFS raw
+     * first). A transparent 8x8 image of our own (not BAR content) at that path leaves the wakes invisible. Drawing
+     * only: the simulation and online games are unaffected.
+     */
+    private void writeNoWakes() throws IOException {
+        File f = new File(p.bar, "bitmaps/projectiletextures/wakegrey.tga");
+        //noinspection ResultOfMethodCallIgnored
+        f.getParentFile().mkdirs();
+        byte[] tga = new byte[18 + 8 * 8 * 4];   // uncompressed 32-bit TGA, every pixel transparent black
+        tga[2] = 2;                               // true colour
+        tga[12] = 8; tga[14] = 8;                 // 8 x 8
+        tga[16] = 32; tga[17] = 0x28;             // 32 bits, 8 alpha bits, top-left origin
+        try (OutputStream o = new FileOutputStream(f)) { o.write(tga); }
+    }
+
     /** springsettings.cfg, the AI stub, start script. Re-run whenever settings change. */
     public void writeGameFiles() throws IOException {
         File assets = new File(p.filesDir, "assets-bardroid");
@@ -270,6 +288,14 @@ public final class Installer {
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
+        // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
+        // its "local widgets" setting, which launch-bar.sh switches on)
+        File menuWidgets = new File(p.bar, "LuaMenu/Widgets");
+        //noinspection ResultOfMethodCallIgnored
+        menuWidgets.mkdirs();
+        try (InputStream in = new FileInputStream(new File(assets, "bardroid_lobby_touch.lua"));
+             OutputStream o = new FileOutputStream(new File(menuWidgets, "bardroid_lobby_touch.lua"))) { copy(in, o); }
+        writeNoWakes();
         // Widgets of the removed touch-only mode (Kailil, 2026-10-25): gone from earlier installs too.
         for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"})
             //noinspection ResultOfMethodCallIgnored

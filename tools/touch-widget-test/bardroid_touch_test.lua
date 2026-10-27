@@ -38,7 +38,8 @@ end
 local cases
 function widget:Update()
 	frames = frames + 1
-	if Spring.GetGameFrame() < 60 or frames < waitUntil then
+	-- (from 5 s of game: BAR's own camera move to the start position came after the first cases on a fast laptop)
+	if Spring.GetGameFrame() < 150 or frames < waitUntil then
 		return
 	end
 	step = step + 1

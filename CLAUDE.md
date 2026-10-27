@@ -48,7 +48,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (smoothed camera, continuous pinch zoom, BAR's
   interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers, the catch-up mode,
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
-  wires them up. BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
+  wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
+  `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first
+  (`tools/lobby-touch-test.ps1`). BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
   in through `launch-bar.sh` instead. `tools/touch-widget-test.ps1` runs the widget in a real skirmish on the laptop
   (~1.5 min): pinch, twist, tilt and drag on the camera, and the map/interface answers; run it after touching either.
 - `termux-x11/` — upstream checkout (`tools/fetch-termux-x11.*`) with `patches/0*.patch`: 0001 CmdEntryPoint loads
@@ -80,6 +82,7 @@ powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
+powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second

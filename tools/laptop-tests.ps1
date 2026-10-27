@@ -4,6 +4,7 @@
 #   settings-merge-test  SettingsMerge.java (springsettings.cfg at every start)
 #   updater-test         Updater.launchEnded (keep or roll back a BAR update)
 #   lobby-bridge-test    LobbyBridge.java against the real lobby
+#   lobby-touch-test     bardroid_lobby_touch.lua in the real lobby (finger scrolling, server details first)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
@@ -25,6 +26,7 @@ Run "downloader" "downloader-test.ps1" "ALL PASS"
 Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
 Run "updater rollback" "updater-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
+Run "lobby touch" "lobby-touch-test.ps1" "\[lobbytouch\] done: ALL PASS"
 Run "touch widget, BAR" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS"
 if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.lua")) {
   Run "touch widget, controller game" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" @("-GamepadGame")

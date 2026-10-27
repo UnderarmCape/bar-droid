@@ -122,6 +122,14 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ]; then
       sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tgameConfigName = \"$LOBBY_GAME\",/" "$igl"
     fi
     grep -q "gameConfigName = \"$LOBBY_GAME\"" "$igl" || layer_miss "singleplayer game: gameConfigName not set in LuaMenu/Config/IGL_data.lua"
+    # the lobby loads the app's LuaMenu/Widgets/bardroid_lobby_touch.lua (finger scrolling, server details first) only
+    # with its developer setting "load local widgets"
+    if grep -q 'loadLocalWidgets = ' "$igl"; then
+      sed -i 's/loadLocalWidgets = [a-z]*/loadLocalWidgets = true/' "$igl"
+    else
+      sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tloadLocalWidgets = true,/" "$igl"
+    fi
+    grep -q 'loadLocalWidgets = true' "$igl" || layer_miss "lobby touch: loadLocalWidgets not set in LuaMenu/Config/IGL_data.lua"
   fi
   log "singleplayer game: $LOBBY_GAME"
 fi

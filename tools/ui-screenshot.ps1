@@ -14,6 +14,8 @@ param(
   [string]$Name = "",     # added to the screenshot's file name
   [switch]$Chat,          # chat lines before the screenshot
   [switch]$BarDroidChat,  # with the app's chat display (bardroid_chat.lua)
+  [switch]$Ships,         # ships moving on the water, the camera on their wakes
+  [switch]$NoWakes,       # the app's transparent wake texture (Installer.writeNoWakes)
   [string]$PlayerName = "Phone",
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
   [string]$Engine = "",
@@ -42,6 +44,12 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
   Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  Remove-Item -Recurse -Force "$Data\bitmaps" -ErrorAction SilentlyContinue
+  if ($NoWakes) {   # as Installer.writeNoWakes: an 8x8 transparent 32-bit TGA
+    New-Item -ItemType Directory -Force -Path "$Data\bitmaps\projectiletextures" | Out-Null
+    $tga = New-Object byte[] (18 + 256); $tga[2] = 2; $tga[12] = 8; $tga[14] = 8; $tga[16] = 32; $tga[17] = 0x28
+    [IO.File]::WriteAllBytes("$Data\bitmaps\projectiletextures\wakegrey.tga", $tga)
+  }
   if ($BarDroidChat) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force }
   # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
@@ -53,7 +61,7 @@ try {
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })" |
+  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })`nbardroid_shot_ships = $(if ($Ships) { 1 } else { 0 })`nWater = 0`nAdvMapShading = 0" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
