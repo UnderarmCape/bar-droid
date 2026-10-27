@@ -228,9 +228,13 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    the lobby still asks to log in again (its saved login was in place on 2026-10-27). New on 2026-10-27: the lobby's
    Skirmish screen and Replays tab, the server bar after unfolding, joining a server shows its room (not Chat: the
    lobby's Do Not Disturb, launch-bar.sh), a game started folded then unfolded keeps its proportions (launcher.log:
-   `GR::UpdateScreenMatrices` with ssx/ssy equal to vsx/vsy and vpy=0 after the fold), and SGSR upscaling: does the
-   compare label show "ON"/"OFF" (not "not supported"), is ON better? Then "Compare upscaling" off by default
-   (`Prefs.upscaleCompare`), and SGSR on or off by default as Kailil decides.
+   `GR::UpdateScreenMatrices` with ssx/ssy equal to vsx/vsy and vpy=0 after the fold), and SGSR upscaling (on;
+   the comparison off since Kailil's look at it). **Open: a GPU hang on joining** (2026-10-27 12:08 and 12:12, the
+   same online 8v8 on All That Glitters v2.2.3, the first games with the SGSR / screen-size build): lorie's display
+   fences time out ("GPU fence wasn't signalled", tag gles-renderer, debug level: `adb logcat -s gles-renderer:D`),
+   then the engine's Mesa gets EDEADLK on every submit (KGSL invalidated the engine's context: its work hung the GPU)
+   and the engine freezes for good. SGSR built and drew (logcat "Xlorie: SGSR 1 upscaling on OpenGL ES 3.2"), lorie's
+   context survived. Map or build: a game on another map tells.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per

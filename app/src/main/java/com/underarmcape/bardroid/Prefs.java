@@ -75,9 +75,10 @@ public final class Prefs {
     public static boolean upscale = true;
     /**
      * SGSR on and off every 3 s with a label saying which, to judge it (Kailil, 2026-10-27: "Can it toggle on and off
-     * every 3 seconds so I can see"). On until Kailil has compared; then off by default (HANDOFF "Next steps").
+     * every 3 seconds so I can see"; then "Turn off the compare and just leave the sgsr on"). Saved as
+     * "upscaleCompareOn": the first key held the comparison's first default (on).
      */
-    public static boolean upscaleCompare = true;
+    public static boolean upscaleCompare = false;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -124,7 +125,7 @@ public final class Prefs {
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
         lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
         upscale = s.getBoolean("upscale", upscale);
-        upscaleCompare = s.getBoolean("upscaleCompare", upscaleCompare);
+        upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -152,7 +153,8 @@ public final class Prefs {
                 .remove("lobbyBridge")   // the old default (off), see lobbyBridge
                 .putBoolean("lobbyBridgeOn", lobbyBridge)
                 .putBoolean("upscale", upscale)
-                .putBoolean("upscaleCompare", upscaleCompare)
+                .remove("upscaleCompare")   // the comparison's first default (on), see upscaleCompare
+                .putBoolean("upscaleCompareOn", upscaleCompare)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();
