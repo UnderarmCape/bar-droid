@@ -60,12 +60,27 @@ public class LauncherActivity extends AppCompatActivity {
         save.setOnClickListener(v -> saveSettings());
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
+        findViewById(R.id.btnBench).setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "bench"));
+
         loadSettingsIntoUi();
         deviceView.setText(deviceSummary());
         logView.setText(Log.dump());
+        startFromIntent(getIntent());
 
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
+    }
+
+    @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); startFromIntent(intent); }
+
+    /**
+     * "start bench" in the intent starts BAR's benchmark scenario unattended (tools/phone-bench.ps1:
+     * adb shell am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench).
+     */
+    private void startFromIntent(Intent intent) {
+        if (intent == null || !"bench".equals(intent.getStringExtra("start"))) return;
+        intent.removeExtra("start");   // (not again when the screen is recreated)
+        GameService.start(this, GameService.ACTION_PLAY, "bench");
     }
 
     @Override protected void onStart() { super.onStart(); Log.addListener(logListener); handler.post(ticker); }

@@ -138,7 +138,8 @@ public class GameService extends Service {
         boolean showLauncher = true;
         try {
             inst.refreshHostFiles();                        // scripts/assets of this app version
-            if (Prefs.gamepadGame && !inst.gamepadReady() && ("lobby".equals(mode) || "skirmish".equals(mode))) {
+            boolean bench = "bench".equals(mode);
+            if (Prefs.gamepadGame && !inst.gamepadReady() && ("lobby".equals(mode) || "skirmish".equals(mode) || bench)) {
                 // New in this app version (or a newer v0.8.5): singleplayer plays BAR's released game until it is in.
                 try { inst.installGamepadGame((step, detail, pct) -> setStatus("controller game: " + detail)); }
                 catch (InterruptedException e) { throw e; }
@@ -147,6 +148,13 @@ public class GameService extends Service {
             Updater up = "lobby".equals(mode) || "skirmish".equals(mode) ? update(Prefs.autoUpdate) : null;
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();
+            // The benchmark (BAR's "Benchmark BAR" scenario, unattended) runs what is installed, no update first, so
+            // runs compare; its map comes once from BAR's servers.
+            if (bench && !new java.io.File(paths.bar, "maps/starwatcher_1.0.sd7").exists()) {
+                setStatus("benchmark: downloading " + Installer.BENCH_MAP);
+                new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
+                        java.util.Arrays.asList("map", Installer.BENCH_MAP, Prefs.engineVersion));
+            }
             setStatus("starting X server");
             xserver.start();
             if (!xserver.waitForSocket(15000)) { setStatus("X server did not start (see log)"); xserver.stop(); return; }
