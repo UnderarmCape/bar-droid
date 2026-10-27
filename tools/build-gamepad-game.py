@@ -48,6 +48,22 @@ MOBILE_LEFT_OUT = (
     "luaui/Widgets/dbg_test_runner.lua",
     "luaui/Tests/",
 )
+# BAR's developer tools, off: BAR loads them only in its developer game (luarules/gadgets.lua: a game version with
+# "$VERSION" sets the isDevMode game rule), which is what the phone plays v0.8.5 as. They watch BAR's files for edits:
+# every 10 s the shader reloader reads all of the engine's shaders in one frame, the widget and gadget reloaders
+# re-read every widget and gadget file when the pointer comes back into the window (each read a trapped system call
+# under proot on the phone); the rest are test helpers. Here each is an empty file, as BAR's own file is outside its
+# developer game (they start with "if not BAR.Utilities.IsDevMode() then return end"). Kailil, 2026-10-26: "we can
+# get rid of the debug stuff"; found in BAR's benchmark on the laptop, 2026-10-27 (tools/profile-benchmark.ps1).
+DEV_TOOLS_OFF = (
+    "luaui/Widgets/dbg_engine_shader_reload.lua",
+    "luaui/Widgets/dbg_widget_auto_reloader.lua",
+    "luaui/Widgets/dbg_test_runner.lua",
+    "luarules/gadgets/dbg_gadget_auto_reloader.lua",
+    "luarules/gadgets/dbg_synced_proxy.lua",
+    "luarules/gadgets/dbg_test_env_helper.lua",
+)
+DEV_TOOL_STUB = b"-- BAR Droid: one of BAR's developer tools, off in the phone's game (tools/build-gamepad-game.py DEV_TOOLS_OFF)\nreturn\n"
 # Copies of BAR artwork in v0.8.5 (luaui/images/controller/stat-icons/LICENSE.md): destination <- BAR's file
 BAR_COPIES = {
     "luaui/images/controller/stat-icons/metal.png": "luaui/images/metal.png",
@@ -103,6 +119,12 @@ def main():
                 doc["settings"]["components"]["hints"]["enabled"] = False
                 data = (json.dumps(doc, indent=2) + "\n").encode()
             put(n, data)
+        for n in DEV_TOOLS_OFF:
+            if n.lower() in [m.lower() for m in names]:
+                sys.exit(f"v0.8.5 changes {n}: not one of BAR's developer tools to leave out any more")
+            if b"IsDevMode()" not in git("show", f"{BASE_COMMIT}:{n}"):
+                sys.exit(f"BAR's {n} is no longer a developer-game-only tool")
+            put(n, DEV_TOOL_STUB)
         put("modinfo.lua", MODINFO.format(commit=commit, base=base_name).encode())
     copies = sorted(BAR_COPIES)
     missing = [c for c in copies if c not in [n.lower() for n in names]]
@@ -126,8 +148,8 @@ def main():
     ] + [f"copy.{i} = {line}" for i, line in enumerate(copy_lines)]
     with open(os.path.join(OUT, "gamepad.properties"), "w", newline="\n") as f:
         f.write("\n".join(props) + "\n")
-    print(f"{len(names) - len(copies)} files from {commit[:10]} on {base_name} ({base_md5}): "
-          f"gamepad.zip {len(zbytes) // 1024} KB")
+    print(f"{len(names) - len(copies)} files from {commit[:10]} on {base_name} ({base_md5}), "
+          f"{len(DEV_TOOLS_OFF)} developer tools off: gamepad.zip {len(zbytes) // 1024} KB")
     if ARGS.unpack:
         unpack(ARGS.unpack, ARGS.bar_data)
 

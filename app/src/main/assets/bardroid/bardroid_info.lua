@@ -451,6 +451,16 @@ local rect = { 0, 0, 0, 0 } -- left, bottom, right, top (BAR's Info panel's plac
 local widthFrac, heightFrac = 0, 0
 local font, bold, pad
 local background
+-- What the panel shows (picture, text, health) recorded once per rebuild and replayed every frame: printed afresh each
+-- frame it cost 4 ms a second with the pointer resting on a unit (laptop, BAR's benchmark, 2026-10-27), for text that
+-- changes four times a second at most (REFRESH).
+local content
+local function dropContent()
+	if content then
+		gl.DeleteList(content)
+		content = nil
+	end
+end
 local stub -- our WG.info
 local standDown, overlay = false, false
 
@@ -467,6 +477,7 @@ local function layout()
 		gl.DeleteList(background)
 		background = nil
 	end
+	dropContent()
 end
 
 -- Lines of text no wider than widthAt(line number) pixels at size; colour codes carried onto the next line.
@@ -631,6 +642,7 @@ local function sameShown(a, b)
 end
 
 local function buildView()
+	dropContent()
 	if not shown or shown.kind == "units" then
 		view, laidOut = nil, nil
 		return
@@ -647,6 +659,7 @@ local function buildView()
 end
 
 local function layoutGrid(types)
+	dropContent()
 	cells = {}
 	local x0, y0, x1, y1 = rect[1] + pad, rect[2] + pad, rect[3] - pad, rect[4] - pad
 	local w, h, n = x1 - x0, y1 - y0, #types
@@ -765,10 +778,11 @@ function widget:DrawScreen()
 	end
 	gl.Color(1, 1, 1, 1)
 	drawBackground()
-	if shown.kind == "units" then
-		drawGrid()
-	elseif laidOut then
-		drawUnitView()
+	if not content and (shown.kind == "units" or laidOut) then
+		content = gl.CreateList(shown.kind == "units" and drawGrid or drawUnitView)
+	end
+	if content then
+		gl.CallList(content)
 	end
 	gl.Color(1, 1, 1, 1)
 end
@@ -914,4 +928,5 @@ function widget:Shutdown()
 	if background then
 		gl.DeleteList(background)
 	end
+	dropContent()
 end

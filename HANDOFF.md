@@ -38,6 +38,7 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb |
 | virgl GPU server (emulator) | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+| Benchmark | launcher "Benchmark", `tools/phone-bench.ps1`, `tools/profile-benchmark.ps1` | BAR's "Benchmark BAR" scenario unattended on the phone (warmed up, clocks and threads logged, per-run engine settings) and profiled on the laptop (every widget, unsynced gadget and engine timer) |
 | Checks | `tools/laptop-tests.ps1`, `tools/pace-test.ps1` | Every laptop check passes (Lua lint, downloader, settings merge, updater rollback, lobby bridge, lobby touch and the lobby's Skirmish screen with the controller game in the real lobby, the touch, chat and info widgets in a real skirmish and in the controller game) |
 
 ## How the app works (one paragraph)
@@ -245,16 +246,21 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    almost everything it turns off). Stress test: BAR's Scenarios → "Benchmark BAR" (1000 Grunts against 1000 Pawns,
    4000 frames; "Benchmark Results" in infolog: Sim/Draw/Update ms per frame). Per-stage GPU timing needs
    gl.QueryCounter/GetQueryDelta, which BAR's GPU Profiler widget expects but no Recoil has yet (master 2026-10-23
-   neither). Next lever: launcher "Game resolution" 100 / 85 / 70 % (`Prefs.renderScale`): run the benchmark at
-   100 and 70; much faster at 70 = pixel-bound, keep a lower resolution with SGSR. Map edge: the 2026-10-26 rules
+   neither). **BAR's benchmark on the phone** (`tools/phone-bench.ps1`, unattended, throttled; docs/HISTORY.md
+   "Benchmarks"): a 1,300-unit battle is CPU-bound (70% resolution changed nothing), the main thread at ~1.7 GHz under
+   Samsung's heat caps, the game at x0.74-0.95 of real time; Android Game Mode no help. Done since: BAR's developer
+   tools out of singleplayer, the info panel cached. Still to run on the phone (Kailil's say when): the widget and
+   gadget profilers (`-Profile widgets|gadgets`), `WorkerThreadCount` 2 vs 4 (`-Settings`), and a check of the
+   singleplayer game without the developer tools. Map edge: the 2026-10-26 rules
    (taps off the map clicking nothing, drags anchored mid-screen) removed at Kailil's word ("we will figure out how to
    deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
    (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
    versions (like the info panel); designed with Kailil first, with touch placement.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
-   status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per
-   frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
+   status); more gameplay-information widgets off (Reclaim Field Highlight: the costliest widget in big battles,
+   18-21 ms/s on the laptop and half of all Lua garbage, shown only with a reclaimer selected; Defense Range GL4,
+   Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
    hardening").
 3. **The lobby without BAR's launcher.** Chobby talks to BAR's PC launcher through `WG.Connector`

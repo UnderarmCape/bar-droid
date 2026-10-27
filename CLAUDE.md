@@ -94,11 +94,14 @@ powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1              
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
-powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets]
+powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
-            # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): waits for a cool phone, then
-            # Sim/Draw/Update ms per frame + clocks every 5 s (tools/phone-clocks.sh) -> build\phone-bench.csv; one run at
-            # a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
+            # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the
+            # throttled state a late game plays in (Kailil: measure hot, back to back), then Sim/Draw/Update ms per frame,
+            # game speed, clocks every 5 s (tools/phone-clocks.sh) and the busiest threads -> build\phone-bench.csv; one
+            # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
+powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"]
+            # the same scenario on the laptop as the phone runs it, every widget, unsynced gadget and engine timer logged
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat && <command>"` (PowerShell tools: dot-source
 `tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand

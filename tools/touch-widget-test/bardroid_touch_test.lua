@@ -37,6 +37,7 @@ local function expect(case, want)
 end
 
 local cases
+local repeats = 0
 function widget:Update()
 	frames = frames + 1
 	-- (from 5 s of game: BAR's own camera move to the start position came after the first cases on a fast laptop)
@@ -47,9 +48,28 @@ function widget:Update()
 	local c = cases[step]
 	if c then
 		local seconds = c()
+		if seconds == false and repeats < 30 then -- not ready yet: the same case again 20 frames later
+			step, repeats = step - 1, repeats + 1
+		else
+			repeats = 0
+		end
 		waitUntil = frames + 20
 		waitClock = type(seconds) == "number" and os.clock() + seconds or 0
 	end
+end
+
+-- A case that waits (up to ~30 x 20 frames) until nothing else moves the camera: on a slow run BAR's own move to the
+-- start position still came during the drag case (the map point 528 elmos off, 2026-10-27).
+local settleCam
+local function settle()
+	local cs = Spring.GetCameraState()
+	local last = settleCam
+	settleCam = cs
+	if not (last and math.abs(cs.px - last.px) < 0.5 and math.abs(cs.pz - last.pz) < 0.5
+		and math.abs((cs.dist or 0) - (last.dist or 0)) < 0.5 and math.abs((cs.ry or 0) - (last.ry or 0)) < 0.001) then
+		return false
+	end
+	settleCam = nil
 end
 
 -- The app's side of the touch log: lines appended to LuaUI/Config/bardroid_touch.txt (X pixels, top-left origin).
@@ -108,6 +128,7 @@ cases = {
 		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 2.6, 0
 		Spring.SetCameraState(cs, 0)
 	end,
+	settle,
 	-- the touch camera (bardroid_touch.lua applyTouch), smoothed over ~0.05 s: 20 frames later it has arrived
 	function()
 		before = Spring.GetCameraState()
@@ -127,6 +148,7 @@ cases = {
 		touch("tilt -0.0500")
 	end,
 	function() near("tilt -0.05 of the screen", Spring.GetCameraState().rx - before.rx, -0.05 * TILT_RANGE, 0.01) end,
+	settle,
 	function()
 		groundBefore = groundAt(cx, cy)
 		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, vsy - cy, cx - 100, vsy - cy))
@@ -151,6 +173,7 @@ cases = {
 			Spring.SetCameraState(cs, 0)
 		end
 	end,
+	settle,
 	function()
 		local row = math.floor(vsy * 0.3) -- X pixels from the top: past the edge, below the horizon
 		local _, dy = Spring.GetPixelDir(cx, vsy - row)
