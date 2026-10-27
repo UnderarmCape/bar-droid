@@ -15,7 +15,10 @@ function widget:GetInfo()
 		desc = "Finger scrolling in the lobby's lists; server details before joining",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
-		layer = -100000, -- before Chili's input (api_chili, -1000)
+		-- before Chili's input (api_chili: an API widget, layer -1000). The engine's LuaHandler sorts every API widget
+		-- ahead of the others whatever their layer: without api, Chili takes every press and nothing scrolls.
+		api = true,
+		layer = -100000,
 		enabled = true,
 	}
 end

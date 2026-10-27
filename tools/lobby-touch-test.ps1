@@ -22,8 +22,10 @@ $links = foreach ($d in "packages", "pool", "rapid") {
   $link
 }
 try {
-  # as launch-bar.sh leaves it: the lobby loads local widgets
-  'return { ["Chili lobby"] = { loadLocalWidgets = true, }, }' | Set-Content "$Data\LuaMenu\Config\IGL_data.lua" -Encoding ascii
+  # as launch-bar.sh leaves it: the lobby loads local widgets, interface scale 120% at every window size
+  $scales = (0..5 | ForEach-Object { $x = $_; 0..11 | ForEach-Object { "[`"${x}x$_`"] = 1.2," } }) -join " "
+  "return { [`"Chili lobby`"] = { loadLocalWidgets = true, panel_layout = 3, uiScalesForScreenSizes = { $scales }, }, }" |
+    Set-Content "$Data\LuaMenu\Config\IGL_data.lua" -Encoding ascii
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_lobby_touch.lua") "$Data\LuaMenu\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua") "$Data\LuaMenu\Widgets\" -Force
   '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "byar"}' |

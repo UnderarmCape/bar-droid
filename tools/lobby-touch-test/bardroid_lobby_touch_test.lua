@@ -1,15 +1,29 @@
 -- LuaMenu widget for tools/lobby-touch-test.ps1: a test list in the real lobby (fake server rows as Chobby's battle
--- list makes them, and plain rows), driven through bardroid_lobby_touch.lua the way a finger drives it.
+-- list makes them, and plain rows), driven the way a finger drives it: through the engine's LuaHandler (the
+-- callins the engine calls for the mouse), so every widget sees the input in the lobby's real order.
 -- Logs "[lobbytouch] PASS|FAIL <case>" and "[lobbytouch] done".
 function widget:GetInfo()
 	return { name = "BAR Droid lobby touch test", desc = "Checks bardroid_lobby_touch.lua", author = "BAR Droid",
-		layer = 0, enabled = true }
+		layer = 0, enabled = true, handler = true } -- handler: the real LuaHandler (its mouse callins)
+end
+
+-- The engine's mouse callins, as the engine calls them for a finger (RtsTouch: down = press, drag = move, up =
+-- release). Not the lobby touch widget's own functions: on the phone Chili took every press first (2026-10-27).
+local finger = {}
+function finger.press(x, y)
+	return widgetHandler.callInHookFuncs.MousePress(x, y, 1)
+end
+function finger.move(x, y)
+	return widgetHandler.callInHookFuncs.MouseMove(x, y, 0, 0, 1)
+end
+function finger.release(x, y)
+	return widgetHandler.callInHookFuncs.MouseRelease(x, y, 1)
 end
 
 local t, step, wait = 0, 0, 0
 local fails = 0
 local window, scroll, rows, clicked = nil, nil, {}, {}
-local startScroll
+local startScroll, dragScroll
 
 local function log(s)
 	Spring.Echo("[lobbytouch] " .. s)
@@ -77,32 +91,30 @@ cases = {
 		end
 		startScroll = scroll.scrollPosY
 		local x, y = mouseAt(rows[3])
-		L.press(x, y)
+		check("a press on a list goes to the lobby touch widget, not Chili", finger.press(x, y) == true
+			and widgetHandler.mouseOwner ~= nil and widgetHandler.mouseOwner.GetInfo().name == "BAR Droid lobby touch",
+			widgetHandler.mouseOwner and widgetHandler.mouseOwner.GetInfo().name or "no owner")
 		for k = 1, 6 do
-			L.move(x, y + k * 20) -- the finger goes up the screen
+			finger.move(x, y + k * 20) -- the finger goes up the screen
 		end
-		L.release(x, y + 120)
+		dragScroll = scroll.scrollPosY -- (before the release: a fling may follow)
+		finger.release(x, y + 120)
 	end,
 	function()
-		scroll:SetScrollPos(nil, 120, false, true) -- (where the drag left it: a test's moves come all at once, a fling followed)
-	end,
-	function()
-		check("drag up scrolls the list down", scroll.scrollPosY > startScroll + 50,
-			string.format("scroll %d -> %d", startScroll, scroll.scrollPosY))
+		check("drag up scrolls the list down", dragScroll > startScroll + 50,
+			string.format("scroll %d -> %d", startScroll, dragScroll))
 		check("a drag clicks nothing", not clicked[3])
 	end,
 	function()
-		local L = WG.BarDroidLobbyTouch
 		local x, y = mouseAt(rows[12])
-		L.press(x, y)
-		L.release(x, y)
+		finger.press(x, y)
+		finger.release(x, y)
 	end,
 	function() check("a tap on a plain row clicks it", clicked[12] == 1, tostring(clicked[12])) end,
 	function()
 		scroll:SetScrollPos(nil, 0, false, true)
 	end,
 	function()
-		local L = WG.BarDroidLobbyTouch
 		local x, y = mouseAt(rows[2])
 		local s = WG.uiScale or 1
 		local hit = WG.Chili.Screen0:HitTest(x / s, select(2, Spring.GetViewSizes()) - y / s)
@@ -113,8 +125,8 @@ cases = {
 		end
 		log("     hit at server 2: " .. table.concat(chain, " < ") .. string.format(" (uiScale %s, scroll %d)", tostring(WG.uiScale), scroll.scrollPosY))
 
-		L.press(x, y)
-		L.release(x, y)
+		finger.press(x, y)
+		finger.release(x, y)
 	end,
 	function()
 		local L = WG.BarDroidLobbyTouch
@@ -128,15 +140,15 @@ cases = {
 	function()
 		check("Next: the server below", same(WG.BarDroidLobbyTouch.popup(), rows[3]))
 		local x, y = mouseAt(rows[3])
-		WG.BarDroidLobbyTouch.press(x, y)
-		WG.BarDroidLobbyTouch.release(x, y)
+		finger.press(x, y)
+		finger.release(x, y)
 	end,
 	function()
 		check("second tap on that server joins it", clicked[3] == 1 and WG.BarDroidLobbyTouch.popup() == nil,
 			tostring(clicked[3]))
 		local x, y = mouseAt(rows[5])
-		WG.BarDroidLobbyTouch.press(x, y)
-		WG.BarDroidLobbyTouch.release(x, y)
+		finger.press(x, y)
+		finger.release(x, y)
 	end,
 	function()
 		local close = barButton("Close")
