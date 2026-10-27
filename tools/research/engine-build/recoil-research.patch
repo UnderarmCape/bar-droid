@@ -1,0 +1,60 @@
+diff --git a/rts/Sim/MoveTypes/GroundMoveType.h b/rts/Sim/MoveTypes/GroundMoveType.h
+index 3f10be4..ea68fb0 100644
+--- a/rts/Sim/MoveTypes/GroundMoveType.h
++++ b/rts/Sim/MoveTypes/GroundMoveType.h
+@@ -130,10 +130,16 @@ public:
+ 	void SyncWaypoints() override {
+ 		// Synced vars trigger a checksum update on change, which is expensive so we should check
+ 		// that there has been a change before triggering an update to the checksum.
++#if defined(SYNCDEBUG) || defined(SYNCCHECK)
+ 		if (!currWayPoint.bitExactEquals(earlyCurrWayPoint))
+ 			currWayPoint = earlyCurrWayPoint;
+ 		if (!nextWayPoint.bitExactEquals(earlyNextWayPoint))
+ 			nextWayPoint = earlyNextWayPoint;
++#else
++		// hail-mary research (SYNCCHECK off): plain float3, no checksum to protect
++		currWayPoint = earlyCurrWayPoint;
++		nextWayPoint = earlyNextWayPoint;
++#endif
+ 	}
+ 	unsigned int GetPathId() override { return pathID; }
+ 
+diff --git a/rts/System/Sync/SyncChecker.cpp b/rts/System/Sync/SyncChecker.cpp
+index edb0cb0..4e0c8d5 100644
+--- a/rts/System/Sync/SyncChecker.cpp
++++ b/rts/System/Sync/SyncChecker.cpp
+@@ -27,6 +27,7 @@ void CSyncChecker::debugSyncCheckThreading()
+ 	assert(ThreadPool::GetThreadNum() == 0);
+ }
+ 
++#ifndef HM_NO_SYNC_HASH
+ void CSyncChecker::Sync(uint32_t val)
+ {
+ #ifdef DEBUG_SYNC_MT_CHECK
+@@ -57,6 +58,8 @@ void CSyncChecker::Sync(const void* p, unsigned size)
+ #endif // SYNC_HISTORY
+ }
+ 
++#endif // HM_NO_SYNC_HASH
++
+ #ifdef SYNC_HISTORY
+ 
+ unsigned CSyncChecker::nextHistoryIndex = 0;
+diff --git a/rts/System/Sync/SyncChecker.h b/rts/System/Sync/SyncChecker.h
+index 3fb996c..69a9926 100644
+--- a/rts/System/Sync/SyncChecker.h
++++ b/rts/System/Sync/SyncChecker.h
+@@ -35,8 +35,13 @@ class CSyncChecker {
+ 		static void SetPrevChecksum(unsigned v) { g_prevChecksum = v; }
+ 		static void NewFrame();
+ 		static void debugSyncCheckThreading();
++	#ifdef HM_NO_SYNC_HASH // hail-mary research: no checksum work at all (desyncs go undetected)
++		static void Sync(uint32_t) {}
++		static void Sync(const void*, unsigned) {}
++	#else
+ 		static void Sync(uint32_t val);
+ 		static void Sync(const void* p, unsigned size);
++	#endif
+ 		#ifdef SYNC_HISTORY
+ 		static std::tuple<unsigned, unsigned, unsigned*> GetFrameHistory(unsigned rewindFrames);
+ 		static std::pair<unsigned, unsigned*> GetHistory() { return std::make_pair(nextHistoryIndex, logs.data()); };
