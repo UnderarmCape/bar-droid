@@ -32,6 +32,7 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | Unit info panel | `assets/bardroid/bardroid_info.lua` | Replaces BAR's Info widget (its text ran under the picture at phone scales): BAR's numbers, the largest text that fits, a type grid with counts for several units (tap keeps a type, long press drops it), BAR's `WG.info` API |
 | Catch-up | `bardroid_touch.lua`, `GameActivity`, `libbardroid_pace.so` | Joining a running game: a black screen with "Catching up 12:30 of 41:10 x2.5", the engine not drawing (a 17-minute game caught up in 164 s); a game too big to catch up draws again after a minute |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera; the pad is a mouse in the lobby (see "Gamepad" below) |
+| Upscaling (SGSR) | patch 0007, `assets/sgsr/`, `GameActivity` | The X screen (smaller than the display) is enlarged with Qualcomm's SGSR 1 instead of plain bilinear filtering; plain if the GPU refuses the shader; "Compare upscaling" switches it every 3 s under a label (on until Kailil has compared, then off by default) |
 | Lobby bridge (on) | `LobbyBridge.java` | Stands in for BAR's PC launcher behind the lobby (web links, downloads, replay info); on by default since 2026-10-27 (without it the Replays tab hung on "Loading"); checked against the real lobby on the laptop, first phone check pending (Next steps) |
 | Updates | `Updater`, [docs/UPDATES.md](docs/UPDATES.md) | Every start updates engine, game and lobby like BAR's PC launcher and rolls back a set that fails on its first start |
 | Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb |
@@ -224,7 +225,12 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    (shields and the radar/jammer placement previews should look as before). Not reported back yet from earlier
    builds: lock the phone mid-game and unlock (picture and sound back at once), drag the top bar's and the settings'
    sliders with a finger, BAR settings (e.g. volume) kept after a restart, the unfolded resolution cap. And whether
-   the lobby still asks to log in again (its saved login was in place on 2026-10-27).
+   the lobby still asks to log in again (its saved login was in place on 2026-10-27). New on 2026-10-27: the lobby's
+   Skirmish screen and Replays tab, the server bar after unfolding, joining a server shows its room (not Chat: the
+   lobby's Do Not Disturb, launch-bar.sh), a game started folded then unfolded keeps its proportions (launcher.log:
+   `GR::UpdateScreenMatrices` with ssx/ssy equal to vsx/vsy and vpy=0 after the fold), and SGSR upscaling: does the
+   compare label show "ON"/"OFF" (not "not supported"), is ON better? Then "Compare upscaling" off by default
+   (`Prefs.upscaleCompare`), and SGSR on or off by default as Kailil decides.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per

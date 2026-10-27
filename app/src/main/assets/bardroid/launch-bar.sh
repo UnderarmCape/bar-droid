@@ -279,6 +279,17 @@ case "$MODE" in
       else
         layer_miss "lobby panels and scale: no [\"Chili lobby\"] settings in LuaMenu/Config/IGL_data.lua"
       fi
+      # Once: Chobby's "Do Not Disturb" on. A message naming the player (the host greets everyone who joins: "Hi
+      # UnderarmCape! Current battle type is ...") or a private one switched the one-panel lobby to Chat, away from the
+      # battle room just joined (Kailil, 2026-10-27). The chat tab still counts unread messages; later changes in the
+      # lobby's Settings stay the player's.
+      if [ ! -f "$BAR/.bardroid-lobby-dnd" ]; then
+        if grep -q 'doNotDisturb = ' "$igl"; then
+          sed -i 's/doNotDisturb = false/doNotDisturb = true/' "$igl" && touch "$BAR/.bardroid-lobby-dnd" && log "lobby: do not disturb"
+        else
+          layer_miss "lobby do not disturb: no doNotDisturb in LuaMenu/Config/IGL_data.lua"
+        fi
+      fi
     fi
     # Chobby's "Resolution limiter" shrinks the window to Spring.GetScreenGeometry() on every resize, but SDL keeps the
     # screen size it saw at startup: after a fold or unfold it fought the X server (which keeps the window at the screen

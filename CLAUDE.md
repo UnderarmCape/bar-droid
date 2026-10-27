@@ -32,7 +32,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), and SDL2 HIDDEN/SHOWN window
   events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing) or a joined game is
   being caught up far behind (`/tmp/bardroid-catchup`, from `bardroid_touch.lua`'s `bardroid_catchup.txt` via
-  `GameActivity`); `tools/pace-test.ps1`).
+  `GameActivity`), and SDL2's display size answers that follow fold/unfold (the game window's size: SDL keeps the
+  startup screen, the engine's screen matrices went wrong after a fold); `tools/pace-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
@@ -58,7 +59,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on
   loopback (the Termux:X11 app, if installed, knocks on 7892 every 250 ms); 0005 `LorieView.setCursorVisible`
   (`RtsTouch` hides the pointer while two or more fingers are down); 0006 `LorieView.maxScaledViewPixels` (unfolded,
-  the X screen keeps the cover screen's pixel count: `GameActivity.MAX_SCREEN_PIXELS`).
+  the X screen keeps the cover screen's pixel count: `GameActivity.MAX_SCREEN_PIXELS`); 0007 `LorieView.setUpscale`:
+  the X screen enlarged onto the display through Qualcomm's SGSR 1 (`assets/sgsr`, BSD-3-Clause; `GameActivity`,
+  settings "Sharper upscaling" and "Compare upscaling"; plain filtering if the GPU refuses the shader).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).

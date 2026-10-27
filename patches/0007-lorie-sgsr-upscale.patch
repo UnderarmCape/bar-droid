@@ -1,0 +1,208 @@
+diff --git a/lorie/src/main/cpp/lorie/activity.cpp b/lorie/src/main/cpp/lorie/activity.cpp
+index d9a4eeb..5dd1b20 100644
+--- a/lorie/src/main/cpp/lorie/activity.cpp
++++ b/lorie/src/main/cpp/lorie/activity.cpp
+@@ -467,6 +467,19 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, __unused void *reserved) {
+                 if (!r || r->destroyed) return;
+                 r->renderer.setFiltering(filtering);
+             }},
++            {"setUpscale", "(JILjava/lang/String;)V", (void *) +[](JNIEnv* env, __unused jobject self, jlong ptr, jint mode, jstring shader) {
++                auto* r = (LorieViewResources*) ptr;
++                if (!r || r->destroyed) return;
++                const char* source = shader ? env->GetStringUTFChars(shader, nullptr) : nullptr;
++                r->renderer.setUpscale(mode, source);
++                if (source)
++                    env->ReleaseStringUTFChars(shader, source);
++            }},
++            {"getUpscaleState", "(J)I", (void *) +[](__unused JNIEnv* env, __unused jobject self, jlong ptr) -> jint {
++                auto* r = (LorieViewResources*) ptr;
++                if (!r || r->destroyed) return 0;
++                return r->renderer.sgsrState;
++            }},
+             {"connect", "(JI)V", (void *) +[](__unused JNIEnv* env, __unused jclass clazz, jlong ptr, jint fd) {
+                 auto* r = (LorieViewResources*) ptr;
+                 if (!r) return;
+diff --git a/lorie/src/main/cpp/lorie/lorie.h b/lorie/src/main/cpp/lorie/lorie.h
+index 7b3a0ff..57347cb 100644
+--- a/lorie/src/main/cpp/lorie/lorie.h
++++ b/lorie/src/main/cpp/lorie/lorie.h
+@@ -326,6 +326,14 @@ struct Renderer {
+     GLuint g_texture_program = 0, gv_pos = 0, gv_coords = 0;
+     GLuint g_texture_program_bgra = 0, gv_pos_bgra = 0, gv_coords_bgra = 0;
+ 
++    // BAR Droid: the X screen drawn onto a bigger display through Qualcomm's SGSR 1 (edge-adaptive upscaling and
++    // sharpening in one pass) instead of plain filtering. The embedding app hands over the shader source.
++    volatile int upscale = 0;              // 0: plain filtering, 1: SGSR
++    char* volatile sgsrSource = nullptr;   // SGSR 1's fragment shader (GLSL ES), taken once
++    volatile int sgsrState = 0;            // 0: not built yet, 1: built, -1: this GPU refused it (plain filtering)
++    GLuint sgsrProgram = 0, sgsrPos = 0, sgsrCoords = 0;
++    GLint sgsrViewportInfo = -1, sgsrTexture = -1;
++
+     EGLint configAttribs[13] = {
+         EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+         EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+@@ -360,6 +368,8 @@ struct Renderer {
+     void setZoomAnchor(float sourceX, float sourceY, float fracX, float fracY);
+     void clearZoomAnchor();
+     void setFollowCursorPan(bool enabled);
++    void setUpscale(int mode, const char* fragmentSource);
++    bool drawRootUpscaled(const LorieBuffer_Desc* desc, float u0, float v0, float u1, float v1, uint8_t flip);
+     void releaseWinAndSurface(ANativeWindow** anw, EGLSurface* esfc);
+     void refreshContext();
+     LorieBuffer* findBufferWithRetry(uint64_t id);
+diff --git a/lorie/src/main/cpp/lorie/renderer.cpp b/lorie/src/main/cpp/lorie/renderer.cpp
+index 7b5b5ff..5be6d18 100644
+--- a/lorie/src/main/cpp/lorie/renderer.cpp
++++ b/lorie/src/main/cpp/lorie/renderer.cpp
+@@ -140,6 +140,28 @@ static const char vertexShaderSrc[] =
+ static const char fragmentShaderSrc[] = FRAGMENT_SHADER();
+ static const char fragmentShaderBgraSrc[] = FRAGMENT_SHADER(".bgra");
+ 
++// BAR Droid: the vertex stage for SGSR 1's fragment shader (its input is in_TEXCOORD0 at location 0). GLSL ES 3.10:
++// SGSR's textureGather with a component argument needs it.
++static const char sgsrVertexShaderSrc[] =
++    "#version 310 es\n"
++    "in vec4 position;\n"
++    "in vec2 texCoords;\n"
++    "layout(location=0) out highp vec4 in_TEXCOORD0;\n"
++    "void main(void) {\n"
++    "   in_TEXCOORD0 = vec4(texCoords, 0.0, 0.0);\n"
++    "   gl_Position = position;\n"
++    "}\n";
++#ifndef GL_TEXTURE_SWIZZLE_R
++#define GL_TEXTURE_SWIZZLE_R 0x8E42
++#define GL_TEXTURE_SWIZZLE_B 0x8E44
++#endif
++#ifndef GL_RED
++#define GL_RED 0x1903
++#endif
++#ifndef GL_BLUE
++#define GL_BLUE 0x1905
++#endif
++
+ // Notifies activity.cpp's end of the GUI<->X server socket immediately when a GPU copy batch
+ // finishes, instead of it waiting for the next vblank-tick poll.
+ void Renderer::notifyGpuCopyDone() const {
+@@ -706,6 +728,67 @@ void Renderer::setFollowCursorPan(bool enabled) {
+     withStateLock({ followCursorPan = enabled; });
+ }
+ 
++void Renderer::setUpscale(int mode, const char* fragmentSource) {
++    withStateLock({
++        if (fragmentSource && !sgsrSource)
++            sgsrSource = strdup(fragmentSource);
++        upscale = mode;
++    });
++}
++
++// BAR Droid: the root window through SGSR 1 (the texture bound, the viewport set). Builds the program on first use;
++// false (plain filtering) when there is no shader or this GPU refuses it.
++bool Renderer::drawRootUpscaled(const LorieBuffer_Desc* desc, float u0, float v0, float u1, float v1, uint8_t flip) {
++    if (sgsrState < 0 || !sgsrSource)
++        return false;
++    if (!sgsrState) {
++        log("Xlorie: SGSR 1 upscaling on %s", (const char*) glGetString(GL_VERSION));
++        sgsrProgram = createProgram(sgsrVertexShaderSrc, sgsrSource);
++        if (!sgsrProgram) {
++            log("Xlorie: SGSR 1 unavailable on this GPU: plain filtering");
++            sgsrState = -1;
++            return false;
++        }
++        sgsrPos = (GLuint) glGetAttribLocation(sgsrProgram, "position");
++        sgsrCoords = (GLuint) glGetAttribLocation(sgsrProgram, "texCoords");
++        sgsrViewportInfo = glGetUniformLocation(sgsrProgram, "ViewportInfo");
++        sgsrTexture = glGetUniformLocation(sgsrProgram, "ps0");
++        sgsrState = 1;
++    }
++
++    float coords[16] = {
++        -1.f, 1.f, u0, v0,
++        1.f, 1.f, u1, v0,
++        -1.f, -1.f, u0, v1,
++        1.f, -1.f, u1, v1,
++    };
++    // the texture's own size: a CPU-uploaded buffer is as wide as its stride
++    float texW = (float) (desc->type == LORIEBUFFER_FD ? desc->stride : desc->width), texH = (float) desc->height;
++
++    glActiveTexture(GL_TEXTURE0);
++    glUseProgram(sgsrProgram);
++    glUniform4f(sgsrViewportInfo, 1.f / texW, 1.f / texH, texW, texH);
++    glUniform1i(sgsrTexture, 0);
++    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
++    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
++    if (flip) {   // the plain program's .bgra, as the texture's swizzle (SGSR's green luma taps stay green)
++        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_BLUE);
++        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_RED);
++    }
++    glVertexAttribPointer(sgsrPos, 2, GL_FLOAT, GL_FALSE, 16, coords);
++    glVertexAttribPointer(sgsrCoords, 2, GL_FLOAT, GL_FALSE, 16, &coords[2]);
++    glEnableVertexAttribArray(sgsrPos);
++    glEnableVertexAttribArray(sgsrCoords);
++    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4); checkGlError();
++    glDisableVertexAttribArray(sgsrPos);
++    glDisableVertexAttribArray(sgsrCoords);
++    if (flip) {
++        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_R, GL_RED);
++        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_SWIZZLE_B, GL_BLUE);
++    }
++    return true;
++}
++
+ void Renderer::refreshContext() {
+     int width = pendingWin ? ANativeWindow_getWidth(pendingWin) : 0;
+     int height = pendingWin ? ANativeWindow_getHeight(pendingWin) : 0;
+@@ -1052,11 +1135,12 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     LorieBuffer_bindTexture(buffer);
+     if (desc->type == LORIEBUFFER_FD)
+         xfactor = (float) desc->width/(float) desc->stride;
+-    drawRegion(0, -1.f, -1.f, 1.f, 1.f,
+-               sourceLeft / (float) desc->width * xfactor, sourceTop / (float) desc->height,
+-               (sourceLeft + sourceWidth) / (float) desc->width * xfactor,
+-               (sourceTop + sourceHeight) / (float) desc->height,
+-               LorieBuffer_isRgba(buffer));
++    float u0 = sourceLeft / (float) desc->width * xfactor, v0 = sourceTop / (float) desc->height;
++    float u1 = (sourceLeft + sourceWidth) / (float) desc->width * xfactor, v1 = (sourceTop + sourceHeight) / (float) desc->height;
++    // BAR Droid: SGSR 1 while the display shows the X screen bigger than it is
++    if (!(upscale && (float) renderViewportW > sourceWidth * 1.05f
++          && drawRootUpscaled(desc, u0, v0, u1, v1, LorieBuffer_isRgba(buffer))))
++        drawRegion(0, -1.f, -1.f, 1.f, 1.f, u0, v0, u1, v1, LorieBuffer_isRgba(buffer));
+     fence = eglCreateSyncKHR(egl_display, EGL_SYNC_FENCE_KHR, nullptr);
+     glFlush();
+ 
+@@ -1209,6 +1293,10 @@ void Renderer::threadLoop() {
+ 
+     glDeleteProgram(g_texture_program);
+     glDeleteProgram(g_texture_program_bgra);
++    if (sgsrProgram)
++        glDeleteProgram(sgsrProgram);
++    sgsrProgram = 0;
++    sgsrState = 0;   // a new context builds it again
+     glDeleteTextures(1, &cursor.id);
+     eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+     if (sfc != defaultSfc) // defensive; setWindow(nullptr) already reverts this before onDetachedFromWindow runs
+diff --git a/lorie/src/main/java/com/termux/x11/LorieView.java b/lorie/src/main/java/com/termux/x11/LorieView.java
+index cdf3203..7d50632 100644
+--- a/lorie/src/main/java/com/termux/x11/LorieView.java
++++ b/lorie/src/main/java/com/termux/x11/LorieView.java
+@@ -761,6 +761,21 @@ public class LorieView extends SurfaceView implements InputStub {
+     }
+     @FastNative private native void setCursorVisible(long ptr, boolean visible);
+ 
++    /**
++     * Draws the X screen onto a bigger display through Qualcomm's SGSR 1 (mode 1; sgsrShader: its GLSL ES fragment
++     * shader, taken once) or with plain filtering (mode 0).
++     */
++    public void setUpscale(int mode, String sgsrShader) {
++        setUpscale(mNativeContext, mode, sgsrShader);
++    }
++    @FastNative private native void setUpscale(long ptr, int mode, String sgsrShader);
++
++    /** SGSR 1: 0 not used yet, 1 drawing, -1 this GPU refused the shader (plain filtering). */
++    public int getUpscaleState() {
++        return getUpscaleState(mNativeContext);
++    }
++    @FastNative private native int getUpscaleState(long ptr);
++
+     /** The real X11 pointer position - unlike RenderData's copy, always accurate in trackpad mode. */
+     public PointF getRealCursorPosition() {
+         long packed = getCursorPosition(mNativeContext);

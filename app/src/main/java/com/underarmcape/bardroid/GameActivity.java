@@ -59,6 +59,7 @@ public class GameActivity extends MainActivity {
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
         addCatchupView();
+        setUpUpscale();
         prefer60Hz();
         // The refresh rate settles after a mode request or a fold: keep the widget's frame cap in step.
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
@@ -147,11 +148,65 @@ public class GameActivity extends MainActivity {
         setFlag(hiddenFlag(BarApp.get().paths()), false, "game screen shown: the engine draws");
         if (!isInPictureInPictureMode()) setFlag(floatingFlag(BarApp.get().paths()), false, "full screen: 30 fps cap");
         catchupHandler.post(catchupCheck);
+        if (upscaleLabel != null) catchupHandler.post(upscaleCompare);
     }
     @Override protected void onStop() {
         setFlag(hiddenFlag(BarApp.get().paths()), true, "game screen hidden: the engine stops drawing");
         catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
+        catchupHandler.removeCallbacks(upscaleCompare);
         super.onStop();
+    }
+
+    // Upscaling (Kailil, 2026-10-27: "a cheaper anti aliasing or upscale"): the X screen is smaller than the display
+    // (MAX_SCREEN_PIXELS) and lorie enlarged it with plain bilinear filtering. Qualcomm's SGSR 1 (assets/sgsr,
+    // BSD-3-Clause; patch 0007 draws it) enlarges it with sharp edges, in one pass on the GPU. The compare mode switches
+    // it on and off every 3 s under a label saying which.
+    private static final long UPSCALE_COMPARE_MS = 3000;
+    private android.widget.TextView upscaleLabel;
+    private boolean upscaleOn;
+    private final Runnable upscaleCompare = new Runnable() {
+        @Override public void run() {
+            setUpscale(!upscaleOn);
+            catchupHandler.postDelayed(this, UPSCALE_COMPARE_MS);
+        }
+    };
+
+    private void setUpUpscale() {
+        String shader = null;
+        if (Prefs.upscale || Prefs.upscaleCompare) {
+            try (java.io.InputStream in = getAssets().open("sgsr/sgsr1_shader_mobile.frag")) {
+                java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+                byte[] b = new byte[8192];
+                for (int n; (n = in.read(b)) > 0; ) out.write(b, 0, n);
+                shader = out.toString("UTF-8");
+            } catch (java.io.IOException e) { Log.e("display", "SGSR shader: " + e); }
+        }
+        upscaleOn = shader != null && Prefs.upscale;
+        getLorieView().setUpscale(upscaleOn ? 1 : 0, shader);
+        Log.i("display", "upscaling: " + (shader == null ? "plain" : Prefs.upscaleCompare ? "compare SGSR and plain" : upscaleOn ? "SGSR" : "plain"));
+        if (shader == null || !Prefs.upscaleCompare) return;
+        android.widget.TextView v = new android.widget.TextView(this);
+        float dp = getResources().getDisplayMetrics().density;
+        v.setBackgroundColor(0xB0000000);   // small, at the top: touches still reach the game below (not clickable)
+        v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 15);
+        v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        v.setPadding((int) (12 * dp), (int) (4 * dp), (int) (12 * dp), (int) (4 * dp));
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL);
+        lp.topMargin = (int) (48 * dp);
+        addContentView(v, lp);
+        upscaleLabel = v;
+    }
+
+    private void setUpscale(boolean on) {
+        LorieView v = getLorieView();
+        upscaleOn = on;
+        v.setUpscale(on ? 1 : 0, null);
+        if (upscaleLabel == null) return;
+        boolean refused = v.getUpscaleState() < 0;   // (known after the first frame drawn with it)
+        upscaleLabel.setText(refused ? "SGSR upscaling: not supported on this GPU" : on ? "SGSR upscaling ON" : "SGSR upscaling OFF");
+        upscaleLabel.setTextColor(on && !refused ? 0xFF7CFC00 : 0xFFFFFFFF);
     }
 
     // The floating window: the X screen shrinks to it (the engine draws few pixels), and libbardroid_pace.so caps the

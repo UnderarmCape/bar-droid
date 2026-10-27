@@ -30,6 +30,15 @@
  * The same while the game catches up with a running game far behind (/tmp/bardroid-catchup, set by the app from the
  * touch widget's progress file): no drawing, every pass of the engine's loop to the simulation, the GPU cool.
  *
+ * The screen's size follows the phone folding and unfolding (the X server resizes its screen and the game window with
+ * it), but SDL2 reads a display's desktop mode and bounds once, at startup, and never updates them for a display that
+ * stays connected. The engine takes its screen size from them (GR::UpdateScreenMatrices ssx/ssy, and the largest
+ * window it allows): a game started folded and then unfolded kept the folded 1680x720 "screen" with a 1152x1044
+ * window, its screen-space view offset by the difference (vpy=-324) and stretched (Kailil, 2026-10-27: "The aspect
+ * ratio ... is different" in game). The display queries below answer with the game window's size, which is the screen's
+ * (the window always fills it; there is no window manager), once the window exists. BARDROID_FIT_SCREEN=0 leaves
+ * them alone.
+ *
  * Built by tools/build-pace.py without glibc headers: the few declarations it needs are below, and the symbols
  * resolve against the engine's libc at load time.
  */
@@ -112,17 +121,74 @@ struct sdl2_window_event {
 
 typedef int (*poll_fn)(void *event);
 typedef unsigned (*window_id_fn)(void *window);
+typedef void (*window_size_fn)(void *window, int *w, int *h);
 static poll_fn real_poll;
 static unsigned game_window;      /* the engine's window (SDL id), known after its first swap; 0 = do nothing */
 static long long hidden_checked_ns;
 static int engine_hidden;         /* what the engine was told last */
+static int fit_screen;             /* answer display queries with the window's size (SDL2, BARDROID_FIT_SCREEN) */
+static void *screen_window;       /* the window of the engine's last swap */
+static window_size_fn window_size;
 
 static void learn_window(void *window) {
+    /* SDL_GetWindowWMInfo exists in SDL2 only: SDL3's events and structures look different */
+    if (!dlsym(RTLD_DEFAULT, "SDL_GetWindowWMInfo")) return;
+    const char *f = getenv("BARDROID_FIT_SCREEN");
+    window_size = (window_size_fn) dlsym(RTLD_DEFAULT, "SDL_GetWindowSize");
+    fit_screen = !(f && f[0] == '0') && window_size;
     const char *s = getenv("BARDROID_HIDDEN_PAUSE");
-    /* SDL_GetWindowWMInfo exists in SDL2 only: SDL3's events look different */
-    if ((s && s[0] == '0') || !dlsym(RTLD_DEFAULT, "SDL_GetWindowWMInfo")) return;
+    if (s && s[0] == '0') return;
     window_id_fn id = (window_id_fn) dlsym(RTLD_DEFAULT, "SDL_GetWindowID");
     if (id) game_window = id(window);
+}
+
+/* SDL2's SDL_DisplayMode and SDL_Rect */
+struct sdl2_display_mode { unsigned format; int w, h, refresh_rate; void *driverdata; };
+struct sdl2_rect { int x, y, w, h; };
+typedef int (*display_mode_fn)(int index, struct sdl2_display_mode *mode);
+typedef int (*display_rect_fn)(int index, struct sdl2_rect *rect);
+
+/* the screen as it is now: the game window's size (0 before the engine's first frame) */
+static int screen_size(int *w, int *h) {
+    *w = *h = 0;
+    if (!screen_window) return 0;
+    window_size(screen_window, w, h);
+    return *w > 0 && *h > 0;
+}
+
+static int fit_mode(display_mode_fn real, int index, struct sdl2_display_mode *mode) {
+    int r = real(index, mode), w, h;
+    if (r == 0 && mode && screen_size(&w, &h)) { mode->w = w; mode->h = h; }
+    return r;
+}
+
+static int fit_rect(display_rect_fn real, int index, struct sdl2_rect *rect) {
+    int r = real(index, rect), w, h;
+    if (r == 0 && rect && screen_size(&w, &h)) { rect->x = 0; rect->y = 0; rect->w = w; rect->h = h; }
+    return r;
+}
+
+static display_mode_fn real_desktop_mode, real_current_mode;
+static display_rect_fn real_bounds, real_usable_bounds;
+
+int SDL_GetDesktopDisplayMode(int index, struct sdl2_display_mode *mode) {
+    if (!real_desktop_mode) real_desktop_mode = (display_mode_fn) dlsym(RTLD_NEXT, "SDL_GetDesktopDisplayMode");
+    return fit_mode(real_desktop_mode, index, mode);
+}
+
+int SDL_GetCurrentDisplayMode(int index, struct sdl2_display_mode *mode) {
+    if (!real_current_mode) real_current_mode = (display_mode_fn) dlsym(RTLD_NEXT, "SDL_GetCurrentDisplayMode");
+    return fit_mode(real_current_mode, index, mode);
+}
+
+int SDL_GetDisplayBounds(int index, struct sdl2_rect *rect) {
+    if (!real_bounds) real_bounds = (display_rect_fn) dlsym(RTLD_NEXT, "SDL_GetDisplayBounds");
+    return fit_rect(real_bounds, index, rect);
+}
+
+int SDL_GetDisplayUsableBounds(int index, struct sdl2_rect *rect) {
+    if (!real_usable_bounds) real_usable_bounds = (display_rect_fn) dlsym(RTLD_NEXT, "SDL_GetDisplayUsableBounds");
+    return fit_rect(real_usable_bounds, index, rect);
 }
 
 int SDL_PollEvent(void *event) {
@@ -155,6 +221,7 @@ void SDL_GL_SwapWindow(void *window) {
         real_swap = (swap_fn) dlsym(RTLD_NEXT, "SDL_GL_SwapWindow");
         learn_window(window);
     }
+    if (fit_screen) screen_window = window;
     if (interval_ns < 0) interval_ns = read_interval();
     real_swap(window);
     long long now = now_ns();

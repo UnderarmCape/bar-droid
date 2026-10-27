@@ -68,6 +68,16 @@ public final class Prefs {
      * Saved as "lobbyBridgeOn": the old key held the old default (off) on every phone that saved settings.
      */
     public static boolean lobbyBridge = true;
+    /**
+     * The X screen (smaller than the display: GameActivity.MAX_SCREEN_PIXELS) drawn onto the display through
+     * Qualcomm's SGSR 1 instead of plain bilinear filtering (GameActivity, patch 0007).
+     */
+    public static boolean upscale = true;
+    /**
+     * SGSR on and off every 3 s with a label saying which, to judge it (Kailil, 2026-10-27: "Can it toggle on and off
+     * every 3 seconds so I can see"). On until Kailil has compared; then off by default (HANDOFF "Next steps").
+     */
+    public static boolean upscaleCompare = true;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -113,6 +123,8 @@ public final class Prefs {
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
         lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
+        upscale = s.getBoolean("upscale", upscale);
+        upscaleCompare = s.getBoolean("upscaleCompare", upscaleCompare);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -139,6 +151,8 @@ public final class Prefs {
                 .putBoolean("autoUpdate", autoUpdate)
                 .remove("lobbyBridge")   // the old default (off), see lobbyBridge
                 .putBoolean("lobbyBridgeOn", lobbyBridge)
+                .putBoolean("upscale", upscale)
+                .putBoolean("upscaleCompare", upscaleCompare)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();
