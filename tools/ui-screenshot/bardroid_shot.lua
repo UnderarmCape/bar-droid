@@ -7,9 +7,9 @@ end
 
 local CHAT = {
 	"gg",
-	"anyone have a spare con for the front? my left side is collapsing fast and I need help over here",
+	"a:anyone have a spare con for the front? my left side is collapsing fast and I need help over here",
 	"push mid now, their t2 air is coming",
-	"nice!",
+	"a:nice!",
 }
 local chat = Spring.GetConfigInt("bardroid_shot_chat", 0) == 1
 local shotAt, quitAt

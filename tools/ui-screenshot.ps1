@@ -13,6 +13,7 @@ param(
   [string]$WidgetData = "",   # widget settings for BYAR.lua's data table, e.g. 'AdvPlayersList = { customScale = 0.8 },'
   [string]$Name = "",     # added to the screenshot's file name
   [switch]$Chat,          # chat lines before the screenshot
+  [switch]$BarDroidChat,  # with the app's chat display (bardroid_chat.lua)
   [string]$PlayerName = "Phone",
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
   [string]$Engine = "",
@@ -41,6 +42,7 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
   Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  if ($BarDroidChat) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force }
   # the phone layer as launch-bar.sh sets it with the controller game on (Kailil's setting): BAR's Build menu instead
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
