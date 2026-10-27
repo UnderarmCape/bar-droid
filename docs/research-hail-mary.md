@@ -1,9 +1,9 @@
-﻿# Hail-mary research: how far can Sim time drop? (2026-10-27)
+# Hail-mary research: how far can Sim time drop? (2026-10-27)
 
 Branch `research/hail-mary`. Pure research, nothing here ships: Kailil asked what the most drastic measures could
 produce ("literally butcher whatever you need"). Scenario: BAR's "Benchmark BAR" (650 Grunts vs 650 Pawns on
 Starwatcher 1.0, 2000 frames) on Kailil's Galaxy Z Fold7, folded, uncapped, 100 % resolution, the phone warmed into
-the throttled state a late game plays in (`tools/phone-bench.ps1`: skin â‰¥ 40 Â°C, thermal status â‰¥ 1).
+the throttled state a late game plays in (`tools/phone-bench.ps1`: skin ≥ 40 °C, thermal status ≥ 1).
 
 **Results table and ranked summary: see the end of this file** (filled in as runs come in).
 
@@ -35,7 +35,7 @@ clang 21 for `aarch64-linux-gnu`:
 - sysroot: Debian trixie arm64 `.deb`s unpacked by `debfetch.py` (glibc, libstdc++-14, SDL2, OpenAL, X11, GL,
   freetype, fontconfig: the container's own versions, linked dynamically);
 - Recoil's official static libs (`spring-static-libs`, branch `18.04-arm`: DevIL, curl, openssl, zlib, png, ogg/vorbis,
-  unwind, minizip), the same set the official arm64 build links; a 40-line shim supplies glibc â‰¤ 2.30's
+  unwind, minizip), the same set the official arm64 build links; a 40-line shim supplies glibc ≤ 2.30's
   `__log_finite`-style entry points those 18.04 libraries call;
 - CMake 4.4 + Ninja from w64devkit, `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`, `AI_TYPES=NONE`, target `engine-legacy`;
   1311 objects in ~12 min on the laptop's 32 threads.
@@ -60,7 +60,7 @@ literals compute differently. A shippable fast engine would have to be a GCC 13 
    0x00000000`, `Main thread CPU affinity not set`, Workers 1-3. Recoil's ARM topology code reads
    `/sys/devices/system/cpu/cpu*/cache/index*/size`; on the Fold7 (or under proot) that yields no cache groups, so the
    "optimal thread count" falls back and nothing is pinned (`rts/System/Platform/Linux/CpuTopology.cpp`,
-   `Threading.cpp`). The Snapdragon 8 Elite has 8 big cores (6 Ã— 3.53 GHz + 2 Ã— 4.47 GHz prime).
+   `Threading.cpp`). The Snapdragon 8 Elite has 8 big cores (6 × 3.53 GHz + 2 × 4.47 GHz prime).
 2. **The ~2 GHz CPU cap is Samsung's SIOP, not the kernel's thermal governor.** During and between runs every
    `cpufreq`/`cpu-cluster` cooling device is at state 0, yet `scaling_max_freq` sits at 2.92/3.28 GHz between runs
    and 1.36-1.79 GHz during a hot run, with `sys.siop.level` set: Samsung's userspace skin-temperature throttling
@@ -95,7 +95,7 @@ phone's widget orders, BAR test-31691-a617033). Engine timers, ms per simulated 
   ~25 gadgets at 0.1-0.27 ms/frame each, nearly all in `UnitPreDamaged`/`UnitDamaged`/`Explosion`, each called
   ~110-270 times per sim frame (Unit Explosion Spawner, Juno Damage, Explosion_lights, Mobile Unit Paralyze Damage
   Handler, Watereffects, EMP Lightning, TurnRadius, Unit Evolution, Shield Behaviour, ...). The cost is the per-event
-  C++â†’Lua call, multiplied by every gadget that registered the event.
+  C++→Lua call, multiplied by every gadget that registered the event.
 - **Unsynced gadgets** (`tools/profile/dbg_bardroid_gadget_profile.lua`): 1.6 ms/sim frame; Fire GL4 0.37, Widget
   Events 0.29, Beam Laser GL4 0.27, CUS GL4 0.15. `UnitDamaged` fires ~23,000 times a second.
 - **Widgets** (phone's set, `dbg_bardroid_profile_log.lua`): 91 ms/s in all; Cache Icons 34 (artifact, above),
