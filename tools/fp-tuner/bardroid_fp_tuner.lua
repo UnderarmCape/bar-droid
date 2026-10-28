@@ -107,10 +107,9 @@ end
 -- resets the value back to the saved default")
 local snapshot, snapshotViews
 
--- Whose values an edit sets (Kailil: "save a specific type of preset for each unit type"): every unit's, the class's
--- (sentries, units) or the unit type's; a unit takes its type's, else its class's, else everyone's.
-local scope = "all"
-local SCOPES = { "all", "class", "type" }
+-- Whose values an edit sets: the unit type's only (Kailil, 2026-10-28: "remove the settings for all units and units. i
+-- will only adjust unit by unit"); a unit takes its type's, else everyone's (the defaults in bardroid_spectate.lua).
+local scope = "type"
 
 local function followedDef()
 	local unitID = S() and S().following()
@@ -200,6 +199,7 @@ local VIEW_NUMBERS = {
 	{ key = "ryRel", label = "Turn (deg)", step = 5, min = -180, max = 180, rad = true, unitOnly = true },
 	{ key = "ox", label = "Right", step = 10, min = -3000, max = 3000 },
 	{ key = "oz", label = "Ahead", step = 10, min = -3000, max = 3000 },
+	{ key = "oy", label = "Up", step = 10, min = -500, max = 3000 }, -- (Kailil: "shoulder needs to have an up adjustment")
 }
 local viewKey = "first"
 
@@ -252,6 +252,7 @@ local function save()
 		all[k] = v
 	end
 	all.presets = S().saved()
+	all.presetTypes = S().presetTypes() -- (the views per unit type)
 	local text = "-- 1st person camera and the views set with tools/fp-tuner.ps1 (bardroid_spectate.lua FP, PRESETS)\nreturn " ..
 		serialize(all) .. "\n"
 	local f = io.open(FILE, "w")
@@ -261,7 +262,7 @@ local function save()
 	end
 	Spring.Echo("[fp-tuner] saved " .. FILE .. ": " .. text:gsub("\n", " "))
 	savedAt = now()
-	snapshot, snapshotViews = copy(FP()), copy(S().saved()) -- (Reset goes back to these now)
+	snapshot, snapshotViews = copy(FP()), copy(S().presetTypes()) -- (Reset goes back to these now)
 end
 
 -- the value's colour by where it comes from: the unit type's own (cyan), its class's (green), everyone's (yellow)
@@ -278,24 +279,6 @@ build = function()
 			step = function(n) if S() then S().actions[n > 0 and "unit_next" or "unit_prev"]() end end },
 	}
 	if viewKey == "first" then
-		rows[#rows + 1] = { label = "Edit for", value = function()
-				local def, unitID = followedDef()
-				if scope == "class" then
-					return unitID and (S().unitClass(unitID) == "sentry" and "Sentries" or "Units") or "-"
-				elseif scope == "type" then
-					return def and (def.translatedHumanName or def.humanName or def.name) or "-"
-				end
-				return "All units"
-			end,
-			step = function(n)
-				local at = 1
-				for i, s in ipairs(SCOPES) do
-					if s == scope then
-						at = i
-					end
-				end
-				scope = SCOPES[(at - 1 + (n > 0 and 1 or -1)) % #SCOPES + 1]
-			end }
 		rows[#rows + 1] = { label = "Anchor", value = function()
 				local a = S() and S().anchor()
 				return a == nil and "-" or (a == "" and "middle" or a)
@@ -319,11 +302,13 @@ build = function()
 	for _, r in ipairs(VIEW_NUMBERS) do
 		if not r.unitOnly or (p and p.frame == "unit") then
 			rows[#rows + 1] = { label = r.label, reset = function()
-					-- this value as saved at the start (none saved: the built-in view's)
-					local base = snapshotViews[viewKey]
+					-- this value as saved for the unit type (none saved: everyone's view)
+					local name = unitDefName()
+					local base = name and snapshotViews[name] and snapshotViews[name][viewKey]
 					if not base then
+						base = S().saved()[viewKey]
 						for _, d in ipairs(S().views()) do
-							if d.key == viewKey then
+							if not base and d.key == viewKey then
 								base = d
 							end
 						end
@@ -474,7 +459,7 @@ function widget:Update()
 	if not started and frame >= SKIP * 30 then
 		local unitID = closestUnit()
 		if unitID then
-			snapshot, snapshotViews = copy(FP()), copy(S().saved()) -- (Reset's values: as saved)
+			snapshot, snapshotViews = copy(FP()), copy(S().presetTypes()) -- (Reset's values: as saved)
 			build()
 			S().firstPerson(unitID)
 			started = true

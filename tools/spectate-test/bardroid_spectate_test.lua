@@ -237,15 +237,39 @@ local cases = {
 		local cs = Spring.GetCameraState()
 		check("Table: far overhead (eye in the sky)", cs.dist and cs.dist > 3000 and cs.rx > 2.8,
 			string.format("dist %.0f, rx %.2f", cs.dist or -1, cs.rx or -1))
-		S().actions.save()
-		moveCamera(0, 0, 777 / cs.dist) -- the camera as the player wants it
+		-- Tune on Close: its first setting (Distance) four steps up, for this unit type, then Save
+		S().actions.preset_close()
+		expected = S().preset("close").dist + 100
+		S().actions.tune()
+		for _ = 1, 4 do
+			S().actions.tune_plus()
+		end
+		S().actions.tune_save()
+		S().actions.tune() -- (Done)
 		return 0.5
 	end,
 	function()
-		S().actions.preset_close() -- (Save armed: saves)
 		local p = S().preset("close")
-		check("Save, then Close: Close is the camera as it is now", p and math.abs(p.dist - 777) < 40,
-			p and string.format("dist %.0f", p.dist))
+		check("Tune: Close's distance set for the unit type", p and math.abs(p.dist - expected) < 1,
+			p and string.format("dist %.0f, wanted %.0f", p.dist, expected))
+		local eq = {}
+		for _, n in ipairs(S().equivalentsOf("armham")) do
+			eq[n] = true
+		end
+		local fig, llt = {}, {}
+		for _, n in ipairs(S().equivalentsOf("armfig")) do
+			fig[n] = true
+		end
+		for _, n in ipairs(S().equivalentsOf("armllt")) do
+			llt[n] = true
+		end
+		check("equivalents: Mace and Thug, Fighter and Fighter, Sentry and Guard", eq.corthud and fig.corveng and llt.corllt,
+			string.format("armham: %s", table.concat(S().equivalentsOf("armham"), " ")))
+		local def = UnitDefs[Spring.GetUnitDefID(S().following())]
+		local others = S().equivalentsOf(def.name)
+		local given = others[1] and S().presetTypes()[others[1]] and S().presetTypes()[others[1]].close
+		check("Save gives it to the unit's equivalents", #others == 0 or (given and math.abs(given.dist - expected) < 1),
+			string.format("%s -> %s", def.name, table.concat(others, " ")))
 		S().actions.group()
 		S().actions.preset_mid()
 		return 1.5
@@ -268,7 +292,7 @@ local cases = {
 	end,
 	function()
 		local cs = Spring.GetCameraState()
-		check("the saved Close comes back", cs.dist and math.abs(cs.dist - 777) < 80, string.format("dist %.0f", cs.dist or -1))
+		check("the tuned Close comes back", cs.dist and math.abs(cs.dist - expected) < 80, string.format("dist %.0f", cs.dist or -1))
 		moveCamera(6000, 0) -- a flick, far away
 		return 1
 	end,

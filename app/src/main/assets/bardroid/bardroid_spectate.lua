@@ -45,22 +45,23 @@ local GROUP_EVERY = 0.5 -- seconds between new group members
 local GROUP_MAX = 40 -- members at most (each frame's centre: ~40 position reads, a few hundredths of a millisecond)
 -- letting go: the camera this far from what it follows (elmos), or twice the camera's distance if that is more
 local BREAK_MIN, BREAK_DIST = 1500, 2
--- Save on the bar until Kailil has set the presets ("after we lock them all in, we hide that button"); what is saved
--- is logged ("[bardroid-spectate] preset ...") to become the defaults below.
-local SHOW_SAVE = true
-
 -- Camera presets: the Spring camera's distance from its target and pitch (rx: pi/2 level, pi straight down), and the
--- target's offset from the unit (elmos). "unit" ones turn with the unit (offset: ox to its right, oz ahead; ryRel its
--- heading's own turn), "world" ones keep the camera's turn and offset the target on the map.
+-- target's offset from the unit (elmos; oy up from the ground). "unit" ones turn with the unit (offset: ox to its
+-- right, oz ahead; ryRel its heading's own turn), "world" ones keep the camera's turn and offset the target on the map.
+-- Shoulder, Table and Mid as Kailil set them in the laptop tuner (2026-10-28).
 local PRESETS = {
 	{ key = "first", label = "1st person", frame = "unit", dist = 80, rx = 1.85, ryRel = 0, ox = 0, oz = 100 },
-	{ key = "shoulder", label = "Shoulder", frame = "unit", dist = 350, rx = 1.95, ryRel = 0, ox = 40, oz = 150 },
+	{ key = "shoulder", label = "Shoulder", frame = "unit", dist = 270, rx = 1.688, ryRel = 0, ox = 90, oz = 140, oy = 0 },
 	-- (Kailil: "make table super far. like eye in sky")
-	{ key = "table", label = "Table", frame = "world", dist = 6000, rx = 3.0, ox = 0, oz = 0 },
+	{ key = "table", label = "Table", frame = "world", dist = 6000, rx = 2.826, ox = 0, oz = 0 },
 	{ key = "close", label = "Close", frame = "world", dist = 450, rx = 2.5, ox = 0, oz = 0 },
-	{ key = "mid", label = "Mid", frame = "world", dist = 1300, rx = 2.75, ox = 0, oz = 0 },
+	{ key = "mid", label = "Mid", frame = "world", dist = 1300, rx = 2.733, ox = 0, oz = 0 },
 }
-local saved = {} -- the player's own presets by key (Save), kept in this widget's config
+local saved = {} -- the views as the laptop tuner set them for everyone (its file), by key
+-- A unit type's own views (presetTypes[unitName][key]) and 1st person values (FP.types) are set by the player, unit by
+-- unit (Kailil, 2026-10-28: "i will only adjust unit by unit"): on the laptop in the tuner, on the phone with Tune on
+-- the bar; Save keeps them (this widget's config) and gives them to the unit's equivalents in the other factions.
+local presetTypes = {}
 
 -- 1st person rides the unit in the engine's first-person camera ("fps": an eye position and a direction; it keeps the
 -- eye 5 elmos above the ground). Kailil sets these on the laptop with tools/fp-tuner.ps1 ("on the desktop only ... then
@@ -70,21 +71,35 @@ local saved = {} -- the player's own presets by key (Save), kept in this widget'
 --   facing:  "unit" (the unit's facing) or "piece" (the anchor piece's: a turret's aim)
 --   forward, right, up: the eye from the anchor (elmos, in the facing's frame); pitch, yaw: the look (degrees, up and
 --   right of the facing); fov (degrees); posSmoothing, turnSmoothing (seconds)
--- Kailil's values from the tuner (2026-10-27 23:00). (The near clipping plane cannot come closer than the engine's
--- own, which follows the view range: Camera.cpp; Kailil only wanted it closer, so there is no setting for it.)
+-- Kailil's values from the tuner (2026-10-27 23:00; his all-units values from then: a later session riding a fighter
+-- changed them by mistake, 2026-10-28, "Can that be un done"). (The near clipping plane cannot come closer than the
+-- engine's own, which follows the view range: Camera.cpp; Kailil only wanted it closer, so there is no setting for it.)
 local FP = {
 	pieceNames = { "head", "turret", "torso", "body", "base" },
 	-- armed buildings (sentries): the gun's barrel first, and the eye turns with its aim (Kailil: "attach to sentries'
 	-- gun barrels")
 	staticPieceNames = { "barrel", "barrel1", "barrel2", "sleeve", "sleeves", "gun", "turret", "head" },
-	pieces = {},
-	-- values for a class ("sentry": armed buildings, "unit": the rest) or a unit type (by name) over the ones below
-	-- (fpFor); sentries' aim barely smoothed: the camera rides the barrel's swing (Kailil's example)
-	classes = { sentry = { turnSmoothing = 0.06 }, unit = {} },
-	-- Kailil's per type (the tuner, 2026-10-28): the Sentry (armllt) on its barrel
+	-- the anchor piece per unit type, and values per unit type (by name) over the ones below (fpFor): Kailil's from the
+	-- laptop tuner (2026-10-28)
+	pieces = { armfig = "base", armguard = "barrel1", armham = "torso", corantiship = "base", corcom = "head",
+		corhlt = "flare", corpun = "turret", cortoast = "turret" },
+	classes = {}, -- (none: Kailil sets unit by unit)
 	types = {
-		armllt = { forward = -38, right = 18, up = 8, pitch = -8, yaw = -10, fov = 80, posSmoothing = 0,
-			turnSmoothing = 0.06 },
+		armack = { forward = -18, right = -8, up = 28 },
+		armch = { forward = -24 },
+		armck = { forward = -26, right = 0, up = 20 },
+		armcom = { forward = 2, up = 4 },
+		armfido = { forward = -10, posSmoothing = 1.98, right = 2 },
+		armguard = { forward = -26, right = 6, up = 0 },
+		armham = { forward = -2, right = -4 },
+		armllt = { forward = -38, fov = 80, pitch = -8, posSmoothing = 0.4, right = 18, turnSmoothing = 0.31, up = 8, yaw = -10 },
+		corantiship = { forward = 20, right = 4, up = 54 },
+		corcom = { forward = 0, right = 0, up = 20 },
+		corhlt = { forward = -88, posSmoothing = 0.7, right = 40, turnSmoothing = 0.31, yaw = -30 },
+		corllt = { forward = -34, posSmoothing = 0.5, right = 14, turnSmoothing = 0.31, up = 4, yaw = -10 },
+		corpun = { forward = -38 },
+		cortoast = { forward = -34, right = 0, up = 4, yaw = 26 },
+		corvalk = { forward = -34, right = -6, up = 18 },
 	},
 	facing = "unit",
 	forward = 16, right = 4, up = 14,
@@ -140,9 +155,9 @@ local shown = false -- the bar: active and BAR's player list open
 local buttons = {} -- { x0, y0, x1, y1, action, label, lit, color }
 local follow -- { unitID, team, members, cx, cz, at, bx, bz (the followed point, smoothed), yaw, setX, setZ, setRy }
 -- the camera's place relative to what it follows; it stays when the arrows pick another unit
-local view = { frame = "world", ox = 0, oz = 0, ryRel = 0, preset = nil, blend = nil }
+local view = { frame = "world", ox = 0, oz = 0, oy = 0, ryRel = 0, preset = nil, blend = nil }
 local groupMode = false
-local saveArmed = false
+local tuning = false -- Tune on the bar (below)
 local cycle -- { list of unitIDs by distance from the screen's centre, taken at the first arrow }
 local lastTap -- { x, y, t }
 local pressedOn -- the button a press went down on
@@ -212,7 +227,7 @@ local function stopFollow()
 	leaveFirstPerson()
 	follow = nil
 	cycle = nil
-	saveArmed = false
+	tuning = false
 	closeZoom(false)
 end
 
@@ -601,7 +616,7 @@ local function updateFollow(dt)
 	f.bx, f.vx = smoothDamp(f.bx, tx, f.vx or 0, glide, dt)
 	f.bz, f.vz = smoothDamp(f.bz, tz, f.vz or 0, glide, dt)
 	cs.px, cs.pz = f.bx + mx, f.bz + mz
-	cs.py = Spring.GetGroundHeight(cs.px, cs.pz)
+	cs.py = Spring.GetGroundHeight(cs.px, cs.pz) + (view.oy or 0) -- (a view's Up)
 	if view.frame == "unit" and f.yaw and cs.ry then
 		cs.ry = approachAngle(cs.ry, f.yaw + view.ryRel, k)
 	end
@@ -622,12 +637,35 @@ local function updateFollow(dt)
 	f.setX, f.setZ, f.setRy = cs.px, cs.pz, cs.ry
 end
 
-local function presetByKey(key)
+local function followedName()
+	local def = follow and UnitDefs[Spring.GetUnitDefID(follow.unitID) or -1]
+	return def and def.name
+end
+
+local function copy(t)
+	if type(t) ~= "table" then
+		return t
+	end
+	local c = {}
+	for k, v in pairs(t) do
+		c[k] = copy(v)
+	end
+	return c
+end
+
+-- a view as everyone gets it (the laptop tuner's, else the built-in one)
+local function defaultPreset(key)
 	for _, p in ipairs(PRESETS) do
 		if p.key == key then
 			return saved[key] or p
 		end
 	end
+end
+
+-- a view as the followed unit gets it: its type's own, else everyone's
+local function presetByKey(key)
+	local name = followedName()
+	return (name and presetTypes[name] and presetTypes[name][key]) or defaultPreset(key)
 end
 
 local function applyPreset(key)
@@ -650,35 +688,225 @@ local function applyPreset(key)
 		follow.setX, follow.setZ, follow.setRy = cs.px, cs.pz, cs.ry
 	end
 	view.frame, view.ox, view.oz, view.ryRel, view.preset = p.frame, p.ox or 0, p.oz or 0, p.ryRel or 0, key
+	view.oy = p.oy or 0
 	view.blend = { dist = p.dist, rx = p.rx, t = now() }
 	closeZoom(p.dist < (minZoomOwn or Spring.GetConfigFloat(MIN_ZOOM_KEY, 300)))
 end
 
--- Save, then a preset: the camera as it is now becomes that preset (kept in the widget's config, and logged)
-local function savePreset(key)
-	local base
-	for _, p in ipairs(PRESETS) do
-		if p.key == key then
-			base = p
+---------------------------------------------------------------------------------------------------------------------
+-- A unit type's equivalents in the other factions (Kailil: "it applies to the other faction's equiltvalent. so
+-- thug/mace and so on"): the same name after the faction's prefix (armllt, corllt, legllt), or the same place in the
+-- same factory of Armada and Cortex (armlab and corlab list their units in the same order: armham, the Mace, where
+-- corthud, the Thug, is; armfig where corveng). Legion's factories list theirs in another order: by name only.
+
+local equivalents -- unit name -> { other names }
+local FACTIONS = { "arm", "cor", "leg" }
+
+local function buildEquivalents()
+	local parent = {}
+	local function find(x)
+		while parent[x] and parent[x] ~= x do
+			x = parent[x]
+		end
+		return x
+	end
+	local function join(a, b)
+		parent[a], parent[b] = parent[a] or a, parent[b] or b
+		local ra, rb = find(a), find(b)
+		if ra ~= rb then
+			parent[rb] = ra
 		end
 	end
-	local cs = spGetCameraState()
-	if not (base and follow and cs.dist and cs.rx) then
+	local bySuffix = {}
+	for _, def in pairs(UnitDefs) do
+		local prefix = def.name:sub(1, 3)
+		for _, f in ipairs(FACTIONS) do
+			if prefix == f then
+				local rest = def.name:sub(4)
+				if bySuffix[rest] then
+					join(bySuffix[rest], def.name)
+				else
+					bySuffix[rest] = def.name
+				end
+			end
+		end
+	end
+	for _, def in pairs(UnitDefs) do
+		local rest = def.name:match("^arm(.+)$")
+		local other = rest and UnitDefNames["cor" .. rest]
+		if other and def.isFactory and def.buildOptions and other.buildOptions then
+			for i, id in ipairs(def.buildOptions) do
+				local a, b = UnitDefs[id], UnitDefs[other.buildOptions[i] or -1]
+				if a and b then
+					join(a.name, b.name)
+				end
+			end
+		end
+	end
+	local groups = {}
+	for name in pairs(parent) do
+		local r = find(name)
+		groups[r] = groups[r] or {}
+		groups[r][#groups[r] + 1] = name
+	end
+	equivalents = {}
+	for _, g in pairs(groups) do
+		for _, name in ipairs(g) do
+			local others = {}
+			for _, o in ipairs(g) do
+				if o ~= name then
+					others[#others + 1] = o
+				end
+			end
+			equivalents[name] = others
+		end
+	end
+end
+
+local function equivalentsOf(name)
+	if not equivalents then
+		buildEquivalents()
+	end
+	return equivalents[name] or {}
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- Tune (the phone; Kailil: "more touch friendly so instead of a big list, you toggle through different settigns one
+-- by one. and each is just for that type of unit"): the bar shows one setting of the view on at a time, < > picks
+-- another, - + change it for the unit type followed (at once); Save keeps it (this widget's config) and gives it to the
+-- unit's equivalents.
+
+local tuneAt = 1
+local savedAt = -100
+-- what the player saved on this device, per unit type: 1st person values, anchor pieces, views (the config)
+local kept = { types = {}, pieces = {}, presetTypes = {} }
+
+local FP_SETTINGS = {
+	{ key = "anchor", label = "Anchor" },
+	{ key = "forward", label = "Forward", step = 2 },
+	{ key = "right", label = "Right", step = 2 },
+	{ key = "up", label = "Up", step = 2 },
+	{ key = "pitch", label = "Pitch", step = 1, min = -89, max = 89 },
+	{ key = "yaw", label = "Yaw", step = 2, min = -180, max = 180 },
+	{ key = "fov", label = "FOV", step = 2, min = 10, max = 150 },
+	{ key = "posSmoothing", label = "Move smooth", step = 0.02, min = 0, max = 3 },
+	{ key = "turnSmoothing", label = "Turn smooth", step = 0.02, min = 0, max = 3 },
+}
+local VIEW_SETTINGS = {
+	{ key = "dist", label = "Distance", step = 25, min = 20, max = 20000 },
+	{ key = "rx", label = "Pitch down", step = 1, min = 0, max = 89.5, deg = true },
+	{ key = "ryRel", label = "Turn", step = 5, min = -180, max = 180, rad = true, unitOnly = true },
+	{ key = "ox", label = "Right", step = 10, min = -3000, max = 3000 },
+	{ key = "oz", label = "Ahead", step = 10, min = -3000, max = 3000 },
+	{ key = "oy", label = "Up", step = 10, min = -500, max = 3000 },
+}
+
+local function tuneSettings()
+	if view.preset == "first" then
+		return FP_SETTINGS
+	end
+	local p = presetByKey(view.preset or "mid") or {}
+	local list = {}
+	for _, s in ipairs(VIEW_SETTINGS) do
+		if not s.unitOnly or p.frame == "unit" then
+			list[#list + 1] = s
+		end
+	end
+	return list
+end
+
+local function round(v, step)
+	return math.floor(v / step + 0.5) * step
+end
+
+-- a view's value as shown (rx as degrees below level, ryRel as degrees)
+local function shownViewValue(s, p)
+	local v = p[s.key] or 0
+	if s.deg then
+		return math.deg(v - math.pi / 2)
+	elseif s.rad then
+		return math.deg(v)
+	end
+	return v
+end
+
+local function tuneValueText(s)
+	if not follow then
+		return "-"
+	end
+	if view.preset == "first" then
+		if s.key == "anchor" then
+			local a = follow.anchor
+			return a == nil and "-" or (a == "" and "middle" or a)
+		end
+		local v = fpFor(UnitDefs[Spring.GetUnitDefID(follow.unitID) or -1])[s.key]
+		return s.step < 1 and string.format("%.2f", v) or string.format("%g", v)
+	end
+	return string.format("%g", round(shownViewValue(s, presetByKey(view.preset) or {}), s.step / 10))
+end
+
+local function tuneStep(s, n)
+	local name = followedName()
+	if not name then
 		return
 	end
-	local mx, mz = offsetOnMap(follow.yaw)
-	local p = { key = key, label = base.label, frame = base.frame, dist = cs.dist, rx = cs.rx, ryRel = 0, ox = mx, oz = mz }
-	if base.frame == "unit" and follow.yaw then
-		local fx, fz = math.sin(follow.yaw), -math.cos(follow.yaw)
-		local rx, rz = -fz, fx
-		p.ox, p.oz = mx * rx + mz * rz, mx * fx + mz * fz
-		p.ryRel = (cs.ry or 0) - follow.yaw
-		p.ryRel = (p.ryRel + math.pi) % (2 * math.pi) - math.pi
+	if view.preset == "first" then
+		if s.key == "anchor" then -- the unit's middle ("") or one of its pieces
+			local list = { "" }
+			for _, piece in ipairs(Spring.GetUnitPieceList(follow.unitID) or {}) do
+				list[#list + 1] = piece
+			end
+			local at = 1
+			for i, piece in ipairs(list) do
+				if piece == (follow.anchor or "") then
+					at = i
+				end
+			end
+			FP.pieces[name] = list[(at - 1 + n) % #list + 1]
+			return
+		end
+		local v = fpFor(UnitDefs[Spring.GetUnitDefID(follow.unitID) or -1])[s.key]
+		FP.types[name] = FP.types[name] or {}
+		FP.types[name][s.key] = math.max(s.min or -9999, math.min(s.max or 9999, round(v + s.step * n, s.step / 10)))
+		return
 	end
-	saved[key] = p
-	view.frame, view.ox, view.oz, view.ryRel, view.preset = p.frame, p.ox, p.oz, p.ryRel, key
-	Spring.Echo(string.format("[bardroid-spectate] preset %s saved: frame %s, dist %.0f, rx %.3f, ryRel %.3f, ox %.0f, oz %.0f",
-		key, p.frame, p.dist, p.rx, p.ryRel, p.ox, p.oz))
+	local key = view.preset
+	local p = copy(presetByKey(key))
+	local v = math.max(s.min, math.min(s.max, round(shownViewValue(s, p) + s.step * n, s.step / 10)))
+	if s.deg then
+		v = math.rad(v) + math.pi / 2
+	elseif s.rad then
+		v = math.rad(v)
+	end
+	p[s.key] = v
+	presetTypes[name] = presetTypes[name] or {}
+	presetTypes[name][key] = p
+	applyPreset(key)
+end
+
+-- Save: the followed unit type's values kept, and the same given to its equivalents in the other factions
+local function tuneSave()
+	local name = followedName()
+	if not name then
+		return
+	end
+	local names = { name }
+	for _, o in ipairs(equivalentsOf(name)) do
+		names[#names + 1] = o
+	end
+	for _, n in ipairs(names) do
+		if FP.types[name] then
+			FP.types[n], kept.types[n] = copy(FP.types[name]), copy(FP.types[name])
+		end
+		if FP.pieces[name] then
+			FP.pieces[n], kept.pieces[n] = FP.pieces[name], FP.pieces[name]
+		end
+		if presetTypes[name] then
+			presetTypes[n], kept.presetTypes[n] = copy(presetTypes[name]), copy(presetTypes[name])
+		end
+	end
+	savedAt = now()
+	Spring.Echo("[bardroid-spectate] saved for " .. table.concat(names, ", "))
 end
 
 local ACTIONS = {
@@ -695,16 +923,23 @@ local ACTIONS = {
 			follow.cx, follow.cz = x or follow.cx, z or follow.cz -- (the group is the one around the unit)
 		end
 	end,
-	save = function() saveArmed = not saveArmed end,
+	tune = function()
+		tuning = not tuning
+		tuneAt = 1
+		if tuning and not view.preset then
+			applyPreset("mid")
+		end
+	end,
+	tune_prev = function() tuneAt = (tuneAt - 2) % #tuneSettings() + 1 end,
+	tune_next = function() tuneAt = tuneAt % #tuneSettings() + 1 end,
+	tune_minus = function() local s = tuneSettings()[tuneAt]; if s then tuneStep(s, -1) end end,
+	tune_plus = function() local s = tuneSettings()[tuneAt]; if s then tuneStep(s, 1) end end,
+	tune_save = tuneSave,
 }
 for _, p in ipairs(PRESETS) do
 	ACTIONS["preset_" .. p.key] = function()
-		if saveArmed then
-			saveArmed = false
-			savePreset(p.key)
-		else
-			applyPreset(p.key)
-		end
+		applyPreset(p.key)
+		tuneAt = 1
 	end
 end
 
@@ -745,14 +980,29 @@ local function layout()
 	local gap = math.floor(h * 0.15)
 	local fLabel, fColor = followLabel()
 	local rowA, rowB
-	if follow then -- the camera presets in place of the players
+	if follow and tuning then -- one setting of the view on, for the unit type followed
+		local s = tuneSettings()[tuneAt] or tuneSettings()[1]
+		rowA = {
+			{ w = h, action = "tune_prev", label = "<" },
+			{ w = h * 2.6, action = "tune_next", label = s and s.label or "-", lit = true },
+			{ w = h, action = "tune_next", label = ">" },
+			{ w = h, action = "tune_minus", label = "-" },
+			{ w = h * 2.2, action = "tune_plus", label = s and tuneValueText(s) or "-" },
+			{ w = h, action = "tune_plus", label = "+" },
+		}
+		rowB = {
+			{ w = h * 1.6, action = "tune", label = "Done", lit = true },
+			{ w = h * 1.6, action = "tune_save", label = now() - savedAt < 2 and "Saved" or "Save" },
+			{ w = h, action = "unit_prev", label = "<" },
+			{ w = h * 3.2, action = "unit_next", label = fLabel, color = fColor, lit = true },
+			{ w = h, action = "unit_next", label = ">" },
+		}
+	elseif follow then -- the camera presets in place of the players
 		rowA = {}
 		for _, p in ipairs(PRESETS) do
 			rowA[#rowA + 1] = { w = h * 1.9, action = "preset_" .. p.key, label = p.label, lit = view.preset == p.key }
 		end
-		if SHOW_SAVE then
-			rowA[#rowA + 1] = { w = h * 1.4, action = "save", label = "Save", lit = saveArmed }
-		end
+		rowA[#rowA + 1] = { w = h * 1.4, action = "tune", label = "Tune" }
 		rowB = {
 			{ w = h * 1.4, action = "free", label = "Free" },
 			{ w = h, action = "unit_prev", label = "<" },
@@ -1004,7 +1254,22 @@ function widget:Initialize()
 					saved[key] = p
 				end
 			end
+			for name, views in pairs(type(t.presetTypes) == "table" and t.presetTypes or {}) do -- (per unit type)
+				if type(views) == "table" then
+					presetTypes[name] = views
+				end
+			end
 		end
+	end
+	-- what the player saved on this device (Tune, Save), over the defaults (SetConfigData came first)
+	for name, v in pairs(kept.types) do
+		FP.types[name] = copy(v)
+	end
+	for name, v in pairs(kept.pieces) do
+		FP.pieces[name] = v
+	end
+	for name, v in pairs(kept.presetTypes) do
+		presetTypes[name] = copy(v)
 	end
 	-- (also for tools/spectate-test.ps1: a user widget cannot send the engine's mouse callins, so its taps come in here)
 	WG.BarDroidSpectate = {
@@ -1022,13 +1287,26 @@ function widget:Initialize()
 		views = function() return PRESETS end,
 		view = function() return view.preset end,
 		presetValues = function(key) return presetByKey(key) end,
+		-- (a view set in the laptop tuner: for the unit type followed, as on the phone)
 		setPreset = function(key, p)
-			saved[key] = p
+			local name = followedName()
+			if not name then
+				return
+			end
+			presetTypes[name] = presetTypes[name] or {}
+			presetTypes[name][key] = p
 			if view.preset == key then
 				applyPreset(key)
 			end
 		end,
+		typeView = function(key)
+			local name = followedName()
+			return name and presetTypes[name] and presetTypes[name][key]
+		end,
 		saved = function() return saved end,
+		presetTypes = function() return presetTypes end,
+		equivalentsOf = function(name) return equivalentsOf(name) end,
+		tuning = function() return tuning end,
 		apply = function(key) applyPreset(key) end,
 		anchor = function() return follow and follow.anchor end,
 		firstPerson = function(unitID)
@@ -1050,16 +1328,16 @@ function widget:Shutdown()
 	WG.BarDroidSpectating = nil
 end
 
+-- what the player saved with Tune (per unit type and its equivalents) stays on the device
 function widget:GetConfigData()
-	return { presets = saved }
+	return { kept = kept }
 end
 
 function widget:SetConfigData(data)
-	if type(data) == "table" and type(data.presets) == "table" then
-		for key, p in pairs(data.presets) do
-			if type(p) == "table" and tonumber(p.dist) and tonumber(p.rx) and (p.frame == "unit" or p.frame == "world") then
-				saved[key] = p
-			end
-		end
+	local k = type(data) == "table" and data.kept
+	if type(k) == "table" then
+		kept.types = type(k.types) == "table" and k.types or {}
+		kept.pieces = type(k.pieces) == "table" and k.pieces or {}
+		kept.presetTypes = type(k.presetTypes) == "table" and k.presetTypes or {}
 	end
 end
