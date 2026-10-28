@@ -22,8 +22,8 @@ function widget:GetInfo()
 end
 
 local FLAG = "LuaUI/Config/bardroid_bench.txt"
--- seconds of real time; os.clock, the process's CPU time on Linux, is logged against it at the end (widgets time with
--- Spring.GetTimer: docs/HISTORY.md, 2026-10-28 morning)
+-- seconds of real time; the engine's os.clock is logged against it at the end (in standard Lua on Linux os.clock is
+-- CPU time; the phone's engine measured x1.00, docs/HISTORY.md 2026-10-28 morning)
 local timer0, cpu0 = Spring.GetTimer(), os.clock()
 local function realSeconds()
 	return Spring.DiffTimers(Spring.GetTimer(), timer0)

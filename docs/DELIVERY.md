@@ -100,8 +100,9 @@ published or posted without Kailil.
       `tools/worklog.py` reviewed: run from plain PowerShell (no git on PATH) it counted 0 commits and said nothing,
       so WORKLOG.md showed "Commits 0"; it now finds the toolchain's git as env.bat does, and without any git says so
       and writes "-". Cron-fired turns are rightly not counted as Kailil's messages. `bardroid_players.lua` reviewed:
-      it, the chat widget and the benchmark widget timed with `os.clock`, CPU time on Linux (faster than real time in
-      a busy game; real time on Windows, so the laptop checks never showed it): `Spring.GetTimer` now.
+      it, the chat widget and the benchmark widget timed with `os.clock` (CPU time in standard Lua on Linux), moved to
+      `Spring.GetTimer`; measured on the phone afterwards, the engine's `os.clock` keeps real time (x1.00): no bug,
+      one timer in all widgets now.
       `tools/spectate-test.ps1` failed ("a replay that never starts playing"): it took BAR's newest replay, one from
       2026-10-13 that never leaves its first frame on the laptop; it and `fp-tuner.ps1` now choose from the tools'
       copies too (`toolchain.ps1` Get-ReplayFiles), so the phone-recorded 8v8 is picked: all pass. `Build APK.bat` reviewed: an

@@ -34,10 +34,10 @@ the simulation, they should be off by default with a toggle.
   benchmark with the pointer on the battle (`tools/profile-benchmark.ps1 -PointerOnBattle`, new), two runs each: 2.69
   / 3.11 ms/s and 39.5 / 48.4 kB/s before, 2.01 / 2.03 ms/s and 18.5 / 20.0 kB/s after. `tools/touch-widget-test.ps1`:
   all pass (the panel shows the selection).
-  On the phone not settled: BAR's widget profiler put the panel at 7.9% before the fix and 19.4% after (that run with
-  no panel on screen; its shares there are not to be trusted), the on/off pairs first ran with the panel on both times
-  (the switch broke, below) and later with the phone locked (below). Still to do: `phone-bench.ps1 -WidgetsOff "BAR
-  Droid info"` against the panel on, alternating, the phone unlocked.
+  On the phone the panel's cost does not show: BAR's benchmark with it on and off, alternating, the phone unlocked
+  (11:29-11:39): x0.78 / x0.77 on, x0.74 / x0.72 off (the "off" runs drew lower CPU caps, 1401 against 1689 MHz for
+  the prime core: noise). BAR's widget profiler had put it at 7.9% before the fix and 19.4% after (that run with no
+  panel on screen): its shares on the phone are not to be trusted; measure with `-WidgetsOff`.
 - `tools/phone-bench.ps1` new switches: `-DisplayScale <percent>` (Termux:X11's display scale for a run) and
   `-WidgetsOff "<name>",...` (widgets off for a run, each one's order put back afterwards; awk on the phone: Android's
   toybox `sed` and `grep` know none of GNU's `\?` and `s//`, and the shell took apostrophes in comments for quotes).
@@ -45,11 +45,12 @@ the simulation, they should be off by default with a toggle.
   started with "game screen hidden: the engine stops drawing" and a portrait X screen, so its numbers are not a game's
   (one run never got the engine started and timed out after 12 minutes). Benchmarks need the phone unlocked; a run's
   launcher.log shows it ("X screen" landscape at the start, "hidden" only at the end).
-- **`os.clock` is not a clock on the phone.** `bardroid_players.lua` (the list's 7 s), `bardroid_chat.lua` (how long a
-  line stays) and `bardroid_bench.lua` timed with `os.clock`, which on Linux is the process's CPU time, all the engine's
-  threads together: faster than real time in a busy game. Windows' C library returns real time instead (the laptop:
-  x1.00 over 42 s of BAR's benchmark), so the laptop checks never showed it. They use `Spring.GetTimer` now, as the
-  other widgets did; the benchmark widget logs the ratio on the phone (`[bardroid-bench] os.clock ...`).
+- **`os.clock`: a suspected bug that was not one.** `bardroid_players.lua` (the list's 7 s), `bardroid_chat.lua` and
+  `bardroid_bench.lua` timed with `os.clock`, which in standard Lua on Linux is the process's CPU time (all threads:
+  faster than real time in a busy game); Windows' C library returns real time (the laptop: x1.00 over 42 s). They were
+  moved to `Spring.GetTimer` (as the other widgets), with the benchmark widget logging the ratio on the phone: **x1.00 in
+  every run** (98-586 s), so the engine's `os.clock` is real time there too and nothing ran fast. The change stays (one
+  timer in all widgets); the earlier commit (5d4d54c) said otherwise.
 - **A higher resolution** (Kailil: "investigate if its worth running native resolution on both, or at least increasing
   to 900p folded, and unfolded 1080p"). Folded, a real 8v8 replay (Supreme Isthmus, minutes 10-13, up to 1,876 units),
   the 30 fps cap, alternating, two runs each:
@@ -66,9 +67,16 @@ the simulation, they should be off by default with a toggle.
   X screen pixels: the display scale 100% for phones (`BarApp`, once for existing installs), at most 2100x900's pixels
   and 1080 lines (`GameActivity`): folded 2100x900, unfolded 1198x1080; render resolution 85%: 1785x765 / 1018x918.
   The way back to the old folded size: Display settings, display scale 150 (folded 1680x720, unfolded stays 1198x1080).
-  **Not yet measured: a heavy late game at 900p** (the four runs from minute 20, 3,600 units, ran with the phone
-  locked); to do with the phone unlocked: `phone-bench.ps1 -Cap 30 -DisplayScale 150|100 -Replay <the 8v8> -SkipTo
-  1200 -Seconds 180`, alternating. Frame generation: Lossless Scaling's (LSFG) runs on Android
+  **A heavy late game at 900p** (the same 8v8 from minute 20, ~3,600 units, the 30 fps cap, alternating, the phone
+  unlocked by Kailil at 11:00; the first four such runs, earlier, went with the phone locked and are not counted):
+
+  | X screen (folded) | game speed | fps | GPU clock (median) | GPU busy (median) | AP at the end |
+  |---|---|---|---|---|---|
+  | 1680x720 | x0.97 / x1.02 | 28.8 / 28.3 | 342 / 342 MHz | 69 / 67% | 44.7 / 46.5 C |
+  | 2096x900 | x0.98 / x1.01 | 29.3 / 29.2 | 342 / 342 MHz | 67 / 72% | 50.2 / 47.4 C |
+
+  900p costs nothing measurable in game speed or fps; the phone ran a little warmer in one of the two 900p runs. 900p
+  stays the default. Frame generation: Lossless Scaling's (LSFG) runs on Android
   as an overlay app over any game (LSFG-Android, Adreno 7xx and newer) with the player's own copy of Lossless Scaling;
   not built in (the shaders are Lossless Scaling's, lsfg-vk is now no-derivatives licensed, and late games have no GPU
   to spare), a player can try it over the app as it is.

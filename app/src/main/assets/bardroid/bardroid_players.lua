@@ -27,8 +27,8 @@ local COLUMNS = { "indent", "rank", "country", "allyid", "id", "playerid", "name
 	"cpuping", "ally", "share", "chat" }
 local KEEP = { name = true }
 
--- seconds of real time (os.clock is the process's CPU time on Linux, the phone's: all the engine's threads together,
--- faster than real time in a busy game)
+-- seconds of real time, on the engine's timer as in the app's other widgets (the engine's os.clock measured the same
+-- on the phone: x1.00, 2026-10-28)
 local spGetTimer, spDiffTimers = Spring.GetTimer, Spring.DiffTimers
 local timer0 = spGetTimer()
 local function clock()
