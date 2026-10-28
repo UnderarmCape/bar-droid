@@ -280,8 +280,18 @@ case "$MODE" in
     log "spring skirmish: $BAR/skirmish.txt"
     ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
   bench)
-    log "spring benchmark: $BAR/bench.txt"
-    ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$? ;;
+    # A replay benchmark (tools/phone-bench.ps1 -Replay): .bardroid-bench-replay says "<game second> <seconds> <replay
+    # in demos/>"; bardroid_bench.lua fast-forwards to that second and measures the game's speed for that long.
+    rep="$BAR/.bardroid-bench-replay"
+    if [ -s "$rep" ] && read -r skip secs file < "$rep" && [ -f "$BAR/demos/$file" ]; then
+      echo "replay $skip $secs" > "$BAR/LuaUI/Config/bardroid_bench.txt"
+      log "spring replay benchmark: demos/$file from game second $skip, $secs s"
+      ./spring --isolation --write-dir "$BAR" "$BAR/demos/$file"; rc=$?
+    else
+      [ -s "$rep" ] && log "replay benchmark: no demos/$(cut -d' ' -f3- "$rep"); BAR's benchmark instead"
+      log "spring benchmark: $BAR/bench.txt"
+      ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$?
+    fi ;;
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
     # config and shuts down (a black screen). The app's update check saves BAR's current one; the built-in copy is
