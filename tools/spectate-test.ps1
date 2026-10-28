@@ -1,5 +1,6 @@
 # bardroid_spectate.lua (spectating by touch) in a real replay on the laptop: BAR's Windows engine plays a replay from
-# BAR's install (the newest one whose game and map are installed, or -Replay) in an isolated write dir
+# BAR's install or the tools' copies (the newest whose game and map are installed: toolchain.ps1 Get-ReplayFiles; or
+# -Replay) in an isolated write dir
 # (build\spectate-test\data; the live install's packages, pool, rapid index and maps joined read-only by junctions,
 # removed again at the end) with the app's touch, info and spectate widgets and a test widget
 # (tools\spectate-test\bardroid_spectate_test.lua) that fast-forwards into the game and checks the touch tools (~2 min).
@@ -43,9 +44,8 @@ function Playable([string]$path) {
   $game -and $installed[$game] -and $map -and $maps[$map.ToLower().Replace(" ", "_")]
 }
 if (-not $Replay) {
-  $Replay = Get-ChildItem (Join-Path $BarData "demos") -Filter *.sdfz | Sort-Object LastWriteTime -Descending |
-    Where-Object { $_.Length -gt 500000 -and (Playable $_.FullName) } | Select-Object -First 1 -ExpandProperty FullName
-  if (-not $Replay) { throw "no replay in $BarData\demos with its game and map installed: pass -Replay" }
+  $Replay = Get-ReplayFiles | Where-Object { Playable $_.FullName } | Select-Object -First 1 -ExpandProperty FullName
+  if (-not $Replay) { throw "no replay in $BarData\demos or build\*\data\demos with its game and map installed: pass -Replay" }
 }
 if (-not $Engine) { $Engine = if ((Split-Path $Replay -Leaf) -match '_(\d{4}\.\d{2}\.\d{2})\.sdfz$') { "recoil_$($Matches[1])" } }
 $EngineDir = Get-EngineDir $Engine

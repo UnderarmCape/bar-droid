@@ -13,9 +13,8 @@ $Data = Join-Path $Work "data"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 Assert-BarData
 if (-not $Replay) {
-  $Replay = Get-ChildItem (Join-Path $BarData "demos") -Filter *.sdfz | Sort-Object LastWriteTime -Descending |
-    Where-Object { $_.Length -gt 500000 } | Select-Object -First 1 -ExpandProperty FullName
-  if (-not $Replay) { throw "no replay in $BarData\demos: pass -Replay" }
+  $Replay = Get-ReplayFiles | Select-Object -First 1 -ExpandProperty FullName   # (toolchain.ps1)
+  if (-not $Replay) { throw "no replay in $BarData\demos or build\*\data\demos: pass -Replay" }
 }
 if (-not $Engine) { $Engine = if ((Split-Path $Replay -Leaf) -match '_(\d{4}\.\d{2}\.\d{2})\.sdfz$') { "recoil_$($Matches[1])" } }
 $EngineDir = Get-EngineDir $Engine

@@ -20,6 +20,18 @@ function Assert-BarData {
   }
 }
 
+# Replays for the laptop tools that play one (spectate-test, fp-tuner), newest first: BAR's own demos and the copies the
+# tools keep in build\<tool>\data\demos, where a replay recorded on the phone stays once a tool has played it (BAR's
+# newest replay need not play: one from 2026-10-13 never left its first frame on the laptop). Larger than 500 KB (a
+# real game), each name once.
+function Get-ReplayFiles {
+  $dirs = @(Join-Path $BarData "demos") + @(Get-ChildItem (Join-Path (Split-Path -Parent $PSScriptRoot) "build") -Directory -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName "data\demos" })
+  $seen = @{}
+  $dirs | Where-Object { Test-Path $_ } | ForEach-Object { Get-ChildItem $_ -Filter *.sdfz } | Where-Object { $_.Length -gt 500000 } |
+    Sort-Object LastWriteTime -Descending | Where-Object { -not $seen[$_.Name] -and ($seen[$_.Name] = $true) }
+}
+
 # The phone's adb serial for tools that drive it: BARDROID_DEVICE if set, else the first line of phone-device.txt
 # beside the toolchain folder (the player's phone, e.g. its Wi-Fi address 192.168.x.y:5555; outside the
 # repository), else the one device adb lists. "" when there is none.
