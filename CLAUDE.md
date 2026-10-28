@@ -102,6 +102,7 @@ powershell -ExecutionPolicy Bypass -File tools\fp-tuner.ps1 [-Replay <file.sdfz>
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
+python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
 powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
             # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the
@@ -126,6 +127,10 @@ Toolchain: AGP 9.3.1, Gradle 9.8.2 wrapper, NDK 29.0.14206865, CMake 3.22.1, JDK
 Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus LorieNative, CmdEntryPoint.
 
 ## Rules of the road
+- The work log is kept from now on (Kailil, 2026-10-28: "i want the time logging from now moving forward as well for
+  statistics"): run `python -I tools\worklog.py` before the last commit of every work session and commit
+  `docs/WORKLOG.md` and `docs/worklog/` with it. Private terms it must hide go in `..\worklog-redact.txt`, never in
+  the repository. The road to a public release: `docs/DELIVERY.md`.
 - Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.
   One exception, Kailil's call (2026-10-25): the app icon is Kailil's edit of BAR's launcher icon (an Android robot
   added), credited in `NOTICE.md`; personal use only (NoDerivatives), so an APK with it must not be published. The

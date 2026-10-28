@@ -1,0 +1,90 @@
+{
+ "24199e1e-f507-4f63-aa76-60dec850a08c": {
+  "claude_by_day": {
+   "2026-10-27": 21756,
+   "2026-10-28": 1486
+  },
+  "claude_s": 23242,
+  "first": "2026-10-27T18:31:58.079000+00:00",
+  "interrupts": 0,
+  "last": "2026-10-28T05:02:42.543000+00:00",
+  "messages": 0,
+  "title": "Hail-mary research build: slash BAR's sim time",
+  "tool_calls": 409
+ },
+ "2a868b94-911f-4d2f-b2b9-1e46ae5f9440": {
+  "claude_by_day": {
+   "2026-10-26": 2643
+  },
+  "claude_s": 2643,
+  "first": "2026-10-26T04:16:10.163000+00:00",
+  "interrupts": 0,
+  "last": "2026-10-26T05:36:02.183000+00:00",
+  "messages": 0,
+  "title": "BAR Droid: follow BAR's PC updates automatically",
+  "tool_calls": 110
+ },
+ "391fb8bc-e6d0-480b-ae30-69aa6f1a41a2": {
+  "claude_by_day": {
+   "2026-10-27": 3373
+  },
+  "claude_s": 3373,
+  "first": "2026-10-28T00:26:12.092000+00:00",
+  "interrupts": 0,
+  "last": "2026-10-28T01:22:25.056000+00:00",
+  "messages": 0,
+  "title": "Mouse and keyboard support (Bluetooth, USB-C dock)",
+  "tool_calls": 227
+ },
+ "d4bf9130-114a-4164-96cf-2934eddbb89f": {
+  "claude_by_day": {
+   "2026-10-25": 13654,
+   "2026-10-26": 804
+  },
+  "claude_s": 14458,
+  "first": "2026-10-26T00:07:21.719000+00:00",
+  "interrupts": 4,
+  "last": "2026-10-26T04:13:12.731000+00:00",
+  "messages": 45,
+  "title": "BAR Android port",
+  "tool_calls": 565
+ },
+ "e2053c74-e310-4e09-a920-62ee2a35a057": {
+  "claude_by_day": {
+   "2026-10-25": 35463
+  },
+  "claude_s": 35463,
+  "first": "2026-10-25T06:41:00.861000+00:00",
+  "interrupts": 1,
+  "last": "2026-10-26T00:02:43.210000+00:00",
+  "messages": 29,
+  "title": "BAR Android port",
+  "tool_calls": 1416
+ },
+ "f8c12e67-1076-49a4-8768-4dcaddbbbd18": {
+  "claude_by_day": {
+   "2026-10-26": 60512,
+   "2026-10-27": 45407,
+   "2026-10-28": 2606
+  },
+  "claude_s": 108526,
+  "first": "2026-10-26T04:14:36.131000+00:00",
+  "interrupts": 1,
+  "last": "2026-10-28T05:03:52.733000+00:00",
+  "messages": 118,
+  "title": "BAR Android port",
+  "tool_calls": 4360
+ },
+ "fe628d0c-b165-4c20-92d3-03ed36ea7d75": {
+  "claude_by_day": {
+   "2026-10-25": 6547
+  },
+  "claude_s": 6547,
+  "first": "2026-10-26T01:14:47.045000+00:00",
+  "interrupts": 1,
+  "last": "2026-10-26T03:45:14.942000+00:00",
+  "messages": 1,
+  "title": "BAR Droid: touch-only controls and UI",
+  "tool_calls": 292
+ }
+}
