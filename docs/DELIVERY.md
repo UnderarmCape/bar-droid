@@ -93,6 +93,9 @@ published or posted without Kailil.
       check missed other letter cases and commit messages, and the APK check passed when the debug key could not be
       read; fixed, `-SelfTest` (in laptop-tests) runs the patterns through git grep over planted data, and the check
       notes the e-mail address the commits name (Kailil: GitHub's noreply address, or keep his).
+      `tools/worklog.py` reviewed: run from plain PowerShell (no git on PATH) it counted 0 commits and said nothing,
+      so WORKLOG.md showed "Commits 0"; it now finds the toolchain's git as env.bat does, and without any git says so
+      and writes "-". Cron-fired turns are rightly not counted as Kailil's messages.
 
 ## Releasing (once the blockers are done)
 

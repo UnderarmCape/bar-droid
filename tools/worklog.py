@@ -183,15 +183,33 @@ def load_existing():
     return sessions, messages
 
 
-def commits_by_day():
+def find_git():
+    """git on PATH, else the portable toolchain's (found as scripts/env.bat finds it: plain PowerShell has no git)."""
     git = shutil.which("git")
+    if git:
+        return git
+    tc = os.environ.get("BARDROID_TOOLCHAIN")
+    if not tc:
+        beside = os.path.join(os.path.dirname(ROOT), "toolchain")
+        tc = beside if os.path.isfile(os.path.join(beside, "jdk", "bin", "java.exe")) else os.path.join(ROOT, "toolchain")
+    for exe in (os.path.join(tc, "git", "cmd", "git.exe"), os.path.join(tc, "git", "bin", "git")):
+        if os.path.isfile(exe):
+            return exe
+    return None
+
+
+def commits_by_day():
+    """{day: commits}, or None without git (the totals then say so instead of 0)."""
+    git = find_git()
     if not git:
-        return {}
+        print("worklog: no git (PATH or the toolchain's): commits not counted", file=sys.stderr)
+        return None
     try:
         out = subprocess.run([git, "-C", ROOT, "log", "--format=%aI"], capture_output=True, text=True,
                              check=True).stdout
-    except (OSError, subprocess.CalledProcessError):
-        return {}
+    except (OSError, subprocess.CalledProcessError) as e:
+        print("worklog: git log failed (%s): commits not counted" % e, file=sys.stderr)
+        return None
     days = defaultdict(int)
     for line in out.split():
         days[datetime.datetime.fromisoformat(line).astimezone().date().isoformat()] += 1
@@ -239,6 +257,12 @@ def write_markdown(sessions, messages):
         for day, sec in s.get("claude_by_day", {}).items():
             claude_by_day[day] += sec
     commits = commits_by_day()
+
+    def count(day=None):
+        if commits is None:
+            return "-"
+        return str(sum(commits.values()) if day is None else commits.get(day, 0))
+
     days = sorted(set(by_day) | set(claude_by_day))
     words = sum(len(m["text"].split()) for m in messages)
     images = sum(m["images"] for m in messages)
@@ -281,7 +305,7 @@ def write_markdown(sessions, messages):
         "| Claude's time | %s h |" % hours(total_claude),
         "| Claude's tool calls | %d |" % sum(s.get("tool_calls", 0) for s in sessions.values()),
         "| Kailil stopped Claude mid-answer | %d times |" % sum(s.get("interrupts", 0) for s in sessions.values()),
-        "| Commits | %d |" % sum(commits.values()),
+        "| Commits | %s |" % count(),
         "",
         "Kailil's time: his sittings, messages less than %d minutes apart, each from %d minutes before its first"
         " message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its"
@@ -294,9 +318,9 @@ def write_markdown(sessions, messages):
         "|---|---:|---:|---:|---:|",
     ]
     for day in days:
-        lines.append("| [%s](worklog/%s.md) | %d | %s | %s | %d |" % (
+        lines.append("| [%s](worklog/%s.md) | %d | %s | %s | %s |" % (
             day, day, len(by_day.get(day, [])), hours(kailil_by_day.get(day, 0)), hours(claude_by_day.get(day, 0)),
-            commits.get(day, 0)))
+            count(day)))
     lines += ["", "## Sessions", "", "| Session | From | To | Kailil's messages | Claude h |",
               "|---|---|---|---:|---:|"]
     for sid, s in sorted(sessions.items(), key=lambda kv: kv[1]["first"]):
