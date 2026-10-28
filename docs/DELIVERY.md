@@ -105,7 +105,10 @@ published or posted without Kailil.
       one timer in all widgets now.
       `tools/spectate-test.ps1` failed ("a replay that never starts playing"): it took BAR's newest replay, one from
       2026-10-13 that never leaves its first frame on the laptop; it and `fp-tuner.ps1` now choose from the tools'
-      copies too (`toolchain.ps1` Get-ReplayFiles), so the phone-recorded 8v8 is picked: all pass. `Build APK.bat` reviewed: an
+      copies too (`toolchain.ps1` Get-ReplayFiles), so the phone-recorded 8v8 is picked: all pass.
+      `bardroid_minimap.lua` reviewed: the suspicion that its in-memory size would hide a size the player sets in
+      BAR's settings was wrong (BAR's own save replaces the overlay); touch-widget-test now checks that such a size
+      stays (passes; a "fix" that followed BAR's value broke the shrinking: BAR takes the overlay 0.25 s late). `Build APK.bat` reviewed: an
       empty `bardroid.keystore=` passed its key check and built an unsigned APK named like a release, and a build
       without an APK (or a failed copy) still reported one; fixed (tested: no key and an empty key refuse, a
       throwaway key builds and passes `publish-check -Apk`), Gradle names a keyless release `-unsigned.apk`, and the

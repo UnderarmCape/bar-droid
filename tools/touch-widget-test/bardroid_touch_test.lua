@@ -420,6 +420,19 @@ cases = {
 		if M then
 			M.setUnfolded(nil)
 		end
+		-- the player sets another size in BAR's settings: it stays (the widget's overlay from before must not hide it)
+		before = WG.minimap and select(2, WG.minimap.getMaxHeight())
+		if WG.minimap and WG.minimap.setMaxHeight then
+			WG.minimap.setMaxHeight(0.2)
+		end
+		return 1
+	end,
+	function()
+		near("minimap: a size set in BAR's settings stays", WG.minimap and select(2, WG.minimap.getMaxHeight()) or -1, 0.2,
+			0.0001)
+		if WG.minimap and WG.minimap.setMaxHeight and before then
+			WG.minimap.setMaxHeight(before)
+		end
 	end,
 	-- the app's chat display (bardroid_chat.lua): BAR's chat hands it each line it parsed
 	function()
