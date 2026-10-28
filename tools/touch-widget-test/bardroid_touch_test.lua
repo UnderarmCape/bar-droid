@@ -120,7 +120,7 @@ end
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
-local before, groundBefore, edgeView, com
+local before, groundBefore, edgeView, com, minimapHeight
 cases = {
 	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
 	function()
@@ -370,6 +370,56 @@ cases = {
 	function()
 		local P = WG.BarDroidPlayers
 		near("player list: small again after 7 s untouched", P and P.minimized() and 1 or 0, 1, 0)
+	end,
+	-- the app's minimap (bardroid_minimap.lua): BAR's size on a wide screen; unfolded (here: told so) about half until
+	-- a tap, which only opens it; seven seconds without a tap make it small again
+	function()
+		local M = WG.BarDroidMinimap
+		minimapHeight = WG.minimap and WG.minimap.getHeight()
+		near("minimap: BAR's own size on the wide screen", M and not M.small() and 1 or 0, 1, 0)
+		if M then
+			M.setUnfolded(true)
+		end
+	end,
+	function() return 1 end, -- (BAR's Minimap reads the size four times a second)
+	function()
+		local M, h = WG.BarDroidMinimap, WG.minimap and WG.minimap.getHeight()
+		near("minimap unfolded: small", M and M.small() and 1 or 0, 1, 0)
+		near("minimap unfolded: about half its height", (h and minimapHeight) and h / minimapHeight or -1, 0.5, 0.1)
+	end,
+	function()
+		local M, at = WG.BarDroidMinimap, nil
+		for y = 0, vsy - 1, 4 do
+			for x = 0, vsx - 1, 4 do
+				if not at and Spring.IsAboveMiniMap(x, y) then
+					at = { x + 4, y + 4 }
+				end
+			end
+		end
+		near("minimap unfolded: a tap on it is taken (opens it)", (M and at and M.press(at[1], at[2])) and 1 or 0, 1, 0)
+		return 1
+	end,
+	function()
+		local M, h = WG.BarDroidMinimap, WG.minimap and WG.minimap.getHeight()
+		near("minimap unfolded: open at BAR's own size", (M and not M.small() and h and minimapHeight) and h / minimapHeight or -1,
+			1, 0.02)
+		return 8
+	end,
+	function()
+		local M = WG.BarDroidMinimap
+		near("minimap unfolded: small again after 7 s untouched", M and M.small() and 1 or 0, 1, 0)
+		if M then
+			M.setUnfolded(false)
+		end
+	end,
+	function() return 1 end,
+	function()
+		local M, h = WG.BarDroidMinimap, WG.minimap and WG.minimap.getHeight()
+		near("minimap folded again: BAR's own size", (M and not M.small() and h and minimapHeight) and h / minimapHeight or -1, 1,
+			0.02)
+		if M then
+			M.setUnfolded(nil)
+		end
 	end,
 	-- the app's chat display (bardroid_chat.lua): BAR's chat hands it each line it parsed
 	function()

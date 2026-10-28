@@ -34,6 +34,7 @@ try {
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_info.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_players.lua") "$Data\LuaUI\Widgets\" -Force
+  Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_minimap.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)

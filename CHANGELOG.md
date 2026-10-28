@@ -25,7 +25,10 @@ The first version meant for other people's phones: everything since the first bu
   follow the unit nearest the screen's centre (or double-tap a unit), follow a group, camera presets (1st person,
   over the shoulder, table, close, mid) and a 1st person camera on the unit with free look that recenters itself;
   the settings can be tuned per unit type on the phone (Tune) and apply to the other factions' equivalents.
-- BAR's interface scale fits each Fold screen (cover and inner), and follows fold/unfold during a game.
+- BAR's interface scale fits each Fold screen (cover and inner), and follows fold/unfold during a game; the lobby at
+  150% on the inner screen. Unfolded, the minimap is half size until tapped.
+- Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
+  unit by default) and 1st person can be tuned per unit type; a view's Up raises the camera.
 
 **Controllers, mouse and keyboard**
 - Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; the pad drives the camera online and is a

@@ -87,6 +87,7 @@ local function groundPoint()
 end
 
 local expected
+local before -- (a view's Up: the camera before)
 local cases = {
 	function()
 		WG.BarDroidInput = "touch" -- as the app reports after a finger
@@ -237,7 +238,48 @@ local cases = {
 		local cs = Spring.GetCameraState()
 		check("Table: far overhead (eye in the sky)", cs.dist and cs.dist > 3000 and cs.rx > 2.8,
 			string.format("dist %.0f, rx %.2f", cs.dist or -1, cs.rx or -1))
-		-- Tune on Close: its first setting (Distance) four steps up, for this unit type, then Save
+		S().actions.preset_shoulder()
+		return 2
+	end,
+	-- a view's Up (Kailil: "the UP tune setting doesnt work in the shoulder cam"): the Spring camera keeps its focus on
+	-- the ground, so Up lifts the camera over the same focus, looking down more steeply
+	function()
+		-- Shoulder's default (Kailil: "every unit is centered and zoomed in on the back of the unit")
+		local u = S().following()
+		local _, _, _, mx, my, mz = Spring.GetUnitPosition(u, true)
+		local sx, sy = Spring.WorldToScreenCoords(mx, my, mz)
+		local vsx, vsy = Spring.GetViewGeometry()
+		local cxw, _, czw = Spring.GetCameraPosition()
+		local ux, _, uz = Spring.GetUnitPosition(u)
+		local heading = Spring.GetUnitHeading(u) * math.pi / 32768 -- (0: facing +z)
+		local behind = -((cxw - ux) * math.sin(heading) + (czw - uz) * math.cos(heading)) -- (the camera behind it: > 0)
+		check("Shoulder: the unit in the middle of the screen, the camera behind it",
+			math.abs(sx - vsx / 2) < vsx * 0.1 and math.abs(sy - vsy / 2) < vsy * 0.12 and behind > 0,
+			string.format("unit at %.0f,%.0f of %dx%d, camera %.0f behind", sx, sy, vsx, vsy, behind))
+		local x, y, z = Spring.GetCameraPosition()
+		before = { h = y - Spring.GetGroundHeight(x, z), rx = Spring.GetCameraState().rx }
+		local p = {}
+		for k, v in pairs(S().preset("shoulder")) do
+			p[k] = v
+		end
+		before.oy = p.oy or 0
+		p.oy = before.oy + 300
+		S().setPreset("shoulder", p)
+		return 2
+	end,
+	function()
+		local x, y, z = Spring.GetCameraPosition()
+		local h, rx = y - Spring.GetGroundHeight(x, z), Spring.GetCameraState().rx
+		check("Shoulder: Up +300 lifts the camera ~300, looking down at the unit more steeply",
+			math.abs(h - before.h - 300) < 100 and rx > before.rx + 0.1,
+			string.format("height %.0f -> %.0f, rx %.2f -> %.2f", before.h, h, before.rx, rx))
+		local p = {}
+		for k, v in pairs(S().preset("shoulder")) do
+			p[k] = v
+		end
+		p.oy = before.oy
+		S().setPreset("shoulder", p)
+		-- Tune on Close: its first setting (Distance) four steps up, for every unit (Close is universal), then Save
 		S().actions.preset_close()
 		expected = S().preset("close").dist + 100
 		S().actions.tune()
@@ -249,9 +291,12 @@ local cases = {
 		return 0.5
 	end,
 	function()
-		local p = S().preset("close")
-		check("Tune: Close's distance set for the unit type", p and math.abs(p.dist - expected) < 1,
-			p and string.format("dist %.0f, wanted %.0f", p.dist, expected))
+		local p, k = S().preset("close"), S().keptViews().close
+		local def = UnitDefs[Spring.GetUnitDefID(S().following())]
+		local own = S().presetTypes()[def.name]
+		check("Tune: Close's distance set and saved for every unit, not the unit type",
+			p and k and math.abs(p.dist - expected) < 1 and math.abs(k.dist - expected) < 1 and not (own and own.close),
+			p and string.format("dist %.0f, saved %s, wanted %.0f", p.dist, k and string.format("%.0f", k.dist) or "-", expected))
 		local eq = {}
 		for _, n in ipairs(S().equivalentsOf("armham")) do
 			eq[n] = true
@@ -265,10 +310,12 @@ local cases = {
 		end
 		check("equivalents: Mace and Thug, Fighter and Fighter, Sentry and Guard", eq.corthud and fig.corveng and llt.corllt,
 			string.format("armham: %s", table.concat(S().equivalentsOf("armham"), " ")))
-		local def = UnitDefs[Spring.GetUnitDefID(S().following())]
+		-- (the unit type's own Shoulder, from the Up case above: Save gives it to the equivalents)
 		local others = S().equivalentsOf(def.name)
-		local given = others[1] and S().presetTypes()[others[1]] and S().presetTypes()[others[1]].close
-		check("Save gives it to the unit's equivalents", #others == 0 or (given and math.abs(given.dist - expected) < 1),
+		local mine = own and own.shoulder
+		local given = others[1] and S().presetTypes()[others[1]] and S().presetTypes()[others[1]].shoulder
+		check("Save gives the unit type's own views to its equivalents",
+			#others == 0 or (mine and given and math.abs(given.dist - mine.dist) < 1),
 			string.format("%s -> %s", def.name, table.concat(others, " ")))
 		S().actions.group()
 		S().actions.preset_mid()

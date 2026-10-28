@@ -62,6 +62,16 @@ local saved = {} -- the views as the laptop tuner set them for everyone (its fil
 -- unit (Kailil, 2026-10-28: "i will only adjust unit by unit"): on the laptop in the tuner, on the phone with Tune on
 -- the bar; Save keeps them (this widget's config) and gives them to the unit's equivalents in the other factions.
 local presetTypes = {}
+-- Table, Close and Mid are one view for every unit (Kailil, 2026-10-28: "TABLE CLOSE MID should be universal. save
+-- affects all units. not individual like SHOULDER AND FIRST PERSON"): Tune sets them here, Save keeps them.
+local UNIVERSAL = { table = true, close = true, mid = true }
+local views = {} -- the universal views as the player set them (Tune), by key
+-- Shoulder's default, where no unit type has its own (Kailil: "it should default to where every unit is centered and
+-- zoomed in on the back of the unit"): the camera SHOULDER_BACK unit radii (plus elmos) behind the unit and
+-- SHOULDER_UP above its middle, looking through its middle to the ground beyond (the Spring camera's focus is always
+-- on the ground), so the unit is in the middle of the screen at any size.
+local SHOULDER_BACK, SHOULDER_BACK_ADD = 4, 40
+local SHOULDER_UP, SHOULDER_UP_ADD = 1.5, 20
 
 -- 1st person rides the unit in the engine's first-person camera ("fps": an eye position and a direction; it keeps the
 -- eye 5 elmos above the ground). Kailil sets these on the laptop with tools/fp-tuner.ps1 ("on the desktop only ... then
@@ -632,9 +642,11 @@ local function updateFollow(dt)
 	f.bx, f.vx = smoothDamp(f.bx, tx, f.vx or 0, glide, dt)
 	f.bz, f.vz = smoothDamp(f.bz, tz, f.vz or 0, glide, dt)
 	cs.px, cs.pz = f.bx + mx, f.bz + mz
-	cs.py = Spring.GetGroundHeight(cs.px, cs.pz) + (view.oy or 0) -- (a view's Up)
 	if view.frame == "unit" and f.yaw and cs.ry then
 		cs.ry = approachAngle(cs.ry, f.yaw + view.ryRel, k)
+	end
+	if cs.dist and cs.rx then -- (without last frame's Up, below: the fingers and a preset's glide work on these)
+		cs.dist, cs.rx = cs.dist - (f.upDist or 0), cs.rx - (f.upRx or 0)
 	end
 	local b = view.blend
 	if b then -- a preset's distance and pitch gliding in
@@ -648,6 +660,20 @@ local function updateFollow(dt)
 		if now() - b.t > BLEND_S * 2 then
 			view.blend = nil
 		end
+	end
+	-- A view's Up: the Spring camera always looks at the ground (the engine sets its focus height every frame, so a
+	-- height given in the state was lost; Kailil: "the UP tune setting doesnt work in the shoulder cam"). The camera
+	-- goes up by Up above the same focus at the same distance across the ground, looking down at it more steeply.
+	-- (Keeping the angle instead moved a near-level view's focus kilometres ahead.)
+	f.upDist, f.upRx = 0, 0
+	local up = view.oy or 0
+	if up ~= 0 and cs.dist and cs.rx then
+		local across = cs.dist * math.sin(cs.rx) -- (rx: pi/2 level, pi straight down)
+		local height = math.max(1, -cs.dist * math.cos(cs.rx) + up)
+		local dist = math.sqrt(across * across + height * height)
+		local rx = math.max(math.pi * 0.51, math.min(math.pi * 0.99, math.pi / 2 + math.atan2(height, across)))
+		f.upDist, f.upRx = dist - cs.dist, rx - cs.rx
+		cs.dist, cs.rx = dist, rx
 	end
 	spSetCameraState(cs, 0)
 	f.setX, f.setZ, f.setRy = cs.px, cs.pz, cs.ry
@@ -678,10 +704,38 @@ local function defaultPreset(key)
 	end
 end
 
--- a view as the followed unit gets it: its type's own, else everyone's
+-- Shoulder fitted to the followed unit (SHOULDER_*): behind it, over its middle, looking through its middle
+local function shoulderFit()
+	local unitID = follow and follow.unitID
+	local def = unitID and UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	if not def then
+		return nil
+	end
+	local r = Spring.GetUnitRadius(unitID) or def.radius or 30
+	local _, by, _, _, my = spGetUnitPosition(unitID, true)
+	local mid = (by and my) and math.max(5, my - by) or r -- (its middle above its base)
+	local back = SHOULDER_BACK * r + SHOULDER_BACK_ADD
+	local above = SHOULDER_UP * r + SHOULDER_UP_ADD -- (the camera over the middle)
+	local ahead = back * mid / above -- (where the line through the middle reaches the ground)
+	return { key = "shoulder", label = "Shoulder", frame = "unit", ryRel = 0, ox = 0, oz = ahead, oy = 0,
+		dist = math.sqrt((back + ahead) ^ 2 + (mid + above) ^ 2), rx = math.pi / 2 + math.atan2(above, back) }
+end
+
+-- a view as the followed unit gets it: Table, Close and Mid the same for all (as the player set them), the others its
+-- type's own, else everyone's (Shoulder: fitted to the unit)
 local function presetByKey(key)
+	if UNIVERSAL[key] then
+		return views[key] or defaultPreset(key)
+	end
 	local name = followedName()
-	return (name and presetTypes[name] and presetTypes[name][key]) or defaultPreset(key)
+	local own = name and presetTypes[name] and presetTypes[name][key]
+	if own then
+		return own
+	end
+	if key == "shoulder" and not saved.shoulder then
+		return shoulderFit() or defaultPreset(key)
+	end
+	return defaultPreset(key)
 end
 
 local function applyPreset(key)
@@ -794,8 +848,9 @@ end
 
 local tuneAt = 1
 local savedAt = -100
--- what the player saved on this device, per unit type: 1st person values, anchor pieces, views (the config)
-local kept = { types = {}, pieces = {}, presetTypes = {} }
+-- what the player saved on this device, per unit type: 1st person values, anchor pieces, views; and the universal views
+-- (the config)
+local kept = { types = {}, pieces = {}, presetTypes = {}, views = {} }
 
 local FP_SETTINGS = {
 	{ key = "anchor", label = "Anchor" },
@@ -895,13 +950,22 @@ local function tuneStep(s, n)
 		v = math.rad(v)
 	end
 	p[s.key] = v
-	presetTypes[name] = presetTypes[name] or {}
-	presetTypes[name][key] = p
+	if UNIVERSAL[key] then -- (every unit's)
+		views[key] = p
+	else
+		presetTypes[name] = presetTypes[name] or {}
+		presetTypes[name][key] = p
+	end
 	applyPreset(key)
 end
 
--- Save: the followed unit type's values kept, and the same given to its equivalents in the other factions
+-- Save: the universal views (Table, Close, Mid) kept for every unit; the followed unit type's own values kept, and the
+-- same given to its equivalents in the other factions
 local function tuneSave()
+	for key, p in pairs(views) do
+		kept.views[key] = copy(p)
+	end
+	savedAt = now()
 	local name = followedName()
 	if not name then
 		return
@@ -1334,9 +1398,9 @@ function widget:Initialize()
 					saved[key] = p
 				end
 			end
-			for name, views in pairs(type(t.presetTypes) == "table" and t.presetTypes or {}) do -- (per unit type)
-				if type(views) == "table" then
-					presetTypes[name] = views
+			for name, own in pairs(type(t.presetTypes) == "table" and t.presetTypes or {}) do -- (per unit type)
+				if type(own) == "table" then
+					presetTypes[name] = own
 				end
 			end
 		end
@@ -1350,6 +1414,11 @@ function widget:Initialize()
 	end
 	for name, v in pairs(kept.presetTypes) do
 		presetTypes[name] = copy(v)
+	end
+	for key, v in pairs(kept.views) do
+		if UNIVERSAL[key] then
+			views[key] = copy(v)
+		end
 	end
 	-- (also for tools/spectate-test.ps1: a user widget cannot send the engine's mouse callins, so its taps come in here)
 	WG.BarDroidSpectate = {
@@ -1368,22 +1437,30 @@ function widget:Initialize()
 		views = function() return PRESETS end,
 		view = function() return view.preset end,
 		presetValues = function(key) return presetByKey(key) end,
-		-- (a view set in the laptop tuner: for the unit type followed, as on the phone)
+		-- (a view set in the laptop tuner: Table, Close and Mid for every unit, the others for the unit type followed,
+		-- as on the phone)
 		setPreset = function(key, p)
 			local name = followedName()
-			if not name then
+			if UNIVERSAL[key] then
+				views[key] = p
+			elseif name then
+				presetTypes[name] = presetTypes[name] or {}
+				presetTypes[name][key] = p
+			else
 				return
 			end
-			presetTypes[name] = presetTypes[name] or {}
-			presetTypes[name][key] = p
 			if view.preset == key then
 				applyPreset(key)
 			end
 		end,
 		typeView = function(key)
+			if UNIVERSAL[key] then
+				return views[key]
+			end
 			local name = followedName()
 			return name and presetTypes[name] and presetTypes[name][key]
 		end,
+		keptViews = function() return kept.views end,
 		saved = function() return saved end,
 		presetTypes = function() return presetTypes end,
 		equivalentsOf = function(name) return equivalentsOf(name) end,
@@ -1421,5 +1498,6 @@ function widget:SetConfigData(data)
 		kept.types = type(k.types) == "table" and k.types or {}
 		kept.pieces = type(k.pieces) == "table" and k.pieces or {}
 		kept.presetTypes = type(k.presetTypes) == "table" and k.presetTypes or {}
+		kept.views = type(k.views) == "table" and k.views or {}
 	end
 end

@@ -331,19 +331,24 @@ case "$MODE" in
       fi
     fi
     # Every start (Kailil): Split Panel Mode "Always One" (panel_layout 3; 1 Autodetect, 2 Always Two; Kailil corrected
-    # Autodetect to Always One, 2026-10-26) and interface scale 120%. Chobby keeps the
-    # scale per window size (key vsx/500 x vsy/250) and falls back to 100% for a size it has not saved; the Fold's two
-    # displays and every resolution scale differ, so each size up to 3000x3000 gets 1.2. Its saved settings exist after
-    # the first lobby run. One-line tables first: Chobby saves an empty one as "{}".
+    # Autodetect to Always One, 2026-10-26) and interface scale 120%, 150% on the unfolded screen (Kailil, 2026-10-28:
+    # "unfolded, lobby UI scale should be default 150"). Chobby keeps the scale per window size (key vsx/500 x vsy/250)
+    # and falls back to 100% for a size it has not saved; the Fold's two displays and every resolution scale differ, so
+    # each size up to 3000x3000 gets one: 1.5 where the key's middle is near-square (as the inner screen at 1080p,
+    # native, 85% and 70%: keys 2x4, 4x7, 2x3, 1x3), 1.2 where it is wide (the cover screen). Its saved settings exist
+    # after the first lobby run. One-line tables first: Chobby saves an empty one as "{}".
     igl="$BAR/LuaMenu/Config/IGL_data.lua"
     if [ -f "$igl" ]; then
       scales=""
-      for x in 0 1 2 3 4 5; do for y in 0 1 2 3 4 5 6 7 8 9 10 11; do scales="$scales[\"${x}x$y\"] = 1.2, "; done; done
+      for x in 0 1 2 3 4 5; do for y in 0 1 2 3 4 5 6 7 8 9 10 11; do
+        if [ $(((x * 500 + 250) * 10)) -lt $(((y * 250 + 125) * 16)) ]; then s=1.5; else s=1.2; fi
+        scales="$scales[\"${x}x$y\"] = $s, "
+      done; done
       sed -i -e '/^\t\tpanel_layout = /d' -e '/^\t\tuiScalesForScreenSizes = {.*}/d' \
         -e '/^\t\tuiScalesForScreenSizes = {$/,/^\t\t},*$/d' \
         -e "s/^\t\[\"Chili lobby\"\] *= *{$/&\n\t\tpanel_layout = 3,\n\t\tuiScalesForScreenSizes = { $scales},/" "$igl"
-      if grep -q '^[[:space:]]*panel_layout = 3,' "$igl" && grep -q '\["2x5"\] = 1.2' "$igl"; then
-        log "lobby: split panels always one, interface scale 120%"
+      if grep -q '^[[:space:]]*panel_layout = 3,' "$igl" && grep -q '\["4x3"\] = 1.2' "$igl" && grep -q '\["2x4"\] = 1.5' "$igl"; then
+        log "lobby: split panels always one, interface scale 120% (150% unfolded)"
       else
         layer_miss "lobby panels and scale: no [\"Chili lobby\"] settings in LuaMenu/Config/IGL_data.lua"
       fi

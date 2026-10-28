@@ -5,6 +5,32 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Afternoon: the unfolded screen, the views, Native tried (2026-10-28, from 12:30)
+Kailil, spectating on the phone:
+- **Native resolution: "a no go"** after a game unfolded at 2184x1968 (the launcher's Native choice stays; the phone
+  is back at 100%: 2100x900 folded, 1198x1080 unfolded).
+- **The lobby at 150% unfolded** ("unfolded, lobby UI scale should be default 150"): launch-bar.sh gives Chobby's
+  per-size scale 1.5 to every near-square size key (the inner screen at 1080p, native, 85%, 70%: 2x4, 4x7, 2x3, 1x3)
+  and keeps 1.2 for the wide ones.
+- **The minimap half size unfolded until tapped** ("about half the size it already is, then when i tap it, it expands
+  to default size"): `bardroid_minimap.lua` sets BAR's Minimap's `MinimapMaxHeight` as the engine's in-memory overlay
+  (never saved) to half the minimap's height on the near-square screen; a tap on it only opens it, 7 s without one
+  make it small again, folded it is BAR's. touch-widget-test checks it (told it is unfolded on the wide laptop
+  window): half the height, a tap taken, BAR's size, small again after 7 s, BAR's size folded.
+- **Up did nothing in the Shoulder view** ("the UP tune setting doesnt work in the shoulder cam"): the Spring camera
+  (Shoulder, Table, Close, Mid) sets its focus height on the ground every frame (`CSpringController::Update`: "always
+  focus on the ground"), so the height the widget gave it was lost. Up now raises the camera over the same focus at
+  the same distance across the ground, looking down more steeply (a first try keeping the angle moved the near-level
+  Shoulder's focus kilometres ahead and the camera into the ground). spectate-test: +300 lifts it ~270-300.
+- **Table, Close and Mid are one view for every unit** ("save affects all units. not individual like SHOULDER AND FIRST
+  PERSON"): Tune sets them for all, Save keeps them (the widget's config, `kept.views`); Shoulder and 1st person stay
+  per unit type, Save still giving them to the equivalents. Old per-type Table/Close/Mid settings are not used.
+- **Shoulder by default centred on the unit, close behind it** ("shoulder is very off by default"): fitted to each
+  unit, the camera 4 radii + 40 elmos behind and 1.5 radii + 20 above its middle, looking through its middle (the
+  focus where that line meets the ground); a unit type's own Shoulder (Tune) still wins. spectate-test: the unit at
+  639,371 of a 1280x720 screen, the camera behind it.
+- The lobby tests run offline now (one BAR account: a test login ended his game on the phone).
+
 ## Morning: the slow night was the phone; the info panel's cost (2026-10-28, from 06:30)
 Kailil asked whether the graphics could drop by themselves as a game gets busy, and (seeing last night's numbers) "i
 authorize you to investigate and automaotically do what you need to do to handle it"; if the spectating tools cost
