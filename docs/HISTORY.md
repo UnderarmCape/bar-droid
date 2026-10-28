@@ -5,17 +5,13 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
-## Mouse and keyboard as on a PC (2026-10-27 evening)
-Kailil: "I want people to be able to use mouse and keyboard either via Bluetooth or plugged in via usb-c dock. and i
-want android to not hijack its inputs and listen for shortcuts and other things." Design and details: HANDOFF.md
-"Mouse and keyboard". What was found on the way:
-- **Absolute pointer positions cannot drive Recoil's middle-click scroll.** `CMouseHandler::HideMouse` puts SDL in
-  relative mode (`SDL_SetRelativeMouseMode`), and SDL2 on X11 reads relative motion from XInput2 raw events; lorie
-  queues Android's absolute positions with `POINTER_NORAW`, its relative ones with raw events and the X server's
-  acceleration. Hence pointer capture, not Termux:X11's default absolute mode.
-- **Termux:X11's defaults were off for a game:** the captured pointer scaled by the display density, the wheel 100
-  units a click where lorie divides by 120, Escape releasing the capture, letters sent as text (pressed and released at
-  once: no held keys), and hardware keys going through the soft keyboard first.
+## Keyboard shortcuts kept out of the game (2026-10-27 evening)
+Kailil asked for mouse and keyboard over Bluetooth or a USB-C dock "and i want android to not hijack its inputs and
+listen for shortcuts and other things". A first build (b148e59, installed 21:01) also captured the mouse and sent keys
+as scancodes; then Kailil: "mouse and keyboard support works perfectly already. but i just want to make sure the
+android built in keyboard bindings and shortcuts dont listen in on the bar session". The mouse and key handling went
+back to Termux:X11's (no mouse had been used with that build: launcher.log listed no input device), and only the
+shortcut part stayed (HANDOFF.md "Keyboard shortcuts"). What was found on the way:
 - **Android 16.1 has keyboard capture for apps.** Moonlight's commit ddb674a ("Add support for Android 16.1 keyboard
   capture") calls `WindowManager.LayoutParams.setKeyboardCaptureEnabled(true)` with the permission
   `android.permission.CAPTURE_KEYBOARD`. On the Fold7 (Android 17, One UI 9.0): `dumpsys package permission` shows it
@@ -24,10 +20,15 @@ want android to not hijack its inputs and listen for shortcuts and other things.
   was found (AOSP's KeyGestureController, read in full, does not mention it: it consumes Alt+Tab, Meta, Ctrl+Space,
   the Recents and screenshot keys before dispatch). Kailil's check on the phone decides whether the accessibility
   fallback is needed there.
-- Right click as Back: stock Android sends a mouse's right button as `BUTTON_SECONDARY`; only the side buttons
-  (`BUTTON_BACK`) are turned into the Back key (InputReader's synthesized button keys). Some older Samsung, Huawei
-  and Xiaomi builds sent right click as Back (SDL bug 3227): Termux:X11's mapping of a mouse's Back to the right button
-  stays for a mouse that never reports `BUTTON_SECONDARY`.
+- Soft keyboard apps see hardware keys before the app unless the focused view takes them pre-IME; Termux:X11 does
+  that only with its "hardware keyboard scancodes workaround" off; otherwise a keyboard app's own shortcuts (Samsung
+  Keyboard's language switch) can act on keys meant for BAR.
+- Noted from the mouse work, not changed (the mouse works for Kailil): Recoil's middle-click scroll puts SDL in
+  relative mode (`CMouseHandler::HideMouse`), which on X11 reads XInput2 raw events, and lorie queues Android's
+  absolute pointer positions with `POINTER_NORAW` (cmdentrypoint.cpp): that scroll mode may not move with a mouse.
+  Termux:X11 sends 100 wheel units a click where lorie divides by 120. A mouse's right button arrives as
+  `BUTTON_SECONDARY` on stock Android; some older Samsung, Huawei and Xiaomi builds sent it as Back (SDL bug 3227),
+  which Termux:X11 maps back to the right button.
 
 ## Benchmarks on the hot phone; online-safe changes only (2026-10-27 evening)
 Kailil: "we MUST have online play enabled. so only do online safe adjustments." Online games need BAR's official

@@ -18,15 +18,14 @@ import com.termux.x11.input.TouchInputHandler;
 
 /**
  * The game screen: Termux:X11's display/input activity, plus a gamepad bridge. Finger gestures go through
- * {@link RtsTouch}; a mouse and a keyboard are played as on a PC ({@link MouseKeyboard}: the mouse captured, keys and
- * Android's shortcuts to the game); stylus and touchpad go to the X server as in Termux:X11 (its preferences screen
- * controls scaling etc.). The Back button is Escape (BAR's menu, cancel the current command).
+ * {@link RtsTouch}; mouse, stylus, touchpad and keyboard go to the X server exactly as in Termux:X11 (its preferences
+ * screen controls scaling etc.); Android's keyboard shortcuts stay out of the game ({@link KeyboardShortcuts}). The Back
+ * button is Escape (BAR's menu, cancel the current command).
  * Gamepad/joystick events are intercepted here and sent to the engine's Lua over UDP instead.
  */
 public class GameActivity extends MainActivity {
     private ControllerBridge pad;
     private RtsTouch touch;
-    private MouseKeyboard desk;
 
     /**
      * Termux:X11's "scaled" display treats a bigger screen as one of the Fold7's cover screen's pixel count (patch 0006):
@@ -40,8 +39,9 @@ public class GameActivity extends MainActivity {
         // the render resolution setting scales both screens alike: folded the cap then applies too (2520x1080 is the cap)
         float r = Prefs.renderScale / 100f;
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
-        MouseKeyboard.applyTermuxPrefs(this);
+        KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
+        KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
@@ -49,13 +49,10 @@ public class GameActivity extends MainActivity {
         LorieView lorieView = getLorieView();
         View lorieParent = (View) lorieView.getParent();
         TouchInputHandler termux = BarDroidAccess.inputHandler(this);
-        desk = new MouseKeyboard(this, termux);
-        desk.start();
         lorieParent.setOnTouchListener((v, e) -> {
             if (e.getAction() == MotionEvent.ACTION_DOWN)
                 lorieParent.requestUnbufferedDispatch(e);   // as Termux:X11 does: no batching, less latency
             if (touch.handles(e)) return touch.onTouch(e);
-            if (e.isFromSource(InputDevice.SOURCE_MOUSE)) desk.seeButtons(e);
             return termux.handleTouchEvent(lorieParent, lorieView, e);
         });
         // Same as Termux:X11's callback, plus: the game window follows the X screen (fold / unfold).
@@ -64,7 +61,6 @@ public class GameActivity extends MainActivity {
             screenW = w; screenH = h;
             preferRefreshRate();
             touch.screenSize(w, h, refreshHz());
-            desk.captureIfMouse();   // (also when the X server has just connected)
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
         addCatchupView();
@@ -149,31 +145,7 @@ public class GameActivity extends MainActivity {
         getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
         pad.stop();
         touch.close();
-        desk.stop();
         super.onDestroy();
-    }
-
-    @Override
-    public void onWindowFocusChanged(boolean hasFocus) {
-        super.onWindowFocusChanged(hasFocus);
-        if (desk != null) desk.focusChanged(hasFocus);
-    }
-
-    @Override
-    public void onPointerCaptureChanged(boolean hasCapture) {
-        super.onPointerCaptureChanged(hasCapture);
-        if (desk != null) desk.captureChanged(hasCapture);
-        Log.i("input", hasCapture ? "mouse captured: BAR's pointer" : "mouse not captured");
-    }
-
-    /**
-     * Termux:X11 lets the mouse go at every Escape (InputEventSender), and BAR uses Escape all the time: with the
-     * setting on, the capture ends only with the screen's focus (Android), Ctrl+Alt (MouseKeyboard) or the X server.
-     */
-    @Override
-    public void setCapturingEnabled(boolean enabled) {
-        if (!enabled && Prefs.mouseKeyboard && getLorieView().connected()) return;
-        super.setCapturingEnabled(enabled);
     }
 
     // Nobody sees the game while this screen is stopped (phone locked, another app in front; the floating window only
@@ -334,31 +306,31 @@ public class GameActivity extends MainActivity {
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
         if (pad != null && pad.onMotion(ev)) return true;
-        if (desk != null && desk.onGenericMotion(ev)) return true;
         return super.dispatchGenericMotionEvent(ev);
     }
 
     /**
-     * Keys before the soft keyboard sees them (LorieView's pre-IME pass: with the setting on, Termux:X11's "hardware
-     * keyboard scancodes workaround" is off, MouseKeyboard) and from Termux:X11's KeyInterceptor service.
+     * Keys before the soft keyboard sees them (LorieView's pre-IME pass, KeyboardShortcuts) and from Termux:X11's
+     * KeyInterceptor service; super sends them to the X server as Termux:X11 always did.
      * @return false: not used here, the key goes on (to the soft keyboard, dispatchKeyEvent, or Android)
      */
     @Override
     public boolean handleKey(KeyEvent e) {
         if (pad != null && pad.onKey(e)) return true;
-        if (MouseKeyboard.isAndroidKey(e.getKeyCode())) return false;
+        if (KeyboardShortcuts.isAndroidKey(e.getKeyCode())) return false;
         // the system Back: Escape in dispatchKeyEvent, after the soft keyboard (if shown) has closed on it
-        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !MouseKeyboard.fromMouse(e)) return false;
-        if (desk != null && desk.onKey(e)) return true;
-        return super.handleKey(e);
+        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
+        boolean sent = super.handleKey(e);
+        if (sent && e.getAction() == KeyEvent.ACTION_UP) BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
+        return sent;
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (pad != null && pad.onKey(event)) return true;
-        if (MouseKeyboard.isAndroidKey(event.getKeyCode())) return false;   // the window's and the system's handling
+        if (KeyboardShortcuts.isAndroidKey(event.getKeyCode())) return false;   // the window's and the system's handling
         // The system Back button/gesture (not a keyboard's or a mouse's back key) becomes Escape.
-        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !MouseKeyboard.fromMouse(event)
+        if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !event.isFromSource(InputDevice.SOURCE_MOUSE)
                 && getLorieView().connected()) {
             if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0)
                 getLorieView().sendKeyEvent(0, KeyEvent.KEYCODE_ESCAPE, true);

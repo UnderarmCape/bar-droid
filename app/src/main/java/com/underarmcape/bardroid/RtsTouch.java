@@ -85,7 +85,6 @@ final class RtsTouch {
     private long logBytes;
 
     private State state = State.IDLE;
-    private int gestureDevice;                      // the touchscreen of the gesture under way
     private int firstId;
     private float downX, downY, curX, curY;         // first finger, view pixels
     private float panX, panY;                       // where the last pan line ended
@@ -191,12 +190,9 @@ final class RtsTouch {
         ioThread.quitSafely();
     }
 
-    /**
-     * Finger touches on the touchscreen are ours (and the rest of a gesture we started: from the same device, so a
-     * mouse clicked meanwhile stays a mouse).
-     */
+    /** Finger touches on the touchscreen are ours (and the rest of a gesture we started). */
     boolean handles(MotionEvent e) {
-        if (state != State.IDLE && state != State.DONE && e.getDeviceId() == gestureDevice) return true;
+        if (state != State.IDLE && state != State.DONE) return true;
         return Prefs.rtsTouch && e.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)
                 && e.getToolType(e.getActionIndex()) == MotionEvent.TOOL_TYPE_FINGER;
     }
@@ -209,7 +205,6 @@ final class RtsTouch {
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
                 state = State.PENDING;
-                gestureDevice = e.getDeviceId();
                 firstId = e.getPointerId(0);
                 downX = curX = e.getX(); downY = curY = e.getY();
                 downTime = e.getEventTime();
