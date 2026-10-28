@@ -59,15 +59,24 @@ AppSh 'if [ -n "$1" ]; then echo "$1" > files/bar/.bardroid-bench-profile; else 
 $kv = @($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" })
 AppSh 'rm -f files/bar/.bardroid-bench-settings; for l in "$@"; do echo "$l" >> files/bar/.bardroid-bench-settings; done' $kv | Out-Null
 
-function BenchCount { [int](AppSh "grep -c 'Benchmark Results' files/logs/launcher.log 2>/dev/null || echo 0" | Select-Object -Last 1) }
+# the launcher's log lines since the run's start ($1, the phone's clock), also when the app put the full log aside as
+# launcher.old.log during the run (Log.rotateIfBig): of each file, the lines after its last line stamped earlier
+$RunLog = @'
+{ for f in files/logs/launcher.old.log files/logs/launcher.log; do
+  [ -f "$f" ] || continue
+  [ "$f" = files/logs/launcher.log ] || [ "$f" -nt files/bench-start ] || continue
+  awk -v s="$1" 'substr($0,3,1) == ":" && substr($0,1,8) < s { n = 0; next } { b[++n] = $0 } END { for (i = 1; i <= n; i++) print b[i] }' "$f"
+done; }
+'@
+function BenchDone { [int](AppSh "$RunLog | grep -c 'Benchmark Results'" @($script:since) | Select-Object -Last 1) }
 function RunBench {   # one benchmark, start to quit (bardroid_bench.lua quits ~3 s after the results)
-  $n = BenchCount
+  $script:since = "$(AppSh 'touch files/bench-start; date +%H:%M:%S' | Select-Object -Last 1)".Trim()
   Adb shell "input keyevent KEYCODE_WAKEUP" | Out-Null
   Adb shell "am start -n $pkg/.LauncherActivity --es start bench" | Out-Null
   $deadline = (Get-Date).AddMinutes(12)
   while ((Get-Date) -lt $deadline) {
     Start-Sleep 15
-    if ((BenchCount) -gt $n) { break }
+    if ((BenchDone) -gt 0) { break }
   }
   Start-Sleep 6
   Adb shell "am force-stop $pkg"
@@ -84,14 +93,13 @@ if (-not $NoWarm) {
   }
 }
 $start = Thermal
-$since = (Get-Date).ToString("HH:mm:ss")
 # the clocks every 5 s through the run (tools/phone-clocks.sh): what the CPU and GPU were allowed and the heat
 $clkFile = Join-Path $App "build\phone-bench-clocks.txt"
 Adb push (Join-Path $PSScriptRoot "phone-clocks.sh") /data/local/tmp/bardroid-clocks.sh | Out-Null
 Adb shell "sed -i 's/\r$//' /data/local/tmp/bardroid-clocks.sh"
 $clk = Start-Process -FilePath $adb -ArgumentList "-s", $Device, "shell", "sh /data/local/tmp/bardroid-clocks.sh 900" `
   -RedirectStandardOutput $clkFile -NoNewWindow -PassThru
-Write-Host "[phone-bench] started ${since}: resolution $Scale%, frame cap $(if ($Cap) { $Cap } else { 'none' }), status $($start.Status), AP $($start.Ap) C, skin $($start.Skin) C"
+Write-Host "[phone-bench] started $((Get-Date).ToString('HH:mm:ss')): resolution $Scale%, frame cap $(if ($Cap) { $Cap } else { 'none' }), status $($start.Status), AP $($start.Ap) C, skin $($start.Skin) C"
 RunBench
 $end = Thermal
 Adb shell "touch /data/local/tmp/bardroid-clocks.stop" | Out-Null
@@ -105,10 +113,10 @@ if ($threads.Count -gt 1) {
 $clocks = @(Get-Content $clkFile | Select-Object -Skip 1 | ForEach-Object { $f = $_ -split ' '; if ($f.Count -ge 9) {
   [pscustomobject]@{ cpu6 = [int]$f[3]; cap6 = [int]$f[4]; cap0 = [int]$f[2]; gpu = [int]$f[5]; busy = [int]$f[7]; status = [int]$f[8] } } })
 function Med($v) { $s = @($v | Sort-Object); if ($s.Count) { $s[[int][math]::Floor($s.Count / 2)] } else { $null } }
-$lines = AppSh @'
-awk -v s="$1" 'substr($0,1,8) >= s' files/logs/launcher.log | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|bardroid-bench|Watchdog|MESA: error' |
+$lines = AppSh ($RunLog + @'
+ | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|bardroid-bench|Watchdog|MESA: error' |
   sed 's/\[engine\] \[t=[^]]*\]\[f=[^]]*\] //' | cut -c1-230
-'@ @($since)
+'@) @($since)
 $lines | ForEach-Object { Write-Host "  $_" }
 
 function Ms([string]$name) { $m = $lines | Select-String "$name \d+ frames, ([\d.]+)ms per frame" | Select-Object -Last 1; if ($m) { [double]$m.Matches[0].Groups[1].Value } else { $null } }

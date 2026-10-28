@@ -29,7 +29,7 @@ $Data = Join-Path $Work "data"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 
 $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
 $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))

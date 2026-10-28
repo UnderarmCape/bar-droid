@@ -249,9 +249,10 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    neither). **BAR's benchmark on the phone** (`tools/phone-bench.ps1`, unattended, throttled; docs/HISTORY.md
    "Benchmarks"): a 1,300-unit battle is CPU-bound (70% resolution changed nothing), the main thread at ~1.7 GHz under
    Samsung's heat caps, the game at x0.74-0.95 of real time; Android Game Mode no help. Done since: BAR's developer
-   tools out of singleplayer, the info panel cached. Still to run on the phone (Kailil's say when): the widget and
-   gadget profilers (`-Profile widgets|gadgets`), `WorkerThreadCount` 2 vs 4 (`-Settings`), and a check of the
-   singleplayer game without the developer tools. Map edge: the 2026-10-26 rules
+   tools out of singleplayer (checked on the phone), the info panel cached; `WorkerThreadCount` 4 beats 2 by ~5%
+   (keep 4); the phone's profilers: LuaUI 11% of the running time (Reclaim Field Highlight 3.1%), LuaRules 20% (BAR's
+   game: not changeable online). **Only online-safe changes** (Kailil, 2026-10-27: "we MUST have online play
+   enabled"): no engine builds, overlay games or modrules, also in research. Map edge: the 2026-10-26 rules
    (taps off the map clicking nothing, drags anchored mid-screen) removed at Kailil's word ("we will figure out how to
    deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
    (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
@@ -259,7 +260,8 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Reclaim Field Highlight: the costliest widget in big battles,
-   18-21 ms/s on the laptop and half of all Lua garbage, shown only with a reclaimer selected; Defense Range GL4,
+   18-21 ms/s on the laptop and half of all Lua garbage, 3.1% of the phone's running time, shown only with a
+   reclaimer selected; Defense Range GL4,
    Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
    hardening").

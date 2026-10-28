@@ -32,7 +32,7 @@ $Work = Join-Path $App "build\catchup-test"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 $Port = 8452
 
 $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"

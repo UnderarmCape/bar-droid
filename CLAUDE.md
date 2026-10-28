@@ -107,6 +107,8 @@ Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat
 `tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
 `adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
+Laptop checks start spring from `build\engine\<engine>` (`tools\toolchain.ps1` Get-EngineDir), never from BAR's
+install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to
 the real profile anyway; `Run in Emulator.bat` deletes it (also a stale one after a crash).
 Toolchain: AGP 9.3.1, Gradle 9.8.2 wrapper, NDK 29.0.14206865, CMake 3.22.1, JDK 21. One ABI per APK.

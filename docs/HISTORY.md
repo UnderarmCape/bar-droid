@@ -5,6 +5,26 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Benchmarks on the hot phone; online-safe changes only (2026-10-27 evening)
+Kailil: "we MUST have online play enabled. so only do online safe adjustments." Online games need BAR's official
+engine binary and BAR's own game archive, so the hail-mary research's engine builds, overlay games and modrule
+changes are out; what is left are client-side settings, local widgets and what runs around the unchanged engine.
+Runs back to back, throttled (thermal status 2, skin ~42 °C, CPU caps 1.40 / 1.36 GHz), the controller game:
+- **Worker threads: keep 4.** `WorkerThreadCount` 4: Sim 28.96 / 31.21 ms, game speed x0.72 / x0.70; 2: Sim 31.48 /
+  32.14 ms, x0.67 / x0.68 (alternated). The main thread is 87-94% of a core, each worker ~16-22%.
+- **Where the Lua time goes on the phone** (BAR's profilers, `phone-bench.ps1 -Profile widgets|gadgets`; they cost
+  time themselves): LuaUI 11.1% of the running time and 812 kB/s of garbage, of which Reclaim Field Highlight 3.1% and
+  477 kB/s, v0.8.5's Controller Camera Test 1.1% and 217 kB/s (singleplayer only), BAR's Info 0.3%, Notifications
+  0.2%. LuaRules 20.2%: synced 12.0% (Unit Explosion Spawner 0.88, Juno Damage 0.83, Paralyze Damage Handler 0.71,
+  Explosion_lights 0.70 and 410 kB/s, Watereffects 0.51, EMP Lightning 0.50), unsynced 8.1% (CUS GL4 2.67, Fire GL4
+  1.67 and 219 kB/s, Beam Laser GL4 0.89, Fire & Smoke GL4 0.71, Widget Events 0.60). Gadgets are BAR's game: not
+  changeable for online play.
+- BAR's developer tools stay off in the controller game on the phone: infolog shows the empty files in their place
+  (the two widgets "Failed to load ... (no GetInfo() call)", the gadget loaded with nothing in it).
+- `phone-bench.ps1` waited 12 minutes and parsed nothing when the app put a full `launcher.log` aside as
+  `launcher.old.log` during a run (`Log.rotateIfBig`): it reads the run's lines from both files now, from the phone's
+  own clock at the run's start.
+
 ## Benchmarks: where a big battle's time goes (2026-10-27 afternoon)
 Kailil: "make optimizations and run benchmarks over and over"; the game should be GPU-bound, and the sim made cheaper
 without editing the engine. BAR's own "Benchmark BAR" scenario (650 Grunts against 650 Pawns on Starwatcher 1.0,
@@ -35,6 +55,11 @@ it with the clocks every 5 s (`tools/phone-clocks.sh`) and the busiest threads, 
   garbage, singleplayer only); gadgets: Fire GL4 21-40 (wreck fires, new in BAR since May), Widget Events 13 (unit
   deaths to widgets), Fire & Smoke GL4 10-19, Beam Laser GL4 8. Laptop A/B timings are too noisy for small changes
   (Draw 4.4-9.2 ms between identical runs): judge by the profilers' own numbers, and on the phone.
+- **The laptop checks drew through ReShade.** Kailil's BAR install has ReShade beside `spring.exe` (an `opengl32.dll`
+  proxy with DLSS add-ons; found by the hail-mary session): every laptop check drew through it (likely part of that
+  Draw spread, and in `ui-screenshot.ps1`'s pictures) and wrote ReShade's logs into BAR's install. The laptop tools
+  start the engine from `build\engine\<engine>` now (`tools/toolchain.ps1` Get-EngineDir: the engine's files copied,
+  its folders linked, ReShade's left out; BAR's install unchanged).
 - **Fixed: BAR's developer tools ran in every singleplayer game.** BAR turns on its developer mode for a game whose
   version holds `$VERSION` (`luarules/gadgets.lua`), and v0.8.5 plays as that game: the engine shader reloader read
   every engine shader every 10 s in one frame, the widget and gadget reloaders re-read every widget and gadget file

@@ -12,7 +12,7 @@ $Data = Join-Path $Work "data"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 
 Remove-Item -Recurse -Force "$Data\LuaMenu" -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path "$Data\LuaMenu\Config", "$Data\LuaMenu\Widgets" | Out-Null

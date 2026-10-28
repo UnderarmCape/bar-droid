@@ -38,7 +38,7 @@ $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 Assert-BarData
-$EngineDir = Join-Path $BarData "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 $Work = Join-Path $App "build\profile-bench"
 $Data = Join-Path $Work "data"
 $Sdd = Join-Path $Data "games\BAR-gamepad.sdd"
