@@ -4,9 +4,13 @@
 # profiler (its table in the benchmark's screenshot at frame 2015). The game: the phone's BAR release itself.
 # -Widgets: every widget's time logged to infolog (tools/profile/dbg_bardroid_profile_log.lua in a tiny overlay game; it
 # quits after its window, before the benchmark ends).
+# -Modrules "sensors.los.losMipLevel=4;...": BAR's modrules with those keys changed (tools/research/modrules-override.py,
+# generated from the install at run time into the overlay). -Speed n: the game forced to n x speed (the laptop then
+# runs behind like the phone: game speed = throughput). Each run adds a row to build\laptop-bench\results.csv (-Label).
 #   powershell -ExecutionPolicy Bypass -File tools\research\laptop-bench.ps1 [-Gadgets] [-Widgets] [-Settings @{ WorkerThreadCount = 4 }]
 param([switch]$Gadgets, [switch]$Widgets, [switch]$Synced, [switch]$Unsynced, [switch]$Trim, [hashtable]$Settings = @{}, [string]$Engine = "recoil_2026.07.04",
-  [string]$Release = "Beyond All Reason test-31691-a617033", [string]$Extra = "", [string[]]$Off = @())
+  [string]$Release = "Beyond All Reason test-31691-a617033", [string]$Extra = "", [string[]]$Off = @(), [string]$Modrules = "",
+  [int]$Speed = 0, [string]$Label = "", [switch]$Quiet, [string]$EngineDir = "", [hashtable]$Env = @{})
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 . (Join-Path $App "tools\toolchain.ps1")
@@ -15,7 +19,7 @@ $Work = Join-Path $App "build\laptop-bench"
 $Data = Join-Path $Work "data"
 Remove-Item -Recurse -Force "$Data\LuaUI", "$Data\screenshots", "$Data\games" -ErrorAction SilentlyContinue
 $game = $Release
-if ($Widgets -or $Synced -or $Unsynced -or $Trim) {
+if ($Widgets -or $Synced -or $Unsynced -or $Trim -or $Modrules) {
   $sdd = Join-Path $Data "games\BAR-wprof.sdd"
   New-Item -ItemType Directory -Force "$sdd\luaui\Widgets", "$sdd\luarules\gadgets" | Out-Null
   if ($Widgets) { Copy-Item (Join-Path $App "tools\profile\dbg_bardroid_profile_log.lua") "$sdd\luaui\Widgets\" }
@@ -23,6 +27,11 @@ if ($Widgets -or $Synced -or $Unsynced -or $Trim) {
   if ($Trim) {   # the gadget-trim overlay of tools/research/levers.ps1 (PushOverlay)
     . (Join-Path $PSScriptRoot "levers.ps1")
     foreach ($g in $TrimGadgets) { "return false -- hail-mary: off" | Set-Content "$sdd\luarules\gadgets\$g.lua" -Encoding ascii }
+  }
+  if ($Modrules) {
+    & (Join-Path $TC "hosttools\python\python.exe") -I (Join-Path $PSScriptRoot "modrules-override.py") $BarData $Release $Modrules "$sdd\gamedata\modrules.lua"
+    if ($LASTEXITCODE) { throw "modrules override failed" }
+    Copy-Item (Join-Path $PSScriptRoot "dbg_hm_modrules_echo.lua") "$sdd\luaui\Widgets\"
   }
   if ($Unsynced) {
     Copy-Item (Join-Path $App "tools\profile\dbg_bardroid_gadget_profile.lua") "$sdd\luarules\gadgets\"
@@ -62,7 +71,7 @@ UnitIconFadeStart = 1
 UnitIconFadeVanish = 1
 $(($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" }) -join "`n")
 "@ | Set-Content "$Data\springsettings.cfg" -Encoding ascii
-$cmds = "16:debuginfo profiling|2010:debuginfo profiling" + $(if ($Gadgets) { "|40:luarules profile" } else { "" }) + $(if ($Extra) { "|$Extra" } else { "" })
+$cmds = "16:debuginfo profiling|2010:debuginfo profiling" + $(if ($Speed) { "|21:setmaxspeed $Speed|22:setminspeed $Speed" } else { "" }) + $(if ($Gadgets) { "|40:luarules profile" } else { "" }) + $(if ($Extra) { "|$Extra" } else { "" })
 $tpl = Get-Content (Join-Path $App "app\src\main\assets\bardroid\benchmark.template.txt") -Raw
 $tpl.Replace("@GAME@", $game).Replace("|20:vsync 0|", "|20:vsync 0|$cmds|") | Set-Content "$Work\bench.txt" -Encoding ascii
 $links = foreach ($d in "packages", "pool", "rapid") {
@@ -73,13 +82,27 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 try {
   if (-not (Test-Path "$Data\maps\starwatcher_1.0.sd7")) { Copy-Item (Join-Path $BarData "maps\starwatcher_1.0.sd7") "$Data\maps\" }
   $log = Join-Path $Data "infolog.txt"; Remove-Item $log -ErrorAction SilentlyContinue
-  $ed = Join-Path $BarData "engine\$Engine"
+  $ed = if ($EngineDir) { $EngineDir } else { Join-Path $BarData "engine\$Engine" }
+  foreach ($k in $Env.Keys) { Set-Item "env:$k" $Env[$k] }   # research switches (HM_*) for the engine process
   $p = Start-Process -FilePath (Join-Path $ed "spring.exe") -WorkingDirectory $ed -PassThru `
     -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$Work\bench.txt`""
   if (-not $p.WaitForExit(900000)) { $p.Kill(); Write-Host "[laptop-bench] timed out" }
-  Get-Content $log | Select-String -Pattern '(Draw|Sim|Update) \d+ frames|Worker \d thread|Optimal|Core Mask|\[bardroid-profile\]|\[hm-sprofile\]|\[bardroid-gprofile\]|Error|error' |
-    ForEach-Object { $_.Line -replace '^\[t=[^\]]+\](\[f=[^\]]+\])? ', '' }
-  Copy-Item $log (Join-Path $Work "infolog-$((Get-Date).ToString('HHmm')).txt")
+  foreach ($k in $Env.Keys) { Remove-Item "env:$k" -ErrorAction SilentlyContinue }
+  if (-not $Quiet) {
+    Get-Content $log | Select-String -Pattern '(Draw|Sim|Update) \d+ frames|Worker \d thread|Optimal|Core Mask|\[bardroid-profile\]|\[hm-sprofile\]|\[bardroid-gprofile\]|\[hm-modrules\]|Error|error' |
+      ForEach-Object { $_.Line -replace '^\[t=[^\]]+\](\[f=[^\]]+\])? ', '' }
+  }
+  $saved = Join-Path $Work "infolog-$((Get-Date).ToString('HHmmss'))-$($Label -replace '[^\w.-]', '_').txt"
+  Copy-Item $log $saved
+  # the engine timers of the run, one CSV row
+  $py = Join-Path $TC "hosttools\python\python.exe"
+  $tm = & $py -I (Join-Path $PSScriptRoot "timers.py") $saved
+  $get = { param($k) $m = $tm | Select-String ("^" + [regex]::Escape($k) + "\s+([\d.]+)"); if ($m) { [double]$m.Matches[0].Groups[1].Value } else { $null } }
+  $row = [pscustomobject]@{ when = (Get-Date).ToString("HH:mm:ss"); label = $Label; speed_forced = $Speed
+    sim = (& $get "Sim"); lua_sync = (& $get "Lua::Callins::Synced"); lua_unsync = (& $get "Lua::Callins::Unsynced")
+    draw = (& $get "Draw"); game_speed = (& $get "game speed (x real time)"); infolog = (Split-Path $saved -Leaf) }
+  $row | Export-Csv -Path (Join-Path $Work "results.csv") -Append -NoTypeInformation
+  Write-Host ("[laptop-bench] {0}: engine Sim {1} ms/frame, Lua synced {2}, unsynced {3}, Draw {4}, game speed x{5}" -f $Label, $row.sim, $row.lua_sync, $row.lua_unsync, $row.draw, $row.game_speed)
   Get-ChildItem "$Data\screenshots" -ErrorAction SilentlyContinue | Copy-Item -Destination $Work
 } finally {
   foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }

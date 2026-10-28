@@ -165,7 +165,7 @@ cat files/bar/research/prefs.saved | tr '\n' ' '; echo
         AppSh "rm -rf files/bar/research/pgo; grep -E 'Sim [0-9]+ frames|spring exited' files/logs/launcher.log | tail -n 2"
         continue
       }
-      $pbArgs = BenchArgs @{ Scale = $(if ($L.Scale) { $L.Scale } else { $Scale }); Cap = $Cap; Profile = $Profile; Label = "hm:$name$(if ($Profile) { " profile $Profile" })" }
+      $pbArgs = BenchArgs @{ Scale = $(if ($L.Scale) { $L.Scale } else { $Scale }); Cap = $(if ($L.Cap) { $L.Cap } else { $Cap }); Profile = $Profile; Label = "hm:$name$(if ($Profile) { " profile $Profile" })" }
       & (Join-Path $App "tools\phone-bench.ps1") @pbArgs
       Set-Content -Path $lock -Value $PID -Encoding ascii   # phone-bench.ps1 drops the lock on an error
       if ($perfJob) { Finish-PerfJob $perfJob $name }

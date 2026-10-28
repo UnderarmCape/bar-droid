@@ -107,3 +107,122 @@ phone's widget orders, BAR test-31691-a617033). Engine timers, ms per simulated 
 - So on the laptop ~75 % of the engine's Sim time is C++ (units, movement, projectiles, collisions, pathing):
   compiler and threading levers are where the large wins would have to come from. The phone profile (simpleperf)
   checks that.
+
+## Round 2 ("Research again. More ways", 2026-10-27 evening)
+
+The phone stayed with Kailil, so round 2 was measured on the laptop (engine timers: work per simulated frame, not
+wall time) and every phone lever is queued in `tools/research/queue.ps1` (steps 6-8) for when it is handed over.
+
+### Laptop setup notes
+- **The laptop's BAR engine dir holds ReShade.** `engine\recoil_2026.07.04` contains `opengl32.dll` (ReShade's proxy)
+  with `ReShade.ini`, renodx/DLSS add-ons and `nvngx_dlss*.dll`: every laptop benchmark so far (this session's and
+  the main session's) drew through ReShade, which may explain much of the laptop's Draw noise (4.4-9.2 ms between
+  identical runs). Research runs now also use `hailmary-work\win-engine\official-clean`: the same engine files as
+  hard links and junctions, without those files (`laptop-bench.ps1 -EngineDir`). Removing such a dir must use
+  `rmdir` per entry, never a recursive delete (the junctions point into BAR's install).
+- Laptop timings drift with heat by ±15 % over an hour; every variant runs once per round, rounds repeated, medians
+  compared (`tools/research/laptop-matrix.ps1`).
+
+### Analysis without measurements
+- **streflop.** The arm64 build runs streflop in NEON mode: plain hardware single/double arithmetic, but every
+  `math::sin/cos/atan2/sqrt...` goes to streflop's own portable C libm (`rts/lib/streflop/libm/flt-32`, `dbl-64`), and
+  that library is compiled `-march=armv8-a+simd` even in a `-mcpu` build. A research build with `ENABLE_STREFLOP=OFF`
+  (system glibc libm, vectorised and tuned for the core) is the lever ("eng-syslibm"); it is not sync-safe (glibc's
+  results differ in the last bit from streflop's). Its size is whatever simpleperf shows in `streflop::` symbols.
+- **ADPF (PerformanceHintManager).** AOSP's `HintManagerService` accepts thread ids of the calling UID even from other
+  processes ("tids can belong to different application processes"; only isolated processes are checked by PID), so
+  the app could create a hint session for the engine's main thread (same UID under proot) with a 33 ms target and
+  report each frame's duration (libbardroid_pace.so knows it). What it buys: the power HAL raises the *floor* (uclamp
+  min, placement on the prime cores) when frames run long. It cannot lift Samsung's SIOP *ceiling*
+  (`scaling_max_freq`), and in the hot runs the CPU already sits at that ceiling, so the expected gain under throttle
+  is small; it could matter early in a game and for frame pacing. Measuring it needs a small app change (a research
+  APK in `apk-research`); not done.
+- **BOLT.** The NDK has no llvm-bolt and BOLT does not build for Windows hosts; it would have to run in the phone's
+  container (Debian's `bolt-19`) with instrumentation (no LBR on the phone) on top of the PGO build. Ranked last:
+  BOLT's typical 2-7 % on top of PGO, hours of phone time.
+- **GAME_SPEED 20** (`-DHM_GAME_SPEED=20`, `GlobalConstants.h`) and **UnitDamaged to synced Lua only**
+  (`-DHM_SYNCED_DAMAGE_EVENTS_ONLY`, `EventHandler.h`): research patches guarded by defines in the Recoil tree
+  (`tools/research/engine-build/recoil-research.patch`). GAME_SPEED 20 is compared per game second (Sim ms per frame
+  x 20 against x 30); BAR's Lua partly assumes 30 frames per second (timers, effects), so gameplay timing is off.
+- **Only Kailil can test** (nothing changed by me): plugged in vs unplugged (charging heat on the same skin sensor);
+  One UI's Performance profile (`restricted_device_performance=1, 1` was set: Light?) against Standard; a clip-on fan
+  or a cold pack for the no-throttle ceiling.
+### Where the sim frame goes (Tracy, laptop)
+Recoil's own Tracy-instrumented release (`recoil_2026.07.04_amd64-windows-tracy.7z`), the same benchmark, Tracy
+0.11.1's `tracy-capture` for 40 s of the fight (1,198 sim frames, frames ~600-1800), `tracy-csvexport`
+(`hailmary-work\tracy\zones.csv`). Main-thread zones, ms per simulated frame:
+
+| zone | ms/frame | what it is |
+| --- | --- | --- |
+| `Sim::Script` | **4.77** | unit scripts: `CobEngine::Tick` 1.90 (of it `WakeSleepingThreads` 1.75) + the animation pass `CUnitScriptEngine::Tick(MT)` 2.74 (waiting for the workers) |
+| `Sim::Unit::Weapon` | **3.81** | 1.56 M `UpdateWeapons` calls (every unit, every frame: targeting, aiming, salvos) |
+| `Sim::Projectiles` | **2.17** | of it collisions 1.66 |
+| `Sim::Unit::MoveType` | 1.40 | ground movement (collision detection itself 0.19) |
+| `Sim::GameFrame` (Lua) | 1.24 | of it the benchmark's own spawner gadget 0.75 (a benchmark artifact) |
+| `Sim::Unit::SlowUpdate` | 1.02 | |
+| LOS (`Sim::Los` + `UpdateLosTypeMT`) | 0.37 | |
+| `Sim::Path` (QTPFS) | 0.09 | |
+
+Off the main thread, `TickAllAnims` (each animating unit's piece animations, `for_mt` over the worker threads) took
+22.6 s of CPU in 40 s: **~19 ms of CPU per sim frame, 14.6 µs per unit per frame**. Per call it sorts the unit's
+animation list, ticks each animation (turns go through streflop's software `fmod`), checksums each one, and walks the
+piece tree breadth-first with a freshly allocated `std::deque`. With the phone's main + 3 workers on slower cores this
+pass alone is likely ~9 ms of wall time per frame: the thread count and these per-unit costs are where the C++ sim
+can give.
+
+### Laptop results, round 2 (engine timer "Sim", ms per sim frame, median of 3 interleaved rounds)
+
+| variant | Sim | vs base | Lua synced / unsynced | Draw | gameplay effect |
+| --- | --- | --- | --- | --- | --- |
+| base (official engine, ReShade dir) | 12.32 | | 1.68 / 5.56 | 4.99 | |
+| LuaUI disabled | 10.62 | **-14 %** | 1.38 / 1.42 | 1.87 | no interface at all |
+| gadget trim (30 gadgets) | 10.96 | **-11 %** | 1.03 / 4.86 | 5.08 | paralyze, shields, Juno, evolution, death effects, fire/laser effects gone |
+| modrules: unit quad position updates every 6th frame | 11.94 | -3 % | | | targeting/collision lookups from older positions |
+| modrules: pathing x0.5 rate, QTPFS 4096 nodes | 12.09 | -2 % | | | slower path refresh |
+| modrules: collision avoidance every 6th frame | 12.09 | -2 % | | | more bumping in crowds |
+| modrules: LOS/air/radar one mip coarser | 12.16 | -1 % | | | blockier LOS edges |
+| modrules: all of the above | 12.45 | +1 % | | | |
+| modrules: quadfield 64 / 256 elmos | 12.49 / 12.91 | +1 / +5 % | | | |
+| modrules: unit collision overlap | 13.01 | +6 % | | | units clump |
+| Sound=0 | 13.16 | +7 % | | | silence |
+
+The spread between identical runs is ±8 %, so only the two Lua levers are clearly real; the modrules knobs act on
+costs the Tracy table shows are small (LOS 0.4, pathing 0.1, collision detection 0.2 ms) and change nothing
+measurable here. Sound runs on its own thread: on the laptop it frees nothing on the main thread (the phone's
+benefit would be heat, a soak-pair question).
+
+**Main-thread split (forced 3x, the laptop behind like the phone):** game speed 1.81 (defaults), 1.80
+(`MinSimDrawBalance=0.05`), 1.80 (`MinSimDrawBalance=0`, `MinDrawFPS=1`): no gain on the laptop, whose draw is only
+~3.5 ms per sim frame. The phone's draw + update is ~3x larger, so the levers stay queued for it.
+### Engine patches on the laptop (Windows research builds)
+To measure engine patches without the phone, the same Recoil 2026.07.04 tree was also built for Windows with
+w64devkit's GCC 16 and BAR's `mingwlibs64` (`hailmary-work\scripts\build-engine-win.ps1`, ~10 min a build; engine dirs
+in `hailmary-work\win-engine\`). The patches are **runtime switches** in one build (`-DHM_RESEARCH_SWITCHES`, each
+off unless its environment variable is set), so they compare within the same binary:
+- `HM_ANIM_DFS`: `TickAllAnims` walks the piece tree depth-first (Recoil's own disabled `#else` branch: recursion,
+  no `std::deque` allocated per unit per frame);
+- `HM_NO_SYNC_HASH`: no sync checksum work (`CSyncChecker::Sync`, the per-animation `LiteHash`);
+- `HM_DMG_SYNCED_ONLY`: `UnitDamaged` reaches synced Lua only (not LuaUI, not unsynced LuaRules; ~23,000 calls a
+  second in the fight).
+Two need builds of their own: `HM_GAME_SPEED=20` (`GlobalConstants.h`) and `ENABLE_STREFLOP=OFF` (system libm; needed
+two fixes: missing `math::truncf`-style mappings in `streflop_cond.h` and an empty `streflop` stand-in target).
+
+Engine timer "Sim", ms per sim frame, median of 3 interleaved rounds (all from the clean engine dir):
+
+| variant | Sim | vs research build, switches off | sync-safe? | gameplay effect |
+| --- | --- | --- | --- | --- |
+| official engine (GCC 13) | 13.36 | +5 % | yes | |
+| research build, switches off (GCC 16 -O3) | 12.73 | | compiler differs: unproven | |
+| `HM_NO_SYNC_HASH` | 12.78 | 0 % | no desync detection | none visible |
+| `HM_ANIM_DFS` | 11.87 | **-7 %** | yes (same results, other order of a pure tree walk) | none |
+| system libm (streflop off) | 11.66 | **-8 %** | **no** | none visible |
+| `HM_DMG_SYNCED_ONLY` | 11.51 | **-10 %** | yes (unsynced only) | health bars, damage notifications, hit sounds that hang on UnitDamaged stop |
+| all three switches | 10.92 | **-14 %** | no desync detection | as above |
+| GAME_SPEED 20 | 12.19 per frame = **-36 % per game second** | | **no** | BAR's Lua timers, effects and UI that assume 30 frames a second run slow; units move the same |
+| WorkerThreadCount 4 / 16 (official) | 13.61 / 12.46 | | yes | |
+
+Identical runs spread ±8 %, so single levers of 5-10 % are suggestive, the combination (-14 %) and GAME_SPEED are
+solid. Threads scale weakly on the laptop (4 → 16 workers: -9 %); the phone has slower cores and only main + 3
+workers by default, so `workers8` is still the first CPU lever to measure there. Observation: Draw per sim frame is
+~2x higher from the clean engine dir than from BAR's dir with ReShade's `opengl32.dll` (10.8 vs 5.0 ms), so laptop
+Draw numbers are only comparable within one dir.

@@ -1,3 +1,19 @@
+diff --git a/rts/Sim/Misc/GlobalConstants.h b/rts/Sim/Misc/GlobalConstants.h
+index 2259f56..2eff4a0 100644
+--- a/rts/Sim/Misc/GlobalConstants.h
++++ b/rts/Sim/Misc/GlobalConstants.h
+@@ -49,7 +49,11 @@ static constexpr float ELMOS_TO_METERS = 1.0f / SQUARE_SIZE;
+  *
+  * Defines the game-/sim-frames per second.
+  */
++#ifdef HM_GAME_SPEED // hail-mary research: fewer simulated frames per second (unit speeds are per frame = per second / GAME_SPEED)
++static constexpr int GAME_SPEED = HM_GAME_SPEED;
++#else
+ static constexpr int GAME_SPEED = 30;
++#endif
+ static constexpr float INV_GAME_SPEED = 1.0f / GAME_SPEED;
+ 
+ /**
 diff --git a/rts/Sim/MoveTypes/GroundMoveType.h b/rts/Sim/MoveTypes/GroundMoveType.h
 index 3f10be4..ea68fb0 100644
 --- a/rts/Sim/MoveTypes/GroundMoveType.h
@@ -19,19 +35,133 @@ index 3f10be4..ea68fb0 100644
  	}
  	unsigned int GetPathId() override { return pathID; }
  
+diff --git a/rts/Sim/Units/Scripts/UnitScript.cpp b/rts/Sim/Units/Scripts/UnitScript.cpp
+index 0e56389..7dff8c9 100644
+--- a/rts/Sim/Units/Scripts/UnitScript.cpp
++++ b/rts/Sim/Units/Scripts/UnitScript.cpp
+@@ -2,6 +2,7 @@
+ 
+ /* heavily based on CobInstance.cpp */
+ #include "UnitScript.h"
++#include <cstdlib>
+ 
+ #include "CobDefines.h"
+ #include "CobFile.h"
+@@ -209,6 +210,12 @@ void CUnitScript::TickAllAnims(int deltaTime)
+ 	static constexpr std::array<TickAnimFunc, ACount> TICK_ANIM_FUNCS = { &CUnitScript::TickTurnAnim, &CUnitScript::TickSpinAnim, &CUnitScript::TickMoveAnim, &CUnitScript::TickScaleAnim };
+ 
+ 	const int tickRate = 1000 / deltaTime;
++#ifdef HM_RESEARCH_SWITCHES // hail-mary research: HM_ANIM_DFS = depth-first piece walk (no std::deque per call), HM_NO_SYNC_HASH = no anim checksum
++	static const bool hmAnimDfs = (std::getenv("HM_ANIM_DFS") != nullptr);
++	static const bool hmNoHash = (std::getenv("HM_NO_SYNC_HASH") != nullptr);
++#else
++	constexpr bool hmAnimDfs = false, hmNoHash = false;
++#endif
+ 
+ 	// clear doneAnims here to preserve them for DumpState
+ 	doneAnims.clear();
+@@ -222,11 +229,12 @@ void CUnitScript::TickAllAnims(int deltaTime)
+ 		}
+ 
+ 		// checksum all anims (live + done)
+-		checksum = spring::LiteHash(ai, checksum);
++		if (!hmNoHash)
++			checksum = spring::LiteHash(ai, checksum);
+ 	}
+ 
+ 	spring::VectorEraseIfAll(anims, [](const auto& ai) { return ai.done; });
+-#if 1
++	if (!hmAnimDfs) {
+ 	// BFS pass
+ 	std::deque<std::pair<LocalModelPiece*, Transform>> q;
+ 	q.push_front({ rootPiece, Transform{} });
+@@ -249,7 +257,7 @@ void CUnitScript::TickAllAnims(int deltaTime)
+ 			q.push_back({ child, modelTra });
+ 		}
+ 	}
+-#else
++	} else {
+ 	// DFS pass
+ 	auto WalkDFS = [](this auto&& self, LocalModelPiece* lmp, const Transform& pTra) -> void {
+ 		if (lmp->GetDirty()) {
+@@ -266,7 +274,7 @@ void CUnitScript::TickAllAnims(int deltaTime)
+ 	};
+ 
+ 	WalkDFS(rootPiece, Transform{});
+-#endif
++	}
+ #ifdef _DEBUG
+ 	for (auto* p : pieces) {
+ 		// NOTE: p can actually be nullptr when the cob script mentions pieces that don't exist in the model!
+diff --git a/rts/System/EventHandler.h b/rts/System/EventHandler.h
+index 31d7779..359e557 100644
+--- a/rts/System/EventHandler.h
++++ b/rts/System/EventHandler.h
+@@ -5,6 +5,7 @@
+ 
+ #include <string>
+ #include <vector>
++#include <cstdlib>
+ 
+ #include "System/EventClient.h"
+ #include "Sim/Units/Unit.h"
+@@ -559,7 +560,18 @@ inline void CEventHandler::UnitDamaged(
+ 	int projectileID,
+ 	bool paralyzer)
+ {
++#ifdef HM_RESEARCH_SWITCHES // hail-mary research: HM_DMG_SYNCED_ONLY set = UnitDamaged reaches synced Lua only (not LuaUI, not unsynced LuaRules)
++	static const bool hmSyncedOnly = (std::getenv("HM_DMG_SYNCED_ONLY") != nullptr);
++	const auto unitAllyTeam = unit->allyteam;
++	for (size_t i = 0; i < listUnitDamaged.size(); ) {
++		CEventClient* ec = listUnitDamaged[i];
++		if ((!hmSyncedOnly || ec->GetSynced()) && ec->CanReadAllyTeam(unitAllyTeam))
++			ec->UnitDamaged(unit, attacker, damage, weaponDefID, projectileID, paralyzer);
++		i += (i < listUnitDamaged.size() && ec == listUnitDamaged[i]);
++	}
++#else
+ 	ITERATE_UNIT_ALLYTEAM_EVENTCLIENTLIST(UnitDamaged, unit, attacker, damage, weaponDefID, projectileID, paralyzer)
++#endif
+ }
+ 
+ inline void CEventHandler::UnitStunned(
 diff --git a/rts/System/Sync/SyncChecker.cpp b/rts/System/Sync/SyncChecker.cpp
-index edb0cb0..4e0c8d5 100644
+index edb0cb0..6b7d8dc 100644
 --- a/rts/System/Sync/SyncChecker.cpp
 +++ b/rts/System/Sync/SyncChecker.cpp
-@@ -27,6 +27,7 @@ void CSyncChecker::debugSyncCheckThreading()
+@@ -4,6 +4,7 @@
+ #ifdef SYNCCHECK
+ 
+ #include "SyncChecker.h"
++#include <cstdlib>
+ 
+ // This cannot be included in the header file (SyncChecker.h) because include conflicts will occur.
+ #include "System/Threading/ThreadPool.h"
+@@ -27,8 +28,13 @@ void CSyncChecker::debugSyncCheckThreading()
  	assert(ThreadPool::GetThreadNum() == 0);
  }
  
 +#ifndef HM_NO_SYNC_HASH
  void CSyncChecker::Sync(uint32_t val)
  {
++#ifdef HM_RESEARCH_SWITCHES // hail-mary research: HM_NO_SYNC_HASH set = no checksum work
++	static const bool hmOff = (std::getenv("HM_NO_SYNC_HASH") != nullptr);
++	if (hmOff) return;
++#endif
  #ifdef DEBUG_SYNC_MT_CHECK
-@@ -57,6 +58,8 @@ void CSyncChecker::Sync(const void* p, unsigned size)
+ 	// Sync calls should not be occurring in multi-threaded sections
+ 	debugSyncCheckThreading();
+@@ -43,6 +49,10 @@ void CSyncChecker::Sync(uint32_t val)
+ 
+ void CSyncChecker::Sync(const void* p, unsigned size)
+ {
++#ifdef HM_RESEARCH_SWITCHES
++	static const bool hmOff = (std::getenv("HM_NO_SYNC_HASH") != nullptr);
++	if (hmOff) return;
++#endif
+ #ifdef DEBUG_SYNC_MT_CHECK
+ 	// Sync calls should not be occurring in multi-threaded sections
+ 	debugSyncCheckThreading();
+@@ -57,6 +67,8 @@ void CSyncChecker::Sync(const void* p, unsigned size)
  #endif // SYNC_HISTORY
  }
  
@@ -58,3 +188,46 @@ index 3fb996c..69a9926 100644
  		#ifdef SYNC_HISTORY
  		static std::tuple<unsigned, unsigned, unsigned*> GetFrameHistory(unsigned rewindFrames);
  		static std::pair<unsigned, unsigned*> GetHistory() { return std::make_pair(nextHistoryIndex, logs.data()); };
+diff --git a/rts/lib/CMakeLists.txt b/rts/lib/CMakeLists.txt
+index 74b8b28..ea9c506 100644
+--- a/rts/lib/CMakeLists.txt
++++ b/rts/lib/CMakeLists.txt
+@@ -49,6 +49,10 @@ ADD_SUBDIRECTORY(nowide)
+ ADD_SUBDIRECTORY(headlessStubs)
+ if (ENABLE_STREFLOP)
+ ADD_SUBDIRECTORY(streflop)
++else ()
++	# hail-mary research (system libm): an empty stand-in, the targets that link "streflop" still resolve
++	add_library(streflop INTERFACE)
++	target_include_directories(streflop INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/streflop)
+ endif ()
+ 
+ SET(GFLAGS_BUILD_SHARED_LIBS          FALSE)
+Submodule rts/lib/streflop contains modified content
+diff --git a/rts/lib/streflop/streflop_cond.h b/rts/lib/streflop/streflop_cond.h
+index f199a2e..6aefd21 100644
+--- a/rts/lib/streflop/streflop_cond.h
++++ b/rts/lib/streflop/streflop_cond.h
+@@ -135,6 +135,22 @@ namespace math {
+ 	static inline float floorf(float x) { return std::floor(x); }
+ 	static inline float ceilf(float x) { return std::ceil(x); }
+ 	static inline float cbrtf(float x) { return std::cbrt(x); }
++	// hail-mary research (ENABLE_STREFLOP=OFF builds): the rest of what the engine calls through math:: with streflop
++	using std::trunc; using std::exp2; using std::copysign; using std::modf; using std::rint; using std::lround;
++	using std::fmin; using std::fmax; using std::remainder; using std::log1p; using std::expm1;
++	using std::asinh; using std::acosh; using std::atanh; using std::nextafter;
++	static inline float truncf(float x) { return std::trunc(x); }
++	static inline float fmodf(float x, float y) { return std::fmod(x, y); }
++	static inline float atan2f(float y, float x) { return std::atan2(y, x); }
++	static inline float asinf(float x) { return std::asin(x); }
++	static inline float atanf(float x) { return std::atan(x); }
++	static inline float expf(float x) { return std::exp(x); }
++	static inline float logf(float x) { return std::log(x); }
++	static inline float powf(float x, float y) { return std::pow(x, y); }
++	static inline float hypotf(float x, float y) { return std::hypot(x, y); }
++	static inline float log2f(float x) { return std::log2(x); }
++	static inline float exp2f(float x) { return std::exp2(x); }
++	static inline float copysignf(float x, float y) { return std::copysign(x, y); }
+ 
+ 
+ // the following are C99 functions -> not supported by VS C

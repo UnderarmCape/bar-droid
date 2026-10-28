@@ -29,11 +29,28 @@ $TrimGadgets = @("unit_explosion_spawner", "unit_juno_damage", "gfx_explosion_li
   "gfx_reclaim_fx", "unit_crashing_aircraft", "unit_respawning", "unit_stun_script", "unit_hats", "unit_paralyze_on_off",
   "unit_paralyze_damage_multiplier", "gfx_tree_feller", "unit_death_animations", "gfx_fire_gl4", "gfx_beam_laser_gl4",
   "gfx_fire_smoke_gl4", "snd_notifications", "gfx_nano_particles_gl4", "snd_battle_volume_controller", "gui_display_dps")
-function PushOverlay([string]$depend = "Beyond All Reason `$VERSION") {
+function PushOverlay([switch]$Trim, [string]$Modrules = "", [string]$depend = "Beyond All Reason `$VERSION") {
   $g = "files/bar/games/BAR-hailmary.sdd"
-  PushText "-- BAR Droid hail-mary research overlay (never shipped): $depend with gadgets switched off`nreturn { name = `"BAR Hail Mary`", shortName = `"BYAR`", version = `"1`", game = `"Beyond All Reason`", shortGame = `"BYAR`", modtype = 1, depend = { `"$depend`" } }`n" "$g/modinfo.lua"
-  $sh = ($TrimGadgets | ForEach-Object { "echo 'return false -- hail-mary: off' > $g/luarules/gadgets/$_.lua" }) -join "`n"
-  AppSh "mkdir -p $g/luarules/gadgets`n$sh`nls $g/luarules/gadgets | wc -l"
+  AppSh "rm -rf $g" | Out-Null
+  PushText "-- BAR Droid hail-mary research overlay (never shipped): $depend$(if ($Trim) { ', gadgets switched off' })$(if ($Modrules) { ", modrules $Modrules" })`nreturn { name = `"BAR Hail Mary`", shortName = `"BYAR`", version = `"1`", game = `"Beyond All Reason`", shortGame = `"BYAR`", modtype = 1, depend = { `"$depend`" } }`n" "$g/modinfo.lua"
+  if ($Trim) {
+    $sh = ($TrimGadgets | ForEach-Object { "echo 'return false -- hail-mary: off' > $g/luarules/gadgets/$_.lua" }) -join "`n"
+    AppSh "mkdir -p $g/luarules/gadgets`n$sh`nls $g/luarules/gadgets | wc -l"
+  }
+  if ($Modrules) {
+    # BAR's own modrules.lua of the release the phone's benchmark game depends on, from the laptop's BAR install,
+    # edited at run time (modrules-override.py); never kept: it lives only in the overlay, removed after the session
+    $relScript = @'
+sed -n 's/.*depend = { "\([^"]*\)".*/\1/p' files/bar/games/BAR-gamepad.sdd/modinfo.lua
+'@
+    $rel = "$(AppSh $relScript)".Trim()
+    $tmp = Join-Path $HM "tmp\modrules.lua"
+    & (Join-Path $TC "hosttools\python\python.exe") -I (Join-Path $Here "modrules-override.py") $BarData $rel $Modrules $tmp
+    if ($LASTEXITCODE) { throw "modrules override for '$rel' failed (is that release in the laptop's BAR install?)" }
+    PushFile $tmp "$g/gamedata/modrules.lua"
+    Remove-Item $tmp
+    PushFile (Join-Path $Here "dbg_hm_modrules_echo.lua") "$g/luaui/Widgets/dbg_hm_modrules_echo.lua"
+  }
 }
 function PushAlloc {
   foreach ($f in "libmimalloc.so.3", "libjemalloc.so.2", "libtcmalloc_minimal.so.4") {
@@ -72,13 +89,51 @@ R_DEBUGCMDS="16:hideinterface 1"'; Scale = 70 }
   "no-luaui-min"    = @{ Conf = 'R_SETTINGS="AdvMapShading=0 AdvUnitShading=0 BumpWaterReflection=0 BumpWaterRefraction=0 ReflectiveWater=0 Water=0 DynamicSky=0 GroundDetail=20 MaxDynamicMapLights=0 MaxDynamicModelLights=0 MaxNanoParticles=0 3DTrees=0 TreeRadius=0 GrassDetail=0 MaxParticles=10000"
 R_DEBUGCMDS="16:luaui disable|17:hideinterface 1"'; Scale = 70 }
   # the gadget-trim overlay (PushOverlay): game logic and effects on damage/explosion events off
-  "gadgets-trim"    = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay } }
+  "gadgets-trim"    = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Trim } }
   # LuaUI widgets that cost the most in the laptop's widget profile with the phone's set (tools/research/laptop-bench.ps1
   # -Widgets), off for the run (wrap-spring.sh R_WIDGETS_OFF; BYAR.lua is put back after the run)
   "widgets-trim"    = @{ Conf = 'R_WIDGETS_OFF="Cache Icons;Reclaim Field Highlight;Sensor Ranges LOS;Unit Repeat Icons;Notifications;Attack Range GL4;Unit Stencil GL4;AdvPlayersList Music Player New;Unit Wait Icons;Attack and Move Notification;Auto Repair Idle Builders;Commander Hurt Vignette;NoDuplicateOrders;Sensor Ranges Radar;Sensor Ranges Jammer Preview;Sensor Ranges Sonar;Projectile Target AoE"' }
   # everything Lua that is not needed to run the fight: LuaUI off and the gadget trim
-  "lua-min"         = @{ Conf = "R_GAME=`"BAR Hail Mary 1`"`nR_DEBUGCMDS=`"17:luaui disable`""; Prepare = { PushOverlay } }
-  # Android Game Mode "performance" for the app (needs appCategory="game" in the installed APK)
+  "lua-min"         = @{ Conf = "R_GAME=`"BAR Hail Mary 1`"`nR_DEBUGCMDS=`"17:luaui disable`""; Prepare = { PushOverlay -Trim } }
+  # --- second round (2026-10-27, "Research again. More ways") ---
+  # Recoil's large-army knobs in BAR's modrules (overlay, generated from BAR's file at run time): one level coarser LOS,
+  # air-LOS and radar maps; ground-unit collision avoidance and quad position updates every 6th frame instead of 3rd;
+  # quadfield cells 256 / 64 elmos instead of 128; slower path updates and half the QTPFS search budget; overlapping units
+  "mr-los"          = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "sensors.los.losMipLevel=4;sensors.los.airMipLevel=5;sensors.los.radarMipLevel=3" } }
+  "mr-avoid6"       = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "movement.groundUnitCollisionAvoidanceUpdateRate=6" } }
+  "mr-quadpos6"     = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "movement.unitQuadPositionUpdateRate=6" } }
+  "mr-quad256"      = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "system.quadFieldQuadSizeInElmos=256" } }
+  "mr-quad64"       = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "system.quadFieldQuadSizeInElmos=64" } }
+  "mr-path"         = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "system.pathFinderUpdateRateScale=0.5;system.qtMaxNodesSearched=4096" } }
+  "mr-overlap"      = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "movement.allowUnitCollisionOverlap=true" } }
+  "mr-all"          = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Modrules "sensors.los.losMipLevel=4;sensors.los.airMipLevel=5;sensors.los.radarMipLevel=3;movement.groundUnitCollisionAvoidanceUpdateRate=6;movement.unitQuadPositionUpdateRate=6;system.pathFinderUpdateRateScale=0.5;system.qtMaxNodesSearched=4096" } }
+  # the main thread's split: sim may take more of it when behind (engine defaults 0.15 and 2)
+  "draw-balance05"  = @{ Conf = 'R_SETTINGS="MinSimDrawBalance=0.05"' }
+  "draw-balance0"   = @{ Conf = 'R_SETTINGS="MinSimDrawBalance=0 MinDrawFPS=1"' }
+  # frame caps (libbardroid_pace.so): fewer draw frames, less heat; compare game speed
+  "cap20"           = @{ Conf = ""; Cap = 20 }
+  "cap30"           = @{ Conf = ""; Cap = 30 }
+  # heat: no OpenAL mixing (the openal thread was ~10 % in the main session's capture)
+  "sound-off"       = @{ Conf = 'R_SETTINGS="Sound=0"' }
+  # huge pages for the heap (check /sys/kernel/mm/transparent_hugepage first: the profile job prints it)
+  "thp-glibc"       = @{ Conf = 'R_ENV="GLIBC_TUNABLES=glibc.malloc.hugetlb=1"' }
+  "thp-mimalloc"    = @{ Conf = 'R_ENV="MIMALLOC_ALLOW_LARGE_OS_PAGES=1"' }
+  # the cool setup for soak pairs (research-bench.ps1 -Runs 6 against baseline -Runs 6): 30 fps, no sound
+  "cool"            = @{ Conf = 'R_SETTINGS="Sound=0"'; Cap = 30 }
+  # engine patches (hailmary-work\recoil-src, tools/research/engine-build/recoil-research.patch): one arm64 build
+  # oryon-lto-sw with runtime switches (-DHM_RESEARCH_SWITCHES; off unless their environment variable is set), and two
+  # builds of their own (GAME_SPEED 20; ENABLE_STREFLOP=OFF = the system libm)
+  "eng-sw"          = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-sw"; Prepare = { PushEngine "oryon-lto-sw" } }
+  "eng-animdfs"     = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-sw`nR_ENV=`"HM_ANIM_DFS=1`""; Prepare = { PushEngine "oryon-lto-sw" } }
+  "eng-nohash-rt"   = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-sw`nR_ENV=`"HM_NO_SYNC_HASH=1`""; Prepare = { PushEngine "oryon-lto-sw" } }
+  "eng-dmgsync"     = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-sw`nR_ENV=`"HM_DMG_SYNCED_ONLY=1`""; Prepare = { PushEngine "oryon-lto-sw" } }
+  "eng-sw-all"      = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-sw`nR_ENV=`"HM_ANIM_DFS=1 HM_NO_SYNC_HASH=1 HM_DMG_SYNCED_ONLY=1`""; Prepare = { PushEngine "oryon-lto-sw" } }
+  "eng-gs20"        = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-gs20"; Prepare = { PushEngine "oryon-lto-gs20" } }
+  "eng-syslibm"     = @{ Conf = "R_ENGINE=$RA/engine-oryon-lto-syslibm"; Prepare = { PushEngine "oryon-lto-syslibm" } }
+  # the hail-mary ceiling: every engine lever in one build (max-all: oryon, ThinLTO, fast-math, system libm, GAME_SPEED
+  # 20, switches on), LuaUI off, the gadget trim, 8 threads, the least drawing, 70 % resolution. Sim at GAME_SPEED 20:
+  # compare Sim ms x 20 with baseline's x 30 (per game second)
+  "everything"      = @{ Conf = "R_ENGINE=$RA/engine-max-all`nR_ENV=`"HM_ANIM_DFS=1 HM_NO_SYNC_HASH=1 HM_DMG_SYNCED_ONLY=1`"`nR_GAME=`"BAR Hail Mary 1`"`nR_DEBUGCMDS=`"17:luaui disable|18:hideinterface 1`"`nR_SETTINGS=`"WorkerThreadCount=8 AdvMapShading=0 AdvUnitShading=0 Water=0 DynamicSky=0 GroundDetail=20 MaxDynamicMapLights=0 MaxDynamicModelLights=0 MaxNanoParticles=0 MaxParticles=10000`""; Scale = 70; Prepare = { PushEngine "max-all"; PushOverlay -Trim } }
   "gamemode-perf"   = @{ Conf = ""; Before = { Adb shell "cmd game mode performance $pkg" }; After = { Adb shell "cmd game mode standard $pkg" } }
   # research engine builds (tools/research/build-engine.ps1 -> hailmary-work\out\<name>\spring)
   "eng-clang-o3"    = @{ Conf = "R_ENGINE=$RA/engine-clang-o3"; Prepare = { PushEngine "clang-o3" } }
@@ -119,6 +174,13 @@ for p in `$pid `$(echo `$pp | tr ',' ' '); do echo "stat0 `$p `$(cut -d' ' -f2,1
 files/simpleperf record -p `$pid -e cpu-clock -f 2000 --duration $secs -o files/perf-$name.data 2>&1 | tail -n 3
 for p in `$pid `$(echo `$pp | tr ',' ' '); do echo "stat1 `$p `$(cut -d' ' -f2,14,15 /proc/`$p/stat)"; done
 ls /proc/`$pid/task | while read t; do echo "thread `$t `$(cat /proc/`$pid/task/`$t/comm) `$(cut -d' ' -f14,15,39 /proc/`$pid/task/`$t/stat)"; done
+# Android scheduling of the engine (read only): cgroups, allowed CPUs, uclamp of its cgroup, huge pages, the threads'
+# last CPU (stat field 39) and voluntary/involuntary switches
+echo "cgroup `$(tr '\n' ' ' < /proc/`$pid/cgroup)"
+grep -E 'Cpus_allowed_list|voluntary_ctxt' /proc/`$pid/status | tr '\n' ' '; echo
+for c in top-app foreground background system-background; do echo "cpuset `$c `$(cat /dev/cpuset/`$c/cpus 2>/dev/null) uclamp `$(cat /dev/cpuctl/`$c/cpu.uclamp.min 2>/dev/null)/`$(cat /dev/cpuctl/`$c/cpu.uclamp.max 2>/dev/null)"; done
+echo "thp `$(cat /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null) defrag `$(cat /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null)"
+ls /proc/`$pid/task | while read t; do echo "sched `$t `$(cat /proc/`$pid/task/`$t/comm) `$(grep -E '^(nr_voluntary_switches|nr_involuntary_switches)' /proc/`$pid/task/`$t/sched 2>/dev/null | tr -s ' ' | tr '\n' ' ')"; done
 "@
   }
 }

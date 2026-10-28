@@ -12,7 +12,8 @@ def dumps(path):
     for line in open(path, encoding="utf-8", errors="replace"):
         if "Total Time" in line and "Part" in line:
             m = re.search(r"\[f=(-?\d+)\]", line)
-            cur = {}
+            w = re.match(r"\[t=(\d+):(\d+):([\d.]+)\]", line)
+            cur = {"_wall": int(w.group(1)) * 3600 + int(w.group(2)) * 60 + float(w.group(3)) if w else 0.0}
             out.append((int(m.group(1)) if m else None, cur))
             continue
         m = ROW.match(line.rstrip("\n"))
@@ -31,7 +32,10 @@ for p in sys.argv[1:]:
         continue
     (f0, a), (f1, b) = d[0], d[-1]
     frames = (f1 - f0) if (f0 is not None and f1 is not None) else 1994
-    cols.append((p, {k: (b[k] - a.get(k, 0.0)) / frames for k in b}, frames))
+    c = {k: (b[k] - a.get(k, 0.0)) / frames for k in b if k != "_wall"}
+    secs = b["_wall"] - a["_wall"]
+    c["game speed (x real time)"] = frames / 30.0 / secs if secs > 0 else 0.0
+    cols.append((p, c, frames))
 if not cols:
     sys.exit(1)
 keys = sorted(cols[0][1], key=lambda k: -cols[0][1][k])
@@ -39,7 +43,7 @@ sim = cols[0][1].get("Sim", 1.0) or 1.0
 print("%-38s" % "part (ms per sim frame)" + "".join("%10s" % ("run%d" % i) for i in range(len(cols))) + "   % of Sim")
 for k in keys:
     v = cols[0][1][k]
-    if v < 0.05:
+    if v < 0.05 and not k.startswith("game speed"):
         continue
     print("%-38s" % k[:38] + "".join("%10.2f" % c[1].get(k, 0.0) for c in cols) + "   %5.1f" % (100 * v / sim))
 for i, c in enumerate(cols):

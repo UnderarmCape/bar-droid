@@ -1,4 +1,4 @@
-# The hail-mary phone queue, in order of expected payoff (each research-bench.ps1 call takes and releases the phone
+﻿# The hail-mary phone queue, in order of expected payoff (each research-bench.ps1 call takes and releases the phone
 # lock; it does nothing without hailmary-work\phone-ok, see research-bench.ps1). Engine builds must exist in
 # hailmary-work\out (hailmary-work\scripts\build-engine.ps1). Afterwards: python -I tools\research\summary.py --markdown
 #   powershell -ExecutionPolicy Bypass -File tools\research\queue.ps1 [-From 1]
@@ -15,7 +15,17 @@ $steps = @(
   # 4: Lua: LuaUI off, gadget trim, widget trim, both
   { RB -Lever "no-luaui,gadgets-trim,baseline,widgets-trim,lua-min,baseline" -NoWarm },
   # 5: the rest of the engine builds and the CPU levers
-  { RB -Lever "eng-oryon-lto-nosync,eng-oryon-lto-fast,eng-oryon,eng-clang-o3,baseline,pin-main7,taskset-prime,mimalloc,baseline" -NoWarm }
+  { RB -Lever "eng-oryon-lto-nosync,eng-oryon-lto-fast,eng-oryon,eng-clang-o3,baseline,pin-main7,taskset-prime,mimalloc,baseline" -NoWarm },
+  # 6 (round 2): modrules knobs, the main thread's draw/sim split, frame caps, sound, huge pages
+  { RB -Lever "mr-los,mr-avoid6,mr-quadpos6,baseline,mr-quad256,mr-quad64,mr-path,mr-overlap,mr-all,baseline" -NoWarm },
+  { RB -Lever "draw-balance05,draw-balance0,cap30,cap20,baseline,sound-off,thp-glibc,thp-mimalloc,baseline" -NoWarm },
+  # 7 (round 2): engine patches (GAME_SPEED 20, damage events to synced Lua only, system libm) and worker counts
+  { RB -Lever "eng-sw,eng-animdfs,eng-nohash-rt,eng-dmgsync,eng-sw-all,baseline,eng-gs20,eng-syslibm,baseline,workers5,workers7,workers8,baseline" -NoWarm },
+  # 8 (round 2): soak pair, ~15 min each: steady-state CPU cap of the cool setup against the default
+  { RB -Lever "baseline" -Runs 6 -NoWarm },
+  { RB -Lever "cool" -Runs 6 -NoWarm },
+  # 9: the ceiling: every lever at once, against baselines
+  { RB -Lever "everything,baseline,everything" -NoWarm }
 )
 for ($i = $From; $i -le $steps.Count; $i++) {
   Write-Host "=== queue step $i"
