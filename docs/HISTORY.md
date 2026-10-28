@@ -5,6 +5,24 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Evening: Shoulder on any ground and any unit (2026-10-28)
+A review of `bardroid_spectate.lua`'s afternoon changes, with new spectate-test cases, found three ways the fitted
+Shoulder missed "every unit is centered":
+- **Another unit kept the last one's camera.** The arrows and a double tap kept Shoulder on but not its fit: a
+  Jethro after another unit got that unit's distance (243 against its own 144) and sat off the screen's middle. The
+  view is fitted again whenever the unit followed changes.
+- **On a slope the engine moved the camera.** The fit assumed level ground: the Spring camera's focus is always on the
+  ground and the engine lifts a camera below the ground to 5 elmos above it (`CSpringController::GetPos`), so a unit
+  with rising ground behind it was framed from below (the replay's unit at 563,571 of 1280x720; the camera 5 elmos
+  over the ground). The fit is made each frame from the ground as it is: the camera at least 20 elmos above the ground
+  behind the unit, the focus where the line through the unit's middle meets the ground (gliding as the unit moves).
+- **The camera looked past the unit.** With `CamSpringLockCardinalDirections` on (the engine's default; the app's
+  springsettings.cfg turns it off, BAR or a player can turn it on again) the Spring camera looks not along its state's
+  turn but along a "locked" one, up to ~25 degrees off (`CSpringController::GetAzimuth`): the Commander facing 1.32 rad
+  was looked at from 1.06. The widget now gives the engine the turn that looks where it means.
+spectate-test: all pass with the lock on and off (`-Settings @{CamSpringLockCardinalDirections=0}`, new); the
+Commander at 640,355 of 1280x720, the replay's bot at 639,418.
+
 ## Afternoon: the unfolded screen, the views, Native tried (2026-10-28, from 12:30)
 Kailil, spectating on the phone:
 - **Native resolution: "a no go"** after a game unfolded at 2184x1968 (the launcher's Native choice stays; the phone

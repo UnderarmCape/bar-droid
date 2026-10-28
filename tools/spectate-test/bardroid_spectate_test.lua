@@ -45,6 +45,20 @@ local function fromUnit(unitID)
 	return dx, dz, math.sqrt(dx * dx + dz * dz)
 end
 
+-- Shoulder's framing of a unit: its middle on the screen (x, y), the camera behind it (> 0) and whether that is the
+-- middle of the screen with the camera behind
+local function shoulderFrame(u)
+	local _, _, _, mx, my, mz = Spring.GetUnitPosition(u, true)
+	local sx, sy = Spring.WorldToScreenCoords(mx, my, mz)
+	local vsx, vsy = Spring.GetViewGeometry()
+	local cxw, _, czw = Spring.GetCameraPosition()
+	local ux, _, uz = Spring.GetUnitPosition(u)
+	local heading = Spring.GetUnitHeading(u) * math.pi / 32768 -- (0: facing +z)
+	local behind = -((cxw - ux) * math.sin(heading) + (czw - uz) * math.cos(heading))
+	local ok = math.abs(sx - vsx / 2) < vsx * 0.1 and math.abs(sy - vsy / 2) < vsy * 0.12 and behind > 0
+	return ok, string.format("unit at %.0f,%.0f of %dx%d, camera %.0f behind", sx, sy, vsx, vsy, behind)
+end
+
 -- a camera move as the fingers make one (bardroid_touch.lua sets the camera state the same way)
 local function moveCamera(dx, dz, distFactor)
 	local cs = Spring.GetCameraState()
@@ -88,6 +102,7 @@ end
 
 local expected
 local before -- (a view's Up: the camera before)
+local other -- (Shoulder on the next unit)
 local cases = {
 	function()
 		WG.BarDroidInput = "touch" -- as the app reports after a finger
@@ -245,17 +260,7 @@ local cases = {
 	-- the ground, so Up lifts the camera over the same focus, looking down more steeply
 	function()
 		-- Shoulder's default (Kailil: "every unit is centered and zoomed in on the back of the unit")
-		local u = S().following()
-		local _, _, _, mx, my, mz = Spring.GetUnitPosition(u, true)
-		local sx, sy = Spring.WorldToScreenCoords(mx, my, mz)
-		local vsx, vsy = Spring.GetViewGeometry()
-		local cxw, _, czw = Spring.GetCameraPosition()
-		local ux, _, uz = Spring.GetUnitPosition(u)
-		local heading = Spring.GetUnitHeading(u) * math.pi / 32768 -- (0: facing +z)
-		local behind = -((cxw - ux) * math.sin(heading) + (czw - uz) * math.cos(heading)) -- (the camera behind it: > 0)
-		check("Shoulder: the unit in the middle of the screen, the camera behind it",
-			math.abs(sx - vsx / 2) < vsx * 0.1 and math.abs(sy - vsy / 2) < vsy * 0.12 and behind > 0,
-			string.format("unit at %.0f,%.0f of %dx%d, camera %.0f behind", sx, sy, vsx, vsy, behind))
+		check("Shoulder: the unit in the middle of the screen, the camera behind it", shoulderFrame(S().following()))
 		local x, y, z = Spring.GetCameraPosition()
 		before = { h = y - Spring.GetGroundHeight(x, z), rx = Spring.GetCameraState().rx }
 		local p = {}
@@ -317,6 +322,48 @@ local cases = {
 		check("Save gives the unit type's own views to its equivalents",
 			#others == 0 or (mine and given and math.abs(given.dist - mine.dist) < 1),
 			string.format("%s -> %s", def.name, table.concat(others, " ")))
+		S().actions.preset_shoulder()
+		return 1.5
+	end,
+	function()
+		-- Shoulder kept on while the next unit is followed (the arrows: the offset kept): fitted to that unit, here the
+		-- team's unit least like this one in size, of a type without its own Shoulder
+		local r0 = Spring.GetUnitRadius(S().following()) or 30
+		local bestK
+		other = nil
+		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+			local own = def and S().presetTypes()[def.name]
+			if def and (def.speed or 0) > 0 and not def.name:find("critter", 1, true) and not def.canFly
+				and not Spring.GetUnitIsBeingBuilt(unitID) and not (own and own.shoulder) then
+				local k = math.abs(math.log((Spring.GetUnitRadius(unitID) or 30) / r0))
+				if not bestK or k > bestK then
+					other, bestK = unitID, k
+				end
+			end
+		end
+		if other then
+			S().follow(other, true)
+		end
+		return 2.5
+	end,
+	function()
+		local fit = S().presetValues("shoulder").fit or { back = -1 }
+		local ok, detail = true, "no other unit type here"
+		if other then
+			ok, detail = shoulderFrame(other)
+			-- (the camera as far behind the unit as fitted to it: the distance itself changes with the ground)
+			local cx, _, cz = Spring.GetCameraPosition()
+			local ux, _, uz = Spring.GetUnitPosition(other)
+			local back = math.sqrt((cx - ux) ^ 2 + (cz - uz) ^ 2)
+			ok = ok and S().following() == other and math.abs(back - fit.back) < fit.back * 0.3
+			local ox, oz, _, ryRel, yaw = S().offset()
+			local vx, _, vz = Spring.GetUnitVelocity(other)
+			detail = string.format("%s: %s, %.0f behind, fitted %.0f (offset %.0f %.0f, turn %.2f, camera ry %.2f, unit yaw %.2f, "
+				.. "speed %.1f)", UnitDefs[Spring.GetUnitDefID(other)].name, detail, back, fit.back, ox, oz, ryRel,
+				Spring.GetCameraState().ry or -1, yaw or -1, math.sqrt(vx * vx + vz * vz))
+		end
+		check("Shoulder on the next unit: fitted to that unit, not the last one", ok, detail)
 		S().actions.group()
 		S().actions.preset_mid()
 		return 1.5

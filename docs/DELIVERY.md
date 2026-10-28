@@ -131,6 +131,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       throwaway key builds and passes `publish-check -Apk`), Gradle names a keyless release `-unsigned.apk`, and the
       tool prints the exact publish-check command. Line endings checked: `.gitattributes` keeps `.bat` CRLF and the
       container's `.sh` LF for any checkout, no binary is taken for text, every `.ps1` is ASCII (PowerShell 5.1).
+      `bardroid_spectate.lua`'s new views reviewed: the fitted Shoulder kept the last unit's camera on the next unit,
+      was framed from below on slopes (the engine lifts a camera under the ground) and looked past the unit with the
+      engine's cardinal lock on; fixed, with a spectate-test case for the next unit (HISTORY.md "Evening").
 
 ## Releasing (once the blockers are done)
 

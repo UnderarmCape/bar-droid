@@ -72,6 +72,12 @@ local views = {} -- the universal views as the player set them (Tune), by key
 -- on the ground), so the unit is in the middle of the screen at any size.
 local SHOULDER_BACK, SHOULDER_BACK_ADD = 4, 40
 local SHOULDER_UP, SHOULDER_UP_ADD = 1.5, 20
+-- On uneven ground it is fitted again every frame from the ground as it is (the engine puts the focus on the ground and
+-- lifts a camera below it to 5 elmos above: CSpringController::Update, GetPos; a unit on a slope was off the screen's
+-- middle): the camera at least SHOULDER_CLEAR above the ground behind the unit, the focus where the line through the
+-- unit's middle meets the ground, at most SHOULDER_AHEAD_MAX times the camera's distance behind ahead of the unit.
+local SHOULDER_CLEAR, SHOULDER_AHEAD_MAX = 20, 6
+local RX_MIN, RX_MAX = math.pi * 0.51, math.pi * 0.99 -- (the Spring camera's pitch limits: CSpringController::Update)
 
 -- 1st person rides the unit in the engine's first-person camera ("fps": an eye position and a direction; it keeps the
 -- eye 5 elmos above the ground). Kailil sets these on the laptop with tools/fp-tuner.ps1 ("on the desktop only ... then
@@ -164,8 +170,11 @@ local active = false
 local shown = false -- the bar: active and BAR's player list open
 local buttons = {} -- { x0, y0, x1, y1, action, label, lit, color }
 local follow -- { unitID, team, members, cx, cz, at, bx, bz (the followed point, smoothed), yaw, setX, setZ, setRy }
--- the camera's place relative to what it follows; it stays when the arrows pick another unit
-local view = { frame = "world", ox = 0, oz = 0, oy = 0, ryRel = 0, preset = nil, blend = nil }
+-- the camera's place relative to what it follows; it stays when the arrows pick another unit. fit: Shoulder fitted to
+-- the unit (shoulderFit); addDist, addRx: what updateFollow put on the camera's distance and pitch last frame (the fit
+-- on the ground as it is, a view's Up), taken off again before the fingers' and a preset's changes are read
+local view = { frame = "world", ox = 0, oz = 0, oy = 0, ryRel = 0, preset = nil, blend = nil, fit = nil, addDist = 0,
+	addRx = 0 }
 local groupMode = false
 local tuning = false -- Tune on the bar (below)
 local cycle -- { list of unitIDs by distance from the screen's centre, taken at the first arrow }
@@ -235,6 +244,7 @@ end
 
 local function stopFollow()
 	leaveFirstPerson()
+	view.addDist, view.addRx = 0, 0 -- (the camera stays as it is)
 	follow = nil
 	cycle = nil
 	tuning = false
@@ -320,6 +330,8 @@ local function addToOffset(dx, dz, yaw)
 	view.oz = view.oz + dx * fx + dz * fz
 end
 
+local applyPreset -- (below)
+
 local function startFollow(unitID, keepOffset)
 	local x, _, z = spGetUnitPosition(unitID)
 	if not x then
@@ -336,6 +348,11 @@ local function startFollow(unitID, keepOffset)
 	local bx, bz = (cs.px or x) - mx, (cs.pz or z) - mz
 	follow = { unitID = unitID, team = Spring.GetUnitTeam(unitID), cx = x, cz = z, members = { unitID }, at = -1,
 		bx = bx, bz = bz, yaw = yaw }
+	-- Shoulder is the unit's own: its type's, else fitted to its size (the last unit's kept a small unit's camera on a
+	-- big one, or the other way round)
+	if view.preset == "shoulder" then
+		applyPreset("shoulder")
+	end
 end
 
 -- mobile units by distance from where the camera looks (the screen's centre)
@@ -603,6 +620,59 @@ local function updateFirstPerson(dt)
 	spSetCameraState(c, 0)
 end
 
+-- Shoulder's fit on the ground as it is (SHOULDER_CLEAR): for the unit at x, z with its base at by, facing yaw, how far
+-- ahead of it the focus is, the camera's distance and its pitch
+local function fitOnGround(fit, x, by, z, yaw)
+	local fx, fz = math.sin(yaw), -math.cos(yaw) -- ahead
+	local cx, cz = x - fx * fit.back, z - fz * fit.back
+	local my = by + fit.mid
+	local cy = math.max(my + fit.above, math.max(0, Spring.GetGroundHeight(cx, cz)) + SHOULDER_CLEAR)
+	local slope = (cy - my) / fit.back -- (the line through the middle: down per elmo ahead)
+	local d = fit.ahead
+	for _ = 1, 4 do -- (where the line meets the ground, the ground there read again each step)
+		d = math.max(0, math.min(SHOULDER_AHEAD_MAX * fit.back, (my - Spring.GetGroundHeight(x + fx * d, z + fz * d)) / slope))
+	end
+	local across = fit.back + d
+	local height = math.max(1, cy - Spring.GetGroundHeight(x + fx * d, z + fz * d))
+	return d, math.sqrt(across * across + height * height), math.pi / 2 + math.atan2(height, across)
+end
+
+-- The Spring camera looks along its state's ry through a "cardinal lock" when CamSpringLockCardinalDirections is on
+-- (the engine's default; the app's springsettings.cfg turns it off, BAR or the player can turn it on again): it holds
+-- still near north, east, south and west and turns faster between (CSpringController::GetAzimuth), up to ~25 degrees
+-- from ry, so a camera behind a unit looked past it. lookAzimuth: where a state's ry looks; stateRy: the ry that looks
+-- along an azimuth (the lock's width: 0.2 of a quarter turn).
+local QUARTER = math.pi / 2
+local lockOn, lockReadAt = false, -100
+local function cardinalLock()
+	if now() - lockReadAt > 1 then
+		lockReadAt = now()
+		lockOn = Spring.GetConfigInt("CamSpringLockCardinalDirections", 1) ~= 0
+	end
+	return lockOn
+end
+
+local function lookAzimuth(ry)
+	if not cardinalLock() then
+		return ry
+	end
+	local moved = math.abs(ry / QUARTER) - 0.1
+	local n = moved < 0 and 0 or math.floor(moved)
+	local fract = moved - n
+	return (ry < 0 and -1 or 1) * (n + (fract > 0.2 and fract * 1.25 - 0.25 or 0)) * QUARTER
+end
+
+local function stateRy(az)
+	if not cardinalLock() then
+		return az
+	end
+	az = (az + math.pi) % (2 * math.pi) - math.pi
+	local a = math.abs(az) / QUARTER
+	local n = math.floor(a)
+	local f = a - n
+	return (az < 0 and -1 or 1) * (f > 0 and n + 0.3 + 0.8 * f or n + 0.2) * QUARTER
+end
+
 local function updateFollow(dt)
 	local f = follow
 	if not f then
@@ -629,7 +699,7 @@ local function updateFollow(dt)
 	if f.setX then
 		addToOffset(cs.px - f.setX, cs.pz - f.setZ, f.yaw)
 		if view.frame == "unit" and cs.ry and f.setRy then
-			view.ryRel = view.ryRel + (cs.ry - f.setRy)
+			view.ryRel = view.ryRel + ((lookAzimuth(cs.ry) - lookAzimuth(f.setRy) + math.pi) % (2 * math.pi) - math.pi)
 		end
 	end
 	local mx, mz = offsetOnMap(f.yaw)
@@ -641,12 +711,30 @@ local function updateFollow(dt)
 	local glide = groupMode and GROUP_SMOOTHING or FOLLOW_SMOOTHING
 	f.bx, f.vx = smoothDamp(f.bx, tx, f.vx or 0, glide, dt)
 	f.bz, f.vz = smoothDamp(f.bz, tz, f.vz or 0, glide, dt)
+	-- Shoulder fitted to the unit, on the ground as it is under and around it, gliding as the unit moves
+	local fit = not groupMode and view.fit
+	local fitDist, fitRx = 0, 0
+	if fit and f.yaw then
+		local _, by = spGetUnitPosition(f.unitID)
+		if by then
+			local d, dist, rx = fitOnGround(fit, f.bx, by, f.bz, f.yaw)
+			if not f.fitD then
+				f.fitD, f.fitDist, f.fitRx = d, dist, rx
+			end
+			f.fitD = f.fitD + (d - f.fitD) * k
+			f.fitDist = f.fitDist + (dist - f.fitDist) * k
+			f.fitRx = f.fitRx + (rx - f.fitRx) * k
+			local ahead = f.fitD - fit.ahead
+			mx, mz = mx + math.sin(f.yaw) * ahead, mz - math.cos(f.yaw) * ahead
+			fitDist, fitRx = f.fitDist - fit.dist, f.fitRx - fit.rx
+		end
+	end
 	cs.px, cs.pz = f.bx + mx, f.bz + mz
 	if view.frame == "unit" and f.yaw and cs.ry then
-		cs.ry = approachAngle(cs.ry, f.yaw + view.ryRel, k)
+		cs.ry = stateRy(approachAngle(lookAzimuth(cs.ry), f.yaw + view.ryRel, k))
 	end
-	if cs.dist and cs.rx then -- (without last frame's Up, below: the fingers and a preset's glide work on these)
-		cs.dist, cs.rx = cs.dist - (f.upDist or 0), cs.rx - (f.upRx or 0)
+	if cs.dist and cs.rx then -- (without last frame's additions, below: the fingers and a preset's glide work on these)
+		cs.dist, cs.rx = cs.dist - view.addDist, cs.rx - view.addRx
 	end
 	local b = view.blend
 	if b then -- a preset's distance and pitch gliding in
@@ -661,19 +749,24 @@ local function updateFollow(dt)
 			view.blend = nil
 		end
 	end
-	-- A view's Up: the Spring camera always looks at the ground (the engine sets its focus height every frame, so a
-	-- height given in the state was lost; Kailil: "the UP tune setting doesnt work in the shoulder cam"). The camera
-	-- goes up by Up above the same focus at the same distance across the ground, looking down at it more steeply.
-	-- (Keeping the angle instead moved a near-level view's focus kilometres ahead.)
-	f.upDist, f.upRx = 0, 0
-	local up = view.oy or 0
-	if up ~= 0 and cs.dist and cs.rx then
-		local across = cs.dist * math.sin(cs.rx) -- (rx: pi/2 level, pi straight down)
-		local height = math.max(1, -cs.dist * math.cos(cs.rx) + up)
-		local dist = math.sqrt(across * across + height * height)
-		local rx = math.max(math.pi * 0.51, math.min(math.pi * 0.99, math.pi / 2 + math.atan2(height, across)))
-		f.upDist, f.upRx = dist - cs.dist, rx - cs.rx
-		cs.dist, cs.rx = dist, rx
+	-- On top of those each frame (taken off again the next): the fitted Shoulder's change for the ground, then a view's Up
+	view.addDist, view.addRx = 0, 0
+	if cs.dist and cs.rx then
+		local dist0, rx0 = cs.dist, cs.rx
+		cs.dist = cs.dist + fitDist
+		cs.rx = math.max(RX_MIN, math.min(RX_MAX, cs.rx + fitRx))
+		-- A view's Up: the Spring camera always looks at the ground (the engine sets its focus height every frame, so a
+		-- height given in the state was lost; Kailil: "the UP tune setting doesnt work in the shoulder cam"). The
+		-- camera goes up by Up above the same focus at the same distance across the ground, looking down at it more
+		-- steeply. (Keeping the angle instead moved a near-level view's focus kilometres ahead.)
+		local up = view.oy or 0
+		if up ~= 0 then
+			local across = cs.dist * math.sin(cs.rx) -- (rx: pi/2 level, pi straight down)
+			local height = math.max(1, -cs.dist * math.cos(cs.rx) + up)
+			cs.dist = math.sqrt(across * across + height * height)
+			cs.rx = math.max(RX_MIN, math.min(RX_MAX, math.pi / 2 + math.atan2(height, across)))
+		end
+		view.addDist, view.addRx = cs.dist - dist0, cs.rx - rx0
 	end
 	spSetCameraState(cs, 0)
 	f.setX, f.setZ, f.setRy = cs.px, cs.pz, cs.ry
@@ -717,8 +810,9 @@ local function shoulderFit()
 	local back = SHOULDER_BACK * r + SHOULDER_BACK_ADD
 	local above = SHOULDER_UP * r + SHOULDER_UP_ADD -- (the camera over the middle)
 	local ahead = back * mid / above -- (where the line through the middle reaches the ground)
-	return { key = "shoulder", label = "Shoulder", frame = "unit", ryRel = 0, ox = 0, oz = ahead, oy = 0,
-		dist = math.sqrt((back + ahead) ^ 2 + (mid + above) ^ 2), rx = math.pi / 2 + math.atan2(above, back) }
+	local dist, rx = math.sqrt((back + ahead) ^ 2 + (mid + above) ^ 2), math.pi / 2 + math.atan2(above, back)
+	return { key = "shoulder", label = "Shoulder", frame = "unit", ryRel = 0, ox = 0, oz = ahead, oy = 0, dist = dist,
+		rx = rx, fit = { back = back, above = above, mid = mid, ahead = ahead, dist = dist, rx = rx } }
 end
 
 -- a view as the followed unit gets it: Table, Close and Mid the same for all (as the player set them), the others its
@@ -738,7 +832,7 @@ local function presetByKey(key)
 	return defaultPreset(key)
 end
 
-local function applyPreset(key)
+function applyPreset(key) -- (the local declared above startFollow)
 	local p = presetByKey(key)
 	if not (p and follow) then
 		return
@@ -759,6 +853,7 @@ local function applyPreset(key)
 	end
 	view.frame, view.ox, view.oz, view.ryRel, view.preset = p.frame, p.ox or 0, p.oz or 0, p.ryRel or 0, key
 	view.oy = p.oy or 0
+	view.fit, follow.fitD = p.fit, nil
 	view.blend = { dist = p.dist, rx = p.rx, t = now() }
 	closeZoom(p.dist < (minZoomOwn or Spring.GetConfigFloat(MIN_ZOOM_KEY, 300)))
 end
@@ -1425,6 +1520,7 @@ function widget:Initialize()
 		widget = widget, -- (tools/spectate-test.ps1 -Cost times its call-ins; user widgets cannot reach the handler's list)
 		actions = ACTIONS,
 		following = function() return follow and follow.unitID end,
+		follow = function(unitID, keepOffset) startFollow(unitID, keepOffset) end, -- (as the arrows, or a double tap)
 		members = function() return follow and #follow.members or 0 end,
 		shown = function() return shown end,
 		label = function() return (playerLabel()) end,

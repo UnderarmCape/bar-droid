@@ -7,7 +7,9 @@
 #   powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Engine recoil_2026.07.04]
 # -Cost: instead of the checks, what the spectate widget costs per frame (ms and KB of garbage) when off, with the bar
 # up, following a unit, a group and in 1st person (tools\spectate-test\bardroid_spectate_cost.lua, ~1.5 min).
-param([string]$Replay = "", [string]$Engine = "", [switch]$Cost)
+# -Settings @{ Key = value }: engine settings for the run (e.g. CamSpringLockCardinalDirections = 0, as the phone has
+# it; the engine's default, on, is what the checks run with otherwise).
+param([string]$Replay = "", [string]$Engine = "", [switch]$Cost, [hashtable]$Settings = @{})
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\spectate-test"
@@ -67,7 +69,8 @@ try {
   # the phone's widget orders that matter here: BAR's Info widget off (bardroid_info.lua instead), Ecostats off
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n`t`t[`"Info`"] = 0,`n`t`t[`"Ecostats`"] = 0,`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0" |
+  ("Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0" +
+    ($Settings.Keys | ForEach-Object { "`n$_ = $($Settings[$_])" }) -join "") |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
