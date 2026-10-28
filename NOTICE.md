@@ -1,12 +1,15 @@
 # Notices
 
-**App icon:** Kailil's artwork (2026-10-25): the Beyond All Reason launcher icon (`dist_cfg/build/icon.png` in
-https://github.com/beyond-all-reason/BYAR-Chobby, by the Beyond All Reason team, licensed CC BY-NC-ND 4.0,
-https://creativecommons.org/licenses/by-nc-nd/4.0/) with an Android robot added. Resized onto Android's adaptive-icon
-canvas (`app/src/main/res/drawable-xx*hdpi/ic_fg.png`). Because it adapts a NoDerivatives work, this icon is for
-Kailil's personal, non-commercial use: do not publish or share an APK carrying it without the BAR team's permission.
-It is the only BAR-derived artwork in this APK; everything else of BAR's is downloaded from BAR's own servers at
-install time.
+**App icon:** the project's own drawing (`app/src/main/res/drawable/ic_fg.xml`, GPL-3.0-or-later like the app); no
+BAR artwork is in this repository or in an APK built from it.
+
+Kailil's own builds replace it with his artwork (2026-10-25): the Beyond All Reason launcher icon
+(`dist_cfg/build/icon.png` in https://github.com/beyond-all-reason/BYAR-Chobby, by the Beyond All Reason team,
+licensed CC BY-NC-ND 4.0, https://creativecommons.org/licenses/by-nc-nd/4.0/) with an Android robot added. It is kept
+outside the repository and added only when `local.properties` names its folder (`bardroid.personalRes`,
+`app/build.gradle`). Because it adapts a NoDerivatives work it is for his personal, non-commercial use: an APK
+carrying it must not be published or shared without the BAR team's permission. Build anything that goes out with
+`-PbardroidPublic`.
 
 **Controller game (`app/src/main/assets/gamepad/`):** Kailil's BAR Controller Support v0.8.5 (UnderarmCape, branch
 `controller/codex-v085-release` of the BAR game repository): new Lua widgets and modified copies of ten of BAR's

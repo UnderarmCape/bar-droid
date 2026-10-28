@@ -47,6 +47,18 @@ android {
         }
     }
 
+    // Kailil's own builds carry his edit of BAR's icon (NoDerivatives: never published), from a folder outside the
+    // checkout named in local.properties: bardroid.personalRes=C:/Tools/BARANDROID/personal/res. Without it, or with
+    // -PbardroidPublic (public and CI builds), the app has the project's own icon (res/drawable/ic_fg.xml).
+    def localProps = new Properties()
+    def localFile = rootProject.file('local.properties')
+    if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+    def personalRes = localProps.getProperty('bardroid.personalRes')
+    if (personalRes && file(personalRes).isDirectory() && !project.hasProperty('bardroidPublic')) {
+        sourceSets.debug.res.srcDir(personalRes)
+        sourceSets.release.res.srcDir(personalRes)
+    }
+
     compileOptions.sourceCompatibility = JavaVersion.VERSION_17
     compileOptions.targetCompatibility = JavaVersion.VERSION_17
     buildFeatures.buildConfig = true

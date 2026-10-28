@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The public app icon's foreground (adaptive icon, 108 dp; the start screen shows it too): a unit marker in a ring.
+     The project's own drawing, no BAR artwork. Kailil's builds replace it from outside the checkout
+     (local.properties bardroid.personalRes, app/build.gradle). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#E8EEF2"
+        android:strokeWidth="3.5"
+        android:pathData="M27,54 a27,27 0 1,0 54,0 a27,27 0 1,0 -54,0" />
+    <path
+        android:fillColor="#F2A33A"
+        android:pathData="M54,35 L69,63 L54,55.5 L39,63 Z" />
+    <path
+        android:fillColor="#E8EEF2"
+        android:pathData="M41,69 h26 v3.5 h-26 Z" />
+</vector>

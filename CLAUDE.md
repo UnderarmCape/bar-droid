@@ -132,9 +132,10 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
   `docs/WORKLOG.md` and `docs/worklog/` with it. Private terms it must hide go in `..\worklog-redact.txt`, never in
   the repository. The road to a public release: `docs/DELIVERY.md`.
 - Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.
-  One exception, Kailil's call (2026-10-25): the app icon is Kailil's edit of BAR's launcher icon (an Android robot
-  added), credited in `NOTICE.md`; personal use only (NoDerivatives), so an APK with it must not be published. The
-  app is named "Beyond All Reason".
+  Kailil's own builds carry his edit of BAR's launcher icon (an Android robot added; NOTICE.md), personal use only
+  (NoDerivatives): it lives outside the repository (`C:\Tools\BARANDROID\personal\res`, local.properties
+  `bardroid.personalRes`); public builds (`-PbardroidPublic`, or no such folder) get the project's own icon. An APK
+  with his icon must not be published. The app is named "Beyond All Reason".
 - Keep the engine binary unmodified and pinned to the version BAR's servers run (launcher config: https://launcher-config.beyondallreason.dev/config.json).
 - Upstream PRs to RecoilEngine/CircuitAI must reference an accepted issue and disclose AI assistance (their `AI_POLICY.md`).
 - Device data layout: `files/rootfs` (container), `files/bar` (engine write-dir, bound at `/root/bar`), `files/logs`, `Android/data/<pkg>/files/import`.

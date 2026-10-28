@@ -72,7 +72,7 @@ widget in BAR's real lobby, and the in-game widgets in a real skirmish. The game
 
 ## Licences
 
-The app's own code and widgets: GPL-3.0-or-later (it embeds Termux:X11's GPL-3 `lorie` module). Third-party parts and
-the one BAR-derived picture (the app icon, personal use only) are listed in [NOTICE.md](NOTICE.md). BAR's game content
+The app's own code and widgets: GPL-3.0-or-later (it embeds Termux:X11's GPL-3 `lorie` module). Third-party parts
+are listed in [NOTICE.md](NOTICE.md). BAR's game content
 (CC BY-NC-ND) is never bundled or re-encoded: it is downloaded from `repos-cdn.beyondallreason.dev` /
 `files-cdn.beyondallreason.dev` on the device.

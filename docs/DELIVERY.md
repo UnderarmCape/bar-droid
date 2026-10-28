@@ -26,9 +26,11 @@ published or posted without Kailil.
 ## Backlog (in order)
 
 ### Blockers
-- [ ] **Public icon.** A neutral icon of our own in `app/src/main/res` (no BAR artwork); Kailil's icon moves out of
-      the repository into `C:\Tools\BARANDROID\personal\icon\` and is picked up by his own builds only
-      (`local.properties`: `bardroid.personalIcon=<folder>`). Public and CI builds get the neutral one by default.
+- [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon
+      lives in `C:\Tools\BARANDROID\personal\res` and is added to his builds only (`local.properties`:
+      `bardroid.personalRes`); `-PbardroidPublic` or no such folder: the public icon.
+- [ ] **App name.** The app is called "Beyond All Reason". For a public download, Kailil decides (perhaps with BAR's
+      team): keep it, or "BAR Droid" with BAR named in the description.
 - [ ] **LICENSE** (GPL-3.0 text) at the top; NOTICE.md keeps the third-party parts.
 - [ ] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes into `CLAUDE.local.md`
       (untracked, read by Claude Code beside CLAUDE.md); tools find the phone through `adb devices` or
