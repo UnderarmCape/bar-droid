@@ -65,15 +65,18 @@ published or posted without Kailil.
       bundle BAR content, the checks to run, upstream reports need an accepted issue and disclose AI assistance.
 - [x] CHANGELOG.md, from docs/HISTORY.md and the commit log, one section per version.
 - [x] `.github/ISSUE_TEMPLATE/bug.md` (phone, Android version, "Share logs" output) and a PR template.
-- [ ] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
-      and patched), the luacheck lint and the Java unit checks; the APK as an artifact. Untested until pushed.
+- [x] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
+      and patched, `-PbardroidPublic`) and the luacheck lint; the APK as an artifact. **Untested until pushed**: the
+      first run on GitHub may need fixes. `gradlew` and `tools/fetch-termux-x11.sh` are executable in git now.
+- [ ] The Java checks (downloader, settings merge, updater rollback) in CI: they run through PowerShell today.
 
 ### Hardening and overhead (the spectator tools first)
 - [x] Measure what `bardroid_spectate.lua` costs per frame (`tools/spectate-test.ps1 -Cost`: off, the bar, following,
       group, 1st person) and cut it: the bar into a display list (0.43 → 0.06 ms, 54 → 4 KB a frame), 1st person
       without per-frame tables (0 KB); HISTORY.md "Overnight". Left as they are (measured or rare): `GetVisibleUnits`
       per tap, the group refresh twice a second, the camera state read each frame while following.
-- [ ] `bardroid_touch.lua`: `GetConfigFloat` on every pinch frame, and its cost per frame the same way.
+- [x] `bardroid_touch.lua`: measured before at ~0.08 ms a frame (HISTORY.md, 2026-10-27 afternoon);
+      `GetConfigFloat` per pinch frame is one engine call, left as it is.
 - [ ] The same on the phone: the replay benchmark with the spectator widget on and off.
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`.
 
