@@ -67,15 +67,26 @@ local saved = {} -- the player's own presets by key (Save), kept in this widget'
 --   facing:  "unit" (the unit's facing) or "piece" (the anchor piece's: a turret's aim)
 --   forward, right, up: the eye from the anchor (elmos, in the facing's frame); pitch, yaw: the look (degrees, up and
 --   right of the facing); fov (degrees); posSmoothing, turnSmoothing (seconds)
+-- Kailil's values from the tuner (2026-10-27 23:00). (The near clipping plane cannot come closer than the engine's
+-- own, which follows the view range: Camera.cpp; Kailil only wanted it closer, so there is no setting for it.)
 local FP = {
 	pieceNames = { "head", "turret", "torso", "body", "base" },
 	pieces = {},
 	facing = "unit",
-	forward = 8, right = 0, up = 14,
+	forward = 16, right = 4, up = 14,
 	pitch = -8, yaw = 0,
-	fov = 70,
-	posSmoothing = 0.06, turnSmoothing = 0.25,
+	fov = 80,
+	posSmoothing = 0.2, turnSmoothing = 0.25,
 }
+
+-- Wildlife is never followed (Kailil: "blacklist wildlife such as seagulls, crabs"): BAR's critters, and anything of the
+-- Gaia team (the map's neutral units).
+local gaiaTeam = Spring.GetGaiaTeamID()
+local function followable(unitID, def)
+	def = def or UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	return def ~= nil and (def.speed or 0) > 0 and not def.name:find("critter", 1, true)
+		and Spring.GetUnitTeam(unitID) ~= gaiaTeam
+end
 
 local spGetCameraState, spSetCameraState = Spring.GetCameraState, Spring.SetCameraState
 local spGetUnitPosition = Spring.GetUnitPosition
@@ -265,9 +276,8 @@ local function unitsByDistance()
 	local cx, cz = cs.px or 0, cs.pz or 0
 	local list = {}
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
-		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
 		local x, _, z = spGetUnitPosition(unitID)
-		if x and def and (def.speed or 0) > 0 and not Spring.GetUnitIsBeingBuilt(unitID) then
+		if x and followable(unitID) and not Spring.GetUnitIsBeingBuilt(unitID) then
 			list[#list + 1] = { id = unitID, d = (x - cx) ^ 2 + (z - cz) ^ 2 }
 		end
 	end
@@ -743,8 +753,10 @@ function widget:MousePress(x, y, button)
 		lastTap = nil
 		local what, unitID = Spring.TraceScreenRay(x, y)
 		if what == "unit" then
-			cycle = nil -- (the arrows start again from here)
-			startFollow(unitID, false) -- (centred on the unit tapped)
+			if followable(unitID) then -- (wildlife: nothing happens)
+				cycle = nil -- (the arrows start again from here)
+				startFollow(unitID, false) -- (centred on the unit tapped)
+			end
 		else
 			stopFollow()
 		end

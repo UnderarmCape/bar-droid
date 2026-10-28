@@ -37,7 +37,8 @@ local function closestUnit()
 	for _, unitID in ipairs(Spring.GetAllUnits()) do
 		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
 		local x, _, z = Spring.GetUnitPosition(unitID)
-		if x and def and (def.speed or 0) > 0 and not Spring.GetUnitIsBeingBuilt(unitID) then
+		if x and def and (def.speed or 0) > 0 and not def.name:find("critter", 1, true)
+			and Spring.GetUnitTeam(unitID) ~= Spring.GetGaiaTeamID() and not Spring.GetUnitIsBeingBuilt(unitID) then
 			local d = (x - (cs.px or 0)) ^ 2 + (z - (cs.pz or 0)) ^ 2
 			if not bestD or d < bestD then
 				best, bestD = unitID, d
