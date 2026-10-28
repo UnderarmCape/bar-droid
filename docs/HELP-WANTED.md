@@ -66,5 +66,6 @@ Not solved:
 - A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game.
 - Reports drafted for upstream, not filed ([upstream/](upstream/)): BAR's saved games crash the engine on load
   (Windows too), Mesa's KGSL present-fence path, an arm64 AI bug in CircuitAI.
-- Much of the code was written with an AI assistant (Claude Code); [WORKLOG.md](WORKLOG.md) records every request
-  and the time spent.
+- It is 100% vibe coded: an AI assistant (Claude Code) wrote all of the project's own code at the author's
+  direction, so it wants review by people who know the engine and BAR; [WORKLOG.md](WORKLOG.md) records every
+  request and the time spent.

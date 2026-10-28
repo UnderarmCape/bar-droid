@@ -19,8 +19,9 @@ as it is safe for online play and for BAR's content, then the checks to run.
   [NOTICE.md](NOTICE.md). New third-party files need their licence beside them and a line there.
 - **Upstream reports** (RecoilEngine, CircuitAI, Termux:X11, Mesa) go through an accepted issue first; Recoil's
   `AI_POLICY.md` asks for AI assistance to be disclosed. Drafts live in [docs/upstream/](docs/upstream/).
-- **AI assistance:** much of this project was written with Claude Code ([docs/WORKLOG.md](docs/WORKLOG.md)). Say so
-  in a pull request when an AI helped with it.
+- **AI assistance:** the project is 100% vibe coded: an AI assistant (Claude Code) wrote all of its own code and
+  documents at the author's direction ([docs/WORKLOG.md](docs/WORKLOG.md) has every request). Review it with that
+  in mind, and say so in a pull request when an AI helped with it.
 
 ## Checks
 

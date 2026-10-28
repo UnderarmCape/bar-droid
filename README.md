@@ -9,7 +9,8 @@ BAR Droid is a fan project, not made by the Beyond All Reason team.
 
 **Status: a working proof, handed on.** It shows BAR playing fully on a phone, online included. Its author does not
 plan to keep developing it: the hope is that BAR's developers and community take it as a stepping stone to an official
-BAR for Android. Help is wanted most with engine-side performance and touch controls:
+BAR for Android. It is 100% vibe coded: an AI assistant (Claude Code) wrote all of its code at the author's
+direction ([docs/WORKLOG.md](docs/WORKLOG.md)). Help is wanted most with engine-side performance and touch controls:
 [docs/HELP-WANTED.md](docs/HELP-WANTED.md).
 
 ## Phones
