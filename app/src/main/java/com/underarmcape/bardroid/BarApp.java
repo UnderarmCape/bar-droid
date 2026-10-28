@@ -26,8 +26,9 @@ public class BarApp extends LorieApp {
 
     /**
      * First run only: Termux:X11's display defaults suit a desktop, not a game. Full screen, landscape, no extra-keys
-     * bar, screen kept on, taps as mouse clicks where the finger is, and a ~720p X screen (BAR at native phone
-     * resolution is too heavy). Everything stays adjustable under "Display settings".
+     * bar, screen kept on, taps as mouse clicks where the finger is, and the X screen's size: on phones the display at
+     * 100% within GameActivity's caps (about 900p folded, 1080p unfolded on the Fold7), on the emulator ~540 lines.
+     * Everything stays adjustable under "Display settings".
      */
     private void applyDisplayDefaults() {
         android.content.SharedPreferences sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(this);
@@ -36,12 +37,16 @@ public class BarApp extends LorieApp {
         // notification is (a spectated match got LOW_MEMORY-killed). Switchable under Display settings.
         if (!sp.getBoolean("bardroid_pip_default_v1", false))
             sp.edit().putBoolean("PIP", true).putBoolean("bardroid_pip_default_v1", true).apply();
+        // Once, also for existing installs: phones draw at 100% within GameActivity's caps (they used ~720 lines by the
+        // display scale: 150% on the Fold7, 1680x720 folded; Kailil, 2026-10-28: "900p folded, and unfolded 1080p").
+        if (!Prefs.EMULATOR_BUILD && !sp.getBoolean("bardroid_display_scale_v4", false))
+            sp.edit().putInt("displayScale", 100).putBoolean("bardroid_display_scale_v4", true).apply();
         if (sp.getBoolean("bardroid_display_defaults_v3", false)) return;
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         int shortSide = Math.min(dm.widthPixels, dm.heightPixels);
-        // The emulator build renders on the CPU (llvmpipe): every pixel costs, so aim lower there.
-        float targetLines = Prefs.EMULATOR_BUILD ? 540f : 720f;
-        int scale = Math.max(100, Math.min(300, Math.round(shortSide * 100f / targetLines / 10f) * 10));
+        // The emulator build renders on the CPU (llvmpipe): every pixel costs, ~540 lines there.
+        int scale = Prefs.EMULATOR_BUILD
+                ? Math.max(100, Math.min(300, Math.round(shortSide * 100f / 540f / 10f) * 10)) : 100;
         sp.edit()
                 .putBoolean("fullscreen", true)
                 .putBoolean("hideCutout", true)

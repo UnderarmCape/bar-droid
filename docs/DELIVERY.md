@@ -99,7 +99,9 @@ published or posted without Kailil.
       notes the e-mail address the commits name (Kailil: GitHub's noreply address, or keep his).
       `tools/worklog.py` reviewed: run from plain PowerShell (no git on PATH) it counted 0 commits and said nothing,
       so WORKLOG.md showed "Commits 0"; it now finds the toolchain's git as env.bat does, and without any git says so
-      and writes "-". Cron-fired turns are rightly not counted as Kailil's messages. `Build APK.bat` reviewed: an
+      and writes "-". Cron-fired turns are rightly not counted as Kailil's messages. `bardroid_players.lua` reviewed:
+      it, the chat widget and the benchmark widget timed with `os.clock`, CPU time on Linux (faster than real time in
+      a busy game; real time on Windows, so the laptop checks never showed it): `Spring.GetTimer` now. `Build APK.bat` reviewed: an
       empty `bardroid.keystore=` passed its key check and built an unsigned APK named like a release, and a build
       without an APK (or a failed copy) still reported one; fixed (tested: no key and an empty key refuse, a
       throwaway key builds and passes `publish-check -Apk`), Gradle names a keyless release `-unsigned.apk`, and the

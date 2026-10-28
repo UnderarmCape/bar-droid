@@ -69,8 +69,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   libXlorie.so from `TERMUX_X11_LIBXLORIE_PATH`; 0002 Windows-host CMake build; 0003 the X server resizes full-screen
   top-level windows with the screen (fold/unfold; there is no window manager); 0004 our own knock port 17892 on
   loopback (the Termux:X11 app, if installed, knocks on 7892 every 250 ms); 0005 `LorieView.setCursorVisible`
-  (`RtsTouch` hides the pointer while two or more fingers are down); 0006 `LorieView.maxScaledViewPixels` (unfolded,
-  the X screen keeps the cover screen's pixel count: `GameActivity.MAX_SCREEN_PIXELS`); 0007 `LorieView.setUpscale`:
+  (`RtsTouch` hides the pointer while two or more fingers are down); 0006 `LorieView.maxScaledViewPixels` and
+  `maxScaledShortSide` (the X screen at most 2100x900's pixels and 1080 lines, display scale 100%: folded 2100x900,
+  unfolded 1198x1080; `GameActivity.MAX_SCREEN_PIXELS`/`MAX_SCREEN_LINES`, `BarApp` display scale v4); 0007 `LorieView.setUpscale`:
   the X screen enlarged onto the display through Qualcomm's SGSR 1 (`assets/sgsr`, BSD-3-Clause; `GameActivity`,
   settings "Sharper upscaling" and "Compare upscaling"; plain filtering if the GPU refuses the shader).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");

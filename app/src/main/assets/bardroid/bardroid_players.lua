@@ -27,6 +27,14 @@ local COLUMNS = { "indent", "rank", "country", "allyid", "id", "playerid", "name
 	"cpuping", "ally", "share", "chat" }
 local KEEP = { name = true }
 
+-- seconds of real time (os.clock is the process's CPU time on Linux, the phone's: all the engine's threads together,
+-- faster than real time in a busy game)
+local spGetTimer, spDiffTimers = Spring.GetTimer, Spring.DiffTimers
+local timer0 = spGetTimer()
+local function clock()
+	return spDiffTimers(spGetTimer(), timer0)
+end
+
 local minimized = false
 local normal -- the player's own list: { scale, hideSpecs, columns = { [name] = active } }
 local saved -- the same from the last game (widget config data)
@@ -99,7 +107,7 @@ local function expand()
 	a.SetAlwaysHideSpecs(normal.hideSpecs)
 	setColumns(a, normal.columns)
 	minimized = false
-	lastTouch = os.clock()
+	lastTouch = clock()
 end
 
 local function overList(x, y)
@@ -119,14 +127,14 @@ function widget:MousePress(x, y, button)
 		return false
 	end
 	if spectating() then
-		lastTouch = os.clock()
+		lastTouch = clock()
 		return true
 	end
 	if minimized then
 		expand()
 		return true
 	end
-	lastTouch = os.clock()
+	lastTouch = clock()
 	return false
 end
 
@@ -141,18 +149,18 @@ function widget:Initialize()
 		end,
 		-- bardroid_spectate.lua's bar opens and closes with the list; a tap on the bar counts as one on the list
 		keepOpen = function()
-			lastTouch = os.clock()
+			lastTouch = clock()
 		end,
 		-- (a double tap that follows a unit brings up the bar, on the same timer; when not spectating the list opens)
 		open = function()
 			if not spectating() then
 				expand()
 			end
-			lastTouch = os.clock()
+			lastTouch = clock()
 		end,
 		-- the spectate bar shows: the list open, or (spectating, the list kept small) tapped less than OPEN_SECONDS ago
 		barWanted = function()
-			return not minimized or (spectating() and os.clock() - lastTouch <= OPEN_SECONDS)
+			return not minimized or (spectating() and clock() - lastTouch <= OPEN_SECONDS)
 		end,
 	}
 end
@@ -167,7 +175,7 @@ function widget:Update()
 		minimize()
 		return
 	end
-	if not minimized and (spectating() or os.clock() - lastTouch > OPEN_SECONDS) then
+	if not minimized and (spectating() or clock() - lastTouch > OPEN_SECONDS) then
 		minimize()
 	end
 end

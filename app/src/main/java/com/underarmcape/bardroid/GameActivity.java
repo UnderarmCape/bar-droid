@@ -28,17 +28,21 @@ public class GameActivity extends MainActivity {
     private RtsTouch touch;
 
     /**
-     * Termux:X11's "scaled" display treats a bigger screen as one of the Fold7's cover screen's pixel count (patch 0006):
-     * unfolded (2184x1968) the game draws about as many pixels as folded (1680x720 at 150%) instead of 1.6x as many.
-     * Late games are limited by the GPU (Kailil, 2026-10-26: "What else can we do to save performance").
+     * The X screen's size (Kailil, 2026-10-28: "900p folded, and unfolded 1080p"): Termux:X11's "scaled" display at 100%
+     * (BarApp) with two caps (patch 0006): at most 2100x900's pixel count, at most 1080 lines on the short side. The
+     * Fold7 folded (2520x1080) draws 2100x900, unfolded (2184x1968) 1198x1080. In a real 8v8 (minutes 10-13, up to 1,876
+     * units, the 30 fps cap) 900p kept x1.01 and ~29.7 fps as 720p did, the GPU clocked a little higher; native 2520x1080
+     * the same, with the GPU ~30% higher clocked (docs/HISTORY.md, 2026-10-28 morning): more heat over a long game.
      */
-    static final int MAX_SCREEN_PIXELS = 2520 * 1080;
+    static final int MAX_SCREEN_PIXELS = 2100 * 900;
+    static final int MAX_SCREEN_LINES = 1080;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // the render resolution setting scales both screens alike: folded the cap then applies too (2520x1080 is the cap)
+        // the render resolution setting scales both screens alike
         float r = Prefs.renderScale / 100f;
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
+        LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);
         KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
         KeyboardShortcuts.start(this);

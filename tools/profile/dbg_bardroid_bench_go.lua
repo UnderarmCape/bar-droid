@@ -24,12 +24,19 @@ function widget:Update()
 	end
 end
 
+-- os.clock (the process's CPU time in standard Lua) against real time over the battle: widgets must time with
+-- Spring.GetTimer if the two differ
+local clock0, timer0
 function widget:GameFrame(n)
 	if n == 300 then
 		Spring.Echo(string.format("[bardroid-bench-profile] go at frame 300, %d units", #Spring.GetAllUnits()))
 		Spring.SetConfigString("bardroid_profile_go", "1", true)
+		clock0, timer0 = os.clock(), Spring.GetTimer()
 	elseif n == 1500 then
 		Spring.Echo(string.format("[bardroid-bench-profile] engine timers at frame 1500, %d units:", #Spring.GetAllUnits()))
 		Spring.SendCommands("debuginfo profiling")
+		local real = Spring.DiffTimers(Spring.GetTimer(), timer0)
+		Spring.Echo(string.format("[bardroid-bench-profile] frames 300-1500: os.clock %.1f s in %.1f s of real time (x%.2f)",
+			os.clock() - clock0, real, (os.clock() - clock0) / real))
 	end
 end

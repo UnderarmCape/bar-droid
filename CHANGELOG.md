@@ -10,7 +10,9 @@ The first version meant for other people's phones: everything since the first bu
 
 **Playing**
 - BAR's own lobby, online games, skirmish against AI and spectating on a Snapdragon phone (tested on a Galaxy Z
-  Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / none in the launcher).
+  Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / none in the launcher). The game draws at about 900
+  lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
+  the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it.
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
   back. BAR's content always comes from BAR's own servers; nothing of BAR is in the APK.
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.

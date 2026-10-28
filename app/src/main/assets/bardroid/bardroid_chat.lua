@@ -31,7 +31,13 @@ local LineTypes = { Player = 1, Spectator = 2, Mapmark = 3, Battleroom = 4, Syst
 local WHITE = "\255\255\255\255"
 local SYSTEM_COLOR = "\255\200\200\200"
 
-local clock = os.clock
+-- seconds of real time (os.clock is the process's CPU time on Linux, the phone's: all the engine's threads together,
+-- faster than real time in a busy game)
+local spGetTimer, spDiffTimers = Spring.GetTimer, Spring.DiffTimers
+local timer0 = spGetTimer()
+local function clock()
+	return spDiffTimers(spGetTimer(), timer0)
+end
 local entries = {} -- { time, chunks = name pieces, nameColor, text, lines = wrapped text }
 local hooked, wasInputHistory = false, nil
 local vsx, vsy = Spring.GetViewGeometry()

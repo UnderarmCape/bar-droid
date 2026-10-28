@@ -80,7 +80,7 @@ try {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") (Join-Path $Data "LuaUI\Widgets\") -Force
   }
   Set-Content (Join-Path $Data "LuaUI\Config\bardroid_touch.txt") -Value $null -NoNewline
-  "1680 720 60 0" | Set-Content (Join-Path $Data "LuaUI\Config\bardroid_screen.txt") -Encoding ascii
+  "2100 900 60 0" | Set-Content (Join-Path $Data "LuaUI\Config\bardroid_screen.txt") -Encoding ascii
   "1" | Set-Content (Join-Path $Data "LuaUI\Config\bardroid_bench.txt") -Encoding ascii   # bardroid_bench.lua: quit after the results
   # the widget orders launch-bar.sh sets on the phone for a benchmark
   $off = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",

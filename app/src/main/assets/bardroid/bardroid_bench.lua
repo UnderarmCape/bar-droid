@@ -22,6 +22,17 @@ function widget:GetInfo()
 end
 
 local FLAG = "LuaUI/Config/bardroid_bench.txt"
+-- seconds of real time; os.clock, the process's CPU time on Linux, is logged against it at the end (widgets time with
+-- Spring.GetTimer: docs/HISTORY.md, 2026-10-28 morning)
+local timer0, cpu0 = Spring.GetTimer(), os.clock()
+local function realSeconds()
+	return Spring.DiffTimers(Spring.GetTimer(), timer0)
+end
+local function logClocks()
+	local real = realSeconds()
+	Spring.Echo(string.format("[bardroid-bench] os.clock %.1f s in %.1f s of real time (x%.2f)", os.clock() - cpu0, real,
+		(os.clock() - cpu0) / math.max(real, 0.001)))
+end
 local QUIT_AFTER = 3 -- seconds after the results, for the log to take them
 local quitAt
 
@@ -71,7 +82,8 @@ end
 
 local function finish(why)
 	Spring.Echo("[replaybench] done (" .. why .. "): " .. summary())
-	quitAt = os.clock() + QUIT_AFTER
+	logClocks()
+	quitAt = realSeconds() + QUIT_AFTER
 end
 
 local function replayUpdate()
@@ -122,7 +134,7 @@ end
 
 local checked = 0
 function widget:Update()
-	local now = os.clock()
+	local now = realSeconds()
 	if quitAt then
 		if now >= quitAt then
 			Spring.Echo("[bardroid-bench] done: quitting")
@@ -154,6 +166,7 @@ end
 
 function widget:AddConsoleLine(line)
 	if not replay and not quitAt and line:find("Benchmark ended", 1, true) then
-		quitAt = os.clock() + QUIT_AFTER
+		logClocks()
+		quitAt = realSeconds() + QUIT_AFTER
 	end
 end

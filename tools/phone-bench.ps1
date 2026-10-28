@@ -16,8 +16,8 @@
 # real time every 10 s (below x1 the phone falls behind live play), units and fps (bardroid_bench.lua). The warm-up
 # stays the scenario. Its game version must be on the phone (a replay recorded there).
 #   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 -Cap 30 -Replay "<replay>.sdfz" [-SkipTo 900] [-Seconds 600]
-# -DisplayScale <percent>: Termux:X11's display scale for this run (the X screen is the display's size / scale; 150 on
-# the Fold7: folded 1680x720, 120: 2100x900, 100: the cover screen's native 2520x1080).
+# -DisplayScale <percent>: Termux:X11's display scale for this run (the X screen is the display's size / scale, within
+# GameActivity's caps; the Fold7 folded: 100, the default, 2100x900; 150: 1680x720, the size until 2026-10-28).
 # -WidgetsOff "<name>","<name>": widgets (GetInfo names, e.g. "BAR Droid spectate") off for this run (their order 0 in
 # LuaUI/Config/BYAR.lua; each one's own order put back afterwards).
 param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoWarm, [string]$Profile = "",
@@ -87,23 +87,38 @@ if ($DisplayScale) { AppSh $PrefsSh @($xPrefs, "displayScale=$DisplayScale") | O
 # widgets off for this run: each one's order before (empty: none saved) in files/bench-widgets, put back afterwards
 # (the names in the script itself: adb joins arguments with spaces)
 $names = ($WidgetsOff | ForEach-Object { "'" + ($_ -replace "'", "'\''") + "'" }) -join " "
-$WidgetsOffSh = (@'
-f=files/bar/LuaUI/Config/BYAR.lua; : > files/bench-widgets
+# (awk: Android's toybox sed and grep know none of GNU's forms, \? or s// after an address.) getorder <name>: the
+# widget's order in BYAR.lua's order table, empty if it has none; setorder <name> <order>: an empty order removes the
+# entry, a widget without one gets it at the top-level order table (one tab in; widgets' own tables are deeper). No
+# comments inside: Android's shell took the apostrophes in them for quotes.
+$OrderSh = @'
+f=files/bar/LuaUI/Config/BYAR.lua
+getorder() {
+  awk -v k="[\"$1\"]" '(i = index($0, k)) && match(substr($0, i + length(k)), /^ *= *-?[0-9]+/) {
+    s = substr($0, i + length(k), RLENGTH); gsub(/[^0-9-]/, "", s); print s; exit }' "$f"
+}
+setorder() {
+  if [ -n "$(getorder "$1")" ]; then
+    awk -v k="[\"$1\"]" -v v="$2" '!done && (i = index($0, k)) && match(substr($0, i + length(k)), /^ *= *-?[0-9]+/) {
+      done = 1; if (v == "") next; $0 = substr($0, 1, i - 1) k " = " v substr($0, i + length(k) + RLENGTH) } { print }' "$f" > "$f.tmp"
+  elif [ -n "$2" ]; then
+    awk -v k="[\"$1\"]" -v v="$2" '{ print } !added && /^\torder *=/ { print "\t\t" k " = " v ","; added = 1 }' "$f" > "$f.tmp"
+  else return 0; fi
+  mv "$f.tmp" "$f"
+}
+'@
+$WidgetsOffSh = $OrderSh + "`n" + (@'
+: > files/bench-widgets
 for n in NAMES; do
-  old=$(grep -o "\[\"$n\"\] *= *-\?[0-9]*" "$f" | head -n 1 | sed 's/.*= *//')
-  echo "$n=$old" >> files/bench-widgets
-  if [ -n "$old" ]; then sed -i "s/\[\"$n\"\] *= *-\?[0-9]*/[\"$n\"] = 0/" "$f"
-  else sed -i "0,/^\torder *= *{/s//\torder = {\n\t\t[\"$n\"] = 0,/" "$f"; fi
-  grep -q "\[\"$n\"\] = 0," "$f" && echo "off: $n" || echo "NOT off: $n"
+  echo "$n=$(getorder "$n")" >> files/bench-widgets
+  setorder "$n" 0
+  [ "$(getorder "$n")" = 0 ] && echo "off: $n" || echo "NOT off: $n"
 done
 '@).Replace("NAMES", $names)
-$RestoreWidgetsSh = @'
-f=files/bar/LuaUI/Config/BYAR.lua
+$RestoreWidgetsSh = $OrderSh + "`n" + @'
 [ -f files/bench-widgets ] || exit 0
 while IFS='=' read -r n old; do
-  [ -n "$n" ] || continue
-  if [ -n "$old" ]; then sed -i "s/\[\"$n\"\] *= *-\?[0-9]*/[\"$n\"] = $old/" "$f"
-  else sed -i "/\[\"$n\"\] *= *-\?[0-9]*,\?[ \t]*$/d" "$f"; fi
+  [ -n "$n" ] && setorder "$n" "$old"
 done < files/bench-widgets
 rm -f files/bench-widgets
 '@

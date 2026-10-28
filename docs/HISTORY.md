@@ -34,9 +34,44 @@ the simulation, they should be off by default with a toggle.
   benchmark with the pointer on the battle (`tools/profile-benchmark.ps1 -PointerOnBattle`, new), two runs each: 2.69
   / 3.11 ms/s and 39.5 / 48.4 kB/s before, 2.01 / 2.03 ms/s and 18.5 / 20.0 kB/s after. `tools/touch-widget-test.ps1`:
   all pass (the panel shows the selection).
-- `tools/phone-bench.ps1` new switches: `-DisplayScale <percent>` (Termux:X11's display scale for a run: 150 = the
-  folded 1680x720, 120 = 2100x900, 100 = native 2520x1080) and `-WidgetsOff "<name>",...` (widgets off for a run, each
-  one's order put back afterwards).
+  On the phone not settled: BAR's widget profiler put the panel at 7.9% before the fix and 19.4% after (that run with
+  no panel on screen; its shares there are not to be trusted), the on/off pairs first ran with the panel on both times
+  (the switch broke, below) and later with the phone locked (below). Still to do: `phone-bench.ps1 -WidgetsOff "BAR
+  Droid info"` against the panel on, alternating, the phone unlocked.
+- `tools/phone-bench.ps1` new switches: `-DisplayScale <percent>` (Termux:X11's display scale for a run) and
+  `-WidgetsOff "<name>",...` (widgets off for a run, each one's order put back afterwards; awk on the phone: Android's
+  toybox `sed` and `grep` know none of GNU's `\?` and `s//`, and the shell took apostrophes in comments for quotes).
+  **The phone locked itself at ~09:10** (after the morning's unlock; `dumpsys trust`: deviceLocked=1): every run since
+  started with "game screen hidden: the engine stops drawing" and a portrait X screen, so its numbers are not a game's
+  (one run never got the engine started and timed out after 12 minutes). Benchmarks need the phone unlocked; a run's
+  launcher.log shows it ("X screen" landscape at the start, "hidden" only at the end).
+- **`os.clock` is not a clock on the phone.** `bardroid_players.lua` (the list's 7 s), `bardroid_chat.lua` (how long a
+  line stays) and `bardroid_bench.lua` timed with `os.clock`, which on Linux is the process's CPU time, all the engine's
+  threads together: faster than real time in a busy game. Windows' C library returns real time instead (the laptop:
+  x1.00 over 42 s of BAR's benchmark), so the laptop checks never showed it. They use `Spring.GetTimer` now, as the
+  other widgets did; the benchmark widget logs the ratio on the phone (`[bardroid-bench] os.clock ...`).
+- **A higher resolution** (Kailil: "investigate if its worth running native resolution on both, or at least increasing
+  to 900p folded, and unfolded 1080p"). Folded, a real 8v8 replay (Supreme Isthmus, minutes 10-13, up to 1,876 units),
+  the 30 fps cap, alternating, two runs each:
+
+  | X screen (folded) | game speed | fps | GPU clock (median) | GPU busy (median) |
+  |---|---|---|---|---|
+  | 1680x720 (until now) | x1.01 | 29.7 / 29.7 | 342 / 342 MHz | 70 / 69% |
+  | 2096x900 | x1.01 | 29.6 / 29.7 | 389 / 342 MHz | 71 / 66% |
+  | 2520x1080 (native) | x1.01 | 29.7 / 29.8 | 443 / 443 MHz | 73 / 69% |
+
+  Every size kept up; native holds the GPU ~30% higher clocked (more power and heat over hours), 900p costs little.
+  Unfolded "1080p" (1198x1080) is about the 1157x1043 drawn until now. One pixel cap could not give both (folded has
+  the more pixels at fewer lines), so patch 0006 has a line cap too (`LorieView.maxScaledShortSide`), both counted in
+  X screen pixels: the display scale 100% for phones (`BarApp`, once for existing installs), at most 2100x900's pixels
+  and 1080 lines (`GameActivity`): folded 2100x900, unfolded 1198x1080; render resolution 85%: 1785x765 / 1018x918.
+  The way back to the old folded size: Display settings, display scale 150 (folded 1680x720, unfolded stays 1198x1080).
+  **Not yet measured: a heavy late game at 900p** (the four runs from minute 20, 3,600 units, ran with the phone
+  locked); to do with the phone unlocked: `phone-bench.ps1 -Cap 30 -DisplayScale 150|100 -Replay <the 8v8> -SkipTo
+  1200 -Seconds 180`, alternating. Frame generation: Lossless Scaling's (LSFG) runs on Android
+  as an overlay app over any game (LSFG-Android, Adreno 7xx and newer) with the player's own copy of Lossless Scaling;
+  not built in (the shaders are Lossless Scaling's, lsfg-vk is now no-derivatives licensed, and late games have no GPU
+  to spare), a player can try it over the app as it is.
 
 ## Overnight: delivery and the spectator tools' cost (2026-10-28, from 00:30)
 Kailil, going to bed: "start an endless task hardening and bug fixing and optimizign what we just buit especially so
