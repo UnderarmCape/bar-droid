@@ -79,7 +79,10 @@ published or posted without Kailil.
       per tap, the group refresh twice a second, the camera state read each frame while following.
 - [x] `bardroid_touch.lua`: measured before at ~0.08 ms a frame (HISTORY.md, 2026-10-27 afternoon);
       `GetConfigFloat` per pinch frame is one engine call, left as it is.
-- [ ] The same on the phone: the replay benchmark with the spectator widget on and off.
+- [x] On the phone: a replay smoke run of the new build (x1.00, ~30 fps, 905 units, no widget errors). The widget on
+      against off was not run: its cost (0.01-0.1 ms a frame) is far below the benchmark's run-to-run noise.
+      `WorkerThreadCount` 7 (the research batch's one lead) checked in three alternating pairs: no gain on a hot
+      phone, 4 stays (HISTORY.md "Overnight").
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`.
 
 ## Releasing (once the blockers are done)

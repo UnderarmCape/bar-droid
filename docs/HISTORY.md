@@ -29,6 +29,16 @@ time logged from now on. The backlog is [DELIVERY.md](DELIVERY.md); the log [WOR
   after a press). 1st person no longer allocates per frame: the anchor piece is looked up once per unit (the engine's
   piece map is a new table at every call), the settings and the camera state go into the same tables every frame.
   `tools/spectate-test.ps1`: all pass; the bar draws as before (screenshot).
+- **On the phone** (Kailil at ~01:10: "if the phone tests are usefull you can conduct them tonight ... as long as i dont
+  need to interact"): the hail-mary session's online-safe batch ran 00:58-02:25 (36 hot runs; branch
+  `research/hail-mary` ca05b0d, its `docs/research-hail-mary.md`): everything flat except `WorkerThreadCount` 7-8,
+  about +7% game speed at equal CPU clocks in single runs. Tonight's build installed 02:27; a replay smoke run
+  (5:00-7:00 of an 8v8) kept x1.00 at ~30 fps up to 905 units, the spectate widget loaded without errors.
+- **Worker threads: 4 stays.** Three alternating pairs, hot, uncapped, BAR's benchmark scenario (`phone-bench.ps1
+  -Settings @{ WorkerThreadCount = 4|7 }`): Sim 29.72 / 29.26 / 29.44 ms and x0.72 each with 4; 28.46 / 29.35 / 29.20
+  ms and x0.74 / 0.72 / 0.72 with 7; Draw a little higher with 7 (29.0 against 27.5 ms). With 7 workers Samsung capped
+  the CPUs lower (prime core down to 1401 MHz against 1689, the others 1363 against 1555-1785): the gain at equal
+  clocks goes into heat, and on a hot phone the game runs no faster.
 
 ## Keyboard shortcuts kept out of the game (2026-10-27 evening)
 Kailil asked for mouse and keyboard over Bluetooth or a USB-C dock "and i want android to not hijack its inputs and
