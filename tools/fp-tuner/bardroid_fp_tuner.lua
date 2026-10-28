@@ -84,8 +84,8 @@ local NUMBERS = {
 	{ key = "posSmoothing", label = "Move smoothing (s)", step = 0.02, min = 0, max = 3 },
 	{ key = "turnSmoothing", label = "Turn smoothing (s)", step = 0.05, min = 0, max = 5 },
 	{ key = "lookSpeed", label = "Look speed (deg)", step = 10, min = 10, max = 720 }, -- (per drag across the screen)
-	{ key = "recenterDelay", label = "Recenter after (s)", step = 0.5, min = 0, max = 60 },
-	{ key = "recenterSmoothing", label = "Recenter smooth (s)", step = 0.05, min = 0, max = 5 },
+	-- (recenter delay and smoothing, and "turn with", left out: Kailil does not need them and the panel ran off the
+	-- screen; bardroid_spectate.lua's own values stand)
 }
 
 local function round(v, step)
@@ -307,12 +307,6 @@ build = function()
 					FP().pieces[name] = snapshot.pieces[name]
 				end
 			end }
-		rows[#rows + 1] = { label = "Turn with", value = function()
-				local v, from = effective("facing")
-				return SOURCE_COLOUR[from] .. v
-			end,
-			step = function() setValue("facing", effective("facing") == "unit" and "piece" or "unit") end,
-			reset = function() resetValue("facing") end }
 		for _, r in ipairs(NUMBERS) do
 			rows[#rows + 1] = { label = r.label, value = function()
 					local v, from = effective(r.key)
@@ -346,10 +340,13 @@ end
 
 local function layout()
 	local _, vsy = Spring.GetViewGeometry()
-	local h = math.floor(vsy * 0.042)
+	local h = math.floor(vsy * 0.038)
 	local w = math.floor(h * 16)
-	local x0, top = 8, vsy - math.floor(vsy * 0.3)
+	-- (below the minimap, Save first: Kailil could not see it at the bottom of a long panel)
+	local x0, top = 8, vsy - math.floor(vsy * 0.36)
 	buttons = {}
+	buttons[1] = { x0 = x0 + w * 0.55, x1 = x0 + w, y0 = top, y1 = top + h, save = true,
+		label = now() - savedAt < 3 and "Saved" or "Save" }
 	for i, r in ipairs(rows) do
 		local y = top - i * (h + 3)
 		local bw, rw = h * 1.2, h * 2.2 -- (the step buttons; Reset at the end)
@@ -363,9 +360,6 @@ local function layout()
 			buttons[#buttons + 1] = { x0 = x0 + w - rw, x1 = x0 + w, y0 = y, y1 = y + h, row = r, reset = true, label = "Reset" }
 		end
 	end
-	local y = top - (#rows + 1) * (h + 3)
-	buttons[#buttons + 1] = { x0 = x0, x1 = x0 + w, y0 = y, y1 = y + h, save = true,
-		label = now() - savedAt < 3 and "Saved" or "Save (bardroid_fp.lua)" }
 	return h, x0, w, top
 end
 
@@ -393,7 +387,7 @@ function widget:DrawScreen()
 	-- (bold, large, light on a dark panel: Kailil, "make the adjustments easier to read and bold")
 	local font = WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
 	gl.Color(0, 0, 0, 0.82)
-	gl.Rect(x0 - 6, top - (#rows + 1) * (h + 3) - 6, x0 + w + 6, top + h * 1.2)
+	gl.Rect(x0 - 6, top - #rows * (h + 3) - 6, x0 + w + 6, top + h + 6)
 	for i, r in ipairs(rows) do
 		if i % 2 == 0 then -- every other row a shade lighter: the eye stays on its line
 			gl.Color(1, 1, 1, 0.06)
@@ -403,6 +397,8 @@ function widget:DrawScreen()
 	for _, b in ipairs(buttons) do
 		if b.reset then
 			gl.Color(0.9, 0.45, 0.2, 0.45)
+		elseif b.save then
+			gl.Color(0.25, 0.75, 0.35, 0.7)
 		else
 			gl.Color(1, 1, 1, b.save and 0.3 or 0.2)
 		end
@@ -412,7 +408,7 @@ function widget:DrawScreen()
 	if font then
 		font:Begin()
 		local size = h * 0.62
-		font:Print("\255\255\210\1001st person tuner", x0, top + h * 0.25, h * 0.75, "o")
+		font:Print("\255\255\210\100Camera tuner", x0 + 6, top + h * 0.22, h * 0.7, "o")
 		for _, r in ipairs(rows) do
 			font:Print("\255\235\235\235" .. r.label, x0 + 6, r.y + h * 0.24, size, "o")
 			local v = tostring(r.value())

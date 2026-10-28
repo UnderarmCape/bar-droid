@@ -81,7 +81,11 @@ local FP = {
 	-- values for a class ("sentry": armed buildings, "unit": the rest) or a unit type (by name) over the ones below
 	-- (fpFor); sentries' aim barely smoothed: the camera rides the barrel's swing (Kailil's example)
 	classes = { sentry = { turnSmoothing = 0.06 }, unit = {} },
-	types = {},
+	-- Kailil's per type (the tuner, 2026-10-28): the Sentry (armllt) on its barrel
+	types = {
+		armllt = { forward = -38, right = 18, up = 8, pitch = -8, yaw = -10, fov = 80, posSmoothing = 0,
+			turnSmoothing = 0.06 },
+	},
 	facing = "unit",
 	forward = 16, right = 4, up = 14,
 	pitch = -8, yaw = 0,
