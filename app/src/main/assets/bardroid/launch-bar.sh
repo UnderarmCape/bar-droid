@@ -229,15 +229,17 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
 fi
 log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields, ecostats$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
 
-# BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
-# one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
+# BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen; on the inner one 1.3
+# until 2026-10-28, then 1.0: BAR's build menu takes no size of its own, its width follows this scale, "then we will
+# just have to reduce the interface scale to 1.0 on unfolded"; bardroid_touch.lua switches it on fold/unfold). The
+# app keeps the X screen size in bardroid_screen.txt.
 scr="$BAR/LuaUI/Config/bardroid_screen.txt"
 if [ -f "$scr" ] && read -r sw sh _ < "$scr" && [ "${sw:-0}" -gt 0 ] && [ "${sh:-0}" -gt 0 ]; then
   if [ "$sw" -gt "$sh" ]; then long=$sw short=$sh; else long=$sh short=$sw; fi
 fi
 # (not the floating window, 584x530: by the long side, as the cover screen at 70% render resolution is 1176x504)
 if [ "${long:-0}" -ge 640 ]; then
-  if [ $((long * 10)) -lt $((short * 16)) ]; then uis=1.3      # inner screen
+  if [ $((long * 10)) -lt $((short * 16)) ]; then uis=1.0      # inner screen
   elif [ "$sw" -gt "$sh" ]; then uis=2.0                        # cover screen
   else uis=1.0; fi                                              # cover screen held upright: BAR scales by the tall side
   if grep -q '^ui_scale *=' "$BAR/springsettings.cfg"; then sed -i "s/^ui_scale *=.*/ui_scale = $uis/" "$BAR/springsettings.cfg"
@@ -246,7 +248,7 @@ if [ "${long:-0}" -ge 640 ]; then
 fi
 # The top bar's button strip is laid out for wide screens: at 1.3 on the near-square inner screen it ran under the
 # wind/tidal/commander counters. Its Keys (keyboard shortcuts) and Changes (patch notes) buttons are no use on a
-# phone: their widgets off, the rest has room.
+# phone: their widgets off (also at 1.0), the rest has room.
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Keybind/Mouse Info" 0; widget_order "Changelog Info" 0
   # BAR's Picture-in-Picture Minimap shows a row of buttons under the map whenever the pointer is over it, and every

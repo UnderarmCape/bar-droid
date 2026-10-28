@@ -30,8 +30,9 @@ The first version meant for other people's phones: everything since the first bu
 - Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit
-  info panel and the spectate bar (and set their text size and padding), size BAR's minimap and player list, and put
-  BAR's build and order menus at the bottom or the left; kept separately for folded and unfolded.
+  info panel and the spectate bar (and set their text size and padding), and size BAR's minimap and player list; kept
+  separately for folded and unfolded. BAR's interface scale unfolded is 1.0 (was 1.3): its build menu takes no size of
+  its own.
 - Typing a chat message: the text wraps and gets smaller as it grows, in a box at the top of the chat that stays clear
   of BAR's start countdown.
 

@@ -3,7 +3,7 @@
 # (Keys/Changes off, BAR's full-screen effects off), and a screenshot after ~5 s of game. BAR sizes its interface by
 # the window height and places it by the width, so a smaller window of the same shape shows the same layout.
 #   powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner [-Scale 0.65] [-NoPhoneLayer]
-#   -Screen inner = 1198x1080 at 1.3, cover = 2100x900 at 2.0 (the X screen sizes, GameActivity's caps);
+#   -Screen inner = 1198x1080 at 1.0, cover = 2100x900 at 2.0 (the X screen sizes, GameActivity's caps);
 #   -Chat: a few chat lines from a player with a long name first. Writes build\ui-screenshot\<screen>-<layer>.png
 param(
   [ValidateSet("inner", "cover")] [string]$Screen = "inner",
@@ -34,7 +34,7 @@ Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
 $EngineDir = Get-EngineDir $Engine
-$size = @{ inner = @(1198, 1080, 1.3); cover = @(2100, 900, 2.0) }[$Screen]
+$size = @{ inner = @(1198, 1080, 1.0); cover = @(2100, 900, 2.0) }[$Screen]
 $w = [int]($size[0] * $Scale); $h = [int]($size[1] * $Scale)
 $uiScale = if ($UiScale -gt 0) { $UiScale } else { $size[2] }
 $layer = $(if ($NoPhoneLayer) { "bar" } else { "phone" }) + "-" + $uiScale + $(if ($Name) { "-$Name" } else { "" })

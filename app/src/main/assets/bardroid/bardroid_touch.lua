@@ -762,10 +762,11 @@ function widget:Shutdown()
 end
 
 -- BAR's interface scale for the screen the game is on (Kailil, 2026-10-26: on the Fold's cover screen "EVERYTHING IS
--- TOO SMALL ... interface 2.0 is necessary", on the inner one "1.3 scale is good"). BAR's slider stops at 1.3, and
--- most of its widgets read ui_scale only when they load, so a fold or unfold that changes it reloads LuaUI, as BAR's
--- own slider does. launch-bar.sh sets it for the screen a game starts on, so a start needs no reload.
-local UI_SCALE_COVER, UI_SCALE_INNER, UI_SCALE_COVER_UPRIGHT = 2.0, 1.3, 1.0
+-- TOO SMALL ... interface 2.0 is necessary", on the inner one "1.3 scale is good"; 2026-10-28, BAR's build menu taking no
+-- size of its own: "then we will just have to reduce the interface scale to 1.0 on unfolded"). Most of BAR's widgets
+-- read ui_scale only when they load, so a fold or unfold that changes it reloads LuaUI, as BAR's own slider does.
+-- launch-bar.sh sets it for the screen a game starts on, so a start needs no reload.
+local UI_SCALE_COVER, UI_SCALE_INNER, UI_SCALE_COVER_UPRIGHT = 2.0, 1.0, 1.0
 local function applyUiScale(w, h)
 	local long, short = math.max(w, h), math.min(w, h)
 	if long < 640 then

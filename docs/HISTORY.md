@@ -5,6 +5,20 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Late night: the build menu vanished; unfolded at interface scale 1.0 (2026-10-28)
+Kailil: "I chose bottom when I had the build menu selected, and now it's complete gone ... I restart the game and it
+comes back ... Is it not possible to adjust the size of the build menu? If not then we will just have to reduce the
+interface scale to 1.0 on unfolded".
+- **The vanishing:** his skirmish runs the controller game, which uses BAR's older Build menu (gui_buildmenu.lua, not
+  the Grid menu). The editor's Bottom called its `WG.buildmenu.setBottomPosition(true)` while it was on screen; its
+  next draw failed (`gui_buildmenu.lua:1398: attempt to index field '?'`: a cell drawn without its command, in a
+  render-to-texture) and BAR removes a widget whose call-in fails, until the next start. BAR's saved settings on the
+  phone were back to the left afterwards. The editor no longer moves BAR's menus: they show as fixed.
+- **The build menu's size:** neither build menu takes one from another widget. The older one is as wide as the
+  interface scale makes it (0.212 of the screen x the scale, for a 16:9 screen) and as tall as the room between the
+  minimap and the unit panel; the Grid menu the same. So unfolded is at interface scale 1.0 now (launch-bar.sh at
+  start, bardroid_touch.lua on unfolding), as Kailil chose; folded stays 2.0.
+
 ## Night: the chat's typing box and the layout editor (2026-10-28)
 Kailil: "when I'm typing a message I the chat box, I want the message to word wrap and grow smaller as new lines
 populate so I can see my entire message. Right now it's just pushing the message off screen to the right"; "the

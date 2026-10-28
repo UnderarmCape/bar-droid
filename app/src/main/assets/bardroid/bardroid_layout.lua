@@ -6,11 +6,14 @@
 -- buttons) sizes it; Done, Escape or three fingers again close the editor.
 -- How far each panel goes depends on whose it is. The app's own (chat, unit info, the spectate bar) move and take
 -- another size, text size and padding. BAR's own only as far as BAR lets another widget change them (its sandbox keeps
--- user widgets out of BAR's code): the minimap's and the player list's size, the build and order menus at the bottom
--- or at the left. BAR's top bar (metal, energy, wind) has no setting: shown as fixed; BAR's start countdown neither
--- (the chat keeps clear of it). A movable HUD for BAR's own panels is BAR's to add (docs/HELP-WANTED.md).
+-- user widgets out of BAR's code): the minimap's and the player list's size. BAR's top bar (metal, energy, wind) and
+-- its build and order menus have no setting for it: shown as fixed (their size follows the interface scale); BAR's
+-- start countdown neither (the chat keeps clear of it). The editor's first version also put BAR's menus at the bottom
+-- or the left (their own setting, setBottomPosition): BAR's older build menu, the controller game's, failed drawing
+-- after the switch (gui_buildmenu.lua:1398, a cell without its command) and BAR removed it until the next start.
+-- A movable HUD for BAR's own panels is BAR's to add (docs/HELP-WANTED.md).
 -- The settings are kept per screen shape (wide: a phone folded; near-square: unfolded) in this widget's config.
--- Panels ask WG.BarDroidLayout.get(id) for theirs ({ dx, dy: moved, of the screen; size; text; pad; bottom }) and
+-- Panels ask WG.BarDroidLayout.get(id) for theirs ({ dx, dy: moved, of the screen; size; text; pad }) and
 -- register to be edited: register(id, { label, can = { move, size, text, pad }, rect = function() -> x0, y0, x1, y1,
 -- relayout = function() }). Installed into LuaUI/Widgets by the app.
 
@@ -91,21 +94,7 @@ local function unregister(id)
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- BAR's own panels: what BAR lets another widget change
-
--- the build and order menus at the bottom or at the left (BAR's setting; the editor's choice per screen shape)
-local function applyMenus()
-	local s = get("buildmenu")
-	if s.bottom ~= nil and WG.buildmenu and WG.buildmenu.setBottomPosition and WG.buildmenu.getBottomPosition
-		and WG.buildmenu.getBottomPosition() ~= s.bottom then
-		WG.buildmenu.setBottomPosition(s.bottom)
-	end
-	s = get("ordermenu")
-	if s.bottom ~= nil and WG.ordermenu and WG.ordermenu.setBottomPosition and WG.ordermenu.getBottomPosition
-		and WG.ordermenu.getBottomPosition() ~= s.bottom then
-		WG.ordermenu.setBottomPosition(s.bottom)
-	end
-end
+-- BAR's own panels that take no setting from another widget: shown, fixed
 
 local function infoRight()
 	local w = WG.info and WG.info.getPosition and WG.info.getPosition()
@@ -124,8 +113,8 @@ local function registerBar()
 		end,
 	})
 	register("ordermenu", {
-		label = "Order menu",
-		can = { bottom = true },
+		label = "Order menu (BAR's: fixed)",
+		can = {},
 		rect = function()
 			local o = WG.ordermenu
 			if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
@@ -135,11 +124,10 @@ local function registerBar()
 				end
 			end
 		end,
-		relayout = applyMenus,
 	})
 	register("buildmenu", {
-		label = "Build menu",
-		can = { bottom = true },
+		label = "Build menu (BAR's: fixed)",
+		can = {},
 		rect = function()
 			local b = WG.buildmenu
 			if not (b and b.getSize and b.getIsShowing and b.getIsShowing()) then
@@ -165,7 +153,6 @@ local function registerBar()
 			end
 			return 0, y0, infoRight(), y1
 		end,
-		relayout = applyMenus,
 	})
 end
 
@@ -185,7 +172,7 @@ end
 
 local function editable(p)
 	local c = p.can or {}
-	return c.move or c.size or c.text or c.pad or c.bottom
+	return c.move or c.size or c.text or c.pad
 end
 
 -- the panel under a point: the one picked if it is there, else the smallest
@@ -234,19 +221,11 @@ local function layoutButtons()
 			row[#row + 1] = { w = h * 2.4, label = "Padding " .. percent(s.pad) }
 			row[#row + 1] = { w = h, label = "+", action = "pad+" }
 		end
-		if c.bottom then
-			local bottom = s.bottom
-			if bottom == nil then
-				local m = picked == "buildmenu" and WG.buildmenu or WG.ordermenu
-				bottom = m and m.getBottomPosition and m.getBottomPosition() or false
-			end
-			row[#row + 1] = { w = h * 1.8, label = "Bottom", action = "bottom", lit = bottom }
-			row[#row + 1] = { w = h * 1.4, label = "Left", action = "left", lit = not bottom }
-		end
-		if not editable(p) then
+		if editable(p) then
+			row[#row + 1] = { w = h * 1.6, label = "Reset", action = "reset" }
+		else
 			row[#row + 1] = { w = h * 6, label = "BAR has no setting for it" }
 		end
-		row[#row + 1] = { w = h * 1.6, label = "Reset", action = "reset" }
 	else
 		row[#row + 1] = { w = h * 6.5, label = "Tap a panel, drag to move, pinch to size" }
 		row[#row + 1] = { w = h * 2, label = "Reset all", action = "resetall" }
@@ -324,7 +303,8 @@ end
 
 local function act(action)
 	local id = picked
-	local s = id and edit(id)
+	local can = id and panels[id] and panels[id].can or {}
+	local s = (can.size or can.text or can.pad) and edit(id)
 	if action == "done" then
 		close()
 		return
@@ -343,8 +323,6 @@ local function act(action)
 			s.text = clamp(s.text * (action == "text+" and TEXT_STEP or 1 / TEXT_STEP), TEXT_MIN, TEXT_MAX)
 		elseif action == "pad+" or action == "pad-" then
 			s.pad = clamp(s.pad + (action == "pad+" and PAD_STEP or -PAD_STEP), 0, PAD_MAX)
-		elseif action == "bottom" or action == "left" then
-			s.bottom = action == "bottom"
 		end
 		relayout(id)
 	end
@@ -427,7 +405,6 @@ end
 
 function widget:ViewResize()
 	vsx, vsy = Spring.GetViewGeometry()
-	applyMenus() -- (folded and unfolded may want them in different places)
 	if isOpen then
 		layoutButtons()
 	end
@@ -527,14 +504,6 @@ function widget:Initialize()
 	}
 end
 
-local menusApplied = false
-function widget:Update()
-	if not menusApplied and WG.buildmenu and WG.ordermenu then
-		menusApplied = true
-		applyMenus()
-	end
-end
-
 function widget:Shutdown()
 	close()
 	WG.BarDroidLayout = nil
@@ -557,6 +526,7 @@ function widget:SetConfigData(data)
 					for k, d in pairs(DEFAULTS) do
 						v[k] = tonumber(v[k]) or d
 					end
+					v.bottom = nil -- (the first version's menu placement, gone)
 				end
 			end
 		end
