@@ -7,6 +7,11 @@ BAR is in the app: it downloads the engine and the game from BAR's own servers, 
 
 BAR Droid is a fan project, not made by the Beyond All Reason team.
 
+**Status: a working proof, handed on.** It shows BAR playing fully on a phone, online included. Its author does not
+plan to keep developing it: the hope is that BAR's developers and community take it as a stepping stone to an official
+BAR for Android. Help is wanted most with engine-side performance and touch controls:
+[docs/HELP-WANTED.md](docs/HELP-WANTED.md).
+
 ## Phones
 
 A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB of
@@ -73,6 +78,7 @@ what happened.
 
 ## For developers
 
+[docs/HELP-WANTED.md](docs/HELP-WANTED.md) (what is left and the measurements behind it),
 [docs/BUILDING.md](docs/BUILDING.md) (build, checks, releasing), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (how it
 works), [CONTRIBUTING.md](CONTRIBUTING.md) (the rules: online play stays BAR's, BAR's content is never bundled),
 [CHANGELOG.md](CHANGELOG.md), [docs/HISTORY.md](docs/HISTORY.md) (measurements and decisions) and

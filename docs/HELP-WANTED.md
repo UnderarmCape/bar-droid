@@ -1,0 +1,70 @@
+# Help wanted: taking BAR Droid on
+
+BAR Droid shows that Beyond All Reason plays fully on an Android phone: BAR's lobby, online games, skirmish against
+the AI and spectating, on BAR's official, unmodified engine. Its author does not plan to keep developing it. The hope
+is that BAR's developers and community take it as a stepping stone to an official BAR for Android: fork it, take it
+over, or take what is useful into BAR's own work. Two areas need people who know them best: **engine-side
+performance** and **touch controls**. Everything below was measured on one phone, a Galaxy Z Fold7 (Snapdragon 8
+Elite, Adreno 830, Android 17); [HISTORY.md](HISTORY.md) has the runs behind each number.
+
+## How it runs (and what that costs)
+
+The official Linux arm64 Recoil build runs inside a Debian container (proot), draws desktop OpenGL through Mesa
+(Freedreno on KGSL) onto an X server built into the app (Termux:X11's `lorie`), which Android shows
+([ARCHITECTURE.md](ARCHITECTURE.md)). That stack exists so the engine and the game stay exactly BAR's and online play
+works: this app changes only client-side settings and its own LuaUI widgets ([CONTRIBUTING.md](../CONTRIBUTING.md)).
+Known costs of the stack: proot stops the engine at every trapped system call (narrowing its seccomp filter to the
+calls proot acts on took the phone from 14 to 30 fps), and the frame goes engine → Mesa → X server → Android. An
+official port is free to do what this app could not: build Recoil for Android itself, change the engine, change the
+game.
+
+## Engine-side performance
+
+- **Late games are CPU-bound on the engine's main thread.** BAR's "Benchmark BAR" scenario (~1,300 units fighting), on
+  a phone hot from play: Sim 21-31 ms per frame, the game at x0.70-0.95 of real time, the main thread 88-94% of a core,
+  its three workers ~60% of a core together (`WorkerThreadCount` 2 was ~5% slower than 4; 7 no better).
+- **Where the main thread goes** (the same scenario profiled on a laptop, `tools/profile-benchmark.ps1`): the
+  simulation ~51%, of which synced Lua callins ~10% (the rest the engine's C++); unsynced Lua ~21%; drawing ~13%.
+  Costliest Lua: unsynced gadgets Fire GL4, Fire & Smoke GL4, CUS GL4, Beam Laser GL4, Widget Events; widgets Reclaim
+  Field Highlight (half of all Lua garbage; the app turns it off), API Unit Tracker, Health Bars.
+- **Heat sets the clocks.** Within ~20 s of a battle Samsung caps the CPUs at ~2.0 GHz (of 3.5/4.5); after an hour of
+  play 1.4-1.7 GHz, and the GPU 160-1050 MHz of 1200 depending on the load history. Measure hot, back to back
+  (`tools/phone-bench.ps1` warms the phone up first).
+- **Spectating a real 8v8** (30 fps cap): ~30 fps to ~2,000 units, game speed x0.97-1.02 at ~3,600 units, the GPU 67-73%
+  busy at 342-443 MHz. Uncapped the GPU is 93-99% busy at its thermal cap: 88 fps at 178 units, 26 at 1,400.
+- **What did not help:** BAR's graphics presets (the app already turns off most of what they turn off), 70% render
+  resolution, Android Game Mode. 900p against 720p costs nothing measurable.
+- **What would**, out of this app's reach: a cheaper simulation main thread (or more of it on the workers), an
+  Android-native engine build (no proot, no X server), GL ES or Vulkan rendering instead of desktop GL through Mesa,
+  cheaper versions of the GL4 effect gadgets, and GPU timer queries in Recoil (`gl.QueryCounter`/`GetQueryDelta`,
+  which BAR's GPU Profiler widget expects) to see where the GPU's time goes.
+- Measure: `tools/phone-bench.ps1` (the benchmark or a replay on the phone, clocks and busiest threads into a CSV),
+  `tools/profile-benchmark.ps1` (the same scenario on a laptop, every widget, gadget and engine timer).
+
+## Touch controls
+
+What works ([README.md](../README.md) "Touch controls"): taps, box select, long press for orders, two-finger camera
+(pan, pinch, twist, tilt), gesture shortcuts, finger scrolling in the lobby, and spectating by touch (follow a unit,
+camera presets, 1st person). Code: `RtsTouch.java` (Android gestures to X mouse events) and the LuaUI widgets in
+`app/src/main/assets/bardroid/` (`bardroid_touch.lua` the camera and interface answers, `bardroid_spectate.lua`,
+`bardroid_info.lua`, `bardroid_players.lua`, `bardroid_minimap.lua`, `bardroid_lobby_touch.lua`).
+
+Not solved:
+- **Playing (not spectating) by touch is basic.** BAR's build and order menus have no "is the pointer over me"
+  answer, so a drag that starts on them pans the map, and they cannot be hidden from a user widget; they need touch
+  versions (as the info panel got), with placing buildings by finger.
+- **BAR's interface on a near-square screen** (a foldable unfolded): the player list covers the order menu's last
+  column; the minimap is shrunk until tapped.
+- **The map's edge:** touch navigation there is still open.
+- The widgets' limits come from BAR's sandbox for user widgets (no `/option`, no widget toggles, no engine restarts):
+  touch support inside BAR's own widgets would remove most of the workarounds.
+
+## Also open
+
+- Only one phone has run it; other Adreno 7xx/8xx phones should take the same path but are untested. Mali, Xclipse
+  and Tensor GPUs have no driver path in this stack.
+- A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game.
+- Reports drafted for upstream, not filed ([upstream/](upstream/)): BAR's saved games crash the engine on load
+  (Windows too), Mesa's KGSL present-fence path, an arm64 AI bug in CircuitAI.
+- Much of the code was written with an AI assistant (Claude Code); [WORKLOG.md](WORKLOG.md) records every request
+  and the time spent.

@@ -16,8 +16,8 @@ messages and the time spent), this file (state, risks, next steps),
 [CLAUDE.md](CLAUDE.md) (architecture, every file and tool, rules), [docs/HISTORY.md](docs/HISTORY.md) (what was found,
 measured and decided, session by session), [docs/UPDATES.md](docs/UPDATES.md) (what the app changes in BAR's
 settings at every start), [docs/upstream/](docs/upstream/) (draft reports of bugs that are not ours),
-[RESEARCH.md](RESEARCH.md) (the research before the first line of code). Kailil's plan doc (private):
-https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
+[RESEARCH.md](RESEARCH.md) (the research before the first line of code), [docs/HELP-WANTED.md](docs/HELP-WANTED.md)
+(for whoever takes it on).
 
 ## State
 
@@ -337,7 +337,10 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 5. 30 fps for hours: read the `[perf]`/`[bardroid-perf]` lines of long sessions; a potato/default switch in game.
 6. **Hand-off to BAR's developers** (Kailil, 2026-10-27): when development ends, the port goes to BAR's developers
    to take in. It must have no known bugs and build from a clone with README's three steps; every fix keeps
-   `tools/laptop-tests.ps1` passing.
+   `tools/laptop-tests.ps1` passing. Kailil, 2026-10-28: a GitHub release, then a post in BAR's Discord (modding
+   discussion) asking the community and devs to check it and make it official; he will not own or continue it, and
+   needs help with engine-side optimization and touch controls ([docs/HELP-WANTED.md](docs/HELP-WANTED.md), the post
+   drafted in `C:\Tools\BARANDROID\discord-post.md`).
 
 ## Licensing
 Engine GPL-2.0+; BAR game code GPL-2.0; BAR art CC-BY-NC-ND 4.0 (never bundle, never re-encode; download from the

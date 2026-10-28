@@ -5,6 +5,13 @@ BAR on Android from GitHub, "so when we are ready to publish its simple to do so
 This file is the backlog for that; each item is done in a small tested commit and ticked here. Nothing is pushed,
 published or posted without Kailil.
 
+What the release is (Kailil, 2026-10-28): "im just posting it on github, then putting it in the BAR discord modding
+discussion page, then asking them all to fix and check my code to make it official. i dont want to own or continue
+this project. I want the community and devs to take this stepping stone and get BAR android official ... But i need
+help with optimziation on the engine side, and touch controls". So: one release, no maintainer afterwards; the
+repository says so (README "Status", CONTRIBUTING, [HELP-WANTED.md](HELP-WANTED.md)), and the Discord post is drafted
+in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts it and fills in the repository's URL).
+
 ## Where it stands (audit, 2026-10-28)
 
 - Small and self-contained: 174 tracked files, 14.8 MB (the largest is the emulator's ANGLE, 6 MB). Prebuilt
@@ -30,7 +37,8 @@ published or posted without Kailil.
       lives in `C:\Tools\BARANDROID\personal\res` and is added to his builds only (`local.properties`:
       `bardroid.personalRes`); `-PbardroidPublic` or no such folder: the public icon.
 - [ ] **App name.** The app is called "Beyond All Reason". For a public download, Kailil decides (perhaps with BAR's
-      team): keep it, or "BAR Droid" with BAR named in the description.
+      team): keep it, or "BAR Droid" with BAR named in the description. Recommended: "BAR Droid" while it is
+      unofficial, so it is never taken for the official app it hopes to lead to.
 - [x] **LICENSE** (GPL-3.0 text, as README already said) at the top; NOTICE.md keeps the third-party parts.
       **Kailil:** HANDOFF had the file as the author's to add; confirm GPL-3.0-or-later (or `git revert c942753`).
 - [x] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes in `CLAUDE.local.md`
@@ -41,7 +49,8 @@ published or posted without Kailil.
       (`bardroid.keystore`, passwords from the environment), never committed; without one it stops and says so.
       `versionName`/`versionCode` from one place (`gradle.properties`), the APK named with the version; release
       builds always have the public icon. Tested with a throwaway key. **Kailil:** make the real key once
-      (docs/BUILDING.md "Releasing") and keep it safe.
+      (docs/BUILDING.md "Releasing") and keep it safe. With no updates planned it signs the one APK; whoever takes
+      the project on can be given it to update that install, or ship under their own key and app ID.
 - [x] **A publish check** (`tools/publish-check.ps1 [-Apk <release.apk>]`): fails on pictures outside the allowed
       places, private data (the terms in `..\worklog-redact.txt`, the phone, home-network addresses, profile paths,
       e-mail addresses), keys and logins, files over 50 MB, a missing LICENSE, a version without a CHANGELOG entry,
@@ -50,6 +59,8 @@ published or posted without Kailil.
       (one commit; the effort record stays in docs/WORKLOG.md and docs/HISTORY.md) or rewrite this one
       (`git filter-repo`) to drop them. Either way `tools/publish-check.ps1` runs over what goes out. The commits
       also name Kailil's e-mail address (the check's NOTE): GitHub's noreply address for what goes out, or keep it.
+      Recommended for a hand-off: the fresh history (one commit by the noreply address; nothing to rewrite or keep in
+      step afterwards).
 
 ### For players
 - [x] README rewritten for players first: what works (lobby, online, skirmish, spectating, gamepad, keyboard and
@@ -67,6 +78,9 @@ published or posted without Kailil.
       bundle BAR content, the checks to run, upstream reports need an accepted issue and disclose AI assistance.
 - [x] CHANGELOG.md, from docs/HISTORY.md and the commit log, one section per version.
 - [x] `.github/ISSUE_TEMPLATE/bug.md` (phone, Android version, "Share logs" output) and a PR template.
+- [x] docs/HELP-WANTED.md for whoever takes it on: how it runs and what that costs, the engine-side performance
+      measurements (what helped, what did not, what only an engine or game change can do), touch controls (what
+      works, what is not solved), the other open points.
 - [x] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
       and patched, `-PbardroidPublic`) and the luacheck lint; the APK as an artifact. **Untested until pushed**: the
       first run on GitHub may need fixes. `gradlew` and `tools/fetch-termux-x11.sh` are executable in git now.
@@ -125,3 +139,4 @@ published or posted without Kailil.
 3. `Build APK.bat phone release` with the release keystore.
 4. `tools/publish-check.ps1`.
 5. Kailil pushes and makes the GitHub release with the APK and the CHANGELOG text.
+6. Kailil posts `C:\Tools\BARANDROID\discord-post.md` (the URLs filled in) in BAR's Discord, modding discussion.

@@ -1,7 +1,9 @@
 # Contributing
 
-Thanks for helping BAR run on phones. A few rules keep the app safe for online play and for BAR's content, then the
-checks to run.
+Thanks for helping BAR run on phones. The author does not plan to maintain this project: it is meant for BAR's
+developers and community to take on (fork it, or ask for the repository to be handed over), with engine-side
+performance and touch controls the open areas ([docs/HELP-WANTED.md](docs/HELP-WANTED.md)). A few rules keep the app
+as it is safe for online play and for BAR's content, then the checks to run.
 
 ## Rules
 
