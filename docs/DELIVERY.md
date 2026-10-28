@@ -83,7 +83,11 @@ published or posted without Kailil.
       against off was not run: its cost (0.01-0.1 ms a frame) is far below the benchmark's run-to-run noise.
       `WorkerThreadCount` 7 (the research batch's one lead) checked in three alternating pairs: no gain on a hot
       phone, 4 stays (HISTORY.md "Overnight").
-- [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`.
+- [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`. Night of
+      2026-10-28: two in tonight's own caching (fixed, bdaae2e); the phone's launcher logs (58,000 lines, Kailil's
+      games and tonight's runs) hold no error from the app or its widgets, only BAR's and the engine's own warnings;
+      the input-source code (touch/mouse/keyboard/pad for the spectator tools) reviewed, nothing found; README's
+      launcher labels match the app's.
 
 ## Releasing (once the blockers are done)
 
