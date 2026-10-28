@@ -31,7 +31,7 @@ published or posted without Kailil.
       `bardroid.personalRes`); `-PbardroidPublic` or no such folder: the public icon.
 - [ ] **App name.** The app is called "Beyond All Reason". For a public download, Kailil decides (perhaps with BAR's
       team): keep it, or "BAR Droid" with BAR named in the description.
-- [ ] **LICENSE** (GPL-3.0 text) at the top; NOTICE.md keeps the third-party parts.
+- [x] **LICENSE** (GPL-3.0 text, as README already said) at the top; NOTICE.md keeps the third-party parts.
 - [ ] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes into `CLAUDE.local.md`
       (untracked, read by Claude Code beside CLAUDE.md); tools find the phone through `adb devices` or
       `BARDROID_DEVICE`.
