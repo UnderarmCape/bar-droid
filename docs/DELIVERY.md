@@ -39,8 +39,10 @@ published or posted without Kailil.
 - [ ] **Release signing.** `Build APK.bat phone release` signs with a keystore named in `local.properties`
       (`bardroid.keystore`, passwords from the environment), never committed; without one it stops and says so.
       `versionName`/`versionCode` from one place (`gradle.properties`), the APK named with the version.
-- [ ] **A publish check** (`tools/publish-check.ps1`): fails on BAR artwork, personal data, credentials, files over
-      50 MB, a missing LICENSE, or a version without a CHANGELOG entry. Run before every release.
+- [x] **A publish check** (`tools/publish-check.ps1 [-Apk <release.apk>]`): fails on pictures outside the allowed
+      places, private data (the terms in `..\worklog-redact.txt`, the phone, home-network addresses, profile paths,
+      e-mail addresses), keys and logins, files over 50 MB, a missing LICENSE, a version without a CHANGELOG entry,
+      an APK with Kailil's icon or the debug key, and reports what old commits still hold. Run before every release.
 - [ ] **History.** The icon and the personal data are in old commits. Kailil decides: publish a fresh history
       (one commit; the effort record stays in docs/WORKLOG.md and docs/HISTORY.md) or rewrite this one
       (`git filter-repo`) to drop them. Either way `tools/publish-check.ps1` runs over what goes out.
@@ -59,7 +61,7 @@ published or posted without Kailil.
       assistant's working rules and points there.
 - [ ] CONTRIBUTING.md: online play must keep working (no engine changes, no modrules, no synced changes), never
       bundle BAR content, the checks to run, upstream reports need an accepted issue and disclose AI assistance.
-- [ ] CHANGELOG.md, from docs/HISTORY.md and the commit log, one section per version.
+- [x] CHANGELOG.md, from docs/HISTORY.md and the commit log, one section per version.
 - [ ] `.github/ISSUE_TEMPLATE/bug.md` (phone, Android version, "Share logs" output) and a PR template.
 - [ ] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
       and patched), the luacheck lint and the Java unit checks; the APK as an artifact. Untested until pushed.

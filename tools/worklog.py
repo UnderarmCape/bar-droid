@@ -12,8 +12,8 @@ Times:
 - Claude's time: per session, the gaps between consecutive transcript entries, each gap up to IDLE_GAP_S.
 - Kailil's time: his sittings, messages less than SITTING_GAP_S apart, each from LEAD_IN_S before its first
   message to its last one.
-Redacted before anything is written: e-mail and IP addresses, and every line of ../worklog-redact.txt (beside the
-checkout; private terms such as network names, never committed)."""
+Redacted before anything is written: e-mail and IP addresses, user profile paths, and every line of
+../worklog-redact.txt (beside the checkout; private terms such as network names, never committed)."""
 import argparse
 import datetime
 import glob
@@ -57,6 +57,7 @@ def load_redactions():
 REDACT = load_redactions()
 EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 IPV4 = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+PROFILE = re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+[^\\/\s\"'`]+", re.I)
 PASTE = re.compile(r"<pasted_content[^>]*>(.*?)</pasted_content[^>]*>", re.S)
 REMINDER = re.compile(r"<system-reminder>.*?</system-reminder>", re.S)
 COMMENT = re.compile(r"=== BEGIN ARTIFACT COMMENT (\w+) ===\n(.*?)\n=== END ARTIFACT COMMENT \1 ===", re.S)
@@ -71,6 +72,7 @@ def clean(text):
     text = REMINDER.sub("", text)
     text = EMAIL.sub("[e-mail]", text)
     text = IPV4.sub("[address]", text)
+    text = PROFILE.sub("%USERPROFILE%", text)
     for term in REDACT:
         text = re.sub(re.escape(term), "[private]", text, flags=re.I)
     return text.strip()
@@ -174,6 +176,7 @@ def load_existing():
         with open(os.path.join(DATA, "messages.jsonl"), encoding="utf-8") as fh:
             for line in fh:
                 m = json.loads(line)
+                m["text"], m["answer"] = clean(m["text"]), clean(m["answer"])  # today's redactions on old records
                 messages[m["id"]] = m
     except (OSError, ValueError):
         pass
