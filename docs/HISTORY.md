@@ -5,6 +5,39 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Morning: the slow night was the phone; the info panel's cost (2026-10-28, from 06:30)
+Kailil asked whether the graphics could drop by themselves as a game gets busy, and (seeing last night's numbers) "i
+authorize you to investigate and automaotically do what you need to do to handle it"; if the spectating tools cost
+the simulation, they should be off by default with a toggle.
+- **Graphics presets do not help a busy late game**, and cannot be switched mid-game from our widgets anyway (BAR
+  refuses `/option` and widget toggles from user widgets). The engine already keeps the simulation going when it falls
+  behind: it reserves 15% of the main thread for drawing (`MinSimDrawBalance` 0.15) and draws as few as 2 frames a
+  second (`MinDrawFPS` 2); BAR's presets mostly save GPU work, while the main thread holds the simulation (about half,
+  the engine's C++) and BAR's Lua. Matches Kailil's own test (medium to lowest mid-8v8: still ~19 fps) and 70% render
+  resolution (no gain).
+- **Draw per frame "doubled" overnight (15-17 ms in the 10-27 evening runs, 26-29 ms at 02:36-02:48): the phone, not
+  the build.** Same build, same folded screen (1680x720, interface scale 2.0, in both sets; the evening's profiler
+  screenshots are 1680x720 too), after the phone rebooted at 03:51: Draw 10.4 / 11.2 ms, Sim 19.8 / 20.7 ms, game speed
+  x1.03 / x1.00, 35-38 fps, with the GPU at 900-1050 MHz and the prime core allowed 2649 MHz; overnight the GPU sat at
+  ~443 MHz and the prime core's cap at 1401-1689 MHz at the same skin temperature (status 2, 42 C). Samsung's limits
+  depend on more than the moment's heat (hours of load before them); Draw follows the GPU clock. The phone's adb port
+  5555 was gone after the reboot (wireless debugging still on: `adb mdns services` found it, `adb tcpip 5555` again).
+- **The spectating tools need no toggle**: BAR's widget profiler on the phone does not list them in a game that is
+  not spectated (they do nothing outside spectating), and spectating they cost ~0.1 ms a frame (above).
+- **The info panel (`bardroid_info.lua`) was the costliest widget on the phone**: 7.9% of the benchmark's running
+  time and 53 kB/s of garbage (BAR's own widgets 1.3% together; BAR's Info widget 0.3% in the evening run), with the
+  pointer resting on the battle, as a finger leaves it. With a unit shown it rebuilt its text four times a second and
+  each time fitted the text size by stepping down half a pixel at a time, wrapping and measuring every word at each
+  step (up to ~30 tries), and looked every label's translation up again (a new closure and pcall each). Now: the
+  size by binary search (~6 tries), fitted again only when the text or the panel changes (health moves only the bar),
+  the recorded drawing made again only when what it shows changes, translations looked up once. Laptop, BAR's
+  benchmark with the pointer on the battle (`tools/profile-benchmark.ps1 -PointerOnBattle`, new), two runs each: 2.69
+  / 3.11 ms/s and 39.5 / 48.4 kB/s before, 2.01 / 2.03 ms/s and 18.5 / 20.0 kB/s after. `tools/touch-widget-test.ps1`:
+  all pass (the panel shows the selection).
+- `tools/phone-bench.ps1` new switches: `-DisplayScale <percent>` (Termux:X11's display scale for a run: 150 = the
+  folded 1680x720, 120 = 2100x900, 100 = native 2520x1080) and `-WidgetsOff "<name>",...` (widgets off for a run, each
+  one's order put back afterwards).
+
 ## Overnight: delivery and the spectator tools' cost (2026-10-28, from 00:30)
 Kailil, going to bed: "start an endless task hardening and bug fixing and optimizign what we just buit especially so
 its not adding a large performance overhead. and overhaul this entire project so that it will make it easy to deliver

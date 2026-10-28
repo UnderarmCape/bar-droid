@@ -31,7 +31,9 @@ param(
   [switch]$NoProfilers,
   [string]$Detail = "BAR Droid touch camera",
   [switch]$Functions,                      # time each function of -Detail (inclusive) instead of each widget
-  [switch]$Released
+  [switch]$Released,
+  [switch]$PointerOnBattle                 # the pointer kept in the middle of the window, on the battle, as the phone's
+                                           # rests where a finger left it (hover answers, the info panel showing a unit)
 )
 
 $ErrorActionPreference = "Stop"
@@ -122,6 +124,7 @@ bardroid_profile_window = $Window
 bardroid_profile_detail = $Detail
 bardroid_profile_functions = $(if ($Functions) { 1 } else { 0 })
 bardroid_profile_quit = 0
+bardroid_profile_pointer = $(if ($PointerOnBattle) { 1 } else { 0 })
 $(($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" }) -join "`n")
 "@ | Set-Content -Path (Join-Path $Data "springsettings.cfg") -Encoding ascii
 

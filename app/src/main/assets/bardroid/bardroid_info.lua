@@ -45,13 +45,17 @@ local function num(v, digits)
 	return s
 end
 
--- BAR's translation of one of gui_info.lua's labels (all exist in BAR's language files; an unknown key logs a warning)
+-- BAR's translation of one of gui_info.lua's labels (all exist in BAR's language files; an unknown key logs a warning),
+-- looked up once per label (the stats text is rebuilt four times a second; each key has one set of params)
+local translated = {}
 local function L(key, english, params)
-	local ok, s = pcall(function() return BAR.I18N(key, params) end)
-	if ok and type(s) == "string" and s ~= "" and s ~= key then
-		return s
+	local s = translated[key]
+	if s == nil then
+		local ok, t = pcall(function() return BAR.I18N(key, params) end)
+		s = (ok and type(t) == "string" and t ~= "" and t ~= key) and t or english
+		translated[key] = s
 	end
-	return english
+	return s
 end
 
 --------------------------------------------------------------------------------
@@ -455,11 +459,14 @@ local background
 -- frame it cost 4 ms a second with the pointer resting on a unit (laptop, BAR's benchmark, 2026-10-27), for text that
 -- changes four times a second at most (REFRESH).
 local content
+local drawn -- what the recorded drawing shows (a unit's: its picture, text and health line), to keep it while that stays
+local fitKey -- what the text size was fitted for (the text and the panel)
 local function dropContent()
 	if content then
 		gl.DeleteList(content)
 		content = nil
 	end
+	drawn = nil
 end
 local stub -- our WG.info
 local standDown, overlay = false, false
@@ -478,6 +485,7 @@ local function layout()
 		background = nil
 	end
 	dropContent()
+	fitKey = nil
 end
 
 -- Lines of text no wider than widthAt(line number) pixels at size; colour codes carried onto the next line.
@@ -519,7 +527,9 @@ local function wrap(f, text, size, widthAt, maxLines)
 	return lines
 end
 
--- The largest text size at which name, description, health and stats fit the panel
+-- The largest text size at which name, description, health and stats fit the panel, on half-pixel steps: a binary
+-- search (each try wraps the text again, measuring every word; stepping down from the largest size took up to ~30
+-- tries, and the phone's widget profiler had this panel at 7.9% of the benchmark's running time, 2026-10-28)
 local function fit(view)
 	local x0, y0, x1, y1 = rect[1] + pad, rect[2] + pad, rect[3] - pad, rect[4] - pad
 	local innerW, innerH = x1 - x0, y1 - y0
@@ -527,8 +537,7 @@ local function fit(view)
 	local textX = x0 + pic + floor(pad * 1.5)
 	local narrow, wide = x1 - textX, innerW
 	local largest = max(MIN_TEXT, innerH / MAX_TEXT_LINES)
-	local s = largest
-	while true do
+	local function try(s)
 		local nameSize, descSize, statSize = s * 1.12, s * 0.86, s
 		local lh = s * 1.22
 		local name = view.name
@@ -554,12 +563,28 @@ local function fit(view)
 			return beside(n) and narrow or wide
 		end)
 		used = used + #stats * lh
-		if used <= innerH or s <= MIN_TEXT then
-			return { beside = beside, s = s, name = name, nameSize = nameSize, desc = desc, descSize = descSize, statSize = statSize,
-				lh = lh, stats = stats, statsTop = top, barH = barH, pic = pic, textX = textX, x0 = x0, y1 = y1, x1 = x1 }
-		end
-		s = s - 0.5
+		return used <= innerH, { beside = beside, s = s, name = name, nameSize = nameSize, desc = desc, descSize = descSize,
+			statSize = statSize, lh = lh, stats = stats, statsTop = top, barH = barH, pic = pic, textX = textX, x0 = x0, y1 = y1,
+			x1 = x1 }
 	end
+	-- (the text only shrinks as the size does; the smallest size is taken whether it fits or not)
+	local steps = max(0, math.ceil((largest - MIN_TEXT) / 0.5))
+	local fits, result = try(largest)
+	if fits or steps == 0 then
+		return result
+	end
+	local lo, hi = 0, steps -- lo does not fit; hi fits, or is the smallest size
+	local _, best = try(largest - steps * 0.5)
+	while hi - lo > 1 do
+		local mid = floor((lo + hi) / 2)
+		local ok, r = try(largest - mid * 0.5)
+		if ok then
+			hi, best = mid, r
+		else
+			lo = mid
+		end
+	end
+	return best
 end
 
 --------------------------------------------------------------------------------
@@ -645,20 +670,32 @@ local function sameShown(a, b)
 end
 
 local function buildView()
-	dropContent()
 	if not shown or shown.kind == "units" then
-		view, laidOut = nil, nil
+		dropContent()
+		view, laidOut, fitKey = nil, nil, nil
 		return
 	end
 	local info = defInfo(shown.id)
-	view = { name = info.name, description = info.description, stats = statsText(shown.id, shown.unitID) }
+	local v = { name = info.name, description = info.description, stats = statsText(shown.id, shown.unitID) }
 	if shown.unitID then
 		local health, maxHealth, _, _, build = Spring.GetUnitHealth(shown.unitID)
 		if health and maxHealth and maxHealth > 0 then
-			view.health, view.maxHealth, view.build = health, maxHealth, build
+			v.health, v.maxHealth, v.build = health, maxHealth, build
 		end
 	end
-	laidOut = fit(view)
+	view = v
+	-- the text size fitted again only when the text or the panel changed (health moves only the bar), the drawing
+	-- recorded again only when what it shows changed: with the pointer on a battle both stay most of the time
+	local key = v.name .. "\n" .. v.description .. "\n" .. v.stats .. (v.health and "\nh" or "") .. "\n" .. rect[3] .. "x" .. rect[4]
+	if key ~= fitKey then
+		fitKey, laidOut = key, fit(v)
+		dropContent()
+	end
+	local now = shown.id .. "\n" .. (v.health and (floor(v.health) .. "/" .. floor(v.maxHealth) .. "/" .. floor((v.build or 1) * 100)) or "")
+	if now ~= drawn then
+		dropContent()
+		drawn = now
+	end
 end
 
 local function layoutGrid(types)

@@ -1,6 +1,7 @@
 -- BAR Droid profiling runs (tools/profile-benchmark.ps1, laptop only, never in the APK): in BAR's benchmark scenario,
 -- starts the widget and unsynced gadget profilers once the battle is on (frame 300; units spawn at frame 15) and logs
--- the engine's own timers (/debuginfo profiling) at frame 1500, as the synced profile ends.
+-- the engine's own timers (/debuginfo profiling) at frame 1500, as the synced profile ends. With
+-- bardroid_profile_pointer = 1 (-PointerOnBattle) the pointer stays in the middle of the window, on the battle.
 function widget:GetInfo()
 	return {
 		name = "BAR Droid benchmark profile go",
@@ -10,6 +11,17 @@ function widget:GetInfo()
 		layer = -999998,
 		enabled = true,
 	}
+end
+
+local pointer = Spring.GetConfigInt("bardroid_profile_pointer", 0) == 1
+local warpedAt = 0
+function widget:Update()
+	local t = os.clock()
+	if pointer and t - warpedAt >= 0.5 then
+		warpedAt = t
+		local vsx, vsy = Spring.GetViewGeometry()
+		Spring.WarpMouse(math.floor(vsx / 2), math.floor(vsy / 2))
+	end
 end
 
 function widget:GameFrame(n)

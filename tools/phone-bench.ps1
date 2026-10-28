@@ -16,9 +16,14 @@
 # real time every 10 s (below x1 the phone falls behind live play), units and fps (bardroid_bench.lua). The warm-up
 # stays the scenario. Its game version must be on the phone (a replay recorded there).
 #   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 -Cap 30 -Replay "<replay>.sdfz" [-SkipTo 900] [-Seconds 600]
+# -DisplayScale <percent>: Termux:X11's display scale for this run (the X screen is the display's size / scale; 150 on
+# the Fold7: folded 1680x720, 120: 2100x900, 100: the cover screen's native 2520x1080).
+# -WidgetsOff "<name>","<name>": widgets (GetInfo names, e.g. "BAR Droid spectate") off for this run (their order 0 in
+# LuaUI/Config/BYAR.lua; each one's own order put back afterwards).
 param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoWarm, [string]$Profile = "",
   [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "",
-  [string]$Replay = "", [int]$SkipTo = 900, [int]$Seconds = 600)
+  [string]$Replay = "", [int]$SkipTo = 900, [int]$Seconds = 600,
+  [int]$DisplayScale = 0, [string[]]$WidgetsOff = @())
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -50,25 +55,60 @@ while (Test-Path $lock) {
   Start-Sleep 30
 }
 Set-Content -Path $lock -Value $PID -Encoding ascii
-trap { try { RestorePrefs; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
+trap { try { RestorePrefs; RestoreWidgets; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
 
 if ($Device -match ":\d+$") { & $adb connect $Device | Out-Null }   # wireless debugging: (re)connect
 Adb shell "am force-stop $pkg"
 # the app's saved settings (shared_prefs/bardroid.xml) while it is stopped: the run's resolution and frame cap, the
 # player's own put back afterwards (an empty value: the key was not saved, the app's default applies)
+# (the first argument: the prefs file; the app's own, or Termux:X11's for the display scale)
 $PrefsSh = @'
-f=shared_prefs/bardroid.xml
+f=shared_prefs/$1; shift
 for kv in "$@"; do
   k=${kv%%=*}; v=${kv#*=}
   sed -i "/name=\"$k\"/d" "$f"
   [ -z "$v" ] || sed -i "s|</map>|    <int name=\"$k\" value=\"$v\" />\n</map>|" "$f"
 done
 '@
-$userPrefs = @(AppSh @'
-for k in "$@"; do echo "$k=$(sed -n "s/.*name=\"$k\" value=\"\([0-9-]*\)\".*/\1/p" shared_prefs/bardroid.xml | head -n 1)"; done
-'@ @("renderScale", "frameCap") | Where-Object { $_ -match '^\w+=' })
-function RestorePrefs { if ($script:userPrefs.Count) { Adb shell "am force-stop $pkg"; AppSh $PrefsSh $script:userPrefs | Out-Null } }
-AppSh $PrefsSh @("renderScale=$Scale", "frameCap=$Cap") | Out-Null
+$ReadPrefsSh = @'
+f=shared_prefs/$1; shift
+for k in "$@"; do echo "$k=$(sed -n "s/.*name=\"$k\" value=\"\([0-9-]*\)\".*/\1/p" "$f" | head -n 1)"; done
+'@
+$xPrefs = "com.underarmcape.bardroid_preferences.xml"
+$userPrefs = @(AppSh $ReadPrefsSh @("bardroid.xml", "renderScale", "frameCap") | Where-Object { $_ -match '^\w+=' })
+$userX = @(if ($DisplayScale) { AppSh $ReadPrefsSh @($xPrefs, "displayScale") | Where-Object { $_ -match '^\w+=' } })
+function RestorePrefs {
+  if ($script:userPrefs.Count -or $script:userX.Count) { Adb shell "am force-stop $pkg" }
+  if ($script:userPrefs.Count) { AppSh $PrefsSh (@("bardroid.xml") + $script:userPrefs) | Out-Null }
+  if ($script:userX.Count) { AppSh $PrefsSh (@($xPrefs) + $script:userX) | Out-Null }
+}
+AppSh $PrefsSh @("bardroid.xml", "renderScale=$Scale", "frameCap=$Cap") | Out-Null
+if ($DisplayScale) { AppSh $PrefsSh @($xPrefs, "displayScale=$DisplayScale") | Out-Null }
+# widgets off for this run: each one's order before (empty: none saved) in files/bench-widgets, put back afterwards
+# (the names in the script itself: adb joins arguments with spaces)
+$names = ($WidgetsOff | ForEach-Object { "'" + ($_ -replace "'", "'\''") + "'" }) -join " "
+$WidgetsOffSh = (@'
+f=files/bar/LuaUI/Config/BYAR.lua; : > files/bench-widgets
+for n in NAMES; do
+  old=$(grep -o "\[\"$n\"\] *= *-\?[0-9]*" "$f" | head -n 1 | sed 's/.*= *//')
+  echo "$n=$old" >> files/bench-widgets
+  if [ -n "$old" ]; then sed -i "s/\[\"$n\"\] *= *-\?[0-9]*/[\"$n\"] = 0/" "$f"
+  else sed -i "0,/^\torder *= *{/s//\torder = {\n\t\t[\"$n\"] = 0,/" "$f"; fi
+  grep -q "\[\"$n\"\] = 0," "$f" && echo "off: $n" || echo "NOT off: $n"
+done
+'@).Replace("NAMES", $names)
+$RestoreWidgetsSh = @'
+f=files/bar/LuaUI/Config/BYAR.lua
+[ -f files/bench-widgets ] || exit 0
+while IFS='=' read -r n old; do
+  [ -n "$n" ] || continue
+  if [ -n "$old" ]; then sed -i "s/\[\"$n\"\] *= *-\?[0-9]*/[\"$n\"] = $old/" "$f"
+  else sed -i "/\[\"$n\"\] *= *-\?[0-9]*,\?[ \t]*$/d" "$f"; fi
+done < files/bench-widgets
+rm -f files/bench-widgets
+'@
+function RestoreWidgets { if ($WidgetsOff.Count) { AppSh $RestoreWidgetsSh | Out-Null } }
+if ($WidgetsOff.Count) { AppSh $WidgetsOffSh | ForEach-Object { Write-Host "[phone-bench] widget $_" } }
 AppSh 'if [ -n "$1" ]; then echo "$1" > files/bar/.bardroid-bench-profile; else rm -f files/bar/.bardroid-bench-profile; fi' @($Profile) | Out-Null
 $kv = @($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" })
 AppSh 'rm -f files/bar/.bardroid-bench-settings; for l in "$@"; do echo "$l" >> files/bar/.bardroid-bench-settings; done' $kv | Out-Null
@@ -184,6 +224,7 @@ if ($Profile) {   # the newest screenshot: the benchmark's, with the profiler's 
 }
 # BAR's settings as they were before this run's -Settings
 AppSh 'rm -f files/bar/.bardroid-bench-settings; [ -f files/bar/.springsettings.pre-bench ] && mv files/bar/.springsettings.pre-bench files/bar/springsettings.cfg; true' | Out-Null
+RestoreWidgets
 RestorePrefs
 Write-Host "[phone-bench] the player's settings back: $($userPrefs -join ', ')"
 Remove-Item $lock -ErrorAction SilentlyContinue

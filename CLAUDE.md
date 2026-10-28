@@ -109,13 +109,13 @@ python -I tools\demo-rate.py <replay.sdfz>                               # game 
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
 powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory] [-SelfTest]   # before anything goes public (docs/DELIVERY.md)
 "Build APK.bat" phone release                                            # the public build: own icon, release key (local.properties), versioned name
-powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
+powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}] [-DisplayScale 150|120|100] [-WidgetsOff "Name"]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
             # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the
             # throttled state a late game plays in (Kailil: measure hot, back to back), then Sim/Draw/Update ms per frame,
             # game speed, clocks every 5 s (tools/phone-clocks.sh) and the busiest threads -> build\phone-bench.csv; one
             # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
-powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"]
+powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"] [-PointerOnBattle]
             # the same scenario on the laptop as the phone runs it, every widget, unsynced gadget and engine timer logged
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat && <command>"` (PowerShell tools: dot-source
