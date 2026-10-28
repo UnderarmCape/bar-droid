@@ -134,6 +134,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `bardroid_spectate.lua`'s new views reviewed: the fitted Shoulder kept the last unit's camera on the next unit,
       was framed from below on slopes (the engine lifts a camera under the ground) and looked past the unit with the
       engine's cardinal lock on; fixed, with a spectate-test case for the next unit (HISTORY.md "Evening").
+      The new chat typing box reviewed against BAR's widget handler: BAR's hotkeys run before any widget hears a key
+      unless one owns the text, so typing could also give orders; the box and the open layout editor own the text now
+      (HISTORY.md "Night").
 
 ## Releasing (once the blockers are done)
 

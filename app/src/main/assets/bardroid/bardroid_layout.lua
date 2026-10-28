@@ -299,16 +299,25 @@ local function layoutButtons()
 	end
 end
 
+-- While open the editor owns the keys (widgetHandler:OwnText): BAR's widget handler runs its hotkeys before any other
+-- widget hears a key, so Escape and the rest would have gone to the game.
+local ownsText = false
+
 local function open()
 	if isOpen then
 		return
 	end
 	isOpen, picked, drag = true, nil, nil
+	ownsText = widgetHandler:OwnText()
 	layoutButtons()
 	Spring.Echo("[bardroid-layout] open")
 end
 
 local function close()
+	if ownsText then
+		widgetHandler:DisownText()
+		ownsText = false
+	end
 	isOpen, picked, drag = false, nil, nil
 	Spring.Echo("[bardroid-layout] closed")
 end
@@ -511,6 +520,7 @@ function widget:Initialize()
 		release = function() widget:MouseRelease() end,
 		act = act,
 		picked = function() return picked end,
+		ownsText = function() return ownsText end,
 		rect = rectOf,
 		ids = function() return order end,
 		buttons = function() return buttons end,
@@ -526,6 +536,7 @@ function widget:Update()
 end
 
 function widget:Shutdown()
+	close()
 	WG.BarDroidLayout = nil
 end
 

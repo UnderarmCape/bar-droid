@@ -25,6 +25,13 @@ real game ... tap A ui element, to adjust its size, position, and if possible, t
   and padding for the app's own (chat, unit info, spectate bar). Settings per screen shape (wide: folded, near-square:
   unfolded) in its config. The button bar sits mid-screen (at the bottom it covered the unit info panel and the player
   list, so a tap on them hit a button; found by the test, screenshots before and after).
+- **Found in review afterwards: typing could also press BAR's hotkeys.** BAR's widget handler runs its key actions
+  (`actionHandler:KeyAction`, the hotkeys BAR binds in Lua) before any widget hears a key, unless a widget owns the
+  text (`barwidgets.lua` KeyPress); BAR's chat takes ownership while typing, the new box did not, so a letter typed
+  could also give an order or pick a build. The box and the open editor now own the text (`widgetHandler:OwnText`,
+  which BAR's handler gives user widgets too); the test drove the widget's KeyPress directly and could not see it.
+  touch-widget-test checks the ownership (BAR's chat refuses a map marker box while the app's box is open) and that
+  no box opens while the editor holds the keys.
 - touch-widget-test: 28 new checks (typing: opens on Enter in the allies' channel, wraps, smaller past two lines,
   Backspace, Escape, a sent line reaches the chat; editor: /hud, picking, a drag, Size/Text on the chat, Size on the
   unit panel, BAR's player list and minimap, the top bar fixed, Reset all, Done, three fingers); all pass, spectate-test

@@ -294,14 +294,24 @@ local function layoutTyping()
 		y0 = boxTop - height, textX = textX, base = base }
 end
 
+-- The box owns the text while open (widgetHandler:OwnText, as BAR's chat does): BAR's widget handler then gives every
+-- key to it before BAR's hotkeys (its actions run before any other widget hears a key: typing "s" would also have
+-- stopped the units selected).
 local function openTyping(mode)
+	if not widgetHandler:OwnText() then
+		return false -- (another box has the keys)
+	end
 	typing = { chars = {}, at = 0, mode = mode, opened = clock() }
 	sentAt = #sent + 1
 	Spring.SDLStartTextInput() -- (as BAR's chat: text input may have been stopped by the lobby)
 	layoutTyping()
+	return true
 end
 
 local function closeTyping()
+	if typing then
+		widgetHandler:DisownText()
+	end
 	typing, typed = nil, nil
 end
 
@@ -403,8 +413,7 @@ function widget:KeyPress(key, mods)
 		elseif spec and mode == "a:" then
 			mode = "s:"
 		end
-		openTyping(mode)
-		return true
+		return openTyping(mode)
 	end
 	local cs = typing.chars
 	if enter then
@@ -551,6 +560,7 @@ local function register()
 end
 
 function widget:Shutdown()
+	closeTyping()
 	WG.bardroidChat = nil
 	if registered and WG.BarDroidLayout and WG.BarDroidLayout.unregister then
 		WG.BarDroidLayout.unregister("chat")

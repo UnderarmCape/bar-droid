@@ -458,6 +458,10 @@ cases = {
 		local t = C and C.typing()
 		verify("typing: Enter opens the app's box (allies)", taken and t and t.mode == "a:", t and t.mode)
 		verify("typing: BAR's own box stays closed", not (WG.chat and WG.chat.isInputActive()))
+		-- the box owns the keys (BAR's hotkeys run before widgets hear a key): BAR's chat, asked for a map marker's box
+		-- now, says no as it does whenever another widget has them
+		verify("typing: the box owns the keys", WG.chat and WG.chat.startMapmarkInput
+			and WG.chat.startMapmarkInput(100, 0, 100) == false)
 		for _ = 1, 12 do
 			C.widget:TextInput("wrapping ")
 		end
@@ -491,6 +495,7 @@ cases = {
 		C.widget:TextInput("/hud")
 		C.widget:KeyPress(13, {})
 		verify("layout: /hud in the chat opens the editor", WG.BarDroidLayout and WG.BarDroidLayout.isOpen())
+		verify("layout: the editor owns the keys while open", WG.BarDroidLayout and WG.BarDroidLayout.ownsText())
 	end,
 	-- the layout editor (bardroid_layout.lua): a tap picks a panel, a drag moves it, the buttons size it; BAR's panels
 	-- only as far as BAR lets (the player list's and the minimap's size); Reset all, Done
@@ -528,6 +533,8 @@ cases = {
 		for _ = 1, 8 do
 			L.act("text+")
 		end
+		verify("typing: no box while the editor has the keys", not C.widget:KeyPress(13, {}) and C.typing() == nil)
+		L.close()
 		C.widget:KeyPress(13, {})
 		for _ = 1, 14 do
 			C.widget:TextInput("wrapping ")
@@ -536,6 +543,7 @@ cases = {
 		verify("typing: past two lines the text gets smaller", t and t.lines >= 3 and t.size < t.base,
 			t and string.format("%d lines, size %.1f of %.1f", t.lines, t.size, t.base))
 		C.widget:KeyPress(27, {})
+		L.open()
 		local x0, y0, x1, y1 = L.rect("info")
 		before.infoW = x1 - x0
 		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
