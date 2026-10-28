@@ -82,6 +82,9 @@ local NUMBERS = {
 	{ key = "fov", label = "FOV (deg)", step = 2, min = 10, max = 150 },
 	{ key = "posSmoothing", label = "Move smoothing (s)", step = 0.02, min = 0, max = 3 },
 	{ key = "turnSmoothing", label = "Turn smoothing (s)", step = 0.05, min = 0, max = 5 },
+	{ key = "lookSpeed", label = "Look speed (deg)", step = 10, min = 10, max = 720 }, -- (per drag across the screen)
+	{ key = "recenterDelay", label = "Recenter after (s)", step = 0.5, min = 0, max = 60 },
+	{ key = "recenterSmoothing", label = "Recenter smooth (s)", step = 0.05, min = 0, max = 5 },
 }
 
 local function round(v, step)
@@ -153,9 +156,9 @@ end
 
 local function layout()
 	local _, vsy = Spring.GetViewGeometry()
-	local h = math.floor(vsy * 0.034)
-	local w = math.floor(h * 13)
-	local x0, top = 8, vsy - math.floor(vsy * 0.36)
+	local h = math.floor(vsy * 0.042)
+	local w = math.floor(h * 13.5)
+	local x0, top = 8, vsy - math.floor(vsy * 0.3)
 	buttons = {}
 	for i, r in ipairs(rows) do
 		local y = top - i * (h + 3)
@@ -193,23 +196,31 @@ function widget:DrawScreen()
 		return
 	end
 	local h, x0, w, top = layout()
-	local font = WG.fonts and WG.fonts.getFont()
-	gl.Color(0, 0, 0, 0.6)
-	gl.Rect(x0 - 4, top - (#rows + 1) * (h + 3) - 4, x0 + w + 4, top + h)
+	-- (bold, large, light on a dark panel: Kailil, "make the adjustments easier to read and bold")
+	local font = WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
+	gl.Color(0, 0, 0, 0.82)
+	gl.Rect(x0 - 6, top - (#rows + 1) * (h + 3) - 6, x0 + w + 6, top + h * 1.2)
+	for i, r in ipairs(rows) do
+		if i % 2 == 0 then -- every other row a shade lighter: the eye stays on its line
+			gl.Color(1, 1, 1, 0.06)
+			gl.Rect(x0, r.y, x0 + w, r.y + h)
+		end
+	end
 	for _, b in ipairs(buttons) do
-		gl.Color(1, 1, 1, b.save and 0.25 or 0.14)
+		gl.Color(1, 1, 1, b.save and 0.3 or 0.2)
 		gl.Rect(b.x0, b.y0, b.x1, b.y1)
 	end
 	gl.Color(1, 1, 1, 1)
 	if font then
 		font:Begin()
-		font:Print("\255\255\200\1201st person tuner", x0, top + h * 0.2, h * 0.6, "o")
+		local size = h * 0.62
+		font:Print("\255\255\210\1001st person tuner", x0, top + h * 0.25, h * 0.75, "o")
 		for _, r in ipairs(rows) do
-			font:Print(r.label, x0 + 4, r.y + h * 0.28, h * 0.5, "o")
-			font:Print("\255\255\255\255" .. tostring(r.value()), x0 + w * 0.42, r.y + h * 0.28, h * 0.5, "o")
+			font:Print("\255\235\235\235" .. r.label, x0 + 6, r.y + h * 0.24, size, "o")
+			font:Print("\255\255\230\90" .. tostring(r.value()), x0 + w * 0.47, r.y + h * 0.24, size, "o")
 		end
 		for _, b in ipairs(buttons) do
-			font:Print(b.label, (b.x0 + b.x1) / 2, b.y0 + h * 0.28, h * 0.5, "oc")
+			font:Print("\255\255\255\255" .. b.label, (b.x0 + b.x1) / 2, b.y0 + h * 0.24, size, "oc")
 		end
 		font:End()
 	end

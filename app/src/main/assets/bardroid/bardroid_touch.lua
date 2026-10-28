@@ -264,8 +264,35 @@ local ACTIONS = {
 	end,
 }
 
+-- bardroid_spectate.lua's 1st person: the fingers look around instead of moving the camera (pan: screen pixels;
+-- pinch: the FOV; twist and tilt as they are)
+local function readLook(lines, L)
+	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
+		local a, b, c, d = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
+		if a and b and c and d then
+			L.dx, L.dy = L.dx + c - a, L.dy + d - b
+		end
+	end
+	for r in lines:gmatch("zoom (%S+) %S+ %S+") do
+		local ratio = tonumber(r)
+		if ratio and ratio > 0 then
+			L.zoom = L.zoom * ratio
+		end
+	end
+	for a in lines:gmatch("rot (%S+)") do
+		L.rot = L.rot + (tonumber(a) or 0)
+	end
+	for t in lines:gmatch("tilt (%S+)") do
+		L.tilt = L.tilt + (tonumber(t) or 0)
+	end
+end
+
 local function readTouch(lines)
 	local p = pending
+	if WG.BarDroidFirstPerson and WG.BarDroidLook then
+		readLook(lines, WG.BarDroidLook)
+		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
+	end
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		local ax, az = ground(tonumber(x0), tonumber(y0))
 		local bx, bz = ground(tonumber(x1), tonumber(y1))

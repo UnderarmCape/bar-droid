@@ -77,7 +77,13 @@ local FP = {
 	pitch = -8, yaw = 0,
 	fov = 80,
 	posSmoothing = 0.2, turnSmoothing = 0.25,
+	-- free look (Kailil: "look right and left or up and down, which will ignore the rotation of the unit ... after no
+	-- more input from myself, it will auto center and reset fov values ... maybe 4 seconds"): a drag across the screen's
+	-- width turns lookSpeed degrees; recenterDelay seconds without input, then back over recenterSmoothing seconds
+	lookSpeed = 120, recenterDelay = 4, recenterSmoothing = 0.6,
 }
+-- the free look: where the player looks (absolute turn, pitch in degrees, FOV) while look.free; look.at the last input
+local look = { free = false, yaw = 0, pitch = 0, fov = 70, at = 0 }
 
 -- Wildlife is never followed (Kailil: "blacklist wildlife such as seagulls, crabs"): BAR's critters, and anything of the
 -- Gaia team (the map's neutral units).
@@ -429,9 +435,41 @@ local function updateFirstPerson(dt)
 	local rx, rz = -fz, fx -- to its right
 	local ex, ez = f.fpX + fx * FP.forward + rx * FP.right, f.fpZ + fz * FP.forward + rz * FP.right
 	local ey = f.fpY + FP.up
-	local ry = f.fpYaw + math.rad(FP.yaw)
-	local pitch = math.pi / 2 - math.rad(FP.pitch) -- (rx: pi/2 level, more is down)
-	spSetCameraState({ mode = CAM_FPS, px = ex, py = ey, pz = ez, rx = pitch, ry = ry, rz = 0, fov = FP.fov,
+	-- where the eye looks: with the unit, or where the player looked (free look, it ignores the unit's turning) until
+	-- FP.recenterDelay without input, then back with the unit smoothly, the FOV too
+	local wantYaw, wantPitch, wantFov = f.fpYaw + math.rad(FP.yaw), FP.pitch, FP.fov
+	local L = WG.BarDroidLook
+	local input = L and (L.dx ~= 0 or L.dy ~= 0 or L.zoom ~= 1 or L.rot ~= 0 or L.tilt ~= 0)
+	if input then
+		if not look.free then
+			look.free, look.yaw, look.pitch, look.fov = true, wantYaw, wantPitch, wantFov
+		end
+		local vsx = Spring.GetViewGeometry()
+		local speed = math.rad(FP.lookSpeed) -- (a drag across the screen's width turns this much)
+		-- the view goes with the finger, as dragging the scene: right turns it left, down tilts it up (dx, dy: screen
+		-- pixels, y down; rot: a twist, clockwise; tilt: two fingers down, a share of the screen's height)
+		look.yaw = look.yaw - L.dx / vsx * speed - L.rot
+		look.pitch = math.max(-85, math.min(85, look.pitch + math.deg(L.dy / vsx * speed) + L.tilt * 90))
+		look.fov = math.max(20, math.min(120, look.fov / L.zoom))
+		look.at = now()
+		L.dx, L.dy, L.zoom, L.rot, L.tilt = 0, 0, 1, 0, 0
+	end
+	if look.free and now() - look.at > FP.recenterDelay then -- back with the unit
+		local kr = FP.recenterSmoothing > 0 and (1 - math.exp(-dt / FP.recenterSmoothing)) or 1
+		look.yaw = approachAngle(look.yaw, wantYaw, kr)
+		look.pitch = look.pitch + (wantPitch - look.pitch) * kr
+		look.fov = look.fov + (wantFov - look.fov) * kr
+		local dYaw = math.abs((wantYaw - look.yaw + math.pi) % (2 * math.pi) - math.pi)
+		if dYaw < 0.01 and math.abs(wantPitch - look.pitch) < 0.5 and math.abs(wantFov - look.fov) < 0.5 then
+			look.free = false
+		end
+	end
+	local ry, pitchDeg, fov = wantYaw, wantPitch, wantFov
+	if look.free then
+		ry, pitchDeg, fov = look.yaw, look.pitch, look.fov
+	end
+	local pitch = math.pi / 2 - math.rad(pitchDeg) -- (rx: pi/2 level, more is down)
+	spSetCameraState({ mode = CAM_FPS, px = ex, py = ey, pz = ez, rx = pitch, ry = ry, rz = 0, fov = fov,
 		dx = math.sin(pitch) * math.sin(ry), dy = math.cos(pitch), dz = -math.sin(pitch) * math.cos(ry),
 		oldHeight = ey - Spring.GetGroundHeight(ex, ez) }, 0)
 end
@@ -811,20 +849,37 @@ function widget:Update(dt)
 		panSeen = pan
 		if not follow then
 			unlockPlayer()
-		elseif view.preset == "first" then
-			-- 1st person keeps the eye on the unit (a pan there would sweep to the horizon): fingers panning on for a
-			-- while (a drag, a flick's glide) let go of it
-			local t = now()
-			if not follow.panLast or t - follow.panLast > 0.25 then
-				follow.panStart = t
-			end
-			follow.panLast = t
-			if t - follow.panStart > 0.35 then
-				stopFollow()
-			end
 		end
 	end
+	-- in 1st person bardroid_touch.lua hands the fingers' moves over as looking (WG.BarDroidLook), not camera moves
+	local firstPerson = follow ~= nil and view.preset == "first"
+	WG.BarDroidFirstPerson = firstPerson
+	if firstPerson and not WG.BarDroidLook then
+		WG.BarDroidLook = { dx = 0, dy = 0, zoom = 1, rot = 0, tilt = 0 }
+	end
+	if not firstPerson then
+		look.free = false
+	end
 	updateFollow(dt)
+end
+
+-- 1st person on the laptop: a mouse drag looks around, the wheel sets the FOV (as the fingers do on the phone)
+function widget:MouseMove(_, _, dx, dy)
+	local L = WG.BarDroidLook
+	if WG.BarDroidFirstPerson and L then
+		L.dx, L.dy = L.dx + dx, L.dy - dy -- (the engine's y goes up, the fingers' down)
+		lastTap = nil -- (a drag is no tap)
+	end
+	return false
+end
+
+function widget:MouseWheel(up)
+	local L = WG.BarDroidLook
+	if WG.BarDroidFirstPerson and L then
+		L.zoom = L.zoom * (up and 1.1 or 1 / 1.1)
+		return true
+	end
+	return false
 end
 
 function widget:Initialize()

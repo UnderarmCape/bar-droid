@@ -183,6 +183,25 @@ local cases = {
 		check("1st person: the engine's first-person camera on the unit, looking its way", cs.mode == 0 and off < 120
 			and dot > 0.5, string.format("mode %s, eye %.0f elmos from the unit, %.0f above its base, anchor %s, facing %.2f",
 			tostring(cs.mode), off, cy - uy, tostring(S().anchor()), dot))
+		expected = cs.ry
+		-- free look: a drag (as the fingers or the mouse give it), then nothing for longer than the recenter delay
+		WG.BarDroidLook.dx = 400
+		S().fp.recenterDelay = 1.5
+		return 0.5
+	end,
+	function()
+		local cs = Spring.GetCameraState()
+		local turned = math.abs((cs.ry - expected + math.pi) % (2 * math.pi) - math.pi)
+		check("1st person: a drag looks around", turned > 0.3, string.format("turned %.2f rad", turned))
+		return 4
+	end,
+	function()
+		local cdx, _, cdz = Spring.GetCameraDirection()
+		local udx, _, udz = Spring.GetUnitDirection(unitB)
+		local ln = math.sqrt(cdx * cdx + cdz * cdz) * math.sqrt(udx * udx + udz * udz)
+		local dot = ln > 0 and (cdx * udx + cdz * udz) / ln or -1
+		check("1st person: back with the unit after the recenter delay", dot > 0.5, string.format("facing %.2f", dot))
+		S().fp.recenterDelay = 4
 		S().actions.preset_table()
 		return 1.5
 	end,
