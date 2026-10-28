@@ -226,3 +226,31 @@ solid. Threads scale weakly on the laptop (4 → 16 workers: -9 %); the phone ha
 workers by default, so `workers8` is still the first CPU lever to measure there. Observation: Draw per sim frame is
 ~2x higher from the clean engine dir than from BAR's dir with ReShade's `opengl32.dll` (10.8 vs 5.0 ms), so laptop
 Draw numbers are only comparable within one dir.
+## Ranked summary (2026-10-27, after round 2; no phone run yet: laptop numbers, phone queue ready)
+
+Ranked by measured Sim reduction (engine timer, work per frame; laptop, ±8 % noise between identical runs):
+
+| # | lever | measured | sync / online | could it be made safe for the real build? |
+| --- | --- | --- | --- | --- |
+| 1 | GAME_SPEED 20 (engine build) | **-36 % sim per game second** | breaks sync with every other build; BAR's Lua assumes 30 Hz | no (a game-wide change for BAR, not a client lever) |
+| 2 | LuaUI off | -14 % | client-only | partly: the costliest widgets can go on the phone (Reclaim Field Highlight; its cost grows with wrecks) |
+| 3 | engine switches together (DFS piece walk + UnitDamaged to synced Lua only + no sync hash) | -14 % | DFS: identical results; damage-event filter: unsynced only | **DFS walk: yes, as an upstream Recoil change** (no allocation per unit per frame, same results); the damage filter would need an engine option ("no unsynced UnitDamaged") and breaks health bars/notifications |
+| 4 | gadget trim (30 damage-event and effect gadgets) | -11 % | synced gadgets: a different game, singleplayer only | in singleplayer only, as part of the controller game overlay (it is already an overlay); effects gadgets could become a BAR option |
+| 5 | UnitDamaged to synced Lua only | -10 % | client-only | see 3 |
+| 6 | system libm instead of streflop | -8 % | **no** (last-bit differences) | no |
+| 7 | DFS piece walk in `TickAllAnims` | -7 % | yes | yes, upstream (see 3) |
+| 8 | 16 vs 4 worker threads | -9 % between them | yes | yes: a setting; the phone runs main + 3 because Recoil found no cache topology. Measure workers8 on the phone first |
+| 9 | own GCC 16 -O3 build vs official GCC 13 | -5 % | unproven | only as a GCC build with the official flags, proven with Recoil's synctest |
+| - | modrules: LOS mip, collision avoidance and quad update rates, quadfield size, pathing budget, overlap | within ±3 % (overlap, quad 256 worse) | game change | not worth it: Tracy shows LOS 0.4, pathing 0.1, collision detection 0.2 ms per frame |
+| - | MinSimDrawBalance / MinDrawFPS (forced 3x) | no change on the laptop | client | phone pending (its draw share is 3x larger) |
+| - | Sound=0, no sync hash alone | no main-thread change | | heat question: soak pair on the phone |
+
+Not measured yet (phone queue, `tools/research/queue.ps1`): the arm64 compiler builds (oryon, ThinLTO, fast-math,
+PGO), workers 5/7/8, main-thread pinning, allocators, frame caps 20/30 as game speed, soak pair (15 min each), huge
+pages, the engine switches on arm64, and "everything" (the ceiling: every lever at once). simpleperf will show the
+phone's own split (and whether worker threads spin), the scheduling probe the engine's cgroup/uclamp, and the proot
+CPU share (a proot-free start is only worth trying if that share is large).
+
+**Biggest single surprise:** the sim frame is dominated by unit scripts and weapons (Tracy: 4.8 + 3.8 ms of ~13 ms on
+the laptop), and the per-unit animation pass costs ~19 ms of worker-thread CPU per frame, while the levers people
+usually reach for (LOS resolution, pathing, collision rates) act on fractions of a millisecond.
