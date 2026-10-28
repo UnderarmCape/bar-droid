@@ -212,10 +212,11 @@ cases = {
 	end,
 }
 
-local t0 = Spring.GetTimer()
 function widget:Update()
-	t = Spring.DiffTimers(Spring.GetTimer(), t0)
-	if t < 8 or not (WG.Chili and WG.Chili.Screen0) then -- the lobby builds its interface first
+	-- logged in (bardroid_login_wait.lua), the lobby's interface built and its login windows gone first
+	local t0 = WG.BarDroidLoggedIn
+	t = t0 and Spring.DiffTimers(Spring.GetTimer(), t0) or 0
+	if t < 5 or not (WG.Chili and WG.Chili.Screen0) then
 		return
 	end
 	wait = wait - 1

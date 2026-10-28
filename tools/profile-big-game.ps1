@@ -29,7 +29,7 @@ $Data = Join-Path $Work "data"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 
 $gz = Join-Path $Bar "rapid\repos-cdn.beyondallreason.dev\byar\versions.gz"
 $reader = New-Object IO.StreamReader (New-Object IO.Compression.GZipStream ([IO.File]::OpenRead($gz)), ([IO.Compression.CompressionMode]::Decompress))
@@ -64,7 +64,7 @@ try {
   # the widget orders launch-bar.sh sets on the phone
   $off = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap",
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap",
     "Fog Diagonal Lines GL4", "Info") + $AlsoOff
   $orders = @($off | ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"BAR Droid profile log`"] = 1,"
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |

@@ -33,7 +33,7 @@ $Data = Join-Path $Work "data"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 $size = @{ inner = @(1152, 1044, 1.3); cover = @(2520, 1080, 2.0) }[$Screen]
 $w = [int]($size[0] * $Scale); $h = [int]($size[1] * $Scale)
 $uiScale = if ($UiScale -gt 0) { $UiScale } else { $size[2] }
@@ -61,7 +61,7 @@ try {
   # of the Grid menu, in BAR's released game too (one BYAR.lua)
   $orders = if ($NoPhoneLayer) { "" } else {
     (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
-        "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info",
+        "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Keybind/Mouse Info",
         "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") + $(if ($BarDroidInfo -or $NoInfo) { @("Info") } else { @() }) |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
   }

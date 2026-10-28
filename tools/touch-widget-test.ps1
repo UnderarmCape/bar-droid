@@ -18,7 +18,7 @@ $Data = Join-Path $Work "data"
 Assert-BarData
 $Bar = $BarData
 if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Directory | Sort-Object Name | Select-Object -Last 1).Name }
-$EngineDir = Join-Path $Bar "engine\$Engine"
+$EngineDir = Get-EngineDir $Engine
 
 New-Item -ItemType Directory -Force -Path "$Data\LuaUI\Widgets", "$Data\LuaUI\Config", "$Data\maps" | Out-Null
 $links = foreach ($d in "packages", "pool", "rapid") {
@@ -39,7 +39,7 @@ try {
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
   $orders = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap", "Info") | ForEach-Object { "`t`t[`"$_`"] = 0," }
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap", "Info") | ForEach-Object { "`t`t[`"$_`"] = 0," }
   $orders += "`t`t[`"Minimap`"] = 1,"
   # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
   if ($GamepadGame) { $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 165,", "`t`t[`"BAR Droid profile log`"] = 0," }

@@ -38,6 +38,7 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb |
 | virgl GPU server (emulator) | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
+| Benchmark | launcher "Benchmark", `tools/phone-bench.ps1`, `tools/profile-benchmark.ps1` | BAR's "Benchmark BAR" scenario unattended on the phone (warmed up, clocks and threads logged, per-run engine settings) and profiled on the laptop (every widget, unsynced gadget and engine timer) |
 | Checks | `tools/laptop-tests.ps1`, `tools/pace-test.ps1` | Every laptop check passes (Lua lint, downloader, settings merge, updater rollback, lobby bridge, lobby touch and the lobby's Skirmish screen with the controller game in the real lobby, the touch, chat and info widgets in a real skirmish and in the controller game) |
 
 ## How the app works (one paragraph)
@@ -236,25 +237,31 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    and the engine freezes for good. SGSR built and drew (logcat "Xlorie: SGSR 1 upscaling on OpenGL ES 3.2"), lorie's
    context survived. With the comparison off (12:23 build) Kailil played another map and then All That Glitters
    again without a hang (12:29: 30 fps, 1151 units): both hangs were while "Compare upscaling" switched SGSR on and
-   off every 3 s, the suspect; it stays off (a diagnostic only). **Uncapped for measuring** (Kailil: "Let's run
-   fully uncapped to get a real gauge of full performance"): launcher "Frame cap" 30 / 60 / none, none by default
-   for now (`Prefs.fpsCap`; the display at its fastest mode while uncapped). Read `[bardroid-perf]` (fps, slowest
-   frame) and `[perf]` (thermal, GPU clock) after his games; then back to 30 by default. **Where the time goes**
+   off every 3 s, the suspect; it stays off (a diagnostic only). **Frame cap 30 by default** (launcher "Frame cap"
+   30 / 60 / none, `Prefs.fpsCap`, saved as "frameCap"): uncapped only for measuring (`phone-bench.ps1 -Cap 0`, which
+   puts the player's cap back). Kailil after the benchmarks (2026-10-27): "put the hard 30 fps lock back on the
+   phone. I resign to the fps tanking when the battle gets rough. we have optimized enough." **Where the time goes**
    (Kailil's uncapped 8v8, 2026-10-27): GPU-bound, 93-99% busy all game, the GPU's top clock throttled by heat from
    1200 to ~400 MHz; 88 fps at 178 units, 26 at 1400; BAR's Lowest preset changed nothing (the phone already has
    almost everything it turns off). Stress test: BAR's Scenarios → "Benchmark BAR" (1000 Grunts against 1000 Pawns,
    4000 frames; "Benchmark Results" in infolog: Sim/Draw/Update ms per frame). Per-stage GPU timing needs
    gl.QueryCounter/GetQueryDelta, which BAR's GPU Profiler widget expects but no Recoil has yet (master 2026-10-23
-   neither). Next lever: launcher "Game resolution" 100 / 85 / 70 % (`Prefs.renderScale`): run the benchmark at
-   100 and 70; much faster at 70 = pixel-bound, keep a lower resolution with SGSR. Map edge: the 2026-10-26 rules
+   neither). **BAR's benchmark on the phone** (`tools/phone-bench.ps1`, unattended, throttled; docs/HISTORY.md
+   "Benchmarks"): a 1,300-unit battle is CPU-bound (70% resolution changed nothing), the main thread at ~1.7 GHz under
+   Samsung's heat caps, the game at x0.74-0.95 of real time; Android Game Mode no help. Done since: BAR's developer
+   tools out of singleplayer (checked on the phone), the info panel cached; `WorkerThreadCount` 4 beats 2 by ~5%
+   (keep 4); the phone's profilers: LuaUI 11% of the running time (Reclaim Field Highlight 3.1%), LuaRules 20% (BAR's
+   game: not changeable online). **Only online-safe changes** (Kailil, 2026-10-27: "we MUST have online play
+   enabled"): no engine builds, overlay games or modrules, also in research. Map edge: the 2026-10-26 rules
    (taps off the map clicking nothing, drags anchored mid-screen) removed at Kailil's word ("we will figure out how to
    deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
    (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
    versions (like the info panel); designed with Kailil first, with touch placement.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
-   status); more gameplay-information widgets off (Defense Range GL4, Sensor Ranges, Ecostats, BuildETA: CPU per
-   frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
+   status); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
+   Defense Range GL4,
+   Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
    hardening").
 3. **The lobby without BAR's launcher.** Chobby talks to BAR's PC launcher through `WG.Connector`

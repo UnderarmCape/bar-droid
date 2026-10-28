@@ -94,16 +94,24 @@ powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1              
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
-powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets]
+powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
-            # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): waits for a cool phone, then
-            # Sim/Draw/Update ms per frame + clocks every 5 s (tools/phone-clocks.sh) -> build\phone-bench.csv; one run at
-            # a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
+            # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the
+            # throttled state a late game plays in (Kailil: measure hot, back to back), then Sim/Draw/Update ms per frame,
+            # game speed, clocks every 5 s (tools/phone-clocks.sh) and the busiest threads -> build\phone-bench.csv; one
+            # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
+powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"]
+            # the same scenario on the laptop as the phone runs it, every widget, unsynced gadget and engine timer logged
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat && <command>"` (PowerShell tools: dot-source
 `tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
 `adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
+The lobby tests run logged in (Kailil): `C:\Tools\BARANDROID\bar-lobby-login.txt`, written by Kailil alone, outside the
+repository; never read it aloud, print or commit it (`tools\toolchain.ps1` Get-LobbyLoginLua; empty: the test lobby
+waits up to 5 minutes for a login by hand).
+Laptop checks start spring from `build\engine\<engine>` (`tools\toolchain.ps1` Get-EngineDir), never from BAR's
+install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to
 the real profile anyway; `Run in Emulator.bat` deletes it (also a stale one after a crash).
 Toolchain: AGP 9.3.1, Gradle 9.8.2 wrapper, NDK 29.0.14206865, CMake 3.22.1, JDK 21. One ABI per APK.

@@ -5,6 +5,78 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Benchmarks on the hot phone; online-safe changes only (2026-10-27 evening)
+Kailil: "we MUST have online play enabled. so only do online safe adjustments." Online games need BAR's official
+engine binary and BAR's own game archive, so the hail-mary research's engine builds, overlay games and modrule
+changes are out; what is left are client-side settings, local widgets and what runs around the unchanged engine.
+Runs back to back, throttled (thermal status 2, skin ~42 °C, CPU caps 1.40 / 1.36 GHz), the controller game:
+- **Worker threads: keep 4.** `WorkerThreadCount` 4: Sim 28.96 / 31.21 ms, game speed x0.72 / x0.70; 2: Sim 31.48 /
+  32.14 ms, x0.67 / x0.68 (alternated). The main thread is 87-94% of a core, each worker ~16-22%.
+- **Where the Lua time goes on the phone** (BAR's profilers, `phone-bench.ps1 -Profile widgets|gadgets`; they cost
+  time themselves): LuaUI 11.1% of the running time and 812 kB/s of garbage, of which Reclaim Field Highlight 3.1% and
+  477 kB/s, v0.8.5's Controller Camera Test 1.1% and 217 kB/s (singleplayer only), BAR's Info 0.3%, Notifications
+  0.2%. LuaRules 20.2%: synced 12.0% (Unit Explosion Spawner 0.88, Juno Damage 0.83, Paralyze Damage Handler 0.71,
+  Explosion_lights 0.70 and 410 kB/s, Watereffects 0.51, EMP Lightning 0.50), unsynced 8.1% (CUS GL4 2.67, Fire GL4
+  1.67 and 219 kB/s, Beam Laser GL4 0.89, Fire & Smoke GL4 0.71, Widget Events 0.60). Gadgets are BAR's game: not
+  changeable for online play.
+- **Reclaim Field Highlight off** (Kailil: "Turn Reclaim Field Highlight off on the phone"; launch-bar.sh
+  `widget_order`, a local widget: online-safe). Benchmarks from this build on run without it (a lower baseline).
+- BAR's developer tools stay off in the controller game on the phone: infolog shows the empty files in their place
+  (the two widgets "Failed to load ... (no GetInfo() call)", the gadget loaded with nothing in it).
+- `phone-bench.ps1` waited 12 minutes and parsed nothing when the app put a full `launcher.log` aside as
+  `launcher.old.log` during a run (`Log.rotateIfBig`): it reads the run's lines from both files now, from the phone's
+  own clock at the run's start.
+
+## Benchmarks: where a big battle's time goes (2026-10-27 afternoon)
+Kailil: "make optimizations and run benchmarks over and over"; the game should be GPU-bound, and the sim made cheaper
+without editing the engine. BAR's own "Benchmark BAR" scenario (650 Grunts against 650 Pawns on Starwatcher 1.0,
+~1,300 units fighting for 2000 frames; `luarules/gadgets/dbg_benchmark.lua` prints Sim/Draw/Update ms per frame)
+now runs unattended on the phone: launcher "Benchmark" or `am start ... --es start bench` (launch-bar.sh MODE=bench,
+`bardroid_bench.lua` unpauses BAR's paused scenario start and quits after the results), `tools/phone-bench.ps1` runs
+it with the clocks every 5 s (`tools/phone-clocks.sh`) and the busiest threads, into `build\phone-bench.csv`.
+- **CPU-bound, not GPU-bound.** Folded, uncapped: 100% resolution Sim 21.4-26.5, Draw 10.7-14.2, Update 6.5-8.4 ms
+  per frame, ~17-24 fps; 70% resolution the same (Sim 22.9). GPU 56-90% busy. The game itself fell behind: x0.74-0.95
+  of real time (simulated frames per second of the main thread's time).
+- **Heat sets the clock.** Within ~20 s of a start Samsung caps both CPU clusters at ~2.0 GHz (of 3.53 / 4.47) once
+  the AP sensor reaches ~43 °C, at thermal status 0; at status 2 (skin ~42 °C, the state a late game plays in) 1.69 /
+  1.40 GHz and the GPU 443-607 MHz. Run to run the numbers swing ±10% with the heat, so Kailil's rule (big unit counts
+  come 10+ minutes in, on a hot phone): measure throttled, back to back; `phone-bench.ps1` warms the phone up (thermal
+  status ≥ 1, skin ≥ 40 °C) with unrecorded runs first.
+- **Android Game Mode does nothing here.** The app declared a game (`appCategory="game"`, `game_mode_config.xml`)
+  and Game Mode "performance" vs "standard", alternating, throttled: x0.74 / x0.79 against x0.77 / x0.77. Reverted
+  (a game also gets Samsung's Game Booster panel, which could take touches).
+- **Threads** (~70 s in, throttled): the engine's main thread 88% of a core (the limit), its 3 workers ~60% together,
+  OpenAL's mixer 10% plus Android's audioserver 7%, the GPU driver's submit thread 10%, the X server ~6%.
+- **On the laptop** (`tools/profile-benchmark.ps1`: the phone's game, widget orders and user widgets, BAR's widget
+  profiler module, every unsynced gadget callin timed, the engine's timers): Sim 15.1 ms per frame (the throttled
+  phone ~1.7x that, its Draw ~4x). Of the main thread: Sim 51%, unsynced Lua 21% (widgets ~111-119 ms/s, unsynced
+  gadgets 73-134 ms/s), Draw 13%; synced Lua callins are ~10% of Sim, so the simulation is the engine's C++ (not
+  changeable without a different engine build; the hail-mary research session, branch `research/hail-mary`, tries
+  that). Costliest: Reclaim Field Highlight 18-21 ms/s and half of all Lua garbage (0.6 MB/s; it tracks every wreck
+  even when it shows nothing), API Unit Tracker 11, Health Bars 6, v0.8.5's camera widget 5.5-6.5 (+0.3 MB/s
+  garbage, singleplayer only); gadgets: Fire GL4 21-40 (wreck fires, new in BAR since May), Widget Events 13 (unit
+  deaths to widgets), Fire & Smoke GL4 10-19, Beam Laser GL4 8. Laptop A/B timings are too noisy for small changes
+  (Draw 4.4-9.2 ms between identical runs): judge by the profilers' own numbers, and on the phone.
+- **The laptop checks drew through ReShade.** Kailil's BAR install has ReShade beside `spring.exe` (an `opengl32.dll`
+  proxy with DLSS add-ons; found by the hail-mary session): every laptop check drew through it (likely part of that
+  Draw spread, and in `ui-screenshot.ps1`'s pictures) and wrote ReShade's logs into BAR's install. The laptop tools
+  start the engine from `build\engine\<engine>` now (`tools/toolchain.ps1` Get-EngineDir: the engine's files copied,
+  its folders linked, ReShade's left out; BAR's install unchanged).
+- **Fixed: BAR's developer tools ran in every singleplayer game.** BAR turns on its developer mode for a game whose
+  version holds `$VERSION` (`luarules/gadgets.lua`), and v0.8.5 plays as that game: the engine shader reloader read
+  every engine shader every 10 s in one frame, the widget and gadget reloaders re-read every widget and gadget file
+  when the pointer came back into the window (each read a trapped system call under proot), plus test helpers.
+  `tools/build-gamepad-game.py` (DEV_TOOLS_OFF) now ships an empty file for each, as BAR's own file is outside its
+  developer game (Kailil, 2026-10-26: "we can get rid of the debug stuff"). Online games never had them.
+- **Fixed: the app's info panel** printed its whole text afresh every frame (4 ms/s on the laptop with the pointer on
+  a unit, 51 kB/s garbage); it is recorded once per change now (a display list, rebuilt at most 4 times a second).
+- Our touch widget costs ~0.08 ms per frame (its functions timed; the widget profiler's 0.2 includes its own hooks).
+- `tools/touch-widget-test.ps1` failed once (the finger drag 528 elmos off; the next runs passed): on a slow run BAR's
+  own camera move to the start position came during the drag case. Its cases now wait until nothing else moves the
+  camera (`settle`: a case that returns false runs again 20 frames later).
+- Benchmark-only engine settings: `phone-bench.ps1 -Settings @{ Key = value }` (launch-bar.sh
+  `.bardroid-bench-settings`); BAR's `springsettings.cfg` as it was goes back after the run and at the next start.
+
 ## Overnight hardening and after (2026-10-26 night to 2026-10-27; the overnight part was not checked on the phone by a person)
 Found in the phone's logs and code and fixed, each installed on the phone:
 - **BAR's settings did not survive a restart**: `Installer.writeGameFiles` rewrote `springsettings.cfg` from the
