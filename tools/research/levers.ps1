@@ -180,7 +180,7 @@ pid=`$(pidof recoil-main || pidof spring)
 pp=`$(for p in `$(pidof libproot.so proot 2>/dev/null); do echo -n "`$p,"; done)
 echo "engine `$pid proot `$pp"
 for p in `$pid `$(echo `$pp | tr ',' ' '); do echo "stat0 `$p `$(cut -d' ' -f2,14,15 /proc/`$p/stat)"; done
-files/simpleperf record -p `$pid -e cpu-clock -f 2000 --duration $secs -o files/perf-$name.data 2>&1 | tail -n 3
+files/simpleperf record -p `$pid -e cpu-clock:u -f 2000 --duration $secs -o files/perf-$name.data 2>&1 | tail -n 3
 for p in `$pid `$(echo `$pp | tr ',' ' '); do echo "stat1 `$p `$(cut -d' ' -f2,14,15 /proc/`$p/stat)"; done
 ls /proc/`$pid/task | while read t; do echo "thread `$t `$(cat /proc/`$pid/task/`$t/comm) `$(cut -d' ' -f14,15,39 /proc/`$pid/task/`$t/stat)"; done
 # Android scheduling of the engine (read only): cgroups, allowed CPUs, uclamp of its cgroup, huge pages, the threads'

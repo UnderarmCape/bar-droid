@@ -287,3 +287,46 @@ adb. Android's sh (mksh) skips it, the container's bash does not: `dev-env.sh` f
 applied in the first two attempts (their rows are plain baselines). `research-bench.ps1` now pushes text through a
 BOM-free file. Also: the round-2 laptop "work" and "speed" matrices ran from BAR's engine dir (ReShade in the path);
 their Sim timers stand, their Draw numbers are not comparable with the clean-dir runs.
+## Online-safe phone batch (2026-10-28 00:58-02:25, verdict)
+
+Kailil's phone on the charger overnight, mainline APK (Reclaim Field Highlight already off, frame cap saved at 30;
+benchmarks uncapped unless a lever sets a cap), official engine, `tools/research/queue.ps1`. 3 warm-up runs, then
+36 benchmark runs, every lever next to baselines, plus one simpleperf run. Hot throughout after the warm-up (thermal
+status 3, skin ~45 C, AP 44-49 C). Raw rows: `build/phone-bench.csv` (labels `hm:*`), infologs with the engine timers:
+`build/research-infolog/`, profile: `build/research-perf/perf-baseline.data`.
+
+**The CPU cap decides the game speed.** 18 baseline runs: game speed 0.65-0.90 (Sim 23.2-31.8 ms), and the spread
+follows Samsung's CPU cap during the run (`speed = 0.00019 x cap(MHz) + 0.474`, residual ±4 %): the cap moved between
+~1,000 and ~1,800 MHz from run to run with the skin steady at 45 C, and 1,000 -> 1,800 MHz is worth **+23 %** game
+speed. So each lever is shown as its residual against that fit (same clocks), and against its neighbouring baselines:
+
+| lever (online-safe) | game speed vs fit at the run's CPU cap | vs neighbouring baselines (Sim) | verdict |
+| --- | --- | --- | --- |
+| WorkerThreadCount 5 / 7 / 8 (auto = 4 on the phone) | **+8.3 / +7.6 / +6.3 %** | -7.4 / +1.3 / +4.0 % | the one consistent signal: all three above the fit (~3 sigma together); worth shipping as the default, confirm with 2-3 more pairs |
+| main thread pinned to prime core 7 | +0.9 % | -2.2 % | nothing |
+| whole engine on prime cores 6-7 | +3.8 % | -3.1 % | nothing (even 2 cores suffice: the sim is main-thread bound) |
+| mimalloc / jemalloc for malloc | +1.0 / -1.8 % | -0.3 / -0.9 % | nothing |
+| glibc / mimalloc huge pages | +5.0 / -5.8 % | +9.5 / +8.7 % | nothing: THP is already `always` on the phone |
+| LuaUI widget trim (17 widgets) | -0.4 % | +1.7 % (Draw -18 %) | nothing for the sim (Reclaim Field Highlight, the costly one, is already off) |
+| frame cap 20 / 30 | +3.4 / +0.9 % | -5.3 / -4.3 % (game speed +8 / +6 %) | the runs ran at the higher cap; less drawing may keep the CPU cap up, too weak to claim |
+| Sound=0, soak of 6 runs | -1.4 % (mean) | mixed | nothing (openal is ~7 % of the engine's CPU on its own thread) |
+
+**Where the phone's time goes** (simpleperf, 30 s of the fight, user-space samples, official engine with its debug
+symbols): 1.54 cores busy; main thread 52.5 % of the samples, workers 12.7 / 11.9 / 10.4 % (each ~18 % busy), OpenAL
+6.8 %, Mesa 4.7 %. The main thread is flat: the Lua VM (`luaV_execute` 4.6 %, `luaH_get` 1.6 %, `luaD_precall` 1.4 %),
+unit scripts (`CUnitScript::FindAnim` 2.2 %, `CCobThread::Tick` 1.8 %, `TickAllAnims`, `WakeSleepingThreads`), the sync
+checksum (`CSyncChecker::Sync` 1.4 %), collisions, timers. The workers run the animation pass (`TickAllAnims`, quaternion
+rotations, streflop's `fmodf`/`sinf`) and spin very little (`try_dequeue` + `WorkerLoop` + clock reads ~10 % of their
+time, ~3.5 % of all CPU).
+
+**Probes:** proot used 0.27 s of CPU in those 30 s against 48 s for the engine (**0.6 %**): a proot-free start is not
+worth it. The engine runs in the `top-app` cgroup (cpuset, cpu, cpuacct), all 8 CPUs allowed, uclamp not readable;
+120,801 voluntary vs 1,135 involuntary context switches (it waits more than it is preempted). Transparent huge pages:
+`[always]` already.
+
+**Verdict for Kailil:** online-safe optimization is close to done. One setting is worth shipping: **WorkerThreadCount
+7 (or 8) instead of the auto 4: about +7 % game speed at equal CPU clocks** (confirm with a few more alternating
+pairs before making it the default). Everything else online-safe measured flat. The rest of the sim time is BAR's
+own game logic and Recoil's C++ (only changeable upstream or in BAR), and the biggest remaining factor is heat:
+Samsung's CPU cap swings game speed by ~23 %, so cooling, not charging while playing, and One UI's performance profile
+(Kailil's tests) move more than any further client setting would.
