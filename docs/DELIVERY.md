@@ -32,9 +32,10 @@ published or posted without Kailil.
 - [ ] **App name.** The app is called "Beyond All Reason". For a public download, Kailil decides (perhaps with BAR's
       team): keep it, or "BAR Droid" with BAR named in the description.
 - [x] **LICENSE** (GPL-3.0 text, as README already said) at the top; NOTICE.md keeps the third-party parts.
-- [ ] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes into `CLAUDE.local.md`
-      (untracked, read by Claude Code beside CLAUDE.md); tools find the phone through `adb devices` or
-      `BARDROID_DEVICE`.
+- [x] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes in `CLAUDE.local.md`
+      (untracked, read by Claude Code beside CLAUDE.md); `tools\phone-bench.ps1` finds the phone through
+      `-Device`, `BARDROID_DEVICE`, `..\phone-device.txt` or the one device adb lists (toolchain.ps1
+      `Get-PhoneDevice`).
 - [ ] **Release signing.** `Build APK.bat phone release` signs with a keystore named in `local.properties`
       (`bardroid.keystore`, passwords from the environment), never committed; without one it stops and says so.
       `versionName`/`versionCode` from one place (`gradle.properties`), the APK named with the version.

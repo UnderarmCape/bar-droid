@@ -2,6 +2,8 @@
 build/
 */build/
 local.properties
+# the owner's own setup (phone address, private notes for Claude Code)
+CLAUDE.local.md
 .idea/
 *.iml
 termux-x11/lorie/.cxx/

@@ -17,7 +17,7 @@
 # stays the scenario. Its game version must be on the phone (a replay recorded there).
 #   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 -Cap 30 -Replay "<replay>.sdfz" [-SkipTo 900] [-Seconds 600]
 param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoWarm, [string]$Profile = "",
-  [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "192.168.1.196:5555",
+  [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "",
   [string]$Replay = "", [int]$SkipTo = 900, [int]$Seconds = 600)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -25,6 +25,8 @@ $App = Split-Path -Parent $PSScriptRoot
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 if (-not (Test-Path $adb)) { $adb = Get-ChildItem $TC -Recurse -Filter adb.exe | Select-Object -First 1 -ExpandProperty FullName }
 $pkg = "com.underarmcape.bardroid"
+if (-not $Device) { $Device = Get-PhoneDevice $adb }   # -Device, else toolchain.ps1's choice
+if (-not $Device) { throw "No phone: connect one over adb, or name it (-Device, BARDROID_DEVICE, phone-device.txt)" }
 function Adb { & $adb -s $Device @args }
 function AppSh([string]$script, [string[]]$a = @()) {   # a shell script run as the app (adb quoting through PowerShell is fragile)
   # (PowerShell pipes each line with a carriage return: dropped on the phone)
@@ -50,7 +52,7 @@ while (Test-Path $lock) {
 Set-Content -Path $lock -Value $PID -Encoding ascii
 trap { try { RestorePrefs; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
 
-& $adb connect $Device | Out-Null
+if ($Device -match ":\d+$") { & $adb connect $Device | Out-Null }   # wireless debugging: (re)connect
 Adb shell "am force-stop $pkg"
 # the app's saved settings (shared_prefs/bardroid.xml) while it is stopped: the run's resolution and frame cap, the
 # player's own put back afterwards (an empty value: the key was not saved, the app's default applies)

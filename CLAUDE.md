@@ -2,9 +2,10 @@
 
 Working folder on the laptop: `C:\Tools\BARANDROID\` (this project is `bar-droid-app/` inside it).
 Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **It plays on Kailil's Galaxy Z Fold7**
-(~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB (serial R3CY70B9VRH) or Wi-Fi
-`adb connect 192.168.1.196:5555` (after `adb tcpip 5555`, until the phone reboots; the phone must be on the laptop's
-Wi-Fi "MoUniqueHelp": "Mounique Help 5G" is a separate network, 192.168.12.x, the laptop cannot reach it). Kailil checks fps and sound
+(~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB or Wi-Fi
+`adb connect <phone>:5555` (after `adb tcpip 5555`, until the phone reboots); the phone's address, serial and which
+Wi-Fi it must be on: `CLAUDE.local.md` (Kailil's, not in the repository; `tools\phone-bench.ps1` reads
+`..\phone-device.txt`). Kailil checks fps and sound
 themselves: do not run monitoring on the phone while Kailil plays. Install every new phone build right away, even
 over a running game; never ask first (Kailil). Test on the phone only (Kailil, 2026-10-25): Kailil does the check
 (fold, play, lobby), you read the logs; no emulator, and don't drive the phone's game yourself unless asked.

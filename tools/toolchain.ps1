@@ -20,6 +20,23 @@ function Assert-BarData {
   }
 }
 
+# The phone's adb serial for tools that drive it: BARDROID_DEVICE if set, else the first line of phone-device.txt
+# beside the toolchain folder (the player's phone, e.g. its Wi-Fi address 192.168.x.y:5555; outside the
+# repository), else the one device adb lists. "" when there is none.
+function Get-PhoneDevice([string]$adb) {
+  if ($env:BARDROID_DEVICE) { return $env:BARDROID_DEVICE }
+  $file = Join-Path (Split-Path $TC) "phone-device.txt"
+  if (Test-Path $file) {
+    $d = Get-Content $file | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith("#") } |
+      Select-Object -First 1
+    if ($d) { return $d }
+  }
+  $listed = @(& $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match "^(\S+)\s+device$" } |
+    ForEach-Object { $Matches[1] })
+  if ($listed.Count -eq 1) { return $listed[0] }
+  return ""
+}
+
 # The lobby tests run logged in (Kailil, 2026-10-27: "Make the lobby tests wait for me to log in before they run";
 # then "create a local file for me to keep on my laptop ... use that to log me in from now on"). The player's BAR
 # login in bar-lobby-login.txt beside the toolchain folder, outside the repository, written by the player alone; the

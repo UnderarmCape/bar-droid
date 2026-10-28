@@ -77,7 +77,7 @@ The toolchain folder: `BARDROID_TOOLCHAIN` if set, else a `toolchain` folder bes
 inside it (`scripts\env.bat`); APKs and logs go beside it (`BARDROID_OUT` overrides). The laptop checks read BAR's
 Windows install (`BAR_DATA`, default the BAR launcher's folder in Local AppData) and never change it.
 Kailil's phone: Galaxy Z Fold7 (Snapdragon 8 Elite / Adreno 830, so the Freedreno/Turnip path). adb: USB, or Wi-Fi
-`adb connect 192.168.1.196:5555` after `adb tcpip 5555` (until the phone reboots; the phone must be on the laptop's
+`adb connect <phone address>:5555` after `adb tcpip 5555` (until the phone reboots; the phone must be on the laptop's
 Wi-Fi network). Samsung's Auto Blocker can block adb installs.
 In the app: **Install / Update** (Debian + engine + BAR content, ~4 GB, ~10 min) → the lobby or **Play vs AI**.
 Native helper binaries: `tools/fetch-prebuilts.py <abi>` (proot, busybox, ANGLE), `tools/build-proot.py <abi>`,
