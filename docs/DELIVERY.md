@@ -50,11 +50,11 @@ published or posted without Kailil.
       (`git filter-repo`) to drop them. Either way `tools/publish-check.ps1` runs over what goes out.
 
 ### For players
-- [ ] README rewritten for players first: what works (lobby, online, skirmish, spectating, gamepad, keyboard and
+- [x] README rewritten for players first: what works (lobby, online, skirmish, spectating, gamepad, keyboard and
       mouse), which phones, download from Releases, install, first start (4 GB from BAR's servers), touch controls,
-      known limits, where the logs are, how to report a problem. Developers' material moves to docs/.
-- [ ] docs/TOUCH.md: the touch controls and the spectator tools (follow, presets, 1st person, Tune), with pictures
-      from the laptop tools (`tools/ui-screenshot.ps1`), no BAR artwork beyond screenshots of the game.
+      known limits, where the logs are, how to report a problem. Developers' material moved to docs/BUILDING.md.
+- [ ] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
+      `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where

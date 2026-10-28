@@ -1,78 +1,85 @@
 # BAR Droid: Beyond All Reason on Android
 
-An Android app that runs the unmodified [Recoil](https://github.com/beyond-all-reason/RecoilEngine) engine and Beyond
-All Reason on a phone: BAR's own lobby, online and singleplayer games, spectating, at about 30 fps on a Snapdragon 8
-Elite phone (Galaxy Z Fold7), with touch controls and gamepad support. Nothing of BAR is in the APK: the app downloads
-the engine and BAR's content from BAR's own servers at install time, as BAR's PC launcher does.
+Play [Beyond All Reason](https://www.beyondallreason.info/) on an Android phone: BAR's own lobby, online games,
+skirmish against AI and spectating, at about 30 fps on a Snapdragon 8 Elite phone, with touch controls, gamepads, or a
+mouse and keyboard. The app runs BAR's official, unmodified engine, so you play online with everyone else. Nothing of
+BAR is in the app: it downloads the engine and the game from BAR's own servers, as BAR's PC launcher does.
 
-How it works, in one breath: the official arm64 Linux engine runs inside a Debian container (proot, no root needed)
-and draws through Mesa's Freedreno driver onto an X server compiled into the app (Termux:X11's `lorie` module);
-small Lua widgets and an LD_PRELOAD library adapt BAR to a phone (touch camera, interface scale per screen, catching
-up with running games, frame pacing). Details: [HANDOFF.md](HANDOFF.md) (state, risks, next steps),
-[CLAUDE.md](CLAUDE.md) (architecture, files, rules) and [docs/HISTORY.md](docs/HISTORY.md) (measurements and
-decisions, session by session).
+BAR Droid is a fan project, not made by the Beyond All Reason team.
 
-## Phone requirements
+## Phones
 
-Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB RAM, about 6 GB free. The APK
-installs from Android 9; it was tested on Android 17 (Galaxy Z Fold7) and Android 14 (emulator). Mali, Xclipse and
-Tensor GPUs have no Mesa driver path: the app's device check says so.
+A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB of
+RAM and about 6 GB free. Tested on a Galaxy Z Fold7 (Android 17). Phones with Mali, Xclipse or Tensor GPUs cannot run
+it (no driver path); the app's device check says so.
 
-## Build (Windows 10/11 x64)
+## Install
 
-Everything goes into one folder: no global installs, nothing in the registry, AppData or the user profile.
+1. Download `bar-droid-phone-<version>.apk` from the [Releases](../../releases) page and open it on the phone (allow
+   installing from your browser or file manager when Android asks).
+2. Open **Beyond All Reason**, tap **Install / Update**: about 4 GB from BAR's servers, around 10 minutes.
+3. Then the lobby (log in with your BAR account), or **Play vs AI**. The app updates BAR at every start, like the PC
+   launcher.
 
-1. `Install Toolchain.bat --accept-licenses` (one time; downloads a portable JDK 21, Git, the Android SDK/NDK and
-   small host tools, about 6 GB; `--accept-licenses` accepts the
-   [Android SDK terms](https://developer.android.com/studio/terms)). It also fetches Termux:X11 at the pinned commit
-   and applies `patches/`.
-2. `Build APK.bat phone` builds the phone app (arm64) into `apk\bar-droid-phone-debug.apk`; `Build APK.bat` alone
-   builds the x86_64 app for the Android emulator.
-3. `Install on Phone.bat` installs it on the phone connected over adb (USB debugging, or `Pair Phone.bat` for
-   wireless debugging), then in the app: **Install / Update** (about 4 GB from BAR's servers), then the lobby or
-   **Play vs AI**.
+## Touch controls
 
-The toolchain folder is `toolchain\` inside the checkout, a `toolchain` folder beside it if one is installed there,
-or wherever `BARDROID_TOOLCHAIN` points (`scripts\env.bat`). Logs from the phone: `Get Logs.bat phone`, or
-**Share logs** in the app. `Run in Emulator.bat` runs the x86_64 build in an emulator (slow; a test bench only).
+| Gesture | In the game |
+|---|---|
+| Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map |
+| Drag | Pan the map (a flick glides); on BAR's windows and minimap it drags them instead |
+| Tap, then drag | Box select |
+| Long press | Right click (move/attack order); keep dragging for a formation |
+| Two-finger tap | Right click |
+| Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
+| Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
+| Three-finger tap | Show or hide the keyboard |
+| Three-finger swipe | Up: the whole map, down: back; left/right: previous/next idle builder |
 
-## Keyboard shortcuts
+In the lobby a drag scrolls lists and a tap on a server shows its details first.
 
-A Bluetooth keyboard, or one plugged into a USB-C dock, works in the game and the lobby as it is. While BAR is in
-front, Android's, One UI's and DeX's own keyboard shortcuts do nothing and their keys go to BAR: Alt+Tab, the Windows
-key alone or with a letter, Ctrl+Space and the soft keyboard app's language switch (launcher setting "Keyboard
-shortcuts go to the game", on by default). On Android 16.1 and newer the app asks Android for this itself; Samsung
-phones are also asked to pass the Windows key.
-- Android keeps on purpose: the Home, Recents and power keys, volume, brightness and media keys.
-- No app can block: the touch gestures (swipe up for Home or Recents, the notification shade; in the game they take
-  a second swipe because it is full screen) and the power key. Back (gesture or button) is Escape in the game.
+**Spectating** (watching a game or a replay, with touch): the player list stays small; tap it to bring up a bar
+for a few seconds. On it: the players by name (switch whose camera you follow), the unit nearest the middle of the
+screen to follow (or double-tap any unit), a group, and while following, camera presets: 1st person, over the
+shoulder, table, close, mid. In 1st person, drag to look around; it turns back to the unit's view by itself.
+**Tune** adjusts the camera for the unit type you follow, one setting at a time, and saves it for the other
+factions' matching unit too.
 
-Older Android (before 16.1) takes its shortcuts before any app. There the optional accessibility service sends them
-to the game: Settings > Accessibility > Installed apps > **Beyond All Reason keyboard shortcuts** > On. It reads keys
-only while the game screen is in front. If Android says the setting is restricted (an APK installed from a browser
-or a file manager): Settings > Apps > Beyond All Reason > ⋮ > Allow restricted settings, then switch it on.
+## Gamepad, mouse and keyboard
 
-## Checks
+- **Gamepads:** skirmish runs BAR Controller Support, a full controller interface; online, the pad moves the camera;
+  in the lobby it is a mouse.
+- **Mouse and keyboard** (Bluetooth, or a USB-C dock) work as on a PC. While BAR is in front, Android's, One UI's and
+  DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
+  switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
+  power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back is
+  Escape in the game.
+- Before Android 16.1, Android takes its shortcuts before any app; the optional accessibility service sends them to
+  the game: Settings > Accessibility > Installed apps > **Beyond All Reason keyboard shortcuts** > On. It reads keys
+  only while the game screen is in front. If Android says the setting is restricted: Settings > Apps > Beyond All
+  Reason > ⋮ > Allow restricted settings, then switch it on.
 
-`powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1` runs every check that needs no phone (about
-5 minutes): the downloader, settings merge and updater rollback in Java, the lobby bridge and the lobby touch
-widget in BAR's real lobby, and the in-game widgets in a real skirmish. The game checks use BAR's Windows install
-(`%LOCALAPPDATA%\Programs\Beyond-All-Reason`, read only, never changed). Other tools are listed in CLAUDE.md
-("Build / run").
+## Good to know
 
-## Layout
+- Big late-game battles get slow: the phone runs the whole game simulation like a PC does, and thousands of units
+  are more than a phone CPU keeps up with at full speed. The frame cap is 30 fps by default (launcher: 30 / 60 /
+  none).
+- A match uses about 5–6 GB of memory; close other big apps first.
+- Joining a running game catches up first (the screen shows how long it has left).
 
-- `app/` the Android app: `src/main/java/com/underarmcape/bardroid/` (installer, container, X server, game service,
-  touch, gamepad, audio, updater), `src/main/assets/bardroid/` (container setup and launch scripts, the Lua widgets,
-  the preload library), `src/main/jniLibs/` (prebuilt proot, busybox and friends; rebuilt by `tools/`).
-- `patches/` the changes to Termux:X11 (fetched into `termux-x11/` by `tools/fetch-termux-x11.ps1`).
-- `tools/` build scripts for the native helpers, the laptop checks and profiling tools.
-- `docs/` what the app changes in BAR's settings at every start (`UPDATES.md`), the project's history
-  (`HISTORY.md`) and drafts for upstream reports (`upstream/`).
+## Problems
+
+Tap **Share logs** on the launcher screen and attach the zip to an [issue](../../issues), with the phone model and
+what happened.
+
+## For developers
+
+[docs/BUILDING.md](docs/BUILDING.md) (build, checks, releasing), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (how it
+works), [CONTRIBUTING.md](CONTRIBUTING.md) (the rules: online play stays BAR's, BAR's content is never bundled),
+[CHANGELOG.md](CHANGELOG.md), [docs/HISTORY.md](docs/HISTORY.md) (measurements and decisions) and
+[docs/WORKLOG.md](docs/WORKLOG.md) (the effort behind it).
 
 ## Licences
 
-The app's own code and widgets: GPL-3.0-or-later (it embeds Termux:X11's GPL-3 `lorie` module). Third-party parts
-are listed in [NOTICE.md](NOTICE.md). BAR's game content
-(CC BY-NC-ND) is never bundled or re-encoded: it is downloaded from `repos-cdn.beyondallreason.dev` /
-`files-cdn.beyondallreason.dev` on the device.
+The app's own code and widgets: GPL-3.0-or-later ([LICENSE](LICENSE); it embeds Termux:X11's GPL-3 `lorie` module).
+Third-party parts are listed in [NOTICE.md](NOTICE.md). BAR's game content (CC BY-NC-ND) is never bundled or
+re-encoded: it is downloaded from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` on the device.
