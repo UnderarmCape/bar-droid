@@ -32,6 +32,20 @@ function Get-ReplayFiles {
     Sort-Object LastWriteTime -Descending | Where-Object { -not $seen[$_.Name] -and ($seen[$_.Name] = $true) }
 }
 
+# A phone benchmark run's launcher.log lines (oldest first): whether the game ran hidden (the phone locked or its screen
+# off: GameActivity stops, the pace library tells the engine its window is hidden and it draws two frames a minute), i.e.
+# "game screen hidden" before the run's results with no "shown" after it. 2026-10-28: four runs on a phone that had
+# locked itself measured nothing but were recorded.
+function Test-BenchHidden([string[]]$lines) {
+  $hidden = $false
+  foreach ($l in $lines) {
+    if ($l -match 'Benchmark complete|Benchmark Results|replaybench\] done') { return $hidden }
+    if ($l -match 'game screen hidden') { $hidden = $true }
+    elseif ($l -match 'game screen shown') { $hidden = $false }
+  }
+  $hidden
+}
+
 # The phone's adb serial for tools that drive it: BARDROID_DEVICE if set, else the first line of phone-device.txt
 # beside the toolchain folder (the player's phone, e.g. its Wi-Fi address 192.168.x.y:5555; outside the
 # repository), else the one device adb lists. "" when there is none.

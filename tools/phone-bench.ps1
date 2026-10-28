@@ -157,6 +157,14 @@ function RunBench([string]$done = 'Benchmark Results', [int]$minutes = 12) {   #
   Adb shell "am force-stop $pkg"
 }
 
+# A locked phone runs the game hidden (it draws two frames a minute): no run then (2026-10-28: the phone locked itself
+# ~75 min after an unlock and four runs measured nothing). The trap puts the settings back.
+function AssertUnlocked {
+  if ("$(Adb shell 'dumpsys trust | grep -m1 deviceLocked')" -match 'deviceLocked=1') {
+    throw "[phone-bench] the phone is locked: unlock it (and keep it so) for benchmarks"
+  }
+}
+AssertUnlocked
 # into the throttled state first: the skin warms slowest and the thermal status follows it (a long session ended at
 # skin 42 C, status 2); a hot phone goes straight on
 if (-not $NoWarm) {
@@ -167,6 +175,7 @@ if (-not $NoWarm) {
     RunBench
   }
 }
+AssertUnlocked
 $start = Thermal
 # the clocks every 5 s through the run (tools/phone-clocks.sh): what the CPU and GPU were allowed and the heat
 $clkFile = Join-Path $App "build\phone-bench-clocks.txt"
@@ -196,10 +205,11 @@ $clocks = @(Get-Content $clkFile | Select-Object -Skip 1 | ForEach-Object { $f =
   [pscustomobject]@{ cpu6 = [int]$f[3]; cap6 = [int]$f[4]; cap0 = [int]$f[2]; gpu = [int]$f[5]; busy = [int]$f[7]; status = [int]$f[8] } } })
 function Med($v) { $s = @($v | Sort-Object); if ($s.Count) { $s[[int][math]::Floor($s.Count / 2)] } else { $null } }
 $lines = AppSh ($RunLog + @'
- | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|bardroid-bench|replaybench|replay benchmark|Watchdog|MESA: error' |
+ | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|game screen (hidden|shown)|bardroid-bench|replaybench|replay benchmark|Watchdog|MESA: error' |
   sed 's/\[engine\] \[t=[^]]*\]\[f=[^]]*\] //' | cut -c1-230
 '@) @($since)
 $lines | ForEach-Object { Write-Host "  $_" }
+$hiddenRun = Test-BenchHidden $lines   # (toolchain.ps1: the phone locked or its screen off during the run)
 
 function Ms([string]$name) { $m = $lines | Select-String "$name \d+ frames, ([\d.]+)ms per frame" | Select-Object -Last 1; if ($m) { [double]$m.Matches[0].Groups[1].Value } else { $null } }
 $sim, $draw, $upd = (Ms "Sim"), (Ms "Draw"), (Ms "Update")
@@ -243,6 +253,10 @@ RestoreWidgets
 RestorePrefs
 Write-Host "[phone-bench] the player's settings back: $($userPrefs -join ', ')"
 Remove-Item $lock -ErrorAction SilentlyContinue
+if ($hiddenRun) {
+  Write-Host "[phone-bench] FAIL the game ran hidden (the phone locked or its screen off): not recorded; unlock the phone and run again"
+  exit 1
+}
 $csv = Join-Path $App "build\phone-bench.csv"
 New-Item -ItemType Directory -Force -Path (Split-Path $csv) | Out-Null
 $old = @(if (Test-Path $csv) { Import-Csv $csv })

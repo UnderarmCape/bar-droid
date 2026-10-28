@@ -108,7 +108,10 @@ published or posted without Kailil.
       copies too (`toolchain.ps1` Get-ReplayFiles), so the phone-recorded 8v8 is picked: all pass.
       `bardroid_minimap.lua` reviewed: the suspicion that its in-memory size would hide a size the player sets in
       BAR's settings was wrong (BAR's own save replaces the overlay); touch-widget-test now checks that such a size
-      stays (passes; a "fix" that followed BAR's value broke the shrinking: BAR takes the overlay 0.25 s late). `Build APK.bat` reviewed: an
+      stays (passes; a "fix" that followed BAR's value broke the shrinking: BAR takes the overlay 0.25 s late).
+      `tools/phone-bench.ps1` guarded: it stops on a locked phone (`dumpsys trust` deviceLocked) before warming up
+      and before the measured run, and records no run whose game ran hidden ("game screen hidden" before the results,
+      `toolchain.ps1` Test-BenchHidden: today's 21 runs from the phone's log sorted right, the seven hidden ones too). `Build APK.bat` reviewed: an
       empty `bardroid.keystore=` passed its key check and built an unsigned APK named like a release, and a build
       without an APK (or a failed copy) still reported one; fixed (tested: no key and an empty key refuse, a
       throwaway key builds and passes `publish-check -Apk`), Gradle names a keyless release `-unsigned.apk`, and the
