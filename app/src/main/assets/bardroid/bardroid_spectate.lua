@@ -78,6 +78,10 @@ local FP = {
 	-- gun barrels")
 	staticPieceNames = { "barrel", "barrel1", "barrel2", "sleeve", "sleeves", "gun", "turret", "head" },
 	pieces = {},
+	-- values for a class ("sentry": armed buildings, "unit": the rest) or a unit type (by name) over the ones below
+	-- (fpFor); sentries' aim barely smoothed: the camera rides the barrel's swing (Kailil's example)
+	classes = { sentry = { turnSmoothing = 0.06 }, unit = {} },
+	types = {},
 	facing = "unit",
 	forward = 16, right = 4, up = 14,
 	pitch = -8, yaw = 0,
@@ -465,6 +469,31 @@ local function anchorOf(unitID)
 	return mx, my, mz, nil, nil, ""
 end
 
+-- 1st person's values for a unit type: its own (FP.types[name]), else its class's (FP.classes: "sentry" for armed
+-- buildings, "unit" for the rest), else FP's (Kailil: "save a specific type of preset for each unit type. for example
+-- sentries would have less smoothing on the barrel aim")
+local FP_KEYS = { "facing", "forward", "right", "up", "pitch", "yaw", "fov", "posSmoothing", "turnSmoothing",
+	"lookSpeed", "recenterDelay", "recenterSmoothing" }
+local function unitClass(def)
+	return (def and (def.speed or 0) == 0) and "sentry" or "unit"
+end
+local function fpFor(def)
+	local P = {}
+	local c = FP.classes[unitClass(def)] or {}
+	local t = (def and FP.types[def.name]) or {}
+	for _, k in ipairs(FP_KEYS) do
+		local v = t[k]
+		if v == nil then
+			v = c[k]
+		end
+		if v == nil then
+			v = FP[k]
+		end
+		P[k] = v
+	end
+	return P
+end
+
 local function updateFirstPerson(dt)
 	local f = follow
 	local ax, ay, az, pdx, pdz, name = anchorOf(f.unitID)
@@ -474,24 +503,25 @@ local function updateFirstPerson(dt)
 	end
 	f.anchor = name
 	local def = UnitDefs[Spring.GetUnitDefID(f.unitID) or -1]
+	local P = fpFor(def) -- (this unit type's values)
 	local static = def and (def.speed or 0) == 0 -- (a sentry: its gun's aim)
-	local yaw = ((FP.facing == "piece" or static) and pdx and (pdx ~= 0 or pdz ~= 0)) and math.atan2(pdx, -pdz)
+	local yaw = ((P.facing == "piece" or static) and pdx and (pdx ~= 0 or pdz ~= 0)) and math.atan2(pdx, -pdz)
 		or unitYaw(f.unitID)
 	yaw = yaw or f.fpYaw or 0
 	if not f.fpX then
 		f.fpX, f.fpY, f.fpZ, f.fpYaw = ax, ay, az, yaw
 	end
-	local kp = FP.posSmoothing > 0 and (1 - math.exp(-dt / FP.posSmoothing)) or 1
-	local kt = FP.turnSmoothing > 0 and (1 - math.exp(-dt / FP.turnSmoothing)) or 1
+	local kp = P.posSmoothing > 0 and (1 - math.exp(-dt / P.posSmoothing)) or 1
+	local kt = P.turnSmoothing > 0 and (1 - math.exp(-dt / P.turnSmoothing)) or 1
 	f.fpX, f.fpY, f.fpZ = f.fpX + (ax - f.fpX) * kp, f.fpY + (ay - f.fpY) * kp, f.fpZ + (az - f.fpZ) * kp
 	f.fpYaw = approachAngle(f.fpYaw, yaw, kt)
 	local fx, fz = math.sin(f.fpYaw), -math.cos(f.fpYaw) -- ahead
 	local rx, rz = -fz, fx -- to its right
-	local ex, ez = f.fpX + fx * FP.forward + rx * FP.right, f.fpZ + fz * FP.forward + rz * FP.right
-	local ey = f.fpY + FP.up
+	local ex, ez = f.fpX + fx * P.forward + rx * P.right, f.fpZ + fz * P.forward + rz * P.right
+	local ey = f.fpY + P.up
 	-- where the eye looks: with the unit, or where the player looked (free look, it ignores the unit's turning) until
-	-- FP.recenterDelay without input, then back with the unit smoothly, the FOV too
-	local wantYaw, wantPitch, wantFov = f.fpYaw + math.rad(FP.yaw), FP.pitch, FP.fov
+	-- P.recenterDelay without input, then back with the unit smoothly, the FOV too
+	local wantYaw, wantPitch, wantFov = f.fpYaw + math.rad(P.yaw), P.pitch, P.fov
 	local L = WG.BarDroidLook
 	local input = L and (L.dx ~= 0 or L.dy ~= 0 or L.zoom ~= 1 or L.rot ~= 0 or L.tilt ~= 0)
 	if input then
@@ -499,7 +529,7 @@ local function updateFirstPerson(dt)
 			look.free, look.yaw, look.pitch, look.fov = true, wantYaw, wantPitch, wantFov
 		end
 		local vsx = Spring.GetViewGeometry()
-		local speed = math.rad(FP.lookSpeed) -- (a drag across the screen's width turns this much)
+		local speed = math.rad(P.lookSpeed) -- (a drag across the screen's width turns this much)
 		-- the view goes with the finger, as dragging the scene: right turns it left, down tilts it up (dx, dy: screen
 		-- pixels, y down; rot: a twist, clockwise; tilt: two fingers down, a share of the screen's height)
 		look.yaw = look.yaw - L.dx / vsx * speed - L.rot
@@ -508,8 +538,8 @@ local function updateFirstPerson(dt)
 		look.at = now()
 		L.dx, L.dy, L.zoom, L.rot, L.tilt = 0, 0, 1, 0, 0
 	end
-	if look.free and now() - look.at > FP.recenterDelay then -- back with the unit
-		local kr = FP.recenterSmoothing > 0 and (1 - math.exp(-dt / FP.recenterSmoothing)) or 1
+	if look.free and now() - look.at > P.recenterDelay then -- back with the unit
+		local kr = P.recenterSmoothing > 0 and (1 - math.exp(-dt / P.recenterSmoothing)) or 1
 		look.yaw = approachAngle(look.yaw, wantYaw, kr)
 		look.pitch = look.pitch + (wantPitch - look.pitch) * kr
 		look.fov = look.fov + (wantFov - look.fov) * kr
@@ -982,6 +1012,8 @@ function widget:Initialize()
 		offset = function() return view.ox, view.oz, view.frame, view.ryRel, follow and follow.yaw end,
 		-- 1st person: its settings (tools/fp-tuner.ps1 edits them live), the anchor in use, and following a unit in it
 		fp = FP,
+		fpFor = function(unitID) return fpFor(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
+		unitClass = function(unitID) return unitClass(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
 		-- the views (presets): the list, the one on, a view's values, and setting them (applied at once when on)
 		views = function() return PRESETS end,
 		view = function() return view.preset end,

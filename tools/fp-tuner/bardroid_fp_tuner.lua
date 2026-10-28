@@ -92,13 +92,80 @@ local function round(v, step)
 	return math.floor(v / step + 0.5) * step
 end
 
-local function stepNumber(row, n)
+local function copy(t)
+	if type(t) ~= "table" then
+		return t
+	end
+	local c = {}
+	for k, v in pairs(t) do
+		c[k] = copy(v)
+	end
+	return c
+end
+
+-- the values as saved when the tuner started: what Reset puts back (Kailil: "a reset buton next to each value. it
+-- resets the value back to the saved default")
+local snapshot, snapshotViews
+
+-- Whose values an edit sets (Kailil: "save a specific type of preset for each unit type"): every unit's, the class's
+-- (sentries, units) or the unit type's; a unit takes its type's, else its class's, else everyone's.
+local scope = "all"
+local SCOPES = { "all", "class", "type" }
+
+local function followedDef()
+	local unitID = S() and S().following()
+	return unitID and UnitDefs[Spring.GetUnitDefID(unitID) or -1], unitID
+end
+
+local function scopeTable(fp, create)
+	local def, unitID = followedDef()
+	if scope == "class" and unitID then
+		local cls = S().unitClass(unitID)
+		if create and not fp.classes[cls] then
+			fp.classes[cls] = {}
+		end
+		return fp.classes[cls]
+	elseif scope == "type" and def then
+		if create and not fp.types[def.name] then
+			fp.types[def.name] = {}
+		end
+		return fp.types[def.name]
+	end
+	return fp
+end
+
+-- a value as the followed unit gets it, and where it comes from ("type", "class", "all")
+local function effective(key)
+	local def, unitID = followedDef()
 	local fp = FP()
-	local v = round(fp[row.key] + row.step * n, row.step / 10)
+	if def and fp.types[def.name] and fp.types[def.name][key] ~= nil then
+		return fp.types[def.name][key], "type"
+	end
+	local cls = unitID and S().unitClass(unitID)
+	if cls and fp.classes[cls] and fp.classes[cls][key] ~= nil then
+		return fp.classes[cls][key], "class"
+	end
+	return fp[key], "all"
+end
+
+local function setValue(key, v)
+	scopeTable(FP(), true)[key] = v
+end
+
+local function resetValue(key)
+	local was = scopeTable(snapshot, false)
+	local t = scopeTable(FP(), scope ~= "all")
+	if t then
+		t[key] = was and copy(was[key]) or nil
+	end
+end
+
+local function stepNumber(row, n)
+	local v = round(effective(row.key) + row.step * n, row.step / 10)
 	if row.min then
 		v = math.max(row.min, math.min(row.max, v))
 	end
-	fp[row.key] = v
+	setValue(row.key, v)
 end
 
 local function serialize(t, indent)
@@ -194,7 +261,11 @@ local function save()
 	end
 	Spring.Echo("[fp-tuner] saved " .. FILE .. ": " .. text:gsub("\n", " "))
 	savedAt = now()
+	snapshot, snapshotViews = copy(FP()), copy(S().saved()) -- (Reset goes back to these now)
 end
+
+-- the value's colour by where it comes from: the unit type's own (cyan), its class's (green), everyone's (yellow)
+local SOURCE_COLOUR = { type = "\255\110\225\255", class = "\255\130\255\130", all = "\255\255\230\90" }
 
 build = function()
 	rows = {
@@ -207,25 +278,66 @@ build = function()
 			step = function(n) if S() then S().actions[n > 0 and "unit_next" or "unit_prev"]() end end },
 	}
 	if viewKey == "first" then
+		rows[#rows + 1] = { label = "Edit for", value = function()
+				local def, unitID = followedDef()
+				if scope == "class" then
+					return unitID and (S().unitClass(unitID) == "sentry" and "Sentries" or "Units") or "-"
+				elseif scope == "type" then
+					return def and (def.translatedHumanName or def.humanName or def.name) or "-"
+				end
+				return "All units"
+			end,
+			step = function(n)
+				local at = 1
+				for i, s in ipairs(SCOPES) do
+					if s == scope then
+						at = i
+					end
+				end
+				scope = SCOPES[(at - 1 + (n > 0 and 1 or -1)) % #SCOPES + 1]
+			end }
 		rows[#rows + 1] = { label = "Anchor", value = function()
 				local a = S() and S().anchor()
 				return a == nil and "-" or (a == "" and "middle" or a)
 			end,
-			step = function(n) anchorStep(n > 0 and 1 or -1) end }
-		rows[#rows + 1] = { label = "Turn with", value = function() return FP().facing end,
-			step = function() FP().facing = FP().facing == "unit" and "piece" or "unit" end }
+			step = function(n) anchorStep(n > 0 and 1 or -1) end,
+			reset = function()
+				local name = unitDefName()
+				if name then
+					FP().pieces[name] = snapshot.pieces[name]
+				end
+			end }
+		rows[#rows + 1] = { label = "Turn with", value = function()
+				local v, from = effective("facing")
+				return SOURCE_COLOUR[from] .. v
+			end,
+			step = function() setValue("facing", effective("facing") == "unit" and "piece" or "unit") end,
+			reset = function() resetValue("facing") end }
 		for _, r in ipairs(NUMBERS) do
 			rows[#rows + 1] = { label = r.label, value = function()
-					local v = FP()[r.key]
-					return r.step < 1 and string.format("%.2f", v) or string.format("%g", v)
-				end, step = function(n) stepNumber(r, n) end }
+					local v, from = effective(r.key)
+					return SOURCE_COLOUR[from] .. (r.step < 1 and string.format("%.2f", v) or string.format("%g", v))
+				end, step = function(n) stepNumber(r, n) end, reset = function() resetValue(r.key) end }
 		end
 		return
 	end
 	local p = S().presetValues(viewKey)
 	for _, r in ipairs(VIEW_NUMBERS) do
 		if not r.unitOnly or (p and p.frame == "unit") then
-			rows[#rows + 1] = { label = r.label, value = function()
+			rows[#rows + 1] = { label = r.label, reset = function()
+					-- this value as saved at the start (none saved: the built-in view's)
+					local base = snapshotViews[viewKey]
+					if not base then
+						for _, d in ipairs(S().views()) do
+							if d.key == viewKey then
+								base = d
+							end
+						end
+					end
+					local vals = copy(S().presetValues(viewKey))
+					vals[r.key] = base and base[r.key]
+					S().setPreset(viewKey, vals)
+				end, value = function()
 					return string.format("%g", round(viewValue(r, S().presetValues(viewKey)), r.step / 10))
 				end, step = function(n) stepView(r, n) end }
 		end
@@ -235,17 +347,21 @@ end
 local function layout()
 	local _, vsy = Spring.GetViewGeometry()
 	local h = math.floor(vsy * 0.042)
-	local w = math.floor(h * 13.5)
+	local w = math.floor(h * 16)
 	local x0, top = 8, vsy - math.floor(vsy * 0.3)
 	buttons = {}
 	for i, r in ipairs(rows) do
 		local y = top - i * (h + 3)
-		local bw = h * 1.2
+		local bw, rw = h * 1.2, h * 2.2 -- (the step buttons; Reset at the end)
+		local right = x0 + w - rw - 6
 		r.y, r.x0, r.x1 = y, x0, x0 + w
-		buttons[#buttons + 1] = { x0 = x0 + w - bw * 4 - 9, x1 = x0 + w - bw * 3 - 9, y0 = y, y1 = y + h, row = r, n = -5, label = "<<" }
-		buttons[#buttons + 1] = { x0 = x0 + w - bw * 3 - 6, x1 = x0 + w - bw * 2 - 6, y0 = y, y1 = y + h, row = r, n = -1, label = "-" }
-		buttons[#buttons + 1] = { x0 = x0 + w - bw * 2 - 3, x1 = x0 + w - bw - 3, y0 = y, y1 = y + h, row = r, n = 1, label = "+" }
-		buttons[#buttons + 1] = { x0 = x0 + w - bw, x1 = x0 + w, y0 = y, y1 = y + h, row = r, n = 5, label = ">>" }
+		buttons[#buttons + 1] = { x0 = right - bw * 4 - 9, x1 = right - bw * 3 - 9, y0 = y, y1 = y + h, row = r, n = -5, label = "<<" }
+		buttons[#buttons + 1] = { x0 = right - bw * 3 - 6, x1 = right - bw * 2 - 6, y0 = y, y1 = y + h, row = r, n = -1, label = "-" }
+		buttons[#buttons + 1] = { x0 = right - bw * 2 - 3, x1 = right - bw - 3, y0 = y, y1 = y + h, row = r, n = 1, label = "+" }
+		buttons[#buttons + 1] = { x0 = right - bw, x1 = right, y0 = y, y1 = y + h, row = r, n = 5, label = ">>" }
+		if r.reset then
+			buttons[#buttons + 1] = { x0 = x0 + w - rw, x1 = x0 + w, y0 = y, y1 = y + h, row = r, reset = true, label = "Reset" }
+		end
 	end
 	local y = top - (#rows + 1) * (h + 3)
 	buttons[#buttons + 1] = { x0 = x0, x1 = x0 + w, y0 = y, y1 = y + h, save = true,
@@ -285,7 +401,11 @@ function widget:DrawScreen()
 		end
 	end
 	for _, b in ipairs(buttons) do
-		gl.Color(1, 1, 1, b.save and 0.3 or 0.2)
+		if b.reset then
+			gl.Color(0.9, 0.45, 0.2, 0.45)
+		else
+			gl.Color(1, 1, 1, b.save and 0.3 or 0.2)
+		end
 		gl.Rect(b.x0, b.y0, b.x1, b.y1)
 	end
 	gl.Color(1, 1, 1, 1)
@@ -295,7 +415,13 @@ function widget:DrawScreen()
 		font:Print("\255\255\210\1001st person tuner", x0, top + h * 0.25, h * 0.75, "o")
 		for _, r in ipairs(rows) do
 			font:Print("\255\235\235\235" .. r.label, x0 + 6, r.y + h * 0.24, size, "o")
-			font:Print("\255\255\230\90" .. tostring(r.value()), x0 + w * 0.47, r.y + h * 0.24, size, "o")
+			local v = tostring(r.value())
+			local colour, text = v:match("^(\255...)(.*)$")
+			colour, text = colour or "\255\255\230\90", text or v
+			if #text > 14 then -- (a long unit name stays clear of the buttons)
+				text = text:sub(1, 13) .. "."
+			end
+			font:Print(colour .. text, x0 + w * 0.4, r.y + h * 0.24, size, "o")
 		end
 		for _, b in ipairs(buttons) do
 			font:Print("\255\255\255\255" .. b.label, (b.x0 + b.x1) / 2, b.y0 + h * 0.24, size, "oc")
@@ -316,6 +442,8 @@ function widget:MousePress(x, y)
 	if b then
 		if b.save then
 			save()
+		elseif b.reset then
+			b.row.reset()
 		else
 			b.row.step(b.n)
 		end
@@ -350,6 +478,7 @@ function widget:Update()
 	if not started and frame >= SKIP * 30 then
 		local unitID = closestUnit()
 		if unitID then
+			snapshot, snapshotViews = copy(FP()), copy(S().saved()) -- (Reset's values: as saved)
 			build()
 			S().firstPerson(unitID)
 			started = true
