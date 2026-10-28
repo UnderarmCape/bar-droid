@@ -44,7 +44,8 @@ android {
         }
         // Release builds are the ones that go out: signed with the publisher's own key, named in local.properties
         // (bardroid.keystore, bardroid.keyAlias), passwords from the environment (BARDROID_KEYSTORE_PASSWORD,
-        // BARDROID_KEY_PASSWORD if it differs). Without it the release APK is unsigned ("Build APK.bat" says so).
+        // BARDROID_KEY_PASSWORD if it differs). Without it the release APK is unsigned and named so (-unsigned.apk,
+        // for signing elsewhere); "Build APK.bat" refuses to build one.
         if (releaseKeystore) {
             release {
                 storeFile = file(releaseKeystore)
@@ -85,7 +86,8 @@ androidComponents {
         variant.outputs.each { output ->
             def target = rootProject.ext.bardroidAbi == 'x86_64' ? 'emulator' : 'phone'
             // debug: a fixed name the launchers install; release: named with the version, as it is published
-            def kind = variant.buildType == 'release' ? bardroidVersionName : variant.buildType
+            def kind = variant.buildType != 'release' ? variant.buildType :
+                    bardroidVersionName + (releaseKeystore ? '' : '-unsigned')
             output.outputFileName.set("bar-droid-${target}-${kind}.apk")
         }
     }

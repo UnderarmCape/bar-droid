@@ -19,8 +19,9 @@ if /i "%~1"=="release" (set "TYPE=release" & set "TASK=assembleRelease" & shift)
 if not exist "%JAVA_HOME%\bin\java.exe" goto :no_toolchain
 if not exist "%ANDROID_HOME%\ndk\29.0.14206865" goto :no_toolchain
 if not exist "%APPDIR%\termux-x11\lorie\build.gradle" goto :no_toolchain
+rem A release needs bardroid.keystore with a value (an empty one builds an unsigned APK).
 if "%TYPE%"=="release" (
-    findstr /b /c:"bardroid.keystore=" "%APPDIR%\local.properties" >nul 2>nul || goto :no_key
+    findstr /r /b /c:"bardroid\.keystore *[=:] *[^ ]" "%APPDIR%\local.properties" >nul 2>nul || goto :no_key
     if not defined BARDROID_KEYSTORE_PASSWORD goto :no_key
 )
 
@@ -29,12 +30,15 @@ rem (no APK of an earlier version left beside the new one)
 if exist "%APPDIR%\app\build\outputs\apk\%TYPE%" rd /s /q "%APPDIR%\app\build\outputs\apk\%TYPE%"
 call "%APPDIR%\gradlew.bat" --no-daemon :app:%TASK% -PbardroidAbi=%ABI% %1 %2 %3 %4
 if errorlevel 1 goto :fail
+rem (APK may be set in the environment: never report that one)
+set "APK="
 for %%F in ("%APPDIR%\app\build\outputs\apk\%TYPE%\bar-droid-%TARGET%-*.apk") do set "APK=%%~fF"
-copy /y "%APK%" "%BARANDROID%\apk\" >nul
+if not defined APK (echo  No bar-droid-%TARGET%-*.apk in app\build\outputs\apk\%TYPE%. & goto :fail)
+copy /y "%APK%" "%BARANDROID%\apk\" >nul || goto :fail
 for %%F in ("%APK%") do set "APKNAME=%%~nxF"
 echo.
 echo  APK (%TARGET%, %TYPE%): %BARANDROID%\apk\%APKNAME%
-if "%TYPE%"=="release" (echo  Before publishing: tools\publish-check.ps1) else if "%TARGET%"=="emulator" (echo  Run it: "Run in Emulator.bat") else (echo  Install on the phone: "Install on Phone.bat")
+if "%TYPE%"=="release" (echo  Before publishing: powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 -Apk "%BARANDROID%\apk\%APKNAME%") else if "%TARGET%"=="emulator" (echo  Run it: "Run in Emulator.bat") else (echo  Install on the phone: "Install on Phone.bat")
 exit /b 0
 
 :no_key

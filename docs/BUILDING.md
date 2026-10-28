@@ -56,7 +56,8 @@ A release is built from a clean checkout of `main`, checked, and published by th
    `bardroid.keyAlias=<alias>` in `local.properties`, its password in `BARDROID_KEYSTORE_PASSWORD` (and
    `BARDROID_KEY_PASSWORD` if the key's differs). Make it once with the JDK's `keytool -genkeypair -keystore <path>
    -alias bardroid -keyalg RSA -keysize 4096 -validity 10000` and keep it safe: every later version must be signed
-   with the same key, or phones refuse the update.
+   with the same key, or phones refuse the update. Without a key Gradle itself (`gradlew :app:assembleRelease`,
+   e.g. on Linux) builds `bar-droid-phone-<version>-unsigned.apk`, for signing elsewhere; phones refuse it unsigned.
 4. `powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 -Apk apk\bar-droid-phone-<version>.apk`.
 5. Tag the commit `v<version>`, push, and make a GitHub release with the APK and the CHANGELOG section.
 
