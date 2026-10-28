@@ -1,7 +1,10 @@
 # Help wanted: taking BAR Droid on
 
 BAR Droid shows that Beyond All Reason plays fully on an Android phone: BAR's lobby, online games, skirmish against
-the AI and spectating, on BAR's official, unmodified engine. Its author does not plan to keep developing it. The hope
+the AI and spectating, on BAR's official, unmodified engine. It is complete as it is: full games from the lobby to
+the end, late games chug but run well and stay caught up, and with a mouse and keyboard it plays like BAR on a PC.
+What follows is about making it better and official, not about making it work. Its author does not plan to keep
+developing it. The hope
 is that BAR's developers and community take it as a stepping stone to an official BAR for Android: fork it, take it
 over, or take what is useful into BAR's own work. Two areas need people who know them best: **engine-side
 performance** and **touch controls**. Everything below was measured on one phone, a Galaxy Z Fold7 (Snapdragon 8

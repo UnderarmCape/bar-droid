@@ -5,10 +5,17 @@ skirmish against AI and spectating, at about 30 fps on a Snapdragon 8 Elite phon
 mouse and keyboard. The app runs BAR's official, unmodified engine, so you play online with everyone else. Nothing of
 BAR is in the app: it downloads the engine and the game from BAR's own servers, as BAR's PC launcher does.
 
+**This is a complete way to play BAR on an Android phone, and all you need.** Full games, online or against the AI,
+from the lobby to the end. Late games chug in big battles but run well, and you stay caught up with the game. Full
+mouse and keyboard support: with a Bluetooth or USB-C mouse and keyboard it plays like BAR on a PC.
+
+It is not a native port: the app runs BAR's official Linux engine for ARM, natively on the phone's CPU and GPU (no
+emulation, no translation), inside a small Linux environment the app carries. That is what keeps online play in step
+with everyone else's.
+
 BAR Droid is a fan project, not made by the Beyond All Reason team.
 
-**Status: a working proof, handed on.** It shows BAR playing fully on a phone, online included. Its author does not
-plan to keep developing it: the hope is that BAR's developers and community take it as a stepping stone to an official
+**Status: fully playable, handed on.** Its author does not plan to keep developing it: the hope is that BAR's developers and community take it as a stepping stone to an official
 BAR for Android. It is 100% vibe coded: an AI assistant (Claude Code) wrote all of its code at the author's
 direction ([docs/WORKLOG.md](docs/WORKLOG.md)). Help is wanted most with engine-side performance and touch controls:
 [docs/HELP-WANTED.md](docs/HELP-WANTED.md).
@@ -54,7 +61,7 @@ factions' matching unit too.
 
 - **Gamepads:** skirmish runs BAR Controller Support, a full controller interface; online, the pad moves the camera;
   in the lobby it is a mouse.
-- **Mouse and keyboard** (Bluetooth, or a USB-C dock) work as on a PC. While BAR is in front, Android's, One UI's and
+- **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
   power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back is
@@ -66,9 +73,9 @@ factions' matching unit too.
 
 ## Good to know
 
-- Big late-game battles get slow: the phone runs the whole game simulation like a PC does, and thousands of units
-  are more than a phone CPU keeps up with at full speed. The frame cap is 30 fps by default (launcher: 30 / 60 /
-  none).
+- Big late-game battles chug: the frame rate drops with thousands of units (the phone runs the whole game simulation,
+  as a PC does), but the game keeps pace, so you stay caught up (a spectated 8v8 with ~3,600 units ran at x0.97-1.02
+  of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / none).
 - A match uses about 5–6 GB of memory; close other big apps first.
 - Joining a running game catches up first (the screen shows how long it has left).
 
