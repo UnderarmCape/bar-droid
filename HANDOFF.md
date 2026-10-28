@@ -237,10 +237,10 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    and the engine freezes for good. SGSR built and drew (logcat "Xlorie: SGSR 1 upscaling on OpenGL ES 3.2"), lorie's
    context survived. With the comparison off (12:23 build) Kailil played another map and then All That Glitters
    again without a hang (12:29: 30 fps, 1151 units): both hangs were while "Compare upscaling" switched SGSR on and
-   off every 3 s, the suspect; it stays off (a diagnostic only). **Uncapped for measuring** (Kailil: "Let's run
-   fully uncapped to get a real gauge of full performance"): launcher "Frame cap" 30 / 60 / none, none by default
-   for now (`Prefs.fpsCap`; the display at its fastest mode while uncapped). Read `[bardroid-perf]` (fps, slowest
-   frame) and `[perf]` (thermal, GPU clock) after his games; then back to 30 by default. **Where the time goes**
+   off every 3 s, the suspect; it stays off (a diagnostic only). **Frame cap 30 by default** (launcher "Frame cap"
+   30 / 60 / none, `Prefs.fpsCap`, saved as "frameCap"): uncapped only for measuring (`phone-bench.ps1 -Cap 0`, which
+   puts the player's cap back). Kailil after the benchmarks (2026-10-27): "put the hard 30 fps lock back on the
+   phone. I resign to the fps tanking when the battle gets rough. we have optimized enough." **Where the time goes**
    (Kailil's uncapped 8v8, 2026-10-27): GPU-bound, 93-99% busy all game, the GPU's top clock throttled by heat from
    1200 to ~400 MHz; 88 fps at 178 units, 26 at 1400; BAR's Lowest preset changed nothing (the phone already has
    almost everything it turns off). Stress test: BAR's Scenarios → "Benchmark BAR" (1000 Grunts against 1000 Pawns,

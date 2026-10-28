@@ -42,19 +42,25 @@ while (Test-Path $lock) {
   Start-Sleep 30
 }
 Set-Content -Path $lock -Value $PID -Encoding ascii
-trap { Remove-Item $lock -ErrorAction SilentlyContinue; break }
+trap { try { RestorePrefs } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
 
 & $adb connect $Device | Out-Null
 Adb shell "am force-stop $pkg"
-# the app's saved settings (shared_prefs/bardroid.xml) while it is stopped
-AppSh @'
+# the app's saved settings (shared_prefs/bardroid.xml) while it is stopped: the run's resolution and frame cap, the
+# player's own put back afterwards (an empty value: the key was not saved, the app's default applies)
+$PrefsSh = @'
 f=shared_prefs/bardroid.xml
 for kv in "$@"; do
   k=${kv%%=*}; v=${kv#*=}
   sed -i "/name=\"$k\"/d" "$f"
-  sed -i "s|</map>|    <int name=\"$k\" value=\"$v\" />\n</map>|" "$f"
+  [ -z "$v" ] || sed -i "s|</map>|    <int name=\"$k\" value=\"$v\" />\n</map>|" "$f"
 done
-'@ @("renderScale=$Scale", "fpsCap=$Cap") | Out-Null
+'@
+$userPrefs = @(AppSh @'
+for k in "$@"; do echo "$k=$(sed -n "s/.*name=\"$k\" value=\"\([0-9-]*\)\".*/\1/p" shared_prefs/bardroid.xml | head -n 1)"; done
+'@ @("renderScale", "frameCap") | Where-Object { $_ -match '^\w+=' })
+function RestorePrefs { if ($script:userPrefs.Count) { Adb shell "am force-stop $pkg"; AppSh $PrefsSh $script:userPrefs | Out-Null } }
+AppSh $PrefsSh @("renderScale=$Scale", "frameCap=$Cap") | Out-Null
 AppSh 'if [ -n "$1" ]; then echo "$1" > files/bar/.bardroid-bench-profile; else rm -f files/bar/.bardroid-bench-profile; fi' @($Profile) | Out-Null
 $kv = @($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" })
 AppSh 'rm -f files/bar/.bardroid-bench-settings; for l in "$@"; do echo "$l" >> files/bar/.bardroid-bench-settings; done' $kv | Out-Null
@@ -151,6 +157,8 @@ if ($Profile) {   # the newest screenshot: the benchmark's, with the profiler's 
 }
 # BAR's settings as they were before this run's -Settings
 AppSh 'rm -f files/bar/.bardroid-bench-settings; [ -f files/bar/.springsettings.pre-bench ] && mv files/bar/.springsettings.pre-bench files/bar/springsettings.cfg; true' | Out-Null
+RestorePrefs
+Write-Host "[phone-bench] the player's settings back: $($userPrefs -join ', ')"
 Remove-Item $lock -ErrorAction SilentlyContinue
 $csv = Join-Path $App "build\phone-bench.csv"
 New-Item -ItemType Directory -Force -Path (Split-Path $csv) | Out-Null

@@ -52,11 +52,13 @@ public final class Prefs {
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
     /**
-     * Frame cap (phone build, libbardroid_pace.so): 30 or 60 fps, or 0 = none, the game drawing as fast as it can
-     * (Kailil, 2026-10-27: "Let's run fully uncapped to get a real gauge of full performance"). None by default while
-     * measuring; then back to 30 (HANDOFF "Next steps"). Saved as "fpsCap" (the older "fps60" checkbox: 60 if ticked).
+     * Frame cap (phone build, libbardroid_pace.so): 30 or 60 fps, or 0 = none, the game drawing as fast as it can.
+     * 30 by default: uncapped only for measuring (Kailil, 2026-10-27, after the benchmarks: "put the hard 30 fps lock
+     * back on the phone. I resign to the fps tanking when the battle gets rough"). tools/phone-bench.ps1 -Cap sets it
+     * for a run and puts the player's back. Saved as "frameCap": "fpsCap" (and the older "fps60" checkbox) held the
+     * measuring days' none on Kailil's phone.
      */
-    public static int fpsCap = 0;
+    public static int fpsCap = 30;
     /**
      * The game's resolution, percent of the usual (GameActivity.MAX_SCREEN_PIXELS): 100, 85 or 70. Fewer pixels for the
      * GPU, enlarged onto the display (SGSR when "Sharper upscaling" is on). For the benchmark: does the GPU-bound late
@@ -129,7 +131,7 @@ public final class Prefs {
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
-        fpsCap = s.contains("fpsCap") ? s.getInt("fpsCap", fpsCap) : s.getBoolean("fps60", false) ? 60 : fpsCap;
+        fpsCap = s.getInt("frameCap", fpsCap);
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
         renderScale = s.getInt("renderScale", renderScale);
         if (renderScale != 85 && renderScale != 70) renderScale = 100;
@@ -159,8 +161,8 @@ public final class Prefs {
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
                 .remove("touchOnly")   // the touch-only mode is gone
-                .remove("fps60")   // now fpsCap
-                .putInt("fpsCap", fpsCap)
+                .remove("fps60").remove("fpsCap")   // the measuring days' cap, see fpsCap
+                .putInt("frameCap", fpsCap)
                 .putInt("renderScale", renderScale)
                 .putBoolean("autoLobby", autoLobby)
                 .putBoolean("gamepadGame", gamepadGame)
