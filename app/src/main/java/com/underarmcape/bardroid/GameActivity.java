@@ -39,7 +39,7 @@ public class GameActivity extends MainActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // the render resolution setting scales both screens alike
+        // the render resolution setting scales both screens alike; Native (0) has no cap
         float r = Prefs.renderScale / 100f;
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
         LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);

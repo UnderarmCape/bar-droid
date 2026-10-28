@@ -27,6 +27,7 @@
     <string name="rb_render100">100%</string>
     <string name="rb_render85">85%</string>
     <string name="rb_render70">70%</string>
+    <string name="rb_render_native">Native</string>
     <string name="lbl_fps_cap">Frame cap:</string>
     <string name="rb_fps30">30 fps</string>
     <string name="rb_fps60">60 fps</string>

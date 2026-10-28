@@ -94,6 +94,7 @@
                     <RadioButton android:id="@+id/rbRender100" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render100" />
                     <RadioButton android:id="@+id/rbRender85" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render85" />
                     <RadioButton android:id="@+id/rbRender70" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render70" />
+                    <RadioButton android:id="@+id/rbRenderNative" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render_native" />
                 </RadioGroup>
             </LinearLayout>
             <CheckBox android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />

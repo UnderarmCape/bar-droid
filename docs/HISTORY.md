@@ -76,7 +76,10 @@ the simulation, they should be off by default with a toggle.
   | 2096x900 | x0.98 / x1.01 | 29.3 / 29.2 | 342 / 342 MHz | 67 / 72% | 50.2 / 47.4 C |
 
   900p costs nothing measurable in game speed or fps; the phone ran a little warmer in one of the two 900p runs. 900p
-  stays the default. Frame generation: Lossless Scaling's (LSFG) runs on Android
+  stays the default. The launcher's game resolution has a **Native** choice now (render scale 0: no cap; Kailil, to
+  try in a full spectated game unfolded, 2184x1968, 3.6x today's 1198x1080). Found on the way: `phone-bench.ps1`
+  read the display scale before the new build's one-time switch to 100% ran and put the old 150 back after each run,
+  so Kailil's phone drew 1680x720 folded from 09:29 until it was set to 100% by hand at ~12:30. Frame generation: Lossless Scaling's (LSFG) runs on Android
   as an overlay app over any game (LSFG-Android, Adreno 7xx and newer) with the player's own copy of Lossless Scaling;
   not built in (the shaders are Lossless Scaling's, lsfg-vk is now no-derivatives licensed, and late games have no GPU
   to spare), a player can try it over the app as it is.
