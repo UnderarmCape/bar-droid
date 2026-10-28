@@ -1,9 +1,10 @@
 -- LuaUI widget for tools/fp-tuner.ps1 (the laptop only): Kailil sets bardroid_spectate.lua's 1st person camera while
 -- it rides a unit in a replay (2026-10-27: "a way for me to adjust the view of the first person while its spectating
 -- units. then you take those adjustments and apply them globally ... xyz, offsets/ anchor bone selection, fov,
--- smoothing of rotation"). A panel on the left: each value with - and + (the outer ones five steps; the mouse wheel
--- over a row steps too), the unit and its anchor piece (picked per unit type), Save. The values are
--- bardroid_spectate.lua's own (WG.BarDroidSpectate.fp), so the camera changes at once; Save writes them to
+-- smoothing of rotation"), and the other views too ("edit all of the views to make them permanent settings"). A panel
+-- on the left: the view, then each value with - and + (the outer ones five steps; the mouse wheel over a row steps
+-- too), the unit and its anchor piece (picked per unit type), Save. The values are bardroid_spectate.lua's own
+-- (WG.BarDroidSpectate.fp, its views), so the camera changes at once; Save writes them all to
 -- LuaUI/Config/bardroid_fp.lua (the spectate widget reads it at its start here) and logs them ("[fp-tuner] saved").
 function widget:GetInfo()
 	return { name = "BAR Droid 1st person tuner", desc = "Sets the 1st person camera of bardroid_spectate.lua",
@@ -123,8 +124,69 @@ local function serialize(t, indent)
 	return table.concat(out)
 end
 
+-- The other views (Kailil: "make me able to edit all of the views to make them permanent settings"): the Spring
+-- camera's distance, pitch (degrees below level), turn (degrees from the unit's facing, the views that turn with it)
+-- and the target's offset (to the right, ahead).
+local VIEW_NUMBERS = {
+	{ key = "dist", label = "Distance", step = 50, min = 20, max = 20000 },
+	{ key = "rx", label = "Pitch down (deg)", step = 1, min = 0, max = 89.5, deg = true },
+	{ key = "ryRel", label = "Turn (deg)", step = 5, min = -180, max = 180, rad = true, unitOnly = true },
+	{ key = "ox", label = "Right", step = 10, min = -3000, max = 3000 },
+	{ key = "oz", label = "Ahead", step = 10, min = -3000, max = 3000 },
+}
+local viewKey = "first"
+
+-- a view's value as shown (rx as degrees below level, ryRel as degrees)
+local function viewValue(row, p)
+	local v = p[row.key] or 0
+	if row.deg then
+		return math.deg(v - math.pi / 2)
+	elseif row.rad then
+		return math.deg(v)
+	end
+	return v
+end
+
+local function stepView(row, n)
+	local base = S().presetValues(viewKey)
+	local p = {}
+	for k, v in pairs(base) do
+		p[k] = v
+	end
+	local v = round(viewValue(row, p) + row.step * n, row.step / 10)
+	v = math.max(row.min, math.min(row.max, v))
+	if row.deg then
+		v = math.rad(v) + math.pi / 2
+	elseif row.rad then
+		v = math.rad(v)
+	end
+	p[row.key] = v
+	S().setPreset(viewKey, p)
+end
+
+local build -- (below: the rows change with the view)
+
+local function stepViewKey(n)
+	local list = S().views()
+	local at = 1
+	for i, p in ipairs(list) do
+		if p.key == viewKey then
+			at = i
+		end
+	end
+	viewKey = list[(at - 1 + n) % #list + 1].key
+	S().apply(viewKey)
+	build()
+end
+
 local function save()
-	local text = "-- 1st person camera set with tools/fp-tuner.ps1 (bardroid_spectate.lua FP)\nreturn " .. serialize(FP()) .. "\n"
+	local all = {}
+	for k, v in pairs(FP()) do
+		all[k] = v
+	end
+	all.presets = S().saved()
+	local text = "-- 1st person camera and the views set with tools/fp-tuner.ps1 (bardroid_spectate.lua FP, PRESETS)\nreturn " ..
+		serialize(all) .. "\n"
 	local f = io.open(FILE, "w")
 	if f then
 		f:write(text)
@@ -134,23 +196,39 @@ local function save()
 	savedAt = now()
 end
 
-local function build()
+build = function()
 	rows = {
+		{ label = "View", value = function()
+				local p = S().presetValues(viewKey)
+				return p and p.label or viewKey
+			end,
+			step = function(n) stepViewKey(n > 0 and 1 or -1) end },
 		{ label = "Unit", value = function() return select(2, unitDefName()) or "-" end,
 			step = function(n) if S() then S().actions[n > 0 and "unit_next" or "unit_prev"]() end end },
-		{ label = "Anchor", value = function()
+	}
+	if viewKey == "first" then
+		rows[#rows + 1] = { label = "Anchor", value = function()
 				local a = S() and S().anchor()
 				return a == nil and "-" or (a == "" and "middle" or a)
 			end,
-			step = function(n) anchorStep(n > 0 and 1 or -1) end },
-		{ label = "Turn with", value = function() return FP().facing end,
-			step = function() FP().facing = FP().facing == "unit" and "piece" or "unit" end },
-	}
-	for _, r in ipairs(NUMBERS) do
-		rows[#rows + 1] = { label = r.label, value = function()
-				local v = FP()[r.key]
-				return r.step < 1 and string.format("%.2f", v) or string.format("%g", v)
-			end, step = function(n) stepNumber(r, n) end }
+			step = function(n) anchorStep(n > 0 and 1 or -1) end }
+		rows[#rows + 1] = { label = "Turn with", value = function() return FP().facing end,
+			step = function() FP().facing = FP().facing == "unit" and "piece" or "unit" end }
+		for _, r in ipairs(NUMBERS) do
+			rows[#rows + 1] = { label = r.label, value = function()
+					local v = FP()[r.key]
+					return r.step < 1 and string.format("%.2f", v) or string.format("%g", v)
+				end, step = function(n) stepNumber(r, n) end }
+		end
+		return
+	end
+	local p = S().presetValues(viewKey)
+	for _, r in ipairs(VIEW_NUMBERS) do
+		if not r.unitOnly or (p and p.frame == "unit") then
+			rows[#rows + 1] = { label = r.label, value = function()
+					return string.format("%g", round(viewValue(r, S().presetValues(viewKey)), r.step / 10))
+				end, step = function(n) stepView(r, n) end }
+		end
 	end
 end
 

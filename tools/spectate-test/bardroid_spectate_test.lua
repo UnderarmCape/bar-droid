@@ -55,14 +55,15 @@ local function moveCamera(dx, dz, distFactor)
 	Spring.SetCameraState(cs, 0)
 end
 
--- the mobile unit closest to where the camera looks
+-- the mobile unit of the spectated team closest to where the camera looks (wildlife aside)
 local function closestUnit()
 	local cs = Spring.GetCameraState()
 	local best, bestD
-	for _, unitID in ipairs(Spring.GetAllUnits()) do
+	for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
 		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
 		local x, _, z = Spring.GetUnitPosition(unitID)
-		if x and def and (def.speed or 0) > 0 and not Spring.GetUnitIsBeingBuilt(unitID) then
+		if x and def and (def.speed or 0) > 0 and not def.name:find("critter", 1, true)
+			and not Spring.GetUnitIsBeingBuilt(unitID) then
 			local d = (x - cs.px) ^ 2 + (z - cs.pz) ^ 2
 			if not bestD or d < bestD then
 				best, bestD = unitID, d
@@ -102,7 +103,8 @@ local cases = {
 		return 0.5
 	end,
 	function()
-		check("a tap on the player list opens it and the bar", S().shown() == true and not WG.BarDroidPlayers.minimized())
+		check("a tap on the player list brings up the bar, the list stays small", S().shown() == true
+			and WG.BarDroidPlayers.minimized())
 		-- a builder, as a tap or BAR's select-all could pick: BAR's build menu would show its options
 		for _, unitID in ipairs(Spring.GetAllUnits()) do
 			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
@@ -123,7 +125,8 @@ local cases = {
 	end,
 	function()
 		local _, _, off = fromUnit(unitA)
-		check("> : follows the unit closest to the screen's centre", unitA ~= nil and unitA == expected and off < 150,
+		check("> : follows the spectated team's unit closest to the screen's centre", unitA ~= nil and unitA == expected
+			and off < 150 and Spring.GetUnitTeam(unitA) == Spring.GetMyTeamID(),
 			string.format("unit %s (closest %s), camera %.0f elmos off", tostring(unitA), tostring(expected), off))
 		moveCamera(300, 0) -- a finger pan, a little
 		return 1.5
@@ -147,7 +150,8 @@ local cases = {
 	end,
 	function()
 		local dx, dz = fromUnit(unitB)
-		check("> again: the next unit outwards, the offset kept", unitB ~= nil and unitB ~= unitA and math.abs(dx - 300) < 100
+		check("> again: the next unit outwards (same team), the offset kept", unitB ~= nil and unitB ~= unitA
+			and Spring.GetUnitTeam(unitB) == Spring.GetUnitTeam(unitA) and math.abs(dx - 300) < 100
 			and math.abs(dz) < 100, string.format("unit %s, camera %+.0f %+.0f from it", tostring(unitB), dx, dz))
 		local gx, gy = groundPoint()
 		if gx then
@@ -162,8 +166,9 @@ local cases = {
 		-- unit B is still near the screen's centre (the camera looked at it): a double tap on it follows it again
 		local x, y, z = Spring.GetUnitPosition(unitB)
 		local sx, sy = Spring.WorldToScreenCoords(x, y, z)
-		local taken = S().tap(sx, sy)
-		S().tap(sx, sy)
+		-- (a finger a little off, the two taps not on the same spot: forgiving)
+		local taken = S().tap(sx + 18, sy + 12)
+		S().tap(sx - 20, sy + 30)
 		check("a tap on the map is taken (it selects nothing)", taken == true)
 		check("double tap on a unit: follows it, centred", S().following() == unitB and select(1, S().offset()) == 0,
 			string.format("tapped %.0f,%.0f: following %s", sx, sy, tostring(S().following())))
@@ -171,6 +176,7 @@ local cases = {
 		return 2
 	end,
 	function()
+		check("double tap on a unit: the bar comes up (the next frame)", S().shown() == true)
 		local cs = Spring.GetCameraState()
 		local cx, cy, cz = Spring.GetCameraPosition()
 		local ux, uy, uz = Spring.GetUnitPosition(unitB)
@@ -202,12 +208,35 @@ local cases = {
 		local dot = ln > 0 and (cdx * udx + cdz * udz) / ln or -1
 		check("1st person: back with the unit after the recenter delay", dot > 0.5, string.format("facing %.2f", dot))
 		S().fp.recenterDelay = 4
+		-- a sentry: an armed building of the team
+		expected = nil
+		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+			if def and (def.speed or 0) == 0 and def.weapons and #def.weapons > 0 and not Spring.GetUnitIsBeingBuilt(unitID) then
+				expected = unitID
+				break
+			end
+		end
+		if expected then
+			S().firstPerson(expected)
+		end
+		return 1.5
+	end,
+	function()
+		local cs = Spring.GetCameraState()
+		local def = expected and UnitDefs[Spring.GetUnitDefID(expected)]
+		check("1st person on a sentry, riding its gun", expected == nil or (S().following() == expected and cs.mode == 0),
+			expected and string.format("%s: anchor %s", def and def.name or "?", tostring(S().anchor())) or "no sentry here")
+		if expected then
+			S().firstPerson(unitB)
+		end
 		S().actions.preset_table()
 		return 1.5
 	end,
 	function()
 		local cs = Spring.GetCameraState()
-		check("Table: the preset's distance", cs.dist and math.abs(cs.dist - 1100) < 110, string.format("dist %.0f", cs.dist or -1))
+		check("Table: far overhead (eye in the sky)", cs.dist and cs.dist > 3000 and cs.rx > 2.8,
+			string.format("dist %.0f, rx %.2f", cs.dist or -1, cs.rx or -1))
 		S().actions.save()
 		moveCamera(0, 0, 777 / cs.dist) -- the camera as the player wants it
 		return 0.5
@@ -225,7 +254,7 @@ local cases = {
 		check("Group: its team's units around it", S().members() >= 1, S().members() .. " units")
 		check("still nothing selected (no unit panels)", Spring.GetSelectedUnitsCount() == 0,
 			Spring.GetSelectedUnitsCount() .. " selected")
-		if WG.BarDroidPlayers.minimized() then -- (7 s since it opened: open it again, as a tap does)
+		do -- (a tap on the list: the bar again)
 			local pos = WG.advplayerlist_api.GetPosition()
 			WG.BarDroidPlayers.press((pos[2] + pos[4]) / 2, (pos[1] + pos[3]) / 2)
 		end
@@ -279,7 +308,7 @@ local cases = {
 		return 8
 	end,
 	function()
-		check("7 s untouched: the list small again and the bar gone", WG.BarDroidPlayers.minimized() and not S().shown())
+		check("7 s untouched: the bar gone, the list small", WG.BarDroidPlayers.minimized() and not S().shown())
 		log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED"))
 	end,
 }

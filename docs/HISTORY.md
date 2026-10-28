@@ -30,6 +30,21 @@ shortcut part stayed (HANDOFF.md "Keyboard shortcuts"). What was found on the wa
   `BUTTON_SECONDARY` on stock Android; some older Samsung, Huawei and Xiaomi builds sent it as Back (SDL bug 3227),
   which Termux:X11 maps back to the right button.
 
+## Spectating: one player's units, forgiving taps, sentries, a bar beside the small list (2026-10-27 midnight)
+Kailil, after playing it on the inner screen: the open player list covered the bar ("should we keep the player list
+small when I tap it ... tapping it just spawns the touch ui buttons?"); arrows only over the spectated player's units
+and sentries; a tap on another player's unit spectates that player; double tap more forgiving, hopping between units
+in 1st person, the bar coming up with it; sentries' gun barrels; Table "eye in sky"; a unit that dies hands over to
+its player's nearest unit; every view editable in the tuner; wildlife never followed.
+- While spectating by touch BAR's list stays small; a tap on it (or a double tap that follows a unit) brings up the bar
+  for 7 s (`bardroid_players.lua` barWanted); the bar is laid out left of the list.
+- A tap picks the unit under the finger or the nearest on screen within 70 px; a double tap counts within 0.55 s and
+  90 px, or on the same unit.
+- Armed buildings are followable; 1st person rides their barrel (barrel, sleeve, gun, turret...) and turns with its
+  aim.
+- **Ecostats stayed on**: BAR saves widget names that are Lua identifiers as plain keys (`Ecostats = 164,`); the
+  launch script added `["Ecostats"] = 0,` before it and Lua kept the later one. `widget_order` sets both forms now.
+
 ## Following that sticks, camera presets, 1st person and its tuner (2026-10-27 late)
 Kailil: the arrows "just do the closest unit to the center of the screen"; following should "stick no matter what i do
 unless I deliberately move my camera away from the unit a far distance" (pan offsets, zoom, tilt and rotate while

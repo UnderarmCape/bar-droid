@@ -33,7 +33,9 @@ function widget:GetInfo()
 	}
 end
 
-local DOUBLE_TAP_S, DOUBLE_TAP_PX = 0.45, 40
+-- a double tap, forgiving (Kailil: "if im not deadly acurate with my two taps, it misses them"): the second tap within
+-- this long and this far from the first, or on the same unit; a tap picks the unit within PICK_PX of the finger
+local DOUBLE_TAP_S, DOUBLE_TAP_PX, PICK_PX = 0.55, 90, 70
 local FOLLOW_SMOOTHING = 0.25 -- seconds: the camera glides after its target
 local GROUP_SMOOTHING = 0.9 -- seconds: and after a group's centre, which moves as units join and leave it
 local TURN_SMOOTHING = 0.35 -- seconds: and after the unit's facing (1st person, Shoulder)
@@ -53,7 +55,8 @@ local SHOW_SAVE = true
 local PRESETS = {
 	{ key = "first", label = "1st person", frame = "unit", dist = 80, rx = 1.85, ryRel = 0, ox = 0, oz = 100 },
 	{ key = "shoulder", label = "Shoulder", frame = "unit", dist = 350, rx = 1.95, ryRel = 0, ox = 40, oz = 150 },
-	{ key = "table", label = "Table", frame = "world", dist = 1100, rx = 2.35, ox = 0, oz = 0 },
+	-- (Kailil: "make table super far. like eye in sky")
+	{ key = "table", label = "Table", frame = "world", dist = 6000, rx = 3.0, ox = 0, oz = 0 },
 	{ key = "close", label = "Close", frame = "world", dist = 450, rx = 2.5, ox = 0, oz = 0 },
 	{ key = "mid", label = "Mid", frame = "world", dist = 1300, rx = 2.75, ox = 0, oz = 0 },
 }
@@ -71,6 +74,9 @@ local saved = {} -- the player's own presets by key (Save), kept in this widget'
 -- own, which follows the view range: Camera.cpp; Kailil only wanted it closer, so there is no setting for it.)
 local FP = {
 	pieceNames = { "head", "turret", "torso", "body", "base" },
+	-- armed buildings (sentries): the gun's barrel first, and the eye turns with its aim (Kailil: "attach to sentries'
+	-- gun barrels")
+	staticPieceNames = { "barrel", "barrel1", "barrel2", "sleeve", "sleeves", "gun", "turret", "head" },
 	pieces = {},
 	facing = "unit",
 	forward = 16, right = 4, up = 14,
@@ -88,10 +94,33 @@ local look = { free = false, yaw = 0, pitch = 0, fov = 70, at = 0 }
 -- Wildlife is never followed (Kailil: "blacklist wildlife such as seagulls, crabs"): BAR's critters, and anything of the
 -- Gaia team (the map's neutral units).
 local gaiaTeam = Spring.GetGaiaTeamID()
+-- mobile units, and armed buildings (Kailil: "allow me to attach to sentries' gun barrels")
 local function followable(unitID, def)
 	def = def or UnitDefs[Spring.GetUnitDefID(unitID) or -1]
-	return def ~= nil and (def.speed or 0) > 0 and not def.name:find("critter", 1, true)
-		and Spring.GetUnitTeam(unitID) ~= gaiaTeam
+	return def ~= nil and ((def.speed or 0) > 0 or (def.weapons and #def.weapons > 0))
+		and not def.name:find("critter", 1, true) and Spring.GetUnitTeam(unitID) ~= gaiaTeam
+end
+
+-- The unit a tap means: the one under the finger, else the nearest on the screen within PICK_PX (a finger is wide).
+local function pickUnit(x, y)
+	local what, unitID = Spring.TraceScreenRay(x, y)
+	if what == "unit" and followable(unitID) then
+		return unitID
+	end
+	local best, bestD
+	for _, id in ipairs(Spring.GetVisibleUnits(-1, 30, false) or {}) do
+		local ux, uy, uz = Spring.GetUnitPosition(id)
+		if ux and followable(id) then
+			local sx, sy, sz = Spring.WorldToScreenCoords(ux, uy, uz)
+			if sz and sz < 1 then -- (in front of the eye)
+				local d = (sx - x) ^ 2 + (sy - y) ^ 2
+				if d <= PICK_PX * PICK_PX and (not bestD or d < bestD) then
+					best, bestD = id, d
+				end
+			end
+		end
+	end
+	return best
 end
 
 local spGetCameraState, spSetCameraState = Spring.GetCameraState, Spring.SetCameraState
@@ -281,7 +310,9 @@ local function unitsByDistance()
 	local cs = spGetCameraState()
 	local cx, cz = cs.px or 0, cs.pz or 0
 	local list = {}
-	for _, unitID in ipairs(Spring.GetAllUnits()) do
+	-- (only the team spectated, as BAR's own spectating picks it: Kailil, "only follow units of the same team that is
+	-- selected using the vanilla system of spectating")
+	for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
 		local x, _, z = spGetUnitPosition(unitID)
 		if x and followable(unitID) and not Spring.GetUnitIsBeingBuilt(unitID) then
 			list[#list + 1] = { id = unitID, d = (x - cx) ^ 2 + (z - cz) ^ 2 }
@@ -330,7 +361,27 @@ end
 local function followTarget()
 	local f = follow
 	local x, _, z = spGetUnitPosition(f.unitID)
+	if not x and not groupMode then
+		-- the unit is gone: on to its team's unit nearest where it was (Kailil: "if a unit dies, camera moves to the
+		-- closet unit next to it. on the same team")
+		local best, bestD
+		for _, unitID in ipairs(Spring.GetTeamUnits(f.team) or {}) do
+			local ux, _, uz = spGetUnitPosition(unitID)
+			if ux and followable(unitID) then
+				local d = (ux - f.cx) ^ 2 + (uz - f.cz) ^ 2
+				if not bestD or d < bestD then
+					best, bestD = unitID, d
+				end
+			end
+		end
+		if not best then
+			return nil
+		end
+		f.unitID, f.fpX = best, nil -- (1st person starts again on it)
+		x, _, z = spGetUnitPosition(best)
+	end
 	if not groupMode then
+		f.cx, f.cz = x, z -- (where it was, if it dies)
 		return x, z
 	end
 	if now() - f.at >= GROUP_EVERY then
@@ -397,7 +448,7 @@ local function anchorOf(unitID)
 	local map = Spring.GetUnitPieceMap(unitID) or {}
 	local piece = name and name ~= "" and map[name]
 	if not piece and name ~= "" then
-		for _, n in ipairs(FP.pieceNames) do
+		for _, n in ipairs((def and (def.speed or 0) == 0) and FP.staticPieceNames or FP.pieceNames) do
 			if map[n] then
 				piece, name = map[n], n
 				break
@@ -422,7 +473,10 @@ local function updateFirstPerson(dt)
 		return
 	end
 	f.anchor = name
-	local yaw = (FP.facing == "piece" and pdx and (pdx ~= 0 or pdz ~= 0)) and math.atan2(pdx, -pdz) or unitYaw(f.unitID)
+	local def = UnitDefs[Spring.GetUnitDefID(f.unitID) or -1]
+	local static = def and (def.speed or 0) == 0 -- (a sentry: its gun's aim)
+	local yaw = ((FP.facing == "piece" or static) and pdx and (pdx ~= 0 or pdz ~= 0)) and math.atan2(pdx, -pdz)
+		or unitYaw(f.unitID)
 	yaw = yaw or f.fpYaw or 0
 	if not f.fpX then
 		f.fpX, f.fpY, f.fpZ, f.fpYaw = ax, ay, az, yaw
@@ -652,7 +706,8 @@ end
 
 local function layout()
 	local vsx, vsy = Spring.GetViewGeometry()
-	local h = math.floor(math.min(vsy * 0.085, vsx / 15))
+	-- (the presets row is the widest, 6 buttons: on the inner screen it fits left of the player list)
+	local h = math.floor(math.min(vsy * 0.085, vsx / 17))
 	local gap = math.floor(h * 0.15)
 	local fLabel, fColor = followLabel()
 	local rowA, rowB
@@ -703,13 +758,20 @@ local function layout()
 	end
 	local y = math.floor(h * 0.25)
 	local wa, wb = width(rowA), width(rowB)
-	if wa + wb + gap * 3 <= vsx * 0.9 then -- one row
-		local x = math.floor((vsx - (wa + wb + gap * 3)) / 2)
+	-- the room left of BAR's (small) player list at the bottom right: the bar never runs under it
+	local x0, x1 = gap, vsx - gap
+	local pos = WG.advplayerlist_api and WG.advplayerlist_api.GetPosition and WG.advplayerlist_api.GetPosition()
+	if pos and pos[2] and pos[3] and pos[3] < y + 2 * h + 2 * gap and pos[2] > vsx / 2 then -- { top, left, bottom, right }
+		x1 = math.floor(pos[2]) - gap
+	end
+	local room = x1 - x0
+	if wa + wb + gap * 3 <= room then -- one row
+		local x = x0 + math.floor((room - (wa + wb + gap * 3)) / 2)
 		place(rowA, x, y)
 		place(rowB, x + wa + gap * 3, y)
 	else -- two rows: the players (or presets) above
-		place(rowB, math.floor((vsx - wb) / 2), y)
-		place(rowA, math.floor((vsx - wa) / 2), y + h + gap)
+		place(rowB, x0 + math.max(0, math.floor((room - wb) / 2)), y)
+		place(rowA, x0 + math.max(0, math.floor((room - wa) / 2)), y + h + gap)
 	end
 end
 
@@ -783,23 +845,33 @@ function widget:MousePress(x, y, button)
 	if Spring.IsAboveMiniMap(x, y) then
 		return false
 	end
-	-- a tap on the map: it selects nothing; a second one quickly at the same place follows the unit there
+	-- A tap on the map selects nothing. A tap on a unit of another team spectates that team, as BAR's own spectating
+	-- does when a unit is selected (Kailil: "physically touch that unit in game to select them"), so the arrows walk
+	-- its units. A second tap quickly at the same place follows the unit there, and the bar comes up.
 	pressedOn = nil
 	local t = now()
-	if button == 1 and lastTap and t - lastTap.t <= DOUBLE_TAP_S and math.abs(x - lastTap.x) <= DOUBLE_TAP_PX
-		and math.abs(y - lastTap.y) <= DOUBLE_TAP_PX then
+	local unit = pickUnit(x, y) -- (wildlife: none)
+	if unit and Spring.GetUnitTeam(unit) ~= Spring.GetMyTeamID() then
+		Spring.SendCommands("specteam " .. Spring.GetUnitTeam(unit))
+		order = nil
+	end
+	if button == 1 and lastTap and t - lastTap.t <= DOUBLE_TAP_S and ((math.abs(x - lastTap.x) <= DOUBLE_TAP_PX
+		and math.abs(y - lastTap.y) <= DOUBLE_TAP_PX) or (unit and unit == lastTap.unit)) then
+		unit = unit or lastTap.unit -- (the second tap a little off: the first one's unit)
 		lastTap = nil
-		local what, unitID = Spring.TraceScreenRay(x, y)
-		if what == "unit" then
-			if followable(unitID) then -- (wildlife: nothing happens)
-				cycle = nil -- (the arrows start again from here)
-				startFollow(unitID, false) -- (centred on the unit tapped)
+		-- (in 1st person this hops to the unit tapped: Kailil, "hop from first person to another unit first person")
+		if unit then
+			cycle = nil -- (the arrows start again from here)
+			startFollow(unit, false) -- (centred on the unit tapped)
+			-- the bar with it, on BAR's player list's own timer (Kailil: "display the touch ui with its normal autohide")
+			if WG.BarDroidPlayers and WG.BarDroidPlayers.open then
+				WG.BarDroidPlayers.open()
 			end
 		else
 			stopFollow()
 		end
 	elseif button == 1 then
-		lastTap = { x = x, y = y, t = t }
+		lastTap = { x = x, y = y, t = t, unit = unit }
 	end
 	return true
 end
@@ -831,7 +903,7 @@ function widget:Update(dt)
 	-- the bar with BAR's player list: open while it is (without bardroid_players.lua: always)
 	local list = WG.BarDroidPlayers
 	local wasShown = shown
-	shown = active and not (list and list.minimized and list.minimized())
+	shown = active and (not list or (list.barWanted and list.barWanted()) or not (list.minimized and list.minimized()))
 	if shown and not wasShown then
 		order = players() -- top to bottom as the list shows them now
 	end
@@ -893,6 +965,11 @@ function widget:Initialize()
 					FP[k] = v
 				end
 			end
+			for key, p in pairs(type(t.presets) == "table" and t.presets or {}) do -- (the other views, as set there)
+				if type(p) == "table" and tonumber(p.dist) and tonumber(p.rx) then
+					saved[key] = p
+				end
+			end
 		end
 	end
 	-- (also for tools/spectate-test.ps1: a user widget cannot send the engine's mouse callins, so its taps come in here)
@@ -905,6 +982,18 @@ function widget:Initialize()
 		offset = function() return view.ox, view.oz, view.frame, view.ryRel, follow and follow.yaw end,
 		-- 1st person: its settings (tools/fp-tuner.ps1 edits them live), the anchor in use, and following a unit in it
 		fp = FP,
+		-- the views (presets): the list, the one on, a view's values, and setting them (applied at once when on)
+		views = function() return PRESETS end,
+		view = function() return view.preset end,
+		presetValues = function(key) return presetByKey(key) end,
+		setPreset = function(key, p)
+			saved[key] = p
+			if view.preset == key then
+				applyPreset(key)
+			end
+		end,
+		saved = function() return saved end,
+		apply = function(key) applyPreset(key) end,
 		anchor = function() return follow and follow.anchor end,
 		firstPerson = function(unitID)
 			startFollow(unitID, false)

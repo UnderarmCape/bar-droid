@@ -94,13 +94,27 @@ widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
   # the name as a regex and as replacement text ("Keybind/Mouse Info": a / would end the sed expression)
   re=$(printf '%s' "$1" | sed 's/[][\/.*^$]/\\&/g'); rep=$(printf '%s' "$1" | sed 's/[\/&]/\\&/g')
+  # BAR writes a name that is a Lua identifier as a plain key ("Ecostats = 164,"), others in brackets
+  # ('["Reclaim Field Highlight"] = 0,'): both forms are set (an added bracket entry before a plain one lost: Lua takes
+  # the last of two, and Ecostats stayed on, 2026-10-27)
+  plain=""
+  case "$1" in ""|[0-9]*|*[!A-Za-z0-9_]*) ;; *) plain="^\([[:space:]]*\)$re *= *-\?[0-9][0-9]*" ;; esac
+  found=""
   if grep -q "\[\"$re\"\] *= *-\?[0-9][0-9]*" "$f"; then
+    found=1
     if [ -n "$2" ]; then sed -i "s/\[\"$re\"\] *= *-\?[0-9][0-9]*/[\"$rep\"] = $2/" "$f"
     else sed -i "/\[\"$re\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
-  elif [ -n "$2" ]; then   # the top-level order table (one tab in, as BAR writes it), not a widget's "...order = {"
+  fi
+  if [ -n "$plain" ] && grep -q "$plain" "$f"; then
+    found=1
+    if [ -n "$2" ]; then sed -i "s/$plain/\1$rep = $2/" "$f"
+    else sed -i "/$plain,\?[ \t]*$/d" "$f"; fi
+  fi
+  if [ -z "$found" ] && [ -n "$2" ]; then   # the top-level order table (one tab in, as BAR writes it), not a widget's "...order = {"
     sed -i "0,/^\torder *= *{/s//\torder = {\n\t\t[\"$rep\"] = $2,/" "$f"
   fi
-  [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
+  [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || { [ -n "$plain" ] && grep -q "^[[:space:]]*$re *= *$2," "$f"; } \
+    || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
 }
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
