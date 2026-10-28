@@ -46,6 +46,11 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `Updater` + `docs/UPDATES.md` — every lobby/skirmish start updates engine, game and lobby like BAR's PC launcher
   (its launcher config), re-applies the Android layer (each tweak logs `!!! ANDROID LAYER` when its target is gone)
   and rolls back a set that fails fast on its first start. Launcher setting "Update BAR at every start".
+- `MouseKeyboard` — a Bluetooth/USB-C mouse and keyboard as on a PC (HANDOFF "Mouse and keyboard"): pointer capture
+  (Ctrl+Alt lets go), keys as scancodes before the soft keyboard, Android 16.1 keyboard capture (`CAPTURE_KEYBOARD`)
+  and Samsung's Meta key request; Termux:X11's KeyInterceptor accessibility service as the player's fallback.
+  `GameActivity.handleKey` (pre-IME and the service) and `dispatchKeyEvent` route keys: gamepad, Android's own keys,
+  the system Back (Escape after the soft keyboard), the rest to Termux:X11.
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (smoothed camera, continuous pinch zoom, BAR's
   interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers, the catch-up mode,
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
@@ -115,7 +120,7 @@ install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to
 the real profile anyway; `Run in Emulator.bat` deletes it (also a stale one after a crash).
 Toolchain: AGP 9.3.1, Gradle 9.8.2 wrapper, NDK 29.0.14206865, CMake 3.22.1, JDK 21. One ABI per APK.
-Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNative, CmdEntryPoint.
+Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus LorieNative, CmdEntryPoint.
 
 ## Rules of the road
 - Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Replaces Termux:X11's (same name): only key events, a description, no settings screen (LoriePreferences is not
+     exported in this app, Android's Accessibility settings could not open it). -->
+<accessibility-service
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes=""
+    android:accessibilityFlags=""
+    android:canRetrieveWindowContent="false"
+    android:description="@string/key_capture_service_description"
+    android:packageNames="@null"
+    android:canRequestFilterKeyEvents="true" />

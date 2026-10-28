@@ -79,6 +79,7 @@
             <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox android:id="@+id/cbGamepadGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_gamepad_game" />
             <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
+            <CheckBox android:id="@+id/cbMouseKeyboard" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_mouse_keyboard" />
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" android:paddingEnd="8dp" />
                 <RadioGroup android:id="@+id/rgFpsCap" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">

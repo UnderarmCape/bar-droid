@@ -36,6 +36,26 @@ The toolchain folder is `toolchain\` inside the checkout, a `toolchain` folder b
 or wherever `BARDROID_TOOLCHAIN` points (`scripts\env.bat`). Logs from the phone: `Get Logs.bat phone`, or
 **Share logs** in the app. `Run in Emulator.bat` runs the x86_64 build in an emulator (slow; a test bench only).
 
+## Mouse and keyboard
+
+A Bluetooth mouse and keyboard, or ones plugged into a USB-C dock, play as on a PC: nothing to switch on (launcher
+setting "Mouse and keyboard go to the game", on by default). In the game and the lobby:
+- The mouse is captured: BAR's own pointer, with no Android pointer, no stop at the screen's edge, and no button
+  turning into Android's Back. **Ctrl+Alt** (pressed and let go alone) gives the mouse back to Android, for example to
+  reach DeX's taskbar; a click in the game takes it again. Leaving the game (Home or Recents gesture) lets it go too.
+- Every key reaches BAR with its modifiers (Esc, F-keys, Ctrl/Alt/Shift combinations, Space held). On Android 16.1
+  and newer Android hands its own shortcuts (Alt+Tab, the Windows key, Ctrl+Space, Samsung's Windows-key shortcuts) to
+  the game window too; Samsung phones are also asked to pass the Windows key.
+- Android keeps on purpose: the Home, Recents and power keys, volume, brightness and media keys. It always keeps its
+  touch gestures (swipe up for Home or Recents, the notification shade); an app cannot block those, and in the game
+  they take a second swipe because the game is full screen. Back (gesture or button) is Escape in the game.
+
+Older Android (before 16.1) takes its shortcuts first. There the optional accessibility service sends them to the
+game: Settings > Accessibility > Installed apps > **Beyond All Reason keyboard shortcuts** > On. It reads keys only
+while the game screen is in front. If Android says the setting is restricted (an APK installed from a browser or a
+file manager): Settings > Apps > Beyond All Reason > ⋮ > Allow restricted settings, then switch it on. The X server's
+keyboard layout is US English: another layout's keyboard types US characters in BAR's chat.
+
 ## Checks
 
 `powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1` runs every check that needs no phone (about

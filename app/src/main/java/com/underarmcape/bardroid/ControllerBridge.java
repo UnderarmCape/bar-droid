@@ -172,7 +172,10 @@ public final class ControllerBridge {
     /** @return true if the key belongs to a gamepad and has been consumed. */
     public boolean onKey(KeyEvent e) {
         int idx = map(e.getKeyCode());
-        boolean fromPad = isGamepad(e.getDevice()) || KeyEvent.isGamepadButton(e.getKeyCode());
+        // A keyboard that also declares gamepad buttons (some do) keeps its arrow keys: BAR's camera keys.
+        InputDevice d = e.getDevice();
+        boolean fromPad = KeyEvent.isGamepadButton(e.getKeyCode())
+                || (isGamepad(d) && d.getKeyboardType() != InputDevice.KEYBOARD_TYPE_ALPHABETIC);
         if (idx == -1 || !fromPad) return false;
         if (idx == IGNORED) return true;
         synchronized (this) {

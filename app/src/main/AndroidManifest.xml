@@ -10,6 +10,9 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- Android 16.1+ keyboard capture (MouseKeyboard): the system's shortcuts reach the focused game screen. A normal
+         permission, granted at install; older Android does not know it. -->
+    <uses-permission android:name="android.permission.CAPTURE_KEYBOARD" tools:ignore="ProtectedPermissions" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
@@ -69,6 +72,11 @@
             <intent-filter tools:node="removeAll" />
         </activity>
         <receiver android:name="com.termux.x11.LorieApp$Receiver" android:exported="false" tools:replace="android:exported" />
+        <!-- Termux:X11's key interception service, optional (README "Mouse and keyboard"): named for this app.
+             Its config (res/xml/accessibility_service_config.xml) replaces the library's, whose settings screen
+             does not exist in this app. -->
+        <service android:name="com.termux.x11.utils.KeyInterceptor" tools:node="merge"
+            android:label="@string/key_capture_service" tools:replace="android:label" />
         <receiver android:name="com.termux.x11.LoriePreferences$Receiver" android:exported="false" tools:replace="android:exported" />
 
         <!-- Share logs button (LogShare): zips in cache/share, handed out read-only. -->
