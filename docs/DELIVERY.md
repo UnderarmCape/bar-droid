@@ -48,7 +48,8 @@ published or posted without Kailil.
       an APK with Kailil's icon or the debug key, and reports what old commits still hold. Run before every release.
 - [ ] **History.** The icon and the personal data are in old commits. Kailil decides: publish a fresh history
       (one commit; the effort record stays in docs/WORKLOG.md and docs/HISTORY.md) or rewrite this one
-      (`git filter-repo`) to drop them. Either way `tools/publish-check.ps1` runs over what goes out.
+      (`git filter-repo`) to drop them. Either way `tools/publish-check.ps1` runs over what goes out. The commits
+      also name Kailil's e-mail address (the check's NOTE): GitHub's noreply address for what goes out, or keep it.
 
 ### For players
 - [x] README rewritten for players first: what works (lobby, online, skirmish, spectating, gamepad, keyboard and
@@ -87,7 +88,11 @@ published or posted without Kailil.
       2026-10-28: two in tonight's own caching (fixed, bdaae2e); the phone's launcher logs (58,000 lines, Kailil's
       games and tonight's runs) hold no error from the app or its widgets, only BAR's and the engine's own warnings;
       the input-source code (touch/mouse/keyboard/pad for the spectator tools) reviewed, nothing found; README's
-      launcher labels match the app's.
+      launcher labels match the app's. `tools/publish-check.ps1` reviewed: its home-network address check never
+      matched (git grep's ERE has no `\d`), an allowed e-mail address hid a private one on the same line, the history
+      check missed other letter cases and commit messages, and the APK check passed when the debug key could not be
+      read; fixed, `-SelfTest` (in laptop-tests) runs the patterns through git grep over planted data, and the check
+      notes the e-mail address the commits name (Kailil: GitHub's noreply address, or keep his).
 
 ## Releasing (once the blockers are done)
 

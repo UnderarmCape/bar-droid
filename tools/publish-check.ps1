@@ -6,13 +6,77 @@
 # user profile path, e-mail addresses other than the allowed ones); no keys, keystores or login files; no file over
 # 50 MB; a CHANGELOG.md entry for the version in gradle.properties. With -Apk: the APK has the project's own icon and
 # is not signed with the public debug key. History: old commits that still hold the owner's icon or private terms
-# (the fresh-history question in docs/DELIVERY.md); -NoHistory skips it.
-param([string]$Apk = "", [switch]$NoHistory)
+# (the fresh-history question in docs/DELIVERY.md); -NoHistory skips it. -SelfTest: the private-data patterns run
+# through git grep over planted data (tools\laptop-tests.ps1).
+param([string]$Apk = "", [switch]$NoHistory, [switch]$SelfTest)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $git = Join-Path $TC "git\cmd\git.exe"
 if (-not (Test-Path $git)) { $git = "git" }
+
+# Private data in the tracked files of the repository in the current folder: "file: what" for each file holding some.
+# git grep -E is POSIX ERE (no \d: it once matched a literal "d" and hid every address); each match is then checked
+# on its own against what is allowed, so an allowed address on the same line hides nothing.
+$patterns = @{
+  'a home-network address' = '\b(192\.168|10\.[0-9]{1,3})\.[0-9]{1,3}\.[0-9]{1,3}\b'
+  'a user profile path'    = '[A-Za-z]:\\\\?Users\\\\?[A-Za-z0-9._-]+'
+  'an e-mail address'      = '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
+}
+$allowedMail = 'noreply@|@example\.|@users\.noreply\.github\.com|@gnu\.org|@fsf\.org'
+$allowed = @{
+  'a home-network address' = '^10\.0\.2\.'   # the Android emulator's own network (10.0.2.2 is the host)
+  'a user profile path'    = '(?!)'
+  'an e-mail address'      = $allowedMail
+}
+function Find-PrivateData([string[]]$terms) {
+  $hits = @()
+  foreach ($t in $terms) {
+    $hits += @(& $git grep -n -I -i -F -e $t -- . 2>$null | ForEach-Object { ($_ -split ':')[0] + ": a private term" })
+  }
+  foreach ($name in $patterns.Keys) {
+    $hits += @(& $git grep -n -I -E -e $patterns[$name] -- . ':!termux-x11' 2>$null | Where-Object {
+        @([regex]::Matches($_, $patterns[$name]) | Where-Object { $_.Value -notmatch $allowed[$name] }).Count -gt 0 } |
+      ForEach-Object { ($_ -split ':')[0] + ": $name" })
+  }
+  return @($hits | Sort-Object -Unique)
+}
+
+if ($SelfTest) {
+  # planted in a throwaway repository under build\; the values are made up and pieced together so that this file
+  # holds none of them
+  $ErrorActionPreference = "Continue"
+  $dir = Join-Path $App "build\publish-check-selftest"
+  if (Test-Path $dir) { Remove-Item -Recurse -Force $dir }
+  New-Item -ItemType Directory $dir | Out-Null
+  Push-Location $dir
+  try {
+    & $git init -q . 2>$null
+    $plant = @{
+      'address.txt'   = "adb connect 192.168" + ".77.5:5555"
+      'address10.txt' = "the router at 10.4" + ".0.1"
+      'profile.txt'   = "C:\" + "Users\someone\Downloads"
+      'mail.txt'      = "write to player" + "@mail.test"
+      'mixed.txt'     = "noreply" + "@example.com and player" + "@mail.test"
+      'term.txt'      = "on the Wi-Fi " + "PlantedNet"
+      'allowed.txt'   = "emulator host 10.0.2" + ".2, Claude <noreply" + "@anthropic.com>, $([char]0x40)d and 192.168.d.d"
+    }
+    foreach ($f in $plant.Keys) { [IO.File]::WriteAllText((Join-Path $dir $f), $plant[$f] + "`n") }
+    & $git add -A 2>$null
+    $found = Find-PrivateData @("plantednet")
+    $want = @('address.txt: a home-network address', 'address10.txt: a home-network address',
+      'mail.txt: an e-mail address', 'mixed.txt: an e-mail address', 'profile.txt: a user profile path',
+      'term.txt: a private term')
+    $missing = @($want | Where-Object { $found -notcontains $_ })
+    $extra = @($found | Where-Object { $want -notcontains $_ })
+  } finally { Pop-Location; Remove-Item -Recurse -Force $dir }
+  $missing | ForEach-Object { Write-Host "FAIL  selftest: not found: $_" }
+  $extra | ForEach-Object { Write-Host "FAIL  selftest: found although allowed: $_" }
+  if ($missing.Count -or $extra.Count) { exit 1 }
+  Write-Host "selftest: ALL PASS"
+  exit 0
+}
+
 $fails = 0
 function Result([bool]$ok, [string]$what, [string[]]$detail = @()) {
   if ($ok) { Write-Host "PASS  $what" } else {
@@ -44,22 +108,7 @@ try {
   if (Test-Path $phone) {
     $terms += Get-Content $phone | ForEach-Object { ($_.Trim() -split ':')[0] } | Where-Object { $_ -and -not $_.StartsWith("#") }
   }
-  $hits = @()
-  foreach ($t in $terms) {
-    $hits += @(& $git grep -n -I -i -F -e $t -- . 2>$null | ForEach-Object { ($_ -split ':')[0] + ": a private term" })
-  }
-  $patterns = @{
-    'a home-network address' = '\b(192\.168|10\.\d{1,3})\.\d{1,3}\.\d{1,3}\b'
-    'a user profile path'    = '[A-Za-z]:\\\\?Users\\\\?[A-Za-z0-9._-]+'
-    'an e-mail address'      = '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}'
-  }
-  $allowedMail = 'noreply@|@example\.|@users\.noreply\.github\.com|@gnu\.org|@fsf\.org'
-  foreach ($name in $patterns.Keys) {
-    $hits += @(& $git grep -n -I -E -e $patterns[$name] -- . ':!termux-x11' 2>$null |
-      Where-Object { $name -ne 'an e-mail address' -or $_ -notmatch $allowedMail } |
-      ForEach-Object { ($_ -split ':')[0] + ": $name" })
-  }
-  $hits = @($hits | Sort-Object -Unique)
+  $hits = Find-PrivateData $terms
   Result ($hits.Count -eq 0) "no private data in the tracked files" $hits
 
   # keys, keystores, logins
@@ -91,7 +140,14 @@ try {
     $debugCert = & (Join-Path $TC "jdk\bin\keytool.exe") -list -v -keystore (Join-Path $App "app\bardroid-debug.jks") -storepass bardroid 2>$null |
       Select-String 'SHA256: ([0-9A-F:]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value.Replace(':', '').ToLower() }
     $signed = ($certs | Select-String 'certificate SHA-256 digest: ([0-9a-f]+)') | ForEach-Object { $_.Matches[0].Groups[1].Value }
-    Result ($signed -and -not ($signed -contains $debugCert)) "the APK is signed, and not with the public debug key" $certs
+    if (-not $debugCert) { $certs = @("(could not read the debug key's certificate from app\bardroid-debug.jks)") + $certs }
+    Result ($debugCert -and $signed -and -not ($signed -contains $debugCert)) "the APK is signed, and not with the public debug key" $certs
+  }
+
+  # who the commits name: public once pushed
+  $mails = @(& $git log --format='%ae%n%ce' | Sort-Object -Unique | Where-Object { $_ -and $_ -notmatch $allowedMail })
+  if ($mails.Count) {
+    Write-Host "NOTE  the commits name $($mails.Count) e-mail address(es) other than noreply ones, public once pushed (GitHub's noreply address keeps one private)"
   }
 
   # history
@@ -100,8 +156,10 @@ try {
     $iconCommits = @(& $git log --all --format=%h -- 'app/src/main/res/drawable-xxhdpi/ic_fg.png' 'app/src/main/res/drawable-xxxhdpi/ic_fg.png')
     if ($iconCommits.Count) { $old += "the owner's icon (BAR-derived) in $($iconCommits.Count) commits" }
     foreach ($t in $terms) {
-      $n = @(& $git log --all --format=%h -S $t).Count
+      $n = @(& $git log --all -i --format=%h -S $t).Count
       if ($n) { $old += "a private term in $n commits" }
+      $m = @(& $git log --all -i -F --format=%h "--grep=$t").Count
+      if ($m) { $old += "a private term in $m commit messages" }
     }
     Result ($old.Count -eq 0) "the history holds none of it (else: publish a fresh history or rewrite it, docs/DELIVERY.md)" $old
   }

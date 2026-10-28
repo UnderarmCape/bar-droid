@@ -107,7 +107,7 @@ powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-F
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
-powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory]   # before anything goes public (docs/DELIVERY.md)
+powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory] [-SelfTest]   # before anything goes public (docs/DELIVERY.md)
 "Build APK.bat" phone release                                            # the public build: own icon, release key (local.properties), versioned name
 powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or

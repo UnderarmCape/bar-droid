@@ -8,6 +8,7 @@
 #   lobby-game-test      the lobby's Skirmish screen with the controller game (assets\gamepad, as installed)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
+#   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
 #   powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1
 $Tools = $PSScriptRoot
@@ -39,6 +40,7 @@ if ($luacheck) {
   $results += "{0} lua lint" -f $(if ($ok) { "PASS" } else { "FAIL" })
 } else { $results += "SKIP lua lint (no luacheck: run Install Toolchain.bat, or set LUACHECK to luacheck.exe)" }
 
+Run "publish check patterns" "publish-check.ps1" "selftest: ALL PASS" @("-SelfTest")
 Run "downloader" "downloader-test.ps1" "ALL PASS"
 Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
 Run "updater rollback" "updater-test.ps1" "ALL PASS"
