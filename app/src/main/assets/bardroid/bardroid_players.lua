@@ -108,9 +108,19 @@ local function overList(x, y)
 	return pos and pos[1] and x >= pos[2] and x <= pos[4] and y >= pos[3] and y <= pos[1]
 end
 
+-- spectating by touch (bardroid_spectate.lua): the list stays small and a tap on it brings up the spectate bar instead,
+-- on the same timer (Kailil, 2026-10-27: the open list covered the bar's buttons on the inner screen)
+local function spectating()
+	return WG.BarDroidSpectating == true
+end
+
 function widget:MousePress(x, y, button)
 	if button ~= 1 or not overList(x, y) then
 		return false
+	end
+	if spectating() then
+		lastTouch = os.clock()
+		return true
 	end
 	if minimized then
 		expand()
@@ -129,6 +139,21 @@ function widget:Initialize()
 		minimized = function()
 			return minimized
 		end,
+		-- bardroid_spectate.lua's bar opens and closes with the list; a tap on the bar counts as one on the list
+		keepOpen = function()
+			lastTouch = os.clock()
+		end,
+		-- (a double tap that follows a unit brings up the bar, on the same timer; when not spectating the list opens)
+		open = function()
+			if not spectating() then
+				expand()
+			end
+			lastTouch = os.clock()
+		end,
+		-- the spectate bar shows: the list open, or (spectating, the list kept small) tapped less than OPEN_SECONDS ago
+		barWanted = function()
+			return not minimized or (spectating() and os.clock() - lastTouch <= OPEN_SECONDS)
+		end,
 	}
 end
 
@@ -142,7 +167,7 @@ function widget:Update()
 		minimize()
 		return
 	end
-	if not minimized and os.clock() - lastTouch > OPEN_SECONDS then
+	if not minimized and (spectating() or os.clock() - lastTouch > OPEN_SECONDS) then
 		minimize()
 	end
 end

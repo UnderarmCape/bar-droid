@@ -19,7 +19,8 @@ import com.termux.x11.input.TouchInputHandler;
 /**
  * The game screen: Termux:X11's display/input activity, plus a gamepad bridge. Finger gestures go through
  * {@link RtsTouch}; mouse, stylus, touchpad and keyboard go to the X server exactly as in Termux:X11 (its preferences
- * screen controls scaling etc.). The Back button is Escape (BAR's menu, cancel the current command).
+ * screen controls scaling etc.); Android's keyboard shortcuts stay out of the game ({@link KeyboardShortcuts}). The Back
+ * button is Escape (BAR's menu, cancel the current command).
  * Gamepad/joystick events are intercepted here and sent to the engine's Lua over UDP instead.
  */
 public class GameActivity extends MainActivity {
@@ -38,7 +39,9 @@ public class GameActivity extends MainActivity {
         // the render resolution setting scales both screens alike: folded the cap then applies too (2520x1080 is the cap)
         float r = Prefs.renderScale / 100f;
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
+        KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
+        KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
@@ -50,6 +53,7 @@ public class GameActivity extends MainActivity {
             if (e.getAction() == MotionEvent.ACTION_DOWN)
                 lorieParent.requestUnbufferedDispatch(e);   // as Termux:X11 does: no batching, less latency
             if (touch.handles(e)) return touch.onTouch(e);
+            if (e.getAction() == MotionEvent.ACTION_DOWN) touch.source("mouse");   // a mouse, stylus or touchpad
             return termux.handleTouchEvent(lorieParent, lorieView, e);
         });
         // Same as Termux:X11's callback, plus: the game window follows the X screen (fold / unfold).
@@ -302,13 +306,49 @@ public class GameActivity extends MainActivity {
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-        if (pad != null && pad.onMotion(ev)) return true;
+        if (pad != null && pad.onMotion(ev)) { touch.source("pad"); return true; }
+        if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) touch.source("mouse");   // (bardroid_spectate.lua)
         return super.dispatchGenericMotionEvent(ev);
+    }
+
+    /**
+     * Keys before the soft keyboard sees them (LorieView's pre-IME pass, KeyboardShortcuts) and from Termux:X11's
+     * KeyInterceptor service; super sends them to the X server as Termux:X11 always did.
+     * @return false: not used here, the key goes on (to the soft keyboard, dispatchKeyEvent, or Android)
+     */
+    @Override
+    public boolean handleKey(KeyEvent e) {
+        if (pad != null && pad.onKey(e)) { touch.source("pad"); return true; }
+        if (KeyboardShortcuts.isAndroidKey(e.getKeyCode())) return false;
+        if (touch != null && e.getAction() == KeyEvent.ACTION_DOWN && fromKeyboard(e)) touch.source("keyboard");
+        // the system Back: Escape in dispatchKeyEvent, after the soft keyboard (if shown) has closed on it
+        if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
+        boolean sent = super.handleKey(e);
+        if (sent && e.getAction() == KeyEvent.ACTION_UP) BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
+        return sent;
+    }
+
+    /**
+     * A key typed on a real keyboard (bardroid_spectate.lua's touch tools step aside for one), not the phone's volume
+     * buttons, a headset's media keys or the system Back (Kailil, 2026-10-27: volume up ended the follow camera).
+     */
+    private static boolean fromKeyboard(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.KEYCODE_BACK: case KeyEvent.KEYCODE_VOLUME_UP: case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_MUTE: case KeyEvent.KEYCODE_MUTE: case KeyEvent.KEYCODE_HEADSETHOOK:
+            case KeyEvent.KEYCODE_MEDIA_PLAY: case KeyEvent.KEYCODE_MEDIA_PAUSE: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_NEXT: case KeyEvent.KEYCODE_MEDIA_PREVIOUS: case KeyEvent.KEYCODE_MEDIA_STOP:
+                return false;
+            default:
+                InputDevice d = e.getDevice();
+                return d != null && !d.isVirtual() && d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
+        }
     }
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (pad != null && pad.onKey(event)) return true;
+        if (pad != null && pad.onKey(event)) { touch.source("pad"); return true; }
+        if (KeyboardShortcuts.isAndroidKey(event.getKeyCode())) return false;   // the window's and the system's handling
         // The system Back button/gesture (not a keyboard's or a mouse's back key) becomes Escape.
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !event.isFromSource(InputDevice.SOURCE_MOUSE)
                 && getLorieView().connected()) {

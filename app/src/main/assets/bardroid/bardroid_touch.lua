@@ -13,6 +13,7 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
+--                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
@@ -263,8 +264,35 @@ local ACTIONS = {
 	end,
 }
 
+-- bardroid_spectate.lua's 1st person: the fingers look around instead of moving the camera (pan: screen pixels;
+-- pinch: the FOV; twist and tilt as they are)
+local function readLook(lines, L)
+	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
+		local a, b, c, d = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
+		if a and b and c and d then
+			L.dx, L.dy = L.dx + c - a, L.dy + d - b
+		end
+	end
+	for r in lines:gmatch("zoom (%S+) %S+ %S+") do
+		local ratio = tonumber(r)
+		if ratio and ratio > 0 then
+			L.zoom = L.zoom * ratio
+		end
+	end
+	for a in lines:gmatch("rot (%S+)") do
+		L.rot = L.rot + (tonumber(a) or 0)
+	end
+	for t in lines:gmatch("tilt (%S+)") do
+		L.tilt = L.tilt + (tonumber(t) or 0)
+	end
+end
+
 local function readTouch(lines)
 	local p = pending
+	if WG.BarDroidFirstPerson and WG.BarDroidLook then
+		readLook(lines, WG.BarDroidLook)
+		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
+	end
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		local ax, az = ground(tonumber(x0), tonumber(y0))
 		local bx, bz = ground(tonumber(x1), tonumber(y1))
@@ -298,6 +326,13 @@ local function readTouch(lines)
 		if action then
 			action()
 		end
+	end
+	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned
+	for source in lines:gmatch("src (%S+)") do
+		WG.BarDroidInput = source
+	end
+	if lines:find("pan ", 1, true) then
+		WG.BarDroidPanAt = os.clock()
 	end
 end
 
@@ -337,7 +372,9 @@ local function applyTouch(dt)
 		-- spread the fingers: closer; the map point under the pinch stays under it
 		local key = cs.dist and "dist" or cs.height and "height"
 		if zoom ~= 0 and key then
-			local low = key == "dist" and zoomMinDistance or MIN_OVERHEAD_HEIGHT
+			-- (the engine's limit as it is now: bardroid_spectate.lua lowers it for its 1st person camera)
+			local low = key == "dist" and math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", zoomMinDistance) or
+				zoomMinDistance, 0.1) or MIN_OVERHEAD_HEIGHT
 			local value = math.max(low, math.min(zoomMaxDistance, cs[key] / math.exp(zoom)))
 			if p.pivotX then
 				local s = value / cs[key]

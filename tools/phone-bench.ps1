@@ -11,8 +11,14 @@
 #     [-Profile widgets|gadgets] [-Settings @{ WorkerThreadCount = 2 }] [-MinSkin 40] [-NoWarm]
 # -Settings: engine settings (springsettings.cfg keys) for this run only (launch-bar.sh .bardroid-bench-settings; the
 # file as it was goes back afterwards).
+# -Replay <file in the phone's files/bar/demos>: a real game instead of the scenario (Kailil, 2026-10-27: real big
+# battles), fast-forwarded to game second -SkipTo, then -Seconds played at normal speed: how fast the game ran against
+# real time every 10 s (below x1 the phone falls behind live play), units and fps (bardroid_bench.lua). The warm-up
+# stays the scenario. Its game version must be on the phone (a replay recorded there).
+#   powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 -Cap 30 -Replay "<replay>.sdfz" [-SkipTo 900] [-Seconds 600]
 param([int]$Scale = 100, [int]$Cap = 0, [string]$Label = "", [switch]$NoWarm, [string]$Profile = "",
-  [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "192.168.1.196:5555")
+  [hashtable]$Settings = @{}, [double]$MinSkin = 40.0, [string]$Device = "192.168.1.196:5555",
+  [string]$Replay = "", [int]$SkipTo = 900, [int]$Seconds = 600)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -42,7 +48,7 @@ while (Test-Path $lock) {
   Start-Sleep 30
 }
 Set-Content -Path $lock -Value $PID -Encoding ascii
-trap { try { RestorePrefs } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
+trap { try { RestorePrefs; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
 
 & $adb connect $Device | Out-Null
 Adb shell "am force-stop $pkg"
@@ -64,6 +70,12 @@ AppSh $PrefsSh @("renderScale=$Scale", "frameCap=$Cap") | Out-Null
 AppSh 'if [ -n "$1" ]; then echo "$1" > files/bar/.bardroid-bench-profile; else rm -f files/bar/.bardroid-bench-profile; fi' @($Profile) | Out-Null
 $kv = @($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" })
 AppSh 'rm -f files/bar/.bardroid-bench-settings; for l in "$@"; do echo "$l" >> files/bar/.bardroid-bench-settings; done' $kv | Out-Null
+AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null   # (the warm-up runs the scenario)
+if ($Replay) {
+  # (the name in the script itself: adb joins arguments with spaces, and replay names have spaces)
+  $have = "$(AppSh "[ -s 'files/bar/demos/$Replay' ] && echo yes")".Trim()
+  if ($have -ne "yes") { Remove-Item $lock -ErrorAction SilentlyContinue; throw "no replay files/bar/demos/$Replay on the phone" }
+}
 
 # the launcher's log lines since the run's start ($1, the phone's clock), also when the app put the full log aside as
 # launcher.old.log during the run (Log.rotateIfBig): of each file, the lines after its last line stamped earlier
@@ -74,15 +86,15 @@ $RunLog = @'
   awk -v s="$1" 'substr($0,3,1) == ":" && substr($0,1,8) < s { n = 0; next } { b[++n] = $0 } END { for (i = 1; i <= n; i++) print b[i] }' "$f"
 done; }
 '@
-function BenchDone { [int](AppSh "$RunLog | grep -c 'Benchmark Results'" @($script:since) | Select-Object -Last 1) }
-function RunBench {   # one benchmark, start to quit (bardroid_bench.lua quits ~3 s after the results)
+function BenchDone([string]$done) { [int](AppSh "$RunLog | grep -c '$done'" @($script:since) | Select-Object -Last 1) }
+function RunBench([string]$done = 'Benchmark Results', [int]$minutes = 12) {   # one run, start to quit (bardroid_bench.lua quits ~3 s after the results)
   $script:since = "$(AppSh 'touch files/bench-start; date +%H:%M:%S' | Select-Object -Last 1)".Trim()
   Adb shell "input keyevent KEYCODE_WAKEUP" | Out-Null
   Adb shell "am start -n $pkg/.LauncherActivity --es start bench" | Out-Null
-  $deadline = (Get-Date).AddMinutes(12)
+  $deadline = (Get-Date).AddMinutes($minutes)
   while ((Get-Date) -lt $deadline) {
     Start-Sleep 15
-    if ((BenchDone) -gt 0) { break }
+    if ((BenchDone $done) -gt 0) { break }
   }
   Start-Sleep 6
   Adb shell "am force-stop $pkg"
@@ -103,10 +115,17 @@ $start = Thermal
 $clkFile = Join-Path $App "build\phone-bench-clocks.txt"
 Adb push (Join-Path $PSScriptRoot "phone-clocks.sh") /data/local/tmp/bardroid-clocks.sh | Out-Null
 Adb shell "sed -i 's/\r$//' /data/local/tmp/bardroid-clocks.sh"
-$clk = Start-Process -FilePath $adb -ArgumentList "-s", $Device, "shell", "sh /data/local/tmp/bardroid-clocks.sh 900" `
+$runMinutes = if ($Replay) { [int]($Seconds / 60) + 25 } else { 12 }   # (a replay: fast-forward + the measured part)
+$clk = Start-Process -FilePath $adb -ArgumentList "-s", $Device, "shell", "sh /data/local/tmp/bardroid-clocks.sh $($runMinutes * 60)" `
   -RedirectStandardOutput $clkFile -NoNewWindow -PassThru
-Write-Host "[phone-bench] started $((Get-Date).ToString('HH:mm:ss')): resolution $Scale%, frame cap $(if ($Cap) { $Cap } else { 'none' }), status $($start.Status), AP $($start.Ap) C, skin $($start.Skin) C"
-RunBench
+Write-Host "[phone-bench] started $((Get-Date).ToString('HH:mm:ss')): resolution $Scale%, frame cap $(if ($Cap) { $Cap } else { 'none' }), status $($start.Status), AP $($start.Ap) C, skin $($start.Skin) C$(if ($Replay) { "; replay $Replay from game second $SkipTo, $Seconds s" })"
+if ($Replay) {
+  AppSh "echo '$SkipTo $Seconds $Replay' > files/bar/.bardroid-bench-replay" | Out-Null
+  RunBench 'replaybench\] done' $runMinutes
+  AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null
+} else {
+  RunBench
+}
 $end = Thermal
 Adb shell "touch /data/local/tmp/bardroid-clocks.stop" | Out-Null
 if (-not $clk.WaitForExit(15000)) { $clk.Kill() }
@@ -120,7 +139,7 @@ $clocks = @(Get-Content $clkFile | Select-Object -Skip 1 | ForEach-Object { $f =
   [pscustomobject]@{ cpu6 = [int]$f[3]; cap6 = [int]$f[4]; cap0 = [int]$f[2]; gpu = [int]$f[5]; busy = [int]$f[7]; status = [int]$f[8] } } })
 function Med($v) { $s = @($v | Sort-Object); if ($s.Count) { $s[[int][math]::Floor($s.Count / 2)] } else { $null } }
 $lines = AppSh ($RunLog + @'
- | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|bardroid-bench|Watchdog|MESA: error' |
+ | grep -E 'Benchmark complete|^.{8} \[engine\].*(Draw|Sim|Update) [0-9]+ frames|bardroid-perf\] [0-9]|\[perf\] thermal|X screen [0-9]|bardroid-bench|replaybench|replay benchmark|Watchdog|MESA: error' |
   sed 's/\[engine\] \[t=[^]]*\]\[f=[^]]*\] //' | cut -c1-230
 '@) @($since)
 $lines | ForEach-Object { Write-Host "  $_" }
@@ -136,6 +155,10 @@ if ($tot.Count -eq 3) {
   $ms = ($tot | ForEach-Object { [double]$_.Matches[0].Groups[3].Value } | Measure-Object -Sum).Sum
   if ($ms -gt 0) { $speed = [math]::Round($simFrames / ($ms / 1000) / 30, 2) }
 }
+# a replay: its summary line (bardroid_bench.lua)
+$rs = $lines | Select-String 'replaybench\] done \(([^)]*)\): speed min x([\d.]+), median x([\d.]+); below x0\.95 (\d+)% of the time; units up to (\d+)' | Select-Object -Last 1
+$rsum = if ($rs) { $g = $rs.Matches[0].Groups; [pscustomobject]@{ why = $g[1].Value; min = [double]$g[2].Value; med = [double]$g[3].Value; below = [int]$g[4].Value; units = [int]$g[5].Value } }
+if ($rsum) { $speed = $rsum.med }
 $fps = @($lines | Select-String 'bardroid-perf\] ([\d.]+) fps' | ForEach-Object { [double]$_.Matches[0].Groups[1].Value })
 $gpu = @($lines | Select-String 'busy (\d+) %' | ForEach-Object { [int]$_.Matches[0].Groups[1].Value })
 $row = [pscustomobject]@{
@@ -145,6 +168,8 @@ $row = [pscustomobject]@{
   ap_start = $start.Ap; ap_end = $end.Ap; status_end = $end.Status; skin_start = $start.Skin; skin_end = $end.Skin
   cpu6_med = (Med $clocks.cpu6); cap6_min = ($clocks.cap6 | Measure-Object -Minimum).Minimum; cap0_min = ($clocks.cap0 | Measure-Object -Minimum).Minimum
   gpu_med = (Med $clocks.gpu); busy_med = (Med $clocks.busy)
+  replay = $(if ($Replay) { "$Replay from $SkipTo s" } else { $null }); replay_speed_min = $rsum.min
+  replay_below95_pct = $rsum.below; replay_units_peak = $rsum.units
 }
 if ($Profile) {   # the newest screenshot: the benchmark's, with the profiler's table
   $shot = (AppSh 'ls -t files/bar/screenshots/*.png 2>/dev/null | head -n 1').Trim()
@@ -165,6 +190,14 @@ New-Item -ItemType Directory -Force -Path (Split-Path $csv) | Out-Null
 $old = @(if (Test-Path $csv) { Import-Csv $csv })
 $cols = @($(if ($old.Count) { $old[0].PSObject.Properties.Name }) + $row.PSObject.Properties.Name | Select-Object -Unique)
 @($old) + $row | Select-Object $cols | Export-Csv -Path $csv -NoTypeInformation   # new columns join older rows empty
+if ($Replay) {
+  if (-not $rsum) { Write-Host "[phone-bench] no replay results: see files/logs/launcher.log"; exit 1 }
+  Write-Host ("[phone-bench] {0}: replay game speed median x{1}, min x{2}, below x0.95 {3}% of the time; units up to {4} ({5}); last minute {6} fps; AP {7} -> {8} C" -f
+    $(if ($Label) { $Label } else { "replay" }), $rsum.med, $rsum.min, $rsum.below, $rsum.units, $rsum.why, $row.fps_last, $start.Ap, $end.Ap)
+  Write-Host ("[phone-bench] clocks: prime CPU median {0} MHz, its cap down to {1} MHz (others {2}); GPU median {3} MHz, {4}% busy; {5}" -f
+    $row.cpu6_med, $row.cap6_min, $row.cap0_min, $row.gpu_med, $row.busy_med, $clkFile)
+  exit 0
+}
 if ($null -eq $sim) { Write-Host "[phone-bench] no results: see files/logs/launcher.log"; exit 1 }
 Write-Host ("[phone-bench] {0}: Sim {1} ms, Draw {2} ms, Update {3} ms per frame; game speed x{8}; last minute {4} fps; GPU busy up to {5}%; AP {6} -> {7} C" -f
   $(if ($Label) { $Label } else { "$Scale%" }), $sim, $draw, $upd, $row.fps_last, $row.gpu_busy_max, $start.Ap, $end.Ap, $speed)

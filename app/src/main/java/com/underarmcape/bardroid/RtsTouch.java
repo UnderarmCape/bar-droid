@@ -202,6 +202,7 @@ final class RtsTouch {
         if (velocity != null) velocity.addMovement(e);
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
+                source("touch");
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
                 state = State.PENDING;
@@ -566,6 +567,21 @@ final class RtsTouch {
 
     /** The gamepad camera's stick state (ControllerBridge, any thread): the widget moves the camera every frame. */
     void padLine(String line) { send(line); }
+
+    private String inputSource;
+    private long inputSourceAt;
+    /**
+     * The input just used: "touch", "mouse", "keyboard" or "pad" (UI thread). bardroid_spectate.lua shows its touch
+     * tools only after fingers. Sent when it changes, and again at most every 2 s while in use: a game started since
+     * reads only lines written after its start.
+     */
+    void source(String s) {
+        long now = SystemClock.uptimeMillis();
+        if (s.equals(inputSource) && now - inputSourceAt < 2000) return;
+        inputSource = s;
+        inputSourceAt = now;
+        send("src " + s);
+    }
 
     /** A game's widget answers (it writes the hover file at least once a second); not in the lobby. Any thread. */
     boolean gameWidgetRunning() {

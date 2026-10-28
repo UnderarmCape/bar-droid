@@ -46,6 +46,12 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `Updater` + `docs/UPDATES.md` — every lobby/skirmish start updates engine, game and lobby like BAR's PC launcher
   (its launcher config), re-applies the Android layer (each tweak logs `!!! ANDROID LAYER` when its target is gone)
   and rolls back a set that fails fast on its first start. Launcher setting "Update BAR at every start".
+- `KeyboardShortcuts` — Android's, One UI's and DeX's keyboard shortcuts kept out of the game (HANDOFF "Keyboard
+  shortcuts"); mouse and key delivery stay Termux:X11's (Kailil: they work). Android 16.1 keyboard capture
+  (`CAPTURE_KEYBOARD`), Samsung's Meta key request, keys in LorieView's pre-IME pass; Termux:X11's KeyInterceptor
+  accessibility service as the player's fallback. `GameActivity.handleKey` (pre-IME and the service) and
+  `dispatchKeyEvent` route keys: gamepad, Android's own keys, the system Back (Escape after the soft keyboard), the
+  rest to Termux:X11.
 - `RtsTouch` (finger gestures) + `assets/bardroid/bardroid_touch.lua` (smoothed camera, continuous pinch zoom, BAR's
   interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers, the catch-up mode,
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
@@ -91,6 +97,8 @@ powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|c
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
+powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min
+powershell -ExecutionPolicy Bypass -File tools\fp-tuner.ps1 [-Replay <file.sdfz>] [-SkipTo 240]   # Kailil sets the 1st person camera (laptop); Save -> build\fp-tuner\data\LuaUI\Config\bardroid_fp.lua -> bake into bardroid_spectate.lua FP
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
@@ -115,7 +123,7 @@ install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to
 the real profile anyway; `Run in Emulator.bat` deletes it (also a stale one after a crash).
 Toolchain: AGP 9.3.1, Gradle 9.8.2 wrapper, NDK 29.0.14206865, CMake 3.22.1, JDK 21. One ABI per APK.
-Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc, plus LorieNative, CmdEntryPoint.
+Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus LorieNative, CmdEntryPoint.
 
 ## Rules of the road
 - Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.

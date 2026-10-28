@@ -133,6 +133,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbGamepadGame)).setChecked(Prefs.gamepadGame);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
+        ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).setChecked(Prefs.captureShortcuts);
         ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
                 Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
         ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).check(
@@ -158,6 +159,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.gamepadGame = ((CheckBox) findViewById(R.id.cbGamepadGame)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
+        Prefs.captureShortcuts = ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).isChecked();
         int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
         Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;
         int res = ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).getCheckedRadioButtonId();

@@ -94,13 +94,27 @@ widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
   # the name as a regex and as replacement text ("Keybind/Mouse Info": a / would end the sed expression)
   re=$(printf '%s' "$1" | sed 's/[][\/.*^$]/\\&/g'); rep=$(printf '%s' "$1" | sed 's/[\/&]/\\&/g')
+  # BAR writes a name that is a Lua identifier as a plain key ("Ecostats = 164,"), others in brackets
+  # ('["Reclaim Field Highlight"] = 0,'): both forms are set (an added bracket entry before a plain one lost: Lua takes
+  # the last of two, and Ecostats stayed on, 2026-10-27)
+  plain=""
+  case "$1" in ""|[0-9]*|*[!A-Za-z0-9_]*) ;; *) plain="^\([[:space:]]*\)$re *= *-\?[0-9][0-9]*" ;; esac
+  found=""
   if grep -q "\[\"$re\"\] *= *-\?[0-9][0-9]*" "$f"; then
+    found=1
     if [ -n "$2" ]; then sed -i "s/\[\"$re\"\] *= *-\?[0-9][0-9]*/[\"$rep\"] = $2/" "$f"
     else sed -i "/\[\"$re\"\] *= *-\?[0-9][0-9]*,\?[ \t]*$/d" "$f"; fi
-  elif [ -n "$2" ]; then   # the top-level order table (one tab in, as BAR writes it), not a widget's "...order = {"
+  fi
+  if [ -n "$plain" ] && grep -q "$plain" "$f"; then
+    found=1
+    if [ -n "$2" ]; then sed -i "s/$plain/\1$rep = $2/" "$f"
+    else sed -i "/$plain,\?[ \t]*$/d" "$f"; fi
+  fi
+  if [ -z "$found" ] && [ -n "$2" ]; then   # the top-level order table (one tab in, as BAR writes it), not a widget's "...order = {"
     sed -i "0,/^\torder *= *{/s//\torder = {\n\t\t[\"$rep\"] = $2,/" "$f"
   fi
-  [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
+  [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || { [ -n "$plain" ] && grep -q "^[[:space:]]*$re *= *$2," "$f"; } \
+    || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
 }
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
@@ -193,6 +207,8 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   # appears even while it shows nothing: the costliest widget in big battles, 3.1% of the phone's running time and over
   # half of LuaUI's garbage (docs/HISTORY.md, 2026-10-27 evening). Kailil: "Turn Reclaim Field Highlight off"
   widget_order "Reclaim Field Highlight" 0
+  # BAR's Ecostats: the alliances' resource bars in the top right corner (Kailil, 2026-10-27: "hidden if possible")
+  widget_order "Ecostats" 0
   # BAR's fog-of-war stripes (Fog Diagonal Lines GL4) find the ground in the map's G-buffer, which the engine only
   # clears with advanced map shading off (BAR's Lowest preset, the phone's): a full-screen pass every frame whose every
   # pixel is discarded. Off while the lobby's or the engine's setting is 0 (the lobby's copy is what the next game
@@ -211,7 +227,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields, ecostats$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
@@ -280,8 +296,18 @@ case "$MODE" in
     log "spring skirmish: $BAR/skirmish.txt"
     ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
   bench)
-    log "spring benchmark: $BAR/bench.txt"
-    ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$? ;;
+    # A replay benchmark (tools/phone-bench.ps1 -Replay): .bardroid-bench-replay says "<game second> <seconds> <replay
+    # in demos/>"; bardroid_bench.lua fast-forwards to that second and measures the game's speed for that long.
+    rep="$BAR/.bardroid-bench-replay"
+    if [ -s "$rep" ] && read -r skip secs file < "$rep" && [ -f "$BAR/demos/$file" ]; then
+      echo "replay $skip $secs" > "$BAR/LuaUI/Config/bardroid_bench.txt"
+      log "spring replay benchmark: demos/$file from game second $skip, $secs s"
+      ./spring --isolation --write-dir "$BAR" "$BAR/demos/$file"; rc=$?
+    else
+      [ -s "$rep" ] && log "replay benchmark: no demos/$(cut -d' ' -f3- "$rep"); BAR's benchmark instead"
+      log "spring benchmark: $BAR/bench.txt"
+      ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$?
+    fi ;;
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
     # config and shuts down (a black screen). The app's update check saves BAR's current one; the built-in copy is
@@ -359,6 +385,8 @@ chat_err=$(grep -iE 'bardroid_chat|BAR Droid chat' "$BAR/infolog.txt" 2>/dev/nul
 [ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
 info_err=$(grep -iE 'bardroid_info|BAR Droid info' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
+spec_err=$(grep -iE 'bardroid_spectate|BAR Droid spectate' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$spec_err" ] && layer_miss "spectating widget (bardroid_spectate.lua): $spec_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

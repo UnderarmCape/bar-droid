@@ -52,6 +52,11 @@ public final class Prefs {
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
     /**
+     * Android's, One UI's and DeX's keyboard shortcuts stay out of the game screen, their keys go to BAR
+     * (KeyboardShortcuts). Off: Termux:X11's defaults.
+     */
+    public static boolean captureShortcuts = true;
+    /**
      * Frame cap (phone build, libbardroid_pace.so): 30 or 60 fps, or 0 = none, the game drawing as fast as it can.
      * 30 by default: uncapped only for measuring (Kailil, 2026-10-27, after the benchmarks: "put the hard 30 fps lock
      * back on the phone. I resign to the fps tanking when the battle gets rough"). tools/phone-bench.ps1 -Cap sets it
@@ -131,6 +136,7 @@ public final class Prefs {
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
+        captureShortcuts = s.getBoolean("captureShortcuts", captureShortcuts);
         fpsCap = s.getInt("frameCap", fpsCap);
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
         renderScale = s.getInt("renderScale", renderScale);
@@ -160,6 +166,8 @@ public final class Prefs {
                 .putBoolean("verboseX", verboseX)
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
+                .remove("mouseKeyboard")   // the withdrawn mouse capture setting (b148e59)
+                .putBoolean("captureShortcuts", captureShortcuts)
                 .remove("touchOnly")   // the touch-only mode is gone
                 .remove("fps60").remove("fpsCap")   // the measuring days' cap, see fpsCap
                 .putInt("frameCap", fpsCap)

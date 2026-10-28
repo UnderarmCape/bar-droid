@@ -588,6 +588,9 @@ local function selectedTypes()
 end
 
 local function pick()
+	if WG.BarDroidSpectating then -- spectating by touch (bardroid_spectate.lua): no unit panel
+		return nil
+	end
 	if customType == "unit" and customData and spGetUnitDefID(customData) then
 		return { kind = "unit", id = spGetUnitDefID(customData), unitID = customData }
 	end

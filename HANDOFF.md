@@ -28,8 +28,10 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | proot | `tools/build-proot.py` | Our build of Termux's proot (pinned commit) whose seccomp filter stops only for the ioctls proot handles: 14 → 30 fps on the phone |
 | Touch in game | `RtsTouch.java`, `assets/bardroid/bardroid_touch.lua` | Tap = click, double tap = same type on screen, triple tap = same type on the map; one finger pans (drag from the interface = mouse drag), tap-then-drag = box select, long press = right button; two fingers pan, pinch zoom, twist rotate, move up/down together to tilt, tap = right click; two fingers held 450 ms then swiped: up select all, down deselect, left stop, right fight; three-finger swipe: up overview, down back, left/right previous/next idle builder; three-finger tap = keyboard; Back = Escape |
 | Touch in the lobby | `assets/bardroid/bardroid_lobby_touch.lua` (a lobby widget) | A drag scrolls lists with a fling; a tap on a server shows its details and Close / Previous / Next / Join, a second tap joins |
+| Keyboard shortcuts | `KeyboardShortcuts.java`, `GameActivity.handleKey` (see "Keyboard shortcuts" below) | A Bluetooth or dock mouse and keyboard work as Termux:X11 delivers them (Kailil: "works perfectly already"); Android's, One UI's and DeX's shortcuts kept out of the game: Android 16.1 keyboard capture, Samsung's Meta key request, keys before the soft keyboard app; Kailil's check pending |
 | Chat display | `assets/bardroid/bardroid_chat.lua` | BAR's chat lines in the same box, names flush left (wrapped every 10 characters), the text filling the rest, 75% of BAR's font size; BAR's typing box and ignore list stay |
 | Unit info panel | `assets/bardroid/bardroid_info.lua` | Replaces BAR's Info widget (its text ran under the picture at phone scales): BAR's numbers, the largest text that fits, a type grid with counts for several units (tap keeps a type, long press drops it), BAR's `WG.info` API |
+| Spectating by touch | `assets/bardroid/bardroid_spectate.lua`, `RtsTouch.source`, `tools/spectate-test.ps1` | While spectating with fingers (the app reports touch/mouse/keyboard/pad): taps select nothing (no unit panels), double tap a unit follows it (the ground: stops), a finger pan ends following or the player camera; a tap on the small player list opens it and a bar: < player name > (BAR's player camera, in the list's order), Free, < unit > (the most valuable units), Group; both close after 7 s untouched |
 | Catch-up | `bardroid_touch.lua`, `GameActivity`, `libbardroid_pace.so` | Joining a running game: a black screen with "Catching up 12:30 of 41:10 x2.5", the engine not drawing (a 17-minute game caught up in 164 s); a game too big to catch up draws again after a minute |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera; the pad is a mouse in the lobby (see "Gamepad" below) |
 | Upscaling (SGSR) | patch 0007, `assets/sgsr/`, `GameActivity` | The X screen (smaller than the display) is enlarged with Qualcomm's SGSR 1 instead of plain bilinear filtering; plain if the GPU refuses the shader; "Compare upscaling" switches it every 3 s under a label (on until Kailil has compared, then off by default) |
@@ -214,12 +216,53 @@ preset a base with ~200 wind turbines still ran 15-23 fps, so effects were not t
   `bardroid_touch.lua` moves the camera each frame with v0.8.5's camera constants (left stick pans, LT faster, right
   stick turns/zooms, LB+right stick tilts). Off in the controller game (v0.8.5 reads the pad itself).
 
+## Keyboard shortcuts (2026-10-27)
+Kailil: "mouse and keyboard support works perfectly already. but i just want to make sure the android built in
+keyboard bindings and shortcuts dont listen in on the bar session." So how the mouse and keys reach the X server is
+Termux:X11's, unchanged; only who sees a key first changes. `KeyboardShortcuts` (launcher setting "Keyboard
+shortcuts go to the game", `Prefs.captureShortcuts`, on; off = Termux:X11's defaults). Client-side only (online-safe).
+- **Android 16.1+ keyboard capture**: `WindowManager.LayoutParams.setKeyboardCaptureEnabled(true)` (API 36.1, by
+  reflection: compileSdk is 34), permission `android.permission.CAPTURE_KEYBOARD`. On the Fold7 (Android 17, One UI
+  9.0) the permission is `prot=normal` (`dumpsys package permission`), granted at install; framework.jar has the
+  setter and `INPUT_FEATURE_CAPTURE_KEYBOARD`; launcher.log said "keyboard capture on" at the first start. Moonlight
+  uses the same call (its commit ddb674a, "Add support for Android 16.1 keyboard capture"). Without it Android's
+  shortcut handling (AOSP KeyGestureController: Meta alone for All apps, Alt+Tab, Ctrl+Space, Meta+letter, the Recents
+  and screenshot keys) runs before any app sees the key. Which shortcuts the capture hands over is documented nowhere
+  we found: Kailil's check tells.
+- **Samsung's Meta key request** (`SemWindowManager.requestMetaKeyEvent`, Termux:X11's "Intercept system shortcuts",
+  `dexMetaKeyCapture`): One UI and DeX hand the Windows key and its combinations to the window.
+- **Keys before the soft keyboard app**: Termux:X11's "hardware keyboard scancodes workaround" off, so LorieView's
+  pre-IME pass sends keys (`GameActivity.handleKey` → Termux:X11's own `handleKey`, the same code as before) and the
+  keyboard app never sees a hardware key: its shortcuts (Samsung Keyboard's Shift+Space or Ctrl+Space language
+  switch) cannot act. The extra key release LorieView queues 50 ms after a Shift/Ctrl/Backspace release (for soft
+  keyboards that swallow releases) is dropped there as its post-IME path did (`BarDroidAccess.keyReleaseSent`), so a
+  quickly re-pressed Shift is not let go.
+- **Fallback for older Android**: Termux:X11's KeyInterceptor accessibility service, renamed "Beyond All Reason
+  keyboard shortcuts", with our own config (the library's points at a settings screen that is not exported here),
+  switched on by the player (README); an accessibility service gets keys before Android's shortcut handling (only
+  volume keys go to the policy first). Its keys go through `GameActivity.handleKey` too: the gamepad's first (it would
+  otherwise send pad buttons to the X server).
+- **Kept Android's on purpose** (`KeyboardShortcuts.isAndroidKey`, on every path): the Home, Recents and All apps keys,
+  power, brightness, call, camera, assistant; volume and media keys keep Termux:X11's handling (Android's). The system
+  Back (gesture, button) is Escape as before, after the soft keyboard (if shown) has closed on it.
+- **No app can block**: the touch gestures (Home and Recents swipes, the notification shade; full screen they take a
+  second swipe), the power key and its chords (screenshot, emergency). On Android before 16.1 without the accessibility
+  service, Alt+Tab, the Windows key and Ctrl+Space stay Android's.
+- The first build of this (b148e59, installed 21:01, withdrawn the same evening before any mouse was used with it)
+  also captured the mouse and sent keys as scancodes. It switched Termux:X11's `pointerCapture` and `preferScancodes`
+  on; `KeyboardShortcuts.applyTermuxPrefs` sets them back to Termux:X11's defaults once.
+
 ## Phone requirements
 Qualcomm Adreno 7xx/8xx (Snapdragon 8 Gen 2/3/8s Gen 3/8 Elite), 12 GB RAM, ~6 GB free. The APK installs from
 Android 9 (minSdk 28); tested on Android 17 (the Fold7) and Android 14 (the emulator).
 Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
 
 ## Next steps (2026-10-27)
+0. **Keyboard shortcuts, Kailil's check** ("Keyboard shortcuts" above). In a game and in the lobby, whether Android
+   still acts on any of: Esc (Back), the Windows key alone (All apps, search), Windows+D/E/N/other letters, Alt+Tab,
+   Ctrl+Space or Shift+Space (language), Alt+F4, Ctrl+Esc. Mouse and typing should feel exactly as before. If a
+   shortcut gets through, try again with Settings > Accessibility > Installed apps > "Beyond All Reason keyboard
+   shortcuts" on. Afterwards: launcher.log `[input]` ("keyboard shortcuts to the game: keyboard capture on, ...").
 1. **Kailil checks on the phone** (everything is installed; the phone's logs show no app errors): the forgiving tilt
    and the new gestures, the black catch-up screen, the chat display, finger scrolling and the server details in the
    lobby, the unit info panel (one unit and several), no ship wakes, late-game fps with the deferred-pass trims

@@ -5,6 +5,81 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Keyboard shortcuts kept out of the game (2026-10-27 evening)
+Kailil asked for mouse and keyboard over Bluetooth or a USB-C dock "and i want android to not hijack its inputs and
+listen for shortcuts and other things". A first build (b148e59, installed 21:01) also captured the mouse and sent keys
+as scancodes; then Kailil: "mouse and keyboard support works perfectly already. but i just want to make sure the
+android built in keyboard bindings and shortcuts dont listen in on the bar session". The mouse and key handling went
+back to Termux:X11's (no mouse had been used with that build: launcher.log listed no input device), and only the
+shortcut part stayed (HANDOFF.md "Keyboard shortcuts"). What was found on the way:
+- **Android 16.1 has keyboard capture for apps.** Moonlight's commit ddb674a ("Add support for Android 16.1 keyboard
+  capture") calls `WindowManager.LayoutParams.setKeyboardCaptureEnabled(true)` with the permission
+  `android.permission.CAPTURE_KEYBOARD`. On the Fold7 (Android 17, One UI 9.0): `dumpsys package permission` shows it
+  `prot=normal`; its `/system/framework/framework.jar` has `setKeyboardCaptureEnabled`, `hasKeyboardCapture` and
+  `INPUT_FEATURE_CAPTURE_KEYBOARD`, and Samsung's `requestMetaKeyEvent`. No documentation of which shortcuts it covers
+  was found (AOSP's KeyGestureController, read in full, does not mention it: it consumes Alt+Tab, Meta, Ctrl+Space,
+  the Recents and screenshot keys before dispatch). Kailil's check on the phone decides whether the accessibility
+  fallback is needed there.
+- Soft keyboard apps see hardware keys before the app unless the focused view takes them pre-IME; Termux:X11 does
+  that only with its "hardware keyboard scancodes workaround" off; otherwise a keyboard app's own shortcuts (Samsung
+  Keyboard's language switch) can act on keys meant for BAR.
+- Noted from the mouse work, not changed (the mouse works for Kailil): Recoil's middle-click scroll puts SDL in
+  relative mode (`CMouseHandler::HideMouse`), which on X11 reads XInput2 raw events, and lorie queues Android's
+  absolute pointer positions with `POINTER_NORAW` (cmdentrypoint.cpp): that scroll mode may not move with a mouse.
+  Termux:X11 sends 100 wheel units a click where lorie divides by 120. A mouse's right button arrives as
+  `BUTTON_SECONDARY` on stock Android; some older Samsung, Huawei and Xiaomi builds sent it as Back (SDL bug 3227),
+  which Termux:X11 maps back to the right button.
+
+## Spectating: one player's units, forgiving taps, sentries, a bar beside the small list (2026-10-27 midnight)
+Kailil, after playing it on the inner screen: the open player list covered the bar ("should we keep the player list
+small when I tap it ... tapping it just spawns the touch ui buttons?"); arrows only over the spectated player's units
+and sentries; a tap on another player's unit spectates that player; double tap more forgiving, hopping between units
+in 1st person, the bar coming up with it; sentries' gun barrels; Table "eye in sky"; a unit that dies hands over to
+its player's nearest unit; every view editable in the tuner; wildlife never followed.
+- While spectating by touch BAR's list stays small; a tap on it (or a double tap that follows a unit) brings up the bar
+  for 7 s (`bardroid_players.lua` barWanted); the bar is laid out left of the list.
+- A tap picks the unit under the finger or the nearest on screen within 70 px; a double tap counts within 0.55 s and
+  90 px, or on the same unit.
+- Armed buildings are followable; 1st person rides their barrel (barrel, sleeve, gun, turret...) and turns with its
+  aim.
+- **Ecostats stayed on**: BAR saves widget names that are Lua identifiers as plain keys (`Ecostats = 164,`); the
+  launch script added `["Ecostats"] = 0,` before it and Lua kept the later one. `widget_order` sets both forms now.
+
+## Following that sticks, camera presets, 1st person and its tuner (2026-10-27 late)
+Kailil: the arrows "just do the closest unit to the center of the screen"; following should "stick no matter what i do
+unless I deliberately move my camera away from the unit a far distance" (pan offsets, zoom, tilt and rotate while
+following; offsets carry to the next unit); in follow mode camera presets in place of the players (first person, over
+the shoulder, tabletop, close, mid) with Save; group following "never jerky"; volume up broke following.
+- The camera's target is the followed point plus an offset; each frame the fingers' moves since the camera was last
+  placed go into the offset (pinch and twist as well). Letting go: the offset past 1,500 elmos or twice the camera's
+  distance (a flick's glide). Presets "unit"-framed turn with the unit's facing (ry = atan2(dx, -dz): the camera looks
+  along (sin ry, -cos ry), Camera.cpp).
+- Group: members picked twice a second (at most 40, nearest the centre), their centre taken every frame, the camera on
+  a critically damped spring (0.9 s): no jumps when the centre does. ~40 position reads a frame.
+- 1st person is the engine's first-person camera (mode 0: an eye position, a direction, its FOV; the eye stays 5 elmos
+  above the ground), riding a piece of the unit (per unit type, else the first of head, turret, torso, body, base) with
+  its own smoothing; a drag or flick lasting past 0.35 s leaves it. The Spring camera stops at BAR's minimum camera
+  height (CamSpringMinZoomDistance, 300): close presets lower it for the session only (the config overlay).
+- `tools/fp-tuner.ps1` (laptop): the same widget riding a unit in a replay, a mouse panel for anchor, facing, offsets,
+  pitch, yaw, FOV and both smoothings; Save writes `bardroid_fp.lua`, to be baked into `bardroid_spectate.lua` FP.
+- Keys from the phone's volume buttons, media keys or anything that is not an alphabetic keyboard no longer count as
+  keyboard use (the touch tools stepped aside and following ended); following now also goes on under a mouse or
+  keyboard.
+
+## Spectating by touch (2026-10-27 night)
+Kailil: "a touch focused spectator only setup ... cycling through players to switch player cam to, blocking the bottom
+left hand ui from popping up ... camera tools that follow a unit or group of units ... double tap a unit to follow
+them"; then "the touch UI to follow players be hidden and only popup when I touch player list", the player's name on
+the button in the list's order, and BAR's top-right Ecostats hidden. `bardroid_spectate.lua` acts only while
+spectating with fingers: the app reports the input in use ("src touch|mouse|keyboard|pad" in the touch log, at most every
+2 s while in use, so a game started since learns it; `RtsTouch.source`, `GameActivity`). BAR's player camera is its
+Lockcamera widget (`WG.lockcamera.SetPlayerID`, what its player list uses). Taps on the map are taken (nothing
+selected); anything selected otherwise is dropped a frame later, not from SelectionChanged: a selection replaced there
+is never told to the widgets after it (BAR's build menu kept showing a builder's options). Following moves the
+camera's target only (pinch and twist keep working). `tools/spectate-test.ps1` checks it in a replay (23 checks; the
+replay must start playing: one of the laptop's older replays stayed at frame -1, so pass one with `-Replay`).
+Ecostats is off in every game (`launch-bar.sh`).
+
 ## Benchmarks on the hot phone; online-safe changes only (2026-10-27 evening)
 Kailil: "we MUST have online play enabled. so only do online safe adjustments." Online games need BAR's official
 engine binary and BAR's own game archive, so the hail-mary research's engine builds, overlay games and modrule
