@@ -59,6 +59,14 @@ function PushAlloc {
   }
 }
 
+# ONLINE-SAFE ONLY since 2026-10-27 ~20:00 (Kailil: "we MUST have online play enabled. so only do online safe
+# adjustments"): online play needs the official engine binary and BAR's own game archive, so every R_ENGINE build, the
+# overlay games (gadget trim, modrules) and the start-script hacks are culled from the queue (kept below as the record of
+# round 1-2). Online-safe = the engine and game unchanged, only client-side settings, the OS and local widgets.
+$Culled = @("eng-clang-o3", "eng-oryon", "eng-oryon-lto", "eng-pgo-gen", "eng-oryon-lto-pgo", "eng-oryon-lto-fast",
+  "eng-oryon-lto-nosync", "eng-max-nopgo", "eng-max", "eng-sw", "eng-animdfs", "eng-nohash-rt", "eng-dmgsync", "eng-sw-all",
+  "eng-gs20", "eng-syslibm", "everything", "gadgets-trim", "lua-min", "no-luaui", "no-luaui-min", "mr-los", "mr-avoid6",
+  "mr-quadpos6", "mr-quad256", "mr-quad64", "mr-path", "mr-overlap", "mr-all")
 $Levers = [ordered]@{
   # the official engine through the research wrapper with nothing changed: the harness costs nothing
   "baseline"        = @{ Conf = "" }
@@ -66,6 +74,7 @@ $Levers = [ordered]@{
   # runs main + 3 workers (infolog: "affinity not set"); the Fold7 has 8 big cores
   "workers7"        = @{ Conf = 'R_SETTINGS="WorkerThreadCount=7"' }
   "workers8"        = @{ Conf = 'R_SETTINGS="WorkerThreadCount=8"' }
+  "workers6"        = @{ Conf = 'R_SETTINGS="WorkerThreadCount=6"' }
   "workers5"        = @{ Conf = 'R_SETTINGS="WorkerThreadCount=5"' }
   # Lua garbage collection: the least the engine allows per cycle and the slowest growth-driven rate
   "lua-gc-lazy"     = @{ Conf = 'R_SETTINGS="LuaGarbageCollectionMemLoadMult=1 LuaGarbageCollectionRunTimeMult=1"' }
@@ -85,14 +94,14 @@ $Levers = [ordered]@{
   "no-luaui"        = @{ Conf = 'R_DEBUGCMDS="16:luaui disable"' }
   # the least drawing the engine can do: interface hidden, no sky/water/trees detail, smallest ground mesh, 70%
   "min-render"      = @{ Conf = 'R_SETTINGS="AdvMapShading=0 AdvUnitShading=0 BumpWaterReflection=0 BumpWaterRefraction=0 ReflectiveWater=0 Water=0 DynamicSky=0 GroundDetail=20 MaxDynamicMapLights=0 MaxDynamicModelLights=0 MaxNanoParticles=0 3DTrees=0 TreeRadius=0 GrassDetail=0 MaxParticles=10000"
-R_DEBUGCMDS="16:hideinterface 1"'; Scale = 70 }
+'; Scale = 70 }
   "no-luaui-min"    = @{ Conf = 'R_SETTINGS="AdvMapShading=0 AdvUnitShading=0 BumpWaterReflection=0 BumpWaterRefraction=0 ReflectiveWater=0 Water=0 DynamicSky=0 GroundDetail=20 MaxDynamicMapLights=0 MaxDynamicModelLights=0 MaxNanoParticles=0 3DTrees=0 TreeRadius=0 GrassDetail=0 MaxParticles=10000"
 R_DEBUGCMDS="16:luaui disable|17:hideinterface 1"'; Scale = 70 }
   # the gadget-trim overlay (PushOverlay): game logic and effects on damage/explosion events off
   "gadgets-trim"    = @{ Conf = 'R_GAME="BAR Hail Mary 1"'; Prepare = { PushOverlay -Trim } }
   # LuaUI widgets that cost the most in the laptop's widget profile with the phone's set (tools/research/laptop-bench.ps1
   # -Widgets), off for the run (wrap-spring.sh R_WIDGETS_OFF; BYAR.lua is put back after the run)
-  "widgets-trim"    = @{ Conf = 'R_WIDGETS_OFF="Cache Icons;Reclaim Field Highlight;Sensor Ranges LOS;Unit Repeat Icons;Notifications;Attack Range GL4;Unit Stencil GL4;AdvPlayersList Music Player New;Unit Wait Icons;Attack and Move Notification;Auto Repair Idle Builders;Commander Hurt Vignette;NoDuplicateOrders;Sensor Ranges Radar;Sensor Ranges Jammer Preview;Sensor Ranges Sonar;Projectile Target AoE"' }
+  "widgets-trim"    = @{ Conf = 'R_WIDGETS_OFF="Sensor Ranges LOS;Unit Repeat Icons;Notifications;Attack Range GL4;Unit Stencil GL4;AdvPlayersList Music Player New;Unit Wait Icons;Attack and Move Notification;Auto Repair Idle Builders;Commander Hurt Vignette;NoDuplicateOrders;Sensor Ranges Radar;Sensor Ranges Jammer Preview;Sensor Ranges Sonar;Projectile Target AoE"' }
   # everything Lua that is not needed to run the fight: LuaUI off and the gadget trim
   "lua-min"         = @{ Conf = "R_GAME=`"BAR Hail Mary 1`"`nR_DEBUGCMDS=`"17:luaui disable`""; Prepare = { PushOverlay -Trim } }
   # --- second round (2026-10-27, "Research again. More ways") ---

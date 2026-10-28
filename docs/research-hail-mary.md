@@ -1,5 +1,11 @@
 # Hail-mary research: how far can Sim time drop? (2026-10-27)
 
+> **Online-safe only (Kailil, 2026-10-27 ~20:00):** "we MUST have online play enabled. so only do online safe
+> adjustments. If our tests have singlpalyer only ajustments then cull those out and leave the online ones". Online
+> play needs the official engine binary and BAR's own game archive, so every engine build, the overlay games (gadget
+> trim, modrules) and start-script tricks below are **culled**: they stay in this file only as the record of what the
+> sim time is made of. See "Online-safe levers" at the end for what is kept and measured.
+
 Branch `research/hail-mary`. Pure research, nothing here ships: Kailil asked what the most drastic measures could
 produce ("literally butcher whatever you need"). Scenario: BAR's "Benchmark BAR" (650 Grunts vs 650 Pawns on
 Starwatcher 1.0, 2000 frames) on Kailil's Galaxy Z Fold7, folded, uncapped, 100 % resolution, the phone warmed into
@@ -254,3 +260,30 @@ CPU share (a proot-free start is only worth trying if that share is large).
 **Biggest single surprise:** the sim frame is dominated by unit scripts and weapons (Tracy: 4.8 + 3.8 ms of ~13 ms on
 the laptop), and the per-unit animation pass costs ~19 ms of worker-thread CPU per frame, while the levers people
 usually reach for (LOS resolution, pathing, collision rates) act on fractions of a millisecond.
+## Online-safe levers (from 2026-10-27 ~20:00)
+
+**Culled** (they change the engine binary or the game a player joins): every research engine build (clang/oryon/LTO/
+PGO/fast-math/no-sync-hash/system libm/GAME_SPEED 20/the runtime-switch patches, also the GCC 16 Windows builds),
+BOLT, the gadget-trim and modrules overlay games, start-script commands (`luaui disable`, `hideinterface`), and
+LuaUI-off (online-safe but unplayable: kept only as the laptop reference ceiling, -14 %). `levers.ps1` lists them in
+`$Culled`; `research-bench.ps1` refuses them.
+
+**Kept, and why each changes nothing synced:**
+
+| lever | sync check |
+| --- | --- |
+| WorkerThreadCount 5/6/7/8 | the thread pool only splits homogeneous `for_mt` work; Recoil keeps sim results independent of how work lands on threads (`coding-agents/ENGINE_PERFORMANCE.md`), and the setting is a normal player option |
+| main thread on the prime core, taskset | OS scheduling only |
+| mimalloc/jemalloc for malloc (LD_PRELOAD), glibc huge pages | where memory comes from; nothing synced may depend on addresses (players already differ in OS, allocator and ASLR) |
+| MinSimDrawBalance / MinDrawFPS | when the client simulates vs draws; the frames simulated are the same |
+| frame cap 30 (Kailil's hard lock), Sound=0 | drawing and audio only |
+| MaxParticles 10000 / MaxNanoParticles 0 | unsynced effect particles (synced projectiles are not limited by them) |
+| LuaUI widget trim | local widgets |
+| Lua garbage-collection settings | change only when collection runs, which already varies with each player's CPU speed (the run-time budget is in ms), so synced Lua cannot depend on it |
+| graphics settings (min-render without `hideinterface`), Game Mode, the cgroup/uclamp probe, proot cost | client-side or read-only |
+
+Harness fix found on the way (2026-10-27 21:00): Windows PowerShell puts a UTF-8 BOM in front of any text piped into
+adb. Android's sh (mksh) skips it, the container's bash does not: `dev-env.sh` failed on line 1 and no lever was
+applied in the first two attempts (their rows are plain baselines). `research-bench.ps1` now pushes text through a
+BOM-free file. Also: the round-2 laptop "work" and "speed" matrices ran from BAR's engine dir (ReShade in the path);
+their Sim timers stand, their Draw numbers are not comparable with the clean-dir runs.

@@ -27,7 +27,12 @@ function PushFile([string]$local, [string]$remote) {   # binary-safe, as the app
   if ($LASTEXITCODE) { throw "push failed: $local" }
 }
 function PushText([string]$text, [string]$remote) {
-  $text | & $adb -s $Device exec-in run-as $pkg sh -c "mkdir -p `$(dirname $remote) && tr -d '\r' > $remote" | Out-Null
+  # through a file, not a pipe: Windows PowerShell puts a UTF-8 BOM in front of text piped into adb; Android's sh skips
+  # it, but the container's bash does not (dev-env.sh failed on line 1 and no lever was applied, 2026-10-27)
+  $tmp = Join-Path $HM "tmp\push.txt"
+  New-Item -ItemType Directory -Force (Split-Path $tmp) | Out-Null
+  [IO.File]::WriteAllText($tmp, $text.Replace("`r", ""), (New-Object System.Text.UTF8Encoding $false))
+  PushFile $tmp $remote
 }
 
 # Kailil's phone: no run while he uses it (2026-10-27 a call was in front while benchmarks kept being started). In use =
@@ -94,6 +99,8 @@ if [ -f $B/research/prefs.saved ]; then
   done < $B/research/prefs.saved
   rm -f $B/research/prefs.saved
 fi
+# Kailil's hard 30 fps lock (2026-10-27): the frame cap stays 30 when no saved value came back
+grep -q 'name="frameCap"' shared_prefs/bardroid.xml || sed -i 's|</map>|    <int name="frameCap" value="30" />\n</map>|' shared_prefs/bardroid.xml
 ls $B/dev-env.sh $B/research 2>&1 | tr '\n' ' '; echo
 '@
   if ($Purge) { AppSh 'rm -rf files/bar/research files/hm-x.sh; echo purged' }
@@ -112,7 +119,7 @@ try {
   # the user's prefs that phone-bench.ps1 changes, put back afterwards
   AppSh @'
 mkdir -p files/bar/research
-[ -f files/bar/research/prefs.saved ] || for k in renderScale fpsCap; do
+[ -f files/bar/research/prefs.saved ] || for k in renderScale frameCap fpsCap; do
   echo "$k $(grep -o "name=\"$k\" value=\"[0-9]*\"" shared_prefs/bardroid.xml | sed 's/.*value="\([0-9]*\)"/\1/')"
 done > files/bar/research/prefs.saved
 cat files/bar/research/prefs.saved | tr '\n' ' '; echo
@@ -141,6 +148,7 @@ cat files/bar/research/prefs.saved | tr '\n' ' '; echo
   foreach ($name in $Lever) {
     $L = $Levers[$name]
     if (-not $L) { throw "unknown lever $name (tools/research/levers.ps1)" }
+    if ($Culled -contains $name) { throw "lever $name is culled: online-safe levers only (levers.ps1 `$Culled)" }
     if ($L.Prepare) { & $L.Prepare }
     PushText ("# lever $name`n" + $L.Conf) "files/bar/research/lever.conf"
     for ($i = 1; $i -le $Runs; $i++) {
