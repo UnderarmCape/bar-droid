@@ -69,9 +69,11 @@ published or posted without Kailil.
       and patched), the luacheck lint and the Java unit checks; the APK as an artifact. Untested until pushed.
 
 ### Hardening and overhead (the spectator tools first)
-- [ ] Measure what `bardroid_spectate.lua` costs per frame (laptop profiler in a replay: idle, following a unit, a
-      group, 1st person) and cut anything above noise: `layout()` on every DrawScreen, `GetConfigFloat` on every
-      pinch frame, tables made per frame (`fpFor`, presets), `GetVisibleUnits` per tap, the group refresh.
+- [x] Measure what `bardroid_spectate.lua` costs per frame (`tools/spectate-test.ps1 -Cost`: off, the bar, following,
+      group, 1st person) and cut it: the bar into a display list (0.43 → 0.06 ms, 54 → 4 KB a frame), 1st person
+      without per-frame tables (0 KB); HISTORY.md "Overnight". Left as they are (measured or rare): `GetVisibleUnits`
+      per tap, the group refresh twice a second, the camera state read each frame while following.
+- [ ] `bardroid_touch.lua`: `GetConfigFloat` on every pinch frame, and its cost per frame the same way.
 - [ ] The same on the phone: the replay benchmark with the spectator widget on and off.
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`.
 

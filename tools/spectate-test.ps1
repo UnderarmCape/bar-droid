@@ -4,7 +4,9 @@
 # removed again at the end) with the app's touch, info and spectate widgets and a test widget
 # (tools\spectate-test\bardroid_spectate_test.lua) that fast-forwards into the game and checks the touch tools (~2 min).
 #   powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Engine recoil_2026.07.04]
-param([string]$Replay = "", [string]$Engine = "")
+# -Cost: instead of the checks, what the spectate widget costs per frame (ms and KB of garbage) when off, with the bar
+# up, following a unit, a group and in 1st person (tools\spectate-test\bardroid_spectate_cost.lua, ~1.5 min).
+param([string]$Replay = "", [string]$Engine = "", [switch]$Cost)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\spectate-test"
@@ -60,7 +62,8 @@ try {
   foreach ($f in "bardroid_touch.lua", "bardroid_info.lua", "bardroid_players.lua", "bardroid_spectate.lua") {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") "$Data\LuaUI\Widgets\" -Force
   }
-  Copy-Item (Join-Path $PSScriptRoot "spectate-test\bardroid_spectate_test.lua") "$Data\LuaUI\Widgets\" -Force
+  $driver = if ($Cost) { "bardroid_spectate_cost.lua" } else { "bardroid_spectate_test.lua" }
+  Copy-Item (Join-Path $PSScriptRoot "spectate-test\$driver") "$Data\LuaUI\Widgets\" -Force
   # the phone's widget orders that matter here: BAR's Info widget off (bardroid_info.lua instead), Ecostats off
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n`t`t[`"Info`"] = 0,`n`t`t[`"Ecostats`"] = 0,`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
@@ -72,12 +75,12 @@ try {
   Write-Host "[spectate-test] $(Split-Path $Replay -Leaf), engine $Engine"
   $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
     -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$demo`""
-  $deadline = (Get-Date).AddSeconds(300)
+  $deadline = (Get-Date).AddSeconds($(if ($Cost) { 600 } else { 300 }))
   while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
          -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet))) { Start-Sleep 1 }
   Start-Sleep 1
   if (-not $p.HasExited) { $p.Kill() }
-  Select-String -Path $log -Pattern '\[spectest\]|BAR Droid spectate|bardroid_spectate' |
+  Select-String -Path $log -Pattern '\[spectest\]|\[spectcost\]|BAR Droid spectate|bardroid_spectate' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   if (-not (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet)) {
     "[spectest] FAIL the test finished (a replay that never starts playing: pass another with -Replay)"

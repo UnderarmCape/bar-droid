@@ -464,19 +464,28 @@ local function approachAngle(a, b, k)
 end
 
 -- the anchor of 1st person: a piece of the unit (FP.pieces for its type, else the first of FP.pieceNames it has; ""
--- picks the middle) or the unit's middle; with the piece's facing on the map (dx, dz) and the anchor's name
+-- picks the middle) or the unit's middle; with the piece's facing on the map (dx, dz) and the anchor's name. The piece
+-- is looked up once per unit and anchor setting (the unit's piece map is a new table at every call).
+local anchorFound = {} -- { unitID, want, piece, name }
 local function anchorOf(unitID)
 	local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
-	local name = def and FP.pieces[def.name]
-	local map = Spring.GetUnitPieceMap(unitID) or {}
-	local piece = name and name ~= "" and map[name]
-	if not piece and name ~= "" then
-		for _, n in ipairs((def and (def.speed or 0) == 0) and FP.staticPieceNames or FP.pieceNames) do
-			if map[n] then
-				piece, name = map[n], n
-				break
+	local want = def and FP.pieces[def.name]
+	local piece, name
+	if anchorFound.unitID == unitID and anchorFound.want == want then
+		piece, name = anchorFound.piece, anchorFound.name
+	else
+		name = want
+		local map = Spring.GetUnitPieceMap(unitID) or {}
+		piece = name and name ~= "" and map[name]
+		if not piece and name ~= "" then
+			for _, n in ipairs((def and (def.speed or 0) == 0) and FP.staticPieceNames or FP.pieceNames) do
+				if map[n] then
+					piece, name = map[n], n
+					break
+				end
 			end
 		end
+		anchorFound.unitID, anchorFound.want, anchorFound.piece, anchorFound.name = unitID, want, piece, name
 	end
 	if piece then
 		local px, py, pz, dx, _, dz = Spring.GetUnitPiecePosDir(unitID, piece)
@@ -496,10 +505,11 @@ local FP_KEYS = { "facing", "forward", "right", "up", "pitch", "yaw", "fov", "po
 local function unitClass(def)
 	return (def and (def.speed or 0) == 0) and "sentry" or "unit"
 end
-local function fpFor(def)
-	local P = {}
-	local c = FP.classes[unitClass(def)] or {}
-	local t = (def and FP.types[def.name]) or {}
+local NONE = {}
+local function fpFor(def, P) -- (into P when given: 1st person reuses one table every frame)
+	P = P or {}
+	local c = FP.classes[unitClass(def)] or NONE
+	local t = (def and FP.types[def.name]) or NONE
 	for _, k in ipairs(FP_KEYS) do
 		local v = t[k]
 		if v == nil then
@@ -513,6 +523,8 @@ local function fpFor(def)
 	return P
 end
 
+local fpValues = {} -- (fpFor's values, the same table every frame)
+local fpCam = { mode = CAM_FPS, rz = 0 } -- (the camera state set every frame, the same table)
 local function updateFirstPerson(dt)
 	local f = follow
 	local ax, ay, az, pdx, pdz, name = anchorOf(f.unitID)
@@ -522,7 +534,7 @@ local function updateFirstPerson(dt)
 	end
 	f.anchor = name
 	local def = UnitDefs[Spring.GetUnitDefID(f.unitID) or -1]
-	local P = fpFor(def) -- (this unit type's values)
+	local P = fpFor(def, fpValues) -- (this unit type's values)
 	local static = def and (def.speed or 0) == 0 -- (a sentry: its gun's aim)
 	local yaw = ((P.facing == "piece" or static) and pdx and (pdx ~= 0 or pdz ~= 0)) and math.atan2(pdx, -pdz)
 		or unitYaw(f.unitID)
@@ -572,9 +584,11 @@ local function updateFirstPerson(dt)
 		ry, pitchDeg, fov = look.yaw, look.pitch, look.fov
 	end
 	local pitch = math.pi / 2 - math.rad(pitchDeg) -- (rx: pi/2 level, more is down)
-	spSetCameraState({ mode = CAM_FPS, px = ex, py = ey, pz = ez, rx = pitch, ry = ry, rz = 0, fov = fov,
-		dx = math.sin(pitch) * math.sin(ry), dy = math.cos(pitch), dz = -math.sin(pitch) * math.cos(ry),
-		oldHeight = ey - Spring.GetGroundHeight(ex, ez) }, 0)
+	local c = fpCam
+	c.px, c.py, c.pz, c.rx, c.ry, c.fov = ex, ey, ez, pitch, ry, fov
+	c.dx, c.dy, c.dz = math.sin(pitch) * math.sin(ry), math.cos(pitch), -math.sin(pitch) * math.cos(ry)
+	c.oldHeight = ey - Spring.GetGroundHeight(ex, ez)
+	spSetCameraState(c, 0)
 end
 
 local function updateFollow(dt)
@@ -973,6 +987,7 @@ local function followLabel()
 	return name, follow.team and { Spring.GetTeamColor(follow.team) }
 end
 
+-- The bar's buttons ({ x0, y0, x1, y1, action, label, lit, color, size }) as the state is now.
 local function layout()
 	local vsx, vsy = Spring.GetViewGeometry()
 	-- (the presets row is the widest, 6 buttons: on the inner screen it fits left of the player list)
@@ -1032,10 +1047,10 @@ local function layout()
 		end
 		return w - gap
 	end
-	buttons = {}
+	local out = {}
 	local function place(row, x, y)
 		for _, b in ipairs(row) do
-			buttons[#buttons + 1] = { x0 = x, y0 = y, x1 = x + b.w, y1 = y + h, action = b.action, label = b.label,
+			out[#out + 1] = { x0 = x, y0 = y, x1 = x + b.w, y1 = y + h, action = b.action, label = b.label,
 				lit = b.lit, color = b.color, size = h }
 			x = x + b.w + gap
 		end
@@ -1057,6 +1072,28 @@ local function layout()
 		place(rowB, x0 + math.max(0, math.floor((room - wb) / 2)), y)
 		place(rowA, x0 + math.max(0, math.floor((room - wa) / 2)), y + h + gap)
 	end
+	return out
+end
+
+local function sameColor(a, b)
+	if not (a and b) then
+		return a == b
+	end
+	return a[1] == b[1] and a[2] == b[2] and a[3] == b[3]
+end
+
+local function sameButtons(a, b)
+	if #a ~= #b then
+		return false
+	end
+	for i = 1, #a do
+		local p, q = a[i], b[i]
+		if p.x0 ~= q.x0 or p.y0 ~= q.y0 or p.x1 ~= q.x1 or p.y1 ~= q.y1 or p.label ~= q.label or p.lit ~= q.lit
+			or p.action ~= q.action or not sameColor(p.color, q.color) then
+			return false
+		end
+	end
+	return true
 end
 
 local function buttonAt(x, y)
@@ -1067,11 +1104,7 @@ local function buttonAt(x, y)
 	end
 end
 
-function widget:DrawScreen()
-	if not shown then
-		return
-	end
-	layout()
+local function drawBar()
 	local font = WG.fonts and WG.fonts.getFont()
 	for _, b in ipairs(buttons) do
 		if WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.Element then
@@ -1103,6 +1136,42 @@ function widget:DrawScreen()
 		end
 		font:End()
 	end
+end
+
+-- The bar is drawn into a display list, made again only when a button changes: BAR's FlowUI elements drawn directly
+-- cost about 7 KB of garbage each, every frame (tools/spectate-test.ps1 -Cost: 54-75 KB a frame with the bar up).
+-- The state is looked at again every LAYOUT_EVERY seconds, or at once after a press or a resize.
+local LAYOUT_EVERY = 0.25
+local barList, layoutAt, barDirty = nil, -1, true
+
+local function dropBarList()
+	if barList then
+		gl.DeleteList(barList)
+		barList = nil
+	end
+end
+
+function widget:DrawScreen()
+	if not shown then
+		return
+	end
+	local t = now()
+	if barDirty or t - layoutAt >= LAYOUT_EVERY then
+		layoutAt, barDirty = t, false
+		local fresh = layout()
+		if not barList or not sameButtons(fresh, buttons) then
+			buttons = fresh
+			dropBarList()
+			barList = gl.CreateList(drawBar)
+		end
+	end
+	if barList then
+		gl.CallList(barList)
+	end
+end
+
+function widget:ViewResize()
+	barDirty = true
 end
 
 function widget:IsAbove(x, y)
@@ -1165,6 +1234,7 @@ function widget:MouseRelease(x, y)
 	pressedOn = nil
 	if b and buttonAt(x, y) == b and ACTIONS[b.action] then
 		ACTIONS[b.action]()
+		barDirty = true -- (the bar shows the press's result in the next frame)
 		if WG.BarDroidPlayers and WG.BarDroidPlayers.keepOpen then
 			WG.BarDroidPlayers.keepOpen() -- (the list and the bar stay open while the bar is used)
 		end
@@ -1190,6 +1260,7 @@ function widget:Update(dt)
 	shown = active and (not list or (list.barWanted and list.barWanted()) or not (list.minimized and list.minimized()))
 	if shown and not wasShown then
 		order = players() -- top to bottom as the list shows them now
+		barDirty = true
 	end
 	if not active then
 		-- following sticks while spectating, whatever the input (a key no longer ends it): only a far pan lets go
@@ -1273,6 +1344,7 @@ function widget:Initialize()
 	end
 	-- (also for tools/spectate-test.ps1: a user widget cannot send the engine's mouse callins, so its taps come in here)
 	WG.BarDroidSpectate = {
+		widget = widget, -- (tools/spectate-test.ps1 -Cost times its call-ins; user widgets cannot reach the handler's list)
 		actions = ACTIONS,
 		following = function() return follow and follow.unitID end,
 		members = function() return follow and #follow.members or 0 end,
@@ -1323,6 +1395,7 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	dropBarList()
 	closeZoom(false)
 	WG.BarDroidSpectate = nil
 	WG.BarDroidSpectating = nil

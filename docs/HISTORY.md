@@ -5,6 +5,31 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Overnight: delivery and the spectator tools' cost (2026-10-28, from 00:30)
+Kailil, going to bed: "start an endless task hardening and bug fixing and optimizign what we just buit especially so
+its not adding a large performance overhead. and overhaul this entire project so that it will make it easy to deliver
+this as a deliverable to the devs and anyone else who wants to download and play BAR on github", and the effort and
+time logged from now on. The backlog is [DELIVERY.md](DELIVERY.md); the log [WORKLOG.md](WORKLOG.md)
+(`tools/worklog.py`).
+- **What the spectator widget costs**, measured with `tools/spectate-test.ps1 -Cost` (the widget's call-ins timed in
+  a 10-minute-old 8v8 replay on the laptop, 1,560 units, the garbage collector stopped while measuring so every KB
+  allocated counts). Before / after, per frame:
+
+  | | before | after |
+  |---|---|---|
+  | not in use (every player outside spectating) | 0.017 ms, 0 KB | 0.014 ms, 0 KB |
+  | the bar up | 0.43 ms, 54 KB | 0.064 ms, 4 KB |
+  | following a unit, the bar up | 0.61 ms, 75 KB | 0.095 ms, 7 KB |
+  | a group, the bar up | 0.60 ms, 75 KB | 0.105 ms, 8 KB |
+  | 1st person, the bar up | 0.59 ms, 76 KB | 0.104 ms, 6 KB |
+  | 1st person, the bar closed (the usual state) | not measured | 0.032 ms, 0 KB |
+
+  The cost was the bar: BAR's FlowUI elements, drawn directly, allocate about 7 KB each, every frame. The bar is now
+  drawn into a display list made again only when a button changes (the state looked at four times a second, at once
+  after a press). 1st person no longer allocates per frame: the anchor piece is looked up once per unit (the engine's
+  piece map is a new table at every call), the settings and the camera state go into the same tables every frame.
+  `tools/spectate-test.ps1`: all pass; the bar draws as before (screenshot).
+
 ## Keyboard shortcuts kept out of the game (2026-10-27 evening)
 Kailil asked for mouse and keyboard over Bluetooth or a USB-C dock "and i want android to not hijack its inputs and
 listen for shortcuts and other things". A first build (b148e59, installed 21:01) also captured the mouse and sent keys
