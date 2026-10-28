@@ -36,9 +36,11 @@ published or posted without Kailil.
       (untracked, read by Claude Code beside CLAUDE.md); `tools\phone-bench.ps1` finds the phone through
       `-Device`, `BARDROID_DEVICE`, `..\phone-device.txt` or the one device adb lists (toolchain.ps1
       `Get-PhoneDevice`).
-- [ ] **Release signing.** `Build APK.bat phone release` signs with a keystore named in `local.properties`
+- [x] **Release signing.** `Build APK.bat phone release` signs with a keystore named in `local.properties`
       (`bardroid.keystore`, passwords from the environment), never committed; without one it stops and says so.
-      `versionName`/`versionCode` from one place (`gradle.properties`), the APK named with the version.
+      `versionName`/`versionCode` from one place (`gradle.properties`), the APK named with the version; release
+      builds always have the public icon. Tested with a throwaway key. **Kailil:** make the real key once
+      (docs/BUILDING.md "Releasing") and keep it safe.
 - [x] **A publish check** (`tools/publish-check.ps1 [-Apk <release.apk>]`): fails on pictures outside the allowed
       places, private data (the terms in `..\worklog-redact.txt`, the phone, home-network addresses, profile paths,
       e-mail addresses), keys and logins, files over 50 MB, a missing LICENSE, a version without a CHANGELOG entry,
@@ -55,9 +57,9 @@ published or posted without Kailil.
       from the laptop tools (`tools/ui-screenshot.ps1`), no BAR artwork beyond screenshots of the game.
 
 ### For developers (BAR's devs first)
-- [ ] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks; the launchers' Linux equivalents where
+- [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
       they exist.
-- [ ] docs/ARCHITECTURE.md: CLAUDE.md's architecture and key files written for people; CLAUDE.md keeps the AI
+- [x] docs/ARCHITECTURE.md: CLAUDE.md's architecture and key files written for people; CLAUDE.md keeps the AI
       assistant's working rules and points there.
 - [x] CONTRIBUTING.md: online play must keep working (no engine changes, no modrules, no synced changes), never
       bundle BAR content, the checks to run, upstream reports need an accepted issue and disclose AI assistance.

@@ -80,13 +80,14 @@ try {
 
   # the APK
   if ($Apk) {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
-    $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Apk))
-    $personal = @($zip.Entries | Where-Object { $_.FullName -like '*ic_fg_personal*' } | ForEach-Object FullName)
-    $zip.Dispose()
-    Result ($personal.Count -eq 0) "the APK has the project's own icon" $personal
+    # by the resource table: release builds shorten the files' paths, not the resources' names
     $bt = Get-ChildItem (Join-Path $TC "android-sdk\build-tools") | Sort-Object Name | Select-Object -Last 1
-    $certs = cmd /c "`"$($bt.FullName)\apksigner.bat`" verify --print-certs `"$Apk`" 2>&1"
+    $table = @(& (Join-Path $bt.FullName "aapt2.exe") dump resources $Apk 2>$null)
+    $personal = @($table | Select-String 'ic_fg_personal' | ForEach-Object { $_.Line.Trim() })
+    Result ($table.Count -gt 0 -and $personal.Count -eq 0) "the APK has the project's own icon" $personal
+    $env:JAVA_HOME = Join-Path $TC "jdk"
+    $certs = cmd /c "`"$($bt.FullName)\apksigner.bat`" verify --print-certs `"$Apk`" 2>&1" |
+      Where-Object { $_ -notmatch 'JAVA_TOOL_OPTIONS' }
     $debugCert = & (Join-Path $TC "jdk\bin\keytool.exe") -list -v -keystore (Join-Path $App "app\bardroid-debug.jks") -storepass bardroid 2>$null |
       Select-String 'SHA256: ([0-9A-F:]+)' | ForEach-Object { $_.Matches[0].Groups[1].Value.Replace(':', '').ToLower() }
     $signed = ($certs | Select-String 'certificate SHA-256 digest: ([0-9a-f]+)') | ForEach-Object { $_.Matches[0].Groups[1].Value }

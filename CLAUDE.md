@@ -10,6 +10,9 @@ themselves: do not run monitoring on the phone while Kailil plays. Install every
 over a running game; never ask first (Kailil). Test on the phone only (Kailil, 2026-10-25): Kailil does the check
 (fold, play, lobby), you read the logs; no emulator, and don't drive the phone's game yourself unless asked.
 
+For people: README.md (players), docs/BUILDING.md, docs/ARCHITECTURE.md, CONTRIBUTING.md; keep them current when
+something they describe changes.
+
 ## Architecture in one breath
 Unmodified official **Recoil engine** (amd64 build for the emulator, arm64 for phones) runs inside a **Debian trixie
 proot container** (Termux's proot, built by `tools/build-proot.py`, bundled as `libproot.so`) and draws onto
@@ -104,6 +107,8 @@ powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-F
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
+powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory]   # before anything goes public (docs/DELIVERY.md)
+"Build APK.bat" phone release                                            # the public build: own icon, release key (local.properties), versioned name
 powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
             # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the

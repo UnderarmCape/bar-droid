@@ -1,5 +1,12 @@
 apply plugin: 'com.android.application'
 
+// This machine's own settings (local.properties, never committed): the SDK, and optionally the owner's icon and the
+// release key below.
+def localProps = new Properties()
+def localFile = rootProject.file('local.properties')
+if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+def releaseKeystore = localProps.getProperty('bardroid.keystore')
+
 android {
     namespace = 'com.underarmcape.bardroid'
     compileSdk = 34
@@ -10,8 +17,9 @@ android {
         applicationId = "com.underarmcape.bardroid"
         minSdk = 28
         targetSdk = 34
-        versionCode = 3
-        versionName = "0.2.0"
+        // The version lives in gradle.properties (one place; CHANGELOG.md has an entry for each).
+        versionCode = bardroidVersionCode.toInteger()
+        versionName = bardroidVersionName
         // ABI filter comes from the root build.gradle (-PbardroidAbi, default x86_64 = emulator build).
         buildConfigField "String", "TARGET_ABI", "\"${rootProject.ext.bardroidAbi}\""
     }
@@ -28,11 +36,22 @@ android {
 
     signingConfigs {
         debug {
-            // Reproducible dev signing key; replace with your own keystore for release builds.
+            // Reproducible dev signing key for test builds (public: anyone can sign with it).
             storeFile = file('bardroid-debug.jks')
             storePassword = 'bardroid'
             keyAlias = 'bardroid'
             keyPassword = 'bardroid'
+        }
+        // Release builds are the ones that go out: signed with the publisher's own key, named in local.properties
+        // (bardroid.keystore, bardroid.keyAlias), passwords from the environment (BARDROID_KEYSTORE_PASSWORD,
+        // BARDROID_KEY_PASSWORD if it differs). Without it the release APK is unsigned ("Build APK.bat" says so).
+        if (releaseKeystore) {
+            release {
+                storeFile = file(releaseKeystore)
+                storePassword = System.getenv('BARDROID_KEYSTORE_PASSWORD')
+                keyAlias = localProps.getProperty('bardroid.keyAlias', 'bardroid')
+                keyPassword = System.getenv('BARDROID_KEY_PASSWORD') ?: System.getenv('BARDROID_KEYSTORE_PASSWORD')
+            }
         }
     }
 
@@ -42,21 +61,18 @@ android {
             minifyEnabled = false
         }
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = releaseKeystore ? signingConfigs.release : null
             minifyEnabled = false
         }
     }
 
-    // Kailil's own builds carry his edit of BAR's icon (NoDerivatives: never published), from a folder outside the
-    // checkout named in local.properties: bardroid.personalRes=C:/Tools/BARANDROID/personal/res. Without it, or with
-    // -PbardroidPublic (public and CI builds), the app has the project's own icon (res/drawable/ic_fg.xml).
-    def localProps = new Properties()
-    def localFile = rootProject.file('local.properties')
-    if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+    // Kailil's own (debug) builds carry his edit of BAR's icon (NoDerivatives: never published), from a folder
+    // outside the checkout named in local.properties: bardroid.personalRes=C:/Tools/BARANDROID/personal/res.
+    // Release builds, debug builds with -PbardroidPublic, and checkouts without it have the project's own icon
+    // (res/drawable/ic_fg.xml).
     def personalRes = localProps.getProperty('bardroid.personalRes')
     if (personalRes && file(personalRes).isDirectory() && !project.hasProperty('bardroidPublic')) {
         sourceSets.debug.res.srcDir(personalRes)
-        sourceSets.release.res.srcDir(personalRes)
     }
 
     compileOptions.sourceCompatibility = JavaVersion.VERSION_17
@@ -68,7 +84,9 @@ androidComponents {
     onVariants(selector().all()) { variant ->
         variant.outputs.each { output ->
             def target = rootProject.ext.bardroidAbi == 'x86_64' ? 'emulator' : 'phone'
-            output.outputFileName.set("bar-droid-${target}-${variant.buildType}.apk")
+            // debug: a fixed name the launchers install; release: named with the version, as it is published
+            def kind = variant.buildType == 'release' ? bardroidVersionName : variant.buildType
+            output.outputFileName.set("bar-droid-${target}-${kind}.apk")
         }
     }
 }
