@@ -1,7 +1,7 @@
 # bardroid_lobby_touch.lua in the real lobby on the laptop: BAR's Windows engine runs byar-chobby:test in an isolated
 # write dir (build\lobby-touch-test\data; the live install's packages, pool and rapid index joined read-only by
 # junctions, removed again at the end) with the app's lobby widget and a test widget that builds a list of fake
-# servers and plain rows and drives it as a finger would (~20 s), logged in (bar-lobby-login.txt, toolchain.ps1).
+# servers and plain rows and drives it as a finger would (~20 s), offline (the test lobby never logs in: toolchain.ps1 Write-LobbyConfig).
 #   powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1 [-Engine recoil_2026.09.01]
 param([string]$Engine = "")
 $ErrorActionPreference = "Stop"
@@ -39,7 +39,7 @@ try {
   $r = Wait-LobbyTest $p $log '\[lobbytouch\] done'
   Start-Sleep 2
   if (-not $p.HasExited) { $p.Kill() }
-  Select-String -Path $log -Pattern '\[lobbytouch\]|\[lobbylogin\] logged in|BAR Droid lobby|bardroid_lobby' |
+  Select-String -Path $log -Pattern '\[lobbytouch\]|\[lobbylogin\]|BAR Droid lobby|bardroid_lobby' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   if ($r -ne "done") { "[lobbytouch] FAIL the test ran: $r" }
 } finally {

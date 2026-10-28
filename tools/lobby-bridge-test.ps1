@@ -2,7 +2,7 @@
 # isolated write dir (build\lobby-bridge-test\data) that joins the live install's packages, pool and rapid index in
 # read-only (junctions, removed again at the end), and LobbyBridge.java runs on the toolchain's JDK with stand-ins for
 # Android, org.json and the container (tools\lobby-bridge-test\src; game/map downloads only log). A LuaMenu widget opens
-# the Replays tab and a web link, logged in (bar-lobby-login.txt, toolchain.ps1). Prints the bridge's log and the
+# the Replays tab and a web link, offline (the test lobby never logs in: toolchain.ps1 Write-LobbyConfig). Prints the bridge's log and the
 # lobby's bridge lines; a lobby error shows there too.
 #   powershell -ExecutionPolicy Bypass -File tools\lobby-bridge-test.ps1 [-Engine recoil_2026.09.01] [-Replays 4]
 param(
@@ -59,7 +59,7 @@ try {
   if (-not $bridge.HasExited) { $bridge.Kill() }
   Write-Host "---- bridge"; Get-Content "$Work\bridge.log"
   Write-Host "---- lobby"
-  Select-String -Path $log -Pattern "bridgetest|lobbylogin\] logged in|spring-launcher|WrapperLoopback|ReplayHandler|Error" |
+  Select-String -Path $log -Pattern "bridgetest|lobbylogin\]|spring-launcher|WrapperLoopback|ReplayHandler|Error" |
     Where-Object { $_.Line -notmatch "CPoolArchive|CBufferedArchive" } | ForEach-Object { $_.Line }
   if ($r -ne "done") { "[bridgetest] the test ran: $r" }
 } finally {

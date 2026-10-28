@@ -49,62 +49,37 @@ function Get-PhoneDevice([string]$adb) {
   return ""
 }
 
-# The lobby tests run logged in (Kailil, 2026-10-27: "Make the lobby tests wait for me to log in before they run";
-# then "create a local file for me to keep on my laptop ... use that to log me in from now on"). The player's BAR
-# login in bar-lobby-login.txt beside the toolchain folder, outside the repository, written by the player alone; the
-# tests put it into their own lobby's saved settings (Chobby's remembered password and automatic login) and delete
-# that copy again at the end. Never printed. Get-LobbyLoginLua: the "Chili lobby" fields, or "" while the file is not
-# filled in (the test lobby then waits on its login screen for the player). A second account for the tests (Kailil,
-# 2026-10-28: "allow me to enter different account details on my laptop to login with so i can have two accounts and
-# they never log oneanother out"): the server allows one session per account, and the phone keeps its own login.
-$LobbyLoginFile = Join-Path (Split-Path $TC) "bar-lobby-login.txt"
+# The lobby tests never log in (Kailil, 2026-10-28: "i cant have two accounts. so instead dont login and disable
+# autologin on the laptop when you run the tests"): BAR's server allows one session per account, and a test that logged
+# in with his ended the game he was spectating on the phone. Their lobby starts with no login saved, automatic login
+# and the remembered password off, and no login window (firstLoginEver = false); bardroid_login_wait.lua says when the
+# lobby is ready instead. (They ran logged in from 2026-10-27 to 10-28, from bar-lobby-login.txt beside the toolchain
+# folder; nothing reads that file now.)
 $LoginWaitWidget = Join-Path $PSScriptRoot "lobby-login\bardroid_login_wait.lua"
-function Get-LobbyLoginLua {
-  if (-not (Test-Path $LobbyLoginFile)) {
-    @(
-      "# A BAR lobby login for the laptop lobby tests (bar-droid-app\tools\lobby-*-test.ps1): fill in both lines, save.",
-      "# Use a second BAR account here, not the one you play with: BAR's server allows one session per account, so a",
-      "# test logging in with your own ends the game or lobby you have open on the phone or PC.",
-      "# This file stays on this laptop: outside the repository, never committed or printed. The tests copy it into",
-      "# their own test lobby's settings for the run only.",
-      "username = ",
-      "password = "
-    ) | Set-Content $LobbyLoginFile -Encoding utf8
-  }
-  $kv = @{}
-  foreach ($l in Get-Content $LobbyLoginFile -Encoding utf8) {
-    if ($l -match '^\s*(username|password)\s*=\s?(.*?)\s*$') { $kv[$Matches[1]] = $Matches[2] }
-  }
-  if (-not $kv.username -or -not $kv.password) { return "" }
-  $q = { param($s) '"' + $s.Replace('\', '\\').Replace('"', '\"') + '"' }
-  "userName = $(& $q $kv.username), password = $(& $q $kv.password), rememberPassword = true, autoLogin = true, " +
-    "wantAuthenticateWithSteam = false, firstLoginEver = false,"
-}
-# A lobby test's LuaMenu/Config/IGL_data.lua: the "Chili lobby" fields with the login (UTF-8 without a byte-order mark,
-# which Lua would not read). Prints where the login comes from.
+# A lobby test's LuaMenu/Config/IGL_data.lua: the "Chili lobby" fields (UTF-8 without a byte-order mark, which Lua
+# would not read).
 function Write-LobbyConfig([string]$data, [string]$fields) {
-  $login = Get-LobbyLoginLua
-  if ($login) { Write-Host "[lobby-login] logging in from $LobbyLoginFile (an account of its own: a game open on the same account elsewhere is logged out)" }
-  else { Write-Host "[lobby-login] $LobbyLoginFile is not filled in: log in on the test lobby's login screen (up to 5 minutes)" }
+  $offline = "autoLogin = false, rememberPassword = false, wantAuthenticateWithSteam = false, firstLoginEver = false,"
+  Write-Host "[lobby-login] offline: the test lobby does not log in"
   [IO.File]::WriteAllText((Join-Path $data "LuaMenu\Config\IGL_data.lua"),
-    "return { [`"Chili lobby`"] = { $login $fields }, }", (New-Object Text.UTF8Encoding($false)))
+    "return { [`"Chili lobby`"] = { $offline $fields }, }", (New-Object Text.UTF8Encoding($false)))
   Copy-Item $LoginWaitWidget (Join-Path $data "LuaMenu\Widgets\") -Force
 }
-# The login's copy out of the test lobby's settings again (Chobby saves the remembered password there at exit).
+# The test lobby's saved settings removed again at the end.
 function Remove-LobbyLogin([string]$data) {
   Remove-Item (Join-Path $data "LuaMenu\Config\IGL_data.lua") -ErrorAction SilentlyContinue
 }
-# A lobby test's engine until its widget logs $done: up to 5 minutes for the login ("[lobbylogin] logged in"), then 90 s
-# for the test. Returns "done", "not logged in", "timed out" or "exited".
+# A lobby test's engine until its widget logs $done: up to 2 minutes for the lobby ("[lobbylogin] ready"), then 90 s
+# for the test. Returns "done", "lobby not ready", "timed out" or "exited".
 function Wait-LobbyTest($proc, [string]$log, [string]$done) {
-  $loginBy = (Get-Date).AddMinutes(5); $testBy = $null
+  $readyBy = (Get-Date).AddMinutes(2); $testBy = $null
   while (-not $proc.HasExited) {
     Start-Sleep 1
     if (-not (Test-Path $log)) { continue }
     if (Select-String -Path $log -Pattern $done -Quiet) { return "done" }
-    if (-not $testBy -and (Select-String -Path $log -Pattern '\[lobbylogin\] logged in' -Quiet)) { $testBy = (Get-Date).AddSeconds(90) }
+    if (-not $testBy -and (Select-String -Path $log -Pattern '\[lobbylogin\] ready' -Quiet)) { $testBy = (Get-Date).AddSeconds(90) }
     if ($testBy -and (Get-Date) -gt $testBy) { return "timed out" }
-    if (-not $testBy -and (Get-Date) -gt $loginBy) { return "not logged in" }
+    if (-not $testBy -and (Get-Date) -gt $readyBy) { return "lobby not ready" }
   }
   "exited"
 }

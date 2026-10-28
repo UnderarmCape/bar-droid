@@ -1,8 +1,8 @@
 # The lobby's Skirmish screen with the controller game on the laptop, as the phone sets it up: BAR's Windows engine
 # runs byar-chobby:test in an isolated write dir (build\lobby-game-test\data; the live install's packages, pool and
 # rapid index joined read-only by junctions, removed again at the end) with Chobby's byar-dev config and
-# games\BAR-gamepad.sdd unpacked from app\src\main\assets\gamepad as Installer.installGamepadGame does (~30 s), logged
-# in (bar-lobby-login.txt, toolchain.ps1). Any lobby error ("[Chili] Error") fails it.
+# games\BAR-gamepad.sdd unpacked from app\src\main\assets\gamepad as Installer.installGamepadGame does (~30 s),
+# offline (the test lobby never logs in: toolchain.ps1 Write-LobbyConfig). Any lobby error ("[Chili] Error") fails it.
 #   powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1 [-Engine recoil_2026.07.04]
 param([string]$Engine = "")
 $ErrorActionPreference = "Stop"

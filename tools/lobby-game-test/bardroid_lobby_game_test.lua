@@ -51,7 +51,7 @@ local cases = {
 }
 
 function widget:Update()
-	-- logged in (bardroid_login_wait.lua), the lobby's interface built and its login windows gone first
+	-- the lobby ready (bardroid_login_wait.lua: offline, its interface built) and a few seconds more
 	local t0 = WG.BarDroidLoggedIn
 	if not t0 or Spring.DiffTimers(Spring.GetTimer(), t0) < 5 or not (WG.Chobby and WG.Chobby.interfaceRoot) then
 		return

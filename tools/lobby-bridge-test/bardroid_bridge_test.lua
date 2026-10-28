@@ -12,7 +12,7 @@ local function log(...)
 end
 
 function widget:Update() -- LuaMenu passes no dt
-	if not WG.BarDroidLoggedIn then -- the lobby tests run logged in (bardroid_login_wait.lua)
+	if not WG.BarDroidLoggedIn then -- the lobby ready (bardroid_login_wait.lua: offline)
 		return
 	end
 	start = start or Spring.GetTimer()
