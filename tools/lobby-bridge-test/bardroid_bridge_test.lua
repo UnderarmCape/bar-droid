@@ -12,6 +12,9 @@ local function log(...)
 end
 
 function widget:Update() -- LuaMenu passes no dt
+	if not WG.BarDroidLoggedIn then -- the lobby tests run logged in (bardroid_login_wait.lua)
+		return
+	end
 	start = start or Spring.GetTimer()
 	local t = Spring.DiffTimers(Spring.GetTimer(), start)
 	if step == 0 and t > 3 then

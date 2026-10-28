@@ -107,6 +107,9 @@ Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat
 `tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand
 before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
 `adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
+The lobby tests run logged in (Kailil): `C:\Tools\BARANDROID\bar-lobby-login.txt`, written by Kailil alone, outside the
+repository; never read it aloud, print or commit it (`tools\toolchain.ps1` Get-LobbyLoginLua; empty: the test lobby
+waits up to 5 minutes for a login by hand).
 Laptop checks start spring from `build\engine\<engine>` (`tools\toolchain.ps1` Get-EngineDir), never from BAR's
 install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to
