@@ -1,5 +1,6 @@
-# The phone APK (public icon, debug key) and the Lua lint on every push and pull request; the APK as an artifact.
-# The laptop checks (tools\laptop-tests.ps1) need BAR's Windows install and stay local (docs/BUILDING.md "Checks").
+# The phone APK (public icon, debug key), the Java checks and the Lua lint on every push and pull request; the APK as
+# an artifact. The checks in BAR's real game and lobby (tools\laptop-tests.ps1) need BAR's Windows install and stay
+# local (docs/BUILDING.md "Checks").
 name: build
 
 on:
@@ -27,6 +28,17 @@ jobs:
         with:
           name: bar-droid-phone-debug
           path: app/build/outputs/apk/debug/*.apk
+
+  java-checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Downloader, settings merge, updater rollback
+        run: sh tools/java-checks.sh
 
   lua-lint:
     runs-on: ubuntu-24.04

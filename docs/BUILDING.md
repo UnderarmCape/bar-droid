@@ -36,6 +36,8 @@ The prebuilt helpers in `app/src/main/jniLibs/` are committed; rebuild them with
 in BAR's real lobby, the in-game widgets in a real skirmish, and the Lua lint. The game checks use BAR's Windows
 install (`%LOCALAPPDATA%\Programs\Beyond-All-Reason`, read only, never changed; `BAR_DATA` points elsewhere).
 
+On Linux (and in CI): `sh tools/java-checks.sh` runs the Java checks with the JDK on `JAVA_HOME` or the path.
+
 Per widget: `tools\touch-widget-test.ps1`, `tools\spectate-test.ps1 [-Replay <file.sdfz>]`,
 `tools\lobby-touch-test.ps1`, `tools\lobby-game-test.ps1`. On the phone: `tools\pace-test.ps1` (the pace library),
 `tools\phone-bench.ps1` (BAR's benchmark scenario or a replay on a hot phone, results in `build\phone-bench.csv`).

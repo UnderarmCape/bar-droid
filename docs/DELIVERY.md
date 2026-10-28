@@ -32,6 +32,7 @@ published or posted without Kailil.
 - [ ] **App name.** The app is called "Beyond All Reason". For a public download, Kailil decides (perhaps with BAR's
       team): keep it, or "BAR Droid" with BAR named in the description.
 - [x] **LICENSE** (GPL-3.0 text, as README already said) at the top; NOTICE.md keeps the third-party parts.
+      **Kailil:** HANDOFF had the file as the author's to add; confirm GPL-3.0-or-later (or `git revert c942753`).
 - [x] **Personal data out of tracked files.** Phone address, serial and Wi-Fi notes in `CLAUDE.local.md`
       (untracked, read by Claude Code beside CLAUDE.md); `tools\phone-bench.ps1` finds the phone through
       `-Device`, `BARDROID_DEVICE`, `..\phone-device.txt` or the one device adb lists (toolchain.ps1
@@ -68,7 +69,8 @@ published or posted without Kailil.
 - [x] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
       and patched, `-PbardroidPublic`) and the luacheck lint; the APK as an artifact. **Untested until pushed**: the
       first run on GitHub may need fixes. `gradlew` and `tools/fetch-termux-x11.sh` are executable in git now.
-- [ ] The Java checks (downloader, settings merge, updater rollback) in CI: they run through PowerShell today.
+- [x] The Java checks (downloader, settings merge, updater rollback) in CI: `tools/java-checks.sh` (passes under
+      the portable Git's sh on the laptop).
 
 ### Hardening and overhead (the spectator tools first)
 - [x] Measure what `bardroid_spectate.lua` costs per frame (`tools/spectate-test.ps1 -Cost`: off, the bar, following,
