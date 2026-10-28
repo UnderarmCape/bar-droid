@@ -1,6 +1,7 @@
 # The phone APK (public icon, debug key), the Java checks and the Lua lint on every push and pull request; the APK as
 # an artifact. The checks in BAR's real game and lobby (tools\laptop-tests.ps1) need BAR's Windows install and stay
-# local (docs/BUILDING.md "Checks").
+# local (docs/BUILDING.md "Checks"). Action versions as Termux:X11's own workflow uses them at the pinned commit
+# (termux-x11/.github/workflows/debug_build.yml), whose native build this one repeats on the same runner image.
 name: build
 
 on:
@@ -8,12 +9,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   apk:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      # (a pull request could swap gradle/wrapper/gradle-wrapper.jar, which the build then runs)
+      - uses: gradle/actions/wrapper-validation@v6.4.0
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -24,7 +30,7 @@ jobs:
         run: bash tools/fetch-termux-x11.sh
       - name: The phone APK
         run: bash ./gradlew --no-daemon :app:assembleDebug -PbardroidAbi=arm64-v8a -PbardroidPublic
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: bar-droid-phone-debug
           path: app/build/outputs/apk/debug/*.apk
@@ -32,8 +38,8 @@ jobs:
   java-checks:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "21"
@@ -43,7 +49,7 @@ jobs:
   lua-lint:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: luacheck
         run: |
           sudo apt-get update -q

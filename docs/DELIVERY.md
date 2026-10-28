@@ -70,6 +70,10 @@ published or posted without Kailil.
 - [x] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
       and patched, `-PbardroidPublic`) and the luacheck lint; the APK as an artifact. **Untested until pushed**: the
       first run on GitHub may need fixes. `gradlew` and `tools/fetch-termux-x11.sh` are executable in git now.
+      Reviewed 2026-10-28: the native build needs nothing beyond the runner image (Termux:X11's own workflow builds
+      the same code on ubuntu-latest with nothing installed: bison, gcc, patch, Python are there); actions at the
+      versions Termux:X11's workflow uses now (checkout v7, setup-java v6, upload-artifact v7), the Gradle wrapper
+      jar validated before it runs (a pull request could swap it), the token read-only.
 - [x] The Java checks (downloader, settings merge, updater rollback) in CI: `tools/java-checks.sh` (passes under
       the portable Git's sh on the laptop).
 
