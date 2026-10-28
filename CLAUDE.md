@@ -125,7 +125,9 @@ before env.bat runs; use literal paths). `adb shell` quoting through PowerShell 
 `adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
 The lobby tests run logged in (Kailil): `C:\Tools\BARANDROID\bar-lobby-login.txt`, written by Kailil alone, outside the
 repository; never read it aloud, print or commit it (`tools\toolchain.ps1` Get-LobbyLoginLua; empty: the test lobby
-waits up to 5 minutes for a login by hand).
+waits up to 5 minutes for a login by hand). It is to hold a second BAR account (Kailil, 2026-10-28): BAR's server
+allows one session per account, and a test logging in with his own ended his game on the phone. Until he says it holds
+the second account, run no lobby test (laptop-tests' lobby bridge, lobby touch, lobby Skirmish) while he may be playing.
 Laptop checks start spring from `build\engine\<engine>` (`tools\toolchain.ps1` Get-EngineDir), never from BAR's
 install folder: Kailil's has ReShade beside `spring.exe`.
 Never install tools globally or write to AppData/the profile. The emulator writes `.emulator_console_auth_token` to

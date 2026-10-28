@@ -54,16 +54,19 @@ function Get-PhoneDevice([string]$adb) {
 # login in bar-lobby-login.txt beside the toolchain folder, outside the repository, written by the player alone; the
 # tests put it into their own lobby's saved settings (Chobby's remembered password and automatic login) and delete
 # that copy again at the end. Never printed. Get-LobbyLoginLua: the "Chili lobby" fields, or "" while the file is not
-# filled in (the test lobby then waits on its login screen for the player).
+# filled in (the test lobby then waits on its login screen for the player). A second account for the tests (Kailil,
+# 2026-10-28: "allow me to enter different account details on my laptop to login with so i can have two accounts and
+# they never log oneanother out"): the server allows one session per account, and the phone keeps its own login.
 $LobbyLoginFile = Join-Path (Split-Path $TC) "bar-lobby-login.txt"
 $LoginWaitWidget = Join-Path $PSScriptRoot "lobby-login\bardroid_login_wait.lua"
 function Get-LobbyLoginLua {
   if (-not (Test-Path $LobbyLoginFile)) {
     @(
-      "# Your BAR lobby login for the laptop lobby tests (bar-droid-app\tools\lobby-*-test.ps1): fill in both lines, save.",
+      "# A BAR lobby login for the laptop lobby tests (bar-droid-app\tools\lobby-*-test.ps1): fill in both lines, save.",
+      "# Use a second BAR account here, not the one you play with: BAR's server allows one session per account, so a",
+      "# test logging in with your own ends the game or lobby you have open on the phone or PC.",
       "# This file stays on this laptop: outside the repository, never committed or printed. The tests copy it into",
-      "# their own test lobby's settings for the run only. Note: the test lobby logging in may end your other lobby",
-      "# session on the same account (BAR's server allows one).",
+      "# their own test lobby's settings for the run only.",
       "username = ",
       "password = "
     ) | Set-Content $LobbyLoginFile -Encoding utf8
@@ -81,7 +84,7 @@ function Get-LobbyLoginLua {
 # which Lua would not read). Prints where the login comes from.
 function Write-LobbyConfig([string]$data, [string]$fields) {
   $login = Get-LobbyLoginLua
-  if ($login) { Write-Host "[lobby-login] logging in from $LobbyLoginFile" }
+  if ($login) { Write-Host "[lobby-login] logging in from $LobbyLoginFile (an account of its own: a game open on the same account elsewhere is logged out)" }
   else { Write-Host "[lobby-login] $LobbyLoginFile is not filled in: log in on the test lobby's login screen (up to 5 minutes)" }
   [IO.File]::WriteAllText((Join-Path $data "LuaMenu\Config\IGL_data.lua"),
     "return { [`"Chili lobby`"] = { $login $fields }, }", (New-Object Text.UTF8Encoding($false)))
