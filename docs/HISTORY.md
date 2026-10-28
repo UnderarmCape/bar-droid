@@ -30,6 +30,20 @@ shortcut part stayed (HANDOFF.md "Keyboard shortcuts"). What was found on the wa
   `BUTTON_SECONDARY` on stock Android; some older Samsung, Huawei and Xiaomi builds sent it as Back (SDL bug 3227),
   which Termux:X11 maps back to the right button.
 
+## Spectating by touch (2026-10-27 night)
+Kailil: "a touch focused spectator only setup ... cycling through players to switch player cam to, blocking the bottom
+left hand ui from popping up ... camera tools that follow a unit or group of units ... double tap a unit to follow
+them"; then "the touch UI to follow players be hidden and only popup when I touch player list", the player's name on
+the button in the list's order, and BAR's top-right Ecostats hidden. `bardroid_spectate.lua` acts only while
+spectating with fingers: the app reports the input in use ("src touch|mouse|keyboard|pad" in the touch log, at most every
+2 s while in use, so a game started since learns it; `RtsTouch.source`, `GameActivity`). BAR's player camera is its
+Lockcamera widget (`WG.lockcamera.SetPlayerID`, what its player list uses). Taps on the map are taken (nothing
+selected); anything selected otherwise is dropped a frame later, not from SelectionChanged: a selection replaced there
+is never told to the widgets after it (BAR's build menu kept showing a builder's options). Following moves the
+camera's target only (pinch and twist keep working). `tools/spectate-test.ps1` checks it in a replay (23 checks; the
+replay must start playing: one of the laptop's older replays stayed at frame -1, so pass one with `-Replay`).
+Ecostats is off in every game (`launch-bar.sh`).
+
 ## Benchmarks on the hot phone; online-safe changes only (2026-10-27 evening)
 Kailil: "we MUST have online play enabled. so only do online safe adjustments." Online games need BAR's official
 engine binary and BAR's own game archive, so the hail-mary research's engine builds, overlay games and modrule

@@ -129,6 +129,10 @@ function widget:Initialize()
 		minimized = function()
 			return minimized
 		end,
+		-- bardroid_spectate.lua's bar opens and closes with the list; a tap on the bar counts as one on the list
+		keepOpen = function()
+			lastTouch = os.clock()
+		end,
 	}
 end
 

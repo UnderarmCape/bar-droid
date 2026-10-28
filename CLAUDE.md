@@ -97,6 +97,7 @@ powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|c
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
+powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second

@@ -13,6 +13,7 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
+--                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
@@ -298,6 +299,13 @@ local function readTouch(lines)
 		if action then
 			action()
 		end
+	end
+	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned
+	for source in lines:gmatch("src (%S+)") do
+		WG.BarDroidInput = source
+	end
+	if lines:find("pan ", 1, true) then
+		WG.BarDroidPanAt = os.clock()
 	end
 end
 

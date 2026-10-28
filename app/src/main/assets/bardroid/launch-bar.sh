@@ -193,6 +193,8 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   # appears even while it shows nothing: the costliest widget in big battles, 3.1% of the phone's running time and over
   # half of LuaUI's garbage (docs/HISTORY.md, 2026-10-27 evening). Kailil: "Turn Reclaim Field Highlight off"
   widget_order "Reclaim Field Highlight" 0
+  # BAR's Ecostats: the alliances' resource bars in the top right corner (Kailil, 2026-10-27: "hidden if possible")
+  widget_order "Ecostats" 0
   # BAR's fog-of-war stripes (Fog Diagonal Lines GL4) find the ground in the map's G-buffer, which the engine only
   # clears with advanced map shading off (BAR's Lowest preset, the phone's): a full-screen pass every frame whose every
   # pixel is discarded. Off while the lobby's or the engine's setting is 0 (the lobby's copy is what the next game
@@ -211,7 +213,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields, ecostats$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.
@@ -369,6 +371,8 @@ chat_err=$(grep -iE 'bardroid_chat|BAR Droid chat' "$BAR/infolog.txt" 2>/dev/nul
 [ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
 info_err=$(grep -iE 'bardroid_info|BAR Droid info' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
+spec_err=$(grep -iE 'bardroid_spectate|BAR Droid spectate' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$spec_err" ] && layer_miss "spectating widget (bardroid_spectate.lua): $spec_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

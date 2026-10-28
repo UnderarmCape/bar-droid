@@ -53,6 +53,7 @@ public class GameActivity extends MainActivity {
             if (e.getAction() == MotionEvent.ACTION_DOWN)
                 lorieParent.requestUnbufferedDispatch(e);   // as Termux:X11 does: no batching, less latency
             if (touch.handles(e)) return touch.onTouch(e);
+            if (e.getAction() == MotionEvent.ACTION_DOWN) touch.source("mouse");   // a mouse, stylus or touchpad
             return termux.handleTouchEvent(lorieParent, lorieView, e);
         });
         // Same as Termux:X11's callback, plus: the game window follows the X screen (fold / unfold).
@@ -305,7 +306,8 @@ public class GameActivity extends MainActivity {
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-        if (pad != null && pad.onMotion(ev)) return true;
+        if (pad != null && pad.onMotion(ev)) { touch.source("pad"); return true; }
+        if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) touch.source("mouse");   // (bardroid_spectate.lua)
         return super.dispatchGenericMotionEvent(ev);
     }
 
@@ -316,8 +318,10 @@ public class GameActivity extends MainActivity {
      */
     @Override
     public boolean handleKey(KeyEvent e) {
-        if (pad != null && pad.onKey(e)) return true;
+        if (pad != null && pad.onKey(e)) { touch.source("pad"); return true; }
         if (KeyboardShortcuts.isAndroidKey(e.getKeyCode())) return false;
+        if (touch != null && e.getKeyCode() != KeyEvent.KEYCODE_BACK && e.getAction() == KeyEvent.ACTION_DOWN)
+            touch.source("keyboard");
         // the system Back: Escape in dispatchKeyEvent, after the soft keyboard (if shown) has closed on it
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
         boolean sent = super.handleKey(e);
@@ -327,7 +331,7 @@ public class GameActivity extends MainActivity {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        if (pad != null && pad.onKey(event)) return true;
+        if (pad != null && pad.onKey(event)) { touch.source("pad"); return true; }
         if (KeyboardShortcuts.isAndroidKey(event.getKeyCode())) return false;   // the window's and the system's handling
         // The system Back button/gesture (not a keyboard's or a mouse's back key) becomes Escape.
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !event.isFromSource(InputDevice.SOURCE_MOUSE)
