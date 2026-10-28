@@ -152,6 +152,8 @@ cat files/bar/research/prefs.saved | tr '\n' ' '; echo
     if ($L.Prepare) { & $L.Prepare }
     PushText ("# lever $name`n" + $L.Conf) "files/bar/research/lever.conf"
     for ($i = 1; $i -le $Runs; $i++) {
+      # the phone taken back (phone-ok deleted): stop before the next run; finally restores the phone
+      if (-not (Test-Path (Join-Path $HM "phone-ok"))) { Write-Host "[research] the phone was taken back (no phone-ok): stopping"; return }
       Write-Host "[research] lever $name, run $i of $Runs"
       WaitPhoneFree
       if ($L.Before) { & $L.Before }

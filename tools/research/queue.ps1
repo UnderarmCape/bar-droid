@@ -7,19 +7,20 @@ param([int]$From = 1, [int]$To = 99)
 $rb = Join-Path $PSScriptRoot "research-bench.ps1"
 function RB { powershell -NoProfile -ExecutionPolicy Bypass -File $rb @args 2>&1 | ForEach-Object { "$(Get-Date -Format HH:mm:ss) $_" } }
 $steps = @(
-  # 1: threads (Tracy: the animation pass is for_mt; the phone runs main + 3), pinning, the allocator, the main
-  #    thread's draw/sim split (warms the phone first)
-  { RB -Lever "baseline,workers8,baseline,workers6,pin-main7,baseline,mimalloc,draw-balance0,baseline" },
-  # 2: client settings: sound, effects particles, local widgets, Lua GC, the frame cap
-  { RB -Lever "sound-off,particles-min,baseline,widgets-trim,lua-gc-lazy,baseline,cap30,baseline" -NoWarm },
-  # 3: where the phone's time goes: simpleperf (official engine, its debug symbols), proot's CPU share, the engine's
-  #    cgroup/uclamp, huge pages, worker threads spinning or not
-  { RB -Lever "baseline,workers8" -Perf 30 -NoWarm },
-  # 4 (if 1-2 left room): the remaining client-side levers
-  { RB -Lever "workers7,workers5,baseline,taskset-prime,jemalloc,baseline,thp-glibc,min-render,baseline,gamemode-perf,draw-balance05,baseline" -NoWarm },
-  # 5: soak pair, ~15 min each: the steady-state CPU cap of a cooler setup (30 fps, no sound) against the default
+  # 1: thread pool size against alternating baselines (Tracy: the animation pass is for_mt; the phone runs main + 3);
+  #    warms the phone first
+  { RB -Lever "baseline,workers5,baseline,workers7,workers8,baseline" },
+  # 2: OS-side levers: main thread on the prime core, whole engine on the prime cores, other allocators for malloc,
+  #    huge pages, the local widget trim
+  { RB -Lever "pin-main7,taskset-prime,baseline,mimalloc,jemalloc,baseline,thp-glibc,thp-mimalloc,widgets-trim,baseline" -NoWarm },
+  # 3: frame caps as game speed (Kailil's hard lock is 30)
+  { RB -Lever "cap20,cap30,baseline" -NoWarm },
+  # 4: soak pair, ~20 min each: steady-state CPU cap and game speed with sound on vs Sound=0
   { RB -Lever "baseline" -Runs 6 -NoWarm },
-  { RB -Lever "cool" -Runs 6 -NoWarm }
+  { RB -Lever "sound-off" -Runs 6 -NoWarm },
+  # 5: simpleperf (official engine with its debug symbols): proot's CPU share, worker threads spinning, the engine's
+  #    cgroup/uclamp, huge pages
+  { RB -Lever "baseline" -Perf 30 -NoWarm }
 )
 for ($i = $From; $i -le [Math]::Min($To, $steps.Count); $i++) {
   Write-Host "=== queue step $i"
