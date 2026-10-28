@@ -5,6 +5,31 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Night: the chat's typing box and the layout editor (2026-10-28)
+Kailil: "when I'm typing a message I the chat box, I want the message to word wrap and grow smaller as new lines
+populate so I can see my entire message. Right now it's just pushing the message off screen to the right"; "the
+message chat box overlaps with the GAME COUNT DOWN POP-UP"; and "a tool to select ui elements on screen while in a
+real game ... tap A ui element, to adjust its size, position, and if possible, text size inside of it and padding".
+- **What can be moved.** BAR 2026.10.20 sandboxes user widgets (no widget handler, no patched copies of BAR's
+  widgets), so the app reaches BAR's panels only through what they offer other widgets (`WG.*`): the minimap's
+  `MinimapMaxHeight`, the player list's `SetScale`, the build and order menus' `setBottomPosition`. BAR's top bar and
+  start countdown (`gui_pregameui.lua`, 67% up the screen) have none. Kailil chose the editor for everything movable
+  now, with a movable HUD for BAR's own panels written up for BAR's devs (HELP-WANTED.md).
+- **Typing box** (`bardroid_chat.lua`, now layer -96000, under BAR's chat at -95000, so it hears Enter first): its own
+  box at the top of the chat box, the text wrapped at word boundaries and smaller past two lines (down to 55%), the
+  chat lines below it; before the game starts the lines end above BAR's countdown. As BAR's: the channels and
+  Ctrl/Alt/Shift+Enter, Escape, history, Ctrl+V, "/" commands, and BAR's word filter (`luaui/configs/badwords.lua`,
+  a message held back once). BAR's own box still opens for map marker labels. `/hud` opens the editor.
+- **Layout editor** (`bardroid_layout.lua`, new; three fingers held for most of a second in RtsTouch, `act hud`, or
+  `/hud`): outlines and names every panel; a tap picks one, a drag moves it, a pinch or the buttons size it; text size
+  and padding for the app's own (chat, unit info, spectate bar). Settings per screen shape (wide: folded, near-square:
+  unfolded) in its config. The button bar sits mid-screen (at the bottom it covered the unit info panel and the player
+  list, so a tap on them hit a button; found by the test, screenshots before and after).
+- touch-widget-test: 28 new checks (typing: opens on Enter in the allies' channel, wraps, smaller past two lines,
+  Backspace, Escape, a sent line reaches the chat; editor: /hud, picking, a drag, Size/Text on the chat, Size on the
+  unit panel, BAR's player list and minimap, the top bar fixed, Reset all, Done, three fingers); all pass, spectate-test
+  all pass, lint 0 warnings.
+
 ## Evening: Shoulder on any ground and any unit (2026-10-28)
 A review of `bardroid_spectate.lua`'s afternoon changes, with new spectate-test cases, found three ways the fitted
 Shoulder missed "every unit is centered":

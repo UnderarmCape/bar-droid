@@ -262,6 +262,11 @@ local ACTIONS = {
 	idle_prev = function()
 		idleBuilder(-1)
 	end,
+	hud = function() -- three fingers held: the layout editor (bardroid_layout.lua)
+		if WG.BarDroidLayout then
+			WG.BarDroidLayout.toggle()
+		end
+	end,
 }
 
 -- bardroid_spectate.lua's 1st person: the fingers look around instead of moving the camera (pan: screen pixels;
@@ -289,7 +294,13 @@ end
 
 local function readTouch(lines)
 	local p = pending
-	if WG.BarDroidFirstPerson and WG.BarDroidLook then
+	local L = WG.BarDroidLayout
+	if L and L.isOpen() then -- the layout editor: the camera stays, a pinch resizes the panel picked
+		for r in lines:gmatch("zoom (%S+) %S+ %S+") do
+			L.pinch(tonumber(r) or 1)
+		end
+		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
+	elseif WG.BarDroidFirstPerson and WG.BarDroidLook then
 		readLook(lines, WG.BarDroidLook)
 		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
 	end

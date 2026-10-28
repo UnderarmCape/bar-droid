@@ -471,15 +471,27 @@ end
 local stub -- our WG.info
 local standDown, overlay = false, false
 
+-- The layout editor's settings for the panel (bardroid_layout.lua): moved by dx, dy (of the screen), size, the largest
+-- text size (the text still fits the panel), padding
+local NO_EDITS = { dx = 0, dy = 0, size = 1, text = 1, pad = 1 }
+local function edits()
+	local editor = WG.BarDroidLayout
+	return editor and editor.get("info") or NO_EDITS
+end
+
 local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	local ui = Spring.GetConfigFloat("ui_scale", 1) or 1
-	widthFrac = floor(0.2125 / (vsx / vsy) * 1.78 * ui * vsx) / vsx
-	heightFrac = floor(0.14 * ui * vsy) / vsy
-	rect = { 0, 0, floor(widthFrac * vsx), floor(heightFrac * vsy) }
+	local e = edits()
+	widthFrac = floor(0.2125 / (vsx / vsy) * 1.78 * ui * e.size * vsx) / vsx
+	heightFrac = floor(0.14 * ui * e.size * vsy) / vsy
+	local w, h = floor(widthFrac * vsx), floor(heightFrac * vsy)
+	local x0 = max(0, min(vsx - w, floor(e.dx * vsx)))
+	local y0 = max(0, min(vsy - h, floor(e.dy * vsy)))
+	rect = { x0, y0, x0 + w, y0 + h }
 	font = WG.fonts and WG.fonts.getFont() or font
 	bold = WG.fonts and WG.fonts.getFont(2) or font
-	pad = WG.FlowUI and WG.FlowUI.elementPadding or 4
+	pad = (WG.FlowUI and WG.FlowUI.elementPadding or 4) * e.pad
 	if background then
 		gl.DeleteList(background)
 		background = nil
@@ -536,7 +548,7 @@ local function fit(view)
 	local pic = floor(min(innerH, innerW * 0.3))
 	local textX = x0 + pic + floor(pad * 1.5)
 	local narrow, wide = x1 - textX, innerW
-	local largest = max(MIN_TEXT, innerH / MAX_TEXT_LINES)
+	local largest = max(MIN_TEXT, innerH / MAX_TEXT_LINES * edits().text)
 	local function try(s)
 		local nameSize, descSize, statSize = s * 1.12, s * 0.86, s
 		local lh = s * 1.22
@@ -886,6 +898,7 @@ end
 -- Life cycle
 
 local elapsed, pickAt = 0, 0
+local registered = false
 function widget:SelectionChanged()
 	pickAt = 0
 end
@@ -901,6 +914,22 @@ function widget:Update(dt)
 	end
 	if not font then
 		layout()
+	end
+	local editor = WG.BarDroidLayout
+	if editor and editor.register and not registered then -- the panel for the layout editor
+		registered = true
+		editor.register("info", {
+			label = "Unit info",
+			can = { move = true, size = true, text = true, pad = true },
+			rect = function() return rect[1], rect[2], rect[3], rect[4] end,
+			relayout = function()
+				layout()
+				rebuildAt = 0
+				if shown and shown.kind == "units" then
+					layoutGrid(shown.types)
+				end
+			end,
+		})
 	end
 	elapsed = elapsed + dt
 	if elapsed < pickAt then
@@ -960,6 +989,9 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	if registered and WG.BarDroidLayout then
+		WG.BarDroidLayout.unregister("info")
+	end
 	if WG.info == stub then
 		WG.info = nil
 		Spring.SendCommands("tooltip 1")

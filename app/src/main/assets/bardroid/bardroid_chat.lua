@@ -3,18 +3,26 @@
 -- past 10 characters"). BAR's chat gives each line a game-time column and a name column as wide as the longest player
 -- name in the game, so on the Fold's inner screen the message wrapped in ~120 pixels. Here the names sit at the box's
 -- left edge, broken every 10 characters, and the message fills the rest of the box.
--- BAR's chat widget still does everything else (typing box, sounds, ignore list, history when scrolled): its own lines
+-- BAR's chat widget still does the rest (sounds, ignore list, history when scrolled, map marker labels): its own lines
 -- are hidden (WG.chat.setHide) and this widget gets every line it parsed through WG.chat.addChatProcessor. A few of
 -- the engine's system lines BAR shows as console lines (paused, left the game, lagging) come from AddConsoleLine.
+-- Typing (Kailil, 2026-10-28: "I want the message to word wrap and grow smaller as new lines populate so I can see my
+-- entire message. Right now it's just pushing the message off screen to the right"; "the message chat box overlaps
+-- with the GAME COUNT DOWN POP-UP"): BAR's typing box is one line under the chat lines. This widget opens its own on
+-- Enter before BAR's chat hears the key (a lower layer hears keys first): at the top of the chat box, the text wrapped
+-- and smaller as lines are added, the chat lines below it, and before the game starts everything above BAR's start
+-- countdown. As BAR's: Enter sends, Ctrl / Alt / Shift + Enter switch to everyone / allies / spectators, Escape
+-- cancels, Up and Down go through the messages sent, Ctrl+V pastes, "/" sends a command, BAR's word filter
+-- (luaui/configs/badwords.lua) holds a message back once. "/hud" opens the app's layout editor (bardroid_layout.lua).
 -- Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
 		name = "BAR Droid chat",
-		desc = "Chat lines with the names at the left edge and the text filling the box (the phone's chat)",
+		desc = "Chat lines with the names at the left edge and the text filling the box, a typing box that wraps",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
-		layer = 0,
+		layer = -96000, -- (below BAR's chat, -95000: Enter comes here first)
 		enabled = true,
 	}
 end
@@ -26,6 +34,17 @@ local LINES_TYPING = 14 -- while the typing box is open (BAR's own history is sw
 local LINE_TTL = 40 -- seconds a line stays (BAR's)
 local BOX_RIGHT = 0.74 -- of the screen width (BAR's chat box)
 local BACKGROUND = 0.3
+local MAX_BYTES = 127 -- a message's length at most (BAR's typing box)
+local TYPE_SIZE = 1.03 / 0.75 -- the typing text, of the chat lines' size (BAR's typing box: 1.03 x its chat font)
+local TYPE_FULL_LINES = 2 -- lines at that size; with more the text gets smaller ...
+local TYPE_MIN = 0.55 -- ... down to this much of it
+-- BAR's start countdown ("Game starts in 3", gui_pregameui): 67% up the screen, its font 18.5 x (0.75 + pixels / 6e6)
+local COUNTDOWN_Y, COUNTDOWN_FONT = 0.67, 18.5
+local MODES = { -- (BAR's channels: everyone, allies, spectators)
+	[""] = { label = "All", color = "\255\255\255\255" },
+	["a:"] = { label = "Allies", color = "\255\120\235\120" },
+	["s:"] = { label = "Specs", color = "\255\255\225\110" },
+}
 
 local LineTypes = { Player = 1, Spectator = 2, Mapmark = 3, Battleroom = 4, System = 5 } -- BAR's gui_chat.lua
 local WHITE = "\255\255\255\255"
@@ -42,7 +61,15 @@ local entries = {} -- { time, chunks = name pieces, nameColor, text, lines = wra
 local hooked, wasInputHistory = false, nil
 local vsx, vsy = Spring.GetViewGeometry()
 local font, nameFont, fontSize, lineHeight
-local boxLeft, boxRight, boxTop, nameWidth, textLeft, gap
+local boxLeft, boxRight, boxTop, nameWidth, textLeft, gap, maxLines
+
+-- The layout editor's settings for the chat box (bardroid_layout.lua): moved by dx, dy (of the screen), size (its width
+-- and lines), text size, padding
+local NO_EDITS = { dx = 0, dy = 0, size = 1, text = 1, pad = 1 }
+local function edits()
+	local L = WG.BarDroidLayout
+	return L and L.get("chat") or NO_EDITS
+end
 
 -- Words wrapped into lines no wider than width pixels at size; a word longer than a line is cut. Each line starts with
 -- the colour the text had there.
@@ -113,13 +140,16 @@ local function layout()
 	-- BAR's chat: 21 x a small-screen boost x vsy * 0.00075 x ui_scale
 	local barSize = 21 * math.min(1.2, math.max(1, 1 + (1 - vsy / 1200) * 0.5)) * vsy * 0.00075
 		* (Spring.GetConfigFloat("ui_scale", 1) or 1)
-	fontSize = barSize * FONT_SIZE
+	local ed = edits()
+	fontSize = barSize * FONT_SIZE * ed.text
 	lineHeight = math.floor(fontSize * 1.3)
-	gap = math.floor(fontSize * 0.6)
+	gap = math.floor(fontSize * 0.6 * ed.pad)
+	maxLines = math.max(2, math.floor(LINES * ed.size + 0.5))
 	local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
-	boxLeft = math.floor(p and p[1] or vsx * 0.3)
-	boxTop = math.floor(p and p[2] - fontSize * 0.5 or vsy * 0.94)
-	boxRight = math.floor(vsx * BOX_RIGHT)
+	local left = p and p[1] or vsx * 0.3
+	boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, left + ed.dx * vsx)))
+	boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, (p and p[2] - fontSize * 0.5 or vsy * 0.94) + ed.dy * vsy)))
+	boxRight = math.floor(math.min(vsx, boxLeft + (vsx * BOX_RIGHT - left) * ed.size))
 	-- the name column: the widest 10-character piece of any player's name
 	nameWidth = nameFont:GetTextWidth("Player") * fontSize
 	for _, playerID in ipairs(Spring.GetPlayerList() or {}) do
@@ -186,6 +216,283 @@ function widget:AddConsoleLine(line)
 	end
 end
 
+---------------------------------------------------------------------------------------------------------------------
+-- Typing
+
+local typing -- the open typing box: { chars = the text's UTF-8 characters, at = characters before the cursor, mode }
+local lastMode -- the channel of the last message (BAR's: the next box opens on it)
+local sent, sentAt = {}, 0 -- the messages sent this game, and which one Up / Down show (#sent + 1: the new text)
+local lastHeld -- a message BAR's word filter held back: sent as it is the second time (BAR's)
+local badWords -- BAR's word filter's patterns (false: not found)
+local charWidth = {} -- a character's width at font size 1
+local typed -- the typing box as drawn: { size, lines = { { first, last } }, x0, y0, x1, y1, textX, tagWidth }
+
+local function utf8Chars(s)
+	local out = {}
+	for c in s:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+		out[#out + 1] = c
+	end
+	return out
+end
+
+local function widthOf(c)
+	local w = charWidth[c]
+	if not w then
+		w = font:GetTextWidth(c)
+		charWidth[c] = w
+	end
+	return w
+end
+
+-- the characters wrapped into lines at most width pixels wide at size: { { first, last } }, broken after the last
+-- space that fits (a word longer than a line is cut)
+local function wrapChars(cs, width, size)
+	local lines, first, w, space = {}, 1, 0, nil
+	local i = 1
+	while i <= #cs do
+		local cw = widthOf(cs[i]) * size
+		if w + cw > width and i > first then
+			local last = (space and space >= first and space < i) and space or i - 1
+			lines[#lines + 1] = { first, last }
+			first, w, space = last + 1, 0, nil
+			for j = first, i - 1 do
+				w = w + widthOf(cs[j]) * size
+			end
+		end
+		if cs[i] == " " then
+			space = i
+		end
+		w = w + cw
+		i = i + 1
+	end
+	lines[#lines + 1] = { first, #cs }
+	return lines
+end
+
+-- the typing box laid out: the text's size (smaller as lines are added) and lines, and the box under the chat box's top
+local function layoutTyping()
+	if not (typing and font) then
+		typed = nil
+		return
+	end
+	local mode = MODES[typing.mode]
+	local base = fontSize * TYPE_SIZE
+	local tagWidth = font:GetTextWidth(mode.label .. ": ") * base
+	local textX = boxLeft + gap + tagWidth
+	local width = boxRight - gap - textX
+	local size, lines = base
+	while true do
+		lines = wrapChars(typing.chars, width, size)
+		if #lines <= TYPE_FULL_LINES or size <= base * TYPE_MIN then
+			break
+		end
+		size = math.max(base * TYPE_MIN, size * 0.9)
+	end
+	local lh = math.floor(size * 1.3)
+	local height = #lines * lh + math.floor(gap * 0.8)
+	typed = { size = size, lineHeight = lh, lines = lines, x0 = boxLeft, y1 = boxTop, x1 = boxRight,
+		y0 = boxTop - height, textX = textX, base = base }
+end
+
+local function openTyping(mode)
+	typing = { chars = {}, at = 0, mode = mode, opened = clock() }
+	sentAt = #sent + 1
+	Spring.SDLStartTextInput() -- (as BAR's chat: text input may have been stopped by the lobby)
+	layoutTyping()
+end
+
+local function closeTyping()
+	typing, typed = nil, nil
+end
+
+local function insert(s)
+	local text = table.concat(typing.chars)
+	for _, c in ipairs(utf8Chars(s)) do
+		if #text + #c > MAX_BYTES then
+			break
+		end
+		text = text .. c
+		typing.at = typing.at + 1
+		table.insert(typing.chars, typing.at, c)
+	end
+	layoutTyping()
+end
+
+local function badWord(text)
+	if badWords == nil then
+		local ok, list = pcall(VFS.Include, "luaui/configs/badwords.lua")
+		badWords = ok and type(list) == "table" and list or false
+	end
+	for w in text:lower():gmatch("%w+") do
+		for _, pattern in ipairs(badWords or {}) do
+			if w:find(pattern) then
+				return w
+			end
+		end
+	end
+end
+
+local function i18n(key, values, fallback)
+	local ok, s = pcall(function() return BAR.I18N(key, values) end)
+	return ok and type(s) == "string" and s ~= key and s or fallback
+end
+
+local function send()
+	local text, mode = table.concat(typing.chars), typing.mode
+	lastMode = mode
+	closeTyping()
+	if not text:find("%S") then
+		return
+	end
+	if sent[#sent] ~= text then
+		sent[#sent + 1] = text
+	end
+	if text:sub(1, 1) == "/" then
+		local command = text:sub(2)
+		if (command == "hud" or command == "layout") and WG.BarDroidLayout then
+			WG.BarDroidLayout.open()
+		else
+			Spring.SendCommands(command == "lr" and "luaui reload" or command)
+		end
+		return
+	end
+	local bad = badWord(text)
+	if bad and text ~= lastHeld then
+		lastHeld = text
+		add("", WHITE, "\255\255\000\000" .. i18n("ui.chat.moderation.prefix", nil, "Moderation") .. " "
+			.. SYSTEM_COLOR .. i18n("ui.chat.moderation.blocked", { badWord = bad }, "message not sent: \"" .. bad
+			.. "\" (send it again to send it anyway)"))
+		return
+	end
+	lastHeld = nil
+	if mode == "a:" then
+		Spring.SendAllyChat(text)
+	elseif mode == "s:" then
+		Spring.SendSpectatorChat(text)
+	else
+		Spring.SendPublicChat(text)
+	end
+end
+
+local function showSent(i)
+	sentAt = math.max(1, math.min(#sent + 1, i))
+	typing.chars = utf8Chars(sent[sentAt] or "")
+	typing.at = #typing.chars
+	layoutTyping()
+end
+
+function widget:KeyPress(key, mods)
+	if not hooked or Spring.IsGUIHidden() then
+		return false
+	end
+	local chat = WG.chat or {}
+	local enter = key == 13 or key == 271 -- (Return, the keypad's Enter)
+	if not typing then
+		if not enter or (chat.isInputActive and chat.isInputActive())
+			or (chat.getHandleInput and not chat.getHandleInput()) then
+			return false -- (BAR's own box is open for a map marker, or the player switched typing off in BAR)
+		end
+		local spec = Spring.GetSpectatingState()
+		local mode = lastMode or (spec and "s:" or "a:")
+		if mods.ctrl then
+			mode = ""
+		elseif mods.alt then
+			mode = spec and "s:" or "a:"
+		elseif mods.shift then
+			mode = "s:"
+		elseif spec and mode == "a:" then
+			mode = "s:"
+		end
+		openTyping(mode)
+		return true
+	end
+	local cs = typing.chars
+	if enter then
+		if mods.ctrl then
+			typing.mode = ""
+		elseif mods.alt and not Spring.GetSpectatingState() then
+			typing.mode = typing.mode == "a:" and "" or "a:"
+		elseif mods.alt or mods.shift then
+			typing.mode = typing.mode == "s:" and "" or "s:"
+		else
+			send()
+			return true
+		end
+	elseif key == 27 then -- Escape
+		closeTyping()
+		return true
+	elseif mods.ctrl and key == 118 then -- Ctrl+V
+		insert((Spring.GetClipboard() or ""):gsub("[\r\n\t]+", " "))
+		return true
+	elseif key == 8 then -- Backspace
+		if typing.at > 0 then
+			table.remove(cs, typing.at)
+			typing.at = typing.at - 1
+		end
+	elseif key == 127 then -- Delete
+		if typing.at < #cs then
+			table.remove(cs, typing.at + 1)
+		end
+	elseif key == 276 then -- Left
+		typing.at = math.max(0, typing.at - 1)
+	elseif key == 275 then -- Right
+		typing.at = math.min(#cs, typing.at + 1)
+	elseif key == 278 then -- Home
+		typing.at = 0
+	elseif key == 279 then -- End
+		typing.at = #cs
+	elseif key == 273 then -- Up: the message sent before
+		showSent(sentAt - 1)
+		return true
+	elseif key == 274 then -- Down
+		showSent(sentAt + 1)
+		return true
+	end
+	typing.opened = clock() -- (the cursor shows steadily while keys are pressed)
+	layoutTyping()
+	return true -- (every key goes to the text while the box is open, none to the game's hotkeys)
+end
+
+function widget:TextInput(text)
+	if not typing then
+		return false
+	end
+	insert(text)
+	typing.opened = clock()
+	return true
+end
+
+-- the typing box: the channel, the text (its lines wrapped), the cursor blinking
+local function drawTyping()
+	local t, mode = typed, MODES[typing.mode]
+	gl.Color(0, 0, 0, 0.62)
+	gl.Rect(t.x0, t.y0, t.x1, t.y1)
+	gl.Color(1, 1, 1, 0.25)
+	gl.Rect(t.x0, t.y0, t.x1, t.y0 + 1)
+	gl.Color(1, 1, 1, 1)
+	local top = t.y1 - math.floor(gap * 0.4)
+	local function baseline(r)
+		return top - (r - 1) * t.lineHeight - math.floor(t.lineHeight * 0.78)
+	end
+	font:Begin()
+	font:Print(mode.color .. mode.label .. ":", boxLeft + gap, baseline(1), t.size, "o")
+	local cursorX, cursorRow = t.textX, 1
+	for r, line in ipairs(t.lines) do
+		local first, last = line[1], line[2]
+		font:Print(WHITE .. table.concat(typing.chars, "", first, last), t.textX, baseline(r), t.size, "o")
+		if typing.at >= first - 1 and typing.at <= last then
+			cursorRow = r
+			cursorX = t.textX + font:GetTextWidth(table.concat(typing.chars, "", first, typing.at)) * t.size
+		end
+	end
+	font:End()
+	if (clock() - typing.opened) % 1 < 0.6 then
+		local y = baseline(cursorRow)
+		gl.Color(1, 1, 1, 0.9)
+		gl.Rect(cursorX, y - t.size * 0.2, cursorX + math.max(1, t.size * 0.08), y + t.size * 0.9)
+	end
+end
+
 local function hook()
 	local chat = WG.chat
 	if not (chat and chat.setHide and chat.addChatProcessor) or not layout() then
@@ -202,12 +509,52 @@ local function hook()
 		lines = function()
 			return #entries
 		end,
+		widget = widget, -- (its KeyPress and TextInput: a widget cannot send the engine's key events)
+		typing = function()
+			return typing and { text = table.concat(typing.chars), mode = typing.mode, lines = #typed.lines,
+				size = typed.size, base = typed.base, x0 = typed.x0, y0 = typed.y0, x1 = typed.x1, y1 = typed.y1 }
+		end,
+		box = function()
+			return boxLeft, boxTop, boxRight, maxLines, lineHeight
+		end,
+		countdownTop = function()
+			return Spring.GetGameFrame() <= 0 and COUNTDOWN_Y * vsy + COUNTDOWN_FONT * (0.75 + vsx * vsy / 6e6) * 1.2
+				or nil
+		end,
 	}
 	return true
 end
 
+-- the chat box for the layout editor (bardroid_layout.lua): where it is, with its lines' room
+local registered = false
+local function register()
+	local L = WG.BarDroidLayout
+	if registered or not (L and L.register) then
+		return
+	end
+	registered = true
+	L.register("chat", {
+		label = "Chat",
+		can = { move = true, size = true, text = true, pad = true },
+		rect = function()
+			if not lineHeight then
+				return nil
+			end
+			return boxLeft, boxTop - maxLines * lineHeight - math.floor(lineHeight * 0.3), boxRight, boxTop
+		end,
+		relayout = function()
+			if layout() then
+				layoutTyping()
+			end
+		end,
+	})
+end
+
 function widget:Shutdown()
 	WG.bardroidChat = nil
+	if registered and WG.BarDroidLayout and WG.BarDroidLayout.unregister then
+		WG.BarDroidLayout.unregister("chat")
+	end
 	local chat = WG.chat
 	if hooked and chat then
 		if chat.setHide then
@@ -226,26 +573,43 @@ function widget:Update()
 	if not hooked then
 		hooked = hook()
 	end
+	if hooked and not registered then
+		register()
+	end
 end
 
 function widget:ViewResize()
 	if hooked then
 		layout()
+		layoutTyping()
 	end
 end
 
 function widget:DrawScreen()
-	if not hooked or not font or #entries == 0 or Spring.IsGUIHidden() then
+	if not hooked or not font or Spring.IsGUIHidden() then
 		return
 	end
-	local typing = WG.chat and WG.chat.isInputActive and WG.chat.isInputActive()
-	local budget = typing and LINES_TYPING or LINES
+	local top = boxTop -- (the chat lines: under the typing box while it is open)
+	if typing then
+		drawTyping()
+		top = typed.y0 - math.floor(gap * 0.5)
+	end
+	if #entries == 0 then
+		return
+	end
+	local barTyping = WG.chat and WG.chat.isInputActive and WG.chat.isInputActive() -- (BAR's box: a map marker)
+	local budget = (typing or barTyping) and math.max(maxLines, LINES_TYPING) or maxLines
+	-- before the game starts: the lines end above BAR's start countdown
+	local countdownTop = WG.bardroidChat and WG.bardroidChat.countdownTop()
+	if countdownTop and top > countdownTop then
+		budget = math.min(budget, math.floor((top - countdownTop) / lineHeight))
+	end
 	local now = clock()
 	-- the newest lines that fit, oldest first on the screen
 	local shown, used = {}, 0
 	for i = #entries, 1, -1 do
 		local e = entries[i]
-		if not typing and now - e.time > LINE_TTL then
+		if not (typing or barTyping) and now - e.time > LINE_TTL then
 			break
 		end
 		local rows = math.max(#e.lines, #e.chunks)
@@ -258,11 +622,11 @@ function widget:DrawScreen()
 	if #shown == 0 then
 		return
 	end
-	local bottom = boxTop - used * lineHeight - math.floor(lineHeight * 0.3)
+	local bottom = top - used * lineHeight - math.floor(lineHeight * 0.3)
 	gl.Color(0, 0, 0, BACKGROUND)
-	gl.Rect(boxLeft, bottom, boxRight, boxTop)
+	gl.Rect(boxLeft, bottom, boxRight, top)
 	gl.Color(1, 1, 1, 1)
-	local y = boxTop
+	local y = top
 	local baseline = math.floor(lineHeight * 0.78)
 	nameFont:Begin()
 	for _, e in ipairs(shown) do
@@ -272,7 +636,7 @@ function widget:DrawScreen()
 		y = y - math.max(#e.lines, #e.chunks) * lineHeight
 	end
 	nameFont:End()
-	y = boxTop
+	y = top
 	font:Begin()
 	for _, e in ipairs(shown) do
 		local x = #e.chunks > 0 and textLeft or boxLeft + gap

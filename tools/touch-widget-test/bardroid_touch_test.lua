@@ -87,6 +87,13 @@ local function near(case, got, want, tolerance)
 	log((ok and "PASS " or "FAIL ") .. case .. string.format(": %s, expected %.3f +- %.3f", tostring(got), want, tolerance))
 end
 
+local function verify(case, cond, detail)
+	if not cond then
+		fails = fails + 1
+	end
+	log((cond and "PASS " or "FAIL ") .. case .. (detail and (": " .. tostring(detail)) or ""))
+end
+
 local function groundAt(x, y) -- bottom-left origin
 	local _, pos = Spring.TraceScreenRay(x, y, true)
 	return pos
@@ -442,6 +449,146 @@ cases = {
 	function()
 		local now = WG.bardroidChat and WG.bardroidChat.lines()
 		near("chat: a said line reaches BAR Droid chat", (before and now) and now - before or -1, 1, 0)
+	end,
+	-- the app's typing box (bardroid_chat.lua): Enter opens it (allies, playing), a long message wraps and gets smaller,
+	-- Backspace, Escape; a message sent reaches the chat; "/hud" opens the layout editor
+	function()
+		local C = WG.bardroidChat
+		local taken = C and C.widget:KeyPress(13, {})
+		local t = C and C.typing()
+		verify("typing: Enter opens the app's box (allies)", taken and t and t.mode == "a:", t and t.mode)
+		verify("typing: BAR's own box stays closed", not (WG.chat and WG.chat.isInputActive()))
+		for _ = 1, 12 do
+			C.widget:TextInput("wrapping ")
+		end
+		C.widget:TextInput("end")
+	end,
+	function()
+		local C = WG.bardroidChat
+		local t = C.typing()
+		local left, top, right = C.box()
+		verify("typing: a long message wraps into lines (smaller only past two)", t and t.lines >= 2
+			and (t.lines <= 2) == (t.size == t.base), t and string.format("%d lines, size %.1f of %.1f", t.lines, t.size, t.base))
+		verify("typing: the box at the top of the chat box, as wide", t and t.x0 == left and t.x1 == right and t.y1 == top,
+			t and string.format("box %d-%d top %d, chat %d-%d top %d", t.x0, t.x1, t.y1, left, right, top))
+		C.widget:KeyPress(8, {}) -- Backspace
+		C.widget:KeyPress(8, {})
+		t = C.typing()
+		verify("typing: Backspace", t and t.text:sub(-2) == " e", t and t.text:sub(-6))
+		C.widget:KeyPress(27, {}) -- Escape
+		verify("typing: Escape closes it", C.typing() == nil)
+		before = C.lines()
+		C.widget:KeyPress(13, {})
+		C.widget:TextInput("touch test typed line")
+		C.widget:KeyPress(13, {})
+		verify("typing: Enter sends and closes", C.typing() == nil)
+		return 1
+	end,
+	function()
+		local C = WG.bardroidChat
+		near("typing: the message sent reaches the chat", C.lines() - before, 1, 0)
+		C.widget:KeyPress(13, {})
+		C.widget:TextInput("/hud")
+		C.widget:KeyPress(13, {})
+		verify("layout: /hud in the chat opens the editor", WG.BarDroidLayout and WG.BarDroidLayout.isOpen())
+	end,
+	-- the layout editor (bardroid_layout.lua): a tap picks a panel, a drag moves it, the buttons size it; BAR's panels
+	-- only as far as BAR lets (the player list's and the minimap's size); Reset all, Done
+	function()
+		local L, C = WG.BarDroidLayout, WG.bardroidChat
+		local ids = table.concat(L.ids(), " ")
+		verify("layout: the panels known", ids:find("chat") and ids:find("info") and ids:find("players") and ids:find("minimap")
+			and ids:find("topbar"), ids)
+		local x0, y0, x1, y1 = L.rect("chat")
+		local left, top = C.box()
+		before = { left = left, top = top }
+		local px, py = math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)
+		L.press(px, py)
+		verify("layout: a tap picks the chat", L.picked() == "chat", L.picked())
+		L.move(px + 100, py - 50)
+		L.release()
+		left, top = C.box()
+		verify("layout: a drag moves the chat box", math.abs(left - before.left - 100) <= 2 and math.abs(top - before.top + 50) <= 2,
+			string.format("left %d -> %d, top %d -> %d", before.left, left, before.top, top))
+		local _, _, right, _, lineHeight = C.box()
+		before.width, before.lineHeight = right - left, lineHeight
+		L.act("size+")
+		L.act("text+")
+	end,
+	function()
+		-- (a screenshot is of the frame drawn last: the editor with the chat picked; build\touch-widget-test\data\screenshots)
+		Spring.SendCommands("screenshot png")
+		local C = WG.bardroidChat
+		local left, _, right, _, lineHeight = C.box()
+		near("layout: Size + widens the chat box", (right - left) / before.width, 1.08, 0.02)
+		verify("layout: Text + makes the chat's text bigger", lineHeight > before.lineHeight,
+			string.format("line height %d -> %d", before.lineHeight, lineHeight))
+		local L = WG.BarDroidLayout
+		-- twice the text: the longest message takes more than two lines, and the typing gets smaller
+		for _ = 1, 8 do
+			L.act("text+")
+		end
+		C.widget:KeyPress(13, {})
+		for _ = 1, 14 do
+			C.widget:TextInput("wrapping ")
+		end
+		local t = C.typing()
+		verify("typing: past two lines the text gets smaller", t and t.lines >= 3 and t.size < t.base,
+			t and string.format("%d lines, size %.1f of %.1f", t.lines, t.size, t.base))
+		C.widget:KeyPress(27, {})
+		local x0, y0, x1, y1 = L.rect("info")
+		before.infoW = x1 - x0
+		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
+		verify("layout: a tap picks the unit info panel", L.picked() == "info", L.picked())
+		L.act("size+")
+		local ix0, _, ix1 = L.rect("info")
+		near("layout: Size + makes the unit info panel bigger", (ix1 - ix0) / before.infoW, 1.08, 0.02)
+		local a = WG.advplayerlist_api
+		x0, y0, x1, y1 = L.rect("players")
+		before.scale = a.GetScale()
+		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
+		verify("layout: a tap picks the player list", L.picked() == "players", L.picked())
+		L.act("size+")
+		near("layout: Size + scales BAR's player list", a.GetScale() / before.scale, 1.08, 0.01)
+		x0, y0, x1, y1 = L.rect("minimap")
+		before.minimap = WG.minimap and select(2, WG.minimap.getMaxHeight())
+		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
+		verify("layout: a tap picks the minimap", L.picked() == "minimap", L.picked())
+		L.act("size+")
+		x0, y0, x1, y1 = L.rect("topbar")
+		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
+		local fixed = false
+		for _, b in ipairs(L.buttons()) do
+			fixed = fixed or b.label == "BAR has no setting for it"
+		end
+		verify("layout: BAR's top bar picked, shown as fixed", L.picked() == "topbar" and fixed, L.picked())
+		return 1
+	end,
+	function()
+		local L = WG.BarDroidLayout
+		near("layout: Size + makes BAR's minimap bigger (its max height)", WG.minimap and select(2, WG.minimap.getMaxHeight())
+			/ before.minimap or -1, 1.08, 0.01)
+		L.act("resetall")
+		local C, a = WG.bardroidChat, WG.advplayerlist_api
+		local left, top = C.box()
+		verify("layout: Reset all puts the chat back", left == before.left and top == before.top,
+			string.format("left %d, top %d", left, top))
+		near("layout: Reset all puts the player list's size back", a.GetScale(), before.scale, 0.001)
+		L.act("done")
+		verify("layout: Done closes the editor", not L.isOpen())
+		touch("act hud") -- three fingers held (RtsTouch)
+		return 1
+	end,
+	function()
+		local L = WG.BarDroidLayout
+		verify("layout: three fingers held open the editor", L.isOpen())
+		touch("act hud")
+		return 1
+	end,
+	function()
+		verify("layout: three fingers held again close it", not WG.BarDroidLayout.isOpen())
+		near("layout: Reset all puts the minimap's size back", WG.minimap and select(2, WG.minimap.getMaxHeight()) or -1,
+			before.minimap, 0.0001)
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
 	function()

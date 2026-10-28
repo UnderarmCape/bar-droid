@@ -52,7 +52,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   replay info); `bardroid_lobby_touch.lua` makes it finger-friendly.
 - **In-game widgets** (`app/src/main/assets/bardroid/`): `bardroid_touch.lua` (camera, perf log, catch-up mode),
   `bardroid_players.lua` (small player list), `bardroid_spectate.lua` (spectating by touch: player cameras, follow,
-  presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua`, `bardroid_queue.lua`, `bardroid_bench.lua`.
+  presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
+  `bardroid_minimap.lua` (minimap small until tapped, unfolded), `bardroid_layout.lua` (the layout editor: panels
+  register with `WG.BarDroidLayout` and read their settings from it), `bardroid_queue.lua`, `bardroid_bench.lua`.
 
 ## Source map
 

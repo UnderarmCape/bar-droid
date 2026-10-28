@@ -62,6 +62,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
   `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first
   (`tools/lobby-touch-test.ps1`). `assets/bardroid/bardroid_players.lua`: BAR's player list small until tapped (WG.advplayerlist_api).
+  `assets/bardroid/bardroid_layout.lua`: the layout editor (three fingers held → RtsTouch `act hud`, or `/hud` typed in
+  `bardroid_chat.lua`'s own typing box); panels register with `WG.BarDroidLayout` and read their settings from it;
+  BAR's own panels only through their `WG` setters (BAR's sandbox keeps user widgets out of BAR's code).
   BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
   in through `launch-bar.sh` instead. `tools/touch-widget-test.ps1` runs the widget in a real skirmish on the laptop
   (~1.5 min): pinch, twist, tilt and drag on the camera, and the map/interface answers; run it after touching either.

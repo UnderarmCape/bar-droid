@@ -43,6 +43,7 @@ import java.util.Locale;
  *                        right = fight (attack-move: the next tap places it)
  *   three-finger tap     show / hide the keyboard
  *   three-finger swipe   up = overview of the whole map, down = back; left / right = previous / next idle builder
+ *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
  * Actions go to the widget as "act <name>" lines (not in the lobby).
  * The X pointer is hidden while two or more fingers are down. Off the map (the void past its edge) fingers work as on
  * it: the map-edge rules of 2026-10-26 (taps off the map clicking nothing, drags anchored mid-screen) are gone (Kailil,
@@ -62,6 +63,7 @@ final class RtsTouch {
     private static final long FLING_FRAME_MS = 16;
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
     private static final long TWO_HOLD_MS = 450;               // two fingers held still this long: the swipe menu
+    private static final long THREE_HOLD_MS = 800;             // three fingers held still this long: the layout editor
     // A second finger this soon after the first is one two-finger gesture even if the first already slid a little
     // (fingers never land together; the first one's slide used to lock the gesture into pan/zoom: no tilt)
     private static final long JOIN_MS = 250;
@@ -120,6 +122,14 @@ final class RtsTouch {
         if (state != State.MULTI_PENDING || maxFingers != 2) return;
         state = State.TWO_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+    };
+
+    /** Three fingers held still: the layout editor opens or closes (bardroid_layout.lua). */
+    private final Runnable threeHold = () -> {
+        if (state != State.MULTI_PENDING || maxFingers != 3) return;
+        state = State.DONE;
+        view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        act("hud");
     };
 
     /** The game has not said in time whether the drag started on its interface: pan. */
@@ -186,6 +196,7 @@ final class RtsTouch {
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
+        ui.removeCallbacks(threeHold);
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -232,6 +243,8 @@ final class RtsTouch {
                     ui.postDelayed(twoHold, TWO_HOLD_MS);
                 } else if (state == State.MULTI_PENDING) {
                     ui.removeCallbacks(twoHold);   // a third finger
+                    ui.removeCallbacks(threeHold);
+                    if (e.getPointerCount() == 3) ui.postDelayed(threeHold, THREE_HOLD_MS);
                 } else if ((state == State.PAN || state == State.DRAG_WAIT) && e.getEventTime() - downTime <= JOIN_MS) {
                     // the first finger slid before the second landed: still one two-finger gesture, measured from here
                     ui.removeCallbacks(hoverTimeout);
@@ -287,6 +300,7 @@ final class RtsTouch {
             case MULTI_PENDING: {
                 if (e.getPointerCount() < 2 || !movedPastSlop(e)) return;
                 ui.removeCallbacks(twoHold);
+                ui.removeCallbacks(threeHold);
                 if (maxFingers >= 3) {   // three fingers: a swipe, measured from where they came down
                     state = State.THREE;
                     swipe(e);
@@ -348,6 +362,7 @@ final class RtsTouch {
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
+        ui.removeCallbacks(threeHold);
         curX = e.getX(); curY = e.getY();
         switch (state) {
             case PENDING:
@@ -394,6 +409,7 @@ final class RtsTouch {
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
+        ui.removeCallbacks(threeHold);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         state = State.IDLE;

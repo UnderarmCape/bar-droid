@@ -47,8 +47,19 @@ it (no driver path); the app's device check says so.
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
 | Three-finger tap | Show or hide the keyboard |
 | Three-finger swipe | Up: the whole map, down: back; left/right: previous/next idle builder |
+| Three fingers held | The layout editor (below) |
 
 In the lobby a drag scrolls lists and a tap on a server shows its details first.
+
+**The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
+it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
+(chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size, its
+build and order menus go at the bottom or the left. BAR's top bar and start countdown can't be moved (BAR has no
+setting for them). Folded and unfolded each keep their own layout.
+
+**Chat:** Enter (or the keyboard's Enter) opens the typing box at the top of the chat; long messages wrap and get
+smaller so the whole message stays in view. Ctrl, Alt or Shift + Enter switch between everyone, allies and
+spectators, as in BAR.
 
 **Spectating** (watching a game or a replay, with touch): the player list stays small; tap it to bring up a bar
 for a few seconds. On it: the players by name (switch whose camera you follow), the unit nearest the middle of the

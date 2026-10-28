@@ -1148,12 +1148,21 @@ local function followLabel()
 	return name, follow.team and { Spring.GetTeamColor(follow.team) }
 end
 
--- The bar's buttons ({ x0, y0, x1, y1, action, label, lit, color, size }) as the state is now.
+-- The layout editor's settings for the bar (bardroid_layout.lua): moved by dx, dy (of the screen), size, text size,
+-- padding (the gaps between the buttons)
+local NO_EDITS = { dx = 0, dy = 0, size = 1, text = 1, pad = 1 }
+local function edits()
+	local L = WG.BarDroidLayout
+	return L and L.get("spectate") or NO_EDITS
+end
+
+-- The bar's buttons ({ x0, y0, x1, y1, action, label, lit, color, size, text }) as the state is now.
 local function layout()
 	local vsx, vsy = Spring.GetViewGeometry()
+	local e = edits()
 	-- (the presets row is the widest, 6 buttons: on the inner screen it fits left of the player list)
-	local h = math.floor(math.min(vsy * 0.085, vsx / 17))
-	local gap = math.floor(h * 0.15)
+	local h = math.floor(math.min(vsy * 0.085, vsx / 17) * e.size)
+	local gap = math.floor(h * 0.15 * e.pad)
 	local fLabel, fColor = followLabel()
 	local rowA, rowB
 	if follow and tuning then -- one setting of the view on, for the unit type followed
@@ -1209,14 +1218,15 @@ local function layout()
 		return w - gap
 	end
 	local out = {}
+	local shiftX = math.floor(e.dx * vsx)
 	local function place(row, x, y)
 		for _, b in ipairs(row) do
-			out[#out + 1] = { x0 = x, y0 = y, x1 = x + b.w, y1 = y + h, action = b.action, label = b.label,
-				lit = b.lit, color = b.color, size = h }
+			out[#out + 1] = { x0 = x + shiftX, y0 = y, x1 = x + shiftX + b.w, y1 = y + h, action = b.action,
+				label = b.label, lit = b.lit, color = b.color, size = h, text = e.text }
 			x = x + b.w + gap
 		end
 	end
-	local y = math.floor(h * 0.25)
+	local y = math.max(0, math.min(vsy - 2 * h - gap, math.floor(h * 0.25 + e.dy * vsy)))
 	local wa, wb = width(rowA), width(rowB)
 	-- the room left of BAR's (small) player list at the bottom right: the bar never runs under it
 	local x0, x1 = gap, vsx - gap
@@ -1287,7 +1297,7 @@ local function drawBar()
 	if font then
 		font:Begin()
 		for _, b in ipairs(buttons) do
-			local size = b.size * 0.36
+			local size = b.size * 0.36 * (b.text or 1)
 			local text = b.label
 			local maxW = (b.x1 - b.x0) * 0.9
 			while #text > 4 and font:GetTextWidth(text) * size > maxW do
@@ -1412,10 +1422,39 @@ end
 
 ---------------------------------------------------------------------------------------------------------------------
 
+local registered = false
+local function register() -- the bar for the layout editor (bardroid_layout.lua), while spectating
+	local L = WG.BarDroidLayout
+	if registered or not (L and L.register) then
+		return
+	end
+	registered = true
+	L.register("spectate", {
+		label = "Spectate bar",
+		can = { move = true, size = true, text = true, pad = true },
+		rect = function()
+			if not active then
+				return nil
+			end
+			local x0, y0, x1, y1
+			for _, b in ipairs(layout()) do
+				x0, y0 = math.min(x0 or b.x0, b.x0), math.min(y0 or b.y0, b.y0)
+				x1, y1 = math.max(x1 or b.x1, b.x1), math.max(y1 or b.y1, b.y1)
+			end
+			return x0, y0, x1, y1
+		end,
+		relayout = function()
+			barDirty = true
+			dropBarList()
+		end,
+	})
+end
+
 function widget:Update(dt)
 	local was = active
 	active = isActive()
 	WG.BarDroidSpectating = active -- bardroid_info.lua shows no unit then
+	register()
 	-- Nothing stays selected while this is on: BAR's selected-unit panels (info, orders, build menu) never open, whatever
 	-- selected the units (the two-finger swipe's select-all, a box). A frame later, not from SelectionChanged: a
 	-- selection replaced there is never told to the widgets after it (BAR's build menu kept showing the builder's).
@@ -1581,6 +1620,9 @@ function widget:Shutdown()
 	closeZoom(false)
 	WG.BarDroidSpectate = nil
 	WG.BarDroidSpectating = nil
+	if registered and WG.BarDroidLayout then
+		WG.BarDroidLayout.unregister("spectate")
+	end
 end
 
 -- what the player saved with Tune (per unit type and its equivalents) stays on the device

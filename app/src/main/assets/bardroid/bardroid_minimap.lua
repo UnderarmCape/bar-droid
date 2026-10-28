@@ -6,8 +6,9 @@
 --
 -- Through BAR's own Minimap widget (gui_minimap.lua), which sizes itself by the MinimapMaxHeight setting and reads it
 -- again four times a second: the small size goes in as the engine's in-memory overlay of that setting (never saved,
--- so the player's own stays in springsettings.cfg whatever happens to the game). Installed into LuaUI/Widgets by the
--- app.
+-- so the player's own stays in springsettings.cfg whatever happens to the game). The layout editor
+-- (bardroid_layout.lua) can size it too: its size times the player's own, folded and unfolded (the small one half of
+-- that). Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
@@ -45,14 +46,22 @@ local function unfolded()
 	return vsx * 10 < vsy * 16 -- (as launch-bar.sh: the inner screen is near-square, the cover screen wide)
 end
 
+local overlaid -- the overlay this widget last set
 local function setMaxHeight(v)
 	Spring.SetConfigFloat(KEY, v, true) -- (the overlay: in memory only)
+	overlaid = v
+end
+
+-- the open minimap's MinimapMaxHeight: the player's own, times the layout editor's size for it
+local function full()
+	local L = WG.BarDroidLayout
+	return own * (L and L.get("minimap").size or 1)
 end
 
 local function expand()
 	if small then
 		small = false
-		setMaxHeight(own)
+		setMaxHeight(full())
 	end
 	lastTouch = now()
 end
@@ -65,7 +74,7 @@ local function shrink()
 	setMaxHeight(normalHeight * SMALL)
 end
 
--- the minimap's height at the player's own setting, from BAR's widget (its padding left out)
+-- the minimap's height when open, from BAR's widget (its padding left out)
 local function measure()
 	local m = WG.minimap
 	if not (m and m.getHeight) then
@@ -86,7 +95,39 @@ function widget:Initialize()
 	}
 end
 
+-- the minimap for the layout editor: its size (BAR's minimap takes no other place)
+local registered = false
+local function register()
+	local L = WG.BarDroidLayout
+	if registered or not (L and L.register) then
+		return
+	end
+	registered = true
+	L.register("minimap", {
+		label = "Minimap",
+		can = { size = true },
+		rect = function()
+			local px, py, sx, sy = Spring.GetMiniMapGeometry()
+			if not (px and sx and sx > 0 and sy > 0) then
+				return nil
+			end
+			local _, vsy = Spring.GetViewGeometry()
+			if not Spring.IsAboveMiniMap(px + sx / 2, py + sy / 2) then -- (its y counted from the top)
+				py = vsy - py - sy
+			end
+			return px, py, px + sx, py + sy
+		end,
+		relayout = function()
+			small = false
+			setMaxHeight(full())
+			lastTouch = now() -- (open while it is sized; small again later, measured at the new size)
+			normalHeight, startedAt = nil, now() - 2.5
+		end,
+	})
+end
+
 function widget:Update()
+	register()
 	-- BAR's Minimap settles its size ~2 s in (the top bar, its own delayed setup)
 	if not normalHeight then
 		if now() - startedAt < 3 then
@@ -109,10 +150,12 @@ function widget:Update()
 end
 
 function widget:ViewResize()
-	-- fold/unfold: measured again at the player's own size
-	if small then
-		small = false
-		setMaxHeight(own)
+	-- fold/unfold: open at this screen's size (the player's own, or the layout editor's), measured again; the setting
+	-- left alone where nothing of ours is on it (a size the player set in BAR's settings stays)
+	small = false
+	local target = full()
+	if (overlaid and math.abs(overlaid - target) > 1e-6) or (not overlaid and math.abs(target - own) > 1e-6) then
+		setMaxHeight(target)
 	end
 	normalHeight, startedAt = nil, now()
 end
@@ -132,4 +175,7 @@ end
 function widget:Shutdown()
 	setMaxHeight(own)
 	WG.BarDroidMinimap = nil
+	if registered and WG.BarDroidLayout then
+		WG.BarDroidLayout.unregister("minimap")
+	end
 end

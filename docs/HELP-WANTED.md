@@ -59,8 +59,13 @@ Not solved:
 - **BAR's interface on a near-square screen** (a foldable unfolded): the player list covers the order menu's last
   column; the minimap is shrunk until tapped.
 - **The map's edge:** touch navigation there is still open.
-- The widgets' limits come from BAR's sandbox for user widgets (no `/option`, no widget toggles, no engine restarts):
-  touch support inside BAR's own widgets would remove most of the workarounds.
+- **A movable HUD.** The app's layout editor (`bardroid_layout.lua`) moves and sizes the app's own panels, but BAR's
+  only as far as BAR's widgets allow another widget: the minimap's and player list's size, the build and order menus
+  at the bottom or the left. BAR's top bar (metal, energy, wind), its start countdown and the positions of the minimap,
+  player list and menus are fixed in BAR's code. Position (and size) settings for those panels in BAR, or `WG` setters
+  like the ones the build menu has, would let a phone layout be made to fit each screen.
+- The widgets' limits come from BAR's sandbox for user widgets (no `/option`, no widget toggles, no engine restarts,
+  no access to other widgets): touch support inside BAR's own widgets would remove most of the workarounds.
 
 ## Also open
 

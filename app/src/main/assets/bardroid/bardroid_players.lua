@@ -39,9 +39,16 @@ local minimized = false
 local normal -- the player's own list: { scale, hideSpecs, columns = { [name] = active } }
 local saved -- the same from the last game (widget config data)
 local lastTouch = 0
+local applied = 1 -- the layout editor's size in the list's scale now (open: its own scale times this)
 
 local function api()
 	return WG.advplayerlist_api
+end
+
+-- the layout editor's size for the list (bardroid_layout.lua): open and small, both times this
+local function sizeFactor()
+	local L = WG.BarDroidLayout
+	return L and L.get("players").size or 1
 end
 
 local function columnsKnown(a)
@@ -76,7 +83,7 @@ local function setColumns(a, columns)
 end
 
 local function looksMinimized(state)
-	return state.scale <= SMALL_SCALE + 0.001 and state.hideSpecs
+	return state.scale <= SMALL_SCALE * math.max(1, sizeFactor()) + 0.001 and state.hideSpecs
 end
 
 local function minimize()
@@ -85,10 +92,12 @@ local function minimize()
 		return
 	end
 	local current = readState(a)
+	current.scale = current.scale / applied -- (the player's own scale, without the editor's size)
+	applied = 1
 	-- a game that ended minimized saved the small list as BAR's settings: the player's own are in our config
 	normal = (looksMinimized(current) and saved) or current
 	saved = normal
-	a.SetScale(SMALL_SCALE)
+	a.SetScale(SMALL_SCALE * sizeFactor())
 	a.SetAlwaysHideSpecs(true)
 	local small = {}
 	for _, name in ipairs(COLUMNS) do
@@ -103,7 +112,8 @@ local function expand()
 	if not minimized or not a or not normal then
 		return
 	end
-	a.SetScale(normal.scale)
+	applied = sizeFactor()
+	a.SetScale(normal.scale * applied)
 	a.SetAlwaysHideSpecs(normal.hideSpecs)
 	setColumns(a, normal.columns)
 	minimized = false
@@ -165,11 +175,44 @@ function widget:Initialize()
 	}
 end
 
+-- the list for the layout editor: its size (BAR's list takes no other place)
+local registered = false
+local function register()
+	local L = WG.BarDroidLayout
+	if registered or not (L and L.register) then
+		return
+	end
+	registered = true
+	L.register("players", {
+		label = "Player list",
+		can = { size = true },
+		rect = function()
+			local pos = api() and api().GetPosition()
+			if pos and pos[4] then -- { top, left, bottom, right }
+				return pos[2], pos[3], pos[4], pos[1]
+			end
+		end,
+		relayout = function()
+			local a = api()
+			if not a then
+				return
+			end
+			if minimized then
+				a.SetScale(SMALL_SCALE * sizeFactor())
+			elseif normal then
+				applied = sizeFactor()
+				a.SetScale(normal.scale * applied)
+			end
+		end,
+	})
+end
+
 local started = false
 function widget:Update()
 	if not api() then
 		return
 	end
+	register()
 	if not started then -- the list exists: small from the start
 		started = true
 		minimize()
@@ -182,7 +225,13 @@ end
 
 function widget:Shutdown()
 	expand() -- (BAR keeps the list's settings: the player's own)
+	if normal and api() and applied ~= 1 then
+		api().SetScale(normal.scale) -- (without the layout editor's size)
+	end
 	WG.BarDroidPlayers = nil
+	if registered and WG.BarDroidLayout then
+		WG.BarDroidLayout.unregister("players")
+	end
 end
 
 function widget:GetConfigData()
