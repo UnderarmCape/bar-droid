@@ -345,7 +345,9 @@ local function applyTouch(dt)
 		-- spread the fingers: closer; the map point under the pinch stays under it
 		local key = cs.dist and "dist" or cs.height and "height"
 		if zoom ~= 0 and key then
-			local low = key == "dist" and zoomMinDistance or MIN_OVERHEAD_HEIGHT
+			-- (the engine's limit as it is now: bardroid_spectate.lua lowers it for its 1st person camera)
+			local low = key == "dist" and math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", zoomMinDistance) or
+				zoomMinDistance, 0.1) or MIN_OVERHEAD_HEIGHT
 			local value = math.max(low, math.min(zoomMaxDistance, cs[key] / math.exp(zoom)))
 			if p.pivotX then
 				local s = value / cs[key]

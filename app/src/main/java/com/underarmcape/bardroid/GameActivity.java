@@ -320,13 +320,29 @@ public class GameActivity extends MainActivity {
     public boolean handleKey(KeyEvent e) {
         if (pad != null && pad.onKey(e)) { touch.source("pad"); return true; }
         if (KeyboardShortcuts.isAndroidKey(e.getKeyCode())) return false;
-        if (touch != null && e.getKeyCode() != KeyEvent.KEYCODE_BACK && e.getAction() == KeyEvent.ACTION_DOWN)
-            touch.source("keyboard");
+        if (touch != null && e.getAction() == KeyEvent.ACTION_DOWN && fromKeyboard(e)) touch.source("keyboard");
         // the system Back: Escape in dispatchKeyEvent, after the soft keyboard (if shown) has closed on it
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
         boolean sent = super.handleKey(e);
         if (sent && e.getAction() == KeyEvent.ACTION_UP) BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
         return sent;
+    }
+
+    /**
+     * A key typed on a real keyboard (bardroid_spectate.lua's touch tools step aside for one), not the phone's volume
+     * buttons, a headset's media keys or the system Back (Kailil, 2026-10-27: volume up ended the follow camera).
+     */
+    private static boolean fromKeyboard(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.KEYCODE_BACK: case KeyEvent.KEYCODE_VOLUME_UP: case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_MUTE: case KeyEvent.KEYCODE_MUTE: case KeyEvent.KEYCODE_HEADSETHOOK:
+            case KeyEvent.KEYCODE_MEDIA_PLAY: case KeyEvent.KEYCODE_MEDIA_PAUSE: case KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE:
+            case KeyEvent.KEYCODE_MEDIA_NEXT: case KeyEvent.KEYCODE_MEDIA_PREVIOUS: case KeyEvent.KEYCODE_MEDIA_STOP:
+                return false;
+            default:
+                InputDevice d = e.getDevice();
+                return d != null && !d.isVirtual() && d.getKeyboardType() == InputDevice.KEYBOARD_TYPE_ALPHABETIC;
+        }
     }
 
     @Override

@@ -30,6 +30,27 @@ shortcut part stayed (HANDOFF.md "Keyboard shortcuts"). What was found on the wa
   `BUTTON_SECONDARY` on stock Android; some older Samsung, Huawei and Xiaomi builds sent it as Back (SDL bug 3227),
   which Termux:X11 maps back to the right button.
 
+## Following that sticks, camera presets, 1st person and its tuner (2026-10-27 late)
+Kailil: the arrows "just do the closest unit to the center of the screen"; following should "stick no matter what i do
+unless I deliberately move my camera away from the unit a far distance" (pan offsets, zoom, tilt and rotate while
+following; offsets carry to the next unit); in follow mode camera presets in place of the players (first person, over
+the shoulder, tabletop, close, mid) with Save; group following "never jerky"; volume up broke following.
+- The camera's target is the followed point plus an offset; each frame the fingers' moves since the camera was last
+  placed go into the offset (pinch and twist as well). Letting go: the offset past 1,500 elmos or twice the camera's
+  distance (a flick's glide). Presets "unit"-framed turn with the unit's facing (ry = atan2(dx, -dz): the camera looks
+  along (sin ry, -cos ry), Camera.cpp).
+- Group: members picked twice a second (at most 40, nearest the centre), their centre taken every frame, the camera on
+  a critically damped spring (0.9 s): no jumps when the centre does. ~40 position reads a frame.
+- 1st person is the engine's first-person camera (mode 0: an eye position, a direction, its FOV; the eye stays 5 elmos
+  above the ground), riding a piece of the unit (per unit type, else the first of head, turret, torso, body, base) with
+  its own smoothing; a drag or flick lasting past 0.35 s leaves it. The Spring camera stops at BAR's minimum camera
+  height (CamSpringMinZoomDistance, 300): close presets lower it for the session only (the config overlay).
+- `tools/fp-tuner.ps1` (laptop): the same widget riding a unit in a replay, a mouse panel for anchor, facing, offsets,
+  pitch, yaw, FOV and both smoothings; Save writes `bardroid_fp.lua`, to be baked into `bardroid_spectate.lua` FP.
+- Keys from the phone's volume buttons, media keys or anything that is not an alphabetic keyboard no longer count as
+  keyboard use (the touch tools stepped aside and following ended); following now also goes on under a mouse or
+  keyboard.
+
 ## Spectating by touch (2026-10-27 night)
 Kailil: "a touch focused spectator only setup ... cycling through players to switch player cam to, blocking the bottom
 left hand ui from popping up ... camera tools that follow a unit or group of units ... double tap a unit to follow
