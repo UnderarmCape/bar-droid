@@ -189,6 +189,10 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   # checks every unit every 6 simulated frames (a spectator: every unit of the game), the costliest widget per
   # simulated frame (13.8 ms/s at 10x on the laptop): catching up and late games run on the CPU
   widget_order "Contrast Adaptive Sharpen" 0; widget_order "Jammed Units Highlight" 0
+  # BAR's Reclaim Field Highlight outlines fields of wrecks for builders; it recomputes the fields as every wreck
+  # appears even while it shows nothing: the costliest widget in big battles, 3.1% of the phone's running time and over
+  # half of LuaUI's garbage (docs/HISTORY.md, 2026-10-27 evening). Kailil: "Turn Reclaim Field Highlight off"
+  widget_order "Reclaim Field Highlight" 0
   # BAR's fog-of-war stripes (Fog Diagonal Lines GL4) find the ground in the map's G-buffer, which the engine only
   # clears with advanced map shading off (BAR's Lowest preset, the phone's): a full-screen pass every frame whose every
   # pixel is discarded. Off while the lobby's or the engine's setting is 0 (the lobby's copy is what the next game
@@ -207,7 +211,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
       || layer_miss "lights' screen-space shadows: no screenSpaceShadows in LuaUI/Config/BYAR.lua"
   fi
 fi
-log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
+log "phone graphics: $(echo $PHONE_GFX); no bloom, SSAO, distortion, snow, map edge extension, lights, decals, AO plates, grass, order effects, sharpening, jammed-unit tint, reclaim fields$([ -f "$BAR/.bardroid-fog-lines-off" ] && echo ", fog-of-war stripes (no advanced map shading)"); queued buildings near the camera only"
 
 # BAR's interface scale for the screen the game starts on (Kailil: 2.0 on the Fold's cover screen, 1.3 on the inner
 # one; bardroid_touch.lua switches it on fold/unfold). The app keeps the X screen size in bardroid_screen.txt.

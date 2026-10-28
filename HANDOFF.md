@@ -259,9 +259,8 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    versions (like the info panel); designed with Kailil first, with touch placement.
 2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
    file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
-   status); more gameplay-information widgets off (Reclaim Field Highlight: the costliest widget in big battles,
-   18-21 ms/s on the laptop and half of all Lua garbage, 3.1% of the phone's running time, shown only with a
-   reclaimer selected; Defense Range GL4,
+   status); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
+   Defense Range GL4,
    Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
    hardening").

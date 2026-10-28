@@ -19,6 +19,8 @@ Runs back to back, throttled (thermal status 2, skin ~42 °C, CPU caps 1.40 / 1.
   Explosion_lights 0.70 and 410 kB/s, Watereffects 0.51, EMP Lightning 0.50), unsynced 8.1% (CUS GL4 2.67, Fire GL4
   1.67 and 219 kB/s, Beam Laser GL4 0.89, Fire & Smoke GL4 0.71, Widget Events 0.60). Gadgets are BAR's game: not
   changeable for online play.
+- **Reclaim Field Highlight off** (Kailil: "Turn Reclaim Field Highlight off on the phone"; launch-bar.sh
+  `widget_order`, a local widget: online-safe). Benchmarks from this build on run without it (a lower baseline).
 - BAR's developer tools stay off in the controller game on the phone: infolog shows the empty files in their place
   (the two widgets "Failed to load ... (no GetInfo() call)", the gadget loaded with nothing in it).
 - `phone-bench.ps1` waited 12 minutes and parsed nothing when the app put a full `launcher.log` aside as
