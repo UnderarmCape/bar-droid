@@ -1,4 +1,4 @@
-# BAR Droid — hand-off (updated 2026-10-27)
+# BAR Droid — hand-off (updated 2026-10-28)
 
 Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
@@ -9,7 +9,10 @@ inside a Debian container with an **embedded X server** (Termux:X11's `lorie` li
 seconds (2026-10-26). The emulator build (x86_64, the default of `Build APK.bat`) is the quick test bench:
 amd64 Debian + the official amd64 engine, OpenGL through Mesa virpipe → virgl server → ANGLE → host GPU.
 
-Where to read on: [README.md](README.md) (build in three steps), this file (state, risks, next steps),
+Where to read on: [README.md](README.md) (for players), [docs/BUILDING.md](docs/BUILDING.md) (build in three steps,
+checks, releasing), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [CONTRIBUTING.md](CONTRIBUTING.md),
+[docs/DELIVERY.md](docs/DELIVERY.md) (the road to a public GitHub release), [docs/WORKLOG.md](docs/WORKLOG.md) (Kailil's
+messages and the time spent), this file (state, risks, next steps),
 [CLAUDE.md](CLAUDE.md) (architecture, every file and tool, rules), [docs/HISTORY.md](docs/HISTORY.md) (what was found,
 measured and decided, session by session), [docs/UPDATES.md](docs/UPDATES.md) (what the app changes in BAR's
 settings at every start), [docs/upstream/](docs/upstream/) (draft reports of bugs that are not ours),
@@ -31,7 +34,9 @@ https://claude.ai/artifact/XDdcJwfebpK1D138U2MjZf
 | Keyboard shortcuts | `KeyboardShortcuts.java`, `GameActivity.handleKey` (see "Keyboard shortcuts" below) | A Bluetooth or dock mouse and keyboard work as Termux:X11 delivers them (Kailil: "works perfectly already"); Android's, One UI's and DeX's shortcuts kept out of the game: Android 16.1 keyboard capture, Samsung's Meta key request, keys before the soft keyboard app; Kailil's check pending |
 | Chat display | `assets/bardroid/bardroid_chat.lua` | BAR's chat lines in the same box, names flush left (wrapped every 10 characters), the text filling the rest, 75% of BAR's font size; BAR's typing box and ignore list stay |
 | Unit info panel | `assets/bardroid/bardroid_info.lua` | Replaces BAR's Info widget (its text ran under the picture at phone scales): BAR's numbers, the largest text that fits, a type grid with counts for several units (tap keeps a type, long press drops it), BAR's `WG.info` API |
-| Spectating by touch | `assets/bardroid/bardroid_spectate.lua`, `RtsTouch.source`, `tools/spectate-test.ps1` | While spectating with fingers (the app reports touch/mouse/keyboard/pad): taps select nothing (no unit panels), double tap a unit follows it (the ground: stops), a finger pan ends following or the player camera; a tap on the small player list opens it and a bar: < player name > (BAR's player camera, in the list's order), Free, < unit > (the most valuable units), Group; both close after 7 s untouched |
+| Spectating by touch | `assets/bardroid/bardroid_spectate.lua`, `RtsTouch.source`, `tools/spectate-test.ps1 [-Cost]`, `tools/fp-tuner.ps1` | While spectating with fingers (the app reports touch/mouse/keyboard/pad): taps select nothing (no unit panels); a tap on another player's unit spectates that player, a double tap on a unit follows it (forgiving; the ground: stops); following sticks through pans, zooms and twists (an offset) until a far flick; a tap on the small player list brings up a bar for 7 s: < player name > (BAR's player camera, in the list's order), Free, < unit > (the player's units nearest the screen's centre), Group; while following: 1st person (free look, recenters after 4 s), Shoulder, Table, Close, Mid, and Tune (per unit type, saved on the device, given to the other factions' equivalent). Costs 0.014 ms a frame when not in use, 0.03 ms in 1st person, ~0.1 ms with the bar up (laptop, 1,560 units) |
+| Public release | [docs/DELIVERY.md](docs/DELIVERY.md), `tools/publish-check.ps1`, `Build APK.bat phone release`, `.github/` | The project's own icon in public builds (Kailil's BAR-derived icon only in his debug builds, from outside the repository), LICENSE, personal data out of tracked files, release signing with the publisher's key, CI, players' README, CHANGELOG, CONTRIBUTING; left for Kailil: the release key, the app's public name, a fresh or rewritten history, the push |
+| Work log | `tools/worklog.py` → [docs/WORKLOG.md](docs/WORKLOG.md), `docs/worklog/` | Kailil's messages, Claude's answers and both sides' hours from the Claude Code transcripts, kept in the repository; rerun after every work session |
 | Catch-up | `bardroid_touch.lua`, `GameActivity`, `libbardroid_pace.so` | Joining a running game: a black screen with "Catching up 12:30 of 41:10 x2.5", the engine not drawing (a 17-minute game caught up in 164 s); a game too big to catch up draws again after a minute |
 | Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera; the pad is a mouse in the lobby (see "Gamepad" below) |
 | Upscaling (SGSR) | patch 0007, `assets/sgsr/`, `GameActivity` | The X screen (smaller than the display) is enlarged with Qualcomm's SGSR 1 instead of plain bilinear filtering; plain if the GPU refuses the shader; "Compare upscaling" switches it every 3 s under a label (on until Kailil has compared, then off by default) |
@@ -300,8 +305,9 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
    (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
    versions (like the info panel); designed with Kailil first, with touch placement.
-2. **Kailil's calls:** a `LICENSE` file (README says GPL-3.0-or-later, as the embedded `lorie` module requires; the
-   file is the author's to add); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
+2. **Kailil's calls:** the `LICENSE` file is in since 2026-10-28 (the GPL-3.0 text, as README has always said
+   GPL-3.0-or-later and the embedded `lorie` module requires GPL-3; Kailil to confirm "or later", or `git revert`
+   it); the public release's open points (docs/DELIVERY.md); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
    status); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
    Defense Range GL4,
    Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the

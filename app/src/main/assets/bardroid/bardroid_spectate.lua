@@ -466,12 +466,13 @@ end
 -- the anchor of 1st person: a piece of the unit (FP.pieces for its type, else the first of FP.pieceNames it has; ""
 -- picks the middle) or the unit's middle; with the piece's facing on the map (dx, dz) and the anchor's name. The piece
 -- is looked up once per unit and anchor setting (the unit's piece map is a new table at every call).
-local anchorFound = {} -- { unitID, want, piece, name }
+local anchorFound = {} -- { unitID, defID (unit IDs are used again), want, piece, name }
 local function anchorOf(unitID)
-	local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	local defID = Spring.GetUnitDefID(unitID)
+	local def = UnitDefs[defID or -1]
 	local want = def and FP.pieces[def.name]
 	local piece, name
-	if anchorFound.unitID == unitID and anchorFound.want == want then
+	if anchorFound.unitID == unitID and anchorFound.defID == defID and anchorFound.want == want then
 		piece, name = anchorFound.piece, anchorFound.name
 	else
 		name = want
@@ -485,7 +486,8 @@ local function anchorOf(unitID)
 				end
 			end
 		end
-		anchorFound.unitID, anchorFound.want, anchorFound.piece, anchorFound.name = unitID, want, piece, name
+		anchorFound.unitID, anchorFound.defID, anchorFound.want = unitID, defID, want
+		anchorFound.piece, anchorFound.name = piece, name
 	end
 	if piece then
 		local px, py, pz, dx, _, dz = Spring.GetUnitPiecePosDir(unitID, piece)
@@ -1143,6 +1145,12 @@ end
 -- The state is looked at again every LAYOUT_EVERY seconds, or at once after a press or a resize.
 local LAYOUT_EVERY = 0.25
 local barList, layoutAt, barDirty = nil, -1, true
+local barMadeWith -- (BAR's font and FlowUI as they were when the list was made: made again when either turns up)
+
+local function drawTools()
+	return (WG.fonts and WG.fonts.getFont() and 1 or 0)
+		+ (WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.Element and 2 or 0)
+end
 
 local function dropBarList()
 	if barList then
@@ -1159,8 +1167,9 @@ function widget:DrawScreen()
 	if barDirty or t - layoutAt >= LAYOUT_EVERY then
 		layoutAt, barDirty = t, false
 		local fresh = layout()
-		if not barList or not sameButtons(fresh, buttons) then
-			buttons = fresh
+		local tools = drawTools()
+		if not barList or tools ~= barMadeWith or not sameButtons(fresh, buttons) then
+			buttons, barMadeWith = fresh, tools
 			dropBarList()
 			barList = gl.CreateList(drawBar)
 		end
