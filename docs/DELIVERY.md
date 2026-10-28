@@ -59,10 +59,10 @@ published or posted without Kailil.
       they exist.
 - [ ] docs/ARCHITECTURE.md: CLAUDE.md's architecture and key files written for people; CLAUDE.md keeps the AI
       assistant's working rules and points there.
-- [ ] CONTRIBUTING.md: online play must keep working (no engine changes, no modrules, no synced changes), never
+- [x] CONTRIBUTING.md: online play must keep working (no engine changes, no modrules, no synced changes), never
       bundle BAR content, the checks to run, upstream reports need an accepted issue and disclose AI assistance.
 - [x] CHANGELOG.md, from docs/HISTORY.md and the commit log, one section per version.
-- [ ] `.github/ISSUE_TEMPLATE/bug.md` (phone, Android version, "Share logs" output) and a PR template.
+- [x] `.github/ISSUE_TEMPLATE/bug.md` (phone, Android version, "Share logs" output) and a PR template.
 - [ ] `.github/workflows/build.yml`: the phone APK on Linux (Gradle and the committed prebuilts; Termux:X11 fetched
       and patched), the luacheck lint and the Java unit checks; the APK as an artifact. Untested until pushed.
 
