@@ -214,7 +214,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       that time does not end it; its fallback click (no answer: a plain click) can then come in the middle of the new
       gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered); open:
       the fix (the waiting tap decided at the next touch down) is Java that only the phone can check.
-      `tools/publish-check.ps1 -NoHistory` after the night's commits: ready.
+      `tools/publish-check.ps1 -NoHistory` after the night's commits: ready. CI's `tools/java-checks.sh` run locally
+      (the toolchain's sh and JDK 21): all four pass. Its javac notes `new URL(String)` in Downloader and Updater as
+      deprecated (since JDK 20); left as it is on purpose: Android's `java.net.URL` is not deprecated, and the
+      replacement (`URI.create(...).toURL()`, `URI.resolve`) parses more strictly (it refuses a space, which a
+      redirect's `Location` can carry), a download risk for nothing on the phone.
 
 ## Releasing (once the blockers are done)
 
