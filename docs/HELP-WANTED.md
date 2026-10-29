@@ -111,9 +111,15 @@ Not solved:
   of skirmish uses ~2.5 GB of GPU memory too (the laptop's per-process GPU counters), so the footprint is BAR's own,
   not the stack's. By loading phase (`GL mtrack` against the engine's load messages): the map ~500 MB, models,
   square and projectile textures and water ~1 GB, LuaRules (BAR's gadgets) ~620 MB, LuaUI ~110 MB, the game's start
-  ~270 MB. GPU memory cannot be swapped, and an 8 GB phone has ~4 GB at best: client settings cannot close that gap
-  (the app changes no game content). It needs BAR or the engine: lower texture detail for units and maps, GL4
-  effects that allocate their buffers as they grow, a lighter Lua state; that would open BAR to most phones.
+  ~270 MB. GPU memory cannot be swapped, and an 8 GB phone has ~4 GB at best. One engine setting closes the gap:
+  `CompressTextures = 1` (GPU ~2.75 → ~2.45 GB) let a 1v1 skirmish load and play in all 5 tries (3 to 10 minutes,
+  the phone's free memory steady at ~600 MB), where every one of 9 tries without it was ended while loading
+  (`tools/phone-memory.ps1`, build\phone-memory.csv). But it breaks two textures the engine draws into: the unit
+  icon atlas (icons draw as black squares) and the projectile perlin texture, on Windows too: an engine bug, report
+  drafted in [upstream/](upstream/recoil-compresstextures-fbo.md). Fixed there, 8 GB phones could play with it. No
+  help, alone or together: Lua pools off and faster Lua GC, map texture streaming, 2048 atlases, no model preloading,
+  no sound, 70% render resolution, no deferred buffers or high-precision ground normals. Beyond that it needs BAR or
+  the engine: lower texture detail, GL4 effects that allocate their buffers as they grow, a lighter Lua state.
 - The app's touch camera, panels and touch building are LuaUI user widgets: a lobby that turns custom widgets off
   loads none of them (the pad's mouse and keys still work; touch is then mouse clicks only). BAR's Code of Conduct
   asks for custom widgets used on public servers to be posted publicly (#widgets): they are all in

@@ -76,12 +76,14 @@ public class LauncherActivity extends AppCompatActivity {
 
     /**
      * "start bench" in the intent starts BAR's benchmark scenario unattended (tools/phone-bench.ps1:
-     * adb shell am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench).
+     * adb shell am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench); "start skirmish" the
+     * Play vs AI game (tools/phone-memory.ps1).
      */
     private void startFromIntent(Intent intent) {
-        if (intent == null || !"bench".equals(intent.getStringExtra("start"))) return;
+        String start = intent == null ? null : intent.getStringExtra("start");
+        if (!"bench".equals(start) && !"skirmish".equals(start)) return;
         intent.removeExtra("start");   // (not again when the screen is recreated)
-        GameService.start(this, GameService.ACTION_PLAY, "bench");
+        GameService.start(this, GameService.ACTION_PLAY, start);
     }
 
     @Override protected void onStart() { super.onStart(); Log.addListener(logListener); handler.post(ticker); }

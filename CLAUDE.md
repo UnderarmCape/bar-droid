@@ -142,6 +142,8 @@ powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70
             # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). On the dev phone (the Fold7: not
             # unless necessary, and never while Kailil uses it).
 powershell -ExecutionPolicy Bypass -File tools\devphone.ps1 [status|connect|dark|bench|watch]   # the dev phone's adb links and screen
+powershell -ExecutionPolicy Bypass -Command "& tools\phone-memory.ps1 -Settings @{ CompressTextures = 1 } [-Scale 70] [-Seconds 150] [-Label x]"
+            # the engine's memory on the dev phone in a skirmish (GPU, heap, swap, free memory, killed or not) -> build\phone-memory.csv
 powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"] [-PointerOnBattle]
             # the same scenario on the laptop as the phone runs it, every widget, unsynced gadget and engine timer logged
 ```

@@ -5,6 +5,23 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Fitting BAR into an 8 GB phone (2026-10-29, evening)
+Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
+idea was a run on the dev phone (`tools/phone-memory.ps1`: a skirmish started by intent, `start skirmish`, with engine
+settings for that run only through `dev-springsettings.cfg`, background apps stopped first; the engine's GPU memory
+from Android's GL mtrack, its heap resident and swapped, the phone's available memory every 5 s; build\phone-memory.csv).
+Android's resident total includes the GPU memory mapped into the engine; the engine's own heap shows as "Unknown"
+(the container's allocator is not Android's). The engine's `--list-config-vars` named the memory settings to try.
+Result: only `CompressTextures = 1` decides it (GPU ~2.75 → ~2.45 GB): 5 of 5 runs played on, up to a full 10 minutes
+of game (frame 18379, x1), the phone's free memory steady at ~600 MB; 9 of 9 runs without it were ended while
+loading or at the first frames. No help: Lua pools off and faster GC, map texture streaming, 2048 atlases, no model
+preloading (BAR loads them anyway), no sound, 70% render resolution, no deferred buffers. But compression breaks the
+unit icon atlas (icons are black squares) and the projectile perlin texture, on Windows too, also when switched off
+again after loading (the engine reads the setting once): an engine bug, drafted for Recoil
+(`docs/upstream/recoil-compresstextures-fbo.md`). Not for players as it is; the dev phone keeps it
+(`dev-springsettings.cfg`) so its games load for the agents' in-game tests. `touch-widget-test.ps1 -Settings` adds
+engine settings to a laptop run.
+
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this
 phone 24/7", its screen ultra dark at all times, the normal minimum brightness for benchmarks; his Fold7 only for

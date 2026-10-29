@@ -11,7 +11,9 @@ param(
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
   # also the "what is under the pointer" checks, which move the laptop's real mouse pointer (Spring.WarpMouse): off by
   # default (Kailil, 2026-10-28: the tests must not take his mouse); run them when nobody is using the laptop
-  [switch]$Pointer
+  [switch]$Pointer,
+  # engine settings added for this run (springsettings.cfg keys), e.g. @{ CompressTextures = 1 }: run with -Command
+  [hashtable]$Settings = @{}
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -58,7 +60,8 @@ try {
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
   ("Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = $(if ($Pointer) { 40 } else { $OffScreenX })`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" +
-    "`nbardroid_touchtest_pointer = $(if ($Pointer) { 1 } else { 0 })") |
+    "`nbardroid_touchtest_pointer = $(if ($Pointer) { 1 } else { 0 })" +
+    (($Settings.GetEnumerator() | ForEach-Object { "`n$($_.Name) = $($_.Value)" }) -join "")) |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   if ($GamepadGame) {
