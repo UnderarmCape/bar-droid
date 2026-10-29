@@ -49,9 +49,11 @@ public final class PadGameTest {
     /** One pump tick of 16 ms; pressed: buttons that went down since the last tick. */
     void tick(int... pressed) {
         boolean[] tapped = new boolean[COUNT];
+        boolean active = lx != 0 || ly != 0 || lt || rt;
         for (int b : pressed) { tapped[b] = true; held[b] = true; }
+        for (int b = 0; b < COUNT; b++) active |= held[b] || tapped[b];
         SystemClock.now += 16;
-        g.tick(held, tapped, lx, ly, lt, rt, 0.016f);
+        g.tick(held, tapped, lx, ly, lt, rt, active, 0.016f);
     }
 
     void up(int b) { held[b] = false; tick(); }
@@ -213,14 +215,26 @@ public final class PadGameTest {
         check("the order menu: A gives the order, B leaves, the D-pad steps (no clicks)",
                 t.has("act pad_select") && t.has("act pad_back") && t.has("act pad_right") && !t.has("left down"), t.m.out);
 
-        // After touch moved the pointer, the pad brings it back gliding
+        // After touch moved the pointer, a resting pad leaves it alone; used again, it brings the pointer back gliding
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
         t.m.at = new float[]{200, 100};
         t.g.otherInput();
-        t.wait(250);
-        check("after a touch the pointer glides back from where it was",
+        t.wait(500);
+        check("a pad lying unused leaves the pointer to touch or the mouse",
+                !t.has("centre") && t.count("moveTo ") == 0, t.m.out);
+        t.lx = 0.5f; t.tick(); t.lx = 0; t.wait(250);
+        check("used again (the left stick), the pointer glides back from where it was",
                 t.m.out.contains("moveTo 1000 500") && !t.has("centre") && t.count("moveTo ") >= 5, t.m.out);
+        t.m.out.clear();
+        t.lx = 1; t.tick(); t.lx = 0;   // (a glide under way when touch takes the pointer again stops)
+        t.m.at = new float[]{1500, 900};
+        t.g.otherInput();
+        t.wait(100);
+        check("a glide stops when touch takes the pointer", t.count("moveTo ") <= 2, t.m.out);
+        t = new PadGameTest();
+        t.wait(300);
+        check("a pad connected at the start but unused does not take the pointer", t.m.out.isEmpty(), t.m.out);
 
         System.out.println(fails == 0 ? "ALL PASS" : fails + " FAILED");
         System.exit(fails == 0 ? 0 : 1);

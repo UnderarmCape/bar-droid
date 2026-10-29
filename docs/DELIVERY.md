@@ -155,6 +155,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       focus now steps from itself and follows the pointer only once the warp has landed (or half a second on).
       touch-widget-test: right, right, down in one frame and three lefts past the edge (the real pointer's lag only
       shows with -Pointer).
+      `PadGame` reviewed for a pad that lies connected while fingers or a mouse play: its tick runs 60 times a second
+      whenever a pad is connected, and after each touch or mouse move it glided the pointer back to the middle at once,
+      taking it from under the finger (the widget's hover answer for the finger then never came) or the mouse; also at
+      the start of a game. Now it waits until the pad itself is used (a button, a stick, a trigger), and a glide under
+      way stops when touch takes the pointer. padgame-test: four checks (they fail on the old code).
 
 ## Releasing (once the blockers are done)
 

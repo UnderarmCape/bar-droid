@@ -276,7 +276,7 @@ public final class ControllerBridge {
         float dt = lastMouseTick == 0 ? 0 : Math.min(0.1f, (now - lastMouseTick) / 1000f);
         lastMouseTick = now;
         boolean[] held = new boolean[BUTTON_COUNT], tapped = new boolean[BUTTON_COUNT];
-        boolean rtHeld, ltHeld;
+        boolean rtHeld, ltHeld, active;
         float x, y, scroll;
         synchronized (this) {
             System.arraycopy(buttons, 0, held, 0, BUTTON_COUNT);
@@ -285,10 +285,12 @@ public final class ControllerBridge {
             x = stick(lx); y = stick(ly); scroll = stick(ry);
             rtHeld = rt > TRIGGER_HELD;
             ltHeld = lt > TRIGGER_DEADZONE;
+            active = x != 0 || y != 0 || scroll != 0 || stick(rx) != 0 || ltHeld || rt > TRIGGER_DEADZONE;
+            for (int i = 0; i < BUTTON_COUNT && !active; i++) active = held[i] || tapped[i];
         }
         if (mode == MODE_OFF) return;
         if (mode == MODE_GAME) {   // v0.8.5's controls (PadGame)
-            game.tick(held, tapped, x, y, ltHeld, rtHeld, dt);
+            game.tick(held, tapped, x, y, ltHeld, rtHeld, active, dt);
             return;
         }
         boolean a = held[BTN_A], b = held[BTN_B];

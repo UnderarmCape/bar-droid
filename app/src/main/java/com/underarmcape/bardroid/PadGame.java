@@ -64,6 +64,7 @@ final class PadGame {
     private boolean leftDown, rightDown, shift, space, alt;
     private boolean mouseMode;                     // Back+Start: a free pointer
     private volatile boolean centreWanted = true;  // the pointer must go (back) to the middle
+    private volatile boolean waitForPad = true;    // ... once the pad is used again (touch or a mouse has the pointer)
     private boolean reticle, drawing;
     private float px, py;                          // the pointer while drawing (X screen pixels)
     private long glideAt = -1;                     // a glide back to the middle: since when, from where
@@ -77,8 +78,11 @@ final class PadGame {
 
     PadGame(PadMouse mouse) { this.mouse = mouse; }
 
-    /** Touch or a real mouse moved the pointer: the pad brings it back to the middle when it is used again. Any thread. */
-    void otherInput() { centreWanted = true; }
+    /**
+     * Touch or a real mouse moved the pointer: the pad brings it back to the middle when it is used again, not before (a
+     * pad lying connected but unused kept taking the pointer away from the finger or the mouse). Any thread.
+     */
+    void otherInput() { centreWanted = true; waitForPad = true; }
 
     /** The left stick pans the camera (the pointer in the middle) rather than moving the pointer. */
     boolean reticle() { return reticle && !drawing; }
@@ -93,15 +97,18 @@ final class PadGame {
         java.util.Arrays.fill(prev, false);
         rbDownAt = startLeftAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = -1;
         sticky = drawing = false;
-        centreWanted = true;
+        centreWanted = waitForPad = true;
     }
 
     /**
      * One pump tick. held: the buttons down now; tapped: pressed since the last tick (even if already up again);
-     * lx, ly: the left stick (-1..1 past the deadzone); lt, rt: the triggers held.
+     * lx, ly: the left stick (-1..1 past the deadzone); lt, rt: the triggers held; active: the pad is in use (a button,
+     * a stick or a trigger, the right stick too).
      */
-    void tick(boolean[] held, boolean[] tapped, float lx, float ly, boolean lt, boolean rt, float dt) {
+    void tick(boolean[] held, boolean[] tapped, float lx, float ly, boolean lt, boolean rt, boolean active, float dt) {
         long now = SystemClock.uptimeMillis();
+        if (active) waitForPad = false;
+        else if (waitForPad) glideAt = -1;   // (touch or a mouse has the pointer: no glide pulls it away)
         String focus = mouse.padFocus();
         // (the order menu, and in the controller game v0.8.5's build menu, take A and X as actions: "buildapi")
         boolean menu = !focus.equals("none"), ordersMenu = focus.equals("orders") || focus.equals("buildapi");
@@ -154,7 +161,7 @@ final class PadGame {
         if (drawing && !wasDrawing) { glideAt = -1; px = mouse.width() / 2f; py = mouse.height() / 2f; }
         if (!drawing && wasDrawing && reticle) glideFrom(px, py, now);
         if (reticle && !drawing) {
-            if (centreWanted) {
+            if (centreWanted && !waitForPad) {
                 centreWanted = false;
                 float[] at = mouse.pointer();
                 if (at != null) glideFrom(at[0], at[1], now); else mouse.centre();
