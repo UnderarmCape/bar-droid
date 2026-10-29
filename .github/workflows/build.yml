@@ -45,6 +45,8 @@ jobs:
           java-version: "21"
       - name: Downloader, settings merge, updater rollback
         run: sh tools/java-checks.sh
+      - name: launch-bar.sh's build menu switching
+        run: sh tools/launch-bar-test.sh
 
   lua-lint:
     runs-on: ubuntu-24.04

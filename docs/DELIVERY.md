@@ -136,7 +136,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       engine's cardinal lock on; fixed, with a spectate-test case for the next unit (HISTORY.md "Evening").
       The new chat typing box reviewed against BAR's widget handler: BAR's hotkeys run before any widget hears a key
       unless one owns the text, so typing could also give orders; the box and the open layout editor own the text now
-      (HISTORY.md "Night").
+      (HISTORY.md "Night"). launch-bar.sh's new build menu switching had no check: `tools/launch-bar-test.sh` runs its
+      widget_order and controller-game block as they are on a scratch BYAR.lua (the copy in, BAR's own back on another
+      BAR file or none, the controller game off, a second start changing nothing; a sabotaged switch fails it); in
+      laptop-tests and CI.
 
 ## Releasing (once the blockers are done)
 

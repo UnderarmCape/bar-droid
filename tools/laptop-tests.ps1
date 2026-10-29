@@ -9,6 +9,7 @@
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
+#   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back)
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
 # The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's
 # checks of what is under the pointer move the real mouse pointer and run only with -Pointer (nobody at the laptop).
@@ -42,6 +43,18 @@ if ($luacheck) {
   if (-not $ok) { $out | Select-String -Pattern "\(W|\(E|Total:" | Select-Object -First 25 | ForEach-Object { Write-Host "   $_" } }
   $results += "{0} lua lint" -f $(if ($ok) { "PASS" } else { "FAIL" })
 } else { $results += "SKIP lua lint (no luacheck: run Install Toolchain.bat, or set LUACHECK to luacheck.exe)" }
+
+# launch-bar.sh's switching of BAR's build menus (tools/launch-bar-test.sh), with the portable Git's sh and its tools
+# (on PATH for this process only)
+$gitUsr = Join-Path $TC "git\usr\bin"
+if (Test-Path (Join-Path $gitUsr "sh.exe")) {
+  Write-Host "== launch-bar build menus"
+  $env:PATH = "$gitUsr;$env:PATH"
+  $out = & (Join-Path $gitUsr "sh.exe") (Join-Path $Tools "launch-bar-test.sh") 2>&1 | ForEach-Object { "$_" }
+  $ok = ($LASTEXITCODE -eq 0) -and ($out | Select-String -Pattern "done: ALL PASS" -Quiet)
+  if (-not $ok) { $out | Select-Object -Last 25 | ForEach-Object { Write-Host "   $_" } }
+  $results += "{0} launch-bar build menus" -f $(if ($ok) { "PASS" } else { "FAIL" })
+} else { $results += "SKIP launch-bar build menus (no sh in $gitUsr: run Install Toolchain.bat)" }
 
 Run "publish check patterns" "publish-check.ps1" "selftest: ALL PASS" @("-SelfTest")
 Run "downloader" "downloader-test.ps1" "ALL PASS"
