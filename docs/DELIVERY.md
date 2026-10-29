@@ -215,7 +215,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered). Fixed
       2026-10-29: the waiting tap is decided at the next touch down, before that touch moves the pointer (its late
       answer, else its click, in order). Not yet checked in a game on a phone: the dev phone (8 GB) cannot load one
-      (HELP-WANTED.md); Kailil's next Fold7 build carries it.
+      (HELP-WANTED.md); Kailil's next Fold7 build carries it. A touch-building try on the dev phone with
+      `CompressTextures = 1` (its games load then) ended at the first tap on the build menu: Android ended the app
+      for lack of memory again, so that mode has no headroom for play. It showed another bug: Android restored the
+      launcher with its first intent (`start skirmish`, also `start bench`), and the game started all over by
+      itself (`removeExtra` does not outlive the process); the intent now acts only on a fresh start (a forced kill
+      of the app's process: the launcher came back, no game).
       `tools/publish-check.ps1 -NoHistory` after the night's commits: ready. CI's `tools/java-checks.sh` run locally
       (the toolchain's sh and JDK 21): all four pass. Its javac notes `new URL(String)` in Downloader and Updater as
       deprecated (since JDK 20); left as it is on purpose: Android's `java.net.URL` is not deprecated, and the

@@ -66,7 +66,9 @@ public class LauncherActivity extends AppCompatActivity {
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
         deviceView.setText(deviceSummary());
         logView.setText(Log.dump());
-        startFromIntent(getIntent());
+        // (not when Android restores the screen, as it does after ending the app for lack of memory: it hands back the
+        // first intent, and the game or benchmark started all over again by itself; removeExtra does not outlive that)
+        if (savedInstanceState == null) startFromIntent(getIntent());
 
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED)
             requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 1);
