@@ -14,6 +14,13 @@ panel): 6 options a page with the arrows below, all of them when a builder has 9
 first try did not load: BAR's file sits near Lua 5.1's limit of 200 locals in one chunk and two more constants passed
 it ("main function has more than 200 local variables"); everything the copy adds is now one table (`droid`), fewer
 locals than before.
+Then, from the screenshots: "keep it the same size, but move the left and right arrows to into thier own small strip,
+it will be about a quarter the height of the real grid. and that will allow 3x3 items on top", "the page swapper and
+inidcator needs to be bigger. double the size", "increase the total height of the build menu to allow the pictures to
+fill their squares". So: 3 rows of items always (9 a page; BAR's paging set aside at the left), the arrows and the
+page number in a strip half a cell high under them, their text twice BAR's size, the grid centred, and the menu as
+tall as three rows of cells as wide as it allows plus the strip (height / width 1.16 on the laptop). The commander's
+26 options: 3 pages.
 
 ## Past midnight: a sizeable copy of BAR's Build menu; quiet laptop checks (2026-10-28)
 Kailil: "the vaniallal build menu works fine for touch. just rebuild the exact same one with the ability for us to

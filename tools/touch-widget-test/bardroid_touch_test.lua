@@ -639,13 +639,15 @@ cases = {
 			return
 		end
 		before.bm = { x0 = x0, y0 = y0, w = x1 - x0, h = y1 - y0 }
-		-- a 3 x 3 grid of square cells (Kailil: "only 6 items per page and have a 3x3 grid"): with more than 9 build
-		-- options BAR's paging takes the bottom row, 6 a page
+		-- a 3 x 3 grid, the page arrows in a strip under it (Kailil: "3x3 items on top of the left and right and page
+		-- indicator", the strip half a cell high): 9 options a page
 		local colls, rows, pages, count = B.droidGrid()
-		verify("build menu: 3 columns, 3 rows (6 a page with the arrows below)", colls == 3
-			and (count > 9 and rows == 2 and pages == math.ceil(count / 6) or count <= 9 and rows == 3),
+		verify("build menu: 3 x 3 options a page, the arrows in a strip under them", colls == 3 and rows == 3
+			and pages == math.max(1, math.ceil(count / 9)),
 			string.format("%s x %s, %s pages for %s options", tostring(colls), tostring(rows), tostring(pages), tostring(count)))
-		near("build menu: about square", (x1 - x0) / (y1 - y0), 1, 0.15)
+		-- (Kailil: "increase the total height of the build menu to allow the pictures to fill their squares": three
+		-- pictures across the menu, three rows and half a row's strip high)
+		near("build menu: 3 rows and the strip tall, 3 pictures wide", (y1 - y0) / (x1 - x0), 3.5 / 3, 0.06)
 		L.open()
 		local px, py = math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)
 		L.press(px, py)

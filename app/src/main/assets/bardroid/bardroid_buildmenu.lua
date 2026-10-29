@@ -76,10 +76,12 @@ local smartOrderUnits = true
 
 local maxPosY = 0.74
 -- BAR Droid: what the app adds, in one table (BAR's file is near Lua 5.1's limit of 200 locals in a chunk). At the left
--- a grid of colls x rows square cells, the menu as tall as that (Kailil, 2026-10-28: "Can the build menu be reduced to
--- show only 6 items per page and have a 3x3 grid"); with more build options than fit, BAR's own paging takes the
--- bottom row for its arrows: 6 options a page.
-local droid = { colls = 3, rows = 3, registered = false }
+-- a grid of colls x rows square cells across the menu's width (Kailil, 2026-10-28: "a 3x3 grid"), and the page arrows and
+-- number in a strip under it, strip x a cell's height ("move the left and right arrows into their own small strip,
+-- it will be about a quarter the height ... that will allow 3x3 items on top"; then "the page swapper and inidcator
+-- needs to be bigger. double the size": half a cell, their text pageText x BAR's): 9 options a page. (BAR's own
+-- paging gave a whole row to the arrows: 6 a page, the first version of this.)
+local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
 
@@ -486,11 +488,13 @@ local function UpdateGridGeometry()
 		end
 	end
 
-	-- BAR Droid: the grid at the left, droid.colls x droid.rows
+	-- BAR Droid: the grid at the left, droid.colls x droid.rows, the page strip under it
+	droid.gap = 0
 	if not stickToBottom then
 		colls = droid.colls
-		cellSize = math_floor(math_min(contentWidth / colls, contentHeight / droid.rows))
-		rows = math_floor(contentHeight / cellSize)
+		cellSize = math_floor(math_min(contentWidth / colls, contentHeight / (droid.rows + droid.strip)))
+		rows = droid.rows
+		droid.gap = math_floor((contentWidth - colls * cellSize) / 2) -- (the grid in the middle of the menu)
 	end
 
 	-- adjust grid size when pages are needed
@@ -518,6 +522,14 @@ local function UpdateGridGeometry()
 	else
 		currentPage = 1
 		pages = 1
+	end
+	-- BAR Droid: at the left all droid.rows stay items, the arrows in the strip under them
+	if not stickToBottom then
+		rows = droid.rows
+		pages = math_max(1, math_ceil(cmdsCount / (colls * rows)))
+		if currentPage > pages then
+			currentPage = pages
+		end
 	end
 
 	-- these are globals so it can be reused (hover highlight)
@@ -756,9 +768,11 @@ function widget:ViewResize()
 		width = math_floor(width * vsx) / vsx
 		height = math_floor(height * vsy) / vsy
 
-		-- BAR Droid: no taller than droid.rows square cells (its bottom stays above the unit panel)
+		-- BAR Droid: as tall as droid.rows cells as wide as the menu allows, and the page strip under them (Kailil:
+		-- "increase the total height of the build menu to allow the pictures to fill their squares"); its bottom
+		-- above the unit panel
 		local cellPx = (width * vsx - (bgpadding + activeAreaMargin) * 2) / droid.colls
-		local want = math_floor(droid.rows * cellPx + (bgpadding + activeAreaMargin) * 2) / vsy
+		local want = math_floor((droid.rows + droid.strip) * cellPx + (bgpadding + activeAreaMargin) * 2) / vsy
 		if want < height then
 			height = want
 			posY = posY2 + height
@@ -1408,10 +1422,10 @@ function drawBuildmenu()
 					activeArea[4] - ((row - 1) * cellSize),
 				}
 			else
-				cellRects[cellRectID] = {
-					activeArea[3] - ((colls - coll + 1) * cellSize),
+				cellRects[cellRectID] = { -- BAR Droid: droid.gap, the grid in the middle
+					activeArea[3] - droid.gap - ((colls - coll + 1) * cellSize),
 					activeArea[4] - (row * cellSize),
-					activeArea[3] - ((colls - coll) * cellSize),
+					activeArea[3] - droid.gap - ((colls - coll) * cellSize),
 					activeArea[4] - ((row - 1) * cellSize),
 				}
 			end
@@ -1440,6 +1454,7 @@ function drawBuildmenu()
 	else
 		tracy.ZoneBeginN("W:BuildMenu:DrawBuildmenu:Paginator")
 		local paginatorFontSize = math_max(0.016 * vsy, paginatorCellHeight * 0.2)
+			* (stickToBottom and 1 or droid.pageText) -- BAR Droid: the page strip's arrows and number bigger
 		local paginatorCellWidth = math_floor(contentWidth * 0.3)
 
 		paginatorRects[1] = {
