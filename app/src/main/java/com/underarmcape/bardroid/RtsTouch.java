@@ -225,6 +225,7 @@ final class RtsTouch {
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 source("touch");
+                finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
                 state = State.PENDING;
@@ -622,6 +623,21 @@ final class RtsTouch {
     }
 
     private static final int HOVER_ASKS = 8;   // a tap with a building picked asks this often, HOVER_WAIT_MS in all
+    private Runnable waitingTap;   // such a tap still waiting for the game's answer, and its point (view pixels)
+    private float waitX, waitY;
+
+    /**
+     * A tap still waiting for the game's answer is decided at the next touch down, with the answer there is by then
+     * (none: the click, as after the wait): the next touch moves the pointer, so the answer for the tap's point could
+     * no longer come, and the click came 250 ms later, in the middle of the new gesture (a drag's button held).
+     */
+    private void finishWaitingTap() {
+        if (waitingTap == null) return;
+        ui.removeCallbacks(waitingTap);
+        waitingTap = null;
+        Place p = place();
+        if (p == null || !tapBuilding(waitX, waitY, p, hoverAt(waitX, waitY), 0)) clickTap(waitX, waitY);
+    }
     /**
      * A tap with a building picked: true when it was PLACE or picked the spot (or will be decided shortly). Where the
      * game has not yet said whether the point is on its interface (a quick tap, a slow frame late in a game), it asks
@@ -643,10 +659,13 @@ final class RtsTouch {
             return true;
         }
         if (hover == HOVER_UNKNOWN && asks > 0) {
-            ui.postDelayed(() -> {
+            waitX = vx; waitY = vy;
+            waitingTap = () -> {
+                waitingTap = null;
                 Place p = place();
                 if (p == null || !tapBuilding(vx, vy, p, hoverAt(vx, vy), asks - 1)) clickTap(vx, vy);
-            }, HOVER_WAIT_MS / HOVER_ASKS);
+            };
+            ui.postDelayed(waitingTap, HOVER_WAIT_MS / HOVER_ASKS);
             return true;
         }
         if (hover == HOVER_MAP) {   // the spot: the building shows there until PLACE
