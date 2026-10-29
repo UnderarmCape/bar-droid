@@ -751,7 +751,7 @@ cases = {
 		end
 		Spring.SendCommands("screenshot png") -- the strip, PLACE and the spot (build\touch-widget-test\data\screenshots)
 		local armed, shape = WG.buildmenu.droidPlace()
-		local panel, spot = WG.buildmenu.droidPanel()
+		local _, spot = WG.buildmenu.droidPanel()
 		verify("build menu: GRID chosen", armed and shape == "grid", shape)
 		verify("build menu: rotate turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
 			before.facing .. " -> " .. Spring.GetBuildFacing())
@@ -759,6 +759,18 @@ cases = {
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: the app told GRID, PLACE and the spot",
 			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+\n$"), text)
+		-- a spot that lies under the menu (the camera moved): PLACE would click the menu, so the app is told none
+		local b = before.bm
+		touch(string.format("spot %d %d", b.x0 + b.w / 2, vsy - (b.y0 + b.h / 2) - 1))
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local panel, spot = WG.buildmenu.droidPanel()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("build menu: a spot under the menu is not told to the app", spot ~= nil and not text:find("spot"), text)
 		touch("spot none") -- (RtsTouch after PLACE)
 		if panel then
 			local r = panel.cancel

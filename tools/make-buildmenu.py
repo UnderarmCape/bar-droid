@@ -259,13 +259,14 @@ function droid.spotPos()
 	end
 	return Spring.Pos2BuildPos(droid.defID, s[1], s[2], s[3], Spring.GetBuildFacing())
 end
+-- (none when it is off the screen or under this menu, PLACE or the minimap: a click there would hit them, not the map)
 function droid.spotOnScreen()
 	local bx, by, bz = droid.spotPos()
 	if not bx then
 		return nil
 	end
 	local sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
-	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy then
+	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
 		return nil
 	end
 	return math_floor(sx), math_floor(sy)
@@ -324,7 +325,7 @@ function droid.drawPanel()
 	if not p then
 		return
 	end
-	local ready = droid.spot ~= nil -- (green once a tap has picked the spot)
+	local ready = droid.spotOnScreen() ~= nil -- (green once a tap has picked the spot, while it can be clicked)
 	local a = p.all
 	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
 		ready and { 0.1, 0.5, 0.1, 0.95 } or { 0.1, 0.25, 0.1, 0.9 }, ready and { 0.25, 0.8, 0.25, 0.95 } or { 0.2, 0.35, 0.2, 0.9 },

@@ -143,6 +143,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       broken by that commit (a "$gitUsr:" in a string: PowerShell would not parse the file); fixed, and every
       tools\*.ps1 is now parsed first (laptop-tests, and CI with pwsh, which also covers laptop-tests.ps1). All 12
       checks pass, the lobby, bridge and catch-up tests with their games off-screen.
+      The touch building's taps reviewed (`RtsTouch`, the build menu copy): a tap shorter than the game's answer for
+      that point (a quick finger, a slow late-game frame) became a plain click and placed the building at once,
+      without PLACE; it now asks again for up to 250 ms first. And a spot the camera had moved under the build menu,
+      PLACE or the minimap made PLACE click that interface instead; such a spot is no longer told to the app (PLACE
+      dims until it is back in view; a touch-widget-test case). The Java side is Kailil's to check on the phone.
 
 ## Releasing (once the blockers are done)
 

@@ -201,6 +201,7 @@ final class RtsTouch {
     }
 
     void close() {
+        ui.removeCallbacksAndMessages(null);   // (also a tap still waiting for the game's answer: tapBuilding)
         ui.removeCallbacks(fling);
         ui.removeCallbacks(longPress);
         ui.removeCallbacks(hoverTimeout);
@@ -615,27 +616,50 @@ final class RtsTouch {
     }
 
     private void tap(float vx, float vy) {
-        float x = toX(vx), y = toY(vy);
         Place place = place();
-        if (place != null) {   // a building picked
-            float[] d = place.done;
-            if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]) {
-                // PLACE: the building at the spot, and it stays picked for the next (Shift held for the click)
-                lastTapX = -1; doubleTapX = -1;
-                if (place.spot != null) {
-                    holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
-                    clickAt(place.spot[0], place.spot[1]);
-                    releaseKeys();
-                    send("spot none");
-                }
-                return;
+        if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
+        clickTap(vx, vy);
+    }
+
+    private static final int HOVER_ASKS = 8;   // a tap with a building picked asks this often, HOVER_WAIT_MS in all
+    /**
+     * A tap with a building picked: true when it was PLACE or picked the spot (or will be decided shortly). Where the
+     * game has not yet said whether the point is on its interface (a quick tap, a slow frame late in a game), it asks
+     * again for up to HOVER_WAIT_MS before the tap becomes a click: a plain click on the map would place the building
+     * at once, without PLACE.
+     */
+    private boolean tapBuilding(float vx, float vy, Place place, int hover, int asks) {
+        float x = toX(vx), y = toY(vy);
+        float[] d = place.done;
+        if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]) {
+            // PLACE: the building at the spot, and it stays picked for the next (Shift held for the click)
+            lastTapX = -1; doubleTapX = -1;
+            if (place.spot != null) {
+                holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+                clickAt(place.spot[0], place.spot[1]);
+                releaseKeys();
+                send("spot none");
             }
-            if (hoverAt(vx, vy) == HOVER_MAP) {   // the spot: the building shows there until PLACE
-                lastTapX = -1; doubleTapX = -1;
-                send(String.format(Locale.US, "spot %.0f %.0f", x, y));
-                return;
-            }
+            return true;
         }
+        if (hover == HOVER_UNKNOWN && asks > 0) {
+            ui.postDelayed(() -> {
+                Place p = place();
+                if (p == null || !tapBuilding(vx, vy, p, hoverAt(vx, vy), asks - 1)) clickTap(vx, vy);
+            }, HOVER_WAIT_MS / HOVER_ASKS);
+            return true;
+        }
+        if (hover == HOVER_MAP) {   // the spot: the building shows there until PLACE
+            lastTapX = -1; doubleTapX = -1;
+            send(String.format(Locale.US, "spot %.0f %.0f", x, y));
+            return true;
+        }
+        return false;
+    }
+
+    /** A tap as a left click; a quick second one a double click, a third the type on the whole map. */
+    private void clickTap(float vx, float vy) {
+        float x = toX(vx), y = toY(vy);
         float tol = slop * 2 * xPerViewPixel();
         long now = SystemClock.uptimeMillis();
         // A third quick tap: the double click's unit types on the whole map. No click (it would select one unit).
