@@ -27,8 +27,8 @@ try {
     --unpack "$Data\games\BAR-gamepad.sdd" --bar-data $Bar
   if ($LASTEXITCODE) { throw "unpacking the controller game failed" }
   # as launch-bar.sh leaves it with the controller game on: the lobby's singleplayer game is byar-dev, local widgets,
-  # interface scale 120%
-  $scales = (0..5 | ForEach-Object { $x = $_; 0..11 | ForEach-Object { "[`"${x}x$_`"] = 1.2," } }) -join " "
+  # interface scale 135%
+  $scales = (0..5 | ForEach-Object { $x = $_; 0..11 | ForEach-Object { "[`"${x}x$_`"] = 1.35," } }) -join " "
   Write-LobbyConfig $Data "gameConfigName = `"byar-dev`", loadLocalWidgets = true, panel_layout = 3, uiScalesForScreenSizes = { $scales },"
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_lobby_touch.lua") "$Data\LuaMenu\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "lobby-game-test\bardroid_lobby_game_test.lua") "$Data\LuaMenu\Widgets\" -Force
