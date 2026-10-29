@@ -24,6 +24,12 @@ resize it freely. becuaser right now it is too large."
   the build menu brings BAR's own back, logged as an Android-layer miss, until the tool runs again.
 - touch-widget-test: shown for a builder, picked in the editor, Size - twice (0.855), dragged, Reset; in the controller
   game the copy stands down and v0.8.5's shows. All pass in both games.
+- On the phone (20:26, Kailil's phone free; the app's benchmark start): Installer wrote BAR's gui_buildmenu.lua md5
+  a5d8e476... (the copy's), launch-bar.sh switched the copy in ("build menu: the app's copy of BAR's"), the renamed
+  controller game installed, and in it the copy stood down for "Build menu (controller)"; the benchmark ran to its
+  results and quit (exit 0), no widget errors. BAR's options log "'buildmenu_maxposy' widgetConfig: unknown widget
+  Build menu" in the controller game: that one setting of BAR's options panel finds its menu by name; its other build
+  menu settings go through WG.buildmenu and reach both menus.
 - **Quiet laptop checks** (Kailil: "is it possible to not have it hijack my mouse or keyboard when its testing", "the
   laptop test is also appearing on top and not letting any window display over it"): the engine's window was never
   "always on top" (its style sampled during a run), but every new game window opened in front and took the keyboard,
