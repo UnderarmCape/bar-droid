@@ -223,6 +223,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       pattern can match inside another line (the gamepad's act names, `slow_pan`, `pad_*`, `rotate_*`, never have the
       space after them that `pan `, `pad ` and `rot ` need); the left stick goes to the pointer exactly while it draws
       or is free, and pans under the reticle otherwise (the area select too).
+      Both games' touch-widget-test logs after the night's widget changes scanned for errors and warnings the cases do
+      not catch (an error in a path no case takes would remove a widget quietly): only BAR's own (a deprecated config
+      key, a test weapon without a model, sound overrides).
 
 ## Releasing (once the blockers are done)
 
