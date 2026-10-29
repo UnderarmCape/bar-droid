@@ -42,8 +42,9 @@ The first version meant for other people's phones: everything since the first bu
   of BAR's start countdown.
 
 **Controllers, mouse and keyboard**
-- Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; the pad drives the camera online and is a
-  mouse in the lobby.
+- Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby; in BAR's own game
+  (online, spectating) a mouse and keyboard: the left stick the pointer, the right stick the camera, A and B the
+  mouse buttons, RT Shift, LB Ctrl, the D-pad control groups 1-4, Back Escape, Start BAR's options.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 

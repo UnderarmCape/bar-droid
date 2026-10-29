@@ -77,8 +77,21 @@ factions' matching unit too.
 
 ## Gamepad, mouse and keyboard
 
-- **Gamepads:** skirmish runs BAR Controller Support, a full controller interface; online, the pad moves the camera;
-  in the lobby it is a mouse.
+- **Gamepads:** skirmish runs BAR Controller Support, a full controller interface; in the lobby the pad is a mouse.
+  In BAR's own game (online, spectating) the pad is a mouse and keyboard, one button one input, as Steam Input is on
+  a PC:
+
+  | Pad | In the game |
+  |---|---|
+  | Left stick | The pointer (slower over the interface); LT held: fine aim |
+  | Right stick | Pan the camera; with LB held: turn (left/right) and zoom (up/down) |
+  | A / B | Left / right mouse button (hold A and move: box select or a row of buildings; hold B: a formation) |
+  | RT held | Shift (queue orders) |
+  | LB held | Ctrl (LB + D-pad: Ctrl+1..4, assign a group) |
+  | D-pad | 1, 2, 3, 4 (up, right, down, left): control groups |
+  | Back / Start | Escape / BAR's options (F10) |
+  | X / Y | Attack-move (A places it) / the next idle builder |
+  | Left / right stick click | Select all your units / the whole map and back |
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

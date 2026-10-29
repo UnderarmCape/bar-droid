@@ -79,6 +79,10 @@ Not solved:
 - Only one phone has run it; other Adreno 7xx/8xx phones should take the same path but are untested. Mali, Xclipse
   and Tensor GPUs have no driver path in this stack.
 - A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game.
+- The app's touch camera, panels and touch building are LuaUI user widgets: a lobby that turns custom widgets off
+  loads none of them (the pad's mouse and keys still work; touch is then mouse clicks only). BAR's Code of Conduct
+  asks for custom widgets used on public servers to be posted publicly (#widgets): they are all in
+  `app/src/main/assets/bardroid/`. Shipping them with BAR (or touch support in BAR's own widgets) would settle both.
 - Reports drafted for upstream, not filed ([upstream/](upstream/)): BAR's saved games crash the engine on load
   (Windows too), Mesa's KGSL present-fence path, an arm64 AI bug in CircuitAI.
 - It is 100% vibe coded: an AI assistant (Claude Code) wrote all of the project's own code at the author's

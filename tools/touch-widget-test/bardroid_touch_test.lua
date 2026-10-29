@@ -311,7 +311,21 @@ cases = {
 		near("act overview_in: overview camera", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
 		touch("act overview_out")
 	end,
-	function() near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0) end,
+	function()
+		near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
+		touch("act overview") -- the pad's right stick click: the whole map, and back
+	end,
+	function()
+		near("act overview: the whole map", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
+		touch("act overview")
+	end,
+	function()
+		near("act overview again: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
+		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
+		local want = Game.gameVersion == "$VERSION" and "controller 1\n" or "controller 0\n"
+		verify("the game told the app who has the pad", readFile("LuaUI/Config/bardroid_game.txt") == want,
+			readFile("LuaUI/Config/bardroid_game.txt"))
+	end,
 	-- the camera's way back from the overview: still for 20 frames before the pad moves it (a fixed wait of 20 frames
 	-- was sometimes too short: "sticks at rest" saw the camera 695 elmos on, 2026-10-28)
 	settle,

@@ -16,14 +16,17 @@
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+--   LuaUI/Config/bardroid_game.txt    widget, at start: controller <0|1>        (1: the controller game, v0.8.5 reads
+--                                                                               the pad; 0: the pad is a mouse and keys)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
 --                                                                               with a running game: the engine then
 --                                                                               draws nothing)
 --
--- The gamepad camera is for BAR's released game (online, spectating). It moves the camera the way Kailil's controller
--- build (BAR Controller Support v0.8.5, the app's singleplayer game) does: left stick pans (LT up to 2.75x faster),
--- right stick turns (x) and zooms (y; with LB held it tilts instead). In that game v0.8.5 reads the pad itself, so
--- this part stays off there.
+-- The gamepad camera is for BAR's released game (online, spectating), with v0.8.5's camera speeds and easing: the
+-- app's pad lines say pan (lx, ly), turn (rx), zoom (ry; tilt with lb) and boost (lt). There the app makes the left
+-- stick the pointer, so its lines carry the right stick: a pan, or with LB held a turn and a zoom (ControllerBridge).
+-- In the controller game (BAR Controller Support v0.8.5, the app's singleplayer game) v0.8.5 reads the pad itself,
+-- so this part stays off there.
 
 function widget:GetInfo()
 	return {
@@ -40,6 +43,7 @@ end
 local TOUCH = "LuaUI/Config/bardroid_touch.txt"
 local SCREEN = "LuaUI/Config/bardroid_screen.txt"
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
+local GAME = "LuaUI/Config/bardroid_game.txt"
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- a drag over the screen height tilts this much (Kailil: +75%, then +50%)
 -- Finger moves reach the camera over a few frames instead of in whatever batch each frame happened to collect
 -- (Kailil, 2026-10-26: "super juttery", "like a super cheap touch screen mp3 player"); seconds.
@@ -99,6 +103,12 @@ function widget:Initialize()
 	-- the controller game: BAR's developer game ("$VERSION") with v0.8.5's pad bridge
 	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
 	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
+	-- for the app: in the controller game the pad is v0.8.5's; in BAR's game a mouse and keys (ControllerBridge)
+	local f = io.open(GAME, "w")
+	if f then
+		f:write(padCamera and "controller 0\n" or "controller 1\n")
+		f:close()
+	end
 	zoomMinDistance = math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", 0.1) or 0.1, 0.1)
 	zoomMaxDistance = math.max(Game.mapSizeX, Game.mapSizeZ) * 1.333
 	local cs = spGetCameraState()
@@ -255,6 +265,9 @@ local ACTIONS = {
 		if inOverview() then
 			Spring.SendCommands("toggleoverview")
 		end
+	end,
+	overview = function() -- the pad's right stick click: the whole map, and back
+		Spring.SendCommands("toggleoverview")
 	end,
 	idle_next = function()
 		idleBuilder(1)

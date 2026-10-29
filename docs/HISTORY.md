@@ -5,6 +5,24 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The gamepad online: a mouse and keyboard (2026-10-28, night)
+Kailil: "spin up a helper to research some way to get our gamepad support working in online." The research (a
+background agent, BAR release 2026.10.20-1 and master read): v0.8.5 cannot run as a user widget online. It reads the
+pad over a socket (the sandbox removes `socket`), it relies on ten of BAR's widgets patched with `WG.*.controller*`
+hooks (online BAR's originals load), it uses widget-handler internals, and its 89 `GiveOrder*` calls need
+`allowunitcontrolwidgets`. What works with nothing from BAR's developers is the pad as an X mouse and keyboard from
+the app, which no widget, modoption or lobby setting can see or block. Its other findings: a lobby that turns custom
+widgets off loads none of the app's widgets (the touch camera included), and BAR's Code of Conduct asks for custom
+widgets used on public servers to be posted on #widgets. Kailil: "Yes, start the pad-as-mouse-and-keyboard plan".
+`ControllerBridge` now has three modes: the lobby (as before), the controller game (v0.8.5 reads the packets; the
+touch widget says which game it is in `bardroid_game.txt`), and BAR's game: the left stick the pointer (x0.6 over the
+interface by the widget's hover answer, x0.35 with LT held), the right stick the camera through the old pad lines
+(a pan, or with LB a turn and a zoom; tilt stays with two fingers), A and B the mouse buttons, RT Shift, LB Ctrl,
+the D-pad 1-4, Back Escape, Start F10 (BAR's options; Escape, 1-4, Ctrl+1-4 and F10 checked in BAR's
+keybind_defaults.json), and X, Y and the stick clicks the touch widget's actions (fight, the next idle builder,
+select all, the overview, now also a toggle). Every key and button is let go when the mode changes or the screen
+pauses. touch-widget-test: the overview toggle and the game file; the pad itself is Kailil's to check on the phone.
+
 ## Building by touch again: the shape strip (2026-10-28, late evening)
 Kailil: "what happened to the touch building system we created a while back, wht the line, grid and border setup.
 revamp the whole system before you bring it in." That was the touch-only mode of 2026-10-25 (`c33d9af` a touch build

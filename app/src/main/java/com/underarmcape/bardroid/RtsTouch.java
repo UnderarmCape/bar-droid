@@ -643,6 +643,44 @@ final class RtsTouch {
     /** The gamepad camera's stick state (ControllerBridge, any thread): the widget moves the camera every frame. */
     void padLine(String line) { send(line); }
 
+    /** A gamepad button's game action (ControllerBridge, any thread). */
+    void padAct(String name) { act(name); }
+
+    private final File gameFile = new File(widgetDir, "bardroid_game.txt");
+    private volatile long gameFileAt = -1;
+    private volatile boolean controllerGame;
+    /** The game is the controller game (v0.8.5 reads the pad): bardroid_game.txt "controller 1". Any thread. */
+    boolean controllerGame() {
+        long at = gameFile.lastModified();
+        if (at != gameFileAt) {
+            String text = readSmall(gameFile);
+            controllerGame = text != null && text.trim().equals("controller 1");
+            gameFileAt = at;
+        }
+        return controllerGame;
+    }
+
+    private volatile long interfaceAt;
+    private volatile boolean onInterface;
+    /** The game's last answer for the pointer, wherever it is: over the interface (read at most every 100 ms). Any thread. */
+    boolean pointerOnInterface() {
+        long now = SystemClock.uptimeMillis();
+        if (now - interfaceAt >= 100) {
+            String text = readSmall(hoverFile);
+            String[] f = text == null ? new String[0] : text.trim().split(" ");
+            onInterface = f.length == 3 && f[2].equals("1");
+            interfaceAt = now;
+        }
+        return onInterface;
+    }
+
+    private static String readSmall(File file) {
+        byte[] b = new byte[64];
+        int n;
+        try (FileInputStream in = new FileInputStream(file)) { n = in.read(b); } catch (IOException e) { return null; }
+        return n <= 0 ? null : new String(b, 0, n, StandardCharsets.US_ASCII);
+    }
+
     private String inputSource;
     private long inputSourceAt;
     /**
