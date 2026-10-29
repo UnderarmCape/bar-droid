@@ -209,6 +209,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       The build menu copy's D-pad reviewed: on the last page, right from the last option (a row not full) stayed on it,
       stuck (the step past the end was clamped back); it now goes on to the next page like right past the edge (from
       the last page, the first, the same row). touch-widget-test case.
+      `RtsTouch`'s touch building taps reviewed again (the build menu copy's spot and PLACE code too: nothing): a tap
+      still waiting for the game's answer (up to 250 ms, `tapBuilding`) is not tied to its gesture, so a new gesture in
+      that time does not end it; its fallback click (no answer: a plain click) can then come in the middle of the new
+      gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered); open:
+      the fix (the waiting tap decided at the next touch down) is Java that only the phone can check.
+      `tools/publish-check.ps1 -NoHistory` after the night's commits: ready.
 
 ## Releasing (once the blockers are done)
 
