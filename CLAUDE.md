@@ -2,13 +2,17 @@
 
 Working folder on the laptop: `C:\Tools\BARANDROID\` (this project is `bar-droid-app/` inside it).
 Owner: Kailil (GitHub UnderarmCape). Goal: a sideloadable APK that plays BAR. **It plays on Kailil's Galaxy Z Fold7**
-(~30 fps); the emulator on this laptop stays the quick test bench. Phone adb: USB or Wi-Fi
-`adb connect <phone>:5555` (after `adb tcpip 5555`, until the phone reboots); the phone's address, serial and which
-Wi-Fi it must be on: `CLAUDE.local.md` (Kailil's, not in the repository; `tools\phone-bench.ps1` reads
-`..\phone-device.txt`). Kailil checks fps and sound
-themselves: do not run monitoring on the phone while Kailil plays. Install every new phone build right away, even
-over a running game; never ask first (Kailil). Test on the phone only (Kailil, 2026-10-25): Kailil does the check
-(fold, play, lobby), you read the logs; no emulator, and don't drive the phone's game yourself unless asked.
+(~30 fps). Two phones on adb (Kailil, 2026-10-29): the **dev phone** (a Galaxy S23 Ultra, always on USB, adb over
+Wi-Fi as a backup) is the agents' own, 24/7, for dev work, tests and benchmarks: drive its game yourself; its screen is
+kept dark (`tools\devphone.ps1` status|connect|dark|bench; `tools\devphone-watch.bat` keeps it connected and dark;
+`tools\phone-bench.ps1` puts it at the normal minimum brightness for a run). The **Fold7** is his daily phone, only
+for builds that need his own testing (fold, play, lobby; he checks fps and sound, you read the logs): no benchmarks or
+monitoring on it unless necessary, never while he plays. Install every build that needs his testing on the Fold7 right
+away, even over a running game; never ask first. The tools drive the dev phone (`..\phone-device.txt`: its serial and
+Wi-Fi address, outside the repository; `toolchain.ps1` Get-PhoneDevice); name the Fold7 on purpose with
+`ANDROID_SERIAL` (`Install on Phone.bat`, `Get Logs.bat`) or `-Device`. Serials, addresses and the Wi-Fi both must be
+on: `CLAUDE.local.md` (Kailil's, not in the repository). Wi-Fi adb: `adb tcpip 5555` over USB, until the phone
+restarts. No emulator for checks (Kailil, 2026-10-25); it stays a bench for emulator builds only.
 
 For people: README.md (players), docs/BUILDING.md, docs/ARCHITECTURE.md, CONTRIBUTING.md; keep them current when
 something they describe changes.
@@ -135,7 +139,9 @@ powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70
             # `am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench`): warms the phone up into the
             # throttled state a late game plays in (Kailil: measure hot, back to back), then Sim/Draw/Update ms per frame,
             # game speed, clocks every 5 s (tools/phone-clocks.sh) and the busiest threads -> build\phone-bench.csv; one
-            # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). Only while Kailil is not using the phone.
+            # run at a time across sessions (lock C:\Tools\BARANDROID\phone-bench.lock). On the dev phone (the Fold7: not
+            # unless necessary, and never while Kailil uses it).
+powershell -ExecutionPolicy Bypass -File tools\devphone.ps1 [status|connect|dark|bench|watch]   # the dev phone's adb links and screen
 powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfilers] [-AlsoOff "Widget"] [-Functions -Detail "Widget"] [-PointerOnBattle]
             # the same scenario on the laptop as the phone runs it, every widget, unsynced gadget and engine timer logged
 ```

@@ -46,21 +46,69 @@ function Test-BenchHidden([string[]]$lines) {
   $hidden
 }
 
-# The phone's adb serial for tools that drive it: BARDROID_DEVICE if set, else the first line of phone-device.txt
-# beside the toolchain folder (the player's phone, e.g. its Wi-Fi address 192.168.x.y:5555; outside the
-# repository), else the one device adb lists. "" when there is none.
+# The phone's adb serial for tools that drive it: BARDROID_DEVICE if set, else from phone-device.txt beside the
+# toolchain folder (outside the repository: the dev phone, its USB serial and its Wi-Fi address 192.168.x.y:5555) the
+# first line adb lists, else its first Wi-Fi address (for the caller's adb connect), else the one device adb lists.
+# "" when there is none. (Kailil, 2026-10-29: a dev phone always on USB adb for the agents; his Fold7, which he uses
+# daily, only for his own tests of builds, and no benchmarks on it.)
+function Get-PhoneDevices {
+  $file = Join-Path (Split-Path $TC) "phone-device.txt"
+  if (-not (Test-Path $file)) { return @() }
+  @(Get-Content $file | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith("#") })
+}
 function Get-PhoneDevice([string]$adb) {
   if ($env:BARDROID_DEVICE) { return $env:BARDROID_DEVICE }
-  $file = Join-Path (Split-Path $TC) "phone-device.txt"
-  if (Test-Path $file) {
-    $d = Get-Content $file | ForEach-Object { $_.Trim() } | Where-Object { $_ -and -not $_.StartsWith("#") } |
-      Select-Object -First 1
-    if ($d) { return $d }
-  }
   $listed = @(& $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match "^(\S+)\s+device$" } |
     ForEach-Object { $Matches[1] })
+  $mine = Get-PhoneDevices
+  foreach ($d in $mine) { if ($listed -contains $d) { return $d } }
+  $wifi = @($mine | Where-Object { $_ -match ":\d+$" })
+  if ($wifi.Count) { return $wifi[0] }
+  if ($mine.Count) { return $mine[0] }
   if ($listed.Count -eq 1) { return $listed[0] }
   return ""
+}
+
+# The dev phone's screen (Kailil, 2026-10-29: "at all times, the screen is at an ultra dark minimum setting ... so the
+# screen being on 24/7 wont cause burn in or extra heat"; "for bench marks, just have the screen at normal minimum
+# brightness"). dark: manual brightness at its minimum, Samsung's Extra dim at 100% (kept across restarts), the
+# wallpaper dimmed, awake while powered; bench: the minimum brightness, Extra dim off. Only settings that differ are
+# written; the screen is woken if it went off. (A black overlay window was not used: screenshots would be black and
+# Android drops touches through an opaque window of another app; the display's color matrix is refused to the shell.)
+$PhoneScreen = @{
+  dark = @'
+s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
+s system screen_brightness_mode 0
+s system screen_brightness 1
+s secure reduce_bright_colors_level 100
+s secure reduce_bright_colors_persist_across_reboots 1
+s secure reduce_bright_colors_activated 1
+s global stay_on_while_plugged_in 15
+cmd wallpaper get-dim-amount | grep -q ' 1.0$' || { cmd wallpaper set-dim-amount 1 >/dev/null; echo "wallpaper dim 1.0"; }
+dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
+'@
+  bench = @'
+s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
+s system screen_brightness_mode 0
+s system screen_brightness 1
+s secure reduce_bright_colors_activated 0
+s global stay_on_while_plugged_in 15
+dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
+'@
+}
+# A shell script run on a device (adb quoting through PowerShell is fragile, and a pipe into adb can start with a
+# byte-order mark, which broke the script's first line): written as ASCII with LF endings, pushed, run; its output
+function Invoke-PhoneScript([string]$adb, [string]$device, [string]$script, [string]$name = "bardroid-x.sh") {
+  $tmp = Join-Path $TC "tmp"
+  New-Item -ItemType Directory -Force $tmp | Out-Null
+  $file = Join-Path $tmp $name
+  [IO.File]::WriteAllText($file, ($script -replace "`r", ""), (New-Object Text.ASCIIEncoding))
+  $null = & $adb -s $device push $file "/data/local/tmp/$name" 2>&1   # (its progress line comes on stderr)
+  & $adb -s $device shell sh "/data/local/tmp/$name"
+}
+# The screen profile (dark or bench) on a device; prints the settings it changed
+function Set-PhoneScreen([string]$adb, [string]$device, [string]$mode) {
+  Invoke-PhoneScript $adb $device $PhoneScreen[$mode] "bardroid-screen.sh"
 }
 
 # The lobby tests never log in (Kailil, 2026-10-28: "i cant have two accounts. so instead dont login and disable

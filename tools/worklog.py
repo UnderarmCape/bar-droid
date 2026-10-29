@@ -49,7 +49,7 @@ def local(ts):
 def load_redactions():
     terms = []
     if os.path.exists(REDACT_FILE):
-        with open(REDACT_FILE, encoding="utf-8") as fh:
+        with open(REDACT_FILE, encoding="utf-8-sig") as fh:  # (-sig: PowerShell's UTF-8 starts with a byte-order mark)
             terms = [t.strip() for t in fh if t.strip() and not t.startswith("#")]
     return sorted(terms, key=len, reverse=True)
 

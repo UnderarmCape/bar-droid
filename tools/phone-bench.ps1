@@ -55,9 +55,15 @@ while (Test-Path $lock) {
   Start-Sleep 30
 }
 Set-Content -Path $lock -Value $PID -Encoding ascii
-trap { try { RestorePrefs; RestoreWidgets; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
+# the dev phone (phone-device.txt) runs at the normal minimum brightness, and dark again afterwards (toolchain.ps1
+# $PhoneScreen; Kailil: "for bench marks, just have the screen at normal minimum brightness"); another phone's screen
+# is left as it is
+$devPhone = (Get-PhoneDevices) -contains $Device
+function DarkAgain { if ($devPhone) { Set-PhoneScreen $adb $Device "dark" | Out-Null } }
+trap { try { RestorePrefs; RestoreWidgets; AppSh 'rm -f files/bar/.bardroid-bench-replay' | Out-Null; DarkAgain } catch {}; Remove-Item $lock -ErrorAction SilentlyContinue; break }
 
 if ($Device -match ":\d+$") { & $adb connect $Device | Out-Null }   # wireless debugging: (re)connect
+if ($devPhone) { Set-PhoneScreen $adb $Device "bench" | ForEach-Object { Write-Host "[phone-bench] screen: $_" } }
 Adb shell "am force-stop $pkg"
 # the app's saved settings (shared_prefs/bardroid.xml) while it is stopped: the run's resolution and frame cap, the
 # player's own put back afterwards (an empty value: the key was not saved, the app's default applies)
@@ -252,6 +258,7 @@ AppSh 'rm -f files/bar/.bardroid-bench-settings; [ -f files/bar/.springsettings.
 RestoreWidgets
 RestorePrefs
 Write-Host "[phone-bench] the player's settings back: $($userPrefs -join ', ')"
+DarkAgain
 Remove-Item $lock -ErrorAction SilentlyContinue
 if ($hiddenRun) {
   Write-Host "[phone-bench] FAIL the game ran hidden (the phone locked or its screen off): not recorded; unlock the phone and run again"
