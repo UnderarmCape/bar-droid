@@ -54,8 +54,8 @@ In the lobby a drag scrolls lists and a tap on a server shows its details first.
 **The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
-build menu is the app's copy of BAR's own Build menu, which can be moved and sized (in the controller game, the
-gamepad's own build menu instead). BAR's top bar, order menu and start countdown can't be moved or sized on their own
+build menu is the app's copy of BAR's own Build menu, a 3x3 grid (6 build options a page, the page arrows in the
+bottom row), which can be moved and sized (in the controller game, the gamepad's own build menu instead). BAR's top bar, order menu and start countdown can't be moved or sized on their own
 (BAR has no setting for them; their size follows the interface scale: 2.0 folded, 1.0 unfolded). Folded and unfolded
 each keep their own layout.
 

@@ -60,6 +60,44 @@ HEADER = """\
 
 # (what to find, exactly once; what goes in its place)
 PATCHES = [
+    ('''local maxPosY = 0.74
+''',
+     '''local maxPosY = 0.74
+-- BAR Droid: what the app adds, in one table (BAR's file is near Lua 5.1's limit of 200 locals in a chunk). At the left
+-- a grid of colls x rows square cells, the menu as tall as that (Kailil, 2026-10-28: "Can the build menu be reduced to
+-- show only 6 items per page and have a 3x3 grid"); with more build options than fit, BAR's own paging takes the
+-- bottom row for its arrows: 6 options a page.
+local droid = { colls = 3, rows = 3, registered = false }
+'''),
+    ('''	-- adjust grid size when pages are needed
+''',
+     '''	-- BAR Droid: the grid at the left, droid.colls x droid.rows
+	if not stickToBottom then
+		colls = droid.colls
+		cellSize = math_floor(math_min(contentWidth / colls, contentHeight / droid.rows))
+		rows = math_floor(contentHeight / cellSize)
+	end
+
+	-- adjust grid size when pages are needed
+'''),
+    ('''		-- make pixel aligned
+		width = math_floor(width * vsx) / vsx
+		height = math_floor(height * vsy) / vsy
+	end
+''',
+     '''		-- make pixel aligned
+		width = math_floor(width * vsx) / vsx
+		height = math_floor(height * vsy) / vsy
+
+		-- BAR Droid: no taller than droid.rows square cells (its bottom stays above the unit panel)
+		local cellPx = (width * vsx - (bgpadding + activeAreaMargin) * 2) / droid.colls
+		local want = math_floor(droid.rows * cellPx + (bgpadding + activeAreaMargin) * 2) / vsy
+		if want < height then
+			height = want
+			posY = posY2 + height
+		end
+	end
+'''),
     ('''		name = "Build menu",
 		desc = "",
 		author = "Floris",''',
@@ -76,19 +114,18 @@ PATCHES = [
     ('''function widget:ViewResize()
 	tracy.ZoneBeginN("W:BuildMenu:ViewResize")''',
      '''-- BAR Droid: the layout editor's settings for the menu (moved by dx, dy of the screen; size)
-local function droidEdits()
+function droid.edits()
 	local editor = WG.BarDroidLayout
 	return editor and editor.get("buildmenu") or { dx = 0, dy = 0, size = 1 }
 end
 
 -- BAR Droid: the menu for the layout editor, once it is there (BAR's own shows in it as fixed)
-local droidRegistered = false
-local function droidRegister()
+function droid.register()
 	local editor = WG.BarDroidLayout
-	if droidRegistered or not (editor and editor.register) then
+	if droid.registered or not (editor and editor.register) then
 		return
 	end
-	droidRegistered = true
+	droid.registered = true
 	editor.register("buildmenu", {
 		label = "Build menu",
 		can = { move = true, size = true },
@@ -106,20 +143,20 @@ function widget:ViewResize()
     ('''function widget:Update(dt)
 ''',
      '''function widget:Update(dt)
-	droidRegister() -- BAR Droid
+	droid.register() -- BAR Droid
 '''),
     ('''	backgroundRect = { posX, (posY - height) * vsy, posX2, posY * vsy }
 
 	checkGuishader(true)''',
      '''	-- BAR Droid: the layout editor's size (width and height from the menu's bottom left corner) and place
-	local droid = droidEdits()
-	if droid.size ~= 1 or droid.dx ~= 0 or droid.dy ~= 0 then
+	local edit = droid.edits()
+	if edit.size ~= 1 or edit.dx ~= 0 or edit.dy ~= 0 then
 		local bottom = posY - height
-		width, height = width * droid.size, height * droid.size
+		width, height = width * edit.size, height * edit.size
 		local w = math_floor(width * vsx)
-		posX = math.clamp(posX + math_floor(droid.dx * vsx), 0, math.max(0, vsx - w))
+		posX = math.clamp(posX + math_floor(edit.dx * vsx), 0, math.max(0, vsx - w))
 		posX2 = posX + w
-		bottom = math.clamp(bottom + droid.dy, 0, math.max(0, 1 - height))
+		bottom = math.clamp(bottom + edit.dy, 0, math.max(0, 1 - height))
 		posY, posY2 = bottom + height, bottom
 	end
 	backgroundRect = { posX, (posY - height) * vsy, posX2, posY * vsy }
@@ -154,8 +191,12 @@ function widget:ViewResize()
      '''	widget:ViewResize()
 	widget:SelectionChanged(spGetSelectedUnits())
 
-	droidRegister() -- BAR Droid
-	WG.buildmenu = {}'''),
+	droid.register() -- BAR Droid
+	WG.buildmenu = {}
+	-- BAR Droid: the grid as laid out (tools/touch-widget-test.ps1)
+	WG.buildmenu.droidGrid = function()
+		return colls, rows, pages, cmdsCount
+	end'''),
     ('''	WG.buildmenu = nil
 end
 

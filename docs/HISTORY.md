@@ -5,6 +5,16 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The build menu as a 3x3 grid (2026-10-28, evening)
+Kailil, after playing with the copy: "Can the build menu be reduced to show only 6 items per page and have a 3x3 grid."
+BAR's paging already takes the bottom row for its arrows when the options do not fit, so the copy lays the menu out
+at the left as 3 columns of square cells, 3 rows tall (the panel no taller than that, its bottom above the unit
+panel): 6 options a page with the arrows below, all of them when a builder has 9 or fewer. The commander's 26 options:
+3 x 2 and "1 / 5" (touch-widget-test, a screenshot sent to Kailil); the editor's size and move work as before. The
+first try did not load: BAR's file sits near Lua 5.1's limit of 200 locals in one chunk and two more constants passed
+it ("main function has more than 200 local variables"); everything the copy adds is now one table (`droid`), fewer
+locals than before.
+
 ## Past midnight: a sizeable copy of BAR's Build menu; quiet laptop checks (2026-10-28)
 Kailil: "the vaniallal build menu works fine for touch. just rebuild the exact same one with the ability for us to
 resize it freely. becuaser right now it is too large."

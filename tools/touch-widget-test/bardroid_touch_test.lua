@@ -625,6 +625,7 @@ cases = {
 		return 1.5
 	end,
 	function()
+		Spring.SendCommands("screenshot png") -- the build menu for a builder (build\touch-widget-test\data\screenshots)
 		local B, L = WG.buildmenu, WG.BarDroidLayout
 		verify("build menu: shows for a builder", B and B.getIsShowing and B.getIsShowing())
 		if B and B.controllerApiVersion then
@@ -638,6 +639,13 @@ cases = {
 			return
 		end
 		before.bm = { x0 = x0, y0 = y0, w = x1 - x0, h = y1 - y0 }
+		-- a 3 x 3 grid of square cells (Kailil: "only 6 items per page and have a 3x3 grid"): with more than 9 build
+		-- options BAR's paging takes the bottom row, 6 a page
+		local colls, rows, pages, count = B.droidGrid()
+		verify("build menu: 3 columns, 3 rows (6 a page with the arrows below)", colls == 3
+			and (count > 9 and rows == 2 and pages == math.ceil(count / 6) or count <= 9 and rows == 3),
+			string.format("%s x %s, %s pages for %s options", tostring(colls), tostring(rows), tostring(pages), tostring(count)))
+		near("build menu: about square", (x1 - x0) / (y1 - y0), 1, 0.15)
 		L.open()
 		local px, py = math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)
 		L.press(px, py)
