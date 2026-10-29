@@ -219,6 +219,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       deprecated (since JDK 20); left as it is on purpose: Android's `java.net.URL` is not deprecated, and the
       replacement (`URI.create(...).toURL()`, `URI.resolve`) parses more strictly (it refuses a space, which a
       redirect's `Location` can carry), a download risk for nothing on the phone.
+      `bardroid_touch.lua`'s reading of the app's lines and `ControllerBridge`'s camera line reviewed: nothing. No
+      pattern can match inside another line (the gamepad's act names, `slow_pan`, `pad_*`, `rotate_*`, never have the
+      space after them that `pan `, `pad ` and `rot ` need); the left stick goes to the pointer exactly while it draws
+      or is free, and pans under the reticle otherwise (the area select too).
 
 ## Releasing (once the blockers are done)
 
