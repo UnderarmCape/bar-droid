@@ -63,6 +63,7 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.btnBench).setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "bench"));
 
         loadSettingsIntoUi();
+        GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
         deviceView.setText(deviceSummary());
         logView.setText(Log.dump());
         startFromIntent(getIntent());
@@ -89,9 +90,10 @@ public class LauncherActivity extends AppCompatActivity {
     private void refresh() {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
-        // (again on each refresh: Android restarts the app within a second of ending it and files the reason a moment
-        // later, so the launcher it restores asked too early)
-        GameService.noteLowMemoryExit(this);
+        // (again on each refresh in the process's first 20 s: Android restarts the app within a second of ending it and
+        // files the reason a moment later, so the launcher it restores asked too early; an IPC, not for every tick)
+        if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
+            GameService.noteLowMemoryExit(this);
         String note = GameService.exitNote();
         statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
