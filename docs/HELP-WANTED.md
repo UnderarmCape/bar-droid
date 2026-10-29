@@ -7,7 +7,7 @@ What follows is about making it better and official, not about making it work. I
 developing it. The hope
 is that BAR's developers and community take it as a stepping stone to an official BAR for Android: fork it, take it
 over, or take what is useful into BAR's own work. Two areas need people who know them best: **engine-side
-performance** and **touch controls**. Everything below was measured on one phone, a Galaxy Z Fold7 (Snapdragon 8
+performance** and **touch controls** (the gamepad's state is below too). Everything below was measured on one phone, a Galaxy Z Fold7 (Snapdragon 8
 Elite, Adreno 830, Android 17); [HISTORY.md](HISTORY.md) has the runs behind each number.
 
 ## How it runs (and what that costs)
@@ -73,6 +73,28 @@ Not solved:
   like the ones the build menu has, would let a phone layout be made to fit each screen.
 - The widgets' limits come from BAR's sandbox for user widgets (no `/option`, no widget toggles, no engine restarts,
   no access to other widgets): touch support inside BAR's own widgets would remove most of the workarounds.
+
+## Gamepad
+
+What works ([README.md](../README.md) "Gamepad, mouse and keyboard"): skirmish runs the author's BAR Controller
+Support v0.8.5 (radials, a reticle, its own build and order menus) as BAR's developer game, the pad's state sent to it
+by the app (`ControllerBridge`, BARCTRL1 over UDP). Online that game cannot run (BAR's sandbox removes `socket`, BAR's
+own widgets lack its hooks, `GiveOrder` needs `allowunitcontrolwidgets`), so in BAR's own game `PadGame.java` rebuilds
+v0.8.5's controls from X mouse and key events, which no lobby setting or widget rule can see or block: the pointer
+held in the middle, the left stick panning the map under it, A a click, X BAR's right click, RT Shift, RB and
+Back + RB putting the build and order menus on the pad (`bardroid_pad.lua`, the build menu copy), groups, idle units,
+area select. In the controller game a triple tap switches between the two to compare them. `tools/padgame-test.ps1`
+runs `PadGame` against a made-up pointer (laptop and CI).
+
+Not solved:
+- Without unit-control widgets allowed in a lobby, the LB shortcuts fall back to picking the order (A gives it) and
+  the queue removal (L3/R3) does nothing; v0.8.5's Smart-X decisions are BAR's default order instead.
+- The order menu's grid is worked out by copying BAR's layout code (`gui_ordermenu.lua` setupCellGrid): it breaks
+  when BAR changes that code. A `WG.ordermenu` call returning the cells (or a focus API, as v0.8.5's edits add) would
+  remove the copy.
+- An engine gamepad API (Recoil PRs #2985, #3365) would not help on Android: SDL inside the container cannot see the
+  phone's input devices, so the pad always comes through the app. A BAR widget reading the app's packets, accepted by
+  BAR's developers, plus small `WG` hooks in the build and order menus, would let v0.8.5's full interface play online.
 
 ## Also open
 
