@@ -992,6 +992,10 @@ cases = {
 		end
 		local _, index = WG.BarDroidPad.orders()
 		verify("pad: D-pad right: the next order", index == 2, tostring(index))
+		-- the order menu's cells as bardroid_pad.lua works them out, drawn over BAR's buttons for the screenshot
+		-- (build\touch-widget-test\data\screenshots: each outline should sit on one of BAR's buttons)
+		local cells, cmds = WG.BarDroidPad.ordersCells()
+		padDraw.cells, padDraw.count = cells, cmds and #cmds or 0
 		verify("pad: Move is on the order menu", WG.BarDroidPad.ordersOn(CMD.MOVE))
 		touch("act pad_select") -- (A: Move needs a target: picked, the pointer back to the middle)
 		return 0.3
@@ -1000,6 +1004,8 @@ cases = {
 		if not before.bm then
 			return
 		end
+		Spring.SendCommands("screenshot png") -- (the cells drawn in the frames before)
+		padDraw.cells = nil
 		local _, active = Spring.GetActiveCommand()
 		verify("pad: A on Move picks it and leaves the menu", active == CMD.MOVE and WG.BarDroidPad.orders() == nil,
 			tostring(active))
@@ -1143,6 +1149,20 @@ end
 
 -- The build menu's gamepad highlight, drawn once for the pad cases (no pointer over the menu without -Pointer)
 function widget:DrawScreen()
+	if padDraw.cells then -- (the order menu's cells: red outlines, the ones with an order thicker)
+		for i, r in ipairs(padDraw.cells) do
+			gl.Color(1, 0.1, 0.1, 0.9)
+			gl.LineWidth(i <= padDraw.count and 2 or 1)
+			gl.BeginEnd(GL.LINE_LOOP, function()
+				gl.Vertex(r[1] + 1, r[2] + 1)
+				gl.Vertex(r[3] - 1, r[2] + 1)
+				gl.Vertex(r[3] - 1, r[4] - 1)
+				gl.Vertex(r[1] + 1, r[4] - 1)
+			end)
+		end
+		gl.LineWidth(1)
+		gl.Color(1, 1, 1, 1)
+	end
 	if padDraw.cell and WG.bardroidBuildmenu and WG.bardroidBuildmenu.droidDrawHover then
 		local list = gl.CreateList(function() end)
 		padDraw.ok, padDraw.err = pcall(WG.bardroidBuildmenu.droidDrawHover, padDraw.cell, list)

@@ -805,6 +805,10 @@ function widget:Initialize()
 		orders = function()
 			return orders and orders.cmdID, orders and orders.index, orders and #orders.layout.cmds
 		end,
+		ordersCells = function() -- (the order menu's cells as worked out here, and its commands)
+			local layout = ordersLayout()
+			return layout and layout.cells, layout and layout.cmds
+		end,
 		ordersOn = function(cmdID)
 			local layout = ordersLayout()
 			for i, cmd in ipairs(layout and layout.cmds or {}) do

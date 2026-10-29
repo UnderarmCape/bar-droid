@@ -166,6 +166,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       widget and the layout editor below the top 25 (under 0.036 ms); the costliest of the app's, the info panel,
       0.090 ms and 21 kB/s. The gamepad widget looked a command's kind up each frame while one was picked (a table per
       call): now once per command.
+      The order menu on the pad (Back + RB) works out BAR's order grid itself (`bardroid_pad.lua` ordersLayout, from
+      `gui_ordermenu.lua`'s setupCellGrid), checked so far only by the pointer landing inside the menu: touch-widget-test
+      now draws the worked-out cells over BAR's buttons for its screenshot. On the laptop (1280x720, a commander, 20
+      orders) every outline sits on one of BAR's 5 x 4 buttons, and the order the pad was put on (Move, the 10th) is the
+      button BAR lights.
 
 ## Releasing (once the blockers are done)
 
