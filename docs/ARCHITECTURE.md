@@ -38,7 +38,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **Audio.** The engine's OpenAL Soft writes waves into a FIFO; `AudioPump` plays them with `AudioTrack`. No
   PulseAudio.
 - **Input.** Touch: `RtsTouch` turns gestures into lines in files under `LuaUI/Config`, read by
-  `bardroid_touch.lua` (camera, pinch, tilt, "is the finger on BAR's interface"). Gamepads: `ControllerBridge`
+  `bardroid_touch.lua` (camera, pinch, tilt, "is the finger on BAR's interface"); the widgets answer in small files
+  there (the pointer's answer, the game, the building picked, the pad's menu), each written whole to a `.tmp` and
+  renamed, since the app reads them many times a second. Gamepads: `ControllerBridge`
   streams `BARCTRL1` packets over UDP 28777 to BAR Controller Support (v0.8.5, the singleplayer game); in BAR's own
   game `PadGame` rebuilds v0.8.5's controls from X mouse and key events (the pointer held in the middle, the camera
   through the touch widget's pad lines, the rest as actions to `bardroid_pad.lua`); in the lobby the pad is a mouse.

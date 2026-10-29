@@ -87,10 +87,21 @@ try {
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[touch-test] $game on $MapName, engine $Engine"
   $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
-  $deadline = (Get-Date).AddSeconds(240)
-  while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
-         -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[touchtest\] done' -Quiet))) { Start-Sleep 1 }
-  if (-not $p.HasExited) { $p.Kill() }
+  # stopped once the log stands still for 90 s (a hung game), not after a fixed time: a throttled laptop (screen off,
+  # 7 fps) takes several times as long, and a fixed 240 s cut the cases off midway
+  $hardStop = (Get-Date).AddMinutes(15)
+  $lastSize = -1; $quietSince = Get-Date; $done = $false
+  while (-not $p.HasExited -and (Get-Date) -lt $hardStop -and ((Get-Date) - $quietSince).TotalSeconds -lt 90 -and -not $done) {
+    Start-Sleep 1
+    $size = if (Test-Path $log) { (Get-Item $log).Length } else { 0 }
+    if ($size -ne $lastSize) { $lastSize = $size; $quietSince = Get-Date }
+    $done = (Test-Path $log) -and (Select-String -Path $log -Pattern '\[touchtest\] done' -Quiet)
+  }
+  $exited = $p.HasExited
+  if (-not $exited) { $p.Kill() }   # (the game stays in after the last case)
+  if (-not $done) {
+    Write-Host "[touch-test] stopped before the end: $(if ($exited) { 'the game ended' } elseif ((Get-Date) -ge $hardStop) { '15 min' } else { 'the log stood still for 90 s' })"
+  }
   Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch|bardroid-perf|bardroid-buildmenu|bardroid_buildmenu|BAR Droid build menu" |
     ForEach-Object { $_.Line }
 } finally {

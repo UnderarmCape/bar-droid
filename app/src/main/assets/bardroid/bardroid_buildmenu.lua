@@ -778,10 +778,17 @@ function droid.place()
 	-- a game that ended with a building picked never turns taps into Shift clicks)
 	local now = Spring.GetTimer()
 	if text ~= droid.written or (armed and Spring.DiffTimers(now, droid.writtenAt) > 1) then
-		local f = io.open(droid.file, "w")
+		-- written whole, then renamed: the app must never read it empty (io.open "w" empties it first), which made a
+		-- tap a plain click that placed the building at once
+		local f = io.open(droid.file .. ".tmp", "w")
 		if f then
 			f:write(text)
 			f:close()
+			local ok, renamed = pcall(os.rename, droid.file .. ".tmp", droid.file)
+			if not (ok and renamed) then -- (Windows, for the laptop tests: rename does not replace a file)
+				pcall(os.remove, droid.file)
+				pcall(os.rename, droid.file .. ".tmp", droid.file)
+			end
 			droid.written, droid.writtenAt = text, now
 		end
 	end

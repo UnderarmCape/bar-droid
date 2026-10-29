@@ -31,6 +31,24 @@ function widget:GetInfo()
 end
 
 local PAD_FILE = "LuaUI/Config/bardroid_pad.txt"
+
+-- written whole, then renamed: the app reads it every 100 ms and must never find it empty (io.open "w" empties it
+-- first: "no menu" pulled the pointer out of the menu, "not pregame" to the middle)
+local function writeWhole(path, text)
+	local f = io.open(path .. ".tmp", "w")
+	if not f then
+		return false
+	end
+	f:write(text)
+	f:close()
+	local ok, renamed = pcall(os.rename, path .. ".tmp", path)
+	if not (ok and renamed) then -- (Windows, for the laptop tests: rename does not replace a file)
+		pcall(os.remove, path)
+		pcall(os.rename, path .. ".tmp", path)
+	end
+	return true
+end
+
 local TOAST_SECONDS = 1.3
 local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
@@ -67,8 +85,10 @@ local function freePointer()
 	return mouseMode ~= (Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState())
 end
 
+local lastNote, notes = nil, 0 -- (tools/touch-widget-test.ps1: the last note, also once it has faded, and how many)
 local function note(text)
 	toast, toastAt = text, now()
+	lastNote, notes = text, notes + 1
 end
 
 -- Orders at a point straight to the units only where the game allows it (BAR's sandbox; the modoption is on by default)
@@ -311,15 +331,20 @@ local function commander()
 	end
 end
 
--- Where the middle of the screen (the pointer) points: a unit, else the ground
+-- Where the pad points: the reticle in the middle of the screen (the pointer only while it is free: it is still gliding
+-- back to the middle for 160 ms after a drag or a menu); the unit there, and the ground (under a unit too: patrol or
+-- fight on a unit goes to its place)
 local function aim()
-	local mx, my = Spring.GetMouseState()
-	local kind, target = Spring.TraceScreenRay(mx, my)
-	if kind == "unit" then
-		return target, nil
+	local x, y
+	if freePointer() then
+		x, y = Spring.GetMouseState()
+	else
+		local vsx, vsy = Spring.GetViewGeometry()
+		x, y = math.floor(vsx / 2), math.floor(vsy / 2)
 	end
-	local _, pos = Spring.TraceScreenRay(mx, my, true)
-	return nil, pos
+	local kind, target = Spring.TraceScreenRay(x, y)
+	local _, pos = Spring.TraceScreenRay(x, y, true)
+	return kind == "unit" and target or nil, pos
 end
 
 -- An order at the middle of the screen: given at once where allowed, else picked (A gives it)
@@ -330,8 +355,8 @@ local function orderAt(cmdID, name, unitOK)
 	end
 	local unitID, pos = aim()
 	local opts = shiftHeld() and { "shift" } or {}
-	if unitControl() and (pos or (unitID and unitOK)) then
-		local params = unitID and unitOK and { unitID } or { pos[1], pos[2], pos[3] }
+	if unitControl() and ((unitID and unitOK) or pos) then
+		local params = (unitID and unitOK) and { unitID } or { pos[1], pos[2], pos[3] }
 		if pcall(Spring.GiveOrderToUnitArray, selected, cmdID, params, opts) then
 			note(string.upper(name))
 			return
@@ -735,10 +760,7 @@ function widget:Update()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\n"
 	local t = now()
 	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none") and Spring.DiffTimers(t, writtenAt) > 1) then
-		local f = io.open(PAD_FILE, "w")
-		if f then
-			f:write(text)
-			f:close()
+		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
 		end
 	end
@@ -831,8 +853,8 @@ function widget:Initialize()
 		setWarp = function(fn)
 			warp, fakeWarp = fn or Spring.WarpMouse, fn ~= nil
 		end,
-		note = function()
-			return toast
+		note = function() -- (the note showing, the last one shown, how many so far)
+			return toast, lastNote, notes
 		end,
 		area = function() -- (the area select: on, its radius, how many units it has passed over)
 			return area.on, area.radius, area.count
@@ -844,9 +866,5 @@ function widget:Shutdown()
 	ordersEnd()
 	WG.BarDroidPad = nil
 	WG.BarDroidOwnsBuildMenu = nil
-	local f = io.open(PAD_FILE, "w")
-	if f then
-		f:write("focus none\npregame 0\narmed none\n")
-		f:close()
-	end
+	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\n")
 end

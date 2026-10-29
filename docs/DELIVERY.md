@@ -181,6 +181,20 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       always `y` in Lua; harmless on screen, an expired note was not drawn): fixed. The same pattern is in BAR's own
       Build menu (`disableInput = Spring.IsGodModeEnabled() and false or (...)`: god mode never forces input on), an
       upstream matter; the app's copy keeps BAR's line.
+      The files the widgets hand the app reviewed: `io.open(..., "w")` empties a file before writing it, and the app
+      reads them many times a second, so it could find one empty: the build menu copy's (a tap then a plain click that
+      placed the building at once, without PLACE; rewritten every frame while the camera moves a picked spot), the
+      gamepad widget's (no menu: the pointer pulled out of the menu it was on) and the game file (read once per change
+      of its time stamp, which the emptying and the writing can share: the wrong game for the whole match). All are
+      now written whole and renamed, as the catch-up file was. touch-widget-test stopped after a fixed 240 s, which a
+      throttled laptop (7 fps, screen off) ran past, cutting the cases off midway: it now stops when the log stands
+      still for 90 s. New cases for the pad's group clear, LB + Y, Back + R3 and the camera bookmark; LB + Y found the
+      LB orders (fight, attack, patrol) aimed where the mouse pointer was, not at the reticle: wrong for the 160 ms the
+      pointer glides back to the middle after a drag or a menu, and patrol or fight with a unit under the reticle
+      only picked the order. They aim at the middle now (the pointer while it is free), at the ground under a unit
+      too. padgame-test: the chords (groups, L3/R3 against Back + R3, LB with the face buttons and the D-pad, the
+      bookmark, Back + Start), 13 checks. At tonight's 5 fps the controller game's note checks failed (the runner's
+      steps 4 s apart, the note gone after 1.3 s): they read the last note shown and a count of notes now.
 
 ## Releasing (once the blockers are done)
 

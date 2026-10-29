@@ -260,6 +260,66 @@ public final class PadGameTest {
         t.wait(300);
         check("a pad connected at the start but unused does not take the pointer", t.m.out.isEmpty(), t.m.out);
 
+        // Control groups (Start + D-pad): the slot, a tap recalls, held assigns, right autogroups, L3 clears
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(START); t.tap(DPAD_UP);
+        check("Start + D-pad up: the next group slot", t.has("act group_show_2") && !t.has("act bookmark_recall"), t.m.out);
+        t.tap(DPAD_LEFT);
+        check("Start + D-pad left tapped: the group recalled", t.has("act group_recall_2") && !t.has("act group_assign_2")
+                && !t.has("act idle_prev"), t.m.out);
+        t.m.out.clear();
+        t.tick(DPAD_LEFT); t.wait(400); t.up(DPAD_LEFT);
+        check("Start + D-pad left held: the selection assigned, no recall", t.has("act group_assign_2")
+                && !t.has("act group_recall_2"), t.m.out);
+        t.m.out.clear();
+        t.tap(DPAD_RIGHT);
+        int altDown = t.m.out.indexOf("key " + KeyEvent.KEYCODE_ALT_LEFT + " down");
+        check("Start + D-pad right: BAR's autogroup (Alt + 2)", altDown >= 0
+                && altDown < t.m.out.indexOf("key " + (KeyEvent.KEYCODE_1 + 1) + " down")
+                && t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") && t.has("act group_auto_2") && !t.has("act idle_next"), t.m.out);
+        t.m.out.clear();
+        t.tap(LS);
+        check("Start + L3: the group cleared, no queued order removed", t.has("act group_clear_2")
+                && !t.has("act queue_remove_first"), t.m.out);
+        t.up(START);
+
+        // The D-pad's own work; L3 / R3; Back + R3; LB with the face buttons and the D-pad
+        t.m.out.clear();
+        t.tap(DPAD_RIGHT); t.tap(DPAD_LEFT); t.tap(DPAD_DOWN); t.tap(DPAD_UP);
+        check("the D-pad: idle builders, the commander, the bookmark (no groups)", t.has("act idle_next")
+                && t.has("act idle_prev") && t.has("act commander") && t.has("act bookmark_recall") && t.count("act group_") == 0, t.m.out);
+        t.m.out.clear();
+        t.lt = true; t.tap(DPAD_UP); t.lt = false; t.tick();
+        check("LT + D-pad up: the bookmark stored", t.has("act bookmark_store") && !t.has("act bookmark_recall"), t.m.out);
+        t.m.out.clear();
+        t.tap(LS); t.tap(RS);
+        check("L3 / R3: the next / last queued order removed", t.has("act queue_remove_first")
+                && t.has("act queue_remove_last") && !t.has("act dgun"), t.m.out);
+        t.m.out.clear();
+        t.tick(BACK); t.tap(RS); t.up(BACK);
+        check("Back + R3: the D-gun, no order removed", t.has("act dgun") && !t.has("act queue_remove_last"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(Y); t.tap(A); t.tap(X); t.up(LB);
+        check("LB + Y / A / X: patrol, fight, attack (no clicks)", t.has("act lb_y") && t.has("act lb_a") && t.has("act lb_x")
+                && !t.has("left down") && !t.has("right down"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(DPAD_RIGHT); t.tap(DPAD_LEFT); t.tap(DPAD_DOWN); t.up(LB);
+        check("LB + D-pad: the other idle units, idle of the type (no builders, no commander)", t.has("act idle_mobile_next")
+                && t.has("act idle_mobile_prev") && t.has("act idle_type") && !t.has("act idle_next") && !t.has("act commander"), t.m.out);
+
+        // Back + Start: a free pointer on the left stick, and back to the middle
+        t.m.out.clear();
+        t.tick(BACK); t.tap(START); t.up(BACK);
+        t.lx = 1; t.wait(100); t.lx = 0;
+        check("Back + Start: a free pointer the left stick moves", t.has("act mouse_toggle") && !t.g.reticle()
+                && t.count("move ") > 0, t.m.out);
+        t.m.out.clear();
+        t.m.at = new float[]{1300, 500};   // (where the free pointer went, by the game's answer)
+        t.tick(START); t.tap(BACK); t.up(START); t.wait(250);
+        check("Start + Back: the pointer glides back and is held in the middle again", t.has("act mouse_toggle")
+                && t.g.reticle() && t.count("moveTo ") >= 5 && t.m.out.contains("moveTo 1000 500") && !t.has("centre"), t.m.out);
+
         System.out.println(fails == 0 ? "ALL PASS" : fails + " FAILED");
         System.exit(fails == 0 ? 0 : 1);
     }

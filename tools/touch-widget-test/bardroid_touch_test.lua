@@ -691,7 +691,9 @@ cases = {
 		end
 		touch("pad 0 0 0 0 0 0")
 		local cs = Spring.GetCameraState()
-		verify("controller game switched: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: BAR DROID", WG.BarDroidPad.note())
+		-- (the last note shown: at a few frames a second the 1.3 s note has faded by the next case)
+		verify("controller game switched: the note", select(2, WG.BarDroidPad.note()) == "CONTROLLER MOD: BAR DROID",
+			select(2, WG.BarDroidPad.note()))
 		verify("controller game switched: the pad moves the camera",
 			math.sqrt((cs.px - before.ctl.px) ^ 2 + (cs.pz - before.ctl.pz) ^ 2) > 50)
 		verify("controller game: v0.8.5's build menu kept in BAR's place", WG.buildmenu and WG.buildmenu.controllerApiVersion
@@ -773,7 +775,8 @@ cases = {
 		if not before.ctl then
 			return
 		end
-		verify("controller game switched back: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: v0.8.5", WG.BarDroidPad.note())
+		verify("controller game switched back: the note", select(2, WG.BarDroidPad.note()) == "CONTROLLER MOD: v0.8.5",
+			select(2, WG.BarDroidPad.note()))
 		verify("controller game switched back: v0.8.5's panel again, the app's menu hidden",
 			WG.buildmenu.controllerGetPanelVisible() == true and not WG.bardroidBuildmenu.getIsShowing())
 		verify("controller game switched back: the layout editor has no outline for the hidden menu",
@@ -814,7 +817,10 @@ cases = {
 		if not before.ctl then
 			return
 		end
-		before.noteGone = WG.BarDroidPad.note() == nil
+		local showing, last, count = WG.BarDroidPad.note()
+		before.notes = count
+		verify("controller game: the switch noted, the note faded after 1.3 s", last == "CONTROLLER MOD: BAR DROID"
+			and showing == nil, tostring(last) .. ", " .. tostring(showing))
 		touch("act mod_bardroid") -- (the same mode again, as the app's resend)
 		return 0.3
 	end,
@@ -822,8 +828,9 @@ cases = {
 		if not before.ctl then
 			return
 		end
-		verify("controller game: the app's mode told again shows no second note", before.noteGone
-			and WG.BarDroidPad.note() == nil, tostring(before.noteGone) .. ", " .. tostring(WG.BarDroidPad.note()))
+		local _, last, count = WG.BarDroidPad.note()
+		verify("controller game: the app's mode told again shows no second note", count == before.notes,
+			tostring(before.notes) .. " -> " .. tostring(count) .. " (" .. tostring(last) .. ")")
 		verify("controller game: ... and the app's menu still in place", WG.BarDroidOwnsBuildMenu == true)
 		touch("act mod_v085")
 	end,
@@ -1188,6 +1195,90 @@ cases = {
 		local on, radius = WG.BarDroidPad.area()
 		verify("pad: the D-pad makes the circle bigger, B undoes the selection", not on and radius == 400
 			and #Spring.GetSelectedUnits() == 0, tostring(radius))
+		-- a control group cleared (Start + L3): set, cleared, recalled empty
+		Spring.SelectUnitArray({ before.com })
+		touch("act group_assign_4")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		touch("act group_clear_4")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		verify("pad: clearing a group keeps the selection", Spring.GetSelectedUnits()[1] == before.com)
+		Spring.SelectUnitArray({})
+		touch("act group_recall_4")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		verify("pad: a cleared group recalls nothing", #Spring.GetSelectedUnits() == 0, #Spring.GetSelectedUnits())
+		-- LB + Y: patrol at the middle (given at once where unit control is allowed, as in this skirmish; picked else)
+		Spring.SelectUnitArray({ before.com })
+		touch("act lb_y")
+		return 1 -- (a given order reaches the queue a few frames on: 0.3 s was too short at 5 fps)
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		-- (a patrol under way has the engine's own FIGHT in front of it)
+		local queue, patrol = Spring.GetUnitCommands(before.com, -1) or {}, false
+		for _, cmd in ipairs(queue) do
+			patrol = patrol or cmd.id == CMD.PATROL
+		end
+		local _, active = Spring.GetActiveCommand()
+		verify("pad: LB + Y patrols (the order given, or picked for A)", patrol or active == CMD.PATROL,
+			tostring(queue[1] and queue[1].id) .. ", " .. tostring(active))
+		Spring.SetActiveCommand(0)
+		Spring.GiveOrderToUnit(before.com, CMD.STOP, {}, 0)
+		Spring.SelectUnitArray({ before.com }) -- (B with nothing picked clears it: the D-gun needs the commander)
+		touch("act dgun") -- (Back + R3)
+		return 0.6
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		local _, active = Spring.GetActiveCommand()
+		verify("pad: Back + R3 picks the commander's D-gun", active == CMD.MANUALFIRE, tostring(active))
+		touch("act cancel")
+		-- a camera bookmark (LT + D-pad up stores, D-pad up returns)
+		before.mark = Spring.GetCameraState()
+		touch("act bookmark_store")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		local cs = Spring.GetCameraState()
+		Spring.SetCameraTarget(cs.px + 1500, cs.py, cs.pz + 1500, 0)
+		return 0.5
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		touch("act bookmark_recall")
+		return 1
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		local cs = Spring.GetCameraState()
+		near("pad: D-pad up returns to the bookmark (elmos off)",
+			math.sqrt((cs.px - before.mark.px) ^ 2 + (cs.pz - before.mark.pz) ^ 2), 0, 30)
+		Spring.SelectUnitArray({})
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
 	function()

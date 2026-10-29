@@ -99,6 +99,23 @@ local function fileSize(path)
 	return size
 end
 
+-- A file for the app, written whole and then renamed: the app reads these many times a second and must never find
+-- one empty or half written (io.open "w" empties it first). True when written.
+local function writeWhole(path, text)
+	local f = io.open(path .. ".tmp", "w")
+	if not f then
+		return false
+	end
+	f:write(text)
+	f:close()
+	local ok, renamed = pcall(os.rename, path .. ".tmp", path)
+	if not (ok and renamed) then -- (Windows, for the laptop tests: rename does not replace a file)
+		pcall(os.remove, path)
+		pcall(os.rename, path .. ".tmp", path)
+	end
+	return true
+end
+
 function widget:Initialize()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
 	pcall(os.remove, "LuaUI/Config/bardroid_catchup.txt") -- left by a reload while catching up: written again if still behind
@@ -106,11 +123,7 @@ function widget:Initialize()
 	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
 	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
 	-- for the app: in the controller game the pad is v0.8.5's; in BAR's game a mouse and keys (ControllerBridge)
-	local f = io.open(GAME, "w")
-	if f then
-		f:write(padCamera and "controller 0\n" or "controller 1\n")
-		f:close()
-	end
+	writeWhole(GAME, padCamera and "controller 0\n" or "controller 1\n")
 	zoomMinDistance = math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", 0.1) or 0.1, 0.1)
 	zoomMaxDistance = math.max(Game.mapSizeX, Game.mapSizeZ) * 1.333
 	local cs = spGetCameraState()
@@ -706,17 +719,7 @@ local function updateCatchup(now, frame, rate)
 			catchup.gainAt, catchup.gainBehind = now, behind
 		end
 	end
-	-- written whole, then renamed: the app never reads half a line
-	local f = io.open(CATCHUP .. ".tmp", "w")
-	if f then
-		f:write(string.format("%d %d %.1f\n", frame, behind and math.floor(frame + behind) or 0, speedNow))
-		f:close()
-		local ok, renamed = pcall(os.rename, CATCHUP .. ".tmp", CATCHUP)
-		if not (ok and renamed) then -- (Windows, for tools/catchup-test.ps1: rename does not replace a file)
-			pcall(os.remove, CATCHUP)
-			pcall(os.rename, CATCHUP .. ".tmp", CATCHUP)
-		end
-	end
+	writeWhole(CATCHUP, string.format("%d %d %.1f\n", frame, behind and math.floor(frame + behind) or 0, speedNow))
 	local logSeconds = spDiffTimers(now, catchup.logTime)
 	if logSeconds >= CATCHUP_LOG_EVERY then
 		Spring.Echo(string.format("[bardroid-catchup] at %s, %s, x%.1f over %.0f s, %d units; %d pauses over %d ms"
@@ -897,11 +900,7 @@ local function updateHover()
 	end
 	-- also once a second: the app takes an old file for "no widget" (the lobby)
 	local _, vsy = spGetViewGeometry()
-	local f = io.open(HOVER, "w")
-	if f then
-		f:write(string.format("%d %d %d\n", mx, vsy - my - 1, onInterface))
-		f:close()
-	end
+	writeWhole(HOVER, string.format("%d %d %d\n", mx, vsy - my - 1, onInterface))
 	hoverX, hoverY, hoverAnswer, hoverTimer = mx, my, onInterface, now
 end
 
