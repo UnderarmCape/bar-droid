@@ -102,8 +102,15 @@ public class GameActivity extends MainActivity {
         private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
         @Override public int mode() {
             if (!touch.gameWidgetRunning()) return ControllerBridge.MODE_LOBBY;
-            return touch.controllerGame() && v085 ? ControllerBridge.MODE_OFF : ControllerBridge.MODE_GAME;
+            if (!touch.controllerGame()) return ControllerBridge.MODE_GAME;
+            if (v085) return ControllerBridge.MODE_OFF;
+            // the app's controls in the controller game: told to the widgets again every 2 s (a LuaUI reload, as a fold
+            // or unfold makes, starts them with v0.8.5's; they show the note only when it changes)
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - modToldAt >= 2000) { modToldAt = now; touch.padAct("mod_bardroid"); }
+            return ControllerBridge.MODE_GAME;
         }
+        private long modToldAt;
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
         @Override public boolean onInterface() { return touch.pointerOnInterface(); }
         @Override public void move(int dx, int dy) { send(dx, dy, InputStub.BUTTON_UNDEFINED, false); }

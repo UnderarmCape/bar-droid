@@ -526,17 +526,24 @@ local ACTIONS = {
 	pad_page_prev = function()
 		buildMenu("pageprev")
 	end,
-	mod_bardroid = function() -- the triple tap in the controller game (GameActivity, through bardroid_touch.lua): the
-		modV085 = false -- app's build menu in place of v0.8.5's (DrawGenesis hides v0.8.5's panel)
+	-- the triple tap in the controller game (GameActivity, through bardroid_touch.lua): the app's build menu in place of
+	-- v0.8.5's (DrawGenesis hides v0.8.5's panel). The app tells the app's mode again every 2 s (a LuaUI reload starts
+	-- this widget with v0.8.5's): the note only when it changes
+	mod_bardroid = function()
 		WG.BarDroidOwnsBuildMenu = controllerGame or nil
-		note("CONTROLLER MOD: BAR DROID")
+		if modV085 then
+			modV085 = false
+			note("CONTROLLER MOD: BAR DROID")
+		end
 	end,
 	mod_v085 = function()
-		modV085 = true
 		WG.BarDroidOwnsBuildMenu = nil
-		ordersEnd()
-		buildMenu("back")
-		note("CONTROLLER MOD: v0.8.5")
+		if not modV085 then
+			modV085 = true
+			ordersEnd()
+			buildMenu("back")
+			note("CONTROLLER MOD: v0.8.5")
+		end
 	end,
 	pad_back = function()
 		if orders then
@@ -780,8 +787,10 @@ function widget:DrawScreen()
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
 		local font = WG.fonts and WG.fonts.getFont()
-		if age > TOAST_SECONDS or not font then
-			toast = age > TOAST_SECONDS and nil or toast
+		if age > TOAST_SECONDS then
+			toast = nil
+			return
+		elseif not font then
 			return
 		end
 		local size = math.max(14, math.floor(vsy * 0.03))

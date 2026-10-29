@@ -770,6 +770,33 @@ cases = {
 			panel ~= nil and text:match("^place one\ndone %d+ %d+ %d+ %d+\n"), text)
 		touch("act cancel")
 		Spring.SelectUnitArray({})
+		return 1.5 -- (the note gone)
+	end,
+	-- the app tells its mode again every 2 s (a LuaUI reload, as a fold makes, starts the widgets with v0.8.5's): the
+	-- same mode again changes nothing and shows no note
+	function()
+		if not before.ctl then
+			return
+		end
+		touch("act mod_bardroid") -- (a change: the note)
+		return 1.6
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		before.noteGone = WG.BarDroidPad.note() == nil
+		touch("act mod_bardroid") -- (the same mode again, as the app's resend)
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		verify("controller game: the app's mode told again shows no second note", before.noteGone
+			and WG.BarDroidPad.note() == nil, tostring(before.noteGone) .. ", " .. tostring(WG.BarDroidPad.note()))
+		verify("controller game: ... and the app's menu still in place", WG.BarDroidOwnsBuildMenu == true)
+		touch("act mod_v085")
 	end,
 	function()
 		if not before.bm then

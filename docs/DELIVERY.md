@@ -171,6 +171,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       now draws the worked-out cells over BAR's buttons for its screenshot. On the laptop (1280x720, a commander, 20
       orders) every outline sits on one of BAR's 5 x 4 buttons, and the order the pad was put on (Move, the 10th) is the
       button BAR lights.
+      The controller mod switch reviewed: a LuaUI reload (BAR's interface scale changes on every fold and unfold)
+      starts the widgets with v0.8.5's controls while the app stayed on its own: no pad camera, v0.8.5's build menu
+      shown, the app's hidden. The app now tells its mode again every 2 s while its controls have the pad in the
+      controller game; the widgets act and note only on a change. touch-widget-test: the same mode told again changes
+      nothing and shows no second note; that check found the gamepad widget's notes never cleared (`x and nil or y` is
+      always `y` in Lua; harmless on screen, an expired note was not drawn): fixed. The same pattern is in BAR's own
+      Build menu (`disableInput = Spring.IsGodModeEnabled() and false or (...)`: god mode never forces input on), an
+      upstream matter; the app's copy keeps BAR's line.
 
 ## Releasing (once the blockers are done)
 
