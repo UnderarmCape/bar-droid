@@ -98,8 +98,8 @@ local maxPosY = 0.74
 local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	file = "LuaUI/Config/bardroid_place.txt",
-	focus = nil, focusFrom = nil, warpTo = nil, padFile = "LuaUI/Config/bardroid_pad.txt", padWritten = nil,
-	padWrittenAt = nil, warp = Spring.WarpMouse,
+	focus = nil, warped = nil, warpTo = nil, padFile = "LuaUI/Config/bardroid_pad.txt", padWritten = nil,
+	padWrittenAt = nil, warp = Spring.WarpMouse, fakeWarp = false,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
@@ -949,7 +949,7 @@ function droid.cellAt(x, y)
 end
 
 function droid.endFocus(center)
-	droid.focus, droid.warpTo, droid.focusFrom = nil, nil, nil
+	droid.focus, droid.warpTo, droid.warped = nil, nil, nil
 	if center then
 		droid.warp(math_floor(vsx / 2), math_floor(vsy / 2))
 	end
@@ -968,8 +968,10 @@ function droid.pad(name)
 	elseif name == "back" then
 		droid.endFocus(true)
 	else
+		-- (from the focused option, not the one under the pointer: two quick presses come before the pointer has
+		-- moved; the focus follows the pointer once it is the player's again, droid.padFocus)
 		local per = colls * rows
-		local id = droid.cellAt(spGetMouseState()) or droid.focus
+		local id = droid.focus
 		local page = math_ceil(id / per)
 		local i = id - (page - 1) * per - 1
 		local row, col = math_floor(i / colls), i % colls
@@ -998,26 +1000,35 @@ function droid.pad(name)
 	droid.padFocus()
 end
 
--- (each Update: the pointer onto the focused option once the menu has laid it out; the focus ends when the menu goes
--- or the pointer is moved off it; the app told)
+-- (each Update: the pointer onto the focused option once the menu has laid it out; once the pointer has got there
+-- (or half a second on) it is the player's again: the focus follows it over the options and ends off the menu, as
+-- when the menu goes; the app told)
 function droid.padFocus()
 	if droid.focus then
+		local now = Spring.GetTimer()
 		if not buildmenuShows then
 			droid.endFocus(false)
 		elseif droid.warpTo then
 			local r = cellRects[droid.warpTo]
 			if r then
-				droid.warp(math_floor((r[1] + r[3]) / 2), math_floor((r[2] + r[4]) / 2))
-				droid.warpTo, droid.focusFrom = nil, nil
+				local x, y = math_floor((r[1] + r[3]) / 2), math_floor((r[2] + r[4]) / 2)
+				droid.warp(x, y)
+				droid.warpTo, droid.warped = nil, { x, y, now }
 			end
-		else
+		elseif not droid.fakeWarp then
 			local mx, my = spGetMouseState()
-			local r = backgroundRect
-			if not droid.focusFrom then
-				droid.focusFrom = { mx, my }
-			elseif (mx ~= droid.focusFrom[1] or my ~= droid.focusFrom[2])
-				and not (r and mx >= r[1] and mx <= r[3] and my >= r[2] and my <= r[4]) then
-				droid.endFocus(false)
+			local w = droid.warped
+			if w and ((math.abs(mx - w[1]) <= 2 and math.abs(my - w[2]) <= 2) or Spring.DiffTimers(now, w[3]) > 0.5) then
+				droid.warped, w = nil, nil
+			end
+			if not w then
+				local r = backgroundRect
+				local id = droid.cellAt(mx, my)
+				if id then
+					droid.focus = id
+				elseif not (r and mx >= r[1] and mx <= r[3] and my >= r[2] and my <= r[4]) then
+					droid.endFocus(false)
+				end
 			end
 		end
 	end
@@ -2779,8 +2790,8 @@ function widget:Initialize()
 	WG.buildmenu.droidFocus = function() -- (the option the gamepad is on, and the page)
 		return droid.focus, currentPage
 	end
-	WG.buildmenu.droidSetWarp = function(fn) -- (tools/touch-widget-test.ps1: no pointer moves without -Pointer)
-		droid.warp = fn or Spring.WarpMouse
+	WG.buildmenu.droidSetWarp = function(fn) -- (tools/touch-widget-test.ps1: no pointer moves without -Pointer; the
+		droid.warp, droid.fakeWarp = fn or Spring.WarpMouse, fn ~= nil -- focus then does not follow the pointer)
 	end
 	WG.buildmenu.droidDrawHover = droid.drawHover -- (the same: drawn once without a pointer over the menu)
 	WG.buildmenu.getGroups = function()

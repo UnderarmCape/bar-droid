@@ -148,6 +148,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       without PLACE; it now asks again for up to 250 ms first. And a spot the camera had moved under the build menu,
       PLACE or the minimap made PLACE click that interface instead; such a spot is no longer told to the app (PLACE
       dims until it is back in view; a touch-widget-test case). The Java side is Kailil's to check on the phone.
+      The gamepad's new game mode reviewed (`ControllerBridge`: keys and buttons let go on every mode change and pause,
+      hat D-pads, the build menu's focus and a picked building routing the D-pad, B and X): nothing found. Its build
+      menu focus (the copy) had one: two quick D-pad presses, before the pointer warp had reached the game (a frame
+      or two), stepped the second from the option still under the pointer, so right, right moved one option; the
+      focus now steps from itself and follows the pointer only once the warp has landed (or half a second on).
+      touch-widget-test: right, right, down in one frame and three lefts past the edge (the real pointer's lag only
+      shows with -Pointer).
 
 ## Releasing (once the blockers are done)
 

@@ -812,6 +812,7 @@ cases = {
 		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus 1\n")
 		verify("pad: the pointer went onto it", POINTER or #before.warps >= 1)
 		padDraw.cell = before.first -- (DrawScreen below: the focused option drawn bigger and outlined)
+		touch("act pad_right") -- (quick presses, one frame: each from the last one's option, not the pointer's)
 		touch("act pad_right")
 		touch("act pad_down")
 		return 0.3
@@ -822,8 +823,8 @@ cases = {
 		end
 		verify("pad: the option drawn bigger and outlined", padDraw.ok, padDraw.err)
 		local focus = WG.buildmenu.droidFocus()
-		verify("pad: D-pad right, down: the option right of the first one's, a row down", focus == before.first + 4,
-			tostring(focus))
+		verify("pad: D-pad right, right, down: the right column, a row down", focus == before.first + 5, tostring(focus))
+		touch("act pad_left")
 		touch("act pad_left")
 		touch("act pad_left") -- (past the left edge: the page before; from the first, the last)
 		return 0.3
