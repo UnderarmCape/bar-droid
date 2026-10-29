@@ -710,7 +710,10 @@ function droid.register()
 	editor.register("buildmenu", {
 		label = "Build menu",
 		can = { move = true, size = true },
-		rect = function()
+		rect = function() -- (none while hidden: the controller game with v0.8.5's controls, its own menu in the place)
+			if not droid.active() then
+				return nil
+			end
 			return backgroundRect[1], backgroundRect[2], backgroundRect[3], backgroundRect[4]
 		end,
 		relayout = function()

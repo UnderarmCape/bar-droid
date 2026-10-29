@@ -776,6 +776,8 @@ cases = {
 		verify("controller game switched back: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: v0.8.5", WG.BarDroidPad.note())
 		verify("controller game switched back: v0.8.5's panel again, the app's menu hidden",
 			WG.buildmenu.controllerGetPanelVisible() == true and not WG.bardroidBuildmenu.getIsShowing())
+		verify("controller game switched back: the layout editor has no outline for the hidden menu",
+			WG.BarDroidLayout.rect("buildmenu") == nil)
 		WG.bardroidBuildmenu.droidSetWarp(nil)
 		-- touch building with v0.8.5's controls on (Kailil: the PLACE button "not even putting the place box over the
 		-- orders box"): a building picked from v0.8.5's menu, PLACE over the order menu all the same
