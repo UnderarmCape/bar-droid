@@ -91,7 +91,7 @@ factions' matching unit too.
   | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard); held, the left stick draws a path |
   | B | Cancel the order or building picked, else clear the selection |
   | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
-  | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
+  | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge, or right from the last option: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
   | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A) |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
@@ -102,6 +102,8 @@ factions' matching unit too.
   | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid - A starts it, the left stick draws it, A places it (X: and keeps the building), B cancels |
   | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |
 
+  A lobby can forbid widgets that give units orders (most allow them): there LB + A / X / Y only pick the order (A
+  gives it, in the middle) and L3 / R3 do nothing ("NOT IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
   to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
   takes v0.8.5's build menu's place.
