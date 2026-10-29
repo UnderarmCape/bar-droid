@@ -170,7 +170,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `gui_ordermenu.lua`'s setupCellGrid), checked so far only by the pointer landing inside the menu: touch-widget-test
       now draws the worked-out cells over BAR's buttons for its screenshot. On the laptop (1280x720, a commander, 20
       orders) every outline sits on one of BAR's 5 x 4 buttons, and the order the pad was put on (Move, the 10th) is the
-      button BAR lights.
+      button BAR lights. The same in the controller game, whose order menu is v0.8.5's (BAR's of the older release
+      with v0.8.5's edits): every outline on a button, the first order lit where the pad put it, and the app's 3x3
+      build menu in place of v0.8.5's.
       The controller mod switch reviewed: a LuaUI reload (BAR's interface scale changes on every fold and unfold)
       starts the widgets with v0.8.5's controls while the app stayed on its own: no pad camera, v0.8.5's build menu
       shown, the app's hidden. The app now tells its mode again every 2 s while its controls have the pad in the

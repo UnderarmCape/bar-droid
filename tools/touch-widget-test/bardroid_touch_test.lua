@@ -739,6 +739,33 @@ cases = {
 		verify("controller game: LB on the menu turns it back", page == before.ctlPage and focus == before.ctlFocus,
 			tostring(page) .. ", " .. tostring(focus))
 		touch("act pad_back")
+		-- Back + RB there: v0.8.5's order menu (BAR's of the release it was ported to, with v0.8.5's edits); the cells as
+		-- bardroid_pad.lua works them out drawn over its buttons for the screenshot
+		if not POINTER then
+			WG.BarDroidPad.setWarp(function() end)
+		end
+		touch("act pad_orders")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		local cmdID, index, count = WG.BarDroidPad.orders()
+		verify("controller game: Back + RB puts v0.8.5's order menu's first order on the pad", cmdID and index == 1 and count > 1,
+			string.format("%s, %s of %s", tostring(cmdID), tostring(index), tostring(count)))
+		local cells, cmds = WG.BarDroidPad.ordersCells()
+		padDraw.cells, padDraw.count = cells, cmds and #cmds or 0
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		Spring.SendCommands("screenshot png") -- (build\touch-widget-test\data\screenshots: each outline on one of its buttons)
+		padDraw.cells = nil
+		touch("act pad_back")
+		WG.BarDroidPad.setWarp(nil)
 		touch("act mod_v085")
 		return 0.3
 	end,
