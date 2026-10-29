@@ -106,7 +106,11 @@ Not solved:
   same, 2 of 2. The app and engine run at oom_score_adj 0 (the top activity): nothing to raise. Mali, Xclipse and
   Tensor GPUs have no driver path in this stack.
 - A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game, and an 8 GB phone cannot load one (above).
-  A lower-memory engine or game setup (textures, Lua state) would open BAR to most phones.
+  On the S23 Ultra the engine's GPU memory (Android's `GL mtrack`, ordinary RAM on a phone) reached 2.8 GB within
+  90 s of loading a 1v1 skirmish, its CPU side ~3.2 GB resident plus ~4.2 GB swapped; BAR on Windows in the same kind
+  of skirmish uses ~2.5 GB of GPU memory too (the laptop's per-process GPU counters), so the footprint is BAR's own,
+  not the stack's. A lower-memory setup (textures, the GL4 effects' buffers, Lua state), found by turning BAR's
+  pieces off one by one and reading `GL mtrack`, would open BAR to most phones.
 - The app's touch camera, panels and touch building are LuaUI user widgets: a lobby that turns custom widgets off
   loads none of them (the pad's mouse and keys still work; touch is then mouse clicks only). BAR's Code of Conduct
   asks for custom widgets used on public servers to be posted publicly (#widgets): they are all in
