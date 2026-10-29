@@ -194,7 +194,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       only picked the order. They aim at the middle now (the pointer while it is free), at the ground under a unit
       too. padgame-test: the chords (groups, L3/R3 against Back + R3, LB with the face buttons and the D-pad, the
       bookmark, Back + Start), 13 checks. At tonight's 5 fps the controller game's note checks failed (the runner's
-      steps 4 s apart, the note gone after 1.3 s): they read the last note shown and a count of notes now.
+      steps 4 s apart, the note gone after 1.3 s): they read the last note shown and a count of notes now. A full
+      laptop-tests run at that speed (40 min): 12 of 13 passed; the pad's R3 case had queued two short moves that the
+      commander walked before R3 came ("0 -> 0"), now held behind a WAIT (and "LB + B stops" checks a real queue).
+      The next run, at 3.5 fps, lasted 11 game minutes: BARb's first raid killed the commander and ended the game
+      midway. touch-widget-test plays against the engine's NullAI now (no case needs the enemy). With the commander
+      held still, LB + Y's patrol point (the reticle on the commander) was where it stood: the engine ends such a patrol
+      at once (the order given, the queue empty; a mouse patrol on the unit does the same); the case aims 400 elmos off.
 
 ## Releasing (once the blockers are done)
 

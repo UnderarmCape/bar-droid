@@ -80,6 +80,11 @@ try {
     if (-not $game) { throw "byar:test not in $gz" }
   }
   $script = (Get-Content (Join-Path $App "app\src\main\assets\bardroid\skirmish.template.txt") -Raw).Replace("@GAME@", $game).Replace("@MAP@", $MapName)
+  # the opponent the engine's NullAI (it does nothing): on a throttled laptop (4 fps) the cases run past ten game
+  # minutes, and BARb's first raid killed the commander and ended the game midway (no case needs the enemy)
+  if (Test-Path (Join-Path $EngineDir "AI\Skirmish\NullAI\0.1\AIInfo.lua")) {
+    $script = $script.Replace("ShortName=BARb;", "ShortName=NullAI;").Replace("Version=stable;", "Version=0.1;")
+  }
   $startscript = Join-Path $Work "skirmish.txt"
   $script | Set-Content $startscript -Encoding ascii
 

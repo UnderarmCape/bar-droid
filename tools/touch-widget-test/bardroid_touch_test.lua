@@ -1134,8 +1134,12 @@ cases = {
 		verify("pad: D-pad down selects the commander", def and def.customParams.iscommander, def and def.name)
 		before.com = sel[1]
 		if sel[1] then -- two orders queued, then R3: the last one removed (where unit control is allowed, as here)
+			-- (behind a WAIT, so they are still queued however long the next steps take: at 5 fps the commander walked
+			-- both moves before R3 came)
 			local x, y, z = Spring.GetUnitPosition(sel[1])
-			Spring.GiveOrderToUnit(sel[1], CMD.MOVE, { x + 100, y, z }, 0)
+			Spring.GiveOrderToUnit(sel[1], CMD.STOP, {}, 0)
+			Spring.GiveOrderToUnit(sel[1], CMD.WAIT, {}, 0)
+			Spring.GiveOrderToUnit(sel[1], CMD.MOVE, { x + 100, y, z }, { "shift" })
 			Spring.GiveOrderToUnit(sel[1], CMD.MOVE, { x + 200, y, z }, { "shift" })
 		end
 		return 0.3
@@ -1145,6 +1149,8 @@ cases = {
 			return
 		end
 		before.queued = Spring.GetUnitCommandCount(before.com)
+		local queue = Spring.GetUnitCommands(before.com, -1) or {}
+		before.lastQueued = queue[#queue] and queue[#queue].params[1]
 		touch("act queue_remove_last")
 		return 0.3
 	end,
@@ -1152,8 +1158,10 @@ cases = {
 		if not before.com then
 			return
 		end
-		verify("pad: R3 removes the last queued order", Spring.GetUnitCommandCount(before.com) == before.queued - 1,
-			before.queued .. " -> " .. Spring.GetUnitCommandCount(before.com))
+		local queue = Spring.GetUnitCommands(before.com, -1) or {}
+		local last = queue[#queue] and queue[#queue].params[1]
+		verify("pad: R3 removes the last queued order", before.queued == 3 and #queue == 2 and last ~= before.lastQueued,
+			before.queued .. " -> " .. #queue)
 		touch("act lb_b") -- (LB + B: stop)
 		return 0.3
 	end,
@@ -1221,7 +1229,16 @@ cases = {
 			return
 		end
 		verify("pad: a cleared group recalls nothing", #Spring.GetSelectedUnits() == 0, #Spring.GetSelectedUnits())
-		-- LB + Y: patrol at the middle (given at once where unit control is allowed, as in this skirmish; picked else)
+		-- LB + Y: patrol at the middle (given at once where unit control is allowed, as in this skirmish; picked else),
+		-- 400 elmos off the commander (a patrol to where it stands ends at once: the queue was empty, the order given)
+		local x, y, z = Spring.GetUnitPosition(before.com)
+		Spring.SetCameraTarget(x + 400, y, z, 0)
+		return 0.5
+	end,
+	function()
+		if not before.com then
+			return
+		end
 		Spring.SelectUnitArray({ before.com })
 		touch("act lb_y")
 		return 1 -- (a given order reaches the queue a few frames on: 0.3 s was too short at 5 fps)
@@ -1237,7 +1254,8 @@ cases = {
 		end
 		local _, active = Spring.GetActiveCommand()
 		verify("pad: LB + Y patrols (the order given, or picked for A)", patrol or active == CMD.PATROL,
-			tostring(queue[1] and queue[1].id) .. ", " .. tostring(active))
+			string.format("queue %s, picked %s, note %s, %d selected", tostring(queue[1] and queue[1].id), tostring(active),
+				tostring(select(2, WG.BarDroidPad.note())), #Spring.GetSelectedUnits()))
 		Spring.SetActiveCommand(0)
 		Spring.GiveOrderToUnit(before.com, CMD.STOP, {}, 0)
 		Spring.SelectUnitArray({ before.com }) -- (B with nothing picked clears it: the D-gun needs the commander)
