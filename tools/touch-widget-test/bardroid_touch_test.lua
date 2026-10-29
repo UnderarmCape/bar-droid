@@ -750,6 +750,25 @@ cases = {
 		verify("controller game switched back: v0.8.5's panel again, the app's menu hidden",
 			WG.buildmenu.controllerGetPanelVisible() == true and not WG.bardroidBuildmenu.getIsShowing())
 		WG.bardroidBuildmenu.droidSetWarp(nil)
+		-- touch building with v0.8.5's controls on (Kailil: the PLACE button "not even putting the place box over the
+		-- orders box"): a building picked from v0.8.5's menu, PLACE over the order menu all the same
+		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do
+			if cmd.id < 0 then
+				Spring.SetActiveCommand(Spring.GetCmdDescIndex(cmd.id))
+				break
+			end
+		end
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		local panel = WG.bardroidBuildmenu.droidPanel()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("controller game, v0.8.5's controls: a building picked shows PLACE and tells the app",
+			panel ~= nil and text:match("^place one\ndone %d+ %d+ %d+ %d+\n"), text)
+		touch("act cancel")
 		Spring.SelectUnitArray({})
 	end,
 	function()
