@@ -47,6 +47,7 @@ public class GameActivity extends MainActivity {
         super.onCreate(savedInstanceState);
         KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
+        touch.setTripleTap(this::switchControllerMod);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
         pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
@@ -80,6 +81,20 @@ public class GameActivity extends MainActivity {
     private volatile int screenW, screenH;
 
     /**
+     * In the controller game the pad is v0.8.5's (true) or the app's (PadGame, as in BAR's own game); a triple tap
+     * switches (Kailil, 2026-10-29: "toggle between the two in game via a ... triple tap single finger press anywhere
+     * on screen. it displays a toast saying controller mod switched ... so i can compare back and forth").
+     */
+    private volatile boolean v085 = true;
+
+    private void switchControllerMod() {
+        if (!touch.controllerGame()) return;   // (only the controller game has both)
+        v085 = !v085;
+        Log.i("pad", "controller mod: " + (v085 ? "v0.8.5" : "BAR Droid's"));
+        touch.padAct(v085 ? "mod_v085" : "mod_bardroid");
+    }
+
+    /**
      * The pad as a mouse (and in BAR's game a keyboard too: ControllerBridge); events go to the X server on the UI
      * thread. The controller game (v0.8.5 reads the pad itself) says so in bardroid_game.txt (bardroid_touch.lua).
      */
@@ -87,7 +102,7 @@ public class GameActivity extends MainActivity {
         private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
         @Override public int mode() {
             if (!touch.gameWidgetRunning()) return ControllerBridge.MODE_LOBBY;
-            return touch.controllerGame() ? ControllerBridge.MODE_OFF : ControllerBridge.MODE_GAME;
+            return touch.controllerGame() && v085 ? ControllerBridge.MODE_OFF : ControllerBridge.MODE_GAME;
         }
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
         @Override public boolean onInterface() { return touch.pointerOnInterface(); }
@@ -100,17 +115,20 @@ public class GameActivity extends MainActivity {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendKeyEvent(0, keyCode, down); });
         }
         @Override public void act(String name) { touch.padAct(name); }
-        @Override public void centre() {
-            int w = screenW, h = screenH;
-            if (w <= 0 || h <= 0) return;
+        @Override public void centre() { moveTo(screenW / 2f, screenH / 2f); }
+        @Override public void moveTo(float x, float y) {
+            if (screenW <= 0 || screenH <= 0) return;
             ui.post(() -> {
                 LorieView v = getLorieView();
-                if (v != null && v.connected()) v.sendMouseEvent(w / 2f, h / 2f, InputStub.BUTTON_UNDEFINED, false, false);
+                if (v != null && v.connected()) v.sendMouseEvent(x, y, InputStub.BUTTON_UNDEFINED, false, false);
             });
         }
+        @Override public int width() { return screenW; }
+        @Override public int height() { return screenH; }
+        @Override public float[] pointer() { return touch.pointerAt(); }
         @Override public String padFocus() { return touch.padFocus(); }
         @Override public boolean pregame() { return touch.pregame(); }
-        @Override public boolean buildingPicked() { return touch.buildingPicked(); }
+        @Override public String armed() { return touch.armed(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
         }

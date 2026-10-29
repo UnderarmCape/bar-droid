@@ -649,14 +649,18 @@ cases = {
 		verify("build menu: shows for a builder", B and B.getIsShowing and B.getIsShowing())
 		if B and B.controllerApiVersion then
 			verify("build menu: the controller game's own (the app's copy stood down)", true)
-			Spring.SelectUnitArray({})
-			return
+			-- the triple tap (GameActivity): the pad to the app's controls, the camera with it
+			before.ctl = Spring.GetCameraState()
+			touch("act mod_bardroid")
+			touch("pad 32767 0 0 0 0 0")
+			return 0.3
 		end
 		local x0, y0, x1, y1 = L.rect("buildmenu")
 		verify("build menu: the app's copy, known to the editor", x0 ~= nil, x0 and string.format("%d,%d-%d,%d", x0, y0, x1, y1))
 		if not x0 then
 			return
 		end
+		before.ctl = nil
 		before.bm = { x0 = x0, y0 = y0, w = x1 - x0, h = y1 - y0 }
 		-- a 3 x 3 grid, the page arrows in a strip under it (Kailil: "3x3 items on top of the left and right and page
 		-- indicator", the strip half a cell high): 9 options a page
@@ -676,6 +680,59 @@ cases = {
 		L.move(px + 60, py + 40)
 		L.release()
 		return 0.5
+	end,
+	-- the controller game: switched to the app's controls (a triple tap), RB drives v0.8.5's own build menu
+	function()
+		if not before.ctl then
+			return
+		end
+		touch("pad 0 0 0 0 0 0")
+		local cs = Spring.GetCameraState()
+		verify("controller game switched: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: BAR DROID", WG.BarDroidPad.note())
+		verify("controller game switched: the pad moves the camera",
+			math.sqrt((cs.px - before.ctl.px) ^ 2 + (cs.pz - before.ctl.pz) ^ 2) > 50)
+		touch("act pad_build")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		local B = WG.buildmenu
+		before.ctlFocus = B.controllerGetFocus and B.controllerGetFocus().unitDefID
+		verify("controller game: RB puts v0.8.5's build menu on the pad", before.ctlFocus ~= nil
+			and (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("^focus buildapi\n"), readFile("LuaUI/Config/bardroid_pad.txt"))
+		touch("act pad_right")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		local B = WG.buildmenu
+		local focus = B.controllerGetFocus().unitDefID
+		verify("controller game: the D-pad steps through it", focus ~= nil and focus ~= before.ctlFocus,
+			tostring(before.ctlFocus) .. " -> " .. tostring(focus))
+		touch("act pad_select") -- (A: the building picked, the menu let go)
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		local _, active = Spring.GetActiveCommand()
+		verify("controller game: A picks the building", active and active < 0 and WG.buildmenu.controllerGetFocus().unitDefID == nil,
+			tostring(active))
+		touch("act cancel")
+		touch("act mod_v085")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		verify("controller game switched back: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: v0.8.5", WG.BarDroidPad.note())
+		Spring.SelectUnitArray({})
 	end,
 	function()
 		if not before.bm then
@@ -782,8 +839,8 @@ cases = {
 		verify("build menu: the next building starts with ONE", shape == "one", shape)
 		verify("build menu: the app told none", readFile("LuaUI/Config/bardroid_place.txt") == "place none\n")
 		-- the gamepad (Kailil: v0.8.5's feel): RB puts the pointer on the menu's first option, the D-pad steps through
-		-- them, picking one sends the pointer to the middle of the screen. Pointer moves recorded, not made, unless
-		-- -Pointer.
+		-- them, picking one lets go of the menu (the app glides the pointer back to the middle). Pointer moves
+		-- recorded, not made, unless -Pointer.
 		before.warps = {}
 		if not POINTER then
 			WG.buildmenu.droidSetWarp(function(x, y)
@@ -801,7 +858,7 @@ cases = {
 		before.first = (page - 1) * 9 + 1
 		verify("pad: RB puts the menu's first option on the pad", focus == before.first,
 			tostring(focus) .. " on page " .. tostring(page))
-		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus build\npregame 0\n",
+		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus build\npregame 0\narmed none\n",
 			readFile("LuaUI/Config/bardroid_pad.txt"))
 		verify("pad: the pointer went onto it", POINTER or #before.warps >= 1)
 		padDraw.cell = before.first -- (DrawScreen below: the focused option drawn bigger and outlined)
@@ -844,11 +901,10 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local w = before.warps[#before.warps]
-		verify("pad: a building picked off the menu: the pointer to the middle of the screen",
-			WG.buildmenu.droidFocus() == nil and (POINTER or (w and w[1] == cx and w[2] == cy)),
-			w and (w[1] .. "," .. w[2]) or "no move")
-		verify("pad: the app told the focus is over", readFile("LuaUI/Config/bardroid_pad.txt") == "focus none\npregame 0\n")
+		verify("pad: a building picked off the menu lets go of the menu", WG.buildmenu.droidFocus() == nil)
+		verify("pad: the app told the focus is over, a building picked",
+			readFile("LuaUI/Config/bardroid_pad.txt") == "focus none\npregame 0\narmed build\n",
+			readFile("LuaUI/Config/bardroid_pad.txt"))
 		before.facing = Spring.GetBuildFacing()
 		touch("act rotate_right") -- (the D-pad while a building is picked)
 		return 0.3
@@ -906,10 +962,9 @@ cases = {
 			return
 		end
 		local _, active = Spring.GetActiveCommand()
-		local w = before.warps[#before.warps]
 		verify("pad: A on Move picks it and leaves the menu", active == CMD.MOVE and WG.BarDroidPad.orders() == nil,
 			tostring(active))
-		verify("pad: the pointer back to the middle", POINTER or (w and w[1] == cx and w[2] == cy))
+		verify("pad: the app told an order is picked", (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("armed other\n", 1, true))
 		touch("act cancel") -- (B: the order put away)
 		return 0.3
 	end,

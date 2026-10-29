@@ -1,7 +1,7 @@
 #!/bin/sh
 # The Java checks of tools/laptop-tests.ps1 that need no BAR install, for Linux and CI (.github/workflows/build.yml):
 # Downloader.java against a local HTTP server, SettingsMerge.java on the app's springsettings.cfg, Updater.java's
-# rollback on made-up files dirs. javac and java from JAVA_HOME, else PATH. Prints each check's result; exit 1 on a
+# rollback on made-up files dirs, PadGame.java's gamepad controls with a made-up pointer and game. javac and java from JAVA_HOME, else PATH. Prints each check's result; exit 1 on a
 # failure.
 #   sh tools/java-checks.sh
 set -eu
@@ -37,4 +37,6 @@ args=""
 check updater com.underarmcape.bardroid.UpdaterTest $(find tools/updater-test/src tools/lobby-bridge-test/src/org -name '*.java') \
   "$src/Updater.java" "$src/Downloader.java"
 rm -rf "$work"/updater-*
+check padgame com.underarmcape.bardroid.PadGameTest $(find tools/padgame-test/src -name '*.java') \
+  "$src/PadGame.java" "$src/PadMouse.java" "$src/PadButtons.java"
 exit $failed

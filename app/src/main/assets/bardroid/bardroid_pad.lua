@@ -12,8 +12,12 @@
 --   cancel (B), LB + A/X/Y/B orders at the middle of the screen, removing queued orders (L3/R3), the D-gun (Back + R3)
 --   a reticle in the middle while the pad is the input, and short notes (v0.8.5's hotkey feedback)
 -- Orders at a point go to the units at once where the game allows unit-control widgets (BAR's default), else the order
--- is picked and A gives it. The app learns which menu has the pad, and whether the game has started, from
--- LuaUI/Config/bardroid_pad.txt ("focus build|orders|none", "pregame 0|1").
+-- is picked and A gives it. The app learns which menu has the pad, whether the game has started and what kind of order
+-- is picked from LuaUI/Config/bardroid_pad.txt ("focus build|orders|none", "pregame 0|1",
+-- "armed build|area|unitarea|other|none": a tap of A starts an area order's circle, PadGame).
+-- A menu on the pad keeps the pointer on it (Kailil: "constrain the mouse within the menu bounds ... let the mouse leave
+-- it if i press B only or i constantly move the left stick out of the box for ... 1 second"); the app brings the
+-- pointer back to the middle afterwards, gliding.
 
 function widget:GetInfo()
 	return {
@@ -28,6 +32,7 @@ end
 
 local PAD_FILE = "LuaUI/Config/bardroid_pad.txt"
 local TOAST_SECONDS = 1.3
+local LEAVE_SECONDS = 1 -- the pointer pushed off a menu this long lets go of it
 local HIGHLIGHT = { 1, 0.8, 0.25 }
 
 -- BAR's order menu (luaui/Widgets/gui_ordermenu.lua): the orders it hides, and how it lays out its grid
@@ -45,6 +50,9 @@ local bookmark = nil
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
 local lastIdleMobile = 0
 local mouseMode = false -- Back + Start, as the app's switch (PadGame)
+local controllerGame = false -- v0.8.5's game: the pad is v0.8.5's until a triple tap switches it (modV085)
+local modV085 = false
+local apiFocus = nil -- there, v0.8.5's build menu on the pad (its controller calls): the option's unitDefID
 local warp, fakeWarp = Spring.WarpMouse, false -- (tools/touch-widget-test.ps1 records the moves instead)
 
 local function now()
@@ -187,21 +195,18 @@ local function ordersLight(cmdID)
 	end
 end
 
-local function ordersEnd(centre)
+-- (the app glides the pointer back to the middle once no menu has the pad)
+local function ordersEnd()
 	if orders then
 		ordersLight(nil)
 	end
 	orders = nil
-	if centre then
-		local vsx, vsy = Spring.GetViewGeometry()
-		warp(math.floor(vsx / 2), math.floor(vsy / 2))
-	end
 end
 
 local function ordersGo(index)
 	local layout = ordersLayout()
 	if not layout then
-		ordersEnd(false)
+		ordersEnd()
 		return
 	end
 	index = math.max(1, math.min(#layout.cmds, index))
@@ -237,7 +242,7 @@ local function ordersSelect()
 	Spring.SetActiveCommand(index, 1, true, false, alt, ctrl, meta, shift)
 	local _, active = Spring.GetActiveCommand()
 	if active == orders.cmdID then
-		ordersEnd(true)
+		ordersEnd()
 	else
 		ordersGo(orders.index) -- (the menu may have changed: a state's label, Wait)
 	end
@@ -366,9 +371,36 @@ local function queueRemove(last)
 	end
 end
 
+local function pregameBuild()
+	local pb = WG["pregame-build"]
+	return Spring.GetGameFrame() == 0 and pb and pb.getPreGameDefID and pb.getPreGameDefID() ~= nil
+end
+
+-- What kind of order is picked, for the app: a building, an area only (area mex: A starts its circle, the next A ends
+-- it), a unit or an area (repair, reclaim: hold A and draw for the area), another order, or none
+local function armedKind()
+	if pregameBuild() then
+		return "build"
+	end
+	local _, id = Spring.GetActiveCommand()
+	if not id then
+		return "none"
+	elseif id < 0 then
+		return "build"
+	end
+	local index = Spring.GetCmdDescIndex(id)
+	local desc = index and Spring.GetActiveCmdDesc(index)
+	local t = desc and desc.type
+	if t == CMDTYPE.ICON_AREA then
+		return "area"
+	elseif t == CMDTYPE.ICON_UNIT_OR_AREA or t == CMDTYPE.ICON_UNIT_FEATURE_OR_AREA or t == CMDTYPE.ICON_UNIT_OR_RECTANGLE then
+		return "unitarea"
+	end
+	return "other"
+end
+
 local function cancel()
-	if Spring.GetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].getPreGameDefID
-		and WG["pregame-build"].getPreGameDefID() then
+	if pregameBuild() then
 		WG["pregame-build"].setPreGameDefID(nil)
 	elseif select(2, Spring.GetActiveCommand()) then
 		Spring.SetActiveCommand(0)
@@ -377,24 +409,65 @@ local function cancel()
 	end
 end
 
+-- The controller game keeps v0.8.5's build menu (the app's copy stands down there): RB drives it through its own
+-- controller calls (controllerSetFocus, controllerMoveFocus, controllerActivate), its focus lit as v0.8.5 lights it
+local function apiMenu()
+	local b = WG.buildmenu
+	return b and not b.droidPad and b.controllerGetItems and b.controllerSetFocus and b.controllerMoveFocus
+		and b.controllerActivate and b
+end
+
+local function apiEnd()
+	local b = apiMenu()
+	if b and apiFocus then
+		b.controllerSetFocus(nil, "bardroid")
+	end
+	apiFocus = nil
+end
+
 local function buildMenu(name)
-	if WG.buildmenu and WG.buildmenu.droidPad then
-		WG.buildmenu.droidPad(name)
+	local b = WG.buildmenu
+	if b and b.droidPad then
+		b.droidPad(name)
+		return
+	end
+	b = apiMenu()
+	if not b then
+		return
+	end
+	if name == "build" then
+		if apiFocus then
+			apiEnd()
+		else
+			local items = b.controllerGetItems()
+			if items and items[1] then
+				if b.controllerSetFocusVisible then
+					b.controllerSetFocusVisible(true)
+				end
+				apiFocus = b.controllerSetFocus(items[1].unitDefID, "bardroid")
+			end
+		end
+	elseif name == "back" then
+		apiEnd()
+	elseif apiFocus then
+		local dx = name == "left" and -1 or name == "right" and 1 or 0
+		local dy = name == "up" and -1 or name == "down" and 1 or 0
+		apiFocus = b.controllerMoveFocus(dx, dy) or apiFocus
 	end
 end
 
 local function buildFocus()
-	return WG.buildmenu and WG.buildmenu.droidFocus and WG.buildmenu.droidFocus() ~= nil
+	return (WG.buildmenu and WG.buildmenu.droidFocus and WG.buildmenu.droidFocus() ~= nil) or apiFocus ~= nil
 end
 
 local ACTIONS = {
 	pad_build = function() -- RB
-		ordersEnd(false)
+		ordersEnd()
 		buildMenu("build")
 	end,
 	pad_orders = function() -- Back + RB
 		if orders then
-			ordersEnd(false)
+			ordersEnd()
 			return
 		end
 		if buildFocus() then
@@ -405,17 +478,41 @@ local ACTIONS = {
 			note("NO ORDERS")
 		end
 	end,
-	pad_select = function()
+	pad_select = function() -- A on the order menu, or on v0.8.5's build menu (a building picked: the menu let go)
 		if orders then
 			ordersSelect()
+		elseif apiFocus and apiMenu() then
+			apiMenu().controllerActivate(apiFocus, 1)
+			if select(2, Spring.GetActiveCommand()) then
+				apiEnd()
+			end
 		end
+	end,
+	pad_x = function() -- X on v0.8.5's build menu: one off a factory's queue (RT held: five)
+		if apiFocus and apiMenu() then
+			apiMenu().controllerActivate(apiFocus, 3)
+		end
+	end,
+	mod_bardroid = function() -- the triple tap in the controller game (GameActivity, through bardroid_touch.lua)
+		modV085 = false
+		note("CONTROLLER MOD: BAR DROID")
+	end,
+	mod_v085 = function()
+		modV085 = true
+		ordersEnd()
+		apiEnd()
+		note("CONTROLLER MOD: v0.8.5")
 	end,
 	pad_back = function()
 		if orders then
-			ordersEnd(true)
+			ordersEnd()
 		else
 			buildMenu("back")
 		end
+	end,
+	slow_pan = function() -- Back while placing a building (v0.8.5): the pan at 30% until the building is put away
+		WG.BarDroidPadSlowPan = not WG.BarDroidPadSlowPan
+		note(WG.BarDroidPadSlowPan and "SLOW PAN" or "FULL PAN")
 	end,
 	cancel = cancel,
 	commander = commander,
@@ -543,12 +640,13 @@ local function act(name)
 end
 
 -- The order menu on the pad follows the pointer once it is the player's again (the warp landed, or half a second),
--- and ends when the pointer leaves the menu or the menu goes; the app is told which menu has the pad
+-- keeps it on the menu (pushed off it for LEAVE_SECONDS it lets go) and ends when the menu goes; the app is told
+-- which menu has the pad and what is picked
 function widget:Update()
 	if orders then
 		local layout = ordersLayout()
 		if not layout then
-			ordersEnd(false)
+			ordersEnd()
 		else
 			orders.layout = layout
 			local mx, my = Spring.GetMouseState()
@@ -567,20 +665,37 @@ function widget:Update()
 				if over and over ~= orders.index then
 					orders.index, orders.cmdID = over, layout.cmds[over].id
 					ordersLight(orders.cmdID)
-				elseif not over then
-					local first, last = layout.cells[1], layout.cells[#layout.cells]
-					if not (mx >= first[1] and mx <= last[3] and my >= last[2] and my <= first[4]) then
-						ordersEnd(false)
-					end
+				end
+				local first, last = layout.cells[1], layout.cells[#layout.cells]
+				local x0, y0, x1, y1 = first[1] + 2, last[2] + 2, last[3] - 2, first[4] - 2
+				if mx >= x0 and mx <= x1 and my >= y0 and my <= y1 then
+					orders.outSince = nil
+				elseif not orders.outSince then
+					orders.outSince = now()
+					warp(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
+				elseif Spring.DiffTimers(now(), orders.outSince) >= LEAVE_SECONDS then
+					ordersEnd()
+				else
+					warp(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
 				end
 			end
 		end
 	end
-	local focus = orders and "orders" or (buildFocus() and "build" or "none")
+	if apiFocus then -- (v0.8.5's build menu gone: no builder selected)
+		local b = apiMenu()
+		if not b or (b.getIsShowing and not b.getIsShowing()) then
+			apiEnd()
+		end
+	end
+	local armed = armedKind()
+	if armed ~= "build" and WG.BarDroidPadSlowPan then -- (the slow pan is for placing only, as in v0.8.5)
+		WG.BarDroidPadSlowPan = nil
+	end
+	local focus = orders and "orders" or (apiFocus and "buildapi") or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
-	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\n"
+	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\n"
 	local t = now()
-	if text ~= written or ((focus ~= "none" or pregame) and Spring.DiffTimers(t, writtenAt) > 1) then
+	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none") and Spring.DiffTimers(t, writtenAt) > 1) then
 		local f = io.open(PAD_FILE, "w")
 		if f then
 			f:write(text)
@@ -595,7 +710,7 @@ function widget:DrawScreen()
 	local vsx, vsy = Spring.GetViewGeometry()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"
-	if pad and not orders and not buildFocus() and not freePointer() then
+	if pad and not modV085 and not orders and not buildFocus() and not freePointer() then
 		local r = math.max(8, math.floor(vsy * 0.018))
 		gl.Color(1, 1, 1, 0.55)
 		gl.LineWidth(2)
@@ -625,6 +740,10 @@ function widget:DrawScreen()
 end
 
 function widget:Initialize()
+	-- the controller game (as bardroid_touch.lua finds it): the pad is v0.8.5's until a triple tap switches it
+	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
+	controllerGame = (ok and found) or Game.gameVersion == "$VERSION"
+	modV085 = controllerGame
 	WG.BarDroidPad = {
 		act = act,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
@@ -652,11 +771,11 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
-	ordersEnd(false)
+	ordersEnd()
 	WG.BarDroidPad = nil
 	local f = io.open(PAD_FILE, "w")
 	if f then
-		f:write("focus none\npregame 0\n")
+		f:write("focus none\npregame 0\narmed none\n")
 		f:close()
 	end
 end

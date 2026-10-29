@@ -75,7 +75,7 @@ local updates = 0
 local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
 local hoverTimer = nil
-local padCamera = true   -- false in the controller game
+local padCamera = true   -- false in the controller game (until a triple tap gives the pad to the app: mod_bardroid)
 
 -- Long queues of the selected units: the engine draws every building a selected builder has queued once more, one model
 -- at a time (CommandDrawer -> CCursorIcons::DrawBuilds), over BAR's "Show Builder Queue", which has drawn them all
@@ -274,6 +274,20 @@ local ACTIONS = {
 	end,
 	idle_prev = function()
 		idleBuilder(-1)
+	end,
+	-- the controller game: a triple tap switches the pad between v0.8.5 and the app's controls (GameActivity), the
+	-- camera with it (bardroid_pad.lua shows which)
+	mod_bardroid = function()
+		padCamera = true
+		if WG.BarDroidPad then
+			WG.BarDroidPad.act("mod_bardroid")
+		end
+	end,
+	mod_v085 = function()
+		padCamera = false
+		if WG.BarDroidPad then
+			WG.BarDroidPad.act("mod_v085")
+		end
 	end,
 	hud = function() -- three fingers held: the layout editor (bardroid_layout.lua)
 		if WG.BarDroidLayout then
@@ -488,6 +502,7 @@ local function applyPad(dt)
 		local rightX, rightZ = horizontal(v and v.right)
 		local forwardX, forwardZ = horizontal(v and v.forward)
 		local distance = PAD_PAN_SPEED * (1 + (PAD_FAST_PAN - 1) * s.boost) * dt
+			* (WG.BarDroidPadSlowPan and 0.3 or 1) -- (Back while placing a building: bardroid_pad.lua)
 		if rightX and forwardX then
 			cs.px = cs.px + (s.panX * rightX - s.panY * forwardX) * distance
 			cs.pz = cs.pz + (s.panX * rightZ - s.panY * forwardZ) * distance

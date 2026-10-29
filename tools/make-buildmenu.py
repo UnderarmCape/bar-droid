@@ -206,7 +206,7 @@ function droid.place()
 		if not armed then
 			droid.shape = "one" -- (each building picked starts with ONE: a drag pans the map until a shape is chosen)
 		elseif droid.focus then
-			droid.endFocus(true) -- (picked with the gamepad: the pointer to the middle, ready to place it)
+			droid.endFocus() -- (picked with the gamepad: the app glides the pointer to the middle, ready to place it)
 		end
 		clear()
 	end
@@ -412,17 +412,15 @@ function droid.cellAt(x, y)
 	end
 end
 
-function droid.endFocus(center)
-	droid.focus, droid.warpTo, droid.warped = nil, nil, nil
-	if center then
-		droid.warp(math_floor(vsx / 2), math_floor(vsy / 2))
-	end
+-- (the app glides the pointer back to the middle once no menu has the pad: Kailil, "make sure that snap back is smooth")
+function droid.endFocus()
+	droid.focus, droid.warpTo, droid.warped, droid.outSince = nil, nil, nil, nil
 end
 
 function droid.pad(name)
 	if name == "build" then
 		if droid.focus then
-			droid.endFocus(false)
+			droid.endFocus()
 		elseif buildmenuShows and cmdsCount > 0 then
 			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
 			droid.warpTo = droid.focus
@@ -430,7 +428,7 @@ function droid.pad(name)
 	elseif not droid.focus then
 		return
 	elseif name == "back" then
-		droid.endFocus(true)
+		droid.endFocus()
 	else
 		-- (from the focused option, not the one under the pointer: two quick presses come before the pointer has
 		-- moved; the focus follows the pointer once it is the player's again, droid.padFocus)
@@ -471,7 +469,7 @@ function droid.padFocus()
 	if droid.focus then
 		local now = Spring.GetTimer()
 		if not buildmenuShows then
-			droid.endFocus(false)
+			droid.endFocus()
 		elseif droid.warpTo then
 			local r = cellRects[droid.warpTo]
 			if r then
@@ -486,12 +484,21 @@ function droid.padFocus()
 				droid.warped, w = nil, nil
 			end
 			if not w then
-				local r = backgroundRect
+				-- (kept on the menu: pushed off it for a second the pointer is let go - Kailil: "let the mouse leave it if
+				-- i press B only or i constantly move the left stick out of the box for ... 1 second")
 				local id = droid.cellAt(mx, my)
 				if id then
 					droid.focus = id
-				elseif not (r and mx >= r[1] and mx <= r[3] and my >= r[2] and my <= r[4]) then
-					droid.endFocus(false)
+				end
+				local r = backgroundRect
+				local x0, y0, x1, y1 = r[1] + 2, r[2] + 2, r[3] - 2, r[4] - 2
+				if mx >= x0 and mx <= x1 and my >= y0 and my <= y1 then
+					droid.outSince = nil
+				elseif droid.outSince and Spring.DiffTimers(now, droid.outSince) >= 1 then
+					droid.endFocus()
+				else
+					droid.outSince = droid.outSince or now
+					droid.warp(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
 				end
 			end
 		end

@@ -38,7 +38,7 @@ it (no driver path); the app's device check says so.
 
 | Gesture | In the game |
 |---|---|
-| Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map |
+| Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map (in the controller game: switch the gamepad between v0.8.5 and the app's controls) |
 | Drag | Pan the map (a flick glides); on BAR's windows and minimap it drags them instead |
 | Tap, then drag | Box select |
 | Long press | Right click (move/attack order); keep dragging for a formation |
@@ -86,19 +86,24 @@ factions' matching unit too.
   |---|---|
   | Left stick | Pan the map under the pointer (LT held: faster) |
   | Right stick | Turn (left/right) and zoom (up/down); with LB held, tilt |
-  | A | Select (twice: that type on screen; hold and pan: box select); place a building |
-  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard; hold and pan: a path) |
+  | A | Select (twice: that type on screen); place a building |
+  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard) |
+  | A or X held | The left stick moves the pointer instead: box select, a path (X), an area circle (repair, reclaim), a row of buildings; let go and the pointer glides back to the middle |
   | B | Cancel the order or building picked, else clear the selection |
-  | RT / RB held | Queue (Shift) / put the order first in the queue (Space) |
-  | RB | The build menu: the pointer onto its first option, the D-pad steps (past the left or right edge: the page before or after), the option drawn bigger with a gold outline; A picks it and the pointer goes back to the middle; B or RB leaves |
-  | Back + RB | The order menu, the same way: A gives the order (one that needs a target: aim it in the middle, A) |
+  | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
+  | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a second of pushing off it, lets go), the D-pad steps (past the left or right edge: the page before or after), the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
+  | Back + RB | The order menu, the same way (the pointer at half speed): A gives the order (one that needs a target: aim it in the middle, A) |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
   | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait). With builders, A repair and X reclaim (A on the target) |
   | Start + D-pad | Control groups: up / down picks the group, left tapped recalls it (held: assigns the selection), right: that type joins it from now on; Start + L3 clears it |
   | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires) |
   | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
-  | A building picked | A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, LB held + drag: a filled area, B puts it away |
+  | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid - A starts it, the left stick draws it, A places it (X: and keeps the building), B cancels |
+  | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |
+
+  In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
+  to compare them ("CONTROLLER MOD: ..."); there RB drives v0.8.5's own build menu.
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

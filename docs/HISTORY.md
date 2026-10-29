@@ -5,6 +5,36 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The gamepad: Kailil's notes from playing it (2026-10-29)
+Kailil, while playing: the LB grid placement of v0.8.5 to be copied "1 to 1 overwriting what you have now" (the touch
+buttons left for touch); the pointer kept inside the build and order menus, let go on B or "constantly move the left
+stick out of the box for ... 1 second", half speed on the order menu; "Hold X for a pan path isnt working. its just
+applying a move command when I release the X"; on factories "X doesnt remove one from queue or RT + X doesnt remove
+5"; area mex "makes the highlight mex options appear for a split second then drops the command"; "i cant click and
+drag to draw the circles" (repair, reclaim, area mex); LB + B twice or held "triggers stop first"; RB held does not
+insert into a factory's queue; then "make sure that snap back is smooth and not jerky", and "i want the controller mod
+toggle in this build". The cause of the drags: Recoil counts a drag only when the pointer moves
+(`CMouseHandler::buttons[].movement` against `dragCircleCommandThreshold` and friends in `GuiHandler.cpp`), and the
+pointer held in the middle never moves while the camera pans. So while A or X is held the left stick moves the
+pointer (`PadGame` "drawing"); let go, it glides back to the middle (ease-out over 0.16 s, from where it was: the
+app's own moves, or the touch widget's hover answer after a touch or a menu). v0.8.5's placement (read from
+`ControllerCameraTestHandlePlacementInput`): A places, X places and stays, B cancels, the D-pad turns and spaces, Back
+slows the pan (30%, `bardroid_touch.lua`), LB held a grid (Alt: the engine's filled rectangle) where a tap of A starts
+the drag and the next A ends it (X: placing and staying; B: the order put away first through `SetActiveCommand(0)`,
+which drops the engine's pending press, then the button let go); the same tap-draw-tap for an area-only order
+(`bardroid_pad.txt` "armed area": area mex). The menus keep the pointer on them (`bardroid_pad.lua`, the build menu
+copy: warped back to the edge, let go after a second outside); the order menu at half speed. X on the build menu is
+the right button (a factory's queue minus one, RT + X five); RB held there is Alt (Recoil's `FactoryCAI`: Alt queues
+at the front). LB + B decides after the double-tap window (stop), on the second tap (repeat) or at half a second held
+(wait), only one of them. The controller mod toggle: in the controller game a quick triple tap (`RtsTouch`, where
+elsewhere it selects the type on the whole map) switches `ControllerBridge` between v0.8.5 (packets as before) and
+`PadGame` (packets "disconnected", so v0.8.5 idles; it drops to mouse mode as soon as the mouse moves), the touch
+widget's pad camera with it, and `bardroid_pad.lua` notes "CONTROLLER MOD: ..."; there RB drives v0.8.5's own build
+menu through its controller calls (`controllerSetFocus`, `controllerMoveFocus`, `controllerActivate`), since the app's
+copy stands down in that game. `PadMouse` and `PadButtons` hold the pad's interface without Android classes, so
+`tools/padgame-test` (laptop-tests and CI) runs `PadGame` against a made-up pointer and game: 30 checks of the button
+sequences above.
+
 ## The gamepad online: v0.8.5's controls rebuilt (2026-10-29)
 Kailil, after testing: "Remove the full map thing when I click the right thumb stick ... BACK + RB sends the mouse to
 orders menu and does the highlight behavior that the build menu does. So take a look at my controls that my Original

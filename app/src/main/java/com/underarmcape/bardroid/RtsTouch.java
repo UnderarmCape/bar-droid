@@ -662,11 +662,13 @@ final class RtsTouch {
         float x = toX(vx), y = toY(vy);
         float tol = slop * 2 * xPerViewPixel();
         long now = SystemClock.uptimeMillis();
-        // A third quick tap: the double click's unit types on the whole map. No click (it would select one unit).
+        // A third quick tap: the double click's unit types on the whole map; in the controller game it switches the
+        // controller mod instead (GameActivity). No click (it would select one unit).
         if (doubleTapX >= 0 && now - doubleTapTime <= doubleTapMs && Math.abs(x - doubleTapX) <= tol
                 && Math.abs(y - doubleTapY) <= tol && gameWidgetRunning()) {
             doubleTapX = -1;
-            act("type_all");
+            if (tripleTap != null && controllerGame()) tripleTap.run();
+            else act("type_all");
             return;
         }
         // A double click needs both clicks on the same pixel; fingers land a few pixels apart.
@@ -711,6 +713,10 @@ final class RtsTouch {
     /** A gamepad button's game action (ControllerBridge, any thread). */
     void padAct(String name) { act(name); }
 
+    private Runnable tripleTap;
+    /** What a third quick tap does in the controller game (GameActivity: switch the controller mod). */
+    void setTripleTap(Runnable r) { tripleTap = r; }
+
     private final File gameFile = new File(widgetDir, "bardroid_game.txt");
     private volatile long gameFileAt = -1;
     private volatile boolean controllerGame;
@@ -727,35 +733,46 @@ final class RtsTouch {
 
     private final File padFile = new File(widgetDir, "bardroid_pad.txt");
     private volatile long padAt;
-    private volatile String padFocus = "none";
-    private volatile boolean pregame, buildingPicked;
+    private volatile String padFocus = "none", armed = "none";
+    private volatile boolean pregame;
     /**
      * The menu that has the gamepad: "build", "orders" or "none" (bardroid_pad.lua writes bardroid_pad.txt, again every
-     * second while a menu has it or the game has not started). Any thread.
+     * second while a menu has it, an order is picked or the game has not started). Any thread.
      */
     String padFocus() { padState(); return padFocus; }
     /** The game has not started yet (bardroid_pad.txt). Any thread. */
     boolean pregame() { padState(); return pregame; }
-    /** A building is picked in the app's build menu (bardroid_place.txt). Any thread. */
-    boolean buildingPicked() { padState(); return buildingPicked; }
+    /** The order picked: "build", "area" (an area only: area mex), "unitarea", "other" or "none". Any thread. */
+    String armed() { padState(); return armed; }
     private void padState() {   // (read at most every 100 ms: the pad asks each tick)
         long now = SystemClock.uptimeMillis();
         if (now - padAt < 100) return;
         padAt = now;
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
-        String focus = "none";
+        String focus = "none", picked = "none";
         boolean before = false;
         if (text != null) {
             for (String line : text.split("\n")) {
                 String[] f = line.trim().split(" ");
-                if (f.length == 2 && f[0].equals("focus")) focus = f[1];
-                if (f.length == 2 && f[0].equals("pregame")) before = f[1].equals("1");
+                if (f.length != 2) continue;
+                if (f[0].equals("focus")) focus = f[1];
+                if (f[0].equals("pregame")) before = f[1].equals("1");
+                if (f[0].equals("armed")) picked = f[1];
             }
         }
         padFocus = focus;
         pregame = before;
-        buildingPicked = place() != null;
+        armed = picked;
+    }
+
+    /** Where the pointer is by the game's last answer (bardroid_hover.txt, X screen pixels); null: no answer. Any thread. */
+    float[] pointerAt() {
+        if (!gameWidgetRunning()) return null;
+        String text = readSmall(hoverFile);
+        String[] f = text == null ? new String[0] : text.trim().split(" ");
+        if (f.length != 3) return null;
+        try { return new float[]{Float.parseFloat(f[0]), Float.parseFloat(f[1])}; } catch (NumberFormatException e) { return null; }
     }
 
     private volatile long interfaceAt;

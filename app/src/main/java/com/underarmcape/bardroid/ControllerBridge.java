@@ -38,13 +38,13 @@ import java.util.Locale;
  * is neither.
  */
 public final class ControllerBridge {
-    // SDL GameController button order, as the Windows companion sends it:
-    // 0 A, 1 B, 2 X, 3 Y, 4 Back, 5 Guide, 6 Start, 7 LeftStick, 8 RightStick, 9 LB, 10 RB,
-    // 11 DPadUp, 12 DPadDown, 13 DPadLeft, 14 DPadRight, 15..20 misc/paddles (unused). 21 chars total.
-    public static final int BTN_A = 0, BTN_B = 1, BTN_X = 2, BTN_Y = 3, BTN_BACK = 4, BTN_GUIDE = 5, BTN_START = 6,
-            BTN_LS = 7, BTN_RS = 8, BTN_LB = 9, BTN_RB = 10,
-            BTN_DPAD_UP = 11, BTN_DPAD_DOWN = 12, BTN_DPAD_LEFT = 13, BTN_DPAD_RIGHT = 14;
-    public static final int BUTTON_COUNT = 21;
+    // SDL GameController button order, as the Windows companion sends it (PadButtons)
+    public static final int BTN_A = PadButtons.A, BTN_B = PadButtons.B, BTN_X = PadButtons.X, BTN_Y = PadButtons.Y,
+            BTN_BACK = PadButtons.BACK, BTN_GUIDE = PadButtons.GUIDE, BTN_START = PadButtons.START,
+            BTN_LS = PadButtons.LS, BTN_RS = PadButtons.RS, BTN_LB = PadButtons.LB, BTN_RB = PadButtons.RB,
+            BTN_DPAD_UP = PadButtons.DPAD_UP, BTN_DPAD_DOWN = PadButtons.DPAD_DOWN,
+            BTN_DPAD_LEFT = PadButtons.DPAD_LEFT, BTN_DPAD_RIGHT = PadButtons.DPAD_RIGHT;
+    public static final int BUTTON_COUNT = PadButtons.COUNT;
     private static final int IGNORED = -2;            // a pad key that is consumed but not sent (Guide, as v0.8.5 mode)
     private static final long TICK_MS = 16, HEARTBEAT_MS = 100, CAMERA_MS = 33;
     private static final int STICK_DEADZONE = 5000, TRIGGER_DEADZONE = 3000;   // v0.8.5's defaults
@@ -52,23 +52,9 @@ public final class ControllerBridge {
     /** Receives "pad lx ly rx ry lt lb" lines for the camera widget. */
     public interface CameraSink { void padLine(String line); }
 
-    /** The X pointer and keyboard. Called on the pump thread. */
-    public interface Mouse {
-        int mode();                             // MODE_LOBBY, MODE_GAME or MODE_OFF
-        float pixelsPerSecond();                // pointer speed at full stick
-        boolean onInterface();                  // the pointer is over the game's interface (the game's last answer)
-        void move(int dx, int dy);              // relative, X screen pixels
-        void button(boolean left, boolean down);
-        void wheel(float dy);                   // Termux:X11 scroll units, 120 per click, > 0 scrolls down
-        void key(int keyCode, boolean down);    // an Android key code, as a keyboard key
-        void act(String name);                  // a game action (bardroid_touch.lua, bardroid_pad.lua)
-        void centre();                          // the pointer to the middle of the screen
-        String padFocus();                      // "build", "orders" or "none": a menu has the pad (bardroid_pad.txt)
-        boolean pregame();                      // before the start (bardroid_pad.txt)
-        boolean buildingPicked();               // a building is picked (bardroid_place.txt)
-    }
-    /** No game widget answers (the lobby, a loading screen) / BAR's released game / the controller game (v0.8.5). */
-    public static final int MODE_LOBBY = 0, MODE_GAME = 1, MODE_OFF = 2;
+    /** The X pointer and keyboard (PadMouse). Called on the pump thread. */
+    public interface Mouse extends PadMouse {}
+    public static final int MODE_LOBBY = PadMouse.MODE_LOBBY, MODE_GAME = PadMouse.MODE_GAME, MODE_OFF = PadMouse.MODE_OFF;
     private static final float MOUSE_CURVE = 2f, SCROLL_CLICKS_PER_SECOND = 10f;
     private static final int TRIGGER_HELD = 16000;                    // a trigger past this: held
     private static final long MOUSE_CHECK_MS = 250;
@@ -343,14 +329,16 @@ public final class ControllerBridge {
         return raw < 0 ? -n : n;
     }
 
+    /** While the app has the pad (PadGame, also in the controller game when switched) v0.8.5 sees it disconnected. */
     private String packet() {
-        int c = connected ? 1 : 0;
+        boolean on = connected && mode != MODE_GAME;
+        int c = on ? 1 : 0;
         StringBuilder sb = new StringBuilder(96);
         sb.append("BARCTRL1|").append(seq++ & 0xffffffffL).append('|').append(c)
           .append('|').append(c * lx).append('|').append(c * ly)    // Android Y is down-positive, as the protocol
           .append('|').append(c * rx).append('|').append(c * ry)
           .append('|').append(c * lt).append('|').append(c * rt).append('|');
-        for (boolean b : buttons) sb.append(connected && b ? '1' : '0');
+        for (boolean b : buttons) sb.append(on && b ? '1' : '0');
         return sb.toString();
     }
 
