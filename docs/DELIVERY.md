@@ -206,6 +206,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       pointer; it now takes the order in the cell. Its following, holding and letting go never ran in touch-widget-test
       (the recorded moves left no pointer to follow): a made-up pointer the moves land on now runs them (onto the 3rd
       order, pushed off once and held, pushed off for 0.25 s and let go).
+      The build menu copy's D-pad reviewed: on the last page, right from the last option (a row not full) stayed on it,
+      stuck (the step past the end was clamped back); it now goes on to the next page like right past the edge (from
+      the last page, the first, the same row). touch-widget-test case.
 
 ## Releasing (once the blockers are done)
 

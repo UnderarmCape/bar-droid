@@ -486,8 +486,8 @@ function droid.pad(name)
 		end
 		if col < 0 then
 			page, col = page - 1, colls - 1
-		elseif col >= colls then
-			page, col = page + 1, 0
+		elseif col >= colls or (name == "right" and (page - 1) * per + row * colls + col + 1 > cmdsCount) then
+			page, col = page + 1, 0 -- (right past the last option too: it stayed on it, stuck)
 		end
 		page = page < 1 and pages or (page > pages and 1 or page)
 		local target = math.min(cmdsCount, (page - 1) * per + row * colls + col + 1)

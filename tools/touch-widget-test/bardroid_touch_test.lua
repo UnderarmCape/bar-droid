@@ -1013,6 +1013,33 @@ cases = {
 		end
 		local focus = WG.bardroidBuildmenu.droidFocus()
 		verify("pad: LB on the menu: the page before (the last again)", focus == before.pageFocus, tostring(focus))
+		touch("act pad_down") -- (the last page's bottom row: its last option when the row is not full)
+		touch("act pad_down")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		before.bottom = WG.bardroidBuildmenu.droidFocus()
+		touch("act pad_right")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		-- right from there: the next option, or past the row's or the menu's end the next page (from the last, the
+		-- first), the same row's first option (it stayed on the last option)
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		local _, _, pages, count = WG.bardroidBuildmenu.droidGrid()
+		local i = before.bottom - (pages - 1) * 9 - 1
+		local row, col = math.floor(i / 3), i % 3
+		local past = col == 2 or before.bottom == count
+		local want = past and math.min(count, row * 3 + 1) or before.bottom + 1
+		verify("pad: D-pad right from the last page's last option goes on (the first page)", focus == want
+			and page == (past and 1 or pages), string.format("%s -> %s on page %s (want %d)", tostring(before.bottom),
+			tostring(focus), tostring(page), want))
 		before.warps = {}
 		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do -- (A on it: BAR's own menu picks it)
 			if cmd.id < 0 then
