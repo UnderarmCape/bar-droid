@@ -380,7 +380,9 @@ local function pregameBuild()
 end
 
 -- What kind of order is picked, for the app: a building, an area only (area mex: A starts its circle, the next A ends
--- it), a unit or an area (repair, reclaim: hold A and draw for the area), another order, or none
+-- it), a unit or an area (repair, reclaim: hold A and draw for the area), another order, or none. Asked every frame:
+-- a command's kind is looked up once (GetActiveCmdDesc makes a table each call)
+local kindOf = {}
 local function armedKind()
 	if pregameBuild() then
 		return "build"
@@ -391,15 +393,23 @@ local function armedKind()
 	elseif id < 0 then
 		return "build"
 	end
-	local index = Spring.GetCmdDescIndex(id)
-	local desc = index and Spring.GetActiveCmdDesc(index)
-	local t = desc and desc.type
-	if t == CMDTYPE.ICON_AREA then
-		return "area"
-	elseif t == CMDTYPE.ICON_UNIT_OR_AREA or t == CMDTYPE.ICON_UNIT_FEATURE_OR_AREA or t == CMDTYPE.ICON_UNIT_OR_RECTANGLE then
-		return "unitarea"
+	local kind = kindOf[id]
+	if not kind then
+		local index = Spring.GetCmdDescIndex(id)
+		local desc = index and Spring.GetActiveCmdDesc(index)
+		local t = desc and desc.type
+		if t == CMDTYPE.ICON_AREA then
+			kind = "area"
+		elseif t == CMDTYPE.ICON_UNIT_OR_AREA or t == CMDTYPE.ICON_UNIT_FEATURE_OR_AREA or t == CMDTYPE.ICON_UNIT_OR_RECTANGLE then
+			kind = "unitarea"
+		else
+			kind = "other"
+		end
+		if desc then
+			kindOf[id] = kind
+		end
 	end
-	return "other"
+	return kind
 end
 
 -- The area select's step: the units under the circle added, the selection set when that changed

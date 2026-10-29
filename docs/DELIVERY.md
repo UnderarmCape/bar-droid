@@ -160,6 +160,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       taking it from under the finger (the widget's hover answer for the finger then never came) or the mouse; also at
       the start of a game. Now it waits until the pad itself is used (a button, a stick, a trigger), and a glide under
       way stops when touch takes the pointer. padgame-test: four checks (they fail on the old code).
+      `tools/profile-benchmark.ps1` loaded the phone's widgets as of a week ago: now Installer's whole list (the
+      spectator tools, minimap, layout editor, build menu copy, gamepad widget too). BAR's benchmark in the controller
+      game with all of them: the build menu copy (hidden beside v0.8.5's) 0.036 ms a frame and no garbage, the gamepad
+      widget and the layout editor below the top 25 (under 0.036 ms); the costliest of the app's, the info panel,
+      0.090 ms and 21 kB/s. The gamepad widget looked a command's kind up each frame while one was picked (a table per
+      call): now once per command.
 
 ## Releasing (once the blockers are done)
 
