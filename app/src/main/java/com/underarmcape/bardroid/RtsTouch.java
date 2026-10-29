@@ -727,9 +727,15 @@ final class RtsTouch {
 
     private final File padFile = new File(widgetDir, "bardroid_pad.txt");
     private volatile long padAt;
-    private volatile boolean menuFocus, buildingPicked;
-    /** The build menu has the gamepad (bardroid_pad.txt "focus 1", rewritten every second while it has). Any thread. */
-    boolean menuFocus() { padState(); return menuFocus; }
+    private volatile String padFocus = "none";
+    private volatile boolean pregame, buildingPicked;
+    /**
+     * The menu that has the gamepad: "build", "orders" or "none" (bardroid_pad.lua writes bardroid_pad.txt, again every
+     * second while a menu has it or the game has not started). Any thread.
+     */
+    String padFocus() { padState(); return padFocus; }
+    /** The game has not started yet (bardroid_pad.txt). Any thread. */
+    boolean pregame() { padState(); return pregame; }
     /** A building is picked in the app's build menu (bardroid_place.txt). Any thread. */
     boolean buildingPicked() { padState(); return buildingPicked; }
     private void padState() {   // (read at most every 100 ms: the pad asks each tick)
@@ -738,7 +744,17 @@ final class RtsTouch {
         padAt = now;
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
-        menuFocus = text != null && text.trim().equals("focus 1");
+        String focus = "none";
+        boolean before = false;
+        if (text != null) {
+            for (String line : text.split("\n")) {
+                String[] f = line.trim().split(" ");
+                if (f.length == 2 && f[0].equals("focus")) focus = f[1];
+                if (f.length == 2 && f[0].equals("pregame")) before = f[1].equals("1");
+            }
+        }
+        padFocus = focus;
+        pregame = before;
         buildingPicked = place() != null;
     }
 

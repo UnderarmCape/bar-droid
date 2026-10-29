@@ -29,22 +29,8 @@ import java.util.Locale;
  * packet goes out every 100 ms (v0.8.5 takes the stream for gone after 250 ms), which costs the game next to nothing.
  *
  * BAR's released game (online, spectating) has no v0.8.5 (BAR's sandbox keeps it out: docs/HISTORY.md, 2026-10-28):
- * there the pad is a mouse and keyboard, one button one input, as Steam Input is on a PC (Kailil, 2026-10-28, yes to
- * that plan), which no lobby setting or widget rule can see or block:
- *
- *   left stick   the pointer (slower over the interface; LT held: fine aim)
- *   right stick  pans the camera; with LB held, turns (x) and zooms (y)   (bardroid_touch.lua, "pad" lines)
- *   A / B        left / right mouse button (held: box select or a build line / a formation)
- *   RT held      Shift (queue)          LB held  Ctrl (LB + D-pad: Ctrl+1..4, assign a group)
- *   D-pad        1, 2, 3, 4 (up, right, down, left: control groups)
- *   Back         Escape                 Start    F10 (BAR's options)
- *   X            attack-move (fight; A places it)        Y  the next idle builder
- *   LS click     select all              RS click  the whole map / back
- *   RB           the build menu (bardroid_buildmenu.lua; Kailil: "try your best to finesse a way" to v0.8.5's feel):
- *                the pointer onto its first option, the D-pad steps through them, the option is drawn bigger and
- *                outlined, A picks it and the pointer goes to the middle of the screen, B or RB leaves the menu
- *   a building picked: A places it, X places it and keeps it picked, D-pad left/right turns it, up/down spaces a
- *                row, B puts it away (BAR's right click)
+ * there {@link PadGame} rebuilds v0.8.5's controls on a mouse and keyboard, which no lobby setting or widget rule can
+ * see or block, with the camera through bardroid_touch.lua ({@link CameraSink}, "pad" lines).
  *
  * Where no game runs (the lobby, a loading screen) the pad is a simpler mouse ({@link Mouse}, Kailil 2026-10-26: "just
  * simple mouse movement, scroll and A and B as left and right click"): the left stick moves the pointer, the right
@@ -75,38 +61,25 @@ public final class ControllerBridge {
         void button(boolean left, boolean down);
         void wheel(float dy);                   // Termux:X11 scroll units, 120 per click, > 0 scrolls down
         void key(int keyCode, boolean down);    // an Android key code, as a keyboard key
-        void act(String name);                  // a game action (bardroid_touch.lua ACTIONS)
-        boolean menuFocus();                    // the build menu has the pad (bardroid_pad.txt)
+        void act(String name);                  // a game action (bardroid_touch.lua, bardroid_pad.lua)
+        void centre();                          // the pointer to the middle of the screen
+        String padFocus();                      // "build", "orders" or "none": a menu has the pad (bardroid_pad.txt)
+        boolean pregame();                      // before the start (bardroid_pad.txt)
         boolean buildingPicked();               // a building is picked (bardroid_place.txt)
     }
     /** No game widget answers (the lobby, a loading screen) / BAR's released game / the controller game (v0.8.5). */
     public static final int MODE_LOBBY = 0, MODE_GAME = 1, MODE_OFF = 2;
     private static final float MOUSE_CURVE = 2f, SCROLL_CLICKS_PER_SECOND = 10f;
-    private static final float FINE_AIM = 0.35f, ON_INTERFACE = 0.6f;   // pointer speed factors in a game
-    private static final int TRIGGER_HELD = 16000;                    // RT past this: Shift held
+    private static final int TRIGGER_HELD = 16000;                    // a trigger past this: held
     private static final long MOUSE_CHECK_MS = 250;
-    /** In a game: the buttons held as keys (button index, Android key code) and the ones that send an action. */
-    private static final int[][] GAME_KEYS = {
-            { BTN_LB, KeyEvent.KEYCODE_CTRL_LEFT },
-            { BTN_DPAD_UP, KeyEvent.KEYCODE_1 }, { BTN_DPAD_RIGHT, KeyEvent.KEYCODE_2 },
-            { BTN_DPAD_DOWN, KeyEvent.KEYCODE_3 }, { BTN_DPAD_LEFT, KeyEvent.KEYCODE_4 },
-            { BTN_BACK, KeyEvent.KEYCODE_ESCAPE }, { BTN_START, KeyEvent.KEYCODE_F10 },
-    };
-    private static final String[] GAME_ACTS = new String[BUTTON_COUNT];
-    static {
-        GAME_ACTS[BTN_X] = "fight";
-        GAME_ACTS[BTN_Y] = "idle_next";
-        GAME_ACTS[BTN_LS] = "select_all";
-        GAME_ACTS[BTN_RS] = "overview";
-    }
 
     private final int port;
     private final CameraSink camera;
     private Mouse mouse;
+    private PadGame game;
     // pointer and key state, pump thread only
     private int mode = MODE_OFF;
-    private boolean leftDown, rightDown, shiftHeld;
-    private final boolean[] keysHeld = new boolean[GAME_KEYS.length];
+    private boolean leftDown, rightDown;
     private long mouseCheckAt, lastMouseTick;
     private float fracX, fracY, scrollAcc;
     // presses shorter than a pump tick still count (main thread sets, pump thread clears; guarded by this)
@@ -137,7 +110,13 @@ public final class ControllerBridge {
     }
 
     /** Before {@link #start}. */
-    public void setMouse(Mouse mouse) { this.mouse = mouse; }
+    public void setMouse(Mouse mouse) {
+        this.mouse = mouse;
+        game = new PadGame(mouse);
+    }
+
+    /** Touch or a real mouse moved the pointer (any thread): in a game the pad centres it again when next used. */
+    public void otherInput() { if (game != null) game.otherInput(); }
 
     public synchronized void start() {
         if (running) return;
@@ -270,7 +249,7 @@ public final class ControllerBridge {
             String packet = null, cameraLine = null;
             synchronized (this) {
                 if (dirty || now - lastSend >= HEARTBEAT_MS) { packet = packet(); dirty = false; }
-                if (camera != null && now - lastCamera >= CAMERA_MS) cameraLine = cameraLine(mode == MODE_GAME);
+                if (camera != null && now - lastCamera >= CAMERA_MS) cameraLine = cameraLine(mode == MODE_GAME && !game.reticle());
             }
             if (packet != null) {
                 byte[] data = packet.getBytes(StandardCharsets.US_ASCII);
@@ -311,7 +290,7 @@ public final class ControllerBridge {
         float dt = lastMouseTick == 0 ? 0 : Math.min(0.1f, (now - lastMouseTick) / 1000f);
         lastMouseTick = now;
         boolean[] held = new boolean[BUTTON_COUNT], tapped = new boolean[BUTTON_COUNT];
-        boolean rtHeld, fine;
+        boolean rtHeld, ltHeld;
         float x, y, scroll;
         synchronized (this) {
             System.arraycopy(buttons, 0, held, 0, BUTTON_COUNT);
@@ -319,25 +298,20 @@ public final class ControllerBridge {
             java.util.Arrays.fill(pressed, false);
             x = stick(lx); y = stick(ly); scroll = stick(ry);
             rtHeld = rt > TRIGGER_HELD;
-            fine = lt > TRIGGER_DEADZONE;
+            ltHeld = lt > TRIGGER_DEADZONE;
         }
         if (mode == MODE_OFF) return;
-        // BAR's game: the build menu can have the pad (RB: the D-pad steps through its options, B leaves it), and a
-        // building picked turns the D-pad and X (bardroid_buildmenu.lua)
-        boolean focus = mode == MODE_GAME && mouse.menuFocus();
-        boolean picked = mode == MODE_GAME && !focus && mouse.buildingPicked();
-        boolean a = held[BTN_A], b = held[BTN_B] && !focus, bTap = tapped[BTN_B] && !focus;
+        if (mode == MODE_GAME) {   // v0.8.5's controls (PadGame)
+            game.tick(held, tapped, x, y, ltHeld, rtHeld, dt);
+            return;
+        }
+        boolean a = held[BTN_A], b = held[BTN_B];
         if ((a || tapped[BTN_A]) && !leftDown) { leftDown = true; mouse.button(true, true); }
         if (!a && leftDown) { leftDown = false; mouse.button(true, false); }
-        if ((b || bTap) && !rightDown) { rightDown = true; mouse.button(false, true); }
+        if ((b || tapped[BTN_B]) && !rightDown) { rightDown = true; mouse.button(false, true); }
         if (!b && rightDown) { rightDown = false; mouse.button(false, false); }
-        if (mode == MODE_GAME) {
-            gameKeys(held, tapped, rtHeld, focus, picked);
-            scroll = 0;   // the right stick moves the camera
-        }
         if (x != 0 || y != 0) {
             float step = mouse.pixelsPerSecond() * dt;
-            if (mode == MODE_GAME) step *= (fine ? FINE_AIM : 1f) * (mouse.onInterface() ? ON_INTERFACE : 1f);
             fracX += x * step; fracY += y * step;
             int ix = (int) fracX, iy = (int) fracY;
             fracX -= ix; fracY -= iy;
@@ -354,49 +328,11 @@ public final class ControllerBridge {
         }
     }
 
-    /**
-     * BAR's game: the buttons that are keys (held as long as the button) and the ones that send an action. RB puts
-     * the build menu on the pad (or takes it off); while it has it (focus) the D-pad steps through its options and B
-     * leaves it; while a building is picked the D-pad turns it (left, right) and spaces a row (up, down), and X places
-     * it and keeps it picked (a Shift click), as in v0.8.5.
-     */
-    private void gameKeys(boolean[] held, boolean[] tapped, boolean rtHeld, boolean focus, boolean picked) {
-        if (rtHeld != shiftHeld) { shiftHeld = rtHeld; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, rtHeld); }
-        for (int i = 0; i < GAME_KEYS.length; i++) {
-            int button = GAME_KEYS[i][0], key = GAME_KEYS[i][1];
-            boolean dpad = button >= BTN_DPAD_UP && button <= BTN_DPAD_RIGHT;
-            if ((held[button] || tapped[button]) && !keysHeld[i] && !(dpad && (focus || picked))) {
-                keysHeld[i] = true;
-                mouse.key(key, true);
-            }
-            if (!held[button] && keysHeld[i]) { keysHeld[i] = false; mouse.key(key, false); }
-        }
-        if (tapped[BTN_RB]) mouse.act("pad_build");
-        if (focus || picked) {
-            String[] dpad = focus ? new String[]{"pad_up", "pad_down", "pad_left", "pad_right"}
-                    : new String[]{"spacing_up", "spacing_down", "rotate_left", "rotate_right"};
-            for (int d = 0; d < 4; d++) if (tapped[BTN_DPAD_UP + d]) mouse.act(dpad[d]);
-        }
-        if (focus && tapped[BTN_B]) mouse.act("pad_back");
-        if (picked && tapped[BTN_X]) {   // place it here and keep it picked
-            if (!shiftHeld) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, true);
-            mouse.button(true, true);
-            mouse.button(true, false);
-            if (!shiftHeld) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false);
-        }
-        for (int i = 0; i < BUTTON_COUNT; i++) {
-            if (tapped[i] && GAME_ACTS[i] != null && !(picked && i == BTN_X)) mouse.act(GAME_ACTS[i]);
-        }
-    }
-
     /** Lets go of every mouse button and key the pad holds. Pump thread. */
     private void releaseAll() {
         if (leftDown) { leftDown = false; mouse.button(true, false); }
         if (rightDown) { rightDown = false; mouse.button(false, false); }
-        if (shiftHeld) { shiftHeld = false; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false); }
-        for (int i = 0; i < GAME_KEYS.length; i++) {
-            if (keysHeld[i]) { keysHeld[i] = false; mouse.key(GAME_KEYS[i][1], false); }
-        }
+        game.release();
     }
 
     /** -1..1 past v0.8.5's deadzone, squared for fine control near the centre. */
@@ -420,11 +356,12 @@ public final class ControllerBridge {
 
     /**
      * Sticks inside v0.8.5's deadzones count as centred and the rest moves in steps of 256 (of 32767), so a resting
-     * or steadily held pad sends no camera lines. In BAR's game (the pad also a mouse) the right stick pans, and with
-     * LB held turns and zooms: the line's pan, turn and zoom come from it (lt and lb 0).
+     * or steadily held pad sends no camera lines. In BAR's game with a free pointer (a menu has the pad, Back+Start,
+     * before the start) the left stick is the pointer, so the right stick pans, and with LB held turns and zooms: the
+     * line's pan, turn and zoom come from it (lt and lb 0). Otherwise (the pointer in the middle) v0.8.5's camera.
      */
-    private String cameraLine(boolean game) {
-        if (game) {
+    private String cameraLine(boolean freePointer) {
+        if (freePointer) {
             boolean lb = buttons[BTN_LB];
             return String.format(Locale.US, "pad %d %d %d %d 0 0", lb ? 0 : dead(rx, STICK_DEADZONE),
                     lb ? 0 : dead(ry, STICK_DEADZONE), lb ? dead(rx, STICK_DEADZONE) : 0, lb ? dead(ry, STICK_DEADZONE) : 0);

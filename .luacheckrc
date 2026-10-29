@@ -7,7 +7,8 @@ self = false -- widget:Callin(...) methods that do not use self
 globals = { "widget", "gadget", "WG" } -- WG: the table widgets share
 read_globals = {
 	"widgetHandler", "gadgetHandler", "Spring", "gl", "GL", "VFS", "UnitDefs", "UnitDefNames", "WeaponDefs",
-	"WeaponDefNames", "FeatureDefs", "Game", "CMD", "Script", "BAR", "LOG", "Platform", "Engine", "SendToUnsynced",
+	"WeaponDefNames", "FeatureDefs", "Game", "CMD", "CMDTYPE", "Script", "BAR", "LOG", "Platform", "Engine",
+	"SendToUnsynced",
 }
 -- BAR's own Build menu copied by tools/make-buildmenu.py (BAR's code and style; its changes are checked in a game)
 exclude_files = { "app/src/main/assets/bardroid/bardroid_buildmenu.lua" }

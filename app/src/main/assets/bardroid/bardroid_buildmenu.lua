@@ -94,12 +94,11 @@ local maxPosY = 0.74
 -- place it"): RB puts the pointer on the menu's first option (droid.focus), the D-pad steps from option to option
 -- (past the left or right edge: the page before or after), the option under the pointer is drawn 10% bigger with a
 -- gold outline, A (a click) picks it and the pointer goes to the middle of the screen; B leaves the menu.
--- The app learns of the focus from LuaUI/Config/bardroid_pad.txt ("focus 1": the D-pad and B are the menu's).
+-- bardroid_pad.lua tells the app (droidFocus) and routes the pad's actions here (droidPad).
 local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	file = "LuaUI/Config/bardroid_place.txt",
-	focus = nil, warped = nil, warpTo = nil, padFile = "LuaUI/Config/bardroid_pad.txt", padWritten = nil,
-	padWrittenAt = nil, warp = Spring.WarpMouse, fakeWarp = false,
+	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
@@ -1002,7 +1001,7 @@ end
 
 -- (each Update: the pointer onto the focused option once the menu has laid it out; once the pointer has got there
 -- (or half a second on) it is the player's again: the focus follows it over the options and ends off the menu, as
--- when the menu goes; the app told)
+-- when the menu goes)
 function droid.padFocus()
 	if droid.focus then
 		local now = Spring.GetTimer()
@@ -1030,16 +1029,6 @@ function droid.padFocus()
 					droid.endFocus(false)
 				end
 			end
-		end
-	end
-	local text = droid.focus and "focus 1\n" or "focus 0\n"
-	local now = Spring.GetTimer()
-	if text ~= droid.padWritten or (droid.focus and Spring.DiffTimers(now, droid.padWrittenAt) > 1) then
-		local f = io.open(droid.padFile, "w")
-		if f then
-			f:write(text)
-			f:close()
-			droid.padWritten, droid.padWrittenAt = text, now
 		end
 	end
 end

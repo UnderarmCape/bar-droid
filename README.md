@@ -78,23 +78,27 @@ factions' matching unit too.
 
 ## Gamepad, mouse and keyboard
 
-- **Gamepads:** skirmish runs BAR Controller Support, a full controller interface; in the lobby the pad is a mouse.
-  In BAR's own game (online, spectating) the pad is a mouse and keyboard, one button one input, as Steam Input is on
-  a PC:
+- **Gamepads:** skirmish runs BAR Controller Support (v0.8.5), a full controller interface; in the lobby the pad is a
+  mouse. In BAR's own game (online, spectating) the app rebuilds v0.8.5's controls from a mouse and keyboard, which
+  every game allows; the pointer stays in the middle of the screen, as v0.8.5's reticle:
 
   | Pad | In the game |
   |---|---|
-  | Left stick | The pointer (slower over the interface); LT held: fine aim |
-  | Right stick | Pan the camera; with LB held: turn (left/right) and zoom (up/down) |
-  | A / B | Left / right mouse button (hold A and move: box select or a row of buildings; hold B: a formation) |
-  | RT held | Shift (queue orders) |
-  | LB held | Ctrl (LB + D-pad: Ctrl+1..4, assign a group) |
-  | D-pad | 1, 2, 3, 4 (up, right, down, left): control groups |
-  | Back / Start | Escape / BAR's options (F10) |
-  | X / Y | Attack-move (A places it) / the next idle builder |
-  | Left / right stick click | Select all your units / the whole map and back |
-  | RB (a builder selected) | The build menu: the pointer onto its first option; the D-pad steps through them (past the left or right edge: the page before or after), the option is drawn bigger with a gold outline; A picks it and the pointer goes to the middle of the screen; B or RB leaves the menu |
-  | A building picked | A places it, X places it and keeps it picked, D-pad left/right turns it, up/down spaces a row, B puts it away |
+  | Left stick | Pan the map under the pointer (LT held: faster) |
+  | Right stick | Turn (left/right) and zoom (up/down); with LB held, tilt |
+  | A | Select (twice: that type on screen; hold and pan: box select); place a building |
+  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard; hold and pan: a path) |
+  | B | Cancel the order or building picked, else clear the selection |
+  | RT / RB held | Queue (Shift) / put the order first in the queue (Space) |
+  | RB | The build menu: the pointer onto its first option, the D-pad steps (past the left or right edge: the page before or after), the option drawn bigger with a gold outline; A picks it and the pointer goes back to the middle; B or RB leaves |
+  | Back + RB | The order menu, the same way: A gives the order (one that needs a target: aim it in the middle, A) |
+  | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
+  | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
+  | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait). With builders, A repair and X reclaim (A on the target) |
+  | Start + D-pad | Control groups: up / down picks the group, left tapped recalls it (held: assigns the selection), right: that type joins it from now on; Start + L3 clears it |
+  | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires) |
+  | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
+  | A building picked | A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, LB held + drag: a filled area, B puts it away |
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

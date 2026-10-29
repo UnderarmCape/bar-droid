@@ -291,7 +291,7 @@ public final class Installer {
         // app's copy of BAR's Build menu that the editor sizes (launch-bar.sh switches it in, see writeBuildMenuMd5)
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
-                "bardroid_layout.lua", "bardroid_buildmenu.lua"})
+                "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_pad.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         writeBuildMenuMd5();

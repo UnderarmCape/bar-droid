@@ -314,14 +314,6 @@ cases = {
 	end,
 	function()
 		near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
-		touch("act overview") -- the pad's right stick click: the whole map, and back
-	end,
-	function()
-		near("act overview: the whole map", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
-		touch("act overview")
-	end,
-	function()
-		near("act overview again: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
 		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
 		local want = Game.gameVersion == "$VERSION" and "controller 1\n" or "controller 0\n"
 		verify("the game told the app who has the pad", readFile("LuaUI/Config/bardroid_game.txt") == want,
@@ -809,7 +801,8 @@ cases = {
 		before.first = (page - 1) * 9 + 1
 		verify("pad: RB puts the menu's first option on the pad", focus == before.first,
 			tostring(focus) .. " on page " .. tostring(page))
-		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus 1\n")
+		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus build\npregame 0\n",
+			readFile("LuaUI/Config/bardroid_pad.txt"))
 		verify("pad: the pointer went onto it", POINTER or #before.warps >= 1)
 		padDraw.cell = before.first -- (DrawScreen below: the focused option drawn bigger and outlined)
 		touch("act pad_right") -- (quick presses, one frame: each from the last one's option, not the pointer's)
@@ -855,7 +848,7 @@ cases = {
 		verify("pad: a building picked off the menu: the pointer to the middle of the screen",
 			WG.buildmenu.droidFocus() == nil and (POINTER or (w and w[1] == cx and w[2] == cy)),
 			w and (w[1] .. "," .. w[2]) or "no move")
-		verify("pad: the app told the focus is over", readFile("LuaUI/Config/bardroid_pad.txt") == "focus 0\n")
+		verify("pad: the app told the focus is over", readFile("LuaUI/Config/bardroid_pad.txt") == "focus none\npregame 0\n")
 		before.facing = Spring.GetBuildFacing()
 		touch("act rotate_right") -- (the D-pad while a building is picked)
 		return 0.3
@@ -866,8 +859,128 @@ cases = {
 		end
 		verify("pad: D-pad right turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
 			before.facing .. " -> " .. Spring.GetBuildFacing())
-		Spring.SetActiveCommand(0)
+		touch("act cancel") -- (B: the building put away)
 		WG.buildmenu.droidSetWarp(nil)
+		-- the order menu on the pad (Back + RB; bardroid_pad.lua)
+		if not POINTER then
+			WG.BarDroidPad.setWarp(function(x, y)
+				before.warps[#before.warps + 1] = { x, y }
+			end)
+		end
+		before.warps = {}
+		touch("act pad_orders")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, active = Spring.GetActiveCommand()
+		verify("pad: B puts the picked building away", active == nil, tostring(active))
+		local cmdID, index, count = WG.BarDroidPad.orders()
+		verify("pad: Back + RB puts the order menu's first order on the pad", cmdID and index == 1 and count > 1,
+			string.format("%s, %s of %s", tostring(cmdID), tostring(index), tostring(count)))
+		local w = before.warps[1]
+		local o = WG.ordermenu
+		if w and o then -- (the pointer onto the order menu)
+			local x, y, width, height = o.getPosition()
+			verify("pad: the pointer went onto the order menu", w[1] >= x * vsx and w[1] <= (x + width) * vsx
+				and w[2] >= (y - height) * vsy and w[2] <= y * vsy, w[1] .. "," .. w[2])
+		end
+		verify("pad: the app told the order menu's focus", (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("^focus orders\n"))
+		touch("act pad_right")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, index = WG.BarDroidPad.orders()
+		verify("pad: D-pad right: the next order", index == 2, tostring(index))
+		verify("pad: Move is on the order menu", WG.BarDroidPad.ordersOn(CMD.MOVE))
+		touch("act pad_select") -- (A: Move needs a target: picked, the pointer back to the middle)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, active = Spring.GetActiveCommand()
+		local w = before.warps[#before.warps]
+		verify("pad: A on Move picks it and leaves the menu", active == CMD.MOVE and WG.BarDroidPad.orders() == nil,
+			tostring(active))
+		verify("pad: the pointer back to the middle", POINTER or (w and w[1] == cx and w[2] == cy))
+		touch("act cancel") -- (B: the order put away)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, active = Spring.GetActiveCommand()
+		verify("pad: B puts the order away", active == nil, tostring(active))
+		before.units = Spring.GetSelectedUnits()
+		touch("act group_assign_3") -- (Start + D-pad left held)
+		touch("act cancel") -- (B again: nothing picked, the selection cleared)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		verify("pad: B with nothing picked clears the selection", #Spring.GetSelectedUnits() == 0)
+		touch("act group_recall_3") -- (Start + D-pad left tapped)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local sel = Spring.GetSelectedUnits()
+		verify("pad: a control group set and recalled", #sel == #before.units and sel[1] == before.units[1],
+			#sel .. " of " .. #before.units)
+		Spring.SelectUnitArray({})
+		touch("act commander") -- (D-pad down)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local sel = Spring.GetSelectedUnits()
+		local def = sel[1] and UnitDefs[Spring.GetUnitDefID(sel[1])]
+		verify("pad: D-pad down selects the commander", def and def.customParams.iscommander, def and def.name)
+		before.com = sel[1]
+		if sel[1] then -- two orders queued, then R3: the last one removed (where unit control is allowed, as here)
+			local x, y, z = Spring.GetUnitPosition(sel[1])
+			Spring.GiveOrderToUnit(sel[1], CMD.MOVE, { x + 100, y, z }, 0)
+			Spring.GiveOrderToUnit(sel[1], CMD.MOVE, { x + 200, y, z }, { "shift" })
+		end
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		before.queued = Spring.GetUnitCommandCount(before.com)
+		touch("act queue_remove_last")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		verify("pad: R3 removes the last queued order", Spring.GetUnitCommandCount(before.com) == before.queued - 1,
+			before.queued .. " -> " .. Spring.GetUnitCommandCount(before.com))
+		touch("act lb_b") -- (LB + B: stop)
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		verify("pad: LB + B stops", Spring.GetUnitCommandCount(before.com) == 0, Spring.GetUnitCommandCount(before.com))
+		WG.BarDroidPad.setWarp(nil)
 		Spring.SelectUnitArray({})
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)

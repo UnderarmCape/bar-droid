@@ -54,8 +54,10 @@ public class GameActivity extends MainActivity {
         View lorieParent = (View) lorieView.getParent();
         TouchInputHandler termux = BarDroidAccess.inputHandler(this);
         lorieParent.setOnTouchListener((v, e) -> {
-            if (e.getAction() == MotionEvent.ACTION_DOWN)
+            if (e.getAction() == MotionEvent.ACTION_DOWN) {
                 lorieParent.requestUnbufferedDispatch(e);   // as Termux:X11 does: no batching, less latency
+                pad.otherInput();   // (the pointer moves: the pad centres it again when next used)
+            }
             if (touch.handles(e)) return touch.onTouch(e);
             if (e.getAction() == MotionEvent.ACTION_DOWN) touch.source("mouse");   // a mouse, stylus or touchpad
             return termux.handleTouchEvent(lorieParent, lorieView, e);
@@ -98,7 +100,16 @@ public class GameActivity extends MainActivity {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendKeyEvent(0, keyCode, down); });
         }
         @Override public void act(String name) { touch.padAct(name); }
-        @Override public boolean menuFocus() { return touch.menuFocus(); }
+        @Override public void centre() {
+            int w = screenW, h = screenH;
+            if (w <= 0 || h <= 0) return;
+            ui.post(() -> {
+                LorieView v = getLorieView();
+                if (v != null && v.connected()) v.sendMouseEvent(w / 2f, h / 2f, InputStub.BUTTON_UNDEFINED, false, false);
+            });
+        }
+        @Override public String padFocus() { return touch.padFocus(); }
+        @Override public boolean pregame() { return touch.pregame(); }
         @Override public boolean buildingPicked() { return touch.buildingPicked(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
@@ -324,7 +335,10 @@ public class GameActivity extends MainActivity {
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
         if (pad != null && pad.onMotion(ev)) { touch.source("pad"); return true; }
-        if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) touch.source("mouse");   // (bardroid_spectate.lua)
+        if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) {
+            touch.source("mouse");   // (bardroid_spectate.lua)
+            if (pad != null) pad.otherInput();
+        }
         return super.dispatchGenericMotionEvent(ev);
     }
 

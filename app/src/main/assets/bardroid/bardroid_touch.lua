@@ -240,13 +240,8 @@ local function inOverview()
 	return spGetCameraState().name == "ov"
 end
 
-local function padMenu(name)
-	if WG.buildmenu and WG.buildmenu.droidPad then
-		WG.buildmenu.droidPad(name)
-	end
-end
-
--- Gesture actions from the app ("act <name>", RtsTouch.java): the same commands BAR's keys send.
+-- Gesture actions from the app ("act <name>", RtsTouch.java): the same commands BAR's keys send. The gamepad's are
+-- bardroid_pad.lua's (any name not here goes there).
 local ACTIONS = {
 	type_all = function() -- a triple tap: the types of the selection (a double tap's) on the whole map
 		Spring.SendCommands("select AllMap+_InPrevSel+_ClearSelection_SelectAll+")
@@ -274,21 +269,6 @@ local ACTIONS = {
 			Spring.SendCommands("toggleoverview")
 		end
 	end,
-	overview = function() -- the pad's right stick click: the whole map, and back
-		Spring.SendCommands("toggleoverview")
-	end,
-	-- the pad and the build menu (bardroid_buildmenu.lua): RB, B and the D-pad while it has the menu
-	pad_build = function() padMenu("build") end,
-	pad_back = function() padMenu("back") end,
-	pad_left = function() padMenu("left") end,
-	pad_right = function() padMenu("right") end,
-	pad_up = function() padMenu("up") end,
-	pad_down = function() padMenu("down") end,
-	-- the pad's D-pad while a building is picked: turn it, and the space between buildings in a row
-	rotate_left = function() Spring.SendCommands("buildfacing dec") end,
-	rotate_right = function() Spring.SendCommands("buildfacing inc") end,
-	spacing_up = function() Spring.SendCommands("buildspacing inc") end,
-	spacing_down = function() Spring.SendCommands("buildspacing dec") end,
 	idle_next = function()
 		idleBuilder(1)
 	end,
@@ -369,6 +349,8 @@ local function readTouch(lines)
 		local action = ACTIONS[name]
 		if action then
 			action()
+		elseif WG.BarDroidPad then
+			WG.BarDroidPad.act(name)
 		end
 	end
 	-- a tap on the map with a building picked: the spot for the build menu's PLACE button (bardroid_buildmenu.lua)

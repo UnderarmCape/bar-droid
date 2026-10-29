@@ -5,6 +5,31 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The gamepad online: v0.8.5's controls rebuilt (2026-10-29)
+Kailil, after testing: "Remove the full map thing when I click the right thumb stick ... BACK + RB sends the mouse to
+orders menu and does the highlight behavior that the build menu does. So take a look at my controls that my Original
+8.5 build had and match/rebuild workarounds to match the behavior of that original mod. match 1to1 using any means
+necessary ... dont worry about radials ... I want mouse to be locked to the center of the screen like it is in 8.5 so
+left thumb stick is controlling the mouse. Right stick will work as the pan, zoom, rotate etc."
+v0.8.5's "Build-First Commander" bindings and behaviour were read from its source (`gui_controller_camera_test.lua`
+in `C:\Tools\BARGAMEPAD\src\bar-codex-perf`, its docs) and rebuilt: `PadGame.java` (new) owns the pad in BAR's game.
+The pointer is held in the middle of the screen (an absolute X move, again after a touch or a real mouse moved it),
+so the left stick pans the map under it with v0.8.5's camera (the touch widget's pad lines in their first form: LS
+pan, LT faster, RS turn and zoom, LB + RS tilt). A is the left button there (select, double select, box select by
+holding A and panning, place), X the right button (BAR's default order: v0.8.5's smart X), B cancels or clears.
+RB tapped opens the build menu as before; Back + RB the order menu (`bardroid_pad.lua`, new): its grid worked out as
+BAR's `gui_ordermenu.lua` lays it out (its commands in its order, `setupCellGrid`'s cells), the pointer onto an
+order, the D-pad steps, BAR's own `WG.ordermenu.setHighlight` lights the order, A gives it through
+`SetActiveCommand` as BAR's button does (an order that needs a target sends the pointer back to the middle). The
+rest: control groups on Start + D-pad (BAR's `group set/select`, the autogroup by Alt+N), idle builders and units,
+the commander, a camera bookmark, LB + A/X/Y orders at the middle (at once where the game allows unit-control
+widgets, BAR's default; else picked for A), LB + B stop/repeat/wait, L3/R3 queue removal, Back + R3 the D-gun, Back +
+Start a free pointer (free before the start, as v0.8.5), RB held Space (front of the queue), with a building picked
+LB held Alt (an area). Left out: the radials (the menus instead, as asked), v0.8.5's own Smart-X tree (BAR's default
+order does most of it), Disassemble, self-destruct, mouse-mode speeds. The right stick click's whole-map view is gone.
+touch-widget-test: the order menu on the pad, Move picked from it, B, a group set and recalled, the commander, R3, LB +
+B (all pass; one earlier run failed five camera checks before any pad case, a rerun passed them all).
+
 ## The gamepad and the build menu, as in v0.8.5; the lobby at 135% (2026-10-29, early)
 Kailil: "so i really cant get behavior close to what i had with 8.5 in this new method? can you try your best to
 finesse a way to do it using this system you have built. Like RB with builder selected snaps the mouse to the build

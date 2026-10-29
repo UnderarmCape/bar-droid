@@ -44,11 +44,10 @@ The first version meant for other people's phones: everything since the first bu
 
 **Controllers, mouse and keyboard**
 - Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby; in BAR's own game
-  (online, spectating) a mouse and keyboard: the left stick the pointer, the right stick the camera, A and B the
-  mouse buttons, RT Shift, LB Ctrl, the D-pad control groups 1-4, Back Escape, Start BAR's options. RB puts the
-  build menu on the pad as in v0.8.5: the D-pad steps through its options (the one on the pad bigger and outlined),
-  A picks it and the pointer goes to the middle of the screen; then A places it, X places it and keeps it, the
-  D-pad turns it and spaces a row.
+  (online, spectating) v0.8.5's controls rebuilt from a mouse and keyboard: the pointer in the middle of the screen,
+  the left stick pans, the right stick turns and zooms, A selects and places, X is the smart order, B cancels; RB and
+  Back + RB put the build and order menus on the pad (the D-pad steps, the option on the pad highlighted); control
+  groups on Start + D-pad, idle units and the commander on the D-pad, LB orders, queue removal, the D-gun.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 
