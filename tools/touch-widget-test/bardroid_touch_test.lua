@@ -302,7 +302,9 @@ cases = {
 		touch("act overview_out")
 	end,
 	function() near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0) end,
-	function() end, -- the camera's way back from the overview
+	-- the camera's way back from the overview: still for 20 frames before the pad moves it (a fixed wait of 20 frames
+	-- was sometimes too short: "sticks at rest" saw the camera 695 elmos on, 2026-10-28)
+	settle,
 	-- the gamepad camera (online games; ControllerBridge sends "pad" lines when the sticks change)
 	function()
 		before = Spring.GetCameraState()
