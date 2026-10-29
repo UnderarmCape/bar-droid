@@ -110,6 +110,16 @@ local function verify(case, cond, detail)
 	log((cond and "PASS " or "FAIL ") .. case .. (detail and (": " .. tostring(detail)) or ""))
 end
 
+local function readFile(path)
+	local f = io.open(path, "r")
+	if not f then
+		return nil
+	end
+	local text = f:read("*a")
+	f:close()
+	return text
+end
+
 local function groundAt(x, y) -- bottom-left origin
 	local _, pos = Spring.TraceScreenRay(x, y, true)
 	return pos
@@ -676,6 +686,63 @@ cases = {
 		verify("build menu: Reset puts it back", x0 == before.bm.x0 and y0 == before.bm.y0 and x1 - x0 == before.bm.w,
 			string.format("%d,%d %dx%d", x0, y0, x1 - x0, y1 - y0))
 		L.act("done")
+		-- touch building (Kailil, 2026-10-28, "Strip buttons"): a building picked turns the page strip into ONE . LINE .
+		-- GRID . BORDER, rotate and cancel; the shape goes to RtsTouch in bardroid_place.txt
+		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do
+			if cmd.id < 0 then
+				Spring.SetActiveCommand(Spring.GetCmdDescIndex(cmd.id))
+				break
+			end
+		end
+		return 0.5
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		Spring.SendCommands("screenshot png") -- the shape strip (build\touch-widget-test\data\screenshots)
+		local armed, shape, rects = WG.buildmenu.droidPlace()
+		verify("build menu: a building picked shows the shape strip", armed and #rects == 6,
+			string.format("%s, %d buttons", tostring(armed), #rects))
+		verify("build menu: ONE to start", shape == "one", shape)
+		verify("build menu: the app told the shape", readFile("LuaUI/Config/bardroid_place.txt") == "place one\n")
+		before.facing = Spring.GetBuildFacing()
+		local function tap(name)
+			for _, r in ipairs(rects) do
+				if r[5] == name then
+					return WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
+				end
+			end
+		end
+		verify("build menu: GRID tapped", tap("grid"))
+		tap("rotate")
+		return 0.5
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local armed, shape, rects = WG.buildmenu.droidPlace()
+		verify("build menu: GRID chosen", armed and shape == "grid", shape)
+		verify("build menu: the app told GRID", readFile("LuaUI/Config/bardroid_place.txt") == "place grid\n")
+		verify("build menu: rotate turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
+			before.facing .. " -> " .. Spring.GetBuildFacing())
+		for _, r in ipairs(rects) do
+			if r[5] == "cancel" then
+				WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
+			end
+		end
+		return 0.5
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, id = Spring.GetActiveCommand()
+		local armed, shape = WG.buildmenu.droidPlace()
+		verify("build menu: cancel puts the building away", not armed and (id == nil or id >= 0), tostring(id))
+		verify("build menu: the next building starts with ONE", shape == "one", shape)
+		verify("build menu: the app told none", readFile("LuaUI/Config/bardroid_place.txt") == "place none\n")
 		Spring.SelectUnitArray({})
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)

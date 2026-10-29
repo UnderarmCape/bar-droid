@@ -9,6 +9,7 @@ import android.os.SystemClock;
 import android.util.SparseArray;
 import android.view.HapticFeedbackConstants;
 import android.view.InputDevice;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.ViewConfiguration;
@@ -45,6 +46,10 @@ import java.util.Locale;
  *   three-finger swipe   up = overview of the whole map, down = back; left / right = previous / next idle builder
  *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
  * Actions go to the widget as "act <name>" lines (not in the lobby).
+ * A building picked in the app's build menu (bardroid_buildmenu.lua: its page strip then shows ONE, LINE, GRID, BORDER,
+ * rotate and cancel; Kailil, 2026-10-28): a tap on the map places one and the building stays picked (Shift held for
+ * the click); with LINE, GRID or BORDER a drag on the map lays out BAR's own line, filled area or hollow ring of them
+ * (the engine's build drag with Shift, Shift+Alt or Shift+Alt+Ctrl held); with ONE a drag pans.
  * The X pointer is hidden while two or more fingers are down. Off the map (the void past its edge) fingers work as on
  * it: the map-edge rules of 2026-10-26 (taps off the map clicking nothing, drags anchored mid-screen) are gone (Kailil,
  * 2026-10-27: they made the edge "wonky" and the interface over the void untouchable; edge navigation comes later).
@@ -83,6 +88,8 @@ final class RtsTouch {
     private final File touchLog = new File(widgetDir, "bardroid_touch.txt");
     private final File screenFile = new File(widgetDir, "bardroid_screen.txt");
     private final File hoverFile = new File(widgetDir, "bardroid_hover.txt");
+    private final File placeFile = new File(widgetDir, "bardroid_place.txt");
+    private int[] heldKeys = {};                     // modifier keys held for a building's tap or drag
     private FileOutputStream log;
     private long logBytes;
 
@@ -197,6 +204,7 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
+        releaseKeys();
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -283,7 +291,7 @@ final class RtsTouch {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
                 ui.removeCallbacks(longPress);
-                if (secondTap) startLeftDrag();
+                if (secondTap && placeShape() == null) startLeftDrag();
                 else decideDrag(hoverAt(downX, downY));
                 return;
             }
@@ -383,6 +391,7 @@ final class RtsTouch {
                 break;
             case LEFT_DRAG:
                 press(curX, curY, InputStub.BUTTON_LEFT, false);
+                releaseKeys();
                 break;
             case RIGHT_HOLD:
                 press(curX, curY, InputStub.BUTTON_RIGHT, false);
@@ -412,6 +421,7 @@ final class RtsTouch {
         ui.removeCallbacks(threeHold);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
+        releaseKeys();
         state = State.IDLE;
         showCursor(true);
     }
@@ -433,8 +443,49 @@ final class RtsTouch {
             return;
         }
         ui.removeCallbacks(hoverTimeout);
+        if (hover == HOVER_MAP && startShapeDrag()) return;
         if (hover == HOVER_INTERFACE) startLeftDrag();
         else startPan();
+    }
+
+    /**
+     * A building picked with LINE, GRID or BORDER: the drag lays it out with BAR's own build drag (the engine's
+     * GuiHandler: no modifier a line, Alt a filled rectangle, Alt+Ctrl a hollow one; Shift queues them and keeps the
+     * building picked). False: nothing picked, or ONE (the drag pans).
+     */
+    private boolean startShapeDrag() {
+        String shape = placeShape();
+        if (shape == null || shape.equals("one")) return false;
+        if (shape.equals("grid")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
+        else if (shape.equals("border")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_CTRL_LEFT);
+        else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        startLeftDrag();
+        return true;
+    }
+
+    private void holdKeys(int... keys) {
+        releaseKeys();
+        heldKeys = keys;
+        for (int k : keys) view().sendKeyEvent(0, k, true);
+    }
+
+    private void releaseKeys() {
+        for (int i = heldKeys.length - 1; i >= 0; i--) view().sendKeyEvent(0, heldKeys[i], false);
+        heldKeys = new int[0];
+    }
+
+    /**
+     * The shape of the building picked in the app's build menu ("place one|line|grid|border" in bardroid_place.txt,
+     * written again every second while one is picked); null: none picked, no game, or an old file.
+     */
+    private String placeShape() {
+        if (!gameWidgetRunning() || System.currentTimeMillis() - placeFile.lastModified() > HOVER_STALE_MS) return null;
+        byte[] b = new byte[32];
+        int n;
+        try (FileInputStream in = new FileInputStream(placeFile)) { n = in.read(b); } catch (IOException e) { return null; }
+        if (n <= 0) return null;
+        String[] f = new String(b, 0, n, StandardCharsets.US_ASCII).trim().split(" ");
+        return f.length == 2 && f[0].equals("place") && !f[1].equals("none") ? f[1] : null;
     }
 
     private void startLeftDrag() {
@@ -536,6 +587,14 @@ final class RtsTouch {
 
     private void tap(float vx, float vy) {
         float x = toX(vx), y = toY(vy);
+        if (placeShape() != null && hoverAt(vx, vy) == HOVER_MAP) {   // a building picked: one here, and it stays picked
+            lastTapX = -1; doubleTapX = -1;
+            holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+            press(vx, vy, InputStub.BUTTON_LEFT, true);
+            press(vx, vy, InputStub.BUTTON_LEFT, false);
+            releaseKeys();
+            return;
+        }
         float tol = slop * 2 * xPerViewPixel();
         long now = SystemClock.uptimeMillis();
         // A third quick tap: the double click's unit types on the whole map. No click (it would select one unit).

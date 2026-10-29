@@ -81,7 +81,13 @@ local maxPosY = 0.74
 -- it will be about a quarter the height ... that will allow 3x3 items on top"; then "the page swapper and inidcator
 -- needs to be bigger. double the size": half a cell, their text pageText x BAR's): 9 options a page. (BAR's own
 -- paging gave a whole row to the arrows: 6 a page, the first version of this.)
-local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false }
+-- While a building is picked the strip holds the building shapes instead (droid.place): ONE, LINE, GRID, BORDER, rotate,
+-- cancel (Kailil, 2026-10-28, choosing "the build menu's own page strip turns into ONE . LINE . GRID . BORDER, plus
+-- rotate and cancel" for the touch building of 2026-10-25, which he had removed as "ugly and clunky to switch between").
+local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
+	shape = "one", armed = false, written = nil, writtenAt = nil, shapeRects = {}, file = "LuaUI/Config/bardroid_place.txt",
+	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" }, { "rotate", "\226\134\187" },
+		{ "cancel", "\226\156\149" } } }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
 
@@ -699,6 +705,83 @@ function droid.register()
 	})
 end
 
+-- BAR Droid: a building picked (from this menu, a key or before the start) and the shape for it, for the app:
+-- LuaUI/Config/bardroid_place.txt "place <one|line|grid|border|none>" (RtsTouch: how a finger on the map builds it).
+-- The strip is drawn again when that changes.
+function droid.place()
+	local armed
+	if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].getPreGameDefID then
+		armed = WG["pregame-build"].getPreGameDefID() ~= nil
+	else
+		local _, id = spGetActiveCommand()
+		armed = id ~= nil and id < 0
+	end
+	if armed ~= droid.armed then
+		droid.armed = armed
+		if not armed then
+			droid.shape = "one" -- (each building picked starts with ONE: a drag pans the map until a shape is chosen)
+		end
+		clear()
+	end
+	-- (written again every second while a building is picked: the app takes an older "place" for none, so a file left
+	-- by a game that ended with a building picked never turns taps into Shift clicks)
+	local want = armed and droid.shape or "none"
+	local now = Spring.GetTimer()
+	if want ~= droid.written or (armed and Spring.DiffTimers(now, droid.writtenAt) > 1) then
+		local f = io.open(droid.file, "w")
+		if f then
+			f:write("place " .. want .. "\n")
+			f:close()
+			droid.written, droid.writtenAt = want, now
+		end
+	end
+end
+
+-- BAR Droid: the shape strip, in the page strip's place (area: the menu's inner rect; h: the strip's height)
+function droid.drawShapes(area, width, h)
+	local unit = width / 6 -- (the four words a fifth wider, the two symbols narrower)
+	local y0, y1 = area[2], area[2] + h - cellPadding - activeAreaMargin
+	local words = math.min((y1 - y0) * 0.5, unit * 1.2 * 0.8 / math.max(0.01, font2:GetTextWidth("BORDER"))) -- (one size)
+	local x0 = area[1]
+	for i, item in ipairs(droid.items) do
+		local w = unit * (i > 4 and 0.6 or 1.2)
+		local rect = { x0, y0, x0 + w, y1, item[1] }
+		x0 = x0 + w
+		droid.shapeRects[#droid.shapeRects + 1] = rect
+		local lit = item[1] == droid.shape
+		UiButton(rect[1] + cellPadding, rect[2] + cellPadding, rect[3] - cellPadding, rect[4] - cellPadding,
+			1, 1, 1, 1, 1, 1, 1, 1, nil,
+			lit and { 0.45, 0.36, 0.05, 0.9 } or { 0, 0, 0, 0.8 }, lit and { 0.75, 0.62, 0.15, 0.9 } or { 0.2, 0.2, 0.2, 0.8 },
+			bgpadding * 0.5)
+		local size = i > 4 and math.min((y1 - y0) * 0.6, w * 0.7) or words
+		font2:Print((lit and "\255\255\235\150" or "\255\235\235\235") .. item[2], (rect[1] + rect[3]) * 0.5,
+			(y0 + y1) * 0.5 - size * 0.3, size, "co")
+	end
+end
+
+-- BAR Droid: a tap on the shape strip: pick the shape, turn the building, or put it away
+function droid.press(x, y)
+	for _, r in ipairs(droid.shapeRects) do
+		if x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
+			if r[5] == "rotate" then
+				Spring.SendCommands("buildfacing inc")
+			elseif r[5] == "cancel" then
+				if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
+					WG["pregame-build"].setPreGameDefID(nil)
+				else
+					Spring.SetActiveCommand(0)
+				end
+			else
+				droid.shape = r[5]
+			end
+			clear()
+			droid.place()
+			return true
+		end
+	end
+	return false
+end
+
 function widget:ViewResize()
 	tracy.ZoneBeginN("W:BuildMenu:ViewResize")
 	vsx, vsy = spGetViewGeometry()
@@ -817,6 +900,7 @@ end
 local sec = 0
 function widget:Update(dt)
 	droid.register() -- BAR Droid
+	droid.place()
 	tracy.ZoneBeginN("W:BuildMenu:Update")
 	if delayRefresh and spGetGameSeconds() >= delayRefresh then
 		clear()
@@ -1448,8 +1532,12 @@ function drawBuildmenu()
 	end
 	tracy.ZoneEnd()
 
-	-- paginator
-	if pages == 1 then
+	-- paginator (BAR Droid: while a building is picked, the shape strip in its place)
+	droid.shapeRects = {}
+	if droid.armed and not stickToBottom then
+		paginatorRects = {}
+		droid.drawShapes(activeArea, contentWidth, paginatorCellHeight)
+	elseif pages == 1 then
 		paginatorRects = {}
 	else
 		tracy.ZoneBeginN("W:BuildMenu:DrawBuildmenu:Paginator")
@@ -2101,6 +2189,9 @@ function widget:MousePress(x, y, button)
 		and math_isInRect(x, y, backgroundRect[1], backgroundRect[2], backgroundRect[3], backgroundRect[4])
 	then
 		if selectedBuilderCount > 0 or (preGamestartPlayer and startDefID) then
+			if droid.press(x, y) then -- BAR Droid: the shape strip
+				return true
+			end
 			if
 				paginatorRects[1]
 				and math_isInRect(
@@ -2394,6 +2485,10 @@ function widget:Initialize()
 	WG.buildmenu.droidGrid = function()
 		return colls, rows, pages, cmdsCount
 	end
+	WG.buildmenu.droidPlace = function() -- (and the shape strip: a building picked, the shape, the buttons, a tap)
+		return droid.armed, droid.shape, droid.shapeRects
+	end
+	WG.buildmenu.droidPress = droid.press
 	WG.buildmenu.getGroups = function()
 		return groups, units.unitGroup
 	end

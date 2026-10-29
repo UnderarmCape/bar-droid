@@ -55,7 +55,10 @@ camera presets, 1st person). Code: `RtsTouch.java` (Android gestures to X mouse 
 Not solved:
 - **Playing (not spectating) by touch is basic.** BAR's build and order menus have no "is the pointer over me"
   answer, so a drag that starts on them pans the map, and they cannot be hidden from a user widget; they need touch
-  versions (as the info panel got), with placing buildings by finger.
+  versions (as the info panel got). Placing buildings by finger works through the app's build menu copy: while a
+  building is picked its page strip offers ONE, LINE, GRID, BORDER, rotate and cancel, and `RtsTouch` holds Shift
+  (and Alt, Ctrl) for the tap or drag so BAR's own build drag lays them out; a touch-first placement (a ghost to
+  nudge before confirming) would be better.
 - **BAR's interface on a near-square screen** (a foldable unfolded): the player list covers the order menu's last
   column; the minimap is shrunk until tapped.
 - **The map's edge:** touch navigation there is still open.

@@ -5,6 +5,22 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Building by touch again: the shape strip (2026-10-28, late evening)
+Kailil: "what happened to the touch building system we created a while back, wht the line, grid and border setup.
+revamp the whole system before you bring it in." That was the touch-only mode of 2026-10-25 (`c33d9af` a touch build
+menu with ONE / LINE / GRID, `f6a3c6a` a ghost with BUILD / ROTATE / CANCEL beside it), removed in `5b3ae63` when
+Kailil found the mode "all bad" and "ugly and clunky to switch between". Asked how it should come back, he picked the
+build menu's own strip: while a building is picked, the copy's page strip (`bardroid_buildmenu.lua`, from
+`tools/make-buildmenu.py`) shows ONE · LINE · GRID · BORDER, ↻ (BAR's `buildfacing inc`) and ✕ (puts it away), the
+chosen shape lit; no new panels. The app does no building of its own: the copy tells `RtsTouch` the shape in
+`LuaUI/Config/bardroid_place.txt` ("place line", rewritten every second while a building is picked, so an old file
+counts as none), and the finger is a mouse with keys held, BAR's own placing as with a mouse: a tap on the map is a
+click with Shift (one there, and the building stays picked), a drag with LINE, GRID or BORDER is the engine's build
+drag with Shift, Shift+Alt or Shift+Alt+Ctrl (`GuiHandler::GetBuildPositions`: a line, a filled rectangle, a hollow
+one); with ONE a drag pans. A long press (right click) also puts the building away. Each building picked starts with
+ONE. touch-widget-test: the strip shows for a picked building, a tap picks GRID and writes it, ↻ turns the building,
+✕ puts it away (screenshot sent to Kailil); the taps and drags on the phone are his to check.
+
 ## The build menu as a 3x3 grid (2026-10-28, evening)
 Kailil, after playing with the copy: "Can the build menu be reduced to show only 6 items per page and have a 3x3 grid."
 BAR's paging already takes the bottom row for its arrows when the options do not fit, so the copy lays the menu out
