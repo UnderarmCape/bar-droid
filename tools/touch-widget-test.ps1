@@ -32,6 +32,7 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
   if (-not $Widget) { $Widget = Join-Path $App "app\src\main\assets\bardroid\bardroid_touch.lua" }
+  Remove-Item "$Data\LuaUI\Widgets\*.lua" -ErrorAction SilentlyContinue   # (only the widgets below: none left from before)
   Copy-Item $Widget "$Data\LuaUI\Widgets\bardroid_touch.lua" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_queue.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_chat.lua") "$Data\LuaUI\Widgets\" -Force
@@ -109,6 +110,10 @@ try {
   }
   Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch|bardroid-perf|bardroid-buildmenu|bardroid_buildmenu|BAR Droid build menu" |
     ForEach-Object { $_.Line }
+  # any widget's error (BAR's handler removes that widget, often quietly for the cases: the pad, chat, info, players,
+  # minimap or layout widget, or BAR's own after one of the app's): a FAIL line (laptop-tests counts it)
+  Select-String -Path $log -CaseSensitive -Pattern "Error in [A-Za-z]+\(\)|Removed widget: " |
+    ForEach-Object { "[touch-test] FAIL widget error: " + ($_.Line -replace '^\[t=[^\]]*\](\[f=[^\]]*\])? ', '') }
 } finally {
   foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }   # the junction only, never the live install's files
 }

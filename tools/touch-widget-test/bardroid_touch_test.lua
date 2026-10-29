@@ -67,7 +67,14 @@ function widget:Update()
 	step = step + 1
 	local c = cases[step]
 	if c then
-		local seconds = c()
+		-- (a case that errors, as one after a failed one can, is a FAIL and the next case runs: BAR's widget handler
+		-- would remove this widget, and the run stopped with no "done")
+		local ok, seconds = pcall(c)
+		if not ok then
+			fails = fails + 1
+			log("FAIL case " .. step .. " errored: " .. tostring(seconds))
+			seconds = nil
+		end
 		if seconds == false and repeats < 30 then -- not ready yet: the same case again 20 frames later
 			step, repeats = step - 1, repeats + 1
 		else

@@ -226,6 +226,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Both games' touch-widget-test logs after the night's widget changes scanned for errors and warnings the cases do
       not catch (an error in a path no case takes would remove a widget quietly): only BAR's own (a deprecated config
       key, a test weapon without a model, sound overrides).
+      That scan should not be needed by hand: touch-widget-test printed only the touch widget's, the build menu's and
+      the cases' lines, so an error in any other widget (pad, chat, info, players, minimap, layout, or BAR's own after
+      one of the app's), which BAR's handler answers by removing the widget, passed unseen (a planted error: ALL PASS).
+      Any "Error in ...()" or "Removed widget:" line is now a FAIL line (laptop-tests counts it); a case that errors
+      is a FAIL and the run goes on (it had removed the test widget: no "done"); the test's widget folder is emptied
+      first (a stale file kept loading). Checked with a planted error (both reported, "done: 34 FAILED") and clean
+      runs in both games. One clean run before had three cases a few pixels off (the chat box, PLACE against the
+      order menu, ~1%: the view resized under it?); the next passed, the code unchanged.
 
 ## Releasing (once the blockers are done)
 
