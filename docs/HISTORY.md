@@ -5,6 +5,28 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The gamepad and the build menu, as in v0.8.5; the lobby at 135% (2026-10-29, early)
+Kailil: "so i really cant get behavior close to what i had with 8.5 in this new method? can you try your best to
+finesse a way to do it using this system you have built. Like RB with builder selected snaps the mouse to the build
+menu grid spot one, then a highlight stroke and enlargement of like 10 percent of the build item as the mouse
+highlights on to easily show what item im selecting. pressing A snaps the mouse to the center of the screen ready to
+place it." The build menu copy owns it: RB (`act pad_build` through the touch widget) puts the menu on the pad and
+the pointer on its first option (`Spring.WarpMouse`, once the menu has laid the cell out); the D-pad (`pad_left` ...)
+steps from the option under the pointer, past the left or right edge to the page before or after (wrapping);
+the option under the pointer is drawn 10% bigger with a gold outline (BAR's own hover drawing, scaled about the
+cell's middle) while the pad is the input; A is still the pad's left click, so BAR's own menu picks the option, and
+the copy then sends the pointer to the middle of the screen. B (or RB again) leaves the menu, as does moving the
+pointer off it. The copy tells the app in `bardroid_pad.txt` ("focus 1", rewritten every second) so that
+`ControllerBridge` gives the D-pad and B to the menu meanwhile, and while a building is picked the D-pad turns it
+(`buildfacing`) and spaces a row (`buildspacing`), X places it and keeps it (a Shift click; v0.8.5's placeStay),
+B is BAR's right click (puts it away). The touch PLACE button stays off for the pad and the mouse (A or a click
+places where the pointer is). A D-pad on hat axes now counts short presses too. touch-widget-test: RB, right and
+down, past the left edge to the last page, the pointer to the middle after a pick (pointer moves recorded, not made,
+without -Pointer), the highlight drawn once, the D-pad turning a picked building.
+Then: "Add the 135 percent lobby change into tissue": the lobby's interface scale held back since the evening (the
+lobby at 135% on both screens, folded and unfolded alike; "new folded and unfolded lobby UI is 135. just keep them the
+same") goes in: launch-bar.sh writes 1.35 for every window size; the lobby tests run at 135% and pass.
+
 ## Building by touch: a PLACE button (2026-10-28, night)
 Kailil, on the shape strip: "one tap needs to have a done confirmation the done should be large in the bottom of the
 screen. it should take up the width of the orders menu and appear on top of the orders menu as one big green button

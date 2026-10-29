@@ -76,9 +76,18 @@ PATCHES = [
 -- top of the orders menu as one big green button saying done or place"; "Get rid of the circle and x and move those to
 -- the order menu button popup with done as smaller sub buttons"): a tap on the map picks the spot (droid.spot, the
 -- building drawn there), PLACE builds it there (the app clicks the spot with Shift held: RtsTouch).
+-- The gamepad (the app makes it a mouse and keys in BAR's game; Kailil: "try your best to finesse a way" to v0.8.5's
+-- feel, "RB with builder selected snaps the mouse to the build menu grid spot one, then a highlight stroke and
+-- enlargement of like 10 percent of the build item ... pressing A snaps the mouse to the center of the screen ready to
+-- place it"): RB puts the pointer on the menu's first option (droid.focus), the D-pad steps from option to option
+-- (past the left or right edge: the page before or after), the option under the pointer is drawn 10% bigger with a
+-- gold outline, A (a click) picks it and the pointer goes to the middle of the screen; B leaves the menu.
+-- The app learns of the focus from LuaUI/Config/bardroid_pad.txt ("focus 1": the D-pad and B are the menu's).
 local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	file = "LuaUI/Config/bardroid_place.txt",
+	focus = nil, focusFrom = nil, warpTo = nil, padFile = "LuaUI/Config/bardroid_pad.txt", padWritten = nil,
+	padWrittenAt = nil, warp = Spring.WarpMouse,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 '''),
     ('''	-- adjust grid size when pages are needed
@@ -197,9 +206,12 @@ function droid.place()
 		droid.armed = armed
 		if not armed then
 			droid.shape = "one" -- (each building picked starts with ONE: a drag pans the map until a shape is chosen)
+		elseif droid.focus then
+			droid.endFocus(true) -- (picked with the gamepad: the pointer to the middle, ready to place it)
 		end
 		clear()
 	end
+	droid.padFocus()
 	if not armed and droid.written == "place none\\n" then
 		droid.panel = nil
 		return
@@ -284,8 +296,8 @@ end
 -- at the right, each a square of 0.7 of its height
 function droid.layoutPanel()
 	droid.panel = nil
-	if not droid.armed then
-		return
+	if not droid.armed or WG.BarDroidInput == "pad" or WG.BarDroidInput == "mouse" then -- (fingers' only: A or a
+		return -- click places where the pointer is)
 	end
 	local x0, y0, x1, y1
 	local o = WG.ordermenu
@@ -390,6 +402,120 @@ function droid.press(x, y)
 	return false
 end
 
+-- BAR Droid: the gamepad's buttons for the menu (bardroid_touch.lua's pad_* actions): build (RB: on, or off again),
+-- back (B), left, right, up, down (the D-pad)
+function droid.cellAt(x, y)
+	for id, r in pairs(cellRects) do
+		if cmds[id] and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
+			return id
+		end
+	end
+end
+
+function droid.endFocus(center)
+	droid.focus, droid.warpTo, droid.focusFrom = nil, nil, nil
+	if center then
+		droid.warp(math_floor(vsx / 2), math_floor(vsy / 2))
+	end
+end
+
+function droid.pad(name)
+	if name == "build" then
+		if droid.focus then
+			droid.endFocus(false)
+		elseif buildmenuShows and cmdsCount > 0 then
+			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
+			droid.warpTo = droid.focus
+		end
+	elseif not droid.focus then
+		return
+	elseif name == "back" then
+		droid.endFocus(true)
+	else
+		local per = colls * rows
+		local id = droid.cellAt(spGetMouseState()) or droid.focus
+		local page = math_ceil(id / per)
+		local i = id - (page - 1) * per - 1
+		local row, col = math_floor(i / colls), i % colls
+		if name == "left" then
+			col = col - 1
+		elseif name == "right" then
+			col = col + 1
+		elseif name == "up" then
+			row = math.max(0, row - 1)
+		elseif name == "down" then
+			row = math.min(rows - 1, row + 1)
+		end
+		if col < 0 then
+			page, col = page - 1, colls - 1
+		elseif col >= colls then
+			page, col = page + 1, 0
+		end
+		page = page < 1 and pages or (page > pages and 1 or page)
+		local target = math.min(cmdsCount, (page - 1) * per + row * colls + col + 1)
+		if page ~= currentPage then
+			currentPage = page
+			doUpdate = true
+		end
+		droid.focus, droid.warpTo = target, target
+	end
+	droid.padFocus()
+end
+
+-- (each Update: the pointer onto the focused option once the menu has laid it out; the focus ends when the menu goes
+-- or the pointer is moved off it; the app told)
+function droid.padFocus()
+	if droid.focus then
+		if not buildmenuShows then
+			droid.endFocus(false)
+		elseif droid.warpTo then
+			local r = cellRects[droid.warpTo]
+			if r then
+				droid.warp(math_floor((r[1] + r[3]) / 2), math_floor((r[2] + r[4]) / 2))
+				droid.warpTo, droid.focusFrom = nil, nil
+			end
+		else
+			local mx, my = spGetMouseState()
+			local r = backgroundRect
+			if not droid.focusFrom then
+				droid.focusFrom = { mx, my }
+			elseif (mx ~= droid.focusFrom[1] or my ~= droid.focusFrom[2])
+				and not (r and mx >= r[1] and mx <= r[3] and my >= r[2] and my <= r[4]) then
+				droid.endFocus(false)
+			end
+		end
+	end
+	local text = droid.focus and "focus 1\\n" or "focus 0\\n"
+	local now = Spring.GetTimer()
+	if text ~= droid.padWritten or (droid.focus and Spring.DiffTimers(now, droid.padWrittenAt) > 1) then
+		local f = io.open(droid.padFile, "w")
+		if f then
+			f:write(text)
+			f:close()
+			droid.padWritten, droid.padWrittenAt = text, now
+		end
+	end
+end
+
+-- BAR Droid: the option under the pointer, with the gamepad: 10% bigger, a gold outline around it
+function droid.drawHover(cellID, list)
+	local r = cellRects[cellID]
+	if not (r and (droid.focus or WG.BarDroidInput == "pad")) then
+		gl.CallList(list)
+		return
+	end
+	local cx, cy = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2
+	local t = math.max(2, math_floor((r[3] - r[1]) * 0.035))
+	gl.PushMatrix()
+	gl.Translate(cx, cy, 0)
+	gl.Scale(1.1, 1.1, 1)
+	gl.Translate(-cx, -cy, 0)
+	RectRound(r[1] + cellPadding - t, r[2] + cellPadding - t, r[3] - cellPadding + t, r[4] - cellPadding + t,
+		cornerSize * 1.5, 1, 1, 1, 1, { 1, 0.78, 0.2, 1 }, { 1, 0.92, 0.45, 1 })
+	gl.CallList(list)
+	gl.PopMatrix()
+end
+
 function widget:ViewResize()
 	tracy.ZoneBeginN("W:BuildMenu:ViewResize")'''),
     ('''function widget:Update(dt)
@@ -455,6 +581,12 @@ function widget:DrawWorld()
 	if spGetGameFrame() > 0 then
 		return
 	end'''),
+    ('''					if hoverDlist then
+						gl.CallList(hoverDlist)
+					end''',
+     '''					if hoverDlist then
+						droid.drawHover(hoveredCellID, hoverDlist) -- BAR Droid: with the gamepad bigger, outlined
+					end'''),
     ('''function widget:DrawScreen()
 	tracy.ZoneBeginN("W:BuildMenu:DrawScreen")
 	glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
@@ -518,7 +650,15 @@ function widget:DrawWorld()
 		return droid.panel, droid.spot
 	end
 	WG.buildmenu.droidPressPanel = droid.pressPanel
-	WG.buildmenu.droidSpot = droid.setSpot -- (bardroid_touch.lua: the app's "spot" lines)'''),
+	WG.buildmenu.droidSpot = droid.setSpot -- (bardroid_touch.lua: the app's "spot" lines)
+	WG.buildmenu.droidPad = droid.pad -- (bardroid_touch.lua: the gamepad's pad_* actions)
+	WG.buildmenu.droidFocus = function() -- (the option the gamepad is on, and the page)
+		return droid.focus, currentPage
+	end
+	WG.buildmenu.droidSetWarp = function(fn) -- (tools/touch-widget-test.ps1: no pointer moves without -Pointer)
+		droid.warp = fn or Spring.WarpMouse
+	end
+	WG.buildmenu.droidDrawHover = droid.drawHover -- (the same: drawn once without a pointer over the menu)'''),
     ('''		local paginatorFontSize = math_max(0.016 * vsy, paginatorCellHeight * 0.2)
 ''',
      '''		local paginatorFontSize = math_max(0.016 * vsy, paginatorCellHeight * 0.2)

@@ -701,6 +701,23 @@ final class RtsTouch {
         return controllerGame;
     }
 
+    private final File padFile = new File(widgetDir, "bardroid_pad.txt");
+    private volatile long padAt;
+    private volatile boolean menuFocus, buildingPicked;
+    /** The build menu has the gamepad (bardroid_pad.txt "focus 1", rewritten every second while it has). Any thread. */
+    boolean menuFocus() { padState(); return menuFocus; }
+    /** A building is picked in the app's build menu (bardroid_place.txt). Any thread. */
+    boolean buildingPicked() { padState(); return buildingPicked; }
+    private void padState() {   // (read at most every 100 ms: the pad asks each tick)
+        long now = SystemClock.uptimeMillis();
+        if (now - padAt < 100) return;
+        padAt = now;
+        String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
+                ? readSmall(padFile) : null;
+        menuFocus = text != null && text.trim().equals("focus 1");
+        buildingPicked = place() != null;
+    }
+
     private volatile long interfaceAt;
     private volatile boolean onInterface;
     /** The game's last answer for the pointer, wherever it is: over the interface (read at most every 100 ms). Any thread. */

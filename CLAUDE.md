@@ -96,7 +96,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `tools/build-gamepad-game.py` (rerun after a new v0.8.5 commit) → `assets/gamepad/`, `Installer.installGamepadGame`,
   `launch-bar.sh` (`GAMEPAD_GAME`). `ControllerBridge` is its companion (BARCTRL1 over UDP 28777, always streaming);
   in BAR's own game (online) it makes the pad an X mouse and keyboard (the right stick the camera through
-  `bardroid_touch.lua`'s pad lines; which game it is: `bardroid_game.txt`), in the lobby a mouse. Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
+  `bardroid_touch.lua`'s pad lines; which game it is: `bardroid_game.txt`; RB puts the build menu copy on the pad,
+  `bardroid_pad.txt` "focus 1" gives it the D-pad and B), in the lobby a mouse. Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
   Packaged from BARGAMEPAD branch `controller/codex-v085-perf` (performance work, same behaviour; HANDOFF.md
   "Gamepad"); measure with `tools/profile-gamepad-game.ps1` on the laptop before and after any change to it.
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;

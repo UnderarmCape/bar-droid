@@ -26,7 +26,7 @@ The first version meant for other people's phones: everything since the first bu
   over the shoulder, table, close, mid) and a 1st person camera on the unit with free look that recenters itself;
   the settings can be tuned per unit type on the phone (Tune) and apply to the other factions' equivalents.
 - BAR's interface scale fits each Fold screen (cover and inner), and follows fold/unfold during a game; the lobby at
-  150% on the inner screen. Unfolded, the minimap is half size until tapped.
+  135% on both screens. Unfolded, the minimap is half size until tapped.
 - Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit
@@ -45,7 +45,10 @@ The first version meant for other people's phones: everything since the first bu
 **Controllers, mouse and keyboard**
 - Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby; in BAR's own game
   (online, spectating) a mouse and keyboard: the left stick the pointer, the right stick the camera, A and B the
-  mouse buttons, RT Shift, LB Ctrl, the D-pad control groups 1-4, Back Escape, Start BAR's options.
+  mouse buttons, RT Shift, LB Ctrl, the D-pad control groups 1-4, Back Escape, Start BAR's options. RB puts the
+  build menu on the pad as in v0.8.5: the D-pad steps through its options (the one on the pad bigger and outlined),
+  A picks it and the pointer goes to the middle of the screen; then A places it, X places it and keeps it, the
+  D-pad turns it and spaces a row.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 

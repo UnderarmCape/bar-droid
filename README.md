@@ -93,6 +93,8 @@ factions' matching unit too.
   | Back / Start | Escape / BAR's options (F10) |
   | X / Y | Attack-move (A places it) / the next idle builder |
   | Left / right stick click | Select all your units / the whole map and back |
+  | RB (a builder selected) | The build menu: the pointer onto its first option; the D-pad steps through them (past the left or right edge: the page before or after), the option is drawn bigger with a gold outline; A picks it and the pointer goes to the middle of the screen; B or RB leaves the menu |
+  | A building picked | A places it, X places it and keeps it picked, D-pad left/right turns it, up/down spaces a row, B puts it away |
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

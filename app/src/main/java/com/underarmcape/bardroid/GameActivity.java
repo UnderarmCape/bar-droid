@@ -98,6 +98,8 @@ public class GameActivity extends MainActivity {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendKeyEvent(0, keyCode, down); });
         }
         @Override public void act(String name) { touch.padAct(name); }
+        @Override public boolean menuFocus() { return touch.menuFocus(); }
+        @Override public boolean buildingPicked() { return touch.buildingPicked(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
         }
