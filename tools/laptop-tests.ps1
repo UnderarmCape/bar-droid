@@ -10,6 +10,7 @@
 #                        has unpacked it)
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
 #   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back)
+#   powershell syntax    every tools\*.ps1 parses
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
 # The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's
 # checks of what is under the pointer move the real mouse pointer and run only with -Pointer (nobody at the laptop).
@@ -44,6 +45,17 @@ if ($luacheck) {
   $results += "{0} lua lint" -f $(if ($ok) { "PASS" } else { "FAIL" })
 } else { $results += "SKIP lua lint (no luacheck: run Install Toolchain.bat, or set LUACHECK to luacheck.exe)" }
 
+# Every PowerShell tool parses (2026-10-28: a "$name:" in a string stopped this file from running at all; CI checks this
+# file too, .github/workflows/build.yml)
+Write-Host "== powershell syntax"
+$bad = foreach ($f in Get-ChildItem $Tools -Filter *.ps1) {
+  $errs = $null
+  [void][Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
+  if ($errs) { "$($f.Name): $($errs[0].Message) (line $($errs[0].Extent.StartLineNumber))" }
+}
+if ($bad) { $bad | ForEach-Object { Write-Host "   $_" } }
+$results += "{0} powershell syntax" -f $(if ($bad) { "FAIL" } else { "PASS" })
+
 # launch-bar.sh's switching of BAR's build menus (tools/launch-bar-test.sh), with the portable Git's sh and its tools
 # (on PATH for this process only)
 $gitUsr = Join-Path $TC "git\usr\bin"
@@ -54,7 +66,7 @@ if (Test-Path (Join-Path $gitUsr "sh.exe")) {
   $ok = ($LASTEXITCODE -eq 0) -and ($out | Select-String -Pattern "done: ALL PASS" -Quiet)
   if (-not $ok) { $out | Select-Object -Last 25 | ForEach-Object { Write-Host "   $_" } }
   $results += "{0} launch-bar build menus" -f $(if ($ok) { "PASS" } else { "FAIL" })
-} else { $results += "SKIP launch-bar build menus (no sh in $gitUsr: run Install Toolchain.bat)" }
+} else { $results += "SKIP launch-bar build menus (no sh in ${gitUsr}: run Install Toolchain.bat)" }
 
 Run "publish check patterns" "publish-check.ps1" "selftest: ALL PASS" @("-SelfTest")
 Run "downloader" "downloader-test.ps1" "ALL PASS"

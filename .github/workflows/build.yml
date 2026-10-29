@@ -47,6 +47,15 @@ jobs:
         run: sh tools/java-checks.sh
       - name: launch-bar.sh's build menu switching
         run: sh tools/launch-bar-test.sh
+      - name: The PowerShell tools parse
+        shell: pwsh
+        run: |
+          $bad = foreach ($f in Get-ChildItem tools -Filter *.ps1) {
+            $errs = $null
+            [void][Management.Automation.Language.Parser]::ParseFile($f.FullName, [ref]$null, [ref]$errs)
+            if ($errs) { "$($f.Name): $($errs[0].Message) (line $($errs[0].Extent.StartLineNumber))" }
+          }
+          if ($bad) { $bad; exit 1 }
 
   lua-lint:
     runs-on: ubuntu-24.04

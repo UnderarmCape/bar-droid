@@ -139,7 +139,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (HISTORY.md "Night"). launch-bar.sh's new build menu switching had no check: `tools/launch-bar-test.sh` runs its
       widget_order and controller-game block as they are on a scratch BYAR.lua (the copy in, BAR's own back on another
       BAR file or none, the controller game off, a second start changing nothing; a sabotaged switch fails it); in
-      laptop-tests and CI.
+      laptop-tests and CI. A full laptop-tests run after the checks moved off-screen found laptop-tests.ps1 itself
+      broken by that commit (a "$gitUsr:" in a string: PowerShell would not parse the file); fixed, and every
+      tools\*.ps1 is now parsed first (laptop-tests, and CI with pwsh, which also covers laptop-tests.ps1). All 12
+      checks pass, the lobby, bridge and catch-up tests with their games off-screen.
 
 ## Releasing (once the blockers are done)
 
