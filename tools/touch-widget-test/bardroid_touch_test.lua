@@ -54,8 +54,12 @@ end
 
 local cases
 local repeats = 0
+local pushPointer = nil -- {x, y}: the pad widget's made-up pointer put there every frame (a stick held out)
 function widget:Update()
 	frames = frames + 1
+	if pushPointer and WG.BarDroidPad then
+		WG.BarDroidPad.setPointer(pushPointer[1], pushPointer[2])
+	end
 	-- (from 5 s of game: BAR's own camera move to the start position came after the first cases on a fast laptop)
 	if Spring.GetGameFrame() < 150 or frames < waitUntil or os.clock() < waitClock then
 		return
@@ -1101,6 +1105,68 @@ cases = {
 		end
 		local _, active = Spring.GetActiveCommand()
 		verify("pad: B puts the order away", active == nil, tostring(active))
+		-- the order menu follows the pointer (here a made-up one the recorded moves land on): onto another order; pushed
+		-- off the menu it is held on it; pushed off for 0.25 s it lets go (Kailil: "a quarter long")
+		if not POINTER then
+			WG.BarDroidPad.setPointer(0, 0)
+			touch("act pad_orders")
+		end
+		return 0.3
+	end,
+	function()
+		if not before.bm or POINTER then
+			return
+		end
+		local cells, cmds = WG.BarDroidPad.ordersCells()
+		local _, index = WG.BarDroidPad.orders()
+		verify("pad: the order menu on the pad again, on its first order", index == 1, tostring(index))
+		local r = cells and cmds and #cmds >= 3 and cells[3]
+		if r then -- (the left stick takes the pointer onto the 3rd order)
+			before.third = cmds[3].id
+			WG.BarDroidPad.setPointer(math.floor((r[1] + r[3]) / 2), math.floor((r[2] + r[4]) / 2))
+		end
+		return 0.3
+	end,
+	function()
+		if not before.bm or POINTER then
+			return
+		end
+		local cmdID, index = WG.BarDroidPad.orders()
+		verify("pad: the order menu follows the pointer onto another order", index == 3 and cmdID == before.third,
+			tostring(index))
+		local cells = WG.BarDroidPad.ordersCells()
+		before.menuLeft = cells and cells[1][1]
+		before.warps = {}
+		if cells then -- (pushed off the menu's left edge once)
+			WG.BarDroidPad.setPointer(cells[1][1] - 150, math.floor((cells[1][2] + cells[1][4]) / 2))
+		end
+		return 0.3
+	end,
+	function()
+		if not before.bm or POINTER then
+			return
+		end
+		local w = before.warps[#before.warps]
+		verify("pad: pushed off the order menu once, the pointer held on it", WG.BarDroidPad.orders() ~= nil
+			and w and before.menuLeft and w[1] >= before.menuLeft, w and (w[1] .. "," .. w[2]))
+		local cells = WG.BarDroidPad.ordersCells()
+		if cells then -- (pushed off it every frame: the stick held out)
+			pushPointer = { cells[1][1] - 150, math.floor((cells[1][2] + cells[1][4]) / 2) }
+		end
+		return 0.6
+	end,
+	function()
+		if not before.bm or POINTER then
+			return
+		end
+		pushPointer = nil
+		verify("pad: pushed off the order menu for 0.25 s, the menu let go", WG.BarDroidPad.orders() == nil)
+		WG.BarDroidPad.setPointer(nil)
+	end,
+	function()
+		if not before.bm then
+			return
+		end
 		before.units = Spring.GetSelectedUnits()
 		touch("act group_assign_3") -- (Start + D-pad left held)
 		touch("act cancel") -- (B again: nothing picked, the selection cleared)

@@ -75,6 +75,21 @@ local modV085 = false
 -- added to the selection, buildings too); the D-pad sizes it, B undoes it. v0.8.5's radius: 320, 120..1200 in 80s.
 local area = { on = false, radius = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil, z = nil }
 local warp, fakeWarp = Spring.WarpMouse, false -- (tools/touch-widget-test.ps1 records the moves instead)
+-- (tools/touch-widget-test.ps1: a made-up pointer, {x, y}, which the recorded moves land on, so the order menu's
+-- following, holding and letting go run without moving the real one)
+local fakePointer = nil
+local function pointerAt()
+	if fakePointer then
+		return fakePointer[1], fakePointer[2]
+	end
+	return Spring.GetMouseState()
+end
+local function warpTo(x, y)
+	if fakePointer then
+		fakePointer = { x, y }
+	end
+	warp(x, y)
+end
 
 local function now()
 	return Spring.GetTimer()
@@ -236,7 +251,7 @@ local function ordersGo(index)
 	local r = layout.cells[index]
 	orders = { index = index, cmdID = layout.cmds[index].id, layout = layout }
 	local x, y = math.floor((r[1] + r[3]) / 2), math.floor((r[2] + r[4]) / 2)
-	warp(x, y)
+	warpTo(x, y)
 	orders.warped = { x, y, now() }
 	ordersLight(orders.cmdID)
 end
@@ -716,9 +731,10 @@ function widget:Update()
 			ordersEnd()
 		else
 			orders.layout = layout
-			local mx, my = Spring.GetMouseState()
-			local w = fakeWarp or orders.warped
-			if w and not fakeWarp and ((math.abs(mx - w[1]) <= 2 and math.abs(my - w[2]) <= 2) or Spring.DiffTimers(now(), w[3]) > 0.5) then
+			local mx, my = pointerAt()
+			local recorded = fakeWarp and not fakePointer -- (the moves only recorded: no pointer to follow)
+			local w = recorded or orders.warped
+			if w and not recorded and ((math.abs(mx - w[1]) <= 2 and math.abs(my - w[2]) <= 2) or Spring.DiffTimers(now(), w[3]) > 0.5) then
 				orders.warped, w = nil, nil
 			end
 			if not w then
@@ -729,7 +745,9 @@ function widget:Update()
 						break
 					end
 				end
-				if over and over ~= orders.index then
+				-- (also the same cell with another order in it: the menu changed under a pointer at rest, as when a
+				-- selected unit dies or the priority target button comes; the order lit and given is the one there)
+				if over and (over ~= orders.index or layout.cmds[over].id ~= orders.cmdID) then
 					orders.index, orders.cmdID = over, layout.cmds[over].id
 					ordersLight(orders.cmdID)
 				end
@@ -739,11 +757,11 @@ function widget:Update()
 					orders.outSince = nil
 				elseif not orders.outSince then
 					orders.outSince = now()
-					warp(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
+					warpTo(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
 				elseif Spring.DiffTimers(now(), orders.outSince) >= LEAVE_SECONDS then
 					ordersEnd()
 				else
-					warp(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
+					warpTo(math.max(x0, math.min(x1, mx)), math.max(y0, math.min(y1, my)))
 				end
 			end
 		end
@@ -852,6 +870,12 @@ function widget:Initialize()
 		end,
 		setWarp = function(fn)
 			warp, fakeWarp = fn or Spring.WarpMouse, fn ~= nil
+			if not fn then
+				fakePointer = nil
+			end
+		end,
+		setPointer = function(x, y) -- (a made-up pointer the recorded moves land on, with setWarp; nil: none)
+			fakePointer = x and { x, y } or nil
 		end,
 		note = function() -- (the note showing, the last one shown, how many so far)
 			return toast, lastNote, notes

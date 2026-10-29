@@ -201,6 +201,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       midway. touch-widget-test plays against the engine's NullAI now (no case needs the enemy). With the commander
       held still, LB + Y's patrol point (the reticle on the commander) was where it stood: the engine ends such a patrol
       at once (the order given, the queue empty; a mouse patrol on the unit does the same); the case aims 400 elmos off.
+      `bardroid_pad.lua`'s order menu reviewed: with the pointer at rest, a menu that changed under it (a selected unit
+      died, BAR's priority target button came) kept the old order lit and A gave it, though another order sat under the
+      pointer; it now takes the order in the cell. Its following, holding and letting go never ran in touch-widget-test
+      (the recorded moves left no pointer to follow): a made-up pointer the moves land on now runs them (onto the 3rd
+      order, pushed off once and held, pushed off for 0.25 s and let go).
 
 ## Releasing (once the blockers are done)
 
