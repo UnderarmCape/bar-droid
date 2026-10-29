@@ -88,7 +88,11 @@ fi
 # Kailil's controller game (v0.8.5 as BAR's developer game, games/BAR-gamepad.sdd) for singleplayer, set up the way
 # its Windows installer does: the lobby's singleplayer game is "Beyond All Reason Dev" (Chobby's byar-dev config), and
 # BAR's Build menu replaces the Grid menu, which v0.8.5 does not drive (LuaUI/Config/BYAR.lua, shared with BAR's
-# released game). Switched off in the app (GAMEPAD_GAME=0): both go back.
+# released game). In the controller game that is v0.8.5's own ("Build menu (controller)": tools/build-gamepad-game.py
+# renames it), in BAR's released game the app's copy of BAR's Build menu, sized with the layout editor (Kailil,
+# 2026-10-28: "just rebuild the exact same one with the ability for us to resize it freely"; bardroid_buildmenu.lua,
+# tools/make-buildmenu.py), while BAR's file is still the one it was copied from (Installer writes that file's md5 to
+# .bardroid-buildmenu), else BAR's own. Switched off in the app (GAMEPAD_GAME=0): BAR's defaults again.
 widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry (the widget's default)
   f="$BAR/LuaUI/Config/BYAR.lua"
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
@@ -120,12 +124,22 @@ LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
-    widget_order "Build menu" 165; widget_order "Grid menu" 0
-    grep -q '\["Build menu"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
-      || layer_miss "controller game: Build menu / Grid menu order not set in LuaUI/Config/BYAR.lua"
+    widget_order "Build menu (controller)" 165; widget_order "Grid menu" 0
+    copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)
+    bars=$(cat "$BAR/.bardroid-buildmenu" 2>/dev/null)
+    if [ -n "$copied" ] && [ "$copied" = "$bars" ]; then
+      widget_order "Build menu" 0; widget_order "BAR Droid build menu" 165
+      log "build menu: the app's copy of BAR's (gui_buildmenu.lua $copied), sized with the layout editor"
+    else
+      widget_order "Build menu" 165; widget_order "BAR Droid build menu" 0
+      layer_miss "build menu: BAR's gui_buildmenu.lua is ${bars:-not found}, the app's copy was made from ${copied:-?}: BAR's own (not sizeable) until tools/make-buildmenu.py runs again"
+    fi
+    grep -q '\["Build menu (controller)"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
+      || layer_miss "controller game: Build menu (controller) / Grid menu order not set in LuaUI/Config/BYAR.lua"
     touch "$BAR/.bardroid-gamepad-menus"
   elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
-    widget_order "Build menu" ""; widget_order "Grid menu" ""
+    widget_order "Build menu" ""; widget_order "Grid menu" ""; widget_order "Build menu (controller)" ""
+    widget_order "BAR Droid build menu" 0
     rm -f "$BAR/.bardroid-gamepad-menus"
   fi
   igl="$BAR/LuaMenu/Config/IGL_data.lua"   # the lobby's saved settings: they override chobby_config.json's game

@@ -76,7 +76,7 @@ Fullscreen = 0
 WindowBorderless = 0
 XResolutionWindowed = 1280
 YResolutionWindowed = 720
-WindowPosX = 40
+WindowPosX = $OffScreenX
 WindowPosY = 40
 snd_volmaster = 0
 LogFlushLevel = 0
@@ -135,8 +135,7 @@ $($teams -join "`n")
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[profile-big] $base + profiler, engine $Engine, $AIs BARb, fast to $FastMinutes min at x$Speed, then $Window s measured"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$Work\script.txt`""
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$Work\script.txt`"")
   if (-not $p.WaitForExit(($FastMinutes * 60 + $Window + 600) * 1000)) { $p.Kill(); Write-Host "[profile-big] timed out" }
   Get-Content $log | Select-String -Pattern '\[bardroid-g?profile\]|\[bardroid-touch\]|\[catchup-host\]|Error in |Removed widget|Removed gadget' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

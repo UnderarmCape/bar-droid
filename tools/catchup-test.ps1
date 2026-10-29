@@ -119,14 +119,13 @@ try {
   $n = 0
   foreach ($mode in $Modes) {
     $n++
-    "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nbardroid_catchup = $mode`nbardroid_probe_burn_ms = $BurnMs`nbardroid_probe_limit = $ProbeLimit`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+    "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = $OffScreenX`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nbardroid_catchup = $mode`nbardroid_probe_burn_ms = $BurnMs`nbardroid_probe_limit = $ProbeLimit`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
       Set-Content "$clientDir\springsettings.cfg" -Encoding ascii
     "[GAME]`n{`n`tHostIP=127.0.0.1;`n`tHostPort=$Port;`n`tIsHost=0;`n`tMyPlayerName=Watcher$n;`n`tMyPasswd=;`n}" | Set-Content "$Work\client.txt" -Encoding ascii
     $log = "$clientDir\infolog.txt"
     Remove-Item $log -ErrorAction SilentlyContinue
     Write-Host "[catchup-test] join $n, catch-up mode $(if ($mode) { 'on' } else { 'off' })"
-    $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-      -ArgumentList "--isolation", "--write-dir", "`"$clientDir`"", "`"$Work\client.txt`""
+    $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$clientDir`"", "`"$Work\client.txt`"")
     if (-not $p.WaitForExit(660000)) { $p.Kill() }
     Copy-Item $log "$Work\client-$n-catchup$mode.txt" -Force
     Select-String -Path $log -Pattern "catchup-probe|bardroid-catchup|bardroid_touch|Error in" | ForEach-Object { "   " + $_.Line }

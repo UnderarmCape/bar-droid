@@ -29,13 +29,12 @@ try {
   Copy-Item (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua") "$Data\LuaMenu\Widgets\" -Force
   '{"server": {"address": "server4.beyondallreason.info", "port": 8200, "protocol": "spring", "serverName": "BAR"}, "game": "byar"}' |
     Set-Content "$Data\chobby_config.json" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+  "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = $OffScreenX`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[lobby-touch-test] engine $Engine"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "--menu", "rapid://byar-chobby:test"
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "--menu", "rapid://byar-chobby:test")
   $r = Wait-LobbyTest $p $log '\[lobbytouch\] done'
   Start-Sleep 2
   if (-not $p.HasExited) { $p.Kill() }

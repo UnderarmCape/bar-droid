@@ -8,7 +8,10 @@ param(
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1",
   [string]$Widget = "",   # another bardroid_touch.lua to test (default: the app's)
-  [switch]$GamepadGame    # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
+  [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
+  # also the "what is under the pointer" checks, which move the laptop's real mouse pointer (Spring.WarpMouse): off by
+  # default (Kailil, 2026-10-28: the tests must not take his mouse); run them when nobody is using the laptop
+  [switch]$Pointer
 )
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
@@ -36,6 +39,7 @@ try {
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_players.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_minimap.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_layout.lua") "$Data\LuaUI\Widgets\" -Force
+  Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_buildmenu.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
@@ -43,11 +47,16 @@ try {
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
     "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap", "Info") | ForEach-Object { "`t`t[`"$_`"] = 0," }
   $orders += "`t`t[`"Minimap`"] = 1,"
+  # the build menus as launch-bar.sh sets them with the controller game on: BAR's Build menu off, the app's copy of it
+  # on (it stands down in the controller game, whose own "Build menu (controller)" runs)
+  $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 0,", "`t`t[`"BAR Droid build menu`"] = 165,",
+    "`t`t[`"Build menu (controller)`"] = 165,"
   # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
-  if ($GamepadGame) { $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 165,", "`t`t[`"BAR Droid profile log`"] = 0," }
+  if ($GamepadGame) { $orders += "`t`t[`"BAR Droid profile log`"] = 0," }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" |
+  ("Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = $(if ($Pointer) { 40 } else { $OffScreenX })`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev" +
+    "`nbardroid_touchtest_pointer = $(if ($Pointer) { 1 } else { 0 })") |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   if ($GamepadGame) {
@@ -76,13 +85,13 @@ try {
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[touch-test] $game on $MapName, engine $Engine"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`""
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
   $deadline = (Get-Date).AddSeconds(240)
   while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
          -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[touchtest\] done' -Quiet))) { Start-Sleep 1 }
   if (-not $p.HasExited) { $p.Kill() }
-  Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch|bardroid-perf" | ForEach-Object { $_.Line }
+  Select-String -Path $log -Pattern "touchtest|bardroid-touch|bardroid_touch|bardroid-perf|bardroid-buildmenu|bardroid_buildmenu|BAR Droid build menu" |
+    ForEach-Object { $_.Line }
 } finally {
   foreach ($l in $links) { if (Test-Path $l) { cmd /c rmdir "$l" } }   # the junction only, never the live install's files
 }

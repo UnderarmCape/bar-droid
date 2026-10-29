@@ -98,6 +98,51 @@ function Wait-LobbyTest($proc, [string]$log, [string]$done) {
   "exited"
 }
 
+# The laptop checks' game windows never take the keyboard and never cover a window in use (Kailil, 2026-10-28: "is it
+# possible to not have it hijack my mouse or keyboard when its testing", "the laptop test is also appearing on top and
+# not letting any window display over it"): started with SW_SHOWNOACTIVATE (CreateProcess; the program's first
+# ShowWindow follows it), and placed off every screen (WindowPosX = $OffScreenX in the checks' springsettings.cfg; the
+# engine does not clamp it, and the game draws and takes screenshots as usual). Each new window used to open on top of
+# everything, so a run of checks seemed to stay in front. Hands-on tools (tools\fp-tuner.ps1) keep a normal window.
+# Start-Engine returns the process (as Start-Process -PassThru). The C# is compiled by PowerShell into the toolchain's
+# tmp folder (TEMP for this process only), never the profile's.
+$OffScreenX = -10000
+function Start-Engine([string]$exe, [string]$dir, [string[]]$arguments) {
+  if (-not ("BarDroidStart" -as [type])) {
+    $tmp = Join-Path $TC "tmp"
+    New-Item -ItemType Directory -Force $tmp | Out-Null
+    $env:TEMP, $env:TMP = $tmp, $tmp
+    Add-Type -TypeDefinition @'
+using System; using System.Runtime.InteropServices;
+public static class BarDroidStart {
+  [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+  struct STARTUPINFO { public int cb; public string lpReserved, lpDesktop, lpTitle; public int dwX, dwY, dwXSize, dwYSize,
+    dwXCountChars, dwYCountChars, dwFillAttribute, dwFlags; public short wShowWindow, cbReserved2;
+    public IntPtr lpReserved2, hStdInput, hStdOutput, hStdError; }
+  [StructLayout(LayoutKind.Sequential)]
+  struct PROCESS_INFORMATION { public IntPtr hProcess, hThread; public int dwProcessId, dwThreadId; }
+  [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+  static extern bool CreateProcess(string app, string cmd, IntPtr pa, IntPtr ta, bool inherit, int flags, IntPtr env,
+    string dir, ref STARTUPINFO si, out PROCESS_INFORMATION pi);
+  [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+  [DllImport("user32.dll")] static extern IntPtr GetForegroundWindow();
+  [DllImport("user32.dll")] static extern int GetWindowThreadProcessId(IntPtr hwnd, out int pid);
+  public static int Start(string exe, string args, string dir) {
+    var si = new STARTUPINFO(); si.cb = Marshal.SizeOf(si);
+    si.dwFlags = 1; si.wShowWindow = 4;   // STARTF_USESHOWWINDOW, SW_SHOWNOACTIVATE
+    PROCESS_INFORMATION pi;
+    if (!CreateProcess(exe, "\"" + exe + "\" " + args, IntPtr.Zero, IntPtr.Zero, false, 0, IntPtr.Zero, dir, ref si, out pi))
+      throw new System.ComponentModel.Win32Exception(Marshal.GetLastWin32Error());
+    CloseHandle(pi.hThread); CloseHandle(pi.hProcess);
+    return pi.dwProcessId;
+  }
+  public static int ForegroundProcess() { int pid; GetWindowThreadProcessId(GetForegroundWindow(), out pid); return pid; }
+}
+'@
+  }
+  [Diagnostics.Process]::GetProcessById([BarDroidStart]::Start($exe, ($arguments -join " "), $dir))
+}
+
 # The engine folder the laptop checks start spring from: BAR's engine without anything else put beside spring.exe.
 # Kailil's BAR install has ReShade there (an opengl32.dll proxy, add-ons, DLSS files): every engine started in that
 # folder draws through ReShade (timings, screenshots) and writes ReShade's logs into BAR's install.

@@ -67,7 +67,7 @@ try {
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = 0`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })`nbardroid_shot_ships = $(if ($Ships) { 1 } else { 0 })`nbardroid_shot_select = $(if ($Select) { 1 } else { 0 })`nWater = 0`nAdvMapShading = 0" |
+  "Fullscreen = 0`nWindowBorderless = 1`nXResolutionWindowed = $w`nYResolutionWindowed = $h`nWindowPosX = $OffScreenX`nWindowPosY = 0`nui_scale = $uiScale`nsnd_volmaster = 0`nLogFlushLevel = 0`nRapidTagResolutionOrder = repos-cdn.beyondallreason.dev;repos.beyondallreason.dev`nbardroid_shot_chat = $(if ($Chat) { 1 } else { 0 })`nbardroid_shot_ships = $(if ($Ships) { 1 } else { 0 })`nbardroid_shot_select = $(if ($Select) { 1 } else { 0 })`nWater = 0`nAdvMapShading = 0" |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
 
   $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
@@ -94,8 +94,7 @@ try {
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[ui-shot] $Screen ($($size[0])x$($size[1]) at $uiScale) as ${w}x$h, $layer layer, $game"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`""
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
   if (-not $p.WaitForExit(240000)) { $p.Kill() }
   $shot = Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Select-Object -Last 1
   if (-not $shot) { Select-String -Path $log -Pattern "uishot|screenshot|Error" | ForEach-Object { $_.Line }; throw "no screenshot" }

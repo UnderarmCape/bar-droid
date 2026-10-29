@@ -60,9 +60,11 @@ Not solved:
   column; the minimap is shrunk until tapped.
 - **The map's edge:** touch navigation there is still open.
 - **A movable HUD.** The app's layout editor (`bardroid_layout.lua`) moves and sizes the app's own panels, but BAR's
-  only as far as BAR's widgets allow another widget: the minimap's and player list's size. BAR's top bar (metal,
-  energy, wind), its build and order menus (their size follows the interface scale), its start countdown and the
-  positions of the minimap and player list are fixed in BAR's code. (The menus' own bottom/left setting,
+  only as far as BAR's widgets allow another widget: the minimap's and player list's size. For the build menu the app
+  runs a copy of BAR's Build menu with a size and place hook (`bardroid_buildmenu.lua`, made by
+  `tools/make-buildmenu.py`, used only while BAR's file is the one it was copied from): the kind of hook BAR's own
+  panels could take. BAR's top bar (metal, energy, wind), its order menu (its size follows the interface scale), its
+  start countdown and the positions of the minimap and player list are fixed in BAR's code. (The menus' own bottom/left setting,
   `setBottomPosition`, made BAR's older build menu fail drawing when switched while shown: `gui_buildmenu.lua`, a cell
   drawn without its command.) Position (and size) settings for those panels in BAR, or `WG` setters
   like the ones the build menu has, would let a phone layout be made to fit each screen.

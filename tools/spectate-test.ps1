@@ -69,15 +69,14 @@ try {
   # the phone's widget orders that matter here: BAR's Info widget off (bardroid_info.lua instead), Ecostats off
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n`t`t[`"Info`"] = 0,`n`t`t[`"Ecostats`"] = 0,`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
-  ("Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = 40`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0" +
+  ("Fullscreen = 0`nWindowBorderless = 0`nXResolutionWindowed = 1280`nYResolutionWindowed = 720`nWindowPosX = $OffScreenX`nWindowPosY = 40`nsnd_volmaster = 0`nLogFlushLevel = 0" +
     ($Settings.Keys | ForEach-Object { "`n$_ = $($Settings[$_])" }) -join "") |
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   $demo = Join-Path $Data "demos\$(Split-Path $Replay -Leaf)"
   Write-Host "[spectate-test] $(Split-Path $Replay -Leaf), engine $Engine"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
-    -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$demo`""
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$demo`"")
   $deadline = (Get-Date).AddSeconds($(if ($Cost) { 600 } else { 300 }))
   while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
          -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet))) { Start-Sleep 1 }

@@ -65,6 +65,14 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `assets/bardroid/bardroid_layout.lua`: the layout editor (three fingers held → RtsTouch `act hud`, or `/hud` typed in
   `bardroid_chat.lua`'s own typing box); panels register with `WG.BarDroidLayout` and read their settings from it;
   BAR's own panels only through their `WG` setters (BAR's sandbox keeps user widgets out of BAR's code).
+  `assets/bardroid/bardroid_buildmenu.lua`: BAR's Build menu copied by `tools/make-buildmenu.py` (do not edit; rerun it
+  after BAR changes its gui_buildmenu.lua: launch-bar.sh then logs `!!! ANDROID LAYER ... build menu`) with a size and
+  place hook for the editor; launch-bar.sh runs it in place of BAR's only while the phone's BAR file has the md5 it was
+  made from (Installer writes `.bardroid-buildmenu`); the controller game keeps v0.8.5's, renamed "Build menu
+  (controller)" by `tools/build-gamepad-game.py`.
+  Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
+  screen): they never take Kailil's keyboard or cover his windows; the checks that move the real mouse pointer run only
+  with `-Pointer` (touch-widget-test, laptop-tests) or `-PointerOnBattle` (profile-benchmark).
   BAR's sandbox refuses `/option`, widget toggles and engine restarts from user widgets: settings go
   in through `launch-bar.sh` instead. `tools/touch-widget-test.ps1` runs the widget in a real skirmish on the laptop
   (~1.5 min): pinch, twist, tilt and drag on the camera, and the map/interface answers; run it after touching either.

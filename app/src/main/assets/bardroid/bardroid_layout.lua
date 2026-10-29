@@ -125,6 +125,9 @@ local function registerBar()
 			end
 		end,
 	})
+	if panels.buildmenu then -- (the app's copy of BAR's Build menu registered first: it is sizeable)
+		return
+	end
 	register("buildmenu", {
 		label = "Build menu (BAR's: fixed)",
 		can = {},

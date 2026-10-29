@@ -36,6 +36,22 @@ local function expect(case, want)
 	log((ok and "PASS " or "FAIL ") .. case .. ": answer " .. tostring(got) .. ", expected " .. want)
 end
 
+-- The checks of what is under the pointer move the laptop's real mouse pointer (Spring.WarpMouse): only with
+-- tools/touch-widget-test.ps1 -Pointer (Kailil, 2026-10-28: the tests must not take his mouse while he works)
+local POINTER = Spring.GetConfigInt("bardroid_touchtest_pointer", 0) == 1
+local function warp(x, y)
+	if POINTER then
+		Spring.WarpMouse(x, y)
+	end
+end
+local function expectAt(case, want) -- the answer for a pointer moved by warp
+	if POINTER then
+		expect(case, want)
+	else
+		log("SKIP " .. case .. " (moves the mouse pointer: tools/touch-widget-test.ps1 -Pointer)")
+	end
+end
+
 local cases
 local repeats = 0
 function widget:Update()
@@ -201,9 +217,9 @@ cases = {
 		local ok = moved > 1
 		fails = fails + (ok and 0 or 1)
 		log((ok and "PASS" or "FAIL") .. " drag over the void past the edge moves the camera: " .. string.format("%.0f", moved))
-		Spring.WarpMouse(cx, vsy - math.floor(vsy * 0.3)) -- the pointer into that void
+		warp(cx, vsy - math.floor(vsy * 0.3)) -- the pointer into that void
 	end,
-	function() expect("pointer off the map (the void): answer 0, taps work there", 0) end,
+	function() expectAt("pointer off the map (the void): answer 0, taps work there", 0) end,
 	-- the builder queue (bardroid_queue.lua): only queued buildings near the camera's target are drawn
 	function()
 		local myTeam = Spring.GetMyTeamID()
@@ -311,9 +327,9 @@ cases = {
 		near("sticks at rest: the camera stays (elmos)", math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2), 0, 1)
 	end,
 	-- the interface answers (bardroid_hover.txt)
-	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
-	function() Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
-	function() expect("map in the middle", 0) end,
+	function() warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
+	function() warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
+	function() expectAt("map in the middle", 0) end,
 	function()
 		local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
 		if not p then
@@ -321,9 +337,9 @@ cases = {
 			log("FAIL no WG.topbar.GetPosition")
 			return
 		end
-		Spring.WarpMouse(math.floor((p[1] + p[3]) / 2), math.floor((p[2] + p[4]) / 2))
+		warp(math.floor((p[1] + p[3]) / 2), math.floor((p[2] + p[4]) / 2))
 	end,
-	function() expect("top bar", 1) end,
+	function() expectAt("top bar", 1) end,
 	function() -- the classic minimap (the phone layer switches BAR's Picture-in-Picture Minimap off)
 		local found
 		for y = 0, vsy - 1, 8 do
@@ -338,25 +354,25 @@ cases = {
 			log("FAIL no minimap on the screen")
 			return
 		end
-		Spring.WarpMouse(found[1], found[2])
+		warp(found[1], found[2])
 	end,
-	function() expect("minimap", 1) end,
+	function() expectAt("minimap", 1) end,
 	function()
 		if WG.options and WG.options.toggle then
 			WG.options.toggle(true)
 		else
 			Spring.SendCommands("options")
 		end
-		Spring.WarpMouse(math.floor(vsx * 0.5), math.floor(vsy * 0.45))
+		warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45))
 	end,
-	function() expect("settings window open", 1) end,
+	function() expectAt("settings window open", 1) end,
 	function()
 		if WG.options and WG.options.toggle then
 			WG.options.toggle(false)
 		end
-		Spring.WarpMouse(math.floor(vsx * 0.5) + 3, math.floor(vsy * 0.45))
+		warp(math.floor(vsx * 0.5) + 3, math.floor(vsy * 0.45))
 	end,
-	function() expect("map after the window closed", 0) end,
+	function() expectAt("map after the window closed", 0) end,
 	-- the app's player list (bardroid_players.lua): BAR's list small from the start, a tap on it opens it at the
 	-- player's own scale, and seven seconds without a tap make it small again
 	function()
@@ -597,6 +613,58 @@ cases = {
 		verify("layout: three fingers held again close it", not WG.BarDroidLayout.isOpen())
 		near("layout: Reset all puts the minimap's size back", WG.minimap and select(2, WG.minimap.getMaxHeight()) or -1,
 			before.minimap, 0.0001)
+		-- the build menu: in BAR's released game the app's copy of BAR's Build menu (bardroid_buildmenu.lua), which the
+		-- editor moves and sizes; in the controller game v0.8.5's own (the copy stands down). A builder selected shows it.
+		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+			if def and def.isBuilder and (def.speed or 0) > 0 then
+				Spring.SelectUnitArray({ unitID })
+				break
+			end
+		end
+		return 1.5
+	end,
+	function()
+		local B, L = WG.buildmenu, WG.BarDroidLayout
+		verify("build menu: shows for a builder", B and B.getIsShowing and B.getIsShowing())
+		if B and B.controllerApiVersion then
+			verify("build menu: the controller game's own (the app's copy stood down)", true)
+			Spring.SelectUnitArray({})
+			return
+		end
+		local x0, y0, x1, y1 = L.rect("buildmenu")
+		verify("build menu: the app's copy, known to the editor", x0 ~= nil, x0 and string.format("%d,%d-%d,%d", x0, y0, x1, y1))
+		if not x0 then
+			return
+		end
+		before.bm = { x0 = x0, y0 = y0, w = x1 - x0, h = y1 - y0 }
+		L.open()
+		local px, py = math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2)
+		L.press(px, py)
+		verify("build menu: a tap picks it", L.picked() == "buildmenu", L.picked())
+		L.act("size-")
+		L.act("size-")
+		L.move(px + 60, py + 40)
+		L.release()
+		return 0.5
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local L = WG.BarDroidLayout
+		local x0, y0, x1 = L.rect("buildmenu")
+		near("build menu: Size - twice makes it smaller", (x1 - x0) / before.bm.w, 1 / 1.08 / 1.08, 0.02)
+		verify("build menu: a drag moves it", math.abs(x0 - before.bm.x0 - 60) <= 2 and math.abs(y0 - before.bm.y0 - 40) <= 2,
+			string.format("%d,%d -> %d,%d", before.bm.x0, before.bm.y0, x0, y0))
+		verify("build menu: still showing", WG.buildmenu.getIsShowing())
+		L.act("reset")
+		local y1
+		x0, y0, x1, y1 = L.rect("buildmenu")
+		verify("build menu: Reset puts it back", x0 == before.bm.x0 and y0 == before.bm.y0 and x1 - x0 == before.bm.w,
+			string.format("%d,%d %dx%d", x0, y0, x1 - x0, y1 - y0))
+		L.act("done")
+		Spring.SelectUnitArray({})
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
 	function()

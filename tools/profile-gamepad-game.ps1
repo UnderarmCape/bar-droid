@@ -83,7 +83,7 @@ Fullscreen = 0
 WindowBorderless = 0
 XResolutionWindowed = 1280
 YResolutionWindowed = 720
-WindowPosX = 40
+WindowPosX = $OffScreenX
 WindowPosY = 40
 snd_volmaster = 0
 VSync = 0
@@ -102,7 +102,7 @@ $script | Set-Content -Path $startscript -Encoding ascii
 $log = Join-Path $Data "infolog.txt"
 Remove-Item $log -ErrorAction SilentlyContinue
 Write-Host "[profile] $(if ($Released) { 'BAR release (no v0.8.5)' } else { $Branch }), pad: $([bool]$Pad), warmup $Warmup s, window $Window s"
-$p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"" -WorkingDirectory $EngineDir -PassThru
+$p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
 if ($Pad) {
   while (-not $p.HasExited -and -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[f=0+[1-9]\d*\]' -Quiet))) { Start-Sleep -Milliseconds 500 }
   Start-Process -FilePath $Companion -ArgumentList "--until-pid", $p.Id, "--fake", "--codex" -WindowStyle Hidden | Out-Null

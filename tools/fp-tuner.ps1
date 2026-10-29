@@ -39,6 +39,7 @@ try {
     Set-Content "$Data\springsettings.cfg" -Encoding ascii
   $demo = Join-Path $Data "demos\$(Split-Path $Replay -Leaf)"
   Write-Host "[fp-tuner] $(Split-Path $Replay -Leaf) from game second $SkipTo (the start fast-forwards there first), engine $Engine"
+  # (a normal window in front: Kailil tunes in it by hand, unlike the automated checks' toolchain.ps1 Start-Engine)
   $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -WorkingDirectory $EngineDir -PassThru `
     -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$demo`""
   $p.WaitForExit()

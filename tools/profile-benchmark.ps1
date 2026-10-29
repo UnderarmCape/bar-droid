@@ -99,7 +99,7 @@ Fullscreen = 0
 WindowBorderless = 0
 XResolutionWindowed = 1680
 YResolutionWindowed = 720
-WindowPosX = 20
+WindowPosX = $(if ($PointerOnBattle) { 20 } else { $OffScreenX })
 WindowPosY = 40
 snd_volmaster = 0
 VSync = 0
@@ -135,7 +135,7 @@ $(($Settings.GetEnumerator() | ForEach-Object { "$($_.Key) = $($_.Value)" }) -jo
   $log = Join-Path $Data "infolog.txt"
   Remove-Item $log -ErrorAction SilentlyContinue
   Write-Host "[profile-bench] $(if ($Released) { 'BAR release' } else { $Branch }), engine $Engine, profilers $(-not $NoProfilers), off: $($AlsoOff -join ', ')"
-  $p = Start-Process -FilePath (Join-Path $EngineDir "spring.exe") -ArgumentList "--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"" -WorkingDirectory $EngineDir -PassThru
+  $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
   if (-not $p.WaitForExit(15 * 60 * 1000)) { $p.Kill(); Write-Host "[profile-bench] timed out; see $log" -ForegroundColor Red }
   $lines = Get-Content $log
   $lines | Select-String -Pattern '\[bardroid-(profile|gprofile|bench-profile|bench)\]|Benchmark complete|(Draw|Sim|Update) \d+ frames|Error in |Removed (widget|gadget)' |

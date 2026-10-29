@@ -11,7 +11,11 @@ files before its dependencies', so v0.8.5's files win.
 Not packaged: BAR artwork v0.8.5 copied under new names (LICENSE.md next to them names the originals), and BAR files
 the lobby reads from the game's own archive (modoptions.lua); the app copies those from the downloaded release
 (gamepad.properties "copy.N = <destination> <source>"). Changed on the way, for
-Android: the controller's "companion status" panel is off (the app is the companion and always runs).
+Android: the controller's "companion status" panel is off (the app is the companion and always runs), and its build
+menu (v0.8.5's edit of BAR's Build menu, which the gamepad drives) is named "Build menu (controller)": BAR's released
+game on the phone runs the app's own copy of BAR's Build menu instead of BAR's (bardroid_buildmenu.lua, sizeable), and
+both games share one widget list (LuaUI/Config/BYAR.lua), so the two build menus need different names to be switched
+apart (launch-bar.sh). Nothing else in it changes.
 
 Stripped for the phone (Kailil, 2026-10-26: "we can get rid of the debug stuff and the hints menu all together. and
 remove bindings menu and UI and all that bloat ... its too clunky to use on mobile"): the button hints are off, and
@@ -75,6 +79,9 @@ BAR_COPIES = {
 LOBBY_COPIES = {
     "modoptions.lua": "modoptions.lua",
 }
+# v0.8.5's build menu under its own name (the app's copy of BAR's runs in BAR's released game; one widget list)
+BUILDMENU_NAME = b'name = "Build menu",'
+BUILDMENU_RENAMED = b'name = "Build menu (controller)", -- BAR Droid: tools/build-gamepad-game.py'
 
 
 def git(*args):
@@ -118,6 +125,10 @@ def main():
                 doc["settings"]["components"]["companionStatus"]["enabled"] = False
                 doc["settings"]["components"]["hints"]["enabled"] = False
                 data = (json.dumps(doc, indent=2) + "\n").encode()
+            if n == "luaui/Widgets/gui_buildmenu.lua":
+                if data.count(BUILDMENU_NAME) != 1:
+                    sys.exit(f"{n}: its widget name is not {BUILDMENU_NAME!r} (once) any more")
+                data = data.replace(BUILDMENU_NAME, BUILDMENU_RENAMED)
             put(n, data)
         for n in DEV_TOOLS_OFF:
             if n.lower() in [m.lower() for m in names]:

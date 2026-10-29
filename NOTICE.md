@@ -15,7 +15,14 @@ carrying it must not be published or shared without the BAR team's permission. B
 `controller/codex-v085-release` of the BAR game repository): new Lua widgets and modified copies of ten of BAR's
 interface widgets, GPL-2.0-or-later like BAR's own Lua code, and controller glyph atlases made for it
 (GPL-2.0-or-later OR CC0-1.0, `luaui/images/controller-glyphs/LICENSE.md` inside the zip). The three BAR icons it shows
-are copied from BAR's downloaded release on the phone, not shipped.
+are copied from BAR's downloaded release on the phone, not shipped. Its build menu's widget name is "Build menu
+(controller)" in the package (`tools/build-gamepad-game.py`), nothing else of it changed.
+
+**Build menu (`app/src/main/assets/bardroid/bardroid_buildmenu.lua`):** BAR's Build menu widget
+(`luaui/Widgets/gui_buildmenu.lua` of the BAR game, https://github.com/beyond-all-reason/Beyond-All-Reason, by Floris,
+GPL-2.0-or-later), copied from a BAR release by `tools/make-buildmenu.py` with its changes marked "BAR Droid:" (its
+size and place from the app's layout editor; the widget-handler calls a user widget makes). Code only: the unit
+pictures it draws come from BAR's downloaded release on the phone.
 
 **Upscaling shader (`app/src/main/assets/sgsr/`):** Snapdragon Game Super Resolution 1
 (`sgsr/v1/include/glsl/sgsr1_shader_mobile.frag` in https://github.com/SnapdragonGameStudios/snapdragon-gsr),

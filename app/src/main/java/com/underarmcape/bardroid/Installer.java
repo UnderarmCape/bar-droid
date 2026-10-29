@@ -287,12 +287,14 @@ public final class Installer {
         // BAR's chat lines laid out for the phone (names at the left edge, the text filling the box), and the unit info
         // panel with its text sized to fit (launch-bar.sh turns BAR's Info widget off), and BAR's player list small until
         // touched, and the touch tools for spectating (player cameras, following units), and the minimap half size on the
-        // unfolded screen until touched, and the layout editor (three fingers held, or /hud in the chat)
+        // unfolded screen until touched, and the layout editor (three fingers held, or /hud in the chat), and the
+        // app's copy of BAR's Build menu that the editor sizes (launch-bar.sh switches it in, see writeBuildMenuMd5)
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
-                "bardroid_layout.lua"})
+                "bardroid_layout.lua", "bardroid_buildmenu.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
+        writeBuildMenuMd5();
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
         // its "local widgets" setting, which launch-bar.sh switches on)
         File menuWidgets = new File(p.bar, "LuaMenu/Widgets");
@@ -358,6 +360,37 @@ public final class Installer {
 
     /** The benchmark's map (benchmark.template.txt). */
     public static final String BENCH_MAP = "Starwatcher 1.0";
+
+    /**
+     * The pool md5 of BAR's Build menu (luaui/widgets/gui_buildmenu.lua) in the released game this phone has, into
+     * .bardroid-buildmenu ("" when not found): launch-bar.sh runs the app's copy of it (bardroid_buildmenu.lua, made by
+     * tools/make-buildmenu.py, sized with the layout editor) only while BAR's file is the one the copy was made from,
+     * else BAR's own. Written after the update at every start.
+     */
+    private void writeBuildMenuMd5() {
+        String md5 = "";
+        File rapid = new File(p.bar, "rapid");
+        File[] hosts = rapid.listFiles();
+        String pkg = null;
+        if (hosts != null) for (File h : hosts) {
+            File v = new File(h, "byar/versions.gz");
+            if (!v.exists() || pkg != null) continue;
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(v)), StandardCharsets.UTF_8))) {
+                for (String l; (l = r.readLine()) != null; ) {
+                    String[] f = l.split(",", 4);
+                    if (f.length == 4 && f[0].equals(Prefs.gameTag)) pkg = f[1];
+                }
+            } catch (IOException ignored) {}
+        }
+        try {
+            String m = pkg == null ? null : sdpFiles(new File(p.bar, "packages/" + pkg + ".sdp")).get("luaui/widgets/gui_buildmenu.lua");
+            if (m != null) md5 = m;
+        } catch (IOException e) {
+            Log.e("install", "BAR's build menu not looked up: " + e);
+        }
+        try { writeFile(new File(p.bar, ".bardroid-buildmenu"), md5 + "\n"); }   // ("": BAR's own build menu)
+        catch (IOException e) { Log.e("install", ".bardroid-buildmenu not written: " + e); }
+    }
 
     /** Looks up the display name for the game tag in the downloaded rapid index; falls back to the tag itself. */
     private String resolveGameName() {

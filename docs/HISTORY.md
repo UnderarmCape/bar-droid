@@ -5,6 +5,34 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Past midnight: a sizeable copy of BAR's Build menu; quiet laptop checks (2026-10-28)
+Kailil: "the vaniallal build menu works fine for touch. just rebuild the exact same one with the ability for us to
+resize it freely. becuaser right now it is too large."
+- **Which menu:** with the controller game on (the app's default) BAR's Build menu (gui_buildmenu.lua) replaces the
+  Grid menu in BAR's released game too: the two games share one widget list (LuaUI/Config/BYAR.lua). The controller
+  game's is v0.8.5's edit of it, which the gamepad drives (~300 more lines).
+- **The copy:** `tools/make-buildmenu.py` takes BAR's file from the release in BAR's rapid pool (test-31740-57a02af,
+  pool md5 a5d8e476..., the same release the phone had) and makes `bardroid_buildmenu.lua`: its own name (BAR ignores
+  loose copies of its widgets under their names), its size and place from the layout editor (width and height from
+  the bottom left corner, a move), and three handler calls through BAR's stand-in for user widgets
+  (RegisterUnitCommand, RemoveCallIn, no Grid menu switch-off). Orders go through `Spring.SetActiveCommand` as in BAR's,
+  so it works where a host forbids widgets that give orders.
+- **Switching:** v0.8.5's build menu is "Build menu (controller)" in the package now (`tools/build-gamepad-game.py`,
+  the only change), so launch-bar.sh can turn BAR's "Build menu" off and the copy on for BAR's released game while the
+  controller game keeps its own; the copy stands down in the controller game. The copy runs only while the phone's BAR
+  file has the md5 it was made from (Installer writes it to `.bardroid-buildmenu` after each update); a BAR update to
+  the build menu brings BAR's own back, logged as an Android-layer miss, until the tool runs again.
+- touch-widget-test: shown for a builder, picked in the editor, Size - twice (0.855), dragged, Reset; in the controller
+  game the copy stands down and v0.8.5's shows. All pass in both games.
+- **Quiet laptop checks** (Kailil: "is it possible to not have it hijack my mouse or keyboard when its testing", "the
+  laptop test is also appearing on top and not letting any window display over it"): the engine's window was never
+  "always on top" (its style sampled during a run), but every new game window opened in front and took the keyboard,
+  and a few touch checks move the real pointer (`Spring.WarpMouse`). The checks now start the engine without
+  activating it (`toolchain.ps1` Start-Engine, SW_SHOWNOACTIVATE: 56 samples of the foreground window during a run,
+  never the game) and place its window off every screen (`WindowPosX = -10000`; the engine does not clamp it, spectate
+  and touch tests pass, screenshots included); the pointer checks run only with `-Pointer` (touch-widget-test,
+  laptop-tests), the benchmark's pointer only with `-PointerOnBattle`. fp-tuner, used by hand, keeps a normal window.
+
 ## Late night: the build menu vanished; unfolded at interface scale 1.0 (2026-10-28)
 Kailil: "I chose bottom when I had the build menu selected, and now it's complete gone ... I restart the game and it
 comes back ... Is it not possible to adjust the size of the build menu? If not then we will just have to reduce the

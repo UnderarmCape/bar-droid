@@ -10,7 +10,10 @@
 #                        has unpacked it)
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
-#   powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1
+# The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's
+# checks of what is under the pointer move the real mouse pointer and run only with -Pointer (nobody at the laptop).
+#   powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1 [-Pointer]
+param([switch]$Pointer)
 $Tools = $PSScriptRoot
 $App = Split-Path -Parent $Tools
 $results = @()
@@ -47,9 +50,10 @@ Run "updater rollback" "updater-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
 Run "lobby touch" "lobby-touch-test.ps1" "\[lobbytouch\] done: ALL PASS"
 Run "lobby Skirmish, controller game" "lobby-game-test.ps1" "\[lobbygame\] done: ALL PASS"
-Run "touch widget, BAR" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS"
+$pointerArg = @(if ($Pointer) { "-Pointer" })
+Run "touch widget, BAR" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" $pointerArg
 if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.lua")) {
-  Run "touch widget, controller game" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" @("-GamepadGame")
+  Run "touch widget, controller game" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" (@("-GamepadGame") + $pointerArg)
 } else { $results += "SKIP touch widget, controller game (run tools\profile-gamepad-game.ps1 once)" }
 
 Write-Host ""

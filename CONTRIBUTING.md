@@ -30,7 +30,11 @@ On Windows with the toolchain set up ([README.md](README.md) "Build"):
 - `powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1`: every check that needs no phone (about 5
   minutes), including the Lua lint. Run it before every pull request.
 - Touched a widget? Its own test too: `tools\touch-widget-test.ps1` (the touch camera), `tools\spectate-test.ps1`
-  (spectating by touch), `tools\lobby-touch-test.ps1` (the lobby). Each starts BAR on the laptop.
+  (spectating by touch), `tools\lobby-touch-test.ps1` (the lobby). Each starts BAR on the laptop, off-screen and
+  without taking the keyboard; the checks that move the real mouse pointer run with `-Pointer` (also
+  `laptop-tests.ps1 -Pointer`), when nobody is using the laptop.
+- BAR changed its Build menu (launch-bar.sh logs an Android-layer miss for the build menu): run
+  `python -I tools\make-buildmenu.py` to copy it again, then touch-widget-test.
 - On a phone: `"Build APK.bat" phone`, `"Install on Phone.bat"`, then play: the lobby, an online game, a skirmish,
   fold/unfold on a foldable. `"Get Logs.bat" phone` or **Share logs** in the app collects the logs.
 - Performance: `tools\phone-bench.ps1` measures BAR's benchmark scenario (or a replay) on a hot phone; compare
