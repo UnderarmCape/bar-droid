@@ -212,8 +212,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `RtsTouch`'s touch building taps reviewed again (the build menu copy's spot and PLACE code too: nothing): a tap
       still waiting for the game's answer (up to 250 ms, `tapBuilding`) is not tied to its gesture, so a new gesture in
       that time does not end it; its fallback click (no answer: a plain click) can then come in the middle of the new
-      gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered); open:
-      the fix (the waiting tap decided at the next touch down) is Java that only the phone can check.
+      gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered). Fixed
+      2026-10-29: the waiting tap is decided at the next touch down, before that touch moves the pointer (its late
+      answer, else its click, in order). Not yet checked in a game on a phone: the dev phone (8 GB) cannot load one
+      (HELP-WANTED.md); Kailil's next Fold7 build carries it.
       `tools/publish-check.ps1 -NoHistory` after the night's commits: ready. CI's `tools/java-checks.sh` run locally
       (the toolchain's sh and JDK 21): all four pass. Its javac notes `new URL(String)` in Downloader and Updater as
       deprecated (since JDK 20); left as it is on purpose: Android's `java.net.URL` is not deprecated, and the

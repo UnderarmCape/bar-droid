@@ -5,6 +5,24 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
+Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this
+phone 24/7", its screen ultra dark at all times, the normal minimum brightness for benchmarks; his Fold7 only for
+builds that need his testing. He called it a Galaxy S22 Ultra; adb reports SM-S918U, an S23 Ultra (Snapdragon 8 Gen 2,
+Adreno 740, 8 GB, Android 17, One UI 9). `tools\devphone.ps1` keeps it connected and dark (brightness 1, Extra dim
+100% kept across restarts, the wallpaper dimmed, awake while powered; `tools\devphone-watch.bat` every minute), and
+the tools drive it (`..\phone-device.txt`). The darkest the shell can do: a black overlay window would black out
+screenshots and Android drops touches through it; SurfaceFlinger's color matrix is refused to the shell on Android 17.
+BAR Droid installed on it in about 4 minutes (Debian, Mesa, engine, BAR's game and lobby, the controller game over a
+fast line); the GL check passes (FD740, OpenGL 4.3, Turnip for Vulkan). But it cannot play: with ~3.4 GB available at
+rest (4.1 GB after `am kill-all`), the engine is ~2.7 GB resident 30 s into loading a skirmish, the rest goes to
+compressed swap (BAR's benchmark ran at 1-3 fps, CPU capped at 0.9-1.5 GHz), and Android's low-memory killer ends the
+engine (exit 137) or the whole app within 1-2 minutes: two benchmark runs and three skirmish starts. The engine runs
+at oom_score_adj 0 like the top activity. An unexplained "recents" gesture in the first run was not a touch (a
+second run logged every input event: none); the app's own launcher came up when the engine was killed. phone-bench
+on the dev phone stopped at once: adb's progress line on stderr is an error record under phone-bench's
+`$ErrorActionPreference = "Stop"` (fixed in toolchain.ps1 Invoke-PhoneScript).
+
 ## Overnight hardening, no phone (2026-10-29, night)
 Kailil went to bed ("spend all your time doing the permanent hardening and bug fixing ... don't try to reach the
 phone tonight"): laptop checks only, the APKs built and not installed. Found and fixed:

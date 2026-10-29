@@ -103,7 +103,11 @@ function Invoke-PhoneScript([string]$adb, [string]$device, [string]$script, [str
   New-Item -ItemType Directory -Force $tmp | Out-Null
   $file = Join-Path $tmp $name
   [IO.File]::WriteAllText($file, ($script -replace "`r", ""), (New-Object Text.ASCIIEncoding))
-  $null = & $adb -s $device push $file "/data/local/tmp/$name" 2>&1   # (its progress line comes on stderr)
+  # (adb push writes its progress line on stderr; PowerShell 5.1 makes each such line an error record, which stops a
+  # caller with $ErrorActionPreference = "Stop", as phone-bench.ps1 has)
+  $eap = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try { $null = & $adb -s $device push $file "/data/local/tmp/$name" 2>&1 } finally { $ErrorActionPreference = $eap }
   & $adb -s $device shell sh "/data/local/tmp/$name"
 }
 # The screen profile (dark or bench) on a device; prints the settings it changed

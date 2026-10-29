@@ -98,9 +98,15 @@ Not solved:
 
 ## Also open
 
-- Only one phone has run it; other Adreno 7xx/8xx phones should take the same path but are untested. Mali, Xclipse
-  and Tensor GPUs have no driver path in this stack.
-- A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game.
+- Two phones have run it. The Galaxy Z Fold7 (12 GB) plays. A Galaxy S23 Ultra (Snapdragon 8 Gen 2, Adreno 740,
+  8 GB, Android 17) takes the same path (Mesa's Freedreno, OpenGL 4.3, the GL check passes) but runs out of memory:
+  with ~3.4 GB available at rest (Samsung's and Google's apps hold ~3 GB; 4.1 GB after `am kill-all`), the engine
+  reaches ~2.7 GB resident 30 s into loading a skirmish, the rest is pushed into compressed swap (1-3 fps), and
+  Android's low-memory killer ends it (exit 137), or the whole app, within 1-2 minutes; BAR's benchmark scenario the
+  same, 2 of 2. The app and engine run at oom_score_adj 0 (the top activity): nothing to raise. Mali, Xclipse and
+  Tensor GPUs have no driver path in this stack.
+- A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game, and an 8 GB phone cannot load one (above).
+  A lower-memory engine or game setup (textures, Lua state) would open BAR to most phones.
 - The app's touch camera, panels and touch building are LuaUI user widgets: a lobby that turns custom widgets off
   loads none of them (the pad's mouse and keys still work; touch is then mouse clicks only). BAR's Code of Conduct
   asks for custom widgets used on public servers to be posted publicly (#widgets): they are all in
