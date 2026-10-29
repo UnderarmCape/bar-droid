@@ -70,7 +70,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   place hook for the editor; launch-bar.sh runs it in place of BAR's only while the phone's BAR file has the md5 it was
   made from (Installer writes `.bardroid-buildmenu`); the controller game keeps v0.8.5's, renamed "Build menu
   (controller)" by `tools/build-gamepad-game.py`. While a building is picked its page strip is the shape strip (ONE,
-  LINE, GRID, BORDER, rotate, cancel), told to `RtsTouch` in `bardroid_place.txt`: map taps and drags then hold
+  LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
+  the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag.
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
   screen): they never take Kailil's keyboard or cover his windows; the checks that move the real mouse pointer run only

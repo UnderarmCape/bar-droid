@@ -81,13 +81,17 @@ local maxPosY = 0.74
 -- it will be about a quarter the height ... that will allow 3x3 items on top"; then "the page swapper and inidcator
 -- needs to be bigger. double the size": half a cell, their text pageText x BAR's): 9 options a page. (BAR's own
 -- paging gave a whole row to the arrows: 6 a page, the first version of this.)
--- While a building is picked the strip holds the building shapes instead (droid.place): ONE, LINE, GRID, BORDER, rotate,
--- cancel (Kailil, 2026-10-28, choosing "the build menu's own page strip turns into ONE . LINE . GRID . BORDER, plus
--- rotate and cancel" for the touch building of 2026-10-25, which he had removed as "ugly and clunky to switch between").
+-- While a building is picked the strip holds the building shapes instead (droid.place): ONE, LINE, GRID, BORDER
+-- (Kailil, 2026-10-28, choosing "the build menu's own page strip turns into ONE . LINE . GRID . BORDER" for the touch
+-- building of 2026-10-25, which he had removed as "ugly and clunky to switch between"), and a big green PLACE button
+-- lies over the order menu with rotate and cancel inside it ("one tap needs to have a done confirmation ... appear on
+-- top of the orders menu as one big green button saying done or place"; "Get rid of the circle and x and move those to
+-- the order menu button popup with done as smaller sub buttons"): a tap on the map picks the spot (droid.spot, the
+-- building drawn there), PLACE builds it there (the app clicks the spot with Shift held: RtsTouch).
 local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
-	shape = "one", armed = false, written = nil, writtenAt = nil, shapeRects = {}, file = "LuaUI/Config/bardroid_place.txt",
-	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" }, { "rotate", "\226\134\187" },
-		{ "cancel", "\226\156\149" } } }
+	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
+	file = "LuaUI/Config/bardroid_place.txt",
+	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
 
@@ -705,16 +709,24 @@ function droid.register()
 	})
 end
 
--- BAR Droid: a building picked (from this menu, a key or before the start) and the shape for it, for the app:
--- LuaUI/Config/bardroid_place.txt "place <one|line|grid|border|none>" (RtsTouch: how a finger on the map builds it).
--- The strip is drawn again when that changes.
+-- BAR Droid: a building picked (from this menu, a key or before the start), the shape for it, the PLACE button and the
+-- spot a tap picked, for the app (RtsTouch: how a finger on the map builds it), in LuaUI/Config/bardroid_place.txt,
+-- X screen pixels (top left origin):
+--   place <one|line|grid|border|none>
+--   done <x0> <y0> <x1> <y1>    (the PLACE button, without its rotate and cancel)
+--   spot <x> <y>                (where the spot is on the screen now; only while it is)
+-- The strip is drawn again when the building is picked or put away.
 function droid.place()
-	local armed
+	local defID
 	if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].getPreGameDefID then
-		armed = WG["pregame-build"].getPreGameDefID() ~= nil
+		defID = WG["pregame-build"].getPreGameDefID()
 	else
 		local _, id = spGetActiveCommand()
-		armed = id ~= nil and id < 0
+		defID = id and id < 0 and -id or nil
+	end
+	local armed = defID ~= nil
+	if defID ~= droid.defID then
+		droid.defID, droid.spot = defID, nil -- (another building: the spot was for the last one)
 	end
 	if armed ~= droid.armed then
 		droid.armed = armed
@@ -723,57 +735,188 @@ function droid.place()
 		end
 		clear()
 	end
-	-- (written again every second while a building is picked: the app takes an older "place" for none, so a file left
-	-- by a game that ended with a building picked never turns taps into Shift clicks)
-	local want = armed and droid.shape or "none"
+	if not armed and droid.written == "place none\n" then
+		droid.panel = nil
+		return
+	end
+	droid.layoutPanel()
+	local text = "place " .. (armed and droid.shape or "none") .. "\n"
+	local p = droid.panel
+	if p then
+		text = text .. string.format("done %d %d %d %d\n", p.place[1], vsy - p.place[4], p.place[3], vsy - p.place[2])
+	end
+	local sx, sy = droid.spotOnScreen()
+	if sx then
+		text = text .. string.format("spot %d %d\n", sx, vsy - sy - 1)
+	end
+	-- (written again every second while a building is picked: the app takes an older file for none, so a file left by
+	-- a game that ended with a building picked never turns taps into Shift clicks)
 	local now = Spring.GetTimer()
-	if want ~= droid.written or (armed and Spring.DiffTimers(now, droid.writtenAt) > 1) then
+	if text ~= droid.written or (armed and Spring.DiffTimers(now, droid.writtenAt) > 1) then
 		local f = io.open(droid.file, "w")
 		if f then
-			f:write("place " .. want .. "\n")
+			f:write(text)
 			f:close()
-			droid.written, droid.writtenAt = want, now
+			droid.written, droid.writtenAt = text, now
 		end
 	end
 end
 
+-- BAR Droid: the spot a tap picked (X screen pixels; nil: none): the building goes there when PLACE is tapped
+function droid.setSpot(x, y)
+	droid.spot = nil
+	if x and y and droid.armed then
+		local _, pos = Spring.TraceScreenRay(x, vsy - y - 1, true)
+		if pos then
+			droid.spot = { pos[1], pos[2], pos[3] }
+		end
+	end
+	droid.place()
+end
+
+-- (the building's place on the build grid at the spot, and where that is on the screen)
+function droid.spotPos()
+	local s = droid.spot
+	if not (s and droid.defID) then
+		return nil
+	end
+	return Spring.Pos2BuildPos(droid.defID, s[1], s[2], s[3], Spring.GetBuildFacing())
+end
+function droid.spotOnScreen()
+	local bx, by, bz = droid.spotPos()
+	if not bx then
+		return nil
+	end
+	local sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
+	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy then
+		return nil
+	end
+	return math_floor(sx), math_floor(sy)
+end
+
+-- BAR Droid: the building at the spot, as the engine draws a building being placed, and a ring around it
+function droid.drawSpot()
+	local bx, by, bz = droid.spotPos()
+	if not bx then
+		return
+	end
+	local def = UnitDefs[droid.defID]
+	gl.DepthTest(true)
+	gl.PushMatrix()
+	gl.Translate(bx, by, bz)
+	gl.Rotate(90 * Spring.GetBuildFacing(), 0, 1, 0)
+	gl.UnitShape(droid.defID, Spring.GetMyTeamID(), false, false, false)
+	gl.PopMatrix()
+	gl.DepthTest(false)
+	gl.Color(0.3, 1, 0.3, 0.8)
+	gl.LineWidth(2)
+	gl.DrawGroundCircle(bx, by, bz, def and def.radius or 32, 32)
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
+end
+
+-- BAR Droid: the PLACE button over the order menu (else under the middle of the screen), rotate and cancel inside it
+-- at the right, each a square of 0.7 of its height
+function droid.layoutPanel()
+	droid.panel = nil
+	if not droid.armed then
+		return
+	end
+	local x0, y0, x1, y1
+	local o = WG.ordermenu
+	if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
+		local x, y, w, h = o.getPosition()
+		if x and h then
+			x0, y0, x1, y1 = x * vsx, (y - h) * vsy, (x + w) * vsx, y * vsy
+		end
+	end
+	if not x0 then
+		x0, y0, x1, y1 = vsx * 0.35, 0, vsx * 0.65, vsy * 0.14
+	end
+	x0, y0, x1, y1 = math_floor(x0), math_floor(y0), math_floor(x1), math_floor(y1)
+	local pad = math_floor(math.max(2, (y1 - y0) * 0.08))
+	local s = math_floor(math.min((y1 - y0) * 0.7, (x1 - x0) * 0.2))
+	local my = math_floor((y0 + y1 - s) / 2)
+	local cancel = { x1 - pad - s, my, x1 - pad, my + s }
+	local rotate = { cancel[1] - pad - s, my, cancel[1] - pad, my + s }
+	droid.panel = { all = { x0, y0, x1, y1 }, place = { x0, y0, rotate[1] - pad, y1 }, rotate = rotate, cancel = cancel }
+end
+
+function droid.drawPanel()
+	local p = droid.panel
+	if not p then
+		return
+	end
+	local ready = droid.spot ~= nil -- (green once a tap has picked the spot)
+	local a = p.all
+	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
+		ready and { 0.1, 0.5, 0.1, 0.95 } or { 0.1, 0.25, 0.1, 0.9 }, ready and { 0.25, 0.8, 0.25, 0.95 } or { 0.2, 0.35, 0.2, 0.9 },
+		bgpadding * 0.5)
+	for _, name in ipairs({ "rotate", "cancel" }) do
+		local r = p[name]
+		UiButton(r[1], r[2], r[3], r[4], 1, 1, 1, 1, 1, 1, 1, 1, nil, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 }, bgpadding * 0.4)
+	end
+	font2:Begin(true)
+	local pl = p.place
+	local size = math.min((pl[4] - pl[2]) * 0.45, (pl[3] - pl[1]) * 0.8 / math.max(0.01, font2:GetTextWidth("PLACE")))
+	font2:Print((ready and "\255\255\255\255" or "\255\150\190\150") .. "PLACE", (pl[1] + pl[3]) / 2,
+		(pl[2] + pl[4]) / 2 - size * 0.3, size, "co")
+	local r = p.rotate
+	local sym = (r[4] - r[2]) * 0.6
+	font2:Print("\255\235\235\235\226\134\187", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
+	r = p.cancel
+	font2:Print("\255\235\235\235\226\156\149", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
+	font2:End()
+end
+
+-- BAR Droid: a press on the PLACE button: rotate turns the building, cancel puts it away; PLACE itself is the app's
+-- (it clicks the spot); a mouse there does nothing
+function droid.pressPanel(x, y)
+	local p = droid.panel
+	local function inside(r)
+		return x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+	end
+	if not (p and inside(p.all)) then
+		return false
+	end
+	if inside(p.rotate) then
+		Spring.SendCommands("buildfacing inc")
+	elseif inside(p.cancel) then
+		droid.spot = nil
+		if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
+			WG["pregame-build"].setPreGameDefID(nil)
+		else
+			Spring.SetActiveCommand(0)
+		end
+	end
+	droid.place()
+	return true
+end
+
 -- BAR Droid: the shape strip, in the page strip's place (area: the menu's inner rect; h: the strip's height)
 function droid.drawShapes(area, width, h)
-	local unit = width / 6 -- (the four words a fifth wider, the two symbols narrower)
+	local w = width / #droid.items
 	local y0, y1 = area[2], area[2] + h - cellPadding - activeAreaMargin
-	local words = math.min((y1 - y0) * 0.5, unit * 1.2 * 0.8 / math.max(0.01, font2:GetTextWidth("BORDER"))) -- (one size)
-	local x0 = area[1]
+	local size = math.min((y1 - y0) * 0.5, w * 0.8 / math.max(0.01, font2:GetTextWidth("BORDER"))) -- (one size for all)
 	for i, item in ipairs(droid.items) do
-		local w = unit * (i > 4 and 0.6 or 1.2)
+		local x0 = area[1] + (i - 1) * w
 		local rect = { x0, y0, x0 + w, y1, item[1] }
-		x0 = x0 + w
 		droid.shapeRects[#droid.shapeRects + 1] = rect
 		local lit = item[1] == droid.shape
 		UiButton(rect[1] + cellPadding, rect[2] + cellPadding, rect[3] - cellPadding, rect[4] - cellPadding,
 			1, 1, 1, 1, 1, 1, 1, 1, nil,
 			lit and { 0.45, 0.36, 0.05, 0.9 } or { 0, 0, 0, 0.8 }, lit and { 0.75, 0.62, 0.15, 0.9 } or { 0.2, 0.2, 0.2, 0.8 },
 			bgpadding * 0.5)
-		local size = i > 4 and math.min((y1 - y0) * 0.6, w * 0.7) or words
-		font2:Print((lit and "\255\255\235\150" or "\255\235\235\235") .. item[2], (rect[1] + rect[3]) * 0.5,
+		font2:Print((lit and "\255\255\235\150" or "\255\235\235\235") .. item[2], x0 + w * 0.5,
 			(y0 + y1) * 0.5 - size * 0.3, size, "co")
 	end
 end
 
--- BAR Droid: a tap on the shape strip: pick the shape, turn the building, or put it away
+-- BAR Droid: a tap on the shape strip picks the shape
 function droid.press(x, y)
 	for _, r in ipairs(droid.shapeRects) do
 		if x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
-			if r[5] == "rotate" then
-				Spring.SendCommands("buildfacing inc")
-			elseif r[5] == "cancel" then
-				if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
-					WG["pregame-build"].setPreGameDefID(nil)
-				else
-					Spring.SetActiveCommand(0)
-				end
-			else
-				droid.shape = r[5]
-			end
+			droid.shape = r[5]
 			clear()
 			droid.place()
 			return true
@@ -1704,6 +1847,7 @@ end
 function widget:DrawScreen()
 	tracy.ZoneBeginN("W:BuildMenu:DrawScreen")
 	glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	droid.drawPanel() -- BAR Droid: the PLACE button (over the order menu)
 
 	if WG.buildmenu then
 		WG.buildmenu.hoverID = nil
@@ -2046,10 +2190,17 @@ function widget:DrawScreen()
 	tracy.ZoneEnd()
 end
 
+-- BAR Droid: the menu and the PLACE button are interface: a finger there clicks, it does not pan or pick a spot
+function widget:IsAbove(x, y)
+	local r, p = backgroundRect, droid.panel
+	return (buildmenuShows and r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4])
+		or (p and x >= p.all[1] and x <= p.all[3] and y >= p.all[2] and y <= p.all[4]) or false
+end
+
 function widget:DrawWorld()
+	droid.drawSpot() -- BAR Droid: the spot a tap picked (so this call-in stays after the start)
 	-- Avoid unnecessary overhead after buildqueue has been setup in early frames
 	if spGetGameFrame() > 0 then
-		widgetHandler:RemoveCallIn("DrawWorld") -- BAR Droid: the handler's stand-in for user widgets
 		return
 	end
 
@@ -2179,6 +2330,9 @@ end
 function widget:MousePress(x, y, button)
 	if Spring.IsGUIHidden() then
 		return
+	end
+	if droid.pressPanel(x, y) then -- BAR Droid: the PLACE button
+		return true
 	end
 	if WG.topbar and WG.topbar.showingQuit() then
 		return
@@ -2489,6 +2643,11 @@ function widget:Initialize()
 		return droid.armed, droid.shape, droid.shapeRects
 	end
 	WG.buildmenu.droidPress = droid.press
+	WG.buildmenu.droidPanel = function() -- (the PLACE button's rects and the spot)
+		return droid.panel, droid.spot
+	end
+	WG.buildmenu.droidPressPanel = droid.pressPanel
+	WG.buildmenu.droidSpot = droid.setSpot -- (bardroid_touch.lua: the app's "spot" lines)
 	WG.buildmenu.getGroups = function()
 		return groups, units.unitGroup
 	end

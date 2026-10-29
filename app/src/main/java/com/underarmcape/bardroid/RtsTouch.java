@@ -46,10 +46,12 @@ import java.util.Locale;
  *   three-finger swipe   up = overview of the whole map, down = back; left / right = previous / next idle builder
  *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
  * Actions go to the widget as "act <name>" lines (not in the lobby).
- * A building picked in the app's build menu (bardroid_buildmenu.lua: its page strip then shows ONE, LINE, GRID, BORDER,
- * rotate and cancel; Kailil, 2026-10-28): a tap on the map places one and the building stays picked (Shift held for
- * the click); with LINE, GRID or BORDER a drag on the map lays out BAR's own line, filled area or hollow ring of them
- * (the engine's build drag with Shift, Shift+Alt or Shift+Alt+Ctrl held); with ONE a drag pans.
+ * A building picked in the app's build menu (bardroid_buildmenu.lua: its page strip then shows ONE, LINE, GRID and
+ * BORDER, and a big green PLACE button with rotate and cancel lies over the order menu; Kailil, 2026-10-28): a tap on
+ * the map picks the spot (the building shows there), a tap on PLACE builds it there and the building stays picked
+ * (Shift held for the click); with LINE, GRID or BORDER a drag on the map lays out BAR's own line, filled area or
+ * hollow ring of them at once (the engine's build drag with Shift, Shift+Alt or Shift+Alt+Ctrl held); with ONE a drag
+ * pans.
  * The X pointer is hidden while two or more fingers are down. Off the map (the void past its edge) fingers work as on
  * it: the map-edge rules of 2026-10-26 (taps off the map clicking nothing, drags anchored mid-screen) are gone (Kailil,
  * 2026-10-27: they made the edge "wonky" and the interface over the void untouchable; edge navigation comes later).
@@ -291,7 +293,7 @@ final class RtsTouch {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
                 ui.removeCallbacks(longPress);
-                if (secondTap && placeShape() == null) startLeftDrag();
+                if (secondTap && place() == null) startLeftDrag();
                 else decideDrag(hoverAt(downX, downY));
                 return;
             }
@@ -454,7 +456,8 @@ final class RtsTouch {
      * building picked). False: nothing picked, or ONE (the drag pans).
      */
     private boolean startShapeDrag() {
-        String shape = placeShape();
+        Place p = place();
+        String shape = p == null ? null : p.shape;
         if (shape == null || shape.equals("one")) return false;
         if (shape.equals("grid")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
         else if (shape.equals("border")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_CTRL_LEFT);
@@ -474,18 +477,44 @@ final class RtsTouch {
         heldKeys = new int[0];
     }
 
+    /** The building picked in the app's build menu (bardroid_buildmenu.lua writes bardroid_place.txt). */
+    private static final class Place {
+        String shape;      // one, line, grid or border
+        float[] done;      // its PLACE button: x0 y0 x1 y1, X screen pixels
+        float[] spot;      // where the spot a tap picked is on the screen now; null: none (or off the screen)
+    }
+
     /**
-     * The shape of the building picked in the app's build menu ("place one|line|grid|border" in bardroid_place.txt,
-     * written again every second while one is picked); null: none picked, no game, or an old file.
+     * The building picked, its shape, PLACE button and spot ("place <shape>", "done x0 y0 x1 y1", "spot x y" in
+     * bardroid_place.txt, written again every second while one is picked); null: none picked, no game, or an old file.
      */
-    private String placeShape() {
+    private Place place() {
         if (!gameWidgetRunning() || System.currentTimeMillis() - placeFile.lastModified() > HOVER_STALE_MS) return null;
-        byte[] b = new byte[32];
-        int n;
-        try (FileInputStream in = new FileInputStream(placeFile)) { n = in.read(b); } catch (IOException e) { return null; }
-        if (n <= 0) return null;
-        String[] f = new String(b, 0, n, StandardCharsets.US_ASCII).trim().split(" ");
-        return f.length == 2 && f[0].equals("place") && !f[1].equals("none") ? f[1] : null;
+        String text = readSmall(placeFile);
+        if (text == null) return null;
+        Place p = null;
+        try {
+            for (String line : text.split("\n")) {
+                String[] f = line.trim().split(" ");
+                if (f[0].equals("place") && f.length == 2 && !f[1].equals("none")) {
+                    p = new Place();
+                    p.shape = f[1];
+                } else if (p != null && f[0].equals("done") && f.length == 5) {
+                    p.done = new float[]{Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
+                } else if (p != null && f[0].equals("spot") && f.length == 3) {
+                    p.spot = new float[]{Float.parseFloat(f[1]), Float.parseFloat(f[2])};
+                }
+            }
+        } catch (NumberFormatException e) { return null; }
+        return p;
+    }
+
+    /** A left click at X screen pixel (x, y). */
+    private void clickAt(float x, float y) {
+        LorieView v = view();
+        v.sendMouseEvent(x, y, InputStub.BUTTON_UNDEFINED, false, false);
+        v.sendMouseEvent(x, y, InputStub.BUTTON_LEFT, true, false);
+        v.sendMouseEvent(x, y, InputStub.BUTTON_LEFT, false, false);
     }
 
     private void startLeftDrag() {
@@ -587,13 +616,25 @@ final class RtsTouch {
 
     private void tap(float vx, float vy) {
         float x = toX(vx), y = toY(vy);
-        if (placeShape() != null && hoverAt(vx, vy) == HOVER_MAP) {   // a building picked: one here, and it stays picked
-            lastTapX = -1; doubleTapX = -1;
-            holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
-            press(vx, vy, InputStub.BUTTON_LEFT, true);
-            press(vx, vy, InputStub.BUTTON_LEFT, false);
-            releaseKeys();
-            return;
+        Place place = place();
+        if (place != null) {   // a building picked
+            float[] d = place.done;
+            if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]) {
+                // PLACE: the building at the spot, and it stays picked for the next (Shift held for the click)
+                lastTapX = -1; doubleTapX = -1;
+                if (place.spot != null) {
+                    holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+                    clickAt(place.spot[0], place.spot[1]);
+                    releaseKeys();
+                    send("spot none");
+                }
+                return;
+            }
+            if (hoverAt(vx, vy) == HOVER_MAP) {   // the spot: the building shows there until PLACE
+                lastTapX = -1; doubleTapX = -1;
+                send(String.format(Locale.US, "spot %.0f %.0f", x, y));
+                return;
+            }
         }
         float tol = slop * 2 * xPerViewPixel();
         long now = SystemClock.uptimeMillis();
@@ -675,7 +716,7 @@ final class RtsTouch {
     }
 
     private static String readSmall(File file) {
-        byte[] b = new byte[64];
+        byte[] b = new byte[160];
         int n;
         try (FileInputStream in = new FileInputStream(file)) { n = in.read(b); } catch (IOException e) { return null; }
         return n <= 0 ? null : new String(b, 0, n, StandardCharsets.US_ASCII);

@@ -5,6 +5,23 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Building by touch: a PLACE button (2026-10-28, night)
+Kailil, on the shape strip: "one tap needs to have a done confirmation the done should be large in the bottom of the
+screen. it should take up the width of the orders menu and appear on top of the orders menu as one big green button
+saying done or place", and "Get rid of the circle and x and move those to the order menu button popup with done as
+smaller sub buttons within done." So the strip keeps ONE · LINE · GRID · BORDER (four wider buttons), and while a
+building is picked the copy draws PLACE over BAR's order menu (its rect from `WG.ordermenu.getPosition`, as the
+layout editor finds it; under the middle of the screen when there is none, before the start), dim until a spot is
+picked, green after, with ↻ and ✕ as smaller buttons inside at its right. A tap on the map no longer clicks:
+`RtsTouch` sends "spot <x> <y>", the copy keeps the ground point and draws the building there (`gl.UnitShape` and a
+green ring, from its DrawWorld, which now stays on after the start), and writes where it is on the screen and where
+PLACE is into `bardroid_place.txt`; a tap on PLACE is the Shift click on the spot, wherever the camera has gone since.
+The building stays picked for the next spot (✕ or a long press puts it away); LINE, GRID and BORDER drags still build
+at once. The copy now answers IsAbove for the menu and PLACE, so a finger there is a click (before, a drag on the
+build menu panned, and with a building picked a tap there would have picked a spot under it). touch-widget-test:
+PLACE lies over the order menu, rotate and cancel inside it work, a "spot" line picks the spot and the file says
+so (picture sent to Kailil); the taps on the phone are his to check.
+
 ## The gamepad online: a mouse and keyboard (2026-10-28, night)
 Kailil: "spin up a helper to research some way to get our gamepad support working in online." The research (a
 background agent, BAR release 2026.10.20-1 and master read): v0.8.5 cannot run as a user widget online. It reads the

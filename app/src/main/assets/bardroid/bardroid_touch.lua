@@ -13,6 +13,8 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
+--                                                     spot <x> <y> | spot none  (a building's spot for the build
+--                                                                               menu's PLACE button: bardroid_buildmenu.lua)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
@@ -349,6 +351,13 @@ local function readTouch(lines)
 		local action = ACTIONS[name]
 		if action then
 			action()
+		end
+	end
+	-- a tap on the map with a building picked: the spot for the build menu's PLACE button (bardroid_buildmenu.lua)
+	for args in lines:gmatch("spot ([^\n]*)") do
+		local x, y = args:match("^(%S+) (%S+)")
+		if WG.buildmenu and WG.buildmenu.droidSpot then
+			WG.buildmenu.droidSpot(tonumber(x), tonumber(y))
 		end
 	end
 	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned

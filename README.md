@@ -51,10 +51,11 @@ it (no driver path); the app's device check says so.
 
 In the lobby a drag scrolls lists and a tap on a server shows its details first.
 
-**Building:** pick a building in the build menu; its page strip then shows **ONE · LINE · GRID · BORDER**, ↻ and ✕.
-A tap on the map places one, and the building stays picked for the next. With LINE, GRID or BORDER, drag on the map
-for a row, a filled area or a hollow ring of them (BAR's own line and area building). ↻ turns the building, ✕ (or a
-long press) puts it away. With ONE, a drag pans the map.
+**Building:** pick a building in the build menu; its page strip then shows **ONE · LINE · GRID · BORDER**, and a big
+green **PLACE** button with ↻ and ✕ inside covers the order menu. Tap the map to pick the spot (the building shows
+there), then PLACE to build it; the building stays picked for the next spot. With LINE, GRID or BORDER, drag on the
+map for a row, a filled area or a hollow ring of them (BAR's own line and area building, placed at once). ↻ turns the
+building, ✕ (or a long press) puts it away. With ONE, a drag pans the map.
 
 **The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels

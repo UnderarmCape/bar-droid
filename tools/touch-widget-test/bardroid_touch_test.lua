@@ -700,8 +700,9 @@ cases = {
 		verify("build menu: Reset puts it back", x0 == before.bm.x0 and y0 == before.bm.y0 and x1 - x0 == before.bm.w,
 			string.format("%d,%d %dx%d", x0, y0, x1 - x0, y1 - y0))
 		L.act("done")
-		-- touch building (Kailil, 2026-10-28, "Strip buttons"): a building picked turns the page strip into ONE . LINE .
-		-- GRID . BORDER, rotate and cancel; the shape goes to RtsTouch in bardroid_place.txt
+		-- touch building (Kailil, 2026-10-28): a building picked turns the page strip into ONE . LINE . GRID . BORDER and
+		-- lays a big green PLACE button with rotate and cancel over the order menu; a tap on the map picks the spot,
+		-- PLACE builds there. What the app needs goes to RtsTouch in bardroid_place.txt
 		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do
 			if cmd.id < 0 then
 				Spring.SetActiveCommand(Spring.GetCmdDescIndex(cmd.id))
@@ -714,37 +715,55 @@ cases = {
 		if not before.bm then
 			return
 		end
-		Spring.SendCommands("screenshot png") -- the shape strip (build\touch-widget-test\data\screenshots)
 		local armed, shape, rects = WG.buildmenu.droidPlace()
-		verify("build menu: a building picked shows the shape strip", armed and #rects == 6,
+		verify("build menu: a building picked shows the shape strip", armed and #rects == 4,
 			string.format("%s, %d buttons", tostring(armed), #rects))
 		verify("build menu: ONE to start", shape == "one", shape)
-		verify("build menu: the app told the shape", readFile("LuaUI/Config/bardroid_place.txt") == "place one\n")
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("build menu: the app told the shape and the PLACE button", text:match("^place one\ndone %d+ %d+ %d+ %d+\n$"),
+			text)
+		local panel = WG.buildmenu.droidPanel()
+		local o = WG.ordermenu
+		if panel and o and o.getPosition and o.getIsShowing() then -- (as the layout editor finds the order menu)
+			local x, y, w, h = o.getPosition()
+			local vsx, vsy = Spring.GetViewGeometry()
+			verify("build menu: PLACE lies over the order menu", math.abs(panel.all[1] - x * vsx) <= 1
+				and math.abs(panel.all[3] - (x + w) * vsx) <= 1 and math.abs(panel.all[4] - y * vsy) <= 1,
+				string.format("%d,%d-%d,%d", panel.all[1], panel.all[2], panel.all[3], panel.all[4]))
+		end
 		before.facing = Spring.GetBuildFacing()
-		local function tap(name)
-			for _, r in ipairs(rects) do
-				if r[5] == name then
-					return WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
-				end
+		for _, r in ipairs(rects) do
+			if r[5] == "grid" then
+				verify("build menu: GRID tapped", WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
 			end
 		end
-		verify("build menu: GRID tapped", tap("grid"))
-		tap("rotate")
+		if panel then
+			local r = panel.rotate
+			verify("build menu: rotate inside PLACE", WG.buildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
+		end
+		-- a tap on the middle of the map (RtsTouch: "spot <x> <y>", X screen pixels)
+		local vsx, vsy = Spring.GetViewGeometry()
+		touch(string.format("spot %d %d", vsx / 2, vsy / 2))
 		return 0.5
 	end,
 	function()
 		if not before.bm then
 			return
 		end
-		local armed, shape, rects = WG.buildmenu.droidPlace()
+		Spring.SendCommands("screenshot png") -- the strip, PLACE and the spot (build\touch-widget-test\data\screenshots)
+		local armed, shape = WG.buildmenu.droidPlace()
+		local panel, spot = WG.buildmenu.droidPanel()
 		verify("build menu: GRID chosen", armed and shape == "grid", shape)
-		verify("build menu: the app told GRID", readFile("LuaUI/Config/bardroid_place.txt") == "place grid\n")
 		verify("build menu: rotate turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
 			before.facing .. " -> " .. Spring.GetBuildFacing())
-		for _, r in ipairs(rects) do
-			if r[5] == "cancel" then
-				WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
-			end
+		verify("build menu: a tap on the map picks the spot", spot ~= nil)
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("build menu: the app told GRID, PLACE and the spot",
+			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+\n$"), text)
+		touch("spot none") -- (RtsTouch after PLACE)
+		if panel then
+			local r = panel.cancel
+			WG.buildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
 		end
 		return 0.5
 	end,
@@ -754,7 +773,9 @@ cases = {
 		end
 		local _, id = Spring.GetActiveCommand()
 		local armed, shape = WG.buildmenu.droidPlace()
+		local panel, spot = WG.buildmenu.droidPanel()
 		verify("build menu: cancel puts the building away", not armed and (id == nil or id >= 0), tostring(id))
+		verify("build menu: no PLACE and no spot after", panel == nil and spot == nil)
 		verify("build menu: the next building starts with ONE", shape == "one", shape)
 		verify("build menu: the app told none", readFile("LuaUI/Config/bardroid_place.txt") == "place none\n")
 		Spring.SelectUnitArray({})

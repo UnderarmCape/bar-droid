@@ -35,9 +35,10 @@ The first version meant for other people's phones: everything since the first bu
   copy of BAR's Build menu (the same menu, as a 3x3 grid: 9 options a page, the page arrows in a strip under
   them), so the editor moves and sizes it too; it steps aside for BAR's own when a
   BAR update changes that menu, and for the gamepad's in the controller game.
-- Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID, BORDER, rotate
-  and cancel. A tap on the map places one (the building stays picked); with LINE, GRID or BORDER a drag lays out a
-  row, a filled area or a hollow ring of them (BAR's own build drag).
+- Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER, and a
+  big green PLACE button (rotate and cancel inside) covers the order menu. A tap on the map picks the spot, PLACE
+  builds there (the building stays picked); with LINE, GRID or BORDER a drag lays out a row, a filled area or a
+  hollow ring of them (BAR's own build drag).
 - Typing a chat message: the text wraps and gets smaller as it grows, in a box at the top of the chat that stays clear
   of BAR's start countdown.
 
