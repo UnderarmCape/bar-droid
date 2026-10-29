@@ -69,7 +69,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   after BAR changes its gui_buildmenu.lua: launch-bar.sh then logs `!!! ANDROID LAYER ... build menu`) with a size and
   place hook for the editor; launch-bar.sh runs it in place of BAR's only while the phone's BAR file has the md5 it was
   made from (Installer writes `.bardroid-buildmenu`); the controller game keeps v0.8.5's, renamed "Build menu
-  (controller)" by `tools/build-gamepad-game.py`. While a building is picked its page strip is the shape strip (ONE,
+  (controller)" by `tools/build-gamepad-game.py`, in `WG.buildmenu`, and runs the copy beside it as
+  `WG.bardroidBuildmenu`, shown while the app's gamepad controls have the pad (`WG.BarDroidOwnsBuildMenu`). While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
   the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag.

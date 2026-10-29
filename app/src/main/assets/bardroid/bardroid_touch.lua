@@ -370,8 +370,8 @@ local function readTouch(lines)
 	-- a tap on the map with a building picked: the spot for the build menu's PLACE button (bardroid_buildmenu.lua)
 	for args in lines:gmatch("spot ([^\n]*)") do
 		local x, y = args:match("^(%S+) (%S+)")
-		if WG.buildmenu and WG.buildmenu.droidSpot then
-			WG.buildmenu.droidSpot(tonumber(x), tonumber(y))
+		if WG.bardroidBuildmenu and WG.bardroidBuildmenu.droidSpot then
+			WG.bardroidBuildmenu.droidSpot(tonumber(x), tonumber(y))
 		end
 	end
 	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned

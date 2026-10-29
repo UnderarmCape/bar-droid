@@ -99,9 +99,14 @@ public final class PadGameTest {
         check("RB held on the build menu: Alt (a factory queues it first), not Space",
                 t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " down") && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
         t.up(RB);
+        check("RB held on the build menu and let go: no page turned", !t.has("act pad_page_next"), t.m.out);
         t.tap(X);
         check("X on the build menu: the right button (one off a factory's queue)",
                 t.has("right down") && t.has("right up"), t.m.out);
+        t.m.out.clear();
+        t.tap(RB); t.tap(LB);
+        check("RB / LB tapped on the build menu: the next / previous page (not the menu off)",
+                t.has("act pad_page_next") && t.has("act pad_page_prev") && !t.has("act pad_build"), t.m.out);
 
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
@@ -126,11 +131,30 @@ public final class PadGameTest {
         t.tap(A);
         check("A: centred, a left click", t.m.out.indexOf("centre") >= 0
                 && t.m.out.indexOf("centre") < t.m.out.indexOf("left down") && t.has("left up"), t.m.out);
+        // v0.8.5's area select: A held with nothing picked
+        t.m.out.clear();
+        t.tick(A);
+        t.lx = 1; t.wait(320); t.lx = 0;
+        check("A held, nothing picked: the click let go and the area select on, the left stick still pans",
+                t.has("left up") && t.has("act area_on") && t.count("move ") == 0 && t.g.reticle(), t.m.out);
+        t.tap(DPAD_UP); t.tap(DPAD_LEFT);
+        check("the D-pad sizes the circle (no idle builders, no bookmark)", t.has("act area_bigger") && t.has("act area_smaller")
+                && !t.has("act idle_prev") && !t.has("act bookmark_recall"), t.m.out);
+        t.up(A);
+        check("A let go: the area select over", t.has("act area_off"), t.m.out);
+        t.m.out.clear();
+        t.tick(A); t.wait(320); t.tap(B);
+        check("B in the area select: undone, no cancel as well", t.has("act area_cancel") && !t.has("act cancel"), t.m.out);
+        t.up(A);
+        check("A let go after B: nothing more", !t.has("act area_off"), t.m.out);
+
+        // With an order picked, A held draws with the pointer
+        t.m.armed = "unitarea";
         t.m.out.clear();
         t.tick(A);
         t.lx = 1; t.wait(200); t.lx = 0;
-        check("A held + left stick: the pointer moves (a drag BAR sees), the camera does not pan",
-                t.count("move ") > 0 && !t.g.reticle(), t.m.out);
+        check("A held with an order picked + left stick: the pointer moves (a drag BAR sees), the camera does not pan",
+                t.count("move ") > 0 && !t.g.reticle() && !t.has("act area_on"), t.m.out);
         t.m.out.clear();
         t.up(A); t.wait(250);
         String last = t.m.out.isEmpty() ? "" : t.m.out.get(t.m.out.size() - 1);
@@ -208,8 +232,8 @@ public final class PadGameTest {
         t.lx = 1; t.wait(320);
         int orders = 0;
         for (String e : t.m.out) if (e.startsWith("move ")) orders += Integer.parseInt(e.split(" ")[1]);
-        check("the order menu: the pointer at half speed", build > 0 && Math.abs(orders * 2 - build) <= 4,
-                orders + " against " + build);
+        check("the order menu: the pointer at 5/8 speed (half, then a quarter faster)", build > 0
+                && Math.abs(orders * 8 - build * 5) <= 32, orders + " against " + build);
         t.m.out.clear();
         t.tap(A); t.tap(B); t.tap(DPAD_RIGHT);
         check("the order menu: A gives the order, B leaves, the D-pad steps (no clicks)",

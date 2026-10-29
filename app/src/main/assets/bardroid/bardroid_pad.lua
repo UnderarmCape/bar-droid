@@ -32,7 +32,7 @@ end
 
 local PAD_FILE = "LuaUI/Config/bardroid_pad.txt"
 local TOAST_SECONDS = 1.3
-local LEAVE_SECONDS = 1 -- the pointer pushed off a menu this long lets go of it
+local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
 
 -- BAR's order menu (luaui/Widgets/gui_ordermenu.lua): the orders it hides, and how it lays out its grid
@@ -52,7 +52,10 @@ local lastIdleMobile = 0
 local mouseMode = false -- Back + Start, as the app's switch (PadGame)
 local controllerGame = false -- v0.8.5's game: the pad is v0.8.5's until a triple tap switches it (modV085)
 local modV085 = false
-local apiFocus = nil -- there, v0.8.5's build menu on the pad (its controller calls): the option's unitDefID
+-- v0.8.5's area select (A held with nothing picked: PadGame): a circle in the middle of the screen selects the player's
+-- units it passes over while the camera pans; units first (buildings only when there are no units in it, or with RT:
+-- added to the selection, buildings too); the D-pad sizes it, B undoes it. v0.8.5's radius: 320, 120..1200 in 80s.
+local area = { on = false, radius = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil, z = nil }
 local warp, fakeWarp = Spring.WarpMouse, false -- (tools/touch-widget-test.ps1 records the moves instead)
 
 local function now()
@@ -399,6 +402,41 @@ local function armedKind()
 	return "other"
 end
 
+-- The area select's step: the units under the circle added, the selection set when that changed
+local function areaUpdate()
+	local vsx, vsy = Spring.GetViewGeometry()
+	local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
+	if not pos then
+		area.x = nil
+		return
+	end
+	area.x, area.y, area.z = pos[1], pos[2], pos[3]
+	local added = false
+	for _, unitID in ipairs(Spring.GetUnitsInCylinder(pos[1], pos[3], area.radius, Spring.GetMyTeamID()) or {}) do
+		if not area.units[unitID] then
+			area.units[unitID] = true
+			area.count = area.count + 1
+			added = true
+		end
+	end
+	if not added then
+		return
+	end
+	local mobile, all = {}, {}
+	for unitID in pairs(area.units) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		all[#all + 1] = unitID
+		if def and (def.speed or 0) > 0 then
+			mobile[#mobile + 1] = unitID
+		end
+	end
+	local pick = (area.shift or #mobile == 0) and all or mobile
+	for _, unitID in ipairs(area.keep) do
+		pick[#pick + 1] = unitID
+	end
+	Spring.SelectUnitArray(pick)
+end
+
 local function cancel()
 	if pregameBuild() then
 		WG["pregame-build"].setPreGameDefID(nil)
@@ -409,55 +447,20 @@ local function cancel()
 	end
 end
 
--- The controller game keeps v0.8.5's build menu (the app's copy stands down there): RB drives it through its own
--- controller calls (controllerSetFocus, controllerMoveFocus, controllerActivate), its focus lit as v0.8.5 lights it
-local function apiMenu()
-	local b = WG.buildmenu
-	return b and not b.droidPad and b.controllerGetItems and b.controllerSetFocus and b.controllerMoveFocus
-		and b.controllerActivate and b
-end
-
-local function apiEnd()
-	local b = apiMenu()
-	if b and apiFocus then
-		b.controllerSetFocus(nil, "bardroid")
-	end
-	apiFocus = nil
-end
-
+-- The app's build menu (bardroid_buildmenu.lua, WG.bardroidBuildmenu): RB puts the pointer on it. In the controller
+-- game it runs beside v0.8.5's and shows while the app's controls have the pad (WG.BarDroidOwnsBuildMenu; Kailil, of
+-- v0.8.5's own focus there: "its doing a weird selector system, i dont want that, i want a mouse cursor, with a stroke
+-- just like the orders").
 local function buildMenu(name)
-	local b = WG.buildmenu
+	local b = WG.bardroidBuildmenu
 	if b and b.droidPad then
 		b.droidPad(name)
-		return
-	end
-	b = apiMenu()
-	if not b then
-		return
-	end
-	if name == "build" then
-		if apiFocus then
-			apiEnd()
-		else
-			local items = b.controllerGetItems()
-			if items and items[1] then
-				if b.controllerSetFocusVisible then
-					b.controllerSetFocusVisible(true)
-				end
-				apiFocus = b.controllerSetFocus(items[1].unitDefID, "bardroid")
-			end
-		end
-	elseif name == "back" then
-		apiEnd()
-	elseif apiFocus then
-		local dx = name == "left" and -1 or name == "right" and 1 or 0
-		local dy = name == "up" and -1 or name == "down" and 1 or 0
-		apiFocus = b.controllerMoveFocus(dx, dy) or apiFocus
 	end
 end
 
 local function buildFocus()
-	return (WG.buildmenu and WG.buildmenu.droidFocus and WG.buildmenu.droidFocus() ~= nil) or apiFocus ~= nil
+	local b = WG.bardroidBuildmenu
+	return b and b.droidFocus and b.droidFocus() ~= nil or false
 end
 
 local ACTIONS = {
@@ -478,29 +481,51 @@ local ACTIONS = {
 			note("NO ORDERS")
 		end
 	end,
-	pad_select = function() -- A on the order menu, or on v0.8.5's build menu (a building picked: the menu let go)
+	pad_select = function() -- A on the order menu
 		if orders then
 			ordersSelect()
-		elseif apiFocus and apiMenu() then
-			apiMenu().controllerActivate(apiFocus, 1)
-			if select(2, Spring.GetActiveCommand()) then
-				apiEnd()
-			end
 		end
 	end,
-	pad_x = function() -- X on v0.8.5's build menu: one off a factory's queue (RT held: five)
-		if apiFocus and apiMenu() then
-			apiMenu().controllerActivate(apiFocus, 3)
+	area_on = function()
+		local _, _, _, shift = Spring.GetModKeyState()
+		area.on, area.units, area.count, area.shift = true, {}, 0, shift
+		area.keep = shift and Spring.GetSelectedUnits() or {}
+		if not shift then
+			Spring.SelectUnitArray({})
 		end
+		areaUpdate()
 	end,
-	mod_bardroid = function() -- the triple tap in the controller game (GameActivity, through bardroid_touch.lua)
-		modV085 = false
+	area_off = function()
+		area.on = false
+	end,
+	area_cancel = function() -- B: the selection as it was before
+		area.on = false
+		Spring.SelectUnitArray(area.keep)
+	end,
+	area_bigger = function()
+		area.radius = math.min(1200, area.radius + 80)
+		note("AREA " .. area.radius)
+	end,
+	area_smaller = function()
+		area.radius = math.max(120, area.radius - 80)
+		note("AREA " .. area.radius)
+	end,
+	pad_page_next = function() -- RB / LB on the build menu: its pages (Kailil: "pressing RB or LB cycles the tabs")
+		buildMenu("pagenext")
+	end,
+	pad_page_prev = function()
+		buildMenu("pageprev")
+	end,
+	mod_bardroid = function() -- the triple tap in the controller game (GameActivity, through bardroid_touch.lua): the
+		modV085 = false -- app's build menu in place of v0.8.5's (DrawGenesis hides v0.8.5's panel)
+		WG.BarDroidOwnsBuildMenu = controllerGame or nil
 		note("CONTROLLER MOD: BAR DROID")
 	end,
 	mod_v085 = function()
 		modV085 = true
+		WG.BarDroidOwnsBuildMenu = nil
 		ordersEnd()
-		apiEnd()
+		buildMenu("back")
 		note("CONTROLLER MOD: v0.8.5")
 	end,
 	pad_back = function()
@@ -681,17 +706,14 @@ function widget:Update()
 			end
 		end
 	end
-	if apiFocus then -- (v0.8.5's build menu gone: no builder selected)
-		local b = apiMenu()
-		if not b or (b.getIsShowing and not b.getIsShowing()) then
-			apiEnd()
-		end
+	if area.on then
+		areaUpdate()
 	end
 	local armed = armedKind()
 	if armed ~= "build" and WG.BarDroidPadSlowPan then -- (the slow pan is for placing only, as in v0.8.5)
 		WG.BarDroidPadSlowPan = nil
 	end
-	local focus = orders and "orders" or (apiFocus and "buildapi") or (buildFocus() and "build" or "none")
+	local focus = orders and "orders" or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\n"
 	local t = now()
@@ -702,6 +724,28 @@ function widget:Update()
 			f:close()
 			written, writtenAt = text, t
 		end
+	end
+end
+
+-- The area select's circle on the ground
+function widget:DrawWorld()
+	if area.on and area.x then
+		gl.DepthTest(false)
+		gl.LineWidth(2.5)
+		gl.Color(area.shift and 1 or 0.35, area.shift and 0.85 or 1, 0.35, 0.9)
+		gl.DrawGroundCircle(area.x, area.y, area.z, area.radius, 48)
+		gl.LineWidth(1)
+		gl.Color(1, 1, 1, 1)
+	end
+end
+
+-- The controller game with the app's controls: v0.8.5's build menu panel hidden through its own switch
+-- (controllerSetPanelVisible); v0.8.5's camera widget sets that switch again in each Update, so here, after every
+-- Update and before anything is drawn or clicked
+function widget:DrawGenesis()
+	local b = WG.buildmenu
+	if WG.BarDroidOwnsBuildMenu and b and b ~= WG.bardroidBuildmenu and b.controllerSetPanelVisible then
+		b.controllerSetPanelVisible(false)
 	end
 end
 
@@ -767,12 +811,16 @@ function widget:Initialize()
 		note = function()
 			return toast
 		end,
+		area = function() -- (the area select: on, its radius, how many units it has passed over)
+			return area.on, area.radius, area.count
+		end,
 	}
 end
 
 function widget:Shutdown()
 	ordersEnd()
 	WG.BarDroidPad = nil
+	WG.BarDroidOwnsBuildMenu = nil
 	local f = io.open(PAD_FILE, "w")
 	if f then
 		f:write("focus none\npregame 0\narmed none\n")

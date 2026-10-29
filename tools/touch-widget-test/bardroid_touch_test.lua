@@ -633,7 +633,8 @@ cases = {
 		near("layout: Reset all puts the minimap's size back", WG.minimap and select(2, WG.minimap.getMaxHeight()) or -1,
 			before.minimap, 0.0001)
 		-- the build menu: in BAR's released game the app's copy of BAR's Build menu (bardroid_buildmenu.lua), which the
-		-- editor moves and sizes; in the controller game v0.8.5's own (the copy stands down). A builder selected shows it.
+		-- editor moves and sizes; in the controller game v0.8.5's own (the copy beside it, hidden until the app's controls
+		-- have the pad). A builder selected shows it.
 		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
 			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
 			if def and def.isBuilder and (def.speed or 0) > 0 then
@@ -648,7 +649,8 @@ cases = {
 		local B, L = WG.buildmenu, WG.BarDroidLayout
 		verify("build menu: shows for a builder", B and B.getIsShowing and B.getIsShowing())
 		if B and B.controllerApiVersion then
-			verify("build menu: the controller game's own (the app's copy stood down)", true)
+			verify("build menu: the controller game's own (the app's copy hidden beside it)",
+				WG.bardroidBuildmenu ~= nil and not WG.bardroidBuildmenu.getIsShowing())
 			-- the triple tap (GameActivity): the pad to the app's controls, the camera with it
 			before.ctl = Spring.GetCameraState()
 			touch("act mod_bardroid")
@@ -681,7 +683,8 @@ cases = {
 		L.release()
 		return 0.5
 	end,
-	-- the controller game: switched to the app's controls (a triple tap), RB drives v0.8.5's own build menu
+	-- the controller game: switched to the app's controls (a triple tap), the app's 3x3 build menu in place of v0.8.5's
+	-- (Kailil: "What happened to my 3x3 build menu grid? its gone"), RB puts the pointer on it as in BAR's game
 	function()
 		if not before.ctl then
 			return
@@ -691,6 +694,14 @@ cases = {
 		verify("controller game switched: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: BAR DROID", WG.BarDroidPad.note())
 		verify("controller game switched: the pad moves the camera",
 			math.sqrt((cs.px - before.ctl.px) ^ 2 + (cs.pz - before.ctl.pz) ^ 2) > 50)
+		verify("controller game: v0.8.5's build menu kept in BAR's place", WG.buildmenu and WG.buildmenu.controllerApiVersion
+			and WG.bardroidBuildmenu and WG.bardroidBuildmenu ~= WG.buildmenu)
+		before.warps = {}
+		if not POINTER then
+			WG.bardroidBuildmenu.droidSetWarp(function(x, y)
+				before.warps[#before.warps + 1] = { x, y }
+			end)
+		end
 		touch("act pad_build")
 		return 0.3
 	end,
@@ -699,31 +710,35 @@ cases = {
 			return
 		end
 		local B = WG.buildmenu
-		before.ctlFocus = B.controllerGetFocus and B.controllerGetFocus().unitDefID
-		verify("controller game: RB puts v0.8.5's build menu on the pad", before.ctlFocus ~= nil
-			and (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("^focus buildapi\n"), readFile("LuaUI/Config/bardroid_pad.txt"))
-		touch("act pad_right")
+		verify("controller game switched: v0.8.5's build menu panel hidden", B.controllerGetPanelVisible() == false)
+		verify("controller game switched: the app's 3x3 menu shows", WG.bardroidBuildmenu.getIsShowing())
+		local _, _, pages = WG.bardroidBuildmenu.droidGrid()
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		verify("controller game: RB puts the app's build menu on the pad, the pointer onto it", focus ~= nil
+			and (POINTER or #before.warps >= 1) and (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("^focus build\n"),
+			readFile("LuaUI/Config/bardroid_pad.txt"))
+		before.ctlFocus, before.ctlPage, before.ctlPages = focus, page, pages
+		touch("act pad_page_next") -- (RB on the menu)
 		return 0.3
 	end,
 	function()
 		if not before.ctl then
 			return
 		end
-		local B = WG.buildmenu
-		local focus = B.controllerGetFocus().unitDefID
-		verify("controller game: the D-pad steps through it", focus ~= nil and focus ~= before.ctlFocus,
-			tostring(before.ctlFocus) .. " -> " .. tostring(focus))
-		touch("act pad_select") -- (A: the building picked, the menu let go)
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		verify("controller game: RB on the menu turns the page", before.ctlPages < 2 or (page == before.ctlPage % before.ctlPages + 1
+			and focus ~= before.ctlFocus), tostring(before.ctlPage) .. " -> " .. tostring(page))
+		touch("act pad_page_prev") -- (LB on the menu)
 		return 0.3
 	end,
 	function()
 		if not before.ctl then
 			return
 		end
-		local _, active = Spring.GetActiveCommand()
-		verify("controller game: A picks the building", active and active < 0 and WG.buildmenu.controllerGetFocus().unitDefID == nil,
-			tostring(active))
-		touch("act cancel")
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		verify("controller game: LB on the menu turns it back", page == before.ctlPage and focus == before.ctlFocus,
+			tostring(page) .. ", " .. tostring(focus))
+		touch("act pad_back")
 		touch("act mod_v085")
 		return 0.3
 	end,
@@ -732,6 +747,9 @@ cases = {
 			return
 		end
 		verify("controller game switched back: the note", WG.BarDroidPad.note() == "CONTROLLER MOD: v0.8.5", WG.BarDroidPad.note())
+		verify("controller game switched back: v0.8.5's panel again, the app's menu hidden",
+			WG.buildmenu.controllerGetPanelVisible() == true and not WG.bardroidBuildmenu.getIsShowing())
+		WG.bardroidBuildmenu.droidSetWarp(nil)
 		Spring.SelectUnitArray({})
 	end,
 	function()
@@ -765,14 +783,14 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local armed, shape, rects = WG.buildmenu.droidPlace()
+		local armed, shape, rects = WG.bardroidBuildmenu.droidPlace()
 		verify("build menu: a building picked shows the shape strip", armed and #rects == 4,
 			string.format("%s, %d buttons", tostring(armed), #rects))
 		verify("build menu: ONE to start", shape == "one", shape)
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: the app told the shape and the PLACE button", text:match("^place one\ndone %d+ %d+ %d+ %d+\n$"),
 			text)
-		local panel = WG.buildmenu.droidPanel()
+		local panel = WG.bardroidBuildmenu.droidPanel()
 		local o = WG.ordermenu
 		if panel and o and o.getPosition and o.getIsShowing() then -- (as the layout editor finds the order menu)
 			local x, y, w = o.getPosition()
@@ -783,12 +801,12 @@ cases = {
 		before.facing = Spring.GetBuildFacing()
 		for _, r in ipairs(rects) do
 			if r[5] == "grid" then
-				verify("build menu: GRID tapped", WG.buildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
+				verify("build menu: GRID tapped", WG.bardroidBuildmenu.droidPress((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
 			end
 		end
 		if panel then
 			local r = panel.rotate
-			verify("build menu: rotate inside PLACE", WG.buildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
+			verify("build menu: rotate inside PLACE", WG.bardroidBuildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2))
 		end
 		-- a tap on the middle of the map (RtsTouch: "spot <x> <y>", X screen pixels)
 		touch(string.format("spot %d %d", cx, cy))
@@ -799,8 +817,8 @@ cases = {
 			return
 		end
 		Spring.SendCommands("screenshot png") -- the strip, PLACE and the spot (build\touch-widget-test\data\screenshots)
-		local armed, shape = WG.buildmenu.droidPlace()
-		local _, spot = WG.buildmenu.droidPanel()
+		local armed, shape = WG.bardroidBuildmenu.droidPlace()
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
 		verify("build menu: GRID chosen", armed and shape == "grid", shape)
 		verify("build menu: rotate turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
 			before.facing .. " -> " .. Spring.GetBuildFacing())
@@ -817,13 +835,13 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local panel, spot = WG.buildmenu.droidPanel()
+		local panel, spot = WG.bardroidBuildmenu.droidPanel()
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: a spot under the menu is not told to the app", spot ~= nil and not text:find("spot"), text)
 		touch("spot none") -- (RtsTouch after PLACE)
 		if panel then
 			local r = panel.cancel
-			WG.buildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
+			WG.bardroidBuildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)
 		end
 		return 0.5
 	end,
@@ -832,8 +850,8 @@ cases = {
 			return
 		end
 		local _, id = Spring.GetActiveCommand()
-		local armed, shape = WG.buildmenu.droidPlace()
-		local panel, spot = WG.buildmenu.droidPanel()
+		local armed, shape = WG.bardroidBuildmenu.droidPlace()
+		local panel, spot = WG.bardroidBuildmenu.droidPanel()
 		verify("build menu: cancel puts the building away", not armed and (id == nil or id >= 0), tostring(id))
 		verify("build menu: no PLACE and no spot after", panel == nil and spot == nil)
 		verify("build menu: the next building starts with ONE", shape == "one", shape)
@@ -843,7 +861,7 @@ cases = {
 		-- recorded, not made, unless -Pointer.
 		before.warps = {}
 		if not POINTER then
-			WG.buildmenu.droidSetWarp(function(x, y)
+			WG.bardroidBuildmenu.droidSetWarp(function(x, y)
 				before.warps[#before.warps + 1] = { x, y }
 			end)
 		end
@@ -854,7 +872,7 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local focus, page = WG.buildmenu.droidFocus()
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
 		before.first = (page - 1) * 9 + 1
 		verify("pad: RB puts the menu's first option on the pad", focus == before.first,
 			tostring(focus) .. " on page " .. tostring(page))
@@ -872,7 +890,7 @@ cases = {
 			return
 		end
 		verify("pad: the option drawn bigger and outlined", padDraw.ok, padDraw.err)
-		local focus = WG.buildmenu.droidFocus()
+		local focus = WG.bardroidBuildmenu.droidFocus()
 		verify("pad: D-pad right, right, down: the right column, a row down", focus == before.first + 5, tostring(focus))
 		touch("act pad_left")
 		touch("act pad_left")
@@ -883,11 +901,32 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local focus, page = WG.buildmenu.droidFocus()
-		local _, _, pages, count = WG.buildmenu.droidGrid()
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		local _, _, pages, count = WG.bardroidBuildmenu.droidGrid()
 		local want = math.min(count, (pages - 1) * 9 + 3 + 2 + 1)
 		verify("pad: past the left edge, the page before (the last), its right column", page == pages and focus == want,
 			string.format("%s on page %s (want %d on %d)", tostring(focus), tostring(page), want, pages))
+		before.pageFocus = focus
+		touch("act pad_page_next") -- (RB on the menu, Kailil: "pressing RB or LB cycles the tabs"; from the last, the first)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local focus, page = WG.bardroidBuildmenu.droidFocus()
+		verify("pad: RB on the menu: the next page (from the last, the first), the same place", page == 1
+			and focus == before.pageFocus - (select(3, WG.bardroidBuildmenu.droidGrid()) - 1) * 9,
+			string.format("%s on page %s", tostring(focus), tostring(page)))
+		touch("act pad_page_prev")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local focus = WG.bardroidBuildmenu.droidFocus()
+		verify("pad: LB on the menu: the page before (the last again)", focus == before.pageFocus, tostring(focus))
 		before.warps = {}
 		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do -- (A on it: BAR's own menu picks it)
 			if cmd.id < 0 then
@@ -901,7 +940,7 @@ cases = {
 		if not before.bm then
 			return
 		end
-		verify("pad: a building picked off the menu lets go of the menu", WG.buildmenu.droidFocus() == nil)
+		verify("pad: a building picked off the menu lets go of the menu", WG.bardroidBuildmenu.droidFocus() == nil)
 		verify("pad: the app told the focus is over, a building picked",
 			readFile("LuaUI/Config/bardroid_pad.txt") == "focus none\npregame 0\narmed build\n",
 			readFile("LuaUI/Config/bardroid_pad.txt"))
@@ -916,7 +955,7 @@ cases = {
 		verify("pad: D-pad right turns the building", Spring.GetBuildFacing() == (before.facing + 1) % 4,
 			before.facing .. " -> " .. Spring.GetBuildFacing())
 		touch("act cancel") -- (B: the building put away)
-		WG.buildmenu.droidSetWarp(nil)
+		WG.bardroidBuildmenu.droidSetWarp(nil)
 		-- the order menu on the pad (Back + RB; bardroid_pad.lua)
 		if not POINTER then
 			WG.BarDroidPad.setWarp(function(x, y)
@@ -1037,6 +1076,37 @@ cases = {
 		verify("pad: LB + B stops", Spring.GetUnitCommandCount(before.com) == 0, Spring.GetUnitCommandCount(before.com))
 		WG.BarDroidPad.setWarp(nil)
 		Spring.SelectUnitArray({})
+		-- v0.8.5's area select (A held with nothing picked): the commander in the middle of the screen
+		local x, y, z = Spring.GetUnitPosition(before.com)
+		Spring.SetCameraTarget(x, y, z, 0)
+		return 0.5
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		touch("act area_on")
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		local on, radius, count = WG.BarDroidPad.area()
+		local sel = Spring.GetSelectedUnits()
+		verify("pad: the area select picks the unit under its circle", on and count >= 1 and sel[1] == before.com,
+			string.format("%s, radius %s, %s units, %d selected", tostring(on), tostring(radius), tostring(count), #sel))
+		touch("act area_bigger")
+		touch("act area_cancel") -- (B: undone)
+		return 0.3
+	end,
+	function()
+		if not before.com then
+			return
+		end
+		local on, radius = WG.BarDroidPad.area()
+		verify("pad: the D-pad makes the circle bigger, B undoes the selection", not on and radius == 400
+			and #Spring.GetSelectedUnits() == 0, tostring(radius))
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
 	function()
@@ -1073,9 +1143,9 @@ end
 
 -- The build menu's gamepad highlight, drawn once for the pad cases (no pointer over the menu without -Pointer)
 function widget:DrawScreen()
-	if padDraw.cell and WG.buildmenu and WG.buildmenu.droidDrawHover then
+	if padDraw.cell and WG.bardroidBuildmenu and WG.bardroidBuildmenu.droidDrawHover then
 		local list = gl.CreateList(function() end)
-		padDraw.ok, padDraw.err = pcall(WG.buildmenu.droidDrawHover, padDraw.cell, list)
+		padDraw.ok, padDraw.err = pcall(WG.bardroidBuildmenu.droidDrawHover, padDraw.cell, list)
 		gl.DeleteList(list)
 		padDraw.cell = nil
 	end

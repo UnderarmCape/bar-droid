@@ -39,9 +39,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   PulseAudio.
 - **Input.** Touch: `RtsTouch` turns gestures into lines in files under `LuaUI/Config`, read by
   `bardroid_touch.lua` (camera, pinch, tilt, "is the finger on BAR's interface"). Gamepads: `ControllerBridge`
-  streams `BARCTRL1` packets over UDP 28777 to BAR Controller Support (the singleplayer game) and to the touch widget's
-  pad camera online. Mouse and keyboard: Termux:X11's delivery; `KeyboardShortcuts` keeps Android's own shortcuts
-  out of the game.
+  streams `BARCTRL1` packets over UDP 28777 to BAR Controller Support (v0.8.5, the singleplayer game); in BAR's own
+  game `PadGame` rebuilds v0.8.5's controls from X mouse and key events (the pointer held in the middle, the camera
+  through the touch widget's pad lines, the rest as actions to `bardroid_pad.lua`); in the lobby the pad is a mouse.
+  In the controller game a triple tap switches between the two. Mouse and keyboard: Termux:X11's delivery;
+  `KeyboardShortcuts` keeps Android's own shortcuts out of the game.
 - **BAR's settings.** `launch-bar.sh` puts the Android layer over BAR's and the lobby's saved settings at every start
   (phone graphics, interface scale per Fold screen, widget orders and switches) and reports `!!! ANDROID LAYER` when
   a target it edits is gone. BAR's sandbox refuses widget toggles from user widgets, so they go in here.
@@ -54,13 +56,16 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   `bardroid_players.lua` (small player list), `bardroid_spectate.lua` (spectating by touch: player cameras, follow,
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
   `bardroid_minimap.lua` (minimap small until tapped, unfolded), `bardroid_layout.lua` (the layout editor: panels
-  register with `WG.BarDroidLayout` and read their settings from it), `bardroid_queue.lua`, `bardroid_bench.lua`.
+  register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
+  copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, the touch building's shape strip and PLACE button, the
+  gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
+  select, LB orders), `bardroid_queue.lua`, `bardroid_bench.lua`.
 
 ## Source map
 
 | Where | What |
 |---|---|
-| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `AudioPump`, `Updater`, `LobbyBridge`, `KeyboardShortcuts`, `PerfLog`, `LogShare` |
+| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `KeyboardShortcuts`, `PerfLog`, `LogShare` |
 | `app/src/main/assets/bardroid/` | `setup-container.sh`, `launch-bar.sh`, `springsettings.cfg`, the Lua widgets |
 | `app/src/main/assets/gamepad/` | BAR Controller Support v0.8.5, packed by `tools/build-gamepad-game.py` |
 | `app/src/main/jniLibs/<abi>/` | prebuilt helpers (proot, busybox, talloc, ANGLE, virgl), rebuilt by `tools/` |

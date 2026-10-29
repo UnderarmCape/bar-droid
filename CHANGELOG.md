@@ -33,7 +33,8 @@ The first version meant for other people's phones: everything since the first bu
   info panel and the spectate bar (and set their text size and padding), and size BAR's minimap and player list; kept
   separately for folded and unfolded. BAR's interface scale unfolded is 1.0 (was 1.3). The build menu is the app's
   copy of BAR's Build menu (the same menu, as a 3x3 grid: 9 options a page, the page arrows in a strip under
-  them), so the editor moves and sizes it too; it steps aside for BAR's own when a
+  them), so the editor moves and sizes it too; in the controller game it shows while the app's gamepad controls
+  have the pad (a triple tap switches); it steps aside for BAR's own when a
   BAR update changes that menu, and for the gamepad's in the controller game.
 - Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER, and a
   big green PLACE button (rotate and cancel inside) covers the order menu. A tap on the map picks the spot, PLACE
@@ -48,9 +49,9 @@ The first version meant for other people's phones: everything since the first bu
   the left stick pans, the right stick turns and zooms, A selects and places, X is the smart order, B cancels; RB and
   Back + RB put the build and order menus on the pad (the D-pad steps, the option on the pad highlighted, the
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
-  queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); A or X held draws (box select, paths, area
-  circles); the pointer glides back to the middle. In the controller game a triple tap switches between v0.8.5 and
-  these controls.
+  queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
+  path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
+  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu).
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 

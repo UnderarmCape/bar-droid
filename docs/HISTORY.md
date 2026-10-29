@@ -5,6 +5,26 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The gamepad, second round of notes; the 3x3 menu in the controller game (2026-10-29, night)
+Kailil, testing in the controller game: "What happened to my 3x3 build menu grid? its gone and now its displaying the
+huge list again", RB "doing a weird selector system, i dont want that, i want a mouse cursor, with a stroke just like
+the orders", "pressing RB or LB cycles the tabs", the menus' hold "too long. make it a quarter long", the order menu's
+pointer "increase speed by a quarter", the touch PLACE button "not even putting the place box over the orders box",
+and "when holding A to select units ... is it not possible to do the 0.8.5 method". The phone's log showed the
+controller game (GAMEPAD_GAME=1), where the app's copy stood down for v0.8.5's build menu. Now it runs beside it there
+(`WG.bardroidBuildmenu`; BAR's `WG.buildmenu` stays v0.8.5's, which v0.8.5's radials read) and shows while the app's
+controls have the pad: `bardroid_pad.lua` sets `WG.BarDroidOwnsBuildMenu` on the switch and hides v0.8.5's panel
+through v0.8.5's own `controllerSetPanelVisible(false)`, from `DrawGenesis` (v0.8.5's camera widget sets that switch
+again in each Update; after every Update and before anything is drawn or clicked, the app's wins). The PLACE button
+and the touch spot work in both modes. The v0.8.5-selector path is gone. RB and LB on the build menu turn its pages
+(the same place on the next or previous page; RB held there stays Alt). The menus let go after 0.25 s of pushing off;
+the order menu's pointer at 5/8 speed. v0.8.5's area select (read from `ControllerCameraTestSelectAreaUnits`: radius
+320, 120..1200 in 80s on the D-pad, units first, RT including buildings and toggling into the selection): A held
+past 0.25 s with nothing picked lets the click go and a circle in the middle selects the units it passes over while
+the left stick pans; B undoes it. With an order picked A held still draws with the pointer. touch-widget-test: the
+pages, the area select in BAR's game; in the controller game the switch hides v0.8.5's panel, shows the 3x3 menu, RB,
+the pages, and the way back. padgame-test: the pages, the area select, the order menu's speed.
+
 ## The gamepad: Kailil's notes from playing it (2026-10-29)
 Kailil, while playing: the LB grid placement of v0.8.5 to be copied "1 to 1 overwriting what you have now" (the touch
 buttons left for touch); the pointer kept inside the build and order menus, let go on B or "constantly move the left

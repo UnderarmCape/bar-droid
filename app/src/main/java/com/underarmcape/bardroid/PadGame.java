@@ -29,17 +29,19 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *                elsewhere it glides back (Kailil: "make sure that snap back is smooth and not jerky")
  *   left stick   pans the map under it (LT held: faster); right stick turns (x) and zooms (y), LB + right stick tilts
  *   A            left click there: select (twice: that type on screen), place a building
- *   X            BAR's right click there (the smart action: move, attack, repair, reclaim, guard)
- *   A or X held  the left stick moves the pointer instead (BAR counts a drag only when the pointer moves): box select,
- *                a path (X), an area circle, a row of buildings; let go: the order, and the pointer glides back
+ *   A held       nothing picked: v0.8.5's area select - a circle in the middle selects the units it passes over while
+ *                the left stick pans (RT: added to the selection, buildings too; D-pad: the circle bigger or smaller;
+ *                B: undone). With an order picked the left stick moves the pointer instead (BAR counts a drag only when
+ *                the pointer moves): an area circle, a row of buildings; let go: the order, the pointer glides back
+ *   X            BAR's right click there (the smart action: move, attack, repair, reclaim, guard); held: the left stick
+ *                draws a path
  *   B            cancel the order or building picked, else clear the selection
  *   RT held      Shift (queue)                    RB held  Space (put the order first; on the build menu Alt: a
  *                                                          factory queues it first)
  *   RB tap       the build menu (the D-pad steps through it, the pointer kept on it, A picks, X takes one off a
- *                factory's queue, B leaves; in the controller game v0.8.5's own build menu, through its controller
- *                calls: "buildapi")
+ *                factory's queue, RB / LB the next / previous page, B leaves)
  *   Back + RB    the order menu, the same way (A gives the order: targeted ones go back to the middle to aim; the
- *                pointer at half speed there)
+ *                pointer at 5/8 speed there)
  *   D-pad        right / left: next / previous idle builder; down: the commander; up: camera bookmark (LT + up: store)
  *   LB + D-pad   right / left: next / previous idle unit of the rest; down: every idle unit of the last one's type
  *   LB + A/X/Y   fight (attack the enemy there) / attack / patrol, at the middle; LB + B: stop (twice: repeat; held: wait)
@@ -57,7 +59,9 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
 final class PadGame {
     private static final long RB_TAP_MS = 220, ASSIGN_HOLD_MS = 350, LB_B_DOUBLE_MS = 350, LB_B_HOLD_MS = 500;
     private static final long STICKY_TAP_MS = 350, CANCEL_RELEASE_MS = 250, GLIDE_MS = 160, BACK_TAP_MS = 300;
-    private static final float FINE_AIM = 0.35f, ON_INTERFACE = 0.6f, ON_ORDERS = 0.5f;
+    private static final long AREA_SELECT_MS = 250;   // A held this long with nothing picked: v0.8.5's area select
+    // (the order menu: half speed, then Kailil: "increase speed by a quarter now")
+    private static final float FINE_AIM = 0.35f, ON_INTERFACE = 0.6f, ON_ORDERS = 0.5f * 1.25f;
 
     private final PadMouse mouse;
     private final boolean[] prev = new boolean[COUNT];
@@ -71,6 +75,7 @@ final class PadGame {
     private float gx, gy;
     private long aDownAt = -1, cancelAt = -1;      // A's press; a cancelled drag lets go of the button then
     private boolean sticky;                        // a drag started by a tap of A, ended by the next press
+    private boolean areaCandidate, areaSelect;     // A down with nothing picked (a click, or held: the area select)
     private long rbDownAt = -1, startLeftAt = -1, lbBDownAt = -1, lbBTapAt = -1, backDownAt = -1;
     private boolean rbUsed, startLeftDone, lbBHeld, backUsed;
     private int groupSlot = 1;
@@ -96,7 +101,8 @@ final class PadGame {
         if (alt) { alt = false; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false); }
         java.util.Arrays.fill(prev, false);
         rbDownAt = startLeftAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = -1;
-        sticky = drawing = false;
+        if (areaSelect) mouse.act("area_off");
+        sticky = drawing = areaCandidate = areaSelect = false;
         centreWanted = waitForPad = true;
     }
 
@@ -110,8 +116,7 @@ final class PadGame {
         if (active) waitForPad = false;
         else if (waitForPad) glideAt = -1;   // (touch or a mouse has the pointer: no glide pulls it away)
         String focus = mouse.padFocus();
-        // (the order menu, and in the controller game v0.8.5's build menu, take A and X as actions: "buildapi")
-        boolean menu = !focus.equals("none"), ordersMenu = focus.equals("orders") || focus.equals("buildapi");
+        boolean menu = !focus.equals("none"), ordersMenu = focus.equals("orders"), buildMenu = focus.equals("build");
         String armed = menu ? "none" : mouse.armed();   // the order or building picked: build, area, unitarea, other
         boolean picked = armed.equals("build");
         boolean free = mouseMode != mouse.pregame();   // (before the start the pointer is free, as in v0.8.5)
@@ -138,26 +143,26 @@ final class PadGame {
             backDownAt = -1;
         }
 
-        // RB: a quick tap the build menu; held past the tap (or with another button) a modifier
+        // RB: a quick tap the build menu (on it: its next page); held past the tap (or with another button) a modifier
         if (!back && pressed(tapped, RB)) { rbDownAt = now; rbUsed = false; }
         if (held[RB] && rbDownAt >= 0 && !rbUsed && (now - rbDownAt > RB_TAP_MS || anyFace(tapped))) rbUsed = true;
         boolean rbHeld = held[RB] && rbUsed && rbDownAt >= 0;
-        boolean buildMenu = focus.equals("build") || focus.equals("buildapi");
         boolean wantSpace = rbHeld && !buildMenu;
         if (wantSpace != space) { space = wantSpace; mouse.key(KeyEvent.KEYCODE_SPACE, wantSpace); }
         boolean wantAlt = (lb && picked) || (rbHeld && buildMenu);
         if (wantAlt != alt) { alt = wantAlt; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, wantAlt); }
         if (released(held, tapped, RB)) {
-            if (rbDownAt >= 0 && !rbUsed) mouse.act("pad_build");
+            if (rbDownAt >= 0 && !rbUsed) mouse.act(buildMenu ? "pad_page_next" : "pad_build");
             rbDownAt = -1;
         }
+        if (buildMenu && pressed(tapped, LB)) mouse.act("pad_page_prev");   // (Kailil: "pressing RB or LB cycles the tabs")
 
         boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb);
 
         // The pointer: drawing (a mouse button held in the middle's place) the left stick moves it; else in the middle,
         // gliding back to it; free (a menu, Back+Start, before the start) the left stick moves it
         boolean wasDrawing = drawing;
-        drawing = reticle && (leftDown || rightDown);
+        drawing = reticle && ((leftDown && !areaCandidate) || rightDown);
         if (drawing && !wasDrawing) { glideAt = -1; px = mouse.width() / 2f; py = mouse.height() / 2f; }
         if (!drawing && wasDrawing && reticle) glideFrom(px, py, now);
         if (reticle && !drawing) {
@@ -187,9 +192,10 @@ final class PadGame {
             dpad(tapped, "pad_up", "pad_down", "pad_left", "pad_right");
             if (pressed(tapped, B)) mouse.act("pad_back");
             if (ordersMenu && pressed(tapped, A)) mouse.act("pad_select");
-            if (focus.equals("buildapi") && pressed(tapped, X)) mouse.act("pad_x");   // (one off a factory's queue)
         } else if (picked) {
             dpad(tapped, "spacing_up", "spacing_down", "rotate_left", "rotate_right");
+        } else if (areaSelect) {   // (v0.8.5: the D-pad sizes the circle)
+            dpad(tapped, "area_bigger", "area_smaller", "area_smaller", "area_bigger");
         } else {
             playButtons(held, tapped, lb, start, back, lt, now, bTaken);
         }
@@ -205,6 +211,20 @@ final class PadGame {
     private boolean buttons(boolean[] held, boolean[] tapped, long now, boolean menu, boolean ordersMenu, boolean picked,
                             String armed, boolean lb) {
         boolean stickyKind = !menu && ((picked && lb) || armed.equals("area"));
+        // v0.8.5's area select (Kailil: "when holding A to select units ... is it not possible to do the 0.8.5 method"):
+        // nothing picked, A held past a tap - the click is let go and bardroid_pad.lua's circle selects; B undoes it
+        if (areaSelect) {
+            if (pressed(tapped, B)) { areaSelect = false; mouse.act("area_cancel"); return true; }
+            if (!held[A]) { areaSelect = false; mouse.act("area_off"); }
+            return false;
+        }
+        if (areaCandidate && leftDown && held[A] && now - aDownAt >= AREA_SELECT_MS) {
+            areaCandidate = false;
+            leftUp();
+            areaSelect = true;
+            mouse.act("area_on");
+            return false;
+        }
         if (sticky) {
             if (cancelAt >= 0) {   // B: the order or building put away first, then the button let go
                 if (now - cancelAt >= CANCEL_RELEASE_MS) { sticky = false; cancelAt = -1; leftUp(); }
@@ -226,9 +246,11 @@ final class PadGame {
             if (reticle && !drawing) centreNow();
             aDownAt = now;
             leftDown = true;
+            areaCandidate = reticle && !menu && !lb && armed.equals("none");
             mouse.button(true, true);
         }
         if (leftDown && !held[A]) {
+            areaCandidate = false;
             if (stickyKind && aDownAt >= 0 && now - aDownAt < STICKY_TAP_MS) sticky = true;   // a tap: the drag goes on
             else leftUp();
         }

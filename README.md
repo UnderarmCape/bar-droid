@@ -87,12 +87,12 @@ factions' matching unit too.
   | Left stick | Pan the map under the pointer (LT held: faster) |
   | Right stick | Turn (left/right) and zoom (up/down); with LB held, tilt |
   | A | Select (twice: that type on screen); place a building |
-  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard) |
-  | A or X held | The left stick moves the pointer instead: box select, a path (X), an area circle (repair, reclaim), a row of buildings; let go and the pointer glides back to the middle |
+  | A held | Nothing picked: v0.8.5's area select - a circle in the middle selects your units as you pan (RT: added to the selection, buildings too; D-pad: bigger or smaller; B: undo). With an order picked, the left stick moves the pointer instead: an area circle (repair, reclaim), a row of buildings; let go and it glides back to the middle |
+  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard); held, the left stick draws a path |
   | B | Cancel the order or building picked, else clear the selection |
   | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
-  | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a second of pushing off it, lets go), the D-pad steps (past the left or right edge: the page before or after), the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
-  | Back + RB | The order menu, the same way (the pointer at half speed): A gives the order (one that needs a target: aim it in the middle, A) |
+  | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
+  | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A) |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
   | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait). With builders, A repair and X reclaim (A on the target) |
@@ -103,7 +103,8 @@ factions' matching unit too.
   | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |
 
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
-  to compare them ("CONTROLLER MOD: ..."); there RB drives v0.8.5's own build menu.
+  to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
+  takes v0.8.5's build menu's place.
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
