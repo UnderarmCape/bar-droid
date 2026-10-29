@@ -5,6 +5,24 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Overnight hardening, no phone (2026-10-29, night)
+Kailil went to bed ("spend all your time doing the permanent hardening and bug fixing ... don't try to reach the
+phone tonight"): laptop checks only, the APKs built and not installed. Found and fixed:
+- The widgets' files for the app (the pointer's answer, the game, the building picked, the pad's menu) were rewritten
+  in place; `io.open "w"` empties a file first, and the app reads them many times a second: an empty read could
+  place a building without PLACE, drop the pad's menu, or (the game file, read once per time stamp) name the wrong
+  game for a match. All are written to a `.tmp` and renamed now (3eb6c84).
+- The pad's LB orders aimed at the mouse pointer, not the reticle (wrong while it glides back; patrol or fight on a
+  unit only picked the order); they aim at the middle (3eb6c84). The order menu kept an order lit that the menu had
+  moved from under a resting pointer (e2f7477). The build menu copy's D-pad stuck on the last page's last option
+  (06e016d).
+- The laptop was throttled (4-8 fps, the screen off), which broke the touch test itself: a fixed 240 s stop, toasts
+  faded before their checks, moves walked before R3 came, BARb's first raid ending the game, a patrol to where the
+  commander stood (the engine ends it at once). The test stops when its log stands still, plays against NullAI and
+  holds its queues (3eb6c84, ce956be); the order menu's following and letting go now run in it with a made-up pointer.
+- Open, for the phone: a touch tap waiting for the game's answer (up to 250 ms) can click in the middle of a newer
+  gesture (`RtsTouch`, DELIVERY.md).
+
 ## The gamepad, second round of notes; the 3x3 menu in the controller game (2026-10-29, night)
 Kailil, testing in the controller game: "What happened to my 3x3 build menu grid? its gone and now its displaying the
 huge list again", RB "doing a weird selector system, i dont want that, i want a mouse cursor, with a stroke just like
