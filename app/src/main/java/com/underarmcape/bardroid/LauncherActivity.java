@@ -89,13 +89,30 @@ public class LauncherActivity extends AppCompatActivity {
     private void refresh() {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
-        statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s + "\n" + Updater.summary(BarApp.get().paths()));
+        // (again on each refresh: Android restarts the app within a second of ending it and files the reason a moment
+        // later, so the launcher it restores asked too early)
+        GameService.noteLowMemoryExit(this);
+        String note = GameService.exitNote();
+        statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s + (note != null ? "\n" + note : "")
+                + "\n" + Updater.summary(BarApp.get().paths()));
     }
 
     private void appendLog(String line) {
         logView.append(line + "\n");
         if (logView.getLineCount() > 2500) logView.setText(Log.dump());
         logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
+    }
+
+    /**
+     * Less memory than a BAR game needs: an 8 GB phone reports ~7.2 GB and Android ends the game while it loads (a
+     * Galaxy S23 Ultra, 2026-10-29: the engine's GPU memory alone ~3 GB); a 12 GB phone reports ~11 GB.
+     */
+    static boolean tooLittleRam(android.content.Context c) {
+        android.app.ActivityManager am = c.getSystemService(android.app.ActivityManager.class);
+        if (am == null) return false;
+        android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+        am.getMemoryInfo(mi);
+        return mi.totalMem < 9_500_000_000L;
     }
 
     private String deviceSummary() {
@@ -114,7 +131,12 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append("Free storage: ").append(Downloader.human(st.getAvailableBytes())).append(" (need ~6 GB)\n");
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
         android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
-        if (am != null) { am.getMemoryInfo(mi); sb.append("RAM: ").append(Downloader.human(mi.totalMem)).append(" (a match uses about 5-6 GB, part of it in swap)\n"); }
+        if (am != null) {
+            am.getMemoryInfo(mi);
+            sb.append("RAM: ").append(Downloader.human(mi.totalMem));
+            if (tooLittleRam(this)) sb.append(" — too little: a game needs a 12 GB phone; with 8 GB Android closes it while it loads\n");
+            else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
+        }
         sb.append("Engine: ").append(Prefs.engineVersion).append("  Driver: ").append(Prefs.mesaDriver);
         return sb.toString();
     }

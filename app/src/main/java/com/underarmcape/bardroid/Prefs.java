@@ -194,4 +194,13 @@ public final class Prefs {
     public static void setLobbyFailedFast(Context ctx, boolean failed) {
         ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putBoolean("lobbyFailedFast", failed).apply();
     }
+
+    /** The time of the last low-memory end of the app already told (GameService.noteLowMemoryExit). */
+    public static long lowMemoryExitSeen(Context ctx) {
+        return ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).getLong("lowMemoryExitSeen", 0);
+    }
+
+    public static void setLowMemoryExitSeen(Context ctx, long time) {
+        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit().putLong("lowMemoryExitSeen", time).apply();
+    }
 }

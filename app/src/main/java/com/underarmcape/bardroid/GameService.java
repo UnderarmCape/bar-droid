@@ -45,6 +45,42 @@ public class GameService extends Service {
 
     public static String status() { return status; }
     public static boolean busy() { return busy; }
+    /** Why the last game ended when the player did not end it (the launcher shows it); null: nothing to say. */
+    public static String exitNote() { return exitNote; }
+    private static volatile String exitNote;
+
+    private static String lowMemoryNote(android.content.Context c) {
+        return "Android closed the game: the phone ran out of memory"
+                + (LauncherActivity.tooLittleRam(c) ? " (a game needs a 12 GB phone)." : ". Close other apps and try again.");
+    }
+
+    /**
+     * At the app's start (Android 11+): Android ended the app's last process for lack of memory while it was in front,
+     * as on an 8 GB phone when the game loads, where the app goes with the engine (2026-10-29: the player only saw the
+     * app start again). The launcher says so, once per such end. True when there is something to say.
+     */
+    private static boolean exitLogged;
+    static boolean noteLowMemoryExit(android.content.Context c) {
+        if (android.os.Build.VERSION.SDK_INT < 30 || busy) return false;
+        android.app.ActivityManager am = c.getSystemService(android.app.ActivityManager.class);
+        if (am == null) return false;
+        java.util.List<android.app.ApplicationExitInfo> exits;
+        try { exits = am.getHistoricalProcessExitReasons(c.getPackageName(), 0, 1); } catch (Exception e) { return false; }
+        if (exits.isEmpty()) return false;
+        android.app.ApplicationExitInfo e = exits.get(0);
+        if (!exitLogged) {   // (once per process: how the app's last run ended, for the shared logs)
+            exitLogged = true;
+            Log.i("app", "the last run ended: " + e.getDescription() + ", reason " + e.getReason() + ", importance "
+                    + e.getImportance() + ", " + new java.util.Date(e.getTimestamp()));
+        }
+        if (e.getReason() != android.app.ApplicationExitInfo.REASON_LOW_MEMORY
+                || e.getImportance() > android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE
+                || e.getTimestamp() <= Prefs.lowMemoryExitSeen(c)) return false;
+        Prefs.setLowMemoryExitSeen(c, e.getTimestamp());
+        exitNote = lowMemoryNote(c);
+        Log.i("app", "the last run ended for lack of memory (importance " + e.getImportance() + "): " + exitNote);
+        return true;
+    }
 
     @Override public IBinder onBind(Intent intent) { return null; }
 
@@ -128,6 +164,7 @@ public class GameService extends Service {
 
     private void play(String mode) {
         updater = null;
+        exitNote = null;
         Installer inst = new Installer(this, paths);
         if (!inst.isInstalled() && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
@@ -216,6 +253,12 @@ public class GameService extends Service {
                         if (audio != null) audio.stop();
                     }
                     setStatus("engine exited (" + rc + ")");
+                    if (rc == 137 && !closing) {
+                        // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing
+                        // first). Without a word the player only saw the launcher come back (an 8 GB phone, 2026-10-29).
+                        exitNote = lowMemoryNote(this);
+                        Log.i("svc", exitNote);
+                    }
                     if (up == null || closing) break;
                     // The first start of a BAR update failed fast: once more on the last good version, same display.
                     Updater.Result r = up.launchEnded(rc, android.os.SystemClock.elapsedRealtime() - started);

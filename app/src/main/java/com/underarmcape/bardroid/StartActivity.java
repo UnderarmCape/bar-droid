@@ -50,7 +50,9 @@ public class StartActivity extends Activity {
             }
             return;
         }
-        if (!Prefs.autoLobby || !new Installer(this, BarApp.get().paths()).isInstalled() || Prefs.lobbyFailedFast(this)) {
+        boolean lowMemoryExit = GameService.noteLowMemoryExit(this);   // (the launcher says why the game ended)
+        if (!Prefs.autoLobby || !new Installer(this, BarApp.get().paths()).isInstalled() || Prefs.lobbyFailedFast(this)
+                || lowMemoryExit) {
             if (Prefs.lobbyFailedFast(this)) Log.i("app", "the lobby failed on its last start: showing the launcher");
             openLauncher();
             finish();
