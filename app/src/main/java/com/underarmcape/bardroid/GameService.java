@@ -195,8 +195,8 @@ public class GameService extends Service {
                 int got = new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
                         java.util.Arrays.asList("map", map, Prefs.engineVersion));
                 if (got != 0) {
-                    exitNote = "Map \"" + map + "\" is not on the phone and did not download: check its name under"
-                            + " Settings, and the connection.";
+                    exitNote = "Map \"" + map + "\" is not on the phone and did not download: check its name at Map"
+                            + " (skirmish) below, and the connection.";
                     Log.i("svc", exitNote);
                     setStatus("no map");
                     return;

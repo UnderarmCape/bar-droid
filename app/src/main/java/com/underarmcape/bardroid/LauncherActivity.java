@@ -135,8 +135,8 @@ public class LauncherActivity extends AppCompatActivity {
               .append("virpipe".equals(Prefs.mesaDriver) ? "on the GPU through Android's GLES (virgl)" : "on the CPU (llvmpipe), slow")
               .append("; ").append(Runtime.getRuntime().availableProcessors()).append(" CPU cores\n");
         else
-            sb.append(adreno ? "GPU: Qualcomm Adreno (/dev/kgsl-3d0 present) — supported\n"
-                             : "GPU: no /dev/kgsl-3d0 — not an Adreno GPU; Mesa Freedreno/Turnip will not work on this phone\n");
+            sb.append(adreno ? "GPU: Qualcomm Adreno, supported\n"
+                             : "GPU: not a Qualcomm Adreno: BAR's graphics will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
         sb.append("Free storage: ").append(Downloader.human(st.getAvailableBytes())).append(" (need ~6 GB)\n");
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
@@ -185,8 +185,11 @@ public class LauncherActivity extends AppCompatActivity {
             Prefs.workerThreads = Integer.parseInt(((EditText) findViewById(R.id.edWorkers)).getText().toString().trim());
         } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
         String map = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
-        if (!map.equals(Prefs.mapName)) Prefs.mapChosen = true;   // (the player's from now on, also on an 8 GB phone)
-        Prefs.mapName = map;
+        if (map.isEmpty()) ((EditText) findViewById(R.id.edMap)).setText(Prefs.mapName);   // (no game starts on no map)
+        else {
+            if (!map.equals(Prefs.mapName)) Prefs.mapChosen = true;   // (the player's from now on, also on an 8 GB phone)
+            Prefs.mapName = map;
+        }
         Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().trim();
         boolean alt = ((CheckBox) findViewById(R.id.cbZink)).isChecked();
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");

@@ -1315,7 +1315,13 @@ end
 function widget:IsAbove(x, y)
 	return inQueueButton(x, y)
 end
+-- Presses before the first draws go no further (2026-10-30): BAR's music widget reads its buttons before it has any, and
+-- BAR takes a widget that fails out of the game: no music, no volume sliders. A tap while the game loads comes in just then.
+local draws = 0
 function widget:MousePress(x, y)
+	if draws < 2 then
+		return true
+	end
 	if inQueueButton(x, y) then
 		queue.on = not queue.on
 		return true
@@ -1424,6 +1430,7 @@ end
 
 -- The reticle in the middle of the screen while the pad is the input (and its pointer is there), and the notes
 function widget:DrawScreen()
+	draws = math.min(draws + 1, 2)
 	local vsx, vsy = Spring.GetViewGeometry()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"

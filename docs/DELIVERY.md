@@ -301,6 +301,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       real Shift and looked the button up only at a touch, so with the pad it stayed down. It now follows the file.
       Checked on the dev phone without a pad (`adb shell input keyevent KEYCODE_BUTTON_SELECT` counts as one, a triple tap
       by `input tap` as a triple tap): Shift down with QUEUE on, up at the press, and it stays up.
+- [x] A tap as a game finished loading took BAR's music widget out for the whole game (2026-10-30, found by chance): it
+      reads its buttons before its first draw, the press fails it, and BAR removes a widget that fails: no music, no
+      volume sliders. 3 taps did it; a tap queued up during the load arrives just then, and a fold's LuaUI reload has the
+      same moment. `bardroid_pad.lua` (before it in the order) now keeps presses from going on until two draws are done:
+      30 presses before the first draw on the dev phone, no error, the widget stays.
+- [x] The launcher's map setting (2026-10-30): a blank name is not saved (built, not tried on a phone: the keyboard
+      kept the Save button out of the test's reach), and the note for a map that did not download names the real field.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 
