@@ -214,8 +214,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       that time does not end it; its fallback click (no answer: a plain click) can then come in the middle of the new
       gesture (a drag's button held). Rare (a second touch within 250 ms of a tap the game has not answered). Fixed
       2026-10-29: the waiting tap is decided at the next touch down, before that touch moves the pointer (its late
-      answer, else its click, in order). Not yet checked in a game on a phone: the dev phone (8 GB) cannot load one
-      (HELP-WANTED.md); Kailil's next Fold7 build carries it. A touch-building try on the dev phone with
+      answer, else its click, in order). Not yet checked in a game on a phone: the dev phone (8 GB) could not load one
+      then (it plays in the low-memory mode since the evening of 2026-10-29); Kailil's next Fold7 build carries it. A touch-building try on the dev phone with
       `CompressTextures = 1` (its games load then) ended at the first tap on the build menu: Android ended the app
       for lack of memory again, so that mode has no headroom for play. It showed another bug: Android restored the
       launcher with its first intent (`start skirmish`, also `start bench`), and the game started all over by

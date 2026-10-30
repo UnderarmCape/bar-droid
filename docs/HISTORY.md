@@ -5,22 +5,61 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
-## Fitting BAR into an 8 GB phone (2026-10-29, evening)
+## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
 idea was a run on the dev phone (`tools/phone-memory.ps1`: a skirmish started by intent, `start skirmish`, with engine
 settings for that run only through `dev-springsettings.cfg`, background apps stopped first; the engine's GPU memory
 from Android's GL mtrack, its heap resident and swapped, the phone's available memory every 5 s; build\phone-memory.csv).
 Android's resident total includes the GPU memory mapped into the engine; the engine's own heap shows as "Unknown"
 (the container's allocator is not Android's). The engine's `--list-config-vars` named the memory settings to try.
-Result: only `CompressTextures = 1` decides it (GPU ~2.75 → ~2.45 GB): 5 of 5 runs played on, up to a full 10 minutes
-of game (frame 18379, x1), the phone's free memory steady at ~600 MB; 9 of 9 runs without it were ended while
-loading or at the first frames. No help: Lua pools off and faster GC, map texture streaming, 2048 atlases, no model
-preloading (BAR loads them anyway), no sound, 70% render resolution, no deferred buffers. But compression breaks the
-unit icon atlas (icons are black squares) and the projectile perlin texture, on Windows too, also when switched off
-again after loading (the engine reads the setting once): an engine bug, drafted for Recoil
-(`docs/upstream/recoil-compresstextures-fbo.md`). Not for players as it is; the dev phone keeps it
-(`dev-springsettings.cfg`) so its games load for the agents' in-game tests. `touch-widget-test.ps1 -Settings` adds
-engine settings to a laptop run.
+First result: only `CompressTextures = 1` decided it (GPU ~2.75 → ~2.45 GB): 5 of 5 runs played on, up to a full 10
+minutes of game (frame 18379, x1), the phone's free memory steady at ~600 MB; 9 of 9 runs without it were ended while
+loading or at the first frames. No help on their own: Lua pools off and faster GC, map texture streaming, 2048
+atlases, no model preloading (BAR loads them anyway), no sound, 70% render resolution, no deferred buffers. But
+compression breaks the unit icon atlas (icons are black squares) and the projectile perlin texture, on Windows too,
+also when switched off again after loading (the engine reads the setting once): an engine bug, drafted for Recoil
+(`docs/upstream/recoil-compresstextures-fbo.md`). `touch-widget-test.ps1 -Settings` adds engine settings to a laptop
+run.
+
+Kailil then: "Do whatever is necessary to make it playable on low memory phones" (could the app pretend every phone
+has 12 GB? No: Android's low-memory killer acts on the memory really in use). The evening's runs, now with taps on the
+map so the game is played, were less kind than the first five: compression alone was ended in most of them. What
+was found, and what the app does now on phones under 9.5 GB (launch-bar.sh `LOW_MEMORY`, automatic; 12 GB phones
+unchanged):
+- **The black icons, fixed in the app.** The engine loads GL through GLAD's own loader (`dlopen("libGL.so.1")`, then
+  `glXGetProcAddressARB` from that handle; never `SDL_GL_GetProcAddress`), so `libbardroid_pace.so` wraps `dlsym`:
+  asked for `glXGetProcAddress(ARB)` it hands back a wrapper whose `glFramebufferTexture2D(EXT)` gives a compressed
+  texture uncompressed RGBA8 storage before it is attached (`BARDROID_FBO_UNCOMPRESS=1`): `atlasRendered=1`, no perlin
+  warning. Every other `dlsym` is a tail call (`musttail`): glibc finds `RTLD_NEXT` from its caller's address.
+- **Where the memory goes.** Android's resident total for the engine includes its GPU memory; inside, glibc's malloc
+  held only ~1.65 GB of ~4.1 GB: the engine links mimalloc (four 1 GiB arenas, ~2.35 GB used, live and mostly swapped
+  out; `MIMALLOC_*` options are read, purging gave nothing back), and the 128 MB blocks in glibc were the engine's
+  **Lua memory pools**: 32 size classes of 4 MB each, every page written when a pool is made, nine of them in a game
+  (1.15 GB, mostly swapped out), while BAR's Lua uses ~150 MB in all. `UseLuaMemPools = 0` (and
+  `TextureMemPoolSize = 0`): the engine ~1.1 GB smaller (5.8 instead of 6.9 GB resident plus swapped). Phone-wide at
+  80 s into a game: 7.24 GB of RAM, of it 2.25 GB unevictable (GPU), 1.97 GB zram holding 5.7 GB of swapped pages, the
+  rest the system and caches. A GPU allocation log (a test build of the pace library, every texture and buffer of
+  2 MB or more with the engine function that made it) found BAR's two projectile texture atlases at 8176x6056 and
+  6616x6152 (`MaxTextureAtlasSize*` does not limit them), a 4096x4096 half-float BumpWater shore-wave texture
+  (128 MB), a 160 MB model buffer, 7 stream buffers of 16 MB; QTPFS says its own footprint is 379 MB.
+- **BAR's GL4 unit shaders came back.** `cus2 = 0` keeps BAR's CUS GL4 gadget from starting when LuaRules loads, but
+  in the controller game ("Beyond All Reason $VERSION": BAR's developer mode) BAR's Options widget sees 3 GB or more
+  of GPU memory (the engine reports the phone's RAM, 7072 MB, also with Mesa's NVX/ATI memory extensions hidden) and
+  switches them back on at the game's start; switched off again afterwards (`luarules disablecusgl4`) gave no memory
+  back. `bardroid_lowmem.lua` (layer below BAR's Options) puts cus2 back to 1 once LuaRules has seen 0, so BAR's
+  check finds nothing to switch: 60-100 MB of GPU less. In BAR's own game the phone's GPU counts as a low-end one and
+  BAR never switches them on.
+- The mode: `UseLuaMemPools 0`, `TextureMemPoolSize 0`, `CompressTextures 1` (with the pace fix), `cus2 0` (with the
+  widget), `BumpWaterShoreWaves 0`, `GroundDecals 0`, map texture streaming, 2048 atlases, no deferred buffers, no
+  high-resolution info texture. GPU at most ~2.5 GB (was ~2.75), the engine ~5.7 GB resident plus swapped (was ~7.2).
+- **Result:** 4 of 6 five-minute skirmishes with taps ran through (frame ~7190), the plain app 2 of 3 with nothing
+  set by hand; the others ended while loading or in the first minutes, the phone's free memory always down to
+  550-650 MB. Playable, with little to spare: close other apps first. The launcher says "low-memory mode" for such a
+  phone, and Android's ending says so. Fps in these games: 12.5 over the first minute (swapping in), 23 the next.
+  Not tried: an online game (the dev phone never logs in). What is left is BAR's own (projectile atlases, map
+  textures, the pathfinder) or the engine's.
+- `tools\pace-test.ps1` ran a helper (`files/crun.sh`) the app never writes: now the app's own `files/container.sh`
+  (ALL PASS on the dev phone with the shipped library).
 
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this

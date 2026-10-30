@@ -110,10 +110,11 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     /**
-     * Less memory than a BAR game needs: an 8 GB phone reports ~7.2 GB and Android ends the game while it loads (a
-     * Galaxy S23 Ultra, 2026-10-29: the engine's GPU memory alone ~3 GB); a 12 GB phone reports ~11 GB.
+     * An 8 GB phone (it reports ~7.2 GB; a 12 GB phone ~11 GB): launch-bar.sh starts the game in its low-memory mode
+     * there (MemTotal under the same 9.5 GB), without which Android ended every game while it loaded (a Galaxy S23
+     * Ultra, 2026-10-29).
      */
-    static boolean tooLittleRam(android.content.Context c) {
+    static boolean lowRam(android.content.Context c) {
         android.app.ActivityManager am = c.getSystemService(android.app.ActivityManager.class);
         if (am == null) return false;
         android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
@@ -140,7 +141,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (am != null) {
             am.getMemoryInfo(mi);
             sb.append("RAM: ").append(Downloader.human(mi.totalMem));
-            if (tooLittleRam(this)) sb.append(" — too little: a game needs a 12 GB phone; with 8 GB Android closes it while it loads\n");
+            if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail; close other apps before a game\n");
             else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
         }
         sb.append("Engine: ").append(Prefs.engineVersion).append("  Driver: ").append(Prefs.mesaDriver);

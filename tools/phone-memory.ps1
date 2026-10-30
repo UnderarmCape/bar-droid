@@ -5,10 +5,13 @@
 # phone, never swapped), its resident and swapped memory and the phone's available memory. Prints the peaks, how far
 # the game got (its last simulated frame) and whether Android ended it; each run is added to build\phone-memory.csv.
 # Runs on the dev phone (..\phone-device.txt), one heavy run at a time (..\phone-bench.lock).
-#   powershell -ExecutionPolicy Bypass -File tools\phone-memory.ps1 [-Mode skirmish|bench] [-Settings @{ Water = 0 }]
-#     [-Seconds 150] [-Label text] [-Device serial]
+#   powershell -ExecutionPolicy Bypass -Command "& tools\phone-memory.ps1 [-Mode skirmish|bench] [-Settings @{ Water = 0 }]
+#     [-Env @{ MALLOC_ARENA_MAX = 2 }] [-Scale 70] [-Map 'Starwatcher 1.0'] [-Seconds 150] [-Label text] [-Device serial]"
+#   (-Command, not -File: a hashtable does not pass through -File)
 param([ValidateSet("skirmish", "bench")][string]$Mode = "skirmish", [hashtable]$Settings = @{}, [int]$Seconds = 150,
-  [string]$Label = "", [string]$Device = "", [int]$Scale = 0)   # -Scale: the app's render resolution for the run (100, 85, 70)
+  [string]$Label = "", [string]$Device = "", [int]$Scale = 0,   # -Scale: the app's render resolution for the run (100, 85, 70)
+  [hashtable]$Env = @{},   # -Env: the engine's environment for the run (dev-env.sh, which launch-bar.sh sources), e.g. @{ MALLOC_ARENA_MAX = 2 }
+  [string]$Map = "")   # -Map: the skirmish's map for the run (the app's map setting; on the phone already, e.g. "Starwatcher 1.0")
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $App = Split-Path -Parent $PSScriptRoot
@@ -49,9 +52,13 @@ function RunAs([string]$script) {
   try { $null = & $adb -s $Device push $tmp /data/local/tmp/bardroid-runas.sh 2>&1 } finally { $ErrorActionPreference = $eap }
   & $adb -s $Device shell "run-as $pkg sh -c 'cat /data/local/tmp/bardroid-runas.sh > files/bardroid-runas.sh; sh files/bardroid-runas.sh'"
 }
-$userScale = $null
+$userScale = $null; $userMap = $null
 try {
   & $adb -s $Device shell "am force-stop $pkg"
+  if ($Map) {   # (the player's own map back afterwards)
+    $userMap = (RunAs "sed -n 's/.*<string name=`"mapName`">\([^<]*\)<.*/\1/p' shared_prefs/bardroid.xml | head -n 1" | Out-String).Trim()
+    RunAs "f=shared_prefs/bardroid.xml; sed -i '/name=`"mapName`"/d' `$f; sed -i 's|</map>|    <string name=`"mapName`">$Map</string>\n</map>|' `$f"
+  }
   if ($Scale) {   # (as tools\phone-bench.ps1 -Scale; the player's own value back afterwards)
     $userScale = (RunAs "sed -n 's/.*name=`"renderScale`" value=`"\([0-9-]*\)`".*/\1/p' shared_prefs/bardroid.xml | head -n 1" | Out-String).Trim()
     RunAs "f=shared_prefs/bardroid.xml; sed -i '/name=`"renderScale`"/d' `$f; sed -i 's|</map>|    <int name=`"renderScale`" value=`"$Scale`" />\n</map>|' `$f"
@@ -59,10 +66,13 @@ try {
   $lines = @($Settings.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Name) = $($_.Value)" })
   # (launch-bar.sh appends the file to springsettings.cfg and the engine saves that file at its end: the run's settings
   # would stay for every game after; the file as it was goes back afterwards)
-  # (a dev-springsettings.cfg the phone keeps, as the dev phone's CompressTextures = 1, is set aside for the run, so a
-  # run measures the app's own settings plus the run's, and goes back afterwards)
-  & $adb -s $Device shell "run-as $pkg sh -c 'cp files/bar/springsettings.cfg files/bar/.springsettings.pre-memory; [ -f files/bar/dev-springsettings.cfg ] && mv files/bar/dev-springsettings.cfg files/bar/.dev-springsettings.pre-memory; true'"
+  # (developer files the phone keeps, dev-springsettings.cfg and dev-env.sh, are set aside for the run, so a run
+  # measures the app's own settings plus the run's, and go back afterwards)
+  & $adb -s $Device shell "run-as $pkg sh -c 'cp files/bar/springsettings.cfg files/bar/.springsettings.pre-memory; [ -f files/bar/dev-springsettings.cfg ] && mv files/bar/dev-springsettings.cfg files/bar/.dev-springsettings.pre-memory; [ -f files/bar/dev-env.sh ] && mv files/bar/dev-env.sh files/bar/.dev-env.pre-memory; true'"
   AppFile "files/bar/dev-springsettings.cfg" ($lines -join "`n")
+  $envLines = @($Env.GetEnumerator() | Sort-Object Name | ForEach-Object { "export $($_.Name)=$($_.Value)" })
+  AppFile "files/bar/dev-env.sh" ($envLines -join "`n")
+  $lines += $envLines
   & $adb -s $Device shell "am kill-all"
   Start-Sleep 3
   $sampler = Join-Path $PSScriptRoot "phone-memory.sh"
@@ -89,7 +99,12 @@ try {
 } finally {
   & $adb -s $Device shell "am force-stop $pkg"
   AppFile "files/bar/dev-springsettings.cfg" ""
-  & $adb -s $Device shell "run-as $pkg sh -c '[ -f files/bar/.springsettings.pre-memory ] && mv files/bar/.springsettings.pre-memory files/bar/springsettings.cfg; [ -f files/bar/.dev-springsettings.pre-memory ] && mv files/bar/.dev-springsettings.pre-memory files/bar/dev-springsettings.cfg; true'"
+  AppFile "files/bar/dev-env.sh" ""
+  & $adb -s $Device shell "run-as $pkg sh -c '[ -f files/bar/.springsettings.pre-memory ] && mv files/bar/.springsettings.pre-memory files/bar/springsettings.cfg; [ -f files/bar/.dev-springsettings.pre-memory ] && mv files/bar/.dev-springsettings.pre-memory files/bar/dev-springsettings.cfg; [ -f files/bar/.dev-env.pre-memory ] && mv files/bar/.dev-env.pre-memory files/bar/dev-env.sh; true'"
+  if ($Map) {
+    $backMap = if ($userMap) { "sed -i 's|</map>|    <string name=`"mapName`">$userMap</string>\n</map>|' `$f" } else { "true" }
+    RunAs "f=shared_prefs/bardroid.xml; sed -i '/name=`"mapName`"/d' `$f; $backMap"
+  }
   if ($Scale) {
     $back = if ($userScale) { "sed -i 's|</map>|    <int name=`"renderScale`" value=`"$userScale`" />\n</map>|' `$f" } else { "true" }
     RunAs "f=shared_prefs/bardroid.xml; sed -i '/name=`"renderScale`"/d' `$f; $back"

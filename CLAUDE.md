@@ -34,14 +34,17 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   (display + gamepad), `Prefs` (`EMULATOR_BUILD`, URLs per ABI, `putGpuEnv`), `ControllerBridge`, `AudioPump`.
 - `app/src/main/assets/bardroid/` — `setup-container.sh` (apt/mesa/engine/content/import), `launch-bar.sh` (GPU env,
   glcheck, the Android layer over BAR's and the lobby's saved settings at every start: phone graphics `PHONE_GFX`,
-  interface scale, widget orders; spring), `springsettings.cfg` (preset; emulator overrides in
+  the low-memory mode under 9.5 GB of RAM `LOW_MEMORY` (with `bardroid_lowmem.lua`), interface scale, widget orders;
+  spring), `springsettings.cfg` (preset; emulator overrides in
   `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
   into the engine: the frame cap after `SDL_GL_SwapWindow`, the ioctl answer that puts lfdevs' Mesa on its
   explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), and SDL2 HIDDEN/SHOWN window
   events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing) or a joined game is
   being caught up far behind (`/tmp/bardroid-catchup`, from `bardroid_touch.lua`'s `bardroid_catchup.txt` via
   `GameActivity`), and SDL2's display size answers that follow fold/unfold (the game window's size: SDL keeps the
-  startup screen, the engine's screen matrices went wrong after a fold); `tools/pace-test.ps1`).
+  startup screen, the engine's screen matrices went wrong after a fold), and in the low-memory mode
+  (`BARDROID_FBO_UNCOMPRESS`) a `dlsym` wrapper around the engine's GL lookup that stores a compressed texture
+  uncompressed when it is attached to a framebuffer; `tools/pace-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).

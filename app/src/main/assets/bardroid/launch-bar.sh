@@ -199,6 +199,35 @@ for kv in $PHONE_GFX; do
   else echo "$k = $v" >> "$BAR/springsettings.cfg"; fi
   [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i "s/^\([[:space:]]*$k = \)[0-9.-]*,/\1$v,/" "$BAR/LuaMenu/Config/IGL_data.lua"
 done
+# Phones with less than 9.5 GB (8 GB: Android ended every game while it loaded, docs/HISTORY.md "Fitting BAR into an
+# 8 GB phone"): over 1 GB less engine memory, all client settings (online-safe). The 12 GB phones keep the above.
+#   UseLuaMemPools 0       the engine's Lua pools take 128 MB each (32 size classes of 4 MB, every page written when
+#                          the pool is made), nine of them in a game: 1.15 GB, while BAR's Lua uses ~150 MB in all
+#   TextureMemPoolSize 0   no memory set aside for loading pictures
+#   CompressTextures 1     textures compressed on the GPU (~300 MB less GPU memory, which a phone can never swap);
+#                          the two textures the engine draws into come back uncompressed (libbardroid_pace.so,
+#                          BARDROID_FBO_UNCOMPRESS; else unit icons draw as black squares)
+#   cus2 0                 BAR's GL4 unit shaders off (BAR's cus_gl4.lua): the engine's plainer unit shading; the
+#                          controller game would switch them back on, which bardroid_lowmem.lua (BarDroidLowMemory)
+#                          prevents
+#   BumpWaterShoreWaves 0  no foam along the shores (BAR's water setting; a 4096x4096 half-float texture, 128 MB)
+#   GroundDecals 0         no tracks and scorch marks on the ground (BAR does the same for a low-end GPU in its game)
+#   SMFTextureStreaming, MaxTextureAtlasSize* 2048, AllowDeferred*Rendering 0, HighResInfoTexture 0: smaller map and
+#                          atlas textures, no G-buffers (nothing on the phone reads them: lights and decals are off)
+mem_kb=$(sed -n 's/^MemTotal:[[:space:]]*\([0-9]*\).*/\1/p' /proc/meminfo)
+if [ "${mem_kb:-0}" -gt 0 ] && [ "$mem_kb" -lt 9277343 ]; then
+  LOW_MEMORY="UseLuaMemPools=0 TextureMemPoolSize=0 CompressTextures=1 cus2=0 BarDroidLowMemory=1
+    BumpWaterShoreWaves=0 GroundDecals=0 SMFTextureStreaming=1 MaxTextureAtlasSizeX=2048 MaxTextureAtlasSizeY=2048
+    AllowDeferredMapRendering=0 AllowDeferredModelRendering=0 HighResInfoTexture=0"
+  for kv in $LOW_MEMORY; do
+    k=${kv%%=*}; v=${kv#*=}
+    if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
+    else echo "$k = $v" >> "$BAR/springsettings.cfg"; fi
+    [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ] && sed -i "s/^\([[:space:]]*$k = \)[0-9.-]*,/\1$v,/" "$BAR/LuaMenu/Config/IGL_data.lua"
+  done
+  export BARDROID_FBO_UNCOMPRESS=1
+  log "low-memory mode ($((mem_kb / 1024)) MB of RAM): $(echo $LOW_MEMORY)"
+fi
 # and BAR's full-screen effects off (order 0 = disabled; BAR's settings can switch them on again until the next start):
 # bloom, ambient occlusion, heat distortion, snow, the mirrored map beyond its edges; and the lights' screen-space
 # shadows (a full-screen pass, BAR's default 2) in that widget's saved settings. (A user widget cannot do it: BAR

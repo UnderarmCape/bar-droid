@@ -241,3 +241,129 @@ void SDL_GL_SwapWindow(void *window) {
     struct timespec until = { (long) (next_ns / 1000000000LL), (long) (next_ns % 1000000000LL) };
     while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &until, 0) == EINTR) {}
 }
+
+/*
+ * Phones with 8 GB (BARDROID_FBO_UNCOMPRESS=1, set by launch-bar.sh with CompressTextures = 1): the engine's runtime
+ * texture compression is the one client setting that brings a BAR game into an 8 GB phone (GPU memory ~2.75 -> ~2.45
+ * GB, docs/HISTORY.md), but the engine also compresses two textures it later draws into, the unit icon atlas and the
+ * projectile drawer's perlin noise, and their framebuffers fail ("FBO-TEXTURE-RENDER-ATLAS: None/Unsupported
+ * textures/buffers attached!", icons as black squares; on Windows too: docs/upstream/recoil-compresstextures-fbo.md).
+ * The engine loads GL through GLAD's own loader: dlopen("libGL.so.1"), dlsym(that, "glXGetProcAddressARB"), then every
+ * function through it (no SDL_GL_GetProcAddress, and a dlsym on a handle passes by every LD_PRELOAD). So dlsym itself
+ * is wrapped: asked for glXGetProcAddress(ARB), it hands back a wrapper that, for glFramebufferTexture2D(EXT), hands
+ * back the wrapper below, which gives a compressed 2D texture uncompressed RGBA8 storage of the same size (every level
+ * that has one) before it is attached. Its contents go, which is right for a texture about to be drawn into. Without
+ * BARDROID_FBO_UNCOMPRESS=1 the dlsym wrapper only passes every call on to glibc's.
+ */
+typedef unsigned int GLenum;
+typedef unsigned int GLuint;
+typedef int GLint;
+typedef int GLsizei;
+#define GL_TEXTURE_2D 0x0DE1
+#define GL_TEXTURE_BINDING_2D 0x8069
+#define GL_TEXTURE_WIDTH 0x1000
+#define GL_TEXTURE_HEIGHT 0x1001
+#define GL_TEXTURE_COMPRESSED 0x86A1
+#define GL_RGBA8 0x8058
+#define GL_RGBA 0x1908
+#define GL_UNSIGNED_BYTE 0x1401
+extern long write(int fd, const void *buf, unsigned long n);
+
+typedef void *(*getproc_fn)(const char *name);
+typedef void (*fbtex2d_fn)(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level);
+static getproc_fn real_getproc;
+static fbtex2d_fn real_fbtex2d, real_fbtex2d_ext;
+static void (*gl_get_integerv)(GLenum, GLint *);
+static void (*gl_bind_texture)(GLenum, GLuint);
+static void (*gl_get_tex_level_parameteriv)(GLenum, GLint, GLenum, GLint *);
+static void (*gl_tex_image_2d)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *);
+static int fbo_uncompress = -1;   /* -1: not read yet */
+static int uncompressed_count;
+
+static int same(const char *a, const char *b) {
+    while (*a && *a == *b) { a++; b++; }
+    return *a == *b;
+}
+
+static void say(const char *s) {
+    unsigned long n = 0;
+    while (s[n]) n++;
+    write(2, s, n);
+}
+
+static void uncompress_target(GLenum textarget, GLuint texture) {
+    if (!texture || textarget != GL_TEXTURE_2D || !gl_tex_image_2d || !gl_get_integerv || !gl_bind_texture
+        || !gl_get_tex_level_parameteriv) return;
+    GLint before = 0;
+    gl_get_integerv(GL_TEXTURE_BINDING_2D, &before);
+    gl_bind_texture(GL_TEXTURE_2D, texture);
+    int changed = 0;
+    for (GLint level = 0; level < 16; level++) {
+        GLint compressed = 0, w = 0, h = 0;
+        gl_get_tex_level_parameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_WIDTH, &w);
+        gl_get_tex_level_parameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_HEIGHT, &h);
+        if (w <= 0 || h <= 0) break;
+        gl_get_tex_level_parameteriv(GL_TEXTURE_2D, level, GL_TEXTURE_COMPRESSED, &compressed);
+        if (!compressed) break;
+        gl_tex_image_2d(GL_TEXTURE_2D, level, GL_RGBA8, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+        changed = 1;
+    }
+    gl_bind_texture(GL_TEXTURE_2D, (GLuint) before);
+    if (changed && uncompressed_count++ < 8) say("[pace] a compressed texture attached to a framebuffer: stored uncompressed\n");
+}
+
+static void fbtex2d_wrap(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {
+    uncompress_target(textarget, texture);
+    real_fbtex2d(target, attachment, textarget, texture, level);
+}
+
+static void fbtex2d_ext_wrap(GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level) {
+    uncompress_target(textarget, texture);
+    real_fbtex2d_ext(target, attachment, textarget, texture, level);
+}
+
+/* glXGetProcAddress(ARB) as the engine gets it: the attach functions wrapped, the rest as they are */
+static void *glx_getproc_wrap(const char *proc) {
+    void *p = real_getproc ? real_getproc(proc) : 0;
+    if (!p || !proc) return p;
+    int ext = same(proc, "glFramebufferTexture2DEXT");
+    if (!ext && !same(proc, "glFramebufferTexture2D")) return p;
+    if (!gl_tex_image_2d) {
+        gl_get_integerv = (void (*)(GLenum, GLint *)) real_getproc("glGetIntegerv");
+        gl_bind_texture = (void (*)(GLenum, GLuint)) real_getproc("glBindTexture");
+        gl_get_tex_level_parameteriv = (void (*)(GLenum, GLint, GLenum, GLint *)) real_getproc("glGetTexLevelParameteriv");
+        gl_tex_image_2d = (void (*)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *))
+            real_getproc("glTexImage2D");
+    }
+    if (ext) { real_fbtex2d_ext = (fbtex2d_fn) p; return (void *) fbtex2d_ext_wrap; }
+    real_fbtex2d = (fbtex2d_fn) p;
+    say("[pace] framebuffer textures: compressed ones stored uncompressed when attached (BARDROID_FBO_UNCOMPRESS)\n");
+    return (void *) fbtex2d_wrap;
+}
+
+/* glibc's dlsym (2.34 and later in libc, before that in libdl; aarch64's and x86_64's first versions) */
+extern void *dlvsym(void *handle, const char *symbol, const char *version);
+typedef void *(*dlsym_fn)(void *handle, const char *symbol);
+static dlsym_fn glibc_dlsym;
+
+/* glibc's dlsym finds RTLD_NEXT's "next" from its caller's return address: every call that is not the GL lookup is a
+   tail call (musttail), so glibc sees the real caller, not this library */
+void *dlsym(void *handle, const char *symbol) {
+    if (!glibc_dlsym) {
+        glibc_dlsym = (dlsym_fn) dlvsym(RTLD_NEXT, "dlsym", "GLIBC_2.34");
+        if (!glibc_dlsym) glibc_dlsym = (dlsym_fn) dlvsym(RTLD_NEXT, "dlsym", "GLIBC_2.17");
+        if (!glibc_dlsym) glibc_dlsym = (dlsym_fn) dlvsym(RTLD_NEXT, "dlsym", "GLIBC_2.2.5");
+        if (!glibc_dlsym) return 0;
+    }
+    if (fbo_uncompress < 0) {
+        const char *v = getenv("BARDROID_FBO_UNCOMPRESS");
+        fbo_uncompress = v && v[0] == '1';
+    }
+    if (!fbo_uncompress || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
+        || !(same(symbol, "glXGetProcAddressARB") || same(symbol, "glXGetProcAddress")))
+        __attribute__((musttail)) return glibc_dlsym(handle, symbol);
+    void *p = glibc_dlsym(handle, symbol);
+    if (!p) return p;
+    real_getproc = (getproc_fn) p;
+    return (void *) glx_getproc_wrap;
+}

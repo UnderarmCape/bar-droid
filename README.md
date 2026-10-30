@@ -23,8 +23,9 @@ direction ([docs/WORKLOG.md](docs/WORKLOG.md)). Help is wanted most with engine-
 ## Phones
 
 A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB of
-RAM and about 6 GB free. Tested on a Galaxy Z Fold7 (Android 17). 8 GB is not enough: on a Galaxy S23 Ultra (8 GB)
-it installs and its graphics work, but Android closes the game while it loads for lack of memory. Phones with Mali,
+RAM and about 6 GB free. Tested on a Galaxy Z Fold7 (Android 17). 8 GB phones get a low-memory mode (plainer unit
+shading, no shore foam or ground scorch marks): on a Galaxy S23 Ultra (8 GB) about 2 in 3 skirmishes play through,
+the others Android closes for lack of memory, so close other apps first; online games there are untested. Phones with Mali,
 Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check says so.
 
 ## Install

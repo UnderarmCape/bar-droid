@@ -30,4 +30,4 @@ $script = "rm -f /tmp/bardroid-hidden; cd /root/bar/pace-test && SDL_VIDEODRIVER
           "LD_PRELOAD=/root/bar/pace-test/libbardroid_pace.so:/root/bar/pace-test/pace_test.so perl -e 1; rm -rf /root/bar/pace-test /tmp/bardroid-hidden"
 $script | Out-File -Encoding ascii -NoNewline (Join-Path $Out "run.sh")
 cmd /c "type `"$(Join-Path $Out 'run.sh')`" | `"$adb`" exec-in run-as $pkg sh -c `"cat > files/bar/pace-test-run.sh`""
-& $adb shell "run-as $pkg sh files/crun.sh 'sh /root/bar/pace-test-run.sh; rm -f /root/bar/pace-test-run.sh'"
+& $adb shell "run-as $pkg sh files/container.sh 'sh /root/bar/pace-test-run.sh; rm -f /root/bar/pace-test-run.sh'"

@@ -34,7 +34,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **Frame pacing.** `libbardroid_pace.so` (`tools/pace/pace.c`), preloaded into the engine: the frame cap after each
   swap (no VSync, so CPU and GPU overlap), an ioctl answer that puts lfdevs' Mesa on its explicit Present fence (the
   swap stops waiting for the GPU), window HIDDEN/SHOWN events while the game screen is hidden or a joined game is
-  caught up, and SDL's display size following fold/unfold.
+  caught up, and SDL's display size following fold/unfold. In the low-memory mode it also wraps the engine's GL
+  lookup (`dlsym` of `glXGetProcAddressARB`) so that a compressed texture gets uncompressed storage when it is
+  attached to a framebuffer (`CompressTextures = 1` otherwise breaks the unit icon atlas: an engine bug).
 - **Audio.** The engine's OpenAL Soft writes waves into a FIFO; `AudioPump` plays them with `AudioTrack`. No
   PulseAudio.
 - **Input.** Touch: `RtsTouch` turns gestures into lines in files under `LuaUI/Config`, read by
@@ -48,7 +50,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   `KeyboardShortcuts` keeps Android's own shortcuts out of the game.
 - **BAR's settings.** `launch-bar.sh` puts the Android layer over BAR's and the lobby's saved settings at every start
   (phone graphics, interface scale per Fold screen, widget orders and switches) and reports `!!! ANDROID LAYER` when
-  a target it edits is gone. BAR's sandbox refuses widget toggles from user widgets, so they go in here.
+  a target it edits is gone. BAR's sandbox refuses widget toggles from user widgets, so they go in here. Phones with
+  less than 9.5 GB of RAM get a low-memory mode on top (Lua memory pools off, compressed textures, BAR's GL4 unit
+  shaders, shore waves and ground decals off; docs/HISTORY.md "Fitting BAR into an 8 GB phone").
 - **Updates.** `Updater` updates engine, game and lobby at every start as BAR's PC launcher does (its launcher
   config), re-applies the layer and rolls back a set that fails on its first start. Content only ever comes from BAR's
   CDN (`pr-downloader`).
@@ -61,7 +65,8 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
   copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
-  select, LB orders), `bardroid_queue.lua`, `bardroid_bench.lua`.
+  select, LB orders), `bardroid_queue.lua`, `bardroid_bench.lua`, `bardroid_lowmem.lua` (keeps BAR's GL4 unit shaders
+  off in the low-memory mode).
 
 ## Source map
 

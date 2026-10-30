@@ -10,7 +10,8 @@
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
-#   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back)
+#   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back) and its
+#                        low-memory mode (an 8 GB phone's settings, a 12 GB phone's untouched)
 #   powershell syntax    every tools\*.ps1 parses
 # The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
 # The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's

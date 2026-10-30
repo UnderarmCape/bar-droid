@@ -23,10 +23,11 @@ the perlin noise texture the projectile drawer renders is missing. Seen on Windo
 2026.09.01, BAR byar:test) and on Linux arm64 (Mesa Freedreno, Adreno 740, engine 2026.07.04). With
 `CompressTextures = 0` (the default) both are fine.
 
-Why it matters: `CompressTextures = 1` is the one client setting that brings BAR into an 8 GB phone (the engine's GPU
-memory, which is RAM on a phone and cannot be swapped, drops from ~2.75 to ~2.45 GB in a 1v1 skirmish; with it the
-game ran 3-10 minutes in every try, without it Android's low-memory killer ended it while loading in every try). If
-render targets kept an uncompressed format whatever `CompressTextures` says, phones with less memory could use it.
+Why it matters: `CompressTextures = 1` is one of the client settings that bring BAR into an 8 GB phone (the engine's
+GPU memory, which is RAM on a phone and cannot be swapped, drops by ~300 MB in a 1v1 skirmish). If render targets
+kept an uncompressed format whatever `CompressTextures` says, phones with less memory could use it as it is. (BAR on
+Android works around it for now: its preloaded library gives a compressed texture uncompressed RGBA8 storage when it
+is attached to a framebuffer, and both FBOs then complete: `atlasRendered=1`, no perlin warning.)
 
 Steps: `CompressTextures = 1`, start any skirmish, look for the lines above in infolog.txt, zoom out until units are
 icons.

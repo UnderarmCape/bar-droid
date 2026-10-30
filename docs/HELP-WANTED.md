@@ -99,13 +99,14 @@ Not solved:
 ## Also open
 
 - Two phones have run it. The Galaxy Z Fold7 (12 GB) plays. A Galaxy S23 Ultra (Snapdragon 8 Gen 2, Adreno 740,
-  8 GB, Android 17) takes the same path (Mesa's Freedreno, OpenGL 4.3, the GL check passes) but runs out of memory:
+  8 GB, Android 17) takes the same path (Mesa's Freedreno, OpenGL 4.3, the GL check passes) but is short of memory:
   with ~3.4 GB available at rest (Samsung's and Google's apps hold ~3 GB; 4.1 GB after `am kill-all`), the engine
   reaches ~2.7 GB resident 30 s into loading a skirmish, the rest is pushed into compressed swap (1-3 fps), and
-  Android's low-memory killer ends it (exit 137), or the whole app, within 1-2 minutes; BAR's benchmark scenario the
-  same, 2 of 2. The app and engine run at oom_score_adj 0 (the top activity): nothing to raise. Mali, Xclipse and
-  Tensor GPUs have no driver path in this stack.
-- A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game, and an 8 GB phone cannot load one (above).
+  without the low-memory mode (below) Android's low-memory killer ended it (exit 137), or the whole app, within 1-2
+  minutes every time; BAR's benchmark scenario the same, 2 of 2. The app and engine run at oom_score_adj 0 (the top
+  activity): nothing to raise. Mali, Xclipse and Tensor GPUs have no driver path in this stack.
+- A match uses 5-6 GB of RAM; Android's low-memory killer has taken the game, and an 8 GB phone plays only in the
+  low-memory mode, with little to spare.
   On the S23 Ultra the engine's GPU memory (Android's `GL mtrack`, ordinary RAM on a phone) reached 2.8 GB within
   90 s of loading a 1v1 skirmish, its CPU side ~3.2 GB resident plus ~4.2 GB swapped; BAR on Windows in the same kind
   of skirmish uses ~2.5 GB of GPU memory too (the laptop's per-process GPU counters), so the footprint is BAR's own,
@@ -116,10 +117,15 @@ Not solved:
   the phone's free memory steady at ~600 MB), where every one of 9 tries without it was ended while loading
   (`tools/phone-memory.ps1`, build\phone-memory.csv). But it breaks two textures the engine draws into: the unit
   icon atlas (icons draw as black squares) and the projectile perlin texture, on Windows too: an engine bug, report
-  drafted in [upstream/](upstream/recoil-compresstextures-fbo.md). Fixed there, 8 GB phones could play with it. No
-  help, alone or together: Lua pools off and faster Lua GC, map texture streaming, 2048 atlases, no model preloading,
-  no sound, 70% render resolution, no deferred buffers or high-precision ground normals. Beyond that it needs BAR or
-  the engine: lower texture detail, GL4 effects that allocate their buffers as they grow, a lighter Lua state.
+  drafted in [upstream/](upstream/recoil-compresstextures-fbo.md); the app works around it (the pace library stores
+  such a texture uncompressed when it is attached to a framebuffer). Phones under 9.5 GB now get a low-memory mode
+  (docs/HISTORY.md "Fitting BAR into an 8 GB phone"): the engine's Lua memory pools off (nine pools of 128 MB, every
+  page written at the start, ~1.1 GB), compression, BAR's GL4 unit shaders (which BAR's Options switch back on in a
+  developer game), shore waves and ground decals off. On the S23 Ultra 4 of 6 five-minute skirmishes ran through, the
+  phone's free memory always at 550-650 MB. What is left is BAR's or the engine's: two projectile texture atlases of
+  8176x6056 and 6616x6152 that `MaxTextureAtlasSize*` does not limit, the map's textures, the pathfinder (379 MB),
+  ~2.35 GB of live engine data in mimalloc, mostly swapped out. Smaller atlases, lower texture detail for low-memory
+  devices and Lua pools that are not written in full up front would each help.
 - The app's touch camera, panels and touch building are LuaUI user widgets: a lobby that turns custom widgets off
   loads none of them (the pad's mouse and keys still work; touch is then mouse clicks only). BAR's Code of Conduct
   asks for custom widgets used on public servers to be posted publicly (#widgets): they are all in

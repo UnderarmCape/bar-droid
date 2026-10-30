@@ -50,8 +50,8 @@ public class GameService extends Service {
     private static volatile String exitNote;
 
     private static String lowMemoryNote(android.content.Context c) {
-        return "Android closed the game: the phone ran out of memory"
-                + (LauncherActivity.tooLittleRam(c) ? " (a game needs a 12 GB phone)." : ". Close other apps and try again.");
+        return "Android closed the game: the phone ran out of memory. Close other apps and try again"
+                + (LauncherActivity.lowRam(c) ? " (an 8 GB phone has little to spare in a game)." : ".");
     }
 
     /**

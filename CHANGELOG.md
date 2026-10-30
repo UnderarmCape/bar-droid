@@ -62,8 +62,10 @@ The first version meant for other people's phones: everything since the first bu
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
   its screen is hidden; a floating window when you leave the game.
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario).
-- When Android closes the game for lack of memory, the launcher says so (before, the app just started again); its
-  device check says when a phone has too little memory for a game (8 GB phones: Android closes it while it loads).
+- When Android closes the game for lack of memory, the launcher says so (before, the app just started again).
+- 8 GB phones play in a low-memory mode, set automatically: over 1 GB less memory (the engine's Lua memory pools off,
+  compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off). On a Galaxy S23 Ultra about 2
+  in 3 skirmishes play through; close other apps first. 12 GB phones are unchanged.
 
 ## 0.1.0 (2026-10-25)
 
