@@ -1010,9 +1010,15 @@ function droid.drawGridShown()
 	if not sx or sz > 1 then
 		sx, sy = vsx / 2, vsy / 2
 	end
+	local alpha = math.max(0, math.min(1, age / 0.08, (droid.gridToast - age) / 0.3))
+	local s = WG.BarDroidStyle
+	if s then -- (the app's controller look: a note in BAR's panel, as the pad's)
+		s.toast("GRID", sx, sy + s.size(0.035), s.BLUE, alpha)
+		return
+	end
 	local size = math.max(16, math_floor(vsy * 0.045))
 	font2:Begin(true)
-	font2:SetTextColor(0.2, 0.8, 1, math.min(1, (droid.gridToast - age) / 0.3))
+	font2:SetTextColor(0.2, 0.8, 1, alpha)
 	font2:SetOutlineColor(0, 0, 0, 0.8)
 	font2:Print("GRID", sx, math.min(vsy - size, sy + size * 1.4), size, "co")
 	font2:End()
@@ -1265,7 +1271,8 @@ function droid.padFocus()
 	end
 end
 
--- BAR Droid: the option under the pointer, with the gamepad: 10% bigger, a gold outline around it
+-- BAR Droid: the option under the pointer, with the gamepad: 10% bigger, a gold line round it (the app's controller
+-- look, WG.BarDroidStyle: as the order on the pad in the order menu)
 function droid.drawHover(cellID, list)
 	local r = cellRects[cellID]
 	if not (r and (droid.focus or WG.BarDroidInput == "pad")) then
@@ -1273,14 +1280,24 @@ function droid.drawHover(cellID, list)
 		return
 	end
 	local cx, cy = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2
-	local t = math.max(2, math_floor((r[3] - r[1]) * 0.035))
 	gl.PushMatrix()
 	gl.Translate(cx, cy, 0)
 	gl.Scale(1.1, 1.1, 1)
 	gl.Translate(-cx, -cy, 0)
-	RectRound(r[1] + cellPadding - t, r[2] + cellPadding - t, r[3] - cellPadding + t, r[4] - cellPadding + t,
-		cornerSize * 1.5, 1, 1, 1, 1, { 1, 0.78, 0.2, 1 }, { 1, 0.92, 0.45, 1 })
 	gl.CallList(list)
+	local s = WG.BarDroidStyle
+	local x0, y0, x1, y1 = r[1] + cellPadding, r[2] + cellPadding, r[3] - cellPadding, r[4] - cellPadding
+	if s then
+		s.outline(x0, y0, x1, y1, s.GOLD, 1)
+	else
+		local t = math.max(2, math_floor((r[3] - r[1]) * 0.03))
+		gl.Color(1, 0.78, 0.25, 1)
+		gl.Rect(x0, y0, x1, y0 + t)
+		gl.Rect(x0, y1 - t, x1, y1)
+		gl.Rect(x0, y0, x0 + t, y1)
+		gl.Rect(x1 - t, y0, x1, y1)
+		gl.Color(1, 1, 1, 1)
+	end
 	gl.PopMatrix()
 end
 

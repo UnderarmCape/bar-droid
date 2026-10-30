@@ -108,8 +108,135 @@ local function freePointer()
 	return mouseMode ~= (Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState())
 end
 
+-- The app's controller interface, one look (Kailil, 2026-10-30: "make them look more polished. not extravagant"): BAR's
+-- own panels (WG.FlowUI's Element: its dark glass, corners and padding) and font, sizes from BAR's interface scale (the
+-- phone sets it per Fold screen, so a note is about as big on the cover screen as on the inner one), and two accents:
+-- gold where the pad is (the focus on a menu, a lit choice), v0.8.5's blue for placing and filters. The app's build
+-- menu draws with it too (WG.BarDroidStyle).
+local style = {
+	GOLD = { 1, 0.78, 0.25 },
+	BLUE = { 0.2, 0.8, 1 },
+	TEXT = { 0.96, 0.92, 0.8 },
+	-- the pad's face buttons in their Xbox colours (a note naming one at its end, "REPAIR: A", shows it as a key)
+	KEYS = { A = { 0.33, 0.66, 0.24 }, B = { 0.82, 0.24, 0.2 }, X = { 0.2, 0.44, 0.88 }, Y = { 0.9, 0.7, 0.1 } },
+}
+
+-- a size from BAR's interface scale: this fraction of the screen's height at scale 1; least: the smallest (10: text)
+function style.size(fraction, least)
+	local _, vsy = Spring.GetViewGeometry()
+	local scale = (WG.FlowUI and WG.FlowUI.scale) or Spring.GetConfigFloat("ui_scale", 1) or 1
+	return math.max(least or 10, math.floor(vsy * fraction * scale + 0.5))
+end
+
+-- BAR's panel, its alpha times alpha
+function style.panel(x0, y0, x1, y1, alpha)
+	local f = WG.FlowUI
+	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
+	if f and f.Draw and f.Draw.Element then
+		local o = math.min(1, (f.opacity or 0.7) + 0.1) * (alpha or 1)
+		f.Draw.Element(x0, y0, x1, y1, 1, 1, 1, 1, 1, 1, 1, 1, o, { 0.03, 0.03, 0.03, o }, { 1, 1, 1, o * 0.07 },
+			math.max(1, math.floor((f.elementPadding or 2) * 0.8)))
+	else
+		gl.Color(0.03, 0.03, 0.03, 0.8 * (alpha or 1))
+		gl.Rect(x0, y0, x1, y1)
+	end
+end
+
+-- (a rounded rect, filled; BAR's own when it is there)
+function style.fill(x0, y0, x1, y1, color, alpha, corner)
+	local f = WG.FlowUI
+	local c = { color[1], color[2], color[3], (color[4] or 1) * (alpha or 1) }
+	local cs = corner or math.max(2, math.floor(math.min(x1 - x0, y1 - y0) * 0.14))
+	if f and f.Draw and f.Draw.RectRound then
+		f.Draw.RectRound(x0, y0, x1, y1, cs, 1, 1, 1, 1, c, c)
+	else
+		gl.Color(c[1], c[2], c[3], c[4])
+		gl.Rect(x0, y0, x1, y1)
+	end
+end
+
+-- an accent line round a rect (the pad's focus, a lit choice), its corners cut as BAR's panels' are; width: about BAR's
+-- element padding
+local function ring(x0, y0, x1, y1, cs, w)
+	local ics = math.max(0, cs - w * 0.586) -- (the cut as thick as the sides)
+	local points = {
+		x1, y1 - cs, x1 - w, y1 - w - ics, x1 - cs, y1, x1 - w - ics, y1 - w,
+		x0 + cs, y1, x0 + w + ics, y1 - w, x0, y1 - cs, x0 + w, y1 - w - ics,
+		x0, y0 + cs, x0 + w, y0 + w + ics, x0 + cs, y0, x0 + w + ics, y0 + w,
+		x1 - cs, y0, x1 - w - ics, y0 + w, x1, y0 + cs, x1 - w, y0 + w + ics,
+		x1, y1 - cs, x1 - w, y1 - w - ics,
+	}
+	gl.BeginEnd(GL.TRIANGLE_STRIP, function()
+		for i = 1, #points, 2 do
+			gl.Vertex(points[i], points[i + 1])
+		end
+	end)
+end
+function style.outline(x0, y0, x1, y1, color, alpha, width)
+	local w = width or style.size(0.0026, 2)
+	local cs = math.max(w + 1, math.floor(math.min(x1 - x0, y1 - y0) * 0.1))
+	gl.Color(color[1], color[2], color[3], alpha or 1)
+	ring(math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1), cs, w)
+	gl.Color(1, 1, 1, 1)
+end
+
+-- (a filled circle)
+function style.disc(x, y, r, color, alpha)
+	gl.Color(color[1], color[2], color[3], (color[4] or 1) * (alpha or 1))
+	gl.BeginEnd(GL.TRIANGLE_FAN, function()
+		gl.Vertex(x, y)
+		for i = 0, 24 do
+			local a = i / 24 * 2 * math.pi
+			gl.Vertex(x + math.cos(a) * r, y + math.sin(a) * r)
+		end
+	end)
+	gl.Color(1, 1, 1, 1)
+end
+
+-- a pad button as a small round key in its colour, its letter on it; size: its side
+function style.key(x0, y0, size, letter, alpha)
+	local c = style.KEYS[letter] or { 0.4, 0.4, 0.4 }
+	local r = size / 2
+	style.disc(x0 + r, y0 + r, r, { c[1] * 0.5, c[2] * 0.5, c[3] * 0.5 }, alpha)
+	style.disc(x0 + r, y0 + r, r - math.max(1, size * 0.08), c, alpha)
+	local font = WG.fonts and WG.fonts.getFont()
+	if font then
+		font:Begin()
+		font:SetTextColor(1, 1, 1, alpha or 1)
+		font:SetOutlineColor(0, 0, 0, 0.5 * (alpha or 1))
+		font:Print(letter, x0 + size / 2, y0 + size * 0.5 - size * 0.62 * 0.36, size * 0.62, "co")
+		font:End()
+	end
+end
+
+-- a short message in a panel, its middle at x and its bottom at y; key: a pad button shown after the words
+function style.toast(text, x, y, color, alpha, key)
+	local font = WG.fonts and WG.fonts.getFont()
+	if not font then
+		return
+	end
+	local size = style.size(0.02)
+	local pad = math.floor(size * 0.75)
+	local chip = key and math.floor(size * 1.3) or 0
+	local gap = key and math.floor(size * 0.5) or 0
+	local tw = math.ceil(font:GetTextWidth(text) * size)
+	local w, h = tw + gap + chip + pad * 2, math.floor(size * 2)
+	local _, vsy = Spring.GetViewGeometry()
+	local x0 = math.floor(x - w / 2)
+	y = math.min(math.floor(y), vsy - h - 2)
+	style.panel(x0, y, x0 + w, y + h, alpha)
+	font:Begin()
+	font:SetTextColor(color[1], color[2], color[3], alpha)
+	font:SetOutlineColor(0, 0, 0, 0.55 * alpha)
+	font:Print(text, x0 + pad, y + h / 2 - size * 0.36, size, "o")
+	font:End()
+	if key then
+		style.key(x0 + pad + tw + gap, math.floor(y + (h - chip) / 2), chip, key, alpha)
+	end
+end
+
 local lastNote, notes = nil, 0 -- (tools/touch-widget-test.ps1: the last note, also once it has faded, and how many)
-local GOLD, BLUE = { 1, 0.9, 0.5 }, { 0.2, 0.8, 1 } -- (blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
+local GOLD, BLUE = style.TEXT, style.BLUE -- (notes warm white; blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
 local toastColor = GOLD
 local function note(text, color)
 	toast, toastAt, toastColor = text, now(), color or GOLD
@@ -870,52 +997,64 @@ local function groupSlots()
 	return slots
 end
 
-local function drawGroupList(vsx)
+-- (where BAR's interface at the bottom of the screen ends: the order menu's top, else a tenth of the screen)
+local function bottomInterfaceTop(vsy)
+	local o = WG.ordermenu
+	if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
+		local _, y = o.getPosition()
+		if y then
+			return math.floor(y * vsy)
+		end
+	end
+	return math.floor(vsy * 0.1)
+end
+
+-- The group strip: one of BAR's panels in the middle just above its interface at the bottom, a box for each group with
+-- units (the unit type's picture, its key at the top left, how many at the bottom right) and the slot in use outlined
+-- in gold (dim while it is empty)
+local function drawGroupList(vsx, vsy)
 	local shown = groupList.held or (groupList.untilAt and Spring.DiffTimers(now(), groupList.untilAt) < GROUP_LIST_SECONDS)
 	if not shown then
 		groupList.untilAt = nil
 		return
 	end
+	local alpha = groupList.held and 1 or math.min(1, (GROUP_LIST_SECONDS - Spring.DiffTimers(now(), groupList.untilAt)) / 0.3)
 	local slots = groupSlots()
-	local size = math.max(36, math.floor(vsx * 0.035))
-	local gap = math.floor(size * 0.12)
+	local size = style.size(0.048)
+	local gap = math.max(2, math.floor(size * 0.12))
+	local pad = math.max(3, math.floor(size * 0.16))
 	local width = #slots * size + (#slots - 1) * gap
-	local x0, y0 = math.floor((vsx - width) / 2), 86
+	local x0 = math.floor((vsx - width) / 2)
+	local y0 = bottomInterfaceTop(vsy) + pad * 3
+	style.panel(x0 - pad, y0 - pad, x0 + width + pad, y0 + size + pad, alpha)
 	local font = WG.fonts and WG.fonts.getFont()
 	for i, s in ipairs(slots) do
 		local x = x0 + (i - 1) * (size + gap)
 		local active = s.n == groupList.slot
-		if active then
-			gl.Color(0.18, 0.42, 0.78, 0.88)
-		elseif #s.units > 0 then
-			gl.Color(0.10, 0.18, 0.24, 0.82)
-		else
-			gl.Color(0.05, 0.07, 0.09, 0.74)
-		end
-		gl.Rect(x, y0, x + size, y0 + size)
+		local empty = #s.units == 0
+		style.fill(x, y0, x + size, y0 + size, { 0.12, 0.12, 0.12, 0.9 }, alpha)
 		local defID = s.units[1] and Spring.GetUnitDefID(s.units[1])
 		if defID then
-			local inset = math.floor(size * 0.14)
-			gl.Color(1, 1, 1, active and 0.95 or 0.75)
+			local inset = math.max(2, math.floor(size * 0.06))
+			gl.Color(1, 1, 1, (active and 1 or 0.8) * alpha)
 			gl.Texture("#" .. defID)
 			gl.TexRect(x + inset, y0 + inset, x + size - inset, y0 + size - inset)
 			gl.Texture(false)
 		end
-		gl.Color(0.36, 0.68, 1, active and 1 or 0.5)
-		gl.LineWidth(active and 2.5 or 1)
-		gl.BeginEnd(GL.LINE_LOOP, function()
-			gl.Vertex(x, y0)
-			gl.Vertex(x + size, y0)
-			gl.Vertex(x + size, y0 + size)
-			gl.Vertex(x, y0 + size)
-		end)
-		gl.LineWidth(1)
+		if active then
+			style.outline(x, y0, x + size, y0 + size, style.GOLD, (empty and 0.6 or 1) * alpha)
+		else
+			style.outline(x, y0, x + size, y0 + size, { 1, 1, 1 }, 0.14 * alpha, 1)
+		end
 		if font then
+			local ts = math.floor(size * 0.3)
 			font:Begin()
-			font:SetTextColor(0.92, 0.96, 1, 1)
-			font:Print(tostring(s.n), x + 3, y0 + size - size * 0.3, size * 0.28, "o")
-			if #s.units > 0 then
-				font:Print(tostring(#s.units), x + size - 3, y0 + 3, size * 0.26, "ro")
+			font:SetOutlineColor(0, 0, 0, 0.8 * alpha)
+			font:SetTextColor(1, 1, 1, (empty and 0.6 or 1) * alpha)
+			font:Print(tostring(s.n), x + size * 0.1, y0 + size - ts * 1.05, ts, "o")
+			if not empty then
+				font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], alpha)
+				font:Print(tostring(#s.units), x + size * 0.92, y0 + size * 0.08, ts, "ro")
 			end
 			font:End()
 		end
@@ -923,39 +1062,44 @@ local function drawGroupList(vsx)
 	gl.Color(1, 1, 1, 1)
 end
 
--- v0.8.5's filter radial around the area select's middle: the four filters, the one the stick points at lit, the one
--- in use marked
-local FILTER_PLACES = { { "All Mobile", 0, 1, { 0.25, 0.75, 1 } }, { "Combat", 0, -1, { 1, 0.35, 0.2 } },
-	{ "Builders", -1, 0, { 1, 0.75, 0.1 } }, { "Air", 1, 0, { 0.6, 1, 0.6 } } }
+-- v0.8.5's filter radial around the area select's middle: the four filters in BAR's panels, each with its colour's dot;
+-- the one the stick points at outlined in gold, the one in use outlined faintly
+local FILTER_PLACES = { { "All Mobile", 0, 1, { 0.35, 0.75, 1 } }, { "Combat", 0, -1, { 1, 0.4, 0.25 } },
+	{ "Builders", -1, 0, { 1, 0.75, 0.15 } }, { "Air", 1, 0, { 0.55, 0.95, 0.55 } } }
 local function drawFilterRadial(cx, cy, vsy)
 	local font = WG.fonts and WG.fonts.getFont()
 	if not font then
 		return
 	end
-	local r, size = vsy * 0.16, math.max(14, math.floor(vsy * 0.028))
-	font:Begin()
+	local size = style.size(0.019)
+	local pad = math.floor(size * 0.7)
+	local dot = math.floor(size * 0.5)
+	local w = 0
 	for _, p in ipairs(FILTER_PLACES) do
-		local lit = area.highlight == p[1]
-		local c = p[4]
-		local x, y = cx + p[2] * r * 1.4, cy + p[3] * r
-		local w, h = size * 5.2, size * 1.6
-		gl.Color(0, 0, 0, lit and 0.8 or 0.55)
-		gl.Rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2)
-		if lit or area.filter == p[1] then
-			gl.Color(c[1], c[2], c[3], lit and 1 or 0.5)
-			gl.LineWidth(lit and 3 or 1.5)
-			gl.BeginEnd(GL.LINE_LOOP, function()
-				gl.Vertex(x - w / 2, y - h / 2)
-				gl.Vertex(x + w / 2, y - h / 2)
-				gl.Vertex(x + w / 2, y + h / 2)
-				gl.Vertex(x - w / 2, y + h / 2)
-			end)
-			gl.LineWidth(1)
-		end
-		font:SetTextColor(c[1], c[2], c[3], lit and 1 or 0.75)
-		font:Print(string.upper(p[1]), x, y - size * 0.35, size, "co")
+		w = math.max(w, font:GetTextWidth(string.upper(p[1])) * size)
 	end
-	font:End()
+	w = math.ceil(w) + dot + pad * 3
+	local h = math.floor(size * 2)
+	local r = math.max(h * 2.2, vsy * 0.13)
+	for _, p in ipairs(FILTER_PLACES) do
+		local lit, inUse = area.highlight == p[1], area.filter == p[1]
+		local x = math.floor(cx + p[2] * (r * 0.9 + w / 2) - w / 2)
+		local y = math.floor(cy + p[3] * r - h / 2)
+		style.panel(x, y, x + w, y + h, 1)
+		if lit then
+			style.outline(x, y, x + w, y + h, style.GOLD, 1)
+		elseif inUse then
+			style.outline(x, y, x + w, y + h, { 1, 1, 1 }, 0.35, 1)
+		end
+		local c = p[4]
+		style.disc(x + pad + dot / 2, y + h / 2, dot / 2, c, lit and 1 or 0.8)
+		font:Begin()
+		font:SetOutlineColor(0, 0, 0, 0.6)
+		local t = lit and style.GOLD or style.TEXT
+		font:SetTextColor(t[1], t[2], t[3], (lit or inUse) and 1 or 0.8)
+		font:Print(string.upper(p[1]), x + pad * 2 + dot, y + h / 2 - size * 0.36, size, "o")
+		font:End()
+	end
 	gl.Color(1, 1, 1, 1)
 end
 
@@ -1126,39 +1270,42 @@ function widget:DrawScreen()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"
 	if pad and not modV085 and not orders and not buildFocus() and not freePointer() then
-		local r = math.max(8, math.floor(vsy * 0.018))
-		gl.Color(1, 1, 1, 0.55)
-		gl.LineWidth(2)
-		gl.BeginEnd(GL.LINE_LOOP, function()
-			for i = 0, 23 do
-				local a = i / 24 * 2 * math.pi
-				gl.Vertex(cx + math.cos(a) * r, cy + math.sin(a) * r)
-			end
-		end)
+		-- (a white ring on a dark one: it reads over snow and over water alike)
+		local r = style.size(0.016)
+		for pass = 1, 2 do
+			gl.Color(pass == 1 and 0 or 1, pass == 1 and 0 or 1, pass == 1 and 0 or 1, pass == 1 and 0.35 or 0.75)
+			gl.LineWidth(pass == 1 and 4 or 2)
+			gl.BeginEnd(GL.LINE_LOOP, function()
+				for i = 0, 47 do
+					local a = i / 48 * 2 * math.pi
+					gl.Vertex(cx + math.cos(a) * r, cy + math.sin(a) * r)
+				end
+			end)
+		end
 		gl.LineWidth(1)
 		gl.Color(1, 1, 1, 1)
 	end
-	if not modV085 then
-		drawGroupList(vsx)
+	-- the order on the pad: outlined in gold over BAR's own highlight, as the build menu's option on the pad
+	local cell = orders and orders.layout and orders.layout.cells[orders.index]
+	if cell then
+		style.outline(cell[1] + 1, cell[2] + 1, cell[3] - 1, cell[4] - 1, style.GOLD, 1)
+	end
+	if not modV085 and not (area.radial and area.on) then -- (the filter radial reaches down to where the strip is)
+		drawGroupList(vsx, vsy)
 	end
 	if area.radial and area.on then
 		drawFilterRadial(cx, cy, vsy)
 	end
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
-		local font = WG.fonts and WG.fonts.getFont()
 		if age > TOAST_SECONDS then
 			toast = nil
 			return
-		elseif not font then
-			return
 		end
-		local size = math.max(14, math.floor(vsy * 0.03))
-		local alpha = math.min(1, (TOAST_SECONDS - age) / 0.3)
-		font:Begin()
-		font:SetTextColor(toastColor[1], toastColor[2], toastColor[3], alpha)
-		font:Print(toast, cx, cy + vsy * 0.08, size, "oc")
-		font:End()
+		-- (a quick fade in, a slower fade out; a pad button at the end of a note as its key)
+		local alpha = math.max(0, math.min(1, age / 0.08, (TOAST_SECONDS - age) / 0.3))
+		local words, key = toast:match("^(.-): ([ABXY])$")
+		style.toast(words or toast, cx, cy + vsy * 0.09, toastColor, alpha, key)
 	end
 end
 
@@ -1167,6 +1314,7 @@ function widget:Initialize()
 	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
 	controllerGame = (ok and found) or Game.gameVersion == "$VERSION"
 	modV085 = controllerGame
+	WG.BarDroidStyle = style -- (the app's build menu: its GRID note and its option on the pad in the same look)
 	WG.BarDroidPad = {
 		act = act,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
@@ -1214,6 +1362,7 @@ function widget:Shutdown()
 	padOrders(false)
 	ordersEnd()
 	WG.BarDroidPad = nil
+	WG.BarDroidStyle = nil
 	WG.BarDroidOwnsBuildMenu = nil
 	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\n")
 end

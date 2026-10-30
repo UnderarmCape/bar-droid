@@ -5,6 +5,23 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The controller interface polished (2026-10-30, night)
+Kailil: "do a full UI overhaul polish of the controller systems you created ... not extravagant or anything. just
+polished" (no questions). Judged from screenshots: `tools/ui-screenshot.ps1 -PadUI` stages each piece of the app's
+gamepad interface with the app's own lines (`tools/ui-screenshot/bardroid_padui_shot.lua`; no pointer moves) and saves
+`build/ui-screenshot/<screen>-padui[-gamepad]-<name>-<piece>.png`: buildmenu, orders, grid, groups, radial, place.
+Before: bare text notes, plain boxes for the radial, a small group strip low over BAR's console, the order on the pad
+barely visible (BAR's own highlight only), the build menu's focus a filled gold square behind the option.
+Choices: one style in `bardroid_pad.lua` (`WG.BarDroidStyle`, the app's build menu draws with it): BAR's panel
+(FlowUI Element) and font; sizes from BAR's interface scale (the phone sets it per Fold screen, so a note is about the
+same size on both); two accents, gold where the pad is and v0.8.5's blue for placing and filters; outlines a thin
+line with BAR's cut corners (its `RectRoundOutline` filled the shape in BAR's current release, so the app draws its
+own); a pad button named at the end of a note ("REPAIR: A") as a round key in the Xbox colour. The group strip sits
+in a panel just above the order menu, its boxes bigger, the group in use outlined in gold; it steps aside while the
+filter radial is open. The order on the pad gets the same gold line as the build menu's option. v0.8.5's even order
+menu (BARGAMEPAD 324ef86f44) lays its rows out for buttons about twice as wide as tall: square ones squeezed BAR's
+labels. The touch PLACE button and the shape strip stay BAR's own buttons.
+
 ## Kailil's Fold7 notes: touch placing, the two controller modes (2026-10-29/30, night)
 Kailil played e10df47 on the Fold7 and sent twelve notes (worktree `bar-droid-fold7`, branch `fold7/kailil-notes`; the
 laptop blue-screened midway: the one file being written then, the generated build menu, came back as zeros and was

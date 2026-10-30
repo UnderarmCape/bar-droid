@@ -5,6 +5,9 @@
 #   powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner [-Scale 0.65] [-NoPhoneLayer]
 #   -Screen inner = 1198x1080 at 1.0, cover = 2100x900 at 2.0 (the X screen sizes, GameActivity's caps);
 #   -Chat: a few chat lines from a player with a long name first. Writes build\ui-screenshot\<screen>-<layer>.png
+#   -PadUI: the app's gamepad interface instead (its widgets as the phone runs them, tools\ui-screenshot\
+#   bardroid_padui_shot.lua staging each piece): build\ui-screenshot\<screen>-padui[-gamepad]-<piece>.png, one per piece
+#   (buildmenu, orders, grid, groups, radial, place); no pointer moves
 param(
   [ValidateSet("inner", "cover")] [string]$Screen = "inner",
   [double]$Scale = 0.65,
@@ -21,6 +24,7 @@ param(
   [switch]$NoWakes,       # the app's transparent wake texture (Installer.writeNoWakes)
   [string]$PlayerName = "Phone",
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1
+  [switch]$PadUI,         # the app's gamepad interface, a screenshot of each piece
   [string]$Engine = "",
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1"
@@ -48,7 +52,14 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 }
 try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
-  Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  if ($PadUI) {   # the app's widgets for the pad as installed on the phone, and the staging widget
+    foreach ($wf in "bardroid_touch.lua", "bardroid_pad.lua", "bardroid_buildmenu.lua") {
+      Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$wf") "$Data\LuaUI\Widgets\" -Force
+    }
+    Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_padui_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  } else {
+    Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_shot.lua") "$Data\LuaUI\Widgets\" -Force
+  }
   Remove-Item -Recurse -Force "$Data\bitmaps" -ErrorAction SilentlyContinue
   if ($NoWakes) {   # as Installer.writeNoWakes: an 8x8 transparent 32-bit TGA
     New-Item -ItemType Directory -Force -Path "$Data\bitmaps\projectiletextures" | Out-Null
@@ -63,7 +74,10 @@ try {
     (($("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
         "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info",
         "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") + $(if ($BarDroidInfo -or $NoInfo) { @("Info") } else { @() }) |
-      ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"Build menu`"] = 165,") -join "`n"
+      ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + $(if ($PadUI) {
+        # (the app's build menu in BAR's place, as launch-bar.sh switches it; the controller game keeps its own beside it)
+        "`t`t[`"Build menu`"] = 0,`n`t`t[`"BAR Droid build menu`"] = 165,`n`t`t[`"Build menu (controller)`"] = 165,"
+      } else { "`t`t[`"Build menu`"] = 165," })) -join "`n"
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii
@@ -96,6 +110,18 @@ try {
   Write-Host "[ui-shot] $Screen ($($size[0])x$($size[1]) at $uiScale) as ${w}x$h, $layer layer, $game"
   $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$startscript`"")
   if (-not $p.WaitForExit(240000)) { $p.Kill() }
+  if ($PadUI) {   # each screenshot named by the piece the staging widget logged just before it
+    $names = @(Select-String -Path $log -Pattern '\[uishot\] shot (\S+)' | ForEach-Object { $_.Matches[0].Groups[1].Value })
+    $shots = @(Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Sort-Object Name)
+    Select-String -Path $log -Pattern '\[uishot\] step|Error in |Removed widget' | ForEach-Object { $_.Line }
+    if ($shots.Count -ne $names.Count) { Write-Host "[ui-shot] $($shots.Count) screenshots for $($names.Count) pieces" -ForegroundColor Red }
+    for ($i = 0; $i -lt [Math]::Min($shots.Count, $names.Count); $i++) {
+      $out = Join-Path $Work "$Screen-padui$(if ($GamepadGame) { '-gamepad' })$(if ($Name) { "-$Name" })-$($names[$i]).png"
+      Copy-Item $shots[$i].FullName $out -Force
+      Write-Host "[ui-shot] $out"
+    }
+    return
+  }
   $shot = Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Select-Object -Last 1
   if (-not $shot) { Select-String -Path $log -Pattern "uishot|screenshot|Error" | ForEach-Object { $_.Line }; throw "no screenshot" }
   $out = Join-Path $Work "$Screen-$layer.png"
