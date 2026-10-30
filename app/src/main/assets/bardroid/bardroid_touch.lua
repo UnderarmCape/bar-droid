@@ -15,6 +15,10 @@
 --                                                     act <name>                (a gesture's action: ACTIONS below)
 --                                                     spot <x> <y> | spot none  (a building's spot for the build
 --                                                                               menu's PLACE button: bardroid_buildmenu.lua)
+--                                                     nudge <dx> <dy>           (the waiting building moved by that many
+--                                                                               pixels, y down)
+--                                                     grid start | grid by <dx> <dy> | grid none  (a GRID from the
+--                                                                               waiting building, its far corner moved)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
@@ -253,6 +257,39 @@ local function inOverview()
 	return spGetCameraState().name == "ov"
 end
 
+-- Three fingers down (Kailil, 2026-10-29): the camera to the commander; if it is dead, to the constructor selected last
+-- (else any). Out of the overview first: its way back is waited out (lookAt, a few updates later).
+local lastConstructor, lookAt = nil, nil
+local function constructorDef(def)
+	return def and def.isBuilder and not def.isFactory and (def.speed or 0) > 0
+end
+local function lookAtCommander()
+	if Spring.GetSpectatingState() then
+		return
+	end
+	local pick, builder
+	for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
+		if def and def.customParams and def.customParams.iscommander then
+			pick = unitID
+			break
+		elseif not builder and constructorDef(def) then
+			builder = unitID
+		end
+	end
+	if not pick and lastConstructor and Spring.ValidUnitID(lastConstructor) and not Spring.GetUnitIsDead(lastConstructor) then
+		pick = lastConstructor
+	end
+	pick = pick or builder
+	local x, y, z
+	if pick then
+		x, y, z = Spring.GetUnitPosition(pick)
+	end
+	if x then
+		Spring.SetCameraTarget(x, y, z, 0.3)
+	end
+end
+
 -- Gesture actions from the app ("act <name>", RtsTouch.java): the same commands BAR's keys send. The gamepad's are
 -- bardroid_pad.lua's (any name not here goes there).
 local ACTIONS = {
@@ -280,6 +317,14 @@ local ACTIONS = {
 	overview_out = function()
 		if inOverview() then
 			Spring.SendCommands("toggleoverview")
+		end
+	end,
+	commander_view = function()
+		if inOverview() then
+			Spring.SendCommands("toggleoverview")
+			lookAt = 3 -- (updates: the overview's way back first)
+		else
+			lookAtCommander()
 		end
 	end,
 	idle_next = function()
@@ -380,12 +425,38 @@ local function readTouch(lines)
 			WG.BarDroidPad.act(name)
 		end
 	end
-	-- a tap on the map with a building picked: the spot for the build menu's PLACE button (bardroid_buildmenu.lua)
-	for args in lines:gmatch("spot ([^\n]*)") do
-		local x, y = args:match("^(%S+) (%S+)")
-		if WG.bardroidBuildmenu and WG.bardroidBuildmenu.droidSpot then
-			WG.bardroidBuildmenu.droidSpot(tonumber(x), tonumber(y))
+	-- a building picked: the spot a tap or a drag picked for the build menu's PLACE button, a nudge of it, a GRID from it
+	-- (bardroid_buildmenu.lua), in the order the app sent them; a frame's nudges and GRID moves summed
+	local b = WG.bardroidBuildmenu
+	if b and b.droidSpot and (lines:find("spot ", 1, true) or lines:find("nudge ", 1, true) or lines:find("grid ", 1, true)) then
+		local nx, ny, gx, gy = 0, 0, 0, 0
+		local function flush()
+			if (nx ~= 0 or ny ~= 0) and b.droidNudge then
+				b.droidNudge(nx, ny)
+			end
+			if (gx ~= 0 or gy ~= 0) and b.droidSetGrid then
+				b.droidSetGrid("by", gx, gy)
+			end
+			nx, ny, gx, gy = 0, 0, 0, 0
 		end
+		for line in lines:gmatch("[^\n]+") do
+			local kind, args = line:match("^(%a+) (.*)$")
+			if kind == "nudge" then
+				local x, y = args:match("^(%S+) (%S+)")
+				nx, ny = nx + (tonumber(x) or 0), ny + (tonumber(y) or 0)
+			elseif kind == "grid" and args:find("^by ") then
+				local x, y = args:match("^by (%S+) (%S+)")
+				gx, gy = gx + (tonumber(x) or 0), gy + (tonumber(y) or 0)
+			elseif kind == "spot" then
+				flush()
+				local x, y = args:match("^(%S+) (%S+)")
+				b.droidSpot(tonumber(x), tonumber(y))
+			elseif kind == "grid" and b.droidSetGrid then
+				flush()
+				b.droidSetGrid(args)
+			end
+		end
+		flush()
 	end
 	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned
 	for source in lines:gmatch("src (%S+)") do
@@ -559,8 +630,15 @@ local function updateQueueDrawing()
 	end
 end
 
-function widget:SelectionChanged()
+function widget:SelectionChanged(selected)
 	updateQueueDrawing()
+	for _, unitID in ipairs(selected or {}) do -- (the constructor the three-finger slide down falls back to)
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		if constructorDef(def) and not (def.customParams and def.customParams.iscommander) then
+			lastConstructor = unitID
+			break
+		end
+	end
 end
 
 -- Long sessions (the target is 30 fps for hours on a hot phone): once a minute the average frame rate, the slowest
@@ -913,6 +991,13 @@ local function update(dt)
 	applyTouch(dt)
 	if padCamera then
 		applyPad(dt)
+	end
+	if lookAt then
+		lookAt = lookAt - 1
+		if lookAt <= 0 then
+			lookAt = nil
+			lookAtCommander()
+		end
 	end
 	updateHover()
 	queueCheck = queueCheck - dt

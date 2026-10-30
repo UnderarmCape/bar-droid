@@ -19,7 +19,11 @@ The first version meant for other people's phones: everything since the first bu
 
 **Touch**
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
-  bar act as mouse drags.
+  bar act as mouse drags. A three-finger swipe down brings the camera to the commander (dead: the constructor
+  selected last).
+- Placing one building by touch: the building follows a drag instead of the map panning, a later drag nudges it, a
+  tap moves it, a double tap sends it; held still (or dragged from the waiting building) it becomes a GRID drawn by
+  the finger and sent with PLACE or a double tap.
 - The lobby by finger: lists scroll with a drag, a tap on a server shows its details first.
 - Spectating by touch: the player list stays small, a tap on it brings up a bar to switch player cameras by name,
   follow the unit nearest the screen's centre (or double-tap a unit), follow a group, camera presets (1st person,

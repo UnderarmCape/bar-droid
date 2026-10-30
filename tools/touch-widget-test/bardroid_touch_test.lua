@@ -172,6 +172,10 @@ cases = {
 		local cs = Spring.GetCameraState()
 		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 2.6, 0
 		Spring.SetCameraState(cs, 0)
+		-- (a first run has no touch log yet: the widget looks for it again every 60 updates, and the first pinch came
+		-- before it had)
+		touch("src test")
+		return 2.5
 	end,
 	settle,
 	-- the touch camera (bardroid_touch.lua applyTouch), smoothed over ~0.05 s: 20 frames later it has arrived
@@ -323,8 +327,26 @@ cases = {
 		near("act overview_in: overview camera", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
 		touch("act overview_out")
 	end,
+	-- three fingers down (Kailil, 2026-10-29): the camera to the commander, out of the overview first
 	function()
 		near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz = 300, 300
+		Spring.SetCameraState(cs, 0)
+		touch("act overview_in")
+	end,
+	function()
+		touch("act commander_view")
+		return 1.5
+	end,
+	function()
+		local x, _, z = Spring.GetUnitPosition(com or -1)
+		local cs = Spring.GetCameraState()
+		verify("act commander_view: out of the overview, the camera on the commander", cs.name ~= "ov" and x
+			and math.abs(cs.px - x) < 150 and math.abs(cs.pz - z) < 150,
+			string.format("%s at %.0f,%.0f, commander %s,%s", tostring(cs.name), cs.px or -1, cs.pz or -1, tostring(x), tostring(z)))
+	end,
+	function()
 		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
 		local want = Game.gameVersion == "$VERSION" and "controller 1\n" or "controller 0\n"
 		verify("the game told the app who has the pad", readFile("LuaUI/Config/bardroid_game.txt") == want,
@@ -872,6 +894,88 @@ cases = {
 		end
 		return 0.5
 	end,
+	-- ONE (Kailil, 2026-10-29): a drag or a tap puts the building down ("spot", with its size for the app: a drag that
+	-- starts on it draws a GRID), a later drag nudges it ("nudge", the app's half of the finger's way), a finger held
+	-- still or that drag makes it the first corner of a GRID ("grid start", "grid by"; "GRID" shown), sent with PLACE
+	-- or a double tap (the app's build drag between the corners the file names)
+	function()
+		if not before.bm then
+			return
+		end
+		touch(string.format("spot %d %d", cx, cy))
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("ONE: the spot told with the building's size", spot and text:match("\nspot %d+ %d+ [1-9]%d*\n"), text)
+		before.spot = spot and { spot[1], spot[2], spot[3] }
+		touch("nudge 30.5 0")
+		touch("nudge 9.5 0") -- (two in one frame: summed)
+		return 0.3
+	end,
+	function()
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
+		if not (before.bm and before.spot and spot) then
+			return
+		end
+		local ax, ay = Spring.WorldToScreenCoords(before.spot[1], before.spot[2], before.spot[3])
+		local bx, by = Spring.WorldToScreenCoords(spot[1], spot[2], spot[3])
+		near("ONE: a nudge of 40 pixels right moves the building 40 pixels right on the screen", bx - ax, 40, 2)
+		near("ONE: ... and not up or down", by - ay, 0, 2)
+		touch("grid start")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list = WG.bardroidBuildmenu.droidGridPositions()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("GRID: starts as the one building", list and #list == 1, list and #list)
+		verify("GRID: the app told its corners", text:match("\ngrid %d+ %d+ %d+ %d+\n"), text)
+		touch("grid by 120 0")
+		touch("grid by 40 -110") -- (right and up the screen)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list, across, deep = WG.bardroidBuildmenu.droidGridPositions()
+		verify("GRID: a drag right and up draws rows of them", list and across > 1 and deep > 1 and #list == across * deep,
+			list and string.format("%d buildings, %d x %d", #list, across, deep))
+		Spring.SendCommands("screenshot png") -- (the GRID and "GRID": build\touch-widget-test\data\screenshots)
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		local x0, y0, x1, y1 = text:match("\ngrid (%d+) (%d+) (%d+) (%d+)\n")
+		verify("GRID: its far corner told right of and above the first", x0 and tonumber(x1) > tonumber(x0)
+			and tonumber(y1) < tonumber(y0), text)
+		touch("nudge 0 20")
+		before.grid = list and list[#list]
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list = WG.bardroidBuildmenu.droidGridPositions()
+		local last = list and list[#list]
+		verify("GRID: a nudge moves the whole grid", last and before.grid and #list > 1
+			and (last[1] ~= before.grid[1] or last[3] ~= before.grid[3]))
+		touch("grid none")
+		touch("spot none")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("GRID: none and spot none clear it", not text:find("grid") and not text:find("spot"), text)
+	end,
 	function()
 		if not before.bm then
 			return
@@ -918,7 +1022,7 @@ cases = {
 		verify("build menu: a tap on the map picks the spot", spot ~= nil)
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: the app told GRID, PLACE and the spot",
-			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+\n$"), text)
+			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+ %d+\n$"), text)
 		-- a spot that lies under the menu (the camera moved): PLACE would click the menu, so the app is told none
 		local b = before.bm
 		touch(string.format("spot %d %d", b.x0 + b.w / 2, vsy - (b.y0 + b.h / 2) - 1))

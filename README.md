@@ -48,7 +48,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
 | Three-finger tap | Show or hide the keyboard |
-| Three-finger swipe | Up: the whole map, down: back; left/right: previous/next idle builder |
+| Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
 
 In the lobby a drag scrolls lists and a tap on a server shows its details first.
@@ -57,7 +57,12 @@ In the lobby a drag scrolls lists and a tap on a server shows its details first.
 green **PLACE** button with ↻ and ✕ inside covers the order menu. Tap the map to pick the spot (the building shows
 there), then PLACE to build it; the building stays picked for the next spot. With LINE, GRID or BORDER, drag on the
 map for a row, a filled area or a hollow ring of them (BAR's own line and area building, placed at once). ↻ turns the
-building, ✕ (or a long press) puts it away. With ONE, a drag pans the map.
+building, ✕ puts it away (with LINE, GRID or BORDER a long press too).
+With ONE a drag does not pan the map: the building follows your finger. Once it waits there, a later drag anywhere
+nudges it (half your finger's way), a tap elsewhere moves it there, and a double tap sends it (with none waiting, a
+double tap places one there and sends it at once). Hold your finger still on it for a moment (or start a drag on the
+waiting building) and "GRID" pops up with a buzz: the drag now draws a grid of them from it; PLACE or a double tap
+sends the grid. Two fingers still pan and zoom.
 
 **The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels

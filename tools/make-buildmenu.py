@@ -84,8 +84,13 @@ PATCHES = [
 -- (past the left or right edge: the page before or after), the option under the pointer is drawn 10% bigger with a
 -- gold outline, A (a click) picks it and the pointer goes to the middle of the screen; B leaves the menu.
 -- bardroid_pad.lua tells the app (droidFocus) and routes the pad's actions here (droidPad).
+-- With ONE (Kailil, 2026-10-29) the app moves the waiting building (droid.spot) under a dragging finger or by a nudge,
+-- and a finger held still (or a drag from the building) makes it the first corner of a GRID (droid.grid: the far corner;
+-- "GRID" shown over it for a moment, droid.gridShown): BAR's filled rectangle of them (the engine's build drag with
+-- Alt, droid.gridPositions), sent by the app with PLACE or a double tap.
 local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
+	grid = nil, gridShown = nil, gridToast = 1.2, gridMax = 60, nudgeCarry = { 0, 0 }, gridCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",
 	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false, ctl = false, shared = nil,
 	wasActive = nil, leave = 0.25,
@@ -192,7 +197,8 @@ end
 -- X screen pixels (top left origin):
 --   place <one|line|grid|border|none>
 --   done <x0> <y0> <x1> <y1>    (the PLACE button, without its rotate and cancel)
---   spot <x> <y>                (where the spot is on the screen now; only while it is)
+--   spot <x> <y> <r>            (where the spot is on the screen now, and the building's size there; only while it is)
+--   grid <x0> <y0> <x1> <y1>    (a GRID waits: its first and far corner buildings; "grid off" while one is off screen)
 -- The strip is drawn again when the building is picked or put away.
 function droid.place()
 	local active = droid.active()
@@ -213,7 +219,7 @@ function droid.place()
 	end
 	local armed = defID ~= nil
 	if defID ~= droid.defID then
-		droid.defID, droid.spot = defID, nil -- (another building: the spot was for the last one)
+		droid.defID, droid.spot, droid.grid = defID, nil, nil -- (another building: the spot was for the last one)
 	end
 	if armed ~= droid.armed then
 		droid.armed = armed
@@ -235,9 +241,13 @@ function droid.place()
 	if p then
 		text = text .. string.format("done %d %d %d %d\\n", p.place[1], vsy - p.place[4], p.place[3], vsy - p.place[2])
 	end
-	local sx, sy = droid.spotOnScreen()
+	local sx, sy, sr = droid.spotOnScreen()
 	if sx then
-		text = text .. string.format("spot %d %d\\n", sx, vsy - sy - 1)
+		text = text .. string.format("spot %d %d %d\\n", sx, vsy - sy - 1, sr)
+	end
+	if droid.grid then
+		local g = droid.gridEnds()
+		text = text .. (g and string.format("grid %d %d %d %d\\n", g[1], vsy - g[2] - 1, g[3], vsy - g[4] - 1) or "grid off\\n")
 	end
 	-- (written again every second while a building is picked: the app takes an older file for none, so a file left by
 	-- a game that ended with a building picked never turns taps into Shift clicks)
@@ -259,9 +269,10 @@ function droid.place()
 	end
 end
 
--- BAR Droid: the spot a tap picked (X screen pixels; nil: none): the building goes there when PLACE is tapped
+-- BAR Droid: the spot a tap picked (X screen pixels; nil: none): the building goes there when PLACE is tapped (a new
+-- spot is one building again: no GRID)
 function droid.setSpot(x, y)
-	droid.spot = nil
+	droid.spot, droid.grid, droid.nudgeCarry = nil, nil, { 0, 0 }
 	if x and y and droid.armed then
 		local _, pos = Spring.TraceScreenRay(x, vsy - y - 1, true)
 		if pos then
@@ -269,6 +280,111 @@ function droid.setSpot(x, y)
 		end
 	end
 	droid.place()
+end
+
+-- (a map point moved by dx, dy X screen pixels, y down: the ground under the pixel it lands on; nil: off the screen
+-- or over the sky. The part of a pixel left over is carried to the next move: the app sends a finger's way in small
+-- steps)
+function droid.screenMove(p, dx, dy, carry)
+	local sx, sy, sz = Spring.WorldToScreenCoords(p[1], p[2], p[3])
+	if sz > 1 then
+		return nil
+	end
+	local tx, ty = sx + dx + carry[1], sy - dy + carry[2]
+	local ix, iy = math_floor(tx + 0.5), math_floor(ty + 0.5)
+	local _, pos = Spring.TraceScreenRay(ix, iy, true)
+	if not pos then
+		return nil
+	end
+	carry[1], carry[2] = tx - ix, ty - iy
+	return { pos[1], pos[2], pos[3] }
+end
+
+-- BAR Droid: the waiting building (and its GRID) moved by a finger's nudge, X screen pixels
+function droid.nudge(dx, dy)
+	local s = droid.spot
+	local moved = s and droid.armed and dx and dy and droid.screenMove(s, dx, dy, droid.nudgeCarry)
+	if not moved then
+		return
+	end
+	local g = droid.grid
+	if g then
+		local x = math.clamp(g[1] + moved[1] - s[1], 0, Game.mapSizeX)
+		local z = math.clamp(g[3] + moved[3] - s[3], 0, Game.mapSizeZ)
+		droid.grid = { x, Spring.GetGroundHeight(x, z), z }
+	end
+	droid.spot = moved
+	droid.place()
+end
+
+-- BAR Droid: a GRID from the waiting building ("start": its far corner the building itself, "GRID" shown), its far
+-- corner moved by dx, dy X screen pixels ("by"), or none
+function droid.setGrid(kind, dx, dy)
+	if kind == "start" and droid.spot and droid.armed then
+		droid.grid = { droid.spot[1], droid.spot[2], droid.spot[3] }
+		droid.gridShown, droid.gridCarry = Spring.GetTimer(), { 0, 0 }
+	elseif kind == "by" and droid.grid and dx and dy then
+		droid.grid = droid.screenMove(droid.grid, dx, dy, droid.gridCarry) or droid.grid
+	elseif kind == "none" then
+		droid.grid = nil
+	end
+	droid.place()
+end
+
+-- (the GRID's buildings, as the engine lays out a build drag with Alt from the spot to the far corner:
+-- CGuiHandler::GetBuildPositions, as BAR's api_blueprint has it; and how many across and deep)
+function droid.gridPositions()
+	local s, g, defID = droid.spot, droid.grid, droid.defID
+	local def = defID and UnitDefs[defID]
+	if not (s and g and def) then
+		return nil
+	end
+	local facing = Spring.GetBuildFacing()
+	local sx, _, sz = Spring.Pos2BuildPos(defID, s[1], s[2], s[3], facing)
+	local ex, _, ez = Spring.Pos2BuildPos(defID, g[1], g[2], g[3], facing)
+	local xs, zs = def.xsize * 8, def.zsize * 8
+	if facing % 2 == 1 then
+		xs, zs = zs, xs
+	end
+	local spacing = Spring.GetBuildSpacing and Spring.GetBuildSpacing() or 0
+	local xSize, zSize = xs + 16 * spacing, zs + 16 * spacing
+	local dx, dz = ex - sx, ez - sz
+	local xNum = math_floor((math.abs(dx) + xSize * 1.4) / xSize)
+	local zNum = math_floor((math.abs(dz) + zSize * 1.4) / zSize)
+	local xStep, zStep = math_floor(dx > 0 and xSize or -xSize), math_floor(dz > 0 and zSize or -zSize)
+	local out = {}
+	for zn = 0, zNum - 1 do
+		for xn = 0, xNum - 1 do
+			local x, z = sx + xn * xStep, sz + zn * zStep
+			local bx, by, bz = Spring.Pos2BuildPos(defID, x, Spring.GetGroundHeight(x, z), z, facing)
+			out[#out + 1] = { bx, by, bz }
+		end
+	end
+	return out, xNum, zNum
+end
+
+-- (a point the app may click on the map: on the screen, not under this menu, PLACE or the minimap)
+function droid.clickable(bx, by, bz)
+	local sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
+	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
+		return nil
+	end
+	return math_floor(sx), math_floor(sy)
+end
+
+-- (the GRID's first and far corner buildings on the screen, for the app's build drag; nil: one is not clickable)
+function droid.gridEnds()
+	local list = droid.gridPositions()
+	if not list then
+		return nil
+	end
+	local a, b = list[1], list[#list]
+	local x0, y0 = droid.clickable(a[1], a[2], a[3])
+	local x1, y1 = droid.clickable(b[1], b[2], b[3])
+	if not (x0 and x1) then
+		return nil
+	end
+	return { x0, y0, x1, y1 }
 end
 
 -- (the building's place on the build grid at the spot, and where that is on the screen)
@@ -279,38 +395,92 @@ function droid.spotPos()
 	end
 	return Spring.Pos2BuildPos(droid.defID, s[1], s[2], s[3], Spring.GetBuildFacing())
 end
--- (none when it is off the screen or under this menu, PLACE or the minimap: a click there would hit them, not the map)
+-- (none when it is off the screen or under this menu, PLACE or the minimap: a click there would hit them, not the map;
+-- with it the building's size on the screen, pixels from its middle)
 function droid.spotOnScreen()
 	local bx, by, bz = droid.spotPos()
 	if not bx then
 		return nil
 	end
-	local sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
-	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
+	local sx, sy = droid.clickable(bx, by, bz)
+	if not sx then
 		return nil
 	end
-	return math_floor(sx), math_floor(sy)
+	local def = UnitDefs[droid.defID]
+	local half = math.max(def.xsize, def.zsize) * 4
+	local r = 0
+	for _, d in ipairs({ { half, 0 }, { 0, half } }) do
+		local ex, ey = Spring.WorldToScreenCoords(bx + d[1], by, bz + d[2])
+		r = math.max(r, math.sqrt((ex - sx) ^ 2 + (ey - sy) ^ 2))
+	end
+	return sx, sy, math_floor(r + 0.5)
 end
 
--- BAR Droid: the building at the spot, as the engine draws a building being placed, and a ring around it
+-- BAR Droid: the building at the spot (or each of a GRID's), as the engine draws a building being placed, and a ring
+-- around it
 function droid.drawSpot()
 	local bx, by, bz = droid.spotPos()
 	if not bx then
 		return
 	end
 	local def = UnitDefs[droid.defID]
+	local list = droid.grid and droid.gridPositions() or { { bx, by, bz } }
+	local facing = Spring.GetBuildFacing()
 	gl.DepthTest(true)
-	gl.PushMatrix()
-	gl.Translate(bx, by, bz)
-	gl.Rotate(90 * Spring.GetBuildFacing(), 0, 1, 0)
-	gl.UnitShape(droid.defID, Spring.GetMyTeamID(), false, false, false)
-	gl.PopMatrix()
+	for i = 1, math.min(#list, droid.gridMax) do
+		local p = list[i]
+		gl.PushMatrix()
+		gl.Translate(p[1], p[2], p[3])
+		gl.Rotate(90 * facing, 0, 1, 0)
+		gl.UnitShape(droid.defID, Spring.GetMyTeamID(), false, false, false)
+		gl.PopMatrix()
+	end
 	gl.DepthTest(false)
-	gl.Color(0.3, 1, 0.3, 0.8)
 	gl.LineWidth(2)
-	gl.DrawGroundCircle(bx, by, bz, def and def.radius or 32, 32)
+	if droid.grid then -- (each building's footprint: rings of their size overlap)
+		local hx, hz = def.xsize * 4, def.zsize * 4
+		if facing % 2 == 1 then
+			hx, hz = hz, hx
+		end
+		for i, p in ipairs(list) do
+			gl.Color(0.2, 0.8, 1, i == 1 and 0.95 or 0.7)
+			gl.BeginEnd(GL.LINE_LOOP, function()
+				gl.Vertex(p[1] - hx, p[2] + 2, p[3] - hz)
+				gl.Vertex(p[1] + hx, p[2] + 2, p[3] - hz)
+				gl.Vertex(p[1] + hx, p[2] + 2, p[3] + hz)
+				gl.Vertex(p[1] - hx, p[2] + 2, p[3] + hz)
+			end)
+		end
+	else
+		gl.Color(0.3, 1, 0.3, 0.8)
+		gl.DrawGroundCircle(bx, by, bz, def and def.radius or 32, 32)
+	end
 	gl.LineWidth(1)
 	gl.Color(1, 1, 1, 1)
+end
+
+-- BAR Droid: "GRID" over the waiting building for a moment once a GRID starts, in v0.8.5's blue (its "SLOW PAN")
+function droid.drawGridShown()
+	local t = droid.gridShown
+	local age = t and Spring.DiffTimers(Spring.GetTimer(), t)
+	if not age or age > droid.gridToast then
+		droid.gridShown = nil
+		return
+	end
+	local bx, by, bz = droid.spotPos()
+	local sx, sy, sz
+	if bx then
+		sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
+	end
+	if not sx or sz > 1 then
+		sx, sy = vsx / 2, vsy / 2
+	end
+	local size = math.max(16, math_floor(vsy * 0.045))
+	font2:Begin(true)
+	font2:SetTextColor(0.2, 0.8, 1, math.min(1, (droid.gridToast - age) / 0.3))
+	font2:SetOutlineColor(0, 0, 0, 0.8)
+	font2:Print("GRID", sx, math.min(vsy - size, sy + size * 1.4), size, "co")
+	font2:End()
 end
 
 -- BAR Droid: the PLACE button over the order menu (else under the middle of the screen), rotate and cancel inside it
@@ -345,7 +515,8 @@ function droid.drawPanel()
 	if not p then
 		return
 	end
-	local ready = droid.spotOnScreen() ~= nil -- (green once a tap has picked the spot, while it can be clicked)
+	-- (green once a tap has picked the spot, while it can be clicked; with a GRID, while both its corners can)
+	local ready = droid.spotOnScreen() ~= nil and (not droid.grid or droid.gridEnds() ~= nil)
 	local a = p.all
 	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
 		ready and { 0.1, 0.5, 0.1, 0.95 } or { 0.1, 0.25, 0.1, 0.9 }, ready and { 0.25, 0.8, 0.25, 0.95 } or { 0.2, 0.35, 0.2, 0.9 },
@@ -380,7 +551,7 @@ function droid.pressPanel(x, y)
 	if inside(p.rotate) then
 		Spring.SendCommands("buildfacing inc")
 	elseif inside(p.cancel) then
-		droid.spot = nil
+		droid.spot, droid.grid = nil, nil
 		if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
 			WG["pregame-build"].setPreGameDefID(nil)
 		else
@@ -642,6 +813,7 @@ function widget:DrawWorld()
 	tracy.ZoneBeginN("W:BuildMenu:DrawScreen")
 	glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 	droid.drawPanel() -- BAR Droid: the PLACE button (over the order menu)
+	droid.drawGridShown() -- BAR Droid: "GRID" over a building for a moment
 	if not droid.active() then -- BAR Droid: the controller game while v0.8.5 has the pad: its own menu shows
 		tracy.ZoneEnd()
 		return
@@ -712,6 +884,11 @@ function widget:DrawWorld()
 	end
 	WG.buildmenu.droidPressPanel = droid.pressPanel
 	WG.buildmenu.droidSpot = droid.setSpot -- (bardroid_touch.lua: the app's "spot" lines)
+	WG.buildmenu.droidNudge = droid.nudge -- (the app's "nudge" lines)
+	WG.buildmenu.droidSetGrid = droid.setGrid -- (the app's "grid" lines)
+	WG.buildmenu.droidGridPositions = function() -- (tools/touch-widget-test.ps1: the GRID's buildings, across, deep)
+		return droid.gridPositions()
+	end
 	WG.buildmenu.droidPad = droid.pad -- (bardroid_touch.lua: the gamepad's pad_* actions)
 	WG.buildmenu.droidFocus = function() -- (the option the gamepad is on, and the page)
 		return droid.focus, currentPage
