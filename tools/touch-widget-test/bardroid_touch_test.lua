@@ -975,8 +975,8 @@ cases = {
 			string.format("%s, %d buttons", tostring(armed), #rects))
 		verify("build menu: ONE to start", shape == "one", shape)
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
-		verify("build menu: the app told the shape and the PLACE button", text:match("^place one\ndone %d+ %d+ %d+ %d+\n$"),
-			text)
+		verify("build menu: the app told the shape, the PLACE button and the ones beside it",
+			text:match("^place one\ndone %d+ %d+ %d+ %d+\nrotate %d+ %d+ %d+ %d+\ncancel %d+ %d+ %d+ %d+\n$"), text)
 		local panel = WG.bardroidBuildmenu.droidPanel()
 		local o = WG.ordermenu
 		if panel and o and o.getPosition and o.getIsShowing() then -- (as the layout editor finds the order menu)
@@ -1012,7 +1012,7 @@ cases = {
 		verify("build menu: a tap on the map picks the spot", spot ~= nil)
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: the app told GRID, PLACE and the spot",
-			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+ %d+\n$"), text)
+			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nrotate %d+ %d+ %d+ %d+\ncancel %d+ %d+ %d+ %d+\nspot %d+ %d+ %d+\n$"), text)
 		-- a spot that lies under the menu (the camera moved): PLACE would click the menu, so the app is told none
 		local b = before.bm
 		touch(string.format("spot %d %d", b.x0 + b.w / 2, vsy - (b.y0 + b.h / 2) - 1))
@@ -1063,7 +1063,7 @@ cases = {
 		before.first = (page - 1) * 9 + 1
 		verify("pad: RB puts the menu's first option on the pad", focus == before.first,
 			tostring(focus) .. " on page " .. tostring(page))
-		verify("pad: the app told the focus", readFile("LuaUI/Config/bardroid_pad.txt") == "focus build\npregame 0\narmed none\n",
+		verify("pad: the app told the focus", (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("focus build\npregame 0\narmed none\n", 1, true) == 1,
 			readFile("LuaUI/Config/bardroid_pad.txt"))
 		verify("pad: the pointer went onto it", POINTER or #before.warps >= 1)
 		padDraw.cell = before.first -- (DrawScreen below: the focused option drawn bigger and outlined)
@@ -1156,7 +1156,7 @@ cases = {
 		end
 		verify("pad: a building picked off the menu lets go of the menu", WG.bardroidBuildmenu.droidFocus() == nil)
 		verify("pad: the app told the focus is over, a building picked",
-			readFile("LuaUI/Config/bardroid_pad.txt") == "focus none\npregame 0\narmed build\n",
+			(readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("focus none\npregame 0\narmed build\n", 1, true) == 1,
 			readFile("LuaUI/Config/bardroid_pad.txt"))
 		before.facing = Spring.GetBuildFacing()
 		touch("act rotate_right") -- (the D-pad while a building is picked)
@@ -1568,8 +1568,13 @@ cases = {
 		return 0.5
 	end,
 	function()
+		verify("one touch: the pad's orders stay hidden", WG.BarDroidPad.ordersHidden() ~= nil)
+		touch("act fingers") -- (RtsTouch: a few taps)
+		return 0.5
+	end,
+	function()
 		local o = WG.ordermenu
-		verify("touch input: the order menu's orders back", o and not o.getDisabledCmd("Move") and not o.getDisabledCmd("Stop")
+		verify("a few taps: the order menu's orders back", o and not o.getDisabledCmd("Move") and not o.getDisabledCmd("Stop")
 			and WG.BarDroidPad.ordersHidden() == nil and Spring.GetConfigString("bardroid_pad_hidden_orders", "x") == "")
 		Spring.SelectUnitArray({ before.com })
 		touch("act group_assign_5")

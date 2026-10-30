@@ -125,7 +125,7 @@ final class RtsTouch {
     private long doubleTapTime;
     private boolean joinedPan;                      // this two-finger gesture began as a one-finger pan: no tap
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
-    private boolean cursorHidden;
+    private boolean cursorHidden, cursorWanted = true;
     // One building picked with ONE (startPlaceDrag): at this touch's start, and where the finger last came to rest
     private boolean placingOne, waitingAtDown, onWaiting;
     private float holdX, holdY, moveX, moveY;       // view pixels: the rest point (the GRID hold), the last move sent
@@ -506,8 +506,10 @@ final class RtsTouch {
         showCursor(true);
     }
 
-    /** The X pointer is hidden while two or more fingers are down. */
+    /** The X pointer is hidden while two or more fingers are down, and in first person (its own crosshair). */
     private void showCursor(boolean visible) {
+        cursorWanted = visible;
+        visible &= !firstPerson;
         if (cursorHidden == !visible) return;
         cursorHidden = !visible;
         view().setCursorVisible(visible);
@@ -1081,7 +1083,10 @@ final class RtsTouch {
         pregame = before;
         armed = picked;
         queueWanted = queue;
-        firstPerson = riding;
+        if (riding != firstPerson) {
+            firstPerson = riding;
+            ui.post(() -> showCursor(cursorWanted));
+        }
     }
     private volatile boolean firstPerson;
     /** The gamepad rides a unit (bardroid_padfp.lua). Any thread. */

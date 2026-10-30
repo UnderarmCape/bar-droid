@@ -266,8 +266,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
-- [ ] Run `tools/touch-widget-test.ps1` once Kailil is off the laptop (his launch guard): the commander, build menu and
-      GRID checks written on 2026-10-30 have not run yet.
+- [x] `tools/touch-widget-test.ps1` run after Kailil's 2026-10-30 notes, with his laptop idle: the commander, build menu
+      and GRID checks pass. Its five failures were old expectations, no app bug: the place file's rotate and cancel lines,
+      the pad file's new lines, and the orders coming back after a few taps (`act fingers`), not after one touch.
+- [x] First person reviewed (2026-10-30): RT never fired while walking sideways. A commander's gun is 23 elmos off its
+      centre, so 0.97 of the range from the body was out of range from the muzzle: no target on 60 of 60 frames, now
+      59 of 60 with 0.9 (measured on the dev phone; standing and walking 60 of 60). A spectator can no longer ride, and
+      leaving BAR Droid's mode ends the ride (nothing would drive the unit). Added a crosshair, gold while firing.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

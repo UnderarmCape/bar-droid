@@ -43,7 +43,9 @@ local CMD_CANCEL_TARGET = (GameCMD and GameCMD.UNIT_CANCEL_TARGET) or 34924 -- l
 local RECENTER_AFTER, RECENTER_SMOOTHING = 1.5, 0.5
 local LOOK_TURN, LOOK_TILT = 2.2, 1.4 -- radians, degrees * 60: a full stick's look a second
 local MOVE_AHEAD, MOVE_TURN, MOVE_EVERY = 280, 0.3, 0.8 -- how far the order goes, and what renews it
-local FIRE_EVERY, FIRE_REACH = 0.25, 0.97 -- the aim renewed this often; how much of the weapon's range it reaches for
+-- The aim renewed this often; how much of the weapon's range it reaches for (the gun is off the unit's centre, a
+-- commander's arm by 23 elmos: walking sideways, 0.97 of its 300 from the body was out of range from the muzzle)
+local FIRE_EVERY, FIRE_REACH = 0.25, 0.9
 local NEARBY, ORDER_AHEAD = 900, 1400 -- elmos: the units nearby; fight or patrol with the view on the sky
 local SUMMARY_SECONDS = 0.25
 local STATUS = { [CMD.GUARD] = "Following", [CMD.FIGHT] = "Fighting", [CMD.PATROL] = "Patrolling", [CMD.MOVE] = "Moving",
@@ -53,7 +55,7 @@ local BUTTONS = { { "A", "Follow me" }, { "X", "Stop" }, { "Y", "Fight there" },
 local TUNE_BUTTONS = { { "UP", "Previous" }, { "DN", "Next" }, { "LF", "Less" }, { "RG", "More" },
 	{ "A", "Save" }, { "B", "Close" } }
 
-local fp = nil -- { unitID, saved camera, selection before, x, y, z, yaw, lookYaw, lookPitch, lookAt, sticks, ... }
+local fp = nil -- { unitID, saved camera, x, y, z (the eye), viewYaw, lookPitch, lookAt, sticks, moving, firing, ... }
 local cam = { mode = CAM_FPS, rz = 0 }
 local squad, inSquad = {}, {} -- the units the orders go to; unitID -> true
 local summary, summaryAt = {}, nil -- per unit type: { defID, count, status }
@@ -74,10 +76,6 @@ local function unitControl()
 	local mo = Spring.GetModOptions and Spring.GetModOptions() or {}
 	local v = mo.allowunitcontrolwidgets
 	return v == nil or v == true or v == 1 or v == "1" or v == "true"
-end
-
-local function angleTo(from, to, k)
-	return from + ((to - from + math.pi) % (2 * math.pi) - math.pi) * k
 end
 
 local function unitYaw(unitID)
@@ -134,7 +132,7 @@ local function stop(text)
 end
 
 local function start()
-	if not unitControl() then
+	if not unitControl() or Spring.GetSpectatingState() then -- (a spectator's orders go nowhere: bardroid_spectate.lua's)
 		say("NOT IN THIS GAME")
 		return
 	end
@@ -160,7 +158,7 @@ local function start()
 	if WG.info and WG.info.displayUnitID then
 		WG.info.displayUnitID(unitID) -- (the panel at the bottom left: the unit ridden)
 	end
-	squad, inSquad, summary, summaryAt = {}, {}, {}, nil
+	squad, inSquad, summary, summaryAt, lastOrder = {}, {}, {}, nil, nil
 	say("FIRST PERSON")
 end
 
@@ -576,6 +574,21 @@ function widget:DrawScreen()
 	end
 	local vsx, vsy = Spring.GetViewGeometry()
 	local x0, y0, x1, y1 = menuPlace(vsx, vsy)
+	-- the crosshair (the app hides the pointer meanwhile): a thin ring and a dot, gold while firing
+	local cx, cy, r = math.floor(vsx / 2), math.floor(vsy / 2), style.size(0.014, 8)
+	local c = fp.firing and style.GOLD or { 1, 1, 1 }
+	for pass = 1, 2 do
+		gl.Color(pass == 1 and 0 or c[1], pass == 1 and 0 or c[2], pass == 1 and 0 or c[3], pass == 1 and 0.4 or 0.85)
+		gl.LineWidth(pass == 1 and 3.5 or 1.5)
+		gl.BeginEnd(GL.LINE_LOOP, function()
+			for i = 0, 39 do
+				local a = i / 40 * 2 * math.pi
+				gl.Vertex(cx + math.cos(a) * r, cy + math.sin(a) * r)
+			end
+		end)
+	end
+	gl.LineWidth(1)
+	style.disc(cx, cy, math.max(1.5, r * 0.12), c, 0.9)
 	if tuning then
 		drawTuner(style, font, x0, y1, vsy)
 		drawButtons(style, font, x0, y0, x1, y1, TUNE_BUTTONS)
@@ -628,6 +641,7 @@ function widget:Initialize()
 		active = function()
 			return fp ~= nil
 		end,
+		stop = stop,
 		toggle = function()
 			if tuning then -- (B closes the tuner first)
 				tuning = false

@@ -836,6 +836,9 @@ local ACTIONS = {
 	end,
 	mod_v085 = function()
 		WG.BarDroidOwnsBuildMenu = nil
+		if WG.BarDroidPadFP and WG.BarDroidPadFP.active() then -- (v0.8.5 has the pad now: nothing would drive the unit)
+			WG.BarDroidPadFP.stop()
+		end
 		if not modV085 then
 			modV085 = true
 			ordersEnd()
@@ -1417,7 +1420,8 @@ function widget:DrawScreen()
 	local vsx, vsy = Spring.GetViewGeometry()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"
-	if pad and not modV085 and not orders and not buildFocus() and not freePointer() then
+	local riding = WG.BarDroidPadFP and WG.BarDroidPadFP.active() -- (first person has its own crosshair)
+	if pad and not riding and not modV085 and not orders and not buildFocus() and not freePointer() then
 		-- (a white ring on a dark one: it reads over snow and over water alike)
 		local r = style.size(0.016)
 		for pass = 1, 2 do
