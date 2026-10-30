@@ -51,6 +51,32 @@ made again by `tools/make-buildmenu.py`; every other file was whole).
   engine kept (`[bardroid-pad] group N set` / `[controller] group N set`) for the next try.
 - v0.8.5's changes: BARGAMEPAD `controller/codex-v085-perf` 2544b21417 (local, not pushed).
 
+## A smooth 30 fps (2026-10-30)
+Kailil: the 30 fps should "feel smoother", "its frame time or frame pacing"; "Let's pursue getting a smooth 30fps with
+percent lows as close to 30 as possible". The engine's own numbers said
+30.0 fps. What counts is how long each picture stays on screen, so a count went into the X server: vsyncs between one
+new picture and the next. A light skirmish on the dev phone at a steady 30 fps on 60 Hz (the Fold7 plays 60 Hz at the
+cap too): of 1800 pictures a minute 1125-1650 stayed the right 2 vsyncs, the others 1 and 3 in pairs (16 and 50 ms
+instead of 33): the rough feel, with no frame late at all, and a 1% low of 20 fps on screen. The cause: the frame cap
+ran on its own clock, so the pictures arrived right around a vsync and fell on either side of it (the X server shows a
+new picture at the next vsync). `dumpsys SurfaceFlinger --latency` showed something else on the way: the surface
+changed 42 times a second at 30 fps, every GPU copy drawing at once and the next vsync drawing it again, each draw a
+full-screen upscale. The fix, in steps measured on the phone (pictures that stayed exactly 2 vsyncs):
+- the cap on the display's vsync (the X server shares it, termux-x11 patch 0008) after the swap: 63-85%, depending on
+  the phase;
+- the wait before the swap, so a frame's own time no longer moves it: 86-99.7%, still depending on the phase (the
+  GPU's time differs by phone and scene);
+- a search for the best phase from the X server's counts: 86-97%, restless, a move itself makes pictures uneven;
+- no search: the X server holds a picture for the cap's vsyncs at least (`lorieMinHold`: `waitForNextFrame`, which also
+  ends the double draws): **99.8-99.9%**, three runs (1795, 1798 and 1798 of 1800; none short, 2-4 long). A picture
+  a moment early waits; one late gives the next ones a full vsync of margin. A slow frame is never held back.
+- Waiting before the swap would have put up to 20 ms of old input on screen, so a frame now starts as late as the
+  slowest recent frame allows (`start_late`: its time fading by 1/64 a frame, plus 4 ms).
+In BAR's benchmark at the cap nothing changed beyond noise (Sim 47-50 ms against 44-50, last minute 11.2 fps against
+11.8-11.9, x0.45-0.47 against x0.45-0.50; `kswapd` at up to 90% of a core in these runs): frames that take longer
+than the slot run as before. `[display] pictures held for ...` goes into launcher.log once a minute, so a player's
+shared logs show it. `BARDROID_PACE_VSYNC=0` in `dev-env.sh` brings the old cap back.
+
 ## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
 idea was a run on the dev phone (`tools/phone-memory.ps1`: a skirmish started by intent, `start skirmish`, with engine
@@ -125,6 +151,18 @@ unchanged):
   GPU ~2.4 GB, free memory never below 668 MB). So an 8 GB phone's skirmish defaults to Starwatcher (`Prefs`: until
   the player changes the map in the launcher, `mapChosen`), and the game service fetches it before a skirmish where
   the first install fetched Supreme Isthmus. 12 GB phones keep Supreme Isthmus.
+- The dev phone's speed (night of 2026-10-30, Kailil: "continue ... improving the dev phone performance"): the logs
+  called cpu6 the prime core, which it is on the Fold7 (cpu6-7) but not on the S23 Ultra (cpu0-2, cpu3-6, prime
+  cpu7); PerfLog now logs every cluster (the cpufreq policies) and `tools/phone-clocks.sh` the fastest one. The phone
+  runs Samsung's reduced-heat performance profile (`sem_low_heat_mode=1`, `restricted_device_performance=1`; a system
+  setting, left for Kailil): in games the middle cores were capped at 1.5-2.6 GHz and the prime core rarely above
+  1.7. The engine's main thread is mostly kept off the prime core: it starts with a CPU mask of cpu0-5 (its parent,
+  the launch script, has all eight), and something of Samsung's rewrites the masks every 10-20 s (`bf`, `df`: one
+  middle core left out). The engine's own `SetCoreAffinity` (128: the prime core; 248: middle and prime) did not get
+  it there, and a test build of the pace library that put the main thread on all eight cores again whenever the
+  mask changed measured nothing: BAR's benchmark Sim 32.5 and 33.6 ms against 33.1 and 31.5 ms without, alternated.
+  Heat decides instead: the same benchmark from a cool phone (28 C) 33 ms, after a few runs (43-47 C) 43-48 ms. Not
+  pursued; nothing of the test is in the app.
 
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this

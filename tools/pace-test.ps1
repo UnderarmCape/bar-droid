@@ -1,4 +1,4 @@
-# libbardroid_pace.so's hidden-window events, tested on the phone in the app's container without a display:
+# libbardroid_pace.so's hidden-window events and frame cap, tested on the phone in the app's container without a display:
 # builds tools\pace\pace.c (as tools\build-pace.py does, into build\pace-test) and tools\pace\pace_test.c, pushes both
 # into files/bar, runs `perl -e 1` with both preloaded and SDL's dummy video driver, removes them again.
 # Needs the phone on adb (ANDROID_SERIAL) and an installed app with its container.

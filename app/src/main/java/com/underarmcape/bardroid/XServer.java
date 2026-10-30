@@ -46,6 +46,8 @@ public final class XServer {
         env.put("TMPDIR", p.rootfsTmp.getAbsolutePath());
         env.put("XKB_CONFIG_ROOT", xkb.getAbsolutePath());
         env.put("TERMUX_X11_LIBXLORIE_PATH", lib.getAbsolutePath());
+        // the display's vsync for the engine's frame cap (/tmp/bardroid-vsync in the container: tools/pace/pace.c)
+        env.put("BARDROID_VSYNC_FILE", new File(p.rootfsTmp, "bardroid-vsync").getAbsolutePath());
         if (Prefs.verboseX) env.put("TERMUX_X11_DEBUG", "1");
 
         List<String> cmd = new ArrayList<>();

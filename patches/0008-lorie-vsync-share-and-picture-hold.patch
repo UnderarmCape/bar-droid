@@ -1,0 +1,109 @@
+diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
+index 7d1d41c..9fe87c2 100644
+--- a/lorie/src/main/cpp/lorie/InitOutput.c
++++ b/lorie/src/main/cpp/lorie/InitOutput.c
+@@ -24,6 +24,7 @@
+ #include <sys/mman.h>
+ #include <dri3.h>
+ #include <sys/stat.h>
++#include <fcntl.h>
+ #include <dlfcn.h>
+ #include "fb.h"
+ #include "inputstr.h"
+@@ -557,6 +558,16 @@ static void lorieBlockHandler(__unused void *data, __unused void *timeout) {
+     ddxRequestDone();
+ }
+ 
++static volatile int64_t *vsyncShared;   // BAR Droid: lorieShareVsync
++static uint64_t tick, lastPictureTick, gaps[8];
++static CARD32 lastLog;
++
++// The engine's frame cap tells its vsyncs a frame ([2]) as long as it runs ([10]: when it last did)
++static uint64_t lorieMinHold(void) {
++    int64_t hold = vsyncShared ? vsyncShared[2] : 0;
++    return hold > 1 && vsyncShared[0] - vsyncShared[10] < 200000000 ? (uint64_t) hold : 1;
++}
++
+ static Bool lorieRedraw(__unused ClientPtr pClient, __unused void *closure) {
+     int status, nonEmpty;
+     LoriePixmapPriv* priv;
+@@ -566,6 +577,13 @@ static Bool lorieRedraw(__unused ClientPtr pClient, __unused void *closure) {
+     pvfb->current_msc++;
+     loriePerformVblanks();
+ 
++    // BAR Droid: with the engine's frame cap on, a picture stays on screen for the cap's vsyncs at least (2 for 30 fps on
++    // 60 Hz): one that arrives a moment early waits instead of cutting the last one short, and no draw happens in between
++    // (a redraw of the same picture is wasted GPU). A slow frame is never held back: it has stayed that long already.
++    tick++;
++    if (tick - lastPictureTick < lorieMinHold())
++        return TRUE;
++
+     pvfb->state->waitForNextFrame = false;
+ 
+     if (!lorieConnectionAlive(conn_fd) || !pvfb->state->surfaceAvailable)
+@@ -578,6 +596,21 @@ static Bool lorieRedraw(__unused ClientPtr pClient, __unused void *closure) {
+         // Impossible situation, but let's skip this step
+         return TRUE;
+ 
++    if (nonEmpty && priv->buffer) {   // BAR Droid: how long each picture stayed: shared with the frame cap, logged once a minute
++        uint64_t g = tick - lastPictureTick;
++        lastPictureTick = tick;
++        g = g > 7 ? 7 : g;
++        gaps[g]++;
++        if (vsyncShared)
++            vsyncShared[2 + g]++;
++    }
++    if (GetTimeInMillis() - lastLog >= 60000) {
++        ErrorF("[display] pictures held for 1:%llu 2:%llu 3:%llu 4:%llu 5:%llu 6:%llu 7+:%llu vsyncs\n",
++               (unsigned long long) gaps[1], (unsigned long long) gaps[2], (unsigned long long) gaps[3], (unsigned long long) gaps[4],
++               (unsigned long long) gaps[5], (unsigned long long) gaps[6], (unsigned long long) gaps[7]);
++        memset(gaps, 0, sizeof gaps);
++        lastLog = GetTimeInMillis();
++    }
+     if (nonEmpty && priv->buffer) {
+         // We should unlock and lock buffer in order to update texture content on some devices
+         // In most cases AHardwareBuffer uses DMA memory which is shared between CPU and GPU
+@@ -845,8 +878,43 @@ static void lorieWorkingQueueCallback(int fd, int __unused ready, void __unused
+     eventfd_read(fd, &dummy);
+ }
+ 
++// BAR Droid: the display's vsync for the engine's frame cap (libbardroid_pace.so maps the same file):
++// [0] the last vsync (CLOCK_MONOTONIC ns), [1] the time between two vsyncs (ns), [2] and [10] from the engine (lorieMinHold),
++// [3..9] how many pictures stayed on screen for 1..7 vsyncs (7: or more). BARDROID_VSYNC_FILE: the file.
++static void lorieShareVsync(int64_t t) {
++    static int tried, mismatches;
++    static int64_t last;
++    if (!tried) {
++        const char *path = getenv("BARDROID_VSYNC_FILE");
++        int fd = path ? open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0600) : -1;
++        tried = 1;
++        if (fd >= 0) {
++            if (ftruncate(fd, 4096) == 0) {
++                void *m = mmap(NULL, 4096, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
++                if (m != MAP_FAILED)
++                    vsyncShared = m;
++            }
++            close(fd);
++        }
++    }
++    if (!vsyncShared)
++        return;
++    int64_t d = t - last, period = vsyncShared[1];
++    last = t;
++    if (d > 2000000 && d < 120000000) {   // (a skipped vsync or a stop says nothing about the period)
++        if (!period || mismatches >= 8)
++            vsyncShared[1] = d, mismatches = 0;   // the first one, or the display changed its rate
++        else if (d > period - period / 5 && d < period + period / 5)
++            vsyncShared[1] = period + (d - period) / 16, mismatches = 0;
++        else
++            mismatches++;
++    }
++    vsyncShared[0] = t;
++}
++
+ void lorieChoreographerFrameCallback(__unused long t, AChoreographer* d) {
+     AChoreographer_postFrameCallback(d, (AChoreographer_frameCallback) lorieChoreographerFrameCallback, d);
++    lorieShareVsync(t);
+     if (pScreenPtr) {
+         QueueWorkProc(lorieRedraw, NULL, NULL);
+         lorieWakeServer();

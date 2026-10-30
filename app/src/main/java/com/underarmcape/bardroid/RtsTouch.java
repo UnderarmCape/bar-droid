@@ -478,6 +478,9 @@ final class RtsTouch {
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
         ui.removeCallbacks(gridHold);
+        // (a tap before this touch, held back for a double tap: this one was none, so its building moves now, not at
+        // some later touch)
+        runPlaceTap();
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         releaseKeys();
