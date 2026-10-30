@@ -64,8 +64,9 @@ The first version meant for other people's phones: everything since the first bu
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario).
 - When Android closes the game for lack of memory, the launcher says so (before, the app just started again).
 - 8 GB phones play in a low-memory mode, set automatically: over 1 GB less memory (the engine's Lua memory pools off,
-  compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off). On a Galaxy S23 Ultra about 2
-  in 3 skirmishes play through; close other apps first. 12 GB phones are unchanged.
+  compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off), and skirmish on a smaller map
+  (Starwatcher) until you pick one. On a Galaxy S23 Ultra BAR's benchmark battle and skirmishes on that map play
+  through (13 of 13 and 3 of 3); close other apps first. 12 GB phones are unchanged.
 
 ## 0.1.0 (2026-10-25)
 

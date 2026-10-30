@@ -33,7 +33,15 @@ public final class Prefs {
     };
     public static String gameTag = "byar:test";
     public static String lobbyTag = "byar-chobby:test";
-    public static String mapName = "Supreme Isthmus v2.1";
+    /**
+     * The skirmish map. An 8 GB phone (LauncherActivity.lowRam) gets the benchmark's smaller map until the player picks
+     * one: in the low-memory mode 3 of 3 skirmishes on Starwatcher (75 MB) played through against 2 of 3 on Supreme
+     * Isthmus (144 MB), the engine ~0.6 GB smaller (2026-10-30, docs/HISTORY.md "Fitting BAR into an 8 GB phone").
+     * mapChosen: the player changed it in the launcher (the saved name is then theirs, whatever it is).
+     */
+    public static final String DEFAULT_MAP = "Supreme Isthmus v2.1";
+    public static String mapName = DEFAULT_MAP;
+    public static boolean mapChosen = false;
 
     // Runtime knobs
     /**
@@ -126,7 +134,9 @@ public final class Prefs {
         }
         gameTag = s.getString("gameTag", gameTag);
         lobbyTag = s.getString("lobbyTag", lobbyTag);
-        mapName = s.getString("mapName", mapName);
+        mapChosen = s.getBoolean("mapChosen", false);
+        mapName = s.getString("mapName", DEFAULT_MAP);
+        if (!mapChosen && DEFAULT_MAP.equals(mapName) && LauncherActivity.lowRam(ctx)) mapName = Installer.BENCH_MAP;
         String driver = s.getString("mesaDriver", mesaDriver);
         boolean valid = EMULATOR_BUILD ? (driver.equals("virpipe") || driver.equals("llvmpipe"))
                                        : (driver.equals("kgsl") || driver.equals("zink"));
@@ -158,11 +168,12 @@ public final class Prefs {
                 .putString("gameTag", gameTag)
                 .putString("lobbyTag", lobbyTag)
                 .putString("mapName", mapName)
+                .putBoolean("mapChosen", mapChosen)
                 .putString("mesaDriver", mesaDriver)
                 .putBoolean("forceCompat45", forceCompat45)
                 .putInt("workerThreads", workerThreads)
                 .remove("uiScale").remove("shadows")   // gone: launch-bar.sh sets ui_scale per Fold screen, shadows off
-                .remove("compressTextures")   // gone: CompressTextures is always 0 (springsettings.cfg)
+                .remove("compressTextures")   // gone: launch-bar.sh sets CompressTextures (1 only in its low-memory mode)
                 .putBoolean("noSeccomp", noSeccomp)
                 .putBoolean("verboseX", verboseX)
                 .putBoolean("audio", audio)

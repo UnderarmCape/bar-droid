@@ -141,7 +141,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (am != null) {
             am.getMemoryInfo(mi);
             sb.append("RAM: ").append(Downloader.human(mi.totalMem));
-            if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail; close other apps before a game\n");
+            if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game\n");
             else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
         }
         sb.append("Engine: ").append(Prefs.engineVersion).append("  Driver: ").append(Prefs.mesaDriver);
@@ -181,7 +181,9 @@ public class LauncherActivity extends AppCompatActivity {
         try {
             Prefs.workerThreads = Integer.parseInt(((EditText) findViewById(R.id.edWorkers)).getText().toString().trim());
         } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
-        Prefs.mapName = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
+        String map = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
+        if (!map.equals(Prefs.mapName)) Prefs.mapChosen = true;   // (the player's from now on, also on an 8 GB phone)
+        Prefs.mapName = map;
         Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().trim();
         boolean alt = ((CheckBox) findViewById(R.id.cbZink)).isChecked();
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");

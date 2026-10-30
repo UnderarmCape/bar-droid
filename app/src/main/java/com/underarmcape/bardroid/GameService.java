@@ -186,9 +186,11 @@ public class GameService extends Service {
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();
             // The benchmark (BAR's "Benchmark BAR" scenario, unattended) runs what is installed, no update first, so
-            // runs compare; its map comes once from BAR's servers.
-            if (bench && !new java.io.File(paths.bar, "maps/starwatcher_1.0.sd7").exists()) {
-                setStatus("benchmark: downloading " + Installer.BENCH_MAP);
+            // runs compare; its map comes once from BAR's servers. So does a skirmish's on an 8 GB phone, which plays
+            // it by default (Prefs.mapName) also where the first install fetched the bigger map.
+            boolean benchMap = bench || ("skirmish".equals(mode) && Installer.BENCH_MAP.equals(Prefs.mapName));
+            if (benchMap && !new java.io.File(paths.bar, "maps/starwatcher_1.0.sd7").exists()) {
+                setStatus((bench ? "benchmark" : "skirmish") + ": downloading " + Installer.BENCH_MAP);
                 new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
                         java.util.Arrays.asList("map", Installer.BENCH_MAP, Prefs.engineVersion));
             }

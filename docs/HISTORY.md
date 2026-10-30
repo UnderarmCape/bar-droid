@@ -75,6 +75,10 @@ unchanged):
   and a game that Android ended was waited on for the full 12 minutes and recorded like any other. Now the scripts go
   as files (`adb push`), a start time is checked, times compare across midnight, the push ignores stderr, and a run
   without results stops at once and says why (`ended` in build\phone-bench.csv, "FAIL the run gave no results").
+- The same 1v1 skirmish on Starwatcher: 3 of 3 played through (the engine ~5.1 GB resident plus swapped against ~5.7,
+  GPU ~2.4 GB, free memory never below 668 MB). So an 8 GB phone's skirmish defaults to Starwatcher (`Prefs`: until
+  the player changes the map in the launcher, `mapChosen`), and the game service fetches it before a skirmish where
+  the first install fetched Supreme Isthmus. 12 GB phones keep Supreme Isthmus.
 
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this
