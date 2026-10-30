@@ -74,23 +74,19 @@
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_graphics" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" android:paddingEnd="8dp" />
-                <RadioGroup android:id="@+id/rgFpsCap" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
-                    <RadioButton android:id="@+id/rbFps30" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps30" />
-                    <RadioButton android:id="@+id/rbFps60" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps60" />
-                    <RadioButton android:id="@+id/rbFpsNone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps_none" />
-                </RadioGroup>
-            </LinearLayout>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_render_scale" android:paddingEnd="8dp" />
-                <RadioGroup android:id="@+id/rgRenderScale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
-                    <RadioButton android:id="@+id/rbRender100" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render100" />
-                    <RadioButton android:id="@+id/rbRender85" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render85" />
-                    <RadioButton android:id="@+id/rbRender70" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render70" />
-                    <RadioButton android:id="@+id/rbRenderNative" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render_native" />
-                </RadioGroup>
-            </LinearLayout>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" />
+            <RadioGroup android:id="@+id/rgFpsCap" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <RadioButton android:id="@+id/rbFps30" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps30" />
+                <RadioButton android:id="@+id/rbFps60" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps60" />
+                <RadioButton android:id="@+id/rbFpsNone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps_none" />
+            </RadioGroup>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_render_scale" android:paddingTop="8dp" />
+            <RadioGroup android:id="@+id/rgRenderScale" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                <RadioButton android:id="@+id/rbRender100" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render100" />
+                <RadioButton android:id="@+id/rbRender85" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render85" />
+                <RadioButton android:id="@+id/rbRender70" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render70" />
+                <RadioButton android:id="@+id/rbRenderNative" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render_native" />
+            </RadioGroup>
             <CheckBox android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />
             <CheckBox android:id="@+id/cbUpscaleCompare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale_compare" />
 

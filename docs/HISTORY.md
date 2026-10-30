@@ -64,7 +64,8 @@ The launcher's buttons in the same hour: at 1080 pixels wide the row of five bro
 the rows ran uneven. Both rows now share one style (`LauncherButton`: words kept whole, one height per row), the small
 row shrinks its text to stay on one line, and "Display prefs" is "Display". The next hour the settings list, one long
 run of options, got three headings (Game, Graphics, Advanced), the everyday ones first; only the status's first line
-stays bold.
+stays bold. Frame cap and Game resolution now put their label above the choices: beside them, "Native" stood one letter
+to a line and "none (measuring: hot)" was cut off.
 
 ## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
