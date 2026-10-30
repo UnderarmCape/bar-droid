@@ -48,6 +48,7 @@ local fp = nil -- { unitID, saved camera, selection before, x, y, z, yaw, lookYa
 local cam = { mode = CAM_FPS, rz = 0 }
 local squad, inSquad = {}, {} -- the units the orders go to; unitID -> true
 local summary, summaryAt = {}, nil -- per unit type: { defID, count, status }
+local lastOrder = nil -- the squad's last order (the panel tells a patrol from a fight by it)
 
 local function now()
 	return Spring.GetTimer()
@@ -321,6 +322,9 @@ local function order(kind)
 		joinNearby(s)
 	end
 	summaryAt = nil
+	if kind ~= "add" then
+		lastOrder = kind
+	end
 	if #squad == 0 then
 		say("NO UNITS NEAR")
 	elseif kind == "add" then
@@ -356,6 +360,9 @@ local function summarize()
 		entry.count = entry.count + 1
 		local cmdID = Spring.GetUnitCurrentCommand(unitID)
 		local status = cmdID and (STATUS[cmdID] or "Busy") or "Holding"
+		if cmdID == CMD.FIGHT and lastOrder == "patrol" then
+			status = "Patrolling" -- (the engine walks a patrol as a fight, with the patrol queued behind it)
+		end
 		entry.seen[status] = (entry.seen[status] or 0) + 1
 	end
 	for _, entry in ipairs(list) do

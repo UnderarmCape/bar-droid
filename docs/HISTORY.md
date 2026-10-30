@@ -34,7 +34,9 @@ Kailil, playing the merged build, sent ten notes. Done so far:
   900 elmos (combat units; builders only where there are none). A follow me (Guard), X stop, Y fight and RB patrol to
   where the view points, D-pad up adds, down clears. The build menu's place lists each unit type, how many and what most
   of them are doing, the order menu's the buttons, BAR's info panel the unit ridden, and a gold ring marks each unit.
-  Seen on the dev phone with seven spawned bots: Following, Fighting, Patrolling, Holding, and the bots going there.
+  Seen on the dev phone with seven spawned bots: Following, Fighting, Holding, and the bots going there. A patrol showed
+  as Fighting (the engine walks it as a fight): the panel goes by the last order, that label not yet seen on screen.
+  Riding alone on the dev phone: 30.0 fps, slowest frame 58 ms, 1798 of 1800 pictures exactly 2 vsyncs.
 - Placing a building pans 20% slower, Back's slow pan 33% (30% + 10%), both modes. The A-held circle: the D-pad held,
   minimum 20, eased over about 0.1 s, both modes. Self-destruct in the app's mode: Back + R3 + L3 held, as v0.8.5's.
 ## Touch in the controller game: menus by themselves again (2026-10-30, morning)
