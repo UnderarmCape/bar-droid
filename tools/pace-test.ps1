@@ -21,13 +21,15 @@ if ($Shipped) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\libbardr
 
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
+if (-not $env:ANDROID_SERIAL) { $env:ANDROID_SERIAL = Get-PhoneDevice $adb }   # toolchain.ps1's choice: the dev phone
+if (-not $env:ANDROID_SERIAL) { throw "No phone: connect one over adb, or name it (ANDROID_SERIAL, BARDROID_DEVICE, phone-device.txt)" }
 $pkg = "com.underarmcape.bardroid"
 foreach ($f in "libbardroid_pace.so", "pace_test.so") {
   & $adb push (Join-Path $Out $f) "/data/local/tmp/$f" | Out-Null
   & $adb shell "run-as $pkg sh -c 'mkdir -p files/bar/pace-test && cat /data/local/tmp/$f > files/bar/pace-test/$f' && rm /data/local/tmp/$f"
 }
-$script = "rm -f /tmp/bardroid-hidden; cd /root/bar/pace-test && SDL_VIDEODRIVER=dummy " +
-          "LD_PRELOAD=/root/bar/pace-test/libbardroid_pace.so:/root/bar/pace-test/pace_test.so perl -e 1; rm -rf /root/bar/pace-test /tmp/bardroid-hidden"
+$script = "rm -f /tmp/bardroid-hidden /tmp/pace-test-vsync; cd /root/bar/pace-test && SDL_VIDEODRIVER=dummy BARDROID_VSYNC_FILE=/tmp/pace-test-vsync " +
+          "LD_PRELOAD=/root/bar/pace-test/libbardroid_pace.so:/root/bar/pace-test/pace_test.so perl -e 1; rm -rf /root/bar/pace-test /tmp/bardroid-hidden /tmp/pace-test-vsync"
 $script | Out-File -Encoding ascii -NoNewline (Join-Path $Out "run.sh")
 cmd /c "type `"$(Join-Path $Out 'run.sh')`" | `"$adb`" exec-in run-as $pkg sh -c `"cat > files/bar/pace-test-run.sh`""
 & $adb shell "run-as $pkg sh files/container.sh 'sh /root/bar/pace-test-run.sh; rm -f /root/bar/pace-test-run.sh'"

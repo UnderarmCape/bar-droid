@@ -232,8 +232,9 @@ static int floating;
 extern int open(const char *path, int flags, ...);
 extern int close(int fd);
 extern void *mmap(void *addr, unsigned long len, int prot, int flags, int fd, long off);
+extern long lseek(int fd, long offset, int whence);
 static volatile long long *vsync;
-static int vsync_tried, before_swap;
+static int before_swap;
 
 static long read_number(const char *name, long fallback) {
     const char *s = getenv(name);
@@ -243,12 +244,15 @@ static long read_number(const char *name, long fallback) {
     return v;
 }
 
+/* Tried until it works: the X server makes the file at its first vsync (none while the phone's screen is off), empty
+   for a moment (a read of a map past the end of a file faults). BARDROID_VSYNC_FILE: tools/pace-test.ps1's own file. */
 static void pace_setup(void) {
-    vsync_tried = 1;
     if (read_number("BARDROID_PACE_VSYNC", 1) == 0) return;
-    int fd = open(VSYNC_FILE, 2 /* O_RDWR */);
+    const char *path = getenv("BARDROID_VSYNC_FILE");
+    int fd = open(path ? path : VSYNC_FILE, 2 /* O_RDWR */);
     if (fd < 0) return;
-    void *m = mmap(0, 4096, 3 /* PROT_READ | PROT_WRITE */, 1 /* MAP_SHARED */, fd, 0);
+    void *m = lseek(fd, 0, 2 /* SEEK_END */) < 4096 ? (void *) -1L
+        : mmap(0, 4096, 3 /* PROT_READ | PROT_WRITE */, 1 /* MAP_SHARED */, fd, 0);
     close(fd);
     if (m != (void *) -1L) { vsync = m; before_swap = 1; }
 }
@@ -299,6 +303,7 @@ static int late_start = -1;
 static void frame_ended(void) {
     if (!frame_start_ns) return;
     long long work = now_ns() - frame_start_ns;
+    if (work > slot_ns) work = slot_ns;   /* a slot's work leaves nothing to sleep; a stall of seconds would linger */
     work_peak_ns -= work_peak_ns / WORK_PEAK_DECAY;
     if (work > work_peak_ns) work_peak_ns = work;
 }
@@ -319,11 +324,11 @@ void SDL_GL_SwapWindow(void *window) {
     }
     if (fit_screen) screen_window = window;
     if (interval_ns < 0) interval_ns = read_interval();
-    if (!vsync_tried) pace_setup();
     long long now = now_ns();
     if (now - floating_checked_ns >= 500000000LL) {
         floating_checked_ns = now;
         floating = access(FLOATING_FLAG, F_OK) == 0;
+        if (!before_swap) pace_setup();
     }
     long long interval = interval_ns;
     if (floating && interval < 1000000000LL / FLOATING_FPS) interval = 1000000000LL / FLOATING_FPS;

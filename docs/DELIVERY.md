@@ -257,6 +257,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       to try on the Fold7). Then main (01ec7af) checked whole: all 13 laptop checks pass (the lobby, touch and
       controller-game runs with Kailil idle, as his launch guard wants), and on the dev phone a skirmish of that build
       played its 240 s in the low-memory mode on Starwatcher with no widget error.
+      The new frame cap (`tools/pace/pace.c`, patch 0008) reviewed, with its first checks in `tools/pace-test.ps1` (a
+      made-up 60 Hz vsync: swaps on the grid, the hold told to the X server, the late start, back to its own clock on a
+      stale vsync). A stall stayed in the late start's slowest frame for ~14 s after a hidden game, now one slot at most;
+      the vsync file was looked for at the first swap only (a game started with the screen off kept the old cap to its
+      end), now twice a second until found, and an empty file is left alone (a bus error otherwise). Each check fails
+      without its fix. `pace-test.ps1` took any phone: with both on adb it stopped; it now takes the dev phone.
 
 ## Releasing (once the blockers are done)
 
