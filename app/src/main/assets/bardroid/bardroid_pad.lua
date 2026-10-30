@@ -1228,11 +1228,92 @@ local function padOrders(want)
 	end
 end
 
+-- BAR's info panel (bottom left) shows the unit under the pointer before the selection, and the pad's pointer rests in
+-- the middle of the screen: a unit there stayed on the panel, whatever was selected, also after B, until a tap moved the
+-- pointer (Kailil, 2026-10-30: it "freezes ... or it doesn't close after I hit B"). While the pad is in use with its
+-- pointer in the middle the panel gets no hover (BAR's own WG.info.setCustomHover, there for its picture-in-picture).
+local hoverOff = false
+local function padHover()
+	local info = WG.info
+	if not (info and info.setCustomHover and info.clearCustomHover) then
+		return
+	end
+	local want = WG.BarDroidPadOnly == true and not freePointer() and not orders and not buildFocus()
+	if want ~= hoverOff then
+		hoverOff = want
+		if want then
+			info.setCustomHover("none", 1)
+		else
+			info.clearCustomHover()
+		end
+	end
+end
+
+-- QUEUE (Kailil, 2026-10-30: touch "doesn't have a way to add to queue (the shift button)"): a button above the order
+-- menu while fingers have units selected, a sticky Shift: on, the app holds Shift, so orders and buildings queue as with
+-- BAR's Shift key, until it is tapped off (bardroid_pad.txt "queue 1", RtsTouch). Over any of BAR's interface it answers
+-- IsAbove, so a tap on it is a click and not an order.
+local queue = { on = false, rect = nil }
+local function queueShows()
+	return queue.on or (WG.BarDroidPadOnly ~= true and WG.BarDroidInput ~= "mouse" and not Spring.GetSpectatingState()
+		and Spring.GetSelectedUnitsCount() > 0)
+end
+local function queueLayout(vsx, vsy)
+	if not queueShows() then
+		queue.rect = nil
+		return
+	end
+	local h, w = style.size(0.036), style.size(0.11)
+	local gap = style.size(0.008, 3)
+	local x1, y0 = math.floor(vsx * 0.65), math.floor(vsy * 0.16)
+	local o = WG.ordermenu
+	if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
+		local x, y, width = o.getPosition()
+		if x and y and width then
+			x1, y0 = math.floor((x + width) * vsx), math.floor(y * vsy) + gap
+		end
+	end
+	queue.rect = { x1 - w, y0, x1, y0 + h }
+end
+local function drawQueue()
+	local r = queue.rect
+	local font = WG.fonts and WG.fonts.getFont()
+	if not (r and font) then
+		return
+	end
+	style.panel(r[1], r[2], r[3], r[4], 1)
+	if queue.on then
+		style.outline(r[1], r[2], r[3], r[4], style.GOLD, 1)
+	end
+	local size = math.floor((r[4] - r[2]) * 0.5)
+	local c = queue.on and style.GOLD or style.TEXT
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.6)
+	font:SetTextColor(c[1], c[2], c[3], 1)
+	font:Print("QUEUE", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - size * 0.36, size, "co")
+	font:End()
+end
+local function inQueueButton(x, y)
+	local r = queue.rect
+	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+end
+function widget:IsAbove(x, y)
+	return inQueueButton(x, y)
+end
+function widget:MousePress(x, y)
+	if inQueueButton(x, y) then
+		queue.on = not queue.on
+		return true
+	end
+	return false
+end
+
 -- The order menu on the pad follows the pointer once it is the player's again (the warp landed, or half a second),
 -- keeps it on the menu (pushed off it for LEAVE_SECONDS it lets go) and ends when the menu goes; the app is told
 -- which menu has the pad and what is picked
 function widget:Update(dt)
 	padOrders(WG.BarDroidPadOnly == true)
+	padHover()
 	if area.radius ~= area.target then
 		local r = area.radius + (area.target - area.radius) * math.min(1, (dt or 0) / AREA_EASE)
 		area.radius = math.abs(area.target - r) < 1 and area.target or r
@@ -1290,9 +1371,9 @@ function widget:Update(dt)
 	local focus = orders and "orders" or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
-		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\n"
+		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0) .. "\n"
 	local t = now()
-	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none") and Spring.DiffTimers(t, writtenAt) > 1) then
+	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none" or queue.on) and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
 		end
@@ -1353,6 +1434,8 @@ function widget:DrawScreen()
 	if area.radial and area.on then
 		drawFilterRadial(cx, cy, vsy)
 	end
+	queueLayout(vsx, vsy)
+	drawQueue()
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
 		if age > TOAST_SECONDS then
@@ -1418,8 +1501,11 @@ end
 function widget:Shutdown()
 	padOrders(false)
 	ordersEnd()
+	if hoverOff and WG.info and WG.info.clearCustomHover then
+		WG.info.clearCustomHover()
+	end
 	WG.BarDroidPad = nil
 	WG.BarDroidStyle = nil
 	WG.BarDroidOwnsBuildMenu = nil
-	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\n")
+	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\nqueue 0\n")
 end

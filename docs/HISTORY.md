@@ -5,6 +5,26 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## The second round of Fold7 notes: paths, groups, GRID by the engine (2026-10-30, morning)
+Kailil, playing the merged build, sent ten notes. Done so far:
+- Touch GRID: BAR's own build drag now, as on the pad. The old way drew the app's blue boxes and at PLACE replayed the
+  drag in one burst: only the last building came, the engine reading the modifier keys once a frame. Now a finger held
+  still (or a drag from the waiting building) puts the left button down with Shift+Alt and leaves it down: the engine
+  draws its transparent buildings, the finger's way moves the far corner, a later drag moves it further, and PLACE or a
+  double tap lets go (`RtsTouch.startGrid`). Rotate and cancel still work while it waits (`bardroid_place.txt` names
+  their rects). Seen on the dev phone: all of a 90-building grid queued.
+- QUEUE (`bardroid_pad.lua`): a button above the order menu while fingers have units selected, a sticky Shift held by the
+  app. Kailil asked how to tackle queueing by touch: this keeps BAR's own Shift behaviour for orders and buildings.
+- Fight and patrol paths: LB + A / Y held past 250 ms picks the order, then the left button goes down and the left stick
+  draws until let go; BAR's formation widget gives the path. RB held on a path is Alt.
+- The pointer's speed while drawing follows the zoom (`bardroid_padspeed.lua`, Back + Y or /padspeed): Kailil's "manually
+  dial this in", a curve he sets, 100% at full zoom out. LT slows it only from a standstill.
+- The info panel "freezing": BAR shows the unit under the pointer before the selection, and the pad's pointer rests in the
+  middle. While the pad is in use the panel gets no hover (`WG.info.setCustomHover`, BAR's own, in both controller modes).
+- Groups, both modes: Start or Back + D-pad left tap selects, left held takes every unit of the selection's types, right
+  tap moves the camera to the group, right held clears it. Kailil wrote Back; v0.8.5's layer was Start: both work.
+- Placing a building pans 20% slower, Back's slow pan 33% (30% + 10%), both modes. The A-held circle: the D-pad held,
+  minimum 20, eased over about 0.1 s, both modes. Self-destruct in the app's mode: Back + R3 + L3 held, as v0.8.5's.
 ## Touch in the controller game: menus by themselves again (2026-10-30, morning)
 Kailil, testing the merged build, with and without a pad attached: a builder picked by touch should "open in its usual
 location. not hide by default like gamepad behavior", and "after a few taps on screen. it should detect then disable

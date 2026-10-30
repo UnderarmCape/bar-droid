@@ -224,6 +224,7 @@ function droid.place()
 	if armed ~= droid.armed then
 		droid.armed = armed
 		if not armed then
+			droid.gridHeld = nil
 			droid.shape = "one" -- (each building picked starts with ONE: a drag pans the map until a shape is chosen)
 		elseif droid.focus then
 			droid.endFocus() -- (picked with the gamepad: the app glides the pointer to the middle, ready to place it)
@@ -239,7 +240,10 @@ function droid.place()
 	local text = "place " .. (armed and droid.shape or "none") .. "\\n"
 	local p = droid.panel
 	if p then
-		text = text .. string.format("done %d %d %d %d\\n", p.place[1], vsy - p.place[4], p.place[3], vsy - p.place[2])
+		for _, b in ipairs({ { "done", p.place }, { "rotate", p.rotate }, { "cancel", p.cancel } }) do
+			local r = b[2]
+			text = text .. string.format("%s %d %d %d %d\\n", b[1], r[1], vsy - r[4], r[3], vsy - r[2])
+		end
 	end
 	local sx, sy, sr = droid.spotOnScreen()
 	if sx then
@@ -327,6 +331,10 @@ function droid.setGrid(kind, dx, dy)
 		droid.grid = droid.screenMove(droid.grid, dx, dy, droid.gridCarry) or droid.grid
 	elseif kind == "none" then
 		droid.grid = nil
+	elseif kind == "held" then -- (the app's GRID: BAR's own build drag, its left button held until PLACE: RtsTouch)
+		droid.gridHeld, droid.gridShown = true, Spring.GetTimer()
+	elseif kind == "free" then
+		droid.gridHeld = nil
 	end
 	droid.place()
 end
@@ -522,7 +530,7 @@ function droid.drawPanel()
 		return
 	end
 	-- (green once a tap has picked the spot, while it can be clicked; with a GRID, while both its corners can)
-	local ready = droid.spotOnScreen() ~= nil and (not droid.grid or droid.gridEnds() ~= nil)
+	local ready = droid.gridHeld or (droid.spotOnScreen() ~= nil and (not droid.grid or droid.gridEnds() ~= nil))
 	local a = p.all
 	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
 		ready and { 0.1, 0.5, 0.1, 0.95 } or { 0.1, 0.25, 0.1, 0.9 }, ready and { 0.25, 0.8, 0.25, 0.95 } or { 0.2, 0.35, 0.2, 0.9 },
