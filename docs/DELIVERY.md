@@ -254,7 +254,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       reviewed: a tap that moves a waiting building is held back for a double tap; a second touch near it that Android
       cancelled (the notification shade, a fold) neither ran nor dropped it, so the building jumped there at some
       later touch. A cancelled touch now runs it, as a touch that was no tap does (built; the touch itself is Kailil's
-      to try on the Fold7).
+      to try on the Fold7). Then main (01ec7af) checked whole: all 13 laptop checks pass (the lobby, touch and
+      controller-game runs with Kailil idle, as his launch guard wants), and on the dev phone a skirmish of that build
+      played its 240 s in the low-memory mode on Starwatcher with no widget error.
 
 ## Releasing (once the blockers are done)
 
