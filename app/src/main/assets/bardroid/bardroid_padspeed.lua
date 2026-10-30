@@ -158,7 +158,7 @@ local function press(name)
 end
 
 -- The curve in a box: x the zoom (near at the left), y the speed
-local function drawCurve(x0, y0, x1, y1, style)
+local function drawCurve(x0, y0, x1, y1, style, font, size)
 	local top = fullZoom()
 	local near = math.min(120, top / 20)
 	local function xOf(zoom)
@@ -200,6 +200,14 @@ local function drawCurve(x0, y0, x1, y1, style)
 		gl.Vertex(x, y1)
 	end)
 	style.disc(x, yOf(speedNow), 6, style.GOLD, 1)
+	local small = size * 0.72 -- (the scale: 100%, and which way the zoom runs)
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.6)
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.6)
+	font:Print("100%", x0 + 4, yOf(1) + 3, small, "o")
+	font:Print("near", x0 + 4, y0 + 4, small, "o")
+	font:Print("far", x1 - 4, y0 + 4, small, "ro")
+	font:End()
 	gl.Color(1, 1, 1, 1)
 end
 
@@ -229,7 +237,7 @@ function widget:DrawScreen()
 	font:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], 1)
 	font:Print(string.format("zoom %d   speed %d%%", zoomNow, speedNow * 100 + 0.5), x0 + w - pad, y1 - pad - size * 0.85, size, "ro")
 	font:End()
-	drawCurve(x0 + pad, y0 + pad * 2 + buttonH, x0 + w - pad, y0 + pad * 2 + buttonH + boxH, style)
+	drawCurve(x0 + pad, y0 + pad * 2 + buttonH, x0 + w - pad, y0 + pad * 2 + buttonH + boxH, style, font, size)
 	local asked = resetIsAsked()
 	local list = { { "minus", "-" }, { "plus", "+" }, { "remove", "Remove" }, { "reset", asked and "Sure?" or "Reset" },
 		{ "close", "Close" } }

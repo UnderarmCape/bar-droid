@@ -285,6 +285,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       read back over the config. Checked on the dev phone: Forward 2 to 6, Save, the app force-stopped, 6 in the next
       game. `spectate-test` checks the file. That test stopped at a fixed 5 min, midway on a busy laptop, and blamed the
       replay; it now stops when the log stands still for 3 min and says why.
+- [x] `tools/laptop-tests.ps1` after the day's notes (2026-10-30): two failures, neither the app's behaviour as played.
+      Lint: a shadowed name in a new test case. The controller game's checks predated this morning's touch change: the
+      menu hides only once the pad is in use, so they now say so, and PLACE (fingers' only) is checked by touch. They
+      ran into the 15 min stop at 4 fps; it is 30 now. Both pass, 14 min at that speed.
+- [x] Found on the way: RB's "nothing to build after half a second: closed" counted time only, two frames at 4 fps and
+      less than the 0.8 s stall early in a game: the menu closed before it was laid out. It now also waits 8 frames.
+      PadGame reviewed: starting first person with LB on a building or RB held left Alt or Space down for the whole
+      ride; everything is let go as it starts (two `padgame-test` cases).
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

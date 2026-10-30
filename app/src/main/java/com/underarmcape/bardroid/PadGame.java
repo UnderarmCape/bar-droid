@@ -112,7 +112,7 @@ final class PadGame {
     private boolean pathDrawing;                   // the path's drag: until pathButton is let go
     private boolean drawFast;                      // the stick was moving as the drawing began: LT does not slow it
     private long areaRepeatAt = -1, selfDestructAt = -1, dgunAt = -1, fpDownAt = -1;
-    private boolean selfDestructDone, fpDone, fpFiring;
+    private boolean selfDestructDone, fpDone, fpFiring, wasRiding;
     private float fracX, fracY;
 
     PadGame(PadMouse mouse) { this.mouse = mouse; }
@@ -173,7 +173,10 @@ final class PadGame {
             if (!held[LS] || !lb) fpDownAt = -1;
             else if (!fpDone && now - fpDownAt >= FIRST_PERSON_MS) { fpDone = true; mouse.act("fp_toggle"); }
         }
-        if (mouse.firstPerson()) {
+        boolean riding = mouse.firstPerson();
+        if (riding && !wasRiding) release();   // (nothing stays down under the ride: LB on a building holds Shift + Alt)
+        wasRiding = riding;
+        if (riding) {
             if (pressed(tapped, B)) mouse.act("fp_toggle");
             if (pressed(tapped, A)) mouse.act("fp_order_follow");
             if (pressed(tapped, X)) mouse.act("fp_order_stop");
@@ -185,7 +188,6 @@ final class PadGame {
             if (pressed(tapped, DPAD_RIGHT)) mouse.act("fp_order_right");
             if (pressed(tapped, BACK)) mouse.act("fp_order_tune");
             if (rt != fpFiring) { fpFiring = rt; mouse.act(rt ? "fp_fire_on" : "fp_fire_off"); }
-            if (shift) { shift = false; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false); }
             System.arraycopy(held, 0, prev, 0, COUNT);
             return;
         }

@@ -1090,7 +1090,7 @@ function droid.pad(name)
 			droid.warpTo = droid.focus
 			droid.opened = true -- (a menu fingers left open: it stays, now the pad is in use)
 		elseif droid.ctl and WG.BarDroidOwnsBuildMenu == true then -- (opened: the pad on it once it is laid out)
-			droid.opened, droid.openedAt = true, Spring.GetTimer()
+			droid.opened, droid.openedAt, droid.openedWait = true, Spring.GetTimer(), 0
 			doUpdate = true
 		end
 	elseif not droid.focus then
@@ -1150,8 +1150,11 @@ function droid.padFocus()
 			droid.openedAt = nil
 			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
 			droid.warpTo = droid.focus
-		elseif Spring.DiffTimers(Spring.GetTimer(), droid.openedAt) > 0.5 then
-			droid.endFocus()
+		else
+			droid.openedWait = droid.openedWait + 1 -- (and a few frames: a stall outlasts half a second before it is laid out)
+			if droid.openedWait > 8 and Spring.DiffTimers(Spring.GetTimer(), droid.openedAt) > 0.5 then
+				droid.endFocus()
+			end
 		end
 	end
 	if droid.focus then

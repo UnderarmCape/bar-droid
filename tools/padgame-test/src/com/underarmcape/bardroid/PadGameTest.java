@@ -438,6 +438,13 @@ public final class PadGameTest {
         t.tap(B);
         check("riding: B ends it", t.has("act fp_toggle") && !t.has("act cancel"), t.m.out);
         t.m.riding = false;
+        PadGameTest r = new PadGameTest();
+        r.tick(); r.m.armed = "build"; r.tick(LB); r.m.out.clear(); r.m.riding = true; r.tick();
+        check("riding: LB on a building lets go of Shift and Alt as it starts", r.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up")
+                && r.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up"), r.m.out);
+        r = new PadGameTest();
+        r.tick(); r.tick(RB); r.wait(500); r.m.out.clear(); r.m.riding = true; r.tick();
+        check("riding: RB held lets go of Space as it starts", r.has("key " + KeyEvent.KEYCODE_SPACE + " up"), r.m.out);
 
         // The D-pad's own work; L3 / R3; Back + R3; LB with the face buttons and the D-pad
         t.m.out.clear();

@@ -688,6 +688,7 @@ cases = {
 				WG.bardroidBuildmenu ~= nil and not WG.bardroidBuildmenu.getIsShowing())
 			-- the triple tap (GameActivity): the pad to the app's controls, the camera with it
 			before.ctl = Spring.GetCameraState()
+			touch("src pad")
 			touch("act mod_bardroid")
 			touch("pad 32767 0 0 0 0 0")
 			return 0.3
@@ -742,7 +743,7 @@ cases = {
 			end)
 		end
 		touch("act pad_build")
-		return 0.3
+		return 1.5 -- (at a throttled laptop's few frames a second the menu takes a while to lay out)
 	end,
 	function()
 		if not before.ctl then
@@ -806,6 +807,8 @@ cases = {
 		padDraw.cells = nil
 		touch("act pad_back")
 		WG.BarDroidPad.setWarp(nil)
+		touch("src touch") -- (PLACE below is fingers' only)
+		touch("act fingers")
 		touch("act mod_v085")
 		return 0.3
 	end,
@@ -1569,17 +1572,17 @@ cases = {
 	end,
 	function()
 		local ps = WG.BarDroidPadSpeed
-		local near = function(a, b) return math.abs(a - b) < 0.01 end
+		local same = function(a, b) return math.abs(a - b) < 0.01 end
 		ps.setPoints({ { 500, 0.5 }, { 2000, 0.8 } })
-		verify("path speed: the points, and 100% past them", near(ps.speedAt(100), 0.5) and near(ps.speedAt(2000), 0.8)
-			and near(ps.speedAt(1000000), 1), ps.speedAt(100) .. " " .. ps.speedAt(2000) .. " " .. ps.speedAt(1000000))
-		verify("path speed: between two points by the zoom's logarithm", near(ps.speedAt(1000), 0.65), ps.speedAt(1000))
+		verify("path speed: the points, and 100% past them", same(ps.speedAt(100), 0.5) and same(ps.speedAt(2000), 0.8)
+			and same(ps.speedAt(1000000), 1), ps.speedAt(100) .. " " .. ps.speedAt(2000) .. " " .. ps.speedAt(1000000))
+		verify("path speed: between two points by the zoom's logarithm", same(ps.speedAt(1000), 0.65), ps.speedAt(1000))
 		local cs = Spring.GetCameraState()
 		local zoom = math.max(1, cs.dist or cs.height or cs.py or 1)
 		ps.setPoints({ { zoom / 1.1, 0.5 }, { zoom * 1.05, 0.6 } })
 		ps.press("plus")
 		local p = ps.points()
-		verify("path speed: + changes the nearest point", #p == 2 and near(p[1][2], 0.5) and near(p[2][2], 0.65),
+		verify("path speed: + changes the nearest point", #p == 2 and same(p[1][2], 0.5) and same(p[2][2], 0.65),
 			#p .. " " .. p[1][2] .. " " .. tostring(p[2] and p[2][2]))
 		ps.press("reset")
 		verify("path speed: one tap on Reset takes nothing", #ps.points() == 2, #ps.points())
