@@ -1591,7 +1591,27 @@ cases = {
 		verify("path speed: another button starts Reset over", #ps.points() == 2, #ps.points())
 		ps.press("reset")
 		verify("path speed: the second tap takes the curve", #ps.points() == 0, #ps.points())
+		WG.BarDroidPad.queueOn(true) -- (left on by fingers, the pad in use since the cases above)
 		return 0.2
+	end,
+	function()
+		verify("QUEUE: the pad in use lets go of it", WG.BarDroidPad.queueOn() == false
+			and (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("queue 0", 1, true) ~= nil, readFile("LuaUI/Config/bardroid_pad.txt"))
+		Spring.SelectUnitArray({ before.com })
+		touch("act group_assign_6")
+		return 0.3
+	end,
+	function()
+		touch("act group_clear_7")
+		return 0.3
+	end,
+	function()
+		local sel = Spring.GetSelectedUnits()
+		verify("pad: clearing an empty group leaves the selection and its group alone", sel[1] == before.com
+			and Spring.GetUnitGroup(before.com) == 6 and select(2, WG.BarDroidPad.note()) == "GROUP 7 EMPTY",
+			tostring(Spring.GetUnitGroup(before.com)) .. ", " .. tostring(select(2, WG.BarDroidPad.note())))
+		touch("act group_clear_6")
+		return 0.3
 	end,
 	function()
 		verify("one touch: the pad's orders stay hidden", WG.BarDroidPad.ordersHidden() ~= nil)

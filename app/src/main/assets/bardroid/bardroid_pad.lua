@@ -1028,6 +1028,10 @@ local function group(kind, n)
 			note("GROUP " .. n .. " EMPTY")
 		end
 	elseif kind == "clear" then
+		if #groupUnits(n) == 0 then -- (what comes next would work on the selection, in other groups)
+			note("GROUP " .. n .. " EMPTY")
+			return
+		end
 		local keep = Spring.GetSelectedUnits()
 		Spring.SendCommands("group select " .. n)
 		if autogroup and autogroup.removeCurrentSelectionFromAutogroup then
@@ -1325,6 +1329,9 @@ end
 function widget:Update(dt)
 	padOrders(WG.BarDroidPadOnly == true)
 	padHover()
+	if queue.on and WG.BarDroidPadOnly == true then -- (fingers' button: left on, it would queue every order of the pad's)
+		queue.on = false
+	end
 	if area.radius ~= area.target then
 		local r = area.radius + (area.target - area.radius) * math.min(1, (dt or 0) / AREA_EASE)
 		area.radius = math.abs(area.target - r) < 1 and area.target or r
@@ -1509,6 +1516,12 @@ function widget:Initialize()
 		chooseUnits = chooseUnits, -- (what the area select takes of units: made-up unit types)
 		ordersHidden = function() -- (the order menu's orders hidden while the pad is the input)
 			return ordersHidden
+		end,
+		queueOn = function(on) -- (QUEUE: on or off, as a tap on it would)
+			if on ~= nil then
+				queue.on = on
+			end
+			return queue.on
 		end,
 	}
 end

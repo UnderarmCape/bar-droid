@@ -293,6 +293,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       less than the 0.8 s stall early in a game: the menu closed before it was laid out. It now also waits 8 frames.
       PadGame reviewed: starting first person with LB on a building or RB held left Alt or Space down for the whole
       ride; everything is let go as it starts (two `padgame-test` cases).
+- [x] `bardroid_pad.lua`'s groups and QUEUE reviewed (2026-10-30): clearing an empty group went on to the selection, in
+      other groups; it now says the group is empty. QUEUE left on by fingers stayed on when the pad took over and
+      queued every order of the pad's; the pad in use lets go of it (`touch-widget-test` cases for both). All 13
+      `tools/laptop-tests.ps1` checks pass with these in.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 
