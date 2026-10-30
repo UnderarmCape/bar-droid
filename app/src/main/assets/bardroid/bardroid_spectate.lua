@@ -1056,12 +1056,12 @@ end
 
 -- Save: the universal views (Table, Close, Mid) kept for every unit; the followed unit type's own values kept, and the
 -- same given to its equivalents in the other factions
-local function tuneSave()
+local function tuneSave(unitName)
 	for key, p in pairs(views) do
 		kept.views[key] = copy(p)
 	end
 	savedAt = now()
-	local name = followedName()
+	local name = unitName or followedName()
 	if not name then
 		return
 	end
@@ -1082,6 +1082,41 @@ local function tuneSave()
 	end
 	savedAt = now()
 	Spring.Echo("[bardroid-spectate] saved for " .. table.concat(names, ", "))
+end
+
+-- The same values for first person on the gamepad (bardroid_padfp.lua, Kailil 2026-10-30: "follow the spectator First
+-- person view camera settings ... allow me to tune it here too"): for the unit ridden, not the one followed
+local function fpTuneValue(unitID, s)
+	if s.key == "anchor" then
+		local a = select(6, anchorOf(unitID))
+		return (a == nil or a == "") and "middle" or a
+	end
+	local v = fpFor(UnitDefs[Spring.GetUnitDefID(unitID) or -1])[s.key]
+	return s.step < 1 and string.format("%.2f", v) or string.format("%g", v)
+end
+
+local function fpTuneStep(unitID, s, n)
+	local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	if not def then
+		return
+	end
+	if s.key == "anchor" then
+		local list = { "" }
+		for _, piece in ipairs(Spring.GetUnitPieceList(unitID) or {}) do
+			list[#list + 1] = piece
+		end
+		local at, now_ = 1, select(6, anchorOf(unitID)) or ""
+		for i, piece in ipairs(list) do
+			if piece == now_ then
+				at = i
+			end
+		end
+		FP.pieces[def.name] = list[(at - 1 + n) % #list + 1]
+		return
+	end
+	local v = fpFor(def)[s.key]
+	FP.types[def.name] = FP.types[def.name] or {}
+	FP.types[def.name][s.key] = math.max(s.min or -9999, math.min(s.max or 9999, round(v + s.step * n, s.step / 10)))
 end
 
 local ACTIONS = {
@@ -1568,6 +1603,18 @@ function widget:Initialize()
 		fp = FP,
 		fpFor = function(unitID) return fpFor(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
 		anchorOf = anchorOf, -- (bardroid_padfp.lua: first person on the gamepad rides the same point)
+		followable = function(unitID) -- (... the same units: mobile ones and sentries, no other buildings)
+			return followable(unitID, UnitDefs[Spring.GetUnitDefID(unitID) or -1])
+		end,
+		fpSettings = FP_SETTINGS, -- (... and tunes the same values)
+		fpTuneValue = fpTuneValue,
+		fpTuneStep = fpTuneStep,
+		fpTuneSave = function(unitID)
+			local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+			if def then
+				tuneSave(def.name)
+			end
+		end,
 		unitClass = function(unitID) return unitClass(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
 		-- the views (presets): the list, the one on, a view's values, and setting them (applied at once when on)
 		views = function() return PRESETS end,

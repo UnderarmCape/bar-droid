@@ -59,7 +59,8 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   Back + Y     the path speed tuner (bardroid_padspeed.lua): how fast the pointer draws at each zoom
  *   LB + L3 held first person on the selected unit (bardroid_padfp.lua): the sticks go to the widget (left walks, right
  *                looks), RT fires, B or the same chord ends it; the squad's orders: A follow me, X stop, Y fight, RB
- *                patrol, D-pad up add, down clear; nothing else while it lasts
+ *                patrol, D-pad up add, down clear; Back the camera tuner (D-pad up / down the setting, left / right
+ *                less and more, A saves, B closes); nothing else while it lasts
  *   a building picked (v0.8.5's placement): A places it, X places it and keeps it, D-pad left/right turns it and
  *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid ("GRID" shown; Shift+Alt:
  *                the engine lays a build drag out only with Shift held, so LB alone did not, Kailil 2026-10-29) - A
@@ -180,6 +181,9 @@ final class PadGame {
             if (pressed(tapped, RB)) mouse.act("fp_order_patrol");
             if (pressed(tapped, DPAD_UP)) mouse.act("fp_order_add");
             if (pressed(tapped, DPAD_DOWN)) mouse.act("fp_order_clear");
+            if (pressed(tapped, DPAD_LEFT)) mouse.act("fp_order_left");     // (the camera tuner's less and more)
+            if (pressed(tapped, DPAD_RIGHT)) mouse.act("fp_order_right");
+            if (pressed(tapped, BACK)) mouse.act("fp_order_tune");
             if (rt != fpFiring) { fpFiring = rt; mouse.act(rt ? "fp_fire_on" : "fp_fire_off"); }
             if (shift) { shift = false; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false); }
             System.arraycopy(held, 0, prev, 0, COUNT);
@@ -488,19 +492,14 @@ final class PadGame {
             if (pressed(tapped, DPAD_DOWN)) { groupSlot = (groupSlot + 7) % 9 + 1; mouse.act("group_show_" + groupSlot); }
             if (start && pressed(tapped, LS)) mouse.act("group_clear_" + groupSlot);
         }
-        // + D-pad left: a tap selects the group, held every unit of the selection's types joins it, those to come too
-        // (the widget, and BAR's autogroup: Alt+N). + D-pad right: a tap the camera to the group, held the group cleared.
-        // Also if Start or Back lets go first.
+        // + D-pad left: a tap selects the group, held every unit of the selection's types joins it, those to come too.
+        // + D-pad right: a tap the camera to the group, held the group cleared. Also if Start or Back lets go first.
+        // (All BAR's own group commands and autogroup: bardroid_pad.lua.)
         if (groups && pressed(tapped, DPAD_LEFT)) { startLeftAt = now; startLeftDone = false; }
         if (startLeftAt >= 0) {
             if (!startLeftDone && held[DPAD_LEFT] && now - startLeftAt >= ASSIGN_HOLD_MS) {
                 startLeftDone = true;
                 mouse.act("group_assign_" + groupSlot);
-                int key = KeyEvent.KEYCODE_1 + groupSlot - 1;
-                if (!alt) mouse.key(KeyEvent.KEYCODE_ALT_LEFT, true);
-                mouse.key(key, true);
-                mouse.key(key, false);
-                if (!alt) mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false);
             }
             if (released(held, tapped, DPAD_LEFT)) {
                 if (!startLeftDone) mouse.act("group_recall_" + groupSlot);

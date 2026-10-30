@@ -979,10 +979,13 @@ local ACTIONS = {
 	end,
 }
 
--- control groups: group_<recall|assign|look|clear|show>_<1..9>. The engine's groups (BAR's keys use the same), set
--- unit by unit; a recall only selects, the camera stays (Kailil, 2026-10-29); assign takes every unit of the selection's
--- types, a look moves the camera to the group (2026-10-30). The group list (v0.8.5's: a box for each group that has units,
--- the slot in use too) shows while Start or Back is held and for a moment after each group action.
+-- control groups: group_<recall|assign|look|clear|show>_<1..9>. BAR's own system with other keys (Kailil, 2026-10-30: "it
+-- should literarly just be the vanilla system just different UI and keybindings"): the engine's group commands and BAR's
+-- autogroup, nothing kept here. Recall: "group select", the camera stays. Assign: BAR's select of the selection's types
+-- on the whole map (a double tap's), "group set", and the autogroup so that those to come join. Look: "group focus".
+-- Clear: the group selected, taken out of its autogroup and "group unset", the selection as it was. The group list
+-- (v0.8.5's: a box for each group that has units, the slot in use too) shows while Start or Back is held and for a moment
+-- after each group action.
 local function groupUnits(n)
 	local units = {}
 	for _, unitID in ipairs(Spring.GetGroupUnits(n) or {}) do
@@ -995,57 +998,40 @@ end
 local function group(kind, n)
 	n = tonumber(n)
 	groupList.slot, groupList.untilAt = n, now()
+	local autogroup = WG.autogroup
 	if kind == "recall" then
-		local units = groupUnits(n)
-		if #units > 0 then
-			Spring.SelectUnitArray(units)
+		if #groupUnits(n) > 0 then
+			Spring.SendCommands("group select " .. n)
 			note("GROUP " .. n)
 		else
 			note("GROUP " .. n .. " EMPTY")
 		end
 	elseif kind == "assign" then
-		local selected = Spring.GetSelectedUnits()
-		local types, wanted = {}, 0
-		for _, unitID in ipairs(selected) do
-			types[Spring.GetUnitDefID(unitID) or -1] = true
-		end
-		if #selected == 0 then
+		if Spring.GetSelectedUnitsCount() == 0 then
 			note("SELECT A UNIT")
 			return
 		end
-		for _, unitID in ipairs(groupUnits(n)) do
-			Spring.SetUnitGroup(unitID, -1)
+		Spring.SendCommands("select AllMap+_InPrevSel+_ClearSelection_SelectAll+")
+		Spring.SendCommands("group set " .. n)
+		if autogroup and autogroup.addCurrentSelectionToAutogroup then
+			autogroup.addCurrentSelectionToAutogroup(n)
 		end
-		for _, unitID in ipairs(myUnits()) do
-			if types[Spring.GetUnitDefID(unitID) or -1] then
-				Spring.SetUnitGroup(unitID, n)
-				wanted = wanted + 1
-			end
-		end
-		local count = #groupUnits(n)
-		-- (Kailil: with maces or ticks selected only one unit was taken; what the engine kept, for the next look)
-		Spring.Echo(string.format("[bardroid-pad] group %d set: %d of %d units of the selection's types", n, count, wanted))
-		note("GROUP " .. n .. " SET: " .. count)
+		note("GROUP " .. n .. " SET: " .. #groupUnits(n))
 	elseif kind == "look" then
-		local units = groupUnits(n)
-		local sx, sz, found = 0, 0, 0
-		for _, unitID in ipairs(units) do
-			local x, _, z = Spring.GetUnitPosition(unitID)
-			if x then
-				sx, sz, found = sx + x, sz + z, found + 1
-			end
-		end
-		if found > 0 then
-			sx, sz = sx / found, sz / found
-			Spring.SetCameraTarget(sx, Spring.GetGroundHeight(sx, sz), sz, 0.3)
+		if #groupUnits(n) > 0 then
+			Spring.SendCommands("group focus " .. n .. " 0.3")
 			note("GROUP " .. n)
 		else
 			note("GROUP " .. n .. " EMPTY")
 		end
 	elseif kind == "clear" then
-		for _, unitID in ipairs(groupUnits(n)) do
-			Spring.SetUnitGroup(unitID, -1)
+		local keep = Spring.GetSelectedUnits()
+		Spring.SendCommands("group select " .. n)
+		if autogroup and autogroup.removeCurrentSelectionFromAutogroup then
+			autogroup.removeCurrentSelectionFromAutogroup()
 		end
+		Spring.SendCommands("group unset")
+		Spring.SelectUnitArray(keep)
 		note("GROUP " .. n .. " CLEARED")
 	else
 		note("GROUP " .. n)

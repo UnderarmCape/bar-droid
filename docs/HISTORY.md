@@ -37,6 +37,19 @@ Kailil, playing the merged build, sent ten notes. Done so far:
   Seen on the dev phone with seven spawned bots: Following, Fighting, Holding, and the bots going there. A patrol showed
   as Fighting (the engine walks it as a fight): the panel goes by the last order, that label not yet seen on screen.
   Riding alone on the dev phone: 30.0 fps, slowest frame 58 ms, 1798 of 1800 pictures exactly 2 vsyncs.
+- Then, playing it: the camera follows the spectator tools' anchor and values for each unit type, smoothing too, and Back
+  tunes them in place (the same settings, kept for both with Save). The head is apart from the body (the view's heading
+  is the player's alone, the left stick walks relative to it, sideways and backwards too, the body turning to walk), and
+  only the horizon recentres, not while RT is held. First person only on what the spectator tools follow: mobile units
+  and armed buildings. RT into open air: not possible for a player. The engine lowers every ground attack to the terrain
+  (`CommandAI.cpp`, `AdjustGroundAttackCommand`), which a test showed after the first try (target at ground height, off
+  the screen, with the shot timer running), and BAR's Set Target does too; `Spring.SetUnitTarget` could, but only synced
+  game code has it, so not online. So RT is Set Target at 97% of the range along the view: fires on the move, standing
+  or looking up alike, 291 of 300 elmos on the commander.
+- Control groups on BAR's own system (Kailil: "it should literarly just be the vanilla system just different UI and
+  keybindings"), both modes: `group select`, `group focus`, BAR's select of the types then `group set` and its autogroup,
+  and for clear the autogroup's removal and `group unset`. The custom way set units by hand and pressed Alt+N on top, so
+  two systems wrote the same groups. Checked on the dev phone with two unit types, assigning twice, focus and clear.
 - Placing a building pans 20% slower, Back's slow pan 33% (30% + 10%), both modes. The A-held circle: the D-pad held,
   minimum 20, eased over about 0.1 s, both modes. Self-destruct in the app's mode: Back + R3 + L3 held, as v0.8.5's.
 ## Touch in the controller game: menus by themselves again (2026-10-30, morning)

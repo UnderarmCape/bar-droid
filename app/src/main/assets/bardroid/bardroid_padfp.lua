@@ -1,12 +1,20 @@
 -- BAR Droid first person on the gamepad (Kailil, 2026-10-30): LB + L3 held 0.3 s rides the selected unit, in the engine's
--- first-person camera with the values Kailil set for each unit type (bardroid_spectate.lua's). The same again, or B, ends
--- it. The app's controls only (PadGame), so online too; BAR's sandbox allows it: these are a camera and ordinary orders.
---   right stick  looks around; left alone for RECENTER_AFTER s the view eases back with the unit
---   left stick   walks the unit where the view points: a move order a little ahead, renewed only when the stick turns or
---                the unit nears it (Kailil: "without spamming the move orders"); nothing is selected meanwhile, so no order
---                lines or unit voices. Let go: the unit stops.
---   RT           fires at the middle of the screen, also while walking: BAR's Set Target (its own order, for "fire on the
---                move"), renewed while RT is held and cancelled when let go; at the sky, a point ahead of the unit.
+-- first-person camera at the spectator tools' anchor and values for its type (bardroid_spectate.lua's; Back tunes them
+-- here too, Save keeps them for both). The same chord again, or B, ends it. The app's controls only (PadGame), so online
+-- too; BAR's sandbox allows it: these are a camera and ordinary orders.
+-- The head and the body are apart (Kailil: "so i can move in all directions with the left stick. and look in all
+-- directions with the right"):
+--   right stick  looks anywhere, whichever way the body faces; left alone for RECENTER_AFTER s only the pitch eases back
+--                to the horizon, never the heading
+--   left stick   walks the unit that way relative to the view, sideways and backwards too: a move order a little ahead,
+--                renewed only when the stick turns or the unit nears it (Kailil: "without spamming the move orders");
+--                nothing is selected meanwhile, so no order lines or unit voices. Let go: the unit stops.
+--   RT           fires where the view points, standing or walking: BAR's Set Target ("fire on the move"), renewed while RT
+--                is held and ended when let go. Its aim is the enemy under the crosshair, the ground the view points at
+--                within range, else the ground at full range along the view: the flattest, longest shot there is. Open
+--                air cannot be aimed at by a player's order (Kailil: "targets the max range and thin air"): the engine
+--                lowers every ground attack to the terrain (CommandAI.cpp AdjustGroundAttackCommand), Set Target's
+--                gadget too, and only synced game code gets past that (Spring.SetUnitTarget), which online play has not.
 -- The squad (Kailil: "tell all units nearby or that im looking at to follow (guard Me) or stop"; fight and patrol "in a
 -- direction"; "a UI telling me what is selected and what orders they have"): the units these orders go to. A unit of
 -- yours in the middle of the screen joins it with the next order; an empty squad takes the units within NEARBY (combat
@@ -35,20 +43,22 @@ local CMD_CANCEL_TARGET = (GameCMD and GameCMD.UNIT_CANCEL_TARGET) or 34924 -- l
 local RECENTER_AFTER, RECENTER_SMOOTHING = 1.5, 0.5
 local LOOK_TURN, LOOK_TILT = 2.2, 1.4 -- radians, degrees * 60: a full stick's look a second
 local MOVE_AHEAD, MOVE_TURN, MOVE_EVERY = 280, 0.3, 0.8 -- how far the order goes, and what renews it
-local FIRE_EVERY, FIRE_SKY = 0.25, 600
-local POS_SMOOTHING, TURN_SMOOTHING = 0.12, 0.2
+local FIRE_EVERY, FIRE_REACH = 0.25, 0.97 -- the aim renewed this often; how much of the weapon's range it reaches for
 local NEARBY, ORDER_AHEAD = 900, 1400 -- elmos: the units nearby; fight or patrol with the view on the sky
 local SUMMARY_SECONDS = 0.25
 local STATUS = { [CMD.GUARD] = "Following", [CMD.FIGHT] = "Fighting", [CMD.PATROL] = "Patrolling", [CMD.MOVE] = "Moving",
 	[CMD.ATTACK] = "Attacking", [CMD.RECLAIM] = "Reclaiming", [CMD.REPAIR] = "Repairing" }
 local BUTTONS = { { "A", "Follow me" }, { "X", "Stop" }, { "Y", "Fight there" }, { "RB", "Patrol there" },
-	{ "UP", "Add units" }, { "DN", "Clear squad" }, { "RT", "Fire" }, { "B", "Leave" } }
+	{ "UP", "Add units" }, { "DN", "Clear squad" }, { "RT", "Fire" }, { "BK", "Tune camera" }, { "B", "Leave" } }
+local TUNE_BUTTONS = { { "UP", "Previous" }, { "DN", "Next" }, { "LF", "Less" }, { "RG", "More" },
+	{ "A", "Save" }, { "B", "Close" } }
 
 local fp = nil -- { unitID, saved camera, selection before, x, y, z, yaw, lookYaw, lookPitch, lookAt, sticks, ... }
 local cam = { mode = CAM_FPS, rz = 0 }
 local squad, inSquad = {}, {} -- the units the orders go to; unitID -> true
 local summary, summaryAt = {}, nil -- per unit type: { defID, count, status }
 local lastOrder = nil -- the squad's last order (the panel tells a patrol from a fight by it)
+local tuning, tuneAt = false, 1 -- the camera tuner is open; the setting on it (bardroid_spectate.lua's FP_SETTINGS)
 
 local function now()
 	return Spring.GetTimer()
@@ -90,12 +100,23 @@ local function eyeOf(unitID)
 	return mx, my, mz, P
 end
 
+-- Mobile units and sentries (armed buildings): the ones the spectator tools follow
+local function rideable(unitID)
+	local s = WG.BarDroidSpectate
+	if s and s.followable then
+		return s.followable(unitID)
+	end
+	local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	return def ~= nil and ((def.speed or 0) > 0 or #(def.weapons or {}) > 0)
+end
+
 local function stop(text)
 	local s = fp
 	if not s then
 		return
 	end
 	fp = nil
+	tuning = false
 	if s.firing then
 		pcall(Spring.GiveOrderToUnit, s.unitID, CMD_CANCEL_TARGET, {}, 0)
 	end
@@ -117,17 +138,24 @@ local function start()
 		say("NOT IN THIS GAME")
 		return
 	end
-	local unitID = Spring.GetSelectedUnits()[1]
+	-- (Kailil, 2026-10-30: "only work on units and sentries": the spectator tools' choice, no other buildings)
+	local selected, unitID = Spring.GetSelectedUnits(), nil
+	for _, id in ipairs(selected) do
+		if rideable(id) then
+			unitID = id
+			break
+		end
+	end
 	if not unitID then
-		say("SELECT A UNIT")
+		say(#selected > 0 and "NOT ON THIS BUILDING" or "SELECT A UNIT")
 		return
 	end
 	local x, y, z = eyeOf(unitID)
 	if not x then
 		return
 	end
-	fp = { unitID = unitID, camera = Spring.GetCameraState(), x = x, y = y, z = z, yaw = unitYaw(unitID) or 0,
-		lookYaw = 0, lookPitch = 0, lookAt = now(), lx = 0, ly = 0, rx = 0, ry = 0, moving = false }
+	fp = { unitID = unitID, camera = Spring.GetCameraState(), x = x, y = y, z = z, viewYaw = unitYaw(unitID) or 0,
+		lookPitch = 0, lookAt = now(), lx = 0, ly = 0, rx = 0, ry = 0, moving = false }
 	Spring.SelectUnitArray({}) -- (no order lines, panels or voices while riding)
 	if WG.info and WG.info.displayUnitID then
 		WG.info.displayUnitID(unitID) -- (the panel at the bottom left: the unit ridden)
@@ -141,39 +169,44 @@ local function camera(s, dt)
 	if not ax then
 		return false
 	end
-	local kp = 1 - math.exp(-dt / POS_SMOOTHING)
-	local kt = 1 - math.exp(-dt / TURN_SMOOTHING)
+	-- (the unit type's own smoothing; the anchor's place from the view's frame, not the body's: the eye stays put when the
+	-- body turns to walk another way, and looking straight along the body is the spectator's view exactly)
+	local kp = P.posSmoothing and P.posSmoothing > 0 and (1 - math.exp(-dt / P.posSmoothing)) or 1
 	s.x, s.y, s.z = s.x + (ax - s.x) * kp, s.y + (ay - s.y) * kp, s.z + (az - s.z) * kp
-	s.yaw = angleTo(s.yaw, unitYaw(s.unitID) or s.yaw, kt)
 	if s.rx ~= 0 or s.ry ~= 0 then
-		s.lookYaw = s.lookYaw + s.rx * LOOK_TURN * dt
+		s.viewYaw = s.viewYaw + s.rx * LOOK_TURN * dt
 		s.lookPitch = math.max(-80, math.min(80, s.lookPitch - s.ry * LOOK_TILT * 60 * dt))
 		s.lookAt = now()
-	elseif Spring.DiffTimers(now(), s.lookAt) > RECENTER_AFTER then
-		local k = 1 - math.exp(-dt / RECENTER_SMOOTHING)
-		s.lookYaw = angleTo(s.lookYaw, 0, k)
-		s.lookPitch = s.lookPitch + (0 - s.lookPitch) * k
+	elseif s.firing then
+		s.lookAt = now() -- (the aim stays where it is while RT is held)
+	elseif Spring.DiffTimers(now(), s.lookAt) > RECENTER_AFTER then -- (the horizon only: the heading stays the player's)
+		s.lookPitch = s.lookPitch * math.exp(-dt / RECENTER_SMOOTHING)
 	end
-	local fx, fz = math.sin(s.yaw), -math.cos(s.yaw)
+	local fx, fz = math.sin(s.viewYaw), -math.cos(s.viewYaw)
 	local rx, rz = -fz, fx
 	local ex, ez = s.x + fx * P.forward + rx * P.right, s.z + fz * P.forward + rz * P.right
 	local ey = s.y + P.up
-	local ry = s.yaw + math.rad(P.yaw or 0) + s.lookYaw
-	local pitch = math.pi / 2 - math.rad(P.pitch + s.lookPitch) -- (rx: pi/2 level, more is down)
+	local ry = s.viewYaw + math.rad(P.yaw or 0)
+	local pitchDeg = P.pitch + s.lookPitch
+	local pitch = math.pi / 2 - math.rad(pitchDeg) -- (rx: pi/2 level, more is down)
 	local c = cam
 	c.px, c.py, c.pz, c.rx, c.ry, c.fov = ex, ey, ez, pitch, ry, P.fov
 	c.dx, c.dy, c.dz = math.sin(pitch) * math.sin(ry), math.cos(pitch), -math.sin(pitch) * math.cos(ry)
 	c.oldHeight = ey - Spring.GetGroundHeight(ex, ez)
 	Spring.SetCameraState(c, 0)
-	s.viewYaw = ry
+	s.aimYaw, s.aimPitch = ry, math.rad(pitchDeg)
 	return true
 end
 
 local function walk(s)
+	local def = UnitDefs[Spring.GetUnitDefID(s.unitID) or -1]
+	if not def or (def.speed or 0) <= 0 then -- (a sentry looks and fires, it does not walk)
+		return
+	end
 	local moved = s.lx ~= 0 or s.ly ~= 0
 	if not moved then
 		if s.moving then
-			s.moving = false
+			s.moving, s.moveDir, s.fireAt = false, nil, nil -- (a stop ends a Set Target too: the next pass gives it again)
 			pcall(Spring.GiveOrderToUnit, s.unitID, CMD.STOP, {}, 0)
 		end
 		return
@@ -200,24 +233,33 @@ local function walk(s)
 	end
 end
 
--- Where the middle of the screen points: an enemy unit, the ground, or (the sky) ahead of the unit. BAR's Set Target
--- takes no ground out of the unit's range (allowTargetPos), so a far point comes in along the line to it.
-local function aimPoint(s)
+local function reachOf(s)
+	local def = UnitDefs[Spring.GetUnitDefID(s.unitID) or -1]
+	return math.max(60, (def and def.maxWeaponRange or 300) * FIRE_REACH)
+end
+
+local function enemyAimed(s)
 	local vsx, vsy = Spring.GetViewGeometry()
 	local kind, target = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2))
 	if kind == "unit" and target ~= s.unitID and not Spring.IsUnitAllied(target) then
-		return { target }
+		return target
 	end
+	return nil
+end
+
+-- The ground the view points at within reach, else the ground at reach along the view (BAR's Set Target takes only
+-- ground, in range: allowTargetPos)
+local function groundAim(s)
+	local vsx, vsy = Spring.GetViewGeometry()
 	local ux, _, uz = Spring.GetUnitPosition(s.unitID)
-	local def = UnitDefs[Spring.GetUnitDefID(s.unitID) or -1]
-	local reach = math.max(60, (def and def.maxWeaponRange or FIRE_SKY) * 0.9)
+	local reach = reachOf(s)
 	local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
-	local dx, dz = math.sin(s.viewYaw) * reach, -math.cos(s.viewYaw) * reach
-	if pos then
-		dx, dz = pos[1] - ux, pos[3] - uz
-		local d = math.sqrt(dx * dx + dz * dz)
-		if d > reach then
-			dx, dz = dx / d * reach, dz / d * reach
+	local dx, dz = math.sin(s.aimYaw) * reach, -math.cos(s.aimYaw) * reach
+	if pos and s.aimPitch < 0 then
+		local gx, gz = pos[1] - ux, pos[3] - uz
+		local d = math.sqrt(gx * gx + gz * gz)
+		if d <= reach then
+			dx, dz = gx, gz
 		end
 	end
 	local x = math.max(0, math.min(Game.mapSizeX, ux + dx))
@@ -232,7 +274,8 @@ local function fire(s)
 	local t = now()
 	if not s.fireAt or Spring.DiffTimers(t, s.fireAt) > FIRE_EVERY then
 		s.fireAt = t
-		pcall(Spring.GiveOrderToUnit, s.unitID, CMD_SET_TARGET, aimPoint(s), 0)
+		local target = enemyAimed(s)
+		pcall(Spring.GiveOrderToUnit, s.unitID, CMD_SET_TARGET, target and { target } or groundAim(s), 0)
 	end
 end
 
@@ -292,8 +335,8 @@ local function orderPoint(s)
 	if pos then
 		return { pos[1], pos[2], pos[3] }
 	end
-	local x = math.max(0, math.min(Game.mapSizeX, s.x + math.sin(s.viewYaw or s.yaw) * ORDER_AHEAD))
-	local z = math.max(0, math.min(Game.mapSizeZ, s.z - math.cos(s.viewYaw or s.yaw) * ORDER_AHEAD))
+	local x = math.max(0, math.min(Game.mapSizeX, s.x + math.sin(s.viewYaw) * ORDER_AHEAD))
+	local z = math.max(0, math.min(Game.mapSizeZ, s.z - math.cos(s.viewYaw) * ORDER_AHEAD))
 	return { x, Spring.GetGroundHeight(x, z), z }
 end
 
@@ -304,9 +347,45 @@ local function give(cmdID, params, name)
 	summaryAt = nil
 end
 
+-- The camera tuner (Back): the spectator tools' settings for the unit type ridden, kept for both with Save
+
+local function tuneList()
+	local s = WG.BarDroidSpectate
+	return s and s.fpSettings
+end
+
+local function tune(kind)
+	local list, api = tuneList(), WG.BarDroidSpectate
+	if not list then
+		return
+	end
+	if kind == "add" then
+		tuneAt = (tuneAt - 2) % #list + 1
+	elseif kind == "clear" then
+		tuneAt = tuneAt % #list + 1
+	elseif kind == "left" or kind == "right" then
+		api.fpTuneStep(fp.unitID, list[tuneAt], kind == "left" and -1 or 1)
+	elseif kind == "follow" then
+		api.fpTuneSave(fp.unitID)
+		say("CAMERA SAVED")
+	elseif kind == "tune" then
+		tuning = false
+	end
+end
+
 local function order(kind)
 	local s = fp
 	if not s then
+		return
+	end
+	if tuning then
+		tune(kind)
+		return
+	end
+	if kind == "tune" then
+		tuning = tuneList() ~= nil
+		return
+	elseif kind == "left" or kind == "right" then
 		return
 	end
 	cleanSquad()
@@ -430,14 +509,14 @@ local function drawSquad(style, font, x1, y0, vsy)
 	gl.Color(1, 1, 1, 1)
 end
 
-local function drawButtons(style, font, x0, y0, x1, y1)
+local function drawButtons(style, font, x0, y0, x1, y1, buttons)
 	style.panel(x0, y0, x1, y1, 1)
 	local size = style.size(0.019, 11)
 	local pad = math.floor(size * 0.8)
-	local cols, rows = 2, math.ceil(#BUTTONS / 2)
+	local cols, rows = 2, math.ceil(#buttons / 2)
 	local cw, ch = (x1 - x0 - pad) / cols, (y1 - y0 - pad) / rows
 	local chip = math.floor(math.min(ch * 0.72, size * 1.7))
-	for i, b in ipairs(BUTTONS) do
+	for i, b in ipairs(buttons) do
 		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
 		local x = math.floor(x0 + pad + col * cw)
 		local y = math.floor(y1 - pad / 2 - (row + 1) * ch + (ch - chip) / 2)
@@ -461,6 +540,32 @@ local function drawButtons(style, font, x0, y0, x1, y1)
 	gl.Color(1, 1, 1, 1)
 end
 
+-- The tuner, in the squad's place: every setting with its value, the one on the D-pad in gold
+local function drawTuner(style, font, x1, y0, vsy)
+	local list, api = tuneList(), WG.BarDroidSpectate
+	local size = style.size(0.018, 11)
+	local pad = math.floor(size * 0.6)
+	local rowH = math.floor(size * 1.5)
+	local h = pad * 3 + size + #list * rowH
+	local y1 = math.min(y0 + h, math.floor(vsy * 0.86))
+	style.panel(0, y0, x1, y1, 1)
+	local def = UnitDefs[Spring.GetUnitDefID(fp.unitID) or -1]
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.6)
+	font:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], 1)
+	font:Print("Camera: " .. (def and (def.translatedHumanName or def.humanName) or ""), pad, y1 - pad - size * 0.85, size, "o")
+	for i, setting in ipairs(list) do
+		local lit = i == tuneAt
+		local c = lit and style.GOLD or style.TEXT
+		local y = y1 - pad * 2 - size - i * rowH + rowH * 0.3
+		font:SetTextColor(c[1], c[2], c[3], lit and 1 or 0.8)
+		font:Print(setting.label, pad * 2, y, size, "o")
+		font:Print(api.fpTuneValue(fp.unitID, setting), x1 - pad * 2, y, size, "ro")
+	end
+	font:End()
+	gl.Color(1, 1, 1, 1)
+end
+
 function widget:DrawScreen()
 	if not fp then
 		return
@@ -471,9 +576,14 @@ function widget:DrawScreen()
 	end
 	local vsx, vsy = Spring.GetViewGeometry()
 	local x0, y0, x1, y1 = menuPlace(vsx, vsy)
+	if tuning then
+		drawTuner(style, font, x0, y1, vsy)
+		drawButtons(style, font, x0, y0, x1, y1, TUNE_BUTTONS)
+		return
+	end
 	summarize()
 	drawSquad(style, font, x0, y1, vsy)
-	drawButtons(style, font, x0, y0, x1, y1)
+	drawButtons(style, font, x0, y0, x1, y1, BUTTONS)
 end
 
 function widget:DrawWorld() -- (a ring under each unit of the squad)
@@ -519,7 +629,9 @@ function widget:Initialize()
 			return fp ~= nil
 		end,
 		toggle = function()
-			if fp then
+			if tuning then -- (B closes the tuner first)
+				tuning = false
+			elseif fp then
 				stop()
 			else
 				start()

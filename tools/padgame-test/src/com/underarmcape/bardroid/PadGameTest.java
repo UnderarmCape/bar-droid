@@ -323,10 +323,8 @@ public final class PadGameTest {
                 && !t.has("act idle_prev"), t.m.out);
         t.m.out.clear();
         t.tick(DPAD_LEFT); t.wait(400); t.up(DPAD_LEFT);
-        int altDown = t.m.out.indexOf("key " + KeyEvent.KEYCODE_ALT_LEFT + " down");
-        check("Start + D-pad left held: the type assigned, BAR's autogroup (Alt + 2), no recall", t.has("act group_assign_2")
-                && altDown >= 0 && altDown < t.m.out.indexOf("key " + (KeyEvent.KEYCODE_1 + 1) + " down")
-                && t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") && !t.has("act group_recall_2"), t.m.out);
+        check("Start + D-pad left held: the group assigned once, no keys pressed, no recall", t.count("act group_assign_2") == 1
+                && t.count("key ") == 0 && !t.has("act group_recall_2"), t.m.out);
         t.m.out.clear();
         t.tap(DPAD_RIGHT);
         check("Start + D-pad right tapped: the camera to the group", t.has("act group_look_2") && !t.has("act group_clear_2")
@@ -427,10 +425,12 @@ public final class PadGameTest {
         t.tick(LB); t.tap(LS); t.up(LB);
         check("LB + L3 tapped: nothing", t.m.out.stream().noneMatch(e -> e.equals("act fp_toggle") || e.equals("act queue_remove_first")), t.m.out);
         t.m.riding = true; t.m.out.clear();
-        t.tap(A); t.tap(X); t.tap(Y); t.tap(RB); t.tap(DPAD_UP); t.tap(DPAD_DOWN); t.tap(DPAD_LEFT);
+        t.tap(A); t.tap(X); t.tap(Y); t.tap(RB); t.tap(DPAD_UP); t.tap(DPAD_DOWN); t.tap(DPAD_LEFT); t.tap(DPAD_RIGHT); t.tap(BACK);
         t.rt = true; t.tick(); t.tick(); t.rt = false; t.tick();
         check("riding: A, X, Y, RB, D-pad up and down are the squad's orders", t.has("act fp_order_follow") && t.has("act fp_order_stop")
                 && t.has("act fp_order_fight") && t.has("act fp_order_patrol") && t.has("act fp_order_add") && t.has("act fp_order_clear"), t.m.out);
+        check("riding: Back the camera tuner, D-pad left and right its less and more", t.has("act fp_order_tune")
+                && t.has("act fp_order_left") && t.has("act fp_order_right") && !t.has("act group_list_on"), t.m.out);
         check("riding: RT fires and lets go, once each, no Shift, no clicks, no menus", t.count("act fp_fire_on") == 1
                 && t.count("act fp_fire_off") == 1 && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
                 && !t.has("left down") && !t.has("right down") && !t.has("act pad_build") && !t.has("act idle_prev"), t.m.out);
