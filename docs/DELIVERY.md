@@ -250,6 +250,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `tools\phone-bench.ps1` on the 8 GB phone (BAR's benchmark, 13 runs through): it misread four runs (helper
       scripts that reached the phone cut short, a run past midnight, adb push's stderr, a killed game waited on for
       12 minutes); fixed (HISTORY.md "Fitting BAR into an 8 GB phone"), the midnight filter checked on the phone's log.
+      After the Fold7 notes' merge: `tools/publish-check.ps1 -NoHistory` ready. `RtsTouch`'s new ONE placement
+      reviewed: a tap that moves a waiting building is held back for a double tap; a second touch near it that Android
+      cancelled (the notification shade, a fold) neither ran nor dropped it, so the building jumped there at some
+      later touch. A cancelled touch now runs it, as a touch that was no tap does (built; the touch itself is Kailil's
+      to try on the Fold7).
 
 ## Releasing (once the blockers are done)
 
