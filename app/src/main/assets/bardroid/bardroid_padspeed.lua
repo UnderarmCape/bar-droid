@@ -222,10 +222,12 @@ function widget:DrawScreen()
 		buttons[i] = { b[1], bx, by, bx + bw, by + buttonH }
 		style.fill(bx, by, bx + bw, by + buttonH, { 0.16, 0.16, 0.16, 0.95 }, 1)
 		style.outline(bx, by, bx + bw, by + buttonH, { 1, 1, 1 }, 0.16, 1)
+		-- (the words a little smaller, with air at both ends; - and + bigger: they are the buttons used)
+		local bs = size * (#b[2] == 1 and 1.35 or 0.86)
 		font:Begin()
 		font:SetOutlineColor(0, 0, 0, 0.6)
 		font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 1)
-		font:Print(b[2], bx + bw / 2, by + buttonH / 2 - size * 0.36, size, "co")
+		font:Print(b[2], bx + bw / 2, by + buttonH / 2 - bs * 0.36, bs, "co")
 		font:End()
 	end
 	gl.Color(1, 1, 1, 1)

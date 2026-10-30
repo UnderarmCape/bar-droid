@@ -17,8 +17,8 @@
 --                                                                               menu's PLACE button: bardroid_buildmenu.lua)
 --                                                     nudge <dx> <dy>           (the waiting building moved by that many
 --                                                                               pixels, y down)
---                                                     grid start | grid by <dx> <dy> | grid none  (a GRID from the
---                                                                               waiting building, its far corner moved)
+--                                                     grid held | grid free     (the app holds a GRID's build drag down:
+--                                                                               PLACE lit)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
@@ -433,28 +433,22 @@ local function readTouch(lines)
 			WG.BarDroidPad.act(name)
 		end
 	end
-	-- a building picked: the spot a tap or a drag picked for the build menu's PLACE button, a nudge of it, a GRID from it
-	-- (bardroid_buildmenu.lua), in the order the app sent them; a frame's nudges and GRID moves summed
+	-- a building picked: the spot a tap or a drag picked for the build menu's PLACE button, a nudge of it, a GRID held
+	-- (bardroid_buildmenu.lua), in the order the app sent them; a frame's nudges summed
 	local b = WG.bardroidBuildmenu
 	if b and b.droidSpot and (lines:find("spot ", 1, true) or lines:find("nudge ", 1, true) or lines:find("grid ", 1, true)) then
-		local nx, ny, gx, gy = 0, 0, 0, 0
+		local nx, ny = 0, 0
 		local function flush()
 			if (nx ~= 0 or ny ~= 0) and b.droidNudge then
 				b.droidNudge(nx, ny)
 			end
-			if (gx ~= 0 or gy ~= 0) and b.droidSetGrid then
-				b.droidSetGrid("by", gx, gy)
-			end
-			nx, ny, gx, gy = 0, 0, 0, 0
+			nx, ny = 0, 0
 		end
 		for line in lines:gmatch("[^\n]+") do
 			local kind, args = line:match("^(%a+) (.*)$")
 			if kind == "nudge" then
 				local x, y = args:match("^(%S+) (%S+)")
 				nx, ny = nx + (tonumber(x) or 0), ny + (tonumber(y) or 0)
-			elseif kind == "grid" and args:find("^by ") then
-				local x, y = args:match("^by (%S+) (%S+)")
-				gx, gy = gx + (tonumber(x) or 0), gy + (tonumber(y) or 0)
 			elseif kind == "spot" then
 				flush()
 				local x, y = args:match("^(%S+) (%S+)")

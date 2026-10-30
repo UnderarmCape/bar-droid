@@ -263,9 +263,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the vsync file was looked for at the first swap only (a game started with the screen off kept the old cap to its
       end), now twice a second until found, and an empty file is left alone (a bus error otherwise). Each check fails
       without its fix. `pace-test.ps1` took any phone: with both on adb it stopped; it now takes the dev phone.
-- [ ] Touch GRID moved to the engine's build drag (2026-10-30): take the blue grid out of `tools/make-buildmenu.py`
-      (droid.grid, gridPositions, gridEnds, the spot's rings) and change `tools/touch-widget-test`'s GRID checks; run that
-      test with the new commander, build menu, QUEUE and tuner checks once Kailil is off the laptop.
+- [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
+      (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
+      changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
+- [ ] Run `tools/touch-widget-test.ps1` once Kailil is off the laptop (his launch guard): the commander, build menu and
+      GRID checks written on 2026-10-30 have not run yet.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 
