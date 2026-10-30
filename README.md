@@ -50,7 +50,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
 | Three-finger tap | Show or hide the keyboard |
-| Three-finger swipe | Up: the whole map, down: back; left/right: previous/next idle builder |
+| Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
 
 In the lobby a drag scrolls lists and a tap on a server shows its details first.
@@ -59,7 +59,12 @@ In the lobby a drag scrolls lists and a tap on a server shows its details first.
 green **PLACE** button with ↻ and ✕ inside covers the order menu. Tap the map to pick the spot (the building shows
 there), then PLACE to build it; the building stays picked for the next spot. With LINE, GRID or BORDER, drag on the
 map for a row, a filled area or a hollow ring of them (BAR's own line and area building, placed at once). ↻ turns the
-building, ✕ (or a long press) puts it away. With ONE, a drag pans the map.
+building, ✕ puts it away (with LINE, GRID or BORDER a long press too).
+With ONE a drag does not pan the map: the building follows your finger. Once it waits there, a later drag anywhere
+nudges it (half your finger's way), a tap elsewhere moves it there, and a double tap sends it (with none waiting, a
+double tap places one there and sends it at once). Hold your finger still on it for a moment (or start a drag on the
+waiting building) and "GRID" pops up with a buzz: the drag now draws a grid of them from it; PLACE or a double tap
+sends the grid. Two fingers still pan and zoom.
 
 **The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
@@ -91,26 +96,26 @@ factions' matching unit too.
   | Left stick | Pan the map under the pointer (LT held: faster) |
   | Right stick | Turn (left/right) and zoom (up/down); with LB held, tilt |
   | A | Select (twice: that type on screen); place a building |
-  | A held | Nothing picked: v0.8.5's area select - a circle in the middle selects your units as you pan (RT: added to the selection, buildings too; D-pad: bigger or smaller; B: undo). With an order picked, the left stick moves the pointer instead: an area circle (repair, reclaim), a row of buildings; let go and it glides back to the middle |
-  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard); held, the left stick draws a path |
+  | A held | Nothing picked: v0.8.5's area select - a circle in the middle selects your units as you pan (RT: added to the selection, buildings too; D-pad: bigger or smaller; B: undo; X held as well: v0.8.5's filter radial, the left stick picks all mobile / combat / builders / air). Builders are never selected together with combat units. With an order picked, held for a quarter second, the left stick moves the pointer instead: an area circle (repair, reclaim), a row of buildings; let go and it glides back to the middle |
+  | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard); held for a quarter second, the left stick draws a path (a shorter press stays a click, also while the camera moves) |
   | B | Cancel the order or building picked, else clear the selection |
   | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
   | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge, or right from the last option: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
-  | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A) |
+  | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A). While the pad is in use the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the menu; in the controller game the rest then fill it evenly |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
-  | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait). With builders, A repair and X reclaim (A on the target) |
-  | Start + D-pad | Control groups: up / down picks the group, left tapped recalls it (held: assigns the selection), right: that type joins it from now on; Start + L3 clears it |
+  | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait; with factories selected: stops them and clears their whole queue). With builders, A repair and X reclaim (A on the target) |
+  | Start + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), held assigns the selection, right: that type joins it from now on; Start + L3 clears it. While Start is held (and a moment after) a strip shows a box for each group that has units |
   | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires) |
   | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
-  | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid - A starts it, the left stick draws it, A places it (X: and keeps the building), B cancels |
+  | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid ("GRID" shows) - A starts it, the left stick draws it (LB may be let go then), A places it (X: and keeps the building), B cancels |
   | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |
 
   A lobby can forbid widgets that give units orders (most allow them): there LB + A / X / Y only pick the order (A
   gives it, in the middle) and L3 / R3 do nothing ("NOT IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
   to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
-  takes v0.8.5's build menu's place.
+  takes v0.8.5's build menu's place, shown only once RB opens it (as v0.8.5's).
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

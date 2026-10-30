@@ -356,8 +356,10 @@ public final class ControllerBridge {
             return String.format(Locale.US, "pad %d %d %d %d 0 0", lb ? 0 : dead(rx, STICK_DEADZONE),
                     lb ? 0 : dead(ry, STICK_DEADZONE), lb ? dead(rx, STICK_DEADZONE) : 0, lb ? dead(ry, STICK_DEADZONE) : 0);
         }
-        return String.format(Locale.US, "pad %d %d %d %d %d %d", dead(lx, STICK_DEADZONE), dead(ly, STICK_DEADZONE),
-                dead(rx, STICK_DEADZONE), dead(ry, STICK_DEADZONE), dead(lt, TRIGGER_DEADZONE), buttons[BTN_LB] ? 1 : 0);
+        boolean still = game != null && game.stickTaken();   // (the area select's filter radial has the left stick)
+        return String.format(Locale.US, "pad %d %d %d %d %d %d", still ? 0 : dead(lx, STICK_DEADZONE),
+                still ? 0 : dead(ly, STICK_DEADZONE), dead(rx, STICK_DEADZONE), dead(ry, STICK_DEADZONE),
+                dead(lt, TRIGGER_DEADZONE), buttons[BTN_LB] ? 1 : 0);
     }
     private static int dead(int v, int deadzone) { return Math.abs(v) < deadzone ? 0 : v / 256 * 256; }
 }

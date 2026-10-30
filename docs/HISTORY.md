@@ -5,6 +5,35 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Kailil's Fold7 notes: touch placing, the two controller modes (2026-10-29/30, night)
+Kailil played e10df47 on the Fold7 and sent twelve notes (worktree `bar-droid-fold7`, branch `fold7/kailil-notes`; the
+laptop blue-screened midway: the one file being written then, the generated build menu, came back as zeros and was
+made again by `tools/make-buildmenu.py`; every other file was whole).
+- Touch: a three-finger swipe down brings the camera to the commander (dead: the constructor selected last). ONE no
+  longer pans on a drag: the building follows the finger, a later drag nudges it at half the finger's way (traced to
+  the exact pixel, the fraction carried: a first try extrapolated over sloped ground drifted 13 px), a tap moves it
+  unless a second tap follows, a double tap sends it. Held still (or dragged from the waiting building) it becomes a
+  GRID, laid out as the engine lays out a build drag with Alt and sent as BAR's own build drag with Shift+Alt between
+  its corners (the engine takes the press and the release points' own rays: `MouseHandler.cpp` 355/533, so a drag
+  replayed in one burst lands as a real one).
+- Why LB alone drew no grid with the app's gamepad controls: the engine lays out a build drag's line or grid only
+  while Shift is held (`GuiHandler.cpp` 2253, `GetQueueKeystate()`), so Alt alone placed one building; RT added Shift.
+  PadGame now holds Shift+Alt for the grid (and puts the building away after A, as v0.8.5's A).
+- The tiny paths: a quick X (or A with an order picked) while the camera moved held the button down while the ground
+  under the reticle slid, so BAR saw a drag. The app now presses the button only once the press is a quarter second
+  old (a shorter one is a click when let go); v0.8.5 waits a quarter second too (was 0.14 s) and starts the path where
+  the reticle is when the hold counts.
+- A big army's paths showed only with RT: `bardroid_touch.lua` hides the selection's queue past 40 orders (the engine
+  draws every queued building's model again); only builders count now.
+- The order menu with the pad: BAR's own switch (`WG.ordermenu.setDisabledCmd`) hides Stop, Wait, Attack, Repeat,
+  Move, Reclaim, Repair, Fight and Patrol while the pad is the input; BAR saves that switch, so the names hidden are
+  kept in springsettings and shown again at the next start. BAR's released game keeps its fixed grid (a user widget
+  cannot change its layout); v0.8.5's order menu lays the rest out evenly and tells the app its cells.
+- Control groups (both modes): a strip of the groups that have units, a recall without the camera move. The maces and
+  ticks bug (one unit taken) did not show in the code of either mode; each assignment now logs how many units the
+  engine kept (`[bardroid-pad] group N set` / `[controller] group N set`) for the next try.
+- v0.8.5's changes: BARGAMEPAD `controller/codex-v085-perf` 2544b21417 (local, not pushed).
+
 ## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
 idea was a run on the dev phone (`tools/phone-memory.ps1`: a skirmish started by intent, `start skirmish`, with engine

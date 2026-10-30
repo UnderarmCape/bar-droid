@@ -19,7 +19,11 @@ The first version meant for other people's phones: everything since the first bu
 
 **Touch**
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
-  bar act as mouse drags.
+  bar act as mouse drags. A three-finger swipe down brings the camera to the commander (dead: the constructor
+  selected last).
+- Placing one building by touch: the building follows a drag instead of the map panning, a later drag nudges it, a
+  tap moves it, a double tap sends it; held still (or dragged from the waiting building) it becomes a GRID drawn by
+  the finger and sent with PLACE or a double tap.
 - The lobby by finger: lists scroll with a drag, a tap on a server shows its details first.
 - Spectating by touch: the player list stays small, a tap on it brings up a bar to switch player cameras by name,
   follow the unit nearest the screen's centre (or double-tap a unit), follow a group, camera presets (1st person,
@@ -51,7 +55,15 @@ The first version meant for other people's phones: everything since the first bu
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
   queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
-  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu).
+  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu,
+  shown once RB opens it).
+- Both controller modes (Kailil's Fold7 notes): the camera pans 30% slower; A held then X opens the area select's
+  filter radial (all mobile, combat, builders, air), and builders are never selected together with combat units; LB
+  grid shows "GRID" and draws with LB alone; X (and A with an order picked) needs a quarter-second hold before it
+  draws, so a quick press while the camera moves stays a click; the order menu drops the orders the pad has buttons
+  for (in the controller game the rest fill it evenly); a group strip shows the groups that have units, and recalling
+  one no longer moves the camera; LB + B with factories selected stops them and clears their queues; a big army's
+  paths and queue show without RT.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 

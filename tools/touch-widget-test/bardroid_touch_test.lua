@@ -172,6 +172,10 @@ cases = {
 		local cs = Spring.GetCameraState()
 		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 2.6, 0
 		Spring.SetCameraState(cs, 0)
+		-- (a first run has no touch log yet: the widget looks for it again every 60 updates, and the first pinch came
+		-- before it had)
+		touch("src test")
+		return 2.5
 	end,
 	settle,
 	-- the touch camera (bardroid_touch.lua applyTouch), smoothed over ~0.05 s: 20 frames later it has arrived
@@ -323,8 +327,26 @@ cases = {
 		near("act overview_in: overview camera", Spring.GetCameraState().name == "ov" and 1 or 0, 1, 0)
 		touch("act overview_out")
 	end,
+	-- three fingers down (Kailil, 2026-10-29): the camera to the commander, out of the overview first
 	function()
 		near("act overview_out: back", Spring.GetCameraState().name ~= "ov" and 1 or 0, 1, 0)
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz = 300, 300
+		Spring.SetCameraState(cs, 0)
+		touch("act overview_in")
+	end,
+	function()
+		touch("act commander_view")
+		return 1.5
+	end,
+	function()
+		local x, _, z = Spring.GetUnitPosition(com or -1)
+		local cs = Spring.GetCameraState()
+		verify("act commander_view: out of the overview, the camera on the commander", cs.name ~= "ov" and x
+			and math.abs(cs.px - x) < 150 and math.abs(cs.pz - z) < 150,
+			string.format("%s at %.0f,%.0f, commander %s,%s", tostring(cs.name), cs.px or -1, cs.pz or -1, tostring(x), tostring(z)))
+	end,
+	function()
 		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
 		local want = Game.gameVersion == "$VERSION" and "controller 1\n" or "controller 0\n"
 		verify("the game told the app who has the pad", readFile("LuaUI/Config/bardroid_game.txt") == want,
@@ -709,6 +731,8 @@ cases = {
 			math.sqrt((cs.px - before.ctl.px) ^ 2 + (cs.pz - before.ctl.pz) ^ 2) > 50)
 		verify("controller game: v0.8.5's build menu kept in BAR's place", WG.buildmenu and WG.buildmenu.controllerApiVersion
 			and WG.bardroidBuildmenu and WG.bardroidBuildmenu ~= WG.buildmenu)
+		-- (Kailil, 2026-10-29: hidden until RB, as v0.8.5's own, to save screen space)
+		verify("controller game switched: the app's build menu hidden until RB", not WG.bardroidBuildmenu.getIsShowing())
 		before.warps = {}
 		if not POINTER then
 			WG.bardroidBuildmenu.droidSetWarp(function(x, y)
@@ -767,6 +791,7 @@ cases = {
 		local cmdID, index, count = WG.BarDroidPad.orders()
 		verify("controller game: Back + RB puts v0.8.5's order menu's first order on the pad", cmdID and index == 1 and count > 1,
 			string.format("%s, %s of %s", tostring(cmdID), tostring(index), tostring(count)))
+		verify("controller game: B closed the app's build menu again", not WG.bardroidBuildmenu.getIsShowing())
 		local cells, cmds = WG.BarDroidPad.ordersCells()
 		padDraw.cells, padDraw.count = cells, cmds and #cmds or 0
 		return 0.3
@@ -872,6 +897,88 @@ cases = {
 		end
 		return 0.5
 	end,
+	-- ONE (Kailil, 2026-10-29): a drag or a tap puts the building down ("spot", with its size for the app: a drag that
+	-- starts on it draws a GRID), a later drag nudges it ("nudge", the app's half of the finger's way), a finger held
+	-- still or that drag makes it the first corner of a GRID ("grid start", "grid by"; "GRID" shown), sent with PLACE
+	-- or a double tap (the app's build drag between the corners the file names)
+	function()
+		if not before.bm then
+			return
+		end
+		touch(string.format("spot %d %d", cx, cy))
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("ONE: the spot told with the building's size", spot and text:match("\nspot %d+ %d+ [1-9]%d*\n"), text)
+		before.spot = spot and { spot[1], spot[2], spot[3] }
+		touch("nudge 30.5 0")
+		touch("nudge 9.5 0") -- (two in one frame: summed)
+		return 0.3
+	end,
+	function()
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
+		if not (before.bm and before.spot and spot) then
+			return
+		end
+		local ax, ay = Spring.WorldToScreenCoords(before.spot[1], before.spot[2], before.spot[3])
+		local bx, by = Spring.WorldToScreenCoords(spot[1], spot[2], spot[3])
+		near("ONE: a nudge of 40 pixels right moves the building 40 pixels right on the screen", bx - ax, 40, 2)
+		near("ONE: ... and not up or down", by - ay, 0, 2)
+		touch("grid start")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list = WG.bardroidBuildmenu.droidGridPositions()
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("GRID: starts as the one building", list and #list == 1, list and #list)
+		verify("GRID: the app told its corners", text:match("\ngrid %d+ %d+ %d+ %d+\n"), text)
+		touch("grid by 120 0")
+		touch("grid by 40 -110") -- (right and up the screen)
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list, across, deep = WG.bardroidBuildmenu.droidGridPositions()
+		verify("GRID: a drag right and up draws rows of them", list and across > 1 and deep > 1 and #list == across * deep,
+			list and string.format("%d buildings, %d x %d", #list, across, deep))
+		Spring.SendCommands("screenshot png") -- (the GRID and "GRID": build\touch-widget-test\data\screenshots)
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		local x0, y0, x1, y1 = text:match("\ngrid (%d+) (%d+) (%d+) (%d+)\n")
+		verify("GRID: its far corner told right of and above the first", x0 and tonumber(x1) > tonumber(x0)
+			and tonumber(y1) < tonumber(y0), text)
+		touch("nudge 0 20")
+		before.grid = list and list[#list]
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local list = WG.bardroidBuildmenu.droidGridPositions()
+		local last = list and list[#list]
+		verify("GRID: a nudge moves the whole grid", last and before.grid and #list > 1
+			and (last[1] ~= before.grid[1] or last[3] ~= before.grid[3]))
+		touch("grid none")
+		touch("spot none")
+		return 0.3
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
+		verify("GRID: none and spot none clear it", not text:find("grid") and not text:find("spot"), text)
+	end,
 	function()
 		if not before.bm then
 			return
@@ -918,7 +1025,7 @@ cases = {
 		verify("build menu: a tap on the map picks the spot", spot ~= nil)
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: the app told GRID, PLACE and the spot",
-			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+\n$"), text)
+			text:match("^place grid\ndone %d+ %d+ %d+ %d+\nspot %d+ %d+ %d+\n$"), text)
 		-- a spot that lies under the menu (the camera moved): PLACE would click the menu, so the app is told none
 		local b = before.bm
 		touch(string.format("spot %d %d", b.x0 + b.w / 2, vsy - (b.y0 + b.h / 2) - 1))
@@ -1397,6 +1504,120 @@ cases = {
 		near("pad: D-pad up returns to the bookmark (elmos off)",
 			math.sqrt((cs.px - before.mark.px) ^ 2 + (cs.pz - before.mark.pz) ^ 2), 0, 30)
 		Spring.SelectUnitArray({})
+	end,
+	-- Kailil's Fold7 notes (2026-10-29), the app's pad: the area select never takes builders with combat units, its filter
+	-- radial (A held, then X: the left stick picks a side), the order menu without the orders the pad's buttons give,
+	-- groups set unit by unit and recalled without a camera jump, "GRID" in blue
+	function()
+		local P = WG.BarDroidPad
+		if not (P and P.chooseUnits) then
+			fails = fails + 1
+			log("FAIL pad: no chooseUnits")
+			return
+		end
+		local defs = { { speed = 50, isBuilder = true }, { speed = 60, canAttack = true }, { speed = 40, canAttack = true, canFly = true },
+			{ speed = 0 }, { speed = 70, isBuilder = true, canFly = true } }
+		local function pick(units, filter, shift)
+			local got = P.chooseUnits(units, function(id) return defs[id] end, filter, shift)
+			table.sort(got)
+			return table.concat(got, ",")
+		end
+		local got = pick({ 1, 2, 3, 4, 5 }, "All Mobile")
+		verify("pad area select: builders with combat units: the combat units only", got == "2,3", got)
+		got = pick({ 1, 4, 5 }, "All Mobile")
+		verify("pad area select: builders alone: the builders", got == "1,5", got)
+		got = pick({ 1, 2, 3, 5 }, "Builders")
+		verify("pad area select, Builders: the builders only", got == "1,5", got)
+		got = pick({ 1, 2, 3, 5 }, "Air")
+		verify("pad area select, Air: the air combat unit, not the air builder", got == "3", got)
+		got = pick({ 1, 2, 3, 5 }, "Combat")
+		verify("pad area select, Combat: the combat units", got == "2,3", got)
+		got = pick({ 4 }, "All Mobile")
+		verify("pad area select: no units under it: the buildings", got == "4", got)
+		got = pick({ 1, 2, 4 }, "All Mobile", true)
+		verify("pad area select with RT: buildings too, still no builder with combat", got == "2,4", got)
+		touch("act area_on")
+		touch("act area_filter_open")
+		touch("act area_filter_left")
+		return 0.3
+	end,
+	function()
+		local _, _, _, filter, lit = WG.BarDroidPad.area()
+		verify("pad area select: X opens the filter radial, the stick left lights Builders", lit == "Builders" and filter == "All Mobile",
+			tostring(lit) .. ", " .. tostring(filter))
+		touch("act area_filter_pick")
+		return 0.3
+	end,
+	function()
+		local _, _, _, filter, lit = WG.BarDroidPad.area()
+		verify("pad area select: X let go takes Builders", filter == "Builders" and not lit
+			and select(2, WG.BarDroidPad.note()) == "FILTER: BUILDERS", tostring(filter))
+		touch("act area_filter_open")
+		touch("act area_filter_up")
+		touch("act area_filter_pick")
+		touch("act area_off")
+		return 0.3
+	end,
+	function()
+		local on, _, _, filter = WG.BarDroidPad.area()
+		verify("pad area select: the stick up takes All Mobile again", filter == "All Mobile" and not on, tostring(filter))
+		before.com = before.com or (Spring.GetTeamUnits(Spring.GetMyTeamID()) or {})[1]
+		Spring.SelectUnitArray({ before.com })
+		touch("src pad")
+		return 0.5
+	end,
+	function()
+		local o = WG.ordermenu
+		local hidden = WG.BarDroidPad.ordersHidden() or {}
+		local _, cmds = WG.BarDroidPad.ordersCells()
+		local move = false
+		for _, cmd in ipairs(cmds or {}) do
+			move = move or cmd.id == CMD.MOVE
+		end
+		verify("pad input: Move, Stop and the rest gone from the order menu", o and o.getDisabledCmd("Move") and o.getDisabledCmd("Stop")
+			and #hidden >= 1 and not move and Spring.GetConfigString("bardroid_pad_hidden_orders", "") ~= "",
+			table.concat(hidden, ","))
+		touch("src touch")
+		return 0.5
+	end,
+	function()
+		local o = WG.ordermenu
+		verify("touch input: the order menu's orders back", o and not o.getDisabledCmd("Move") and not o.getDisabledCmd("Stop")
+			and WG.BarDroidPad.ordersHidden() == nil and Spring.GetConfigString("bardroid_pad_hidden_orders", "x") == "")
+		Spring.SelectUnitArray({ before.com })
+		touch("act group_assign_5")
+		before.cam = Spring.GetCameraState()
+		return 0.3
+	end,
+	function()
+		local units = Spring.GetGroupUnits(5) or {}
+		verify("pad: a group set takes the selection, and says how many", #units == 1 and units[1] == before.com
+			and select(2, WG.BarDroidPad.note()) == "GROUP 5 SET: 1", select(2, WG.BarDroidPad.note()))
+		local cs = Spring.GetCameraState()
+		cs.px, cs.pz = cs.px + 1200, cs.pz + 900
+		Spring.SetCameraState(cs, 0)
+		Spring.SelectUnitArray({})
+		return 0.5
+	end,
+	function()
+		before.cam = Spring.GetCameraState()
+		touch("act group_recall_5")
+		return 1
+	end,
+	function()
+		local cs = Spring.GetCameraState()
+		local sel = Spring.GetSelectedUnits()
+		verify("pad: a group recalled selects it, the camera stays", sel[1] == before.com and #sel == 1
+			and math.abs(cs.px - before.cam.px) < 5 and math.abs(cs.pz - before.cam.pz) < 5,
+			string.format("%d selected, camera moved %.0f", #sel, math.abs(cs.px - before.cam.px) + math.abs(cs.pz - before.cam.pz)))
+		touch("act group_clear_5")
+		touch("act grid_on")
+		Spring.SelectUnitArray({})
+		return 0.3
+	end,
+	function()
+		verify("pad: LB with a building picked notes GRID", select(2, WG.BarDroidPad.note()) == "GRID",
+			select(2, WG.BarDroidPad.note()))
 	end,
 	-- the interface scale for the Fold's cover screen: 2.0 and one LuaUI reload (which restarts this widget)
 	function()
