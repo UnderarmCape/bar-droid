@@ -105,8 +105,11 @@ factions' matching unit too.
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
   | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait; with factories selected: stops them and clears their whole queue). With builders, A repair and X reclaim (A on the target) |
-  | Start + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), held assigns the selection, right: that type joins it from now on; Start + L3 clears it. While Start is held (and a moment after) a strip shows a box for each group that has units |
-  | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires) |
+  | Start or Back + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), left held assigns every unit of the selection's types (and those to come), right tapped moves the camera to it, right held clears it; Start + L3 clears it too. While Start or Back is held (and a moment after) a strip shows a box for each group that has units |
+  | LB + A / Y held | Draws a fight / patrol path with the left stick until let go (LB may be let go; RB held: Alt, the other fight) |
+  | Back + Y | The path speed tuner (also `/padspeed` in the chat box): how fast X, LB + A and LB + Y draw at each zoom |
+  | LB + L3 held | First person on the selected unit: the left stick walks it, the right stick looks, RT fires where you look; B or the same again ends it |
+  | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires); Back + R3 + L3 held: self-destruct |
   | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
   | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid ("GRID" shows) - A starts it, the left stick draws it (LB may be let go then), A places it (X: and keeps the building), B cancels |
   | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |

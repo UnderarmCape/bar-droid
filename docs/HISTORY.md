@@ -23,6 +23,14 @@ Kailil, playing the merged build, sent ten notes. Done so far:
   middle. While the pad is in use the panel gets no hover (`WG.info.setCustomHover`, BAR's own, in both controller modes).
 - Groups, both modes: Start or Back + D-pad left tap selects, left held takes every unit of the selection's types, right
   tap moves the camera to the group, right held clears it. Kailil wrote Back; v0.8.5's layer was Start: both work.
+- First person on the pad (`bardroid_padfp.lua`, the app's controls): LB + L3 held 0.3 s (L3 alone still removes the next
+  order) rides the selected unit in the spectator tools' camera, with Kailil's values per unit type. Nothing stays
+  selected, so no order lines or voices. The left stick walks it where the view points: a move order 280 elmos ahead,
+  renewed when the stick turns 17 degrees or every 0.8 s, not every frame. The right stick looks, eased back after 1.5 s.
+  RT fires through BAR's own Set Target (`unit_target_on_the_move.lua`), which fires on the move and with three
+  parameters is silent; it takes no ground out of the unit's range, so a far aim comes in along the line. Seen on the
+  dev phone with made-up stick lines: it walks, looks and comes back; the laser fires at the aim. The second half of
+  the note (nearby units following or fighting, and its panel) is still to do.
 - Placing a building pans 20% slower, Back's slow pan 33% (30% + 10%), both modes. The A-held circle: the D-pad held,
   minimum 20, eased over about 0.1 s, both modes. Self-destruct in the app's mode: Back + R3 + L3 held, as v0.8.5's.
 ## Touch in the controller game: menus by themselves again (2026-10-30, morning)

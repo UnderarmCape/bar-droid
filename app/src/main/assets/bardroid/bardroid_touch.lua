@@ -573,6 +573,11 @@ end
 
 local function applyPad(dt)
 	local s = smooth
+	local rider = WG.BarDroidPadFP
+	if rider and rider.active() then -- (first person on the pad: bardroid_padfp.lua has the sticks)
+		rider.sticks(stick(pad.lx), stick(pad.ly), stick(pad.rx), stick(pad.ry))
+		return
+	end
 	if pad.lx == 0 and pad.ly == 0 and pad.rx == 0 and pad.ry == 0 and pad.lt == 0
 		and s.panX == 0 and s.panY == 0 and s.rotate == 0 and s.pitch == 0 and s.zoom == 0 and s.boost == 0 then
 		return -- the sticks rest: nothing to do

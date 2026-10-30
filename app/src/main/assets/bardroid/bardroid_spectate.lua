@@ -1567,6 +1567,7 @@ function widget:Initialize()
 		-- 1st person: its settings (tools/fp-tuner.ps1 edits them live), the anchor in use, and following a unit in it
 		fp = FP,
 		fpFor = function(unitID) return fpFor(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
+		anchorOf = anchorOf, -- (bardroid_padfp.lua: first person on the gamepad rides the same point)
 		unitClass = function(unitID) return unitClass(UnitDefs[Spring.GetUnitDefID(unitID) or -1]) end,
 		-- the views (presets): the list, the one on, a view's values, and setting them (applied at once when on)
 		views = function() return PRESETS end,

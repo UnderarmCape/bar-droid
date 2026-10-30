@@ -40,6 +40,8 @@ public final class PadGameTest {
         public String armed() { return armed; }
         float speed = 1;
         public float drawSpeed() { return speed; }
+        boolean riding;
+        public boolean firstPerson() { return riding; }
     }
 
     final Fake m = new Fake();
@@ -414,6 +416,26 @@ public final class PadGameTest {
         t.m.out.clear();
         t.tick(BACK); t.tap(Y); t.up(BACK);
         check("Back + Y: the path speed tuner", t.has("act pad_speed"), t.m.out);
+
+        // First person: LB + L3 held, no order removed; in it only B and RT count
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(LB); t.tick(LS); t.wait(350); t.up(LS); t.up(LB);
+        check("LB + L3 held 0.3 s: first person, once, no order removed", t.count("act fp_toggle") == 1
+                && !t.has("act queue_remove_first"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(LS); t.up(LB);
+        check("LB + L3 tapped: nothing", t.m.out.stream().noneMatch(e -> e.equals("act fp_toggle") || e.equals("act queue_remove_first")), t.m.out);
+        t.m.riding = true; t.m.out.clear();
+        t.tap(A); t.tap(X); t.tap(RB); t.tap(DPAD_LEFT);
+        t.rt = true; t.tick(); t.tick(); t.rt = false; t.tick();
+        check("riding: RT fires and lets go, once each, no Shift, A, X, RB, D-pad nothing", t.count("act fp_fire_on") == 1
+                && t.count("act fp_fire_off") == 1 && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
+                && !t.has("left down") && !t.has("right down") && !t.has("act pad_build") && !t.has("act idle_prev"), t.m.out);
+        t.m.out.clear();
+        t.tap(B);
+        check("riding: B ends it", t.has("act fp_toggle") && !t.has("act cancel"), t.m.out);
+        t.m.riding = false;
 
         // The D-pad's own work; L3 / R3; Back + R3; LB with the face buttons and the D-pad
         t.m.out.clear();

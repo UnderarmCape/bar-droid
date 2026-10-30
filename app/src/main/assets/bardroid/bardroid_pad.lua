@@ -922,6 +922,21 @@ local ACTIONS = {
 			WG.BarDroidPadSpeed.toggle()
 		end
 	end,
+	fp_toggle = function() -- LB + L3 held, or B in first person (bardroid_padfp.lua)
+		if WG.BarDroidPadFP then
+			WG.BarDroidPadFP.toggle()
+		end
+	end,
+	fp_fire_on = function() -- RT in first person
+		if WG.BarDroidPadFP then
+			WG.BarDroidPadFP.fire(true)
+		end
+	end,
+	fp_fire_off = function()
+		if WG.BarDroidPadFP then
+			WG.BarDroidPadFP.fire(false)
+		end
+	end,
 	lb_b = function() -- stop; factories selected: stopped and their whole queue cleared (Kailil, 2026-10-29)
 		if clearFactories() then
 			return
@@ -1371,9 +1386,11 @@ function widget:Update(dt)
 	local focus = orders and "orders" or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
-		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0) .. "\n"
+		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
+		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\n"
 	local t = now()
-	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none" or queue.on) and Spring.DiffTimers(t, writtenAt) > 1) then
+	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or text:find("fp 1", 1, true)
+	if text ~= written or (keep and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
 		end
@@ -1457,6 +1474,7 @@ function widget:Initialize()
 	WG.BarDroidStyle = style -- (the app's build menu: its GRID note and its option on the pad in the same look)
 	WG.BarDroidPad = {
 		act = act,
+		say = note, -- (bardroid_padfp.lua's notes)
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
 		-- one order; pointer moves recorded instead of made)
 		orders = function()

@@ -57,6 +57,8 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   L3 / R3      remove the next / the last queued order; Back + R3: D-gun; Back + R3 + L3 held: self-destruct
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
  *   Back + Y     the path speed tuner (bardroid_padspeed.lua): how fast the pointer draws at each zoom
+ *   LB + L3 held first person on the selected unit (bardroid_padfp.lua): the sticks go to the widget (left walks, right
+ *                looks), RT fires, B or the same chord ends it; nothing else while it lasts
  *   a building picked (v0.8.5's placement): A places it, X places it and keeps it, D-pad left/right turns it and
  *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid ("GRID" shown; Shift+Alt:
  *                the engine lays a build drag out only with Shift held, so LB alone did not, Kailil 2026-10-29) - A
@@ -74,6 +76,7 @@ final class PadGame {
     private static final long GRID_EXIT_MS = 150;     // a grid placed with A: the building put away this much later
     private static final long PATH_ARM_MS = 160;      // a path's order picked: this long later the game has it, its drag starts
     private static final long SELF_DESTRUCT_MS = 750; // Back + R3 + L3 held this long (v0.8.5's)
+    private static final long FIRST_PERSON_MS = 300;  // LB + L3 held this long (Kailil, 2026-10-30)
     private static final long AREA_REPEAT_AFTER_MS = 250, AREA_REPEAT_MS = 60;   // the D-pad held on the area select
     private static final float FILTER_STICK = 0.25f;  // the filter radial: the left stick this far picks a side
     // (the order menu: half speed, then Kailil: "increase speed by a quarter now")
@@ -106,8 +109,8 @@ final class PadGame {
     private long pathDownAt = -1, pathArmAt = -1;
     private boolean pathDrawing;                   // the path's drag: until pathButton is let go
     private boolean drawFast;                      // the stick was moving as the drawing began: LT does not slow it
-    private long areaRepeatAt = -1, selfDestructAt = -1, dgunAt = -1;
-    private boolean selfDestructDone;
+    private long areaRepeatAt = -1, selfDestructAt = -1, dgunAt = -1, fpDownAt = -1;
+    private boolean selfDestructDone, fpDone, fpFiring;
     private float fracX, fracY;
 
     PadGame(PadMouse mouse) { this.mouse = mouse; }
@@ -160,6 +163,22 @@ final class PadGame {
         boolean back = held[BACK], start = held[START], lb = held[LB];
         rtNow = rt;
         if (gridExitAt >= 0 && now >= gridExitAt) { gridExitAt = -1; mouse.act("build_exit"); }
+
+        // First person: LB + L3 held in or out of it; in it the sticks are the widget's (the camera line) and only B and RT
+        // count here
+        if (lb && pressed(tapped, LS)) { fpDownAt = now; fpDone = false; }
+        if (fpDownAt >= 0) {
+            if (!held[LS] || !lb) fpDownAt = -1;
+            else if (!fpDone && now - fpDownAt >= FIRST_PERSON_MS) { fpDone = true; mouse.act("fp_toggle"); }
+        }
+        if (mouse.firstPerson()) {
+            if (pressed(tapped, B)) mouse.act("fp_toggle");
+            if (rt != fpFiring) { fpFiring = rt; mouse.act(rt ? "fp_fire_on" : "fp_fire_off"); }
+            if (shift) { shift = false; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false); }
+            System.arraycopy(held, 0, prev, 0, COUNT);
+            return;
+        }
+        fpFiring = false;
 
         // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked
         // Shift+Alt (a grid: the engine lays out a build drag only with Shift), held on while its drag lasts
@@ -525,7 +544,7 @@ final class PadGame {
             if (pressed(tapped, X)) mouse.act("lb_x");
         }
         if (!start && !back) {
-            if (pressed(tapped, LS)) mouse.act("queue_remove_first");
+            if (pressed(tapped, LS) && !lb) mouse.act("queue_remove_first");   // (LB + L3: first person)
             if (pressed(tapped, RS)) mouse.act("queue_remove_last");
         }
     }

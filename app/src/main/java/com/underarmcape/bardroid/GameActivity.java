@@ -137,6 +137,7 @@ public class GameActivity extends MainActivity {
         @Override public boolean pregame() { return touch.pregame(); }
         @Override public String armed() { return touch.armed(); }
         @Override public float drawSpeed() { return touch.drawSpeed(); }
+        @Override public boolean firstPerson() { return touch.firstPerson(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
         }

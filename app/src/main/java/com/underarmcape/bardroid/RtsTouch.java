@@ -1062,7 +1062,7 @@ final class RtsTouch {
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
         String focus = "none", picked = "none";
-        boolean before = false, queue = false;
+        boolean before = false, queue = false, riding = false;
         if (text != null) {
             for (String line : text.split("\n")) {
                 String[] f = line.trim().split(" ");
@@ -1071,6 +1071,7 @@ final class RtsTouch {
                 if (f[0].equals("pregame")) before = f[1].equals("1");
                 if (f[0].equals("armed")) picked = f[1];
                 if (f[0].equals("queue")) queue = f[1].equals("1");
+                if (f[0].equals("fp")) riding = f[1].equals("1");
                 if (f[0].equals("drawspeed")) {
                     try { drawSpeed = Float.parseFloat(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
                 }
@@ -1080,7 +1081,11 @@ final class RtsTouch {
         pregame = before;
         armed = picked;
         queueWanted = queue;
+        firstPerson = riding;
     }
+    private volatile boolean firstPerson;
+    /** The gamepad rides a unit (bardroid_padfp.lua). Any thread. */
+    boolean firstPerson() { padState(); return firstPerson; }
     private volatile float drawSpeed = 1;
     /** The pointer's speed while drawing, for the camera's zoom (bardroid_padspeed.lua). Any thread. */
     float drawSpeed() { padState(); return drawSpeed; }
