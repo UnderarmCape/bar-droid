@@ -34,8 +34,14 @@ if (-not $Device) { $Device = Get-PhoneDevice $adb }   # -Device, else toolchain
 if (-not $Device) { throw "No phone: connect one over adb, or name it (-Device, BARDROID_DEVICE, phone-device.txt)" }
 function Adb { & $adb -s $Device @args }
 function AppSh([string]$script, [string[]]$a = @()) {   # a shell script run as the app (adb quoting through PowerShell is fragile)
-  # (PowerShell pipes each line with a carriage return: dropped on the phone)
-  $script | & $adb -s $Device exec-in run-as $pkg sh -c "tr -d '\r' > files/bench-x.sh" | Out-Null
+  # (pushed as a file: piped into `adb exec-in`, a script sometimes arrived cut short while the phone loaded a game, and
+  # its answer was empty or a shell error: a run's start time, a done check)
+  $tmp = Join-Path $TC "tmp\bardroid-bench-x.sh"
+  New-Item -ItemType Directory -Force (Split-Path $tmp) | Out-Null
+  [IO.File]::WriteAllText($tmp, ($script -replace "`r", ""), (New-Object Text.ASCIIEncoding))
+  $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  try { $null = & $adb -s $Device push $tmp /data/local/tmp/bardroid-bench-x.sh 2>&1 } finally { $ErrorActionPreference = $eap }
+  & $adb -s $Device exec-out run-as $pkg sh -c "cat /data/local/tmp/bardroid-bench-x.sh > files/bench-x.sh"
   & $adb -s $Device exec-out run-as $pkg sh files/bench-x.sh @a
 }
 function Thermal {
@@ -141,23 +147,45 @@ if ($Replay) {
 }
 
 # the launcher's log lines since the run's start ($1, the phone's clock), also when the app put the full log aside as
-# launcher.old.log during the run (Log.rotateIfBig): of each file, the lines after its last line stamped earlier
+# launcher.old.log during the run (Log.rotateIfBig): of each file, the lines after its last line stamped earlier (up
+# to 12 hours earlier: a run that goes past midnight stamps its lines 00:..., which are later, not earlier)
 $RunLog = @'
 { for f in files/logs/launcher.old.log files/logs/launcher.log; do
   [ -f "$f" ] || continue
   [ "$f" = files/logs/launcher.log ] || [ "$f" -nt files/bench-start ] || continue
-  awk -v s="$1" 'substr($0,3,1) == ":" && substr($0,1,8) < s { n = 0; next } { b[++n] = $0 } END { for (i = 1; i <= n; i++) print b[i] }' "$f"
+  awk -v s="$1" 'function sec(t) { return substr(t,1,2) * 3600 + substr(t,4,2) * 60 + substr(t,7,2) }
+    BEGIN { ss = sec(s) }
+    substr($0,3,1) == ":" { d = ss - sec(substr($0,1,8)); if (d > 0 && d < 43200) { n = 0; next } }
+    { b[++n] = $0 } END { for (i = 1; i <= n; i++) print b[i] }' "$f"
 done; }
 '@
-function BenchDone([string]$done) { [int](AppSh "$RunLog | grep -c '$done'" @($script:since) | Select-Object -Last 1) }
+# (no number, as when the script reached the phone cut short while it loaded a game: not yet, the next look asks again)
+function BenchDone([string]$done) {
+  $n = 0; [void][int]::TryParse("$(AppSh "$RunLog | grep -c '$done'" @($script:since) | Select-Object -Last 1)".Trim(), [ref]$n); $n
+}
 function RunBench([string]$done = 'Benchmark Results', [int]$minutes = 12) {   # one run, start to quit (bardroid_bench.lua quits ~3 s after the results)
   $script:since = "$(AppSh 'touch files/bench-start; date +%H:%M:%S' | Select-Object -Last 1)".Trim()
+  # (an empty start time would count every earlier run's results as this run's)
+  if ($script:since -notmatch '^\d\d:\d\d:\d\d$') { throw "[phone-bench] no start time from the phone: '$($script:since)'" }
+  $script:ended = "no results in $minutes min"
   Adb shell "input keyevent KEYCODE_WAKEUP" | Out-Null
   Adb shell "am start -n $pkg/.LauncherActivity --es start bench" | Out-Null
   $deadline = (Get-Date).AddMinutes($minutes)
+  $missing = 0
   while ((Get-Date) -lt $deadline) {
     Start-Sleep 15
-    if ((BenchDone $done) -gt 0) { break }
+    if ((BenchDone $done) -gt 0) { $script:ended = ""; break }
+    # the game ended without its results (an 8 GB phone: Android ends the engine or the whole app for memory):
+    # the app gone at two looks in a row, or already started again (it logs why its last run ended,
+    # GameService.noteLowMemoryExit)
+    $missing = if ("$(Adb shell "pidof $pkg")".Trim()) { 0 } else { $missing + 1 }
+    if ($missing -ge 2 -or (BenchDone 'ended for lack of memory') -gt 0) {
+      $script:ended = "Android ended the app"; break
+    }
+    if ((BenchDone 'engine exited') -gt 0) {
+      $script:ended = "$(AppSh "$RunLog | grep -o 'engine exited ([0-9]*)' | tail -n 1" @($script:since) | Select-Object -Last 1)".Trim()
+      break
+    }
   }
   Start-Sleep 6
   Adb shell "am force-stop $pkg"
@@ -185,7 +213,9 @@ AssertUnlocked
 $start = Thermal
 # the clocks every 5 s through the run (tools/phone-clocks.sh): what the CPU and GPU were allowed and the heat
 $clkFile = Join-Path $App "build\phone-bench-clocks.txt"
-Adb push (Join-Path $PSScriptRoot "phone-clocks.sh") /data/local/tmp/bardroid-clocks.sh | Out-Null
+# (adb push writes its progress on stderr: an error record that stops this script when its caller merges stderr, 2>&1)
+$eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+try { Adb push (Join-Path $PSScriptRoot "phone-clocks.sh") /data/local/tmp/bardroid-clocks.sh 2>&1 | Out-Null } finally { $ErrorActionPreference = $eap }
 Adb shell "sed -i 's/\r$//' /data/local/tmp/bardroid-clocks.sh"
 $runMinutes = if ($Replay) { [int]($Seconds / 60) + 25 } else { 12 }   # (a replay: fast-forward + the measured part)
 $clk = Start-Process -FilePath $adb -ArgumentList "-s", $Device, "shell", "sh /data/local/tmp/bardroid-clocks.sh $($runMinutes * 60)" `
@@ -243,7 +273,9 @@ $row = [pscustomobject]@{
   gpu_med = (Med $clocks.gpu); busy_med = (Med $clocks.busy)
   replay = $(if ($Replay) { "$Replay from $SkipTo s" } else { $null }); replay_speed_min = $rsum.min
   replay_below95_pct = $rsum.below; replay_units_peak = $rsum.units
+  ended = $script:ended   # empty: the run gave its results
 }
+if ($script:ended) { Write-Host "[phone-bench] FAIL the run gave no results: $($script:ended)" }
 if ($Profile) {   # the newest screenshot: the benchmark's, with the profiler's table
   $shot = (AppSh 'ls -t files/bar/screenshots/*.png 2>/dev/null | head -n 1').Trim()
   if ($shot) {

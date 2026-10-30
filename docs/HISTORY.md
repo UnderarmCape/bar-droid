@@ -60,6 +60,21 @@ unchanged):
   textures, the pathfinder) or the engine's.
 - `tools\pace-test.ps1` ran a helper (`files/crun.sh`) the app never writes: now the app's own `files/container.sh`
   (ALL PASS on the dev phone with the shipped library).
+- **BAR's benchmark on the 8 GB phone** (Kailil: "I want the 8gb phone getting passed multiple real bar benchmark
+  tests"): "Benchmark BAR" (Starwatcher, up to ~1,300 units fighting) in the low-memory mode ran through 13 times in a
+  row (results at frame 2016, a clean quit), never ended by Android; the phone's free memory stayed above ~700 MB.
+  `tools\phone-bench.ps1`, five recorded runs: Sim 41-49 ms, Draw 20-22 ms, Update 9 ms a frame, the main thread at
+  x0.45-0.53 of real time, ~12 fps in the busiest minute, 1536-1920 MHz on the prime core, the GPU at ~400 MHz and
+  ~43% busy, thermal status 0 throughout (the dev phone never got hot enough for the tool's warm-up target). So in the
+  benchmark's battle the phone survives but falls behind live play by half. The benchmark's map is small: the 1v1
+  skirmishes on Supreme Isthmus (a 144 MB map against Starwatcher's 75 MB) are the harder test (2 in 3).
+- phone-bench itself misread four of those runs: piped into `adb exec-in`, its helper scripts sometimes reached the
+  phone cut short while a game loaded (a run's start time empty, so the previous run's results counted at once; a done
+  check that answered with a shell error); a run that went past midnight never found its results (its log lines
+  `00:...` compared as earlier than the start); `adb push`'s progress line stopped it when a caller merged stderr;
+  and a game that Android ended was waited on for the full 12 minutes and recorded like any other. Now the scripts go
+  as files (`adb push`), a start time is checked, times compare across midnight, the push ignores stderr, and a run
+  without results stops at once and says why (`ended` in build\phone-bench.csv, "FAIL the run gave no results").
 
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this

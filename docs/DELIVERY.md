@@ -247,6 +247,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       back before BAR's Options looks; launch-bar.sh logs the mode at every start on the dev phone ("low-memory mode
       (7072 MB of RAM)"). `tools\pace-test.ps1` could not run on a fresh phone (a `files/crun.sh` the app never writes):
       it uses the app's `container.sh` now, ALL PASS with the shipped library.
+      `tools\phone-bench.ps1` on the 8 GB phone (BAR's benchmark, 13 runs through): it misread four runs (helper
+      scripts that reached the phone cut short, a run past midnight, adb push's stderr, a killed game waited on for
+      12 minutes); fixed (HISTORY.md "Fitting BAR into an 8 GB phone"), the midnight filter checked on the phone's log.
 
 ## Releasing (once the blockers are done)
 
