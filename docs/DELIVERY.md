@@ -306,8 +306,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       volume sliders. 3 taps did it; a tap queued up during the load arrives just then, and a fold's LuaUI reload has the
       same moment. `bardroid_pad.lua` (before it in the order) now keeps presses from going on until two draws are done:
       30 presses before the first draw on the dev phone, no error, the widget stays.
-- [x] The launcher's map setting (2026-10-30): a blank name is not saved (built, not tried on a phone: the keyboard
-      kept the Save button out of the test's reach), and the note for a map that did not download names the real field.
+- [x] The launcher's map setting (2026-10-30): a blank name is not saved, and the note for a map that did not download
+      names the real field.
+- [x] The launcher's start buttons ignored what the screen showed: only "Save settings", at the bottom of a long list,
+      saved a change, so Sound unticked and Play vs AI played with sound. Every start saves first (2026-10-30). Checked on
+      the dev phone: Sound unticked and the map name blanked, Play vs AI: `audio` false, the map name kept.
+- [x] `tools/phone-bench.ps1` after the day's notes (dev phone, 100%, cap 30): Sim 49.8 ms, Draw 9.9, Update 6.1, 16 fps
+      in the last minute; this morning 44 to 50, 22 to 24, 9.2 to 9.5, 11 to 12. No cost from the new widgets. The lower
+      Draw is not a gain to count on: GPU clocks differed (220 against 348 MHz) and nothing today set out to change it.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

@@ -48,19 +48,19 @@ public class LauncherActivity extends AppCompatActivity {
         Button prefs = findViewById(R.id.btnDisplayPrefs);
         Button save = findViewById(R.id.btnSave);
 
-        install.setOnClickListener(v -> GameService.start(this, GameService.ACTION_INSTALL, null));
-        play.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "skirmish"));
-        lobby.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "lobby"));
-        glcheck.setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "glcheck"));
+        install.setOnClickListener(v -> start(GameService.ACTION_INSTALL, null));
+        play.setOnClickListener(v -> start(GameService.ACTION_PLAY, "skirmish"));
+        lobby.setOnClickListener(v -> start(GameService.ACTION_PLAY, "lobby"));
+        glcheck.setOnClickListener(v -> start(GameService.ACTION_PLAY, "glcheck"));
         // Developer hook: long-press keeps the X display (and GPU server) up for an hour without starting the game,
         // so GL programs can be tried inside the container with tools\container-shell.bat.
         glcheck.setOnLongClickListener(v -> { GameService.start(this, GameService.ACTION_PLAY, "shell"); return true; });
         stop.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
         prefs.setOnClickListener(v -> startActivity(new Intent(this, com.termux.x11.LoriePreferences.class)));
-        save.setOnClickListener(v -> saveSettings());
+        save.setOnClickListener(v -> saveSettings(true));
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
-        findViewById(R.id.btnBench).setOnClickListener(v -> GameService.start(this, GameService.ACTION_PLAY, "bench"));
+        findViewById(R.id.btnBench).setOnClickListener(v -> start(GameService.ACTION_PLAY, "bench"));
 
         loadSettingsIntoUi();
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
@@ -75,6 +75,12 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); startFromIntent(intent); }
+
+    /** A start takes what the screen shows: a setting changed and left unsaved was ignored without a word. */
+    private void start(String action, String mode) {
+        saveSettings(false);
+        GameService.start(this, action, mode);
+    }
 
     /**
      * "start bench" in the intent starts BAR's benchmark scenario unattended (tools/phone-bench.ps1:
@@ -180,7 +186,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbVerboseX)).setChecked(Prefs.verboseX);
     }
 
-    private void saveSettings() {
+    private void saveSettings(boolean say) {
         try {
             Prefs.workerThreads = Integer.parseInt(((EditText) findViewById(R.id.edWorkers)).getText().toString().trim());
         } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
@@ -211,6 +217,6 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.verboseX = ((CheckBox) findViewById(R.id.cbVerboseX)).isChecked();
         Prefs.save(this);
         deviceView.setText(deviceSummary());
-        Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
+        if (say) Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show();
     }
 }
