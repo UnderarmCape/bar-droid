@@ -37,7 +37,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the low-memory mode under 9.5 GB of RAM `LOW_MEMORY` (with `bardroid_lowmem.lua`), interface scale, widget orders;
   spring), `springsettings.cfg` (preset; emulator overrides in
   `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
-  into the engine: the frame cap after `SDL_GL_SwapWindow`, the ioctl answer that puts lfdevs' Mesa on its
+  into the engine: the frame cap on the display's vsync grid (the swap waits for its slot, a frame starts as late as
+  the slowest recent one allows; `BARDROID_PACE_VSYNC=0`: the old sleep after the swap), the ioctl answer that puts lfdevs' Mesa on its
   explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), and SDL2 HIDDEN/SHOWN window
   events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing) or a joined game is
   being caught up far behind (`/tmp/bardroid-catchup`, from `bardroid_touch.lua`'s `bardroid_catchup.txt` via
@@ -98,7 +99,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `maxScaledShortSide` (the X screen at most 2100x900's pixels and 1080 lines, display scale 100%: folded 2100x900,
   unfolded 1198x1080; `GameActivity.MAX_SCREEN_PIXELS`/`MAX_SCREEN_LINES`, `BarApp` display scale v4); 0007 `LorieView.setUpscale`:
   the X screen enlarged onto the display through Qualcomm's SGSR 1 (`assets/sgsr`, BSD-3-Clause; `GameActivity`,
-  settings "Sharper upscaling" and "Compare upscaling"; plain filtering if the GPU refuses the shader).
+  settings "Sharper upscaling" and "Compare upscaling"; plain filtering if the GPU refuses the shader); 0008 the
+  display's vsync shared with the frame cap (`/tmp/bardroid-vsync`, `BARDROID_VSYNC_FILE`) and a picture held for the
+  cap's vsyncs at least (`lorieMinHold`), `[display] pictures held` once a minute in launcher.log.
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).

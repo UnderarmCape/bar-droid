@@ -68,6 +68,9 @@ The first version meant for other people's phones: everything since the first bu
   are kept out of the game.
 
 **Phone-friendly running**
+- Smooth 30 fps: the frame cap follows the display's vsync and every picture stays on screen for the same time. At a
+  steady 30 fps a third of the pictures used to stay too short or too long (a stutter you could feel without the fps
+  dropping); now 99.9% stay exactly right.
 - Frame pacing that lets CPU and GPU overlap, a sharper upscale of the game image (Snapdragon GSR), phone graphics
   settings applied at every start, and effects nobody sees on a phone switched off (Reclaim Field Highlight, ship
   wakes, unread G-buffer passes, ...).

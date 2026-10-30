@@ -10,6 +10,16 @@
  *
  * BARDROID_FPS: frames per second (30 default, 0 = no cap).
  *
+ * A steady 30 fps still looked rough (Kailil, 2026-10-30: "the frame time or frame pacing is rough"): the X server shows
+ * a new picture at the display's next vsync, and a cap on its own clock lands the pictures right around a vsync, so
+ * they fell on either side of it: of 300 pictures at 30 fps on 60 Hz, 240 stayed on screen for 2 vsyncs, 30 for one and
+ * 30 for three (the dev phone, a light scene). So the cap follows the display: the X server shares each vsync
+ * (/tmp/bardroid-vsync, termux-x11 patch 0008), the swap waits for its slot on the vsync grid instead of the next frame
+ * waiting after it (the time a frame takes no longer moves the swap), the X server holds a picture for the slot's
+ * vsyncs at least (lorieMinHold: one a moment early waits; a late one has its margin afterwards), and a frame starts as
+ * late as the slowest recent frame allows (start_late), so that waiting adds no input lag. No vsync file, or
+ * BARDROID_PACE_VSYNC=0: the old cap, the sleep after the swap on the engine's own clock.
+ *
  * The swap itself still made the main thread wait for the GPU (2026-10-26, spectating an 8v8: 42-51% of each frame
  * in SDL_GL_SwapWindow -> glXSwapBuffers -> dri_flush -> fd_flush_resource -> KGSL wait). lfdevs' Mesa (PR #96) has
  * two ways to hand a finished frame to the X server: an explicit Present fence (a "present" thread waits for the
@@ -216,6 +226,92 @@ int SDL_PollEvent(void *event) {
 static long long floating_checked_ns;
 static int floating;
 
+/* The display's vsync, shared by the X server (patch 0008): [0] the last one, [1] the time between two (ns) */
+#define VSYNC_FILE "/tmp/bardroid-vsync"
+#define VSYNC_STALE_NS 200000000LL
+extern int open(const char *path, int flags, ...);
+extern int close(int fd);
+extern void *mmap(void *addr, unsigned long len, int prot, int flags, int fd, long off);
+static volatile long long *vsync;
+static int vsync_tried, before_swap;
+
+static long read_number(const char *name, long fallback) {
+    const char *s = getenv(name);
+    if (!s || !*s) return fallback;
+    long v = 0;
+    while (*s >= '0' && *s <= '9') v = v * 10 + (*s++ - '0');
+    return v;
+}
+
+static void pace_setup(void) {
+    vsync_tried = 1;
+    if (read_number("BARDROID_PACE_VSYNC", 1) == 0) return;
+    int fd = open(VSYNC_FILE, 2 /* O_RDWR */);
+    if (fd < 0) return;
+    void *m = mmap(0, 4096, 3 /* PROT_READ | PROT_WRITE */, 1 /* MAP_SHARED */, fd, 0);
+    close(fd);
+    if (m != (void *) -1L) { vsync = m; before_swap = 1; }
+}
+
+static void sleep_until(long long when) {
+    struct timespec until = { (long) (when / 1000000000LL), (long) (when % 1000000000LL) };
+    while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &until, 0) == EINTR) {}
+}
+
+static long long slot_ns;   /* this frame's slot: the cap's interval, or the nearest whole number of vsyncs */
+
+static void pace(long long interval) {
+    long long now = now_ns();
+    if (next_ns == 0) next_ns = now;
+    long long t = vsync ? vsync[0] : 0, p = vsync ? vsync[1] : 0;
+    slot_ns = interval;
+    if (p > 0 && now - t < VSYNC_STALE_NS) {     /* on the display's own grid: every Nth vsync */
+        long long ticks = (interval + p / 2) / p;
+        if (ticks < 1) ticks = 1;
+        vsync[2] = ticks;      /* the X server holds a picture that long */
+        vsync[10] = t;
+        slot_ns = ticks * p;
+        next_ns += slot_ns;
+        long long e = (next_ns - t) % p;
+        if (e > p / 2) e -= p;
+        else if (e < -p / 2) e += p;
+        next_ns -= e;
+    } else {
+        next_ns += interval;   /* when this frame's slot ends */
+    }
+    if (now >= next_ns) {     /* the frame took the whole slot or more: no sleep, pace from here */
+        next_ns = now;
+        return;
+    }
+    sleep_until(next_ns);
+}
+
+/*
+ * A late start: a frame that starts right after the last swap and then waits for its slot shows input as old as that
+ * wait. So the time after the swap is slept away, as much as the slowest recent frame leaves: the next frame then ends
+ * just before its slot.
+ */
+#define LATE_MARGIN_NS 4000000LL
+#define WORK_PEAK_DECAY 64        /* the slowest recent frame fades by 1/64 a frame (half in ~1.5 s at 30 fps) */
+static long long frame_start_ns, work_peak_ns;
+static int late_start = -1;
+
+static void frame_ended(void) {
+    if (!frame_start_ns) return;
+    long long work = now_ns() - frame_start_ns;
+    work_peak_ns -= work_peak_ns / WORK_PEAK_DECAY;
+    if (work > work_peak_ns) work_peak_ns = work;
+}
+
+static void start_late(void) {
+    if (late_start < 0) late_start = read_number("BARDROID_PACE_LATE", 1) != 0;
+    if (late_start) {
+        long long wake = next_ns + slot_ns - work_peak_ns - LATE_MARGIN_NS;
+        if (wake > now_ns()) sleep_until(wake);
+    }
+    frame_start_ns = now_ns();
+}
+
 void SDL_GL_SwapWindow(void *window) {
     if (!real_swap) {
         real_swap = (swap_fn) dlsym(RTLD_NEXT, "SDL_GL_SwapWindow");
@@ -223,7 +319,7 @@ void SDL_GL_SwapWindow(void *window) {
     }
     if (fit_screen) screen_window = window;
     if (interval_ns < 0) interval_ns = read_interval();
-    real_swap(window);
+    if (!vsync_tried) pace_setup();
     long long now = now_ns();
     if (now - floating_checked_ns >= 500000000LL) {
         floating_checked_ns = now;
@@ -231,15 +327,13 @@ void SDL_GL_SwapWindow(void *window) {
     }
     long long interval = interval_ns;
     if (floating && interval < 1000000000LL / FLOATING_FPS) interval = 1000000000LL / FLOATING_FPS;
-    if (interval == 0) return;
-    if (next_ns == 0) next_ns = now;
-    next_ns += interval;   /* when this frame's slot ends */
-    if (now >= next_ns) {     /* the frame took the whole slot or more: no sleep, pace from here */
-        next_ns = now;
-        return;
+    if (before_swap && interval) {
+        frame_ended();
+        pace(interval);
     }
-    struct timespec until = { (long) (next_ns / 1000000000LL), (long) (next_ns % 1000000000LL) };
-    while (clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &until, 0) == EINTR) {}
+    real_swap(window);
+    if (before_swap && interval) start_late();
+    if (!before_swap && interval) pace(interval);
 }
 
 /*

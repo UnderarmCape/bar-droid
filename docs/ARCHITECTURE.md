@@ -31,8 +31,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **Graphics.** Phones: Mesa for Android containers (Freedreno `kgsl` / Turnip + Zink, lfdevs builds). The emulator:
   Mesa `virpipe` → our virgl server (`VirglServer`, `tools/build-virgl.py`) → ANGLE → the host GPU, llvmpipe as
   fallback.
-- **Frame pacing.** `libbardroid_pace.so` (`tools/pace/pace.c`), preloaded into the engine: the frame cap after each
-  swap (no VSync, so CPU and GPU overlap), an ioctl answer that puts lfdevs' Mesa on its explicit Present fence (the
+- **Frame pacing.** `libbardroid_pace.so` (`tools/pace/pace.c`), preloaded into the engine: the frame cap (no VSync
+  wait in Mesa, so CPU and GPU overlap), locked to the display: the X server shares each vsync (termux-x11 patch 0008),
+  the swap waits for its slot on that grid, each frame starts as late as the slowest recent frame allows (no added input
+  lag), and the X server holds a picture for the cap's vsyncs at least, so 30 fps on a 60 Hz display shows every picture
+  for exactly two vsyncs. Also an ioctl answer that puts lfdevs' Mesa on its explicit Present fence (the
   swap stops waiting for the GPU), window HIDDEN/SHOWN events while the game screen is hidden or a joined game is
   caught up, and SDL's display size following fold/unfold. In the low-memory mode it also wraps the engine's GL
   lookup (`dlsym` of `glXGetProcAddressARB`) so that a compressed texture gets uncompressed storage when it is
