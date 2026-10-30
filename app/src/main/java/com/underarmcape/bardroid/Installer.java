@@ -362,6 +362,12 @@ public final class Installer {
     /** The benchmark's map (benchmark.template.txt). */
     public static final String BENCH_MAP = "Starwatcher 1.0";
 
+    /** On the phone? BAR's map files are named after their map: Starwatcher 1.0 is maps/starwatcher_1.0.sd7. */
+    public boolean hasMap(String name) {
+        String file = "maps/" + name.toLowerCase(Locale.ROOT).replace(' ', '_');
+        return new File(p.bar, file + ".sd7").exists() || new File(p.bar, file + ".sdz").exists();
+    }
+
     /**
      * The pool md5 of BAR's Build menu (luaui/widgets/gui_buildmenu.lua) in the released game this phone has, into
      * .bardroid-buildmenu ("" when not found): launch-bar.sh runs the app's copy of it (bardroid_buildmenu.lua, made by

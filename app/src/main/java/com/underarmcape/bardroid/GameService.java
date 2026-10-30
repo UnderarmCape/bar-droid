@@ -186,13 +186,21 @@ public class GameService extends Service {
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();
             // The benchmark (BAR's "Benchmark BAR" scenario, unattended) runs what is installed, no update first, so
-            // runs compare; its map comes once from BAR's servers. So does a skirmish's on an 8 GB phone, which plays
-            // it by default (Prefs.mapName) also where the first install fetched the bigger map.
-            boolean benchMap = bench || ("skirmish".equals(mode) && Installer.BENCH_MAP.equals(Prefs.mapName));
-            if (benchMap && !new java.io.File(paths.bar, "maps/starwatcher_1.0.sd7").exists()) {
-                setStatus((bench ? "benchmark" : "skirmish") + ": downloading " + Installer.BENCH_MAP);
-                new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
-                        java.util.Arrays.asList("map", Installer.BENCH_MAP, Prefs.engineVersion));
+            // runs compare; its map comes once from BAR's servers. So does a skirmish's: the launcher's map setting is
+            // free text, and without its map the engine ends in 2 s (an 8 GB phone plays the benchmark's map by default,
+            // Prefs.mapName, also where the first install fetched the bigger one).
+            String map = bench ? Installer.BENCH_MAP : "skirmish".equals(mode) ? Prefs.mapName : null;
+            if (map != null && !inst.hasMap(map)) {
+                setStatus((bench ? "benchmark" : "skirmish") + ": downloading " + map);
+                int got = new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
+                        java.util.Arrays.asList("map", map, Prefs.engineVersion));
+                if (got != 0) {
+                    exitNote = "Map \"" + map + "\" is not on the phone and did not download: check its name under"
+                            + " Settings, and the connection.";
+                    Log.i("svc", exitNote);
+                    setStatus("no map");
+                    return;
+                }
             }
             setStatus("starting X server");
             xserver.start();
