@@ -2,6 +2,28 @@
 <resources>
     <style name="Theme.BarDroid" parent="Theme.AppCompat.DayNight.NoActionBar" />
 
+    <!-- The launcher's rows of buttons: one height in a row, words kept whole. -->
+    <style name="LauncherButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:hyphenationFrequency">none</item>
+    </style>
+    <!-- Five to a row. -->
+    <style name="LauncherButton.Small">
+        <item name="android:maxLines">1</item>
+        <item name="android:paddingLeft">6dp</item>
+        <item name="android:paddingRight">6dp</item>
+        <item name="android:autoSizeTextType">uniform</item>
+        <item name="android:autoSizeMinTextSize">9sp</item>
+        <item name="android:autoSizeMaxTextSize">12sp</item>
+        <item name="android:autoSizeStepGranularity">1sp</item>
+    </style>
+
     <!-- StartActivity: nothing but BAR's icon on black until the lobby is up. -->
     <style name="Theme.BarDroid.Start" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@drawable/start_background</item>

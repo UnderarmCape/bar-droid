@@ -6,7 +6,7 @@
     <string name="btn_play">Play vs AI</string>
     <string name="btn_lobby">Lobby</string>
     <string name="btn_glcheck">GL check</string>
-    <string name="btn_display_prefs">Display prefs</string>
+    <string name="btn_display_prefs">Display</string>
     <string name="btn_stop">Stop</string>
     <string name="btn_save">Save settings</string>
     <string name="settings_title">Settings</string>

@@ -33,21 +33,23 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:orientation="horizontal">
-        <Button android:id="@+id/btnInstall" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_install" />
-        <Button android:id="@+id/btnPlay" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_play" />
-        <Button android:id="@+id/btnLobby" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_lobby" />
+        <Button style="@style/LauncherButton" android:id="@+id/btnInstall" android:text="@string/btn_install" />
+        <Button style="@style/LauncherButton" android:id="@+id/btnPlay" android:text="@string/btn_play" />
+        <Button style="@style/LauncherButton" android:id="@+id/btnLobby" android:text="@string/btn_lobby" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:baselineAligned="false"
         android:orientation="horizontal">
-        <Button android:id="@+id/btnGlCheck" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_glcheck" />
-        <Button android:id="@+id/btnBench" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_bench" />
-        <Button android:id="@+id/btnDisplayPrefs" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_display_prefs" />
-        <Button android:id="@+id/btnShareLogs" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_share_logs" />
-        <Button android:id="@+id/btnStop" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="@string/btn_stop" />
+        <Button style="@style/LauncherButton.Small" android:id="@+id/btnGlCheck" android:text="@string/btn_glcheck" />
+        <Button style="@style/LauncherButton.Small" android:id="@+id/btnBench" android:text="@string/btn_bench" />
+        <Button style="@style/LauncherButton.Small" android:id="@+id/btnDisplayPrefs" android:text="@string/btn_display_prefs" />
+        <Button style="@style/LauncherButton.Small" android:id="@+id/btnShareLogs" android:text="@string/btn_share_logs" />
+        <Button style="@style/LauncherButton.Small" android:id="@+id/btnStop" android:text="@string/btn_stop" />
     </LinearLayout>
 
     <ScrollView

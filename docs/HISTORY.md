@@ -60,6 +60,10 @@ In BAR's benchmark at the cap nothing changed beyond noise (Sim 47-50 ms against
 than the slot run as before. `[display] pictures held for ...` goes into launcher.log once a minute, so a player's
 shared logs show it. `BARDROID_PACE_VSYNC=0` in `dev-env.sh` brings the old cap back.
 
+The launcher's buttons in the same hour: at 1080 pixels wide the row of five broke "Benchmark" into three lines and
+the rows ran uneven. Both rows now share one style (`LauncherButton`: words kept whole, one height per row), the small
+row shrinks its text to stay on one line, and "Display prefs" is "Display".
+
 ## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each
 idea was a run on the dev phone (`tools/phone-memory.ps1`: a skirmish started by intent, `start skirmish`, with engine
