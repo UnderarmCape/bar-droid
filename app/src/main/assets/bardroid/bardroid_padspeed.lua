@@ -24,8 +24,10 @@ local STEP = 0.05
 local MIN_SPEED, MAX_SPEED = 0.05, 3
 local SAME_POINT = 1.15 -- a point this close (as a ratio) to the zoom now is the same point
 local LOOK_SECONDS = 0.1
+local RESET_SECONDS = 3
 
 local points = {} -- { zoom, speed }, nearest first; 100% at full zoom out is not one of them
+local resetAsked = nil -- when Reset had its first tap
 local open = false
 local zoomNow, speedNow = 1000, 1
 local lookedAt = nil
@@ -66,7 +68,7 @@ local function load()
 	for line in f:lines() do
 		local zoom, speed = line:match("^(%S+) (%S+)")
 		zoom, speed = tonumber(zoom), tonumber(speed)
-		if zoom and speed then
+		if zoom and speed and zoom >= 1 and speed >= MIN_SPEED and speed <= MAX_SPEED then -- (a bad line is no point)
 			points[#points + 1] = { zoom, speed }
 		end
 	end
@@ -86,13 +88,15 @@ local function save()
 	end
 end
 
-local function pointHere()
+local function pointHere() -- (the nearest: two points can both be close)
+	local here, ratio = nil, SAME_POINT
 	for i, p in ipairs(points) do
-		if zoomNow < p[1] * SAME_POINT and zoomNow > p[1] / SAME_POINT then
-			return i
+		local r = math.max(zoomNow / p[1], p[1] / zoomNow)
+		if r < ratio then
+			here, ratio = i, r
 		end
 	end
-	return nil
+	return here
 end
 
 local function look()
@@ -138,6 +142,20 @@ local DO = {
 	reset = reset,
 	close = function() open = false end,
 }
+
+local function resetIsAsked()
+	return resetAsked ~= nil and Spring.DiffTimers(Spring.GetTimer(), resetAsked) < RESET_SECONDS
+end
+
+local function press(name)
+	local asked = resetIsAsked()
+	resetAsked = nil
+	if name == "reset" and not asked then
+		resetAsked = Spring.GetTimer() -- (it takes the whole curve, and it sits beside Close: a second tap does it)
+		return
+	end
+	DO[name]()
+end
 
 -- The curve in a box: x the zoom (near at the left), y the speed
 local function drawCurve(x0, y0, x1, y1, style)
@@ -212,7 +230,9 @@ function widget:DrawScreen()
 	font:Print(string.format("zoom %d   speed %d%%", zoomNow, speedNow * 100 + 0.5), x0 + w - pad, y1 - pad - size * 0.85, size, "ro")
 	font:End()
 	drawCurve(x0 + pad, y0 + pad * 2 + buttonH, x0 + w - pad, y0 + pad * 2 + buttonH + boxH, style)
-	local list = { { "minus", "-" }, { "plus", "+" }, { "remove", "Remove" }, { "reset", "Reset" }, { "close", "Close" } }
+	local asked = resetIsAsked()
+	local list = { { "minus", "-" }, { "plus", "+" }, { "remove", "Remove" }, { "reset", asked and "Sure?" or "Reset" },
+		{ "close", "Close" } }
 	local gap = math.floor(pad * 0.6)
 	local bw = math.floor((w - pad * 2 - gap * (#list - 1)) / #list)
 	buttons = {}
@@ -226,7 +246,8 @@ function widget:DrawScreen()
 		local bs = size * (#b[2] == 1 and 1.35 or 0.86)
 		font:Begin()
 		font:SetOutlineColor(0, 0, 0, 0.6)
-		font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 1)
+		local c = (asked and b[1] == "reset") and style.GOLD or style.TEXT
+		font:SetTextColor(c[1], c[2], c[3], 1)
 		font:Print(b[2], bx + bw / 2, by + buttonH / 2 - bs * 0.36, bs, "co")
 		font:End()
 	end
@@ -243,7 +264,7 @@ function widget:MousePress(x, y)
 	end
 	for _, b in ipairs(buttons) do
 		if x >= b[2] and x <= b[4] and y >= b[3] and y <= b[5] then
-			DO[b[1]]()
+			press(b[1])
 			break
 		end
 	end
@@ -294,6 +315,10 @@ function widget:Initialize()
 		setPoints = function(list)
 			points = list
 			look()
+		end,
+		press = press,
+		points = function()
+			return points
 		end,
 	}
 end

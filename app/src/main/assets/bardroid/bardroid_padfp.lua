@@ -475,17 +475,13 @@ local function drawSquad(style, font, x1, y0, vsy)
 	local pad = math.floor(size * 0.6)
 	local rowH = math.floor(size * 2.2)
 	local rows = math.min(#summary, 7)
-	local h = pad * 3 + size + math.max(1, rows) * rowH
+	local h = rows == 0 and pad * 2 + size or pad * 3 + size + rows * rowH -- (empty: one line, the view stays free)
 	local y1 = math.min(y0 + h, math.floor(vsy * 0.68))
 	style.panel(x0, y0, x1, y1, 1)
 	font:Begin()
 	font:SetOutlineColor(0, 0, 0, 0.6)
 	font:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], 1)
-	font:Print("Squad: " .. #squad, x0 + pad, y1 - pad - size * 0.85, size, "o")
-	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.75)
-	if rows == 0 then
-		font:Print("none yet: an order takes the units nearby", x0 + pad, y1 - pad * 2 - size * 2, size * 0.85, "o")
-	end
+	font:Print(rows == 0 and "Squad: none" or "Squad: " .. #squad, x0 + pad, y1 - pad - size * 0.85, size, "o")
 	font:End()
 	for i = 1, rows do
 		local e = summary[i]

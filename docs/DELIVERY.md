@@ -273,6 +273,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       centre, so 0.97 of the range from the body was out of range from the muzzle: no target on 60 of 60 frames, now
       59 of 60 with 0.9 (measured on the dev phone; standing and walking 60 of 60). A spectator can no longer ride, and
       leaving BAR Droid's mode ends the ride (nothing would drive the unit). Added a crosshair, gold while firing.
+- [x] First person's untested parts, on the dev phone (2026-10-30): on Hold Fire no target until RT, then the enemy under
+      the crosshair, gone when let go (its damage not measured: BAR hides that building's health). Save reaches
+      `BYAR.lua` for the unit and its other-faction equivalent on a clean quit. Still only with a real pad: the pointer
+      hidden while riding, the D-pad and face buttons.
+- [x] Path speed reviewed (2026-10-30): Reset took the whole curve in one tap beside Close, now a second tap within 3 s
+      ("Sure?"); + and - changed the first point in reach, now the nearest; a bad line in the file is no point.
+      `touch-widget-test` never loaded this widget or first person; it does now, with six path speed cases.
+- [ ] A Save in either camera tuner lives only in BAR's widget config, written when the game quits: the launcher's Stop
+      (SIGKILL) or a crash loses it. Write it at Save, and load it back beside `kept`.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

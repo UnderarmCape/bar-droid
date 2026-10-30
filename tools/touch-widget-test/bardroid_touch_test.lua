@@ -1568,6 +1568,29 @@ cases = {
 		return 0.5
 	end,
 	function()
+		local ps = WG.BarDroidPadSpeed
+		local near = function(a, b) return math.abs(a - b) < 0.01 end
+		ps.setPoints({ { 500, 0.5 }, { 2000, 0.8 } })
+		verify("path speed: the points, and 100% past them", near(ps.speedAt(100), 0.5) and near(ps.speedAt(2000), 0.8)
+			and near(ps.speedAt(1000000), 1), ps.speedAt(100) .. " " .. ps.speedAt(2000) .. " " .. ps.speedAt(1000000))
+		verify("path speed: between two points by the zoom's logarithm", near(ps.speedAt(1000), 0.65), ps.speedAt(1000))
+		local cs = Spring.GetCameraState()
+		local zoom = math.max(1, cs.dist or cs.height or cs.py or 1)
+		ps.setPoints({ { zoom / 1.1, 0.5 }, { zoom * 1.05, 0.6 } })
+		ps.press("plus")
+		local p = ps.points()
+		verify("path speed: + changes the nearest point", #p == 2 and near(p[1][2], 0.5) and near(p[2][2], 0.65),
+			#p .. " " .. p[1][2] .. " " .. tostring(p[2] and p[2][2]))
+		ps.press("reset")
+		verify("path speed: one tap on Reset takes nothing", #ps.points() == 2, #ps.points())
+		ps.press("plus")
+		ps.press("reset")
+		verify("path speed: another button starts Reset over", #ps.points() == 2, #ps.points())
+		ps.press("reset")
+		verify("path speed: the second tap takes the curve", #ps.points() == 0, #ps.points())
+		return 0.2
+	end,
+	function()
 		verify("one touch: the pad's orders stay hidden", WG.BarDroidPad.ordersHidden() ~= nil)
 		touch("act fingers") -- (RtsTouch: a few taps)
 		return 0.5
