@@ -57,6 +57,9 @@ The first version meant for other people's phones: everything since the first bu
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
   the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu,
   shown once RB opens it).
+- The app's controller interface in one look with BAR's own: notes, the filter radial and the group strip in BAR's
+  panels and font, sized by the interface scale (about the same on both Fold screens); the pad's place on the build
+  and order menus a thin gold line; a pad button named in a note shown as its coloured key.
 - Both controller modes (Kailil's Fold7 notes): the camera pans 30% slower; A held then X opens the area select's
   filter radial (all mobile, combat, builders, air), and builders are never selected together with combat units; LB
   grid shows "GRID" and draws with LB alone; X (and A with an order picked) needs a quarter-second hold before it
