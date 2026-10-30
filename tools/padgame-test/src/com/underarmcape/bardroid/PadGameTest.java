@@ -147,14 +147,33 @@ public final class PadGameTest {
         check("B in the area select: undone, no cancel as well", t.has("act area_cancel") && !t.has("act cancel"), t.m.out);
         t.up(A);
         check("A let go after B: nothing more", !t.has("act area_off"), t.m.out);
+        // v0.8.5's filter radial (Kailil, 2026-10-29): A held, then X; the left stick picks a side, X let go takes it
+        t.m.out.clear();
+        t.tick(A); t.wait(320); t.tick(X);
+        check("A held, then X: the filter radial, no right click, the stick no longer pans", t.has("act area_filter_open")
+                && !t.has("right down") && t.g.stickTaken(), t.m.out);
+        t.lx = -1; t.tick(); t.tick(); t.lx = 0; t.tick();
+        check("the left stick left: Builders lit (once)", t.count("act area_filter_left") == 1, t.m.out);
+        t.up(X);
+        check("X let go: the filter taken, the stick pans again", t.has("act area_filter_pick") && !t.g.stickTaken(), t.m.out);
+        t.up(A);
+        check("A let go: the area select over", t.has("act area_off") && !t.has("right down"), t.m.out);
 
-        // With an order picked, A held draws with the pointer
+        // With an order picked, A held draws with the pointer, once held past the hold time (Kailil, 2026-10-29: a press
+        // while the camera moved drew a tiny path); a shorter press is a click when let go
         t.m.armed = "unitarea";
         t.m.out.clear();
+        t.lx = 1; t.tap(A); t.wait(50); t.lx = 0;
+        check("A tapped with an order picked while the camera pans: a click when let go, no drag",
+                t.has("left down") && t.has("left up") && t.count("move ") == 0, t.m.out);
+        t.m.out.clear();
         t.tick(A);
-        t.lx = 1; t.wait(200); t.lx = 0;
+        t.lx = 1; t.wait(150);
+        check("A held with an order picked, under the hold time: no button yet, the stick still pans",
+                !t.has("left down") && t.count("move ") == 0 && t.g.reticle(), t.m.out);
+        t.wait(250); t.lx = 0;
         check("A held with an order picked + left stick: the pointer moves (a drag BAR sees), the camera does not pan",
-                t.count("move ") > 0 && !t.g.reticle() && !t.has("act area_on"), t.m.out);
+                t.has("left down") && t.count("move ") > 0 && !t.g.reticle() && !t.has("act area_on"), t.m.out);
         t.m.out.clear();
         t.up(A); t.wait(250);
         String last = t.m.out.isEmpty() ? "" : t.m.out.get(t.m.out.size() - 1);
@@ -166,7 +185,14 @@ public final class PadGameTest {
 
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
-        t.tick(X); t.lx = 1; t.wait(200); t.lx = 0;
+        t.lx = 1; t.tap(X); t.wait(50); t.lx = 0;
+        check("X tapped while the camera pans: a right click, no path", t.has("right down") && t.has("right up")
+                && t.count("move ") == 0, t.m.out);
+        t.m.out.clear();
+        t.tick(X); t.lx = 1; t.wait(150);
+        check("X held under the hold time: no button yet, the stick still pans", !t.has("right down")
+                && t.count("move ") == 0 && t.g.reticle(), t.m.out);
+        t.wait(250); t.lx = 0;
         check("X held + left stick: the right button held while the pointer moves (a path)",
                 t.has("right down") && !t.has("right up") && t.count("move ") > 0, t.m.out);
         t.up(X);
@@ -177,14 +203,24 @@ public final class PadGameTest {
         t.m.armed = "build";
         t.tick(); t.m.out.clear();
         t.tick(LB);
+        check("a building picked, LB: Shift+Alt (the engine lays out a build drag only with Shift) and GRID shown",
+                t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " down") && t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
+                && t.has("act grid_on"), t.m.out);
         t.tap(A);
-        check("a building picked, LB held: Alt, and a tap of A starts the grid (the button stays down)",
-                t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " down") && t.has("left down") && !t.has("left up"), t.m.out);
+        check("a building picked, LB held: a tap of A starts the grid (the button stays down)",
+                t.has("left down") && !t.has("left up"), t.m.out);
+        t.up(LB);
         t.lx = 1; t.wait(150); t.lx = 0;
-        check("the left stick draws the grid", t.count("move ") > 0, t.m.out);
+        check("the left stick draws the grid, LB let go: Shift+Alt held on", t.count("move ") > 0
+                && !t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up"), t.m.out);
         t.m.out.clear();
         t.tap(A);
-        check("the next A places it", t.has("left up"), t.m.out);
+        int leftUp = t.m.out.indexOf("left up");
+        check("the next A places it (Shift+Alt let go after)", leftUp >= 0
+                && t.m.out.indexOf("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") > leftUp, t.m.out);
+        t.wait(200);
+        check("... and puts the building away, as v0.8.5's A", t.has("act build_exit"), t.m.out);
+        t.tick(LB);
         t.m.out.clear();
         t.tap(A); t.tap(X);
         check("X ends a grid placing it and keeping the building (Shift)", t.m.out.indexOf("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
@@ -264,6 +300,7 @@ public final class PadGameTest {
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
         t.tick(START); t.tap(DPAD_UP);
+        check("Start held: the group list shows", t.has("act group_list_on"), t.m.out);
         check("Start + D-pad up: the next group slot", t.has("act group_show_2") && !t.has("act bookmark_recall"), t.m.out);
         t.tap(DPAD_LEFT);
         check("Start + D-pad left tapped: the group recalled", t.has("act group_recall_2") && !t.has("act group_assign_2")
@@ -283,6 +320,7 @@ public final class PadGameTest {
         check("Start + L3: the group cleared, no queued order removed", t.has("act group_clear_2")
                 && !t.has("act queue_remove_first"), t.m.out);
         t.up(START);
+        check("Start let go: the group list goes (after a moment)", t.has("act group_list_off"), t.m.out);
 
         // The D-pad's own work; L3 / R3; Back + R3; LB with the face buttons and the D-pad
         t.m.out.clear();

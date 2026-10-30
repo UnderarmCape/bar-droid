@@ -73,7 +73,15 @@ local modV085 = false
 -- v0.8.5's area select (A held with nothing picked: PadGame): a circle in the middle of the screen selects the player's
 -- units it passes over while the camera pans; units first (buildings only when there are no units in it, or with RT:
 -- added to the selection, buildings too); the D-pad sizes it, B undoes it. v0.8.5's radius: 320, 120..1200 in 80s.
-local area = { on = false, radius = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil, z = nil }
+-- X held as well: v0.8.5's filter radial (Kailil, 2026-10-29), the left stick picks All Mobile (up), Combat (down),
+-- Builders (left) or Air (right), kept for the next area select. Builders and combat units are never selected together
+-- (Kailil: "prefer combat units (BAR's vanilla behavior), so con bots are not sent into battle").
+local FILTER_SIDES = { up = "All Mobile", down = "Combat", left = "Builders", right = "Air" }
+local area = { on = false, radius = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil, z = nil,
+	filter = "All Mobile", radial = false, highlight = nil }
+-- the group list (control groups, below): the slot in use, Start held, shown until
+local GROUP_LIST_SECONDS = 1.5
+local groupList = { slot = 1, held = false, untilAt = nil }
 local warp, fakeWarp = Spring.WarpMouse, false -- (tools/touch-widget-test.ps1 records the moves instead)
 -- (tools/touch-widget-test.ps1: a made-up pointer, {x, y}, which the recorded moves land on, so the order menu's
 -- following, holding and letting go run without moving the real one)
@@ -101,8 +109,10 @@ local function freePointer()
 end
 
 local lastNote, notes = nil, 0 -- (tools/touch-widget-test.ps1: the last note, also once it has faded, and how many)
-local function note(text)
-	toast, toastAt = text, now()
+local GOLD, BLUE = { 1, 0.9, 0.5 }, { 0.2, 0.8, 1 } -- (blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
+local toastColor = GOLD
+local function note(text, color)
+	toast, toastAt, toastColor = text, now(), color or GOLD
 	lastNote, notes = text, notes + 1
 end
 
@@ -176,6 +186,18 @@ local function ordersLayout()
 	local o = WG.ordermenu
 	if not (o and o.getPosition and o.getIsShowing and o.getIsShowing()) then
 		return nil
+	end
+	if o.droidCells then -- (the controller game's order menu tells its own cells: its even layout with the pad)
+		local rects, list = o.droidCells()
+		local cells, cmds = {}, {}
+		for i, cmd in ipairs(list or {}) do
+			local r = rects and rects[i]
+			if r and type(cmd) == "table" then
+				cells[#cells + 1] = { r[1], r[2], r[3], r[4] }
+				cmds[#cmds + 1] = cmd
+			end
+		end
+		return #cmds > 0 and { cmds = cmds, cells = cells } or nil
 	end
 	local cmds = orderCommands()
 	if #cmds == 0 then
@@ -256,17 +278,35 @@ local function ordersGo(index)
 	ordersLight(orders.cmdID)
 end
 
+-- The D-pad on the order menu, by where the buttons are (rows may hold different numbers of them: the controller game's
+-- even layout): left / right the next button in the row, wrapping round it; up / down the nearest in the row above or
+-- below, staying put at the top or bottom
 local function ordersStep(dx, dy)
 	local layout = orders.layout
-	local i = orders.index - 1
-	local col, row = i % layout.cols + dx, math.floor(i / layout.cols) + dy
-	col = (col + layout.cols) % layout.cols -- (wrapping, as the build menu's pages do)
-	row = math.max(0, math.min(layout.rows - 1, row))
-	local index = row * layout.cols + col + 1
-	if index > #layout.cmds then
-		index = dy ~= 0 and #layout.cmds or (dx > 0 and row * layout.cols + 1 or #layout.cmds)
+	local n = #layout.cmds
+	local cur = layout.cells[orders.index]
+	if not cur then
+		ordersGo(1)
+		return
 	end
-	ordersGo(index)
+	local cx, cy = (cur[1] + cur[3]) / 2, (cur[2] + cur[4]) / 2
+	local best, bestScore
+	for i = 1, n do
+		local r = layout.cells[i]
+		local x, y = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2
+		local sameRow = y > cur[2] and y < cur[4]
+		local score
+		if dx ~= 0 and sameRow and i ~= orders.index then
+			local ahead = (x - cx) * dx
+			score = ahead > 0 and ahead or ahead + 1e6 -- (none ahead: the farthest the other way)
+		elseif dy ~= 0 and not sameRow and (cy - y) * dy > 0 then -- (dy > 0: down the screen, y smaller)
+			score = math.abs(cy - y) * 1e4 + math.abs(x - cx)
+		end
+		if score and (not bestScore or score < bestScore) then
+			best, bestScore = i, score
+		end
+	end
+	ordersGo(best or orders.index)
 end
 
 -- A on the order menu: the order as BAR's button gives it (a state changes, an order without a target is given, one
@@ -419,6 +459,38 @@ local function pregameBuild()
 	return Spring.GetGameFrame() == 0 and pb and pb.getPreGameDefID and pb.getPreGameDefID() ~= nil
 end
 
+-- LB + B with factories selected: each stopped with its whole queue gone. BAR's own Stop Production (it keeps the unit
+-- being built), then that one taken off too (a right click on its build option); true when there were factories
+local CMD_STOP_PRODUCTION = (GameCMD and GameCMD.STOP_PRODUCTION) or 13923 -- luacheck: ignore 113 (BAR's global)
+local function clearFactories()
+	local factories = {}
+	for _, unitID in ipairs(Spring.GetSelectedUnits()) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		if def and def.isFactory then
+			factories[#factories + 1] = unitID
+		end
+	end
+	if #factories == 0 then
+		return false
+	end
+	if not unitControl() then
+		note("NOT IN THIS GAME")
+		return true
+	end
+	local cleared = 0
+	for _, unitID in ipairs(factories) do
+		local first = (Spring.GetFactoryCommands(unitID, 1) or {})[1]
+		if pcall(Spring.GiveOrderToUnit, unitID, CMD_STOP_PRODUCTION, {}, 0) then
+			cleared = cleared + 1
+		end
+		if first and first.id < 0 then
+			pcall(Spring.GiveOrderToUnit, unitID, first.id, {}, { "right", "ctrl", "shift" })
+		end
+	end
+	note(cleared > 1 and "FACTORIES STOPPED, QUEUES CLEARED" or "FACTORY STOPPED, QUEUE CLEARED")
+	return true
+end
+
 -- What kind of order is picked, for the app: a building, an area only (area mex: A starts its circle, the next A ends
 -- it), a unit or an area (repair, reclaim: hold A and draw for the area), another order, or none. Asked every frame:
 -- a command's kind is looked up once (GetActiveCmdDesc makes a table each call)
@@ -452,8 +524,51 @@ local function armedKind()
 	return kind
 end
 
+-- The units the area select has passed over that its filter takes: mobile units first (buildings only when there are
+-- none, or with RT); of those, builders only when no combat unit is among them (Builders: builders only)
+local function chooseUnits(units, defOf, filter, shift)
+	local builders, others, buildings = {}, {}, {}
+	for _, unitID in ipairs(units) do
+		local def = defOf(unitID)
+		if def and (def.speed or 0) > 0 and not def.isFactory then
+			local builder = def.isBuilder
+			local fits = filter == "All Mobile" or (filter == "Air" and def.canFly) or (filter == "Builders" and builder)
+				or (filter == "Combat" and not builder and (def.canAttack or #(def.weapons or {}) > 0))
+			if fits then
+				local list = builder and builders or others
+				list[#list + 1] = unitID
+			end
+		elseif def then
+			buildings[#buildings + 1] = unitID
+		end
+	end
+	local pick = #others > 0 and others or builders
+	if shift or (#pick == 0 and filter == "All Mobile") then
+		for _, unitID in ipairs(buildings) do
+			pick[#pick + 1] = unitID
+		end
+	end
+	return pick
+end
+
+local function unitDefOf(unitID)
+	return UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+end
+
+local function areaPick()
+	local units = {}
+	for unitID in pairs(area.units) do
+		units[#units + 1] = unitID
+	end
+	local pick = chooseUnits(units, unitDefOf, area.filter, area.shift)
+	for _, unitID in ipairs(area.keep) do
+		pick[#pick + 1] = unitID
+	end
+	return pick
+end
+
 -- The area select's step: the units under the circle added, the selection set when that changed
-local function areaUpdate()
+local function areaUpdate(force)
 	local vsx, vsy = Spring.GetViewGeometry()
 	local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
 	if not pos then
@@ -469,22 +584,9 @@ local function areaUpdate()
 			added = true
 		end
 	end
-	if not added then
-		return
+	if added or force then
+		Spring.SelectUnitArray(areaPick())
 	end
-	local mobile, all = {}, {}
-	for unitID in pairs(area.units) do
-		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
-		all[#all + 1] = unitID
-		if def and (def.speed or 0) > 0 then
-			mobile[#mobile + 1] = unitID
-		end
-	end
-	local pick = (area.shift or #mobile == 0) and all or mobile
-	for _, unitID in ipairs(area.keep) do
-		pick[#pick + 1] = unitID
-	end
-	Spring.SelectUnitArray(pick)
 end
 
 local function cancel()
@@ -546,11 +648,38 @@ local ACTIONS = {
 		areaUpdate()
 	end,
 	area_off = function()
-		area.on = false
+		area.on, area.radial = false, false
 	end,
 	area_cancel = function() -- B: the selection as it was before
-		area.on = false
+		area.on, area.radial = false, false
 		Spring.SelectUnitArray(area.keep)
+	end,
+	area_filter_open = function() -- X held in the area select: the filter radial
+		area.radial, area.highlight = area.on, nil
+	end,
+	area_filter_pick = function() -- X let go: the side the stick picked (none: the filter stays)
+		if area.radial and area.highlight then
+			area.filter = area.highlight
+			note("FILTER: " .. string.upper(area.filter), BLUE)
+			areaUpdate(true)
+		end
+		area.radial, area.highlight = false, nil
+	end,
+	area_filter_close = function()
+		area.radial, area.highlight = false, nil
+	end,
+	grid_on = function() -- LB with a building picked (PadGame holds Shift+Alt: BAR's grid)
+		note("GRID", BLUE)
+	end,
+	build_exit = function() -- a grid placed with A: the building put away, as v0.8.5's A does
+		if pregameBuild() then
+			WG["pregame-build"].setPreGameDefID(nil)
+		else
+			local _, id = Spring.GetActiveCommand()
+			if id and id < 0 then
+				Spring.SetActiveCommand(0)
+			end
+		end
 	end,
 	area_bigger = function()
 		area.radius = math.min(1200, area.radius + 80)
@@ -640,7 +769,10 @@ local ACTIONS = {
 	lb_y = function()
 		orderAt(CMD.PATROL, "patrol", false)
 	end,
-	lb_b = function()
+	lb_b = function() -- stop; factories selected: stopped and their whole queue cleared (Kailil, 2026-10-29)
+		if clearFactories() then
+			return
+		end
 		Spring.SetActiveCommand("stop")
 		note("STOP")
 	end,
@@ -669,32 +801,162 @@ local ACTIONS = {
 		mouseMode = not mouseMode
 		note(freePointer() and "MOUSE ON" or "MOUSE OFF")
 	end,
+	group_list_on = function() -- Start held: the group list
+		groupList.held = true
+	end,
+	group_list_off = function()
+		if groupList.held then
+			groupList.held, groupList.untilAt = false, now()
+		end
+	end,
 }
 
--- control groups: group_<recall|assign|auto|clear|show>_<1..9>
+-- control groups: group_<recall|assign|auto|clear|show>_<1..9>. The engine's groups (BAR's keys use the same), set
+-- unit by unit; a recall only selects, the camera stays (Kailil, 2026-10-29). The group list (v0.8.5's: a box for each
+-- group that has units, the slot in use too) shows while Start is held and for a moment after each group action.
+local function groupUnits(n)
+	local units = {}
+	for _, unitID in ipairs(Spring.GetGroupUnits(n) or {}) do
+		if not Spring.GetUnitIsDead(unitID) then
+			units[#units + 1] = unitID
+		end
+	end
+	return units
+end
 local function group(kind, n)
+	n = tonumber(n)
+	groupList.slot, groupList.untilAt = n, now()
 	if kind == "recall" then
-		Spring.SendCommands("group select " .. n)
-		if #Spring.GetSelectedUnits() > 0 then
-			Spring.SendCommands("viewselection")
+		local units = groupUnits(n)
+		if #units > 0 then
+			Spring.SelectUnitArray(units)
 			note("GROUP " .. n)
 		else
 			note("GROUP " .. n .. " EMPTY")
 		end
 	elseif kind == "assign" then
-		Spring.SendCommands("group set " .. n)
-		note("GROUP " .. n .. " SET")
+		local selected = Spring.GetSelectedUnits()
+		for _, unitID in ipairs(groupUnits(n)) do
+			Spring.SetUnitGroup(unitID, -1)
+		end
+		for _, unitID in ipairs(selected) do
+			Spring.SetUnitGroup(unitID, n)
+		end
+		local count = #groupUnits(n)
+		-- (Kailil: with maces or ticks selected only one unit was taken; what the engine kept, for the next look)
+		Spring.Echo(string.format("[bardroid-pad] group %d set: %d of %d selected units in it", n, count, #selected))
+		note("GROUP " .. n .. " SET: " .. count)
 	elseif kind == "auto" then
 		note("GROUP " .. n .. ": THIS TYPE FROM NOW ON")
 	elseif kind == "clear" then
-		local keep = Spring.GetSelectedUnits()
-		Spring.SendCommands("group select " .. n)
-		Spring.SendCommands("group unset")
-		Spring.SelectUnitArray(keep)
+		for _, unitID in ipairs(groupUnits(n)) do
+			Spring.SetUnitGroup(unitID, -1)
+		end
 		note("GROUP " .. n .. " CLEARED")
 	else
 		note("GROUP " .. n)
 	end
+end
+
+-- (the groups that have units, in key order 1..9, 0; the slot in use as well while it is empty)
+local function groupSlots()
+	local slots = {}
+	for _, n in ipairs({ 1, 2, 3, 4, 5, 6, 7, 8, 9, 0 }) do
+		local units = groupUnits(n)
+		if #units > 0 or n == groupList.slot then
+			slots[#slots + 1] = { n = n, units = units }
+		end
+	end
+	return slots
+end
+
+local function drawGroupList(vsx)
+	local shown = groupList.held or (groupList.untilAt and Spring.DiffTimers(now(), groupList.untilAt) < GROUP_LIST_SECONDS)
+	if not shown then
+		groupList.untilAt = nil
+		return
+	end
+	local slots = groupSlots()
+	local size = math.max(36, math.floor(vsx * 0.035))
+	local gap = math.floor(size * 0.12)
+	local width = #slots * size + (#slots - 1) * gap
+	local x0, y0 = math.floor((vsx - width) / 2), 86
+	local font = WG.fonts and WG.fonts.getFont()
+	for i, s in ipairs(slots) do
+		local x = x0 + (i - 1) * (size + gap)
+		local active = s.n == groupList.slot
+		if active then
+			gl.Color(0.18, 0.42, 0.78, 0.88)
+		elseif #s.units > 0 then
+			gl.Color(0.10, 0.18, 0.24, 0.82)
+		else
+			gl.Color(0.05, 0.07, 0.09, 0.74)
+		end
+		gl.Rect(x, y0, x + size, y0 + size)
+		local defID = s.units[1] and Spring.GetUnitDefID(s.units[1])
+		if defID then
+			local inset = math.floor(size * 0.14)
+			gl.Color(1, 1, 1, active and 0.95 or 0.75)
+			gl.Texture("#" .. defID)
+			gl.TexRect(x + inset, y0 + inset, x + size - inset, y0 + size - inset)
+			gl.Texture(false)
+		end
+		gl.Color(0.36, 0.68, 1, active and 1 or 0.5)
+		gl.LineWidth(active and 2.5 or 1)
+		gl.BeginEnd(GL.LINE_LOOP, function()
+			gl.Vertex(x, y0)
+			gl.Vertex(x + size, y0)
+			gl.Vertex(x + size, y0 + size)
+			gl.Vertex(x, y0 + size)
+		end)
+		gl.LineWidth(1)
+		if font then
+			font:Begin()
+			font:SetTextColor(0.92, 0.96, 1, 1)
+			font:Print(tostring(s.n), x + 3, y0 + size - size * 0.3, size * 0.28, "o")
+			if #s.units > 0 then
+				font:Print(tostring(#s.units), x + size - 3, y0 + 3, size * 0.26, "ro")
+			end
+			font:End()
+		end
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
+-- v0.8.5's filter radial around the area select's middle: the four filters, the one the stick points at lit, the one
+-- in use marked
+local FILTER_PLACES = { { "All Mobile", 0, 1, { 0.25, 0.75, 1 } }, { "Combat", 0, -1, { 1, 0.35, 0.2 } },
+	{ "Builders", -1, 0, { 1, 0.75, 0.1 } }, { "Air", 1, 0, { 0.6, 1, 0.6 } } }
+local function drawFilterRadial(cx, cy, vsy)
+	local font = WG.fonts and WG.fonts.getFont()
+	if not font then
+		return
+	end
+	local r, size = vsy * 0.16, math.max(14, math.floor(vsy * 0.028))
+	font:Begin()
+	for _, p in ipairs(FILTER_PLACES) do
+		local lit = area.highlight == p[1]
+		local c = p[4]
+		local x, y = cx + p[2] * r * 1.4, cy + p[3] * r
+		local w, h = size * 5.2, size * 1.6
+		gl.Color(0, 0, 0, lit and 0.8 or 0.55)
+		gl.Rect(x - w / 2, y - h / 2, x + w / 2, y + h / 2)
+		if lit or area.filter == p[1] then
+			gl.Color(c[1], c[2], c[3], lit and 1 or 0.5)
+			gl.LineWidth(lit and 3 or 1.5)
+			gl.BeginEnd(GL.LINE_LOOP, function()
+				gl.Vertex(x - w / 2, y - h / 2)
+				gl.Vertex(x + w / 2, y - h / 2)
+				gl.Vertex(x + w / 2, y + h / 2)
+				gl.Vertex(x - w / 2, y + h / 2)
+			end)
+			gl.LineWidth(1)
+		end
+		font:SetTextColor(c[1], c[2], c[3], lit and 1 or 0.75)
+		font:Print(string.upper(p[1]), x, y - size * 0.35, size, "co")
+	end
+	font:End()
+	gl.Color(1, 1, 1, 1)
 end
 
 local function act(name)
@@ -706,6 +968,13 @@ local function act(name)
 	local kind, n = name:match("^group_(%a+)_(%d)$")
 	if kind then
 		group(kind, n)
+		return true
+	end
+	local side = FILTER_SIDES[name:match("^area_filter_(%a+)$") or ""]
+	if side then -- (the left stick on the filter radial)
+		if area.radial then
+			area.highlight = side
+		end
 		return true
 	end
 	-- the D-pad on a menu
@@ -721,10 +990,53 @@ local function act(name)
 	return false
 end
 
+-- The order menu while the pad is the input (Kailil, 2026-10-29, both controller modes): the orders the pad gives with
+-- its buttons are hidden (BAR's own switch, WG.ordermenu.setDisabledCmd), so the rest is bigger. BAR saves that switch
+-- with its settings, so the names hidden here are kept in springsettings (bardroid_pad_hidden_orders) and shown again
+-- at the next start, whatever ended the game; names the player had hidden in BAR's options stay theirs.
+local PAD_HIDDEN_ORDERS = { "Stop", "Wait", "Attack", "Repeat", "Move", "Reclaim", "Repair", "Fight", "Patrol" }
+local HIDDEN_KEY = "bardroid_pad_hidden_orders"
+local ordersHidden, ordersRecovered = nil, false
+local function padOrders(want)
+	local o = WG.ordermenu
+	if not (o and o.getDisabledCmd and o.setDisabledCmd) then
+		return
+	end
+	if not ordersRecovered then -- (a game that ended with them hidden)
+		ordersRecovered = true
+		for name in (Spring.GetConfigString(HIDDEN_KEY, "") or ""):gmatch("[^,]+") do
+			o.setDisabledCmd({ name, false })
+		end
+		Spring.SetConfigString(HIDDEN_KEY, "")
+	end
+	if want == (ordersHidden ~= nil) then
+		return
+	end
+	-- (the controller game's order menu then lays the rest out evenly over the whole menu: gui_ordermenu.lua there)
+	WG.BarDroidPadOrders = want or nil
+	if want then
+		ordersHidden = {}
+		for _, name in ipairs(PAD_HIDDEN_ORDERS) do
+			if not o.getDisabledCmd(name) then
+				o.setDisabledCmd({ name, true })
+				ordersHidden[#ordersHidden + 1] = name
+			end
+		end
+		Spring.SetConfigString(HIDDEN_KEY, table.concat(ordersHidden, ","))
+	else
+		for _, name in ipairs(ordersHidden) do
+			o.setDisabledCmd({ name, false })
+		end
+		ordersHidden = nil
+		Spring.SetConfigString(HIDDEN_KEY, "")
+	end
+end
+
 -- The order menu on the pad follows the pointer once it is the player's again (the warp landed, or half a second),
 -- keeps it on the menu (pushed off it for LEAVE_SECONDS it lets go) and ends when the menu goes; the app is told
 -- which menu has the pad and what is picked
 function widget:Update()
+	padOrders(WG.BarDroidInput == "pad")
 	if orders then
 		local layout = ordersLayout()
 		if not layout then
@@ -751,8 +1063,10 @@ function widget:Update()
 					orders.index, orders.cmdID = over, layout.cmds[over].id
 					ordersLight(orders.cmdID)
 				end
-				local first, last = layout.cells[1], layout.cells[#layout.cells]
-				local x0, y0, x1, y1 = first[1] + 2, last[2] + 2, last[3] - 2, first[4] - 2
+				local x0, y0, x1, y1 = math.huge, math.huge, -math.huge, -math.huge -- (the menu: all its cells)
+				for _, r in ipairs(layout.cells) do
+					x0, y0, x1, y1 = math.min(x0, r[1] + 2), math.min(y0, r[2] + 2), math.max(x1, r[3] - 2), math.max(y1, r[4] - 2)
+				end
 				if mx >= x0 and mx <= x1 and my >= y0 and my <= y1 then
 					orders.outSince = nil
 				elseif not orders.outSince then
@@ -824,6 +1138,12 @@ function widget:DrawScreen()
 		gl.LineWidth(1)
 		gl.Color(1, 1, 1, 1)
 	end
+	if not modV085 then
+		drawGroupList(vsx)
+	end
+	if area.radial and area.on then
+		drawFilterRadial(cx, cy, vsy)
+	end
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
 		local font = WG.fonts and WG.fonts.getFont()
@@ -836,7 +1156,7 @@ function widget:DrawScreen()
 		local size = math.max(14, math.floor(vsy * 0.03))
 		local alpha = math.min(1, (TOAST_SECONDS - age) / 0.3)
 		font:Begin()
-		font:SetTextColor(1, 0.9, 0.5, alpha)
+		font:SetTextColor(toastColor[1], toastColor[2], toastColor[3], alpha)
 		font:Print(toast, cx, cy + vsy * 0.08, size, "oc")
 		font:End()
 	end
@@ -880,13 +1200,18 @@ function widget:Initialize()
 		note = function() -- (the note showing, the last one shown, how many so far)
 			return toast, lastNote, notes
 		end,
-		area = function() -- (the area select: on, its radius, how many units it has passed over)
-			return area.on, area.radius, area.count
+		area = function() -- (the area select: on, its radius, how many units it has passed over; its filter, radial)
+			return area.on, area.radius, area.count, area.filter, area.radial and area.highlight
+		end,
+		chooseUnits = chooseUnits, -- (what the area select takes of units: made-up unit types)
+		ordersHidden = function() -- (the order menu's orders hidden while the pad is the input)
+			return ordersHidden
 		end,
 	}
 end
 
 function widget:Shutdown()
+	padOrders(false)
 	ordersEnd()
 	WG.BarDroidPad = nil
 	WG.BarDroidOwnsBuildMenu = nil

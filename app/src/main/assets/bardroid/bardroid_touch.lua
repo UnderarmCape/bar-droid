@@ -64,8 +64,9 @@ local spIsAboveMiniMap = Spring.IsAboveMiniMap
 local spGetTimer = Spring.GetTimer
 local spDiffTimers = Spring.DiffTimers
 
--- v0.8.5's camera defaults (gui_controller_camera_test.lua)
-local PAD_PAN_SPEED, PAD_FAST_PAN = 1400, 2.75
+-- v0.8.5's camera defaults (gui_controller_camera_test.lua); the pan 30% slower (Kailil, 2026-10-29, both controller
+-- modes: v0.8.5's own too)
+local PAD_PAN_SPEED, PAD_FAST_PAN = 1400 * 0.7, 2.75
 local PAD_ZOOM_SCALE, PAD_ROTATION, PAD_PITCH = 0.9, 3.0, 3.0
 local PAD_STICK_CURVE, PAD_TRIGGER_CURVE, PAD_SMOOTHING = 1.175, 1.075, 0.06
 local PAD_STICK_DEADZONE, PAD_TRIGGER_DEADZONE = 5000, 3000
@@ -84,8 +85,9 @@ local padCamera = true   -- false in the controller game (until a triple tap giv
 -- Long queues of the selected units: the engine draws every building a selected builder has queued once more, one model
 -- at a time (CommandDrawer -> CCursorIcons::DrawBuilds), over BAR's "Show Builder Queue", which has drawn them all
 -- already (Fold7, 2026-10-26: a ~150 wind turbine queue ran 29-30 fps with nothing selected, 17 with the commander
--- selected). Past QUEUE_LIMIT orders the selection's queue is drawn only while Shift is held (cmdcolors
--- alwaysDrawQueue, the engine's own switch); BAR's widget keeps showing the queued buildings.
+-- selected). Past QUEUE_LIMIT orders of the selected builders the selection's queue is drawn only while Shift is held
+-- (cmdcolors alwaysDrawQueue, the engine's own switch); BAR's widget keeps showing the queued buildings. Only builders
+-- count (Kailil, 2026-10-29: a big army's move paths showed only while RT was held): other units queue no buildings.
 local QUEUE_LIMIT = 40
 local queueDrawn, queueCheck = true, 0
 local spGetUnitCommandCount = Spring.GetUnitCommandCount
@@ -618,9 +620,12 @@ local function updateQueueDrawing()
 	end
 	local orders = 0
 	for _, unitID in ipairs(spGetSelectedUnits() or {}) do
-		orders = orders + (spGetUnitCommandCount(unitID) or 0)
-		if orders > QUEUE_LIMIT then
-			break
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		if def and def.isBuilder then
+			orders = orders + (spGetUnitCommandCount(unitID) or 0)
+			if orders > QUEUE_LIMIT then
+				break
+			end
 		end
 	end
 	local draw = orders <= QUEUE_LIMIT

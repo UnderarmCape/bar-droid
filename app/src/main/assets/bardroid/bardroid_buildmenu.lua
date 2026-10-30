@@ -1139,24 +1139,30 @@ function droid.cellAt(x, y)
 	end
 end
 
--- (the app glides the pointer back to the middle once no menu has the pad: Kailil, "make sure that snap back is smooth")
+-- (the app glides the pointer back to the middle once no menu has the pad: Kailil, "make sure that snap back is smooth";
+-- in the controller game the menu goes with the pad)
 function droid.endFocus()
 	droid.focus, droid.warpTo, droid.warped, droid.outSince = nil, nil, nil, nil
+	droid.opened, droid.openedAt = false, nil
 end
 
--- BAR Droid: the menu is shown and takes input (the controller game: only while the app's controls have the pad; the
--- PLACE button and a building's spot work either way, for fingers)
+-- BAR Droid: the menu is shown and takes input (the controller game: only while the app's controls have the pad, and
+-- only once RB has opened it, as v0.8.5's own; Kailil, 2026-10-29: hidden until RB, "to save screen space"; the PLACE
+-- button and a building's spot work either way, for fingers)
 function droid.active()
-	return not droid.ctl or WG.BarDroidOwnsBuildMenu == true
+	return not droid.ctl or (WG.BarDroidOwnsBuildMenu == true and droid.opened == true)
 end
 
 function droid.pad(name)
 	if name == "build" then
-		if droid.focus then
+		if droid.focus or droid.openedAt then
 			droid.endFocus()
 		elseif buildmenuShows and cmdsCount > 0 then
 			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
 			droid.warpTo = droid.focus
+		elseif droid.ctl and WG.BarDroidOwnsBuildMenu == true then -- (opened: the pad on it once it is laid out)
+			droid.opened, droid.openedAt = true, Spring.GetTimer()
+			doUpdate = true
 		end
 	elseif not droid.focus then
 		return
@@ -1210,6 +1216,15 @@ end
 -- (or half a second on) it is the player's again: the focus follows it over the options and ends off the menu, as
 -- when the menu goes)
 function droid.padFocus()
+	if droid.openedAt then -- (the controller game: RB opened the menu; nothing to build after half a second: closed)
+		if buildmenuShows and cmdsCount > 0 then
+			droid.openedAt = nil
+			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
+			droid.warpTo = droid.focus
+		elseif Spring.DiffTimers(Spring.GetTimer(), droid.openedAt) > 0.5 then
+			droid.endFocus()
+		end
+	end
 	if droid.focus then
 		local now = Spring.GetTimer()
 		if not buildmenuShows then

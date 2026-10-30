@@ -31,10 +31,13 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   A            left click there: select (twice: that type on screen), place a building
  *   A held       nothing picked: v0.8.5's area select - a circle in the middle selects the units it passes over while
  *                the left stick pans (RT: added to the selection, buildings too; D-pad: the circle bigger or smaller;
- *                B: undone). With an order picked the left stick moves the pointer instead (BAR counts a drag only when
- *                the pointer moves): an area circle, a row of buildings; let go: the order, the pointer glides back
- *   X            BAR's right click there (the smart action: move, attack, repair, reclaim, guard); held: the left stick
- *                draws a path
+ *                B: undone; X held: v0.8.5's filter radial, the left stick picks all mobile / combat / builders / air).
+ *                With an order picked, held past HOLD_MS, the left stick moves the pointer instead (BAR counts a drag
+ *                only when the pointer moves): an area circle, a row of buildings; let go: the order, the pointer glides
+ *                back. A shorter press is a click when it is let go (Kailil, 2026-10-29: a press while the camera moved
+ *                drew a tiny path)
+ *   X            BAR's right click there (the smart action: move, attack, repair, reclaim, guard); held past HOLD_MS:
+ *                the left stick draws a path
  *   B            cancel the order or building picked, else clear the selection
  *   RT held      Shift (queue)                    RB held  Space (put the order first; on the build menu Alt: a
  *                                                          factory queues it first)
@@ -50,9 +53,11 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   L3 / R3      remove the next / the last queued order; Back + R3: D-gun
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
  *   a building picked (v0.8.5's placement): A places it, X places it and keeps it, D-pad left/right turns it and
- *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid (Alt) - A starts it where
- *                the pointer is, the left stick draws it, A places it (X: and keeps the building), B cancels; holding
- *                A the whole time works too. An area order picked (area mex, ...) works the same way: A, draw, A.
+ *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid ("GRID" shown; Shift+Alt:
+ *                the engine lays a build drag out only with Shift held, so LB alone did not, Kailil 2026-10-29) - A
+ *                starts it where the pointer is, the left stick draws it (LB may be let go), A places it and puts the
+ *                building away (X: keeps it), B cancels; holding A the whole time works too. An area order picked
+ *                (area mex, ...) works the same way: A, draw, A.
  *
  * Pump thread only, except {@link #otherInput}.
  */
@@ -60,6 +65,9 @@ final class PadGame {
     private static final long RB_TAP_MS = 220, ASSIGN_HOLD_MS = 350, LB_B_DOUBLE_MS = 350, LB_B_HOLD_MS = 500;
     private static final long STICKY_TAP_MS = 350, CANCEL_RELEASE_MS = 250, GLIDE_MS = 160, BACK_TAP_MS = 300;
     private static final long AREA_SELECT_MS = 250;   // A held this long with nothing picked: v0.8.5's area select
+    private static final long HOLD_MS = 250;          // A (an order picked) or X held this long: the stick draws
+    private static final long GRID_EXIT_MS = 150;     // a grid placed with A: the building put away this much later
+    private static final float FILTER_STICK = 0.25f;  // the filter radial: the left stick this far picks a side
     // (the order menu: half speed, then Kailil: "increase speed by a quarter now")
     private static final float FINE_AIM = 0.35f, ON_INTERFACE = 0.6f, ON_ORDERS = 0.5f * 1.25f;
 
@@ -76,6 +84,12 @@ final class PadGame {
     private long aDownAt = -1, cancelAt = -1;      // A's press; a cancelled drag lets go of the button then
     private boolean sticky;                        // a drag started by a tap of A, ended by the next press
     private boolean areaCandidate, areaSelect;     // A down with nothing picked (a click, or held: the area select)
+    private boolean aPending, xPending;            // A or X down, its button not yet pressed (a click, or held: a drag)
+    private long xDownAt = -1, gridExitAt = -1;
+    private boolean gridLatched;                   // a grid's drag started with LB: Shift+Alt held until it ends
+    private boolean rtNow;                         // RT held this tick (a grid placed with RT keeps the building)
+    private boolean filterOpen;                    // X in the area select: v0.8.5's filter radial
+    private String filterSide;
     private long rbDownAt = -1, startLeftAt = -1, lbBDownAt = -1, lbBTapAt = -1, backDownAt = -1;
     private boolean rbUsed, startLeftDone, lbBHeld, backUsed;
     private int groupSlot = 1;
@@ -92,6 +106,9 @@ final class PadGame {
     /** The left stick pans the camera (the pointer in the middle) rather than moving the pointer. */
     boolean reticle() { return reticle && !drawing; }
 
+    /** The left stick picks a side of the area select's filter radial: it does not pan meanwhile. */
+    boolean stickTaken() { return filterOpen; }
+
     /** Lets go of every button and key the pad holds (a mode change, a pause). */
     void release() {
         if (leftDown) { leftDown = false; mouse.button(true, false); }
@@ -100,9 +117,9 @@ final class PadGame {
         if (space) { space = false; mouse.key(KeyEvent.KEYCODE_SPACE, false); }
         if (alt) { alt = false; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false); }
         java.util.Arrays.fill(prev, false);
-        rbDownAt = startLeftAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = -1;
+        rbDownAt = startLeftAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = xDownAt = gridExitAt = -1;
         if (areaSelect) mouse.act("area_off");
-        sticky = drawing = areaCandidate = areaSelect = false;
+        sticky = drawing = areaCandidate = areaSelect = aPending = xPending = gridLatched = filterOpen = false;
         centreWanted = waitForPad = true;
     }
 
@@ -124,9 +141,17 @@ final class PadGame {
         reticle = !menu && !free;
         if (reticle && !wasReticle) centreWanted = true;
         boolean back = held[BACK], start = held[START], lb = held[LB];
+        rtNow = rt;
+        if (gridExitAt >= 0 && now >= gridExitAt) { gridExitAt = -1; mouse.act("build_exit"); }
 
-        // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked Alt
-        if (rt != shift) { shift = rt; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, rt); }
+        // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked
+        // Shift+Alt (a grid: the engine lays out a build drag only with Shift), held on while its drag lasts
+        boolean gridKeys = (lb && picked) || gridLatched;
+        boolean wantShift = rt || gridKeys;
+        if (wantShift != shift) { shift = wantShift; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, wantShift); }
+        if (picked && pressed(tapped, LB)) mouse.act("grid_on");   // ("GRID" in v0.8.5's blue)
+        if (!menu && pressed(tapped, START)) mouse.act("group_list_on");   // (the group list while Start is held)
+        if (released(held, tapped, START)) mouse.act("group_list_off");
 
         // Back chords: + RB the order menu, + Start the free pointer, + R3 the D-gun; Back alone while placing slows
         // the pan (v0.8.5)
@@ -149,7 +174,7 @@ final class PadGame {
         boolean rbHeld = held[RB] && rbUsed && rbDownAt >= 0;
         boolean wantSpace = rbHeld && !buildMenu;
         if (wantSpace != space) { space = wantSpace; mouse.key(KeyEvent.KEYCODE_SPACE, wantSpace); }
-        boolean wantAlt = (lb && picked) || (rbHeld && buildMenu);
+        boolean wantAlt = gridKeys || (rbHeld && buildMenu);
         if (wantAlt != alt) { alt = wantAlt; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, wantAlt); }
         if (released(held, tapped, RB)) {
             if (rbDownAt >= 0 && !rbUsed) mouse.act(buildMenu ? "pad_page_next" : "pad_build");
@@ -157,7 +182,7 @@ final class PadGame {
         }
         if (buildMenu && pressed(tapped, LB)) mouse.act("pad_page_prev");   // (Kailil: "pressing RB or LB cycles the tabs")
 
-        boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb);
+        boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb, lx, ly);
 
         // The pointer: drawing (a mouse button held in the middle's place) the left stick moves it; else in the middle,
         // gliding back to it; free (a menu, Back+Start, before the start) the left stick moves it
@@ -209,54 +234,91 @@ final class PadGame {
      * factory's queue); with a building picked a Shift click (place it and keep it). B: cancel. True: B was taken here.
      */
     private boolean buttons(boolean[] held, boolean[] tapped, long now, boolean menu, boolean ordersMenu, boolean picked,
-                            String armed, boolean lb) {
+                            String armed, boolean lb, float lx, float ly) {
         boolean stickyKind = !menu && ((picked && lb) || armed.equals("area"));
         // v0.8.5's area select (Kailil: "when holding A to select units ... is it not possible to do the 0.8.5 method"):
-        // nothing picked, A held past a tap - the click is let go and bardroid_pad.lua's circle selects; B undoes it
+        // nothing picked, A held past a tap - the click is let go and bardroid_pad.lua's circle selects; B undoes it;
+        // X held as well opens v0.8.5's filter radial (Kailil, 2026-10-29): the left stick picks a side (up all mobile,
+        // down combat, left builders, right air), let go of X: that filter
         if (areaSelect) {
-            if (pressed(tapped, B)) { areaSelect = false; mouse.act("area_cancel"); return true; }
-            if (!held[A]) { areaSelect = false; mouse.act("area_off"); }
+            if (pressed(tapped, X) && !filterOpen) { filterOpen = true; filterSide = null; mouse.act("area_filter_open"); }
+            if (filterOpen) {
+                if (held[X]) {
+                    String side = Math.hypot(lx, ly) < FILTER_STICK ? null
+                            : Math.abs(ly) > Math.abs(lx) ? (ly < 0 ? "up" : "down") : (lx < 0 ? "left" : "right");
+                    if (side != null && !side.equals(filterSide)) { filterSide = side; mouse.act("area_filter_" + side); }
+                } else {
+                    filterOpen = false;
+                    mouse.act("area_filter_pick");
+                }
+            }
+            if (pressed(tapped, B)) { closeFilter(); areaSelect = false; mouse.act("area_cancel"); return true; }
+            if (!held[A]) { closeFilter(); areaSelect = false; mouse.act("area_off"); }
             return false;
         }
         if (areaCandidate && leftDown && held[A] && now - aDownAt >= AREA_SELECT_MS) {
             areaCandidate = false;
-            leftUp();
+            leftUp(true);
             areaSelect = true;
             mouse.act("area_on");
             return false;
         }
         if (sticky) {
             if (cancelAt >= 0) {   // B: the order or building put away first, then the button let go
-                if (now - cancelAt >= CANCEL_RELEASE_MS) { sticky = false; cancelAt = -1; leftUp(); }
+                if (now - cancelAt >= CANCEL_RELEASE_MS) { sticky = false; cancelAt = -1; leftUp(true); }
                 return pressed(tapped, B);
             }
-            if (pressed(tapped, A)) { sticky = false; leftUp(); return false; }
+            if (pressed(tapped, A)) { sticky = false; leftUp(false); return false; }
             if (pressed(tapped, X)) {   // confirm and keep the building picked
                 sticky = false;
                 if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, true);
-                leftUp();
+                leftUp(true);
                 if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false);
                 return false;
             }
             if (pressed(tapped, B)) { mouse.act("cancel"); cancelAt = now; return true; }
             return false;
         }
+        // A with an order or building picked: the button goes down only when A is let go (a click, or a sticky drag's
+        // start) or once held past HOLD_MS (a drag: the stick draws), so a press while the camera moves stays a click
         boolean aClicks = !ordersMenu && !(lb && !menu && !picked);
-        if (aClicks && pressed(tapped, A) && !leftDown) {
+        if (aClicks && pressed(tapped, A) && !leftDown && !aPending) {
             if (reticle && !drawing) centreNow();
             aDownAt = now;
-            leftDown = true;
             areaCandidate = reticle && !menu && !lb && armed.equals("none");
-            mouse.button(true, true);
+            if (reticle && !menu && !armed.equals("none")) aPending = true;
+            else leftPress(lb && picked);
+        }
+        if (aPending && (!held[A] || now - aDownAt >= HOLD_MS)) {
+            aPending = false;
+            if (reticle) centreNow();
+            leftPress(lb && picked);
         }
         if (leftDown && !held[A]) {
             areaCandidate = false;
             if (stickyKind && aDownAt >= 0 && now - aDownAt < STICKY_TAP_MS) sticky = true;   // a tap: the drag goes on
-            else leftUp();
+            else leftUp(false);
         }
+        // X: the same, a click unless held past HOLD_MS (then a path)
         boolean xRight = (!menu && !picked && !lb) || (menu && !ordersMenu);
-        if (xRight && pressed(tapped, X) && !rightDown) {
+        if (xRight && pressed(tapped, X) && !rightDown && !xPending) {
             if (reticle && !drawing) centreNow();
+            if (reticle && !menu) {
+                xPending = true;
+                xDownAt = now;
+            } else {
+                rightDown = true;
+                mouse.button(false, true);
+            }
+        }
+        if (xPending && !held[X]) {   // a short press: a right click
+            xPending = false;
+            if (reticle) centreNow();
+            mouse.button(false, true);
+            mouse.button(false, false);
+        } else if (xPending && now - xDownAt >= HOLD_MS) {
+            xPending = false;
+            if (reticle) centreNow();
             rightDown = true;
             mouse.button(false, true);
         }
@@ -272,9 +334,25 @@ final class PadGame {
         return false;
     }
 
-    private void leftUp() {
+    /** The left button down; grid: a grid's drag (Shift+Alt stay held until it ends). */
+    private void leftPress(boolean grid) {
+        leftDown = true;
+        if (grid) gridLatched = true;
+        mouse.button(true, true);
+    }
+
+    /** keepBuilding: a grid placed keeps the building picked (X, RT, a cancel); else it is put away just after. */
+    private void leftUp(boolean keepBuilding) {
         if (leftDown) { leftDown = false; mouse.button(true, false); }
         aDownAt = -1;
+        if (gridLatched) {
+            gridLatched = false;
+            if (!keepBuilding && !rtNow) gridExitAt = SystemClock.uptimeMillis() + GRID_EXIT_MS;
+        }
+    }
+
+    private void closeFilter() {
+        if (filterOpen) { filterOpen = false; mouse.act("area_filter_close"); }
     }
 
     /** The pointer straight to the middle (before a click there): a glide still under way ends. */
