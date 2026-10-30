@@ -280,8 +280,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] Path speed reviewed (2026-10-30): Reset took the whole curve in one tap beside Close, now a second tap within 3 s
       ("Sure?"); + and - changed the first point in reach, now the nearest; a bad line in the file is no point.
       `touch-widget-test` never loaded this widget or first person; it does now, with six path speed cases.
-- [ ] A Save in either camera tuner lives only in BAR's widget config, written when the game quits: the launcher's Stop
-      (SIGKILL) or a crash loses it. Write it at Save, and load it back beside `kept`.
+- [x] A Save in either camera tuner lived only in BAR's widget config, written when the game quits: the launcher's Stop
+      (SIGKILL) or a crash lost it. Each Save now also writes `LuaUI/Config/bardroid_kept.lua` at once, whole and renamed,
+      read back over the config. Checked on the dev phone: Forward 2 to 6, Save, the app force-stopped, 6 in the next
+      game. `spectate-test` checks the file. That test stopped at a fixed 5 min, midway on a busy laptop, and blamed the
+      replay; it now stops when the log stands still for 3 min and says why.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

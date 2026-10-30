@@ -77,15 +77,23 @@ try {
   $demo = Join-Path $Data "demos\$(Split-Path $Replay -Leaf)"
   Write-Host "[spectate-test] $(Split-Path $Replay -Leaf), engine $Engine"
   $p = Start-Engine (Join-Path $EngineDir "spring.exe") $EngineDir @("--isolation", "--write-dir", "`"$Data`"", "`"$demo`"")
-  $deadline = (Get-Date).AddSeconds($(if ($Cost) { 600 } else { 300 }))
-  while (-not $p.HasExited -and (Get-Date) -lt $deadline -and
-         -not ((Test-Path $log) -and (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet))) { Start-Sleep 1 }
+  # stopped once the log stands still for 3 min (a replay that never starts), not after a fixed time: a busy or throttled
+  # laptop takes several times as long, and a fixed 5 min cut the cases off midway
+  $hardStop = (Get-Date).AddMinutes($(if ($Cost) { 10 } else { 15 }))
+  $lastSize = -1; $quietSince = Get-Date; $done = $false
+  while (-not $p.HasExited -and (Get-Date) -lt $hardStop -and ((Get-Date) - $quietSince).TotalSeconds -lt 180 -and -not $done) {
+    Start-Sleep 1
+    $size = if (Test-Path $log) { (Get-Item $log).Length } else { 0 }
+    if ($size -ne $lastSize) { $lastSize = $size; $quietSince = Get-Date }
+    $done = (Test-Path $log) -and (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet)
+  }
+  $why = if ($p.HasExited) { "the game ended" } elseif ((Get-Date) -ge $hardStop) { "the time ran out" } else { "the log stood still (a replay that never starts playing: pass another with -Replay)" }
   Start-Sleep 1
   if (-not $p.HasExited) { $p.Kill() }
   Select-String -Path $log -Pattern '\[spectest\]|\[spectcost\]|BAR Droid spectate|bardroid_spectate' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   if (-not (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet)) {
-    "[spectest] FAIL the test finished (a replay that never starts playing: pass another with -Replay)"
+    "[spectest] FAIL the test finished: $why"
   }
   $shot = Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1
   if ($shot) { "[spectate-test] the bar: $($shot.FullName)" }

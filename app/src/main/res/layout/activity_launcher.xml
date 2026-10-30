@@ -65,12 +65,12 @@
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
             <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:importantForAutofill="no" />
 
-            <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
-            <CheckBox android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
-            <CheckBox android:id="@+id/cbAutoUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_update" />
-            <CheckBox android:id="@+id/cbGamepadGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_gamepad_game" />
-            <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
-            <CheckBox android:id="@+id/cbCaptureShortcuts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_capture_shortcuts" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_update" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbGamepadGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_gamepad_game" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbCaptureShortcuts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_capture_shortcuts" />
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_graphics" />
 
@@ -87,8 +87,8 @@
                 <RadioButton android:id="@+id/rbRender70" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render70" />
                 <RadioButton android:id="@+id/rbRenderNative" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render_native" />
             </RadioGroup>
-            <CheckBox android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />
-            <CheckBox android:id="@+id/cbUpscaleCompare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale_compare" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbUpscaleCompare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale_compare" />
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
 
@@ -100,11 +100,11 @@
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
             <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:textSize="11sp" android:importantForAutofill="no" />
 
-            <CheckBox android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
-            <CheckBox android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
-            <CheckBox android:id="@+id/cbLobbyBridge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_lobby_bridge" />
-            <CheckBox android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
-            <CheckBox android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbLobbyBridge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_lobby_bridge" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
             <Button android:id="@+id/btnSave" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textAllCaps="false" android:text="@string/btn_save" />
 
             <TextView style="@style/LauncherSection" android:text="@string/log_title" />

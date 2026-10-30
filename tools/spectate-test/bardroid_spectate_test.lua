@@ -302,6 +302,10 @@ local cases = {
 		check("Tune: Close's distance set and saved for every unit, not the unit type",
 			p and k and math.abs(p.dist - expected) < 1 and math.abs(k.dist - expected) < 1 and not (own and own.close),
 			p and string.format("dist %.0f, saved %s, wanted %.0f", p.dist, k and string.format("%.0f", k.dist) or "-", expected))
+		local read, file = pcall(VFS.Include, "LuaUI/Config/bardroid_kept.lua", nil, VFS.RAW)
+		local close = read and type(file) == "table" and file.views and file.views.close
+		check("Tune: Save is in its file at once, not only when the game quits", close and math.abs(close.dist - expected) < 1,
+			tostring(close and close.dist))
 		local eq = {}
 		for _, n in ipairs(S().equivalentsOf("armham")) do
 			eq[n] = true

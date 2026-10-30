@@ -938,14 +938,57 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Tune (the phone; Kailil: "more touch friendly so instead of a big list, you toggle through different settigns one
 -- by one. and each is just for that type of unit"): the bar shows one setting of the view on at a time, < > picks
--- another, - + change it for the unit type followed (at once); Save keeps it (this widget's config) and gives it to the
--- unit's equivalents.
+-- another, - + change it for the unit type followed (at once); Save keeps it (its own file and this widget's config) and
+-- gives it to the unit's equivalents.
 
 local tuneAt = 1
 local savedAt = -100
 -- what the player saved on this device, per unit type: 1st person values, anchor pieces, views; and the universal views
--- (the config)
+-- (the config, and at each Save this file: BAR writes a widget's config only when the game quits, and the launcher's
+-- Stop or a crash never gets there)
 local kept = { types = {}, pieces = {}, presetTypes = {}, views = {} }
+local KEPT_FILE = "LuaUI/Config/bardroid_kept.lua"
+
+local function asLua(v)
+	if type(v) == "table" then
+		local parts = {}
+		for k, item in pairs(v) do
+			parts[#parts + 1] = "[" .. asLua(k) .. "]=" .. asLua(item)
+		end
+		return "{" .. table.concat(parts, ",") .. "}"
+	end
+	return type(v) == "string" and string.format("%q", v) or tostring(v)
+end
+
+local function writeKept()
+	local f = io.open(KEPT_FILE .. ".tmp", "w")
+	if not f then
+		return
+	end
+	f:write("return ", asLua(kept), "\n")
+	f:close()
+	local ok, renamed = pcall(os.rename, KEPT_FILE .. ".tmp", KEPT_FILE)
+	if not (ok and renamed) then -- (Windows, for the laptop tests: rename does not replace a file)
+		pcall(os.remove, KEPT_FILE)
+		pcall(os.rename, KEPT_FILE .. ".tmp", KEPT_FILE)
+	end
+end
+
+local function takeKept(k)
+	kept.types = type(k.types) == "table" and k.types or {}
+	kept.pieces = type(k.pieces) == "table" and k.pieces or {}
+	kept.presetTypes = type(k.presetTypes) == "table" and k.presetTypes or {}
+	kept.views = type(k.views) == "table" and k.views or {}
+end
+
+local function readKept()
+	if VFS.FileExists(KEPT_FILE, VFS.RAW) then
+		local ok, k = pcall(VFS.Include, KEPT_FILE, nil, VFS.RAW)
+		if ok and type(k) == "table" then
+			takeKept(k)
+		end
+	end
+end
 
 local FP_SETTINGS = {
 	{ key = "anchor", label = "Anchor" },
@@ -1063,6 +1106,7 @@ local function tuneSave(unitName)
 	savedAt = now()
 	local name = unitName or followedName()
 	if not name then
+		writeKept()
 		return
 	end
 	local names = { name }
@@ -1081,6 +1125,7 @@ local function tuneSave(unitName)
 		end
 	end
 	savedAt = now()
+	writeKept()
 	Spring.Echo("[bardroid-spectate] saved for " .. table.concat(names, ", "))
 end
 
@@ -1574,7 +1619,9 @@ function widget:Initialize()
 			end
 		end
 	end
-	-- what the player saved on this device (Tune, Save), over the defaults (SetConfigData came first)
+	-- what the player saved on this device (Tune, Save), over the defaults (SetConfigData came first; the file is the
+	-- newer: each Save writes it)
+	readKept()
 	for name, v in pairs(kept.types) do
 		FP.types[name] = copy(v)
 	end
@@ -1681,9 +1728,6 @@ end
 function widget:SetConfigData(data)
 	local k = type(data) == "table" and data.kept
 	if type(k) == "table" then
-		kept.types = type(k.types) == "table" and k.types or {}
-		kept.pieces = type(k.pieces) == "table" and k.pieces or {}
-		kept.presetTypes = type(k.presetTypes) == "table" and k.presetTypes or {}
-		kept.views = type(k.views) == "table" and k.views or {}
+		takeKept(k)
 	end
 end
