@@ -83,7 +83,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held
   finger makes a GRID ("grid start/by"; the file's "grid" corners: PLACE or a double tap replays BAR's build drag with
-  Shift+Alt). In the controller game the app's build menu shows only once RB opens it. While the pad is the input
+  Shift+Alt). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
+  6 s: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
   screen): they never take Kailil's keyboard or cover his windows; the checks that move the real mouse pointer run only

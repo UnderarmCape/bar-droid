@@ -115,7 +115,8 @@ factions' matching unit too.
   gives it, in the middle) and L3 / R3 do nothing ("NOT IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
   to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
-  takes v0.8.5's build menu's place, shown only once RB opens it (as v0.8.5's).
+  takes v0.8.5's build menu's place. Once the pad is used the menu shows only when RB opens it (as v0.8.5's); three
+  taps on the screen within 6 seconds bring it back to opening by itself for a selected builder.
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

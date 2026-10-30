@@ -43,8 +43,8 @@ import java.util.Locale;
  *   two fingers held     (half a second, a buzz) then swiped: up = select all own units, down = deselect, left = stop,
  *                        right = fight (attack-move: the next tap places it)
  *   three-finger tap     show / hide the keyboard
- *   three-finger swipe   up = overview of the whole map, down = the camera to the commander (dead: the constructor
- *                        selected last; out of the overview too); left / right = previous / next idle builder
+ *   three-finger swipe   up = overview of the whole map, down = the camera to the commander, selected (dead: the
+ *                        constructor selected last; out of the overview too); left / right = previous / next idle builder
  *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
  * Actions go to the widget as "act <name>" lines (not in the lobby).
  * A building picked in the app's build menu (bardroid_buildmenu.lua: its page strip then shows ONE, LINE, GRID and
@@ -1038,15 +1038,32 @@ final class RtsTouch {
         return n <= 0 ? null : new String(b, 0, n, StandardCharsets.US_ASCII);
     }
 
+    private static final int TAPS_OFF_PAD = 3;          // this many touches ...
+    private static final long TAPS_OFF_PAD_MS = 6000;   // ... within this long end the pad's ways
     private String inputSource;
     private long inputSourceAt;
+    private boolean padInUse;
+    private int tapsOffPad;
+    private long tapsOffPadFrom;
     /**
      * The input just used: "touch", "mouse", "keyboard" or "pad" (UI thread). bardroid_spectate.lua shows its touch
      * tools only after fingers. Sent when it changes, and again at most every 2 s while in use: a game started since
-     * reads only lines written after its start.
+     * reads only lines written after its start. The pad's use starts its ways in the widgets ("src pad": menus hidden
+     * until RB, its orders off); a few taps end them ("act fingers"; Kailil, 2026-10-30: "it should detect then
+     * disable gamepad only mode"), a mouse or keyboard at once.
      */
     void source(String s) {
         long now = SystemClock.uptimeMillis();
+        if (s.equals("pad")) {
+            padInUse = true;
+            tapsOffPad = 0;
+        } else if (padInUse) {
+            if (tapsOffPad == 0 || now - tapsOffPadFrom > TAPS_OFF_PAD_MS) { tapsOffPad = 0; tapsOffPadFrom = now; }
+            if (++tapsOffPad >= TAPS_OFF_PAD || !s.equals("touch")) {
+                padInUse = false;
+                send("act fingers");
+            }
+        }
         if (s.equals(inputSource) && now - inputSourceAt < 2000) return;
         inputSource = s;
         inputSourceAt = now;

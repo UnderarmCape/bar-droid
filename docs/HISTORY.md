@@ -5,6 +5,20 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Touch in the controller game: menus by themselves again (2026-10-30, morning)
+Kailil, testing the merged build, with and without a pad attached: a builder picked by touch should "open in its usual
+location. not hide by default like gamepad behavior", and "after a few taps on screen. it should detect then disable
+gamepad only mode". With the app's controls on (a triple tap) the 3x3 menu showed only after RB, fingers or not;
+v0.8.5's own controls already show BAR's menu on any mouse input. Now the pad's ways start with the pad's first use
+in a game (`src pad`, `WG.BarDroidPadOnly`) and end after three touches within 6 s, or a mouse at once (`RtsTouch.source`,
+`act fingers`): until then the menu opens by itself and the orders the pad has buttons for stay. A pad at rest no longer
+counts as in use: Android sends its jitter as motion, and that alone said "pad" (`ControllerBridge.inUse`). RB on a menu
+fingers left open keeps it open. Also: the three-finger swipe down selects the commander as well (Kailil: "teleport cam
+to commander AND select commander"). Seen on the dev phone in a controller game: no pad, the menu with the commander
+tapped; a pad button (`input gamepad`), menu and the pad's orders gone; two taps, still gone; the third, both back; the
+commander action after a deselect, selected with its menu. BAR's benchmark-free skirmish on the new frame cap: 1782-1793
+of 1800 pictures held exactly 2 vsyncs.
+
 ## The controller interface polished (2026-10-30, night)
 Kailil: "do a full UI overhaul polish of the controller systems you created ... not extravagant or anything. just
 polished" (no questions). Judged from screenshots: `tools/ui-screenshot.ps1 -PadUI` stages each piece of the app's

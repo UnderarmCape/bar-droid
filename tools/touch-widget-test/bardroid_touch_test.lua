@@ -345,6 +345,8 @@ cases = {
 		verify("act commander_view: out of the overview, the camera on the commander", cs.name ~= "ov" and x
 			and math.abs(cs.px - x) < 150 and math.abs(cs.pz - z) < 150,
 			string.format("%s at %.0f,%.0f, commander %s,%s", tostring(cs.name), cs.px or -1, cs.pz or -1, tostring(x), tostring(z)))
+		local selected = Spring.GetSelectedUnits()
+		verify("act commander_view: the commander selected", #selected == 1 and selected[1] == com, tostring(selected[1]))
 	end,
 	function()
 		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
@@ -868,6 +870,27 @@ cases = {
 		verify("controller game: the app's mode told again shows no second note", count == before.notes,
 			tostring(before.notes) .. " -> " .. tostring(count) .. " (" .. tostring(last) .. ")")
 		verify("controller game: ... and the app's menu still in place", WG.BarDroidOwnsBuildMenu == true)
+		-- by touch the menu shows as in BAR's own game, hidden until RB only once the pad is used, back after a few taps
+		Spring.SelectUnitArray({ com })
+		verify("controller game, no pad yet: the build menu shows", WG.BarDroidLayout.rect("buildmenu") ~= nil)
+		touch("src pad")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		verify("controller game, the pad in use: the build menu hidden until RB", WG.BarDroidLayout.rect("buildmenu") == nil)
+		verify("... v0.8.5's panel stays hidden", WG.buildmenu.controllerGetPanelVisible() == false)
+		touch("act fingers")
+		return 0.3
+	end,
+	function()
+		if not before.ctl then
+			return
+		end
+		verify("controller game, a few taps later: the build menu shows again", WG.BarDroidLayout.rect("buildmenu") ~= nil)
+		Spring.SelectUnitArray({})
 		touch("act mod_v085")
 	end,
 	function()

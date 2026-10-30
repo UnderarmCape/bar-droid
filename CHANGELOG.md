@@ -19,8 +19,8 @@ The first version meant for other people's phones: everything since the first bu
 
 **Touch**
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
-  bar act as mouse drags. A three-finger swipe down brings the camera to the commander (dead: the constructor
-  selected last).
+  bar act as mouse drags. A three-finger swipe down brings the camera to the commander and selects it (dead: the
+  constructor selected last).
 - Placing one building by touch: the building follows a drag instead of the map panning, a later drag nudges it, a
   tap moves it, a double tap sends it; held still (or dragged from the waiting building) it becomes a GRID drawn by
   the finger and sent with PLACE or a double tap.
@@ -55,8 +55,8 @@ The first version meant for other people's phones: everything since the first bu
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
   queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
-  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu,
-  shown once RB opens it).
+  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu:
+  once the pad is used it shows only when RB opens it, until three taps on the screen).
 - The app's controller interface in one look with BAR's own: notes, the filter radial and the group strip in BAR's
   panels and font, sized by the interface scale (about the same on both Fold screens); the pad's place on the build
   and order menus a thin gold line; a pad button named in a note shown as its coloured key.

@@ -175,6 +175,14 @@ public final class ControllerBridge {
         return true;
     }
 
+    /** A stick or trigger past v0.8.5's deadzones or a button down: a pad at rest sends motion too, it only jitters. */
+    public synchronized boolean inUse() {
+        if (stick(lx) != 0 || stick(ly) != 0 || stick(rx) != 0 || stick(ry) != 0
+                || lt > TRIGGER_DEADZONE || rt > TRIGGER_DEADZONE) return true;
+        for (boolean b : buttons) if (b) return true;
+        return false;
+    }
+
     /** A D-pad direction from the hat axes (lock held): a press counts even if shorter than a pump tick. */
     private void hat(int idx, boolean down) {
         if (down && !buttons[idx]) pressed[idx] = true;

@@ -1180,7 +1180,7 @@ end
 -- keeps it on the menu (pushed off it for LEAVE_SECONDS it lets go) and ends when the menu goes; the app is told
 -- which menu has the pad and what is picked
 function widget:Update()
-	padOrders(WG.BarDroidInput == "pad")
+	padOrders(WG.BarDroidPadOnly == true)
 	if orders then
 		local layout = ordersLayout()
 		if not layout then

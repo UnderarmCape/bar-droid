@@ -263,6 +263,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the vsync file was looked for at the first swap only (a game started with the screen off kept the old cap to its
       end), now twice a second until found, and an empty file is left alone (a bus error otherwise). Each check fails
       without its fix. `pace-test.ps1` took any phone: with both on adb it stopped; it now takes the dev phone.
+- [ ] The launcher's skirmish map is free text, and only Starwatcher is fetched when missing (`GameService`): see what
+      a player gets from a map that is not on the phone, or a typing mistake, and fetch it or say so.
 
 ## Releasing (once the blockers are done)
 

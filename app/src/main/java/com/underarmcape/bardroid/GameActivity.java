@@ -359,7 +359,7 @@ public class GameActivity extends MainActivity {
 
     @Override
     public boolean dispatchGenericMotionEvent(MotionEvent ev) {
-        if (pad != null && pad.onMotion(ev)) { touch.source("pad"); return true; }
+        if (pad != null && pad.onMotion(ev)) { if (pad.inUse()) touch.source("pad"); return true; }
         if (touch != null && ev.isFromSource(InputDevice.SOURCE_MOUSE)) {
             touch.source("mouse");   // (bardroid_spectate.lua)
             if (pad != null) pad.otherInput();

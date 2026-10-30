@@ -259,8 +259,9 @@ local function inOverview()
 	return spGetCameraState().name == "ov"
 end
 
--- Three fingers down (Kailil, 2026-10-29): the camera to the commander; if it is dead, to the constructor selected last
--- (else any). Out of the overview first: its way back is waited out (lookAt, a few updates later).
+-- Three fingers down (Kailil, 2026-10-29, and 2026-10-30: "teleport cam to commander AND select commander"): the camera
+-- to the commander, selected; if it is dead, to the constructor selected last (else any). Out of the overview first: its
+-- way back is waited out (lookAt, a few updates later).
 local lastConstructor, lookAt = nil, nil
 local function constructorDef(def)
 	return def and def.isBuilder and not def.isFactory and (def.speed or 0) > 0
@@ -289,12 +290,16 @@ local function lookAtCommander()
 	end
 	if x then
 		Spring.SetCameraTarget(x, y, z, 0.3)
+		Spring.SelectUnitArray({ pick })
 	end
 end
 
 -- Gesture actions from the app ("act <name>", RtsTouch.java): the same commands BAR's keys send. The gamepad's are
 -- bardroid_pad.lua's (any name not here goes there).
 local ACTIONS = {
+	fingers = function() -- a few taps since the pad was last used (RtsTouch.source): the menus as without a pad
+		WG.BarDroidPadOnly = nil
+	end,
 	type_all = function() -- a triple tap: the types of the selection (a double tap's) on the whole map
 		Spring.SendCommands("select AllMap+_InPrevSel+_ClearSelection_SelectAll+")
 	end,
@@ -463,6 +468,9 @@ local function readTouch(lines)
 	-- for bardroid_spectate.lua: the input last used (the app says when it changes) and when the fingers last panned
 	for source in lines:gmatch("src (%S+)") do
 		WG.BarDroidInput = source
+		if source == "pad" then
+			WG.BarDroidPadOnly = true -- (the pad's ways: menus hidden until RB, its orders off; until "act fingers")
+		end
 	end
 	if lines:find("pan ", 1, true) then
 		WG.BarDroidPanAt = os.clock()

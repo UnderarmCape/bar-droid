@@ -617,11 +617,12 @@ function droid.endFocus()
 	droid.opened, droid.openedAt = false, nil
 end
 
--- BAR Droid: the menu is shown and takes input (the controller game: only while the app's controls have the pad, and
--- only once RB has opened it, as v0.8.5's own; Kailil, 2026-10-29: hidden until RB, "to save screen space"; the PLACE
--- button and a building's spot work either way, for fingers)
+-- BAR Droid: the menu is shown and takes input (the controller game: only while the app's controls have the pad; then,
+-- once the pad is in use (WG.BarDroidPadOnly: until a few taps), only after RB has opened it, as v0.8.5's own; Kailil,
+-- 2026-10-29: hidden until RB, "to save screen space"; 2026-10-30, by touch: "open in its usual location. not hide by
+-- default like gamepad behavior"; the PLACE button and a building's spot work either way, for fingers)
 function droid.active()
-	return not droid.ctl or (WG.BarDroidOwnsBuildMenu == true and droid.opened == true)
+	return not droid.ctl or (WG.BarDroidOwnsBuildMenu == true and (droid.opened == true or not WG.BarDroidPadOnly))
 end
 
 function droid.pad(name)
@@ -631,6 +632,7 @@ function droid.pad(name)
 		elseif buildmenuShows and cmdsCount > 0 then
 			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
 			droid.warpTo = droid.focus
+			droid.opened = true -- (a menu fingers left open: it stays, now the pad is in use)
 		elseif droid.ctl and WG.BarDroidOwnsBuildMenu == true then -- (opened: the pad on it once it is laid out)
 			droid.opened, droid.openedAt = true, Spring.GetTimer()
 			doUpdate = true
