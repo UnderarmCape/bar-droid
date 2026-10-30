@@ -24,6 +24,16 @@
         <item name="android:autoSizeStepGranularity">1sp</item>
     </style>
 
+    <!-- A heading in the settings list. -->
+    <style name="LauncherSection">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">?attr/colorAccent</item>
+        <item name="android:paddingTop">16dp</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
     <!-- StartActivity: nothing but BAR's icon on black until the lobby is up. -->
     <style name="Theme.BarDroid.Start" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@drawable/start_background</item>

@@ -62,7 +62,9 @@ shared logs show it. `BARDROID_PACE_VSYNC=0` in `dev-env.sh` brings the old cap 
 
 The launcher's buttons in the same hour: at 1080 pixels wide the row of five broke "Benchmark" into three lines and
 the rows ran uneven. Both rows now share one style (`LauncherButton`: words kept whole, one height per row), the small
-row shrinks its text to stay on one line, and "Display prefs" is "Display".
+row shrinks its text to stay on one line, and "Display prefs" is "Display". The next hour the settings list, one long
+run of options, got three headings (Game, Graphics, Advanced), the everyday ones first; only the status's first line
+stays bold.
 
 ## Fitting BAR into an 8 GB phone (2026-10-29, evening and night)
 Kailil: "Work on getting the game to fit on a smaller ram phone". Online-safe means client settings only, so each

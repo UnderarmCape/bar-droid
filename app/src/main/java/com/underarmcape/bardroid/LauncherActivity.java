@@ -99,8 +99,11 @@ public class LauncherActivity extends AppCompatActivity {
         if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
             GameService.noteLowMemoryExit(this);
         String note = GameService.exitNote();
-        statusView.setText((inst.isInstalled() ? "Installed. " : "Not installed. ") + s + (note != null ? "\n" + note : "")
+        String head = (inst.isInstalled() ? "Installed, " : "Not installed, ") + s;
+        android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
+        text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);
+        statusView.setText(text);
     }
 
     private void appendLog(String line) {

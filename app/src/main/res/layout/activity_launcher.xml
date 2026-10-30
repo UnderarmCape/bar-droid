@@ -26,7 +26,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textSize="14sp"
-        android:textStyle="bold"
         android:paddingTop="6dp"
         android:paddingBottom="6dp" />
 
@@ -61,27 +60,20 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/settings_title" android:textStyle="bold" android:paddingTop="8dp" />
-
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" />
-                <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:importantForAutofill="no" />
-            </LinearLayout>
+            <TextView style="@style/LauncherSection" android:text="@string/settings_game" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
             <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:importantForAutofill="no" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
-            <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:textSize="11sp" android:importantForAutofill="no" />
-
-            <CheckBox android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
-            <CheckBox android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
+            <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
             <CheckBox android:id="@+id/cbAutoUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_update" />
-            <CheckBox android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox android:id="@+id/cbGamepadGame" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_gamepad_game" />
             <CheckBox android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
             <CheckBox android:id="@+id/cbCaptureShortcuts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_capture_shortcuts" />
+
+            <TextView style="@style/LauncherSection" android:text="@string/settings_graphics" />
+
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" android:paddingEnd="8dp" />
                 <RadioGroup android:id="@+id/rgFpsCap" android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
@@ -101,12 +93,25 @@
             </LinearLayout>
             <CheckBox android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />
             <CheckBox android:id="@+id/cbUpscaleCompare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale_compare" />
+
+            <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" />
+                <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:importantForAutofill="no" />
+            </LinearLayout>
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
+            <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:textSize="11sp" android:importantForAutofill="no" />
+
+            <CheckBox android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
+            <CheckBox android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />
             <CheckBox android:id="@+id/cbLobbyBridge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_lobby_bridge" />
             <CheckBox android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
             <CheckBox android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
-            <Button android:id="@+id/btnSave" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/btn_save" />
+            <Button android:id="@+id/btnSave" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textAllCaps="false" android:text="@string/btn_save" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/log_title" android:textStyle="bold" android:paddingTop="8dp" />
+            <TextView style="@style/LauncherSection" android:text="@string/log_title" />
             <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="360dp" android:background="#11000000">
                 <TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="monospace" android:textSize="10sp" android:textIsSelectable="true" />
             </ScrollView>
