@@ -108,6 +108,18 @@ unchanged):
   GPU ~2.4 GB, free memory never below 668 MB). So an 8 GB phone's skirmish defaults to Starwatcher (`Prefs`: until
   the player changes the map in the launcher, `mapChosen`), and the game service fetches it before a skirmish where
   the first install fetched Supreme Isthmus. 12 GB phones keep Supreme Isthmus.
+- The dev phone's speed (night of 2026-10-30, Kailil: "continue ... improving the dev phone performance"): the logs
+  called cpu6 the prime core, which it is on the Fold7 (cpu6-7) but not on the S23 Ultra (cpu0-2, cpu3-6, prime
+  cpu7); PerfLog now logs every cluster (the cpufreq policies) and `tools/phone-clocks.sh` the fastest one. The phone
+  runs Samsung's reduced-heat performance profile (`sem_low_heat_mode=1`, `restricted_device_performance=1`; a system
+  setting, left for Kailil): in games the middle cores were capped at 1.5-2.6 GHz and the prime core rarely above
+  1.7. The engine's main thread is mostly kept off the prime core: it starts with a CPU mask of cpu0-5 (its parent,
+  the launch script, has all eight), and something of Samsung's rewrites the masks every 10-20 s (`bf`, `df`: one
+  middle core left out). The engine's own `SetCoreAffinity` (128: the prime core; 248: middle and prime) did not get
+  it there, and a test build of the pace library that put the main thread on all eight cores again whenever the
+  mask changed measured nothing: BAR's benchmark Sim 32.5 and 33.6 ms against 33.1 and 31.5 ms without, alternated.
+  Heat decides instead: the same benchmark from a cool phone (28 C) 33 ms, after a few runs (43-47 C) 43-48 ms. Not
+  pursued; nothing of the test is in the app.
 
 ## A dev phone, and the first 8 GB phone (2026-10-29, afternoon)
 Kailil gave the agents a phone of their own: always on USB adb to the laptop (Wi-Fi adb as a backup), "You can use this

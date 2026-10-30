@@ -44,8 +44,9 @@ final class PerfLog {
         sb.append("; GPU ").append(mhz(read("devfreq/cur_freq"))).append(" MHz of ").append(mhz(read("devfreq/max_freq")))
           .append(" (thermal level ").append(read("thermal_pwrlevel")).append("), busy ").append(read("gpu_busy_percentage"))
           .append(", ").append(read("temp")).append(" mC");
-        // the Fold7's two CPU clusters: cpu0-5 and cpu6-7 (the engine's main thread); thermal lowers scaling_max_freq
-        for (int cpu : new int[] {0, 6}) {
+        // every CPU cluster by its first core (cpufreq policyN): the Fold7's cpu0-5 and cpu6-7, the S23 Ultra's cpu0-2,
+        // cpu3-6 and cpu7 (its prime core; a cpu6 reading there was a middle core); thermal lowers scaling_max_freq
+        for (int cpu : clusters()) {
             String dir = "/sys/devices/system/cpu/cpu" + cpu + "/cpufreq/";
             sb.append("; cpu").append(cpu).append(' ').append(mhz(readFile(dir + "scaling_cur_freq"), 1000)).append(" MHz of ")
               .append(mhz(readFile(dir + "scaling_max_freq"), 1000));
@@ -56,6 +57,20 @@ final class PerfLog {
         if (GameActivity.hiddenFlag(BarApp.get().paths()).exists()) sb.append("; game screen hidden (engine not drawing)");
         else if (GameActivity.catchupFlag(BarApp.get().paths()).exists()) sb.append("; catching up (engine not drawing)");
         Log.i("perf", sb.toString());
+    }
+
+    /** The first core of each CPU cluster (the cpufreq policies), lowest first; 0 and 6 if they cannot be listed. */
+    private static int[] clusters() {
+        String[] names = new java.io.File("/sys/devices/system/cpu/cpufreq").list();
+        java.util.TreeSet<Integer> first = new java.util.TreeSet<>();
+        if (names != null) for (String n : names) {
+            if (n.matches("policy\\d+")) first.add(Integer.parseInt(n.substring(6)));
+        }
+        if (first.isEmpty()) return new int[] {0, 6};
+        int[] out = new int[first.size()];
+        int i = 0;
+        for (int c : first) out[i++] = c;
+        return out;
     }
 
     /** A /proc/meminfo field in MB, or "?". */
