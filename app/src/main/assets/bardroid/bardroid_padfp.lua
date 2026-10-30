@@ -534,13 +534,23 @@ local function drawButtons(style, font, x0, y0, x1, y1, buttons)
 	gl.Color(1, 1, 1, 1)
 end
 
--- The tuner, in the squad's place: every setting with its value, the one on the D-pad in gold
+-- The tuner, in the squad's place: every setting with its value in two columns (the minimap stays free), the one on the
+-- D-pad in gold
 local function drawTuner(style, font, x1, y0, vsy)
 	local list, api = tuneList(), WG.BarDroidSpectate
 	local size = style.size(0.018, 11)
 	local pad = math.floor(size * 0.6)
 	local rowH = math.floor(size * 1.5)
-	local h = pad * 3 + size + #list * rowH
+	local rows = math.ceil(#list / 2)
+	local gap = pad * 2
+	local leftW = math.floor((x1 - pad * 4 - gap) * 0.43) -- (the longer labels are in the second)
+	local rightW = x1 - pad * 4 - gap - leftW
+	local fit = 1 -- (a narrow screen: the text comes down to its columns)
+	for i, setting in ipairs(list) do
+		local w = (font:GetTextWidth(setting.label) + font:GetTextWidth(api.fpTuneValue(fp.unitID, setting))) * size + pad
+		fit = math.min(fit, (i > rows and rightW or leftW) / w)
+	end
+	local h = pad * 3 + size + rows * rowH
 	local y1 = math.min(y0 + h, math.floor(vsy * 0.86))
 	style.panel(0, y0, x1, y1, 1)
 	local def = UnitDefs[Spring.GetUnitDefID(fp.unitID) or -1]
@@ -551,10 +561,11 @@ local function drawTuner(style, font, x1, y0, vsy)
 	for i, setting in ipairs(list) do
 		local lit = i == tuneAt
 		local c = lit and style.GOLD or style.TEXT
-		local y = y1 - pad * 2 - size - i * rowH + rowH * 0.3
+		local y = y1 - pad * 2 - size - ((i - 1) % rows + 1) * rowH + rowH * 0.3
+		local left = pad * 2 + (i > rows and leftW + gap or 0)
 		font:SetTextColor(c[1], c[2], c[3], lit and 1 or 0.8)
-		font:Print(setting.label, pad * 2, y, size, "o")
-		font:Print(api.fpTuneValue(fp.unitID, setting), x1 - pad * 2, y, size, "ro")
+		font:Print(setting.label, left, y, size * fit, "o")
+		font:Print(api.fpTuneValue(fp.unitID, setting), left + (i > rows and rightW or leftW), y, size * fit, "ro")
 	end
 	font:End()
 	gl.Color(1, 1, 1, 1)

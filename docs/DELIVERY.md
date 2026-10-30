@@ -297,6 +297,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       other groups; it now says the group is empty. QUEUE left on by fingers stayed on when the pad took over and
       queued every order of the pad's; the pad in use lets go of it (`touch-widget-test` cases for both). All 13
       `tools/laptop-tests.ps1` checks pass with these in.
+- [x] `RtsTouch` reviewed (GRID, QUEUE, the input source; 2026-10-30): that QUEUE fix was only half: the app holds the
+      real Shift and looked the button up only at a touch, so with the pad it stayed down. It now follows the file.
+      Checked on the dev phone without a pad (`adb shell input keyevent KEYCODE_BUTTON_SELECT` counts as one, a triple tap
+      by `input tap` as a triple tap): Shift down with QUEUE on, up at the press, and it stays up.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 

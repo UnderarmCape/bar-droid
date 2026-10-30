@@ -676,7 +676,8 @@ final class RtsTouch {
 
     /**
      * The QUEUE button (bardroid_pad.lua, Kailil 2026-10-30: touch "doesn't have a way to add to queue"): Shift held while
-     * it is on, so orders and buildings queue as with BAR's Shift key. Looked up at each touch and just after one.
+     * it is on, so orders and buildings queue as with BAR's Shift key. Looked up at each touch and just after one, and
+     * whenever the file says otherwise (padState).
      */
     private final Runnable applyQueue = () -> {
         padAt = 0;
@@ -1082,7 +1083,10 @@ final class RtsTouch {
         padFocus = focus;
         pregame = before;
         armed = picked;
-        queueWanted = queue;
+        if (queue != queueWanted) {   // (the widget let go of it, the pad in use: no touch comes to look it up)
+            queueWanted = queue;
+            ui.post(applyQueue);
+        }
         if (riding != firstPerson) {
             firstPerson = riding;
             ui.post(() -> showCursor(cursorWanted));
