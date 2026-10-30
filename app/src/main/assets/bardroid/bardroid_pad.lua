@@ -72,13 +72,15 @@ local controllerGame = false -- v0.8.5's game: the pad is v0.8.5's until a tripl
 local modV085 = false
 -- v0.8.5's area select (A held with nothing picked: PadGame): a circle in the middle of the screen selects the player's
 -- units it passes over while the camera pans; units first (buildings only when there are no units in it, or with RT:
--- added to the selection, buildings too); the D-pad sizes it, B undoes it. v0.8.5's radius: 320, 120..1200 in 80s.
+-- added to the selection, buildings too); the D-pad sizes it, held quickly, the circle easing to its new size in about
+-- 0.1 s (Kailil, 2026-10-30); B undoes it. v0.8.5's radius: 320 in 80s up to 1200; down to 20, in 20s under 160.
 -- X held as well: v0.8.5's filter radial (Kailil, 2026-10-29), the left stick picks All Mobile (up), Combat (down),
 -- Builders (left) or Air (right), kept for the next area select. Builders and combat units are never selected together
 -- (Kailil: "prefer combat units (BAR's vanilla behavior), so con bots are not sent into battle").
 local FILTER_SIDES = { up = "All Mobile", down = "Combat", left = "Builders", right = "Air" }
-local area = { on = false, radius = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil, z = nil,
-	filter = "All Mobile", radial = false, highlight = nil }
+local area = { on = false, radius = 320, target = 320, units = {}, count = 0, keep = {}, shift = false, x = nil, y = nil,
+	z = nil, filter = "All Mobile", radial = false, highlight = nil }
+local AREA_MIN, AREA_MAX, AREA_EASE = 20, 1200, 0.035 -- (the ease: 95% of the way in 0.1 s)
 -- the group list (control groups, below): the slot in use, Start held, shown until
 local GROUP_LIST_SECONDS = 1.5
 local groupList = { slot = 1, held = false, untilAt = nil }
@@ -809,12 +811,12 @@ local ACTIONS = {
 		end
 	end,
 	area_bigger = function()
-		area.radius = math.min(1200, area.radius + 80)
-		note("AREA " .. area.radius)
+		area.target = math.min(AREA_MAX, area.target + (area.target >= 160 and 80 or 20))
+		note("AREA " .. area.target)
 	end,
 	area_smaller = function()
-		area.radius = math.max(120, area.radius - 80)
-		note("AREA " .. area.radius)
+		area.target = math.max(AREA_MIN, area.target - (area.target > 160 and 80 or 20))
+		note("AREA " .. area.target)
 	end,
 	pad_page_next = function() -- RB / LB on the build menu: its pages (Kailil: "pressing RB or LB cycles the tabs")
 		buildMenu("pagenext")
@@ -896,6 +898,30 @@ local ACTIONS = {
 	lb_y = function()
 		orderAt(CMD.PATROL, "patrol", false)
 	end,
+	path_fight = function() -- LB + A held: picked, the app's drag draws it (BAR's formation widget gives the path)
+		Spring.SetActiveCommand("fight")
+		note("FIGHT PATH")
+	end,
+	path_patrol = function() -- LB + Y held
+		Spring.SetActiveCommand("patrol")
+		note("PATROL PATH")
+	end,
+	selfd = function() -- Back + R3 + L3 held, as v0.8.5's (given again: called off)
+		local selected = Spring.GetSelectedUnits()
+		if #selected == 0 then
+			return
+		end
+		if unitControl() and pcall(Spring.GiveOrderToUnitArray, selected, CMD.SELFD, {}, 0) then
+			note("SELF DESTRUCT")
+		else
+			note("NOT IN THIS GAME")
+		end
+	end,
+	pad_speed = function() -- Back + Y: the path speed tuner
+		if WG.BarDroidPadSpeed then
+			WG.BarDroidPadSpeed.toggle()
+		end
+	end,
 	lb_b = function() -- stop; factories selected: stopped and their whole queue cleared (Kailil, 2026-10-29)
 		if clearFactories() then
 			return
@@ -938,9 +964,10 @@ local ACTIONS = {
 	end,
 }
 
--- control groups: group_<recall|assign|auto|clear|show>_<1..9>. The engine's groups (BAR's keys use the same), set
--- unit by unit; a recall only selects, the camera stays (Kailil, 2026-10-29). The group list (v0.8.5's: a box for each
--- group that has units, the slot in use too) shows while Start is held and for a moment after each group action.
+-- control groups: group_<recall|assign|look|clear|show>_<1..9>. The engine's groups (BAR's keys use the same), set
+-- unit by unit; a recall only selects, the camera stays (Kailil, 2026-10-29); assign takes every unit of the selection's
+-- types, a look moves the camera to the group (2026-10-30). The group list (v0.8.5's: a box for each group that has units,
+-- the slot in use too) shows while Start or Back is held and for a moment after each group action.
 local function groupUnits(n)
 	local units = {}
 	for _, unitID in ipairs(Spring.GetGroupUnits(n) or {}) do
@@ -963,18 +990,43 @@ local function group(kind, n)
 		end
 	elseif kind == "assign" then
 		local selected = Spring.GetSelectedUnits()
+		local types, wanted = {}, 0
+		for _, unitID in ipairs(selected) do
+			types[Spring.GetUnitDefID(unitID) or -1] = true
+		end
+		if #selected == 0 then
+			note("SELECT A UNIT")
+			return
+		end
 		for _, unitID in ipairs(groupUnits(n)) do
 			Spring.SetUnitGroup(unitID, -1)
 		end
-		for _, unitID in ipairs(selected) do
-			Spring.SetUnitGroup(unitID, n)
+		for _, unitID in ipairs(myUnits()) do
+			if types[Spring.GetUnitDefID(unitID) or -1] then
+				Spring.SetUnitGroup(unitID, n)
+				wanted = wanted + 1
+			end
 		end
 		local count = #groupUnits(n)
 		-- (Kailil: with maces or ticks selected only one unit was taken; what the engine kept, for the next look)
-		Spring.Echo(string.format("[bardroid-pad] group %d set: %d of %d selected units in it", n, count, #selected))
+		Spring.Echo(string.format("[bardroid-pad] group %d set: %d of %d units of the selection's types", n, count, wanted))
 		note("GROUP " .. n .. " SET: " .. count)
-	elseif kind == "auto" then
-		note("GROUP " .. n .. ": THIS TYPE FROM NOW ON")
+	elseif kind == "look" then
+		local units = groupUnits(n)
+		local sx, sz, found = 0, 0, 0
+		for _, unitID in ipairs(units) do
+			local x, _, z = Spring.GetUnitPosition(unitID)
+			if x then
+				sx, sz, found = sx + x, sz + z, found + 1
+			end
+		end
+		if found > 0 then
+			sx, sz = sx / found, sz / found
+			Spring.SetCameraTarget(sx, Spring.GetGroundHeight(sx, sz), sz, 0.3)
+			note("GROUP " .. n)
+		else
+			note("GROUP " .. n .. " EMPTY")
+		end
 	elseif kind == "clear" then
 		for _, unitID in ipairs(groupUnits(n)) do
 			Spring.SetUnitGroup(unitID, -1)
@@ -1179,8 +1231,12 @@ end
 -- The order menu on the pad follows the pointer once it is the player's again (the warp landed, or half a second),
 -- keeps it on the menu (pushed off it for LEAVE_SECONDS it lets go) and ends when the menu goes; the app is told
 -- which menu has the pad and what is picked
-function widget:Update()
+function widget:Update(dt)
 	padOrders(WG.BarDroidPadOnly == true)
+	if area.radius ~= area.target then
+		local r = area.radius + (area.target - area.radius) * math.min(1, (dt or 0) / AREA_EASE)
+		area.radius = math.abs(area.target - r) < 1 and area.target or r
+	end
 	if orders then
 		local layout = ordersLayout()
 		if not layout then
@@ -1233,7 +1289,8 @@ function widget:Update()
 	end
 	local focus = orders and "orders" or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
-	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\n"
+	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
+		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\n"
 	local t = now()
 	if text ~= written or ((focus ~= "none" or pregame or armed ~= "none") and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
@@ -1349,7 +1406,7 @@ function widget:Initialize()
 			return toast, lastNote, notes
 		end,
 		area = function() -- (the area select: on, its radius, how many units it has passed over; its filter, radial)
-			return area.on, area.radius, area.count, area.filter, area.radial and area.highlight
+			return area.on, area.target, area.count, area.filter, area.radial and area.highlight
 		end,
 		chooseUnits = chooseUnits, -- (what the area select takes of units: made-up unit types)
 		ordersHidden = function() -- (the order menu's orders hidden while the pad is the input)

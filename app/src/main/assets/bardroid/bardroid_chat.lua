@@ -13,7 +13,8 @@
 -- and smaller as lines are added, the chat lines below it, and before the game starts everything above BAR's start
 -- countdown. As BAR's: Enter sends, Ctrl / Alt / Shift + Enter switch to everyone / allies / spectators, Escape
 -- cancels, Up and Down go through the messages sent, Ctrl+V pastes, "/" sends a command, BAR's word filter
--- (luaui/configs/badwords.lua) holds a message back once. "/hud" opens the app's layout editor (bardroid_layout.lua).
+-- (luaui/configs/badwords.lua) holds a message back once. "/hud" opens the app's layout editor (bardroid_layout.lua),
+-- "/padspeed" the gamepad's path speed tuner (bardroid_padspeed.lua).
 -- Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
@@ -361,6 +362,8 @@ local function send()
 		local command = text:sub(2)
 		if (command == "hud" or command == "layout") and WG.BarDroidLayout then
 			WG.BarDroidLayout.open()
+		elseif command == "padspeed" and WG.BarDroidPadSpeed then
+			WG.BarDroidPadSpeed.toggle()
 		else
 			Spring.SendCommands(command == "lr" and "luaui reload" or command)
 		end

@@ -426,7 +426,8 @@ local function readTouch(lines)
 	end
 	for name in lines:gmatch("act (%S+)") do
 		local action = ACTIONS[name]
-		if action then
+		if WG.BarDroidPadSpeed and WG.BarDroidPadSpeed.act(name) then -- luacheck: ignore 542 (the path speed tuner's)
+		elseif action then
 			action()
 		elseif WG.BarDroidPad then
 			WG.BarDroidPad.act(name)
@@ -595,8 +596,11 @@ local function applyPad(dt)
 		local v = Spring.GetCameraVectors()
 		local rightX, rightZ = horizontal(v and v.right)
 		local forwardX, forwardZ = horizontal(v and v.forward)
+		-- a building picked: 20% slower; Back's slow pan (bardroid_pad.lua) 33% (Kailil, 2026-10-30: it was 30%, "increase
+		-- slow mode by 10 percent")
+		local _, activeID = Spring.GetActiveCommand()
 		local distance = PAD_PAN_SPEED * (1 + (PAD_FAST_PAN - 1) * s.boost) * dt
-			* (WG.BarDroidPadSlowPan and 0.3 or 1) -- (Back while placing a building: bardroid_pad.lua)
+			* (WG.BarDroidPadSlowPan and 0.33 or (activeID and activeID < 0 and 0.8 or 1))
 		if rightX and forwardX then
 			cs.px = cs.px + (s.panX * rightX - s.panY * forwardX) * distance
 			cs.pz = cs.pz + (s.panX * rightZ - s.panY * forwardZ) * distance

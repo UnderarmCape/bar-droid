@@ -38,6 +38,8 @@ public final class PadGameTest {
         public String padFocus() { return focus; }
         public boolean pregame() { return pregame; }
         public String armed() { return armed; }
+        float speed = 1;
+        public float drawSpeed() { return speed; }
     }
 
     final Fake m = new Fake();
@@ -69,6 +71,17 @@ public final class PadGameTest {
     }
 
     boolean has(String event) { return m.out.contains(event); }
+
+    /** How far the pointer moved, sideways and down, by the moves written down. */
+    static int sumMoves(PadGameTest t) {
+        int sum = 0;
+        for (String e : t.m.out) {
+            if (!e.startsWith("move ")) continue;
+            String[] f = e.split(" ");
+            sum += Math.abs(Integer.parseInt(f[1])) + Math.abs(Integer.parseInt(f[2]));
+        }
+        return sum;
+    }
 
     int count(String prefix) {
         int n = 0;
@@ -296,7 +309,8 @@ public final class PadGameTest {
         t.wait(300);
         check("a pad connected at the start but unused does not take the pointer", t.m.out.isEmpty(), t.m.out);
 
-        // Control groups (Start + D-pad): the slot, a tap recalls, held assigns, right autogroups, L3 clears
+        // Control groups (Start or Back + D-pad): the slot, left tap selects, left held assigns (and BAR's autogroup), right
+        // tap the camera, right held clears, Start + L3 clears
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
         t.tick(START); t.tap(DPAD_UP);
@@ -307,20 +321,99 @@ public final class PadGameTest {
                 && !t.has("act idle_prev"), t.m.out);
         t.m.out.clear();
         t.tick(DPAD_LEFT); t.wait(400); t.up(DPAD_LEFT);
-        check("Start + D-pad left held: the selection assigned, no recall", t.has("act group_assign_2")
-                && !t.has("act group_recall_2"), t.m.out);
+        int altDown = t.m.out.indexOf("key " + KeyEvent.KEYCODE_ALT_LEFT + " down");
+        check("Start + D-pad left held: the type assigned, BAR's autogroup (Alt + 2), no recall", t.has("act group_assign_2")
+                && altDown >= 0 && altDown < t.m.out.indexOf("key " + (KeyEvent.KEYCODE_1 + 1) + " down")
+                && t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") && !t.has("act group_recall_2"), t.m.out);
         t.m.out.clear();
         t.tap(DPAD_RIGHT);
-        int altDown = t.m.out.indexOf("key " + KeyEvent.KEYCODE_ALT_LEFT + " down");
-        check("Start + D-pad right: BAR's autogroup (Alt + 2)", altDown >= 0
-                && altDown < t.m.out.indexOf("key " + (KeyEvent.KEYCODE_1 + 1) + " down")
-                && t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up") && t.has("act group_auto_2") && !t.has("act idle_next"), t.m.out);
+        check("Start + D-pad right tapped: the camera to the group", t.has("act group_look_2") && !t.has("act group_clear_2")
+                && !t.has("act idle_next"), t.m.out);
+        t.m.out.clear();
+        t.tick(DPAD_RIGHT); t.wait(400); t.up(DPAD_RIGHT);
+        check("Start + D-pad right held: the group cleared, no camera move", t.has("act group_clear_2")
+                && !t.has("act group_look_2"), t.m.out);
         t.m.out.clear();
         t.tap(LS);
         check("Start + L3: the group cleared, no queued order removed", t.has("act group_clear_2")
                 && !t.has("act queue_remove_first"), t.m.out);
         t.up(START);
         check("Start let go: the group list goes (after a moment)", t.has("act group_list_off"), t.m.out);
+        t.m.out.clear();
+        t.tick(BACK); t.tap(DPAD_LEFT); t.tap(DPAD_RIGHT); t.up(BACK);
+        check("Back + D-pad works as Start + D-pad, no idle builders", t.has("act group_list_on") && t.has("act group_recall_2")
+                && t.has("act group_look_2") && !t.has("act idle_prev") && !t.has("act idle_next"), t.m.out);
+
+        // Fight and patrol paths: LB + A / Y held draws, RB held Alt, let go: the drag ends; a tap stays the order at the middle
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(LB); t.tick(A); t.wait(300);
+        check("LB + A held: fight picked", t.has("act path_fight") && !t.has("act lb_a") && !t.has("left down"), t.m.out);
+        t.m.armed = "other";
+        t.wait(200);
+        check("... and once the game has it the left button goes down in the middle", t.has("left down") && t.has("centre"), t.m.out);
+        t.up(LB);
+        t.m.out.clear();
+        t.lx = 1; t.tick(); t.tick(); t.lx = 0; t.tick();
+        check("LB may be let go: the left stick draws, the button stays down", t.count("move ") > 0 && !t.has("left up"), t.m.out);
+        t.tick(RB); t.wait(16);
+        check("RB held on a path: Alt (the other fight), no Space", t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " down")
+                && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
+        t.up(A);
+        check("A let go: the path given (the button up)", t.has("left up"), t.m.out);
+        t.up(RB); t.m.armed = "none"; t.m.out.clear();
+        t.tick(LB); t.tick(Y); t.wait(300);
+        t.m.armed = "other"; t.wait(200);
+        check("LB + Y held: a patrol path, the left button down", t.has("act path_patrol") && t.has("left down"), t.m.out);
+        t.m.out.clear();
+        t.up(Y);
+        check("Y let go ends it (A was never down)", t.has("left up"), t.m.out);
+        t.up(LB); t.m.armed = "none"; t.m.out.clear();
+        t.tick(LB); t.tick(A); t.wait(300); t.wait(200); t.up(A); t.up(LB);
+        check("nothing that can take the order: no drag", t.has("act path_fight") && !t.has("left down"), t.m.out);
+
+        // The pointer's speed while drawing: the zoom's; LT slows it only from a standstill
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(X); t.wait(300); t.m.out.clear();
+        t.m.speed = 0.5f; t.lx = 1; t.tick(); t.tick(); t.tick(); t.tick();
+        int half = sumMoves(t);
+        t.m.out.clear(); t.m.speed = 1; t.tick(); t.tick(); t.tick(); t.tick();
+        check("drawing: the zoom's speed", Math.abs(sumMoves(t) - half * 2) <= 2, half + " " + sumMoves(t));
+        t.lx = 0; t.up(X);
+        t.m.out.clear(); t.wait(250);
+        t.lt = true; t.tick(X); t.wait(300); t.m.out.clear();
+        t.lx = 1; t.tick(); t.tick(); t.tick(); t.tick();
+        int slow = sumMoves(t);
+        t.lx = 0; t.lt = false; t.up(X); t.wait(250);
+        t.lt = true; t.lx = 1; t.tick(X); t.wait(300); t.m.out.clear(); t.tick(); t.tick(); t.tick(); t.tick();
+        check("LT from a standstill slows the drawing; with the stick already moving it does not", sumMoves(t) > slow * 2,
+                slow + " " + sumMoves(t));
+        t.lx = 0; t.lt = false; t.up(X);
+
+        // A held: the D-pad sizes the circle, held quickly
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(A); t.wait(300);
+        check("(the area select is on)", t.has("act area_on"), t.m.out);
+        t.m.out.clear();
+        t.tick(DPAD_LEFT); t.wait(1000); t.up(DPAD_LEFT);
+        int steps = t.count("act area_smaller");
+        check("D-pad held: the circle steps quickly", steps >= 8 && steps <= 16, steps);
+        t.m.out.clear();
+        t.wait(300);
+        check("D-pad let go: no more steps", t.count("act area_") == 0, t.m.out);
+        t.up(A);
+
+        // Back + R3 + L3 held: self-destruct, no D-gun, no order removed; Back + Y: the tuner
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(BACK); t.tick(RS); t.tick(LS); t.wait(800); t.up(RS); t.up(LS); t.up(BACK);
+        check("Back + R3 + L3 held: self-destruct once, no D-gun, nothing removed", t.count("act selfd") == 1 && !t.has("act dgun")
+                && !t.has("act queue_remove_first") && !t.has("act queue_remove_last"), t.m.out);
+        t.m.out.clear();
+        t.tick(BACK); t.tap(Y); t.up(BACK);
+        check("Back + Y: the path speed tuner", t.has("act pad_speed"), t.m.out);
 
         // The D-pad's own work; L3 / R3; Back + R3; LB with the face buttons and the D-pad
         t.m.out.clear();

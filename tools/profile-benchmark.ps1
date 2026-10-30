@@ -78,7 +78,7 @@ try {
   # the phone's user widgets (Installer's list) and the files the app keeps for them
   foreach ($f in "bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua", "bardroid_players.lua",
       "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua", "bardroid_layout.lua", "bardroid_buildmenu.lua",
-      "bardroid_pad.lua", "bardroid_lowmem.lua") {
+      "bardroid_pad.lua", "bardroid_padspeed.lua", "bardroid_lowmem.lua") {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") (Join-Path $Data "LuaUI\Widgets\") -Force
   }
   Set-Content (Join-Path $Data "LuaUI\Config\bardroid_touch.txt") -Value $null -NoNewline

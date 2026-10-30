@@ -292,7 +292,7 @@ public final class Installer {
         // and BAR's GL4 unit shaders kept off in launch-bar.sh's low-memory mode (8 GB phones)
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
-                "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_pad.lua", "bardroid_lowmem.lua"})
+                "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua", "bardroid_lowmem.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         writeBuildMenuMd5();

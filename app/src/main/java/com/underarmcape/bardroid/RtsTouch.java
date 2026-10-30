@@ -1001,12 +1001,18 @@ final class RtsTouch {
                 if (f[0].equals("focus")) focus = f[1];
                 if (f[0].equals("pregame")) before = f[1].equals("1");
                 if (f[0].equals("armed")) picked = f[1];
+                if (f[0].equals("drawspeed")) {
+                    try { drawSpeed = Float.parseFloat(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
+                }
             }
         }
         padFocus = focus;
         pregame = before;
         armed = picked;
     }
+    private volatile float drawSpeed = 1;
+    /** The pointer's speed while drawing, for the camera's zoom (bardroid_padspeed.lua). Any thread. */
+    float drawSpeed() { padState(); return drawSpeed; }
 
     /** Where the pointer is by the game's last answer (bardroid_hover.txt, X screen pixels); null: no answer. Any thread. */
     float[] pointerAt() {

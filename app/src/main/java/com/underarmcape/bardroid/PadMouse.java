@@ -25,4 +25,5 @@ interface PadMouse {
     String padFocus();                      // "build", "orders" or "none": a menu has the pad (bardroid_pad.txt)
     boolean pregame();                      // before the start (bardroid_pad.txt)
     String armed();                         // the order picked: "build", "area", "unitarea", "other" or "none"
+    float drawSpeed();                      // the pointer's speed while drawing, for the zoom (1: the speed at full zoom out)
 }
