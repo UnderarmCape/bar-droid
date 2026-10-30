@@ -29,8 +29,12 @@ Kailil, playing the merged build, sent ten notes. Done so far:
   renewed when the stick turns 17 degrees or every 0.8 s, not every frame. The right stick looks, eased back after 1.5 s.
   RT fires through BAR's own Set Target (`unit_target_on_the_move.lua`), which fires on the move and with three
   parameters is silent; it takes no ground out of the unit's range, so a far aim comes in along the line. Seen on the
-  dev phone with made-up stick lines: it walks, looks and comes back; the laser fires at the aim. The second half of
-  the note (nearby units following or fighting, and its panel) is still to do.
+  dev phone with made-up stick lines: it walks, looks and comes back; the laser fires at the aim. Then the second half:
+  a squad. A unit of the player's under the crosshair joins with the next order, an empty squad takes the units within
+  900 elmos (combat units; builders only where there are none). A follow me (Guard), X stop, Y fight and RB patrol to
+  where the view points, D-pad up adds, down clears. The build menu's place lists each unit type, how many and what most
+  of them are doing, the order menu's the buttons, BAR's info panel the unit ridden, and a gold ring marks each unit.
+  Seen on the dev phone with seven spawned bots: Following, Fighting, Patrolling, Holding, and the bots going there.
 - Placing a building pans 20% slower, Back's slow pan 33% (30% + 10%), both modes. The A-held circle: the D-pad held,
   minimum 20, eased over about 0.1 s, both modes. Self-destruct in the app's mode: Back + R3 + L3 held, as v0.8.5's.
 ## Touch in the controller game: menus by themselves again (2026-10-30, morning)

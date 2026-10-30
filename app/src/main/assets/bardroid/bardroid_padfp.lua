@@ -7,6 +7,14 @@
 --                lines or unit voices. Let go: the unit stops.
 --   RT           fires at the middle of the screen, also while walking: BAR's Set Target (its own order, for "fire on the
 --                move"), renewed while RT is held and cancelled when let go; at the sky, a point ahead of the unit.
+-- The squad (Kailil: "tell all units nearby or that im looking at to follow (guard Me) or stop"; fight and patrol "in a
+-- direction"; "a UI telling me what is selected and what orders they have"): the units these orders go to. A unit of
+-- yours in the middle of the screen joins it with the next order; an empty squad takes the units within NEARBY (combat
+-- units; builders only where there are none).
+--   A  follow me (Guard)       X  stop        Y  fight to where I look        RB  patrol to where I look
+--   D-pad up  add what I look at, or the units nearby        D-pad down  an empty squad again
+-- While riding the build menu's place shows the squad (each unit type, how many, what they are doing), the order menu's
+-- the buttons, and BAR's info panel the unit ridden.
 -- PadGame learns it is on from bardroid_pad.txt ("fp 1"), bardroid_touch.lua hands the sticks over. Installed into
 -- LuaUI/Widgets by the app.
 
@@ -29,9 +37,17 @@ local LOOK_TURN, LOOK_TILT = 2.2, 1.4 -- radians, degrees * 60: a full stick's l
 local MOVE_AHEAD, MOVE_TURN, MOVE_EVERY = 280, 0.3, 0.8 -- how far the order goes, and what renews it
 local FIRE_EVERY, FIRE_SKY = 0.25, 600
 local POS_SMOOTHING, TURN_SMOOTHING = 0.12, 0.2
+local NEARBY, ORDER_AHEAD = 900, 1400 -- elmos: the units nearby; fight or patrol with the view on the sky
+local SUMMARY_SECONDS = 0.25
+local STATUS = { [CMD.GUARD] = "Following", [CMD.FIGHT] = "Fighting", [CMD.PATROL] = "Patrolling", [CMD.MOVE] = "Moving",
+	[CMD.ATTACK] = "Attacking", [CMD.RECLAIM] = "Reclaiming", [CMD.REPAIR] = "Repairing" }
+local BUTTONS = { { "A", "Follow me" }, { "X", "Stop" }, { "Y", "Fight there" }, { "RB", "Patrol there" },
+	{ "UP", "Add units" }, { "DN", "Clear squad" }, { "RT", "Fire" }, { "B", "Leave" } }
 
 local fp = nil -- { unitID, saved camera, selection before, x, y, z, yaw, lookYaw, lookPitch, lookAt, sticks, ... }
 local cam = { mode = CAM_FPS, rz = 0 }
+local squad, inSquad = {}, {} -- the units the orders go to; unitID -> true
+local summary, summaryAt = {}, nil -- per unit type: { defID, count, status }
 
 local function now()
 	return Spring.GetTimer()
@@ -86,6 +102,9 @@ local function stop(text)
 		pcall(Spring.GiveOrderToUnit, s.unitID, CMD.STOP, {}, 0)
 	end
 	Spring.SetCameraState(s.camera, 0.3)
+	if WG.info and WG.info.clearDisplayUnitID then
+		WG.info.clearDisplayUnitID()
+	end
 	if Spring.ValidUnitID(s.unitID) and not Spring.GetUnitIsDead(s.unitID) then
 		Spring.SelectUnitArray({ s.unitID })
 	end
@@ -109,6 +128,10 @@ local function start()
 	fp = { unitID = unitID, camera = Spring.GetCameraState(), x = x, y = y, z = z, yaw = unitYaw(unitID) or 0,
 		lookYaw = 0, lookPitch = 0, lookAt = now(), lx = 0, ly = 0, rx = 0, ry = 0, moving = false }
 	Spring.SelectUnitArray({}) -- (no order lines, panels or voices while riding)
+	if WG.info and WG.info.displayUnitID then
+		WG.info.displayUnitID(unitID) -- (the panel at the bottom left: the unit ridden)
+	end
+	squad, inSquad, summary, summaryAt = {}, {}, {}, nil
 	say("FIRST PERSON")
 end
 
@@ -212,6 +235,257 @@ local function fire(s)
 	end
 end
 
+-- The squad
+
+local function joinSquad(unitID)
+	if not inSquad[unitID] then
+		inSquad[unitID] = true
+		squad[#squad + 1] = unitID
+	end
+end
+
+local function cleanSquad()
+	local alive = {}
+	for _, unitID in ipairs(squad) do
+		if Spring.ValidUnitID(unitID) and not Spring.GetUnitIsDead(unitID) then
+			alive[#alive + 1] = unitID
+		else
+			inSquad[unitID] = nil
+		end
+	end
+	squad = alive
+end
+
+-- A unit of the player's in the middle of the screen (not the one ridden, not a building)
+local function lookedAt(s)
+	local vsx, vsy = Spring.GetViewGeometry()
+	local kind, target = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2))
+	if kind == "unit" and target ~= s.unitID and Spring.GetUnitTeam(target) == Spring.GetMyTeamID() then
+		local def = UnitDefs[Spring.GetUnitDefID(target) or -1]
+		if def and (def.speed or 0) > 0 then
+			return target
+		end
+	end
+	return nil
+end
+
+-- The units within NEARBY: combat units; builders only where there are none (as the area select)
+local function joinNearby(s)
+	local combat, builders = {}, {}
+	for _, unitID in ipairs(Spring.GetUnitsInCylinder(s.x, s.z, NEARBY, Spring.GetMyTeamID()) or {}) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		if unitID ~= s.unitID and def and (def.speed or 0) > 0 and not Spring.GetUnitIsBeingBuilt(unitID) then
+			local list = def.isBuilder and builders or combat
+			list[#list + 1] = unitID
+		end
+	end
+	for _, unitID in ipairs(#combat > 0 and combat or builders) do
+		joinSquad(unitID)
+	end
+end
+
+-- Where a fight or patrol goes: the ground the view points at, or on the sky a long way ahead
+local function orderPoint(s)
+	local vsx, vsy = Spring.GetViewGeometry()
+	local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
+	if pos then
+		return { pos[1], pos[2], pos[3] }
+	end
+	local x = math.max(0, math.min(Game.mapSizeX, s.x + math.sin(s.viewYaw or s.yaw) * ORDER_AHEAD))
+	local z = math.max(0, math.min(Game.mapSizeZ, s.z - math.cos(s.viewYaw or s.yaw) * ORDER_AHEAD))
+	return { x, Spring.GetGroundHeight(x, z), z }
+end
+
+local function give(cmdID, params, name)
+	if pcall(Spring.GiveOrderToUnitArray, squad, cmdID, params, 0) then
+		say(name .. ": " .. #squad)
+	end
+	summaryAt = nil
+end
+
+local function order(kind)
+	local s = fp
+	if not s then
+		return
+	end
+	cleanSquad()
+	if kind == "clear" then
+		squad, inSquad, summaryAt = {}, {}, nil
+		say("SQUAD CLEARED")
+		return
+	end
+	local looked = lookedAt(s)
+	if looked then
+		joinSquad(looked)
+	elseif kind == "add" or #squad == 0 then
+		joinNearby(s)
+	end
+	summaryAt = nil
+	if #squad == 0 then
+		say("NO UNITS NEAR")
+	elseif kind == "add" then
+		say("SQUAD: " .. #squad)
+	elseif kind == "follow" then
+		give(CMD.GUARD, { s.unitID }, "FOLLOW ME")
+	elseif kind == "stop" then
+		give(CMD.STOP, {}, "STOP")
+	elseif kind == "fight" then
+		give(CMD.FIGHT, orderPoint(s), "FIGHT")
+	elseif kind == "patrol" then
+		give(CMD.PATROL, orderPoint(s), "PATROL")
+	end
+end
+
+-- What the squad is doing, per unit type: how many, and what most of them do
+local function summarize()
+	local t = now()
+	if summaryAt and Spring.DiffTimers(t, summaryAt) < SUMMARY_SECONDS then
+		return
+	end
+	summaryAt = t
+	cleanSquad()
+	local byType, list = {}, {}
+	for _, unitID in ipairs(squad) do
+		local defID = Spring.GetUnitDefID(unitID)
+		local entry = byType[defID]
+		if not entry then
+			entry = { defID = defID, count = 0, seen = {} }
+			byType[defID] = entry
+			list[#list + 1] = entry
+		end
+		entry.count = entry.count + 1
+		local cmdID = Spring.GetUnitCurrentCommand(unitID)
+		local status = cmdID and (STATUS[cmdID] or "Busy") or "Holding"
+		entry.seen[status] = (entry.seen[status] or 0) + 1
+	end
+	for _, entry in ipairs(list) do
+		local most = 0
+		for status, n in pairs(entry.seen) do
+			if n > most then
+				entry.status, most = status, n
+			end
+		end
+	end
+	table.sort(list, function(a, b)
+		return a.count > b.count
+	end)
+	summary = list
+end
+
+-- The panels: the squad where the build menu is, the buttons where the order menu is (BAR's look, WG.BarDroidStyle)
+
+local function menuPlace(vsx, vsy)
+	local o = WG.ordermenu
+	if o and o.getPosition then
+		local x, y, w, h = o.getPosition()
+		if x and y and w and h then
+			return math.floor(x * vsx), math.floor((y - h) * vsy), math.floor((x + w) * vsx), math.floor(y * vsy)
+		end
+	end
+	return math.floor(vsx * 0.36), 0, math.floor(vsx * 0.71), math.floor(vsy * 0.28)
+end
+
+local function drawSquad(style, font, x1, y0, vsy)
+	local x0 = 0
+	local size = style.size(0.02, 11)
+	local pad = math.floor(size * 0.6)
+	local rowH = math.floor(size * 2.2)
+	local rows = math.min(#summary, 7)
+	local h = pad * 3 + size + math.max(1, rows) * rowH
+	local y1 = math.min(y0 + h, math.floor(vsy * 0.68))
+	style.panel(x0, y0, x1, y1, 1)
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.6)
+	font:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], 1)
+	font:Print("Squad: " .. #squad, x0 + pad, y1 - pad - size * 0.85, size, "o")
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.75)
+	if rows == 0 then
+		font:Print("none yet: an order takes the units nearby", x0 + pad, y1 - pad * 2 - size * 2, size * 0.85, "o")
+	end
+	font:End()
+	for i = 1, rows do
+		local e = summary[i]
+		local top = y1 - pad * 2 - size - (i - 1) * rowH
+		local icon = rowH - 4
+		gl.Color(1, 1, 1, 1)
+		gl.Texture("#" .. e.defID)
+		gl.TexRect(x0 + pad, top - icon, x0 + pad + icon, top)
+		gl.Texture(false)
+		local def = UnitDefs[e.defID]
+		font:Begin()
+		font:SetOutlineColor(0, 0, 0, 0.6)
+		font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 1)
+		font:Print(e.count .. "  " .. (def and (def.translatedHumanName or def.humanName) or ""), x0 + pad * 2 + icon, top - icon * 0.62, size, "o")
+		font:SetTextColor(style.BLUE[1], style.BLUE[2], style.BLUE[3], 1)
+		font:Print(e.status or "", x1 - pad, top - icon * 0.62, size, "ro")
+		font:End()
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
+local function drawButtons(style, font, x0, y0, x1, y1)
+	style.panel(x0, y0, x1, y1, 1)
+	local size = style.size(0.019, 11)
+	local pad = math.floor(size * 0.8)
+	local cols, rows = 2, math.ceil(#BUTTONS / 2)
+	local cw, ch = (x1 - x0 - pad) / cols, (y1 - y0 - pad) / rows
+	local chip = math.floor(math.min(ch * 0.72, size * 1.7))
+	for i, b in ipairs(BUTTONS) do
+		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+		local x = math.floor(x0 + pad + col * cw)
+		local y = math.floor(y1 - pad / 2 - (row + 1) * ch + (ch - chip) / 2)
+		if style.KEYS[b[1]] then
+			style.key(x, y, chip, b[1], 1)
+		else
+			local w = math.floor(chip * 1.5)
+			style.fill(x, y, x + w, y + chip, { 0.2, 0.2, 0.2, 0.95 }, 1)
+			font:Begin()
+			font:SetOutlineColor(0, 0, 0, 0.6)
+			font:SetTextColor(1, 1, 1, 1)
+			font:Print(b[1], x + w / 2, y + chip / 2 - chip * 0.2, chip * 0.55, "co")
+			font:End()
+		end
+		font:Begin()
+		font:SetOutlineColor(0, 0, 0, 0.6)
+		font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 1)
+		font:Print(b[2], x + chip * 1.7, y + chip / 2 - size * 0.36, size, "o")
+		font:End()
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
+function widget:DrawScreen()
+	if not fp then
+		return
+	end
+	local style, font = WG.BarDroidStyle, WG.fonts and WG.fonts.getFont()
+	if not (style and font) then
+		return
+	end
+	local vsx, vsy = Spring.GetViewGeometry()
+	local x0, y0, x1, y1 = menuPlace(vsx, vsy)
+	summarize()
+	drawSquad(style, font, x0, y1, vsy)
+	drawButtons(style, font, x0, y0, x1, y1)
+end
+
+function widget:DrawWorld() -- (a ring under each unit of the squad)
+	if not fp or #squad == 0 then
+		return
+	end
+	gl.DepthTest(false)
+	gl.LineWidth(2)
+	gl.Color(1, 0.78, 0.25, 0.8)
+	for _, unitID in ipairs(squad) do
+		local x, y, z = Spring.GetUnitPosition(unitID)
+		if x then
+			gl.DrawGroundCircle(x, y, z, 24, 16)
+		end
+	end
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
+end
+
 function widget:Update(dt)
 	local s = fp
 	if not s then
@@ -256,6 +530,10 @@ function widget:Initialize()
 			if fp then
 				fp.lx, fp.ly, fp.rx, fp.ry = lx, ly, rx, ry
 			end
+		end,
+		order = order, -- (bardroid_pad.lua: fp_order_<follow|stop|fight|patrol|add|clear>)
+		squad = function() -- (tests: the squad)
+			return squad
 		end,
 	}
 end

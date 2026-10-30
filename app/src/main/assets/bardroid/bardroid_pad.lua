@@ -1181,6 +1181,13 @@ local function act(name)
 		group(kind, n)
 		return true
 	end
+	local fpOrder = name:match("^fp_order_(%a+)$")
+	if fpOrder then -- (first person: the squad's orders)
+		if WG.BarDroidPadFP then
+			WG.BarDroidPadFP.order(fpOrder)
+		end
+		return true
+	end
 	local side = FILTER_SIDES[name:match("^area_filter_(%a+)$") or ""]
 	if side then -- (the left stick on the filter radial)
 		if area.radial then

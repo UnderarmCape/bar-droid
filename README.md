@@ -108,7 +108,7 @@ factions' matching unit too.
   | Start or Back + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), left held assigns every unit of the selection's types (and those to come), right tapped moves the camera to it, right held clears it; Start + L3 clears it too. While Start or Back is held (and a moment after) a strip shows a box for each group that has units |
   | LB + A / Y held | Draws a fight / patrol path with the left stick until let go (LB may be let go; RB held: Alt, the other fight) |
   | Back + Y | The path speed tuner (also `/padspeed` in the chat box): how fast X, LB + A and LB + Y draw at each zoom |
-  | LB + L3 held | First person on the selected unit: the left stick walks it, the right stick looks, RT fires where you look; B or the same again ends it |
+  | LB + L3 held | First person on the selected unit: the left stick walks it, the right stick looks, RT fires where you look; B or the same again ends it. A squad takes orders meanwhile (the unit you look at, else the units nearby): A follow me, X stop, Y fight, RB patrol to where you look; D-pad up adds units, down clears the squad. Panels show the squad, their orders and the buttons |
   | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires); Back + R3 + L3 held: self-destruct |
   | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
   | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid ("GRID" shows) - A starts it, the left stick draws it (LB may be let go then), A places it (X: and keeps the building), B cancels |

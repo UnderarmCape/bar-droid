@@ -58,7 +58,8 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
  *   Back + Y     the path speed tuner (bardroid_padspeed.lua): how fast the pointer draws at each zoom
  *   LB + L3 held first person on the selected unit (bardroid_padfp.lua): the sticks go to the widget (left walks, right
- *                looks), RT fires, B or the same chord ends it; nothing else while it lasts
+ *                looks), RT fires, B or the same chord ends it; the squad's orders: A follow me, X stop, Y fight, RB
+ *                patrol, D-pad up add, down clear; nothing else while it lasts
  *   a building picked (v0.8.5's placement): A places it, X places it and keeps it, D-pad left/right turns it and
  *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid ("GRID" shown; Shift+Alt:
  *                the engine lays a build drag out only with Shift held, so LB alone did not, Kailil 2026-10-29) - A
@@ -173,6 +174,12 @@ final class PadGame {
         }
         if (mouse.firstPerson()) {
             if (pressed(tapped, B)) mouse.act("fp_toggle");
+            if (pressed(tapped, A)) mouse.act("fp_order_follow");
+            if (pressed(tapped, X)) mouse.act("fp_order_stop");
+            if (pressed(tapped, Y)) mouse.act("fp_order_fight");
+            if (pressed(tapped, RB)) mouse.act("fp_order_patrol");
+            if (pressed(tapped, DPAD_UP)) mouse.act("fp_order_add");
+            if (pressed(tapped, DPAD_DOWN)) mouse.act("fp_order_clear");
             if (rt != fpFiring) { fpFiring = rt; mouse.act(rt ? "fp_fire_on" : "fp_fire_off"); }
             if (shift) { shift = false; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false); }
             System.arraycopy(held, 0, prev, 0, COUNT);
