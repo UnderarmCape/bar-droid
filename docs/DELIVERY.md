@@ -241,6 +241,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       first (a stale file kept loading). Checked with a planted error (both reported, "done: 34 FAILED") and clean
       runs in both games. One clean run before had three cases a few pixels off (the chat box, PLACE against the
       order menu, ~1%: the view resized under it?); the next passed, the code unchanged.
+      The low-memory mode (2026-10-29, night) reviewed: `bardroid_lowmem.lua` leans on BAR's widget handler calling
+      every widget's Shutdown when LuaUI ends (`widgetHandler:Shutdown`, its ShutdownList: yes), so a next game from the
+      lobby in the same engine starts with the GL4 unit shaders off too, and a LuaUI reload (fold/unfold) puts cus2
+      back before BAR's Options looks; launch-bar.sh logs the mode at every start on the dev phone ("low-memory mode
+      (7072 MB of RAM)"). `tools\pace-test.ps1` could not run on a fresh phone (a `files/crun.sh` the app never writes):
+      it uses the app's `container.sh` now, ALL PASS with the shipped library.
 
 ## Releasing (once the blockers are done)
 
