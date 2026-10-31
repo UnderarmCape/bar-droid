@@ -33,7 +33,7 @@ try {
   & $adb shell "input tap 1500 400; input tap 1500 400; input tap 1500 400; sleep 3; uinput $evemu"
   $until = (Get-Date).AddSeconds(30)
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
-  Log '\[padtest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
+  Log '\[padtest\] (PASS|FAIL|done|a new)|Error in|Removed widget' 24 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   if (-not (Log '\[padtest\] done' 1)) { "[padtest] FAIL it did not finish: the pad never went away, or was never seen" }
 } finally {
   & $adb exec-out run-as $pkg rm -f $widget

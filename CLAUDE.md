@@ -45,7 +45,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `GameActivity`), and SDL2's display size answers that follow fold/unfold (the game window's size: SDL keeps the
   startup screen, the engine's screen matrices went wrong after a fold), and in the low-memory mode
   (`BARDROID_FBO_UNCOMPRESS`) a `dlsym` wrapper around the engine's GL lookup that stores a compressed texture
-  uncompressed when it is attached to a framebuffer; `tools/pace-test.ps1`).
+  uncompressed when it is attached to a framebuffer, and through the same wrapper on phones (`BARDROID_TEX_ZERO`) new RGBA
+  textures made with zeros, as Mesa's recycled buffers hold old pictures; `tools/pace-test.ps1`, `tools/pad-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).

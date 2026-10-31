@@ -39,6 +39,8 @@ export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # hidden window (screen off, catching up). The emulator build's x86_64 copy (no cap, no Present-fence answer).
 if [ -f "$BAR/libbardroid_pace.so" ]; then
   export LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$BAR/libbardroid_pace.so" BARDROID_FPS="${BARDROID_FPS:-30}"
+  # New textures start as zeros: Mesa's recycled GPU buffers hold old pictures, which BAR's panels showed as noise.
+  [ "$(uname -m)" = aarch64 ] && export BARDROID_TEX_ZERO=1
 fi
 
 log() { echo "[launch] $*"; }

@@ -351,8 +351,8 @@ void SDL_GL_SwapWindow(void *window) {
  * function through it (no SDL_GL_GetProcAddress, and a dlsym on a handle passes by every LD_PRELOAD). So dlsym itself
  * is wrapped: asked for glXGetProcAddress(ARB), it hands back a wrapper that, for glFramebufferTexture2D(EXT), hands
  * back the wrapper below, which gives a compressed 2D texture uncompressed RGBA8 storage of the same size (every level
- * that has one) before it is attached. Its contents go, which is right for a texture about to be drawn into. Without
- * BARDROID_FBO_UNCOMPRESS=1 the dlsym wrapper only passes every call on to glibc's.
+ * that has one) before it is attached. Its contents go, which is right for a texture about to be drawn into. With
+ * neither BARDROID_FBO_UNCOMPRESS=1 nor BARDROID_TEX_ZERO=1 the dlsym wrapper only passes every call on to glibc's.
  */
 typedef unsigned int GLenum;
 typedef unsigned int GLuint;
@@ -421,19 +421,72 @@ static void fbtex2d_ext_wrap(GLenum target, GLenum attachment, GLenum textarget,
     real_fbtex2d_ext(target, attachment, textarget, texture, level);
 }
 
-/* glXGetProcAddress(ARB) as the engine gets it: the attach functions wrapped, the rest as they are */
+/*
+ * A new texture starts as whatever its recycled GPU buffer last held: Mesa reuses freed buffers as they are (22 of 60
+ * new textures on the dev phone, 2026-10-31), where a PC's driver hands out zeros, and BAR's widgets draw into new
+ * textures without clearing them (its unit-groups panel as pink and white noise). So a plain RGBA texture made with no
+ * data is made with zeros (BARDROID_TEX_ZERO=1, launch-bar.sh), with the upload settings at their defaults meanwhile: a
+ * bound pixel buffer would make the pointer an offset, the others would read past the zeros.
+ */
+#define GL_UNPACK_ROW_LENGTH 0x0CF2
+#define GL_UNPACK_SKIP_ROWS 0x0CF3
+#define GL_UNPACK_SKIP_PIXELS 0x0CF4
+#define GL_PIXEL_UNPACK_BUFFER 0x88EC
+#define GL_PIXEL_UNPACK_BUFFER_BINDING 0x88EF
+#define TEX_ZERO_MAX_SIDE 4096
+extern void *calloc(unsigned long count, unsigned long size);
+extern void free(void *p);
+static void (*gl_pixel_storei)(GLenum, GLint);
+static void (*gl_bind_buffer)(GLenum, GLuint);
+static int tex_zero = -1;   /* -1: not read yet */
+
+static void teximage2d_wrap(GLenum target, GLint level, GLint internal, GLsizei w, GLsizei h, GLint border, GLenum format,
+                            GLenum type, const void *pixels) {
+    void *zero = 0;
+    if (!pixels && target == GL_TEXTURE_2D && level == 0 && (internal == GL_RGBA || internal == GL_RGBA8)
+        && format == GL_RGBA && type == GL_UNSIGNED_BYTE && w > 0 && h > 0
+        && w <= TEX_ZERO_MAX_SIDE && h <= TEX_ZERO_MAX_SIDE) zero = calloc((unsigned long) w * (unsigned long) h, 4);
+    if (!zero) { gl_tex_image_2d(target, level, internal, w, h, border, format, type, pixels); return; }
+    GLint buffer = 0, row = 0, skip_rows = 0, skip_pixels = 0;
+    gl_get_integerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
+    gl_get_integerv(GL_UNPACK_ROW_LENGTH, &row);
+    gl_get_integerv(GL_UNPACK_SKIP_ROWS, &skip_rows);
+    gl_get_integerv(GL_UNPACK_SKIP_PIXELS, &skip_pixels);
+    if (buffer) gl_bind_buffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    if (row) gl_pixel_storei(GL_UNPACK_ROW_LENGTH, 0);
+    if (skip_rows) gl_pixel_storei(GL_UNPACK_SKIP_ROWS, 0);
+    if (skip_pixels) gl_pixel_storei(GL_UNPACK_SKIP_PIXELS, 0);
+    gl_tex_image_2d(target, level, internal, w, h, border, format, type, zero);
+    if (buffer) gl_bind_buffer(GL_PIXEL_UNPACK_BUFFER, (GLuint) buffer);
+    if (row) gl_pixel_storei(GL_UNPACK_ROW_LENGTH, row);
+    if (skip_rows) gl_pixel_storei(GL_UNPACK_SKIP_ROWS, skip_rows);
+    if (skip_pixels) gl_pixel_storei(GL_UNPACK_SKIP_PIXELS, skip_pixels);
+    free(zero);
+}
+
+static void gl_lookups(void) {
+    if (gl_tex_image_2d) return;
+    gl_pixel_storei = (void (*)(GLenum, GLint)) real_getproc("glPixelStorei");
+    gl_bind_buffer = (void (*)(GLenum, GLuint)) real_getproc("glBindBuffer");
+    gl_get_integerv = (void (*)(GLenum, GLint *)) real_getproc("glGetIntegerv");
+    gl_bind_texture = (void (*)(GLenum, GLuint)) real_getproc("glBindTexture");
+    gl_get_tex_level_parameteriv = (void (*)(GLenum, GLint, GLenum, GLint *)) real_getproc("glGetTexLevelParameteriv");
+    gl_tex_image_2d = (void (*)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *))
+        real_getproc("glTexImage2D");
+}
+
+/* glXGetProcAddress(ARB) as the engine gets it: the functions above wrapped, the rest as they are */
 static void *glx_getproc_wrap(const char *proc) {
     void *p = real_getproc ? real_getproc(proc) : 0;
     if (!p || !proc) return p;
-    int ext = same(proc, "glFramebufferTexture2DEXT");
-    if (!ext && !same(proc, "glFramebufferTexture2D")) return p;
-    if (!gl_tex_image_2d) {
-        gl_get_integerv = (void (*)(GLenum, GLint *)) real_getproc("glGetIntegerv");
-        gl_bind_texture = (void (*)(GLenum, GLuint)) real_getproc("glBindTexture");
-        gl_get_tex_level_parameteriv = (void (*)(GLenum, GLint, GLenum, GLint *)) real_getproc("glGetTexLevelParameteriv");
-        gl_tex_image_2d = (void (*)(GLenum, GLint, GLint, GLsizei, GLsizei, GLint, GLenum, GLenum, const void *))
-            real_getproc("glTexImage2D");
+    if (tex_zero && same(proc, "glTexImage2D")) {
+        gl_lookups();
+        say("[pace] new textures start as zeros (BARDROID_TEX_ZERO)\n");
+        return (void *) teximage2d_wrap;
     }
+    int ext = same(proc, "glFramebufferTexture2DEXT");
+    if (!fbo_uncompress || (!ext && !same(proc, "glFramebufferTexture2D"))) return p;
+    gl_lookups();
     if (ext) { real_fbtex2d_ext = (fbtex2d_fn) p; return (void *) fbtex2d_ext_wrap; }
     real_fbtex2d = (fbtex2d_fn) p;
     say("[pace] framebuffer textures: compressed ones stored uncompressed when attached (BARDROID_FBO_UNCOMPRESS)\n");
@@ -457,8 +510,10 @@ void *dlsym(void *handle, const char *symbol) {
     if (fbo_uncompress < 0) {
         const char *v = getenv("BARDROID_FBO_UNCOMPRESS");
         fbo_uncompress = v && v[0] == '1';
+        v = getenv("BARDROID_TEX_ZERO");
+        tex_zero = v && v[0] == '1';
     }
-    if (!fbo_uncompress || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
+    if ((!fbo_uncompress && !tex_zero) || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
         || !(same(symbol, "glXGetProcAddressARB") || same(symbol, "glXGetProcAddress")))
         __attribute__((musttail)) return glibc_dlsym(handle, symbol);
     void *p = glibc_dlsym(handle, symbol);

@@ -35,7 +35,7 @@
     <string name="rb_fps60">60 fps</string>
     <string name="rb_fps_none">none (measuring: hot)</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR): the game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
-    <string name="cb_upscale_compare">Compare upscaling (diagnostic): SGSR on and off every 3 seconds, with a label; the two game freezes of 2026-10-27 were with it on</string>
+    <string name="cb_upscale_compare">Compare upscaling (diagnostic): SGSR on and off every 3 seconds, with a label</string>
     <string name="cb_lobby_bridge">Lobby bridge: the app stands in for BAR\'s PC launcher, for the Replays tab, web links and skill ratings; the lobby\'s downloads go through the app (off: the Replays tab cannot list replays)</string>
     <string name="cb_rts_touch">BAR touch controls (drag pans, pinch zooms, twist rotates, two fingers up/down tilt, tap then drag selects, long press orders); off = Termux:X11 touch modes</string>
     <string name="cb_capture_shortcuts">Keyboard shortcuts go to the game: Android\'s, One UI\'s and DeX\'s shortcuts (Alt+Tab, the Windows key, Ctrl+Space, the soft keyboard\'s language switch) do nothing while BAR is in front, their keys reach BAR; off = Android\'s</string>

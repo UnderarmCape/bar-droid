@@ -339,13 +339,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
-- [ ] BAR's unit-groups panel (the 1-9 grid beside the order menu) showed pink and white noise on the dev phone, seen in 1
-      of 2 tries (2026-10-31): a skirmish, a triple tap, a virtual pad's D-pad down, then RB. Clean before that, 2:55 into
-      the game when it showed; the digits stayed right, the panel's dark background was gone. BAR's `gui_unitgroups.lua`
-      rebuilds into new `gl.CreateTexture` textures with no clear, so a guess, not yet shown: Mesa's recycled buffers,
-      not zeroed. Not checked: whether the Fold7 shows it. To try: a test widget that draws a new texture unrendered, to
-      see stale memory; then `pace.c` giving a new RGBA texture with no data a zeroed buffer in `glTexImage2D` (its
-      wrapper only runs in the low-memory mode today).
+- [x] BAR's unit-groups panel (the 1-9 grid beside the order menu) showed pink and white noise on the dev phone, seen in 1
+      of 2 tries (2026-10-31): a skirmish, a triple tap, a virtual pad's D-pad down, then RB, 2:55 into the game. BAR's
+      `gui_unitgroups.lua` rebuilds into new `gl.CreateTexture` textures with no clear, and Mesa's recycled buffers are not
+      zeroed: on the dev phone 22 of 60 new render textures came back full of old pixels. `pace.c` now makes a new RGBA
+      texture with no data with zeros (`BARDROID_TEX_ZERO`, every phone): 0 of 60, and none whole in four runs of
+      `tools/pad-test.ps1`, which checks it now (10 checks). The same steps again, 2:30 into a game: a clean panel. The
+      noise was intermittent, so that one clean panel is not proof; the 22 of 60 are. On 2 of the 4 runs a new texture
+      held a few white pixels (7 to 9 samples of 156 to 361, game frames 760-800, while the test rides a unit): cause not
+      known, no sign of it on screen. Not run on the Fold7. "Compare upscaling" no longer carries a dated note in its label.
 - [x] `ControllerBridge.java` reviewed (2026-10-31): nothing found. On the pad BAR's hover tooltip no longer covers the
       build menu's next row; the info panel below says the same.
 - [x] `tools/laptop-tests.ps1` with the 2026-10-31 fixes in: all 15 pass. No other thread does what that crash did: every
