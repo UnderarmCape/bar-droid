@@ -339,6 +339,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] BAR's update to test-31774 (2026-10-31, 17:42) changed `gui_buildmenu.lua`, and the phones fell back to BAR's own menu,
+      as they are meant to; the launcher named it ("ANDROID LAYER: 1 tweak(s) found no target"). The copy is made again from
+      the release on the dev phone (`--bar-data` with its package and that one file, in the scratchpad, not kept): all 24
+      patches apply. The laptop's BAR is still on an older release until Kailil starts it.
 - [x] `GameService.java` reviewed (2026-10-31): nothing found. The launcher's status says "game ended", or "game ended with
       an error (n)", where it said "engine exited (n)"; the log line stays for the tools that read it. Stop is dim whenever
       nothing is running. Benchmark on the dev phone with new textures zeroed: Sim 46.2 ms, x0.47, as before (46.9-49.9,

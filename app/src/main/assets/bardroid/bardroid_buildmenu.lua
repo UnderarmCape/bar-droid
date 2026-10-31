@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31740-57a02af, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31774-68ba3b1, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -7,7 +7,7 @@
 -- line below (Installer writes the md5 of BAR's file to .bardroid-buildmenu); in the controller game, which keeps its
 -- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
 -- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
--- BARDROID_BUILDMENU_FROM a5d8e476d58ea3a278dab74a57c560e5
+-- BARDROID_BUILDMENU_FROM 5fd93aec8f49ed557597312788ecdb14
 local widget = widget ---@type Widget
 
 function widget:GetInfo()
@@ -2115,16 +2115,16 @@ local function refreshBuildmenuTexture()
 	refreshBuildmenu = false
 	if not buildmenuTex and width > 0.05 and height > 0.05 then
 		tracy.ZoneBeginN("W:BuildMenu:DrawScreen:CreateTextures")
-		buildmenuTex =
-			gl.CreateTexture(math_floor(width * vsx) * 2, math_floor(height * vsy) * 2, { --*(vsy<1400 and 2 or 1)
-				target = GL.TEXTURE_2D,
-				format = GL.RGBA,
-				fbo = true,
-			})
+		local ss = WG.FlowUI.supersample or 2
+		buildmenuTex = gl.CreateTexture(math_floor(width * vsx) * ss, math_floor(height * vsy) * ss, {
+			target = GL.TEXTURE_2D,
+			format = GL.RGBA8,
+			fbo = true,
+		})
 		buildmenuTexHasContent = false
 		buildmenuBgTex = gl.CreateTexture(math_floor(width * vsx), math_floor(height * vsy), {
 			target = GL.TEXTURE_2D,
-			format = GL.RGBA,
+			format = GL.RGBA8,
 			fbo = true,
 		})
 		gl.R2tHelper.RenderInRect(
