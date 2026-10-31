@@ -339,6 +339,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [ ] A building placed by touch does not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md say it does: the engine
+      keeps a Shift click's building only while Shift stays down (CGuiHandler `needShift`), and the app lets go of Shift
+      100 ms later (seen on the dev phone: active -212 until Shift up, then nil). To decide with what the code promises:
+      the build menu picking it again once the app has placed it, so ✕ or a long press stays the way to put it away.
+- [x] `RtsTouch.java` reviewed (2026-10-31), with taps from adb on the dev phone. A double tap with a building waiting sent
+      it to the double tap, not the waiting spot: `cancelGesture()` ran the held-back move at every touch, added for
+      cancelled touches only (it now runs at ACTION_CANCEL). Seen before: the order at the tapped point; after: at the
+      waiting spot. A building's Shift click went down, clicked and up in one burst, which the engine reads as no Shift
+      (startGrid's comment says so); Shift is now down 100 ms before the click and 100 ms after. Seen after: the builder's
+      move order kept, the building behind it; the old build was not measured with an order to keep. A double tap right at
+      the 300 ms limit can still move the building first (the timer fires just before the second touch arrives).
 - [x] BAR's unit-groups panel (the 1-9 grid beside the order menu) showed pink and white noise on the dev phone, seen in 1
       of 2 tries (2026-10-31): a skirmish, a triple tap, a virtual pad's D-pad down, then RB, 2:55 into the game. BAR's
       `gui_unitgroups.lua` rebuilds into new `gl.CreateTexture` textures with no clear, and Mesa's recycled buffers are not

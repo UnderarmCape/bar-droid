@@ -263,6 +263,7 @@ final class RtsTouch {
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 source("touch");
+                finishPlacedClick();
                 finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
@@ -329,6 +330,9 @@ final class RtsTouch {
                 onLastUp(e);
                 break;
             case MotionEvent.ACTION_CANCEL:
+                // (a tap before this touch, held back for a double tap: this one was none, so its building moves now,
+                // not at some later touch)
+                runPlaceTap();
                 cancelGesture();
                 break;
             default:
@@ -496,9 +500,6 @@ final class RtsTouch {
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
         ui.removeCallbacks(gridHold);
-        // (a tap before this touch, held back for a double tap: this one was none, so its building moves now, not at
-        // some later touch)
-        runPlaceTap();
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         if (!gridHeld) releaseKeys();
@@ -588,9 +589,12 @@ final class RtsTouch {
         if (!gridHeld) return;
         gridHeld = false;
         view().sendMouseEvent(gridX, gridY, InputStub.BUTTON_LEFT, false, false);
-        ui.postDelayed(() -> { if (!gridHeld) releaseKeys(); }, GRID_KEYS_MS);
+        ui.postDelayed(keysUp, GRID_KEYS_MS);
         send("grid free");
     }
+
+    /** The keys up, a moment after the click they go with. */
+    private final Runnable keysUp = () -> { if (!gridHeld) releaseKeys(); };
 
     /** The building put away first, then the button let go: nothing is placed. */
     private void gridCancel() {
@@ -663,6 +667,7 @@ final class RtsTouch {
     }
 
     private void holdKeys(int... keys) {
+        ui.removeCallbacks(keysUp);
         releaseKeys();
         heldKeys = keys;
         for (int k : keys) view().sendKeyEvent(0, k, true);
@@ -798,11 +803,27 @@ final class RtsTouch {
         lastTapX = -1; doubleTapX = -1;
         float[] s = p.spot != null ? p.spot : fallback;
         if (s == null) return;
+        // (the engine reads the keys once a frame: Shift down a frame before the click and after it, or the building
+        // takes the place of the builder's orders instead of joining them)
         holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
-        clickAt(s[0], s[1]);
-        releaseKeys();
-        send("spot none");
+        placedClick = () -> {
+            placedClick = null;
+            clickAt(s[0], s[1]);
+            ui.postDelayed(keysUp, GRID_KEYS_MS);
+            send("spot none");
+        };
+        ui.postDelayed(placedClick, GRID_KEYS_MS);
         spotSentAt = -1;
+    }
+
+    private Runnable placedClick;   // a building's click, waiting for its Shift
+
+    /** The click now, before the next touch moves the pointer away. */
+    private void finishPlacedClick() {
+        Runnable r = placedClick;
+        if (r == null) return;
+        ui.removeCallbacks(r);
+        r.run();
     }
 
     /** A left click at X screen pixel (x, y). */
