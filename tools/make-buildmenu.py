@@ -10,30 +10,47 @@ Takes BAR's luaui/Widgets/gui_buildmenu.lua from the byar:test release in a BAR 
 install, as the laptop checks use it) and records its pool md5: launch-bar.sh runs the copy only while the phone's BAR
 release has that same file (Installer writes its md5 to .bardroid-buildmenu), so a BAR update to its build menu brings
 BAR's own back until this is run again. A patch that no longer finds its place stops the tool.
-    python -I tools/make-buildmenu.py [--bar-data <BAR data folder>]
+A phone that updated first (the laptop's BAR updates only when it is started): --adb reads the release off the phone.
+    python -I tools/make-buildmenu.py [--bar-data <BAR data folder> | --adb <adb.exe>]   (ANDROID_SERIAL names the phone)
 """
 import argparse
 import gzip
 import os
+import subprocess
 import sys
 
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(APP, "app", "src", "main", "assets", "bardroid", "bardroid_buildmenu.lua")
 FILE = "luaui/widgets/gui_buildmenu.lua"
+PACKAGE = "com.underarmcape.bardroid"
 
 
-def bar_file(bar):
-    """(release name, pool md5, bytes) of FILE in the byar:test release of the BAR data folder bar."""
+def bar_file(bar, adb):
+    """(release name, pool md5, bytes) of FILE in the byar:test release of the BAR data folder bar, or with adb the phone's."""
+    def on_phone(*command):
+        return subprocess.run([adb, "exec-out", "run-as", PACKAGE, *command], check=True, stdout=subprocess.PIPE).stdout
+
+    def read(path):
+        if adb:
+            return on_phone("cat", "files/bar/" + path)
+        with open(os.path.join(bar, path), "rb") as f:
+            return f.read()
+
+    if adb:
+        found = on_phone("sh", "-c", "cd files/bar && find rapid -name versions.gz").decode().split()
+    else:
+        found = [os.path.relpath(os.path.join(root, "versions.gz"), bar)
+                 for root, _, files in os.walk(os.path.join(bar, "rapid")) if "versions.gz" in files]
     tag = None
-    for root, _, files in os.walk(os.path.join(bar, "rapid")):
-        if "versions.gz" in files and root.replace("\\", "/").endswith("/byar"):
-            for line in gzip.open(os.path.join(root, "versions.gz")).read().decode().splitlines():
+    for path in found:
+        if path.replace("\\", "/").endswith("/byar/versions.gz"):
+            for line in gzip.decompress(read(path)).decode().splitlines():
                 parts = line.split(",", 3)
                 if parts[0] == "byar:test":
                     tag = parts
     if not tag:
-        sys.exit("byar:test is not in " + bar)
-    data = gzip.open(os.path.join(bar, "packages", tag[1] + ".sdp")).read()
+        sys.exit("byar:test is not in " + ("the phone" if adb else bar))
+    data = gzip.decompress(read("packages/" + tag[1] + ".sdp"))
     i = 0
     while i < len(data):
         n = data[i]
@@ -41,8 +58,7 @@ def bar_file(bar):
         md5 = data[i + 1 + n:i + 17 + n].hex()
         i += 1 + n + 16 + 8
         if name == FILE:
-            with gzip.open(os.path.join(bar, "pool", md5[:2], md5[2:] + ".gz")) as f:
-                return tag[3], md5, f.read()
+            return tag[3], md5, gzip.decompress(read("pool/" + md5[:2] + "/" + md5[2:] + ".gz"))
     sys.exit(FILE + " is not in " + tag[3])
 
 
@@ -929,8 +945,9 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--bar-data", default=os.path.join(os.environ.get("LOCALAPPDATA_REAL") or
                     os.path.expandvars(r"%USERPROFILE%\AppData\Local"), "Programs", "Beyond-All-Reason", "data"))
+    ap.add_argument("--adb", help="read BAR's file off the phone with this adb, not from a BAR data folder")
     args = ap.parse_args()
-    release, md5, raw = bar_file(args.bar_data)
+    release, md5, raw = bar_file(args.bar_data, args.adb)
     text = raw.decode("utf-8").replace("\r\n", "\n")
     for find, repl in PATCHES:
         n = text.count(find)

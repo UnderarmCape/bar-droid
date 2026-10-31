@@ -33,8 +33,10 @@ On Windows with the toolchain set up ([README.md](README.md) "Build"):
   (spectating by touch), `tools\lobby-touch-test.ps1` (the lobby). Each starts BAR on the laptop, off-screen and
   without taking the keyboard; the checks that move the real mouse pointer run with `-Pointer` (also
   `laptop-tests.ps1 -Pointer`), when nobody is using the laptop.
-- BAR changed its Build menu (launch-bar.sh logs an Android-layer miss for the build menu): run
-  `python -I tools\make-buildmenu.py` to copy it again, then touch-widget-test.
+- BAR changed its Build menu (launch-bar.sh logs an Android-layer miss for the build menu, and BAR's own menu runs: no
+  PLACE, no shape strip, no 3x3 grid on the pad): run `python -I tools\make-buildmenu.py` to copy it again, then
+  touch-widget-test. A phone that has the new release before the laptop: `--adb <adb.exe>` reads it off the phone
+  (`ANDROID_SERIAL` names it). This comes with BAR's releases, a few a year or more: a build of the app is needed each time.
 - On a phone: `"Build APK.bat" phone`, `"Install on Phone.bat"`, then play: the lobby, an online game, a skirmish,
   fold/unfold on a foldable. `"Get Logs.bat" phone` or **Share logs** in the app collects the logs.
 - Performance: `tools\phone-bench.ps1` measures BAR's benchmark scenario (or a replay) on a hot phone; compare

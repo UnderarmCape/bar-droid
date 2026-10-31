@@ -126,7 +126,7 @@ public final class Updater {
         if (s.getProperty("check") != null) sb.append(", last check ").append(s.getProperty("check"));
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
         try { misses += Integer.parseInt(s.getProperty("layer.misses", "0")); } catch (NumberFormatException ignored) {}
-        if (misses > 0) sb.append(". ANDROID LAYER: ").append(misses).append(" tweak(s) found no target (see log)");
+        if (misses > 0) sb.append(". ").append(misses).append(" of the app's adjustments to BAR did not apply: see the log");
         return sb.toString();
     }
 
