@@ -222,8 +222,9 @@ local function walk(s)
 	if not s.moving or turned or Spring.DiffTimers(t, s.moveAt) > MOVE_EVERY then
 		local ux, _, uz = Spring.GetUnitPosition(s.unitID)
 		if ux then
-			local x = math.max(0, math.min(Game.mapSizeX, ux + dx / len * MOVE_AHEAD))
-			local z = math.max(0, math.min(Game.mapSizeZ, uz + dz / len * MOVE_AHEAD))
+			local ahead = math.max(MOVE_AHEAD, def.speed * MOVE_EVERY * 1.5) -- (a plane is past MOVE_AHEAD before the next one)
+			local x = math.max(0, math.min(Game.mapSizeX, ux + dx / len * ahead))
+			local z = math.max(0, math.min(Game.mapSizeZ, uz + dz / len * ahead))
 			if pcall(Spring.GiveOrderToUnit, s.unitID, CMD.MOVE, { x, Spring.GetGroundHeight(x, z), z }, 0) then
 				s.moving, s.moveDir, s.moveAt = true, dir, t
 			end
@@ -587,9 +588,9 @@ function widget:DrawScreen()
 	-- the crosshair (the app hides the pointer meanwhile): a thin ring and a dot, gold while firing
 	local cx, cy, r = math.floor(vsx / 2), math.floor(vsy / 2), style.size(0.014, 8)
 	local c = fp.firing and style.GOLD or { 1, 1, 1 }
-	for pass = 1, 2 do
-		gl.Color(pass == 1 and 0 or c[1], pass == 1 and 0 or c[2], pass == 1 and 0 or c[3], pass == 1 and 0.4 or 0.85)
-		gl.LineWidth(pass == 1 and 3.5 or 1.5)
+	for pass = 1, 2 do -- (a dark edge first: it has to show on a pale sky too)
+		gl.Color(pass == 1 and 0 or c[1], pass == 1 and 0 or c[2], pass == 1 and 0 or c[3], pass == 1 and 0.65 or 0.95)
+		gl.LineWidth(pass == 1 and 4 or 1.5)
 		gl.BeginEnd(GL.LINE_LOOP, function()
 			for i = 0, 39 do
 				local a = i / 40 * 2 * math.pi
@@ -598,7 +599,8 @@ function widget:DrawScreen()
 		end)
 	end
 	gl.LineWidth(1)
-	style.disc(cx, cy, math.max(1.5, r * 0.12), c, 0.9)
+	style.disc(cx, cy, math.max(1.5, r * 0.12) + 1.5, { 0, 0, 0 }, 0.65)
+	style.disc(cx, cy, math.max(1.5, r * 0.12), c, 0.95)
 	if tuning then
 		drawTuner(style, font, x0, y1, vsy)
 		drawButtons(style, font, x0, y0, x1, y1, TUNE_BUTTONS)

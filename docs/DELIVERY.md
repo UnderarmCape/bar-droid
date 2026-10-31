@@ -318,6 +318,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the
       constructor left out, Following and Patrolling shown right; the counts in their own column so the names line up.
+- [x] First person on each kind of unit, on the dev phone (2026-10-30): a solar collector refused ("NOT ON THIS
+      BUILDING"), a sentry rides, looks and fires and does not walk, a self-destructing Pawn ends the ride ("UNIT LOST"),
+      a Falcon flies. A plane passed its order 280 elmos ahead before the next came, with gaps in the flight: the order
+      now goes as far as its speed asks. The crosshair has a stronger dark edge, for a pale sky.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 
