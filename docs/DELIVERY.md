@@ -339,6 +339,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [ ] BAR's unit-groups panel (the 1-9 grid beside the order menu) showed pink and white noise on the dev phone, seen in 1
+      of 2 tries (2026-10-31): a skirmish, a triple tap, a virtual pad's D-pad down, then RB. Clean before that, 2:55 into
+      the game when it showed; the digits stayed right, the panel's dark background was gone. BAR's `gui_unitgroups.lua`
+      rebuilds into new `gl.CreateTexture` textures with no clear, so a guess, not yet shown: Mesa's recycled buffers,
+      not zeroed. Not checked: whether the Fold7 shows it. To try: a test widget that draws a new texture unrendered, to
+      see stale memory; then `pace.c` giving a new RGBA texture with no data a zeroed buffer in `glTexImage2D` (its
+      wrapper only runs in the low-memory mode today).
+- [x] `ControllerBridge.java` reviewed (2026-10-31): nothing found. On the pad BAR's hover tooltip no longer covers the
+      build menu's next row; the info panel below says the same.
 - [x] `tools/laptop-tests.ps1` with the 2026-10-31 fixes in: all 15 pass. No other thread does what that crash did: every
       `Handler` in the app has a Looper. The dev phone's logs since 2026-10-30 hold no error from the app or its widgets
       but one of a test widget of ours. The launcher's small buttons have one text size ("Benchmark" was smaller).

@@ -781,6 +781,11 @@ function widget:DrawWorld()
 	if not preGamestartPlayer and selectedBuilderCount == 0 and not alwaysShow then''',
      '''	local prevBuildmenuShows = buildmenuShows
 	if not droid.active() or (not preGamestartPlayer and selectedBuilderCount == 0 and not alwaysShow) then -- BAR Droid'''),
+    ('''						if WG.tooltip and not meta then
+							-- when meta: unitstats does the tooltip''',
+     '''						if WG.tooltip and not meta and WG.BarDroidInput ~= "pad" then -- BAR Droid: on the pad it covers the
+							-- grid's next row, and BAR's info panel says the same
+							-- when meta: unitstats does the tooltip'''),
     ('''function widget:MousePress(x, y, button)
 	if Spring.IsGUIHidden() then
 		return

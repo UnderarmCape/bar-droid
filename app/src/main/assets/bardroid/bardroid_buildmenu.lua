@@ -2235,7 +2235,8 @@ function widget:DrawScreen()
 						WG.buildmenu.hoverID = uDefID
 						gl.Color(1, 1, 1, 1)
 						local _, _, meta, _ = Spring.GetModKeyState()
-						if WG.tooltip and not meta then
+						if WG.tooltip and not meta and WG.BarDroidInput ~= "pad" then -- BAR Droid: on the pad it covers the
+							-- grid's next row, and BAR's info panel says the same
 							-- when meta: unitstats does the tooltip
 							local text
 							local textColor = "\255\215\255\215"
