@@ -339,6 +339,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] `tools/laptop-tests.ps1` with the 2026-10-31 fixes in: all 15 pass. No other thread does what that crash did: every
+      `Handler` in the app has a Looper. The dev phone's logs since 2026-10-30 hold no error from the app or its widgets
+      but one of a test widget of ours. The launcher's small buttons have one text size ("Benchmark" was smaller).
 - [x] A game start could end the app (2026-10-31, in the dev phone's crash buffer: 1 start among last night's). A cold
       start called `GameActivity.hiddenFlag` on its worker thread; when that was the class's first use, Termux:X11's
       static `Handler` was made there with no Looper. The flags are on `Paths` now, `PerfLog` the same, and

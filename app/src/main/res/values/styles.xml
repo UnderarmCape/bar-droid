@@ -13,11 +13,11 @@
         <item name="android:paddingRight">6dp</item>
         <item name="android:hyphenationFrequency">none</item>
     </style>
-    <!-- Five to a row. -->
+    <!-- Five to a row: little padding, so that the longest word stays the size of the others. -->
     <style name="LauncherButton.Small">
         <item name="android:maxLines">1</item>
-        <item name="android:paddingLeft">6dp</item>
-        <item name="android:paddingRight">6dp</item>
+        <item name="android:paddingLeft">2dp</item>
+        <item name="android:paddingRight">2dp</item>
         <item name="android:autoSizeTextType">uniform</item>
         <item name="android:autoSizeMinTextSize">9sp</item>
         <item name="android:autoSizeMaxTextSize">11sp</item>
