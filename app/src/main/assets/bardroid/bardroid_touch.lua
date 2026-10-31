@@ -13,8 +13,8 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
---                                                     spot <x> <y> | spot none  (a building's spot for the build
---                                                                               menu's PLACE button: bardroid_buildmenu.lua)
+--                                                     spot <x> <y> | spot none | spot placed  (a building's spot for
+--                                                                               the build menu's PLACE button: bardroid_buildmenu.lua)
 --                                                     nudge <dx> <dy>           (the waiting building moved by that many
 --                                                                               pixels, y down)
 --                                                     grid held | grid free     (the app holds a GRID's build drag down:
@@ -452,7 +452,7 @@ local function readTouch(lines)
 			elseif kind == "spot" then
 				flush()
 				local x, y = args:match("^(%S+) (%S+)")
-				b.droidSpot(tonumber(x), tonumber(y))
+				b.droidSpot(tonumber(x), tonumber(y), args == "placed")
 			elseif kind == "grid" and b.droidSetGrid then
 				flush()
 				b.droidSetGrid(args)

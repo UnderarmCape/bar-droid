@@ -1069,10 +1069,27 @@ cases = {
 		if not before.bm then
 			return
 		end
-		local panel, spot = WG.bardroidBuildmenu.droidPanel()
+		local _, spot = WG.bardroidBuildmenu.droidPanel()
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("build menu: a spot under the menu is not told to the app", spot ~= nil and not text:find("spot"), text)
-		touch("spot none") -- (RtsTouch after PLACE)
+		local _, id = Spring.GetActiveCommand()
+		before.placedID = id
+		touch("spot placed") -- (RtsTouch after PLACE)
+		return 0.3
+	end,
+	function()
+		if before.bm then
+			Spring.SetActiveCommand(-1) -- (none, as the engine leaves it when the click's Shift comes up)
+		end
+		return 0.5
+	end,
+	function()
+		if not before.bm then
+			return
+		end
+		local panel = WG.bardroidBuildmenu.droidPanel()
+		local _, id = Spring.GetActiveCommand()
+		verify("build menu: a placed building stays picked", id ~= nil and id == before.placedID, tostring(id))
 		if panel then
 			local r = panel.cancel
 			WG.bardroidBuildmenu.droidPressPanel((r[1] + r[3]) / 2, (r[2] + r[4]) / 2)

@@ -736,6 +736,9 @@ end
 --   rotate, cancel <x0> <y0> <x1> <y1>    (the buttons beside PLACE: a GRID's left button is down, so taps there are the app's)
 -- The strip is drawn again when the building is picked or put away.
 function droid.place()
+	if droid.again then
+		droid.pickAgain()
+	end
 	local active = droid.active()
 	if active ~= droid.wasActive then -- (the controller game: shown or hidden with the app's controls)
 		droid.wasActive = active
@@ -805,8 +808,28 @@ function droid.place()
 end
 
 -- BAR Droid: the spot a tap picked (X screen pixels; nil: none): the building goes there when PLACE is tapped
-function droid.setSpot(x, y)
+-- BAR Droid: the building the app has just placed, picked again: the engine keeps a Shift click's building only until Shift
+-- comes up (CGuiHandler needShift), and it stays picked for the next spot, until the cancel button or a long press
+function droid.pickAgain()
+	local again = droid.again
+	local _, id = spGetActiveCommand()
+	again.frames = again.frames - 1
+	if id == nil and spGetGameFrame() > 0 then
+		droid.again = nil
+		local index = Spring.GetCmdDescIndex(-again.defID)
+		if index then
+			Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+		end
+	elseif id ~= -again.defID or again.frames <= 0 then
+		droid.again = nil -- (another order picked, or Shift never came up)
+	end
+end
+
+function droid.setSpot(x, y, placed)
 	droid.spot, droid.nudgeCarry = nil, { 0, 0 }
+	if placed and droid.defID then -- (RtsTouch sent the building off: "spot placed")
+		droid.again = { defID = droid.defID, frames = 30 } -- (frames, not seconds: a slow frame must not lose it)
+	end
 	if x and y and droid.armed then
 		local _, pos = Spring.TraceScreenRay(x, vsy - y - 1, true)
 		if pos then
@@ -1013,7 +1036,7 @@ function droid.pressPanel(x, y)
 	if inside(p.rotate) then
 		Spring.SendCommands("buildfacing inc")
 	elseif inside(p.cancel) then
-		droid.spot = nil
+		droid.spot, droid.again = nil, nil
 		if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
 			WG["pregame-build"].setPreGameDefID(nil)
 		else

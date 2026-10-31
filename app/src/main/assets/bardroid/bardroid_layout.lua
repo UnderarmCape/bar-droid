@@ -456,7 +456,7 @@ function widget:DrawScreen()
 		if b.action then
 			gl.Color(b.lit and 0.25 or 0.08, b.lit and 0.22 or 0.08, b.lit and 0.06 or 0.08, 0.92)
 		else
-			gl.Color(0, 0, 0, b.lit and 0.85 or 0.6)
+			gl.Color(0, 0, 0, 0.85) -- (it crosses the build menu: nothing shows through the words)
 		end
 		gl.Rect(b.x0, b.y0, b.x1, b.y1)
 		if font then

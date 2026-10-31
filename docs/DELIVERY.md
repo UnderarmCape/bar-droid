@@ -339,10 +339,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
-- [ ] A building placed by touch does not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md say it does: the engine
+- [x] A building placed by touch did not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md said it did: the engine
       keeps a Shift click's building only while Shift stays down (CGuiHandler `needShift`), and the app lets go of Shift
-      100 ms later (seen on the dev phone: active -212 until Shift up, then nil). To decide with what the code promises:
-      the build menu picking it again once the app has placed it, so ✕ or a long press stays the way to put it away.
+      100 ms later (seen on the dev phone: active -212 until Shift up, then nil). RtsTouch now says "spot placed", and the
+      build menu picks the building again once it is let go; ✕ or a long press puts it away, QUEUE's Shift keeps it as
+      before. On the dev phone, taps from adb: Shift up with the building still picked, PLACE still up, the builder's
+      order kept and the building behind it; touch-widget-test has a check. The layout editor's hint no longer lets the
+      build menu show through its words.
 - [x] `RtsTouch.java` reviewed (2026-10-31), with taps from adb on the dev phone. A double tap with a building waiting sent
       it to the double tap, not the waiting spot: `cancelGesture()` ran the held-back move at every touch, added for
       cancelled touches only (it now runs at ACTION_CANCEL). Seen before: the order at the tapped point; after: at the

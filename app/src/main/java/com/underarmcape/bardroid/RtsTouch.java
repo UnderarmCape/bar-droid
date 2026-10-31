@@ -810,7 +810,8 @@ final class RtsTouch {
             placedClick = null;
             clickAt(s[0], s[1]);
             ui.postDelayed(keysUp, GRID_KEYS_MS);
-            send("spot none");
+            // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
+            send(queueHeld ? "spot none" : "spot placed");
         };
         ui.postDelayed(placedClick, GRID_KEYS_MS);
         spotSentAt = -1;
