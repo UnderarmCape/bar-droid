@@ -119,10 +119,10 @@ public final class Updater {
     public static String summary(Paths p) {
         Properties s = new Properties();
         load(new File(p.filesDir, "update/state.properties"), s);
-        StringBuilder sb = new StringBuilder("Engine ").append(Prefs.engineVersion);
+        StringBuilder sb = new StringBuilder();   // (the engine's version is in the lines above: only a fallback here)
         String good = s.getProperty("good.engine");
-        if (good != null && !good.equals(Prefs.engineVersion)) sb.append(" (falls back to ").append(good).append(')');
-        sb.append(". BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
+        if (good != null && !good.equals(Prefs.engineVersion)) sb.append("Falls back to engine ").append(good).append(". ");
+        sb.append("BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
         if (s.getProperty("check") != null) sb.append(", last check ").append(s.getProperty("check"));
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
         try { misses += Integer.parseInt(s.getProperty("layer.misses", "0")); } catch (NumberFormatException ignored) {}

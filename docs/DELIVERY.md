@@ -340,7 +340,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
 - [x] Quitting in first person has a standing check (2026-10-31): `spectate-test -QuitCheck`, in `tools/laptop-tests.ps1`
-      (14 checks now). It fails without the fix (`mode = 0` saved). The launcher names the app's version, for reports.
+      (14 checks now). It fails without the fix (`mode = 0` saved). The launcher names the app's version, for reports,
+      and its status line no longer repeats the engine's. All 14 pass together.
 - [x] `tools/laptop-tests.ps1` with all of the 2026-10-30 fixes in: all 13 pass. `tools/publish-check.ps1 -NoHistory`:
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the
