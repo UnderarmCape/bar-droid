@@ -1,7 +1,8 @@
 -- LuaUI widget for tools/pad-test.ps1: what a virtual gamepad (pad.evemu) did in a skirmish on the phone, through the app's
 -- real pad path: LB + L3 held rides the commander, RT fires, the right stick looks, B leaves, the right stick zooms and LT
--- speeds it up, D-pad down is the commander, and the pad going away ends the pad's ways. Logs "[padtest] PASS|FAIL <case>"
--- and "[padtest] done".
+-- speeds it up, D-pad down is the commander, and the pad going away ends the pad's ways. The ride's squad also gets an
+-- enemy unit, made visible by /globallos (as a unit captured in sight), which has to drop out. Logs "[padtest] PASS|FAIL
+-- <case>" and "[padtest] done".
 function widget:GetInfo()
 	return { name = "BAR Droid pad test", desc = "Reports what the virtual gamepad did", author = "BAR Droid", layer = 0, enabled = true }
 end
@@ -11,6 +12,15 @@ local picked, com, lastDist, done = false, nil, nil, false
 local rode, fired, firedAfter, yawFrom, yawTo, left, sawPad, sawCommander = false, false, false, nil, nil, false, false, false
 local zoomSteps = {}
 local fails = 0
+local taken = nil -- the enemy unit put in the squad
+
+local function enemyUnit()
+	for _, unitID in ipairs(Spring.GetAllUnits()) do
+		if Spring.GetUnitTeam(unitID) ~= Spring.GetMyTeamID() then
+			return unitID
+		end
+	end
+end
 
 local function check(case, ok, detail)
 	if not ok then
@@ -31,6 +41,8 @@ local function finish()
 	check("LT speeds the zoom up", slow and fast and fast > slow * 1.8, tostring(slow) .. " -> " .. tostring(fast))
 	check("D-pad down: the commander", sawCommander)
 	check("the pad gone: its ways end, no taps needed", sawPad and WG.BarDroidPadOnly == nil)
+	local fp = WG.BarDroidPadFP
+	check("a unit no longer the player's leaves the squad", taken and fp and #fp.squad() == 0, tostring(taken))
 	Spring.Echo("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 
@@ -38,7 +50,11 @@ function widget:GameFrame(f)
 	if done then
 		return
 	end
-	if f == READY_FRAME then
+	if f == READY_FRAME - 90 then
+		Spring.SendCommands("cheat 1")
+	elseif f == READY_FRAME - 45 then
+		Spring.SendCommands("globallos")
+	elseif f == READY_FRAME then
 		Spring.Echo("[padtest] ready") -- (the script taps the screen three times: the app's controls in the controller game)
 	end
 	if WG.BarDroidOwnsBuildMenu and not picked then
@@ -49,11 +65,18 @@ function widget:GameFrame(f)
 	if not picked then
 		return
 	end
-	local riding = WG.BarDroidPadFP.active()
+	local fp = WG.BarDroidPadFP
+	local riding = fp and fp.active()
 	local target = Spring.GetUnitWeaponTarget(com, 1)
 	local cs = Spring.GetCameraState()
 	sawPad = sawPad or WG.BarDroidPadOnly == true
 	if riding then
+		if not rode then
+			taken = enemyUnit()
+			if taken then
+				table.insert(fp.squad(), taken)
+			end
+		end
 		rode = true
 		if target and target > 0 then
 			fired = true

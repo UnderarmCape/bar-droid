@@ -110,7 +110,7 @@
             <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textAllCaps="false" android:text="@string/btn_save" />
 
             <TextView style="@style/LauncherSection" android:text="@string/log_title" />
-            <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="360dp" android:background="#11000000">
+            <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="300dp" android:nestedScrollingEnabled="true" android:background="#11000000">
                 <TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="monospace" android:textSize="10sp" android:textIsSelectable="true" />
             </ScrollView>
         </LinearLayout>

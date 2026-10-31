@@ -108,6 +108,10 @@ local function rideable(unitID)
 	return def ~= nil and ((def.speed or 0) > 0 or #(def.weapons or {}) > 0)
 end
 
+local function ours(unitID) -- (alive and the player's: a unit captured or given away in sight is still valid, but takes no orders)
+	return Spring.GetUnitTeam(unitID) == Spring.GetMyTeamID() and not Spring.GetUnitIsDead(unitID)
+end
+
 local function stop(text)
 	local s = fp
 	if not s then
@@ -125,7 +129,7 @@ local function stop(text)
 	if WG.info and WG.info.clearDisplayUnitID then
 		WG.info.clearDisplayUnitID()
 	end
-	if Spring.ValidUnitID(s.unitID) and not Spring.GetUnitIsDead(s.unitID) then
+	if ours(s.unitID) then
 		Spring.SelectUnitArray({ s.unitID })
 	end
 	say(text or "FIRST PERSON OFF")
@@ -290,7 +294,7 @@ end
 local function cleanSquad()
 	local alive = {}
 	for _, unitID in ipairs(squad) do
-		if Spring.ValidUnitID(unitID) and not Spring.GetUnitIsDead(unitID) then
+		if ours(unitID) then
 			alive[#alive + 1] = unitID
 		else
 			inSquad[unitID] = nil
@@ -640,7 +644,7 @@ function widget:Update(dt)
 	if not s then
 		return
 	end
-	if not Spring.ValidUnitID(s.unitID) or Spring.GetUnitIsDead(s.unitID) then
+	if not ours(s.unitID) then
 		stop("UNIT LOST")
 		return
 	end
