@@ -867,7 +867,8 @@ local ACTIONS = {
 		note("BOOKMARK SET")
 	end,
 	bookmark_recall = function()
-		if bookmark then
+		if bookmark then -- (the place and the zoom; the tilt stays as it is, Kailil 2026-10-30)
+			bookmark.rx = Spring.GetCameraState().rx
 			Spring.SetCameraState(bookmark, 0.4)
 		else
 			note("LT + UP SETS A BOOKMARK")
@@ -908,6 +909,9 @@ local ACTIONS = {
 	path_patrol = function() -- LB + Y held
 		Spring.SetActiveCommand("patrol")
 		note("PATROL PATH")
+	end,
+	path_end = function() -- the drag let go: BAR's formation widget has the path, and leaves the order picked for many units
+		Spring.SetActiveCommand(0)
 	end,
 	selfd = function() -- Back + R3 + L3 held, as v0.8.5's (given again: called off)
 		local selected = Spring.GetSelectedUnits()

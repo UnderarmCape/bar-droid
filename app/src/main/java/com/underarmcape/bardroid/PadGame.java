@@ -389,7 +389,7 @@ final class PadGame {
             rightDown = true;
             mouse.button(false, true);
         }
-        if (rightDown && !held[X]) { rightDown = false; mouse.button(false, false); }
+        if (rightDown && !held[X] && !pathDrawing) { rightDown = false; mouse.button(false, false); }
         if (picked && pressed(tapped, X) && !leftDown) {   // place it here and keep it picked
             if (reticle) centreNow();
             if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, true);
@@ -403,13 +403,19 @@ final class PadGame {
 
     /**
      * LB + A or Y (Kailil, 2026-10-30: "draw Patrol paths, and fight paths, just like i can draw Move paths"): a tap
-     * gives the order at the middle; held past HOLD_MS the order is picked and, once the game has it, the left button
-     * goes down: the left stick draws, and BAR's formation widget gives the path when the button is let go.
+     * gives the order at the middle; held past HOLD_MS the order is picked and, once the game has it, the right button
+     * goes down (BAR's formation widget draws with no other; the left gave one order at one point, Kailil: "just places
+     * the patrol order for a single point"): the left stick draws, the widget gives the path when the button is let go,
+     * and keeps the order picked for many units, so it is put away then.
      */
     private void paths(boolean[] held, long now) {
         if (pathButton < 0) return;
         if (pathDrawing) {
-            if (!held[pathButton]) { pathDrawing = false; pathButton = -1; leftUp(true); }
+            if (!held[pathButton]) {
+                pathDrawing = false; pathButton = -1;
+                if (rightDown) { rightDown = false; mouse.button(false, false); }
+                mouse.act("path_end");
+            }
         } else if (pathArmAt >= 0) {
             if (!held[pathButton]) {
                 mouse.act("cancel");
@@ -418,8 +424,8 @@ final class PadGame {
                 pathArmAt = -1;
                 if (mouse.armed().equals("none")) { pathButton = -1; return; }   // (nothing that can take the order selected)
                 if (reticle) centreNow();
-                pathDrawing = true;
-                leftPress(false);
+                pathDrawing = rightDown = true;
+                mouse.button(false, true);
             }
         } else if (!held[pathButton]) {
             mouse.act(pathButton == A ? "lb_a" : "lb_y");

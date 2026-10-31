@@ -1656,6 +1656,7 @@ function widget:Initialize()
 		fpSettings = FP_SETTINGS, -- (... and tunes the same values)
 		fpTuneValue = fpTuneValue,
 		fpTuneStep = fpTuneStep,
+		leaveFirstPerson = leaveFirstPerson, -- (bardroid_padfp.lua, as the game quits)
 		fpTuneSave = function(unitID)
 			local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
 			if def then

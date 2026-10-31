@@ -120,6 +120,18 @@ widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry
   [ -z "$2" ] || grep -q "\[\"$re\"\] *= *$2," "$f" || { [ -n "$plain" ] && grep -q "^[[:space:]]*$re *= *$2," "$f"; } \
     || layer_miss "widget order: \"$1\" = $2 not set in LuaUI/Config/BYAR.lua"
 }
+# BAR's Camera Remember opens each game in the camera the last one quit in: a first-person one (mode 0) would hold every
+# later game there, with no start view (BAR's Camera Startup leaves other cameras alone). bardroid_padfp.lua puts the
+# camera back as a game quits; a game that left one all the same, or one from before that, is forgotten here.
+forget_fps_camera() {
+  f="$BAR/LuaUI/Config/BYAR.lua"
+  [ -f "$f" ] || return 0
+  if sed -n '/^\t\t\["Camera Remember"\] *= *{/,/^\t\t},/p' "$f" | grep -q '[[:space:]]mode = 0,'; then
+    sed -i '/^\t\t\["Camera Remember"\] *= *{/,/^\t\t},/d' "$f"
+    log "camera: the first-person camera a game quit in forgotten"
+  fi
+}
+forget_fps_camera
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then

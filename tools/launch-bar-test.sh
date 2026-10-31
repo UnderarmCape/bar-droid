@@ -74,6 +74,25 @@ check "controller game off: the app's copy off" order "BAR Droid build menu" 0
 check "controller game off: the marker gone" [ ! -f "$BAR/.bardroid-gamepad-menus" ]
 check "the other widgets untouched" grep -q '^		Ecostats = 0,$' "$BAR/LuaUI/Config/BYAR.lua"
 
+# A game quit in first person: BAR's Camera Remember would open every later game in that camera
+forget=$(awk '/^forget_fps_camera\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
+check "launch-bar.sh: forget_fps_camera found" [ -n "$forget" ]
+eval "$forget"
+remembered() {   # remembered <mode>: BYAR.lua with a saved camera of that mode, and another widget's own "mode" beside it
+  printf -- 'return {\n\tdata = {\n\t\tBefore = {\n\t\t\tmode = 0,\n\t\t},\n\t\t["Camera Remember"] = {\n\t\t\tfov = 80,\n\t\t\tmode = %s,\n\t\t\tpx = 6144,\n\t\t},\n\t\tCameraShake = {\n\t\t\tmode = 0,\n\t\t},\n\t},\n\torder = {\n\t\t["Camera Remember"] = 106,\n\t},\n}\n' "$1" \
+    > "$BAR/LuaUI/Config/BYAR.lua"
+}
+saved() { grep -q '\["Camera Remember"\] = {' "$BAR/LuaUI/Config/BYAR.lua"; }
+remembered 2; forget_fps_camera
+check "the Spring camera stays remembered" saved
+remembered 0; forget_fps_camera
+check "a first-person camera forgotten" sh -c "! grep -q '\[\"Camera Remember\"\] = {' '$BAR/LuaUI/Config/BYAR.lua'"
+check "... its place in the widget order kept" order "Camera Remember" 106
+check "... the other widgets' data untouched" [ "$(grep -c 'mode = 0,' "$BAR/LuaUI/Config/BYAR.lua")" = 2 ]
+check "... and the file still ends as it did" grep -q '^		CameraShake = {$' "$BAR/LuaUI/Config/BYAR.lua"
+rm -f "$BAR/LuaUI/Config/BYAR.lua"; forget_fps_camera
+check "no widget settings yet: nothing to do" [ ! -f "$BAR/LuaUI/Config/BYAR.lua" ]
+
 # The low-memory mode (phones under 9.5 GB): its block as it is, /proc/meminfo swapped for a scratch one
 low=$(awk '/^mem_kb=\$\(sed / { on = 1 } on { print } on && /^fi$/ { exit }' "$src" | sed "s#/proc/meminfo#$work/meminfo#")
 check "launch-bar.sh: the low-memory block found" [ -n "$low" ]

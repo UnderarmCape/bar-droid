@@ -66,7 +66,7 @@ local spDiffTimers = Spring.DiffTimers
 
 -- v0.8.5's camera defaults (gui_controller_camera_test.lua); the pan 30% slower (Kailil, 2026-10-29, both controller
 -- modes: v0.8.5's own too)
-local PAD_PAN_SPEED, PAD_FAST_PAN = 1400 * 0.7, 2.75
+local PAD_PAN_SPEED, PAD_FAST_PAN, PAD_FAST_ZOOM = 1400 * 0.7, 2.75, 3
 local PAD_ZOOM_SCALE, PAD_ROTATION, PAD_PITCH = 0.9, 3.0, 3.0
 local PAD_STICK_CURVE, PAD_TRIGGER_CURVE, PAD_SMOOTHING = 1.175, 1.075, 0.06
 local PAD_STICK_DEADZONE, PAD_TRIGGER_DEADZONE = 5000, 3000
@@ -608,7 +608,8 @@ local function applyPad(dt)
 		end
 	end
 	if s.zoom ~= 0 then
-		local scale = 1 - s.zoom * PAD_ZOOM_SCALE * 3 * dt
+		-- (LT as for the pan: v0.8.5's zoomBoostMultiplier; a stall's long frame must not turn the scale over)
+		local scale = math.max(0.2, 1 - s.zoom * (1 + (PAD_FAST_ZOOM - 1) * s.boost) * PAD_ZOOM_SCALE * 3 * dt)
 		if cs.dist then
 			cs.dist = clamp(cs.dist * scale, MIN_SPRING_DISTANCE, maxDistance)
 		elseif cs.height then

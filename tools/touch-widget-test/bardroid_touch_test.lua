@@ -380,6 +380,42 @@ cases = {
 		local cs = Spring.GetCameraState()
 		near("sticks at rest: the camera stays (elmos)", math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2), 0, 1)
 	end,
+	-- the zoom, and LT speeding it up (v0.8.5's zoomBoostMultiplier): how fast it goes in, without and with LT
+	function()
+		if Game.gameVersion == "$VERSION" then
+			return
+		end
+		local cs = Spring.GetCameraState()
+		before.zoomBack = cs
+		before.zoomFrom, before.zoomAt = cs.dist, Spring.GetTimer()
+		touch("pad 0 0 0 -32767 0 0") -- right stick up
+		return 0.25
+	end,
+	function()
+		if Game.gameVersion == "$VERSION" then
+			return
+		end
+		local dist = Spring.GetCameraState().dist
+		before.zoomSlow = math.log(before.zoomFrom / dist) / Spring.DiffTimers(Spring.GetTimer(), before.zoomAt)
+		before.zoomFrom, before.zoomAt = dist, Spring.GetTimer()
+		touch("pad 0 0 0 -32767 32767 0") -- and LT
+		return 0.25
+	end,
+	function()
+		if Game.gameVersion == "$VERSION" then
+			return
+		end
+		local fast = math.log(before.zoomFrom / Spring.GetCameraState().dist) / Spring.DiffTimers(Spring.GetTimer(), before.zoomAt)
+		touch("pad 0 0 0 0 0 0")
+		verify("pad: LT speeds the zoom up", fast > before.zoomSlow * 1.8, string.format("%.2f, without LT %.2f", fast, before.zoomSlow))
+		return 0.3
+	end,
+	function()
+		if Game.gameVersion == "$VERSION" then
+			return
+		end
+		Spring.SetCameraState(before.zoomBack, 0)
+	end,
 	-- the interface answers (bardroid_hover.txt)
 	function() warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
 	function() warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,

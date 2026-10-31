@@ -348,29 +348,32 @@ public final class PadGameTest {
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
         t.tick(LB); t.tick(A); t.wait(300);
-        check("LB + A held: fight picked", t.has("act path_fight") && !t.has("act lb_a") && !t.has("left down"), t.m.out);
+        check("LB + A held: fight picked", t.has("act path_fight") && !t.has("act lb_a") && !t.has("right down"), t.m.out);
         t.m.armed = "other";
         t.wait(200);
-        check("... and once the game has it the left button goes down in the middle", t.has("left down") && t.has("centre"), t.m.out);
+        check("... and once the game has it the right button goes down in the middle (BAR's formations draw with no other)",
+                t.has("right down") && !t.has("left down") && t.has("centre"), t.m.out);
         t.up(LB);
         t.m.out.clear();
         t.lx = 1; t.tick(); t.tick(); t.lx = 0; t.tick();
-        check("LB may be let go: the left stick draws, the button stays down", t.count("move ") > 0 && !t.has("left up"), t.m.out);
+        check("LB may be let go: the left stick draws, the button stays down", t.count("move ") > 0 && !t.has("right up"), t.m.out);
         t.tick(RB); t.wait(16);
         check("RB held on a path: Alt (the other fight), no Space", t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " down")
                 && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
         t.up(A);
-        check("A let go: the path given (the button up)", t.has("left up"), t.m.out);
+        check("A let go: the path given (the button up), the order put away", t.has("right up") && t.has("act path_end"), t.m.out);
         t.up(RB); t.m.armed = "none"; t.m.out.clear();
         t.tick(LB); t.tick(Y); t.wait(300);
         t.m.armed = "other"; t.wait(200);
-        check("LB + Y held: a patrol path, the left button down", t.has("act path_patrol") && t.has("left down"), t.m.out);
+        check("LB + Y held: a patrol path, the right button down", t.has("act path_patrol") && t.has("right down"), t.m.out);
+        t.wait(300);
+        check("... and it stays down with X not held", !t.has("right up"), t.m.out);
         t.m.out.clear();
         t.up(Y);
-        check("Y let go ends it (A was never down)", t.has("left up"), t.m.out);
+        check("Y let go ends it (A was never down)", t.has("right up") && t.has("act path_end"), t.m.out);
         t.up(LB); t.m.armed = "none"; t.m.out.clear();
         t.tick(LB); t.tick(A); t.wait(300); t.wait(200); t.up(A); t.up(LB);
-        check("nothing that can take the order: no drag", t.has("act path_fight") && !t.has("left down"), t.m.out);
+        check("nothing that can take the order: no drag", t.has("act path_fight") && !t.has("right down"), t.m.out);
 
         // The pointer's speed while drawing: the zoom's; LT slows it only from a standstill
         t = new PadGameTest();

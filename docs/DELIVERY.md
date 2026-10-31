@@ -314,6 +314,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] `tools/phone-bench.ps1` after the day's notes (dev phone, 100%, cap 30): Sim 49.8 ms, Draw 9.9, Update 6.1, 16 fps
       in the last minute; this morning 44 to 50, 22 to 24, 9.2 to 9.5, 11 to 12. No cost from the new widgets. The lower
       Draw is not a gain to count on: GPU clocks differed (220 against 348 MHz) and nothing today set out to change it.
+- [x] Quitting a game in first person held every later game in that camera (2026-10-30, seen on the dev phone: mode 0 in
+      the logs before any ride): BAR's Camera Remember saves the camera as a game quits, before the widgets' Shutdown,
+      and BAR's start view skips any but the Spring and overhead cameras. `bardroid_padfp.lua` puts the camera back when
+      the handler asks for settings (it is asked before Camera Remember), a spectator's first person too, and
+      launch-bar.sh forgets one saved (`launch-bar-test`). On the dev phone: the first game back in the Spring camera at
+      5000; quit while riding, Spring saved.
+- [x] Kailil's notes, testing on the pad (2026-10-30): LT speeds the zoom up as it does the pan, as v0.8.5's (case in
+      `touch-widget-test`, first run pending his laptop idle). LB + A / Y held drew with the left button, and BAR's
+      formation widget draws with no other but the right: with five Pawns and a stick now a path, orders at x 1127, 2270,
+      3486, 4702 and 5895, and the order put away. A bookmark's recall keeps the tilt, in both controller modes.
+      New for tests without a pad: `adb shell input joystick motionevent MOVE 0.7 0.1` is the left stick, and
+      `input keyevent --duration <ms> KEYCODE_BUTTON_L1 &` holds a button, so chords run through the app's real path.
 - [x] `tools/laptop-tests.ps1` with all of the 2026-10-30 fixes in: all 13 pass. `tools/publish-check.ps1 -NoHistory`:
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the
