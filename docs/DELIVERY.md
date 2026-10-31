@@ -332,6 +332,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       <file>` runs one widget in place of the cases (2.5 min, not 15, for one question). The nudge case read its result
       one frame too soon at 4 fps, so it failed by chance; it waits 1 s. The PLACE panel is solid: the order menu's
       buttons showed through it.
+- [x] The rest of that quit case and the pad's chords (2026-10-31): a replay quit in a spectator's first person saves the
+      Spring camera (`spectate-test -TestWidget`, which also takes one question now, and which loads the first-person
+      widget). On the dev phone by simulated pad: Back + Y opens the path speed tuner, B closes it, Back + R3 + L3 held
+      starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
+      whatever drew last: white now.
 - [x] `tools/laptop-tests.ps1` with all of the 2026-10-30 fixes in: all 13 pass. `tools/publish-check.ps1 -NoHistory`:
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the

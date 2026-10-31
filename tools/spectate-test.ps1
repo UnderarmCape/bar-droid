@@ -9,7 +9,8 @@
 # up, following a unit, a group and in 1st person (tools\spectate-test\bardroid_spectate_cost.lua, ~1.5 min).
 # -Settings @{ Key = value }: engine settings for the run (e.g. CamSpringLockCardinalDirections = 0, as the phone has
 # it; the engine's default, on, is what the checks run with otherwise).
-param([string]$Replay = "", [string]$Engine = "", [switch]$Cost, [hashtable]$Settings = @{})
+# -TestWidget <file>: that widget in place of the checks, for one question.
+param([string]$Replay = "", [string]$Engine = "", [switch]$Cost, [hashtable]$Settings = @{}, [string]$TestWidget = "")
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\spectate-test"
@@ -61,11 +62,12 @@ $links = foreach ($d in "packages", "pool", "rapid", "maps") {
 }
 try {
   Copy-Item $Replay "$Data\demos\" -Force
-  foreach ($f in "bardroid_touch.lua", "bardroid_info.lua", "bardroid_players.lua", "bardroid_spectate.lua") {
+  foreach ($f in "bardroid_touch.lua", "bardroid_info.lua", "bardroid_players.lua", "bardroid_spectate.lua", "bardroid_padfp.lua") {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") "$Data\LuaUI\Widgets\" -Force
   }
   $driver = if ($Cost) { "bardroid_spectate_cost.lua" } else { "bardroid_spectate_test.lua" }
-  Copy-Item (Join-Path $PSScriptRoot "spectate-test\$driver") "$Data\LuaUI\Widgets\" -Force
+  $driverFile = if ($TestWidget) { $TestWidget } else { Join-Path $PSScriptRoot "spectate-test\$driver" }
+  Copy-Item $driverFile "$Data\LuaUI\Widgets\$driver" -Force
   # the phone's widget orders that matter here: BAR's Info widget off (bardroid_info.lua instead), Ecostats off
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n`t`t[`"Info`"] = 0,`n`t`t[`"Ecostats`"] = 0,`n`t},`n}" |
     Set-Content "$Data\LuaUI\Config\BYAR.lua" -Encoding ascii

@@ -1376,6 +1376,8 @@ local function drawBar()
 	gl.Color(1, 1, 1, 1)
 	if font then
 		font:Begin()
+		font:SetTextColor(1, 1, 1, 1) -- (else what the last widget left: a dim grey at times)
+		font:SetOutlineColor(0, 0, 0, 0.8)
 		for _, b in ipairs(buttons) do
 			local size = b.size * 0.36 * (b.text or 1)
 			local text = b.label
