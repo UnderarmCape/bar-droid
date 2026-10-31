@@ -339,6 +339,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] `GameService.java` reviewed (2026-10-31): nothing found. The launcher's status says "game ended", or "game ended with
+      an error (n)", where it said "engine exited (n)"; the log line stays for the tools that read it. Stop is dim whenever
+      nothing is running. Benchmark on the dev phone with new textures zeroed: Sim 46.2 ms, x0.47, as before (46.9-49.9,
+      x0.45-0.48), so no cost.
 - [x] `GameActivity.java` reviewed (2026-10-31). The choice between v0.8.5 and the app's controls lives in the screen, so a
       screen opened anew in a running game went back to v0.8.5 while the widgets stayed on the app's controls. The new
       screen now tells them. Read from the code, not run: on the dev phone Home makes the floating window and no adb step

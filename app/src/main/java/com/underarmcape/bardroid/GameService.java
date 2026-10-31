@@ -262,7 +262,8 @@ public class GameService extends Service {
                     } finally {
                         if (audio != null) audio.stop();
                     }
-                    setStatus("engine exited (" + rc + ")");
+                    Log.i("svc", "engine exited (" + rc + ")");   // (tools/phone-bench.ps1, phone-memory.ps1 read this line)
+                    setStatus(rc == 0 ? "game ended" : "game ended with an error (" + rc + ")");
                     if (rc == 137 && !closing) {
                         // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing
                         // first). Without a word the player only saw the launcher come back (an 8 GB phone, 2026-10-29).

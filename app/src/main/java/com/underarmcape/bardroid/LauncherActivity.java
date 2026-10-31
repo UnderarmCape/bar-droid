@@ -119,7 +119,7 @@ public class LauncherActivity extends AppCompatActivity {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
         // (nothing to stop: dim, not off: after a crash here "idle" can hide a game's processes, which Stop still ends)
-        stopButton.setAlpha(s.equals("idle") || s.equals("stopped") ? 0.5f : 1f);
+        stopButton.setAlpha(GameService.busy() ? 1f : 0.5f);
         // (again on each refresh in the process's first 20 s: Android restarts the app within a second of ending it and
         // files the reason a moment later, so the launcher it restores asked too early; an IPC, not for every tick)
         if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
