@@ -329,9 +329,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] More through the app's real pad path on the dev phone (2026-10-30): a fight path with RB held, five orders along it,
       each with Alt; a first-person walk with the stick, the unit stopping when let go and B ending the ride. The zoom
       case in `touch-widget-test` passes: 0.17 with LT, 0.06 without, 3 times as v0.8.5's. `touch-widget-test -TestWidget
-      <file>` runs one widget in place of the cases (2.5 min, not 15, for one question). The nudge case read its result
-      one frame too soon at 4 fps, so it failed by chance; it waits 1 s. The PLACE panel is solid: the order menu's
-      buttons showed through it.
+      <file>` runs one widget in place of the cases (2.5 min, not 15, for one question). The nudge case failed in about
+      half the runs: not its timing, as first thought, but the test game's random start positions, which can put the
+      map's edge just right of the middle, where a nudge rightly stops; it nudges towards the ground now. The PLACE panel
+      is solid: the order menu's buttons showed through it.
 - [x] The rest of that quit case and the pad's chords (2026-10-31): a replay quit in a spectator's first person saves the
       Spring camera (`spectate-test -TestWidget`, which also takes one question now, and which loads the first-person
       widget). On the dev phone by simulated pad: Back + Y opens the path speed tuner, B closes it, Back + R3 + L3 held

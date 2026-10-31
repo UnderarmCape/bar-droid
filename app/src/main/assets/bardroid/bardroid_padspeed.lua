@@ -239,6 +239,7 @@ function widget:DrawScreen()
 	font:End()
 	drawCurve(x0 + pad, y0 + pad * 2 + buttonH, x0 + w - pad, y0 + pad * 2 + buttonH + boxH, style, font, size)
 	local asked = resetIsAsked()
+	local here = pointHere()
 	local list = { { "minus", "-" }, { "plus", "+" }, { "remove", "Remove" }, { "reset", asked and "Sure?" or "Reset" },
 		{ "close", "Close" } }
 	local gap = math.floor(pad * 0.6)
@@ -255,7 +256,9 @@ function widget:DrawScreen()
 		font:Begin()
 		font:SetOutlineColor(0, 0, 0, 0.6)
 		local c = (asked and b[1] == "reset") and style.GOLD or style.TEXT
-		font:SetTextColor(c[1], c[2], c[3], 1)
+		-- (dim where it would do nothing: no point at this zoom to remove, no curve to reset)
+		local idle = (b[1] == "remove" and not here) or (b[1] == "reset" and #points == 0)
+		font:SetTextColor(c[1], c[2], c[3], idle and 0.35 or 1)
 		font:Print(b[2], bx + bw / 2, by + buttonH / 2 - bs * 0.36, bs, "co")
 		font:End()
 	end

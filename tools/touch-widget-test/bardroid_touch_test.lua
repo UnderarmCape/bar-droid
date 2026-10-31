@@ -984,9 +984,11 @@ cases = {
 		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
 		verify("ONE: the spot told with the building's size", spot and text:match("\nspot %d+ %d+ [1-9]%d*\n"), text)
 		before.spot = spot and { spot[1], spot[2], spot[3] }
-		touch("nudge 30.5 0")
-		touch("nudge 9.5 0") -- (two in one frame: summed)
-		return 1 -- (0.3 s is one frame at a throttled laptop's 4 fps: read or not, by chance)
+		-- (towards the ground: with random start positions the map's edge can be just to the right, where a nudge stops)
+		before.nudge = select(2, Spring.TraceScreenRay(cx + 60, cy, true)) and 1 or -1
+		touch(string.format("nudge %.1f 0", 30.5 * before.nudge))
+		touch(string.format("nudge %.1f 0", 9.5 * before.nudge)) -- (two in one frame: summed)
+		return 1
 	end,
 	function()
 		local _, spot = WG.bardroidBuildmenu.droidPanel()
@@ -995,7 +997,7 @@ cases = {
 		end
 		local ax, ay = Spring.WorldToScreenCoords(before.spot[1], before.spot[2], before.spot[3])
 		local bx, by = Spring.WorldToScreenCoords(spot[1], spot[2], spot[3])
-		near("ONE: a nudge of 40 pixels right moves the building 40 pixels right on the screen", bx - ax, 40, 2)
+		near("ONE: a nudge of 40 pixels moves the building 40 pixels that way on the screen", (bx - ax) * before.nudge, 40, 2)
 		near("ONE: ... and not up or down", by - ay, 0, 2)
 		touch("grid held")
 		touch("spot none")
