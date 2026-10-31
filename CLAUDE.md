@@ -86,7 +86,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   Shift+Alt: the left button stays down from the GRID's start to PLACE, the engine draws and places it). `bardroid_pad.lua`'s
   QUEUE button is a sticky Shift for fingers (`RtsTouch.applyQueue`). `bardroid_padspeed.lua`: the pad's drawing speed by
   zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
-  6 s: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
+  6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
   screen): they never take Kailil's keyboard or cover his windows; the checks that move the real mouse pointer run only
@@ -134,6 +134,7 @@ newcomer's version of this section. APKs land in `apk\` beside the toolchain fol
 "Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
+powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1       # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s

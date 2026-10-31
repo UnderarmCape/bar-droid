@@ -339,6 +339,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] The pad switched off (2026-10-31): the game stayed in its pad-only ways until three taps. The pad going away now
+      ends them. Found with a new standing check, `tools/pad-test.ps1`: Android's uinput makes a virtual Xbox pad on the
+      dev phone, a real input device with both sticks, triggers and a D-pad, so ride, RT, looking, B, zoom with LT, the
+      D-pad and a real disconnect are tested through the app's own pad path with no gamepad. 8 of 8. Settings' boxes sit
+      at the first line of long labels.
 - [x] Quitting in first person has a standing check (2026-10-31): `spectate-test -QuitCheck`, in `tools/laptop-tests.ps1`
       (14 checks now). It fails without the fix (`mode = 0` saved). The launcher names the app's version, for reports,
       and its status line no longer repeats the engine's. All 14 pass together.

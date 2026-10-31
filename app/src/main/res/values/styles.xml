@@ -24,8 +24,9 @@
         <item name="android:autoSizeStepGranularity">1sp</item>
     </style>
 
-    <!-- A setting: air between the long ones. -->
+    <!-- A setting: air between the long ones, the box at the first line. -->
     <style name="LauncherCheck">
+        <item name="android:gravity">top</item>
         <item name="android:paddingTop">6dp</item>
         <item name="android:paddingBottom">6dp</item>
     </style>

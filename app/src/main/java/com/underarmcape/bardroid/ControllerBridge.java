@@ -151,6 +151,7 @@ public final class ControllerBridge {
             wakeIdle();
         }
         Log.i("pad", any ? "gamepad connected" : "gamepad disconnected");
+        if (!any && mouse != null) mouse.act("fingers");   // (the pad's ways end with it: no three taps to get the menus back)
     }
 
     /** @return true if the event was a gamepad event and has been consumed. */
