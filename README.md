@@ -94,7 +94,7 @@ factions' matching unit too.
   | Pad | In the game |
   |---|---|
   | Left stick | Pan the map under the pointer (LT held: faster) |
-  | Right stick | Turn (left/right) and zoom (up/down); with LB held, tilt |
+  | Right stick | Turn (left/right) and zoom (up/down; LT held: faster); with LB held, tilt |
   | A | Select (twice: that type on screen); place a building |
   | A held | Nothing picked: v0.8.5's area select - a circle in the middle selects your units as you pan (RT: added to the selection, buildings too; D-pad: bigger or smaller; B: undo; X held as well: v0.8.5's filter radial, the left stick picks all mobile / combat / builders / air). Builders are never selected together with combat units. With an order picked, held for a quarter second, the left stick moves the pointer instead: an area circle (repair, reclaim), a row of buildings; let go and it glides back to the middle |
   | X | The smart order there (BAR's right click: move, attack, repair, reclaim, guard); held for a quarter second, the left stick draws a path (a shorter press stays a click, also while the camera moves) |
@@ -102,11 +102,11 @@ factions' matching unit too.
   | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
   | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge, or right from the last option: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
   | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A). While the pad is in use the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the menu; in the controller game the rest then fill it evenly |
-  | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark (LT + up: store it) |
+  | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark, its place and zoom (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
   | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait; with factories selected: stops them and clears their whole queue). With builders, A repair and X reclaim (A on the target) |
   | Start or Back + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), left held assigns every unit of the selection's types (and those to come), right tapped moves the camera to it, right held clears it; Start + L3 clears it too. While Start or Back is held (and a moment after) a strip shows a box for each group that has units |
-  | LB + A / Y held | Draws a fight / patrol path with the left stick until let go (LB may be let go; RB held: Alt, the other fight) |
+  | LB + A / Y held | Draws a fight / patrol path with the left stick until let go, the units spread along it as on a move path (LB may be let go; RB held: Alt, the other fight) |
   | Back + Y | The path speed tuner (also `/padspeed` in the chat box): how fast X, LB + A and LB + Y draw at each zoom |
   | LB + L3 held | First person on the selected unit or sentry (no other buildings): the left stick walks it in any direction, the right stick looks anywhere, apart from the body, and only the horizon recentres; RT fires along the view, walking too (a player's order cannot aim above the ground, so at full range along the view at most). Back tunes the camera, the same values as the spectator tools'; B or the same chord again ends it. A squad takes orders meanwhile (the unit you look at, else the units nearby): A follow me, X stop, Y fight, RB patrol to where you look; D-pad up adds units, down clears the squad. Panels show the squad, their orders and the buttons |
   | L3 / R3 | Remove the next / the last queued order; Back + R3: the D-gun (A fires); Back + R3 + L3 held: self-destruct |

@@ -567,6 +567,13 @@ local function drawTuner(style, font, x1, y0, vsy)
 		local c = lit and style.GOLD or style.TEXT
 		local y = y1 - pad * 2 - size - ((i - 1) % rows + 1) * rowH + rowH * 0.3
 		local left = pad * 2 + (i > rows and leftW + gap or 0)
+		if lit then -- (the setting on the D-pad, a faint gold bar behind it)
+			font:End()
+			local w = i > rows and rightW or leftW
+			style.fill(left - pad * 0.6, y - rowH * 0.22, left + w + pad * 0.6, y + rowH * 0.72, { style.GOLD[1], style.GOLD[2], style.GOLD[3], 0.14 }, 1)
+			font:Begin()
+			font:SetOutlineColor(0, 0, 0, 0.6)
+		end
 		font:SetTextColor(c[1], c[2], c[3], lit and 1 or 0.8)
 		font:Print(setting.label, left, y, size * fit, "o")
 		font:Print(api.fpTuneValue(fp.unitID, setting), left + (i > rows and rightW or leftW), y, size * fit, "ro")

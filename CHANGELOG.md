@@ -67,6 +67,18 @@ The first version meant for other people's phones: everything since the first bu
   for (in the controller game the rest fill it evenly); a group strip shows the groups that have units, and recalling
   one no longer moves the camera; LB + B with factories selected stops them and clears their queues; a big army's
   paths and queue show without RT.
+- First person on the pad (LB + L3 held) on a unit or a sentry: the left stick walks it in any direction, the right
+  stick looks anywhere apart from the body, RT fires where you look, and a squad of units nearby takes orders (follow
+  me, stop, fight, patrol there). Its camera uses the spectator tools' values and is tuned in place. A Save in either
+  camera tuner is kept at once, not only when the game quits.
+- Fight and patrol paths (LB + A / Y held), drawn as a move path is, with the units spread along them. The pointer's
+  speed while drawing follows the zoom, on a curve you set (Back + Y). LT speeds up the zoom too, as in v0.8.5. A
+  camera bookmark brings back its place and zoom and leaves the tilt alone. Self-destruct is Back + R3 + L3 held.
+- A QUEUE button for fingers (a sticky Shift, let go when the pad takes over), and the menus open by themselves by
+  touch, also in the controller game; three-finger swipe down selects the commander as well.
+- A tap as a game finishes loading no longer takes BAR's music and volume sliders out of that game, and quitting in
+  first person no longer starts later games in that camera.
+- The launcher's start buttons use what the screen shows: a changed setting no longer needs Save settings first.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 
