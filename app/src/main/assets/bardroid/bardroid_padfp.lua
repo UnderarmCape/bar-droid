@@ -483,6 +483,7 @@ local function drawSquad(style, font, x1, y0, vsy)
 	font:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], 1)
 	font:Print(rows == 0 and "Squad: none" or "Squad: " .. #squad, x0 + pad, y1 - pad - size * 0.85, size, "o")
 	font:End()
+	local numW = #tostring(summary[1] and summary[1].count or 1) * size * 0.62 -- (the counts in a column: the biggest is first)
 	for i = 1, rows do
 		local e = summary[i]
 		local top = y1 - pad * 2 - size - (i - 1) * rowH
@@ -495,7 +496,9 @@ local function drawSquad(style, font, x1, y0, vsy)
 		font:Begin()
 		font:SetOutlineColor(0, 0, 0, 0.6)
 		font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 1)
-		font:Print(e.count .. "  " .. (def and (def.translatedHumanName or def.humanName) or ""), x0 + pad * 2 + icon, top - icon * 0.62, size, "o")
+		local tx = x0 + pad * 2 + icon + numW
+		font:Print(tostring(e.count), tx, top - icon * 0.62, size, "ro")
+		font:Print(def and (def.translatedHumanName or def.humanName) or "", tx + size * 0.7, top - icon * 0.62, size, "o")
 		font:SetTextColor(style.BLUE[1], style.BLUE[2], style.BLUE[3], 1)
 		font:Print(e.status or "", x1 - pad, top - icon * 0.62, size, "ro")
 		font:End()
