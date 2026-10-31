@@ -445,6 +445,8 @@ function widget:DrawScreen()
 				gl.Color(0, 0, 0, 0.7)
 				gl.Rect(lx, ly - labelSize * 1.5, lx + w, ly)
 				font:Begin()
+				font:SetTextColor(1, 1, 1, 1) -- (else what the last widget left)
+				font:SetOutlineColor(0, 0, 0, 0.8)
 				font:Print(p.label, lx + labelSize * 0.5, ly - labelSize * 1.15, labelSize, "o")
 				font:End()
 			end

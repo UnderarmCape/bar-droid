@@ -336,7 +336,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Spring camera (`spectate-test -TestWidget`, which also takes one question now, and which loads the first-person
       widget). On the dev phone by simulated pad: Back + Y opens the path speed tuner, B closes it, Back + R3 + L3 held
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
-      whatever drew last: white now.
+      whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
+      fixed; chat and the info panel carry their colours in the text.
 - [x] `tools/laptop-tests.ps1` with all of the 2026-10-30 fixes in: all 13 pass. `tools/publish-check.ps1 -NoHistory`:
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the
