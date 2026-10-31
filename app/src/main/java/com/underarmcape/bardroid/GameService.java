@@ -212,11 +212,11 @@ public class GameService extends Service {
             }
             // Bring the display up (a hidden flag left by the last game screen must not hide this one)
             //noinspection ResultOfMethodCallIgnored
-            GameActivity.hiddenFlag(paths).delete();
+            paths.hiddenFlag().delete();
             //noinspection ResultOfMethodCallIgnored
-            GameActivity.floatingFlag(paths).delete();
+            paths.floatingFlag().delete();
             //noinspection ResultOfMethodCallIgnored
-            GameActivity.catchupFlag(paths).delete();
+            paths.catchupFlag().delete();
             //noinspection ResultOfMethodCallIgnored
             new java.io.File(paths.bar, "LuaUI/Config/bardroid_catchup.txt").delete();
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

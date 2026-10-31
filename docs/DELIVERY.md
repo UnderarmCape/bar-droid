@@ -339,8 +339,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
-- [ ] The launcher in landscape (it opens that way after a game): the fixed top part leaves about 90 dp for the settings
-      and the log.
+- [x] A game start could end the app (2026-10-31, in the dev phone's crash buffer: 1 start among last night's). A cold
+      start called `GameActivity.hiddenFlag` on its worker thread; when that was the class's first use, Termux:X11's
+      static `Handler` was made there with no Looper. The flags are on `Paths` now, `PerfLog` the same, and
+      `tools/laptop-tests.ps1` fails on any other class calling into `GameActivity`. Ten cold starts: no crash. It was a
+      race that ran only some of the time, so those ten show no harm, not the cure; the cure is that the call is gone.
+- [x] The launcher in landscape (it opens that way after a game): two columns, the settings and log with the whole
+      height. A new log line took the focus out of a field being typed in (the log's `fullScroll`): it stays in the field
+      now (`dumpsys activity top` before and after), and the log keeps a reader's place while they have scrolled back.
 - [x] `bardroid_padspeed.lua` and `bardroid_padfp.lua` reviewed (2026-10-31). Path speed: nothing. First person: a unit
       captured or given away in sight stayed in the squad, and a ride went on, on a unit that takes no orders; both end
       now ("UNIT LOST" for the ride). A unit out of sight was no risk: a scan of every id shows `ValidUnitID`,

@@ -1,59 +1,74 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="12dp">
 
-    <TextView
-        android:id="@+id/title"
+    <!-- Above the settings, or beside them on a wide screen: LauncherActivity.fitLayout. -->
+    <ScrollView
+        android:id="@+id/top"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="22sp"
-        android:textStyle="bold" />
+        android:layout_height="wrap_content">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/device"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="12sp"
-        android:fontFamily="monospace"
-        android:paddingTop="6dp" />
+            <TextView
+                android:id="@+id/title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/app_name"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="22sp"
+                android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="?android:attr/textColorPrimary"
-        android:textSize="14sp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp" />
+            <TextView
+                android:id="@+id/device"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:fontFamily="monospace"
+                android:paddingTop="6dp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
-        <Button style="@style/LauncherButton" android:id="@+id/btnInstall" android:text="@string/btn_install" />
-        <Button style="@style/LauncherButton" android:id="@+id/btnPlay" android:text="@string/btn_play" />
-        <Button style="@style/LauncherButton" android:id="@+id/btnLobby" android:text="@string/btn_lobby" />
-    </LinearLayout>
+            <TextView
+                android:id="@+id/status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="?android:attr/textColorPrimary"
+                android:textSize="14sp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
-        <Button style="@style/LauncherButton.Small" android:id="@+id/btnGlCheck" android:text="@string/btn_glcheck" />
-        <Button style="@style/LauncherButton.Small" android:id="@+id/btnBench" android:text="@string/btn_bench" />
-        <Button style="@style/LauncherButton.Small" android:id="@+id/btnDisplayPrefs" android:text="@string/btn_display_prefs" />
-        <Button style="@style/LauncherButton.Small" android:id="@+id/btnShareLogs" android:text="@string/btn_share_logs" />
-        <Button style="@style/LauncherButton.Small" android:id="@+id/btnStop" android:text="@string/btn_stop" />
-    </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+                <Button style="@style/LauncherButton" android:id="@+id/btnInstall" android:text="@string/btn_install" />
+                <Button style="@style/LauncherButton" android:id="@+id/btnPlay" android:text="@string/btn_play" />
+                <Button style="@style/LauncherButton" android:id="@+id/btnLobby" android:text="@string/btn_lobby" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
+                <Button style="@style/LauncherButton.Small" android:id="@+id/btnGlCheck" android:text="@string/btn_glcheck" />
+                <Button style="@style/LauncherButton.Small" android:id="@+id/btnBench" android:text="@string/btn_bench" />
+                <Button style="@style/LauncherButton.Small" android:id="@+id/btnDisplayPrefs" android:text="@string/btn_display_prefs" />
+                <Button style="@style/LauncherButton.Small" android:id="@+id/btnShareLogs" android:text="@string/btn_share_logs" />
+                <Button style="@style/LauncherButton.Small" android:id="@+id/btnStop" android:text="@string/btn_stop" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
 
     <ScrollView
+        android:id="@+id/settings"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">

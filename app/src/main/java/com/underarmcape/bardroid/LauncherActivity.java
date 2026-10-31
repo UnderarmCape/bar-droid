@@ -8,10 +8,10 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StatFs;
-import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +27,7 @@ import java.io.File;
 public class LauncherActivity extends AppCompatActivity {
     private TextView statusView, deviceView, logView;
     private ScrollView logScroll;
+    private boolean logFollows = true;   // the newest line stays in view, unless the reader has scrolled back
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Log.Listener logListener = line -> handler.post(() -> appendLog(line));
     private final Runnable ticker = new Runnable() { @Override public void run() { refresh(); handler.postDelayed(this, 1500); } };
@@ -39,6 +40,9 @@ public class LauncherActivity extends AppCompatActivity {
         deviceView = findViewById(R.id.device);
         logView = findViewById(R.id.log);
         logScroll = findViewById(R.id.logScroll);
+        // (scrollTo: fullScroll takes the focus with it, out of a field being typed in, at every new line)
+        logView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> { if (logFollows) logScroll.scrollTo(0, b); });
+        fitLayout();
 
         Button install = findViewById(R.id.btnInstall);
         Button play = findViewById(R.id.btnPlay);
@@ -75,6 +79,19 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent); startFromIntent(intent); }
+
+    @Override public void onConfigurationChanged(android.content.res.Configuration c) { super.onConfigurationChanged(c); fitLayout(); }
+
+    /** Side by side on a wide screen (it opens that way after a game): one over the other left the settings 90 dp. */
+    private void fitLayout() {
+        boolean wide = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        int fill = LinearLayout.LayoutParams.MATCH_PARENT, wrap = LinearLayout.LayoutParams.WRAP_CONTENT;
+        ((LinearLayout) findViewById(R.id.root)).setOrientation(wide ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+        findViewById(R.id.top).setLayoutParams(new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : wrap, wide ? 1 : 0));
+        LinearLayout.LayoutParams settings = new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : 0, 1);
+        settings.leftMargin = wide ? Math.round(12 * getResources().getDisplayMetrics().density) : 0;
+        findViewById(R.id.settings).setLayoutParams(settings);
+    }
 
     /** A start takes what the screen shows: a setting changed and left unsaved was ignored without a word. */
     private void start(String action, String mode) {
@@ -113,9 +130,9 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void appendLog(String line) {
+        logFollows = logScroll.getScrollY() + logScroll.getHeight() >= logView.getHeight();
         logView.append(line + "\n");
         if (logView.getLineCount() > 2500) logView.setText(Log.dump());
-        logScroll.post(() -> logScroll.fullScroll(View.FOCUS_DOWN));
     }
 
     /**

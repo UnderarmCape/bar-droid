@@ -210,13 +210,13 @@ public class GameActivity extends MainActivity {
     // is closed while the game goes on (the app icon brings a new one); GameService clears it before each game.
     @Override protected void onStart() {
         super.onStart();
-        setFlag(hiddenFlag(BarApp.get().paths()), false, "game screen shown: the engine draws");
-        if (!isInPictureInPictureMode()) setFlag(floatingFlag(BarApp.get().paths()), false, "full screen: 30 fps cap");
+        setFlag(BarApp.get().paths().hiddenFlag(), false, "game screen shown: the engine draws");
+        if (!isInPictureInPictureMode()) setFlag(BarApp.get().paths().floatingFlag(), false, "full screen: 30 fps cap");
         catchupHandler.post(catchupCheck);
         if (upscaleLabel != null) catchupHandler.post(upscaleCompare);
     }
     @Override protected void onStop() {
-        setFlag(hiddenFlag(BarApp.get().paths()), true, "game screen hidden: the engine stops drawing");
+        setFlag(BarApp.get().paths().hiddenFlag(), true, "game screen hidden: the engine stops drawing");
         catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
         catchupHandler.removeCallbacks(upscaleCompare);
         super.onStop();
@@ -279,13 +279,8 @@ public class GameActivity extends MainActivity {
     @Override
     public void onPictureInPictureModeChanged(boolean inPip, android.content.res.Configuration newConfig) {
         super.onPictureInPictureModeChanged(inPip, newConfig);
-        setFlag(floatingFlag(BarApp.get().paths()), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
+        setFlag(BarApp.get().paths().floatingFlag(), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
     }
-
-    /** The flags libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden, -floating, -catchup). */
-    static java.io.File hiddenFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-hidden"); }
-    static java.io.File floatingFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-floating"); }
-    static java.io.File catchupFlag(Paths p) { return new java.io.File(p.rootfsTmp, "bardroid-catchup"); }
 
     // Catching up with a running game far behind (spectating, a reconnect; Kailil: "The catchup is still slow"): the
     // touch widget writes LuaUI/Config/bardroid_catchup.txt, "<game frame> <server frame> <speed>", about once a second
@@ -335,7 +330,7 @@ public class GameActivity extends MainActivity {
                 return;   // the file changing under the read: keep what is shown, the next poll reads it again
             }
         }
-        setFlag(catchupFlag(p), on, on ? "catching up: the engine draws nothing until caught up" : "caught up: the engine draws");
+        setFlag(p.catchupFlag(), on, on ? "catching up: the engine draws nothing until caught up" : "caught up: the engine draws");
         if (catchupView == null) return;
         if (on) catchupView.setText(text);
         catchupView.setVisibility(on ? View.VISIBLE : View.GONE);

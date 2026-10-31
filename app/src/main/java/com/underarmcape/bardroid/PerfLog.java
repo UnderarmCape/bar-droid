@@ -54,8 +54,8 @@ final class PerfLog {
         // memory: Android logged low memory all through an 8v8 (2026-10-26), and its killer has taken the game before
         sb.append("; memory available ").append(meminfo("MemAvailable:")).append(" MB, swap free ")
           .append(meminfo("SwapFree:")).append(" MB, engine ").append(engineRss()).append(" MB");
-        if (GameActivity.hiddenFlag(BarApp.get().paths()).exists()) sb.append("; game screen hidden (engine not drawing)");
-        else if (GameActivity.catchupFlag(BarApp.get().paths()).exists()) sb.append("; catching up (engine not drawing)");
+        if (BarApp.get().paths().hiddenFlag().exists()) sb.append("; game screen hidden (engine not drawing)");
+        else if (BarApp.get().paths().catchupFlag().exists()) sb.append("; catching up (engine not drawing)");
         Log.i("perf", sb.toString());
     }
 

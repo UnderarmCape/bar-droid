@@ -59,6 +59,14 @@ $bad = foreach ($f in Get-ChildItem $Tools -Filter *.ps1) {
 if ($bad) { $bad | ForEach-Object { Write-Host "   $_" } }
 $results += "{0} powershell syntax" -f $(if ($bad) { "FAIL" } else { "PASS" })
 
+# No other class calls into GameActivity: its first use on a worker thread ends the app (Paths.hiddenFlag says why)
+Write-Host "== GameActivity left alone"
+$bad = Get-ChildItem (Join-Path $Tools "..\app\src\main\java\com\underarmcape\bardroid") -Filter *.java |
+  Where-Object { $_.Name -ne "GameActivity.java" } | Select-String -Pattern 'GameActivity\.[a-z]\w*\(' |
+  Where-Object { $_.Line -notmatch '^\s*(\*|//)' }
+if ($bad) { $bad | ForEach-Object { Write-Host "   $($_.Filename):$($_.LineNumber): $($_.Line.Trim())" } }
+$results += "{0} GameActivity left alone" -f $(if ($bad) { "FAIL" } else { "PASS" })
+
 # launch-bar.sh's switching of BAR's build menus (tools/launch-bar-test.sh), with the portable Git's sh and its tools
 # (on PATH for this process only)
 $gitUsr = Join-Path $TC "git\usr\bin"

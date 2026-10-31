@@ -54,6 +54,13 @@ public final class Paths {
     public File l2s() { return new File(rootfs, ".l2s"); }
     public File libXlorie() { return nativeLib("libXlorie.so"); }
 
+    // The flags libbardroid_pace.so looks for (the container's /tmp/bardroid-hidden, -floating, -catchup). Here, not on
+    // GameActivity: its first use on a worker thread creates Termux:X11's static Handler there, with no Looper, and the
+    // app dies (a skirmish start on the dev phone, 2026-10-31). tools/laptop-tests.ps1 looks for that.
+    public File hiddenFlag() { return new File(rootfsTmp, "bardroid-hidden"); }
+    public File floatingFlag() { return new File(rootfsTmp, "bardroid-floating"); }
+    public File catchupFlag() { return new File(rootfsTmp, "bardroid-catchup"); }
+
     public File engineDir(String version) { return new File(bar, "engine/recoil_" + version); }
 
     public void mkdirs() {
