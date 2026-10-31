@@ -10,7 +10,9 @@
 # -Settings @{ Key = value }: engine settings for the run (e.g. CamSpringLockCardinalDirections = 0, as the phone has
 # it; the engine's default, on, is what the checks run with otherwise).
 # -TestWidget <file>: that widget in place of the checks, for one question.
-param([string]$Replay = "", [string]$Engine = "", [switch]$Cost, [hashtable]$Settings = @{}, [string]$TestWidget = "")
+# -QuitCheck: instead of the checks, a replay quit in first person: the camera BAR saves for later games must not be that
+# one (tools\spectate-test\bardroid_spectate_quit.lua, ~3 min).
+param([string]$Replay = "", [string]$Engine = "", [switch]$Cost, [hashtable]$Settings = @{}, [string]$TestWidget = "", [switch]$QuitCheck)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Work = Join-Path $App "build\spectate-test"
@@ -65,7 +67,7 @@ try {
   foreach ($f in "bardroid_touch.lua", "bardroid_info.lua", "bardroid_players.lua", "bardroid_spectate.lua", "bardroid_padfp.lua") {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") "$Data\LuaUI\Widgets\" -Force
   }
-  $driver = if ($Cost) { "bardroid_spectate_cost.lua" } else { "bardroid_spectate_test.lua" }
+  $driver = if ($Cost) { "bardroid_spectate_cost.lua" } elseif ($QuitCheck) { "bardroid_spectate_quit.lua" } else { "bardroid_spectate_test.lua" }
   $driverFile = if ($TestWidget) { $TestWidget } else { Join-Path $PSScriptRoot "spectate-test\$driver" }
   Copy-Item $driverFile "$Data\LuaUI\Widgets\$driver" -Force
   # the phone's widget orders that matter here: BAR's Info widget off (bardroid_info.lua instead), Ecostats off
@@ -92,9 +94,15 @@ try {
   $why = if ($p.HasExited) { "the game ended" } elseif ((Get-Date) -ge $hardStop) { "the time ran out" } else { "the log stood still (a replay that never starts playing: pass another with -Replay)" }
   Start-Sleep 1
   if (-not $p.HasExited) { $p.Kill() }
-  Select-String -Path $log -Pattern '\[spectest\]|\[spectcost\]|BAR Droid spectate|bardroid_spectate' |
+  Select-String -Path $log -Pattern '\[spectest\]|\[spectcost\]|\[spectquit\]|BAR Droid spectate|bardroid_spectate' |
     ForEach-Object { $_.Line -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
-  if (-not (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet)) {
+  if ($QuitCheck) {
+    $inFps = Select-String -Path $log -Pattern '\[spectquit\] camera before quitting: fps' -Quiet
+    $saved = Get-Content "$Data\LuaUI\Config\BYAR.lua" -Raw
+    $block = if ($saved -match '(?s)\["Camera Remember"\] = \{(.*?)\n\t\t\},') { $Matches[1] } else { "" }
+    if ($inFps -and $block -match 'mode = (\d+),' -and $Matches[1] -ne "0") { "[spectest] done: ALL PASS (first person at the quit, camera mode $($Matches[1]) saved)" }
+    else { "[spectest] FAIL quit in first person: in it $inFps, saved: $($block -replace '\s+', ' ')" }
+  } elseif (-not (Select-String -Path $log -Pattern '\[spectest\] done' -Quiet)) {
     "[spectest] FAIL the test finished: $why"
   }
   $shot = Get-ChildItem "$Data\screenshots" -Filter *.png -ErrorAction SilentlyContinue | Sort-Object LastWriteTime | Select-Object -Last 1

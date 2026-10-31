@@ -153,7 +153,8 @@ public class LauncherActivity extends AppCompatActivity {
             if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game\n");
             else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
         }
-        sb.append("Engine: ").append(Prefs.engineVersion).append("  Driver: ").append(Prefs.mesaDriver);
+        sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion)
+          .append(", ").append(Prefs.mesaDriver);
         return sb.toString();
     }
 

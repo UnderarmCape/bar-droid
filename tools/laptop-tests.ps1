@@ -9,6 +9,7 @@
 #   lobby-game-test      the lobby's Skirmish screen with the controller game (assets\gamepad, as installed)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
+#   spectate-test        -QuitCheck: a replay quit in first person leaves no first-person camera for later games
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
 #   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back) and its
 #                        low-memory mode (an 8 GB phone's settings, a 12 GB phone's untouched)
@@ -83,6 +84,7 @@ Run "touch widget, BAR" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" $
 if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.lua")) {
   Run "touch widget, controller game" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" (@("-GamepadGame") + $pointerArg)
 } else { $results += "SKIP touch widget, controller game (run tools\profile-gamepad-game.ps1 once)" }
+Run "quit in first person" "spectate-test.ps1" "\[spectest\] done: ALL PASS" @("-QuitCheck")
 
 Write-Host ""
 $results | ForEach-Object { Write-Host $_ }
