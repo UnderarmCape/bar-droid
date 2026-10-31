@@ -339,6 +339,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] `GameActivity.java` reviewed (2026-10-31). The choice between v0.8.5 and the app's controls lives in the screen, so a
+      screen opened anew in a running game went back to v0.8.5 while the widgets stayed on the app's controls. The new
+      screen now tells them. Read from the code, not run: on the dev phone Home makes the floating window and no adb step
+      closed that, so the case was never reached; a normal game and its triple tap checked by `pad-test`. The launcher's
+      Stop is dim with nothing to stop, still tappable: after a crash "idle" can hide a game's processes.
 - [x] `PadGame.java` reviewed (2026-10-31): the rest clean, but X, "place it and keep it", had the touch fault below: Shift
       down, click and Shift up in one tick. A virtual pad on the dev phone showed it: Shift never reached the engine and the
       building went. Now Shift comes 100 ms before the click and stays 100 ms after, in BAR's game and in the app's controls

@@ -103,7 +103,11 @@ public class GameActivity extends MainActivity {
         @Override public int mode() {
             if (!touch.gameWidgetRunning()) return ControllerBridge.MODE_LOBBY;
             if (!touch.controllerGame()) return ControllerBridge.MODE_GAME;
-            if (v085) return ControllerBridge.MODE_OFF;
+            if (v085) {
+                // (a new screen starts with v0.8.5: a game still running, on the app's controls, goes back with it)
+                if (!modToldOnce) { modToldOnce = true; touch.padAct("mod_v085"); }
+                return ControllerBridge.MODE_OFF;
+            }
             // the app's controls in the controller game: told to the widgets again every 2 s (a LuaUI reload, as a fold
             // or unfold makes, starts them with v0.8.5's; they show the note only when it changes)
             long now = android.os.SystemClock.uptimeMillis();
@@ -111,6 +115,7 @@ public class GameActivity extends MainActivity {
             return ControllerBridge.MODE_GAME;
         }
         private long modToldAt;
+        private boolean modToldOnce;
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
         @Override public boolean onInterface() { return touch.pointerOnInterface(); }
         @Override public void move(int dx, int dy) { send(dx, dy, InputStub.BUTTON_UNDEFINED, false); }

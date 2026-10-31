@@ -27,6 +27,7 @@ import java.io.File;
 public class LauncherActivity extends AppCompatActivity {
     private TextView statusView, deviceView, logView;
     private ScrollView logScroll;
+    private Button stopButton;
     private boolean logFollows = true;   // the newest line stays in view, unless the reader has scrolled back
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Log.Listener logListener = line -> handler.post(() -> appendLog(line));
@@ -48,7 +49,7 @@ public class LauncherActivity extends AppCompatActivity {
         Button play = findViewById(R.id.btnPlay);
         Button lobby = findViewById(R.id.btnLobby);
         Button glcheck = findViewById(R.id.btnGlCheck);
-        Button stop = findViewById(R.id.btnStop);
+        stopButton = findViewById(R.id.btnStop);
         Button prefs = findViewById(R.id.btnDisplayPrefs);
         Button save = findViewById(R.id.btnSave);
 
@@ -59,7 +60,7 @@ public class LauncherActivity extends AppCompatActivity {
         // Developer hook: long-press keeps the X display (and GPU server) up for an hour without starting the game,
         // so GL programs can be tried inside the container with tools\container-shell.bat.
         glcheck.setOnLongClickListener(v -> { GameService.start(this, GameService.ACTION_PLAY, "shell"); return true; });
-        stop.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
+        stopButton.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
         prefs.setOnClickListener(v -> startActivity(new Intent(this, com.termux.x11.LoriePreferences.class)));
         save.setOnClickListener(v -> saveSettings(true));
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
@@ -117,6 +118,8 @@ public class LauncherActivity extends AppCompatActivity {
     private void refresh() {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
+        // (nothing to stop: dim, not off: after a crash here "idle" can hide a game's processes, which Stop still ends)
+        stopButton.setAlpha(s.equals("idle") || s.equals("stopped") ? 0.5f : 1f);
         // (again on each refresh in the process's first 20 s: Android restarts the app within a second of ending it and
         // files the reason a moment later, so the launcher it restores asked too early; an IPC, not for every tick)
         if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
