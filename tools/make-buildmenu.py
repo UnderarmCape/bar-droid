@@ -446,8 +446,8 @@ function droid.drawPanel()
 	local ready = droid.gridHeld or droid.spotOnScreen() ~= nil
 	local a = p.all
 	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
-		ready and { 0.1, 0.5, 0.1, 0.95 } or { 0.1, 0.25, 0.1, 0.9 }, ready and { 0.25, 0.8, 0.25, 0.95 } or { 0.2, 0.35, 0.2, 0.9 },
-		bgpadding * 0.5)
+		ready and { 0.1, 0.5, 0.1, 1 } or { 0.1, 0.25, 0.1, 1 }, ready and { 0.25, 0.8, 0.25, 1 } or { 0.2, 0.35, 0.2, 1 },
+		bgpadding * 0.5) -- (solid: the order menu's buttons are under it)
 	for _, name in ipairs({ "rotate", "cancel" }) do
 		local r = p[name]
 		UiButton(r[1], r[2], r[3], r[4], 1, 1, 1, 1, 1, 1, 1, 1, nil, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 }, bgpadding * 0.4)

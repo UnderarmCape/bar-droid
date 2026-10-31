@@ -387,9 +387,14 @@ cases = {
 		end
 		local cs = Spring.GetCameraState()
 		before.zoomBack = cs
-		before.zoomFrom, before.zoomAt = cs.dist, Spring.GetTimer()
-		touch("pad 0 0 0 -32767 0 0") -- right stick up
-		return 0.25
+		local far = Spring.GetCameraState()
+		far.dist = 5000
+		Spring.SetCameraState(far, 0)
+		before.zoomFrom, before.zoomAt = far.dist, Spring.GetTimer()
+		-- (the stick just past its deadzone: at a throttled laptop's frames of a second a full one is at the nearest zoom
+		-- before LT comes in)
+		touch("pad 0 0 0 -6000 0 0")
+		return 3
 	end,
 	function()
 		if Game.gameVersion == "$VERSION" then
@@ -398,8 +403,8 @@ cases = {
 		local dist = Spring.GetCameraState().dist
 		before.zoomSlow = math.log(before.zoomFrom / dist) / Spring.DiffTimers(Spring.GetTimer(), before.zoomAt)
 		before.zoomFrom, before.zoomAt = dist, Spring.GetTimer()
-		touch("pad 0 0 0 -32767 32767 0") -- and LT
-		return 0.25
+		touch("pad 0 0 0 -6000 32767 0") -- and LT
+		return 3
 	end,
 	function()
 		if Game.gameVersion == "$VERSION" then
@@ -408,13 +413,14 @@ cases = {
 		local fast = math.log(before.zoomFrom / Spring.GetCameraState().dist) / Spring.DiffTimers(Spring.GetTimer(), before.zoomAt)
 		touch("pad 0 0 0 0 0 0")
 		verify("pad: LT speeds the zoom up", fast > before.zoomSlow * 1.8, string.format("%.2f, without LT %.2f", fast, before.zoomSlow))
-		return 0.3
+		return 2 -- (the stick's smoothing runs out first, at a throttled laptop's few frames a second)
 	end,
 	function()
 		if Game.gameVersion == "$VERSION" then
 			return
 		end
 		Spring.SetCameraState(before.zoomBack, 0)
+		return 0.5
 	end,
 	-- the interface answers (bardroid_hover.txt)
 	function() warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45)) end,
@@ -980,7 +986,7 @@ cases = {
 		before.spot = spot and { spot[1], spot[2], spot[3] }
 		touch("nudge 30.5 0")
 		touch("nudge 9.5 0") -- (two in one frame: summed)
-		return 0.3
+		return 1 -- (0.3 s is one frame at a throttled laptop's 4 fps: read or not, by chance)
 	end,
 	function()
 		local _, spot = WG.bardroidBuildmenu.droidPanel()

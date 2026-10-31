@@ -326,6 +326,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       3486, 4702 and 5895, and the order put away. A bookmark's recall keeps the tilt, in both controller modes.
       New for tests without a pad: `adb shell input joystick motionevent MOVE 0.7 0.1` is the left stick, and
       `input keyevent --duration <ms> KEYCODE_BUTTON_L1 &` holds a button, so chords run through the app's real path.
+- [x] More through the app's real pad path on the dev phone (2026-10-30): a fight path with RB held, five orders along it,
+      each with Alt; a first-person walk with the stick, the unit stopping when let go and B ending the ride. The zoom
+      case in `touch-widget-test` passes: 0.17 with LT, 0.06 without, 3 times as v0.8.5's. `touch-widget-test -TestWidget
+      <file>` runs one widget in place of the cases (2.5 min, not 15, for one question). The nudge case read its result
+      one frame too soon at 4 fps, so it failed by chance; it waits 1 s. The PLACE panel is solid: the order menu's
+      buttons showed through it.
 - [x] `tools/laptop-tests.ps1` with all of the 2026-10-30 fixes in: all 13 pass. `tools/publish-check.ps1 -NoHistory`:
       ready to publish; `tools/pace-test.ps1`: all pass.
 - [x] First person's squad with real units on the dev phone: 3 Pawns, a Rocketeer and a Mace taken by "add units", the

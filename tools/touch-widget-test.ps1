@@ -8,6 +8,7 @@ param(
   [string]$Map = "supreme_isthmus_v2.1.sd7",
   [string]$MapName = "Supreme Isthmus v2.1",
   [string]$Widget = "",   # another bardroid_touch.lua to test (default: the app's)
+  [string]$TestWidget = "",   # a test widget in place of the cases, for one question (it logs "[touchtest] done" to end)
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
   # also the "what is under the pointer" checks, which move the laptop's real mouse pointer (Spring.WarpMouse): off by
   # default (Kailil, 2026-10-28: the tests must not take his mouse); run them when nobody is using the laptop
@@ -46,7 +47,8 @@ try {
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_pad.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_padspeed.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_padfp.lua") "$Data\LuaUI\Widgets\" -Force
-  Copy-Item (Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua") "$Data\LuaUI\Widgets\" -Force
+  $cases = if ($TestWidget) { $TestWidget } else { Join-Path $PSScriptRoot "touch-widget-test\bardroid_touch_test.lua" }
+  Copy-Item $cases "$Data\LuaUI\Widgets\bardroid_touch_test.lua" -Force
   Remove-Item "$Data\LuaUI\Config\bardroid_hover.txt", "$Data\LuaUI\Config\bardroid_screen.txt" -ErrorAction SilentlyContinue
   # the widget orders launch-bar.sh sets on the phone (BAR's own saved settings from a run before are dropped)
   $orders = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
