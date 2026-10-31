@@ -79,6 +79,7 @@ final class PadGame {
     private static final long PATH_ARM_MS = 160;      // a path's order picked: this long later the game has it, its drag starts
     private static final long SELF_DESTRUCT_MS = 750; // Back + R3 + L3 held this long (v0.8.5's)
     private static final long FIRST_PERSON_MS = 300;  // LB + L3 held this long (Kailil, 2026-10-30)
+    private static final long SHIFT_CLICK_MS = 100;   // a Shift click: Shift down this long before it and after (the engine reads the keys once a frame)
     private static final long AREA_REPEAT_AFTER_MS = 250, AREA_REPEAT_MS = 60;   // the D-pad held on the area select
     private static final float FILTER_STICK = 0.25f;  // the filter radial: the left stick this far picks a side
     // (the order menu: half speed, then Kailil: "increase speed by a quarter now")
@@ -100,6 +101,7 @@ final class PadGame {
     private boolean areaCandidate, areaSelect;     // A down with nothing picked (a click, or held: the area select)
     private boolean aPending, xPending;            // A or X down, its button not yet pressed (a click, or held: a drag)
     private long xDownAt = -1, gridExitAt = -1;
+    private long shiftClickAt = -1, shiftUntil = -1;   // X's Shift click, waiting for its Shift; the Shift, until then
     private boolean gridLatched;                   // a grid's drag started with LB: Shift+Alt held until it ends
     private boolean rtNow;                         // RT held this tick (a grid placed with RT keeps the building)
     private boolean filterOpen;                    // X in the area select: v0.8.5's filter radial
@@ -138,7 +140,7 @@ final class PadGame {
         if (alt) { alt = false; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false); }
         java.util.Arrays.fill(prev, false);
         rbDownAt = startLeftAt = startRightAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = xDownAt
-                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = -1;
+                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = -1;
         pathButton = -1;
         if (areaSelect) mouse.act("area_off");
         sticky = drawing = areaCandidate = areaSelect = aPending = xPending = gridLatched = filterOpen = pathDrawing = false;
@@ -196,7 +198,7 @@ final class PadGame {
         // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked
         // Shift+Alt (a grid: the engine lays out a build drag only with Shift), held on while its drag lasts
         boolean gridKeys = (lb && picked) || gridLatched;
-        boolean wantShift = rt || gridKeys;
+        boolean wantShift = rt || gridKeys || now < shiftUntil;
         if (wantShift != shift) { shift = wantShift; mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, wantShift); }
         if (picked && pressed(tapped, LB)) mouse.act("grid_on");   // ("GRID" in v0.8.5's blue)
         if (!menu && !picked && (pressed(tapped, START) || pressed(tapped, BACK))) mouse.act("group_list_on");   // (while held)
@@ -303,6 +305,13 @@ final class PadGame {
     private boolean buttons(boolean[] held, boolean[] tapped, long now, boolean menu, boolean ordersMenu, boolean picked,
                             String armed, boolean lb, float lx, float ly) {
         boolean stickyKind = !menu && ((picked && lb) || armed.equals("area"));
+        if (shiftClickAt >= 0 && now >= shiftClickAt) {
+            shiftClickAt = -1;
+            if (leftDown) leftUp(true);
+            else { mouse.button(true, true); mouse.button(true, false); }
+            // (the engine lets go of the building as Shift comes up: the build menu picks it again; RT's Shift stays)
+            if (picked && !rtNow) mouse.act("build_placed");
+        }
         // v0.8.5's area select (Kailil: "when holding A to select units ... is it not possible to do the 0.8.5 method"):
         // nothing picked, A held past a tap - the click is let go and bardroid_pad.lua's circle selects; B undoes it;
         // X held as well opens v0.8.5's filter radial (Kailil, 2026-10-29): the left stick picks a side (up all mobile,
@@ -338,9 +347,7 @@ final class PadGame {
             if (pressed(tapped, A)) { sticky = false; leftUp(false); return false; }
             if (pressed(tapped, X)) {   // confirm and keep the building picked
                 sticky = false;
-                if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, true);
-                leftUp(true);
-                if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false);
+                shiftClick(now);
                 return false;
             }
             if (pressed(tapped, B)) { mouse.act("cancel"); cancelAt = now; return true; }
@@ -361,7 +368,7 @@ final class PadGame {
             if (reticle) centreNow();
             leftPress(lb && picked);
         }
-        if (leftDown && !held[A] && pathButton < 0) {
+        if (leftDown && !held[A] && pathButton < 0 && shiftClickAt < 0) {
             areaCandidate = false;
             if (stickyKind && aDownAt >= 0 && now - aDownAt < STICKY_TAP_MS) sticky = true;   // a tap: the drag goes on
             else leftUp(false);
@@ -390,12 +397,9 @@ final class PadGame {
             mouse.button(false, true);
         }
         if (rightDown && !held[X] && !pathDrawing) { rightDown = false; mouse.button(false, false); }
-        if (picked && pressed(tapped, X) && !leftDown) {   // place it here and keep it picked
+        if (picked && pressed(tapped, X) && !leftDown && shiftClickAt < 0) {   // place it here and keep it picked
             if (reticle) centreNow();
-            if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, true);
-            mouse.button(true, true);
-            mouse.button(true, false);
-            if (!shift) mouse.key(KeyEvent.KEYCODE_SHIFT_LEFT, false);
+            shiftClick(now);
         }
         if (!menu && picked && pressed(tapped, B)) { mouse.act("cancel"); return true; }
         return false;
@@ -451,6 +455,12 @@ final class PadGame {
             mouse.act(bigger ? "area_bigger" : "area_smaller");
             areaRepeatAt = now + AREA_REPEAT_MS;
         }
+    }
+
+    /** X: Shift now, the click (or the end of a drag) in a moment; Shift and a click in one tick reach the engine as no Shift. */
+    private void shiftClick(long now) {
+        shiftClickAt = now + SHIFT_CLICK_MS;
+        shiftUntil = now + 2 * SHIFT_CLICK_MS;
     }
 
     /** The left button down; grid: a grid's drag (Shift+Alt stay held until it ends). */

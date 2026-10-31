@@ -339,6 +339,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] `PadGame.java` reviewed (2026-10-31): the rest clean, but X, "place it and keep it", had the touch fault below: Shift
+      down, click and Shift up in one tick. A virtual pad on the dev phone showed it: Shift never reached the engine and the
+      building went. Now Shift comes 100 ms before the click and stays 100 ms after, in BAR's game and in the app's controls
+      in the controller game, X at the end of a grid too, and the build menu picks the building again
+      (`build_placed`). Seen after: Shift true, the building still picked, the builder's move order kept and the building
+      behind it. `padgame-test` checks the order. A second X on the same spot takes it off again: BAR's own way. The
+      pad's group list shows an empty slot's number big, in the middle.
 - [x] A building placed by touch did not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md said it did: the engine
       keeps a Shift click's building only while Shift stays down (CGuiHandler `needShift`), and the app lets go of Shift
       100 ms later (seen on the dev phone: active -212 until Shift up, then nil). RtsTouch now says "spot placed", and the

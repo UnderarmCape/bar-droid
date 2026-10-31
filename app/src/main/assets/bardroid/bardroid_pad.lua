@@ -800,6 +800,12 @@ local ACTIONS = {
 	grid_on = function() -- LB with a building picked (PadGame holds Shift+Alt: BAR's grid)
 		note("GRID", BLUE)
 	end,
+	build_placed = function() -- X placed the building: the engine lets go of it as Shift comes up, and X keeps it
+		local b = WG.bardroidBuildmenu
+		if b and b.droidSpot then
+			b.droidSpot(nil, nil, true)
+		end
+	end,
 	build_exit = function() -- a grid placed with A: the building put away, as v0.8.5's A does
 		if pregameBuild() then
 			WG["pregame-build"].setPreGameDefID(nil)
@@ -1114,9 +1120,13 @@ local function drawGroupList(vsx, vsy)
 			local ts = math.floor(size * 0.3)
 			font:Begin()
 			font:SetOutlineColor(0, 0, 0, 0.8 * alpha)
-			font:SetTextColor(1, 1, 1, (empty and 0.6 or 1) * alpha)
-			font:Print(tostring(s.n), x + size * 0.1, y0 + size - ts * 1.05, ts, "o")
-			if not empty then
+			if empty then -- (no unit's picture to share the box with: the slot's number big, in the middle)
+				local big = math.floor(size * 0.46)
+				font:SetTextColor(1, 1, 1, (active and 0.8 or 0.5) * alpha)
+				font:Print(tostring(s.n), x + size / 2, y0 + size / 2 - big * 0.36, big, "co")
+			else
+				font:SetTextColor(1, 1, 1, alpha)
+				font:Print(tostring(s.n), x + size * 0.1, y0 + size - ts * 1.05, ts, "o")
 				font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], alpha)
 				font:Print(tostring(#s.units), x + size * 0.92, y0 + size * 0.08, ts, "ro")
 			end

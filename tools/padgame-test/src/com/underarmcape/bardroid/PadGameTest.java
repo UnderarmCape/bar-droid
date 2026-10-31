@@ -238,8 +238,9 @@ public final class PadGameTest {
         t.tick(LB);
         t.m.out.clear();
         t.tap(A); t.tap(X);
+        t.wait(150);
         check("X ends a grid placing it and keeping the building (Shift)", t.m.out.indexOf("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
-                < t.m.out.indexOf("left up") && t.has("left up"), t.m.out);
+                < t.m.out.indexOf("left up") && t.has("left up") && t.has("act build_placed"), t.m.out);
         t.m.out.clear();
         t.tap(A); t.tap(B);
         check("B in a grid: cancel first", t.has("act cancel") && !t.has("left up"), t.m.out);
@@ -261,8 +262,14 @@ public final class PadGameTest {
         check("a building picked, no LB: A places it (down and up)", t.has("left down") && t.has("left up"), t.m.out);
         t.m.out.clear();
         t.tap(X);
+        check("X: Shift first, the click a moment later (one tick reaches the engine as no Shift)",
+                t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down") && !t.has("left down"), t.m.out);
+        t.wait(120);
         check("X places it and keeps it (a Shift click)", t.m.out.indexOf("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down")
-                < t.m.out.indexOf("left down") && t.has("left up") && !t.has("right down"), t.m.out);
+                < t.m.out.indexOf("left down") && t.has("left up") && !t.has("right down") && t.has("act build_placed")
+                && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up"), t.m.out);
+        t.wait(120);
+        check("... and Shift up a moment after the click", t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up"), t.m.out);
         t.m.out.clear();
         t.tap(BACK);
         check("Back alone while placing: the slow pan", t.has("act slow_pan"), t.m.out);
