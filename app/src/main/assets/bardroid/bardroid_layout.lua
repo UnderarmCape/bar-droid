@@ -425,6 +425,9 @@ local function outline(x0, y0, x1, y1, color, width, fill)
 	gl.Rect(x1 - width, y0, x1, y1)
 end
 
+-- (the hint crosses the build menu: nothing shows through its words)
+local BAR_HINT, BAR_BUTTON, BAR_LIT = { 0, 0, 0, 0.85 }, { 0.08, 0.08, 0.08, 0.92 }, { 0.25, 0.22, 0.06, 0.92 }
+
 function widget:DrawScreen()
 	if not isOpen then
 		return
@@ -453,12 +456,14 @@ function widget:DrawScreen()
 		end
 	end
 	for _, b in ipairs(buttons) do
-		if b.action then
-			gl.Color(b.lit and 0.25 or 0.08, b.lit and 0.22 or 0.08, b.lit and 0.06 or 0.08, 0.92)
+		local c = not b.action and BAR_HINT or b.lit and BAR_LIT or BAR_BUTTON
+		local f = WG.FlowUI
+		if f and f.Draw and f.Draw.RectRound then
+			f.Draw.RectRound(b.x0, b.y0, b.x1, b.y1, f.elementCorner or 4, 1, 1, 1, 1, c, c)
 		else
-			gl.Color(0, 0, 0, 0.85) -- (it crosses the build menu: nothing shows through the words)
+			gl.Color(c)
+			gl.Rect(b.x0, b.y0, b.x1, b.y1)
 		end
-		gl.Rect(b.x0, b.y0, b.x1, b.y1)
 		if font then
 			font:Begin()
 			font:Print((b.lit and "\255\255\225\110" or "\255\235\235\235") .. b.label, (b.x0 + b.x1) / 2,
