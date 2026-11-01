@@ -89,8 +89,14 @@ public class LauncherActivity extends AppCompatActivity {
         int fill = LinearLayout.LayoutParams.MATCH_PARENT, wrap = LinearLayout.LayoutParams.WRAP_CONTENT;
         ((LinearLayout) findViewById(R.id.root)).setOrientation(wide ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         findViewById(R.id.top).setLayoutParams(new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : wrap, wide ? 1 : 0));
+        float dp = getResources().getDisplayMetrics().density;
+        int line = Math.max(1, Math.round(dp)), gap = Math.round(12 * dp);
+        LinearLayout.LayoutParams divider = new LinearLayout.LayoutParams(wide ? line : fill, wide ? fill : line);
+        divider.leftMargin = wide ? gap : 0;
+        divider.topMargin = wide ? 0 : Math.round(6 * dp);
+        findViewById(R.id.divider).setLayoutParams(divider);
         LinearLayout.LayoutParams settings = new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : 0, 1);
-        settings.leftMargin = wide ? Math.round(12 * getResources().getDisplayMetrics().density) : 0;
+        settings.leftMargin = wide ? gap : 0;
         findViewById(R.id.settings).setLayoutParams(settings);
     }
 
