@@ -342,7 +342,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] Kailil's game read back from the Fold7 (2026-11-01): its replay's start script has 19 players on BAR test-31774 with
       `allowunitcontrolwidgets=0`, `allowuserwidgets=1`, the rules `pad-test -Online` now plays by, and launcher.log the
       Android-layer miss at 20:49, just before it: both causes confirmed from the game itself. No widget error in 52
-      game minutes; 22-25 fps at the end with about 3,500 units, thermal status 3. The launcher says "Ready" at rest.
+      game minutes; 22-25 fps at the end with about 3,500 units, thermal status 3. The launcher says "Ready" at rest, and
+      counts missed adjustments from the last start's own list: the state's count, written when a game ends, stayed old
+      after a game that was stopped (it still showed BAR's menu after the fix).
 - [x] Soak of the pad fixes on the dev phone (2026-11-01): over 7 minutes of BAR's own game with user widgets' orders forbidden,
       no widget error, no adjustment missed, 29.9 fps. The pad's notes say what happened: "NO ORDERS QUEUED" for L3 or R3 with
       nothing to remove, "NO PING FROM OTHERS YET" for RB + D-pad up with none seen.

@@ -125,7 +125,11 @@ public final class Updater {
         sb.append("BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
         if (s.getProperty("check") != null) sb.append(", last check ").append(s.getProperty("check"));
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
-        try { misses += Integer.parseInt(s.getProperty("layer.misses", "0")); } catch (NumberFormatException ignored) {}
+        // (the last start's own list: the count in the state is written when a game ends, so one stopped kept an old one)
+        File layer = new File(p.bar, "logs/android-layer.txt");
+        if (layer.exists()) try (BufferedReader r = new BufferedReader(new FileReader(layer))) {
+            for (String l; (l = r.readLine()) != null; ) if (!l.trim().isEmpty()) misses++;
+        } catch (IOException ignored) {}
         if (misses > 0) sb.append(". ").append(misses).append(" of the app's adjustments to BAR did not apply: see the log");
         return sb.toString();
     }
