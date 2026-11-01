@@ -142,7 +142,8 @@ powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace lib
 powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online]   # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min; -Online: BAR's released game with user widgets' orders forbidden, as a host can
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
-powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s
+powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s
+powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1                # the same on the dev phone, plus a virtual pad's Start; nothing on the laptop, ~1 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
 powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Cost] [-Settings @{Key=1}]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min; -Cost: its ms and KB per frame; -Settings: engine settings (run it with -Command for a hashtable)
 powershell -ExecutionPolicy Bypass -File tools\fp-tuner.ps1 [-Replay <file.sdfz>] [-SkipTo 240]   # Kailil sets the 1st person camera (laptop); Save -> build\fp-tuner\data\LuaUI\Config\bardroid_fp.lua -> bake into bardroid_spectate.lua FP

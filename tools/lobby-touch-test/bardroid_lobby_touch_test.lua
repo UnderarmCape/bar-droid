@@ -24,7 +24,7 @@ local t, step, wait = 0, 0, 0
 local fails = 0
 local window, scroll, rows, maps, clicked = nil, nil, {}, {}, {}
 local startScroll, dragScroll, clicksBefore, screenSize
-local settleFrom, settleSeconds
+local settleFrom, settleSeconds, scaleLogged
 local SCALE_KEY = 302 -- Scroll Lock: what the pad's Start sends in the lobby (ControllerBridge)
 
 -- the next case runs after the widget's own check of the server's settings
@@ -44,8 +44,8 @@ local function warningWindow()
 	end
 end
 
-local function warningText()
-	return WG.BarDroidLobbyTouch.warning() or ""
+local function warningText() -- (without its colour codes)
+	return (WG.BarDroidLobbyTouch.warning() or ""):gsub("\255...", "")
 end
 
 local function press(key)
@@ -84,6 +84,17 @@ local function tap(c, fx)
 	local x, y = mouseAt(c, fx)
 	finger.press(x, y)
 	finger.release(x, y)
+end
+
+-- a finger on the warning's OK
+local function tapOk()
+	for _, c in ipairs(warningWindow() and warningWindow().children or {}) do
+		if c.caption == "OK" then
+			tap(c)
+			return true
+		end
+	end
+	return false
 end
 
 -- (Chili hands out its controls wrapped: compare what they show)
@@ -264,20 +275,30 @@ cases = {
 	function()
 		check("unit control widgets off: only first person", warningWindow() ~= nil
 			and warningText():find("First person will not work", 1, true) ~= nil, warningText())
-		local ok
-		for _, c in ipairs(warningWindow() and warningWindow().children or {}) do
-			if c.caption == "OK" then
-				ok = c
-			end
-		end
-		check("the warning has an OK button", ok ~= nil)
-		if ok then
-			tap(ok)
-		end
+		check("the warning has an OK button", tapOk())
 		settle()
 	end,
 	function()
 		check("OK closes it, and it stays closed", warningWindow() == nil, warningText())
+		setTags("game/modoptions/allowunitcontrolwidgets=1")
+		settle()
+	end,
+	function()
+		setTags("game/modoptions/allowunitcontrolwidgets=0")
+		settle()
+	end,
+	function()
+		check("the host takes the setting back and sets it again: shown again", warningWindow() ~= nil, warningText())
+		tapOk()
+		settle()
+	end,
+	function()
+		WG.LibLobby.lobby.myBattleID = 90002
+		settle()
+	end,
+	function()
+		check("the same setting in another server: shown again", warningWindow() ~= nil, warningText())
+		tapOk()
 		setTags("game/modoptions/teamcolors_anonymous_mode=global")
 		settle()
 	end,
@@ -321,6 +342,13 @@ function widget:Update()
 			return
 		end
 		settleSeconds = nil
+	end
+	if step > #cases then -- (tools\lobby-phone-test.ps1: what a pad's Start does afterwards)
+		if WG.uiScale ~= scaleLogged then
+			scaleLogged = WG.uiScale
+			log(string.format("scale %d%%", scaleLogged * 100 + 0.5))
+		end
+		return
 	end
 	wait = wait - 1
 	if wait > 0 then

@@ -32,8 +32,8 @@ local SCALE_KEY = 302 -- Scroll Lock (the engine's key code): ControllerBridge s
 local SCALE_SMALL, SCALE_LARGE = 1.0, 1.3
 local WARNING_CHECK_S = 0.5 -- a joined server's settings arrive after the join, and its host can change them later
 local OFF_VALUES = { ["0"] = true, ["false"] = true }
-local WARNING_RED = { fill = { 0.5, 0.06, 0.05, 1 }, edge = { 0.95, 0.3, 0.25, 1 } }
-local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2, 1 } }
+local WARNING_RED = { fill = { 0.5, 0.06, 0.05, 1 }, edge = { 0.95, 0.3, 0.25, 1 }, title = "\255\255\205\170" }
+local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2, 1 }, title = "\255\255\225\130" }
 
 local Chili, screen0
 local press, fling
@@ -251,15 +251,19 @@ end
 -- custom widgets off, or Anonymous Mode, keeps all of them out of a player's game (a spectator's game is exempt);
 -- unit control widgets off only stops first person (the rest of the app gives no Spring.GiveOrder).
 
+local function warningLines(title, why, colour)
+	return colour.title .. title .. "\n\255\255\255\255" .. why, colour
+end
+
 local function controlsWarning(options)
 	local anonymous = options.teamcolors_anonymous_mode
 	if OFF_VALUES[tostring(options.allowuserwidgets)] or (anonymous and anonymous ~= "disabled") then
-		return "Touch and gamepad controls will not work if you play here\n"
-			.. "The host turned off custom widgets. They do work if you spectate.", WARNING_RED
+		return warningLines("Touch and gamepad controls will not work if you play here",
+			"The host turned off custom widgets. They do work if you spectate.", WARNING_RED)
 	end
 	if OFF_VALUES[tostring(options.allowunitcontrolwidgets)] then
-		return "First person will not work in this game\n"
-			.. "The host turned off unit control widgets. Touch and gamepad controls work.", WARNING_AMBER
+		return warningLines("First person will not work in this game",
+			"The host turned off unit control widgets. Touch and gamepad controls work.", WARNING_AMBER)
 	end
 end
 
@@ -294,7 +298,7 @@ local function makeWarning()
 	warningText = Chili.TextBox:New({
 		parent = warning,
 		x = 14,
-		y = 16,
+		y = 27,
 		right = 118,
 		bottom = 0,
 		text = "",
