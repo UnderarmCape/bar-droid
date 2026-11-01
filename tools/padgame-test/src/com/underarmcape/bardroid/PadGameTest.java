@@ -42,6 +42,8 @@ public final class PadGameTest {
         public float drawSpeed() { return speed; }
         boolean riding;
         public boolean firstPerson() { return riding; }
+        int clicks;
+        public int clicks() { return clicks; }
     }
 
     final Fake m = new Fake();
@@ -98,6 +100,51 @@ public final class PadGameTest {
         t.tick(); t.m.out.clear();
         t.tap(RB); t.wait(50);
         check("RB tapped: the build menu", t.has("act pad_build") && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
+
+        t = new PadGameTest();
+        t.tick(); t.m.out.clear();
+        t.tick(RB); t.tap(DPAD_UP); t.wait(300); t.up(RB); t.wait(50);
+        check("RB + D-pad up tapped: to the last ping, and nothing of RB's or the D-pad's own", t.has("act ping_look")
+                && !t.has("act ping") && !t.has("act pad_build") && !t.has("act bookmark_recall")
+                && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
+        t.m.out.clear();
+        t.tick(RB); t.tick(DPAD_UP); t.wait(400);
+        check("RB + D-pad up held: a ping", t.has("act ping") && !t.has("act ping_look"), t.m.out);
+        t.up(DPAD_UP); t.up(RB); t.wait(50);
+        check("... and nothing more when let go", !t.has("act ping_look") && !t.has("act pad_build"), t.m.out);
+        t.m.out.clear();
+        t.tick(RB); t.tap(DPAD_DOWN); t.up(RB); t.wait(50);
+        check("RB + D-pad down: every combat unit, not the commander", t.has("act select_combat") && !t.has("act commander")
+                && !t.has("act pad_build"), t.m.out);
+        t.m.out.clear();
+        t.tick(RB); t.tap(DPAD_RIGHT); t.up(RB); t.wait(50);
+        check("RB + D-pad right: the combat units on the screen, not the next idle builder",
+                t.has("act select_combat_screen") && !t.has("act idle_next"), t.m.out);
+        t.m.out.clear();
+        t.tick(RB); t.wait(300); t.tap(DPAD_DOWN); t.wait(50);
+        check("RB held long first: the D-pad still counts, and Space lets go", t.has("act select_combat")
+                && t.m.out.lastIndexOf("key " + KeyEvent.KEYCODE_SPACE + " up") > t.m.out.indexOf("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
+        t.up(RB); t.m.out.clear();
+        t.tap(DPAD_DOWN); t.wait(50);
+        check("RB let go: D-pad down is the commander again", t.has("act commander"), t.m.out);
+
+        t = new PadGameTest();
+        t.tick(); t.m.clicks = 3; t.tick(); t.m.out.clear();   // (the count a game left in the file: no click)
+        t.m.clicks = 4; t.wait(50);
+        check("the game asks for a click (an order it could not give): one, in the middle", t.has("centre") && t.has("left down")
+                && t.has("left up") && t.m.out.indexOf("centre") < t.m.out.indexOf("left down") && t.m.out.size() == 3, t.m.out);
+        t.m.out.clear();
+        t.m.clicks = 0; t.wait(50);
+        check("a new game counts from 0: no click", !t.has("left down"), t.m.out);
+
+        String patches = "made from {release} {md5}\n\u001eone\ntwo\u001eONE\ntwo\u001ethree\u001eTHREE";
+        check("the build menu made on the phone: BAR's file, the patches in, the header on top",
+                BuildMenuPatches.apply("one\r\ntwo\nthree\n", patches, "BAR 1", "abc").equals("made from BAR 1 abc\nONE\ntwo\nTHREE\n"), "");
+        for (String bad : new String[]{"one\ntwo\n", "one\ntwo\nthree three\n"}) {
+            boolean refused = false;
+            try { BuildMenuPatches.apply(bad, patches, "BAR 1", "abc"); } catch (IllegalArgumentException e) { refused = true; }
+            check("... a patch with no one place: refused, the last copy stays", refused, bad);
+        }
 
         t = new PadGameTest();
         t.tick(); t.m.out.clear();
@@ -468,6 +515,9 @@ public final class PadGameTest {
         t.tap(LS); t.tap(RS);
         check("L3 / R3: the next / last queued order removed", t.has("act queue_remove_first")
                 && t.has("act queue_remove_last") && !t.has("act dgun"), t.m.out);
+        check("... by the keys bound to BAR's Command Queue Manager, a key press, not a widget's order",
+                t.has("key " + KeyEvent.KEYCODE_INSERT + " down") && t.has("key " + KeyEvent.KEYCODE_INSERT + " up")
+                && t.has("key " + KeyEvent.KEYCODE_NUMPAD_DIVIDE + " down") && t.has("key " + KeyEvent.KEYCODE_NUMPAD_DIVIDE + " up"), t.m.out);
         t.m.out.clear();
         t.tick(BACK); t.tap(RS); t.up(BACK);
         check("Back + R3: the D-gun, no order removed", t.has("act dgun") && !t.has("act queue_remove_last"), t.m.out);

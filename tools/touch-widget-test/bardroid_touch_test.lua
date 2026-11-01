@@ -1391,9 +1391,9 @@ cases = {
 		local def = sel[1] and UnitDefs[Spring.GetUnitDefID(sel[1])]
 		verify("pad: D-pad down selects the commander", def and def.customParams.iscommander, def and def.name)
 		before.com = sel[1]
-		if sel[1] then -- two orders queued, then R3: the last one removed (where unit control is allowed, as here)
+		if sel[1] then -- orders queued, for LB + B to stop
 			-- (behind a WAIT, so they are still queued however long the next steps take: at 5 fps the commander walked
-			-- both moves before R3 came)
+			-- both moves first)
 			local x, y, z = Spring.GetUnitPosition(sel[1])
 			Spring.GiveOrderToUnit(sel[1], CMD.STOP, {}, 0)
 			Spring.GiveOrderToUnit(sel[1], CMD.WAIT, {}, 0)
@@ -1406,20 +1406,17 @@ cases = {
 		if not before.com then
 			return
 		end
-		before.queued = Spring.GetUnitCommandCount(before.com)
-		local queue = Spring.GetUnitCommands(before.com, -1) or {}
-		before.lastQueued = queue[#queue] and queue[#queue].params[1]
-		touch("act queue_remove_last")
-		return 0.3
-	end,
-	function()
-		if not before.com then
-			return
+		-- (L3 and R3 press these keys, PadGame; tools/pad-test.ps1 -Online presses them on a phone)
+		local function bound(action, key)
+			for _, k in ipairs(Spring.GetActionHotKeys(action) or {}) do
+				if k == key then
+					return true
+				end
+			end
+			return false
 		end
-		local queue = Spring.GetUnitCommands(before.com, -1) or {}
-		local last = queue[#queue] and queue[#queue].params[1]
-		verify("pad: R3 removes the last queued order", before.queued == 3 and #queue == 2 and last ~= before.lastQueued,
-			before.queued .. " -> " .. #queue)
+		verify("pad: L3's key is bound to BAR's Command Queue Manager", bound("command_skip_current", "insert"))
+		verify("pad: R3's key too", bound("command_cancel_last", "numpad/"))
 		touch("act lb_b") -- (LB + B: stop)
 		return 0.3
 	end,

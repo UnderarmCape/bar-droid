@@ -339,6 +339,16 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       starts a unit's self-destruct. The spectator bar never set its text colour, so its labels took a dim grey from
       whatever drew last: white now. All the app's widgets checked for the same: only the layout editor's panel labels,
       fixed; chat and the info panel carry their colours in the text.
+- [x] Kailil's 40-minute online game with the pad (2026-11-01): "I should have no cases of that happening". RB had no build
+      menu: BAR's update the evening before had turned the app's copy off (Back + RB is BAR's own menu, so it worked). The
+      phone now makes the copy again itself, a copy it cannot remake still runs, and it runs with the controller game
+      switched off too. L3 / R3 said "NOT IN THIS GAME" where the host forbids user widgets' orders: they press two keys
+      now, Insert and numpad /, bound to BAR's Command Queue Manager (it takes key presses only, no `SendCommands`);
+      self-destruct and LB + B go by BAR's order picks, and an order at the middle is picked and clicked by the app. New:
+      RB + D-pad up (held: a ping; tapped: to the last ping from someone else), down (all combat units), right (those on
+      the screen). `pad-test -Online` plays all of it through a virtual pad with BAR's "Allow Custom 'Unit Control' Widgets"
+      really off (Kailil's idea; its first check proves the game refuses a widget's order): 11 of 11. The laptop's
+      `touch-widget-test -NoUnitControl` (in laptop-tests) still has to run, with Kailil away from the laptop.
 - [x] BAR's update to test-31774 (2026-10-31, 17:42) changed `gui_buildmenu.lua`, and the phones fell back to BAR's own menu,
       as they are meant to; the launcher named it. The copy is made again from the release on the dev phone: all 24 patches
       apply. The laptop's BAR is still on an older release until Kailil starts it, so `make-buildmenu.py --adb` now reads a

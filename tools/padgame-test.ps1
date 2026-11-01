@@ -12,7 +12,7 @@ $java = Join-Path (Split-Path $javac) "java.exe"
 $env:JAVA_TOOL_OPTIONS = "-Duser.home=$(Join-Path $TC 'home') -Djava.io.tmpdir=$Work"
 $src = Join-Path $App "app\src\main\java\com\underarmcape\bardroid"
 $sources = @(Get-ChildItem (Join-Path $PSScriptRoot "padgame-test\src") -Recurse -Filter *.java | ForEach-Object FullName) +
-  (Join-Path $src "PadGame.java") + (Join-Path $src "PadMouse.java") + (Join-Path $src "PadButtons.java")
+  (Join-Path $src "PadGame.java") + (Join-Path $src "PadMouse.java") + (Join-Path $src "PadButtons.java") + (Join-Path $src "BuildMenuPatches.java")
 & $javac -nowarn -d $Work $sources
 if ($LASTEXITCODE -ne 0) { throw "javac failed" }
 & $java -cp $Work com.underarmcape.bardroid.PadGameTest

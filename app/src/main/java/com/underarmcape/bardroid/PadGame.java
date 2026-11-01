@@ -48,6 +48,8 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *                pointer at 5/8 speed there)
  *   D-pad        right / left: next / previous idle builder; down: the commander; up: camera bookmark (LT + up: store)
  *   LB + D-pad   right / left: next / previous idle unit of the rest; down: every idle unit of the last one's type
+ *   RB + D-pad   up tapped: the camera to the last ping from someone else; up held: a ping at the middle; down: every
+ *                combat unit; right: the combat units on the screen (Kailil, 2026-11-01)
  *   LB + A/X/Y   fight (attack the enemy there) / attack / patrol, at the middle; LB + B: stop (twice: repeat; held: wait)
  *                LB + A or Y held past HOLD_MS: draws a fight or patrol path with the left stick, until let go (LB may
  *                be let go; RB held at the end: Alt, the other fight)
@@ -115,6 +117,9 @@ final class PadGame {
     private boolean drawFast;                      // the stick was moving as the drawing began: LT does not slow it
     private long areaRepeatAt = -1, selfDestructAt = -1, dgunAt = -1, fpDownAt = -1;
     private boolean selfDestructDone, fpDone, fpFiring, wasRiding;
+    private long rbUpAt = -1;                      // RB + D-pad up: a tap the last ping, held a ping
+    private boolean rbUpDone, rbDpad;              // ... held; RB is with the D-pad, not a modifier for a click
+    private int seenClicks = -1;                   // the game's clicks done (bardroid_pad.lua: an order it could not give)
     private float fracX, fracY;
 
     PadGame(PadMouse mouse) { this.mouse = mouse; }
@@ -140,8 +145,9 @@ final class PadGame {
         if (alt) { alt = false; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false); }
         java.util.Arrays.fill(prev, false);
         rbDownAt = startLeftAt = startRightAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = xDownAt
-                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = -1;
+                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = rbUpAt = -1;
         pathButton = -1;
+        rbDpad = false;
         if (areaSelect) mouse.act("area_off");
         sticky = drawing = areaCandidate = areaSelect = aPending = xPending = gridLatched = filterOpen = pathDrawing = false;
         centreWanted = waitForPad = true;
@@ -230,20 +236,29 @@ final class PadGame {
 
         // RB: a quick tap the build menu (on it: its next page); held past the tap (or with another button) a modifier
         if (!back && pressed(tapped, RB)) { rbDownAt = now; rbUsed = false; }
+        if (held[RB] && rbDownAt >= 0 && anyDpad(tapped)) rbDpad = rbUsed = true;
         if (held[RB] && rbDownAt >= 0 && !rbUsed && (now - rbDownAt > RB_TAP_MS || anyFace(tapped) || pathDrawing)) rbUsed = true;
         boolean rbHeld = held[RB] && rbUsed && rbDownAt >= 0;
-        boolean wantSpace = rbHeld && !buildMenu && !pathDrawing;
+        boolean wantSpace = rbHeld && !buildMenu && !pathDrawing && !rbDpad;
         if (wantSpace != space) { space = wantSpace; mouse.key(KeyEvent.KEYCODE_SPACE, wantSpace); }
         boolean wantAlt = gridKeys || (rbHeld && (buildMenu || pathDrawing));   // (a path: the other fight)
         if (wantAlt != alt) { alt = wantAlt; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, wantAlt); }
         if (released(held, tapped, RB)) {
             if (rbDownAt >= 0 && !rbUsed) mouse.act(buildMenu ? "pad_page_next" : "pad_build");
             rbDownAt = -1;
+            rbDpad = false;
         }
         if (buildMenu && pressed(tapped, LB)) mouse.act("pad_page_prev");   // (Kailil: "pressing RB or LB cycles the tabs")
 
         boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb, lx, ly);
         paths(held, now);
+        int clicks = mouse.clicks();   // (a game that keeps widgets from giving orders: the order is picked, the click is here)
+        if (clicks > seenClicks && seenClicks >= 0 && reticle) {
+            centreNow();
+            mouse.button(true, true);
+            mouse.button(true, false);
+        }
+        seenClicks = clicks;
 
         // The pointer: drawing (a mouse button held in the middle's place) the left stick moves it; else in the middle,
         // gliding back to it; free (a menu, Back+Start, before the start) the left stick moves it
@@ -536,8 +551,18 @@ final class PadGame {
             }
         }
         if (!groups) {
-            if (lb) dpad(tapped, null, "idle_type", "idle_mobile_prev", "idle_mobile_next");
+            if (held[RB] && rbDownAt >= 0) {   // (Kailil, 2026-11-01)
+                if (pressed(tapped, DPAD_UP)) { rbUpAt = now; rbUpDone = false; }
+                dpad(tapped, null, "select_combat", null, "select_combat_screen");
+            } else if (lb) dpad(tapped, null, "idle_type", "idle_mobile_prev", "idle_mobile_next");
             else dpad(tapped, lt ? "bookmark_store" : "bookmark_recall", "commander", "idle_prev", "idle_next");
+        }
+        if (rbUpAt >= 0) {   // (also if RB lets go first)
+            if (!rbUpDone && held[DPAD_UP] && now - rbUpAt >= ASSIGN_HOLD_MS) { rbUpDone = true; mouse.act("ping"); }
+            if (released(held, tapped, DPAD_UP)) {
+                if (!rbUpDone) mouse.act("ping_look");
+                rbUpAt = -1;
+            }
         }
         // B: cancel; with LB stop, twice repeat, held wait - decided once it is clear which (Kailil: double tap and
         // hold "triggers stop first")
@@ -568,9 +593,16 @@ final class PadGame {
             if (pressed(tapped, X)) mouse.act("lb_x");
         }
         if (!start && !back) {
-            if (pressed(tapped, LS) && !lb) mouse.act("queue_remove_first");   // (LB + L3: first person)
-            if (pressed(tapped, RS)) mouse.act("queue_remove_last");
+            if (pressed(tapped, LS) && !lb) queueKey(KeyEvent.KEYCODE_INSERT, "queue_remove_first");   // (LB + L3: first person)
+            if (pressed(tapped, RS)) queueKey(KeyEvent.KEYCODE_NUMPAD_DIVIDE, "queue_remove_last");
         }
+    }
+
+    /** A queued order off: a key press, as a player's hotkey, which no host can forbid (bardroid_pad.lua binds the key). */
+    private void queueKey(int keyCode, String note) {
+        mouse.key(keyCode, true);
+        mouse.key(keyCode, false);
+        mouse.act(note);
     }
 
     /** The D-pad's four presses as actions (null: none); DPAD_UP, DOWN, LEFT, RIGHT follow each other (SDL order). */
@@ -585,5 +617,9 @@ final class PadGame {
 
     private static boolean anyFace(boolean[] tapped) {
         return tapped[A] || tapped[B] || tapped[X] || tapped[Y];
+    }
+
+    private static boolean anyDpad(boolean[] tapped) {
+        return tapped[DPAD_UP] || tapped[DPAD_DOWN] || tapped[DPAD_LEFT] || tapped[DPAD_RIGHT];
     }
 }

@@ -56,7 +56,10 @@ The first version meant for other people's phones: everything since the first bu
   queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
   the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu:
-  once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away).
+  once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away). RB + D-pad:
+  up held a ping in the middle, up tapped the camera to the last ping from another player, down every combat unit,
+  right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;
+  only first person does not.
 - The app's controller interface in one look with BAR's own: notes, the filter radial and the group strip in BAR's
   panels and font, sized by the interface scale (about the same on both Fold screens); the pad's place on the build
   and order menus a thin gold line; a pad button named in a note shown as its coloured key.

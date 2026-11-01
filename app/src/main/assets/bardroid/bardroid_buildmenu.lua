@@ -1,10 +1,10 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31774-68ba3b1, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31777-b750759, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
--- launch-bar.sh runs it instead of BAR's Build menu only while the BAR release on the phone has the same file as the
--- line below (Installer writes the md5 of BAR's file to .bardroid-buildmenu); in the controller game, which keeps its
+-- launch-bar.sh runs it instead of BAR's Build menu; when an update changes BAR's file the phone makes it again from the
+-- new file (the line below names the one it was made from; Installer, BuildMenuPatches); in the controller game, which keeps its
 -- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
 -- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
 -- BARDROID_BUILDMENU_FROM 5fd93aec8f49ed557597312788ecdb14

@@ -7,9 +7,10 @@ place and size from the app's layout editor (bardroid_layout.lua) and the few wi
 through BAR's stand-in for the handler. Each change is marked "BAR Droid:" in the copy.
 
 Takes BAR's luaui/Widgets/gui_buildmenu.lua from the byar:test release in a BAR data folder's rapid pool (BAR's Windows
-install, as the laptop checks use it) and records its pool md5: launch-bar.sh runs the copy only while the phone's BAR
-release has that same file (Installer writes its md5 to .bardroid-buildmenu), so a BAR update to its build menu brings
-BAR's own back until this is run again. A patch that no longer finds its place stops the tool.
+install, as the laptop checks use it) and records its pool md5. It also writes the patches beside the copy: when an
+update changes BAR's file the phone makes the copy again itself (Installer, BuildMenuPatches), so a new app is needed only
+when BAR rewrites a part a patch needs; until then the phone keeps running the copy it has. A patch that no longer finds
+its place stops the tool.
 A phone that updated first (the laptop's BAR updates only when it is started): --adb reads the release off the phone.
     python -I tools/make-buildmenu.py [--bar-data <BAR data folder> | --adb <adb.exe>]   (ANDROID_SERIAL names the phone)
 """
@@ -21,6 +22,7 @@ import sys
 
 APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(APP, "app", "src", "main", "assets", "bardroid", "bardroid_buildmenu.lua")
+PATCHES_OUT = os.path.join(APP, "app", "src", "main", "assets", "bardroid", "bardroid_buildmenu.patches")
 FILE = "luaui/widgets/gui_buildmenu.lua"
 PACKAGE = "com.underarmcape.bardroid"
 
@@ -68,8 +70,8 @@ HEADER = """\
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
--- launch-bar.sh runs it instead of BAR's Build menu only while the BAR release on the phone has the same file as the
--- line below (Installer writes the md5 of BAR's file to .bardroid-buildmenu); in the controller game, which keeps its
+-- launch-bar.sh runs it instead of BAR's Build menu; when an update changes BAR's file the phone makes it again from the
+-- new file (the line below names the one it was made from; Installer, BuildMenuPatches); in the controller game, which keeps its
 -- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
 -- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
 -- BARDROID_BUILDMENU_FROM {md5}
@@ -956,6 +958,9 @@ def main():
         text = text.replace(find, repl)
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(HEADER.format(release=release, md5=md5) + text)
+    # (the same patches for the phone: Installer makes the copy again when an update changes BAR's file, BuildMenuPatches)
+    with open(PATCHES_OUT, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\x1e".join([HEADER] + [part for patch in PATCHES for part in patch]))
     print(f"{OUT}: {release}, {FILE} {md5}, {len(PATCHES)} patches")
 
 

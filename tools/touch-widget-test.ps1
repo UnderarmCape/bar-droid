@@ -10,6 +10,7 @@ param(
   [string]$Widget = "",   # another bardroid_touch.lua to test (default: the app's)
   [string]$TestWidget = "",   # a test widget in place of the cases, for one question (it logs "[touchtest] done" to end)
   [switch]$GamepadGame,   # the controller game (v0.8.5) as unpacked by tools\profile-gamepad-game.ps1, not byar:test
+  [switch]$NoUnitControl, # BAR's "Allow Custom 'Unit Control' Widgets" unticked, as a host can (with -TestWidget ...\bardroid_rule_off_test.lua)
   # also the "what is under the pointer" checks, which move the laptop's real mouse pointer (Spring.WarpMouse): off by
   # default (Kailil, 2026-10-28: the tests must not take his mouse); run them when nobody is using the laptop
   [switch]$Pointer,
@@ -93,6 +94,7 @@ try {
   if (Test-Path (Join-Path $EngineDir "AI\Skirmish\NullAI\0.1\AIInfo.lua")) {
     $script = $script.Replace("ShortName=BARb;", "ShortName=NullAI;").Replace("Version=stable;", "Version=0.1;")
   }
+  if ($NoUnitControl) { $script = $script.Replace("deathmode=com;", "deathmode=com;`n`t`tallowunitcontrolwidgets=0;") }
   $startscript = Join-Path $Work "skirmish.txt"
   $script | Set-Content $startscript -Encoding ascii
 

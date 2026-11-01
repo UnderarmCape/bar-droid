@@ -1097,6 +1097,9 @@ final class RtsTouch {
                 if (f[0].equals("armed")) picked = f[1];
                 if (f[0].equals("queue")) queue = f[1].equals("1");
                 if (f[0].equals("fp")) riding = f[1].equals("1");
+                if (f[0].equals("click")) {
+                    try { padClicks = Integer.parseInt(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
+                }
                 if (f[0].equals("drawspeed")) {
                     try { drawSpeed = Float.parseFloat(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
                 }
@@ -1117,6 +1120,9 @@ final class RtsTouch {
     private volatile boolean firstPerson;
     /** The gamepad rides a unit (bardroid_padfp.lua). Any thread. */
     boolean firstPerson() { padState(); return firstPerson; }
+    private volatile int padClicks;
+    /** Clicks in the middle the game has asked of the pad so far (bardroid_pad.lua: an order it could not give). Any thread. */
+    int clicks() { padState(); return padClicks; }
     private volatile float drawSpeed = 1;
     /** The pointer's speed while drawing, for the camera's zoom (bardroid_padspeed.lua). Any thread. */
     float drawSpeed() { padState(); return drawSpeed; }

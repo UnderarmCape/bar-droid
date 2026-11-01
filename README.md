@@ -104,6 +104,7 @@ factions' matching unit too.
   | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A). While the pad is in use the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the menu; in the controller game the rest then fill it evenly |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark, its place and zoom (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
+  | RB + D-pad | Up tapped: the camera to the last ping from another player; up held: a ping in the middle of the screen; down: all your combat units; right: your combat units on the screen |
   | LB + A / X / Y / B | Fight (or attack the enemy there) / attack / patrol, in the middle; B: stop (twice: repeat; held: wait; with factories selected: stops them and clears their whole queue). With builders, A repair and X reclaim (A on the target) |
   | Start or Back + D-pad | Control groups: up / down picks the group, left tapped selects it (the camera stays), left held assigns every unit of the selection's types (and those to come), right tapped moves the camera to it, right held clears it; Start + L3 clears it too. While Start or Back is held (and a moment after) a strip shows a box for each group that has units |
   | LB + A / Y held | Draws a fight / patrol path with the left stick until let go, the units spread along it as on a move path (LB may be let go; RB held: Alt, the other fight) |
@@ -114,8 +115,9 @@ factions' matching unit too.
   | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid ("GRID" shows) - A starts it, the left stick draws it (LB may be let go then), A places it (X: and keeps the building), B cancels |
   | An area order picked (area mex) | A starts its circle, the left stick draws it, A gives it |
 
-  A lobby can forbid widgets that give units orders (most allow them): there LB + A / X / Y only pick the order (A
-  gives it, in the middle) and L3 / R3 do nothing ("NOT IN THIS GAME").
+  All of this works in online games, also where a lobby forbids widgets that give units orders: the pad goes the way BAR's
+  own hotkeys and menus go (L3 and R3 press Insert and numpad / , which the app binds to BAR's own actions for the game).
+  Only first person needs those widgets ("NOT IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
   to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
   takes v0.8.5's build menu's place. Once the pad is used the menu shows only when RB opens it (as v0.8.5's); three

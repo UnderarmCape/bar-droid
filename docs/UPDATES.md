@@ -115,7 +115,7 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | `drawAtFullSpeed` on (once) | `launch-bar.sh`, `LuaMenu/Config/IGL_data.lua` | until done | no `drawAtFullSpeed` in the file = miss (marker not set) |
 | `gameConfigName` | `launch-bar.sh`, `IGL_data.lua` | every lobby/skirmish start | not set afterwards = miss |
 | Build menu / Grid menu order (controller game) | `launch-bar.sh`, `LuaUI/Config/BYAR.lua` | every start | not set afterwards = miss |
-| The app's copy of BAR's Build menu (`bardroid_buildmenu.lua`, sizeable) in place of BAR's, the controller game's "Build menu (controller)" | `launch-bar.sh` (orders), `Installer` (`.bardroid-buildmenu`: the md5 of BAR's gui_buildmenu.lua) | every start, after the update | BAR's file is not the one the copy was made from = miss, BAR's own runs (rerun `tools/make-buildmenu.py`) |
+| The app's copy of BAR's Build menu (`bardroid_buildmenu.lua`, sizeable) in place of BAR's, the controller game's "Build menu (controller)" | `launch-bar.sh` (orders), `Installer` (`.bardroid-buildmenu`: the md5 of BAR's gui_buildmenu.lua) | every start, after the update | BAR's file changed: the copy is made again on the phone (`Installer.remakeBuildMenu`). A patch with no place = miss, the old copy runs (fix it in `tools/make-buildmenu.py`). A copy BAR removed in a game = miss, BAR's own for that file |
 | Container environment (Mesa, SDL, OpenAL wave writer, `PRD_*`, `libasarm64.so` preload) | `launch-bar.sh`, `Prefs.putGpuEnv` | every launch | none to check; a new engine that breaks it fails fast and rolls back |
 
 A miss is printed as `[launch] !!! ANDROID LAYER: …` (in `files/logs/launcher.log` with all child output), written

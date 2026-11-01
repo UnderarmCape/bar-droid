@@ -9,12 +9,13 @@
 #   lobby-game-test      the lobby's Skirmish screen with the controller game (assets\gamepad, as installed)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
 #                        has unpacked it)
+#                        and with "Allow Custom 'Unit Control' Widgets" unticked (-NoUnitControl): the pad's actions
 #   spectate-test        -QuitCheck: a replay quit in first person leaves no first-person camera for later games
 #   publish-check        -SelfTest: its private-data patterns through git grep, over planted data
 #   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back) and its
 #                        low-memory mode (an 8 GB phone's settings, a 12 GB phone's untouched)
 #   powershell syntax    every tools\*.ps1 parses
-# The phone-side checks are separate: tools\pace-test.ps1 (needs adb).
+# The phone-side checks are separate: tools\pace-test.ps1, tools\pad-test.ps1 [-Online] (need adb).
 # The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's
 # checks of what is under the pointer move the real mouse pointer and run only with -Pointer (nobody at the laptop).
 #   powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1 [-Pointer]
@@ -93,6 +94,7 @@ if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.
   Run "touch widget, controller game" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" (@("-GamepadGame") + $pointerArg)
 } else { $results += "SKIP touch widget, controller game (run tools\profile-gamepad-game.ps1 once)" }
 Run "quit in first person" "spectate-test.ps1" "\[spectest\] done: ALL PASS" @("-QuitCheck")
+Run "pad with unit control widgets off" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" @("-NoUnitControl", "-TestWidget", (Join-Path $Tools "touch-widget-test\bardroid_rule_off_test.lua"))
 
 Write-Host ""
 $results | ForEach-Object { Write-Host $_ }

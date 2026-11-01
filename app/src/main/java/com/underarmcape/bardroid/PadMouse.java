@@ -27,4 +27,5 @@ interface PadMouse {
     String armed();                         // the order picked: "build", "area", "unitarea", "other" or "none"
     float drawSpeed();                      // the pointer's speed while drawing, for the zoom (1: the speed at full zoom out)
     boolean firstPerson();                  // riding a unit (bardroid_padfp.lua, bardroid_pad.txt)
+    int clicks();                           // clicks in the middle the game has asked for so far (bardroid_pad.txt)
 }

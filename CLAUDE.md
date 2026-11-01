@@ -75,9 +75,11 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `bardroid_chat.lua`'s own typing box); panels register with `WG.BarDroidLayout` and read their settings from it;
   BAR's own panels only through their `WG` setters (BAR's sandbox keeps user widgets out of BAR's code).
   `assets/bardroid/bardroid_buildmenu.lua`: BAR's Build menu copied by `tools/make-buildmenu.py` (do not edit; rerun it
-  after BAR changes its gui_buildmenu.lua: launch-bar.sh then logs `!!! ANDROID LAYER ... build menu`) with a size and
-  place hook for the editor; launch-bar.sh runs it in place of BAR's only while the phone's BAR file has the md5 it was
-  made from (Installer writes `.bardroid-buildmenu`); the controller game keeps v0.8.5's, renamed "Build menu
+  after BAR changes its gui_buildmenu.lua; `--adb` reads a phone's release) with a size and place hook for the editor;
+  launch-bar.sh runs it in place of BAR's in every game: the pad's RB is in it. When an update changes BAR's file the phone
+  makes the copy again itself (`Installer.remakeBuildMenu`, `BuildMenuPatches`, the tool's `bardroid_buildmenu.patches`); if
+  a patch finds no place the old copy runs and launch-bar.sh logs `!!! ANDROID LAYER ... build menu`, and only a copy BAR
+  removed in a game gives way to BAR's own (`.bardroid-buildmenu-failed`); the controller game keeps v0.8.5's, renamed "Build menu
   (controller)" by `tools/build-gamepad-game.py`, in `WG.buildmenu`, and runs the copy beside it as
   `WG.bardroidBuildmenu`, shown while the app's gamepad controls have the pad (`WG.BarDroidOwnsBuildMenu`). While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
@@ -135,7 +137,7 @@ newcomer's version of this section. APKs land in `apk\` beside the toolchain fol
 "Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
-powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1       # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min
+powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online]   # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min; -Online: BAR's released game with user widgets' orders forbidden, as a host can
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details), ~30 s

@@ -370,9 +370,9 @@ public final class Installer {
 
     /**
      * The pool md5 of BAR's Build menu (luaui/widgets/gui_buildmenu.lua) in the released game this phone has, into
-     * .bardroid-buildmenu ("" when not found): launch-bar.sh runs the app's copy of it (bardroid_buildmenu.lua, made by
-     * tools/make-buildmenu.py, sized with the layout editor) only while BAR's file is the one the copy was made from,
-     * else BAR's own. Written after the update at every start.
+     * .bardroid-buildmenu ("" when not found), and the app's copy of it (bardroid_buildmenu.lua, tools/make-buildmenu.py)
+     * made again here when that is another file than the copy was made from. launch-bar.sh runs the copy. Written after
+     * the update at every start.
      */
     private void writeBuildMenuMd5() {
         String md5 = "";
@@ -395,8 +395,37 @@ public final class Installer {
         } catch (IOException e) {
             Log.e("install", "BAR's build menu not looked up: " + e);
         }
-        try { writeFile(new File(p.bar, ".bardroid-buildmenu"), md5 + "\n"); }   // ("": BAR's own build menu)
+        if (!md5.isEmpty()) remakeBuildMenu(md5);
+        try { writeFile(new File(p.bar, ".bardroid-buildmenu"), md5 + "\n"); }
         catch (IOException e) { Log.e("install", ".bardroid-buildmenu not written: " + e); }
+    }
+
+    /**
+     * BAR's update changed its Build menu: the copy made again from BAR's new file (BuildMenuPatches). If a patch finds
+     * no place the copy from the last app stays, and launch-bar.sh names that: it runs, the pad's RB with it.
+     */
+    private void remakeBuildMenu(String md5) {
+        File copy = new File(p.bar, "LuaUI/Widgets/bardroid_buildmenu.lua");
+        try (BufferedReader r = new BufferedReader(new FileReader(copy))) {
+            for (String l; (l = r.readLine()) != null && l.startsWith("--"); )
+                if (l.equals("-- BARDROID_BUILDMENU_FROM " + md5)) return;   // (the copy is of this file)
+        } catch (IOException e) { Log.e("install", "the build menu copy not read: " + e); }
+        try {
+            File bar = new File(p.bar, "pool/" + md5.substring(0, 2) + "/" + md5.substring(2) + ".gz");
+            String barFile, patches;
+            try (InputStream in = new GZIPInputStream(new FileInputStream(bar))) { barFile = new String(readAll(in), StandardCharsets.UTF_8); }
+            try (InputStream in = new FileInputStream(new File(p.filesDir, "assets-bardroid/bardroid_buildmenu.patches"))) {
+                patches = new String(readAll(in), StandardCharsets.UTF_8);
+            }
+            String release = resolveGameName();
+            String made = BuildMenuPatches.apply(barFile, patches, release, md5);
+            File tmp = new File(copy.getPath() + ".tmp");
+            writeFile(tmp, made);
+            Updater.replace(tmp, copy);
+            Log.i("install", "build menu: the app's copy made again from " + release);
+        } catch (IOException | IllegalArgumentException e) {
+            Log.e("install", "build menu: the app's copy not made again, the last one stays: " + e.getMessage());
+        }
     }
 
     /** Looks up the display name for the game tag in the downloaded rapid index; falls back to the tag itself. */

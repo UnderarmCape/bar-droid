@@ -134,26 +134,39 @@ forget_fps_camera() {
   fi
 }
 forget_fps_camera
+# The app's copy of BAR's Build menu in BAR's place, in every game: the pad's RB, PLACE and the shapes are in it (Kailil,
+# 2026-11-01, after BAR's update turned it off in an online game: "that is UNACCEPTABLE"). Installer makes it again when an
+# update changes BAR's file; one it could not (BAR rewrote a part a patch needs) runs all the same, and is named. Only a
+# copy BAR had to remove in the last game (an error in it) gives way to BAR's own, for that BAR file.
+build_menu() {
+  copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)
+  bars=$(cat "$BAR/.bardroid-buildmenu" 2>/dev/null)
+  failed="$BAR/.bardroid-buildmenu-failed"
+  grep -aq 'Removed widget: BAR Droid build menu' "$BAR/infolog.txt" 2>/dev/null && printf '%s\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars" ]; }; then
+    widget_order "Build menu" 165; widget_order "BAR Droid build menu" 0
+    layer_miss "build menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_buildmenu.lua ${bars:-not found}: BAR's own, no pad focus on it, until the copy is made again (tools/make-buildmenu.py)"
+    return
+  fi
+  widget_order "Build menu" 0; widget_order "BAR Droid build menu" 165
+  if [ "$copied" = "$bars" ]; then
+    log "build menu: the app's copy of BAR's (gui_buildmenu.lua $copied), sized with the layout editor"
+  else
+    layer_miss "build menu: BAR's gui_buildmenu.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-buildmenu.py)"
+  fi
+}
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
+  widget_order "Grid menu" 0
+  build_menu
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
-    widget_order "Build menu (controller)" 165; widget_order "Grid menu" 0
-    copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)
-    bars=$(cat "$BAR/.bardroid-buildmenu" 2>/dev/null)
-    if [ -n "$copied" ] && [ "$copied" = "$bars" ]; then
-      widget_order "Build menu" 0; widget_order "BAR Droid build menu" 165
-      log "build menu: the app's copy of BAR's (gui_buildmenu.lua $copied), sized with the layout editor"
-    else
-      widget_order "Build menu" 165; widget_order "BAR Droid build menu" 0
-      layer_miss "build menu: BAR's gui_buildmenu.lua is ${bars:-not found}, the app's copy was made from ${copied:-?}: BAR's own (not sizeable) until tools/make-buildmenu.py runs again"
-    fi
+    widget_order "Build menu (controller)" 165
     grep -q '\["Build menu (controller)"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
       || layer_miss "controller game: Build menu (controller) / Grid menu order not set in LuaUI/Config/BYAR.lua"
     touch "$BAR/.bardroid-gamepad-menus"
   elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
-    widget_order "Build menu" ""; widget_order "Grid menu" ""; widget_order "Build menu (controller)" ""
-    widget_order "BAR Droid build menu" 0
+    widget_order "Build menu (controller)" ""
     rm -f "$BAR/.bardroid-gamepad-menus"
   fi
   igl="$BAR/LuaMenu/Config/IGL_data.lua"   # the lobby's saved settings: they override chobby_config.json's game

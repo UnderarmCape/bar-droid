@@ -1,10 +1,10 @@
 #!/bin/sh
 # launch-bar.sh's switching of BAR's build menus in LuaUI/Config/BYAR.lua (the widget list both games share), on the
-# laptop or in CI: its widget_order function and its controller-game block, taken from launch-bar.sh as they are,
-# run against a scratch BAR write dir (build/launch-bar-test). Cases: the app's copy of BAR's Build menu in, BAR's own
-# back when BAR's file is not the one the copy was made from (an Android-layer miss), the controller game switched
-# off, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings, a 12 GB phone's left
-# alone. Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
+# laptop or in CI: its widget_order and build_menu functions and its controller-game block, taken from launch-bar.sh as
+# they are, run against a scratch BAR write dir (build/launch-bar-test). Cases: the app's copy of BAR's Build menu in, kept
+# when BAR's file is not the one it was made from (an Android-layer miss), BAR's own only after the copy failed in a game,
+# the controller game switched off, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings,
+# a 12 GB phone's left alone. Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
 #   sh tools/launch-bar-test.sh          (tools\laptop-tests.ps1 runs it with the portable Git's sh)
 here=$(cd "$(dirname "$0")/.." && pwd)
 src="$here/app/src/main/assets/bardroid/launch-bar.sh"
@@ -13,13 +13,15 @@ work="$here/build/launch-bar-test"
 fails=0
 
 fn=$(awk '/^widget_order\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
-block=$(awk '/^  if \[ "\$\{GAMEPAD_GAME:-0\}" = 1 \]; then/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
-[ -n "$fn" ] && [ -n "$block" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order or the controller-game block not found"; exit 1; }
+menu=$(awk '/^build_menu\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
+block=$(awk '/^  widget_order "Grid menu" 0$/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
+[ -n "$fn" ] && [ -n "$menu" ] && [ -n "$block" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, build_menu or the controller-game block not found"; exit 1; }
 
 BAR="$work/bar"; LOGS="$work/logs"
 log() { :; }
 layer_miss() { echo "$*" >> "$LOGS/android-layer.txt"; }
 eval "$fn"
+eval "$menu"
 start() {   # one launch-bar.sh start: start <GAMEPAD_GAME> <md5 Installer found in BAR's release>
   GAMEPAD_GAME=$1
   printf '%s\n' "$2" > "$BAR/.bardroid-buildmenu"
@@ -59,18 +61,29 @@ start 1 "$made"
 check "a second start: each entry once" order "BAR Droid build menu" 165
 
 start 1 "0123456789abcdef0123456789abcdef"
-check "BAR changed its file: BAR's Build menu on" order "Build menu" 165
-check "BAR changed its file: the app's copy off" order "BAR Droid build menu" 0
-check "BAR changed its file: an Android-layer miss" missed
+check "BAR changed its file and no new copy: the old copy runs (the pad's RB is in it)" order "BAR Droid build menu" 165
+check "BAR changed its file and no new copy: BAR's Build menu off" order "Build menu" 0
+check "BAR changed its file and no new copy: an Android-layer miss" missed
 
 start 1 ""
-check "BAR's file not found: BAR's own" order "BAR Droid build menu" 0
+check "BAR's file not found: the copy runs" order "BAR Droid build menu" 165
+
+echo "[t=0] Removed widget: BAR Droid build menu" > "$BAR/infolog.txt"
+start 1 "fedcba9876543210fedcba9876543210"
+check "the copy failed in the last game: BAR's own" order "Build menu" 165
+check "the copy failed in the last game: the copy off" order "BAR Droid build menu" 0
+check "the copy failed in the last game: an Android-layer miss" missed
+rm -f "$BAR/infolog.txt"
+start 1 "fedcba9876543210fedcba9876543210"
+check "the copy failed on this BAR file: still BAR's own" order "BAR Droid build menu" 0
+start 1 "$made"
+check "another BAR file: the copy runs again" order "BAR Droid build menu" 165
 
 start 0 "$made"
-check "controller game off: BAR's Build menu at its default" absent "Build menu"
-check "controller game off: the Grid menu at its default" absent "Grid menu"
+check "controller game off: the copy still in BAR's place (the pad online)" order "BAR Droid build menu" 165
+check "controller game off: BAR's Build menu off" order "Build menu" 0
+check "controller game off: the Grid menu off" order "Grid menu" 0
 check "controller game off: no controller build menu entry" absent "Build menu (controller)"
-check "controller game off: the app's copy off" order "BAR Droid build menu" 0
 check "controller game off: the marker gone" [ ! -f "$BAR/.bardroid-gamepad-menus" ]
 check "the other widgets untouched" grep -q '^		Ecostats = 0,$' "$BAR/LuaUI/Config/BYAR.lua"
 

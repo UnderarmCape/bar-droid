@@ -11,9 +11,12 @@
 --   idle units (D-pad; LB + D-pad), the commander (D-pad down), a camera bookmark (D-pad up; LT + up stores it)
 --   cancel (B), LB + A/X/Y/B orders at the middle of the screen, removing queued orders (L3/R3), the D-gun (Back + R3)
 --   a reticle in the middle while the pad is the input, and short notes (v0.8.5's hotkey feedback)
--- Orders at a point go to the units at once where the game allows unit-control widgets (BAR's default), else the order
--- is picked and A gives it. The app learns which menu has the pad, whether the game has started and what kind of order
--- is picked from LuaUI/Config/bardroid_pad.txt ("focus build|orders|none", "pregame 0|1",
+-- Every control here works in every game (Kailil, 2026-11-01, after 40 minutes online: "I should have no cases of that
+-- happening"). A host can forbid user widgets Spring.GiveOrder* (the modoption allowunitcontrolwidgets; first person
+-- alone needs it): the rest goes the way a player's own hotkey or click goes, BAR's actions and its order menu's picks
+-- (Spring.SendCommands, Spring.SetActiveCommand). An order at a point goes straight to the units where allowed, else it
+-- is picked and the app clicks in the middle ("click <n>"). The app learns which menu has the pad, whether the game has
+-- started and what kind of order is picked from LuaUI/Config/bardroid_pad.txt ("focus build|orders|none", "pregame 0|1",
 -- "armed build|area|unitarea|other|none": a tap of A starts an area order's circle, PadGame).
 -- A menu on the pad keeps the pointer on it (Kailil: "constrain the mouse within the menu bounds ... let the mouse leave
 -- it if i press B only or i constantly move the left stick out of the box for ... 1 second"); the app brings the
@@ -65,6 +68,8 @@ local orders = nil -- the order menu on the pad: { index, cmdID, warped = {x, y,
 local toast, toastAt = nil, nil
 local written, writtenAt = nil, nil
 local bookmark = nil
+local lastPing = nil -- { x, y, z } of the last ping from someone else (RB + D-pad up)
+local padClicks = 0 -- clicks asked of the app ("click <n>" in bardroid_pad.txt)
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
 local lastIdleMobile = 0
 local mouseMode = false -- Back + Start, as the app's switch (PadGame)
@@ -531,7 +536,7 @@ local function aim()
 	return kind == "unit" and target or nil, pos
 end
 
--- An order at the middle of the screen: given at once where allowed, else picked (A gives it)
+-- An order at the middle of the screen: given at once where allowed, else picked and the app clicks there
 local function orderAt(cmdID, name, unitOK)
 	local selected = Spring.GetSelectedUnits()
 	if #selected == 0 then
@@ -547,7 +552,8 @@ local function orderAt(cmdID, name, unitOK)
 		end
 	end
 	Spring.SetActiveCommand(name)
-	note(string.upper(name) .. ": A")
+	padClicks = padClicks + 1
+	note(string.upper(name))
 end
 
 local function hasBuilder()
@@ -564,21 +570,25 @@ local function enemyAt(unitID)
 	return unitID and not Spring.IsUnitAllied(unitID)
 end
 
--- L3 / R3: the next or the last queued order of the selected units removed
-local function queueRemove(last)
-	if not unitControl() then
-		note("NOT IN THIS GAME")
-		return
-	end
-	local removed = 0
-	for _, unitID in ipairs(Spring.GetSelectedUnits()) do
-		local queue = Spring.GetUnitCommands(unitID, -1) or {}
-		local cmd = last and queue[#queue] or queue[1]
-		if cmd and cmd.tag and pcall(Spring.GiveOrderToUnit, unitID, CMD.REMOVE, { cmd.tag }, 0) then
-			removed = removed + 1
+-- L3 / R3: the next or the last queued order of the selected units removed, by BAR's own Command Queue Manager, which any
+-- game allows (it also takes care of area orders and of a build queue before the start). It listens for key presses only,
+-- so these two keys, used by nothing else and bound whatever keys the player's BAR has for it, are what PadGame presses.
+local QUEUE_KEYS = { { "insert", "command_skip_current" }, { "numpad/", "command_cancel_last" } }
+local keysLookedAt = nil
+local function bindQueueKeys()
+	for _, k in ipairs(QUEUE_KEYS) do
+		local bound = false
+		for _, key in ipairs(Spring.GetActionHotKeys(k[2]) or {}) do
+			bound = bound or key == k[1]
+		end
+		if not bound then
+			Spring.SendCommands("bind " .. k[1] .. " " .. k[2])
 		end
 	end
-	if removed > 0 then
+end
+
+local function queueRemove(last)
+	if Spring.GetGameFrame() == 0 or Spring.GetSelectedUnitsCount() > 0 then
 		note(last and "REMOVED LAST ORDER" or "REMOVED NEXT ORDER")
 	end
 end
@@ -589,7 +599,8 @@ local function pregameBuild()
 end
 
 -- LB + B with factories selected: each stopped with its whole queue gone. BAR's own Stop Production (it keeps the unit
--- being built), then that one taken off too (a right click on its build option); true when there were factories
+-- being built), then that one taken off too (a right click on its build option, Ctrl+Shift: as many as there are); each
+-- as BAR's menus give them, which any game allows. True when there were factories
 local CMD_STOP_PRODUCTION = (GameCMD and GameCMD.STOP_PRODUCTION) or 13923 -- luacheck: ignore 113 (BAR's global)
 local function clearFactories()
 	local factories = {}
@@ -602,21 +613,24 @@ local function clearFactories()
 	if #factories == 0 then
 		return false
 	end
-	if not unitControl() then
-		note("NOT IN THIS GAME")
-		return true
-	end
-	local cleared = 0
+	local inBuild = {} -- (the unit each is building: read before Stop Production empties the queues)
 	for _, unitID in ipairs(factories) do
 		local first = (Spring.GetFactoryCommands(unitID, 1) or {})[1]
-		if pcall(Spring.GiveOrderToUnit, unitID, CMD_STOP_PRODUCTION, {}, 0) then
-			cleared = cleared + 1
-		end
 		if first and first.id < 0 then
-			pcall(Spring.GiveOrderToUnit, unitID, first.id, {}, { "right", "ctrl", "shift" })
+			inBuild[first.id] = true
 		end
 	end
-	note(cleared > 1 and "FACTORIES STOPPED, QUEUES CLEARED" or "FACTORY STOPPED, QUEUE CLEARED")
+	local index = Spring.GetCmdDescIndex(CMD_STOP_PRODUCTION)
+	if index then
+		Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+	end
+	for cmdID in pairs(inBuild) do
+		index = Spring.GetCmdDescIndex(cmdID)
+		if index then
+			Spring.SetActiveCommand(index, 3, false, true, false, true, false, true)
+		end
+	end
+	note(#factories > 1 and "FACTORIES STOPPED, QUEUES CLEARED" or "FACTORY STOPPED, QUEUE CLEARED")
 	return true
 end
 
@@ -682,6 +696,17 @@ end
 
 local function unitDefOf(unitID)
 	return UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+end
+
+-- RB + D-pad down / right: the player's combat units, all of them or those on the screen (the area select's Combat)
+local function selectCombat(units, name)
+	local pick = chooseUnits(units, unitDefOf, "Combat", false)
+	if #pick == 0 then
+		note("NO COMBAT UNITS")
+		return
+	end
+	Spring.SelectUnitArray(pick)
+	note(name .. ": " .. #pick)
 end
 
 local function areaPick()
@@ -920,15 +945,31 @@ local ACTIONS = {
 		Spring.SetActiveCommand(0)
 	end,
 	selfd = function() -- Back + R3 + L3 held, as v0.8.5's (given again: called off)
-		local selected = Spring.GetSelectedUnits()
-		if #selected == 0 then
-			return
-		end
-		if unitControl() and pcall(Spring.GiveOrderToUnitArray, selected, CMD.SELFD, {}, 0) then
+		if #Spring.GetSelectedUnits() > 0 then
+			Spring.SetActiveCommand("selfd") -- (as BAR's own hotkey gives it: any game allows that)
 			note("SELF DESTRUCT")
-		else
-			note("NOT IN THIS GAME")
 		end
+	end,
+	ping = function() -- RB + D-pad up held: a ping in the middle of the screen, as BAR's own
+		local _, pos = aim()
+		if pos then
+			Spring.MarkerAddPoint(pos[1], pos[2], pos[3], "")
+			note("PING")
+		end
+	end,
+	ping_look = function() -- RB + D-pad up: the camera to the last ping from someone else
+		if lastPing then
+			Spring.SetCameraTarget(lastPing[1], lastPing[2], lastPing[3], 0.3)
+			note("LAST PING")
+		else
+			Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
+		end
+	end,
+	select_combat = function() -- RB + D-pad down
+		selectCombat(myUnits(), "COMBAT UNITS")
+	end,
+	select_combat_screen = function() -- RB + D-pad right
+		selectCombat(Spring.GetVisibleUnits(Spring.GetMyTeamID(), nil, true) or {}, "ON SCREEN")
 	end,
 	pad_speed = function() -- Back + Y: the path speed tuner
 		if WG.BarDroidPadSpeed then
@@ -1410,13 +1451,24 @@ function widget:Update(dt)
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\n"
+		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks .. "\n"
 	local t = now()
+	if not keysLookedAt or Spring.DiffTimers(t, keysLookedAt) > 10 then -- (a change of BAR's keyset drops the two keys)
+		keysLookedAt = t
+		bindQueueKeys()
+	end
 	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or text:find("fp 1", 1, true)
 	if text ~= written or (keep and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
 		end
+	end
+end
+
+-- A ping from someone else: RB + D-pad up goes there
+function widget:MapDrawCmd(playerID, cmdType, x, y, z)
+	if cmdType == "point" and playerID ~= Spring.GetMyPlayerID() then
+		lastPing = { x, y, z }
 	end
 end
 
@@ -1500,6 +1552,9 @@ function widget:Initialize()
 	WG.BarDroidPad = {
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
+		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
+			lastPing = { x, y, z }
+		end,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
 		-- one order; pointer moves recorded instead of made)
 		orders = function()
