@@ -587,9 +587,26 @@ local function bindQueueKeys()
 	end
 end
 
+-- (looked at five times a second, not as the note is made: by then PadGame's key may have taken the only order away)
+local hasOrders, ordersLookedAt = false, nil
+local function lookAtOrders(t)
+	if ordersLookedAt and Spring.DiffTimers(t, ordersLookedAt) < 0.2 then
+		return
+	end
+	ordersLookedAt, hasOrders = t, false
+	for _, unitID in ipairs(Spring.GetSelectedUnits()) do
+		if (Spring.GetUnitCommandCount(unitID) or 0) > 0 then
+			hasOrders = true
+			break
+		end
+	end
+end
+
 local function queueRemove(last)
-	if Spring.GetGameFrame() == 0 or Spring.GetSelectedUnitsCount() > 0 then
+	if Spring.GetGameFrame() == 0 or hasOrders then
 		note(last and "REMOVED LAST ORDER" or "REMOVED NEXT ORDER")
+	else
+		note("NO ORDERS QUEUED")
 	end
 end
 
@@ -963,6 +980,7 @@ local ACTIONS = {
 			note("LAST PING")
 		else
 			Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
+			note("NO PING FROM OTHERS YET")
 		end
 	end,
 	select_combat = function() -- RB + D-pad down
@@ -1453,6 +1471,7 @@ function widget:Update(dt)
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
 		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks .. "\n"
 	local t = now()
+	lookAtOrders(t)
 	if not keysLookedAt or Spring.DiffTimers(t, keysLookedAt) > 10 then -- (a change of BAR's keyset drops the two keys)
 		keysLookedAt = t
 		bindQueueKeys()
