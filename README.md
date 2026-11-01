@@ -119,7 +119,7 @@ factions' matching unit too.
 
   All of this works in online games, also where a lobby forbids widgets that give units orders: the pad goes the way BAR's
   own hotkeys and menus go (L3 and R3 press Insert and numpad / , which the app binds to BAR's own actions for the game).
-  Only first person needs those widgets ("NOT IN THIS GAME").
+  Only first person needs those widgets ("FIRST PERSON OFF IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
   to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
   takes v0.8.5's build menu's place. Once the pad is used the menu shows only when RB opens it (as v0.8.5's); three

@@ -136,8 +136,12 @@ local function stop(text)
 end
 
 local function start()
-	if not unitControl() or Spring.GetSpectatingState() then -- (a spectator's orders go nowhere: bardroid_spectate.lua's)
-		say("NOT IN THIS GAME")
+	if Spring.GetSpectatingState() then -- (a spectator's orders go nowhere: bardroid_spectate.lua's)
+		say("NOT WHILE SPECTATING")
+		return
+	end
+	if not unitControl() then
+		say("FIRST PERSON OFF IN THIS GAME") -- (the lobby's warning named it: the host's unit control widgets setting)
 		return
 	end
 	-- (Kailil, 2026-10-30: "only work on units and sentries": the spectator tools' choice, no other buildings)

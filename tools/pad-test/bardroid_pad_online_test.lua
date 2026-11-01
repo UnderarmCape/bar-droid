@@ -56,6 +56,9 @@ local function finish()
 	check("LB + B: the factory's queue gone", labQueued and labCleared, tostring(labQueued) .. " " .. tostring(labCleared))
 	check("LB + Y on a building, which has no patrol: no click, it stays selected", solarKept and solarNote == "NOT FOR THESE UNITS", solarNote)
 	check("LB + A held on it: no path drawn, it stays selected", solarKept and solarHeld)
+	WG.BarDroidPadFP.toggle()
+	local _, fpNote = WG.BarDroidPad.note()
+	check("LB + L3 held: first person says it is off in this game", fpNote == "FIRST PERSON OFF IN THIS GAME", fpNote)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 
