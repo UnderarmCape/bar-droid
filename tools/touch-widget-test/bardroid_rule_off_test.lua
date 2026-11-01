@@ -8,6 +8,7 @@ end
 local PING = { 1500, 1500 }
 local fails, frames, nextAt, step = 0, 0, 0, 0
 local com, myPing = nil, false
+local doomed, selfDSeen = {}, false
 
 local function verify(case, ok, detail)
 	if not ok then
@@ -73,11 +74,12 @@ local STEPS = {
 		touch("act select_combat_screen")
 	end,
 	function()
+		doomed = Spring.GetSelectedUnits()
 		touch("act selfd")
 	end,
 	function()
-		local first = Spring.GetSelectedUnits()[1]
-		verify("Back + R3 + L3: self-destruct", first and (Spring.GetUnitSelfDTime(first) or 0) > 0, first)
+		verify("Back + R3 + L3: self-destruct", selfDSeen, #doomed)
+		doomed = {}
 		touch("act ping")
 	end,
 	function()
@@ -94,6 +96,11 @@ local STEPS = {
 
 function widget:Update()
 	frames = frames + 1
+	for _, unitID in ipairs(doomed) do -- (every update: at a laptop's few fps the units are gone by the next step)
+		if (Spring.GetUnitSelfDTime(unitID) or 0) > 0 then
+			selfDSeen = true
+		end
+	end
 	if Spring.GetGameFrame() < 150 or frames < nextAt or step >= #STEPS then
 		return
 	end

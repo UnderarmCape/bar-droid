@@ -439,6 +439,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       now goes as far as its speed asks. The crosshair has a stronger dark edge, for a pale sky.
 - [x] The launcher's skirmish map is free text, and only Starwatcher was fetched when missing: any other map, or a typing
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
+- [x] `tools/laptop-tests.ps1` with the unit-control-off run and the lobby's warning (2026-11-01): 15 of 16; the last failed
+      on the test, which read the units' self-destruct countdown after they had blown up (a laptop's 3 fps). Now watched
+      every update; that run alone then passed. `tools/lobby-phone-test.ps1` runs the lobby test on the dev phone any time.
 
 ## Releasing (once the blockers are done)
 

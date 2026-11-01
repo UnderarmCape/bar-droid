@@ -229,16 +229,17 @@ makeBar = function()
 		{ "Close", closePopup },
 		{ "Previous", function() step(-1) end },
 		{ "Next", function() step(1) end },
-		{ "Join", join },
+		{ "Join", join, "positive_button" }, -- (the skin's "go ahead", as its red negative_button is "cancel")
 	}
 	for i, a in ipairs(actions) do
 		Chili.Button:New({
 			parent = bar,
-			x = string.format("%d%%", (i - 1) * 25),
+			x = string.format("%.1f%%", (i - 1) * 25 + 0.5),
 			y = 0,
 			width = "24%",
 			bottom = 0,
 			caption = a[1],
+			classname = a[3],
 			objectOverrideFont = font,
 			OnClick = { a[2] },
 		})
