@@ -69,7 +69,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   interface scale per Fold screen, long-queue drawing, "is the pointer on the interface" answers, the catch-up mode,
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
   wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
-  `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first
+  `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first, a
+  joined server's settings that stop the app's controls show as a warning, and the pad's Start (Scroll Lock from
+  `ControllerBridge`) switches the lobby's scale between 100%, launch-bar.sh's default, and 130%
   (`tools/lobby-touch-test.ps1`). `assets/bardroid/bardroid_players.lua`: BAR's player list small until tapped (WG.advplayerlist_api).
   `assets/bardroid/bardroid_layout.lua`: the layout editor (three fingers held → RtsTouch `act hud`, or `/hud` typed in
   `bardroid_chat.lua`'s own typing box); panels register with `WG.BarDroidLayout` and read their settings from it;

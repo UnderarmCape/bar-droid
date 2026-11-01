@@ -53,7 +53,9 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
 
-In the lobby a drag scrolls lists and a tap on a server shows its details first.
+In the lobby a drag scrolls lists and a tap on a server shows its details first. A server whose settings stop your
+controls says so when you join it: in red when custom widgets are off (no touch or gamepad controls unless you
+spectate), in amber when unit control widgets are off (only first person stops).
 
 **Building:** pick a building in the build menu; its page strip then shows **ONE · LINE · GRID · BORDER**, and a big
 green **PLACE** button with ↻ and ✕ inside covers the order menu. Tap the map to pick the spot (the building shows
@@ -88,7 +90,7 @@ factions' matching unit too.
 ## Gamepad, mouse and keyboard
 
 - **Gamepads:** skirmish runs BAR Controller Support (v0.8.5), a full controller interface; in the lobby the pad is a
-  mouse. In BAR's own game (online, spectating) the app rebuilds v0.8.5's controls from a mouse and keyboard, which
+  mouse and Start switches the lobby's size between 100% and 130% (each start is at 100%). In BAR's own game (online, spectating) the app rebuilds v0.8.5's controls from a mouse and keyboard, which
   every game allows; the pointer stays in the middle of the screen, as v0.8.5's reticle:
 
   | Pad | In the game |

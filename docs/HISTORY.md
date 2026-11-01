@@ -5,6 +5,17 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## A warning for servers that stop the controls; the lobby at 100% (2026-11-01)
+Kailil cannot see a server's settings in the lobby (no room), so a game can turn out to have no touch or gamepad
+controls. `bardroid_lobby_touch.lua` now reads the joined server's settings twice a second (they arrive after the join,
+and a host can change them): custom widgets off or Anonymous Mode, which keep every user widget out of a player's game
+(a spectator's game is exempt), give a red banner; unit control widgets off, which only stops first person, an amber
+one. OK closes it until it says something else or another server is joined. The default scale goes from 135% to 100%
+("default lobby ui scale at 100") and the pad's Start switches 100% and 130%, on every screen size so a fold keeps it.
+Start is a Scroll Lock key press into the lobby: the engine's key code for it is 302, not SDL's. Seen on the dev phone
+offline, with a virtual pad and the server's own command for the settings; never in a real server (the tests do not
+log in).
+
 ## The second round of Fold7 notes: paths, groups, GRID by the engine (2026-10-30, morning)
 Kailil, playing the merged build, sent ten notes. Done so far:
 - Touch GRID: BAR's own build drag now, as on the pad. The old way drew the app's blue boxes and at PLACE replayed the

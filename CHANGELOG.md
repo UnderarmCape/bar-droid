@@ -24,13 +24,14 @@ The first version meant for other people's phones: everything since the first bu
 - Placing one building by touch: the building follows a drag instead of the map panning, a later drag nudges it, a
   tap moves it, a double tap sends it; held still (or dragged from the waiting building) it becomes a GRID drawn by
   the finger and sent with PLACE or a double tap.
-- The lobby by finger: lists scroll with a drag, a tap on a server shows its details first.
+- The lobby by finger: lists scroll with a drag, a tap on a server shows its details first. A server whose settings
+  stop the touch or gamepad controls says so when you join it.
 - Spectating by touch: the player list stays small, a tap on it brings up a bar to switch player cameras by name,
   follow the unit nearest the screen's centre (or double-tap a unit), follow a group, camera presets (1st person,
   over the shoulder, table, close, mid) and a 1st person camera on the unit with free look that recenters itself;
   the settings can be tuned per unit type on the phone (Tune) and apply to the other factions' equivalents.
 - BAR's interface scale fits each Fold screen (cover and inner), and follows fold/unfold during a game; the lobby at
-  135% on both screens. Unfolded, the minimap is half size until tapped.
+  100% on both screens. Unfolded, the minimap is half size until tapped.
 - Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit
@@ -48,7 +49,8 @@ The first version meant for other people's phones: everything since the first bu
   of BAR's start countdown.
 
 **Controllers, mouse and keyboard**
-- Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby; in BAR's own game
+- Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby, where Start switches its
+  size between 100% and 130%; in BAR's own game
   (online, spectating) v0.8.5's controls rebuilt from a mouse and keyboard: the pointer in the middle of the screen,
   the left stick pans, the right stick turns and zooms, A selects and places, X is the smart order, B cancels; RB and
   Back + RB put the build and order menus on the pad (the D-pad steps, the option on the pad highlighted, the

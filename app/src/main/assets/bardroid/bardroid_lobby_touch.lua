@@ -6,13 +6,15 @@
 --   tap      the click Chili would have had, on release
 --   tap on a server (battle list)  its details (Chobby's own server tooltip) and a bar: Close, Previous, Next, Join;
 --            a second tap on the same server joins it
--- Presses outside lists, on sliders, text boxes and scroll bars go to Chili as before. Installed into
--- LuaMenu/Widgets by the app; Chobby loads it with its "loadLocalWidgets" setting (launch-bar.sh).
+-- Presses outside lists, on sliders, text boxes and scroll bars go to Chili as before. Also: a warning in a server
+-- whose settings take away the app's controls (Kailil, 2026-11-01: the lobby has no room to show them), and the pad's
+-- Start in the lobby: the interface scale 100% or 130% (launch-bar.sh starts at 100%). Installed into LuaMenu/Widgets
+-- by the app; Chobby loads it with its "loadLocalWidgets" setting (launch-bar.sh).
 
 function widget:GetInfo()
 	return {
 		name = "BAR Droid lobby touch",
-		desc = "Finger scrolling in the lobby's lists; server details before joining",
+		desc = "Finger scrolling in the lobby's lists; server details before joining; warns of settings that stop the controls",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
 		-- before Chili's input (api_chili: an API widget, layer -1000). The engine's LuaHandler sorts every API widget
@@ -26,10 +28,17 @@ end
 local DRAG_PX = 14 -- a finger that moves this far (screen pixels) scrolls instead of clicking
 local FLING_MIN, FLING_DECAY = 150, 4 -- list pixels a second; per second
 local BLOCKERS = { trackbar = true, editbox = true, scrollbar = true, colorbars = true }
+local SCALE_KEY = 302 -- Scroll Lock (the engine's key code): ControllerBridge sends it for the pad's Start
+local SCALE_SMALL, SCALE_LARGE = 1.0, 1.3
+local WARNING_CHECK_S = 0.5 -- a joined server's settings arrive after the join, and its host can change them later
+local OFF_VALUES = { ["0"] = true, ["false"] = true }
+local WARNING_RED = { fill = { 0.5, 0.06, 0.05, 1 }, edge = { 0.95, 0.3, 0.25, 1 } }
+local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2, 1 } }
 
 local Chili, screen0
 local press, fling
 local popupButton, bar
+local warning, warningText, warningColour, warningShown, warningClosed, warningBattle, warningSize, warningCheck
 
 local function uiScale()
 	return WG.uiScale or 1
@@ -238,6 +247,147 @@ makeBar = function()
 end
 
 --------------------------------------------------------------------------------
+-- A server's settings that stop the app's controls (BAR's luaui/barwidgets.lua). The controls are user widgets:
+-- custom widgets off, or Anonymous Mode, keeps all of them out of a player's game (a spectator's game is exempt);
+-- unit control widgets off only stops first person (the rest of the app gives no Spring.GiveOrder).
+
+local function controlsWarning(options)
+	local anonymous = options.teamcolors_anonymous_mode
+	if OFF_VALUES[tostring(options.allowuserwidgets)] or (anonymous and anonymous ~= "disabled") then
+		return "Touch and gamepad controls will not work if you play here\n"
+			.. "The host turned off custom widgets. They do work if you spectate.", WARNING_RED
+	end
+	if OFF_VALUES[tostring(options.allowunitcontrolwidgets)] then
+		return "First person will not work in this game\n"
+			.. "The host turned off unit control widgets. Touch and gamepad controls work.", WARNING_AMBER
+	end
+end
+
+-- at the top of the screen as it is now (the scale and folding the phone both resize the lobby's screen)
+local function placeWarning()
+	local sw = screen0.width
+	local w = math.min(sw - 16, 900)
+	warning:SetPos(math.floor((sw - w) / 2), 8, w, 92)
+	warningSize = sw .. "x" .. screen0.height
+end
+
+local function closeWarning()
+	warningClosed = warningShown
+	warningShown = nil
+	warning:Hide()
+end
+
+local function makeWarning()
+	local config = WG.Chobby and WG.Chobby.Configuration
+	local font = config and config:GetFont(3)
+	warning = Chili.Window:New({
+		name = "bardroidLobbyWarning",
+		parent = screen0,
+		x = 0,
+		y = 0,
+		width = 100,
+		height = 92,
+		resizable = false,
+		draggable = false,
+		padding = { 0, 0, 0, 0 },
+	})
+	warningText = Chili.TextBox:New({
+		parent = warning,
+		x = 14,
+		y = 16,
+		right = 118,
+		bottom = 0,
+		text = "",
+		objectOverrideFont = font,
+	})
+	Chili.Button:New({
+		parent = warning,
+		right = 8,
+		y = 8,
+		width = 100,
+		bottom = 8,
+		caption = "OK",
+		objectOverrideFont = font,
+		OnClick = { closeWarning },
+	})
+	Chili.Control:New({ -- (the last child draws first; a window's own colour only tints the skin's dark, clear picture)
+		parent = warning,
+		x = 0,
+		y = 0,
+		width = "100%",
+		height = "100%",
+		padding = { 0, 0, 0, 0 },
+		DrawControl = function(obj)
+			gl.Texture(false)
+			gl.Color(warningColour.edge)
+			gl.Rect(0, 0, obj.width, obj.height)
+			gl.Color(warningColour.fill)
+			gl.Rect(2, 2, obj.width - 2, obj.height - 2)
+			gl.Color(1, 1, 1, 1)
+		end,
+	})
+	warning:Hide()
+end
+
+-- Nothing while no server is joined. A warning closed stays closed until it says something else, the host takes the
+-- setting back, or the player is in another server.
+local function updateWarning()
+	local lobby = WG.LibLobby and WG.LibLobby.lobby
+	local battle = lobby and lobby.myBattleID
+	local text, colour
+	if battle then
+		text, colour = controlsWarning(lobby.modoptions or {})
+	end
+	if not text or battle ~= warningBattle then
+		warningClosed = nil
+	end
+	warningBattle = battle
+	if text == warningClosed then
+		text = nil
+	end
+	if text ~= warningShown then
+		warningShown = text
+		if not warning then
+			makeWarning()
+		end
+		if text then
+			warningText:SetText(text)
+			warningColour = colour
+			placeWarning()
+			warning:Show()
+			warning:BringToFront()
+		else
+			warning:Hide()
+		end
+	elseif warningShown and warningSize ~= screen0.width .. "x" .. screen0.height then
+		placeWarning()
+	end
+end
+
+--------------------------------------------------------------------------------
+-- The interface scale, the same on every screen size (Chobby keeps one per size: folding would change it back)
+
+local function toggleScale()
+	local config = WG.Chobby and WG.Chobby.Configuration
+	if not config then
+		return
+	end
+	local scale = config.uiScale < (SCALE_SMALL + SCALE_LARGE) / 2 and SCALE_LARGE or SCALE_SMALL
+	for size in pairs(config.uiScalesForScreenSizes) do
+		config.uiScalesForScreenSizes[size] = scale
+	end
+	config:SetUiScale(scale)
+end
+
+function widget:KeyPress(key)
+	if key ~= SCALE_KEY then
+		return false
+	end
+	toggleScale()
+	return true
+end
+
+--------------------------------------------------------------------------------
 -- Input
 
 function widget:MousePress(x, y, button)
@@ -335,6 +485,10 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	elseif popupButton and barSize ~= screen0.width .. "x" .. screen0.height then
 		placeBar() -- folded or unfolded
 	end
+	if not warningCheck or Spring.DiffTimers(now, warningCheck) >= WARNING_CHECK_S then
+		warningCheck = now
+		updateWarning()
+	end
 end
 
 function widget:Initialize()
@@ -344,6 +498,7 @@ function widget:Initialize()
 		move = function(x, y) return widget:MouseMove(x, y, 0, 0, 1) end,
 		release = function(x, y) return widget:MouseRelease(x, y, 1) end,
 		popup = function() return popupButton end,
+		warning = function() return warningShown end,
 	}
 end
 
@@ -353,5 +508,9 @@ function widget:Shutdown()
 	if bar then
 		bar:Dispose()
 		bar = nil
+	end
+	if warning then
+		warning:Dispose()
+		warning = nil
 	end
 end

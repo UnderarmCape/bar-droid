@@ -302,6 +302,10 @@ public final class ControllerBridge {
             game.tick(held, tapped, x, y, ltHeld, rtHeld, active, dt);
             return;
         }
+        if (tapped[BTN_START]) {   // the lobby's scale, 100% and 130% (bardroid_lobby_touch.lua catches the key)
+            mouse.key(KeyEvent.KEYCODE_SCROLL_LOCK, true);
+            mouse.key(KeyEvent.KEYCODE_SCROLL_LOCK, false);
+        }
         boolean a = held[BTN_A], b = held[BTN_B];
         if ((a || tapped[BTN_A]) && !leftDown) { leftDown = true; mouse.button(true, true); }
         if (!a && leftDown) { leftDown = false; mouse.button(true, false); }

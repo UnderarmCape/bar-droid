@@ -24,6 +24,42 @@ local t, step, wait = 0, 0, 0
 local fails = 0
 local window, scroll, rows, maps, clicked = nil, nil, {}, {}, {}
 local startScroll, dragScroll, clicksBefore, screenSize
+local settleFrom, settleSeconds
+local SCALE_KEY = 302 -- Scroll Lock: what the pad's Start sends in the lobby (ControllerBridge)
+
+-- the next case runs after the widget's own check of the server's settings
+local function settle()
+	settleFrom, settleSeconds = Spring.GetTimer(), 0.8
+end
+
+local function setTags(tags)
+	WG.LibLobby.lobby:_OnSetScriptTags(tags) -- (the server's own command, in the real lobby object)
+end
+
+local function warningWindow()
+	for _, c in ipairs(WG.Chili.Screen0.children) do
+		if c.name == "bardroidLobbyWarning" and c.visible ~= false then
+			return c
+		end
+	end
+end
+
+local function warningText()
+	return WG.BarDroidLobbyTouch.warning() or ""
+end
+
+local function press(key)
+	return widgetHandler.callInHookFuncs.KeyPress(key, {}, false, "", 0)
+end
+
+local function allScalesAre(scale)
+	for size, s in pairs(WG.Chobby.Configuration.uiScalesForScreenSizes) do
+		if math.abs(s - scale) > 0.001 then
+			return false, size .. " = " .. s
+		end
+	end
+	return true
+end
 
 local function log(s)
 	Spring.Echo("[lobbytouch] " .. s)
@@ -208,6 +244,67 @@ cases = {
 			and clickTotal() == clicksBefore + 1, string.format("clicked %s, clicks %d -> %d", tostring(clicked[6]),
 			clicksBefore, clickTotal()))
 		window:Dispose()
+		-- a joined server, without a server: the id Chobby sets at a join, the settings as the server's command
+		local lobby = WG.LibLobby.lobby
+		lobby.myBattleID, lobby.modoptions = 90001, {}
+		setTags("game/modoptions/allowuserwidgets=1\tgame/modoptions/allowunitcontrolwidgets=1")
+		settle()
+	end,
+	function()
+		check("a server that leaves the controls alone: no warning", warningWindow() == nil, warningText())
+		setTags("game/modoptions/allowuserwidgets=0")
+		settle()
+	end,
+	function()
+		check("custom widgets off: touch and gamepad will not work", warningWindow() ~= nil
+			and warningText():find("Touch and gamepad controls will not work", 1, true) ~= nil, warningText())
+		setTags("game/modoptions/allowuserwidgets=1\tgame/modoptions/allowunitcontrolwidgets=0")
+		settle()
+	end,
+	function()
+		check("unit control widgets off: only first person", warningWindow() ~= nil
+			and warningText():find("First person will not work", 1, true) ~= nil, warningText())
+		local ok
+		for _, c in ipairs(warningWindow() and warningWindow().children or {}) do
+			if c.caption == "OK" then
+				ok = c
+			end
+		end
+		check("the warning has an OK button", ok ~= nil)
+		if ok then
+			tap(ok)
+		end
+		settle()
+	end,
+	function()
+		check("OK closes it, and it stays closed", warningWindow() == nil, warningText())
+		setTags("game/modoptions/teamcolors_anonymous_mode=global")
+		settle()
+	end,
+	function()
+		check("Anonymous Mode: a new warning, though the last was closed", warningWindow() ~= nil
+			and warningText():find("Touch and gamepad controls will not work", 1, true) ~= nil, warningText())
+		press(97)
+		check("any other key leaves the scale alone", math.abs(WG.uiScale - 1) < 0.001, tostring(WG.uiScale))
+		press(SCALE_KEY)
+		settle()
+	end,
+	function()
+		local b, s0 = warningWindow(), WG.Chili.Screen0
+		local all, odd = allScalesAre(1.3)
+		check("Start: 130%, on every screen size", math.abs(WG.uiScale - 1.3) < 0.001 and all, odd or tostring(WG.uiScale))
+		check("the warning follows the scale (top, centred, on the screen)", b ~= nil and b.y >= 0
+			and b.x + b.width <= s0.width and math.abs(b.x * 2 + b.width - s0.width) <= 1,
+			b and string.format("warning %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
+		press(SCALE_KEY)
+		WG.LibLobby.lobby.myBattleID = nil
+		settle()
+	end,
+	function()
+		local all, odd = allScalesAre(1)
+		check("Start again: 100%", math.abs(WG.uiScale - 1) < 0.001 and all, odd or tostring(WG.uiScale))
+		check("out of the server: no warning", warningWindow() == nil, warningText())
+		WG.LibLobby.lobby.modoptions = {}
 		log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED"))
 	end,
 }
@@ -218,6 +315,12 @@ function widget:Update()
 	t = t0 and Spring.DiffTimers(Spring.GetTimer(), t0) or 0
 	if t < 5 or not (WG.Chili and WG.Chili.Screen0) then
 		return
+	end
+	if settleSeconds then
+		if Spring.DiffTimers(Spring.GetTimer(), settleFrom) < settleSeconds then
+			return
+		end
+		settleSeconds = nil
 	end
 	wait = wait - 1
 	if wait > 0 then

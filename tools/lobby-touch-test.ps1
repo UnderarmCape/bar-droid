@@ -22,8 +22,8 @@ $links = foreach ($d in "packages", "pool", "rapid") {
   $link
 }
 try {
-  # as launch-bar.sh leaves it: the lobby loads local widgets, interface scale 135% at every window size
-  $scales = (0..5 | ForEach-Object { $x = $_; 0..11 | ForEach-Object { "[`"${x}x$_`"] = 1.35," } }) -join " "
+  # as launch-bar.sh leaves it: the lobby loads local widgets, interface scale 100% at every window size
+  $scales = (0..5 | ForEach-Object { $x = $_; 0..11 | ForEach-Object { "[`"${x}x$_`"] = 1.0," } }) -join " "
   Write-LobbyConfig $Data "loadLocalWidgets = true, panel_layout = 3, uiScalesForScreenSizes = { $scales },"
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_lobby_touch.lua") "$Data\LuaMenu\Widgets\" -Force
   Copy-Item (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua") "$Data\LuaMenu\Widgets\" -Force
