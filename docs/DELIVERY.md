@@ -444,6 +444,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       every update; the next full run passed all 16. `tools/lobby-phone-test.ps1` runs the lobby test on the dev phone any time.
 - [x] `bardroid_pad.lua`'s online code reviewed (2026-11-01): where orders go through a click, LB + A or Y on units without
       that order still asked the app to click, which dropped the selection. Now a note, and `pad-test -Online` checks it.
+      Repair, reclaim and the fight and patrol paths said so too when nothing was picked; factories no longer count as builders.
 
 ## Releasing (once the blockers are done)
 

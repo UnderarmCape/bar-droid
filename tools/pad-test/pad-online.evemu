@@ -124,3 +124,10 @@
 {"id":1,"command":"inject","events":[1,308,0,0,0,0]}
 {"id":1,"command":"inject","events":[1,310,0,0,0,0]}
 {"id":1,"command":"delay","duration":2000}
+{"id":1,"command":"inject","events":[1,310,1,0,0,0]}
+{"id":1,"command":"delay","duration":100}
+{"id":1,"command":"inject","events":[1,304,1,0,0,0]}
+{"id":1,"command":"delay","duration":700}
+{"id":1,"command":"inject","events":[1,304,0,0,0,0]}
+{"id":1,"command":"inject","events":[1,310,0,0,0,0]}
+{"id":1,"command":"delay","duration":2000}

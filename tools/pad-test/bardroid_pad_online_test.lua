@@ -13,7 +13,7 @@ local com, lab
 local counts, patrol, focus, allCombat, onScreen, selfD, myPing, jumped, labQueued, labCleared = {}, false, false, 0, 0, false, false, false, false, false
 local lastCount, seenPad, done = nil, false, false
 local labStep, lastTrace, centred = 0, nil, false
-local solar, solarStep, solarAt, solarKept, solarNote = nil, 0, 0, false, nil
+local solar, solarStep, solarAt, solarKept, solarNote, solarNotes, solarHeld = nil, 0, 0, false, nil, 0, false
 
 -- (its own file: the game's log reaches the disk late on a phone, and tools/pad-test.ps1 reads this as it goes)
 local function say(text)
@@ -55,6 +55,7 @@ local function finish()
 	check("RB + D-pad up: the camera at the last ping", jumped)
 	check("LB + B: the factory's queue gone", labQueued and labCleared, tostring(labQueued) .. " " .. tostring(labCleared))
 	check("LB + Y on a building, which has no patrol: no click, it stays selected", solarKept and solarNote == "NOT FOR THESE UNITS", solarNote)
+	check("LB + A held on it: no path drawn, it stays selected", solarKept and solarHeld)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 
@@ -149,8 +150,12 @@ function widget:GameFrame(f)
 	elseif solarStep == 2 and select(2, WG.BarDroidPad.note()) == "NOT FOR THESE UNITS" then
 		solarStep = 3
 		solarNote = "NOT FOR THESE UNITS"
+		solarNotes = select(3, WG.BarDroidPad.note())
+	elseif solarStep == 3 and select(3, WG.BarDroidPad.note()) > solarNotes then -- (then LB + A held, the same note again)
+		solarStep = 4
+		solarHeld = select(2, WG.BarDroidPad.note()) == "NOT FOR THESE UNITS"
 	end
-	if solarStep == 3 then
+	if solarStep >= 3 then
 		solarKept = Spring.IsUnitSelected(solar)
 	end
 	local _, note = WG.BarDroidPad.note()
@@ -165,7 +170,7 @@ function widget:GameFrame(f)
 		lastTrace = trace
 		say("[padtest] f" .. f .. " " .. trace)
 	end
-	if (seenPad and WG.BarDroidPadOnly == nil and solarStep == 3) or f > READY_FRAME + 2400 then
+	if (seenPad and WG.BarDroidPadOnly == nil and solarStep == 4) or f > READY_FRAME + 2400 then
 		finish()
 	end
 end

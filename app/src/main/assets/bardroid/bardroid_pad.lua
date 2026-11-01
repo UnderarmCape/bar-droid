@@ -536,6 +536,14 @@ local function aim()
 	return kind == "unit" and target or nil, pos
 end
 
+-- An order picked, if any of the selected units has it: true, and text as the note
+local function pickOrder(cmdID, name, text)
+	Spring.SetActiveCommand(name)
+	local picked = select(2, Spring.GetActiveCommand()) == cmdID
+	note(picked and text or "NOT FOR THESE UNITS")
+	return picked
+end
+
 -- An order at the middle of the screen: given at once where allowed, else picked and the app clicks there
 local function orderAt(cmdID, name, unitOK)
 	local selected = Spring.GetSelectedUnits()
@@ -551,19 +559,15 @@ local function orderAt(cmdID, name, unitOK)
 			return
 		end
 	end
-	Spring.SetActiveCommand(name)
-	if select(2, Spring.GetActiveCommand()) ~= cmdID then -- (none of these units has it: the click would only drop them)
-		note("NOT FOR THESE UNITS")
-		return
+	if pickOrder(cmdID, name, string.upper(name)) then -- (else the click would only drop the units)
+		padClicks = padClicks + 1
 	end
-	padClicks = padClicks + 1
-	note(string.upper(name))
 end
 
-local function hasBuilder()
+local function hasBuilder() -- (a factory neither repairs nor reclaims)
 	for _, unitID in ipairs(Spring.GetSelectedUnits()) do
 		local def = UnitDefs[Spring.GetUnitDefID(unitID)]
-		if def and def.isBuilder then
+		if def and def.isBuilder and not def.isFactory then
 			return true
 		end
 	end
@@ -932,8 +936,7 @@ local ACTIONS = {
 	spacing_down = function() Spring.SendCommands("buildspacing dec") end,
 	lb_a = function() -- builders: repair (picked: A on a unit, or drag an area); else attack the enemy there, or fight
 		if hasBuilder() then
-			Spring.SetActiveCommand("repair")
-			note("REPAIR: A")
+			pickOrder(CMD.REPAIR, "repair", "REPAIR: A")
 			return
 		end
 		local unitID = aim()
@@ -945,8 +948,7 @@ local ACTIONS = {
 	end,
 	lb_x = function() -- builders: reclaim (picked); else attack there
 		if hasBuilder() then
-			Spring.SetActiveCommand("reclaim")
-			note("RECLAIM: A")
+			pickOrder(CMD.RECLAIM, "reclaim", "RECLAIM: A")
 			return
 		end
 		orderAt(CMD.ATTACK, "attack", true)
@@ -955,12 +957,10 @@ local ACTIONS = {
 		orderAt(CMD.PATROL, "patrol", false)
 	end,
 	path_fight = function() -- LB + A held: picked, the app's drag draws it (BAR's formation widget gives the path)
-		Spring.SetActiveCommand("fight")
-		note("FIGHT PATH")
+		pickOrder(CMD.FIGHT, "fight", "FIGHT PATH")
 	end,
 	path_patrol = function() -- LB + Y held
-		Spring.SetActiveCommand("patrol")
-		note("PATROL PATH")
+		pickOrder(CMD.PATROL, "patrol", "PATROL PATH")
 	end,
 	path_end = function() -- the drag let go: BAR's formation widget has the path, and leaves the order picked for many units
 		Spring.SetActiveCommand(0)

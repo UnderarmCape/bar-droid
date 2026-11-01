@@ -9,6 +9,7 @@
 --   radial     A held, X held: the area select's filter radial, the stick on Builders
 --   place      touch: a building picked, a spot, PLACE, then held: a GRID with "GRID" over it
 --   queue      touch: QUEUE on
+--   note, note-key   a long note; one that ends in a pad button
 function widget:GetInfo()
 	return { name = "BAR Droid pad screenshots", desc = "The app's gamepad interface, one screenshot each",
 		author = "BAR Droid", layer = -10, enabled = true } -- (drawn after the app's widgets: on top)
@@ -141,7 +142,11 @@ local STEPS = {
 	[405] = function() shot("place") end,
 	[415] = function() WG.BarDroidPad.queueOn(true) end,
 	[470] = function() shot("queue") end,
-	[500] = function()
+	[480] = function() WG.BarDroidPad.say("FACTORIES STOPPED, QUEUES CLEARED") end,
+	[486] = function() shot("note") end,
+	[500] = function() WG.BarDroidPad.say("REPAIR: A") end,
+	[506] = function() shot("note-key") end,
+	[530] = function()
 		Spring.Echo("[uishot] done")
 		Spring.SendCommands("quitforce")
 	end,
