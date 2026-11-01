@@ -1370,7 +1370,8 @@ local function drawQueue()
 		return
 	end
 	style.panel(r[1], r[2], r[3], r[4], 1)
-	if queue.on then
+	if queue.on then -- (it stays on until tapped off: plain to see)
+		style.fill(r[1], r[2], r[3], r[4], style.GOLD, 0.22)
 		style.outline(r[1], r[2], r[3], r[4], style.GOLD, 1)
 	end
 	local size = math.floor((r[4] - r[2]) * 0.5)

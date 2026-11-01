@@ -8,6 +8,7 @@
 --   groups     two groups set, Start held: the group strip, and a note
 --   radial     A held, X held: the area select's filter radial, the stick on Builders
 --   place      touch: a building picked, a spot, PLACE, then held: a GRID with "GRID" over it
+--   queue      touch: QUEUE on
 function widget:GetInfo()
 	return { name = "BAR Droid pad screenshots", desc = "The app's gamepad interface, one screenshot each",
 		author = "BAR Droid", layer = -10, enabled = true } -- (drawn after the app's widgets: on top)
@@ -138,7 +139,9 @@ local STEPS = {
 		touch("grid by 90 -60")
 	end,
 	[405] = function() shot("place") end,
-	[440] = function()
+	[415] = function() WG.BarDroidPad.queueOn(true) end,
+	[470] = function() shot("queue") end,
+	[500] = function()
 		Spring.Echo("[uishot] done")
 		Spring.SendCommands("quitforce")
 	end,

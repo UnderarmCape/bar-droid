@@ -441,7 +441,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       mistake, ended the engine in 2 s (`engine exited (21)`). Now fetched, or the launcher names the map and what to check.
 - [x] `tools/laptop-tests.ps1` with the unit-control-off run and the lobby's warning (2026-11-01): 15 of 16; the last failed
       on the test, which read the units' self-destruct countdown after they had blown up (a laptop's 3 fps). Now watched
-      every update; that run alone then passed. `tools/lobby-phone-test.ps1` runs the lobby test on the dev phone any time.
+      every update; the next full run passed all 16. `tools/lobby-phone-test.ps1` runs the lobby test on the dev phone any time.
 
 ## Releasing (once the blockers are done)
 
