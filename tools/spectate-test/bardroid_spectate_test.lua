@@ -254,7 +254,7 @@ local cases = {
 		check("Table: far overhead (eye in the sky)", cs.dist and cs.dist > 3000 and cs.rx > 2.8,
 			string.format("dist %.0f, rx %.2f", cs.dist or -1, cs.rx or -1))
 		S().actions.preset_shoulder()
-		return 2
+		return 5 -- (the camera glides in from Table: at a laptop's few frames a second 2 s left it 130 pixels short)
 	end,
 	-- a view's Up (Kailil: "the UP tune setting doesnt work in the shoulder cam"): the Spring camera keeps its focus on
 	-- the ground, so Up lifts the camera over the same focus, looking down more steeply

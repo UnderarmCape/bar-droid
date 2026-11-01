@@ -1355,6 +1355,7 @@ local function buttonAt(x, y)
 	end
 end
 
+local LIT = { 1, 1, 1, 0.2 }
 local function drawBar()
 	local font = WG.fonts and WG.fonts.getFont()
 	for _, b in ipairs(buttons) do
@@ -1364,9 +1365,13 @@ local function drawBar()
 			gl.Color(0, 0, 0, 0.6)
 			gl.Rect(b.x0, b.y0, b.x1, b.y1)
 		end
-		if b.lit then
-			gl.Color(1, 1, 1, 0.16)
-			gl.Rect(b.x0, b.y0, b.x1, b.y1)
+		if b.lit then -- (to the button's corners)
+			if WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.RectRound then
+				WG.FlowUI.Draw.RectRound(b.x0, b.y0, b.x1, b.y1, WG.FlowUI.elementCorner or 4, 1, 1, 1, 1, LIT, LIT)
+			else
+				gl.Color(LIT)
+				gl.Rect(b.x0, b.y0, b.x1, b.y1)
+			end
 		end
 		if b.color then -- the team's colour as a strip along the bottom
 			gl.Color(b.color[1], b.color[2], b.color[3], 0.9)
