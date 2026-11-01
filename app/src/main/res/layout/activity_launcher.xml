@@ -48,8 +48,8 @@
                 android:baselineAligned="false"
                 android:orientation="horizontal">
                 <Button style="@style/LauncherButton" android:id="@+id/btnInstall" android:text="@string/btn_install" />
-                <Button style="@style/LauncherButton" android:id="@+id/btnPlay" android:text="@string/btn_play" />
-                <Button style="@style/LauncherButton" android:id="@+id/btnLobby" android:text="@string/btn_lobby" />
+                <Button style="@style/LauncherButton.Main" android:id="@+id/btnPlay" android:text="@string/btn_play" />
+                <Button style="@style/LauncherButton.Main" android:id="@+id/btnLobby" android:text="@string/btn_lobby" />
             </LinearLayout>
 
             <LinearLayout
