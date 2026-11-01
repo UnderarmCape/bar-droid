@@ -181,7 +181,7 @@ public final class Updater {
                         if (ok) engine = target[0];
                     }
                     for (String t : tags) { if (cancelled) throw new InterruptedException(); ok &= updateTag(t, remote.get(t), engine, st); }
-                    result = ok ? "up to date with BAR's launcher config" : "not everything updated, see log";
+                    result = ok ? "up to date" : "not everything updated, see log";
                 }
             } else result = "BAR's launcher config not reachable: started what is installed";
         }

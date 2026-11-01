@@ -552,6 +552,10 @@ local function orderAt(cmdID, name, unitOK)
 		end
 	end
 	Spring.SetActiveCommand(name)
+	if select(2, Spring.GetActiveCommand()) ~= cmdID then -- (none of these units has it: the click would only drop them)
+		note("NOT FOR THESE UNITS")
+		return
+	end
 	padClicks = padClicks + 1
 	note(string.upper(name))
 end

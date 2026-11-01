@@ -13,6 +13,7 @@ local com, lab
 local counts, patrol, focus, allCombat, onScreen, selfD, myPing, jumped, labQueued, labCleared = {}, false, false, 0, 0, false, false, false, false, false
 local lastCount, seenPad, done = nil, false, false
 local labStep, lastTrace, centred = 0, nil, false
+local solar, solarStep, solarAt, solarKept, solarNote = nil, 0, 0, false, nil
 
 -- (its own file: the game's log reaches the disk late on a phone, and tools/pad-test.ps1 reads this as it goes)
 local function say(text)
@@ -53,6 +54,7 @@ local function finish()
 	check("RB + D-pad up held: a ping", myPing)
 	check("RB + D-pad up: the camera at the last ping", jumped)
 	check("LB + B: the factory's queue gone", labQueued and labCleared, tostring(labQueued) .. " " .. tostring(labCleared))
+	check("LB + Y on a building, which has no patrol: no click, it stays selected", solarKept and solarNote == "NOT FOR THESE UNITS", solarNote)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 
@@ -132,6 +134,25 @@ function widget:GameFrame(f)
 		labQueued = labQueued or n >= 3
 		labCleared = labCleared or (labQueued and n == 0)
 	end
+	-- then a building, which has no patrol, for the pad's last LB + Y (only now: the self-destructs would take it too)
+	if labCleared and solarStep == 0 then
+		solarStep, solarAt = 1, f
+		Spring.SendCommands("give 1 armsolar")
+	elseif solarStep == 1 and f >= solarAt + 20 then
+		solarStep = 2
+		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID())) do
+			if UnitDefs[Spring.GetUnitDefID(unitID)].name == "armsolar" then
+				solar = unitID
+			end
+		end
+		Spring.SelectUnitArray({ solar })
+	elseif solarStep == 2 and select(2, WG.BarDroidPad.note()) == "NOT FOR THESE UNITS" then
+		solarStep = 3
+		solarNote = "NOT FOR THESE UNITS"
+	end
+	if solarStep == 3 then
+		solarKept = Spring.IsUnitSelected(solar)
+	end
 	local _, note = WG.BarDroidPad.note()
 	onScreen = tonumber((note or ""):match("^ON SCREEN: (%d+)$")) or onScreen
 	if note == "COMMANDER" and not centred then -- (a random start: at a map's edge the pad's pans and orders stayed on the commander)
@@ -144,7 +165,7 @@ function widget:GameFrame(f)
 		lastTrace = trace
 		say("[padtest] f" .. f .. " " .. trace)
 	end
-	if (seenPad and WG.BarDroidPadOnly == nil) or f > READY_FRAME + 2400 then
+	if (seenPad and WG.BarDroidPadOnly == nil and solarStep == 3) or f > READY_FRAME + 2400 then
 		finish()
 	end
 end
