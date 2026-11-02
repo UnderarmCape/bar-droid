@@ -452,6 +452,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       phone a real one, `spring` moved aside, was downloaded again and the game started.
 - [x] Building by touch with unit control widgets off, real taps on the dev phone (2026-11-02): a building on the build menu, a
       spot, PLACE twice with the order queued each time, the building still picked, the X puts it away; no widget error.
+- [x] The hot benchmark on the dev phone, 2026-11-02 night: slower than on 10-31 (Sim 46 -> 51-56 ms, Draw 21 -> 27 ms, game
+      speed x0.47 -> x0.42) at the same CPU clocks, GPU median 295 MHz against 401. Not the app: the same with 10-31's game
+      files (`assets/bardroid` of 6d18d0e) and with the app's build menu off. The phone's OS is unchanged (28 Sep); open.
 
 ## Releasing (once the blockers are done)
 
