@@ -48,6 +48,11 @@ public class GameService extends Service {
     /** Why the last game ended when the player did not end it (the launcher shows it); null: nothing to say. */
     public static String exitNote() { return exitNote; }
     private static volatile String exitNote;
+    /** ApplicationExitInfo's REASON_ numbers in words (0 to 16, Android 11 to 13). */
+    private static final String[] EXIT_REASONS = { "reason unknown", "the app exited", "a signal", "low memory", "a crash",
+            "a native crash", "not responding", "start-up failed", "a permission changed", "too many resources used",
+            "force stopped", "stopped by the user", "a process it needs ended", "another reason", "frozen",
+            "the app was turned off", "an app update" };
 
     private static String lowMemoryNote(android.content.Context c) {
         return "Android closed the game: the phone ran out of memory. Close other apps and try again"
@@ -70,8 +75,10 @@ public class GameService extends Service {
         android.app.ApplicationExitInfo e = exits.get(0);
         if (!exitLogged) {   // (once per process: how the app's last run ended, for the shared logs)
             exitLogged = true;
-            Log.i("app", "the last run ended: " + e.getDescription() + ", reason " + e.getReason() + ", importance "
-                    + e.getImportance() + ", " + new java.util.Date(e.getTimestamp()));
+            int r = e.getReason();   // (the cause in words first: the launcher's log box shows this line to players)
+            Log.i("app", "the last run ended " + new java.text.SimpleDateFormat("MMM d HH:mm:ss", java.util.Locale.US)
+                    .format(new java.util.Date(e.getTimestamp())) + ": " + (r >= 0 && r < EXIT_REASONS.length ? EXIT_REASONS[r] : "reason " + r)
+                    + " (" + e.getDescription() + "; reason " + r + ", importance " + e.getImportance() + ")");
         }
         if (e.getReason() != android.app.ApplicationExitInfo.REASON_LOW_MEMORY
                 || e.getImportance() > android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE

@@ -142,14 +142,16 @@ function widget:GameFrame(f)
 	if labCleared and solarStep == 0 then
 		solarStep, solarAt = 1, f
 		Spring.SendCommands("give 1 armsolar")
-	elseif solarStep == 1 and f >= solarAt + 20 then
-		solarStep = 2
+	elseif solarStep == 1 and f >= solarAt + 2 then -- (selected as soon as it stands: the pad's script keeps its own clock)
 		for _, unitID in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID())) do
 			if UnitDefs[Spring.GetUnitDefID(unitID)].name == "armsolar" then
 				solar = unitID
 			end
 		end
-		Spring.SelectUnitArray({ solar })
+		if solar then
+			solarStep = 2
+			Spring.SelectUnitArray({ solar })
+		end
 	elseif solarStep == 2 and select(2, WG.BarDroidPad.note()) == "NOT FOR THESE UNITS" then
 		solarStep = 3
 		solarNote = "NOT FOR THESE UNITS"
@@ -167,8 +169,10 @@ function widget:GameFrame(f)
 		centred = true
 		Spring.SetCameraTarget(Game.mapSizeX / 2, 0, Game.mapSizeZ / 2, 0)
 	end
-	local trace = string.format("orders %s, selected %d, focus %s, input %s, padonly %s, note %s", tostring(count), #selected,
-		tostring(focus), tostring(WG.BarDroidInput), tostring(WG.BarDroidPadOnly), tostring(note))
+	-- (the lab's queue seen and gone, and the solar's step: a run that never finished on a hot phone did not say which)
+	local trace = string.format("orders %s, selected %d, focus %s, input %s, padonly %s, note %s, lab %s/%s, solar %d",
+		tostring(count), #selected, tostring(focus), tostring(WG.BarDroidInput), tostring(WG.BarDroidPadOnly), tostring(note),
+		tostring(labQueued), tostring(labCleared), solarStep)
 	if trace ~= lastTrace then
 		lastTrace = trace
 		say("[padtest] f" .. f .. " " .. trace)
