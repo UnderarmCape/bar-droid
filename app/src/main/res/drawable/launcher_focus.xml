@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A launcher button with the focus (a gamepad or keys; touch never focuses one): an outline on the button's face.
+     The insets and corners are AppCompat's button background's (abc_button_inset_*_material, abc_control_corner_material). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <inset android:insetLeft="4dp" android:insetRight="4dp" android:insetTop="6dp" android:insetBottom="6dp">
+            <shape android:shape="rectangle">
+                <stroke android:width="2dp" android:color="?android:attr/colorForeground" />
+                <corners android:radius="2dp" />
+            </shape>
+        </inset>
+    </item>
+    <item android:drawable="@android:color/transparent" />
+</selector>
