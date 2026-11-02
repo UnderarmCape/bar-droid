@@ -374,11 +374,11 @@ end
 
 local function toggleScale()
 	local config = WG.Chobby and WG.Chobby.Configuration
-	if not config then
+	if not (config and config.SetUiScale) then
 		return
 	end
-	local scale = config.uiScale < (SCALE_SMALL + SCALE_LARGE) / 2 and SCALE_LARGE or SCALE_SMALL
-	for size in pairs(config.uiScalesForScreenSizes) do
+	local scale = (config.uiScale or SCALE_SMALL) < (SCALE_SMALL + SCALE_LARGE) / 2 and SCALE_LARGE or SCALE_SMALL
+	for size in pairs(config.uiScalesForScreenSizes or {}) do -- (a lobby version without the per-size table: just the scale)
 		config.uiScalesForScreenSizes[size] = scale
 	end
 	config:SetUiScale(scale)
