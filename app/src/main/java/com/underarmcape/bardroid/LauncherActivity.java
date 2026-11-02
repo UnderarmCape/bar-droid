@@ -68,6 +68,11 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
         findViewById(R.id.btnBench).setOnClickListener(v -> start(GameService.ACTION_PLAY, "bench"));
+        // With a gamepad or keys (out of touch mode) the focus went to the top scroll view: a grey block over the title
+        // and buttons, with nothing to press. The scroll views pass it on to their buttons and settings, Play vs AI first.
+        findViewById(R.id.top).setFocusable(false);
+        findViewById(R.id.settings).setFocusable(false);
+        play.setFocusedByDefault(true);
 
         loadSettingsIntoUi();
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
