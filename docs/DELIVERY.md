@@ -498,6 +498,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The launcher on the Fold7 unfolded (2026-11-02, the dev phone at 1968x2184): one column across the whole width,
       setting lines of 1,700 pixels. Now side by side from 600 dp wide, upright too; an ordinary phone upright keeps one
       column. `pad-test -Online` with the tile-copy change: 14 of 14.
+- [ ] Touch HUD on the Fold7 unfolded (the dev phone at 1968x2184, 2026-11-02), Kailil's call on both:
+      BAR's control-group and idle-builder panels dock to the order menu's right edge, which reaches far enough there
+      that both sit under the small player list and show through it (BAR's layout; its order menu has no width setter
+      and the list no position setter: the order menu raised with `setBottomPosition`, or the list kept open, are the
+      app's ways). And the build menu (BAR's sizing, made taller at his request) shows the commander's 26 options in 6
+      rows with a quarter of its panel empty below them; it could end at the last row when all fit on one page, at the
+      price of its top edge moving with each selection.
 - [ ] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
       Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
       x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should
