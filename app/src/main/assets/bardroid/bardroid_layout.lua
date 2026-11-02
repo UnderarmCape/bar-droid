@@ -427,6 +427,7 @@ end
 
 -- (the hint crosses the build menu: nothing shows through its words)
 local BAR_HINT, BAR_BUTTON, BAR_LIT = { 0, 0, 0, 0.85 }, { 0.08, 0.08, 0.08, 0.92 }, { 0.25, 0.22, 0.06, 0.92 }
+local BAR_TAB = { 0, 0, 0, 0.7 }
 
 function widget:DrawScreen()
 	if not isOpen then
@@ -445,8 +446,13 @@ function widget:DrawScreen()
 			if font then
 				local w = font:GetTextWidth(p.label) * labelSize + labelSize
 				local lx, ly = math.max(0, math.min(x0, vsx - w)), math.min(y1, vsy) -- (on the screen)
-				gl.Color(0, 0, 0, 0.7)
-				gl.Rect(lx, ly - labelSize * 1.5, lx + w, ly)
+				local f = WG.FlowUI
+				if f and f.Draw and f.Draw.RectRound then -- (a tab on the panel's top left corner)
+					f.Draw.RectRound(lx, ly - labelSize * 1.5, lx + w, ly, f.elementCorner or 4, 0, 0, 1, 0, BAR_TAB, BAR_TAB)
+				else
+					gl.Color(BAR_TAB)
+					gl.Rect(lx, ly - labelSize * 1.5, lx + w, ly)
+				end
 				font:Begin()
 				font:SetTextColor(1, 1, 1, 1) -- (else what the last widget left)
 				font:SetOutlineColor(0, 0, 0, 0.8)
