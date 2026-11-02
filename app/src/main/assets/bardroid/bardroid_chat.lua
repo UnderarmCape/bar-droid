@@ -474,7 +474,6 @@ function widget:TextInput(text)
 	return true
 end
 
--- the typing box: the channel, the text (its lines wrapped), the cursor blinking
 -- A dark box in the shape of BAR's panels
 local TYPING_BOX, LINES_BOX = { 0, 0, 0, 0.62 }, { 0, 0, 0, BACKGROUND }
 local function box(x0, y0, x1, y1, color)
@@ -487,6 +486,7 @@ local function box(x0, y0, x1, y1, color)
 	end
 end
 
+-- the typing box: the channel, the text (its lines wrapped), the cursor blinking
 local function drawTyping()
 	local t, mode = typed, MODES[typing.mode]
 	box(t.x0, t.y0, t.x1, t.y1, TYPING_BOX)
