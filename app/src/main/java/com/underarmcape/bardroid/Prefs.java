@@ -142,7 +142,8 @@ public final class Prefs {
                                        : (driver.equals("kgsl") || driver.equals("zink"));
         if (valid) mesaDriver = driver;
         forceCompat45 = s.getBoolean("forceCompat45", forceCompat45);
-        workerThreads = s.getInt("workerThreads", workerThreads);
+        int workers = s.getInt("workerThreads", workerThreads);
+        if (workers >= 1) workerThreads = workers;   // (as the launcher takes it; before it took any number)
         noSeccomp = s.getBoolean("noSeccomp", noSeccomp);
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
