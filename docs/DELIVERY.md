@@ -469,6 +469,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       launcher opens instead, with the low-memory note when that was why; on the dev phone, a skirmish ended by an
       install and the app brought back. `tools/lobby-phone-test.ps1` on today's build: all 30 pass. The layout editor's
       rounded boxes reviewed: nothing found.
+- [x] The unit info panel in online games (2026-11-02, seen in `pad-test -Online`'s screenshots): BAR's released game's
+      `common/weapons.lua` now calls `tonumber`, which the panel's copy of it was not given, and every unit with a beam
+      laser (the commander's too) lost its name and all its stats. Now it gets Lua's own functions, a failure there falls
+      back to the plain sum, and a unit type with no stats says why in the log. On the dev phone in BAR's released game:
+      all stats shown. `pad-test -Online`: 14 of 14 (the first run's last case was the test's timing on a hot phone).
 
 ## Releasing (once the blockers are done)
 

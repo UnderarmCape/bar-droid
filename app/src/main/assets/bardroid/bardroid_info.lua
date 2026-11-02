@@ -64,7 +64,12 @@ end
 
 local weaponsLib
 do
-	local ok, lib = pcall(VFS.Include, "common/weapons.lua", { math = math, Game = Game })
+	-- (Lua's own functions too: BAR's file of 2026-10 calls tonumber, and with only math and Game every beam laser's
+	-- unit, the commander's too, lost all its stats in BAR's released game)
+	local env = { math = math, Game = Game, tonumber = tonumber, tostring = tostring, type = type, pairs = pairs,
+		ipairs = ipairs, select = select, next = next, string = string, table = table, error = error, assert = assert,
+		pcall = pcall, unpack = unpack, setmetatable = setmetatable, getmetatable = getmetatable, rawget = rawget }
+	local ok, lib = pcall(VFS.Include, "common/weapons.lua", env)
 	weaponsLib = ok and type(lib) == "table" and lib.GetDamagePerSecond and lib or nil
 end
 
@@ -143,8 +148,11 @@ local function computeDef(id)
 		info.maxdps = (info.maxdps or 0) + hi
 	end
 	local function laserDPS(def, damage)
-		if weaponsLib then
-			return weaponsLib.GetDamagePerSecond(def, damage)
+		if weaponsLib then -- (BAR's own sum; should a later version of it fail here, the plain one below)
+			local ok, lo, hi = pcall(weaponsLib.GetDamagePerSecond, def, damage)
+			if ok and lo then
+				return lo, hi or lo
+			end
 		end
 		local d = damage * def.projectiles / def.reload
 		return d, d
@@ -316,6 +324,9 @@ defInfo = function(id)
 	local info = defCache[id]
 	if not info then
 		local ok, result = pcall(computeDef, id)
+		if not ok then -- (the plain fallback below shows; the log says why, once per unit type)
+			Spring.Echo("[bardroid_info] no stats for " .. tostring(UnitDefs[id].name) .. ": " .. tostring(result))
+		end
 		info = ok and result or { name = UnitDefs[id].humanName or "?", description = "", health = UnitDefs[id].health,
 			metalCost = UnitDefs[id].metalCost, energyCost = UnitDefs[id].energyCost, energyStorage = 0, metalStorage = 0 }
 		defCache[id] = info
