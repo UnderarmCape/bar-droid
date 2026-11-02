@@ -33,7 +33,7 @@
     <string name="lbl_fps_cap">Frame cap:</string>
     <string name="rb_fps30">30 fps</string>
     <string name="rb_fps60">60 fps</string>
-    <string name="rb_fps_none">none (measuring: hot)</string>
+    <string name="rb_fps_none">none (runs hot)</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR): the game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
     <string name="cb_upscale_compare">Compare upscaling (diagnostic): SGSR on and off every 3 seconds, with a label</string>
     <string name="cb_lobby_bridge">Lobby bridge: the app stands in for BAR\'s PC launcher, for the Replays tab, web links and skill ratings; the lobby\'s downloads go through the app (off: the Replays tab cannot list replays)</string>
