@@ -123,7 +123,8 @@
             </LinearLayout>
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
-            <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri" android:textSize="11sp" android:importantForAutofill="no" />
+            <!-- (wrapped, the whole address shown: a single line ran off the screen mid-word) -->
+            <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri|textMultiLine" android:maxLines="4" android:imeOptions="actionDone" android:textSize="11sp" android:importantForAutofill="no" />
 
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbZink" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_zink" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbCompat45" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_compat45" />

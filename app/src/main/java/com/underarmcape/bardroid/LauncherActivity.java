@@ -230,7 +230,8 @@ public class LauncherActivity extends AppCompatActivity {
             if (!map.equals(Prefs.mapName)) Prefs.mapChosen = true;   // (the player's from now on, also on an 8 GB phone)
             Prefs.mapName = map;
         }
-        Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().trim();
+        // (the field wraps: an Enter typed in it is no part of the address, nor is any space)
+        Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().replaceAll("\\s", "");
         boolean alt = ((CheckBox) findViewById(R.id.cbZink)).isChecked();
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();

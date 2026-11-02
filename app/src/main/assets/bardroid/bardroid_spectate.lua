@@ -224,7 +224,10 @@ end
 local CAM_FPS, CAM_SPRING = 0, 2
 local springBefore -- the Spring camera as it was when 1st person began
 
-local function leaveFirstPerson()
+-- keep: the camera for BAR's Camera Remember only (bardroid_padfp.lua's GetConfigData). The handler asks for the widgets'
+-- settings whenever a widget is switched on or off too, not only as the game quits: 1st person goes on next frame
+-- (updateFirstPerson), and its way back stays the player's own camera.
+local function leaveFirstPerson(keep)
 	local cs = spGetCameraState()
 	if not springBefore then
 		if cs.mode == CAM_FPS and cs.px then -- (1st person begun without the Spring camera to go back to)
@@ -233,8 +236,13 @@ local function leaveFirstPerson()
 		end
 		return
 	end
-	local back = springBefore
-	springBefore = nil
+	local back = {}
+	for k, v in pairs(springBefore) do
+		back[k] = v
+	end
+	if not keep then
+		springBefore = nil
+	end
 	if cs.mode == CAM_FPS and cs.px then -- (back over where the eye was)
 		back.px, back.pz = cs.px, cs.pz
 		back.py = Spring.GetGroundHeight(cs.px, cs.pz)
@@ -1663,7 +1671,7 @@ function widget:Initialize()
 		fpSettings = FP_SETTINGS, -- (... and tunes the same values)
 		fpTuneValue = fpTuneValue,
 		fpTuneStep = fpTuneStep,
-		leaveFirstPerson = leaveFirstPerson, -- (bardroid_padfp.lua, as the game quits)
+		cameraForSave = function() leaveFirstPerson(true) end, -- (bardroid_padfp.lua's GetConfigData)
 		fpTuneSave = function(unitID)
 			local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
 			if def then

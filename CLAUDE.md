@@ -145,6 +145,7 @@ powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]   
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1                # the same on the dev phone, plus a virtual pad's Start; nothing on the laptop, ~1 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
+powershell -ExecutionPolicy Bypass -File tools\fp-save-test.ps1                    # a spectator's 1st person through BAR's mid-game settings save, on the dev phone, ~1.5 min
 powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Cost] [-Settings @{Key=1}]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min; -Cost: its ms and KB per frame; -Settings: engine settings (run it with -Command for a hashtable)
 powershell -ExecutionPolicy Bypass -File tools\fp-tuner.ps1 [-Replay <file.sdfz>] [-SkipTo 240]   # Kailil sets the 1st person camera (laptop); Save -> build\fp-tuner\data\LuaUI\Config\bardroid_fp.lua -> bake into bardroid_spectate.lua FP
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]

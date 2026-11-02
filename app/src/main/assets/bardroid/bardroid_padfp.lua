@@ -701,14 +701,15 @@ end
 -- BAR's Camera Remember saves the camera as the game quits and opens every later game in it, and the handler asks for
 -- the widgets' settings before their Shutdown, lowest layer first: the camera goes back here, first person never
 -- outlives its game (a spectator's too: bardroid_spectate.lua is asked after Camera Remember). launch-bar.sh clears one
--- saved all the same.
+-- saved all the same. The handler also asks whenever a widget is switched on or off: first person stays on (the next
+-- Update sets its camera again, and the spectator's keeps its way back).
 function widget:GetConfigData()
 	if fp then
 		Spring.SetCameraState(fp.camera, 0)
 	end
 	local s = WG.BarDroidSpectate
-	if s and s.leaveFirstPerson then
-		s.leaveFirstPerson()
+	if s and s.cameraForSave then
+		s.cameraForSave()
 	end
 	return {}
 end

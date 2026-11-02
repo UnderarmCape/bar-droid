@@ -457,6 +457,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       files (`assets/bardroid` of 6d18d0e) and with the app's build menu off. The phone's OS is unchanged (28 Sep); open.
 - [x] `tools/laptop-tests.ps1` stops when Kailil comes back (2026-11-02): the first run did, after 14 passes. The check it cut
       off read as a FAIL (its engine stopped mid-run); a check the watch cut off is now a STOP. The last two still to run.
+- [x] `bardroid_padfp.lua` reviewed (2026-11-02): its GetConfigData, meant for the game's end, runs whenever BAR saves the
+      widgets' settings, as it does each time a widget is switched on or off; a spectator in 1st person lost the way back
+      to the own camera (leaving gave a made-up one). Now kept; `tools/fp-save-test.ps1` checks it on the dev phone, 4/4.
+      The dev phone's logs (56,000 launcher lines, the last game's log): no error from the app or its widgets.
 
 ## Releasing (once the blockers are done)
 
