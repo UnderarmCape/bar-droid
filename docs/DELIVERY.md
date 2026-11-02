@@ -495,6 +495,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       recent apps or the low-memory killer left an empty `.sdfz` that the lobby's Replays tab listed with nothing to read
       (282 of 355 on the dev phone). `launch-bar.sh` now removes the empty ones before each start; on the dev phone: 282
       removed, the 73 real ones kept. `tools/pace-test.ps1` after the tile change: all 19 pass.
+- [ ] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
+      Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
+      x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should
+      say so or leave them out, is Kailil's call; the empty ones are already removed (above).
 
 ## Releasing (once the blockers are done)
 
