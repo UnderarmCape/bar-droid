@@ -166,8 +166,8 @@ local function layout()
 	return true
 end
 
-local function add(name, nameColor, text)
-	local e = { time = clock(), chunks = name ~= "" and chunks(name) or {}, nameColor = nameColor, text = text }
+local function add(name, nameColor, text, ttl)
+	local e = { time = clock(), chunks = name ~= "" and chunks(name) or {}, nameColor = nameColor, text = text, ttl = ttl }
 	if font then
 		e.lines = wrap(text, boxRight - gap - (name ~= "" and textLeft or boxLeft + gap), fontSize)
 	end
@@ -220,8 +220,10 @@ end
 -- BAR's messages ("Battle Started", a commander under attack, the tutorial's lines: snd_notifications sends them with
 -- its voice lines) are typed by gui_messages at 16% of the screen's height from 31% of its width: on a phone, under the
 -- order menu and the unit info, unread (dev phone, 2026-11-02); it has no position setter. Its WG.messages.addMessage
--- puts them in the chat box instead, in BAR's message white.
+-- puts them in the chat box instead, in BAR's message white, for BAR's 15 seconds (they repeat: "wasting metal" every
+-- few seconds would push the players' lines out of the box).
 local MESSAGE_COLOR = "\255\240\240\240"
+local MESSAGE_TTL = 15
 local barAddMessage, ownAddMessage -- BAR's function, and the one in its place
 local function takeMessages()
 	local m = WG.messages
@@ -229,7 +231,7 @@ local function takeMessages()
 		barAddMessage = m.addMessage
 		ownAddMessage = ownAddMessage or function(text)
 			if type(text) == "string" and text:find("%S") then
-				add("", WHITE, MESSAGE_COLOR .. (text:gsub("%s+", " ")))
+				add("", WHITE, MESSAGE_COLOR .. (text:gsub("%s+", " ")), MESSAGE_TTL)
 			end
 		end
 		m.addMessage = ownAddMessage
@@ -659,15 +661,18 @@ function widget:DrawScreen()
 	local shown, used = {}, 0
 	for i = #entries, 1, -1 do
 		local e = entries[i]
-		if not (typing or barTyping) and now - e.time > LINE_TTL then
+		local old = not (typing or barTyping) and now - e.time > (e.ttl or LINE_TTL)
+		if old and not e.ttl then
 			break
 		end
-		local rows = math.max(#e.lines, #e.chunks)
-		if used + rows > budget then
-			break
+		if not old then -- (a message gone: the chat lines before it may still stay)
+			local rows = math.max(#e.lines, #e.chunks)
+			if used + rows > budget then
+				break
+			end
+			used = used + rows
+			table.insert(shown, 1, e)
 		end
-		used = used + rows
-		table.insert(shown, 1, e)
 	end
 	if #shown == 0 then
 		return
