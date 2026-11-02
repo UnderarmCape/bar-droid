@@ -726,12 +726,15 @@ local function layoutGrid(types)
 	local cell = floor(max(bestCell, 16))
 	local cols = max(1, min(bestCols, floor(w / cell)))
 	local rows = max(1, floor(h / cell))
+	-- (in the middle of the panel: the room left over was all on the right)
+	local left = x0 + floor((w - min(n, cols) * cell) / 2)
+	local top = y1 - floor((h - min(rows, math.ceil(n / cols)) * cell) / 2)
 	for i, t in ipairs(types) do
 		if i > cols * rows then
 			break
 		end
 		local c, r = (i - 1) % cols, floor((i - 1) / cols)
-		local cx, cy = x0 + c * cell, y1 - (r + 1) * cell
+		local cx, cy = left + c * cell, top - (r + 1) * cell
 		cells[#cells + 1] = { cx, cy, cx + cell, cy + cell, t.defID, t.units, more = (i == cols * rows and n > i) and (n - i) or nil }
 	end
 end
