@@ -46,7 +46,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   startup screen, the engine's screen matrices went wrong after a fold), and in the low-memory mode
   (`BARDROID_FBO_UNCOMPRESS`) a `dlsym` wrapper around the engine's GL lookup that stores a compressed texture
   uncompressed when it is attached to a framebuffer, and through the same wrapper on phones (`BARDROID_TEX_ZERO`) new RGBA
-  textures made with zeros, as Mesa's recycled buffers hold old pictures; `tools/pace-test.ps1`, `tools/pad-test.ps1`).
+  textures made with zeros, as Mesa's recycled buffers hold old pictures, and the map's compressed ground tiles uploaded
+  from a copy of their pixel buffer's bytes (the engine maps that buffer unsynchronized for the next tile while Mesa
+  still copies from it: white blocks after a camera jump); `BARDROID_TEX_LOG=1` in dev-env.sh logs the engine's
+  textures; `tools/pace-test.ps1`, `tools/pad-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).

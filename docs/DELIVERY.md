@@ -474,7 +474,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       laser (the commander's too) lost its name and all its stats. Now it gets Lua's own functions, a failure there falls
       back to the plain sum, and a unit type with no stats says why in the log. On the dev phone in BAR's released game:
       all stats shown. `pad-test -Online`: 14 of 14 (the first run's last case was the test's timing on a hot phone).
-- [ ] A white lattice over the map and the minimap for a moment, at 2 fps and x0.60, right after first person ended
+- [x] A white lattice over the map and the minimap for a moment, at 2 fps and x0.60, right after first person ended
       (`pad-test`, the controller game, dev phone, 2026-11-02 08:36); 6 s later all clean. Seen again in the next run, in
       the frame after "FIRST PERSON OFF" only (a frame a second, 21 of them): rows of white blocks, like a font's glyphs,
       over the whole minimap, as a recycled GPU buffer shows before its texture is filled. Not the test's 340x83 line
@@ -486,6 +486,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       as zeros, but the lattice was still on the minimap in the frame after "FIRST PERSON OFF": so those tiles come
       from a pixel buffer, or the lattice is another texture (the minimap's, or the LOS overlay's, which streams through
       pixel buffers too). Next: log the bound pixel buffer with each tile, and the minimap and info textures.
+      Found in the engine's source: SMFGroundTextures.cpp fills every tile through one pixel buffer, mapped
+      unsynchronized for the next tile right after the last one's upload (VBO::New of the same size keeps it), while
+      Mesa copies from a pixel buffer later, on the GPU. Now `pace.c` uploads a compressed texture from a pixel buffer
+      out of a copy of its bytes (BARDROID_TEX_ZERO, phones): on the dev phone the frames after "FIRST PERSON OFF" are
+      clean, 11 fps where they were 2. `pad-test`: 10 of 10.
 
 ## Releasing (once the blockers are done)
 

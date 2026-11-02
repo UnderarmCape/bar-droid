@@ -467,23 +467,49 @@ static void texstorage2d_wrap(GLenum target, GLsizei levels, GLenum internal, GL
 }
 
 /*
- * The map's ground tiles too (BARDROID_TEX_ZERO): the engine makes each 128x128 DXT1 tile with no data and fills it
- * later, and when the camera jumps (first person ending, 2026-11-02) a frame showed the new tiles' recycled buffers as
- * rows of white blocks over the map and the minimap. Made with zeros (black) instead, unless a pixel buffer is bound
- * (then no data means its start, not nothing).
+ * The map's ground tiles (BARDROID_TEX_ZERO, phones): when the camera jumps (first person ending, 2026-11-02) a frame
+ * showed rows of white blocks over the map and the minimap. The engine fills each 128x128 DXT1 tile through one pixel
+ * buffer, mapped unsynchronized for the next tile right after the last one's upload (SMFGroundTextures.cpp
+ * LoadSquareTexture; VBO::New of the same size keeps the buffer), and Mesa copies from a pixel buffer later, on the
+ * GPU: a tile got another's bytes, or a recycled buffer's. So a compressed texture from a pixel buffer is uploaded from
+ * a copy of its bytes in memory, which the driver takes at once. With no data and no buffer: made with zeros.
  */
 #define TEX_ZERO_MAX_BYTES (16L * 1024 * 1024)
+#define GL_MAP_READ_BIT 0x0001
+extern void *malloc(unsigned long size);
+extern void *memcpy(void *to, const void *from, unsigned long n);
+static void *(*gl_map_buffer_range)(GLenum, long, long, unsigned);
+static unsigned char (*gl_unmap_buffer)(GLenum);
+static int tile_copies;
+
 static void compressedteximage2d_wrap(GLenum target, GLint level, GLenum internal, GLsizei w, GLsizei h, GLint border,
                                       GLsizei size, const void *data) {
     if (level == 0) tex_said("glCompressedTexImage2D", target, (GLint) internal, w, h, 0, 0, data != 0);
-    void *zero = 0;
-    if (tex_zero == 1 && !data && size > 0 && size <= TEX_ZERO_MAX_BYTES && gl_get_integerv) {
-        GLint buffer = 0;
-        gl_get_integerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
-        if (!buffer) zero = calloc((unsigned long) size, 1);
+    GLint buffer = 0;
+    if (tex_zero != 1 || size <= 0 || size > TEX_ZERO_MAX_BYTES || !gl_get_integerv) {
+        real_compressed_tex_image_2d(target, level, internal, w, h, border, size, data);
+        return;
     }
-    real_compressed_tex_image_2d(target, level, internal, w, h, border, size, zero ? zero : data);
-    if (zero) free(zero);
+    gl_get_integerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
+    void *mem = buffer || !data ? (buffer ? malloc((unsigned long) size) : calloc((unsigned long) size, 1)) : 0;
+    if (buffer && mem) {
+        const void *bytes = gl_map_buffer_range && gl_unmap_buffer && gl_bind_buffer
+            ? gl_map_buffer_range(GL_PIXEL_UNPACK_BUFFER, (long) data, (long) size, GL_MAP_READ_BIT) : 0;
+        if (bytes) {
+            memcpy(mem, bytes, (unsigned long) size);
+            gl_unmap_buffer(GL_PIXEL_UNPACK_BUFFER);
+            gl_bind_buffer(GL_PIXEL_UNPACK_BUFFER, 0);
+            real_compressed_tex_image_2d(target, level, internal, w, h, border, size, mem);
+            gl_bind_buffer(GL_PIXEL_UNPACK_BUFFER, (GLuint) buffer);
+            free(mem);
+            if (tile_copies++ == 0) say("[pace] compressed textures from a pixel buffer: uploaded from a copy\n");
+            return;
+        }
+        free(mem);
+        mem = 0;
+    }
+    real_compressed_tex_image_2d(target, level, internal, w, h, border, size, mem ? mem : data);
+    if (mem) free(mem);
 }
 
 static void teximage2d_wrap(GLenum target, GLint level, GLint internal, GLsizei w, GLsizei h, GLint border, GLenum format,
@@ -515,6 +541,8 @@ static void gl_lookups(void) {
     if (gl_tex_image_2d) return;
     gl_pixel_storei = (void (*)(GLenum, GLint)) real_getproc("glPixelStorei");
     gl_bind_buffer = (void (*)(GLenum, GLuint)) real_getproc("glBindBuffer");
+    gl_map_buffer_range = (void *(*)(GLenum, long, long, unsigned)) real_getproc("glMapBufferRange");
+    gl_unmap_buffer = (unsigned char (*)(GLenum)) real_getproc("glUnmapBuffer");
     gl_get_integerv = (void (*)(GLenum, GLint *)) real_getproc("glGetIntegerv");
     gl_bind_texture = (void (*)(GLenum, GLuint)) real_getproc("glBindTexture");
     gl_get_tex_level_parameteriv = (void (*)(GLenum, GLint, GLenum, GLint *)) real_getproc("glGetTexLevelParameteriv");
