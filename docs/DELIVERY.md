@@ -495,6 +495,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       recent apps or the low-memory killer left an empty `.sdfz` that the lobby's Replays tab listed with nothing to read
       (282 of 355 on the dev phone). `launch-bar.sh` now removes the empty ones before each start; on the dev phone: 282
       removed, the 73 real ones kept. `tools/pace-test.ps1` after the tile change: all 19 pass.
+- [x] The launcher on the Fold7 unfolded (2026-11-02, the dev phone at 1968x2184): one column across the whole width,
+      setting lines of 1,700 pixels. Now side by side from 600 dp wide, upright too; an ordinary phone upright keeps one
+      column. `pad-test -Online` with the tile-copy change: 14 of 14.
 - [ ] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
       Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
       x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should

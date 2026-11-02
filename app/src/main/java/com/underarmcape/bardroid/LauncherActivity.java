@@ -85,9 +85,12 @@ public class LauncherActivity extends AppCompatActivity {
 
     @Override public void onConfigurationChanged(android.content.res.Configuration c) { super.onConfigurationChanged(c); fitLayout(); }
 
-    /** Side by side on a wide screen (it opens that way after a game): one over the other left the settings 90 dp. */
+    /**
+     * Side by side on a wide screen (it opens that way after a game): one over the other left the settings 90 dp. Wide
+     * is 600 dp or more, upright too: the Fold7 unfolded stacked them across its whole width, lines of 1,700 pixels.
+     */
     private void fitLayout() {
-        boolean wide = getResources().getConfiguration().orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        boolean wide = getResources().getConfiguration().screenWidthDp >= 600;
         int fill = LinearLayout.LayoutParams.MATCH_PARENT, wrap = LinearLayout.LayoutParams.WRAP_CONTENT;
         ((LinearLayout) findViewById(R.id.root)).setOrientation(wide ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         findViewById(R.id.top).setLayoutParams(new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : wrap, wide ? 1 : 0));
