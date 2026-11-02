@@ -83,7 +83,8 @@ end
 local function refresh()
 	local cs = spGetCameraState()
 	local cx, cz = cs.px, cs.pz
-	if not (cx and cz) or guiHidden then
+	local draw = WG.DrawUnitShapeGL4 -- (gone if BAR's shape drawer shut down: the call would take this widget with it)
+	if not (cx and cz and draw) or guiHidden then
 		for id in pairs(shapes) do
 			hide(id)
 		end
@@ -96,7 +97,7 @@ local function refresh()
 		if not near then
 			hide(id)
 		elseif not shapes[id] and shown < MAX_SHAPES then
-			shapes[id] = WG.DrawUnitShapeGL4(c.def, c.x, c.y - 0.01, c.z, c.rot, OPACITY, c.team)
+			shapes[id] = draw(c.def, c.x, c.y - 0.01, c.z, c.rot, OPACITY, c.team)
 			if shapes[id] then
 				shown = shown + 1
 			end

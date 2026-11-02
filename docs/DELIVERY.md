@@ -445,6 +445,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] `bardroid_pad.lua`'s online code reviewed (2026-11-01): where orders go through a click, LB + A or Y on units without
       that order still asked the app to click, which dropped the selection. Now a note, and `pad-test -Online` checks it.
       Repair, reclaim and the fight and patrol paths said so too when nothing was picked; factories no longer count as builders.
+- [x] `bardroid_queue.lua` reviewed (2026-11-01): if BAR's shape drawer went away in a game the next look at the queue took the
+      widget out, and queued buildings stopped showing for good. Taken away and back on the dev phone: shown 0, then 1.
 
 ## Releasing (once the blockers are done)
 

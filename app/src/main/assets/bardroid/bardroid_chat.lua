@@ -475,12 +475,24 @@ function widget:TextInput(text)
 end
 
 -- the typing box: the channel, the text (its lines wrapped), the cursor blinking
+-- A dark box in the shape of BAR's panels
+local TYPING_BOX, LINES_BOX = { 0, 0, 0, 0.62 }, { 0, 0, 0, BACKGROUND }
+local function box(x0, y0, x1, y1, color)
+	local f = WG.FlowUI
+	if f and f.Draw and f.Draw.RectRound then
+		f.Draw.RectRound(x0, y0, x1, y1, f.elementCorner or 4, 1, 1, 1, 1, color, color)
+	else
+		gl.Color(color)
+		gl.Rect(x0, y0, x1, y1)
+	end
+end
+
 local function drawTyping()
 	local t, mode = typed, MODES[typing.mode]
-	gl.Color(0, 0, 0, 0.62)
-	gl.Rect(t.x0, t.y0, t.x1, t.y1)
+	box(t.x0, t.y0, t.x1, t.y1, TYPING_BOX)
+	local corner = WG.FlowUI and WG.FlowUI.elementCorner or 0
 	gl.Color(1, 1, 1, 0.25)
-	gl.Rect(t.x0, t.y0, t.x1, t.y0 + 1)
+	gl.Rect(t.x0 + corner, t.y0, t.x1 - corner, t.y0 + 1)
 	gl.Color(1, 1, 1, 1)
 	local top = t.y1 - math.floor(gap * 0.4)
 	local function baseline(r)
@@ -636,8 +648,7 @@ function widget:DrawScreen()
 		return
 	end
 	local bottom = top - used * lineHeight - math.floor(lineHeight * 0.3)
-	gl.Color(0, 0, 0, BACKGROUND)
-	gl.Rect(boxLeft, bottom, boxRight, top)
+	box(boxLeft, bottom, boxRight, top, LINES_BOX)
 	gl.Color(1, 1, 1, 1)
 	local y = top
 	local baseline = math.floor(lineHeight * 0.78)
