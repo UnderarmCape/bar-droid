@@ -447,6 +447,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Repair, reclaim and the fight and patrol paths said so too when nothing was picked; factories no longer count as builders.
 - [x] `bardroid_queue.lua` reviewed (2026-11-01): if BAR's shape drawer went away in a game the next look at the queue took the
       widget out, and queued buildings stopped showing for good. Taken away and back on the dev phone: shown 0, then 1.
+- [x] `LobbyBridge.java` and `Updater.java`'s engine install reviewed (2026-11-02): an engine folder left without `spring` (its
+      removal cut short) could never be installed again, the final rename failing at every try. Now cleared first; on the dev
+      phone a real one, `spring` moved aside, was downloaded again and the game started.
 
 ## Releasing (once the blockers are done)
 

@@ -299,6 +299,7 @@ public final class Updater {
                     st.status("downloading engine " + ver + " " + Downloader.human(done) + " / " + Downloader.human(total)));
             st.status("installing engine " + ver);
             removeTree(tmp);
+            removeTree(dest);   // (one half deleted, with no spring: the rename below would fail at every try)
             // Extracted under another name first: a half-extracted engine never looks installed.
             int rc = proot.runScript("update:engine", "/opt/bardroid/setup-container.sh", new HashMap<>(),
                     Arrays.asList("engine", "/root/downloads/" + z.getName(), ver + ".new"));
