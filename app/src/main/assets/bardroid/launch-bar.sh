@@ -134,6 +134,14 @@ forget_fps_camera() {
   fi
 }
 forget_fps_camera
+# The engine writes a game's replay as the game ends: one ended by Stop, a swipe from recent apps or Android's low-memory
+# killer leaves an empty file, which the lobby's Replays tab listed with nothing to read (282 of 355 on the dev phone,
+# 2026-11-02). Nothing is recording now (one engine at a time): empty ones go.
+empty=$(find "$BAR/demos" -maxdepth 1 -name '*.sdfz' -size 0 2>/dev/null | wc -l)
+if [ "$empty" -gt 0 ]; then
+  find "$BAR/demos" -maxdepth 1 -name '*.sdfz' -size 0 -delete 2>/dev/null
+  log "replays: $empty empty ones (games that were stopped) removed"
+fi
 # The app's copy of BAR's Build menu in BAR's place, in every game: the pad's RB, PLACE and the shapes are in it (Kailil,
 # 2026-11-01, after BAR's update turned it off in an online game: "that is UNACCEPTABLE"). Installer makes it again when an
 # update changes BAR's file; one it could not (BAR rewrote a part a patch needs) runs all the same, and is named. Only a

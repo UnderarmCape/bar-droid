@@ -491,6 +491,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Mesa copies from a pixel buffer later, on the GPU. Now `pace.c` uploads a compressed texture from a pixel buffer
       out of a copy of its bytes (BARDROID_TEX_ZERO, phones): on the dev phone the frames after "FIRST PERSON OFF" are
       clean, 11 fps where they were 2. `pad-test`: 10 of 10.
+- [x] Empty replays (2026-11-02): the engine writes a replay as its game ends, so every game ended by Stop, a swipe from
+      recent apps or the low-memory killer left an empty `.sdfz` that the lobby's Replays tab listed with nothing to read
+      (282 of 355 on the dev phone). `launch-bar.sh` now removes the empty ones before each start; on the dev phone: 282
+      removed, the 73 real ones kept. `tools/pace-test.ps1` after the tile change: all 19 pass.
 
 ## Releasing (once the blockers are done)
 
