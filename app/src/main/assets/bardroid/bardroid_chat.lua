@@ -217,6 +217,25 @@ function widget:AddConsoleLine(line)
 	end
 end
 
+-- BAR's messages ("Battle Started", a commander under attack, the tutorial's lines: snd_notifications sends them with
+-- its voice lines) are typed by gui_messages at 16% of the screen's height from 31% of its width: on a phone, under the
+-- order menu and the unit info, unread (dev phone, 2026-11-02); it has no position setter. Its WG.messages.addMessage
+-- puts them in the chat box instead, in BAR's message white.
+local MESSAGE_COLOR = "\255\240\240\240"
+local barAddMessage, ownAddMessage -- BAR's function, and the one in its place
+local function takeMessages()
+	local m = WG.messages
+	if m and m.addMessage and m.addMessage ~= ownAddMessage then -- (again after a LuaUI reload makes a new WG.messages)
+		barAddMessage = m.addMessage
+		ownAddMessage = ownAddMessage or function(text)
+			if type(text) == "string" and text:find("%S") then
+				add("", WHITE, MESSAGE_COLOR .. (text:gsub("%s+", " ")))
+			end
+		end
+		m.addMessage = ownAddMessage
+	end
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- Typing
 
@@ -592,6 +611,9 @@ function widget:Shutdown()
 			chat.setChatInputHistory(wasInputHistory)
 		end
 	end
+	if WG.messages and WG.messages.addMessage == ownAddMessage and barAddMessage then
+		WG.messages.addMessage = barAddMessage
+	end
 end
 
 function widget:Update()
@@ -600,6 +622,9 @@ function widget:Update()
 	end
 	if hooked and not registered then
 		register()
+	end
+	if hooked then
+		takeMessages()
 	end
 end
 

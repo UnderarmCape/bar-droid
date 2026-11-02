@@ -523,6 +523,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       renames it over the file, so a start stopped in between left the copy: a 28 KB `BYAR.lua` in `LuaUI/Config` on the
       dev phone since 10-31. `launch-bar.sh` now removes them before it edits anything; on the dev phone: "1 half-made
       sed copies removed", BYAR.lua untouched. And the Info panel's stats no longer end a line with a comma (dev phone).
+- [x] BAR's messages under the HUD (2026-11-02): BAR's Messages widget (gui_messages: "Battle Started", a commander
+      under attack, the tutorial's lines) types them at 16% of the screen's height from 31% of its width, which on a
+      phone is behind the order menu and the unit info, and it has no position setter. `bardroid_chat.lua` now takes
+      its `WG.messages.addMessage` and shows them in the chat box (BAR's message white). On the dev phone: "Battle,
+      Started" and a test message there, nothing behind the order menu.
 
 ## Releasing (once the blockers are done)
 
