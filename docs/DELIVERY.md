@@ -506,9 +506,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's control-group and idle-builder panels dock to the order menu's right edge, which reaches far enough there
       that both sit under the small player list and show through it (BAR's layout; its order menu has no width setter
       and the list no position setter: the order menu raised with `setBottomPosition`, or the list kept open, are the
-      app's ways). And the build menu (BAR's sizing, made taller at his request) shows the commander's 26 options in 6
-      rows with a quarter of its panel empty below them; it could end at the last row when all fit on one page, at the
-      price of its top edge moving with each selection.
+      app's ways). And in the controller game v0.8.5's build menu shows the commander's 26 options in 6 rows with a
+      quarter of its panel empty below them (the app's copy, in BAR's game, ends at its last row); v0.8.5 changes only in
+      BARGAMEPAD, at his word.
+- [x] The layout editor in the controller game (2026-11-02, unfolded): v0.8.5's build menu, the one shown there, had no
+      outline or label at all (the app's hidden copy took its place in the editor's list). Now shown as "Build menu
+      (BAR's: fixed)" whenever the app's copy is not on screen; in BAR's game the copy stays the sizeable "Build menu",
+      with no second label. Both seen on the dev phone at 1968x2184.
 - [ ] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
       Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
       x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should

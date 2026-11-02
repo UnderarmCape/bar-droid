@@ -125,13 +125,16 @@ local function registerBar()
 			end
 		end,
 	})
-	if panels.buildmenu then -- (the app's copy of BAR's Build menu registered first: it is sizeable)
-		return
-	end
-	register("buildmenu", {
+	-- (its own id: the app's copy of BAR's Build menu is "buildmenu", sizeable, and outlined only while it shows; the
+	-- controller game with v0.8.5's controls shows v0.8.5's in its place, which had no outline at all)
+	register("barbuildmenu", {
 		label = "Build menu (BAR's: fixed)",
 		can = {},
 		rect = function()
+			local own = panels.buildmenu
+			if own and own.rect and own.rect() then
+				return nil
+			end
 			local b = WG.buildmenu
 			if not (b and b.getSize and b.getIsShowing and b.getIsShowing()) then
 				return nil
