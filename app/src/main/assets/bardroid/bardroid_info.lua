@@ -594,6 +594,9 @@ local function fit(view)
 		local stats = wrap(font, view.stats, statSize, function(n)
 			return beside(n) and narrow or wide
 		end)
+		for i, line in ipairs(stats) do -- a stat that ends its line drops its comma (the break is the separator)
+			stats[i] = line:gsub(",$", "")
+		end
 		used = used + #stats * lh
 		return used <= innerH, { beside = beside, s = s, name = name, nameSize = nameSize, desc = desc, descSize = descSize,
 			statSize = statSize, lh = lh, stats = stats, statsTop = top, barH = barH, pic = pic, textX = textX, x0 = x0, y1 = y1,

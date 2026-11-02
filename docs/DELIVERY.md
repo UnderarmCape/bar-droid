@@ -519,6 +519,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
       x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should
       say so or leave them out, is Kailil's call; the empty ones are already removed (above).
+- [x] Half-made settings copies (2026-11-02): `sed -i` writes a whole copy (`sedXXXXXX`) beside the file it edits and
+      renames it over the file, so a start stopped in between left the copy: a 28 KB `BYAR.lua` in `LuaUI/Config` on the
+      dev phone since 10-31. `launch-bar.sh` now removes them before it edits anything; on the dev phone: "1 half-made
+      sed copies removed", BYAR.lua untouched. And the Info panel's stats no longer end a line with a comma (dev phone).
 
 ## Releasing (once the blockers are done)
 

@@ -142,6 +142,14 @@ if [ "$empty" -gt 0 ]; then
   find "$BAR/demos" -maxdepth 1 -name '*.sdfz' -size 0 -delete 2>/dev/null
   log "replays: $empty empty ones (games that were stopped) removed"
 fi
+# sed -i writes a whole copy (sedXXXXXX) beside the file and renames it over the file: a start stopped in between leaves
+# the copy (a 28 KB BYAR.lua in LuaUI/Config on the dev phone, 2026-10-31). This script is the only sed here, and none
+# of its own is running now.
+stale=$(find "$BAR" "$BAR/LuaUI/Config" "$BAR/LuaMenu/Config" -maxdepth 1 -type f -name 'sed??????' 2>/dev/null)
+if [ -n "$stale" ]; then
+  printf '%s\n' "$stale" | while IFS= read -r s; do rm -f "$s"; done
+  log "settings: $(printf '%s\n' "$stale" | wc -l) half-made sed copies (a start that was stopped) removed"
+fi
 # The app's copy of BAR's Build menu in BAR's place, in every game: the pad's RB, PLACE and the shapes are in it (Kailil,
 # 2026-11-01, after BAR's update turned it off in an online game: "that is UNACCEPTABLE"). Installer makes it again when an
 # update changes BAR's file; one it could not (BAR rewrote a part a patch needs) runs all the same, and is named. Only a
