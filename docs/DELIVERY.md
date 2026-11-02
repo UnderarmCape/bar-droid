@@ -455,6 +455,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The hot benchmark on the dev phone, 2026-11-02 night: slower than on 10-31 (Sim 46 -> 51-56 ms, Draw 21 -> 27 ms, game
       speed x0.47 -> x0.42) at the same CPU clocks, GPU median 295 MHz against 401. Not the app: the same with 10-31's game
       files (`assets/bardroid` of 6d18d0e) and with the app's build menu off. The phone's OS is unchanged (28 Sep); open.
+      Settled the next morning (10:26, with the tile-copy change in `pace.c`): Sim 34.4 ms, Draw 26.4 ms, x0.64, 11.6 fps,
+      the prime core at a median 1708 MHz where the night's slow runs had it at 864 under the same 1708 cap. The night's
+      slowdown was that core's clock (the night's one fast run, 02:28, had Sim 33.7 too); Draw is unchanged, so the tile
+      copy costs nothing measurable.
 - [x] `tools/laptop-tests.ps1` stops when Kailil comes back (2026-11-02): the first run did, after 14 passes. The check it cut
       off read as a FAIL (its engine stopped mid-run); a check the watch cut off is now a STOP. The last two still to run.
 - [x] `bardroid_padfp.lua` reviewed (2026-11-02): its GetConfigData, meant for the game's end, runs whenever BAR saves the
