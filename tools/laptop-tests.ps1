@@ -24,7 +24,14 @@ $Tools = $PSScriptRoot
 $App = Split-Path -Parent $Tools
 $results = @()
 
+# Kailil back at the laptop: the check's engine ended at once, no further check started (tools\away-watch.ps1). Not with
+# -Pointer, whose checks move the pointer themselves.
+. (Join-Path $Tools "away-watch.ps1")
+$backFlag = Join-Path $App "build\laptop-tests.back"
+$watch = if (-not $Pointer) { Start-AwayWatch $backFlag }
+
 function Run($name, $script, $passPattern, [string[]]$extra = @()) {
+  if (Test-Path $backFlag) { $script:results += "STOP $name (Kailil is back at the laptop)"; return }
   Write-Host "== $name"
   $out = & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Tools $script) @extra 2>&1 | ForEach-Object { "$_" }
   $ok = ($out | Select-String -Pattern $passPattern -Quiet) -and
@@ -96,6 +103,8 @@ if (Test-Path (Join-Path $App "build\profile\data\games\BAR-gamepad.sdd\modinfo.
 Run "quit in first person" "spectate-test.ps1" "\[spectest\] done: ALL PASS" @("-QuitCheck")
 Run "pad with unit control widgets off" "touch-widget-test.ps1" "\[touchtest\] done: ALL PASS" @("-NoUnitControl", "-TestWidget", (Join-Path $Tools "touch-widget-test\bardroid_rule_off_test.lua"))
 
+Stop-AwayWatch $watch
+if (Test-Path $backFlag) { $results += "STOPPED: Kailil came back to the laptop; the checks after that did not run" }
 Write-Host ""
 $results | ForEach-Object { Write-Host $_ }
-if ($results -match "^FAIL") { exit 1 }
+if ($results -match "^(FAIL|STOP)") { exit 1 }
