@@ -464,6 +464,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The launcher's Save reviewed (2026-11-02): an emptied Mesa address was saved, and a phone's next install would have
       drawn on the CPU (no address is the emulator's choice). Now the address stays, as an emptied map does; tried on
       the dev phone. `bardroid_chat.lua`'s rounded boxes reviewed: nothing found.
+- [x] The game screen without a game (2026-11-02): when Android ended the app under a game (an update, the low-memory
+      killer), bringing it back from recent apps showed Termux:X11's own "Not connected" page and its buttons. Now the
+      launcher opens instead, with the low-memory note when that was why; on the dev phone, a skirmish ended by an
+      install and the app brought back. `tools/lobby-phone-test.ps1` on today's build: all 30 pass. The layout editor's
+      rounded boxes reviewed: nothing found.
 
 ## Releasing (once the blockers are done)
 

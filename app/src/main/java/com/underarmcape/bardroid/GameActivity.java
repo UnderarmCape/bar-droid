@@ -45,6 +45,16 @@ public class GameActivity extends MainActivity {
         LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);
         KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
+        if (!GameService.busy()) {
+            // Android brought the game screen back from recent apps after it ended the app (an update, the low-memory
+            // killer): no game behind it, only Termux:X11's "Not connected" page. The launcher instead, saying why.
+            Log.i("app", "the game screen came back with no game: the launcher instead");
+            GameService.noteLowMemoryExit(this);
+            startActivity(new android.content.Intent(this, LauncherActivity.class)
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK));
+            finishAndRemoveTask();
+            return;
+        }
         KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
         touch.setTripleTap(this::switchControllerMod);
@@ -202,11 +212,13 @@ public class GameActivity extends MainActivity {
         finishAndRemoveTask();
     }
 
-    @Override public void onPause() { pad.release(); super.onPause(); }
+    @Override public void onPause() { if (pad != null) pad.release(); super.onPause(); }
     @Override protected void onDestroy() {
-        getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
-        pad.stop();
-        touch.close();
+        if (pad != null) {   // (null: a screen that closed itself in onCreate, no game behind it)
+            getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
+            pad.stop();
+            touch.close();
+        }
         super.onDestroy();
     }
 
