@@ -352,7 +352,8 @@ void SDL_GL_SwapWindow(void *window) {
  * is wrapped: asked for glXGetProcAddress(ARB), it hands back a wrapper that, for glFramebufferTexture2D(EXT), hands
  * back the wrapper below, which gives a compressed 2D texture uncompressed RGBA8 storage of the same size (every level
  * that has one) before it is attached. Its contents go, which is right for a texture about to be drawn into. With
- * neither BARDROID_FBO_UNCOMPRESS=1 nor BARDROID_TEX_ZERO=1 the dlsym wrapper only passes every call on to glibc's.
+ * none of BARDROID_FBO_UNCOMPRESS=1, BARDROID_TEX_ZERO=1 and BARDROID_TEX_LOG=1 the dlsym wrapper only passes every call
+ * on to glibc's.
  */
 typedef unsigned int GLenum;
 typedef unsigned int GLuint;
@@ -440,10 +441,56 @@ static void (*gl_pixel_storei)(GLenum, GLint);
 static void (*gl_bind_buffer)(GLenum, GLuint);
 static int tex_zero = -1;   /* -1: not read yet */
 
+/*
+ * BARDROID_TEX_LOG=1 (a developer's switch, dev-env.sh): every texture of 128x128 or more the engine makes, its size and
+ * formats, to stderr (launcher.log), to see which one shows a recycled buffer (DELIVERY.md, the white lattice after
+ * first person). Off, nothing changes.
+ */
+#define TEX_LOG_MIN (128 * 128)
+extern int snprintf(char *s, unsigned long n, const char *format, ...);
+static int tex_log = -1;   /* -1: not read yet */
+static void (*real_tex_storage_2d)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
+static void (*real_compressed_tex_image_2d)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const void *);
+
+static void tex_said(const char *what, GLenum target, GLint internal, GLsizei w, GLsizei h, unsigned format,
+                     unsigned type, int data) {
+    if (tex_log != 1 || (long) w * (long) h < TEX_LOG_MIN) return;
+    char line[160];
+    snprintf(line, sizeof line, "[pace] %s %dx%d target 0x%x internal 0x%x format 0x%x type 0x%x %s\n", what, (int) w,
+             (int) h, target, (unsigned) internal, format, type, data ? "with data" : "empty");
+    say(line);
+}
+
+static void texstorage2d_wrap(GLenum target, GLsizei levels, GLenum internal, GLsizei w, GLsizei h) {
+    tex_said("glTexStorage2D", target, (GLint) internal, w, h, (unsigned) levels, 0, 0);
+    real_tex_storage_2d(target, levels, internal, w, h);
+}
+
+/*
+ * The map's ground tiles too (BARDROID_TEX_ZERO): the engine makes each 128x128 DXT1 tile with no data and fills it
+ * later, and when the camera jumps (first person ending, 2026-11-02) a frame showed the new tiles' recycled buffers as
+ * rows of white blocks over the map and the minimap. Made with zeros (black) instead, unless a pixel buffer is bound
+ * (then no data means its start, not nothing).
+ */
+#define TEX_ZERO_MAX_BYTES (16L * 1024 * 1024)
+static void compressedteximage2d_wrap(GLenum target, GLint level, GLenum internal, GLsizei w, GLsizei h, GLint border,
+                                      GLsizei size, const void *data) {
+    if (level == 0) tex_said("glCompressedTexImage2D", target, (GLint) internal, w, h, 0, 0, data != 0);
+    void *zero = 0;
+    if (tex_zero == 1 && !data && size > 0 && size <= TEX_ZERO_MAX_BYTES && gl_get_integerv) {
+        GLint buffer = 0;
+        gl_get_integerv(GL_PIXEL_UNPACK_BUFFER_BINDING, &buffer);
+        if (!buffer) zero = calloc((unsigned long) size, 1);
+    }
+    real_compressed_tex_image_2d(target, level, internal, w, h, border, size, zero ? zero : data);
+    if (zero) free(zero);
+}
+
 static void teximage2d_wrap(GLenum target, GLint level, GLint internal, GLsizei w, GLsizei h, GLint border, GLenum format,
                             GLenum type, const void *pixels) {
     void *zero = 0;
-    if (!pixels && target == GL_TEXTURE_2D && level == 0 && (internal == GL_RGBA || internal == GL_RGBA8)
+    if (level == 0) tex_said("glTexImage2D", target, internal, w, h, format, type, pixels != 0);
+    if (tex_zero == 1 && !pixels && target == GL_TEXTURE_2D && level == 0 && (internal == GL_RGBA || internal == GL_RGBA8)
         && format == GL_RGBA && type == GL_UNSIGNED_BYTE && w > 0 && h > 0
         && w <= TEX_ZERO_MAX_SIDE && h <= TEX_ZERO_MAX_SIDE) zero = calloc((unsigned long) w * (unsigned long) h, 4);
     if (!zero) { gl_tex_image_2d(target, level, internal, w, h, border, format, type, pixels); return; }
@@ -479,10 +526,20 @@ static void gl_lookups(void) {
 static void *glx_getproc_wrap(const char *proc) {
     void *p = real_getproc ? real_getproc(proc) : 0;
     if (!p || !proc) return p;
-    if (tex_zero && same(proc, "glTexImage2D")) {
+    if ((tex_zero || tex_log) && same(proc, "glTexImage2D")) {
         gl_lookups();
-        say("[pace] new textures start as zeros (BARDROID_TEX_ZERO)\n");
+        if (tex_zero) say("[pace] new textures start as zeros (BARDROID_TEX_ZERO)\n");
+        if (tex_log) say("[pace] textures of 128x128 or more logged (BARDROID_TEX_LOG)\n");
         return (void *) teximage2d_wrap;
+    }
+    if (tex_log && same(proc, "glTexStorage2D")) {
+        real_tex_storage_2d = (void (*)(GLenum, GLsizei, GLenum, GLsizei, GLsizei)) p;
+        return (void *) texstorage2d_wrap;
+    }
+    if ((tex_zero || tex_log) && same(proc, "glCompressedTexImage2D")) {
+        gl_lookups();
+        real_compressed_tex_image_2d = (void (*)(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, const void *)) p;
+        return (void *) compressedteximage2d_wrap;
     }
     int ext = same(proc, "glFramebufferTexture2DEXT");
     if (!fbo_uncompress || (!ext && !same(proc, "glFramebufferTexture2D"))) return p;
@@ -512,8 +569,10 @@ void *dlsym(void *handle, const char *symbol) {
         fbo_uncompress = v && v[0] == '1';
         v = getenv("BARDROID_TEX_ZERO");
         tex_zero = v && v[0] == '1';
+        v = getenv("BARDROID_TEX_LOG");
+        tex_log = v && v[0] == '1';
     }
-    if ((!fbo_uncompress && !tex_zero) || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
+    if ((!fbo_uncompress && !tex_zero && !tex_log) || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
         || !(same(symbol, "glXGetProcAddressARB") || same(symbol, "glXGetProcAddress")))
         __attribute__((musttail)) return glibc_dlsym(handle, symbol);
     void *p = glibc_dlsym(handle, symbol);

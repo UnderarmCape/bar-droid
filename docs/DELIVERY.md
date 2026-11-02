@@ -481,6 +481,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (its own probe textures, a few white pixels at times, under its threshold). `BARDROID_TEX_ZERO` zeroes only plain
       RGBA textures made with no data; next: have `pace.c` log the textures made in that frame (size, format) to see
       which one the map draws from. `pad-test`: 10 of 10 both runs.
+      Third run, with `pace.c`'s new log (`BARDROID_TEX_LOG=1` in dev-env.sh): a camera jump makes dozens of the map's
+      128x128 DXT1 ground tiles (`glCompressedTexImage2D`, no pointer). Those made with no pixel buffer bound now start
+      as zeros, but the lattice was still on the minimap in the frame after "FIRST PERSON OFF": so those tiles come
+      from a pixel buffer, or the lattice is another texture (the minimap's, or the LOS overlay's, which streams through
+      pixel buffers too). Next: log the bound pixel buffer with each tile, and the minimap and info textures.
 
 ## Releasing (once the blockers are done)
 
