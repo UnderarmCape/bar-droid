@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StatFs;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -98,6 +100,13 @@ public class LauncherActivity extends AppCompatActivity {
         LinearLayout.LayoutParams settings = new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : 0, 1);
         settings.leftMargin = wide ? gap : 0;
         findViewById(R.id.settings).setLayoutParams(settings);
+        // the device lines: under the buttons on a wide screen (half of that side stood empty), else first in the settings
+        View device = findViewById(R.id.device);
+        ViewGroup to = (ViewGroup) ((ViewGroup) findViewById(wide ? R.id.top : R.id.settings)).getChildAt(0);
+        if (device.getParent() != to) {
+            ((ViewGroup) device.getParent()).removeView(device);
+            if (wide) to.addView(device); else to.addView(device, 0);
+        }
     }
 
     /** A start takes what the screen shows: a setting changed and left unsaved was ignored without a word. */
