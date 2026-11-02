@@ -508,7 +508,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       and the list no position setter: the order menu raised with `setBottomPosition`, or the list kept open, are the
       app's ways). And in the controller game v0.8.5's build menu shows the commander's 26 options in 6 rows with a
       quarter of its panel empty below them (the app's copy, in BAR's game, ends at its last row); v0.8.5 changes only in
-      BARGAMEPAD, at his word.
+      BARGAMEPAD, at his word. And spectating there, BAR's "Player View", "Player Camera" and "TV" buttons, which sit
+      on the player list's left edge, run past the screen's right edge while the list is minimized (only "Player View"
+      shows): the minimized list could keep more width while spectating, or stay open for spectators.
 - [x] The layout editor in the controller game (2026-11-02, unfolded): v0.8.5's build menu, the one shown there, had no
       outline or label at all (the app's hidden copy took its place in the editor's list). Now shown as "Build menu
       (BAR's: fixed)" whenever the app's copy is not on screen; in BAR's game the copy stays the sizeable "Build menu",
