@@ -788,6 +788,20 @@ local function drawPicture(defID, x0, y0, x1, y1)
 	end
 end
 
+-- The health bar in the shape of BAR's panels (corners a fifth of its height: a third read as a hexagon; never more
+-- than half its width, so a sliver of health stays a bar)
+local BAR_BACK = { 0, 0, 0, 0.45 }
+local function roundBar(x0, y0, x1, y1, color)
+	local f = WG.FlowUI
+	local cs = min(floor((y1 - y0) / 5), floor((x1 - x0) / 2))
+	if cs >= 1 and f and f.Draw and f.Draw.RectRound then
+		f.Draw.RectRound(x0, y0, x1, y1, cs, 1, 1, 1, 1, color, color)
+	elseif x1 > x0 then
+		gl.Color(color)
+		gl.Rect(x0, y0, x1, y1)
+	end
+end
+
 local function drawUnitView()
 	local l = laidOut
 	local pic = l.pic
@@ -809,10 +823,8 @@ local function drawUnitView()
 		local x0, x1 = l.textX, l.x1
 		local frac = max(0, min(1, view.health / view.maxHealth))
 		local yb = y - barH - l.s * 0.15
-		gl.Color(0, 0, 0, 0.45)
-		gl.Rect(x0, yb, x1, yb + barH)
-		gl.Color(min(1, 2 - frac * 2), min(1, frac * 2), 0.15, 0.85)
-		gl.Rect(x0, yb, x0 + (x1 - x0) * frac, yb + barH)
+		roundBar(x0, yb, x1, yb + barH, BAR_BACK)
+		roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { min(1, 2 - frac * 2), min(1, frac * 2), 0.15, 0.85 })
 		gl.Color(1, 1, 1, 1)
 		local label = floor(view.health) .. " / " .. floor(view.maxHealth)
 		if view.build and view.build < 1 then

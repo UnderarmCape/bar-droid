@@ -474,6 +474,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       laser (the commander's too) lost its name and all its stats. Now it gets Lua's own functions, a failure there falls
       back to the plain sum, and a unit type with no stats says why in the log. On the dev phone in BAR's released game:
       all stats shown. `pad-test -Online`: 14 of 14 (the first run's last case was the test's timing on a hot phone).
+- [ ] A white lattice over the map and the minimap for a moment, at 2 fps and x0.60, right after first person ended
+      (`pad-test`, the controller game, dev phone, 2026-11-02 08:36); 6 s later all clean. The test logged a new 340x83
+      texture holding white at about the same time (its own new textures: 0 of 40). To find which texture, and whether
+      `BARDROID_TEX_ZERO` misses it. `pad-test`: 10 of 10.
 
 ## Releasing (once the blockers are done)
 
