@@ -1369,7 +1369,8 @@ local function queueLayout(vsx, vsy)
 end
 local function drawQueue()
 	local r = queue.rect
-	local font = WG.fonts and WG.fonts.getFont()
+	-- (BAR's order menu's font, the buttons right under it; the plain one read thin and large beside them)
+	local font = WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
 	if not (r and font) then
 		return
 	end
@@ -1378,7 +1379,7 @@ local function drawQueue()
 		style.fill(r[1], r[2], r[3], r[4], style.GOLD, 0.22)
 		style.outline(r[1], r[2], r[3], r[4], style.GOLD, 1)
 	end
-	local size = math.floor((r[4] - r[2]) * 0.5)
+	local size = math.floor((r[4] - r[2]) * 0.42)
 	local c = queue.on and style.GOLD or style.TEXT
 	font:Begin()
 	font:SetOutlineColor(0, 0, 0, 0.6)
