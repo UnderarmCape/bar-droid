@@ -274,7 +274,16 @@ local function layoutButtons()
 		for i, b in ipairs(r) do
 			w = w + b.w + (i > 1 and gap or 0)
 		end
-		local x = math.floor((vsx - w) / 2)
+		-- centred in the room the panels leave at its height, else on the screen (the hint crossed the build menu's last
+		-- column on a phone's wide screen, 2026-11-02)
+		local lo, hi = 0, vsx
+		for _, id in ipairs(order) do
+			local x0, y0, x1, y1 = rectOf(id)
+			if x0 and y0 < y + h and y1 > y then
+				if (x0 + x1) / 2 < vsx / 2 then lo = math.max(lo, x1) else hi = math.min(hi, x0) end
+			end
+		end
+		local x = hi - lo >= w + 2 * gap and math.floor(lo + (hi - lo - w) / 2) or math.floor((vsx - w) / 2)
 		for _, b in ipairs(r) do
 			buttons[#buttons + 1] = { x0 = x, y0 = y, x1 = x + b.w, y1 = y + h, label = b.label, action = b.action,
 				lit = b.lit, size = h }
@@ -428,7 +437,7 @@ local function outline(x0, y0, x1, y1, color, width, fill)
 	gl.Rect(x1 - width, y0, x1, y1)
 end
 
--- (the hint crosses the build menu: nothing shows through its words)
+-- (where no room is left beside the panels the hint crosses one: nothing shows through its words)
 local BAR_HINT, BAR_BUTTON, BAR_LIT = { 0, 0, 0, 0.85 }, { 0.08, 0.08, 0.08, 0.92 }, { 0.25, 0.22, 0.06, 0.92 }
 local BAR_TAB = { 0, 0, 0, 0.7 }
 
