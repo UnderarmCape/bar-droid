@@ -215,9 +215,15 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private void saveSettings(boolean say) {
+        EditText workers = findViewById(R.id.edWorkers);
         try {
-            Prefs.workerThreads = Integer.parseInt(((EditText) findViewById(R.id.edWorkers)).getText().toString().trim());
-        } catch (NumberFormatException e) { Toast.makeText(this, "bad number", Toast.LENGTH_SHORT).show(); return; }
+            int n = Integer.parseInt(workers.getText().toString().trim());
+            if (n < 1) throw new NumberFormatException();
+            Prefs.workerThreads = n;
+        } catch (NumberFormatException e) {   // (only this one: giving up here lost the screen's other changes too)
+            workers.setText(String.valueOf(Prefs.workerThreads));
+            Toast.makeText(this, "Worker threads: a number from 1, kept " + Prefs.workerThreads, Toast.LENGTH_SHORT).show();
+        }
         String map = ((EditText) findViewById(R.id.edMap)).getText().toString().trim();
         if (map.isEmpty()) ((EditText) findViewById(R.id.edMap)).setText(Prefs.mapName);   // (no game starts on no map)
         else {
