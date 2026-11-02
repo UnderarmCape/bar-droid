@@ -115,22 +115,22 @@ public final class Updater {
         Prefs.engineUrl = ENGINE_RELEASES + ver + "/recoil_" + ver + "_" + ENGINE_ARCH + ".7z";
     }
 
-    /** One line for the launcher's status. */
+    /** The launcher's status lines (one fact a line: a phone's width wrapped one long line mid-phrase). */
     public static String summary(Paths p) {
         Properties s = new Properties();
         load(new File(p.filesDir, "update/state.properties"), s);
         StringBuilder sb = new StringBuilder();   // (the engine's version is in the lines above: only a fallback here)
         String good = s.getProperty("good.engine");
-        if (good != null && !good.equals(Prefs.engineVersion)) sb.append("Falls back to engine ").append(good).append(". ");
+        if (good != null && !good.equals(Prefs.engineVersion)) sb.append("Falls back to engine ").append(good).append("\n");
         sb.append("BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
-        if (s.getProperty("check") != null) sb.append(", last check ").append(s.getProperty("check"));
+        if (s.getProperty("check") != null) sb.append("\nLast check ").append(s.getProperty("check"));
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
         // (the last start's own list: the count in the state is written when a game ends, so one stopped kept an old one)
         File layer = new File(p.bar, "logs/android-layer.txt");
         if (layer.exists()) try (BufferedReader r = new BufferedReader(new FileReader(layer))) {
             for (String l; (l = r.readLine()) != null; ) if (!l.trim().isEmpty()) misses++;
         } catch (IOException ignored) {}
-        if (misses > 0) sb.append(". ").append(misses).append(" of the app's adjustments to BAR did not apply: see the log");
+        if (misses > 0) sb.append("\n").append(misses).append(" of the app's adjustments to BAR did not apply: see the log");
         return sb.toString();
     }
 

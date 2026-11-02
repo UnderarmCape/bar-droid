@@ -37,6 +37,8 @@ function Run($name, $script, $passPattern, [string[]]$extra = @()) {
   $ok = ($out | Select-String -Pattern $passPattern -Quiet) -and
         -not ($out | Select-String -CaseSensitive -Pattern "(^\s*|\] )FAIL\b|Error in |\] Error" -Quiet)
   if (-not $ok) { $out | Select-Object -Last 25 | ForEach-Object { Write-Host "   $_" } }
+  # (a check whose engine the away watch stopped is cut off, not failed: 2026-11-02 one read as a FAIL)
+  if (-not $ok -and (Test-Path $backFlag)) { $script:results += "STOP $name (cut off: Kailil came back)"; return }
   $script:results += "{0} {1}" -f $(if ($ok) { "PASS" } else { "FAIL" }), $name
 }
 

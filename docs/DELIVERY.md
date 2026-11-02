@@ -455,6 +455,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The hot benchmark on the dev phone, 2026-11-02 night: slower than on 10-31 (Sim 46 -> 51-56 ms, Draw 21 -> 27 ms, game
       speed x0.47 -> x0.42) at the same CPU clocks, GPU median 295 MHz against 401. Not the app: the same with 10-31's game
       files (`assets/bardroid` of 6d18d0e) and with the app's build menu off. The phone's OS is unchanged (28 Sep); open.
+- [x] `tools/laptop-tests.ps1` stops when Kailil comes back (2026-11-02): the first run did, after 14 passes. The check it cut
+      off read as a FAIL (its engine stopped mid-run); a check the watch cut off is now a STOP. The last two still to run.
 
 ## Releasing (once the blockers are done)
 
