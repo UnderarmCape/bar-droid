@@ -450,6 +450,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] `LobbyBridge.java` and `Updater.java`'s engine install reviewed (2026-11-02): an engine folder left without `spring` (its
       removal cut short) could never be installed again, the final rename failing at every try. Now cleared first; on the dev
       phone a real one, `spring` moved aside, was downloaded again and the game started.
+- [x] Building by touch with unit control widgets off, real taps on the dev phone (2026-11-02): a building on the build menu, a
+      spot, PLACE twice with the order queued each time, the building still picked, the X puts it away; no widget error.
 
 ## Releasing (once the blockers are done)
 
