@@ -231,7 +231,10 @@ public class LauncherActivity extends AppCompatActivity {
             Prefs.mapName = map;
         }
         // (the field wraps: an Enter typed in it is no part of the address, nor is any space)
-        Prefs.mesaUrl = ((EditText) findViewById(R.id.edMesaUrl)).getText().toString().replaceAll("\\s", "");
+        EditText mesaField = findViewById(R.id.edMesaUrl);
+        String mesa = mesaField.getText().toString().replaceAll("\\s", "");
+        if (mesa.isEmpty() && !Prefs.EMULATOR_BUILD) mesaField.setText(Prefs.mesaUrl);   // (none is the emulator's: CPU drawing)
+        else Prefs.mesaUrl = mesa;
         boolean alt = ((CheckBox) findViewById(R.id.cbZink)).isChecked();
         Prefs.mesaDriver = Prefs.EMULATOR_BUILD ? (alt ? "llvmpipe" : "virpipe") : (alt ? "zink" : "kgsl");
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();

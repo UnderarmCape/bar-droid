@@ -26,6 +26,7 @@ local MIN_TEXT, MAX_TEXT_LINES = 8, 6.2 -- smallest text (pixels); the largest: 
 local REFRESH = 0.25 -- seconds between rebuilding a shown unit's text (health, experience)
 local PICK_EVERY = 0.1 -- seconds between looking again at what to show (and at once when the selection changes)
 local LABEL, VALUE, DIM = "\255\175\175\175", "\255\255\255\255", "\255\200\200\200"
+local KEEP = "\1" -- a space inside one stat, its label and value (wrap breaks lines only between stats)
 
 local floor, max, min = math.floor, math.max, math.min
 local spGetUnitDefID = Spring.GetUnitDefID
@@ -326,8 +327,9 @@ end
 local function statsText(id, unitID)
 	local info = defInfo(id)
 	local parts = {}
-	local function add(label, value)
-		parts[#parts + 1] = LABEL .. label:sub(1, 1):upper() .. label:sub(2) .. (value and (VALUE .. " " .. value) or "")
+	local function add(label, value) -- (its spaces kept from wrap: a line never ends between "M storage" and its 500)
+		local part = LABEL .. label:sub(1, 1):upper() .. label:sub(2) .. (value and (VALUE .. " " .. value) or "")
+		parts[#parts + 1] = part:gsub(" ", KEEP)
 	end
 	local maxRange, exp
 	if unitID then
@@ -514,18 +516,25 @@ local function lastColor(s)
 	return code
 end
 
+-- (KEEP: a space no line breaks at, printed as a space)
 local function wrap(f, text, size, widthAt, maxLines)
 	local lines, line, color = {}, "", ""
 	local function width()
 		return widthAt(#lines + 1)
 	end
+	local function done()
+		for i, l in ipairs(lines) do
+			lines[i] = l:gsub(KEEP, " ")
+		end
+		return lines
+	end
 	for word in text:gmatch("%S+") do
 		local candidate = (line == "" or line == color) and line .. word or line .. " " .. word
-		if f:GetTextWidth(candidate) * size > width() and line ~= "" and line ~= color then
+		if f:GetTextWidth((candidate:gsub(KEEP, " "))) * size > width() and line ~= "" and line ~= color then
 			lines[#lines + 1] = line
 			if maxLines and #lines >= maxLines then
 				lines[#lines] = line .. "..."
-				return lines
+				return done()
 			end
 			line = color .. word
 		else
@@ -536,7 +545,7 @@ local function wrap(f, text, size, widthAt, maxLines)
 	if line ~= "" and line ~= color then
 		lines[#lines + 1] = line
 	end
-	return lines
+	return done()
 end
 
 -- The largest text size at which name, description, health and stats fit the panel, on half-pixel steps: a binary

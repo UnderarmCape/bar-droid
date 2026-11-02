@@ -461,6 +461,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       widgets' settings, as it does each time a widget is switched on or off; a spectator in 1st person lost the way back
       to the own camera (leaving gave a made-up one). Now kept; `tools/fp-save-test.ps1` checks it on the dev phone, 4/4.
       The dev phone's logs (56,000 launcher lines, the last game's log): no error from the app or its widgets.
+- [x] The launcher's Save reviewed (2026-11-02): an emptied Mesa address was saved, and a phone's next install would have
+      drawn on the CPU (no address is the emulator's choice). Now the address stays, as an emptied map does; tried on
+      the dev phone. `bardroid_chat.lua`'s rounded boxes reviewed: nothing found.
 
 ## Releasing (once the blockers are done)
 
