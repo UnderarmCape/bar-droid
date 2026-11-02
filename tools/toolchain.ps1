@@ -96,6 +96,13 @@ s global stay_on_while_plugged_in 15
 dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
 '@
 }
+# A phone test's game starts on a lit, unlocked screen: behind a dark one it began hidden and upright, and the screen
+# coming on (a virtual pad wakes it) turned it and reloaded the interface mid-test, the test widget with it (pad-test,
+# 2026-11-02). No device: ANDROID_SERIAL's.
+function Set-PhoneAwake([string]$adb, [string]$device = "") {
+  $on = if ($device) { @("-s", $device) } else { @() }
+  & $adb @on shell "input keyevent KEYCODE_WAKEUP; wm dismiss-keyguard" | Out-Null
+}
 # A shell script run on a device (adb quoting through PowerShell is fragile, and a pipe into adb can start with a
 # byte-order mark, which broke the script's first line): written as ASCII with LF endings, pushed, run; its output
 function Invoke-PhoneScript([string]$adb, [string]$device, [string]$script, [string]$name = "bardroid-x.sh") {

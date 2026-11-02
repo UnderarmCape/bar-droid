@@ -27,6 +27,7 @@ Push (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua")
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
 & $adb push (Join-Path $PSScriptRoot "lobby-touch-test\pad-start.evemu") $evemu | Out-Null
 try {
+  Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.StartActivity" | Out-Null   # (the app icon: the lobby)
   $until = (Get-Date).AddMinutes(4)
   while ((Get-Date) -lt $until -and -not (Log '\[lobbytouch\] done' 1)) { Start-Sleep 3 }

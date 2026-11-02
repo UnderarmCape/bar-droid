@@ -34,6 +34,7 @@ cmd /c "`"$adb`" exec-in run-as $pkg sh -c `"cat > $widget`" < `"$(Join-Path $PS
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null
 try {
   if ($Online) { InApp "online-on.sh" }
+  Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $until = (Get-Date).AddMinutes(5)
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] ready' 1)) { Start-Sleep 3 }

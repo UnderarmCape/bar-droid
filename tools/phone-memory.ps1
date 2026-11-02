@@ -81,6 +81,7 @@ try {
   $since = (& $adb -s $Device shell "date +%H:%M:%S").Trim()
   $job = Start-Job -ScriptBlock { param($a, $d, $s) & $a -s $d shell "sed -i 's/\r$//' /data/local/tmp/bardroid-mem.sh; sh /data/local/tmp/bardroid-mem.sh $s /data/local/tmp/bardroid-mem.txt" } -ArgumentList $adb, $Device, ($Seconds + 30)
   Start-Sleep 2
+  Set-PhoneAwake $adb $Device
   & $adb -s $Device shell "am start -n $pkg/.LauncherActivity --es start $Mode" | Out-Null
   Write-Host "[phone-memory] $Mode started at $since$(if ($lines) { ' with ' + ($lines -join ', ') })"
   Wait-Job $job -Timeout ($Seconds + 90) | Out-Null

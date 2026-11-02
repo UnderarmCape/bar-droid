@@ -15,7 +15,7 @@ $out = "files/bar/LuaUI/Config/bardroid_fpsave.txt"
 & $adb exec-out run-as $pkg rm -f $out
 cmd /c "`"$adb`" exec-in run-as $pkg sh -c `"cat > $widget`" < `"$(Join-Path $PSScriptRoot "spectate-test\bardroid_fpsave_test.lua")`""
 try {
-  & $adb shell input keyevent KEYCODE_WAKEUP
+  Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $until = (Get-Date).AddMinutes(6)
   while ((Get-Date) -lt $until) {
