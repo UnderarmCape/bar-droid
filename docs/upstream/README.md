@@ -9,3 +9,4 @@ and for AI assistance to be disclosed (RecoilEngine `AI_POLICY.md`); every draft
 | [recoil-arm64-barb-angelscript-stub.md](recoil-arm64-barb-angelscript-stub.md) | github.com/beyond-all-reason/RecoilEngine issues, then the CircuitAI patch | the log lines; later `patches/circuitai-cmake-arm64-linux.patch` |
 | [recoil-save-load-crash.md](recoil-save-load-crash.md) | github.com/beyond-all-reason/RecoilEngine issues (or BAR's Discord bug channel first) | Kailil's save `Saves/20261026_063343.ssf` |
 | [recoil-compresstextures-fbo.md](recoil-compresstextures-fbo.md) | github.com/beyond-all-reason/RecoilEngine issues | an infolog with the lines; a screenshot of the black icons |
+| [bar-topbar-warning-banner.md](bar-topbar-warning-banner.md) | github.com/beyond-all-reason/Beyond-All-Reason issues | a screenshot of the cut-off banner (`build/hud-square.png` from the phone) |
