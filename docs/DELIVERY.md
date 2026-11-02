@@ -475,9 +475,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       back to the plain sum, and a unit type with no stats says why in the log. On the dev phone in BAR's released game:
       all stats shown. `pad-test -Online`: 14 of 14 (the first run's last case was the test's timing on a hot phone).
 - [ ] A white lattice over the map and the minimap for a moment, at 2 fps and x0.60, right after first person ended
-      (`pad-test`, the controller game, dev phone, 2026-11-02 08:36); 6 s later all clean. The test logged a new 340x83
-      texture holding white at about the same time (its own new textures: 0 of 40). To find which texture, and whether
-      `BARDROID_TEX_ZERO` misses it. `pad-test`: 10 of 10.
+      (`pad-test`, the controller game, dev phone, 2026-11-02 08:36); 6 s later all clean. Seen again in the next run, in
+      the frame after "FIRST PERSON OFF" only (a frame a second, 21 of them): rows of white blocks, like a font's glyphs,
+      over the whole minimap, as a recycled GPU buffer shows before its texture is filled. Not the test's 340x83 line
+      (its own probe textures, a few white pixels at times, under its threshold). `BARDROID_TEX_ZERO` zeroes only plain
+      RGBA textures made with no data; next: have `pace.c` log the textures made in that frame (size, format) to see
+      which one the map draws from. `pad-test`: 10 of 10 both runs.
 
 ## Releasing (once the blockers are done)
 
