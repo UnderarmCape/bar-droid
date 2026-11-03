@@ -681,6 +681,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       build menu copy, the Unit info). On the dev phone: a chat line and BAR's messages, after 17 s the chat line alone
       (40 s), with the typing box open the chat line alone. And the line box ends where its longest line does (it was
       three quarters of the screen wide for one short line); while typing it keeps the typing box's width.
+- [x] Tonight's fold fixes need a resize to show: the dev phone's floating window keeps the X screen at 2008x938
+      (only the frame cap changes: "[display] floating window: 15 fps cap"), so they wait for the Fold7. The laptop's
+      checks that start no BAR all pass over tonight's changes (Lua lint 0 warnings in 35 files, PowerShell syntax,
+      launch-bar.sh's switching, publish-check's self-test, downloader, settings merge, updater rollback, PadGame).
+      GL check on the dev phone: FD740. And the launcher's device lines at 12sp: turned sideways (GL check leaves the
+      launcher so) the wide layout cut their last line off under the buttons; now all of them show.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
