@@ -96,6 +96,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       pictures 137 MB, loaded in every game's first seconds by BAR's "Cache Icons". That widget is now off on phones
       (`launch-bar.sh`): GPU memory in a skirmish 2.08 GB a minute in where it was 2.52 GB, the start "12 8 10 31 27"
       fps where it was "2 4 5 5 5 4", the build menus' pictures as before (each loads when first shown).
+      BAR's GUI Shader (the blur behind its panels, 4 screen-size textures, ~30 MB) measured with the phone benchmark,
+      warm (thermal status 1): Draw 24.97 and 25.74 ms a frame with it, 26.37 without; Sim 52-54 ms (the prime CPU at
+      864 MHz). It costs nothing measurable: it stays.
 - [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its
