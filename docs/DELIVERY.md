@@ -729,7 +729,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       That status is now the notification's title: expanded it read "Beyond All Reason" (Android's header) over a
       "BAR Droid" title, the name twice and two ways; now "Skirmish running" under the header (the app's name stays
       the App name item's). Its Stop, tried during a skirmish: the engine exits (137), no game process left, the
-      notification gone.
+      notification gone. A tap on it while a game runs now goes back to the game, as the app icon does (it opened the
+      launcher, the game left in its floating window); otherwise the launcher. On the dev phone: a skirmish sent
+      Home (floating window), the notification tapped: the game full screen again (GameActivity focused). Seen on
+      the way: launcher.log's X screen read 936x2013 for a moment before 2008x938 again (the window's way out of the
+      floating window); nothing showed for it. Watch for a game laid out upright after a return.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

@@ -374,8 +374,12 @@ public class GameService extends Service {
     // (the status is the title: Android's header above it names the app; a "BAR Droid" title under "Beyond All Reason"
     // named it twice, two ways)
     private Notification notification(String status) {
-        Intent open = new Intent(this, LauncherActivity.class);
-        PendingIntent pi = PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        // a tap: back to the game while one runs (as the app icon, StartActivity; it opened the launcher, with the game
+        // left in its floating window), else the launcher (installing, updating, a game that ended)
+        boolean game = status != null && status.startsWith("running");
+        Intent open = game ? new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                : new Intent(this, LauncherActivity.class);
+        PendingIntent pi = PendingIntent.getActivity(this, game ? 2 : 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Intent stop = new Intent(this, GameService.class).setAction(ACTION_STOP);
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this, CHANNEL)
