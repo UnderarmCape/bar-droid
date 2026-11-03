@@ -132,12 +132,17 @@ public class GameService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
+        String mode = intent != null && intent.getStringExtra(EXTRA_MODE) != null ? intent.getStringExtra(EXTRA_MODE) : "skirmish";
         if (!busy) closing = false;
+        // what is starting, before the notification goes up (it read "Idle", then the launcher "Installed, idle", for a
+        // second or two after Play: the last game's word; dev phone, 2026-11-03)
+        if (!busy && ACTION_PLAY.equals(action)) setStatus("starting (" + mode + ")");
+        else if (!busy && ACTION_INSTALL.equals(action)) setStatus("installing");
         startForeground(1, notification(status));
         if (ACTION_STOP.equals(action)) { closing = true; stopEverything(); close(); return START_NOT_STICKY; }
         if (busy) { Log.i("svc", "busy; ignoring " + action); return START_NOT_STICKY; }
         if (ACTION_INSTALL.equals(action)) runAsync(this::install);
-        else if (ACTION_PLAY.equals(action)) { String mode = intent.getStringExtra(EXTRA_MODE); runAsync(() -> play(mode == null ? "skirmish" : mode)); }
+        else if (ACTION_PLAY.equals(action)) runAsync(() -> play(mode));
         return START_NOT_STICKY;
     }
 
@@ -176,9 +181,6 @@ public class GameService extends Service {
     private void play(String mode) {
         updater = null;
         exitNote = null;
-        // (at once: until the update check the launcher said "Installed, idle" for a second or two after Play, the last
-        // game's word under a busy service; dev phone, 2026-11-03)
-        setStatus("starting (" + mode + ")");
         Installer inst = new Installer(this, paths);
         if (!inst.isInstalled() && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
@@ -433,7 +435,7 @@ public class GameService extends Service {
                 default: return "Running (" + m.group(1) + ")";
             }
         }
-        if (s.startsWith("launching engine")) return "Starting";
+        if (s.startsWith("launching engine") || s.matches("^starting \\(\\w+\\)$")) return "Starting";
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 

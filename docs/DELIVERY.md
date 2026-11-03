@@ -938,7 +938,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       stays picked for the next. QUEUE off and lit looked over: nothing to change. A game's start looked over
       (launcher, ~3 s of black while the X server and engine start, Recoil's splash, BAR's loading screen): right
       after Play the launcher read "Installed, idle" for a second or two (the service busy, its status still the last
-      game's word until the update check); it says "starting (skirmish)" at once now. And placing a
+      game's word until the update check); it says "starting (skirmish)" at once now. The notification had the same
+      first word ("Idle", posted before the work began): the service sets "starting" (or "installing") before it goes
+      up, and shows it as "Starting" like the engine's start; titles sampled during a start: Starting, Update:
+      checking for BAR updates, Starting X server, Skirmish running. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
