@@ -77,13 +77,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- (on a wide screen under the buttons instead: LauncherActivity.fitLayout) -->
+            <!-- (on a wide screen under the buttons instead: LauncherActivity.fitLayout); the launcher's own type, a
+                 step quieter than the settings (in monospace its sentences broke like a log's lines) -->
             <TextView
                 android:id="@+id/device"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:fontFamily="monospace"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:lineSpacingExtra="2dp"
                 android:paddingTop="8dp" />
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_game" />

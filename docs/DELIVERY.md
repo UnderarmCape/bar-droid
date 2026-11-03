@@ -623,6 +623,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       test-31783) and lays itself out again when that changes. In BAR's game on the dev phone, Unit info at 126%: the
       menu ends above it, its strip whole. pad-test -Online: all pass. The controller game's menu is v0.8.5's and keeps
       BAR's 14% (BARGAMEPAD, at Kailil's word).
+- [x] The held tap (above) and the double tap (a type's units on the screen): reviewed in `RtsTouch` (the first tap's
+      wait ends at the next touch down, both clicks keep their spacing, the engine's DoubleClickTime is 350 ms) and
+      tried on the dev phone, 6 Pawns given: one tap selected 1, a double tap 6. And the launcher's device lines are
+      set in its own type, a step quieter, where monospace broke the low-memory sentence like a log's lines.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
