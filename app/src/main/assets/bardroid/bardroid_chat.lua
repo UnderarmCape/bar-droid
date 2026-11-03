@@ -59,7 +59,10 @@ local function clock()
 	return spDiffTimers(spGetTimer(), timer0)
 end
 local entries = {} -- { time, chunks = name pieces, nameColor, text, lines = wrapped text }
-local hooked, wasInputHistory = false, nil
+-- BAR's chat as the player has it (hidden or not, its history over the typing box), given back at the end (giveBack)
+local hooked, wasInputHistory, wasHidden = false, nil, false
+-- this widget's config version: none, from a version whose end left BAR's chat saved hidden (SetConfigData)
+local CONFIG_VERSION, configVersion = 1, nil
 local relayoutNext = false -- (ViewResize: once more in the next Update, BAR's top bar placed by then)
 local vsx, vsy = Spring.GetViewGeometry()
 local font, nameFont, fontSize, lineHeight
@@ -583,11 +586,20 @@ local function hook()
 	if not (chat and chat.setHide and chat.addChatProcessor) or not layout() then
 		return false
 	end
+	wasHidden = chat.getHide and chat.getHide() or false
 	chat.setHide(true)
 	chat.addChatProcessor("bardroid_chat", processor)
 	if chat.getChatInputHistory and chat.setChatInputHistory then
 		wasInputHistory = chat.getChatInputHistory()
 		chat.setChatInputHistory(false)
+	end
+	if configVersion ~= CONFIG_VERSION then
+		-- BAR saved its chat as this widget keeps it (hidden, no history) at every game's end before: BAR's own
+		-- defaults instead, once
+		wasHidden = false
+		if wasInputHistory ~= nil then
+			wasInputHistory = true
+		end
 	end
 	Spring.Echo("[bardroid-chat] BAR's chat lines drawn by BAR Droid chat")
 	WG.bardroidChat = { -- (tools/touch-widget-test.ps1)
@@ -635,6 +647,36 @@ local function register()
 	})
 end
 
+-- BAR saves every widget's config before any widget's Shutdown (barwidgets.lua widgetHandler:Shutdown), this widget's
+-- before its chat's (layers -96000, -95000): BAR's chat gets the player's own hide and history back for that save, and
+-- is taken over again at the next Update if the game goes on (a widget switched on or off). Given back in Shutdown
+-- only, BAR had kept its chat hidden with no history as the player's own (dev phone, 2026-11-03: hide = true).
+local takeAgain = false
+local function giveBack()
+	local chat = WG.chat
+	if not (hooked and chat) then
+		return
+	end
+	if chat.setHide then
+		chat.setHide(wasHidden)
+	end
+	if wasInputHistory ~= nil and chat.setChatInputHistory then
+		chat.setChatInputHistory(wasInputHistory)
+	end
+end
+
+function widget:GetConfigData()
+	if hooked then
+		giveBack()
+		takeAgain = true
+	end
+	return { version = CONFIG_VERSION }
+end
+
+function widget:SetConfigData(data)
+	configVersion = type(data) == "table" and data.version or nil
+end
+
 function widget:Shutdown()
 	closeTyping()
 	WG.bardroidChat = nil
@@ -643,14 +685,9 @@ function widget:Shutdown()
 	end
 	local chat = WG.chat
 	if hooked and chat then
-		if chat.setHide then
-			chat.setHide(false)
-		end
+		giveBack()
 		if chat.removeChatProcessor then
 			chat.removeChatProcessor("bardroid_chat")
-		end
-		if wasInputHistory ~= nil and chat.setChatInputHistory then
-			chat.setChatInputHistory(wasInputHistory)
 		end
 	end
 	if WG.messages and WG.messages.addMessage == ownAddMessage and barAddMessage then
@@ -679,6 +716,16 @@ function widget:Update()
 				quitNote.text = quitText(left)
 				quitNote.lines = wrap(quitNote.text, boxRight - gap - (boxLeft + gap), fontSize)
 				quitNote.right = reach(quitNote)
+			end
+		end
+	end
+	if takeAgain then -- (a save while the game goes on: GetConfigData)
+		takeAgain = false
+		local chat = WG.chat
+		if hooked and chat then
+			chat.setHide(true)
+			if chat.setChatInputHistory then
+				chat.setChatInputHistory(false)
 			end
 		end
 	end

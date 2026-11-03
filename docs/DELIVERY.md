@@ -859,6 +859,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] BAR's chat saved hidden with no input history (review of the app's Shutdowns after the order menu's, dev phone,
+      2026-11-03: BAR's file said `hide = true`): `bardroid_chat.lua` gave BAR's chat back in Shutdown, after BAR's
+      save. Now in its GetConfigData (layers -96000, BAR's chat -95000), taken over again if the game goes on; a config
+      of an older version gives BAR's defaults back once (shown, history on). Dev phone: in game BAR's chat hidden,
+      history off, as before; after `/quitforce` BAR's file says `hide = false`, `showHistoryWhenChatInput = true`;
+      the next game the same. The other Shutdowns: the minimap's size is an in-memory overlay (never saved), the
+      touch and low-memory ones engine settings.
 - [x] The order menu's pad orders stayed hidden after a game played with the pad (Kailil, 2026-11-03: the order
       menu no longer "rearranges"): BAR saves the order menu's switch (`disabledCmd`) with every widget's config
       before any widget's Shutdown, so `bardroid_pad.lua` showing Stop, Wait, Attack, Repeat, Move, Reclaim, Repair,
