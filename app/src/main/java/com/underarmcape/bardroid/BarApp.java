@@ -63,6 +63,14 @@ public class BarApp extends LorieApp {
                 .apply();
     }
 
+    /**
+     * Termux:X11 posts a notification of its own while its screen is in front ("Termux:X11", high importance, its
+     * preferences on a button), beside GameService's ("running (skirmish)", Stop; a tap opens the launcher): two for
+     * one game in the shade (dev phone, 2026-11-03). GameService's stands for the game; Termux:X11's is not posted.
+     */
+    @Override
+    public void onActivityResumed(com.termux.x11.MainActivity activity) { }
+
     public static BarApp get() { return instance; }
     public Paths paths() { return paths; }
 }
