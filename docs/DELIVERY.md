@@ -90,8 +90,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       in his game before). Options, Kailil's call: a lower render resolution by itself when the phone reports severe
       heat (the frame cap holds, the picture softer), and a lighter memory set for big online games. The minute's
       `[perf]` line now has the GPU driver's memory (`/proc/meminfo` GpuTotal): a 1v1 skirmish's start on the dev phone
-      reads "engine 749 MB, GPU 2060 MB", so the GPU's textures and buffers are most of the game's memory; the next
-      look at it starts there.
+      reads "engine 749 MB, GPU 2060 MB", so the GPU's textures and buffers are most of the game's memory. Its parts
+      (pace's BARDROID_TEX_LOG summed, dev phone): the engine's two projectile atlases 345 MB (8176x6056 and
+      6616x6152, past the low-memory mode's atlas cap: the engine's own), the screen's buffers ~200 MB, and ~570 unit
+      pictures 137 MB, loaded in every game's first seconds by BAR's "Cache Icons". That widget is now off on phones
+      (`launch-bar.sh`): GPU memory in a skirmish 2.08 GB a minute in where it was 2.52 GB, the start "12 8 10 31 27"
+      fps where it was "2 4 5 5 5 4", the build menus' pictures as before (each loads when first shown).
 - [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its

@@ -295,6 +295,11 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Reclaim Field Highlight" 0
   # BAR's Ecostats: the alliances' resource bars in the top right corner (Kailil, 2026-10-27: "hidden if possible")
   widget_order "Ecostats" 0
+  # BAR's Cache Icons loads every unit's picture in a game's first seconds (~570 with Legion, Raptors and Scavengers),
+  # so that none shows white for a moment: 137 MB of GPU memory on a phone, uncompressed, and loading work in the
+  # start's stutter (dev phone, 2026-11-02; Kailil's online game on the Fold7 ended by Android's low-memory killer).
+  # Without it a picture loads when first shown (the app's build menu loads its page's own as it opens).
+  widget_order "Cache Icons" 0
   # BAR's fog-of-war stripes (Fog Diagonal Lines GL4) find the ground in the map's G-buffer, which the engine only
   # clears with advanced map shading off (BAR's Lowest preset, the phone's): a full-screen pass every frame whose every
   # pixel is discarded. Off while the lobby's or the engine's setting is 0 (the lobby's copy is what the next game
