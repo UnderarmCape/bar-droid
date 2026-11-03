@@ -6,7 +6,8 @@
 --   tap      the click Chili would have had, on release
 --   tap on a server (battle list)  its details (Chobby's own server tooltip) and a bar: Close, Previous, Next, Join;
 --            a second tap on the same server joins it
--- Presses outside lists, on sliders, text boxes and scroll bars go to Chili as before. Also: a warning in a server
+-- Presses outside lists, on sliders, text boxes and scroll bars go to Chili as before. After a press the hover tooltips
+-- wait until the pointer moves (a finger leaves it where it lifted: a tooltip stayed up). Also: a warning in a server
 -- whose settings take away the app's controls (Kailil, 2026-11-01: the lobby has no room to show them), and the pad's
 -- Start in the lobby: the interface scale 100% or 130% (launch-bar.sh starts at 100%). Installed into LuaMenu/Widgets
 -- by the app; Chobby loads it with its "loadLocalWidgets" setting (launch-bar.sh).
@@ -37,6 +38,7 @@ local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2,
 
 local Chili, screen0
 local press, fling
+local hush -- where the last press left the pointer: Chili's hover tooltip held back until it moves (Update)
 local popupButton, bar
 local warning, warningText, warningColour, warningShown, warningClosed, warningBattle, warningSize, warningCheck
 
@@ -400,6 +402,7 @@ function widget:MousePress(x, y, button)
 		return false
 	end
 	fling = nil
+	hush = { x = x, y = y }
 	local _, _, hx, hy = chiliPoint(x, y)
 	local hit = screen0:HitTest(hx, hy)
 	if hit and isOurs(hit) then
@@ -483,6 +486,17 @@ function widget:Update() -- (the lobby's Update has no frame time)
 			if math.abs(fling.v) < 20 then
 				fling = nil
 			end
+		end
+	end
+	-- A finger leaves the pointer where it lifted, and Chili's hover tooltip of whatever is under it stayed up: on the
+	-- Skirmish screen a tapped map's picture as large as the screen, over the Next button (dev phone, 2026-11-02). Held
+	-- back from a press until the pointer moves away; a mouse moving on gets its tooltips as before.
+	if hush then
+		local mx, my = Spring.GetMouseState()
+		if math.abs(mx - hush.x) + math.abs(my - hush.y) > DRAG_PX then
+			hush = nil
+		else
+			screen0.currentTooltip = nil
 		end
 	end
 	if popupButton and (popupButton.disposed or not popupButton.parent or popupButton.visible == false) then
