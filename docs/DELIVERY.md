@@ -88,7 +88,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       minute 9.4. Free memory 650-950 MB the whole late game (engine 1.0-1.6 GB, swap 6-7 GB free), and at 22:31:46,
       as he left, Android's low-memory killer ended the app (ApplicationExitInfo reason 3, LOW_MEMORY; also at 21:57
       in his game before). Options, Kailil's call: a lower render resolution by itself when the phone reports severe
-      heat (the frame cap holds, the picture softer), and a lighter memory set for big online games. The minute's
+      heat (the frame cap holds, the picture softer), and a lighter memory set for big online games. Leaving checked
+      on the dev phone (2026-11-03, a lobby skirmish played to defeat, BAR's Awards, Leave): the game's 2 GB of GPU
+      memory freed at once, 2.6 GB available through the engine's reload into the lobby, back on the Skirmish screen;
+      so it is the late game's memory that leaves no room, not the leaving itself. (On the way: BAR's pregame panel at
+      the folded screen's interface scale 2.0 sets "Pick your faction" over its own instruction line and runs the
+      faction cards' names off the screen's bottom; picking, placing and Ready all work by touch.) The minute's
       `[perf]` line now has the GPU driver's memory (`/proc/meminfo` GpuTotal): a 1v1 skirmish's start on the dev phone
       reads "engine 749 MB, GPU 2060 MB", so the GPU's textures and buffers are most of the game's memory. Its parts
       (pace's BARDROID_TEX_LOG summed, dev phone): the engine's two projectile atlases 345 MB (8176x6056 and
