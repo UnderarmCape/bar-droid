@@ -46,6 +46,8 @@ public final class Proc {
             try (BufferedReader r = new BufferedReader(new java.io.FileReader(new File(d, "status")))) {
                 String line;
                 while ((line = r.readLine()) != null) {
+                    // (a process already dead, not yet reaped: a second Stop pass "killed" it again in the log)
+                    if (line.startsWith("State:") && line.substring(6).trim().startsWith("Z")) break;
                     if (!line.startsWith("Uid:")) continue;
                     if (Integer.parseInt(line.substring(4).trim().split("\\s+")[0]) == uid) {
                         android.system.Os.kill(pid, android.system.OsConstants.SIGKILL);
