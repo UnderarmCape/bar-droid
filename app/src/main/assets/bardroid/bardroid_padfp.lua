@@ -515,6 +515,11 @@ local function drawSquad(style, font, x1, y0, vsy)
 	gl.Color(1, 1, 1, 1)
 end
 
+-- The D-pad's directions as arrows in their chips, and the View button by its name ("UP", "DN", "LF", "RG", "BK" read
+-- as a code)
+local ARROWS = { UP = { 0, 1 }, DN = { 0, -1 }, LF = { -1, 0 }, RG = { 1, 0 } }
+local CHIP_WORDS = { BK = "VIEW" }
+
 local function drawButtons(style, font, x0, y0, x1, y1, buttons)
 	style.panel(x0, y0, x1, y1, 1)
 	local size = style.size(0.019, 11)
@@ -531,11 +536,24 @@ local function drawButtons(style, font, x0, y0, x1, y1, buttons)
 		else
 			local w = math.floor(chip * 1.5)
 			style.fill(x, y, x + w, y + chip, { 0.2, 0.2, 0.2, 0.95 }, 1)
-			font:Begin()
-			font:SetOutlineColor(0, 0, 0, 0.6)
-			font:SetTextColor(1, 1, 1, 1)
-			font:Print(b[1], x + w / 2, y + chip / 2 - chip * 0.2, chip * 0.55, "co")
-			font:End()
+			local arrow = ARROWS[b[1]]
+			if arrow then -- (its tip, then the two ends of its base)
+				local cx, cy, r, dx, dy = x + w / 2, y + chip / 2, chip * 0.26, arrow[1], arrow[2]
+				gl.Color(1, 1, 1, 1)
+				gl.BeginEnd(GL.TRIANGLES, function()
+					gl.Vertex(cx + dx * r, cy + dy * r)
+					gl.Vertex(cx - dx * r * 0.7 - dy * r, cy - dy * r * 0.7 + dx * r)
+					gl.Vertex(cx - dx * r * 0.7 + dy * r, cy - dy * r * 0.7 - dx * r)
+				end)
+			else
+				local word = CHIP_WORDS[b[1]] or b[1]
+				local fs = math.min(chip * 0.55, (w - chip * 0.3) / math.max(0.01, font:GetTextWidth(word)))
+				font:Begin()
+				font:SetOutlineColor(0, 0, 0, 0.6)
+				font:SetTextColor(1, 1, 1, 1)
+				font:Print(word, x + w / 2, y + chip / 2 - fs * 0.36, fs, "co")
+				font:End()
+			end
 		end
 		font:Begin()
 		font:SetOutlineColor(0, 0, 0, 0.6)

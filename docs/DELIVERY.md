@@ -112,6 +112,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its
       launcher.log is kept on the dev phone as `files/logs/hang-2026-11-02.log`. Watch for it again; if it repeats,
       a report for lfdevs' Mesa (KGSL submit) with that log.
+- [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
+      7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
+      `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
+      1 of 22 shots in that run; none in 222 back-to-back shots of the next. HANDOFF's "watch for flicker" of the
+      explicit Present fence covers it; if anyone sees a white flash in play, this is the picture to compare.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
@@ -653,6 +658,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the bar turned to the camera presets. Its buttons were BAR's panels at BAR's 70% opacity without the blur BAR's
       GUI shader puts behind its own (a blur pass more per frame on a phone), so the battle showed through the words;
       now 85% at least, BAR's look kept. (A tap 7 s after the bar opened found it closed, as designed.)
+- [x] The pad's first-person legend (`bardroid_padfp.lua`, screenshots during pad-test, 2026-11-03): the D-pad read
+      "UP", "DN" (and "LF", "RG" in the camera tuner) and the View button "BK"; now arrows in the D-pad's chips and
+      "VIEW". pad-test: all pass. Also looked into: BAR's messages read "Battle, Started" in the chat box because
+      BAR's own translation has the comma (`BAR.I18N("tips.notifications.gameStarted")` on the phone), and the big
+      "BUTTON_L1" boxes in some shots are the dev phone's developer option "Show key presses", not the app.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
