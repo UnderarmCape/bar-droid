@@ -112,6 +112,9 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.divider).setLayoutParams(divider);
         LinearLayout.LayoutParams settings = new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : 0, 1);
         settings.leftMargin = wide ? gap : 0;
+        // (out into the screen's edge by its scrollbar's margin, so its text ends where the buttons' do: the layout's
+        // paddingEnd, the root's clipToPadding off)
+        settings.rightMargin = -findViewById(R.id.settings).getPaddingEnd();
         findViewById(R.id.settings).setLayoutParams(settings);
         // the device lines: under the buttons on a wide screen (half of that side stood empty), else first in the settings
         View device = findViewById(R.id.device);

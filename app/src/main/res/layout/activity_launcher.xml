@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:clipToPadding="false"
     android:padding="12dp">
 
     <!-- Above the settings, or beside them on a wide screen: LauncherActivity.fitLayout. -->
@@ -67,7 +68,8 @@
         android:alpha="0.4"
         android:background="?attr/colorAccent" />
 
-    <!-- (its scrollbar in a margin of its own: over the text it covered the long settings' line ends) -->
+    <!-- (its scrollbar in a margin of its own, out in the screen's edge: over the text it covered the long settings'
+         line ends; LauncherActivity.fitLayout) -->
     <ScrollView
         android:id="@+id/settings"
         android:layout_width="match_parent"

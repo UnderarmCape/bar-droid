@@ -919,7 +919,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       recordings (cfcc568: keys, the oldest dropped after 8, the bar live or recorded, the grid): nothing found.
       lobby-phone-test: all pass.
 - [x] The launcher's settings scrollbar ran over the long settings' line ends ("... Off: Android's own", "... where
-      plain"; dev phone, sideways and upright, 2026-11-03): it has a 10 dp margin of its own now. And placing a
+      plain"; dev phone, sideways and upright, 2026-11-03): it has a 10 dp margin of its own now, out in the screen's
+      edge (the settings at first ended 10 dp short of the buttons above: "Save settings" no longer lined up with
+      "Lobby"; now both end where they did). The day's launcher logs looked over: only BAR's and the engine's own
+      warnings; the one odd exit ("INVALID START", killedByAm) is Android cancelling a start in the middle of an
+      `adb install -r`. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
