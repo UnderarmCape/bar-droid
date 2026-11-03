@@ -31,7 +31,7 @@ public class StartActivity extends Activity {
             long now = SystemClock.elapsedRealtime();
             boolean updating = s.startsWith("update: ") || s.startsWith("BAR update");
             if (updating) waitingSince = now;
-            updateView.setText(updating ? GameService.forPlayers(s.replaceFirst("^update: ", "")) : "");   // ("Checking for ...")
+            updateView.setText(updating ? StatusText.forPlayers(s.replaceFirst("^update: ", "")) : "");   // ("Checking for ...")
             if (now - waitingSince > GIVE_UP_MS) { toGame = false; openLauncher(); finish(); return; }
             handler.postDelayed(this, 500);
         }

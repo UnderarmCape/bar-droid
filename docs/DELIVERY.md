@@ -948,7 +948,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       refreshes on each service line, at most ~10 a second while a download reports (every 2 MB), three small file
       reads each: fine. The installer's steps in players' words too ("Install rootfs: downloading Debian ..." ->
       "Installing: downloading Debian ...", "Install done: Installed (100%)" -> "Installed"; "Install failed: ..."
-      kept), checked on twelve of the service's statuses with a copy of `forPlayers`. And placing a
+      kept), checked on twelve of the service's statuses with a copy of `forPlayers`. That check is a real one now:
+      the words moved to `StatusText.java` (no Android classes), `tools/status-text-test.ps1` (19 cases, in
+      laptop-tests) and `java-checks.sh` (CI) run it; all pass, and the notification still reads "Skirmish running"
+      on the dev phone. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

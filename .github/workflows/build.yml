@@ -43,7 +43,7 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-      - name: Downloader, settings merge, updater rollback, gamepad controls
+      - name: Downloader, settings merge, updater rollback, gamepad controls, status words
         run: sh tools/java-checks.sh
       - name: launch-bar.sh's build menu switching
         run: sh tools/launch-bar-test.sh

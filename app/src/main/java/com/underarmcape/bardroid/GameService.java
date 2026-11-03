@@ -418,32 +418,6 @@ public class GameService extends Service {
         return "Benchmark, ms per frame: " + String.join(", ", parts);
     }
 
-    /**
-     * The status as the notification says it to players: "Skirmish running" for the log's "running (skirmish)",
-     * "Starting" for "launching engine (...)", any other with a capital (the status words themselves stay: the
-     * launcher, StartActivity and the logs read them).
-     */
-    static String forPlayers(String s) {
-        if (s == null || s.isEmpty()) return "";
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^running \\((\\w+)\\)$").matcher(s);
-        if (m.matches()) {
-            switch (m.group(1)) {
-                case "skirmish": return "Skirmish running";
-                case "lobby": return "Lobby running";
-                case "bench": return "Benchmark running";
-                case "glcheck": return "GL check running";
-                default: return "Running (" + m.group(1) + ")";
-            }
-        }
-        if (s.startsWith("launching engine") || s.matches("^starting \\(\\w+\\)$")) return "Starting";
-        // the installer's steps without their inner names ("Install rootfs: downloading Debian ...", "Install done:
-        // Installed (100%)")
-        if (s.startsWith("install done")) return "Installed";
-        m = java.util.regex.Pattern.compile("^install (\\w+): (.*)$").matcher(s);
-        if (m.matches() && !m.group(1).equals("failed")) return "Installing: " + m.group(2);
-        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
-    }
-
     // (the status is the title: Android's header above it names the app; a "BAR Droid" title under "Beyond All Reason"
     // named it twice, two ways)
     private Notification notification(String status) {
@@ -457,7 +431,7 @@ public class GameService extends Service {
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
-                .setContentTitle(forPlayers(status))
+                .setContentTitle(StatusText.forPlayers(status))
                 .setContentIntent(pi)
                 .addAction(new Notification.Action.Builder(null, "Stop", stopPi).build())
                 .setOngoing(true)

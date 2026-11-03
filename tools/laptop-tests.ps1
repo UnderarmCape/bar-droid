@@ -4,6 +4,7 @@
 #   settings-merge-test  SettingsMerge.java (springsettings.cfg at every start)
 #   updater-test         Updater.launchEnded (keep or roll back a BAR update)
 #   padgame-test         PadGame.java (the gamepad in BAR's game: button sequences, the mouse and keys it sends)
+#   status-text-test     StatusText.java (the game service's status in players' words: notification, launcher)
 #   lobby-bridge-test    LobbyBridge.java against the real lobby
 #   lobby-touch-test     bardroid_lobby_touch.lua in the real lobby (finger scrolling, server details first)
 #   lobby-game-test      the lobby's Skirmish screen with the controller game (assets\gamepad, as installed)
@@ -107,6 +108,7 @@ Run "downloader" "downloader-test.ps1" "ALL PASS"
 Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
 Run "updater rollback" "updater-test.ps1" "ALL PASS"
 Run "gamepad in BAR's game (PadGame)" "padgame-test.ps1" "ALL PASS"
+Run "status words (StatusText)" "status-text-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
 Run "lobby touch" "lobby-touch-test.ps1" "\[lobbytouch\] done: ALL PASS"
 Run "lobby Skirmish, controller game" "lobby-game-test.ps1" "\[lobbygame\] done: ALL PASS"
