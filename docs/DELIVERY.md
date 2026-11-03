@@ -918,6 +918,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (`LauncherActivity.fitSmallButtons`, again when the row's width changes). And a review of the unit info panel's
       recordings (cfcc568: keys, the oldest dropped after 8, the bar live or recorded, the grid): nothing found.
       lobby-phone-test: all pass.
+- [x] The launcher's settings scrollbar ran over the long settings' line ends ("... Off: Android's own", "... where
+      plain"; dev phone, sideways and upright, 2026-11-03): it has a 10 dp margin of its own now. And placing a
+      building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
+      to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
+      `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
+      it.)
 - [x] Spectating by touch after the day's player list changes (dev phone, a skirmish's replay started through a
       temporary `dev-env.sh`, removed after; 2026-11-03): a tap on the small list brings up the spectate bar ("No player
       cams" dimmed, Free, Follow unit, Group), the list small as a spectator, no errors. The touch widget's 0.6% of the
