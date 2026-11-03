@@ -75,10 +75,10 @@ public class GameService extends Service {
         android.app.ApplicationExitInfo e = exits.get(0);
         if (!exitLogged) {   // (once per process: how the app's last run ended, for the shared logs)
             exitLogged = true;
-            int r = e.getReason();   // (the cause in words first: the launcher's log box shows this line to players)
+            int r = e.getReason();   // (the cause in words for the launcher's log box; Android's own words in the shared logs)
             Log.i("app", "the last run ended " + new java.text.SimpleDateFormat("MMM d HH:mm:ss", java.util.Locale.US)
-                    .format(new java.util.Date(e.getTimestamp())) + ": " + (r >= 0 && r < EXIT_REASONS.length ? EXIT_REASONS[r] : "reason " + r)
-                    + " (" + e.getDescription() + "; reason " + r + ", importance " + e.getImportance() + ")");
+                    .format(new java.util.Date(e.getTimestamp())) + ": " + (r >= 0 && r < EXIT_REASONS.length ? EXIT_REASONS[r] : "reason " + r));
+            Log.detail("app", "the last run's exit: " + e.getDescription() + "; reason " + r + ", importance " + e.getImportance());
         }
         if (e.getReason() != android.app.ApplicationExitInfo.REASON_LOW_MEMORY
                 || e.getImportance() > android.app.ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND_SERVICE

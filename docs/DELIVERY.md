@@ -713,6 +713,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       pointer, adb's mouse input does not reach the game): after a finger's tap "Code of Conduct" hovered=false, the
       pointer 40 px on inside it hovered=true. lobby-phone-test: all pass. And the launcher's log box no longer
       starts with the app's library path (`nativeLibDir=/data/app/~~...`): it goes to launcher.log only (`Log.detail`).
+      Nor does the last run's end carry Android's own words ("([FORCE STOP] stop com.underarmcape.bardroid due to
+      from pid 10071; reason 10, importance 100)"): the box says "force stopped", launcher.log keeps the rest on a line
+      of its own ("the last run's exit: ..."); phone-bench's "ended for lack of memory" line is unchanged.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
