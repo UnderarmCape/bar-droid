@@ -935,7 +935,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       other checks run locally: the PowerShell tools parse (27), publish-check -SelfTest passes. pad-test -Online
       after that change: all pass (the copy runs, 11 orders one cell each). Placing a factory by touch: on a crater's
       slope the ghost is red and PLACE stays dim; on flat ground PLACE lights, the commander goes and builds, the plant
-      stays picked for the next. QUEUE off and lit looked over: nothing to change. And placing a
+      stays picked for the next. QUEUE off and lit looked over: nothing to change. A game's start looked over
+      (launcher, ~3 s of black while the X server and engine start, Recoil's splash, BAR's loading screen): right
+      after Play the launcher read "Installed, idle" for a second or two (the service busy, its status still the last
+      game's word until the update check); it says "starting (skirmish)" at once now. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

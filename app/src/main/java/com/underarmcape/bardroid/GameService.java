@@ -176,6 +176,9 @@ public class GameService extends Service {
     private void play(String mode) {
         updater = null;
         exitNote = null;
+        // (at once: until the update check the launcher said "Installed, idle" for a second or two after Play, the last
+        // game's word under a busy service; dev phone, 2026-11-03)
+        setStatus("starting (" + mode + ")");
         Installer inst = new Installer(this, paths);
         if (!inst.isInstalled() && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
