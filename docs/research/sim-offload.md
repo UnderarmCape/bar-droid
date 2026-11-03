@@ -4,8 +4,9 @@ Kailil, 2026-11-03: "try the simulation skipping anyways I want to give the resu
 for how to implement lower spec phones into multi-player. Like the phones rely on other players to keep them sync and
 get the math from them."
 
-Work in progress. Every experiment here runs offline on our own devices; nothing in it touches online play or the
-shipped app, which keeps BAR's official, unmodified engine.
+Every experiment here ran offline on our own devices; nothing in it touches online play or the shipped app, which
+keeps BAR's official, unmodified engine. The version for the developers (private until Kailil shares it):
+https://claude.ai/artifact/P7sLPSorKYJY4F8sHgjbWM
 
 ## How BAR plays online today
 
