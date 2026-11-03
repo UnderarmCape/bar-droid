@@ -457,12 +457,23 @@ local function statsText(id, unitID)
 		add(L("ui.info.transportcapacity", "capacity"), info.transport[3])
 	end
 	if unitID then
+		-- made and used, a side of nothing left out ("Metal +2 -0" for a commander standing still)
+		local function flow(make, use)
+			local parts = {}
+			if make > 0.05 then
+				parts[#parts + 1] = "\255\180\255\180+" .. num(make, 1)
+			end
+			if use > 0.05 then
+				parts[#parts + 1] = "\255\255\180\180-" .. num(use, 1)
+			end
+			return table.concat(parts, " ")
+		end
 		local mMake, mUse, eMake, eUse = Spring.GetUnitResources(unitID)
 		if mMake and (mMake > 0.05 or mUse > 0.05) then
-			add(L("ui.info.metal", "metal"), "\255\180\255\180+" .. num(mMake, 1) .. " \255\255\180\180-" .. num(mUse, 1))
+			add(L("ui.info.metal", "metal"), flow(mMake, mUse))
 		end
 		if eMake and (eMake > 0.05 or eUse > 0.05) then
-			add(L("ui.info.energy", "energy"), "\255\180\255\180+" .. num(eMake, 1) .. " \255\255\180\180-" .. num(eUse, 1))
+			add(L("ui.info.energy", "energy"), flow(eMake, eUse))
 		end
 	end
 	-- (BAR prints it on the picture) metal white, energy yellow; a cost of nothing left out ("Cost 155 0": a solar)

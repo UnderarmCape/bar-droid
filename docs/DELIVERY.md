@@ -691,6 +691,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       a line (BAR's own build drag, the building put away after it); then GRID and a diagonal drag: 75 more in a
       grid, added to the queue (Shift+Alt held: 23 -> 98), and the commander building them. And the cancel button's
       cross is a soft red: in the green PLACE panel the two dark squares looked alike (rotate stays white).
+- [x] BORDER and QUEUE by touch (dev phone, BAR's game, 2026-11-03): BORDER and a drag: 54 Solar Collectors round a
+      rectangle; QUEUE lit gold, then two long presses on the map: two moves added after them (54 -> 55 -> 56), drawn
+      as waypoints. And the Info panel's resources leave a side of nothing out: "Metal +2, Energy +30" for a
+      commander standing still, where it read "+2 -0" and "+30 -0" with a red "-0".
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
