@@ -746,6 +746,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the answer only in the log box far below. The launcher now says it under Ready: "GL check: FD740, OpenGL 4.3,
       Mesa 27.0.0-devel" (`GameService.glCheckNote`, from launch-bar.sh's `$BAR/logs/glcheck-<driver>.txt`; without a
       renderer "no OpenGL from the GPU", without this run's file "no result"; the full answer stays in the log).
+- [x] A game's result lost at its end (dev phone, 2026-11-03): when a game ended, the app's own closing of its screen
+      reached `GameService.onTaskRemoved` as a removed task, logged "game removed from recent apps: closing" after
+      every game, and with the service's end (onDestroy) turned the result into "stopped": a lobby that failed to
+      start brought the launcher back to show why, and it said "Ready". Now the app's own closing is no swipe
+      (`displayClosedByApp`), the service ends after every game (no "Game ended" notification left), its end keeps
+      the result, and the launcher reads a plain "game ended" as Ready. On the dev phone: GL check (game ended, its
+      line, no notification left), the notification's Stop (engine 137, "stopped", notification gone), a game
+      swiped away in recent apps (closed as before). pad-test, lobby-phone-test: all pass.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

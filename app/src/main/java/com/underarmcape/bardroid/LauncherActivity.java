@@ -149,7 +149,7 @@ public class LauncherActivity extends AppCompatActivity {
             GameService.noteLowMemoryExit(this);
         String note = GameService.exitNote();
         String head = !inst.isInstalled() ? "Not installed, " + s
-                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped")) ? "Installed, " + s : "Ready";
+                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? "Installed, " + s : "Ready";
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
         text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);

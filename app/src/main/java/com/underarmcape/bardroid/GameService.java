@@ -93,12 +93,16 @@ public class GameService extends Service {
 
     /**
      * Swiping the game away in the recent-apps screen closes the app, like Stop in the notification. Android also
-     * reports tasks the app removes itself (StartActivity handing over to the game): only the game's task counts.
+     * reports tasks the app removes itself (StartActivity handing over to the game): only the game's task counts, and
+     * not once the app has closed the game's screen itself (closeDisplay, a game that ended): that read "game removed
+     * from recent apps" after every game and turned its result into "stopped" (a failed lobby's launcher said
+     * "Ready", dev phone, 2026-11-03).
      */
+    private volatile boolean displayClosedByApp;
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         android.content.ComponentName c = rootIntent != null ? rootIntent.getComponent() : null;
-        if (c != null && GameActivity.class.getName().equals(c.getClassName())) {
+        if (c != null && GameActivity.class.getName().equals(c.getClassName()) && !displayClosedByApp) {
             Log.i("svc", "game removed from recent apps: closing");
             closing = true;
             stopEverything();
@@ -227,6 +231,7 @@ public class GameService extends Service {
             //noinspection ResultOfMethodCallIgnored
             new java.io.File(paths.bar, "LuaUI/Config/bardroid_catchup.txt").delete();
             Intent ui = new Intent(this, GameActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            displayClosedByApp = false;
             startActivity(ui);
 
             setStatus("launching engine (" + mode + ")");
@@ -307,12 +312,15 @@ public class GameService extends Service {
             xserver.stop();
             engine = null;
             closeDisplay(showLauncher && !closing);
-            if (!showLauncher || closing) close();   // the lobby was quit, or the app closed: nothing left running
+            // nothing left running in any case (the launcher shown or not; the status stays for it): no notification
+            // left behind ("Game ended" stayed once onTaskRemoved no longer took the app's own closing for a swipe)
+            close();
         }
     }
 
     /** Closes the X display activity (Termux:X11's ACTION_STOP) and, if asked, brings the launcher back with the result. */
     private void closeDisplay(boolean showLauncher) {
+        displayClosedByApp = true;
         sendBroadcast(new Intent(com.termux.x11.MainActivity.ACTION_STOP).setPackage(getPackageName()));
         if (!showLauncher) return;
         try {
@@ -321,14 +329,17 @@ public class GameService extends Service {
         } catch (Exception e) { Log.e("svc", "could not reopen the launcher", e); }
     }
 
-    private void stopEverything() {
+    private void stopEverything() { stopEverything(true); }
+
+    /** say: the status becomes "stopped" (not when this service ends itself after a game: its result stays). */
+    private void stopEverything(boolean say) {
         if (installer != null) installer.cancel();
         if (updater != null) updater.cancel();
         if (engine != null) engine.kill();
         Proc.killAll();          // container setup steps (proot) started by the installer
         xserver.stop();
         if (worker != null) worker.interrupt();
-        setStatus("stopped");
+        if (say) setStatus("stopped");
     }
 
     private void setStatus(String s) {
@@ -422,7 +433,7 @@ public class GameService extends Service {
 
     @Override
     public void onDestroy() {
-        stopEverything();
+        stopEverything(!closing);   // (closing: Stop or a swipe said so already, or a game ended and its result stays)
         super.onDestroy();
     }
 
