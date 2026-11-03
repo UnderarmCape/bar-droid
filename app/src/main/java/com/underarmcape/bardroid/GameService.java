@@ -129,7 +129,7 @@ public class GameService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         String action = intent != null ? intent.getAction() : null;
         if (!busy) closing = false;
-        startForeground(1, notification("BAR Droid", status));
+        startForeground(1, notification(status));
         if (ACTION_STOP.equals(action)) { closing = true; stopEverything(); close(); return START_NOT_STICKY; }
         if (busy) { Log.i("svc", "busy; ignoring " + action); return START_NOT_STICKY; }
         if (ACTION_INSTALL.equals(action)) runAsync(this::install);
@@ -332,7 +332,7 @@ public class GameService extends Service {
         status = s;
         Log.i("svc", s);
         NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm != null && !closing) nm.notify(1, notification("BAR Droid", s));
+        if (nm != null && !closing) nm.notify(1, notification(s));
     }
 
     private void acquireWakeLock() {
@@ -371,16 +371,16 @@ public class GameService extends Service {
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
-    private Notification notification(String title, String text) {
-        text = forPlayers(text);
+    // (the status is the title: Android's header above it names the app; a "BAR Droid" title under "Beyond All Reason"
+    // named it twice, two ways)
+    private Notification notification(String status) {
         Intent open = new Intent(this, LauncherActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Intent stop = new Intent(this, GameService.class).setAction(ACTION_STOP);
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
-                .setContentTitle(title)
-                .setContentText(text)
+                .setContentTitle(forPlayers(status))
                 .setContentIntent(pi)
                 .addAction(new Notification.Action.Builder(null, "Stop", stopPi).build())
                 .setOngoing(true)
