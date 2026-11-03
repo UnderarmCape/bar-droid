@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31777-b750759, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31783-a096d9f, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -100,7 +100,7 @@ local maxPosY = 0.74
 -- and a finger held still (or a drag from the building) makes it the first corner of a GRID: the app holds BAR's own
 -- build drag down with Shift+Alt, the engine draws it, and PLACE or a double tap lets go (droid.gridHeld: PLACE lit;
 -- "GRID" shown for a moment, droid.gridShown).
-local droid = { colls = 3, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
+local droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	gridHeld = nil, gridShown = nil, gridToast = 1.2, nudgeCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",
@@ -513,11 +513,14 @@ local function UpdateGridGeometry()
 		end
 	end
 
-	-- BAR Droid: the grid at the left, droid.colls x droid.rows, the page strip under it
+	-- BAR Droid: the grid at the left, droid.colls x droid.rows, the page strip under it. Where the menu's height keeps
+	-- the cells smaller than a third of its width (a wide, short screen: the Fold7 folded, the dev phone) more columns
+	-- of that size fill the sides that stood empty, up to droid.maxColls (Kailil, 2026-11-02: "try 5 x 3")
 	droid.gap = 0
 	if not stickToBottom then
 		colls = droid.colls
 		cellSize = math_floor(math_min(contentWidth / colls, contentHeight / (droid.rows + droid.strip)))
+		colls = math_max(colls, math_min(droid.maxColls, math_floor(contentWidth / math_max(1, cellSize))))
 		rows = droid.rows
 		droid.gap = math_floor((contentWidth - colls * cellSize) / 2) -- (the grid in the middle of the menu)
 	end
