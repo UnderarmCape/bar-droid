@@ -67,7 +67,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
   `bardroid_minimap.lua` (minimap small until tapped, unfolded), `bardroid_layout.lua` (the layout editor: panels
   register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
-  copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, the touch building's shape strip and PLACE button, the
+  copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, up to 5 wide on a wide short screen, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
   select, LB orders, the touch QUEUE button), `bardroid_padspeed.lua` (the pad's drawing speed by zoom, and its tuner),
   `bardroid_padfp.lua` (first person on the pad), `bardroid_queue.lua`, `bardroid_bench.lua`, `bardroid_lowmem.lua` (keeps BAR's GL4 unit shaders

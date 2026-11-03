@@ -72,13 +72,14 @@ sends the grid. Two fingers still pan and zoom.
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
 build menu is the app's copy of BAR's own Build menu, a 3x3 grid (9 build options a page, the page arrows in a strip
-under them), which can be moved and sized (in the controller game, the gamepad's own build menu instead). BAR's top bar, order menu and start countdown can't be moved or sized on their own
+under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized (in the controller game, the gamepad's own build menu instead). BAR's top bar, order menu and start countdown can't be moved or sized on their own
 (BAR has no setting for them; their size follows the interface scale: 2.0 folded, 1.0 unfolded). Folded and unfolded
 each keep their own layout.
 
 **Chat:** Enter (or the keyboard's Enter) opens the typing box at the top of the chat; long messages wrap and get
 smaller so the whole message stays in view. Ctrl, Alt or Shift + Enter switch between everyone, allies and
-spectators, as in BAR.
+spectators, as in BAR. BAR's own messages ("Battle Started", a commander under attack, the tutorial's lines) show in
+the chat box too, for 15 seconds (on a phone BAR's own place for them is behind the bottom panels).
 
 **Spectating** (watching a game or a replay, with touch): the player list stays small; tap it to bring up a bar
 for a few seconds. On it: the players by name (switch whose camera you follow), the unit nearest the middle of the
@@ -121,7 +122,7 @@ factions' matching unit too.
   own hotkeys and menus go (L3 and R3 press Insert and numpad / , which the app binds to BAR's own actions for the game).
   Only first person needs those widgets ("FIRST PERSON OFF IN THIS GAME").
   In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
-  to compare them ("CONTROLLER MOD: ..."); with these controls the app's 3x3 build menu (and the touch PLACE button)
+  to compare them ("CONTROLLER MOD: ..."); with these controls the app's build menu (and the touch PLACE button)
   takes v0.8.5's build menu's place. Once the pad is used the menu shows only when RB opens it (as v0.8.5's); three
   taps on the screen within 6 seconds bring it back to opening by itself for a selected builder.
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
