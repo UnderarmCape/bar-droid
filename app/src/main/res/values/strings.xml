@@ -2,6 +2,8 @@
 <resources>
     <string name="app_name">Beyond All Reason</string>
     <string name="display_prefs_title">Display &amp; touch preferences</string>
+    <!-- Termux:X11's title for that screen's top level ("Preferences"), the launcher's name for it in its place -->
+    <string name="lorie_pref_main">Display &amp; touch preferences</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
     <string name="btn_lobby">Lobby</string>
