@@ -497,6 +497,28 @@ local function statsText(id, unitID)
 	return table.concat(parts, LABEL .. ",  ")
 end
 
+-- A feature's view: its name (BAR's tooltip for it, else its description) and what reclaiming it gives, in the Cost
+-- line's colours (metal white, energy yellow); a wreck shows the picture of the unit it was (customParams.fromunit),
+-- anything else none
+local function featureView(fdefID, featureID)
+	local fd = FeatureDefs[fdefID] or {}
+	local name = (fd.tooltip and fd.tooltip ~= "" and fd.tooltip) or fd.translatedDescription or fd.name or "?"
+	local metal, _, energy = Spring.GetFeatureResources(featureID)
+	local gives = {}
+	if fd.reclaimable ~= false then
+		if (metal or 0) >= 1 then
+			gives[#gives + 1] = "\255\235\235\235" .. price(metal)
+		end
+		if (energy or 0) >= 1 then
+			gives[#gives + 1] = "\255\255\255\150" .. price(energy)
+		end
+	end
+	local stats = #gives > 0 and (LABEL .. "Reclaim" .. VALUE .. " " .. table.concat(gives, "   ")):gsub(" ", KEEP) or ""
+	local from = fd.customParams and fd.customParams.fromunit
+	local unit = from and UnitDefNames[from]
+	return { name = name, description = "", stats = stats, picture = unit and unit.id or nil }
+end
+
 --------------------------------------------------------------------------------
 -- Layout
 
@@ -637,8 +659,8 @@ end
 local function fit(view)
 	local x0, y0, x1, y1 = rect[1] + pad, rect[2] + pad, rect[3] - pad, rect[4] - pad
 	local innerW, innerH = x1 - x0, y1 - y0
-	local pic = floor(min(innerH, innerW * 0.3))
-	local textX = x0 + pic + floor(pad * 1.5)
+	local pic = view.picture and floor(min(innerH, innerW * 0.3)) or 0 -- (a tree or a rock has none: the text from the left)
+	local textX = view.picture and (x0 + pic + floor(pad * 1.5)) or x0
 	local narrow, wide = x1 - textX, innerW
 	local largest = max(MIN_TEXT, innerH / MAX_TEXT_LINES * edits().text)
 	local function try(s)
@@ -759,6 +781,11 @@ local function pick()
 	if what == "unit" and spGetUnitDefID(unitID) then
 		return { kind = "unit", id = spGetUnitDefID(unitID), unitID = unitID }
 	end
+	-- a wreck, a tree or a rock under the pointer: its name and what reclaiming it gives, as BAR's Info widget shows it
+	-- (with fingers: tap it, nothing selected)
+	if what == "feature" and Spring.GetFeatureDefID(unitID) then
+		return { kind = "feature", id = Spring.GetFeatureDefID(unitID), featureID = unitID }
+	end
 	return nil
 end
 
@@ -777,7 +804,7 @@ local function sameShown(a, b)
 		end
 		return true
 	end
-	return a.id == b.id and a.unitID == b.unitID and a.count == b.count
+	return a.id == b.id and a.unitID == b.unitID and a.count == b.count and a.featureID == b.featureID
 end
 
 local function buildView()
@@ -785,8 +812,13 @@ local function buildView()
 		view, laidOut, fitKey, staticKey, staticId, staticText = nil, nil, nil, nil, nil, nil
 		return
 	end
-	local info = defInfo(shown.id)
-	local v = { name = info.name, description = info.description, stats = statsText(shown.id, shown.unitID) }
+	local v
+	if shown.kind == "feature" then
+		v = featureView(shown.id, shown.featureID)
+	else
+		local info = defInfo(shown.id)
+		v = { name = info.name, description = info.description, stats = statsText(shown.id, shown.unitID), picture = shown.id }
+	end
 	if shown.unitID then
 		local health, maxHealth, _, _, build = Spring.GetUnitHealth(shown.unitID)
 		if health and maxHealth and maxHealth > 0 then
@@ -800,7 +832,8 @@ local function buildView()
 	if key ~= fitKey then
 		fitKey, laidOut = key, fit(v)
 	end
-	local id = shown.count and (shown.id .. "x" .. shown.count) or shown.id
+	-- (a feature's def numbers are not unit defs': its own key)
+	local id = shown.kind == "feature" and ("f" .. shown.id) or shown.count and (shown.id .. "x" .. shown.count) or shown.id
 	if id ~= staticId or key ~= staticText then
 		staticId, staticText = id, key
 		staticKey = id .. "\n" .. key
@@ -887,7 +920,9 @@ local function drawUnitStatic()
 	local l = laidOut
 	local pic = l.pic
 	gl.Color(1, 1, 1, 1)
-	drawPicture(shown.id, l.x0, l.y1 - pic, l.x0 + pic, l.y1)
+	if view.picture then
+		drawPicture(view.picture, l.x0, l.y1 - pic, l.x0 + pic, l.y1)
+	end
 	bold:Begin()
 	if shown.count then -- (as the grid's cells print it, no larger than the name: on the big picture it outweighed it)
 		local size = min(pic * 0.3, l.nameSize)

@@ -960,7 +960,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (the commander ordered to build, then the team selected; removed after): a commander and a Wind Turbine, each
       with a big "1" on its picture. A count shows only above 1 now, as BAR's Info widget prints it. (A second try
       for counts above 1, four builds ordered by the scratch widget at the corner start, built none in 3 minutes:
-      the commander stood idle; that path is unchanged.) And placing a
+      the commander stood idle; that path is unchanged.) And the unit info panel had nothing for a map feature (a
+      wreck, a tree, a rock) under the pointer, where BAR's Info widget, which it replaces, shows its name and what
+      reclaiming it gives. It shows them now (nothing selected): the name, "Reclaim" with metal white and energy yellow
+      as the Cost line, a wreck with the picture of the unit it was, anything else text only. Dev phone, a scratch
+      widget putting the pointer on the nearest feature (removed after): "San Pedro", "Reclaim 100". And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
