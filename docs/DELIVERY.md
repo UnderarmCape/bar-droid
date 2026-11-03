@@ -537,8 +537,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
       runs each), and not Mesa compiling shaders (its disk cache in the container's `/root/.cache`, 7.7 MB, unchanged
-      by these games). Next: BAR's widget profiler over the game's start (`tools/phone-bench.ps1 -Profile widgets` reads
-      it for the benchmark) to see which widget or engine pass holds those frames.
+      by these games). Narrowed (a scratch widget timing each drawn frame, the engine's `/debuginfo profiling` table):
+      from game frame 16 to about 300 one drawn frame every 15 game frames takes 0.2-1 s, the rest are quick; in the
+      half second before frame 150 "Lua::Callins::Unsynced" is 84% of the time (Draw 8%, Sim 15%). BAR's Widget
+      Profiler (on for one run through dev-env.sh's `widget_order "Widget Profiler" 1`) puts LuaUI callins at 67-90% of
+      the running time but no widget above 2.3% (its 0.1 s tick and 2 s smoothing miss one long frame in fifteen, or
+      the time is in what it leaves out: garbage collection and GL calls). Next: time the callins from a first and a
+      last widget layer (Update, GameFrame, DrawScreen, DrawWorld) to find the phase, then the widgets in it.
 
 ## Releasing (once the blockers are done)
 
