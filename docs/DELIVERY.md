@@ -878,6 +878,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
       from a recent save. Catch-up times added from Kailil's own late joins on the Fold7 (x2.0 at 2 400 units, never
       past ~5 000). The write-up is complete for Kailil to hand on.
+- [x] The pad's interface looked over during pad-test -Online (dev phone, 8 screenshots, 2026-11-03): the even order
+      menu with the commander (4 + 4 + 3), three Pawns (2 + 2) and a Solar Collector (one row of 2), the "COMBAT UNITS:
+      3" note, QUEUE gone while the pad is the input, the map marker's chat line; all pass. Nothing to change. (The
+      "BUTTON_R1" box in two shots is Android's own "Show key presses" on the dev phone, left as it is.) And both menu
+      copies' patches, applied as the phone does, still give the shipped files byte for byte.
 - [x] Building by touch after the order menu copy (dev phone, BAR's game, 2026-11-03): PLACE covers the app's order
       menu copy exactly, QUEUE lit gold. A tap on the Metal Extractor left two of BAR's texts over the app's panels:
       the build menu's tooltip (the finger's pointer stays on the cell; it covered the next row) and BAR's Screen Mode
