@@ -840,9 +840,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's Settings stays 2. The cyan arc on the build menu (the last runs' screenshots) was BAR's Guard cursor: the
       pointer left over the factory itself. And the launcher's map and worker fields at the settings' 14 sp (the map
       name stood out at 18 sp).
-- [ ] BAR's player list, small (`bardroid_players.lua`, names only, scale 0.65; dev phone, 2026-11-03): an AI's name
-      ("SuperKitowiec (AI)") runs under an icon at the list's right end. Which of BAR's icons that is, and whether
-      BAR's own list does the same at that scale, not found yet.
+- [x] BAR's player list, small (`bardroid_players.lua`, names only, scale 0.65; dev phone, 2026-11-03): an AI's name
+      ("SuperKitowiec (AI)") ran under an icon at the list's right end: BAR's map marks eraser (Clearmapmarks
+      button), which sits in the screen's bottom right corner, where BAR's own list has empty columns. The small list
+      now keeps BAR's chat column where it draws nothing (no other player, or spectating): an empty corner as wide as
+      the eraser. Found on the way, a real one: BAR numbers the list's columns in the order it sorts them into, not in
+      its modules table's, and the widget read them in the latter: the small list kept rank, country, share and chat
+      (the orange chevron was the rank), and the "player's own" columns it put back were scrambled (opened: income
+      and chat on, resources, share and ping off), and BAR saved them so at every game's end. Now each column's
+      number is found once a game (switched and back), and a saved config of the old reading gives way, once, to
+      BAR's default columns (config version 2). Checked on the dev phone with a probe of all 14 columns: small
+      name + chat, opened BAR's defaults, the same in the next game after a clean quit.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

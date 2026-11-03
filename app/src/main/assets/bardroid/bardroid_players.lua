@@ -2,7 +2,8 @@
 -- "minimized by default, to show really small, and clicking on it makes it expand to its normal size, then i can
 -- interact with it. not touching it after 7 seconds lets it return to normal minimized size").
 --
--- Minimized: BAR's smallest list scale (0.65), the names column only, no spectators. A tap on it brings back the
+-- Minimized: BAR's smallest list scale (0.65), the names column only (and the chat column where it is empty, room for
+-- BAR's eraser button), no spectators. A tap on it brings back the
 -- player's own scale and columns (the tap itself is taken: it only opens the list); every tap on the open list keeps
 -- it open, and OPEN_SECONDS without one minimizes it again. Through BAR's WG.advplayerlist_api only; the player's own
 -- settings are what the list returns to, also after a game that ended minimized (saved with this widget's config).
@@ -21,11 +22,18 @@ end
 
 local OPEN_SECONDS = 7
 local SMALL_SCALE = 0.65 -- BAR's smallest
--- AdvPlayersList's columns by number (its modules table), for SetModuleActive, which takes names. Used only while the
--- list has exactly these many: a BAR version with other columns gets the scale and the spectators only.
+-- AdvPlayersList's columns. GetModuleActive takes a number, SetModuleActive a name, and the numbers follow the places
+-- BAR sorts its columns into, not its modules table's order: read in that order, the small list and the player's own
+-- columns came back scrambled (the open list: income and chat on, resources and share off; dev phone, 2026-11-03).
+-- Each column's number is found once per game (findColumns). A BAR version with other columns gets the scale and the
+-- spectators only.
 local COLUMNS = { "indent", "rank", "country", "allyid", "id", "playerid", "name", "skill", "resources", "income",
 	"cpuping", "ally", "share", "chat" }
 local KEEP = { name = true }
+-- BAR's own columns (its defaults), for a list whose columns the old reading scrambled (config without CONFIG_VERSION)
+local BAR_COLUMNS = { indent = true, rank = true, country = true, name = true, resources = true, cpuping = true,
+	ally = true, share = true }
+local CONFIG_VERSION = 2
 
 -- seconds of real time, on the engine's timer as in the app's other widgets (the engine's os.clock measured the same
 -- on the phone: x1.00, 2026-10-28)
@@ -38,6 +46,7 @@ end
 local minimized = false
 local normal -- the player's own list: { scale, hideSpecs, columns = { [name] = active } }
 local saved -- the same from the last game (widget config data)
+local reset -- BAR's columns, once, in place of the player's scrambled ones (SetConfigData)
 local lastTouch = 0
 local applied = 1 -- the layout editor's size in the list's scale now (open: its own scale times this)
 
@@ -51,35 +60,109 @@ local function sizeFactor()
 	return L and L.get("players").size or 1
 end
 
-local function columnsKnown(a)
-	if not a.GetModuleActive then
+-- every column's state by number, nil if the list has not exactly #COLUMNS
+local function states(a)
+	if pcall(a.GetModuleActive, #COLUMNS + 1) then
+		return nil
+	end
+	local s = {}
+	for i = 1, #COLUMNS do
+		local ok, on = pcall(a.GetModuleActive, i)
+		if not ok or on == nil then
+			return nil
+		end
+		s[i] = on and true or false
+	end
+	return s
+end
+
+-- the one number whose state differs, else nil
+local function changed(s0, s1)
+	local at
+	for i = 1, #COLUMNS do
+		if s0[i] ~= s1[i] then
+			if at then
+				return nil
+			end
+			at = i
+		end
+	end
+	return at
+end
+
+-- [name] = its number, false if not found: each column switched on (or off, if it already was) and back, once a game
+-- (BAR sorts its columns before it offers the calls, and by fixed places: the numbers stay)
+local columnAt
+local function findColumns(a)
+	if columnAt ~= nil then
+		return columnAt
+	end
+	columnAt = false
+	if not (a.GetModuleActive and a.SetModuleActive) then
 		return false
 	end
-	local ok, last = pcall(a.GetModuleActive, #COLUMNS)
-	local over = pcall(a.GetModuleActive, #COLUMNS + 1)
-	return ok and last ~= nil and not over
+	local found = {}
+	for _, name in ipairs(COLUMNS) do
+		local s0 = states(a)
+		if not s0 then
+			return false
+		end
+		for _, want in ipairs({ true, false }) do
+			a.SetModuleActive({ name, want })
+			local s1 = states(a)
+			local at = s1 and changed(s0, s1)
+			if at then
+				found[name] = at
+				a.SetModuleActive({ name, s0[at] })
+				break
+			end
+		end
+		if not found[name] then
+			return false
+		end
+	end
+	columnAt = found
+	return found
 end
 
 local function readState(a)
 	local state = { scale = a.GetScale(), hideSpecs = a.GetAlwaysHideSpecs(), columns = {} }
-	if columnsKnown(a) then
-		for i, name in ipairs(COLUMNS) do
-			state.columns[name] = a.GetModuleActive(i) and true or false
+	local at = findColumns(a)
+	if at then
+		for _, name in ipairs(COLUMNS) do
+			state.columns[name] = a.GetModuleActive(at[name]) and true or false
 		end
 	end
 	return state
 end
 
 local function setColumns(a, columns)
-	if not columnsKnown(a) then
+	local at = findColumns(a)
+	if not at then
 		return
 	end
-	for i, name in ipairs(COLUMNS) do
+	for _, name in ipairs(COLUMNS) do
 		local want = columns[name]
-		if want ~= nil and (a.GetModuleActive(i) and true or false) ~= want then
+		if want ~= nil and (a.GetModuleActive(at[name]) and true or false) ~= want then
 			a.SetModuleActive({ name, want })
 		end
 	end
+end
+
+-- BAR's map marks eraser (Clearmapmarks button) sits in the list's bottom right corner, where the small list's last name
+-- ran under it ("SuperKitowiec (AI)", dev phone, 2026-11-03). BAR's chat column, as wide as the eraser, keeps that
+-- corner free where it draws nothing: no other player (a skirmish: no chat button for an AI) or the player spectating.
+local function chatColumnEmpty()
+	local me = Spring.GetMyPlayerID()
+	if select(3, Spring.GetPlayerInfo(me, false)) then
+		return true
+	end
+	for _, id in ipairs(Spring.GetPlayerList() or {}) do
+		if id ~= me and not select(3, Spring.GetPlayerInfo(id, false)) then
+			return false
+		end
+	end
+	return true
 end
 
 local function looksMinimized(state)
@@ -96,6 +179,9 @@ local function minimize()
 	applied = 1
 	-- a game that ended minimized saved the small list as BAR's settings: the player's own are in our config
 	normal = (looksMinimized(current) and saved) or current
+	if reset then
+		normal.columns, reset = reset, nil
+	end
 	saved = normal
 	a.SetScale(SMALL_SCALE * sizeFactor())
 	a.SetAlwaysHideSpecs(true)
@@ -103,6 +189,7 @@ local function minimize()
 	for _, name in ipairs(COLUMNS) do
 		small[name] = KEEP[name] or false
 	end
+	small.chat = chatColumnEmpty()
 	setColumns(a, small)
 	minimized = true
 end
@@ -252,12 +339,21 @@ function widget:Shutdown()
 end
 
 function widget:GetConfigData()
-	return saved and { normal = saved } or {}
+	return saved and { normal = saved, version = CONFIG_VERSION } or {}
 end
 
 function widget:SetConfigData(data)
 	if type(data) == "table" and type(data.normal) == "table" and tonumber(data.normal.scale) then
 		saved = data.normal
 		saved.columns = type(saved.columns) == "table" and saved.columns or {}
+		if data.version ~= CONFIG_VERSION then
+			-- saved by the old reading: these columns, and BAR's own settings with them (put back at every game's
+			-- end), are scrambled; BAR's columns instead, once
+			reset = {}
+			for _, name in ipairs(COLUMNS) do
+				reset[name] = BAR_COLUMNS[name] or false
+			end
+			saved.columns = reset
+		end
 	end
 end
