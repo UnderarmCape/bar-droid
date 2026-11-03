@@ -958,7 +958,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       a fresh turbine missed it: the spots differ by start position). The launcher's log lines ran along their box's
       left edge: 6 dp of padding inside it now. The info panel's grid reached with a scratch widget on the dev phone
       (the commander ordered to build, then the team selected; removed after): a commander and a Wind Turbine, each
-      with a big "1" on its picture. A count shows only above 1 now, as BAR's Info widget prints it. And placing a
+      with a big "1" on its picture. A count shows only above 1 now, as BAR's Info widget prints it. (A second try
+      for counts above 1, four builds ordered by the scratch widget at the corner start, built none in 3 minutes:
+      the commander stood idle; that path is unchanged.) And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
