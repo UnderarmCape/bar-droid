@@ -350,7 +350,29 @@ public class GameService extends Service {
             nm.createNotificationChannel(new NotificationChannel(CHANNEL, "BAR Droid", NotificationManager.IMPORTANCE_LOW));
     }
 
+    /**
+     * The status as the notification says it to players: "Skirmish running" for the log's "running (skirmish)",
+     * "Starting" for "launching engine (...)", any other with a capital (the status words themselves stay: the
+     * launcher, StartActivity and the logs read them).
+     */
+    static String forPlayers(String s) {
+        if (s == null || s.isEmpty()) return "";
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^running \\((\\w+)\\)$").matcher(s);
+        if (m.matches()) {
+            switch (m.group(1)) {
+                case "skirmish": return "Skirmish running";
+                case "lobby": return "Lobby running";
+                case "bench": return "Benchmark running";
+                case "glcheck": return "GL check running";
+                default: return "Running (" + m.group(1) + ")";
+            }
+        }
+        if (s.startsWith("launching engine")) return "Starting";
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
+    }
+
     private Notification notification(String title, String text) {
+        text = forPlayers(text);
         Intent open = new Intent(this, LauncherActivity.class);
         PendingIntent pi = PendingIntent.getActivity(this, 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Intent stop = new Intent(this, GameService.class).setAction(ACTION_STOP);

@@ -723,6 +723,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       And its small icon (status bar, lock screen) is the app's marker in its ring (`res/drawable/ic_notification.xml`,
       white, from the public icon's drawing), where it was Android's media "play" triangle: seen in the dev phone's
       status bar with a game in the floating window.
+      Its words are for players: "Skirmish running" (Lobby, Benchmark, GL check likewise), "Starting" while the engine
+      starts, others with a capital, where it showed the log's "running (skirmish)" (`GameService.forPlayers`; the
+      status itself, which the launcher, StartActivity and the logs read, is unchanged). Seen on the dev phone.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
