@@ -93,7 +93,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       memory freed at once, 2.6 GB available through the engine's reload into the lobby, back on the Skirmish screen;
       so it is the late game's memory that leaves no room, not the leaving itself. (On the way: BAR's pregame panel at
       the folded screen's interface scale 2.0 sets "Pick your faction" over its own instruction line and runs the
-      faction cards' names off the screen's bottom; picking, placing and Ready all work by touch.) The minute's
+      faction cards' names off the screen's bottom; picking, placing and Ready all work by touch. The same in BAR's
+      own game, as online: BAR's Factionpicker sizes its panel and names for a taller screen (height 0.14 x the
+      interface scale; at 2.0 on 938 lines the names are wider than their cards) and the pregame's hint line sits on
+      its title; neither widget takes a size or place from another, so it stays as BAR draws it.) The minute's
       `[perf]` line now has the GPU driver's memory (`/proc/meminfo` GpuTotal): a 1v1 skirmish's start on the dev phone
       reads "engine 749 MB, GPU 2060 MB", so the GPU's textures and buffers are most of the game's memory. Its parts
       (pace's BARDROID_TEX_LOG summed, dev phone): the engine's two projectile atlases 345 MB (8176x6056 and
