@@ -297,6 +297,9 @@ public class GameService extends Service {
             if ("glcheck".equals(mode)) {   // (its answer was only in the log box at the bottom: the launcher says it)
                 exitNote = glCheckNote(paths, started);
                 Log.i("svc", exitNote);
+            } else if ("bench".equals(mode) && !closing && rc == 0) {   // (so is the benchmark's: its ms per frame)
+                exitNote = benchNote(paths);
+                Log.i("svc", exitNote);
             }
             if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
                 Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
@@ -388,6 +391,26 @@ public class GameService extends Service {
         // ("4.3 (Compatibility Profile) Mesa 27.0.0-devel (git-6f90e92dfd)": the numbers; the rest is in the log)
         java.util.regex.Matcher mesa = java.util.regex.Pattern.compile("Mesa (\\S+)").matcher(version);
         return "GL check: " + renderer + ", OpenGL " + version.split(" ")[0] + (mesa.find() ? ", Mesa " + mesa.group(1) : "");
+    }
+
+    /**
+     * BAR's benchmark in a line, from its results in this run's infolog ("Sim 1801 frames, 54.08ms per frame, ..."; the
+     * last of each, as tools/phone-bench.ps1 reads them): the main thread's ms per frame for Sim, Draw and Update.
+     */
+    static String benchNote(Paths paths) {
+        java.util.regex.Pattern line = java.util.regex.Pattern.compile("\\] (Sim|Draw|Update) \\d+ frames, ([\\d.]+)ms per frame");
+        java.util.Map<String, String> ms = new java.util.HashMap<>();
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(paths.bar, "infolog.txt")))) {
+            for (String l; (l = r.readLine()) != null; ) {
+                java.util.regex.Matcher m = line.matcher(l);
+                if (m.find()) ms.put(m.group(1), m.group(2));
+            }
+        } catch (java.io.IOException ignored) {}
+        if (!ms.containsKey("Sim")) return "Benchmark: no results in the game's log (it ended before them)";
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        for (String k : new String[]{"Sim", "Draw", "Update"})
+            if (ms.containsKey(k)) parts.add(k + " " + ms.get(k));
+        return "Benchmark, ms per frame: " + String.join(", ", parts);
     }
 
     /**
