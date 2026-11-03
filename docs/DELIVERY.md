@@ -627,6 +627,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       wait ends at the next touch down, both clicks keep their spacing, the engine's DoubleClickTime is 350 ms) and
       tried on the dev phone, 6 Pawns given: one tap selected 1, a double tap 6. And the launcher's device lines are
       set in its own type, a step quieter, where monospace broke the low-memory sentence like a log's lines.
+- [x] BAR's messages in the chat box (review of `bardroid_chat.lua`, 2026-11-03): after their 15 seconds they came back
+      whenever the typing box opened (its history shows old lines), and repeated ones would push the players' lines
+      out of the box's 100. They now leave the list after their time, as BAR's own Messages widget lets them go. On the
+      dev phone: a chat line and a message shown together, then with the typing box open only the chat line. The dev
+      phone's logs (a skirmish, the lobby) hold nothing from the app's widgets but their start lines. And the layout
+      editor's buttons are near-opaque: the build menu's pictures showed through their words where the bar crosses it.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

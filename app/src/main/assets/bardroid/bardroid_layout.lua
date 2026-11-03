@@ -437,8 +437,9 @@ local function outline(x0, y0, x1, y1, color, width, fill)
 	gl.Rect(x1 - width, y0, x1, y1)
 end
 
--- (where no room is left beside the panels the hint crosses one: nothing shows through its words)
-local BAR_HINT, BAR_BUTTON, BAR_LIT = { 0, 0, 0, 0.85 }, { 0.08, 0.08, 0.08, 0.92 }, { 0.25, 0.22, 0.06, 0.92 }
+-- (where no room is left beside the panels the bar crosses one: nothing shows through its words; at 0.85-0.92 the build
+-- menu's pictures still did, dev phone 2026-11-03)
+local BAR_HINT, BAR_BUTTON, BAR_LIT = { 0.02, 0.02, 0.02, 0.96 }, { 0.08, 0.08, 0.08, 0.97 }, { 0.25, 0.22, 0.06, 0.97 }
 local BAR_TAB = { 0, 0, 0, 0.7 }
 
 function widget:DrawScreen()

@@ -167,7 +167,16 @@ local function layout()
 end
 
 local function add(name, nameColor, text, ttl)
-	local e = { time = clock(), chunks = name ~= "" and chunks(name) or {}, nameColor = nameColor, text = text, ttl = ttl }
+	-- BAR's messages (a ttl of their own) leave the list after their time, as BAR's own widget lets them go: not in the
+	-- history the typing box shows, and repeated ones ("commander under attack") never push the players' lines out
+	local now = clock()
+	for i = #entries, 1, -1 do
+		local o = entries[i]
+		if o.ttl and now - o.time > o.ttl then
+			table.remove(entries, i)
+		end
+	end
+	local e = { time = now, chunks = name ~= "" and chunks(name) or {}, nameColor = nameColor, text = text, ttl = ttl }
 	if font then
 		e.lines = wrap(text, boxRight - gap - (name ~= "" and textLeft or boxLeft + gap), fontSize)
 	end
@@ -661,9 +670,14 @@ function widget:DrawScreen()
 	local shown, used = {}, 0
 	for i = #entries, 1, -1 do
 		local e = entries[i]
-		local old = not (typing or barTyping) and now - e.time > (e.ttl or LINE_TTL)
-		if old and not e.ttl then
-			break
+		local old
+		if e.ttl then -- (BAR's messages: gone after their time, typing or not)
+			old = now - e.time > e.ttl
+		else
+			old = not (typing or barTyping) and now - e.time > LINE_TTL
+			if old then
+				break
+			end
 		end
 		if not old then -- (a message gone: the chat lines before it may still stay)
 			local rows = math.max(#e.lines, #e.chunks)
