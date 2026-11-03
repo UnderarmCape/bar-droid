@@ -91,7 +91,8 @@
             <TextView style="@style/LauncherSection" android:text="@string/settings_game" />
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
-            <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:importantForAutofill="no" />
+            <!-- (14sp: the settings' size; the field's own 18sp stood out over every setting) -->
+            <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" />
 
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
@@ -122,7 +123,7 @@
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" />
-                <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:importantForAutofill="no" />
+                <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:textSize="14sp" android:importantForAutofill="no" />
             </LinearLayout>
 
             <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />

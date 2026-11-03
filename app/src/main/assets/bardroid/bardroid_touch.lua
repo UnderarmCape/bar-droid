@@ -62,6 +62,7 @@ local spSetCameraState = Spring.SetCameraState
 local spGetViewGeometry = Spring.GetViewGeometry
 local spGetMouseState = Spring.GetMouseState
 local spIsAboveMiniMap = Spring.IsAboveMiniMap
+local spIsGUIHidden = Spring.IsGUIHidden
 local spGetTimer = Spring.GetTimer
 local spDiffTimers = Spring.DiffTimers
 
@@ -1022,7 +1023,9 @@ local function updateHover()
 		mouseX, mouseY, mouseSince = mx, my, updates
 	end
 	local onInterface
-	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
+	if spIsGUIHidden() then
+		onInterface = 0 -- the interface hidden (F5): all map
+	elseif seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
 		-- 1 interface, 2 a BAR window that scrolls, 0 map (the void past the map's edge too: fingers work there as on
 		-- the map)
 		if mx ~= calcX or my ~= calcY or updates - calcAt >= HOVER_RECHECK then
@@ -1031,12 +1034,11 @@ local function updateHover()
 			calcX, calcY, calcAt = mx, my, updates
 		end
 		onInterface = calcAnswer
-	elseif updates - seenAt > 300 then
-		-- no IsAbove for a long time: a window that holds the pointer for itself, else the map
-		local bar = overBarInterface(mx, my)
-		onInterface = bar == 2 and 2 or (bar and 1 or 0)
 	elseif updates - mouseSince >= 2 then
-		onInterface = 1
+		-- not asked: a widget before this one claimed the pointer, however long ago this widget was last asked (the
+		-- old "map after 300 updates without IsAbove" answered map all over the build menu once the pointer had
+		-- rested on the interface for 10 s: fingers there then worked as on the map; dev phone, 2026-11-03)
+		onInterface = overBarInterface(mx, my) == 2 and 2 or 1
 	else
 		return -- not asked yet for this position
 	end

@@ -831,6 +831,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       building under construction: its bar was its health, orange as for a damaged unit ("64 / 340 18%"); now the
       building's progress in blue, "Building 18%", and its health in green once it stands (a Solar Collector, seen
       both ways).
+- [x] The touch widget's "map or interface" answer after the pointer rested on the interface (dev phone, BAR's game,
+      a Bot Lab selected, 2026-11-03): ten seconds on the build menu and the answer turned to map there and on every
+      other spot of the interface a finger touched next, until one touched the map (an old fallback: "no IsAbove for
+      300 updates: the map"; a widget that claims the pointer keeps the touch widget from being asked at all). Now
+      not asked is interface (or 2 with a BAR window open), and map only with the interface hidden (F5). Measured
+      before and after: a cell, 15 s, then the menu's empty area: 0 before, 1 after; the map stays 0 after 15 s;
+      BAR's Settings stays 2. The cyan arc on the build menu (the last runs' screenshots) was BAR's Guard cursor: the
+      pointer left over the factory itself. And the launcher's map and worker fields at the settings' 14 sp (the map
+      name stood out at 18 sp).
+- [ ] BAR's player list, small (`bardroid_players.lua`, names only, scale 0.65; dev phone, 2026-11-03): an AI's name
+      ("SuperKitowiec (AI)") runs under an icon at the list's right end. Which of BAR's icons that is, and whether
+      BAR's own list does the same at that scale, not found yet.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
