@@ -51,7 +51,8 @@ The first version meant for other people's phones: everything since the first bu
 - BAR's messages ("Battle Started", a commander under attack, the tutorial's lines) show in the chat box for 15
   seconds, where they were typed behind the order menu.
 - A tap on BAR's top bar (metal, energy) no longer clears the selection, and the spectate bar's buttons work on the
-  first tap.
+  first tap. BAR's Settings, Statistics, key bindings and other windows scroll with a finger drag up or down (sideways
+  still moves their sliders), and the map behind them stays put.
 - Several units of one type selected: the unit info panel shows that type's name and stats with the count on its
   picture; a tap on the picture brings the camera to them.
 - The lobby: a tooltip or a pressed look no longer stays where a finger lifted, and the Settings list scrolls from

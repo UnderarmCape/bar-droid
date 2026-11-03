@@ -1001,6 +1001,13 @@ local function overBarInterface(mx, my)
 	return barAnswer
 end
 
+-- Those windows take the wheel only over themselves (BAR's Settings: anywhere while open), and a wheel none took zooms
+-- the map: a finger's up or down drag beside BAR's Statistics zoomed the map behind it (dev phone, 2026-11-03). Taken
+-- here, last in line, while one is open and the fingers are the input; a mouse keeps BAR's way.
+function widget:MouseWheel()
+	return WG.BarDroidInput == "touch" and overBarInterface(spGetMouseState()) == 2
+end
+
 -- Whether the interface is under the pointer: the engine asks the widgets each frame (IsAbove) where the pointer is,
 -- and this widget, last in line, only hears of it where nothing else answered.
 -- The map/interface answer for a pointer that stays put is worked out again every HOVER_RECHECK updates only (the

@@ -786,6 +786,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (the sliders). On the dev phone: the Settings list scrolled from Graphics Quality to Advanced Map Shading with
       the finger; Darken map dragged to 0.23 and back to 0.00 (left as it was); pad-test, lobby-phone-test: all pass.
       The laptop's touch-widget-test expects 2 for the open window now (not run: BAR on the laptop needs Kailil's yes).
+      The other windows take the wheel only over themselves: a vertical drag beside BAR's Statistics zoomed the map
+      behind it (mean pixel change of the map 75.9). `bardroid_touch.lua` (last in line) now takes a wheel no window
+      took while one is open and the fingers are the input (a mouse keeps BAR's way): beside and inside Statistics
+      0.3 (noise), Settings scrolls as before. CHANGELOG and README say so.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
