@@ -453,6 +453,13 @@ local function readTouch(lines)
 			ax, az = ground(x0, y0, ah or bh)
 			bx, bz = ground(x1, y1, ah or bh)
 		end
+		if x0 and y0 and x1 and y1 and not (ax and bx) then
+			-- over the sky (a camera tilted up to the horizon): the same drag as made in the middle of the screen (nothing
+			-- moved there before)
+			local vsx, vsy = spGetViewGeometry()
+			ax, az = ground(vsx / 2, vsy / 2)
+			bx, bz = ground(vsx / 2 + x1 - x0, vsy / 2 + y1 - y0)
+		end
 		if ax and bx then
 			-- grab: the point that was under the fingers moves with them
 			p.dx, p.dz = p.dx + ax - bx, p.dz + az - bz

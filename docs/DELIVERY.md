@@ -979,7 +979,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the edge (on the map at one end, past it at the other) takes both ends on the level plane at the map end's height:
       it met the map point with a plane point at the height the camera looks at, a jump where the edge's ground stands
       higher or lower. Dev phone: map to void 320 px up, the map edge 268 px up; void to map 400 px across, the edge
-      264 px (the edge is farther than the finger's row); both with the finger. And placing a
+      264 px (the edge is farther than the finger's row); both with the finger. And a drag over the sky (a camera tilted
+      up to the horizon) moved nothing: no ground point, no plane point. It now moves the map as the same drag made in
+      the middle of the screen would. Dev phone, a scratch widget tilting the camera at the corner start (removed
+      after): a drag down over the sky at the top right pulled the camera back (its target 221 -> 202), where it
+      stood still before. The review of the edge path found the rest sound: a fling glides from the middle of the
+      screen, the void answers "map" for taps, a pinch's pivot over the void comes from the fixed function. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
