@@ -873,6 +873,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       simulation, the engine's own work the rest. Step 2 done: a 1 226-unit state is 11.3 MB saved (77 MB in memory),
       12 s to write on the phone, 2.5 s to load; a busy online game's command stream is 4-7 KB a game-second (whole
       states about 2 000 times that: for catching up, not for play). The study's scratch saves and widget removed.
+      Steps 3 and 4 written up from Recoil's source: a save is applied only while a game starts (`CGame::Load`), so a
+      running phone cannot take a state (each would be a 69 s restart); a real skip is engine design work (deltas,
+      commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
+      from a recent save. Left: catch-up times from real replays.
 - [ ] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
       all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
       over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and

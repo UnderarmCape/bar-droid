@@ -71,7 +71,43 @@ whoever made the states would freeze for seconds to write each one (12 s on this
 work for catching up (a late join, a reconnect), not for continuous play. Continuous play needs the engine to send
 changes since the last state (deltas), or only the part of the world a player sees: the engine has neither today.
 
+## 3. Can a running game take a state from elsewhere?
+
+Not with today's engine. Recoil applies a saved state only while a game starts: `CGame::Load` reaches "Loading Saved
+Game" (`rts/Game/Game.cpp`, ~line 460: `saveFileHandler->LoadGame()`) after the map, definitions and pathing are
+loaded, and nowhere else; `PreGame` creates the handler from the file named on the command line. So "the phone takes
+the math from another player" with the stock engine means a full restart of the game for each state: 69 s on the
+phone, with the game gone meanwhile. The snapshot-sync try therefore needs no more experiments to be answered: the
+engine cannot do it during play.
+
+Where whole states already fit is catching up. A client that joins a running game (a spectator, a player who
+reconnects) receives the game's commands from the start and re-simulates every frame up to the present; a phone that
+simulates a big late game at x0.40 can never catch up that way. Starting it from a recent state that another client
+saved (11 MB, 2.5 s to load on the phone) and then replaying only the commands since would let it in. The engine has
+both halves (saving any time, starting from a save, replaying commands); what is missing is a host or a peer sending
+a fresh save to a joining client, and the client continuing from it in sync.
+
+## 4. A modified engine for a real skip
+
+Building Recoil is possible here (a source checkout is on the laptop; its Linux build is Docker-based, or native on an
+arm64 Debian, which the app's own container on the dev phone is). Laptop engine builds wait for Kailil's word
+(BARGAMEPAD rule). A real "skip" would be engine design work, not a switch: a client that does not simulate needs the
+world from somewhere each frame (deltas of what changed, or of what its player can see), a way to send its commands
+against a world it did not compute, and a different sync check, since lockstep's checksums assume every client
+simulated. That is the proposal to take to the developers, with the numbers above.
+
+## Summary for BAR's and Recoil's developers
+
+- A phone (Snapdragon 8 Gen 2) simulates a ~1 300-unit battle at 40% of real time; five sixths of that is the engine's
+  C++ simulation, a sixth BAR's synced Lua.
+- A whole game state is ~11 MB compressed (77 MB in memory) at that size, ~12 s to write on the phone, 2.5 s to load;
+  a busy online game sends 4-7 KB of commands a second.
+- Recoil can start from a state but not take one during play.
+- Near-term, feasible with today's pieces: late join / reconnect from a recent save instead of re-simulating from frame
+  0 (phones could then spectate and rejoin big games).
+- Long-term, the "thin client" Kailil describes: state or interest-based deltas from a host, commands sent against
+  them, sync checked differently. An architecture change in the engine.
+
 ## Next
 
-3. A snapshot-sync try: one device simulates, the phone loads its states.
-4. Whether an engine build that really skips frames is feasible here.
+- How long a phone needs to catch up by re-simulating, from real replays (fast-forward speed at minutes 5, 10, 15).
