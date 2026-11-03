@@ -808,6 +808,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the room the panels leave in the middle of the screen (if that is half the screen at least), a "- value +"
       never split: Unit info's in two rows right of the build menu. Size + (108%), Reset (100%) and Done by tap in
       their new places; lint clean.
+      And a panel's label sits as a tab on its top edge, outside, where that is on the screen and on no other panel
+      (inside it covered the panel's first line: the order menu's Fire at will and Hold pos); else in its corner as
+      before. On the dev phone the order menu's and the player list's labels moved above them, the rest stay.
+      Android's Back in a game, tried on the way: Escape, the first press clears the selection, the second does nothing.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

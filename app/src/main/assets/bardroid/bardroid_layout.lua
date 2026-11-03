@@ -476,6 +476,7 @@ function widget:DrawScreen()
 	gl.Color(0, 0, 0, 0.18)
 	gl.Rect(0, 0, vsx, vsy)
 	local labelSize = math.floor(math.min(vsy * 0.075, vsx / 18) * 0.36)
+	local th = labelSize * 1.5
 	for _, id in ipairs(order) do
 		local x0, y0, x1, y1 = rectOf(id)
 		if x0 then
@@ -484,13 +485,28 @@ function widget:DrawScreen()
 			outline(x0, y0, x1, y1, color, id == picked and 4 or 2, id == picked and 0.18 or nil)
 			if font then
 				local w = font:GetTextWidth(p.label) * labelSize + labelSize
-				local lx, ly = math.max(0, math.min(x0, vsx - w)), math.min(y1, vsy) -- (on the screen)
+				local lx = math.max(0, math.min(x0, vsx - w))
+				-- a tab on the panel's top edge, outside, where that is on the screen and on no other panel (inside, the
+				-- label covered the panel's own first line: the order menu's Fire at will); else in its top left corner
+				local above = y1 + th <= vsy
+				for _, other in ipairs(order) do
+					local ox0, oy0, ox1, oy1 = rectOf(other)
+					if above and other ~= id and ox0 and ox0 < lx + w and ox1 > lx and oy0 < y1 + th and oy1 > y1 then
+						above = false
+					end
+				end
+				local ly = above and y1 + th or math.min(y1, vsy) -- (the tab's top)
 				local f = WG.FlowUI
-				if f and f.Draw and f.Draw.RectRound then -- (a tab on the panel's top left corner)
-					f.Draw.RectRound(lx, ly - labelSize * 1.5, lx + w, ly, f.elementCorner or 4, 0, 0, 1, 0, BAR_TAB, BAR_TAB)
+				if f and f.Draw and f.Draw.RectRound then
+					local cs = f.elementCorner or 4
+					if above then
+						f.Draw.RectRound(lx, ly - th, lx + w, ly, cs, 1, 1, 0, 0, BAR_TAB, BAR_TAB)
+					else
+						f.Draw.RectRound(lx, ly - th, lx + w, ly, cs, 0, 0, 1, 0, BAR_TAB, BAR_TAB)
+					end
 				else
 					gl.Color(BAR_TAB)
-					gl.Rect(lx, ly - labelSize * 1.5, lx + w, ly)
+					gl.Rect(lx, ly - th, lx + w, ly)
 				end
 				font:Begin()
 				font:SetTextColor(1, 1, 1, 1) -- (else what the last widget left)
