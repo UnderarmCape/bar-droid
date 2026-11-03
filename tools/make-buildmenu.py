@@ -518,8 +518,8 @@ function droid.drawPanel()
 	local r = p.rotate
 	local sym = (r[4] - r[2]) * 0.6
 	font2:Print("\\255\\235\\235\\235\\226\\134\\187", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
-	r = p.cancel
-	font2:Print("\\255\\235\\235\\235\\226\\156\\149", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
+	r = p.cancel -- (its cross a soft red: in the green panel it read as one more way to build)
+	font2:Print("\\255\\255\\150\\140\\226\\156\\149", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
 	font2:End()
 end
 

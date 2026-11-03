@@ -687,6 +687,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       launch-bar.sh's switching, publish-check's self-test, downloader, settings merge, updater rollback, PadGame).
       GL check on the dev phone: FD740. And the launcher's device lines at 12sp: turned sideways (GL check leaves the
       launcher so) the wide layout cut their last line off under the buttons; now all of them show.
+- [x] LINE and GRID by touch (dev phone, BAR's game, 2026-11-03): Solar Collector, LINE, a drag across the map: 23 in
+      a line (BAR's own build drag, the building put away after it); then GRID and a diagonal drag: 75 more in a
+      grid, added to the queue (Shift+Alt held: 23 -> 98), and the commander building them. And the cancel button's
+      cross is a soft red: in the green PLACE panel the two dark squares looked alike (rotate stays white).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
