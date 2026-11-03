@@ -945,7 +945,15 @@ function droid.drawSpot()
 	gl.DepthTest(false)
 	gl.LineWidth(2)
 	gl.Color(0.3, 1, 0.3, 0.8)
-	gl.DrawGroundCircle(bx, by, bz, def and def.radius or 32, 32)
+	-- (the ring at least 2% of the screen's height across its radius: zoomed far out the spot was a 9-pixel dot)
+	local r = def and def.radius or 32
+	local sx, sy = Spring.WorldToScreenCoords(bx, by, bz)
+	local ex, ey = Spring.WorldToScreenCoords(bx + r, by, bz)
+	local px, minPx = math.sqrt((ex - sx) ^ 2 + (ey - sy) ^ 2), math.max(12, vsy * 0.02)
+	if px > 0 and px < minPx then
+		r = r * minPx / px
+	end
+	gl.DrawGroundCircle(bx, by, bz, r, 32)
 	gl.LineWidth(1)
 	gl.Color(1, 1, 1, 1)
 end

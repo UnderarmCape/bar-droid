@@ -695,6 +695,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       rectangle; QUEUE lit gold, then two long presses on the map: two moves added after them (54 -> 55 -> 56), drawn
       as waypoints. And the Info panel's resources leave a side of nothing out: "Metal +2, Energy +30" for a
       commander standing still, where it read "+2 -0" and "+30 -0" with a red "-0".
+- [x] The spot a tap picks for a building, zoomed far out (dev phone, 2026-11-03): its ring was the building's own
+      radius, a 9-pixel dot at the skirmish's starting zoom; now at least 2% of the screen's height across its
+      radius (the building drawn there stays true to size). PLACE and cancel as before; Lua lint clean. Also: in
+      one run a PLACE right after an install, in the game's first 20 s, queued nothing; six more (five cycles of
+      pick, spot, PLACE, cancel in one game) all queued. Watch for a PLACE that does nothing.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
