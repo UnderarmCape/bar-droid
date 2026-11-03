@@ -859,6 +859,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] A long name in the small player list still reached BAR's eraser ("Prime_Federator (AI)", dev phone,
+      2026-11-03): under 1200 lines BAR draws a name about a tenth wider than it measures it (its fontScaleMed, 1.11
+      on a 938-line screen), more than the chat column's room. The small list also keeps BAR's income column where
+      it is empty, for a player alone on their team (BAR draws it beside allies only: a skirmish, an online 1v1).
+      "AurenTheAbsolute (AI)" clear of the eraser; the dev phone's logs after the day's games: only BAR's own
+      notices. Still possible: a long last name in a team game while playing (names only there, Kailil's small list).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

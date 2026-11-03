@@ -165,6 +165,13 @@ local function chatColumnEmpty()
 	return true
 end
 
+-- BAR also draws a name about a tenth wider than it measures it on a screen under 1200 lines (its fontScaleMed): a long
+-- one ("Prime_Federator (AI)") still reached the eraser. The income column, empty for a player alone on their team (BAR
+-- draws it only beside allies, isSingle: a skirmish, an online 1v1), gives such names the room.
+local function incomeColumnEmpty()
+	return not Spring.GetSpectatingState() and #(Spring.GetTeamList(Spring.GetMyAllyTeamID()) or {}) == 1
+end
+
 local function looksMinimized(state)
 	return state.scale <= SMALL_SCALE * math.max(1, sizeFactor()) + 0.001 and state.hideSpecs
 end
@@ -190,6 +197,7 @@ local function minimize()
 		small[name] = KEEP[name] or false
 	end
 	small.chat = chatColumnEmpty()
+	small.income = incomeColumnEmpty()
 	setColumns(a, small)
 	minimized = true
 end
