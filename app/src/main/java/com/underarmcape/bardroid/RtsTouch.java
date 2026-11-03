@@ -937,6 +937,26 @@ final class RtsTouch {
         Place place = place();
         if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
         runPlaceTap();
+        clickWhenSeen(vx, vy, HOVER_ASKS);
+    }
+
+    /**
+     * The click once the game has had a frame with the pointer at the tap (the widget's answer for that point): BAR's
+     * top bar takes a press only where its Update saw the pointer (hoveringTopbar), and a quick tap, or any tap in a
+     * slow late-game frame, moved the pointer and clicked within one frame: the click went to the map behind the bar
+     * and the selection was gone (dev phone, 2026-11-03). Asks for up to HOVER_WAIT_MS, then clicks all the same; a
+     * new touch clicks it at once (finishWaitingTap). Not in the lobby (no game widget).
+     */
+    private void clickWhenSeen(float vx, float vy, int asks) {
+        if (asks > 0 && gameWidgetRunning() && hoverAt(vx, vy) == HOVER_UNKNOWN) {
+            waitX = vx; waitY = vy;
+            waitingTap = () -> {
+                waitingTap = null;
+                clickWhenSeen(vx, vy, asks - 1);
+            };
+            ui.postDelayed(waitingTap, HOVER_WAIT_MS / HOVER_ASKS);
+            return;
+        }
         clickTap(vx, vy);
     }
 
