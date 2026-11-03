@@ -112,7 +112,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the X screen enlarged onto the display through Qualcomm's SGSR 1 (`assets/sgsr`, BSD-3-Clause; `GameActivity`,
   settings "Sharper upscaling" and "Compare upscaling"; plain filtering if the GPU refuses the shader); 0008 the
   display's vsync shared with the frame cap (`/tmp/bardroid-vsync`, `BARDROID_VSYNC_FILE`) and a picture held for the
-  cap's vsyncs at least (`lorieMinHold`), `[display] pictures held` once a minute in launcher.log.
+  cap's vsyncs at least (`lorieMinHold`), `[display] pictures held` once a minute in launcher.log; 0009 X's root
+  cursor (the "X" over the black screen and the engine's splash) drawn as nothing until the game sets its pointer.
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).

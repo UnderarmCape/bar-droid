@@ -1,0 +1,15 @@
+diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
+--- a/lorie/src/main/cpp/lorie/InitOutput.c
++++ b/lorie/src/main/cpp/lorie/InitOutput.c
+@@ -482,6 +482,11 @@ static void lorieSetCursor(DeviceIntPtr pDev, unused ScreenPtr pScr, CursorPtr p
+         // We do not have enough memory allocated for such a big cursor, let's display default "X" cursor
+         pCurs = rootCursor;
+ 
++    // BAR Droid: the root cursor (the "X") drawn as nothing: it stood over the black screen and the engine's splash
++    // until the game set its own pointer
++    if (pCurs == rootCursor)
++        pCurs = NULL;
++
+     lorie_mutex_lock(&pvfb->state->cursor.lock, &pvfb->state->cursor.lockingPid, conn_fd);
+     if (pCurs && bits) {
+         pvfb->state->cursor.xhot = bits->xhot;

@@ -27,7 +27,8 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **Display.** Termux:X11's X server (`lorie`, GPL-3) is compiled into the APK from `termux-x11/` plus
   [patches/](../patches/) and started with `app_process` (`XServer`). `GameActivity extends
   com.termux.x11.MainActivity` shows its screen. The patches add fold/unfold resizing, a private knock port, cursor
-  hiding under two fingers, a pixel cap for the unfolded screen and Snapdragon GSR upscaling.
+  hiding under two fingers, a pixel cap for the unfolded screen, Snapdragon GSR upscaling, the display's vsync for
+  the frame cap, and no "X" root cursor before the game sets its pointer.
 - **Graphics.** Phones: Mesa for Android containers (Freedreno `kgsl` / Turnip + Zink, lfdevs builds). The emulator:
   Mesa `virpipe` → our virgl server (`VirglServer`, `tools/build-virgl.py`) → ANGLE → the host GPU, llvmpipe as
   fallback.
