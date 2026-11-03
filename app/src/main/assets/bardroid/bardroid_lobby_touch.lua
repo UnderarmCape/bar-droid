@@ -428,11 +428,11 @@ end
 -- Input
 
 function widget:MousePress(x, y, button)
+	hush = { x = x, y = y } -- (any button: a finger's long press is a right click, and lifted there too)
 	if button ~= 1 or not screen0 or Spring.IsGUIHidden() then
 		return false
 	end
 	fling = nil
-	hush = { x = x, y = y }
 	local _, _, hx, hy = chiliPoint(x, y)
 	local hit = screen0:HitTest(hx, hy)
 	if hit and isOurs(hit) then
