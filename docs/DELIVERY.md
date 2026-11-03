@@ -633,6 +633,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       dev phone: a chat line and a message shown together, then with the typing box open only the chat line. The dev
       phone's logs (a skirmish, the lobby) hold nothing from the app's widgets but their start lines. And the layout
       editor's buttons are near-opaque: the build menu's pictures showed through their words where the bar crosses it.
+- [x] The dev phone's tests over tonight's changes (2026-11-03, 01:40): pad-test, lobby-phone-test, fp-save-test and
+      pace-test all pass. A 5-minute skirmish in the low-memory mode (`tools/phone-memory.ps1`) ran through: the
+      engine at 4726 MB at most where the October runs reached 5100-5150, its GPU memory 1979 MB where they had
+      2390-2400 (BAR's "Cache Icons" off). And the Info panel's count on one type's picture is no larger than the
+      unit's name (it was 30% of the picture, as in the grid's small cells: on the big picture it outweighed the name).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

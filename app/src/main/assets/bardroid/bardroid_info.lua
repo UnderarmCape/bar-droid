@@ -827,8 +827,8 @@ local function drawUnitView()
 	local pic = l.pic
 	gl.Color(1, 1, 1, 1)
 	drawPicture(shown.id, l.x0, l.y1 - pic, l.x0 + pic, l.y1)
-	if shown.count then -- (as the grid's cells print it)
-		local size = pic * 0.3
+	if shown.count then -- (as the grid's cells print it, no larger than the name: on the big picture it outweighed it)
+		local size = min(pic * 0.3, l.nameSize)
 		bold:Begin()
 		bold:Print(VALUE .. shown.count, l.x0 + pic - size * 0.25, l.y1 - pic + size * 0.3, size, "or")
 		bold:End()
