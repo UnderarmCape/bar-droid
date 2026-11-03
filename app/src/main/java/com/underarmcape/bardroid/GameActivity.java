@@ -298,6 +298,36 @@ public class GameActivity extends MainActivity {
     public void onPictureInPictureModeChanged(boolean inPip, android.content.res.Configuration newConfig) {
         super.onPictureInPictureModeChanged(inPip, newConfig);
         setFlag(BarApp.get().paths().floatingFlag(), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
+        if (!inPip) holdSizeUntilSettled();
+    }
+
+    /**
+     * Out of the floating window the window lies upright for a moment (dev phone, 2026-11-03: its first layout
+     * 936x2013, then 2008x938 in the same second): Termux:X11 lets the X screen follow the window again at once, and it
+     * followed both, a resize the game took 373 ms over for the size it already had. The X screen stays as it is
+     * until the window lies its way again (a new layout, not the floating window's), 1 s at most (a fold meanwhile).
+     */
+    private void holdSizeUntilSettled() {
+        LorieView v = getLorieView();
+        android.util.Rational r = v.getScreenAspectRatio();
+        if (r == null) return;
+        boolean wide = r.floatValue() >= 1f;
+        int fromW = v.getWidth(), fromH = v.getHeight();
+        v.freezeDimensions(true);
+        View.OnLayoutChangeListener[] listener = new View.OnLayoutChangeListener[1];
+        Runnable thaw = new Runnable() {
+            @Override public void run() {
+                v.removeOnLayoutChangeListener(listener[0]);
+                v.removeCallbacks(this);
+                v.freezeDimensions(false);
+            }
+        };
+        listener[0] = (view, l, t, right, bottom, ol, ot, or, ob) -> {
+            int w = right - l, h = bottom - t;
+            if ((w != fromW || h != fromH) && (w >= h) == wide) thaw.run();
+        };
+        v.addOnLayoutChangeListener(listener[0]);
+        v.postDelayed(thaw, 1000);
     }
 
     // Catching up with a running game far behind (spectating, a reconnect; Kailil: "The catchup is still slow"): the
