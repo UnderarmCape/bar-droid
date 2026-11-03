@@ -522,13 +522,21 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	end
 	-- A finger leaves the pointer where it lifted, and Chili's hover tooltip of whatever is under it stayed up: on the
 	-- Skirmish screen a tapped map's picture as large as the screen, over the Next button (dev phone, 2026-11-02). Held
-	-- back from a press until the pointer moves away; a mouse moving on gets its tooltips as before.
+	-- back from a press until the pointer moves away; a mouse moving on gets its tooltips as before. And the hover look
+	-- once the button is up: Cancel tapped in the Register dialog left the Welcome screen's "Code of Conduct" under the
+	-- pointer lit as if picked (dev phone, 2026-11-03). Chili hovers a control again only when the pointer reaches another
+	-- (Screen:IsAbove), so one MouseOut keeps it plain.
 	if hush then
-		local mx, my = Spring.GetMouseState()
+		local mx, my, left, middle, right = Spring.GetMouseState()
 		if math.abs(mx - hush.x) + math.abs(my - hush.y) > DRAG_PX then
 			hush = nil
 		else
 			screen0.currentTooltip = nil
+			local hovered = screen0._lastHoveredControl
+			if hovered and hovered ~= hush.out and not (left or middle or right) then
+				hush.out = hovered
+				pcall(function() hovered:MouseOut() end) -- (a weak link: its control may be gone)
+			end
 		end
 	end
 	if popupButton and (popupButton.disposed or not popupButton.parent or popupButton.visible == false) then
