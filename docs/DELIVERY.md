@@ -859,6 +859,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] The phone's remake of the menu copies, checked (2026-11-03): the shipped `.patches` applied to BAR's files as
+      `BuildMenuPatches` does give the shipped `bardroid_buildmenu.lua` and `bardroid_ordermenu.lua` byte for byte.
+      `make-buildmenu.py` and `make-ordermenu.py --check` (the patches against a BAR release, nothing written) pass on
+      the laptop's (test-31777) and the phone's (test-31783), and run in `laptop-tests.ps1` now, so a BAR update that
+      moves a part a patch needs shows before a phone falls back. `launch-bar-test.sh` covers `order_menu`: the copy
+      in, kept with an Android-layer miss when BAR's file changed, BAR's own after the copy failed in a game (the build
+      menu's copy left running), the controller game off; 55 cases, all pass (its menu block had called an undefined
+      `order_menu`). And QUEUE's label in the white of the order menu's words right under it (it was the notes' warm
+      white).
 - [x] The order menu copy by touch (dev phone, BAR's game, 2026-11-03): a tap on Move picks it, a tap on Fire at will
       cycles it, a drag across the menu leaves the camera where it was (the copy's IsAbove; the press picks the button
       it starts on, as BAR's does with a mouse), a long press is a right click (Hold pos back to Roam).

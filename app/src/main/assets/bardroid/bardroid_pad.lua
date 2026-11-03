@@ -1401,7 +1401,8 @@ local function drawQueue()
 		style.outline(r[1], r[2], r[3], r[4], style.GOLD, 1)
 	end
 	local size = math.floor((r[4] - r[2]) * 0.42)
-	local c = queue.on and style.GOLD or style.TEXT
+	-- (off: the white of the order menu's words right under it, \255\240\240\240; the notes' warm white stood apart)
+	local c = queue.on and style.GOLD or { 0.94, 0.94, 0.94 }
 	font:Begin()
 	font:SetOutlineColor(0, 0, 0, 0.6)
 	font:SetTextColor(c[1], c[2], c[3], 1)

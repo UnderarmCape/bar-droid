@@ -976,6 +976,7 @@ def main():
     ap.add_argument("--bar-data", default=os.path.join(os.environ.get("LOCALAPPDATA_REAL") or
                     os.path.expandvars(r"%USERPROFILE%\AppData\Local"), "Programs", "Beyond-All-Reason", "data"))
     ap.add_argument("--adb", help="read BAR's file off the phone with this adb, not from a BAR data folder")
+    ap.add_argument("--check", action="store_true", help="only see that every patch finds its place; write nothing")
     args = ap.parse_args()
     release, md5, raw = bar_file(args.bar_data, args.adb)
     text = raw.decode("utf-8").replace("\r\n", "\n")
@@ -984,6 +985,9 @@ def main():
         if n != 1:
             sys.exit(f"BAR's build menu changed: a patch finds its place {n} times (not once):\n{find}")
         text = text.replace(find, repl)
+    if args.check:
+        print(f"patches apply: {release}, {FILE} {md5}, {len(PATCHES)} patches")
+        return
     with open(OUT, "w", encoding="utf-8", newline="\n") as f:
         f.write(HEADER.format(release=release, md5=md5) + text)
     # (the same patches for the phone: Installer makes the copy again when an update changes BAR's file, BuildMenuPatches)

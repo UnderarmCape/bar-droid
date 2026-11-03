@@ -89,6 +89,19 @@ if (Test-Path (Join-Path $gitUsr "sh.exe")) {
   $results += "{0} launch-bar build menus" -f $(if ($ok) { "PASS" } else { "FAIL" })
 } else { $results += "SKIP launch-bar build menus (no sh in ${gitUsr}: run Install Toolchain.bat)" }
 
+# The app's copies of BAR's Build and Order menus: their patches still find their places in the laptop's BAR release (the
+# phone makes the copies again with the same patches after BAR updates: Installer, BuildMenuPatches). Reads BAR's install
+# only, no BAR started.
+$py = Join-Path $TC "hosttools\python\python.exe"
+if (-not (Test-Path $py)) { $py = "python" }
+foreach ($tool in "make-buildmenu.py", "make-ordermenu.py") {
+  Write-Host "== $tool --check"
+  $out = & $py -I (Join-Path $Tools $tool) --check 2>&1 | ForEach-Object { "$_" }
+  $ok = ($LASTEXITCODE -eq 0) -and ($out | Select-String -Pattern "^patches apply" -Quiet)
+  if (-not $ok) { $out | Select-Object -Last 8 | ForEach-Object { Write-Host "   $_" } }
+  $results += "{0} {1} patches on the laptop's BAR" -f $(if ($ok) { "PASS" } else { "FAIL" }), $tool
+}
+
 Run "publish check patterns" "publish-check.ps1" "selftest: ALL PASS" @("-SelfTest")
 Run "downloader" "downloader-test.ps1" "ALL PASS"
 Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
