@@ -203,6 +203,19 @@ local function percent(v)
 	return string.format("%d%%", math.floor(v * 100 + 0.5))
 end
 
+-- the room the panels leave between the screen's left and right at heights ya to yb: the panels on the left half end
+-- before it, those on the right half start after it
+local function freeSpan(ya, yb)
+	local lo, hi = 0, vsx
+	for _, id in ipairs(order) do
+		local x0, y0, x1, y1 = rectOf(id)
+		if x0 and y0 < yb and y1 > ya then
+			if (x0 + x1) / 2 < vsx / 2 then lo = math.max(lo, x1) else hi = math.min(hi, x0) end
+		end
+	end
+	return lo, hi
+end
+
 -- the control bar: the panel picked and what can change, Reset and Done
 local function layoutButtons()
 	local h = math.floor(math.min(vsy * 0.075, vsx / 18))
@@ -212,20 +225,21 @@ local function layoutButtons()
 	if p then
 		local s, c = get(picked), p.can or {}
 		row[#row + 1] = { w = h * 3.4, label = p.label, lit = true }
+		-- (join: kept in one row with the button before it, a "- value +" never split)
 		if c.size then
 			row[#row + 1] = { w = h, label = "-", action = "size-" }
-			row[#row + 1] = { w = h * 2.2, label = "Size " .. percent(s.size) }
-			row[#row + 1] = { w = h, label = "+", action = "size+" }
+			row[#row + 1] = { w = h * 2.2, label = "Size " .. percent(s.size), join = true }
+			row[#row + 1] = { w = h, label = "+", action = "size+", join = true }
 		end
 		if c.text then
 			row[#row + 1] = { w = h, label = "-", action = "text-" }
-			row[#row + 1] = { w = h * 2.2, label = "Text " .. percent(s.text) }
-			row[#row + 1] = { w = h, label = "+", action = "text+" }
+			row[#row + 1] = { w = h * 2.2, label = "Text " .. percent(s.text), join = true }
+			row[#row + 1] = { w = h, label = "+", action = "text+", join = true }
 		end
 		if c.pad then
 			row[#row + 1] = { w = h, label = "-", action = "pad-" }
-			row[#row + 1] = { w = h * 2.4, label = "Padding " .. percent(s.pad) }
-			row[#row + 1] = { w = h, label = "+", action = "pad+" }
+			row[#row + 1] = { w = h * 2.4, label = "Padding " .. percent(s.pad), join = true }
+			row[#row + 1] = { w = h, label = "+", action = "pad+", join = true }
 		end
 		if editable(p) then
 			row[#row + 1] = { w = h * 1.6, label = "Reset", action = "reset" }
@@ -244,14 +258,32 @@ local function layoutButtons()
 			b.w = math.max(b.w, math.ceil(font:GetTextWidth(b.label) * h * 0.38 + h * 0.6))
 		end
 	end
-	-- rows no wider than the screen
-	local rows, current, width = {}, {}, 0
+	-- rows no wider than the room the panels leave in the middle of the screen, where they go, if that is half the
+	-- screen at least, else than the screen (one row of a picked panel's buttons crossed the build menu, 2026-11-03)
+	local lo, hi = freeSpan(vsy / 2 - h * 1.5, vsy / 2 + h * 1.5)
+	local maxW = hi - lo - 2 * gap
+	if maxW < vsx * 0.5 then
+		maxW = vsx - 2 * gap
+	end
+	local groups = {}
 	for _, b in ipairs(row) do
-		if #current > 0 and width + gap + b.w > vsx - 2 * gap then
+		if b.join and #groups > 0 then
+			local g = groups[#groups]
+			g[#g + 1] = b
+			g.w = g.w + gap + b.w
+		else
+			groups[#groups + 1] = { b, w = b.w }
+		end
+	end
+	local rows, current, width = {}, {}, 0
+	for _, g in ipairs(groups) do
+		if #current > 0 and width + gap + g.w > maxW then
 			rows[#rows + 1], current, width = current, {}, 0
 		end
-		current[#current + 1] = b
-		width = width + (#current > 1 and gap or 0) + b.w
+		width = width + (#current > 0 and gap or 0) + g.w
+		for _, b in ipairs(g) do
+			current[#current + 1] = b
+		end
 	end
 	rows[#rows + 1] = current
 	-- in the middle of the screen (the panels sit at its edges), else just above or below the panel picked
@@ -276,13 +308,7 @@ local function layoutButtons()
 		end
 		-- centred in the room the panels leave at its height, else on the screen (the hint crossed the build menu's last
 		-- column on a phone's wide screen, 2026-11-02)
-		local lo, hi = 0, vsx
-		for _, id in ipairs(order) do
-			local x0, y0, x1, y1 = rectOf(id)
-			if x0 and y0 < y + h and y1 > y then
-				if (x0 + x1) / 2 < vsx / 2 then lo = math.max(lo, x1) else hi = math.min(hi, x0) end
-			end
-		end
+		lo, hi = freeSpan(y, y + h)
 		local x = hi - lo >= w + 2 * gap and math.floor(lo + (hi - lo - w) / 2) or math.floor((vsx - w) / 2)
 		for _, b in ipairs(r) do
 			buttons[#buttons + 1] = { x0 = x, y0 = y, x1 = x + b.w, y1 = y + h, label = b.label, action = b.action,
