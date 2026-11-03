@@ -870,7 +870,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (5) a write-up with the numbers (docs/research/), Kailil hands it on. Dynamic resolution when hot: declined
       (Kailil, 2026-11-03: "No res reduction"). Step 1 done (docs/research/sim-offload.md): in the benchmark's ~1 300
       units the phone simulates at x0.40; BAR's synced Lua is 11.1% of the running time, about a sixth of the
-      simulation, the engine's own work the rest.
+      simulation, the engine's own work the rest. Step 2 done: a 1 226-unit state is 11.3 MB saved (77 MB in memory),
+      12 s to write on the phone, 2.5 s to load; a busy online game's command stream is 4-7 KB a game-second (whole
+      states about 2 000 times that: for catching up, not for play). The study's scratch saves and widget removed.
 - [ ] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
       all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
       over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and

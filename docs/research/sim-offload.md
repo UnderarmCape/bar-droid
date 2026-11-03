@@ -40,9 +40,38 @@ BAR's gadget profiler on the same run (13:06; the profiler roughly doubles the L
 So "get the math from someone else" means mostly the engine's work, not BAR's scripts: a game-side (Lua) shortcut would
 save a sixth at most.
 
+## 2. What a phone would have to receive instead
+
+The engine can already write a game's whole state and start from it: BAR's save (`/save`, a `.ssf` file). That is the
+nearest thing to "the math from someone else" Recoil has. A skirmish on the dev phone with the benchmark's armies (650
+Pawns against 650 Grunts) given at frame 90 and saved three times as they fought (2026-11-03):
+
+| units at the save | file (compressed) | writing it on the phone (game frozen) |
+|---|---|---|
+| 1 226 | 11.3 MB | 12.0 s |
+| 785 | 11.5 MB | 8.4 s |
+| 417 | 10.0 MB | 6.5 s |
+
+Uncompressed, the 1 226-unit state is 58.1 MB of engine state and 19.3 MB of Lua state (77 MB; the engine's own
+save log). The file's size hardly follows the units: most of it is the fixed part (map, features, Lua state).
+
+Starting from that save on the phone took 69 s, of which **2.5 s** were the state itself ("Loading Saved Game"); the
+rest is what every game start does (map 7.8 s, textures, pathing 2.6 s, 24 s of interface Lua).
+
+What lockstep sends instead, from replays on the dev phone (`tools/demo-rate.py`, the command stream):
+
+| game | per game-second |
+|---|---|
+| online, 16 players (three replays, minutes 2-15) | 4-7 KB, up to 11.7 KB |
+| skirmish against one AI | 0.35 KB |
+
+So a full state is about 2 000 times a busy online game's command stream for one second of play. A phone fed whole
+states every 10 s would need about 1.1 MB/s (9 Mbit/s) of download and spend 2.5 s of every 10 loading them, and
+whoever made the states would freeze for seconds to write each one (12 s on this phone; a PC much less). Whole states
+work for catching up (a late join, a reconnect), not for continuous play. Continuous play needs the engine to send
+changes since the last state (deltas), or only the part of the world a player sees: the engine has neither today.
+
 ## Next
 
-2. What a phone would receive instead of simulating: a late game's full state (BAR's save on the phone: size, save and
-   load time) against the command stream it receives now.
 3. A snapshot-sync try: one device simulates, the phone loads its states.
 4. Whether an engine build that really skips frames is feasible here.
