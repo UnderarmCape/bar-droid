@@ -924,12 +924,17 @@ local function restoreDeferred()
 	end
 end
 
+local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrapped for fingers (wrapTooltips)
+
 function widget:Shutdown()
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
 	endCatchup() -- a LuaUI reload (fold/unfold) while catching up: the next start sees the gap again
 	restoreDeferred() -- the engine's own passes back (a reload switches them off again)
+	if tooltipApi and tooltipApi.ShowTooltip == fingersShowTooltip then -- (a widget reload wraps it again)
+		tooltipApi.ShowTooltip = barShowTooltip
+	end
 	if touchFile then
 		touchFile:close()
 		touchFile = nil
@@ -1052,12 +1057,52 @@ local function updateHover()
 	hoverX, hoverY, hoverAnswer, hoverTimer = mx, my, onInterface, now
 end
 
+-- The build and order menus' tooltips for fingers: a finger's pointer stays where it lifted, so the tooltip of the cell
+-- or order it tapped stood over the buttons beside it until the next touch (dev phone, 2026-11-03). A build menu's says
+-- what the info panel says: none; an order's goes TOOLTIP_REST seconds after the pointer came to rest. The app's menu
+-- copies do that themselves (tools/make-buildmenu.py, make-ordermenu.py); v0.8.5's menus in the controller game, which
+-- the app does not change, and BAR's own (a copy's fallback) through BAR's tooltip API: its ShowTooltip wrapped while
+-- the fingers are the input; a mouse and the pad keep BAR's way. Wrapped again when BAR's tooltip widget makes a new
+-- API (a reload). (tooltipApi, barShowTooltip, fingersShowTooltip: declared before Shutdown, which unwraps it)
+local TOOLTIP_REST = 2.5 -- (the order menu copy's TOOLTIP_SECONDS)
+local tipX, tipY, tipRestsFrom
+local function fingersTooltip(name)
+	if WG.BarDroidInput ~= "touch" then
+		return true
+	elseif name == "buildmenu" then
+		return false
+	elseif name ~= "ordermenu" then
+		return true
+	end
+	local x, y = spGetMouseState()
+	local now = spGetTimer()
+	if x ~= tipX or y ~= tipY or not tipRestsFrom then
+		tipX, tipY, tipRestsFrom = x, y, now
+	end
+	return spDiffTimers(now, tipRestsFrom) < TOOLTIP_REST
+end
+local function wrapTooltips()
+	local t = WG.tooltip
+	if type(t) ~= "table" or t == tooltipApi or type(t.ShowTooltip) ~= "function" then
+		return
+	end
+	local show = t.ShowTooltip
+	fingersShowTooltip = function(name, ...)
+		if fingersTooltip(name) then
+			return show(name, ...)
+		end
+	end
+	tooltipApi, barShowTooltip = t, show
+	t.ShowTooltip = fingersShowTooltip
+end
+
 local function update(dt)
 	updates = updates + 1
 	local lines = newTouchLines()
 	if lines then
 		readTouch(lines)
 	end
+	wrapTooltips()
 	applyTouch(dt)
 	if padCamera then
 		applyPad(dt)

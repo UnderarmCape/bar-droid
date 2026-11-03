@@ -890,6 +890,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       over PLACE). The tooltip now shows to a mouse only, as it already skipped the pad (the info panel says the
       same); BAR's Screen Mode Info off in launch-bar.sh with the other hints that clash on a phone (the metal view
       itself is the engine's and stays). Seen clean after; launch-bar-test: all pass.
+- [x] The same in the controller game (the launcher's Play vs AI; dev phone, 2026-11-03): with fingers its menus are
+      v0.8.5's, which the copies' patches do not reach, so a tapped Metal Extractor's tooltip still covered the build
+      menu's next row and a tapped Move's stayed over Reclaim, Place Blueprint and the player list until the next
+      touch. `bardroid_touch.lua` now wraps BAR's tooltip API (`WG.tooltip.ShowTooltip`) while the fingers are the
+      input: no build menu tooltip, an order's for 2.5 s after the pointer came to rest, as the copies do; a mouse and
+      the pad keep BAR's way, v0.8.5 itself unchanged. Seen: Move's tooltip at 1 s, gone at 4 s; none on the
+      extractor; no errors. And the unit info panel's largest text a sixth smaller (panel height / 7.4, was 6.2): a
+      Metal Extractor's text was 1.5 times a Commander's, the largest on the screen; its description fits one line
+      now, the Commander's (already below the cap) unchanged. And the BAR top bar's cut-off "Wasting metal" banner
+      (`docs/upstream/bar-topbar-warning-banner.md`) is still in BAR's current code (test-31777). Three Python bytecode
+      files committed by mistake in fc0bb4a (`tools/__pycache__`) untracked, `__pycache__/` in .gitignore.
 - [x] Spectating by touch after the day's player list changes (dev phone, a skirmish's replay started through a
       temporary `dev-env.sh`, removed after; 2026-11-03): a tap on the small list brings up the spectate bar ("No player
       cams" dimmed, Free, Follow unit, Group), the list small as a spectator, no errors. The touch widget's 0.6% of the

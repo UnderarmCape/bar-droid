@@ -22,7 +22,9 @@ function widget:GetInfo()
 	}
 end
 
-local MIN_TEXT, MAX_TEXT_LINES = 8, 6.2 -- smallest text (pixels); the largest: panel height / this
+-- smallest text (pixels); the largest: panel height / this (6.2 put a short unit's text, a Metal Extractor's, at 1.5
+-- times a Commander's, the largest text on the screen: dev phone, 2026-11-03)
+local MIN_TEXT, MAX_TEXT_LINES = 8, 7.4
 local REFRESH = 0.25 -- seconds between rebuilding a shown unit's text (health, experience)
 local PICK_EVERY = 0.1 -- seconds between looking again at what to show (and at once when the selection changes)
 local LABEL, VALUE, DIM = "\255\175\175\175", "\255\255\255\255", "\255\200\200\200"
