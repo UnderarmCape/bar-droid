@@ -1,7 +1,8 @@
 # The touch camera (bardroid_touch.lua) at the map's edge on the dev phone, in a skirmish: a test widget
 # (tools\touch-phone-test\bardroid_touch_phone_test.lua) appends the app's pan and zoom lines to the touch log and checks
 # that a drag holds the point under the finger (on the map, over the void past the edge, across the edge), that a pinch
-# over the void zooms about its point and that a drag over the sky moves the map. No fingers needed, nothing on the
+# over the void or on the map zooms about its point, that a drag over the sky moves the map, and a twist, a tilt and
+# the zoom-out limit. No fingers needed, nothing on the
 # laptop: it runs any time. About 2 minutes.
 #   powershell -ExecutionPolicy Bypass -File tools\touch-phone-test.ps1
 $ErrorActionPreference = "Stop"

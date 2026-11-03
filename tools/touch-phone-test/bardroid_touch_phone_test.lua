@@ -106,6 +106,44 @@ local cases = {
 		local x, z = groundAt(endX, endY)
 		check("a drag on the map holds the point under the finger", grab[1], grab[2], x, z, moved())
 	end,
+	-- a pinch on the map: its point stays put
+	function()
+		endX, endY = cx + 200, math.floor(vsy * 0.6)
+		grab = { groundAt(endX, endY) }
+		touch(string.format("zoom 1.4 %d %d", endX, endY))
+	end,
+	settle,
+	function()
+		local x, z = groundAt(endX, endY)
+		check("a pinch on the map zooms about its point", grab[1], grab[2], x, z)
+	end,
+	-- a twist turns the camera the other way round (the map turns with the fingers); fingers down tilt it
+	function()
+		before = Spring.GetCameraState()
+		touch("rot 0.3")
+		touch("tilt 0.04")
+	end,
+	settle,
+	function()
+		local cs = Spring.GetCameraState()
+		local turned = before.ry - cs.ry
+		local ok = math.abs(turned - 0.3) < 0.02
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s a twist of 0.3 turns the camera by it: %.3f", ok and "PASS" or "FAIL", turned))
+		ok = cs.rx > before.rx + 0.01
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s fingers down tilt the camera: rx %.3f -> %.3f", ok and "PASS" or "FAIL", before.rx, cs.rx))
+	end,
+	-- pinched far out: the camera stops at the touch widget's limit (a third past the map's longer side)
+	function() touch(string.format("zoom 0.02 %d %d", cx, math.floor(vsy / 2))) end,
+	settle,
+	function()
+		local cs = Spring.GetCameraState()
+		local limit = math.max(Game.mapSizeX, Game.mapSizeZ) * 1.333
+		local ok = cs.dist and cs.dist <= limit + 1 and cs.dist > limit * 0.5
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s a pinch far out stops at the limit: %.0f of %.0f", ok and "PASS" or "FAIL", cs.dist or -1, limit))
+	end,
 	-- past the edge, looking out over it: across and up (until 2026-11-03 up and down there went against the finger)
 	function() camera(Game.mapSizeX / 2, 700, 2500, 1.9, true) end,
 	settle,
