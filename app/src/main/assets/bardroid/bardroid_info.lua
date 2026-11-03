@@ -501,6 +501,19 @@ local function layout()
 	local w, h = floor(widthFrac * vsx), floor(heightFrac * vsy)
 	local x0 = max(0, min(vsx - w, floor(e.dx * vsx)))
 	local y0 = max(0, min(vsy - h, floor(e.dy * vsy)))
+	-- BAR's order menu sits right of the Info panel's default width and moves for nothing (gui_ordermenu.lua posX): a
+	-- panel made bigger in the editor stops at its left edge, so D-Gun and the orders under it still take taps
+	local o = WG.ordermenu
+	if o and o.getPosition and o.getBottomPosition and o.getBottomPosition() then
+		local ox, oy, _, oh = o.getPosition()
+		if ox and oh then
+			local left = floor(ox * vsx) - (WG.FlowUI and WG.FlowUI.elementMargin or 0)
+			if x0 < left and y0 < oy * vsy and y0 + h > (oy - oh) * vsy then
+				w = max(1, min(w, left - x0))
+				widthFrac = w / vsx
+			end
+		end
+	end
 	rect = { x0, y0, x0 + w, y0 + h }
 	font = WG.fonts and WG.fonts.getFont() or font
 	bold = WG.fonts and WG.fonts.getFont(2) or font

@@ -612,6 +612,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       lobby). On the dev phone the commander stays selected after a tap on the metal bar; pad-test and
       lobby-phone-test: all pass. (BAR's own hover tooltips, as "Guard" after a tap on it, stay until the pointer
       moves: left as BAR shows them.)
+- [x] The layout editor by touch (dev phone, 2026-11-03, after the tap change above): `/hud`, a tap on Unit info picks
+      it, the size + steps it 108, 117, 126%, Done closes. Found there: the Unit info panel made bigger grew under BAR's
+      order menu, which stays where BAR's widget puts it (right of the panel's default width; no setter), and covered
+      D-Gun and Set Target. The panel now stops at the order menu's left edge and grows in height and text only; at
+      126% on the dev phone the orders show whole.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
