@@ -859,6 +859,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] The order menu copy by touch (dev phone, BAR's game, 2026-11-03): a tap on Move picks it, a tap on Fire at will
+      cycles it, a drag across the menu leaves the camera where it was (the copy's IsAbove; the press picks the button
+      it starts on, as BAR's does with a mouse), a long press is a right click (Hold pos back to Roam).
+      lobby-phone-test after launch-bar.sh's order_menu: all pass. And an order's tooltip after a finger's tap: the
+      pointer stays where the finger lifted, so BAR's tooltip stayed over the buttons beside it until the next touch;
+      now it goes 2.5 s after the pointer came to rest (with fingers; a mouse keeps BAR's way). Seen at 1 s and gone
+      at 4 s.
 - [x] pad-test after the order menu copy (dev phone, 2026-11-03): both runs check the order menu now. `-Online`
       (BAR's released game, user widgets' orders forbidden): the app's copy runs (`WG.ordermenu.droidCells`), and
       with the pad's orders hidden the other 11 fill it, one cell each; the controller game: v0.8.5's own menu

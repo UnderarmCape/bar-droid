@@ -66,9 +66,21 @@ PATCHES = [
 '''),
     ('''local function setupCellGrid(force)
 ''',
-     '''-- BAR Droid: what the app adds: the even layout's last shape, and the WG.ordermenu this copy set (the controller game's
--- own is left alone)
-local droid = { evenKey = nil, api = nil }
+     '''-- BAR Droid: what the app adds: the even layout's last shape, the WG.ordermenu this copy set (the controller game's
+-- own is left alone), and where and since when the pointer rests (tooltipShows)
+local droid = { evenKey = nil, api = nil, x = nil, y = nil, restsFrom = nil, TOOLTIP_SECONDS = 2.5 }
+
+-- BAR Droid: with fingers the pointer stays where the last one lifted, and an order's tooltip with it, over the buttons
+-- beside it until the next touch (dev phone, 2026-11-03): it goes TOOLTIP_SECONDS after the pointer came to rest (BAR's
+-- tooltip widget draws one only while it is asked for it each frame). A mouse keeps BAR's way.
+function droid.tooltipShows()
+	local x, y = Spring.GetMouseState()
+	local now = Spring.GetTimer()
+	if x ~= droid.x or y ~= droid.y or not droid.restsFrom then
+		droid.x, droid.y, droid.restsFrom = x, y, now
+	end
+	return WG.BarDroidInput ~= "touch" or Spring.DiffTimers(now, droid.restsFrom) < droid.TOOLTIP_SECONDS
+end
 
 local function setupCellGrid(force)
 '''),
@@ -180,6 +192,12 @@ end
 			if fontSize > sizeWidth / 7 then
 				fontSize = sizeWidth / 7
 			end
+'''),
+    ('''						local cmd = commands[cell]
+						if WG.tooltip then
+''',
+     '''						local cmd = commands[cell]
+						if WG.tooltip and droid.tooltipShows() then -- BAR Droid: a finger's tooltip goes after a while
 '''),
     ('''function widget:MousePress(x, y, button)
 ''',
