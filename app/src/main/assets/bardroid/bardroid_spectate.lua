@@ -1505,7 +1505,10 @@ end
 function widget:MouseRelease(x, y)
 	local b = pressedOn
 	pressedOn = nil
-	if b and buttonAt(x, y) == b and ACTIONS[b.action] then
+	-- a finger lifted where it pressed: the bar is laid out again every LAYOUT_EVERY and moves while BAR's player list
+	-- opens beside it (its left edge), so the button found at the release was another table, or another button, and
+	-- the first tap after the bar came up did nothing (a phone replay, 2026-11-02)
+	if b and x >= b.x0 and x <= b.x1 and y >= b.y0 and y <= b.y1 and ACTIONS[b.action] then
 		ACTIONS[b.action]()
 		barDirty = true -- (the bar shows the press's result in the next frame)
 		if WG.BarDroidPlayers and WG.BarDroidPlayers.keepOpen then

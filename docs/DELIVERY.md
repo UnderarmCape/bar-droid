@@ -71,10 +71,19 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
       lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar). Still to
       take: 1st person.
-- [ ] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but a tap on
-      "Follow unit" or its ">" followed nothing (the label stayed, the camera did not move). Next: `tools/spectate-test.ps1`
-      on the laptop after 2:00 (it drives the same widget in a replay), and the widget's `cycleUnit` in a phone replay
-      (the team a replay spectator has, `unitsByDistance`).
+- [x] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but the first tap on
+      "Follow unit" followed nothing. The bar is laid out again every 0.25 s and moves while BAR's player list opens
+      beside it, so the button found at the release was a new table (or another button) and the tap was dropped; a
+      later tap, with the list open, worked. `bardroid_spectate.lua` now acts when the finger lifts inside the button it
+      pressed. On the dev phone the first tap on "Follow unit" followed a Pawn (the bar turned to the camera presets).
+- [ ] In that replay a tap on "1st person" (the bar's left end) changed nothing; the press reached the widgets. Next:
+      which widget before the spectate one (layer 999999) takes presses there: probes at 8 layers were in place when
+      the next replay hung (below), so not yet answered.
+- [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
+      "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
+      triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its
+      launcher.log is kept on the dev phone as `files/logs/hang-2026-11-02.log`. Watch for it again; if it repeats,
+      a report for lfdevs' Mesa (KGSL submit) with that log.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
