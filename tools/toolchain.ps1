@@ -117,6 +117,27 @@ function Invoke-PhoneScript([string]$adb, [string]$device, [string]$script, [str
   try { $null = & $adb -s $device push $file "/data/local/tmp/$name" 2>&1 } finally { $ErrorActionPreference = $eap }
   & $adb -s $device shell sh "/data/local/tmp/$name"
 }
+# A file into the app's own folder, and a shell script run there as the app (No device: ANDROID_SERIAL's). Through
+# adb push and /data/local/tmp, which run-as can read: piped into `adb exec-in` the input now and then never reached
+# the phone or arrived cut short (phone-bench, docs/HISTORY.md; pad-test's setting restore lost twice, 2026-11-03).
+function Send-AppFile([string]$adb, [string]$local, [string]$remote, [string]$device = "") {
+  $on = if ($device) { @("-s", $device) } else { @() }
+  $tmp = "/data/local/tmp/bardroid-send-" + [IO.Path]::GetFileName($local)
+  $eap = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"   # (adb push's progress line on stderr: see Invoke-PhoneScript)
+  try { $null = & $adb @on push $local $tmp 2>&1 } finally { $ErrorActionPreference = $eap }
+  & $adb @on exec-out run-as com.underarmcape.bardroid sh -c "cat $tmp > $remote"
+  & $adb @on shell rm -f $tmp
+}
+function Invoke-AppScript([string]$adb, [string]$local, [string]$device = "") {   # (LF endings; its output)
+  $on = if ($device) { @("-s", $device) } else { @() }
+  $tmp = "/data/local/tmp/bardroid-run-" + [IO.Path]::GetFileName($local)
+  $eap = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  try { $null = & $adb @on push $local $tmp 2>&1 } finally { $ErrorActionPreference = $eap }
+  & $adb @on exec-out run-as com.underarmcape.bardroid sh $tmp
+  & $adb @on shell rm -f $tmp
+}
 # The screen profile (dark or bench) on a device; prints the settings it changed
 function Set-PhoneScreen([string]$adb, [string]$device, [string]$mode) {
   Invoke-PhoneScript $adb $device $PhoneScreen[$mode] "bardroid-screen.sh"

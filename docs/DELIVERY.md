@@ -700,6 +700,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       radius (the building drawn there stays true to size). PLACE and cancel as before; Lua lint clean. Also: in
       one run a PLACE right after an install, in the game's first 20 s, queued nothing; six more (five cycles of
       pick, spot, PLACE, cancel in one game) all queued. Watch for a PLACE that does nothing.
+- [x] The phone tests' files into the app (2026-11-03): pad-test, lobby-phone-test, fp-save-test and pace-test piped
+      their test widgets and scripts into `adb exec-in`, which phone-bench had already dropped for scripts that now and
+      then never arrived; the same lost a settings restore twice tonight. Now `toolchain.ps1`'s `Send-AppFile` and
+      `Invoke-AppScript` (adb push, /data/local/tmp). pad-test -Online also switches the controller game off only if it
+      was on and checks that it reads on again afterwards. All four pass on the dev phone; the setting reads as before.
+      And the lobby's warning box: its title and reason are two lines apart in the box's middle (they touched, the
+      box's room all under them); lobby-phone-test passes at 100% and 130%.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

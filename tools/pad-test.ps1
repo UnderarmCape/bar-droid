@@ -29,8 +29,8 @@ function Log([string]$pattern, [int]$lines) {
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
 $testWidget = if ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
 $padScript = if ($Online) { "pad-online.evemu" } else { "pad.evemu" }
-function InApp([string]$script) { cmd /c "`"$adb`" exec-in run-as $pkg sh < `"$(Join-Path $PSScriptRoot "pad-test\$script")`"" }
-cmd /c "`"$adb`" exec-in run-as $pkg sh -c `"cat > $widget`" < `"$(Join-Path $PSScriptRoot "pad-test\$testWidget")`""
+function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
+Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null
 try {
   if ($Online) { InApp "online-on.sh" }
@@ -53,5 +53,14 @@ try {
   & $adb exec-out run-as $pkg rm -f $widget
   & $adb shell am force-stop $pkg
   & $adb shell rm -f $evemu
-  if ($Online) { InApp "online-off.sh" }
+  if ($Online) {   # (again while its marker stays: the setting must read as before)
+    for ($i = 0; $i -lt 3; $i++) {
+      InApp "online-off.sh"
+      if (-not (& $adb exec-out run-as $pkg sh -c "ls files/padtest-gamepad-was-on 2>/dev/null")) { break }
+      Start-Sleep 2
+    }
+    if (& $adb exec-out run-as $pkg sh -c "ls files/padtest-gamepad-was-on 2>/dev/null") {
+      "[padtest] FAIL the controller game setting was not switched back on (files/padtest-gamepad-was-on)"
+    }
+  }
 }

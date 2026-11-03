@@ -31,5 +31,5 @@ foreach ($f in "libbardroid_pace.so", "pace_test.so") {
 $script = "rm -f /tmp/bardroid-hidden /tmp/pace-test-vsync; cd /root/bar/pace-test && SDL_VIDEODRIVER=dummy BARDROID_VSYNC_FILE=/tmp/pace-test-vsync " +
           "LD_PRELOAD=/root/bar/pace-test/libbardroid_pace.so:/root/bar/pace-test/pace_test.so perl -e 1; rm -rf /root/bar/pace-test /tmp/bardroid-hidden /tmp/pace-test-vsync"
 $script | Out-File -Encoding ascii -NoNewline (Join-Path $Out "run.sh")
-cmd /c "type `"$(Join-Path $Out 'run.sh')`" | `"$adb`" exec-in run-as $pkg sh -c `"cat > files/bar/pace-test-run.sh`""
+Send-AppFile $adb (Join-Path $Out "run.sh") "files/bar/pace-test-run.sh"
 & $adb shell "run-as $pkg sh files/container.sh 'sh /root/bar/pace-test-run.sh; rm -f /root/bar/pace-test-run.sh'"

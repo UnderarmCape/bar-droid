@@ -15,10 +15,7 @@ $evemu = "/data/local/tmp/bardroid-lobby-pad.evemu"
 
 function InApp([string]$command) { & $adb exec-out run-as $pkg sh -c $command }
 function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files/bar/infolog.txt 2>/dev/null | tail -$lines" }
-function Push([string]$file) {
-  $name = Split-Path $file -Leaf
-  cmd /c "`"$adb`" exec-in run-as $pkg sh -c `"cat > $widgets/$name`" < `"$file`""
-}
+function Push([string]$file) { Send-AppFile $adb $file "$widgets/$(Split-Path $file -Leaf)" }
 
 & $adb shell am force-stop $pkg
 InApp "rm -f files/bar/infolog.txt"

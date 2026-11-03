@@ -41,7 +41,7 @@ local Chili, screen0
 local press, fling
 local hush -- where the last press left the pointer: Chili's hover tooltip held back until it moves (Update)
 local popupButton, bar
-local warning, warningText, warningColour, warningShown, warningClosed, warningBattle, warningSize, warningCheck
+local warning, warningTitle, warningWhy, warningColour, warningShown, warningClosed, warningBattle, warningSize, warningCheck
 
 local function uiScale()
 	return WG.uiScale or 1
@@ -328,10 +328,21 @@ local function makeWarning()
 		draggable = false,
 		padding = { 0, 0, 0, 0 },
 	})
-	warningText = Chili.TextBox:New({
+	-- (the title and the reason each a line of their own, apart and in the middle of the box: as one text box's two
+	-- lines they touched, with the box's room all below them)
+	warningTitle = Chili.TextBox:New({
 		parent = warning,
 		x = 14,
-		y = 27,
+		y = 16,
+		right = 118,
+		height = 30,
+		text = "",
+		objectOverrideFont = font,
+	})
+	warningWhy = Chili.TextBox:New({
+		parent = warning,
+		x = 14,
+		y = 50,
 		right = 118,
 		bottom = 0,
 		text = "",
@@ -389,7 +400,9 @@ local function updateWarning()
 			makeWarning()
 		end
 		if text then
-			warningText:SetText(text)
+			local title, why = text:match("^(.-)\n(.*)$")
+			warningTitle:SetText(title or text)
+			warningWhy:SetText(why or "")
 			warningColour = colour
 			placeWarning()
 			warning:Show()

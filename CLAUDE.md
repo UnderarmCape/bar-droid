@@ -174,8 +174,9 @@ powershell -ExecutionPolicy Bypass -File tools\profile-benchmark.ps1 [-NoProfile
 ```
 Ad-hoc commands: `cmd /c "call C:\Tools\BARANDROID\bar-droid-app\scripts\env.bat && <command>"` (PowerShell tools: dot-source
 `tools\toolchain.ps1` for `$TC`) (`%VARS%` on that line expand
-before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: push a script with
-`adb exec-in run-as com.underarmcape.bardroid sh -c "cat > files/x.sh"` and run it.
+before env.bat runs; use literal paths). `adb shell` quoting through PowerShell is fragile: `toolchain.ps1`'s
+`Send-AppFile` (a file into the app's folder) and `Invoke-AppScript` (a script run there as the app) go through
+`adb push` and /data/local/tmp; piped into `adb exec-in` the input now and then never arrived or came cut short.
 The lobby tests never log in (Kailil, 2026-10-28: "dont login and disable autologin on the laptop when you run the
 tests"): BAR's server allows one session per account, and a test's login ended his game on the phone. Their lobby
 starts offline (`tools\toolchain.ps1` Write-LobbyConfig: no login, automatic login off; `tools\lobby-login\
