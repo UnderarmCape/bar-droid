@@ -237,19 +237,24 @@ local function planePoint(x, y, h)
 	return cx + dx * t, cz + dz * t
 end
 
--- The map point under an X screen pixel. Off the map (the void around it) the view ray meets the plane at the height
--- of the ground the camera looks at, so dragging keeps working there; nil only above the horizon.
-local function ground(x, y)
+-- The map point under an X screen pixel, and its height when it is on the map. Off the map (the void around it) the
+-- view ray meets the plane at the height of the ground the camera looks at (or at height h when given, which skips the
+-- map), so dragging keeps working there; nil only above the horizon.
+local function ground(x, y, h)
 	if not (x and y) then
 		return nil -- a line that is not numbers
 	end
-	local _, vsy = spGetViewGeometry()
-	local kind, pos = spTraceScreenRay(x, vsy - y, true)
-	if kind == "ground" and pos then
-		return pos[1], pos[3]
+	if not h then
+		local _, vsy = spGetViewGeometry()
+		local kind, pos = spTraceScreenRay(x, vsy - y, true)
+		if kind == "ground" and pos then
+			return pos[1], pos[3], pos[2]
+		end
+		local cs = spGetCameraState()
+		h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
 	end
-	local cs = spGetCameraState()
-	return planePoint(x, y, cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0)
+	local px, pz = planePoint(x, y, h)
+	return px, pz
 end
 
 -- Camera moves the fingers asked for and the camera has not made yet: pan (map units), twist and tilt (radians), zoom
@@ -438,8 +443,16 @@ local function readTouch(lines)
 		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
 	end
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
-		local ax, az = ground(tonumber(x0), tonumber(y0))
-		local bx, bz = ground(tonumber(x1), tonumber(y1))
+		x0, y0, x1, y1 = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
+		local ax, az, ah = ground(x0, y0)
+		local bx, bz, bh = ground(x1, y1)
+		if ax and bx and (ah == nil) ~= (bh == nil) then
+			-- the finger crossed the map's edge: both ends on the level plane at the map end's height (the map point and
+			-- the void's plane point at the height the camera looks at made a jump where the edge's ground stands higher or
+			-- lower than that)
+			ax, az = ground(x0, y0, ah or bh)
+			bx, bz = ground(x1, y1, ah or bh)
+		end
 		if ax and bx then
 			-- grab: the point that was under the fingers moves with them
 			p.dx, p.dz = p.dx + ax - bx, p.dz + az - bz

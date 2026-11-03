@@ -975,7 +975,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       void follows the finger as the map does (dev phone, the corner start: 200 px down moved the map 208 px down,
       200 px up 218 px up, 300 px across 284 px across); a pinch's pivot over the void comes from the same function.
       touch-widget-test's edge case now drags across and up and checks that the grabbed point stays under the finger
-      (an across-only drag never showed it); not run: BAR on the laptop needs Kailil's yes. And placing a
+      (an across-only drag never showed it); not run: BAR on the laptop needs Kailil's yes. And a drag that crosses
+      the edge (on the map at one end, past it at the other) takes both ends on the level plane at the map end's height:
+      it met the map point with a plane point at the height the camera looks at, a jump where the edge's ground stands
+      higher or lower. Dev phone: map to void 320 px up, the map edge 268 px up; void to map 400 px across, the edge
+      264 px (the edge is farther than the finger's row); both with the finger. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
