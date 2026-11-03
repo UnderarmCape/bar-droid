@@ -76,6 +76,33 @@ local function isOurs(obj)
 	return false
 end
 
+local function overflows(obj)
+	return obj.SetScrollPos and obj.contentArea and obj.clientArea and obj.verticalScrollbar ~= false
+		and obj.contentArea[4] > obj.clientArea[4] + 1
+end
+
+-- The innermost list within obj that lies under the point, by its place on the screen. Chili's hit test passes over a
+-- list's labels and gaps (no handler of their own) to the window behind it: a finger on a settings line's words, or
+-- between them and its control, did not scroll the lobby's Settings (only its checkbox lines did; dev phone,
+-- 2026-11-02). Searched only inside what was hit, so a dropdown open over a list is not scrolled through.
+local function listUnder(obj, hx, hy)
+	obj = real(obj)
+	if not obj or obj.hidden or obj.visible == false or not obj.LocalToScreen then
+		return nil
+	end
+	local x, y = obj:LocalToScreen(0, 0)
+	if hx < x or hy < y or hx > x + (obj.width or 0) or hy > y + (obj.height or 0) then
+		return nil
+	end
+	for _, child in ipairs(obj.children or {}) do
+		local inner = listUnder(child, hx, hy)
+		if inner then
+			return inner
+		end
+	end
+	return overflows(obj) and obj or nil
+end
+
 -- What a press on hit means: the list it scrolls, the server row it is on, or nothing of ours (a slider, a text box,
 -- a scroll bar, outside lists).
 local function classify(hit, hx, hy)
@@ -88,8 +115,7 @@ local function classify(hit, hx, hy)
 		if not battle and obj.name == "battleButton" and battleIdOf(obj) then
 			battle = obj
 		end
-		if obj.SetScrollPos and obj.contentArea and obj.clientArea and obj.verticalScrollbar ~= false
-			and obj.contentArea[4] > obj.clientArea[4] + 1 then
+		if overflows(obj) then
 			if obj == real(hit) and obj.IsAboveVScrollbars then
 				local lx, ly = obj:ScreenToLocal(hx, hy)
 				if obj:IsAboveVScrollbars(lx, ly) then
@@ -100,6 +126,9 @@ local function classify(hit, hx, hy)
 			break
 		end
 		obj = real(obj.parent)
+	end
+	if not panel and not battle then
+		panel = listUnder(hit, hx, hy)
 	end
 	return panel, battle
 end

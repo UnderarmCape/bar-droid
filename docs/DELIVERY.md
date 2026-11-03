@@ -539,6 +539,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       now holds the hover tooltip back from a press until the pointer moves away (its own server details unaffected).
       On the dev phone: Skirmish, 1v1, Beginner, Armada, a map tapped: no tooltip, the Start button clear; Start began
       the game. lobby-phone-test: all pass.
+- [x] The lobby's Settings list did not scroll under most of a finger (2026-11-02): Chili's hit test passes over a
+      line's words and the gap before its control (no handler of their own) to the window behind, so only the checkbox
+      lines (their box spans the line) reached the list; a probe of the screen found the rest "main_window". When
+      nothing on the hit's way up scrolls, `bardroid_lobby_touch.lua` now finds the list under the finger inside what
+      was hit, by its place on the screen (a dropdown open over a list is its own hit: not scrolled through). On the
+      dev phone a drag from that gap scrolled Settings to its end, no setting changed. lobby-phone-test: all pass.
 - [ ] The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
