@@ -878,11 +878,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
       from a recent save. Catch-up times added from Kailil's own late joins on the Fold7 (x2.0 at 2 400 units, never
       past ~5 000). The write-up is complete for Kailil to hand on.
-- [ ] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
+- [x] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
       all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
       over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and
       re-recording its drawing at each switch. Measure that first (count the switches and fits a minute), then keep
-      the fits per text, or with fingers stop following what drifts under a pointer that came to rest.
+      the fits per text, or with fingers stop following what drifts under a pointer that came to rest. Measured (timers in a
+      scratch build, BAR's benchmark on the dev phone): the text fits were cheap (2-18 ms each 20 s); the cost was
+      recording the panel's drawing, ~27 ms each, its text the bulk (text recorded into a display list is slow on the
+      phone; drawn as it is, ~0.15 ms), about 1.5 a second as units passed under the pointer and health changed:
+      734-985 ms each 20 s. Now a unit's picture and text are recorded once per text and kept (the last 8) and the
+      health bar is drawn as it is while its numbers change, recorded once they stand still a second: 60-220 ms each
+      20 s in the same battle. Description and stats print in one pass of the font. Looks as before (dev phone).
 - [x] phone-bench after the day's changes (dev phone, 2026-11-03 12:43, the controller game: the order menu copy stands
       down there): Sim 52.58, Draw 26.01, Update 11.23 ms per frame, x0.40, in last night's range (52.3-54.3,
       24.97-26.37, 11.28-11.39; this morning's 49.4/23.05/10.49 ran cooler: prime CPU cap 1843 against 1708 MHz now).

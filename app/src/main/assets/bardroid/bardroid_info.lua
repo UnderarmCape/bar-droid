@@ -503,18 +503,36 @@ local rect = { 0, 0, 0, 0 } -- left, bottom, right, top (BAR's Info panel's plac
 local widthFrac, heightFrac = 0, 0
 local font, bold, pad
 local background
--- What the panel shows (picture, text, health) recorded once per rebuild and replayed every frame: printed afresh each
--- frame it cost 4 ms a second with the pointer resting on a unit (laptop, BAR's benchmark, 2026-10-27), for text that
--- changes four times a second at most (REFRESH).
-local content
-local drawn -- what the recorded drawing shows (a unit's: its picture, text and health line), to keep it while that stays
+-- What the panel shows recorded and replayed every frame: printed afresh each frame it cost 4 ms a second with the
+-- pointer resting on a unit (laptop, BAR's benchmark, 2026-10-27). A unit's picture and text are recorded once per
+-- text and kept (the last STATIC_LISTS); its health bar is drawn as it is each frame. In a battle the pointer passes
+-- from unit to unit and health changes: each recording of the whole panel cost ~27 ms on the phone, the text the bulk
+-- (about 1.5 a second in BAR's benchmark, 2% of its running time), a recording of the bar alone ~15 ms, the bar drawn
+-- live ~0.15 ms (dev phone, 2026-11-03). In that battle: 734-985 ms of recording each 20 s before, 60-220 ms now. A bar
+-- whose numbers stood still for BAR_STILL frames is recorded too (a selected unit at rest: nothing printed a frame).
+local STATIC_LISTS, BAR_STILL = 8, 30
+local content -- the grid of several types
+local statics, staticOrder = {}, {} -- a unit's picture and text by staticKey, the oldest first
+local staticKey, staticId, staticText -- the shown unit's (made again only when its type, count or text change)
+local barKey -- the shown unit's bar's numbers
+local barList, barDrawn, barFor, barStill = nil, nil, nil, 0 -- the bar's recording, its numbers and unit, frames still
 local fitKey -- what the text size was fitted for (the text and the panel)
-local function dropContent()
+local function dropGrid()
 	if content then
 		gl.DeleteList(content)
 		content = nil
 	end
-	drawn = nil
+end
+local function dropContent() -- (the panel moved or changed its size or fonts: every recording goes)
+	dropGrid()
+	for _, list in pairs(statics) do
+		gl.DeleteList(list)
+	end
+	statics, staticOrder = {}, {}
+	if barList then
+		gl.DeleteList(barList)
+		barList, barDrawn = nil, nil
+	end
 end
 local stub -- our WG.info
 local standDown, overlay = false, false
@@ -762,8 +780,7 @@ end
 
 local function buildView()
 	if not shown or shown.kind == "units" then
-		dropContent()
-		view, laidOut, fitKey = nil, nil, nil
+		view, laidOut, fitKey, staticKey, staticId, staticText = nil, nil, nil, nil, nil, nil
 		return
 	end
 	local info = defInfo(shown.id)
@@ -775,22 +792,22 @@ local function buildView()
 		end
 	end
 	view = v
-	-- the text size fitted again only when the text or the panel changed (health moves only the bar), the drawing
-	-- recorded again only when what it shows changed: with the pointer on a battle both stay most of the time
+	-- the text size fitted again only when the text or the panel changed (health moves only the bar); the picture and
+	-- text recorded once per staticKey (DrawScreen)
 	local key = v.name .. "\n" .. v.description .. "\n" .. v.stats .. (v.health and "\nh" or "") .. "\n" .. rect[3] .. "x" .. rect[4]
 	if key ~= fitKey then
 		fitKey, laidOut = key, fit(v)
-		dropContent()
 	end
-	local now = shown.id .. "x" .. (shown.count or 1) .. "\n" .. (v.health and (floor(v.health) .. "/" .. floor(v.maxHealth) .. "/" .. floor((v.build or 1) * 100)) or "")
-	if now ~= drawn then
-		dropContent()
-		drawn = now
+	local id = shown.count and (shown.id .. "x" .. shown.count) or shown.id
+	if id ~= staticId or key ~= staticText then
+		staticId, staticText = id, key
+		staticKey = id .. "\n" .. key
 	end
+	barKey = v.health and (floor(v.health) .. "/" .. floor(v.maxHealth) .. "/" .. floor((v.build or 1) * 100)) or nil
 end
 
 local function layoutGrid(types)
-	dropContent()
+	dropGrid()
 	cells = {}
 	local x0, y0, x1, y1 = rect[1] + pad, rect[2] + pad, rect[3] - pad, rect[4] - pad
 	local w, h, n = x1 - x0, y1 - y0, #types
@@ -862,59 +879,59 @@ local function roundBar(x0, y0, x1, y1, color)
 	end
 end
 
-local function drawUnitView()
+-- a unit's picture and text (the health bar is drawUnitBar's): the description and the stats in one pass of the font,
+-- each pass a large part of a recording's cost on the phone
+local function drawUnitStatic()
 	local l = laidOut
 	local pic = l.pic
 	gl.Color(1, 1, 1, 1)
 	drawPicture(shown.id, l.x0, l.y1 - pic, l.x0 + pic, l.y1)
+	bold:Begin()
 	if shown.count then -- (as the grid's cells print it, no larger than the name: on the big picture it outweighed it)
 		local size = min(pic * 0.3, l.nameSize)
-		bold:Begin()
 		bold:Print(VALUE .. shown.count, l.x0 + pic - size * 0.25, l.y1 - pic + size * 0.3, size, "or")
-		bold:End()
 	end
-	local y = l.y1
-	bold:Begin()
-	bold:Print(VALUE .. l.name, l.textX, y - l.nameSize * 0.95, l.nameSize, "o")
+	bold:Print(VALUE .. l.name, l.textX, l.y1 - l.nameSize * 0.95, l.nameSize, "o")
 	bold:End()
-	y = y - l.nameSize * 1.25
+	local y = l.y1 - l.nameSize * 1.25
 	font:Begin()
 	for _, line in ipairs(l.desc) do
 		font:Print(DIM .. line, l.textX, y - l.descSize * 0.95, l.descSize, "o")
 		y = y - l.descSize * 1.2
 	end
-	font:End()
-	if view.health then
-		local barH = l.barH
-		local x0, x1 = l.textX, l.x1
-		local frac = max(0, min(1, view.health / view.maxHealth))
-		local yb = y - barH - l.s * 0.15
-		roundBar(x0, yb, x1, yb + barH, BAR_BACK)
-		local label = floor(view.health) .. " / " .. floor(view.maxHealth)
-		if view.build and view.build < 1 then
-			-- under construction: the bar is the building's progress, in blue (as health it read as a damaged unit,
-			-- orange at 18% built)
-			frac = max(0, min(1, view.build))
-			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { 0.22, 0.45, 0.78, 0.85 })
-			label = "Building " .. floor(view.build * 100) .. "%"
-		else
-			-- (a deeper green to red: the white figures on full green were hard to read, dev phone 2026-11-03)
-			local s = BAR_SHADE
-			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH,
-				{ min(1, 2 - frac * 2) * s, min(1, frac * 2) * s, 0.12, 0.85 })
-		end
-		gl.Color(1, 1, 1, 1)
-		font:Begin()
-		font:Print(VALUE .. label, (x0 + x1) / 2, yb + barH * 0.18, barH * 0.82, "oc")
-		font:End()
-	end
 	y = l.y1 - l.statsTop
-	font:Begin()
 	for n, line in ipairs(l.stats) do
 		local ly = y - n * l.lh
 		local x = l.beside(n) and l.textX or l.x0
 		font:Print(line, x, ly + l.lh * 0.18, l.statSize, "o")
 	end
+	font:End()
+end
+
+-- the unit's health bar, under its name and description
+local function drawUnitBar()
+	local l = laidOut
+	local barH = l.barH
+	local x0, x1 = l.textX, l.x1
+	local frac = max(0, min(1, view.health / view.maxHealth))
+	local yb = l.y1 - l.nameSize * 1.25 - #l.desc * l.descSize * 1.2 - barH - l.s * 0.15
+	roundBar(x0, yb, x1, yb + barH, BAR_BACK)
+	local label = floor(view.health) .. " / " .. floor(view.maxHealth)
+	if view.build and view.build < 1 then
+		-- under construction: the bar is the building's progress, in blue (as health it read as a damaged unit,
+		-- orange at 18% built)
+		frac = max(0, min(1, view.build))
+		roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { 0.22, 0.45, 0.78, 0.85 })
+		label = "Building " .. floor(view.build * 100) .. "%"
+	else
+		-- (a deeper green to red: the white figures on full green were hard to read, dev phone 2026-11-03)
+		local s = BAR_SHADE
+		roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH,
+			{ min(1, 2 - frac * 2) * s, min(1, frac * 2) * s, 0.12, 0.85 })
+	end
+	gl.Color(1, 1, 1, 1)
+	font:Begin()
+	font:Print(VALUE .. label, (x0 + x1) / 2, yb + barH * 0.18, barH * 0.82, "oc")
 	font:End()
 end
 
@@ -939,11 +956,42 @@ function widget:DrawScreen()
 	end
 	gl.Color(1, 1, 1, 1)
 	drawBackground()
-	if not content and (shown.kind == "units" or laidOut) then
-		content = gl.CreateList(shown.kind == "units" and drawGrid or drawUnitView)
-	end
-	if content then
+	if shown.kind == "units" then
+		if not content then
+			content = gl.CreateList(drawGrid)
+		end
 		gl.CallList(content)
+	elseif laidOut and staticKey and view then
+		local list = statics[staticKey]
+		if not list then
+			list = gl.CreateList(drawUnitStatic)
+			statics[staticKey] = list
+			staticOrder[#staticOrder + 1] = staticKey
+			if #staticOrder > STATIC_LISTS then
+				local oldest = table.remove(staticOrder, 1)
+				gl.DeleteList(statics[oldest])
+				statics[oldest] = nil
+			end
+		end
+		gl.CallList(list)
+		if view.health and barKey then -- (drawn as it is while it changes: ~0.15 ms a frame on the phone, a recording ~15 ms)
+			if barKey ~= barDrawn or staticKey ~= barFor then
+				if barList then
+					gl.DeleteList(barList)
+					barList = nil
+				end
+				barDrawn, barFor, barStill = barKey, staticKey, 0
+			end
+			barStill = barStill + 1
+			if not barList and barStill >= BAR_STILL then
+				barList = gl.CreateList(drawUnitBar)
+			end
+			if barList then
+				gl.CallList(barList)
+			else
+				drawUnitBar()
+			end
+		end
 	end
 	gl.Color(1, 1, 1, 1)
 end
