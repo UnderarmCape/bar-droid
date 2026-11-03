@@ -356,7 +356,7 @@ public class GameService extends Service {
         Intent stop = new Intent(this, GameService.class).setAction(ACTION_STOP);
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this, CHANNEL)
-                .setSmallIcon(android.R.drawable.ic_media_play)
+                .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
                 .setContentTitle(title)
                 .setContentText(text)
                 .setContentIntent(pi)
