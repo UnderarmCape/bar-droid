@@ -21,7 +21,8 @@
 --                                                                               PLACE lit)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1>             (pointer position; 1 = on the interface)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
+--                                                                               2 = a BAR window open that scrolls)
 --   LuaUI/Config/bardroid_game.txt    widget, at start: controller <0|1>        (1: the controller game, v0.8.5 reads
 --                                                                               the pad; 0: the pad is a mouse and keys)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
@@ -976,6 +977,8 @@ end
 -- when the pointer moves, else every 10 frames (a window opened by a tap that left the pointer where it was).
 local BAR_WINDOWS = { "options", "gameinfo", "teamstats", "keybinds", "changelog", "widgetselector", "missioninfo",
 	"scavengerinfo" }
+-- 2: one of those windows is open. They scroll their lists and text with the mouse wheel only (a finger's drag was a
+-- left drag there: BAR's Settings did not scroll, dev phone 2026-11-03), so the app sends a vertical drag as the wheel.
 local barX, barY, barAt, barAnswer = nil, nil, -1000, false
 local function overBarInterface(mx, my)
 	if mx == barX and my == barY and updates - barAt < 10 then
@@ -985,8 +988,8 @@ local function overBarInterface(mx, my)
 	for i = 1, #BAR_WINDOWS do
 		local w = WG[BAR_WINDOWS[i]]
 		if type(w) == "table" and type(w.isvisible) == "function" and w.isvisible() then
-			barAnswer = true
-			return true
+			barAnswer = 2
+			return 2
 		end
 	end
 	local tb = WG.topbar
@@ -1013,15 +1016,18 @@ local function updateHover()
 	end
 	local onInterface
 	if seenX == mx and seenY == my and seenAt >= mouseSince - 1 then
-		-- 1 interface, 0 map (the void past the map's edge too: fingers work there as on the map)
+		-- 1 interface, 2 a BAR window that scrolls, 0 map (the void past the map's edge too: fingers work there as on
+		-- the map)
 		if mx ~= calcX or my ~= calcY or updates - calcAt >= HOVER_RECHECK then
-			calcAnswer = (spIsAboveMiniMap(mx, my) or overBarInterface(mx, my)) and 1 or 0
+			local bar = overBarInterface(mx, my)
+			calcAnswer = bar == 2 and 2 or ((spIsAboveMiniMap(mx, my) or bar) and 1 or 0)
 			calcX, calcY, calcAt = mx, my, updates
 		end
 		onInterface = calcAnswer
 	elseif updates - seenAt > 300 then
 		-- no IsAbove for a long time: a window that holds the pointer for itself, else the map
-		onInterface = overBarInterface(mx, my) and 1 or 0
+		local bar = overBarInterface(mx, my)
+		onInterface = bar == 2 and 2 or (bar and 1 or 0)
 	elseif updates - mouseSince >= 2 then
 		onInterface = 1
 	else

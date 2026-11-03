@@ -779,6 +779,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       memory, GL check and the Benchmark answering in the launcher, one notification that returns to the game. README:
       "30 / 60 / no cap", the bigger unit info and the build menu. The in-game typing box looked over on the dev phone:
       nothing to change.
+- [x] BAR's Settings did not scroll by finger (dev phone, 2026-11-03): its list (and BAR's key bindings, changelog,
+      game info, team stats, widget list) scrolls with the mouse wheel only, and a finger's drag there was a left drag.
+      `bardroid_touch.lua` now answers 2 while one of those windows is open, and `RtsTouch` sends an up or down drag
+      there as wheel steps (one per 8% of the view's height: the list follows the finger), a sideways drag as before
+      (the sliders). On the dev phone: the Settings list scrolled from Graphics Quality to Advanced Map Shading with
+      the finger; Darken map dragged to 0.23 and back to 0.00 (left as it was); pad-test, lobby-phone-test: all pass.
+      The laptop's touch-widget-test expects 2 for the open window now (not run: BAR on the laptop needs Kailil's yes).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

@@ -33,7 +33,8 @@ import java.util.Locale;
  *   tap                  left click (select, buttons, place a building); a quick second tap is a double click (BAR:
  *                        the unit's type on screen); a quick third tap selects that type on the whole map
  *   drag                 pan: the map follows the finger, and keeps gliding after a flick. A drag that starts on the
- *                        game's interface (minimap, sliders, windows) is a left drag instead
+ *                        game's interface (minimap, sliders, windows) is a left drag instead; up or down in one of
+ *                        BAR's windows (Settings, key bindings, ...) it scrolls (the mouse wheel), sideways a left drag
  *   tap, then drag       left drag: box select
  *   long press           right button: lift = right click (move/attack order), keep dragging = right drag (formation)
  *   two-finger tap       right click at the first finger
@@ -89,7 +90,11 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, DONE }
+    // of the view's height: one wheel step in BAR's windows (BAR's Settings: ~3.5 rows a step; at 0.045 the list ran
+    // 1.7 times as far as the finger, dev phone)
+    private static final float SCROLL_STEP = 0.08f;
+    private float scrollY;                                      // a SCROLL's finger height at its last wheel step
 
     private final MainActivity activity;
     private final float slop, minFling;
@@ -141,7 +146,8 @@ final class RtsTouch {
     private float[] placeTapSpot;                   // X screen pixels: where that tap put the building
 
     // What the game's widget says is under a point (bardroid_hover.txt)
-    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1;
+    // (HOVER_SCROLL: one of BAR's windows is open, whose lists and text scroll with the mouse wheel only)
+    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1, HOVER_SCROLL = 2;
 
     private final Runnable longPress = () -> {
         if (state != State.PENDING || gridHeld) return;
@@ -362,6 +368,9 @@ final class RtsTouch {
             case PAN:
                 panTo(curX, curY);
                 return;
+            case SCROLL:
+                if (i >= 0) scrollTo(curY);
+                return;
             case LEFT_DRAG:
             case RIGHT_HOLD:
                 if (i >= 0) moveCursor(curX, curY);
@@ -454,7 +463,8 @@ final class RtsTouch {
                 tap(downX, downY);
                 break;
             case DRAG_WAIT:
-                if (hoverAt(downX, downY) == HOVER_INTERFACE) {   // a quick drag on the interface
+                int quick = hoverAt(downX, downY);
+                if (quick == HOVER_INTERFACE || quick == HOVER_SCROLL) {   // a quick drag on the interface
                     press(downX, downY, InputStub.BUTTON_LEFT, true);
                     press(curX, curY, InputStub.BUTTON_LEFT, false);
                 } else if (startPlaceDrag()) {   // (ONE picked: the building moved, the map stays)
@@ -527,8 +537,25 @@ final class RtsTouch {
         }
         ui.removeCallbacks(hoverTimeout);
         if (hover == HOVER_MAP && (startShapeDrag() || startPlaceDrag())) return;
-        if (hover == HOVER_INTERFACE) startLeftDrag();
+        if (hover == HOVER_SCROLL && Math.abs(curY - downY) >= Math.abs(curX - downX)) startScroll();
+        else if (hover == HOVER_INTERFACE || hover == HOVER_SCROLL) startLeftDrag();   // (a window's sliders: sideways)
         else startPan();
+    }
+
+    /**
+     * A vertical drag in one of BAR's windows (Settings, key bindings, ...): the mouse wheel at where it started, one
+     * step per SCROLL_STEP of the view's height the finger moves; the content follows the finger.
+     */
+    private void startScroll() {
+        state = State.SCROLL;
+        scrollY = downY;
+        scrollTo(curY);
+    }
+
+    private void scrollTo(float y) {
+        float step = Math.max(1, view().getHeight() * SCROLL_STEP);
+        while (y - scrollY >= step) { wheel(downX, downY, -WHEEL_CLICK); scrollY += step; }   // finger down: back up
+        while (scrollY - y >= step) { wheel(downX, downY, WHEEL_CLICK); scrollY -= step; }    // finger up: further down
     }
 
     /**
@@ -1164,7 +1191,7 @@ final class RtsTouch {
         if (now - interfaceAt >= 100) {
             String text = readSmall(hoverFile);
             String[] f = text == null ? new String[0] : text.trim().split(" ");
-            onInterface = f.length == 3 && f[2].equals("1");
+            onInterface = f.length == 3 && (f[2].equals("1") || f[2].equals("2"));
             interfaceAt = now;
         }
         return onInterface;
@@ -1224,8 +1251,9 @@ final class RtsTouch {
     }
 
     /**
-     * What is under view pixel (x, y) by the widget's last answer ("x y 0|1" in X screen pixels, written when the
-     * pointer moves and every second): HOVER_INTERFACE (the game's interface or the minimap) or HOVER_MAP;
+     * What is under view pixel (x, y) by the widget's last answer ("x y 0|1|2" in X screen pixels, written when the
+     * pointer moves and every second): HOVER_INTERFACE (the game's interface or the minimap), HOVER_SCROLL (one of
+     * BAR's windows open) or HOVER_MAP;
      * HOVER_UNKNOWN while it has not answered for that point. Without a widget (the lobby, a game still loading)
      * everything is interface: drags stay mouse drags.
      */
@@ -1239,7 +1267,7 @@ final class RtsTouch {
         if (f.length != 3) return HOVER_UNKNOWN;
         try {
             if (Math.abs(Integer.parseInt(f[0]) - toX(vx)) > 2 || Math.abs(Integer.parseInt(f[1]) - toY(vy)) > 2) return HOVER_UNKNOWN;
-            return f[2].equals("1") ? HOVER_INTERFACE : HOVER_MAP;
+            return f[2].equals("0") ? HOVER_MAP : f[2].equals("2") ? HOVER_SCROLL : HOVER_INTERFACE;
         } catch (NumberFormatException e) { return HOVER_UNKNOWN; }
     }
 

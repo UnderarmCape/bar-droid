@@ -1,6 +1,6 @@
 -- User widget for tools/touch-widget-test.ps1: moves the pointer over BAR's real interface and reads what
 -- bardroid_touch.lua answers in LuaUI/Config/bardroid_hover.txt (1 = interface: a finger drag there is a mouse drag,
--- 0 = map: a pan). Logs "[touchtest] PASS|FAIL <case>" and "[touchtest] done".
+-- 2 = one of BAR's windows open: an up or down drag is the wheel, 0 = map: a pan). Logs "[touchtest] PASS|FAIL <case>" and "[touchtest] done".
 function widget:GetInfo()
 	return { name = "BAR Droid touch test", desc = "Checks the touch widget's interface answers", author = "BAR Droid",
 		layer = 0, enabled = true }
@@ -461,7 +461,7 @@ cases = {
 		end
 		warp(math.floor(vsx * 0.5), math.floor(vsy * 0.45))
 	end,
-	function() expectAt("settings window open", 1) end,
+	function() expectAt("settings window open (2: a window that scrolls)", 2) end,
 	function()
 		if WG.options and WG.options.toggle then
 			WG.options.toggle(false)
