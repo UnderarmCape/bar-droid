@@ -72,7 +72,13 @@ public class StartActivity extends Activity {
         updateView.post(() -> {
             android.view.WindowInsets in = getWindow().getDecorView().getRootWindowInsets();
             if (in == null) return;
-            int left = in.getStableInsetLeft(), right = in.getStableInsetRight();
+            int left, right;
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.graphics.Insets bars = in.getInsetsIgnoringVisibility(android.view.WindowInsets.Type.systemBars());
+                left = bars.left; right = bars.right;
+            } else {
+                left = in.getStableInsetLeft(); right = in.getStableInsetRight();   // (Android 9 and 10)
+            }
             updateView.setPadding(right, 0, left, 48);
         });
         waitingSince = SystemClock.elapsedRealtime();
