@@ -10,7 +10,7 @@ The first version meant for other people's phones: everything since the first bu
 
 **Playing**
 - BAR's own lobby, online games, skirmish against AI and spectating on a Snapdragon phone (tested on a Galaxy Z
-  Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / none in the launcher). The game draws at about 900
+  Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / no cap in the launcher). The game draws at about 900
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
   the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it.
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
@@ -37,8 +37,9 @@ The first version meant for other people's phones: everything since the first bu
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit
   info panel and the spectate bar (and set their text size and padding), and size BAR's minimap and player list; kept
   separately for folded and unfolded. BAR's interface scale unfolded is 1.0 (was 1.3). The build menu is the app's
-  copy of BAR's Build menu (the same menu, as a 3x3 grid: 9 options a page, the page arrows in a strip under
-  them), so the editor moves and sizes it too; in the controller game it shows while the app's gamepad controls
+  copy of BAR's Build menu (the same menu, 3 rows a page: 3 options across, 5 on a wide, short screen such as the
+  Fold7 folded; the page arrows in a strip under them), so the editor moves and sizes it too, and it keeps clear of a
+  unit info panel made bigger (which stops at the order menu); in the controller game it shows while the app's gamepad controls
   have the pad (a triple tap switches); it steps aside for BAR's own when a
   BAR update changes that menu, and for the gamepad's in the controller game.
 - Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER, and a
@@ -47,6 +48,14 @@ The first version meant for other people's phones: everything since the first bu
   hollow ring of them (BAR's own build drag).
 - Typing a chat message: the text wraps and gets smaller as it grows, in a box at the top of the chat that stays clear
   of BAR's start countdown.
+- BAR's messages ("Battle Started", a commander under attack, the tutorial's lines) show in the chat box for 15
+  seconds, where they were typed behind the order menu.
+- A tap on BAR's top bar (metal, energy) no longer clears the selection, and the spectate bar's buttons work on the
+  first tap.
+- Several units of one type selected: the unit info panel shows that type's name and stats with the count on its
+  picture; a tap on the picture brings the camera to them.
+- The lobby: a tooltip or a pressed look no longer stays where a finger lifted, and the Settings list scrolls from
+  anywhere on it.
 
 **Controllers, mouse and keyboard**
 - Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby, where Start switches its
@@ -57,7 +66,7 @@ The first version meant for other people's phones: everything since the first bu
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
   queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
-  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's 3x3 build menu:
+  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's build menu:
   once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away). RB + D-pad:
   up held a ping in the middle, up tapped the camera to the last ping from another player, down every combat unit,
   right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;
@@ -96,7 +105,12 @@ The first version meant for other people's phones: everything since the first bu
   wakes, unread G-buffer passes, ...).
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
   its screen is hidden; a floating window when you leave the game.
-- **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario).
+- **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
+  Benchmark show their result in the launcher, and a game that fails to start says so there.
+- A skirmish's first seconds no longer stutter at 2-5 fps (BAR's cursors load with the game), and a game takes about
+  400 MB less graphics memory (BAR's unit picture cache off).
+- One notification while a game runs (with Stop); a tap on it goes back to the game, and coming back from the
+  floating window no longer makes the game pause to lay itself out again.
 - When Android closes the game for lack of memory, the launcher says so (before, the app just started again).
 - 8 GB phones play in a low-memory mode, set automatically: over 1 GB less memory (the engine's Lua memory pools off,
   compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off), and skirmish on a smaller map

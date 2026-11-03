@@ -772,6 +772,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       launcher saying "Ready", its numbers only in the game's log. Now under Ready: "Benchmark, ms per frame: Sim 35.21,
       Draw 17.00, Update 7.97" (`GameService.benchNote`, the last of each line in infolog.txt as phone-bench reads
       them; "no results" if the game ended before them). phone-bench's own reading is unchanged.
+- [x] publish-check over the tracked files (2026-11-03, after the night's commits): all pass (the commits' e-mail
+      address a NOTE, the History item's). CHANGELOG.md's 0.2.0 caught up in players' words: the build menu up to 5
+      wide (it said a 3x3 grid), BAR's messages in the chat, the top bar and spectate bar taps, the one-type unit
+      info, the lobby's leftover tooltips and Settings scrolling, the first seconds' stutter, ~400 MB less graphics
+      memory, GL check and the Benchmark answering in the launcher, one notification that returns to the game. README:
+      "30 / 60 / no cap", the bigger unit info and the build menu. The in-game typing box looked over on the dev phone:
+      nothing to change.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

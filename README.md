@@ -72,7 +72,7 @@ sends the grid. Two fingers still pan and zoom.
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
 build menu is the app's copy of BAR's own Build menu, a 3x3 grid (9 build options a page, the page arrows in a strip
-under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized (in the controller game, the gamepad's own build menu instead). BAR's top bar, order menu and start countdown can't be moved or sized on their own
+under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized (in the controller game, the gamepad's own build menu instead); a unit info panel made bigger stops at the order menu, and the build menu keeps clear of it. BAR's top bar, order menu and start countdown can't be moved or sized on their own
 (BAR has no setting for them; their size follows the interface scale: 2.0 folded, 1.0 unfolded). Folded and unfolded
 each keep their own layout.
 
@@ -139,7 +139,7 @@ factions' matching unit too.
 
 - Big late-game battles chug: the frame rate drops with thousands of units (the phone runs the whole game simulation,
   as a PC does), but the game keeps pace, so you stay caught up (a spectated 8v8 with ~3,600 units ran at x0.97-1.02
-  of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / none).
+  of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / no cap).
 - A match uses about 5–6 GB of memory; close other big apps first.
 - Joining a running game catches up first (the screen shows how long it has left).
 
