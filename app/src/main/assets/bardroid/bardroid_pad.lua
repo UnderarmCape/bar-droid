@@ -53,6 +53,7 @@ local function writeWhole(path, text)
 end
 
 local TOAST_SECONDS = 1.3
+local MOD_NOTE_SECONDS = 2.5 -- the triple tap's mode switch: 1.3 s was mostly gone before the eye found it (dev phone)
 local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
 
@@ -245,8 +246,9 @@ end
 local lastNote, notes = nil, 0 -- (tools/touch-widget-test.ps1: the last note, also once it has faded, and how many)
 local GOLD, BLUE = style.TEXT, style.BLUE -- (notes warm white; blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
 local toastColor = GOLD
-local function note(text, color)
-	toast, toastAt, toastColor = text, now(), color or GOLD
+local toastFor = TOAST_SECONDS
+local function note(text, color, seconds)
+	toast, toastAt, toastColor, toastFor = text, now(), color or GOLD, seconds or TOAST_SECONDS
 	lastNote, notes = text, notes + 1
 end
 
@@ -887,7 +889,7 @@ local ACTIONS = {
 		WG.BarDroidOwnsBuildMenu = controllerGame or nil
 		if modV085 then
 			modV085 = false
-			note("CONTROLLER MOD: BAR DROID")
+			note("CONTROLLER MOD: BAR DROID", nil, MOD_NOTE_SECONDS)
 		end
 	end,
 	mod_v085 = function()
@@ -899,7 +901,7 @@ local ACTIONS = {
 			modV085 = true
 			ordersEnd()
 			buildMenu("back")
-			note("CONTROLLER MOD: v0.8.5")
+			note("CONTROLLER MOD: v0.8.5", nil, MOD_NOTE_SECONDS)
 		end
 	end,
 	pad_back = function()
@@ -1557,12 +1559,12 @@ function widget:DrawScreen()
 	drawQueue()
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
-		if age > TOAST_SECONDS then
+		if age > toastFor then
 			toast = nil
 			return
 		end
 		-- (a quick fade in, a slower fade out; a pad button at the end of a note as its key)
-		local alpha = math.max(0, math.min(1, age / 0.08, (TOAST_SECONDS - age) / 0.3))
+		local alpha = math.max(0, math.min(1, age / 0.08, (toastFor - age) / 0.3))
 		local words, key = toast:match("^(.-): ([ABXY])$")
 		style.toast(words or toast, cx, cy + vsy * 0.09, toastColor, alpha, key)
 	end
