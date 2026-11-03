@@ -944,7 +944,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       checking for BAR updates, Starting X server, Skirmish running. The launcher's status line says the same in the
       same words now ("Skirmish running", "Installed"; it said "Installed, running (skirmish)", "Installed,
       installed"), and follows each of the service's steps at once (it read "Ready" for up to 1.5 s after Install /
-      Update; at 0.3 s now "Update: checking for BAR updates"). And placing a
+      Update; at 0.3 s now "Update: checking for BAR updates"). A review of those changes: the status line now
+      refreshes on each service line, at most ~10 a second while a download reports (every 2 MB), three small file
+      reads each: fine. The installer's steps in players' words too ("Install rootfs: downloading Debian ..." ->
+      "Installing: downloading Debian ...", "Install done: Installed (100%)" -> "Installed"; "Install failed: ..."
+      kept), checked on twelve of the service's statuses with a copy of `forPlayers`. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

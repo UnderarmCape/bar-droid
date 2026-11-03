@@ -436,6 +436,11 @@ public class GameService extends Service {
             }
         }
         if (s.startsWith("launching engine") || s.matches("^starting \\(\\w+\\)$")) return "Starting";
+        // the installer's steps without their inner names ("Install rootfs: downloading Debian ...", "Install done:
+        // Installed (100%)")
+        if (s.startsWith("install done")) return "Installed";
+        m = java.util.regex.Pattern.compile("^install (\\w+): (.*)$").matcher(s);
+        if (m.matches() && !m.group(1).equals("failed")) return "Installing: " + m.group(2);
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
