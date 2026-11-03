@@ -1656,6 +1656,18 @@ function widget:Initialize()
 	end
 	-- (also for tools/spectate-test.ps1: a user widget cannot send the engine's mouse callins, so its taps come in here)
 	WG.BarDroidSpectate = {
+		-- a press on the bar, for bardroid_players.lua (layer -5): BAR's player list (-4) takes some presses far from
+		-- where it draws, and this widget comes after it (999999): the first tap on "Follow unit" or "1st person" in a
+		-- phone replay went to the list (2026-11-02); the release follows the press here (widget:MouseRelease)
+		barPress = function(x, y)
+			local b = active and shown and buttonAt(x, y)
+			if b then
+				pressedOn = b
+				return true
+			end
+			return false
+		end,
+		barRelease = function(x, y) widget:MouseRelease(x, y) end,
 		widget = widget, -- (tools/spectate-test.ps1 -Cost times its call-ins; user widgets cannot reach the handler's list)
 		actions = ACTIONS,
 		following = function() return follow and follow.unitID end,

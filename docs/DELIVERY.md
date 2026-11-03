@@ -69,16 +69,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [ ] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
       `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. Candidates from the
       dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
-      lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar). Still to
-      take: 1st person.
+      lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar, 1st person).
 - [x] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but the first tap on
       "Follow unit" followed nothing. The bar is laid out again every 0.25 s and moves while BAR's player list opens
       beside it, so the button found at the release was a new table (or another button) and the tap was dropped; a
       later tap, with the list open, worked. `bardroid_spectate.lua` now acts when the finger lifts inside the button it
       pressed. On the dev phone the first tap on "Follow unit" followed a Pawn (the bar turned to the camera presets).
-- [ ] In that replay a tap on "1st person" (the bar's left end) changed nothing; the press reached the widgets. Next:
-      which widget before the spectate one (layer 999999) takes presses there: probes at 8 layers were in place when
-      the next replay hung (below), so not yet answered.
+- [x] In that replay a tap on "1st person" (the bar's left end) changed nothing, and some first taps on "Follow unit"
+      too. Probe widgets at 13 layers found the press taken at layer -4: BAR's player list (AdvPlayersList), which
+      takes some presses far from where it draws (its own rects; the tap went through on a second try). The bar is
+      drawn over everything, but its widget is at 999999, after the list. `bardroid_players.lua` (-5, just before the
+      list) now hands a press on a bar button to the bar (`WG.BarDroidSpectate.barPress`, its release with it). On the
+      dev phone: "Follow unit", then "1st person" on their first taps, the camera in 1st person. fp-save-test: 4 of 4.
 - [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its

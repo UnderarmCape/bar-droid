@@ -132,7 +132,13 @@ local function spectating()
 	return WG.BarDroidSpectating == true
 end
 
+local barPressed = false -- (a press handed to the spectate bar: its release too)
 function widget:MousePress(x, y, button)
+	local bar = WG.BarDroidSpectate
+	if button == 1 and spectating() and bar and bar.barPress and bar.barPress(x, y) then
+		barPressed = true -- the bar's own buttons, ahead of BAR's list (it takes presses far from where it draws)
+		return true
+	end
 	if button ~= 1 or not overList(x, y) then
 		return false
 	end
@@ -145,6 +151,17 @@ function widget:MousePress(x, y, button)
 		return true
 	end
 	lastTouch = clock()
+	return false
+end
+
+function widget:MouseRelease(x, y)
+	if barPressed then
+		barPressed = false
+		local bar = WG.BarDroidSpectate
+		if bar and bar.barRelease then
+			bar.barRelease(x, y)
+		end
+	end
 	return false
 end
 
