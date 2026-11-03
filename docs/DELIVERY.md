@@ -826,6 +826,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       night's widget changes (chat, info, touch, layout editor; 2026-11-03 08:41, warm, thermal 0): Sim 49.4, Draw
       23.05, Update 10.49 ms per frame, x0.43, against last night's 52.3-54.3, 24.97-26.37 and 11.28-11.39: no cost
       from them (the GPU memory and cursor work of the evening, if anything, a little less).
+- [x] The minimap by touch (dev phone, 2026-11-03): a tap brings the camera there, a drag leaves it where the finger
+      ends, a long press gives a move order there (BAR's right click on the minimap). And the Info panel for a
+      building under construction: its bar was its health, orange as for a damaged unit ("64 / 340 18%"); now the
+      building's progress in blue, "Building 18%", and its health in green once it stands (a Solar Collector, seen
+      both ways).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

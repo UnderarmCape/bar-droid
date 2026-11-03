@@ -884,12 +884,17 @@ local function drawUnitView()
 		local frac = max(0, min(1, view.health / view.maxHealth))
 		local yb = y - barH - l.s * 0.15
 		roundBar(x0, yb, x1, yb + barH, BAR_BACK)
-		roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { min(1, 2 - frac * 2), min(1, frac * 2), 0.15, 0.85 })
-		gl.Color(1, 1, 1, 1)
 		local label = floor(view.health) .. " / " .. floor(view.maxHealth)
 		if view.build and view.build < 1 then
-			label = label .. "   " .. floor(view.build * 100) .. "%"
+			-- under construction: the bar is the building's progress, in blue (as health it read as a damaged unit,
+			-- orange at 18% built)
+			frac = max(0, min(1, view.build))
+			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { 0.3, 0.62, 1, 0.85 })
+			label = "Building " .. floor(view.build * 100) .. "%"
+		else
+			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { min(1, 2 - frac * 2), min(1, frac * 2), 0.15, 0.85 })
 		end
+		gl.Color(1, 1, 1, 1)
 		font:Begin()
 		font:Print(VALUE .. label, (x0 + x1) / 2, yb + barH * 0.18, barH * 0.82, "oc")
 		font:End()
