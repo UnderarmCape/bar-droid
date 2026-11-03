@@ -1285,10 +1285,16 @@ local function layout()
 		}
 	else
 		local pLabel, pColor = playerLabel()
+		-- (no human player in the game to watch: a skirmish against AIs, lost or spectated; an AI has no camera to follow,
+		-- and the arrows did nothing without a word, dev phone 2026-11-03)
+		local none = #(order or players()) == 0
+		if none then
+			pLabel = "No player cams"
+		end
 		rowA = {
-			{ w = h, action = "player_prev", label = "<" },
-			{ w = h * 3.2, action = "player_next", label = pLabel, color = pColor, lit = lockedPlayer() ~= nil },
-			{ w = h, action = "player_next", label = ">" },
+			{ w = h, action = "player_prev", label = "<", dim = none },
+			{ w = h * 3.2, action = "player_next", label = pLabel, color = pColor, lit = lockedPlayer() ~= nil, dim = none },
+			{ w = h, action = "player_next", label = ">", dim = none },
 			{ w = h * 1.6, action = "free", label = "Free", lit = not lockedPlayer() },
 		}
 		rowB = {
@@ -1310,7 +1316,7 @@ local function layout()
 	local function place(row, x, y)
 		for _, b in ipairs(row) do
 			out[#out + 1] = { x0 = x + shiftX, y0 = y, x1 = x + shiftX + b.w, y1 = y + h, action = b.action,
-				label = b.label, lit = b.lit, color = b.color, size = h, text = e.text }
+				label = b.label, lit = b.lit, color = b.color, size = h, text = e.text, dim = b.dim }
 			x = x + b.w + gap
 		end
 	end
@@ -1348,7 +1354,7 @@ local function sameButtons(a, b)
 	for i = 1, #a do
 		local p, q = a[i], b[i]
 		if p.x0 ~= q.x0 or p.y0 ~= q.y0 or p.x1 ~= q.x1 or p.y1 ~= q.y1 or p.label ~= q.label or p.lit ~= q.lit
-			or p.action ~= q.action or not sameColor(p.color, q.color) then
+			or p.dim ~= q.dim or p.action ~= q.action or not sameColor(p.color, q.color) then
 			return false
 		end
 	end
@@ -1401,6 +1407,9 @@ local function drawBar()
 			local maxW = (b.x1 - b.x0) * 0.9
 			while #text > 4 and font:GetTextWidth(text) * size > maxW do
 				text = text:sub(1, #text - 2) .. "."
+			end
+			if b.dim then -- (nothing to do there now)
+				text = "\255\140\140\140" .. text
 			end
 			font:Print(text, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2 - size * 0.35, size, "oc")
 		end

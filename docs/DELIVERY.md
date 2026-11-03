@@ -812,6 +812,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (inside it covered the panel's first line: the order menu's Fire at will and Hold pos); else in its corner as
       before. On the dev phone the order menu's and the player list's labels moved above them, the rest stay.
       Android's Back in a game, tried on the way: Escape, the first press clears the selection, the second does nothing.
+- [x] The spectate bar after a lost skirmish (dev phone, 2026-11-03): the player is a spectator then, the bar comes up
+      from the player list, and its player arrows did nothing without a word (no human player in the game: an AI has no
+      camera to follow). They now read "No player cams" in grey; Free, Follow unit and Group as before. fp-save-test
+      and lobby-phone-test: all pass.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
