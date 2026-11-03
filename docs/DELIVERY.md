@@ -754,6 +754,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the result, and the launcher reads a plain "game ended" as Ready. On the dev phone: GL check (game ended, its
       line, no notification left), the notification's Stop (engine 137, "stopped", notification gone), a game
       swiped away in recent apps (closed as before). pad-test, lobby-phone-test: all pass.
+      Then a lobby that fails at once, made with `files/bar/dev-env.sh` = `exit 3` on the dev phone: the launcher came
+      back saying "Installed, game ended with an error (3)"; now "Game ended with an error (3): the log below says
+      why". (That test start was a pending lobby update's first: the updater took it for a broken update, rolled
+      the lobby back and listed it bad. Undone the same minute: the bad entry out of `files/update/state.properties`,
+      `lobbyFailedFast` back to false, the update started again; the Benchmark, which the updater does not judge,
+      for the wording's check. A fake failure for a test goes through the Benchmark or GL check, never the lobby or
+      a skirmish with an update pending.)
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

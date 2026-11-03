@@ -149,6 +149,8 @@ public class LauncherActivity extends AppCompatActivity {
             GameService.noteLowMemoryExit(this);
         String note = GameService.exitNote();
         String head = !inst.isInstalled() ? "Not installed, " + s
+                // (a failure says so and where to look, not "Installed, game ended with an error (3)")
+                : !GameService.busy() && s.startsWith("game ended with an error") ? GameService.forPlayers(s) + ": the log below says why"
                 : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? "Installed, " + s : "Ready";
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
