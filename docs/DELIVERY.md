@@ -67,7 +67,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       mouse), which phones, download from Releases, install, first start (4 GB from BAR's servers), touch controls,
       known limits, where the logs are, how to report a problem. Developers' material moved to docs/BUILDING.md.
 - [ ] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
-      `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork.
+      `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. Candidates from the
+      dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
+      lobby's Skirmish screens, the launcher, an army on the map). Still to take: spectating with the touch bar and
+      1st person, from a replay (a spectator in a skirmish resigns and ends it).
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
