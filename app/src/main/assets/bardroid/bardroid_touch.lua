@@ -225,9 +225,10 @@ local function newTouchLines()
 end
 
 -- Where the view ray through X screen pixel (x, y) meets the level plane at height h; nil above the horizon.
+-- (GetPixelDir counts y from the top, as X does, unlike TraceScreenRay: given vsy - y it mirrored the void's rows, and a
+-- drag up or down past the map's edge moved the map against the finger; Kailil, 2026-11-03: "super inconvenient")
 local function planePoint(x, y, h)
-	local _, vsy = spGetViewGeometry()
-	local dx, dy, dz = Spring.GetPixelDir(x, vsy - y)
+	local dx, dy, dz = Spring.GetPixelDir(x, y)
 	if not dy or dy > -0.01 then
 		return nil
 	end

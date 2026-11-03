@@ -964,7 +964,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       wreck, a tree, a rock) under the pointer, where BAR's Info widget, which it replaces, shows its name and what
       reclaiming it gives. It shows them now (nothing selected): the name, "Reclaim" with metal white and energy yellow
       as the Cost line, a wreck with the picture of the unit it was, anything else text only. Dev phone, a scratch
-      widget putting the pointer on the nearest feature (removed after): "San Pedro", "Reclaim 100". And placing a
+      widget putting the pointer on the nearest feature (removed after): "San Pedro", "Reclaim 100". (A wreck's
+      picture not yet seen: the scratch widget that would make one did not run.)
+- [x] Navigating past the map's edge by touch (Kailil, 2026-11-03: "I want it to feel just like normal navigation when
+      I push my finger around the outside of the map edge ... super inconvenient right now"). A drag over the void moved
+      the map the right way across but the wrong way up and down. `bardroid_touch.lua`'s planePoint (the void's ground
+      point: the view ray met with the level plane) passed `vsy - y` to `Spring.GetPixelDir`, which counts y from the
+      top as X does (TraceScreenRay counts from the bottom): every void row was mirrored. Logged on the dev phone with a
+      scratch widget (removed after): pixel rows near the top of the screen gave plane points by the camera. Now the
+      void follows the finger as the map does (dev phone, the corner start: 200 px down moved the map 208 px down,
+      200 px up 218 px up, 300 px across 284 px across); a pinch's pivot over the void comes from the same function.
+      touch-widget-test's edge case now drags across and up and checks that the grabbed point stays under the finger
+      (an across-only drag never showed it); not run: BAR on the laptop needs Kailil's yes. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

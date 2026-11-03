@@ -165,6 +165,20 @@ local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- bardroid_touch.lua's
 local vsx, vsy = Spring.GetViewGeometry()
 local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 local before, groundBefore, edgeView, com, minimapHeight
+local edgeGrab -- the level-plane point under the edge drag's start
+-- Where the view ray through X pixel (x, y from the top: GetPixelDir's own way) meets the level plane at the height of
+-- the ground the camera looks at, as bardroid_touch.lua's planePoint
+local function planeAt(x, y)
+	local cs = Spring.GetCameraState()
+	local h = Spring.GetGroundHeight(cs.px, cs.pz)
+	local dx, dy, dz = Spring.GetPixelDir(x, y)
+	if not dy or dy > -0.01 then
+		return nil
+	end
+	local px, py, pz = Spring.GetCameraPosition()
+	local t = (h - py) / dy
+	return px + dx * t, pz + dz * t
+end
 local padDraw = {} -- the build menu's gamepad highlight, drawn once by DrawScreen (at the end)
 cases = {
 	-- the same start every run (the game keeps the camera of the last one): mid-map, BAR's usual angle
@@ -225,11 +239,15 @@ cases = {
 	settle,
 	function()
 		local row = math.floor(vsy * 0.3) -- X pixels from the top: past the edge, below the horizon
-		local _, dy = Spring.GetPixelDir(cx, vsy - row)
+		local _, dy = Spring.GetPixelDir(cx, row)
 		edgeView = Spring.TraceScreenRay(cx, vsy - row, true) ~= "ground" and dy and dy < -0.01
 		before = Spring.GetCameraState()
-		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, row, cx + 100, row))
+		edgeGrab = { planeAt(cx, row) }
+		-- across and up: a drag up or down there moved the map against the finger until 2026-11-03 (the void's rows
+		-- mirrored), which an across-only drag never showed (up: down would push the camera's target into the edge's clamp)
+		touch(string.format("pan %.1f %.1f %.1f %.1f", cx, row, cx + 100, row - 40))
 	end,
+	settle, -- (the pan is made over a few frames)
 	function()
 		if not edgeView then
 			fails = fails + 1
@@ -243,6 +261,14 @@ cases = {
 		local ok = moved > 1
 		fails = fails + (ok and 0 or 1)
 		log((ok and "PASS" or "FAIL") .. " drag over the void past the edge moves the camera: " .. string.format("%.0f", moved))
+		-- the grab: the point that was under the finger's start is under its end now
+		local row = math.floor(vsy * 0.3)
+		local gx, gz = planeAt(cx + 100, row - 40)
+		local off = (gx and edgeGrab[1]) and math.sqrt((gx - edgeGrab[1]) ^ 2 + (gz - edgeGrab[2]) ^ 2)
+		local held = off and off < math.max(20, moved * 0.25)
+		fails = fails + (held and 0 or 1)
+		log((held and "PASS" or "FAIL") .. " past the edge the map follows the finger, down as across: "
+			.. (off and string.format("%.0f off after %.0f", off, moved) or "no point"))
 		warp(cx, vsy - math.floor(vsy * 0.3)) -- the pointer into that void
 	end,
 	function() expectAt("pointer off the map (the void): answer 0, taps work there", 0) end,
