@@ -311,14 +311,34 @@ local function register()
 	})
 end
 
+-- The player's own list back, for BAR to keep: BAR saves every widget's config before any widget's Shutdown
+-- (barwidgets.lua widgetHandler:Shutdown), and this widget's before BAR's list's (layer -5, its -4), so it is done
+-- in GetConfigData; the small list had gone into BAR's settings at every game's end (dev phone, 2026-11-03). A save
+-- while the game goes on (a widget switched on or off) gets the list small again at the next Update.
+local smallAgain = false
+local function forBarsSave()
+	local a = api()
+	if not a or not normal then
+		return
+	end
+	if minimized then
+		expand()
+		smallAgain = true
+	end
+	if applied ~= 1 then
+		a.SetScale(normal.scale) -- (without the layout editor's size)
+		applied = 1
+	end
+end
+
 local started = false
 function widget:Update()
 	if not api() then
 		return
 	end
 	register()
-	if not started then -- the list exists: small from the start
-		started = true
+	if not started or smallAgain then -- the list exists: small from the start
+		started, smallAgain = true, false
 		minimize()
 		return
 	end
@@ -328,10 +348,7 @@ function widget:Update()
 end
 
 function widget:Shutdown()
-	expand() -- (BAR keeps the list's settings: the player's own)
-	if normal and api() and applied ~= 1 then
-		api().SetScale(normal.scale) -- (without the layout editor's size)
-	end
+	forBarsSave() -- (a reload without a save)
 	WG.BarDroidPlayers = nil
 	if registered and WG.BarDroidLayout then
 		WG.BarDroidLayout.unregister("players")
@@ -339,6 +356,7 @@ function widget:Shutdown()
 end
 
 function widget:GetConfigData()
+	forBarsSave()
 	return saved and { normal = saved, version = CONFIG_VERSION } or {}
 end
 

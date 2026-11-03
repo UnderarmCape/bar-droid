@@ -845,6 +845,7 @@ end
 -- The health bar in the shape of BAR's panels (corners a fifth of its height: a third read as a hexagon; never more
 -- than half its width, so a sliver of health stays a bar)
 local BAR_BACK = { 0, 0, 0, 0.45 }
+local BAR_SHADE = 0.68 -- the health colours' brightness
 local function roundBar(x0, y0, x1, y1, color)
 	local f = WG.FlowUI
 	local cs = min(floor((y1 - y0) / 5), floor((x1 - x0) / 2))
@@ -889,10 +890,13 @@ local function drawUnitView()
 			-- under construction: the bar is the building's progress, in blue (as health it read as a damaged unit,
 			-- orange at 18% built)
 			frac = max(0, min(1, view.build))
-			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { 0.3, 0.62, 1, 0.85 })
+			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { 0.22, 0.45, 0.78, 0.85 })
 			label = "Building " .. floor(view.build * 100) .. "%"
 		else
-			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH, { min(1, 2 - frac * 2), min(1, frac * 2), 0.15, 0.85 })
+			-- (a deeper green to red: the white figures on full green were hard to read, dev phone 2026-11-03)
+			local s = BAR_SHADE
+			roundBar(x0, yb, x0 + (x1 - x0) * frac, yb + barH,
+				{ min(1, 2 - frac * 2) * s, min(1, frac * 2) * s, 0.12, 0.85 })
 		end
 		gl.Color(1, 1, 1, 1)
 		font:Begin()

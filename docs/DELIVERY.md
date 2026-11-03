@@ -851,6 +851,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       number is found once a game (switched and back), and a saved config of the old reading gives way, once, to
       BAR's default columns (config version 2). Checked on the dev phone with a probe of all 14 columns: small
       name + chat, opened BAR's defaults, the same in the next game after a clean quit.
+- [x] The player list's settings at a game's end (review of `bardroid_players.lua`, 2026-11-03): BAR saves every
+      widget's config before any widget's Shutdown, so the widget's "give the list back" in Shutdown came too late and
+      BAR kept the small list (scale 0.65, names only) as the player's own after every game. Now done in the widget's
+      GetConfigData, which BAR calls just before its list's (layer -5, -4); a save in mid-game (a widget switched on or
+      off) gets the list small again at the next Update. Dev phone, after `/quitforce`: BAR's file says scale 1 and
+      BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
+      and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
+      full green were hard to read), the building bar a deeper blue.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
