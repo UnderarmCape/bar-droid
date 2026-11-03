@@ -859,6 +859,21 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] Late game on the Fold7: memory or heat? (Kailil, 2026-11-03: "a way to clear ram usage as the game enters late
+      game ... repeating over and over ram dumps"). His online game of 2026-11-02 22:07-22:31 (launcher.log `[perf]`,
+      `[bardroid-perf]`): memory available 650-950 MB the whole game, 6.3-7.6 GB of swap free, the engine 1.0-1.6 GB
+      resident, nothing killed: memory never ran short. What fell was the heat budget: thermal status 0 -> 3, the GPU's
+      clock cap 1200 -> 525 -> 342 -> 160 MHz (thermal level 14), the CPUs held at 960-1017 MHz, and the frame rate 30 ->
+      24 -> 16 -> 9.4 fps at 1 000-1 100 units. Clearing memory cannot help that (Android already compresses idle pages
+      to swap and reclaims caches; the game's units, map and paths are in use; a forced Lua garbage collection is a
+      hitch of its own, more CPU and heat). What can: less work per frame when hot (render resolution, the cap), a
+      cooler phone. A note for Kailil, no change.
+- [ ] Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
+      colorize, bottom position and always-show options); BAR's game runs the app's copy ("BAR Droid order menu"), the
+      controller game v0.8.5's renamed "Order menu (controller)" (infolog: "Options: 'ordermenu_colorize' widgetConfig:
+      unknown widget Order menu"). A change in Settings still reaches the running menu (its `WG.ordermenu` setters) and
+      the copy keeps its own settings, but Settings shows the old widget's saved values. Left: it would mean patching
+      BAR's Settings widget.
 - [x] The phone's remake of the menu copies, checked (2026-11-03): the shipped `.patches` applied to BAR's files as
       `BuildMenuPatches` does give the shipped `bardroid_buildmenu.lua` and `bardroid_ordermenu.lua` byte for byte.
       `make-buildmenu.py` and `make-ordermenu.py --check` (the patches against a BAR release, nothing written) pass on
