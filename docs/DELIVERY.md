@@ -796,6 +796,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       phone never shows. `bardroid_chat.lua` now puts it in the chat box for those seconds: "Leaving the game in 12 s:
       tap the screen to stay longer" ("move the mouse" with a mouse). On the dev phone a tap on the window's empty part
       kept the game: still running 19 s after its end, the line gone after its 12 s. pad-test: all pass.
+      The end screen's Show Graphs works by tap too (BAR's Statistics with the game's graphs). And the line now goes
+      the moment the pointer moves (it stayed after the tap that kept the game, then untrue); seen on the dev phone.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

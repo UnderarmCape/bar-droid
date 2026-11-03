@@ -197,6 +197,7 @@ local function add(name, nameColor, text, ttl)
 	if #entries > 100 then
 		table.remove(entries, 1)
 	end
+	return e
 end
 
 -- BAR's chat calls this for every chat line it parsed: text carries its colour (all, allies, spectators)
@@ -228,17 +229,20 @@ end
 
 local SYSTEM_LINES = { " paused the game", " unpaused the game", " left the game", " is lagging behind", "Sync error for" }
 local WARNING_COLOR = "\255\255\220\120"
+local quitNote, quitX, quitY -- that line, and where the pointer was: it goes once the pointer moves (Update)
 function widget:AddConsoleLine(line)
 	if not hooked then
 		return
 	end
 	-- BAR's Autoquit leaves an ended game after 12 s unless the pointer moves, and says so in the console only: on a
 	-- phone the game closed with no word 12 s after a lost skirmish (dev phone, 2026-11-03). Said here for that time;
-	-- a finger's tap moves the pointer.
+	-- a finger's tap moves the pointer, and then the line goes (BAR waits a minute after each move).
 	local secs = line:match("<autoquit> Automatically exiting in (%d+) seconds")
 	if secs then
 		local how = WG.BarDroidInput == "touch" and "tap the screen" or "move the mouse"
-		add("", WHITE, WARNING_COLOR .. "Leaving the game in " .. secs .. " s: " .. how .. " to stay longer", tonumber(secs))
+		quitNote = add("", WHITE, WARNING_COLOR .. "Leaving the game in " .. secs .. " s: " .. how .. " to stay longer",
+			tonumber(secs))
+		quitX, quitY = Spring.GetMouseState()
 		return
 	end
 	for _, s in ipairs(SYSTEM_LINES) do
@@ -656,6 +660,15 @@ function widget:Update()
 	end
 	if hooked and not registered then
 		register()
+	end
+	if quitNote then
+		local mx, my = Spring.GetMouseState()
+		if mx ~= quitX or my ~= quitY then
+			quitNote.ttl = 0 -- (gone at the next draw)
+			quitNote = nil
+		elseif clock() - quitNote.time > quitNote.ttl then
+			quitNote = nil
+		end
 	end
 	if hooked then
 		takeMessages()
