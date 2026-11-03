@@ -925,7 +925,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       warnings; the one odd exit ("INVALID START", killedByAm) is Android cancelling a start in the middle of an
       `adb install -r`. The launcher's top row the same way as the small one ("Install / Update" nearly touched its
       edges: the button's shape sits 4 dp inside the view, so the 6 dp padding left 2 dp one could see): both rows
-      one size each, 9 dp of padding (5 dp of air at the edge one sees); seen upright and sideways. And placing a
+      one size each, 9 dp of padding (5 dp of air at the edge one sees); seen upright and sideways. The shape strip's
+      ONE, LINE, GRID and BORDER (BAR's game, dev phone) were a size smaller than the page strip's "1 / 2" they stand in
+      for (half the strip's height): now the page strip's size, BORDER still inside its button. And `java-checks.sh`
+      (CI's Java checks) failed to compile: PadGameTest checks BuildMenuPatches, which `padgame-test.ps1` compiles
+      and the script did not; now the same sources, all four pass. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

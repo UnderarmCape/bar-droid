@@ -37,6 +37,8 @@ args=""
 check updater com.underarmcape.bardroid.UpdaterTest $(find tools/updater-test/src tools/lobby-bridge-test/src/org -name '*.java') \
   "$src/Updater.java" "$src/Downloader.java"
 rm -rf "$work"/updater-*
+# (the same sources as tools/padgame-test.ps1: PadGameTest also checks BuildMenuPatches, the phone's remake of the
+# menu copies)
 check padgame com.underarmcape.bardroid.PadGameTest $(find tools/padgame-test/src -name '*.java') \
-  "$src/PadGame.java" "$src/PadMouse.java" "$src/PadButtons.java"
+  "$src/PadGame.java" "$src/PadMouse.java" "$src/PadButtons.java" "$src/BuildMenuPatches.java"
 exit $failed

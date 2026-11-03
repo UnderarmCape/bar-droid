@@ -1071,7 +1071,9 @@ end
 function droid.drawShapes(area, width, h)
 	local w = width / #droid.items
 	local y0, y1 = area[2], area[2] + h - cellPadding - activeAreaMargin
-	local size = math.min((y1 - y0) * 0.5, w * 0.8 / math.max(0.01, font2:GetTextWidth("BORDER"))) -- (one size for all)
+	-- (one size for all: the page strip's, which they replace; at half the strip's height they read a size smaller)
+	local size = math.min(math.max(0.016 * vsy, h * 0.2) * droid.pageText, (y1 - y0) * 0.62,
+		w * 0.8 / math.max(0.01, font2:GetTextWidth("BORDER")))
 	for i, item in ipairs(droid.items) do
 		local x0 = area[1] + (i - 1) * w
 		local rect = { x0, y0, x0 + w, y1, item[1] }
