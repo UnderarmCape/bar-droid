@@ -459,14 +459,14 @@ local function statsText(id, unitID)
 	if unitID then
 		-- made and used, a side of nothing left out ("Metal +2 -0" for a commander standing still)
 		local function flow(make, use)
-			local parts = {}
+			local sides = {}
 			if make > 0.05 then
-				parts[#parts + 1] = "\255\180\255\180+" .. num(make, 1)
+				sides[#sides + 1] = "\255\180\255\180+" .. num(make, 1)
 			end
 			if use > 0.05 then
-				parts[#parts + 1] = "\255\255\180\180-" .. num(use, 1)
+				sides[#sides + 1] = "\255\255\180\180-" .. num(use, 1)
 			end
-			return table.concat(parts, " ")
+			return table.concat(sides, " ")
 		end
 		local mMake, mUse, eMake, eUse = Spring.GetUnitResources(unitID)
 		if mMake and (mMake > 0.05 or mUse > 0.05) then
