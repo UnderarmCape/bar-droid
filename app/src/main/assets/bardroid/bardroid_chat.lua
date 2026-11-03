@@ -227,8 +227,18 @@ local function processor(_, lineType, name, nameText, text, _, ignore)
 end
 
 local SYSTEM_LINES = { " paused the game", " unpaused the game", " left the game", " is lagging behind", "Sync error for" }
+local WARNING_COLOR = "\255\255\220\120"
 function widget:AddConsoleLine(line)
 	if not hooked then
+		return
+	end
+	-- BAR's Autoquit leaves an ended game after 12 s unless the pointer moves, and says so in the console only: on a
+	-- phone the game closed with no word 12 s after a lost skirmish (dev phone, 2026-11-03). Said here for that time;
+	-- a finger's tap moves the pointer.
+	local secs = line:match("<autoquit> Automatically exiting in (%d+) seconds")
+	if secs then
+		local how = WG.BarDroidInput == "touch" and "tap the screen" or "move the mouse"
+		add("", WHITE, WARNING_COLOR .. "Leaving the game in " .. secs .. " s: " .. how .. " to stay longer", tonumber(secs))
 		return
 	end
 	for _, s in ipairs(SYSTEM_LINES) do

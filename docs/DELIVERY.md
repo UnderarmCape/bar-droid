@@ -790,6 +790,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       behind it (mean pixel change of the map 75.9). `bardroid_touch.lua` (last in line) now takes a wheel no window
       took while one is open and the fingers are the input (a mouse keeps BAR's way): beside and inside Statistics
       0.3 (noise), Settings scrolls as before. CHANGELOG and README say so.
+- [x] A game's end by touch (dev phone, 2026-11-03, a skirmish lost: the commander self-destructed): BAR's Awards
+      window, "Defeat!" in the chat; its Leave works by tap. But 12 s later the game closed itself: BAR's Autoquit leaves
+      an ended game unless the pointer moves, and says so only in the console ("Move mouse to postpone"), which the
+      phone never shows. `bardroid_chat.lua` now puts it in the chat box for those seconds: "Leaving the game in 12 s:
+      tap the screen to stay longer" ("move the mouse" with a mouse). On the dev phone a tap on the window's empty part
+      kept the game: still running 19 s after its end, the line gone after its 12 s. pad-test: all pass.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

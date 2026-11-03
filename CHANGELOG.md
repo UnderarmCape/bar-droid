@@ -49,7 +49,8 @@ The first version meant for other people's phones: everything since the first bu
 - Typing a chat message: the text wraps and gets smaller as it grows, in a box at the top of the chat that stays clear
   of BAR's start countdown.
 - BAR's messages ("Battle Started", a commander under attack, the tutorial's lines) show in the chat box for 15
-  seconds, where they were typed behind the order menu.
+  seconds, where they were typed behind the order menu. When a game ends the chat says that BAR will leave it in 12
+  seconds and that a tap keeps it open (it closed without a word).
 - A tap on BAR's top bar (metal, energy) no longer clears the selection, and the spectate bar's buttons work on the
   first tap. BAR's Settings, Statistics, key bindings and other windows scroll with a finger drag up or down (sideways
   still moves their sliders), and the map behind them stays put.
