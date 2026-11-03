@@ -229,19 +229,23 @@ end
 
 local SYSTEM_LINES = { " paused the game", " unpaused the game", " left the game", " is lagging behind", "Sync error for" }
 local WARNING_COLOR = "\255\255\220\120"
-local quitNote, quitX, quitY -- that line, and where the pointer was: it goes once the pointer moves (Update)
+-- that line, where the pointer was (it goes once the pointer moves: Update), how to keep the game, the seconds shown
+local quitNote, quitX, quitY, quitHow, quitShown
+local function quitText(secs)
+	return WARNING_COLOR .. "Leaving the game in " .. secs .. " s: " .. quitHow .. " to stay longer"
+end
 function widget:AddConsoleLine(line)
 	if not hooked then
 		return
 	end
 	-- BAR's Autoquit leaves an ended game after 12 s unless the pointer moves, and says so in the console only: on a
-	-- phone the game closed with no word 12 s after a lost skirmish (dev phone, 2026-11-03). Said here for that time;
-	-- a finger's tap moves the pointer, and then the line goes (BAR waits a minute after each move).
+	-- phone the game closed with no word 12 s after a lost skirmish (dev phone, 2026-11-03). Said here for that time,
+	-- counting down; a finger's tap moves the pointer, and then the line goes (BAR waits a minute after each move).
 	local secs = line:match("<autoquit> Automatically exiting in (%d+) seconds")
 	if secs then
-		local how = WG.BarDroidInput == "touch" and "tap the screen" or "move the mouse"
-		quitNote = add("", WHITE, WARNING_COLOR .. "Leaving the game in " .. secs .. " s: " .. how .. " to stay longer",
-			tonumber(secs))
+		quitHow = WG.BarDroidInput == "touch" and "tap the screen" or "move the mouse"
+		quitShown = tonumber(secs)
+		quitNote = add("", WHITE, quitText(quitShown), quitShown)
 		quitX, quitY = Spring.GetMouseState()
 		return
 	end
@@ -668,6 +672,14 @@ function widget:Update()
 			quitNote = nil
 		elseif clock() - quitNote.time > quitNote.ttl then
 			quitNote = nil
+		else
+			local left = math.max(1, math.ceil(quitNote.ttl - (clock() - quitNote.time)))
+			if left ~= quitShown and font then -- (the seconds left, once a second)
+				quitShown = left
+				quitNote.text = quitText(left)
+				quitNote.lines = wrap(quitNote.text, boxRight - gap - (boxLeft + gap), fontSize)
+				quitNote.right = reach(quitNote)
+			end
 		end
 	end
 	if hooked then

@@ -822,6 +822,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       sits under its bottom right (it covered "Battle, Started"), the top bar's under its right end (it covered the
       metal figures). The lobby's server bar (Close, Previous, Next, Join) looked over during lobby-phone-test: as it
       should be.
+- [x] The end-of-game line counts down ("Leaving the game in 11 s", then 4 s; dev phone). And phone-bench over the
+      night's widget changes (chat, info, touch, layout editor; 2026-11-03 08:41, warm, thermal 0): Sim 49.4, Draw
+      23.05, Update 10.49 ms per frame, x0.43, against last night's 52.3-54.3, 24.97-26.37 and 11.28-11.39: no cost
+      from them (the GPU memory and cursor work of the evening, if anything, a little less).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
