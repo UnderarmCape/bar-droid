@@ -878,6 +878,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
       from a recent save. Catch-up times added from Kailil's own late joins on the Fold7 (x2.0 at 2 400 units, never
       past ~5 000). The write-up is complete for Kailil to hand on.
+- [x] Building by touch after the order menu copy (dev phone, BAR's game, 2026-11-03): PLACE covers the app's order
+      menu copy exactly, QUEUE lit gold. A tap on the Metal Extractor left two of BAR's texts over the app's panels:
+      the build menu's tooltip (the finger's pointer stays on the cell; it covered the next row) and BAR's Screen Mode
+      Info ("Screen mode: Resources ...", drawn at 21% of the screen's height in the middle: over the order menu, and
+      over PLACE). The tooltip now shows to a mouse only, as it already skipped the pad (the info panel says the
+      same); BAR's Screen Mode Info off in launch-bar.sh with the other hints that clash on a phone (the metal view
+      itself is the engine's and stays). Seen clean after; launch-bar-test: all pass.
 - [x] Spectating by touch after the day's player list changes (dev phone, a skirmish's replay started through a
       temporary `dev-env.sh`, removed after; 2026-11-03): a tap on the small list brings up the spectate bar ("No player
       cams" dimmed, Free, Follow unit, Group), the list small as a spectator, no errors. The touch widget's 0.6% of the

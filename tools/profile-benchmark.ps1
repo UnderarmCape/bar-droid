@@ -87,7 +87,7 @@ try {
   # the widget orders launch-bar.sh sets on the phone for a benchmark
   $off = @("Bloom Shader Deferred", "SSAO", "Distortion GL4", "Snow", "Map Edge Extension", "Show Builder Queue",
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
-    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info", "Changelog Info",
+    "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info", "Changelog Info", "Screen Mode Info",
     "Picture-in-Picture Minimap", "Fog Diagonal Lines GL4", "Info", "Mission Info") + $AlsoOff
   # (the app's build menu copy beside v0.8.5's "Build menu (controller)", and its order menu copy in BAR's place, as
   # launch-bar.sh switches them in; the order menu's stands down in the controller game)

@@ -370,6 +370,10 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   # touch puts the pointer there (Kailil: "useless and in the way even when they autohide"): the classic Minimap
   # widget instead (the PIP minimap switches it off while it runs)
   widget_order "Picture-in-Picture Minimap" 0; widget_order "Minimap" 1
+  # BAR's Screen Mode Info prints its notice ("Screen mode: Resources ...", when a metal extractor is picked) at 21% of
+  # the screen's height in the middle: on a phone's screen over the order menu, and over the app's PLACE while a
+  # building waits (dev phone, 2026-11-03). The view itself (metal spots in green) is the engine's and stays.
+  widget_order "Screen Mode Info" 0
   # BAR's unit info panel sizes its text by the interface scale but narrows the panel on wide screens: at 2.0 and 1.3
   # the stats ran under the unit picture and off the screen (Kailil: "too large and it is jumbled up"). The app's
   # bardroid_info.lua takes its place.

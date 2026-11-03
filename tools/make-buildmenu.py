@@ -852,8 +852,9 @@ function widget:DrawWorld()
 	if not droid.active() or (not preGamestartPlayer and selectedBuilderCount == 0 and not alwaysShow) then -- BAR Droid'''),
     ('''						if WG.tooltip and not meta then
 							-- when meta: unitstats does the tooltip''',
-     '''						if WG.tooltip and not meta and WG.BarDroidInput ~= "pad" then -- BAR Droid: on the pad it covers the
-							-- grid's next row, and BAR's info panel says the same
+     '''						if WG.tooltip and not meta and WG.BarDroidInput ~= "pad" and WG.BarDroidInput ~= "touch" then
+							-- BAR Droid: with the pad or fingers it covers the grid's next row (a finger's pointer stays on
+							-- the cell it tapped), and BAR's info panel says the same
 							-- when meta: unitstats does the tooltip'''),
     ('''function widget:MousePress(x, y, button)
 	if Spring.IsGUIHidden() then
