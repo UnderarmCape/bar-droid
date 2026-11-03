@@ -14,6 +14,7 @@ local counts, patrol, focus, allCombat, onScreen, selfD, myPing, jumped, labQueu
 local lastCount, seenPad, done = nil, false, false
 local labStep, lastTrace, centred = 0, nil, false
 local solar, solarStep, solarAt, solarKept, solarNote, solarNotes, solarHeld = nil, 0, 0, false, nil, 0, false
+local evenOrders = 0 -- the most orders seen laid out evenly in the app's order menu while the pad hid its own
 
 -- (its own file: the game's log reaches the disk late on a phone, and tools/pad-test.ps1 reads this as it goes)
 local function say(text)
@@ -46,6 +47,9 @@ local function finish()
 	check("the rule is on: a user widget's order is refused", not pcall(Spring.GiveOrderToUnit, com, CMD.STOP, {}, 0))
 	check("the app's build menu runs in BAR's game", WG.bardroidBuildmenu ~= nil)
 	check("RB: the build menu has the pad", focus)
+	-- (the app's copy of BAR's Order menu: BAR's own has no droidCells; Kailil, 2026-11-03: online "like offline")
+	check("the app's order menu runs in BAR's game", WG.ordermenu ~= nil and WG.ordermenu.droidCells ~= nil)
+	check("the pad's orders hidden: the rest fill the order menu, one cell each", evenOrders > 0, evenOrders)
 	check("L3 and R3: the next, then the last order gone (3, 2, 1)", has(counts, 3, 2, 1), table.concat(counts, " "))
 	check("LB + Y: a patrol at the middle, with no second press", patrol)
 	check("RB + D-pad down: every combat unit, no commander", allCombat >= 3, allCombat)
@@ -117,6 +121,13 @@ function widget:GameFrame(f)
 		Spring.SetCameraTarget(x, y, z, 0)
 	end
 	seenPad = seenPad or WG.BarDroidPadOnly == true
+	local o = WG.ordermenu
+	if WG.BarDroidPadOrders and o and o.droidCells then -- (BAR's grid has at least 16 cells, the even layout one an order)
+		local rects, cmds = o.droidCells()
+		if #cmds > 0 and #rects == #cmds then
+			evenOrders = math.max(evenOrders, #cmds)
+		end
+	end
 	local cs = Spring.GetCameraState()
 	if myPing and cs.px and math.abs(cs.px - PING[1]) < 300 and math.abs(cs.pz - PING[2]) < 300 then
 		jumped = true

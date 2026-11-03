@@ -15,6 +15,7 @@ local rode, fired, firedAfter, yawFrom, yawTo, left, sawPad, sawCommander = fals
 local zoomSteps = {}
 local fails = 0
 local taken = nil -- the enemy unit put in the squad
+local evenOrders = 0 -- the most orders seen laid out evenly in the order menu while the pad hid its own
 local TEX_SIZES, TEX_ROUNDS = { { 85, 83 }, { 170, 166 }, { 340, 83 }, { 128, 128 } }, 40 -- (as BAR's unit-groups panel)
 local texRound, texWait, texDirty = 0, 0, 0
 
@@ -44,6 +45,9 @@ local function finish()
 	local slow, fast = zoomSteps[2], zoomSteps[#zoomSteps]
 	check("LT speeds the zoom up", slow and fast and fast > slow * 1.8, tostring(slow) .. " -> " .. tostring(fast))
 	check("D-pad down: the commander", sawCommander)
+	-- (v0.8.5's order menu, "Order menu (controller)"; the app's copy of BAR's stands down in this game)
+	check("the controller game's own order menu", WG.ordermenu ~= nil and WG.ordermenu.controllerApiVersion ~= nil)
+	check("the pad's orders hidden: the rest fill the order menu, one cell each", evenOrders > 0, evenOrders)
 	check("the pad gone: its ways end, no taps needed", sawPad and WG.BarDroidPadOnly == nil)
 	local fp = WG.BarDroidPadFP
 	check("a unit no longer the player's leaves the squad", taken and fp and #fp.squad() == 0, tostring(taken))
@@ -112,6 +116,13 @@ function widget:GameFrame(f)
 	local target = Spring.GetUnitWeaponTarget(com, 1)
 	local cs = Spring.GetCameraState()
 	sawPad = sawPad or WG.BarDroidPadOnly == true
+	local o = WG.ordermenu
+	if WG.BarDroidPadOrders and o and o.droidCells then -- (BAR's grid has at least 16 cells, the even layout one an order)
+		local rects, cmds = o.droidCells()
+		if #cmds > 0 and #rects == #cmds then
+			evenOrders = math.max(evenOrders, #cmds)
+		end
+	end
 	if riding then
 		if not rode then
 			taken = enemyUnit()

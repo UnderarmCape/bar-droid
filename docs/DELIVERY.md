@@ -859,6 +859,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] pad-test after the order menu copy (dev phone, 2026-11-03): both runs check the order menu now. `-Online`
+      (BAR's released game, user widgets' orders forbidden): the app's copy runs (`WG.ordermenu.droidCells`), and
+      with the pad's orders hidden the other 11 fill it, one cell each; the controller game: v0.8.5's own menu
+      (`controllerApiVersion`), the copy stood down, the same 11 evenly. All pass, both. And the unit info panel no
+      longer prints a description its name already says ("Armada Commander" over "Commander").
 - [x] The order menu online like offline (Kailil, 2026-11-03: "Do the fix to make the orders menu behave like
       offline"): the app runs its own copy of BAR's Order menu in BAR's released game, as it does the Build menu
       (`bardroid_ordermenu.lua`, `tools/make-ordermenu.py`, 8 patches; the phone remakes it after BAR updates:

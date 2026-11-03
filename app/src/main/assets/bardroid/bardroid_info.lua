@@ -104,7 +104,12 @@ local function computeDef(id)
 	local ud = UnitDefs[id]
 	local info = {}
 	info.name = (ud.translatedHumanName or ud.humanName or ud.name):gsub("Scavenger", "Scav")
-	info.description = ud.translatedTooltip or ud.tooltip or ""
+	-- (a description the name already says goes: "Armada Commander" over "Commander" took a line for nothing)
+	local description = ud.translatedTooltip or ud.tooltip or ""
+	if description ~= "" and info.name:lower():find(description:lower(), 1, true) then
+		description = ""
+	end
+	info.description = description
 	info.airUnit = ud.isAirUnit or nil
 	if ud.maxWeaponRange > 16 then
 		info.maxWeaponRange = ud.maxWeaponRange
