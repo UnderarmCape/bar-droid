@@ -7,7 +7,8 @@
 --   tap on a server (battle list)  its details (Chobby's own server tooltip) and a bar: Close, Previous, Next, Join;
 --            a second tap on the same server joins it
 -- Presses outside lists, on sliders, text boxes and scroll bars go to Chili as before. After a press the hover tooltips
--- wait until the pointer moves (a finger leaves it where it lifted: a tooltip stayed up). Also: a warning in a server
+-- wait until the pointer moves on (a finger leaves it where it lifted: a tooltip stayed up), and again from where a
+-- drag on a list ends. Also: a warning in a server
 -- whose settings take away the app's controls (Kailil, 2026-11-01: the lobby has no room to show them), and the pad's
 -- Start in the lobby: the interface scale 100% or 130% (launch-bar.sh starts at 100%). Installed into LuaMenu/Widgets
 -- by the app; Chobby loads it with its "loadLocalWidgets" setting (launch-bar.sh).
@@ -479,6 +480,7 @@ function widget:MouseRelease(x, y)
 	if not p then
 		return false
 	end
+	hush = { x = x, y = y } -- (after a drag too: a replay's teams came up where the finger lifted)
 	if p.moved then
 		if math.abs(p.vel) > FLING_MIN and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
 			fling = { panel = p.panel, v = p.vel }
