@@ -152,6 +152,7 @@ powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|c
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1                # the same on the dev phone, plus a virtual pad's Start; nothing on the laptop, ~1 min
+powershell -ExecutionPolicy Bypass -File tools\touch-phone-test.ps1                # the touch camera at the map's edge on the dev phone (drags on the map, over the void, across the edge, over the sky; a pinch over the void), driven through the touch log; ~2 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
 powershell -ExecutionPolicy Bypass -File tools\fp-save-test.ps1                    # a spectator's 1st person through BAR's mid-game settings save, on the dev phone, ~1.5 min
 powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Cost] [-Settings @{Key=1}]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min; -Cost: its ms and KB per frame; -Settings: engine settings (run it with -Command for a hashtable)

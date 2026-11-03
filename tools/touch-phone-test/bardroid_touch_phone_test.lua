@@ -1,0 +1,213 @@
+-- User widget for tools/touch-phone-test.ps1: the touch camera (bardroid_touch.lua) on the phone, driven by lines this
+-- widget appends to LuaUI/Config/bardroid_touch.txt as the app writes them (pan, zoom: X pixels, top-left origin). A
+-- drag holds the map point under the finger: on the map, over the void past its edge (across and up), across the edge;
+-- a pinch over the void zooms about its point; a drag over the sky moves the map. Logs "[touchphone] PASS|FAIL|SKIP
+-- <case>" and "[touchphone] done".
+function widget:GetInfo()
+	return { name = "BAR Droid touch phone test", desc = "Checks the touch camera at the map's edge", author = "BAR Droid",
+		layer = 0, enabled = true }
+end
+
+local frames, step, waitUntil, repeats, fails = 0, 0, 0, 0, 0
+local vsx, vsy = Spring.GetViewGeometry()
+local cx = math.floor(vsx / 2)
+
+local function log(s)
+	Spring.Echo("[touchphone] " .. s)
+end
+
+local function touch(line)
+	local f = io.open("LuaUI/Config/bardroid_touch.txt", "a")
+	f:write(line .. "\n")
+	f:close()
+end
+
+-- The map point under X pixel (x, y from the top), or nil off the map
+local function groundAt(x, y)
+	local kind, pos = Spring.TraceScreenRay(x, vsy - y, true)
+	if kind == "ground" and pos then
+		return pos[1], pos[3], pos[2]
+	end
+end
+
+-- Where the view ray through X pixel (x, y from the top: GetPixelDir's own way) meets the level plane at height h
+-- (default: the ground the camera looks at), as bardroid_touch.lua's planePoint
+local function planeAt(x, y, h)
+	if not h then
+		local cs = Spring.GetCameraState()
+		h = Spring.GetGroundHeight(cs.px, cs.pz)
+	end
+	local dx, dy, dz = Spring.GetPixelDir(x, y)
+	if not dy or dy > -0.01 then
+		return nil
+	end
+	local px, py, pz = Spring.GetCameraPosition()
+	local t = (h - py) / dy
+	return px + dx * t, pz + dz * t
+end
+
+-- nothing moves the camera any more (the touch widget makes a pan over a few frames)
+local settleCam
+local function settle()
+	local cs = Spring.GetCameraState()
+	local last = settleCam
+	settleCam = cs
+	if not (last and math.abs(cs.px - last.px) < 0.5 and math.abs(cs.pz - last.pz) < 0.5
+		and math.abs((cs.dist or 0) - (last.dist or 0)) < 0.5 and math.abs((cs.rx or 0) - (last.rx or 0)) < 0.001) then
+		return false
+	end
+	settleCam = nil
+end
+
+local function camera(px, pz, dist, rx, outward)
+	local cs = Spring.GetCameraState()
+	cs.px, cs.pz, cs.dist, cs.rx, cs.ry = px, pz, dist, rx, 0
+	Spring.SetCameraState(cs, 0)
+	if outward then
+		local forward = Spring.GetCameraVectors().forward
+		if forward[3] > 0 then -- looking into the map (+z): turn round to look out over the z = 0 edge
+			cs = Spring.GetCameraState()
+			cs.ry = cs.ry + math.pi
+			Spring.SetCameraState(cs, 0)
+		end
+	end
+end
+
+local function check(case, ax, az, bx, bz, moved)
+	if not (ax and bx) then
+		fails = fails + 1
+		log("FAIL " .. case .. ": no point")
+		return
+	end
+	local off = math.sqrt((ax - bx) ^ 2 + (az - bz) ^ 2)
+	local ok = off < math.max(20, (moved or 0) * 0.25)
+	fails = fails + (ok and 0 or 1)
+	log(string.format("%s %s: %.0f off%s", ok and "PASS" or "FAIL", case, off,
+		moved and string.format(" after %.0f", moved) or ""))
+end
+
+local before, grab, endX, endY, row, mapRow
+local function moved()
+	local cs = Spring.GetCameraState()
+	return math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2)
+end
+
+local cases = {
+	-- on the map: the point under the finger stays under it
+	function() camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.9) end,
+	settle,
+	function()
+		local y = math.floor(vsy * 0.55)
+		before, grab, endX, endY = Spring.GetCameraState(), { groundAt(cx, y) }, cx + 120, y + 60
+		touch(string.format("pan %d %d %d %d", cx, y, endX, endY))
+	end,
+	settle,
+	function()
+		local x, z = groundAt(endX, endY)
+		check("a drag on the map holds the point under the finger", grab[1], grab[2], x, z, moved())
+	end,
+	-- past the edge, looking out over it: across and up (until 2026-11-03 up and down there went against the finger)
+	function() camera(Game.mapSizeX / 2, 700, 2500, 1.9, true) end,
+	settle,
+	function()
+		row = math.floor(vsy * 0.3)
+		if groundAt(cx, row) or not planeAt(cx, row) then
+			log("SKIP the void cases: the row at 30% shows the map or the sky")
+			step = step + 8 -- (past the three void cases)
+			return
+		end
+		before, grab, endX, endY = Spring.GetCameraState(), { planeAt(cx, row) }, cx + 100, row - 40
+		touch(string.format("pan %d %d %d %d", cx, row, endX, endY))
+	end,
+	settle,
+	function()
+		local x, z = planeAt(endX, endY)
+		check("a drag over the void past the edge holds the point under the finger", grab[1], grab[2], x, z, moved())
+	end,
+	-- a pinch there: its point stays put
+	function()
+		grab = { planeAt(cx, row) }
+		touch(string.format("zoom 1.5 %d %d", cx, row))
+	end,
+	settle,
+	function()
+		local x, z = planeAt(cx, row)
+		check("a pinch over the void zooms about its point", grab[1], grab[2], x, z)
+	end,
+	-- across the edge: from the map up onto the void (the camera backs away from the edge; the other way round it ran
+	-- into the edge's clamp: the void's point brought near meant a camera past the edge)
+	function()
+		mapRow = math.floor(vsy * 0.8)
+		local x, z, h = groundAt(cx, mapRow)
+		if not h then
+			log("SKIP across the edge: the row at 80% shows no map")
+			step = step + 2
+			return
+		end
+		before, grab, endX, endY = Spring.GetCameraState(), { x, z, h }, cx + 40, row
+		touch(string.format("pan %d %d %d %d", cx, mapRow, endX, endY))
+	end,
+	settle,
+	function()
+		local x, z = planeAt(endX, endY, grab[3])
+		local cs = Spring.GetCameraState()
+		local detail = string.format("target %.0f,%.0f -> %.0f,%.0f; grabbed %.0f,%.0f, now under the finger %s",
+			before.px, before.pz, cs.px, cs.pz, grab[1], grab[2], x and string.format("%.0f,%.0f", x, z) or "nothing")
+		check("a drag from the map onto the void holds the point under the finger (" .. detail .. ")", grab[1], grab[2],
+			x, z, moved())
+	end,
+	-- over the sky (the camera tilted up to the horizon): the map moves
+	function() camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.62) end,
+	settle,
+	function()
+		row = nil
+		for y = 2, math.floor(vsy * 0.5), 4 do
+			local _, dy = Spring.GetPixelDir(cx, y)
+			if dy and dy > -0.01 then
+				row = y
+			end
+		end
+		if not row then
+			log("SKIP a drag over the sky: no sky at that tilt")
+			step = step + 2
+			return
+		end
+		before = Spring.GetCameraState()
+		touch(string.format("pan %d %d %d %d", cx, row, cx, row + 80))
+	end,
+	settle,
+	function()
+		local ok = moved() > 1
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s a drag over the sky moves the map: %.0f", ok and "PASS" or "FAIL", moved()))
+	end,
+	function()
+		log(fails == 0 and "done: ALL PASS" or ("done: " .. fails .. " FAILED"))
+		widgetHandler:RemoveWidget()
+	end,
+}
+
+function widget:Update()
+	frames = frames + 1
+	-- (from 10 s of game: BAR's own camera move to the start position comes in the first seconds)
+	if Spring.GetGameFrame() < 300 or frames < waitUntil then
+		return
+	end
+	step = step + 1
+	local c = cases[step]
+	if not c then
+		return
+	end
+	local ok, result = pcall(c)
+	if not ok then
+		fails = fails + 1
+		log("FAIL case " .. step .. " errored: " .. tostring(result))
+		result = nil
+	end
+	if result == false and repeats < 30 then -- not ready yet: the same case again 15 frames later
+		step, repeats = step - 1, repeats + 1
+	else
+		repeats = 0
+	end
+	waitUntil = frames + 15
+end

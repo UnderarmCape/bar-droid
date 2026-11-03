@@ -988,7 +988,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the void checked on the dev phone without two fingers: a "zoom 1.6" line with its pivot over the void appended to
       the touch log (`bardroid_touch.txt`, as the app writes it): the map's edge went from 180 to 278 px off the pivot
       (x1.54), the void under the pivot stayed. (Lines appended to that file drive the touch camera from adb: pans,
-      pinches and twists for any later phone check.) And placing a
+      pinches and twists for any later phone check.) That is a phone check now: `tools/touch-phone-test.ps1` (~2 min,
+      dev phone, nothing on the laptop) runs a test widget that appends the app's pan and zoom lines and checks the
+      point under the finger: a drag on the map (0 off after 356), over the void across and up (0 off after 1402), a
+      pinch over the void (0 off), a drag from the map onto the void (241 off after 2748: the engine lifts the camera
+      over the terrain on so long a move), a drag over the sky (moves). All pass. (Its first version dragged from the
+      void onto the map: that brings the void's point near, a camera past the edge, and the edge's clamp held it.)
+      And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

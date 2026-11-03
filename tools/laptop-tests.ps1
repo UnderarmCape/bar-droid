@@ -16,7 +16,8 @@
 #   launch-bar-test.sh   launch-bar.sh's switching of BAR's build menus (the app's copy in, BAR's own back) and its
 #                        low-memory mode (an 8 GB phone's settings, a 12 GB phone's untouched)
 #   powershell syntax    every tools\*.ps1 parses
-# The phone-side checks are separate: tools\pace-test.ps1, tools\pad-test.ps1 [-Online] (need adb).
+# The phone-side checks are separate: tools\pace-test.ps1, tools\pad-test.ps1 [-Online], tools\lobby-phone-test.ps1,
+# tools\touch-phone-test.ps1 (need adb).
 # The games open behind the window in use and never take the keyboard (toolchain.ps1 Start-Engine); the touch widget's
 # checks of what is under the pointer move the real mouse pointer and run only with -Pointer (nobody at the laptop).
 #   powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1 [-Pointer]
