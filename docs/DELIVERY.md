@@ -663,6 +663,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       "VIEW". pad-test: all pass. Also looked into: BAR's messages read "Battle, Started" in the chat box because
       BAR's own translation has the comma (`BAR.I18N("tips.notifications.gameStarted")` on the phone), and the big
       "BUTTON_L1" boxes in some shots are the dev phone's developer option "Show key presses", not the app.
+- [x] The launcher's Display & touch preferences (Termux:X11's screen, dev phone, 2026-11-03): its last line said
+      "Version 1.03.01-..." in an app that calls itself BAR Droid 0.2.0 everywhere else; it is the display server's,
+      now titled "Display server (Termux:X11) version" (the app's strings override Termux:X11's, as for the screen's
+      title). Its Output, Pointer, Keyboard and Other pages open; nothing else there names the wrong app.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
