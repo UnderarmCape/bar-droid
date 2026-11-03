@@ -46,6 +46,15 @@ local function num(v, digits)
 	return s
 end
 
+-- A price as BAR's build menu beside the panel prints it: a space every three digits ("1 150", "26 000"; its AddSpaces)
+local function price(v)
+	v = math.floor(v + 0.5)
+	if v >= 1000 then
+		return string.format("%s %03d", price(math.floor(v / 1000)), v % 1000)
+	end
+	return tostring(v)
+end
+
 -- BAR's translation of one of gui_info.lua's labels (all exist in BAR's language files; an unknown key logs a warning),
 -- looked up once per label (the stats text is rebuilt four times a second; each key has one set of params)
 local translated = {}
@@ -459,13 +468,13 @@ local function statsText(id, unitID)
 	-- (BAR prints it on the picture) metal white, energy yellow; a cost of nothing left out ("Cost 155 0": a solar)
 	local cost = {}
 	if (info.metalCost or 0) > 0 then
-		cost[#cost + 1] = "\255\235\235\235" .. num(info.metalCost)
+		cost[#cost + 1] = "\255\235\235\235" .. price(info.metalCost)
 	end
 	if (info.energyCost or 0) > 0 then
-		cost[#cost + 1] = "\255\255\255\150" .. num(info.energyCost)
+		cost[#cost + 1] = "\255\255\255\150" .. price(info.energyCost)
 	end
 	if #cost > 0 then
-		add("Cost", table.concat(cost, " "))
+		add("Cost", table.concat(cost, "   ")) -- (wider than a price's own spaces: "2 700   26 000")
 	end
 	return table.concat(parts, LABEL .. ",  ")
 end
@@ -502,6 +511,7 @@ local function edits()
 	return editor and editor.get("info") or NO_EDITS
 end
 
+local orderX, orderY -- BAR's order menu's place the last layout kept clear of (layout, Update)
 local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	local ui = Spring.GetConfigFloat("ui_scale", 1) or 1
@@ -512,10 +522,13 @@ local function layout()
 	local x0 = max(0, min(vsx - w, floor(e.dx * vsx)))
 	local y0 = max(0, min(vsy - h, floor(e.dy * vsy)))
 	-- BAR's order menu sits right of the Info panel's default width and moves for nothing (gui_ordermenu.lua posX): a
-	-- panel made bigger in the editor stops at its left edge, so D-Gun and the orders under it still take taps
+	-- panel made bigger in the editor stops at its left edge, so D-Gun and the orders under it still take taps (where
+	-- the order menu was when this ran: after a fold this panel, layer 0, lays out before it, layer 1; Update looks)
 	local o = WG.ordermenu
+	orderX, orderY = nil, nil
 	if o and o.getPosition and o.getBottomPosition and o.getBottomPosition() then
 		local ox, oy, _, oh = o.getPosition()
+		orderX, orderY = ox, oy
 		if ox and oh then
 			local left = floor(ox * vsx) - (WG.FlowUI and WG.FlowUI.elementMargin or 0)
 			if x0 < left and y0 < oy * vsy and y0 + h > (oy - oh) * vsy then
@@ -992,6 +1005,20 @@ function widget:Update(dt)
 	end
 	if not font then
 		layout()
+	end
+	local o = WG.ordermenu -- (its place since the last layout: moved after a fold, or by its own setting)
+	if o and o.getPosition and o.getBottomPosition then
+		local ox, oy
+		if o.getBottomPosition() then
+			ox, oy = o.getPosition()
+		end
+		if ox ~= orderX or oy ~= orderY then
+			layout()
+			rebuildAt = 0
+			if shown and shown.kind == "units" then
+				layoutGrid(shown.types)
+			end
+		end
 	end
 	local editor = WG.BarDroidLayout
 	if editor and editor.register and not registered then -- the panel for the layout editor

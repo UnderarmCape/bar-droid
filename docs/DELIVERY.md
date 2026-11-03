@@ -667,6 +667,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       "Version 1.03.01-..." in an app that calls itself BAR Droid 0.2.0 everywhere else; it is the display server's,
       now titled "Display server (Termux:X11) version" (the app's strings override Termux:X11's, as for the screen's
       title). Its Output, Pointer, Keyboard and Other pages open; nothing else there names the wrong app.
+- [x] The Unit info panel after a fold (review, 2026-11-03): BAR's order menu (layer 1) lays itself out after this
+      panel (layer 0), so after a fold or unfold the panel kept clear of where the order menu had been on the other
+      screen; a panel made bigger could cover its orders or stop short. It now lays out again in the first Update
+      after the order menu moves. On the dev phone (no fold there): the 126% panel still ends at the order menu, 30
+      fps, no Lua error. A 10-minute skirmish (low-memory mode, the game left alone) ran through at 30 fps a minute,
+      the engine at 4734 MB at most. And the panel's prices are grouped as BAR's build menu beside it prints them:
+      "Cost 2 700   26 000" where it read "2700 26000".
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
