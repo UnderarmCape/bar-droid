@@ -171,18 +171,42 @@ build_menu() {
     layer_miss "build menu: BAR's gui_buildmenu.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-buildmenu.py)"
   fi
 }
+# The app's copy of BAR's Order menu in BAR's place, the same way (Kailil, 2026-11-03: online the order menu should
+# "behave like offline": the orders the pad leaves fill the menu, as in the controller game's; bardroid_ordermenu.lua,
+# tools/make-ordermenu.py). It stands down in the controller game, which keeps v0.8.5's ("Order menu (controller)").
+order_menu() {
+  copied=$(sed -n 's/^-- BARDROID_ORDERMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_ordermenu.lua" 2>/dev/null)
+  bars=$(cat "$BAR/.bardroid-ordermenu" 2>/dev/null)
+  failed="$BAR/.bardroid-ordermenu-failed"
+  grep -aq 'Removed widget: BAR Droid order menu' "$BAR/infolog.txt" 2>/dev/null && printf '%s\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars" ]; }; then
+    widget_order "Order menu" 189; widget_order "BAR Droid order menu" 0
+    layer_miss "order menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_ordermenu.lua ${bars:-not found}: BAR's own, its grid with the pad, until the copy is made again (tools/make-ordermenu.py)"
+    return
+  fi
+  widget_order "Order menu" 0; widget_order "BAR Droid order menu" 189
+  if [ "$copied" = "$bars" ]; then
+    log "order menu: the app's copy of BAR's (gui_ordermenu.lua $copied), the orders the pad leaves filling it"
+  else
+    layer_miss "order menu: BAR's gui_ordermenu.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-ordermenu.py)"
+  fi
+}
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Grid menu" 0
   build_menu
+  order_menu
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
     widget_order "Build menu (controller)" 165
+    widget_order "Order menu (controller)" 189
     grep -q '\["Build menu (controller)"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
-      || layer_miss "controller game: Build menu (controller) / Grid menu order not set in LuaUI/Config/BYAR.lua"
+      && grep -q '\["Order menu (controller)"\] *= *189' "$BAR/LuaUI/Config/BYAR.lua" \
+      || layer_miss "controller game: Build menu (controller) / Order menu (controller) / Grid menu order not set in LuaUI/Config/BYAR.lua"
     touch "$BAR/.bardroid-gamepad-menus"
   elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
     widget_order "Build menu (controller)" ""
+    widget_order "Order menu (controller)" ""
     rm -f "$BAR/.bardroid-gamepad-menus"
   fi
   igl="$BAR/LuaMenu/Config/IGL_data.lua"   # the lobby's saved settings: they override chobby_config.json's game

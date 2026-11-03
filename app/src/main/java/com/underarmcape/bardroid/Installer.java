@@ -288,14 +288,15 @@ public final class Installer {
         // panel with its text sized to fit (launch-bar.sh turns BAR's Info widget off), and BAR's player list small until
         // touched, and the touch tools for spectating (player cameras, following units), and the minimap half size on the
         // unfolded screen until touched, and the layout editor (three fingers held, or /hud in the chat), and the
-        // app's copy of BAR's Build menu that the editor sizes (launch-bar.sh switches it in, see writeBuildMenuMd5),
-        // and BAR's GL4 unit shaders kept off in launch-bar.sh's low-memory mode (8 GB phones)
+        // app's copy of BAR's Build menu that the editor sizes and of its Order menu (launch-bar.sh switches them in,
+        // see writeBarCopiesMd5), and BAR's GL4 unit shaders kept off in launch-bar.sh's low-memory mode (8 GB phones)
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
-                "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua", "bardroid_padfp.lua", "bardroid_lowmem.lua"})
+                "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua",
+                "bardroid_padfp.lua", "bardroid_lowmem.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
-        writeBuildMenuMd5();
+        writeBarCopiesMd5();
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
         // its "local widgets" setting, which launch-bar.sh switches on)
         File menuWidgets = new File(p.bar, "LuaMenu/Widgets");
@@ -368,14 +369,22 @@ public final class Installer {
         return new File(p.bar, file + ".sd7").exists() || new File(p.bar, file + ".sdz").exists();
     }
 
+    /** BAR's widgets the app runs a copy of in their place (launch-bar.sh): BAR's file, the copy, its patches, the file
+     *  that tells launch-bar.sh BAR's md5, the copy's line naming the md5 it was made from, a name for the log. */
+    private static final String[][] BAR_COPIES = {
+            {"luaui/widgets/gui_buildmenu.lua", "bardroid_buildmenu.lua", "bardroid_buildmenu.patches", ".bardroid-buildmenu",
+                    "-- BARDROID_BUILDMENU_FROM ", "build menu"},   // tools/make-buildmenu.py
+            {"luaui/widgets/gui_ordermenu.lua", "bardroid_ordermenu.lua", "bardroid_ordermenu.patches", ".bardroid-ordermenu",
+                    "-- BARDROID_ORDERMENU_FROM ", "order menu"},   // tools/make-ordermenu.py
+    };
+
     /**
-     * The pool md5 of BAR's Build menu (luaui/widgets/gui_buildmenu.lua) in the released game this phone has, into
-     * .bardroid-buildmenu ("" when not found), and the app's copy of it (bardroid_buildmenu.lua, tools/make-buildmenu.py)
-     * made again here when that is another file than the copy was made from. launch-bar.sh runs the copy. Written after
-     * the update at every start.
+     * The pool md5 of each of BAR's widgets the app has a copy of (BAR_COPIES: its Build and Order menus) in the released
+     * game this phone has, into .bardroid-buildmenu and .bardroid-ordermenu ("" when not found), and the copy made again
+     * here when that is another file than it was made from. launch-bar.sh runs the copies. Written after the update at
+     * every start.
      */
-    private void writeBuildMenuMd5() {
-        String md5 = "";
+    private void writeBarCopiesMd5() {
         File rapid = new File(p.bar, "rapid");
         File[] hosts = rapid.listFiles();
         String pkg = null;
@@ -389,32 +398,36 @@ public final class Installer {
                 }
             } catch (IOException ignored) {}
         }
+        Map<String, String> files = null;
         try {
-            String m = pkg == null ? null : sdpFiles(new File(p.bar, "packages/" + pkg + ".sdp")).get("luaui/widgets/gui_buildmenu.lua");
-            if (m != null) md5 = m;
+            if (pkg != null) files = sdpFiles(new File(p.bar, "packages/" + pkg + ".sdp"));
         } catch (IOException e) {
-            Log.e("install", "BAR's build menu not looked up: " + e);
+            Log.e("install", "BAR's build and order menus not looked up: " + e);
         }
-        if (!md5.isEmpty()) remakeBuildMenu(md5);
-        try { writeFile(new File(p.bar, ".bardroid-buildmenu"), md5 + "\n"); }
-        catch (IOException e) { Log.e("install", ".bardroid-buildmenu not written: " + e); }
+        for (String[] c : BAR_COPIES) {
+            String md5 = files == null || files.get(c[0]) == null ? "" : files.get(c[0]);
+            if (!md5.isEmpty()) remakeBarCopy(c, md5);
+            try { writeFile(new File(p.bar, c[3]), md5 + "\n"); }
+            catch (IOException e) { Log.e("install", c[3] + " not written: " + e); }
+        }
     }
 
     /**
-     * BAR's update changed its Build menu: the copy made again from BAR's new file (BuildMenuPatches). If a patch finds
-     * no place the copy from the last app stays, and launch-bar.sh names that: it runs, the pad's RB with it.
+     * BAR's update changed one of the widgets the app has a copy of: the copy made again from BAR's new file
+     * (BuildMenuPatches). If a patch finds no place the copy from the last app stays, and launch-bar.sh names that: it
+     * runs (the build menu's: the pad's RB with it).
      */
-    private void remakeBuildMenu(String md5) {
-        File copy = new File(p.bar, "LuaUI/Widgets/bardroid_buildmenu.lua");
+    private void remakeBarCopy(String[] c, String md5) {
+        File copy = new File(p.bar, "LuaUI/Widgets/" + c[1]);
         try (BufferedReader r = new BufferedReader(new FileReader(copy))) {
             for (String l; (l = r.readLine()) != null && l.startsWith("--"); )
-                if (l.equals("-- BARDROID_BUILDMENU_FROM " + md5)) return;   // (the copy is of this file)
-        } catch (IOException e) { Log.e("install", "the build menu copy not read: " + e); }
+                if (l.equals(c[4] + md5)) return;   // (the copy is of this file)
+        } catch (IOException e) { Log.e("install", "the " + c[5] + " copy not read: " + e); }
         try {
             File bar = new File(p.bar, "pool/" + md5.substring(0, 2) + "/" + md5.substring(2) + ".gz");
             String barFile, patches;
             try (InputStream in = new GZIPInputStream(new FileInputStream(bar))) { barFile = new String(readAll(in), StandardCharsets.UTF_8); }
-            try (InputStream in = new FileInputStream(new File(p.filesDir, "assets-bardroid/bardroid_buildmenu.patches"))) {
+            try (InputStream in = new FileInputStream(new File(p.filesDir, "assets-bardroid/" + c[2]))) {
                 patches = new String(readAll(in), StandardCharsets.UTF_8);
             }
             String release = resolveGameName();
@@ -422,9 +435,9 @@ public final class Installer {
             File tmp = new File(copy.getPath() + ".tmp");
             writeFile(tmp, made);
             Updater.replace(tmp, copy);
-            Log.i("install", "build menu: the app's copy made again from " + release);
+            Log.i("install", c[5] + ": the app's copy made again from " + release);
         } catch (IOException | IllegalArgumentException e) {
-            Log.e("install", "build menu: the app's copy not made again, the last one stays: " + e.getMessage());
+            Log.e("install", c[5] + ": the app's copy not made again, the last one stays: " + e.getMessage());
         }
     }
 

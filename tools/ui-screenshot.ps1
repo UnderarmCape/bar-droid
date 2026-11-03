@@ -53,7 +53,7 @@ $links = foreach ($d in "packages", "pool", "rapid") {
 try {
   if (-not (Test-Path "$Data\maps\$Map")) { Copy-Item (Join-Path $Bar "maps\$Map") "$Data\maps\$Map" }
   if ($PadUI) {   # the app's widgets for the pad as installed on the phone, and the staging widget
-    foreach ($wf in "bardroid_touch.lua", "bardroid_pad.lua", "bardroid_buildmenu.lua") {
+    foreach ($wf in "bardroid_touch.lua", "bardroid_pad.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua") {
       Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$wf") "$Data\LuaUI\Widgets\" -Force
     }
     Copy-Item (Join-Path $PSScriptRoot "ui-screenshot\bardroid_padui_shot.lua") "$Data\LuaUI\Widgets\" -Force
@@ -75,8 +75,10 @@ try {
         "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4", "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info",
         "Changelog Info", "Picture-in-Picture Minimap", "Grid menu") + $(if ($BarDroidInfo -or $NoInfo) { @("Info") } else { @() }) |
       ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + $(if ($PadUI) {
-        # (the app's build menu in BAR's place, as launch-bar.sh switches it; the controller game keeps its own beside it)
-        "`t`t[`"Build menu`"] = 0,`n`t`t[`"BAR Droid build menu`"] = 165,`n`t`t[`"Build menu (controller)`"] = 165,"
+        # (the app's build and order menus in BAR's place, as launch-bar.sh switches them; the controller game keeps its
+        # own beside the build menu's, the order menu's stands down there)
+        "`t`t[`"Build menu`"] = 0,`n`t`t[`"BAR Droid build menu`"] = 165,`n`t`t[`"Build menu (controller)`"] = 165," +
+          "`n`t`t[`"Order menu`"] = 0,`n`t`t[`"BAR Droid order menu`"] = 189,`n`t`t[`"Order menu (controller)`"] = 189,"
       } else { "`t`t[`"Build menu`"] = 165," })) -join "`n"
   }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t`t$WidgetData`n`t},`n`torder = {`n$orders`n`t},`n}" |

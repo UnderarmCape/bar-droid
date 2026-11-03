@@ -82,11 +82,15 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `assets/bardroid/bardroid_buildmenu.lua`: BAR's Build menu copied by `tools/make-buildmenu.py` (do not edit; rerun it
   after BAR changes its gui_buildmenu.lua; `--adb` reads a phone's release) with a size and place hook for the editor;
   launch-bar.sh runs it in place of BAR's in every game: the pad's RB is in it. When an update changes BAR's file the phone
-  makes the copy again itself (`Installer.remakeBuildMenu`, `BuildMenuPatches`, the tool's `bardroid_buildmenu.patches`); if
+  makes the copy again itself (`Installer.remakeBarCopy`, `BuildMenuPatches`, the tool's `bardroid_buildmenu.patches`); if
   a patch finds no place the old copy runs and launch-bar.sh logs `!!! ANDROID LAYER ... build menu`, and only a copy BAR
   removed in a game gives way to BAR's own (`.bardroid-buildmenu-failed`); the controller game keeps v0.8.5's, renamed "Build menu
   (controller)" by `tools/build-gamepad-game.py`, in `WG.buildmenu`, and runs the copy beside it as
-  `WG.bardroidBuildmenu`, shown while the app's gamepad controls have the pad (`WG.BarDroidOwnsBuildMenu`). While a building is picked its page strip is the shape strip (ONE,
+  `WG.bardroidBuildmenu`, shown while the app's gamepad controls have the pad (`WG.BarDroidOwnsBuildMenu`).
+  `assets/bardroid/bardroid_ordermenu.lua`: BAR's Order menu copied the same way by `tools/make-ordermenu.py` (Kailil,
+  2026-11-03: online "behave like offline"): v0.8.5's even layout while the pad hides orders (`WG.BarDroidPadOrders`),
+  `WG.ordermenu.droidCells`, an IsAbove; launch-bar.sh's `order_menu` runs it in place of BAR's (`.bardroid-ordermenu`,
+  `!!! ANDROID LAYER ... order menu`); it stands down in the controller game, whose v0.8.5 menu is "Order menu (controller)". While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
   the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held

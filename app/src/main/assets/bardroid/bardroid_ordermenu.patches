@@ -1,0 +1,135 @@
+-- BAR Droid order menu: BAR's own Order menu (luaui/Widgets/gui_ordermenu.lua, by Floris, GPL v2 or later), from
+-- {release}, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
+-- offline"): while the app's gamepad controls hide the orders the pad has buttons for, the rest fill the menu evenly,
+-- as in the controller game's (v0.8.5's) order menu, and the menu answers IsAbove (a finger's drag on it no longer pans
+-- the map). Made by tools/make-ordermenu.py; do not edit by hand, run it again.
+-- launch-bar.sh runs it instead of BAR's Order menu; when an update changes BAR's file the phone makes it again from the
+-- new file (the line below names the one it was made from; Installer, BuildMenuPatches). In the controller game, which
+-- keeps v0.8.5's own ("Order menu (controller)"), it stands down.
+-- BARDROID_ORDERMENU_FROM {md5}
+		name = "Order menu",
+		desc = "",
+		author = "Floris",
+		date = "April 2020",
+		license = "GNU GPL, v2 or later",
+		layer = 1,
+		enabled = true,
+		name = "BAR Droid order menu", -- BAR Droid: its own name (BAR's sandbox runs no user widget under BAR's)
+		desc = "BAR's Order menu; with the app's gamepad controls the orders left fill it (BAR Droid)",
+		author = "Floris",
+		date = "April 2020",
+		license = "GNU GPL, v2 or later",
+		layer = 1,
+		enabled = false, -- BAR Droid: launch-bar.sh switches it on in place of BAR's Order menu
+local function setupCellGrid(force)
+-- BAR Droid: what the app adds: the even layout's last shape, and the WG.ordermenu this copy set (the controller game's
+-- own is left alone)
+local droid = { evenKey = nil, api = nil }
+
+local function setupCellGrid(force)
+	local sizeDivider = ((cols + rows) / 16)
+	cellMargin = (cellMarginOriginal / sizeDivider) * uiScale
+
+	if force or oldCols ~= cols or oldRows ~= rows then
+	-- BAR Droid (Kailil, 2026-10-29, the controller game's order menu; 2026-11-03 online too): while the pad is the
+	-- input the orders it gives with its buttons are hidden (bardroid_pad.lua, through setDisabledCmd) and the rest fill
+	-- the menu evenly, whatever their number: as many rows as make the buttons about twice as wide as tall (BAR's own
+	-- buttons' shape: their words stay readable), each row's buttons sharing its width (WG.BarDroidPadOrders)
+	local evenRows = nil
+	if WG.BarDroidPadOrders and cmdCount > 0 then
+		local w, h = activeRect[3] - activeRect[1], activeRect[4] - activeRect[2]
+		local r = math_max(1, math_min(cmdCount, math_floor(math.sqrt(2 * cmdCount * h / math_max(1, w)) + 0.5)))
+		evenRows = {}
+		local left = cmdCount
+		for i = 1, r do
+			evenRows[i] = math_ceil(left / (r - i + 1))
+			left = left - evenRows[i]
+		end
+		cols, rows = evenRows[1], r
+	end
+	local evenKey = evenRows and (cmdCount .. "x" .. rows) or nil
+	if evenKey ~= droid.evenKey then
+		droid.evenKey = evenKey
+		force = true
+	end
+
+	local sizeDivider = ((cols + rows) / 16)
+	cellMargin = (cellMarginOriginal / sizeDivider) * uiScale
+
+	if (force or oldCols ~= cols or oldRows ~= rows) and evenRows then -- BAR Droid: the even layout
+		clearStateLightDisplayLists()
+		clickedCell = nil
+		clickedCellTime = nil
+		clickedCellDesiredState = nil
+		local w = activeRect[3] - activeRect[1]
+		cellHeight = math_floor((activeRect[4] - activeRect[2]) / rows)
+		cellWidth = math_floor(w / cols)
+		cellMarginPx = math_max(1, math_ceil(cellHeight * 0.5 * cellMargin))
+		cellMarginPx2 = math_max(0, math_ceil(cellHeight * 0.18 * cellMargin))
+		local i = 0
+		for row = 1, rows do
+			local k = evenRows[row]
+			for col = 1, k do
+				i = i + 1
+				cellRects[i] = cellRects[i] or {}
+				local rect = cellRects[i]
+				rect[1] = math_floor(activeRect[1] + w * (col - 1) / k + 0.5)
+				rect[2] = math_floor(activeRect[4] - cellHeight * row + 0.5)
+				rect[3] = math_floor(activeRect[1] + w * col / k + 0.5)
+				rect[4] = math_floor(activeRect[4] - cellHeight * (row - 1) + 0.5)
+			end
+		end
+		for j = i + 1, #cellRects do
+			cellRects[j] = nil
+		end
+	elseif force or oldCols ~= cols or oldRows ~= rows then
+function widget:Initialize()
+	widgetHandler:RegisterUnitCommand(CMD.WAIT)
+function widget:Initialize()
+	-- BAR Droid: the controller game keeps v0.8.5's own order menu (its gamepad drives it, and it lays the orders out
+	-- the same way): this copy stands down there
+	if (Game.gameVersion or ""):find("$VERSION", 1, true) or (WG.ordermenu and WG.ordermenu.controllerApiVersion) then
+		Spring.Echo("[bardroid-ordermenu] the controller game: its own order menu")
+		widgetHandler:RemoveWidget()
+		return
+	end
+	widgetHandler:RegisterUnitCommand(CMD.WAIT)
+	WG.ordermenu.getIsShowing = function()
+		return ordermenuShows
+	end
+	WG.ordermenu.getIsShowing = function()
+		return ordermenuShows
+	end
+	-- BAR Droid: the cells as laid out (bottom left origin) and the orders in them, in the same order: the app's gamepad
+	-- controls step through them (bardroid_pad.lua), the even layout included
+	WG.ordermenu.droidCells = function()
+		return cellRects, commands
+	end
+	droid.api = WG.ordermenu
+	WG.ordermenu = nil
+end
+	if WG.ordermenu == droid.api then -- BAR Droid: the controller game's own left alone
+		WG.ordermenu = nil
+	end
+end
+			local fontSize = cellInnerWidth / textWidth * math_min(1, (cellInnerHeight / (rows * 6)))
+			if fontSize > cellInnerWidth / 7 then
+				fontSize = cellInnerWidth / 7
+			end
+			-- BAR Droid: in the even layout a row of fewer, wider buttons keeps the narrowest row's largest text size (its
+			-- labels came out a third larger than the rows above); a long label still fits its own button
+			local sizeWidth = cellInnerWidth
+			if droid.evenKey then
+				sizeWidth = math_min(cellInnerWidth, cellWidth - ((cellRects[cell][3] - cellRects[cell][1]) - cellInnerWidth))
+			end
+			local fontSize = cellInnerWidth / textWidth * math_min(1, (cellInnerHeight / (rows * 6)))
+			if fontSize > sizeWidth / 7 then
+				fontSize = sizeWidth / 7
+			end
+function widget:MousePress(x, y, button)
+-- BAR Droid: the menu is interface: a finger's drag there does not pan the map (BAR's own answers no IsAbove)
+function widget:IsAbove(x, y)
+	return ordermenuShows and math_isInRect(x, y, backgroundRect[1], backgroundRect[2], backgroundRect[3], backgroundRect[4])
+end
+
+function widget:MousePress(x, y, button)

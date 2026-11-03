@@ -78,7 +78,7 @@ try {
   # the phone's user widgets (Installer's list) and the files the app keeps for them
   foreach ($f in "bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua", "bardroid_players.lua",
       "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua", "bardroid_layout.lua", "bardroid_buildmenu.lua",
-      "bardroid_pad.lua", "bardroid_padspeed.lua", "bardroid_padfp.lua", "bardroid_lowmem.lua") {
+      "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua", "bardroid_padfp.lua", "bardroid_lowmem.lua") {
     Copy-Item (Join-Path $App "app\src\main\assets\bardroid\$f") (Join-Path $Data "LuaUI\Widgets\") -Force
   }
   Set-Content (Join-Path $Data "LuaUI\Config\bardroid_touch.txt") -Value $null -NoNewline
@@ -89,10 +89,12 @@ try {
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
     "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info", "Changelog Info",
     "Picture-in-Picture Minimap", "Fog Diagonal Lines GL4", "Info", "Mission Info") + $AlsoOff
-  # (the app's build menu copy beside v0.8.5's "Build menu (controller)", as launch-bar.sh switches it in)
+  # (the app's build menu copy beside v0.8.5's "Build menu (controller)", and its order menu copy in BAR's place, as
+  # launch-bar.sh switches them in; the order menu's stands down in the controller game)
   $orders = @($off | ForEach-Object { "`t`t[`"$_`"] = 0," }) + "`t`t[`"Minimap`"] = 1," + "`t`t[`"BAR Droid profile log`"] = 1," +
     "`t`t[`"Build menu`"] = $(if ($Released) { 0 } else { 165 })," + "`t`t[`"Grid menu`"] = $(if ($Released) { 113 } else { 0 })," +
-    "`t`t[`"BAR Droid build menu`"] = 165,"
+    "`t`t[`"BAR Droid build menu`"] = 165," + "`t`t[`"Order menu`"] = 0," + "`t`t[`"BAR Droid order menu`"] = 189," +
+    "`t`t[`"Order menu (controller)`"] = 189,"
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |
     Set-Content (Join-Path $Data "LuaUI\Config\BYAR.lua") -Encoding ascii
   # the phone's graphics (launch-bar.sh PHONE_GFX and Kailil's Lowest preset), a window the size of the folded X screen

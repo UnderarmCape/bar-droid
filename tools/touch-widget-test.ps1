@@ -45,6 +45,7 @@ try {
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_minimap.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_layout.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_buildmenu.lua") "$Data\LuaUI\Widgets\" -Force
+  Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_ordermenu.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_pad.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_padspeed.lua") "$Data\LuaUI\Widgets\" -Force
   Copy-Item (Join-Path $App "app\src\main\assets\bardroid\bardroid_padfp.lua") "$Data\LuaUI\Widgets\" -Force
@@ -56,10 +57,11 @@ try {
     "Deferred rendering GL4", "Decals GL4", "Ground AO Plates GL4", "Ground AO Plates Features GL4", "Map Grass GL4",
     "Commands FX", "Contrast Adaptive Sharpen", "Jammed Units Highlight", "Reclaim Field Highlight", "Ecostats", "Keybind/Mouse Info", "Changelog Info", "Picture-in-Picture Minimap", "Info") | ForEach-Object { "`t`t[`"$_`"] = 0," }
   $orders += "`t`t[`"Minimap`"] = 1,"
-  # the build menus as launch-bar.sh sets them with the controller game on: BAR's Build menu off, the app's copy of it
-  # on (it stands down in the controller game, whose own "Build menu (controller)" runs)
+  # the build and order menus as launch-bar.sh sets them with the controller game on: BAR's off, the app's copies on
+  # (the build menu's runs beside the controller game's own "Build menu (controller)", the order menu's stands down there)
   $orders += "`t`t[`"Grid menu`"] = 0,", "`t`t[`"Build menu`"] = 0,", "`t`t[`"BAR Droid build menu`"] = 165,",
-    "`t`t[`"Build menu (controller)`"] = 165,"
+    "`t`t[`"Build menu (controller)`"] = 165,", "`t`t[`"Order menu`"] = 0,", "`t`t[`"BAR Droid order menu`"] = 189,",
+    "`t`t[`"Order menu (controller)`"] = 189,"
   # (the unpacked controller game carries the profiler's widget, which quits the game after its 100 s)
   if ($GamepadGame) { $orders += "`t`t[`"BAR Droid profile log`"] = 0," }
   "-- Widget Custom data and order, order = 0 disabled widget`nreturn {`n`tdata = {`n`t},`n`torder = {`n$($orders -join "`n")`n`t},`n}" |

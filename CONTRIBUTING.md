@@ -33,10 +33,10 @@ On Windows with the toolchain set up ([README.md](README.md) "Build"):
   (spectating by touch), `tools\lobby-touch-test.ps1` (the lobby). Each starts BAR on the laptop, off-screen and
   without taking the keyboard; the checks that move the real mouse pointer run with `-Pointer` (also
   `laptop-tests.ps1 -Pointer`), when nobody is using the laptop.
-- BAR changed its Build menu: the phone makes the app's copy again by itself at the next start, with the patches of
-  `tools\make-buildmenu.py`. If BAR rewrote a part a patch needs (launch-bar.sh logs an Android-layer miss for the build
-  menu, the old copy keeps running), fix that patch, run `python -I tools\make-buildmenu.py`, then touch-widget-test and
-  `tools\pad-test.ps1 -Online`. A phone that has the new release before the laptop: `--adb <adb.exe>` reads it off the
+- BAR changed its Build or Order menu: the phone makes the app's copy again by itself at the next start, with the
+  patches of `tools\make-buildmenu.py` (`make-ordermenu.py`). If BAR rewrote a part a patch needs (launch-bar.sh logs an
+  Android-layer miss for the build or order menu, the old copy keeps running), fix that patch, run
+  `python -I tools\make-buildmenu.py` (`make-ordermenu.py`), then touch-widget-test and `tools\pad-test.ps1 -Online`. A phone that has the new release before the laptop: `--adb <adb.exe>` reads it off the
   phone (`ANDROID_SERIAL` names it).
 - A new pad control must work in any game: `Spring.GiveOrder*` is forbidden to user widgets where a host switches
   `allowunitcontrolwidgets` off, so use BAR's actions (`Spring.SendCommands`) and order picks (`Spring.SetActiveCommand`).

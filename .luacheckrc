@@ -10,5 +10,6 @@ read_globals = {
 	"WeaponDefNames", "FeatureDefs", "Game", "CMD", "CMDTYPE", "Script", "BAR", "LOG", "Platform", "Engine",
 	"SendToUnsynced",
 }
--- BAR's own Build menu copied by tools/make-buildmenu.py (BAR's code and style; its changes are checked in a game)
-exclude_files = { "app/src/main/assets/bardroid/bardroid_buildmenu.lua" }
+-- BAR's own Build and Order menus copied by tools/make-buildmenu.py and make-ordermenu.py (BAR's code and style; their
+-- changes are checked in a game)
+exclude_files = { "app/src/main/assets/bardroid/bardroid_buildmenu.lua", "app/src/main/assets/bardroid/bardroid_ordermenu.lua" }

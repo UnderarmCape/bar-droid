@@ -73,6 +73,10 @@ The first version meant for other people's phones: everything since the first bu
   up held a ping in the middle, up tapped the camera to the last ping from another player, down every combat unit,
   right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;
   only first person does not.
+- The order menu with the pad, in every game: the orders the pad has buttons for are hidden and the rest fill the
+  menu with bigger buttons, online too (the app's copy of BAR's Order menu runs in BAR's released game), and a
+  finger's drag on the order menu no longer pans the map. The hidden orders come back after a game played with the pad
+  (they had stayed hidden in later games, by touch too).
 - The app's controller interface in one look with BAR's own: notes, the filter radial and the group strip in BAR's
   panels and font, sized by the interface scale (about the same on both Fold screens); the pad's place on the build
   and order menus a thin gold line; a pad button named in a note shown as its coloured key.

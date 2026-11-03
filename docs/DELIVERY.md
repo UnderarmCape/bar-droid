@@ -859,6 +859,20 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] The order menu online like offline (Kailil, 2026-11-03: "Do the fix to make the orders menu behave like
+      offline"): the app runs its own copy of BAR's Order menu in BAR's released game, as it does the Build menu
+      (`bardroid_ordermenu.lua`, `tools/make-ordermenu.py`, 8 patches; the phone remakes it after BAR updates:
+      Installer's BAR_COPIES, `.bardroid-ordermenu`, launch-bar.sh `order_menu`). In it v0.8.5's even layout while
+      the pad hides orders, `WG.ordermenu.droidCells` for the app's pad controls, an IsAbove (a finger's drag on the
+      menu no longer pans the map: an open risk in CLAUDE.md), and in the even layout a row of fewer, wider buttons
+      keeps the other rows' text size (its labels were a third larger; offline v0.8.5's still does that). v0.8.5's
+      order menu is packaged as "Order menu (controller)" (`tools/build-gamepad-game.py`: only that line of the zip
+      changed), since both games share one widget list; the copy stands down in the controller game. Dev phone:
+      BAR's game with the pad's orders hidden 4 + 4 + 3 filling the menu; by touch BAR's 5 x 4; the controller game
+      v0.8.5's (its log line, the copy's "stands down" line). Not checked here: the laptop tests' new orders
+      (touch-widget-test, ui-screenshot, profile-benchmark), BAR on the laptop needing Kailil's yes. The controller
+      game's settings warn "unknown widget Order menu" for its colorize option (v0.8.5's gui_options names the old
+      widget): that option is not kept there.
 - [x] BAR's chat saved hidden with no input history (review of the app's Shutdowns after the order menu's, dev phone,
       2026-11-03: BAR's file said `hide = true`): `bardroid_chat.lua` gave BAR's chat back in Shutdown, after BAR's
       save. Now in its GetConfigData (layers -96000, BAR's chat -95000), taken over again if the game goes on; a config
