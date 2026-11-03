@@ -648,6 +648,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (`Screen:IsAbove`), so `bardroid_lobby_touch.lua` now takes the hover off once the button is up, with the tooltip
       it already held back, until the pointer moves on. On the dev phone: "Code of Conduct" plain after Cancel, the
       Skirmish tab still shown as the open one. lobby-phone-test: all pass.
+- [x] Spectating by touch on the dev phone (2026-11-03): a replay from the lobby's Replays tab (the benchmark's, 1300
+      units at 9-11 fps), "skip", a tap on the small player list brought the spectate bar, its › followed a Grunt and
+      the bar turned to the camera presets. Its buttons were BAR's panels at BAR's 70% opacity without the blur BAR's
+      GUI shader puts behind its own (a blur pass more per frame on a phone), so the battle showed through the words;
+      now 85% at least, BAR's look kept. (A tap 7 s after the bar opened found it closed, as designed.)
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

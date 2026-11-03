@@ -1364,11 +1364,15 @@ local function buttonAt(x, y)
 end
 
 local LIT = { 1, 1, 1, 0.2 }
+-- BAR's panel look, a little denser than BAR's interface opacity (0.7): BAR's panels have its GUI shader's blur behind
+-- them, these do not (a blur pass more per frame on a phone), and over a big battle the units showed through the words
+local BAR_OPACITY = 0.85
 local function drawBar()
 	local font = WG.fonts and WG.fonts.getFont()
+	local opacity = math.max(BAR_OPACITY, WG.FlowUI and WG.FlowUI.opacity or 0)
 	for _, b in ipairs(buttons) do
 		if WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.Element then
-			WG.FlowUI.Draw.Element(b.x0, b.y0, b.x1, b.y1, 1, 1, 1, 1)
+			WG.FlowUI.Draw.Element(b.x0, b.y0, b.x1, b.y1, 1, 1, 1, 1, nil, nil, nil, nil, opacity)
 		else
 			gl.Color(0, 0, 0, 0.6)
 			gl.Rect(b.x0, b.y0, b.x1, b.y1)
