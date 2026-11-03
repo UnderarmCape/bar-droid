@@ -54,6 +54,17 @@ public final class Log {
     }
     /** Raw output from a child process; no timestamp prefix in memory, kept verbatim. */
     public static void raw(String tag, String text) { line(tag, text, false); }
+    /** For the shared logs only (launcher.log, logcat): not in the launcher's log box, where players read. */
+    public static void detail(String tag, String msg) {
+        android.util.Log.i("BarDroid/" + tag, msg);
+        synchronized (Log.class) { write(fmt.format(new Date()) + " [" + tag + "] " + msg); }
+    }
+
+    private static void write(String s) {
+        if (file == null) return;
+        if (++sinceCheck >= 2000) { sinceCheck = 0; rotateIfBig(); }
+        try (FileWriter w = new FileWriter(file, true)) { w.write(s); w.write('\n'); } catch (IOException ignored) {}
+    }
 
     private static void line(String tag, String msg, boolean error) {
         String s = fmt.format(new Date()) + " [" + tag + "] " + msg;
@@ -63,10 +74,7 @@ public final class Log {
             lines.addLast(s);
             while (lines.size() > MAX_LINES) lines.removeFirst();
             ls = new ArrayList<>(listeners);
-            if (file != null) {
-                if (++sinceCheck >= 2000) { sinceCheck = 0; rotateIfBig(); }
-                try (FileWriter w = new FileWriter(file, true)) { w.write(s); w.write('\n'); } catch (IOException ignored) {}
-            }
+            write(s);
         }
         for (Listener l : ls) l.onLine(s);
     }

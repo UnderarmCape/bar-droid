@@ -707,6 +707,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       was on and checks that it reads on again afterwards. All four pass on the dev phone; the setting reads as before.
       And the lobby's warning box: its title and reason are two lines apart in the box's middle (they touched, the
       box's room all under them); lobby-phone-test passes at 100% and 130%.
+- [x] The lobby's hover look after a press (review, 2026-11-03): taken off a control once the button is up, it stayed
+      off when a mouse then moved on over the same control (Chili hovers a control again only on reaching another).
+      Now lit again once the pointer moves away from the press. On the dev phone (a scratch lobby widget moving the
+      pointer, adb's mouse input does not reach the game): after a finger's tap "Code of Conduct" hovered=false, the
+      pointer 40 px on inside it hovered=true. lobby-phone-test: all pass. And the launcher's log box no longer
+      starts with the app's library path (`nativeLibDir=/data/app/~~...`): it goes to launcher.log only (`Log.detail`).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

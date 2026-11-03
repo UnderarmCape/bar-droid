@@ -538,11 +538,15 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	-- back from a press until the pointer moves away; a mouse moving on gets its tooltips as before. And the hover look
 	-- once the button is up: Cancel tapped in the Register dialog left the Welcome screen's "Code of Conduct" under the
 	-- pointer lit as if picked (dev phone, 2026-11-03). Chili hovers a control again only when the pointer reaches another
-	-- (Screen:IsAbove), so one MouseOut keeps it plain.
+	-- (Screen:IsAbove), so one MouseOut keeps it plain; a mouse moving on over that same control lights it again.
 	if hush then
 		local mx, my, left, middle, right = Spring.GetMouseState()
 		if math.abs(mx - hush.x) + math.abs(my - hush.y) > DRAG_PX then
+			local out = hush.out
 			hush = nil
+			if out and screen0._lastHoveredControl == out then
+				pcall(function() out:MouseOver() end)
+			end
 		else
 			screen0.currentTooltip = nil
 			local hovered = screen0._lastHoveredControl
