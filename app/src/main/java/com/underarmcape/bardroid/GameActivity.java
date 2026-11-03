@@ -319,7 +319,8 @@ public class GameActivity extends MainActivity {
             @Override public void run() {
                 v.removeOnLayoutChangeListener(listener[0]);
                 v.removeCallbacks(this);
-                v.freezeDimensions(false);
+                // (back in the floating window within the second: it stays frozen, as Termux:X11 froze it again)
+                if (!isInPictureInPictureMode()) v.freezeDimensions(false);
             }
         };
         listener[0] = (view, l, t, right, bottom, ol, ot, or, ob) -> {

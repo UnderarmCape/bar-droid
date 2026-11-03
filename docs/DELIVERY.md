@@ -736,7 +736,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       floating window), and the game took a resize for it, 373 ms (`Game::ResizeEvent`) for the size it already had.
       `GameActivity` now keeps the X screen as it is out of the floating window until the window lies its way again
       (1 s at most). On the dev phone, Home and the notification again: no upright size, no resize in the game, the
-      game full screen as before. pad-test: all pass.
+      game full screen as before. pad-test: all pass. (Review: back in the floating window within that second, the
+      hold's end would have let the X screen follow the floating window; it stays frozen there now. On the dev phone
+      the notification tapped, Home 0.4 s later: 2008x938 throughout, no resize in the game.)
+- [x] The start screen's line under the icon (the app icon's way to the lobby, dev phone, 2026-11-03): "checking for
+      BAR updates" with a capital now, and in landscape centred under the icon (the icon is the window's background,
+      centred on the whole window; the line was centred beside the navigation bar, ~70 px to the left).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

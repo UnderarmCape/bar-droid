@@ -31,7 +31,7 @@ public class StartActivity extends Activity {
             long now = SystemClock.elapsedRealtime();
             boolean updating = s.startsWith("update: ") || s.startsWith("BAR update");
             if (updating) waitingSince = now;
-            updateView.setText(updating ? s.replaceFirst("^update: ", "") : "");
+            updateView.setText(updating ? GameService.forPlayers(s.replaceFirst("^update: ", "")) : "");   // ("Checking for ...")
             if (now - waitingSince > GIVE_UP_MS) { toGame = false; openLauncher(); finish(); return; }
             handler.postDelayed(this, 500);
         }
@@ -66,6 +66,15 @@ public class StartActivity extends Activity {
         updateView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
         updateView.setPadding(0, 0, 0, 48);
         setContentView(updateView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        // under the icon: the icon is the window's background, centred on the whole window, the text was centred
+        // beside the navigation bar (landscape: ~70 px left of the icon on the dev phone); the bar's width on the
+        // other side too
+        updateView.post(() -> {
+            android.view.WindowInsets in = getWindow().getDecorView().getRootWindowInsets();
+            if (in == null) return;
+            int left = in.getStableInsetLeft(), right = in.getStableInsetRight();
+            updateView.setPadding(right, 0, left, 48);
+        });
         waitingSince = SystemClock.elapsedRealtime();
         handler.post(tick);
     }
