@@ -798,6 +798,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       kept the game: still running 19 s after its end, the line gone after its 12 s. pad-test: all pass.
       The end screen's Show Graphs works by tap too (BAR's Statistics with the game's graphs). And the line now goes
       the moment the pointer moves (it stayed after the tap that kept the game, then untrue); seen on the dev phone.
+- [x] The top bar's Save and Quit by touch (dev phone, 2026-11-03): Save writes the game (2.6 s, 6.9 MB, the game at
+      1 fps meanwhile) and the selection is gone after it; the same with `savegame` sent from a widget and no finger
+      at all, so it is BAR's or the engine's own, not the touch (a probe: no press reached the map). Quit asks first
+      (Stay / Resign / Quit, under BAR's blur): Stay resumes the game, the selection kept; Quit ends it. The test
+      saves were removed from the dev phone. Nothing of the app's to change.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
