@@ -518,10 +518,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       outline or label at all (the app's hidden copy took its place in the editor's list). Now shown as "Build menu
       (BAR's: fixed)" whenever the app's copy is not on screen; in BAR's game the copy stays the sizeable "Build menu",
       with no second label. Both seen on the dev phone at 1968x2184.
-- [ ] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
+- [x] Replays of games that were stopped but had written something (the benchmark's runs on the dev phone): the lobby's
       Replays tab lists them as "time unknown" (no game time in the header), and one started from there stood at 0:00,
-      x0.00. Whether a phone game ended by the low-memory killer leaves such a replay too, and whether the tab should
-      say so or leave them out, is Kailil's call; the empty ones are already removed (above).
+      x0.00. Looked into (2026-11-02, dev phone): a 2-minute game quit the way BAR's Quit does (`quitforce`, the engine
+      exited 0) wrote a replay with game time 0 in its header as well: the engine writes the time only at game over,
+      so "time unknown" is BAR's own for any game not played to its end, on a PC too. Started from the Replays tab it
+      played: the 0:00, x0.00 is the game's start replayed in real time (51 s here, the phone's load of the recorded
+      game) before "Beginning demo playback" reaches the game, which BAR's replay "skip" button jumps; then 0:22, x1.00.
+      A stopped game's replay lists its players as "Player" and "InactiveAI(1)" (the quit one: "Phone",
+      "BARbarianAI(1)"). Nothing for the app to change; the empty ones are already removed (above).
 - [x] Half-made settings copies (2026-11-02): `sed -i` writes a whole copy (`sedXXXXXX`) beside the file it edits and
       renames it over the file, so a start stopped in between left the copy: a 28 KB `BYAR.lua` in `LuaUI/Config` on the
       dev phone since 10-31. `launch-bar.sh` now removes them before it edits anything; on the dev phone: "1 half-made
