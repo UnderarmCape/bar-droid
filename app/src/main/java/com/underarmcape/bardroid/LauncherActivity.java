@@ -190,7 +190,9 @@ public class LauncherActivity extends AppCompatActivity {
         String head = !inst.isInstalled() ? "Not installed, " + s
                 // (a failure says so and where to look, not "Installed, game ended with an error (3)")
                 : !GameService.busy() && s.startsWith("game ended with an error") ? GameService.forPlayers(s) + ": the log below says why"
-                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? "Installed, " + s : "Ready";
+                // (what the service does, in the notification's words: "Installed, running (skirmish)" said the install
+                // state with the service's own word for it)
+                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? GameService.forPlayers(s) : "Ready";
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
         text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);
@@ -201,6 +203,9 @@ public class LauncherActivity extends AppCompatActivity {
         logFollows = logScroll.getScrollY() + logScroll.getHeight() >= logView.getHeight();
         logView.append(line + "\n");
         if (logView.getLineCount() > 2500) logView.setText(Log.dump());
+        // (the service's own lines are its status: the status line follows at once, not at the next 1.5 s tick; it
+        // still read "Ready" after Install / Update had begun)
+        if (line.contains(" [svc] ")) refresh();
     }
 
     /**

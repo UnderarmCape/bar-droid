@@ -941,7 +941,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       game's word until the update check); it says "starting (skirmish)" at once now. The notification had the same
       first word ("Idle", posted before the work began): the service sets "starting" (or "installing") before it goes
       up, and shows it as "Starting" like the engine's start; titles sampled during a start: Starting, Update:
-      checking for BAR updates, Starting X server, Skirmish running. And placing a
+      checking for BAR updates, Starting X server, Skirmish running. The launcher's status line says the same in the
+      same words now ("Skirmish running", "Installed"; it said "Installed, running (skirmish)", "Installed,
+      installed"), and follows each of the service's steps at once (it read "Ready" for up to 1.5 s after Install /
+      Update; at 0.3 s now "Update: checking for BAR updates"). And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
