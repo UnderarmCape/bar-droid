@@ -674,6 +674,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       fps, no Lua error. A 10-minute skirmish (low-memory mode, the game left alone) ran through at 30 fps a minute,
       the engine at 4734 MB at most. And the panel's prices are grouped as BAR's build menu beside it prints them:
       "Cost 2 700   26 000" where it read "2700 26000".
+- [x] The chat box after a fold (the same review): it hangs under BAR's top bar, which lays itself out after it
+      (layer -95000 to the chat's -96000), so after a fold the box went by the top bar's place on the other screen. It
+      lays out once more in the first Update after a resize. The app's other panels read BAR's places when they need
+      them (the pad's order cells, the touch widget's top bar, the spectate bar's player list) or follow them (the
+      build menu copy, the Unit info). On the dev phone: a chat line and BAR's messages, after 17 s the chat line alone
+      (40 s), with the typing box open the chat line alone. And the line box ends where its longest line does (it was
+      three quarters of the screen wide for one short line); while typing it keeps the typing box's width.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

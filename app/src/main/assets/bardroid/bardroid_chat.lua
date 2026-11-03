@@ -60,6 +60,7 @@ local function clock()
 end
 local entries = {} -- { time, chunks = name pieces, nameColor, text, lines = wrapped text }
 local hooked, wasInputHistory = false, nil
+local relayoutNext = false -- (ViewResize: once more in the next Update, BAR's top bar placed by then)
 local vsx, vsy = Spring.GetViewGeometry()
 local font, nameFont, fontSize, lineHeight
 local boxLeft, boxRight, boxTop, nameWidth, textLeft, gap, maxLines
@@ -123,6 +124,16 @@ local function wrap(text, width, size)
 	return lines
 end
 
+-- How far an entry's longest line reaches on the screen: the box ends there when no typing box is open above it (a
+-- short line had a box three quarters of the screen wide)
+local function reach(e)
+	local w = 0
+	for _, line in ipairs(e.lines) do
+		w = math.max(w, font:GetTextWidth(line) * fontSize)
+	end
+	return (#e.chunks > 0 and textLeft or boxLeft + gap) + w
+end
+
 local function chunks(name)
 	local out = {}
 	for i = 1, #name, NAME_CHARS do
@@ -162,6 +173,7 @@ local function layout()
 	textLeft = boxLeft + gap + nameWidth + gap
 	for _, e in ipairs(entries) do
 		e.lines = wrap(e.text, boxRight - gap - (#e.chunks > 0 and textLeft or boxLeft + gap), fontSize)
+		e.right = reach(e)
 	end
 	return true
 end
@@ -179,6 +191,7 @@ local function add(name, nameColor, text, ttl)
 	local e = { time = now, chunks = name ~= "" and chunks(name) or {}, nameColor = nameColor, text = text, ttl = ttl }
 	if font then
 		e.lines = wrap(text, boxRight - gap - (name ~= "" and textLeft or boxLeft + gap), fontSize)
+		e.right = reach(e)
 	end
 	entries[#entries + 1] = e
 	if #entries > 100 then
@@ -636,13 +649,21 @@ function widget:Update()
 	end
 	if hooked then
 		takeMessages()
+		if relayoutNext then
+			relayoutNext = false
+			layout()
+			layoutTyping()
+		end
 	end
 end
 
+-- The box hangs under BAR's top bar, which lays itself out after this widget (its layer, -95000): after a fold the box
+-- went by the top bar's place on the other screen. Laid out again in the next Update, when every widget has its new one.
 function widget:ViewResize()
 	if hooked then
 		layout()
 		layoutTyping()
+		relayoutNext = true
 	end
 end
 
@@ -692,7 +713,15 @@ function widget:DrawScreen()
 		return
 	end
 	local bottom = top - used * lineHeight - math.floor(lineHeight * 0.3)
-	box(boxLeft, bottom, boxRight, top, LINES_BOX)
+	local right = boxRight -- (while typing: as wide as the typing box above)
+	if not (typing or barTyping) then
+		right = 0
+		for _, e in ipairs(shown) do
+			right = math.max(right, e.right or boxRight)
+		end
+		right = math.min(boxRight, math.ceil(right + gap))
+	end
+	box(boxLeft, bottom, right, top, LINES_BOX)
 	gl.Color(1, 1, 1, 1)
 	local y = top
 	local baseline = math.floor(lineHeight * 0.78)
