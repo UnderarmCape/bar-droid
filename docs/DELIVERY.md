@@ -542,8 +542,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       half second before frame 150 "Lua::Callins::Unsynced" is 84% of the time (Draw 8%, Sim 15%). BAR's Widget
       Profiler (on for one run through dev-env.sh's `widget_order "Widget Profiler" 1`) puts LuaUI callins at 67-90% of
       the running time but no widget above 2.3% (its 0.1 s tick and 2 s smoothing miss one long frame in fifteen, or
-      the time is in what it leaves out: garbage collection and GL calls). Next: time the callins from a first and a
-      last widget layer (Update, GameFrame, DrawScreen, DrawWorld) to find the phase, then the widgets in it.
+      the time is in what it leaves out: garbage collection and GL calls). Found: it is the Update callin (probe
+      widgets from layer -1,000,000 to 1,000,000: every slow Update between 10,000 and 100,000), BAR's Cursor widget
+      (layer 19000), which after the start replaces its 26 animated cursors one Update at a time (BAR's comment: "~0.7 s
+      for all" on a PC). On the phone each first `Spring.ReplaceMouseCursor` takes 240-320 ms in the engine (the same
+      cursor again: 0 ms; with `HardwareCursor = 0` just as slow; reading all 992 images of the 75 set through the VFS:
+      0.8 s, 40 of them as textures: 38 ms). The phone already gets BAR's smallest set (75). Online games load them in
+      the pregame (start positions), and a fold or unfold reloads the same set at no cost: only a skirmish's first
+      seconds stutter. Kailil's call: the app could ask for the same 26 cursors while the game loads (a user widget's
+      Initialize: the loading screen about 8 s longer, then BAR's own replacements cost nothing), or leave it.
 
 ## Releasing (once the blockers are done)
 
