@@ -859,6 +859,21 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [ ] Simulation offload for low-spec phones, a study for BAR's devs (Kailil, 2026-11-03: "try the simulation skipping
+      anyways I want to give the results to the devs ... the phones rely on other players to keep them sync and get the
+      math from them"). Recoil is lockstep: every client simulates every frame and is checked for sync; only commands
+      travel; no past frames are kept. Offline experiments only, never online, never in the shipped app. Steps: (1)
+      where the phone's sim time goes at late-game sizes (`phone-bench -Profile gadgets`, the engine's own timers); (2)
+      what a phone would receive instead of simulating: BAR's save of a late game on the phone (size, save and load
+      time) against the command stream (`tools/demo-rate.py`); (3) a snapshot-sync try from savegames (one device
+      simulates, the phone loads its states); (4) whether a modified engine build for a real skip is feasible here;
+      (5) a write-up with the numbers (docs/research/), Kailil hands it on. Dynamic resolution when hot: declined
+      (Kailil, 2026-11-03: "No res reduction").
+- [ ] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
+      all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
+      over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and
+      re-recording its drawing at each switch. Measure that first (count the switches and fits a minute), then keep
+      the fits per text, or with fingers stop following what drifts under a pointer that came to rest.
 - [x] phone-bench after the day's changes (dev phone, 2026-11-03 12:43, the controller game: the order menu copy stands
       down there): Sim 52.58, Draw 26.01, Update 11.23 ms per frame, x0.40, in last night's range (52.3-54.3,
       24.97-26.37, 11.28-11.39; this morning's 49.4/23.05/10.49 ran cooler: prime CPU cap 1843 against 1708 MHz now).
