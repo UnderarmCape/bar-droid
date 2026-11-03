@@ -956,7 +956,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       on `WG.messages.addMessage`, given back in Shutdown: fine. The info panel's grid (several unit types) not yet
       seen: a box drag at that zoom took the commander only, BAR's Ctrl+A the idle constructors (and a QUEUE tap on
       a fresh turbine missed it: the spots differ by start position). The launcher's log lines ran along their box's
-      left edge: 6 dp of padding inside it now. And placing a
+      left edge: 6 dp of padding inside it now. The info panel's grid reached with a scratch widget on the dev phone
+      (the commander ordered to build, then the team selected; removed after): a commander and a Wind Turbine, each
+      with a big "1" on its picture. A count shows only above 1 now, as BAR's Info widget prints it. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

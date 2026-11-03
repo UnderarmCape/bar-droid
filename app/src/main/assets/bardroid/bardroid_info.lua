@@ -945,9 +945,12 @@ local function drawGrid()
 	end
 	bold:Begin()
 	for _, c in ipairs(cells) do
-		local size = (c[3] - c[1]) * 0.3
-		local text = c.more and ("+" .. c.more) or tostring(#c[6])
-		bold:Print(VALUE .. text, c[3] - size * 0.25, c[2] + size * 0.3, size, "or")
+		-- (a count only above 1, as BAR's Info widget prints it: a big "1" on every single unit's picture was noise)
+		if c.more or #c[6] > 1 then
+			local size = (c[3] - c[1]) * 0.3
+			local text = c.more and ("+" .. c.more) or tostring(#c[6])
+			bold:Print(VALUE .. text, c[3] - size * 0.25, c[2] + size * 0.3, size, "or")
+		end
 	end
 	bold:End()
 end
