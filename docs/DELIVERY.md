@@ -816,6 +816,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       from the player list, and its player arrows did nothing without a word (no human player in the game: an AI has no
       camera to follow). They now read "No player cams" in grey; Free, Follow unit and Group as before. fp-save-test
       and lobby-phone-test: all pass.
+- [x] A quick flick in BAR's Settings (and its other windows) was still a left drag (the drag ended before the touch
+      widget had answered for the point); it scrolls as a slower drag does now (dev phone, a 60 ms flick). The layout
+      editor's labels try the panel's bottom edge too, and its right end where the left is blocked: the chat's label
+      sits under its bottom right (it covered "Battle, Started"), the top bar's under its right end (it covered the
+      metal figures). The lobby's server bar (Close, Previous, Next, Join) looked over during lobby-phone-test: as it
+      should be.
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

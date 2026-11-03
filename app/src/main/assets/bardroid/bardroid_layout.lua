@@ -487,20 +487,38 @@ function widget:DrawScreen()
 				local w = font:GetTextWidth(p.label) * labelSize + labelSize
 				local lx = math.max(0, math.min(x0, vsx - w))
 				-- a tab on the panel's top edge, outside, where that is on the screen and on no other panel (inside, the
-				-- label covered the panel's own first line: the order menu's Fire at will); else in its top left corner
-				local above = y1 + th <= vsy
-				for _, other in ipairs(order) do
-					local ox0, oy0, ox1, oy1 = rectOf(other)
-					if above and other ~= id and ox0 and ox0 < lx + w and ox1 > lx and oy0 < y1 + th and oy1 > y1 then
-						above = false
+				-- label covered the panel's own first line: the order menu's Fire at will); else on its bottom edge,
+				-- outside (the chat, under BAR's top bar); else in its top left corner
+				-- (at the panel's left end, else at its right end: the build menu reaches under the chat's left end)
+				local function free(top)
+					if top > vsy or top - th < 0 then
+						return false
 					end
+					for _, x in ipairs({ lx, math.max(0, math.min(x1, vsx) - w) }) do
+						local clear = true
+						for _, other in ipairs(order) do
+							local ox0, oy0, ox1, oy1 = rectOf(other)
+							if other ~= id and ox0 and ox0 < x + w and ox1 > x and oy0 < top and oy1 > top - th then
+								clear = false
+							end
+						end
+						if clear then
+							lx = x
+							return true
+						end
+					end
+					return false
 				end
-				local ly = above and y1 + th or math.min(y1, vsy) -- (the tab's top)
+				local above = free(y1 + th)
+				local below = not above and free(y0)
+				local ly = above and y1 + th or below and y0 or math.min(y1, vsy) -- (the tab's top)
 				local f = WG.FlowUI
 				if f and f.Draw and f.Draw.RectRound then
 					local cs = f.elementCorner or 4
 					if above then
 						f.Draw.RectRound(lx, ly - th, lx + w, ly, cs, 1, 1, 0, 0, BAR_TAB, BAR_TAB)
+					elseif below then
+						f.Draw.RectRound(lx, ly - th, lx + w, ly, cs, 0, 0, 1, 1, BAR_TAB, BAR_TAB)
 					else
 						f.Draw.RectRound(lx, ly - th, lx + w, ly, cs, 0, 0, 1, 0, BAR_TAB, BAR_TAB)
 					end

@@ -464,7 +464,10 @@ final class RtsTouch {
                 break;
             case DRAG_WAIT:
                 int quick = hoverAt(downX, downY);
-                if (quick == HOVER_INTERFACE || quick == HOVER_SCROLL) {   // a quick drag on the interface
+                if (quick == HOVER_SCROLL && Math.abs(curY - downY) >= Math.abs(curX - downX)) {
+                    scrollY = downY;   // a quick flick in one of BAR's windows: it scrolls as a slower drag does
+                    scrollTo(curY);
+                } else if (quick == HOVER_INTERFACE || quick == HOVER_SCROLL) {   // a quick drag on the interface
                     press(downX, downY, InputStub.BUTTON_LEFT, true);
                     press(curX, curY, InputStub.BUTTON_LEFT, false);
                 } else if (startPlaceDrag()) {   // (ONE picked: the building moved, the map stays)
