@@ -1342,7 +1342,8 @@ local function drawCell(cell, zoom)
 			if droid.evenKey then
 				sizeWidth = math_min(cellInnerWidth, cellWidth - ((cellRects[cell][3] - cellRects[cell][1]) - cellInnerWidth))
 			end
-			local fontSize = cellInnerWidth / textWidth * math_min(1, (cellInnerHeight / (rows * 6)))
+			-- (and a label sized by its width keeps 4% of the button at each end: "Place Blueprint" ran to its edges)
+			local fontSize = cellInnerWidth * 0.92 / textWidth * math_min(1, (cellInnerHeight / (rows * 6)))
 			if fontSize > sizeWidth / 7 then
 				fontSize = sizeWidth / 7
 			end
