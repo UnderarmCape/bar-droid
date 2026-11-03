@@ -81,6 +81,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       drawn over everything, but its widget is at 999999, after the list. `bardroid_players.lua` (-5, just before the
       list) now hands a press on a bar button to the bar (`WG.BarDroidSpectate.barPress`, its release with it). On the
       dev phone: "Follow unit", then "1st person" on their first taps, the camera in 1st person. fp-save-test: 4 of 4.
+- [ ] Kailil's call: Escape and Android 17's keyboard capture (dev phone, 2026-11-03). Each Escape in a game shows
+      Android's notice "Long press Esc key to close this app" at the bottom of the screen for a few seconds (BAR's
+      Escape cancels, deselects and opens the menu: a keyboard player presses it often), and by that notice a long
+      press closes the app. It comes from Android's keyboard capture, which the app turns on so Android's own shortcuts
+      (Alt+Tab, Meta and its combinations, Ctrl+Space ...) reach the game (`KeyboardShortcuts`, Kailil 2026-10-27:
+      "i want android to not hijack its inputs"): posted by Android's KeyGestureController before the app sees the
+      key, so no app code can hide it. Checked: with the launcher's "Keyboard shortcuts go to the game" off, and with a
+      test build that kept only Samsung's Meta key request, no notice, and Escape still reached BAR (the selection
+      went). Seen with adb's keys; a real keyboard is likely the same. Choose: keep the capture (the notice stays), or
+      drop Android's capture and keep Samsung's Meta key request (One UI's and DeX's Meta shortcuts still go to the
+      game; Android's own, such as Alt+Tab, act again), or leave it to the setting (off: neither).
 - [ ] Kailil's online game on the Fold7 (2026-11-02, 22:07-22:31, Ascendancy, 8 players, unfolded; "super laggy. I
       had to leave the game. And when attempting to leave, the game crashed anyways"). His phone's logs: 30 fps for the
       first 11 minutes (up to 778 units); from 22:19 Android's thermal status 3 (severe), from 22:24 the GPU held at its
