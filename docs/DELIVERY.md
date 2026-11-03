@@ -951,7 +951,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       kept), checked on twelve of the service's statuses with a copy of `forPlayers`. That check is a real one now:
       the words moved to `StatusText.java` (no Android classes), `tools/status-text-test.ps1` (19 cases, in
       laptop-tests) and `java-checks.sh` (CI) run it; all pass, and the notification still reads "Skirmish running"
-      on the dev phone. And placing a
+      on the dev phone. A Wind Turbine by touch at the corner start (the spot, PLACE, the commander builds it: +42
+      energy); the chat box's BAR messages ("Battle, Started" is BAR's own caption; "Idle Constructors") and its hold
+      on `WG.messages.addMessage`, given back in Shutdown: fine. The info panel's grid (several unit types) not yet
+      seen: a box drag at that zoom took the commander only, BAR's Ctrl+A the idle constructors. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
