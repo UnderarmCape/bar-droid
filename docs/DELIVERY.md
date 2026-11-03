@@ -901,6 +901,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       now, the Commander's (already below the cap) unchanged. And the BAR top bar's cut-off "Wasting metal" banner
       (`docs/upstream/bar-topbar-warning-banner.md`) is still in BAR's current code (test-31777). Three Python bytecode
       files committed by mistake in fc0bb4a (`tools/__pycache__`) untracked, `__pycache__/` in .gitignore.
+- [x] The launcher's row of small buttons (dev phone, upright, 2026-11-03): each sized its own label, so "Benchmark"
+      ran from edge to edge of its button (2 dp of padding kept it the size of the others). The five now share one
+      size, the largest at which every label fits inside the launcher buttons' usual 6 dp padding
+      (`LauncherActivity.fitSmallButtons`, again when the row's width changes). And a review of the unit info panel's
+      recordings (cfcc568: keys, the oldest dropped after 8, the bar live or recorded, the grid): nothing found.
+      lobby-phone-test: all pass.
 - [x] Spectating by touch after the day's player list changes (dev phone, a skirmish's replay started through a
       temporary `dev-env.sh`, removed after; 2026-11-03): a tap on the small list brings up the spectate bar ("No player
       cams" dimmed, Free, Follow unit, Group), the list small as a spectator, no errors. The touch widget's 0.6% of the

@@ -8,6 +8,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.StatFs;
+import android.text.TextPaint;
+import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -68,6 +70,9 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
         findViewById(R.id.btnBench).setOnClickListener(v -> start(GameService.ACTION_PLAY, "bench"));
+        ((View) glcheck.getParent()).addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (r - l != or - ol) v.post(this::fitSmallButtons);
+        });
         // With a gamepad or keys (out of touch mode) the focus went to the top scroll view: a grey block over the title
         // and buttons, with nothing to press. The scroll views pass it on to their buttons and settings, Play vs AI first.
         findViewById(R.id.top).setFocusable(false);
@@ -114,6 +119,32 @@ public class LauncherActivity extends AppCompatActivity {
         if (device.getParent() != to) {
             ((ViewGroup) device.getParent()).removeView(device);
             if (wide) to.addView(device); else to.addView(device, 0);
+        }
+    }
+
+    /**
+     * The row of small buttons (GL check ... Stop) in one text size: the largest, 11 sp at most and 9 at least, at which
+     * every label fits inside its button's padding (LauncherButton's). Sized one by one (Android's autosize), "Benchmark"
+     * ran from edge to edge of its button (dev phone, 2026-11-03), or with that padding would have shrunk alone.
+     */
+    private void fitSmallButtons() {
+        ViewGroup row = (ViewGroup) findViewById(R.id.btnGlCheck).getParent();
+        android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+        float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11, dm);
+        float least = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9, dm);
+        for (int i = 0; i < row.getChildCount(); i++) {
+            TextView b = (TextView) row.getChildAt(i);
+            int room = b.getWidth() - b.getPaddingLeft() - b.getPaddingRight();
+            if (room <= 0) return;   // (not laid out yet)
+            TextPaint p = new TextPaint(b.getPaint());
+            p.setTextSize(size);
+            float w = p.measureText(b.getText().toString());
+            if (w > room) size *= room / w;
+        }
+        size = Math.max(least, (float) Math.floor(size));
+        for (int i = 0; i < row.getChildCount(); i++) {
+            TextView b = (TextView) row.getChildAt(i);
+            if (b.getTextSize() != size) b.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);
         }
     }
 

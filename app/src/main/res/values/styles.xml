@@ -24,15 +24,12 @@
         <item name="android:backgroundTint">?attr/colorAccent</item>
         <item name="android:textColor">@color/ic_bg</item>
     </style>
-    <!-- Five to a row: little padding, so that the longest word stays the size of the others. -->
+    <!-- Five to a row, their words in one size: LauncherActivity.fitSmallButtons (sized one by one, the longest word
+         either shrank alone or, with little padding, ran from edge to edge of its button). -->
     <style name="LauncherButton.Small">
         <item name="android:maxLines">1</item>
-        <item name="android:paddingLeft">2dp</item>
-        <item name="android:paddingRight">2dp</item>
-        <item name="android:autoSizeTextType">uniform</item>
-        <item name="android:autoSizeMinTextSize">9sp</item>
-        <item name="android:autoSizeMaxTextSize">11sp</item>
-        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">none</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
     <!-- A setting: air between the long ones, the box at the first line. -->
