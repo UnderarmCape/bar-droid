@@ -878,6 +878,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
       from a recent save. Catch-up times added from Kailil's own late joins on the Fold7 (x2.0 at 2 400 units, never
       past ~5 000). The write-up is complete for Kailil to hand on.
+- [x] Spectating by touch after the day's player list changes (dev phone, a skirmish's replay started through a
+      temporary `dev-env.sh`, removed after; 2026-11-03): a tap on the small list brings up the spectate bar ("No player
+      cams" dimmed, Free, Follow unit, Group), the list small as a spectator, no errors. The touch widget's 0.6% of the
+      benchmark looked over: nothing in it stands out after its two earlier rounds; left.
 - [x] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
       all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
       over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and
