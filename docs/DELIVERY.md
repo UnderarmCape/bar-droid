@@ -617,6 +617,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       order menu, which stays where BAR's widget puts it (right of the panel's default width; no setter), and covered
       D-Gun and Set Target. The panel now stops at the order menu's left edge and grows in height and text only; at
       126% on the dev phone the orders show whole.
+- [x] The same panel made taller covered the build menu's page strip (‹ 1/2 ›): the menu's bottom was BAR's fixed 14%
+      of the screen, the unit panel's default height. The app's copy now keeps its bottom above the unit panel's
+      height as `WG.info` tells it (`droid.infoTall`, `tools/make-buildmenu.py`; the copy made again from the phone's
+      test-31783) and lays itself out again when that changes. In BAR's game on the dev phone, Unit info at 126%: the
+      menu ends above it, its strip whole. pad-test -Online: all pass. The controller game's menu is v0.8.5's and keeps
+      BAR's 14% (BARGAMEPAD, at Kailil's word).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

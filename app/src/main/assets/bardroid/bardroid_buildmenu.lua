@@ -708,6 +708,15 @@ function droid.edits()
 	return editor and editor.get("buildmenu") or { dx = 0, dy = 0, size = 1 }
 end
 
+-- BAR Droid: the unit panel's height (of the screen), BAR's or the app's (bardroid_info.lua, sized in the layout editor)
+function droid.infoTall()
+	local info = WG.info
+	if info and info.getPosition then
+		local _, h = info.getPosition()
+		return h
+	end
+end
+
 -- BAR Droid: the menu for the layout editor, once it is there (BAR's own shows in it as fixed)
 function droid.register()
 	local editor = WG.BarDroidLayout
@@ -1324,7 +1333,12 @@ function widget:ViewResize()
 
 		-- BAR Droid: as tall as droid.rows cells as wide as the menu allows, and the page strip under them (Kailil:
 		-- "increase the total height of the build menu to allow the pictures to fill their squares"); its bottom
-		-- above the unit panel
+		-- above the unit panel, also the app's made taller in the layout editor (droid.infoHeight)
+		droid.infoHeight = droid.infoTall()
+		if droid.infoHeight and droid.infoHeight + widgetSpaceMargin / vsy > posY2 then
+			posY2 = math.min(droid.infoHeight + widgetSpaceMargin / vsy, posY - 0.1)
+			height = math_floor((posY - posY2) * vsy) / vsy
+		end
 		local cellPx = (width * vsx - (bgpadding + activeAreaMargin) * 2) / droid.colls
 		local want = math_floor((droid.rows + droid.strip) * cellPx + (bgpadding + activeAreaMargin) * 2) / vsy
 		if want < height then
@@ -1372,6 +1386,9 @@ local sec = 0
 function widget:Update(dt)
 	droid.register() -- BAR Droid
 	droid.place()
+	if not stickToBottom and droid.infoTall() ~= droid.infoHeight then -- BAR Droid: the unit panel's height changed
+		widget:ViewResize()
+	end
 	tracy.ZoneBeginN("W:BuildMenu:Update")
 	if delayRefresh and spGetGameSeconds() >= delayRefresh then
 		clear()
