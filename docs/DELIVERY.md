@@ -528,6 +528,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       phone is behind the order menu and the unit info, and it has no position setter. `bardroid_chat.lua` now takes
       its `WG.messages.addMessage` and shows them in the chat box (BAR's message white). On the dev phone: "Battle,
       Started" and a test message there, nothing behind the order menu.
+- [x] The Info panel with several units of one type (2026-11-02): a grid of one cell, one big picture and the rest of the
+      panel empty (BAR's own panel does the same: any selection of two or more is its grid). Now that type's name, words
+      and stats as for one unit, the count on its picture, and a tap on the picture brings the camera to the group
+      (BAR's middle click on a cell). On the dev phone, 23 units of 9 types given: a tap on a cell (the touch path)
+      selected that type's 6, and the panel showed "Pawn" with its stats and a 6.
 
 ## Releasing (once the blockers are done)
 

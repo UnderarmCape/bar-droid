@@ -676,7 +676,11 @@ local function pick()
 			return { kind = "unit", id = id, unitID = unitID }
 		end
 	elseif count > 1 then
-		return { kind = "units", types = selectedTypes() }
+		local types = selectedTypes()
+		if #types == 1 then -- (one type: its name and stats, the count on its picture; as a grid it was one big picture)
+			return { kind = "def", id = types[1].defID, count = #types[1].units }
+		end
+		return { kind = "units", types = types }
 	end
 	local mx, my = Spring.GetMouseState()
 	local what, unitID = Spring.TraceScreenRay(mx, my)
@@ -701,7 +705,7 @@ local function sameShown(a, b)
 		end
 		return true
 	end
-	return a.id == b.id and a.unitID == b.unitID
+	return a.id == b.id and a.unitID == b.unitID and a.count == b.count
 end
 
 local function buildView()
@@ -726,7 +730,7 @@ local function buildView()
 		fitKey, laidOut = key, fit(v)
 		dropContent()
 	end
-	local now = shown.id .. "\n" .. (v.health and (floor(v.health) .. "/" .. floor(v.maxHealth) .. "/" .. floor((v.build or 1) * 100)) or "")
+	local now = shown.id .. "x" .. (shown.count or 1) .. "\n" .. (v.health and (floor(v.health) .. "/" .. floor(v.maxHealth) .. "/" .. floor((v.build or 1) * 100)) or "")
 	if now ~= drawn then
 		dropContent()
 		drawn = now
@@ -810,6 +814,12 @@ local function drawUnitView()
 	local pic = l.pic
 	gl.Color(1, 1, 1, 1)
 	drawPicture(shown.id, l.x0, l.y1 - pic, l.x0 + pic, l.y1)
+	if shown.count then -- (as the grid's cells print it)
+		local size = pic * 0.3
+		bold:Begin()
+		bold:Print(VALUE .. shown.count, l.x0 + pic - size * 0.25, l.y1 - pic + size * 0.3, size, "or")
+		bold:End()
+	end
 	local y = l.y1
 	bold:Begin()
 	bold:Print(VALUE .. l.name, l.textX, y - l.nameSize * 0.95, l.nameSize, "o")
@@ -899,6 +909,13 @@ function widget:MousePress(x, y, button)
 			if ux then
 				Spring.SetCameraTarget(ux, uy, uz, 0.4)
 			end
+			return true
+		end
+	end
+	if shown.count and laidOut then -- one type's picture: the camera to the group (BAR's middle click on a cell)
+		local l = laidOut
+		if inRect(x, y, { l.x0, l.y1 - l.pic, l.x0 + l.pic, l.y1 }) then
+			Spring.SendCommands("viewselection")
 			return true
 		end
 	end
