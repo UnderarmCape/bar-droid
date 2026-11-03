@@ -761,6 +761,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `lobbyFailedFast` back to false, the update started again; the Benchmark, which the updater does not judge,
       for the wording's check. A fake failure for a test goes through the Benchmark or GL check, never the lobby or
       a skirmish with an update pending.)
+- [x] Share logs on the dev phone (2026-11-03): a 1.7 MB zip of the logs (launcher, infolog, the engine's kept logs)
+      and Android's share sheet; backed out, nothing sent. And two settings in the launcher's own words: the frame
+      cap's third choice "No cap (runs hot)" beside "30 fps" and "60 fps" (it read "none (runs hot)"), the keyboard
+      shortcuts' "Off: Android's own" as the other settings say what off does (it read "off = Android's").
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

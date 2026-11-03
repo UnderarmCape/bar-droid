@@ -37,12 +37,12 @@
     <string name="lbl_fps_cap">Frame cap</string>
     <string name="rb_fps30">30 fps</string>
     <string name="rb_fps60">60 fps</string>
-    <string name="rb_fps_none">none (runs hot)</string>
+    <string name="rb_fps_none">No cap (runs hot)</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR): the game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
     <string name="cb_upscale_compare">Compare upscaling (diagnostic): SGSR on and off every 3 seconds, with a label</string>
     <string name="cb_lobby_bridge">Lobby bridge: the app stands in for BAR\'s PC launcher, for the Replays tab, web links and skill ratings; the lobby\'s downloads go through the app (off: the Replays tab cannot list replays)</string>
     <string name="cb_rts_touch">BAR touch controls: drag pans, pinch zooms, twist rotates, two fingers up or down tilt, tap then drag selects, long press gives orders. Off: the touch modes under Display</string>
-    <string name="cb_capture_shortcuts">Keyboard shortcuts go to the game: Android\'s, One UI\'s and DeX\'s shortcuts (Alt+Tab, the Windows key, Ctrl+Space, the soft keyboard\'s language switch) do nothing while BAR is in front, their keys reach BAR; off = Android\'s</string>
+    <string name="cb_capture_shortcuts">Keyboard shortcuts go to the game: Android\'s, One UI\'s and DeX\'s shortcuts (Alt+Tab, the Windows key, Ctrl+Space, the soft keyboard\'s language switch) do nothing while BAR is in front, their keys reach BAR. Off: Android\'s own</string>
     <string name="key_capture_service">Beyond All Reason keyboard shortcuts</string>
     <string name="key_capture_service_description">Optional. Sends the keyboard shortcuts Android would take for itself (Alt+Tab, the Windows key, Ctrl+Space) to Beyond All Reason while its game screen is in front. Needed only where Android does not hand them to the game by itself (before Android 16.1). It reads keys only while the game screen has focus and passes them to the game; Home, Recents, power and volume keys stay Android\'s.</string>
     <string name="cb_noseccomp">proot: disable seccomp acceleration (PROOT_NO_SECCOMP)</string>
