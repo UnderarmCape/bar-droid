@@ -533,6 +533,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       and stats as for one unit, the count on its picture, and a tap on the picture brings the camera to the group
       (BAR's middle click on a cell). On the dev phone, 23 units of 9 types given: a tap on a cell (the touch path)
       selected that type's 6, and the panel showed "Pawn" with its stats and a 6.
+- [ ] The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
+      "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
+      its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
+      runs each), and not Mesa compiling shaders (its disk cache in the container's `/root/.cache`, 7.7 MB, unchanged
+      by these games). Next: BAR's widget profiler over the game's start (`tools/phone-bench.ps1 -Profile widgets` reads
+      it for the benchmark) to see which widget or engine pass holds those frames.
 
 ## Releasing (once the blockers are done)
 
