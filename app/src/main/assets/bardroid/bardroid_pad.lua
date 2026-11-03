@@ -1294,7 +1294,17 @@ local function padOrders(want)
 	end
 	if not ordersRecovered then -- (a game that ended with them hidden)
 		ordersRecovered = true
-		for name in (Spring.GetConfigString(HIDDEN_KEY, "") or ""):gmatch("[^,]+") do
+		local names = Spring.GetConfigString(HIDDEN_KEY, "") or ""
+		if names == "" then
+			-- all nine hidden and none of them noted: BAR's own save of them hidden at a game's end, before this
+			-- widget's Shutdown showed them again (until GetConfigData below did it); the app's doing, not a choice
+			local all = true
+			for _, name in ipairs(PAD_HIDDEN_ORDERS) do
+				all = all and o.getDisabledCmd(name) == true
+			end
+			names = all and table.concat(PAD_HIDDEN_ORDERS, ",") or ""
+		end
+		for name in names:gmatch("[^,]+") do
 			o.setDisabledCmd({ name, false })
 		end
 		Spring.SetConfigString(HIDDEN_KEY, "")
@@ -1320,6 +1330,15 @@ local function padOrders(want)
 		ordersHidden = nil
 		Spring.SetConfigString(HIDDEN_KEY, "")
 	end
+end
+
+-- BAR saves the order menu's switch with every widget's config before any widget's Shutdown (barwidgets.lua
+-- widgetHandler:Shutdown), and this widget's config comes first (layer -95000, BAR's order menu 1): the orders are shown
+-- again for that save, and hidden again at the next Update if the game goes on (a widget switched on or off). Shown in
+-- Shutdown, they had stayed hidden after a game played with the pad, in every game after it, by touch and online too
+-- (Kailil, 2026-11-03: the order menu no longer "rearranges"; dev phone: the nine hidden with no pad).
+function widget:GetConfigData()
+	padOrders(false)
 end
 
 -- BAR's info panel (bottom left) shows the unit under the pointer before the selection, and the pad's pointer rests in

@@ -859,6 +859,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] The order menu's pad orders stayed hidden after a game played with the pad (Kailil, 2026-11-03: the order
+      menu no longer "rearranges"): BAR saves the order menu's switch (`disabledCmd`) with every widget's config
+      before any widget's Shutdown, so `bardroid_pad.lua` showing Stop, Wait, Attack, Repeat, Move, Reclaim, Repair,
+      Fight and Patrol again in Shutdown came too late, and every game after one that ended normally with the pad in
+      use had them hidden, by touch and online (dev phone: all nine hidden with no pad, the app's note of them
+      empty). Now shown again in the widget's GetConfigData (before the order menu's: layers -95000 and 1) and
+      hidden again at the next Update if the game goes on; at the first start, all nine hidden with no note is taken
+      for that leftover and undone. Dev phone, three games: the leftover gone; the pad in use hid the nine, and after
+      `/quitforce` BAR's file had `disabledCmd = {}`; the next game by touch showed every order. Why the menu does not
+      rearrange online: the even layout (the rest filling the menu) is the controller game's order menu (v0.8.5)
+      with the pad; BAR's released game keeps BAR's own, a grid of at least 4 x 4 cells (Kailil's last game on the
+      Fold7, 2026-11-02 22:07, was online).
 - [x] A long name in the small player list still reached BAR's eraser ("Prime_Federator (AI)", dev phone,
       2026-11-03): under 1200 lines BAR draws a name about a tenth wider than it measures it (its fontScaleMed, 1.11
       on a 938-line screen), more than the chat column's room. The small list also keeps BAR's income column where
