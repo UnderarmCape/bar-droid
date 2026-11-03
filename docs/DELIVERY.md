@@ -954,7 +954,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       on the dev phone. A Wind Turbine by touch at the corner start (the spot, PLACE, the commander builds it: +42
       energy); the chat box's BAR messages ("Battle, Started" is BAR's own caption; "Idle Constructors") and its hold
       on `WG.messages.addMessage`, given back in Shutdown: fine. The info panel's grid (several unit types) not yet
-      seen: a box drag at that zoom took the commander only, BAR's Ctrl+A the idle constructors. And placing a
+      seen: a box drag at that zoom took the commander only, BAR's Ctrl+A the idle constructors (and a QUEUE tap on
+      a fresh turbine missed it: the spots differ by start position). The launcher's log lines ran along their box's
+      left edge: 6 dp of padding inside it now. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
