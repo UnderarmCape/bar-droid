@@ -427,6 +427,13 @@ local function setupCellGrid(force)
 				rect[2] = math_floor(activeRect[4] - cellHeight * row + 0.5)
 				rect[3] = math_floor(activeRect[1] + w * col / k + 0.5)
 				rect[4] = math_floor(activeRect[4] - cellHeight * (row - 1) + 0.5)
+				-- (BAR's drawing gives a row's first button its edge margin by the cell's number, i % cols == 1, which
+				-- rows of fewer buttons do not follow (10 orders: 4 + 3 + 3): those rects shift by the difference, so
+				-- every row's first button lines up)
+				if cols > 1 and (i % cols == 1) ~= (col == 1) then
+					local d = cellMarginPx - cellMarginPx2
+					rect[1] = rect[1] + (col == 1 and -d or d)
+				end
 			end
 		end
 		for j = i + 1, #cellRects do

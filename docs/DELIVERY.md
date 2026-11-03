@@ -859,6 +859,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] phone-bench after the day's changes (dev phone, 2026-11-03 12:43, the controller game: the order menu copy stands
+      down there): Sim 52.58, Draw 26.01, Update 11.23 ms per frame, x0.40, in last night's range (52.3-54.3,
+      24.97-26.37, 11.28-11.39; this morning's 49.4/23.05/10.49 ran cooler: prime CPU cap 1843 against 1708 MHz now).
+      And a review of the order menu copy: BAR draws a row's first button with the edge margin by its number
+      (`cell % cols == 1`, four places in its code), which rows of fewer buttons do not follow (10 orders: 4 + 3 + 3,
+      the third row's first two buttons a few pixels off); the even layout now shifts those rects by the margins'
+      difference instead of patching BAR's four places. Seen on the dev phone for 7, 6 and 4 orders (Construction
+      Aircraft, Construction Bot and Vehicle, Pawn, Rocko: 4 + 3, 3 + 3, 2 + 2), which need no shift.
 - [x] fp-save-test and pace-test on the dev phone after the day's changes (2026-11-03): all pass. And the order menu's
       tooltips by touch without the keyboard hotkey in front ("; - Set how far out of its way ..."): the copy names no
       key while the input is fingers (a mouse and keyboard keep BAR's).
