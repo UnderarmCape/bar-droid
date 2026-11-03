@@ -354,6 +354,7 @@ local function makeWarning()
 		width = "100%",
 		height = "100%",
 		padding = { 0, 0, 0, 0 },
+		drawcontrolv2 = true, -- (drawn in its own place, Chili 2.1: without it a warning in every lobby's log)
 		DrawControl = function(obj)
 			gl.Texture(false)
 			gl.Color(warningColour.edge)
