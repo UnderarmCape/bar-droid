@@ -69,8 +69,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [ ] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
       `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. Candidates from the
       dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
-      lobby's Skirmish screens, the launcher, an army on the map). Still to take: spectating with the touch bar and
-      1st person, from a replay (a spectator in a skirmish resigns and ends it).
+      lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar). Still to
+      take: 1st person.
+- [ ] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but a tap on
+      "Follow unit" or its ">" followed nothing (the label stayed, the camera did not move). Next: `tools/spectate-test.ps1`
+      on the laptop after 2:00 (it drives the same widget in a replay), and the widget's `cycleUnit` in a phone replay
+      (the team a replay spectator has, `unitsByDistance`).
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
@@ -553,7 +557,17 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       nothing on the hit's way up scrolls, `bardroid_lobby_touch.lua` now finds the list under the finger inside what
       was hit, by its place on the screen (a dropdown open over a list is its own hit: not scrolled through). On the
       dev phone a drag from that gap scrolled Settings to its end, no setting changed. lobby-phone-test: all pass.
-- [ ] The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
+- [x] The app's build menu 5 wide where the screen is wide and short (Kailil, 2026-11-02: "try 5 x 3"): its 3x3 grid was
+      held by the menu's height there (the dev phone, the Fold7 folded) and left the panel's sides empty. Now as many
+      columns of that cell size as fit, up to 5 (`droid.maxColls`, `tools/make-buildmenu.py`; the copy made again from
+      the phone's release, test-31783): the commander's options in 2 pages of 15 where they were 6 of 9. Unfolded the
+      cells are as wide as 3 allow, so it stays 3x3. pad-test -Online (RB and the D-pad in that menu): 14 of 14.
+- [x] The first seconds of every game at 2-5 fps (dev phone, 2026-11-02; found below): `bardroid_touch.lua` now asks
+      for BAR's 26 animated cursors while the game loads, in a game with no pregame (skirmish), at the size BAR's Cursor
+      widget will pick (Kailil: "Yes whatever you recommend"): 4-7 s more on the loading screen; the first seconds then
+      read "3 13 9 21 25 13 17 27 ..." frames each second where they read "2 4 5 5 5 4 21 ...", and the long Updates end
+      by game frame 53 where they ran to 200. What is left in those seconds is the engine's own start.
+- [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
       runs each), and not Mesa compiling shaders (its disk cache in the container's `/root/.cache`, 7.7 MB, unchanged
