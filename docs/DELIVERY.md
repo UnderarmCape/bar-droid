@@ -742,6 +742,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The start screen's line under the icon (the app icon's way to the lobby, dev phone, 2026-11-03): "checking for
       BAR updates" with a capital now, and in landscape centred under the icon (the icon is the window's background,
       centred on the whole window; the line was centred beside the navigation bar, ~70 px to the left).
+- [x] GL check's answer (dev phone, 2026-11-03): the button ran glxinfo and came back to a launcher saying "Ready",
+      the answer only in the log box far below. The launcher now says it under Ready: "GL check: FD740, OpenGL 4.3,
+      Mesa 27.0.0-devel" (`GameService.glCheckNote`, from launch-bar.sh's `$BAR/logs/glcheck-<driver>.txt`; without a
+      renderer "no OpenGL from the GPU", without this run's file "no result"; the full answer stays in the log).
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two

@@ -289,6 +289,10 @@ public class GameService extends Service {
             } finally {
                 if (bridge != null) bridge.stop();
             }
+            if ("glcheck".equals(mode)) {   // (its answer was only in the log box at the bottom: the launcher says it)
+                exitNote = glCheckNote(paths, started);
+                Log.i("svc", exitNote);
+            }
             if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
                 Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
                 showLauncher = rc != 0;   // quitting the lobby closes the app; a failure shows the launcher and its log
@@ -348,6 +352,31 @@ public class GameService extends Service {
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (nm != null && nm.getNotificationChannel(CHANNEL) == null)
             nm.createNotificationChannel(new NotificationChannel(CHANNEL, "BAR Droid", NotificationManager.IMPORTANCE_LOW));
+    }
+
+    /**
+     * GL check's answer in a line (launch-bar.sh writes glxinfo's to $BAR/logs/glcheck-<driver>.txt): the renderer and
+     * the OpenGL version, or that there was none.
+     */
+    static String glCheckNote(Paths paths, long startedElapsed) {
+        java.io.File newest = null;
+        java.io.File[] files = new java.io.File(paths.bar, "logs").listFiles((d, n) -> n.startsWith("glcheck-") && n.endsWith(".txt"));
+        for (java.io.File f : files == null ? new java.io.File[0] : files)
+            if (newest == null || f.lastModified() > newest.lastModified()) newest = f;
+        long startedWall = System.currentTimeMillis() - (android.os.SystemClock.elapsedRealtime() - startedElapsed);
+        if (newest == null || newest.lastModified() < startedWall - 5000) return "GL check: no result (see the log)";
+        String renderer = null, version = null;
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(newest))) {
+            for (String line; (line = r.readLine()) != null; ) {
+                if (line.startsWith("OpenGL renderer string:")) renderer = line.substring(23).trim();
+                else if (line.startsWith("OpenGL version string:")) version = line.substring(22).trim();
+            }
+        } catch (java.io.IOException e) { return "GL check: no result (see the log)"; }
+        if (renderer == null) return "GL check: no OpenGL from the GPU (see the log)";
+        if (version == null) return "GL check: " + renderer;
+        // ("4.3 (Compatibility Profile) Mesa 27.0.0-devel (git-6f90e92dfd)": the numbers; the rest is in the log)
+        java.util.regex.Matcher mesa = java.util.regex.Pattern.compile("Mesa (\\S+)").matcher(version);
+        return "GL check: " + renderer + ", OpenGL " + version.split(" ")[0] + (mesa.find() ? ", Mesa " + mesa.group(1) : "");
     }
 
     /**
