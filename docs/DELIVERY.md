@@ -984,7 +984,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the middle of the screen would. Dev phone, a scratch widget tilting the camera at the corner start (removed
       after): a drag down over the sky at the top right pulled the camera back (its target 221 -> 202), where it
       stood still before. The review of the edge path found the rest sound: a fling glides from the middle of the
-      screen, the void answers "map" for taps, a pinch's pivot over the void comes from the fixed function. And placing a
+      screen, the void answers "map" for taps, a pinch's pivot over the void comes from the fixed function. A pinch over
+      the void checked on the dev phone without two fingers: a "zoom 1.6" line with its pivot over the void appended to
+      the touch log (`bardroid_touch.txt`, as the app writes it): the map's edge went from 180 to 278 px off the pivot
+      (x1.54), the void under the pivot stayed. (Lines appended to that file drive the touch camera from adb: pans,
+      pinches and twists for any later phone check.) And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
