@@ -1532,6 +1532,9 @@ function widget:DrawScreen()
 									keyConfig.sanitizeKey(actionHotkeys[cmd.action], currentLayout)
 							end
 							local hotkey = hotkeyCache[cmd.action]
+							if WG.BarDroidInput == "touch" then -- BAR Droid: no key to name to fingers ("; - Set how far ...")
+								hotkey = ""
+							end
 							local hotkeyApplied = false
 
 							if cmd.id == CMD.FIRE_STATE then

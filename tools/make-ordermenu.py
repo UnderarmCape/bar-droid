@@ -199,6 +199,13 @@ end
      '''						local cmd = commands[cell]
 						if WG.tooltip and droid.tooltipShows() then -- BAR Droid: a finger's tooltip goes after a while
 '''),
+    ('''							local hotkey = hotkeyCache[cmd.action]
+''',
+     '''							local hotkey = hotkeyCache[cmd.action]
+							if WG.BarDroidInput == "touch" then -- BAR Droid: no key to name to fingers ("; - Set how far ...")
+								hotkey = ""
+							end
+'''),
     ('''function widget:MousePress(x, y, button)
 ''',
      '''-- BAR Droid: the menu is interface: a finger's drag there does not pan the map (BAR's own answers no IsAbove)

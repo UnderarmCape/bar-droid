@@ -859,6 +859,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
+- [x] fp-save-test and pace-test on the dev phone after the day's changes (2026-11-03): all pass. And the order menu's
+      tooltips by touch without the keyboard hotkey in front ("; - Set how far out of its way ..."): the copy names no
+      key while the input is fingers (a mouse and keyboard keep BAR's).
 - [x] Late game on the Fold7: memory or heat? (Kailil, 2026-11-03: "a way to clear ram usage as the game enters late
       game ... repeating over and over ram dumps"). His online game of 2026-11-02 22:07-22:31 (launcher.log `[perf]`,
       `[bardroid-perf]`): memory available 650-950 MB the whole game, 6.3-7.6 GB of swap free, the engine 1.0-1.6 GB
