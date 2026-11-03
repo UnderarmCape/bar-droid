@@ -81,6 +81,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       drawn over everything, but its widget is at 999999, after the list. `bardroid_players.lua` (-5, just before the
       list) now hands a press on a bar button to the bar (`WG.BarDroidSpectate.barPress`, its release with it). On the
       dev phone: "Follow unit", then "1st person" on their first taps, the camera in 1st person. fp-save-test: 4 of 4.
+- [ ] Kailil's online game on the Fold7 (2026-11-02, 22:07-22:31, Ascendancy, 8 players, unfolded; "super laggy. I
+      had to leave the game. And when attempting to leave, the game crashed anyways"). His phone's logs: 30 fps for the
+      first 11 minutes (up to 778 units); from 22:19 Android's thermal status 3 (severe), from 22:24 the GPU held at its
+      lowest clock (160 of 1200 MHz, thermal level 14) and the CPU near 1 GHz, 1000-1160 units: 10-25 fps, the last
+      minute 9.4. Free memory 650-950 MB the whole late game (engine 1.0-1.6 GB, swap 6-7 GB free), and at 22:31:46,
+      as he left, Android's low-memory killer ended the app (ApplicationExitInfo reason 3, LOW_MEMORY; also at 21:57
+      in his game before). Options, Kailil's call: a lower render resolution by itself when the phone reports severe
+      heat (the frame cap holds, the picture softer), and a lighter memory set for big online games.
 - [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its
