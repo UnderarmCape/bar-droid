@@ -70,9 +70,8 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.btnShareLogs).setOnClickListener(v -> LogShare.share(this));
 
         findViewById(R.id.btnBench).setOnClickListener(v -> start(GameService.ACTION_PLAY, "bench"));
-        ((View) glcheck.getParent()).addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
-            if (r - l != or - ol) v.post(this::fitSmallButtons);
-        });
+        fitRowOnResize((ViewGroup) install.getParent(), 14, 10);
+        fitRowOnResize((ViewGroup) glcheck.getParent(), 11, 9);
         // With a gamepad or keys (out of touch mode) the focus went to the top scroll view: a grey block over the title
         // and buttons, with nothing to press. The scroll views pass it on to their buttons and settings, Play vs AI first.
         findViewById(R.id.top).setFocusable(false);
@@ -125,16 +124,22 @@ public class LauncherActivity extends AppCompatActivity {
         }
     }
 
+    /** fitRow again whenever the row's width changes (the first layout, a turn, a fold). */
+    private void fitRowOnResize(ViewGroup row, float maxSp, float minSp) {
+        row.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            if (r - l != or - ol) v.post(() -> fitRow(row, maxSp, minSp));
+        });
+    }
+
     /**
-     * The row of small buttons (GL check ... Stop) in one text size: the largest, 11 sp at most and 9 at least, at which
-     * every label fits inside its button's padding (LauncherButton's). Sized one by one (Android's autosize), "Benchmark"
-     * ran from edge to edge of its button (dev phone, 2026-11-03), or with that padding would have shrunk alone.
+     * A row of buttons in one text size: the largest, maxSp at most and minSp at least, at which every label fits inside
+     * its button's padding (LauncherButton's). Sized one by one (Android's autosize), "Benchmark" ran from edge to edge
+     * of its button (dev phone, 2026-11-03), or with that padding would have shrunk alone.
      */
-    private void fitSmallButtons() {
-        ViewGroup row = (ViewGroup) findViewById(R.id.btnGlCheck).getParent();
+    private void fitRow(ViewGroup row, float maxSp, float minSp) {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
-        float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 11, dm);
-        float least = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, 9, dm);
+        float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, maxSp, dm);
+        float least = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, minSp, dm);
         for (int i = 0; i < row.getChildCount(); i++) {
             TextView b = (TextView) row.getChildAt(i);
             int room = b.getWidth() - b.getPaddingLeft() - b.getPaddingRight();

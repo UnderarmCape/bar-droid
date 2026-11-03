@@ -2,21 +2,21 @@
 <resources>
     <style name="Theme.BarDroid" parent="Theme.AppCompat.DayNight.NoActionBar" />
 
-    <!-- The launcher's rows of buttons: one height in a row, words kept whole. -->
+    <!-- The launcher's rows of buttons: one height in a row, words kept whole, a row's words in one size
+         (LauncherActivity.fitRow). The padding counts from the view's edge: the button's own shape sits 4 dp inside
+         it, so 6 dp left the words 2 dp from the edge one sees ("Install / Update", "Benchmark"). -->
     <style name="LauncherButton">
         <item name="android:layout_width">0dp</item>
         <item name="android:layout_height">match_parent</item>
         <item name="android:layout_weight">1</item>
         <item name="android:minWidth">0dp</item>
         <item name="android:textAllCaps">false</item>
-        <item name="android:paddingLeft">6dp</item>
-        <item name="android:paddingRight">6dp</item>
+        <item name="android:paddingLeft">9dp</item>
+        <item name="android:paddingRight">9dp</item>
         <item name="android:hyphenationFrequency">none</item>
         <item name="android:maxLines">1</item>
-        <item name="android:autoSizeTextType">uniform</item>
-        <item name="android:autoSizeMinTextSize">10sp</item>
-        <item name="android:autoSizeMaxTextSize">14sp</item>
-        <item name="android:autoSizeStepGranularity">1sp</item>
+        <item name="android:autoSizeTextType">none</item>
+        <item name="android:textSize">14sp</item>
         <item name="android:foreground">@drawable/launcher_focus</item>
     </style>
     <!-- What the launcher is for: playing. In the settings' accent colour. -->
@@ -24,11 +24,9 @@
         <item name="android:backgroundTint">?attr/colorAccent</item>
         <item name="android:textColor">@color/ic_bg</item>
     </style>
-    <!-- Five to a row, their words in one size: LauncherActivity.fitSmallButtons (sized one by one, the longest word
-         either shrank alone or, with little padding, ran from edge to edge of its button). -->
+    <!-- Five to a row: smaller words (sized one by one, the longest either shrank alone or, with little padding, ran
+         from edge to edge of its button). -->
     <style name="LauncherButton.Small">
-        <item name="android:maxLines">1</item>
-        <item name="android:autoSizeTextType">none</item>
         <item name="android:textSize">11sp</item>
     </style>
 

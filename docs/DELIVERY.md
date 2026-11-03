@@ -915,7 +915,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 - [x] The launcher's row of small buttons (dev phone, upright, 2026-11-03): each sized its own label, so "Benchmark"
       ran from edge to edge of its button (2 dp of padding kept it the size of the others). The five now share one
       size, the largest at which every label fits inside the launcher buttons' usual 6 dp padding
-      (`LauncherActivity.fitSmallButtons`, again when the row's width changes). And a review of the unit info panel's
+      (`LauncherActivity.fitRow`, again when the row's width changes). And a review of the unit info panel's
       recordings (cfcc568: keys, the oldest dropped after 8, the bar live or recorded, the grid): nothing found.
       lobby-phone-test: all pass.
 - [x] The launcher's settings scrollbar ran over the long settings' line ends ("... Off: Android's own", "... where
@@ -923,7 +923,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       edge (the settings at first ended 10 dp short of the buttons above: "Save settings" no longer lined up with
       "Lobby"; now both end where they did). The day's launcher logs looked over: only BAR's and the engine's own
       warnings; the one odd exit ("INVALID START", killedByAm) is Android cancelling a start in the middle of an
-      `adb install -r`. And placing a
+      `adb install -r`. The launcher's top row the same way as the small one ("Install / Update" nearly touched its
+      edges: the button's shape sits 4 dp inside the view, so the 6 dp padding left 2 dp one could see): both rows
+      one size each, 9 dp of padding (5 dp of air at the edge one sees); seen upright and sideways. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
