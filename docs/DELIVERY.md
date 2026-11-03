@@ -88,7 +88,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       minute 9.4. Free memory 650-950 MB the whole late game (engine 1.0-1.6 GB, swap 6-7 GB free), and at 22:31:46,
       as he left, Android's low-memory killer ended the app (ApplicationExitInfo reason 3, LOW_MEMORY; also at 21:57
       in his game before). Options, Kailil's call: a lower render resolution by itself when the phone reports severe
-      heat (the frame cap holds, the picture softer), and a lighter memory set for big online games.
+      heat (the frame cap holds, the picture softer), and a lighter memory set for big online games. The minute's
+      `[perf]` line now has the GPU driver's memory (`/proc/meminfo` GpuTotal): a 1v1 skirmish's start on the dev phone
+      reads "engine 749 MB, GPU 2060 MB", so the GPU's textures and buffers are most of the game's memory; the next
+      look at it starts there.
 - [ ] A replay on the dev phone hung in its opening seconds (2026-11-02 22:32, frame -1): 21 lines of Mesa's
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its

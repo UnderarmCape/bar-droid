@@ -54,6 +54,11 @@ final class PerfLog {
         // memory: Android logged low memory all through an 8v8 (2026-10-26), and its killer has taken the game before
         sb.append("; memory available ").append(meminfo("MemAvailable:")).append(" MB, swap free ")
           .append(meminfo("SwapFree:")).append(" MB, engine ").append(engineRss()).append(" MB");
+        // the GPU driver's own memory (textures, buffers: not in the engine's RSS); in Kailil's online game on the Fold7
+        // the game took ~3 GB of available memory with the engine at 1-1.6 GB, and the low-memory killer ended it
+        // (2026-11-02). Android's meminfo has it on Qualcomm phones (GpuTotal); left out where it does not.
+        String gpu = meminfo("GpuTotal:");
+        if (!"?".equals(gpu)) sb.append(", GPU ").append(gpu).append(" MB");
         if (BarApp.get().paths().hiddenFlag().exists()) sb.append("; game screen hidden (engine not drawing)");
         else if (BarApp.get().paths().catchupFlag().exists()) sb.append("; catching up (engine not drawing)");
         Log.i("perf", sb.toString());

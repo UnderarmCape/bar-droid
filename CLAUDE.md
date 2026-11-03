@@ -54,7 +54,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
 - `PerfLog` — once a minute while a game runs, `[perf]` in launcher.log: thermal status, GPU/CPU clocks and caps,
-  memory; `bardroid_touch.lua` logs `[bardroid-perf]` (fps, slowest frame, frames of each second) to infolog.
+  memory (the GPU driver's too, `GpuTotal`); `bardroid_touch.lua` logs `[bardroid-perf]` (fps, slowest frame, frames of each second) to infolog.
 - `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux talloc,
   shmem and ANGLE, Debian busybox), `tools/build-proot.py <abi>` (proot + loader, NDK build with our ioctl filter; run
   after fetch-prebuilts, it links its talloc/shmem) and `tools/build-virgl.py <abi>` (virglrenderer + libepoxy, NDK
