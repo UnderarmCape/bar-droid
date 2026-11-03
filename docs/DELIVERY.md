@@ -859,7 +859,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's columns; the next game starts small and opens to them. pad-test and lobby-phone-test after the day's touch
       and player list changes: all pass. And the Info panel's health bar a deeper green to red (white figures on
       full green were hard to read), the building bar a deeper blue.
-- [ ] Simulation offload for low-spec phones, a study for BAR's devs (Kailil, 2026-11-03: "try the simulation skipping
+- [x] Simulation offload for low-spec phones, a study for BAR's devs (Kailil, 2026-11-03: "try the simulation skipping
       anyways I want to give the results to the devs ... the phones rely on other players to keep them sync and get the
       math from them"). Recoil is lockstep: every client simulates every frame and is checked for sync; only commands
       travel; no past frames are kept. Offline experiments only, never online, never in the shipped app. Steps: (1)
@@ -876,7 +876,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Steps 3 and 4 written up from Recoil's source: a save is applied only while a game starts (`CGame::Load`), so a
       running phone cannot take a state (each would be a 69 s restart); a real skip is engine design work (deltas,
       commands against a world the client did not compute, another sync check); near-term: a late join or reconnect
-      from a recent save. Left: catch-up times from real replays.
+      from a recent save. Catch-up times added from Kailil's own late joins on the Fold7 (x2.0 at 2 400 units, never
+      past ~5 000). The write-up is complete for Kailil to hand on.
 - [ ] The unit info panel costs 2.0% of the benchmark's time (BAR's widget profiler on the dev phone, 2026-11-03 12:56;
       all of the app's widgets 3.1%, BAR's busiest shown 1.25%): its DrawScreen and Update. Likely the pointer resting
       over the battle, units drifting under it: the panel switching between units and nothing, re-fitting its text and

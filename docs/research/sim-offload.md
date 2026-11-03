@@ -96,6 +96,25 @@ world from somewhere each frame (deltas of what changed, or of what its player c
 against a world it did not compute, and a different sync check, since lockstep's checksums assume every client
 simulated. That is the proposal to take to the developers, with the numbers above.
 
+### Catching up today, on a real phone
+
+Kailil's own late joins of online games as a spectator on his Galaxy Z Fold7 (Snapdragon 8 Elite), drawing switched
+off by the app while far behind (docs/HISTORY.md, "Catch-up when joining a running game"): the phone re-simulated at
+
+| units in the game | catch-up speed |
+|---|---|
+| 2 400 | x2.0 |
+| 3 000-3 400 | x1.6-1.9 |
+| 4 000-4 500 | x1.2-1.5 |
+| past 5 000 | x0.9-1.0 |
+| 6 000-6 800 | x0.6-0.7 |
+
+with the CPUs held at ~1.4 GHz by heat. At x1.5 a client gains half a minute a minute: joining 40 minutes into a game
+takes over an hour of catching up; past ~5 000 units the phone never catches up (it stayed 9 minutes behind). From a
+fresh save the same join would take a game start plus the commands since the save, about a minute and a half on the dev
+phone. The network was not the limit: those games' command streams were 5-6.5 KB a game-second, which the server's
+default 64 KiB/s link sends 10-13 times as fast as the game runs.
+
 ## Summary for BAR's and Recoil's developers
 
 - A phone (Snapdragon 8 Gen 2) simulates a ~1 300-unit battle at 40% of real time; five sixths of that is the engine's
@@ -104,10 +123,14 @@ simulated. That is the proposal to take to the developers, with the numbers abov
   a busy online game sends 4-7 KB of commands a second.
 - Recoil can start from a state but not take one during play.
 - Near-term, feasible with today's pieces: late join / reconnect from a recent save instead of re-simulating from frame
-  0 (phones could then spectate and rejoin big games).
+  0. A phone catches up at x2.0 with 2 400 units and not at all past ~5 000 (Kailil's joins on a Fold7); from a save
+  it would be in within about a minute and a half.
 - Long-term, the "thin client" Kailil describes: state or interest-based deltas from a host, commands sent against
   them, sync checked differently. An architecture change in the engine.
 
-## Next
+## Method notes
 
-- How long a phone needs to catch up by re-simulating, from real replays (fast-forward speed at minutes 5, 10, 15).
+Dev phone measurements: `tools/phone-bench.ps1` (BAR's "Benchmark BAR" scenario; `-Profile gadgets` for BAR's gadget
+profiler), a scratch widget that gave the benchmark's armies in a skirmish and saved with `/save <name> -y` (timed from
+the engine's own log lines), a temporary `files/bar/dev-env.sh` that started the engine from the save (removed after),
+`tools/demo-rate.py` on replays. Catch-up numbers: the app's logs of Kailil's joins (docs/HISTORY.md).
