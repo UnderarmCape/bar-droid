@@ -604,6 +604,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       widget will pick (Kailil: "Yes whatever you recommend"): 4-7 s more on the loading screen; the first seconds then
       read "3 13 9 21 25 13 17 27 ..." frames each second where they read "2 4 5 5 5 4 21 ...", and the long Updates end
       by game frame 53 where they ran to 200. What is left in those seconds is the engine's own start.
+- [x] A tap on BAR's top bar cleared the selection (dev phone, 2026-11-03): the top bar takes a press only where its
+      Update saw the pointer in the frame before (`hoveringTopbar`); a finger moves the pointer and clicks at once, so
+      a quick tap, or any tap in a slow late-game frame, went to the map behind the bar, which deselects (the build
+      menu and unit info gone). `RtsTouch` now holds a plain tap's click until the game has had a frame with the
+      pointer there (the widget's hover answer for that point; up to 250 ms, then it clicks all the same; not in the
+      lobby). On the dev phone the commander stays selected after a tap on the metal bar; pad-test and
+      lobby-phone-test: all pass. (BAR's own hover tooltips, as "Guard" after a tap on it, stay until the pointer
+      moves: left as BAR shows them.)
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
