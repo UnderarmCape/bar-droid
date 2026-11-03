@@ -456,7 +456,17 @@ local function statsText(id, unitID)
 			add(L("ui.info.energy", "energy"), "\255\180\255\180+" .. num(eMake, 1) .. " \255\255\180\180-" .. num(eUse, 1))
 		end
 	end
-	add("Cost", "\255\235\235\235" .. num(info.metalCost) .. " \255\255\255\150" .. num(info.energyCost)) -- (BAR prints it on the picture)
+	-- (BAR prints it on the picture) metal white, energy yellow; a cost of nothing left out ("Cost 155 0": a solar)
+	local cost = {}
+	if (info.metalCost or 0) > 0 then
+		cost[#cost + 1] = "\255\235\235\235" .. num(info.metalCost)
+	end
+	if (info.energyCost or 0) > 0 then
+		cost[#cost + 1] = "\255\255\255\150" .. num(info.energyCost)
+	end
+	if #cost > 0 then
+		add("Cost", table.concat(cost, " "))
+	end
 	return table.concat(parts, LABEL .. ",  ")
 end
 

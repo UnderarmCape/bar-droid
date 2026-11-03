@@ -638,6 +638,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       engine at 4726 MB at most where the October runs reached 5100-5150, its GPU memory 1979 MB where they had
       2390-2400 (BAR's "Cache Icons" off). And the Info panel's count on one type's picture is no larger than the
       unit's name (it was 30% of the picture, as in the grid's small cells: on the big picture it outweighed the name).
+- [x] Building by touch after the held tap (dev phone, BAR's game, 2026-11-03): a tap on the Solar Collector in the
+      app's build menu picked it, a map tap the spot ("spot" in bardroid_place.txt), PLACE queued it (the commander's
+      queue 0 -> 1, the building still picked for the next) and the cancel button put it away ("place none"); no Lua
+      error. And the Info panel leaves a cost of nothing out: a Solar Collector read "Cost 155 0", now "Cost 155".
 - [x] (the search) The first seconds of every game at 2-5 fps (dev phone, 2026-11-02): `[bardroid-perf]`'s first minute reads
       "2 4 5 5 5 4 21 24 28 ..." frames each second, then a steady 30 (a 6-minute game: 30.0, 29.9, ...). The sim keeps
       its pace (frame 190 at 6.4 s). Not the app's tile copy (`BARDROID_TEX_ZERO=0` through dev-env.sh: the same in two
