@@ -153,6 +153,15 @@ game until the replay and spectating stages below say it computes exactly what t
   loaded (956 MB available a moment before: Android kills on memory pressure, not only on free memory). Next: what
   the 4K textures are (perhaps the loading screens' pictures, held after the load), and what else the load allocates
   at its peak. `tools/engine-sim/replay-memory.ps1` runs it.
+  The textures (the official run's log): the three 3840x2160 are pictures of the loading phase (one at the engine's
+  start, the splash; two as the load screen begins), 33 MB each uncompressed, all in the load's peak; 4080x3256 is
+  the engine's unit icon atlas (`IconsAtlas_0`, drawn into, stored uncompressed). With the background apps killed
+  first (`am kill-all`: 3.78 GB available) the replay was killed 45 s into the load, 1.1 GB still available. Android's
+  kill daemon says why (logcat): "Reclaim 'com.underarmcape.bardroid' ... oom_score_adj 0 ... reason: min2x watermark
+  is breached even after kill": the load allocates faster than the kernel frees and compresses, the free pages fall
+  under twice the kernel's minimum, and lmkd kills the app (the engine with it), whatever "available" says. So on the
+  8 GB phone the load's burst has to shrink (the loading pictures at the screen's size, the projectile atlases, the
+  icon atlas), or the 16-player stage runs on a 12 GB phone (the Fold7).
 
 ## "Calculations from others"
 
