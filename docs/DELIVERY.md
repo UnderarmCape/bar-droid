@@ -1063,7 +1063,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       replay benchmark (`.bardroid-bench-replay`, removed after; no dev-env.sh needed): a tap on the small player list
       brings up the spectate bar, a drag pans the map, 30 fps, no error from the app's widgets; "Follow unit" follows a
       Pawn (the bar turns to the camera presets), and the camera goes on following when the bar goes with the player
-      list closing by itself (the bar shows while the list is open, by design). And placing a
+      list closing by itself (the bar shows while the list is open, by design). After the day's commits:
+      `publish-check -NoHistory` (no private data, keys or BAR artwork tracked; only the known e-mail NOTE), luacheck
+      (36 files), java-checks (5) and launch-bar-test: all pass. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
