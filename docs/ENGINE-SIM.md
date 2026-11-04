@@ -143,6 +143,17 @@ game until the replay and spectating stages below say it computes exactly what t
 - **Old replays and the app's menu copies** (a `main` bug found here, fixed there: 9dd7f16): the replay's BAR release
   is older than the copies, BAR removed them, and launch-bar.sh switched them off for every later game.
 
+- **16-player games on the 8 GB dev phone: memory, not the sim, stops them first.** The 8v8 replay (Supreme Isthmus)
+  loaded once with the official engine (~700 MB available in the pre-game, the GPU driver at 2.35 GB, the engine
+  ~600 MB) and Android's low-memory killer ended it as the game started; other times during the load. Its textures
+  of 128x128 or more (pace's `BARDROID_TEX_LOG`): 780 MB, of it the two projectile atlases 189 + 155 MB (8176x6056,
+  6616x6152, requested as generic compressed RGBA, which Mesa keeps uncompressed), three 3840x2160 (95 MB) and one
+  4080x3256 (51 MB). `ProjectileAtlasDownscale = 2` (an engine setting on this branch: the atlases' images shrunk 2x
+  on each side, effects only) took the GPU driver's peak to 2.14 GB, -200 MB; the replay was still killed while it
+  loaded (956 MB available a moment before: Android kills on memory pressure, not only on free memory). Next: what
+  the 4K textures are (perhaps the loading screens' pictures, held after the load), and what else the load allocates
+  at its peak. `tools/engine-sim/replay-memory.ps1` runs it.
+
 ## "Calculations from others"
 
 Recoil is lockstep: players exchange only their commands, every client simulates every frame itself and reports a
