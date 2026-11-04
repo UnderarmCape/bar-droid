@@ -1007,7 +1007,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       of sight (removed after), had 19 units at 3:30, 24 at 4:00, 26 at 4:30; on the low-memory mode's smaller map it
       had not reached the player's base by 8:00. Its "Script: '...' not found!" lines are BAR's own script's optional
       hooks. (A note for scratch checks: the phone's toybox grep takes no `\|` in a basic pattern; `grep -E 'a|b'`
-      does. The earlier "wreck" scratch widget may well have run; the repository's tools use no `\|`.) And placing a
+      does. The earlier "wreck" scratch widget had run; the repository's tools use no `\|`.) Its turbine was built
+      and self-destructed, but a self-destruct leaves no wreck there (the map's 320 features stayed 320): the info
+      panel's wreck picture is still unseen; the code takes it from BAR's own `customParams.fromunit`. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
