@@ -1057,7 +1057,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       camera's height to the ground under its new target on so long a move; inside the check's quarter). The HUD at
       that shape in the controller game looked over after the day's changes: the app's own panels (unit info, QUEUE,
       the order menu's place) fit; what does not is the open "Touch HUD on the Fold7 unfolded" item (Kailil's call),
-      unchanged. And placing a
+      unchanged. Spectating after the day's touch changes: a skirmish's replay on the dev phone through the app's
+      replay benchmark (`.bardroid-bench-replay`, removed after; no dev-env.sh needed): a tap on the small player list
+      brings up the spectate bar, a drag pans the map, 30 fps, no error from the app's widgets. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
