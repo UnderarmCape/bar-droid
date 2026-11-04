@@ -192,6 +192,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `launch-bar-test.sh`: the replay case for both menus and the old mark, all pass. Dev phone, BAR's game: with
       both old marks still there the copies ran again; then the 2026-10-01 replay (BAR removed both copies in it) and a
       skirmish right after: the app's copies ran (launch-bar 17:43:02), the marks untouched.
+- [x] The engine on every CPU (found on the engine branch, 2026-11-04, Kailil's go: "Move the latest version onto my
+      zfold 7 for me to test"): the dev phone (Samsung) starts the engine on a CPU mask without its fastest core (0x3f,
+      0x5f, ...; set from outside as it starts; Android's own shell may not change it, the app's may), and its busy
+      threads sat where the big cluster stayed idle. launch-bar.sh's `widen_engine` gives every engine thread not on
+      every CPU all of them, every 3 s (read from its status first: nothing to do on a phone that allows all 8).
+      BAR's benchmark on the hot dev phone, alternating, the official engine: game speed x0.53/0.54/0.53 as started,
+      x0.67/0.70/0.64 with every CPU (+26 %). Dev phone after the change: the engine's 26 threads on 0-7, no errors.
+      Installed on the Fold7 for Kailil's test (whether his Fold7 starts the engine on a narrower mask too is open:
+      the 2026-10-27 research saw all 8 there).
 - [x] Order labels of two words that their button's width shrank well below the others ("Place Blueprint" a size
       smaller than every other order) go on two lines at up to the others' size where the button is tall enough
       (`make-ordermenu.py`; the phone's remake gives the copy byte for byte). Dev phone: "Place / Blueprint" at the

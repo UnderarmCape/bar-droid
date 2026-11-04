@@ -415,6 +415,28 @@ fi
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
 
+# The engine's threads allowed on every CPU of the app's cpuset. The dev phone (Samsung) starts it on a CPU mask without
+# its fastest core (0x3f, 0x5f, ...: never core 7, from the engine's first log line on, while this shell has all 8; set
+# from outside, and Android's own shell may not change it, the app's may), and the busy threads sat where the big
+# cluster stayed idle. BAR's benchmark on the hot dev phone, alternating: game speed x0.53/0.54/0.53 as started,
+# x0.67/0.70/0.64 with every CPU allowed (2026-11-04, engine branch docs/ENGINE-SIM.md). Scheduling only, nothing
+# synced. Every 3 s, each engine thread not on every CPU gets them (read from its status first: no taskset where
+# nothing is to do, a phone that allows all 8 runs none). Stopped when the engine has exited.
+widen_engine() {
+  while :; do
+    sleep 3
+    for p in $(pidof spring 2>/dev/null); do
+      for t in /proc/$p/task/*; do
+        m=""
+        while read -r k v; do [ "$k" = "Cpus_allowed:" ] && { m=$v; break; }; done < "$t/status" 2>/dev/null
+        [ -n "$m" ] && [ "$m" != ff ] && taskset -p ff "${t##*/}" >/dev/null 2>&1
+      done
+    done
+  done
+}
+widen_engine &
+widen=$!
+
 # 4. Launch the engine.
 cd "$ENGINE" || { log "engine dir missing: $ENGINE"; exit 11; }
 rm -f "$BAR/infolog.txt"
@@ -505,6 +527,7 @@ case "$MODE" in
   *) log "unknown MODE=$MODE"; rc=2 ;;
 esac
 log "spring exited with $rc"
+kill "$widen" 2>/dev/null
 touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
 queue_err=$(grep -iE 'bardroid_queue|BAR Droid builder queue' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
