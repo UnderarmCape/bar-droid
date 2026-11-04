@@ -54,14 +54,19 @@ camera presets, 1st person). Code: `RtsTouch.java` (Android gestures to X mouse 
 
 Not solved:
 - **Playing (not spectating) by touch is basic.** BAR's build and order menus have no "is the pointer over me"
-  answer, so a drag that starts on them pans the map, and they cannot be hidden from a user widget; they need touch
-  versions (as the info panel got). Placing buildings by finger works through the app's build menu copy: while a
-  building is picked its page strip offers ONE, LINE, GRID and BORDER and a PLACE button (rotate, cancel) covers the
-  order menu; a tap picks the spot, PLACE confirms it, and `RtsTouch` holds Shift (and Alt, Ctrl) for the click or
-  drag so BAR's own building does the rest. Nudging a picked spot, and confirming a drawn line, are still to come.
+  answer, so the app runs its own copies of both (`bardroid_buildmenu.lua`, `bardroid_ordermenu.lua`, patched copies
+  remade on the phone after BAR updates), which answer it: a drag there no longer pans the map. In the controller
+  game the menus are v0.8.5's own. Placing buildings by finger works through the build menu copy: while a building is
+  picked its page strip offers ONE, LINE, GRID and BORDER and a PLACE button (rotate, cancel) covers the order menu;
+  a tap picks the spot, a drag moves it, PLACE confirms it, and `RtsTouch` holds Shift (and Alt, Ctrl) for the click
+  or drag so BAR's own building does the rest. What is still missing is a touch design for the rest of play: picking
+  targets, unit groups, a selection without a box drag.
 - **BAR's interface on a near-square screen** (a foldable unfolded): the player list covers the order menu's last
   column; the minimap is shrunk until tapped.
-- **The map's edge:** touch navigation there is still open.
+- **The map's edge:** solved for the app's touch camera (2026-11-03: a drag past the edge holds the point under the
+  finger on the level plane, across the edge too, a pinch there zooms about it, a drag over the sky moves the map;
+  `tools/touch-phone-test.ps1`). The engine still keeps the camera's target on the map, so a drag outward stops
+  where BAR's mouse camera stops too.
 - **A movable HUD.** The app's layout editor (`bardroid_layout.lua`) moves and sizes the app's own panels, but BAR's
   only as far as BAR's widgets allow another widget: the minimap's and player list's size. For the build menu the app
   runs a copy of BAR's Build menu with a size and place hook (`bardroid_buildmenu.lua`, made by

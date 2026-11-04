@@ -222,5 +222,6 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
 ## Open risks (see HANDOFF.md)
 Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trips; memory tight (12 GB guest, little
 host RAM left; the low-memory killer once took the app). Phone: RAM (~5–6 GB a match), BAR's UI on the near-square
-inner display, a drag that starts on BAR's build/order menus pans (they have no `IsAbove`; the top bar and BAR's
-windows are covered: `bardroid_touch.lua` overBarInterface, `tools/touch-widget-test.ps1`), touch-only play (later).
+inner display, BAR's own panels without an `IsAbove` take a finger drag for a pan (the app's menu copies answer it;
+the top bar and BAR's windows are covered: `bardroid_touch.lua` overBarInterface, `tools/touch-widget-test.ps1`;
+v0.8.5's menus in the controller game are its own), touch-only play (later).
