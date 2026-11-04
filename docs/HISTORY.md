@@ -30,7 +30,7 @@ launchers' old place beside the checkout (now in the repository root); sections 
   in a margin of its own, a padded log, and the same words for the status in both from the first moment ("Starting",
   "Installing: ...", "Skirmish running"), now in `StatusText.java` with a check in CI.
 - **Checks**: `java-checks.sh` (CI) had stopped compiling (PadGameTest needs BuildMenuPatches); fixed. Escape on
-  Android 17 shows "Long press Esc key to close this app" while the app captures the keyboard: Kailil's call. The
+  Android 17 shows "Long press Esc key to close this app" while the app captures the keyboard: kept (Kailil). The
   dev phone reset itself once (a hardware reset four seconds into a skirmish, after hours of back-to-back games); a
   watch item.
 

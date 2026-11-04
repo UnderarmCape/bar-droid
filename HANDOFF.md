@@ -308,8 +308,7 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    touch placement; v0.8.5's in the controller game are counted as interface by their rects.
 2. **Kailil's calls:** the `LICENSE` file is in since 2026-10-28 (the GPL-3.0 text, as README has always said
    GPL-3.0-or-later and the embedded `lorie` module requires GPL-3; Kailil to confirm "or later", or `git revert`
-   it); the public release's open points (docs/DELIVERY.md); Escape's "Long press Esc key to close this app" notice
-   from Android 17's keyboard capture (docs/DELIVERY.md); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
+   it); the public release's open points (docs/DELIVERY.md); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
    Defense Range GL4,
    Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
