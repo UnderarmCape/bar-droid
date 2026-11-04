@@ -1040,7 +1040,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (they act on the press and have no MouseRelease: the release landed on the map). Left panning, the lesser harm;
       the menus keep their fix. Checked with a scratch widget logging the selection, the active command and the
       commander's orders (removed after): a drag from the order menu's Move leaves no command and no order (a tap on
-      Move picks it), the selection stays; a drag from the build menu picks the option it starts on. And placing a
+      Move picks it), the selection stays; a drag from the build menu picks the option it starts on. The lobby by
+      finger on the dev phone (offline: the tests' login wait widget, removed after): the login dialog's Cancel, then
+      Skirmish, Next through game type, difficulty and faction to the map choice, each tap taken; no lobby widget
+      error. Stopped at the map (a pick can download a large map onto the 8 GB phone). And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
