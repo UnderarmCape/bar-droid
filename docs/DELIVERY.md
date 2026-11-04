@@ -1015,7 +1015,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       spot, TestBuildOrder knowing nothing of the queue; spread out, 5 built): four Wind Turbines with "4", the
       commander and a Solar Collector with none. The grid by finger (units given by BAR's cheats in a scratch widget:
       seconds, not minutes; removed after): a long press on the Solar Collector dropped it (armcom 1, armwin 4), a tap
-      on the turbines kept only them (armwin 4), the panel then "Wind Turbine" with 4 on its picture. And placing a
+      on the turbines kept only them (armwin 4), the panel then "Wind Turbine" with 4 on its picture. And 17 types
+      selected (two each of 16 Armada units given, and the commander): 6 x 3 cells in the middle of the panel, each
+      with its count, the commander's none; nothing to change. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
