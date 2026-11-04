@@ -130,8 +130,8 @@ factions' matching unit too.
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
   power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back is
   Escape in the game. On Android 17 each Escape shows Android's own notice "Long press Esc key to close this app"
-  (while the game gets the keyboard shortcuts): a short press is Escape for BAR, as on a PC; by that notice, holding
-  Escape down closes the app, so a held Escape is best avoided.
+  (while the game gets the keyboard shortcuts): a short press is Escape for BAR, as on a PC; holding Escape down
+  (3 seconds in a test) closes the game, as the notice says, so never hold it in a game you want to keep.
 - Before Android 16.1, Android takes its shortcuts before any app; the optional accessibility service sends them to
   the game: Settings > Accessibility > Installed apps > **Beyond All Reason keyboard shortcuts** > On. It reads keys
   only while the game screen is in front. If Android says the setting is restricted: Settings > Apps > Beyond All

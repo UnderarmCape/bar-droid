@@ -83,9 +83,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       dev phone: "Follow unit", then "1st person" on their first taps, the camera in 1st person. fp-save-test: 4 of 4.
 - [x] Kailil's call: Escape and Android 17's keyboard capture (dev phone, 2026-11-03). Decided (Kailil, 2026-11-03:
       "2"): keep the capture; the notice stays on each Escape. README's keyboard section says so for players (a short
-      press is Escape; by Android's notice a held one closes the app). adb's `input keyevent --longpress
-      KEYCODE_ESCAPE` in a skirmish left the game open: adb's long press is not a held key's timing, so the README
-      gives it as Android's notice says, not as tested. Each Escape in a game shows
+      press is Escape; a held one closes the game). adb's `input keyevent --longpress KEYCODE_ESCAPE` left the game
+      open (not a held key's timing); a virtual USB keyboard through Android's `uinput` (a register line with keys
+      1-58, Escape down, 3 s, up) closed it: Android removed the game's task, and the app stopped the game ("game
+      removed from recent apps: closing"). README says so. Each Escape in a game shows
       Android's notice "Long press Esc key to close this app" at the bottom of the screen for a few seconds (BAR's
       Escape cancels, deselects and opens the menu: a keyboard player presses it often), and by that notice a long
       press closes the app. It comes from Android's keyboard capture, which the app turns on so Android's own shortcuts
