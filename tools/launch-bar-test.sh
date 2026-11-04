@@ -14,15 +14,17 @@ work="$here/build/launch-bar-test"
 fails=0
 
 fn=$(awk '/^widget_order\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
+removed=$(awk '/^copy_removed\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
 menu=$(awk '/^build_menu\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
 omenu=$(awk '/^order_menu\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
 block=$(awk '/^  widget_order "Grid menu" 0$/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
-[ -n "$fn" ] && [ -n "$menu" ] && [ -n "$omenu" ] && [ -n "$block" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, build_menu, order_menu or the controller-game block not found"; exit 1; }
+[ -n "$fn" ] && [ -n "$removed" ] && [ -n "$menu" ] && [ -n "$omenu" ] && [ -n "$block" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, copy_removed, build_menu, order_menu or the controller-game block not found"; exit 1; }
 
 BAR="$work/bar"; LOGS="$work/logs"
 log() { :; }
 layer_miss() { echo "$*" >> "$LOGS/android-layer.txt"; }
 eval "$fn"
+eval "$removed"
 eval "$menu"
 eval "$omenu"
 start() {   # one launch-bar.sh start: start <GAMEPAD_GAME> <build menu md5 Installer found in BAR's release> [<order menu's>]
@@ -88,6 +90,15 @@ start 1 "fedcba9876543210fedcba9876543210"
 check "the copy failed on this BAR file: still BAR's own" order "BAR Droid build menu" 0
 start 1 "$made"
 check "another BAR file: the copy runs again" order "BAR Droid build menu" 165
+rm -f "$BAR/.bardroid-buildmenu-failed"
+printf '%s\n' "[t=0] [PreGame::ReadDataFromDemo] pre-scanning demo file" "[t=1] Removed widget: BAR Droid build menu" > "$BAR/infolog.txt"
+start 1 "fedcba9876543210fedcba9876543210"
+check "the copy removed in a replay (it plays its own BAR release): the copy still runs" order "BAR Droid build menu" 165
+rm -f "$BAR/infolog.txt"
+printf '%s\n' "fedcba9876543210fedcba9876543210" > "$BAR/.bardroid-buildmenu-failed"
+start 1 "fedcba9876543210fedcba9876543210"
+check "a mark from before \"game\" (a replay may have written it): the copy runs" order "BAR Droid build menu" 165
+rm -f "$BAR/.bardroid-buildmenu-failed"
 
 start 1 "$made" "0123456789abcdef0123456789abcdef"
 check "BAR changed its Order menu and no new copy: the old copy runs" order "BAR Droid order menu" 189
@@ -101,6 +112,11 @@ check "the order menu copy failed: the build menu copy keeps running" order "BAR
 rm -f "$BAR/infolog.txt"
 start 1 "$made"
 check "another BAR Order menu file: the copy runs again" order "BAR Droid order menu" 189
+rm -f "$BAR/.bardroid-ordermenu-failed"
+printf '%s\n' "[t=0] [PreGame::ReadDataFromDemo] pre-scanning demo file" "[t=1] Removed widget: BAR Droid order menu" > "$BAR/infolog.txt"
+start 1 "$made" "fedcba9876543210fedcba9876543210"
+check "the order menu copy removed in a replay: the copy still runs" order "BAR Droid order menu" 189
+rm -f "$BAR/infolog.txt"
 
 start 0 "$made"
 check "controller game off: the copy still in BAR's place (the pad online)" order "BAR Droid build menu" 165

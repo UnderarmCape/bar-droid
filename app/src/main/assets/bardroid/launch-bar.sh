@@ -154,12 +154,18 @@ fi
 # 2026-11-01, after BAR's update turned it off in an online game: "that is UNACCEPTABLE"). Installer makes it again when an
 # update changes BAR's file; one it could not (BAR rewrote a part a patch needs) runs all the same, and is named. Only a
 # copy BAR had to remove in the last game (an error in it) gives way to BAR's own, for that BAR file.
+# A replay does not count: it plays the BAR release it was recorded with, whose widgets an older one's copy may not fit
+# (a replay from 2026-10-01 removed both copies, and every game after ran BAR's own menus: dev phone, 2026-11-04). The
+# mark says "game" since then; an older one, which a replay may have written, no longer counts.
+copy_removed() {   # copy_removed <widget name>: BAR removed it in the last run, and that run was not a replay
+  grep -aq "Removed widget: $1" "$BAR/infolog.txt" 2>/dev/null && ! grep -aq 'PreGame::ReadDataFromDemo' "$BAR/infolog.txt" 2>/dev/null
+}
 build_menu() {
   copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-buildmenu" 2>/dev/null)
   failed="$BAR/.bardroid-buildmenu-failed"
-  grep -aq 'Removed widget: BAR Droid build menu' "$BAR/infolog.txt" 2>/dev/null && printf '%s\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars" ]; }; then
+  copy_removed 'BAR Droid build menu' && printf '%s game\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
     widget_order "Build menu" 165; widget_order "BAR Droid build menu" 0
     layer_miss "build menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_buildmenu.lua ${bars:-not found}: BAR's own, no pad focus on it, until the copy is made again (tools/make-buildmenu.py)"
     return
@@ -178,8 +184,8 @@ order_menu() {
   copied=$(sed -n 's/^-- BARDROID_ORDERMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_ordermenu.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-ordermenu" 2>/dev/null)
   failed="$BAR/.bardroid-ordermenu-failed"
-  grep -aq 'Removed widget: BAR Droid order menu' "$BAR/infolog.txt" 2>/dev/null && printf '%s\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars" ]; }; then
+  copy_removed 'BAR Droid order menu' && printf '%s game\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
     widget_order "Order menu" 189; widget_order "BAR Droid order menu" 0
     layer_miss "order menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_ordermenu.lua ${bars:-not found}: BAR's own, its grid with the pad, until the copy is made again (tools/make-ordermenu.py)"
     return

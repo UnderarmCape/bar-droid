@@ -182,6 +182,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       circles back for the rest of a pick (now the see-through colour is set every frame while a building is
       picked, one line for the engine to read). Dev phone, 150 turrets, the colour file's line loaded once
       mid-pick: 79.3 fps before, 97.3 after (the engine's circles held it at 26).
+- [x] Watching an older replay switched the app's menu copies off for good (found on the engine branch's sync
+      checks, 2026-11-04): a replay plays the BAR release it was recorded with, whose widgets the copies (made for
+      today's) do not fit (`RegisterUnitCommand` missing in test-31465); BAR removed both copies, and launch-bar.sh,
+      which gives way to BAR's own menus after a copy BAR removed in the last game, did so for every game after
+      (no pad RB, no PLACE, no shape strip) until BAR's next update. A removal in a replay (`PreGame::ReadDataFromDemo`
+      in that run's infolog) no longer counts (`copy_removed`); the mark says "game" now, and an older mark, which a
+      replay may have written, no longer counts (a copy that really fails is marked again in its next game).
+      `launch-bar-test.sh`: the replay case for both menus and the old mark, all pass.
 - [x] BAR's update to test-31820 (2026-11-04) changed its Order menu: an order's tooltip now gets a keyboard line
       ("Tap L quickly: 1x Fire at will, 2x Hold fire, ...", "Press Z Z for area mex"; `tapHotkeyLine`), and the line
       the copy's touch patch hooked into moved, so the phone could not make the copy again: the old copy ran, and the
