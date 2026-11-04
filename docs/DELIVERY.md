@@ -999,7 +999,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       pass. (The launcher's Display screen, Termux:X11's own preferences, looked over: clean, left.) After the day's
       touch changes: fp-save-test, pace-test and lobby-phone-test on the dev phone, all pass; the lobby widget's server
       bar (Close, Previous, Next, Join) and both warnings (first person, touch and gamepad) looked over in screenshots
-      taken during lobby-phone-test: text inside its box, OK clear of it; nothing to change. And placing a
+      taken during lobby-phone-test: text inside its box, OK clear of it; nothing to change. An 8-minute skirmish on
+      the dev phone after them: 29.9-30.0 fps each minute after the first (its load, 29.1), no error or warning from
+      the app's widgets in infolog, LuaUI's memory up and down by the low-memory mode's own collector notes. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
