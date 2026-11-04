@@ -1008,8 +1008,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       had not reached the player's base by 8:00. Its "Script: '...' not found!" lines are BAR's own script's optional
       hooks. (A note for scratch checks: the phone's toybox grep takes no `\|` in a basic pattern; `grep -E 'a|b'`
       does. The earlier "wreck" scratch widget had run; the repository's tools use no `\|`.) Its turbine was built
-      and self-destructed, but a self-destruct leaves no wreck there (the map's 320 features stayed 320): the info
-      panel's wreck picture is still unseen; the code takes it from BAR's own `customParams.fromunit`. And placing a
+      and self-destructed, but a self-destruct leaves no wreck there (the map's 320 features stayed 320). Shot down by
+      the commander instead it left `armwin_heap`: with the pointer on it the panel shows "Wind Turbine Debris", the
+      turbine's picture (BAR's `customParams.fromunit`) and "Reclaim 10" (dev phone; the scratch widget removed
+      after). And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
