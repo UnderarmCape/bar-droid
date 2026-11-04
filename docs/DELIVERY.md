@@ -149,6 +149,19 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       target ..."), which the app's copy leaves out for fingers. The tooltip wrapper in `bardroid_touch.lua` takes
       out BAR's gold key and its " - " (`ui.orderMenu.hotkeyTooltip`) while the fingers are the input. Dev phone: Set
       Target's tooltip without "5 -"; a mouse keeps the key.
+- [ ] The build menu's unit pictures in stripes (dev phone, 2026-11-03 evening, BAR's game, 2 of 5 skirmish starts):
+      every picture of the first page drawn in vertical stripes about 16 of its pixels wide, every other one empty
+      (the panel showing through), while the menu's figures, icons and words over them were whole. It stayed (0:33
+      and 0:48 of game time) until something drew the menu again (a page change, a building picked: whole at once).
+      The engine loads a picture when it is first shown, on the main thread (`UnitDrawerData.cpp` SetUnitDefImage);
+      BAR's Cache Icons, which loaded all of them in a game's first seconds, is off on phones since 2026-11-02
+      (`launch-bar.sh`). Tried: the menu drawn again a few frames after its first drawing (the copy's warm-up kept,
+      `make-buildmenu.py`): the stripes still came, at 1 of 2 starts, so it was taken out. Both striped starts loaded
+      faster (game time ~0:33 when the clean ones showed ~0:07 at the same moment). Next: a copy that logs each
+      drawing of the menu, to see when the pictures come out whole, and whether a drawing a second or two later is
+      enough; else a Mesa report (freedreno on KGSL).
+- [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read
+      worst of the four; now white words on a deeper gold (dev phone, 2026-11-03: ONE and LINE picked, by touch).
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.

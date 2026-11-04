@@ -42,8 +42,8 @@ The first version meant for other people's phones: everything since the first bu
   unit info panel made bigger (which stops at the order menu); in the controller game it shows while the app's gamepad controls
   have the pad (a triple tap switches); it steps aside for BAR's own when a
   BAR update changes that menu, and for the gamepad's in the controller game.
-- Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER, and a
-  big green PLACE button (rotate and cancel inside) covers the order menu. A tap on the map picks the spot, PLACE
+- Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER (the
+  picked one gold, in white words), and a big green PLACE button (rotate and cancel inside) covers the order menu. A tap on the map picks the spot, PLACE
   builds there (the building stays picked); with LINE, GRID or BORDER a drag lays out a row, a filled area or a
   hollow ring of them (BAR's own build drag).
 - Typing a chat message: the text wraps and gets smaller as it grows, in a box at the top of the chat that stays clear

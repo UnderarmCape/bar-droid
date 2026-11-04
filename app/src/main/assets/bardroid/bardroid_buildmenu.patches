@@ -482,12 +482,14 @@ function droid.drawShapes(area, width, h)
 		local x0 = area[1] + (i - 1) * w
 		local rect = { x0, y0, x0 + w, y1, item[1] }
 		droid.shapeRects[#droid.shapeRects + 1] = rect
+		-- (the picked one gold with white words: its pale gold words on the gold read worst of the four, dev phone
+		-- 2026-11-03)
 		local lit = item[1] == droid.shape
 		UiButton(rect[1] + cellPadding, rect[2] + cellPadding, rect[3] - cellPadding, rect[4] - cellPadding,
 			1, 1, 1, 1, 1, 1, 1, 1, nil,
-			lit and { 0.45, 0.36, 0.05, 0.9 } or { 0, 0, 0, 0.8 }, lit and { 0.75, 0.62, 0.15, 0.9 } or { 0.2, 0.2, 0.2, 0.8 },
+			lit and { 0.38, 0.3, 0.04, 0.9 } or { 0, 0, 0, 0.8 }, lit and { 0.66, 0.53, 0.12, 0.9 } or { 0.2, 0.2, 0.2, 0.8 },
 			bgpadding * 0.5)
-		font2:Print((lit and "\255\255\235\150" or "\255\235\235\235") .. item[2], x0 + w * 0.5,
+		font2:Print((lit and "\255\255\255\255" or "\255\235\235\235") .. item[2], x0 + w * 0.5,
 			(y0 + y1) * 0.5 - size * 0.3, size, "co")
 	end
 end
