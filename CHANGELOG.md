@@ -62,7 +62,8 @@ The first version meant for other people's phones: everything since the first bu
   well as across (up and down went the wrong way), a drag across the edge moves smoothly, a pinch there zooms about
   the fingers, and a drag over the sky (the camera tilted up to the horizon) moves the map.
 - In a game the build menu's tooltip no longer stays over the next row after a tap, and an order's tooltip goes
-  2.5 s after the finger lifts, in every game (the controller game's menus too).
+  2.5 s after the finger lifts, in every game (the controller game's menus too). In the controller game a drag that
+  starts on the build or order menu no longer pans the map, as in BAR's own game.
 - The unit info panel: a wreck, a tree or a rock under the finger (nothing selected) shows its name and what
   reclaiming it gives, a wreck with the picture of the unit it was; several types selected show a count only above
   1, a long count small enough to leave the picture visible; its largest text a size smaller.

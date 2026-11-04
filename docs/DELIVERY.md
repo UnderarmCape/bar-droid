@@ -125,6 +125,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       a report for lfdevs' Mesa (KGSL submit) with that log. Not seen again: 2026-11-03 19:11-21:44, 31 starts on the
       dev phone (28 skirmishes, 2 replays, the lobby), no hang, no crash, no low-memory exit (every exit a test's own
       stop).
+- [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
+      at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
+      GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
+      with uptime 100 s. Android's dropbox holds only the boot loader's log (`SYSTEM_LAST_KMSG_..._KP`):
+      `PonReason.HARD_RESET = 1`, reboot reason 0x4, the usual sign of a watchdog after a full freeze; the kernel's
+      last lines are not readable without root. The phone had run games back to back for hours (an 8 GB phone in the
+      low-memory mode). Watch for it again: if it repeats, note what ran, and whether the replay
+      hang above came first. Wi-Fi adb and the dark screen restored with `tools\devphone.ps1 connect` / `dark`.
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
