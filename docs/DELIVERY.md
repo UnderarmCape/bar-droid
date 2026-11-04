@@ -165,6 +165,18 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       logged on the dev phone: frames 0, 31 and 150, the menu whole. Why the first second's drawings break is not
       known (the gaps are fully transparent: perhaps the new texture's zeros from `BARDROID_TEX_ZERO` landing after
       the pictures; the words drawn last are whole).
+- [x] Build range circles (Kailil, 2026-11-03, after a full online game on the Fold7: "In late game when I have tons of
+      con turrets, it lags the game when I build anything because it displays literally all of them at the same time.
+      Can we change it to display only the closest 10 or something?"). The engine draws them itself
+      (`GuiHandler.cpp` DrawMapStuff: during a build command, one ground circle per immobile builder of the team and
+      per selected builder, on the map and the minimap, each its own drawing over 40 ground heights), with no Lua
+      switch; but it skips a circle whose colour is see-through (`glExtra.cpp`), and the colour (`rangeBuild`) is a
+      client-side command colour, as BAR itself hides `rangeExtract` and `rangeAttack`. `bardroid_buildrange.lua`:
+      while a building is picked `rangeBuild` is see-through, and the widget draws the 10 builders nearest the
+      building (BAR's colour, a third of its alpha as the engine) and the picked building's own range. Dev phone, BAR's
+      game, 150 construction turrets given in a skirmish, a solar collector picked, frame cap off, 20 s each: engine
+      circles 26.1 and 26.2 fps, the 10 nearest 87.3 and 84.8 fps (~27 ms a frame was the circles). Installed on the
+      Fold7 (the app was not running).
 - [x] The launcher's settings fade out at the top and bottom of their scrolling area (a line cut in half under the
       buttons' divider read as a glitch; dev phone, 2026-11-03).
 - [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read

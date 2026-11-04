@@ -509,6 +509,8 @@ info_err=$(grep -iE 'bardroid_info|BAR Droid info' "$BAR/infolog.txt" 2>/dev/nul
 [ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
 spec_err=$(grep -iE 'bardroid_spectate|BAR Droid spectate' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
 [ -n "$spec_err" ] && layer_miss "spectating widget (bardroid_spectate.lua): $spec_err"
+range_err=$(grep -iE 'bardroid_buildrange|BAR Droid build ranges' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+[ -n "$range_err" ] && layer_miss "build ranges widget (bardroid_buildrange.lua): $range_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

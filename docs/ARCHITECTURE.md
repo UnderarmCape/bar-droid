@@ -71,7 +71,8 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
   select, LB orders, the touch QUEUE button), `bardroid_padspeed.lua` (the pad's drawing speed by zoom, and its tuner),
   `bardroid_padfp.lua` (first person on the pad), `bardroid_queue.lua`, `bardroid_bench.lua`, `bardroid_lowmem.lua` (keeps BAR's GL4 unit shaders
-  off in the low-memory mode).
+  off in the low-memory mode), `bardroid_buildrange.lua` (while a building is picked: the engine's build range circle
+  of every construction turret made see-through, which the engine then skips, and the 10 nearest the building drawn).
 
 ## Source map
 
