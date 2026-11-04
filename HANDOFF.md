@@ -300,15 +300,16 @@ Mali/Xclipse/Tensor: no Mesa path → the app's device check says so.
    tools out of singleplayer (checked on the phone), the info panel cached; `WorkerThreadCount` 4 beats 2 by ~5%
    (keep 4); the phone's profilers: LuaUI 11% of the running time (Reclaim Field Highlight 3.1%), LuaRules 20% (BAR's
    game: not changeable online). **Only online-safe changes** (Kailil, 2026-10-27: "we MUST have online play
-   enabled"): no engine builds, overlay games or modrules, also in research. Map edge: the 2026-10-26 rules
-   (taps off the map clicking nothing, drags anchored mid-screen) removed at Kailil's word ("we will figure out how to
-   deal with touch navigation at the edge of the map later"). BAR's player list: small until tapped
-   (`bardroid_players.lua`, 7 s). Build and order menus that open on a tap: BAR's have no hide API, so they need app
-   versions (like the info panel); designed with Kailil first, with touch placement.
+   enabled"): no engine builds, overlay games or modrules, also in research. Map edge: past it the camera moves as
+   on the map since 2026-11-03 (Kailil: "feel just like normal navigation"; the void's point on the level plane,
+   `bardroid_touch.lua` planePoint; `tools/touch-phone-test.ps1`). BAR's player list: small until tapped
+   (`bardroid_players.lua`, 7 s). Build and order menus: the app runs its own copies of BAR's in BAR's game
+   (`bardroid_buildmenu.lua`, `bardroid_ordermenu.lua`, remade on the phone after BAR updates) with an IsAbove and
+   touch placement; v0.8.5's in the controller game are counted as interface by their rects.
 2. **Kailil's calls:** the `LICENSE` file is in since 2026-10-28 (the GPL-3.0 text, as README has always said
    GPL-3.0-or-later and the embedded `lorie` module requires GPL-3; Kailil to confirm "or later", or `git revert`
-   it); the public release's open points (docs/DELIVERY.md); a lower resolution while the phone is hot (the lorie pixel cap from Android's thermal
-   status); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
+   it); the public release's open points (docs/DELIVERY.md); Escape's "Long press Esc key to close this app" notice
+   from Android 17's keyboard capture (docs/DELIVERY.md); more gameplay-information widgets off (Reclaim Field Highlight is off since 2026-10-27, Kailil's call;
    Defense Range GL4,
    Sensor Ranges, Ecostats, BuildETA: CPU per frame) or GPU ones (Outline Shader GL4, Orb Effects); MaxSounds lower (OpenAL mixing); on the inner screen the
    player list covers the order menu's last column (at 75% it uncovers most of it; docs/HISTORY.md, "Overnight
