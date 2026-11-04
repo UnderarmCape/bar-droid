@@ -24,7 +24,7 @@
 local function setupCellGrid(force)
 -- BAR Droid: what the app adds: the even layout's last shape, the WG.ordermenu this copy set (the controller game's
 -- own is left alone), and where and since when the pointer rests (tooltipShows)
-local droid = { evenKey = nil, api = nil, x = nil, y = nil, restsFrom = nil, TOOLTIP_SECONDS = 2.5 }
+local droid = { evenKey = nil, api = nil, x = nil, y = nil, restsFrom = nil, TOOLTIP_SECONDS = 2.5, two = {} }
 
 -- BAR Droid: with fingers the pointer stays where the last one lifted, and an order's tooltip with it, over the buttons
 -- beside it until the next touch (dev phone, 2026-11-03): it goes TOOLTIP_SECONDS after the pointer came to rest (BAR's
@@ -156,6 +156,44 @@ end
 							if WG.BarDroidInput == "touch" then
 								hotkey, tapLine = "", nil
 							end
+			font:Print(
+				printStr,
+				cellRects[cell][1] + ((cellRects[cell][3] - cellRects[cell][1]) / 2),
+				(cellRects[cell][2] - ((cellRects[cell][2] - cellRects[cell][4]) / 2) - fontHeightOffset),
+				fontSize,
+				"con"
+			)
+			-- BAR Droid: a label of two or more words that its button's width shrank well below the others' size
+			-- ("Place Blueprint" a size smaller than every other order, dev phone 2026-11-04) goes on two lines at up to
+			-- the others' size, where the button is tall enough for them
+			local two = droid.two[text]
+			if two == nil then
+				local best = false
+				for at in text:gmatch("() ") do
+					local a, b = text:sub(1, at - 1), text:sub(at + 1)
+					local w = math_max(font:GetTextWidth("  " .. a .. " "), font:GetTextWidth("  " .. b .. " "))
+					if not best or w < best[3] then
+						best = { a, b, w }
+					end
+				end
+				droid.two[text] = best
+				two = best
+			end
+			local twoSize = two and math_min(sizeWidth / 7, cellInnerWidth * 0.92 / two[3] * math_min(1, (cellInnerHeight / (rows * 6)))) * zoom
+			if twoSize and twoSize > fontSize * 1.15 and twoSize * 2.1 <= cellInnerHeight * zoom then
+				local x = cellRects[cell][1] + ((cellRects[cell][3] - cellRects[cell][1]) / 2)
+				local y = cellRects[cell][2] - ((cellRects[cell][2] - cellRects[cell][4]) / 2) - fontHeightOffset * twoSize / fontSize
+				font:Print(textColor .. two[1], x, y + twoSize * 0.52, twoSize, "con")
+				font:Print(textColor .. two[2], x, y - twoSize * 0.52, twoSize, "con")
+			else
+			font:Print(
+				printStr,
+				cellRects[cell][1] + ((cellRects[cell][3] - cellRects[cell][1]) / 2),
+				(cellRects[cell][2] - ((cellRects[cell][2] - cellRects[cell][4]) / 2) - fontHeightOffset),
+				fontSize,
+				"con"
+			)
+			end
 function widget:MousePress(x, y, button)
 -- BAR Droid: the menu is interface: a finger's drag there does not pan the map (BAR's own answers no IsAbove)
 function widget:IsAbove(x, y)

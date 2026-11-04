@@ -189,7 +189,19 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (no pad RB, no PLACE, no shape strip) until BAR's next update. A removal in a replay (`PreGame::ReadDataFromDemo`
       in that run's infolog) no longer counts (`copy_removed`); the mark says "game" now, and an older mark, which a
       replay may have written, no longer counts (a copy that really fails is marked again in its next game).
-      `launch-bar-test.sh`: the replay case for both menus and the old mark, all pass.
+      `launch-bar-test.sh`: the replay case for both menus and the old mark, all pass. Dev phone, BAR's game: with
+      both old marks still there the copies ran again; then the 2026-10-01 replay (BAR removed both copies in it) and a
+      skirmish right after: the app's copies ran (launch-bar 17:43:02), the marks untouched.
+- [x] Order labels of two words that their button's width shrank well below the others ("Place Blueprint" a size
+      smaller than every other order) go on two lines at up to the others' size where the button is tall enough
+      (`make-ordermenu.py`; the phone's remake gives the copy byte for byte). Dev phone: "Place / Blueprint" at the
+      other orders' size.
+- [ ] The whole picture in vertical stripes in a game's first frames (dev phone, 2026-11-04, BAR's game, game time
+      0:00, the engine just loaded: map, minimap, build and order menus, unit picture, every ~16 px; some text whole),
+      clean by 0:25. The same pattern as the build menu's stuck stripes (fixed by drawing it again at 5 s) and the
+      white columns in a pad-test screenshot: likely one GPU cause at a game's start, the heaviest frames (a frame
+      shown or sampled before the GPU finished it: Adreno draws in tiles). Watch: if the order menu or another
+      panel drawn into its own texture keeps stripes after the start, give it the build menu's redraw.
 - [x] BAR's update to test-31820 (2026-11-04) changed its Order menu: an order's tooltip now gets a keyboard line
       ("Tap L quickly: 1x Fire at will, 2x Hold fire, ...", "Press Z Z for area mex"; `tapHotkeyLine`), and the line
       the copy's touch patch hooked into moved, so the phone could not make the copy again: the old copy ran, and the
