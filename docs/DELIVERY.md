@@ -1038,7 +1038,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       button and unit groups (bottom right) answer no IsAbove either, and a drag up from them pans the map; counted as
       interface too, the drag from the idle builders button lost the selection and left the commander no longer idle
       (they act on the press and have no MouseRelease: the release landed on the map). Left panning, the lesser harm;
-      the menus keep their fix (they handle the release: the selection stays). And placing a
+      the menus keep their fix. Checked with a scratch widget logging the selection, the active command and the
+      commander's orders (removed after): a drag from the order menu's Move leaves no command and no order (a tap on
+      Move picks it), the selection stays; a drag from the build menu picks the option it starts on. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
