@@ -8,9 +8,10 @@
 #       simulated and, in a replay BAR's server recorded, checked against every player's checksum), then measures the
 #       game's speed for -Seconds. Prints the [DESYNC WARNING] count and the speed lines; the infolog goes to
 #       C:\Tools\BARANDROID\engine-sim\runs\. The replay must be in the phone's demos/ (pushed from the laptop if it
-#       is not), its game and map installed. Afterwards dev-env.sh is removed again.
+#       is not), its game and map installed. Afterwards dev-env.sh is removed again. -Perf <seconds>: simpleperf on the
+#       engine for that long once the measured part begins (the .perf.data beside the infolog). One run at a time.
 param([string]$Install, [string]$Use, [switch]$Off, [string]$Replay, [string]$Engine = "official",
-      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [string]$Device = "")
+      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [int]$Perf = 0, [string]$Device = "")
 $ErrorActionPreference = "Stop"
 . (Join-Path (Split-Path $PSScriptRoot) "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
@@ -63,9 +64,24 @@ if ($Replay) {
   $before = [int](App-Script $count "es-count.sh")
   & $adb -s $Device shell "am force-stop com.underarmcape.bardroid; sleep 1; am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench" | Out-Null
   $start = Get-Date
+  $perfDone = -not $Perf
+  $seen = $false   # (the engine's process seen; gone again = ended, also when Android's low-memory killer took the app)
   do {
     Start-Sleep 20
     $now = [int](App-Script $count "es-count.sh")
+    $engine = "$(& $adb -s $Device shell 'pidof recoil-main || pidof spring')".Trim()
+    if ($engine) { $seen = $true } elseif ($seen) { $now = $before + 1; "the engine's process is gone" }
+    # -Perf: simpleperf on the engine (user space, 2000 samples a second) once the measured part has begun
+    if (-not $perfDone -and "$(App-Script "grep -c 'replaybench\] measuring' files/bar/infolog.txt 2>/dev/null" "es-perf0.sh")".Trim() -ge 1) {
+      $perfDone = $true
+      $sp = Join-Path $TC "android-sdk\ndk\29.0.14206865\simpleperf\bin\android\arm64\simpleperf"
+      if ("$(App-Script '[ -x files/simpleperf ] && echo yes' 'es-perf1.sh')".Trim() -ne "yes") {
+        Send-AppFile $adb $sp "files/simpleperf" $Device; App-Script "chmod 755 files/simpleperf" | Out-Null
+      }
+      & $adb -s $Device shell "setprop security.perf_harden 0" | Out-Null
+      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u -f 2000 --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
+      & $adb -s $Device shell "setprop security.perf_harden 1" | Out-Null
+    }
   } while ($now -le $before -and ((Get-Date) - $start).TotalSeconds -lt $Timeout)
   if ($now -le $before) { "timeout after $Timeout s" }
   & $adb -s $Device shell "am force-stop com.underarmcape.bardroid" | Out-Null
@@ -75,6 +91,11 @@ if ($Replay) {
   # (this run's infolog: the next start removes it, and a force-stop can come before launch-bar.sh's copy in files/logs)
   App-Script "cat files/bar/infolog.txt" "es-cat.sh" | Out-File -Encoding utf8 $out
   App-Script "rm -f files/bar/.bardroid-bench-replay files/bar/dev-env.sh" | Out-Null
+  if ($Perf) {
+    & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat files/es-perf.data > `"$($out -replace '\.txt$','.perf.data')`""
+    App-Script "rm -f files/es-perf.data" | Out-Null
+    "profile: $($out -replace '\.txt$','.perf.data')"
+  }
   $log = Get-Content $out
   $desync = @($log | Select-String -SimpleMatch "[DESYNC WARNING]").Count
   "engine $Engine, replay ${name}: $desync desync warnings, $([int]((Get-Date) - $start).TotalSeconds) s; infolog $out"

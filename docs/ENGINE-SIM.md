@@ -81,6 +81,18 @@ game until the replay and spectating stages below say it computes exactly what t
 - A replay's game version must be installed: `pr-downloader --download-game "Beyond All Reason test-NNNNN-hash"` in
   the phone's container (BAR's rapid servers, as the app's update does).
 
+## Findings on the way
+
+- **Memory before 16-player games on 8 GB phones.** The 8v8 replay (Supreme Isthmus, 2026-10-13) does not load on the
+  dev phone: Android's low-memory killer closed the app while the engine loaded it (13:12:59, "the phone ran out of
+  memory"; ~3.1 GB available idle). Stage 4's "spectating 16-player games on the dev phone" needs the engine to use
+  less memory first (the projectile atlases' 345 MB and the screen's buffers are unsynced: engine-side work now
+  possible), or Kailil's Fold7 (12 GB). The sync checks use a 1v1 server replay meanwhile (SpeedMetal, 2026-10-01).
+- **PGO** (profile-guided optimization; the main thread is mostly BAR's Lua and unit scripts, interpreters gain most
+  from it): the Windows-hosted GCC writes profile names with Windows backslashes; with `-fprofile-prefix-path` set to
+  the build folder (backslash form) they come out as `<dir>\rts#...#File.cpp.gcda`, which the rebuild in the same
+  folder finds again.
+
 ## Status
 
 - 2026-11-04: branches and folders set up; Arm GNU toolchain 13.2.Rel1 (GCC 13.2, mingw-hosted, aarch64 Linux)
