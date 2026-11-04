@@ -58,6 +58,14 @@ The first version meant for other people's phones: everything since the first bu
   picture; a tap on the picture brings the camera to them.
 - The lobby: a tooltip or a pressed look no longer stays where a finger lifted, and the Settings list scrolls from
   anywhere on it.
+- Past the map's edge the camera moves as on the map: a drag there holds the point under the finger up and down as
+  well as across (up and down went the wrong way), a drag across the edge moves smoothly, a pinch there zooms about
+  the fingers, and a drag over the sky (the camera tilted up to the horizon) moves the map.
+- In a game the build menu's tooltip no longer stays over the next row after a tap, and an order's tooltip goes
+  2.5 s after the finger lifts, in every game (the controller game's menus too).
+- The unit info panel: a wreck, a tree or a rock under the finger (nothing selected) shows its name and what
+  reclaiming it gives, a wreck with the picture of the unit it was; several types selected show a count only above
+  1, a long count small enough to leave the picture visible; its largest text a size smaller.
 
 **Controllers, mouse and keyboard**
 - Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby, where Start switches its
@@ -99,6 +107,8 @@ The first version meant for other people's phones: everything since the first bu
 - A tap as a game finishes loading no longer takes BAR's music and volume sliders out of that game, and quitting in
   first person no longer starts later games in that camera.
 - The launcher's start buttons use what the screen shows: a changed setting no longer needs Save settings first.
+  Its status line and the notification say what is happening in the same words from the first moment ("Starting",
+  "Installing: ...", "Skirmish running"), and its buttons and settings no longer crowd their edges.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 
