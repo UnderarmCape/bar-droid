@@ -207,11 +207,12 @@ end
      '''						local cmd = commands[cell]
 						if WG.tooltip and droid.tooltipShows() then -- BAR Droid: a finger's tooltip goes after a while
 '''),
-    ('''							local hotkey = hotkeyCache[cmd.action]
+    ('''							local hotkey = tapLine and "" or hotkeyCache[cmd.action]
 ''',
-     '''							local hotkey = hotkeyCache[cmd.action]
-							if WG.BarDroidInput == "touch" then -- BAR Droid: no key to name to fingers ("; - Set how far ...")
-								hotkey = ""
+     '''							local hotkey = tapLine and "" or hotkeyCache[cmd.action]
+							-- BAR Droid: no key to name to fingers ("; - Set how far ...", "Tap L quickly: 1x Fire at will, ...")
+							if WG.BarDroidInput == "touch" then
+								hotkey, tapLine = "", nil
 							end
 '''),
     ('''function widget:MousePress(x, y, button)

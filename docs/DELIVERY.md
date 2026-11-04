@@ -182,6 +182,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       circles back for the rest of a pick (now the see-through colour is set every frame while a building is
       picked, one line for the engine to read). Dev phone, 150 turrets, the colour file's line loaded once
       mid-pick: 79.3 fps before, 97.3 after (the engine's circles held it at 26).
+- [x] BAR's update to test-31820 (2026-11-04) changed its Order menu: an order's tooltip now gets a keyboard line
+      ("Tap L quickly: 1x Fire at will, 2x Hold fire, ...", "Press Z Z for area mex"; `tapHotkeyLine`), and the line
+      the copy's touch patch hooked into moved, so the phone could not make the copy again: the old copy ran, and the
+      launcher said "1 of the app's adjustments to BAR did not apply". `make-ordermenu.py` hooks the new line and
+      leaves out the tap line too for fingers; the copy made again from the phone's release (the phone's own remake,
+      as `BuildMenuPatches` does, gives it byte for byte). Dev phone: no Android-layer miss at start, Fire at will's
+      tooltip by touch without key or tap line. The build menu's patches still apply to test-31820. pad-test after
+      the build-ranges widget: all pass. (The laptop's BAR is older, test-31777: `make-ordermenu.py --check` there
+      fails until it updates.)
 - [x] The launcher's settings fade out at the top and bottom of their scrolling area (a line cut in half under the
       buttons' divider read as a glitch; dev phone, 2026-11-03).
 - [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read

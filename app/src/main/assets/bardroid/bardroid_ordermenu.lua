@@ -1,12 +1,12 @@
 -- BAR Droid order menu: BAR's own Order menu (luaui/Widgets/gui_ordermenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31783-a096d9f, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
+-- Beyond All Reason test-31820-45ea098, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
 -- offline"): while the app's gamepad controls hide the orders the pad has buttons for, the rest fill the menu evenly,
 -- as in the controller game's (v0.8.5's) order menu, and the menu answers IsAbove (a finger's drag on it no longer pans
 -- the map). Made by tools/make-ordermenu.py; do not edit by hand, run it again.
 -- launch-bar.sh runs it instead of BAR's Order menu; when an update changes BAR's file the phone makes it again from the
 -- new file (the line below names the one it was made from; Installer, BuildMenuPatches). In the controller game, which
 -- keeps v0.8.5's own ("Order menu (controller)"), it stands down.
--- BARDROID_ORDERMENU_FROM eca8d53b7bcd1fd5289a14e4cdaf8e22
+-- BARDROID_ORDERMENU_FROM 6f71272f2d87695f936c072d02d5a033
 local widget = widget ---@type Widget
 
 function widget:GetInfo()
@@ -291,6 +291,8 @@ local isSpectating = spGetSpectatingState()
 local cursorTextures = {}
 ---@type table<string, string>
 local actionHotkeys
+local tapHotkeys
+local tapHotkeyLines = {}
 
 local function clearStateLightDisplayLists()
 	for cell, cache in pairs(stateLightDisplayLists) do
@@ -535,6 +537,11 @@ local function refreshCommands()
 
 	-- cancelTargetLastState is kept current by SelectionChanged and by the poll in Update
 	local cancelTargetRelevant = cancelTargetLastState
+
+	-- the blueprint commands, unless the blueprint UI is off (ShowBlueprintUI: settings, dev)
+	local hideBlueprints = Spring.GetConfigInt("ShowBlueprintUI", 1) == 0 or nil
+	hiddenCommands[GameCMD.BLUEPRINT_PLACE] = hideBlueprints
+	hiddenCommands[GameCMD.BLUEPRINT_CREATE] = hideBlueprints
 
 	local activeCmdDescs = spGetActiveCmdDescs()
 	for _, command in ipairs(activeCmdDescs) do
@@ -790,6 +797,66 @@ end
 local function reloadBindings()
 	currentLayout = Spring.GetConfigString("KeyboardLayout", "qwerty")
 	actionHotkeys = require("luaui/Include/action_hotkeys")
+	tapHotkeys = require("luaui/Include/action_tap_hotkeys")
+	tapHotkeyLines = {}
+end
+
+-- "Tap L quickly: 1x Fire at will, 2x Hold fire, 3x Return fire" for a state set by the number of taps;
+-- "Press Z Z for area mex" when it needs the extractor picked first: its key bound to an extractor too
+-- (Legacy presets), or the grid layout's keys (the build menu's WG.gridmenu.getAreaMexKeys)
+local function tapHotkeyLine(cmd)
+	if cmd.action == "areamex" then
+		local keys
+		local key = actionHotkeys.areamex
+		if key then
+			if tapHotkeyLines.areamex == nil then
+				tapHotkeyLines.areamex = false
+				for _, keybinding in ipairs(Spring.GetKeyBindings()) do
+					if keybinding.boundWith == key and keybinding.command:find("buildunit_", 1, true) == 1 then
+						local label = keyConfig.sanitizeKey(key, currentLayout):upper()
+						tapHotkeyLines.areamex = label .. " " .. label
+						break
+					end
+				end
+			end
+			keys = tapHotkeyLines.areamex or nil
+		elseif WG.gridmenu and WG.gridmenu.getAreaMexKeys then
+			local grid = WG.gridmenu.getAreaMexKeys()
+			keys = grid and table.concat(grid, " ")
+		end
+		return keys
+				and getCachedTranslation("ui.orderMenu.areamexHotkey", {
+					keys = keys,
+					highlightColor = "\255\255\215\100",
+					textColor = "\255\240\240\240",
+				})
+			or nil
+	end
+	local line = tapHotkeyLines[cmd.action]
+	if line == nil then
+		line = false
+		local chain = tapHotkeys[cmd.action]
+		if chain then
+			local taps = {}
+			for count = 1, #chain do
+				local state = cmd.params[chain[count] + 2]
+				if state then
+					taps[#taps + 1] = getCachedTranslation("ui.orderMenu.tapCount", {
+						count = count,
+						state = getCachedTranslation("commands." .. state),
+					})
+				end
+			end
+			line = getCachedTranslation("ui.orderMenu.tapHotkeys", {
+				hotkey = keyConfig.sanitizeKey(chain.key, currentLayout):upper(),
+				taps = table.concat(taps, ", "),
+				highlightColor = "\255\255\215\100",
+				textColor = "\255\240\240\240",
+			})
+		end
+		tapHotkeyLines[cmd.action] = line
+	end
+	return line or nil
 end
 
 function widget:Initialize()
@@ -1539,9 +1606,11 @@ function widget:DrawScreen()
 								hotkeyCache[cmd.action] =
 									keyConfig.sanitizeKey(actionHotkeys[cmd.action], currentLayout)
 							end
-							local hotkey = hotkeyCache[cmd.action]
-							if WG.BarDroidInput == "touch" then -- BAR Droid: no key to name to fingers ("; - Set how far ...")
-								hotkey = ""
+							local tapLine = tapHotkeyLine(cmd)
+							local hotkey = tapLine and "" or hotkeyCache[cmd.action]
+							-- BAR Droid: no key to name to fingers ("; - Set how far ...", "Tap L quickly: 1x Fire at will, ...")
+							if WG.BarDroidInput == "touch" then
+								hotkey, tapLine = "", nil
 							end
 							local hotkeyApplied = false
 
@@ -1577,6 +1646,9 @@ function widget:DrawScreen()
 									highlightColor = "\255\255\215\100",
 									textColor = "\255\240\240\240",
 								})
+							end
+							if tapLine then
+								tooltip = tooltip ~= "" and (tooltip .. "\n" .. tapLine) or tapLine
 							end
 							if tooltip ~= "" then
 								local title
@@ -1993,6 +2065,7 @@ end
 function widget:LanguageChanged()
 	commandTextCache = {}
 	translationCache = {}
+	tapHotkeyLines = {}
 	widget:ViewResize()
 end
 
