@@ -1126,6 +1126,8 @@ end
 -- the fingers are the input; a mouse and the pad keep BAR's way. Wrapped again when BAR's tooltip widget makes a new
 -- API (a reload). (tooltipApi, barShowTooltip, fingersShowTooltip: declared before Shutdown, which unwraps it)
 local TOOLTIP_REST = 2.5 -- (the order menu copy's TOOLTIP_SECONDS)
+local TEXT_WHITE = "\255\240\240\240"
+local HOTKEY = "\255\255\215\100[^\255\n]-" .. TEXT_WHITE .. " %- " -- (gold key, white " - ")
 local tipX, tipY, tipRestsFrom
 local function fingersTooltip(name)
 	if WG.BarDroidInput ~= "touch" then
@@ -1148,10 +1150,16 @@ local function wrapTooltips()
 		return
 	end
 	local show = t.ShowTooltip
-	fingersShowTooltip = function(name, ...)
-		if fingersTooltip(name) then
-			return show(name, ...)
+	fingersShowTooltip = function(name, value, ...)
+		if not fingersTooltip(name) then
+			return
 		end
+		-- an order's keyboard key, which fingers have none of ("5 - Set a prioritized target ..."): BAR's
+		-- ui.orderMenu.hotkeyTooltip puts it in its gold before the text's white; the app's copy leaves it out itself
+		if name == "ordermenu" and type(value) == "string" and WG.BarDroidInput == "touch" then
+			value = value:gsub(HOTKEY, TEXT_WHITE)
+		end
+		return show(name, value, ...)
 	end
 	tooltipApi, barShowTooltip = t, show
 	t.ShowTooltip = fingersShowTooltip

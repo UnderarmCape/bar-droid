@@ -140,6 +140,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       "Reclaim" figure changes every frame while it is reclaimed, each new text a new recording of the panel (~27 ms
       on the phone): up to 4 a second. A feature's text is rebuilt once a second now (units keep 0.25 s). Dev phone,
       after a pause for its heat: the feature view as before ("San Pedro", "Reclaim 100"), no error.
+- [x] v0.8.5's order tooltips by touch (the controller game) named the keyboard key in front ("5 - Set a prioritized
+      target ..."), which the app's copy leaves out for fingers. The tooltip wrapper in `bardroid_touch.lua` takes
+      out BAR's gold key and its " - " (`ui.orderMenu.hotkeyTooltip`) while the fingers are the input. Dev phone: Set
+      Target's tooltip without "5 -"; a mouse keeps the key.
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
