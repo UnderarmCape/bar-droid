@@ -1048,7 +1048,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       (BAR's width at the left edge) could have taken a map drag beside a moved menu for a menu drag; the copy answers
       IsAbove itself, so the rect is now for other build menus only (v0.8.5's). The order menu keeps it (the copy is
       not movable). (`droidCells` marks no copy: v0.8.5's packaged order menu has it too.) touch-phone-test in both
-      games: all pass. And placing a
+      games: all pass. Checked with the menu moved (BAR's game, a scratch widget driving the layout editor's own
+      press/move/release, the move reset after): the menu from x 0-707 to 700-1407; the pointer at its old place
+      answers map, at its new place interface; the next game has it back at its default place. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
