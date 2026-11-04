@@ -132,7 +132,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `PonReason.HARD_RESET = 1`, reboot reason 0x4, the usual sign of a watchdog after a full freeze; the kernel's
       last lines are not readable without root. The phone had run games back to back for hours (an 8 GB phone in the
       low-memory mode). Watch for it again: if it repeats, note what ran, and whether the replay
-      hang above came first. Wi-Fi adb and the dark screen restored with `tools\devphone.ps1 connect` / `dark`.
+      hang above came first. Wi-Fi adb and the dark screen restored with `tools\devphone.ps1 connect` / `dark`. A
+      skirmish right after it ran normally: loaded in 60 s, 28.2 fps its first minute (the load's stutter) then 30,
+      memory available 744 MB, but the phone still hot (53 C on the GPU's sensor, its cap at 295 of 615 MHz, thermal
+      level 7): hours of back-to-back games keep it near its limits, so the next runs give it pauses.
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
