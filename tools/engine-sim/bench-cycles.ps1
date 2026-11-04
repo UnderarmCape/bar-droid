@@ -45,7 +45,8 @@ foreach ($r in 1..$Rounds) {
     & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $e -Device $Device | Out-Null
     if ($e -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
     if ($spec -match '\+allcpu') {
-      AppRun "printf '%s\n' 'taskset -p ff `$`$ >/dev/null 2>&1' >> files/bar/dev-env.sh" "es-c3.sh" | Out-Null
+      Send-AppFile $adb "$PSScriptRoot\dev-env-allcpu.sh" "files/bar/es-allcpu.txt" $Device
+      AppRun "cat files/bar/es-allcpu.txt >> files/bar/dev-env.sh; rm -f files/bar/es-allcpu.txt" "es-c3.sh" | Out-Null
     }
     & $adb -s $Device shell "setprop security.perf_harden 0" | Out-Null
     # (the last run's infolog would answer the watcher at once: launch-bar.sh removes it only when the engine starts)

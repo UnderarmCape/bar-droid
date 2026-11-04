@@ -93,6 +93,37 @@ game until the replay and spectating stages below say it computes exactly what t
   the build folder (backslash form) they come out as `<dir>\rts#...#File.cpp.gcda`, which the rebuild in the same
   folder finds again.
 
+- **The engine never ran on the dev phone's prime core.** Its threads start with a CPU mask that leaves out core 7 (the
+  X3, 3.36 GHz) and often 5 or 6 (0x3f, 0x5f, 0x3b, 0x58...; the engine's first log line already has it, while the
+  launch shell has all 8), set from outside as it starts (most likely Samsung's game service); the cpuset is
+  top-app (0-7). Android's side may not change it (run-as: Permission denied, SELinux); the app's own shell can:
+  `tools/engine-sim/dev-env-allcpu.sh` re-allows every CPU every 3 s (engine `0-7` from then on). App-side, no engine
+  change. Measured hot, the official engine, alternating (BAR's benchmark, uncapped, AP 49-57 C):
+
+  | | game speed | Sim ms per frame | big cluster's median clock |
+  | --- | --- | --- | --- |
+  | as started (cores 0-5 or so) | x0.53, x0.54, x0.53 | 40.1, 39.0, 39.6 | 864 MHz |
+  | every CPU allowed | x0.67, x0.70, x0.64 | 33.2, 30.9, 34.1 | 1593 MHz |
+
+  **+26 % game speed** with the same binary and heat: as started, the engine's busy threads sat mostly where the big
+  cluster stayed idle at its floor. Scheduling only, nothing synced: it can go to `main` on its own (launch-bar.sh),
+  after a look at the Fold7's mask (the 2026-10-27 research saw all 8 CPUs there).
+- **Wall time is the wrong yardstick for small changes on a hot phone**: in 8 alternating hot runs the big cores'
+  cluster sat at 864 MHz in seven and at 1843 MHz in one; game speed followed the clock, not the build. CPU work per
+  simulated frame (simpleperf: user-space instructions and cycles of all engine threads from game frame 15 to 2017
+  of BAR's benchmark, `tools/engine-sim/bench-cycles.ps1`) repeats within ~1 %:
+
+  | engine | instructions per frame (2 runs) | cycles per frame | main thread cycles |
+  | --- | --- | --- | --- |
+  | official | 197.5 / 196.8 M | 167.2 / 166.4 M | 115.5 / 115.3 M |
+  | gcc-stock | 184.6 / 184.9 M (-6.4 %) | 163.5 / 164.4 M (-1.8 %) | 112.8 / 113.2 M |
+  | gcc-sim1 | 184.0 / 184.4 M | 161.2 / 162.9 M (-2.8 %) | 112.2 / 113.2 M |
+  | gcc-sim1, the engine's own thread choice | 184.5 / 184.7 M | 162.0 / 164.0 M | 111.8 / 113.3 M |
+
+  So the GCC 13.2 build with the newer libraries already does less work than the official one, and the first sim
+  changes add little in this scenario (the deque was a laptop cost more than a phone one). The engine's own thread
+  choice changes nothing measurable while the main thread is the limit (it is ~70 % of all cycles).
+
 ## Status
 
 - 2026-11-04: branches and folders set up; Arm GNU toolchain 13.2.Rel1 (GCC 13.2, mingw-hosted, aarch64 Linux)

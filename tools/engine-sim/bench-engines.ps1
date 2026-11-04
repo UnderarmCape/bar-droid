@@ -20,13 +20,11 @@ function DevSettings([bool]$auto) {
   [IO.File]::WriteAllText($tmpf, $text, (New-Object Text.ASCIIEncoding))
   Invoke-AppScript $adb $tmpf $Device | Out-Null
 }
-# "+allcpu": the engine started with every CPU of its cpuset allowed (taskset in dev-env.sh). It inherits the CPU mask
-# of the app thread that starts it, which on the dev phone left out the prime core 7 (0x3f, 0x5f; 2026-11-04).
+# "+allcpu": the engine's threads allowed on every CPU (dev-env-allcpu.sh). It starts with a CPU mask that leaves out
+# the dev phone's prime core 7 (0x3f, 0x5f, ...; 2026-11-04).
 function AllCpu {
-  $line = Join-Path $TC "tmp\es-allcpu.txt"
   $add = Join-Path $TC "tmp\es-allcpu.sh"
-  [IO.File]::WriteAllText($line, "taskset -p ff `$`$ >/dev/null 2>&1; log `"engine-sim: CPUs `$(taskset -p `$`$ | sed 's/.*: //')`"`n", (New-Object Text.ASCIIEncoding))
-  Send-AppFile $adb $line "files/bar/es-allcpu.txt" $Device
+  Send-AppFile $adb "$PSScriptRoot\dev-env-allcpu.sh" "files/bar/es-allcpu.txt" $Device
   [IO.File]::WriteAllText($add, "cat files/bar/es-allcpu.txt >> files/bar/dev-env.sh; rm -f files/bar/es-allcpu.txt; tail -1 files/bar/dev-env.sh", (New-Object Text.ASCIIEncoding))
   Invoke-AppScript $adb $add $Device
 }
