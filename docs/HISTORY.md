@@ -34,6 +34,29 @@ launchers' old place beside the checkout (now in the repository root); sections 
   dev phone reset itself once (a hardware reset four seconds into a skirmish, after hours of back-to-back games); a
   watch item.
 
+## White blocks on the map, the first seconds, the lobby by finger (2026-11-02)
+- **White blocks after a camera jump** (the minimap and map's ground tiles, a frame after first person ended): the
+  engine fills every 128x128 ground tile through one pixel buffer and maps it unsynchronized for the next tile right
+  after the last upload, while Mesa copies from it later on the GPU. `pace.c` now uploads such a tile from a copy of
+  the buffer's bytes (phones, `BARDROID_TEX_ZERO`): clean frames, 11 fps where they were 2.
+- **The first seconds of every game at 2-5 fps**: BAR's 26 animated cursors loaded in the first frames;
+  `bardroid_touch.lua` now asks for them on the loading screen (4-7 s more there), and the first seconds read "3 13 9
+  21 25 ..." frames a second where they read "2 4 5 5 5".
+- **The unit info panel online**: BAR's released `common/weapons.lua` calls `tonumber`, which the panel's copy was not
+  given: every unit with a beam laser lost its name and stats. Fixed, with a fallback; several units of one type show
+  that type's name and stats with the count on its picture (a grid of one cell before).
+- **The lobby by finger**: a tapped thing's hover tooltip no longer stays (a map's picture covered Next), and the
+  Settings list scrolls from anywhere on it (Chili passed most of a line to the window behind).
+- **BAR's messages** ("Battle Started", a commander under attack) are shown in the chat box, where they were typed behind
+  the order menu. The app's build menu is 5 wide on a wide, short screen (Kailil: "try 5 x 3").
+- **Housekeeping**: empty replays (282 of 355 on the dev phone, games ended by Stop or the low-memory killer) and
+  half-made `sed` copies are removed before each start; an engine folder left without `spring` installs again; an
+  emptied Mesa address is no longer saved; the game screen without a game opens the launcher; first person survives
+  BAR's mid-game settings save (`tools/fp-save-test.ps1`); the launcher side by side on a wide screen.
+- **Kailil's online game on the Fold7** (8 players, unfolded): 30 fps for 11 minutes, then the heat (GPU down to 160 of
+  1200 MHz, thermal status 3) took it to 9-16 fps; memory never ran short. A replay hung once on the dev phone (Mesa's
+  "submit failed"); watched since.
+
 ## A warning for servers that stop the controls; the lobby at 100% (2026-11-01)
 Kailil cannot see a server's settings in the lobby (no room), so a game can turn out to have no touch or gamepad
 controls. `bardroid_lobby_touch.lua` now reads the joined server's settings twice a second (they arrive after the join,
