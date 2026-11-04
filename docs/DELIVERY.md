@@ -1043,7 +1043,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       Move picks it), the selection stays; a drag from the build menu picks the option it starts on. The lobby by
       finger on the dev phone (offline: the tests' login wait widget, removed after): the login dialog's Cancel, then
       Skirmish, Next through game type, difficulty and faction to the map choice, each tap taken; no lobby widget
-      error. Stopped at the map (a pick can download a large map onto the 8 GB phone). And placing a
+      error. Stopped at the map (a pick can download a large map onto the 8 GB phone). A review of the menu change:
+      in BAR's game the build menu is the app's copy, which the layout editor can move and size, and the new rect
+      (BAR's width at the left edge) could have taken a map drag beside a moved menu for a menu drag; the copy answers
+      IsAbove itself, so the rect is now for other build menus only (v0.8.5's). The order menu keeps it (the copy is
+      not movable). (`droidCells` marks no copy: v0.8.5's packaged order menu has it too.) touch-phone-test in both
+      games: all pass. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

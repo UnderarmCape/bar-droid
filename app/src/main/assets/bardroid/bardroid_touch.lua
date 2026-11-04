@@ -1016,15 +1016,18 @@ local barX, barY, barAt, barAnswer = nil, nil, -1000, false
 local function overGameMenus(mx, my)
 	local vsx, vsy = spGetViewGeometry()
 	local o = WG.ordermenu
-	if type(o) == "table" and type(o.getPosition) == "function"
+	if type(o) == "table" and type(o.getPosition) == "function" -- (the app's copy too: not movable, its place is true)
 		and (type(o.getIsShowing) ~= "function" or o.getIsShowing()) then
 		local x, y, w, h = o.getPosition()
 		if x and y and w and h and mx >= x * vsx and mx <= (x + w) * vsx and my <= y * vsy and my >= (y - h) * vsy then
 			return true
 		end
 	end
+	-- (not the app's copy: it answers IsAbove itself, and the layout editor may have moved and sized it away from the
+	-- width and place assumed here)
 	local b = WG.buildmenu
-	if type(b) == "table" and type(b.getSize) == "function" and type(b.getIsShowing) == "function" and b.getIsShowing()
+	if type(b) == "table" and b ~= WG.bardroidBuildmenu and type(b.getSize) == "function"
+		and type(b.getIsShowing) == "function" and b.getIsShowing()
 		and not WG.BarDroidOwnsBuildMenu and not (type(b.getBottomPosition) == "function" and b.getBottomPosition()) then
 		local top, bottom = b.getSize()
 		if type(top) == "number" and type(bottom) == "number" and top <= 1 then -- (fractions; BAR's grid menu gives pixels)
