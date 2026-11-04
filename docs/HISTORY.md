@@ -5,6 +5,35 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Online like offline, the map's edge, and the touch details (2026-11-03)
+- **The order menu online like offline** (Kailil: "Do the fix to make the orders menu behave like offline"): the app
+  runs its own copy of BAR's Order menu in BAR's released game, as it does the Build menu (`tools/make-ordermenu.py`,
+  remade on the phone after BAR updates): v0.8.5's even layout while the pad hides orders, an `IsAbove` (a drag on it
+  no longer pans), no keyboard key in its tooltips for fingers.
+- **Simulation offload study** for BAR's devs (Kailil: "try the simulation skipping anyways"): measured where a
+  phone's time goes, what a saved state and a catch-up cost; a running engine cannot take a state, so offloading the
+  simulation needs engine work. `docs/research/sim-offload.md`, and a Claude doc for Kailil to hand on.
+- **Past the map's edge** (Kailil: "I want it to feel just like normal navigation"): the void's ground point was
+  mirrored top to bottom (`Spring.GetPixelDir` counts y from the top, as X does), so up and down went against the
+  finger there. Fixed, and a drag across the edge takes both ends at one height, a pinch over the void zooms about the
+  fingers, a drag over the sky moves the map. `tools/touch-phone-test.ps1` checks the finger camera on the dev phone
+  through the touch log, no fingers and no laptop BAR needed (12 cases).
+- **Touch on BAR's menus, every game**: tooltips no longer stay where a finger lifted (build menu: none; an order's:
+  2.5 s), through a wrapper on BAR's tooltip API that reaches v0.8.5's menus too, without their keyboard key; in the
+  controller game a drag that starts on v0.8.5's build or order menu no longer pans (their rects from their own
+  `WG` functions). BAR's idle builders button and unit groups still pan: they act on the press, and a drag's release
+  on the map then cleared the selection.
+- **The unit info panel**: wrecks, trees and rocks under the pointer (name, reclaim value, a wreck's unit picture),
+  counts only above 1 and no wider than a third of a cell, a calmer largest text, a feature's text rebuilt once a
+  second (each new text is a ~27 ms recording on the phone).
+- **The launcher and the notification**: one text size per button row with air at the edges, the settings' scrollbar
+  in a margin of its own, a padded log, and the same words for the status in both from the first moment ("Starting",
+  "Installing: ...", "Skirmish running"), now in `StatusText.java` with a check in CI.
+- **Checks**: `java-checks.sh` (CI) had stopped compiling (PadGameTest needs BuildMenuPatches); fixed. Escape on
+  Android 17 shows "Long press Esc key to close this app" while the app captures the keyboard: Kailil's call. The
+  dev phone reset itself once (a hardware reset four seconds into a skirmish, after hours of back-to-back games); a
+  watch item.
+
 ## A warning for servers that stop the controls; the lobby at 100% (2026-11-01)
 Kailil cannot see a server's settings in the lobby (no room), so a game can turn out to have no touch or gamepad
 controls. `bardroid_lobby_touch.lua` now reads the joined server's settings twice a second (they arrive after the join,
