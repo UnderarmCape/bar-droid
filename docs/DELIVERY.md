@@ -1020,7 +1020,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       with its count, the commander's none; nothing to change. A big army (300 Pawns given): 29.9 fps with none
       selected and 29.9/29.8 with all 301 selected (the 30 cap holds; no error from the app's widgets), but in the grid
       "300", at a single digit's size, covered most of the Pawn's picture: a count is now no wider than about a third
-      of its cell (BAR's Info widget shrinks long counts too); one or two digits keep their size. And placing a
+      of its cell (BAR's Info widget shrinks long counts too); one or two digits keep their size. With 300 Pawns
+      and 30 Construction Bots (331 units, 29.9 fps, no error): the one-type views "Pawn" with 300 and "Construction
+      Bot" with 30 on the picture, the counts inside it; the idle-builders button's 30 reads. (The bots' queued
+      turbines fell off the map at that start: the queue drawing with many builders not seen.) And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
