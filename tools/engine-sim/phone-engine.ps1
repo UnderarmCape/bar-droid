@@ -69,8 +69,8 @@ if ($Replay) {
   do {
     Start-Sleep 20
     $now = [int](App-Script $count "es-count.sh")
-    $engine = "$(& $adb -s $Device shell 'pidof recoil-main || pidof spring')".Trim()
-    if ($engine) { $seen = $true } elseif ($seen) { $now = $before + 1; "the engine's process is gone" }
+    $enginePid = "$(& $adb -s $Device shell 'pidof recoil-main || pidof spring')".Trim()   # (not $engine: PowerShell names ignore case, -Engine is a parameter)
+    if ($enginePid) { $seen = $true } elseif ($seen) { $now = $before + 1; "the engine's process is gone" }
     # -Perf: simpleperf on the engine (user space, 2000 samples a second) once the measured part has begun
     if (-not $perfDone -and "$(App-Script "grep -c 'replaybench\] measuring' files/bar/infolog.txt 2>/dev/null" "es-perf0.sh")".Trim() -ge 1) {
       $perfDone = $true

@@ -124,6 +124,42 @@ game until the replay and spectating stages below say it computes exactly what t
   changes add little in this scenario (the deque was a laptop cost more than a phone one). The engine's own thread
   choice changes nothing measurable while the main thread is the limit (it is ~70 % of all cycles).
 
+- **Sync proven on a real game, and the check proven to bite.** BAR's server echoes every player's checksum every
+  60 frames into its recording (`GameServer.cpp`, `syncResponseEchoInterval`), and a replay played back compares
+  each with its own (`NetCommands.cpp`). The 1v1 server replay (SpeedMetal, 2026-10-01, Kailil's own game as
+  UnderarmCape vs chrrod1, BAR test-31465), fast-forwarded 20 minutes (36,000 frames, ~1,150 units at the end):
+
+  | engine | desync warnings |
+  | --- | --- |
+  | official | 0 |
+  | gcc-stock (GCC 13.2, official flags) | 0 |
+  | clang-o3 (the 2026-10-27 research build: no `-fsingle-precision-constant`) | 0 |
+  | gcc-pgo (sim changes, `-mtune=cortex-x3`, profile-guided) | 0 |
+  | oryon-lto-fast (research build with `-ffast-math`: the control) | **1,190, from frame 0** |
+
+  So clang's missing `-fsingle-precision-constant` did not show in 20 minutes of a real game (Recoil's synced math
+  writes its float literals as floats); GCC stays the safe choice. All builds played the replay's measured minute in
+  real time on the dev phone (x1.00).
+- **Old replays and the app's menu copies** (a `main` bug found here, fixed there: 9dd7f16): the replay's BAR release
+  is older than the copies, BAR removed them, and launch-bar.sh switched them off for every later game.
+
+## "Calculations from others"
+
+Recoil is lockstep: players exchange only their commands, every client simulates every frame itself and reports a
+checksum, and the server compares them. So no client can take results from another while it plays:
+- A **player's** phone must simulate: its own commands depend on the state, its checksum is what keeps the game fair,
+  and trusting another machine's results would let that machine decide the game.
+- A **spectator's** phone could, in a new engine mode: a client that keeps up (a PC player, or BAR's server) streams
+  the synced state (units' positions, health, build progress, projectiles) at e.g. 10 per second, and the phone
+  draws it without simulating. That is an engine and server feature for BAR's developers (a new network message, a
+  "draw without sim" spectator, state compression), not something a client can do alone. What it would save and
+  cost on the phone: the whole Sim (30-45 ms per frame in BAR's benchmark when hot) against receiving and decoding
+  the state (a 1,000-unit battle: ~32 bytes per unit, ~320 KB/s raw at 10 Hz, much less as deltas).
+- Pieces of the sim (pathing, LOS) are cheap per frame (Tracy, research: 0.1-0.4 ms): not worth taking from others.
+
+Next for this part: measure, from a 16-player replay, the state a spectator would need per second (units alive,
+changed fields per frame) against the phone's Sim per frame, as numbers for BAR's developers.
+
 ## Status
 
 - 2026-11-04: branches and folders set up; Arm GNU toolchain 13.2.Rel1 (GCC 13.2, mingw-hosted, aarch64 Linux)
