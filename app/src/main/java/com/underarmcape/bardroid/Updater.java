@@ -115,6 +115,9 @@ public final class Updater {
         Prefs.engineUrl = ENGINE_RELEASES + ver + "/recoil_" + ver + "_" + ENGINE_ARCH + ".7z";
     }
 
+    /** The end of summary()'s line about the Android layer's misses (LauncherActivity shows it as a warning). */
+    static final String MISSES = " of the app's adjustments to BAR did not apply: see the log";
+
     /** The launcher's status lines (one fact a line: a phone's width wrapped one long line mid-phrase). */
     public static String summary(Paths p) {
         Properties s = new Properties();
@@ -130,7 +133,7 @@ public final class Updater {
         if (layer.exists()) try (BufferedReader r = new BufferedReader(new FileReader(layer))) {
             for (String l; (l = r.readLine()) != null; ) if (!l.trim().isEmpty()) misses++;
         } catch (IOException ignored) {}
-        if (misses > 0) sb.append("\n").append(misses).append(" of the app's adjustments to BAR did not apply: see the log");
+        if (misses > 0) sb.append("\n").append(misses).append(MISSES);
         return sb.toString();
     }
 

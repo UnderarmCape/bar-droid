@@ -201,6 +201,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       x0.67/0.70/0.64 with every CPU (+26 %). Dev phone after the change: the engine's 26 threads on 0-7, no errors.
       Installed on the Fold7 for Kailil's test (whether his Fold7 starts the engine on a narrower mask too is open:
       the 2026-10-27 research saw all 8 there).
+- [x] The launcher's two warnings in amber: "N of the app's adjustments to BAR did not apply: see the log" and the
+      last run's exit note (low memory, a crash) stood in the same plain text as the routine status lines
+      (`LauncherActivity.refresh`, `Updater.MISSES`). Dev phone: the miss line amber across both its wrapped lines.
 - [x] Order labels of two words that their button's width shrank well below the others ("Place Blueprint" a size
       smaller than every other order) go on two lines at up to the others' size where the button is tall enough
       (`make-ordermenu.py`; the phone's remake gives the copy byte for byte). Dev phone: "Place / Blueprint" at the

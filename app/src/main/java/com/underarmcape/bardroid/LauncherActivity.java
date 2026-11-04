@@ -196,7 +196,15 @@ public class LauncherActivity extends AppCompatActivity {
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
         text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);
+        // (the two warnings in amber: among the facts they read as one more status line, dev phone 2026-11-04)
+        if (note != null) warn(text, head.length() + 1, head.length() + 1 + note.length());
+        int miss = text.toString().indexOf(Updater.MISSES);
+        if (miss >= 0) warn(text, text.toString().lastIndexOf('\n', miss) + 1, miss + Updater.MISSES.length());
         statusView.setText(text);
+    }
+
+    private static void warn(android.text.SpannableString text, int start, int end) {
+        text.setSpan(new android.text.style.ForegroundColorSpan(0xFFF2B84B), start, end, 0);
     }
 
     private void appendLog(String line) {
