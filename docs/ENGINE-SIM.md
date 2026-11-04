@@ -54,7 +54,36 @@ game until the replay and spectating stages below say it computes exactly what t
 3. The phone benchmark (`tools/phone-bench.ps1`, hot, alternating with the stock build): gains or not.
 4. If gains: replays (no desync warning in whole multiplayer games), then spectating 16-player games on the dev phone.
 
+## Engine changes (`bardroid/sim`, all behind `-DBARDROID_SIM`: the same source builds stock without it)
+
+- `rts/Sim/Units/Scripts/UnitScript.cpp` `TickAllAnims`: each animating unit's pieces walked depth-first from a stack
+  kept per worker thread, not breadth-first through a `std::deque` allocated per unit per frame (laptop research:
+  -7 % Sim). Same transforms in the same values: a piece's transform depends only on its parent's. (Recoil's own
+  disabled DFS branch needs C++23 explicit object parameters, which GCC 13 lacks.)
+- `rts/System/Platform/Linux/CpuTopology.cpp`: Android lists each core's caches without sizes, so Recoil found no
+  cache groups, counted the little cores as performance cores and fell back to its default thread count. Without
+  cache sizes the cores are now grouped by the kernel's `cpu_capacity` (dev phone: 1024 prime, 811 x4, 266 x3):
+  the slowest are efficiency cores, the groups sorted fastest first, so the thread pool takes the fast groups up to
+  its threshold (dev phone: main + 4 workers on the prime and big cores; Fold7: all 8) and keeps off the little ones.
+  Threads only: which core runs a task never changes its result.
+- Compiler: `-mtune=cortex-x3` (the dev phone's prime core; scheduling only, no instruction or FP change).
+- LTO: not with this compiler: Arm's Windows-hosted GCC is a 32-bit program, too small for whole-engine LTO.
+
+## Toolchain notes
+
+- Arm's folder name made the compiler's own header paths pass Windows' 260-character limit
+  (`bits/c++allocator.h` "not found"): it lives at `toolchain\hosttools\agcc13`.
+- Its `include-fixed/pthread.h` (a copy of Arm's glibc 2.38 header) shadowed the sysroot's glibc 2.41 one
+  (`PTHREAD_COND_INITIALIZER` no longer matched): moved aside (`agcc13\SOURCE.txt`).
+- Debian's multiarch folders (`usr/include/aarch64-linux-gnu`, `usr/lib/aarch64-linux-gnu`) are passed by hand
+  (`-idirafter`, `-B`, `-L`, `-rpath-link`); some of Recoil's targets drop `CMAKE_C_FLAGS`, so the include goes in
+  the build type's flags too. `--allow-shlib-undefined`: SDL2's own dependencies are on the phone, not in the sysroot.
+- A replay's game version must be installed: `pr-downloader --download-game "Beyond All Reason test-NNNNN-hash"` in
+  the phone's container (BAR's rapid servers, as the app's update does).
+
 ## Status
 
 - 2026-11-04: branches and folders set up; Arm GNU toolchain 13.2.Rel1 (GCC 13.2, mingw-hosted, aarch64 Linux)
-  downloaded into the portable toolchain.
+  downloaded into the portable toolchain. `gcc-stock` built (the official flags, checked in its compile lines) and
+  installed on the dev phone as `engine-sim/gcc-stock`. Replays for the checks: two 8v8 Supreme Isthmus games BAR's
+  server recorded (engine 2026.07.04; `engine-sim\replays`).

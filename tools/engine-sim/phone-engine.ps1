@@ -58,17 +58,16 @@ if ($Replay) {
   }
   Set-DevEnv $Engine
   App-Script "printf '%s\n' '$Skip $Seconds $name' > files/bar/.bardroid-bench-replay; echo 'replay set'"
+  # (the end: one more "[svc] engine exited" line in launcher.log; the app's process stays after the game)
+  $count = "grep -c 'svc\] engine exited' files/logs/launcher.log"
+  $before = [int](App-Script $count "es-count.sh")
   & $adb -s $Device shell "am force-stop com.underarmcape.bardroid; sleep 1; am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench" | Out-Null
   $start = Get-Date
-  Start-Sleep 30
-  while (((Get-Date) - $start).TotalSeconds -lt $Timeout) {
-    $running = & $adb -s $Device shell "pidof com.underarmcape.bardroid"
-    $done = App-Script "grep -c 'replaybench\] done' files/bar/infolog.txt 2>/dev/null; grep -c 'spring exited' files/logs/launcher.log"
-    if (-not $running) { break }
-    $lines = @($done)
-    if ($lines.Count -ge 1 -and [int]$lines[0] -ge 1) { Start-Sleep 15; break }
+  do {
     Start-Sleep 20
-  }
+    $now = [int](App-Script $count "es-count.sh")
+  } while ($now -le $before -and ((Get-Date) - $start).TotalSeconds -lt $Timeout)
+  if ($now -le $before) { "timeout after $Timeout s" }
   & $adb -s $Device shell "am force-stop com.underarmcape.bardroid" | Out-Null
   $runs = "$ES\runs"
   New-Item -ItemType Directory -Force $runs | Out-Null
