@@ -1034,7 +1034,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       order menu's `getPosition`, the build menu's `getSize` with the width its code gives it, not while the app's own
       build menu has its place or it sits at the bottom): the same drags leave the map where it was, the press picks
       what it starts on (a build option: PLACE), as in BAR's game. touch-phone-test checks it now: the pointer on
-      the order menu and on the build menu answers interface, on the map map; all 12 cases pass. And placing a
+      the order menu and on the build menu answers interface, on the map map; all 12 cases pass. BAR's idle builders
+      button and unit groups (bottom right) answer no IsAbove either, and a drag up from them pans the map; counted as
+      interface too, the drag from the idle builders button lost the selection and left the commander no longer idle
+      (they act on the press and have no MouseRelease: the release landed on the map). Left panning, the lesser harm;
+      the menus keep their fix (they handle the release: the selection stays). And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts

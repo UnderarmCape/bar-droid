@@ -1035,6 +1035,9 @@ local function overGameMenus(mx, my)
 			end
 		end
 	end
+	-- (Not BAR's idle builders button and unit groups, bottom right, though a drag up from them pans the map too: they
+	-- act on the press and have no MouseRelease, so as a drag the release landed on the map: the selection went and
+	-- the commander was no longer idle; dev phone, 2026-11-03. A pan is the lesser harm.)
 	return false
 end
 
