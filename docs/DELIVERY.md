@@ -149,7 +149,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       target ..."), which the app's copy leaves out for fingers. The tooltip wrapper in `bardroid_touch.lua` takes
       out BAR's gold key and its " - " (`ui.orderMenu.hotkeyTooltip`) while the fingers are the input. Dev phone: Set
       Target's tooltip without "5 -"; a mouse keeps the key.
-- [ ] The build menu's unit pictures in stripes (dev phone, 2026-11-03 evening, BAR's game, 2 of 5 skirmish starts):
+- [x] The build menu's unit pictures in stripes (dev phone, 2026-11-03 evening, BAR's game, 2 of 5 skirmish starts):
       every picture of the first page drawn in vertical stripes about 16 of its pixels wide, every other one empty
       (the panel showing through), while the menu's figures, icons and words over them were whole. It stayed (0:33
       and 0:48 of game time) until something drew the menu again (a page change, a building picked: whole at once).
@@ -157,9 +157,16 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's Cache Icons, which loaded all of them in a game's first seconds, is off on phones since 2026-11-02
       (`launch-bar.sh`). Tried: the menu drawn again a few frames after its first drawing (the copy's warm-up kept,
       `make-buildmenu.py`): the stripes still came, at 1 of 2 starts, so it was taken out. Both striped starts loaded
-      faster (game time ~0:33 when the clean ones showed ~0:07 at the same moment). Next: a copy that logs each
-      drawing of the menu, to see when the pictures come out whole, and whether a drawing a second or two later is
-      enough; else a Mesa report (freedreno on KGSL).
+      faster (game time ~0:33 when the clean ones showed ~0:07 at the same moment). A test build that logged each
+      drawing: BAR draws the menu into a new texture at frame 0 (before "finished loading") and again at frame 31-42
+      (~1.4 s), then only on a change. Made to draw into a new texture every 1.5 s, with screenshots every ~2 s: the
+      stripes at 0:01 (the start's stutter, 10 fps), every drawing from ~1.6 s on whole. So the copy now draws the
+      menu once more at 5 s of game time when its last drawing came before (`make-buildmenu.py`, `droid.settled`);
+      logged on the dev phone: frames 0, 31 and 150, the menu whole. Why the first second's drawings break is not
+      known (the gaps are fully transparent: perhaps the new texture's zeros from `BARDROID_TEX_ZERO` landing after
+      the pictures; the words drawn last are whole).
+- [x] The launcher's settings fade out at the top and bottom of their scrolling area (a line cut in half under the
+      buttons' divider read as a glitch; dev phone, 2026-11-03).
 - [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read
       worst of the four; now white words on a deeper gold (dev phone, 2026-11-03: ONE and LINE picked, by touch).
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at

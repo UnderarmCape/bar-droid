@@ -60,7 +60,8 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Where the settings scroll under the buttons (its size: LauncherActivity.fitLayout). -->
+    <!-- Where the settings scroll under the buttons (its size: LauncherActivity.fitLayout); they fade out at its edges
+         (a line cut in half under the divider read as a glitch, dev phone 2026-11-03). -->
     <View
         android:id="@+id/divider"
         android:layout_width="match_parent"
@@ -76,7 +77,9 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:paddingEnd="10dp"
-        android:scrollbarStyle="outsideOverlay">
+        android:scrollbarStyle="outsideOverlay"
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="24dp">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
