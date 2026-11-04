@@ -136,6 +136,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       skirmish right after it ran normally: loaded in 60 s, 28.2 fps its first minute (the load's stutter) then 30,
       memory available 744 MB, but the phone still hot (53 C on the GPU's sensor, its cap at 295 of 615 MHz, thermal
       level 7): hours of back-to-back games keep it near its limits, so the next runs give it pauses.
+- [x] A review of the info panel's feature view (2026-11-03): its text is rebuilt every 0.25 s, and a wreck's
+      "Reclaim" figure changes every frame while it is reclaimed, each new text a new recording of the panel (~27 ms
+      on the phone): up to 4 a second. A feature's text is rebuilt once a second now (units keep 0.25 s). Dev phone,
+      after a pause for its heat: the feature view as before ("San Pedro", "Reclaim 100"), no error.
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
