@@ -1054,7 +1054,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       -Online after the menus' answers changed (the pad reads them too): all pass. touch-phone-test at the Fold7's
       unfolded shape (the dev phone at `wm size 1968x2184`, reset after; interface scale 1.0): all 12 pass; the drag
       from the map onto the void drifts more there (688 off after 3032, folded 241 after 2748: the engine fits the
-      camera's height to the ground under its new target on so long a move; inside the check's quarter). And placing a
+      camera's height to the ground under its new target on so long a move; inside the check's quarter). The HUD at
+      that shape in the controller game looked over after the day's changes: the app's own panels (unit info, QUEUE,
+      the order menu's place) fit; what does not is the open "Touch HUD on the Fold7 unfolded" item (Kailil's call),
+      unchanged. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
