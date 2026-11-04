@@ -176,7 +176,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       building (BAR's colour, a third of its alpha as the engine) and the picked building's own range. Dev phone, BAR's
       game, 150 construction turrets given in a skirmish, a solar collector picked, frame cap off, 20 s each: engine
       circles 26.1 and 26.2 fps, the 10 nearest 87.3 and 84.8 fps (~27 ms a frame was the circles). Installed on the
-      Fold7 (the app was not running).
+      Fold7 (the app was not running). Reviewed after (2026-11-04): the engine calls UnitTaken before the unit
+      changes team, so a turret given away stayed in the widget's list (now the callins' team arguments decide);
+      and BAR's cursor widget loads its whole colour file again on a cursor change, which would bring the engine's
+      circles back for the rest of a pick (now the see-through colour is set every frame while a building is
+      picked, one line for the engine to read). Dev phone, 150 turrets, the colour file's line loaded once
+      mid-pick: 79.3 fps before, 97.3 after (the engine's circles held it at 26).
 - [x] The launcher's settings fade out at the top and bottom of their scrolling area (a line cut in half under the
       buttons' divider read as a glitch; dev phone, 2026-11-03).
 - [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read

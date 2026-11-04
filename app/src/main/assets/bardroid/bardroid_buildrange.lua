@@ -55,8 +55,9 @@ local hidden = false
 local nearX, nearY, nearZ, nearR, nearD = {}, {}, {}, {}, {}
 local nearN = 0
 
-local function track(unitID, defID)
-	if immobile[defID] and Spring.GetUnitTeam(unitID) == myTeam then
+-- (team: the unit's team after the event: the engine calls UnitTaken before the unit changes team, Unit.cpp ChangeTeam)
+local function track(unitID, defID, team)
+	if immobile[defID] and team == myTeam then
 		local x, y, z = spGetUnitPosition(unitID)
 		if x then
 			turrets[unitID] = { x, y, z, reach[defID] }
@@ -70,12 +71,14 @@ local function trackAll()
 	turrets = {}
 	myTeam = Spring.GetMyTeamID()
 	for _, unitID in ipairs(Spring.GetTeamUnits(myTeam) or {}) do
-		track(unitID, spGetUnitDefID(unitID))
+		track(unitID, spGetUnitDefID(unitID), myTeam)
 	end
 end
 
+-- (set again every frame while hidden: BAR's cursor widget loads its whole colour file again when the cursor changes,
+-- a resize too; one line for the engine to read)
 local function setHidden(h)
-	if h ~= hidden then
+	if h or h ~= hidden then
 		hidden = h
 		Spring.LoadCmdColorsConfig(h and HIDDEN or SHOWN)
 	end
@@ -150,16 +153,16 @@ function widget:DrawWorld()
 	gl.Color(1, 1, 1, 1)
 end
 
-function widget:UnitCreated(unitID, unitDefID)
-	track(unitID, unitDefID)
+function widget:UnitCreated(unitID, unitDefID, team)
+	track(unitID, unitDefID, team)
 end
 
-function widget:UnitGiven(unitID, unitDefID)
-	track(unitID, unitDefID)
+function widget:UnitGiven(unitID, unitDefID, newTeam)
+	track(unitID, unitDefID, newTeam)
 end
 
-function widget:UnitTaken(unitID, unitDefID)
-	track(unitID, unitDefID)
+function widget:UnitTaken(unitID, unitDefID, _, newTeam)
+	track(unitID, unitDefID, newTeam)
 end
 
 function widget:UnitDestroyed(unitID)
