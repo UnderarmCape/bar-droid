@@ -86,6 +86,25 @@ local function check(case, ax, az, bx, bz, moved)
 		moved and string.format(" after %.0f", moved) or ""))
 end
 
+-- The touch widget's answer for where the pointer is (LuaUI/Config/bardroid_hover.txt: "x y answer"; 1 interface,
+-- 0 map); false (try again) until it is the wanted one, up to the runner's 30 tries
+local hoverTries = 0
+local function hoverAnswer(case, want)
+	local f = io.open("LuaUI/Config/bardroid_hover.txt", "r")
+	local got = f and tonumber((f:read("*l") or ""):match("(%d)%s*$"))
+	if f then
+		f:close()
+	end
+	if got ~= want and hoverTries < 20 then
+		hoverTries = hoverTries + 1
+		return false
+	end
+	hoverTries = 0
+	local ok = got == want
+	fails = fails + (ok and 0 or 1)
+	log(string.format("%s %s: %s", ok and "PASS" or "FAIL", case, tostring(got)))
+end
+
 local before, grab, endX, endY, row, mapRow
 local function moved()
 	local cs = Spring.GetCameraState()
@@ -219,6 +238,37 @@ local cases = {
 		fails = fails + (ok and 0 or 1)
 		log(string.format("%s a drag over the sky moves the map: %.0f", ok and "PASS" or "FAIL", moved()))
 	end,
+	-- the pointer over the build and order menus answers "interface" (a finger's drag there drags, not pans), over the
+	-- map "map": in the controller game the menus are v0.8.5's, which answer no IsAbove of their own
+	function() camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.9) end,
+	settle,
+	function()
+		local o = WG.ordermenu
+		if not (o and o.getPosition and (not o.getIsShowing or o.getIsShowing())) then
+			log("SKIP the menus' answers: no order menu shown")
+			step = step + 6
+			return
+		end
+		local x, y, w, h = o.getPosition()
+		Spring.WarpMouse(math.floor((x + w / 2) * vsx), math.floor((y - h / 2) * vsy))
+	end,
+	function() return hoverAnswer("the pointer on the order menu answers interface", 1) end,
+	function()
+		local b = WG.buildmenu
+		if not (b and b.getSize and b.getIsShowing and b.getIsShowing()) then
+			log("SKIP the build menu's answer: none shown")
+			step = step + 1
+			return
+		end
+		local top, bottom = b.getSize()
+		if top > 1 then -- (BAR's grid menu gives pixels)
+			top, bottom = top / vsy, bottom / vsy
+		end
+		Spring.WarpMouse(math.floor(vsx * 0.05), math.floor((top + bottom) / 2 * vsy))
+	end,
+	function() return hoverAnswer("the pointer on the build menu answers interface", 1) end,
+	function() Spring.WarpMouse(math.floor(vsx * 0.6), math.floor(vsy * 0.55)) end,
+	function() return hoverAnswer("the pointer on the map answers map", 0) end,
 	function()
 		log(fails == 0 and "done: ALL PASS" or ("done: " .. fails .. " FAILED"))
 		widgetHandler:RemoveWidget()
