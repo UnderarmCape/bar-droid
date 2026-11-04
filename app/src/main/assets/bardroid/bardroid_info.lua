@@ -982,8 +982,10 @@ local function drawGrid()
 	for _, c in ipairs(cells) do
 		-- (a count only above 1, as BAR's Info widget prints it: a big "1" on every single unit's picture was noise)
 		if c.more or #c[6] > 1 then
-			local size = (c[3] - c[1]) * 0.3
 			local text = c.more and ("+" .. c.more) or tostring(#c[6])
+			-- (no wider than about a third of the cell: "300" at a single digit's size covered most of the picture; dev
+			-- phone, 2026-11-03)
+			local size = min((c[3] - c[1]) * 0.3, (c[3] - c[1]) * 0.36 / max(0.01, bold:GetTextWidth(text)))
 			bold:Print(VALUE .. text, c[3] - size * 0.25, c[2] + size * 0.3, size, "or")
 		end
 	end
