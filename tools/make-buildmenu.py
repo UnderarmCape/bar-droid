@@ -111,7 +111,7 @@ local droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, ga
 	gridHeld = nil, gridShown = nil, gridToast = 1.2, nudgeCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",
 	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false, ctl = false, shared = nil,
-	wasActive = nil, leave = 0.25,
+	wasActive = nil, leave = 0.25, settled = 150, drawnAt = nil,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 '''),
     ('''	-- adjust grid size when pages are needed
@@ -849,6 +849,21 @@ function widget:DrawWorld()
 		tracy.ZoneEnd()
 		return
 	end
+	-- BAR Droid: BAR draws the menu into its texture at a game's frame 0 and again about 1.4 s in, then only when
+	-- something changes; at some starts on the phones its pictures came out of those drawings in stripes, every other
+	-- 16 pixels empty, until the next change (dev phone, 2026-11-03: 2 of 8 starts; drawn every 1.5 s, only the drawings
+	-- in the start's stutter were striped). A menu last drawn before droid.settled (5 s) is drawn once more then.
+	if droid.drawnAt and droid.drawnAt < droid.settled and spGetGameFrame() >= droid.settled then
+		droid.drawnAt = nil
+		refreshBuildmenu = true
+	end
+'''),
+    ('''		if buildmenuRenderedCells > 0 then
+			buildmenuTexHasContent = true
+''',
+     '''		if buildmenuRenderedCells > 0 then
+			droid.drawnAt = spGetGameFrame() -- BAR Droid: (droid.settled)
+			buildmenuTexHasContent = true
 '''),
     ('''	local prevBuildmenuShows = buildmenuShows
 	if not preGamestartPlayer and selectedBuilderCount == 0 and not alwaysShow then''',
