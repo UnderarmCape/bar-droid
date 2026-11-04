@@ -82,7 +82,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       list) now hands a press on a bar button to the bar (`WG.BarDroidSpectate.barPress`, its release with it). On the
       dev phone: "Follow unit", then "1st person" on their first taps, the camera in 1st person. fp-save-test: 4 of 4.
 - [x] Kailil's call: Escape and Android 17's keyboard capture (dev phone, 2026-11-03). Decided (Kailil, 2026-11-03:
-      "2"): keep the capture; the notice stays on each Escape. Each Escape in a game shows
+      "2"): keep the capture; the notice stays on each Escape. README's keyboard section says so for players (a short
+      press is Escape; by Android's notice a held one closes the app). adb's `input keyevent --longpress
+      KEYCODE_ESCAPE` in a skirmish left the game open: adb's long press is not a held key's timing, so the README
+      gives it as Android's notice says, not as tested. Each Escape in a game shows
       Android's notice "Long press Esc key to close this app" at the bottom of the screen for a few seconds (BAR's
       Escape cancels, deselects and opens the menu: a keyboard player presses it often), and by that notice a long
       press closes the app. It comes from Android's keyboard capture, which the app turns on so Android's own shortcuts
