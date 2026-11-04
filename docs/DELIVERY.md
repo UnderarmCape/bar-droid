@@ -122,7 +122,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       "flush_submit_list: submit failed -1 (Resource deadlock avoided)", then BAR's watchdog ("Hang detection
       triggered", the main thread). Once in many replays and games tonight; 9 scratch widgets were loaded. Its
       launcher.log is kept on the dev phone as `files/logs/hang-2026-11-02.log`. Watch for it again; if it repeats,
-      a report for lfdevs' Mesa (KGSL submit) with that log.
+      a report for lfdevs' Mesa (KGSL submit) with that log. Not seen again: 2026-11-03 19:11-21:44, 31 starts on the
+      dev phone (28 skirmishes, 2 replays, the lobby), no hang, no crash, no low-memory exit (every exit a test's own
+      stop).
 - [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
