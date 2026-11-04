@@ -1001,7 +1001,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       bar (Close, Previous, Next, Join) and both warnings (first person, touch and gamepad) looked over in screenshots
       taken during lobby-phone-test: text inside its box, OK clear of it; nothing to change. An 8-minute skirmish on
       the dev phone after them: 29.9-30.0 fps each minute after the first (its load, 29.1), no error or warning from
-      the app's widgets in infolog, LuaUI's memory up and down by the low-memory mode's own collector notes. And placing a
+      the app's widgets in infolog, LuaUI's memory up and down by the low-memory mode's own collector notes. The AI
+      never came in those 8 minutes: does it play on the phone? It does: BARb initializes ("BARbarIAn 1.6.28 (0)
+      Initialized!", the arm64 AngelScript stub preloaded) and, counted by a scratch widget with cheats and global line
+      of sight (removed after), had 19 units at 3:30, 24 at 4:00, 26 at 4:30; on the low-memory mode's smaller map it
+      had not reached the player's base by 8:00. Its "Script: '...' not found!" lines are BAR's own script's optional
+      hooks. (A note for scratch checks: the phone's toybox grep takes no `\|` in a basic pattern; `grep -E 'a|b'`
+      does. The earlier "wreck" scratch widget may well have run; the repository's tools use no `\|`.) And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
