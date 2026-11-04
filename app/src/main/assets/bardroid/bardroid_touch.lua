@@ -1007,6 +1007,37 @@ local BAR_WINDOWS = { "options", "gameinfo", "teamstats", "keybinds", "changelog
 -- 2: one of those windows is open. They scroll their lists and text with the mouse wheel only (a finger's drag was a
 -- left drag there: BAR's Settings did not scroll, dev phone 2026-11-03), so the app sends a vertical drag as the wheel.
 local barX, barY, barAt, barAnswer = nil, nil, -1000, false
+
+-- The build and order menus where they answer no IsAbove: v0.8.5's in the controller game (the app's copies in BAR's
+-- game answer it themselves). A finger's drag that started on them panned the map (dev phone, 2026-11-03: the order
+-- menu, then the build menu, moved the map up). Their rects from their WG functions: the order menu's position (view
+-- fractions); the build menu's top and bottom (getSize, view fractions) and the width its code gives it at the left
+-- edge, not while it sits at the bottom or the app's own build menu has its place (WG.BarDroidOwnsBuildMenu).
+local function overGameMenus(mx, my)
+	local vsx, vsy = spGetViewGeometry()
+	local o = WG.ordermenu
+	if type(o) == "table" and type(o.getPosition) == "function"
+		and (type(o.getIsShowing) ~= "function" or o.getIsShowing()) then
+		local x, y, w, h = o.getPosition()
+		if x and y and w and h and mx >= x * vsx and mx <= (x + w) * vsx and my <= y * vsy and my >= (y - h) * vsy then
+			return true
+		end
+	end
+	local b = WG.buildmenu
+	if type(b) == "table" and type(b.getSize) == "function" and type(b.getIsShowing) == "function" and b.getIsShowing()
+		and not WG.BarDroidOwnsBuildMenu and not (type(b.getBottomPosition) == "function" and b.getBottomPosition()) then
+		local top, bottom = b.getSize()
+		if type(top) == "number" and type(bottom) == "number" and top <= 1 then -- (fractions; BAR's grid menu gives pixels)
+			local ui = Spring.GetConfigFloat("ui_scale", 1) or 1
+			local right = math.floor(0.212 / (vsx / vsy) * 1.78 * ui * vsx)
+			if mx >= 0 and mx <= right and my >= bottom * vsy and my <= top * vsy then
+				return true
+			end
+		end
+	end
+	return false
+end
+
 local function overBarInterface(mx, my)
 	if mx == barX and my == barY and updates - barAt < 10 then
 		return barAnswer
@@ -1024,6 +1055,9 @@ local function overBarInterface(mx, my)
 	if type(p) == "table" and p[1] and p[2] and p[3] and p[4] then -- left, bottom, right, top (+ scale, buttons' bottom)
 		local bottom = math.min(p[2], tonumber(p[6]) or p[2])
 		barAnswer = mx >= p[1] and mx <= p[3] and my >= bottom and my <= p[4]
+	end
+	if not barAnswer then
+		barAnswer = overGameMenus(mx, my)
 	end
 	return barAnswer
 end

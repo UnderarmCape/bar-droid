@@ -1027,7 +1027,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       turbines queued by 30 bots: the bots went to build, no error. In that scene the build menu showed the Wind
       Turbine greyed out for the Construction Bots: BAR's own build blocking (`api_build_blocking.lua`, a synced
       per-builder block the app cannot set); at the game's start only the geothermal buildings are blocked (the map
-      has no vents), so BAR added it on the way. Not the app's; noted in case it is seen in play. And placing a
+      has no vents), so BAR added it on the way. Not the app's; noted in case it is seen in play. And in the
+      controller game (the launcher's Play vs AI) a finger's drag that started on v0.8.5's order or build menu panned
+      the map (106 px for a 310 px drag up from Set Target; 80 px for 220 px on the build menu): v0.8.5's menus answer
+      no IsAbove (the app's copies in BAR's game do). `bardroid_touch.lua` now counts their rects as interface (the
+      order menu's `getPosition`, the build menu's `getSize` with the width its code gives it, not while the app's own
+      build menu has its place or it sits at the bottom): the same drags leave the map where it was, the press picks
+      what it starts on (a build option: PLACE), as in BAR's game. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
