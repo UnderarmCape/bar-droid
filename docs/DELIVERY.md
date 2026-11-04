@@ -1023,7 +1023,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       of its cell (BAR's Info widget shrinks long counts too); one or two digits keep their size. With 300 Pawns
       and 30 Construction Bots (331 units, 29.9 fps, no error): the one-type views "Pawn" with 300 and "Construction
       Bot" with 30 on the picture, the counts inside it; the idle-builders button's 30 reads. (The bots' queued
-      turbines fell off the map at that start: the queue drawing with many builders not seen.) And placing a
+      turbines fell off the map at that start: the queue drawing with many builders not seen.) Placed on the map, 120
+      turbines queued by 30 bots: the bots went to build, no error. In that scene the build menu showed the Wind
+      Turbine greyed out for the Construction Bots: BAR's own build blocking (`api_build_blocking.lua`, a synced
+      per-builder block the app cannot set); at the game's start only the geothermal buildings are blocked (the map
+      has no vents), so BAR added it on the way. Not the app's; noted in case it is seen in play. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
