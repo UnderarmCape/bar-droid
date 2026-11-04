@@ -1011,7 +1011,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       and self-destructed, but a self-destruct leaves no wreck there (the map's 320 features stayed 320). Shot down by
       the commander instead it left `armwin_heap`: with the pointer on it the panel shows "Wind Turbine Debris", the
       turbine's picture (BAR's `customParams.fromunit`) and "Reclaim 10" (dev phone; the scratch widget removed
-      after). And placing a
+      after). And the grid with a count above 1 seen at last (the grid scratch widget had queued every building on one
+      spot, TestBuildOrder knowing nothing of the queue; spread out, 5 built): four Wind Turbines with "4", the
+      commander and a Solar Collector with none. And placing a
       building by touch in the controller game checked (a Wind Turbine: the spot, PLACE lit, PLACE, the commander off
       to build it), pad-test and fp-save-test on the dev phone: all pass. (An `am start` sent right after
       `adb install -r` can be lost while Android restarts the app: the tools never do that; noted for whoever scripts
