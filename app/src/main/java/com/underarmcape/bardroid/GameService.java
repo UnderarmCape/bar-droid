@@ -446,6 +446,8 @@ public class GameService extends Service {
         return new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
                 .setContentTitle(StatusText.forPlayers(status))
+                // (while a game runs, what the tap and the button do: the title alone left the line under it empty)
+                .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
                 .setContentIntent(pi)
                 .addAction(new Notification.Action.Builder(null, "Stop", stopPi).build())
                 .setOngoing(true)
