@@ -313,7 +313,12 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
         String branch = engineBranchBuild();
         if (branch != null) sb.append(" (BAR Droid build ").append(branch).append(')');
-        sb.append(", ").append(Prefs.mesaDriver);
+        // (the GPU driver by its name, not the setting's word: "kgsl" alone meant nothing to a player)
+        String driver = "kgsl".equals(Prefs.mesaDriver) ? "GPU driver Freedreno (Mesa)"
+                : "zink".equals(Prefs.mesaDriver) ? "GPU driver Turnip + Zink (Mesa)"
+                : "llvmpipe".equals(Prefs.mesaDriver) ? "CPU rendering (llvmpipe)"
+                : "virpipe".equals(Prefs.mesaDriver) ? "virgl" : Prefs.mesaDriver;
+        sb.append(", ").append(driver);
         return sb.toString();
     }
 
