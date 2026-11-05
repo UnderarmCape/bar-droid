@@ -415,7 +415,7 @@ local function statsText(id, unitID)
 			add(L("ui.info.weaponrange", "range"), big(floor(maxRange)))
 		end
 		if reload and reload > 0 then
-			add(L("ui.info.reloadtime", "reload"), num(reload, 2))
+			add(L("ui.info.reloadtime", "reload"), num(reload, 2) .. " s")
 		end
 		if info.energyPerShot then
 			add(L("ui.info.energyshot", "energy/shot"), big(info.energyPerShot))
