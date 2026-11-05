@@ -78,6 +78,46 @@ typedef int (*ioctl_fn)(int fd, unsigned long request, void *arg);
 static ioctl_fn real_ioctl;
 static int hide_sync_export = -1;   /* -1: not read yet */
 
+/*
+ * BARDROID_SWAP_LOG=1 (dev-env.sh): where the engine's buffer swap spends its time, every 10 s in launcher.log: the swap
+ * in all, and of it the waits for the X server (xcb replies and Present's special events) and the GPU driver's ioctls
+ * made from the swapping thread; the rest is Mesa itself (flushing, waiting for its driver thread). The engine's own
+ * profiler only knows the swap as one block ("Misc::SwapBuffers", 11-13% of a late 8v8's real time on the dev phone).
+ */
+static long long now_ns(void);
+static void say(const char *s);
+extern int snprintf(char *s, unsigned long n, const char *format, ...);
+static void gl_count_text(char *out, unsigned long n, long long frames);
+extern unsigned long pthread_self(void);
+static int swap_log = -1;            /* -1: not read yet */
+static volatile int in_swap;
+static unsigned long swap_thread;
+static long long swap_ns_sum, swap_xcb_ns, swap_ioctl_ns, swap_log_at;
+static int swap_frames, swap_ioctls;
+#define SWAP_TIMED (swap_log > 0 && in_swap && pthread_self() == swap_thread)
+
+typedef void *(*xcb_reply_fn)(void *c, unsigned int request, void **e);
+typedef void *(*xcb_special_fn)(void *c, void *se);
+static xcb_reply_fn real_xcb_wait_for_reply;
+static xcb_special_fn real_xcb_wait_for_special_event;
+void *xcb_wait_for_reply(void *c, unsigned int request, void **e) {
+    if (!real_xcb_wait_for_reply) real_xcb_wait_for_reply = (xcb_reply_fn) dlsym(RTLD_NEXT, "xcb_wait_for_reply");
+    if (!SWAP_TIMED) return real_xcb_wait_for_reply(c, request, e);
+    long long t = now_ns();
+    void *r = real_xcb_wait_for_reply(c, request, e);
+    swap_xcb_ns += now_ns() - t;
+    return r;
+}
+void *xcb_wait_for_special_event(void *c, void *se) {
+    if (!real_xcb_wait_for_special_event)
+        real_xcb_wait_for_special_event = (xcb_special_fn) dlsym(RTLD_NEXT, "xcb_wait_for_special_event");
+    if (!SWAP_TIMED) return real_xcb_wait_for_special_event(c, se);
+    long long t = now_ns();
+    void *r = real_xcb_wait_for_special_event(c, se);
+    swap_xcb_ns += now_ns() - t;
+    return r;
+}
+
 int ioctl(int fd, unsigned long request, ...) {
     __builtin_va_list ap;
     __builtin_va_start(ap, request);
@@ -94,7 +134,12 @@ int ioctl(int fd, unsigned long request, ...) {
         }
     }
     if (!real_ioctl) real_ioctl = (ioctl_fn) dlsym(RTLD_NEXT, "ioctl");
-    return real_ioctl(fd, request, arg);
+    if (!SWAP_TIMED) return real_ioctl(fd, request, arg);
+    long long t = now_ns();
+    int r = real_ioctl(fd, request, arg);
+    swap_ioctl_ns += now_ns() - t;
+    swap_ioctls++;
+    return r;
 }
 
 typedef void (*swap_fn)(void *window);
@@ -263,6 +308,8 @@ static void sleep_until(long long when) {
 }
 
 static long long slot_ns;   /* this frame's slot: the cap's interval, or the nearest whole number of vsyncs */
+static long long pace_sleep_ns;   /* (BARDROID_SWAP_LOG: the cap's waits and the frames that came too late for one) */
+static int pace_late_frames;
 
 static void pace(long long interval) {
     long long now = now_ns();
@@ -285,8 +332,10 @@ static void pace(long long interval) {
     }
     if (now >= next_ns) {     /* the frame took the whole slot or more: no sleep, pace from here */
         next_ns = now;
+        pace_late_frames++;
         return;
     }
+    pace_sleep_ns += next_ns - now;
     sleep_until(next_ns);
 }
 
@@ -336,7 +385,35 @@ void SDL_GL_SwapWindow(void *window) {
         frame_ended();
         pace(interval);
     }
-    real_swap(window);
+    if (swap_log < 0) swap_log = read_number("BARDROID_SWAP_LOG", 0) != 0;
+    if (swap_log) {
+        swap_thread = pthread_self();
+        long long t = now_ns();
+        in_swap = 1;
+        real_swap(window);
+        in_swap = 0;
+        long long done = now_ns();
+        swap_ns_sum += done - t;
+        swap_frames++;
+        if (!swap_log_at) swap_log_at = done;
+        if (done - swap_log_at >= 10000000000LL) {
+            char line[512], counts[256];
+            long long n = swap_frames ? swap_frames : 1;
+            gl_count_text(counts, sizeof counts, n);
+            snprintf(line, sizeof line, "[pace] swap over %d frames: %lld us each, of it X server waits %lld us, GPU "
+                "driver ioctls %lld us (%lld a frame), Mesa's own %lld us; the cap waited %lld us a frame, %d frames "
+                "too late for their slot%s\n", swap_frames, swap_ns_sum / n / 1000,
+                swap_xcb_ns / n / 1000, swap_ioctl_ns / n / 1000, (long long) swap_ioctls / n,
+                (swap_ns_sum - swap_xcb_ns - swap_ioctl_ns) / n / 1000, pace_sleep_ns / n / 1000, pace_late_frames,
+                counts);
+            say(line);
+            swap_ns_sum = swap_xcb_ns = swap_ioctl_ns = pace_sleep_ns = 0;
+            swap_frames = swap_ioctls = pace_late_frames = 0;
+            swap_log_at = done;
+        }
+    } else {
+        real_swap(window);
+    }
     if (before_swap && interval) start_late();
     if (!before_swap && interval) pace(interval);
 }
@@ -584,10 +661,91 @@ static void gl_lookups(void) {
         real_getproc("glTexImage2D");
 }
 
+#ifdef BARDROID_DEV_GL_COUNT
+/*
+ * A developer build only (tools/build-pace.py --dev: libbardroid_pace_dev.so, never in the APK; dev-env.sh points
+ * LD_PRELOAD at it): the engine's draw calls and state binds counted, per drawn frame every 10 s in launcher.log (with
+ * BARDROID_SWAP_LOG's line). Mesa's driver thread turns each into GPU commands: ~15 ms of its CPU a drawn frame in a
+ * late 8v8 on the dev phone, and the swap waits for it. Each counted function is wrapped by a forwarder of eight
+ * integer arguments (AArch64 and x86-64 pass them in registers; none of these takes a float). GL 1.1's own functions
+ * are not looked up through glXGetProcAddress: exported here instead.
+ */
+typedef unsigned long long u64;
+typedef void (*gl8_fn)(u64, u64, u64, u64, u64, u64, u64, u64);
+static int gl_count = -1;
+#define GLC_KINDS 6   /* draws, programs, textures, buffers, vertex arrays, framebuffers */
+static const char *const glc_kind_name[GLC_KINDS] = { "draws", "programs", "textures", "buffers", "VAOs", "FBOs" };
+static long long glc_counts[GLC_KINDS];
+static const struct { const char *name; int kind; } glc_names[] = {
+    { "glDrawArrays", 0 }, { "glDrawElements", 0 }, { "glDrawArraysInstanced", 0 }, { "glDrawElementsInstanced", 0 },
+    { "glDrawElementsBaseVertex", 0 }, { "glDrawElementsInstancedBaseVertex", 0 }, { "glDrawRangeElements", 0 },
+    { "glDrawArraysInstancedBaseInstance", 0 }, { "glDrawElementsInstancedBaseVertexBaseInstance", 0 },
+    { "glMultiDrawArrays", 0 }, { "glMultiDrawElements", 0 }, { "glMultiDrawArraysIndirect", 0 },
+    { "glMultiDrawElementsIndirect", 0 }, { "glDrawArraysIndirect", 0 }, { "glDrawElementsIndirect", 0 },
+    { "glUseProgram", 1 }, { "glBindTexture", 2 }, { "glBindBuffer", 3 }, { "glBindBufferBase", 3 },
+    { "glBindBufferRange", 3 }, { "glBindVertexArray", 4 }, { "glBindFramebuffer", 5 }, { "glBindFramebufferEXT", 5 },
+};
+#define GLC_N ((int) (sizeof glc_names / sizeof glc_names[0]))
+static gl8_fn glc_real[GLC_N];
+#define GLC_WRAP(i) static void glc_wrap##i(u64 a, u64 b, u64 c, u64 d, u64 e, u64 f, u64 g, u64 h) { \
+    glc_counts[glc_names[i].kind]++; glc_real[i](a, b, c, d, e, f, g, h); }
+GLC_WRAP(0) GLC_WRAP(1) GLC_WRAP(2) GLC_WRAP(3) GLC_WRAP(4) GLC_WRAP(5) GLC_WRAP(6) GLC_WRAP(7) GLC_WRAP(8) GLC_WRAP(9)
+GLC_WRAP(10) GLC_WRAP(11) GLC_WRAP(12) GLC_WRAP(13) GLC_WRAP(14) GLC_WRAP(15) GLC_WRAP(16) GLC_WRAP(17) GLC_WRAP(18)
+GLC_WRAP(19) GLC_WRAP(20) GLC_WRAP(21) GLC_WRAP(22)
+static const gl8_fn glc_wraps[] = { glc_wrap0, glc_wrap1, glc_wrap2, glc_wrap3, glc_wrap4, glc_wrap5, glc_wrap6,
+    glc_wrap7, glc_wrap8, glc_wrap9, glc_wrap10, glc_wrap11, glc_wrap12, glc_wrap13, glc_wrap14, glc_wrap15, glc_wrap16,
+    glc_wrap17, glc_wrap18, glc_wrap19, glc_wrap20, glc_wrap21, glc_wrap22 };
+typedef char glc_table_check[(sizeof glc_wraps / sizeof glc_wraps[0]) == GLC_N ? 1 : -1];
+
+/* the counts per frame since the last call, as text (empty when not counting) */
+static void gl_count_text(char *out, unsigned long n, long long frames) {
+    out[0] = 0;
+    if (gl_count <= 0 || frames <= 0) return;
+    snprintf(out, n, "; per frame %lld %s, %lld %s, %lld %s, %lld %s, %lld %s, %lld %s", glc_counts[0] / frames,
+        glc_kind_name[0], glc_counts[1] / frames, glc_kind_name[1], glc_counts[2] / frames, glc_kind_name[2],
+        glc_counts[3] / frames, glc_kind_name[3], glc_counts[4] / frames, glc_kind_name[4], glc_counts[5] / frames,
+        glc_kind_name[5]);
+    for (int k = 0; k < GLC_KINDS; k++) glc_counts[k] = 0;
+}
+
+typedef void (*gl3_fn)(u64, u64, u64);
+typedef void (*gl4_fn)(u64, u64, u64, u64);
+static gl3_fn real_draw_arrays;
+static gl4_fn real_draw_elements;
+static void (*real_bind_texture)(u64, u64);
+void glDrawArrays(u64 mode, u64 first, u64 count) {
+    if (!real_draw_arrays) real_draw_arrays = (gl3_fn) dlsym(RTLD_NEXT, "glDrawArrays");
+    glc_counts[0]++;
+    real_draw_arrays(mode, first, count);
+}
+void glDrawElements(u64 mode, u64 count, u64 type, u64 indices) {
+    if (!real_draw_elements) real_draw_elements = (gl4_fn) dlsym(RTLD_NEXT, "glDrawElements");
+    glc_counts[0]++;
+    real_draw_elements(mode, count, type, indices);
+}
+void glBindTexture(u64 target, u64 texture) {
+    if (!real_bind_texture) real_bind_texture = (void (*)(u64, u64)) dlsym(RTLD_NEXT, "glBindTexture");
+    glc_counts[2]++;
+    real_bind_texture(target, texture);
+}
+#else
+#define gl_count 0
+static void gl_count_text(char *out, unsigned long n, long long frames) { (void) n; (void) frames; out[0] = 0; }
+#endif
+
 /* glXGetProcAddress(ARB) as the engine gets it: the functions above wrapped, the rest as they are */
 static void *glx_getproc_wrap(const char *proc) {
     void *p = real_getproc ? real_getproc(proc) : 0;
     if (!p || !proc) return p;
+#ifdef BARDROID_DEV_GL_COUNT
+    if (gl_count < 0) gl_count = 1;
+    for (int i = 0; i < GLC_N; i++) {
+        if (same(proc, glc_names[i].name)) {
+            glc_real[i] = (gl8_fn) p;
+            return (void *) glc_wraps[i];
+        }
+    }
+#endif
     if ((tex_zero || tex_log) && same(proc, "glTexImage2D")) {
         gl_lookups();
         if (tex_zero) say("[pace] new textures start as zeros (BARDROID_TEX_ZERO)\n");
@@ -650,7 +808,11 @@ void *dlsym(void *handle, const char *symbol) {
         v = getenv("BARDROID_TEX_LOG");
         tex_log = v && v[0] == '1';
     }
+#ifdef BARDROID_DEV_GL_COUNT   /* (the dev build always wraps the GL lookup: its counters live there) */
+    if (!symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
+#else
     if ((!fbo_uncompress && !tex_zero && !tex_log) || !symbol || handle == RTLD_NEXT || handle == RTLD_DEFAULT
+#endif
         || !(same(symbol, "glXGetProcAddressARB") || same(symbol, "glXGetProcAddress")))
         __attribute__((musttail)) return glibc_dlsym(handle, symbol);
     void *p = glibc_dlsym(handle, symbol);

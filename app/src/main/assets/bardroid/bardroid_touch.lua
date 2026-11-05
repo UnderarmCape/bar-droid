@@ -1167,17 +1167,26 @@ local function wrapTooltips()
 	t.ShowTooltip = fingersShowTooltip
 end
 
+-- Tracy zones around the parts of a frame's work (no-ops on BAR's engine; the engine branch's profiler times them,
+-- docs/ENGINE-SIM.md: this widget's Update was 0.9% of a late 8v8's real time on the dev phone)
+local zoneBegin = type(tracy) == "table" and tracy.ZoneBeginN or function() end
+local zoneEnd = type(tracy) == "table" and tracy.ZoneEnd or function() end
+
 local function update(dt)
 	updates = updates + 1
+	zoneBegin("W:touch:lines")
 	local lines = newTouchLines()
 	if lines then
 		readTouch(lines)
 	end
+	zoneEnd()
 	wrapTooltips()
+	zoneBegin("W:touch:camera")
 	applyTouch(dt)
 	if padCamera then
 		applyPad(dt)
 	end
+	zoneEnd()
 	if lookAt then
 		lookAt = lookAt - 1
 		if lookAt <= 0 then
@@ -1185,16 +1194,21 @@ local function update(dt)
 			lookAtCommander()
 		end
 	end
+	zoneBegin("W:touch:hover")
 	updateHover()
+	zoneEnd()
 	queueCheck = queueCheck - dt
 	if queueCheck <= 0 then -- queues grow and shrink without a selection change
 		queueCheck = 0.5
+		zoneBegin("W:touch:queue")
 		updateQueueDrawing()
+		zoneEnd()
 	end
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then
 		screenCheck = 0.5
+		zoneBegin("W:touch:screen")
 		local f = io.open(SCREEN, "r")
 		if f then
 			local s = f:read("*l")
@@ -1205,6 +1219,7 @@ local function update(dt)
 				applyUiScale(tonumber(w), tonumber(h))
 			end
 		end
+		zoneEnd()
 	end
 end
 
