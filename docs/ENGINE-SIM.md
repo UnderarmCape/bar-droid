@@ -262,8 +262,14 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     only from its second read; 0 bytes at a replay's exit), Lua itself (134 MB in a 1v1: the app's `[bardroid-perf]`
     line says it now). With the official engine the effect atlases' source pictures also stay in RAM for the game
     ("reloadable" atlases: ~360 MB), which `ProjectileAtlasDownscale` already shrinks 16x. Also not it: the map's
-    unpacked .sd7 (a test build freed every 7z extraction buffer before the pathfinder's load: 1 MB; reverted). The
-    30-minute replay still loads completely and is killed at "finished loading" (3 runs).
+    unpacked .sd7 (a test build freed every 7z extraction buffer before the pathfinder's load: 1 MB; reverted).
+  - Correction: the runs "killed at finished loading" were `replay-memory.ps1` itself: it took any launcher.log line
+    with "low memory" for Android's kill, and the app's "BAR Droid low memory" widget logs that phrase as LuaUI
+    loads, so the tool force-stopped its own game (fixed: the app's "ended for lack of memory", or the engine gone).
+    With the fix, the 30-minute replay loaded and played: x1.00 at 60-68 fps up to 2:11 of game time (276 units),
+    then the hot phone (GPU held at 220 MHz, thermal level 8, 73.6 C, after an evening of runs) fell to 4-12 fps,
+    and Android's low-memory killer ended it at 2:41 (318 units; 964 MB available a moment before).
+  - The models' CPU copies are now given back after every upload in either load mode (`vertBase`/`indxBase`).
   - Freeing other apps' memory from the app (Kailil, 2026-11-04): Android lets no app force-stop others, and since
     Android 14 `killBackgroundProcesses` reaches only the app's own; One UI's memory screen ("Clean now",
     `com.samsung.android.sm.ACTION_RAM`) needs `READ_SEARCH_INDEXABLES`, a system permission; Device care's own page
