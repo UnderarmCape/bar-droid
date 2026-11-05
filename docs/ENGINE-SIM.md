@@ -87,6 +87,8 @@ game until the replay and spectating stages below say it computes exactly what t
   Tracy zones (`W:Update:<widget>`, `G:GameFrame:<gadget>`) as timers.
 - `rts/Lua/LuaVFS.cpp`: `BarDroidUnsyncedGadgetsOff`, gadget files left out of the unsynced LuaRules state's lists.
 - `rts/Rendering/GlobalRendering.cpp`, `rts/System/SpringApp.cpp`: `BarDroidDeferSwap`, the deferred present.
+- `rts/Rendering/BarDroidGpuTimer.h` (WorldDrawer.cpp, Game.cpp, LuaHandle.cpp): with the profiler on, the GPU's time
+  per drawing pass and per widget's or gadget's drawing call-in ("GPU::<pass>").
 - `rts/Net/NetCommands.cpp`: `BarDroidMaxSimPerDraw`, one simulated frame per drawn frame while few are waiting.
 - `rts/System/Threading/ThreadPool.h`: `for_mt_chunk` in about four chunks a thread, taken as threads come free.
 - `rts/Sim/Features/FeatureHandler.cpp`: the features' previous-frame transforms on the workers.
@@ -359,6 +361,12 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     no graphics, sound, widget or gadget setting changed. Before: the whole 29-minute 8v8 replay simulated by that
     build (fast-forward to its end) with 0 desync warnings, and the lobby test on the dev phone ALL PASS with it.
     Back to BAR's engine: delete those two files on the Fold7.
+  - At full resolution (the Fold7's setup on the dev phone, BAR's whole interface): **14-18 fps, median 16** (11-13
+    before these changes), the GPU 99 % busy at its thermal cap (295-401 MHz). GPU time per pass (GL time-elapsed
+    queries, `BarDroidGpuTimer.h`, with the profiler on; BAR's own per-widget marks get one each), in % of real time:
+    unit and feature models 15, terrain 6.8, see-through models 5.2, water 1.1; and of BAR's widgets **Sensor Ranges
+    Sonar 8.6, Sensor Ranges Radar 3.8, Sensor Ranges LOS 2.0, Jammer Preview 1.2** (the range circles of every
+    unit a spectator sees: ~16 % together), GUI Shader's blur 1.7, Defense Range GL4 1.6, Nano Particles GL4 0.9.
   - Once in ~20 runs the GPU driver failed ("submit failed -1 (Resource deadlock avoided)", KGSL refusing a context
     after a GPU fault) and the engine hung, here before the game started (05:46, a cool phone): the 2026-11-02 and
     2026-11-04 hangs' signature, before any of these changes; `replay-memory.ps1` now ends such a run at the
