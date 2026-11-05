@@ -104,6 +104,12 @@ game until the replay and spectating stages below say it computes exactly what t
 - `rts/Rendering/Env/CubeMapHandler.cpp`: `BarDroidReflectionEvery` (default 1), the reflection cubemap's next face
   drawn every N drawn frames (each face a terrain pass from another camera). At 8: its main-thread time 0.97 -> 0.12
   ms a frame and its GPU pass (0.39 ms) gone from the profile, a whole cubemap still renewed every 1.6 s at 30 fps.
+- `rts/System/Threading/ThreadPool.h/.cpp`: `BARDROID_POOL_WAIT` (environment; "wfe", the default, "spin" as stock,
+  "sleep"): a thread waiting for a task group (the main thread for the workers) spins 50 us
+  (`BARDROID_POOL_SPIN_US`), then rests in ARM's wait-for-event until another core writes the group's task counter,
+  instead of spinning on the clock for up to 500 ms (~7 % of the main thread in a late 8v8). Fast-forward of 10 game
+  minutes, alternating: spin 100-125 s (the phone warming), WFE at once 127/127 s, a futex sleep 129/136 s, the
+  spin-then-WFE default 95/108 against spin 109/95 s; 0 desync warnings throughout.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
