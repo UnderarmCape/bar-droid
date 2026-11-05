@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 11 (2026-10-25 to 2026-11-04) |
 | Claude Code sessions | 8 |
-| Kailil's messages | 292 (14820 words, 22 screenshots) |
-| Kailil's time | 35.3 h in 72 sittings |
-| Claude's time | 166.1 h |
-| Claude's tool calls | 19005 |
+| Kailil's messages | 294 (14834 words, 22 screenshots) |
+| Kailil's time | 35.4 h in 73 sittings |
+| Claude's time | 166.2 h |
+| Claude's tool calls | 19025 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 550 |
+| Commits | 551 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -31,7 +31,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-01](worklog/2026-11-01.md) | 9 | 1.5 | 8.9 | 18 |
 | [2026-11-02](worklog/2026-11-02.md) | 6 | 0.4 | 13.4 | 62 |
 | [2026-11-03](worklog/2026-11-03.md) | 8 | 1.1 | 23.6 | 140 |
-| [2026-11-04](worklog/2026-11-04.md) | 6 | 0.5 | 8.6 | 14 |
+| [2026-11-04](worklog/2026-11-04.md) | 8 | 0.6 | 8.6 | 15 |
 
 ## Sessions
 
@@ -40,7 +40,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-04 20:57 | 217 | 138.6 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-04 21:02 | 219 | 138.7 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
