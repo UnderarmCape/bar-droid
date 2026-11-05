@@ -23,6 +23,23 @@ launchers' old place beside the checkout (now in the repository root); sections 
   every widget's timers).
 - **Ping cycling**: RB + Up within 2 seconds goes back through the last 5 pings, newest first (`bardroid_pad.lua`,
   pad test).
+- **Heat, the afternoon** (Kailil: "Where else can we aggressively cut ... On heat especially with the simulation";
+  "30 fps is the minimum. Nothing less"). A CPU profile of the late 8v8 (simpleperf) split the engine's time: the main
+  thread 45 %, three workers 33 %, OpenAL's sound mixer 10 %, Mesa's driver thread 8 %.
+  - **Sound**: no EFX reverb, 48 sounds at once (BAR's 128), OpenAL's linear resampler: the mixer 10 -> 5 % of the
+    engine's CPU (`launch-bar.sh`).
+  - **Nano spray**: BAR's 3D spray keeps at least 5000 particles; `bardroid_nano.lua` switches BAR's own setting to the
+    engine's spray and caps it at 1000 (Kailil: "can it be capped at only showing x amount?").
+  - **Reflections**: the units' reflection map redrawn one face every 8th frame (engine branch), 0.97 -> 0.12 ms a frame.
+  - **The simulation**: Recoil already runs on all cores what can be split without changing results; what stays on one
+    core is BAR's game code (Lua) and steps whose order every player's phone must repeat. The main thread spent ~7 % of
+    its time reading the clock: it waits for the workers by spinning. Sleeping there instead cost 28 % of the
+    simulation's speed (a phone wakes a thread slowly, and this wait comes dozens of times a frame), ARM's low-power
+    wait 5 %.
+- **The launcher**: every setting says what it does (Advanced, the frame cap, the resolution), a passing GL check or
+  benchmark no longer in warning amber, the GPU driver by name, the left column fading at its edge sideways; the
+  notification says what its tap and Stop do; the Display screen's entries each have a summary (termux-x11 patch 0010);
+  the loading screen's Free memory button says where it goes.
 
 ## Online like offline, the map's edge, and the touch details (2026-11-03)
 - **The order menu online like offline** (Kailil: "Do the fix to make the orders menu behave like offline"): the app
