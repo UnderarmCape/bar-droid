@@ -16,10 +16,10 @@
     <string name="settings_game">Game</string>
     <string name="settings_graphics">Graphics</string>
     <string name="settings_advanced">Advanced</string>
-    <string name="lbl_workers">Worker threads</string>
+    <string name="lbl_workers">Worker threads\nThe engine\'s helper threads for the simulation and drawing (BAR\'s WorkerThreadCount)</string>
     <string name="lbl_map">Map for Play vs AI\nIts name as BAR lists it, with the version</string>
     <string name="lbl_mesa_url">Mesa for Android tarball URL\nThe debian_trixie_arm64 build the container installs</string>
-    <string name="cb_zink">Use Turnip + Zink instead of Freedreno (kgsl)</string>
+    <string name="cb_zink">Use Turnip + Zink instead of Freedreno (kgsl)\nOpenGL through Mesa\'s Vulkan driver instead of its own OpenGL one; for comparison</string>
     <string name="cb_llvmpipe">Render on the CPU (llvmpipe) instead of the GPU (virgl)\nSlow, for comparison</string>
     <string name="cb_compat45">Force OpenGL 4.5 compatibility profile\nMESA_GL_VERSION_OVERRIDE</string>
     <string name="cb_auto_update">Update BAR at every start\nLike BAR\'s PC launcher: engine, game, lobby; back to the last working version if an update fails to start. Off: only the Install / Update button updates</string>
@@ -46,7 +46,7 @@
     <string name="key_capture_service">Beyond All Reason keyboard shortcuts</string>
     <string name="key_capture_service_description">Optional. Sends the keyboard shortcuts Android would take for itself (Alt+Tab, the Windows key, Ctrl+Space) to Beyond All Reason while its game screen is in front. Needed only where Android does not hand them to the game by itself (before Android 16.1). It reads keys only while the game screen has focus and passes them to the game; Home, Recents, power and volume keys stay Android\'s.</string>
     <string name="cb_noseccomp">proot: disable seccomp acceleration\nPROOT_NO_SECCOMP</string>
-    <string name="cb_verbosex">Verbose X server logging</string>
+    <string name="cb_verbosex">Verbose X server logging\nThe display server\'s (Termux:X11) debug output in the log</string>
     <string name="log_title">Log</string>
     <string name="btn_share_logs">Share logs</string>
     <string name="btn_free_memory">Free memory</string>

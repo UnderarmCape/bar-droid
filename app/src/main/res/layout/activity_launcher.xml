@@ -129,10 +129,9 @@
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
 
-            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView style="@style/LauncherFieldLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" android:paddingTop="0dp" />
-                <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:textSize="14sp" android:importantForAutofill="no" />
-            </LinearLayout>
+            <!-- (the name and what it does above the field, as the map's and Mesa's) -->
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_workers" />
+            <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:textSize="14sp" android:importantForAutofill="no" />
 
             <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
             <!-- (wrapped, the whole address shown: a single line ran off the screen mid-word) -->
