@@ -261,4 +261,11 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     cause: mimalloc keeping freed memory (`MIMALLOC_PURGE_DELAY=0`: -220 MB only), the archive cache (a file is kept
     only from its second read; 0 bytes at a replay's exit), Lua itself (134 MB in a 1v1: the app's `[bardroid-perf]`
     line says it now). With the official engine the effect atlases' source pictures also stay in RAM for the game
-    ("reloadable" atlases: ~360 MB), which `ProjectileAtlasDownscale` already shrinks 16x.
+    ("reloadable" atlases: ~360 MB), which `ProjectileAtlasDownscale` already shrinks 16x. Also not it: the map's
+    unpacked .sd7 (a test build freed every 7z extraction buffer before the pathfinder's load: 1 MB; reverted). The
+    30-minute replay still loads completely and is killed at "finished loading" (3 runs).
+  - Freeing other apps' memory from the app (Kailil, 2026-11-04): Android lets no app force-stop others, and since
+    Android 14 `killBackgroundProcesses` reaches only the app's own; One UI's memory screen ("Clean now",
+    `com.samsung.android.sm.ACTION_RAM`) needs `READ_SEARCH_INDEXABLES`, a system permission; Device care's own page
+    (`com.samsung.android.sm.ACTION_DASHBOARD`) opens from any app, one tap from Memory. On the dev phone closing the
+    background apps (`am kill-all`, about what "Clean now" does) gave ~0.4 GB and did not change the 8v8's outcome.
