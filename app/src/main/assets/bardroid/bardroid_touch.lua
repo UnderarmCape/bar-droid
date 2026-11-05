@@ -757,8 +757,10 @@ local function logPerf()
 	end
 	local seconds = spDiffTimers(now, perfStart)
 	if seconds >= 60 then
-		Spring.Echo(string.format("[bardroid-perf] %.1f fps over %.0f s, slowest frame %.0f ms, %d units; each second: %s",
-			perfFrames / seconds, seconds, perfWorst * 1000, #(Spring.GetAllUnits() or {}), table.concat(perSecond, " ")))
+		-- (and every Lua state's memory together: the engine's own memory was 2.4 GB in a 1v1 on the dev phone, 2026-11-04)
+		local luaKB = Spring.GetLuaMemUsage and select(3, Spring.GetLuaMemUsage()) or 0
+		Spring.Echo(string.format("[bardroid-perf] %.1f fps over %.0f s, slowest frame %.0f ms, %d units, Lua %.0f MB; each second: %s",
+			perfFrames / seconds, seconds, perfWorst * 1000, #(Spring.GetAllUnits() or {}), luaKB / 1024, table.concat(perSecond, " ")))
 		perfFrames, perfStart, perfWorst = 0, now, 0
 		for i = #perSecond, 1, -1 do
 			perSecond[i] = nil
