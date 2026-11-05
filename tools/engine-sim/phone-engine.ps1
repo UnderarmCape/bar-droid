@@ -10,8 +10,10 @@
 #       C:\Tools\BARANDROID\engine-sim\runs\. The replay must be in the phone's demos/ (pushed from the laptop if it
 #       is not), its game and map installed. Afterwards dev-env.sh is removed again. -Perf <seconds>: simpleperf on the
 #       engine for that long once the measured part begins (the .perf.data beside the infolog). One run at a time.
+#       -Settings "Key = value", ...: springsettings lines for the run; -DevEnv "line", ...: added to dev-env.sh.
 param([string]$Install, [string]$Use, [switch]$Off, [string]$Replay, [string]$Engine = "official",
-      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [int]$Perf = 0, [string]$Device = "")
+      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [int]$Perf = 0, [string]$Device = "",
+      [string[]]$Settings = @(), [string[]]$DevEnv = @())
 $ErrorActionPreference = "Stop"
 . (Join-Path (Split-Path $PSScriptRoot) "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
@@ -58,6 +60,12 @@ if ($Replay) {
     Send-AppFile $adb $Replay "'files/bar/demos/$name'" $Device
   }
   Set-DevEnv $Engine
+  # -DevEnv: lines added to dev-env.sh (also for the official engine); -Settings: springsettings lines for this run
+  # (dev-springsettings.cfg, launch-bar.sh appends it; springsettings.cfg put back afterwards, as replay-memory.ps1 does)
+  if ($DevEnv.Count) { App-Script ("printf '%s\n' " + (($DevEnv | ForEach-Object { "'$_'" }) -join ' ') + " >> files/bar/dev-env.sh") "es-env.sh" | Out-Null }
+  if ($Settings.Count) {
+    App-Script ("cp files/bar/springsettings.cfg files/bar/.springsettings-before-run; printf '%s\n' " + (($Settings | ForEach-Object { "'$_'" }) -join ' ') + " > files/bar/dev-springsettings.cfg") "es-set.sh" | Out-Null
+  }
   App-Script "printf '%s\n' '$Skip $Seconds $name' > files/bar/.bardroid-bench-replay; echo 'replay set'"
   # (the end: one more "[svc] engine exited" line in launcher.log; the app's process stays after the game)
   $count = "grep -c 'svc\] engine exited' files/logs/launcher.log"
@@ -90,7 +98,7 @@ if ($Replay) {
   $out = "$runs\$((Get-Date).ToString('yyyyMMdd-HHmmss'))-$Engine-$($name -replace '[^\w.-]','_').txt"
   # (this run's infolog: the next start removes it, and a force-stop can come before launch-bar.sh's copy in files/logs)
   App-Script "cat files/bar/infolog.txt" "es-cat.sh" | Out-File -Encoding utf8 $out
-  App-Script "rm -f files/bar/.bardroid-bench-replay files/bar/dev-env.sh" | Out-Null
+  App-Script "rm -f files/bar/.bardroid-bench-replay files/bar/dev-env.sh files/bar/dev-springsettings.cfg; [ -f files/bar/.springsettings-before-run ] && mv files/bar/.springsettings-before-run files/bar/springsettings.cfg; true" | Out-Null
   if ($Perf) {
     & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat files/es-perf.data > `"$($out -replace '\.txt$','.perf.data')`""
     App-Script "rm -f files/es-perf.data" | Out-Null
