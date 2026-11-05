@@ -308,9 +308,30 @@ public class LauncherActivity extends AppCompatActivity {
             if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game\n");
             else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
         }
-        sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion)
-          .append(", ").append(Prefs.mesaDriver);
+        sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
+        String branch = engineBranchBuild();
+        if (branch != null) sb.append(" (BAR Droid build ").append(branch).append(')');
+        sb.append(", ").append(Prefs.mesaDriver);
         return sb.toString();
+    }
+
+    /**
+     * The engine branch's build the games start with instead of BAR's own (docs/ENGINE-SIM.md on engine/sim): its
+     * files/bar/dev-env.sh names it (ENGINE="$BAR/engine-sim/gcc-fold"), else null. The launcher said BAR's version
+     * while the Fold7 ran the 30 fps build (2026-11-05).
+     */
+    private String engineBranchBuild() {
+        java.io.File f = new java.io.File(new Paths(this).bar, "dev-env.sh");
+        if (!f.isFile()) return null;
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
+            for (String line; (line = r.readLine()) != null; ) {
+                java.util.regex.Matcher m = java.util.regex.Pattern.compile("^ENGINE=\"\\$BAR/engine-sim/([^\"/]+)\"").matcher(line.trim());
+                if (m.find()) return m.group(1);
+            }
+        } catch (java.io.IOException e) {
+            return null;
+        }
+        return null;
     }
 
     private void loadSettingsIntoUi() {
