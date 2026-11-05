@@ -66,6 +66,18 @@ game until the replay and spectating stages below say it computes exactly what t
   the slowest are efficiency cores, the groups sorted fastest first, so the thread pool takes the fast groups up to
   its threshold (dev phone: main + 4 workers on the prime and big cores; Fold7: all 8) and keeps off the little ones.
   Threads only: which core runs a task never changes its result.
+- Memory for 8v8 replays on the 8 GB dev phone (Kailil, 2026-11-04: "Cut wherever necessary. I want that dev phone
+  running 8v8 30min plus games via replay"); drawing and memory only, each a setting (off by default) or behind
+  `BARDROID_SIM`:
+  - `ProjectileAtlasDownscale` (1-4): the projectile and ground effect atlases' pictures shrunk on each side
+    (8176x6056 + 6616x6152 uncompressed, 344 MB; at 4: ~22 MB).
+  - `NamedTextureMaxSize`: picture files loaded by name (Lua's `gl.Texture`) larger than this on a side shrunk to it
+    (BAR's loading pictures: 3840x2160, 33 MB each).
+  - `MaxDrawnParticles`: at most this many see-through projectiles and particles drawn a frame, the nearest.
+  - `S3DModelVAO`: the models' CPU copies (an 8v8: 336 MB vertices, 104 MB indices) given back right after their
+    upload (they stayed through the pathfinder's and LuaRules' load, and `clear()` kept their memory for the game);
+    and the model buffer grown by half at least when models load as needed (`PreloadModels = 0`, an existing
+    setting), where 8 MB steps made the whole buffer anew each time (~1.9 GB of GPU memory in 8 s).
 - Compiler: `-mtune=cortex-x3` (the dev phone's prime core; scheduling only, no instruction or FP change).
 - LTO: not with this compiler: Arm's Windows-hosted GCC is a 32-bit program, too small for whole-engine LTO.
 
