@@ -254,3 +254,11 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     signalled within 100 ms". The 30-minute 2026-10-26 replay (test-31723) is still killed in its load.
   - Next: free the on-demand models' CPU copies too; find the GPU memory the logs do not show; the heaviest LuaUI
     widgets for a replay; and for the GPU drop, play at x1 (no fast-forward) with the frame cap at 30.
+  - The engine's own memory, second by second through the 30-minute replay's load (`gcc-8v8`, every cut, on-demand
+    models; mimalloc's three 1 GiB arenas hold it): the map +580 MB, its tiles +715 MB (streamed: kept in RAM, which
+    swaps, not on the GPU), the pathfinder +270 MB, LuaRules +600 MB, LuaUI +450 MB: 2.9 GB at "finished loading",
+    1.8 GB of it in RAM, GPU 1.64 GB. The replay loaded completely and was killed as its playback began. Not the
+    cause: mimalloc keeping freed memory (`MIMALLOC_PURGE_DELAY=0`: -220 MB only), the archive cache (a file is kept
+    only from its second read; 0 bytes at a replay's exit), Lua itself (134 MB in a 1v1: the app's `[bardroid-perf]`
+    line says it now). With the official engine the effect atlases' source pictures also stay in RAM for the game
+    ("reloadable" atlases: ~360 MB), which `ProjectileAtlasDownscale` already shrinks 16x.
