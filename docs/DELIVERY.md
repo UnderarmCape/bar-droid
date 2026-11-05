@@ -228,6 +228,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       render targets (UBWC) read with stale flags, so 6 more skirmishes with 20 s pauses, 3 with `FD_MESA_DEBUG=noubwc`
       in dev-env.sh and 3 without: all 6 whole. Not reproduced cool: heat-linked, the UBWC lead neither confirmed nor
       ruled out. Next time it shows: the same pair on a hot phone.
+      2026-11-05 ~17:00, the controller game, the dev phone warm (battery 33-36 C), screenshots at ~2:00: it showed
+      at 1:14 (the build menu's pictures and BAR's idle builders picture both in columns), then 6 skirmishes
+      alternating `FD_MESA_DEBUG=noubwc` and none (now `tools\stripes-test.ps1`): the idle builders
+      picture in black columns in 1 of 3 normal starts, all 3 `noubwc` starts whole; the tool's own test pair after,
+      both whole. With the earlier three each: columns in 2 of 9 normal starts (the build menu's 30 s redraw cleared
+      its own), 0 of 7 with UBWC off. Leaning to
+      UBWC, too few starts to be sure. Next: what `noubwc` costs in the late 8v8 (GPU timers, `replay-memory.ps1
+      -Timers`); if little, it becomes the phones' default in launch-bar.sh, else a redraw for BAR's idle builders
+      button as the build menu's.
 - [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
       still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
