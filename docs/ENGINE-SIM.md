@@ -270,6 +270,13 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     then the hot phone (GPU held at 220 MHz, thermal level 8, 73.6 C, after an evening of runs) fell to 4-12 fps,
     and Android's low-memory killer ended it at 2:41 (318 units; 964 MB available a moment before).
   - The models' CPU copies are now given back after every upload in either load mode (`vertBase`/`indxBase`).
+  - **The 30-minute 8v8 played to its end on the dev phone** (2026-11-04, 22:58-23:28; the 2026-10-26 Supreme
+    Isthmus replay, BAR test-31723, from its start at normal speed): `gcc-8v8` with `ProjectileAtlasDownscale = 4`,
+    `NamedTextureMaxSize = 1024`, `MaxDrawnParticles = 3000`, `PreloadModels = 0`, the game resolution at 70 %, the
+    frame cap at 30, background apps closed (`am kill-all`). 28:58 of game time, up to 3,680 units; game speed median
+    x1.01, below x0.95 1 % of the time (lowest x0.70); 12-29 fps, 17.6 on average; memory available never under
+    553 MB, GPU driver up to 1.80 GB, the engine ~1.1-1.6 GB in RAM and ~1.5-1.8 GB swapped; the phone up to 70 C;
+    **0 desync warnings** over the whole game (every player's checksum the server recorded matched).
   - Freeing other apps' memory from the app (Kailil, 2026-11-04): Android lets no app force-stop others, and since
     Android 14 `killBackgroundProcesses` reaches only the app's own; One UI's memory screen ("Clean now",
     `com.samsung.android.sm.ACTION_RAM`) needs `READ_SEARCH_INDEXABLES`, a system permission; Device care's own page
