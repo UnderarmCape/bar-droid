@@ -79,6 +79,7 @@ public class LauncherActivity extends AppCompatActivity {
         play.setFocusedByDefault(true);
 
         loadSettingsIntoUi();
+        explainSettings(findViewById(android.R.id.content), secondaryTextColor());
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
         deviceView.setText(deviceSummary());
         logView.setText(Log.dump());
@@ -205,6 +206,32 @@ public class LauncherActivity extends AppCompatActivity {
 
     private static void warn(android.text.SpannableString text, int start, int end) {
         text.setSpan(new android.text.style.ForegroundColorSpan(0xFFF2B84B), start, end, 0);
+    }
+
+    /** A setting's name, and under it what it does, smaller and in the secondary colour: the text after its first line
+     *  break (strings.xml). At one size and colour the settings read as one wall of text (dev phone, 2026-11-04). */
+    private static void explainSettings(View v, int color) {
+        if (v instanceof ViewGroup) {
+            ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) explainSettings(g.getChildAt(i), color);
+            return;
+        }
+        if (!(v instanceof android.widget.CompoundButton)) return;
+        TextView t = (TextView) v;
+        CharSequence s = t.getText();
+        int nl = android.text.TextUtils.indexOf(s, '\n');
+        if (nl < 0 || nl + 1 >= s.length()) return;
+        android.text.SpannableString text = new android.text.SpannableString(s);
+        text.setSpan(new android.text.style.RelativeSizeSpan(0.82f), nl + 1, s.length(), 0);
+        text.setSpan(new android.text.style.ForegroundColorSpan(color), nl + 1, s.length(), 0);
+        t.setText(text);
+    }
+
+    private int secondaryTextColor() {
+        android.content.res.TypedArray a = obtainStyledAttributes(new int[]{android.R.attr.textColorSecondary});
+        int color = a.getColor(0, 0xFFB0B0B0);
+        a.recycle();
+        return color;
     }
 
     private void appendLog(String line) {
