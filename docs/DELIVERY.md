@@ -129,7 +129,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       launcher.log is kept on the dev phone as `files/logs/hang-2026-11-02.log`. Watch for it again; if it repeats,
       a report for lfdevs' Mesa (KGSL submit) with that log. Not seen again: 2026-11-03 19:11-21:44, 31 starts on the
       dev phone (28 skirmishes, 2 replays, the lobby), no hang, no crash, no low-memory exit (every exit a test's own
-      stop).
+      stop). **It repeated**: 2026-11-04 (a replay fast-forwarded on a hot phone, after ~40 s of "GPU fence wasn't
+      signalled within 100 ms") and 2026-11-05 05:46 (a replay's opening seconds again, frame -1, a cool phone, the GPU
+      20% busy); all three in replays, none in the day's skirmishes and online games. The report is drafted in
+      `docs/research/mesa-kgsl-submit-deadlock.md` (setup, the three times, the questions) for Kailil to post or not;
+      `tools/engine-sim/replay-memory.ps1` (engine branch) now ends a run at the watchdog's line.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57

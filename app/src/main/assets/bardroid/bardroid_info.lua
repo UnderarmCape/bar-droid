@@ -42,15 +42,6 @@ local function round(v, digits)
 	return floor(v * m + 0.5) / m
 end
 
--- a number as text with at most that many decimals ("0.4", not "0.40000001")
-local function num(v, digits)
-	local s = string.format("%." .. (digits or 0) .. "f", v)
-	if s:find("%.") then
-		s = s:gsub("0+$", ""):gsub("%.$", "")
-	end
-	return s
-end
-
 -- A price as BAR's build menu beside the panel prints it: a space every three digits ("1 150", "26 000"; its AddSpaces)
 local function price(v)
 	v = math.floor(v + 0.5)
@@ -58,6 +49,27 @@ local function price(v)
 		return string.format("%s %03d", price(math.floor(v / 1000)), v % 1000)
 	end
 	return tostring(v)
+end
+
+-- a number as text with at most that many decimals ("0.4", not "0.40000001"); a whole one of 1000 or more grouped as
+-- the prices are ("2 400", not "2400")
+local function num(v, digits)
+	local s = string.format("%." .. (digits or 0) .. "f", v)
+	if s:find("%.") then
+		s = s:gsub("0+$", ""):gsub("%.$", "")
+	end
+	if v >= 999.5 and not s:find("%.") then
+		return price(v)
+	end
+	return s
+end
+
+-- a stat as BAR gives it, grouped when it is a whole number of 1000 or more ("6 000" storage, "100 / 1 000" cloak cost)
+local function big(v)
+	if type(v) == "number" and v >= 1000 and v == floor(v) then
+		return price(v)
+	end
+	return v
 end
 
 -- BAR's translation of one of gui_info.lua's labels (all exist in BAR's language files; an unknown key logs a warning),
@@ -398,23 +410,23 @@ local function statsText(id, unitID)
 			add("DPS(EMP)", num((lo or 0) / speedup) .. "-" .. num((hi or 0) / speedup))
 		end
 		if info.maxCoverage then
-			add(L("ui.info.coverrange", "coverage"), info.maxCoverage)
+			add(L("ui.info.coverrange", "coverage"), big(info.maxCoverage))
 		elseif maxRange and not info.shieldOnly then
-			add(L("ui.info.weaponrange", "range"), floor(maxRange))
+			add(L("ui.info.weaponrange", "range"), big(floor(maxRange)))
 		end
 		if reload and reload > 0 then
 			add(L("ui.info.reloadtime", "reload"), num(reload, 2))
 		end
 		if info.energyPerShot then
-			add(L("ui.info.energyshot", "energy/shot"), info.energyPerShot)
+			add(L("ui.info.energyshot", "energy/shot"), big(info.energyPerShot))
 		end
 		if info.metalPerShot then
-			add(L("ui.info.metalshot", "metal/shot"), info.metalPerShot)
+			add(L("ui.info.metalshot", "metal/shot"), big(info.metalPerShot))
 		end
 	end
 	if info.shieldCapacity then
-		add(L("ui.info.shieldcapacity", "shield"), info.shieldCapacity)
-		add(L("ui.info.shieldrange", "shield range"), info.shieldRange)
+		add(L("ui.info.shieldcapacity", "shield"), big(info.shieldCapacity))
+		add(L("ui.info.shieldrange", "shield range"), big(info.shieldRange))
 		add(L("ui.info.shieldrechargerate", "recharge"), info.shieldRechargeRate)
 		add(L("ui.info.shieldrechargecost", "recharge cost"), info.shieldRechargeCost)
 	end
@@ -422,7 +434,7 @@ local function statsText(id, unitID)
 		add(L("ui.info.stealthy", "stealthy"))
 	end
 	if info.cloakCost then
-		add(L("ui.info.cloakcost", "cloak cost"), info.cloakCost .. (info.cloakCostMoving and ("/" .. info.cloakCostMoving) or ""))
+		add(L("ui.info.cloakcost", "cloak cost"), big(info.cloakCost) .. (info.cloakCostMoving and (" / " .. big(info.cloakCostMoving)) or ""))
 	end
 	if info.speed then
 		add(L("ui.info.speed", "speed"), info.speed)
@@ -433,7 +445,7 @@ local function statsText(id, unitID)
 		add(L("ui.info.reversespeed", "reverse speed"), info.reverseSpeed)
 	end
 	if info.buildSpeed then
-		add(L("ui.info.buildpower", "buildpower"), info.buildSpeed)
+		add(L("ui.info.buildpower", "buildpower"), big(info.buildSpeed))
 	end
 	if info.sightDistance then
 		add(L("ui.info.los", "LoS"), num(info.sightDistance))
@@ -449,14 +461,14 @@ local function statsText(id, unitID)
 		end
 	end
 	if info.metalmaker then
-		add(L("ui.info.eneededforconversion", "E needed"), info.metalmaker[1])
+		add(L("ui.info.eneededforconversion", "E needed"), big(info.metalmaker[1]))
 		add(L("ui.info.convertedm", "converted M"), num(info.metalmaker[1] * info.metalmaker[2], 1))
 	end
 	if (info.energyStorage or 0) > 0 then
-		add(L("ui.info.estorage", "E storage"), info.energyStorage)
+		add(L("ui.info.estorage", "E storage"), big(info.energyStorage))
 	end
 	if (info.metalStorage or 0) > 0 then
-		add(L("ui.info.mstorage", "M storage"), info.metalStorage)
+		add(L("ui.info.mstorage", "M storage"), big(info.metalStorage))
 	end
 	if info.transport then
 		if info.transport[1] < 5001 then
@@ -464,7 +476,7 @@ local function statsText(id, unitID)
 		else
 			add(L("ui.info.transport_heavy", "heavy transport", { highlightColor = VALUE }))
 		end
-		add(L("ui.info.transportcapacity", "capacity"), info.transport[3])
+		add(L("ui.info.transportcapacity", "capacity"), big(info.transport[3]))
 	end
 	if unitID then
 		-- made and used, a side of nothing left out ("Metal +2 -0" for a commander standing still)
