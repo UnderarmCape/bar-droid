@@ -72,7 +72,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   select, LB orders, the touch QUEUE button), `bardroid_padspeed.lua` (the pad's drawing speed by zoom, and its tuner),
   `bardroid_padfp.lua` (first person on the pad), `bardroid_queue.lua`, `bardroid_bench.lua`, `bardroid_lowmem.lua` (keeps BAR's GL4 unit shaders
   off in the low-memory mode), `bardroid_buildrange.lua` (while a building is picked: the engine's build range circle
-  of every construction turret made see-through, which the engine then skips, and the 10 nearest the building drawn).
+  of every construction turret made see-through, which the engine then skips, and the 10 nearest the building drawn),
+  `bardroid_sensors.lua` (in games of 10 teams or more BAR's sonar, radar and line-of-sight circles at opacity 0 and its
+  always-shown jammer coverage off: their GPU cost grows with the square of the units; the player's values back in the
+  next smaller game).
 
 ## Source map
 

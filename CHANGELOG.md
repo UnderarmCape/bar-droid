@@ -124,7 +124,9 @@ The first version meant for other people's phones: everything since the first bu
   dropping); now 99.9% stay exactly right.
 - Frame pacing that lets CPU and GPU overlap, a sharper upscale of the game image (Snapdragon GSR), phone graphics
   settings applied at every start, and effects nobody sees on a phone switched off (Reclaim Field Highlight, ship
-  wakes, unread G-buffer passes, ...).
+  wakes, unread G-buffer passes, ...). In big games (10 teams or more) BAR's sonar, radar and line-of-sight circles and
+  its always-shown jammer coverage are off (a late 8v8 spent ~13% of the GPU's time on them); your own settings come
+  back in the next smaller game.
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
   its screen is hidden; a floating window when you leave the game.
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the

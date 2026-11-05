@@ -537,18 +537,23 @@ case "$MODE" in
 esac
 log "spring exited with $rc"
 kill "$widen" 2>/dev/null
-touch_err=$(grep -iE 'bardroid_touch|BAR Droid touch' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+# an error line of one of the app's widgets (the dev profiler's [simdraw] lines name every widget's timers, such as
+# W:VisibleUnitRemoved:BAR Droid touch: not errors; three false warnings in the launcher, 2026-11-05)
+widget_error() { grep -iE "$1" "$BAR/infolog.txt" 2>/dev/null | grep -v '\[simdraw\]' | grep -iE 'error|fail|removed' | head -n 1; }
+touch_err=$(widget_error 'bardroid_touch|BAR Droid touch')
 [ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
-queue_err=$(grep -iE 'bardroid_queue|BAR Droid builder queue' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+queue_err=$(widget_error 'bardroid_queue|BAR Droid builder queue')
 [ -n "$queue_err" ] && layer_miss "builder queue widget (bardroid_queue.lua): $queue_err"
-chat_err=$(grep -iE 'bardroid_chat|BAR Droid chat' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+chat_err=$(widget_error 'bardroid_chat|BAR Droid chat')
 [ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
-info_err=$(grep -iE 'bardroid_info|BAR Droid info' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+info_err=$(widget_error 'bardroid_info|BAR Droid info')
 [ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
-spec_err=$(grep -iE 'bardroid_spectate|BAR Droid spectate' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+spec_err=$(widget_error 'bardroid_spectate|BAR Droid spectate')
 [ -n "$spec_err" ] && layer_miss "spectating widget (bardroid_spectate.lua): $spec_err"
-range_err=$(grep -iE 'bardroid_buildrange|BAR Droid build ranges' "$BAR/infolog.txt" 2>/dev/null | grep -iE 'error|fail|removed' | head -n 1)
+range_err=$(widget_error 'bardroid_buildrange|BAR Droid build ranges')
 [ -n "$range_err" ] && layer_miss "build ranges widget (bardroid_buildrange.lua): $range_err"
+sensors_err=$(widget_error 'bardroid_sensors|BAR Droid sensor ranges')
+[ -n "$sensors_err" ] && layer_miss "sensor ranges widget (bardroid_sensors.lua): $sensors_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f
