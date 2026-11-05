@@ -5,6 +5,25 @@ steps are in [HANDOFF.md](../HANDOFF.md); this file is the record behind them. P
 launchers' old place beside the checkout (now in the repository root); sections named here such as "Gamepad",
 "Busy scenes" and "Next steps" are in HANDOFF.md.
 
+## Lighter drawing for big games (2026-11-05)
+- Kailil spectated a 30-minute multiplayer game on the Fold7 with the engine branch's build (docs/ENGINE-SIM.md on
+  `engine/sim`): "averaging 30fps". With the GPU timed per pass and per widget on the dev phone at full resolution,
+  BAR's sensor range circles took ~13 ms of GPU a frame in a late 8v8. Kailil: "Yes turn them off in big games",
+  and for the rest "optimize the unit models ... be as heavy handed as you need ... To keep temps down".
+- **Sensor ranges off in big games** (`bardroid_sensors.lua`): from 10 teams the sonar, radar and LOS circles go to
+  opacity 0 and the always-shown jammer coverage off; the player's values come back in the next smaller game (kept
+  in a file until that game ends cleanly). Late 8v8 replay, same window: 11.2 -> 14.4 fps on the dev phone, which is
+  then limited by its simulation.
+- **Simpler unit models** (engine branch, `BarDroidModelSimplify`): every model piece simplified once at load,
+  vertices untouched, so nothing the simulation reads changes. BAR's models have hard edges and texture seams on most
+  edges, which a shape-keeping simplifier must keep: at most about a third of the triangles go (1.35M -> 0.93M), the
+  models' GPU time -10%, see-through models -45%, nothing visible at the closest zoom.
+- **The launcher** names the engine branch's build when one runs ("engine 2026.07.04 (BAR Droid build gcc-lod)"),
+  and three false "adjustments did not apply" warnings after a profiled run are gone (the profiler's lines name
+  every widget's timers).
+- **Ping cycling**: RB + Up within 2 seconds goes back through the last 5 pings, newest first (`bardroid_pad.lua`,
+  pad test).
+
 ## Online like offline, the map's edge, and the touch details (2026-11-03)
 - **The order menu online like offline** (Kailil: "Do the fix to make the orders menu behave like offline"): the app
   runs its own copy of BAR's Order menu in BAR's released game, as it does the Build menu (`tools/make-ordermenu.py`,
