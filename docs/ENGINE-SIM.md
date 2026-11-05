@@ -101,6 +101,9 @@ game until the replay and spectating stages below say it computes exactly what t
 - `rts/Sim/Features/FeatureHandler.cpp`: the features' previous-frame transforms on the workers.
 - `rts/Lua/LuaUnsyncedRead.cpp` (a plain fix, not behind the flag): `Spring.GetProfilerTimeRecord` reads its optional
   argument before pushing its results, and makes the frame table before filling it.
+- `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
+  `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
+  registered").
 - Compiler: `-mtune=cortex-x3` (the dev phone's prime core; scheduling only, no instruction or FP change).
 - LTO: not with this compiler: Arm's Windows-hosted GCC is a 32-bit program, too small for whole-engine LTO.
 
