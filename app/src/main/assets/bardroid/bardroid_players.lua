@@ -301,7 +301,18 @@ local function register()
 		rect = function()
 			local pos = api() and api().GetPosition()
 			if pos and pos[4] then -- { top, left, bottom, right }
-				return pos[2], pos[3], pos[4], pos[1]
+				-- with the rows BAR stacks on it, each on the one below (music, unit totals, the clock and fps), which its
+				-- size scales too: the editor's name tab then sits above them, not over the music row
+				local top = pos[1]
+				for _, name in ipairs({ "music", "unittotals", "displayinfo" }) do
+					local w = WG[name]
+					local p = type(w) == "table" and type(w.GetPosition) == "function" and w.GetPosition()
+					if type(p) == "table" and type(p[1]) == "number" and type(p[3]) == "number" and p[1] > top
+						and math.abs(p[3] - top) <= 2 then
+						top = p[1]
+					end
+				end
+				return pos[2], pos[3], pos[4], top
 			end
 		end,
 		relayout = function()

@@ -36,7 +36,8 @@ The first version meant for other people's phones: everything since the first bu
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit
   info panel and the spectate bar (and set their text size and padding), and size BAR's minimap and player list; kept
-  separately for folded and unfolded. BAR's interface scale unfolded is 1.0 (was 1.3). The build menu is the app's
+  separately for folded and unfolded. The player list's outline takes in the rows BAR stacks on it (music, unit
+  totals, the clock), its name tab above them. BAR's interface scale unfolded is 1.0 (was 1.3). The build menu is the app's
   copy of BAR's Build menu (the same menu, 3 rows a page: 3 options across, 5 on a wide, short screen such as the
   Fold7 folded; the page arrows in a strip under them), so the editor moves and sizes it too, and it keeps clear of a
   unit info panel made bigger (which stops at the order menu); in the controller game it shows while the app's gamepad controls
