@@ -98,7 +98,7 @@
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_game" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
             <!-- (14sp: the settings' size; the field's own 18sp stood out over every setting) -->
             <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" />
 
@@ -111,13 +111,13 @@
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_graphics" />
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_fps_cap" />
             <RadioGroup android:id="@+id/rgFpsCap" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                 <RadioButton android:id="@+id/rbFps30" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps30" />
                 <RadioButton android:id="@+id/rbFps60" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps60" />
                 <RadioButton android:id="@+id/rbFpsNone" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_fps_none" />
             </RadioGroup>
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_render_scale" android:paddingTop="8dp" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_render_scale" android:paddingTop="8dp" />
             <RadioGroup android:id="@+id/rgRenderScale" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                 <RadioButton android:id="@+id/rbRender100" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render100" />
                 <RadioButton android:id="@+id/rbRender85" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/rb_render85" />
@@ -130,11 +130,11 @@
             <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
 
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
-                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" />
+                <TextView style="@style/LauncherFieldLabel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/lbl_workers" android:paddingEnd="8dp" android:paddingTop="0dp" />
                 <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:textSize="14sp" android:importantForAutofill="no" />
             </LinearLayout>
 
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
             <!-- (wrapped, the whole address shown: a single line ran off the screen mid-word) -->
             <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri|textMultiLine" android:maxLines="4" android:imeOptions="actionDone" android:textSize="11sp" android:importantForAutofill="no" />
 

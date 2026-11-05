@@ -128,7 +128,8 @@ The first version meant for other people's phones: everything since the first bu
   its screen is hidden; a floating window when you leave the game.
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
   Benchmark show their result in the launcher, and a game that fails to start says so there. The launcher's
-  settings show their name first, what they do smaller under it; its warnings stand in amber.
+  settings show their name first, what they do smaller under it (its text fields and option groups too: the map
+  says it is Play vs AI's); its warnings stand in amber.
 - A skirmish's first seconds no longer stutter at 2-5 fps (BAR's cursors load with the game), and a game takes about
   400 MB less graphics memory (BAR's unit picture cache off).
 - Picking a building no longer lags with many construction turrets: the engine drew the build range of every one of

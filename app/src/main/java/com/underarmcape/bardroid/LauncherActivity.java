@@ -245,7 +245,8 @@ public class LauncherActivity extends AppCompatActivity {
             for (int i = 0; i < g.getChildCount(); i++) explainSettings(g.getChildAt(i), color);
             return;
         }
-        if (!(v instanceof android.widget.CompoundButton)) return;
+        // (the settings' boxes, and the text fields' names: style LauncherFieldLabel tags them)
+        if (!(v instanceof android.widget.CompoundButton) && !(v instanceof TextView && "explain".equals(v.getTag()))) return;
         TextView t = (TextView) v;
         CharSequence s = t.getText();
         int nl = android.text.TextUtils.indexOf(s, '\n');
