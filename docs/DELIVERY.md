@@ -1253,6 +1253,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       unknown widget Order menu"). A change in Settings still reaches the running menu (its `WG.ordermenu` setters) and
       the copy keeps its own settings, but Settings shows the old widget's saved values. Left: it would mean patching
       BAR's Settings widget.
+- [x] The order menu copy in replays of older BAR releases (2026-11-05, every engine-branch replay run on the dev
+      phone, BAR test-31723's 8v8): "Error in Initialize(): ... luaui/Include/action_tap_hotkeys.lua ... File not seen
+      by VFS", then "Removed widget: BAR Droid order menu": the copy (made from test-31777) includes a file that release
+      did not have yet. No effect: a replay's spectator gives no orders, and `copy_removed` leaves replays out, so the
+      next game still runs the copy. A live game of such an old release cannot happen (BAR's servers run the current
+      one). Left as it is.
 - [x] The phone's remake of the menu copies, checked (2026-11-03): the shipped `.patches` applied to BAR's files as
       `BuildMenuPatches` does give the shipped `bardroid_buildmenu.lua` and `bardroid_ordermenu.lua` byte for byte.
       `make-buildmenu.py` and `make-ordermenu.py --check` (the patches against a BAR release, nothing written) pass on

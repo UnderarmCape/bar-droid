@@ -1,0 +1,34 @@
+diff --git a/lorie/src/main/res/values/strings.xml b/lorie/src/main/res/values/strings.xml
+index 07954e0..290aada 100644
+--- a/lorie/src/main/res/values/strings.xml
++++ b/lorie/src/main/res/values/strings.xml
+@@ -38,6 +38,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_pointer">Pointer</string>
+     <string name="lorie_pref_kbd">Keyboard</string>
+     <string name="lorie_pref_other">Other</string>
++    <string name="lorie_pref_output_summary">Resolution, display scale, filtering, orientation, screen timeout</string>
++    <string name="lorie_pref_pointer_summary">Touch mode, stylus, mouse capture and speed</string>
++    <string name="lorie_pref_kbd_summary">Extra key bar, soft keyboard, hardware keys, shortcut capture</string>
++    <string name="lorie_pref_other_summary">Clipboard, notifications, what swipes and the volume keys do</string>
+     <string name="lorie_pref_version">Version</string>
+     <string name="lorie_pref_ekbar">Extra key bar preferences</string>
+     <string name="lorie_pref_userActions">Response to user actions</string>
+diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
+index 7adb171..0911876 100644
+--- a/lorie/src/main/res/xml/preferences.xml
++++ b/lorie/src/main/res/xml/preferences.xml
+@@ -3,10 +3,10 @@
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     xmlns:android="http://schemas.android.com/apk/res/android">
+     <PreferenceScreen app:key="main" app:title="@string/lorie_pref_main">
+-        <Preference app:title="@string/lorie_pref_output" app:fragment="output" />
+-        <Preference app:title="@string/lorie_pref_pointer" app:fragment="pointer" />
+-        <Preference app:title="@string/lorie_pref_kbd" app:fragment="kbd" />
+-        <Preference app:title="@string/lorie_pref_other" app:fragment="other" />
++        <Preference app:title="@string/lorie_pref_output" app:summary="@string/lorie_pref_output_summary" app:fragment="output" />
++        <Preference app:title="@string/lorie_pref_pointer" app:summary="@string/lorie_pref_pointer_summary" app:fragment="pointer" />
++        <Preference app:title="@string/lorie_pref_kbd" app:summary="@string/lorie_pref_kbd_summary" app:fragment="kbd" />
++        <Preference app:title="@string/lorie_pref_other" app:summary="@string/lorie_pref_other_summary" app:fragment="other" />
+         <Preference app:key="version" app:title="@string/lorie_pref_version" />
+     </PreferenceScreen>
+     <PreferenceScreen app:key="output">
