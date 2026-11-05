@@ -235,5 +235,22 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     `gcc-pgo`, `gcc-pgo-lse` (and the research's clang build); the fast-math control 1,190.
   - "Calculations from others": not for players (lockstep); a spectator state stream is BAR's to build (section above).
   - Stage 4, 16 players: the 8v8 replay does not load on the 8 GB dev phone (Android's low-memory killer during the
-    load); `ProjectileAtlasDownscale = 2` saved ~200 MB, not enough. Kailil's choice pending: memory cuts for the dev
-    phone, or the Fold7 (12 GB).
+    load); `ProjectileAtlasDownscale = 2` saved ~200 MB, not enough. Kailil's choice (2026-11-04 ~21:10): the dev
+    phone, "Cut wherever necessary".
+- 2026-11-04, night: 8v8 memory on the dev phone (`tools/engine-sim/replay-memory.ps1`, build `gcc-8v8`).
+  - Where it goes (a 1v1 skirmish, Android's report for the engine): GPU 2.0 GB (textures of 64x64 or more ~0.5-0.9
+    GB, buffers ~0.4 GB, the rest small items and the driver's own), the engine's own memory 2.4 GB (0.7 GB in RAM,
+    1.7 GB swapped). In an 8v8's load: the models' buffers 336 + 104 MB, the pathfinder 379 MB (synced: stays),
+    then BAR's LuaRules and LuaUI; Android kills when the load allocates faster than it can swap the engine's cold
+    memory out (11 GB of swap free; ~3.4 GB available at the start, Android and its apps hold ~4.1 GB).
+  - Cut so far: effect atlases at 1/4 (-322 MB GPU), loading pictures at 1024 (-55 MB), game resolution 70 % (the
+    screen-sized targets halved), the models' CPU copies freed after upload (-440 MB), on-demand models
+    (`PreloadModels = 0`) with the buffer grown by half (no 8 MB copy churn). Not helping: closing background apps
+    (`am kill-all`), a "pacer" pausing the engine while memory is low (`dev-env-pacer.sh`: available memory kept
+    falling during 3 s pauses).
+  - Results: the 2026-10-13 replay (BAR test-31604) loaded once (on-demand models) and played ~80 s at 1,153 units,
+    fast-forwarding to 10:00 on a hot phone, until the GPU driver dropped the context ("submit failed ... Resource
+    deadlock avoided", the engine hung: the 2026-11-02 replay hang's signature) after ~40 s of "GPU fence wasn't
+    signalled within 100 ms". The 30-minute 2026-10-26 replay (test-31723) is still killed in its load.
+  - Next: free the on-demand models' CPU copies too; find the GPU memory the logs do not show; the heaviest LuaUI
+    widgets for a replay; and for the GPU drop, play at x1 (no fast-forward) with the frame cap at 30.

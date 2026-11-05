@@ -3,11 +3,11 @@
 # driver's memory (GpuTotal), whether the engine runs and the replay's progress, until the replay benchmark is done,
 # Android's low-memory killer ends it, or -Minutes pass. Then cleans up (dev-env, dev-springsettings, replay flag).
 #   replay-memory.ps1 -Engine gcc-sim1 -Settings "ProjectileAtlasDownscale = 2" [-Replay isthmus8v8-20261013a.sdfz] [-Skip 600] [-Seconds 30]
-#     [-DevEnv "export BARDROID_TEX_LOG=1"] (lines added to dev-env.sh) [-KillAll] (background apps closed first)
+#     [-DevEnv "export BARDROID_TEX_LOG=1"] (lines added to dev-env.sh) [-KillAll] (background apps closed first) [-Pacer] (dev-env-pacer.sh)
 # The launcher.log of the run (the app starts a new one at each start) is kept beside the log as <...>-launcher.log (tools/tex-memory.py reads it with the texture log on).
 param([string]$Engine = "gcc-sim1", [string[]]$Settings = @(), [string]$Replay = "isthmus8v8-20261013a.sdfz",
       [int]$Skip = 600, [int]$Seconds = 30, [int]$Minutes = 25, [string]$Device = "R5CW22GVC3D", [string[]]$DevEnv = @(),
-      [switch]$KillAll, [string]$Label = "", [int]$Every = 20)
+      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer)
 $ErrorActionPreference = "Continue"
 $tools = Split-Path $PSScriptRoot
 . (Join-Path $tools "toolchain.ps1")
@@ -20,6 +20,10 @@ function AppRun([string]$text, [string]$name) {
 }
 & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $Engine -Device $Device | Out-Null
 if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
+if ($Pacer) {   # (the memory pacer, dev-env-pacer.sh: the engine paused while Android's available memory is low)
+  Send-AppFile $adb "$PSScriptRoot\dev-env-pacer.sh" "files/bar/dev-env-pacer.sh" $Device
+  AppRun "cat files/bar/dev-env-pacer.sh >> files/bar/dev-env.sh; rm -f files/bar/dev-env-pacer.sh" "es-rm-pacer.sh" | Out-Null
+}
 if ($DevEnv.Count) { AppRun ("printf '%s\n' " + (($DevEnv | ForEach-Object { "'$_'" }) -join ' ') + " >> files/bar/dev-env.sh") "es-rm-env.sh" | Out-Null }
 $ss = if ($Settings.Count) { "printf '%s\n' " + (($Settings | ForEach-Object { "'$_'" }) -join ' ') + " > files/bar/dev-springsettings.cfg" } else { "rm -f files/bar/dev-springsettings.cfg" }
 AppRun "$ss; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
