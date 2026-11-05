@@ -4,7 +4,8 @@
 # launch-bar.sh as they are, run against a scratch BAR write dir (build/launch-bar-test). Cases: the app's copies of BAR's
 # Build and Order menus in, kept when BAR's file is not the one they were made from (an Android-layer miss), BAR's own only
 # after a copy failed in a game, the controller game switched off, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings,
-# a 12 GB phone's left alone. And the CPU mask its all-CPU loop reads. Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
+# a 12 GB phone's left alone. And the CPU mask its all-CPU loop reads, and the after-game check of the app's widgets.
+# Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
 #   sh tools/launch-bar-test.sh          (tools\laptop-tests.ps1 runs it with the portable Git's sh)
 here=$(cd "$(dirname "$0")/.." && pwd)
 src="$here/app/src/main/assets/bardroid/launch-bar.sh"
@@ -46,6 +47,7 @@ absent() { ! grep -q "\[\"$1\"\] = -\?[0-9][0-9]*,$" "$BAR/LuaUI/Config/BYAR.lua
 missed() { grep -q "build menu" "$LOGS/android-layer.txt"; }
 omissed() { grep -q "order menu" "$LOGS/android-layer.txt"; }
 quiet() { [ ! -s "$LOGS/android-layer.txt" ]; }
+widget_error_found() { widget_error "$1" | grep -q 'attempt to index nil'; }
 
 rm -rf "$work"
 mkdir -p "$BAR/LuaUI/Config" "$BAR/LuaUI/Widgets" "$LOGS"
@@ -183,6 +185,16 @@ cpus_allowed "$work/status"
 check "CPU mask: a thread's Cpus_allowed (not its _list)" [ "$mask" = 5f ]
 cpus_allowed "$work/no-such-status"
 check "CPU mask: none for a thread that has exited" [ -z "$mask" ]
+
+# The after-game check of the app's widgets (widget_error): an error line counts, the dev profiler's timer lines (which
+# name every widget, "W:VisibleUnitRemoved:BAR Droid touch") do not (three false launcher warnings, 2026-11-05)
+werr=$(grep '^widget_error() {' "$src")
+[ -n "$werr" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_error not found"; exit 1; }
+eval "$werr"
+printf '%s\n' '[t=1][f=9] [simdraw] timers: W:VisibleUnitRemoved:BAR Droid touch 0.1%, W:Update:BAR Droid chat 0.2%' \
+  '[t=2][f=9] Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_chat.lua"]:12: attempt to index nil' > "$BAR/infolog.txt"
+check "widget check: a profiler line is no error" [ -z "$(widget_error 'bardroid_touch|BAR Droid touch')" ]
+check "widget check: a widget's error still is" widget_error_found 'bardroid_chat|BAR Droid chat'
 
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]
