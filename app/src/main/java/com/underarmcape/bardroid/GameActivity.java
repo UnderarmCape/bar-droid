@@ -362,10 +362,19 @@ public class GameActivity extends MainActivity {
         if (care.resolveActivity(getPackageManager()) == null) return;
         android.widget.TextView v = new android.widget.TextView(this);
         float dp = getResources().getDisplayMetrics().density;
-        v.setText(R.string.btn_free_memory);
+        // (the name bold, what a tap does smaller under it, as the launcher's settings: it leaves the game for a moment)
+        String label = getString(R.string.btn_free_memory);
+        int nl = label.indexOf('\n');
+        android.text.SpannableString text = new android.text.SpannableString(label);
+        text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, nl > 0 ? nl : label.length(), 0);
+        if (nl > 0) {
+            text.setSpan(new android.text.style.RelativeSizeSpan(0.68f), nl + 1, label.length(), 0);
+            text.setSpan(new android.text.style.ForegroundColorSpan(0xC8FFFFFF), nl + 1, label.length(), 0);
+        }
+        v.setText(text);
+        v.setGravity(android.view.Gravity.CENTER);
         v.setTextColor(0xFFFFFFFF);
         v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
-        v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
         v.setPadding((int) (22 * dp), (int) (10 * dp), (int) (22 * dp), (int) (10 * dp));
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
         bg.setColor(0xC0101010);

@@ -222,6 +222,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       white columns in a pad-test screenshot: likely one GPU cause at a game's start, the heaviest frames (a frame
       shown or sampled before the GPU finished it: Adreno draws in tiles). Watch: if the order menu or another
       panel drawn into its own texture keeps stripes after the start, give it the build menu's redraw.
+      2026-11-05: BAR's idle builders button (its own widget, drawn into its own texture) showed its commander
+      picture in black columns at ~1:40 in 2 of 4 controller-game skirmishes, back to back on a hot dev phone (one
+      at 82 C); the same picture in the app's info panel whole. Black blocks 16 px wide fit Adreno's compressed
+      render targets (UBWC) read with stale flags, so 6 more skirmishes with 20 s pauses, 3 with `FD_MESA_DEBUG=noubwc`
+      in dev-env.sh and 3 without: all 6 whole. Not reproduced cool: heat-linked, the UBWC lead neither confirmed nor
+      ruled out. Next time it shows: the same pair on a hot phone.
 - [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
       still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
