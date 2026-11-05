@@ -7,11 +7,15 @@
     android:clipToPadding="false"
     android:padding="12dp">
 
-    <!-- Above the settings, or beside them on a wide screen: LauncherActivity.fitLayout. -->
+    <!-- Above the settings, or beside them on a wide screen: LauncherActivity.fitLayout. Beside them it scrolls (the
+         device lines and the log under the buttons) and fades at its edges as the settings do (a line cut in half at
+         the screen's bottom, dev phone sideways, 2026-11-05). -->
     <ScrollView
         android:id="@+id/top"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:requiresFadingEdge="vertical"
+        android:fadingEdgeLength="24dp">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
