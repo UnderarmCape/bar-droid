@@ -34,6 +34,24 @@ public class StatusTextTest {
             System.out.println((ok ? "PASS " : "FAIL ") + "\"" + c[0] + "\" -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[1] + "\")"));
         }
         if (StatusText.forPlayers(null).length() != 0) { failed++; System.out.println("FAIL null -> not empty"); }
+        // StatusText.isResultNote: the launcher's note in its own colour (a result) or in amber (a warning)
+        Object[][] notes = {
+            { "GL check: FD740, OpenGL 4.3, Mesa 27.0.0-devel", true },
+            { "GL check: FD740", true },
+            { "GL check: no result (see the log)", false },
+            { "GL check: no OpenGL from the GPU (see the log)", false },
+            { "Benchmark, ms per frame: Sim 12.3, Draw 20.1, Update 1.2", true },
+            { "Benchmark: no results in the game's log (it ended before them)", false },
+            { "Map \"Starwatcher 1.0\" is not on the phone and did not download: check its name", false },
+            { "The last game ended for lack of memory", false },
+            { null, false },
+        };
+        for (Object[] n : notes) {
+            boolean got = StatusText.isResultNote((String) n[0]);
+            boolean ok = got == (Boolean) n[1];
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "note \"" + n[0] + "\" -> " + (got ? "result" : "warning"));
+        }
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);
     }

@@ -29,4 +29,15 @@ final class StatusText {
         if (m.matches() && !m.group(1).equals("failed")) return "Installing: " + m.group(2);
         return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
+
+    /**
+     * Whether the launcher's note under its status (GameService.exitNote) is a result rather than a warning: a GL
+     * check's or the benchmark's answer, unless it failed (those say "(see the log)" / "no results"). The launcher shows
+     * warnings in amber; "GL check: FD740, OpenGL 4.3" in amber read as a problem (2026-11-05).
+     */
+    static boolean isResultNote(String note) {
+        if (note == null) return false;
+        return (note.startsWith("GL check: ") && !note.contains("(see the log)"))
+                || note.startsWith("Benchmark, ms per frame");
+    }
 }
