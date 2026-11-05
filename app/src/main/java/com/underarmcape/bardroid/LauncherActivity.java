@@ -226,8 +226,12 @@ public class LauncherActivity extends AppCompatActivity {
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + Updater.summary(BarApp.get().paths()));
         text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);
-        // (the two warnings in amber: among the facts they read as one more status line, dev phone 2026-11-04)
-        if (note != null) warn(text, head.length() + 1, head.length() + 1 + note.length());
+        // (the two warnings in amber: among the facts they read as one more status line, dev phone 2026-11-04; a GL
+        // check's or the benchmark's answer is a result, amber only when it failed: "GL check: FD740, OpenGL 4.3" in
+        // amber read as a problem, 2026-11-05)
+        boolean result = note != null && ((note.startsWith("GL check: ") && !note.contains("(see the log)"))
+                || note.startsWith("Benchmark, ms per frame"));
+        if (note != null && !result) warn(text, head.length() + 1, head.length() + 1 + note.length());
         int miss = text.toString().indexOf(Updater.MISSES);
         if (miss >= 0) warn(text, text.toString().lastIndexOf('\n', miss) + 1, miss + Updater.MISSES.length());
         statusView.setText(text);
