@@ -49,7 +49,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   textures made with zeros, as Mesa's recycled buffers hold old pictures, and the map's compressed ground tiles uploaded
   from a copy of their pixel buffer's bytes (the engine maps that buffer unsynchronized for the next tile while Mesa
   still copies from it: white blocks after a camera jump); `BARDROID_TEX_LOG=1` in dev-env.sh logs the engine's
-  textures; `tools/pace-test.ps1`, `tools/pad-test.ps1`).
+  textures (64x64 or more) and GPU buffers (64 KB or more); `tools/pace-test.ps1`, `tools/pad-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
@@ -161,7 +161,7 @@ powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-F
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 powershell -ExecutionPolicy Bypass -File tools\remake-check.ps1                    # the phone's remake of the menu copies (BuildMenuPatches) byte for byte against the shipped ones, BAR's files from the dev phone; after make-buildmenu.py / make-ordermenu.py --adb
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
-python -I tools\tex-memory.py <launcher.log> [--top 25]                  # the engine's textures summed (a game run with BARDROID_TEX_LOG=1 in dev-env.sh)
+python -I tools\tex-memory.py <launcher.log> [--top 25]                  # the engine's textures and GPU buffers summed (a game run with BARDROID_TEX_LOG=1 in dev-env.sh)
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
 powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory] [-SelfTest]   # before anything goes public (docs/DELIVERY.md)
 "Build APK.bat" phone release                                            # the public build: own icon, release key (local.properties), versioned name

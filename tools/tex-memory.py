@@ -2,8 +2,10 @@
 
 Android's meminfo puts most of a game's memory in the GPU driver (PerfLog's "GPU ... MB": 2.5 GB in a 1v1 skirmish on
 the dev phone, 2026-11-02, the engine itself 0.75 GB). With `export BARDROID_TEX_LOG=1` in the phone's
-files/bar/dev-env.sh, libbardroid_pace.so logs every texture of 128x128 or more the engine makes ("[pace] glTexImage2D
-...", tools/pace/pace.c); this adds them up by call, internal format and size, largest first. A texture is counted as
+files/bar/dev-env.sh, libbardroid_pace.so logs every texture of 64x64 or more the engine makes ("[pace] glTexImage2D
+...", tools/pace/pace.c) and every buffer of 64 KB or more it gives storage to ("[pace] glBufferData ... bytes"; in a 1v1
+skirmish the GPU driver held 2.0 GB, its textures ~0.5 GB); this adds them up by call, internal format and size,
+largest first, the buffers apart. A texture is counted as
 made, not as freed later (the log has no deletes), a compressed format the driver may store uncompressed is counted at
 4 bytes a pixel (GL_COMPRESSED_RGBA: Mesa's choice), and glTexStorage2D's mipmaps at a third more.
     python -I tools/tex-memory.py <launcher.log> [--top 25]
@@ -20,6 +22,8 @@ BPP = {0x8058: 4, 0x1908: 4, 0x881A: 8, 0x8814: 16, 0x822E: 4, 0x81A6: 4, 0x81A7
 FLOAT_TYPES = {0x1406: 4, 0x140B: 2, 0x8D61: 2}
 LINE = re.compile(r"\[pace\] (\w+) (\d+)x(\d+) target 0x([0-9a-f]+) internal 0x([0-9a-f]+) format 0x([0-9a-f]+) "
                   r"type 0x([0-9a-f]+) (with data|empty)")
+# buffers of 1 MB or more (pace.c buf_said): storage given, not freed later (a buffer given storage again counts again)
+BUF = re.compile(r"\[pace\] (\w+) (\d+) bytes target 0x([0-9a-f]+) usage 0x([0-9a-f]+)")
 
 
 def main():
@@ -28,7 +32,15 @@ def main():
     ap.add_argument("--top", type=int, default=25)
     args = ap.parse_args()
     size_by, count_by, unknown = collections.Counter(), collections.Counter(), collections.Counter()
+    buf_size, buf_count = collections.Counter(), collections.Counter()
     for line in open(args.log, encoding="utf-8", errors="replace"):
+        b = BUF.search(line)
+        if b:
+            key = "%s target %s usage %s %.1f MB" % (b.group(1), "0x" + b.group(3), "0x" + b.group(4),
+                                                     int(b.group(2)) / 2 ** 20)
+            buf_size[key] += int(b.group(2))
+            buf_count[key] += 1
+            continue
         m = LINE.search(line)
         if not m:
             continue
@@ -54,6 +66,10 @@ def main():
         print("%8.1f MB  %5d x  %s" % (size / 2 ** 20, count_by[key], key))
     if unknown:
         print("formats not known here (counted at 4 bytes a pixel):", dict(unknown))
+    if buf_size:
+        print("%.0f MB in %d buffers of 1 MB or more" % (sum(buf_size.values()) / 2 ** 20, sum(buf_count.values())))
+        for key, size in buf_size.most_common(args.top):
+            print("%8.1f MB  %5d x  %s" % (size / 2 ** 20, buf_count[key], key))
 
 
 if __name__ == "__main__":

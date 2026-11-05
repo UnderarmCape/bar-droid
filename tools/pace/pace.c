@@ -442,11 +442,11 @@ static void (*gl_bind_buffer)(GLenum, GLuint);
 static int tex_zero = -1;   /* -1: not read yet */
 
 /*
- * BARDROID_TEX_LOG=1 (a developer's switch, dev-env.sh): every texture of 128x128 or more the engine makes, its size and
+ * BARDROID_TEX_LOG=1 (a developer's switch, dev-env.sh): every texture of 64x64 or more the engine makes, its size and
  * formats, to stderr (launcher.log), to see which one shows a recycled buffer (DELIVERY.md, the white lattice after
  * first person). Off, nothing changes.
  */
-#define TEX_LOG_MIN (128 * 128)
+#define TEX_LOG_MIN (64 * 64)
 extern int snprintf(char *s, unsigned long n, const char *format, ...);
 static int tex_log = -1;   /* -1: not read yet */
 static void (*real_tex_storage_2d)(GLenum, GLsizei, GLenum, GLsizei, GLsizei);
@@ -464,6 +464,40 @@ static void tex_said(const char *what, GLenum target, GLint internal, GLsizei w,
 static void texstorage2d_wrap(GLenum target, GLsizei levels, GLenum internal, GLsizei w, GLsizei h) {
     tex_said("glTexStorage2D", target, (GLint) internal, w, h, (unsigned) levels, 0, 0);
     real_tex_storage_2d(target, levels, internal, w, h);
+}
+
+/*
+ * And with BARDROID_TEX_LOG=1 every buffer of 64 KB or more the engine gives storage to (glBufferData, glBufferStorage,
+ * the named forms): in a 1v1 skirmish on the dev phone the GPU driver held 2.0 GB, its textures ~0.5 GB (2026-11-04).
+ */
+#define BUF_LOG_MIN (64L * 1024)
+typedef long GLsizeiptr;
+static void (*real_buffer_data)(GLenum, GLsizeiptr, const void *, GLenum);
+static void (*real_buffer_storage)(GLenum, GLsizeiptr, const void *, unsigned);
+static void (*real_named_buffer_data)(GLuint, GLsizeiptr, const void *, GLenum);
+static void (*real_named_buffer_storage)(GLuint, GLsizeiptr, const void *, unsigned);
+
+static void buf_said(const char *what, unsigned target, GLsizeiptr size, unsigned usage) {
+    if (tex_log != 1 || size < BUF_LOG_MIN) return;
+    char line[128];
+    snprintf(line, sizeof line, "[pace] %s %ld bytes target 0x%x usage 0x%x\n", what, size, target, usage);
+    say(line);
+}
+static void bufferdata_wrap(GLenum target, GLsizeiptr size, const void *data, GLenum usage) {
+    buf_said("glBufferData", target, size, usage);
+    real_buffer_data(target, size, data, usage);
+}
+static void bufferstorage_wrap(GLenum target, GLsizeiptr size, const void *data, unsigned flags) {
+    buf_said("glBufferStorage", target, size, flags);
+    real_buffer_storage(target, size, data, flags);
+}
+static void namedbufferdata_wrap(GLuint buffer, GLsizeiptr size, const void *data, GLenum usage) {
+    buf_said("glNamedBufferData", 0, size, usage);
+    real_named_buffer_data(buffer, size, data, usage);
+}
+static void namedbufferstorage_wrap(GLuint buffer, GLsizeiptr size, const void *data, unsigned flags) {
+    buf_said("glNamedBufferStorage", 0, size, flags);
+    real_named_buffer_storage(buffer, size, data, flags);
 }
 
 /*
@@ -563,6 +597,22 @@ static void *glx_getproc_wrap(const char *proc) {
     if (tex_log && same(proc, "glTexStorage2D")) {
         real_tex_storage_2d = (void (*)(GLenum, GLsizei, GLenum, GLsizei, GLsizei)) p;
         return (void *) texstorage2d_wrap;
+    }
+    if (tex_log && (same(proc, "glBufferData") || same(proc, "glBufferDataARB"))) {
+        real_buffer_data = (void (*)(GLenum, GLsizeiptr, const void *, GLenum)) p;
+        return (void *) bufferdata_wrap;
+    }
+    if (tex_log && same(proc, "glBufferStorage")) {
+        real_buffer_storage = (void (*)(GLenum, GLsizeiptr, const void *, unsigned)) p;
+        return (void *) bufferstorage_wrap;
+    }
+    if (tex_log && same(proc, "glNamedBufferData")) {
+        real_named_buffer_data = (void (*)(GLuint, GLsizeiptr, const void *, GLenum)) p;
+        return (void *) namedbufferdata_wrap;
+    }
+    if (tex_log && same(proc, "glNamedBufferStorage")) {
+        real_named_buffer_storage = (void (*)(GLuint, GLsizeiptr, const void *, unsigned)) p;
+        return (void *) namedbufferstorage_wrap;
     }
     if ((tex_zero || tex_log) && same(proc, "glCompressedTexImage2D")) {
         gl_lookups();
