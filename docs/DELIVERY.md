@@ -223,6 +223,16 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
       the menu's texture broke, not the pictures. The copy now also draws an unchanged menu again every 30 s of game
       time (`droid.redraw`, one texture drawing each time). Dev phone: the menu whole at frame 1801, no errors.
+- [x] Free memory while BAR loads (Kailil, 2026-11-04: "It should appear while bar is loading as a button under the bar
+      logo"): Android lets no app force-stop others (since Android 14 not even their background processes), and One
+      UI's Memory screen needs `READ_SEARCH_INDEXABLES`; Device care's page (`com.samsung.android.sm.ACTION_DASHBOARD`,
+      a `<queries>` entry) opens from the app, Memory one tap away. The button sits a sixth of the screen below the
+      middle (under the engine's logo, over BAR's loading picture) from the engine's start until "finished loading"
+      or the lobby's widget (`GameService.loading`); opened with `FLAG_ACTIVITY_NO_USER_ACTION`, as a plain tap made
+      Termux:X11 shrink the game to its floating window and Back went to the launcher. Dev phone: shown on the engine's
+      splash and the loading picture, Device care opens, Back returns to the loading game, gone in the game. Not tried:
+      Clean now itself while a game loads (the app runs as a foreground service). The launcher's low-memory note now
+      says how: Recents, Close all; or Device care, Memory, Clean now.
 - [x] The app's builder queue widget removed in older replays (found in the dev phone's launcher.log, 2026-11-04):
       a replay plays its own BAR release, and test-31465's `WG.BuilderQueueApi` had no `OnBuildCommandTeamChanged`
       ("attempt to call field ... (a nil value)" in Update, BAR removed `bardroid_queue.lua` for that game: no

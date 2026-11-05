@@ -45,6 +45,10 @@ public class GameService extends Service {
 
     public static String status() { return status; }
     public static boolean busy() { return busy; }
+    /** BAR is loading: the engine started, the game ("finished loading") or the lobby (its BAR Droid widget) not up yet
+     *  (GameActivity's Free memory button). */
+    public static boolean loading() { return loading; }
+    private static volatile boolean loading;
     /** Why the last game ended when the player did not end it (the launcher shows it); null: nothing to say. */
     public static String exitNote() { return exitNote; }
     private static volatile String exitNote;
@@ -54,8 +58,11 @@ public class GameService extends Service {
             "force stopped", "stopped by the user", "a process it needs ended", "another reason", "frozen",
             "the app was turned off", "an app update" };
 
+    /** (how to close the other apps, not only that: an app may not close them itself, Android 14+) */
     private static String lowMemoryNote(android.content.Context c) {
-        return "Android closed the game: the phone ran out of memory. Close other apps and try again"
+        boolean galaxy = "samsung".equalsIgnoreCase(android.os.Build.MANUFACTURER);
+        return "Android closed the game: the phone ran out of memory. Close the other apps (Recents, Close all"
+                + (galaxy ? "; or Settings, Device care, Memory, Clean now" : "") + ") and try again"
                 + (LauncherActivity.lowRam(c) ? " (an 8 GB phone has little to spare in a game)." : ".");
     }
 
@@ -270,13 +277,20 @@ public class GameService extends Service {
                     // Stopped in every case: a pump left behind (Stop, a failed start) would read the next game's
                     // FIFO too and take half of its sound.
                     try {
-                        engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, null);
+                        loading = true;
+                        engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
+                            if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
+                                loading = false;
+                                Log.i("svc", "loaded (the loading screen's Free memory button goes)");
+                            }
+                        });
                         setStatus("running (" + mode + ")");
                         started = android.os.SystemClock.elapsedRealtime();
                         PerfLog perf = new PerfLog(this);
                         perf.start();
                         try { rc = engine.waitFor(); } finally { perf.stop(); }
                     } finally {
+                        loading = false;
                         if (audio != null) audio.stop();
                     }
                     Log.i("svc", "engine exited (" + rc + ")");   // (tools/phone-bench.ps1, phone-memory.ps1 read this line)

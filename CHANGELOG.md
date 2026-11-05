@@ -135,7 +135,10 @@ The first version meant for other people's phones: everything since the first bu
   them; now the 10 nearest the building are drawn (150 turrets on the dev phone: 26 fps before, 85 after, uncapped).
 - One notification while a game runs (with Stop); a tap on it goes back to the game, and coming back from the
   floating window no longer makes the game pause to lay itself out again.
-- When Android closes the game for lack of memory, the launcher says so (before, the app just started again).
+- When Android closes the game for lack of memory, the launcher says so (before, the app just started again), and how
+  to close the other apps.
+- A Free memory button while BAR loads (Galaxy phones): it opens Device care, where Memory, Clean now closes the
+  other apps; Back returns to the loading game. (Android lets no app close other apps itself.)
 - 8 GB phones play in a low-memory mode, set automatically: over 1 GB less memory (the engine's Lua memory pools off,
   compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off), and skirmish on a smaller map
   (Starwatcher) until you pick one. On a Galaxy S23 Ultra BAR's benchmark battle and skirmishes on that map play

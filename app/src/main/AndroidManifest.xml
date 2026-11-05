@@ -17,6 +17,13 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
 
+    <!-- One UI's Device care, which the loading screen's Free memory button opens (GameActivity): visible to the app -->
+    <queries>
+        <intent>
+            <action android:name="com.samsung.android.sm.ACTION_DASHBOARD" />
+        </intent>
+    </queries>
+
     <application
         android:name=".BarApp"
         android:label="@string/app_name"

@@ -82,6 +82,7 @@ public class GameActivity extends MainActivity {
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
         addCatchupView();
+        addFreeMemoryButton();
         setUpUpscale();
         preferRefreshRate();
         // The refresh rate settles after a mode request or a fold: keep the widget's frame cap in step.
@@ -343,9 +344,56 @@ public class GameActivity extends MainActivity {
     private final Runnable catchupCheck = new Runnable() {
         @Override public void run() {
             updateCatchup();
+            updateFreeMemory();
             catchupHandler.postDelayed(this, 500);
         }
     };
+
+    // Free memory while BAR loads (Kailil, 2026-11-04: "It should appear while bar is loading as a button under the bar
+    // logo"): Android lets no app close other apps (since Android 14 not even their background processes), and One UI's
+    // Memory screen ("Clean now") needs a system permission; Device care's own page opens from any app, Memory one tap
+    // away, and Back comes back here while the game loads on. Only where Device care is (Samsung); below the middle of
+    // the screen, under the engine's logo; gone once the game or the lobby is up (GameService.loading).
+    private static final String DEVICE_CARE = "com.samsung.android.sm.ACTION_DASHBOARD";
+    private android.widget.TextView freeMemory;
+
+    private void addFreeMemoryButton() {
+        android.content.Intent care = new android.content.Intent(DEVICE_CARE);
+        if (care.resolveActivity(getPackageManager()) == null) return;
+        android.widget.TextView v = new android.widget.TextView(this);
+        float dp = getResources().getDisplayMetrics().density;
+        v.setText("Free memory");
+        v.setTextColor(0xFFFFFFFF);
+        v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+        v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+        v.setPadding((int) (22 * dp), (int) (10 * dp), (int) (22 * dp), (int) (10 * dp));
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setColor(0xC0101010);
+        bg.setCornerRadius(10 * dp);
+        bg.setStroke(Math.max(1, (int) dp), 0x90FFFFFF);
+        v.setBackground(bg);
+        // (NO_USER_ACTION: no onUserLeaveHint, so Termux:X11 does not shrink the game to its floating window, and Back
+        // from Device care comes back to the full screen; dev phone, 2026-11-04)
+        care.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION);
+        v.setOnClickListener(x -> {
+            Log.i("app", "free memory: Device care opened (Memory, Clean now; Back returns to the game)");
+            try { startActivity(care); } catch (Exception e) { Log.e("app", "Device care did not open: " + e); }
+        });
+        v.setVisibility(View.GONE);
+        addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER));
+        // (a sixth of the screen below its middle: under the engine's logo, above the loading screen's tips)
+        v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) ->
+                view.setTranslationY(((View) view.getParent()).getHeight() / 6f));
+        freeMemory = v;
+    }
+
+    private void updateFreeMemory() {
+        if (freeMemory == null) return;
+        boolean show = GameService.loading() && !isInPictureInPictureMode()
+                && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
+        if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
 
     private void addCatchupView() {
         android.widget.TextView v = new android.widget.TextView(this);
