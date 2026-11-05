@@ -392,6 +392,14 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
       see-through models 2.9 -> 1.9 ms; fps the same (simulation-bound); no difference visible at the closest zoom
       (`replay-memory.ps1 -Shots`). 0.10 / 6 elmos only reaches 0.93M: BAR's models have hard edges and UV seams on
       most edges, which an edge-collapse simplifier keeps, and many pieces are under 48 triangles.
+    - Where the simulation's ~20 ms a tick goes (late 8v8, 3,300 units, hot dev phone): unit movement 3.6 ms, unit
+      scripts 3.2, BAR's synced gadgets 2.3, unit updates 1.9 + 1.3 (slow), line of sight 1.1, paths 1.0 + 0.75 (map
+      updates), weapons 0.9, projectiles 0.75. Recoil already runs the parallel-safe parts on the workers: movement's
+      traversal plans and collision detection (stages 1 and 3), the scripts' animation ticks; what stays serial
+      changes synced state in an order every client must repeat (movement stages 2, 4 and 5, "the vars are synced and
+      that's what is stopping this being MT'ed", upstream's own TODO; the COB threads; the gadgets, which are BAR's game
+      code and cannot change). What is left there is ~1.5 ms a tick of movement stage 5 and part of the scripts' 3.2,
+      at a real desync risk: the heat that remains is cut on the drawing side (fewer drawn frames, cosmetic effects).
     - The see-through pass is mostly map features in the fade band (`FeatureFadeDistance` 4800 to
       `FeatureDrawDistance` 6000: drawn blended, twice with water: below and above its surface). Without the band
       (`FeatureFadeDistance = 6000`) those features join the solid pass: +1.3 ms there, -1.6 ms of see-through, a net
