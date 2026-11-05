@@ -124,6 +124,32 @@ game until the replay and spectating stages below say it computes exactly what t
   changes add little in this scenario (the deque was a laptop cost more than a phone one). The engine's own thread
   choice changes nothing measurable while the main thread is the limit (it is ~70 % of all cycles).
 
+  Profile-guided (`tools/engine-sim/pgo-train.ps1`: BAR's benchmark played with an instrumented build, 1,086 profiles,
+  then rebuilt with them), against the same day's official and gcc-stock rows:
+
+  | engine | instructions per frame (2 runs) | cycles per frame | main thread cycles |
+  | --- | --- | --- | --- |
+  | official | 201.0 / 189.0 M | 168.5 / 123.1 M | 115.9 / 81.1 M |
+  | gcc-stock | 183.7 / 183.6 M | 163.1 / 162.7 M | 113.0 / 113.0 M |
+  | gcc-pgo | 171.0 / 172.6 M (-7 % from gcc-stock, -13 % from official) | 152.4 / 162.5 M | 105.5 / 113.4 M |
+
+  Instructions repeat; cycles depend on which core the main thread got (official's second run: core 7, the X3, in
+  its mask: 123 M), so instructions are the yardstick between builds and cycles only within one core type.
+
+  With every CPU allowed (`main`'s launch-bar.sh since 46cfe85) even instructions stop repeating: the main thread
+  spin-waits for the worker threads' parts of a frame, and those spins count. `gcc-pgo-lse` (`gcc-pgo` with
+  `-march=armv8.2-a`: the atomics as single LSE instructions instead of load/store-exclusive loops; every phone BAR
+  can run on has them), main thread per frame:
+
+  | engine | instructions (2 runs) | cycles |
+  | --- | --- | --- |
+  | gcc-pgo | 116.0 / 106.3 M | 84.0 / 74.7 M |
+  | gcc-pgo-lse | 106.7 / 104.0 M | 76.9 / 73.7 M |
+
+  The same build moved 9 % between its runs; the LSE build's gain (-2 % between the closer pair) is inside that.
+  Measuring builds this close needs the spinning out of the count (simpleperf on the main thread's functions without
+  the thread pool's wait loop) or more rounds.
+
 - **Sync proven on a real game, and the check proven to bite.** BAR's server echoes every player's checksum every
   60 frames into its recording (`GameServer.cpp`, `syncResponseEchoInterval`), and a replay played back compares
   each with its own (`NetCommands.cpp`). The 1v1 server replay (SpeedMetal, 2026-10-01, Kailil's own game as
@@ -135,6 +161,7 @@ game until the replay and spectating stages below say it computes exactly what t
   | gcc-stock (GCC 13.2, official flags) | 0 |
   | clang-o3 (the 2026-10-27 research build: no `-fsingle-precision-constant`) | 0 |
   | gcc-pgo (sim changes, `-mtune=cortex-x3`, profile-guided) | 0 |
+  | gcc-pgo-lse (the same, `-march=armv8.2-a`; flags checked in build.ninja: fp-contract off, single-precision constants and rounding math kept) | 0 (37,683 frames) |
   | oryon-lto-fast (research build with `-ffast-math`: the control) | **1,190, from frame 0** |
 
   So clang's missing `-fsingle-precision-constant` did not show in 20 minutes of a real game (Recoil's synced math
