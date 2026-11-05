@@ -6,12 +6,13 @@
 #     [-DevEnv "export BARDROID_TEX_LOG=1"] (lines added to dev-env.sh) [-KillAll] (background apps closed first) [-Pacer] (dev-env-pacer.sh)
 #     [-Timers] (the engine's profiler on: the busiest timers every 10 s in the infolog, bardroid_simdraw.lua)
 #     [-Widgets] (every widget's call-ins timed: the busiest widgets every 10 s)
+#     [-Shots <game second>] (three screenshots from that second, close to where the units are thickest, the same in every run of a replay: <run>-shot1..3.png)
 # Every run logs the main thread's Sim / Draw / rest split every 10 s ([simdraw], bardroid_simdraw.lua) and keeps the
 # phone's springsettings.cfg as it was before the run.
 # The launcher.log of the run (the app starts a new one at each start) is kept beside the log as <...>-launcher.log (tools/tex-memory.py reads it with the texture log on).
 param([string]$Engine = "gcc-sim1", [string[]]$Settings = @(), [string]$Replay = "isthmus8v8-20261013a.sdfz",
       [int]$Skip = 600, [int]$Seconds = 30, [int]$Minutes = 25, [string]$Device = "R5CW22GVC3D", [string[]]$DevEnv = @(),
-      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer, [switch]$Timers, [switch]$Widgets, [switch]$HideUi, [switch]$NoDeferred)
+      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer, [switch]$Timers, [switch]$Widgets, [switch]$HideUi, [switch]$NoDeferred, [int]$Shots = 0)
 $ErrorActionPreference = "Continue"
 # one run at a time: a run started while the last one still cleans up was force-stopped by it (2026-11-05)
 $lock = "C:\Tools\BARANDROID\engine-sim\replay-memory.lock"
@@ -43,7 +44,7 @@ $ss = if ($Settings.Count) { "printf '%s\n' " + (($Settings | ForEach-Object { "
 Send-AppFile $adb "$PSScriptRoot\bardroid_simdraw.lua" "files/bar/LuaUI/Widgets/bardroid_simdraw.lua" $Device
 $modes = @()   # (built one by one: @($(if ...), $(if ...)) came out empty when only the last switch was set)
 if ($Timers) { $modes += "timers" }; if ($Widgets) { $modes += "widgets" }; if ($HideUi) { $modes += "hideui" }
-if ($NoDeferred) { $modes += "nodeferred" }
+if ($NoDeferred) { $modes += "nodeferred" }; if ($Shots) { $modes += "shots $Shots" }
 AppRun $(if ($modes.Count) { "echo '$($modes -join ' ')' > files/bar/LuaUI/Config/bardroid_simdraw.txt" } else { "rm -f files/bar/LuaUI/Config/bardroid_simdraw.txt" }) "es-rm-timers.sh" | Out-Null
 # (springsettings.cfg kept as it was: launch-bar.sh appends dev-springsettings.cfg to it and the engine saves it at exit)
 AppRun "$ss; cp files/bar/springsettings.cfg files/bar/.springsettings-before-run; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
@@ -75,6 +76,14 @@ $keep = "C:\Tools\BARANDROID\engine-sim\runs\$((Get-Date).ToString('yyyyMMdd-HHm
 & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid tail -n +$($lines0 + 1) files/logs/launcher.log > `"$keep-launcher.log`""
 & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat files/bar/infolog.txt > `"$keep-infolog.txt`""
 "launcher.log and infolog of the run: $keep-launcher.log, -infolog.txt"
+if ($Shots) {   # (the engine's screenshots of this run, oldest first, kept beside the logs and taken off the phone)
+  $names = @("$(AppRun 'ls -tr files/bar/screenshots/*.png 2>/dev/null | tail -3' 'es-rm-shots.sh')" -split '\s+' | Where-Object { $_ })
+  for ($i = 0; $i -lt $names.Count; $i++) {
+    & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat $($names[$i]) > `"$keep-shot$($i + 1).png`""
+  }
+  AppRun "rm -f files/bar/screenshots/*.png" "es-rm-shots2.sh" | Out-Null
+  "screenshots: $($names.Count) ($keep-shot1.png ...)"
+}
 & $adb -s $Device shell "am force-stop com.underarmcape.bardroid" | Out-Null
 # (the run's settings out of springsettings.cfg again: the engine saved them there, as PreloadModels = 0 stayed for
 # every later game, 2026-11-04), and the dev widget out of LuaUI/Widgets

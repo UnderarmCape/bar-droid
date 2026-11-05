@@ -88,7 +88,14 @@ game until the replay and spectating stages below say it computes exactly what t
 - `rts/Lua/LuaVFS.cpp`: `BarDroidUnsyncedGadgetsOff`, gadget files left out of the unsynced LuaRules state's lists.
 - `rts/Rendering/GlobalRendering.cpp`, `rts/System/SpringApp.cpp`: `BarDroidDeferSwap`, the deferred present.
 - `rts/Rendering/BarDroidGpuTimer.h` (WorldDrawer.cpp, Game.cpp, LuaHandle.cpp): with the profiler on, the GPU's time
-  per drawing pass and per widget's or gadget's drawing call-in ("GPU::<pass>").
+  per drawing pass and per widget's or gadget's drawing call-in ("GPU::<pass>"); a result over a second (a query
+  Mesa never ran: the minimap widget's read ~5e8 s) is left out.
+- `rts/Rendering/Models/IModelParser.cpp` + `rts/lib/meshoptimizer` (meshoptimizer 0.23, MIT: its simplifier and vertex
+  cache optimizer only): `BarDroidModelSimplify` (share of triangles kept, 0 = off) and `BarDroidModelSimplifyError`
+  (elmos): every model piece's triangles simplified once when the model loads (edge collapses that keep seams and open
+  edges), then ordered for the GPU's vertex cache. Only the index list changes: vertices, sizes, bounds and collision
+  volumes stay exactly the same, so the simulation cannot notice; every pass (units, features, wreck pieces, build
+  previews) draws the shorter list. Pieces under 48 triangles are left alone.
 - `rts/Net/NetCommands.cpp`: `BarDroidMaxSimPerDraw`, one simulated frame per drawn frame while few are waiting.
 - `rts/System/Threading/ThreadPool.h`: `for_mt_chunk` in about four chunks a thread, taken as threads come free.
 - `rts/Sim/Features/FeatureHandler.cpp`: the features' previous-frame transforms on the workers.
@@ -303,7 +310,9 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
   150 s at normal speed (3,150-3,500 units), `gcc-8v8` and its successors, the frame cap off, the phone hot (AP
   62-68 C, the prime core capped at 1.4-1.8 of 3.36 GHz, the GPU at 220-615 MHz).
   - Measuring: `replay-memory.ps1` now logs the main thread's split every 10 s (`[simdraw]`, `bardroid_simdraw.lua`
-    from the engine's always-on "Sim" and "Draw" timers; `-Timers`: the whole profiler, the busiest timers) and keeps
+    from the engine's always-on "Sim" and "Draw" timers, with the drawn frames over 50 and 100 ms; `-Timers`: the
+    whole profiler, the busiest timers and the longest single runs; `-Shots <game second>`: three screenshots from
+    that second, the camera close to where the units are thickest, the same in every run of a replay) and keeps
     the run's infolog. `Spring.GetProfilerTimeRecord` failed on every call (it read its optional argument after
     pushing its results): fixed on the branch. User widgets cannot time other widgets (BAR keeps
     `widgetHandler.widgets` from them), so the branch times each Lua call-in by name while the profiler is on
@@ -367,6 +376,25 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     unit and feature models 15, terrain 6.8, see-through models 5.2, water 1.1; and of BAR's widgets **Sensor Ranges
     Sonar 8.6, Sensor Ranges Radar 3.8, Sensor Ranges LOS 2.0, Jammer Preview 1.2** (the range circles of every
     unit a spectator sees: ~16 % together), GUI Shader's blur 1.7, Defense Range GL4 1.6, Nano Particles GL4 0.9.
+  - **Mobile drawing overhaul** (Kailil, 2026-11-05 ~09:50: sensor ranges off in big games, "optimize the unit models
+    ... be as heavy handed as you need", "go as wild as you need to. To keep temps down"). Same replay, game seconds
+    1210-1330, full resolution, profiler on, a hot phone (GPU 401-475 of 615 MHz, prime core 1.2-1.4 GHz):
+    - BAR's sonar, radar and LOS circles at opacity 0 and the jammer coverage off (the app's `bardroid_sensors.lua`,
+      games of 10 teams or more): **11.2 -> 14.4 fps**; their 13 ms of GPU a frame gone. The phone is then limited by
+      the simulation (Sim 57 % of the time, the GPU 51-69 % busy).
+    - `BarDroidModelSimplify` 0.25 / 2 elmos: 1.35M -> 0.98M triangles; models 8.6 -> 7.9 ms of GPU a frame,
+      see-through models 2.9 -> 1.9 ms; fps the same (simulation-bound); no difference visible at the closest zoom
+      (`replay-memory.ps1 -Shots`). 0.10 / 6 elmos only reaches 0.93M: BAR's models have hard edges and UV seams on
+      most edges, which an edge-collapse simplifier keeps, and many pieces are under 48 triangles.
+    - The see-through pass is mostly map features in the fade band (`FeatureFadeDistance` 4800 to
+      `FeatureDrawDistance` 6000: drawn blended, twice with water: below and above its surface). Without the band
+      (`FeatureFadeDistance = 6000`) those features join the solid pass: +1.3 ms there, -1.6 ms of see-through, a net
+      -0.3 ms for features popping in: not kept. The ground's anisotropic filtering off (`SMFTexAniso = 0`): no gain
+      (terrain 3.9 -> 4.2 ms, within the heat noise): not kept.
+    - So the models' GPU time is mostly not their triangles (a third fewer: -10 %), nor draw calls (~220 a frame in
+      all, above); at 9 % of the pixels it was 9.5 ms against 13.5 at full resolution (hotter, other clocks), so
+      not mostly pixels either. Not known yet; the dev phone draws them with the engine's plainer shading (the
+      low-memory mode keeps BAR's GL4 unit shaders off), the Fold7 with BAR's GL4 shaders.
   - Once in ~20 runs the GPU driver failed ("submit failed -1 (Resource deadlock avoided)", KGSL refusing a context
     after a GPU fault) and the engine hung, here before the game started (05:46, a cool phone): the 2026-11-02 and
     2026-11-04 hangs' signature, before any of these changes; `replay-memory.ps1` now ends such a run at the
