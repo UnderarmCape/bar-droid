@@ -43,6 +43,7 @@ The first version meant for other people's phones: everything since the first bu
   unit info panel made bigger (which stops at the order menu); in the controller game it shows while the app's gamepad controls
   have the pad (a triple tap switches); it steps aside for BAR's own when a
   BAR update changes that menu, and for the gamepad's in the controller game.
+- The building you picked is framed in gold in the build menu while you place it.
 - The build menu's pictures no longer stay in stripes after some game starts (the menu is drawn again 5 s in, and
   every 30 s while it is unchanged).
 - Building by touch: while a building is picked, the build menu's page strip shows ONE, LINE, GRID and BORDER (the

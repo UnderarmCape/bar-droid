@@ -223,6 +223,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
       the menu's texture broke, not the pictures. The copy now also draws an unchanged menu again every 30 s of game
       time (`droid.redraw`, one texture drawing each time). Dev phone: the menu whole at frame 1801, no errors.
+- [x] The picked building's option in the build menu (BAR's game, fingers): only BAR's slightly lighter cell said which
+      building PLACE would build. Now the gold line the pad's focus has (`droid.drawPicked`, `droid.goldLine`), 4% of
+      the cell wide (the focus's 2 px read as a hairline), also over BAR's hover drawing: a finger's tap leaves the
+      pointer on the cell it picked, and BAR draws that cell anew on top (the first try was hidden under it). Gold is
+      the app's "on": QUEUE, the picked shape. Dev phone: the frame round the wind turbine with the pointer on it and
+      after a tap elsewhere; no errors; remake-check equal. (In the controller game v0.8.5's own menu shows for fingers,
+      as designed: PLACE works there, the shape strip is the app's copy's.)
 - [x] BAR's update to test-31820 (2026-11-04) changed its Order menu: an order's tooltip now gets a keyboard line
       ("Tap L quickly: 1x Fire at will, 2x Hold fire, ...", "Press Z Z for area mex"; `tapHotkeyLine`), and the line
       the copy's touch patch hooked into moved, so the phone could not make the copy again: the old copy ran, and the
@@ -1229,7 +1236,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       moves a part a patch needs shows before a phone falls back. `launch-bar-test.sh` covers `order_menu`: the copy
       in, kept with an Android-layer miss when BAR's file changed, BAR's own after the copy failed in a game (the build
       menu's copy left running), the controller game off; 55 cases, all pass (its menu block had called an undefined
-      `order_menu`). And QUEUE's label in the white of the order menu's words right under it (it was the notes' warm
+      `order_menu`). Since 2026-11-04 a tool does the byte-for-byte check: `tools/remake-check.ps1` (BAR's two files
+      from the dev phone's release, the shipped `.patches` through the app's own `BuildMenuPatches.java`); after the
+      build menu's 30 s redraw, test-31820: both copies equal. And QUEUE's label in the white of the order menu's words right under it (it was the notes' warm
       white).
 - [x] The order menu copy by touch (dev phone, BAR's game, 2026-11-03): a tap on Move picks it, a tap on Fire at will
       cycles it, a drag across the menu leaves the camera where it was (the copy's IsAbove; the press picks the button

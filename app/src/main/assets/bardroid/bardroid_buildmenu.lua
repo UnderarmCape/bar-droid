@@ -1258,12 +1258,19 @@ function droid.drawHover(cellID, list)
 	gl.Scale(1.1, 1.1, 1)
 	gl.Translate(-cx, -cy, 0)
 	gl.CallList(list)
+	droid.goldLine(r)
+	gl.PopMatrix()
+end
+
+-- BAR Droid: a gold line round a cell (rect r; width: of the cell's, else the style's)
+function droid.goldLine(r, width)
 	local s = WG.BarDroidStyle
 	local x0, y0, x1, y1 = r[1] + cellPadding, r[2] + cellPadding, r[3] - cellPadding, r[4] - cellPadding
+	local w = width and math.max(2, math_floor((r[3] - r[1]) * width)) or nil
 	if s then
-		s.outline(x0, y0, x1, y1, s.GOLD, 1)
+		s.outline(x0, y0, x1, y1, s.GOLD, 1, w)
 	else
-		local t = math.max(2, math_floor((r[3] - r[1]) * 0.03))
+		local t = w or math.max(2, math_floor((r[3] - r[1]) * 0.03))
 		gl.Color(1, 0.78, 0.25, 1)
 		gl.Rect(x0, y0, x1, y0 + t)
 		gl.Rect(x0, y1 - t, x1, y1)
@@ -1271,7 +1278,21 @@ function droid.drawHover(cellID, list)
 		gl.Rect(x1 - t, y0, x1, y1)
 		gl.Color(1, 1, 1, 1)
 	end
-	gl.PopMatrix()
+end
+
+-- BAR Droid: while a building is picked, its option with the gold line (BAR's lighter cell alone read faintly on the
+-- phone, 2026-11-04; gold is the app's "on": QUEUE, the picked shape below it). Not while the pad is on the menu
+-- (its own gold line is the focus).
+function droid.drawPicked()
+	if not (droid.armed and droid.defID) or droid.focus then
+		return
+	end
+	for id, r in pairs(cellRects) do
+		if cmds[id] and cmds[id].id == -droid.defID then
+			droid.goldLine(r, 0.04) -- (the pad focus's 2 px read as a hairline on the dev phone)
+			return
+		end
+	end
 end
 
 function widget:ViewResize()
@@ -2360,6 +2381,7 @@ function widget:DrawScreen()
 		elseif dlistBuildmenu then
 			gl.CallList(dlistBuildmenu)
 		end
+		droid.drawPicked() -- BAR Droid: the picked building's option outlined
 
 		-- draw highlight
 		local usedZoom
@@ -2523,6 +2545,8 @@ function widget:DrawScreen()
 					end
 					if hoverDlist then
 						droid.drawHover(hoveredCellID, hoverDlist) -- BAR Droid: with the gamepad bigger, outlined
+						droid.drawPicked() -- BAR Droid: again (a finger's tap leaves the pointer on the cell it picked,
+						-- which BAR draws anew here)
 					end
 				end
 			end
