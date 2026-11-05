@@ -956,7 +956,8 @@ local function drawUnitBar()
 	local frac = max(0, min(1, view.health / view.maxHealth))
 	local yb = l.y1 - l.nameSize * 1.25 - #l.desc * l.descSize * 1.2 - barH - l.s * 0.15
 	roundBar(x0, yb, x1, yb + barH, BAR_BACK)
-	local label = floor(view.health) .. " / " .. floor(view.maxHealth)
+	-- (grouped in thousands as the costs under it are: "3 700 / 3 700", not "3700 / 3700")
+	local label = price(floor(view.health)) .. " / " .. price(floor(view.maxHealth))
 	if view.build and view.build < 1 then
 		-- under construction: the bar is the building's progress, in blue (as health it read as a damaged unit,
 		-- orange at 18% built)
