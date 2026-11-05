@@ -1,5 +1,5 @@
 diff --git a/lorie/src/main/res/values/strings.xml b/lorie/src/main/res/values/strings.xml
-index 07954e0..290aada 100644
+index 07954e0..648dc73 100644
 --- a/lorie/src/main/res/values/strings.xml
 +++ b/lorie/src/main/res/values/strings.xml
 @@ -38,6 +38,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
@@ -13,6 +13,21 @@ index 07954e0..290aada 100644
      <string name="lorie_pref_version">Version</string>
      <string name="lorie_pref_ekbar">Extra key bar preferences</string>
      <string name="lorie_pref_userActions">Response to user actions</string>
+@@ -49,10 +53,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_displayFilteringMode">Display filtering mode</string>
+     <string name="lorie_pref_adjustResolution">Adjust the set resolution to fit screen orientation</string>
+     <string name="lorie_pref_displayStretch">Stretch to fit display</string>
+-    <string name="lorie_pref_Reseed">Reseed screen while soft keyboard is open</string>
+-    <string name="lorie_pref_Reseed_summary">The screen size will be adjusted while Soft Keyboard is open.</string>
+-    <string name="lorie_pref_PIP">PIP mode</string>
+-    <string name="lorie_pref_PIP_summary">Show app in picture-in-picture mode when home button or recents button is pressed</string>
++    <string name="lorie_pref_Reseed">Resize the screen for the soft keyboard</string>
++    <string name="lorie_pref_Reseed_summary">The screen shrinks above the soft keyboard instead of going under it</string>
++    <string name="lorie_pref_PIP">Picture-in-picture</string>
++    <string name="lorie_pref_PIP_summary">Home or Recents shrinks the app to a small window instead of hiding it</string>
+     <string name="lorie_pref_fullscreen">Fullscreen</string>
+     <string name="lorie_pref_fullscreen_summary">Toggle immersive mode in your device display</string>
+     <string name="lorie_pref_forceOrientation">Screen orientation</string>
 diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
 index 7adb171..0911876 100644
 --- a/lorie/src/main/res/xml/preferences.xml
