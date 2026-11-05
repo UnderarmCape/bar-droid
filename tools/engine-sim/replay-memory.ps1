@@ -27,22 +27,23 @@ if ($Pacer) {   # (the memory pacer, dev-env-pacer.sh: the engine paused while A
 if ($DevEnv.Count) { AppRun ("printf '%s\n' " + (($DevEnv | ForEach-Object { "'$_'" }) -join ' ') + " >> files/bar/dev-env.sh") "es-rm-env.sh" | Out-Null }
 $ss = if ($Settings.Count) { "printf '%s\n' " + (($Settings | ForEach-Object { "'$_'" }) -join ' ') + " > files/bar/dev-springsettings.cfg" } else { "rm -f files/bar/dev-springsettings.cfg" }
 AppRun "$ss; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
-$lmk0 = [int](AppRun "grep -c 'low memory' files/logs/launcher.log" "es-rm1.sh")
+$lmk0 = [int](AppRun "grep -c 'ended for lack of memory' files/logs/launcher.log" "es-rm1.sh")
 $lines0 = [int]("$(AppRun 'wc -l < files/logs/launcher.log' 'es-rm-lines.sh')".Trim())   # (this run's lines follow)
 if ($KillAll) { & $adb -s $Device shell "am kill-all" | Out-Null }
 & $adb -s $Device shell "am force-stop com.underarmcape.bardroid; sleep 1; am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench >/dev/null"
 $t0 = Get-Date
-$minAvail = 1e9; $maxGpu = 0; $state = "running"
+$minAvail = 1e9; $maxGpu = 0; $state = "running"; $seen = $false
 do {
   Start-Sleep $Every
   $m = @(& $adb -s $Device shell "grep -E 'MemAvailable|GpuTotal|SwapFree' /proc/meminfo | tr -s ' ' | cut -d' ' -f2; ps -A | grep -c ' spring$'; p=`$(pidof spring); grep -E 'VmRSS|VmSwap' /proc/`$p/status 2>/dev/null | tr -s ' ' | cut -d' ' -f2")
   $avail = [int]($m[0]) / 1024; $swap = [int]($m[1]) / 1024; $gpu = [int]($m[2]) / 1024; $running = [int]($m[3])
   $rss = if ($m.Count -gt 4) { [int]($m[4]) / 1024 } else { 0 }; $eswap = if ($m.Count -gt 5) { [int]($m[5]) / 1024 } else { 0 }
-  if ($running) { $minAvail = [math]::Min($minAvail, $avail); $maxGpu = [math]::Max($maxGpu, $gpu) }
-  $prog = "$(AppRun "grep -E 'replaybench\] (done|fast|measuring|[0-9]+:[0-9]+ x)' files/bar/infolog.txt | tail -1 | cut -c1-140; grep -c 'low memory' files/logs/launcher.log" 'es-rm2.sh')"
+  if ($running) { $seen = $true; $minAvail = [math]::Min($minAvail, $avail); $maxGpu = [math]::Max($maxGpu, $gpu) }
+  $prog = "$(AppRun "grep -E 'replaybench\] (done|fast|measuring|[0-9]+:[0-9]+ x)' files/bar/infolog.txt | tail -1 | cut -c1-140; grep -c 'ended for lack of memory' files/logs/launcher.log" 'es-rm2.sh')"
   "$((Get-Date).ToString('HH:mm:ss')) avail $([int]$avail) MB, swap free $([int]$swap) MB, GPU $([int]$gpu) MB, engine $running ($([int]$rss) MB in RAM, $([int]$eswap) MB swapped) | $prog"
   if ($prog -match 'done \(') { $state = "done"; break }
   if ([int](($prog -split '\s+')[-1]) -gt $lmk0) { $state = "killed (low memory)"; break }
+  if ($seen -and -not $running) { $state = "engine gone (not by low memory as the app saw it)"; break }
 } while (((Get-Date) - $t0).TotalMinutes -lt $Minutes)
 "result: $state; lowest memory available $([int]$minAvail) MB, GPU driver up to $([int]$maxGpu) MB"
 AppRun "grep -E 'replaybench\]|DESYNC' files/bar/infolog.txt | tail -8 | cut -c1-200; rm -f files/bar/dev-env.sh files/bar/dev-springsettings.cfg files/bar/.bardroid-bench-replay" "es-rm3.sh"
