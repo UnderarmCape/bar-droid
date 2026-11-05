@@ -400,6 +400,13 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
       that's what is stopping this being MT'ed", upstream's own TODO; the COB threads; the gadgets, which are BAR's game
       code and cannot change). What is left there is ~1.5 ms a tick of movement stage 5 and part of the scripts' 3.2,
       at a real desync risk: the heat that remains is cut on the drawing side (fewer drawn frames, cosmetic effects).
+    - CPU profile of the same window (`phone-engine.ps1 -Replay ... -Perf 40`, `gcc-refl`, 0 desync warnings): the
+      main thread 45 % of the samples, the three workers 33 %, **OpenAL's mixer 10 %** (128 sounds, EFX reverb on,
+      48 kHz, OpenAL Soft's default resampler), Mesa's driver thread 8 %. On the main thread: Lua ~13 % (luaV_execute
+      5.3, luaH_get 5.3, luaD_precall 2.7), **`__kernel_clock_gettime` 7.2 %** (timer reads; callers not known
+      without a call graph), the units' animation ticks 3.2, line of sight 2.1, previous-frame transforms 2.0, ground
+      heights 1.9, the sync checker 1.4, COB threads 1.4. Next: the mixer with EFX off / fewer sounds / a cheaper
+      resampler (client-side, online-safe), and a call-graph profile for the clock reads.
     - The see-through pass is mostly map features in the fade band (`FeatureFadeDistance` 4800 to
       `FeatureDrawDistance` 6000: drawn blended, twice with water: below and above its surface). Without the band
       (`FeatureFadeDistance = 6000`) those features join the solid pass: +1.3 ms there, -1.6 ms of see-through, a net
