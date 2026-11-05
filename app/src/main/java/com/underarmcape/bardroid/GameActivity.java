@@ -362,7 +362,7 @@ public class GameActivity extends MainActivity {
         if (care.resolveActivity(getPackageManager()) == null) return;
         android.widget.TextView v = new android.widget.TextView(this);
         float dp = getResources().getDisplayMetrics().density;
-        v.setText("Free memory");
+        v.setText(R.string.btn_free_memory);
         v.setTextColor(0xFFFFFFFF);
         v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
         v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
@@ -371,7 +371,9 @@ public class GameActivity extends MainActivity {
         bg.setColor(0xC0101010);
         bg.setCornerRadius(10 * dp);
         bg.setStroke(Math.max(1, (int) dp), 0x90FFFFFF);
-        v.setBackground(bg);
+        // (a light ripple inside the rounded outline while the finger is down: the tap shows it was taken)
+        v.setBackground(new android.graphics.drawable.RippleDrawable(
+                android.content.res.ColorStateList.valueOf(0x50FFFFFF), bg, null));
         // (NO_USER_ACTION: no onUserLeaveHint, so Termux:X11 does not shrink the game to its floating window, and Back
         // from Device care comes back to the full screen; dev phone, 2026-11-04)
         care.addFlags(android.content.Intent.FLAG_ACTIVITY_NO_USER_ACTION);

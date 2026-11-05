@@ -49,4 +49,5 @@
     <string name="cb_verbosex">Verbose X server logging</string>
     <string name="log_title">Log</string>
     <string name="btn_share_logs">Share logs</string>
+    <string name="btn_free_memory">Free memory</string>
 </resources>

@@ -77,6 +77,7 @@ public final class Prefs {
      * GPU, enlarged onto the display (SGSR when "Sharper upscaling" is on). For the benchmark: does the GPU-bound late
      * game get faster with fewer pixels (Kailil, 2026-10-27: "find the best optimization to reduce that bottle neck")?
      * 0: native, the display's own pixels, no cap (Kailil, 2026-10-28: "put native res on now and run a test").
+     * Values 5-99 other than those come only from the engine tools (profiling with next to no pixels).
      */
     public static int renderScale = 100;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
@@ -152,7 +153,9 @@ public final class Prefs {
         fpsCap = s.getInt("frameCap", fpsCap);
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
         renderScale = s.getInt("renderScale", renderScale);
-        if (renderScale != 85 && renderScale != 70 && renderScale != 0) renderScale = 100;
+        // (other values from 5 up are kept: the engine tools set them over adb to profile the CPU side alone, 10 = 1% of
+        // the pixels; the launcher shows them as 100% and a Save there writes 100)
+        if (renderScale != 0 && (renderScale < 5 || renderScale > 100)) renderScale = 100;
         autoLobby = s.getBoolean("autoLobby", autoLobby);
         gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
         autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
