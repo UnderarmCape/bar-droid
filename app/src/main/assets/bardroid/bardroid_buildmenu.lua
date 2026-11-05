@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31783-a096d9f, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31820-45ea098, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -105,7 +105,7 @@ local droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, ga
 	gridHeld = nil, gridShown = nil, gridToast = 1.2, nudgeCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",
 	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false, ctl = false, shared = nil,
-	wasActive = nil, leave = 0.25, settled = 150, drawnAt = nil,
+	wasActive = nil, leave = 0.25, settled = 150, redraw = 900, drawnAt = nil,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 
 local disableInputWhenSpec = false -- disable specs selecting buildoptions
@@ -2214,8 +2214,13 @@ function widget:DrawScreen()
 	-- BAR Droid: BAR draws the menu into its texture at a game's frame 0 and again about 1.4 s in, then only when
 	-- something changes; at some starts on the phones its pictures came out of those drawings in stripes, every other
 	-- 16 pixels empty, until the next change (dev phone, 2026-11-03: 2 of 8 starts; drawn every 1.5 s, only the drawings
-	-- in the start's stutter were striped). A menu last drawn before droid.settled (5 s) is drawn once more then.
-	if droid.drawnAt and droid.drawnAt < droid.settled and spGetGameFrame() >= droid.settled then
+	-- in the start's stutter were striped). A menu last drawn before droid.settled (5 s) is drawn once more then. And
+	-- an unchanged menu again every droid.redraw (30 s): one start on the hot dev phone kept its stripes past the 5 s
+	-- drawing (2026-11-04, stripes evenly spaced across the cells: the drawing into the texture, not the pictures; the
+	-- next drawing clean), one drawing of the texture each time
+	local droidFrame = spGetGameFrame()
+	if droid.drawnAt and (droid.drawnAt < droid.settled and droidFrame >= droid.settled
+		or droidFrame - droid.drawnAt >= droid.redraw) then
 		droid.drawnAt = nil
 		refreshBuildmenu = true
 	end

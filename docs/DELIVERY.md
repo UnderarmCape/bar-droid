@@ -200,7 +200,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's benchmark on the hot dev phone, alternating, the official engine: game speed x0.53/0.54/0.53 as started,
       x0.67/0.70/0.64 with every CPU (+26 %). Dev phone after the change: the engine's 26 threads on 0-7, no errors.
       Installed on the Fold7 for Kailil's test (whether his Fold7 starts the engine on a narrower mask too is open:
-      the 2026-10-27 research saw all 8 there).
+      the 2026-10-27 research saw all 8 there). Reviewed after: "every CPU" was a fixed `ff`, which a phone with
+      another number of CPUs or a smaller cpuset never matches (a `taskset` for each of ~26 threads every 3 s for the
+      whole game) and which would take CPUs away on one with more than 8; now it is the launch shell's own mask (the
+      app's cpuset), and a thread that exits mid-scan no longer writes "No such file" into launcher.log (5 such lines
+      in the dev phone's log). `launch-bar-test.sh`: the mask read, all pass; dev phone: the 26 threads on `ff`.
 - [x] The launcher's two warnings in amber: "N of the app's adjustments to BAR did not apply: see the log" and the
       last run's exit note (low memory, a crash) stood in the same plain text as the routine status lines
       (`LauncherActivity.refresh`, `Updater.MISSES`). Dev phone: the miss line amber across both its wrapped lines.
@@ -214,6 +218,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       white columns in a pad-test screenshot: likely one GPU cause at a game's start, the heaviest frames (a frame
       shown or sampled before the GPU finished it: Adreno draws in tiles). Watch: if the order menu or another
       panel drawn into its own texture keeps stripes after the start, give it the build menu's redraw.
+- [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
+      still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
+      screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
+      the menu's texture broke, not the pictures. The copy now also draws an unchanged menu again every 30 s of game
+      time (`droid.redraw`, one texture drawing each time). Dev phone: the menu whole at frame 1801, no errors.
 - [x] BAR's update to test-31820 (2026-11-04) changed its Order menu: an order's tooltip now gets a keyboard line
       ("Tap L quickly: 1x Fire at will, 2x Hold fire, ...", "Press Z Z for area mex"; `tapHotkeyLine`), and the line
       the copy's touch patch hooked into moved, so the phone could not make the copy again: the old copy ran, and the
