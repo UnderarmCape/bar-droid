@@ -12,6 +12,7 @@ local fails = 0
 local com, lab
 local counts, patrol, focus, allCombat, onScreen, selfD, myPing, jumped, labQueued, labCleared = {}, false, false, 0, 0, false, false, false, false, false
 local lastCount, seenPad, done = nil, false, false
+local pauseFrom -- (the ping round's pause: from when)
 local labStep, lastTrace, centred = 0, nil, false
 local solar, solarStep, solarAt, solarKept, solarNote, solarNotes, solarHeld = nil, 0, 0, false, nil, 0, false
 local evenOrders = 0 -- the most orders seen laid out evenly in the app's order menu while the pad hid its own
@@ -63,6 +64,31 @@ local function finish()
 	WG.BarDroidPadFP.toggle()
 	local _, fpNote = WG.BarDroidPad.note()
 	check("LB + L3 held: first person says it is off in this game", fpNote == "FIRST PERSON OFF IN THIS GAME", fpNote)
+	-- RB + D-pad up again and again (Kailil, 2026-11-05): the last pings, newest first, round again; after a pause the
+	-- newest (three more pings from others: four with the test's first)
+	for i = 1, 3 do
+		WG.BarDroidPad.setPing(PING[1] + 300 * i, 0, PING[2])
+	end
+	local seen = {}
+	for _ = 1, 5 do
+		WG.BarDroidPad.act("ping_look")
+		local _, n = WG.BarDroidPad.note()
+		seen[#seen + 1] = n
+	end
+	check("RB + D-pad up pressed on: the last pings, newest first, round again",
+		table.concat(seen, ",") == "PING 1 OF 4,PING 2 OF 4,PING 3 OF 4,PING 4 OF 4,PING 1 OF 4", table.concat(seen, ","))
+	pauseFrom = Spring.GetTimer() -- (the pause: widget:Update, which then says done)
+end
+
+function widget:Update()
+	if not pauseFrom or Spring.DiffTimers(Spring.GetTimer(), pauseFrom) < 2.5 then
+		return
+	end
+	pauseFrom = nil
+	WG.BarDroidPad.act("ping_look") -- (2: the next older after the round's first)
+	WG.BarDroidPad.act("ping_look")
+	local _, n = WG.BarDroidPad.note()
+	check("... and after a pause the newest first again, then the next", n == "PING 2 OF 4", n)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 

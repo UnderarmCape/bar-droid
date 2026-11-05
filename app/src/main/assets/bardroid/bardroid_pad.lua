@@ -69,7 +69,19 @@ local orders = nil -- the order menu on the pad: { index, cmdID, warped = {x, y,
 local toast, toastAt = nil, nil
 local written, writtenAt = nil, nil
 local bookmark = nil
-local lastPing = nil -- { x, y, z } of the last ping from someone else (RB + D-pad up)
+-- The last pings from someone else, newest first ({ x, y, z } each): RB + D-pad up goes to the newest, and pressed
+-- again within PING_CYCLE_SECONDS to the one before, and so on
+local PINGS_KEPT = 5
+local PING_CYCLE_SECONDS = 2
+local pings = {}
+local pingStep, pingStepAt = 0, nil
+local function addPing(x, y, z)
+	table.insert(pings, 1, { x, y, z })
+	pings[PINGS_KEPT + 1] = nil
+	if pingStepAt and pingStep > 0 then
+		pingStep = math.min(pingStep + 1, #pings) -- (still the same ping for a press that cycles on)
+	end
+end
 local padClicks = 0 -- clicks asked of the app ("click <n>" in bardroid_pad.txt)
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
 local lastIdleMobile = 0
@@ -980,10 +992,20 @@ local ACTIONS = {
 			note("PING")
 		end
 	end,
-	ping_look = function() -- RB + D-pad up: the camera to the last ping from someone else
-		if lastPing then
-			Spring.SetCameraTarget(lastPing[1], lastPing[2], lastPing[3], 0.3)
-			note("LAST PING")
+	ping_look = function() -- RB + D-pad up: the camera to the last ping from someone else, then the ones before it
+		if #pings > 0 then
+			-- (Kailil, 2026-11-05: pressed again within PING_CYCLE_SECONDS, the next older of the last PINGS_KEPT,
+			-- round to the newest after the oldest; after a pause, the newest again)
+			local now = Spring.GetTimer()
+			if pingStepAt and Spring.DiffTimers(now, pingStepAt) <= PING_CYCLE_SECONDS then
+				pingStep = pingStep % #pings + 1
+			else
+				pingStep = 1
+			end
+			pingStepAt = now
+			local p = pings[pingStep]
+			Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
+			note(#pings == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, #pings))
 		else
 			Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
 			note("NO PING FROM OTHERS YET")
@@ -1515,7 +1537,7 @@ end
 -- A ping from someone else: RB + D-pad up goes there
 function widget:MapDrawCmd(playerID, cmdType, x, y, z)
 	if cmdType == "point" and playerID ~= Spring.GetMyPlayerID() then
-		lastPing = { x, y, z }
+		addPing(x, y, z)
 	end
 end
 
@@ -1600,7 +1622,7 @@ function widget:Initialize()
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
 		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
-			lastPing = { x, y, z }
+			addPing(x, y, z)
 		end,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
 		-- one order; pointer moves recorded instead of made)

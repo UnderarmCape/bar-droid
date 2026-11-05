@@ -83,8 +83,9 @@ The first version meant for other people's phones: everything since the first bu
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
   the controller game a triple tap switches between v0.8.5 and these controls (with them the app's build menu:
   once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away). RB + D-pad:
-  up held a ping in the middle, up tapped the camera to the last ping from another player, down every combat unit,
-  right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;
+  up held a ping in the middle, up tapped the camera to the last ping from another player (tapped again within 2 s
+  the one before it, back through the last 5 and round again; after a pause the newest again), down every combat
+  unit, right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;
   only first person does not.
 - The order menu with the pad, in every game: the orders the pad has buttons for are hidden and the rest fill the
   menu with bigger buttons, online too (the app's copy of BAR's Order menu runs in BAR's released game), and a
