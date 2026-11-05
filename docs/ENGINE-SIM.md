@@ -213,3 +213,15 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
   downloaded into the portable toolchain. `gcc-stock` built (the official flags, checked in its compile lines) and
   installed on the dev phone as `engine-sim/gcc-stock`. Replays for the checks: two 8v8 Supreme Isthmus games BAR's
   server recorded (engine 2026.07.04; `engine-sim\replays`).
+- 2026-11-04, evening: stages 1-3 done, stage 4's replays done, its 16-player part waiting.
+  - Stage 3, the benchmark (CPU work per simulated frame, "Findings"): `gcc-stock` -6.4 % instructions against the
+    official engine, the sim changes (`gcc-sim1`) about the same again, profile-guided (`gcc-pgo`) -13 %;
+    `gcc-pgo-lse` inside run-to-run noise. Game speed on a hot phone not measured for these (heat swings more).
+  - Multithreading: the engine's own thread choice changed nothing measurable (the main thread is the limit); the
+    big gain was scheduling, +26 % game speed with every CPU allowed, shipped on `main` (46cfe85) and on the Fold7.
+  - Stage 4, replays: 0 desync warnings in 20 minutes of the SpeedMetal server replay for official, `gcc-stock`,
+    `gcc-pgo`, `gcc-pgo-lse` (and the research's clang build); the fast-math control 1,190.
+  - "Calculations from others": not for players (lockstep); a spectator state stream is BAR's to build (section above).
+  - Stage 4, 16 players: the 8v8 replay does not load on the 8 GB dev phone (Android's low-memory killer during the
+    load); `ProjectileAtlasDownscale = 2` saved ~200 MB, not enough. Kailil's choice pending: memory cuts for the dev
+    phone, or the Fold7 (12 GB).
