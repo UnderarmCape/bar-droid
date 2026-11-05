@@ -75,7 +75,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   of every construction turret made see-through, which the engine then skips, and the 10 nearest the building drawn),
   `bardroid_sensors.lua` (in games of 10 teams or more BAR's sonar, radar and line-of-sight circles at opacity 0 and its
   always-shown jammer coverage off: their GPU cost grows with the square of the units; the player's values back in the
-  next smaller game).
+  next smaller game), `bardroid_nano.lua` (builders' nano spray drawn by the engine, at most 1000 particles: BAR's own
+  setting NanoParticleMode 0, whose gadget then skips its per-frame work, and MaxNanoParticles put back after the
+  gadget's own budget).
 
 ## Source map
 

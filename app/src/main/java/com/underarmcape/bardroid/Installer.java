@@ -291,11 +291,12 @@ public final class Installer {
         // app's copy of BAR's Build menu that the editor sizes and of its Order menu (launch-bar.sh switches them in,
         // see writeBarCopiesMd5), and BAR's GL4 unit shaders kept off in launch-bar.sh's low-memory mode (8 GB phones), and
         // while a building is picked the build ranges of the nearest builders only, not the engine's one of every turret,
-        // and BAR's sonar, radar and line-of-sight circles off in big games (their GPU cost grows with the square of the units)
+        // and BAR's sonar, radar and line-of-sight circles off in big games (their GPU cost grows with the square of the units),
+        // and builders' nano spray drawn by the engine with a cap (BAR's own 3D spray has a floor of 5000 particles)
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
                 "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua",
-                "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua"})
+                "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         writeBarCopiesMd5();

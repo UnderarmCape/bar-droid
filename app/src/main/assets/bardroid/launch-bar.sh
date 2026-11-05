@@ -554,6 +554,8 @@ range_err=$(widget_error 'bardroid_buildrange|BAR Droid build ranges')
 [ -n "$range_err" ] && layer_miss "build ranges widget (bardroid_buildrange.lua): $range_err"
 sensors_err=$(widget_error 'bardroid_sensors|BAR Droid sensor ranges')
 [ -n "$sensors_err" ] && layer_miss "sensor ranges widget (bardroid_sensors.lua): $sensors_err"
+nano_err=$(widget_error 'bardroid_nano|BAR Droid nano spray')
+[ -n "$nano_err" ] && layer_miss "nano spray widget (bardroid_nano.lua): $nano_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

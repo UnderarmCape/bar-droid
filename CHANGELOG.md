@@ -126,7 +126,8 @@ The first version meant for other people's phones: everything since the first bu
   settings applied at every start, and effects nobody sees on a phone switched off (Reclaim Field Highlight, ship
   wakes, unread G-buffer passes, ...). In big games (10 teams or more) BAR's sonar, radar and line-of-sight circles and
   its always-shown jammer coverage are off (a late 8v8 spent ~13% of the GPU's time on them); your own settings come
-  back in the next smaller game.
+  back in the next smaller game. Builders' nano spray is the engine's, at most 1000 particles (BAR's 3D spray kept at
+  least 5000 and cost ~2 ms a frame in a late 8v8).
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
   its screen is hidden; a floating window when you leave the game.
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
