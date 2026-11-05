@@ -111,20 +111,32 @@ local function start()
 	if not (api and WG.DrawUnitShapeGL4 and WG.StopDrawUnitShapeGL4) then
 		return false
 	end
-	callbacks = {
-		api.OnBuildCommandAdded(add),
-		api.OnBuildCommandRemoved(remove),
-		api.OnBuildCommandTeamChanged(function(id, c)
-			remove(id)
-			add(id, c)
-		end),
-		api.OnUnitCreated(function(_, _, id) -- the building has started: the real one is there
-			remove(id)
-		end),
-		api.OnUnitFinished(function(_, id)
-			remove(id)
-		end),
-	}
+	-- (each one only where BAR's release has it: an older replay plays its own release, whose API had no
+	-- OnBuildCommandTeamChanged (test-31465, 2026-11-04: "attempt to call field", and BAR removed this widget))
+	for _, f in ipairs({ "OnBuildCommandAdded", "OnBuildCommandRemoved", "ForEachActiveBuildCommand", "UnregisterCallback" }) do
+		if type(api[f]) ~= "function" then
+			api = nil
+			return false
+		end
+	end
+	callbacks = {}
+	local function on(name, fn)
+		if type(api[name]) == "function" then
+			callbacks[#callbacks + 1] = api[name](fn)
+		end
+	end
+	on("OnBuildCommandAdded", add)
+	on("OnBuildCommandRemoved", remove)
+	on("OnBuildCommandTeamChanged", function(id, c)
+		remove(id)
+		add(id, c)
+	end)
+	on("OnUnitCreated", function(_, _, id) -- the building has started: the real one is there
+		remove(id)
+	end)
+	on("OnUnitFinished", function(_, id)
+		remove(id)
+	end)
 	api.ForEachActiveBuildCommand(add)
 	return true
 end
