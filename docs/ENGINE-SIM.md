@@ -110,6 +110,13 @@ game until the replay and spectating stages below say it computes exactly what t
   instead of spinning on the clock for up to 500 ms (~7 % of the main thread in a late 8v8). Fast-forward of 10 game
   minutes, alternating: spin 100-125 s (the phone warming), WFE at once 127/127 s, a futex sleep 129/136 s, the
   spin-then-WFE default 95/108 against spin 109/95 s; 0 desync warnings throughout.
+- Tried and not kept (2026-11-05), the unit update loop (`CUnitHandler::UpdateUnits`, ~1.1 ms a frame with 3,500
+  units): it cannot go to the workers with the same results, as builders and factories do their own work inside it
+  (building, terraforming, moving their buildee, synced Lua call-ins) between other units' updates, and a unit's
+  change of air/water state fires synced Lua call-ins that BAR's gadgets answer (water speed, depth damage, collision
+  damage). Asking for the next units' memory ahead of time instead (the same code in the same order) was measured
+  on and off by turns in one run of the whole 8v8 replay: 1.114 against 1.133 ms over 2,500 units (-1.7 %), 0 desync
+  warnings; too small to keep.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
