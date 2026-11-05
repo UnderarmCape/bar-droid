@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 12 (2026-10-25 to 2026-11-05) |
 | Claude Code sessions | 8 |
-| Kailil's messages | 303 (15363 words, 22 screenshots) |
-| Kailil's time | 36.2 h in 79 sittings |
-| Claude's time | 182.4 h |
-| Claude's tool calls | 20594 |
+| Kailil's messages | 305 (15423 words, 22 screenshots) |
+| Kailil's time | 36.3 h in 80 sittings |
+| Claude's time | 182.5 h |
+| Claude's tool calls | 20619 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 576 |
+| Commits | 578 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -32,7 +32,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-02](worklog/2026-11-02.md) | 6 | 0.4 | 13.4 | 62 |
 | [2026-11-03](worklog/2026-11-03.md) | 8 | 1.1 | 23.6 | 140 |
 | [2026-11-04](worklog/2026-11-04.md) | 12 | 0.9 | 11.4 | 24 |
-| [2026-11-05](worklog/2026-11-05.md) | 5 | 0.5 | 13.4 | 16 |
+| [2026-11-05](worklog/2026-11-05.md) | 7 | 0.6 | 13.5 | 18 |
 
 ## Sessions
 
@@ -41,7 +41,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-05 13:12 | 228 | 154.8 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-05 13:19 | 230 | 155.0 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
