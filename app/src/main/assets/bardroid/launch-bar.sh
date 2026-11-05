@@ -421,15 +421,24 @@ fi
 # cluster stayed idle. BAR's benchmark on the hot dev phone, alternating: game speed x0.53/0.54/0.53 as started,
 # x0.67/0.70/0.64 with every CPU allowed (2026-11-04, engine branch docs/ENGINE-SIM.md). Scheduling only, nothing
 # synced. Every 3 s, each engine thread not on every CPU gets them (read from its status first: no taskset where
-# nothing is to do, a phone that allows all 8 runs none). Stopped when the engine has exited.
+# nothing is to do, a phone that allows all of them runs none). "Every CPU" is this shell's own mask, the app's
+# cpuset: a fixed ff would never match on a phone with another number of CPUs or a smaller cpuset (a taskset for
+# every thread every 3 s) and would take CPUs away on one with more than 8. Stopped when the engine has exited.
+cpus_allowed() { # $1: a /proc status file -> its Cpus_allowed mask in $mask (no subshell: called for every thread)
+  mask=""
+  while read -r k v; do [ "$k" = "Cpus_allowed:" ] && { mask=$v; break; }; done 2>/dev/null < "$1" # (a thread that
+  # exited meanwhile: no message in launcher.log, the stderr redirect before the file's)
+}
 widen_engine() {
+  cpus_allowed /proc/self/status
+  local all=$mask
+  [ -n "$all" ] || return
   while :; do
     sleep 3
     for p in $(pidof spring 2>/dev/null); do
       for t in /proc/$p/task/*; do
-        m=""
-        while read -r k v; do [ "$k" = "Cpus_allowed:" ] && { m=$v; break; }; done < "$t/status" 2>/dev/null
-        [ -n "$m" ] && [ "$m" != ff ] && taskset -p ff "${t##*/}" >/dev/null 2>&1
+        cpus_allowed "$t/status"
+        [ -n "$mask" ] && [ "$mask" != "$all" ] && taskset -p "${all//,/}" "${t##*/}" >/dev/null 2>&1
       done
     done
   done

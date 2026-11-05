@@ -4,7 +4,7 @@
 # launch-bar.sh as they are, run against a scratch BAR write dir (build/launch-bar-test). Cases: the app's copies of BAR's
 # Build and Order menus in, kept when BAR's file is not the one they were made from (an Android-layer miss), BAR's own only
 # after a copy failed in a game, the controller game switched off, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings,
-# a 12 GB phone's left alone. Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
+# a 12 GB phone's left alone. And the CPU mask its all-CPU loop reads. Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
 #   sh tools/launch-bar-test.sh          (tools\laptop-tests.ps1 runs it with the portable Git's sh)
 here=$(cd "$(dirname "$0")/.." && pwd)
 src="$here/app/src/main/assets/bardroid/launch-bar.sh"
@@ -173,6 +173,16 @@ check "8 GB, a second start: each setting once" setting UseLuaMemPools 0
 phone 11392000
 check "12 GB: settings untouched" [ "$(cat "$BAR/springsettings.cfg")" = "$(printf 'CompressTextures = 0\nXResolution = 1200')" ]
 check "12 GB: framebuffer textures left alone" [ -z "${BARDROID_FBO_UNCOMPRESS:-}" ]
+
+# The engine's threads on every CPU (widen_engine): the mask read from a status file, as for every thread every 3 s
+cpus=$(awk '/^cpus_allowed\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
+[ -n "$cpus" ] || { echo "[launchbartest] FAIL launch-bar.sh: cpus_allowed not found"; exit 1; }
+eval "$cpus"
+printf 'Name:\tspring\nCpus_allowed_list:\t0-4,6\nCpus_allowed:\t5f\nMems_allowed:\t1\n' > "$work/status"
+cpus_allowed "$work/status"
+check "CPU mask: a thread's Cpus_allowed (not its _list)" [ "$mask" = 5f ]
+cpus_allowed "$work/no-such-status"
+check "CPU mask: none for a thread that has exited" [ -z "$mask" ]
 
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]
