@@ -79,7 +79,7 @@ if ($Replay) {
         Send-AppFile $adb $sp "files/simpleperf" $Device; App-Script "chmod 755 files/simpleperf" | Out-Null
       }
       & $adb -s $Device shell "setprop security.perf_harden 0" | Out-Null
-      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u -f 2000 --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
+      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u -c 500000 --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
       & $adb -s $Device shell "setprop security.perf_harden 1" | Out-Null
     }
   } while ($now -le $before -and ((Get-Date) - $start).TotalSeconds -lt $Timeout)
