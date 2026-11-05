@@ -11,8 +11,17 @@
 # The launcher.log of the run (the app starts a new one at each start) is kept beside the log as <...>-launcher.log (tools/tex-memory.py reads it with the texture log on).
 param([string]$Engine = "gcc-sim1", [string[]]$Settings = @(), [string]$Replay = "isthmus8v8-20261013a.sdfz",
       [int]$Skip = 600, [int]$Seconds = 30, [int]$Minutes = 25, [string]$Device = "R5CW22GVC3D", [string[]]$DevEnv = @(),
-      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer, [switch]$Timers, [switch]$Widgets)
+      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer, [switch]$Timers, [switch]$Widgets, [switch]$HideUi, [switch]$NoDeferred)
 $ErrorActionPreference = "Continue"
+# one run at a time: a run started while the last one still cleans up was force-stopped by it (2026-11-05)
+$lock = "C:\Tools\BARANDROID\engine-sim\replay-memory.lock"
+for ($w = 0; (Test-Path $lock) -and $w -lt 360; $w++) {
+  $owner = 0; [void][int]::TryParse("$(Get-Content $lock -ErrorAction SilentlyContinue)".Trim(), [ref]$owner)
+  if ($owner -le 0 -or -not (Get-Process -Id $owner -ErrorAction SilentlyContinue)) { break }
+  if ($w -eq 0) { "waiting for the run in process $owner to end" }
+  Start-Sleep 5
+}
+"$PID" | Set-Content $lock
 $tools = Split-Path $PSScriptRoot
 . (Join-Path $tools "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
@@ -32,7 +41,9 @@ if ($DevEnv.Count) { AppRun ("printf '%s\n' " + (($DevEnv | ForEach-Object { "'$
 $ss = if ($Settings.Count) { "printf '%s\n' " + (($Settings | ForEach-Object { "'$_'" }) -join ' ') + " > files/bar/dev-springsettings.cfg" } else { "rm -f files/bar/dev-springsettings.cfg" }
 # bardroid_simdraw.lua: the main thread's Sim / Draw / rest split every 10 s in the infolog ([simdraw])
 Send-AppFile $adb "$PSScriptRoot\bardroid_simdraw.lua" "files/bar/LuaUI/Widgets/bardroid_simdraw.lua" $Device
-$modes = @($(if ($Timers) { "timers" }), $(if ($Widgets) { "widgets" })) | Where-Object { $_ }
+$modes = @()   # (built one by one: @($(if ...), $(if ...)) came out empty when only the last switch was set)
+if ($Timers) { $modes += "timers" }; if ($Widgets) { $modes += "widgets" }; if ($HideUi) { $modes += "hideui" }
+if ($NoDeferred) { $modes += "nodeferred" }
 AppRun $(if ($modes.Count) { "echo '$($modes -join ' ')' > files/bar/LuaUI/Config/bardroid_simdraw.txt" } else { "rm -f files/bar/LuaUI/Config/bardroid_simdraw.txt" }) "es-rm-timers.sh" | Out-Null
 # (springsettings.cfg kept as it was: launch-bar.sh appends dev-springsettings.cfg to it and the engine saves it at exit)
 AppRun "$ss; cp files/bar/springsettings.cfg files/bar/.springsettings-before-run; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
@@ -51,6 +62,10 @@ do {
   $prog = "$(AppRun "grep -E 'replaybench\] (done|fast|measuring|[0-9]+:[0-9]+ x)' files/bar/infolog.txt | tail -1 | cut -c1-140; grep -c 'ended for lack of memory' files/logs/launcher.log" 'es-rm2.sh')"
   "$((Get-Date).ToString('HH:mm:ss')) avail $([int]$avail) MB, swap free $([int]$swap) MB, GPU $([int]$gpu) MB, engine $running ($([int]$rss) MB in RAM, $([int]$eswap) MB swapped) | $prog"
   if ($prog -match 'done \(') { $state = "done"; break }
+  # (the GPU driver's "submit failed ... Resource deadlock avoided", then the engine's watchdog: it never comes back)
+  if ("$(AppRun "grep -c 'Watchdog\] Hang detection' files/bar/infolog.txt 2>/dev/null" 'es-rm-hang.sh')".Trim() -match '^[1-9]') {
+    $state = "engine hung (watchdog; GPU driver: $("$(AppRun "grep -c 'submit failed' files/logs/launcher.log" 'es-rm-hang2.sh')".Trim()) failed submits)"; break
+  }
   if ([int](($prog -split '\s+')[-1]) -gt $lmk0) { $state = "killed (low memory)"; break }
   if ($seen -and -not $running) { $state = "engine gone (not by low memory as the app saw it)"; break }
 } while (((Get-Date) - $t0).TotalMinutes -lt $Minutes)
@@ -64,3 +79,4 @@ $keep = "C:\Tools\BARANDROID\engine-sim\runs\$((Get-Date).ToString('yyyyMMdd-HHm
 # (the run's settings out of springsettings.cfg again: the engine saved them there, as PreloadModels = 0 stayed for
 # every later game, 2026-11-04), and the dev widget out of LuaUI/Widgets
 AppRun "[ -f files/bar/.springsettings-before-run ] && mv files/bar/.springsettings-before-run files/bar/springsettings.cfg; rm -f files/bar/LuaUI/Widgets/bardroid_simdraw.lua files/bar/LuaUI/Config/bardroid_simdraw.txt" "es-rm4.sh" | Out-Null
+Remove-Item $lock -ErrorAction SilentlyContinue

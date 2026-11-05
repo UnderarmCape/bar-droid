@@ -23,6 +23,7 @@ compares checksums, so a build whose simulation computes anything differently de
 
 The shipped app (`main`) keeps BAR's official engine. Nothing from this branch reaches Kailil's Fold7 or an online
 game until the replay and spectating stages below say it computes exactly what the official engine computes.
+(2026-11-05: Kailil had the 30 fps build put on his Fold7 after those checks; Status below.)
 
 ## Sync rules for every change
 
@@ -82,7 +83,13 @@ game until the replay and spectating stages below say it computes exactly what t
   interpolation) on the thread pool in blocks of 16 units; `UpdateUnitLosStates` works every unit's new LOS status
   out on the workers (`CalcLosStatus` only reads) and sets them in the original order on the main thread, where
   the Lua events run, working a status out again if a call-in changed it meanwhile.
-- `rts/Lua/LuaHandle.cpp`: with the engine's profiler on (`/debug 1 0`), a timer per handle and call-in.
+- `rts/Lua/LuaHandle.cpp`: with the engine's profiler on (`/debug 1 0`), a timer per handle and call-in, and BAR's
+  Tracy zones (`W:Update:<widget>`, `G:GameFrame:<gadget>`) as timers.
+- `rts/Lua/LuaVFS.cpp`: `BarDroidUnsyncedGadgetsOff`, gadget files left out of the unsynced LuaRules state's lists.
+- `rts/Rendering/GlobalRendering.cpp`, `rts/System/SpringApp.cpp`: `BarDroidDeferSwap`, the deferred present.
+- `rts/Net/NetCommands.cpp`: `BarDroidMaxSimPerDraw`, one simulated frame per drawn frame while few are waiting.
+- `rts/System/Threading/ThreadPool.h`: `for_mt_chunk` in about four chunks a thread, taken as threads come free.
+- `rts/Sim/Features/FeatureHandler.cpp`: the features' previous-frame transforms on the workers.
 - `rts/Lua/LuaUnsyncedRead.cpp` (a plain fix, not behind the flag): `Spring.GetProfilerTimeRecord` reads its optional
   argument before pushing its results, and makes the frame table before filling it.
 - Compiler: `-mtune=cortex-x3` (the dev phone's prime core; scheduling only, no instruction or FP change).
@@ -313,3 +320,46 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
   - Sim threading (sync-exact, 0 desync warnings in each run): the units' previous-frame transforms (~5 % of the
     main thread) and their LOS status checks (~2.5 %) on every worker, the LOS events still raised in the original
     order on the main thread (a status a call-in changed meanwhile is worked out again there).
+  - At 30 % and 3,200-3,500 units (median 21-23 fps over 14 samples; the phone's heat moves a run by about +-2):
+    Sim ~15 ms a simulated frame (45 % of real time at x1), Draw ~10.5 ms a drawn frame, the rest ~30 %: Update
+    (Lua ~3 ms, the unit drawer's per-frame update ~2.5 ms) and the swap. The main thread runs ~80 % of the time.
+    Lua outside the synced game ~22 % of real time (with the profiler on), a long tail: BAR's Nano Particles GL4
+    gadget 1.7 % (its `NanoParticleMode = 0` does not idle it in this BAR version), unit sound effects 0.9 %, the
+    app's own touch widget 0.8 %, Fire & Smoke GL4 0.7 %, Defense Range GL4 0.7 %, and ~30 more at 0.1-0.5 %.
+  - No change (within the heat noise): units drawn as icons almost everywhere (`UnitIconDist = 10`), 5 engine
+    threads instead of 8 (the little cores), nine effect gadgets left out of unsynced LuaRules (the GPU's load fell
+    from ~89 % to ~60 % at its thermal cap of 220-295 MHz, the fps did not move).
+  - The swap (`BARDROID_SWAP_LOG=1`, the pace library times it): ~7 ms a drawn frame, nearly all inside Mesa itself
+    (X server waits 0, the driver's ioctls ~0.13 ms): the main thread waits for Mesa's driver thread (`gdrv0`) to
+    finish the frame's commands. That thread is ~34 % busy (~15 ms of CPU a drawn frame), 29 % of it in atomic
+    reference counts (`__aarch64_ldadd4_acq_rel`: buffer and texture tracking; a frame has only ~220 draw calls but
+    ~400 texture binds, 700-1,000 buffer binds and 24 framebuffer binds, `libbardroid_pace_dev.so`'s counter).
+    Without Mesa's driver thread (`GALLIUM_THREAD=0`): 6 fps (91 ms a drawn frame). The main thread alone on the
+    prime core and the rest on the others (a launch-bar.sh trial): no change. BAR's interface hidden: no change.
+  - **The deferred present** (`BarDroidDeferSwap = 1`, GlobalRendering.cpp/SpringApp.cpp): the drawn frame is handed
+    to the window only before the next one is drawn, after the next simulated frames ran while the driver thread
+    finished it. The swap 7 -> 2 ms, **21-22 -> 26 fps median** (up to 30) uncapped; with the 30 fps cap (the
+    display at 60 Hz) 24 (a frame just over 33 ms waits for the next vsync slot). 0 desync warnings.
+  - With the cap, the vsync-aligned pacing waited ~7 ms in 64 % of the frames while 36 % came too late for their
+    slot (`BARDROID_SWAP_LOG` now logs the cap's waits): after a late frame the next ran two simulated frames to
+    catch up and was late too. **One simulated frame per drawn frame while few are waiting**
+    (`BarDroidMaxSimPerDraw = 1`, NetCommands.cpp: two from 4 waiting, all from a second's worth, as a replay's skip
+    needs): **29 fps (27-30), 92 % of the pictures held exactly two vsyncs**, game speed x1.01, 0 desync warnings
+    (with the cosmetic widgets below off).
+  - Also measured, each within the heat noise (+-1 fps) alone: the units' G-buffer pass off (`SetDrawModelsDeferred
+    (false, false)`; shields read it), fewer particles, `for_mt_chunk` in four chunks a thread, the features' save
+    on the workers, BAR's unit sound gadget's unsynced half left out; BAR's cosmetic widgets off (Defense Range GL4,
+    the four Sensor Ranges, AllyCursors, Commander Name Tags, Ally Selected Units: -1.3 ms a drawn frame); every BAR
+    widget off: drawing 10 -> 6.5 ms a frame.
+  - The same with BAR's whole interface (no widget cut): 26 fps (24-28).
+  - **On the Fold7 since 2026-11-05 ~08:45** (Kailil: "Push this to the zfold but not the resolution changes or
+    cosmetic widgets disabled"): build `gcc-fold` (all the changes above; the sync version reported as `2026.07.04`,
+    `GameVersion.cpp`, as BAR's servers compare it exactly), started by the Fold7's `files/bar/dev-env.sh` (with
+    `BARDROID_PACE_LATE=0`) and `dev-springsettings.cfg` (`BarDroidDeferSwap = 1`, `BarDroidMaxSimPerDraw = 1`) only;
+    no graphics, sound, widget or gadget setting changed. Before: the whole 29-minute 8v8 replay simulated by that
+    build (fast-forward to its end) with 0 desync warnings, and the lobby test on the dev phone ALL PASS with it.
+    Back to BAR's engine: delete those two files on the Fold7.
+  - Once in ~20 runs the GPU driver failed ("submit failed -1 (Resource deadlock avoided)", KGSL refusing a context
+    after a GPU fault) and the engine hung, here before the game started (05:46, a cool phone): the 2026-11-02 and
+    2026-11-04 hangs' signature, before any of these changes; `replay-memory.ps1` now ends such a run at the
+    engine's watchdog line.

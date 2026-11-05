@@ -21,8 +21,8 @@ function widget:GetInfo()
 end
 
 local STEP = 10
-local TOP = 40
-local last, timers, totals, widgetTimes
+local TOP = 150
+local last, timers, totals, widgetTimes, hideUi, noDeferred
 
 -- each widget's call-ins wrapped with a timer: seconds spent, by widget name
 local wrapped = {}
@@ -76,6 +76,25 @@ function widget:Initialize()
 	if flag:find("widgets", 1, true) then
 		widgetTimes = {}
 		Spring.Echo("[simdraw] every widget's call-ins timed")
+	end
+	hideUi = flag:find("hideui", 1, true) ~= nil
+	noDeferred = flag:find("nodeferred", 1, true) ~= nil
+end
+
+-- "hideui": BAR's interface hidden once the game runs (what the UI's drawing costs); "nodeferred": the units' second
+-- (G-buffer) pass off as well (the touch widget turns the features' off), set again now and then
+local uiHidden
+function widget:GameFrame(frame)
+	if hideUi and not uiHidden then
+		uiHidden = true
+		Spring.SendCommands("hideinterface 1")
+		Spring.Echo("[simdraw] the interface hidden")
+	end
+	if noDeferred and frame % 300 == 0 and Spring.SetDrawModelsDeferred then
+		Spring.SetDrawModelsDeferred(false, false)
+		if frame % 9000 == 0 then
+			Spring.Echo("[simdraw] the models' deferred pass off")
+		end
 	end
 end
 
