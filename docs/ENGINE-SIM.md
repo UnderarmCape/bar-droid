@@ -101,6 +101,9 @@ game until the replay and spectating stages below say it computes exactly what t
 - `rts/Sim/Features/FeatureHandler.cpp`: the features' previous-frame transforms on the workers.
 - `rts/Lua/LuaUnsyncedRead.cpp` (a plain fix, not behind the flag): `Spring.GetProfilerTimeRecord` reads its optional
   argument before pushing its results, and makes the frame table before filling it.
+- `rts/Rendering/Env/CubeMapHandler.cpp`: `BarDroidReflectionEvery` (default 1), the reflection cubemap's next face
+  drawn every N drawn frames (each face a terrain pass from another camera). At 8: its main-thread time 0.97 -> 0.12
+  ms a frame and its GPU pass (0.39 ms) gone from the profile, a whole cubemap still renewed every 1.6 s at 30 fps.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
