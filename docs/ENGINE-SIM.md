@@ -78,6 +78,13 @@ game until the replay and spectating stages below say it computes exactly what t
     upload (they stayed through the pathfinder's and LuaRules' load, and `clear()` kept their memory for the game);
     and the model buffer grown by half at least when models load as needed (`PreloadModels = 0`, an existing
     setting), where 8 MB steps made the whole buffer anew each time (~1.9 GB of GPU memory in 8 s).
+- `rts/Sim/Units/UnitHandler.cpp`: `UpdatePreFrame` (each unit's previous-frame piece transforms, for the draw
+  interpolation) on the thread pool in blocks of 16 units; `UpdateUnitLosStates` works every unit's new LOS status
+  out on the workers (`CalcLosStatus` only reads) and sets them in the original order on the main thread, where
+  the Lua events run, working a status out again if a call-in changed it meanwhile.
+- `rts/Lua/LuaHandle.cpp`: with the engine's profiler on (`/debug 1 0`), a timer per handle and call-in.
+- `rts/Lua/LuaUnsyncedRead.cpp` (a plain fix, not behind the flag): `Spring.GetProfilerTimeRecord` reads its optional
+  argument before pushing its results, and makes the frame table before filling it.
 - Compiler: `-mtune=cortex-x3` (the dev phone's prime core; scheduling only, no instruction or FP change).
 - LTO: not with this compiler: Arm's Windows-hosted GCC is a 32-bit program, too small for whole-engine LTO.
 
@@ -282,3 +289,27 @@ changed fields per frame) against the phone's Sim per frame, as numbers for BAR'
     `com.samsung.android.sm.ACTION_RAM`) needs `READ_SEARCH_INDEXABLES`, a system permission; Device care's own page
     (`com.samsung.android.sm.ACTION_DASHBOARD`) opens from any app, one tap from Memory. On the dev phone closing the
     background apps (`am kill-all`, about what "Clean now" does) gave ~0.4 GB and did not change the 8v8's outcome.
+- 2026-11-05, night: **toward a locked 30 fps in the late 8v8** (Kailil, 2026-11-04: "Make it happen ... start super
+  aggressive"; 2026-11-05: "Do not stop until we get 30fps 8v8"). Every run: the 2026-10-26 replay from 20:00 for
+  150 s at normal speed (3,150-3,500 units), `gcc-8v8` and its successors, the frame cap off, the phone hot (AP
+  62-68 C, the prime core capped at 1.4-1.8 of 3.36 GHz, the GPU at 220-615 MHz).
+  - Measuring: `replay-memory.ps1` now logs the main thread's split every 10 s (`[simdraw]`, `bardroid_simdraw.lua`
+    from the engine's always-on "Sim" and "Draw" timers; `-Timers`: the whole profiler, the busiest timers) and keeps
+    the run's infolog. `Spring.GetProfilerTimeRecord` failed on every call (it read its optional argument after
+    pushing its results): fixed on the branch. User widgets cannot time other widgets (BAR keeps
+    `widgetHandler.widgets` from them), so the branch times each Lua call-in by name while the profiler is on
+    (`Lua::<handle>::<call-in>`). The app keeps a render scale the tools set over adb (Prefs reset anything but
+    100/85/70/native to 100: the first "1 %" runs were at 100 %); 10 (1 % of the pixels, 200x93) crashes BAR's UI
+    load (NaN sizes in its widgets, then a segfault), so the CPU-side runs use 30 (9 %).
+  - Where the main thread goes at 100 % and 3,400 units, 11-15 fps: Sim 57 % of real time (~19 ms a simulated frame),
+    Draw 16 % (~11 ms a drawn frame), Update 14 %, the buffer swap 11 %; Lua call-ins outside the synced game
+    (widgets, unsynced gadgets) ~19 % across all of them, the game's synced gadgets ~6 %.
+  - Cut for the drawing side (settings): `MaxSounds = 16` (OpenAL mixing was 10 % of the engine's CPU samples),
+    `UnitIconDist = 50`, `GroundDetail = 30`, `FeatureDrawDistance = 1500`, `Water = 0`, `MaxDrawnParticles = 500`,
+    `WorkerThreadCount = 8` (every core): game speed x0.91 -> x1.00, 11-13 -> 12-15 fps at 100 %. Mesa's GL thread
+    (`mesa_glthread=true`): no gain.
+  - **The render scale at 30 % (9 % of the pixels): 20-26 fps, median ~23, x1.01**; Sim fell to ~15 ms a frame (the
+    GPU's lighter load leaves the CPU faster clocks: the phone shares one heat budget).
+  - Sim threading (sync-exact, 0 desync warnings in each run): the units' previous-frame transforms (~5 % of the
+    main thread) and their LOS status checks (~2.5 %) on every worker, the LOS events still raised in the original
+    order on the main thread (a status a call-in changed meanwhile is worked out again there).

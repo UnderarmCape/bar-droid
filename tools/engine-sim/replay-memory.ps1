@@ -4,10 +4,14 @@
 # Android's low-memory killer ends it, or -Minutes pass. Then cleans up (dev-env, dev-springsettings, replay flag).
 #   replay-memory.ps1 -Engine gcc-sim1 -Settings "ProjectileAtlasDownscale = 2" [-Replay isthmus8v8-20261013a.sdfz] [-Skip 600] [-Seconds 30]
 #     [-DevEnv "export BARDROID_TEX_LOG=1"] (lines added to dev-env.sh) [-KillAll] (background apps closed first) [-Pacer] (dev-env-pacer.sh)
+#     [-Timers] (the engine's profiler on: the busiest timers every 10 s in the infolog, bardroid_simdraw.lua)
+#     [-Widgets] (every widget's call-ins timed: the busiest widgets every 10 s)
+# Every run logs the main thread's Sim / Draw / rest split every 10 s ([simdraw], bardroid_simdraw.lua) and keeps the
+# phone's springsettings.cfg as it was before the run.
 # The launcher.log of the run (the app starts a new one at each start) is kept beside the log as <...>-launcher.log (tools/tex-memory.py reads it with the texture log on).
 param([string]$Engine = "gcc-sim1", [string[]]$Settings = @(), [string]$Replay = "isthmus8v8-20261013a.sdfz",
       [int]$Skip = 600, [int]$Seconds = 30, [int]$Minutes = 25, [string]$Device = "R5CW22GVC3D", [string[]]$DevEnv = @(),
-      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer)
+      [switch]$KillAll, [string]$Label = "", [int]$Every = 20, [switch]$Pacer, [switch]$Timers, [switch]$Widgets)
 $ErrorActionPreference = "Continue"
 $tools = Split-Path $PSScriptRoot
 . (Join-Path $tools "toolchain.ps1")
@@ -26,7 +30,12 @@ if ($Pacer) {   # (the memory pacer, dev-env-pacer.sh: the engine paused while A
 }
 if ($DevEnv.Count) { AppRun ("printf '%s\n' " + (($DevEnv | ForEach-Object { "'$_'" }) -join ' ') + " >> files/bar/dev-env.sh") "es-rm-env.sh" | Out-Null }
 $ss = if ($Settings.Count) { "printf '%s\n' " + (($Settings | ForEach-Object { "'$_'" }) -join ' ') + " > files/bar/dev-springsettings.cfg" } else { "rm -f files/bar/dev-springsettings.cfg" }
-AppRun "$ss; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
+# bardroid_simdraw.lua: the main thread's Sim / Draw / rest split every 10 s in the infolog ([simdraw])
+Send-AppFile $adb "$PSScriptRoot\bardroid_simdraw.lua" "files/bar/LuaUI/Widgets/bardroid_simdraw.lua" $Device
+$modes = @($(if ($Timers) { "timers" }), $(if ($Widgets) { "widgets" })) | Where-Object { $_ }
+AppRun $(if ($modes.Count) { "echo '$($modes -join ' ')' > files/bar/LuaUI/Config/bardroid_simdraw.txt" } else { "rm -f files/bar/LuaUI/Config/bardroid_simdraw.txt" }) "es-rm-timers.sh" | Out-Null
+# (springsettings.cfg kept as it was: launch-bar.sh appends dev-springsettings.cfg to it and the engine saves it at exit)
+AppRun "$ss; cp files/bar/springsettings.cfg files/bar/.springsettings-before-run; printf '%s\n' '$Skip $Seconds $Replay' > files/bar/.bardroid-bench-replay; rm -f files/bar/infolog.txt; echo 'engine $Engine; settings: $($Settings -join ', ')'" "es-rm0.sh"
 $lmk0 = [int](AppRun "grep -c 'ended for lack of memory' files/logs/launcher.log" "es-rm1.sh")
 $lines0 = [int]("$(AppRun 'wc -l < files/logs/launcher.log' 'es-rm-lines.sh')".Trim())   # (this run's lines follow)
 if ($KillAll) { & $adb -s $Device shell "am kill-all" | Out-Null }
@@ -46,12 +55,12 @@ do {
   if ($seen -and -not $running) { $state = "engine gone (not by low memory as the app saw it)"; break }
 } while (((Get-Date) - $t0).TotalMinutes -lt $Minutes)
 "result: $state; lowest memory available $([int]$minAvail) MB, GPU driver up to $([int]$maxGpu) MB"
-AppRun "grep -E 'replaybench\]|DESYNC' files/bar/infolog.txt | tail -8 | cut -c1-200; rm -f files/bar/dev-env.sh files/bar/dev-springsettings.cfg files/bar/.bardroid-bench-replay" "es-rm3.sh"
-# (launch-bar.sh appends dev-springsettings.cfg to the phone's springsettings.cfg and the engine saves it: the run's keys
-# would stay for every later game, as PreloadModels = 0 did, 2026-11-04)
-$keys = @($Settings | ForEach-Object { ($_ -split '=')[0].Trim() } | Where-Object { $_ -match '^\w+$' })
-if ($keys.Count) { AppRun "sed -i -E '/^($($keys -join '|')) *=/d' files/bar/springsettings.cfg" "es-rm4.sh" | Out-Null }
-$keep = "C:\Tools\BARANDROID\engine-sim\runs\$((Get-Date).ToString('yyyyMMdd-HHmmss'))-mem-$Engine$(if ($Label) { '-' + $Label })-launcher.log"
-& cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid tail -n +$($lines0 + 1) files/logs/launcher.log > `"$keep`""
-"launcher.log of the run: $keep"
+AppRun "grep -E 'replaybench\]|simdraw\]|DESYNC' files/bar/infolog.txt | tail -12 | cut -c1-200; rm -f files/bar/dev-env.sh files/bar/dev-springsettings.cfg files/bar/.bardroid-bench-replay" "es-rm3.sh"
+$keep = "C:\Tools\BARANDROID\engine-sim\runs\$((Get-Date).ToString('yyyyMMdd-HHmmss'))-mem-$Engine$(if ($Label) { '-' + $Label })"
+& cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid tail -n +$($lines0 + 1) files/logs/launcher.log > `"$keep-launcher.log`""
+& cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat files/bar/infolog.txt > `"$keep-infolog.txt`""
+"launcher.log and infolog of the run: $keep-launcher.log, -infolog.txt"
 & $adb -s $Device shell "am force-stop com.underarmcape.bardroid" | Out-Null
+# (the run's settings out of springsettings.cfg again: the engine saved them there, as PreloadModels = 0 stayed for
+# every later game, 2026-11-04), and the dev widget out of LuaUI/Widgets
+AppRun "[ -f files/bar/.springsettings-before-run ] && mv files/bar/.springsettings-before-run files/bar/springsettings.cfg; rm -f files/bar/LuaUI/Widgets/bardroid_simdraw.lua files/bar/LuaUI/Config/bardroid_simdraw.txt" "es-rm4.sh" | Out-Null
