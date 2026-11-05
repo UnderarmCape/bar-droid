@@ -123,6 +123,14 @@ public class LauncherActivity extends AppCompatActivity {
             ((ViewGroup) device.getParent()).removeView(device);
             if (wide) to.addView(device); else to.addView(device, 0);
         }
+        // and the log under them on a wide screen: below the device lines the left column stood half empty (the Fold7
+        // unfolded, 2026-11-04) while the log came last, under every setting; else last in the settings
+        for (View v : new View[]{findViewById(R.id.logTitle), logScroll}) {
+            if (v.getParent() != to) {
+                ((ViewGroup) v.getParent()).removeView(v);
+                to.addView(v);
+            }
+        }
     }
 
     /** fitRow again whenever the row's width changes (the first layout, a turn, a fold). */

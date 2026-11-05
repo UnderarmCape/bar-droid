@@ -223,6 +223,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
       the menu's texture broke, not the pictures. The copy now also draws an unchanged menu again every 30 s of game
       time (`droid.redraw`, one texture drawing each time). Dev phone: the menu whole at frame 1801, no errors.
+- [x] The app's builder queue widget removed in older replays (found in the dev phone's launcher.log, 2026-11-04):
+      a replay plays its own BAR release, and test-31465's `WG.BuilderQueueApi` had no `OnBuildCommandTeamChanged`
+      ("attempt to call field ... (a nil value)" in Update, BAR removed `bardroid_queue.lua` for that game: no
+      queued buildings drawn, as launch-bar.sh switches BAR's own off). It now takes each callback only where the
+      release has it and waits for the ones it needs. Dev phone, the 2026-10-01 replay: no error past frame 9,299
+      (before: removed at 1:03).
+- [x] The launcher's log on a wide screen: in two columns (the Fold7 unfolded) the left column stood half empty under
+      the device lines, while the log came last under every setting; it now sits there (`fitLayout`), and last in the
+      settings on a narrow screen as before. Dev phone at 1968x2184 and folded.
 - [x] The launcher at the unfolded Fold7's size (the dev phone at 1968x2184, two columns): "Benchmark" cut to
       "Benchmar", too wide for its button even at the row's smallest size. `LauncherActivity.fitRow` now lets a
       button's side padding give way (down to 5 dp, 1 dp inside its shape) before the words get smaller; the style's

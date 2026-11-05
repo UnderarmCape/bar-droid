@@ -145,7 +145,8 @@
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
             <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textAllCaps="false" android:text="@string/btn_save" />
 
-            <TextView style="@style/LauncherSection" android:text="@string/log_title" />
+            <!-- (the log: under the buttons on a wide screen, LauncherActivity.fitLayout) -->
+            <TextView style="@style/LauncherSection" android:id="@+id/logTitle" android:text="@string/log_title" />
             <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="300dp" android:nestedScrollingEnabled="true" android:background="#11000000">
                 <!-- (padding: the lines ran along the box's left edge) -->
                 <TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="monospace" android:textSize="10sp" android:textIsSelectable="true" android:padding="6dp" />
