@@ -135,22 +135,43 @@ public class LauncherActivity extends AppCompatActivity {
     /**
      * A row of buttons in one text size: the largest, maxSp at most and minSp at least, at which every label fits inside
      * its button's padding (LauncherButton's). Sized one by one (Android's autosize), "Benchmark" ran from edge to edge
-     * of its button (dev phone, 2026-11-03), or with that padding would have shrunk alone.
+     * of its button (dev phone, 2026-11-03), or with that padding would have shrunk alone. A label still too wide at
+     * minSp (the unfolded Fold7's half-width column: "Benchmar", 2026-11-04) gets its button's side padding down to
+     * 5 dp (1 dp inside the button's own shape), and only then a smaller size.
      */
     private void fitRow(ViewGroup row, float maxSp, float minSp) {
         android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
         float size = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, maxSp, dm);
         float least = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_SP, minSp, dm);
+        int edge = Math.round(TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 5, dm));
         for (int i = 0; i < row.getChildCount(); i++) {
             TextView b = (TextView) row.getChildAt(i);
-            int room = b.getWidth() - b.getPaddingLeft() - b.getPaddingRight();
-            if (room <= 0) return;   // (not laid out yet)
+            if (!(b.getTag() instanceof int[])) b.setTag(new int[]{b.getPaddingLeft(), b.getPaddingRight()});
+            int[] pad = (int[]) b.getTag();   // (the style's padding: a wider screen gets it back)
+            int room = b.getWidth() - pad[0] - pad[1];
+            if (b.getWidth() <= 0) return;   // (not laid out yet)
             TextPaint p = new TextPaint(b.getPaint());
             p.setTextSize(size);
             float w = p.measureText(b.getText().toString());
             if (w > room) size *= room / w;
         }
         size = Math.max(least, (float) Math.floor(size));
+        float fits = size;
+        for (int i = 0; i < row.getChildCount(); i++) {
+            TextView b = (TextView) row.getChildAt(i);
+            int[] pad = (int[]) b.getTag();
+            TextPaint p = new TextPaint(b.getPaint());
+            p.setTextSize(size);
+            float w = (float) Math.ceil(p.measureText(b.getText().toString()));
+            int left = pad[0], right = pad[1];
+            if (w > b.getWidth() - left - right) {
+                left = right = Math.max(edge, (int) ((b.getWidth() - w) / 2));
+                if (w > b.getWidth() - left - right) fits = Math.min(fits, size * (b.getWidth() - left - right) / w);
+            }
+            if (b.getPaddingLeft() != left || b.getPaddingRight() != right)
+                b.setPadding(left, b.getPaddingTop(), right, b.getPaddingBottom());
+        }
+        size = (float) Math.floor(fits);
         for (int i = 0; i < row.getChildCount(); i++) {
             TextView b = (TextView) row.getChildAt(i);
             if (b.getTextSize() != size) b.setTextSize(TypedValue.COMPLEX_UNIT_PX, size);

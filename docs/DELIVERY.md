@@ -223,6 +223,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
       the menu's texture broke, not the pictures. The copy now also draws an unchanged menu again every 30 s of game
       time (`droid.redraw`, one texture drawing each time). Dev phone: the menu whole at frame 1801, no errors.
+- [x] The launcher at the unfolded Fold7's size (the dev phone at 1968x2184, two columns): "Benchmark" cut to
+      "Benchmar", too wide for its button even at the row's smallest size. `LauncherActivity.fitRow` now lets a
+      button's side padding give way (down to 5 dp, 1 dp inside its shape) before the words get smaller; the style's
+      padding comes back on a wider screen. Dev phone: whole at 1968x2184, the folded size unchanged. Checks this run
+      on the dev phone: lobby-phone-test and touch-phone-test, all pass.
 - [x] The picked building's option in the build menu (BAR's game, fingers): only BAR's slightly lighter cell said which
       building PLACE would build. Now the gold line the pad's focus has (`droid.drawPicked`, `droid.goldLine`), 4% of
       the cell wide (the focus's 2 px read as a hairline), also over BAR's hover drawing: a finger's tap leaves the
