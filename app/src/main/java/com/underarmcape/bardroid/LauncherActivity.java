@@ -219,7 +219,8 @@ public class LauncherActivity extends AppCompatActivity {
         String note = GameService.exitNote();
         String head = !inst.isInstalled() ? "Not installed, " + s
                 // (a failure says so and where to look, not "Installed, game ended with an error (3)")
-                : !GameService.busy() && s.startsWith("game ended with an error") ? StatusText.forPlayers(s) + ": the log below says why"
+                // (with a note under it, the engine's own message, that note says why)
+                : !GameService.busy() && s.startsWith("game ended with an error") ? StatusText.forPlayers(s) + (note != null ? "" : ": the log below says why")
                 // (what the service does, in the notification's words: "Installed, running (skirmish)" said the install
                 // state with the service's own word for it)
                 : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? StatusText.forPlayers(s) : "Ready";

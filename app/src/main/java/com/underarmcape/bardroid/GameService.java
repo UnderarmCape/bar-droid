@@ -307,8 +307,12 @@ public class GameService extends Service {
                     // (Stop's own kill is no error: it read "game ended with an error (137)" after the player's Stop)
                     // (closed by the app after the GPU driver's fault: the note under it says why, not "error (137): the log")
                     setStatus(closing ? "stopped" : rc == 0 || driverLost ? "game ended" : "game ended with an error (" + rc + ")");
+                    String fatal = rc != 0 && !closing && !driverLost && rc != 137 ? engineFatal(paths) : null;
                     if (driverLost) {
                         exitNote = DriverWatch.note();
+                        Log.i("svc", exitNote);
+                    } else if (fatal != null) {   // (the engine's own message box, which the phone never shows)
+                        exitNote = StatusText.engineFatalNote(fatal);
                         Log.i("svc", exitNote);
                     } else if (rc == 137 && !closing) {
                         // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing
@@ -445,6 +449,18 @@ public class GameService extends Service {
         for (String k : new String[]{"Sim", "Draw", "Update"})
             if (ms.containsKey(k)) parts.add(k + " " + ms.get(k));
         return "Benchmark, ms per frame: " + String.join(", ", parts);
+    }
+
+    /** The engine's fatal error in this run's infolog (StatusText.engineFatal), the last one; null if there is none. */
+    static String engineFatal(Paths paths) {
+        String found = null;
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(paths.bar, "infolog.txt")))) {
+            for (String l; (l = r.readLine()) != null; ) {
+                String m = StatusText.engineFatal(l);
+                if (m != null) found = m;
+            }
+        } catch (java.io.IOException ignored) {}
+        return found;
     }
 
     // (the status is the title: Android's header above it names the app; a "BAR Droid" title under "Beyond All Reason"

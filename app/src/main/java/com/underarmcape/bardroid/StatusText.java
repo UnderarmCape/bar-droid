@@ -40,4 +40,27 @@ final class StatusText {
         return (note.startsWith("GL check: ") && !note.contains("(see the log)"))
                 || note.startsWith("Benchmark, ms per frame");
     }
+
+    /**
+     * The engine's fatal error from an infolog line, or null: "Fatal: [ExitSpringProcess] errorMsg="invalid GameData
+     * received: Unpack failure (vector)" msgCaption="Spring: caught content_error: " ...". On a PC the engine shows it in
+     * a message box; on the phone nothing did, and the launcher only said "game ended with an error (21)" (the engine's
+     * EXIT_CODE_CRASHED, -1003, as an exit status; the Fold7, 2026-11-05, a join after the network dropped).
+     */
+    static String engineFatal(String line) {
+        if (line == null) return null;
+        int at = line.indexOf("[ExitSpringProcess] errorMsg=\"");
+        if (at < 0) return null;
+        String rest = line.substring(at + "[ExitSpringProcess] errorMsg=\"".length());
+        int end = rest.indexOf("\" msgCaption=");
+        if (end < 0) end = rest.lastIndexOf('"');
+        String msg = (end >= 0 ? rest.substring(0, end) : rest).trim();
+        if (msg.isEmpty()) return null;
+        return msg.length() > 200 ? msg.substring(0, 200) + "..." : msg;
+    }
+
+    /** The launcher's note for it. */
+    static String engineFatalNote(String msg) {
+        return "BAR's own message: \"" + msg + "\"";
+    }
 }

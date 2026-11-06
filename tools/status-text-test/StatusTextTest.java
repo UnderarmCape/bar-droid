@@ -52,6 +52,24 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "note \"" + n[0] + "\" -> " + (got ? "result" : "warning"));
         }
+        // StatusText.engineFatal: the engine's fatal message from its infolog line (the Fold7's, 2026-11-05)
+        Object[][] fatals = {
+            { "[t=00:16:13.492054][f=-000001] Fatal: [ExitSpringProcess] errorMsg=\"invalid GameData received: Unpack failure (vector)\" msgCaption=\"Spring: caught content_error: \" mainThread=1",
+              "invalid GameData received: Unpack failure (vector)" },
+            { "[t=1] Fatal: [ExitSpringProcess] errorMsg=\"a \"quoted\" word\" msgCaption=\"x\"", "a \"quoted\" word" },
+            { "[t=1] Error: [Watchdog::ClearTimer(id)] Invalid thread 4", null },
+            { "[t=1] Fatal: [ExitSpringProcess] errorMsg=\"\" msgCaption=\"x\"", null },
+            { null, null },
+        };
+        for (Object[] f : fatals) {
+            String got = StatusText.engineFatal((String) f[0]);
+            boolean ok = f[1] == null ? got == null : f[1].equals(got);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "engine fatal -> " + got);
+        }
+        boolean okNote = StatusText.engineFatalNote("x").equals("BAR's own message: \"x\"") && !StatusText.isResultNote(StatusText.engineFatalNote("x"));
+        failed += okNote ? 0 : 1;
+        System.out.println((okNote ? "PASS " : "FAIL ") + "engine fatal note, in amber");
         // DriverWatch: the game is closed only after the driver's refusal and then BAR's watchdog (dev phone's lines)
         String refused = "19:52:34 [engine] MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)";
         String hung = "19:53:14 [engine] [t=00:01:44.048302][f=0000741] Warning: [Watchdog] Hang detection triggered for Spring 2026.07.04.";

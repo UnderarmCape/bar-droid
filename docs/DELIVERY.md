@@ -531,6 +531,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       folded one as before the unfold, no error. Caught 8 s after a change the HUD was still mid-reload (both layouts'
       panels at once, the top bar's words over each other, "fps 0"): passing. The unfolded proportions (a small
       minimap, a tall build menu) are the Touch HUD item below, Kailil's call.
+      The Fold7's lobby session of 2026-11-05 08:46-09:01 ended "with an error (21)": the phone's network dropped
+      ("Network error 101: Network is unreachable"), a join then got garbled packets and the engine stopped on
+      "invalid GameData received: Unpack failure (vector)" (21 is its EXIT_CODE_CRASHED, -1003, as an exit status). On a
+      PC the engine shows that in a message box; the phone showed nothing. The launcher now gives the engine's own
+      message (`StatusText.engineFatal` on the infolog's `[ExitSpringProcess] errorMsg=` line) in amber under "Game ended
+      with an error (21)". status-text-test: 5 cases; dev phone: a stand-in engine (dev-env.sh, removed after) writing
+      that line and exiting with 21: the message shown. A plain Exit from the lobby: exit 0, "game ended", as before.
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
