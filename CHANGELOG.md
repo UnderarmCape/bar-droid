@@ -146,7 +146,8 @@ The first version meant for other people's phones: everything since the first bu
 - When Android closes the game for lack of memory, the launcher says so (before, the app just started again), and how
   to close the other apps. When the phone's GPU driver hits its rare fault and the game freezes for good, the app
   closes it and says why, instead of leaving a frozen picture. When BAR stops on an error of its own (on a PC a
-  message box), the launcher shows its message.
+  message box), the launcher shows its message. A game Android closed for memory, or a join that timed out, in a
+  new BAR version's first minutes no longer rolls BAR back to the older version (which online games reject).
 - A Free memory button while BAR loads (Galaxy phones): it opens Device care, where Memory, Clean now closes the
   other apps; Back returns to the loading game; it lights up under the finger. (Android lets no app close other apps
   itself.)

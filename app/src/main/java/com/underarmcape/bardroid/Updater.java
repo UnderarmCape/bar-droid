@@ -569,6 +569,16 @@ public final class Updater {
         List<String> tags = tags();
         if (state.getProperty("launched.engine") == null) return Result.NONE;
         String launched = set("launched", tags), good = set("good", tags);
+        // Ended from outside or by the network, not by the update: undecided, judged at the next start. 137 is a SIGKILL
+        // from outside (Android's low-memory killer while an 8 GB phone loads, or the app closing a game the GPU driver
+        // froze: GameService.driverLost), 233 the engine's EXIT_CODE_TIMEOUT (a join that timed out). Before, either in a
+        // new version's first two minutes rolled BAR back to a version online games reject.
+        if (rc == 137 || rc == 233) {
+            if (!launched.equals(good))
+                Log.i("update", "the game was ended from outside (" + rc + "): " + launched + " is judged at the next start");
+            save();
+            return Result.NONE;
+        }
         // A crash once a game ran (loading one of Kailil's saves crashes the engine on every platform, ~70 s after the
         // app started) is not the update failing to start: it must not roll BAR back to a version online games reject.
         boolean fast = rc != 0 && ms < FAST_FAIL_MS && !gameFrameRan();

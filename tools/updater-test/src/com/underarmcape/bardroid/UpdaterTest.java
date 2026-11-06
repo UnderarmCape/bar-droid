@@ -106,6 +106,15 @@ public final class UpdaterTest {
         check("no update pending and a fast crash: nothing changes", r == Updater.Result.NONE
                 && "A".equals(s.getProperty("good.engine")) && s.getProperty("bad.0") == null && "A".equals(Prefs.engineVersion));
 
+        for (int code : new int[]{137, 233}) {   // a low-memory kill / the app's own close, a join that timed out
+            p = setup("outside" + code, true, NO_FRAME);
+            r = new Updater(p).launchEnded(code, 30_000);
+            s = state(p);
+            check("exit " + code + " in the update's first 30 s, no game frame: undecided, no rollback", r == Updater.Result.NONE
+                    && "B".equals(s.getProperty("launched.engine")) && "A".equals(s.getProperty("good.engine"))
+                    && s.getProperty("bad.0") == null && "B".equals(Prefs.engineVersion));
+        }
+
         // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
         check("game version: BAR's name without \"Beyond All Reason\"", "test-31836-b250a16".equals(Updater.gameRelease("Beyond All Reason test-31836-b250a16")));
         check("  another name as it is", "Some Mod 1.2".equals(Updater.gameRelease("Some Mod 1.2")));

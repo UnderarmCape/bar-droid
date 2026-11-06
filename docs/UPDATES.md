@@ -79,6 +79,9 @@ an old package is just restoring its `versions.gz`.
 - The first check snapshots what is installed as the last good set.
 - An update that changes the set marks it **pending**.
 - After the engine exits (`GameService`, not when the player pressed Stop or closed the app):
+  - ended from outside or by the network → undecided, judged at the next start: exit 137 (a SIGKILL: Android's
+    low-memory killer while an 8 GB phone loads, or the app closing a game the GPU driver froze) and 233 (the engine's
+    timeout, a join that timed out).
   - pending and **failed fast** (exit code ≠ 0 within 120 s, and no game frame in `infolog.txt`: a game or a saved
     game that ran and then crashed is not a failed start) → **rollback**: the current set goes on the bad list,
     the engine goes back to the last good version, the good `versions.gz` files are restored, and the game starts once
