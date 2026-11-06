@@ -40,7 +40,15 @@
         android:largeHeap="true"
         android:hardwareAccelerated="true"
         android:supportsRtl="true"
+        android:appCategory="game"
+        android:isGame="true"
+        tools:ignore="UnusedAttribute"
         tools:replace="android:name,android:icon,android:roundIcon,android:label,android:theme">
+
+        <!-- A game for Android and One UI (Kailil, 2026-11-06: "get our game to run in game mode on the phone so game
+             boost is on"): Game Booster's panel and settings, Gaming Hub, Android's game modes. The app sets its own
+             resolution and frame pacing, so Android's downscaling and frame rate override stay off. -->
+        <meta-data android:name="android.game_mode_config" android:resource="@xml/game_mode_config" />
 
         <!-- The app icon: straight into the lobby, BAR's icon on black meanwhile. -->
         <activity

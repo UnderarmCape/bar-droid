@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android's game modes for BAR Droid (AndroidManifest.xml, android.game_mode_config): the performance and battery
+     modes a phone's game settings (One UI's Game Booster) may pick; no downscaling or frame rate override by Android,
+     as the app sets its own resolution (the late-game drop) and paces its frames (libbardroid_pace.so). -->
+<game-mode-config xmlns:android="http://schemas.android.com/apk/res/android"
+    android:supportsPerformanceGameMode="true"
+    android:supportsBatteryGameMode="true"
+    android:allowGameDownscaling="false"
+    android:allowGameFpsOverride="false" />
