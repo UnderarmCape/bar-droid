@@ -525,6 +525,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       build and order menu copies in place (5 x 3 options a page, "< 1 / 2 >", "Place / Blueprint" on two lines); the
       grid stands centred with ~110 px empty at each side on the dev phone's wide screen, by design (Kailil's "try 5 x
       3": more columns would fill it). The setting put back afterwards.
+      Unfolding and folding mid-game (the dev phone's screen set to the Fold7's inner 2184x1968 and back with `wm size`,
+      a skirmish in the controller game, screenshots 25 s after each): the X screen 1192x1080 at interface scale 1.0,
+      then 2008x938 at 2.0 again, each with the app's interface reload ~1 s after the change; both layouts whole, the
+      folded one as before the unfold, no error. Caught 8 s after a change the HUD was still mid-reload (both layouts'
+      panels at once, the top bar's words over each other, "fps 0"): passing. The unfolded proportions (a small
+      minimap, a tall build menu) are the Touch HUD item below, Kailil's call.
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
