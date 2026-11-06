@@ -72,7 +72,7 @@ import java.util.Locale;
 final class RtsTouch {
     private static final long LONG_PRESS_MS = 450, MULTI_TAP_MS = 500;
     private static final long HOVER_WAIT_MS = 250;            // a drag waits this long at most for the widget's answer
-    private static final long HOVER_STALE_MS = 3000;          // older answers: the widget is not running
+    private static final long HOVER_STALE_MS = 5000;          // older answers: the widget is not running (it writes every 2 s)
     private static final long LOG_RESTART_BYTES = 256 * 1024;
     private static final double ZOOM_STEP = Math.log(1.12);   // one wheel click per 12% change in finger distance
     private static final float WHEEL_CLICK = 120;              // Termux:X11 scroll units per wheel click

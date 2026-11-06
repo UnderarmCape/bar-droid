@@ -77,7 +77,7 @@ local MIN_SPRING_DISTANCE, MIN_OVERHEAD_HEIGHT, MIN_CAMERA_RX, MAX_CAMERA_RX = 2
 local zoomMinDistance, zoomMaxDistance = MIN_SPRING_DISTANCE, 100000
 
 local touchPos, partial = 0, ""
-local lastScreen, screenCheck = nil, 0
+local lastScreen, screenCheck, screenFast = nil, 0, 4
 local updates = 0
 local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
@@ -185,8 +185,10 @@ end
 
 -- Complete new lines of the touch log since the last call. One handle across frames: an open is a path system call,
 -- which proot traps (two ptrace stops and a path translation) on the phone, once a frame. The app truncates the same
--- file for a new log (the size shrinks); opened again every TOUCH_REOPEN updates in case the file itself was replaced.
-local TOUCH_REOPEN = 60
+-- file for a new log (the size shrinks); opened again every TOUCH_REOPEN updates in case the file itself was replaced
+-- (every 60 was 0.6-0.9 % of a late 8v8's real time on the dev phone with nobody touching, 2026-11-06: the opens)
+local TOUCH_REOPEN = 600
+local TOUCH_SIZE_EVERY = 30 -- updates: the log's size looked at (a new, shorter log), newTouchLines
 local touchFile, touchFileAt = nil, -1000
 local function newTouchLines()
 	-- (BAR's sandbox checks the path of every io.open too: a missing file is looked for again only that often)
@@ -200,21 +202,30 @@ local function newTouchLines()
 	if not f then
 		return nil
 	end
-	local size = f:seek("end")
-	if not size then -- (the handle went bad: open it again next time)
-		f:close()
-		touchFile = nil
+	-- The size only every TOUCH_SIZE_EVERY updates (the app started a new log when it shrank): seeking to the end asks
+	-- for it with fstat, which proot traps to fake the file's owner, two ptrace stops: every frame that was 0.6 % of a
+	-- late 8v8's real time on the dev phone with nothing written (2026-11-06). Each frame only reads on from where the
+	-- last read ended (a seek there clears the end-of-file mark; neither is trapped).
+	if updates % TOUCH_SIZE_EVERY == 0 then
+		local size = f:seek("end")
+		if not size then -- (the handle went bad: open it again next time)
+			f:close()
+			touchFile = nil
+			return nil
+		end
+		if size < touchPos then -- the app started a new log
+			touchPos, partial = 0, ""
+		end
+	end
+	if not f:seek("set", touchPos) then
 		return nil
 	end
-	if size < touchPos then -- the app started a new log
-		touchPos, partial = 0, ""
-	end
-	if size == touchPos then
+	local more = f:read("*a")
+	if not more or more == "" then
 		return nil
 	end
-	f:seek("set", touchPos)
-	local data = partial .. (f:read("*a") or "")
-	touchPos = f:seek()
+	touchPos = touchPos + #more
+	local data = partial .. more
 	local cut = data:match(".*\n()") -- just after the last newline
 	if not cut then
 		partial = data
@@ -1207,6 +1218,7 @@ end
 -- camera moving under it can change it); a pointer that moves gets it at once. Profiled on the laptop (2026-10-26):
 -- this widget was BAR's most expensive one, 0.14 ms a frame (a view ray, a string and a file open every frame).
 local HOVER_RECHECK = 10
+local HOVER_KEEP = 2 -- s: the same answer written again this often (each write two opens and a rename through proot)
 local calcX, calcY, calcAt, calcAnswer = nil, nil, -1000, 0
 local hoverX, hoverY, hoverAnswer
 local function updateHover()
@@ -1235,10 +1247,10 @@ local function updateHover()
 		return -- not asked yet for this position
 	end
 	local now = spGetTimer()
-	if mx == hoverX and my == hoverY and onInterface == hoverAnswer and hoverTimer and spDiffTimers(now, hoverTimer) < 1 then
+	if mx == hoverX and my == hoverY and onInterface == hoverAnswer and hoverTimer and spDiffTimers(now, hoverTimer) < HOVER_KEEP then
 		return
 	end
-	-- also once a second: the app takes an old file for "no widget" (the lobby)
+	-- also every HOVER_KEEP seconds: the app takes a file older than 5 s for "no widget" (the lobby; RtsTouch HOVER_STALE_MS)
 	local _, vsy = spGetViewGeometry()
 	writeWhole(HOVER, string.format("%d %d %d\n", mx, vsy - my - 1, onInterface))
 	hoverX, hoverY, hoverAnswer, hoverTimer = mx, my, onInterface, now
@@ -1331,7 +1343,11 @@ local function update(dt)
 
 	screenCheck = screenCheck - dt
 	if screenCheck <= 0 then
-		screenCheck = 0.5
+		-- (a fold or unfold resizes the view: ViewResize has it read every 0.5 s for the next 2 s, as the app writes the
+		-- file about then; the display's refresh rate alone changes nothing here. Every 0.5 s always it was 0.3-0.4 % of
+		-- a late 8v8's real time on the dev phone: the open)
+		screenFast = math.max(0, screenFast - 1)
+		screenCheck = screenFast > 0 and 0.5 or 3
 		zoneBegin("W:touch:screen")
 		local f = io.open(SCREEN, "r")
 		if f then
@@ -1361,6 +1377,10 @@ end
 function widget:Update(dt)
 	WG.BarDroidOnInterface = pointOnInterface
 	guarded(update, dt)
+end
+
+function widget:ViewResize() -- (folded or unfolded: the screen file soon, update() above)
+	screenCheck, screenFast = 0.2, 5
 end
 
 -- the world pass: once per drawn frame, and (unlike DrawScreen) also with the interface hidden or a window open

@@ -532,27 +532,34 @@ end
 local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
 local logFile, logPos
 
--- the log's new whole lines since the last call (none the first time: what came before is not replayed)
+-- the log's new whole lines since the last call (none the first time: what came before is not replayed). Its size only
+-- every 30 calls (a seek to the end is an fstat, which proot traps: bardroid_touch.lua's newTouchLines); else reads on.
+local logCalls = 0
 local function appLines()
 	if not logFile then
 		logFile = io.open(TOUCH_LOG, "r")
 		logPos = logFile and logFile:seek("end")
 		return nil
 	end
-	local size = logFile:seek("end")
-	if not size then
-		logFile:close()
-		logFile = nil
+	logCalls = logCalls + 1
+	if logCalls % 30 == 0 then
+		local size = logFile:seek("end")
+		if not size then
+			logFile:close()
+			logFile = nil
+			return nil
+		end
+		if size < logPos then
+			logPos = 0 -- (the app began the log anew)
+		end
+	end
+	if not logFile:seek("set", logPos) then
 		return nil
 	end
-	if size < logPos then
-		logPos = 0 -- (the app began the log anew)
-	end
-	if size == logPos then
+	local text = logFile:read("*a") or ""
+	if text == "" then
 		return nil
 	end
-	logFile:seek("set", logPos)
-	local text = logFile:read(size - logPos) or ""
 	local last = text:match(".*()\n")
 	if not last then
 		return nil
