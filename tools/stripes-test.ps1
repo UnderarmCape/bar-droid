@@ -50,6 +50,8 @@ for ($k = 0; $k -lt 2 * $Pairs; $k++) {
   Start-Sleep $Pause
 }
 AppRun "rm -f files/bar/dev-env.sh" | Out-Null
+$shots = @($shots | Where-Object { (Test-Path $_) -and (Get-Item $_).Length -gt 0 })
+if (-not $shots.Count) { "no screenshots (adb lost the phone?): no montage"; exit 1 }
 
 # the montage: per start a row with the build menu (50 %), BAR's idle builders button and the whole screen (25 %)
 Add-Type -AssemblyName System.Drawing

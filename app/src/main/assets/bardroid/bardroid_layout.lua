@@ -103,7 +103,7 @@ end
 
 local function registerBar()
 	register("topbar", {
-		label = "Top bar (BAR's: fixed)",
+		label = "Top bar (fixed by BAR)",
 		can = {},
 		rect = function()
 			local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
@@ -113,7 +113,7 @@ local function registerBar()
 		end,
 	})
 	register("ordermenu", {
-		label = "Order menu (BAR's: fixed)",
+		label = "Order menu (fixed by BAR)",
 		can = {},
 		rect = function()
 			local o = WG.ordermenu
@@ -128,7 +128,7 @@ local function registerBar()
 	-- (its own id: the app's copy of BAR's Build menu is "buildmenu", sizeable, and outlined only while it shows; the
 	-- controller game with v0.8.5's controls shows v0.8.5's in its place, which had no outline at all)
 	register("barbuildmenu", {
-		label = "Build menu (BAR's: fixed)",
+		label = "Build menu (fixed by BAR)",
 		can = {},
 		rect = function()
 			local own = panels.buildmenu
