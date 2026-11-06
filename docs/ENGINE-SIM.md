@@ -176,6 +176,11 @@ game until the replay and spectating stages below say it computes exactly what t
   first and back at thermal level 7 within the first run): baseline 14.8 and 12.7 fps (x0.97, x0.89), `UseEFX = 0` +
   `MaxSounds = 64` 11.9 and 12.0 (x0.75 both). No gain: not kept. At full resolution the GPU, 99 % busy at its 295 MHz
   cap, is the wall; the mixer's thread is not on the frame's path. Measured at the allowed 50 % floor from here on.
+  BAR's cosmetic widgets at 50 % (05:48-06:37, ABBA; Defense Range GL4, AllyCursors, Commander Name Tags, Ally Selected
+  Units, Airjets GL4 off through launch-bar.sh's `widget_order` from dev-env.sh, none of them loaded): on 21.9 and 22.8
+  fps, off 20.6 and 20.7 (x1.00 each). No gain: not kept. At 50 % the GPU is no longer full (73-91 % busy at its 295
+  MHz cap, 62 % at 401): the main thread is the limit, ~45 ms a frame with the X3 at 1363-1478 MHz. Next: a CPU
+  profile of the window at 50 % (the plain sampler).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
