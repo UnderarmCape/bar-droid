@@ -178,6 +178,13 @@ game until the replay and spectating stages below say it computes exactly what t
   its widgets there with `BARDROID_GAME_WIDGETS=1` in dev-env.sh and sets the key; without it they are back in
   `LuaUI/Widgets` (BAR's official engine). The widgets ask whether they may give orders with an order to no units
   (`unitControl`), not the lobby's option. A player's own user widgets stay in BAR's sandbox as before.
+  A replay plays the BAR release it was recorded with: the 2026-10-01 release's handler loads every widget "raw first"
+  while user widgets are allowed, so the first build's hook (archive-mode reads only) listed the app's widgets and
+  then found them missing (the 1v1 replay ran without them, its benchmark never fast-forwarding). Loading a file there
+  now also answers raw-first modes once the usual lookup missed; listing stays archive-mode only. Sync, gcc-wfe3 with
+  `BARDROID_GAME_WIDGETS=1` (2026-11-06): the 1v1 server replay (SpeedMetal, 2026-10-01 release) 36,787 frames and the
+  whole 8v8 replay (isthmus, 2026-10-26, to its end at frame 52,606), **0 desync warnings** each, all 18 app widgets
+  "from mod:" in both.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").

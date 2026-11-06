@@ -9,10 +9,11 @@
 #       game's speed for -Seconds. Prints the [DESYNC WARNING] count and the speed lines; the infolog goes to
 #       C:\Tools\BARANDROID\engine-sim\runs\. The replay must be in the phone's demos/ (pushed from the laptop if it
 #       is not), its game and map installed. Afterwards dev-env.sh is removed again. -Perf <seconds>: simpleperf on the
-#       engine for that long once the measured part begins (the .perf.data beside the infolog). One run at a time.
+#       engine for that long once the measured part begins (the .perf.data beside the infolog); -Graph: with call
+#       graphs (DWARF unwinding, 500 samples a second: who calls the hot functions). One run at a time.
 #       -Settings "Key = value", ...: springsettings lines for the run; -DevEnv "line", ...: added to dev-env.sh.
 param([string]$Install, [string]$Use, [switch]$Off, [string]$Replay, [string]$Engine = "official",
-      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [int]$Perf = 0, [string]$Device = "",
+      [int]$Skip = 900, [int]$Seconds = 120, [int]$Timeout = 3600, [int]$Perf = 0, [switch]$Graph, [string]$Device = "",
       [string[]]$Settings = @(), [string[]]$DevEnv = @())
 $ErrorActionPreference = "Stop"
 . (Join-Path (Split-Path $PSScriptRoot) "toolchain.ps1")
@@ -87,7 +88,7 @@ if ($Replay) {
         Send-AppFile $adb $sp "files/simpleperf" $Device; App-Script "chmod 755 files/simpleperf" | Out-Null
       }
       & $adb -s $Device shell "setprop security.perf_harden 0" | Out-Null
-      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u -c 500000 --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
+      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u $(if ($Graph) { '--call-graph dwarf -c 2000000' } else { '-c 500000' }) --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
       & $adb -s $Device shell "setprop security.perf_harden 1" | Out-Null
     }
   } while ($now -le $before -and ((Get-Date) - $start).TotalSeconds -lt $Timeout)
