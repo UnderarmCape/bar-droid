@@ -499,6 +499,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       menu copy's ViewResize without `WG.fonts` in a run with every BAR widget off (an experiment), the dev timer
       widget's argument on a since-fixed engine build, and launch-bar.sh's false "ANDROID LAYER" alarms quoting
       `[simdraw]` timer lines, last at 10:48, before `widget_error` left those lines out. Nothing to fix.
+      The app's chat dropped who shared units: BAR's chat hands a unit share over as a system line with the sharer in
+      its name text only (its name stays ""), so it read "shared Tidal Generator to Heroic_El_Paska" with no one in
+      front (dev phone, the 2026-10-26 8v8 replay at 1:15). `bardroid_chat.lua` takes the name from the name text
+      then (colour codes and brackets off); the same moment again: "Schluebber  shared Tidal Generator to ...".
+      Also on the dev phone with the UBWC default: touch-phone-test and lobby-phone-test ALL PASS.
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.

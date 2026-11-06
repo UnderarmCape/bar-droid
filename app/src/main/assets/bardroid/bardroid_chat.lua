@@ -207,6 +207,11 @@ end
 local function processor(_, lineType, name, nameText, text, _, ignore)
 	if not ignore and text and text ~= "" then
 		local nameColor = (type(nameText) == "string" and nameText:match("^\255...")) or WHITE
+		-- a unit share is BAR's system line with the sharer in nameText only (its name stays ""): the line read "shared
+		-- Tidal Generator to Heroic_El_Paska" with no one in front (dev phone, a replay, 2026-11-05)
+		if (name == nil or name == "") and type(nameText) == "string" then
+			name = nameText:gsub("\255...", ""):match("^%s*<?(.-)>?%s*$")
+		end
 		if lineType == LineTypes.Player and text:sub(5, 6) == "> " then
 			-- metal or energy given: "<key>:amount=500:name=Kailil", which BAR words from its translations
 			local params, values = {}, {}
