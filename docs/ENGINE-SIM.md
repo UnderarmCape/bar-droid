@@ -205,6 +205,17 @@ game until the replay and spectating stages below say it computes exactly what t
   no water reflections: not kept. In the target set both sides are near their limits at ~24 fps (the GPU ~90 % busy at
   its cap, the main thread ~41 ms a frame): easing one alone hardly moves the frame. Next: the GPU's passes at 50 %
   (`replay-memory.ps1 -Timers`).
+  The timers at 50 % in the target set (09:25, profiler on, 17 fps x0.86): Sim 56-59 % of real time, Draw 21-24,
+  BAR's unsynced Lua call-ins 22-24, Update 13-15; GPU: opaque models 12-19, terrain 3.4-5.4, see-through models
+  1.4-2.2 (twice, below and above water). The most expensive widget was **the app's own touch camera, 1.7-1.8 %**
+  with nobody touching: its touch-log read 0.6-0.9, hover answer 0.4, screen file 0.3-0.4 (BAR's next: Defense Range
+  GL4 1.4, Sensor Ranges LOS's DrawGenesis 0.9-1.4 although its circles are drawn at opacity 0, GUI Sound Effects 0.8).
+  The app's `bardroid_touch.lua` then: the touch log opened again every 600 updates (was 60), the hover answer
+  rewritten every 2 s (was 1; the app's staleness 5 s, was 3), the screen file read every 3 s and on a resize (was
+  every 0.5 s), and the log's size, which a seek to the end asks of the kernel with fstat, which proot traps (two
+  ptrace stops), only every 30 updates (each update reads on from where the last ended). Re-timed (10:01): **0.2 %**,
+  the camera's 1.6 % back on the main thread; 23.4 fps x1.00 with the profiler on (touch-phone-test ALL PASS). The
+  app's own widgets left: BAR Droid chat's DrawScreen 0.3-0.4, the builder queue 0.2.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
