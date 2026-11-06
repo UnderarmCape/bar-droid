@@ -446,16 +446,23 @@ cpus_allowed() { # $1: a /proc status file -> its Cpus_allowed mask in $mask (no
   while read -r k v; do [ "$k" = "Cpus_allowed:" ] && { mask=$v; break; }; done 2>/dev/null < "$1" # (a thread that
   # exited meanwhile: no message in launcher.log, the stderr redirect before the file's)
 }
+# BARDROID_WORKER_CPUS (dev-env.sh only, an experiment, docs/ENGINE-SIM.md on engine/sim): the engine's pool workers
+# ("worker1".."workerN") get that hex mask instead (the dev phone: 78, its A715/A710 cores), the other threads all.
 widen_engine() {
   cpus_allowed /proc/self/status
-  local all=$mask
+  local all=$mask want comm
   [ -n "$all" ] || return
   while :; do
     sleep 3
     for p in $(pidof spring 2>/dev/null); do
       for t in /proc/$p/task/*; do
         cpus_allowed "$t/status"
-        [ -n "$mask" ] && [ "$mask" != "$all" ] && taskset -p "${all//,/}" "${t##*/}" >/dev/null 2>&1
+        want=$all
+        if [ -n "${BARDROID_WORKER_CPUS:-}" ]; then
+          comm=; read -r comm 2>/dev/null < "$t/comm"
+          case "$comm" in worker*) want=$BARDROID_WORKER_CPUS ;; esac
+        fi
+        [ -n "$mask" ] && [ "$mask" != "$want" ] && taskset -p "${want//,/}" "${t##*/}" >/dev/null 2>&1
       done
     done
   done
