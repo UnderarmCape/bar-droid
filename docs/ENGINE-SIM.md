@@ -125,7 +125,13 @@ game until the replay and spectating stages below say it computes exactly what t
   `widen_engine` gives every engine thread all CPUs every 3 s, so a worker can run its last piece on a little core
   (A510, about a third of the X3's speed). Next: the 4 workers on the A715/A710 cores (cpus 3-6), the main thread free
   to keep the X3, through a launch-bar.sh hook, measured by the alternating fast-forward (`ab-wfe2.ps1`'s way) and the
-  same timers.
+  same timers. The hook: `BARDROID_WORKER_CPUS` (hex, dev-env.sh only; the app's launch-bar.sh `widen_engine`), the
+  pool's six workers (two pools of three, "worker1".."worker3") on that mask, every other thread on all; checked on
+  the dev phone (78 on the workers, `recoil-main` free). Fast-forward of 10 game-minutes, alternating: workers on
+  cpus 3-6 101 and 140 s, on all 121 and 129 s; 0 desync warnings. Inconclusive: the two pinned runs differ by 40 %,
+  far more than the effect sought (the phone warming run to run). Next: the timer gap itself (AddTask - WaitFor) in
+  each mode, ABBA, with the profiler. The Fold7's 8 Elite has no little cores (two 4.47 GHz and six 3.53 GHz Oryon),
+  so it would gain little either way; it matters for phones like the dev phone.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
