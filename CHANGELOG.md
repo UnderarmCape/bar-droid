@@ -12,12 +12,16 @@ The first version meant for other people's phones: everything since the first bu
 - BAR's own lobby, online games, skirmish against AI and spectating on a Snapdragon phone (tested on a Galaxy Z
   Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / no cap in the launcher). The game draws at about 900
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
-  the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it.
+  the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it. Launcher
+  setting "Lower the resolution when the game slows down" (off by default): under 27 fps the game is drawn smaller a
+  step at a time (85, 70, 60, 50% of the lines), never under half, kept only while each step makes it faster.
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
   back. BAR's content always comes from BAR's own servers; nothing of BAR is in the APK.
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.
 
 **Touch**
+- Speak to chat: a three-finger double tap listens through the phone's speech recognition and sends what you said as a
+  chat message, no keyboard (nothing said, nothing sent).
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
   bar act as mouse drags. A three-finger swipe down brings the camera to the commander and selects it (dead: the
   constructor selected last).
@@ -79,7 +83,10 @@ The first version meant for other people's phones: everything since the first bu
   the left stick pans, the right stick turns and zooms, A selects and places, X is the smart order, B cancels; RB and
   Back + RB put the build and order menus on the pad (the D-pad steps, the option on the pad highlighted, the
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
-  queue removal, the D-gun; v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
+  queue removal; v0.8.5's D-gun mode on LB + RB + R3 or Back + R3 (the right stick aims around the commander, the left
+  walks it, RT fires, B leaves; riding the commander in first person RB fires the D-gun); LB + D-pad up tapped, then
+  held: the share list (the selected units to a teammate, names in their colours; D-pad picks, A gives, B cancels);
+  v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
   the controller game a triple tap switches between v0.8.5 and these controls (with them the app's build menu:
   once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away). RB + D-pad:

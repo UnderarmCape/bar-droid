@@ -40,6 +40,7 @@
     <string name="rb_fps_none">No cap (runs hot)</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR)\nThe game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
     <string name="cb_upscale_compare">Compare upscaling (diagnostic)\nSGSR on and off every 3 seconds, with a label</string>
+    <string name="cb_late_drop">Lower the resolution when the game slows down\nUnder 27 fps the game is drawn smaller a step at a time, down to half the render resolution, only while each step helps; the upscaling enlarges it</string>
     <string name="cb_lobby_bridge">Lobby bridge\nThe app stands in for BAR\'s PC launcher, for the Replays tab, web links and skill ratings; the lobby\'s downloads go through the app. Off: the Replays tab cannot list replays</string>
     <string name="cb_rts_touch">BAR touch controls\nDrag pans, pinch zooms, twist rotates, two fingers up or down tilt, tap then drag selects, long press gives orders. Off: the touch modes under Display</string>
     <string name="cb_capture_shortcuts">Keyboard shortcuts go to the game\nAlt+Tab, the Windows key, Ctrl+Space and the soft keyboard\'s language switch reach BAR while it is in front, not Android, One UI or DeX. Off: Android\'s own</string>

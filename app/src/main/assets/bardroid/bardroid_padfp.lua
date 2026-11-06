@@ -19,7 +19,8 @@
 -- direction"; "a UI telling me what is selected and what orders they have"): the units these orders go to. A unit of
 -- yours in the middle of the screen joins it with the next order; an empty squad takes the units within NEARBY (combat
 -- units; builders only where there are none).
---   A  follow me (Guard)       X  stop        Y  fight to where I look        RB  patrol to where I look
+--   A  follow me (Guard)       X  stop        Y  fight to where I look        RB  patrol to where I look (riding the
+--      commander: its D-gun where I look, below)
 --   D-pad up  add what I look at, or the units nearby        D-pad down  an empty squad again
 -- While riding the build menu's place shows the squad (each unit type, how many, what they are doing), the order menu's
 -- the buttons, and BAR's info panel the unit ridden.
@@ -51,6 +52,8 @@ local SUMMARY_SECONDS = 0.25
 local STATUS = { [CMD.GUARD] = "Following", [CMD.FIGHT] = "Fighting", [CMD.PATROL] = "Patrolling", [CMD.MOVE] = "Moving",
 	[CMD.ATTACK] = "Attacking", [CMD.RECLAIM] = "Reclaiming", [CMD.REPAIR] = "Repairing" }
 local BUTTONS = { { "A", "Follow me" }, { "X", "Stop" }, { "Y", "Fight there" }, { "RB", "Patrol there" },
+	{ "UP", "Add units" }, { "DN", "Clear squad" }, { "RT", "Fire" }, { "BK", "Tune camera" }, { "B", "Leave" } }
+local COMMANDER_BUTTONS = { { "A", "Follow me" }, { "X", "Stop" }, { "Y", "Fight there" }, { "RB", "D-gun" },
 	{ "UP", "Add units" }, { "DN", "Clear squad" }, { "RT", "Fire" }, { "BK", "Tune camera" }, { "B", "Leave" } }
 local TUNE_BUTTONS = { { "UP", "Previous" }, { "DN", "Next" }, { "LF", "Less" }, { "RG", "More" },
 	{ "A", "Save" }, { "B", "Close" } }
@@ -204,7 +207,12 @@ local function camera(s, dt)
 	return true
 end
 
+local dgunPending -- (below: the D-gun's order, which the walk must not replace)
+
 local function walk(s)
+	if dgunPending(s) then
+		return
+	end
 	local def = UnitDefs[Spring.GetUnitDefID(s.unitID) or -1]
 	if not def or (def.speed or 0) <= 0 then -- (a sentry looks and fires, it does not walk)
 		return
@@ -256,10 +264,10 @@ end
 
 -- The ground the view points at within reach, else the ground at reach along the view (BAR's Set Target takes only
 -- ground, in range: allowTargetPos)
-local function groundAim(s)
+local function groundAim(s, reach)
 	local vsx, vsy = Spring.GetViewGeometry()
 	local ux, _, uz = Spring.GetUnitPosition(s.unitID)
-	local reach = reachOf(s)
+	reach = reach or reachOf(s)
 	local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
 	local dx, dz = math.sin(s.aimYaw) * reach, -math.cos(s.aimYaw) * reach
 	if pos and s.aimPitch < 0 then
@@ -274,8 +282,56 @@ local function groundAim(s)
 	return { x, Spring.GetGroundHeight(x, z), z }
 end
 
+-- The commander's D-gun (Kailil, 2026-11-06: "I need dgun ability for the commander in the first person control mode. I
+-- should be able to fire like normal but also issue the dgun fire by pressing RB as the commander"): RB, riding a
+-- commander, fires it where the view points: the enemy under the crosshair, else the ground as RT's aim, at the D-gun's
+-- reach. Meanwhile (DGUN_ARRIVE for the order to reach the game, online too; then until it has fired, DGUN_HOLD at most)
+-- neither the walk nor RT's aim renew their orders: either would replace it.
+local DGUN_ARRIVE, DGUN_HOLD = 0.5, 1.5
+
+local function isCommander(unitID)
+	local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+	return def ~= nil and def.customParams ~= nil and def.customParams.iscommander ~= nil
+end
+
+local function dgunReach(s)
+	local def = UnitDefs[Spring.GetUnitDefID(s.unitID) or -1]
+	for _, w in ipairs(def and def.weapons or {}) do
+		local wd = WeaponDefs[w.weaponDef]
+		if wd and (wd.range or 0) > 0 and (wd.manualFire or wd.type == "DGun") then
+			return math.max(60, wd.range * FIRE_REACH)
+		end
+	end
+	return 250
+end
+
+function dgunPending(s)
+	if not s.dgunAt then
+		return false
+	end
+	local age = Spring.DiffTimers(now(), s.dgunAt)
+	if age < DGUN_ARRIVE then
+		return true
+	end
+	local cmdID = Spring.GetUnitCurrentCommand and Spring.GetUnitCurrentCommand(s.unitID)
+	if cmdID == CMD.MANUALFIRE and age <= DGUN_HOLD then
+		return true
+	end
+	s.dgunAt = nil
+	s.moving, s.moveDir, s.fireAt = false, nil, nil -- (the walk and RT's aim given again at once)
+	return false
+end
+
+local function dgunFire(s)
+	local target = enemyAimed(s)
+	if pcall(Spring.GiveOrderToUnit, s.unitID, CMD.MANUALFIRE, target and { target } or groundAim(s, dgunReach(s)), 0) then
+		s.dgunAt = now()
+		say("D-GUN")
+	end
+end
+
 local function fire(s)
-	if not s.firing then
+	if not s.firing or dgunPending(s) then
 		return
 	end
 	local t = now()
@@ -393,6 +449,9 @@ local function order(kind)
 		tuning = tuneList() ~= nil
 		return
 	elseif kind == "left" or kind == "right" then
+		return
+	elseif kind == "patrol" and isCommander(s.unitID) then -- (RB riding the commander: its D-gun)
+		dgunFire(s)
 		return
 	end
 	cleanSquad()
@@ -641,7 +700,7 @@ function widget:DrawScreen()
 	end
 	summarize()
 	drawSquad(style, font, x0, y1, vsy)
-	drawButtons(style, font, x0, y0, x1, y1, BUTTONS)
+	drawButtons(style, font, x0, y0, x1, y1, isCommander(fp.unitID) and COMMANDER_BUTTONS or BUTTONS)
 end
 
 function widget:DrawWorld() -- (a ring under each unit of the squad)

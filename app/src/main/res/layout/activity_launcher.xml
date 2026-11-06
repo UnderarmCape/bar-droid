@@ -130,6 +130,7 @@
             </RadioGroup>
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbUpscale" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbUpscaleCompare" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_upscale_compare" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbLateDrop" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_late_drop" />
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
 

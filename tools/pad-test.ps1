@@ -7,8 +7,10 @@
 # ABS_RZ (RT) 5, ABS_HAT0X 16, ABS_HAT0Y 17. Xbox 360 ids, so Android's own key layout names them.
 # -Online: BAR's released game with user widgets' orders forbidden, as a host can forbid them, and pad-online.evemu: the
 # controls that must work in any online game (tools\pad-test\online-on.sh; the skirmish keeps its AI opponent).
-#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online]
-param([switch]$Online)
+# -Dgun: the same game, pad-dgun.evemu: v0.8.5's D-gun mode (LB + RB + R3) through the app's clicks, the share list's chord.
+#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun]
+param([switch]$Online, [switch]$Dgun)
+if ($Dgun) { $Online = $true }   # (-Dgun: the same game, the D-gun mode's and the share list's script)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
@@ -27,8 +29,8 @@ function Log([string]$pattern, [int]$lines) {
 
 & $adb shell am force-stop $pkg
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
-$testWidget = if ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
-$padScript = if ($Online) { "pad-online.evemu" } else { "pad.evemu" }
+$testWidget = if ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
+$padScript = if ($Dgun) { "pad-dgun.evemu" } elseif ($Online) { "pad-online.evemu" } else { "pad.evemu" }
 function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
 Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null

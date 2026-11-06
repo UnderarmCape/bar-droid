@@ -9,7 +9,8 @@
 --   control groups (Start + D-pad): recall, assign, BAR's autogroup (the app presses Alt+N), clear; BAR's group
 --     actions, the group's number shown
 --   idle units (D-pad; LB + D-pad), the commander (D-pad down), a camera bookmark (D-pad up; LT + up stores it)
---   cancel (B), LB + A/X/Y/B orders at the middle of the screen, removing queued orders (L3/R3), the D-gun (Back + R3)
+--   cancel (B), LB + A/X/Y/B orders at the middle of the screen, removing queued orders (L3/R3), v0.8.5's D-gun mode
+--     (LB + RB + R3, or Back + R3), the share list (LB + D-pad up tapped, then held: the selected units to a teammate)
 --   a reticle in the middle while the pad is the input, and short notes (v0.8.5's hotkey feedback)
 -- Every control here works in every game (Kailil, 2026-11-01, after 40 minutes online: "I should have no cases of that
 -- happening"). A host can forbid user widgets Spring.GiveOrder* (the modoption allowunitcontrolwidgets; first person
@@ -53,6 +54,7 @@ local function writeWhole(path, text)
 end
 
 local TOAST_SECONDS = 1.3
+local VOICE_NOTE = "SPEAK TO CHAT" -- (shown while the app listens: voice_on / voice_off)
 local MOD_NOTE_SECONDS = 2.5 -- the triple tap's mode switch: 1.3 s was mostly gone before the eye found it (dev phone)
 local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
@@ -83,6 +85,7 @@ local function addPing(x, y, z)
 	end
 end
 local padClicks = 0 -- clicks asked of the app ("click <n>" in bardroid_pad.txt)
+local padClickAt = nil -- the last one's point if not the middle: { x, y }, fractions of the screen from its top left
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
 local lastIdleMobile = 0
 local mouseMode = false -- Back + Start, as the app's switch (PadGame)
@@ -574,7 +577,7 @@ local function orderAt(cmdID, name, unitOK)
 		end
 	end
 	if pickOrder(cmdID, name, string.upper(name)) then -- (else the click would only drop the units)
-		padClicks = padClicks + 1
+		padClicks, padClickAt = padClicks + 1, nil
 	end
 end
 
@@ -808,6 +811,384 @@ local function buildFocus()
 	return b and b.droidFocus and b.droidFocus() ~= nil or false
 end
 
+-- The pad's own modes, one at a time: v0.8.5's D-gun mode ("dgun") and the share list ("share"). While one is on only
+-- its buttons count in the app (bardroid_pad.txt "modal dgun|share|none", PadGame).
+local modal = nil
+
+-- A click asked of the app at a point on the screen (engine pixels, from the bottom left)
+local function clickAt(sx, sy)
+	local vsx, vsy = Spring.GetViewGeometry()
+	padClicks = padClicks + 1
+	padClickAt = { sx / vsx, 1 - sy / vsy }
+end
+
+-- The point on the screen for a click on the ground at x, y, z: on the screen and off the interface (BAR's panels, the
+-- minimap: a click there would press a button), else nil
+local function clickable(x, y, z)
+	local sx, sy, sz = Spring.WorldToScreenCoords(x, y, z)
+	local vsx, vsy = Spring.GetViewGeometry()
+	if not sx or sz > 1 or sx < 2 or sx > vsx - 3 or sy < 2 or sy > vsy - 3 then
+		return nil
+	end
+	local over = WG.BarDroidOnInterface
+	if over and over(math.floor(sx), math.floor(sy)) then
+		return nil
+	end
+	return sx, sy
+end
+
+local function selectedCommander()
+	for _, unitID in ipairs(Spring.GetSelectedUnits()) do
+		local def = UnitDefs[Spring.GetUnitDefID(unitID) or -1]
+		if def and def.customParams and def.customParams.iscommander then
+			return unitID, def
+		end
+	end
+	return nil
+end
+
+-- v0.8.5's D-gun mode (Kailil, 2026-11-06: "make LB + RB + R3 the dgun control mechanism that the commander has in
+-- 0.8.5"; v0.8.5's own Back + R3 opens it too): the selected commander's D-gun aimed around it at the D-gun's range.
+-- While it lasts the sticks are its (bardroid_touch.lua hands them over; the camera stays): the right stick aims (past
+-- half way, along the camera's heading), the left stick walks the commander (a move 150 ahead, every 0.2 s); RT fires
+-- once, B leaves; v0.8.5's red range ring, target and line on the ground. It ends when the commander is no longer
+-- selected or is lost. Where the host lets user widgets give orders the move and the shot go to the commander as in
+-- v0.8.5; where it does not, BAR's Move or D-gun is picked and the app clicks on the point (it has to be on the screen
+-- and off the interface: a shot aimed off it goes to the farthest point of the aim that is on it, the same way).
+local DGUN_AIM_DEADZONE, DGUN_MOVE_DEADZONE = 0.5, 0.4
+local DGUN_MOVE_STEP, DGUN_MOVE_EVERY, DGUN_FIRE_EVERY = 150, 0.2, 0.15
+local DGUN_RANGE = 280 -- (v0.8.5's when the D-gun's own is not found)
+local dgun = nil -- { unitID, range, aimX, aimZ, x, y, z: the target, lx, ly, rx, ry: the sticks, moveAt, fireAt }
+
+local function dgunRange(def)
+	for _, w in ipairs(def.weapons or {}) do
+		local wd = WeaponDefs[w.weaponDef]
+		if wd and (wd.range or 0) > 0 and (wd.manualFire or wd.type == "DGun") then
+			return wd.range
+		end
+	end
+	return DGUN_RANGE
+end
+
+-- A stick past its deadzone as a heading on the ground, from the camera's (v0.8.5's); nil at rest
+local function stickHeading(x, y, deadzone)
+	if math.sqrt(x * x + y * y) <= deadzone then
+		return nil
+	end
+	local cx, _, cz = Spring.GetCameraDirection()
+	local len = math.sqrt((cx or 0) ^ 2 + (cz or 0) ^ 2)
+	local fx, fz = 0, -1
+	if len > 0.001 then
+		fx, fz = cx / len, cz / len
+	end
+	local hx, hz = x * -fz - y * fx, x * fx - y * fz
+	len = math.sqrt(hx * hx + hz * hz)
+	if len <= 0.001 then
+		return 0, -1
+	end
+	return hx / len, hz / len
+end
+
+local function dgunTarget(d)
+	local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
+	if not cx then
+		return false
+	end
+	d.x = math.max(0, math.min(Game.mapSizeX, cx + d.aimX * d.range))
+	d.z = math.max(0, math.min(Game.mapSizeZ, cz + d.aimZ * d.range))
+	d.y = Spring.GetGroundHeight(d.x, d.z) or cy
+	return true
+end
+
+local function dgunExit(text)
+	if dgun then
+		dgun = nil
+		modal = nil
+		if text then
+			note(text)
+		end
+	end
+end
+
+local function dgunEnter()
+	if Spring.GetSpectatingState() then
+		note("NOT WHILE SPECTATING")
+		return
+	end
+	local unitID, def = selectedCommander()
+	if not unitID then
+		note("SELECT THE COMMANDER")
+		return
+	end
+	if modal == "share" then
+		return
+	end
+	local cx, _, cz = Spring.GetUnitPosition(unitID)
+	if not cx then
+		return
+	end
+	-- the first aim: to the reticle's ground, else the camera's heading (v0.8.5's)
+	local _, pos = aim()
+	local dx, dz = pos and pos[1] - cx or 0, pos and pos[3] - cz or 0
+	local dist = math.sqrt(dx * dx + dz * dz)
+	local ax, az
+	if dist > 10 then
+		ax, az = dx / dist, dz / dist
+	else
+		ax, az = stickHeading(0, -1, 0)
+	end
+	dgun = { unitID = unitID, range = dgunRange(def), aimX = ax, aimZ = az, lx = 0, ly = 0, rx = 0, ry = 0 }
+	modal = "dgun"
+	dgunTarget(dgun)
+	note("D-GUN: RIGHT STICK AIMS, RT FIRES, B LEAVES", nil, 3)
+end
+
+-- An order on the ground for the commander: given where allowed, else picked and clicked (off the screen or over the
+-- interface: the farthest point towards from that is clickable, for a shot; none for a move)
+local function dgunOrder(cmdID, name, x, y, z, along)
+	local d = dgun
+	if unitControl() and pcall(Spring.GiveOrderToUnit, d.unitID, cmdID, { x, y, z }, 0) then
+		return true
+	end
+	local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
+	local sx, sy = clickable(x, y, z)
+	if not sx and along and cx then
+		for t = 0.9, 0.15, -0.075 do
+			local px, pz = cx + (x - cx) * t, cz + (z - cz) * t
+			sx, sy = clickable(px, Spring.GetGroundHeight(px, pz) or cy, pz)
+			if sx then
+				break
+			end
+		end
+	end
+	if not sx then
+		return false
+	end
+	Spring.SetActiveCommand(name)
+	if select(2, Spring.GetActiveCommand()) ~= cmdID then
+		return false
+	end
+	clickAt(sx, sy)
+	return true
+end
+
+local function dgunUpdate()
+	local d = dgun
+	local unitID = selectedCommander()
+	if unitID ~= d.unitID or Spring.GetUnitIsDead(d.unitID) ~= false
+		or Spring.GetUnitTeam(d.unitID) ~= Spring.GetMyTeamID() then
+		dgunExit("D-GUN OFF")
+		return
+	end
+	local ax, az = stickHeading(d.rx, d.ry, DGUN_AIM_DEADZONE)
+	if ax then
+		d.aimX, d.aimZ = ax, az
+	end
+	if not dgunTarget(d) then
+		dgunExit("D-GUN OFF")
+		return
+	end
+	local mx, mz = stickHeading(d.lx, d.ly, DGUN_MOVE_DEADZONE)
+	local t = now()
+	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY) then
+		d.moveAt = t
+		local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
+		local x = math.max(0, math.min(Game.mapSizeX, cx + mx * DGUN_MOVE_STEP))
+		local z = math.max(0, math.min(Game.mapSizeZ, cz + mz * DGUN_MOVE_STEP))
+		dgunOrder(CMD.MOVE, "move", x, Spring.GetGroundHeight(x, z) or cy, z, false)
+	end
+end
+
+local function dgunFire()
+	local d = dgun
+	if not d then
+		return
+	end
+	local t = now()
+	if d.fireAt and Spring.DiffTimers(t, d.fireAt) < DGUN_FIRE_EVERY then
+		return
+	end
+	d.fireAt = t
+	if dgunTarget(d) and dgunOrder(CMD.MANUALFIRE, "manualfire", d.x, d.y, d.z, true) then
+		note("D-GUN FIRED")
+	else
+		note("D-GUN: AIM ON THE SCREEN")
+	end
+end
+
+local function dgunDraw()
+	local d = dgun
+	local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
+	if not (cx and d.x) then
+		return
+	end
+	gl.DepthTest(false)
+	gl.LineWidth(1.5)
+	gl.Color(1, 0, 0, 0.25) -- (v0.8.5's: a faint range ring, the target in two rings, a line to it)
+	gl.DrawGroundCircle(cx, cy, cz, d.range, 64)
+	gl.LineWidth(2.5)
+	gl.Color(1, 0, 0, 0.8)
+	gl.DrawGroundCircle(d.x, d.y, d.z, 32, 24)
+	gl.DrawGroundCircle(d.x, d.y, d.z, 8, 12)
+	gl.BeginEnd(GL.LINE_STRIP, function()
+		gl.Vertex(cx, cy + 12, cz)
+		gl.Vertex(d.x, d.y + 2, d.z)
+	end)
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
+end
+
+-- The share list (Kailil, 2026-11-06: "a way to share selected units to another player quickly on gamepad ... LB +
+-- Double tap Up on dpad hold ... a toast that cycles through a list of my team mates and their respective colors
+-- represented by their names text being the color ... regular dpad then to cycle through the list up and down ... on
+-- the center of the screen semi transparent. Pressing A confirms the transfer. B CANCELS"): the selected units go to
+-- the teammate picked with BAR's own share (Spring.ShareResources, as its player list's: no order, so in every game).
+local share = nil -- { index, teams = { { teamID, name, color } } }
+local given = nil -- units just given: { units, teamID, at }; none of them there SHARE_CHECK_SECONDS later: refused
+local SHARE_CHECK_SECONDS = 1.5
+
+local function teammates()
+	local list = {}
+	local myTeam = Spring.GetMyTeamID()
+	for _, teamID in ipairs(Spring.GetTeamList(Spring.GetMyAllyTeamID()) or {}) do
+		local _, leader, isDead, isAI = Spring.GetTeamInfo(teamID, false)
+		if teamID ~= myTeam and not isDead then
+			local name
+			for _, playerID in ipairs(Spring.GetPlayerList(teamID, true) or {}) do
+				local pname, active, spectator = Spring.GetPlayerInfo(playerID, false)
+				if pname and active and not spectator then
+					name = name and (name .. ", " .. pname) or pname -- (a team of several players: all of them)
+				end
+			end
+			if not name and isAI then
+				local _, aiName = Spring.GetAIInfo(teamID)
+				name = aiName or ("AI " .. teamID)
+			end
+			if not name and leader and leader >= 0 then
+				name = Spring.GetPlayerInfo(leader, false) -- (gone from the game: still a team to give to)
+			end
+			if name then
+				local r, g, b = Spring.GetTeamColor(teamID)
+				list[#list + 1] = { teamID = teamID, name = name, color = { r or 1, g or 1, b or 1 } }
+			end
+		end
+	end
+	return list
+end
+
+local function shareOpen()
+	if Spring.GetSpectatingState() then
+		note("NOT WHILE SPECTATING")
+		return
+	end
+	if modal then
+		return
+	end
+	if Spring.GetSelectedUnitsCount() == 0 then
+		note("SELECT UNITS TO GIVE")
+		return
+	end
+	local teams = teammates()
+	if #teams == 0 then
+		note("NO TEAMMATES")
+		return
+	end
+	share = { index = 1, teams = teams }
+	modal = "share"
+end
+
+local function shareClose(text)
+	share, modal = nil, nil
+	if text then
+		note(text)
+	end
+end
+
+local function shareConfirm()
+	local s = share
+	local team = s and s.teams[s.index]
+	if not team then
+		shareClose()
+		return
+	end
+	local units = Spring.GetSelectedUnits()
+	if #units == 0 then
+		shareClose("SELECT UNITS TO GIVE")
+		return
+	end
+	Spring.ShareResources(team.teamID, "units")
+	given = { units = units, teamID = team.teamID, at = now() }
+	shareClose("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
+end
+
+-- (a game whose rules keep units from being given: BAR's unit sharing modoption)
+local function shareCheck()
+	if Spring.DiffTimers(now(), given.at) < SHARE_CHECK_SECONDS then
+		return
+	end
+	for _, unitID in ipairs(given.units) do
+		if Spring.GetUnitTeam(unitID) == given.teamID then
+			given = nil
+			return
+		end
+	end
+	given = nil
+	note("THIS GAME DOES NOT ALLOW GIVING UNITS", nil, 2.5)
+end
+
+local function shareDraw(vsx, vsy)
+	local s = share
+	local font = WG.fonts and WG.fonts.getFont()
+	if not font then
+		return
+	end
+	local size = style.size(0.022)
+	local rowH, pad = math.floor(size * 1.9), math.floor(size * 0.8)
+	local count = Spring.GetSelectedUnitsCount()
+	local title = "GIVE " .. count .. (count == 1 and " UNIT TO" or " UNITS TO")
+	local w = font:GetTextWidth(title) * size
+	for _, team in ipairs(s.teams) do
+		w = math.max(w, font:GetTextWidth(team.name) * size)
+	end
+	local key = math.floor(size * 1.2)
+	local hint = font:GetTextWidth("GIVE    CANCEL") * size * 0.8 + key * 2
+	w = math.ceil(math.max(w, hint)) + pad * 2
+	local h = rowH * (#s.teams + 2) + pad
+	local x0, y1 = math.floor(vsx / 2 - w / 2), math.floor(vsy / 2 + h / 2)
+	style.panel(x0, y1 - h, x0 + w, y1, 0.75) -- (semi-transparent: the battle shows through)
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.8)
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.9)
+	font:Print(title, x0 + pad, y1 - rowH + (rowH - size) / 2 + size * 0.14, size, "o")
+	for i, team in ipairs(s.teams) do
+		local c = team.color
+		font:SetTextColor(c[1], c[2], c[3], 1)
+		font:Print(team.name, x0 + pad, y1 - rowH * (i + 1) + (rowH - size) / 2 + size * 0.14, size, "o")
+	end
+	font:End()
+	local ry = y1 - rowH * (s.index + 1)
+	style.outline(x0 + pad * 0.4, ry + 2, x0 + w - pad * 0.4, ry + rowH - 2, style.GOLD, 0.9)
+	-- the keys: A gives, B cancels
+	local hy = y1 - h + pad * 0.5
+	local hs = size * 0.8
+	local hx = x0 + pad
+	style.key(hx, hy, key, "A", 0.95)
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.8)
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.85)
+	hx = hx + key + pad * 0.4
+	font:Print("GIVE", hx, hy + key / 2 - hs * 0.36, hs, "o")
+	hx = hx + font:GetTextWidth("GIVE") * hs + pad
+	font:End()
+	style.key(hx, hy, key, "B", 0.95)
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.8)
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.85)
+	font:Print("CANCEL", hx + key + pad * 0.4, hy + key / 2 - hs * 0.36, hs, "o")
+	font:End()
+	gl.Color(1, 1, 1, 1)
+end
+
 local ACTIONS = {
 	pad_build = function() -- RB
 		ordersEnd()
@@ -909,6 +1290,8 @@ local ACTIONS = {
 		if WG.BarDroidPadFP and WG.BarDroidPadFP.active() then -- (v0.8.5 has the pad now: nothing would drive the unit)
 			WG.BarDroidPadFP.stop()
 		end
+		dgunExit()
+		shareClose()
 		if not modV085 then
 			modV085 = true
 			ordersEnd()
@@ -996,13 +1379,13 @@ local ACTIONS = {
 		if #pings > 0 then
 			-- (Kailil, 2026-11-05: pressed again within PING_CYCLE_SECONDS, the next older of the last PINGS_KEPT,
 			-- round to the newest after the oldest; after a pause, the newest again)
-			local now = Spring.GetTimer()
-			if pingStepAt and Spring.DiffTimers(now, pingStepAt) <= PING_CYCLE_SECONDS then
+			local t = now()
+			if pingStepAt and Spring.DiffTimers(t, pingStepAt) <= PING_CYCLE_SECONDS then
 				pingStep = pingStep % #pings + 1
 			else
 				pingStep = 1
 			end
-			pingStepAt = now
+			pingStepAt = t
 			local p = pings[pingStep]
 			Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
 			note(#pings == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, #pings))
@@ -1054,16 +1437,36 @@ local ACTIONS = {
 	end,
 	queue_remove_first = function() queueRemove(false) end,
 	queue_remove_last = function() queueRemove(true) end,
-	dgun = function()
-		for _, unitID in ipairs(Spring.GetSelectedUnits()) do
-			local def = UnitDefs[Spring.GetUnitDefID(unitID)]
-			if def and def.customParams and def.customParams.iscommander then
-				Spring.SetActiveCommand("manualfire")
-				note("D-GUN: A")
-				return
-			end
+	dgun = dgunEnter, -- LB + RB + R3, or Back + R3 (v0.8.5's D-gun mode)
+	dgun_fire = dgunFire, -- RT in it
+	dgun_cancel = function() -- B in it
+		dgunExit("D-GUN OFF")
+	end,
+	share_open = shareOpen, -- LB + D-pad up tapped, then held
+	share_up = function()
+		if share then
+			share.index = (share.index - 2) % #share.teams + 1
 		end
-		note("SELECT THE COMMANDER")
+	end,
+	share_down = function()
+		if share then
+			share.index = share.index % #share.teams + 1
+		end
+	end,
+	voice_on = function() -- speak to chat (the app's VoiceChat: a three-finger double tap) is listening
+		note(VOICE_NOTE, nil, 15)
+	end,
+	voice_off = function() -- (done: what was said goes to chat, bardroid_chat.lua)
+		if toast == VOICE_NOTE then
+			toast = nil
+		end
+	end,
+	voice_none = function()
+		note("NO SPEECH RECOGNITION ON THIS PHONE", nil, 2.5)
+	end,
+	share_confirm = shareConfirm, -- A on the list
+	share_cancel = function() -- B on it
+		shareClose()
 	end,
 	mouse_toggle = function() -- Back + Start (the app keeps the same switch)
 		mouseMode = not mouseMode
@@ -1511,6 +1914,15 @@ function widget:Update(dt)
 	if area.on then
 		areaUpdate()
 	end
+	if dgun then
+		dgunUpdate()
+	end
+	if share and (Spring.GetSpectatingState() or Spring.GetSelectedUnitsCount() == 0) then
+		shareClose()
+	end
+	if given then
+		shareCheck()
+	end
 	local armed = armedKind()
 	if armed ~= "build" and WG.BarDroidPadSlowPan then -- (the slow pan is for placing only, as in v0.8.5)
 		WG.BarDroidPadSlowPan = nil
@@ -1519,14 +1931,18 @@ function widget:Update(dt)
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks .. "\n"
+		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
+		.. "\nmodal " .. (modal or "none") .. "\n"
+	if padClickAt then -- (the last click's point: the app clicks there, not in the middle)
+		text = text .. string.format("clickat %.4f %.4f\n", padClickAt[1], padClickAt[2])
+	end
 	local t = now()
 	lookAtOrders(t)
 	if not keysLookedAt or Spring.DiffTimers(t, keysLookedAt) > 10 then -- (a change of BAR's keyset drops the two keys)
 		keysLookedAt = t
 		bindQueueKeys()
 	end
-	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or text:find("fp 1", 1, true)
+	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or text:find("fp 1", 1, true) or modal
 	if text ~= written or (keep and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
@@ -1543,6 +1959,9 @@ end
 
 -- The area select's circle on the ground
 function widget:DrawWorld()
+	if dgun then
+		dgunDraw()
+	end
 	if area.on and area.x then
 		gl.DepthTest(false)
 		gl.LineWidth(2.5)
@@ -1570,7 +1989,7 @@ function widget:DrawScreen()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"
 	local riding = WG.BarDroidPadFP and WG.BarDroidPadFP.active() -- (first person has its own crosshair)
-	if pad and not riding and not modV085 and not orders and not buildFocus() and not freePointer() then
+	if pad and not riding and not dgun and not modV085 and not orders and not buildFocus() and not freePointer() then
 		-- (a white ring on a dark one: it reads over snow and over water alike)
 		local r = style.size(0.016)
 		for pass = 1, 2 do
@@ -1599,6 +2018,9 @@ function widget:DrawScreen()
 	end
 	queueLayout(vsx, vsy)
 	drawQueue()
+	if share then
+		shareDraw(vsx, vsy)
+	end
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
 		if age > toastFor then
@@ -1618,9 +2040,25 @@ function widget:Initialize()
 	controllerGame = (ok and found) or Game.gameVersion == "$VERSION"
 	modV085 = controllerGame
 	WG.BarDroidStyle = style -- (the app's build menu: its GRID note and its option on the pad in the same look)
+	WG.BarDroidPadDgun = { -- (bardroid_touch.lua hands the sticks to the D-gun mode)
+		active = function()
+			return dgun ~= nil
+		end,
+		sticks = function(lx, ly, rx, ry)
+			if dgun then
+				dgun.lx, dgun.ly, dgun.rx, dgun.ry = lx, ly, rx, ry
+			end
+		end,
+	}
 	WG.BarDroidPad = {
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
+		-- (tools/pad-test.ps1: the mode on, the D-gun's commander, aim and target; the share list's pick and length; the
+		-- last click's point)
+		modal = function()
+			return modal, dgun and dgun.unitID, dgun and dgun.aimX, dgun and dgun.aimZ, share and share.index,
+				share and #share.teams, padClickAt and padClickAt[1], padClickAt and padClickAt[2]
+		end,
 		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
 			addPing(x, y, z)
 		end,
@@ -1678,7 +2116,8 @@ function widget:Shutdown()
 		WG.info.clearCustomHover()
 	end
 	WG.BarDroidPad = nil
+	WG.BarDroidPadDgun = nil
 	WG.BarDroidStyle = nil
 	WG.BarDroidOwnsBuildMenu = nil
-	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\nqueue 0\n")
+	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\nqueue 0\nmodal none\n")
 end

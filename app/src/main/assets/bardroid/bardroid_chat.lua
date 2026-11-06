@@ -417,6 +417,8 @@ local function i18n(key, values, fallback)
 	return ok and type(s) == "string" and s ~= key and s or fallback
 end
 
+local deliver -- (below)
+
 local function send()
 	local text, mode = table.concat(typing.chars), typing.mode
 	lastMode = mode
@@ -427,6 +429,11 @@ local function send()
 	if sent[#sent] ~= text then
 		sent[#sent + 1] = text
 	end
+	deliver(text, mode)
+end
+
+-- A message to its channel: "/" a command, else BAR's word filter first (held back once), then sent
+function deliver(text, mode)
 	if text:sub(1, 1) == "/" then
 		local command = text:sub(2)
 		if (command == "hud" or command == "layout") and WG.BarDroidLayout then
@@ -608,6 +615,32 @@ local function hook()
 	end
 	Spring.Echo("[bardroid-chat] BAR's chat lines drawn by BAR Droid chat")
 	WG.bardroidChat = { -- (tools/touch-widget-test.ps1)
+		-- what was said for the chat (the app's VoiceChat, bardroid_touch.lua): sent as a message typed and sent with
+		-- Enter would be, to the channel Enter opens (the last one used, else allies; a spectator's: spectators), never
+		-- a command
+		voice = function(text)
+			text = text:gsub("^/+", ""):gsub("%s+", " ")
+			if not text:find("%S") then
+				return
+			end
+			local cut = text
+			if #text > MAX_BYTES then -- (BAR's length; never half a character at the end)
+				local next = text:byte(MAX_BYTES + 1)
+				cut = text:sub(1, MAX_BYTES)
+				if next >= 128 and next < 192 then -- (the cut is inside a character: that character goes)
+					cut = cut:gsub("[\128-\191]*[\192-\255]$", "")
+				end
+			end
+			local spec = Spring.GetSpectatingState()
+			local mode = lastMode or (spec and "s:" or "a:")
+			if spec and mode == "a:" then
+				mode = "s:"
+			end
+			if sent[#sent] ~= cut then
+				sent[#sent + 1] = cut
+			end
+			deliver(cut, mode)
+		end,
 		lines = function()
 			return #entries
 		end,

@@ -44,6 +44,10 @@ public final class PadGameTest {
         public boolean firstPerson() { return riding; }
         int clicks;
         public int clicks() { return clicks; }
+        float[] clickPoint;
+        public float[] clickAt() { return clickPoint; }
+        String modal = "none";
+        public String modal() { return modal; }
     }
 
     final Fake m = new Fake();
@@ -520,7 +524,7 @@ public final class PadGameTest {
                 && t.has("key " + KeyEvent.KEYCODE_NUMPAD_DIVIDE + " down") && t.has("key " + KeyEvent.KEYCODE_NUMPAD_DIVIDE + " up"), t.m.out);
         t.m.out.clear();
         t.tick(BACK); t.tap(RS); t.up(BACK);
-        check("Back + R3: the D-gun, no order removed", t.has("act dgun") && !t.has("act queue_remove_last"), t.m.out);
+        check("Back + R3: the D-gun mode, no order removed", t.has("act dgun") && !t.has("act queue_remove_last"), t.m.out);
         t.m.out.clear();
         t.tick(LB); t.tap(Y); t.tap(A); t.tap(X); t.up(LB);
         check("LB + Y / A / X: patrol, fight, attack (no clicks)", t.has("act lb_y") && t.has("act lb_a") && t.has("act lb_x")
@@ -529,6 +533,55 @@ public final class PadGameTest {
         t.tick(LB); t.tap(DPAD_RIGHT); t.tap(DPAD_LEFT); t.tap(DPAD_DOWN); t.up(LB);
         check("LB + D-pad: the other idle units, idle of the type (no builders, no commander)", t.has("act idle_mobile_next")
                 && t.has("act idle_mobile_prev") && t.has("act idle_type") && !t.has("act idle_next") && !t.has("act commander"), t.m.out);
+
+        // LB + RB + R3: v0.8.5's D-gun mode (Kailil, 2026-11-06); in it only RT (once a press) and B count
+        t.m.out.clear();
+        t.tick(LB); t.tick(RB); t.tap(RS); t.wait(300); t.up(RB); t.up(LB); t.wait(50);
+        check("LB + RB + R3: the D-gun mode, no order removed, no build menu, no Space", t.count("act dgun") == 1
+                && !t.has("act queue_remove_last") && !t.has("act pad_build") && !t.has("key " + KeyEvent.KEYCODE_SPACE + " down"), t.m.out);
+        t.m.out.clear();
+        t.tick(RB); t.tick(LB); t.tap(RS); t.up(LB); t.up(RB); t.wait(50);
+        check("RB + LB + R3 (the other order): the same", t.count("act dgun") == 1 && !t.has("act pad_build"), t.m.out);
+        t.m.modal = "dgun"; t.m.out.clear();
+        t.tap(A); t.tap(X); t.tap(Y); t.tap(DPAD_UP); t.tap(LS); t.tap(RS); t.tap(RB);
+        t.rt = true; t.tick(); t.tick(); t.tick(); t.rt = false; t.tick(); t.rt = true; t.tick(); t.rt = false; t.tick();
+        check("the D-gun mode: RT fires once a press; nothing else of the pad's, no Shift", t.count("act dgun_fire") == 2
+                && t.m.out.stream().filter(e -> e.startsWith("act ")).allMatch(e -> e.equals("act dgun_fire"))
+                && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down") && !t.has("left down"), t.m.out);
+        t.m.out.clear();
+        t.m.clickPoint = new float[] {0.25f, 0.75f}; t.m.clicks++; t.tick();
+        check("the D-gun mode: a click asked at a point goes there, and the pointer straight back", t.m.out.indexOf("moveTo 500 750") >= 0
+                && t.m.out.indexOf("left down") > t.m.out.indexOf("moveTo 500 750") && t.m.out.indexOf("left up") > t.m.out.indexOf("left down")
+                && t.m.out.lastIndexOf("centre") > t.m.out.indexOf("left up"), t.m.out);
+        t.m.out.clear();
+        t.tap(B);
+        check("the D-gun mode: B leaves it", t.has("act dgun_cancel") && !t.has("act cancel"), t.m.out);
+        t.m.modal = "none"; t.m.clickPoint = null; t.tick();
+        t.m.out.clear();
+        t.m.clicks++; t.tick();
+        check("a click asked with no point: in the middle, as before", t.has("centre") && t.has("left down") && !t.has("moveTo 500 750"), t.m.out);
+
+        // LB + D-pad up tapped, then pressed again and held: the share list; in it the D-pad picks, A gives, B cancels
+        t.m.out.clear();
+        t.tick(LB); t.tap(DPAD_UP); t.wait(100); t.tick(DPAD_UP); t.wait(400); t.up(DPAD_UP); t.up(LB);
+        check("LB + D-pad up double tapped and held: the share list, once", t.count("act share_open") == 1, t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(DPAD_UP); t.wait(100); t.tap(DPAD_UP); t.wait(400); t.up(LB);
+        check("... double tapped, not held: nothing", !t.has("act share_open"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tick(DPAD_UP); t.wait(500); t.up(DPAD_UP); t.up(LB);
+        check("... held once: nothing", !t.has("act share_open"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(DPAD_UP); t.wait(500); t.tick(DPAD_UP); t.wait(400); t.up(DPAD_UP); t.up(LB);
+        check("... the second press too late: nothing", !t.has("act share_open"), t.m.out);
+        t.m.modal = "share"; t.m.out.clear();
+        t.tap(DPAD_DOWN); t.tap(DPAD_DOWN); t.tap(DPAD_UP); t.tap(X); t.tap(RB); t.tap(A);
+        check("the share list: D-pad down / up pick, A gives, nothing else", t.count("act share_down") == 2
+                && t.count("act share_up") == 1 && t.has("act share_confirm") && !t.has("act pad_build") && !t.has("act bookmark_recall"), t.m.out);
+        t.m.out.clear();
+        t.tap(B);
+        check("the share list: B cancels", t.has("act share_cancel") && !t.has("act cancel"), t.m.out);
+        t.m.modal = "none"; t.tick();
 
         // Back + Start: a free pointer on the left stick, and back to the middle
         t.m.out.clear();

@@ -96,7 +96,12 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held
   finger makes a GRID ("grid start/by"; the file's "grid" corners: PLACE or a double tap replays BAR's build drag with
   Shift+Alt: the left button stays down from the GRID's start to PLACE, the engine draws and places it). `bardroid_pad.lua`'s
-  QUEUE button is a sticky Shift for fingers (`RtsTouch.applyQueue`). `bardroid_padspeed.lua`: the pad's drawing speed by
+  QUEUE button is a sticky Shift for fingers (`RtsTouch.applyQueue`). A three-finger double tap is speak to chat
+  (`VoiceChat`: Android's SpeechRecognizer, the words hex-encoded as a `voice` line to `bardroid_chat.lua`). The pad's
+  own modes (`bardroid_pad.lua`, "modal dgun|share" in bardroid_pad.txt): v0.8.5's D-gun mode and the share list;
+  a click at a point the game asks for ("clickat") is `PadGame.clickIfAsked`. The late-game resolution drop
+  (`Prefs.lateDrop`): `bardroid_touch.lua` writes `bardroid_scale.txt`, `GameActivity.updateRenderDrop` shrinks the
+  X screen (floor: half the full lines). `bardroid_padspeed.lua`: the pad's drawing speed by
   zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
   6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
@@ -150,7 +155,7 @@ newcomer's version of this section. APKs land in `apk\` beside the toolchain fol
 "Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
-powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online]   # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min; -Online: BAR's released game with user widgets' orders forbidden, as a host can
+powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online|-Dgun]   # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min; -Online: BAR's released game with user widgets' orders forbidden, as a host can; -Dgun: the same game, v0.8.5's D-gun mode (LB + RB + R3) through the app's clicks and the share list's chord
 powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|cover   # BAR's HUD at a Fold layout
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s

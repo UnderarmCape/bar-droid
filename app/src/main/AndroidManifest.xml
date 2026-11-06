@@ -13,6 +13,9 @@
     <!-- Android 16.1+ keyboard capture (KeyboardShortcuts): the system's shortcuts reach the focused game screen. A normal
          permission, granted at install; older Android does not know it. -->
     <uses-permission android:name="android.permission.CAPTURE_KEYBOARD" tools:ignore="ProtectedPermissions" />
+    <!-- Speak to chat (VoiceChat: a three-finger double tap): asked for the first time it is used -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <uses-feature android:name="android.hardware.touchscreen" android:required="false" />
     <uses-feature android:name="android.hardware.gamepad" android:required="false" />
@@ -21,6 +24,10 @@
     <queries>
         <intent>
             <action android:name="com.samsung.android.sm.ACTION_DASHBOARD" />
+        </intent>
+        <!-- the phone's speech recognition service (VoiceChat) -->
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
         </intent>
     </queries>
 

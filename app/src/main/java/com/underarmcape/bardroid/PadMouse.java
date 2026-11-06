@@ -28,4 +28,6 @@ interface PadMouse {
     float drawSpeed();                      // the pointer's speed while drawing, for the zoom (1: the speed at full zoom out)
     boolean firstPerson();                  // riding a unit (bardroid_padfp.lua, bardroid_pad.txt)
     int clicks();                           // clicks in the middle the game has asked for so far (bardroid_pad.txt)
+    float[] clickAt();                      // the last one's point if not the middle: x, y as fractions of the screen, or null
+    String modal();                         // the pad's own mode: "dgun", "share" or "none" (bardroid_pad.lua)
 }

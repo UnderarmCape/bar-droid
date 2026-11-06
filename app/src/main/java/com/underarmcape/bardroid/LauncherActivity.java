@@ -365,6 +365,7 @@ public class LauncherActivity extends AppCompatActivity {
                         : Prefs.renderScale == 0 ? R.id.rbRenderNative : R.id.rbRender100);
         ((CheckBox) findViewById(R.id.cbUpscale)).setChecked(Prefs.upscale);
         ((CheckBox) findViewById(R.id.cbUpscaleCompare)).setChecked(Prefs.upscaleCompare);
+        ((CheckBox) findViewById(R.id.cbLateDrop)).setChecked(Prefs.lateDrop);
         ((CheckBox) findViewById(R.id.cbLobbyBridge)).setChecked(Prefs.lobbyBridge);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
         ((CheckBox) findViewById(R.id.cbAutoUpdate)).setChecked(Prefs.autoUpdate);
@@ -406,6 +407,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.renderScale = res == R.id.rbRender85 ? 85 : res == R.id.rbRender70 ? 70 : res == R.id.rbRenderNative ? 0 : 100;
         Prefs.upscale = ((CheckBox) findViewById(R.id.cbUpscale)).isChecked();
         Prefs.upscaleCompare = ((CheckBox) findViewById(R.id.cbUpscaleCompare)).isChecked();
+        Prefs.lateDrop = ((CheckBox) findViewById(R.id.cbLateDrop)).isChecked();
         Prefs.lobbyBridge = ((CheckBox) findViewById(R.id.cbLobbyBridge)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();
         Prefs.autoUpdate = ((CheckBox) findViewById(R.id.cbAutoUpdate)).isChecked();

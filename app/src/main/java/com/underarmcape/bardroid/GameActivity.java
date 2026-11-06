@@ -58,6 +58,12 @@ public class GameActivity extends MainActivity {
         KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
         touch.setTripleTap(this::switchControllerMod);
+        voiceChat = new VoiceChat(this, new VoiceChat.Sink() {
+            @Override public void listening(boolean on) { touch.padAct(on ? "voice_on" : "voice_off"); }
+            @Override public void heard(String text) { touch.voice(text); }
+            @Override public void unavailable() { touch.padAct("voice_none"); }
+        });
+        touch.setVoiceChat(voiceChat::start);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
         pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
@@ -155,6 +161,8 @@ public class GameActivity extends MainActivity {
         @Override public float drawSpeed() { return touch.drawSpeed(); }
         @Override public boolean firstPerson() { return touch.firstPerson(); }
         @Override public int clicks() { return touch.clicks(); }
+        @Override public float[] clickAt() { return touch.clickAt(); }
+        @Override public String modal() { return touch.padModal(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });
         }
@@ -219,8 +227,17 @@ public class GameActivity extends MainActivity {
             getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
             pad.stop();
             touch.close();
+            voiceChat.close();
         }
         super.onDestroy();
+    }
+
+    private VoiceChat voiceChat;
+
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == VoiceChat.PERMISSION_REQUEST && voiceChat != null)
+            voiceChat.permissionResult(grantResults.length > 0 && grantResults[0] == android.content.pm.PackageManager.PERMISSION_GRANTED);
     }
 
     // Nobody sees the game while this screen is stopped (phone locked, another app in front; the floating window only
@@ -345,6 +362,7 @@ public class GameActivity extends MainActivity {
         @Override public void run() {
             updateCatchup();
             updateFreeMemory();
+            updateRenderDrop();
             catchupHandler.postDelayed(this, 500);
         }
     };
@@ -442,6 +460,41 @@ public class GameActivity extends MainActivity {
         if (catchupView == null) return;
         if (on) catchupView.setText(text);
         catchupView.setVisibility(on ? View.VISIBLE : View.GONE);
+    }
+
+    // The late-game drop (Prefs.lateDrop): bardroid_touch.lua writes LuaUI/Config/bardroid_scale.txt, "scale <percent>"
+    // of the render resolution's lines, when the frame rate stays low, and again every 10 s while it is under 100; the
+    // X screen shrinks to it (the same way a fold resizes it: the engine's window follows) and SGSR enlarges it. Never
+    // under half the full lines (Kailil, 2026-11-06). A file not written for RENDER_DROP_STALE_MS (the game ended, the
+    // widget gone) is full size again. Native resolution (no cap) has nothing to drop from.
+    private static final long RENDER_DROP_STALE_MS = 30000;
+    private static final int RENDER_DROP_FLOOR = 50;
+    private int renderDrop = 100;
+
+    private void updateRenderDrop() {
+        if (!Prefs.lateDrop || Prefs.renderScale == 0) return;
+        java.io.File f = new java.io.File(BarApp.get().paths().bar, "LuaUI/Config/bardroid_scale.txt");
+        int want = 100;
+        if (System.currentTimeMillis() - f.lastModified() < RENDER_DROP_STALE_MS) {   // (0 when there is no file)
+            try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
+                String line = r.readLine();
+                String[] v = line == null ? new String[0] : line.trim().split(" ");
+                if (v.length == 2 && v[0].equals("scale")) want = Integer.parseInt(v[1]);
+            } catch (java.io.IOException | RuntimeException e) {
+                return;   // (the file changing under the read: the next poll reads it again)
+            }
+        }
+        // (a render resolution already under the floor: no drop at all)
+        want = Math.max(Math.min(want, 100), Math.min(100, (RENDER_DROP_FLOOR * 100 + Prefs.renderScale - 1) / Prefs.renderScale));
+        if (want == renderDrop) return;
+        renderDrop = want;
+        float r = Prefs.renderScale / 100f * want / 100f;
+        LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
+        LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);
+        LorieView v = getLorieView();
+        if (v != null) v.triggerCallback();
+        Log.i("display", String.format(java.util.Locale.US, "late-game drop: the game drawn at %d%% of the render resolution (%d%% of the full lines)",
+                want, Math.round(r * 100)));
     }
 
     /** "about N min left": the gap shrinks by (speed - 1) game seconds a second (the live game runs on at 1x). */

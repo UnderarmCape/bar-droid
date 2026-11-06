@@ -8,7 +8,7 @@ globals = { "widget", "gadget", "WG" } -- WG: the table widgets share
 read_globals = {
 	"widgetHandler", "gadgetHandler", "Spring", "gl", "GL", "VFS", "UnitDefs", "UnitDefNames", "WeaponDefs",
 	"WeaponDefNames", "FeatureDefs", "Game", "CMD", "CMDTYPE", "Script", "BAR", "LOG", "Platform", "Engine",
-	"SendToUnsynced",
+	"SendToUnsynced", "tracy",
 }
 -- BAR's own Build and Order menus copied by tools/make-buildmenu.py and make-ordermenu.py (BAR's code and style; their
 -- changes are checked in a game)

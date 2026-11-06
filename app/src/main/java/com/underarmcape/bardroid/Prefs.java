@@ -106,6 +106,14 @@ public final class Prefs {
      * "upscaleCompareOn": the first key held the comparison's first default (on).
      */
     public static boolean upscaleCompare = false;
+    /**
+     * The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop. But make sure
+     * the dev phone is running the max snapdragon upscaling sharpness. Upscaling should be doing the heavy lifting"):
+     * when a game's frame rate stays under 27, bardroid_touch.lua asks for a lower resolution, a step at a time and only
+     * while each step helps, never under half the render resolution's lines (GameActivity.updateRenderDrop). Off by
+     * default: on for the dev phone's 30 fps target; on the Fold7 only with Kailil's say.
+     */
+    public static boolean lateDrop = false;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -162,6 +170,7 @@ public final class Prefs {
         lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
         upscale = s.getBoolean("upscale", upscale);
         upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
+        lateDrop = s.getBoolean("lateDrop", lateDrop);
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -196,6 +205,7 @@ public final class Prefs {
                 .putBoolean("upscale", upscale)
                 .remove("upscaleCompare")   // the comparison's first default (on), see upscaleCompare
                 .putBoolean("upscaleCompareOn", upscaleCompare)
+                .putBoolean("lateDrop", lateDrop)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

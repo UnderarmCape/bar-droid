@@ -43,7 +43,8 @@ import java.util.Locale;
  *   two fingers up/down  tilt the camera (both fingers moving up or down together, however they sit)
  *   two fingers held     (half a second, a buzz) then swiped: up = select all own units, down = deselect, left = stop,
  *                        right = fight (attack-move: the next tap places it)
- *   three-finger tap     show / hide the keyboard
+ *   three-finger tap     show / hide the keyboard (once it is clear no second tap follows)
+ *   three-finger double tap  speak to chat (VoiceChat: "SPEAK TO CHAT", the words sent; nothing said, nothing sent)
  *   three-finger swipe   up = overview of the whole map, down = the camera to the commander, selected (dead: the
  *                        constructor selected last; out of the overview too); left / right = previous / next idle builder
  *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
@@ -78,6 +79,7 @@ final class RtsTouch {
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
     private static final long TWO_HOLD_MS = 450;               // two fingers held still this long: the swipe menu
     private static final long THREE_HOLD_MS = 800;             // three fingers held still this long: the layout editor
+    private static final long THREE_DOUBLE_MS = 350;           // a second three-finger tap this soon: speak to chat
     // A second finger this soon after the first is one two-finger gesture even if the first already slid a little
     // (fingers never land together; the first one's slide used to lock the gesture into pan/zoom: no tilt)
     private static final long JOIN_MS = 250;
@@ -493,8 +495,18 @@ final class RtsTouch {
                     if (maxFingers == 2) {
                         press(downX, downY, InputStub.BUTTON_RIGHT, true);
                         press(downX, downY, InputStub.BUTTON_RIGHT, false);
-                    } else if (maxFingers == 3) {
-                        activity.toggleKeyboardVisibility();
+                    } else if (maxFingers == 3) {   // a tap the keyboard; two quick ones speak to chat (VoiceChat)
+                        long t = e.getEventTime();
+                        if (threeTapAt >= 0 && t - threeTapAt <= THREE_DOUBLE_MS && voiceChat != null) {
+                            ui.removeCallbacks(threeTapKeyboard);
+                            threeTapAt = -1;
+                            voiceChat.run();
+                        } else {
+                            threeTapAt = t;
+                            ui.removeCallbacks(threeTapKeyboard);
+                            if (voiceChat != null) ui.postDelayed(threeTapKeyboard, THREE_DOUBLE_MS);
+                            else activity.toggleKeyboardVisibility();
+                        }
                     }
                 }
                 break;
@@ -1104,6 +1116,21 @@ final class RtsTouch {
     /** What a third quick tap does in the controller game (GameActivity: switch the controller mod). */
     void setTripleTap(Runnable r) { tripleTap = r; }
 
+    private Runnable voiceChat;
+    private long threeTapAt = -1;   // a three-finger tap: the keyboard unless a second one follows within THREE_DOUBLE_MS
+    private final Runnable threeTapKeyboard = this::keyboardAfterTap;
+    private void keyboardAfterTap() { threeTapAt = -1; activity.toggleKeyboardVisibility(); }
+    /** What a three-finger double tap does (GameActivity: speak to chat, VoiceChat). */
+    void setVoiceChat(Runnable r) { voiceChat = r; }
+
+    /** Words said for the chat (VoiceChat): to bardroid_chat.lua, hex-encoded so no word can read as another line. */
+    void voice(String text) {
+        byte[] b = text.replace('\n', ' ').getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        StringBuilder hex = new StringBuilder(b.length * 2 + 6).append("voice ");
+        for (byte x : b) hex.append(Character.forDigit((x >> 4) & 15, 16)).append(Character.forDigit(x & 15, 16));
+        send(hex.toString());
+    }
+
     private final File gameFile = new File(widgetDir, "bardroid_game.txt");
     private volatile long gameFileAt = -1;
     private volatile boolean controllerGame;
@@ -1136,12 +1163,17 @@ final class RtsTouch {
         padAt = now;
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
-        String focus = "none", picked = "none";
+        String focus = "none", picked = "none", mode = "none";
         boolean before = false, queue = false, riding = false;
+        float[] at = null;
         if (text != null) {
             for (String line : text.split("\n")) {
                 String[] f = line.trim().split(" ");
+                if (f.length == 3 && f[0].equals("clickat")) {
+                    try { at = new float[] {Float.parseFloat(f[1]), Float.parseFloat(f[2])}; } catch (NumberFormatException e) { at = null; }
+                }
                 if (f.length != 2) continue;
+                if (f[0].equals("modal")) mode = f[1];
                 if (f[0].equals("focus")) focus = f[1];
                 if (f[0].equals("pregame")) before = f[1].equals("1");
                 if (f[0].equals("armed")) picked = f[1];
@@ -1158,6 +1190,8 @@ final class RtsTouch {
         padFocus = focus;
         pregame = before;
         armed = picked;
+        padModal = mode;
+        clickPoint = at;
         if (queue != queueWanted) {   // (the widget let go of it, the pad in use: no touch comes to look it up)
             queueWanted = queue;
             ui.post(applyQueue);
@@ -1173,6 +1207,12 @@ final class RtsTouch {
     private volatile int padClicks;
     /** Clicks in the middle the game has asked of the pad so far (bardroid_pad.lua: an order it could not give). Any thread. */
     int clicks() { padState(); return padClicks; }
+    private volatile float[] clickPoint;
+    /** Where the last click asked of the pad goes if not the middle: x, y as fractions of the screen, or null. Any thread. */
+    float[] clickAt() { padState(); return clickPoint; }
+    private volatile String padModal = "none";
+    /** The pad's own mode: "dgun" (v0.8.5's D-gun mode), "share" (the share list) or "none" (bardroid_pad.lua). Any thread. */
+    String padModal() { padState(); return padModal; }
     private volatile float drawSpeed = 1;
     /** The pointer's speed while drawing, for the camera's zoom (bardroid_padspeed.lua). Any thread. */
     float drawSpeed() { padState(); return drawSpeed; }

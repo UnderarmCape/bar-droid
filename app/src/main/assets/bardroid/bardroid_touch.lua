@@ -485,6 +485,17 @@ local function readTouch(lines)
 		pad.lx, pad.ly, pad.rx, pad.ry = tonumber(lx) or 0, tonumber(ly) or 0, tonumber(rx) or 0, tonumber(ry) or 0
 		pad.lt, pad.lb = tonumber(lt) or 0, lb == "1"
 	end
+	-- words said for the chat (the app's VoiceChat), hex-encoded UTF-8: to bardroid_chat.lua, as a message typed
+	for hex in lines:gmatch("voice (%x+)") do
+		local text = hex:gsub("%x%x", function(h)
+			return string.char(tonumber(h, 16))
+		end)
+		if WG.bardroidChat and WG.bardroidChat.voice then
+			WG.bardroidChat.voice(text)
+		elseif text:find("%S") then
+			Spring.SendAllyChat(text:sub(1, 127))
+		end
+	end
 	for name in lines:gmatch("act (%S+)") do
 		local action = ACTIONS[name]
 		if WG.BarDroidPadSpeed and WG.BarDroidPadSpeed.act(name) then -- luacheck: ignore 542 (the path speed tuner's)
@@ -633,6 +644,12 @@ local function applyPad(dt)
 		rider.sticks(stick(pad.lx), stick(pad.ly), stick(pad.rx), stick(pad.ry))
 		return
 	end
+	local dgun = WG.BarDroidPadDgun
+	if dgun and dgun.active() then -- (v0.8.5's D-gun mode: bardroid_pad.lua has the sticks, the camera stays)
+		dgun.sticks(stick(pad.lx), stick(pad.ly), stick(pad.rx), stick(pad.ry))
+		s.panX, s.panY, s.rotate, s.pitch, s.zoom = 0, 0, 0, 0, 0
+		return
+	end
 	if pad.lx == 0 and pad.ly == 0 and pad.rx == 0 and pad.ry == 0 and pad.lt == 0
 		and s.panX == 0 and s.panY == 0 and s.rotate == 0 and s.pitch == 0 and s.zoom == 0 and s.boost == 0 then
 		return -- the sticks rest: nothing to do
@@ -726,6 +743,97 @@ end
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
 local perSecond, secondStart, secondFrames = {}, nil, 0
 local catchup -- while catching up with a running game (below): the engine's own settings, where the last log line was
+
+-- The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ... Upscaling should
+-- be doing the heavy lifting"; the app's setting "Lower the resolution when the game slows down", Prefs.lateDrop): from
+-- game minute DROP_AFTER on, DROP_WINDOW seconds of drawn frames under DROP_BELOW a second ask the app for the next step
+-- down (SCALE: "scale <percent>" of the render resolution's lines; the app keeps half the full lines at least and
+-- shrinks the X screen as a fold does, SGSR enlarging it). A step stays only if the next DROP_WINDOW seconds (after
+-- DROP_SETTLE for the resize) are DROP_GAIN faster: else it goes back one step and the game keeps that (the GPU was not
+-- what held it back). A size the view does not take (the setting off) ends it for the game too.
+local SCALE = "LuaUI/Config/bardroid_scale.txt"
+local DROP_STEPS = { 100, 85, 70, 60, 50 }
+local DROP_AFTER, DROP_WINDOW, DROP_SETTLE, DROP_BELOW, DROP_GAIN, DROP_KEEP = 180, 20, 8, 27, 1, 10
+local drop = { step = 1, window = {}, at = nil, before = nil, view = nil, keptAt = nil, locked = false }
+
+local function dropWrite(t)
+	writeWhole(SCALE, "scale " .. DROP_STEPS[drop.step] .. "\n")
+	drop.keptAt = t
+end
+
+local function dropTo(step, t, why)
+	local vsx, vsy = Spring.GetViewGeometry()
+	drop.step, drop.at, drop.view = step, t, vsx * vsy
+	for i = #drop.window, 1, -1 do
+		drop.window[i] = nil
+	end
+	dropWrite(t)
+	Spring.Echo(string.format("[bardroid-perf] resolution %d%% (%s)", DROP_STEPS[step], why))
+end
+
+local function dropSecond(frames, t)
+	if not drop.started then -- (a new game starts at full size; a reload mid-game, as a fold makes, keeps the step)
+		drop.started = true
+		local f = Spring.GetGameFrame() > 300 and io.open(SCALE, "r")
+		local percent = f and tonumber((f:read("*l") or ""):match("^scale (%d+)$"))
+		if f then
+			f:close()
+		end
+		for i, p in ipairs(DROP_STEPS) do
+			if p == percent then
+				drop.step, drop.keptAt = i, t
+			end
+		end
+		if drop.step == 1 then
+			pcall(os.remove, SCALE)
+		end
+	end
+	if drop.locked then
+		return
+	end
+	if drop.step > 1 and spDiffTimers(t, drop.keptAt) >= DROP_KEEP then -- (the app's sign that it still holds)
+		dropWrite(t)
+	end
+	local _, _, paused = Spring.GetGameSpeed()
+	if paused or catchup or Spring.GetGameFrame() < DROP_AFTER * 30 then
+		return
+	end
+	if drop.at and spDiffTimers(t, drop.at) < DROP_SETTLE then
+		return
+	end
+	local w = drop.window
+	w[#w + 1] = frames
+	if #w > DROP_WINDOW then
+		table.remove(w, 1)
+	end
+	if #w < DROP_WINDOW then
+		return
+	end
+	local sum = 0
+	for i = 1, #w do
+		sum = sum + w[i]
+	end
+	local fps = sum / #w
+	if drop.before then -- (a step just made: kept only if it helped)
+		local vsx, vsy = Spring.GetViewGeometry()
+		if vsx * vsy == drop.view then
+			drop.locked = true
+			Spring.Echo("[bardroid-perf] resolution: the screen kept its size (the app's setting is off)")
+			pcall(os.remove, SCALE)
+			return
+		end
+		if fps < drop.before + DROP_GAIN then
+			drop.locked = true
+			dropTo(drop.step - 1, t, string.format("%.1f fps there against %.1f: no help, back and kept", fps, drop.before))
+			return
+		end
+		drop.before = nil
+	end
+	if fps < DROP_BELOW and drop.step < #DROP_STEPS then
+		drop.before = fps
+		dropTo(drop.step + 1, t, string.format("%.1f fps over %d s", fps, DROP_WINDOW))
+	end
+end
 local function logPerf()
 	local now = spGetTimer()
 	if perfLast and spDiffTimers(now, perfLast) > 5 then
@@ -749,6 +857,7 @@ local function logPerf()
 		secondStart = now
 	elseif spDiffTimers(now, secondStart) >= 1 then
 		perSecond[#perSecond + 1] = secondFrames
+		dropSecond(secondFrames / spDiffTimers(now, secondStart), now)
 		secondStart, secondFrames = now, 0
 	end
 	if not perfStart then
@@ -950,6 +1059,7 @@ end
 local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrapped for fingers (wrapTooltips)
 
 function widget:Shutdown()
+	WG.BarDroidOnInterface = nil
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
@@ -1068,6 +1178,11 @@ local function overBarInterface(mx, my)
 		barAnswer = overGameMenus(mx, my)
 	end
 	return barAnswer
+end
+
+-- (bardroid_pad.lua: a click the pad asks the app for at a point lands on the map, never on a panel; also the minimap)
+local function pointOnInterface(mx, my)
+	return overBarInterface(mx, my) ~= false or (Spring.IsAboveMiniMap ~= nil and Spring.IsAboveMiniMap(mx, my) == true)
 end
 
 -- Those windows take the wheel only over themselves (BAR's Settings: anywhere while open), and a wheel none took zooms
@@ -1235,6 +1350,7 @@ local function guarded(fn, ...)
 end
 
 function widget:Update(dt)
+	WG.BarDroidOnInterface = pointOnInterface
 	guarded(update, dt)
 end
 

@@ -56,12 +56,17 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   Start or Back + D-pad  control groups: up / down the slot, left tap selects the group, left held assigns every unit
  *                of the selection's types to it (and those to come), right tap the camera to it, right held clears it;
  *                Start + L3: clear the group
- *   L3 / R3      remove the next / the last queued order; Back + R3: D-gun; Back + R3 + L3 held: self-destruct
+ *   L3 / R3      remove the next / the last queued order; Back + R3 + L3 held: self-destruct
+ *   LB + RB + R3 (or v0.8.5's Back + R3) v0.8.5's D-gun mode on the selected commander (bardroid_pad.lua): the right
+ *                stick aims around it at the D-gun's range, the left stick walks it, RT fires once, B leaves; nothing
+ *                else counts meanwhile (Kailil, 2026-11-06)
+ *   LB + D-pad up tapped, then pressed again and held: the share list (the selected units to a teammate: D-pad up /
+ *                down picks, A gives, B cancels; nothing else counts meanwhile)
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
  *   Back + Y     the path speed tuner (bardroid_padspeed.lua): how fast the pointer draws at each zoom
  *   LB + L3 held first person on the selected unit (bardroid_padfp.lua): the sticks go to the widget (left walks, right
  *                looks), RT fires, B or the same chord ends it; the squad's orders: A follow me, X stop, Y fight, RB
- *                patrol, D-pad up add, down clear; Back the camera tuner (D-pad up / down the setting, left / right
+ *                patrol (riding the commander: its D-gun where the view points), D-pad up add, down clear; Back the camera tuner (D-pad up / down the setting, left / right
  *                less and more, A saves, B closes); nothing else while it lasts
  *   a building picked (v0.8.5's placement): A places it, X places it and keeps it, D-pad left/right turns it and
  *                up/down spaces a row, Back slows the pan, B puts it away; LB held: a grid ("GRID" shown; Shift+Alt:
@@ -81,6 +86,9 @@ final class PadGame {
     private static final long PATH_ARM_MS = 160;      // a path's order picked: this long later the game has it, its drag starts
     private static final long SELF_DESTRUCT_MS = 750; // Back + R3 + L3 held this long (v0.8.5's)
     private static final long FIRST_PERSON_MS = 300;  // LB + L3 held this long (Kailil, 2026-10-30)
+    // LB + D-pad up: a tap at most SHARE_TAP_MS, the second press within SHARE_DOUBLE_MS of it, held SHARE_HOLD_MS: the
+    // share list
+    private static final long SHARE_TAP_MS = 300, SHARE_DOUBLE_MS = 350, SHARE_HOLD_MS = 350;
     private static final long SHIFT_CLICK_MS = 100;   // a Shift click: Shift down this long before it and after (the engine reads the keys once a frame)
     private static final long AREA_REPEAT_AFTER_MS = 250, AREA_REPEAT_MS = 60;   // the D-pad held on the area select
     private static final float FILTER_STICK = 0.25f;  // the filter radial: the left stick this far picks a side
@@ -117,6 +125,8 @@ final class PadGame {
     private boolean drawFast;                      // the stick was moving as the drawing began: LT does not slow it
     private long areaRepeatAt = -1, selfDestructAt = -1, dgunAt = -1, fpDownAt = -1;
     private boolean selfDestructDone, fpDone, fpFiring, wasRiding;
+    private boolean wasModal, modalRt;             // the pad's own mode (bardroid_pad.lua); RT in it, as last seen
+    private long shareFirstAt = -1, shareTapAt = -1, shareDownAt = -1;   // LB + D-pad up: shareChord
     private long rbUpAt = -1;                      // RB + D-pad up: a tap the last ping, held a ping
     private boolean rbUpDone, rbDpad;              // ... held; RB is with the D-pad, not a modifier for a click
     private int seenClicks = -1;                   // the game's clicks done (bardroid_pad.lua: an order it could not give)
@@ -145,7 +155,8 @@ final class PadGame {
         if (alt) { alt = false; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, false); }
         java.util.Arrays.fill(prev, false);
         rbDownAt = startLeftAt = startRightAt = lbBDownAt = lbBTapAt = backDownAt = aDownAt = cancelAt = glideAt = xDownAt
-                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = rbUpAt = -1;
+                = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = rbUpAt
+                = shareFirstAt = shareTapAt = shareDownAt = -1;
         pathButton = -1;
         rbDpad = false;
         if (areaSelect) mouse.act("area_off");
@@ -201,6 +212,29 @@ final class PadGame {
         }
         fpFiring = false;
 
+        // The pad's own modes (bardroid_pad.lua): v0.8.5's D-gun mode (the sticks are its: the right aims, the left walks
+        // the commander; RT fires once, B leaves) and the share list (D-pad up / down picks, A gives, B cancels); only
+        // their buttons count meanwhile. The game may ask for a click at a point (an order a host keeps from widgets).
+        String modal = mouse.modal();
+        boolean inModal = !modal.equals("none");
+        if (inModal && !wasModal) { release(); modalRt = rt; }   // (RT held as it starts: no shot until pressed again)
+        wasModal = inModal;
+        if (inModal) {
+            if (modal.equals("dgun")) {
+                if (pressed(tapped, B)) mouse.act("dgun_cancel");
+                if (rt && !modalRt) mouse.act("dgun_fire");
+            } else {
+                if (pressed(tapped, DPAD_UP)) mouse.act("share_up");
+                if (pressed(tapped, DPAD_DOWN)) mouse.act("share_down");
+                if (pressed(tapped, A)) mouse.act("share_confirm");
+                if (pressed(tapped, B)) mouse.act("share_cancel");
+            }
+            modalRt = rt;
+            clickIfAsked(true);
+            System.arraycopy(held, 0, prev, 0, COUNT);
+            return;
+        }
+
         // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked
         // Shift+Alt (a grid: the engine lays out a build drag only with Shift), held on while its drag lasts
         boolean gridKeys = (lb && picked) || gridLatched;
@@ -220,8 +254,9 @@ final class PadGame {
             backUsed = true;
             mouse.act("mouse_toggle");   // (bardroid_pad.lua keeps the same switch: its reticle and note)
         }
-        // (the D-gun when R3 is let go: it may yet be the self-destruct chord)
+        // (the D-gun mode when R3 is let go: it may yet be the self-destruct chord); LB + RB + R3 at once (Kailil, 2026-11-06)
         if (back && pressed(tapped, RS)) { dgunAt = now; backUsed = true; }
+        if (!back && lb && held[RB] && pressed(tapped, RS)) { mouse.act("dgun"); rbDownAt = -1; rbUsed = true; }
         if (dgunAt >= 0 && released(held, tapped, RS)) { if (selfDestructAt < 0) mouse.act("dgun"); dgunAt = -1; }
         if (back && held[RS] && held[LS]) {
             if (selfDestructAt < 0) { selfDestructAt = now; selfDestructDone = false; backUsed = true; }
@@ -252,13 +287,7 @@ final class PadGame {
 
         boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb, lx, ly);
         paths(held, now);
-        int clicks = mouse.clicks();   // (a game that keeps widgets from giving orders: the order is picked, the click is here)
-        if (clicks > seenClicks && seenClicks >= 0 && reticle) {
-            centreNow();
-            mouse.button(true, true);
-            mouse.button(true, false);
-        }
-        seenClicks = clicks;
+        clickIfAsked(reticle);
 
         // The pointer: drawing (a mouse button held in the middle's place) the left stick moves it; else in the middle,
         // gliding back to it; free (a menu, Back+Start, before the start) the left stick moves it
@@ -506,6 +535,23 @@ final class PadGame {
         mouse.centre();
     }
 
+    /**
+     * A click the game asked for (a game that keeps widgets from giving orders: the order is picked, the click is here):
+     * in the middle, or at the point it named and the pointer straight back.
+     */
+    private void clickIfAsked(boolean allowed) {
+        int clicks = mouse.clicks();
+        if (clicks > seenClicks && seenClicks >= 0 && allowed) {
+            float[] at = mouse.clickAt();
+            if (at != null) mouse.moveTo(at[0] * mouse.width(), at[1] * mouse.height());
+            else centreNow();
+            mouse.button(true, true);
+            mouse.button(true, false);
+            if (at != null) centreNow();
+        }
+        seenClicks = clicks;
+    }
+
     private void glideFrom(float x, float y, long now) { gx = x; gy = y; glideAt = now; }
 
     /** One step of the glide back to the middle (ease-out over GLIDE_MS). */
@@ -554,9 +600,12 @@ final class PadGame {
             if (held[RB] && rbDownAt >= 0) {   // (Kailil, 2026-11-01)
                 if (pressed(tapped, DPAD_UP)) { rbUpAt = now; rbUpDone = false; }
                 dpad(tapped, null, "select_combat", null, "select_combat_screen");
-            } else if (lb) dpad(tapped, null, "idle_type", "idle_mobile_prev", "idle_mobile_next");
-            else dpad(tapped, lt ? "bookmark_store" : "bookmark_recall", "commander", "idle_prev", "idle_next");
+            } else if (lb) {
+                dpad(tapped, null, "idle_type", "idle_mobile_prev", "idle_mobile_next");
+                shareChord(held, tapped, now);
+            } else dpad(tapped, lt ? "bookmark_store" : "bookmark_recall", "commander", "idle_prev", "idle_next");
         }
+        if (!lb) shareFirstAt = shareTapAt = shareDownAt = -1;
         if (rbUpAt >= 0) {   // (also if RB lets go first)
             if (!rbUpDone && held[DPAD_UP] && now - rbUpAt >= ASSIGN_HOLD_MS) { rbUpDone = true; mouse.act("ping"); }
             if (released(held, tapped, DPAD_UP)) {
@@ -594,7 +643,27 @@ final class PadGame {
         }
         if (!start && !back) {
             if (pressed(tapped, LS) && !lb) queueKey(KeyEvent.KEYCODE_INSERT, "queue_remove_first");   // (LB + L3: first person)
-            if (pressed(tapped, RS)) queueKey(KeyEvent.KEYCODE_NUMPAD_DIVIDE, "queue_remove_last");
+            if (pressed(tapped, RS) && !(lb && held[RB])) queueKey(KeyEvent.KEYCODE_NUMPAD_DIVIDE, "queue_remove_last");   // (LB + RB + R3: the D-gun)
+        }
+    }
+
+    /**
+     * LB + D-pad up tapped, then pressed again and held: the share list (Kailil, 2026-11-06: "LB + Double tap Up on dpad
+     * hold"); a single tap or a second press let go early does nothing.
+     */
+    private void shareChord(boolean[] held, boolean[] tapped, long now) {
+        if (shareTapAt >= 0 && now - shareTapAt > SHARE_DOUBLE_MS) shareTapAt = -1;
+        if (pressed(tapped, DPAD_UP)) {
+            if (shareTapAt >= 0) { shareDownAt = now; shareTapAt = -1; }   // (the second press)
+            else shareFirstAt = now;
+        }
+        if (released(held, tapped, DPAD_UP)) {
+            if (shareFirstAt >= 0 && now - shareFirstAt <= SHARE_TAP_MS) shareTapAt = now;
+            shareFirstAt = shareDownAt = -1;
+        }
+        if (shareDownAt >= 0 && held[DPAD_UP] && now - shareDownAt >= SHARE_HOLD_MS) {
+            shareDownAt = -1;
+            mouse.act("share_open");
         }
     }
 
