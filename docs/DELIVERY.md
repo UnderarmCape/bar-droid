@@ -144,7 +144,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       refusal is followed by BAR's watchdog (30 s with the main thread stuck; either alone closes nothing), and the
       launcher says what happened in amber under "Ready" (not "error (137)", nor the low-memory note a killed engine
       would get). `tools/status-text-test`: 4 cases; dev phone: a scratch widget echoing the two lines (removed after):
-      the game closed at frame 210, the note shown.
+      the game closed at frame 210, the note shown. Checked on a real one too: the 05:46 hang's kept launcher.log holds
+      both kinds of line (13 of the driver's, then 21 of the watchdog's), so the app's reading of the engine's output
+      sees them, not only infolog.txt.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
