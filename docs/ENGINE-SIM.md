@@ -117,6 +117,15 @@ game until the replay and spectating stages below say it computes exactly what t
   damage). Asking for the next units' memory ahead of time instead (the same code in the same order) was measured
   on and off by turns in one run of the whole 8v8 replay: 1.114 against 1.133 ms over 2,500 units (-1.7 %), 0 desync
   warnings; too small to keep.
+- The main thread's wait at the end of parallel sections (2026-11-05 22:30, from the evening's late-8v8 runs with the
+  profiler, gcc-wfe2): `ThreadPool::AddTask` times a whole `for_mt` on the calling thread (its own share and the wait
+  after it), `ThreadPool::WaitFor` only its own share (`ExecuteLoop`). 23.6-25.8 % of real time against 19.6-20.6 %:
+  the main thread idles 4-5 % of real time, ~2 ms a drawn frame (8-10 % of the simulation), for the workers' last
+  pieces. Lead: the engine pins its workers to cores itself (`FindWorkerThreadCore`), but launch-bar.sh's
+  `widen_engine` gives every engine thread all CPUs every 3 s, so a worker can run its last piece on a little core
+  (A510, about a third of the X3's speed). Next: the 4 workers on the A715/A710 cores (cpus 3-6), the main thread free
+  to keep the X3, through a launch-bar.sh hook, measured by the alternating fast-forward (`ab-wfe2.ps1`'s way) and the
+  same timers.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
