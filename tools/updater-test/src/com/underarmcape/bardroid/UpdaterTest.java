@@ -104,6 +104,11 @@ public final class UpdaterTest {
         check("no update pending and a fast crash: nothing changes", r == Updater.Result.NONE
                 && "A".equals(s.getProperty("good.engine")) && s.getProperty("bad.0") == null && "A".equals(Prefs.engineVersion));
 
+        // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
+        check("game version: BAR's name without \"Beyond All Reason\"", "test-31836-b250a16".equals(Updater.gameRelease("Beyond All Reason test-31836-b250a16")));
+        check("  another name as it is", "Some Mod 1.2".equals(Updater.gameRelease("Some Mod 1.2")));
+        check("  none or empty: no line", Updater.gameRelease(null) == null && Updater.gameRelease(" ") == null);
+
         System.out.println(fails == 0 ? "ALL PASS" : fails + " FAILED");
         System.exit(fails == 0 ? 0 : 1);
     }

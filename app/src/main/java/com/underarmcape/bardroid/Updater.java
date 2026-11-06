@@ -115,6 +115,13 @@ public final class Updater {
         Prefs.engineUrl = ENGINE_RELEASES + ver + "/recoil_" + ver + "_" + ENGINE_ARCH + ".7z";
     }
 
+    /** A rapid name as the launcher shows it: "Beyond All Reason test-31836-b250a16" -> "test-31836-b250a16"; null for none. */
+    static String gameRelease(String name) {
+        if (name == null || name.trim().isEmpty()) return null;
+        String n = name.trim();
+        return n.startsWith("Beyond All Reason ") ? n.substring("Beyond All Reason ".length()).trim() : n;
+    }
+
     /** The end of summary()'s line about the Android layer's misses (LauncherActivity shows it as a warning). */
     static final String MISSES = " of the app's adjustments to BAR did not apply: see the log";
 
@@ -125,6 +132,9 @@ public final class Updater {
         StringBuilder sb = new StringBuilder();   // (the engine's version is in the lines above: only a fallback here)
         String good = s.getProperty("good.engine");
         if (good != null && !good.equals(Prefs.engineVersion)) sb.append("Falls back to engine ").append(good).append("\n");
+        // (BAR's release the last start played, what players compare for an online game; known after a start)
+        String release = gameRelease(s.getProperty("name." + Prefs.gameTag));
+        if (release != null) sb.append("Game version ").append(release).append("\n");
         sb.append("BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
         if (s.getProperty("check") != null) sb.append("\nLast check ").append(s.getProperty("check"));
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
@@ -194,6 +204,9 @@ public final class Updater {
         for (String t : tags) {
             String[] l = local(t);
             if (l != null) state.setProperty("launched." + t, l[0]); else state.remove("launched." + t);
+            // (its release's name for the launcher's status: "Beyond All Reason test-31836-b250a16"; read here, where the
+            // index is read anyway: 1.5 MB of it on the launcher's thread at every refresh would be too much)
+            if (l != null && !l[1].isEmpty()) state.setProperty("name." + t, l[1]); else state.remove("name." + t);
             snapshot(repo(t), launchedDir);
         }
         state.setProperty("tags", String.join(",", tags));

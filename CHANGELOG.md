@@ -133,7 +133,8 @@ The first version meant for other people's phones: everything since the first bu
 - **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
   Benchmark show their result in the launcher, and a game that fails to start says so there. The launcher's
   settings show their name first, what they do smaller under it (its text fields and option groups too: the map
-  says it is Play vs AI's); its warnings stand in amber.
+  says it is Play vs AI's); its warnings stand in amber. It shows BAR's game version the last start played
+  ("Game version test-31836-b250a16"), the one to compare with friends before an online game.
 - A skirmish's first seconds no longer stutter at 2-5 fps (BAR's cursors load with the game), and a game takes about
   400 MB less graphics memory (BAR's unit picture cache off).
 - Interface pictures in black stripes (the build menu's, the idle builders button's) should be gone: the GPU's

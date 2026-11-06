@@ -134,6 +134,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       20% busy); all three in replays, none in the day's skirmishes and online games. The report is drafted in
       `docs/research/mesa-kgsl-submit-deadlock.md` (setup, the three times, the questions) for Kailil to post or not;
       `tools/engine-sim/replay-memory.ps1` (engine branch) now ends a run at the watchdog's line.
+      A fourth, the first in a skirmish: 2026-11-05 19:52, `pad-test.ps1 -Online` (BAR's game, frame 741, a minute in,
+      the virtual pad just giving orders), the same Mesa lines, then the watchdog; the test said "did not finish". The
+      first with UBWC off (launch-bar.sh's new default, ~10 starts since 18:56); before, 1 in the 68 run logs kept
+      since 2026-11-01. Too few to tell whether UBWC off makes it likelier: count it. The same test right after: ALL PASS.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
