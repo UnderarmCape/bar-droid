@@ -235,6 +235,14 @@ game until the replay and spectating stages below say it computes exactly what t
   The target set against the Fold7's set at 50 % without the profiler (10:45-11:24, ABBA; one Fold7-set run lost to
   the low-memory killer at load): target 20.5 (x0.91) and 23.5, Fold7's 21.4. Single runs swing +-2 fps with the
   heat, more than these cuts add together (~4 % by the timers): fps runs cannot show them; the timers did, one by one.
+- **The app as a game** (Kailil, 2026-11-06: "Is there any way to get our game to run in gane mode on the phone so
+  game boost is on"): the app's manifest says `android:appCategory="game"` with a game mode config (performance and
+  battery offered, Android's downscaling and frame rate override off); Android's game manager then lists standard,
+  performance, battery and custom for it (`cmd game list-modes`; One UI's Game Booster and Gaming Hub see a game).
+  Android's performance game mode against standard on the dev phone, the target set (11:25-12:15, ABBA, `cmd game
+  mode`): **performance 25.6 and 25.1 fps** (x1.00 throughout), standard 22.5 (one dip to x0.58) and 24.4. The same
+  clock caps in the minute's `[perf]` lines; the gain is the scheduler's (game mode hints), +1 to +2 fps. Kept on the
+  dev phone; the target set with it: ~25 fps late 8v8 hot.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
