@@ -216,6 +216,13 @@ game until the replay and spectating stages below say it computes exactly what t
   ptrace stops), only every 30 updates (each update reads on from where the last ended). Re-timed (10:01): **0.2 %**,
   the camera's 1.6 % back on the main thread; 23.4 fps x1.00 with the profiler on (touch-phone-test ALL PASS). The
   app's own widgets left: BAR Droid chat's DrawScreen 0.3-0.4, the builder queue 0.2.
+  BAR's Sensor Ranges LOS draws its stencil in DrawGenesis every frame whatever its opacity (only its DrawWorld looks at
+  it): at the opacity 0 the app's `bardroid_sensors.lua` sets in big games it still cost 0.9-1.4 %. As one of the
+  game's widgets (the engine branch) that widget now asks for and gets the real widget handler and switches BAR's three
+  range widgets off whole in a big game (noted, on again in the next smaller one; BAR's engine: opacity 0 as before).
+  Re-timed (10:20): the three removed, none of them in the timers; 22.0 fps x1.00 with the profiler on. The costliest
+  widget is now BAR's Defense Range GL4, 1.5-1.6 + 0.5 % (defence ranges, a gameplay aid: left on), then GUI Sound
+  Effects 0.9, Fire & Smoke GL4 0.8-0.9, GUI Shader 0.8, Health Bars GL4 0.6-0.7.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
