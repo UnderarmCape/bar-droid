@@ -223,6 +223,15 @@ game until the replay and spectating stages below say it computes exactly what t
   Re-timed (10:20): the three removed, none of them in the timers; 22.0 fps x1.00 with the profiler on. The costliest
   widget is now BAR's Defense Range GL4, 1.5-1.6 + 0.5 % (defence ranges, a gameplay aid: left on), then GUI Sound
   Effects 0.9, Fire & Smoke GL4 0.8-0.9, GUI Shader 0.8, Health Bars GL4 0.6-0.7.
+  Of those, visual only: Fire & Smoke GL4's unsynced half (`BarDroidUnsyncedGadgetsOff = gfx_fire_smoke_gl4.lua`: no
+  fire and smoke on burning units and wrecks) and GUI Shader (the interface's blur behind its panels; `widget_order
+  "GUI Shader" 0` from dev-env.sh). With both off (10:39): neither loaded, both gone from the timers (-1.7 %), 22.1 fps
+  x1.00 with the profiler on against 22.0 (single runs cannot show 0.4 fps). Kept in the dev phone's target set
+  (Kailil, 2026-11-04: anything visual for 8v8 there), not for players without his say. GUI Sound Effects player is
+  BAR's unit voices and selection sounds (an unsynced gadget, its GameFrame 0.9 %): audio feedback, left on.
+  The target set now: the Fold7's set, render scale 50 % (SGSR), `MaxDrawnParticles = 300`, these two off, BAR's
+  range widgets off whole; ~24 fps late 8v8 on the hot dev phone without the profiler. 30 needs about 20 % more of
+  both the main thread and the capped GPU.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
