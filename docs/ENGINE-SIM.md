@@ -232,6 +232,9 @@ game until the replay and spectating stages below say it computes exactly what t
   The target set now: the Fold7's set, render scale 50 % (SGSR), `MaxDrawnParticles = 300`, these two off, BAR's
   range widgets off whole; ~24 fps late 8v8 on the hot dev phone without the profiler. 30 needs about 20 % more of
   both the main thread and the capped GPU.
+  The target set against the Fold7's set at 50 % without the profiler (10:45-11:24, ABBA; one Fold7-set run lost to
+  the low-memory killer at load): target 20.5 (x0.91) and 23.5, Fold7's 21.4. Single runs swing +-2 fps with the
+  heat, more than these cuts add together (~4 % by the timers): fps runs cannot show them; the timers did, one by one.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
