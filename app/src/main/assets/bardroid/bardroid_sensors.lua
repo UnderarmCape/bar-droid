@@ -11,6 +11,10 @@
 -- LuaUI/Config/bardroid_sensors.txt while they are hidden, and the next smaller game puts them back, the file kept
 -- until that game ends cleanly (the jammer setting is put back when the game ends, or at the next start after a
 -- crash). Installed into LuaUI/Widgets by the app.
+-- Loaded as one of the game's widgets (an engine-branch build: launch-bar.sh's BARDROID_GAME_WIDGETS) it holds the real
+-- widget handler, and switches the three off whole instead: at opacity 0 the line of sight's still draws its stencil
+-- every frame (0.9-1.4 % of a late 8v8's real time on the dev phone, 2026-11-06). Those it switched off are noted in
+-- the same file ("<api>Off 1") and switched on again by the next smaller game.
 
 function widget:GetInfo()
 	return {
@@ -20,15 +24,23 @@ function widget:GetInfo()
 		license = "GPL-3.0-or-later",
 		layer = 0,
 		enabled = true,
+		handler = true, -- (granted to the game's own widgets only: then the range widgets can be switched off whole)
 	}
 end
 
 local BIG_GAME_TEAMS = 10
 local SAVED = "LuaUI/Config/bardroid_sensors.txt"
 local APIS = { "sonarrange", "radarrange", "losrange" } -- BAR's WG names (gui_sensor_ranges_*.lua)
+local WIDGETS = { sonarrange = "Sensor Ranges Sonar", radarrange = "Sensor Ranges Radar", losrange = "Sensor Ranges LOS" }
 local OFF = 0.01 -- (BAR's widgets draw nothing at this or less)
 local JAMMER = "JammerPreviewAlwaysShow" -- (an engine setting BAR's jammer preview reads every few seconds)
 local jammerOff, restored
+
+-- the real widget handler, if this widget was given it (a game widget's); a user widget's stand-in does not count
+local function realHandler()
+	local h = rawget(widget, "widgetHandler")
+	return type(h) == "table" and type(h.knownWidgets) == "table" and h.DisableWidget and h.EnableWidget and h or nil
+end
 
 local function readSaved()
 	local saved = {}
@@ -90,6 +102,14 @@ function widget:Update()
 		end
 	end
 	local big, teams = bigGame()
+	local handler = realHandler()
+	if saved and handler and not big then -- (switched off whole by a big game before: on again)
+		for _, api in ipairs(APIS) do
+			if saved[api .. "Off"] then
+				handler:EnableWidget(WIDGETS[api])
+			end
+		end
+	end
 	if not big then
 		if saved then
 			-- (the file goes when this game ends cleanly, when BAR saves the values put back: a crash before that
@@ -102,7 +122,13 @@ function widget:Update()
 	local values, hidden = {}, {}
 	for _, api in ipairs(APIS) do
 		local w = WG[api]
-		if w and w.getOpacity() > OFF then
+		local known = handler and handler.knownWidgets[WIDGETS[api]]
+		if saved and saved[api .. "Off"] and not (known and known.active) then
+			values[api .. "Off"] = 1 -- (still off from the big game before: kept noted)
+		elseif known and known.active then
+			values[api .. "Off"] = 1 -- (switched off whole, below)
+			hidden[#hidden + 1] = api
+		elseif w and w.getOpacity() > OFF then
 			values[api] = w.getOpacity()
 			hidden[#hidden + 1] = api
 		end
@@ -114,7 +140,9 @@ function widget:Update()
 	-- (hidden only when the values are kept, else BAR would save them as 0 for good)
 	if #hidden > 0 and writeSaved(values) then
 		for _, api in ipairs(APIS) do
-			if values[api] then
+			if values[api .. "Off"] and handler then
+				handler:DisableWidget(WIDGETS[api])
+			elseif values[api] then
 				WG[api].setOpacity(0)
 			end
 		end
