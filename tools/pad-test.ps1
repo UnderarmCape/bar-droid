@@ -48,9 +48,8 @@ try {
   $until = (Get-Date).AddMinutes(5)
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] ready' 1)) { Start-Sleep 3 }
   if (-not (Log '\[padtest\] ready' 1)) { throw "the game did not get to frame 300 in 5 minutes" }
-  # (a triple tap: the app's controls in the controller game; then the pad, which plays its script and goes)
-  if ($Online) { & $adb shell "uinput $evemu" }   # (BAR's game: the app's controls from the start)
-  else { & $adb shell "input tap 1500 400; input tap 1500 400; input tap 1500 400; sleep 3; uinput $evemu" }
+  # (the pad, which plays its script and goes; BAR's game in skirmish too since v0.8.5's game went, 2026-11-06)
+  & $adb shell "uinput $evemu"
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }

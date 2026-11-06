@@ -78,9 +78,8 @@ The first version meant for other people's phones: everything since the first bu
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
 
 **Controllers, mouse and keyboard**
-- Gamepads: BAR Controller Support (v0.8.5) as the singleplayer game; a mouse in the lobby, where Start switches its
-  size between 100% and 130%; in BAR's own game
-  (online, spectating) v0.8.5's controls rebuilt from a mouse and keyboard: the pointer in the middle of the screen,
+- Gamepads: a mouse in the lobby, where Start switches its size between 100% and 130%; in every game (skirmish,
+  online, spectating) BAR Controller Support v0.8.5's controls rebuilt from a mouse and keyboard: the pointer in the middle of the screen,
   the left stick pans, the right stick turns and zooms, A selects and places, X is the smart order, B cancels; RB and
   Back + RB put the build and order menus on the pad (the D-pad steps, the option on the pad highlighted, the
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
@@ -88,9 +87,10 @@ The first version meant for other people's phones: everything since the first bu
   walks it, RT fires, B leaves; riding the commander in first person RB fires the D-gun); LB + D-pad up tapped, then
   held: the share list (the selected units to a teammate, names in their colours; D-pad picks, A gives, B cancels);
   v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
-  path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle. In
-  the controller game a triple tap switches between v0.8.5 and these controls (with them the app's build menu:
-  once the pad is used it shows only when RB opens it, until three taps on the screen or the pad goes away). RB + D-pad:
+  path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle; once
+  the pad is used the app's build menu shows only when RB opens it, until three taps on the screen or the pad goes
+  away. Skirmish plays BAR's own game with these controls too (Kailil, 2026-11-06: the v0.8.5 game and its triple-tap
+  switch are gone). In the lobby the D-pad puts the pointer on the next control that way, ringed in gold. RB + D-pad:
   up held a ping in the middle, up tapped the camera to the last ping from another player (tapped again within 2 s
   the one before it, back through the last 5 and round again; after a pause the newest again), down every combat
   unit, right those on the screen. All of it works online, also where a lobby forbids widgets that give units orders;

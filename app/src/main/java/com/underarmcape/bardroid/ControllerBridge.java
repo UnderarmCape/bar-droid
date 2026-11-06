@@ -66,6 +66,9 @@ public final class ControllerBridge {
     // pointer and key state, pump thread only
     private int mode = MODE_OFF;
     private boolean leftDown, rightDown;
+    private static final long LOBBY_RB_TAPS_MS = 350;   // the lobby: RB's taps with LB held, the next within this
+    private int lobbyRbTaps;
+    private long lobbyRbAt;
     private long mouseCheckAt, lastMouseTick;
     private float fracX, fracY, scrollAcc;
     // presses shorter than a pump tick still count (main thread sets, pump thread clears; guarded by this)
@@ -305,6 +308,19 @@ public final class ControllerBridge {
         if (tapped[BTN_START]) {   // the lobby's scale, 100% and 130% (bardroid_lobby_touch.lua catches the key)
             mouse.key(KeyEvent.KEYCODE_SCROLL_LOCK, true);
             mouse.key(KeyEvent.KEYCODE_SCROLL_LOCK, false);
+        }
+        // The D-pad from control to control (bardroid_lobby_touch.lua puts the pointer on the next one that way: A clicks
+        // it; Kailil, 2026-11-06: "allow dpad menu navigation via selection in the lobby"); while speak to chat listens,
+        // left / right its target. LB held + RB twice: speak to chat, as in the game.
+        boolean listening = mouse.voiceListening();
+        if (tapped[BTN_DPAD_UP]) mouse.act("lobby_nav_up");
+        if (tapped[BTN_DPAD_DOWN]) mouse.act("lobby_nav_down");
+        if (tapped[BTN_DPAD_LEFT]) mouse.act(listening ? "voice_channel_prev" : "lobby_nav_left");
+        if (tapped[BTN_DPAD_RIGHT]) mouse.act(listening ? "voice_channel_next" : "lobby_nav_right");
+        if (held[BTN_LB] && tapped[BTN_RB]) {
+            lobbyRbTaps = now - lobbyRbAt <= LOBBY_RB_TAPS_MS ? lobbyRbTaps + 1 : 1;
+            lobbyRbAt = now;
+            if (lobbyRbTaps == 2) mouse.voice(false);
         }
         boolean a = held[BTN_A], b = held[BTN_B];
         if ((a || tapped[BTN_A]) && !leftDown) { leftDown = true; mouse.button(true, true); }

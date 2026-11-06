@@ -519,6 +519,344 @@ function widget:MouseRelease(x, y)
 	return true
 end
 
+--------------------------------------------------------------------------------
+-- The app's lines in the lobby (RtsTouch's touch log, the one the game's widget reads; Kailil, 2026-11-06: "I want the
+-- text chat stuff working in lobby too", "allow dpad menu navigation via selection in the lobby"):
+--   speak to chat (a three-finger tap; the pad's LB held + RB twice): the words go to the server room's chat while one
+--     is joined, else to the chat tab open; while it listens D-pad left / right or a sideways swipe step through them
+--     (the room first, then each tab), a note at the top saying where
+--   the pad's D-pad: the pointer onto the nearest control that way (a button, a tab, a list's row, a box), ringed in
+--     gold; A clicks it as always. Only what is not covered (a dialog in front keeps the D-pad on itself); in a list
+--     the D-pad scrolls on past its last row in sight. The left stick or a finger moving the pointer away lets go.
+
+local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
+local logFile, logPos
+
+-- the log's new whole lines since the last call (none the first time: what came before is not replayed)
+local function appLines()
+	if not logFile then
+		logFile = io.open(TOUCH_LOG, "r")
+		logPos = logFile and logFile:seek("end")
+		return nil
+	end
+	local size = logFile:seek("end")
+	if not size then
+		logFile:close()
+		logFile = nil
+		return nil
+	end
+	if size < logPos then
+		logPos = 0 -- (the app began the log anew)
+	end
+	if size == logPos then
+		return nil
+	end
+	logFile:seek("set", logPos)
+	local text = logFile:read(size - logPos) or ""
+	local last = text:match(".*()\n")
+	if not last then
+		return nil
+	end
+	logPos = logPos + last
+	return text:sub(1, last)
+end
+
+local GOLD = { 1, 0.78, 0.25, 1 }
+
+-- Speak to chat
+
+local voiceOn, voiceTarget = false, nil -- listening; the target picked, by name (kept for the lobby's session)
+local voicePanel, voiceLabel
+
+local function voiceTargets()
+	local targets = {}
+	local lobby = WG.LibLobby and WG.LibLobby.lobby
+	if lobby and lobby.myBattleID then
+		targets[#targets + 1] = { name = "SERVER ROOM", send = function(text) lobby:SayBattle(text) end }
+	end
+	local root = WG.Chobby and WG.Chobby.interfaceRoot
+	local chat = root and root.GetChatWindow and root.GetChatWindow()
+	local tabBar = chat and chat.tabPanel and chat.tabPanel.tabBar
+	for i, child in ipairs(tabBar and tabBar.children or {}) do
+		local console = chat.tabbars and chat.tabbars[child.name]
+		if console and console.listener then
+			local user = child.name:match("^(.-) messages$")
+			targets[#targets + 1] = { name = user and ("@" .. user) or ("#" .. child.name), tab = child.name,
+				open = tabBar.selected == i, send = console.listener }
+		end
+	end
+	return targets
+end
+
+-- the target now: the one picked if it is still there, else the server room, else the open tab, else the first
+local function voiceCurrent(targets)
+	for _, t in ipairs(targets) do
+		if t.name == voiceTarget then
+			return t
+		end
+	end
+	if targets[1] and targets[1].name == "SERVER ROOM" then
+		return targets[1]
+	end
+	for _, t in ipairs(targets) do
+		if t.open then
+			return t
+		end
+	end
+	return targets[1]
+end
+
+local function voiceShow()
+	if not voicePanel then
+		local config = WG.Chobby and WG.Chobby.Configuration
+		voicePanel = Chili.Window:New({
+			name = "bardroidLobbyVoice",
+			parent = screen0,
+			x = 0, y = 8, width = 100, height = 56,
+			resizable = false, draggable = false,
+			padding = { 0, 0, 0, 0 },
+		})
+		voiceLabel = Chili.Label:New({
+			parent = voicePanel,
+			x = 0, y = 0, right = 0, bottom = 0,
+			align = "center", valign = "center",
+			caption = "",
+			objectOverrideFont = config and config:GetFont(3),
+		})
+	end
+	local target = voiceCurrent(voiceTargets())
+	voiceLabel:SetCaption(target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
+		or "SPEAK TO CHAT: JOIN A SERVER OR OPEN THE CHAT")
+	local w = math.min(screen0.width - 16, 640)
+	voicePanel:SetPos(math.floor((screen0.width - w) / 2), 8, w, 56)
+	voicePanel:Show()
+	voicePanel:BringToFront()
+end
+
+local function voiceStep(by)
+	local targets = voiceTargets()
+	local now = voiceCurrent(targets)
+	if not now then
+		return
+	end
+	local at = 1
+	for i, t in ipairs(targets) do
+		if t == now then
+			at = i
+		end
+	end
+	local nextOne = targets[(at - 1 + by) % #targets + 1]
+	voiceTarget = nextOne.name
+	if nextOne.tab then -- (its tab shown: where the words will be)
+		local root = WG.Chobby and WG.Chobby.interfaceRoot
+		local chat = root and root.GetChatWindow and root.GetChatWindow()
+		pcall(function() chat.tabPanel.tabBar:Select(nextOne.tab) end)
+	end
+	voiceShow()
+end
+
+local function voiceSay(text)
+	text = text:gsub("%s+", " "):gsub("^ ", "")
+	local target = voiceCurrent(voiceTargets())
+	if target and text:find("%S") then
+		pcall(target.send, text)
+	end
+end
+
+-- The D-pad from control to control
+
+local FOCUS_CLASSES = { "button", "checkbox", "tabbaritem", "combobox", "editbox", "trackbar" }
+local DIRECTIONS = { up = { 0, -1 }, down = { 0, 1 }, left = { -1, 0 }, right = { 1, 0 } }
+local focus, focusRing, focusAt -- the control the D-pad put the pointer on, its ring, where the pointer went (mouse pixels)
+
+local function focusable(obj)
+	if obj.OnClick and #obj.OnClick > 0 then
+		return true
+	end
+	for _, c in ipairs(FOCUS_CLASSES) do
+		if obj.InheritsFrom and obj:InheritsFrom(c) then
+			return true
+		end
+	end
+	return false
+end
+
+-- every focusable control in sight: { obj, x0, y0, x1, y1 } in the screen's own coordinates, cut to the lists they sit in
+local function collect(obj, clip, out)
+	obj = real(obj)
+	if not obj or obj.hidden or obj.visible == false or not obj.LocalToScreen or obj == real(focusRing) then
+		return
+	end
+	local x, y = obj:LocalToScreen(0, 0)
+	local r = { math.max(x, clip[1]), math.max(y, clip[2]), math.min(x + (obj.width or 0), clip[3]),
+		math.min(y + (obj.height or 0), clip[4]) }
+	if r[3] - r[1] < 6 or r[4] - r[2] < 6 then
+		return
+	end
+	if obj ~= real(screen0) and focusable(obj) then
+		out[#out + 1] = { obj = obj, r = r }
+		return -- (a button's children are its caption and picture)
+	end
+	local inner = overflows(obj) and r or clip
+	for _, child in ipairs(obj.children or {}) do
+		collect(child, inner, out)
+	end
+end
+
+-- not covered: the screen's own hit test at its middle lands on it (or inside it)
+local function onTop(c)
+	local cx, cy = (c.r[1] + c.r[3]) / 2, (c.r[2] + c.r[4]) / 2
+	local hit = screen0:HitTest(cx, cy)
+	hit = real(hit)
+	while hit do
+		if hit == c.obj then
+			return true
+		end
+		hit = real(hit.parent)
+	end
+	return false
+end
+
+local function pointerToChili()
+	local mx, my = Spring.GetMouseState()
+	local _, _, hx, hy = chiliPoint(mx, my)
+	return hx, hy
+end
+
+local function focusRect()
+	local obj = focus and real(focus)
+	if not obj or obj.disposed or not obj.parent or not obj:IsVisibleOnScreen() then
+		return nil
+	end
+	local x, y = obj:LocalToScreen(0, 0)
+	return x, y, obj.width or 0, obj.height or 0
+end
+
+local function placeRing()
+	local x, y, w, h = focusRect()
+	if not x then
+		focus = nil
+		if focusRing then
+			focusRing:Hide()
+		end
+		return
+	end
+	if not focusRing then
+		focusRing = Chili.Control:New({
+			name = "bardroidLobbyFocus",
+			parent = screen0,
+			x = 0, y = 0, width = 10, height = 10,
+			padding = { 0, 0, 0, 0 },
+			drawcontrolv2 = true,
+			HitTest = function() return false end, -- (never in the way of a click)
+			DrawControl = function(obj)
+				gl.Texture(false)
+				gl.Color(GOLD)
+				local t = 3
+				gl.Rect(0, 0, obj.width, t)
+				gl.Rect(0, obj.height - t, obj.width, obj.height)
+				gl.Rect(0, t, t, obj.height - t)
+				gl.Rect(obj.width - t, t, obj.width, obj.height - t)
+				gl.Color(1, 1, 1, 1)
+			end,
+		})
+	end
+	focusRing:SetPos(x - 3, y - 3, w + 6, h + 6)
+	focusRing:Show()
+	focusRing:BringToFront()
+end
+
+local function navigate(dir)
+	if not screen0 then
+		return
+	end
+	local d = DIRECTIONS[dir]
+	local ox, oy
+	local fx, fy, fw, fh = focusRect()
+	if fx then
+		ox, oy = fx + fw / 2, fy + fh / 2
+	else
+		ox, oy = pointerToChili()
+	end
+	local function best()
+		local list = {}
+		collect(screen0, { 0, 0, screen0.width, screen0.height }, list)
+		local pick, score = nil, math.huge
+		for _, c in ipairs(list) do
+			if c.obj ~= real(focus) then
+				local vx, vy = (c.r[1] + c.r[3]) / 2 - ox, (c.r[2] + c.r[4]) / 2 - oy
+				local along = vx * d[1] + vy * d[2]
+				if along > 4 then
+					local s = along + math.abs(vx * d[2] - vy * d[1]) * 2.5
+					if s < score and onTop(c) then
+						pick, score = c, s
+					end
+				end
+			end
+		end
+		return pick
+	end
+	local pick = best()
+	if not pick and fx and d[1] == 0 then -- (the end of a list in sight: it scrolls on, then the next row)
+		local obj = real(real(focus).parent)
+		while obj and not overflows(obj) do
+			obj = real(obj.parent)
+		end
+		if obj then
+			obj:SetScrollPos(nil, obj.scrollPosY + d[2] * math.max(24, fh), false, true)
+			pick = best()
+		end
+	end
+	if not pick then
+		return
+	end
+	focus = pick.obj
+	local cx, cy = (pick.r[1] + pick.r[3]) / 2, (pick.r[2] + pick.r[4]) / 2
+	local s = uiScale()
+	local mx, my = math.floor(cx * s + 0.5), math.floor((select(2, Spring.GetViewSizes()) - cy) * s + 0.5)
+	if Spring.WarpMouse then
+		pcall(Spring.WarpMouse, mx, my)
+	end
+	focusAt = { mx, my }
+	placeRing()
+end
+
+local function appUpdate()
+	local lines = appLines()
+	if lines then
+		for name in lines:gmatch("act (%S+)") do
+			if name == "voice_on" then
+				voiceOn = true
+				voiceShow()
+			elseif name == "voice_off" then
+				voiceOn = false
+				if voicePanel then
+					voicePanel:Hide()
+				end
+			elseif voiceOn and (name == "voice_channel_next" or name == "voice_channel_prev") then
+				voiceStep(name == "voice_channel_next" and 1 or -1)
+			else
+				local dir = name:match("^lobby_nav_(%a+)$")
+				if DIRECTIONS[dir] then
+					navigate(dir)
+				end
+			end
+		end
+		for hex in lines:gmatch("voice (%x+)") do
+			voiceSay((hex:gsub("%x%x", function(h)
+				return string.char(tonumber(h, 16))
+			end)))
+		end
+	end
+	if focus then -- (the pointer moved away: let go; the control moved, as a list scrolls: the ring follows)
+		local mx, my = Spring.GetMouseState()
+		if not focusAt or math.abs(mx - focusAt[1]) + math.abs(my - focusAt[2]) > 24 then
+			focus = nil
+		end
+		placeRing()
+	end
+end
+
 local lastUpdate
 function widget:Update() -- (the lobby's Update has no frame time)
 	local now = Spring.GetTimer()
@@ -573,6 +911,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 		warningCheck = now
 		updateWarning()
 	end
+	appUpdate()
 end
 
 function widget:Initialize()

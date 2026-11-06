@@ -973,9 +973,12 @@ final class RtsTouch {
         act(name);
     }
 
-    /** A game action for the widget (bardroid_touch.lua ACTIONS); in the lobby there is none. */
+    /**
+     * A game action for the widget (bardroid_touch.lua ACTIONS); in the lobby only speak to chat's and the pad's D-pad
+     * ("voice_*", "lobby_*": bardroid_lobby_touch.lua reads the same log).
+     */
     private void act(String name) {
-        if (gameWidgetRunning()) send("act " + name);
+        if (gameWidgetRunning() || name.startsWith("voice_") || name.startsWith("lobby_")) send("act " + name);
     }
 
     private boolean nearLastTap(float x, float y) {
@@ -1076,8 +1079,7 @@ final class RtsTouch {
         if (doubleTapX >= 0 && now - doubleTapTime <= doubleTapMs && Math.abs(x - doubleTapX) <= tol
                 && Math.abs(y - doubleTapY) <= tol && gameWidgetRunning()) {
             doubleTapX = -1;
-            if (tripleTap != null && controllerGame()) tripleTap.run();
-            else act("type_all");
+            act("type_all");
             return;
         }
         // A double click needs both clicks on the same pixel; fingers land a few pixels apart.
@@ -1121,10 +1123,6 @@ final class RtsTouch {
 
     /** A gamepad button's game action (ControllerBridge, any thread). */
     void padAct(String name) { act(name); }
-
-    private Runnable tripleTap;
-    /** What a third quick tap does in the controller game (GameActivity: switch the controller mod). */
-    void setTripleTap(Runnable r) { tripleTap = r; }
 
     private Runnable voiceChat;
     // a three-finger tap: speak to chat unless a second one follows within THREE_DOUBLE_MS (Kailil, 2026-11-06: "Change

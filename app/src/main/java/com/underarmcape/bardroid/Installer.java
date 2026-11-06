@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 /**
  * First-run installer. Each step is idempotent and records completion in install-state.properties, so a
@@ -89,11 +88,7 @@ public final class Installer {
         if (hasImport()) runSetup("import", st, "import", Prefs.engineVersion);
         step("content", st, () -> runSetup("content", st, "content", Prefs.gameTag, Prefs.lobbyTag, Prefs.mapName, Prefs.engineVersion));
         step("files", st, () -> writeGameFiles());
-        if (Prefs.gamepadGame && !gamepadReady()) {
-            try { installGamepadGame(st); }
-            catch (InterruptedException e) { throw e; }
-            catch (Exception e) { Log.e("install", "controller game not installed (singleplayer plays BAR's released game)", e); }
-        }
+        try { removeGamepadGame(); } catch (IOException e) { Log.e("install", "the controller game's files", e); }
         st.status("done", "Installed", 100);
     }
 
@@ -347,12 +342,12 @@ public final class Installer {
         put("GroundDetail", "20");
     }};
 
-    /** Human (team 0) vs one AI (team 1), on the controller game when it is installed, else on BAR's released game. */
+    /** Human (team 0) vs one AI (team 1), on BAR's released game. */
     public void writeStartScript() throws IOException {
         File assets = new File(p.filesDir, "assets-bardroid");
         String tpl;
         try (InputStream in = new FileInputStream(new File(assets, "skirmish.template.txt"))) { tpl = new String(readAll(in), StandardCharsets.UTF_8); }
-        String game = useGamepadGame() ? GAMEPAD_GAME : resolveGameName();
+        String game = resolveGameName();
         tpl = tpl.replace("@GAME@", game).replace("@MAP@", Prefs.mapName);
         // AI difficulty is a BARb option; keep ShortName=BARb (the only native AI shipped in the arm64 engine archive).
         writeFile(new File(p.bar, "skirmish.txt"), tpl);
@@ -467,93 +462,21 @@ public final class Installer {
     // ---- the controller game -------------------------------------------------------------------------
 
     /**
-     * Kailil's controller (BAR Controller Support v0.8.5, tools/build-gamepad-game.py) is BAR's own game with the
-     * controller added, so it runs as BAR's developer game under this name, the game of the lobby's
-     * "Beyond All Reason Dev" setting. games/BAR-gamepad.sdd holds only v0.8.5's files; its modinfo.lua depends on
-     * the BAR release v0.8.5 was ported to, which the engine loads under it.
+     * Kailil's controller (BAR Controller Support v0.8.5) ran as BAR's developer game in singleplayer until 2026-11-06
+     * (Kailil: "We can pull out the 0.8.5 gamepad toggleer thing now. Since our gamepad controlls are so good now"):
+     * skirmish plays BAR's own game with the app's controls, as online. The one an earlier build installed
+     * (games/BAR-gamepad.sdd) goes, and its mark in the install state.
      */
-    public static final String GAMEPAD_GAME = "Beyond All Reason $VERSION";
-
-    private Properties gamepadInfo() throws IOException {
-        Properties info = new Properties();
-        try (InputStream in = ctx.getAssets().open("gamepad/gamepad.properties")) { info.load(in); }
-        return info;
-    }
-
-    private File gamepadDir() { return new File(p.bar, "games/BAR-gamepad.sdd"); }
-
-    /**
-     * This app build carries the controller game (`tools/build-gamepad-game.py` writes assets/gamepad). Kailil
-     * (2026-10-26): out of the builds until v0.8.5's frame cost is down; a build without it removes an installed one.
-     */
-    public boolean gamepadAvailable() {
-        try { ctx.getAssets().open("gamepad/gamepad.properties").close(); return true; }
-        catch (IOException e) { return false; }
-    }
-
-    /** games/BAR-gamepad.sdd is this app build's v0.8.5. */
-    public boolean gamepadReady() {
-        try {
-            return gamepadInfo().getProperty("version").equals(state.getProperty("gamepad"))
-                    && new File(gamepadDir(), "modinfo.lua").exists();
-        } catch (IOException e) { return false; }
-    }
-
-    /** Singleplayer plays the controller game: the setting is on and the game is installed. */
-    public boolean useGamepadGame() { return Prefs.gamepadGame && gamepadReady(); }
-
-    /**
-     * Downloads the BAR release v0.8.5 was ported to (pr-downloader fetches only files missing from the pool) and
-     * unpacks v0.8.5 as games/BAR-gamepad.sdd. Optional: without it singleplayer plays BAR's released game.
-     */
-    public void installGamepadGame(Status st) throws Exception {
-        if (!gamepadAvailable()) {
-            if (gamepadDir().exists() || state.getProperty("gamepad") != null) {
-                deleteTree(gamepadDir());
-                state.remove("gamepad");
-                save();
-                Log.i("install", "controller game removed (not in this app build): singleplayer plays BAR's released game");
-            }
-            return;
+    void removeGamepadGame() throws IOException {
+        File dir = new File(p.bar, "games/BAR-gamepad.sdd");
+        if (dir.exists() || state.getProperty("gamepad") != null) {
+            deleteTree(dir);
+            deleteTree(new File(p.bar, "games/BAR-gamepad.sdd.tmp"));
+            state.remove("gamepad");
+            save();
+            Log.i("install", "the controller game (v0.8.5) removed: singleplayer plays BAR's released game");
         }
-        Properties info = gamepadInfo();
-        Log.i("install", "==== controller game " + info.getProperty("version") + " on " + info.getProperty("base.name"));
-        st.status("gamepad", "downloading " + info.getProperty("base.name"), -1);
-        runSetup("gamepad", st, "gamepad", info.getProperty("base.tag"), Prefs.engineVersion);
-        File dir = gamepadDir(), tmp = new File(p.bar, "games/BAR-gamepad.sdd.tmp");
-        deleteTree(tmp);
-        String root = tmp.getCanonicalPath() + File.separator;
-        try (ZipInputStream z = new ZipInputStream(ctx.getAssets().open("gamepad/gamepad.zip"))) {
-            for (ZipEntry e; (e = z.getNextEntry()) != null; ) {
-                if (e.isDirectory()) continue;
-                File f = new File(tmp, e.getName());
-                if (!f.getCanonicalPath().startsWith(root)) throw new IOException("bad zip entry " + e.getName());
-                //noinspection ResultOfMethodCallIgnored
-                f.getParentFile().mkdirs();
-                try (OutputStream o = new FileOutputStream(f)) { copy(z, o); }
-            }
-        }
-        // BAR artwork v0.8.5 shows under its own names, and BAR files the lobby reads from this archive alone
-        // (modoptions.lua: the Skirmish screen): copied from the downloaded release, never shipped in the APK.
-        Map<String, String> files = sdpFiles(new File(p.bar, "packages/" + info.getProperty("base.md5") + ".sdp"));
-        for (String key : info.stringPropertyNames()) {
-            if (!key.startsWith("copy.")) continue;
-            String[] f = info.getProperty(key).trim().split("\\s+");
-            String md5 = files.get(f[1].toLowerCase(Locale.ROOT));
-            if (md5 == null) throw new IOException(f[1] + " is not in " + info.getProperty("base.name"));
-            File out = new File(tmp, f[0]);
-            //noinspection ResultOfMethodCallIgnored
-            out.getParentFile().mkdirs();
-            File gz = new File(p.bar, "pool/" + md5.substring(0, 2) + "/" + md5.substring(2) + ".gz");
-            try (InputStream in = new GZIPInputStream(new FileInputStream(gz)); OutputStream o = new FileOutputStream(out)) { copy(in, o); }
-        }
-        deleteTree(dir);
-        if (!tmp.renameTo(dir)) throw new IOException("could not rename " + tmp + " to " + dir);
-        state.setProperty("gamepad", info.getProperty("version"));
-        save();
-        Log.i("install", "controller game ready: " + dir);
     }
-
     /** File name (lower case) -> pool md5 of a rapid package: gzip of [name length, name, md5, crc32, size] per file. */
     private static Map<String, String> sdpFiles(File sdp) throws IOException {
         Map<String, String> m = new HashMap<>();

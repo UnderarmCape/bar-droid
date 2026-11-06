@@ -201,12 +201,8 @@ public class GameService extends Service {
         try {
             inst.refreshHostFiles();                        // scripts/assets of this app version
             boolean bench = "bench".equals(mode);
-            if (Prefs.gamepadGame && !inst.gamepadReady() && ("lobby".equals(mode) || "skirmish".equals(mode) || bench)) {
-                // New in this app version (or a newer v0.8.5): singleplayer plays BAR's released game until it is in.
-                try { inst.installGamepadGame((step, detail, pct) -> setStatus("controller game: " + detail)); }
-                catch (InterruptedException e) { throw e; }
-                catch (Exception e) { Log.e("svc", "controller game not installed", e); }
-            }
+            try { inst.removeGamepadGame(); }   // (v0.8.5's game, out of the app since 2026-11-06: one installed earlier goes)
+            catch (java.io.IOException e) { Log.e("svc", "the controller game's files", e); }
             Updater up = "lobby".equals(mode) || "skirmish".equals(mode) ? update(Prefs.autoUpdate) : null;
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();
@@ -254,7 +250,7 @@ public class GameService extends Service {
             env.put("MODE", mode);
             env.put("DISPLAY", ":0");
             env.put("LOBBY_TAG", Prefs.lobbyTag);
-            env.put("GAMEPAD_GAME", inst.useGamepadGame() ? "1" : "0");
+            env.put("GAMEPAD_GAME", "0");   // (launch-bar.sh: the v0.8.5 game is gone; its controller game branch never runs)
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : String.valueOf(Prefs.fpsCap));   // libbardroid_pace.so; 0 = none

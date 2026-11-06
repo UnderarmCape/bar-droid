@@ -27,7 +27,6 @@
     <string name="shortcut_launcher">Launcher</string>
     <string name="shortcut_launcher_long">Launcher and settings</string>
     <string name="cb_audio">Sound</string>
-    <string name="cb_gamepad_game">Controller support v0.8.5 in singleplayer\nSkirmish and the lobby\'s own games; online games play BAR\'s released game</string>
     <string name="btn_bench">Benchmark</string>
     <string name="lbl_render_scale">Game resolution\nOf the game\'s picture (up to about 900 lines, enlarged to the screen); lower runs cooler. Native: the screen\'s own, the heaviest</string>
     <string name="rb_render100">100%</string>

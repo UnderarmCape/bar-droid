@@ -45,8 +45,8 @@ local function finish()
 	local slow, fast = zoomSteps[2], zoomSteps[#zoomSteps]
 	check("LT speeds the zoom up", slow and fast and fast > slow * 1.8, tostring(slow) .. " -> " .. tostring(fast))
 	check("D-pad down: the commander", sawCommander)
-	-- (v0.8.5's order menu, "Order menu (controller)"; the app's copy of BAR's stands down in this game)
-	check("the controller game's own order menu", WG.ordermenu ~= nil and WG.ordermenu.controllerApiVersion ~= nil)
+	-- (the app's copy of BAR's Order menu: skirmish plays BAR's game since v0.8.5's went, 2026-11-06)
+	check("the app's order menu in skirmish", WG.ordermenu ~= nil and WG.ordermenu.droidCells ~= nil)
 	check("the pad's orders hidden: the rest fill the order menu, one cell each", evenOrders > 0, evenOrders)
 	check("the pad gone: its ways end, no taps needed", sawPad and WG.BarDroidPadOnly == nil)
 	local fp = WG.BarDroidPadFP
@@ -101,7 +101,7 @@ function widget:GameFrame(f)
 	elseif f == READY_FRAME - 45 then
 		Spring.SendCommands("globallos")
 	elseif f == READY_FRAME then
-		Spring.Echo("[padtest] ready") -- (the script taps the screen three times: the app's controls in the controller game)
+		Spring.Echo("[padtest] ready")
 	end
 	if WG.BarDroidOwnsBuildMenu and not picked then
 		picked = true

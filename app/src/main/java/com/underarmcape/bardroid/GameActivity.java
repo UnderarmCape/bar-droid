@@ -57,7 +57,6 @@ public class GameActivity extends MainActivity {
         }
         KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
-        touch.setTripleTap(this::switchControllerMod);
         voiceChat = new VoiceChat(this, new VoiceChat.Sink() {
             @Override public void listening(boolean on, boolean ping) { touch.padAct(on ? (ping ? "voice_on_ping" : "voice_on") : "voice_off"); }
             @Override public void heard(String text, boolean ping) { touch.voice(text, ping); }
@@ -99,41 +98,14 @@ public class GameActivity extends MainActivity {
     private volatile int screenW, screenH;
 
     /**
-     * In the controller game the pad is v0.8.5's (true) or the app's (PadGame, as in BAR's own game); a triple tap
-     * switches (Kailil, 2026-10-29: "toggle between the two in game via a ... triple tap single finger press anywhere
-     * on screen. it displays a toast saying controller mod switched ... so i can compare back and forth").
-     */
-    private volatile boolean v085 = true;
-
-    private void switchControllerMod() {
-        if (!touch.controllerGame()) return;   // (only the controller game has both)
-        v085 = !v085;
-        Log.i("pad", "controller mod: " + (v085 ? "v0.8.5" : "BAR Droid's"));
-        touch.padAct(v085 ? "mod_v085" : "mod_bardroid");
-    }
-
-    /**
      * The pad as a mouse (and in BAR's game a keyboard too: ControllerBridge); events go to the X server on the UI
      * thread. The controller game (v0.8.5 reads the pad itself) says so in bardroid_game.txt (bardroid_touch.lua).
      */
     private final ControllerBridge.Mouse lobbyMouse = new ControllerBridge.Mouse() {
         private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
-        @Override public int mode() {
-            if (!touch.gameWidgetRunning()) return ControllerBridge.MODE_LOBBY;
-            if (!touch.controllerGame()) return ControllerBridge.MODE_GAME;
-            if (v085) {
-                // (a new screen starts with v0.8.5: a game still running, on the app's controls, goes back with it)
-                if (!modToldOnce) { modToldOnce = true; touch.padAct("mod_v085"); }
-                return ControllerBridge.MODE_OFF;
-            }
-            // the app's controls in the controller game: told to the widgets again every 2 s (a LuaUI reload, as a fold
-            // or unfold makes, starts them with v0.8.5's; they show the note only when it changes)
-            long now = android.os.SystemClock.uptimeMillis();
-            if (now - modToldAt >= 2000) { modToldAt = now; touch.padAct("mod_bardroid"); }
-            return ControllerBridge.MODE_GAME;
+        @Override public int mode() {   // (the app's controls in every game since v0.8.5's game went, 2026-11-06)
+            return touch.gameWidgetRunning() ? ControllerBridge.MODE_GAME : ControllerBridge.MODE_LOBBY;
         }
-        private long modToldAt;
-        private boolean modToldOnce;
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
         @Override public boolean onInterface() { return touch.pointerOnInterface(); }
         @Override public void move(int dx, int dy) { send(dx, dy, InputStub.BUTTON_UNDEFINED, false); }

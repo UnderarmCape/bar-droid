@@ -42,7 +42,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 
 | Gesture | In the game |
 |---|---|
-| Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map (in the controller game: switch the gamepad between v0.8.5 and the app's controls) |
+| Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map |
 | Drag | Pan the map (a flick glides); on BAR's minimap and sliders it drags them instead; up or down in BAR's Settings, Statistics and other windows it scrolls them |
 | Tap, then drag | Box select |
 | Long press | Right click (move/attack order); keep dragging for a formation |
@@ -91,8 +91,9 @@ factions' matching unit too.
 
 ## Gamepad, mouse and keyboard
 
-- **Gamepads:** skirmish runs BAR Controller Support (v0.8.5), a full controller interface; in the lobby the pad is a
-  mouse and Start switches the lobby's size between 100% and 130% (each start is at 100%). In BAR's own game (online, spectating) the app rebuilds v0.8.5's controls from a mouse and keyboard, which
+- **Gamepads:** in the lobby the pad is a mouse: the D-pad puts the pointer on the next button, tab, list row or box
+  that way (ringed in gold; A clicks it), and Start switches the lobby's size between 100% and 130% (each start is at
+  100%). In every game (skirmish, online, spectating) the app rebuilds BAR Controller Support v0.8.5's controls from a mouse and keyboard, which
   every game allows; the pointer stays in the middle of the screen, as v0.8.5's reticle:
 
   | Pad | In the game |
@@ -126,10 +127,9 @@ factions' matching unit too.
   own hotkeys and menus go (L3 and R3 press Insert and numpad / , which the app binds to BAR's own actions for the game;
   the D-gun mode's moves and shots are BAR's Move and D-gun picked and clicked on the spot there, so they have to be on
   the screen). Only first person needs those widgets ("FIRST PERSON OFF IN THIS GAME").
-  In the controller game (skirmish), a quick triple tap anywhere switches the pad between v0.8.5 and these controls,
-  to compare them ("CONTROLLER MOD: ..."); with these controls the app's build menu (and the touch PLACE button)
-  takes v0.8.5's build menu's place. Once the pad is used the menu shows only when RB opens it (as v0.8.5's); three
-  taps on the screen within 6 seconds bring it back to opening by itself for a selected builder.
+  Once the pad is used the build menu shows only when RB opens it (as v0.8.5's); three taps on the screen within 6
+  seconds bring it back to opening by itself for a selected builder. (Until 2026-11-06 skirmish played v0.8.5 itself
+  as BAR's developer game; the app's controls replaced it.)
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,

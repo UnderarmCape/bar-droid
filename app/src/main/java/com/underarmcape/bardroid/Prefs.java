@@ -82,11 +82,6 @@ public final class Prefs {
     public static int renderScale = 100;
     /** Opening the app from its icon starts the lobby (LauncherActivity). */
     public static boolean autoLobby = true;
-    /**
-     * Singleplayer (skirmish, the lobby's own games) plays Kailil's controller build, BAR Controller Support v0.8.5, as
-     * BAR's developer game (Installer.installGamepadGame); online games always play BAR's released game.
-     */
-    public static boolean gamepadGame = true;
     /** Each lobby/skirmish start first updates BAR like its PC launcher (Updater, docs/UPDATES.md). */
     public static boolean autoUpdate = true;
     /**
@@ -165,8 +160,7 @@ public final class Prefs {
         // the pixels; the launcher shows them as 100% and a Save there writes 100)
         if (renderScale != 0 && (renderScale < 5 || renderScale > 100)) renderScale = 100;
         autoLobby = s.getBoolean("autoLobby", autoLobby);
-        gamepadGame = s.getBoolean("gamepadGame", gamepadGame);
-        autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
+       autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
         lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
         upscale = s.getBoolean("upscale", upscale);
         upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
@@ -198,7 +192,7 @@ public final class Prefs {
                 .putInt("frameCap", fpsCap)
                 .putInt("renderScale", renderScale)
                 .putBoolean("autoLobby", autoLobby)
-                .putBoolean("gamepadGame", gamepadGame)
+                .remove("gamepadGame")   // (v0.8.5's game, out of the app since 2026-11-06)
                 .putBoolean("autoUpdate", autoUpdate)
                 .remove("lobbyBridge")   // the old default (off), see lobbyBridge
                 .putBoolean("lobbyBridgeOn", lobbyBridge)

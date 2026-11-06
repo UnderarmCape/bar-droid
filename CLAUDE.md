@@ -133,15 +133,17 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
-- Gamepad: singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game
-  ("Beyond All Reason $VERSION", `files/bar/games/BAR-gamepad.sdd`, depends on the BAR release it was ported to):
-  `tools/build-gamepad-game.py` (rerun after a new v0.8.5 commit) → `assets/gamepad/`, `Installer.installGamepadGame`,
-  `launch-bar.sh` (`GAMEPAD_GAME`). `ControllerBridge` is its companion (BARCTRL1 over UDP 28777, always streaming);
-  in BAR's own game (online) `PadGame` rebuilds v0.8.5's controls from an X mouse and keyboard (the pointer held in
+- Gamepad: until 2026-11-06 singleplayer played Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game
+  (`tools/build-gamepad-game.py` → `assets/gamepad/`); Kailil then: "We can pull out the 0.8.5 gamepad toggleer thing
+  now. Since our gamepad controlls are so good now": every game plays BAR's released game with the app's controls,
+  `Installer.removeGamepadGame` deletes an installed `games/BAR-gamepad.sdd`, and the v0.8.5 checks left in the widgets
+  (`bardroid_game.txt`, `modV085`) never fire. `ControllerBridge` still streams BARCTRL1 over UDP 28777;
+  in every game `PadGame` rebuilds v0.8.5's controls from an X mouse and keyboard (the pointer held in
   the middle, the camera through `bardroid_touch.lua`'s pad lines; which game it is: `bardroid_game.txt`) and sends
   the rest as actions to `assets/bardroid/bardroid_pad.lua` (the order menu on the pad, groups, idle units, LB
   orders; it writes `bardroid_pad.txt`: which menu has the pad, pregame, what is picked); in the lobby the pad is a
-  mouse. In the controller game a triple tap switches between v0.8.5 and `PadGame`. `PadGame` runs on the laptop
+  mouse (its D-pad from control to control: `bardroid_lobby_touch.lua` reads `lobby_nav_*` from the touch log).
+  `PadGame` runs on the laptop
   against a made-up pointer (`tools/padgame-test.ps1`, `PadMouse`/`PadButtons` keep it free of Android classes). Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
   Packaged from BARGAMEPAD branch `controller/codex-v085-perf` (performance work, same behaviour; HANDOFF.md
   "Gamepad"); measure with `tools/profile-gamepad-game.ps1` on the laptop before and after any change to it.
@@ -165,7 +167,6 @@ powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]   
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1                # the same on the dev phone, plus a virtual pad's Start; nothing on the laptop, ~1 min
 powershell -ExecutionPolicy Bypass -File tools\touch-phone-test.ps1                # the touch camera at the map's edge on the dev phone (drags on the map, over the void, across the edge, over the sky; a pinch over the void), driven through the touch log; ~2 min
-powershell -ExecutionPolicy Bypass -File tools\lobby-game-test.ps1                 # the lobby's Skirmish screen with the controller game, ~30 s
 powershell -ExecutionPolicy Bypass -File tools\fp-save-test.ps1                    # a spectator's 1st person through BAR's mid-game settings save, on the dev phone, ~1.5 min
 powershell -ExecutionPolicy Bypass -File tools\stripes-test.ps1 [-Pairs 3]         # the interface's stripes: skirmishes on the dev phone alternating launch-bar.sh's UBWC off (FD_MESA_DEBUG=noubwc, the default) and on, screenshots + montage in build\stripes-test (DELIVERY.md), ~3 min a start
 powershell -ExecutionPolicy Bypass -File tools\spectate-test.ps1 [-Replay <file.sdfz>] [-Cost] [-Settings @{Key=1}]   # spectating by touch (bardroid_spectate.lua) in a replay, ~2 min; -Cost: its ms and KB per frame; -Settings: engine settings (run it with -Command for a hashtable)
