@@ -181,6 +181,18 @@ game until the replay and spectating stages below say it computes exactly what t
   fps, off 20.6 and 20.7 (x1.00 each). No gain: not kept. At 50 % the GPU is no longer full (73-91 % busy at its 295
   MHz cap, 62 % at 401): the main thread is the limit, ~45 ms a frame with the X3 at 1363-1478 MHz. Next: a CPU
   profile of the window at 50 % (the plain sampler).
+  That profile (06:48, simpleperf 2000 Hz for 40 s of the window, x1.00 kept, 0 desync warnings): by thread the main
+  thread 43.6 % of the engine's samples, the three workers 14.1 + 12.2 + 11.5, Mesa's driver thread 12.5, OpenAL 2.7.
+  On the main thread: the engine 86.6 %, Mesa 8.4, libc 2.6, the clock (vDSO) 1.7. Its functions, flat: Lua ~15
+  (`luaH_get` 6.0, `luaV_execute` 5.7, `luaD_precall` 2.8: BAR's Lua, synced and unsynced), the units' animation
+  ticks 2.8 (+ `AddAnim` 0.6), the pieces' previous-frame transforms 2.3, waiting for the workers 2.3, ground heights
+  1.7 (+ normals 0.7), `__kernel_clock_gettime` 1.7 (7.2 on 2026-11-05, before the waits rested in WFE), line of sight
+  1.4, COB threads 1.4, the projectiles' draw flags 1.3 (+ their sort 0.6, drawing 0.8, particles 0.9), the sync
+  checker 1.3, unit icons 1.0. No single cost is near the ~25 % 30 fps needs here (45 -> 33 ms a frame); the
+  simulation's part is synced (the order-dependent stages stay serial, above). The pieces' previous transforms are read
+  only for drawing (`GetEffectivePrevModelSpaceTransform`), so units out of view could skip them (a frame's stale
+  interpolation as one comes into view): ~1.5 % at most. Next, client-side: the drawn particle and projectile cap at
+  50 % (`MaxDrawnParticles`), A/B.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
