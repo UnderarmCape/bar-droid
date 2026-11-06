@@ -511,6 +511,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       A 6-minute skirmish soak (20:15, the controller game, the dev phone's own no-cap setting): no error from the app's
       widgets, only BAR's three usual warnings; the GPU 99 % busy throughout and the game at x0.90 by 7:00 while it drew
       61 fps (a 30 fps cap, the app's default, leaves that time to the simulation).
+      The same in BAR's own game (controller support off for the run, `GAMEPAD_GAME=0`, 4 minutes): no error, the app's
+      build and order menu copies in place (5 x 3 options a page, "< 1 / 2 >", "Place / Blueprint" on two lines); the
+      grid stands centred with ~110 px empty at each side on the dev phone's wide screen, by design (Kailil's "try 5 x
+      3": more columns would fill it). The setting put back afterwards.
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
