@@ -18,7 +18,8 @@ The first version meant for other people's phones: everything since the first bu
 - The app is a game for Android and One UI: Game Booster and Gaming Hub see it, and Android's performance game mode
   (Game Booster's game performance, or `cmd game mode performance`) gave 1-2 fps more in a late 8v8 on a hot S23 Ultra.
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is
-  slimmed once at its next start, ~25 s).
+  slimmed once at its next start, ~25 s), and each engine version leaves out the server builds a phone never runs
+  (108 -> 70 MB).
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
   back. BAR's content always comes from BAR's own servers; nothing of BAR is in the APK.
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.

@@ -84,6 +84,7 @@ case "$step" in
         case "$(basename "$j")" in freedreno_icd.*) ;; *) rm -f "$j" ;; esac
       done
     fi
+    rm -f "$BAR"/engine/*/spring-headless "$BAR"/engine/*/spring-dedicated   # (as the engine step does now)
     find /usr/share/doc -mindepth 1 ! -name copyright ! -type d -delete 2>/dev/null
     find /usr/share/doc -mindepth 1 -type d -empty -delete 2>/dev/null
     rm -rf /usr/share/man/* /usr/share/info/* /usr/share/lintian/* 2>/dev/null
@@ -136,7 +137,9 @@ case "$step" in
     mkdir -p "$dest"
     log "extracting engine $ver"
     7z x -y "$archive" -o"$dest" >/dev/null || { log "7z failed"; exit 31; }
-    chmod +x "$dest/spring" "$dest/spring-headless" "$dest/spring-dedicated" "$dest/pr-downloader" 2>/dev/null || true
+    # (the server builds, 39 MB, never run on a phone)
+    rm -f "$dest/spring-headless" "$dest/spring-dedicated"
+    chmod +x "$dest/spring" "$dest/pr-downloader" 2>/dev/null || true
     "$dest/spring" --version || { log "engine does not run"; exit 32; }
     log "ok"
     ;;
