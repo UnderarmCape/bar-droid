@@ -1,5 +1,5 @@
 diff --git a/lorie/src/main/res/values/strings.xml b/lorie/src/main/res/values/strings.xml
-index 07954e0..694d362 100644
+index 07954e0..aababff 100644
 --- a/lorie/src/main/res/values/strings.xml
 +++ b/lorie/src/main/res/values/strings.xml
 @@ -38,6 +38,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
@@ -28,6 +28,24 @@ index 07954e0..694d362 100644
      <string name="lorie_pref_fullscreen">Fullscreen</string>
      <string name="lorie_pref_fullscreen_summary">Toggle immersive mode in your device display</string>
      <string name="lorie_pref_forceOrientation">Screen orientation</string>
+@@ -79,7 +83,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_zoomFollowsCursor">Pan to follow cursor while zoomed in</string>
+ 
+     <string name="lorie_pref_showAdditionalKbd">Show additional keyboard</string>
+-    <string name="lorie_pref_showAdditionalKbd_summary">Show keyboard with additional keys.</string>
++    <string name="lorie_pref_showAdditionalKbd_summary">A bar of extra keys</string>
+     <string name="lorie_pref_showIMEWhileExternalConnected">Show IME with external keyboard</string>
+     <string name="lorie_pref_showIMEWhileExternalConnected_summary">Show software keyboard while hardware keyboard is connected.</string>
+     <string name="lorie_pref_preferScancodes">Prefer scancodes when possible</string>
+@@ -103,7 +107,7 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_xrMode">Meta Oculus XR mode</string>
+     <string name="lorie_pref_configureResponseToUserActions">Configure response to user actions</string>
+     <string name="lorie_pref_storeSecondaryDisplayPreferencesSeparately">Store preferences for secondary displays separately</string>
+-    <string name="lorie_pref_storeSecondaryDisplayPreferencesSeparately_summary">Open this screen on display you want to configure</string>
++    <string name="lorie_pref_storeSecondaryDisplayPreferencesSeparately_summary">Open this screen on the display you want to configure</string>
+ 
+     <string name="lorie_pref_adjustHeightForEK">Prevent extra keys bar from covering the display</string>
+     <string name="lorie_pref_useTermuxEKBarBehaviour">Deactivate special keys on additional key bar after each keypress</string>
 @@ -123,9 +127,9 @@ E.g. <b>META</b> for <i>META key</i>, \n
      <string name="lorie_pref_notificationButton1Action">Notification second button</string>
      <string name="lorie_pref_mediaKeysAction">Media keys</string>
