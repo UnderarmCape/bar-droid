@@ -103,7 +103,7 @@ function widget:GameFrame(f)
 	elseif f == READY_FRAME then
 		Spring.Echo("[padtest] ready")
 	end
-	if WG.BarDroidOwnsBuildMenu and not picked then
+	if f >= READY_FRAME and not picked then -- (BAR's game since v0.8.5's went: the app's controls from the start)
 		picked = true
 		com = Spring.GetTeamUnits(Spring.GetMyTeamID())[1]
 		Spring.SelectUnitArray({ com })

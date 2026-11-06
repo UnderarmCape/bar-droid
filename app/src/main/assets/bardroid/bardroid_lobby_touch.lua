@@ -819,6 +819,8 @@ local function navigate(dir)
 	end
 	focusAt = { mx, my }
 	placeRing()
+	Spring.Echo(string.format("[bardroid-lobby] the pad on %s \"%s\" at %d %d", tostring(pick.obj.classname),
+		tostring(pick.obj.caption or pick.obj.name or ""), mx, my)) -- (tools/lobby-phone-test.ps1)
 end
 
 local function appUpdate()

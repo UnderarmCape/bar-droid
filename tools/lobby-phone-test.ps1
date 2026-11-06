@@ -1,7 +1,8 @@
 # bardroid_lobby_touch.lua in the real lobby on the dev phone: the widget of tools\lobby-touch-test.ps1, offline
 # (tools\lobby-login\bardroid_login_wait.lua: the tests never log in), then a virtual pad's Start
 # (tools\lobby-touch-test\pad-start.evemu), the way through ControllerBridge the laptop cannot take. Puts nothing on
-# the laptop, so it runs any time. About a minute, 3 on the first start after an install.
+# the laptop, so it runs any time. Then the pad's D-pad (pad-dpad.evemu): the pointer from control to control.
+# About a minute, 3 on the first start after an install.
 #   powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -12,6 +13,7 @@ if (-not $env:ANDROID_SERIAL) { throw "No phone: connect one over adb, or name i
 $pkg = "com.underarmcape.bardroid"
 $widgets = "files/bar/LuaMenu/Widgets"
 $evemu = "/data/local/tmp/bardroid-lobby-pad.evemu"
+$dpad = "/data/local/tmp/bardroid-lobby-dpad.evemu"
 
 function InApp([string]$command) { & $adb exec-out run-as $pkg sh -c $command }
 function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files/bar/infolog.txt 2>/dev/null | tail -$lines" }
@@ -23,6 +25,7 @@ Push (Join-Path $PSScriptRoot "lobby-login\bardroid_login_wait.lua")
 Push (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua")
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
 & $adb push (Join-Path $PSScriptRoot "lobby-touch-test\pad-start.evemu") $evemu | Out-Null
+& $adb push (Join-Path $PSScriptRoot "lobby-touch-test\pad-dpad.evemu") $dpad | Out-Null
 try {
   Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.StartActivity" | Out-Null   # (the app icon: the lobby)
@@ -35,11 +38,19 @@ try {
     $scales = @(Log '\[lobbytouch\] scale' 9 | ForEach-Object { ($_ -split " ")[-1] }) -join " "
     if ($scales -eq "100% 130% 100%") { "[lobbytouch] PASS a pad's Start: 100%, 130% and back" }
     else { "[lobbytouch] FAIL a pad's Start: the scale went $scales" }
+    # (the D-pad: down, down, right, left; the pointer from control to control, Kailil 2026-11-06; the tests' lobby is
+    # offline, its login dialog in front: down onto it, right and left between its buttons, nothing behind it)
+    & $adb shell "uinput $dpad"
+    Start-Sleep 1
+    $on = @(Log '\[bardroid-lobby\] the pad on' 9 | ForEach-Object { $_ -replace '^.*the pad on ', '' })
+    $places = @($on | ForEach-Object { ($_ -split ' at ')[-1] } | Select-Object -Unique)
+    if ($on.Count -ge 3 -and $places.Count -ge 2) {   # (the offline lobby: its login dialog in front, Register and Cancel) "[lobbytouch] PASS the pad's D-pad: the pointer on $($on.Count) controls ($($on -join '; '))" }
+    else { "[lobbytouch] FAIL the pad's D-pad: $($on.Count) moves ($($on -join '; '))" }
   } else { "[lobbytouch] FAIL the test did not finish in 4 minutes" }
   Log '\[lobbytouch\] (PASS|FAIL|done)|\[lobbylogin\]|bardroid_lobby.*[Ee]rror' 60 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   InApp "rm -f $widgets/bardroid_login_wait.lua $widgets/bardroid_lobby_touch_test.lua files/bar/dev-springsettings.cfg; sed -i '/^LogFlushLevel = 0/d' files/bar/springsettings.cfg"
   & $adb shell am force-stop $pkg
-  & $adb shell rm -f $evemu
+  & $adb shell rm -f $evemu $dpad
 }
