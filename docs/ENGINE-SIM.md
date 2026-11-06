@@ -193,6 +193,12 @@ game until the replay and spectating stages below say it computes exactly what t
   only for drawing (`GetEffectivePrevModelSpaceTransform`), so units out of view could skip them (a frame's stale
   interpolation as one comes into view): ~1.5 % at most. Next, client-side: the drawn particle and projectile cap at
   50 % (`MaxDrawnParticles`), A/B.
+  `MaxDrawnParticles = 300` at 50 % (06:55-08:13, ABBA and then BAAB; two runs lost to the low-memory killer at load):
+  capped 28.1, 24.4, 23.4 fps, uncapped 24.6, 20.4, 23.4 (x1.00 throughout). The 28.1 had the GPU capped at 615 MHz,
+  every other run at 295 (thermal level 7): without it 23.9 against 22.8, about +1 fps (+5 %), inside the noise of
+  single runs but on the side of the cap in both pairs. Kept for the dev phone's target set (Kailil, 2026-11-04: cut
+  anything visual for 8v8 there): the Fold7's set + render scale 50 % (SGSR) + `MaxDrawnParticles = 300`, ~24 fps late
+  8v8 hot. Further explosions and shots past the nearest 300 are not drawn.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
