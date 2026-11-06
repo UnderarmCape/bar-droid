@@ -49,8 +49,8 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Two-finger tap | Right click |
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
-| Three-finger tap | Show or hide the keyboard |
-| Three-finger double tap | Speak to chat: "SPEAK TO CHAT" shows, the phone's speech recognition listens, and what you said is sent as a chat message (to the channel Enter opens: allies, or the last one used); nothing said, nothing sent. The first time, Android asks for the microphone |
+| Three-finger tap | Speak to chat: "< SPEAK TO ALLIES >" shows in the channel's colour, the phone's speech recognition listens, and what you said is sent as a chat message; nothing said, nothing sent. Meanwhile a sideways swipe (on the pad: D-pad left / right) switches the channel between allies, everyone and spectators, kept for later messages and games (typed ones too). The first time, Android asks for the microphone |
+| Three-finger double tap | Show or hide the keyboard |
 | Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
 
@@ -116,6 +116,7 @@ factions' matching unit too.
   | LB + L3 held | First person on the selected unit or sentry (no other buildings): the left stick walks it in any direction, the right stick looks anywhere, apart from the body, and only the horizon recentres; RT fires along the view, walking too (a player's order cannot aim above the ground, so at full range along the view at most). Back tunes the camera, the same values as the spectator tools'; B or the same chord again ends it. A squad takes orders meanwhile (the unit you look at, else the units nearby): A follow me, X stop, Y fight, RB patrol to where you look; D-pad up adds units, down clears the squad. Panels show the squad, their orders and the buttons |
   | L3 / R3 | Remove the next / the last queued order; Back + R3 + L3 held: self-destruct |
   | LB + RB + R3 (or Back + R3) | v0.8.5's D-gun mode on the selected commander: a red ring shows the D-gun's range and the target; the right stick aims around the commander, the left stick walks it, RT fires once a press, B leaves. Riding the commander in first person, RB fires the D-gun where you look |
+  | LB held + RB twice / three times | Speak to chat (as the three-finger tap) / a ping in the middle of the screen with what you say as its label ("SPEAK THE PING"; nothing said, no ping). LB held + RB once opens the build menu a moment later |
   | LB + D-pad up, tapped then held | The share list: your teammates in the middle of the screen, each name in the player's colour; the D-pad picks, A gives them the selected units, B cancels |
   | Back + Start | A free pointer on the left stick (any of BAR's windows), and back; free before the game starts |
   | A building picked | v0.8.5's placement: A places it, X places it and keeps it, D-pad left/right turns it, up/down spaces a row, Back slows the pan, B puts it away. LB held: a grid ("GRID" shows) - A starts it, the left stick draws it (LB may be let go then), A places it (X: and keeps the building), B cancels |

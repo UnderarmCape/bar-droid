@@ -59,11 +59,12 @@ public class GameActivity extends MainActivity {
         touch = new RtsTouch(this);
         touch.setTripleTap(this::switchControllerMod);
         voiceChat = new VoiceChat(this, new VoiceChat.Sink() {
-            @Override public void listening(boolean on) { touch.padAct(on ? "voice_on" : "voice_off"); }
-            @Override public void heard(String text) { touch.voice(text); }
+            @Override public void listening(boolean on, boolean ping) { touch.padAct(on ? (ping ? "voice_on_ping" : "voice_on") : "voice_off"); }
+            @Override public void heard(String text, boolean ping) { touch.voice(text, ping); }
             @Override public void unavailable() { touch.padAct("voice_none"); }
         });
         touch.setVoiceChat(voiceChat::start);
+        touch.setVoiceListening(voiceChat::listening);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
         pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
@@ -162,6 +163,8 @@ public class GameActivity extends MainActivity {
         @Override public boolean firstPerson() { return touch.firstPerson(); }
         @Override public int clicks() { return touch.clicks(); }
         @Override public float[] clickAt() { return touch.clickAt(); }
+        @Override public void voice(boolean ping) { ui.post(() -> { if (voiceChat != null) voiceChat.start(ping); }); }
+        @Override public boolean voiceListening() { return voiceChat != null && voiceChat.listening(); }
         @Override public String modal() { return touch.padModal(); }
         private void send(int dx, int dy, int button, boolean down) {
             ui.post(() -> { LorieView v = getLorieView(); if (v != null && v.connected()) v.sendMouseEvent(dx, dy, button, down, true); });

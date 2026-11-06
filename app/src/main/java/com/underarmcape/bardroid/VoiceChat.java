@@ -23,23 +23,34 @@ final class VoiceChat {
     static final int PERMISSION_REQUEST = 4711;
 
     interface Sink {
-        void listening(boolean on);   // "SPEAK TO CHAT" shown while true
-        void heard(String text);      // what was said, to chat
-        void unavailable();           // the phone has no recognition service
+        void listening(boolean on, boolean ping);   // "SPEAK TO CHAT" / "SPEAK THE PING" shown while on
+        void heard(String text, boolean ping);      // what was said: to chat, or a ping's label
+        void unavailable();                         // the phone has no recognition service
     }
 
     private final Activity activity;
     private final Sink sink;
     private SpeechRecognizer recognizer;
-    private boolean listening, waitingForPermission;
+    private volatile boolean listening;
+    private boolean waitingForPermission;
+    private volatile boolean ping;   // what this listening is for: a ping's label (the pad: hold LB, RB three times), else chat
 
     VoiceChat(Activity activity, Sink sink) {
         this.activity = activity;
         this.sink = sink;
     }
 
-    /** Starts listening; while it listens, cancels instead (a second double tap). */
-    void start() {
+    /** Speak to chat (three fingers; hold LB, RB twice). */
+    void start() { start(false); }
+
+    /** Listening for chat now: the D-pad's or a swipe's left and right pick the chat's channel meanwhile. Any thread. */
+    boolean listening() { return listening && !ping; }
+
+    /**
+     * Starts listening, for chat or for a ping's label (Kailil, 2026-11-06: the pad's LB held and RB three times "sets
+     * a ping ... (voice stt tho) then it enters the ping either the text"); while it listens, cancels instead.
+     */
+    void start(boolean forPing) {
         if (listening) {
             cancel();
             return;
@@ -49,6 +60,7 @@ final class VoiceChat {
             sink.unavailable();
             return;
         }
+        ping = forPing;
         if (activity.checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             waitingForPermission = true;
             activity.requestPermissions(new String[] {Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST);
@@ -64,7 +76,7 @@ final class VoiceChat {
                 .putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
                 .putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, activity.getPackageName());
         listening = true;
-        sink.listening(true);
+        sink.listening(true, ping);
         recognizer.startListening(intent);
     }
 
@@ -72,7 +84,7 @@ final class VoiceChat {
     void permissionResult(boolean granted) {
         boolean wanted = waitingForPermission;
         waitingForPermission = false;
-        if (wanted && granted) start();
+        if (wanted && granted) start(ping);
         else if (wanted) Log.i("app", "voice chat: the microphone was not allowed");
     }
 
@@ -84,7 +96,7 @@ final class VoiceChat {
     private void done() {
         if (listening) {
             listening = false;
-            sink.listening(false);
+            sink.listening(false, ping);
         }
     }
 
@@ -114,7 +126,7 @@ final class VoiceChat {
             done();
             ArrayList<String> heard = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             String text = heard != null && !heard.isEmpty() && heard.get(0) != null ? heard.get(0).trim() : "";
-            if (!text.isEmpty()) sink.heard(text);
+            if (!text.isEmpty()) sink.heard(text, ping);
         }
     };
 }

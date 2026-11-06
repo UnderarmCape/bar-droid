@@ -30,4 +30,6 @@ interface PadMouse {
     int clicks();                           // clicks in the middle the game has asked for so far (bardroid_pad.txt)
     float[] clickAt();                      // the last one's point if not the middle: x, y as fractions of the screen, or null
     String modal();                         // the pad's own mode: "dgun", "share" or "none" (bardroid_pad.lua)
+    void voice(boolean ping);               // speak to chat, or (ping) a ping's label at the middle (VoiceChat)
+    boolean voiceListening();               // it listens: D-pad left / right pick the chat's channel meanwhile
 }

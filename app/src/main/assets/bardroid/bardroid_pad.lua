@@ -54,7 +54,11 @@ local function writeWhole(path, text)
 end
 
 local TOAST_SECONDS = 1.3
-local VOICE_NOTE = "SPEAK TO CHAT" -- (shown while the app listens: voice_on / voice_off)
+local VOICE_PING_NOTE = "SPEAK THE PING" -- (voice_on_ping: what is said labels a ping, voicePing)
+local VOICE_SECONDS = 15 -- the listening note's longest stay (the app ends it: voice_off)
+local voiceToast = false -- the note showing is the listening one
+local VOICE_PING_SECONDS = 30 -- the ping's place kept this long for the words
+local voicePingAt = nil -- where the spoken ping goes: { x, y, z, at }
 local MOD_NOTE_SECONDS = 2.5 -- the triple tap's mode switch: 1.3 s was mostly gone before the eye found it (dev phone)
 local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
@@ -265,6 +269,26 @@ local toastFor = TOAST_SECONDS
 local function note(text, color, seconds)
 	toast, toastAt, toastColor, toastFor = text, now(), color or GOLD, seconds or TOAST_SECONDS
 	lastNote, notes = text, notes + 1
+	voiceToast = false
+end
+
+-- speak to chat's note, "< SPEAK TO ALLIES >" in the channel's colour (step: the channel changed first; the note keeps
+-- the time the listening has left)
+local function voiceNote(step)
+	if step and not voiceToast then
+		return -- (not listening, as far as this widget knows: no change)
+	end
+	local left = VOICE_SECONDS
+	if step and toastAt then
+		left = math.max(1, toastFor - Spring.DiffTimers(now(), toastAt))
+	end
+	local chat = WG.bardroidChat
+	local name, color = "CHAT", nil
+	if chat and chat.channel then
+		name, color = chat.channel(step)
+	end
+	note("< SPEAK TO " .. name .. " >", color, left)
+	voiceToast = true
 end
 
 -- Orders at a point straight to the units only where this widget may give them: BAR's sandbox takes Spring.GiveOrder*
@@ -1464,13 +1488,30 @@ local ACTIONS = {
 			share.index = share.index % #share.teams + 1
 		end
 	end,
-	voice_on = function() -- speak to chat (the app's VoiceChat: a three-finger double tap) is listening
-		note(VOICE_NOTE, nil, 15)
+	voice_on = function() -- speak to chat (the app's VoiceChat: a three-finger tap, or LB held + RB twice) is listening
+		voiceNote(nil)
 	end,
-	voice_off = function() -- (done: what was said goes to chat, bardroid_chat.lua)
-		if toast == VOICE_NOTE then
+	-- while it listens, D-pad left / right or a sideways swipe: the chat's channel (allies, everyone, spectators), kept
+	-- (Kailil, 2026-11-06: "switching the channel permanently. Don't extend the time"): the words go where it is then
+	voice_channel_next = function()
+		voiceNote(1)
+	end,
+	voice_channel_prev = function()
+		voiceNote(-1)
+	end,
+	voice_on_ping = function() -- ... for a ping's label (LB held + RB three times)
+		note(VOICE_PING_NOTE, nil, VOICE_SECONDS)
+		voiceToast = true
+	end,
+	voice_off = function() -- (done: what was said goes to chat, bardroid_chat.lua, or to the ping, voicePing)
+		if voiceToast and toast == lastNote then
 			toast = nil
 		end
+		voiceToast = false
+	end,
+	voice_ping_here = function() -- (LB held + RB three times: where the ping goes, the middle now)
+		local _, pos = aim()
+		voicePingAt = pos and { pos[1], pos[2], pos[3], at = now() } or nil
 	end,
 	voice_none = function()
 		note("NO SPEECH RECOGNITION ON THIS PHONE", nil, 2.5)
@@ -2064,6 +2105,29 @@ function widget:Initialize()
 	WG.BarDroidPad = {
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
+		-- the words said for a ping (bardroid_touch.lua; LB held + RB three times): a ping with them as its label where
+		-- the middle was then (Kailil, 2026-11-06: as BAR's own labelled ping); BAR's 127 bytes at most, whole letters
+		voicePing = function(text)
+			local p = voicePingAt
+			voicePingAt = nil
+			if not (p and Spring.DiffTimers(now(), p.at) <= VOICE_PING_SECONDS) then
+				local _, pos = aim()
+				p = pos
+			end
+			text = text:gsub("%s+", " "):gsub("^ ", "")
+			if not (p and text:find("%S")) then
+				return
+			end
+			if #text > 127 then
+				local after = text:byte(128)
+				text = text:sub(1, 127)
+				if after >= 128 and after < 192 then
+					text = text:gsub("[\128-\191]*[\192-\255]$", "")
+				end
+			end
+			Spring.MarkerAddPoint(p[1], p[2], p[3], text)
+			note("PING")
+		end,
 		-- (tools/pad-test.ps1: the mode on, the D-gun's commander, aim and target; the share list's pick and length; the
 		-- last click's point)
 		modal = function()

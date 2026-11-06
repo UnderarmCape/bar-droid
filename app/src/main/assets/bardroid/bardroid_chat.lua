@@ -290,7 +290,27 @@ end
 -- Typing
 
 local typing -- the open typing box: { chars = the text's UTF-8 characters, at = characters before the cursor, mode }
-local lastMode -- the channel of the last message (BAR's: the next box opens on it)
+-- the channel of the last message (BAR's: the next box opens on it), kept across games (Kailil, 2026-11-06: speak to
+-- chat's channel switched "permanently")
+local CHANNEL_KEY = "bardroid_chat_channel"
+local CHANNEL_SAVED = { all = "", allies = "a:", spectators = "s:" }
+local lastMode = CHANNEL_SAVED[Spring.GetConfigString(CHANNEL_KEY, "") or ""]
+local function keepMode(mode)
+	lastMode = mode
+	local name = mode == "a:" and "allies" or mode == "s:" and "spectators" or "all"
+	if Spring.GetConfigString(CHANNEL_KEY, "") ~= name then
+		Spring.SetConfigString(CHANNEL_KEY, name)
+	end
+end
+-- the channel a message goes to now: the last one, else allies (a spectator's: spectators; allies is not theirs)
+local function channelNow()
+	local spec = Spring.GetSpectatingState()
+	local mode = lastMode or (spec and "s:" or "a:")
+	if spec and mode == "a:" then
+		mode = "s:"
+	end
+	return mode
+end
 local sent, sentAt = {}, 0 -- the messages sent this game, and which one Up / Down show (#sent + 1: the new text)
 local lastHeld -- a message BAR's word filter held back: sent as it is the second time (BAR's)
 local badWords -- BAR's word filter's patterns (false: not found)
@@ -421,7 +441,7 @@ local deliver -- (below)
 
 local function send()
 	local text, mode = table.concat(typing.chars), typing.mode
-	lastMode = mode
+	keepMode(mode)
 	closeTyping()
 	if not text:find("%S") then
 		return
@@ -631,15 +651,29 @@ local function hook()
 					cut = cut:gsub("[\128-\191]*[\192-\255]$", "")
 				end
 			end
-			local spec = Spring.GetSpectatingState()
-			local mode = lastMode or (spec and "s:" or "a:")
-			if spec and mode == "a:" then
-				mode = "s:"
-			end
 			if sent[#sent] ~= cut then
 				sent[#sent + 1] = cut
 			end
-			deliver(cut, mode)
+			deliver(cut, channelNow())
+		end,
+		-- speak to chat's channel (bardroid_pad.lua's note while it listens): its name and colour now; step: the next
+		-- (1) or the one before (-1): allies, everyone, spectators (a spectator's: everyone, spectators), kept
+		channel = function(step)
+			local order = Spring.GetSpectatingState() and { "", "s:" } or { "a:", "", "s:" }
+			local mode = channelNow()
+			if step then
+				local at = 1
+				for i, m in ipairs(order) do
+					if m == mode then
+						at = i
+					end
+				end
+				mode = order[(at - 1 + step) % #order + 1]
+				keepMode(mode)
+			end
+			local names = { [""] = "EVERYONE", ["a:"] = "ALLIES", ["s:"] = "SPECTATORS" }
+			local c = MODES[mode].color
+			return names[mode], { c:byte(2) / 255, c:byte(3) / 255, c:byte(4) / 255 }
 		end,
 		lines = function()
 			return #entries

@@ -20,8 +20,9 @@ The first version meant for other people's phones: everything since the first bu
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.
 
 **Touch**
-- Speak to chat: a three-finger double tap listens through the phone's speech recognition and sends what you said as a
-  chat message, no keyboard (nothing said, nothing sent).
+- Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and
+  sends what you said as a chat message, no keyboard (nothing said, nothing sent); a three-finger double tap shows the
+  keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say.
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
   bar act as mouse drags. A three-finger swipe down brings the camera to the commander and selects it (dead: the
   constructor selected last).

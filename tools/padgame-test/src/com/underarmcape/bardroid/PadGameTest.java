@@ -48,6 +48,9 @@ public final class PadGameTest {
         public float[] clickAt() { return clickPoint; }
         String modal = "none";
         public String modal() { return modal; }
+        public void voice(boolean ping) { out.add(ping ? "voice ping" : "voice chat"); }
+        boolean listening;
+        public boolean voiceListening() { return listening; }
     }
 
     final Fake m = new Fake();
@@ -560,6 +563,31 @@ public final class PadGameTest {
         t.m.out.clear();
         t.m.clicks++; t.tick();
         check("a click asked with no point: in the middle, as before", t.has("centre") && t.has("left down") && !t.has("moveTo 500 750"), t.m.out);
+
+        // LB held + RB: twice speak to chat, three times a spoken ping, once (a moment later) the build menu
+        t.m.out.clear();
+        t.tick(LB); t.tap(RB); t.wait(60); t.tap(RB); t.wait(500); t.up(LB);
+        check("LB held + RB twice: speak to chat, once, no build menu", t.count("voice chat") == 1
+                && !t.has("voice ping") && !t.has("act pad_build"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(RB); t.wait(60); t.tap(RB); t.wait(60); t.tap(RB); t.wait(500); t.up(LB);
+        check("LB held + RB three times: the ping's place, then speak the ping; no chat, no build menu",
+                t.m.out.indexOf("act voice_ping_here") >= 0 && t.m.out.indexOf("voice ping") > t.m.out.indexOf("act voice_ping_here")
+                && !t.has("voice chat") && !t.has("act pad_build"), t.m.out);
+        t.m.out.clear();
+        t.tick(LB); t.tap(RB); t.wait(500); t.up(LB);
+        check("LB held + RB once: the build menu, a moment later", t.count("act pad_build") == 1 && !t.has("voice chat"), t.m.out);
+        t.m.out.clear();
+        t.tap(RB); t.wait(50);
+        check("RB alone: the build menu at once, as before", t.count("act pad_build") == 1, t.m.out);
+        t.m.listening = true; t.m.out.clear();
+        t.tap(DPAD_RIGHT); t.tap(DPAD_RIGHT); t.tap(DPAD_LEFT); t.tap(DPAD_DOWN);
+        check("speak to chat listening: D-pad right / left pick the channel, not idle builders; down as before",
+                t.count("act voice_channel_next") == 2 && t.count("act voice_channel_prev") == 1 && !t.has("act idle_next")
+                && !t.has("act idle_prev") && t.has("act commander"), t.m.out);
+        t.m.listening = false; t.m.out.clear();
+        t.tap(DPAD_RIGHT);
+        check("... and after it, D-pad right the next idle builder again", t.has("act idle_next") && !t.has("act voice_channel_next"), t.m.out);
 
         // LB + D-pad up tapped, then pressed again and held: the share list; in it the D-pad picks, A gives, B cancels
         t.m.out.clear();

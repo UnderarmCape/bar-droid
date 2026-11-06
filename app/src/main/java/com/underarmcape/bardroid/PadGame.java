@@ -60,6 +60,8 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *   LB + RB + R3 (or v0.8.5's Back + R3) v0.8.5's D-gun mode on the selected commander (bardroid_pad.lua): the right
  *                stick aims around it at the D-gun's range, the left stick walks it, RT fires once, B leaves; nothing
  *                else counts meanwhile (Kailil, 2026-11-06)
+ *   LB held + RB twice: speak to chat (VoiceChat); three times: a ping at the middle labelled with what is said
+ *                (nothing said, no ping); once: the build menu, a moment later
  *   LB + D-pad up tapped, then pressed again and held: the share list (the selected units to a teammate: D-pad up /
  *                down picks, A gives, B cancels; nothing else counts meanwhile)
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
@@ -89,6 +91,7 @@ final class PadGame {
     // LB + D-pad up: a tap at most SHARE_TAP_MS, the second press within SHARE_DOUBLE_MS of it, held SHARE_HOLD_MS: the
     // share list
     private static final long SHARE_TAP_MS = 300, SHARE_DOUBLE_MS = 350, SHARE_HOLD_MS = 350;
+    private static final long LB_RB_TAPS_MS = 350;    // LB held, RB's taps: the next within this, or they are counted
     private static final long SHIFT_CLICK_MS = 100;   // a Shift click: Shift down this long before it and after (the engine reads the keys once a frame)
     private static final long AREA_REPEAT_AFTER_MS = 250, AREA_REPEAT_MS = 60;   // the D-pad held on the area select
     private static final float FILTER_STICK = 0.25f;  // the filter radial: the left stick this far picks a side
@@ -127,6 +130,8 @@ final class PadGame {
     private boolean selfDestructDone, fpDone, fpFiring, wasRiding;
     private boolean wasModal, modalRt;             // the pad's own mode (bardroid_pad.lua); RT in it, as last seen
     private long shareFirstAt = -1, shareTapAt = -1, shareDownAt = -1;   // LB + D-pad up: shareChord
+    private int lbRbTaps;                          // RB's taps with LB held so far, the last at lbRbAt (voiceTaps)
+    private long lbRbAt = -1;
     private long rbUpAt = -1;                      // RB + D-pad up: a tap the last ping, held a ping
     private boolean rbUpDone, rbDpad;              // ... held; RB is with the D-pad, not a modifier for a click
     private int seenClicks = -1;                   // the game's clicks done (bardroid_pad.lua: an order it could not give)
@@ -158,6 +163,7 @@ final class PadGame {
                 = gridExitAt = pathDownAt = pathArmAt = areaRepeatAt = selfDestructAt = dgunAt = shiftClickAt = shiftUntil = rbUpAt
                 = shareFirstAt = shareTapAt = shareDownAt = -1;
         pathButton = -1;
+        lbRbTaps = 0;
         rbDpad = false;
         if (areaSelect) mouse.act("area_off");
         sticky = drawing = areaCandidate = areaSelect = aPending = xPending = gridLatched = filterOpen = pathDrawing = false;
@@ -235,6 +241,14 @@ final class PadGame {
             return;
         }
 
+        // Speak to chat listening: D-pad left / right pick the chat's channel (Kailil, 2026-11-06), not their own work
+        if (mouse.voiceListening() && (tapped[DPAD_LEFT] || tapped[DPAD_RIGHT])) {
+            if (tapped[DPAD_LEFT]) mouse.act("voice_channel_prev");
+            if (tapped[DPAD_RIGHT]) mouse.act("voice_channel_next");
+            tapped = tapped.clone();
+            tapped[DPAD_LEFT] = tapped[DPAD_RIGHT] = false;
+        }
+
         // Modifier keys: RT Shift; RB held past a tap Space (on the build menu Alt); LB with a building picked
         // Shift+Alt (a grid: the engine lays out a build drag only with Shift), held on while its drag lasts
         boolean gridKeys = (lb && picked) || gridLatched;
@@ -279,10 +293,14 @@ final class PadGame {
         boolean wantAlt = gridKeys || (rbHeld && (buildMenu || pathDrawing));   // (a path: the other fight)
         if (wantAlt != alt) { alt = wantAlt; mouse.key(KeyEvent.KEYCODE_ALT_LEFT, wantAlt); }
         if (released(held, tapped, RB)) {
-            if (rbDownAt >= 0 && !rbUsed) mouse.act(buildMenu ? "pad_page_next" : "pad_build");
+            if (rbDownAt >= 0 && !rbUsed) {
+                if (lb && !menu) { lbRbTaps++; lbRbAt = now; }   // (LB held: counted, voiceTaps)
+                else mouse.act(buildMenu ? "pad_page_next" : "pad_build");
+            }
             rbDownAt = -1;
             rbDpad = false;
         }
+        voiceTaps(now);
         if (buildMenu && pressed(tapped, LB)) mouse.act("pad_page_prev");   // (Kailil: "pressing RB or LB cycles the tabs")
 
         boolean bTaken = buttons(held, tapped, now, menu, ordersMenu, picked, armed, lb, lx, ly);
@@ -644,6 +662,24 @@ final class PadGame {
         if (!start && !back) {
             if (pressed(tapped, LS) && !lb) queueKey(KeyEvent.KEYCODE_INSERT, "queue_remove_first");   // (LB + L3: first person)
             if (pressed(tapped, RS) && !(lb && held[RB])) queueKey(KeyEvent.KEYCODE_NUMPAD_DIVIDE, "queue_remove_last");   // (LB + RB + R3: the D-gun)
+        }
+    }
+
+    /**
+     * RB tapped with LB held (Kailil, 2026-11-06: "Hold LB Double tap rb" speaks to chat, "the triple tap sets a ping
+     * ... (voice stt tho) then it enters the ping either the text"): twice speak to chat, three times a ping at the
+     * middle with what is said as its label (VoiceChat); once, when no second tap has come within LB_RB_TAPS_MS, the
+     * build menu as RB alone.
+     */
+    private void voiceTaps(long now) {
+        if (lbRbTaps >= 3) {
+            mouse.act("voice_ping_here");   // (the ping goes where the middle is now, whatever the camera does meanwhile)
+            mouse.voice(true);
+            lbRbTaps = 0;
+        } else if (lbRbTaps > 0 && now - lbRbAt > LB_RB_TAPS_MS) {
+            if (lbRbTaps == 1) mouse.act("pad_build");
+            else mouse.voice(false);
+            lbRbTaps = 0;
         }
     }
 

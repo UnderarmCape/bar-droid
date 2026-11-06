@@ -43,8 +43,10 @@ import java.util.Locale;
  *   two fingers up/down  tilt the camera (both fingers moving up or down together, however they sit)
  *   two fingers held     (half a second, a buzz) then swiped: up = select all own units, down = deselect, left = stop,
  *                        right = fight (attack-move: the next tap places it)
- *   three-finger tap     show / hide the keyboard (once it is clear no second tap follows)
- *   three-finger double tap  speak to chat (VoiceChat: "SPEAK TO CHAT", the words sent; nothing said, nothing sent)
+ *   three-finger tap     speak to chat (VoiceChat: "SPEAK TO CHAT", the words sent; nothing said, nothing sent), once
+ *                        it is clear no second tap follows
+ *   three-finger double tap  show / hide the keyboard
+ *   a sideways swipe while speak to chat listens: the chat's channel (allies, everyone, spectators), kept
  *   three-finger swipe   up = overview of the whole map, down = the camera to the commander, selected (dead: the
  *                        constructor selected last; out of the overview too); left / right = previous / next idle builder
  *   three fingers held   (most of a second, a buzz) the layout editor opens or closes (bardroid_layout.lua)
@@ -79,7 +81,7 @@ final class RtsTouch {
     private static final float FLING_DECAY = 0.92f;            // velocity kept per fling frame
     private static final long TWO_HOLD_MS = 450;               // two fingers held still this long: the swipe menu
     private static final long THREE_HOLD_MS = 800;             // three fingers held still this long: the layout editor
-    private static final long THREE_DOUBLE_MS = 350;           // a second three-finger tap this soon: speak to chat
+    private static final long THREE_DOUBLE_MS = 350;           // a second three-finger tap this soon: the keyboard
     // A second finger this soon after the first is one two-finger gesture even if the first already slid a little
     // (fingers never land together; the first one's slide used to lock the gesture into pan/zoom: no tilt)
     private static final long JOIN_MS = 250;
@@ -92,7 +94,7 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, DONE }
     // of the view's height: one wheel step in BAR's windows (BAR's Settings: ~3.5 rows a step; at 0.045 the list ran
     // 1.7 times as far as the finger, dev phone)
     private static final float SCROLL_STEP = 0.08f;
@@ -356,6 +358,12 @@ final class RtsTouch {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
                 ui.removeCallbacks(longPress);
+                // speak to chat listening: a sideways swipe picks the chat's channel, the map stays (Kailil, 2026-11-06)
+                if (voiceListening != null && voiceListening.getAsBoolean() && !gridHeld
+                        && Math.abs(curX - downX) > 1.5f * Math.abs(curY - downY)) {
+                    state = State.VOICE_SWIPE;
+                    return;
+                }
                 if (gridHeld) {   // a GRID waiting for PLACE: a drag moves its far corner further
                     state = State.GRID_DRAG;
                     moveX = downX; moveY = downY;
@@ -490,22 +498,24 @@ final class RtsTouch {
             case RIGHT_HOLD:
                 press(curX, curY, InputStub.BUTTON_RIGHT, false);
                 break;
+            case VOICE_SWIPE:
+                if (Math.abs(curX - downX) >= 3 * slop) act(curX > downX ? "voice_channel_next" : "voice_channel_prev");
+                break;
             case MULTI_PENDING:
                 if (!joinedPan && e.getEventTime() - downTime <= MULTI_TAP_MS) {
                     if (maxFingers == 2) {
                         press(downX, downY, InputStub.BUTTON_RIGHT, true);
                         press(downX, downY, InputStub.BUTTON_RIGHT, false);
-                    } else if (maxFingers == 3) {   // a tap the keyboard; two quick ones speak to chat (VoiceChat)
+                    } else if (maxFingers == 3) {   // a tap speaks to chat (VoiceChat); two quick ones the keyboard
                         long t = e.getEventTime();
-                        if (threeTapAt >= 0 && t - threeTapAt <= THREE_DOUBLE_MS && voiceChat != null) {
-                            ui.removeCallbacks(threeTapKeyboard);
+                        if (threeTapAt >= 0 && t - threeTapAt <= THREE_DOUBLE_MS) {
+                            ui.removeCallbacks(threeTapVoice);
                             threeTapAt = -1;
-                            voiceChat.run();
+                            activity.toggleKeyboardVisibility();
                         } else {
                             threeTapAt = t;
-                            ui.removeCallbacks(threeTapKeyboard);
-                            if (voiceChat != null) ui.postDelayed(threeTapKeyboard, THREE_DOUBLE_MS);
-                            else activity.toggleKeyboardVisibility();
+                            ui.removeCallbacks(threeTapVoice);
+                            if (voiceChat != null) ui.postDelayed(threeTapVoice, THREE_DOUBLE_MS);
                         }
                     }
                 }
@@ -1117,16 +1127,24 @@ final class RtsTouch {
     void setTripleTap(Runnable r) { tripleTap = r; }
 
     private Runnable voiceChat;
-    private long threeTapAt = -1;   // a three-finger tap: the keyboard unless a second one follows within THREE_DOUBLE_MS
-    private final Runnable threeTapKeyboard = this::keyboardAfterTap;
-    private void keyboardAfterTap() { threeTapAt = -1; activity.toggleKeyboardVisibility(); }
-    /** What a three-finger double tap does (GameActivity: speak to chat, VoiceChat). */
+    // a three-finger tap: speak to chat unless a second one follows within THREE_DOUBLE_MS (Kailil, 2026-11-06: "Change
+    // it to single tap three fingers only. And double tap brings up the regular keyboard")
+    private long threeTapAt = -1;
+    private final Runnable threeTapVoice = this::voiceAfterTap;
+    private void voiceAfterTap() { threeTapAt = -1; if (voiceChat != null) voiceChat.run(); }
+    /** What a three-finger tap does (GameActivity: speak to chat, VoiceChat). */
     void setVoiceChat(Runnable r) { voiceChat = r; }
+    private java.util.function.BooleanSupplier voiceListening;
+    /** Whether speak to chat listens (a sideways swipe meanwhile picks the channel). */
+    void setVoiceListening(java.util.function.BooleanSupplier s) { voiceListening = s; }
 
-    /** Words said for the chat (VoiceChat): to bardroid_chat.lua, hex-encoded so no word can read as another line. */
-    void voice(String text) {
+    /**
+     * Words said (VoiceChat), hex-encoded so no word can read as another line: for the chat (bardroid_chat.lua) or, ping,
+     * a ping's label (bardroid_pad.lua).
+     */
+    void voice(String text, boolean ping) {
         byte[] b = text.replace('\n', ' ').getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        StringBuilder hex = new StringBuilder(b.length * 2 + 6).append("voice ");
+        StringBuilder hex = new StringBuilder(b.length * 2 + 10).append(ping ? "voiceping " : "voice ");
         for (byte x : b) hex.append(Character.forDigit((x >> 4) & 15, 16)).append(Character.forDigit(x & 15, 16));
         send(hex.toString());
     }
