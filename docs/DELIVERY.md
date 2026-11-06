@@ -493,6 +493,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the vsync file was looked for at the first swap only (a game started with the screen off kept the old cap to its
       end), now twice a second until found, and an empty file is left alone (a bus error otherwise). Each check fails
       without its fix. `pace-test.ps1` took any phone: with both on adb it stopped; it now takes the dev phone.
+      2026-11-05 evening: the day's ~70 engine-branch run logs searched for the app's widgets' errors. Found only:
+      the order menu copy removed in every replay of the 2026-10-26 8v8 (that BAR release has no
+      `luaui/Include/action_tap_hotkeys.lua`; the known older-replay case, spectators get no orders anyway), the build
+      menu copy's ViewResize without `WG.fonts` in a run with every BAR widget off (an experiment), the dev timer
+      widget's argument on a since-fixed engine build, and launch-bar.sh's false "ANDROID LAYER" alarms quoting
+      `[simdraw]` timer lines, last at 10:48, before `widget_error` left those lines out. Nothing to fix.
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
