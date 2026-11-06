@@ -243,6 +243,15 @@ game until the replay and spectating stages below say it computes exactly what t
   mode`): **performance 25.6 and 25.1 fps** (x1.00 throughout), standard 22.5 (one dip to x0.58) and 24.4. The same
   clock caps in the minute's `[perf]` lines; the gain is the scheduler's (game mode hints), +1 to +2 fps. Kept on the
   dev phone; the target set with it: ~25 fps late 8v8 hot.
+- `rts/Rendering/Textures/S3OTextureHandler.cpp`, `Bitmap.cpp`, `nv_dds.cpp`: **`BarDroidModelTextureMax`** (0 = off): a
+  DDS model texture larger than this on a side is uploaded from its own smaller mipmap levels (level n as level 0;
+  nothing re-encoded), its size in the S3O texture table as uploaded. BAR's unit textures are 4096x4096 (DXT5, 22 MB
+  each with mipmaps; Legion's normal maps uncompressed, 87 MB each), and a phone's GPU memory is its RAM. At 2048 in
+  the target set with the performance game mode (gcc-tex, 12:27-13:17, ABBA): **the GPU driver's memory 1612 and 1610
+  MB against 1876 and 1873 (-263 MB)**, fps the same (24.8, 25.3 against 25.1, 25.6), every run to its end (no
+  low-memory kill). Screenshots at game second 1220, closest, middle and far zoom, full resolution, with and without
+  the cap: no difference visible (unit panels, team colour, glow). The whole replay with the cap (f=52673, 1064 s):
+  **0 desync warnings** (rendering only, as expected). In the dev phone's target set from now on.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
