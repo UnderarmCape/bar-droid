@@ -147,6 +147,15 @@ game until the replay and spectating stages below say it computes exactly what t
   waiting at the swap 13.5 (the GPU capped at 220-550 MHz: it limits too), Update 11.6; the profiler itself 4.5. No
   single widget or gadget above 1 %: Converter Usage 1.0, the app's touch widget ~1.8 in all (camera 1.0, lines 0.5,
   hover and screen 0.3), GUI Sound Effects 0.8, Top Bar 0.7, Beam Laser GL4 0.6, Builder Priority 0.5.
+  That run kept only x0.69 of real time: Sim 57.9 % for 20.7 ticks a second, ~28 ms a tick; at x1.00 the simulation
+  alone would take ~84 % of the main thread.
+  Baseline without the profiler (2026-11-06 00:28-01:06, ABBA, the X3 capped at 1478-1593 MHz): the dev phone as it
+  is 8.8 fps x0.80 and 15.2 fps x0.84; with the Fold7's set (deferred swap, one step a drawn frame, models 0.1/6,
+  reflections every 8, pace late 0) 14.9 fps x0.99 and 11.3 fps x0.55 (that run's GPU at 295 MHz, level 7). The heat
+  swings each run more than the settings do. The best run at real time: 19.7 ms of simulation a tick, 12.5-13.4 ms
+  of drawing a frame and ~9 ms of the rest, ~42 ms a frame against 30 fps's 33. In this state 30 fps needs the
+  simulation near 14 ms a tick and the rest of a frame near 19 ms: the CPU caps (X3 at ~40-45 % of its clock) are the
+  wall; a cooler phone (18:45: X3 1843 MHz) ran the same window at 22.6 fps.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
