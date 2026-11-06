@@ -267,11 +267,15 @@ local function note(text, color, seconds)
 	lastNote, notes = text, notes + 1
 end
 
--- Orders at a point straight to the units only where the game allows it (BAR's sandbox; the modoption is on by default)
+-- Orders at a point straight to the units only where this widget may give them: BAR's sandbox takes Spring.GiveOrder*
+-- from user widgets where the lobby's option forbids them (on by default); the app's widgets loaded as the game's (an
+-- engine-branch build, launch-bar.sh BARDROID_GAME_WIDGETS) may. Asked of the function itself, once: an order to no units
+local canOrder = nil
 local function unitControl()
-	local mo = Spring.GetModOptions and Spring.GetModOptions() or {}
-	local v = mo.allowunitcontrolwidgets
-	return v == nil or v == true or v == 1 or v == "1" or v == "true"
+	if canOrder == nil then
+		canOrder = pcall(Spring.GiveOrderToUnitArray, {}, CMD.STOP, {}, 0)
+	end
+	return canOrder
 end
 
 local function shiftHeld()
@@ -569,7 +573,8 @@ local function orderAt(cmdID, name, unitOK)
 	end
 	local unitID, pos = aim()
 	local opts = shiftHeld() and { "shift" } or {}
-	if unitControl() and ((unitID and unitOK) or pos) then
+	-- (only an order the selection has: a building given a fight would drop it with no word; picked, it says so)
+	if unitControl() and Spring.GetCmdDescIndex(cmdID) and ((unitID and unitOK) or pos) then
 		local params = (unitID and unitOK) and { unitID } or { pos[1], pos[2], pos[3] }
 		if pcall(Spring.GiveOrderToUnitArray, selected, cmdID, params, opts) then
 			note(string.upper(name))
@@ -1050,6 +1055,9 @@ local SHARE_CHECK_SECONDS = 1.5
 local function teammates()
 	local list = {}
 	local myTeam = Spring.GetMyTeamID()
+	-- (BAR's anonymous mode hides who plays which team: the list shows them by colour and number only)
+	local mode = (Spring.GetModOptions() or {}).teamcolors_anonymous_mode
+	local anonymous = mode ~= nil and mode ~= "" and mode ~= "disabled"
 	for _, teamID in ipairs(Spring.GetTeamList(Spring.GetMyAllyTeamID()) or {}) do
 		local _, leader, isDead, isAI = Spring.GetTeamInfo(teamID, false)
 		if teamID ~= myTeam and not isDead then
@@ -1068,6 +1076,9 @@ local function teammates()
 				name = Spring.GetPlayerInfo(leader, false) -- (gone from the game: still a team to give to)
 			end
 			if name then
+				if anonymous then
+					name = "TEAMMATE " .. (#list + 1)
+				end
 				local r, g, b = Spring.GetTeamColor(teamID)
 				list[#list + 1] = { teamID = teamID, name = name, color = { r or 1, g or 1, b or 1 } }
 			end

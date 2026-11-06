@@ -101,7 +101,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   own modes (`bardroid_pad.lua`, "modal dgun|share" in bardroid_pad.txt): v0.8.5's D-gun mode and the share list;
   a click at a point the game asks for ("clickat") is `PadGame.clickIfAsked`. The late-game resolution drop
   (`Prefs.lateDrop`): `bardroid_touch.lua` writes `bardroid_scale.txt`, `GameActivity.updateRenderDrop` shrinks the
-  X screen (floor: half the full lines). `bardroid_padspeed.lua`: the pad's drawing speed by
+  X screen (floor: half the full lines). With an engine-branch build, `BARDROID_GAME_WIDGETS=1` in dev-env.sh makes
+  launch-bar.sh move the app's widgets to `bardroid-ui/LuaUI/Widgets`, which that engine shows LuaUI as part of the
+  game archive (`BarDroidGameWidgetsDir`): BAR loads them as game widgets, outside the user widgets' sandbox (Kailil,
+  2026-11-06, on a BAR developer's advice); `pad-test.ps1 -Engine <build>` tests it. `bardroid_padspeed.lua`: the pad's drawing speed by
   zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
   6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).

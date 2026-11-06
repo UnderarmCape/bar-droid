@@ -209,6 +209,25 @@ order_menu() {
     layer_miss "order menu: BAR's gui_ordermenu.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-ordermenu.py)"
   fi
 }
+# The app's widgets as the game's (BARDROID_GAME_WIDGETS=1 in dev-env.sh, with an engine-branch build that has
+# BarDroidGameWidgetsDir, docs/ENGINE-SIM.md "The app's widgets as the game's"; Kailil, 2026-11-06, on a BAR developer's
+# advice: they are the phone's mouse and keyboard, not unit-control widgets): they move to $GAME_WIDGETS, which that
+# engine shows LuaUI as part of the game archive, so BAR loads them as game widgets. Back in LuaUI/Widgets first, as
+# every start finds them (Installer puts new ones there: a newer one there wins), and moved again after dev-env.sh.
+APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
+  bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
+  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano"
+GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
+app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
+  mkdir -p "$2"
+  for w in $APP_WIDGETS; do
+    [ -f "$1/$w.lua" ] || continue
+    if [ -f "$2/$w.lua" ] && [ "$2" = "$BAR/LuaUI/Widgets" ]; then rm -f "$1/$w.lua"; else mv -f "$1/$w.lua" "$2/$w.lua"; fi
+  done
+}
+[ -d "$GAME_WIDGETS" ] && app_widgets_to "$GAME_WIDGETS" "$BAR/LuaUI/Widgets"
+rm -f "$BAR/LuaUI/Config/bardroid_game_widgets.txt"   # (the lobby's warnings about a host's widget options: shown)
+
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Grid menu" 0
@@ -429,6 +448,12 @@ fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
+if [ "${BARDROID_GAME_WIDGETS:-0}" = 1 ]; then   # (above: the app's widgets as the game's)
+  app_widgets_to "$BAR/LuaUI/Widgets" "$GAME_WIDGETS"
+  printf 'BarDroidGameWidgetsDir = bardroid-ui\n' >> "$BAR/springsettings.cfg"
+  mkdir -p "$BAR/LuaUI/Config" && : > "$BAR/LuaUI/Config/bardroid_game_widgets.txt"   # (no warnings: they do not apply)
+  log "the app's widgets as the game's: $(ls "$GAME_WIDGETS" | grep -c '\.lua$') in bardroid-ui/LuaUI/Widgets (BarDroidGameWidgetsDir)"
+fi
 # (what the engine gets, after dev-env.sh: the UBWC default above, or a developer's own flags)
 [ "$GPU" = kgsl ] && log "Freedreno flags: FD_MESA_DEBUG=${FD_MESA_DEBUG:-none}"
 

@@ -63,7 +63,9 @@ local function finish()
 	check("LB + A held on it: no path drawn, it stays selected", solarKept and solarHeld)
 	WG.BarDroidPadFP.toggle()
 	local _, fpNote = WG.BarDroidPad.note()
-	check("LB + L3 held: first person says it is off in this game", fpNote == "FIRST PERSON OFF IN THIS GAME", fpNote)
+	-- (the app's widgets loaded as the game's, pad-test.ps1 -Engine: first person works; the building selected says so)
+	check("LB + L3 held: first person off in this game (or, as the game's widget, not on this building)",
+		fpNote == "FIRST PERSON OFF IN THIS GAME" or fpNote == "NOT ON THIS BUILDING", fpNote)
 	-- RB + D-pad up again and again (Kailil, 2026-11-05): the last pings, newest first, round again; after a pause the
 	-- newest (three more pings from others: four with the test's first)
 	for i = 1, 3 do

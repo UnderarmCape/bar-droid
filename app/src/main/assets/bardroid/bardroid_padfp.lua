@@ -75,10 +75,14 @@ local function say(text)
 	end
 end
 
+-- (whether this widget may give orders: BAR's sandbox takes them from user widgets where the lobby forbids them; the
+-- app's widgets loaded as the game's may: asked of the function itself, once, with an order to no units)
+local canOrder = nil
 local function unitControl()
-	local mo = Spring.GetModOptions and Spring.GetModOptions() or {}
-	local v = mo.allowunitcontrolwidgets
-	return v == nil or v == true or v == 1 or v == "1" or v == "true"
+	if canOrder == nil then
+		canOrder = pcall(Spring.GiveOrderToUnitArray, {}, CMD.STOP, {}, 0)
+	end
+	return canOrder
 end
 
 local function unitYaw(unitID)

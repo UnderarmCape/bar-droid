@@ -291,6 +291,11 @@ local function warningLines(title, why, colour)
 end
 
 local function controlsWarning(options)
+	-- (the app's widgets loaded as the game's, an engine-branch build: launch-bar.sh's BARDROID_GAME_WIDGETS; neither
+	-- setting reaches them there)
+	if VFS.FileExists("LuaUI/Config/bardroid_game_widgets.txt", VFS.RAW) then
+		return nil
+	end
 	local anonymous = options.teamcolors_anonymous_mode
 	if OFF_VALUES[tostring(options.allowuserwidgets)] or (anonymous and anonymous ~= "disabled") then
 		return warningLines("Touch and gamepad controls will not work if you play here",

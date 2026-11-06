@@ -8,8 +8,10 @@
 # -Online: BAR's released game with user widgets' orders forbidden, as a host can forbid them, and pad-online.evemu: the
 # controls that must work in any online game (tools\pad-test\online-on.sh; the skirmish keeps its AI opponent).
 # -Dgun: the same game, pad-dgun.evemu: v0.8.5's D-gun mode (LB + RB + R3) through the app's clicks, the share list's chord.
-#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun]
-param([switch]$Online, [switch]$Dgun)
+# -Engine <build>: an engine-branch build on the phone (engine-sim/<build>, phone-engine.ps1 -Install) with the app's widgets
+# as the game's (BARDROID_GAME_WIDGETS=1, launch-bar.sh; docs/ENGINE-SIM.md on engine/sim).
+#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun] [-Engine <build>]
+param([switch]$Online, [switch]$Dgun, [string]$Engine = "")
 if ($Dgun) { $Online = $true }   # (-Dgun: the same game, the D-gun mode's and the share list's script)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -36,6 +38,11 @@ Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null
 try {
   if ($Online) { InApp "online-on.sh" }
+  if ($Engine) {   # (after online-on.sh, which writes dev-env.sh anew)
+    $f = Join-Path $TC "tmp\padtest-engine.sh"
+    [IO.File]::WriteAllText($f, ("printf '%s\n' 'ENGINE=`"`$BAR/engine-sim/$Engine`"' 'export BARDROID_GAME_WIDGETS=1' 'log `"pad-test: engine-sim/$Engine, the app widgets as the game''s`"' >> files/bar/dev-env.sh`n"), (New-Object Text.ASCIIEncoding))
+    Invoke-AppScript $adb $f
+  }
   Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $until = (Get-Date).AddMinutes(5)
@@ -55,6 +62,7 @@ try {
   & $adb exec-out run-as $pkg rm -f $widget
   & $adb shell am force-stop $pkg
   & $adb shell rm -f $evemu
+  if ($Engine -and -not $Online) { & $adb exec-out run-as $pkg rm -f files/bar/dev-env.sh }
   if ($Online) {   # (again while its marker stays: the setting must read as before)
     for ($i = 0; $i -lt 3; $i++) {
       InApp "online-off.sh"
