@@ -508,6 +508,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       front (dev phone, the 2026-10-26 8v8 replay at 1:15). `bardroid_chat.lua` takes the name from the name text
       then (colour codes and brackets off); the same moment again: "Schluebber  shared Tidal Generator to ...".
       Also on the dev phone with the UBWC default: touch-phone-test and lobby-phone-test ALL PASS.
+      A 6-minute skirmish soak (20:15, the controller game, the dev phone's own no-cap setting): no error from the app's
+      widgets, only BAR's three usual warnings; the GPU 99 % busy throughout and the game at x0.90 by 7:00 while it drew
+      61 fps (a 30 fps cap, the app's default, leaves that time to the simulation).
 - [x] Touch GRID moved to the engine's build drag (2026-10-30): the blue grid taken out of `tools/make-buildmenu.py`
       (droid.grid, gridPositions, gridEnds, the "grid start/by/none" lines) and `tools/touch-widget-test`'s GRID checks
       changed. Checked on the dev phone: ONE, a GRID from a waiting building, PLACE; no widget error.
