@@ -139,6 +139,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       first with UBWC off (launch-bar.sh's new default, ~10 starts since 18:56); before, 1 in the 68 run logs kept
       since 2026-11-01. Too few to tell whether UBWC off makes it likelier: count it. The same test right after: ALL PASS.
       Count at 21:00: ~16 game starts with UBWC off since 18:56, that one hang.
+      The player's side of it (2026-11-05 21:25): the picture stayed frozen with the engine alive, until the app was
+      closed by hand. `DriverWatch` (GameService reads every engine line) now closes the game once the driver's
+      refusal is followed by BAR's watchdog (30 s with the main thread stuck; either alone closes nothing), and the
+      launcher says what happened in amber under "Ready" (not "error (137)", nor the low-memory note a killed engine
+      would get). `tools/status-text-test`: 4 cases; dev phone: a scratch widget echoing the two lines (removed after):
+      the game closed at frame 210, the note shown.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57

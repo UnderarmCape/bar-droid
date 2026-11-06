@@ -52,6 +52,24 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "note \"" + n[0] + "\" -> " + (got ? "result" : "warning"));
         }
+        // DriverWatch: the game is closed only after the driver's refusal and then BAR's watchdog (dev phone's lines)
+        String refused = "19:52:34 [engine] MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)";
+        String hung = "19:53:14 [engine] [t=00:01:44.048302][f=0000741] Warning: [Watchdog] Hang detection triggered for Spring 2026.07.04.";
+        DriverWatch w = new DriverWatch();
+        boolean ok1 = !w.onLine("[t=00:00:30][f=-000001] Loading widget") && !w.onLine(hung) && !w.lost();
+        failed += ok1 ? 0 : 1;
+        System.out.println((ok1 ? "PASS " : "FAIL ") + "driver watch: a watchdog line alone (a long load) closes nothing");
+        boolean ok2 = !w.onLine(refused) && w.refused() && !w.onLine(refused) && !w.lost();
+        failed += ok2 ? 0 : 1;
+        System.out.println((ok2 ? "PASS " : "FAIL ") + "driver watch: the driver's refusal alone closes nothing yet");
+        boolean ok3 = w.onLine(hung) && w.lost() && !w.onLine(hung);
+        failed += ok3 ? 0 : 1;
+        System.out.println((ok3 ? "PASS " : "FAIL ") + "driver watch: refusal, then the watchdog: closed, once");
+        DriverWatch w2 = new DriverWatch();
+        boolean ok4 = !w2.onLine("MESA: error: flush_submit_list:89: submit failed -22 (Invalid argument)") && !w2.onLine(hung)
+                && !w2.onLine(null) && !w2.lost();
+        failed += ok4 ? 0 : 1;
+        System.out.println((ok4 ? "PASS " : "FAIL ") + "driver watch: another submit error, then the watchdog: nothing");
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);
     }

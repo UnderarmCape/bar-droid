@@ -49,6 +49,8 @@ public class GameService extends Service {
      *  (GameActivity's Free memory button). */
     public static boolean loading() { return loading; }
     private static volatile boolean loading;
+    /** This game was closed by the app after the GPU driver's fault (DriverWatch): its end is no low-memory kill. */
+    private volatile boolean driverLost;
     /** Why the last game ended when the player did not end it (the launcher shows it); null: nothing to say. */
     public static String exitNote() { return exitNote; }
     private static volatile String exitNote;
@@ -278,10 +280,18 @@ public class GameService extends Service {
                     // FIFO too and take half of its sound.
                     try {
                         loading = true;
+                        DriverWatch driver = new DriverWatch();
+                        driverLost = false;
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
+                            }
+                            // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
+                            if (driver.onLine(line)) {
+                                driverLost = true;
+                                Log.e("svc", "the GPU driver refused the game's graphics and the game stopped responding: closing it");
+                                Proc.killAll();
                             }
                         });
                         setStatus("running (" + mode + ")");
@@ -295,8 +305,12 @@ public class GameService extends Service {
                     }
                     Log.i("svc", "engine exited (" + rc + ")");   // (tools/phone-bench.ps1, phone-memory.ps1 read this line)
                     // (Stop's own kill is no error: it read "game ended with an error (137)" after the player's Stop)
-                    setStatus(closing ? "stopped" : rc == 0 ? "game ended" : "game ended with an error (" + rc + ")");
-                    if (rc == 137 && !closing) {
+                    // (closed by the app after the GPU driver's fault: the note under it says why, not "error (137): the log")
+                    setStatus(closing ? "stopped" : rc == 0 || driverLost ? "game ended" : "game ended with an error (" + rc + ")");
+                    if (driverLost) {
+                        exitNote = DriverWatch.note();
+                        Log.i("svc", exitNote);
+                    } else if (rc == 137 && !closing) {
                         // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing
                         // first). Without a word the player only saw the launcher come back (an 8 GB phone, 2026-10-29).
                         exitNote = lowMemoryNote(this);

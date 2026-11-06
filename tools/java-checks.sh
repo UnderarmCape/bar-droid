@@ -41,5 +41,6 @@ rm -rf "$work"/updater-*
 # menu copies)
 check padgame com.underarmcape.bardroid.PadGameTest $(find tools/padgame-test/src -name '*.java') \
   "$src/PadGame.java" "$src/PadMouse.java" "$src/PadButtons.java" "$src/BuildMenuPatches.java"
-check status-text com.underarmcape.bardroid.StatusTextTest tools/status-text-test/StatusTextTest.java "$src/StatusText.java"
+check status-text com.underarmcape.bardroid.StatusTextTest tools/status-text-test/StatusTextTest.java "$src/StatusText.java" \
+  "$src/DriverWatch.java"
 exit $failed

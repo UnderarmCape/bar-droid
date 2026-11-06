@@ -144,7 +144,8 @@ The first version meant for other people's phones: everything since the first bu
 - One notification while a game runs (with Stop); a tap on it goes back to the game, and coming back from the
   floating window no longer makes the game pause to lay itself out again.
 - When Android closes the game for lack of memory, the launcher says so (before, the app just started again), and how
-  to close the other apps.
+  to close the other apps. When the phone's GPU driver hits its rare fault and the game freezes for good, the app
+  closes it and says why, instead of leaving a frozen picture.
 - A Free memory button while BAR loads (Galaxy phones): it opens Device care, where Memory, Clean now closes the
   other apps; Back returns to the loading game; it lights up under the finger. (Android lets no app close other apps
   itself.)
