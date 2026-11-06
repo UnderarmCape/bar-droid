@@ -172,6 +172,10 @@ game until the replay and spectating stages below say it computes exactly what t
   night after runs since 01:12 (GPU at its 220 MHz floor, thermal level 8; X3 1248 MHz), the fast-forward down from
   x1.2 to x0.3 before it. Next, once it has cooled: that profile, and the sound mixer (10 % of the engine's CPU samples
   on 2026-11-05) A/B: EFX reverb off and 64 sounds against the baseline (client-side, nothing synced).
+  The sound A/B (05:05-05:46, full resolution, gcc-wfe3, the app's widgets as the game's; the phone cooled to 32 °C
+  first and back at thermal level 7 within the first run): baseline 14.8 and 12.7 fps (x0.97, x0.89), `UseEFX = 0` +
+  `MaxSounds = 64` 11.9 and 12.0 (x0.75 both). No gain: not kept. At full resolution the GPU, 99 % busy at its 295 MHz
+  cap, is the wall; the mixer's thread is not on the frame's path. Measured at the allowed 50 % floor from here on.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
