@@ -29,7 +29,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   com.termux.x11.MainActivity` shows its screen. The patches add fold/unfold resizing, a private knock port, cursor
   hiding under two fingers, a pixel cap for the unfolded screen, Snapdragon GSR upscaling, the display's vsync for
   the frame cap, and no "X" root cursor before the game sets its pointer.
-- **Graphics.** Phones: Mesa for Android containers (Freedreno `kgsl` / Turnip + Zink, lfdevs builds). The emulator:
+- **Graphics.** Phones: Mesa for Android containers (Freedreno `kgsl` / Turnip + Zink, lfdevs builds); with Freedreno,
+  `launch-bar.sh` turns Adreno's compressed render targets off (`FD_MESA_DEBUG=noubwc`: panels BAR draws into textures
+  of their own came out in black columns with them, at no measured cost without). The emulator:
   Mesa `virpipe` → our virgl server (`VirglServer`, `tools/build-virgl.py`) → ANGLE → the host GPU, llvmpipe as
   fallback.
 - **Frame pacing.** `libbardroid_pace.so` (`tools/pace/pace.c`), preloaded into the engine: the frame cap (no VSync

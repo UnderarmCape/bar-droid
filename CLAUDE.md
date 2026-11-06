@@ -119,7 +119,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   cap's vsyncs at least (`lorieMinHold`), `[display] pictures held` once a minute in launcher.log; 0009 X's root
   cursor (the "X" over the black screen and the engine's splash) drawn as nothing until the game sets its pointer;
   0010 a summary under each of its preference screen's entries (Output, Pointer, Keyboard, Other), and plain words
-  for Output's soft keyboard resize ("Reseed") and picture-in-picture entries.
+  for Output's soft keyboard resize ("Reseed") and picture-in-picture entries and the "Needs ..." notes of greyed-out
+  ones (upstream's plain double quotes, which Android drops, made them unreadable).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).

@@ -36,7 +36,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
    installing from your browser or file manager when Android asks).
 2. Open **Beyond All Reason**, tap **Install / Update**: about 4 GB from BAR's servers, around 10 minutes.
 3. Then the lobby (log in with your BAR account), or **Play vs AI**. The app updates BAR at every start, like the PC
-   launcher.
+   launcher; the launcher screen shows the game version the last start played.
 
 ## Touch controls
 

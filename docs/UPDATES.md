@@ -133,7 +133,8 @@ the launcher's status line until a launch has no miss. Nothing is skipped silent
 
 ## State files
 
-- `files/update/state.properties` — current / good / previous engine, md5s, pending flag, bad sets, ETags, last check.
+- `files/update/state.properties` — current / good / previous engine, md5s, pending flag, bad sets, ETags, last check,
+  and each tag's release name at the last start (`name.<tag>`: the launcher's "Game version", a rollback included).
 - `files/update/launcher-config.json` — the last launcher config fetched.
 - `files/update/good/…`, `files/update/pre/…` — `versions.gz` copies (last good launch; before a pr-downloader run).
 - `files/update/config-vars-<ver>.txt` — config keys each engine knows.

@@ -1,5 +1,5 @@
 diff --git a/lorie/src/main/res/values/strings.xml b/lorie/src/main/res/values/strings.xml
-index 07954e0..648dc73 100644
+index 07954e0..694d362 100644
 --- a/lorie/src/main/res/values/strings.xml
 +++ b/lorie/src/main/res/values/strings.xml
 @@ -38,6 +38,10 @@ E.g. <b>META</b> for <i>META key</i>, \n
@@ -28,6 +28,19 @@ index 07954e0..648dc73 100644
      <string name="lorie_pref_fullscreen">Fullscreen</string>
      <string name="lorie_pref_fullscreen_summary">Toggle immersive mode in your device display</string>
      <string name="lorie_pref_forceOrientation">Screen orientation</string>
+@@ -123,9 +127,9 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_notificationButton1Action">Notification second button</string>
+     <string name="lorie_pref_mediaKeysAction">Media keys</string>
+ 
+-    <string name="lorie_pref_summary_requiresExactOrCustom">Requires "display resolution mode" to be "exact" or "custom"</string>
+-    <string name="lorie_pref_summary_requiresIntercepting">Requires intercepting system shortcuts with Dex mode or with Accessibility service</string>
+-    <string name="lorie_pref_summary_requiresTrackpadAndNative">Requires "Touchscreen input mode" to be "Trackpad" and "Display resolution mode" to be not "native"</string>
++    <string name="lorie_pref_summary_requiresExactOrCustom">Needs the display resolution mode “exact” or “custom”</string>
++    <string name="lorie_pref_summary_requiresIntercepting">Needs system shortcuts intercepted (DeX mode or the Accessibility service)</string>
++    <string name="lorie_pref_summary_requiresTrackpadAndNative">Needs the touchscreen input mode “Trackpad” and a display resolution mode other than “native”</string>
+     <string name="lorie_pref_summary_screenIdleTimeoutConflict">⚠️ System screen timeout (%s) is longer and takes priority</string>
+     <string name="lorie_pref_screenIdleTimeoutSystem">System (%s)</string>
+ </resources>
 diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
 index 7adb171..0911876 100644
 --- a/lorie/src/main/res/xml/preferences.xml
