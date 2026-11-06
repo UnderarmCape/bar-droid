@@ -59,7 +59,8 @@ public final class UpdaterTest {
         versions(new File(root, "update/launched/" + HOST + "/byar/versions.gz"), launchedMd5);
         write(new File(root, "update/state.properties"),
                 "tags=byar\\:test\ngood.engine=A\ngood.byar\\:test=" + MD5_A + "\nlaunched.engine=" + launchedEngine
-                        + "\nlaunched.byar\\:test=" + launchedMd5 + "\n");
+                        + "\nlaunched.byar\\:test=" + launchedMd5 + "\nname.byar\\:test=Beyond All Reason test-"
+                        + launchedMd5.charAt(0) + "\n");
         write(new File(p.bar, "infolog.txt"), infolog);
         Prefs.engineVersion = launchedEngine;
         return p;
@@ -84,6 +85,7 @@ public final class UpdaterTest {
         check("  the engine goes back to the last good one", "A".equals(Prefs.engineVersion) && "A".equals(s.getProperty("launched.engine")));
         check("  byar:test points at the last good package again", MD5_A.equals(tagMd5(new File(p.bar, "rapid/" + HOST + "/byar/versions.gz"))));
         check("  the failed set is on the bad list", s.getProperty("bad.0", "").startsWith("engine B, byar:test bbbbbbbb"));
+        check("  the launcher's game version is the last good one's", "Beyond All Reason test-a".equals(s.getProperty("name.byar:test")));
 
         p = setup("crashafterframe", true, A_FRAME);
         r = new Updater(p).launchEnded(139, 70_000);

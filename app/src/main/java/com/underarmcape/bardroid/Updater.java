@@ -201,14 +201,7 @@ public final class Updater {
         verifyTags(tags);
         // The set that starts now; launchEnded judges it.
         state.setProperty("launched.engine", engine);
-        for (String t : tags) {
-            String[] l = local(t);
-            if (l != null) state.setProperty("launched." + t, l[0]); else state.remove("launched." + t);
-            // (its release's name for the launcher's status: "Beyond All Reason test-31836-b250a16"; read here, where the
-            // index is read anyway: 1.5 MB of it on the launcher's thread at every refresh would be too much)
-            if (l != null && !l[1].isEmpty()) state.setProperty("name." + t, l[1]); else state.remove("name." + t);
-            snapshot(repo(t), launchedDir);
-        }
+        for (String t : tags) recordLaunched(t);
         state.setProperty("tags", String.join(",", tags));
         useTags(tags);
         state.setProperty("check", new SimpleDateFormat("MMM d HH:mm", Locale.US).format(new Date()) + " (" + result + ")");
@@ -594,11 +587,7 @@ public final class Updater {
             }
             for (String t : tags) restore(repo(t), goodDir);
             state.setProperty("launched.engine", engine);
-            for (String t : tags) {
-                String[] l = local(t);
-                if (l != null) state.setProperty("launched." + t, l[0]); else state.remove("launched." + t);
-                snapshot(repo(t), launchedDir);
-            }
+            for (String t : tags) recordLaunched(t);   // (the launcher's game version too: the failed update's name went)
             setEngine(engine);
             result = Result.ROLLED_BACK;
         } else if (!fast) {
@@ -619,6 +608,18 @@ public final class Updater {
         save();
         if (result == Result.PROMOTED) cleanupEngines();
         return result;
+    }
+
+    /**
+     * The package the tag points at now, as the set that starts, with its index; and its release's name for the
+     * launcher's status ("Beyond All Reason test-31836-b250a16"): read here, where the index is read anyway, as 1.5 MB
+     * of it on the launcher's thread at every refresh would be too much.
+     */
+    private void recordLaunched(String t) {
+        String[] l = local(t);
+        if (l != null) state.setProperty("launched." + t, l[0]); else state.remove("launched." + t);
+        if (l != null && !l[1].isEmpty()) state.setProperty("name." + t, l[1]); else state.remove("name." + t);
+        snapshot(repo(t), launchedDir);
     }
 
     private static final Pattern GAME_FRAME = Pattern.compile("^\\[t=[^\\]]*\\]\\[f=0*[1-9]");
