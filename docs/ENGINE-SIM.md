@@ -132,6 +132,15 @@ game until the replay and spectating stages below say it computes exactly what t
   far more than the effect sought (the phone warming run to run). Next: the timer gap itself (AddTask - WaitFor) in
   each mode, ABBA, with the profiler. The Fold7's 8 Elite has no little cores (two 4.47 GHz and six 3.53 GHz Oryon),
   so it would gain little either way; it matters for phones like the dev phone.
+  The timer A/B (23:16-23:57, profiler on, ABBA): the wait 4.32 and 3.96 ms a frame pinned, 3.58 all (the other "all"
+  run throttled to 5.6 fps, left out): ~8.5-9 % of the simulation's time either way. Pinning does not shorten the tail;
+  dropped (the hook stays, unset).
+- **The sustained-heat state (2026-11-05, Kailil's goal from 23:05: consistent 30 fps in late 8v8 on the dev phone).**
+  After an evening of runs the dev phone's thermal governor capped the X3 at 1248-1363 MHz (of ~3360) and the
+  A715s at 940-1056 MHz (18:45: 1843 and 1536). The same late-8v8 window (game seconds 1210-1330, gcc-wfe2,
+  profiler on): 22.6 fps at 18:45, 12.1-13.2 fps at 23:16-23:57 (Sim 43-47 ms a drawn frame against 20.4). 30 fps
+  must hold in this state, the one a long game ends in: at these clocks the main thread would need well under half of
+  today's work a frame. Watts are the currency: less CPU and GPU work raises the caps.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
