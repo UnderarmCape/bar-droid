@@ -156,6 +156,28 @@ game until the replay and spectating stages below say it computes exactly what t
   of drawing a frame and ~9 ms of the rest, ~42 ms a frame against 30 fps's 33. In this state 30 fps needs the
   simulation near 14 ms a tick and the rest of a frame near 19 ms: the CPU caps (X3 at ~40-45 % of its clock) are the
   wall; a cooler phone (18:45: X3 1843 MHz) ran the same window at 22.6 fps.
+  GPU cuts at full resolution on top of the Fold7's set (2026-11-06 01:12-01:59, ABBA, no profiler: `GroundDetail 30`,
+  features drawn to 1500 elmos and faded from 1200, plain water, `MaxDrawnParticles 500`): Fold7's set 19.0 and 11.7
+  fps, with the cuts 18.7 and 20.9. The evenly heated first pair (19.0 / 18.7, both x0.99-1.00) shows no gain; the
+  last run had the GPU capped at 401 MHz (thermal level 5) and fell to x0.51. Not kept: in this state the GPU's own
+  costs these settings reach are not what holds the frame back.
+  Half the resolution instead (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ...
+  Upscaling should be doing the heavy lifting"; SGSR on at its maximum sharpness, the Fold7's set, no frame cap,
+  02:06-02:46, ABBA): **50 % 23.2 and 22.7 fps, 100 % 17.6** (x0.97-1.00 each; the second 100 % run ended at load for
+  lack of memory). The 50 % runs had the GPU at its 295 MHz floor (thermal level 7), the 100 % one at 550: half the
+  lines is about +30 % with less GPU clock. Not 30 fps yet. The app's launcher setting "Lower the resolution when the
+  game slows down" (Prefs.lateDrop, off by default) makes that drop by itself in a game, a step at a time.
+- **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
+  developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
+  and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
+  "it should run regardless"). LuaUI's reads of the game archive (a mode with the game's archive and without the raw
+  file system: `VFS.DirList` of `LuaUI/Widgets`, `VFS.LoadFile` / `VFS.FileExists` of a file there) also see the
+  folder's `LuaUI/Widgets` under their own names, so BAR's widget handler loads them as the game's widgets ("mod:"),
+  outside the user widgets' sandbox. Unsynced LuaUI only: the synced states never see the folder, the archives and
+  their checksums are unchanged, raw reads (BAR's list of user widgets) do not see it. The app's launch-bar.sh moves
+  its widgets there with `BARDROID_GAME_WIDGETS=1` in dev-env.sh and sets the key; without it they are back in
+  `LuaUI/Widgets` (BAR's official engine). The widgets ask whether they may give orders with an order to no units
+  (`unitControl`), not the lobby's option. A player's own user widgets stay in BAR's sandbox as before.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
