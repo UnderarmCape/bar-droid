@@ -141,6 +141,12 @@ game until the replay and spectating stages below say it computes exactly what t
   profiler on): 22.6 fps at 18:45, 12.1-13.2 fps at 23:16-23:57 (Sim 43-47 ms a drawn frame against 20.4). 30 fps
   must hold in this state, the one a long game ends in: at these clocks the main thread would need well under half of
   today's work a frame. Watts are the currency: less CPU and GPU work raises the caps.
+  Where the time goes in that state (2026-11-06 00:12, `replay-memory.ps1 -Timers -Widgets`, 8.0 fps, % of real time
+  on the main thread): Sim 57.9 (unit movement 10.0, unit scripts 8.5, BAR's synced gadgets 6.5 + their Lua 6.3,
+  paths 6.3 with their map updates 5.0, unit updates 5.6 + slow updates 3.7), BAR's unsynced Lua 19.4, Draw 14.5,
+  waiting at the swap 13.5 (the GPU capped at 220-550 MHz: it limits too), Update 11.6; the profiler itself 4.5. No
+  single widget or gadget above 1 %: Converter Usage 1.0, the app's touch widget ~1.8 in all (camera 1.0, lines 0.5,
+  hover and screen 0.3), GUI Sound Effects 0.8, Top Bar 0.7, Beam Laser GL4 0.6, Builder Priority 0.5.
 - `rts/Sim/Path/QTPFS/PathManager.cpp` (a plain fix): `Sim::Path::RawSearches` registered with the profiler, as
   `Sim::Path::Requests` is (every profiled game logged "[ResortProfilesRaw] timer with hash 2549212347 wasn't
   registered").
