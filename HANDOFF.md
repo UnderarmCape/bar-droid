@@ -54,7 +54,9 @@ settings at every start), [docs/upstream/](docs/upstream/) (draft reports of bug
 from the app's native-lib dir (the only place Android lets an app exec from), downloads the official Debian trixie
 arm64 docker rootfs (layer digest read from the OCI manifest on GitHub, SHA-256 checked), extracts it with
 `proot --link2symlink` + busybox tar (hard links → symlinks), runs `/opt/bardroid/setup-container.sh apt`
-(SDL2/X11/OpenAL/fonts/xkb/Mesa pkgs/PulseAudio), installs **Mesa for Android containers** over Debian's Mesa,
+(SDL2/X11/OpenAL/fonts/xkb/Mesa pkgs; no documentation, manual pages or translations), installs **Mesa for Android
+containers** over Debian's Mesa, `slim` (once, older installs too: PulseAudio's daemon and x11-xserver-utils with the
+~90 packages only they need, on a phone Debian's own gallium driver and other GPUs' Vulkan drivers; 723 -> 375 MB),
 downloads `recoil_2026.07.04_arm64-linux.7z`, then `pr-downloader` fetches `byar:test`, `byar-chobby:test` and one
 map from BAR's own CDN (nothing of BAR's CC-BY-NC-ND art is bundled). **Play**: `XServer` starts
 `com.termux.x11.CmdEntryPoint` (compiled into *our* APK) via `/system/bin/app_process` with `TMPDIR=<rootfs>/tmp`

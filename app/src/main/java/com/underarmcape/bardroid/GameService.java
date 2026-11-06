@@ -203,6 +203,7 @@ public class GameService extends Service {
             boolean bench = "bench".equals(mode);
             try { inst.removeGamepadGame(); }   // (v0.8.5's game, out of the app since 2026-11-06: one installed earlier goes)
             catch (java.io.IOException e) { Log.e("svc", "the controller game's files", e); }
+            inst.slimContainer((step, detail, percent) -> setStatus("container: making room"));
             Updater up = "lobby".equals(mode) || "skirmish".equals(mode) ? update(Prefs.autoUpdate) : null;
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();

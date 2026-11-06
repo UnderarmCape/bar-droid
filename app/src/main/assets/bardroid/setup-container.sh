@@ -2,6 +2,7 @@
 # BAR Droid — container-side setup. Runs as root inside the Debian arm64 proot. Idempotent.
 #   setup-container.sh apt
 #   setup-container.sh mesa    /root/downloads/mesa.tar.gz
+#   setup-container.sh slim                                (what the game never loads, out of the container)
 #   setup-container.sh engine  /root/downloads/engine.7z  2026.07.04
 #   setup-container.sh content byar:test byar-chobby:test "Supreme Isthmus v2.1"  2026.07.04
 #   setup-container.sh gamepad byar:git:<commit> 2026.07.04
@@ -24,13 +25,83 @@ prd_setup() {
   cd "$BAR"
 }
 
+# Files no program here reads (documentation, manual pages, translations): dpkg leaves them out of every package it
+# installs from now on (Debian's slim images do the same); the licence texts stay.
+slim_excludes() {
+  cat > /etc/dpkg/dpkg.cfg.d/bardroid-slim <<'EOF'
+path-exclude=/usr/share/doc/*
+path-include=/usr/share/doc/*/copyright
+path-exclude=/usr/share/man/*
+path-exclude=/usr/share/info/*
+path-exclude=/usr/share/locale/*
+path-include=/usr/share/locale/locale.alias
+path-exclude=/usr/share/lintian/*
+EOF
+}
+
 case "$step" in
+  slim)
+    # Kailil, 2026-11-06: "reduce all other aspects of the game". What the game never loads, taken out of the
+    # container once (Installer step "slim"; /proc/<engine>/maps of a late 8v8 lists what it does load):
+    # PulseAudio's daemon and tools (sound goes the engine's wave writer -> AudioPump; launch-bar.sh only killed a
+    # leftover daemon) and x11-xserver-utils, with the ~90 libraries only they pulled in (GStreamer, FFmpeg's codecs,
+    # the C preprocessor, iso-codes: 187 MB); the libraries the engine maps (libpulse0, ALSA, OpenAL, SDL2, the
+    # sound file codecs) stay, as their other packages need them. On a phone, with the phone Mesa installed over
+    # Debian's: Debian's own gallium driver and the Vulkan drivers for other GPUs (Freedreno's, the phone Mesa's,
+    # stays). Then the documentation, manual pages and translations. Never fails the install: a removal that does not
+    # go through leaves the files where they were.
+    export DEBIAN_FRONTEND=noninteractive
+    slim_excludes
+    before=$(du -sm / --exclude=/root --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/tmp 2>/dev/null | cut -f1)
+    gone=""
+    for p in pulseaudio pulseaudio-utils x11-xserver-utils; do dpkg -s "$p" >/dev/null 2>&1 && gone="$gone $p"; done
+    if [ -n "$gone" ]; then
+      # Every library the engines (BAR's and the engine branch's builds: libatomic), the phone Mesa, OpenAL and SDL
+      # link stays, whatever pulled it in, and the sound backends OpenAL and SDL open themselves.
+      libs=""
+      for f in "$BAR"/engine/*/spring "$BAR"/engine-sim/*/spring /usr/lib/*-linux-gnu/libgallium-*.so \
+               /usr/lib/*-linux-gnu/libGLX_mesa.so.0 /usr/lib/*-linux-gnu/libEGL_mesa.so.0 /usr/lib/*-linux-gnu/gbm/dri_gbm.so \
+               /usr/lib/*-linux-gnu/libvulkan_freedreno.so /usr/lib/*-linux-gnu/libopenal.so.1 /usr/lib/*-linux-gnu/libSDL2-2.0.so.0; do
+        [ -e "$f" ] && libs="$libs $(ldd "$f" 2>/dev/null | awk '/=> \//{print $3}' | xargs -r readlink -f)"
+      done
+      keep=""
+      for p in libatomic1 libpulse0 libasound2t64 libsndio7.0 $(dpkg -S $libs 2>/dev/null | cut -d: -f1 | tr -d ' ' | tr ',' '\n' | sort -u); do
+        dpkg -s "$p" >/dev/null 2>&1 && keep="$keep $p"
+      done
+      log "keeping$keep"
+      [ -n "$keep" ] && apt-mark manual $keep >/dev/null 2>&1
+      log "removing$gone and what only they need"
+      apt-get purge -y -q --autoremove $gone >/dev/null 2>&1 || log "warning: apt-get purge failed (continuing)"
+    fi
+    if [ -f /etc/bardroid/mesa-installed ]; then
+      for d in /usr/lib/*-linux-gnu; do
+        for v in broadcom gfxstream lvp nouveau panfrost radeon virtio intel intel_hasvk asahi powervr; do
+          rm -f "$d/libvulkan_$v.so"
+        done
+        ls "$d"/libgallium-27* >/dev/null 2>&1 && for g in "$d"/libgallium-2[0-6]*.so; do [ -f "$g" ] && rm -f "$g"; done
+      done
+      for j in /usr/share/vulkan/icd.d/*.json; do
+        case "$(basename "$j")" in freedreno_icd.*) ;; *) rm -f "$j" ;; esac
+      done
+    fi
+    find /usr/share/doc -mindepth 1 ! -name copyright ! -type d -delete 2>/dev/null
+    find /usr/share/doc -mindepth 1 -type d -empty -delete 2>/dev/null
+    rm -rf /usr/share/man/* /usr/share/info/* /usr/share/lintian/* 2>/dev/null
+    find /usr/share/locale -mindepth 1 -maxdepth 1 ! -name locale.alias -exec rm -rf {} + 2>/dev/null
+    apt-get clean
+    rm -rf /var/lib/apt/lists/* /var/cache/apt/*.bin
+    after=$(du -sm / --exclude=/root --exclude=/proc --exclude=/sys --exclude=/dev --exclude=/tmp 2>/dev/null | cut -f1)
+    log "container ${before:-?} MB -> ${after:-?} MB"
+    log "ok"
+    ;;
+
   apt)
     export DEBIAN_FRONTEND=noninteractive
     # Android apps may not create hard links; dpkg copes thanks to proot --link2symlink, but keep it quiet.
     echo 'force-unsafe-io' > /etc/dpkg/dpkg.cfg.d/bardroid
     echo 'APT::Install-Recommends "false";' > /etc/apt/apt.conf.d/99bardroid
     echo 'Acquire::Retries "3";' >> /etc/apt/apt.conf.d/99bardroid
+    slim_excludes
     log "apt-get update"
     apt-get update -q || { log "apt-get update failed"; exit 11; }
     log "installing runtime libraries"
@@ -38,10 +109,9 @@ case "$step" in
       bash coreutils ca-certificates curl p7zip-full xz-utils procps \
       libsdl2-2.0-0 libx11-6 libxcursor1 libxext6 libxrandr2 libxi6 libxss1 libxxf86vm1 libxkbcommon0 \
       libopenal1 libsndio7.0 \
-      fontconfig fonts-dejavu-core xkb-data xfonts-base xfonts-utils x11-xserver-utils \
+      fontconfig fonts-dejavu-core xkb-data xfonts-base xfonts-utils \
       libgl1 libegl1 libegl-mesa0 libgbm1 libglx-mesa0 libgl1-mesa-dri mesa-libgallium mesa-vulkan-drivers \
       libvulkan1 vulkan-tools mesa-utils \
-      pulseaudio pulseaudio-utils \
       || { log "apt-get install failed"; exit 12; }
     apt-get clean
     rm -rf /var/lib/apt/lists/*

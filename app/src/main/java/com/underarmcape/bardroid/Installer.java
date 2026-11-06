@@ -83,6 +83,7 @@ public final class Installer {
         step("apt", st, () -> runSetup("apt", st, "apt"));
         if (mesaOutdated()) { Log.i("install", "Mesa changed to " + Prefs.mesaUrl); state.remove("mesa"); save(); }
         step("mesa", st, () -> { installMesa(st); state.setProperty("mesaUrl", Prefs.mesaUrl); });
+        slimContainer(st);
         step("engine", st, () -> installEngine(st));
         // import is optional: only when the user pushed content from a PC
         if (hasImport()) runSetup("import", st, "import", Prefs.engineVersion);
@@ -213,6 +214,22 @@ public final class Installer {
         Map<String, String> env = new HashMap<>();
         int rc = proot.runScript("setup:" + step, "/opt/bardroid/setup-container.sh", env, Arrays.asList(args));
         if (rc != 0) throw new IOException("container step '" + step + "' failed with exit code " + rc + " (see log)");
+    }
+
+    /**
+     * What the game never loads, out of the container, once (setup-container.sh "slim": ~300 MB on a phone). Not one
+     * of {@link #STEPS}: an install from before it stays installed (the icon still opens the lobby) and gets it at
+     * its next start (GameService.play). Never fails a start: the files then stay where they were.
+     */
+    public void slimContainer(Status st) {
+        if (isDone("slim") || !isDone("mesa")) return;
+        try {
+            Log.i("install", "==== step slim");
+            runSetup("slim", st, "slim");
+            mark("slim");
+        } catch (Exception e) {
+            Log.e("install", "slim: " + e.getMessage());
+        }
     }
 
     private void installMesa(Status st) throws Exception {
