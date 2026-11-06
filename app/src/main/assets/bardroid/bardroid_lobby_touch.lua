@@ -34,8 +34,10 @@ local SCALE_KEY = 302 -- Scroll Lock (the engine's key code): ControllerBridge s
 local SCALE_SMALL, SCALE_LARGE = 1.0, 1.3
 local WARNING_CHECK_S = 0.5 -- a joined server's settings arrive after the join, and its host can change them later
 local OFF_VALUES = { ["0"] = true, ["false"] = true }
-local WARNING_RED = { fill = { 0.5, 0.06, 0.05, 1 }, edge = { 0.95, 0.3, 0.25, 1 }, title = "\255\255\205\170" }
-local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2, 1 }, title = "\255\255\225\130" }
+-- (the title white and the reason in the box's tint, a size smaller: with the title tinted and the reason white, the
+-- reason outshone what the warning is about, dev phone 2026-11-05)
+local WARNING_RED = { fill = { 0.5, 0.06, 0.05, 1 }, edge = { 0.95, 0.3, 0.25, 1 }, why = "\255\255\205\170" }
+local WARNING_AMBER = { fill = { 0.42, 0.27, 0.02, 1 }, edge = { 0.95, 0.7, 0.2, 1 }, why = "\255\255\225\130" }
 
 local Chili, screen0
 local press, fling
@@ -285,7 +287,7 @@ end
 -- unit control widgets off only stops first person (the rest of the app gives no Spring.GiveOrder).
 
 local function warningLines(title, why, colour)
-	return colour.title .. title .. "\n\255\255\255\255" .. why, colour
+	return "\255\255\255\255" .. title .. "\n" .. colour.why .. why, colour
 end
 
 local function controlsWarning(options)
@@ -317,6 +319,7 @@ end
 local function makeWarning()
 	local config = WG.Chobby and WG.Chobby.Configuration
 	local font = config and config:GetFont(3)
+	local small = config and config:GetFont(2) or font
 	warning = Chili.Window:New({
 		name = "bardroidLobbyWarning",
 		parent = screen0,
@@ -342,11 +345,11 @@ local function makeWarning()
 	warningWhy = Chili.TextBox:New({
 		parent = warning,
 		x = 14,
-		y = 50,
+		y = 52,
 		right = 118,
 		bottom = 0,
 		text = "",
-		objectOverrideFont = font,
+		objectOverrideFont = small,
 	})
 	Chili.Button:New({
 		parent = warning,
