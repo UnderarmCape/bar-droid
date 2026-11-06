@@ -167,6 +167,11 @@ game until the replay and spectating stages below say it computes exactly what t
   lack of memory). The 50 % runs had the GPU at its 295 MHz floor (thermal level 7), the 100 % one at 550: half the
   lines is about +30 % with less GPU clock. Not 30 fps yet. The app's launcher setting "Lower the resolution when the
   game slows down" (Prefs.lateDrop, off by default) makes that drop by itself in a game, a step at a time.
+  A call-graph profile of the window (04:10, `phone-engine.ps1 -Perf 40 -Graph`) did not happen: Android's
+  low-memory killer ended the game in the fast-forward (frame 31,840 of 36,300), the phone at its hottest of the
+  night after runs since 01:12 (GPU at its 220 MHz floor, thermal level 8; X3 1248 MHz), the fast-forward down from
+  x1.2 to x0.3 before it. Next, once it has cooled: that profile, and the sound mixer (10 % of the engine's CPU samples
+  on 2026-11-05) A/B: EFX reverb off and 64 sounds against the baseline (client-side, nothing synced).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
