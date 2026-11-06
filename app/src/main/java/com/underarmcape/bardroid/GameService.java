@@ -335,7 +335,8 @@ public class GameService extends Service {
                 Log.i("svc", exitNote);
             }
             if ("lobby".equals(mode)) {   // a lobby that dies at once is not started again from the app icon
-                Prefs.setLobbyFailedFast(this, rc != 0 && android.os.SystemClock.elapsedRealtime() - started < 60_000);
+                // (a lobby the app closed for the GPU driver's fault is no broken lobby: the icon still opens it next time)
+                Prefs.setLobbyFailedFast(this, rc != 0 && !driverLost && android.os.SystemClock.elapsedRealtime() - started < 60_000);
                 showLauncher = rc != 0;   // quitting the lobby closes the app; a failure shows the launcher and its log
             }
         } catch (InterruptedException e) {
