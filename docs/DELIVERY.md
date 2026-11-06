@@ -138,6 +138,7 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the virtual pad just giving orders), the same Mesa lines, then the watchdog; the test said "did not finish". The
       first with UBWC off (launch-bar.sh's new default, ~10 starts since 18:56); before, 1 in the 68 run logs kept
       since 2026-11-01. Too few to tell whether UBWC off makes it likelier: count it. The same test right after: ALL PASS.
+      Count at 21:00: ~16 game starts with UBWC off since 18:56, that one hang.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
@@ -246,7 +247,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       and the GPU driver's memory ~2.08 GB either way. No cost seen, so launch-bar.sh now sets
       `FD_MESA_DEBUG=noubwc` for Freedreno (added to a developer's own flags; `unset FD_MESA_DEBUG` in dev-env.sh
       brings UBWC back; launcher.log says "Freedreno flags: ..."); `tools\launch-bar-test.sh` 4 cases. Dev phone:
-      a pair with the new default, both whole (the tally 0 of 8 without UBWC, 2 of 10 with). Open until the
+      a pair with the new default, both whole (the tally 0 of 8 without UBWC, 2 of 10 with); 20:47, two more pairs,
+      all four whole: 0 of 10 without, 2 of 12 with. Open until the
       first-frames stripes above are seen gone too (not reproduced on purpose so far).
 - [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
       still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
