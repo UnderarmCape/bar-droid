@@ -199,6 +199,12 @@ game until the replay and spectating stages below say it computes exactly what t
   single runs but on the side of the cap in both pairs. Kept for the dev phone's target set (Kailil, 2026-11-04: cut
   anything visual for 8v8 there): the Fold7's set + render scale 50 % (SGSR) + `MaxDrawnParticles = 300`, ~24 fps late
   8v8 hot. Further explosions and shots past the nearest 300 are not drawn.
+  GPU cuts on top of that set at 50 % (08:19-09:09, ABBA, every run at 295 MHz, thermal level 7: `GroundDetail 30`,
+  features to 1500 elmos faded from 1200, plain water): with them 25.5 and 24.1 fps (the GPU 84 % busy), without 24.4
+  and 24.3 (89-95 %), x1.00 throughout. +0.5 fps, inside the noise, for a plainer ground, no far trees and rocks and
+  no water reflections: not kept. In the target set both sides are near their limits at ~24 fps (the GPU ~90 % busy at
+  its cap, the main thread ~41 ms a frame): easing one alone hardly moves the frame. Next: the GPU's passes at 50 %
+  (`replay-memory.ps1 -Timers`).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
