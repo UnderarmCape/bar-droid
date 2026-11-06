@@ -252,6 +252,37 @@ game until the replay and spectating stages below say it computes exactly what t
   low-memory kill). Screenshots at game second 1220, closest, middle and far zoom, full resolution, with and without
   the cap: no difference visible (unit panels, team colour, glow). The whole replay with the cap (f=52673, 1064 s):
   **0 desync warnings** (rendering only, as expected). In the dev phone's target set from now on.
+- **The budget hunt** (Kailil, 2026-11-06, after the texture cap: "Conduct an extensive hunt to reduce all other
+  aspects of the game as well ... give me updates to how it effects the overall budget, meaning ram, vram, and total
+  game size"). Late 8v8 on the dev phone (game seconds 1210-1270, the target set, full resolution), the textures and
+  buffers the engine makes (pace's `BARDROID_TEX_LOG`, `tools/tex-memory.py`): 908 MB of textures, of them the two
+  effect atlases 189 + 155 MB (drawn into, so stored uncompressed), the unit icon atlas 51 MB (the same), the 4K
+  loading pictures 2 x 32 MB, screen-sized targets ~140 MB; 485 MB of buffers (the models' vertices 160 MB). The engine's
+  own memory, mapped: mimalloc's heap ~2.6 GB (two thirds swapped), the GPU driver's mappings 322 MB.
+  - The earlier 8v8 cuts, not in the target set until now: `ProjectileAtlasDownscale = 4`, `NamedTextureMaxSize = 1024`.
+  - `rts/Map/SMF/SMFGroundTextures.cpp`: **`BarDroidMapTileSkip`** (0-2, with `SMFTextureStreaming`, which the
+    low-memory mode sets): the map's ground tiles stay in RAM all game (each 32x32 tile with 4 DXT1 levels, 680 bytes);
+    at 1 the finest level is left out (168 bytes a tile) and the ground streams from half resolution up close. Supreme
+    Isthmus: 147,456 tiles, 96 -> 24 MB (`[BarDroid] map tiles` in infolog).
+  - `rts/System/Sound/OpenAL/SoundBuffer.cpp`: `[BarDroid] sound buffers` lines (what the decoded sounds hold in
+    OpenAL's memory: 64 MB after 322 files, all over 24 kHz) and **`BarDroidSoundMaxRate`** (0 = off): a 16-bit sound
+    faster than this kept at half its rate ([1 2 1] low-pass, every second sample), in memory only.
+  - `rts/Rendering/IconHandler.cpp`, `Textures/TextureRenderAtlas.cpp`: **`BarDroidIconMaxSize`** (0 = off): an icon
+    picture larger than this on a side gets that size in the icon atlas, drawn from its own matching mipmap.
+  - Atlases 1/4, loading pictures 1024, tiles at 1 against the target set (gcc-mem, 15:12-15:22 against gcc-tex,
+    13:58-14:07; late game, the engine's own memory as RAM + swap): **engine 3,279 -> 3,045 MB (-234), GPU driver
+    1,758 -> 1,466 MB (-292)**, lowest memory available 639 -> 742 MB. Ground at the closest zoom, effects: no
+    difference visible in the screenshots.
+  - With `BarDroidSoundMaxRate = 24000` (gcc-mem2, 15:23-15:33): the decoded sounds 64 -> 32 MB at the same 323 files
+    (none left over 24 kHz); engine 2,987 MB. `BarDroidIconMaxSize = 128` changed little (4080x3256 -> 4080x3128: BAR's
+    icons are about that size); at 64 (15:34-15:44): the icon atlas 2016x1800 (51 -> 14 MB), the GPU driver up to
+    1,426 MB, engine 3,046 MB (RAM + swap swing ~60 MB run to run). The far zoom's icons as before.
+  - The whole replay with every cut (gcc-mem2, f=52710, 816 s): **0 desync warnings**.
+  - Late-8v8 budget now against the target set this morning (full resolution): **GPU driver 1,758 -> ~1,430 MB
+    (-330), engine ~3,280 -> ~3,000 MB (-280)**; with the texture cap from earlier today, the GPU ~-590 MB in all. On
+    disk (the app's side): the container 723 -> 375 MB, each engine 108 -> 70 MB (bar-droid-app 4eab453, 91ef6fa);
+    BAR's game and maps unchanged (its licence, and the archive checksums every client compares).
+  - All of it in the dev phone's target set; not on the Fold7 (its effects, sound and icons are Kailil's call).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
