@@ -308,11 +308,15 @@ public class GameService extends Service {
                     // (closed by the app after the GPU driver's fault: the note under it says why, not "error (137): the log")
                     setStatus(closing ? "stopped" : rc == 0 || driverLost ? "game ended" : "game ended with an error (" + rc + ")");
                     String fatal = rc != 0 && !closing && !driverLost && rc != 137 ? engineFatal(paths) : null;
+                    String coded = rc != 0 && !closing && !driverLost && fatal == null ? StatusText.exitCodeNote(rc) : null;
                     if (driverLost) {
                         exitNote = DriverWatch.note();
                         Log.i("svc", exitNote);
                     } else if (fatal != null) {   // (the engine's own message box, which the phone never shows)
                         exitNote = StatusText.engineFatalNote(fatal);
+                        Log.i("svc", exitNote);
+                    } else if (coded != null) {   // (an exit code of the engine's own, without a message)
+                        exitNote = coded;
                         Log.i("svc", exitNote);
                     } else if (rc == 137 && !closing) {
                         // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing

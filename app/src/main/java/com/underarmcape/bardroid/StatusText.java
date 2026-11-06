@@ -63,4 +63,21 @@ final class StatusText {
     static String engineFatalNote(String msg) {
         return "BAR's own message: \"" + msg + "\"";
     }
+
+    /**
+     * The engine's exit codes (rts/System/SpringExitCode.h) as they arrive, an exit status's low byte: what the launcher
+     * says when the engine left no message of its own; null for any other.
+     */
+    static String exitCodeNote(int rc) {
+        switch (rc) {
+            case 21: return "BAR stopped on an error of its own (its log has the details)";   // EXIT_CODE_CRASHED -1003
+            case 22: return "BAR could not start (its log has the details)";                  // EXIT_CODE_NOINIT -1002
+            case 23: return "The game went out of sync with the other players (a desync)";    // EXIT_CODE_DESYNC -1001
+            case 233: return "The connection to the game timed out";                          // EXIT_CODE_TIMEOUT 1001
+            case 234: return "The game could not be loaded";                                  // EXIT_CODE_NOLOAD 1002
+            case 235: return "BAR was closed after it stopped responding";                    // EXIT_CODE_KILLED 1003
+            case 236: return "The saved game could not be loaded";                            // EXIT_CODE_BADSAVE 1004
+            default: return null;
+        }
+    }
 }

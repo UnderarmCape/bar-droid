@@ -70,6 +70,15 @@ public class StatusTextTest {
         boolean okNote = StatusText.engineFatalNote("x").equals("BAR's own message: \"x\"") && !StatusText.isResultNote(StatusText.engineFatalNote("x"));
         failed += okNote ? 0 : 1;
         System.out.println((okNote ? "PASS " : "FAIL ") + "engine fatal note, in amber");
+        // StatusText.exitCodeNote: the engine's exit codes as an exit status's low byte (SpringExitCode.h)
+        Object[][] codes = { { 21, "BAR stopped" }, { 23, "desync" }, { 233, "timed out" }, { 234, "could not be loaded" },
+            { 236, "saved game" }, { 0, null }, { 1, null }, { 137, null }, { 139, null } };
+        for (Object[] c : codes) {
+            String got = StatusText.exitCodeNote((Integer) c[0]);
+            boolean ok = c[1] == null ? got == null : got != null && got.contains((String) c[1]);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "exit " + c[0] + " -> " + got);
+        }
         // DriverWatch: the game is closed only after the driver's refusal and then BAR's watchdog (dev phone's lines)
         String refused = "19:52:34 [engine] MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)";
         String hung = "19:53:14 [engine] [t=00:01:44.048302][f=0000741] Warning: [Watchdog] Hang detection triggered for Spring 2026.07.04.";
