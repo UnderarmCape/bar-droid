@@ -136,6 +136,8 @@ The first version meant for other people's phones: everything since the first bu
   says it is Play vs AI's); its warnings stand in amber.
 - A skirmish's first seconds no longer stutter at 2-5 fps (BAR's cursors load with the game), and a game takes about
   400 MB less graphics memory (BAR's unit picture cache off).
+- Interface pictures in black stripes (the build menu's, the idle builders button's) should be gone: the GPU's
+  compressed drawing buffers are off on Snapdragon phones, at no measured cost.
 - Picking a building no longer lags with many construction turrets: the engine drew the build range of every one of
   them; now the 10 nearest the building are drawn (150 turrets on the dev phone: 26 fps before, 85 after, uncapped).
 - One notification while a game runs (with Stop); a tap on it goes back to the game, and coming back from the

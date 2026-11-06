@@ -1,6 +1,7 @@
 # The interface's stripes (docs/DELIVERY.md "The whole picture in vertical stripes") on the dev phone: skirmishes with
-# the launcher's settings, alternating FD_MESA_DEBUG=noubwc (Adreno's compressed render targets off, through
-# dev-env.sh) and none, a screenshot -After seconds after the game's first perf line, then the game force-stopped and
+# the launcher's settings, alternating launch-bar.sh's default (FD_MESA_DEBUG=noubwc: Adreno's compressed render
+# targets off) and UBWC on (dev-env.sh unsets FD_MESA_DEBUG), a screenshot -After seconds after the game's first perf
+# line, then the game force-stopped and
 # -Pause seconds of rest. Screenshots and a montage (the build menu, BAR's idle builders button, the whole screen) in
 # build\stripes-test; one line per start: mode, battery temperature, game frame of the screenshot.
 #   powershell -ExecutionPolicy Bypass -File tools\stripes-test.ps1 [-Pairs 3] [-After 60] [-Pause 20]
@@ -21,9 +22,9 @@ function AppRun([string]$text) {
 $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $shots = @()
 for ($k = 0; $k -lt 2 * $Pairs; $k++) {
-  $mode = @('noubwc', 'normal')[$k % 2]
-  if ($mode -eq 'noubwc') {
-    AppRun "printf '%s\n' 'export FD_MESA_DEBUG=noubwc' 'log `"stripes-test: FD_MESA_DEBUG=noubwc`"' > files/bar/dev-env.sh; rm -f files/bar/infolog.txt" | Out-Null
+  $mode = @('noubwc', 'ubwc')[$k % 2]
+  if ($mode -eq 'ubwc') {
+    AppRun "printf '%s\n' 'unset FD_MESA_DEBUG' 'log `"stripes-test: UBWC on`"' > files/bar/dev-env.sh; rm -f files/bar/infolog.txt" | Out-Null
   } else {
     AppRun "rm -f files/bar/dev-env.sh files/bar/infolog.txt" | Out-Null
   }

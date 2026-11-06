@@ -196,5 +196,15 @@ printf '%s\n' '[t=1][f=9] [simdraw] timers: W:VisibleUnitRemoved:BAR Droid touch
 check "widget check: a profiler line is no error" [ -z "$(widget_error 'bardroid_touch|BAR Droid touch')" ]
 check "widget check: a widget's error still is" widget_error_found 'bardroid_chat|BAR Droid chat'
 
+# Adreno's compressed render targets off for Freedreno (the stripes, 2026-11-05): added once to what is there, never
+# for Turnip + Zink
+ubwc=$(awk '/^if \[ "\$GPU" = kgsl \]; then$/ { on = 1 } on { print } on && /^fi$/ { exit }' "$src")
+[ -n "$ubwc" ] || { echo "[launchbartest] FAIL launch-bar.sh: the UBWC block not found"; exit 1; }
+ubwc_for() { ( GPU=$1; if [ -n "$2" ]; then FD_MESA_DEBUG=$2; else unset FD_MESA_DEBUG; fi; eval "$ubwc"; echo "${FD_MESA_DEBUG:-}" ); }
+check "UBWC: off for Freedreno" [ "$(ubwc_for kgsl '')" = noubwc ]
+check "UBWC: added to other Freedreno flags" [ "$(ubwc_for kgsl nolrz)" = nolrz,noubwc ]
+check "UBWC: not twice" [ "$(ubwc_for kgsl noubwc,nolrz)" = noubwc,nolrz ]
+check "UBWC: Turnip + Zink untouched" [ -z "$(ubwc_for zink '')" ]
+
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]

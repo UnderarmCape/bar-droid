@@ -234,9 +234,16 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       picture in black columns in 1 of 3 normal starts, all 3 `noubwc` starts whole; the tool's own test pair after,
       both whole. With the earlier three each: columns in 2 of 9 normal starts (the build menu's 30 s redraw cleared
       its own), 0 of 7 with UBWC off. Leaning to
-      UBWC, too few starts to be sure. Next: what `noubwc` costs in the late 8v8 (GPU timers, `replay-memory.ps1
-      -Timers`); if little, it becomes the phones' default in launch-bar.sh, else a redraw for BAR's idle builders
-      button as the build menu's.
+      UBWC, too few starts to be sure. BAR's idle builders widget draws its picture into its texture again every
+      ~0.33 s, so its columns were not a stale first drawing (as the build menu's were): the drawing into that texture
+      kept failing while UBWC was on. What `noubwc` costs (late 8v8, game seconds 1210-1330, gcc-wfe2, profiler on,
+      the dev phone at 72-77 C, ABBA): GPU passes 18.9 and 16.5 ms a frame without UBWC, 17.7 with (the other UBWC
+      run throttled hard, its simulation 68 ms a frame: left out); 20.1 and 22.6 fps against 17.2; GPU busy 66-95 %
+      and the GPU driver's memory ~2.08 GB either way. No cost seen, so launch-bar.sh now sets
+      `FD_MESA_DEBUG=noubwc` for Freedreno (added to a developer's own flags; `unset FD_MESA_DEBUG` in dev-env.sh
+      brings UBWC back; launcher.log says "Freedreno flags: ..."); `tools\launch-bar-test.sh` 4 cases. Dev phone:
+      a pair with the new default, both whole (the tally 0 of 8 without UBWC, 2 of 10 with). Open until the
+      first-frames stripes above are seen gone too (not reproduced on purpose so far).
 - [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
       still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into

@@ -21,6 +21,16 @@ elif [ "$GPU" = virpipe ]; then
 else
   export MESA_LOADER_DRIVER_OVERRIDE="$GPU"
 fi
+# Adreno's compressed render targets (UBWC) off for Freedreno: with them, panels BAR draws into textures of their own
+# (the build menu, the idle builders button) came out in black columns 16 px wide in 2 of 9 skirmish starts on the
+# dev phone, in none of 7 without; the late 8v8 took the same GPU time and memory either way (docs/DELIVERY.md,
+# 2026-11-05). dev-env.sh, read later, can `unset FD_MESA_DEBUG` to have them back.
+if [ "$GPU" = kgsl ]; then
+  case ",${FD_MESA_DEBUG:-}," in
+    *,noubwc,*) ;;
+    *) export FD_MESA_DEBUG="${FD_MESA_DEBUG:+$FD_MESA_DEBUG,}noubwc" ;;
+  esac
+fi
 export MESA_VK_WSI_PRESENT_MODE="${MESA_VK_WSI_PRESENT_MODE:-mailbox}"
 # Never wait for vblank: the frame cap is libbardroid_pace.so below instead of VSync. With swap interval 0 and the
 # explicit Present fence (which pace.c steers lfdevs' Mesa onto, see there) Mesa keeps a third back buffer and never
@@ -419,6 +429,8 @@ fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
+# (what the engine gets, after dev-env.sh: the UBWC default above, or a developer's own flags)
+[ "$GPU" = kgsl ] && log "Freedreno flags: FD_MESA_DEBUG=${FD_MESA_DEBUG:-none}"
 
 # The engine's threads allowed on every CPU of the app's cpuset. The dev phone (Samsung) starts it on a CPU mask without
 # its fastest core (0x3f, 0x5f, ...: never core 7, from the engine's first log line on, while this shell has all 8; set
