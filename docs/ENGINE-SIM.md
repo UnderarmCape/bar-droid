@@ -609,6 +609,16 @@ game until the replay and spectating stages below say it computes exactly what t
     (-7 %), Draw 6.64 / 6.32 against 6.61 / 6.58, game speed x0.85 / x0.87 against x0.89 / x0.91, fps 41.3 / 42.5
     against 41.8 / 41.7 (the same). The simulation's gain shows as game speed, the frame rate held by the GPU this
     round. gcc-all3 against gcc-all1 not measured head to head: across rounds the heat differs more than they do.
+  - Round 3, gcc-all4 (365e5eb: sim-move's `BarDroidMoveParallelUpdate`, the ground units' final Update on every
+    thread with each unit's synced writes recorded and replayed through the sync checker in stock order, plus its
+    prefetches; sim-lua's metatable `__index` step, vararg and tail calls inline): the whole replay to "End of demo
+    reached", **0 desync warnings**, fast-forward 693 s. BAR's benchmark, gcc-fold7 against gcc-all4 (15:59-16:21,
+    ABBA): Sim 26.92 / 26.03 ms against 25.79 / 25.62 (-2.9 %), Update 5.00 / 4.68 against 4.41 / 4.43 (-8.7 %), Draw
+    6.58 / 6.41 against 6.37 / 6.48, game speed x0.84 / x0.87 against x0.89 / x0.89 (+4 %), fps 41.1 / 42.8 against
+    43.0 / 42.7 (+2 %). `bardroid/sim` fast-forwarded to it.
+  - Over the three rounds against this morning's engine: game speed +4-5 % each time, Sim -3 to -5 %, Update -7 to
+    -12 %, fps 0 to +4.5 % with the round's heat; each round's both B runs beat both A runs in game speed. A real
+    gain, the size exact rewrites give; the frame stays simulation- and (hot) GPU-bound.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
