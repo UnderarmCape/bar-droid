@@ -564,6 +564,46 @@ game until the replay and spectating stages below say it computes exactly what t
     size do not reach. What would: the simulation run less often than drawn frames already allow (it runs at the
     game's speed; it cannot), the simulation on another device (the offline sim-offload research), or a cooler phone
     (a cool dev phone ran the same window at 25-31 fps in its first phases today).
+- **The exact simulation rewrite, all in one** (Kailil, 2026-11-07 ~13:30: "Is there really no way to make the
+  simulation cheaper on phone ... Stop worrying about the simulation matching 1to1. All that matters is no desync";
+  then "The very first test I want to happen is all of their suggested fixes in one", and "the bar benchmark first.
+  So we can see if our changes made an fps improvemrnt"). Lockstep needs bit-identical results (a cheaper approximate
+  simulation silently plays another game; a spoofed checksum only hides that), so three agents rewrote the hottest
+  parts for speed with the same results, each change behind its own switch (default 1, 0 = stock), branches from
+  `bardroid/sim` 83c7eda, notes in `C:\Tools\BARANDROID\side-session-notes\<name>.md`:
+  - sim-lua, `bardroid/lua-vm` (54e61ec, 4e8b959): a second interpreter loop with computed-goto dispatch
+    (`BarDroidLuaVM`, which the next four need), the first lookup step of table gets and sets inline
+    (`BarDroidLuaFastTable`), call and return set up inline (`BarDroidLuaFastCall`), number/string compares inline
+    (`BarDroidLuaFastCompare`), prefetches (`BarDroidLuaPrefetch`), C iterators (`next`, `ipairs`, `gmatch`) inside
+    the loop (`BarDroidLuaFastIter`), string interning comparing the stored hash first (`BarDroidLuaStrHash`), relaxed
+    allocation counters (`BarDroidLuaAllocRelaxed`). Hashes, sizes, rehash and `next` untouched; checked on the
+    laptop against stock with 8 scripts under 14 switch sets (output, allocation sequence and GC counts identical).
+  - sim-move, `bardroid/move` (0a236f9 .. bf4c02e): quadfield queries without writing marks into objects
+    (`BarDroidMoveQuadStamp`, v2 in 5f0b286 after v1 measured slower), the blocking memo as an epoch-tagged table
+    (`BarDroidMoveBlockMemo`), `RangeHasExitOnly` answered from per-tile counts (`BarDroidMoveExitOnly`), prefetches
+    in the movement loops (`BarDroidMovePrefetch`), static move types not called (`BarDroidMoveStaticSkip`), obstacle
+    avoidance asking for units only (`BarDroidMoveAvoid`), raw searches without a `std::function`
+    (`BarDroidMoveRawSearch`), small sync-checker hashes inline (`BarDroidSyncFast`); `BarDroidMoveAll = 0` turns
+    them all off. Its profile of round 1: unit movement 11.3 -> 9.2 % of the main thread.
+  - sim-units, `bardroid/units` (d605402 .. 293c464): the animations in prefetched blocks (`BarDroidAnimPrefetch`),
+    called by type (`BarDroidAnimDispatch`), the piece walk over the dirty pieces' index range only
+    (`BarDroidAnimDirtyRange`), piece transforms reused while their inputs have the same bits
+    (`BarDroidPieceTrigCache`), the COB interpreter on one dense jump table (`BarDroidCobDispatch`), line of sight
+    calling the per-type update only for the units it would change (`BarDroidLosGather`), prefetches in the weapon
+    and LOS-status loops (`BarDroidWeaponPrefetch`, `BarDroidLosStatePrefetch`); `BarDroidUnitsAll = 0` turns them all
+    off. It also found a latent bug in 5f6dcc7's array-order walk: `Spring.SetUnitPieceParent` re-parents a piece
+    without reordering the array, so the walk would then compute a child from its parent's old transform (BAR's Lua
+    never calls it); since 030f0c7 the walk falls back to the tree after a re-parent or a game load.
+  - Integrated in `bardroid/combined` (worktree `hailmary-work\recoil-combined`): gcc-all1 = round 1 of each
+    (1f35b76), gcc-all3 = all of it (2db352b). `bardroid/sim` fast-forwarded to it afterwards.
+  - **BAR's benchmark, gcc-fold7 (the Fold7's engine of this morning) against gcc-all1** (14:28-14:52, ABBA,
+    `bench-ab.ps1`, render scale 70 %, the dev phone's target set, hot: AP 47-55 C, the prime core capped at 1977-2092
+    MHz): Sim 25.74 / 26.01 ms a frame against 24.65 / 24.36 (**-5.3 %**), Update 4.66 / 4.76 against 4.11 / 4.22
+    (-11.5 %), Draw 6.32 / 6.49 against 6.29 / 6.19, game speed x0.88 / x0.87 against x0.91 / x0.93, the last
+    minute's fps 42.7 / 43.1 against 45.0 / 44.7 (**+4.5 %**). Both B runs beat both A runs on every figure, the
+    second one on a hotter phone. (The benchmark is simulation-bound: below x1 its game falls behind real time.)
+  - **Sync, gcc-all3, every switch on** (14:52-15:04): the whole 8v8 replay to "End of demo reached" (f=52,514),
+    **0 desync warnings**; its fast-forward took 714 s (today's earlier builds 733-755 s).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
