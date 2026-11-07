@@ -105,8 +105,9 @@ public final class Prefs {
      * The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop. But make sure
      * the dev phone is running the max snapdragon upscaling sharpness. Upscaling should be doing the heavy lifting"):
      * when a game's frame rate stays under 27, bardroid_touch.lua asks for a lower resolution, a step at a time and only
-     * while each step helps, never under half the render resolution's lines (GameActivity.updateRenderDrop). Off by
-     * default: on for the dev phone's 30 fps target; on the Fold7 only with Kailil's say.
+     * while each step helps, never under 70 % of the render resolution's lines (GameActivity.updateRenderDrop; Kailil,
+     * 2026-11-06, after watching 50 %: "keep it at 70 percent res drop as the minimum instead"). Off by default: on for
+     * the dev phone's 30 fps target; on the Fold7 only with Kailil's say.
      */
     public static boolean lateDrop = false;
 

@@ -765,14 +765,15 @@ local perSecond, secondStart, secondFrames = {}, nil, 0
 local catchup -- while catching up with a running game (below): the engine's own settings, where the last log line was
 
 -- The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ... Upscaling should
--- be doing the heavy lifting"; the app's setting "Lower the resolution when the game slows down", Prefs.lateDrop): from
+-- be doing the heavy lifting", then, having watched 50 %: "keep it at 70 percent res drop as the minimum instead"; the
+-- app's setting "Lower the resolution when the game slows down", Prefs.lateDrop): from
 -- game minute DROP_AFTER on, DROP_WINDOW seconds of drawn frames under DROP_BELOW a second ask the app for the next step
--- down (SCALE: "scale <percent>" of the render resolution's lines; the app keeps half the full lines at least and
+-- down (SCALE: "scale <percent>" of the render resolution's lines; the app keeps 70 % of the full lines at least and
 -- shrinks the X screen as a fold does, SGSR enlarging it). A step stays only if the next DROP_WINDOW seconds (after
 -- DROP_SETTLE for the resize) are DROP_GAIN faster: else it goes back one step and the game keeps that (the GPU was not
 -- what held it back). A size the view does not take (the setting off) ends it for the game too.
 local SCALE = "LuaUI/Config/bardroid_scale.txt"
-local DROP_STEPS = { 100, 85, 70, 60, 50 }
+local DROP_STEPS = { 100, 85, 70 }
 local DROP_AFTER, DROP_WINDOW, DROP_SETTLE, DROP_BELOW, DROP_GAIN, DROP_KEEP = 180, 20, 8, 27, 1, 10
 local drop = { step = 1, window = {}, at = nil, before = nil, view = nil, keptAt = nil, locked = false }
 

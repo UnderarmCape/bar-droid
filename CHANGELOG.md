@@ -14,7 +14,7 @@ The first version meant for other people's phones: everything since the first bu
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
   the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it. Launcher
   setting "Lower the resolution when the game slows down" (off by default): under 27 fps the game is drawn smaller a
-  step at a time (85, 70, 60, 50% of the lines), never under half, kept only while each step makes it faster.
+  step at a time (85, then 70% of the lines), never under 70%, kept only while each step makes it faster.
 - The app is a game for Android and One UI: Game Booster and Gaming Hub see it, and Android's performance game mode
   (Game Booster's game performance, or `cmd game mode performance`) gave 1-2 fps more in a late 8v8 on a hot S23 Ultra.
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is

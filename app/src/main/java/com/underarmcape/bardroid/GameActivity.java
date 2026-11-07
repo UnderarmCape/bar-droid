@@ -440,10 +440,11 @@ public class GameActivity extends MainActivity {
     // The late-game drop (Prefs.lateDrop): bardroid_touch.lua writes LuaUI/Config/bardroid_scale.txt, "scale <percent>"
     // of the render resolution's lines, when the frame rate stays low, and again every 10 s while it is under 100; the
     // X screen shrinks to it (the same way a fold resizes it: the engine's window follows) and SGSR enlarges it. Never
-    // under half the full lines (Kailil, 2026-11-06). A file not written for RENDER_DROP_STALE_MS (the game ended, the
-    // widget gone) is full size again. Native resolution (no cap) has nothing to drop from.
+    // under 70 % of the full lines (Kailil, 2026-11-06, after watching 50 %: "way too aggressive. You cant even see lol.
+    // We gotta keep it at 70 percent res drop as the minimum instead"). A file not written for RENDER_DROP_STALE_MS (the
+    // game ended, the widget gone) is full size again. Native resolution (no cap) has nothing to drop from.
     private static final long RENDER_DROP_STALE_MS = 30000;
-    private static final int RENDER_DROP_FLOOR = 50;
+    private static final int RENDER_DROP_FLOOR = 70;
     private int renderDrop = 100;
 
     private void updateRenderDrop() {
