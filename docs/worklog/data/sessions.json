@@ -49,6 +49,54 @@
   "title": "Mouse and keyboard support (Bluetooth, USB-C dock)",
   "tool_calls": 227
  },
+ "55a0bad9-91de-4300-8b4d-d28ae8504547": {
+  "claude_by_day": {
+   "2026-11-06": 4407
+  },
+  "claude_s": 4407,
+  "first": "2026-11-07T03:22:56.462000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T04:36:23.065000+00:00",
+  "messages": 0,
+  "title": "Mobile-optimized rebuild of all BAR unit models",
+  "tool_calls": 250
+ },
+ "66150c16-1511-4b53-bdf2-83a99a606ebf": {
+  "claude_by_day": {
+   "2026-11-06": 3506
+  },
+  "claude_s": 3506,
+  "first": "2026-11-07T03:31:47.886000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T04:30:14.311000+00:00",
+  "messages": 0,
+  "title": "Mobile unit shader and pre-made ASTC textures for phones",
+  "tool_calls": 138
+ },
+ "7a286d2a-44c7-4451-8780-d486964533e9": {
+  "claude_by_day": {
+   "2026-11-06": 3606
+  },
+  "claude_s": 3606,
+  "first": "2026-11-07T03:31:31.364000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T04:31:36.947000+00:00",
+  "messages": 0,
+  "title": "Mobile pack of BAR's costliest Lua widgets and effect gadgets",
+  "tool_calls": 193
+ },
+ "9664ca52-74f7-4ff3-97ba-4bfe3528fe0e": {
+  "claude_by_day": {
+   "2026-11-06": 3356
+  },
+  "claude_s": 3356,
+  "first": "2026-11-07T03:32:05.800000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T04:28:01.807000+00:00",
+  "messages": 0,
+  "title": "BAR Droid without proot and the X server: measure, then prototype",
+  "tool_calls": 173
+ },
  "d4bf9130-114a-4164-96cf-2934eddbb89f": {
   "claude_by_day": {
    "2026-10-25": 13654,
@@ -74,6 +122,18 @@
   "title": "BAR Android port",
   "tool_calls": 1416
  },
+ "f83def2f-08fa-474a-ab35-8d7388eda921": {
+  "claude_by_day": {
+   "2026-11-06": 2777
+  },
+  "claude_s": 2777,
+  "first": "2026-11-07T03:00:19.120000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T04:36:33.402000+00:00",
+  "messages": 3,
+  "title": "Investigate idle RAM use on Kailil's Samsung phones",
+  "tool_calls": 95
+ },
  "f8c12e67-1076-49a4-8768-4dcaddbbbd18": {
   "claude_by_day": {
    "2026-10-26": 60512,
@@ -87,15 +147,15 @@
    "2026-11-03": 85107,
    "2026-11-04": 41212,
    "2026-11-05": 81648,
-   "2026-11-06": 46682
+   "2026-11-06": 52754
   },
-  "claude_s": 637669,
+  "claude_s": 643741,
   "first": "2026-10-26T04:14:36.131000+00:00",
   "interrupts": 2,
-  "last": "2026-11-07T02:05:58.983000+00:00",
-  "messages": 267,
+  "last": "2026-11-07T04:36:21.133000+00:00",
+  "messages": 276,
   "title": "BAR Android port",
-  "tool_calls": 19423
+  "tool_calls": 19574
  },
  "fe628d0c-b165-4c20-92d3-03ed36ea7d75": {
   "claude_by_day": {
