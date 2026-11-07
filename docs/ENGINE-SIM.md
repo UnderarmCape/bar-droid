@@ -619,6 +619,9 @@ game until the replay and spectating stages below say it computes exactly what t
   - Over the three rounds against this morning's engine: game speed +4-5 % each time, Sim -3 to -5 %, Update -7 to
     -12 %, fps 0 to +4.5 % with the round's heat; each round's both B runs beat both A runs in game speed. A real
     gain, the size exact rewrites give; the frame stays simulation- and (hot) GPU-bound.
+  - gcc-all4 with the Fold7's dev-env and settings on the dev phone (16:23-16:29): pace-test, pad-test, pad-test
+    -Online -Engine gcc-all4 and touch-phone-test ALL PASS, the 7 phone Lua patches loaded. Installed on the Fold7 at
+    16:35 (BAR not running; only dev-env.sh's engine line changed, the settings and ASTC folder as in the morning).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
