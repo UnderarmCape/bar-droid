@@ -382,7 +382,13 @@ game until the replay and spectating stages below say it computes exactly what t
     phone 21.0 fps (GPU at its 295 MHz floor, level 7, 99 %
     busy; prime core 1478 MHz), 02:56 base 20.4 (GPU 401-550, level 3; prime 1248-1363), 03:31 base 20.6 (GPU 475-615,
     level 2; prime 1248-1363), 03:43 phone 21.4 (GPU 550, level 2; prime 1248-1363). The last pair at the same caps:
-    **48.5 -> 46.7 ms a drawn frame (+0.8 fps, +4 %)**; both pairs +0.6 and +0.8 fps.
+    **48.5 -> 46.7 ms a drawn frame (+0.8 fps, +4 %)**; both pairs +0.6 and +0.8 fps. 04:27 base 20.9 with the GPU
+    at its 295 MHz floor (level 7, 99 % busy) and the prime core at 1478 MHz, the 02:45 phone run's state exactly:
+    there 21.0 against 20.9, the main thread waiting for the GPU 28-29 % of the time. While the hot GPU is the wall the
+    CPU saved does not show; Defense Range's GPU time (-0.5 % of it) is the only GPU part of these changes.
+  - To turn it on: an engine with `bardroid/lua`'s LuaVFS.cpp (`gcc-lua`), the app from `mobile-lua` (the patches in
+    `bardroid-phone/`) and `export BARDROID_PHONE_LUA=1` in dev-env.sh (or `BarDroidPhoneLuaDir = bardroid-phone` in
+    dev-springsettings.cfg). Without that engine the key does nothing and BAR's files load as they are.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
