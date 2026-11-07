@@ -1,0 +1,17 @@
+BAR Droid phone version of BAR's BuildETA (luaui/widgets/gui_build_eta.lua): the time left above units being built worked
+out 5 times a game second instead of every game frame (30). Each update asks the engine for the build progress of every
+unit under construction in view of the player: in a late 16-player game 0.2 % of the dev phone's main thread
+(docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as
+LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+	if gs == lastGameUpdate then
+		return
+	end
+	lastGameUpdate = gs
+@@@ with
+	if gs >= lastGameUpdate and gs < lastGameUpdate + 0.2 then -- BAR Droid (phone): 5 times a game second, not every frame
+		return
+	end
+	lastGameUpdate = gs
+@@@ end

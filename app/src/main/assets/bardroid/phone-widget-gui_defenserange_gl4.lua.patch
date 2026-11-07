@@ -1,0 +1,31 @@
+BAR Droid phone version of BAR's Defense Range GL4 (luaui/widgets/gui_defenserange_gl4.lua): the same rings with fewer
+points. Every ring point fits the ring to the ground with a heightmap search in the vertex shader, for every ring of every
+defence in view, in three passes: 64 points a ring instead of 128 (nukes and long-range cannons 256, not 1024) and 6
+search steps instead of 8 (a ring's edge within 1/64 of its range, the heightmap's grid is 8 elmos); mobile anti-nukes'
+rings follow their units every 3rd frame. Its GPU time was the costliest widget's on the dev phone in a late 16-player game
+(docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as
+LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+local largeCircleSegments = 1024
+@@@ with
+local largeCircleSegments = 256 -- BAR Droid (phone): 1024
+@@@ end
+
+@@@ find
+local smallCircleSegments = 128
+@@@ with
+local smallCircleSegments = 64 -- BAR Droid (phone): 128
+@@@ end
+
+@@@ find
+local rangeHeightmapSampleSteps = 8
+@@@ with
+local rangeHeightmapSampleSteps = 6 -- BAR Droid (phone): 8
+@@@ end
+
+@@@ find
+local antiupdaterate = 1
+@@@ with
+local antiupdaterate = 3 -- BAR Droid (phone): 1
+@@@ end

@@ -1,0 +1,19 @@
+BAR Droid phone version of BAR's GPU mem Broadcast (luarules/gadgets/data_gpumem_broadcast.lua), its unsynced half: it asks
+the driver for the video memory in use every 15 s and tells the other players; when the driver has no figure (phones'
+Mesa drivers: 0), BAR's file asks again every frame, which cost 0.2 % of the dev phone's main thread in a late 16-player
+game (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). It now waits 15 s either way. Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file in the unsynced LuaRules state only; if a block finds no place, BAR's own file runs.
+
+@@@ find
+			local used, max = Spring.GetVidMemUsage()
+			if type(used) == "number" and used > 0 then
+				SendLuaRulesMsg("@" .. validation .. math.ceil((used / max) * 100))
+				updateTimer = 0
+			end
+@@@ with
+			local used, max = Spring.GetVidMemUsage()
+			updateTimer = 0 -- BAR Droid (phone): also when the driver has no figure (BAR's asked every frame then)
+			if type(used) == "number" and used > 0 then
+				SendLuaRulesMsg("@" .. validation .. math.ceil((used / max) * 100))
+			end
+@@@ end

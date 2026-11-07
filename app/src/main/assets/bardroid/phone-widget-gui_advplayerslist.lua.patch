@@ -1,0 +1,17 @@
+BAR Droid phone version of BAR's AdvPlayersList (luaui/widgets/gui_advplayerslist.lua): the player list drawn again half as
+often (every 1.6 s instead of 0.8) and its resource bars a quarter as often (0.6 s instead of 0.15; BAR stretches both
+with the number of players). Each redraw renders the whole list into its textures: in a late 16-player game the list cost
+0.4-0.5 % of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+local updateRate = 0.8
+@@@ with
+local updateRate = 1.6 -- BAR Droid (phone): 0.8
+@@@ end
+
+@@@ find
+local updateFastRate = 0.15 -- only updates resources
+@@@ with
+local updateFastRate = 0.6 -- only updates resources -- BAR Droid (phone): 0.15
+@@@ end

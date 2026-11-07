@@ -297,9 +297,12 @@ fi
 #   UseEFX 0, MaxSounds 48 the sound mixer lighter (Kailil, 2026-11-05: heat): no reverb or underwater muffling, 48 sounds
 #                          at once (BAR's 128); with OpenAL's linear resampler (.alsoftrc above) its thread took 5 % of the
 #                          engine's CPU in a late 8v8 replay on the dev phone, where it took 10 %
+#   MiniMapRefreshRate 8   the minimap's picture (every unit's icon) drawn again 8 times a second, not the engine's 15
+#                          for a small minimap: its GPU time 0.25 -> 0.05 % in a late 8v8 on the dev phone, whose GPU
+#                          is the limit once hot (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones")
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
   BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2
-  VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1 UseEFX=0 MaxSounds=48"
+  VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1 UseEFX=0 MaxSounds=48 MiniMapRefreshRate=8"
 for kv in $PHONE_GFX; do
   k=${kv%%=*}; v=${kv#*=}
   if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
@@ -445,6 +448,8 @@ else
   widget_order "Mission Info" ""; widget_order "Widget Profiler" ""; rm -f "$BAR/LuaUI/Config/bardroid_bench.txt"
 fi
 
+# (the engine saves BarDroidPhoneLuaDir, below, into springsettings.cfg at exit: a start without it has none)
+sed -i '/^BarDroidPhoneLuaDir *=/d' "$BAR/springsettings.cfg" 2>/dev/null
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 [ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
@@ -453,6 +458,15 @@ if [ "${BARDROID_GAME_WIDGETS:-0}" = 1 ]; then   # (above: the app's widgets as 
   printf 'BarDroidGameWidgetsDir = bardroid-ui\n' >> "$BAR/springsettings.cfg"
   mkdir -p "$BAR/LuaUI/Config" && : > "$BAR/LuaUI/Config/bardroid_game_widgets.txt"   # (no warnings: they do not apply)
   log "the app's widgets as the game's: $(ls "$GAME_WIDGETS" | grep -c '\.lua$') in bardroid-ui/LuaUI/Widgets (BarDroidGameWidgetsDir)"
+fi
+# Phone versions of BAR's costliest widgets and of its gadgets' unsynced halves (BARDROID_PHONE_LUA=1 in dev-env.sh, with
+# an engine-branch build that has BarDroidPhoneLuaDir, docs/ENGINE-SIM.md "BAR's Lua on phones"): patches to BAR's own
+# files in bardroid-phone/ (Installer), which that engine applies as LuaUI and the unsynced LuaRules state load them, all
+# of a file's or none (then BAR's file as it is: the infolog's "[BarDroid] phone version of" lines say which). The synced
+# game never sees them.
+if [ "${BARDROID_PHONE_LUA:-0}" = 1 ]; then
+  printf 'BarDroidPhoneLuaDir = bardroid-phone\n' >> "$BAR/springsettings.cfg"
+  log "phone versions of BAR's Lua: $(ls "$BAR/bardroid-phone/LuaUI/Widgets" "$BAR/bardroid-phone/LuaRules/Gadgets" 2>/dev/null | grep -c '\.patch$') patches in bardroid-phone (BarDroidPhoneLuaDir)"
 fi
 # (what the engine gets, after dev-env.sh: the UBWC default above, or a developer's own flags)
 [ "$GPU" = kgsl ] && log "Freedreno flags: FD_MESA_DEBUG=${FD_MESA_DEBUG:-none}"
