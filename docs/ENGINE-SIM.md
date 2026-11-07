@@ -283,6 +283,33 @@ game until the replay and spectating stages below say it computes exactly what t
     disk (the app's side): the container 723 -> 375 MB, each engine 108 -> 70 MB (bar-droid-app 4eab453, 91ef6fa);
     BAR's game and maps unchanged (its licence, and the archive checksums every client compares).
   - All of it in the dev phone's target set; not on the Fold7 (its effects, sound and icons are Kailil's call).
+  - Frame rate, the target set at 50 % with the performance game mode, against it plus these cuts (16:05-16:51, ABBA,
+    120 s each): base 25.5 and 22.9 fps, cuts 25.5 and 25.2 (x1.00 throughout); the GPU driver 1,610 -> 1,259 MB at
+    this resolution (-351 MB), ~0.9 GB more swap free. No fps cost; the +1 fps on average is inside the noise.
+- The timers with every cut (gcc-mem2, 50 %, 17:00, profiler on, x1.01, 3,391 units), in % of real time: Sim 45
+  (MoveType 8.6, unit scripts 6.9, synced Lua 5.4, Unit::Update 4.4, SlowUpdate 2.7, UpdatePreFrame 2.4, weapons 2.3,
+  LOS 2.1, projectiles 2.1, pathing 2.0), Draw 32 (opaque models 4.6, model projectiles 4.0, particles 2.1, see-through
+  models 2.0, LuaUI DrawScreen 4.4 and DrawWorld 2.8), Update 15 (the drawers' per-frame update 5.7 (units 2.7, already
+  on the thread pool), LuaUI Update 3.2); the present 5.1; BAR's unsynced Lua 24 % in all, no widget over 1.2 % (Defense
+  Range GL4's GPU time; then GUI Sound Effects 0.9, Top Bar 0.6, the app's chat 0.5). GPU: opaque models 17.6 %,
+  terrain 5.0. Hot, the GPU sits at its 295 MHz floor 93-98 % busy, so the models' GPU time is the next try.
+  - `BarDroidModelSimplifyError` 6 against 16 elmos (17:05-17:51, ABBA): 929k against 919k triangles left (the
+    simplifier stops at texture seams, not at the error), 25.8 / 23.8 against 26.2 / 25.9 fps: nothing to gain there.
+  - **The ceiling of a cheaper unit drawing** (Kailil, 2026-11-06: "a mobile specific way to do the opaque models so
+    its ultra cheap. They're can be pngs instead of 3d models"): `BarDroidUnitModelsOff` (gcc-mem3, a measurement
+    only) leaves the units' opaque pass out whole. 17:53-18:37, ABBA: drawn 34.1 fps (a cooled phone, the GPU mostly
+    at 615 MHz) and 25.9 (hot, 295 MHz, 97 % busy); not drawn **42.0 and 33.7 fps** (hot, 295 MHz, 31-74 % busy).
+    On the hot phone the units' models are what keeps it under 30.
+  - **Impostors, tried and dropped** (18:45-20:50): every unit model BAR's unit definitions name (and its event
+    skins, 912) rendered on the laptop from 8 directions by 2 heights into a 48-pixel-a-view DXT5 sheet (43 MB, 8 s),
+    and an engine pass drawing a unit small on the screen as one camera-facing picture from its sheet, team-tinted. It
+    worked in a skirmish (the commander upright, cut out, its team's colour; the engine's DDS loader flips images,
+    so the rows are read bottom up), but Kailil, watching a forced test (every unit a picture, even up close): "the
+    pictures are awful now that i see them in gameplay. lets reverse course and not do them". Removed from the branch
+    and the app; only `BarDroidUnitModelsOff` (the measurement) stays. Lessons for the test tools: a skirmish shows a
+    drawing change in two minutes (an 8v8 replay's catch-up takes ten); its starting camera draws units as icons, so
+    move the camera close first; and replay-memory.ps1 now checks that dev-env.sh starts the engine asked for (an adb
+    script that did not arrive left runs on the official engine without any of the branch's settings).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;

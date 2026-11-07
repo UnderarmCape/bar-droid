@@ -34,6 +34,15 @@ function AppRun([string]$text, [string]$name) {
 }
 & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $Engine -Device $Device | Out-Null
 if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
+else {
+  # (a -Use whose adb script did not arrive left dev-env.sh without the engine: the run then measured BAR's official
+  # engine without any of the branch's settings, 2026-11-06; checked, tried once more, else the run stops here)
+  for ($try = 0; $try -lt 3; $try++) {
+    if ("$(AppRun 'cat files/bar/dev-env.sh 2>/dev/null' 'es-rm-check.sh')" -match [regex]::Escape("engine-sim/$Engine")) { break }
+    if ($try -eq 2) { throw "dev-env.sh does not start engine-sim/$Engine (phone-engine.ps1 -Use failed)" }
+    & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $Engine -Device $Device | Out-Null
+  }
+}
 if ($Pacer) {   # (the memory pacer, dev-env-pacer.sh: the engine paused while Android's available memory is low)
   Send-AppFile $adb "$PSScriptRoot\dev-env-pacer.sh" "files/bar/dev-env-pacer.sh" $Device
   AppRun "cat files/bar/dev-env-pacer.sh >> files/bar/dev-env.sh; rm -f files/bar/dev-env-pacer.sh" "es-rm-pacer.sh" | Out-Null
