@@ -321,6 +321,53 @@ game until the replay and spectating stages below say it computes exactly what t
     once more by meshoptimizer's sloppy simplifier (vertices merged by place, no error limit) to that share; every
     model and pass, near and far. At 0.35: 766k -> 161k triangles over 551 models (21 %); close up the commander keeps
     its outline, loses detail and some team-coloured panels (model-cut35-compare.png).
+- **BAR's Lua on phones** (2026-11-06/07 night, a side session of the 30 fps push; engine branch `bardroid/lua`
+  (`hailmary-work\recoil-lua`, build `gcc-lua`), app branch `mobile-lua` (worktree `bar-droid-lua`), this text on
+  `mobile-lua-docs`). BAR's unsynced Lua (widgets and the drawing halves of gadgets) is ~24 % of the main thread in a
+  late 8v8, spread over dozens of scripts: only a pass over many of them pays.
+  - `rts/Lua/LuaVFS.cpp`: **`BarDroidPhoneLuaDir`** (a write-dir folder): LuaUI's and the unsynced LuaRules state's
+    `VFS.LoadFile` of `LuaUI/Widgets/<file>.lua` and `LuaRules/Gadgets/<file>.lua` (BAR's handlers load every widget
+    and gadget that way) get BAR's own file with the folder's `<same path>.patch` applied: blocks of `@@@ find` /
+    `@@@ with` / `@@@ end`, each find text exactly once in the file, all of a file's or none (then BAR's file loads
+    as it is). The infolog says which: `[BarDroid] phone version of <file> (<state>): <n> patches` or why not. A
+    gadget file runs in both LuaRules states and the synced one never sees the folder: the synced half, the game's
+    results and the archives' checksums stay BAR's own. Patches rather than copies: they apply to whatever BAR
+    release is loaded (a replay plays its own release; the one recorded 2026-10-26 is test-31723, the phones play
+    test-31836 tonight), and an update that rewrites a patched part makes BAR's own file run, never a stale copy.
+  - The app (`mobile-lua`): `phone-widget-<file>.lua.patch` and `phone-gadget-<file>.lua.patch` in the assets;
+    `Installer.installPhoneLua` puts them into `bardroid-phone/LuaUI/Widgets` and `bardroid-phone/LuaRules/Gadgets`;
+    `BARDROID_PHONE_LUA=1` in dev-env.sh makes launch-bar.sh set `BarDroidPhoneLuaDir = bardroid-phone` (an engine-branch
+    build only; the official engine ignores the key). `tools/phone-lua-check.py <BAR release folder>` applies them as
+    the engine does (`--out`: the patched files, for luacheck or a diff).
+  - The profile at 70 % (2026-11-07 01:40, `gcc-lua`, the target set with the memory cuts, the performance game
+    mode, BAR Droid widgets as the game's, profiler on, game seconds 1210-1330): 18.4 fps x0.99; Sim 56.1 % of real
+    time, Draw 23.3, Update 13.5, BAR's unsynced Lua 21.8 (LuaUI DrawScreen 3.3, Update 2.9, DrawWorld 1.7,
+    DrawWorldPreUnit 1.0, GameFrame 0.9; unsynced gadgets' GameFrame ~1.5, DrawWorld 1.3, Update 0.9, GameFramePost
+    1.0). By script: Defense Range GL4 GPU 1.20 + CPU 0.55, GUI Sound Effects player 0.93, Beam Laser GL4 0.64 + 0.36,
+    Top Bar 0.63 (+ GPU 0.21), the app's chat 0.38, Fire GL4 0.38, AdvPlayersList 0.36, Juno Damage 0.36 (synced),
+    API Unit Tracker 0.30 + 0.13 (unit events), Widget Selector's Update 0.29, AllyCursors 0.25, Commander Name Tags
+    0.21, the app's touch camera 0.20 and builder queue 0.18, Missile Thruster GL4 0.19, Minimap 0.18; the unit
+    events fanned out to every widget (UnitCommand, UnitFinished, VisibleUnitRemoved, UnitDestroyed, UnitCreated,
+    VisibleUnitAdded) ~1.9 together. LuaUI's AddConsoleLine 2.0 % is the profiler's own: its 4 KB timer lines go
+    through every console widget, which a game without the profiler does not have.
+  - **BAR's widget profiler runs in every game**: BAR's Widget Selector shows a "Cost" column, on by default and saved
+    on (`profiler = true` in the dev phone's BYAR.lua too), and while it is on the selector keeps BAR's widget profiler
+    (`luaui/Include/widget_profiling.lua`) subscribed all game, panel open or not: every call-in of every widget
+    wrapped, each call two timer reads and two Lua memory reads plus the vararg wrapping, hundreds of calls a frame.
+    Its cost lands in every widget's own time (none of it shows as the selector's).
+  - The first seven phone versions (app `ef97317`; each applies to both releases, `phone-lua-check.py`):
+    `widget_selector` (the Cost column off at every start; the panel can switch it on), `snd_soundeffects` (GUI Sound
+    Effects player: the selection and the units' on/off states every 3rd frame), `gui_defenserange_gl4` (64 ring points,
+    not 128; nukes' and long-range cannons' 256, not 1024; 6 heightmap search steps, not 8; mobile anti-nukes every 3rd
+    frame), `gui_top_bar` (resource bars every 0.15 s, not 0.05; checks every 0.1 s, not 0.033; the numbers every 0.5 s,
+    not 0.25), `gui_advplayerslist` (the list every 1.6 s, not 0.8; its resources 0.6 s, not 0.15), `gui_build_eta` (5
+    times a game second, not 30), `data_gpumem_broadcast` (asked the driver every frame once its 15 s were up whenever
+    the driver had no figure, as phones' Mesa: now every 15 s).
+    Profiled against the profile above (02:32, the same window and set): **BAR's unsynced Lua 21.8 -> 19.8 % of real
+    time (11.8 -> 10.7 ms a drawn frame)**; GUI Sound Effects 0.93 -> 0.38, Defense Range GL4's GPU time 1.20 -> 0.73
+    (its CPU 0.55 -> 0.54), Top Bar 0.63 -> 0.48, AdvPlayersList 0.36 -> 0.31; without BAR's widget profiler LuaUI's
+    Update 2.92 -> 2.35, DrawScreen 3.34 -> 2.98, UnitCommand 0.38 -> 0.10, WidgetAt 0.29 -> 0, IsAbove 0.32 -> 0.17
+    (the selector's own Update 0.29 -> 0). fps 18.4 / 18.5 (profiler on; Sim 56-57 %: the simulation holds the frame).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
