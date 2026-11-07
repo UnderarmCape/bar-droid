@@ -386,6 +386,8 @@ game until the replay and spectating stages below say it computes exactly what t
     at its 295 MHz floor (level 7, 99 % busy) and the prime core at 1478 MHz, the 02:45 phone run's state exactly:
     there 21.0 against 20.9, the main thread waiting for the GPU 28-29 % of the time. While the hot GPU is the wall the
     CPU saved does not show; Defense Range's GPU time (-0.5 % of it) is the only GPU part of these changes.
+  - Sync: the whole 8v8 replay (2026-10-26, to its end at frame 52,706, 855 s) on `gcc-lua` with the seven patches
+    applied (the infolog's seven `phone version` lines), the off set and the new builder queue: **0 desync warnings**.
   - To turn it on: an engine with `bardroid/lua`'s LuaVFS.cpp (`gcc-lua`), the app from `mobile-lua` (the patches in
     `bardroid-phone/`) and `export BARDROID_PHONE_LUA=1` in dev-env.sh (or `BarDroidPhoneLuaDir = bardroid-phone` in
     dev-springsettings.cfg). Without that engine the key does nothing and BAR's files load as they are.
