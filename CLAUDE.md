@@ -243,7 +243,8 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
 - `MaxParticles` stays >= 10000 (BAR's minimum): lower values kill unsynced LuaRules and no unit is drawn.
 - proot's seccomp filter must not trap syscalls proot does not act on (each trap = two ptrace stops; GPU drivers make
   hundreds of ioctls per frame). A stopped call costs 30-460 us (`tools/container-cost/trapbench`); proot also stops
-  `getsockopt`, `close`, `recvmsg`/`sendmsg` and every path call: never add such calls to a per-frame path. Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
+  `getsockopt`, `close`, `recvmsg`/`sendmsg` and every path call: never add such calls to a per-frame path.
+  Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
 - The lobby needs `chobby_config.json` in the write dir (launch-bar.sh writes it, as BAR's launcher does).
 - Compare frame rates with the developer fps widget (`tools/dev/bardroid_fps.lua`, docs/HISTORY.md) and the laptop awake: Modern Standby throttles ~2.5x.
 
