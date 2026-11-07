@@ -355,14 +355,15 @@ game until the replay and spectating stages below say it computes exactly what t
   - In game (the dev phone, skirmish and the 8v8 replay): 1,001 models drawn from the set, 0 refused but one hat the
     replay's 2026-10 release has in another version (the hash: BAR's drawn). Of BAR's 1.27M triangles in that game the
     mobile fine level draws 936k, the target set's load-time cut (0.1 / 6 elmos) 929k: about the same; the coarse
-    level 543k. Skirmish close-ups (`mobile-models\preview\phone-commander-close.png`, `-middle.png`): the same as
-    BAR's.
+    level 543k. Skirmish close-ups (`mobile-models\preview\phone-commander-close.png`, `-middle.png`) and the late 8v8
+    at 20:14 (`replay-memory.ps1 -Shots 1215`, `phone-8v8-shot1..3.png`, `phone-8v8-close.png`): the same as BAR's.
   - Cost, late 8v8 (2026-10-26 replay from game second 1210, the target set at 70 %, performance game mode), in-run
     A/B, 6 phases of 20 s each: BAR's models as the target set cuts them against the mobile ones (hot: GPU 295 MHz,
     98-99 % busy; 04:27-04:40): **GPU::ModelsOpaque 10.92 / 10.73 ms a frame, fps 18.6 / 18.3**; the coarse level for
     units under 96 px off / on (cooler: 615 MHz, 64 % busy; 05:34-05:46): **ModelsOpaque 6.54 -> 6.09 ms (-7 %)**, fps
-    20.4 / 19.6 (the main thread's). Under 192 px: (running). Whole runs (ABBA) were left out: the in-run A/B shows
-    the same thing without the heat between runs.
+    20.4 / 19.6 (the main thread's); under 192 px off / on (08:04-08:13, 4 phases each): **ModelsOpaque 6.21 -> 5.90 ms
+    (-5 %)**, fps 22.8 / 21.3 (inside the phases' swing, 19.4-27.2). Whole runs (ABBA) were left out: the in-run A/B
+    shows the same thing without the heat between runs (and the phone was wanted for the Fold7 build).
   - The whole 8v8 replay with the set and the coarse level (gcc-mobile, 06:11-06:23): **0 desync warnings** (to "End of
     demo reached", f=52,514).
   - So: the look holds, the simulation does not notice, but it buys no frame rate on the dev phone: at the target set's

@@ -7,16 +7,17 @@
 # desync: the whole 8v8 replay with B, the [DESYNC WARNING] count
 # The run recipe of the 30 fps push (2026-11-06): render scale 70 % in the app's prefs, Android's performance game
 # mode, screen awake, -KillAll, its dev-env lines; 120 s between runs; render scale back to 100 at the end.
-param([Parameter(Mandatory)][ValidateSet("setup", "ab-bar", "ab-lod", "abba1", "abba2", "desync")][string]$Chunk,
-      [int]$DelayMinutes = 0, [int]$Pause = 120, [int]$Lod = 96)
+param([Parameter(Mandatory)][ValidateSet("setup", "ab-bar", "ab-lod", "abba1", "abba2", "desync", "final", "shots-mobile")][string]$Chunk,
+      [int]$DelayMinutes = 0, [int]$Pause = 120, [int]$LodPx = 96)
 $ErrorActionPreference = "Continue"
 $tools = "C:\Tools\BARANDROID\bar-droid-engine\tools"
 $es = "$tools\engine-sim"
 $adb = "C:\Tools\BARANDROID\toolchain\android-sdk\platform-tools\adb.exe"
 $dev = "R5CW22GVC3D"
 $pkg = "com.underarmcape.bardroid"
+if ($Chunk -like "abba*" -and (Test-Path "$PSScriptRoot\skip-abba.flag")) { "$Chunk skipped (skip-abba.flag: the in-game A/B settled it; the phone is wanted elsewhere)"; return }
 if ($DelayMinutes) { Start-Sleep ($DelayMinutes * 60) }   # (another session's turn first)
-$minutes = @{ "setup" = 25; "ab-bar" = 25; "ab-lod" = 25; "abba1" = 30; "abba2" = 30; "desync" = 35 }[$Chunk]
+$minutes = @{ "setup" = 25; "ab-bar" = 25; "ab-lod" = 25; "abba1" = 30; "abba2" = 30; "desync" = 35; "final" = 45; "shots-mobile" = 15 }[$Chunk]
 "$(Get-Date -Format HH:mm:ss) $Chunk : waiting for the dev phone"
 & "$es\devphone-lock.ps1" take mobile-models -Minutes $minutes
 for ($i = 0; $i -lt 240; $i++) {   # (and no replay-memory run or game of anyone's still going)
@@ -62,7 +63,7 @@ try {
     }
     "ab-lod" {
       Prep
-      & "$es\ab-run.ps1" -Engine gcc-mobile -Key BarDroidModelLodPixels -Values 0,$Lod -Period 20 -From 1210 -Skip 1210 -Seconds 240 -Timers -Label "mm-ab-lod$Lod" -DevEnv $devEnv -Settings $mob |
+      & "$es\ab-run.ps1" -Engine gcc-mobile -Key BarDroidModelLodPixels -Values 0,$LodPx -Period 20 -From 1210 -Skip 1210 -Seconds 240 -Timers -Label "mm-ab-lod$LodPx" -DevEnv $devEnv -Settings $mob |
         Select-String -Pattern "result:|phases|BarDroidModelLodPixels|pairwise|by phase|launcher.log and infolog|DESYNC"
     }
     { $_ -in "abba1", "abba2" } {
@@ -78,6 +79,23 @@ try {
         & "$es\replay-memory.ps1" -Engine gcc-mobile -Replay isthmus8v8-20261026.sdfz -Skip 1210 -Seconds 120 -KillAll -Label $label -DevEnv $devEnv -Settings $set |
           Select-String -Pattern "result:|replaybench\] done|launcher.log and infolog"
       }
+    }
+    "final" {   # the late 8v8's screenshots, target set / mobile + coarse level, then the coarse level 0 / $LodPx in one replay
+      foreach ($run in @(@("mm-shots-base", $base), @("mm-shots-mobile", $lod))) {
+        Prep
+        "$(Get-Date -Format HH:mm:ss) $($run[0])"
+        & "$es\replay-memory.ps1" -Engine gcc-mobile -Replay isthmus8v8-20261026.sdfz -Skip 1210 -Seconds 30 -Shots 1215 -KillAll -Label $run[0] -DevEnv $devEnv -Settings $run[1] |
+          Select-String -Pattern "result:|screenshots:|launcher.log and infolog"
+        Start-Sleep 30
+      }
+      Prep
+      & "$es\ab-run.ps1" -Engine gcc-mobile -Key BarDroidModelLodPixels -Values 0,$LodPx -Period 20 -From 1210 -Skip 1210 -Seconds 160 -Timers -Label "mm-ab-lod$LodPx" -DevEnv $devEnv -Settings $mob |
+        Select-String -Pattern "result:|phases|BarDroidModelLodPixels|pairwise|by phase|launcher.log and infolog|DESYNC"
+    }
+    "shots-mobile" {   # (the late 8v8's screenshots with the mobile set and its coarse level, as "final" meant to)
+      Prep
+      & "$es\replay-memory.ps1" -Engine gcc-mobile -Replay isthmus8v8-20261026.sdfz -Skip 1210 -Seconds 30 -Shots 1215 -KillAll -Label mm-shots-mobile -DevEnv $devEnv -Settings $lod |
+        Select-String -Pattern "result:|screenshots:|launcher.log and infolog"
     }
     "desync" {
       Prep
