@@ -330,6 +330,45 @@ game until the replay and spectating stages below say it computes exactly what t
     target set, gcc-cut, 22:20-23:35, A B C C B A: **now 20.8 / 20.6 fps** (929k triangles), prune 10 16.8 / 19.8 (657k;
     the 16.8 with the GPU at its 220 MHz floor, thermal level 8), sloppy 0.7 20.0 / 19.8 (601k). With the GPU 58-73 %
     busy at 70 %, the main thread is the limit there: a third fewer triangles bought nothing. Not kept.
+- **Mobile models** (Kailil, 2026-11-06: "mobile versions of every model that keep the look"; the "mobile models"
+  session, 2026-11-06/07 night; recoil a0ea9f0 + fab156b on `bardroid/sim`, also `bardroid/models`; build `gcc-mobile` =
+  gcc-pgo-lse at fab156b). Drawing only, off by default.
+  - The set: every S3O model of BAR's test-31836 (2,044: units, wrecks, raptors, scavengers, event skins, hats, rocks),
+    made on the laptop by `tools/mobile-models` (README.md there; ~3.5 min on 32 threads): hidden triangles out (none a
+    camera sees from 320 directions, back faces culled as the engine does), then half-edge collapses that keep every
+    kept vertex BAR's (normal, texture coordinates), texture islands whole, BAR's outlines (seams between different
+    colours) within 0.75 elmo, each collapse sampled against BAR's surface and texture (1.5 elmos and 3 % of the
+    radius at most, mean colour difference 0.04); and a coarse level (4 elmos / 7 %) over the same vertices. 3.52M ->
+    2.21M triangles (62.6 %), coarse 1.18M (33.4 %); 170 MB, outside git (`C:\Tools\BARANDROID\engine-sim\mobile-models\out`).
+    Laptop renders: `mobile-models\preview\*-bar-vs-mobile.png` (the commander 5,018 -> 3,111, the Legion missile ship
+    7,444 -> 3,093, a raptor 2,888 -> 720 triangles).
+  - `rts/Rendering/Models/BarDroidModelOverride.{h,cpp}` (+ a call at the end of S3OParser.cpp's Load):
+    **`BarDroidModelOverrideDir`** (a write-dir folder, e.g. `bardroid-models`; `tools/mobile-models/push.ps1` puts the
+    set there): once BAR's model is parsed (sizes, bounds, collision volumes from it as always), the pieces' vertices and
+    triangles come from the mobile file at the model's path, its coarse triangles into `barDroidLodIndices` (the coarse
+    copy above, `BarDroidModelLodPixels`). Used only if the file was made from this very model file (FNV-1a hash of its
+    bytes), has the same piece tree (names, order, offsets), every piece's vertices 0 and 1 bit for bit (weapon and
+    effect aim) and the same pieces with and without triangles; else BAR's own is drawn (a warning, the first 20).
+    IModelParser.cpp's load-time cut leaves mobile models alone. **`BarDroidModelOverrideAB`** + **`BarDroidModelDrawBar`**
+    (a measurement): BAR's own geometry (with the load-time cut) kept beside the mobile one, drawn while DrawBar is 1;
+    CUnitDrawerGL4 now reads DrawBar and `BarDroidModelLodPixels` every frame (ab-run.ps1 switches them in a game).
+  - In game (the dev phone, skirmish and the 8v8 replay): 1,001 models drawn from the set, 0 refused but one hat the
+    replay's 2026-10 release has in another version (the hash: BAR's drawn). Of BAR's 1.27M triangles in that game the
+    mobile fine level draws 936k, the target set's load-time cut (0.1 / 6 elmos) 929k: about the same; the coarse
+    level 543k. Skirmish close-ups (`mobile-models\preview\phone-commander-close.png`, `-middle.png`): the same as
+    BAR's.
+  - Cost, late 8v8 (2026-10-26 replay from game second 1210, the target set at 70 %, performance game mode), in-run
+    A/B, 6 phases of 20 s each: BAR's models as the target set cuts them against the mobile ones (hot: GPU 295 MHz,
+    98-99 % busy; 04:27-04:40): **GPU::ModelsOpaque 10.92 / 10.73 ms a frame, fps 18.6 / 18.3**; the coarse level for
+    units under 96 px off / on (cooler: 615 MHz, 64 % busy; 05:34-05:46): **ModelsOpaque 6.54 -> 6.09 ms (-7 %)**, fps
+    20.4 / 19.6 (the main thread's). Under 192 px: (running). Whole runs (ABBA) were left out: the in-run A/B shows
+    the same thing without the heat between runs.
+  - The whole 8v8 replay with the set and the coarse level (gcc-mobile, 06:11-06:23): **0 desync warnings** (to "End of
+    demo reached", f=52,514).
+  - So: the look holds, the simulation does not notice, but it buys no frame rate on the dev phone: at the target set's
+    triangle count the models' GPU time does not follow the triangles (as the cheaper shader found, it is not in their
+    shading either), and the coarse level's 42 % fewer triangles for small units are 7 % of the pass. Not in the Fold7
+    build (it has the same load-time cut; the set would be 170 MB more on his phone).
 - **A cheaper model shader, ASTC unit textures, the model instance buffer** (2026-11-06/07 night, the
   "mobile-shader" session; recoil branch `bardroid/shader` from `bardroid/sim` ff532a3, worktree
   `hailmary-work\recoil-shader`; builds `gcc-shader` .. `gcc-shader4`). Drawing only; all off by default.
@@ -396,9 +435,22 @@ game until the replay and spectating stages below say it computes exactly what t
     write-combined readbacks; 6,485 stalls, 2.3 s in all. **`BarDroidInstanceOrphan = 4`**: each batched write into a
     buffer of a pool that no draw of the last 4 drawn frames read (the instance attribute pointed at it), and a
     single-instance draw's instance as a constant attribute (no buffer): never a buffer the render pass reads.
+    The same skirmish with it (gcc-shader6, 06:25): **no flush of the instance buffer left** (0 against 8,665). But the
+    late-8v8 in-run A/B (06:27-06:41) is slower again, as the orphan and ring ones were: 18.36 -> 17.46 fps (lower in 6
+    of 7 pairs), Terrain 3.15 -> 4.61 ms, and Freedreno's counters show more splits, not fewer: GMEM passes 16-41 ->
+    43-88 and restores 8-33 -> 35-80 a frame. So each replacement tried (orphan, mapped ring, buffer pool with the
+    attribute re-pointed and constant attributes) makes Freedreno/Mesa's threaded context split the pass elsewhere;
+    the engine's own writes stay the least bad. All of 1-4 stay off. Next for whoever picks it up: the late game with
+    `FD_MESA_DEBUG=perf` in mode 4 (what the new splits are; the skirmish shows none of the usual messages for them),
+    `GALLIUM_THREAD=0` with each mode (whether the threaded context's busy tracking is what flushes), and the other
+    splits that remain in mode 0 (8-33 restores a frame: the present's flush, the 24 KB buffer, the frame's FBO
+    switches).
   - The whole 8v8 replay (to "End of demo reached", f=52,514): gcc-shader3 with `BarDroidModelShader = 1`, the ASTC
-    folder and `BarDroidInstanceOrphan = 2` (01:16-01:29), and gcc-shader5 (the branch's tip) with the shader, ASTC and
-    `BarDroidInstanceOrphan = 3` (05:21-05:34): **0 desync warnings** each.
+    folder and `BarDroidInstanceOrphan = 2` (01:16-01:29), gcc-shader5 with the shader, ASTC and
+    `BarDroidInstanceOrphan = 3` (05:21-05:34), and gcc-shader6 (the branch's tip, ff78f0c) with the shader, ASTC and
+    `BarDroidInstanceOrphan = 4` (06:41-06:54): **0 desync warnings** each.
+  - For the phones: `BarDroidModelTextureDir = bardroid-astc` (memory) and, where the engine draws the units,
+    `BarDroidModelShader = 1` (a little GPU, the look close); `BarDroidInstanceOrphan` stays 0.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
