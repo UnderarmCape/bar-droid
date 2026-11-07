@@ -4,6 +4,7 @@
 -- time per drawing pass (the branch's GPU::<pass> timers, the profiler on) in ms a drawn frame. The first fifth of a
 -- phase is left out (a shader made at its first use, the GPU timers' results come a few frames late).
 -- LuaUI/Config/bardroid_abswitch.txt: "key BarDroidModelShader values 0 1 period 20 from 1200 timers"
+--   ("cpu Draw::Screen::UnitIcons,Sim": those profiler timers as well, in ms a drawn frame; needs "timers")
 --   (from: game second the phases start at; before it the setting stays at the first value)
 -- ab-run.ps1 puts it in for a run and takes it out again.
 
@@ -19,6 +20,7 @@ function widget:GetInfo()
 end
 
 local key, values, period, from, timers
+local CPU = {}
 local phase, phaseStart, mark, measuring
 local PASSES = { "GPU::ModelsOpaque", "GPU::AlphaModels", "GPU::ProjectileModels", "GPU::Terrain", "GPU::Particles" }
 
@@ -37,6 +39,9 @@ local function gpuTotals()
 		end
 	end
 	t.all = all
+	for _, name in ipairs(CPU) do
+		t[name] = Spring.GetProfilerTimeRecord(name) or 0
+	end
 	return t
 end
 
@@ -60,6 +65,9 @@ function widget:Initialize()
 	period = tonumber(text:match("period (%d+)")) or 20
 	from = tonumber(text:match("from (%d+)")) or 0
 	timers = text:find("timers", 1, true) ~= nil
+	for name in (text:match("cpu (%S+)") or ""):gmatch("[^,]+") do
+		CPU[#CPU + 1] = name
+	end
 	values = {}
 	for v in (text:match("values ([%d%s]+)") or ""):gmatch("%d+") do
 		values[#values + 1] = tonumber(v)
@@ -108,6 +116,9 @@ function widget:Update()
 				parts[#parts + 1] = string.format("%s %.2f", name:sub(6), d / drawn)
 			end
 			parts[#parts + 1] = string.format("all %.2f", (s.gpu.all - mark.gpu.all) / drawn)
+			for _, name in ipairs(CPU) do
+				parts[#parts + 1] = string.format("%s %.3f", name, ((s.gpu[name] or 0) - (mark.gpu[name] or 0)) / drawn)
+			end
 		end
 		local gs = math.floor(s.frame / 30)
 		Spring.Echo(string.format("[abswitch] %d:%02d %s %d: %.1f fps, x%.2f%s%s", gs / 60, gs % 60, key, valueOf(phase),

@@ -3,10 +3,11 @@
 # -From, and logs each phase's fps, game speed and (-Timers) the GPU's time per pass. Then the phases summed by value.
 #   ab-run.ps1 -Engine gcc-shader -Key BarDroidModelShader -Values 0,1 [-Period 20] [-From 1210] [-Timers]
 #              [-Skip 1210] [-Seconds 240] [-Settings "Key = value", ...] [-DevEnv "line", ...] [-Label x]
+#              [-Cpu "Draw::Screen::UnitIcons,Sim"] (with -Timers: those CPU timers per phase too)
 param([string]$Engine = "gcc-shader", [Parameter(Mandatory)][string]$Key, [int[]]$Values = @(0, 1), [int]$Period = 20,
       [int]$From = 1210, [switch]$Timers, [string]$Replay = "isthmus8v8-20261026.sdfz", [int]$Skip = 1210,
       [int]$Seconds = 240, [string[]]$Settings = @(), [string[]]$DevEnv = @(), [string]$Label = "ab",
-      [string]$Device = "R5CW22GVC3D", [string]$Summarize = "")
+      [string]$Device = "R5CW22GVC3D", [string]$Summarize = "", [string]$Cpu = "")
 $ErrorActionPreference = "Stop"
 function Summary([string]$infolog) {
   $rows = foreach ($l in (Get-Content $infolog | Select-String -Pattern '\[abswitch\] (\d+):(\d+) \S+ (\d+): ([\d.]+) fps, x([\d.]+)(?:; GPU ms a frame: (.*))?')) {
@@ -41,7 +42,7 @@ function AppRun([string]$text, [string]$name) {
   Invoke-AppScript $adb $f $Device
 }
 Send-AppFile $adb "$PSScriptRoot\bardroid_abswitch.lua" "files/bar/LuaUI/Widgets/bardroid_abswitch.lua" $Device
-$cfg = "key $Key values $($Values -join ' ') period $Period from $From$(if ($Timers) { ' timers' })"
+$cfg = "key $Key values $($Values -join ' ') period $Period from $From$(if ($Timers) { ' timers' })$(if ($Cpu) { " cpu $Cpu" })"
 AppRun "echo '$cfg' > files/bar/LuaUI/Config/bardroid_abswitch.txt" "ab-cfg.sh" | Out-Null
 try {
   $out = & "$PSScriptRoot\replay-memory.ps1" -Engine $Engine -Replay $Replay -Skip $Skip -Seconds $Seconds `
