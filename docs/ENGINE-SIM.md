@@ -522,6 +522,23 @@ game until the replay and spectating stages below say it computes exactly what t
   - Where that leaves the frame: the main thread's work is spread over dozens of costs of 0.5-3 % each, and each
     exact cut found this way takes 0.3-0.6 % of real time. 30 fps in this state needs ~25 % less work a frame;
     single cuts do not show in fps runs (+-2 fps run to run), only in their timers.
+  - The main thread with call graphs (11:49, gcc-prev1, 25 s, DWARF unwinding; inclusive % of its samples): the
+    simulation 55, drawing 39; Lua 23 in all (GameFrame 4.3, Update 3.9, DrawScreen 3.1, DrawWorld 3.1, the rest
+    spread over BAR's event call-ins), waiting for the workers inside parallel sections 29 (their own share
+    included), unit movement 11, unit scripts 9.9, the units' drawing data 3.5, **the screen-space unit icons 3.1**
+    (`CUnitDrawerGLSL::DrawUnitIconsScreen`), unit weapons 4.2, paths 2.7, line of sight 2.5.
+  - Kept: `BarDroidIconCull` (default 1, e912108, drawing only): the stock off-screen test of a screen-space icon
+    asks for all four edges at once (`x1 < 0 && x0 > 1 && y0 < 0 && y1 > 1`), which never holds, so every unit's
+    icon was built every frame; now any one edge is enough (the viewport coordinates are 0 to the viewport's size,
+    normalised to 0-1). And a unit drawn as its model whose icon has faded at this zoom is left out before its
+    position is projected (the same test the icon's own drawing makes first). The same icons on the screen. In-run
+    A/B, 0 and 1 every 20 s (12:03, `ab-run.ps1 -Cpu`, the replay's camera over the icon view this time: ~50 fps,
+    the models' GPU pass 1 ms): `Draw::Screen::UnitIcons` 0.73 -> 0.48 ms a drawn frame (-34 %), `Draw::Screen`
+    2.17 -> 1.95, `Draw` 4.86 -> 4.67; fps 50.5 against 48.4, inside the phases' 44-62 spread. Worth a report
+    upstream (a plain bug, not phone-specific).
+  - `ab-run.ps1 -Cpu "<timer>,<timer>"` (d6e4937): profiler timers per A/B phase as well (bardroid_abswitch.lua),
+    in ms a drawn frame. The whole-replay desync check of gcc-icon1 (with BarDroidPrevSkip) is still to run before
+    either goes to the Fold7.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
