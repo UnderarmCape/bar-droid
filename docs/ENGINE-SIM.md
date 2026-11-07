@@ -451,6 +451,34 @@ game until the replay and spectating stages below say it computes exactly what t
     `BarDroidInstanceOrphan = 4` (06:41-06:54): **0 desync warnings** each.
   - For the phones: `BarDroidModelTextureDir = bardroid-astc` (memory) and, where the engine draws the units,
     `BarDroidModelShader = 1` (a little GPU, the look close); `BarDroidInstanceOrphan` stays 0.
+- **The Fold7 build of 2026-11-07** (Kailil, 2026-11-06 ~22:35: "have a build ready tomorrow to test on my zfold",
+  from the night's five side sessions). What went in is what measured faster or lighter and looked the same:
+  - Engine `gcc-fold7`, branch `bardroid/fold7` (worktree `hailmary-work\recoil-fold7`): `bardroid/sim` (fab156b,
+    with the mobile models' switches, all off) + `bardroid/lua` (BarDroidPhoneLuaDir) + `bardroid/shader` (ff78f0c:
+    BarDroidModelTextureDir; BarDroidModelShader and BarDroidInstanceOrphan stay 0), PGO as gcc-pgo-lse (the same
+    pgo-data, `-fprofile-prefix-path` of its own build folder).
+  - App main 84e3ea1 + edc1375: the no-proot session's display work (patches/0011: one display draw per picture; the
+    pace library's X socket calls past proot) and the mobile-lua session's seven patches of BAR's costliest widgets
+    and gadgets' unsynced halves (`BARDROID_PHONE_LUA=1` in dev-env.sh), MiniMapRefreshRate 8; with last night's
+    container slim and the 70 % floor.
+  - The Fold7's settings as before (no visual cut added: the dev phone's particle cap, Fire & Smoke and GUI Shader
+    stay the dev phone's), plus `BarDroidModelTextureDir = bardroid-astc` (the 93 MB folder of pre-made ASTC unit
+    textures, `engine-sim\astc\6x6\bardroid-astc.tar`).
+  - Left out: the mobile model set (18.3 vs 18.6 fps against the 0.1/6 cut the phones run, no fewer triangles there,
+    170 MB more on the phone) and the phone model shader (the Fold7 draws units with BAR's CUS GL4: no effect).
+  - Dev phone, the Fold7's dev-env and settings: pace-test, pad-test, pad-test -Online -Engine gcc-fold7 and
+    touch-phone-test ALL PASS; lobby-phone-test 7 FAILED with `BARDROID_GAME_WIDGETS=1` (in that mode the lobby shows
+    no warning about a host's widget options, by design, and the test checks the warnings) and ALL PASS (31) without it.
+  - Sync: the first whole-replay run hit the GPU driver's rare fault at f=26288 (KGSL "submit failed -1 (Resource
+    deadlock avoided)", the watchdog, the app closing the frozen game: the signature seen once in ~20 runs before);
+    the second (07:33-07:45) to "End of demo reached" (f=52,514): **0 desync warnings**, 7 phone versions and 955
+    ASTC textures loaded.
+  - One A/B pair at 70 %, late 8v8 from 1210 s, hot (A first): A gcc-mem2 with the old set 23.1 fps, B gcc-fold7 with
+    the phone Lua and ASTC 22.6 fps (x1.00 both; single runs swing +-2 fps); lowest memory available 693 -> 742 MB,
+    GPU driver up to 1,309 -> 1,245 MB, the engine's RAM + swap the same (~3,030 MB: the dev phone's low-memory mode
+    already compresses textures; the Fold7 does not, so its ASTC saving should be larger, not measured there).
+  - Installed on the Fold7 07:46 (BAR not running): the APK, gcc-fold7, the ASTC folder, dev-env.sh and
+    dev-springsettings.cfg; stray BarDroid lines cleared from its springsettings.cfg.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
