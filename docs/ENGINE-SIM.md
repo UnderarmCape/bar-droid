@@ -387,9 +387,15 @@ game until the replay and spectating stages below say it computes exactly what t
     and 150-345 non-draw batches (blits, uploads); with the ring 34-90 and 26-82. Each split stores the framebuffer
     out of the tile memory and each restore loads it back, for every tile: shader-independent GPU work, counted in
     whichever pass the split falls in (the models', the terrain's). That fits all of tonight's measurements (cheaper
-    shaders, fewer triangles and fewer pixels each bought little) and the orphan/ring results (more splits). Next:
-    what splits the frame (Freedreno's `FD_MESA_DEBUG=perf` messages, below), then keep those uploads, query reads and
-    framebuffer switches out of the middle of the frame.
+    shaders, fewer triangles and fewer pixels each bought little) and the orphan/ring results (more splits).
+  - What splits it: Freedreno's perf messages (`FD_MESA_DEBUG=noubwc,perf` from dev-env.sh; a 90 s skirmish, the target
+    set, gcc-shader5, 06:08; `runs\*-skirmish-fdperf-launcher.log`): **8,665 "flushing" of the 1,081,344-byte buffer**,
+    which is `S3DModelVAO`'s instance buffer (67,584 x 16 bytes): nearly every Submit and immediate draw flushes the
+    render pass; besides it 278 flushes of a 24 KB buffer and 23 of a 16 MB one; 4,423 stalls flushing the 2008x938
+    BGRA frame (the present), 2,037 CPU maps of busy small RGBA textures (64x64-256x256, icons at load) and 2,941
+    write-combined readbacks; 6,485 stalls, 2.3 s in all. **`BarDroidInstanceOrphan = 4`**: each batched write into a
+    buffer of a pool that no draw of the last 4 drawn frames read (the instance attribute pointed at it), and a
+    single-instance draw's instance as a constant attribute (no buffer): never a buffer the render pass reads.
   - The whole 8v8 replay (to "End of demo reached", f=52,514): gcc-shader3 with `BarDroidModelShader = 1`, the ASTC
     folder and `BarDroidInstanceOrphan = 2` (01:16-01:29), and gcc-shader5 (the branch's tip) with the shader, ASTC and
     `BarDroidInstanceOrphan = 3` (05:21-05:34): **0 desync warnings** each.
