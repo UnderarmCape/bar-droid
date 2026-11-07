@@ -480,6 +480,36 @@ game until the replay and spectating stages below say it computes exactly what t
     already compresses textures; the Fold7 does not, so its ASTC saving should be larger, not measured there).
   - Installed on the Fold7 07:46 (BAR not running): the APK, gcc-fold7, the ASTC folder, dev-env.sh and
     dev-springsettings.cfg; stray BarDroid lines cleared from its springsettings.cfg.
+  - `bardroid/sim` fast-forwarded to `bardroid/fold7` afterwards (5f6dcc7): the next builds start from all of it.
+- **Where a late-8v8 frame goes after the Fold7 build** (2026-11-07 08:23-10:39, gcc-fold7 with the dev phone's target
+  set + the phone Lua and ASTC, 70 %, hot; `replay-memory.ps1 -Timers`, % of real time on the main thread): Sim 53-61
+  (18-21 ms a tick at x1.00), Draw 21-26 (11-12 ms a frame), the rest 18-20; BAR's unsynced Lua call-ins 18-20, Update
+  14, unit movement 11, unit scripts 9.4, GPU::ModelsOpaque 14, synced Lua 6-7, Draw::Screen 6.5; ~22-24 fps. No
+  single cost outside the simulation is above ~6 %.
+  - The "longest" Update frames of 50-110 ms every 10 s (`Lua::LuaUI::AddConsoleLine`) are the measurement's own: the
+    timers widget echoes a line of several hundred characters into the console every 10 s, and BAR's chat widget
+    lays it out. Without `-Timers` the longest frame was 76-90 ms. Not a game cost.
+  - `-Widgets` shows nothing with the phone Lua on (its Widget Selector patch turns BAR's always-on widget profiler
+    off, which that mode reads).
+  - The unit scripts' parts (timers in `CUnitScriptEngine::Tick`, gcc-cobt): the animations' step (`TickAllAnims` on
+    the workers, the main thread's share and wait) 6.6 %, the COB interpreter 2.4, the finished-animation pass 0.5,
+    the scripts' Lua call-ins under 0.3.
+  - simpleperf (the engine's threads, 40 s, CPU cycles in user space): the main thread 49 % of the samples, the GPU
+    driver's thread 13, the three workers 32. On the workers `CUnitScript::TickAllAnims` 10.8 % (the walk over every
+    animating unit's pieces), `ILosType::UpdateUnit` 7.4, `LocalModelPiece::SavePrevModelSpaceTransform` 5.0 (every
+    piece of every unit copied each frame, for drawing's interpolation), `__kernel_clock_gettime` 4.3, the projectiles'
+    draw flags 5.2; on the main thread Lua's table lookups and VM 10.1, `TickAllAnims` 3.1, `SavePrev...` 2.3, the GPU
+    driver (libgallium) 9.7 % of its samples.
+  - simpleperf on the dev phone (2026-11-07): run inside the app it no longer records (`cpu-clock:u` refused by the
+    kernel, and the app cannot raise `debug.perf_event_max_sample_rate`); `phone-engine.ps1 -Perf` now runs it from
+    adb's shell with `--app` on `cpu-cycles:u` (dd8f939).
+  - Kept, small: the animations' piece transforms in the piece array's order (pre-order: each dirty piece from its
+    parent's final transform, the depth-first walk's results without a stack of transform copies) and the anims' sort
+    skipped when the list is sorted (unique keys) (5f6dcc7). Whole replay to "End of demo reached" (f=52,514): **0
+    desync warnings**. ABBA with the profiler (09:42-10:39): `Tick::Anims` 6.28 and 6.23 % against 5.66 and 5.68
+    (-9 %), the simulation 17.8 and 17.6 ms a tick against 18.0 and 17.8, drawn frames 23.1 and 23.7 a second
+    against 23.6 and 23.7: the frame does not move measurably. Next: `SavePrevModelSpaceTransform` only for pieces
+    whose transform changed since the last save (a flag set where the transform is computed; drawing-only data).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
