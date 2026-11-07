@@ -12,6 +12,18 @@
   "title": "Fold7 touch and controller changes",
   "tool_calls": 378
  },
+ "07d5b248-277f-4854-9bd9-1b520ad0d65d": {
+  "claude_by_day": {
+   "2026-11-07": 4418
+  },
+  "claude_s": 4418,
+  "first": "2026-11-07T06:44:27.694000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-07T07:58:05.697000+00:00",
+  "messages": 1,
+  "title": "AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb",
+  "tool_calls": 222
+ },
  "24199e1e-f507-4f63-aa76-60dec850a08c": {
   "claude_by_day": {
    "2026-10-27": 21756,
@@ -51,51 +63,55 @@
  },
  "55a0bad9-91de-4300-8b4d-d28ae8504547": {
   "claude_by_day": {
-   "2026-11-06": 4407
+   "2026-11-06": 4459,
+   "2026-11-07": 4752
   },
-  "claude_s": 4407,
+  "claude_s": 9211,
   "first": "2026-11-07T03:22:56.462000+00:00",
   "interrupts": 0,
-  "last": "2026-11-07T04:36:23.065000+00:00",
+  "last": "2026-11-07T12:18:13.551000+00:00",
   "messages": 0,
   "title": "Mobile-optimized rebuild of all BAR unit models",
-  "tool_calls": 250
+  "tool_calls": 301
  },
  "66150c16-1511-4b53-bdf2-83a99a606ebf": {
   "claude_by_day": {
-   "2026-11-06": 3506
+   "2026-11-06": 5136,
+   "2026-11-07": 25117
   },
-  "claude_s": 3506,
+  "claude_s": 30253,
   "first": "2026-11-07T03:31:47.886000+00:00",
   "interrupts": 0,
-  "last": "2026-11-07T04:30:14.311000+00:00",
+  "last": "2026-11-07T11:56:00.520000+00:00",
   "messages": 0,
   "title": "Mobile unit shader and pre-made ASTC textures for phones",
-  "tool_calls": 138
+  "tool_calls": 384
  },
  "7a286d2a-44c7-4451-8780-d486964533e9": {
   "claude_by_day": {
-   "2026-11-06": 3606
+   "2026-11-06": 5108,
+   "2026-11-07": 22460
   },
-  "claude_s": 3606,
+  "claude_s": 27568,
   "first": "2026-11-07T03:31:31.364000+00:00",
   "interrupts": 0,
-  "last": "2026-11-07T04:31:36.947000+00:00",
+  "last": "2026-11-07T11:11:01.299000+00:00",
   "messages": 0,
   "title": "Mobile pack of BAR's costliest Lua widgets and effect gadgets",
-  "tool_calls": 193
+  "tool_calls": 369
  },
  "9664ca52-74f7-4ff3-97ba-4bfe3528fe0e": {
   "claude_by_day": {
-   "2026-11-06": 3356
+   "2026-11-06": 5272,
+   "2026-11-07": 11494
   },
-  "claude_s": 3356,
+  "claude_s": 16766,
   "first": "2026-11-07T03:32:05.800000+00:00",
   "interrupts": 0,
-  "last": "2026-11-07T04:28:01.807000+00:00",
+  "last": "2026-11-07T08:11:34.935000+00:00",
   "messages": 0,
   "title": "BAR Droid without proot and the X server: measure, then prototype",
-  "tool_calls": 173
+  "tool_calls": 291
  },
  "d4bf9130-114a-4164-96cf-2934eddbb89f": {
   "claude_by_day": {
@@ -124,15 +140,16 @@
  },
  "f83def2f-08fa-474a-ab35-8d7388eda921": {
   "claude_by_day": {
-   "2026-11-06": 2777
+   "2026-11-06": 4182,
+   "2026-11-07": 621
   },
-  "claude_s": 2777,
+  "claude_s": 4804,
   "first": "2026-11-07T03:00:19.120000+00:00",
   "interrupts": 0,
-  "last": "2026-11-07T04:36:33.402000+00:00",
-  "messages": 3,
+  "last": "2026-11-07T05:16:06.689000+00:00",
+  "messages": 5,
   "title": "Investigate idle RAM use on Kailil's Samsung phones",
-  "tool_calls": 95
+  "tool_calls": 126
  },
  "f8c12e67-1076-49a4-8768-4dcaddbbbd18": {
   "claude_by_day": {
@@ -147,15 +164,16 @@
    "2026-11-03": 85107,
    "2026-11-04": 41212,
    "2026-11-05": 81648,
-   "2026-11-06": 52754
+   "2026-11-06": 52817,
+   "2026-11-07": 14508
   },
-  "claude_s": 643741,
+  "claude_s": 658313,
   "first": "2026-10-26T04:14:36.131000+00:00",
   "interrupts": 2,
-  "last": "2026-11-07T04:36:21.133000+00:00",
-  "messages": 276,
+  "last": "2026-11-07T12:46:52.664000+00:00",
+  "messages": 277,
   "title": "BAR Android port",
-  "tool_calls": 19574
+  "tool_calls": 19753
  },
  "fe628d0c-b165-4c20-92d3-03ed36ea7d75": {
   "claude_by_day": {
