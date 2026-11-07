@@ -22,9 +22,9 @@ Branch `no-proot` of the app (worktree `C:\Tools\BARANDROID\bar-droid-noproot`).
    copy) and draws it onto the SurfaceView (2316x1080 on the dev phone) through SGSR 1, plus the pointer, waits for the
    GPU (fence) and swaps. SurfaceFlinger shows the SurfaceView as a hardware overlay (composition type DEVICE: no GPU).
 4. The renderer draws whenever the root changed **or the pointer changed or moved**. The engine sets its hardware
-   pointer again every frame it draws (the same image): lorie converted it, the renderer uploaded it again and redrew
-   the whole SGSR picture: **~2.5 draws per engine picture** in a late 8v8 (logcat: 125-150 renderer frames per 5 s
-   against 52-55 presents).
+   pointer again on every frame it draws, the next image of BAR's animated cursor each time: lorie converted it, the
+   renderer uploaded it and redrew the whole SGSR picture: **~2.3-2.5 draws per engine picture** in a late 8v8
+   (logcat: 125-161 renderer frames per 5 s against 52-70 presents).
 
 ## Measurements
 
@@ -37,7 +37,7 @@ extension), `close` (proot tracks netlink, auxv and pipe descriptors), `brk` (pr
 fake netlink sockets). Not stopped: `read`/`write`/`readv`/`writev`, `recvmmsg`, `mmap`, `futex`, `ioctl` (but for the
 seven terminal/network requests proot handles), the vDSO clock.
 
-One stop, `tools/container-cost/trapbench` in the dev phone's container (idle phone, three rounds; the same calls
+One stopped call, `tools/container-cost/trapbench` in the dev phone's container (idle phone, three rounds; the same calls
 outside proot in brackets): `fstat` 71-463 us (0.3), `close(-1)` 33-249 us (0.3), `sendmsg`+`recv` 56-448 us (1.2),
 `brk(0)` 46-134 us (0.2), `openat`+`close` 206-782 us (3.7), `getppid` (never stopped) 0.8-1.3 us. A stop is two
 context switches to proot's process and back plus proot's own work: **hundreds of times the call itself**, and
@@ -87,6 +87,10 @@ of GPU a draw, 7.5 ms of GPU a second**, 3.1-3.3 ms of its thread a draw (2.8 % 
 with the replay over and the engine drawing 1 picture a second, the pointer kept animating at the 100 ms fallback
 (24 pointer-only draws in 5 s).
 
+Run F (02:58, as E plus the display hardware scaling, `files/bar/.bardroid-display-scales`): 13-21 fps, x1.00; the
+SurfaceView's buffer 1408x657, shown by the display hardware; **0.18-0.19 ms of GPU a draw** (SGSR at 70 %: 0.55),
+3.6 ms of GPU a second at 19-20 pictures a second; the CPU copy 0.39-0.40 ms; main thread stopped by proot 0.36 %.
+
 No run had a desync warning (each fast-forwards the first 20 minutes of the server-recorded replay, every frame
 checked against every player's checksum): nothing here touches what the simulation sees.
 
@@ -102,7 +106,7 @@ root window (7.5 MB at 100 %, 3.7 MB at 70 %). The engine itself: 1.33-1.48 GB +
 | engine main thread stopped by proot | 1.05-1.38 % | 0.23-0.27 % |
 | proot's process | ~3.3 % of a core, 285 wake-ups/s | 2.6-2.8 %, ~200/s |
 | X server process (CPU copy of every picture: 0.5 ms at 70 %, 1.1-1.3 ms at 100 %) | 6-7 % of a core | 5.6-7.3 % |
-| display pass on the GPU (SGSR + pointer) | 23 ms a second (2.3 % of the GPU, ~2.3 draws a picture) | 7.5 ms (70 %) - 10.3 ms (100 %) a second, one draw a picture; 5.8-7 ms with the display hardware scaling (100 %) |
+| display pass on the GPU (SGSR + pointer) | 23 ms a second (2.3 % of the GPU, ~2.3 draws a picture) | 7.5 ms (70 %) - 10.3 ms (100 %) a second, one draw a picture; with the display hardware scaling 3.6 ms (70 %, at 19 pictures a second) - 6.4 ms (100 %) |
 | app's renderer thread | ~5 % of a core | ~3 % |
 | memory | app 15-19 MB + X server 3-4 MB + proot 1 MB in RAM, ~75 MB swapped; GPU: 49 MB of display buffers + the root window (4-8 MB) | the same (38 MB / ~18 MB of display buffers with the display hardware scaling at 100 % / 70 %) |
 | disk | Debian container 375-388 MB | the same |
@@ -135,8 +139,7 @@ All of it app-side: nothing the simulation sees changes, so online play is unaff
 - **Optional: the display hardware scales** (same patch, `LorieView.surfaceAtScreenSize`; on only with
   `files/bar/.bardroid-display-scales`, read by `GameActivity` at start): the SurfaceView's buffer is the X screen's
   size (`setFixedSize`), the renderer draws it 1:1 and SurfaceFlinger's hardware composer enlarges it (composition
-  stays DEVICE: no GPU). About a third less GPU time for the display pass at 100 % (0.73 -> 0.52 ms a draw; more at 70 %,
-  not measured), smaller display
+  stays DEVICE: no GPU). Per draw 0.73 -> 0.52 ms of GPU at 100 %, 0.55 -> 0.19 ms at 70 %; smaller display
   buffers, but the display's own scaler instead of SGSR's edge-adaptive sharpening: Kailil's eye decides, so it is
   off by default.
 - **Probes** (`tools/container-cost/`): `stopsample` (a thread's time stopped by proot, by system call), `trapbench`
@@ -144,7 +147,9 @@ All of it app-side: nothing the simulation sees changes, so online play is unaff
   all of them, on top of `replay-memory.ps1` from `engine/sim`).
 
 Checked on the dev phone with this APK: `pace-test.ps1`, `pad-test.ps1`, `lobby-phone-test.ps1`,
-`touch-phone-test.ps1` ALL PASS; late 8v8 runs C-E at x1.00 with 0 desync warnings.
+`touch-phone-test.ps1` ALL PASS; late 8v8 runs C-F at x1.00 with 0 desync warnings. With the display hardware
+scaling on, the picture filled the display correctly (screenshot); input mapping stays in view pixels in the code, but
+a real tap in that mode was not checked (the touch test drives the touch log, not the view).
 
 Not done: the per-frame `faccessat`/`newfstatat`/`openat`/`close` stops that remain (~0.2 % of the main thread:
 BAR's widgets and the engine looking for files; each needs proot's path translation); the CPU copy of every picture
@@ -175,7 +180,10 @@ ptrace translates every path), lorie answers the second. A port without them, in
    Mesa as a memory object, `GL_EXT_memory_object_fd`, with the layout gralloc chose), and hands each finished buffer
    back with a fence; the app shows it with one SGSR pass straight onto its SurfaceView (or, without SGSR, as a
    SurfaceControl buffer the display hardware scales for free). SDL2 keeps a window for input only or gives way to the
-   app's own input events (touch and pad already arrive through files and UDP). Gains: the CPU copy of every
+   app's own input events (touch and pad already arrive through files and UDP). Checked on the dev phone: the
+   container's Mesa (lfdevs 27.0.0-devel, FD740, GL 4.3 core and compatibility) has `GL_EXT_memory_object` and
+   `GL_EXT_memory_object_fd` (no `GL_EXT_semaphore_fd`: a fence goes another way, e.g. `glFenceSync` waited on the
+   engine's present thread, which the deferred present already has); libxcb 1.17, glibc 2.41. Gains: the CPU copy of every
    picture, the X server process, the Present round trips. Risks: gralloc's layout against freedreno's (UBWC, pitch
    alignment), fences between two GL stacks (Mesa's and Android's), fold/unfold resizes.
 3. **A bionic engine** (weeks to months, BAR's developers' call). Recoil built with the NDK against bionic, Mesa's
