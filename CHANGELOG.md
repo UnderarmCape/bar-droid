@@ -20,6 +20,9 @@ The first version meant for other people's phones: everything since the first bu
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is
   slimmed once at its next start, ~25 s), and each engine version leaves out the server builds a phone never runs
   (108 -> 70 MB).
+- Less work around the game itself: the screen is drawn once per game picture (BAR's animated pointer drew it two to
+  three times; the display's GPU time 23 -> 10 ms a second in a late 8v8), and the game's talk with the app's X server
+  no longer stops for the container on every message (the game's main thread stopped 1.05 -> 0.23 % of the time).
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
   back. BAR's content always comes from BAR's own servers; nothing of BAR is in the APK.
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.
