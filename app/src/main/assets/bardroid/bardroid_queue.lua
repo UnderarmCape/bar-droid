@@ -38,6 +38,13 @@ local api
 local callbacks = {}
 local check = 0
 local guiHidden = false
+-- the camera's target at the last look over every queued building, and the time since: in a late 16-player game,
+-- thousands of queued buildings and new orders every frame, each of which used to start that look again (0.2 % of the
+-- dev phone's main thread, docs/ENGINE-SIM.md on engine/sim "BAR's Lua on phones"). A new one is now placed on its own;
+-- the look runs again when the camera has moved, or every 2 s.
+local lastX, lastZ, sinceLook = nil, nil, 0
+local MOVED = 100 -- elmos
+local LOOK_EVERY = 2 -- seconds
 
 local function hide(id)
 	local s = shapes[id]
@@ -50,6 +57,20 @@ local function hide(id)
 	end
 end
 
+local function showIfNear(id, c)
+	local draw = WG.DrawUnitShapeGL4
+	if not (lastX and draw) or guiHidden or shapes[id] or shown >= MAX_SHAPES then
+		return
+	end
+	local dx, dz = c.x - lastX, c.z - lastZ
+	if dx * dx + dz * dz <= DRAW_RADIUS * DRAW_RADIUS then
+		shapes[id] = draw(c.def, c.x, c.y - 0.01, c.z, c.rot, OPACITY, c.team)
+		if shapes[id] then
+			shown = shown + 1
+		end
+	end
+end
+
 local function add(id, c)
 	if commands[id] then
 		return
@@ -58,10 +79,11 @@ local function add(id, c)
 	if waterline[c.unitDefId] then
 		y = math.max(y, -waterline[c.unitDefId])
 	end
-	commands[id] = { def = c.unitDefId, x = c.positionX, y = y, z = c.positionZ,
+	local cmd = { def = c.unitDefId, x = c.positionX, y = y, z = c.positionZ,
 		rot = (c.rotation or 0) * math.pi / 2, team = c.teamId }
+	commands[id] = cmd
 	total = total + 1
-	check = 0 -- show it now if it is near
+	showIfNear(id, cmd) -- (now, if it is near where the camera looked last)
 end
 
 local function remove(id)
@@ -88,8 +110,13 @@ local function refresh()
 		for id in pairs(shapes) do
 			hide(id)
 		end
+		lastX, lastZ = nil, nil
 		return
 	end
+	if lastX and sinceLook < LOOK_EVERY and (cx - lastX) ^ 2 + (cz - lastZ) ^ 2 < MOVED * MOVED then
+		return -- (the camera has not moved: new orders were placed as they came)
+	end
+	lastX, lastZ, sinceLook = cx, cz, 0
 	local r2 = DRAW_RADIUS * DRAW_RADIUS
 	for id, c in pairs(commands) do
 		local dx, dz = c.x - cx, c.z - cz
@@ -162,7 +189,11 @@ function widget:Update(dt)
 			return
 		end
 	end
-	guiHidden = Spring.IsGUIHidden()
+	local hidden = Spring.IsGUIHidden()
+	if hidden ~= guiHidden then
+		guiHidden, check, lastX = hidden, 0, nil
+	end
+	sinceLook = sinceLook + dt
 	check = check - dt
 	if check <= 0 then
 		check = CHECK_EVERY
