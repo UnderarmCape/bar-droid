@@ -321,6 +321,15 @@ game until the replay and spectating stages below say it computes exactly what t
     once more by meshoptimizer's sloppy simplifier (vertices merged by place, no error limit) to that share; every
     model and pass, near and far. At 0.35: 766k -> 161k triangles over 551 models (21 %); close up the commander keeps
     its outline, loses detail and some team-coloured panels (model-cut35-compare.png).
+  - Kailil on the Fold7 at 0.35: "that looks awful lol. Too aggressive" (the Fold7 back on gcc-mem2, every memory cut,
+    no triangle cut). Gentler: **`BarDroidModelSimplifyPrune`** (meshoptimizer's Prune: small separate parts within the
+    error dropped, the big shapes kept). Skirmish close-ups (model-cuts-compare.png, 551 models from 760k): the set now
+    ~68 %, prune at 6 elmos 60 %, prune at 10 56 %, sloppy 0.7 46 %; prune keeps the commander clean but for small
+    parts (a foot), sloppy 0.7 makes legs lumpy.
+  - Frame rate at render scale 70 % (Kailil, 2026-11-06 ~21:35: 70 % is the floor; "You cant even see" at 50 %), the
+    target set, gcc-cut, 22:20-23:35, A B C C B A: **now 20.8 / 20.6 fps** (929k triangles), prune 10 16.8 / 19.8 (657k;
+    the 16.8 with the GPU at its 220 MHz floor, thermal level 8), sloppy 0.7 20.0 / 19.8 (601k). With the GPU 58-73 %
+    busy at 70 %, the main thread is the limit there: a third fewer triangles bought nothing. Not kept.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
