@@ -311,6 +311,7 @@ public final class Installer {
                 "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
+        installPhoneLua(assets);
         writeBarCopiesMd5();
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
         // its "local widgets" setting, which launch-bar.sh switches on)
@@ -339,6 +340,31 @@ public final class Installer {
         writeFile(tmp, cfg);
         Updater.replace(tmp, out);
         writeStartScript();
+    }
+
+    /**
+     * The phone versions of BAR's widgets and of its gadgets' unsynced halves, as patches to BAR's own files
+     * (assets phone-widget-*.lua.patch, phone-gadget-*.lua.patch; tools/phone-lua-check.py): into bardroid-phone/LuaUI/Widgets
+     * and bardroid-phone/LuaRules/Gadgets, where an engine-branch build applies them as LuaUI and the unsynced LuaRules
+     * state load BAR's files (BarDroidPhoneLuaDir, which launch-bar.sh sets with BARDROID_PHONE_LUA=1 in dev-env.sh;
+     * docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). The folder holds the current set only.
+     */
+    private void installPhoneLua(File assets) throws IOException {
+        File root = new File(p.bar, "bardroid-phone");
+        String[][] kinds = {{"phone-widget-", "LuaUI/Widgets"}, {"phone-gadget-", "LuaRules/Gadgets"}};
+        for (String[] k : kinds) {
+            File dir = new File(root, k[1]);
+            File[] old = dir.listFiles();
+            if (old != null) for (File f : old) //noinspection ResultOfMethodCallIgnored
+                f.delete();
+            //noinspection ResultOfMethodCallIgnored
+            dir.mkdirs();
+            File[] patches = assets.listFiles((d, n) -> n.startsWith(k[0]) && n.endsWith(".lua.patch"));
+            if (patches == null) continue;
+            for (File f : patches)
+                try (InputStream in = new FileInputStream(f);
+                     OutputStream o = new FileOutputStream(new File(dir, f.getName().substring(k[0].length())))) { copy(in, o); }
+        }
     }
 
     private static java.util.List<String> readLines(File f) throws IOException {
