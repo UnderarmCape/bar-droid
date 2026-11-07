@@ -366,7 +366,11 @@ game until the replay and spectating stages below say it computes exactly what t
     with mipmaps against 5.6 MB of DXT5. The phone's BAR releases test-31723 (the 8v8 replay's) and test-31836 have all
     955 the same as the laptop's (`astc/check-release.py`). Skirmish close-ups against DXT5: no difference visible
     (`runs\astc-compare-1.png`); the textures the right way up. CUS binds the engine's model textures, so it applies on
-    the Fold7 too.
+    the Fold7 too. Late 8v8 at 70 % (gcc-shader4, 03:51-04:15, B then A, 120 s each; 25-49 unit textures load in that
+    game): **the GPU driver 1,381-1,395 MB with DXT5 against 1,332 MB with ASTC (about -55 MB), the engine's own memory
+    2,240-2,310 against 1,996-2,032 MB** (about -250 MB: the preloaded bitmaps are 2.5 MB files instead of 22 MB DDS),
+    fps 15.8 both, ModelsOpaque per Terrain the same (2.06 / 2.06). Memory, not frame rate. (pace's `BARDROID_TEX_LOG`
+    does not log compressed uploads, DXT or ASTC: the [perf] GPU line is the measure here.)
   - `rts/Rendering/Models/3DModelVAO.cpp`: `S3DModelVAO::Submit` writes the instance buffer (1.08 MB) from its start for
     every texture bin, and every immediate draw (units being built, build previews) one slot of it, while the frame's
     earlier draws still read it; a tiler's driver keeps their data by copying or stalls. **`BarDroidInstanceOrphan`**
