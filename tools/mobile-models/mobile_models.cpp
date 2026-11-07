@@ -1237,6 +1237,7 @@ static void PieceWorldOffsets(const S3OModel& m, std::vector<V3>& off)
 }
 
 static double gZoom = 1.0;
+static bool gDiffRow = false;
 static int gCull = 1;   // which screen winding is a back face (+1: the engine's, counter-clockwise fronts), 0: none
 static void Bounds(const S3OModel& m, V3& c, double& r)
 {
@@ -1412,13 +1413,25 @@ static void SheetPNG(const fs::path& out, const std::vector<const S3OModel*>& ro
 	V3 c; double r;
 	Bounds(*rows[0], c, r);
 	const int nv = int(sizeof(kViews) / sizeof(kViews[0]));
-	const int W = size * nv, H = size * int(rows.size());
+	const bool diff = gDiffRow && rows.size() == 2;
+	const int W = size * nv, H = size * int(rows.size() + diff);
 	std::vector<uint8_t> rgb(size_t(W) * H * 3, 0);
-	for (size_t ri = 0; ri < rows.size(); ++ri) {
+	std::vector<Image> first(nv);
+	for (size_t ri = 0; ri < rows.size() + diff; ++ri) {
 		for (int vi = 0; vi < nv; ++vi) {
 			Image img;
 			img.Init(size, size);
-			Render(*rows[ri], tex, c, r, kViews[vi], img);
+			if (ri < rows.size()) Render(*rows[ri], tex, c, r, kViews[vi], img);
+			if (ri == 0) first[vi] = img;
+			if (ri == 2) {   // the difference of the two, x4
+				Image b; b.Init(size, size);
+				Render(*rows[1], tex, c, r, kViews[vi], b);
+				for (size_t i = 0; i < img.cover.size(); ++i) {
+					img.cover[i] = first[vi].cover[i] | b.cover[i];
+					for (int k = 0; k < 3; ++k)
+						img.rgb[3 * i + k] = first[vi].cover[i] != b.cover[i] ? 255 * (k == 0) : uint8_t(std::min(255, 4 * std::abs(first[vi].rgb[3 * i + k] - b.rgb[3 * i + k])));
+				}
+			}
 			for (int y = 0; y < size; ++y)
 				for (int x = 0; x < size; ++x) {
 					const size_t s = (size_t(y) * size + x) * 3;
@@ -1665,7 +1678,8 @@ int main(int argc, char** argv)
 		std::vector<const S3OModel*> rows;
 		for (auto& m : models) rows.push_back(&m);
 		gZoom = atof(Arg(argc, argv, "--zoom", "1").c_str());
-		gCull = atoi(Arg(argc, argv, "--cull", "0").c_str());
+		gCull = atoi(Arg(argc, argv, "--cull", "1").c_str());
+		gDiffRow = Flag(argc, argv, "--diff");
 		auto tex = tc.Get(models[0].tex1);
 		SheetPNG(Arg(argc, argv, "--png"), rows, tex.get(), atoi(Arg(argc, argv, "--size", "320").c_str()));
 		for (auto& m : models) printf("%zu triangles, %zu vertices\n", CountTris(m), CountVerts(m));
@@ -1682,6 +1696,43 @@ int main(int argc, char** argv)
 		const double n = double(t.w) * t.h;
 		printf("%dx%d mean rgba %.0f %.0f %.0f %.0f, alpha<0.5 %.1f %%, partial %.1f %%\n", t.w, t.h, sum[0] / n, sum[1] / n, sum[2] / n, sum[3] / n, 100 * lo / n, 100 * mid / n);
 		return 0;
+	}
+	if (cmd == "verify") {   // every mobile file against BAR's by the engine's own rules (BarDroidModelOverride.cpp)
+		const fs::path src = Arg(argc, argv, "--src"), out = Arg(argc, argv, "--out");
+		size_t ok = 0, bad = 0, missing = 0;
+		for (auto& e : fs::recursive_directory_iterator(src / "objects3d")) {
+			if (!e.is_regular_file() || e.path().extension() != ".s3o") continue;
+			const fs::path rel = fs::relative(e.path(), src);
+			S3OModel a, b; std::string err, why;
+			if (!LoadS3O(e.path(), a, err)) continue;
+			if (!fs::exists(out / rel)) { ++missing; continue; }
+			if (!LoadS3O(out / rel, b, err)) why = "unreadable: " + err;
+			std::vector<uint8_t> raw; ReadFile(out / rel, raw);
+			uint64_t mark = 0; int markAt = 0; Get(raw, 40, markAt);
+			if (why.empty() && (markAt <= 0 || size_t(markAt) + 24 > raw.size() || memcmp(&raw[markAt], "BDMOBIL1", 8))) why = "no mark";
+			if (why.empty()) { Get(raw, size_t(markAt) + 8, mark); if (mark != a.sourceHash) why = "hash"; }
+			if (why.empty() && a.pieces.size() != b.pieces.size()) why = "piece count";
+			for (size_t i = 0; why.empty() && i < a.pieces.size(); ++i) {
+				const S3OPiece &p = a.pieces[i], &q = b.pieces[i];
+				if (p.name != q.name || memcmp(p.off, q.off, 12) || p.children != q.children) { why = "tree at " + p.name; break; }
+				if (p.verts.size() < 2) { if (q.verts.size() != p.verts.size()) why = "verts of " + p.name; continue; }
+				if (q.verts.size() < 2 || memcmp(p.verts[0].p, q.verts[0].p, 12) || memcmp(p.verts[1].p, q.verts[1].p, 12)) { why = "vertex 0/1 of " + p.name; break; }
+				// the engine's "has geometry": its triangles from BAR's file (strips: padded, quads: whole quads only)
+				bool barGeo = false;
+				if (p.primType == 0) barGeo = p.idx.size() >= 3;
+				else if (p.primType == 1) barGeo = p.idx.size() >= 3;
+				else if (p.primType == 2) barGeo = p.idx.size() % 4 == 0 && p.idx.size() >= 4;
+				else barGeo = p.idx.size() >= 3;
+				const bool keep = q.primType != 0;
+				if (!keep && barGeo != (q.idx.size() >= 3)) { why = "geometry of " + p.name; break; }
+				for (int k : q.idx) if (k < 0 || size_t(k) >= q.verts.size()) { why = "index of " + p.name; break; }
+				for (int k : q.lod) if (k < 0 || size_t(k) >= q.verts.size()) { why = "coarse index of " + p.name; break; }
+				if (q.idx.size() % 3 || q.lod.size() % 3) why = "triangle count of " + p.name;
+			}
+			if (why.empty()) ++ok; else { ++bad; if (bad <= 30) printf("  %s: %s\n", rel.generic_string().c_str(), why.c_str()); }
+		}
+		printf("%zu pass, %zu would be BAR's own, %zu missing\n", ok, bad, missing);
+		return bad ? 1 : 0;
 	}
 	if (cmd == "acmr") {   // vertex shader runs per triangle with a 16 / 32 entry cache: BAR's order and ours
 		S3OModel a, b; std::string err;
