@@ -549,6 +549,21 @@ game until the replay and spectating stages below say it computes exactly what t
     every Nth drawn frame. In-run A/B at 2 (12:31-12:43): `Update::InfoTextures` 0.87 -> 0.48 ms a drawn frame
     (-45 %), `Update` 5.94 -> 5.54, `Draw` 12.17 -> 11.06; fps 22.0 against 22.6 (phases 19-29). The fog's and
     radar's edges follow a frame late (~45 ms at 22 fps).
+  - Kept, neutral here: `BarDroidForGrain` (default 64, 83c7eda): stock `for_mt` hands out one index per fetch, two
+    contended atomics per index (its counter and `remainingTasks`; `__aarch64_ldadd4_acq_rel` and `ExecuteStep`'s own
+    time showed on every thread); now each fetch takes a block (about eight blocks a thread, at most 64). Each index
+    still runs once. Whole replay to "End of demo reached" (f=52,514): **0 desync warnings**. In-run A/B, 1 and 64
+    (12:49-13:01, ms a drawn frame): `ThreadPool::AddTask` 12.72 -> 12.08, `ThreadPool::WaitFor` 10.69 -> 9.66, the
+    animations 2.71 -> 2.57, but `Sim` 24.15 against 24.09 and fps 23.2 against 23.0: the pool's overhead goes, the
+    simulation's time does not move. Left on (it may matter more on the Fold7's eight big cores; unmeasured there).
+  - **Where the dev phone stands after today's cuts** (all exact, all 0 desyncs, each visible in its own timer): the
+    late-8v8 frame at 70 % hot is ~41 ms (Sim ~24 ms a drawn frame = ~18 ms a tick, Draw ~12, Update ~5.5), 22-24
+    fps. The simulation alone takes 58 % of it; the parts left are each 3-11 % of the frame and already parallel
+    (movement, unit scripts, weapons, paths, line of sight) or BAR's own Lua (synced ~7 %, unsynced ~19 %). 30 fps
+    there needs the frame at 33 ms: ~8 ms less, about a third of the simulation, which exact optimizations of this
+    size do not reach. What would: the simulation run less often than drawn frames already allow (it runs at the
+    game's speed; it cannot), the simulation on another device (the offline sim-offload research), or a cooler phone
+    (a cool dev phone ran the same window at 25-31 fps in its first phases today).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
