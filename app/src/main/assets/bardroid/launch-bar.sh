@@ -297,9 +297,12 @@ fi
 #   UseEFX 0, MaxSounds 48 the sound mixer lighter (Kailil, 2026-11-05: heat): no reverb or underwater muffling, 48 sounds
 #                          at once (BAR's 128); with OpenAL's linear resampler (.alsoftrc above) its thread took 5 % of the
 #                          engine's CPU in a late 8v8 replay on the dev phone, where it took 10 %
+#   MiniMapRefreshRate 8   the minimap's picture (every unit's icon) drawn again 8 times a second, not the engine's 15
+#                          for a small minimap: its GPU time 0.25 -> 0.05 % in a late 8v8 on the dev phone, whose GPU
+#                          is the limit once hot (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones")
 PHONE_GFX="MSAALevel=0 FSAA=0 Shadows=0 ShadowQuality=0 FeatureDrawDistance=6000 FeatureFadeDistance=4800 GroundDetail=60
   BumpWaterReflection=0 BumpWaterRefraction=0 GrassDetail=0 SmoothLines=0 SmoothPoints=0 CamMode=2
-  VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1 UseEFX=0 MaxSounds=48"
+  VSync=0 VSyncGame=0 VSyncFraction=1 UnitIconFadeStart=1 UnitIconFadeVanish=1 UseEFX=0 MaxSounds=48 MiniMapRefreshRate=8"
 for kv in $PHONE_GFX; do
   k=${kv%%=*}; v=${kv#*=}
   if grep -q "^$k *=" "$BAR/springsettings.cfg"; then sed -i "s/^$k *=.*/$k = $v/" "$BAR/springsettings.cfg"
