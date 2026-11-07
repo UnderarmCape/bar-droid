@@ -43,6 +43,9 @@ public class GameActivity extends MainActivity {
         float r = Prefs.renderScale / 100f;
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
         LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);
+        // (dev, docs/CONTAINER-COST.md: files/bar/.bardroid-display-scales: the display hardware enlarges the X screen,
+        // no upscaling pass on the GPU)
+        LorieView.surfaceAtScreenSize = new java.io.File(BarApp.get().paths().bar, ".bardroid-display-scales").exists();
         KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
         if (!GameService.busy()) {
@@ -257,9 +260,10 @@ public class GameActivity extends MainActivity {
                 shader = out.toString("UTF-8");
             } catch (java.io.IOException e) { Log.e("display", "SGSR shader: " + e); }
         }
-        upscaleOn = shader != null && Prefs.upscale;
+        upscaleOn = shader != null && Prefs.upscale && !LorieView.surfaceAtScreenSize;
         getLorieView().setUpscale(upscaleOn ? 1 : 0, shader);
-        Log.i("display", "upscaling: " + (shader == null ? "plain" : Prefs.upscaleCompare ? "compare SGSR and plain" : upscaleOn ? "SGSR" : "plain"));
+        Log.i("display", "upscaling: " + (LorieView.surfaceAtScreenSize ? "the display's own (surface at the X screen's size)"
+                : shader == null ? "plain" : Prefs.upscaleCompare ? "compare SGSR and plain" : upscaleOn ? "SGSR" : "plain"));
         if (shader == null || !Prefs.upscaleCompare) return;
         android.widget.TextView v = new android.widget.TextView(this);
         float dp = getResources().getDisplayMetrics().density;

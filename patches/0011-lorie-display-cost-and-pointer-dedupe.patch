@@ -133,8 +133,38 @@ index 41dc7a3..c189aff 100644
      if (lorieNeedsGpuLock(pPix, priv, index) && !lorieKeepLockUntilRequestEnd(pPix, index))
          lorie_mutex_unlock(&pvfb->state->lock, &pvfb->state->lockingPid);
  
+diff --git a/lorie/src/main/cpp/lorie/activity.cpp b/lorie/src/main/cpp/lorie/activity.cpp
+index 5dd1b20..1aeb3df 100644
+--- a/lorie/src/main/cpp/lorie/activity.cpp
++++ b/lorie/src/main/cpp/lorie/activity.cpp
+@@ -475,6 +475,11 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, __unused void *reserved) {
+                 if (source)
+                     env->ReleaseStringUTFChars(shader, source);
+             }},
++            {"setSurfaceScale", "(JF)V", (void *) +[](__unused JNIEnv* env, __unused jobject self, jlong ptr, jfloat scale) {
++                auto* r = (LorieViewResources*) ptr;
++                if (!r || r->destroyed) return;
++                r->renderer.surfaceScale = scale > 0.f ? scale : 1.f;   // BAR Droid: surface pixels per view pixel
++            }},
+             {"getUpscaleState", "(J)I", (void *) +[](__unused JNIEnv* env, __unused jobject self, jlong ptr) -> jint {
+                 auto* r = (LorieViewResources*) ptr;
+                 if (!r || r->destroyed) return 0;
+diff --git a/lorie/src/main/cpp/lorie/lorie.h b/lorie/src/main/cpp/lorie/lorie.h
+index 57347cb..930db5b 100644
+--- a/lorie/src/main/cpp/lorie/lorie.h
++++ b/lorie/src/main/cpp/lorie/lorie.h
+@@ -329,6 +329,9 @@ struct Renderer {
+     // BAR Droid: the X screen drawn onto a bigger display through Qualcomm's SGSR 1 (edge-adaptive upscaling and
+     // sharpening in one pass) instead of plain filtering. The embedding app hands over the shader source.
+     volatile int upscale = 0;              // 0: plain filtering, 1: SGSR
++    // BAR Droid: surface pixels per view pixel. Below 1 the SurfaceView's buffer is smaller than the view (setFixedSize:
++    // the X screen's size) and the display hardware enlarges it: the picture is drawn 1:1, no upscaling pass on the GPU.
++    volatile float surfaceScale = 1.f;
+     char* volatile sgsrSource = nullptr;   // SGSR 1's fragment shader (GLSL ES), taken once
+     volatile int sgsrState = 0;            // 0: not built yet, 1: built, -1: this GPU refused it (plain filtering)
+     GLuint sgsrProgram = 0, sgsrPos = 0, sgsrCoords = 0;
 diff --git a/lorie/src/main/cpp/lorie/renderer.cpp b/lorie/src/main/cpp/lorie/renderer.cpp
-index 5be6d18..e1883b7 100644
+index 5be6d18..fc583e3 100644
 --- a/lorie/src/main/cpp/lorie/renderer.cpp
 +++ b/lorie/src/main/cpp/lorie/renderer.cpp
 @@ -58,6 +58,98 @@ static void waitForFence(EGLDisplay egl_display, EGLSync fence, EGLint flags) {
@@ -245,7 +275,7 @@ index 5be6d18..e1883b7 100644
  
      // Early returns below skip the applyPendingGpuCopiesLocked() call further down, which would
      // stall copies queued for windows unrelated to root while root itself isn't ready yet.
-@@ -1117,6 +1211,7 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1117,11 +1211,17 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      }
      float sourceLeft = panSourceLeft, sourceTop = panSourceTop;
  
@@ -253,7 +283,27 @@ index 5be6d18..e1883b7 100644
      glDisable(GL_SCISSOR_TEST);
      glViewport(0, 0, surfaceW, surfaceH);
      glClearColor(0.f, 0.f, 0.f, 1.f);
-@@ -1155,6 +1250,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     glClear(GL_COLOR_BUFFER_BIT);
+-    glViewport(renderViewportX, surfaceH - renderViewportY - renderViewportH, renderViewportW, renderViewportH);
++    // BAR Droid: the viewport is in view pixels; a surface smaller than the view (surfaceScale) is drawn into at its scale
++    float ss = surfaceScale;
++    int glX = (int) lroundf((float) renderViewportX * ss), glW = (int) lroundf((float) renderViewportW * ss);
++    int glH = (int) lroundf((float) renderViewportH * ss);
++    int glY = surfaceH - (int) lroundf((float) (renderViewportY + renderViewportH) * ss);
++    glViewport(glX, glY, glW, glH);
+ 
+     reportViewport(renderViewportX, renderViewportY, renderViewportW, renderViewportH,
+                    sourceLeft, sourceTop, logicalSourceWidth, logicalSourceHeight);
+@@ -1138,7 +1238,7 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     float u0 = sourceLeft / (float) desc->width * xfactor, v0 = sourceTop / (float) desc->height;
+     float u1 = (sourceLeft + sourceWidth) / (float) desc->width * xfactor, v1 = (sourceTop + sourceHeight) / (float) desc->height;
+     // BAR Droid: SGSR 1 while the display shows the X screen bigger than it is
+-    if (!(upscale && (float) renderViewportW > sourceWidth * 1.05f
++    if (!(upscale && (float) glW > sourceWidth * 1.05f
+           && drawRootUpscaled(desc, u0, v0, u1, v1, LorieBuffer_isRgba(buffer))))
+         drawRegion(0, -1.f, -1.f, 1.f, 1.f, u0, v0, u1, v1, LorieBuffer_isRgba(buffer));
+     fence = eglCreateSyncKHR(egl_display, EGL_SYNC_FENCE_KHR, nullptr);
+@@ -1155,6 +1255,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
  
      state->cursor.moved = FALSE;
      drawCursor(sourceWidth, sourceHeight, sourceLeft, sourceTop, cursorX, cursorY);
@@ -262,7 +312,7 @@ index 5be6d18..e1883b7 100644
      glFlush();
  
      // Wait until root window drawing is finished before giving control back to X server
-@@ -1179,6 +1276,13 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1179,6 +1281,13 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      waitForFence(egl_display, fence, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR);
  
      state->renderedFrames++;
@@ -276,7 +326,7 @@ index 5be6d18..e1883b7 100644
  }
  
  bool Renderer::shouldWait(bool *waitingForBuffers) {
-@@ -1264,6 +1368,14 @@ void Renderer::threadLoop() {
+@@ -1264,6 +1373,14 @@ void Renderer::threadLoop() {
          // Prefer a full redraw over the standalone apply below so a pending GPU copy shares one
          // lock+fence with the root/cursor draw, instead of two GPU round trips per frame.
          bool gpuCopyPending = state && state->gpuCopyQueue.readIndex != state->gpuCopyQueue.writeIndex;
@@ -291,3 +341,52 @@ index 5be6d18..e1883b7 100644
          if (state && state->surfaceAvailable && !state->waitForNextFrame &&
              (state->drawRequested || state->cursor.moved || state->cursor.updated || gpuCopyPending))
              redrawLocked(&waitingForBuffers);
+diff --git a/lorie/src/main/java/com/termux/x11/LorieView.java b/lorie/src/main/java/com/termux/x11/LorieView.java
+index 3b5cc9c..cd9bf72 100644
+--- a/lorie/src/main/java/com/termux/x11/LorieView.java
++++ b/lorie/src/main/java/com/termux/x11/LorieView.java
+@@ -550,6 +550,7 @@ public class LorieView extends SurfaceView implements InputStub {
+             inputSourceHeight = p.y;
+         }
+         setViewport(mNativeContext, viewport.left, viewport.top, viewport.width(), viewport.height(), p.x, p.y, hiddenBottom);
++        applySurfaceScale(surfaceW, surfaceH);
+ 
+         updateInputTransform();
+         if (!dimensionsFrozen)
+@@ -772,6 +773,36 @@ public class LorieView extends SurfaceView implements InputStub {
+      * Draws the X screen onto a bigger display through Qualcomm's SGSR 1 (mode 1; sgsrShader: its GLSL ES fragment
+      * shader, taken once) or with plain filtering (mode 0).
+      */
++    /**
++     * BAR Droid: with this on, the SurfaceView's buffer is the X screen's size (setFixedSize) and the display hardware
++     * enlarges it onto the view, instead of the GPU drawing every picture at the display's size (SGSR or plain
++     * filtering): the renderer draws 1:1 (docs/CONTAINER-COST.md). Set by the embedding app before the view lays out.
++     */
++    public static volatile boolean surfaceAtScreenSize = false;
++    private int fixedW = -1, fixedH = -1;
++
++    private void applySurfaceScale(int viewW, int viewH) {
++        int w = 0, h = 0;
++        float scale = 1f;
++        if (surfaceAtScreenSize && p.x > 0 && viewport.width() > p.x && viewW > 0 && viewH > 0) {
++            scale = p.x / (float) viewport.width();
++            w = Math.max(1, Math.round(viewW * scale));
++            h = Math.max(1, Math.round(viewH * scale));
++        }
++        if (w == fixedW && h == fixedH)
++            return;
++        fixedW = w;
++        fixedH = h;
++        setSurfaceScale(mNativeContext, w > 0 ? viewW > 0 ? w / (float) viewW : scale : 1f);
++        if (w > 0)
++            getHolder().setFixedSize(w, h);
++        else
++            getHolder().setSizeFromLayout();
++        Log.i("LorieView", "surface " + (w > 0 ? w + "x" + h + " for a " + viewW + "x" + viewH + " view (the display enlarges it)" : "at the view's size"));
++    }
++
++    @FastNative private native void setSurfaceScale(long ptr, float scale);
++
+     public void setUpscale(int mode, String sgsrShader) {
+         setUpscale(mNativeContext, mode, sgsrShader);
+     }

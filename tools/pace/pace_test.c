@@ -156,6 +156,60 @@ static void vsync_tests(void (*swap)(void *), void *win, long plain) {
     check("a stale vsync: the cap on its own clock", ms >= 290 && ms <= plain + 90);
 }
 
+/* recvmsg / sendmsg on a Unix stream socket without an address go around proot's traps (recvmmsg, writev): the same
+   bytes, a passed file descriptor still arrives, an empty non-blocking socket still says EAGAIN, a datagram socket
+   keeps the real calls (docs/CONTAINER-COST.md) */
+struct t_iovec { void *base; unsigned long len; };
+struct t_msghdr { void *name; unsigned int namelen; struct t_iovec *iov; unsigned long iovlen; void *control;
+                  unsigned long controllen; int flags; };
+struct t_cmsg { unsigned long len; int level; int type; int fd; int pad; };
+extern int socketpair(int domain, int type, int protocol, int sv[2]);
+extern long write(int fd, const void *buf, unsigned long n);
+extern long read(int fd, void *buf, unsigned long n);
+static void socket_tests(void) {
+    long (*rcv)(int, struct t_msghdr *, int) = (long (*)(int, struct t_msghdr *, int)) dlsym(RTLD_DEFAULT, "recvmsg");
+    long (*snd)(int, const struct t_msghdr *, int) = (long (*)(int, const struct t_msghdr *, int)) dlsym(RTLD_DEFAULT, "sendmsg");
+    int sv[2];
+    if (socketpair(1 /* AF_UNIX */, 1 /* SOCK_STREAM */ | 04000 /* SOCK_NONBLOCK */, 0, sv)) { check("socketpair", 0); return; }
+    char a[] = "hello ", b[] = "x11", got[32] = { 0 };
+    struct t_iovec iv[2] = { { a, 6 }, { b, 3 } };
+    struct t_msghdr m = { 0, 0, iv, 2, 0, 0, 0 };
+    check("sendmsg, two pieces, no control data: 9 bytes", snd(sv[0], &m, 0) == 9);
+    struct t_iovec ri = { got, sizeof got };
+    struct t_cmsg cm = { 0 };
+    struct t_msghdr r = { 0, 0, &ri, 1, &cm, sizeof cm, 0 };
+    long n = rcv(sv[1], &r, 0);
+    int same = n == 9;
+    for (int i = 0; same && i < 9; i++) same = got[i] == "hello x11"[i];
+    check("recvmsg: the same 9 bytes, no control data back", same && r.controllen == 0);
+    *__errno_location() = 0;
+    r.controllen = sizeof cm;
+    check("recvmsg on an empty socket: -1, EAGAIN", rcv(sv[1], &r, 0) == -1 && *__errno_location() == 11);
+    /* a descriptor passed along (SCM_RIGHTS): sendmsg keeps its own call, recvmsg (recvmmsg) gets it */
+    int pv[2];
+    socketpair(1, 1, 0, pv);
+    struct t_cmsg out = { sizeof(long) + 2 * sizeof(int) + sizeof(int), 1 /* SOL_SOCKET */, 1 /* SCM_RIGHTS */, pv[0], 0 };
+    struct t_iovec oi = { "f", 1 };
+    struct t_msghdr fm = { 0, 0, &oi, 1, &out, sizeof out, 0 };
+    check("sendmsg with a descriptor: 1 byte", snd(sv[0], &fm, 0) == 1);
+    struct t_cmsg in = { 0 };
+    struct t_msghdr fr = { 0, 0, &ri, 1, &in, sizeof in, 0 };
+    n = rcv(sv[1], &fr, 0);
+    int ok = n == 1 && in.level == 1 && in.type == 1 && in.fd >= 0;
+    if (ok) { write(in.fd, "z", 1); char c = 0; ok = read(pv[1], &c, 1) == 1 && c == 'z'; close(in.fd); }
+    check("recvmsg: the descriptor arrives and works", ok);
+    close(pv[0]); close(pv[1]); close(sv[0]); close(sv[1]);
+    /* a datagram pair: the real calls (proot may act on those) */
+    if (!socketpair(1, 2 /* SOCK_DGRAM */, 0, sv)) {
+        struct t_msghdr dm = { 0, 0, iv, 2, 0, 0, 0 };
+        check("datagram sendmsg: 9 bytes", snd(sv[0], &dm, 0) == 9);
+        ri.len = sizeof got;
+        struct t_msghdr dr = { 0, 0, &ri, 1, 0, 0, 0 };
+        check("datagram recvmsg: 9 bytes", rcv(sv[1], &dr, 0) == 9);
+        close(sv[0]); close(sv[1]);
+    }
+}
+
 __attribute__((constructor)) static void pace_test(void) {
     if (!dlopen("libSDL2-2.0.so.0", RTLD_NOW | RTLD_GLOBAL)) { printf("FAIL no libSDL2\n"); return; }
     int (*init)(unsigned) = (int (*)(unsigned)) dlsym(RTLD_DEFAULT, "SDL_Init");
@@ -196,6 +250,8 @@ __attribute__((constructor)) static void pace_test(void) {
     check("DMA_BUF_IOCTL_EXPORT_SYNC_FILE: -1, ENOTTY", rc == -1 && *__errno_location() == 25);
     rc = io(-1, 0x5401UL, &arg);   /* TCGETS */
     check("another ioctl goes through (EBADF)", rc == -1 && *__errno_location() == 9);
+
+    socket_tests();
 
     /* how long nine plain 33.3 ms sleeps take here (a dozing phone wakes late: the cap cannot be more exact) */
     struct timespec t0, t1, nap = { 0, 33333333 };

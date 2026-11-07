@@ -16,8 +16,11 @@
 
 #define MAXT 256
 #define MAXNR 512
+#define NPC 16
 
 struct thr {
+    unsigned long pc[NPC];
+    long pcn[NPC];
     int tid, statfd, sysfd;
     char comm[32];
     long n, run, sleep, stop, disk, other;
@@ -84,7 +87,17 @@ int main(int argc, char **argv) {
                 long nr = MAXNR;
                 if (t->sysfd >= 0) {
                     int s = pread(t->sysfd, buf, sizeof buf - 1, 0);
-                    if (s > 0) { buf[s] = 0; if (buf[0] >= '0' && buf[0] <= '9') nr = atol(buf); }
+                    if (s > 0) {
+                        buf[s] = 0;
+                        if (buf[0] >= '0' && buf[0] <= '9') nr = atol(buf);
+                        else if (buf[0] == '-') {   /* "-1 sp pc": stopped outside a system call: where */
+                            char *pc = strrchr(buf, ' ');
+                            unsigned long v = pc ? strtoul(pc + 1, NULL, 16) : 0;
+                            int k;
+                            for (k = 0; k < NPC && t->pc[k] && t->pc[k] != v; k++) {}
+                            if (k < NPC) { t->pc[k] = v; t->pcn[k]++; }
+                        }
+                    }
                 }
                 if (nr < 0 || nr > MAXNR) nr = MAXNR;
                 t->nr[nr]++;
@@ -110,6 +123,7 @@ int main(int argc, char **argv) {
             for (int k = 0; k <= MAXNR; k++) if (t->nr[k]) printf(" %d:%ld", k == MAXNR ? -1 : k, t->nr[k]);
         }
         printf("\n");
+        for (int k = 0; k < NPC && t->pc[k]; k++) printf("    outside a call at pc %lx: %ld\n", t->pc[k], t->pcn[k]);
     }
     return 0;
 }

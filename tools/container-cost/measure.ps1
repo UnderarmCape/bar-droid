@@ -40,6 +40,7 @@ if ($job.State -eq "Running") {
   $e = "$(& $adb -s $Device shell 'pidof spring || pidof recoil-main')".Trim()
   if ($e) {
     & $adb -s $Device shell "run-as com.underarmcape.bardroid files/bd-stopsample $e 20 2000 $e" | Out-File -Encoding ascii "$base-stops.txt"
+    & $adb -s $Device exec-out run-as com.underarmcape.bardroid cat /proc/$e/maps | Out-File -Encoding ascii "$base-maps.txt"
     $mem = @'
 for p in $(pidof com.underarmcape.bardroid) $(pidof bardroid-x11) $(pidof libproot.so) $(pidof spring); do
   echo "== $p $(cat /proc/$p/comm) $(grep -E '^(Rss|Pss|Pss_Anon|Pss_File|Pss_Shmem|SwapPss):' /proc/$p/smaps_rollup | tr -s ' ' | tr '\n' ' ')"
