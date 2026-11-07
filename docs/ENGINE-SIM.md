@@ -376,10 +376,23 @@ game until the replay and spectating stages below say it computes exactly what t
     earlier draws still read it; a tiler's driver keeps their data by copying or stalls. **`BarDroidInstanceOrphan`**
     (read every drawn frame): 1/2 give the buffer's storage up first (glInvalidateBufferData) before batched / all
     writes: **slower**, in-run A/B (gcc-shader3, 01:03-01:16) 16.96 -> 15.5 fps in all 7 pairs, every pass's GPU time up
-    (Terrain 3.2 -> 5.5 ms): Freedreno's invalidation itself costs. 3 writes them into a persistently mapped ring of
-    two 2 MB halves (a fence per half, the instance attribute pointed at the ring): no driver sync or copy per write.
-  - The whole 8v8 replay (to "End of demo reached", f=52,514) on gcc-shader3 with `BarDroidModelShader = 1`, the ASTC
-    folder and `BarDroidInstanceOrphan = 2`: **0 desync warnings** (01:16-01:29).
+    (Terrain 3.2 -> 5.5 ms): Freedreno's invalidation itself costs. 3 writes them into a ring of two 2 MB halves (a fence
+    per half, the instance attribute pointed at the ring): mapped persistently where the driver has ARB_buffer_storage,
+    which the dev phone's Mesa does not expose, so there each write's range is mapped unsynchronized (gcc-shader5,
+    cf0d5cd). It draws correctly (`runs\ring-compare.png`) and is **slower too**: in-run A/B (05:07-05:21) 18.06 ->
+    17.26 fps, lower in 5 of 7 pairs, the GPU 16.0 -> 19.5 ms a frame (Terrain 3.15 -> 4.72). Both stay off.
+  - **What the opaque models pass's time is**: Freedreno's own counters in that A/B (`GALLIUM_HUD` dumped to files,
+    invisible: `GALLIUM_HUD_VISIBLE=false`, `GALLIUM_HUD_DUMP_DIR`; `tools/engine-sim/hud-phases.ps1` per phase): with
+    the engine's own instance writes a late-8v8 frame has **16-52 render passes in GMEM, 8-44 framebuffer restores**
+    and 150-345 non-draw batches (blits, uploads); with the ring 34-90 and 26-82. Each split stores the framebuffer
+    out of the tile memory and each restore loads it back, for every tile: shader-independent GPU work, counted in
+    whichever pass the split falls in (the models', the terrain's). That fits all of tonight's measurements (cheaper
+    shaders, fewer triangles and fewer pixels each bought little) and the orphan/ring results (more splits). Next:
+    what splits the frame (Freedreno's `FD_MESA_DEBUG=perf` messages, below), then keep those uploads, query reads and
+    framebuffer switches out of the middle of the frame.
+  - The whole 8v8 replay (to "End of demo reached", f=52,514): gcc-shader3 with `BarDroidModelShader = 1`, the ASTC
+    folder and `BarDroidInstanceOrphan = 2` (01:16-01:29), and gcc-shader5 (the branch's tip) with the shader, ASTC and
+    `BarDroidInstanceOrphan = 3` (05:21-05:34): **0 desync warnings** each.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
