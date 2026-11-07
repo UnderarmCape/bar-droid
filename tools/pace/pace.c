@@ -142,6 +142,61 @@ int ioctl(int fd, unsigned long request, ...) {
     return r;
 }
 
+/*
+ * proot's stops on the X connection (docs/CONTAINER-COST.md). proot's seccomp filter stops the engine for every
+ * recvmsg and sendmsg (it translates Unix socket addresses and fakes netlink sockets with them), and libxcb reads and
+ * writes the X connection with exactly those two: in a late 8v8 on the dev phone the main thread spent 1.4 % of its
+ * time stopped by proot, a third of it in recvmsg on the X socket. On a connected Unix stream socket and without an
+ * address (the X connection) proot has nothing to do in either call, and two calls its filter lets through do the
+ * same: recvmsg -> recvmmsg with one message (passed file descriptors arrive as before), sendmsg without control data
+ * -> writev (the X requests; one with descriptors to pass keeps sendmsg). Any other socket, an address or flags keep
+ * their own call. BARDROID_SOCKET_TRAPS=1 leaves both alone.
+ */
+struct bd_iovec { void *base; unsigned long len; };
+struct bd_msghdr { void *name; unsigned int namelen; struct bd_iovec *iov; unsigned long iovlen; void *control;
+                   unsigned long controllen; int flags; };
+struct bd_mmsghdr { struct bd_msghdr hdr; unsigned int len; };
+extern long syscall(long number, ...);
+#define BD_SYS_writev 66
+#define BD_SYS_getsockopt 209
+#define BD_SYS_sendmsg 211
+#define BD_SYS_recvmsg 212
+#define BD_SYS_recvmmsg 243
+static int socket_traps = -1;   /* -1: not read yet */
+static int unix_stream(int fd) {
+    if (socket_traps < 0) {
+        const char *s = getenv("BARDROID_SOCKET_TRAPS");
+        socket_traps = s && s[0] == '1';
+    }
+    if (socket_traps) return 0;
+    int v = 0;
+    unsigned int l = sizeof v;
+    if (syscall(BD_SYS_getsockopt, fd, 1 /* SOL_SOCKET */, 39 /* SO_DOMAIN */, &v, &l) || v != 1 /* AF_UNIX */) return 0;
+    l = sizeof v;
+    return !syscall(BD_SYS_getsockopt, fd, 1, 3 /* SO_TYPE */, &v, &l) && v == 1 /* SOCK_STREAM */;
+}
+typedef long (*recvmsg_fn)(int fd, struct bd_msghdr *msg, int flags);
+typedef long (*sendmsg_fn)(int fd, const struct bd_msghdr *msg, int flags);
+static recvmsg_fn real_recvmsg;
+static sendmsg_fn real_sendmsg;
+long recvmsg(int fd, struct bd_msghdr *msg, int flags) {
+    if (msg && !msg->name && unix_stream(fd)) {
+        struct bd_mmsghdr m = { *msg, 0 };
+        long r = syscall(BD_SYS_recvmmsg, fd, &m, 1, flags, (void *) 0);   /* (-1 and errno as recvmsg's) */
+        if (r < 0) return r;
+        *msg = m.hdr;   /* the lengths and flags the kernel wrote back */
+        return m.len;
+    }
+    if (!real_recvmsg) real_recvmsg = (recvmsg_fn) dlsym(RTLD_NEXT, "recvmsg");
+    return real_recvmsg(fd, msg, flags);
+}
+long sendmsg(int fd, const struct bd_msghdr *msg, int flags) {
+    if (msg && !msg->name && !msg->controllen && !flags && msg->iovlen <= 1024 && unix_stream(fd))
+        return syscall(BD_SYS_writev, fd, msg->iov, (int) msg->iovlen);
+    if (!real_sendmsg) real_sendmsg = (sendmsg_fn) dlsym(RTLD_NEXT, "sendmsg");
+    return real_sendmsg(fd, msg, flags);
+}
+
 typedef void (*swap_fn)(void *window);
 static swap_fn real_swap;
 static long long interval_ns = -1;   /* -1: not read yet */

@@ -1,0 +1,293 @@
+diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
+index 41dc7a3..c189aff 100644
+--- a/lorie/src/main/cpp/lorie/InitOutput.c
++++ b/lorie/src/main/cpp/lorie/InitOutput.c
+@@ -26,6 +26,9 @@
+ #include <sys/stat.h>
+ #include <fcntl.h>
+ #include <dlfcn.h>
++#include <string.h>
++#include <time.h>
++#include <unistd.h>
+ #include "fb.h"
+ #include "inputstr.h"
+ #include "mipointer.h"
+@@ -434,10 +437,29 @@ void lorieSetCursorVisible(Bool visible) {
+     pthread_cond_signal(rendererCond);
+ }
+ 
++// BAR Droid (docs/CONTAINER-COST.md): the engine's hardware pointer is set again on every frame it draws, the same
++// image each time, and each set redrew the whole picture (SGSR upscaling, on a GPU near its thermal limit) besides
++// the engine's own presents: ~2.5 draws a picture in a late 8v8. A set with the image, size and hot spot already
++// shown and a move to where the pointer already is are dropped. Counted with the CPU copies of the engine's
++// pictures for the 5 s frame line ([display-cost]); `files/bar/.bardroid-cursor-dedupe-off` (dev) keeps the old way.
++static uint64_t bdCursorSets, bdCursorNew, bdCursorMoves, bdCopies, bdCopyNs, bdCopyBytes, bdLockWaitNs, bdCopyStart;
++static void *bdCopySrc;
++static int bdDedupe = -1;
++static uint32_t bdCursorScratch[512 * 512];
++static uint64_t bdNowNs(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); return (uint64_t) ts.tv_sec * 1000000000ull + ts.tv_nsec; }
++static Bool bdCursorDedupe(void) {
++    if (bdDedupe < 0)
++        bdDedupe = access("bar/.bardroid-cursor-dedupe-off", F_OK) != 0;
++    return bdDedupe;
++}
++
+ static void lorieMoveCursor(DeviceIntPtr pDev, unused ScreenPtr pScr, int x, int y) {
+     if (!lorieCursorFromMouse(pDev))
+         return;
+ 
++    if (bdCursorDedupe() && pvfb->state->cursor.x == (uint32_t) x && pvfb->state->cursor.y == (uint32_t) y)
++        return;
++    bdCursorMoves++;
+     pvfb->state->cursor.x = x;
+     pvfb->state->cursor.y = y;
+     pvfb->state->cursor.moved = TRUE;
+@@ -487,13 +509,34 @@ static void lorieSetCursor(DeviceIntPtr pDev, unused ScreenPtr pScr, CursorPtr p
+     if (pCurs == rootCursor)
+         pCurs = NULL;
+ 
++    bdCursorSets++;
++    if (bdCursorDedupe()) {
++        // (only this thread writes the shared cursor fields: they can be read here without the lock)
++        Bool same;
++        if (pCurs && bits) {
++            lorieConvertCursor(pCurs, bdCursorScratch);
++            same = pvfb->state->cursor.width == bits->width && pvfb->state->cursor.height == bits->height
++                   && pvfb->state->cursor.xhot == bits->xhot && pvfb->state->cursor.yhot == bits->yhot
++                   && !memcmp(pvfb->state->cursor.bits, bdCursorScratch, (size_t) bits->width * bits->height * 4);
++        } else
++            same = !pvfb->state->cursor.width && !pvfb->state->cursor.height;
++        if (same) {
++            lorieMoveCursor(NULL, NULL, x0, y0);
++            return;
++        }
++    }
++    bdCursorNew++;
++
+     lorie_mutex_lock(&pvfb->state->cursor.lock, &pvfb->state->cursor.lockingPid, conn_fd);
+     if (pCurs && bits) {
+         pvfb->state->cursor.xhot = bits->xhot;
+         pvfb->state->cursor.yhot = bits->yhot;
+         pvfb->state->cursor.width = bits->width;
+         pvfb->state->cursor.height = bits->height;
+-        lorieConvertCursor(pCurs, pvfb->state->cursor.bits);
++        if (bdCursorDedupe())
++            memcpy(pvfb->state->cursor.bits, bdCursorScratch, (size_t) bits->width * bits->height * 4);
++        else
++            lorieConvertCursor(pCurs, pvfb->state->cursor.bits);
+     } else {
+         pvfb->state->cursor.xhot = pvfb->state->cursor.yhot = 0;
+         pvfb->state->cursor.width = pvfb->state->cursor.height = 0;
+@@ -502,6 +545,7 @@ static void lorieSetCursor(DeviceIntPtr pDev, unused ScreenPtr pScr, CursorPtr p
+     lorie_mutex_unlock(&pvfb->state->cursor.lock, &pvfb->state->cursor.lockingPid);
+ 
+     lorieMoveCursor(NULL, NULL, x0, y0);
++    pthread_cond_signal(rendererCond);   // (a new image where the pointer already was: the move above returned early)
+ }
+ 
+ static miPointerSpriteFuncRec loriePointerSpriteFuncs = {
+@@ -657,6 +701,14 @@ static CARD32 lorieFramecounter(unused OsTimerPtr timer, unused CARD32 time, unu
+             (unsigned long long) gpuCopyOffloads, (unsigned long long) gpuCopyAttempts,
+             (unsigned long long) gpuCopyFallbackRects, (unsigned long long) gpuCopyFallbackQueueFull,
+             (unsigned long long) gpuCopyFallbackOther);
++    if (bdCopies || bdCursorSets)
++        log(INFO, "[display-cost] %llu pictures copied by the CPU, %.2f ms each (%.1f MB/s, waiting for the renderer %.2f ms a copy); "
++                  "pointer: %llu sets, %llu new images, %llu moves%s",
++            (unsigned long long) bdCopies, bdCopies ? (double) bdCopyNs / (double) bdCopies * 1e-6 : 0.0,
++            (double) bdCopyBytes / 5.0 / 1048576.0, bdCopies ? (double) bdLockWaitNs / (double) bdCopies * 1e-6 : 0.0,
++            (unsigned long long) bdCursorSets, (unsigned long long) bdCursorNew, (unsigned long long) bdCursorMoves,
++            bdCursorDedupe() ? "" : " (dedupe off)");
++    bdCopies = bdCopyNs = bdCopyBytes = bdLockWaitNs = bdCursorSets = bdCursorNew = bdCursorMoves = 0;
+     pvfb->state->renderedFrames = 0;
+     gpuCopyAttempts = gpuCopyOffloads = 0;
+     gpuCopyFallbackRects = gpuCopyFallbackQueueFull = gpuCopyFallbackOther = 0;
+@@ -1333,10 +1385,16 @@ static inline __always_inline Bool lorieKeepLockUntilRequestEnd(PixmapPtr pPix,
+ 
+ Bool loriePrepareAccess(PixmapPtr pPix, int index) {
+     LoriePixmapPriv *priv = exaGetPixmapDriverPrivate(pPix);
++    if (index == EXA_PREPARE_SRC && priv && priv->imported && !bdCopySrc) {   // BAR Droid: a client's picture read by the CPU
++        bdCopySrc = priv;
++        bdCopyStart = bdNowNs();
++    }
+     if (lorieNeedsGpuLock(pPix, priv, index)) {
+-        if (lorieKeepLockUntilRequestEnd(pPix, index))
++        if (lorieKeepLockUntilRequestEnd(pPix, index)) {
++            uint64_t w = bdNowNs();
+             lorieRequestLockTake();
+-        else
++            bdLockWaitNs += bdNowNs() - w;
++        } else
+             lorie_mutex_lock(&pvfb->state->lock, &pvfb->state->lockingPid, conn_fd);
+     }
+ 
+@@ -1356,6 +1414,12 @@ Bool loriePrepareAccess(PixmapPtr pPix, int index) {
+ 
+ void lorieFinishAccess(PixmapPtr pPix, int index) {
+     LoriePixmapPriv *priv = exaGetPixmapDriverPrivate(pPix);
++    if (index == EXA_PREPARE_SRC && priv && priv == bdCopySrc) {
++        bdCopyNs += bdNowNs() - bdCopyStart;
++        bdCopies++;
++        bdCopyBytes += (uint64_t) pPix->drawable.width * pPix->drawable.height * 4;
++        bdCopySrc = NULL;
++    }
+     if (lorieNeedsGpuLock(pPix, priv, index) && !lorieKeepLockUntilRequestEnd(pPix, index))
+         lorie_mutex_unlock(&pvfb->state->lock, &pvfb->state->lockingPid);
+ 
+diff --git a/lorie/src/main/cpp/lorie/renderer.cpp b/lorie/src/main/cpp/lorie/renderer.cpp
+index 5be6d18..e1883b7 100644
+--- a/lorie/src/main/cpp/lorie/renderer.cpp
++++ b/lorie/src/main/cpp/lorie/renderer.cpp
+@@ -58,6 +58,98 @@ static void waitForFence(EGLDisplay egl_display, EGLSync fence, EGLint flags) {
+ 
+ static GLuint createProgram(const char* p_vertex_source, const char* p_fragment_source);
+ 
++// BAR Droid: what the display pass costs (docs/CONTAINER-COST.md): the GPU's time per draw (EXT_disjoint_timer_query),
++// the renderer's own time per draw, and how many draws had a new picture against those only for the pointer; logged
++// every 5 s (logcat gles-renderer, "[display-cost]").
++static struct {
++    int state;   // 0: not set up, 1: timer queries, -1: none on this GPU
++    PFNGLGENQUERIESEXTPROC gen;
++    PFNGLBEGINQUERYEXTPROC begin;
++    PFNGLENDQUERYEXTPROC end;
++    PFNGLGETQUERYOBJECTUIVEXTPROC getui;
++    PFNGLGETQUERYOBJECTUI64VEXTPROC getui64;
++    GLuint q[8];
++    bool busy[8];
++    int next;
++    uint64_t gpuNs, gpuTimed, cpuNs, draws, pictures, pointerOnly, skipped, lastLog;
++    bool pointerShown;   // the last draw drew the pointer
++} bdCost;
++
++static uint64_t bdNowNs() { struct timespec ts; clock_gettime(CLOCK_MONOTONIC, &ts); return (uint64_t) ts.tv_sec * 1000000000ull + ts.tv_nsec; }
++
++static void bdCostCollect() {
++    for (int i = 0; i < 8; i++) {
++        if (!bdCost.busy[i])
++            continue;
++        GLuint avail = 0;
++        bdCost.getui(bdCost.q[i], GL_QUERY_RESULT_AVAILABLE_EXT, &avail);
++        if (!avail)
++            continue;
++        GLuint64 ns = 0;
++        bdCost.getui64(bdCost.q[i], GL_QUERY_RESULT_EXT, &ns);
++        bdCost.busy[i] = false;
++        GLint disjoint = 0;
++        glGetIntegerv(GL_GPU_DISJOINT_EXT, &disjoint);
++        if (!disjoint && ns < 1000000000ull) {
++            bdCost.gpuNs += ns;
++            bdCost.gpuTimed++;
++        }
++    }
++}
++
++static int bdCostBegin() {
++    if (!bdCost.state) {
++        const char* ext = (const char*) glGetString(GL_EXTENSIONS);
++        bdCost.gen = (PFNGLGENQUERIESEXTPROC) eglGetProcAddress("glGenQueriesEXT");
++        bdCost.begin = (PFNGLBEGINQUERYEXTPROC) eglGetProcAddress("glBeginQueryEXT");
++        bdCost.end = (PFNGLENDQUERYEXTPROC) eglGetProcAddress("glEndQueryEXT");
++        bdCost.getui = (PFNGLGETQUERYOBJECTUIVEXTPROC) eglGetProcAddress("glGetQueryObjectuivEXT");
++        bdCost.getui64 = (PFNGLGETQUERYOBJECTUI64VEXTPROC) eglGetProcAddress("glGetQueryObjectui64vEXT");
++        bdCost.state = ext && strstr(ext, "GL_EXT_disjoint_timer_query") && bdCost.gen && bdCost.begin && bdCost.end
++                       && bdCost.getui && bdCost.getui64 ? 1 : -1;
++        if (bdCost.state > 0)
++            bdCost.gen(8, bdCost.q);
++        log("[display-cost] GPU timer queries %s", bdCost.state > 0 ? "on" : "unavailable");
++    }
++    if (bdCost.state < 0)
++        return -1;
++    bdCostCollect();
++    for (int k = 0; k < 8; k++) {
++        int i = (bdCost.next + k) % 8;
++        if (!bdCost.busy[i]) {
++            bdCost.next = (i + 1) % 8;
++            bdCost.begin(GL_TIME_ELAPSED_EXT, bdCost.q[i]);
++            return i;
++        }
++    }
++    return -1;
++}
++
++static void bdCostEnd(int i) {
++    if (i < 0)
++        return;
++    bdCost.end(GL_TIME_ELAPSED_EXT);
++    bdCost.busy[i] = true;
++}
++
++static void bdCostLog() {
++    uint64_t now = bdNowNs();
++    if (!bdCost.lastLog)
++        bdCost.lastLog = now;
++    if (now - bdCost.lastLog < 5000000000ull)
++        return;
++    double s = (double) (now - bdCost.lastLog) * 1e-9;
++    log("[display-cost] %llu draws in %.1f s (%llu new pictures, %llu for the pointer only, %llu pointer-only skipped); "
++        "GPU %.2f ms a draw (%llu timed), %.1f ms of GPU a second; renderer %.2f ms a draw",
++        (unsigned long long) bdCost.draws, s, (unsigned long long) bdCost.pictures, (unsigned long long) bdCost.pointerOnly,
++        (unsigned long long) bdCost.skipped,
++        bdCost.gpuTimed ? (double) bdCost.gpuNs / (double) bdCost.gpuTimed * 1e-6 : 0.0, (unsigned long long) bdCost.gpuTimed,
++        bdCost.gpuTimed && bdCost.draws ? (double) bdCost.gpuNs / (double) bdCost.gpuTimed * (double) bdCost.draws / s * 1e-6 : 0.0,
++        bdCost.draws ? (double) bdCost.cpuNs / (double) bdCost.draws * 1e-6 : 0.0);
++    bdCost.gpuNs = bdCost.gpuTimed = bdCost.cpuNs = bdCost.draws = bdCost.pictures = bdCost.pointerOnly = bdCost.skipped = 0;
++    bdCost.lastLog = now;
++}
++
+ static void* printEglError(const char* msg, int line) {
+     char descBuf[32] = {0};
+     char* desc;
+@@ -1005,6 +1097,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     float xfactor = 1.f;
+     const LorieBuffer_Desc *desc = nullptr;
+     EGLSync fence;
++    uint64_t bdT0 = bdNowNs();   // BAR Droid: [display-cost]
++    bool bdPicture = state->drawRequested;
+ 
+     // Early returns below skip the applyPendingGpuCopiesLocked() call further down, which would
+     // stall copies queued for windows unrelated to root while root itself isn't ready yet.
+@@ -1117,6 +1211,7 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     }
+     float sourceLeft = panSourceLeft, sourceTop = panSourceTop;
+ 
++    int bdQuery = bdCostBegin();
+     glDisable(GL_SCISSOR_TEST);
+     glViewport(0, 0, surfaceW, surfaceH);
+     glClearColor(0.f, 0.f, 0.f, 1.f);
+@@ -1155,6 +1250,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+ 
+     state->cursor.moved = FALSE;
+     drawCursor(sourceWidth, sourceHeight, sourceLeft, sourceTop, cursorX, cursorY);
++    bdCost.pointerShown = state->cursor.width && state->cursor.height && state->cursor.visible;
++    bdCostEnd(bdQuery);
+     glFlush();
+ 
+     // Wait until root window drawing is finished before giving control back to X server
+@@ -1179,6 +1276,13 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+     waitForFence(egl_display, fence, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR);
+ 
+     state->renderedFrames++;
++    bdCost.draws++;
++    if (bdPicture)
++        bdCost.pictures++;
++    else
++        bdCost.pointerOnly++;
++    bdCost.cpuNs += bdNowNs() - bdT0;
++    bdCostLog();
+ }
+ 
+ bool Renderer::shouldWait(bool *waitingForBuffers) {
+@@ -1264,6 +1368,14 @@ void Renderer::threadLoop() {
+         // Prefer a full redraw over the standalone apply below so a pending GPU copy shares one
+         // lock+fence with the root/cursor draw, instead of two GPU round trips per frame.
+         bool gpuCopyPending = state && state->gpuCopyQueue.readIndex != state->gpuCopyQueue.writeIndex;
++        // BAR Droid: a pointer that is not drawn (hidden while fingers are down, or no image) moving is no reason to
++        // draw the whole picture again
++        if (state && state->cursor.moved && !state->drawRequested && !state->cursor.updated && !gpuCopyPending &&
++            !cursor.cursorChanged && !bdCost.pointerShown &&
++            (!state->cursor.visible || !state->cursor.width || !state->cursor.height)) {
++            state->cursor.moved = FALSE;
++            bdCost.skipped++;
++        }
+         if (state && state->surfaceAvailable && !state->waitForNextFrame &&
+             (state->drawRequested || state->cursor.moved || state->cursor.updated || gpuCopyPending))
+             redrawLocked(&waitingForBuffers);
