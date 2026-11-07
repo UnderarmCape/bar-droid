@@ -510,6 +510,18 @@ game until the replay and spectating stages below say it computes exactly what t
     (-9 %), the simulation 17.8 and 17.6 ms a tick against 18.0 and 17.8, drawn frames 23.1 and 23.7 a second
     against 23.6 and 23.7: the frame does not move measurably. Next: `SavePrevModelSpaceTransform` only for pieces
     whose transform changed since the last save (a flag set where the transform is computed; drawing-only data).
+  - Kept, small: `BarDroidPrevSkip` (default 1, c6f1620; build gcc-prev1 from `recoil-src`'s build-gcc-pgo-lse): a
+    model's previous-frame piece transforms copied only when one of its pieces was marked dirty or had its transform
+    computed since the last copy (`LocalModel::barDroidPrevStale`, set in `LocalModelPiece`); otherwise every copy
+    equals the current transform already, so the result is the same. Whole replay to "End of demo reached"
+    (f=52,514): **0 desync warnings**, and the fast-forward took 692 s against gcc-anim1's 754 (one run each).
+    ABBA with the profiler, 0 and 1 in the same binary (10:51-11:47): `Sim::Unit::UpdatePreFrame` 2.55 and 2.58 % of
+    real time against 2.07 and 2.10 (-19 %), the features' copy 0.79/0.82 against 0.72/0.78; the simulation 17.86 and
+    17.96 ms a tick against 17.42 and 17.86, drawn frames 23.4 and 24.9 a second against 24.3 and 20.3 (that run's
+    drop: the heat, by its clocks). Again the timer moves and the frame does not, measurably.
+  - Where that leaves the frame: the main thread's work is spread over dozens of costs of 0.5-3 % each, and each
+    exact cut found this way takes 0.3-0.6 % of real time. 30 fps in this state needs ~25 % less work a frame;
+    single cuts do not show in fps runs (+-2 fps run to run), only in their timers.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
