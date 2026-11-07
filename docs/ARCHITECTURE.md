@@ -28,7 +28,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   [patches/](../patches/) and started with `app_process` (`XServer`). `GameActivity extends
   com.termux.x11.MainActivity` shows its screen. The patches add fold/unfold resizing, a private knock port, cursor
   hiding under two fingers, a pixel cap for the unfolded screen, Snapdragon GSR upscaling, the display's vsync for
-  the frame cap, and no "X" root cursor before the game sets its pointer.
+  the frame cap, no "X" root cursor before the game sets its pointer, and one display draw per picture (the engine's
+  animated pointer no longer redraws the whole picture). Each picture reaches the screen as: the engine's Mesa renders
+  into a dma-buf, the X server copies it on the CPU into the root window (an AHardwareBuffer: Android's EGL cannot
+  import a dma-buf), and the app's renderer draws that through SGSR onto the SurfaceView, which the display hardware
+  shows. What each step costs: [CONTAINER-COST.md](CONTAINER-COST.md).
 - **Graphics.** Phones: Mesa for Android containers (Freedreno `kgsl` / Turnip + Zink, lfdevs builds); with Freedreno,
   `launch-bar.sh` turns Adreno's compressed render targets off (`FD_MESA_DEBUG=noubwc`: panels BAR draws into textures
   of their own came out in black columns with them, at no measured cost without). The emulator:

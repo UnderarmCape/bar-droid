@@ -39,7 +39,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
   into the engine: the frame cap on the display's vsync grid (the swap waits for its slot, a frame starts as late as
   the slowest recent one allows; `BARDROID_PACE_VSYNC=0`: the old sleep after the swap), the ioctl answer that puts lfdevs' Mesa on its
-  explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), and SDL2 HIDDEN/SHOWN window
+  explicit Present fence, so the swap never waits for the GPU (HANDOFF "Busy scenes"), the X connection's
+  `recvmsg`/`sendmsg` as `recvmmsg`/`writev`, which proot's filter does not stop (Unix stream sockets without an
+  address only; `BARDROID_SOCKET_TRAPS=1` off; docs/CONTAINER-COST.md), and SDL2 HIDDEN/SHOWN window
   events while the game screen is stopped (`/tmp/bardroid-hidden`, the engine stops drawing) or a joined game is
   being caught up far behind (`/tmp/bardroid-catchup`, from `bardroid_touch.lua`'s `bardroid_catchup.txt` via
   `GameActivity`), and SDL2's display size answers that follow fold/unfold (the game window's size: SDL keeps the
@@ -129,7 +131,13 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   cursor (the "X" over the black screen and the engine's splash) drawn as nothing until the game sets its pointer;
   0010 a summary under each of its preference screen's entries (Output, Pointer, Keyboard, Other), and plain words
   for Output's soft keyboard resize ("Reseed") and picture-in-picture entries and the "Needs ..." notes of greyed-out
-  ones (upstream's plain double quotes, which Android drops, made them unreadable).
+  ones (upstream's plain double quotes, which Android drops, made them unreadable); 0011 one display draw per picture
+  (the engine's animated pointer: a new pointer image alone waits up to 100 ms for the next picture; identical pointer
+  sets and moves dropped), `[display-cost]` lines in logcat every 5 s (the X server's CPU copy of each picture, the
+  display pass's GPU time, draws per picture), and `LorieView.surfaceAtScreenSize` (dev: `files/bar/.bardroid-display-scales`,
+  the SurfaceView at the X screen's size, the display hardware scales instead of SGSR). docs/CONTAINER-COST.md has
+  what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
+  with all of them).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
@@ -234,7 +242,9 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
 - No `--kernel-release` for proot on kernels >= 4 (its kompat extension traps every futex: half the render thread).
 - `MaxParticles` stays >= 10000 (BAR's minimum): lower values kill unsynced LuaRules and no unit is drawn.
 - proot's seccomp filter must not trap syscalls proot does not act on (each trap = two ptrace stops; GPU drivers make
-  hundreds of ioctls per frame). Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
+  hundreds of ioctls per frame). A stopped call costs 30-460 us (`tools/container-cost/trapbench`); proot also stops
+  `getsockopt`, `close`, `recvmsg`/`sendmsg` and every path call: never add such calls to a per-frame path.
+  Phone Mesa must be lfdevs 27.0.0-devel-20261025 or newer (KGSL present fence: flicker).
 - The lobby needs `chobby_config.json` in the write dir (launch-bar.sh writes it, as BAR's launcher does).
 - Compare frame rates with the developer fps widget (`tools/dev/bardroid_fps.lua`, docs/HISTORY.md) and the laptop awake: Modern Standby throttles ~2.5x.
 
