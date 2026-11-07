@@ -604,6 +604,11 @@ game until the replay and spectating stages below say it computes exactly what t
     second one on a hotter phone. (The benchmark is simulation-bound: below x1 its game falls behind real time.)
   - **Sync, gcc-all3, every switch on** (14:52-15:04): the whole 8v8 replay to "End of demo reached" (f=52,514),
     **0 desync warnings**; its fast-forward took 714 s (today's earlier builds 733-755 s).
+  - BAR's benchmark, gcc-fold7 against gcc-all3 (15:04-15:27, ABBA as above; a hotter round, the GPU at its 220 MHz
+    floor 78-84 % busy): Sim 26.72 / 26.23 ms against 25.66 / 25.20 (-4.0 %), Update 4.93 / 4.77 against 4.52 / 4.49
+    (-7 %), Draw 6.64 / 6.32 against 6.61 / 6.58, game speed x0.85 / x0.87 against x0.89 / x0.91, fps 41.3 / 42.5
+    against 41.8 / 41.7 (the same). The simulation's gain shows as game speed, the frame rate held by the GPU this
+    round. gcc-all3 against gcc-all1 not measured head to head: across rounds the heat differs more than they do.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
