@@ -149,6 +149,10 @@ function Invoke-AppScript([string]$adb, [string]$local, [string]$device = "") { 
 }
 # The screen profile (dark or bench) on a device; prints the settings it changed
 function Set-PhoneScreen([string]$adb, [string]$device, [string]$mode) {
+  # (while Kailil watches, ..\devphone-view.hold: the benchmarks' and tests' bench and dark leave the screen at half
+  # brightness too; devphone.ps1 dark removes the hold first. Kailil, 2026-11-07: "set screen to 50 percent brightness
+  # for this benchmark")
+  if ($mode -ne "view" -and (Test-Path (Join-Path (Split-Path $TC) "devphone-view.hold"))) { $mode = "view" }
   Invoke-PhoneScript $adb $device $PhoneScreen[$mode] "bardroid-screen.sh"
 }
 
