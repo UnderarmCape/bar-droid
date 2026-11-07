@@ -2,7 +2,10 @@
 #   $env:ES_FLAGS / $env:ES_LDFLAGS: extra compile / link flags (never fast-math or FP contraction: sync)
 # Source: hailmary-work\recoil-src (branch bardroid/sim). Build dir and output outside every repository:
 #   C:\Tools\BARANDROID\engine-sim\build-<name>, ...\out\<name>\spring (debug info stripped, symbols kept)
-param([Parameter(Mandatory)][string]$Name, [Parameter(ValueFromRemainingArguments)] $Rest)
+#   -Source <dir>: another checkout of the branch (a git worktree of recoil-src, for sessions working side by side; its
+#   own build-<name> folder; set $env:ES_FLAGS to "-DBARDROID_SIM -march=armv8.2-a -mtune=cortex-x3" before its first
+#   build: gcc-pgo-lse's profile data belong to its own folder)
+param([Parameter(Mandatory)][string]$Name, [string]$Source = "", [Parameter(ValueFromRemainingArguments)] $Rest)
 $ErrorActionPreference = "Continue"   # (cmake and ninja write to stderr; their exit codes decide)
 $HM = "C:\Tools\BARANDROID\hailmary-work"
 $ES = "C:\Tools\BARANDROID\engine-sim"
@@ -30,7 +33,8 @@ $opt = "-O3 -g1 -DNDEBUG -idirafter $HM/sysroot/usr/include/aarch64-linux-gnu $e
 $ld = "-static-libstdc++ -static-libgcc -Wl,--allow-shlib-undefined $shim -lm $env:ES_LDFLAGS"
 $b = "$ES\build-$Name"
 if (-not (Test-Path "$b\build.ninja")) {
-  & "$DK\cmake.exe" -S "$HM\recoil-src" -B $b -G Ninja "-DCMAKE_MAKE_PROGRAM=$DK/ninja.exe" `
+  $src = if ($Source) { $Source } else { "$HM\recoil-src" }
+  & "$DK\cmake.exe" -S $src -B $b -G Ninja "-DCMAKE_MAKE_PROGRAM=$DK/ninja.exe" `
     "-DCMAKE_TOOLCHAIN_FILE=$PSScriptRoot/aarch64-linux-gcc.cmake" "-DCMAKE_POLICY_VERSION_MINIMUM=3.5" `
     -DCMAKE_BUILD_TYPE=RELWITHDEBINFO "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=$opt" "-DCMAKE_C_FLAGS_RELWITHDEBINFO=$opt" `
     "-DCMAKE_EXE_LINKER_FLAGS=$ld" "-DCMAKE_PREFIX_PATH=$HM/static-libs" `

@@ -310,6 +310,17 @@ game until the replay and spectating stages below say it computes exactly what t
     drawing change in two minutes (an 8v8 replay's catch-up takes ten); its starting camera draws units as icons, so
     move the camera close first; and replay-memory.ps1 now checks that dev-env.sh starts the engine asked for (an adb
     script that did not arrive left runs on the official engine without any of the branch's settings).
+  - **Fewer triangles instead** (Kailil: "what if we just compress or reduce res even more for the models?", then
+    "cut even near units, do an aggresive cut to every unit model. close and far"). Texture size only changes memory
+    (the 2048 cap: -263 MB, the same fps). Geometry: `rts/Rendering/Models/IModelParser.cpp`. A coarse copy kept
+    beside each model's list for units small on the screen (`BarDroidModelLodShare`, `BarDroidModelLodPixels` in
+    CUnitDrawerGL4, `S3DModelVAO::AddToSubmissionLod`; the copy's indices after the model's own in the buffer)
+    first with the same edge-collapse simplifier over the pieces' shapes alone (seams merged): 263k against 268k
+    triangles at 251 models, nothing gained: BAR's models are separate panels, which edge collapses cannot merge at
+    any error. Then **`BarDroidModelSimplifySloppy`**: after the simplification every piece of 24 triangles or more cut
+    once more by meshoptimizer's sloppy simplifier (vertices merged by place, no error limit) to that share; every
+    model and pass, near and far. At 0.35: 766k -> 161k triangles over 551 models (21 %); close up the commander keeps
+    its outline, loses detail and some team-coloured panels (model-cut35-compare.png).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
