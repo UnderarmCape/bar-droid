@@ -51,6 +51,9 @@ cat /sys/class/kgsl/kgsl-3d0/gpubusy /sys/class/kgsl/kgsl-3d0/devfreq/cur_freq 2
     $f = Join-Path $TC "tmp\cc-mem.sh"
     [IO.File]::WriteAllText($f, ($mem -replace "`r", ""), (New-Object Text.ASCIIEncoding))
     Invoke-AppScript $adb $f $Device | Out-File -Encoding ascii "$base-mem.txt"
+    # (how SurfaceFlinger shows the game: DEVICE = a display-hardware layer, CLIENT = composed on the GPU)
+    & $adb -s $Device shell "dumpsys SurfaceFlinger | grep -E 'SurfaceView.*BLAST|composition type' | head -12" |
+      Out-File -Encoding ascii -Append "$base-mem.txt"
   }
   "probes done $(Get-Date -Format HH:mm:ss)"
 }

@@ -51,39 +51,106 @@ could be attributed: `recvmsg` 60 % (libxcb reading the X connection), `faccessa
 state and its system call.) proot's own process: ~3.3 % of one core, ~285 wake-ups a second (each stop wakes it).
 
 My own runs (`tools/container-cost/measure.ps1`: the 2026-10-26 Isthmus 8v8 replay, game seconds 1210-1330, engine
-`gcc-cut` with its springsettings, render scale 70 %: a 1408x657 X screen on the 2316x1080 display; phone hot, the
-prime core capped at 1248-1363 MHz, GPU at 475-615 MHz and 47-76 % busy, so this window was CPU-bound; 12-16 fps,
-x0.98-1.00):
+`gcc-cut` with its springsettings, no frame cap (the dev phone's benchmark setup), 3,300-3,450 units; the phone
+hot: prime core capped at 1248-1363 MHz, GPU at 475-615 MHz and 47-76 % busy, so this window was CPU-bound,
+12-16 fps at x0.92-1.00 in every run). Runs A-D played at the phone's saved render scale, 100 % (a 2008x938 X
+screen on the 2316x1080 display); run E at 70 % (1408x657) is below.
 
-| | run A (00:46, as shipped) | run B (00:59) |
-| --- | --- | --- |
-| main thread stopped by proot | 1.05 % (`recvmsg` 48 % of the attributed) | 1.66 % (`getsockopt` 51 %: see below) |
-| proot's process | | 4.1 % of a core, 584 wake-ups/s |
+| | A (00:46) as shipped | B (00:59) first try | C (01:50) the fixes | D (02:03) C + the display scales |
+| --- | --- | --- | --- | --- |
+| main thread stopped by proot | 1.05 % | 1.66 % | **0.23 %** | 0.25 % |
+| of it, by call (attributed samples) | `recvmsg` 48 %, `openat` 19 %, `faccessat` 11 % | `getsockopt` 51 % | `faccessat` 48 %, `newfstatat` 25 % | the same |
+| main thread's voluntary switches | | 505/s | 89/s | 96/s |
+| proot's process | | 4.1 % of a core, 584 wake-ups/s | 2.8 %, 196/s | 2.7 %, 188/s |
+| engine pictures a second | 13.8 | 13.4 | 13.9 | 13.4 |
+| X server: CPU copy of a picture | 1.18-1.30 ms (~100 MB/s), 0.18-0.34 ms of it waiting for the renderer | 1.14-1.25 ms | 1.05-1.09 ms, 0.00-0.04 waiting | 1.05-1.20 ms, 0.00 waiting |
+| renderer draws a second | 32 (pointer only: 18) | 30 (17) | **14 (0.2)** | 13 (0.4) |
+| GPU per draw | 0.74 ms (SGSR) | 0.72-0.81 ms | 0.71-0.75 ms | **0.50-0.55 ms** (1:1, no SGSR) |
+| GPU time of the display pass | 23 ms a second (2.3 % of the GPU) | 20-24 ms | **10.3 ms** | **5.8-7.0 ms** |
+| renderer thread | 8.3-8.7 ms a draw | 4.9 % of a core | 2.6 % of a core | 3.0 % |
+| X server process | | 6.7 % of a core | 7.2 % | 7.3 % |
+| SurfaceView buffer, composition | 2316x1080, DEVICE | the same | the same | 2012x938 scaled by the display hardware, DEVICE |
 
 Run B had the first version of the X socket change in the pace library, which asked each socket's type with
 `getsockopt` on every call: proot stops `getsockopt` too (its fake root answers `SO_PEERCRED`), so it traded one stop
-for two. Fixed (asked once per descriptor), measured again below.
-
-### The display path
-
-| | run A | run B |
-| --- | --- | --- |
-| engine pictures a second (Present) | 13.8 | 13.4 |
-| X server: CPU copy of each picture | 1.18-1.30 ms (~100 MB/s from the dma-buf), 0.2 ms of it waiting for the renderer | 1.14-1.25 ms |
-| renderer draws a second | 32 (of them pointer only: 18) | 30 (pointer only: 17) |
-| GPU per draw (SGSR 1408x657 -> 2316x1080, the pointer) | 0.74 ms at 475 MHz | 0.72-0.81 ms |
-| GPU time of the display pass | 23 ms a second (2.3 % of the GPU) | 20-24 ms a second |
-| renderer thread per draw (mostly its fence waits) | 8.3-8.7 ms | 7.5-8.5 ms |
-| X server pointer traffic | ~17 sets a second, every one a new image | the same: 0 moves, every set a new image |
+for two. Run C asks once per descriptor.
 
 The engine's pointer is animated (Recoil's `HardwareCursorSDL::Update` sets the current frame of BAR's animated cursor
-every drawn frame): the X server's dedupe of identical images (patch 0011) finds none, so more than half of the
-renderer's draws exist only to show the next pointer frame. Fixed in the renderer (a pointer image alone waits up to
-100 ms for the next picture), measured again below.
+on every drawn frame, ~17 a second, a new image each time: the X server's dedupe of identical images finds none),
+so in A and B more than half of the renderer's draws were there only to show the next pointer frame. In C a pointer
+image alone waits up to 100 ms for the next picture (or a move, which still draws at once).
+
+Run E (02:13, the fixes as in C, **render scale 70 %**: a 1408x657 X screen, SGSR to 2316x1080): 13-21 fps, x1.00
+(median), 0 desync warnings; main thread stopped by proot 0.27 %; proot 2.6 % of a core (210 wake-ups/s); X server
+5.6 %; the CPU copy **0.46-0.49 ms a picture** (49 MB/s); the renderer drew only pictures (69-72 per 5 s), **0.53-0.55 ms
+of GPU a draw, 7.5 ms of GPU a second**, 3.1-3.3 ms of its thread a draw (2.8 % of a core). After the measured part,
+with the replay over and the engine drawing 1 picture a second, the pointer kept animating at the 100 ms fallback
+(24 pointer-only draws in 5 s).
+
+No run had a desync warning (each fast-forwards the first 20 minutes of the server-recorded replay, every frame
+checked against every player's checksum): nothing here touches what the simulation sees.
 
 Memory (run B, PSS in RAM + swapped): the app's process 15 + 31 MB, the X server 3 + 43 MB, proot 1 + 0.5 MB; on the
-GPU the SurfaceView's five 2316x1080 buffers (49 MB, `dumpsys gfxinfo`) and the root window (3.6 MB). The engine
-itself: 1.33 GB + 2.1 GB, the GPU driver 2.06 GB in all.
+GPU the SurfaceView's five display-sized buffers (5 x 9.8 MB = 49 MB, `dumpsys gfxinfo`; 5 x 7.5 MB in run D) and the
+root window (7.5 MB at 100 %, 3.7 MB at 70 %). The engine itself: 1.33-1.48 GB + 1.95-2.13 GB swapped, the GPU driver
+2.06 GB in all.
+
+## What the layer costs, in one table (late 8v8, hot dev phone)
+
+| | as shipped | with this branch |
+| --- | --- | --- |
+| engine main thread stopped by proot | 1.05-1.38 % | 0.23-0.27 % |
+| proot's process | ~3.3 % of a core, 285 wake-ups/s | 2.6-2.8 %, ~200/s |
+| X server process (CPU copy of every picture: 0.5 ms at 70 %, 1.1-1.3 ms at 100 %) | 6-7 % of a core | 5.6-7.3 % |
+| display pass on the GPU (SGSR + pointer) | 23 ms a second (2.3 % of the GPU, ~2.3 draws a picture) | 7.5 ms (70 %) - 10.3 ms (100 %) a second, one draw a picture; 5.8-7 ms with the display hardware scaling (100 %) |
+| app's renderer thread | ~5 % of a core | ~3 % |
+| memory | app 15-19 MB + X server 3-4 MB + proot 1 MB in RAM, ~75 MB swapped; GPU: 49 MB of display buffers + the root window (4-8 MB) | the same (38 MB / ~18 MB of display buffers with the display hardware scaling at 100 % / 70 %) |
+| disk | Debian container 375-388 MB | the same |
+
+Against what the frame costs (~45 ms of the engine's main thread a frame at 13-16 fps, the GPU 47-99 % busy depending
+on the heat), the container layer is small: ~1 % of the main thread and ~2 % of the GPU as shipped, ~0.25 % and
+~0.8-1 % with this branch. It is not what keeps the late 8v8 from 30 fps; the engine's own simulation and drawing are
+(docs/ENGINE-SIM.md on `engine/sim`). What it does cost is power (~15 % of one core across proot, the X server and the
+renderer, most of it on the little and middle cores) and ~150 MB of RAM and swap, which matter on a hot 8 GB phone, and
+the first-run install.
+
+## What was built (branch `no-proot`)
+
+All of it app-side: nothing the simulation sees changes, so online play is unaffected.
+
+- **The X connection around proot's traps** (`tools/pace/pace.c`, `libbardroid_pace.so`, already preloaded into the
+  engine): `recvmsg` on a Unix stream socket without an address becomes `recvmmsg` with one message (passed
+  descriptors still arrive), `sendmsg` without control data becomes `writev`; proot's filter stops neither, and it has
+  nothing to do in either call on such a socket. Each descriptor's type is asked once (`getsockopt`, which proot also
+  stops) and forgotten in the library's `close`/`dup2`/`dup3`. Datagram sockets (proot's fake netlink ones), calls with
+  an address, control data or flags keep their real calls. `BARDROID_SOCKET_TRAPS=1` (dev-env.sh) switches it off.
+  Checked by `tools/pace-test.ps1` (new cases: bytes, a passed descriptor, EAGAIN, datagram sockets): ALL PASS.
+- **One display draw per picture** (termux-x11 patch `0011-lorie-display-cost-and-pointer-dedupe.patch`): a new
+  pointer image alone waits up to 100 ms for the next picture (the engine's animated pointer changes on every frame
+  it draws); a pointer set with the image already shown and a move to where the pointer already is are dropped in the
+  X server; a pointer that is not drawn moving draws nothing. Every 5 s logcat has `[display-cost]` lines from the X
+  server (CPU copies of the engine's pictures: count, ms each, MB/s, the wait for the renderer; pointer sets, new
+  images, moves) and from the renderer (draws, of them new pictures and pointer only; the display pass's GPU time
+  from `EXT_disjoint_timer_query`; the renderer's own time a draw).
+- **Optional: the display hardware scales** (same patch, `LorieView.surfaceAtScreenSize`; on only with
+  `files/bar/.bardroid-display-scales`, read by `GameActivity` at start): the SurfaceView's buffer is the X screen's
+  size (`setFixedSize`), the renderer draws it 1:1 and SurfaceFlinger's hardware composer enlarges it (composition
+  stays DEVICE: no GPU). About a third less GPU time for the display pass at 100 % (0.73 -> 0.52 ms a draw; more at 70 %,
+  not measured), smaller display
+  buffers, but the display's own scaler instead of SGSR's edge-adaptive sharpening: Kailil's eye decides, so it is
+  off by default.
+- **Probes** (`tools/container-cost/`): `stopsample` (a thread's time stopped by proot, by system call), `trapbench`
+  (microseconds per stopped call), `threads.sh` + `thrdiff.ps1` (each thread's CPU), `measure.ps1` (a late 8v8 with
+  all of them, on top of `replay-memory.ps1` from `engine/sim`).
+
+Checked on the dev phone with this APK: `pace-test.ps1`, `pad-test.ps1`, `lobby-phone-test.ps1`,
+`touch-phone-test.ps1` ALL PASS; late 8v8 runs C-E at x1.00 with 0 desync warnings.
+
+Not done: the per-frame `faccessat`/`newfstatat`/`openat`/`close` stops that remain (~0.2 % of the main thread:
+BAR's widgets and the engine looking for files; each needs proot's path translation); the CPU copy of every picture
+(it needs the engine's Mesa to render into Android buffers: step 2 below); fps A/B runs (single runs swing +-2 fps
+with the heat, far more than ~1 % of the main thread and of the GPU: the gains here are measured directly, by the
+probes, not by fps).
 
 ## A native Android engine: what it would take
 
@@ -118,3 +185,12 @@ ptrace translates every path), lorie answers the second. A port without them, in
    `-fsingle-precision-constant` (docs/ENGINE-SIM.md, engine/sim branch: a clang build matched 20 minutes of a
    real replay, but GCC is the proven choice); every simulation file must compute bit for bit what BAR's servers'
    players compute.
+
+What the three steps would buy, from the table above: step 1 the last ~0.25 % of the main thread and proot's ~2.7 % of
+a core; step 2 the X server's ~6 % of a core, the CPU copy and most of the display pass (or all of it with the display
+hardware scaling), ~50 MB of RAM and swap; step 3 the 375 MB container, its first-run install and Debian's update path.
+None of them is worth more than a few percent of fps on its own: the reasons to do them are power, memory, install size
+and a build BAR's developers can ship from their own CI, not the frame rate. Order of work for whoever picks it up:
+step 2's present path first (the engine branch already has `BarDroidDeferSwap`, the place to hand a finished frame
+over), measured with this branch's `[display-cost]` lines; then step 1; step 3 only together with BAR's own build of
+the engine.
