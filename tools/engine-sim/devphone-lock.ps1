@@ -13,9 +13,11 @@ function Holder { if (Test-Path $lock) { (Get-Content $lock -Raw).Trim() } else 
 function Queue { if (Test-Path $queue) { @(Get-Content $queue | Where-Object { $_ -match '\S' }) } else { @() } }
 # (a queue line: "<who> <yyyy-MM-dd HH:mm:ss>"; one waiting longer than 3 hours without taking is dropped as gone)
 function CleanQueue {
+  # (and the holder's own line: a session that took the phone without the script leaves it behind, blocking the rest)
+  $holder = ((Holder) -split ' ')[0]
   $keep = @(Queue | Where-Object {
     $p = $_ -split ' ', 2
-    try { ((Get-Date) - [datetime]::Parse($p[1])).TotalHours -lt 3 } catch { $false }
+    $p[0] -ne $holder -and $(try { ((Get-Date) - [datetime]::Parse($p[1])).TotalHours -lt 3 } catch { $false })
   })
   Set-Content -LiteralPath $queue -Value $keep
 }
