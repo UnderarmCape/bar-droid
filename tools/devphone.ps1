@@ -9,7 +9,8 @@
 #   bench    the normal minimum brightness, Extra dim off: for benchmarks (tools\phone-bench.ps1 switches by itself)
 #   watch    connect and dark again every minute (a phone restart, a lost Wi-Fi link, a setting changed), except while a
 #            benchmark holds ..\phone-bench.lock; tools\devphone-watch.bat runs it in a window of its own
-param([ValidateSet("status", "connect", "dark", "bench", "watch")][string]$Do = "status")
+#   view     half brightness, Extra dim off, for Kailil to watch its games; held (watch leaves it) until "dark" runs
+param([ValidateSet("status", "connect", "dark", "bench", "watch", "view")][string]$Do = "status")
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 $mine = Get-PhoneDevices
@@ -17,6 +18,7 @@ if (-not $mine.Count) { throw "no dev phone: put its USB serial and Wi-Fi addres
 $usb = @($mine | Where-Object { $_ -notmatch ":" })[0]
 $wifi = @($mine | Where-Object { $_ -match ":\d+$" })[0]
 $lock = Join-Path (Split-Path $TC) "phone-bench.lock"
+$hold = Join-Path (Split-Path $TC) "devphone-view.hold"
 
 function Listed { @(& $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match "^(\S+)\s+device$" } | ForEach-Object { $Matches[1] }) }
 function Target { $l = Listed; foreach ($d in @($usb, $wifi)) { if ($d -and $l -contains $d) { return $d } }; "" }
@@ -64,14 +66,16 @@ function Screen([string]$mode) {
 switch ($Do) {
   "status" { Status }
   "connect" { Connect; Status }
-  "dark" { Screen "dark" }
+  "dark" { Remove-Item -LiteralPath $hold -ErrorAction SilentlyContinue; Screen "dark" }
   "bench" { Screen "bench" }
+  "view" { Set-Content -LiteralPath $hold -Value "Kailil watches the dev phone's games ($(Get-Date -Format 'yyyy-MM-dd HH:mm')); devphone.ps1 dark ends it"; Screen "view" }
   "watch" {
     Write-Host "[devphone] watching the dev phone every minute (Ctrl+C stops)"
     while ($true) {
       try {
         Connect
         if (Test-Path $lock) { Write-Host "[devphone] $(Get-Date -Format HH:mm) a benchmark runs: the screen left to it" }
+        elseif (Test-Path $hold) { Screen "view" }
         else { Screen "dark" }
       } catch { Write-Host "[devphone] $(Get-Date -Format HH:mm) $_" }
       Start-Sleep 60

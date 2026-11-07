@@ -214,7 +214,11 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
   statistics"): run `python -I tools\worklog.py` before the last commit of every work session and commit
   `docs/WORKLOG.md` and `docs/worklog/` with it. Private terms it must hide go in `..\worklog-redact.txt`, never in
   the repository. The road to a public release: `docs/DELIVERY.md`.
-- Never bundle or re-encode BAR game content (CC-BY-NC-ND). Download from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only.
+- BAR's game itself (CC-BY-NC-ND) comes from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only,
+  as BAR's launcher fetches it. Kailil, 2026-11-06: BAR's developers cleared him ("full authority to do whatever
+  necessary to get this game android ready"; they are bringing him onboard), so content made from BAR's art for
+  phones (made ahead of time on the laptop rather than on players' phones) may ship with the app; credit BAR in
+  NOTICE.md. Anything the simulation or the archive checksums see stays BAR's own (online play).
   Kailil's own builds carry his edit of BAR's launcher icon (an Android robot added; NOTICE.md), personal use only
   (NoDerivatives): it lives outside the repository (`C:\Tools\BARANDROID\personal\res`, local.properties
   `bardroid.personalRes`); public builds (`-PbardroidPublic`, or no such folder) get the project's own icon. An APK

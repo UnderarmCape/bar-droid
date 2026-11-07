@@ -76,6 +76,15 @@ function Get-PhoneDevice([string]$adb) {
 # written; the screen is woken if it went off. (A black overlay window was not used: screenshots would be black and
 # Android drops touches through an opaque window of another app; the display's color matrix is refused to the shell.)
 $PhoneScreen = @{
+  # (Kailil watching the dev phone's games: half brightness, Extra dim off; devphone.ps1 view, held by ..\devphone-view.hold)
+  view = @'
+s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
+s system screen_brightness_mode 0
+s system screen_brightness 128
+s secure reduce_bright_colors_activated 0
+s global stay_on_while_plugged_in 15
+dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
+'@
   dark = @'
 s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
 s system screen_brightness_mode 0
