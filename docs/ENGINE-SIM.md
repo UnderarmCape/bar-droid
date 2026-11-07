@@ -330,6 +330,52 @@ game until the replay and spectating stages below say it computes exactly what t
     target set, gcc-cut, 22:20-23:35, A B C C B A: **now 20.8 / 20.6 fps** (929k triangles), prune 10 16.8 / 19.8 (657k;
     the 16.8 with the GPU at its 220 MHz floor, thermal level 8), sloppy 0.7 20.0 / 19.8 (601k). With the GPU 58-73 %
     busy at 70 %, the main thread is the limit there: a third fewer triangles bought nothing. Not kept.
+- **A cheaper model shader, ASTC unit textures, the model instance buffer** (2026-11-06/07 night, the
+  "mobile-shader" session; recoil branch `bardroid/shader` from `bardroid/sim` ff532a3, worktree
+  `hailmary-work\recoil-shader`; builds `gcc-shader` .. `gcc-shader4`). Drawing only; all off by default.
+  - `rts/Rendering/Common/ModelDrawerState.cpp`, `shaders/GLSL/Model{Vert,Frag}ProgGL4Mobile.glsl`:
+    **`BarDroidModelShader`** (0 = the engine's): 1 draws the GL4 drawer's units, features and wreck pieces with a
+    phone shader: no reflection cubemap read (an "ambient cube" instead: the env cubemap's 1x1 mipmap level of each
+    face, read back without waiting once a whole cube is renewed, `CubeMapHandler::BarDroidAmbientCube`, blended by the
+    reflected ray's direction), the sun's direction normalized on the CPU, one pow for the highlight, a normalized lerp
+    between simulated frames, the team colour flat, fewer varyings. The same two textures, team colour,
+    self-illumination, alpha test and fog. 2-4 are measurements (depth tested before shading; the diffuse texture
+    only, unlit; no frame-to-frame blend in the vertex shader). Read every drawn frame, so a widget switches it in a
+    game: `tools/engine-sim/bardroid_abswitch.lua` + `ab-run.ps1` (A B B A phases of 20 s in one run, the GPU's time
+    per pass logged per phase: both sides in the same heat). Built in (`embed-model-shaders.ps1`; the phone's VFS has
+    BAR's official base content); a file in the write dir's `shaders/GLSL/` wins, for trying changes without a build.
+    Only where the engine draws the units: on 8 GB phones (the low-memory mode's `cus2 = 0`); on the Fold7 BAR's CUS
+    GL4 shaders draw them.
+  - Looks (skirmish, the commander close, middle, far; `runs\shader-compare-2.png`): with the ambient cube the metal
+    panels are as bright as the cubemap made them (a first try with a fog-coloured sky tint left them grey,
+    `shader-compare-1.png`); team colour and glow the same.
+  - Cost, late 8v8 (the 2026-10-26 replay from game second 1210, the dev phone's target set at 70 %, hot: GPU 295 MHz
+    97-99 % busy, the X3 at 1248 MHz), in-run A/B, 7 phases each (gcc-shader, 00:05-00:17): **GPU::ModelsOpaque
+    10.96 -> 10.69 ms a frame (-2.5 %)**, Terrain 5.39 / 5.37, fps 14.6 / 14.4 (the run's heat drift, 18.7 -> 12.7,
+    is far larger). The diagnostics in one run (gcc-shader2, 00:18-00:32; ModelsOpaque per Terrain, the GPU's clock
+    cancelled): engine 2.03, depth tested before shading 1.96, the diffuse texture alone unlit 1.94, no frame blend in
+    the vertex shader 1.94. **The opaque models pass's GPU time is not in its shaders**, fragment or vertex: a cheaper
+    shader cannot buy the frame back. Kept as a setting (a little GPU, the look close), not a 30 fps lever.
+  - `rts/Rendering/Textures/Bitmap.cpp`, `nv_dds.cpp`: **`BarDroidModelTextureDir`** (empty = off): `unittextures/*.dds`
+    loaded from KTX files of ASTC mipmap levels in that write-dir folder when its `manifest.txt` lists the file with
+    the archive's size and CRC32 (else the DDS). Made on the laptop by `tools/engine-sim/astc/convert.py`: `dds2tga.exe`
+    (the DDS's own mip levels decoded and flipped as nv_dds uploads them, from the first level no larger than 2048, the
+    `BarDroidModelTextureMax` cap) and ARM's astcenc 5.7.0 (Apache-2.0, `toolchain\hosttools\astcenc`), 6x6 blocks,
+    `-medium`: all 955 unit textures but the normal maps (which only BAR's CUS shaders read, through Lua) in 29 s,
+    96 MB (outside git: `C:\Tools\BARANDROID\engine-sim\astc\6x6\bardroid-astc`, and its .tar), 2.5 MB a 2048 texture
+    with mipmaps against 5.6 MB of DXT5. The phone's BAR releases test-31723 (the 8v8 replay's) and test-31836 have all
+    955 the same as the laptop's (`astc/check-release.py`). Skirmish close-ups against DXT5: no difference visible
+    (`runs\astc-compare-1.png`); the textures the right way up. CUS binds the engine's model textures, so it applies on
+    the Fold7 too.
+  - `rts/Rendering/Models/3DModelVAO.cpp`: `S3DModelVAO::Submit` writes the instance buffer (1.08 MB) from its start for
+    every texture bin, and every immediate draw (units being built, build previews) one slot of it, while the frame's
+    earlier draws still read it; a tiler's driver keeps their data by copying or stalls. **`BarDroidInstanceOrphan`**
+    (read every drawn frame): 1/2 give the buffer's storage up first (glInvalidateBufferData) before batched / all
+    writes: **slower**, in-run A/B (gcc-shader3, 01:03-01:16) 16.96 -> 15.5 fps in all 7 pairs, every pass's GPU time up
+    (Terrain 3.2 -> 5.5 ms): Freedreno's invalidation itself costs. 3 writes them into a persistently mapped ring of
+    two 2 MB halves (a fence per half, the instance attribute pointed at the ring): no driver sync or copy per write.
+  - The whole 8v8 replay (to "End of demo reached", f=52,514) on gcc-shader3 with `BarDroidModelShader = 1`, the ASTC
+    folder and `BarDroidInstanceOrphan = 2`: **0 desync warnings** (01:16-01:29).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
