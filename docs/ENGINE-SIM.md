@@ -368,6 +368,21 @@ game until the replay and spectating stages below say it computes exactly what t
     (its CPU 0.55 -> 0.54), Top Bar 0.63 -> 0.48, AdvPlayersList 0.36 -> 0.31; without BAR's widget profiler LuaUI's
     Update 2.92 -> 2.35, DrawScreen 3.34 -> 2.98, UnitCommand 0.38 -> 0.10, WidgetAt 0.29 -> 0, IsAbove 0.32 -> 0.17
     (the selector's own Update 0.29 -> 0). fps 18.4 / 18.5 (profiler on; Sim 56-57 %: the simulation holds the frame).
+  - The app's own widgets (app `94c4c35`): the builder queue looked over every queued building again whenever any build
+    order was added, which in a late 8v8 is nearly every frame; a new order is now placed on its own and the look runs
+    when the camera has moved 100 elmos or every 2 s: its Update 0.18-0.20 % -> under 0.02. The chat's lines from a
+    display list instead of printed every frame: 0.38 -> 0.45, not kept.
+  - BAR's decorative effects and two cosmetic widgets off as well (the "off" set, profiled 03:20, not in the app's
+    defaults: `BarDroidUnsyncedGadgetsOff = gfx_fire_smoke_gl4.lua,gfx_fire_gl4.lua,gfx_missile_thruster_gl4.lua,
+    gfx_environmental_lightning_gl4.lua`: fire, smoke and embers on damaged units and wrecks, missiles' engine flames,
+    EMP and commander-spawn lightning; `widget_order "AllyCursors" 0`, `widget_order "Ally Selected Units" 0`): BAR's
+    unsynced Lua 19.8 -> 19.1 % (Fire GL4 0.40, AllyCursors 0.25, Missile Thruster GL4 0.18, Ally Selected Units ~0.1).
+  - Without the profiler, the target set at 70 % (base = BAR's Lua, phone = the seven patches; at 03:43 also the
+    builder queue and the chat's display list, since dropped; 2026-11-07, 120 s each, x0.99-1.00 throughout): 02:45
+    phone 21.0 fps (GPU at its 295 MHz floor, level 7, 99 %
+    busy; prime core 1478 MHz), 02:56 base 20.4 (GPU 401-550, level 3; prime 1248-1363), 03:31 base 20.6 (GPU 475-615,
+    level 2; prime 1248-1363), 03:43 phone 21.4 (GPU 550, level 2; prime 1248-1363). The last pair at the same caps:
+    **48.5 -> 46.7 ms a drawn frame (+0.8 fps, +4 %)**; both pairs +0.6 and +0.8 fps.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
