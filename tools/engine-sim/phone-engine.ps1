@@ -80,16 +80,17 @@ if ($Replay) {
     $now = [int](App-Script $count "es-count.sh")
     $enginePid = "$(& $adb -s $Device shell 'pidof recoil-main || pidof spring')".Trim()   # (not $engine: PowerShell names ignore case, -Engine is a parameter)
     if ($enginePid) { $seen = $true } elseif ($seen) { $now = $before + 1; "the engine's process is gone" }
-    # -Perf: simpleperf on the engine (user space, 2000 samples a second) once the measured part has begun
+    # -Perf: simpleperf on the engine (user space: CPU cycles, every 500,000 of them; since 2026-11-07 the dev phone's kernel refuses cpu-clock:u) once the measured part has begun
     if (-not $perfDone -and "$(App-Script "grep -c 'replaybench\] measuring' files/bar/infolog.txt 2>/dev/null" "es-perf0.sh")".Trim() -ge 1) {
       $perfDone = $true
+      # (from adb's shell with --app, which switches to the app itself: 2026-11-07 simpleperf run inside the app could
+      # no longer raise debug.perf_event_max_sample_rate and recorded nothing)
       $sp = Join-Path $TC "android-sdk\ndk\29.0.14206865\simpleperf\bin\android\arm64\simpleperf"
-      if ("$(App-Script '[ -x files/simpleperf ] && echo yes' 'es-perf1.sh')".Trim() -ne "yes") {
-        Send-AppFile $adb $sp "files/simpleperf" $Device; App-Script "chmod 755 files/simpleperf" | Out-Null
+      if ("$(& $adb -s $Device shell '[ -x /data/local/tmp/simpleperf ] && echo yes')".Trim() -ne "yes") {
+        & $adb -s $Device push $sp /data/local/tmp/simpleperf | Out-Null; & $adb -s $Device shell chmod 755 /data/local/tmp/simpleperf
       }
-      & $adb -s $Device shell "setprop security.perf_harden 0" | Out-Null
-      App-Script "pid=`$(pidof recoil-main || pidof spring); files/simpleperf record -p `$pid -e cpu-clock:u $(if ($Graph) { '--call-graph dwarf -c 2000000' } else { '-c 500000' }) --duration $Perf -o files/es-perf.data 2>&1 | tail -n 2" "es-perf2.sh"
-      & $adb -s $Device shell "setprop security.perf_harden 1" | Out-Null
+      $rec = "-e cpu-cycles:u $(if ($Graph) { '--call-graph dwarf -c 2000000' } else { '-c 500000' }) --duration $Perf"
+      & $adb -s $Device shell "setprop security.perf_harden 0; cd /data/local/tmp; pid=`$(pidof recoil-main || pidof spring); ./simpleperf record --app com.underarmcape.bardroid -p `$pid $rec -o /data/local/tmp/es-perf.data 2>&1 | tail -n 2; setprop security.perf_harden 1"
     }
   } while ($now -le $before -and ((Get-Date) - $start).TotalSeconds -lt $Timeout)
   if ($now -le $before) { "timeout after $Timeout s" }
@@ -101,8 +102,8 @@ if ($Replay) {
   App-Script "cat files/bar/infolog.txt" "es-cat.sh" | Out-File -Encoding utf8 $out
   App-Script "rm -f files/bar/.bardroid-bench-replay files/bar/dev-env.sh files/bar/dev-springsettings.cfg; [ -f files/bar/.springsettings-before-run ] && mv files/bar/.springsettings-before-run files/bar/springsettings.cfg; true" | Out-Null
   if ($Perf) {
-    & cmd /c "`"$adb`" -s $Device exec-out run-as com.underarmcape.bardroid cat files/es-perf.data > `"$($out -replace '\.txt$','.perf.data')`""
-    App-Script "rm -f files/es-perf.data" | Out-Null
+    & $adb -s $Device pull /data/local/tmp/es-perf.data "$($out -replace '\.txt$','.perf.data')" | Out-Null
+    & $adb -s $Device shell rm -f /data/local/tmp/es-perf.data
     "profile: $($out -replace '\.txt$','.perf.data')"
   }
   $log = Get-Content $out

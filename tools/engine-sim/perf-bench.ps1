@@ -24,7 +24,7 @@ AppRun @"
 i=0; while ! grep -q 'Starting Benchmark' files/bar/infolog.txt 2>/dev/null; do sleep 1; i=`$((i+1)); [ `$i -gt 400 ] && exit 1; done
 sleep $After
 pid=`$(pidof recoil-main || pidof spring)
-files/simpleperf record -p `$pid -e cpu-clock:u -c 500000 $Record --duration $Seconds -o files/es-perf.data 2>&1 | tail -n 1
+files/simpleperf record -p `$pid -e cpu-cycles:u -c 500000 $Record --duration $Seconds -o files/es-perf.data 2>&1 | tail -n 1
 "@ "es-pf3.sh"
 & $adb -s $Device shell "setprop security.perf_harden 1" | Out-Null
 $out = "C:\Tools\BARANDROID\engine-sim\runs\$((Get-Date).ToString('yyyyMMdd-HHmmss'))-perf-$Engine"
