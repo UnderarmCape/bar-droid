@@ -1,0 +1,19 @@
+BAR Droid phone version of BAR's Widget Selector (luaui/widgets/widget_selector.lua): its "Cost" column off at every start.
+With the column on (BAR's default, saved on), the selector keeps BAR's widget profiler running all game whether the panel
+is open or not (luaui/Include/widget_profiling.lua): every call-in of every widget wrapped, each call reading the timer
+and Lua's memory counter twice, hundreds of calls a frame. On the dev phone in a late 16-player game that is spread over
+every widget's time (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). The column can still be switched on in
+the panel for the rest of the game. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a
+block finds no place, BAR's own file runs.
+
+@@@ find
+local filters = { enabledOnly = false, errorsOnly = false, byOrder = false, profiler = true, byLoad = false }
+@@@ with
+local filters = { enabledOnly = false, errorsOnly = false, byOrder = false, profiler = false, byLoad = false } -- BAR Droid (phone): profiler = true
+@@@ end
+
+@@@ find
+	filters.profiler = data.profiler ~= false
+@@@ with
+	filters.profiler = false -- BAR Droid (phone): data.profiler ~= false (off at every start)
+@@@ end

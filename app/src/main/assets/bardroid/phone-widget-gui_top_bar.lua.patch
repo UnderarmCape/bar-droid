@@ -1,0 +1,25 @@
+BAR Droid phone version of BAR's Top Bar (luaui/widgets/gui_top_bar.lua): the resource bars drawn again every 0.15 s
+instead of 0.05 (into the bar's texture), the pointer and team checks every 0.1 s instead of 0.033, and the resource
+numbers read every 0.5 s instead of 0.25. In a late 16-player game the top bar cost 0.6-0.7 % of the dev phone's main
+thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
+file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+		timers.nextBarsUpdate = now + 0.05
+		timers.nextForcedBarsUpdate = now + 0.03
+@@@ with
+		timers.nextBarsUpdate = now + 0.15 -- BAR Droid (phone): 0.05
+		timers.nextForcedBarsUpdate = now + 0.1 -- BAR Droid (phone): 0.03
+@@@ end
+
+@@@ find
+		timers.nextStateCheck = now + 0.0333
+@@@ with
+		timers.nextStateCheck = now + 0.1 -- BAR Droid (phone): 0.0333
+@@@ end
+
+@@@ find
+		timers.nextSlowUpdate = now + 0.25
+@@@ with
+		timers.nextSlowUpdate = now + 0.5 -- BAR Droid (phone): 0.25
+@@@ end

@@ -1,0 +1,17 @@
+BAR Droid phone version of BAR's GUI Sound Effects player (luarules/gadgets/snd_soundeffects.lua), its unsynced half:
+the selection and the units' on/off states looked at every 3rd game frame (100 ms) instead of every frame. In a late
+16-player game the frame's loop asks the engine for every tracked unit's active state (converters, radars, ...): 0.9-1.0 %
+of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Sounds come up to 100 ms later.
+The engine (BarDroidPhoneLuaDir) applies the blocks below to BAR's file in the unsynced LuaRules state only; if one finds
+no place, BAR's own file runs.
+
+@@@ find
+	CurrentGameFrame = spGetGameFrame()
+	if not selectionChanged then
+@@@ with
+	CurrentGameFrame = spGetGameFrame()
+	if n % 3 ~= 0 then -- BAR Droid (phone): every 3rd frame
+		return
+	end
+	if not selectionChanged then
+@@@ end
