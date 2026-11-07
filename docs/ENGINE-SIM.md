@@ -537,8 +537,18 @@ game until the replay and spectating stages below say it computes exactly what t
     2.17 -> 1.95, `Draw` 4.86 -> 4.67; fps 50.5 against 48.4, inside the phases' 44-62 spread. Worth a report
     upstream (a plain bug, not phone-specific).
   - `ab-run.ps1 -Cpu "<timer>,<timer>"` (d6e4937): profiler timers per A/B phase as well (bardroid_abswitch.lua),
-    in ms a drawn frame. The whole-replay desync check of gcc-icon1 (with BarDroidPrevSkip) is still to run before
-    either goes to the Fold7.
+    in ms a drawn frame. gcc-icon1 (BarDroidPrevSkip + BarDroidIconCull), the whole replay to "End of demo reached"
+    (12:18-12:30): **0 desync warnings**.
+  - The deferred passes (1.6 % for the models' G-buffer, 1.3 % for the map's) stay: the app's touch widget already
+    leaves out what nobody reads (the features' model pass, the map's while BAR's advanced map shading is off); the
+    units' G-buffer is read by shields' outlines and the radar/jammer placement previews, the map's by BAR's GL4
+    widgets that take the map's depth from it.
+  - Kept for the dev phone's target set (a visual cut, not for players without Kailil's say): `BarDroidInfoTexEvery`
+    (default 1 = stock, 7447e2f): the LOS, air LOS and radar info textures (the fog of war's and the radar's shading;
+    radar 0.86, air LOS 0.72, LOS 0.46 % of the main thread, mostly the GPU driver's copy of each full-map upload)
+    every Nth drawn frame. In-run A/B at 2 (12:31-12:43): `Update::InfoTextures` 0.87 -> 0.48 ms a drawn frame
+    (-45 %), `Update` 5.94 -> 5.54, `Draw` 12.17 -> 11.06; fps 22.0 against 22.6 (phases 19-29). The fog's and
+    radar's edges follow a frame late (~45 ms at 22 fps).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
