@@ -385,7 +385,14 @@ game until the replay and spectating stages below say it computes exactly what t
     **48.5 -> 46.7 ms a drawn frame (+0.8 fps, +4 %)**; both pairs +0.6 and +0.8 fps. 04:27 base 20.9 with the GPU
     at its 295 MHz floor (level 7, 99 % busy) and the prime core at 1478 MHz, the 02:45 phone run's state exactly:
     there 21.0 against 20.9, the main thread waiting for the GPU 28-29 % of the time. While the hot GPU is the wall the
-    CPU saved does not show; Defense Range's GPU time (-0.5 % of it) is the only GPU part of these changes.
+    CPU saved does not show; Defense Range's GPU time (-0.5 % of it) is the only GPU part of these changes. 05:05
+    phone 22.4 (the patches + the builder queue; GPU 550, level 2; prime 1248-1363), 05:56 base 21.9 (GPU 475-550,
+    levels 2-4; prime 1248-1363). With the GPU off its floor (busy 62-81 %): **base 20.4, 20.6, 21.9; phone 21.4, 22.4
+    fps** (+0.9 on average, +0.5 to +0.8 between neighbouring runs); the phone drifts more over a night than these
+    changes move it, so the timers above are the measure.
+  - `MiniMapRefreshRate = 8` (the engine's minimap picture, every unit icon, drawn 8 times a second, not the 15 it
+    picks for a small minimap; an engine setting the official engine has, app `9e60abb` in launch-bar.sh's phone
+    graphics): its GPU time 0.24-0.26 -> 0.05 % (06:08, profiled, with the patches).
   - Sync: the whole 8v8 replay (2026-10-26, to its end at frame 52,706, 855 s) on `gcc-lua` with the seven patches
     applied (the infolog's seven `phone version` lines), the off set and the new builder queue: **0 desync warnings**.
   - To turn it on: an engine with `bardroid/lua`'s LuaVFS.cpp (`gcc-lua`), the app from `mobile-lua` (the patches in
