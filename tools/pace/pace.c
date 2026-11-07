@@ -163,17 +163,48 @@ extern long syscall(long number, ...);
 #define BD_SYS_recvmsg 212
 #define BD_SYS_recvmmsg 243
 static int socket_traps = -1;   /* -1: not read yet */
+/* What a descriptor is, asked once (proot stops getsockopt too: its fake root answers SO_PEERCRED), kept until the
+   engine closes or replaces it through close/dup2/dup3 below (0 unknown, 1 a Unix stream socket, 2 anything else).
+   A descriptor glibc closes internally keeps its entry: harmless, the address and flag checks still decide. */
+#define FD_KINDS 1024
+static volatile unsigned char fd_kind[FD_KINDS];
 static int unix_stream(int fd) {
     if (socket_traps < 0) {
         const char *s = getenv("BARDROID_SOCKET_TRAPS");
         socket_traps = s && s[0] == '1';
     }
-    if (socket_traps) return 0;
-    int v = 0;
+    if (socket_traps || fd < 0) return 0;
+    if (fd < FD_KINDS && fd_kind[fd]) return fd_kind[fd] == 1;
+    int v = 0, stream = 0;
     unsigned int l = sizeof v;
-    if (syscall(BD_SYS_getsockopt, fd, 1 /* SOL_SOCKET */, 39 /* SO_DOMAIN */, &v, &l) || v != 1 /* AF_UNIX */) return 0;
-    l = sizeof v;
-    return !syscall(BD_SYS_getsockopt, fd, 1, 3 /* SO_TYPE */, &v, &l) && v == 1 /* SOCK_STREAM */;
+    if (!syscall(BD_SYS_getsockopt, fd, 1 /* SOL_SOCKET */, 39 /* SO_DOMAIN */, &v, &l) && v == 1 /* AF_UNIX */) {
+        l = sizeof v;
+        stream = !syscall(BD_SYS_getsockopt, fd, 1, 3 /* SO_TYPE */, &v, &l) && v == 1 /* SOCK_STREAM */;
+    }
+    if (fd < FD_KINDS) fd_kind[fd] = stream ? 1 : 2;
+    return stream;
+}
+static void fd_forget(int fd) { if (fd >= 0 && fd < FD_KINDS) fd_kind[fd] = 0; }
+typedef int (*close_fn)(int fd);
+typedef int (*dup2_fn)(int oldfd, int newfd);
+typedef int (*dup3_fn)(int oldfd, int newfd, int flags);
+static close_fn real_close;
+static dup2_fn real_dup2;
+static dup3_fn real_dup3;
+int close(int fd) {
+    fd_forget(fd);
+    if (!real_close) real_close = (close_fn) dlsym(RTLD_NEXT, "close");
+    return real_close(fd);
+}
+int dup2(int oldfd, int newfd) {
+    fd_forget(newfd);
+    if (!real_dup2) real_dup2 = (dup2_fn) dlsym(RTLD_NEXT, "dup2");
+    return real_dup2(oldfd, newfd);
+}
+int dup3(int oldfd, int newfd, int flags) {
+    fd_forget(newfd);
+    if (!real_dup3) real_dup3 = (dup3_fn) dlsym(RTLD_NEXT, "dup3");
+    return real_dup3(oldfd, newfd, flags);
 }
 typedef long (*recvmsg_fn)(int fd, struct bd_msghdr *msg, int flags);
 typedef long (*sendmsg_fn)(int fd, const struct bd_msghdr *msg, int flags);

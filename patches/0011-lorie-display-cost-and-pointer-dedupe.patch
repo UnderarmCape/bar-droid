@@ -150,24 +150,25 @@ index 5dd1b20..1aeb3df 100644
                  auto* r = (LorieViewResources*) ptr;
                  if (!r || r->destroyed) return 0;
 diff --git a/lorie/src/main/cpp/lorie/lorie.h b/lorie/src/main/cpp/lorie/lorie.h
-index 57347cb..930db5b 100644
+index 57347cb..c03b7e7 100644
 --- a/lorie/src/main/cpp/lorie/lorie.h
 +++ b/lorie/src/main/cpp/lorie/lorie.h
-@@ -329,6 +329,9 @@ struct Renderer {
+@@ -329,6 +329,10 @@ struct Renderer {
      // BAR Droid: the X screen drawn onto a bigger display through Qualcomm's SGSR 1 (edge-adaptive upscaling and
      // sharpening in one pass) instead of plain filtering. The embedding app hands over the shader source.
      volatile int upscale = 0;              // 0: plain filtering, 1: SGSR
 +    // BAR Droid: surface pixels per view pixel. Below 1 the SurfaceView's buffer is smaller than the view (setFixedSize:
 +    // the X screen's size) and the display hardware enlarges it: the picture is drawn 1:1, no upscaling pass on the GPU.
 +    volatile float surfaceScale = 1.f;
++    bool bdPointerDeferred(struct lorie_shared_server_state* s);   // BAR Droid: a pointer image alone waits for a picture
      char* volatile sgsrSource = nullptr;   // SGSR 1's fragment shader (GLSL ES), taken once
      volatile int sgsrState = 0;            // 0: not built yet, 1: built, -1: this GPU refused it (plain filtering)
      GLuint sgsrProgram = 0, sgsrPos = 0, sgsrCoords = 0;
 diff --git a/lorie/src/main/cpp/lorie/renderer.cpp b/lorie/src/main/cpp/lorie/renderer.cpp
-index 5be6d18..fc583e3 100644
+index 5be6d18..19001cb 100644
 --- a/lorie/src/main/cpp/lorie/renderer.cpp
 +++ b/lorie/src/main/cpp/lorie/renderer.cpp
-@@ -58,6 +58,98 @@ static void waitForFence(EGLDisplay egl_display, EGLSync fence, EGLint flags) {
+@@ -58,6 +58,100 @@ static void waitForFence(EGLDisplay egl_display, EGLSync fence, EGLint flags) {
  
  static GLuint createProgram(const char* p_vertex_source, const char* p_fragment_source);
  
@@ -185,6 +186,7 @@ index 5be6d18..fc583e3 100644
 +    bool busy[8];
 +    int next;
 +    uint64_t gpuNs, gpuTimed, cpuNs, draws, pictures, pointerOnly, skipped, lastLog;
++    uint64_t pointerSince, deferred;   // a new pointer image waiting for the next picture since; waits for it
 +    bool pointerShown;   // the last draw drew the pointer
 +} bdCost;
 +
@@ -252,21 +254,22 @@ index 5be6d18..fc583e3 100644
 +    if (now - bdCost.lastLog < 5000000000ull)
 +        return;
 +    double s = (double) (now - bdCost.lastLog) * 1e-9;
-+    log("[display-cost] %llu draws in %.1f s (%llu new pictures, %llu for the pointer only, %llu pointer-only skipped); "
-+        "GPU %.2f ms a draw (%llu timed), %.1f ms of GPU a second; renderer %.2f ms a draw",
++    log("[display-cost] %llu draws in %.1f s (%llu new pictures, %llu for the pointer only, %llu pointer-only skipped, "
++        "%llu waits of a pointer image for a picture); GPU %.2f ms a draw (%llu timed), %.1f ms of GPU a second; renderer %.2f ms a draw",
 +        (unsigned long long) bdCost.draws, s, (unsigned long long) bdCost.pictures, (unsigned long long) bdCost.pointerOnly,
-+        (unsigned long long) bdCost.skipped,
++        (unsigned long long) bdCost.skipped, (unsigned long long) bdCost.deferred,
 +        bdCost.gpuTimed ? (double) bdCost.gpuNs / (double) bdCost.gpuTimed * 1e-6 : 0.0, (unsigned long long) bdCost.gpuTimed,
 +        bdCost.gpuTimed && bdCost.draws ? (double) bdCost.gpuNs / (double) bdCost.gpuTimed * (double) bdCost.draws / s * 1e-6 : 0.0,
 +        bdCost.draws ? (double) bdCost.cpuNs / (double) bdCost.draws * 1e-6 : 0.0);
 +    bdCost.gpuNs = bdCost.gpuTimed = bdCost.cpuNs = bdCost.draws = bdCost.pictures = bdCost.pointerOnly = bdCost.skipped = 0;
++    bdCost.deferred = 0;
 +    bdCost.lastLog = now;
 +}
 +
  static void* printEglError(const char* msg, int line) {
      char descBuf[32] = {0};
      char* desc;
-@@ -1005,6 +1097,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1005,6 +1099,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      float xfactor = 1.f;
      const LorieBuffer_Desc *desc = nullptr;
      EGLSync fence;
@@ -275,7 +278,7 @@ index 5be6d18..fc583e3 100644
  
      // Early returns below skip the applyPendingGpuCopiesLocked() call further down, which would
      // stall copies queued for windows unrelated to root while root itself isn't ready yet.
-@@ -1117,11 +1211,17 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1117,11 +1213,17 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      }
      float sourceLeft = panSourceLeft, sourceTop = panSourceTop;
  
@@ -294,7 +297,7 @@ index 5be6d18..fc583e3 100644
  
      reportViewport(renderViewportX, renderViewportY, renderViewportW, renderViewportH,
                     sourceLeft, sourceTop, logicalSourceWidth, logicalSourceHeight);
-@@ -1138,7 +1238,7 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1138,7 +1240,7 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      float u0 = sourceLeft / (float) desc->width * xfactor, v0 = sourceTop / (float) desc->height;
      float u1 = (sourceLeft + sourceWidth) / (float) desc->width * xfactor, v1 = (sourceTop + sourceHeight) / (float) desc->height;
      // BAR Droid: SGSR 1 while the display shows the X screen bigger than it is
@@ -303,7 +306,7 @@ index 5be6d18..fc583e3 100644
            && drawRootUpscaled(desc, u0, v0, u1, v1, LorieBuffer_isRgba(buffer))))
          drawRegion(0, -1.f, -1.f, 1.f, 1.f, u0, v0, u1, v1, LorieBuffer_isRgba(buffer));
      fence = eglCreateSyncKHR(egl_display, EGL_SYNC_FENCE_KHR, nullptr);
-@@ -1155,6 +1255,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1155,6 +1257,8 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
  
      state->cursor.moved = FALSE;
      drawCursor(sourceWidth, sourceHeight, sourceLeft, sourceTop, cursorX, cursorY);
@@ -312,7 +315,7 @@ index 5be6d18..fc583e3 100644
      glFlush();
  
      // Wait until root window drawing is finished before giving control back to X server
-@@ -1179,6 +1281,13 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
+@@ -1179,6 +1283,13 @@ void Renderer::redrawLocked(bool* waitingForBuffers) {
      waitForFence(egl_display, fence, EGL_SYNC_FLUSH_COMMANDS_BIT_KHR);
  
      state->renderedFrames++;
@@ -326,7 +329,56 @@ index 5be6d18..fc583e3 100644
  }
  
  bool Renderer::shouldWait(bool *waitingForBuffers) {
-@@ -1264,6 +1373,14 @@ void Renderer::threadLoop() {
+@@ -1207,7 +1318,7 @@ bool Renderer::shouldWait(bool *waitingForBuffers) {
+         // Even in the case if there are pending changes, we can not draw it without rendering surface
+         return true;
+ 
+-    if (state->drawRequested || state->cursor.moved || state->cursor.updated)
++    if (state->drawRequested || state->cursor.moved || (state->cursor.updated && !bdPointerDeferred(state)))
+         // X server reported drawing or cursor changes, no need to wait.
+         return false;
+ 
+@@ -1215,12 +1326,37 @@ bool Renderer::shouldWait(bool *waitingForBuffers) {
+     return true;
+ }
+ 
++// BAR Droid: the engine's pointer is animated and its image changes on every frame the engine draws, ~15 times a
++// second in a late 8v8 besides the engine's own pictures: each change alone drew the whole picture again (SGSR at the
++// display's size) while the GPU sat at its thermal limit. A new pointer image alone now waits for the next picture (or
++// a move, which still draws at once) for up to 100 ms, then is drawn by itself (a still screen keeps animating at 10 Hz).
++bool Renderer::bdPointerDeferred(struct lorie_shared_server_state* s) {
++    if (!s->cursor.updated || s->drawRequested || s->cursor.moved) {
++        bdCost.pointerSince = 0;
++        return false;
++    }
++    uint64_t now = bdNowNs();
++    if (!bdCost.pointerSince)
++        bdCost.pointerSince = now;
++    if (now - bdCost.pointerSince < 100000000ull)
++        return true;
++    return false;
++}
++
+ void Renderer::threadLoop() {
+     LorieBuffer* buf;
+     bool waitingForBuffers = false;
+     while (!stopping) {
+-        while (!stopping && shouldWait(&waitingForBuffers))
+-            pthread_cond_wait(stateCond, &stateLock);
++        while (!stopping && shouldWait(&waitingForBuffers)) {
++            if (bdCost.pointerSince && state && state->cursor.updated) {   // BAR Droid: a deferred pointer image is due later
++                struct timespec until;
++                clock_gettime(CLOCK_REALTIME, &until);
++                until.tv_nsec += 20000000;
++                if (until.tv_nsec >= 1000000000) { until.tv_sec++; until.tv_nsec -= 1000000000; }
++                pthread_cond_timedwait(stateCond, &stateLock, &until);
++            } else
++                pthread_cond_wait(stateCond, &stateLock);
++        }
+         if (stopping)
+             break;
+ 
+@@ -1264,9 +1400,20 @@ void Renderer::threadLoop() {
          // Prefer a full redraw over the standalone apply below so a pending GPU copy shares one
          // lock+fence with the root/cursor draw, instead of two GPU round trips per frame.
          bool gpuCopyPending = state && state->gpuCopyQueue.readIndex != state->gpuCopyQueue.writeIndex;
@@ -339,8 +391,15 @@ index 5be6d18..fc583e3 100644
 +            bdCost.skipped++;
 +        }
          if (state && state->surfaceAvailable && !state->waitForNextFrame &&
-             (state->drawRequested || state->cursor.moved || state->cursor.updated || gpuCopyPending))
+-            (state->drawRequested || state->cursor.moved || state->cursor.updated || gpuCopyPending))
++            (state->drawRequested || state->cursor.moved || (state->cursor.updated && !bdPointerDeferred(state)) || gpuCopyPending)) {
++            bdCost.pointerSince = 0;
              redrawLocked(&waitingForBuffers);
++        } else if (state && state->cursor.updated && bdCost.pointerSince)
++            bdCost.deferred++;
+         else if (gpuCopyPending)
+             applyPendingGpuCopies();
+ 
 diff --git a/lorie/src/main/java/com/termux/x11/LorieView.java b/lorie/src/main/java/com/termux/x11/LorieView.java
 index 3b5cc9c..cd9bf72 100644
 --- a/lorie/src/main/java/com/termux/x11/LorieView.java

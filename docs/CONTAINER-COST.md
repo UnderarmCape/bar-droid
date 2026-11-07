@@ -28,7 +28,62 @@ Branch `no-proot` of the app (worktree `C:\Tools\BARANDROID\bar-droid-noproot`).
 
 ## Measurements
 
-(filled in below as the runs come in)
+### proot
+
+What its seccomp filter stops (Termux's proot, `tools/build-proot.py`'s ioctl filter on top): every path-taking call
+(`openat`, `faccessat`, `newfstatat`, `readlinkat`, `statx`, ...), `fstat` (link2symlink, the ashmem/memfd
+extension), `close` (proot tracks netlink, auxv and pipe descriptors), `brk` (proot's heap emulation), `getcwd`,
+`clone`, `prctl`, `execve`, and **`recvmsg`, `sendmsg`, `sendto`, `recvfrom`, `sendmmsg`** (Unix socket addresses,
+fake netlink sockets). Not stopped: `read`/`write`/`readv`/`writev`, `recvmmsg`, `mmap`, `futex`, `ioctl` (but for the
+seven terminal/network requests proot handles), the vDSO clock.
+
+One stop, `tools/container-cost/trapbench` in the dev phone's container (idle phone, three rounds; the same calls
+outside proot in brackets): `fstat` 71-463 us (0.3), `close(-1)` 33-249 us (0.3), `sendmsg`+`recv` 56-448 us (1.2),
+`brk(0)` 46-134 us (0.2), `openat`+`close` 206-782 us (3.7), `getppid` (never stopped) 0.8-1.3 us. A stop is two
+context switches to proot's process and back plus proot's own work: **hundreds of times the call itself**, and
+slowest when the cores have gone idle in between.
+
+In the game (late 8v8, game second ~1300, 13 fps, read passively while another session's run played,
+`stopsample` at 2 kHz for 20 s on the engine's main thread): **stopped by proot 1.38 % of the time** (503 stop
+episodes seen; many shorter ones fall between samples, the share stays exact). By system call, of the samples that
+could be attributed: `recvmsg` 60 % (libxcb reading the X connection), `faccessat` 12 %, `openat` 11 %, `close` 10 %,
+`newfstatat`/`fstat` 6 %. (The unattributed rest is a race in the probe: the stop ended between reading the thread's
+state and its system call.) proot's own process: ~3.3 % of one core, ~285 wake-ups a second (each stop wakes it).
+
+My own runs (`tools/container-cost/measure.ps1`: the 2026-10-26 Isthmus 8v8 replay, game seconds 1210-1330, engine
+`gcc-cut` with its springsettings, render scale 70 %: a 1408x657 X screen on the 2316x1080 display; phone hot, the
+prime core capped at 1248-1363 MHz, GPU at 475-615 MHz and 47-76 % busy, so this window was CPU-bound; 12-16 fps,
+x0.98-1.00):
+
+| | run A (00:46, as shipped) | run B (00:59) |
+| --- | --- | --- |
+| main thread stopped by proot | 1.05 % (`recvmsg` 48 % of the attributed) | 1.66 % (`getsockopt` 51 %: see below) |
+| proot's process | | 4.1 % of a core, 584 wake-ups/s |
+
+Run B had the first version of the X socket change in the pace library, which asked each socket's type with
+`getsockopt` on every call: proot stops `getsockopt` too (its fake root answers `SO_PEERCRED`), so it traded one stop
+for two. Fixed (asked once per descriptor), measured again below.
+
+### The display path
+
+| | run A | run B |
+| --- | --- | --- |
+| engine pictures a second (Present) | 13.8 | 13.4 |
+| X server: CPU copy of each picture | 1.18-1.30 ms (~100 MB/s from the dma-buf), 0.2 ms of it waiting for the renderer | 1.14-1.25 ms |
+| renderer draws a second | 32 (of them pointer only: 18) | 30 (pointer only: 17) |
+| GPU per draw (SGSR 1408x657 -> 2316x1080, the pointer) | 0.74 ms at 475 MHz | 0.72-0.81 ms |
+| GPU time of the display pass | 23 ms a second (2.3 % of the GPU) | 20-24 ms a second |
+| renderer thread per draw (mostly its fence waits) | 8.3-8.7 ms | 7.5-8.5 ms |
+| X server pointer traffic | ~17 sets a second, every one a new image | the same: 0 moves, every set a new image |
+
+The engine's pointer is animated (Recoil's `HardwareCursorSDL::Update` sets the current frame of BAR's animated cursor
+every drawn frame): the X server's dedupe of identical images (patch 0011) finds none, so more than half of the
+renderer's draws exist only to show the next pointer frame. Fixed in the renderer (a pointer image alone waits up to
+100 ms for the next picture), measured again below.
+
+Memory (run B, PSS in RAM + swapped): the app's process 15 + 31 MB, the X server 3 + 43 MB, proot 1 + 0.5 MB; on the
+GPU the SurfaceView's five 2316x1080 buffers (49 MB, `dumpsys gfxinfo`) and the root window (3.6 MB). The engine
+itself: 1.33 GB + 2.1 GB, the GPU driver 2.06 GB in all.
 
 ## A native Android engine: what it would take
 
