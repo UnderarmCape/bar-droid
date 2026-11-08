@@ -1164,10 +1164,10 @@ local function shareFmt(n)
 	return tostring(n)
 end
 
-local function shareClose(text)
+local function shareClose(text, color)
 	share, modal = nil, nil
 	if text then
-		note(text)
+		note(text, color) -- (a resource given: in its colour, as its tab)
 	end
 end
 
@@ -1188,7 +1188,7 @@ local function shareConfirm()
 			shareClose(string.upper(team.name) .. "'S " .. what .. " STORAGE IS FULL")
 		else
 			Spring.ShareResources(team.teamID, res, amount)
-			shareClose("GIVING " .. shareFmt(amount) .. " " .. what .. " TO " .. string.upper(team.name))
+			shareClose("GIVING " .. shareFmt(amount) .. " " .. what .. " TO " .. string.upper(team.name), SHARE_COLORS[what])
 		end
 		return
 	end
