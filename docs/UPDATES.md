@@ -92,7 +92,8 @@ an old package is just restoring its `versions.gz`.
 - When the player pressed Stop or swiped the game away (`Updater.closedByPlayer`): a pending set that ran 120 s or
   showed a game frame becomes the last good set; a shorter one is judged at the next start. (Before 2026-11-08 a set
   was kept only when the engine ended by itself, BAR's Quit: a phone whose games are closed by a swipe kept a day-old
-  lobby as the one to fall back to.)
+  lobby as the one to fall back to.) Dev phone, 2026-11-08: the game's card swiped up in recent apps after 140 s,
+  "started fine" in the same second, before Android ended the app.
 - The bad list holds whole sets (engine + md5s, last 5). An update that would recreate a bad set is not applied; as
   soon as BAR moves any part (byar:test moves several times a day), the new set is tried. So a broken BAR version
   costs at most one failed launch per new set, and the engine is never blocked for good.
