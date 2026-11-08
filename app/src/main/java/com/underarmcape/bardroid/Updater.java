@@ -135,8 +135,13 @@ public final class Updater {
         // (BAR's release the last start played, what players compare for an online game; known after a start)
         String release = gameRelease(s.getProperty("name." + Prefs.gameTag));
         if (release != null) sb.append("Game version ").append(release).append("\n");
-        sb.append("BAR updates at start: ").append(Prefs.autoUpdate ? "on" : "off");
-        if (s.getProperty("check") != null) sb.append("\nLast check ").append(s.getProperty("check"));
+        // (updates on, the default: the last check says it, the setting below too; "BAR updates at start: on" took a
+        // line of the four for that, dev phone 2026-11-08. Off is worth its line: nothing checks then)
+        String off = "BAR updates: only with Install / Update";
+        if (s.getProperty("check") != null) {
+            sb.append("Last check ").append(s.getProperty("check"));
+            if (!Prefs.autoUpdate) sb.append("\n").append(off);
+        } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
         int misses = s.getProperty("layer.engine") != null ? 1 : 0;
         // (the last start's own list: the count in the state is written when a game ends, so one stopped kept an old one)
         File layer = new File(p.bar, "logs/android-layer.txt");
