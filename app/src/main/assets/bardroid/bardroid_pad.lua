@@ -1146,13 +1146,15 @@ local function shareResource(s)
 end
 
 -- what A gives the teammate now: the step's share of what this team holds, at most the room in their storage; also
--- what was wanted and their room
+-- what was wanted and their room. Their room ends at their share slider, not the storage's top: BAR's "Prevent
+-- Excessive Share" (and "Tax Resource Sharing") take storage * share - current, cut a bigger transfer to that and
+-- refuse one when it is 0 (the toast said "GIVING 500 METAL" over a refused transfer)
 local function shareAmount(s, team)
 	local res = shareResource(s)
 	local mine = Spring.GetTeamResources(Spring.GetMyTeamID(), res) or 0
 	local want = math.floor(mine * SHARE_STEPS[s.step])
-	local theirs, storage = Spring.GetTeamResources(team.teamID, res)
-	local room = (theirs and storage) and math.max(0, math.floor(storage - theirs)) or want
+	local theirs, storage, _, _, _, slider = Spring.GetTeamResources(team.teamID, res)
+	local room = (theirs and storage) and math.max(0, math.floor(storage * (slider or 1) - theirs)) or want
 	return math.min(want, room), want, room
 end
 
@@ -1291,7 +1293,7 @@ local function shareDraw(vsx, vsy)
 		local c = team.color
 		text(team.name, x0 + pad, yr + (rowH - size) / 2 + size * 0.14, size, c, 1)
 		if res then
-			local theirs, storage = Spring.GetTeamResources(team.teamID, res)
+			local theirs, storage, _, _, _, slider = Spring.GetTeamResources(team.teamID, res)
 			local frac = (theirs and storage and storage > 0) and math.min(1, theirs / storage) or 0
 			local bx1 = x0 + w - pad
 			local bx0 = bx1 - barW
@@ -1300,6 +1302,11 @@ local function shareDraw(vsx, vsy)
 			style.fill(bx0, by, bx1, by + bh, { 0.08, 0.08, 0.09 }, 0.85, math.floor(bh / 2))
 			if frac > 0 then
 				style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, math.floor(bh / 2))
+			end
+			-- (their share slider below the top: a tick where their room ends, what BAR lets in)
+			if slider and slider < 0.995 then
+				local sx = math.floor(bx0 + (bx1 - bx0) * math.max(0, slider))
+				style.fill(sx - 1, by - 3, sx + 1, by + bh + 3, style.TEXT, 0.9)
 			end
 			text(shareFmt(theirs), bx0 - pad * 0.5, yr + rowH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
 		end
@@ -2321,8 +2328,10 @@ function widget:Initialize()
 			share = { index = 1, teams = teams, tab = shareLastTab, step = shareLastStep }
 			modal = "share"
 		end,
-		shareAmount = function()
-			return share and shareResource(share) and shareAmount(share, share.teams[share.index])
+		shareAmount = function() -- (all three: "a and f()" kept only the amount, and the test's checks went blind)
+			if share and shareResource(share) then
+				return shareAmount(share, share.teams[share.index])
+			end
 		end,
 		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
 			addPing(x, y, z)

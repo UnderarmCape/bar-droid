@@ -96,7 +96,8 @@ The first version meant for other people's phones: everything since the first bu
   walks it, RT fires, B leaves; riding the commander in first person RB fires the D-gun); LB + D-pad up tapped, then
   held: the share list (units, metal or energy to a teammate, names in their colours: LB / RB switch between UNITS,
   METAL and ENERGY, D-pad up / down picks the teammate, each row showing how much of it they hold, D-pad left / right
-  sets how much to give, from a tenth to all you have, never more than their storage has room for; A gives, B cancels;
+  sets how much to give, from a tenth to all you have, never more than BAR lets in: their storage up to their share
+  slider, marked on their bar; A gives, B cancels;
   with no unit selected it opens on the resources);
   v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle; once

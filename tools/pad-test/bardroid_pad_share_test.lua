@@ -11,7 +11,10 @@ end
 local READY_FRAME = 420
 local STEP = 20 -- frames between the steps (the list is drawn in between)
 local fails, step, nextAt = 0, 0, nil
-local other, calls, realShare = nil, {}, nil
+local other, calls, realShare, realRes = nil, {}, nil, nil
+-- the stand-in's stock as an ally's reads (an enemy's reads nil): current, storage, share slider. Metal: 200 of 1000
+-- at a 50 % slider, so room for 300, as BAR's "Prevent Excessive Share" counts it
+local fake = { metal = { 200, 1000, 0.5 }, energy = { 0, 1000, 1 } }
 
 local function say(text)
 	Spring.Echo(text)
@@ -72,6 +75,9 @@ local STEPS = {
 		Spring.SendCommands("screenshot png")
 	end,
 	function()
+		local amount, want, room = pad().shareAmount()
+		check("their room ends at their share slider (200 of 1000 at 50 %: 300)", room == 300 and amount == math.min(want, 300),
+			string.format("amount %s, wanted %s, room %s", tostring(amount), tostring(want), tostring(room)))
 		local ok, detail = gave("metal")
 		check("A on METAL: BAR's share of metal, at most their room", ok, detail)
 		check("... and the list closes", state() == nil)
@@ -111,6 +117,21 @@ local STEPS = {
 		pad().act("share_cancel")
 		check("B cancels, nothing given", state() == nil and #calls == before2)
 	end,
+	function()
+		fake.metal = { 500, 1000, 0.5 } -- (at their slider: BAR refuses any more)
+		open()
+		for _ = 1, 3 do
+			if select(4, state()) == 2 then
+				break
+			end
+			pad().act("share_tab_prev")
+		end
+		local before = #calls
+		pad().act("share_confirm")
+		local _, note = pad().note()
+		check("METAL at their slider already: A says their storage is full, nothing given",
+			#calls == before and state() == nil and note ~= nil and note:find("FULL") ~= nil, tostring(note))
+	end,
 }
 
 function widget:GameFrame(f)
@@ -133,6 +154,14 @@ function widget:GameFrame(f)
 		Spring.ShareResources = function(...)
 			calls[#calls + 1] = { ... }
 		end
+		realRes = Spring.GetTeamResources
+		Spring.GetTeamResources = function(teamID, res, ...)
+			local s = teamID == other and fake[res]
+			if s then
+				return s[1], s[2], 0, 0, 0, s[3], 0, 0
+			end
+			return realRes(teamID, res, ...)
+		end
 		say("[padtest] ready, the stand-in teammate: team " .. other)
 		nextAt = f + STEP
 		return
@@ -150,6 +179,7 @@ function widget:GameFrame(f)
 	end
 	if step >= #STEPS then
 		Spring.ShareResources = realShare
+		Spring.GetTeamResources = realRes
 		step = #STEPS + 1
 		say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
@@ -158,5 +188,8 @@ end
 function widget:Shutdown()
 	if realShare then
 		Spring.ShareResources = realShare
+	end
+	if realRes then
+		Spring.GetTeamResources = realRes
 	end
 end
