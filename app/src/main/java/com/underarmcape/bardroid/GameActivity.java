@@ -398,7 +398,9 @@ public class GameActivity extends MainActivity {
 
     private void updateFreeMemory() {
         if (freeMemory == null) return;
-        boolean show = GameService.loading() && !isInPictureInPictureMode()
+        // (and gone once the app's game widget runs: BAR's own interface is up then, the faction picker, "Game starting
+        // in 3...", while the engine still loads the AIs; the button lay over them for those seconds, dev phone 2026-11-08)
+        boolean show = GameService.loading() && !isInPictureInPictureMode() && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
     }
