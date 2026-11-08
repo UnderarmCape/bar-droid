@@ -609,22 +609,45 @@ public final class Updater {
             setEngine(engine);
             result = Result.ROLLED_BACK;
         } else if (!fast) {
-            if (!launched.equals(good)) {
-                Log.i("update", launched + " started fine: it is now the version to fall back to");
-                String oldEngine = state.getProperty("good.engine");
-                if (oldEngine != null && !oldEngine.equals(state.getProperty("launched.engine"))) state.setProperty("previous.engine", oldEngine);
-                result = Result.PROMOTED;
-            }
-            // The index as it was at the start: the lobby may have downloaded other versions since.
-            state.setProperty("good.engine", state.getProperty("launched.engine"));
-            for (String t : tags) {
-                String md5 = state.getProperty("launched." + t);
-                if (md5 != null) state.setProperty("good." + t, md5); else state.remove("good." + t);
-                if (!copyIndex(repo(t), launchedDir, goodDir)) deleteRepo(goodDir, repo(t));
-            }
+            result = keepLaunched(tags, launched, good);
         }
         save();
         if (result == Result.PROMOTED) cleanupEngines();
+        return result;
+    }
+
+    /**
+     * The player closed the game (Stop, or swiped away from recent apps; launchEnded is not asked then): a set that ran
+     * FAST_FAIL_MS or showed a game frame started fine. Before, only a game that ended by itself (BAR's Quit) kept a new
+     * set, and the Fold7, closed by a swipe, kept the lobby of the day before as the one to fall back to, the new one
+     * "first start" at every start (2026-11-08). A shorter one is judged at the next start, as before.
+     */
+    public void closedByPlayer(long ms) throws InterruptedException {
+        List<String> tags = tags();
+        if (state.getProperty("launched.engine") == null) return;
+        if (ms < FAST_FAIL_MS && !gameFrameRan()) return;
+        readLayerMisses();
+        Result r = keepLaunched(tags, set("launched", tags), set("good", tags));
+        save();
+        if (r == Result.PROMOTED) cleanupEngines();
+    }
+
+    /** The set that started is the one to fall back to now. */
+    private Result keepLaunched(List<String> tags, String launched, String good) {
+        Result result = Result.NONE;
+        if (!launched.equals(good)) {
+            Log.i("update", launched + " started fine: it is now the version to fall back to");
+            String oldEngine = state.getProperty("good.engine");
+            if (oldEngine != null && !oldEngine.equals(state.getProperty("launched.engine"))) state.setProperty("previous.engine", oldEngine);
+            result = Result.PROMOTED;
+        }
+        // The index as it was at the start: the lobby may have downloaded other versions since.
+        state.setProperty("good.engine", state.getProperty("launched.engine"));
+        for (String t : tags) {
+            String md5 = state.getProperty("launched." + t);
+            if (md5 != null) state.setProperty("good." + t, md5); else state.remove("good." + t);
+            if (!copyIndex(repo(t), launchedDir, goodDir)) deleteRepo(goodDir, repo(t));
+        }
         return result;
     }
 

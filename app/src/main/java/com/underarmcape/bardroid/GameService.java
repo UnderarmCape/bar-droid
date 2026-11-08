@@ -321,6 +321,11 @@ public class GameService extends Service {
                         exitNote = lowMemoryNote(this);
                         Log.i("svc", exitNote);
                     }
+                    if (up != null && closing) {   // (the player's Stop or swipe: a set that ran is kept, Updater)
+                        try { up.closedByPlayer(android.os.SystemClock.elapsedRealtime() - started); }
+                        catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                        catch (RuntimeException e) { Log.e("update", "closed game not judged: " + e); }
+                    }
                     if (up == null || closing) break;
                     // The first start of a BAR update failed fast: once more on the last good version, same display.
                     Updater.Result r = up.launchEnded(rc, android.os.SystemClock.elapsedRealtime() - started);

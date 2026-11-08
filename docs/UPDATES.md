@@ -89,6 +89,10 @@ an old package is just restoring its `versions.gz`.
   - pending and not failed fast → the set becomes the last good set; engine folders other than the last good and the
     one before it are deleted.
   - not pending → nothing changes (the existing "lobby failed fast → open the launcher" rule still applies).
+- When the player pressed Stop or swiped the game away (`Updater.closedByPlayer`): a pending set that ran 120 s or
+  showed a game frame becomes the last good set; a shorter one is judged at the next start. (Before 2026-11-08 a set
+  was kept only when the engine ended by itself, BAR's Quit: a phone whose games are closed by a swipe kept a day-old
+  lobby as the one to fall back to.)
 - The bad list holds whole sets (engine + md5s, last 5). An update that would recreate a bad set is not applied; as
   soon as BAR moves any part (byar:test moves several times a day), the new set is tried. So a broken BAR version
   costs at most one failed launch per new set, and the engine is never blocked for good.
