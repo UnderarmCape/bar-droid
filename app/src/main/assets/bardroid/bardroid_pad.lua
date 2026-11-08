@@ -238,7 +238,9 @@ function style.key(x0, y0, size, letter, alpha)
 end
 
 -- a short message in a panel, its middle at x and its bottom at y; key: a pad button shown after the words
-function style.toast(text, x, y, color, alpha, key)
+-- listening: seconds since it began, for a pulsing red dot before the words, the sign that the phone listens now
+-- ("< SPEAK TO ALLIES >" alone read as any note, dev phone 2026-11-08)
+function style.toast(text, x, y, color, alpha, key, listening)
 	local font = WG.fonts and WG.fonts.getFont()
 	if not font then
 		return
@@ -247,19 +249,34 @@ function style.toast(text, x, y, color, alpha, key)
 	local pad = math.floor(size * 0.75)
 	local chip = key and math.floor(size * 1.3) or 0
 	local gap = key and math.floor(size * 0.5) or 0
+	local dot = listening and math.floor(size * 0.55) or 0
+	local dotGap = listening and math.floor(size * 0.45) or 0
 	local tw = math.ceil(font:GetTextWidth(text) * size)
-	local w, h = tw + gap + chip + pad * 2, math.floor(size * 2)
+	local w, h = dot + dotGap + tw + gap + chip + pad * 2, math.floor(size * 2)
 	local _, vsy = Spring.GetViewGeometry()
 	local x0 = math.floor(x - w / 2)
 	y = math.min(math.floor(y), vsy - h - 2)
 	style.panel(x0, y, x0 + w, y + h, alpha)
+	if listening then
+		local pulse = 0.55 + 0.45 * math.cos(listening * math.pi * 2.4)
+		local mx, my, r = x0 + pad + dot / 2, y + h / 2, dot / 2 -- (a round dot: style.fill's corners made a diamond)
+		gl.Color(1, 0.3, 0.28, alpha * pulse)
+		gl.BeginEnd(GL.TRIANGLE_FAN, function()
+			gl.Vertex(mx, my)
+			for k = 0, 20 do
+				local a = k / 20 * math.pi * 2
+				gl.Vertex(mx + math.cos(a) * r, my + math.sin(a) * r)
+			end
+		end)
+		gl.Color(1, 1, 1, 1)
+	end
 	font:Begin()
 	font:SetTextColor(color[1], color[2], color[3], alpha)
 	font:SetOutlineColor(0, 0, 0, 0.55 * alpha)
-	font:Print(text, x0 + pad, y + h / 2 - size * 0.36, size, "o")
+	font:Print(text, x0 + pad + dot + dotGap, y + h / 2 - size * 0.36, size, "o")
 	font:End()
 	if key then
-		style.key(x0 + pad + tw + gap, math.floor(y + (h - chip) / 2), chip, key, alpha)
+		style.key(x0 + pad + dot + dotGap + tw + gap, math.floor(y + (h - chip) / 2), chip, key, alpha)
 	end
 end
 
@@ -2331,7 +2348,7 @@ function widget:DrawScreen()
 		-- (a quick fade in, a slower fade out; a pad button at the end of a note as its key)
 		local alpha = math.max(0, math.min(1, age / 0.08, (toastFor - age) / 0.3))
 		local words, key = toast:match("^(.-): ([ABXY])$")
-		style.toast(words or toast, cx, cy + vsy * 0.09, toastColor, alpha, key)
+		style.toast(words or toast, cx, cy + vsy * 0.09, toastColor, alpha, key, voiceToast and age or nil)
 	end
 end
 

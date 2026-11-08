@@ -63,6 +63,16 @@ local function cases()
 end
 
 function widget:GameFrame(f)
+	-- the listening note, as a three-finger tap shows it (bardroid_pad.lua's voice_on), and a screenshot of it once
+	-- drawn (a screenshot is the frame drawn last); pad-test.ps1 copies it to build\chat-voice.png
+	if ran and f == READY_FRAME + 20 and WG.BarDroidPad then
+		WG.BarDroidPad.act("voice_on")
+	elseif ran and f == READY_FRAME + 40 then
+		Spring.SendCommands("screenshot png")
+	elseif ran and f == READY_FRAME + 50 and WG.BarDroidPad then
+		WG.BarDroidPad.act("voice_off")
+		Spring.Echo("[padtest] shot")
+	end
 	if f ~= READY_FRAME or ran then
 		return
 	end

@@ -63,7 +63,17 @@ try {
       & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shots[$i].Trim())`" > `"$to`""
       "[padtest] screenshot: $to"
     }
-  } elseif (-not $Chat) { & $adb shell "uinput $evemu" }   # (-Chat: no pad, the widget runs its cases itself)
+  } elseif ($Chat) {   # (no pad: the widget runs its cases itself, then a screenshot of the listening note)
+    $until = (Get-Date).AddSeconds(30)
+    while ((Get-Date) -lt $until -and -not (Log '\[padtest\] shot' 1)) { Start-Sleep 2 }
+    Start-Sleep 3   # (the engine writes it a moment later: the last run's was taken for it)
+    $shot =(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -1" | Select-Object -First 1)
+    if ($shot) {
+      $to = Join-Path (Split-Path $PSScriptRoot) "build\chat-voice.png"
+      & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shot.Trim())`" > `"$to`""
+      "[padtest] screenshot: $to"
+    }
+  } else { & $adb shell "uinput $evemu" }
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
