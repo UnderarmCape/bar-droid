@@ -149,6 +149,10 @@ factions' matching unit too.
   of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / no cap).
 - A match uses about 5–6 GB of memory; close other big apps first.
 - Joining a running game catches up first (the screen shows how long it has left).
+- With no connection the app starts what is installed: Play vs AI and the lobby's Skirmish work offline, but only on
+  maps already on the phone (pick one in the lobby's map list; a map it would download cannot start). A weak signal
+  can hold a start for up to ~45 s while BAR's update check waits; the launcher's "Update BAR at every start" off
+  skips it. A game in the background keeps its connection, so an online match survives a look at another app.
 
 ## Problems
 
