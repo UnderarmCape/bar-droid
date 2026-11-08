@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 15 (2026-10-25 to 2026-11-08) |
 | Claude Code sessions | 14 |
-| Kailil's messages | 388 (18259 words, 34 screenshots) |
-| Kailil's time | 44.0 h in 104 sittings |
-| Claude's time | 251.2 h |
-| Claude's tool calls | 26396 |
+| Kailil's messages | 389 (18288 words, 34 screenshots) |
+| Kailil's time | 44.1 h in 105 sittings |
+| Claude's time | 251.6 h |
+| Claude's tool calls | 26426 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 686 |
+| Commits | 688 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -35,7 +35,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-05](worklog/2026-11-05.md) | 15 | 1.6 | 22.7 | 56 |
 | [2026-11-06](worklog/2026-11-06.md) | 42 | 3.6 | 21.4 | 25 |
 | [2026-11-07](worklog/2026-11-07.md) | 29 | 2.8 | 34.0 | 18 |
-| [2026-11-08](worklog/2026-11-08.md) | 4 | 0.3 | 4.1 | 27 |
+| [2026-11-08](worklog/2026-11-08.md) | 5 | 0.4 | 4.5 | 29 |
 
 ## Sessions
 
@@ -44,7 +44,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-08 12:13 | 285 | 193.5 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-08 12:39 | 286 | 193.9 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
