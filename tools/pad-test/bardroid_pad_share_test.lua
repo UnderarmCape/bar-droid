@@ -16,6 +16,7 @@ local other, calls, realShare, realRes = nil, {}, nil, nil
 -- at a 50 % slider, so room for 300, as BAR's "Prevent Excessive Share" counts it
 local fake = { metal = { 200, 1000, 0.5 }, energy = { 0, 1000, 1 } }
 local owner, realUnitTeam = {}, nil -- made-up units' teams (Spring.GetUnitTeam), for what BAR did with units given
+local dead, realTeamInfo = {}, nil -- teams said to be out of the game (Spring.GetTeamInfo's isDead)
 
 local function say(text)
 	Spring.Echo(text)
@@ -173,6 +174,17 @@ local STEPS = {
 			r and string.format("y %d-%d, top bar from %d of %d, rows %d-%d, picked %s", r[2], r[4], r[7], vsy, r[5],
 				r[5] + r[6] - 1, tostring(index)))
 		pad().act("share_cancel")
+		-- a teammate out of the game since the list opened (their team dead, as BAR's GetTeamInfo says)
+		open()
+		dead[other] = true
+	end,
+	function()
+		local before = #calls
+		pad().act("share_confirm")
+		local _, note = pad().note()
+		dead[other] = nil
+		check("A on a teammate out of the game: says so, nothing given, the list made again (none here: closed)",
+			#calls == before and note == "ALPHA IS OUT OF THE GAME" and state() == nil, tostring(note))
 	end,
 }
 
@@ -195,6 +207,15 @@ function widget:GameFrame(f)
 		realShare = Spring.ShareResources
 		Spring.ShareResources = function(...)
 			calls[#calls + 1] = { ... }
+		end
+		realTeamInfo = Spring.GetTeamInfo
+		Spring.GetTeamInfo = function(teamID, ...)
+			if dead[teamID] then
+				local r = { realTeamInfo(teamID, ...) }
+				r[3] = true
+				return unpack(r)
+			end
+			return realTeamInfo(teamID, ...)
 		end
 		realUnitTeam = Spring.GetUnitTeam
 		Spring.GetUnitTeam = function(unitID, ...)
@@ -230,6 +251,7 @@ function widget:GameFrame(f)
 		Spring.ShareResources = realShare
 		Spring.GetTeamResources = realRes
 		Spring.GetUnitTeam = realUnitTeam
+		Spring.GetTeamInfo = realTeamInfo
 		step = #STEPS + 1
 		say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
@@ -244,5 +266,8 @@ function widget:Shutdown()
 	end
 	if realUnitTeam then
 		Spring.GetUnitTeam = realUnitTeam
+	end
+	if realTeamInfo then
+		Spring.GetTeamInfo = realTeamInfo
 	end
 end

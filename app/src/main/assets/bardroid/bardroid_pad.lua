@@ -1181,6 +1181,19 @@ local function shareConfirm()
 		shareClose()
 		return
 	end
+	-- (the list is made when it opens: a teammate who died or resigned since was still there, and A said "GIVING"
+	-- to a team that takes nothing; the list made again, the pick kept in range)
+	local _, _, isDead = Spring.GetTeamInfo(team.teamID, false)
+	if isDead then
+		local teams = teammates()
+		if #teams == 0 then
+			shareClose(string.upper(team.name) .. " IS OUT OF THE GAME")
+			return
+		end
+		s.teams, s.index = teams, math.min(s.index, #teams)
+		note(string.upper(team.name) .. " IS OUT OF THE GAME")
+		return
+	end
 	local res = shareResource(s)
 	if res then
 		local amount, want, room = shareAmount(s, team)
