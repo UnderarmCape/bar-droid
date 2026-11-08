@@ -289,7 +289,7 @@ public class LauncherActivity extends AppCompatActivity {
         return mi.totalMem < 9_500_000_000L;
     }
 
-    private String deviceSummary() {
+    private CharSequence deviceSummary() {
         StringBuilder sb = new StringBuilder();
         sb.append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append(", Android ").append(Build.VERSION.RELEASE)
           .append(", SoC ").append(Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
@@ -308,8 +308,12 @@ public class LauncherActivity extends AppCompatActivity {
         if (am != null) {
             am.getMemoryInfo(mi);
             sb.append("RAM: ").append(Downloader.human(mi.totalMem));
-            if (lowRam(this)) sb.append(" — low-memory mode: plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game\n");
-            else sb.append(" (a match uses about 5-6 GB, part of it in swap)\n");
+            // (the mode's name on the RAM line, what it does under it a step smaller: run on after an em dash, the
+            // sentence wrapped over three lines and read as one more fact, dev phone 2026-11-08)
+            if (lowRam(this)) sb.append(", low-memory mode\n").append(NOTE_START)
+                    .append("plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game")
+                    .append(NOTE_END).append('\n');
+            else sb.append('\n').append(NOTE_START).append("a match uses about 5-6 GB, part of it in swap").append(NOTE_END).append('\n');
         }
         sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
         String branch = engineBranchBuild();
@@ -321,7 +325,33 @@ public class LauncherActivity extends AppCompatActivity {
                 : "llvmpipe".equals(Prefs.mesaDriver) ? "CPU rendering (llvmpipe)"
                 : "virpipe".equals(Prefs.mesaDriver) ? "virgl" : Prefs.mesaDriver;
         sb.append(", ").append(driver);
-        return sb.toString();
+        return styleSummary(sb.toString());
+    }
+
+    private static final char NOTE_START = '\u0002', NOTE_END = '\u0003';
+
+    /** The phone's name in the primary colour, as the block's title; a note (between NOTE_START and NOTE_END) a step
+     *  smaller. In one colour and size the block read as a wall of facts (dev phone, 2026-11-08). */
+    private CharSequence styleSummary(String s) {
+        android.text.SpannableStringBuilder b = new android.text.SpannableStringBuilder();
+        int at = 0;
+        java.util.List<int[]> notes = new java.util.ArrayList<>();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (c == NOTE_START) at = b.length();
+            else if (c == NOTE_END) notes.add(new int[]{at, b.length()});
+            else b.append(c);
+        }
+        int nl = android.text.TextUtils.indexOf(b, '\n');
+        if (nl > 0) {
+            android.content.res.TypedArray a = obtainStyledAttributes(new int[]{android.R.attr.textColorPrimary});
+            int primary = a.getColor(0, 0xFFFFFFFF);
+            a.recycle();
+            b.setSpan(new android.text.style.ForegroundColorSpan(primary), 0, nl, 0);
+            b.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, nl, 0);
+        }
+        for (int[] n : notes) b.setSpan(new android.text.style.RelativeSizeSpan(0.88f), n[0], n[1], 0);
+        return b;
     }
 
     /**
