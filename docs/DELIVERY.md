@@ -330,7 +330,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       to 8.8.8.8 as the app failed then, worked with the launcher open, failed again 12 s after it went to the
       background. With the launcher open the container resolved the CDN and `setup-container.sh map "Eye Of Horus
       1.7.1"` fetched it (56 MB, 13 s). The app's own downloads run with the game screen or GameService's foreground
-      service up, so they keep the network. For tools: run as the app only with the app in front.
+      service up, so they keep the network. For tools: run as the app only with the app in front. A game sent to the
+      background (Home) keeps it too: GameService is a foreground service (specialUse), the app's ping worked 15 s
+      and 60 s after Home, the game still running: an online game survives a look at another app.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
