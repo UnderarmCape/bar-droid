@@ -63,8 +63,7 @@ public class StartActivity extends Activity {
         updateView = new TextView(this);
         updateView.setTextColor(0xffb0b0b0);
         updateView.setTextSize(14);
-        updateView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
-        updateView.setPadding(0, 0, 0, 48);
+        updateView.setGravity(Gravity.CENTER_HORIZONTAL | Gravity.TOP);
         setContentView(updateView, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         // under the icon: the icon is the window's background, centred on the whole window, the text was centred
         // beside the navigation bar (landscape: ~70 px left of the icon on the dev phone); the bar's width on the
@@ -79,7 +78,13 @@ public class StartActivity extends Activity {
             } else {
                 left = in.getStableInsetLeft(); right = in.getStableInsetRight();   // (Android 9 and 10)
             }
-            updateView.setPadding(right, 0, left, 48);
+            // just under the icon's picture (start_background: 240 dp, its art ending ~96 dp below the window's middle),
+            // not at the screen's foot: 650 px of black lay between them on the dev phone, upright (2026-11-08)
+            int[] at = new int[2];
+            updateView.getLocationOnScreen(at);
+            float dp = getResources().getDisplayMetrics().density;
+            int top = Math.max(0, Math.round(getWindow().getDecorView().getHeight() / 2f + 128 * dp) - at[1]);
+            updateView.setPadding(right, top, left, 0);
         });
         waitingSince = SystemClock.elapsedRealtime();
         handler.post(tick);
