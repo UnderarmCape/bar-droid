@@ -63,14 +63,15 @@ try {
       & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shots[$i].Trim())`" > `"$to`""
       "[padtest] screenshot: $to"
     }
-  } elseif ($Chat) {   # (no pad: the widget runs its cases itself, then a screenshot of the listening note)
-    $until = (Get-Date).AddSeconds(30)
+  } elseif ($Chat) {   # (no pad: the widget runs its cases itself, then screenshots: the listening note, the autoquit note)
+    $until = (Get-Date).AddSeconds(40)
     while ((Get-Date) -lt $until -and -not (Log '\[padtest\] shot' 1)) { Start-Sleep 2 }
     Start-Sleep 3   # (the engine writes it a moment later: the last run's was taken for it)
-    $shot =(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -1" | Select-Object -First 1)
-    if ($shot) {
-      $to = Join-Path (Split-Path $PSScriptRoot) "build\chat-voice.png"
-      & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shot.Trim())`" > `"$to`""
+    $shots = @(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -2")
+    $names = @("chat-autoquit.png", "chat-voice.png")   # (newest first)
+    for ($i = 0; $i -lt $shots.Count; $i++) {
+      $to = Join-Path (Split-Path $PSScriptRoot) "build\$($names[$i])"
+      & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shots[$i].Trim())`" > `"$to`""
       "[padtest] screenshot: $to"
     }
   } else { & $adb shell "uinput $evemu" }

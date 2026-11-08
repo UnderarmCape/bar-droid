@@ -251,7 +251,9 @@ function widget:AddConsoleLine(line)
 	-- counting down; a finger's tap moves the pointer, and then the line goes (BAR waits a minute after each move).
 	local secs = line:match("<autoquit> Automatically exiting in (%d+) seconds")
 	if secs then
-		quitHow = WG.BarDroidInput == "touch" and "tap the screen" or "move the mouse"
+		-- (BAR's Autoquit waits only for the pointer to move: the pad holds it in the middle, so with the pad too it is a
+		-- tap on the screen; "move the mouse" was said to pad players, 2026-11-08)
+		quitHow = WG.BarDroidInput == "mouse" and "move the mouse" or "tap the screen"
 		quitShown = tonumber(secs)
 		quitNote = add("", WHITE, quitText(quitShown), quitShown)
 		quitX, quitY = Spring.GetMouseState()

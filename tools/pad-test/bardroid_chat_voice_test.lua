@@ -71,6 +71,11 @@ function widget:GameFrame(f)
 		Spring.SendCommands("screenshot png")
 	elseif ran and f == READY_FRAME + 50 and WG.BarDroidPad then
 		WG.BarDroidPad.act("voice_off")
+		-- BAR's autoquit line after a game ends, as bardroid_chat.lua turns it into a countdown note, and its screenshot
+		Spring.Echo("<autoquit> Automatically exiting in 12 seconds. Move mouse to postpone the quit for 60 seconds")
+	elseif ran and f == READY_FRAME + 70 then
+		Spring.SendCommands("screenshot png")
+	elseif ran and f == READY_FRAME + 80 then
 		Spring.Echo("[padtest] shot")
 	end
 	if f ~= READY_FRAME or ran then
