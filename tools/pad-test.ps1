@@ -52,10 +52,10 @@ try {
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] ready' 1)) { Start-Sleep 3 }
   if (-not (Log '\[padtest\] ready' 1)) { throw "the game did not get to frame 300 in 5 minutes" }
   # (the pad, which plays its script and goes; BAR's game in skirmish too since v0.8.5's game went, 2026-11-06)
-  if ($Share) {   # (no pad: the test widget drives the list itself, then copies of its three screenshots)
+  if ($Share) {   # (no pad: the test widget drives the list itself, then copies of its four screenshots)
     $until = (Get-Date).AddSeconds(30)
     while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
-    $shots = @(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -3")
+    $shots = @(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -4")
     $build = Join-Path (Split-Path $PSScriptRoot) "build"
     New-Item -ItemType Directory -Force $build | Out-Null
     for ($i = 0; $i -lt $shots.Count; $i++) {

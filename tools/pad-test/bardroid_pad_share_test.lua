@@ -121,6 +121,25 @@ local STEPS = {
 		pad().act("share_cancel")
 		check("B cancels, nothing given", state() == nil and #calls == before2)
 	end,
+	-- a note while the list is open (A on UNITS with none selected): beside the list, not across its rows
+	function()
+		open()
+		for _ = 1, 3 do
+			if select(4, state()) == 1 then
+				break
+			end
+			pad().act("share_tab_next")
+		end
+		pad().act("share_confirm")
+	end,
+	function()
+		Spring.SendCommands("screenshot png") -- (the list with its note, as drawn by now)
+		local r, t = pad().shareRect(), pad().toastRect()
+		check("a note while the list is open: beside it, not across its rows", r ~= nil and t ~= nil
+			and (t[1] >= r[4] or t[2] <= r[2]),
+			r and t and string.format("note %d-%d, list %d-%d", t[1], t[2], r[2], r[4]) or "nothing drawn")
+		pad().act("share_cancel")
+	end,
 	function()
 		fake.metal = { 500, 1000, 0.5 } -- (at their slider: BAR refuses any more)
 		open()

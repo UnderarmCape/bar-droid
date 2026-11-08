@@ -1101,6 +1101,7 @@ local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TA
 local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
 local given = nil -- units just given: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later: BAR kept them
 local shareRect = nil -- the list as drawn last: x0, y0, x1, y1, the first teammate shown, how many (tools/pad-test.ps1)
+local toastDrawnAt = nil -- the note as drawn last: its bottom and top (tools/pad-test.ps1)
 local SHARE_CHECK_SECONDS = 1.5
 
 local function teammates()
@@ -2348,7 +2349,16 @@ function widget:DrawScreen()
 		-- (a quick fade in, a slower fade out; a pad button at the end of a note as its key)
 		local alpha = math.max(0, math.min(1, age / 0.08, (toastFor - age) / 0.3))
 		local words, key = toast:match("^(.-): ([ABXY])$")
-		style.toast(words or toast, cx, cy + vsy * 0.09, toastColor, alpha, key, voiceToast and age or nil)
+		local ty = cy + vsy * 0.09
+		-- (the share list open: its notes just above it, else under it; at the middle they lay across its first row,
+		-- "GIVING 300 METAL TO BRAVO" through ALPHA's name, dev phone 2026-11-08)
+		local r = share and shareRect
+		if r then
+			local h, gap = math.floor(style.size(0.02) * 2), style.size(0.008, 3)
+			ty = (r[4] + gap + h <= (r[7] or vsy)) and (r[4] + gap) or math.max(0, r[2] - gap - h)
+		end
+		style.toast(words or toast, cx, ty, toastColor, alpha, key, voiceToast and age or nil)
+		toastDrawnAt = { ty, ty + math.floor(style.size(0.02) * 2) }
 	end
 end
 
@@ -2408,6 +2418,9 @@ function widget:Initialize()
 		end,
 		shareRect = function()
 			return shareRect
+		end,
+		toastRect = function()
+			return toastDrawnAt
 		end,
 		shareGiven = function(units, teamID) -- (tools/pad-test.ps1 -Share: units just given, checked at the next update)
 			given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }

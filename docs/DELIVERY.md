@@ -70,6 +70,8 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. Candidates from the
       dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
       lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar, 1st person).
+      Added 2026-11-08: the pad's share list giving metal (`9-`, its teammates the test's stand-ins), speak to chat
+      listening (`10-`) and today's launcher (`5b-`).
 - [x] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but the first tap on
       "Follow unit" followed nothing. The bar is laid out again every 0.25 s and moves while BAR's player list opens
       beside it, so the button found at the release was a new table (or another button) and the tap was dropped; a
@@ -312,6 +314,9 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
       1 of 22 shots in that run; none in 222 back-to-back shots of the next. HANDOFF's "watch for flicker" of the
       explicit Present fence covers it; if anyone sees a white flash in play, this is the picture to compare.
+      2026-11-08, pad-test -Share: one engine screenshot lacked the upper part of the interface (the share list's
+      panel, tabs and first rows, BAR's minimap) while the rest was drawn; the same run again drew all. No columns
+      this time; 1 in ~30 shots that day.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
