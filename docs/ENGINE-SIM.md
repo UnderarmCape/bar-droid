@@ -622,6 +622,15 @@ game until the replay and spectating stages below say it computes exactly what t
   - gcc-all4 with the Fold7's dev-env and settings on the dev phone (16:23-16:29): pace-test, pad-test, pad-test
     -Online -Engine gcc-all4 and touch-phone-test ALL PASS, the 7 phone Lua patches loaded. Installed on the Fold7 at
     16:35 (BAR not running; only dev-env.sh's engine line changed, the settings and ASTC folder as in the morning).
+  - Round 4, gcc-all5 (sim-move's `BarDroidMoveParallelHeading`: the turning stage on every thread in frames where
+    no unit's heading change can reach its script, the same record/replay; sim-lua's call prefetches issued as soon as
+    the closure is known): the whole replay to "End of demo reached", **0 desync warnings**, fast-forward 693 s. BAR's
+    benchmark against gcc-fold7 (16:44-17:06, ABBA): Sim 26.72 / 26.07 ms against 25.64 / 25.14 (-3.8 %), Update 4.84
+    / 4.76 against 4.51 / 4.34 (-7.8 %), game speed x0.85 / x0.87 against x0.89 / x0.91 (+4.7 %), fps 42.2 / 43.2
+    against 41.7 / 43.0 (the same). No round after the first has measured better than it; the gain stays ~4-5 % of
+    game speed.
+  - 2026-11-07 ~17:00 the account's weekly limit stopped sim-move and sim-lua mid-work (sim-units had finished);
+    their branches hold everything they committed (move 73d5800, lua-vm 29ac63f, units 293c464).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
