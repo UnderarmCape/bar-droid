@@ -665,8 +665,16 @@ end
 -- (a game loaded beside the lobby: the engine's ActivateGame / ActivateMenu. Words said in a game are the game's
 -- chat's alone; the app marks them "voicegame", which this widget does not read, and while a game runs the lobby
 -- leaves "voice" lines to it too: Kailil, 2026-11-08, "the voice chat is also sending chats to the lobby")
+-- The rest of speaking goes with the words: "voice_on" put the lobby's "< SPEAK TO SERVER ROOM >" up too, and the
+-- D-pad's channel steps switched the lobby's chat tabs behind the game (2026-11-08).
 local gameLoaded = false
-function widget:ActivateGame() gameLoaded = true end
+function widget:ActivateGame()
+	gameLoaded = true
+	voiceOn = false
+	if voicePanel then
+		voicePanel:Hide()
+	end
+end
 function widget:ActivateMenu() gameLoaded = false end
 
 local function voiceSay(text)
@@ -845,8 +853,10 @@ local function appUpdate()
 	if lines then
 		for name in lines:gmatch("act (%S+)") do
 			if name == "voice_on" then
-				voiceOn = true
-				voiceShow()
+				voiceOn = not gameLoaded -- (in a game: the game's own note and channels)
+				if voiceOn then
+					voiceShow()
+				end
 			elseif name == "voice_off" then
 				voiceOn = false
 				if voicePanel then
@@ -941,6 +951,15 @@ function widget:Initialize()
 		release = function(x, y) return widget:MouseRelease(x, y, 1) end,
 		popup = function() return popupButton end,
 		warning = function() return warningShown end,
+		-- (tools/lobby-touch-test: speak to chat's panel up, and a game loaded or not, as the engine's callins say)
+		voiceShown = function() return voicePanel ~= nil and voicePanel.visible ~= false end,
+		activate = function(game)
+			if game then
+				widget:ActivateGame()
+			else
+				widget:ActivateMenu()
+			end
+		end,
 	}
 end
 

@@ -28,6 +28,17 @@ local settleFrom, settleSeconds, scaleLogged
 local SCALE_KEY = 302 -- Scroll Lock: what the pad's Start sends in the lobby (ControllerBridge)
 
 -- the next case runs after the widget's own check of the server's settings
+-- a line in the app's touch log, as RtsTouch writes it (nil: the file made, nothing written)
+local function appAct(line)
+	local f = io.open("LuaUI/Config/bardroid_touch.txt", "a")
+	if f then
+		if line then
+			f:write(line .. "\n")
+		end
+		f:close()
+	end
+end
+
 local function settle()
 	settleFrom, settleSeconds = Spring.GetTimer(), 0.8
 end
@@ -319,6 +330,28 @@ cases = {
 			b and string.format("warning %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
 		press(SCALE_KEY)
 		WG.LibLobby.lobby.myBattleID = nil
+		appAct(nil) -- (the app's log there before the widget reads it: it starts at its end)
+		settle()
+	end,
+	-- speak to chat: the lobby's panel in the lobby, the game's own in a game (2026-11-08: "When in game, the voice chat
+	-- should only send messages to the game chat")
+	function()
+		appAct("act voice_on")
+		settle()
+	end,
+	function()
+		local L = WG.BarDroidLobbyTouch
+		check("speak to chat in the lobby: the panel says where the words go", L.voiceShown())
+		L.activate(true)
+		check("a game loads: the lobby's panel goes", not L.voiceShown())
+		appAct("act voice_on")
+		settle()
+	end,
+	function()
+		local L = WG.BarDroidLobbyTouch
+		check("speak to chat in a game: the lobby's panel stays down", not L.voiceShown())
+		appAct("act voice_off")
+		L.activate(false)
 		settle()
 	end,
 	function()
