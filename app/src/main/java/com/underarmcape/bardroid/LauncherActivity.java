@@ -47,6 +47,17 @@ public class LauncherActivity extends AppCompatActivity {
         logScroll = findViewById(R.id.logScroll);
         // (scrollTo: fullScroll takes the focus with it, out of a field being typed in, at every new line)
         logView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> { if (logFollows) logScroll.scrollTo(0, b); });
+        // (the box as tall as its lines, up to the layout's 300 dp: after a start two lines sat over an empty dark box
+        // the screen's height tall, dev phone 2026-11-08; the log is last in its column, nothing moves under it)
+        final int logMax = logScroll.getLayoutParams().height;
+        logView.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+            int want = Math.min(logMax, b - t);
+            android.view.ViewGroup.LayoutParams lp = logScroll.getLayoutParams();
+            if (want > 0 && lp.height != want) {
+                lp.height = want;
+                logScroll.post(() -> logScroll.setLayoutParams(lp));
+            }
+        });
         fitLayout();
 
         Button install = findViewById(R.id.btnInstall);
