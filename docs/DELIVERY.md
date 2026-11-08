@@ -317,6 +317,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       2026-11-08, pad-test -Share: one engine screenshot lacked the upper part of the interface (the share list's
       panel, tabs and first rows, BAR's minimap) while the rest was drawn; the same run again drew all. No columns
       this time; 1 in ~30 shots that day.
+- [ ] Playing with no connection (dev phone, 2026-11-08, Wi-Fi and data off; Kailil's road trip): the launcher's Play vs
+      AI starts at once on what is installed (the update check gives up on the first "Unable to resolve host"), and
+      the lobby opens "Offline" with its Skirmish screens. But the lobby's quick skirmish picks from four maps a mode
+      (BAR's `singleplayerquickskirmish.lua`) and cannot download a missing one: the Fold7 had all of 1v1's and 2v2's,
+      1 of 3v3's (Eye of Horus), 1 of Scavengers' and Raptors' (All That Glitters), and not Special Creek 1.0, whose
+      download the Skirmish screen also tried. Kailil's call: fetch them ahead (the Fold7 was asked), or the app
+      fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
