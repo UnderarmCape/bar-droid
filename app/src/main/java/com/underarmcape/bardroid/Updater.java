@@ -201,7 +201,10 @@ public final class Updater {
                     for (String t : tags) { if (cancelled) throw new InterruptedException(); ok &= updateTag(t, remote.get(t), engine, st); }
                     result = ok ? "up to date" : "not everything updated, see log";
                 }
-            } else result = "BAR's launcher config not reachable: started what is installed";
+            // (the launcher's status line after "Last check <date>": "BAR's launcher config not reachable: started what
+            // is installed" wrapped over three lines on an upright phone, at every start away from a network; the
+            // version that played is the line above it. launcher.log keeps the reason, "no answer from ...")
+            } else result = "no answer from BAR";
         }
         verifyTags(tags);
         // The set that starts now; launchEnded judges it.
