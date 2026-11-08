@@ -1365,11 +1365,12 @@ local function shareDraw(vsx, vsy)
 		text("SELECT UNITS FIRST", mid, ya + (amountH - size) / 2 + size * 0.14, size, { 0.7, 0.7, 0.7 }, 0.9, "co")
 	end
 
-	-- the keys: A gives, B cancels
+	-- the keys: A gives, B cancels; centred, as the tabs and the amount above them (at the left they read as stray)
 	local key = math.floor(size * 1.2)
 	local hy = y1 - h + pad * 0.5
 	local hs = size * 0.8
-	local hx = x0 + pad
+	local keysW = 2 * (key + pad * 0.4) + (font:GetTextWidth("GIVE") + font:GetTextWidth("CANCEL")) * hs + pad
+	local hx = math.floor(math.max(x0 + pad, mid - keysW / 2))
 	style.key(hx, hy, key, "A", 0.95)
 	font:Begin()
 	font:SetOutlineColor(0, 0, 0, 0.8)
