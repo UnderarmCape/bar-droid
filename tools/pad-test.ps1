@@ -12,8 +12,9 @@
 # as the game's (BARDROID_GAME_WIDGETS=1, launch-bar.sh; docs/ENGINE-SIM.md on engine/sim).
 # -Share: the share list's metal and energy (bardroid_pad_share_test.lua: the AI's team stands in for teammates, no pad,
 # BAR's share recorded, not sent); its screenshots of the list go to build\pad-share-*.png.
-#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun | -Share] [-Engine <build>]
-param([switch]$Online, [switch]$Dgun, [switch]$Share, [string]$Engine = "")
+# -Chat: what speak to chat sends (bardroid_chat_voice_test.lua: BAR's chat sends recorded, not sent; no pad).
+#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun | -Share | -Chat] [-Engine <build>]
+param([switch]$Online, [switch]$Dgun, [switch]$Share, [switch]$Chat, [string]$Engine = "")
 if ($Dgun) { $Online = $true }   # (-Dgun: the same game, the D-gun mode's and the share list's script)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -33,7 +34,7 @@ function Log([string]$pattern, [int]$lines) {
 
 & $adb shell am force-stop $pkg
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
-$testWidget = if ($Share) { "bardroid_pad_share_test.lua" } elseif ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
+$testWidget = if ($Chat) { "bardroid_chat_voice_test.lua" } elseif ($Share) { "bardroid_pad_share_test.lua" } elseif ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
 $padScript = if ($Dgun) { "pad-dgun.evemu" } elseif ($Online) { "pad-online.evemu" } else { "pad.evemu" }
 function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
 Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
@@ -62,7 +63,7 @@ try {
       & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shots[$i].Trim())`" > `"$to`""
       "[padtest] screenshot: $to"
     }
-  } else { & $adb shell "uinput $evemu" }
+  } elseif (-not $Chat) { & $adb shell "uinput $evemu" }   # (-Chat: no pad, the widget runs its cases itself)
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }

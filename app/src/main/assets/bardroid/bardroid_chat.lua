@@ -648,7 +648,9 @@ local function hook()
 				local next = text:byte(MAX_BYTES + 1)
 				cut = text:sub(1, MAX_BYTES)
 				if next >= 128 and next < 192 then -- (the cut is inside a character: that character goes)
-					cut = cut:gsub("[\128-\191]*[\192-\255]$", "")
+					-- (its lead byte and what of it got in: "[\128-\191]*[\192-\255]$", the other way round, left
+					-- the broken character, or took the one before's tail and left a lead byte, 2026-11-08)
+					cut = cut:gsub("[\192-\255][\128-\191]*$", "")
 				end
 			end
 			if sent[#sent] ~= cut then

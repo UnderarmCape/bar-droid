@@ -514,8 +514,15 @@ local function readTouch(lines)
 			end)
 			if WG.bardroidChat and WG.bardroidChat.voice then
 				WG.bardroidChat.voice(text)
-			elseif text:find("%S") then
-				Spring.SendAllyChat(text:sub(1, 127))
+			elseif text:find("%S") then -- (BAR Droid chat off: to allies, BAR's 127 bytes, never half a character)
+				if #text > 127 then
+					local after = text:byte(128)
+					text = text:sub(1, 127)
+					if after >= 128 and after < 192 then
+						text = text:gsub("[\192-\255][\128-\191]*$", "")
+					end
+				end
+				Spring.SendAllyChat(text)
 			end
 		end
 	end

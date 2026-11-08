@@ -2370,8 +2370,8 @@ function widget:Initialize()
 			if #text > 127 then
 				local after = text:byte(128)
 				text = text:sub(1, 127)
-				if after >= 128 and after < 192 then
-					text = text:gsub("[\128-\191]*[\192-\255]$", "")
+				if after >= 128 and after < 192 then -- (inside a character: its lead byte and what got in go; bardroid_chat.lua)
+					text = text:gsub("[\192-\255][\128-\191]*$", "")
 				end
 			end
 			Spring.MarkerAddPoint(p[1], p[2], p[3], text)
