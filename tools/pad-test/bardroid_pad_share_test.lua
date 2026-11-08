@@ -73,9 +73,11 @@ local STEPS = {
 		local _, index, _, tab, amountStep = state()
 		check("D-pad down: the next teammate; D-pad right twice: more", index == 2 and tab == 2 and amountStep == 4,
 			string.format("teammate %s, tab %s, step %s", tostring(index), tostring(tab), tostring(amountStep)))
-		Spring.SendCommands("screenshot png")
 	end,
 	function()
+		-- (the list as the step before left it: a screenshot takes the frame drawn last, so one at the end of that
+		-- step showed the list from before its actions, 2026-11-08)
+		Spring.SendCommands("screenshot png")
 		local amount, want, room = pad().shareAmount()
 		check("their room ends at their share slider (200 of 1000 at 50 %: 300)", room == 300 and amount == math.min(want, 300),
 			string.format("amount %s, wanted %s, room %s", tostring(amount), tostring(want), tostring(room)))
@@ -90,9 +92,9 @@ local STEPS = {
 		local _, _, _, tab, amountStep = state()
 		check("RB: ENERGY, the amount kept from the last time, D-pad left: less", tab == 3 and amountStep == 3,
 			string.format("tab %s, step %s", tostring(tab), tostring(amountStep)))
-		Spring.SendCommands("screenshot png")
 	end,
 	function()
+		Spring.SendCommands("screenshot png") -- (the ENERGY list, as above)
 		local ok, detail = gave("energy")
 		check("A on ENERGY: BAR's share of energy", ok, detail)
 	end,

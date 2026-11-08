@@ -1341,11 +1341,13 @@ local function shareDraw(vsx, vsy)
 		elseif room < 1 then
 			line, lc = "THEIR " .. tabName .. " STORAGE IS FULL", { 1, 0.45, 0.35 }
 		elseif amount < want then
-			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY HAVE ROOM FOR)"
+			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY CAN TAKE)"
 		else
 			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (" .. math.floor(SHARE_STEPS[s.step] * 100 + 0.5) .. " %)"
 		end
-		text(line, mid, ya + amountH * 0.58, size, lc, 1, "co")
+		-- (within the panel: "GIVE 300 METAL (ALL THEY HAVE ROOM FOR)" ran past both its edges, dev phone 2026-11-08)
+		local ls = math.min(size, size * (w - pad * 2) / math.max(1, font:GetTextWidth(line) * size))
+		text(line, mid, ya + amountH * 0.58 + (size - ls) * 0.36, ls, lc, 1, "co")
 		-- the steps between two arrows
 		local tri = math.floor(size * 0.55)
 		local sy = math.floor(ya + amountH * 0.22)
