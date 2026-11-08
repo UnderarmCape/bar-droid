@@ -10,7 +10,8 @@
 --     actions, the group's number shown
 --   idle units (D-pad; LB + D-pad), the commander (D-pad down), a camera bookmark (D-pad up; LT + up stores it)
 --   cancel (B), LB + A/X/Y/B orders at the middle of the screen, removing queued orders (L3/R3), v0.8.5's D-gun mode
---     (LB + RB + R3, or Back + R3), the share list (LB + D-pad up tapped, then held: the selected units to a teammate)
+--     (LB + RB + R3, or Back + R3), the share list (LB + D-pad up tapped, then held: the selected units, metal or energy
+--     to a teammate; LB / RB what, D-pad left / right how much)
 --   a reticle in the middle while the pad is the input, and short notes (v0.8.5's hotkey feedback)
 -- Every control here works in every game (Kailil, 2026-11-01, after 40 minutes online: "I should have no cases of that
 -- happening"). A host can forbid user widgets Spring.GiveOrder* (the modoption allowunitcontrolwidgets; first person
@@ -1072,7 +1073,15 @@ end
 -- represented by their names text being the color ... regular dpad then to cycle through the list up and down ... on
 -- the center of the screen semi transparent. Pressing A confirms the transfer. B CANCELS"): the selected units go to
 -- the teammate picked with BAR's own share (Spring.ShareResources, as its player list's: no order, so in every game).
-local share = nil -- { index, teams = { { teamID, name, color } } }
+-- Metal and energy too (Kailil, 2026-11-08: "expand the share units interface to also be able tk send power and metal
+-- to your teammates in a sleek and nice looking ui ux way"): LB / RB switch what is given (UNITS, METAL, ENERGY), the
+-- D-pad left / right how much (a share of what this team holds), each teammate's row shows how much of it they hold;
+-- never more than the teammate has room for (BAR's storage: the rest would be lost).
+local SHARE_TABS = { "UNITS", "METAL", "ENERGY" }
+local SHARE_STEPS = { 0.1, 0.25, 0.5, 0.75, 1 }
+local SHARE_COLORS = { UNITS = { 1, 0.78, 0.25 }, METAL = { 0.8, 0.84, 0.92 }, ENERGY = { 1, 0.86, 0.22 } }
+local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TABS), step (SHARE_STEPS) }
+local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
 local given = nil -- units just given: { units, teamID, at }; none of them there SHARE_CHECK_SECONDS later: refused
 local SHARE_CHECK_SECONDS = 1.5
 
@@ -1119,17 +1128,40 @@ local function shareOpen()
 	if modal then
 		return
 	end
-	if Spring.GetSelectedUnitsCount() == 0 then
-		note("SELECT UNITS TO GIVE")
-		return
-	end
 	local teams = teammates()
 	if #teams == 0 then
 		note("NO TEAMMATES")
 		return
 	end
-	share = { index = 1, teams = teams }
+	-- (units selected: they are what is given; none: the resource last given)
+	local tab = Spring.GetSelectedUnitsCount() > 0 and 1 or shareLastTab
+	share = { index = 1, teams = teams, tab = tab, step = shareLastStep }
 	modal = "share"
+end
+
+-- the resource the list gives now ("metal", "energy"), nil for units
+local function shareResource(s)
+	local tab = SHARE_TABS[s.tab]
+	return tab ~= "UNITS" and string.lower(tab) or nil
+end
+
+-- what A gives the teammate now: the step's share of what this team holds, at most the room in their storage; also
+-- what was wanted and their room
+local function shareAmount(s, team)
+	local res = shareResource(s)
+	local mine = Spring.GetTeamResources(Spring.GetMyTeamID(), res) or 0
+	local want = math.floor(mine * SHARE_STEPS[s.step])
+	local theirs, storage = Spring.GetTeamResources(team.teamID, res)
+	local room = (theirs and storage) and math.max(0, math.floor(storage - theirs)) or want
+	return math.min(want, room), want, room
+end
+
+local function shareFmt(n)
+	n = math.floor((n or 0) + 0.5)
+	if n >= 10000 then
+		return string.format("%.1fk", n / 1000)
+	end
+	return tostring(n)
 end
 
 local function shareClose(text)
@@ -1146,9 +1178,23 @@ local function shareConfirm()
 		shareClose()
 		return
 	end
+	local res = shareResource(s)
+	if res then
+		local amount, want, room = shareAmount(s, team)
+		local what = SHARE_TABS[s.tab]
+		if want < 1 then
+			shareClose("NO " .. what .. " TO GIVE")
+		elseif room < 1 then
+			shareClose(string.upper(team.name) .. "'S " .. what .. " STORAGE IS FULL")
+		else
+			Spring.ShareResources(team.teamID, res, amount)
+			shareClose("GIVING " .. shareFmt(amount) .. " " .. what .. " TO " .. string.upper(team.name))
+		end
+		return
+	end
 	local units = Spring.GetSelectedUnits()
 	if #units == 0 then
-		shareClose("SELECT UNITS TO GIVE")
+		note("SELECT UNITS FIRST, OR RB: METAL / ENERGY") -- (the list stays: RB moves to the resources)
 		return
 	end
 	Spring.ShareResources(team.teamID, "units")
@@ -1178,32 +1224,142 @@ local function shareDraw(vsx, vsy)
 		return
 	end
 	local size = style.size(0.022)
+	local small = math.max(10, math.floor(size * 0.78))
 	local rowH, pad = math.floor(size * 1.9), math.floor(size * 0.8)
 	local count = Spring.GetSelectedUnitsCount()
-	local title = "GIVE " .. count .. (count == 1 and " UNIT TO" or " UNITS TO")
-	local w = font:GetTextWidth(title) * size
+	local res = shareResource(s)
+	local tabName = SHARE_TABS[s.tab]
+	local accent = SHARE_COLORS[tabName]
+	local function text(str, x, y, sz, c, a, opts)
+		font:Begin()
+		font:SetOutlineColor(0, 0, 0, 0.8 * (a or 1))
+		font:SetTextColor(c[1], c[2], c[3], a or 1)
+		font:Print(str, x, y, sz, opts or "o")
+		font:End()
+	end
+	-- the widths: the tab strip (LB, the three, RB), the teammates' rows (name, their amount, its bar), the amount line
+	local labels = {}
+	for i, t in ipairs(SHARE_TABS) do
+		labels[i] = (t == "UNITS" and count > 0) and (t .. " " .. count) or t
+	end
+	local tabPad, gap = math.floor(size * 0.7), math.floor(size * 0.35)
+	local chipW = math.ceil(font:GetTextWidth("RB") * small) + tabPad
+	local tabsW = chipW * 2 + gap * 4
+	for _, l in ipairs(labels) do
+		tabsW = tabsW + math.ceil(font:GetTextWidth(l) * small) + tabPad * 2
+	end
+	local nameW = 0
 	for _, team in ipairs(s.teams) do
-		w = math.max(w, font:GetTextWidth(team.name) * size)
+		nameW = math.max(nameW, font:GetTextWidth(team.name) * size)
 	end
-	local key = math.floor(size * 1.2)
-	local hint = font:GetTextWidth("GIVE    CANCEL") * size * 0.8 + key * 2
-	w = math.ceil(math.max(w, hint)) + pad * 2
-	local h = rowH * (#s.teams + 2) + pad
+	local barW, numW = math.floor(size * 5), math.ceil(font:GetTextWidth("00.0k") * small)
+	local rowW = nameW + pad + (res and (numW + pad * 0.5 + barW) or 0)
+	local lineW = font:GetTextWidth("GIVE 00.0k ENERGY (100 %)") * size + size * 3
+	local w = math.ceil(math.max(rowW, tabsW, lineW, size * 14)) + pad * 2
+	local tabRowH, amountH = math.floor(rowH * 1.15), res and math.floor(rowH * 1.6) or rowH
+	local h = tabRowH + rowH * #s.teams + amountH + rowH + pad
 	local x0, y1 = math.floor(vsx / 2 - w / 2), math.floor(vsy / 2 + h / 2)
-	style.panel(x0, y1 - h, x0 + w, y1, 0.75) -- (semi-transparent: the battle shows through)
-	font:Begin()
-	font:SetOutlineColor(0, 0, 0, 0.8)
-	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.9)
-	font:Print(title, x0 + pad, y1 - rowH + (rowH - size) / 2 + size * 0.14, size, "o")
-	for i, team in ipairs(s.teams) do
-		local c = team.color
-		font:SetTextColor(c[1], c[2], c[3], 1)
-		font:Print(team.name, x0 + pad, y1 - rowH * (i + 1) + (rowH - size) / 2 + size * 0.14, size, "o")
+	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
+
+	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
+	local tabH = math.floor(size * 1.45)
+	local ty = math.floor(y1 - tabRowH / 2 - tabH / 2)
+	local tx = math.floor(x0 + (w - tabsW) / 2)
+	local function chip(label)
+		style.fill(tx, ty + tabH * 0.1, tx + chipW, ty + tabH * 0.9, { 0.22, 0.22, 0.25 }, 0.9)
+		text(label, tx + chipW / 2, ty + tabH / 2 - small * 0.36, small, { 1, 1, 1 }, 0.9, "co")
+		tx = tx + chipW + gap
 	end
-	font:End()
-	local ry = y1 - rowH * (s.index + 1)
+	chip("LB")
+	for i, l in ipairs(labels) do
+		local tw = math.ceil(font:GetTextWidth(l) * small) + tabPad * 2
+		local c = SHARE_COLORS[SHARE_TABS[i]]
+		if i == s.tab then
+			style.fill(tx, ty, tx + tw, ty + tabH, c, 0.92)
+			text(l, tx + tw / 2, ty + tabH / 2 - small * 0.36, small, { 0.07, 0.07, 0.07 }, 1, "c")
+		else
+			style.fill(tx, ty, tx + tw, ty + tabH, { 0.16, 0.16, 0.18 }, 0.65)
+			text(l, tx + tw / 2, ty + tabH / 2 - small * 0.36, small, c, 0.7, "co")
+		end
+		tx = tx + tw + gap
+	end
+	chip("RB")
+
+	-- the teammates, each in their colour; for a resource, how much of it they hold (a bar of their storage)
+	for i, team in ipairs(s.teams) do
+		local yr = y1 - tabRowH - rowH * i
+		local c = team.color
+		text(team.name, x0 + pad, yr + (rowH - size) / 2 + size * 0.14, size, c, 1)
+		if res then
+			local theirs, storage = Spring.GetTeamResources(team.teamID, res)
+			local frac = (theirs and storage and storage > 0) and math.min(1, theirs / storage) or 0
+			local bx1 = x0 + w - pad
+			local bx0 = bx1 - barW
+			local bh = math.max(3, math.floor(size * 0.32))
+			local by = math.floor(yr + rowH / 2 - bh / 2)
+			style.fill(bx0, by, bx1, by + bh, { 0.08, 0.08, 0.09 }, 0.85, math.floor(bh / 2))
+			if frac > 0 then
+				style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, math.floor(bh / 2))
+			end
+			text(shareFmt(theirs), bx0 - pad * 0.5, yr + rowH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
+		end
+	end
+	local ry = y1 - tabRowH - rowH * s.index
 	style.outline(x0 + pad * 0.4, ry + 2, x0 + w - pad * 0.4, ry + rowH - 2, style.GOLD, 0.9)
+
+	-- what A gives: the units selected, or the amount (D-pad left / right: a tenth to all of it) as words and steps
+	local ya = y1 - tabRowH - rowH * #s.teams - amountH
+	local mid = x0 + w / 2
+	if res then
+		local amount, want, room = shareAmount(s, s.teams[s.index])
+		local line, lc
+		lc = accent
+		if want < 1 then
+			line, lc = "NO " .. tabName .. " TO GIVE", { 0.7, 0.7, 0.7 }
+		elseif room < 1 then
+			line, lc = "THEIR " .. tabName .. " STORAGE IS FULL", { 1, 0.45, 0.35 }
+		elseif amount < want then
+			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY HAVE ROOM FOR)"
+		else
+			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (" .. math.floor(SHARE_STEPS[s.step] * 100 + 0.5) .. " %)"
+		end
+		text(line, mid, ya + amountH * 0.58, size, lc, 1, "co")
+		-- the steps between two arrows
+		local tri = math.floor(size * 0.55)
+		local sy = math.floor(ya + amountH * 0.22)
+		local sh = math.max(4, math.floor(size * 0.38))
+		local function arrow(x, dir)
+			local a = (dir < 0 and s.step > 1 or dir > 0 and s.step < #SHARE_STEPS) and 0.95 or 0.3
+			gl.Color(1, 1, 1, a)
+			gl.BeginEnd(GL.TRIANGLES, function()
+				gl.Vertex(x + dir * tri, sy + sh / 2)
+				gl.Vertex(x, sy + sh / 2 + tri * 0.8)
+				gl.Vertex(x, sy + sh / 2 - tri * 0.8)
+			end)
+		end
+		local sx0, sx1 = x0 + pad * 2 + tri, x0 + w - pad * 2 - tri
+		arrow(x0 + pad + tri, -1)
+		arrow(x0 + w - pad - tri, 1)
+		local n = #SHARE_STEPS
+		local sg = math.max(2, math.floor(size * 0.2))
+		local segW = (sx1 - sx0 - sg * (n - 1)) / n
+		for k = 1, n do
+			local a0 = sx0 + (k - 1) * (segW + sg)
+			if k <= s.step then
+				style.fill(a0, sy, a0 + segW, sy + sh, accent, 0.95, math.floor(sh / 2))
+			else
+				style.fill(a0, sy, a0 + segW, sy + sh, { 0.12, 0.12, 0.14 }, 0.85, math.floor(sh / 2))
+			end
+		end
+	elseif count > 0 then
+		text(count .. (count == 1 and " UNIT SELECTED" or " UNITS SELECTED"), mid,
+			ya + (amountH - size) / 2 + size * 0.14, size, accent, 1, "co")
+	else
+		text("SELECT UNITS FIRST", mid, ya + (amountH - size) / 2 + size * 0.14, size, { 0.7, 0.7, 0.7 }, 0.9, "co")
+	end
+
 	-- the keys: A gives, B cancels
+	local key = math.floor(size * 1.2)
 	local hy = y1 - h + pad * 0.5
 	local hs = size * 0.8
 	local hx = x0 + pad
@@ -1486,6 +1642,31 @@ local ACTIONS = {
 	share_down = function()
 		if share then
 			share.index = share.index % #share.teams + 1
+		end
+	end,
+	-- LB / RB on the list: what is given (units, metal, energy); D-pad left / right: how much of a resource
+	share_tab_prev = function()
+		if share then
+			share.tab = (share.tab - 2) % #SHARE_TABS + 1
+			shareLastTab = share.tab > 1 and share.tab or shareLastTab
+		end
+	end,
+	share_tab_next = function()
+		if share then
+			share.tab = share.tab % #SHARE_TABS + 1
+			shareLastTab = share.tab > 1 and share.tab or shareLastTab
+		end
+	end,
+	share_less = function()
+		if share and shareResource(share) then
+			share.step = math.max(1, share.step - 1)
+			shareLastStep = share.step
+		end
+	end,
+	share_more = function()
+		if share and shareResource(share) then
+			share.step = math.min(#SHARE_STEPS, share.step + 1)
+			shareLastStep = share.step
 		end
 	end,
 	voice_on = function() -- speak to chat (the app's VoiceChat: a three-finger tap, or LB held + RB twice) is listening
@@ -1969,7 +2150,7 @@ function widget:Update(dt)
 	if dgun then
 		dgunUpdate()
 	end
-	if share and (Spring.GetSpectatingState() or Spring.GetSelectedUnitsCount() == 0) then
+	if share and Spring.GetSpectatingState() then -- (no units selected: the list stays, for metal and energy)
 		shareClose()
 	end
 	if given then
@@ -2129,10 +2310,19 @@ function widget:Initialize()
 			note("PING")
 		end,
 		-- (tools/pad-test.ps1: the mode on, the D-gun's commander, aim and target; the share list's pick and length; the
-		-- last click's point)
+		-- last click's point; the share list's tab and amount step)
 		modal = function()
 			return modal, dgun and dgun.unitID, dgun and dgun.aimX, dgun and dgun.aimZ, share and share.index,
-				share and #share.teams, padClickAt and padClickAt[1], padClickAt and padClickAt[2]
+				share and #share.teams, padClickAt and padClickAt[1], padClickAt and padClickAt[2], share and share.tab,
+				share and share.step
+		end,
+		-- (tools/pad-test.ps1 -Share: the list opened on the teams given, as if they were teammates)
+		shareTest = function(teams)
+			share = { index = 1, teams = teams, tab = shareLastTab, step = shareLastStep }
+			modal = "share"
+		end,
+		shareAmount = function()
+			return share and shareResource(share) and shareAmount(share, share.teams[share.index])
 		end,
 		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
 			addPing(x, y, z)

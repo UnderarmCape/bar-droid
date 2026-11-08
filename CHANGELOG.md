@@ -30,7 +30,8 @@ The first version meant for other people's phones: everything since the first bu
 **Touch**
 - Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and
   sends what you said as a chat message, no keyboard (nothing said, nothing sent); a three-finger double tap shows the
-  keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say.
+  keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say. In a game the
+  words go to the game's chat only (they no longer reach the lobby's server room too).
 - Touch camera: drag to pan, continuous pinch zoom, twist to rotate, two-finger tilt; drags on BAR's windows and top
   bar act as mouse drags. A three-finger swipe down brings the camera to the commander and selects it (dead: the
   constructor selected last).
@@ -93,7 +94,10 @@ The first version meant for other people's phones: everything since the first bu
   pointer kept on the menu); control groups on Start + D-pad, idle units and the commander on the D-pad, LB orders,
   queue removal; v0.8.5's D-gun mode on LB + RB + R3 or Back + R3 (the right stick aims around the commander, the left
   walks it, RT fires, B leaves; riding the commander in first person RB fires the D-gun); LB + D-pad up tapped, then
-  held: the share list (the selected units to a teammate, names in their colours; D-pad picks, A gives, B cancels);
+  held: the share list (units, metal or energy to a teammate, names in their colours: LB / RB switch between UNITS,
+  METAL and ENERGY, D-pad up / down picks the teammate, each row showing how much of it they hold, D-pad left / right
+  sets how much to give, from a tenth to all you have, never more than their storage has room for; A gives, B cancels;
+  with no unit selected it opens on the resources);
   v0.8.5's placement (LB grid: A, draw, A); v0.8.5's area select (A held); X held draws a
   path, A held with an order picked an area; RB / LB page the build menu; the pointer glides back to the middle; once
   the pad is used the app's build menu shows only when RB opens it, until three taps on the screen or the pad goes

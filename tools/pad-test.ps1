@@ -10,8 +10,10 @@
 # -Dgun: the same game, pad-dgun.evemu: v0.8.5's D-gun mode (LB + RB + R3) through the app's clicks, the share list's chord.
 # -Engine <build>: an engine-branch build on the phone (engine-sim/<build>, phone-engine.ps1 -Install) with the app's widgets
 # as the game's (BARDROID_GAME_WIDGETS=1, launch-bar.sh; docs/ENGINE-SIM.md on engine/sim).
-#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun] [-Engine <build>]
-param([switch]$Online, [switch]$Dgun, [string]$Engine = "")
+# -Share: the share list's metal and energy (bardroid_pad_share_test.lua: the AI's team stands in for teammates, no pad,
+# BAR's share recorded, not sent); its screenshots of the list go to build\pad-share-*.png.
+#   powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online | -Dgun | -Share] [-Engine <build>]
+param([switch]$Online, [switch]$Dgun, [switch]$Share, [string]$Engine = "")
 if ($Dgun) { $Online = $true }   # (-Dgun: the same game, the D-gun mode's and the share list's script)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -31,7 +33,7 @@ function Log([string]$pattern, [int]$lines) {
 
 & $adb shell am force-stop $pkg
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
-$testWidget = if ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
+$testWidget = if ($Share) { "bardroid_pad_share_test.lua" } elseif ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
 $padScript = if ($Dgun) { "pad-dgun.evemu" } elseif ($Online) { "pad-online.evemu" } else { "pad.evemu" }
 function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
 Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
@@ -49,7 +51,18 @@ try {
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] ready' 1)) { Start-Sleep 3 }
   if (-not (Log '\[padtest\] ready' 1)) { throw "the game did not get to frame 300 in 5 minutes" }
   # (the pad, which plays its script and goes; BAR's game in skirmish too since v0.8.5's game went, 2026-11-06)
-  & $adb shell "uinput $evemu"
+  if ($Share) {   # (no pad: the test widget drives the list itself, then copies of its two screenshots)
+    $until = (Get-Date).AddSeconds(30)
+    while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
+    $shots = @(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -2")
+    $build = Join-Path (Split-Path $PSScriptRoot) "build"
+    New-Item -ItemType Directory -Force $build | Out-Null
+    for ($i = 0; $i -lt $shots.Count; $i++) {
+      $to = Join-Path $build "pad-share-$($shots.Count - $i).png"
+      & cmd /c "`"$adb`" exec-out run-as $pkg sh -c `"cat $($shots[$i].Trim())`" > `"$to`""
+      "[padtest] screenshot: $to"
+    }
+  } else { & $adb shell "uinput $evemu" }
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }

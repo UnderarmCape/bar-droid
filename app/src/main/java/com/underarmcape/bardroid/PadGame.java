@@ -62,8 +62,9 @@ import static com.underarmcape.bardroid.PadButtons.COUNT;
  *                else counts meanwhile (Kailil, 2026-11-06)
  *   LB held + RB twice: speak to chat (VoiceChat); three times: a ping at the middle labelled with what is said
  *                (nothing said, no ping); once: the build menu, a moment later
- *   LB + D-pad up tapped, then pressed again and held: the share list (the selected units to a teammate: D-pad up /
- *                down picks, A gives, B cancels; nothing else counts meanwhile)
+ *   LB + D-pad up tapped, then pressed again and held: the share list (the selected units, metal or energy to a
+ *                teammate: D-pad up / down picks the teammate, LB / RB what is given, D-pad left / right how much of a
+ *                resource, A gives, B cancels; nothing else counts meanwhile)
  *   Back + Start a free pointer on the left stick (any of BAR's windows), and back; free by itself before the start
  *   Back + Y     the path speed tuner (bardroid_padspeed.lua): how fast the pointer draws at each zoom
  *   LB + L3 held first person on the selected unit (bardroid_padfp.lua): the sticks go to the widget (left walks, right
@@ -219,7 +220,8 @@ final class PadGame {
         fpFiring = false;
 
         // The pad's own modes (bardroid_pad.lua): v0.8.5's D-gun mode (the sticks are its: the right aims, the left walks
-        // the commander; RT fires once, B leaves) and the share list (D-pad up / down picks, A gives, B cancels); only
+        // the commander; RT fires once, B leaves) and the share list (D-pad up / down the teammate, LB / RB units,
+        // metal or energy, D-pad left / right how much, A gives, B cancels); only
         // their buttons count meanwhile. The game may ask for a click at a point (an order a host keeps from widgets).
         String modal = mouse.modal();
         boolean inModal = !modal.equals("none");
@@ -232,6 +234,10 @@ final class PadGame {
             } else {
                 if (pressed(tapped, DPAD_UP)) mouse.act("share_up");
                 if (pressed(tapped, DPAD_DOWN)) mouse.act("share_down");
+                if (pressed(tapped, DPAD_LEFT)) mouse.act("share_less");    // (a resource's amount)
+                if (pressed(tapped, DPAD_RIGHT)) mouse.act("share_more");
+                if (pressed(tapped, LB)) mouse.act("share_tab_prev");       // (units, metal, energy)
+                if (pressed(tapped, RB)) mouse.act("share_tab_next");
                 if (pressed(tapped, A)) mouse.act("share_confirm");
                 if (pressed(tapped, B)) mouse.act("share_cancel");
             }

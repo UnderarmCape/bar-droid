@@ -607,6 +607,12 @@ public final class PadGameTest {
         check("the share list: D-pad down / up pick, A gives, nothing else", t.count("act share_down") == 2
                 && t.count("act share_up") == 1 && t.has("act share_confirm") && !t.has("act pad_build") && !t.has("act bookmark_recall"), t.m.out);
         t.m.out.clear();
+        t.tap(RB); t.tap(RB); t.tap(LB); t.tap(DPAD_RIGHT); t.tap(DPAD_RIGHT); t.tap(DPAD_LEFT);
+        check("the share list: LB / RB what is given, D-pad left / right how much, nothing else",
+                t.count("act share_tab_next") == 2 && t.count("act share_tab_prev") == 1 && t.count("act share_more") == 2
+                && t.count("act share_less") == 1 && !t.has("act pad_build") && !t.has("act idle_next")
+                && !t.has("act voice_channel_next"), t.m.out);
+        t.m.out.clear();
         t.tap(B);
         check("the share list: B cancels", t.has("act share_cancel") && !t.has("act cancel"), t.m.out);
         t.m.modal = "none"; t.tick();
