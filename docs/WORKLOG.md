@@ -10,10 +10,10 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 | Claude Code sessions | 14 |
 | Kailil's messages | 390 (18307 words, 34 screenshots) |
 | Kailil's time | 44.2 h in 106 sittings |
-| Claude's time | 253.4 h |
-| Claude's tool calls | 26563 |
+| Claude's time | 253.7 h |
+| Claude's tool calls | 26581 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 705 |
+| Commits | 707 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -35,7 +35,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-05](worklog/2026-11-05.md) | 15 | 1.6 | 22.7 | 56 |
 | [2026-11-06](worklog/2026-11-06.md) | 42 | 3.6 | 21.4 | 25 |
 | [2026-11-07](worklog/2026-11-07.md) | 29 | 2.8 | 34.0 | 18 |
-| [2026-11-08](worklog/2026-11-08.md) | 6 | 0.5 | 6.3 | 46 |
+| [2026-11-08](worklog/2026-11-08.md) | 6 | 0.5 | 6.7 | 48 |
 
 ## Sessions
 
@@ -44,7 +44,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-08 14:31 | 287 | 195.7 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-08 14:50 | 287 | 196.1 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
