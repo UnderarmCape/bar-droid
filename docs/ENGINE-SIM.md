@@ -629,6 +629,11 @@ game until the replay and spectating stages below say it computes exactly what t
     / 4.76 against 4.51 / 4.34 (-7.8 %), game speed x0.85 / x0.87 against x0.89 / x0.91 (+4.7 %), fps 42.2 / 43.2
     against 41.7 / 43.0 (the same). No round after the first has measured better than it; the gain stays ~4-5 % of
     game speed.
+  - gcc-all4 (the Fold7's engine since 2026-11-07 16:35) over two more server replays with the Fold7's settings and
+    phone Lua (2026-11-08 03:11-03:45): the 1v1 (SpeedMetal, BAR's 2026-10-01 release) to "End of demo reached"
+    (f=78,600) and the other 8v8 (Supreme Isthmus, 2026-10-13 release) to its game's end (game over f=31,140, the
+    players gone and the server shut down f=31,303, then BAR's autoquit before the demo's end line): **0 desync
+    warnings** in both. So three server replays of three BAR releases, every switch of the rewrite on.
   - 2026-11-07 ~17:00 the account's weekly limit stopped sim-move and sim-lua mid-work (sim-units had finished);
     their branches hold everything they committed (move 73d5800, lua-vm 29ac63f, units 293c464).
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
