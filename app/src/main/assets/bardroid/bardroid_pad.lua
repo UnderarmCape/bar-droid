@@ -1083,6 +1083,7 @@ local SHARE_COLORS = { UNITS = { 1, 0.78, 0.25 }, METAL = { 0.8, 0.84, 0.92 }, E
 local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TABS), step (SHARE_STEPS) }
 local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
 local given = nil -- units just given: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later: BAR kept them
+local shareRect = nil -- the list as drawn last: x0, y0, x1, y1, the first teammate shown, how many (tools/pad-test.ps1)
 local SHARE_CHECK_SECONDS = 1.5
 
 local function teammates()
@@ -1274,8 +1275,20 @@ local function shareDraw(vsx, vsy)
 	local lineW = font:GetTextWidth("GIVE 00.0k ENERGY (100 %)") * size + size * 3
 	local w = math.ceil(math.max(rowW, tabsW, lineW, size * 14)) + pad * 2
 	local tabRowH, amountH = math.floor(rowH * 1.15), res and math.floor(rowH * 1.6) or rowH
-	local h = tabRowH + rowH * #s.teams + amountH + rowH + pad
-	local x0, y1 = math.floor(vsx / 2 - w / 2), math.floor(vsy / 2 + h / 2)
+	-- the teammates' rows on the screen: closer together, then a window that follows the one picked (a co-op game
+	-- against Raptors puts ten or more on one team: the list ran off the screen, tabs and keys with it)
+	local fixedH = tabRowH + amountH + rowH + pad
+	local nTeams = #s.teams
+	local bar = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition() -- (under BAR's top bar: its [2] is its foot)
+	local top = math.floor(bar and bar[2] or vsy * 0.92)
+	local roomH = top - pad * 2 - fixedH
+	local teamH = math.max(math.floor(size * 1.35), math.min(rowH, math.floor(roomH / nTeams)))
+	local shown = math.max(1, math.min(nTeams, math.floor(roomH / teamH)))
+	local first = math.max(1, math.min(s.index - math.floor((shown - 1) / 2), nTeams - shown + 1))
+	local nameSize = math.min(size, math.floor(teamH / 1.9 + 0.5))
+	local h = fixedH + teamH * shown
+	local x0, y1 = math.floor(vsx / 2 - w / 2), math.min(math.floor(vsy / 2 + h / 2), top - pad)
+	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top }
 	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
 
 	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
@@ -1303,17 +1316,18 @@ local function shareDraw(vsx, vsy)
 	chip("RB")
 
 	-- the teammates, each in their colour; for a resource, how much of it they hold (a bar of their storage)
-	for i, team in ipairs(s.teams) do
-		local yr = y1 - tabRowH - rowH * i
+	for k = 1, shown do
+		local team = s.teams[first + k - 1]
+		local yr = y1 - tabRowH - teamH * k
 		local c = team.color
-		text(team.name, x0 + pad, yr + (rowH - size) / 2 + size * 0.14, size, c, 1)
+		text(team.name, x0 + pad, yr + (teamH - nameSize) / 2 + nameSize * 0.14, nameSize, c, 1)
 		if res then
 			local theirs, storage, _, _, _, slider = Spring.GetTeamResources(team.teamID, res)
 			local frac = (theirs and storage and storage > 0) and math.min(1, theirs / storage) or 0
 			local bx1 = x0 + w - pad
 			local bx0 = bx1 - barW
 			local bh = math.max(3, math.floor(size * 0.32))
-			local by = math.floor(yr + rowH / 2 - bh / 2)
+			local by = math.floor(yr + teamH / 2 - bh / 2)
 			style.fill(bx0, by, bx1, by + bh, { 0.08, 0.08, 0.09 }, 0.85, math.floor(bh / 2))
 			if frac > 0 then
 				style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, math.floor(bh / 2))
@@ -1323,14 +1337,30 @@ local function shareDraw(vsx, vsy)
 				local sx = math.floor(bx0 + (bx1 - bx0) * math.max(0, slider))
 				style.fill(sx - 1, by - 3, sx + 1, by + bh + 3, style.TEXT, 0.9)
 			end
-			text(shareFmt(theirs), bx0 - pad * 0.5, yr + rowH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
+			text(shareFmt(theirs), bx0 - pad * 0.5, yr + teamH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
 		end
 	end
-	local ry = y1 - tabRowH - rowH * s.index
-	style.outline(x0 + pad * 0.4, ry + 2, x0 + w - pad * 0.4, ry + rowH - 2, style.GOLD, 0.9)
+	local ry = y1 - tabRowH - teamH * (s.index - first + 1)
+	style.outline(x0 + pad * 0.4, ry + 2, x0 + w - pad * 0.4, ry + teamH - 2, style.GOLD, 0.9)
+	-- (rows out of the window: a small arrow at its top or bottom edge)
+	local function more(y, dir)
+		local t = math.floor(size * 0.3)
+		gl.Color(1, 1, 1, 0.8)
+		gl.BeginEnd(GL.TRIANGLES, function()
+			gl.Vertex(x0 + w / 2, y + dir * t)
+			gl.Vertex(x0 + w / 2 - t * 1.3, y)
+			gl.Vertex(x0 + w / 2 + t * 1.3, y)
+		end)
+	end
+	if first > 1 then
+		more(y1 - tabRowH - math.floor(size * 0.32), 1)
+	end
+	if first + shown - 1 < nTeams then
+		more(y1 - tabRowH - teamH * shown + math.floor(size * 0.32), -1)
+	end
 
 	-- what A gives: the units selected, or the amount (D-pad left / right: a tenth to all of it) as words and steps
-	local ya = y1 - tabRowH - rowH * #s.teams - amountH
+	local ya = y1 - tabRowH - teamH * shown - amountH
 	local mid = x0 + w / 2
 	if res then
 		local amount, want, room = shareAmount(s, s.teams[s.index])
@@ -2345,6 +2375,9 @@ function widget:Initialize()
 		shareTest = function(teams)
 			share = { index = 1, teams = teams, tab = shareLastTab, step = shareLastStep }
 			modal = "share"
+		end,
+		shareRect = function()
+			return shareRect
 		end,
 		shareGiven = function(units, teamID) -- (tools/pad-test.ps1 -Share: units just given, checked at the next update)
 			given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }

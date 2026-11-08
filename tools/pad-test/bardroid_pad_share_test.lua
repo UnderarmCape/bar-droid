@@ -153,6 +153,26 @@ local STEPS = {
 		local _, note = pad().note()
 		check("all kept, unit sharing allowed: why it may be", note == "NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT",
 			tostring(note))
+		-- a co-op team against Raptors: 15 teammates, the last one picked
+		local many = {}
+		for i = 1, 15 do
+			many[i] = { teamID = other, name = "PLAYER " .. i, color = { 0.4 + i * 0.04, 0.8, 1 - i * 0.05 } }
+		end
+		pad().shareTest(many)
+		for _ = 1, 14 do
+			pad().act("share_down")
+		end
+	end,
+	function()
+		Spring.SendCommands("screenshot png") -- (the long list, as drawn by now)
+		local r = pad().shareRect()
+		local _, vsy = Spring.GetViewGeometry()
+		local _, index = state()
+		check("15 teammates: the list stays on the screen under BAR's top bar, the one picked in sight", r ~= nil
+			and r[2] >= 0 and r[4] <= r[7] and r[7] <= vsy and index == 15 and r[5] <= 15 and 15 <= r[5] + r[6] - 1,
+			r and string.format("y %d-%d, top bar from %d of %d, rows %d-%d, picked %s", r[2], r[4], r[7], vsy, r[5],
+				r[5] + r[6] - 1, tostring(index)))
+		pad().act("share_cancel")
 	end,
 }
 
