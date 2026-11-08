@@ -1138,11 +1138,15 @@ final class RtsTouch {
 
     /**
      * Words said (VoiceChat), hex-encoded so no word can read as another line: for the chat (bardroid_chat.lua) or, ping,
-     * a ping's label (bardroid_pad.lua).
+     * a ping's label (bardroid_pad.lua). While a game's widget runs the chat's line is "voicegame": only the game's chat
+     * takes it. The lobby (bardroid_lobby_touch.lua, LuaMenu, still loaded during a game and reading the same log) takes
+     * only "voice", so words said in a game no longer reach the server room too (Kailil, 2026-11-08: "When in game, the
+     * voice chat should only send messages to the game chat").
      */
     void voice(String text, boolean ping) {
         byte[] b = text.replace('\n', ' ').getBytes(java.nio.charset.StandardCharsets.UTF_8);
-        StringBuilder hex = new StringBuilder(b.length * 2 + 10).append(ping ? "voiceping " : "voice ");
+        StringBuilder hex = new StringBuilder(b.length * 2 + 10)
+                .append(ping ? "voiceping " : (gameWidgetRunning() ? "voicegame " : "voice "));
         for (byte x : b) hex.append(Character.forDigit((x >> 4) & 15, 16)).append(Character.forDigit(x & 15, 16));
         send(hex.toString());
     }

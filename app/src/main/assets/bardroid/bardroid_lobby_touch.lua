@@ -662,7 +662,17 @@ local function voiceStep(by)
 	voiceShow()
 end
 
+-- (a game loaded beside the lobby: the engine's ActivateGame / ActivateMenu. Words said in a game are the game's
+-- chat's alone; the app marks them "voicegame", which this widget does not read, and while a game runs the lobby
+-- leaves "voice" lines to it too: Kailil, 2026-11-08, "the voice chat is also sending chats to the lobby")
+local gameLoaded = false
+function widget:ActivateGame() gameLoaded = true end
+function widget:ActivateMenu() gameLoaded = false end
+
 local function voiceSay(text)
+	if gameLoaded then
+		return
+	end
 	text = text:gsub("%s+", " "):gsub("^ ", "")
 	local target = voiceCurrent(voiceTargets())
 	if target and text:find("%S") then

@@ -505,15 +505,18 @@ local function readTouch(lines)
 			WG.BarDroidPad.voicePing(text)
 		end
 	end
-	-- words said for the chat (the app's VoiceChat), hex-encoded UTF-8: to bardroid_chat.lua, as a message typed
-	for hex in lines:gmatch("voice (%x+)") do
-		local text = hex:gsub("%x%x", function(h)
-			return string.char(tonumber(h, 16))
-		end)
-		if WG.bardroidChat and WG.bardroidChat.voice then
-			WG.bardroidChat.voice(text)
-		elseif text:find("%S") then
-			Spring.SendAllyChat(text:sub(1, 127))
+	-- words said for the chat (the app's VoiceChat), hex-encoded UTF-8: to bardroid_chat.lua, as a message typed.
+	-- "voicegame" while this widget runs (the lobby takes only "voice"), "voice" from a game that has just started
+	for kind, hex in lines:gmatch("(voice%a*) (%x+)") do
+		if kind == "voice" or kind == "voicegame" then -- (not voiceping, above)
+			local text = hex:gsub("%x%x", function(h)
+				return string.char(tonumber(h, 16))
+			end)
+			if WG.bardroidChat and WG.bardroidChat.voice then
+				WG.bardroidChat.voice(text)
+			elseif text:find("%S") then
+				Spring.SendAllyChat(text:sub(1, 127))
+			end
 		end
 	end
 	for name in lines:gmatch("act (%S+)") do
