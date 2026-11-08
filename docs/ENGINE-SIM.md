@@ -671,6 +671,14 @@ game until the replay and spectating stages below say it computes exactly what t
   the build type's flags too. `--allow-shlib-undefined`: SDL2's own dependencies are on the phone, not in the sysroot.
 - A replay's game version must be installed: `pr-downloader --download-game "Beyond All Reason test-NNNNN-hash"` in
   the phone's container (BAR's rapid servers, as the app's update does).
+- Disk cleanup (Kailil, 2026-11-08, "clean up the bloat"; `C:\Tools\BARANDROID` 70 -> 37 GB): gone are the build
+  folders `engine-sim\build-gcc-{move,units,luavm,lua,shader,sim1,stock,pgo}`, the profiler's cache
+  `engine-sim\symfs` (`perf-bench.ps1` fills it again each run), the 2026-10-27 research's builds and captures in
+  `hailmary-work` (`build-*`, `dbgsym`, `tracy`, `symfs`, `win-engine`, `out`) and the emulator's quick-boot snapshot
+  (it cold-boots). Kept: every source checkout and branch, `hailmary-work\sysroot` and `static-libs`, the build
+  folders `build-gcc-pgo-lse` (its profile data are tied to it), `build-gcc-combined` and `build-gcc-fold7`, every
+  binary in `engine-sim\out`. An old build again: `build-engine.ps1 <name> -Source <its recoil-* worktree>` (a full
+  build, its `ES_FLAGS` as its entry above says).
 
 ## Findings on the way
 
