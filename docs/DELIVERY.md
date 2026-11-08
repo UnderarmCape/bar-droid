@@ -324,12 +324,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       1 of 3v3's (Eye of Horus), 1 of Scavengers' and Raptors' (All That Glitters), and not Special Creek 1.0, whose
       download the Skirmish screen also tried. Kailil's call: fetch them ahead (the Fold7 was asked), or the app
       fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline.
-- [ ] The container's DNS is fixed at 1.1.1.1 and 8.8.8.8 (`Installer`, `etc/resolv.conf`): on the dev phone
-      (2026-11-08 ~14:20, home Wi-Fi up, Android's own ping and the Java update check fine) pr-downloader in the
-      container could not resolve files-cdn.beyondallreason.dev, so a map download failed. Not yet known whether those
-      servers were unreachable from there or something else; a network that blocks outside DNS would break the
-      lobby's map downloads and the rapid updates while the launcher's check works. Next: find the cause; likely fix,
-      the network's own DNS servers (Android's LinkProperties) written at each start, these two after them.
+- [x] A map download in the container failed on the dev phone ("Could not resolve host", 2026-11-08 ~14:20): not the
+      container's DNS (1.1.1.1, 8.8.8.8, `Installer`). The download ran through `run-as` with the app closed, and
+      Android cuts an app's network while it is in the background (no activity shown, no foreground service): a ping
+      to 8.8.8.8 as the app failed then, worked with the launcher open, failed again 12 s after it went to the
+      background. With the launcher open the container resolved the CDN and `setup-container.sh map "Eye Of Horus
+      1.7.1"` fetched it (56 MB, 13 s). The app's own downloads run with the game screen or GameService's foreground
+      service up, so they keep the network. For tools: run as the app only with the app in front.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
