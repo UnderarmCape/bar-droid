@@ -36,10 +36,17 @@ local OFF = 0.01 -- (BAR's widgets draw nothing at this or less)
 local JAMMER = "JammerPreviewAlwaysShow" -- (an engine setting BAR's jammer preview reads every few seconds)
 local jammerOff, restored
 
--- the real widget handler, if this widget was given it (a game widget's); a user widget's stand-in does not count
+-- the real widget handler, if this widget was given it (a game widget's); a user widget's stand-in does not count.
+-- Looked up raw: the stand-in's own lookups log "widgetHandler.knownWidgets is not available to user widgets", one
+-- warning each, three in every game's infolog (dev phone, 2026-11-08); the real handler holds all three as its own
+-- fields (barwidgets.lua)
 local function realHandler()
 	local h = rawget(widget, "widgetHandler")
-	return type(h) == "table" and type(h.knownWidgets) == "table" and h.DisableWidget and h.EnableWidget and h or nil
+	if type(h) ~= "table" then
+		return nil
+	end
+	local known, disable, enable = rawget(h, "knownWidgets"), rawget(h, "DisableWidget"), rawget(h, "EnableWidget")
+	return type(known) == "table" and disable and enable and h or nil
 end
 
 local function readSaved()
@@ -112,10 +119,27 @@ function widget:Update()
 	end
 	if not big then
 		if saved then
-			-- (the file goes when this game ends cleanly, when BAR saves the values put back: a crash before that
-			-- would otherwise leave BAR's saved 0s for good)
-			restored = true
-			Spring.Echo("[bardroid-sensors] the sensor range circles are back (" .. teams .. " teams)")
+			-- (switched off whole by a big game with the game's widgets: a user widget, as here with BAR's own engine,
+			-- cannot switch them on, so the note stays for the next game that can; it said "back", the file went at
+			-- the game's end, and the circles stayed off for good, dev phone 2026-11-08)
+			local pending = {}
+			if not handler then
+				for _, api in ipairs(APIS) do
+					if saved[api .. "Off"] and not WG[api] then -- (loaded: the player switched it on in BAR's Settings)
+						pending[api .. "Off"] = 1
+					end
+				end
+			end
+			if next(pending) then
+				writeSaved(pending)
+				Spring.Echo("[bardroid-sensors] the sensor range circles stay off until a game with the app's game widgets"
+					.. " (BAR's Settings can switch them on)")
+			else
+				-- (the file goes when this game ends cleanly, when BAR saves the values put back: a crash before that
+				-- would otherwise leave BAR's saved 0s for good)
+				restored = true
+				Spring.Echo("[bardroid-sensors] the sensor range circles are back (" .. teams .. " teams)")
+			end
 		end
 		return
 	end
