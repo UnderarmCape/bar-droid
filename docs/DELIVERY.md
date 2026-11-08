@@ -324,6 +324,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       1 of 3v3's (Eye of Horus), 1 of Scavengers' and Raptors' (All That Glitters), and not Special Creek 1.0, whose
       download the Skirmish screen also tried. Kailil's call: fetch them ahead (the Fold7 was asked), or the app
       fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline.
+- [ ] The container's DNS is fixed at 1.1.1.1 and 8.8.8.8 (`Installer`, `etc/resolv.conf`): on the dev phone
+      (2026-11-08 ~14:20, home Wi-Fi up, Android's own ping and the Java update check fine) pr-downloader in the
+      container could not resolve files-cdn.beyondallreason.dev, so a map download failed. Not yet known whether those
+      servers were unreachable from there or something else; a network that blocks outside DNS would break the
+      lobby's map downloads and the rapid updates while the launcher's check works. Next: find the cause; likely fix,
+      the network's own DNS servers (Android's LinkProperties) written at each start, these two after them.
 
 ### For developers (BAR's devs first)
 - [x] docs/BUILDING.md: toolchain, builds, phone install, the laptop checks, releasing; the Linux equivalents where
