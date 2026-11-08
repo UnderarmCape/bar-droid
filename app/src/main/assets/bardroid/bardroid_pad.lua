@@ -1082,7 +1082,7 @@ local SHARE_STEPS = { 0.1, 0.25, 0.5, 0.75, 1 }
 local SHARE_COLORS = { UNITS = { 1, 0.78, 0.25 }, METAL = { 0.8, 0.84, 0.92 }, ENERGY = { 1, 0.86, 0.22 } }
 local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TABS), step (SHARE_STEPS) }
 local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
-local given = nil -- units just given: { units, teamID, at }; none of them there SHARE_CHECK_SECONDS later: refused
+local given = nil -- units just given: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later: BAR kept them
 local SHARE_CHECK_SECONDS = 1.5
 
 local function teammates()
@@ -1200,23 +1200,38 @@ local function shareConfirm()
 		return
 	end
 	Spring.ShareResources(team.teamID, "units")
-	given = { units = units, teamID = team.teamID, at = now() }
+	given = { units = units, teamID = team.teamID, from = Spring.GetMyTeamID(), at = now() }
 	shareClose("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
 end
 
--- (a game whose rules keep units from being given: BAR's unit sharing modoption)
+-- (units BAR kept: all of them in a game whose rules forbid giving units, BAR's disable_unit_sharing; some or all
+-- for its other gadgets: partly built units with "easytax", a teammate at their unit limit. It said "this game does
+-- not allow giving units" only when none went, for any reason, and nothing when some stayed, 2026-11-08)
 local function shareCheck()
-	if Spring.DiffTimers(now(), given.at) < SHARE_CHECK_SECONDS then
+	if not given.checkNow and Spring.DiffTimers(now(), given.at) < SHARE_CHECK_SECONDS then
 		return
 	end
+	local moved, kept = 0, 0
 	for _, unitID in ipairs(given.units) do
-		if Spring.GetUnitTeam(unitID) == given.teamID then
-			given = nil
-			return
+		local team = Spring.GetUnitTeam(unitID) -- (nil: gone meanwhile, counted neither way)
+		if team == given.teamID then
+			moved = moved + 1
+		elseif team == given.from then
+			kept = kept + 1
 		end
 	end
 	given = nil
-	note("THIS GAME DOES NOT ALLOW GIVING UNITS", nil, 2.5)
+	if kept == 0 then
+		return
+	end
+	local rule = (Spring.GetModOptions() or {}).disable_unit_sharing
+	if moved > 0 then
+		note("GAVE " .. moved .. " OF " .. (moved + kept) .. ": THIS GAME KEPT THE REST", nil, 2.5)
+	elseif rule == true or rule == "1" or rule == "true" then
+		note("THIS GAME DOES NOT ALLOW GIVING UNITS", nil, 2.5)
+	else
+		note("NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT", nil, 2.5)
+	end
 end
 
 local function shareDraw(vsx, vsy)
@@ -2328,6 +2343,9 @@ function widget:Initialize()
 		shareTest = function(teams)
 			share = { index = 1, teams = teams, tab = shareLastTab, step = shareLastStep }
 			modal = "share"
+		end,
+		shareGiven = function(units, teamID) -- (tools/pad-test.ps1 -Share: units just given, checked at the next update)
+			given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }
 		end,
 		shareAmount = function() -- (all three: "a and f()" kept only the amount, and the test's checks went blind)
 			if share and shareResource(share) then

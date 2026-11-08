@@ -15,6 +15,7 @@ local other, calls, realShare, realRes = nil, {}, nil, nil
 -- the stand-in's stock as an ally's reads (an enemy's reads nil): current, storage, share slider. Metal: 200 of 1000
 -- at a 50 % slider, so room for 300, as BAR's "Prevent Excessive Share" counts it
 local fake = { metal = { 200, 1000, 0.5 }, energy = { 0, 1000, 1 } }
+local owner, realUnitTeam = {}, nil -- made-up units' teams (Spring.GetUnitTeam), for what BAR did with units given
 
 local function say(text)
 	Spring.Echo(text)
@@ -131,6 +132,25 @@ local STEPS = {
 		local _, note = pad().note()
 		check("METAL at their slider already: A says their storage is full, nothing given",
 			#calls == before and state() == nil and note ~= nil and note:find("FULL") ~= nil, tostring(note))
+		-- units given, what BAR did with them after (made-up units: 1 went over, 2 and 3 stayed)
+		owner = { [900001] = other, [900002] = Spring.GetMyTeamID(), [900003] = Spring.GetMyTeamID() }
+		pad().shareGiven({ 900001 }, other)
+	end,
+	function()
+		local _, note = pad().note()
+		check("units given and gone over: no note after", note == nil or not (note:find("KEPT") or note:find("NOT GIVEN")),
+			tostring(note))
+		pad().shareGiven({ 900001, 900002, 900003 }, other)
+	end,
+	function()
+		local _, note = pad().note()
+		check("some kept by BAR: it says how many went", note == "GAVE 1 OF 3: THIS GAME KEPT THE REST", tostring(note))
+		pad().shareGiven({ 900002, 900003 }, other)
+	end,
+	function()
+		local _, note = pad().note()
+		check("all kept, unit sharing allowed: why it may be", note == "NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT",
+			tostring(note))
 	end,
 }
 
@@ -153,6 +173,13 @@ function widget:GameFrame(f)
 		realShare = Spring.ShareResources
 		Spring.ShareResources = function(...)
 			calls[#calls + 1] = { ... }
+		end
+		realUnitTeam = Spring.GetUnitTeam
+		Spring.GetUnitTeam = function(unitID, ...)
+			if owner[unitID] then
+				return owner[unitID]
+			end
+			return realUnitTeam(unitID, ...)
 		end
 		realRes = Spring.GetTeamResources
 		Spring.GetTeamResources = function(teamID, res, ...)
@@ -180,6 +207,7 @@ function widget:GameFrame(f)
 	if step >= #STEPS then
 		Spring.ShareResources = realShare
 		Spring.GetTeamResources = realRes
+		Spring.GetUnitTeam = realUnitTeam
 		step = #STEPS + 1
 		say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
@@ -191,5 +219,8 @@ function widget:Shutdown()
 	end
 	if realRes then
 		Spring.GetTeamResources = realRes
+	end
+	if realUnitTeam then
+		Spring.GetUnitTeam = realUnitTeam
 	end
 end
