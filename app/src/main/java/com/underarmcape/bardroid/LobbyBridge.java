@@ -157,6 +157,7 @@ final class LobbyBridge {
     private void download(JSONObject cmd, OutputStream out) {
         String name = cmd.optString("name"), type = cmd.optString("type");
         boolean ok = false;
+        String why = null;   // (a failure's reason on the same line: offline, the lobby asks for each resource four times)
         try {
             if ("game".equals(type) || "map".equals(type)) {
                 Proot proot = new Proot(p);
@@ -168,8 +169,10 @@ final class LobbyBridge {
             } else Log.e("bridge", "download type " + type + " is not supported: " + name);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } catch (Exception e) { Log.e("bridge", "download " + type + " " + name + ": " + e); }
-        Log.i("bridge", "download " + type + " " + name + (ok ? " done" : " failed"));
+        } catch (java.net.UnknownHostException e) {
+            why = "no connection (" + e.getMessage() + ")";
+        } catch (Exception e) { why = e.toString(); }
+        Log.i("bridge", "download " + type + " " + name + (ok ? " done" : " failed" + (why != null ? ": " + why : "")));
         JSONObject r = new JSONObject();
         try { r.put("name", name).put("isSuccess", ok).put("isAborted", false); } catch (JSONException ignored) {}
         send(out, "DownloadFinished", r);
@@ -195,14 +198,20 @@ final class LobbyBridge {
         c.setConnectTimeout(15000);
         c.setReadTimeout(30000);
         c.setRequestProperty("User-Agent", "BARDroid/" + BuildConfig.VERSION_NAME);
+        boolean done = false;
         try {
             if (c.getResponseCode() != 200) { Log.e("bridge", url + ": HTTP " + c.getResponseCode()); return false; }
             try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[65536];
                 for (int n; (n = in.read(buf)) > 0; ) o.write(buf, 0, n);
             }
-        } finally { c.disconnect(); }
-        return tmp.renameTo(target) || (target.delete() && tmp.renameTo(target));
+            done = tmp.renameTo(target) || (target.delete() && tmp.renameTo(target));
+            return done;
+        } finally {
+            c.disconnect();
+            //noinspection ResultOfMethodCallIgnored
+            if (!done) tmp.delete();   // (a transfer cut short left its .part file in the write dir)
+        }
     }
 
     // ---- replays --------------------------------------------------------------------------------------
