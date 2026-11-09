@@ -500,7 +500,14 @@ function droid.layoutPanel()
 		end
 	end
 	if not x0 then
-		x0, y0, x1, y1 = vsx * 0.35, 0, vsx * 0.65, vsy * 0.14
+		-- (no order menu: before the game. Under the build menu when there is room; at the bottom's middle it went
+		-- behind BAR's "Pick your faction" panel there, rotate and cancel hidden, 2026-11-09)
+		local b, h, gap = backgroundRect, vsy * 0.14, vsy * 0.01
+		if b[3] > b[1] and b[2] - h - gap >= 0 then
+			x0, y0, x1, y1 = b[1], b[2] - h - gap, b[3], b[2] - gap
+		else
+			x0, y0, x1, y1 = vsx * 0.35, 0, vsx * 0.65, vsy * 0.14
+		end
 	end
 	x0, y0, x1, y1 = math_floor(x0), math_floor(y0), math_floor(x1), math_floor(y1)
 	local pad = math_floor(math.max(2, (y1 - y0) * 0.08))
