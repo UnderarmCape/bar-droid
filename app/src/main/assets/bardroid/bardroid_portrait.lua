@@ -388,6 +388,43 @@ local function activeBuild()
 	return cmdID and cmdID < 0 and cmdID or nil
 end
 
+-- Before the game starts (an online game's start spot and first buildings): the start unit's build options, as BAR's
+-- build menu shows them then, picked through BAR's own pregame queue widget (WG["pregame-build"], as that menu does).
+-- The dock stood there with "No units picked" and nothing to queue. Its start unit, nil once the game runs
+local function pregameStart()
+	if Spring.GetGameFrame() > 0 or Spring.GetSpectatingState() then
+		return nil
+	end
+	local pb = WG["pregame-build"]
+	if not (pb and pb.setPreGamestartDefID and pb.getPreGameDefID and pb.getBuildQueue) then
+		return nil
+	end
+	local d = Spring.GetTeamRulesParam(myTeam(), "startUnit")
+	local ud = d and UnitDefs[d]
+	return ud and ud.buildOptions and #ud.buildOptions > 0 and d or nil
+end
+
+local function pregameItems(startDefID)
+	local queued = {}
+	for _, b in ipairs(WG["pregame-build"].getBuildQueue() or {}) do
+		if type(b) == "table" and type(b[1]) == "number" and b[1] > 0 then
+			queued[b[1]] = (queued[b[1]] or 0) + 1
+		end
+	end
+	local items = {}
+	for _, d in ipairs(UnitDefs[startDefID].buildOptions) do
+		items[#items + 1] = { kind = "pregame", defID = d, queued = queued[d] }
+	end
+	return items
+end
+
+local function placeShapes()
+	return {
+		{ kind = "shape", shape = "one", label = "ONE" }, { kind = "shape", shape = "line", label = "LINE" },
+		{ kind = "shape", shape = "grid", label = "GRID" }, { kind = "shape", shape = "border", label = "BORDER" },
+	}
+end
+
 local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
 
 -- what each half shows, refreshed a few times a second and after every press
@@ -414,7 +451,10 @@ function refreshNow()
 		end
 	end
 	local newLeft, newRight, lk, rk
-	if typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first
+	local pregame = #sel == 0 and not typesFrom and pregameStart()
+	if pregame then
+		newLeft, lk = pregameItems(pregame), "pregame"
+	elseif typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first
 		local types = byType(typesUnits(), combat)
 		newLeft = { { kind = "alltypes", label = "ALL", count = 0 } }
 		for _, g in ipairs(types) do
@@ -440,6 +480,13 @@ function refreshNow()
 			newRight[#newRight + 1] = { kind = "filter", key = f.key, label = f.label }
 		end
 		rk = "filters"
+	elseif pregame and WG["pregame-build"].getPreGameDefID() then -- a building picked: its shapes and PLACE, as in
+		-- the game (the build menu copy places pregame buildings too: a map tap picks the spot, PLACE's Shift click
+		-- adds it to BAR's queue)
+		newRight, rk = placeShapes(), "place"
+	elseif pregame then -- (the queue on the map, BAR's: its last one off, or all of it)
+		newRight = { { kind = "pregameundo", label = "UNDO LAST" }, { kind = "pregameclear", label = "CLEAR QUEUE" } }
+		rk = "pregame"
 	elseif #sel == 0 or typesFrom then
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
@@ -456,11 +503,7 @@ function refreshNow()
 		rk = "units"
 	elseif building and not selectedFactory() then -- a building picked: its shapes, and PLACE under them (the build
 		-- menu copy's panel, in placeRect: RtsTouch places from its rects, bardroid_place.txt)
-		newRight = {
-			{ kind = "shape", shape = "one", label = "ONE" }, { kind = "shape", shape = "line", label = "LINE" },
-			{ kind = "shape", shape = "grid", label = "GRID" }, { kind = "shape", shape = "border", label = "BORDER" },
-		}
-		rk = "place"
+		newRight, rk = placeShapes(), "place"
 	elseif factoryItem then -- a factory's item pressed: its queue
 		newRight = {
 			{ kind = "queue", n = 1, label = "+1" }, { kind = "queue", n = 5, label = "+5" },
@@ -620,6 +663,23 @@ local function pressItem(item, long)
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)
 	elseif k == "back" then
 		factoryItem = nil
+	elseif k == "pregame" or k == "pregameundo" or k == "pregameclear" then
+		local pb = WG["pregame-build"]
+		if pb then
+			if k == "pregame" then -- (a second tap puts it away; so does PLACE's cancel)
+				pb.setPreGamestartDefID(pb.getPreGameDefID() ~= item.defID and item.defID or nil)
+			elseif k == "pregameundo" then -- (as BAR's right click there: the last one off)
+				local q = pb.getBuildQueue()
+				if q and #q > 0 then
+					table.remove(q)
+				end
+			elseif pb.setBuildQueue then
+				pb.setBuildQueue({})
+			end
+			if pb.forceRefresh then
+				pb.forceRefresh()
+			end
+		end
 	end
 	refresh()
 end
@@ -736,9 +796,11 @@ local function drawTile(item, r)
 		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, "\255\255\200\064")
 		return
 	end
-	unitTile(item.defID, r)
+	-- (a pregame option picked: lit as BAR's menu lights its picked cell)
+	local pb = item.kind == "pregame" and WG["pregame-build"]
+	unitTile(item.defID, r, pb and pb.getPreGameDefID and pb.getPreGameDefID() == item.defID or false)
 	local p, size = max(2, floor(w * 0.05)), h * 0.15
-	if item.kind == "build" then -- (as BAR's build menu: metal white, energy yellow, at the bottom right)
+	if item.kind == "build" or item.kind == "pregame" then -- (as BAR's build menu: metal white, energy yellow, bottom right)
 		local ud = UnitDefs[item.defID]
 		if ud then
 			font:Print("\255\245\245\245" .. floor(ud.metalCost or 0), r[3] - p, r[2] + p + size * 1.05, size, "ro")
@@ -747,7 +809,7 @@ local function drawTile(item, r)
 		if item.queued and item.queued > 0 then
 			bold:Print("\255\255\255\255" .. item.queued, r[1] + p * 1.5, r[4] - p - size * 1.5, size * 1.5, "o")
 		end
-		if activeBuild() == item.id or factoryItem == item.id then
+		if item.id and (activeBuild() == item.id or factoryItem == item.id) then
 			selector(r)
 		end
 	else -- a type: its count
