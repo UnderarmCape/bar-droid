@@ -19,14 +19,21 @@ function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files
 
 & $adb shell am force-stop $pkg
 InApp "rm -f files/bar/infolog.txt"
+# the GPU driver's rare fault (docs/DELIVERY.md): a new one during the run ends the wait and is named in the result
+function FaultCount { [int]("0" + ((InApp "grep -a -c 'GPU driver refused' files/logs/launcher.log 2>/dev/null") | Select-Object -First 1)) }
+$faults0 = FaultCount
+function DriverFault { (FaultCount) -gt $faults0 }
 Send-AppFile $adb (Join-Path $PSScriptRoot "touch-phone-test\bardroid_touch_phone_test.lua") $widget
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
 try {
   Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $until = (Get-Date).AddMinutes(4)
-  while ((Get-Date) -lt $until -and -not (Log '\[touchphone\] done' 1)) { Start-Sleep 3 }
-  if (-not (Log '\[touchphone\] done' 1)) { "[touchphone] FAIL the test did not finish in 4 minutes" }
+  while ((Get-Date) -lt $until -and -not (Log '\[touchphone\] done' 1) -and -not (DriverFault)) { Start-Sleep 3 }
+  if (-not (Log '\[touchphone\] done' 1)) {
+    if (DriverFault) { "[touchphone] FAIL the game ended on the GPU driver's rare fault (DriverWatch closed it): not the touch camera; run it again" }
+    else { "[touchphone] FAIL the test did not finish in 4 minutes" }
+  }
   Log '\[touchphone\]|bardroid_touch.*[Ee]rror|\[bardroid-touch\] error' 40 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
