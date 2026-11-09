@@ -216,7 +216,11 @@ final class RtsTouch {
             if (log != null) log.close();
             //noinspection ResultOfMethodCallIgnored
             widgetDir.mkdirs();
-            log = new FileOutputStream(touchLog, false);
+            new FileOutputStream(touchLog, false).close();   // (emptied: the widgets see it shrink)
+            // appended (O_APPEND), not written at this stream's own offset: a test widget's own lines in the same log
+            // (tools/lobby-touch-test, touch-phone-test) were overwritten in place under the reading widget's position,
+            // and the app's next lines with them: the lobby's D-pad lost its first presses (dev phone, 2026-11-09)
+            log = new FileOutputStream(touchLog, true);
             logBytes = 0;
         } catch (IOException e) { Log.e("touch", "touch log", e); log = null; }
     }
