@@ -1135,8 +1135,23 @@ final class RtsTouch {
         holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
         placedClick = () -> {
             placedClick = null;
-            clickAt(s[0], s[1]);
-            ui.postDelayed(keysUp, GRID_KEYS_MS);
+            if (pregame()) {
+                // Before the game BAR's pregame queue (gui_pregame_build.lua) works the spot out in its Update, 30 times
+                // a second, while the button is down: a click with nothing between press and release queued nothing
+                // (2026-11-09). The button held a few frames, as a hand's click is.
+                LorieView v = view();
+                v.sendMouseEvent(s[0], s[1], InputStub.BUTTON_UNDEFINED, false, false);
+                v.sendMouseEvent(s[0], s[1], InputStub.BUTTON_LEFT, true, false);
+                placedRelease = () -> {
+                    placedRelease = null;
+                    view().sendMouseEvent(s[0], s[1], InputStub.BUTTON_LEFT, false, false);
+                    ui.postDelayed(keysUp, GRID_KEYS_MS);
+                };
+                ui.postDelayed(placedRelease, PREGAME_CLICK_MS);
+            } else {
+                clickAt(s[0], s[1]);
+                ui.postDelayed(keysUp, GRID_KEYS_MS);
+            }
             // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
             send(queueHeld ? "spot none" : "spot placed");
         };
@@ -1144,14 +1159,22 @@ final class RtsTouch {
         spotSentAt = -1;
     }
 
+    private static final long PREGAME_CLICK_MS = 120;   // a building's click before the game: the button down this long
     private Runnable placedClick;   // a building's click, waiting for its Shift
+    private Runnable placedRelease; // its button coming up (before the game)
 
     /** The click now, before the next touch moves the pointer away. */
     private void finishPlacedClick() {
         Runnable r = placedClick;
-        if (r == null) return;
-        ui.removeCallbacks(r);
-        r.run();
+        if (r != null) {
+            ui.removeCallbacks(r);
+            r.run();
+        }
+        r = placedRelease;
+        if (r != null) {
+            ui.removeCallbacks(r);
+            r.run();
+        }
     }
 
     /** A left click at X screen pixel (x, y). */

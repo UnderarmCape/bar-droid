@@ -469,8 +469,12 @@ function droid.pressPanel(x, y)
 		Spring.SendCommands("buildfacing inc")
 	elseif inside(p.cancel) then
 		droid.spot, droid.again = nil, nil
-		if spGetGameFrame() == 0 and WG["pregame-build"] and WG["pregame-build"].setPreGameDefID then
-			WG["pregame-build"].setPreGameDefID(nil)
+		-- (before the game: BAR's pregame queue's setPreGamestartDefID; its old name setPreGameDefID, which this called,
+		-- is gone, and cancel did nothing there)
+		local pb = spGetGameFrame() == 0 and WG["pregame-build"]
+		local putAway = pb and (pb.setPreGamestartDefID or pb.setPreGameDefID)
+		if putAway then
+			putAway(nil)
 		else
 			Spring.SetActiveCommand(0)
 		end

@@ -687,6 +687,15 @@ local function pregameBuild()
 	local pb = WG["pregame-build"]
 	return Spring.GetGameFrame() == 0 and pb and pb.getPreGameDefID and pb.getPreGameDefID() ~= nil
 end
+-- the building picked for BAR's pregame queue put away: its setPreGamestartDefID (this called its old name
+-- setPreGameDefID, gone from BAR: an error, and BAR took the pad's widget out of the game, 2026-11-09)
+local function pregamePutAway()
+	local pb = WG["pregame-build"]
+	local putAway = pb and (pb.setPreGamestartDefID or pb.setPreGameDefID)
+	if putAway then
+		putAway(nil)
+	end
+end
 
 -- LB + B with factories selected: each stopped with its whole queue gone. BAR's own Stop Production (it keeps the unit
 -- being built), then that one taken off too (a right click on its build option, Ctrl+Shift: as many as there are); each
@@ -835,7 +844,7 @@ end
 
 local function cancel()
 	if pregameBuild() then
-		WG["pregame-build"].setPreGameDefID(nil)
+		pregamePutAway()
 	elseif select(2, Spring.GetActiveCommand()) then
 		Spring.SetActiveCommand(0)
 	else
@@ -1531,7 +1540,7 @@ local ACTIONS = {
 	end,
 	build_exit = function() -- a grid placed with A: the building put away, as v0.8.5's A does
 		if pregameBuild() then
-			WG["pregame-build"].setPreGameDefID(nil)
+			pregamePutAway()
 		else
 			local _, id = Spring.GetActiveCommand()
 			if id and id < 0 then
