@@ -885,8 +885,16 @@ local function drawPlace()
 		textIn(sym, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, k == "rotate" and "\255\235\235\235" or "\255\255\150\140", bold)
 	end
 	if not ready then
-		textIn("tap the map for the spot", pl[1], pl[2], pl[3], pl[2] + (pl[4] - pl[2]) * 0.32, (pl[4] - pl[2]) * 0.14,
-			"\255\185\215\185")
+		-- under rotate and cancel across the panel when it is tall enough (squeezed under the PLACE label it came out
+		-- tiny), at the size of the dock's other hints; a short panel keeps it under the label
+		local size = (L.groups[4] - L.groups[2]) * 0.24
+		local below = p.rotate[2] - p.all[2]
+		if below >= size * 2.2 then
+			textIn("tap the map for the spot", p.all[1], p.all[2], p.all[3], p.rotate[2], size, "\255\185\215\185")
+		else
+			textIn("tap the map for the spot", pl[1], pl[2], pl[3], pl[2] + (pl[4] - pl[2]) * 0.32, (pl[4] - pl[2]) * 0.14,
+				"\255\185\215\185")
+		end
 	end
 end
 
