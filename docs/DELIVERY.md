@@ -1348,6 +1348,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       to swap and reclaims caches; the game's units, map and paths are in use; a forced Lua garbage collection is a
       hitch of its own, more CPU and heat). What can: less work per frame when hot (render resolution, the cap), a
       cooler phone. A note for Kailil, no change.
+- [ ] Speak to chat started, cancelled and started again quickly (2026-11-09, dev phone, a virtual pad's LB + RB twice
+      three times in the lobby): Android's `cancel()` answers with a late `onError(5)`. Here it came before the next
+      start; had it come after, `done()` would have ended the new session (the note gone, the words dropped). The cure:
+      a fresh `SpeechRecognizer` per session (`cancel()` destroys the old, so its late callbacks never arrive), and a
+      new one after `ERROR_RECOGNIZER_BUSY`. Not changed yet: it needs a live microphone to test, and the dev phone is
+      travelling with Kailil (the test's microphone heard speech in the car; nothing was understood or kept, the touch
+      log was emptied). Test it where the dev phone is alone.
 - [ ] Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
       colorize, bottom position and always-show options); BAR's game runs the app's copy ("BAR Droid order menu"), the
       controller game v0.8.5's renamed "Order menu (controller)" (infolog: "Options: 'ordermenu_colorize' widgetConfig:
