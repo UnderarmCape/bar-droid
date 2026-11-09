@@ -55,7 +55,7 @@ try {
   Log '\[lobbytouch\] (PASS|FAIL|done)|\[lobbylogin\]|bardroid_lobby.*[Ee]rror' 60 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
-  InApp "rm -f $widgets/bardroid_login_wait.lua $widgets/bardroid_lobby_touch_test.lua files/bar/dev-springsettings.cfg; sed -i '/^LogFlushLevel = 0/d' files/bar/springsettings.cfg"
+  InApp "rm -f $widgets/bardroid_login_wait.lua $widgets/bardroid_lobby_touch_test.lua files/bar/dev-springsettings.cfg"   # (its LogFlushLevel: launch-bar.sh puts the old one back)
   & $adb shell am force-stop $pkg
   & $adb shell rm -f $evemu $dpad
 }

@@ -448,11 +448,25 @@ else
   widget_order "Mission Info" ""; widget_order "Widget Profiler" ""; rm -f "$BAR/LuaUI/Config/bardroid_bench.txt"
 fi
 
-# (the engine saves BarDroidPhoneLuaDir, below, into springsettings.cfg at exit: a start without it has none)
-sed -i '/^BarDroidPhoneLuaDir *=/d' "$BAR/springsettings.cfg" 2>/dev/null
+# The engine saves every key it read into springsettings.cfg at exit: the keys below that only some starts set, and the
+# keys of a developer's dev-springsettings.cfg, would outlive the start that set them (a test's LogFlushLevel and
+# profiling switch stayed on the dev phone after its file was gone). They go, and the lines the dev file covered come
+# back, before this start adds its own.
+sed -i -e '/^BarDroidPhoneLuaDir *=/d' -e '/^BarDroidGameWidgetsDir *=/d' "$BAR/springsettings.cfg" 2>/dev/null
+DEV_KEYS="$BAR/.dev-springsettings-keys" DEV_ORIG="$BAR/.dev-springsettings-orig"
+if [ -f "$DEV_KEYS" ]; then
+  while read -r k; do [ -n "$k" ] && sed -i "/^$k *=/d" "$BAR/springsettings.cfg"; done < "$DEV_KEYS"
+  cat "$DEV_ORIG" >> "$BAR/springsettings.cfg" 2>/dev/null
+  rm -f "$DEV_KEYS" "$DEV_ORIG"
+fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
-[ -f "$BAR/dev-springsettings.cfg" ] && cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg"
+if [ -f "$BAR/dev-springsettings.cfg" ]; then
+  sed -n 's/^ *\([A-Za-z0-9_]*\) *=.*/\1/p' "$BAR/dev-springsettings.cfg" > "$DEV_KEYS"
+  : > "$DEV_ORIG"
+  while read -r k; do [ -n "$k" ] && grep "^$k *=" "$BAR/springsettings.cfg" >> "$DEV_ORIG"; done < "$DEV_KEYS"
+  cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg (until a start without it)"
+fi
 if [ "${BARDROID_GAME_WIDGETS:-0}" = 1 ]; then   # (above: the app's widgets as the game's)
   app_widgets_to "$BAR/LuaUI/Widgets" "$GAME_WIDGETS"
   printf 'BarDroidGameWidgetsDir = bardroid-ui\n' >> "$BAR/springsettings.cfg"
