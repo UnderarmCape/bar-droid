@@ -204,6 +204,16 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     /**
+     * Leaving the launcher keeps what it shows too (Kailil's Fold7, 2026-11-09: "Play upright" ticked, the launcher left
+     * by Home and the lobby opened from the app icon: the box was never saved and the lobby stayed sideways).
+     */
+    @Override
+    protected void onPause() {
+        saveSettings(false);
+        super.onPause();
+    }
+
+    /**
      * "start bench" in the intent starts BAR's benchmark scenario unattended (tools/phone-bench.ps1:
      * adb shell am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench); "start skirmish" the
      * Play vs AI game (tools/phone-memory.ps1).
