@@ -1071,25 +1071,49 @@ local function drawResources()
 			bold:Print((res == "metal" and "\255\225\225\225" or "\255\255\230\080") .. short(cur), x0 + pad * 1.5,
 				ty, size * 1.15, "o")
 			font:Print("\255\160\160\160" .. short(storage), bx1, ty, size * 0.8, "ro")
+			if res == "energy" and (Game.windMax or 1) > 0 then -- (the wind, as BAR's top bar gave it: off upright)
+				local wind = "\255\150\150\150wind \255\220\220\220" .. string.format("%.1f", select(4, Spring.GetWind()) or 0)
+				local sw = font:GetTextWidth(short(storage)) * size * 0.8
+				font:Print(wind, bx1 - sw - pad * 2, ty, size * 0.8, "ro")
+			end
 			font:Print(string.format("\255\120\230\120+%s  \255\240\110\100-%s", short(income or 0), short(expense or 0)),
 				bx0, ty, size * 0.8, "o")
 		end
 	end
 end
 
--- BAR's top bar's own resource bars: off while the dock is up (it shows them), back once it is down
+-- BAR's top bar's own resource bars: off while the screen is upright (the dock shows them; a spectator has no dock, and
+-- upright they ran over the top bar's numbers and buttons there too, 2026-11-09), back once it is not
 local resBarsHidden = false
+local function upright()
+	local x, y = Spring.GetViewGeometry()
+	return y > x * PORTRAIT
+end
+-- Its indicators too (wind, tide, the commander counts): BAR places them by the screen's width while its buttons go by
+-- their own, so upright they sat over Statistics, Settings and Quit; the dock's energy panel shows the wind instead.
+local indicatorsHidden = false
 local function topbarBars(dockUp)
 	local tb = WG.topbar
-	if not (tb and tb.setResourceBarsVisible and tb.getResourceBarsVisible) then
+	if not tb then
 		return
 	end
-	if dockUp and tb.getResourceBarsVisible() then -- (also when BAR shows them again, at the game's start)
-		tb.setResourceBarsVisible(false)
-		resBarsHidden = true
-	elseif not dockUp and resBarsHidden then
-		tb.setResourceBarsVisible(true)
-		resBarsHidden = false
+	if tb.setResourceBarsVisible and tb.getResourceBarsVisible then
+		if dockUp and tb.getResourceBarsVisible() then -- (also when BAR shows them again, at the game's start)
+			tb.setResourceBarsVisible(false)
+			resBarsHidden = true
+		elseif not dockUp and resBarsHidden then
+			tb.setResourceBarsVisible(true)
+			resBarsHidden = false
+		end
+	end
+	if tb.setIndicatorsVisible and tb.getIndicatorsVisible then
+		if dockUp and tb.getIndicatorsVisible() then
+			tb.setIndicatorsVisible(false)
+			indicatorsHidden = true
+		elseif not dockUp and indicatorsHidden then
+			tb.setIndicatorsVisible(true)
+			indicatorsHidden = false
+		end
 	end
 end
 
@@ -1302,7 +1326,7 @@ local refreshAt = 0
 function widget:Update(dt)
 	checkActive()
 	dockLines()
-	topbarBars(active)
+	topbarBars(active or upright())
 	if not active then
 		return
 	end
