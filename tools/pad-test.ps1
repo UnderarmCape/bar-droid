@@ -81,7 +81,7 @@ try {
   } else { & $adb shell "uinput $evemu" }
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
-  while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
+  while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1) -and -not (DriverFault)) { Start-Sleep 2 }
   # (no case logged and the game still up: the virtual pad was not seen; its script once more)
   if (-not ($Share -or $Chat) -and -not (Log '\[padtest\] done' 1) -and -not (Log '\[padtest\] (PASS|FAIL)' 1) -and -not (DriverFault)) {
     "[padtest] the pad was not seen: its script once more"
