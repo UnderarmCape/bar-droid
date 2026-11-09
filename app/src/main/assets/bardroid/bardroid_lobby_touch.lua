@@ -574,6 +574,7 @@ local GOLD = { 1, 0.78, 0.25, 1 }
 
 local voiceOn, voiceTarget = false, nil -- listening; the target picked, by name (kept for the lobby's session)
 local voicePanel, voiceLabel
+local voiceTextW = 0 -- its words' width, as the font measures them
 
 local function voiceTargets()
 	local targets = {}
@@ -623,19 +624,27 @@ local function voiceShow()
 			resizable = false, draggable = false,
 			padding = { 0, 0, 0, 0 },
 		})
+		-- (not Chili's autosize: sized to its text while the panel was still 100 wide, the words sat off centre and their
+		-- start was cut, "'EAK TO CHAT: JOIN A SERVER ...", dev phone, 2026-11-09)
 		voiceLabel = Chili.Label:New({
 			parent = voicePanel,
 			x = 0, y = 0, right = 0, bottom = 0,
+			autosize = false,
 			align = "center", valign = "center",
 			caption = "",
 			objectOverrideFont = config and config:GetFont(3),
 		})
 	end
 	local target = voiceCurrent(voiceTargets())
-	voiceLabel:SetCaption(target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
-		or "SPEAK TO CHAT: JOIN A SERVER OR OPEN THE CHAT")
-	local w = math.min(screen0.width - 16, 640)
+	local caption = target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
+		or "SPEAK TO CHAT: JOIN A SERVER OR OPEN THE CHAT"
+	local font = voiceLabel.font
+	local ok, textW = pcall(function() return font:GetTextWidth(caption) end)
+	voiceTextW = ok and tonumber(textW) or 0
+	local w = math.min(screen0.width - 16, math.max(640, math.ceil(voiceTextW) + 48)) -- (a long name: the panel grows)
 	voicePanel:SetPos(math.floor((screen0.width - w) / 2), 8, w, 56)
+	voiceLabel:SetPos(0, 0, w, 56)
+	voiceLabel:SetCaption(caption)
 	voicePanel:Show()
 	voicePanel:BringToFront()
 end
@@ -953,6 +962,14 @@ function widget:Initialize()
 		warning = function() return warningShown end,
 		-- (tools/lobby-touch-test: speak to chat's panel up, and a game loaded or not, as the engine's callins say)
 		voiceShown = function() return voicePanel ~= nil and voicePanel.visible ~= false end,
+		-- the panel, its label and the words' width (panel x, y, w, h; label x, w; words w; screen w; caption)
+		voiceRect = function()
+			if not voicePanel then
+				return nil
+			end
+			return voicePanel.x, voicePanel.y, voicePanel.width, voicePanel.height, voiceLabel.x, voiceLabel.width,
+				voiceTextW, screen0 and screen0.width, voiceLabel.caption
+		end,
 		activate = function(game)
 			if game then
 				widget:ActivateGame()

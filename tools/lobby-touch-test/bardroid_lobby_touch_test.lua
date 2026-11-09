@@ -342,6 +342,13 @@ cases = {
 	function()
 		local L = WG.BarDroidLobbyTouch
 		check("speak to chat in the lobby: the panel says where the words go", L.voiceShown())
+		-- (its words whole and centred: they were cut at the start, the label sized to them in a 100-wide panel)
+		local px, py, pw, ph, lx, lw, tw, sw, cap = L.voiceRect()
+		check("  its words fit in the panel, the label as wide as it, the panel centred on the screen",
+			px and tw > 0 and tw <= pw and lx == 0 and lw == pw and px >= 0 and px + pw <= sw
+				and math.abs(px * 2 + pw - sw) <= 1,
+			px and string.format("panel %d,%d %dx%d, label at %d %d wide, words %d wide, screen %d: %s",
+				px, py, pw, ph, lx, lw, tw, sw, tostring(cap)))
 		L.activate(true)
 		check("a game loads: the lobby's panel goes", not L.voiceShown())
 		appAct("act voice_on")
