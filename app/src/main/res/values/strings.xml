@@ -12,6 +12,15 @@
          server": the app's ControllerBridge takes the sticks and every button it maps first (GameActivity), so the switch
          reaches only a pad's other buttons -->
     <string name="lorie_pref_ignoreGamepadEvents_summary">A pad\'s buttons the app\'s gamepad controls do not use are not passed to the game as keys; the controls themselves stay on</string>
+    <!-- Keyboard's shortcut entries, upstream titles ending in full stops, "Samsung Dex", and the service unnamed: the
+         service is the one the launcher's "Keyboard shortcuts go to the game" names (key_capture_service) -->
+    <string name="lorie_pref_dexMetaKeyCapture_summary">Samsung DeX only: Alt+F4, Meta+D, Meta+E and the like go to the game, not to DeX</string>
+    <string name="lorie_pref_enableAccessibilityService">Accessibility service for system shortcuts</string>
+    <string name="lorie_pref_enableAccessibilityService_summary">Opens Android\'s Accessibility settings: turn on \"Beyond All Reason keyboard shortcuts\" there</string>
+    <string name="lorie_pref_enableAccessibilityServiceAutomatically">Turn that service on automatically</string>
+    <string name="lorie_pref_enableAccessibilityServiceAutomatically_summary">Needs the WRITE_SECURE_SETTINGS permission (granted over adb)</string>
+    <string name="lorie_pref_filterOutWinkey">Leave the Win (Meta) key to DeX</string>
+    <string name="lorie_pref_filterOutWinkey_summary">DeX\'s own Win key shortcuts keep working while the others go to the game; needs the Accessibility service</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
