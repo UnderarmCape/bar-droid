@@ -150,6 +150,11 @@ local function inRect(x, y, r)
 	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
 end
 
+local dirty = true -- the dock's still parts changed: its texture is drawn again (drawDock)
+local function markDirty()
+	dirty = true
+end
+
 local function myTeam()
 	return Spring.GetMyTeamID()
 end
@@ -168,6 +173,7 @@ end
 -- buildmenu to 3x4 ... reduce to 3x3 at minimum 3x2"); the dock no taller than it needs, DOCK_MAX at most
 
 local function layout()
+	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
 	local pad = max(4, floor(vsx * 0.012))
 	local gap = max(3, floor(pad * 0.6))
@@ -462,6 +468,7 @@ function refreshNow()
 		newRight, rk = orders, "orders"
 	end
 	leftItems, rightItems = newLeft, newRight
+	markDirty()
 	snapSet(leftScroll, math.ceil(#leftItems / 3), L.leftRows or 2, lk == leftKind and not newPick)
 	snapSet(rightScroll, math.ceil(#rightItems / 2), L.rightRows or 3, rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
@@ -1150,8 +1157,12 @@ function widget:Update(dt)
 	if not active then
 		return
 	end
-	snapUpdate(leftScroll, dt)
-	snapUpdate(rightScroll, dt)
+	for _, s in ipairs({ leftScroll, rightScroll }) do
+		if s.drag or s.t < 1 then
+			markDirty() -- (rows moving: the texture drawn again each frame until they settle)
+		end
+		snapUpdate(s, dt)
+	end
 	local t = now()
 	if menu and not selecting and not leftScroll.drag and not rightScroll.drag and t - lastTouch > MENU_SECONDS then
 		setMenu(false)
@@ -1179,16 +1190,52 @@ end
 local profile = Spring.GetConfigInt("bardroid_portrait_profile", 0) == 1
 local profSum, profN, profAt = 0, 0, 0
 
-local function drawDock()
+-- The dock's still parts in a texture, drawn again only when something changed (dirty: the refresh a few times a
+-- second, a press, rows moving, the layout), as BAR's own build and order menus keep theirs (gl.R2tHelper); the
+-- moving parts drawn over it every frame: metal and energy, PLACE, the mode. Screen pixels (no supersampling: the
+-- dock starts at 0,0, so the halves' scissor rects are the texture's own). Without the helper: all drawn each frame.
+local dockTex, texW, texH
+
+local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
-	drawResources()
 	drawSelection()
 	drawHalf("left")
 	drawHalf("right")
+	drawGroups() -- (always: a pick away from any group; Kailil asked for them whenever nothing is picked)
+end
+
+local function drawDock()
+	local R = gl.R2tHelper
+	if R and R.RenderInRect and R.BlendTexRect then
+		local w, h = L.dock[3] - L.dock[1], L.dock[4] - L.dock[2]
+		if dockTex and (texW ~= w or texH ~= h) then
+			gl.DeleteTexture(dockTex)
+			dockTex = nil
+		end
+		if not dockTex then
+			dockTex = gl.CreateTexture(w, h, { target = GL.TEXTURE_2D, format = GL.RGBA8, fbo = true })
+			texW, texH, dirty = w, h, true
+		end
+		if dirty and dockTex then
+			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], drawStill, true)
+			dirty = false
+		end
+		if dockTex then
+			-- (drawn into the texture the dock's panel is no longer opaque: the game and BAR's menus under it showed
+			-- through; an opaque base under it)
+			gl.Color(0.03, 0.035, 0.04, 1)
+			gl.Rect(L.dock[1], L.dock[2], L.dock[3], L.dock[4])
+			gl.Color(1, 1, 1, 1)
+			R.BlendTexRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], true)
+		end
+	else
+		drawStill()
+	end
+	resetGL()
+	drawResources()
 	if rightKind == "place" then
 		drawPlace()
 	end
-	drawGroups() -- (always: a pick away from any group; Kailil asked for them whenever nothing is picked)
 	drawMode()
 end
 
@@ -1352,6 +1399,9 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	if dockTex then
+		gl.DeleteTexture(dockTex)
+	end
 	WG.BarDroidPortrait = nil
 	active = false
 	topbarBars(false)
