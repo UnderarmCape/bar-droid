@@ -1367,6 +1367,13 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's wind gauge, which BAR places by the screen's width while the buttons move: over "Statistics" at interface
       scale 1.0, over "Save" at 0.8 (tried, back to 1.0: it only made everything smaller). BAR's layout, no setter: for
       BAR's developers, or a wind readout in the dock and the gauge left as it is.
+- [x] The portrait dock on the unfolded Fold7 (2026-11-09): upright its X screen is 1080x1198, 1.11 times taller than
+      wide, and the dock came up only past 1.15, so "Play upright" there gave BAR's landscape HUD squeezed upright (this
+      file's "Touch HUD on the Fold7 unfolded" notes). Now past 1.05; and the name, groups and resource rows are capped
+      by the height too (on that short dock they took a quarter of it, the build grid got 3x2 small tiles beside a blank
+      strip). Dev phone at the Fold7's 1968x2184 (`wm size`): the dock up, the grid's tiles full width, a building's
+      shapes and PLACE; at its own 1080x2316 the layout as before (936x2013: 3x4 grid). BAR's wind gauge clear of its
+      buttons at that width.
 - [x] The portrait dock's cost (dev phone, 2026-11-09, springsettings `bardroid_portrait_profile = 1`): its drawing
       2.1-3.3 ms a frame (BAR's FlowUI panels, buttons and unit tiles drawn anew every frame), its refresh about 4 a
       second at about 1 ms. A display list of the still parts made it worse (4-10 ms, growing: FlowUI makes lists of

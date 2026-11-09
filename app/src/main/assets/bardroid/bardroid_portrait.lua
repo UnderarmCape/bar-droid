@@ -46,7 +46,9 @@ local function now()
 	return spDiffTimers(spGetTimer(), timer0)
 end
 
-local PORTRAIT = 1.15 -- taller than wide by this much: the dock is up
+-- taller than wide by this much: the dock is up (the unfolded Fold7 upright is 1080x1198, 1.11: at 1.15 it got BAR's
+-- landscape HUD squeezed upright, the case the dock is for)
+local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
 local MENU_SECONDS = 7 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds")
 local BLINK = 0.45 -- seconds of the menu's opening pulse
@@ -177,8 +179,10 @@ local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	local pad = max(4, floor(vsx * 0.012))
 	local gap = max(3, floor(pad * 0.6))
-	local selH = floor(vsx * 0.15)
-	local groupsH = floor(vsx * 0.13)
+	-- (by the width, and by the height on a near-square screen: the unfolded Fold7 upright, 1080x1198, gave a quarter
+	-- of its short dock to these rows and the build grid small tiles beside a blank strip; tall phones keep the width's)
+	local selH = floor(min(vsx * 0.15, vsy * 0.09))
+	local groupsH = floor(min(vsx * 0.13, vsy * 0.075))
 	local half = floor(vsx * 0.5)
 	local tile = floor((half - pad - floor(pad / 2) - 2 * gap) / 3)
 	local room = floor(vsy * DOCK_MAX) - (pad * 4 + selH + groupsH) -- the grid's height at most
@@ -186,7 +190,7 @@ local function layout()
 	if rows * (tile + gap) - gap > room then -- (2 rows that do not fit: smaller tiles)
 		tile = max(16, floor((room + gap) / rows) - gap)
 	end
-	local resH = floor(vsx * 0.06)
+	local resH = floor(min(vsx * 0.06, vsy * 0.04))
 	room = room - resH - pad
 	rows = max(2, min(4, floor((room + gap) / (tile + gap))))
 	if rows * (tile + gap) - gap > room then
