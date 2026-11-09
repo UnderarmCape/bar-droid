@@ -300,9 +300,20 @@ public class LauncherActivity extends AppCompatActivity {
         return mi.totalMem < 9_500_000_000L;
     }
 
+    /** "Samsung SM-S918U": Android's lowercase maker capitalised; a model that starts with the maker ("Xiaomi 14") alone. */
+    static String phoneName(String maker, String model) {
+        maker = maker == null ? "" : maker.trim();
+        model = model == null ? "" : model.trim();
+        if (maker.isEmpty() || model.toLowerCase(java.util.Locale.ROOT).startsWith(maker.toLowerCase(java.util.Locale.ROOT)))
+            return model.isEmpty() ? maker : model;
+        String m = maker.equals(maker.toLowerCase(java.util.Locale.ROOT))
+                ? Character.toUpperCase(maker.charAt(0)) + maker.substring(1) : maker;   // (OnePlus, HMD keep theirs)
+        return model.isEmpty() ? m : m + " " + model;
+    }
+
     private CharSequence deviceSummary() {
         StringBuilder sb = new StringBuilder();
-        sb.append(Build.MANUFACTURER).append(' ').append(Build.MODEL).append(", Android ").append(Build.VERSION.RELEASE)
+        sb.append(phoneName(Build.MANUFACTURER, Build.MODEL)).append(", Android ").append(Build.VERSION.RELEASE)
           .append(", SoC ").append(Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
         boolean adreno = new File("/dev/kgsl-3d0").exists();
         if (Prefs.EMULATOR_BUILD)
