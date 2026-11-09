@@ -8,6 +8,10 @@
          app's: said whose it is -->
     <string name="lorie_pref_version">Display server (Termux:X11) version</string>
     <!-- Output's Fullscreen, upstream "Toggle immersive mode in your device display": said what it does -->
+    <!-- Pointer's "Ignore gamepad input events", upstream "Prevent gamepad and joystick events from being forwarded to X
+         server": the app's ControllerBridge takes the sticks and every button it maps first (GameActivity), so the switch
+         reaches only a pad's other buttons -->
+    <string name="lorie_pref_ignoreGamepadEvents_summary">A pad\'s buttons the app\'s gamepad controls do not use are not passed to the game as keys; the controls themselves stay on</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
