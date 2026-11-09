@@ -264,6 +264,11 @@ end
 
 function widget:MousePress(x, y, button)
 '''),
+    ('''		(WG.guishader and not displayListGuiShader) or (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0))
+	then''',
+     '''		(WG.guishader and not displayListGuiShader) or (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0))
+		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) -- BAR Droid: the portrait dock has the orders
+	then'''),
 ]
 
 

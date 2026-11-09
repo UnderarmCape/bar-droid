@@ -1130,7 +1130,8 @@ function widget:Update(dt)
 		standDown = true
 		return
 	end
-	standDown = false
+	-- the portrait dock (bardroid_portrait.lua) shows the selection itself, in its top row
+	standDown = WG.BarDroidPortrait ~= nil and WG.BarDroidPortrait.active()
 	if not WG.info then
 		WG.info = stub
 	end

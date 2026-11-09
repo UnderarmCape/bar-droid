@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31820-45ea098, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31836-b250a16, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -896,6 +896,11 @@ function droid.clickable(bx, by, bz)
 	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
 		return nil
 	end
+	local P = WG.BarDroidPortrait -- (not under the portrait dock either: the click would land on it)
+	local d = P and P.dock and P.dock()
+	if d and sx >= d[1] and sx <= d[3] and sy >= d[2] and sy <= d[4] then
+		return nil
+	end
 	return math_floor(sx), math_floor(sy)
 end
 
@@ -997,7 +1002,10 @@ function droid.layoutPanel()
 	end
 	local x0, y0, x1, y1
 	local o = WG.ordermenu
-	if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
+	local dock = WG.BarDroidPortrait and WG.BarDroidPortrait.placeRect and WG.BarDroidPortrait.placeRect()
+	if dock then -- (the portrait dock, bardroid_portrait.lua: its place for it, under the shapes)
+		x0, y0, x1, y1 = dock[1], dock[2], dock[3], dock[4]
+	elseif o and o.getPosition and o.getIsShowing and o.getIsShowing() then
 		local x, y, w, h = o.getPosition()
 		if x and h then
 			x0, y0, x1, y1 = x * vsx, (y - h) * vsy, (x + w) * vsx, y * vsy
@@ -1125,6 +1133,9 @@ end
 -- 2026-10-29: hidden until RB, "to save screen space"; 2026-10-30, by touch: "open in its usual location. not hide by
 -- default like gamepad behavior"; the PLACE button and a building's spot work either way, for fingers)
 function droid.active()
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active() then -- (the portrait dock has its own grid; PLACE stays this one's)
+		return false
+	end
 	return not droid.ctl or (WG.BarDroidOwnsBuildMenu == true and (droid.opened == true or not WG.BarDroidPadOnly))
 end
 
@@ -3051,6 +3062,11 @@ function widget:Initialize()
 		return droid.armed, droid.shape, droid.shapeRects
 	end
 	WG.buildmenu.droidPress = droid.press
+	WG.buildmenu.droidSetShape = function(shape) -- (the portrait dock's own shape buttons: one, line, grid, border)
+		droid.shape = shape
+		clear()
+		droid.place()
+	end
 	WG.buildmenu.droidPanel = function() -- (the PLACE button's rects and the spot)
 		return droid.panel, droid.spot
 	end
