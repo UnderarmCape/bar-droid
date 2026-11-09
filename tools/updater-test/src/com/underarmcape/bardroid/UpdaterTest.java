@@ -115,6 +115,22 @@ public final class UpdaterTest {
                     && s.getProperty("bad.0") == null && "B".equals(Prefs.engineVersion));
         }
 
+        // the player closed the game (Stop, or swiped away): closedByPlayer keeps a set that ran, judges a short one later
+        p = setup("closedlong", true, NO_FRAME);
+        new Updater(p).closedByPlayer(140_000);
+        s = state(p);
+        check("closed by the player after 140 s: the update is kept", "B".equals(s.getProperty("good.engine"))
+                && MD5_B.equals(s.getProperty("good.byar:test")) && "A".equals(s.getProperty("previous.engine")));
+        p = setup("closedframe", true, A_FRAME);
+        new Updater(p).closedByPlayer(70_000);
+        s = state(p);
+        check("closed after 70 s with a game frame: kept", "B".equals(s.getProperty("good.engine")));
+        p = setup("closedloading", true, NO_FRAME);
+        new Updater(p).closedByPlayer(25_000);
+        s = state(p);
+        check("closed while loading (25 s, no game frame): undecided, nothing changes", "A".equals(s.getProperty("good.engine"))
+                && "B".equals(s.getProperty("launched.engine")) && s.getProperty("bad.0") == null);
+
         // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
         check("game version: BAR's name without \"Beyond All Reason\"", "test-31836-b250a16".equals(Updater.gameRelease("Beyond All Reason test-31836-b250a16")));
         check("  another name as it is", "Some Mod 1.2".equals(Updater.gameRelease("Some Mod 1.2")));
