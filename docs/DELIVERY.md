@@ -158,6 +158,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       passed. A frozen game also turns the pad into the lobby's mouse 5 s later (`RtsTouch.gameWidgetRunning`: the
       widget's hover file goes stale), harmless as DriverWatch closes the game. touch-phone-test now names the fault
       as pad-test does; the report draft's "only in replays" corrected (three of the six were skirmishes).
+      Again 2026-11-09 15:54 and 16:37, both portrait games (the second: frame 147, 2 s after a scratch widget changed
+      the selection), both soon after the portrait dock began drawing into a texture (gl.R2tHelper: an FBO the
+      dock renders into several times a second), against none in the 18 starts of the day before it. Tested, not the
+      texture: springsettings `bardroid_portrait_tex = 2` (the texture drawn again every frame) in 4 portrait games of
+      2.5 minutes with the selection changing every 1.5 s (~18 000 renders into it), and one game as shipped: no fault.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57

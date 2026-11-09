@@ -1048,8 +1048,9 @@ local function drawMode()
 		gl.Rect(d[1], d[2], d[3], d[4])
 		gl.Color(1, 1, 1, 1)
 		local s = L.sel
-		local size = (s[4] - s[2]) * 0.15
-		font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + L.pad * 0.6, size, "ro")
+		local h = s[4] - s[2]
+		-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it)
+		font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + h * 0.3, h * 0.15, "ro")
 		return
 	end
 	local age = t - menuAt
@@ -1217,6 +1218,9 @@ local profSum, profN, profAt = 0, 0, 0
 -- moving parts drawn over it every frame: metal and energy, PLACE, the mode. Screen pixels (no supersampling: the
 -- dock starts at 0,0, so the halves' scissor rects are the texture's own). Without the helper: all drawn each frame.
 local dockTex, texW, texH
+-- springsettings bardroid_portrait_tex (tools): 0 no texture (all drawn each frame), 2 the texture drawn again every
+-- frame (a stress test: two GPU driver faults on the dev phone in its first 8 games, none in 18 before it, 2026-11-09)
+local texMode = Spring.GetConfigInt("bardroid_portrait_tex", 1)
 
 local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
@@ -1228,7 +1232,7 @@ end
 
 local function drawDock()
 	local R = gl.R2tHelper
-	if R and R.RenderInRect and R.BlendTexRect then
+	if texMode ~= 0 and R and R.RenderInRect and R.BlendTexRect then
 		local w, h = L.dock[3] - L.dock[1], L.dock[4] - L.dock[2]
 		if dockTex and (texW ~= w or texH ~= h) then
 			gl.DeleteTexture(dockTex)
@@ -1238,7 +1242,7 @@ local function drawDock()
 			dockTex = gl.CreateTexture(w, h, { target = GL.TEXTURE_2D, format = GL.RGBA8, fbo = true })
 			texW, texH, dirty = w, h, true
 		end
-		if dirty and dockTex then
+		if (dirty or texMode == 2) and dockTex then
 			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], drawStill, true)
 			dirty = false
 		end
