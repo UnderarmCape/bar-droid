@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
-import android.util.Log;
 
 import java.util.ArrayList;
 
@@ -108,6 +107,26 @@ final class VoiceChat {
         }
     }
 
+    /** SpeechRecognizer's error codes in words, for launcher.log (what was said is never logged). */
+    static String errorName(int error) {
+        switch (error) {
+            case 1: return "network timeout";
+            case 2: return "no network";
+            case 3: return "microphone audio";
+            case 4: return "recognition server";
+            case 5: return "cancelled";
+            case 6: return "nothing said";
+            case 7: return "nothing understood";
+            case 8: return "recognizer busy";
+            case 9: return "microphone not allowed";
+            case 10: return "too many requests";
+            case 11: return "recognition service gone";
+            case 12: return "language not supported";
+            case 13: return "language not downloaded";
+            default: return "other";
+        }
+    }
+
     private final RecognitionListener listener = new RecognitionListener() {
         @Override public void onReadyForSpeech(Bundle params) {}
         @Override public void onBeginningOfSpeech() {}
@@ -118,7 +137,7 @@ final class VoiceChat {
         @Override public void onEvent(int eventType, Bundle params) {}
 
         @Override public void onError(int error) {   // (no speech, no match, a timeout: nothing is sent)
-            Log.i("app", "voice chat: nothing sent (recognizer error " + error + ")");
+            Log.i("app", "voice chat: nothing sent (" + errorName(error) + ", recognizer error " + error + ")");
             done();
         }
 
