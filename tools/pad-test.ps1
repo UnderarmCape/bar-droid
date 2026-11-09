@@ -34,6 +34,10 @@ function Log([string]$pattern, [int]$lines) {
 
 & $adb shell am force-stop $pkg
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
+# the GPU driver's rare fault (docs/DELIVERY.md): counted now, a new one during the run is named in the result
+function FaultCount { [int]("0" + ((& $adb exec-out run-as $pkg sh -c "grep -a -c 'GPU driver refused' files/logs/launcher.log 2>/dev/null") | Select-Object -First 1)) }
+$faults0 = FaultCount
+function DriverFault { (FaultCount) -gt $faults0 }
 $testWidget = if ($Chat) { "bardroid_chat_voice_test.lua" } elseif ($Share) { "bardroid_pad_share_test.lua" } elseif ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
 $padScript = if ($Dgun) { "pad-dgun.evemu" } elseif ($Online) { "pad-online.evemu" } else { "pad.evemu" }
 function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
@@ -78,8 +82,8 @@ try {
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
-  # (the virtual pad now and then is never seen at all, no case logged: its script once more, 2026-11-09 dev phone)
-  if (-not ($Share -or $Chat) -and -not (Log '\[padtest\] done' 1) -and -not (Log '\[padtest\] (PASS|FAIL)' 1)) {
+  # (no case logged and the game still up: the virtual pad was not seen; its script once more)
+  if (-not ($Share -or $Chat) -and -not (Log '\[padtest\] done' 1) -and -not (Log '\[padtest\] (PASS|FAIL)' 1) -and -not (DriverFault)) {
     "[padtest] the pad was not seen: its script once more"
     & $adb shell "uinput $evemu"
     $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
@@ -88,7 +92,12 @@ try {
   $lines = if ($Online) { 60 } else { 24 }   # (-Online: its trace too)
   $which = if ($Online) { '\[padtest\]' } else { '\[padtest\] (PASS|FAIL|done|a new)|Error in|Removed widget' }
   Log $which $lines | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
-  if (-not (Log '\[padtest\] done' 1)) { "[padtest] FAIL it did not finish: the pad never went away, or was never seen" }
+  # (2026-11-09: a run that "did not finish" was the GPU driver's rare fault, the game frozen and closed by DriverWatch,
+  # not the pad: said so, as the controls were never tested)
+  if (-not (Log '\[padtest\] done' 1)) {
+    if (DriverFault) { "[padtest] FAIL the game ended on the GPU driver's rare fault (MESA submit failed, DriverWatch closed it): not the controls; run it again" }
+    else { "[padtest] FAIL it did not finish: the pad never went away, or was never seen" }
+  }
 } finally {
   & $adb exec-out run-as $pkg rm -f $widget
   & $adb shell am force-stop $pkg
