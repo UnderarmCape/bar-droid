@@ -816,6 +816,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BARGAMEPAD, at his word. And spectating there, BAR's "Player View", "Player Camera" and "TV" buttons, which sit
       on the player list's left edge, run past the screen's right edge while the list is minimized (only "Player View"
       shows): the minimized list could keep more width while spectating, or stay open for spectators.
+      What the dev phone at 1968x2184 shows is the game in portrait (X screen 1080x1198), not the unfolded Fold7 held
+      wide (2026-11-09): at that size (smallest width ~656 dp) Android treats the screen as large and ignores the app's
+      landscape request (`dumpsys`: ignoreOrientationRequest=true, letterbox running), and the flat dev phone stays at
+      rotation 0. A real Fold7 unfolded follows how it is held: wide, BAR's landscape HUD at 1198x1080; upright, this
+      portrait one, cramped (the top bar's numbers over Save, the build menu sized by the height, the order menu off
+      the right edge). So a portrait HUD (Kailil's portrait idea, 2026-11-09) would serve the upright unfolded Fold7 too.
+      A fold and unfold four times in a running skirmish there: no error from any widget, the engine's ViewResize
+      0.1-0.7 s each.
 - [x] The layout editor in the controller game (2026-11-02, unfolded): v0.8.5's build menu, the one shown there, had no
       outline or label at all (the app's hidden copy took its place in the editor's list). Now shown as "Build menu
       (BAR's: fixed)" whenever the app's copy is not on screen; in BAR's game the copy stays the sizeable "Build menu",
