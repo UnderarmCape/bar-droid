@@ -689,11 +689,21 @@ local function selector(r)
 	resetGL()
 end
 
-local function unitTile(defID, r)
+-- in use: as BAR's build menu shows its picked cell (gui_buildmenu.lua drawCell): the picture closer, gold light over it
+local function unitTile(defID, r, inUse)
 	local f = flow()
 	local cs = max(2, floor((r[3] - r[1]) * 0.06))
 	if f and f.Unit then
-		f.Unit(r[1], r[2], r[3], r[4], cs, 1, 1, 1, 1, 0.04, nil, nil, "#" .. defID)
+		local zoom = inUse and 0.135 or 0.04
+		f.Unit(r[1], r[2], r[3], r[4], cs, 1, 1, 1, 1, zoom, nil, nil, "#" .. defID)
+		if inUse then
+			gl.Blending(GL.SRC_ALPHA, GL.ONE)
+			gl.Color(1, 0.85, 0.2, 0.25)
+			gl.Texture("#" .. defID)
+			f.Unit(r[1], r[2], r[3], r[4], cs, 1, 1, 1, 1, zoom)
+			gl.Texture(false)
+			gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+		end
 	else
 		gl.Texture("#" .. defID)
 		gl.TexRect(r[1], r[2], r[3], r[4])
@@ -972,9 +982,21 @@ local function drawGroups()
 	end
 	table.sort(list)
 	local h = r[4] - r[2]
+	-- the group whose units are exactly the ones picked: marked as in use (a recalled group showed nothing on its tile)
+	local sel = spGetSelectedUnits() or {}
+	local current = #sel > 0 and Spring.GetUnitGroup(sel[1]) or nil
+	if current and groups[current] ~= #sel then
+		current = nil
+	end
+	for i = 2, current and #sel or 0 do
+		if Spring.GetUnitGroup(sel[i]) ~= current then
+			current = nil
+			break
+		end
+	end
 	-- units picked: a "+ NEW" tile after the groups makes them the next free group (no keyboard for Ctrl+number)
 	local free
-	if #(spGetSelectedUnits() or {}) > 0 then
+	if #sel > 0 then
 		for n = 1, 9 do
 			if not groups[n] or groups[n] == 0 then
 				free = n
@@ -1006,7 +1028,7 @@ local function drawGroups()
 			end
 		end
 		if best then
-			unitTile(best, gr)
+			unitTile(best, gr, g == current)
 		else
 			button(gr)
 		end
