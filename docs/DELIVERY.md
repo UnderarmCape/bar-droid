@@ -1356,6 +1356,12 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       to swap and reclaims caches; the game's units, map and paths are in use; a forced Lua garbage collection is a
       hitch of its own, more CPU and heat). What can: less work per frame when hot (render resolution, the cap), a
       cooler phone. A note for Kailil, no change.
+- [ ] The portrait dock (bardroid_portrait.lua, Kailil's layout D, 2026-11-09): BAR's top bar upright. Its metal and
+      energy bars need about 1600 pixels at a readable size and ran over its menu buttons; the dock hides them through
+      BAR's own `WG.topbar.setResourceBarsVisible` while it is up and shows metal and energy itself. What is left over is
+      BAR's wind gauge, which BAR places by the screen's width while the buttons move: over "Statistics" at interface
+      scale 1.0, over "Save" at 0.8 (tried, back to 1.0: it only made everything smaller). BAR's layout, no setter: for
+      BAR's developers, or a wind readout in the dock and the gauge left as it is.
 - [ ] Speak to chat started, cancelled and started again quickly (2026-11-09, dev phone, a virtual pad's LB + RB twice
       three times in the lobby): Android's `cancel()` answers with a late `onError(5)`. Here it came before the next
       start; had it come after, `done()` would have ended the new session (the note gone, the words dropped). The cure:

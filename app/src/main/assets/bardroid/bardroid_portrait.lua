@@ -180,8 +180,14 @@ local function layout()
 	if rows * (tile + gap) - gap > room then -- (2 rows that do not fit: smaller tiles)
 		tile = max(16, floor((room + gap) / rows) - gap)
 	end
+	local resH = floor(vsx * 0.06)
+	room = room - resH - pad
+	rows = max(2, min(4, floor((room + gap) / (tile + gap))))
+	if rows * (tile + gap) - gap > room then
+		tile = max(16, floor((room + gap) / rows) - gap)
+	end
 	local gridH = rows * (tile + gap) - gap
-	local dockH = pad * 4 + selH + gridH + groupsH
+	local dockH = pad * 5 + resH + selH + gridH + groupsH
 	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
 	L.dock = { 0, 0, vsx, dockH }
 	L.groups = { pad, pad, vsx - pad, pad + groupsH }
@@ -189,6 +195,9 @@ local function layout()
 	L.left = { pad, gy0, half - floor(pad / 2), gy0 + gridH }
 	L.right = { half + floor(pad / 2), gy0, vsx - pad, gy0 + gridH }
 	L.sel = { pad, L.left[4] + pad, vsx - pad, L.left[4] + pad + selH }
+	-- metal and energy, at the dock's top (BAR's top bar keeps its wind, units and buttons; its two resource bars are
+	-- off while the dock is up: about 1600 pixels wide at a readable size, they ran over its buttons upright)
+	L.res = { pad, L.sel[4] + pad, vsx - pad, L.sel[4] + pad + resH }
 	-- order buttons: 2 wide, rows of about 0.42 of a tile in the same height
 	local rw = L.right[3] - L.right[1]
 	L.btnW = floor((rw - gap) / 2)
@@ -850,6 +859,62 @@ local function drawSelection()
 	end
 end
 
+-- metal and energy as BAR's top bar shows them: a bar filled to the storage, the amount and storage, income in green and
+-- spending in red
+local function short(v)
+	v = floor(v + 0.5)
+	return v >= 10000 and string.format("%.1fk", v / 1000) or tostring(v)
+end
+local function drawResources()
+	local r = L.res
+	local w = floor((r[3] - r[1] - L.pad) / 2)
+	local h = r[4] - r[2]
+	for i, res in ipairs({ "metal", "energy" }) do
+		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
+		local x0 = r[1] + (i - 1) * (w + L.pad)
+		local box = { x0, r[2], x0 + w, r[4] }
+		panel(box)
+		if cur and storage then
+			local pad = max(2, floor(h * 0.12))
+			local bx0, bx1 = x0 + floor(w * 0.3), x0 + w - pad
+			local by0, by1 = r[2] + pad, r[2] + pad + max(3, floor(h * 0.2))
+			local frac = storage > 0 and max(0, min(1, cur / storage)) or 0
+			gl.Color(0.1, 0.1, 0.1, 0.9)
+			gl.Rect(bx0, by0, bx1, by1)
+			if res == "metal" then
+				gl.Color(0.85, 0.85, 0.85, 1)
+			else
+				gl.Color(1, 0.86, 0.15, 1)
+			end
+			gl.Rect(bx0, by0, bx0 + (bx1 - bx0) * frac, by1)
+			gl.Color(1, 1, 1, 1)
+			local size = h * 0.34
+			local ty = r[4] - pad - size * 0.95
+			bold:Print((res == "metal" and "\255\225\225\225" or "\255\255\230\080") .. short(cur), x0 + pad * 1.5,
+				ty, size * 1.15, "o")
+			font:Print("\255\160\160\160" .. short(storage), bx1, ty, size * 0.8, "ro")
+			font:Print(string.format("\255\120\230\120+%s  \255\240\110\100-%s", short(income or 0), short(expense or 0)),
+				bx0, ty, size * 0.8, "o")
+		end
+	end
+end
+
+-- BAR's top bar's own resource bars: off while the dock is up (it shows them), back once it is down
+local resBarsHidden = false
+local function topbarBars(dockUp)
+	local tb = WG.topbar
+	if not (tb and tb.setResourceBarsVisible and tb.getResourceBarsVisible) then
+		return
+	end
+	if dockUp and tb.getResourceBarsVisible() then -- (also when BAR shows them again, at the game's start)
+		tb.setResourceBarsVisible(false)
+		resBarsHidden = true
+	elseif not dockUp and resBarsHidden then
+		tb.setResourceBarsVisible(true)
+		resBarsHidden = false
+	end
+end
+
 -- nothing picked: the control groups as pictures along the bottom (Kailil: "touch friendly unit groups by keeping
 -- unit groups in pictures at the bottom whenever no unit is slected"); a tap picks a group
 local function drawGroups()
@@ -1028,6 +1093,7 @@ local refreshAt = 0
 function widget:Update(dt)
 	checkActive()
 	dockLines()
+	topbarBars(active)
 	if not active then
 		return
 	end
@@ -1064,6 +1130,7 @@ function widget:DrawScreen()
 		return
 	end
 	panel(L.dock, 1, 1, 0, 0, true)
+	drawResources()
 	drawSelection()
 	drawHalf("left")
 	drawHalf("right")
@@ -1203,6 +1270,7 @@ end
 function widget:Shutdown()
 	WG.BarDroidPortrait = nil
 	active = false
+	topbarBars(false)
 	writeDock(true)
 	if logFile then
 		logFile:close()
