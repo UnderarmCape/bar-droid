@@ -44,6 +44,9 @@ final class KeyboardShortcuts {
         com.termux.x11.Prefs p = ((LorieApp) a.getApplication()).getPrefs(a);
         boolean on = Prefs.captureShortcuts;
         if (p.dexMetaKeyCapture.get() != on) p.dexMetaKeyCapture.put(on);
+        // (the launcher's "Play upright": the portrait dock, bardroid_portrait.lua; else landscape as always)
+        String orientation = Prefs.portrait ? "portrait" : "landscape";
+        if (!orientation.equals(p.forceOrientation.get())) p.forceOrientation.put(orientation);
         if (p.hardwareKbdScancodesWorkaround.get() == on) p.hardwareKbdScancodesWorkaround.put(!on);
         android.content.SharedPreferences sp = androidx.preference.PreferenceManager.getDefaultSharedPreferences(a);
         if (!sp.getBoolean("bardroid_no_mouse_capture_v1", false)) {

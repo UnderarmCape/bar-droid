@@ -408,6 +408,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
+        ((CheckBox) findViewById(R.id.cbPortrait)).setChecked(Prefs.portrait);
         ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).setChecked(Prefs.captureShortcuts);
         ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
                 Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
@@ -450,6 +451,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
+        Prefs.portrait = ((CheckBox) findViewById(R.id.cbPortrait)).isChecked();
         Prefs.captureShortcuts = ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).isChecked();
         int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
         Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;

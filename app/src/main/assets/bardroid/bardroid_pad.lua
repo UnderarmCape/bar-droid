@@ -2124,6 +2124,12 @@ local function queueLayout(vsx, vsy)
 		queue.rect = nil
 		return
 	end
+	local P = WG.BarDroidPortrait -- (the portrait dock: its place for it, in its top row)
+	local dockRect = P and P.queueRect and P.queueRect()
+	if dockRect then
+		queue.rect = dockRect
+		return
+	end
 	local h, w = style.size(0.036), style.size(0.11)
 	local gap = style.size(0.008, 3)
 	local x1, y0 = math.floor(vsx * 0.65), math.floor(vsy * 0.16)

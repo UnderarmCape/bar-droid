@@ -2,16 +2,25 @@
 -- stuff can be on the bottom portion of the phone. And the game unobstructed shows at the top half"; his pick, layout
 -- D: "Lets do D but instead of more orders button ... just have a scroll option ... Cap the buildmenu to 3x4 and have
 -- the vertical scroll. If phone has less vertical space, reduce to 3x3 at minimum 3x2. Scroll should be magnetic ...
--- Do not allow scroll to half reveal objects. It should snap the next rows into place").
+-- Do not allow scroll to half reveal objects. It should snap the next rows into place"; "I want the UI to look as
+-- close as possible to the BAR original still": BAR's own FlowUI panels, buttons and unit tiles).
 --
 -- While the game's screen is taller than wide (a phone held upright, the unfolded Fold7 held upright: Android leaves
--- the game's orientation to the hand there) the lower half is a dock for touch:
---   selection row  the units picked (picture, name, count, health), or nothing picked: the control groups as pictures
---   left           a builder or factory: its build options, 3 wide, 2-4 rows in sight, scrolled by whole rows;
---                  other units: the selection by type (a tap keeps that type); nothing picked, after LOCAL UNITS or
---                  ALL UNITS: the combat units by type (a tap picks them; MULTI picks several types)
---   right          the orders, 2 wide, scrolled by whole rows; a building picked: its placing buttons; a factory's
---                  item pressed: that item's queue buttons; nothing picked: LOCAL UNITS / ALL UNITS
+-- the game's orientation to the hand there) the lower part is a dock:
+--   top row   the units picked (picture, name, count, health)
+--   left      a builder or factory: its build options, 3 wide, 2-4 rows in sight, scrolled by whole rows; units that
+--             build nothing: the selection by type (a tap keeps that type); nothing picked, after LOCAL UNITS or ALL
+--             UNITS: the combat units by type (a tap picks them; MULTI picks several types)
+--   right     the orders, 2 wide, scrolled by whole rows; a building picked: ONE / LINE / GRID / BORDER and the PLACE
+--             panel (the build menu copy's, in placeRect); a factory's option pressed: its queue buttons; nothing
+--             picked: LOCAL UNITS / ALL UNITS; a box selection being dragged: the unit filters
+--   bottom    nothing picked: the control groups as pictures
+-- Two modes for fingers (Kailil: the dock as "a camera movement pad ... if I single tap, the ui at the bottom, then I
+-- can interact with the ui. It should indicate when its ready to be touched via a quick blink ... if I dont touch the
+-- menu after like 5-10seconds, camera panning turns back on"): pad (RtsTouch moves the camera from touches on the dock)
+-- and menu (taps press, up and down scroll, a drag on the game box-selects with the dock's filters). The mode and the
+-- dock's rects go to RtsTouch in LuaUI/Config/bardroid_dock.txt; its lines come back in the touch log (dockscroll,
+-- dockfling, docktap, act dock_menu / dock_select_start / dock_select_end). A mouse or the pad always press directly.
 -- Every press goes through Spring.SetActiveCommand or a selection, as BAR's own menus do (no GiveOrder: online-safe).
 -- Installed into LuaUI/Widgets by the app.
 
@@ -37,17 +46,19 @@ local function now()
 	return spDiffTimers(spGetTimer(), timer0)
 end
 
-local GOLD = { 1, 0.78, 0.25, 1 }
 local PORTRAIT = 1.15 -- taller than wide by this much: the dock is up
-local DOCK = 0.54 -- of the screen's height
-local TAP_SLOP = 0.012 -- of the screen's width: a press that moves less is a tap
+local DOCK_MAX = 0.54 -- of the screen's height at most
+local MENU_SECONDS = 7 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds")
+local BLINK = 0.45 -- seconds of the menu's opening pulse
+local DOCK_FILE = "LuaUI/Config/bardroid_dock.txt"
+local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
 
 ---------------------------------------------------------------------------------------------------------------------
 -- Rows that scroll by whole rows (Kailil: "Scroll should be magnetic ... A swipe up or down should make the next blocks
--- appear with a small nudge animation ... Do not allow scroll to half reveal objects"). A drag follows the finger; on
--- release the list settles on whole rows: a quick swipe brings the next page, a slow drag the nearest row; the settle
--- overshoots a little and comes back (the nudge). At rest no row is cut.
-local SETTLE, OVERSHOOT, FLICK = 0.30, 1.4, 3.0 -- seconds; easeOutBack's overshoot; rows a second for a swipe
+-- appear with a small nudge animation ... Do not allow scroll to half reveal objects"). A finger moves them (the app's
+-- dockscroll lines, or a mouse drag); on release they settle on whole rows: a quick flick brings the next page, a slow
+-- drag the nearest row; the settle overshoots a little and comes back (the nudge). At rest no row is cut.
+local SETTLE, OVERSHOOT, FLICK = 0.30, 1.4, 3.0 -- seconds; easeOutBack's overshoot; rows a second for a page
 
 local function snapNew()
 	return { rows = 0, visible = 1, pos = 0, from = 0, to = 0, t = 1 }
@@ -65,50 +76,42 @@ end
 local function snapSet(s, rows, visible, keep)
 	s.rows, s.visible = rows, visible
 	if not keep then
-		s.pos, s.from, s.to, s.t = 0, 0, 0, 1
+		s.pos, s.from, s.to, s.t, s.drag = 0, 0, 0, 1, nil
 	elseif s.to > snapMax(s) then
 		snapSettle(s, snapMax(s))
 	end
 end
-local function snapPress(s, y)
-	s.drag = { y0 = y, pos0 = s.pos, lastY = y, lastT = now(), vel = 0, moved = false }
-	s.t = 1 -- (a press holds a settle where it is)
-end
-local function snapMove(s, y, rowH, slop)
-	local d = s.drag
-	if not d or (not d.moved and abs(y - d.y0) < slop) then
-		return false
+-- dy: the finger's move, pixels (up is +); rowH: a row's height
+local function snapBy(s, dy, rowH)
+	if not s.drag then
+		s.drag = { pos0 = s.pos, raw = s.pos }
+		s.t = 1 -- (a touch holds a settle where it is)
 	end
-	d.moved = true
-	local p = d.pos0 + (y - d.y0) / rowH -- (a finger moving up brings the rows below into sight)
-	local hi = snapMax(s)
+	local d = s.drag
+	d.raw = d.raw + dy / rowH -- (a finger moving up brings the rows below into sight)
+	local p, hi = d.raw, snapMax(s)
 	if p < 0 then
 		p = p / 3 -- (past the ends a rubber band, a third as far)
 	elseif p > hi then
 		p = hi + (p - hi) / 3
 	end
-	local t = now()
-	if t > d.lastT then
-		d.vel = 0.6 * d.vel + 0.4 * ((y - d.lastY) / rowH / (t - d.lastT))
-	end
-	d.lastY, d.lastT, s.pos = y, t, p
-	return true
+	s.pos = p
 end
-local function snapRelease(s) -- true: it was a drag
+-- vel: the finger's speed at release, rows a second (up is +)
+local function snapRelease(s, vel)
 	local d = s.drag
 	s.drag = nil
-	if not (d and d.moved) then
-		return false
+	if not d then
+		return
 	end
 	local base = floor(d.pos0 + 0.5)
-	if d.vel > FLICK then
+	if vel > FLICK then
 		snapSettle(s, max(base + s.visible, floor(s.pos + 0.5)))
-	elseif d.vel < -FLICK then
+	elseif vel < -FLICK then
 		snapSettle(s, min(base - s.visible, floor(s.pos + 0.5)))
 	else
 		snapSettle(s, floor(s.pos + 0.5))
 	end
-	return true
 end
 local function snapUpdate(s, dt)
 	if s.drag or s.t >= 1 then
@@ -126,13 +129,18 @@ local vsx, vsy = 0, 0
 local L = {} -- the layout: rects { x0, y0, x1, y1 } (GL: y up from the bottom)
 local font, bold
 local leftScroll, rightScroll = snapNew(), snapNew()
-local leftItems, rightItems = {}, {} -- what the two sections show now (tiles, buttons)
+local leftItems, rightItems = {}, {} -- what the two halves show now (tiles, buttons)
 local leftKind, rightKind = "", ""
-local press -- { side, x, y, item } while a finger is down on the dock
+local press -- a mouse press on the dock: { side, x, y, button, lastY, lastT, vel, moved }
 local typesFrom -- nil, or "local" / "all": LOCAL UNITS or ALL UNITS pressed, the combat units by type on the left
 local multi, multiPicked = false, {}
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
+local menu = false -- the dock's menu is open (fingers press it); else it is the camera pad
+local menuAt, lastTouch = -100, -100 -- when it opened; the last touch on it
+local selecting = false -- a box selection being dragged on the game (its filters on the right)
+local selFilter = "all" -- the box selection's filter, kept for the next one
+local filterAt -- a box selection just ended: the filter goes on when the engine has made it
 
 local function inRect(x, y, r)
 	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
@@ -147,44 +155,89 @@ local function playing()
 	return not spec
 end
 
+local function touched()
+	lastTouch = now()
+end
+
 ---------------------------------------------------------------------------------------------------------------------
--- Layout: the dock's rects for this screen; the build grid 3 wide with 2-4 rows, as many as fit
+-- Layout: the dock's rects for this screen; the build grid 3 wide with 2-4 rows, as many as fit (Kailil: "Cap the
+-- buildmenu to 3x4 ... reduce to 3x3 at minimum 3x2"); the dock no taller than it needs, DOCK_MAX at most
 
 local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	local pad = max(4, floor(vsx * 0.012))
-	local dockH = floor(vsy * DOCK)
-	local selH = floor(vsx * 0.17)
-	L.pad, L.gap = pad, max(3, floor(pad * 0.6))
-	L.dock = { 0, 0, vsx, dockH }
-	L.sel = { pad, dockH - pad - selH, vsx - pad, dockH - pad }
-	local gridTop = L.sel[2] - pad
-	local mid = floor(vsx * 0.5)
-	L.left = { pad, pad, mid - floor(pad / 2), gridTop }
-	L.right = { mid + floor(pad / 2), pad, vsx - pad, gridTop }
-	-- build tiles: 3 wide, square; rows that fit, 2 to 4 (Kailil: "Cap the buildmenu to 3x4 ... at minimum 3x2")
-	local lw = L.left[3] - L.left[1]
-	L.tile = floor((lw - 2 * L.gap) / 3)
-	local gh = gridTop - pad
-	L.leftRows = max(2, min(4, floor((gh + L.gap) / (L.tile + L.gap))))
-	if L.leftRows * (L.tile + L.gap) - L.gap > gh then -- (2 rows that do not fit: smaller tiles)
-		L.tile = floor((gh + L.gap) / L.leftRows) - L.gap
+	local gap = max(3, floor(pad * 0.6))
+	local selH = floor(vsx * 0.15)
+	local groupsH = floor(vsx * 0.13)
+	local half = floor(vsx * 0.5)
+	local tile = floor((half - pad - floor(pad / 2) - 2 * gap) / 3)
+	local room = floor(vsy * DOCK_MAX) - (pad * 4 + selH + groupsH) -- the grid's height at most
+	local rows = max(2, min(4, floor((room + gap) / (tile + gap))))
+	if rows * (tile + gap) - gap > room then -- (2 rows that do not fit: smaller tiles)
+		tile = max(16, floor((room + gap) / rows) - gap)
 	end
-	-- order buttons: 2 wide, a bit under half a tile tall; as many rows as fit in the same height
+	local gridH = rows * (tile + gap) - gap
+	local dockH = pad * 4 + selH + gridH + groupsH
+	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
+	L.dock = { 0, 0, vsx, dockH }
+	L.groups = { pad, pad, vsx - pad, pad + groupsH }
+	local gy0 = L.groups[4] + pad
+	L.left = { pad, gy0, half - floor(pad / 2), gy0 + gridH }
+	L.right = { half + floor(pad / 2), gy0, vsx - pad, gy0 + gridH }
+	L.sel = { pad, L.left[4] + pad, vsx - pad, L.left[4] + pad + selH }
+	-- order buttons: 2 wide, rows of about 0.42 of a tile in the same height
 	local rw = L.right[3] - L.right[1]
-	L.btnW = floor((rw - L.gap) / 2)
-	local leftH = L.leftRows * (L.tile + L.gap) - L.gap
-	L.rightRows = max(3, floor((leftH + L.gap) / (floor(L.tile * 0.46) + L.gap)))
-	L.btnH = floor((leftH + L.gap) / L.rightRows) - L.gap
-	-- both sections end at the grid's height, from the selection row down
-	L.left[2] = gridTop - leftH
-	L.right[2] = L.left[2]
-	-- nothing picked: the control groups along the bottom, under LOCAL / ALL UNITS
-	L.groups = { pad, pad, vsx - pad, pad + floor(L.tile * 0.8) }
+	L.btnW = floor((rw - gap) / 2)
+	L.rightRows = max(3, floor((gridH + gap) / (floor(tile * 0.55) + gap))) -- (about 6 mm tall on a phone: thumbs)
+	L.btnH = floor((gridH + gap) / L.rightRows) - gap
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- What the sections hold
+-- RtsTouch's side: the dock's rects and mode (X screen pixels, top left origin), written when they change and every
+-- second (RtsTouch takes a file older than 5 s for no dock)
+
+local dockWritten, dockWrittenAt = nil, -10
+local function writeDock(force)
+	local text
+	if active then
+		local function r(x)
+			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
+		end
+		text = string.format("dock %s %s\nleft %s\nright %s\n", r(L.dock), menu and "menu" or "pad", r(L.left), r(L.right))
+	else
+		text = "dock none\n"
+	end
+	local t = now()
+	if text == dockWritten and not force and (not active or t - dockWrittenAt < 1) then
+		return
+	end
+	local tmp = DOCK_FILE .. ".tmp"
+	local f = io.open(tmp, "w")
+	if f then
+		f:write(text)
+		f:close()
+		os.rename(tmp, DOCK_FILE)
+	end
+	dockWritten, dockWrittenAt = text, t
+end
+
+local function setMenu(on)
+	if on == menu then
+		if on then
+			touched()
+		end
+		return
+	end
+	menu = on
+	if on then
+		menuAt = now()
+		touched()
+	end
+	writeDock(true)
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- What the halves hold
 
 local function cmdLabel(cmd)
 	if cmd.type == CMDTYPE.ICON_MODE and cmd.params and #cmd.params > 1 then
@@ -235,11 +288,7 @@ local function readCommands()
 end
 
 local function selectedFactory()
-	local counts = spGetSelectedUnitsCounts()
-	if not counts or (counts.n or 0) == 0 then
-		return false
-	end
-	for defID in pairs(counts) do
+	for defID in pairs(spGetSelectedUnitsCounts() or {}) do
 		local ud = defID ~= "n" and UnitDefs[defID]
 		if ud and ud.isFactory then
 			return true
@@ -248,10 +297,27 @@ local function selectedFactory()
 	return false
 end
 
--- combat units: they move and carry a weapon, and build nothing
-local function combat(ud)
-	return ud and ud.canMove and not ud.isBuilder and not ud.isFactory and ud.weapons and #ud.weapons > 0
+-- the unit filters (Kailil: "like the controller mod Hold A and hold x menu to select builders, combat, air, etc.")
+local function builder(ud)
+	return ud and ud.isBuilder and not ud.isFactory and ud.canMove
 end
+local function flying(ud)
+	return ud and ud.canFly
+end
+local function naval(ud)
+	return ud and ud.canMove and (ud.minWaterDepth or 0) > 0 and not ud.canFly
+end
+-- combat units: they move, carry a weapon, build nothing and do not fly
+local function combat(ud)
+	return ud and ud.canMove and not ud.isBuilder and not ud.isFactory and not ud.canFly and ud.weapons and #ud.weapons > 0
+end
+local FILTERS = {
+	{ key = "all", label = "ALL" },
+	{ key = "builders", label = "BUILDERS", test = builder },
+	{ key = "combat", label = "COMBAT", test = combat },
+	{ key = "air", label = "AIR", test = flying },
+	{ key = "naval", label = "NAVAL", test = naval },
+}
 
 -- the units by type: { defID, units = {...} }, the biggest groups first
 local function byType(units, filter)
@@ -285,7 +351,7 @@ local function activeBuild()
 	return cmdID and cmdID < 0 and cmdID or nil
 end
 
--- what each section shows, refreshed a few times a second and after every press
+-- what each half shows, refreshed a few times a second and after every press
 local function refresh()
 	local sel = spGetSelectedUnits() or {}
 	local key = #sel .. ":" .. tostring(sel[1])
@@ -316,7 +382,13 @@ local function refresh()
 		end
 	end
 	local building = activeBuild()
-	if #sel == 0 or typesFrom then
+	if selecting then -- a box selection being dragged: its filters (a second finger on the dock picks one)
+		newRight = {}
+		for _, f in ipairs(FILTERS) do
+			newRight[#newRight + 1] = { kind = "filter", key = f.key, label = f.label }
+		end
+		rk = "filters"
+	elseif #sel == 0 or typesFrom then
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
@@ -365,6 +437,26 @@ end
 
 local function selectUnits(units, append)
 	Spring.SelectUnitArray(units or {}, append or false)
+end
+
+-- the box selection's filter on what the engine selected (an "all" changes nothing)
+local function applyFilter()
+	local f
+	for _, x in ipairs(FILTERS) do
+		if x.key == selFilter then
+			f = x
+		end
+	end
+	if not (f and f.test) then
+		return
+	end
+	local keep = {}
+	for _, u in ipairs(spGetSelectedUnits() or {}) do
+		if f.test(UnitDefs[Spring.GetUnitDefID(u) or -1]) then
+			keep[#keep + 1] = u
+		end
+	end
+	selectUnits(keep)
 end
 
 local function pressItem(item, long)
@@ -420,6 +512,8 @@ local function pressItem(item, long)
 		if B and B.droidSetShape then
 			B.droidSetShape(item.shape)
 		end
+	elseif k == "filter" then
+		selFilter = item.key
 	elseif k == "queue" and factoryItem then
 		if item.n < 0 then
 			runCommand(factoryItem, true)
@@ -434,58 +528,78 @@ local function pressItem(item, long)
 	refresh()
 end
 
--- the item under a point of a section, with its rect
+-- a half's geometry: its rect, scroll, items, columns, cell width and height
+local function half(side)
+	if side == "left" then
+		return L.left, leftScroll, leftItems, 3, L.tile, L.tile
+	end
+	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
+end
+
+-- the item under a point of a half
 local function itemAt(side, x, y)
-	local r = side == "left" and L.left or L.right
+	local r, s, items, cols, cw, ch = half(side)
 	if not inRect(x, y, r) then
 		return nil
 	end
-	local s = side == "left" and leftScroll or rightScroll
-	local cols = side == "left" and 3 or 2
-	local cw = side == "left" and L.tile or L.btnW
-	local ch = side == "left" and L.tile or L.btnH
 	local row = floor((r[4] - y) / (ch + L.gap) + s.pos)
 	local col = floor((x - r[1]) / (cw + L.gap))
 	if col < 0 or col >= cols then
 		return nil
 	end
-	local items = side == "left" and leftItems or rightItems
 	return items[row * cols + col + 1]
 end
 
 ---------------------------------------------------------------------------------------------------------------------
--- Drawing
+-- Drawing: BAR's own FlowUI (gui_flowui.lua): Element for panels, Button for buttons, Unit for unit tiles, Selector for
+-- the one in use (Kailil: "as close as possible to the BAR original")
 
-local function element(r, color)
-	local f = WG.FlowUI and WG.FlowUI.Draw
-	if f and f.RectRound then
-		local cs = max(2, floor((r[4] - r[2]) * 0.12))
-		f.RectRound(r[1], r[2], r[3], r[4], cs, 1, 1, 1, 1, color, color)
+local function flow()
+	return WG.FlowUI and WG.FlowUI.Draw
+end
+
+-- opaque: the dock itself (BAR's panels show the game through; the dock covers the menus and lists under it)
+local function panel(r, tl, tr, br, bl, opaque)
+	local f = flow()
+	if f and f.Element then
+		f.Element(r[1], r[2], r[3], r[4], tl or 1, tr or 1, br or 1, bl or 1, nil, nil, nil, nil, nil, nil, nil, nil, opaque)
 	else
-		gl.Color(color)
+		gl.Color(0.04, 0.04, 0.04, opaque and 1 or 0.8)
 		gl.Rect(r[1], r[2], r[3], r[4])
 	end
+	gl.Color(1, 1, 1, 1) -- (a unit picture right after an Element came out dark: the state it leaves)
+	gl.Texture(false)
 end
 
-local function outline(r, color, w)
-	gl.Color(color)
-	gl.Rect(r[1], r[2], r[3], r[2] + w)
-	gl.Rect(r[1], r[4] - w, r[3], r[4])
-	gl.Rect(r[1], r[2], r[1] + w, r[4])
-	gl.Rect(r[3] - w, r[2], r[3], r[4])
-	gl.Color(1, 1, 1, 1)
-end
-
-local function picture(defID, x0, y0, x1, y1)
-	local f = WG.FlowUI and WG.FlowUI.Draw
-	if f and f.Unit then
-		f.Unit(x0, y0, x1, y1, nil, 1, 1, 1, 1, 0.03, nil, nil, "#" .. defID)
+local function button(r, c1, c2)
+	local f = flow()
+	if f and f.Button then
+		f.Button(r[1], r[2], r[3], r[4], 1, 1, 1, 1, 1, 1, 1, 1, nil, c1, c2, max(1, floor(L.pad * 0.35)))
 	else
+		gl.Color(c1 or { 0.15, 0.15, 0.15, 0.9 })
+		gl.Rect(r[1], r[2], r[3], r[4])
 		gl.Color(1, 1, 1, 1)
+	end
+end
+
+local function selector(r)
+	local f = flow()
+	if f and f.Selector then
+		f.Selector(r[1], r[2], r[3], r[4])
+	end
+end
+
+local function unitTile(defID, r)
+	local f = flow()
+	local cs = max(2, floor((r[3] - r[1]) * 0.06))
+	if f and f.Unit then
+		f.Unit(r[1], r[2], r[3], r[4], cs, 1, 1, 1, 1, 0.04, nil, nil, "#" .. defID)
+	else
 		gl.Texture("#" .. defID)
-		gl.TexRect(x0, y0, x1, y1)
+		gl.TexRect(r[1], r[2], r[3], r[4])
 		gl.Texture(false)
 	end
+	gl.Color(1, 1, 1, 1)
 end
 
 local function textIn(text, x0, y0, x1, y1, size, color, f)
@@ -494,44 +608,43 @@ local function textIn(text, x0, y0, x1, y1, size, color, f)
 		return
 	end
 	local w = f:GetTextWidth(text) * size
-	if w > (x1 - x0) * 0.9 then
-		size = size * (x1 - x0) * 0.9 / w
+	if w > (x1 - x0) * 0.88 then
+		size = size * (x1 - x0) * 0.88 / w
 	end
 	f:Print((color or "\255\235\235\235") .. text, (x0 + x1) / 2, (y0 + y1) / 2 - size * 0.32, size, "co")
 end
 
 local function drawTile(item, r)
-	local tileBg = { 0.06, 0.07, 0.08, 0.92 }
+	local w, h = r[3] - r[1], r[4] - r[2]
 	if item.kind == "alltypes" then
-		element(r, { 0.16, 0.18, 0.21, 0.95 })
-		textIn("ALL", r[1], r[2] + (r[4] - r[2]) * 0.35, r[3], r[4], (r[4] - r[2]) * 0.3, "\255\255\255\255", bold)
-		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + (r[4] - r[2]) * 0.4, (r[4] - r[2]) * 0.22, "\255\255\200\064")
+		button(r, { 0.2, 0.2, 0.2, 0.8 }, { 0.35, 0.35, 0.35, 0.8 })
+		textIn("ALL", r[1], r[2] + h * 0.38, r[3], r[4], h * 0.26, "\255\255\255\255", bold)
+		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, "\255\255\200\064")
 		return
 	end
-	element(r, tileBg)
-	local p = max(2, floor((r[3] - r[1]) * 0.03))
-	picture(item.defID, r[1] + p, r[2] + p, r[3] - p, r[4] - p)
-	local size = (r[4] - r[2]) * 0.17
-	if item.kind == "build" then
+	unitTile(item.defID, r)
+	local p, size = max(2, floor(w * 0.05)), h * 0.15
+	if item.kind == "build" then -- (as BAR's build menu: metal white, energy yellow, at the bottom right)
 		local ud = UnitDefs[item.defID]
 		if ud then
-			font:Print("\255\255\255\255" .. floor(ud.metalCost or 0), r[3] - p * 3, r[2] + p * 3 + size * 1.05, size * 0.85, "ro")
-			font:Print("\255\255\240\080" .. floor(ud.energyCost or 0), r[3] - p * 3, r[2] + p * 3, size * 0.85, "ro")
+			font:Print("\255\245\245\245" .. floor(ud.metalCost or 0), r[3] - p, r[2] + p + size * 1.05, size, "ro")
+			font:Print("\255\255\255\000" .. floor(ud.energyCost or 0), r[3] - p, r[2] + p, size, "ro")
 		end
 		if item.queued and item.queued > 0 then
-			bold:Print("\255\255\255\255" .. item.queued, r[1] + p * 3, r[4] - p * 3 - size * 1.1, size * 1.3, "o")
+			bold:Print("\255\255\255\255" .. item.queued, r[1] + p * 1.5, r[4] - p - size * 1.5, size * 1.5, "o")
 		end
 		if activeBuild() == item.id or factoryItem == item.id then
-			outline(r, GOLD, max(2, floor(p * 1.2)))
+			selector(r)
 		end
 	else -- a type: its count
-		bold:Print("\255\255\255\255" .. #item.units, r[3] - p * 3, r[2] + p * 3, size * 1.3, "ro")
+		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * 1.4, "ro")
 		if multi and multiPicked[item.defID] then
-			outline(r, GOLD, max(2, floor(p * 1.2)))
+			selector(r)
 		end
 	end
 end
 
+-- BAR's order menu's state lights: green, yellow, red by the state
 local STATE_COLORS = { { 0.3, 0.85, 0.3, 1 }, { 0.95, 0.8, 0.2, 1 }, { 0.9, 0.25, 0.2, 1 } }
 
 local function currentShape()
@@ -545,38 +658,35 @@ end
 local function drawButton(item, r)
 	local _, activeID = spGetActiveCommand()
 	local lit = item.kind == "order" and activeID == item.id
-	local bg = { 0.10, 0.11, 0.13, 0.94 }
-	if item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
-		or item.kind == "shape" and currentShape() == item.shape then
-		bg = { 0.38, 0.3, 0.04, 0.95 }
+	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
+		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
+	if on then -- (picked: BAR's gold)
+		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
+	else
+		button(r)
 	end
-	element(r, bg)
-	textIn(item.label or "", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.34, "\255\240\240\240", bold)
-	if item.states and item.states > 1 then -- a state: its bar (green, yellow, red as BAR's)
+	textIn(item.label or "", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.34, "\255\240\240\240", font)
+	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
 		local c = STATE_COLORS[min(3, (item.state or 0) + 1)]
-		local w = (r[3] - r[1]) * 0.3
+		local w = (r[3] - r[1]) * 0.28
+		local y = r[2] + max(3, (r[4] - r[2]) * 0.1)
 		gl.Color(c)
-		gl.Rect(r[3] - w - 6, r[2] + 5, r[3] - 6, r[2] + 9)
+		gl.Rect(r[3] - w - 6, y, r[3] - 6, y + max(2, (r[4] - r[2]) * 0.06))
 		gl.Color(1, 1, 1, 1)
 	end
 	if lit then
-		outline(r, GOLD, 3)
+		selector(r)
 	end
 end
 
-local function drawSection(side)
-	local r = side == "left" and L.left or L.right
-	local s = side == "left" and leftScroll or rightScroll
-	local items = side == "left" and leftItems or rightItems
-	local cols = side == "left" and 3 or 2
-	local cw = side == "left" and L.tile or L.btnW
-	local ch = side == "left" and L.tile or L.btnH
+local function drawHalf(side)
+	local r, s, items, cols, cw, ch = half(side)
 	gl.Scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
 	local first = floor(s.pos)
 	for row = first - 1, first + s.visible + 1 do
 		for col = 0, cols - 1 do
-			local item = items[row * cols + col + 1]
-			if item and row >= 0 then
+			local item = row >= 0 and items[row * cols + col + 1]
+			if item then
 				local y1 = r[4] - (row - s.pos) * (ch + L.gap)
 				local x0 = r[1] + col * (cw + L.gap)
 				local rect = { x0, y1 - ch, x0 + cw, y1 }
@@ -611,7 +721,7 @@ local function drawSection(side)
 	end
 end
 
--- the place for the build menu copy's PLACE panel: the right section under the shapes' two rows
+-- the place for the build menu copy's PLACE panel: the right half under the shapes' two rows
 local function placeRect()
 	if not (active and rightKind == "place") then
 		return nil
@@ -624,96 +734,215 @@ end
 -- tap has picked the spot, rotate and cancel inside at the right
 local function drawPlace()
 	local B = WG.bardroidBuildmenu
-	local panel, spot = nil, nil
+	local p, spot = nil, nil
 	if B and B.droidPanel then
-		panel, spot = B.droidPanel()
+		p, spot = B.droidPanel()
 	end
-	if not panel then
+	if not p then
 		return
 	end
 	local ready = spot ~= nil
-	element(panel.all, ready and { 0.12, 0.52, 0.14, 1 } or { 0.1, 0.26, 0.11, 1 })
-	local pl = panel.place
-	textIn("PLACE", pl[1], pl[2], pl[3], pl[4], (pl[4] - pl[2]) * 0.3, ready and "\255\255\255\255" or "\255\150\190\150", bold)
+	button(p.all, ready and { 0.1, 0.5, 0.1, 1 } or { 0.1, 0.25, 0.1, 1 },
+		ready and { 0.25, 0.8, 0.25, 1 } or { 0.2, 0.35, 0.2, 1 })
+	local pl = p.place
+	textIn("PLACE", pl[1], pl[2], pl[3], pl[4], (pl[4] - pl[2]) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	for _, k in ipairs({ "rotate", "cancel" }) do
-		local r = panel[k]
-		element(r, { 0, 0, 0, 0.55 })
+		local r = p[k]
+		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
 		local sym = k == "rotate" and "\226\134\187" or "\226\156\149"
 		textIn(sym, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, k == "rotate" and "\255\235\235\235" or "\255\255\150\140", bold)
 	end
 	if not ready then
-		textIn("tap the map for the spot", pl[1], pl[2], pl[3], pl[2] + (pl[4] - pl[2]) * 0.3, (pl[4] - pl[2]) * 0.1,
-			"\255\170\200\170")
+		textIn("tap the map for the spot", pl[1], pl[2], pl[3], pl[2] + (pl[4] - pl[2]) * 0.32, (pl[4] - pl[2]) * 0.14,
+			"\255\185\215\185")
 	end
 end
 
 local function drawSelection()
 	local r = L.sel
-	element(r, { 0.06, 0.07, 0.08, 0.9 })
+	panel(r)
 	local counts = spGetSelectedUnitsCounts() or {}
-	local n = #(spGetSelectedUnits() or {})
+	local sel = spGetSelectedUnits() or {}
+	local n = #sel
 	local h = r[4] - r[2]
-	if n == 0 then -- nothing picked: the control groups, as pictures
-		local groups = Spring.GetGroupList() or {}
-		local list = {}
-		for g, c in pairs(groups) do
-			if c > 0 then
-				list[#list + 1] = g
-			end
-		end
-		table.sort(list)
-		L.groupRects = {}
-		if #list == 0 then
-			textIn("No units picked.  Groups: pick units, then hold a number key, or LOCAL / ALL UNITS",
-				r[1], r[2], r[3], r[4], h * 0.2, "\255\170\170\170")
-			return
-		end
-		local w = min(h, floor((r[3] - r[1]) / max(1, #list)))
-		for i, g in ipairs(list) do
-			local x0 = r[1] + (i - 1) * w
-			local gr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, group = g }
-			L.groupRects[#L.groupRects + 1] = gr
-			local best, bestN = nil, 0
-			for d, c in pairs(Spring.GetGroupUnitsCounts(g) or {}) do
-				if c > bestN then
-					best, bestN = d, c
-				end
-			end
-			element(gr, { 0.1, 0.11, 0.13, 0.95 })
-			if best then
-				picture(best, gr[1] + 3, gr[2] + 3, gr[3] - 3, gr[4] - 3)
-			end
-			bold:Print("\255\255\200\064" .. g, gr[1] + 8, gr[4] - h * 0.3, h * 0.26, "o")
-			bold:Print("\255\255\255\255" .. groups[g], gr[3] - 8, gr[2] + 8, h * 0.2, "ro")
-		end
+	local p = floor(h * 0.08)
+	if n == 0 then
+		textIn(selecting and "BOX SELECTION:  pick a filter on the right with a second finger" or "No units picked",
+			r[1], r[2], r[3], r[4], h * 0.2, "\255\175\175\175")
 		return
 	end
-	L.groupRects = nil
 	local best, bestN = nil, 0
 	for d, c in pairs(counts) do
 		if d ~= "n" and c > bestN then
 			best, bestN = d, c
 		end
 	end
-	if best then
-		picture(best, r[1] + 4, r[2] + 4, r[1] + h - 4, r[4] - 4)
-		local ud = UnitDefs[best]
-		local name = ud and (ud.translatedHumanName or ud.humanName) or ""
-		local x = r[1] + h + L.pad
-		bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
-		font:Print("\255\200\200\200" .. (n > 1 and (n .. " units, " .. bestN .. " of them this type") or ""), x,
-			r[4] - h * 0.62, h * 0.18, "o")
-		local u = (spGetSelectedUnits() or {})[1]
-		local hp, maxHp
-		if u then
-			hp, maxHp = Spring.GetUnitHealth(u)
+	if not best then
+		return
+	end
+	unitTile(best, { r[1] + p, r[2] + p, r[1] + h - p, r[4] - p })
+	local ud = UnitDefs[best]
+	local name = ud and (ud.translatedHumanName or ud.humanName) or ""
+	local x = r[1] + h + L.pad
+	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
+	if n > 1 then
+		font:Print("\255\200\200\200" .. n .. " units, " .. bestN .. " of this type", x, r[4] - h * 0.62, h * 0.17, "o")
+	end
+	local hp, maxHp = Spring.GetUnitHealth(sel[1])
+	if hp and maxHp and maxHp > 0 then
+		local x1 = r[3] - L.pad
+		local frac = max(0, min(1, hp / maxHp))
+		gl.Color(0.12, 0.12, 0.12, 0.9)
+		gl.Rect(x, r[2] + h * 0.13, x1, r[2] + h * 0.25)
+		gl.Color(1 - frac, 0.3 + 0.55 * frac, 0.2, 1)
+		gl.Rect(x, r[2] + h * 0.13, x + (x1 - x) * frac, r[2] + h * 0.25)
+		gl.Color(1, 1, 1, 1)
+	end
+end
+
+-- nothing picked: the control groups as pictures along the bottom (Kailil: "touch friendly unit groups by keeping
+-- unit groups in pictures at the bottom whenever no unit is slected"); a tap picks a group
+local function drawGroups()
+	L.groupRects = {}
+	local r = L.groups
+	panel(r)
+	local groups = Spring.GetGroupList() or {}
+	local list = {}
+	for g, c in pairs(groups) do
+		if c > 0 then
+			list[#list + 1] = g
 		end
-		if hp and maxHp and maxHp > 0 then
-			local x1 = r[3] - L.pad
-			local frac = max(0, min(1, hp / maxHp))
-			element({ x, r[2] + h * 0.12, x1, r[2] + h * 0.26 }, { 0.15, 0.15, 0.15, 1 })
-			element({ x, r[2] + h * 0.12, x + (x1 - x) * frac, r[2] + h * 0.26 },
-				{ 1 - frac, 0.25 + 0.55 * frac, 0.2, 1 })
+	end
+	table.sort(list)
+	local h = r[4] - r[2]
+	if #list == 0 then
+		textIn("Groups show here once made", r[1], r[2], r[3], r[4], h * 0.24, "\255\140\140\140")
+		return
+	end
+	local w = min(h, floor((r[3] - r[1]) / max(1, #list)))
+	for i, g in ipairs(list) do
+		local x0 = r[1] + (i - 1) * w
+		local gr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, group = g }
+		L.groupRects[#L.groupRects + 1] = gr
+		local best, bestN = nil, 0
+		for d, c in pairs(Spring.GetGroupUnitsCounts(g) or {}) do
+			if c > bestN then
+				best, bestN = d, c
+			end
+		end
+		if best then
+			unitTile(best, gr)
+		else
+			button(gr)
+		end
+		bold:Print("\255\255\200\064" .. g, gr[1] + 6, gr[4] - h * 0.3, h * 0.26, "o")
+		bold:Print("\255\255\255\255" .. groups[g], gr[3] - 6, gr[2] + 6, h * 0.2, "ro")
+	end
+end
+
+-- the mode: the camera pad dims the dock a little and says how to open it; the open menu has BAR's gold along its top,
+-- a pulse as it opens (Kailil: "a quick blink or sparkle or something that fits the BAR aesthetic"), and the time it
+-- has left before the pad comes back
+local function drawMode()
+	local d = L.dock
+	local t = now()
+	if not menu then
+		gl.Color(0, 0, 0, 0.32)
+		gl.Rect(d[1], d[2], d[3], d[4])
+		gl.Color(1, 1, 1, 1)
+		local s = L.sel
+		local size = (s[4] - s[2]) * 0.15
+		font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + L.pad * 0.6, size, "ro")
+		return
+	end
+	local age = t - menuAt
+	local edge = max(2, floor(L.pad * 0.3))
+	if age < BLINK then -- two quick pulses of light over the dock, gold at its top edge
+		local a = math.sin(age / BLINK * math.pi * 2) ^ 2
+		gl.Color(1, 0.9, 0.6, 0.16 * a)
+		gl.Rect(d[1], d[2], d[3], d[4])
+		gl.Color(1, 0.82, 0.35, 0.9 * a)
+		gl.Rect(d[1], d[4] - edge * 3, d[3], d[4])
+	end
+	local left = max(0, 1 - (t - lastTouch) / MENU_SECONDS)
+	gl.Color(1, 0.78, 0.25, 0.85)
+	gl.Rect(d[1], d[4] - edge, d[1] + (d[3] - d[1]) * left, d[4])
+	gl.Color(1, 1, 1, 1)
+end
+
+---------------------------------------------------------------------------------------------------------------------
+-- The app's lines in the touch log (RtsTouch): only the dock's are read here; bardroid_touch.lua reads the rest. One
+-- handle; the size is looked at every 30 reads (the app starts a new, shorter log now and then).
+
+local logFile, logPos, logCalls = nil, 0, 0
+local function newLines()
+	if not logFile then
+		logFile = io.open(TOUCH_LOG, "r")
+		logPos = logFile and logFile:seek("end") or 0
+		return nil
+	end
+	logCalls = logCalls + 1
+	if logCalls % 30 == 0 then
+		local size = logFile:seek("end")
+		if not size then
+			logFile:close()
+			logFile = nil
+			return nil
+		end
+		if size < logPos then
+			logPos = 0
+		end
+	end
+	if not logFile:seek("set", logPos) then
+		return nil
+	end
+	local text = logFile:read("*a") or ""
+	local last = text:match(".*()\n")
+	if not last then
+		return nil
+	end
+	logPos = logPos + last
+	return text:sub(1, last)
+end
+
+local function dockLines()
+	local lines = newLines()
+	if not lines then
+		return
+	end
+	for line in lines:gmatch("[^\n]+") do
+		local side, v = line:match("^dockscroll (%a+) (%S+)")
+		if side and active and menu then
+			local _, s, _, _, _, ch = half(side)
+			snapBy(s, -(tonumber(v) or 0), ch + L.gap) -- (X pixels down: the rows follow the finger)
+			touched()
+		end
+		side, v = line:match("^dockfling (%a+) (%S+)")
+		if side and active then
+			local _, s, _, _, _, ch = half(side)
+			snapRelease(s, -(tonumber(v) or 0) / (ch + L.gap))
+			touched()
+		end
+		local tx, ty = line:match("^docktap (%S+) (%S+)")
+		if tx and active then -- a second finger on the dock while a box selection is dragged: a filter
+			local item = itemAt("right", tonumber(tx), vsy - tonumber(ty))
+			if item and item.kind == "filter" then
+				selFilter = item.key
+			end
+			touched()
+		end
+		local name = line:match("^act (dock_%S+)")
+		if name == "dock_menu" and active then
+			setMenu(true)
+		elseif name == "dock_select_start" and active then
+			selecting = true
+			touched()
+			refresh()
+		elseif name == "dock_select_end" then
+			selecting = false
+			filterAt = now() + 0.15 -- (the engine makes the box selection when the button goes up)
+			touched()
+			refresh()
 		end
 	end
 end
@@ -730,29 +959,34 @@ local function checkActive()
 		refresh()
 	end
 	if active ~= was then
+		menu, selecting = false, false
 		Spring.Echo("[bardroid-portrait] dock " .. (active and "up" or "down") .. string.format(" (%dx%d)", x, y))
+		writeDock(true)
 	end
 end
 
 local refreshAt = 0
-local DEBUG, debugAt = true, nil
 function widget:Update(dt)
 	checkActive()
+	dockLines()
 	if not active then
 		return
 	end
 	snapUpdate(leftScroll, dt)
 	snapUpdate(rightScroll, dt)
 	local t = now()
+	if menu and not selecting and not leftScroll.drag and not rightScroll.drag and t - lastTouch > MENU_SECONDS then
+		setMenu(false)
+	end
+	if filterAt and t >= filterAt then
+		filterAt = nil
+		applyFilter()
+	end
 	if t >= refreshAt and not press then
 		refreshAt = t + 0.25
 		refresh()
-		if DEBUG and t >= (debugAt or 0) then
-			debugAt = t + 1
-			local descs = spGetActiveCmdDescs() or {}
-			Spring.Echo(string.format("[bardroid-portrait] debug: %d descs, %d left, %d right", #descs, #leftItems, #rightItems))
-		end
 	end
+	writeDock(false)
 end
 
 function widget:CommandsChanged()
@@ -770,25 +1004,27 @@ function widget:DrawScreen()
 	if not font then
 		return
 	end
-	element(L.dock, { 0.03, 0.035, 0.04, 1 })
-	font:Begin()
+	panel(L.dock, 1, 1, 0, 0, true)
 	drawSelection()
-	drawSection("left")
-	drawSection("right")
+	drawHalf("left")
+	drawHalf("right")
 	if rightKind == "place" then
 		drawPlace()
 	end
-	font:End()
+	drawGroups() -- (always: a pick away from any group; Kailil asked for them whenever nothing is picked)
+	drawMode()
 end
 
 function widget:IsAbove(x, y)
 	return active and inRect(x, y, L.dock)
 end
 
-function widget:MousePress(x, y, button)
+-- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
+function widget:MousePress(x, y, btn)
 	if not (active and inRect(x, y, L.dock)) then
 		return false
 	end
+	touched()
 	local pr = placeRect()
 	if pr and inRect(x, y, pr) then -- the PLACE panel: the build menu copy's (rotate, cancel; PLACE is RtsTouch's)
 		local B = WG.bardroidBuildmenu
@@ -798,42 +1034,48 @@ function widget:MousePress(x, y, button)
 		return true
 	end
 	local side = inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
-	press = { side = side, x = x, y = y, button = button, t = now() }
-	if side then
-		snapPress(side == "left" and leftScroll or rightScroll, y)
-	end
+	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0 }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
 
 function widget:MouseMove(_, y)
-	if not press or not press.side then
+	local p = press
+	if not (p and p.side) then
 		return
 	end
-	local s = press.side == "left" and leftScroll or rightScroll
-	local rowH = (press.side == "left" and L.tile or L.btnH) + L.gap
-	if snapMove(s, y, rowH, vsx * TAP_SLOP) then
-		press.dragged = true
+	if not p.moved and abs(y - p.y) < vsx * 0.012 then
+		return
 	end
+	p.moved = true
+	local _, s, _, _, _, ch = half(p.side)
+	snapBy(s, y - p.lastY, ch + L.gap) -- (a mouse drag: the rows follow it)
+	local t = now()
+	if t > p.lastT then
+		p.vel = 0.6 * p.vel + 0.4 * ((y - p.lastY) / (ch + L.gap) / (t - p.lastT))
+	end
+	p.lastY, p.lastT = y, t
+	touched()
 end
 
-function widget:MouseRelease(_, _, button)
+function widget:MouseRelease(_, _, btn)
 	local p = press
 	press = nil
 	if not p then
 		return false
 	end
 	if p.side then
-		local s = p.side == "left" and leftScroll or rightScroll
-		if snapRelease(s) or p.dragged then
+		if p.moved then
+			local _, s = half(p.side)
+			snapRelease(s, p.vel)
 			return true
 		end
-		pressItem(itemAt(p.side, p.x, p.y), button == 3)
+		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
 		return true
 	end
 	if L.groupRects then -- a control group's picture: those units
 		for _, gr in ipairs(L.groupRects) do
 			if inRect(p.x, p.y, gr) then
-				Spring.SendCommands("group " .. gr.group)
+				Spring.SendCommands("group select " .. gr.group)
 				refresh()
 				return true
 			end
@@ -855,10 +1097,28 @@ function widget:Initialize()
 			return active and L.dock or nil
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
+		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the top row's right end)
+			if not active then
+				return nil
+			end
+			local s = L.sel
+			local h = floor((s[4] - s[2]) * 0.42)
+			local w = floor(h * 2.6)
+			return { s[3] - L.pad - w, s[4] - L.pad - h, s[3] - L.pad, s[4] - L.pad }
+		end,
+		menu = function()
+			return menu
+		end,
 	}
 	checkActive()
+	writeDock(true)
 end
 
 function widget:Shutdown()
 	WG.BarDroidPortrait = nil
+	active = false
+	writeDock(true)
+	if logFile then
+		logFile:close()
+	end
 end

@@ -110,6 +110,7 @@
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoUpdate" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_update" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbRtsTouch" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_rts_touch" />
+            <CheckBox style="@style/LauncherCheck" android:id="@+id/cbPortrait" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_portrait" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbCaptureShortcuts" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_capture_shortcuts" />
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_graphics" />

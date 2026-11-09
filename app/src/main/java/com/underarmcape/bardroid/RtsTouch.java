@@ -94,7 +94,36 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, DONE }
+
+    // The portrait dock (bardroid_portrait.lua writes bardroid_dock.txt: its rects in X screen pixels and its mode).
+    // Kailil, 2026-11-09: the dock "function as a camera movement pad to pan and zoom around the map ... double tap hold
+    // finger on second tap and drag up or down to zoom ... Double tap hold on second tap left or right is rotation ...
+    // larger dead zone than the rest. single finger hold and drag in any direction is the camera panning. Tripple tap
+    // hold on third tap up or down is tilt camera ... if I single tap, the ui at the bottom, then I can interact with
+    // the ui". In "pad" mode a touch there moves the camera (PAD); a lone tap asks the widget for its menu ("act
+    // dock_menu", once no second tap follows). In "menu" mode taps click the dock, an up or down drag on one of its
+    // halves scrolls it (dockscroll / dockfling: the widget snaps to whole rows), and a drag on the game above is BAR's
+    // box selection ("act dock_select_start / end": the dock shows its unit filters; a second finger on the dock
+    // meanwhile picks one, "docktap x y").
+    private static final class Dock { float[] all, left, right; boolean menu; }
+    private Dock dockCache;
+    private long dockReadAt, dockModified;
+    private boolean inDock;                          // this touch began on the dock
+    private int padTaps, padTapCount;                // the dock: taps just before this touch / counted after it
+    private long padTapUpAt;
+    private float padTapX = -1, padTapY;             // view pixels: the last tap on the dock
+    private enum PadMove { NONE, PAN, ZOOM, ROTATE, TILT }
+    private PadMove padMove = PadMove.NONE;
+    private float padX, padY;                        // view pixels: the finger at the last camera line
+    private String dockSide;                         // a menu-mode scroll: "left" or "right"
+    private boolean dockSelecting;                   // a menu-mode drag on the game: a box selection
+    private static final float PAD_PAN_GAIN = 1.3f;            // the map moves this much more than the finger
+    private static final float PAD_ZOOM_PER_SCREEN = 3.0f;     // a drag the screen's height up: e^3 times closer
+    private static final float PAD_ROTATE_DEAD = 3f;           // slops a sideways drag goes before it rotates (Kailil:
+                                                               // "a larger dead zone than the rest"; zoom, tilt: 1)
+    private static final float PAD_ROTATE_PER_WIDTH = (float) Math.PI;   // a drag across the screen: half a turn
+    private final Runnable padSingleTap = () -> { padTapCount = 0; act("dock_menu"); };
     // of the view's height: one wheel step in BAR's windows (BAR's Settings: ~3.5 rows a step; at 0.045 the list ran
     // 1.7 times as far as the finger, dev phone)
     private static final float SCROLL_STEP = 0.08f;
@@ -111,6 +140,7 @@ final class RtsTouch {
     private final File screenFile = new File(widgetDir, "bardroid_screen.txt");
     private final File hoverFile = new File(widgetDir, "bardroid_hover.txt");
     private final File placeFile = new File(widgetDir, "bardroid_place.txt");
+    private final File dockFile = new File(widgetDir, "bardroid_dock.txt");          // the portrait dock (above)
     private int[] heldKeys = {};                     // modifier keys held for a building's tap or drag
     private FileOutputStream log;
     private long logBytes;
@@ -281,6 +311,12 @@ final class RtsTouch {
                 finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
+                Dock dock = dock();
+                inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()));
+                if (inDock && !dock.menu) {   // the dock in pad mode: the camera
+                    padDown(e);
+                    break;
+                }
                 ui.removeCallbacks(applyQueue);
                 applyQueue.run();
                 if (gridHeld && place() == null) gridLetGo();   // (the building went some other way)
@@ -309,8 +345,18 @@ final class RtsTouch {
                 int i = e.getActionIndex();
                 starts.put(e.getPointerId(i), new float[]{e.getX(i), e.getY(i)});
                 maxFingers = Math.max(maxFingers, e.getPointerCount());
+                if (state == State.LEFT_DRAG && dockSelecting) {   // a second finger on the dock: a filter for the box
+                    Dock d = dock();
+                    float x = toX(e.getX(i)), y = toY(e.getY(i));
+                    if (d != null && inside(d.all, x, y)) send(String.format(Locale.US, "docktap %.0f %.0f", x, y));
+                    break;
+                }
                 showCursor(false);   // Kailil: the pointer flickering between two fingers looked broken
-                if (state == State.PENDING) {
+                if (state == State.PAD) {   // two fingers on the pad: pinch and twist as on the map
+                    ui.removeCallbacks(padSingleTap);
+                    padTapCount = 0;
+                    beginTwoFinger(e, State.TWO_FINGER);
+                } else if (state == State.PENDING) {
                     ui.removeCallbacks(longPress);
                     state = State.MULTI_PENDING;
                     joinedPan = false;
@@ -368,6 +414,23 @@ final class RtsTouch {
                     state = State.VOICE_SWIPE;
                     return;
                 }
+                if (inDock) {   // the dock in menu mode: up and down on one of its halves scroll it
+                    Dock d = dock();
+                    float x = toX(downX), y = toY(downY);
+                    String side = d == null ? null : inside(d.left, x, y) ? "left" : inside(d.right, x, y) ? "right" : null;
+                    if (side != null && Math.abs(curY - downY) >= Math.abs(curX - downX)) {
+                        state = State.DOCK_SCROLL;
+                        dockSide = side;
+                        padY = downY;
+                        dockScroll();
+                        return;
+                    }
+                } else if (!gridHeld && place() == null && dockMenuOpen()) {   // the game above the open dock: a drag
+                    dockSelecting = true;                                       // is BAR's box selection
+                    act("dock_select_start");
+                    startLeftDrag();
+                    return;
+                }
                 if (gridHeld) {   // a GRID waiting for PLACE: a drag moves its far corner further
                     state = State.GRID_DRAG;
                     moveX = downX; moveY = downY;
@@ -381,6 +444,12 @@ final class RtsTouch {
                 return;
             case PAN:
                 panTo(curX, curY);
+                return;
+            case PAD:
+                if (i >= 0) padMove();
+                return;
+            case DOCK_SCROLL:
+                if (i >= 0) dockScroll();
                 return;
             case SCROLL:
                 if (i >= 0) scrollTo(curY);
@@ -498,7 +567,20 @@ final class RtsTouch {
             case LEFT_DRAG:
                 press(curX, curY, InputStub.BUTTON_LEFT, false);
                 releaseKeys();
+                endDockSelect();
                 break;
+            case PAD:
+                padUp(e);
+                break;
+            case DOCK_SCROLL: {   // let go: its speed, for the widget's settle (a quick flick: the next rows)
+                float vy = 0;
+                if (velocity != null) {
+                    velocity.computeCurrentVelocity(1000);
+                    vy = velocity.getYVelocity(firstId);
+                }
+                send(String.format(Locale.US, "dockfling %s %.1f", dockSide, vy * yPerViewPixel()));
+                break;
+            }
             case RIGHT_HOLD:
                 press(curX, curY, InputStub.BUTTON_RIGHT, false);
                 break;
@@ -541,9 +623,176 @@ final class RtsTouch {
         ui.removeCallbacks(gridHold);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
+        endDockSelect();
         if (!gridHeld) releaseKeys();
         state = State.IDLE;
         showCursor(true);
+    }
+
+    // ---- the portrait dock ----------------------------------------------------------------------------------------
+
+    /**
+     * The dock as bardroid_portrait.lua last wrote it ("dock x0 y0 x1 y1 pad|menu", "left ...", "right ...", X screen
+     * pixels; "dock none" when it is down), read at most every 100 ms; null: no dock, no game, or an old file.
+     */
+    private Dock dock() {
+        long now = SystemClock.uptimeMillis();
+        if (now - dockReadAt < 100) return dockCache;
+        dockReadAt = now;
+        long mod = dockFile.lastModified();
+        if (mod == 0 || System.currentTimeMillis() - mod > HOVER_STALE_MS || !gameWidgetRunning()) {
+            dockCache = null;
+            return null;
+        }
+        if (mod == dockModified) return dockCache;
+        dockModified = mod;
+        String text = readSmall(dockFile);
+        Dock d = null;
+        if (text != null) {
+            try {
+                for (String line : text.split("\n")) {
+                    String[] f = line.trim().split(" ");
+                    if (f.length < 5) continue;
+                    float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
+                    if (f[0].equals("dock") && f.length == 6) {
+                        d = new Dock();
+                        d.all = r;
+                        d.menu = f[5].equals("menu");
+                    } else if (d != null && f[0].equals("left")) d.left = r;
+                    else if (d != null && f[0].equals("right")) d.right = r;
+                }
+            } catch (NumberFormatException e) { d = null; }
+        }
+        if (d != null && (d.left == null || d.right == null)) d = null;
+        dockCache = d;
+        return d;
+    }
+
+    private boolean dockMenuOpen() {
+        Dock d = dock();
+        return d != null && d.menu;
+    }
+
+    private void padDown(MotionEvent e) {
+        state = State.PAD;
+        firstId = e.getPointerId(0);
+        downX = curX = padX = e.getX();
+        downY = curY = padY = e.getY();
+        downTime = e.getEventTime();
+        ui.removeCallbacks(padSingleTap);
+        boolean near = padTapX >= 0 && Math.hypot(downX - padTapX, downY - padTapY) <= slop * 8;
+        padTaps = near && downTime - padTapUpAt <= doubleTapMs ? padTapCount : 0;
+        padMove = PadMove.NONE;
+        starts.clear();
+        starts.put(firstId, new float[]{downX, downY});
+        maxFingers = 1;
+        if (velocity != null) velocity.recycle();
+        velocity = VelocityTracker.obtain();
+        velocity.addMovement(e);
+    }
+
+    /** The camera from a finger on the pad: which move is decided once, by the taps before it and its first slide. */
+    private void padMove() {
+        float dx = curX - downX, dy = curY - downY, ax = Math.abs(dx), ay = Math.abs(dy);
+        if (padMove == PadMove.NONE) {
+            if (padTaps == 0) {
+                if (Math.hypot(dx, dy) <= slop) return;
+                padMove = PadMove.PAN;
+                padX = downX;
+                padY = downY;
+            } else if (padTaps == 1) {
+                if (ay > slop && ay >= ax) padMove = PadMove.ZOOM;
+                else if (ax > PAD_ROTATE_DEAD * slop && ax > 1.5f * ay) padMove = PadMove.ROTATE;
+                else return;
+                padX = curX;
+                padY = curY;
+                return;
+            } else {
+                if (!(ay > slop && ay >= ax)) return;   // (sideways after three taps: nothing yet)
+                padMove = PadMove.TILT;
+                padX = curX;
+                padY = curY;
+                return;
+            }
+        }
+        float[] c = worldCentre();
+        switch (padMove) {
+            case PAN:
+                sendPan(c[0], c[1], c[0] + (curX - padX) * PAD_PAN_GAIN, c[1] + (curY - padY) * PAD_PAN_GAIN);
+                break;
+            case ZOOM: {   // up: closer
+                float h = view().getHeight();
+                if (h > 0) send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
+                        Math.exp((padY - curY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
+                break;
+            }
+            case ROTATE: {
+                float w = view().getWidth();
+                if (w > 0) send(String.format(Locale.US, "rot %.4f", (curX - padX) / w * PAD_ROTATE_PER_WIDTH));
+                break;
+            }
+            case TILT: {
+                float h = view().getInputSourceRect().height();
+                if (h > 0) send(String.format(Locale.US, "tilt %.4f", (toY(curY) - toY(padY)) / h));
+                break;
+            }
+            default:
+        }
+        padX = curX;
+        padY = curY;
+    }
+
+    /** A finger let go on the pad: a lone quick tap opens the dock's menu once no second tap follows; a pan glides. */
+    private void padUp(MotionEvent e) {
+        if (padMove == PadMove.NONE && e.getEventTime() - downTime <= MULTI_TAP_MS) {
+            padTapCount = padTaps + 1;
+            padTapUpAt = e.getEventTime();
+            padTapX = downX;
+            padTapY = downY;
+            if (padTapCount == 1) ui.postDelayed(padSingleTap, doubleTapMs);
+            return;
+        }
+        padTapCount = 0;
+        if (padMove != PadMove.PAN || velocity == null) return;
+        velocity.computeCurrentVelocity(1000);
+        float vx = velocity.getXVelocity(firstId), vy = velocity.getYVelocity(firstId);
+        if (Math.hypot(vx, vy) < minFling) return;
+        float[] c = worldCentre();
+        flingX = c[0];
+        flingY = c[1];
+        flingVx = vx * PAD_PAN_GAIN;
+        flingVy = vy * PAD_PAN_GAIN;
+        ui.postDelayed(fling, FLING_FRAME_MS);
+    }
+
+    /** The middle of the game above the dock, view pixels (the pad pans and zooms about it). */
+    private float[] worldCentre() {
+        LorieView v = view();
+        Rect vp = v.getInputViewport();
+        RectF src = v.getInputSourceRect();
+        float top = v.getTop() + vp.top;
+        Dock d = dock();
+        float dockTop = d != null ? d.all[1] : src.bottom;
+        float bottom = top + (dockTop - src.top) * vp.height() / Math.max(1f, src.height());
+        return new float[]{v.getLeft() + vp.exactCenterX(), (top + bottom) / 2};
+    }
+
+    private void dockScroll() {
+        if (curY == padY) return;
+        send(String.format(Locale.US, "dockscroll %s %.1f", dockSide, toY(curY) - toY(padY)));
+        padY = curY;
+    }
+
+    private void endDockSelect() {
+        if (!dockSelecting) return;
+        dockSelecting = false;
+        act("dock_select_end");
+    }
+
+    private float yPerViewPixel() {
+        LorieView v = view();
+        Rect vp = v.getInputViewport();
+        return vp.height() > 0 ? v.getInputSourceRect().height() / vp.height() : 1;
     }
 
     /** The X pointer is hidden while two or more fingers are down, and in first person (its own crosshair). */

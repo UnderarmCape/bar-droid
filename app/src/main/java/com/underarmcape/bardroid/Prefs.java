@@ -59,6 +59,8 @@ public final class Prefs {
     public static int controllerPort = 28777;
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
+    /** The game upright: the portrait dock for touch (Kailil, 2026-11-09; bardroid_portrait.lua, RtsTouch's pad). */
+    public static boolean portrait = false;
     /**
      * Android's, One UI's and DeX's keyboard shortcuts stay out of the game screen, their keys go to BAR
      * (KeyboardShortcuts). Off: Termux:X11's defaults.
@@ -153,6 +155,7 @@ public final class Prefs {
         verboseX = s.getBoolean("verboseX", verboseX);
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
+        portrait = s.getBoolean("portrait", portrait);
         captureShortcuts = s.getBoolean("captureShortcuts", captureShortcuts);
         fpsCap = s.getInt("frameCap", fpsCap);
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
@@ -186,6 +189,7 @@ public final class Prefs {
                 .putBoolean("verboseX", verboseX)
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
+                .putBoolean("portrait", portrait)
                 .remove("mouseKeyboard")   // the withdrawn mouse capture setting (b148e59)
                 .putBoolean("captureShortcuts", captureShortcuts)
                 .remove("touchOnly")   // the touch-only mode is gone
