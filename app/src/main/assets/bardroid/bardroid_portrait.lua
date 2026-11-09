@@ -378,8 +378,16 @@ local function activeBuild()
 	return cmdID and cmdID < 0 and cmdID or nil
 end
 
+local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
+
 -- what each half shows, refreshed a few times a second and after every press
+local refreshNow
 local function refresh()
+	local t0 = spGetTimer()
+	refreshNow()
+	refreshN, refreshMs = refreshN + 1, refreshMs + spDiffTimers(spGetTimer(), t0) * 1000
+end
+function refreshNow()
 	local sel = spGetSelectedUnits() or {}
 	local builds, orders = readCommands()
 	-- (units picked and no command at all: the engine's list for a frame after a press or a pick, before it is made
@@ -1165,15 +1173,13 @@ function widget:CommandsChanged()
 	end
 end
 
-function widget:DrawScreen()
-	if not active then
-		return
-	end
-	font = WG.fonts and WG.fonts.getFont() or font
-	bold = WG.fonts and WG.fonts.getFont(2) or font
-	if not font then
-		return
-	end
+-- springsettings bardroid_portrait_profile = 1: the dock's drawing time, its average every 10 s in the log (tools;
+-- 2.1 ms a frame on the dev phone, 2026-11-09; a display list of it made that 4-10 ms, growing: FlowUI's own lists
+-- inside it, made again several times a second; BAR's menus keep theirs in a texture, the way to try next)
+local profile = Spring.GetConfigInt("bardroid_portrait_profile", 0) == 1
+local profSum, profN, profAt = 0, 0, 0
+
+local function drawDock()
 	panel(L.dock, 1, 1, 0, 0, true)
 	drawResources()
 	drawSelection()
@@ -1184,6 +1190,29 @@ function widget:DrawScreen()
 	end
 	drawGroups() -- (always: a pick away from any group; Kailil asked for them whenever nothing is picked)
 	drawMode()
+end
+
+function widget:DrawScreen()
+	if not active then
+		return
+	end
+	font = WG.fonts and WG.fonts.getFont() or font
+	bold = WG.fonts and WG.fonts.getFont(2) or font
+	if not font then
+		return
+	end
+	if not profile then
+		drawDock()
+		return
+	end
+	local t0 = spGetTimer()
+	drawDock()
+	profSum, profN = profSum + spDiffTimers(spGetTimer(), t0) * 1000, profN + 1
+	if now() - profAt >= 10 then
+		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each",
+			profSum / max(1, profN), profN, refreshN, refreshMs / max(1, refreshN)))
+		profSum, profN, profAt, refreshN, refreshMs = 0, 0, now(), 0, 0
+	end
 end
 
 -- the circle being dragged, on the ground in BAR's gold

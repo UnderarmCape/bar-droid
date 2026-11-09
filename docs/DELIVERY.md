@@ -1362,6 +1362,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       BAR's wind gauge, which BAR places by the screen's width while the buttons move: over "Statistics" at interface
       scale 1.0, over "Save" at 0.8 (tried, back to 1.0: it only made everything smaller). BAR's layout, no setter: for
       BAR's developers, or a wind readout in the dock and the gauge left as it is.
+- [ ] The portrait dock's cost (dev phone, 2026-11-09, springsettings `bardroid_portrait_profile = 1`): its drawing
+      2.1-3.3 ms a frame (BAR's FlowUI panels, buttons and unit tiles drawn anew every frame), its refresh about 4 a
+      second at about 1 ms. A display list of the still parts made it worse (4-10 ms, growing: FlowUI makes lists of
+      its own inside, and the list was made again several times a second): reverted. BAR's own menus draw into a
+      texture and redraw it only on change: the way to try next.
 - [ ] Speak to chat started, cancelled and started again quickly (2026-11-09, dev phone, a virtual pad's LB + RB twice
       three times in the lobby): Android's `cancel()` answers with a late `onError(5)`. Here it came before the next
       start; had it come after, `done()` would have ended the new session (the note gone, the words dropped). The cure:
