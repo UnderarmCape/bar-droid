@@ -253,12 +253,25 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- What the halves hold
 
+-- BAR's own words for a command, as its order menu shows them ("commands.<action>" or "commands.<state>"), else nil
+local trCache = {}
+local function tr(key)
+	if trCache[key] == nil then
+		local ok, s = pcall(function()
+			return BAR and BAR.I18N and BAR.I18N(key)
+		end)
+		trCache[key] = (ok and type(s) == "string" and s ~= "" and s ~= key and not s:find("commands.", 1, true)) and s or false
+	end
+	return trCache[key] or nil
+end
+
 local function cmdLabel(cmd)
 	if cmd.type == CMDTYPE.ICON_MODE and cmd.params and #cmd.params > 1 then
 		local state = tonumber(cmd.params[1]) or 0
-		return cmd.params[state + 2] or cmd.name, state, #cmd.params - 1
+		local name = cmd.params[state + 2] or cmd.name
+		return tr("commands." .. tostring(name)) or name, state, #cmd.params - 1
 	end
-	return cmd.name
+	return tr("commands." .. tostring(cmd.action)) or cmd.name
 end
 
 -- BAR's order menu's filter (gui_ordermenu.lua, as bardroid_pad.lua's orderCommands): BAR marks every command hidden
@@ -368,14 +381,20 @@ end
 -- what each half shows, refreshed a few times a second and after every press
 local function refresh()
 	local sel = spGetSelectedUnits() or {}
+	local builds, orders = readCommands()
+	-- (units picked and no command at all: the engine's list for a frame after a press or a pick, before it is made
+	-- again; taken as it was, it threw the build menu back to its first rows after each factory press)
+	if #sel > 0 and #builds == 0 and #orders == 0 and not typesFrom and not selecting then
+		return
+	end
 	local key = #sel .. ":" .. tostring(sel[1])
-	if key ~= lastSelection then
+	local newPick = key ~= lastSelection -- (another pick: both halves from their first rows, not the last unit's place)
+	if newPick then
 		lastSelection, factoryItem = key, nil
 		if #sel > 0 and not multi then
 			typesFrom = nil
 		end
 	end
-	local builds, orders = readCommands()
 	local newLeft, newRight, lk, rk
 	if typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first
 		local types = byType(typesUnits(), combat)
@@ -435,8 +454,8 @@ local function refresh()
 		newRight, rk = orders, "orders"
 	end
 	leftItems, rightItems = newLeft, newRight
-	snapSet(leftScroll, math.ceil(#leftItems / 3), L.leftRows or 2, lk == leftKind)
-	snapSet(rightScroll, math.ceil(#rightItems / 2), L.rightRows or 3, rk == rightKind)
+	snapSet(leftScroll, math.ceil(#leftItems / 3), L.leftRows or 2, lk == leftKind and not newPick)
+	snapSet(rightScroll, math.ceil(#rightItems / 2), L.rightRows or 3, rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
 			#rightItems)) -- (tools: what the dock shows)
@@ -617,16 +636,23 @@ local function flow()
 end
 
 -- opaque: the dock itself (BAR's panels show the game through; the dock covers the menus and lists under it)
-local function panel(r, tl, tr, br, bl, opaque)
+local function panel(r, ctl, ctr, cbr, cbl, opaque)
 	local f = flow()
 	if f and f.Element then
-		f.Element(r[1], r[2], r[3], r[4], tl or 1, tr or 1, br or 1, bl or 1, nil, nil, nil, nil, nil, nil, nil, nil, opaque)
+		f.Element(r[1], r[2], r[3], r[4], ctl or 1, ctr or 1, cbr or 1, cbl or 1, nil, nil, nil, nil, nil, nil, nil, nil, opaque)
 	else
 		gl.Color(0.04, 0.04, 0.04, opaque and 1 or 0.8)
 		gl.Rect(r[1], r[2], r[3], r[4])
 	end
 	gl.Color(1, 1, 1, 1) -- (a unit picture right after an Element came out dark: the state it leaves)
 	gl.Texture(false)
+end
+
+-- (a unit picture drawn right after a FlowUI button or selector came out dark: the state they leave)
+local function resetGL()
+	gl.Color(1, 1, 1, 1)
+	gl.Texture(false)
+	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
 end
 
 local function button(r, c1, c2)
@@ -636,8 +662,8 @@ local function button(r, c1, c2)
 	else
 		gl.Color(c1 or { 0.15, 0.15, 0.15, 0.9 })
 		gl.Rect(r[1], r[2], r[3], r[4])
-		gl.Color(1, 1, 1, 1)
 	end
+	resetGL()
 end
 
 local function selector(r)
@@ -645,6 +671,7 @@ local function selector(r)
 	if f and f.Selector then
 		f.Selector(r[1], r[2], r[3], r[4])
 	end
+	resetGL()
 end
 
 local function unitTile(defID, r)
