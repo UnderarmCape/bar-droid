@@ -1,0 +1,19 @@
+diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
+index 0911876..9199f85 100644
+--- a/lorie/src/main/res/xml/preferences.xml
++++ b/lorie/src/main/res/xml/preferences.xml
+@@ -73,10 +73,10 @@
+         <ListPreference app:key="swipeDownAction" app:defaultValue="toggle additional key bar" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
+         <ListPreference app:key="volumeUpAction" app:defaultValue="no action" app:entries="@array/userActionsVolumeUpValues" app:entryValues="@array/userActionsVolumeUpValues" />
+         <ListPreference app:key="volumeDownAction" app:defaultValue="no action" app:entries="@array/userActionsVolumeDownValues" app:entryValues="@array/userActionsVolumeDownValues" />
+-        <ListPreference app:key="backButtonAction" app:defaultValue="toggle soft keyboard" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
+-        <ListPreference app:key="notificationTapAction" app:defaultValue="open preferences" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
+-        <ListPreference app:key="notificationButton0Action" app:defaultValue="open preferences" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
+-        <ListPreference app:key="notificationButton1Action" app:defaultValue="exit" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
++        <ListPreference app:isPreferenceVisible="false" app:key="backButtonAction" app:defaultValue="toggle soft keyboard" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
++        <ListPreference app:isPreferenceVisible="false" app:key="notificationTapAction" app:defaultValue="open preferences" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
++        <ListPreference app:isPreferenceVisible="false" app:key="notificationButton0Action" app:defaultValue="open preferences" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
++        <ListPreference app:isPreferenceVisible="false" app:key="notificationButton1Action" app:defaultValue="exit" app:entries="@array/userActionsValues" app:entryValues="@array/userActionsValues" />
+         <ListPreference app:key="mediaKeysAction" app:defaultValue="no action" app:entries="@array/userActionsMediaKeyValues" app:entryValues="@array/userActionsMediaKeyValues" />
+     </PreferenceScreen>
+ </PreferenceScreen>

@@ -24,7 +24,10 @@
     <!-- Other's two entries had no summary (LoriePreferences finds lorie_pref_<key>_summary by name, in this package too) -->
     <string name="lorie_pref_clipboardEnable_summary">The phone\'s clipboard and the game\'s are shared both ways</string>
     <string name="lorie_pref_configureResponseToUserActions">What swipes and keys do</string>
-    <string name="lorie_pref_configureResponseToUserActions_summary">Swipes, Back, the volume and media keys, the notification\'s buttons</string>
+    <!-- (patch 0013 hides Back, which the game always takes as Escape, and the notification's tap and buttons: BarApp
+         keeps Termux:X11's notification away) -->
+    <string name="lorie_pref_configureResponseToUserActions_summary">Swipes (with BAR touch controls off), the volume and media keys; Back is always Escape in the game</string>
+    <string name="lorie_pref_other_summary">Clipboard, what swipes and the volume keys do</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
