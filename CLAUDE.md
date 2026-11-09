@@ -135,7 +135,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   (the engine's animated pointer: a new pointer image alone waits up to 100 ms for the next picture; identical pointer
   sets and moves dropped), `[display-cost]` lines in logcat every 5 s (the X server's CPU copy of each picture, the
   display pass's GPU time, draws per picture), and `LorieView.surfaceAtScreenSize` (dev: `files/bar/.bardroid-display-scales`,
-  the SurfaceView at the X screen's size, the display hardware scales instead of SGSR). docs/CONTAINER-COST.md has
+  the SurfaceView at the X screen's size, the display hardware scales instead of SGSR); 0012 the preference screen's
+  version line: "1.03.01, built <yyyy-MM-dd> from BAR Droid <commit>" (the commit is the building checkout's). docs/CONTAINER-COST.md has
   what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
   with all of them).
 - The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");

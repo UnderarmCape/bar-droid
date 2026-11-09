@@ -1,0 +1,16 @@
+diff --git a/lorie/version.gradle b/lorie/version.gradle
+index e5c7ea4..3ddce12 100644
+--- a/lorie/version.gradle
++++ b/lorie/version.gradle
+@@ -1,7 +1,10 @@
+ ext.termuxX11VersionName = {
+     def commit = 'git rev-parse --verify --short HEAD'.execute().text.trim()
+     def version = "1.03.01"
+-    "${version}-${commit.length() == 1 ? "nongit" : commit}-${(new Date()).format("dd.MM.yy")}"
++    // BAR Droid: the commit is the building checkout's (BAR Droid's, not Termux:X11's), the date year first: the line read
++    // "1.03.01-6ac80ca-09.11.26" under "Termux:X11 version", the date as September 11 to US eyes
++    def built = (new Date()).format("yyyy-MM-dd")
++    commit.isEmpty() ? "${version}, built ${built}" : "${version}, built ${built} from BAR Droid ${commit}"
+ }()
+ 
+ // Single source of truth for the NDK version. Anything building :lorie (this repo's own
