@@ -94,7 +94,7 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DONE }
 
     // The portrait dock (bardroid_portrait.lua writes bardroid_dock.txt: its rects in X screen pixels and its mode).
     // Kailil, 2026-11-09: the dock "function as a camera movement pad to pan and zoom around the map ... double tap hold
@@ -106,7 +106,9 @@ final class RtsTouch {
     // halves scrolls it (dockscroll / dockfling: the widget snaps to whole rows), and a drag on the game above is BAR's
     // box selection ("act dock_select_start / end": the dock shows its unit filters; a second finger on the dock
     // meanwhile picks one, "docktap x y").
-    private static final class Dock { float[] all, left, right; boolean menu; }
+    // (circle: the dock's selection style is CIRCLE, the pad's area selection by finger: "dockcircle x y r" lines from
+    // where the finger came down out to it, the widget picks the units in it; else BAR's box)
+    private static final class Dock { float[] all, left, right; boolean menu, circle; }
     private Dock dockCache;
     private long dockReadAt, dockModified;
     private boolean inDock;                          // this touch began on the dock
@@ -345,7 +347,8 @@ final class RtsTouch {
                 int i = e.getActionIndex();
                 starts.put(e.getPointerId(i), new float[]{e.getX(i), e.getY(i)});
                 maxFingers = Math.max(maxFingers, e.getPointerCount());
-                if (state == State.LEFT_DRAG && dockSelecting) {   // a second finger on the dock: a filter for the box
+                if ((state == State.LEFT_DRAG || state == State.CIRCLE) && dockSelecting) {   // a second finger on the dock:
+                    // a filter for the box or circle
                     Dock d = dock();
                     float x = toX(e.getX(i)), y = toY(e.getY(i));
                     if (d != null && inside(d.all, x, y)) send(String.format(Locale.US, "docktap %.0f %.0f", x, y));
@@ -426,9 +429,13 @@ final class RtsTouch {
                         return;
                     }
                 } else if (!gridHeld && place() == null && dockMenuOpen()) {   // the game above the open dock: a drag
-                    dockSelecting = true;                                       // is BAR's box selection
+                    dockSelecting = true;                                       // selects: BAR's box, or a circle
                     act("dock_select_start");
-                    startLeftDrag();
+                    Dock d = dock();
+                    if (d != null && d.circle) {
+                        state = State.CIRCLE;
+                        dockCircle();
+                    } else startLeftDrag();
                     return;
                 }
                 if (gridHeld) {   // a GRID waiting for PLACE: a drag moves its far corner further
@@ -450,6 +457,9 @@ final class RtsTouch {
                 return;
             case DOCK_SCROLL:
                 if (i >= 0) dockScroll();
+                return;
+            case CIRCLE:
+                if (i >= 0) dockCircle();
                 return;
             case SCROLL:
                 if (i >= 0) scrollTo(curY);
@@ -572,6 +582,10 @@ final class RtsTouch {
             case PAD:
                 padUp(e);
                 break;
+            case CIRCLE:   // let go: the widget picks what the circle holds (dock_select_end)
+                dockCircle();
+                endDockSelect();
+                break;
             case DOCK_SCROLL: {   // let go: its speed, for the widget's settle (a quick flick: the next rows)
                 float vy = 0;
                 if (velocity != null) {
@@ -652,7 +666,7 @@ final class RtsTouch {
             try {
                 for (String line : text.split("\n")) {
                     String[] f = line.trim().split(" ");
-                    if (f.length < 5) continue;
+                    if (f.length < 5) continue;   // (the "select box|circle" line: below)
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("dock") && f.length == 6) {
                         d = new Dock();
@@ -661,6 +675,7 @@ final class RtsTouch {
                     } else if (d != null && f[0].equals("left")) d.left = r;
                     else if (d != null && f[0].equals("right")) d.right = r;
                 }
+                if (d != null) d.circle = text.contains("\nselect circle");
             } catch (NumberFormatException e) { d = null; }
         }
         if (d != null && (d.left == null || d.right == null)) d = null;
@@ -781,6 +796,13 @@ final class RtsTouch {
         if (curY == padY) return;
         send(String.format(Locale.US, "dockscroll %s %.1f", dockSide, toY(curY) - toY(padY)));
         padY = curY;
+    }
+
+    /** The circle selection: its middle where the finger came down, its edge at the finger (X screen pixels). */
+    private void dockCircle() {
+        float cx = toX(downX), cy = toY(downY);
+        float r = (float) Math.hypot(toX(curX) - cx, toY(curY) - cy);
+        send(String.format(Locale.US, "dockcircle %.0f %.0f %.0f", cx, cy, r));
     }
 
     private void endDockSelect() {

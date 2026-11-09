@@ -141,6 +141,10 @@ local menuAt, lastTouch = -100, -100 -- when it opened; the last touch on it
 local selecting = false -- a box selection being dragged on the game (its filters on the right)
 local selFilter = "all" -- the box selection's filter, kept for the next one
 local filterAt -- a box selection just ended: the filter goes on when the engine has made it
+-- the selection's style (Kailil: "I want to test this using the traditional mouse drag or the controller radial"):
+-- "box", BAR's own drag; or "circle", the pad's area selection by finger (from where it came down out to it); kept
+local selStyle = "box"
+local circle -- the circle being dragged: { x, y, z, r } on the ground
 
 local function inRect(x, y, r)
 	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
@@ -203,7 +207,8 @@ local function writeDock(force)
 		local function r(x)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
-		text = string.format("dock %s %s\nleft %s\nright %s\n", r(L.dock), menu and "menu" or "pad", r(L.left), r(L.right))
+		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\n", r(L.dock), menu and "menu" or "pad", r(L.left),
+			r(L.right), selStyle)
 	else
 		text = "dock none\n"
 	end
@@ -382,7 +387,8 @@ local function refresh()
 		end
 	end
 	local building = activeBuild()
-	if selecting then -- a box selection being dragged: its filters (a second finger on the dock picks one)
+	local style = { kind = "style", label = selStyle == "circle" and "SELECT: CIRCLE" or "SELECT: BOX" }
+	if selecting then -- a selection being dragged: its filters (a second finger on the dock picks one)
 		newRight = {}
 		for _, f in ipairs(FILTERS) do
 			newRight[#newRight + 1] = { kind = "filter", key = f.key, label = f.label }
@@ -393,6 +399,10 @@ local function refresh()
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
 		}
+		if not typesFrom then
+			newRight[#newRight + 1] = style
+			newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
+		end
 		if typesFrom then
 			newRight[#newRight + 1] = { kind = "multi", label = multi and "MULTI: ON" or "MULTI" }
 			newRight[#newRight + 1] = { kind = "done", label = "DONE" }
@@ -439,8 +449,8 @@ local function selectUnits(units, append)
 	Spring.SelectUnitArray(units or {}, append or false)
 end
 
--- the box selection's filter on what the engine selected (an "all" changes nothing)
-local function applyFilter()
+-- the units the filter keeps (an "all" keeps them all)
+local function filtered(units)
 	local f
 	for _, x in ipairs(FILTERS) do
 		if x.key == selFilter then
@@ -448,15 +458,44 @@ local function applyFilter()
 		end
 	end
 	if not (f and f.test) then
-		return
+		return units
 	end
 	local keep = {}
-	for _, u in ipairs(spGetSelectedUnits() or {}) do
+	for _, u in ipairs(units or {}) do
 		if f.test(UnitDefs[Spring.GetUnitDefID(u) or -1]) then
 			keep[#keep + 1] = u
 		end
 	end
-	selectUnits(keep)
+	return keep
+end
+
+-- the box selection's filter on what the engine selected
+local function applyFilter()
+	if selFilter ~= "all" then
+		selectUnits(filtered(spGetSelectedUnits() or {}))
+	end
+end
+
+-- the circle's units: my team's within it on the ground, through the filter
+local function pickCircle()
+	local c = circle
+	circle = nil
+	if not (c and c.r > 0) then
+		return
+	end
+	selectUnits(filtered(Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}))
+end
+
+-- a "dockcircle x y r" line (X screen pixels, top left origin): its middle and edge on the ground
+local function circleTo(x, y, r)
+	local gy = vsy - y
+	local _, a = Spring.TraceScreenRay(x, gy, true)
+	if not a then
+		return
+	end
+	local _, b = Spring.TraceScreenRay(min(vsx - 1, x + max(1, r)), gy, true)
+	local wr = b and math.sqrt((b[1] - a[1]) ^ 2 + (b[3] - a[3]) ^ 2) or 0
+	circle = { x = a[1], y = a[2], z = a[3], r = wr }
 end
 
 local function pressItem(item, long)
@@ -514,6 +553,16 @@ local function pressItem(item, long)
 		end
 	elseif k == "filter" then
 		selFilter = item.key
+	elseif k == "style" then
+		selStyle = selStyle == "box" and "circle" or "box"
+		writeDock(true)
+	elseif k == "filterpick" then -- (nothing picked: the next filter for the next selection, round the list)
+		for i, f in ipairs(FILTERS) do
+			if f.key == selFilter then
+				selFilter = FILTERS[i % #FILTERS + 1].key
+				break
+			end
+		end
 	elseif k == "queue" and factoryItem then
 		if item.n < 0 then
 			runCommand(factoryItem, true)
@@ -767,7 +816,8 @@ local function drawSelection()
 	local h = r[4] - r[2]
 	local p = floor(h * 0.08)
 	if n == 0 then
-		textIn(selecting and "BOX SELECTION:  pick a filter on the right with a second finger" or "No units picked",
+		textIn(selecting and ((selStyle == "circle" and "CIRCLE" or "BOX") .. " SELECTION:  a second finger picks a filter")
+			or "No units picked",
 			r[1], r[2], r[3], r[4], h * 0.2, "\255\175\175\175")
 		return
 	end
@@ -923,6 +973,11 @@ local function dockLines()
 			snapRelease(s, -(tonumber(v) or 0) / (ch + L.gap))
 			touched()
 		end
+		local cx, cy, cr = line:match("^dockcircle (%S+) (%S+) (%S+)")
+		if cx and active then
+			circleTo(tonumber(cx), tonumber(cy), tonumber(cr))
+			touched()
+		end
 		local tx, ty = line:match("^docktap (%S+) (%S+)")
 		if tx and active then -- a second finger on the dock while a box selection is dragged: a filter
 			local item = itemAt("right", tonumber(tx), vsy - tonumber(ty))
@@ -940,7 +995,11 @@ local function dockLines()
 			refresh()
 		elseif name == "dock_select_end" then
 			selecting = false
-			filterAt = now() + 0.15 -- (the engine makes the box selection when the button goes up)
+			if circle then
+				pickCircle()
+			else
+				filterAt = now() + 0.15 -- (the engine makes the box selection when the button goes up)
+			end
 			touched()
 			refresh()
 		end
@@ -1015,8 +1074,35 @@ function widget:DrawScreen()
 	drawMode()
 end
 
+-- the circle being dragged, on the ground in BAR's gold
+function widget:DrawWorld()
+	local c = active and selecting and circle
+	if not (c and c.r > 0) then
+		return
+	end
+	gl.DepthTest(false)
+	gl.LineWidth(3)
+	gl.Color(1, 0.78, 0.25, 0.9)
+	gl.DrawGroundCircle(c.x, c.y, c.z, c.r, 64)
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
+end
+
 function widget:IsAbove(x, y)
 	return active and inRect(x, y, L.dock)
+end
+
+function widget:GetConfigData()
+	return { selStyle = selStyle, selFilter = selFilter }
+end
+
+function widget:SetConfigData(data)
+	if data and (data.selStyle == "box" or data.selStyle == "circle") then
+		selStyle = data.selStyle
+	end
+	if data and type(data.selFilter) == "string" then
+		selFilter = data.selFilter
+	end
 end
 
 -- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
