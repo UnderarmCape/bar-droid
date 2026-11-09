@@ -400,8 +400,7 @@ local function pregameStart()
 		return nil
 	end
 	local d = Spring.GetTeamRulesParam(myTeam(), "startUnit")
-	local ud = d and UnitDefs[d]
-	return ud and ud.buildOptions and #ud.buildOptions > 0 and d or nil
+	return d and UnitDefs[d] and d or nil -- (with no build options too: the faction buttons stay, to pick another)
 end
 
 local function pregameItems(startDefID)
@@ -412,10 +411,35 @@ local function pregameItems(startDefID)
 		end
 	end
 	local items = {}
-	for _, d in ipairs(UnitDefs[startDefID].buildOptions) do
+	for _, d in ipairs(UnitDefs[startDefID].buildOptions or {}) do
 		items[#items + 1] = { kind = "pregame", defID = d, queued = queued[d] }
 	end
 	return items
+end
+
+-- BAR's faction picker (gui_factionpicker.lua) sits at the bottom of the screen, under the dock upright: its factions
+-- here as buttons, the same choice by the same message ("changeStartUnit", BAR's picker's own; validStartUnits, no
+-- RANDOM when one real faction is left, none with one)
+local FACTION_NAMES = { arm = "ARMADA", cor = "CORTEX", leg = "LEGION", dum = "RANDOM" }
+local function pregameFactions()
+	local valid = Spring.GetTeamRulesParam(myTeam(), "validStartUnits") or Spring.GetGameRulesParam("validStartUnits")
+	local out = {}
+	for s in tostring(valid or ""):gmatch("[^|]+") do
+		local d = tonumber(s)
+		local ud = d and UnitDefs[d]
+		if ud then
+			local p = ud.name:sub(1, 3)
+			out[#out + 1] = { kind = "faction", startUnit = d, label = FACTION_NAMES[p] or p:upper(), random = p == "dum" }
+		end
+	end
+	if #out == 2 then
+		for i = #out, 1, -1 do
+			if out[i].random then
+				table.remove(out, i)
+			end
+		end
+	end
+	return #out > 1 and out or {}
 end
 
 local function placeShapes()
@@ -484,8 +508,11 @@ function refreshNow()
 		-- the game (the build menu copy places pregame buildings too: a map tap picks the spot, PLACE's Shift click
 		-- adds it to BAR's queue)
 		newRight, rk = placeShapes(), "place"
-	elseif pregame then -- (the queue on the map, BAR's: its last one off, or all of it)
+	elseif pregame then -- (the queue on the map, BAR's: its last one off, or all of it; the factions)
 		newRight = { { kind = "pregameundo", label = "UNDO LAST" }, { kind = "pregameclear", label = "CLEAR QUEUE" } }
+		for _, f in ipairs(pregameFactions()) do
+			newRight[#newRight + 1] = f
+		end
 		rk = "pregame"
 	elseif #sel == 0 or typesFrom then
 		newRight = {
@@ -663,6 +690,8 @@ local function pressItem(item, long)
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)
 	elseif k == "back" then
 		factoryItem = nil
+	elseif k == "faction" and Spring.GetGameFrame() == 0 then
+		Spring.SendLuaRulesMsg("changeStartUnit" .. tostring(item.startUnit))
 	elseif k == "pregame" or k == "pregameundo" or k == "pregameclear" then
 		local pb = WG["pregame-build"]
 		if pb then
@@ -836,6 +865,7 @@ local function drawButton(item, r)
 	local lit = item.kind == "order" and activeID == item.id
 	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
+		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
 	else

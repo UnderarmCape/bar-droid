@@ -1379,6 +1379,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       QUEUE otherwise. Dev phone, portrait: three solar collectors queued on open ground (BAR's queue drawn on the
       map, "3" on the tile), UNDO 3 -> 2, CLEAR -> 0; the panel's cancel puts the building away. A spot among trees
       queues nothing, as with a mouse. pad-test and touch-phone-test ALL PASS; remake-check: both copies equal.
+      Then landscape: PLACE queued too (the held click), but with no order menu before the game the panel went to the
+      bottom's middle, behind BAR's "Pick your faction" panel (rotate and cancel hidden): now under the build menu when
+      there is room. Upright that faction panel is under the dock: its factions are buttons in the dock's pregame right
+      half (BAR's picker's own "changeStartUnit" message, its rules for RANDOM), the current one lit. Dev phone: Cortex
+      picked (the left half Cortex's buildings), RANDOM, Armada again, then a building queued.
 - [x] The portrait dock on the unfolded Fold7 (2026-11-09): upright its X screen is 1080x1198, 1.11 times taller than
       wide, and the dock came up only past 1.15, so "Play upright" there gave BAR's landscape HUD squeezed upright (this
       file's "Touch HUD on the Fold7 unfolded" notes). Now past 1.05; and the name, groups and resource rows are capped
