@@ -108,6 +108,10 @@ public class GameActivity extends MainActivity {
     private final ControllerBridge.Mouse lobbyMouse = new ControllerBridge.Mouse() {
         private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());
         @Override public int mode() {   // (the app's controls in every game since v0.8.5's game went, 2026-11-06)
+            // Catching up the engine draws one picture in 30 s on purpose, so the widget's answers went stale and the pad
+            // turned into the lobby's free mouse: A clicked into the game unseen behind the progress screen. Off until
+            // caught up (nothing queued for afterwards either).
+            if (catchingUp) return ControllerBridge.MODE_OFF;
             return touch.gameWidgetRunning() ? ControllerBridge.MODE_GAME : ControllerBridge.MODE_LOBBY;
         }
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
@@ -336,6 +340,7 @@ public class GameActivity extends MainActivity {
     // file not written for CATCHUP_STALE_MS (the widget gone, the game ended) counts as caught up.
     // (the first frames after joining can take over 10 s: the emulator's join showed the progress switch off once)
     private static final long CATCHUP_STALE_MS = 30000;
+    private volatile boolean catchingUp;   // (read by the pad's thread: ControllerBridge's mode)
     private android.widget.TextView catchupView;
     private final android.os.Handler catchupHandler = new android.os.Handler(android.os.Looper.getMainLooper());
     private final Runnable catchupCheck = new Runnable() {
@@ -439,6 +444,7 @@ public class GameActivity extends MainActivity {
             }
         }
         setFlag(p.catchupFlag(), on, on ? "catching up: the engine draws nothing until caught up" : "caught up: the engine draws");
+        catchingUp = on;
         if (catchupView == null) return;
         if (on) catchupView.setText(text);
         catchupView.setVisibility(on ? View.VISIBLE : View.GONE);
