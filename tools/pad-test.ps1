@@ -78,6 +78,13 @@ try {
   # (-Online: its widget gives up 2400 frames after "ready" and then says which case missed: a slow phone needs the time)
   $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
+  # (the virtual pad now and then is never seen at all, no case logged: its script once more, 2026-11-09 dev phone)
+  if (-not ($Share -or $Chat) -and -not (Log '\[padtest\] done' 1) -and -not (Log '\[padtest\] (PASS|FAIL)' 1)) {
+    "[padtest] the pad was not seen: its script once more"
+    & $adb shell "uinput $evemu"
+    $until = (Get-Date).AddSeconds($(if ($Online) { 75 } else { 30 }))
+    while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
+  }
   $lines = if ($Online) { 60 } else { 24 }   # (-Online: its trace too)
   $which = if ($Online) { '\[padtest\]' } else { '\[padtest\] (PASS|FAIL|done|a new)|Error in|Removed widget' }
   Log $which $lines | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
