@@ -149,6 +149,10 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       the game closed at frame 210, the note shown. Checked on a real one too: the 05:46 hang's kept launcher.log holds
       both kinds of line (13 of the driver's, then 21 of the watchdog's), so the app's reading of the engine's output
       sees them, not only infolog.txt.
+      Again 2026-11-09 06:43: plain `pad-test.ps1` (a skirmish, frame 776, 19 of the driver's lines, the watchdog);
+      DriverWatch closed the game as built, and the test said "did not finish", first put down to the virtual pad.
+      1 in the 24 engine starts of that launcher.log (2026-11-08 14:08 to 11-09 07:13). pad-test now names the fault
+      when it ends a run (it counts launcher.log's "GPU driver refused" lines), so it is not taken for a controls bug.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
