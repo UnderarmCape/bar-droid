@@ -999,8 +999,12 @@ local function drawSelection()
 	local h = r[4] - r[2]
 	local p = floor(h * 0.08)
 	if n == 0 then
+		-- (before the game: what to do there, the start spot first; BAR's position reads 0,0 until one is picked)
+		local sx, _, sz = Spring.GetTeamStartPosition(myTeam())
+		local pregameText = pregameStart() and ((sx or 0) <= 0 and (sz or 0) <= 0
+			and "START SPOT:  tap the map for yours" or "Start spot picked: queue buildings, then Ready")
 		textIn(selecting and ((selStyle == "circle" and "CIRCLE" or "BOX") .. " SELECTION:  a second finger picks a filter")
-			or "No units picked",
+			or pregameText or "No units picked",
 			r[1], r[2] + h * 0.3, r[3], r[4], h * 0.2, "\255\175\175\175") -- (above the camera pad's hint, drawMode)
 		return
 	end
