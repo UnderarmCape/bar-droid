@@ -78,12 +78,16 @@ public class StartActivity extends Activity {
             } else {
                 left = in.getStableInsetLeft(); right = in.getStableInsetRight();   // (Android 9 and 10)
             }
-            // just under the icon's picture (start_background: 240 dp, its art ending ~96 dp below the window's middle),
-            // not at the screen's foot: 650 px of black lay between them on the dev phone, upright (2026-11-08)
-            int[] at = new int[2];
+            // just under the icon's picture, not at the screen's foot (650 px of black lay between them on the dev phone,
+            // upright, 2026-11-08). start_background centres its 240 dp icon on the window, whose top is not the
+            // screen's (under the status bar, more so at the Fold7's unfolded size): measured from the window's own
+            // place; the picture ends 80 dp below its middle, the text 20 dp under that
+            int[] at = new int[2], win = new int[2];
             updateView.getLocationOnScreen(at);
+            android.view.View decor = getWindow().getDecorView();
+            decor.getLocationOnScreen(win);
             float dp = getResources().getDisplayMetrics().density;
-            int top = Math.max(0, Math.round(getWindow().getDecorView().getHeight() / 2f + 128 * dp) - at[1]);
+            int top = Math.max(0, Math.round(win[1] + decor.getHeight() / 2f + 100 * dp) - at[1]);
             updateView.setPadding(right, top, left, 0);
         });
         waitingSince = SystemClock.elapsedRealtime();
