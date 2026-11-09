@@ -791,6 +791,24 @@ end
 
 local function drawHalf(side)
 	local r, s, items, cols, cw, ch = half(side)
+	if side == "left" and leftKind == "none" and not selecting then
+		-- nothing picked: what the right half's two buttons put here (the half stood empty, nothing said what for)
+		-- (one size for both lines, each beside a row of the right half's buttons)
+		if not font then
+			return
+		end
+		local a = "\255\190\190\190LOCAL UNITS  \255\140\140\140your combat units in view"
+		local b = "\255\190\190\190ALL UNITS  \255\140\140\140all of them, by type"
+		local size = (L.groups[4] - L.groups[2]) * 0.24
+		local w = max(font:GetTextWidth(a), font:GetTextWidth(b)) * size
+		if w > (r[3] - r[1] - 2 * L.pad) then
+			size = size * (r[3] - r[1] - 2 * L.pad) / w
+		end
+		local y1 = r[4] - L.btnH * 0.5
+		font:Print(a, r[1] + L.pad, y1 - size * 0.32, size, "o")
+		font:Print(b, r[1] + L.pad, y1 - L.btnH - L.gap - size * 0.32, size, "o")
+		return
+	end
 	gl.Scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
 	local first = floor(s.pos)
 	for row = first - 1, first + s.visible + 1 do
@@ -879,7 +897,7 @@ local function drawSelection()
 	if n == 0 then
 		textIn(selecting and ((selStyle == "circle" and "CIRCLE" or "BOX") .. " SELECTION:  a second finger picks a filter")
 			or "No units picked",
-			r[1], r[2], r[3], r[4], h * 0.2, "\255\175\175\175")
+			r[1], r[2] + h * 0.3, r[3], r[4], h * 0.2, "\255\175\175\175") -- (above the camera pad's hint, drawMode)
 		return
 	end
 	local best, bestN = nil, 0
