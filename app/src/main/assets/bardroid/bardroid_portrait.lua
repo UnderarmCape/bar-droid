@@ -930,18 +930,36 @@ local function drawGroups()
 	end
 	table.sort(list)
 	local h = r[4] - r[2]
-	if #list == 0 then
-		textIn("Groups show here once made", r[1], r[2], r[3], r[4], h * 0.24, "\255\140\140\140")
+	-- units picked: a "+ NEW" tile after the groups makes them the next free group (no keyboard for Ctrl+number)
+	local free
+	if #(spGetSelectedUnits() or {}) > 0 then
+		for n = 1, 9 do
+			if not groups[n] or groups[n] == 0 then
+				free = n
+				break
+			end
+		end
+	end
+	if #list == 0 and not free then
+		textIn("Groups: pick units, then + NEW here", r[1], r[2], r[3], r[4], h * 0.24, "\255\140\140\140")
 		return
 	end
-	local w = min(h, floor((r[3] - r[1]) / max(1, #list)))
+	local w = min(h, floor((r[3] - r[1]) / max(1, #list + (free and 1 or 0))))
+	if free then
+		local x0 = r[1] + #list * w
+		local nr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, new = free }
+		L.groupRects[#L.groupRects + 1] = nr
+		button(nr, { 0.2, 0.2, 0.2, 0.8 }, { 0.32, 0.32, 0.32, 0.8 })
+		textIn("+", nr[1], nr[2] + h * 0.3, nr[3], nr[4], h * 0.42, "\255\255\200\064", bold)
+		textIn("NEW " .. free, nr[1], nr[2], nr[3], nr[2] + h * 0.4, h * 0.2, "\255\220\220\220", font)
+	end
 	for i, g in ipairs(list) do
 		local x0 = r[1] + (i - 1) * w
 		local gr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, group = g }
 		L.groupRects[#L.groupRects + 1] = gr
 		local best, bestN = nil, 0
 		for d, c in pairs(Spring.GetGroupUnitsCounts(g) or {}) do
-			if c > bestN then
+			if type(d) == "number" and c > bestN then -- (the counts carry their total as "n")
 				best, bestN = d, c
 			end
 		end
@@ -1225,10 +1243,20 @@ function widget:MouseRelease(_, _, btn)
 		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
 		return true
 	end
-	if L.groupRects then -- a control group's picture: those units
+	if L.groupRects then -- a control group's picture: those units; a long press: the units picked now become that group;
+		-- "+ NEW": the units picked become the next free group (the engine's own group commands, as BAR's hotkeys)
+		local picked = #(spGetSelectedUnits() or {}) > 0
 		for _, gr in ipairs(L.groupRects) do
 			if inRect(p.x, p.y, gr) then
-				Spring.SendCommands("group select " .. gr.group)
+				if gr.new then
+					Spring.SendCommands("group set " .. gr.new)
+					Spring.Echo("[bardroid-portrait] group " .. gr.new .. " made") -- (tools)
+				elseif btn == 3 and picked then
+					Spring.SendCommands("group set " .. gr.group)
+					Spring.Echo("[bardroid-portrait] group " .. gr.group .. " set")
+				else
+					Spring.SendCommands("group select " .. gr.group)
+				end
 				refresh()
 				return true
 			end
