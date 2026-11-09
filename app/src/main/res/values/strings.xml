@@ -4,8 +4,11 @@
     <string name="display_prefs_title">Display &amp; touch preferences</string>
     <!-- Termux:X11's title for that screen's top level ("Preferences"), the launcher's name for it in its place -->
     <string name="lorie_pref_main">Display &amp; touch preferences</string>
-    <!-- and its "Version", which is Termux:X11's (1.03.01-...), not the app's: said whose it is -->
+    <!-- and its "Version", which is Termux:X11's (1.03.01, built ... from BAR Droid <commit>: patch 0012), not the
+         app's: said whose it is -->
     <string name="lorie_pref_version">Display server (Termux:X11) version</string>
+    <!-- Output's Fullscreen, upstream "Toggle immersive mode in your device display": said what it does -->
+    <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
     <string name="btn_lobby">Lobby</string>
