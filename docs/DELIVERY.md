@@ -153,6 +153,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       DriverWatch closed the game as built, and the test said "did not finish", first put down to the virtual pad.
       1 in the 24 engine starts of that launcher.log (2026-11-08 14:08 to 11-09 07:13). pad-test now names the fault
       when it ends a run (it counts launcher.log's "GPU driver refused" lines), so it is not taken for a controls bug.
+      Again 2026-11-09 11:14: `touch-phone-test.ps1` (a skirmish, frame 104, 5 s after loading, right after another
+      session's 13-minute benchmark: GPU 615 MHz at thermal level 2, 96 % busy, 59 C); the test named it, the rerun
+      passed. A frozen game also turns the pad into the lobby's mouse 5 s later (`RtsTouch.gameWidgetRunning`: the
+      widget's hover file goes stale), harmless as DriverWatch closes the game. touch-phone-test now names the fault
+      as pad-test does; the report draft's "only in replays" corrected (three of the six were skirmishes).
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57

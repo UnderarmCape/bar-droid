@@ -16,7 +16,8 @@ A draft for Kailil to post (or not) as an issue at https://github.com/lfdevs/mes
   in a Debian trixie proot container; the X server is Termux:X11 (built into the app).
 - The program: the Recoil RTS engine (Beyond All Reason), OpenGL, playing back a recorded game.
 
-**What happens** (3 times over four days of daily test runs, 2026-11-02 to 05, dozens of game starts)
+**What happens** (6 times over eight days of daily test runs, 2026-11-02 to 09, a few hundred game starts; lately
+about 1 in 25)
 ```
 MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)
 MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)
@@ -31,7 +32,9 @@ must be killed. The phone itself recovers (the next start works).
   ~25 s after the playback began.
 - 2026-11-04: a replay being fast-forwarded on a hot phone, after ~40 s of the engine's "GPU fence wasn't signalled
   within 100 ms" warnings.
-- So far only in replays: the skirmishes and online games of the same days did not hit it.
+- In skirmishes too since: 2026-11-05 19:52 (frame 741, a minute in), 2026-11-09 06:43 (frame 776) and 11:14
+  (frame 104, 5 s after loading, right after a 13-minute benchmark: GPU capped at 615 MHz, thermal level 2, 96 %
+  busy, 59 C). Cool and hot phones, idle and busy GPUs, early and a minute in: no pattern yet.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,
