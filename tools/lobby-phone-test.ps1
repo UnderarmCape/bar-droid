@@ -46,7 +46,11 @@ try {
     $places = @($on | ForEach-Object { ($_ -split ' at ')[-1] } | Select-Object -Unique)
     # (the offline lobby: its login dialog in front, Register and Cancel: two places)
     if ($on.Count -ge 3 -and $places.Count -ge 2) { "[lobbytouch] PASS the pad's D-pad: the pointer on $($on.Count) controls ($($on -join '; '))" }
-    else { "[lobbytouch] FAIL the pad's D-pad: $($on.Count) moves ($($on -join '; '))" }
+    else {
+      "[lobbytouch] FAIL the pad's D-pad: $($on.Count) moves ($($on -join '; '))"
+      # (what the widget got: each press as it read it, a press with nothing that way, the pointer moved off)
+      Log '\[bardroid-lobby\] the pad' 16 | ForEach-Object { $_ -replace '^\[t=([^\]]+)\]\[f=[^\]]+\] ', '  $1 ' }
+    }
   } else { "[lobbytouch] FAIL the test did not finish in 4 minutes" }
   Log '\[lobbytouch\] (PASS|FAIL|done)|\[lobbylogin\]|bardroid_lobby.*[Ee]rror' 60 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

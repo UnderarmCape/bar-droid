@@ -57,6 +57,7 @@ end
 local TOAST_SECONDS = 1.3
 local VOICE_PING_NOTE = "SPEAK THE PING" -- (voice_on_ping: what is said labels a ping, voicePing)
 local VOICE_SECONDS = 15 -- the listening note's longest stay (the app ends it: voice_off)
+local VOICE_NOMIC_NOTE = "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" -- (voice_nomic; the lobby's the same)
 local voiceToast = false -- the note showing is the listening one
 local VOICE_PING_SECONDS = 30 -- the ping's place kept this long for the words
 local voicePingAt = nil -- where the spoken ping goes: { x, y, z, at }
@@ -1782,6 +1783,9 @@ local ACTIONS = {
 	end,
 	voice_none = function()
 		note("NO SPEECH RECOGNITION ON THIS PHONE", nil, 2.5)
+	end,
+	voice_nomic = function() -- (the microphone not allowed; after two "Don't allow" Android no longer asks)
+		note(VOICE_NOMIC_NOTE, nil, 4)
 	end,
 	share_confirm = shareConfirm, -- A on the list
 	share_cancel = function() -- B on it

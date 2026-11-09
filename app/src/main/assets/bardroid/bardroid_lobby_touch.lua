@@ -614,7 +614,11 @@ local function voiceCurrent(targets)
 	return targets[1]
 end
 
-local function voiceShow()
+-- say: a note in the panel instead of the target (the microphone not allowed: voice_nomic, VOICE_NOMIC_SECONDS)
+local VOICE_NOMIC = "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" -- (bardroid_pad.lua's in a game)
+local VOICE_NOMIC_SECONDS = 4
+local voiceNoteAt = nil -- the note's start; the panel goes after VOICE_NOMIC_SECONDS
+local function voiceShow(say)
 	if not voicePanel then
 		local config = WG.Chobby and WG.Chobby.Configuration
 		voicePanel = Chili.Window:New({
@@ -635,8 +639,8 @@ local function voiceShow()
 			objectOverrideFont = config and config:GetFont(3),
 		})
 	end
-	local target = voiceCurrent(voiceTargets())
-	local caption = target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
+	local target = not say and voiceCurrent(voiceTargets())
+	local caption = say or target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
 		or "SPEAK TO CHAT: JOIN A SERVER OR OPEN THE CHAT"
 	local font = voiceLabel.font
 	local ok, textW = pcall(function() return font:GetTextWidth(caption) end)
@@ -842,6 +846,9 @@ local function navigate(dir)
 		end
 	end
 	if not pick then
+		Spring.Echo(string.format("[bardroid-lobby] the pad: nothing %s of %s", dir, fx
+			and string.format("%s \"%s\"", tostring(real(focus).classname), tostring(real(focus).caption or real(focus).name or ""))
+			or string.format("the pointer at %d %d", ox, oy))) -- (tools/lobby-phone-test.ps1)
 		return
 	end
 	focus = pick.obj
@@ -864,7 +871,13 @@ local function appUpdate()
 			if name == "voice_on" then
 				voiceOn = not gameLoaded -- (in a game: the game's own note and channels)
 				if voiceOn then
+					voiceNoteAt = nil
 					voiceShow()
+				end
+			elseif name == "voice_nomic" then
+				if not gameLoaded then
+					voiceShow(VOICE_NOMIC)
+					voiceNoteAt = Spring.GetTimer()
 				end
 			elseif name == "voice_off" then
 				voiceOn = false
@@ -876,6 +889,7 @@ local function appUpdate()
 			else
 				local dir = name:match("^lobby_nav_(%a+)$")
 				if DIRECTIONS[dir] then
+					Spring.Echo("[bardroid-lobby] the pad's D-pad: " .. dir) -- (tools/lobby-phone-test.ps1)
 					navigate(dir)
 				end
 			end
@@ -886,9 +900,17 @@ local function appUpdate()
 			end)))
 		end
 	end
+	if voiceNoteAt and Spring.DiffTimers(Spring.GetTimer(), voiceNoteAt) >= VOICE_NOMIC_SECONDS then
+		voiceNoteAt = nil
+		if voicePanel and not voiceOn then
+			voicePanel:Hide()
+		end
+	end
 	if focus then -- (the pointer moved away: let go; the control moved, as a list scrolls: the ring follows)
 		local mx, my = Spring.GetMouseState()
 		if not focusAt or math.abs(mx - focusAt[1]) + math.abs(my - focusAt[2]) > 24 then
+			Spring.Echo(string.format("[bardroid-lobby] the pad let go: the pointer at %d %d, put at %d %d", mx, my,
+				focusAt and focusAt[1] or -1, focusAt and focusAt[2] or -1))
 			focus = nil
 		end
 		placeRing()

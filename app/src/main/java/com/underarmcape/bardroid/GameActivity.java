@@ -64,6 +64,7 @@ public class GameActivity extends MainActivity {
             @Override public void listening(boolean on, boolean ping) { touch.padAct(on ? (ping ? "voice_on_ping" : "voice_on") : "voice_off"); }
             @Override public void heard(String text, boolean ping) { touch.voice(text, ping); }
             @Override public void unavailable() { touch.padAct("voice_none"); }
+            @Override public void denied() { touch.padAct("voice_nomic"); }
         });
         touch.setVoiceChat(voiceChat::start);
         touch.setVoiceListening(voiceChat::listening);

@@ -25,6 +25,7 @@ final class VoiceChat {
         void listening(boolean on, boolean ping);   // "SPEAK TO CHAT" / "SPEAK THE PING" shown while on
         void heard(String text, boolean ping);      // what was said: to chat, or a ping's label
         void unavailable();                         // the phone has no recognition service
+        void denied();                              // the microphone is not allowed: a note says where to allow it
     }
 
     private final Activity activity;
@@ -84,7 +85,12 @@ final class VoiceChat {
         boolean wanted = waitingForPermission;
         waitingForPermission = false;
         if (wanted && granted) start(ping);
-        else if (wanted) Log.i("app", "voice chat: the microphone was not allowed");
+        else if (wanted) {
+            // (after two "Don't allow" Android stops asking and answers no at once: without a word speak to chat did
+            // nothing at all, every time)
+            Log.i("app", "voice chat: the microphone was not allowed");
+            sink.denied();
+        }
     }
 
     private void cancel() {
@@ -139,6 +145,7 @@ final class VoiceChat {
         @Override public void onError(int error) {   // (no speech, no match, a timeout: nothing is sent)
             Log.i("app", "voice chat: nothing sent (" + errorName(error) + ", recognizer error " + error + ")");
             done();
+            if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) sink.denied();
         }
 
         @Override public void onResults(Bundle results) {

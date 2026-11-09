@@ -361,6 +361,18 @@ cases = {
 		L.activate(false)
 		settle()
 	end,
+	function() -- (the microphone not allowed: Android stops asking after two "Don't allow", speak to chat said nothing)
+		appAct("act voice_nomic")
+		settle()
+	end,
+	function()
+		local L = WG.BarDroidLobbyTouch
+		local px, py, pw, ph, lx, lw, tw, sw, cap = L.voiceRect()
+		check("the microphone not allowed: the panel says where to allow it, its words whole",
+			L.voiceShown() and tostring(cap):find("MICROPHONE", 1, true) and tw > 0 and tw <= pw and lw == pw
+				and math.abs(px * 2 + pw - sw) <= 1,
+			px and string.format("panel %dx%d, words %d wide: %s", pw, ph, tw, tostring(cap)))
+	end,
 	function()
 		local all, odd = allScalesAre(1)
 		check("Start again: 100%", math.abs(WG.uiScale - 1) < 0.001 and all, odd or tostring(WG.uiScale))

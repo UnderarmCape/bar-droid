@@ -49,7 +49,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Two-finger tap | Right click |
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
-| Three-finger tap | Speak to chat: "< SPEAK TO ALLIES >" shows in the channel's colour with a pulsing red dot, the phone's speech recognition listens, and what you said is sent as a chat message (in a game to the game's chat only, not the lobby's); nothing said, nothing sent. Meanwhile a sideways swipe (on the pad: D-pad left / right) switches the channel between allies, everyone and spectators, kept for later messages and games (typed ones too). The first time, Android asks for the microphone |
+| Three-finger tap | Speak to chat: "< SPEAK TO ALLIES >" shows in the channel's colour with a pulsing red dot, the phone's speech recognition listens, and what you said is sent as a chat message (in a game to the game's chat only, not the lobby's); nothing said, nothing sent. Meanwhile a sideways swipe (on the pad: D-pad left / right) switches the channel between allies, everyone and spectators, kept for later messages and games (typed ones too). The first time, Android asks for the microphone (not allowed: a note says to allow it in Android's settings, Apps) |
 | Three-finger double tap | Show or hide the keyboard |
 | Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
