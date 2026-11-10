@@ -152,16 +152,6 @@ end
 --------------------------------------------------------------------------------
 -- Server details
 
-local function closePopup()
-	if popupButton and WG.TooltipHandler and WG.TooltipHandler.TooltipOverrideClear then
-		WG.TooltipHandler.TooltipOverrideClear()
-	end
-	popupButton = nil
-	if bar then
-		bar:Hide()
-	end
-end
-
 local function scrollPanelOf(obj)
 	obj = obj and obj.parent
 	while obj do
@@ -169,6 +159,52 @@ local function scrollPanelOf(obj)
 			return obj
 		end
 		obj = obj.parent
+	end
+end
+
+-- A tapped server's details pinned to the server list's top right (Kailil, 2026-11-09: "this popup that occurs when
+-- clicking the server should stay pinned on the top right hand corner of the server list always", upright and wide):
+-- Chobby's tooltip widget puts its window at the pointer at every update (gui_tooltip.lua SetTooltipPos); while the
+-- details are up that window's SetPos takes the list's corner instead. Back to Chobby's own when they close.
+local function pinnedPlace(w, h)
+	local panel = popupButton and scrollPanelOf(popupButton)
+	if not (panel and panel.LocalToScreen) then
+		return nil
+	end
+	local px, py = panel:LocalToScreen(0, 0)
+	local x = px + (panel.width or 0) - (w or 0) - 4
+	local y = math.max(0, math.min(py + 4, screen0.height - (h or 0)))
+	return math.max(0, x), y
+end
+
+local function pinTooltip(on)
+	local tip = screen0 and screen0.GetObjectByName and real(screen0:GetObjectByName("tooltipWindow"))
+	if not tip then
+		return
+	end
+	if on and not tip.bardroidSetPos then
+		local setPos = tip.SetPos
+		tip.bardroidSetPos = setPos
+		tip.SetPos = function(self, x, y, w, h, ...)
+			local px, py = pinnedPlace(w or self.width, h or self.height)
+			if px then
+				x, y = px, py
+			end
+			return setPos(self, x, y, w, h, ...)
+		end
+	elseif not on and tip.bardroidSetPos then
+		tip.SetPos, tip.bardroidSetPos = nil, nil -- (the class's own again)
+	end
+end
+
+local function closePopup()
+	if popupButton and WG.TooltipHandler and WG.TooltipHandler.TooltipOverrideClear then
+		WG.TooltipHandler.TooltipOverrideClear()
+	end
+	popupButton = nil
+	pinTooltip(false)
+	if bar then
+		bar:Hide()
 	end
 end
 
@@ -196,6 +232,7 @@ end
 local makeBar, placeBar
 local function openPopup(button)
 	popupButton = real(button)
+	pinTooltip(true)
 	if WG.TooltipHandler and WG.TooltipHandler.TooltipOverride then
 		WG.TooltipHandler.TooltipOverride(button.tooltip)
 	end
