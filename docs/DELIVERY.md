@@ -57,8 +57,11 @@ same, that stays the simpler way.
       the last item's type (the engine takes one off the back), with Alt for the first item's (off the front).
       Dev phone, upright: the commander's three moves (one walked off) to one to none; a Bot Lab's Pawn, Rocko,
       Pawn to Pawn, Rocko to Rocko.
-- [ ] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message breaks off
-      at "Im thinking the l": ask what came next).
+- [x] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message broke off
+      at "Im thinking the l"; asked, 2026-11-10: "Idk. I ran out of ideas on what buttons would be big", left to us).
+      A factory's FIGHT, MOVE and PATROL are where its new units go: the units' sizes (FIGHT across two rows, MOVE and
+      PATROL tall), and REPEAT across after them where a commander has its D-gun. Dev phone, upright, a Bot Lab: that
+      layout, REPEAT tapped Off to On.
 - [x] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
       every unit that came out of it, and every one that will, to the state tapped; a tap cycles the three, a state
       left 0.3 s is applied. The same for an air factory's fly / land: every plane that came out of it, not builders.
@@ -119,9 +122,18 @@ same, that stays the simpler way.
       the map's edge the Maces' places were off the map and they stayed (now drawn in). CONCAVE to the left: the front in
       a curve at the spot, every unit moving. Once, the engine hung on the dev phone ~1 s after the selection was emptied
       with the presets open (the watchdog, no stack); the same steps again ran on without it (as the 11-02 hang).
-- [ ] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
+- [x] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
       an area mex order over the mex spots within the commander's weapon range, sent at once without confirmation
       (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
+      `bardroid_automex.lua`, every time: as an extractor becomes the active command with a commander picked, the free
+      spots within the commander's weapon range (BAR's maxWeaponRange: the Armada commander's 300) are queued, nearest
+      first, through BAR's resource spot API as BAR's Area Mex (the finder's spots; the builder's PreviewExtractorCommand,
+      which leaves out built spots, its SpotHasExtractorQueued, its ApplyPreviewCmds), appended to the queue (a start's
+      queued buildings stay first); with orders sent the extractor is put away and the note says "3 MEXES QUEUED", with
+      none it stays for the player. Dev phone, upright: on a start whose spots were over 300 away, nothing ("0 spots in
+      300 elmos"); the commander walked within 190 of three spots, the Mex tile tapped: "3 spots in 300 elmos queued",
+      its queue three armmex, the dock back on its orders, the first one built. (PreviewExtractorCommand takes the
+      extractor's own def id: negated, as first read from BAR's Area Mex, it found no building place for any spot.)
 
 Added 2026-11-10 ~05:00 (with screenshots):
 - [x] **LOCAL UNITS / ALL UNITS pick ALL at once**: the first tap shows the list on ALL with those units selected.

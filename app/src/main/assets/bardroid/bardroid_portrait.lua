@@ -938,10 +938,15 @@ function refreshNow()
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
-		if mobilePicked then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
-			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE)
+		if mobilePicked or selectedFactory() then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
+			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE; a factory's
+			-- FIGHT, MOVE and PATROL are where its new units go, the same size, and its REPEAT across after them: Kailil,
+			-- 2026-11-10, the factory's order menu "with the larger buttons arrangement too", the rest left to us)
 			local big = { [CMD.FIGHT] = { 1, 2, 2 }, [CMD.MOVE] = { 2, 1, 2 }, [CMD.PATROL] = { 3, 1, 2 },
 				[CMD.MANUALFIRE] = { 4, 2, 1 } }
+			if not mobilePicked then
+				big[CMD.MANUALFIRE], big[CMD.REPEAT] = nil, { 4, 2, 1 }
+			end
 			local first, rest = {}, {}
 			for _, it in ipairs(orders) do
 				local b = it.kind == "order" and big[it.id]
