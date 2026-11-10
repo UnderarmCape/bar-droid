@@ -1151,7 +1151,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] The launcher on the Fold7 unfolded (2026-11-02, the dev phone at 1968x2184): one column across the whole width,
       setting lines of 1,700 pixels. Now side by side from 600 dp wide, upright too; an ordinary phone upright keeps one
       column. `pad-test -Online` with the tile-copy change: 14 of 14.
-- [ ] Touch HUD on the Fold7 unfolded (the dev phone at 1968x2184, 2026-11-02), Kailil's call on both:
+- [x] Touch HUD on the Fold7 unfolded (the dev phone at 1968x2184, 2026-11-02). Checked again 2026-11-10 with the dev
+      phone's display at 1198x1080 (`wm size`, the unfolded Fold7 held wide; reset after): the build menu, unit info,
+      the app's order menu copy (since 2026-11-03), BAR's groups and idle-builder panels side by side, left of the small
+      player list, nothing under it; spectating (a defeat, then stay), a tap on the small list brings up the app's
+      spectate bar (player cams, Free, Follow unit, Group), BAR's Player View row not needed; the controller game's
+      v0.8.5 menu is gone (2026-11-06); held upright, the portrait dock (2026-11-09, near-square fixes 2026-11-10). The
+      notes from then, kept:
       BAR's control-group and idle-builder panels dock to the order menu's right edge, which reaches far enough there
       that both sit under the small player list and show through it (BAR's layout; its order menu has no width setter
       and the list no position setter: the order menu raised with `setBottomPosition`, or the list kept open, are the
