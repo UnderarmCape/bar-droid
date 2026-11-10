@@ -430,8 +430,14 @@ end
 -- The camera on a point of the map, the point in the middle of the game above the dock: the engine's camera target is
 -- the screen's middle, which upright is the dock's top edge (a unit jumped to sat half under it). The shift is where the
 -- two middles' rays meet the point's height now (a plane: the ground's ray missed over the void past the map's edge).
-local function planeAt(sx, sy, h)
-	local px, py, pz = Spring.GetCameraPosition()
+-- cam: where the camera will be ({ x, y, z }, its heading as now), else where it is.
+local function planeAt(sx, sy, h, cam)
+	local px, py, pz
+	if cam then
+		px, py, pz = cam[1], cam[2], cam[3]
+	else
+		px, py, pz = Spring.GetCameraPosition()
+	end
 	local dx, dy, dz = Spring.GetPixelDir(sx, vsy - sy) -- (its y from the top, as the engine's mouse; ours from the bottom)
 	if not (px and dx) or dy > -1e-4 then
 		return nil
@@ -439,14 +445,135 @@ local function planeAt(sx, sy, h)
 	local t = (h - py) / dy
 	return px + dx * t, pz + dz * t
 end
-local function cameraTo(x, y, z)
+-- The view above the dock kept on the map where it fits (upright, a commander by the map's edge left almost half of it
+-- on the empty void past the edge; dev phone, 2026-11-09): the point moved just enough for the view's corners to stay
+-- inside the edges, and the view centred along a side where it is longer than the map
+local function keepOnMap(x, z, h, cam)
+	local ox, oz = planeAt(floor(vsx / 2), floor((L.dock[4] + vsy) / 2), h, cam)
+	if not ox then
+		return x, z
+	end
+	local x0, x1, z0, z1 = 0, 0, 0, 0
+	for _, c in ipairs({ { 0, L.dock[4] }, { vsx - 1, L.dock[4] }, { 0, vsy - 1 }, { vsx - 1, vsy - 1 } }) do
+		local px, pz = planeAt(c[1], c[2], h, cam)
+		if not px then
+			return x, z -- (a corner past the horizon: a tilted camera, left as it is)
+		end
+		x0, x1 = min(x0, px - ox), max(x1, px - ox)
+		z0, z1 = min(z0, pz - oz), max(z1, pz - oz)
+	end
+	local function fit(v, lo, hi, size)
+		if hi - lo >= size then
+			return (size - lo - hi) / 2
+		end
+		return max(-lo, min(size - hi, v))
+	end
+	local nx, nz = fit(x, x0, x1, Game.mapSizeX), fit(z, z0, z1, Game.mapSizeZ)
+	-- but never so far that the point leaves the middle half of the view: a tilted camera's far half covers a long way,
+	-- and the whole move put a commander by the edge out of sight (2490 elmos). The middle half's corners on the ground,
+	-- from the view's middle; after a part t of the move the point is -t times the move from that middle.
+	local band = (vsy - L.dock[4]) * 0.25
+	local quad = {}
+	for _, c in ipairs({ { 0.2, L.dock[4] + band }, { 0.8, L.dock[4] + band }, { 0.8, vsy - band }, { 0.2, vsy - band } }) do
+		local px, pz = planeAt(floor(vsx * c[1]), floor(c[2]), h, cam)
+		if not px then
+			return x, z
+		end
+		quad[#quad + 1] = { px - ox, pz - oz }
+	end
+	local function inMiddle(t)
+		local dx, dz = -t * (nx - x), -t * (nz - z)
+		local side = 0
+		for i = 1, 4 do
+			local a, b = quad[i], quad[i % 4 + 1]
+			local cross = (b[1] - a[1]) * (dz - a[2]) - (b[2] - a[2]) * (dx - a[1])
+			local s = cross > 0 and 1 or (cross < 0 and -1 or 0)
+			if s ~= 0 then
+				if side == 0 then
+					side = s
+				elseif s ~= side then
+					return false
+				end
+			end
+		end
+		return true
+	end
+	if not inMiddle(1) then
+		local lo, hi = 0, 1
+		for _ = 1, 10 do
+			local t = (lo + hi) / 2
+			if inMiddle(t) then
+				lo = t
+			else
+				hi = t
+			end
+		end
+		nx, nz = x + lo * (nx - x), z + lo * (nz - z)
+	end
+	return nx, nz
+end
+
+-- COMMANDER and BASE's zoom (Kailil, 2026-11-10: "a comfortable level where the icon is not visible and the full 3d model
+-- is shown"): the camera this far from the point, and always well under the height where units are drawn as icons
+-- (the engine's: 750^0.5 x UnitIconDist over the map, by height when UseDistToGroundForIcons; 3900 by BAR's settings)
+local COMFORT_DIST = 1300
+local function comfortDist()
+	local icon = 750 ^ 0.5 * (Spring.GetConfigFloat("UnitIconDist", 200) or 200)
+	local k = Spring.GetConfigFloat("UseDistToGroundForIcons", 0) or 0
+	if k > 0 then
+		icon = icon / math.sqrt(k)
+	end
+	return max(400, min(COMFORT_DIST, icon * 0.8))
+end
+
+local function cameraTo(x, y, z, zoom)
+	-- with zoom, the camera's own state (BAR's spring camera): the new distance along its heading, the view measured
+	-- from where the camera will be
+	local s = zoom and Spring.GetCameraState()
+	local cam
+	if s and s.name == "spring" and (s.dist or 0) > 1 and s.px then
+		local px, py, pz = Spring.GetCameraPosition()
+		local k = comfortDist() / s.dist
+		s.dist = s.dist * k
+		cam = { x + (px - s.px) * k, y + (py - s.py) * k, z + (pz - s.pz) * k }
+	else
+		s = nil
+	end
+	x, z = keepOnMap(x, z, y, cam)
 	local cx = floor(vsx / 2)
-	local ax, az = planeAt(cx, floor(vsy / 2), y)
-	local bx, bz = planeAt(cx, floor((L.dock[4] + vsy) / 2), y)
+	local ax, az = planeAt(cx, floor(vsy / 2), y, cam)
+	local bx, bz = planeAt(cx, floor((L.dock[4] + vsy) / 2), y, cam)
 	if ax and bx then
 		x, z = x + ax - bx, z + az - bz
 	end
-	Spring.SetCameraTarget(x, y, z, 0.25)
+	if s then
+		s.px, s.py, s.pz = x, Spring.GetGroundHeight(x, z) or y, z
+		Spring.SetCameraState(s, 0.25)
+	else
+		Spring.SetCameraTarget(x, y, z, 0.25)
+	end
+end
+
+-- Once at the start, after the engine's own move to the start spot (a second): the start spot in the middle of the view
+-- above the dock (the engine's middle is the dock's top edge: the commander sat on it), the view kept on the map
+local startFitted = false
+local function startFit()
+	if startFitted then
+		return
+	end
+	local f = Spring.GetGameFrame()
+	if f < 40 then
+		return
+	end
+	startFitted = true
+	if f > 90 then
+		return -- (the widget loaded mid-game: the camera is the player's)
+	end
+	local x, y, z = Spring.GetTeamStartPosition(myTeam())
+	if x and (x > 0 or z > 0) then
+		cameraTo(x, y, z)
+		Spring.Echo("[bardroid-portrait] start view on the start spot")
+	end
 end
 
 local function typesUnits()
@@ -985,13 +1112,13 @@ local function pressItem(item, long)
 			selectUnits({ u })
 			local x, y, z = Spring.GetUnitPosition(u)
 			if x then
-				cameraTo(x, y, z)
+				cameraTo(x, y, z, k == "commander")
 			end
 		end
 	elseif k == "base" then -- the camera where the commander began (the start spot)
 		local x, y, z = Spring.GetTeamStartPosition(myTeam())
 		if x and (x > 0 or z > 0) then
-			cameraTo(x, y, z)
+			cameraTo(x, y, z, true)
 		end
 	elseif k == "transfer" then
 		sharing = "units"
@@ -1720,6 +1847,7 @@ function widget:Update(dt)
 	if not active then
 		return
 	end
+	startFit()
 	drawingCursor()
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then
