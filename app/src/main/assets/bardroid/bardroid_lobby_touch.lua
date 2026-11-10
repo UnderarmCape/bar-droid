@@ -599,6 +599,37 @@ local function uprightSet(on)
 	end
 end
 
+-- The battle room upright (Kailil, 2026-11-10: "the selectors in a row of their own ... the space under the team lists
+-- stands empty"). Chobby's room (gui_battle_room_window.lua) is three columns side by side: the teams (playerPanel, to
+-- 48 %), its buttons, selectors and states (leftInfo, 48-67 %) and the map with Start (rightInfo, from 67 %). Upright the
+-- middle one is a sliver: "Update Rea", "BAR-31836-b..", a map's "...ownload failed [fa", the online room's Autobalance,
+-- BalanceMode and Preset crushed, their labels over their values. Upright the teams keep the left's top half, the middle
+-- column goes under them as wide as the left (60 %), the map and Start keep the right; both re-lay their own children as
+-- they resize (their OnResize). Done once to each room's columns (a new room: new columns).
+local roomsLaidOut = setmetatable({}, { __mode = "k" })
+local function uprightBattleRoom()
+	-- (Chili hands out weak links, a new one each time: the real objects, to compare and to remember)
+	local players, middle, right = real(chobbyObject("playerPanel")), real(chobbyObject("leftInfo")),
+		real(chobbyObject("rightInfo"))
+	if not (players and middle and right) or roomsLaidOut[middle] or middle.disposed
+		or not (players._relativeBounds and middle._relativeBounds and right._relativeBounds)
+		or real(players.parent) ~= real(middle.parent) or real(middle.parent) ~= real(right.parent) then
+		return
+	end
+	roomsLaidOut[middle] = true
+	local function bounds(o, left, top, rightEdge, bottom)
+		o._givenBounds.left, o._givenBounds.top = left, top
+		o._relativeBounds.left, o._relativeBounds.top = left, top
+		o._relativeBounds.right, o._relativeBounds.bottom = rightEdge, bottom
+		o._relativeBounds.width, o._relativeBounds.height = false, false
+		o:UpdateClientArea()
+	end
+	bounds(players, "0%", "0%", "40%", "50%")
+	bounds(middle, "0%", "50%", "40%", middle._relativeBounds.bottom or 0)
+	bounds(right, "60%", "0%", 0, right._relativeBounds.bottom or 0)
+	Spring.Echo("[bardroid-lobby] battle room upright: the teams over its buttons and states, the map beside them") -- (tools)
+end
+
 local function uprightUpdate(now)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 then
 		return
@@ -619,6 +650,7 @@ local function uprightUpdate(now)
 	end
 	uprightMirror()
 	uprightRelayout()
+	uprightBattleRoom()
 	if bar and bar.visible then
 		placeBar()
 	end
