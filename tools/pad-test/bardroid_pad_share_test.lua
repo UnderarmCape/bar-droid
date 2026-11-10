@@ -188,10 +188,15 @@ local STEPS = {
 		local r = pad().shareRect()
 		local _, vsy = Spring.GetViewGeometry()
 		local _, index = state()
-		check("15 teammates: the list stays on the screen under BAR's top bar, the one picked in sight", r ~= nil
-			and r[2] >= 0 and r[4] <= r[7] and r[7] <= vsy and index == 15 and r[5] <= 15 and 15 <= r[5] + r[6] - 1,
-			r and string.format("y %d-%d, top bar from %d of %d, rows %d-%d, picked %s", r[2], r[4], r[7], vsy, r[5],
-				r[5] + r[6] - 1, tostring(index)))
+		-- (upright: above the portrait dock too)
+		local P = WG.BarDroidPortrait
+		local dock = P and P.active and P.active() and P.dock and P.dock()
+		local floorY = dock and dock[4] or 0
+		check("15 teammates: the list stays on the screen under BAR's top bar (upright above the dock), the one picked in sight",
+			r ~= nil and r[2] >= floorY and r[4] <= r[7] and r[7] <= vsy and index == 15 and r[5] <= 15
+				and 15 <= r[5] + r[6] - 1,
+			r and string.format("y %d-%d, top bar from %d of %d%s, rows %d-%d, picked %s", r[2], r[4], r[7], vsy,
+				dock and (", dock to " .. math.floor(floorY)) or "", r[5], r[5] + r[6] - 1, tostring(index)))
 		pad().act("share_cancel")
 		-- a teammate out of the game since the list opened (their team dead, as BAR's GetTeamInfo says)
 		open()

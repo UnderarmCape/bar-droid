@@ -1395,13 +1395,18 @@ local function shareDraw(vsx, vsy)
 	local nTeams = #s.teams
 	local bar = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition() -- (under BAR's top bar: its [2] is its foot)
 	local top = math.floor(bar and bar[2] or vsy * 0.92)
-	local roomH = top - pad * 2 - fixedH
+	-- (upright, above the portrait dock: 15 teammates ran down over it; the list in the middle of the game above it)
+	local P = WG.BarDroidPortrait
+	local dock = P and P.active and P.active() and P.dock and P.dock()
+	local floorY = dock and math.floor(dock[4]) or 0
+	local roomH = top - floorY - pad * 2 - fixedH
 	local teamH = math.max(math.floor(size * 1.35), math.min(rowH, math.floor(roomH / nTeams)))
 	local shown = math.max(1, math.min(nTeams, math.floor(roomH / teamH)))
 	local first = math.max(1, math.min(s.index - math.floor((shown - 1) / 2), nTeams - shown + 1))
 	local nameSize = math.min(size, math.floor(teamH / 1.9 + 0.5))
 	local h = fixedH + teamH * shown
-	local x0, y1 = math.floor(vsx / 2 - w / 2), math.min(math.floor(vsy / 2 + h / 2), top - pad)
+	local midY = dock and (top + floorY) / 2 or vsy / 2
+	local x0, y1 = math.floor(vsx / 2 - w / 2), math.min(math.floor(midY + h / 2), top - pad)
 	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top }
 	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
 
