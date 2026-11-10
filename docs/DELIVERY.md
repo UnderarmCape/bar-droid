@@ -332,6 +332,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **The lobby's Settings upright without its sliders and dropdown boxes** (found 2026-11-10): the controls had
+      their size, but their picture was the one drawn before they had it. Upright, when 20 or more controls of the
+      content come or go (a screen or a tab opened) it is drawn again, twice; dev phone: every slider and dropdown
+      there on Settings' first open, its Graphics tab too.
 - [x] **Chobby's notes over the lobby's page strip upright** (found 2026-11-10): its Chotify notes ("Download
       Failed", downloads, invites) stacked from the screen's foot over the strip's right arrow; upright they stack from
       above the grid (and the server bar) now, through WG.Chotify's _Realign. Checked upright on the dev phone: the
