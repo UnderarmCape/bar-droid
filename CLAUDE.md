@@ -92,7 +92,11 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `assets/bardroid/bardroid_ordermenu.lua`: BAR's Order menu copied the same way by `tools/make-ordermenu.py` (Kailil,
   2026-11-03: online "behave like offline"): v0.8.5's even layout while the pad hides orders (`WG.BarDroidPadOrders`),
   `WG.ordermenu.droidCells`, an IsAbove; launch-bar.sh's `order_menu` runs it in place of BAR's (`.bardroid-ordermenu`,
-  `!!! ANDROID LAYER ... order menu`); it stands down in the controller game, whose v0.8.5 menu is "Order menu (controller)". While a building is picked its page strip is the shape strip (ONE,
+  `!!! ANDROID LAYER ... order menu`); it stands down in the controller game, whose v0.8.5 menu is "Order menu (controller)".
+  `assets/bardroid/bardroid_missioninfo.lua`: BAR's Mission Info (a scenario's briefing) copied the same way by
+  `tools/make-missioninfo.py`: no wider than the screen, upright above the portrait dock; its GetInfo `replaces`
+  BAR's (BAR's widget handler then skips BAR's, and brings it back if the copy is not running; the order list alone did
+  not keep a widget BAR had never seen run from starting); launch-bar.sh `mission_info`, `.bardroid-missioninfo`. While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
   the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held

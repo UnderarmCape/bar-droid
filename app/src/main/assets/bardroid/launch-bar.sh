@@ -209,6 +209,26 @@ order_menu() {
     layer_miss "order menu: BAR's gui_ordermenu.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-ordermenu.py)"
   fi
 }
+# The app's copy of BAR's Mission Info (a scenario's briefing) in BAR's place, the same way (Kailil, 2026-11-10: "the game
+# start ui popup needs to fit vertical screen": BAR's ran off both sides upright; bardroid_missioninfo.lua,
+# tools/make-missioninfo.py). Outside a scenario both stop at their first line, as BAR's always has.
+mission_info() {
+  copied=$(sed -n 's/^-- BARDROID_MISSIONINFO_FROM //p' "$BAR/LuaUI/Widgets/bardroid_missioninfo.lua" 2>/dev/null)
+  bars=$(cat "$BAR/.bardroid-missioninfo" 2>/dev/null)
+  failed="$BAR/.bardroid-missioninfo-failed"
+  copy_removed 'BAR Droid mission info' && printf '%s game\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+    widget_order "Mission Info" ""; widget_order "BAR Droid mission info" 0
+    layer_miss "mission info: the app's copy (made from ${copied:-?}) failed on BAR's gui_mission_info.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-missioninfo.py)"
+    return
+  fi
+  widget_order "Mission Info" 0; widget_order "BAR Droid mission info" 190
+  if [ "$copied" = "$bars" ]; then
+    log "mission info: the app's copy of BAR's (gui_mission_info.lua $copied), fitted to the screen"
+  else
+    layer_miss "mission info: BAR's gui_mission_info.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-missioninfo.py)"
+  fi
+}
 # The app's widgets as the game's (BARDROID_GAME_WIDGETS=1 in dev-env.sh, with an engine-branch build that has
 # BarDroidGameWidgetsDir, docs/ENGINE-SIM.md "The app's widgets as the game's"; Kailil, 2026-11-06, on a BAR developer's
 # advice: they are the phone's mouse and keyboard, not unit-control widgets): they move to $GAME_WIDGETS, which that
@@ -216,7 +236,7 @@ order_menu() {
 # every start finds them (Installer puts new ones there: a newer one there wins), and moved again after dev-env.sh.
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
-  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait"
+  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"
@@ -233,6 +253,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Grid menu" 0
   build_menu
   order_menu
+  mission_info
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
     widget_order "Build menu (controller)" 165

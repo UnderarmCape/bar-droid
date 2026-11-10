@@ -85,8 +85,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sideways move too), and so does the space outside the halves but for the resource bars, the selection row and
       the group buttons; the camera pad's gain. Dev phone: up and down on the list 920 elmos, sideways 780, the groups
       strip's empty part 780, each with the finger.
-- [ ] **The game's start popup fits upright** (a scenario's mission briefing ran off the left and over the dock),
-      **and the game-end recap and its graph**.
+- [x] **The game's start popup fits upright** (a scenario's mission briefing ran off the left and over the dock).
+      BAR's Mission Info is 1050 x 520 times a scale from the screen's size: upright 1152 wide on 936. The app runs a
+      copy (`tools/make-missioninfo.py`, 4 patches, `bardroid_missioninfo.lua`, remade on the phone like the menus):
+      no wider than the screen, its text at its size wrapping, upright in the middle of the game above the dock, laid
+      out again as the dock moves; its GetInfo `replaces` BAR's. Dev phone, upright, a skirmish given a scenario's
+      modoption (scenario001): the whole briefing above the dock, BAR's own "not loading (replaced by ...)";
+      remake-check: the phone's remake equals the shipped copy; launch-bar-test all pass.
+- [ ] **The game-end recap and its graph fit upright** (BAR's awards, gui_awards.lua, and the graphs).
+- [ ] **A metal extractor places as easily as other buildings**: PLACE on a mex spot is "very finicky" (2026-11-10).
+- [ ] **PLACE's rotate and cancel at its bottom right corner**, and no "tap the map for the spot" sentence.
+- [ ] **The energy box shows BAR's wind and tide details** (its empty space), **and both boxes' numbers bigger**, the
+      boxes keeping their size.
 - [ ] **The battle room upright: the selectors in a row of their own** (team size, number of teams: the
       Autobalance / BalanceMode / Preset row is crushed, its labels over its values; the space under the team lists
       stands empty).

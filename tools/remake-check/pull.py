@@ -1,11 +1,12 @@
-"""BAR's gui_buildmenu.lua and gui_ordermenu.lua from the phone's BAR release, read as make-buildmenu.py and
-make-ordermenu.py read them (tools/remake-check.ps1):
-    python -I pull.py <repository> <adb> <outdir>   -> <outdir>/<buildmenu|ordermenu>.bar and .info (release, md5)
+"""BAR's gui_buildmenu.lua, gui_ordermenu.lua and gui_mission_info.lua from the phone's BAR release, read as
+make-buildmenu.py, make-ordermenu.py and make-missioninfo.py read them (tools/remake-check.ps1):
+    python -I pull.py <repository> <adb> <outdir>   -> <outdir>/<buildmenu|ordermenu|missioninfo>.bar and .info
 ANDROID_SERIAL names the phone."""
 import importlib.util, os, sys
 
 repo, adb, out = sys.argv[1:4]
-for tool, name in (("make-buildmenu.py", "buildmenu"), ("make-ordermenu.py", "ordermenu")):
+for tool, name in (("make-buildmenu.py", "buildmenu"), ("make-ordermenu.py", "ordermenu"),
+                   ("make-missioninfo.py", "missioninfo")):
     spec = importlib.util.spec_from_file_location(name, os.path.join(repo, "tools", tool))
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

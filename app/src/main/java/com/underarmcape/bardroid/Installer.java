@@ -309,7 +309,7 @@ public final class Installer {
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
                 "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua",
                 "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua",
-                "bardroid_portrait.lua"})
+                "bardroid_portrait.lua", "bardroid_missioninfo.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         installPhoneLua(assets);
@@ -418,11 +418,13 @@ public final class Installer {
                     "-- BARDROID_BUILDMENU_FROM ", "build menu"},   // tools/make-buildmenu.py
             {"luaui/widgets/gui_ordermenu.lua", "bardroid_ordermenu.lua", "bardroid_ordermenu.patches", ".bardroid-ordermenu",
                     "-- BARDROID_ORDERMENU_FROM ", "order menu"},   // tools/make-ordermenu.py
+            {"luaui/widgets/gui_mission_info.lua", "bardroid_missioninfo.lua", "bardroid_missioninfo.patches",
+                    ".bardroid-missioninfo", "-- BARDROID_MISSIONINFO_FROM ", "mission info"},   // tools/make-missioninfo.py
     };
 
     /**
-     * The pool md5 of each of BAR's widgets the app has a copy of (BAR_COPIES: its Build and Order menus) in the released
-     * game this phone has, into .bardroid-buildmenu and .bardroid-ordermenu ("" when not found), and the copy made again
+     * The pool md5 of each of BAR's widgets the app has a copy of (BAR_COPIES: its Build and Order menus, its Mission Info)
+     * in the released game this phone has, into .bardroid-buildmenu, -ordermenu, -missioninfo ("" when not found), and the copy made again
      * here when that is another file than it was made from. launch-bar.sh runs the copies. Written after the update at
      * every start.
      */

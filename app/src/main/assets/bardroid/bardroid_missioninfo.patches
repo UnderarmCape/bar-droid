@@ -1,0 +1,54 @@
+-- BAR Droid mission info: BAR's own Mission Info (luaui/Widgets/gui_mission_info.lua, by Floirs, GPL v2 or later), from
+-- {release}, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: "the game start ui popup needs to fit
+-- vertical screen"): its window no wider than the screen, the text at its size wrapping to it, and with the app's
+-- portrait dock up in the middle of the game above the dock. Made by tools/make-missioninfo.py; do not edit by hand, run
+-- it again. launch-bar.sh runs it instead of BAR's Mission Info; when an update changes BAR's file the phone makes it
+-- again from the new file (the line below names the one it was made from; Installer, BuildMenuPatches).
+-- BARDROID_MISSIONINFO_FROM {md5}
+		name = "Mission Info",
+		desc = "Shows the scenario mission briefing, objectives, and details.",
+		name = "BAR Droid mission info", -- BAR Droid: its own name (BAR's sandbox runs no user widget under BAR's)
+		desc = "BAR's Mission Info; upright it fits the screen, above the app's dock (BAR Droid)",
+		-- BAR Droid: BAR's own off while this runs (BAR's widget handler: GetInfo replaces; back on if this one is not
+		-- running). The order list alone did not keep it off: a widget BAR has not seen run before starts anyway
+		replaces = "Mission Info",
+local vsx, vsy = spGetViewGeometry()
+local vsx, vsy = spGetViewGeometry()
+
+-- BAR Droid: the app's portrait dock (bardroid_portrait.lua) while it is up: x0, y0, x1, y1 (else nil); the window is laid
+-- out again when the dock comes, goes or moves (DrawScreen)
+local droid = { dockTop = nil }
+function droid.dock()
+	local P = WG.BarDroidPortrait
+	return P and P.active and P.active() and P.dock and P.dock() or nil
+end
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	screenX = mathFloor((vsx * centerPosX) - (screenWidth / 2))
+	screenY = mathFloor((vsy * centerPosY) + (screenHeight / 2))
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	-- BAR Droid: no wider than the screen (upright on a phone it was 1152 on 936, its lines starting off the left edge):
+	-- the text keeps its size and wraps to the width; with the portrait dock up, the height of the game above the dock
+	-- at most, in its middle (the title tab above it counted)
+	screenWidth = math.min(screenWidth, mathFloor(vsx * 0.96))
+	local droidCentreY = vsy * centerPosY
+	local droidDock = droid.dock()
+	if droidDock then
+		local tab = 18 * widgetScale * 1.7
+		screenHeight = math.min(screenHeight, mathFloor((vsy - droidDock[4] - tab) * 0.9))
+		droidCentreY = (droidDock[4] + vsy - tab) / 2
+	end
+	screenX = mathFloor((vsx * centerPosX) - (screenWidth / 2))
+	screenY = mathFloor(droidCentreY + (screenHeight / 2))
+function widget:DrawScreen()
+	if not textList then
+function widget:DrawScreen()
+	-- BAR Droid: laid out again when the app's portrait dock comes, goes or moves
+	local droidDock = droid.dock()
+	local droidTop = droidDock and droidDock[4] or false
+	if droidTop ~= droid.dockTop then
+		droid.dockTop = droidTop
+		widget:ViewResize()
+	end
+	if not textList then
