@@ -206,6 +206,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (Spring.GetFactoryCommands): +20 queued 100 (it sent Shift and Ctrl, BAR's x100; Shift is 5, Ctrl 20); now Ctrl
       alone: +20 queues 20. CLEAR (right click with both: 100 off) empties it, -1 takes one. Dev phone, upright, a Bot
       Lab with cheats: 20 queued, CLEAR to none.
+- [x] **The dock's sharing probed** (2026-11-10, dev phone, upright; the pad widget's teammates and give stood in
+      for, one teammate ALPHA): 3 Pawns picked, TRANSFER (beside PRESETS), the picker's ALPHA in its colour: give(77,
+      "units"); nothing picked, the metal box: its panel (SHARE TO ALLIES ABOVE, SEND METAL, CLOSE) over the home
+      grid, SEND METAL: 10 / 25 / 50 / 100 % and ALPHA, 50 % then ALPHA: give(77, "metal", 0.5), the dock back home.
+      The giving itself is pad-test -Share's.
 - [x] **The home grid's buttons probed** (2026-11-10, dev phone, upright; a probe of the selection and the camera, 7
       Pawns of which 4 busy, 2 construction bots 2000 elmos off of which 1 busy, the commander): LOCAL UNITS and ALL
       UNITS pick the 7 Pawns (by design the combat units by type; the list stays until DONE, its ALL counting what
