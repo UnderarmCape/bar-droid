@@ -328,10 +328,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] **The minimap upright was half size** (found 2026-11-10 in a screenshot): `bardroid_minimap.lua`'s half size
       until tapped is the unfolded screen's (Kailil, 2026-10-28), but it took any screen not wide for that one, so a
       phone upright (the Fold7's cover screen too) got it after 7 s: about 140x90 pixels of 1080. The unfolded screen is
-      near-square both ways now; upright the minimap stays BAR's size (dev phone: 275x185). The layout editor had the
+      near-square both ways now; upright the minimap stays BAR's size (dev phone: 275x185; later the same day Kailil
+      asked for it small upright, as tall as the top bar's row: the item below). The layout editor had the
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **Upright: the chat a full row, the minimap small beside the top bar's buttons** (Kailil, 2026-11-10: "make chat
+      take up the entire row instead of sharing the row with the map. Shrink the map by default to fit at the same row
+      as the buttons at the top ... comes down to a comfortable vertical space ... text size a little smaller"). The
+      minimap waits as tall as BAR's top bar (a tap opens it, 7 s untouched small again); the chat is a box across the
+      screen under that row, its text 0.87 of its size sideways, under the minimap only while it is small (opened it
+      lies over the chat's corner). Dev phone: minimap 145 x 100 beside the 85-tall bar, the chat under them across.
 - [x] **An offline game pauses while the phone is locked** (2026-11-10, for a native feel): a game with nobody else in
       it (a skirmish against AIs, a replay) pauses while the game screen is hidden (locked, another app over it) and
       runs again 0.8 s after it is back; online it runs on, and the floating window (Home) keeps it in sight and
