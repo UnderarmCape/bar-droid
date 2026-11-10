@@ -1549,18 +1549,7 @@ local function drawPlace()
 		local sym = k == "rotate" and "\226\134\187" or "\226\156\149"
 		textIn(sym, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, k == "rotate" and "\255\235\235\235" or "\255\255\150\140", bold)
 	end
-	if not ready then
-		-- under rotate and cancel across the panel when it is tall enough (squeezed under the PLACE label it came out
-		-- tiny), at the size of the dock's other hints; a short panel keeps it under the label
-		local size = (L.groups[4] - L.groups[2]) * 0.24
-		local below = p.rotate[2] - p.all[2]
-		if below >= size * 2.2 then
-			textIn("tap the map for the spot", p.all[1], p.all[2], p.all[3], p.rotate[2], size, "\255\185\215\185")
-		else
-			textIn("tap the map for the spot", pl[1], pl[2], pl[3], pl[2] + (pl[4] - pl[2]) * 0.32, (pl[4] - pl[2]) * 0.14,
-				"\255\185\215\185")
-		end
-	end
+	-- (no "tap the map for the spot" under it any more, Kailil 2026-11-10: the panel's dim green says it is waiting)
 end
 
 local function drawSelection()
@@ -1617,41 +1606,90 @@ local function short(v)
 	v = floor(v + 0.5)
 	return v >= 10000 and string.format("%.1fk", v / 1000) or tostring(v)
 end
+-- The energy box also has BAR's wind and tide indicators, as its top bar draws them (its blades turning with the wind,
+-- the speed, the map's range; the waves and the tidal speed where the map has water for tidal generators), which are off
+-- upright (Kailil, 2026-11-10: "the wind and wave details widgets should be present in the energy portion. There's
+-- plenty of empty space ... make the numbers size bigger ... keep the overall size of the metal and energy boxes")
+local BLADES, WAVES = ":n:LuaUI/Images/wind-blades.png", ":n:LuaUI/Images/tidal-waves.png"
+local windTurn, tideShown = 0, nil
+local function tideRelevant() -- (BAR's top bar's test: water 20 deep somewhere, where tidal generators can stand)
+	if tideShown == nil then
+		local low = select(3, Spring.GetGroundExtremes()) or 0
+		tideShown = (Spring.GetTidal() or 0) > 0 and low - ((Spring.GetModOptions() or {}).map_waterlevel or 0) <= -20
+	end
+	return tideShown
+end
+local function drawIndicator(tex, turn, x, cy, s, text, extra)
+	gl.Color(1, 1, 1, 0.28)
+	gl.Texture(tex)
+	gl.PushMatrix()
+	gl.Translate(x + s / 2, cy, 0)
+	gl.Rotate(turn, 0, 0, 1)
+	gl.TexRect(-s * 0.55, -s * 0.55, s * 0.55, s * 0.55)
+	gl.PopMatrix()
+	gl.Texture(false)
+	gl.Color(1, 1, 1, 1)
+	local size = s * 0.62
+	bold:Print("\255\255\255\255" .. text, x + s / 2, cy - size * 0.32, size, "co")
+	if extra then
+		font:Print("\255\150\150\150" .. extra, x + s, cy - size * 0.3, size * 0.7, "o")
+	end
+end
 local function drawResources()
 	local r = L.res
 	local w = floor((r[3] - r[1] - L.pad) / 2)
 	local h = r[4] - r[2]
+	local pad = max(2, floor(h * 0.1))
+	local barH = max(3, floor(h * 0.12))
+	local rowH = h - 3 * pad - barH -- (the text above a thin bar: the numbers about two fifths bigger than they were)
+	local big, small = rowH * 0.92, rowH * 0.62
 	for i, res in ipairs({ "metal", "energy" }) do
 		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
 		local x0 = r[1] + (i - 1) * (w + L.pad)
-		local box = { x0, r[2], x0 + w, r[4] }
+		local x1 = x0 + w
+		local box = { x0, r[2], x1, r[4] }
 		panel(box)
 		if cur and storage then
-			local pad = max(2, floor(h * 0.12))
-			local bx0, bx1 = x0 + floor(w * 0.3), x0 + w - pad
-			local by0, by1 = r[2] + pad, r[2] + pad + max(3, floor(h * 0.2))
+			local by0, by1 = r[2] + pad, r[2] + pad + barH
 			local frac = storage > 0 and max(0, min(1, cur / storage)) or 0
 			gl.Color(0.1, 0.1, 0.1, 0.9)
-			gl.Rect(bx0, by0, bx1, by1)
+			gl.Rect(x0 + pad, by0, x1 - pad, by1)
 			if res == "metal" then
 				gl.Color(0.85, 0.85, 0.85, 1)
 			else
 				gl.Color(1, 0.86, 0.15, 1)
 			end
-			gl.Rect(bx0, by0, bx0 + (bx1 - bx0) * frac, by1)
+			gl.Rect(x0 + pad, by0, x0 + pad + (x1 - x0 - 2 * pad) * frac, by1)
 			gl.Color(1, 1, 1, 1)
-			local size = h * 0.34
-			local ty = r[4] - pad - size * 0.95
-			bold:Print((res == "metal" and "\255\225\225\225" or "\255\255\230\080") .. short(cur), x0 + pad * 1.5,
-				ty, size * 1.15, "o")
-			font:Print("\255\160\160\160" .. short(storage), bx1, ty, size * 0.8, "ro")
-			if res == "energy" and (Game.windMax or 1) > 0 then -- (the wind, as BAR's top bar gave it: off upright)
-				local wind = "\255\150\150\150wind \255\220\220\220" .. string.format("%.1f", select(4, Spring.GetWind()) or 0)
-				local sw = font:GetTextWidth(short(storage)) * size * 0.8
-				font:Print(wind, bx1 - sw - pad * 2, ty, size * 0.8, "ro")
+			local cy = by1 + pad + rowH / 2 -- (the row's middle)
+			local amount = short(cur)
+			bold:Print((res == "metal" and "\255\225\225\225" or "\255\255\230\080") .. amount, x0 + pad * 1.5,
+				cy - big * 0.34, big, "o")
+			local flows = string.format("\255\120\230\120+%s \255\240\110\100-%s", short(income or 0), short(expense or 0))
+			local fx = x0 + pad * 1.5 + bold:GetTextWidth(amount) * big + pad * 2
+			font:Print(flows, fx, cy - small * 0.32, small, "o")
+			local left = fx + font:GetTextWidth(flows) * small + pad * 2 -- (where the right side's things must stop)
+			local rx = x1 - pad * 1.5
+			font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
+			rx = rx - font:GetTextWidth(short(storage)) * small * 0.85 - pad * 3
+			if res == "energy" then
+				local s = rowH
+				if tideRelevant() and rx - s >= left then
+					rx = rx - s
+					drawIndicator(WAVES, 0, rx, cy, s, tostring(floor(Spring.GetTidal() or 0)))
+					rx = rx - pad * 3
+				end
+				if (Game.windMax or 0) > 0 then
+					local range = floor(Game.windMin or 0) .. "-" .. floor(Game.windMax or 0)
+					local rangeW = font:GetTextWidth(range) * s * 0.62 * 0.7
+					local wind = string.format("%.1f", select(4, Spring.GetWind()) or 0)
+					if rx - s - rangeW >= left then
+						drawIndicator(BLADES, windTurn, rx - s - rangeW, cy, s, wind, range)
+					elseif rx - s >= left then
+						drawIndicator(BLADES, windTurn, rx - s, cy, s, wind)
+					end
+				end
 			end
-			font:Print(string.format("\255\120\230\120+%s  \255\240\110\100-%s", short(income or 0), short(expense or 0)),
-				bx0, ty, size * 0.8, "o")
 		end
 	end
 end
@@ -1959,6 +1997,7 @@ function widget:Update(dt)
 		return
 	end
 	startFit()
+	windTurn = (windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then

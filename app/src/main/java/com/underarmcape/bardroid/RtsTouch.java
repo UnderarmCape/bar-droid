@@ -1254,6 +1254,10 @@ final class RtsTouch {
         // (the engine reads the keys once a frame: Shift down a frame before the click and after it, or the building
         // takes the place of the builder's orders instead of joining them)
         holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        // (and the pointer on the spot frames before the click: BAR's Extractor Snap works a mex's place out from where
+        // the pointer is in its Update and takes the click only when the pointer last drew over the map; moved there from
+        // PLACE and clicked at once, a mex went down unsnapped, off its metal: "very finicky", Kailil 2026-11-10)
+        view().sendMouseEvent(s[0], s[1], InputStub.BUTTON_UNDEFINED, false, false);
         placedClick = () -> {
             placedClick = null;
             if (pregame()) {
@@ -1276,10 +1280,11 @@ final class RtsTouch {
             // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
             send(queueHeld ? "spot none" : "spot placed");
         };
-        ui.postDelayed(placedClick, GRID_KEYS_MS);
+        ui.postDelayed(placedClick, PLACE_SETTLE_MS);
         spotSentAt = -1;
     }
 
+    private static final long PLACE_SETTLE_MS = 150;    // PLACE: Shift down and the pointer on the spot this long first
     private static final long PREGAME_CLICK_MS = 120;   // a building's click before the game: the button down this long
     private Runnable placedClick;   // a building's click, waiting for its Shift
     private Runnable placedRelease; // its button coming up (before the game)

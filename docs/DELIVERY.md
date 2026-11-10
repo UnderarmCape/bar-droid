@@ -93,10 +93,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       modoption (scenario001): the whole briefing above the dock, BAR's own "not loading (replaced by ...)";
       remake-check: the phone's remake equals the shipped copy; launch-bar-test all pass.
 - [ ] **The game-end recap and its graph fit upright** (BAR's awards, gui_awards.lua, and the graphs).
-- [ ] **A metal extractor places as easily as other buildings**: PLACE on a mex spot is "very finicky" (2026-11-10).
-- [ ] **PLACE's rotate and cancel at its bottom right corner**, and no "tap the map for the spot" sentence.
-- [ ] **The energy box shows BAR's wind and tide details** (its empty space), **and both boxes' numbers bigger**, the
-      boxes keeping their size.
+- [x] **A metal extractor places as easily as other buildings**: PLACE on a mex spot is "very finicky" (2026-11-10).
+      BAR's Extractor Snap moves a mex onto the spot nearest the pointer as its Update last saw it, and lets a click
+      be only when the pointer last drew over the map; PLACE moved the pointer from where it was to the spot and
+      clicked at once, so the snap used the old place (the mex went to the spot by the pointer, not the one tapped)
+      or none. Now the pointer is on the spot with Shift for 150 ms before the click (`PLACE_SETTLE_MS`). Dev phone,
+      upright, three taps 30-50 px beside visible metal spots, PLACE each: each mex on the snap's own target.
+- [x] **PLACE's rotate and cancel at its bottom right corner**, and no "tap the map for the spot" sentence (the
+      build menu copy's `layoutPanel` upright; the dock no longer prints it).
+- [x] **The energy box shows BAR's wind and tide details** (its empty space), **and both boxes' numbers bigger**, the
+      boxes keeping their size. One row above a thin bar: the amount about two fifths bigger, income and spending,
+      storage; the energy box's right side has BAR's wind indicator (its blades turning with the wind as its top bar
+      turns them, the speed, the map's range) and, on a map with water for tidal generators (BAR's own test), the
+      tide's waves and speed; what does not fit beside the numbers is left out.
 - [ ] **The battle room upright: the selectors in a row of their own** (team size, number of teams: the
       Autobalance / BalanceMode / Preset row is crushed, its labels over its values; the space under the team lists
       stands empty).

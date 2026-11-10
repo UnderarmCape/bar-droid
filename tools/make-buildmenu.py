@@ -513,6 +513,9 @@ function droid.layoutPanel()
 	local pad = math_floor(math.max(2, (y1 - y0) * 0.08))
 	local s = math_floor(math.min((y1 - y0) * 0.7, (x1 - x0) * 0.2))
 	local my = math_floor((y0 + y1 - s) / 2)
+	if dock then -- (upright, the tall panel: at its bottom right corner; Kailil, 2026-11-10)
+		my = y0 + pad
+	end
 	local cancel = { x1 - pad - s, my, x1 - pad, my + s }
 	local rotate = { cancel[1] - pad - s, my, cancel[1] - pad, my + s }
 	droid.panel = { all = { x0, y0, x1, y1 }, place = { x0, y0, rotate[1] - pad, y1 }, rotate = rotate, cancel = cancel }
