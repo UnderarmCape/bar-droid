@@ -738,6 +738,29 @@ local function uprightBattleRoom()
 	Spring.Echo("[bardroid-lobby] battle room upright: the teams over its buttons and states, the map beside them") -- (tools)
 end
 
+-- Chobby's notes (its Chotify: "Download Failed", downloads, invites) stack up from the screen's foot at its right,
+-- over the grid's page strip and its right arrow upright (dev phone, 2026-11-10): upright they stack up from above the
+-- grid, and the server bar while it is up; not upright, Chobby's own place
+local function uprightNotes()
+	local C = WG.Chotify -- (Chobby's api_chotify.lua)
+	if upright.notesHooked or type(C) ~= "table" or type(C._Realign) ~= "function" then
+		return
+	end
+	upright.notesHooked = true
+	local own = C._Realign
+	C._Realign = function(self, sorted)
+		local g = upright.on and real(upright.grid)
+		if not (g and not g.disposed) then
+			return own(self, sorted)
+		end
+		local foot = g.y - ((bar and bar.visible) and (bar.height + 4) or 0)
+		for i, n in pairs(sorted) do
+			n.window:SetPos(nil, foot - i * 110 + 5)
+		end
+	end
+	Spring.Echo("[bardroid-lobby] Chobby's notes above the grid upright") -- (tools)
+end
+
 local function uprightUpdate(now)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 then
 		return
@@ -746,6 +769,7 @@ local function uprightUpdate(now)
 	if not (screen0 and WG.Chobby and WG.Chobby.interfaceRoot) then
 		return
 	end
+	uprightNotes()
 	uprightSet(not gameLoaded and screen0.height > screen0.width * UPRIGHT)
 	if not upright.on then
 		return
