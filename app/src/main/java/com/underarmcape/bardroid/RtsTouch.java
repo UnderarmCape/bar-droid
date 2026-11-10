@@ -735,10 +735,10 @@ final class RtsTouch {
             case PAN:
                 sendPan(c[0], c[1], c[0] + (curX - padX) * PAD_PAN_GAIN, c[1] + (curY - padY) * PAD_PAN_GAIN);
                 break;
-            case ZOOM: {   // up: closer
+            case ZOOM: {   // down: closer, up: farther (Kailil, 2026-11-09: "reverse the direction ... invert it")
                 float h = view().getHeight();
                 if (h > 0) send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
-                        Math.exp((padY - curY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
+                        Math.exp((curY - padY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
                 break;
             }
             case ROTATE: {

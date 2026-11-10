@@ -51,6 +51,7 @@ end
 local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
 local MENU_SECONDS = 7 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds")
+local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons
 local BLINK = 0.45 -- seconds of the menu's opening pulse
 local DOCK_FILE = "LuaUI/Config/bardroid_dock.txt"
 local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
@@ -134,8 +135,9 @@ local leftScroll, rightScroll = snapNew(), snapNew()
 local leftItems, rightItems = {}, {} -- what the two halves show now (tiles, buttons)
 local leftKind, rightKind = "", ""
 local press -- a mouse press on the dock: { side, x, y, button, lastY, lastT, vel, moved }
-local typesFrom -- nil, or "local" / "all": LOCAL UNITS or ALL UNITS pressed, the combat units by type on the left
+local typesFrom -- nil, or "local" / "all" / "idle": a list pressed, those units by type on the left
 local multi, multiPicked = false, {}
+local cycleAt = {} -- COMMANDER, IDLE BUILDER: the last one each picked (a tap again: the next)
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
 local menu = false -- the dock's menu is open (fingers press it); else it is the camera pad
@@ -376,7 +378,56 @@ local function byType(units, filter)
 	return list
 end
 
+-- my units that move and have no orders (not ones still being built)
+local function idleUnits()
+	local out = {}
+	for _, u in ipairs(Spring.GetTeamUnits(myTeam()) or {}) do
+		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if ud and ud.canMove and not ud.isFactory and not Spring.GetUnitIsBeingBuilt(u)
+			and (Spring.GetUnitCommands(u, 0) or 0) == 0 then
+			out[#out + 1] = u
+		end
+	end
+	return out
+end
+
+local function myCommanders()
+	local out = {}
+	for _, u in ipairs(Spring.GetTeamUnits(myTeam()) or {}) do
+		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if ud and ud.customParams and ud.customParams.iscommander then
+			out[#out + 1] = u
+		end
+	end
+	return out
+end
+
+-- The camera on a point of the map, the point in the middle of the game above the dock: the engine's camera target is
+-- the screen's middle, which upright is the dock's top edge (a unit jumped to sat half under it). The shift is where the
+-- two middles' rays meet the point's height now (a plane: the ground's ray missed over the void past the map's edge).
+local function planeAt(sx, sy, h)
+	local px, py, pz = Spring.GetCameraPosition()
+	local dx, dy, dz = Spring.GetPixelDir(sx, vsy - sy) -- (its y from the top, as the engine's mouse; ours from the bottom)
+	if not (px and dx) or dy > -1e-4 then
+		return nil
+	end
+	local t = (h - py) / dy
+	return px + dx * t, pz + dz * t
+end
+local function cameraTo(x, y, z)
+	local cx = floor(vsx / 2)
+	local ax, az = planeAt(cx, floor(vsy / 2), y)
+	local bx, bz = planeAt(cx, floor((L.dock[4] + vsy) / 2), y)
+	if ax and bx then
+		x, z = x + ax - bx, z + az - bz
+	end
+	Spring.SetCameraTarget(x, y, z, 0.25)
+end
+
 local function typesUnits()
+	if typesFrom == "idle" then
+		return idleUnits()
+	end
 	if typesFrom == "local" then
 		return Spring.GetVisibleUnits(myTeam(), nil, false)
 	end
@@ -478,8 +529,8 @@ function refreshNow()
 	local pregame = #sel == 0 and not typesFrom and pregameStart()
 	if pregame then
 		newLeft, lk = pregameItems(pregame), "pregame"
-	elseif typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first
-		local types = byType(typesUnits(), combat)
+	elseif typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first (IDLE: every idle unit)
+		local types = byType(typesUnits(), typesFrom ~= "idle" and combat or nil)
 		newLeft = { { kind = "alltypes", label = "ALL", count = 0 } }
 		for _, g in ipairs(types) do
 			newLeft[#newLeft + 1] = g
@@ -514,20 +565,26 @@ function refreshNow()
 			newRight[#newRight + 1] = f
 		end
 		rk = "pregame"
-	elseif #sel == 0 or typesFrom then
+	elseif typesFrom then -- a list on the left: the lists, MULTI and DONE
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
+			{ kind = "units", from = "idle", label = "IDLE UNITS" },
+			{ kind = "multi", label = multi and "MULTI: ON" or "MULTI" },
+			{ kind = "done", label = "DONE" },
 		}
-		if not typesFrom then
-			newRight[#newRight + 1] = style
-			newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
-		end
-		if typesFrom then
-			newRight[#newRight + 1] = { kind = "multi", label = multi and "MULTI: ON" or "MULTI" }
-			newRight[#newRight + 1] = { kind = "done", label = "DONE" }
-		end
 		rk = "units"
+	elseif #sel == 0 then -- nothing picked: the home grid, big buttons across the dock (Kailil, 2026-11-09: idle
+		-- units, the commander with the camera on it, the camera to the base)
+		newRight = {
+			{ kind = "units", from = "local", label = "LOCAL UNITS" },
+			{ kind = "units", from = "all", label = "ALL UNITS" },
+			{ kind = "units", from = "idle", label = "IDLE UNITS" },
+			{ kind = "idlebuilder", label = "IDLE BUILDER" },
+			{ kind = "commander", label = "COMMANDER" },
+			{ kind = "base", label = "BASE" },
+		}
+		rk = "home"
 	elseif building and not selectedFactory() then -- a building picked: its shapes, and PLACE under them (the build
 		-- menu copy's panel, in placeRect: RtsTouch places from its rects, bardroid_place.txt)
 		newRight, rk = placeShapes(), "place"
@@ -538,13 +595,16 @@ function refreshNow()
 			{ kind = "clearitem", label = "CLEAR" }, { kind = "back", label = "ORDERS" },
 		}
 		rk = "factory"
-	else
+	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
+		newRight[#newRight + 1] = style
+		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
 	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
 	snapSet(leftScroll, math.ceil(#leftItems / 3), L.leftRows or 2, lk == leftKind and not newPick)
-	snapSet(rightScroll, math.ceil(#rightItems / 2), L.rightRows or 3, rk == rightKind and not newPick)
+	snapSet(rightScroll, math.ceil(#rightItems / 2), rk == "home" and HOME_ROWS or L.rightRows or 3,
+		rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
 			#rightItems)) -- (tools: what the dock shows)
@@ -690,6 +750,30 @@ local function pressItem(item, long)
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)
 	elseif k == "back" then
 		factoryItem = nil
+	elseif k == "commander" or k == "idlebuilder" then -- the next one picked and the camera on it (again: the next)
+		local list = k == "commander" and myCommanders() or {}
+		if k == "idlebuilder" then
+			for _, u in ipairs(idleUnits()) do
+				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+				if ud and ud.isBuilder then
+					list[#list + 1] = u
+				end
+			end
+		end
+		if #list > 0 then
+			cycleAt[k] = (cycleAt[k] or 0) % #list + 1
+			local u = list[cycleAt[k]]
+			selectUnits({ u })
+			local x, y, z = Spring.GetUnitPosition(u)
+			if x then
+				cameraTo(x, y, z)
+			end
+		end
+	elseif k == "base" then -- the camera where the commander began (the start spot)
+		local x, y, z = Spring.GetTeamStartPosition(myTeam())
+		if x and (x > 0 or z > 0) then
+			cameraTo(x, y, z)
+		end
 	elseif k == "faction" and Spring.GetGameFrame() == 0 then
 		Spring.SendLuaRulesMsg("changeStartUnit" .. tostring(item.startUnit))
 	elseif k == "pregame" or k == "pregameundo" or k == "pregameclear" then
@@ -713,10 +797,21 @@ local function pressItem(item, long)
 	refresh()
 end
 
+-- Nothing picked ("home"): the right half's buttons across both halves, 2 wide and HOME_ROWS tall (Kailil,
+-- 2026-11-09: "much larger buttons ... Only buttons should be there")
+local function homeRect()
+	return { L.left[1], L.left[2], L.right[3], L.right[4] }
+end
+
 -- a half's geometry: its rect, scroll, items, columns, cell width and height
 local function half(side)
 	if side == "left" then
 		return L.left, leftScroll, leftItems, 3, L.tile, L.tile
+	end
+	if rightKind == "home" then
+		local r = homeRect()
+		return r, rightScroll, rightItems, 2, floor((r[3] - r[1] - L.gap) / 2),
+			floor((r[4] - r[2] + L.gap) / HOME_ROWS) - L.gap
 	end
 	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
 end
@@ -871,7 +966,8 @@ local function drawButton(item, r)
 	else
 		button(r)
 	end
-	textIn(item.label or "", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.34, "\255\240\240\240", font)
+	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
+	textIn(item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * 0.46), "\255\240\240\240", font)
 	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
 		local c = STATE_COLORS[min(3, (item.state or 0) + 1)]
 		local w = (r[3] - r[1]) * 0.28
@@ -887,24 +983,6 @@ end
 
 local function drawHalf(side)
 	local r, s, items, cols, cw, ch = half(side)
-	if side == "left" and leftKind == "none" and not selecting then
-		-- nothing picked: what the right half's two buttons put here (the half stood empty, nothing said what for)
-		-- (one size for both lines, each beside a row of the right half's buttons)
-		if not font then
-			return
-		end
-		local a = "\255\190\190\190LOCAL UNITS  \255\140\140\140your combat units in view"
-		local b = "\255\190\190\190ALL UNITS  \255\140\140\140all of them, by type"
-		local size = (L.groups[4] - L.groups[2]) * 0.24
-		local w = max(font:GetTextWidth(a), font:GetTextWidth(b)) * size
-		if w > (r[3] - r[1] - 2 * L.pad) then
-			size = size * (r[3] - r[1] - 2 * L.pad) / w
-		end
-		local y1 = r[4] - L.btnH * 0.5
-		font:Print(a, r[1] + L.pad, y1 - size * 0.32, size, "o")
-		font:Print(b, r[1] + L.pad, y1 - L.btnH - L.gap - size * 0.32, size, "o")
-		return
-	end
 	gl.Scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
 	local first = floor(s.pos)
 	for row = first - 1, first + s.visible + 1 do
@@ -1483,7 +1561,8 @@ function widget:MousePress(x, y, btn)
 		end
 		return true
 	end
-	local side = inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
+	local side = rightKind == "home" and inRect(x, y, homeRect()) and "right" -- (the home grid: both halves)
+		or inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
 	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0 }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
