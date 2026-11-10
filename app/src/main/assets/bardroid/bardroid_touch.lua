@@ -1035,8 +1035,70 @@ local function updateCatchup(now, frame, rate)
 	end
 end
 
+-- Away from the game (a near-native port, 2026-11-10: a phone locked or another app in front mid-skirmish let the AI
+-- play on unseen, and a touch player has no key to unpause with): the app writes "hidden" / "shown" to APP_FILE as
+-- the game screen stops and starts (GameActivity). Hidden, a game with no other player in it (a skirmish against AIs,
+-- a replay) is paused from GameFrame (Update stops while the engine does not draw); shown again, the pause this made
+-- is lifted from Update a moment later (a paused game has no frames), never one the player made. Online it runs on.
+local APP_FILE = "LuaUI/Config/bardroid_app.txt"
+local away = { checkedAt = nil, paused = false, shownAt = nil }
+local function appHidden()
+	local f = io.open(APP_FILE, "r")
+	if not f then
+		return false
+	end
+	local s = f:read("*l")
+	f:close()
+	return s == "hidden"
+end
+local function aloneInGame()
+	if Spring.IsReplay() then
+		return true
+	end
+	local me = Spring.GetMyPlayerID()
+	for _, pid in ipairs(Spring.GetPlayerList() or {}) do
+		local _, active = Spring.GetPlayerInfo(pid, false)
+		if pid ~= me and active then
+			return false
+		end
+	end
+	return true
+end
+local function awayWhileRunning(now) -- (GameFrame, twice a second of real time)
+	if away.paused or (away.checkedAt and spDiffTimers(now, away.checkedAt) < 0.5) then
+		return
+	end
+	away.checkedAt = now
+	local _, _, paused = Spring.GetGameSpeed()
+	if not paused and appHidden() and aloneInGame() then
+		Spring.SendCommands("pause 1")
+		away.paused = true
+		Spring.Echo("[bardroid-touch] the game screen is hidden: paused until it is back")
+	end
+end
+local function awayBack() -- (Update: the screen is shown)
+	if not away.paused then
+		return
+	end
+	local now = spGetTimer()
+	if appHidden() then
+		away.shownAt = nil
+		return
+	end
+	away.shownAt = away.shownAt or now
+	if spDiffTimers(now, away.shownAt) >= 0.8 then -- (the picture back first)
+		away.paused, away.shownAt = false, nil
+		local _, _, paused = Spring.GetGameSpeed()
+		if paused then
+			Spring.SendCommands("pause 0")
+		end
+		Spring.Echo("[bardroid-touch] the game screen is back: running again")
+	end
+end
+
 local function gameFrame(frame)
 	local now = spGetTimer()
+	awayWhileRunning(now)
 	if catchup and lastGameFrameAt then
 		local gap = spDiffTimers(now, lastGameFrameAt)
 		if gap > CATCHUP_PAUSE then
@@ -1328,6 +1390,7 @@ local zoneEnd = type(tracy) == "table" and tracy.ZoneEnd or function() end
 
 local function update(dt)
 	updates = updates + 1
+	awayBack()
 	zoneBegin("W:touch:lines")
 	local lines = newTouchLines()
 	if lines then

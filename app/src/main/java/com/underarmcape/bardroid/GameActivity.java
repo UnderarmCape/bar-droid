@@ -227,14 +227,31 @@ public class GameActivity extends MainActivity {
     // pauses it): libbardroid_pace.so then tells the engine its window is hidden, and the engine stops drawing and
     // mutes its sound as a minimized BAR does on a PC. The game itself runs on. The flag outlives this screen when it
     // is closed while the game goes on (the app icon brings a new one); GameService clears it before each game.
+    /**
+     * "hidden" / "shown" for the game's widgets (bardroid_touch.lua: a game with nobody else in it pauses while the
+     * screen is hidden and runs again when it is back; online it runs on). Small, written whole through a rename.
+     */
+    private static void writeAppState(boolean hidden) {
+        java.io.File dir = new java.io.File(BarApp.get().paths().bar, "LuaUI/Config");
+        java.io.File tmp = new java.io.File(dir, "bardroid_app.txt.tmp");
+        try (java.io.FileOutputStream o = new java.io.FileOutputStream(tmp)) {
+            o.write((hidden ? "hidden\n" : "shown\n").getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+        } catch (java.io.IOException e) {
+            return;   // (no game files yet: nothing reads it)
+        }
+        if (!tmp.renameTo(new java.io.File(dir, "bardroid_app.txt"))) tmp.delete();
+    }
+
     @Override protected void onStart() {
         super.onStart();
+        writeAppState(false);
         setFlag(BarApp.get().paths().hiddenFlag(), false, "game screen shown: the engine draws");
         if (!isInPictureInPictureMode()) setFlag(BarApp.get().paths().floatingFlag(), false, "full screen: 30 fps cap");
         catchupHandler.post(catchupCheck);
         if (upscaleLabel != null) catchupHandler.post(upscaleCompare);
     }
     @Override protected void onStop() {
+        writeAppState(true);
         setFlag(BarApp.get().paths().hiddenFlag(), true, "game screen hidden: the engine stops drawing");
         catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
         catchupHandler.removeCallbacks(upscaleCompare);
