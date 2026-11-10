@@ -332,6 +332,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [ ] **BAR's Settings upright is wider than the screen** (found 2026-11-10, dev phone, the top bar's Settings): its
+      scale is the screen's height over 1080, so upright it is ~1770 pixels wide on 936 and its values column is cut
+      off. No WG setter for its size; a copy of the widget (as TeamStats) would lose its widget toggles to the user
+      widgets' sandbox. BAR's one-line fix written up in docs/HELP-WANTED.md for BAR's developers; until then Settings
+      is usable sideways. Kailil's call whether to ask them.
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of
