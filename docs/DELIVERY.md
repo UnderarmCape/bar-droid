@@ -332,6 +332,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **An offline game pauses while the phone is locked** (2026-11-10, for a native feel): a game with nobody else in
+      it (a skirmish against AIs, a replay) pauses while the game screen is hidden (locked, another app over it) and
+      runs again 0.8 s after it is back; online it runs on, and the floating window (Home) keeps it in sight and
+      running. GameActivity writes LuaUI/Config/bardroid_app.txt, bardroid_touch.lua pauses from GameFrame and resumes
+      from Update. Dev phone: locked, paused at frame 8425; woken, running from 8426.
 - [x] **The launcher's map for Play vs AI picked, not typed** (2026-11-10, for a native feel): a tap on the field
       lists the maps installed (the engine's archive cache), typing narrows them; any other name still downloads at
       the start. Dev phone: its ten maps listed.
