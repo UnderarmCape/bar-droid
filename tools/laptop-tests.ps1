@@ -59,6 +59,14 @@ if ($luacheck) {
   $results += "{0} lua lint" -f $(if ($ok) { "PASS" } else { "FAIL" })
 } else { $results += "SKIP lua lint (no luacheck: run Install Toolchain.bat, or set LUACHECK to luacheck.exe)" }
 
+# Lua's 200 locals in a main chunk (luacheck does not see it; 2026-11-10 one more took the upright dock away)
+Write-Host "== lua locals"
+$pyLocals = Join-Path $TC "hosttools\python\python.exe"
+if (-not (Test-Path $pyLocals)) { $pyLocals = "python" }
+$out = & $pyLocals -I (Join-Path $Tools "lua-locals.py") 2>&1 | ForEach-Object { "$_" }
+$out | Where-Object { $_ -match "^(OVER|near)" } | ForEach-Object { Write-Host "   $_" }
+$results += "{0} lua locals" -f $(if ($LASTEXITCODE -eq 0) { "PASS" } else { "FAIL" })
+
 # Every PowerShell tool parses (2026-10-28: a "$name:" in a string stopped this file from running at all; CI checks this
 # file too, .github/workflows/build.yml)
 Write-Host "== powershell syntax"

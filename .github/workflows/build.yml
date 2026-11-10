@@ -66,3 +66,5 @@ jobs:
           sudo apt-get update -q
           sudo apt-get install -y -q lua-check
           luacheck --codes app/src/main/assets/bardroid tools
+      - name: lua locals (Lua's 200 in a main chunk)
+        run: python3 -I tools/lua-locals.py
