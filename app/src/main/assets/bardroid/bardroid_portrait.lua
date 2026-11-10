@@ -50,7 +50,8 @@ end
 -- landscape HUD squeezed upright, the case the dock is for)
 local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
-local MENU_SECONDS = 7 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds")
+local MENU_SECONDS = 1.25 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
+-- 2026-11-10: "make time out for the mouse controls on the bottom half 1.25 seconds instead")
 local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons
 local BLINK = 0.45 -- seconds of the menu's opening pulse
 local DOCK_FILE = "LuaUI/Config/bardroid_dock.txt"

@@ -32,6 +32,36 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 
 ## Backlog (in order)
 
+### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
+Online: orders the app gives by itself (`GiveOrder`) work only where the host allows unit control widgets; where it
+can, the app picks BAR's command and clicks instead (as the D-gun by touch), which works everywhere.
+- [x] **The dock's menu times out after 1.25 s** ("make time out for the mouse controls on the bottom half 1.25
+      seconds instead"; it was 7 s untouched, `MENU_SECONDS`). Dev phone: open 0.7 s after a tap, the camera pad
+      again by 2 s, three taps.
+- [ ] **The selection row is the QUEUE button**: its right 2/3 QUEUE (the sticky Shift), its left 1/3 the "alt queue
+      modifier so we can insert things in front of queue" (BAR's insert at the front).
+- [ ] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
+      assignments are", on the right, always there while a unit with orders queued, or a factory, is picked.
+- [ ] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message breaks off
+      at "Im thinking the l": ask what came next).
+- [ ] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
+      every unit that came out of it, and every one that will, to the state tapped; a tap cycles the three, a state
+      left 0.3 s is applied. The same for an air factory's fly / land: every plane that came out of it, not builders.
+- [ ] **Retreat and cover** ("It is insanely hard to micro units on mobile"): a unit under 50% health falls back;
+      the commander retreats behind nearby combat units, which take fight orders to cover it at a distance safe from
+      its death blast and go back to where they were once it is out; a commander that lives waits on patrol (repairs
+      nearby units) until given orders again; builders very close to the commander get a repair order on it inserted
+      in front of their queue, then go back to it.
+- [ ] **Preset orders**: a PRESETS button with combat units picked; the whole dock shows the presets as 2 x 2
+      thumbnails (four for now), closed by an X in the corner or Android's Back. Presets: repeated moves along paths
+      that make units hard to hit (big zigzags); formations for several units by their types' strengths (short-ranged
+      and cheap units like Ticks and Pawns at the front, long-ranged at the back; fighters in front of or escorting
+      bombers and transports; artillery always at the back on fight, moving with the back while the formation moves).
+      First: research the practical formations for BAR's unit types, T1 front-line mixes first, then all.
+- [ ] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
+      an area mex order over the mex spots within the commander's weapon range, sent at once without confirmation
+      (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
+
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon
       lives in `C:\Tools\BARANDROID\personal\res` and is added to his builds only (`local.properties`:
