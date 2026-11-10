@@ -891,7 +891,19 @@ local function clickable(x, y, z)
 	if over and over(math.floor(sx), math.floor(sy)) then
 		return nil
 	end
+	-- (and on the ground: a point on the map's edge was a pixel off it half the time, and the engine refused the shot;
+	-- dev phone, a commander by the north edge, 2026-11-09)
+	if not Spring.TraceScreenRay(math.floor(sx + 0.5), math.floor(sy + 0.5), true) then
+		return nil
+	end
 	return sx, sy
+end
+
+-- x, z kept this far inside the map's edges
+local MAP_MARGIN = 24
+local function onMap(x, z)
+	return math.max(MAP_MARGIN, math.min(Game.mapSizeX - MAP_MARGIN, x)),
+		math.max(MAP_MARGIN, math.min(Game.mapSizeZ - MAP_MARGIN, z))
 end
 
 local function selectedCommander()
@@ -951,8 +963,7 @@ local function dgunTarget(d)
 	if not cx then
 		return false
 	end
-	d.x = math.max(0, math.min(Game.mapSizeX, cx + d.aimX * d.range))
-	d.z = math.max(0, math.min(Game.mapSizeZ, cz + d.aimZ * d.range))
+	d.x, d.z = onMap(cx + d.aimX * d.range, cz + d.aimZ * d.range)
 	d.y = Spring.GetGroundHeight(d.x, d.z) or cy
 	return true
 end
@@ -1059,8 +1070,7 @@ local function dgunUpdate()
 	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY) then
 		d.moveAt = t
 		local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
-		local x = math.max(0, math.min(Game.mapSizeX, cx + mx * DGUN_MOVE_STEP))
-		local z = math.max(0, math.min(Game.mapSizeZ, cz + mz * DGUN_MOVE_STEP))
+		local x, z = onMap(cx + mx * DGUN_MOVE_STEP, cz + mz * DGUN_MOVE_STEP)
 		dgunOrder(CMD.MOVE, "move", x, Spring.GetGroundHeight(x, z) or cy, z, false)
 	end
 end
