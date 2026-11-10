@@ -15,11 +15,23 @@ Add-Type -AssemblyName System.Drawing
 $out = Join-Path (Split-Path -Parent $PSScriptRoot) "app\src\main\assets\bardroid"
 $W, $H = 1080, 2400
 $FEATHER = 110          # pixels of the sharp picture's top and bottom that fade into the blurred one
+# Pictures zoomed in to a part of them (left and right edge, of the width; the whole height), the part across the width
+# (Kailil, 2026-11-10, of cortex.jpg with a box drawn on it: "zoom in. All we need to see is the full view of the
+# commander and the pawn to the left and the large titan to the right"; a little wider than his box, as a 9:21 to 9:23
+# screen cuts a few percent off each side)
+$ZOOM = @{ "cortex.jpg" = @(0.18, 0.77) }
 $jpeg = [System.Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object { $_.MimeType -eq "image/jpeg" }
 $q = New-Object System.Drawing.Imaging.EncoderParameters 1
 $q.Param[0] = New-Object System.Drawing.Imaging.EncoderParameter ([System.Drawing.Imaging.Encoder]::Quality), 84L
 foreach ($f in Get-ChildItem $From -Filter *.jpg) {
   $src = [System.Drawing.Image]::FromFile($f.FullName)
+  if ($ZOOM.ContainsKey($f.Name)) {   # (the part zoomed to, as the picture from here on)
+    $z = $ZOOM[$f.Name]; $x0 = [int]($z[0] * $src.Width); $zw = [int](($z[1] - $z[0]) * $src.Width)
+    $part = New-Object System.Drawing.Bitmap $zw, $src.Height, ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+    $gz = [System.Drawing.Graphics]::FromImage($part)
+    $gz.DrawImage($src, (New-Object System.Drawing.Rectangle 0, 0, $zw, $src.Height), (New-Object System.Drawing.Rectangle $x0, 0, $zw, $src.Height), [System.Drawing.GraphicsUnit]::Pixel)
+    $gz.Dispose(); $src.Dispose(); $src = $part
+  }
   $canvas = New-Object System.Drawing.Bitmap $W, $H, ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
   $g = [System.Drawing.Graphics]::FromImage($canvas)
   $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
@@ -41,6 +53,31 @@ foreach ($f in Get-ChildItem $From -Filter *.jpg) {
   # the whole picture across the width in the middle, its top and bottom rows fading in (strips of rising opacity)
   $ph = [int]($src.Height * $W / $src.Width)
   $py = [int](($H - $ph) / 2)
+  if ($ZOOM.ContainsKey($f.Name)) {
+    # a zoomed picture: above it its own sky, below it its own ground (the picture's top and bottom fifth, mirrored at
+    # the edge, stretched over the room and softened), darkened toward the screen's ends; the blurred whole picture
+    # behind it showed the commander's legs, large, under him
+    foreach ($end in "top", "bottom") {
+      $band = [int]($src.Height * $(if ($end -eq "top") { 0.07 } else { 0.08 }))   # (wider took aircraft and the feet in)
+      $piece = New-Object System.Drawing.Bitmap $src.Width, $band, ([System.Drawing.Imaging.PixelFormat]::Format24bppRgb)
+      $gp = [System.Drawing.Graphics]::FromImage($piece)
+      $sy = if ($end -eq "top") { 0 } else { $src.Height - $band }
+      $gp.DrawImage($src, (New-Object System.Drawing.Rectangle 0, 0, $src.Width, $band), (New-Object System.Drawing.Rectangle 0, $sy, $src.Width, $band), [System.Drawing.GraphicsUnit]::Pixel)
+      $gp.Dispose()
+      $piece.RotateFlip([System.Drawing.RotateFlipType]::RotateNoneFlipY)
+      $soft = New-Object System.Drawing.Bitmap 60, 14   # (made small and drawn large again: soft)
+      $gs2 = [System.Drawing.Graphics]::FromImage($soft); $gs2.InterpolationMode = 'HighQualityBicubic'
+      $gs2.DrawImage($piece, 0, 0, 60, 14); $gs2.Dispose(); $piece.Dispose()
+      $dy = if ($end -eq "top") { 0 } else { $py + $ph - $FEATHER }
+      $g.DrawImage($soft, (New-Object System.Drawing.Rectangle 0, $dy, $W, ($py + $FEATHER)), 0, 0, 60, 14, [System.Drawing.GraphicsUnit]::Pixel, $wrap)
+      $soft.Dispose()
+    }
+    $fade = $py + $FEATHER   # (darker toward the screen's ends)
+    $top = New-Object System.Drawing.Drawing2D.LinearGradientBrush ((New-Object System.Drawing.Point 0, 0), (New-Object System.Drawing.Point 0, $fade), [System.Drawing.Color]::FromArgb(200, 0, 0, 0), [System.Drawing.Color]::FromArgb(40, 0, 0, 0))
+    $g.FillRectangle($top, 0, 0, $W, $fade); $top.Dispose()
+    $bot = New-Object System.Drawing.Drawing2D.LinearGradientBrush ((New-Object System.Drawing.Point 0, ($H - $fade - 1)), (New-Object System.Drawing.Point 0, $H), [System.Drawing.Color]::FromArgb(40, 0, 0, 0), [System.Drawing.Color]::FromArgb(200, 0, 0, 0))
+    $g.FillRectangle($bot, 0, ($H - $fade), $W, $fade); $bot.Dispose()
+  }
   $scaled = New-Object System.Drawing.Bitmap $W, $ph
   $gs = [System.Drawing.Graphics]::FromImage($scaled)
   $gs.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
