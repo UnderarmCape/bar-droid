@@ -214,6 +214,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (language/en/interface.json ui.loadScreen.lowRamWarning, colours out) in .bardroid-lowram, and GameActivity shows
       it over BAR's band, wrapped to the screen, while upright and loading on a phone BAR's own test picks (1 to 11 GB).
       Dev phone, upright (7072 MB): the sentence whole on three lines across the top over BAR's band; gone in the game.
+      Its colours as BAR's: grey, "12GB memory" white (BAR's warnColor, kept as marks in .bardroid-lowram).
 - [x] **The upright loading screen's tips leave out the keyboard and mouse** (2026-11-10, seen on the dev phone: "Press D
       to quickly initiate aiming"). The app's tip (BAR's own tips, writeLoadTips) shows only upright, touch play: the
       tips naming keys or the mouse (27 of BAR's 56: press, hold, CTRL+(0-9), right-click, F4, (K), ~) are left out,
@@ -224,6 +225,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       there (TraceScreenRay with the minimap; it was the world behind the minimap). Dev phone, upright: the commander
       in the D-gun mode with 6 Cans on it, 100 % to 0 % and no retreat; ZIGZAG with the minimap's far corner tapped:
       10804,6383, that corner of the map; the note "ZIGZAG: TAP THE DESTINATION" shows over the map after the pick.
+- [x] **A fight with the day's automation** (dev phone, upright, 2026-11-10): 42 units given by cheat (30 Pawns, 6
+      Maces, 4 Rocketeers, 2 Shellshockers) sent with BATTLE LINE to the AI's corner by a minimap tap: the march at the
+      slowest one's speed, 12 hurt units fell back in the fight, no error from the app's widgets, 57-61 fps.
 - [x] **Regression run, 2026-11-10 after the day's dock work**: lobby-phone-test, touch-phone-test, pad-test and pad-test
       -Share all pass on the dev phone (pad-test once lost its game to Android's low-memory killer on the 8 GB phone,
       then passed); the runs' infologs show no error from the app's widgets.

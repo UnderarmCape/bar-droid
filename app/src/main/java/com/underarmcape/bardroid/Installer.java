@@ -519,7 +519,9 @@ public final class Installer {
             if (json == null) return;
             String t = new org.json.JSONObject(json).getJSONObject("ui").getJSONObject("loadScreen")
                     .optString("lowRamWarning", "");
-            t = t.replaceAll("%\\{[A-Za-z]+\\}", "").replaceAll("\\s+", " ").replace(" .", ".").trim();
+            // (BAR's two colours kept as marks: \u0002 its warning's white from there, \u0001 back to its grey)
+            t = t.replace("%{warnColor}", "\u0002").replace("%{textColor}", "\u0001").replaceAll("%\\{[A-Za-z]+\\}", "")
+                    .replaceAll("\\s+", " ").replace(" \u0001.", "\u0001.").replace(" .", ".").trim();
             writeFile(new File(p.bar, ".bardroid-lowram"), t);
         } catch (IOException | org.json.JSONException e) {
             Log.e("install", "the loading screen's low memory line not read: " + e);

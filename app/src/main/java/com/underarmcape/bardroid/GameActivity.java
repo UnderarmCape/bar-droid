@@ -483,8 +483,18 @@ public class GameActivity extends MainActivity {
             if (text.isEmpty()) return;
             android.widget.TextView v = new android.widget.TextView(this);
             float dp = getResources().getDisplayMetrics().density;
-            v.setText(text);
-            v.setTextColor(0xFFCCCCCC);
+            // (BAR's colours: its grey, and white from a \u0002 to the next \u0001, as BAR prints "12GB memory")
+            android.text.SpannableStringBuilder s = new android.text.SpannableStringBuilder();
+            boolean white = false;
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (c == '\u0002' || c == '\u0001') { white = c == '\u0002'; continue; }
+                int at = s.length();
+                s.append(c);
+                if (white) s.setSpan(new android.text.style.ForegroundColorSpan(0xFFFFFFFF), at, at + 1, 0);
+            }
+            v.setText(s);
+            v.setTextColor(0xFFBBBBBB);
             v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
             v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
             v.setGravity(android.view.Gravity.CENTER);
