@@ -116,8 +116,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       button's click. (A strip three screens wide holding them was not drawn by Chili: each button moves instead.) Dev
       phone, upright, offline lobby: page 1 to 2 by a flick, a short drag back stayed on 2, Settings tapped there opened
       Settings, a flick to page 3 (Exit last); lobby-phone-test all pass.
-- [ ] **The BAR splash of the first load whole upright**: zoomed out to show all of "BAR"; the picture is not tall
-      enough, so its edges feathered into the same grey as the background, seamless.
+- [x] **The BAR splash of the first load whole upright**: zoomed out to show all of "BAR"; the picture is not tall
+      enough, so its edges feathered into the same grey as the background, seamless. It is Chobby's
+      MenuLoadscreens/loadscreen.png, drawn as a 16:9 picture cut to the screen's shape (api_chili.lua): upright the
+      middle quarter of its width. The app's `loadscreen-upright.png` (made on the laptop from BAR's: the logo scaled
+      to 80% of that quarter on the picture's own grey 22,22,22, the torn bands left out, the edges faded; NOTICE.md)
+      goes there while upright (launch-bar.sh; one already there kept aside), and the engine's SplashScreenDir, which
+      would stretch it over the screen, points at none meanwhile (its own logo as before). Dev phone, upright: the
+      whole word, then the lobby; a start not upright: the folder gone, SplashScreenDir as it was.
+- [ ] **Every loading screen's logos and pictures natural on every aspect ratio, landscape and upright** (Kailil,
+      2026-11-10): the engine's Recoil splash (stretched to the screen), Chobby's picture (16:9, cut to the screen),
+      BAR's load screen pictures (bitmaps/loadpictures, cut to the screen: upright a narrow strip of them).
 - [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
       a group button pressed puts that unit type in the group, and every one of that type built later; holding a
       group's picture takes the assignment off. "+ NEW" is BAR's Auto Group's Alt+number

@@ -1,7 +1,14 @@
 # Notices
 
-**App icon:** the project's own drawing (`app/src/main/res/drawable/ic_fg.xml`, GPL-3.0-or-later like the app); no
-BAR artwork is in this repository or in an APK built from it.
+**App icon:** the project's own drawing (`app/src/main/res/drawable/ic_fg.xml`, GPL-3.0-or-later like the app). The
+only BAR artwork in this repository or in an APK built from it is the next item's.
+
+**The lobby's first picture upright** (`app/src/main/assets/bardroid/loadscreen-upright.png`): made from Beyond All
+Reason's lobby picture (`luamenu/configs/gameconfig/byar/defaultsettings/menuloadscreens/loadscreen.png` in
+https://github.com/beyond-all-reason/BYAR-Chobby, by the Beyond All Reason team): its BAR logo scaled down on the
+picture's own grey, so that an upright phone shows the whole word. Made on the laptop and shipped with BAR's
+developers' clearance (2026-11-06: content made from BAR's art for phones may ship with the app); the original's terms
+are BAR's.
 
 Kailil's own builds replace it with his artwork (2026-10-25): the Beyond All Reason launcher icon
 (`dist_cfg/build/icon.png` in https://github.com/beyond-all-reason/BYAR-Chobby, by the Beyond All Reason team,

@@ -314,6 +314,9 @@ public final class Installer {
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         installPhoneLua(assets);
         writeBarCopiesMd5();
+        // the lobby's first picture for an upright screen (launch-bar.sh puts it in MenuLoadscreens while upright)
+        try (InputStream in = new FileInputStream(new File(assets, "loadscreen-upright.png"));
+             OutputStream o = new FileOutputStream(new File(p.bar, ".bardroid-loadscreen-upright.png"))) { copy(in, o); }
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
         // its "local widgets" setting, which launch-bar.sh switches on)
         File menuWidgets = new File(p.bar, "LuaMenu/Widgets");

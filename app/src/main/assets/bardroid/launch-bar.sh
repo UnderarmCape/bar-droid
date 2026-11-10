@@ -497,6 +497,32 @@ elif [ -f "$TIPS_LINE" ]; then
   cat "$TIPS_LINE" >> "$BAR/springsettings.cfg"
   rm -f "$TIPS_LINE" "$BAR/.bardroid-no-tips"
 fi
+# And the lobby's first picture (Kailil, 2026-11-10: "the BAR slash during the first load needs to zoom out so it can
+# show the full word BAR ... feather the edges of the picture and have the background be the same Grey"): Chobby draws
+# MenuLoadscreens/loadscreen.png as a 16:9 picture cut to the screen's shape, so upright only the middle quarter of its
+# width showed, the word cut off. Upright the app's version is there instead (Installer's .bardroid-loadscreen-upright.png:
+# the word scaled into that quarter on the picture's own grey); a picture already there is kept aside and put back at a
+# start that is not upright. The engine shows SplashScreenDir's pictures stretched to the screen: upright it points at
+# none (the engine's own logo, as on a phone without the folder).
+SPLASH_LINE="$BAR/.bardroid-splash-line"
+LOADPIC="$BAR/MenuLoadscreens/loadscreen.png"
+if [ "${BARDROID_PORTRAIT:-0}" = 1 ] && [ -f "$BAR/.bardroid-loadscreen-upright.png" ]; then
+  mkdir -p "$BAR/MenuLoadscreens"
+  if [ -f "$LOADPIC" ] && [ ! -f "$BAR/.bardroid-loadscreen-ours" ]; then mv -f "$LOADPIC" "$BAR/.bardroid-loadscreen-orig.png"; fi
+  cp -f "$BAR/.bardroid-loadscreen-upright.png" "$LOADPIC" && touch "$BAR/.bardroid-loadscreen-ours"
+  [ -f "$SPLASH_LINE" ] || { grep -E '^SplashScreenDir *=' "$BAR/springsettings.cfg" > "$SPLASH_LINE" 2>/dev/null || : > "$SPLASH_LINE"; }
+  sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
+  echo "SplashScreenDir = ./bardroid-no-splash" >> "$BAR/springsettings.cfg"
+elif [ -f "$BAR/.bardroid-loadscreen-ours" ]; then
+  rm -f "$LOADPIC" "$BAR/.bardroid-loadscreen-ours"
+  [ -f "$BAR/.bardroid-loadscreen-orig.png" ] && mv -f "$BAR/.bardroid-loadscreen-orig.png" "$LOADPIC"
+  rmdir "$BAR/MenuLoadscreens" 2>/dev/null || :
+  if [ -f "$SPLASH_LINE" ]; then
+    sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
+    cat "$SPLASH_LINE" >> "$BAR/springsettings.cfg"
+    rm -f "$SPLASH_LINE"
+  fi
+fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 if [ -f "$BAR/dev-springsettings.cfg" ]; then
