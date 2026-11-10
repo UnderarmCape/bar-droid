@@ -1415,9 +1415,14 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       three times in the lobby): Android's `cancel()` answers with a late `onError(5)`. Here it came before the next
       start; had it come after, `done()` would have ended the new session (the note gone, the words dropped). The cure:
       a fresh `SpeechRecognizer` per session (`cancel()` destroys the old, so its late callbacks never arrive), and a
-      new one after `ERROR_RECOGNIZER_BUSY`. Not changed yet: it needs a live microphone to test, and the dev phone is
-      travelling with Kailil (the test's microphone heard speech in the car; nothing was understood or kept, the touch
-      log was emptied). Test it where the dev phone is alone.
+      new one after `ERROR_RECOGNIZER_BUSY`. Changed 2026-11-10 (`VoiceChat`: a recognizer per session, destroyed when
+      it ends, and each session's callbacks numbered: a past session's late error or words are dropped and logged
+      "voice chat: a past session's ... dropped"); built, not yet run with the recognizer listening, which needs a live
+      microphone (the dev phone's surroundings unknown that night; the touch-log tests never open it). Test it where
+      the dev phone is alone: LB + RB twice three times quickly in the lobby, then once and speak; the last session's
+      words reach the chat, launcher.log shows the dropped late error. Until then the dev phone's app has the
+      microphone revoked and user-fixed (2026-11-10: no test can open it); for the live test `adb shell pm
+      clear-permission-flags com.underarmcape.bardroid android.permission.RECORD_AUDIO user-fixed` and `pm grant` it.
 - [ ] Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
       colorize, bottom position and always-show options); BAR's game runs the app's copy ("BAR Droid order menu"), the
       controller game v0.8.5's renamed "Order menu (controller)" (infolog: "Options: 'ordermenu_colorize' widgetConfig:

@@ -30,7 +30,11 @@ final class VoiceChat {
 
     private final Activity activity;
     private final Sink sink;
+    // A fresh recognizer for each session, destroyed when it ends: cancel() answered with a late onError(5), which ended
+    // the next session (its note gone, its words dropped) when it came after that session's start (dev phone,
+    // 2026-11-09); a destroyed recognizer calls nothing back, and what an older session still says is dropped by number.
     private SpeechRecognizer recognizer;
+    private int session;   // the session listening now (main thread)
     private volatile boolean listening;
     private boolean waitingForPermission;
     private volatile boolean ping;   // what this listening is for: a ping's label (the pad: hold LB, RB three times), else chat
@@ -66,10 +70,9 @@ final class VoiceChat {
             activity.requestPermissions(new String[] {Manifest.permission.RECORD_AUDIO}, PERMISSION_REQUEST);
             return;
         }
-        if (recognizer == null) {
-            recognizer = SpeechRecognizer.createSpeechRecognizer(activity);
-            recognizer.setRecognitionListener(listener);
-        }
+        endRecognizer();
+        recognizer = SpeechRecognizer.createSpeechRecognizer(activity);
+        recognizer.setRecognitionListener(new Listener(++session, forPing));
         Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
                 .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
                 .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
@@ -94,8 +97,16 @@ final class VoiceChat {
     }
 
     private void cancel() {
-        if (recognizer != null) recognizer.cancel();
+        session++;
+        endRecognizer();
         done();
+    }
+
+    private void endRecognizer() {
+        if (recognizer != null) {
+            recognizer.destroy();
+            recognizer = null;
+        }
     }
 
     private void done() {
@@ -106,11 +117,9 @@ final class VoiceChat {
     }
 
     void close() {
+        session++;
+        endRecognizer();
         done();
-        if (recognizer != null) {
-            recognizer.destroy();
-            recognizer = null;
-        }
     }
 
     /** SpeechRecognizer's error codes in words, for launcher.log (what was said is never logged). */
@@ -133,7 +142,22 @@ final class VoiceChat {
         }
     }
 
-    private final RecognitionListener listener = new RecognitionListener() {
+    /** One session's callbacks: a session no longer listening is past (cancelled, or another started), its words dropped. */
+    private final class Listener implements RecognitionListener {
+        private final int id;
+        private final boolean forPing;
+
+        Listener(int id, boolean forPing) {
+            this.id = id;
+            this.forPing = forPing;
+        }
+
+        private boolean past(String what) {
+            if (id == session) return false;
+            Log.i("app", "voice chat: a past session's " + what + " dropped");
+            return true;
+        }
+
         @Override public void onReadyForSpeech(Bundle params) {}
         @Override public void onBeginningOfSpeech() {}
         @Override public void onRmsChanged(float rmsdB) {}
@@ -143,16 +167,20 @@ final class VoiceChat {
         @Override public void onEvent(int eventType, Bundle params) {}
 
         @Override public void onError(int error) {   // (no speech, no match, a timeout: nothing is sent)
+            if (past("error " + error)) return;
             Log.i("app", "voice chat: nothing sent (" + errorName(error) + ", recognizer error " + error + ")");
+            endRecognizer();   // (busy, error 8, too: the next session's recognizer is a new one)
             done();
             if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) sink.denied();
         }
 
         @Override public void onResults(Bundle results) {
+            if (past("words")) return;
+            endRecognizer();
             done();
             ArrayList<String> heard = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
             String text = heard != null && !heard.isEmpty() && heard.get(0) != null ? heard.get(0).trim() : "";
-            if (!text.isEmpty()) sink.heard(text, ping);
+            if (!text.isEmpty()) sink.heard(text, forPing);
         }
-    };
+    }
 }
