@@ -337,10 +337,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       off. Kailil, 2026-11-10: "Just fix the setting issue. Remember I am creating the official bar android port that I
       and the devs will be supporting officially". The change to BAR's `gui_options.lua` (its scale by the width too)
       is made and tested: the dev phone's pool file swapped for the patched one, Settings upright whole (tabs and every
-      value), then BAR's file put back (md5 checked). It is ready for BAR's repository in
-      `docs/upstream/bar-options-upright.md`; players get it with the BAR release that has it. (It cannot ship in the
-      app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's file is in the archive
-      checksum.) Left: BAR merging it (Kailil and the devs).
+      value), then BAR's file put back (md5 checked). The same scale is in five more of BAR's windows (Game info,
+      Widget Selector, TeamStats, Keybinds, Changelog): one patch for all six, `docs/upstream/bar-windows-upright.patch`
+      (Game info and the Widget Selector also tested upright on the dev phone the same way), written up in
+      `docs/upstream/bar-windows-upright.md`; players get it with the BAR release that has it. (It cannot ship in the
+      app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's files are in the archive
+      checksum.) Left: BAR merging it (Kailil and the devs); then a taller layout for upright screens (their text is
+      small at the landscape shape).
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of
