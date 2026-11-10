@@ -312,7 +312,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       enemy bots given by cheat, two D-gunned or shot, our Pawn in the path of the third spared. Then: full auto with
       user widgets' orders refused (pad-test's online rule, BAR's default online) fires through the app's click, 14
       frames after the enemies appeared; pad-test -Dgun passes; entered from far off the camera eases in once to
-      COMMANDER's distance (5000 to 1321 in half a second), the zoom the player's after it.
+      COMMANDER's distance (5000 to 1321 in half a second), the zoom the player's after it; FIRE shows when it can
+      fire (a thin bar along its foot, white as the D-gun reloads, amber with the word dimmed while the energy for a
+      shot is short).
 - [x] **The lobby upright: its menu as pages** (2026-11-10, his screenshot of the lobby's 2 x 3 menu): "we need a
       curser selection and the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat, friends.
       Next page. Parties, load game, downloads, account, and you sort the rest". The pages and the swipe were there,
