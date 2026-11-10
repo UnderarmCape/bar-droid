@@ -1,7 +1,13 @@
 # Notices
 
 **App icon:** the project's own drawing (`app/src/main/res/drawable/ic_fg.xml`, GPL-3.0-or-later like the app). The
-only BAR artwork in this repository or in an APK built from it is the next item's.
+only BAR artwork in this repository or in an APK built from it is the next two items'.
+
+**BAR's load screen pictures upright** (`app/src/main/assets/bardroid/loadpicture-upright_*.jpg`, made by
+`tools/make-loadpictures.ps1`): Beyond All Reason's own load screen pictures (`bitmaps/loadpictures/` in the game, by
+the Beyond All Reason team), each laid whole across a 9:20 picture with an enlarged, blurred and darkened copy of itself
+above and below, so that an upright phone shows all of it. Made on the laptop and shipped with the same clearance as
+below; the originals' terms are BAR's.
 
 **The lobby's first picture upright** (`app/src/main/assets/bardroid/loadscreen-upright.png`): made from Beyond All
 Reason's lobby picture (`luamenu/configs/gameconfig/byar/defaultsettings/menuloadscreens/loadscreen.png` in

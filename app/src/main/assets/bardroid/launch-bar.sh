@@ -513,6 +513,25 @@ elif [ -f "$BAR/.bardroid-loadscreen-ours" ]; then
   [ -f "$BAR/.bardroid-loadscreen-orig.png" ] && mv -f "$BAR/.bardroid-loadscreen-orig.png" "$LOADPIC"
   rmdir "$BAR/MenuLoadscreens" 2>/dev/null || :
 fi
+# BAR's load screen pictures upright (Kailil, 2026-11-10: the loading screens' pictures "natural on all aspect ratios"):
+# BAR's load screen cuts its 16:9 pictures to the screen, upright a narrow strip of them. The app's versions (Installer's
+# .bardroid-loadpictures-upright/, tools/make-loadpictures.ps1: the whole picture across the width, the same blurred
+# above and below) go under BAR's names in the write folder, where the engine looks before the game (not synced: only
+# what this phone draws); .bardroid-loadpictures-ours lists them, and a start that is not upright takes them away.
+LP_OURS="$BAR/.bardroid-loadpictures-ours"
+if [ "${BARDROID_PORTRAIT:-0}" = 1 ] && [ -d "$BAR/.bardroid-loadpictures-upright" ]; then
+  : > "$LP_OURS"
+  for f in "$BAR/.bardroid-loadpictures-upright/"*.jpg; do
+    [ -f "$f" ] || continue
+    rel=$(basename "$f" | sed 's/__/\//g')   # (manual__scavengers__x.jpg: manual/scavengers/x.jpg)
+    mkdir -p "$BAR/bitmaps/loadpictures/$(dirname "$rel")"
+    cp -f "$f" "$BAR/bitmaps/loadpictures/$rel" && echo "$rel" >> "$LP_OURS"
+  done
+elif [ -f "$LP_OURS" ]; then
+  while read -r rel; do [ -n "$rel" ] && rm -f "$BAR/bitmaps/loadpictures/$rel"; done < "$LP_OURS"
+  rmdir "$BAR/bitmaps/loadpictures/manual/scavengers" "$BAR/bitmaps/loadpictures/manual" "$BAR/bitmaps/loadpictures" 2>/dev/null || :
+  rm -f "$LP_OURS"
+fi
 # The engine's splash in this screen's shape (GameService made it: SplashPicture): the engine stretches its splash over
 # the screen, and Recoil's 16:9 logo came out of shape upright and on the folded Fold7's wide side. SplashScreenDir by
 # its absolute path (relative, it is the engine's own folder, which has none: the logo in base/). The player's line is

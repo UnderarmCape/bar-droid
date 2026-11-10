@@ -317,6 +317,19 @@ public final class Installer {
         // the lobby's first picture for an upright screen (launch-bar.sh puts it in MenuLoadscreens while upright)
         try (InputStream in = new FileInputStream(new File(assets, "loadscreen-upright.png"));
              OutputStream o = new FileOutputStream(new File(p.bar, ".bardroid-loadscreen-upright.png"))) { copy(in, o); }
+        // and BAR's load screen pictures for an upright screen (tools/make-loadpictures.ps1: loadpicture-upright_<name>;
+        // launch-bar.sh puts them under BAR's names while upright): copied when new or changed
+        File lpTo = new File(p.bar, ".bardroid-loadpictures-upright");
+        File[] lps = assets.listFiles((dir, n) -> n.startsWith("loadpicture-upright_"));
+        if (lps != null && lps.length > 0) {
+            //noinspection ResultOfMethodCallIgnored
+            lpTo.mkdirs();
+            for (File f : lps) {
+                File t = new File(lpTo, f.getName().substring("loadpicture-upright_".length()));
+                if (t.length() == f.length()) continue;
+                try (InputStream in = new FileInputStream(f); OutputStream o = new FileOutputStream(t)) { copy(in, o); }
+            }
+        }
         // and in the lobby: a finger drag scrolls lists, a tap on a server shows its details first (Chobby loads it with
         // its "local widgets" setting, which launch-bar.sh switches on)
         File menuWidgets = new File(p.bar, "LuaMenu/Widgets");
