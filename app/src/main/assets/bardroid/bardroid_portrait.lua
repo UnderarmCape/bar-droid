@@ -935,10 +935,10 @@ function refreshNow()
 		-- menu copy's panel, in placeRect: RtsTouch places from its rects, bardroid_place.txt)
 		newRight, rk = placeShapes(), "place"
 	elseif factoryItem then -- a factory's item pressed: its queue
-		newRight = {
-			{ kind = "queue", n = 1, label = "+1" }, { kind = "queue", n = 5, label = "+5" },
-			{ kind = "queue", n = 20, label = "+20" }, { kind = "queue", n = -1, label = "-1" },
-			{ kind = "clearitem", label = "CLEAR" }, { kind = "back", label = "ORDERS" },
+		newRight = { -- (two rows tall each, as the big orders: six buttons filled three short rows of the half)
+			{ kind = "queue", n = 1, label = "+1", h = 2 }, { kind = "queue", n = 5, label = "+5", h = 2 },
+			{ kind = "queue", n = 20, label = "+20", h = 2 }, { kind = "queue", n = -1, label = "-1", h = 2 },
+			{ kind = "clearitem", label = "CLEAR", h = 2 }, { kind = "back", label = "ORDERS", h = 2 },
 		}
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
@@ -1294,7 +1294,8 @@ local function pressItem(item, long)
 		if item.n < 0 then
 			runCommand(factoryItem, true)
 		else
-			runCommand(factoryItem, false, item.n >= 5, item.n >= 20) -- (Shift: 5, Ctrl: 20, as BAR's build menu)
+			-- (Shift: 5, Ctrl: 20, as BAR's build menu; both are 100: +20 sent both and queued 100, 2026-11-10)
+			runCommand(factoryItem, false, item.n == 5, item.n == 20)
 		end
 	elseif k == "clearitem" and factoryItem then
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)

@@ -199,6 +199,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pad-test -Dgun upright: all pass; -Online upright: all but "RB: the build menu has the pad". Upright the build menu
       copy stands down (the dock has its own grid: droid.active), so the pad's RB opens nothing there; the rest of the
       pad works. The test says SKIP for it upright.
+- [x] **A factory's queue buttons upright** (2026-11-10): +1, +5, +20, -1, CLEAR, ORDERS filled three short rows of the
+      half; now two rows tall each, as the big orders. Checked on the way with a probe of the factory's real queue
+      (Spring.GetFactoryCommands): +20 queued 100 (it sent Shift and Ctrl, BAR's x100; Shift is 5, Ctrl 20); now Ctrl
+      alone: +20 queues 20. CLEAR (right click with both: 100 off) empties it, -1 takes one. Dev phone, upright, a Bot
+      Lab with cheats: 20 queued, CLEAR to none.
 - [x] **Spectating upright** (2026-11-10): fp-save-test passes upright and sideways; a replay upright (bench mode's
       `.bardroid-bench-replay`, a Starwatcher game recorded on the dev phone): no dock (a spectator has none), BAR's
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
