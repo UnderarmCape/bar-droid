@@ -332,6 +332,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **The lobby's login dialog on the Fold7 unfolded upright** (near-square, dev phone at wm size 1080x1198): taller
+      than the room above the grid, its Register / Login and Cancel lay under the grid. While one of Chobby's modal
+      popups is open the grid is hidden now. Found on the way: the pad's D-pad in the lobby lost its place after every
+      step at any scale but 100 % (Chobby's Spring.GetMouseState answers in scaled units); it reads the engine's
+      pixels now (Spring.Orig.GetMouseState). The dock's other views near-square fit (home grid, a Bot Lab picked).
 - [x] **The dock on the Fold7 unfolded upright** (the dev phone's display set near-square, `adb shell wm size
       1080x1198`, reset after; a way to try that screen without the Fold7): its orders half shows three rows, and the
       two-row FIGHT, MOVE and PATROL cut MOVE and PATROL in half at its foot; D-gun mode's MOVE and AIM fell off the
