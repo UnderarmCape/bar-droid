@@ -409,6 +409,9 @@ public class GameActivity extends MainActivity {
     // and this shows one of BAR's tips (Installer.writeLoadTips: .bardroid-tips) wrapped to the screen, where BAR's was:
     // above its loading bar. Not when the player turned BAR's tips off (.bardroid-no-tips, launch-bar.sh).
     private android.widget.TextView loadTip;
+    private static final java.util.regex.Pattern KEY_TIP = java.util.regex.Pattern.compile(
+            "(?i)\\b(press|pressing|hold|holding|hotkeys?|keybinds?|key|keys|click|clicking|mouse|ctrl|control\\+|shift|alt"
+                    + "|tab|f\\d+)\\b|\\([A-Z]\\)|[~`]|alt\\+|pause/break");
 
     private void updateLoadTip() {
         View root = getWindow().getDecorView();
@@ -426,6 +429,13 @@ public class GameActivity extends MainActivity {
                 } catch (java.io.IOException e) { tips = null; }
             }
             if (tips == null || tips.length == 0 || tips[0].isEmpty()) return;
+            // (upright is touch play: the tips about keys and the mouse, 27 of BAR's 56 - "Press D to quickly initiate
+            // aiming", CTRL+(0-9), right-click - left out; all of them if that leaves none)
+            java.util.List<String> touchTips = new java.util.ArrayList<>();
+            for (String t : tips) {
+                if (!KEY_TIP.matcher(t.replace("\\n", "\n")).find()) touchTips.add(t);
+            }
+            if (!touchTips.isEmpty()) tips = touchTips.toArray(new String[0]);
             android.widget.TextView v = new android.widget.TextView(this);
             float dp = getResources().getDisplayMetrics().density;
             v.setText(tips[new java.util.Random().nextInt(tips.length)].replace("\\n", "\n"));

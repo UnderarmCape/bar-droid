@@ -214,6 +214,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (language/en/interface.json ui.loadScreen.lowRamWarning, colours out) in .bardroid-lowram, and GameActivity shows
       it over BAR's band, wrapped to the screen, while upright and loading on a phone BAR's own test picks (1 to 11 GB).
       Dev phone, upright (7072 MB): the sentence whole on three lines across the top over BAR's band; gone in the game.
+- [x] **The upright loading screen's tips leave out the keyboard and mouse** (2026-11-10, seen on the dev phone: "Press D
+      to quickly initiate aiming"). The app's tip (BAR's own tips, writeLoadTips) shows only upright, touch play: the
+      tips naming keys or the mouse (27 of BAR's 56: press, hold, CTRL+(0-9), right-click, F4, (K), ~) are left out,
+      all of them if none would stay. Dev phone, upright, three starts: three of the 29 left, none about a key.
+- [x] **Regression run, 2026-11-10 after the day's dock work**: lobby-phone-test, touch-phone-test, pad-test and pad-test
+      -Share all pass on the dev phone (pad-test once lost its game to Android's low-memory killer on the 8 GB phone,
+      then passed); the runs' infologs show no error from the app's widgets.
 - [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
       a group button pressed puts that unit type in the group, and every one of that type built later; holding a
       group's picture takes the assignment off. "+ NEW" is BAR's Auto Group's Alt+number
