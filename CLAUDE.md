@@ -114,7 +114,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   2026-11-06, on a BAR developer's advice); `pad-test.ps1 -Engine <build>` tests it. `bardroid_padspeed.lua`: the pad's drawing speed by
   zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). `bardroid_retreat.lua`: hurt units
   fall back, a hurt commander retreats with its army covering it (GiveOrder; the dock's AUTO RETREAT, docs/DELIVERY.md).
-  `bardroid_presets.lua`: the dock's PRESETS (2 x 2 over its grid, then a map tap: zigzags, formations; WG.BarDroidPresets). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
+  `bardroid_presets.lua`: the dock's PRESETS (2 x 2 over its grid, then a map tap: zigzags, formations; WG.BarDroidPresets).
+  `bardroid_automex.lua`: the commander picked and an extractor chosen, the free mex spots in its weapon range queued
+  (BAR's resource spot API, as its Area Mex). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
   6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
