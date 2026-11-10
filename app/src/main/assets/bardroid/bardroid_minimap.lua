@@ -43,7 +43,10 @@ local function unfolded()
 		return testUnfolded
 	end
 	local vsx, vsy = Spring.GetViewGeometry()
-	return vsx * 10 < vsy * 16 -- (as launch-bar.sh: the inner screen is near-square, the cover screen wide)
+	-- (as launch-bar.sh: the inner screen is near-square, the cover screen wide; and near-square held upright too: a
+	-- phone upright, taller than 1.6 to 1, is not the unfolded screen, where "not wide" alone took it for one and kept
+	-- the minimap half size, dev phone 2026-11-10)
+	return vsx * 10 < vsy * 16 and vsy * 10 < vsx * 16
 end
 
 local overlaid -- the overlay this widget last set
