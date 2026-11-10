@@ -761,6 +761,52 @@ local function uprightNotes()
 	Spring.Echo("[bardroid-lobby] Chobby's notes above the grid upright") -- (tools)
 end
 
+-- Upright, controls Chobby lays out by the panel's width (its Settings' sliders and dropdowns at "55%" to the right
+-- edge) came up blank when a screen opened: their size right, their picture the one drawn before they had it
+-- (dev phone, 2026-11-10: Settings' sliders, its dropdowns' boxes; a redraw brought them). When what the content shows
+-- changes (a screen or a tab opened: its visible controls counted), it is drawn again, then once more a check later.
+local function contentCount()
+	local n = 0
+	local function walk(o, depth)
+		if not o or depth > 40 or o.visible == false then
+			return
+		end
+		n = n + 1
+		for _, c in ipairs(o.children or {}) do
+			walk(c, depth + 1)
+		end
+	end
+	walk(real(chobbyObject("mainWindow_mainContent")), 0)
+	walk(real(chobbyObject("holder_submenuWindow")), 0)
+	return n
+end
+local function redrawContent()
+	local function walk(o, depth)
+		if not o or depth > 40 then
+			return
+		end
+		if o.Invalidate then
+			o:Invalidate()
+		end
+		for _, c in ipairs(o.children or {}) do
+			walk(c, depth + 1)
+		end
+	end
+	walk(real(chobbyObject("mainWindow_mainContent")), 0)
+	walk(real(chobbyObject("holder_submenuWindow")), 0)
+end
+local function uprightRedraw()
+	local n = contentCount()
+	-- (20 or more: a screen or a tab, not a server row coming or going online, each a full redraw twice)
+	if not upright.shown or math.abs(n - upright.shown) >= 20 then
+		upright.shown, upright.redrawAgain = n, true
+		redrawContent()
+	elseif upright.redrawAgain then
+		upright.redrawAgain = false
+		redrawContent()
+	end
+end
+
 local function uprightUpdate(now)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 then
 		return
@@ -783,6 +829,7 @@ local function uprightUpdate(now)
 	uprightMirror()
 	uprightRelayout()
 	uprightBattleRoom()
+	uprightRedraw()
 	if bar and bar.visible then
 		placeBar()
 	end
