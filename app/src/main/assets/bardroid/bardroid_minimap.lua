@@ -1,8 +1,9 @@
 -- BAR Droid minimap: on the unfolded (near-square) screen BAR's minimap is about half its size until touched (Kailil,
 -- 2026-10-28: "make map when unfolded in game, about half the size it already is, then when i tap it, it expands to
 -- default size"). A tap on the small minimap only opens it (as the small player list, bardroid_players.lua); every
--- tap on the open minimap keeps it open, and OPEN_SECONDS without one makes it small again. Folded it stays as BAR
--- has it.
+-- tap on the open minimap keeps it open, and OPEN_SECONDS without one makes it small again. Upright the same, its
+-- small size as tall as BAR's top bar, beside its buttons (Kailil, 2026-11-10: the chat a row of its own under them).
+-- Folded and held wide it stays as BAR has it.
 --
 -- Through BAR's own Minimap widget (gui_minimap.lua), which sizes itself by the MinimapMaxHeight setting and reads it
 -- again four times a second: the small size goes in as the engine's in-memory overlay of that setting (never saved,
@@ -38,15 +39,21 @@ local lastTouch = 0
 local startedAt
 
 local testUnfolded -- (tools/touch-widget-test.ps1 on a wide laptop window: as if unfolded)
-local function unfolded()
+-- How small the minimap waits: "row" upright (Kailil, 2026-11-10: "Shrink the map by default to fit at the same row as
+-- the buttons at the top", the chat then its own row under them), as tall as BAR's top bar; "half" on the unfolded
+-- screen held wide (near-square: as launch-bar.sh, the inner screen near-square, the cover screen wide); nil: BAR's size
+local function mode()
 	if testUnfolded ~= nil then
-		return testUnfolded
+		return testUnfolded and "half" or nil
 	end
 	local vsx, vsy = Spring.GetViewGeometry()
-	-- (as launch-bar.sh: the inner screen is near-square, the cover screen wide; and near-square held upright too: a
-	-- phone upright, taller than 1.6 to 1, is not the unfolded screen, where "not wide" alone took it for one and kept
-	-- the minimap half size, dev phone 2026-11-10)
-	return vsx * 10 < vsy * 16 and vsy * 10 < vsx * 16
+	if vsy > vsx * 1.05 then
+		return "row"
+	end
+	return (vsx * 10 < vsy * 16 and vsy * 10 < vsx * 16) and "half" or nil
+end
+local function unfolded()
+	return mode() ~= nil
 end
 
 local overlaid -- the overlay this widget last set
@@ -73,8 +80,18 @@ local function shrink()
 	if small or not normalHeight then
 		return
 	end
+	local target = normalHeight * SMALL
+	if mode() == "row" then -- (as tall as BAR's top bar: its buttons' row, the minimap's padding left out)
+		local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
+		local _, vsy = Spring.GetViewGeometry()
+		if not (p and p[4] and p[2] and p[4] > p[2]) then
+			return
+		end
+		local pad = WG.FlowUI and WG.FlowUI.elementPadding or 0
+		target = math.max(0.02, (p[4] - p[2] - pad) / vsy)
+	end
 	small = true
-	setMaxHeight(normalHeight * SMALL)
+	setMaxHeight(target)
 end
 
 -- the minimap's height when open, from BAR's widget (its padding left out)

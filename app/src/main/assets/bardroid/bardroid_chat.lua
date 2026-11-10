@@ -34,6 +34,7 @@ local LINES = 8 -- screen lines shown (BAR shows 5 lines of text; names broken i
 local LINES_TYPING = 14 -- while the typing box is open (BAR's own history is switched off for it)
 local LINE_TTL = 40 -- seconds a line stays (BAR's)
 local BOX_RIGHT = 0.74 -- of the screen width (BAR's chat box)
+local UPRIGHT_TEXT = 0.87 -- upright, of FONT_SIZE (the row across the screen)
 local BACKGROUND = 0.3
 local MAX_BYTES = 127 -- a message's length at most (BAR's typing box)
 local TYPE_SIZE = 1.03 / 0.75 -- the typing text, of the chat lines' size (BAR's typing box: 1.03 x its chat font)
@@ -64,6 +65,7 @@ local hooked, wasInputHistory, wasHidden = false, nil, false
 -- this widget's config version: none, from a version whose end left BAR's chat saved hidden (SetConfigData)
 local CONFIG_VERSION, configVersion = 1, nil
 local relayoutNext = false -- (ViewResize: once more in the next Update, BAR's top bar placed by then)
+local chatMinimap, chatMinimapAt -- upright: the minimap's height the box was laid out under, when it was looked at
 local vsx, vsy = Spring.GetViewGeometry()
 local font, nameFont, fontSize, lineHeight
 local boxLeft, boxRight, boxTop, nameWidth, textLeft, gap, maxLines
@@ -145,6 +147,16 @@ local function chunks(name)
 	return out
 end
 
+-- upright, the minimap's height the box goes under: while it waits small (bardroid_minimap.lua: as tall as the top
+-- bar's row); opened by a tap it lies over the box's corner for its few seconds, the box does not jump down and back
+local function smallMinimap()
+	local M = WG.BarDroidMinimap
+	if M and M.small and M.small() and WG.minimap and WG.minimap.getHeight then
+		return WG.minimap.getHeight() or 0
+	end
+	return 0
+end
+
 local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	if not (WG.fonts and WG.fonts.getFont) then
@@ -156,15 +168,33 @@ local function layout()
 	local barSize = 21 * math.min(1.2, math.max(1, 1 + (1 - vsy / 1200) * 0.5)) * vsy * 0.00075
 		* (Spring.GetConfigFloat("ui_scale", 1) or 1)
 	local ed = edits()
-	fontSize = barSize * FONT_SIZE * ed.text
+	local upright = vsy > vsx * 1.05
+	-- (upright a little smaller: Kailil, 2026-11-10, the chat a row of its own: "Its okay for the text size to be a
+	-- little smaller")
+	fontSize = barSize * FONT_SIZE * (upright and UPRIGHT_TEXT or 1) * ed.text
 	lineHeight = math.floor(fontSize * 1.3)
 	gap = math.floor(fontSize * 0.6 * ed.pad)
 	maxLines = math.max(2, math.floor(LINES * ed.size + 0.5))
 	local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
 	local left = p and p[1] or vsx * 0.3
-	boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, left + ed.dx * vsx)))
-	boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, (p and p[2] - fontSize * 0.5 or vsy * 0.94) + ed.dy * vsy)))
-	boxRight = math.floor(math.min(vsx, boxLeft + (vsx * BOX_RIGHT - left) * ed.size))
+	if upright then
+		-- upright: a row of its own across the screen under BAR's top bar and the small minimap beside it (Kailil,
+		-- 2026-11-10: "make chat take up the entire row instead of sharing the row with the map"); under the top bar alone,
+		-- between the minimap and the top bar's buttons, it was a column 38 % wide where a long line took five rows. The
+		-- minimap settles its size a little later: laid out again when it does (widget:Update)
+		local mm = smallMinimap()
+		chatMinimap = mm
+		local margin = math.floor(vsx * 0.02)
+		local top = math.min(p and p[2] or vsy * 0.94, vsy - mm) - fontSize * 0.5
+		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, margin + ed.dx * vsx)))
+		boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, top + ed.dy * vsy)))
+		boxRight = math.floor(math.min(vsx - margin, boxLeft + (vsx - 2 * margin) * ed.size))
+	else
+		chatMinimap = nil
+		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, left + ed.dx * vsx)))
+		boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, (p and p[2] - fontSize * 0.5 or vsy * 0.94) + ed.dy * vsy)))
+		boxRight = math.floor(math.min(vsx, boxLeft + (vsx * BOX_RIGHT - left) * ed.size))
+	end
 	-- the name column: the widest 10-character piece of any player's name
 	nameWidth = nameFont:GetTextWidth("Player") * fontSize
 	for _, playerID in ipairs(Spring.GetPlayerList() or {}) do
@@ -807,6 +837,13 @@ function widget:Update()
 	end
 	if hooked then
 		takeMessages()
+		local now = clock()
+		if chatMinimap and now - (chatMinimapAt or 0) >= 1 then -- (upright: the box under the minimap, which settles later)
+			chatMinimapAt = now
+			if smallMinimap() ~= chatMinimap then
+				relayoutNext = true
+			end
+		end
 		if relayoutNext then
 			relayoutNext = false
 			layout()
