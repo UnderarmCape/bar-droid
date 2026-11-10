@@ -969,6 +969,13 @@ function refreshNow()
 			end
 			table.insert(newRight, at, { kind = "transfer", label = "TRANSFER" })
 		end
+		if WG.BarDroidPresets and WG.BarDroidPresets.fits(sel) then -- (after FIGHT, MOVE, PATROL, D-gun: bardroid_presets.lua)
+			local at = 1
+			while newRight[at] and newRight[at].h do
+				at = at + 1
+			end
+			table.insert(newRight, at, { kind = "presets", label = "PRESETS" })
+		end
 		newRight[#newRight + 1] = style
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
 	end
@@ -983,6 +990,13 @@ function refreshNow()
 			newRight[#newRight + 1] = it
 		end
 	end
+	if WG.BarDroidPresets and WG.BarDroidPresets.isOpen() then -- (the presets: 2 x 2 over the whole grid, an X)
+		if #sel > 0 then
+			newLeft, lk, newRight, rk = {}, "presets", WG.BarDroidPresets.items(), "presets"
+		else
+			WG.BarDroidPresets.close()
+		end
+	end
 	if dgunOn() then -- (the D-gun mode: its sticks, FIRE and cancel over the whole grid)
 		newLeft, lk, newRight, rk = {}, "dgun", {}, "dgun"
 	end
@@ -995,8 +1009,11 @@ function refreshNow()
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
 	if rk == "home" then -- (all of it on the dock: AUTO RETREAT a fourth row, no scrolling)
 		L.homeRows = max(HOME_ROWS, min(HOME_ROWS + 1, rightRowsN))
+	elseif rk == "presets" then -- (laid out as the home grid, 2 x 2)
+		L.homeRows = 2
 	end
-	snapSet(rightScroll, rightRowsN, rk == "home" and (L.homeRows or HOME_ROWS) or (rk == "share" or rk == "panel") and wideRows
+	snapSet(rightScroll, rightRowsN, (rk == "home" or rk == "presets") and (L.homeRows or HOME_ROWS)
+		or (rk == "share" or rk == "panel") and wideRows
 		or L.rightRows or 3, rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
@@ -1298,6 +1315,10 @@ local function pressItem(item, long)
 		end
 	elseif k == "retreat" and WG.BarDroidRetreat then -- (bardroid_retreat.lua: hurt units fall back, on or off)
 		WG.BarDroidRetreat.set(not WG.BarDroidRetreat.on())
+	elseif k == "presets" and WG.BarDroidPresets then -- (bardroid_presets.lua: the presets over the grid)
+		WG.BarDroidPresets.open()
+	elseif k == "preset" and WG.BarDroidPresets then -- (one picked: the map's next tap is where they go)
+		WG.BarDroidPresets.pick(item.id)
 	elseif k == "transfer" then
 		sharing = "units"
 	elseif k == "sendres" then
@@ -1348,10 +1369,11 @@ local function half(side)
 	if side == "left" then
 		return L.left, leftScroll, leftItems, 3, L.tile, L.tile
 	end
-	if rightKind == "home" or rightKind == "share" or rightKind == "panel" then -- (the whole grid)
+	if rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets" then -- (the whole grid)
 		local r = homeRect()
 		return r, rightScroll, rightItems, 2, floor((r[3] - r[1] - L.gap) / 2),
-			rightKind == "home" and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap or floor(L.btnH * 1.5)
+			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
+			or floor(L.btnH * 1.5)
 	end
 	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
 end
@@ -1545,6 +1567,13 @@ local function drawButton(item, r)
 		drawSlider(item, r)
 		return
 	end
+	if item.kind == "preset" and WG.BarDroidPresets then -- (its thumbnail, its name under it)
+		button(r)
+		local lh = (r[4] - r[2]) * 0.2
+		WG.BarDroidPresets.drawThumb(item.id, { r[1], r[2] + lh, r[3], r[4] })
+		textIn(item.label or "", r[1], r[2], r[3], r[2] + lh * 1.2, lh * 0.62, "\255\240\240\240", font)
+		return
+	end
 	local _, activeID = spGetActiveCommand()
 	local lit = item.kind == "order" and activeID == item.id
 	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
@@ -1591,6 +1620,11 @@ local function drawHalf(side)
 		end
 	end
 	gl.Scissor(false)
+	if side == "right" and rightKind == "presets" and WG.BarDroidPresets then -- (the presets' X, in the corner)
+		local x = WG.BarDroidPresets.closeRect(r)
+		button(x, { 0.42, 0.1, 0.08, 0.95 }, { 0.75, 0.25, 0.2, 0.95 })
+		textIn("\195\151", x[1], x[2], x[3], x[4], (x[4] - x[2]) * 0.7, "\255\250\240\240", bold)
+	end
 	-- more rows: a small gold chevron at the edge they come from
 	if s.rows > s.visible then
 		local cx, w = (r[1] + r[3]) / 2, (r[3] - r[1]) * 0.05
@@ -1680,8 +1714,11 @@ local function drawSelection()
 	local x = r[1] + floor((r[3] - r[1]) / 3) + L.pad -- (the row's left third is INSERT, its words beside the tile, drawn
 	-- live with QUEUE's: drawQueueZones)
 	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
+	L.selCountEnd = nil -- (where the count line ends: the camera pad's words keep right of it, drawMode)
 	if n > 1 then
-		font:Print("\255\200\200\200" .. n .. " units, " .. bestN .. " of this type", x, r[4] - h * 0.62, h * 0.17, "o")
+		local count = n .. " units, " .. bestN .. " of this type"
+		font:Print("\255\200\200\200" .. count, x, r[4] - h * 0.62, h * 0.17, "o")
+		L.selCountEnd = x + font:GetTextWidth(count) * h * 0.17
 	end
 	local hp, maxHp = Spring.GetUnitHealth(sel[1])
 	if hp and maxHp and maxHp > 0 then
@@ -1936,8 +1973,16 @@ local function drawMode()
 		if showSel then -- (no selection row: the dimmed dock says it alone)
 			local s = L.sel
 			local h = s[4] - s[2]
-			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it)
-			font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + h * 0.3, h * 0.15, "ro")
+			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it;
+			-- right of the count line, "6 units, 6 of this type", which it ran under: shorter, or left out, where it does not fit)
+			local size, right = h * 0.15, s[3] - L.pad
+			local from = (L.selCountEnd or 0) + L.pad * 2
+			local full, brief = "CAMERA PAD  tap to use the menu", "CAMERA PAD"
+			if right - font:GetTextWidth(full) * size >= from then
+				font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", right, s[2] + h * 0.3, size, "ro")
+			elseif right - font:GetTextWidth(brief) * size >= from then
+				font:Print("\255\190\190\190" .. brief, right, s[2] + h * 0.3, size, "ro")
+			end
 		end
 		return
 	end
@@ -2353,7 +2398,11 @@ function widget:MousePress(x, y, btn)
 		end
 		return true
 	end
-	local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel"
+	if rightKind == "presets" and WG.BarDroidPresets and inRect(x, y, WG.BarDroidPresets.closeRect(homeRect())) then
+		WG.BarDroidPresets.close() -- (the presets' X)
+		return true
+	end
+	local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets"
 	local side = wide and inRect(x, y, homeRect()) and "right" -- (the whole grid: both halves)
 		or inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
 	if side == "right" and rightKind == "panel" then -- a slider: set where pressed, then follows the finger
@@ -2518,6 +2567,7 @@ function widget:Initialize()
 		menu = function()
 			return menu
 		end,
+		refresh = refresh, -- (bardroid_presets.lua: its presets opened or closed)
 	}
 	checkActive()
 	writeDock(true)

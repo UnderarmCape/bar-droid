@@ -93,6 +93,14 @@ same, that stays the simpler way.
       and cheap units like Ticks and Pawns at the front, long-ranged at the back; fighters in front of or escorting
       bombers and transports; artillery always at the back on fight, moving with the back while the formation moves).
       First: research the practical formations for BAR's unit types, T1 front-line mixes first, then all.
+      Done so far: `bardroid_presets.lua` (layer -20: the destination's tap and Back before the dock and BAR's menus).
+      PRESETS among the orders while units that move and fight are picked; the dock's whole grid then shows the presets
+      2 x 2, each a drawing of what it does with its name under it, an X in the top right corner; Back closes them (BAR's
+      menu stays shut). A preset tapped closes them and the map's next tap is the destination (Back or the right button
+      lets it go). ZIGZAG: to the destination in turns 230 elmos apart, 170 to each side, each unit keeping its place in
+      the group (drawn in to 260 of its middle). Dev phone, upright: 6 Pawns, PRESETS, ZIGZAG, a tap 900 elmos off: 4
+      orders each (3 turns and the destination), the group's middle swinging right, then left on the way; Back and the X
+      each closed the presets. Still to do: the formations (research running), their three thumbnails.
 - [ ] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
       an area mex order over the mex spots within the commander's weapon range, sent at once without confirmation
       (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
