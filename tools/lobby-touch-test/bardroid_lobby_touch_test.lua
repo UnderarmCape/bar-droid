@@ -367,7 +367,7 @@ cases = {
 	end,
 	function()
 		local L = WG.BarDroidLobbyTouch
-		local px, py, pw, ph, lx, lw, tw, sw, cap = L.voiceRect()
+		local px, _, pw, ph, _, lw, tw, sw, cap = L.voiceRect()
 		check("the microphone not allowed: the panel says where to allow it, its words whole",
 			L.voiceShown() and tostring(cap):find("MICROPHONE", 1, true) and tw > 0 and tw <= pw and lw == pw
 				and math.abs(px * 2 + pw - sw) <= 1,
