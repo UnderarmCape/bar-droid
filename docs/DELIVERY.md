@@ -332,6 +332,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **The dock on the Fold7 unfolded upright** (the dev phone's display set near-square, `adb shell wm size
+      1080x1198`, reset after; a way to try that screen without the Fold7): its orders half shows three rows, and the
+      two-row FIGHT, MOVE and PATROL cut MOVE and PATROL in half at its foot; D-gun mode's MOVE and AIM fell off the
+      screen. The big orders are one row there now (two where four rows or more show), the factory queue's likewise,
+      the sticks sit between their words and FIRE. The tall phone's dock unchanged. Also checked upright (tall): the
+      lobby's Scenarios (a scenario's page and Start Scenario), Load Game, Downloads, Replays fit.
 - [x] **The lobby's Settings upright without its sliders and dropdown boxes** (found 2026-11-10): the controls had
       their size, but their picture was the one drawn before they had it. Upright, when 20 or more controls of the
       content come or go (a screen or a tab opened) it is drawn again, twice; dev phone: every slider and dropdown
