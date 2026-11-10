@@ -1819,27 +1819,27 @@ local function tideRelevant() -- (BAR's top bar's test: water 20 deep somewhere,
 	end
 	return tideShown
 end
--- The wind's or the tide's reading: its picture turning behind the number (a slot as wide as the number), the wind's
--- range after it, apart from the number
+-- The wind's or the tide's reading: its picture turning before the number (behind it, as BAR's top bar has it, the
+-- blades' hub sat on the decimal point at this size: "6.5" read "6:5", dev phone 2026-11-10), the wind's range after it
 local function indicatorSlot(text, s)
-	return max(s, bold:GetTextWidth(text) * s * 0.62 + s * 0.24)
+	return s * 0.95 + bold:GetTextWidth(text) * s * 0.62
 end
 local function indicatorWidth(text, s, extra)
 	return indicatorSlot(text, s) + (extra and s * 0.14 + font:GetTextWidth(extra) * s * 0.5 or 0)
 end
 local function drawIndicator(tex, turn, x, cy, s, text, extra)
 	local slot = indicatorSlot(text, s)
-	gl.Color(1, 1, 1, 0.5)
+	gl.Color(1, 1, 1, 0.8)
 	gl.Texture(tex)
 	gl.PushMatrix()
-	gl.Translate(x + slot / 2, cy, 0)
+	gl.Translate(x + s * 0.42, cy, 0)
 	gl.Rotate(turn, 0, 0, 1)
-	gl.TexRect(-s * 0.6, -s * 0.6, s * 0.6, s * 0.6)
+	gl.TexRect(-s * 0.42, -s * 0.42, s * 0.42, s * 0.42)
 	gl.PopMatrix()
 	gl.Texture(false)
 	gl.Color(1, 1, 1, 1)
 	local size = s * 0.62
-	bold:Print("\255\255\255\255" .. text, x + slot / 2, cy - size * 0.32, size, "co")
+	bold:Print("\255\255\255\255" .. text, x + s * 0.95, cy - size * 0.32, size, "o")
 	if extra then
 		font:Print("\255\185\185\185" .. extra, x + slot + s * 0.14, cy - size * 0.32, s * 0.5, "o")
 	end
@@ -2227,6 +2227,8 @@ function widget:Update(dt)
 	drawingCursor()
 	if rightKind == "dgun" then
 		DG.follow(dt)
+	else
+		DG.unitWas = nil -- (the next start eases in again, the same commander too)
 	end
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then
