@@ -183,6 +183,8 @@ final class RtsTouch {
     private float gridX, gridY;                     // ... and the pointer, its far corner (X screen pixels)
     private volatile boolean queueWanted;           // QUEUE is on (bardroid_pad.txt)
     private boolean queueHeld;                      // Shift held down for it (UI thread)
+    private volatile boolean insertWanted;          // the dock's INSERT is on (bardroid_pad.txt "insert 1")
+    private boolean insertHeld;                     // numpad* held down for it, BAR's CommandInsert (UI thread)
     private volatile long padAt;                    // bardroid_pad.txt last read
     // A tap with a building waiting moves it only once no second tap follows (a double tap sends the waiting one)
     private Runnable placeTapLater;
@@ -301,6 +303,7 @@ final class RtsTouch {
         gridLetGo();
         releaseKeys();
         if (queueHeld) { queueHeld = false; view().sendKeyEvent(0, KeyEvent.KEYCODE_SHIFT_LEFT, false); }
+        if (insertHeld) { insertHeld = false; view().sendKeyEvent(0, KeyEvent.KEYCODE_NUMPAD_MULTIPLY, false); }
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -1124,6 +1127,12 @@ final class RtsTouch {
     private final Runnable applyQueue = () -> {
         padAt = 0;
         padState();
+        // (the dock's INSERT, Kailil 2026-11-10: numpad* held, which bardroid_pad.lua binds to BAR's CommandInsert: an
+        // order given meanwhile goes to the front of the queue; BAR's own key for it, Space, does more things held)
+        if (insertWanted != insertHeld) {
+            insertHeld = insertWanted;
+            view().sendKeyEvent(0, KeyEvent.KEYCODE_NUMPAD_MULTIPLY, insertHeld);
+        }
         if (queueWanted == queueHeld) return;
         queueHeld = queueWanted;
         boolean shiftHere = false;
@@ -1592,7 +1601,7 @@ final class RtsTouch {
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
         String focus = "none", picked = "none", mode = "none";
-        boolean before = false, queue = false, riding = false;
+        boolean before = false, queue = false, insert = false, riding = false;
         float[] at = null;
         if (text != null) {
             for (String line : text.split("\n")) {
@@ -1606,6 +1615,7 @@ final class RtsTouch {
                 if (f[0].equals("pregame")) before = f[1].equals("1");
                 if (f[0].equals("armed")) picked = f[1];
                 if (f[0].equals("queue")) queue = f[1].equals("1");
+                if (f[0].equals("insert")) insert = f[1].equals("1");
                 if (f[0].equals("fp")) riding = f[1].equals("1");
                 if (f[0].equals("click")) {
                     try { padClicks = Integer.parseInt(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
@@ -1620,8 +1630,10 @@ final class RtsTouch {
         armed = picked;
         padModal = mode;
         clickPoint = at;
-        if (queue != queueWanted) {   // (the widget let go of it, the pad in use: no touch comes to look it up)
+        if (queue != queueWanted || insert != insertWanted) {   // (the widget let go of one, the pad in use: no touch
+            // comes to look it up)
             queueWanted = queue;
+            insertWanted = insert;
             ui.post(applyQueue);
         }
         if (riding != firstPerson) {

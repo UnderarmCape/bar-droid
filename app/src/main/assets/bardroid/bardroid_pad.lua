@@ -646,13 +646,17 @@ end
 -- L3 / R3: the next or the last queued order of the selected units removed, by BAR's own Command Queue Manager, which any
 -- game allows (it also takes care of area orders and of a build queue before the start). It listens for key presses only,
 -- so these two keys, used by nothing else and bound whatever keys the player's BAR has for it, are what PadGame presses.
-local QUEUE_KEYS = { { "insert", "command_skip_current" }, { "numpad/", "command_cancel_last" } }
+-- And the portrait dock's INSERT (Kailil, 2026-11-10: "insert things in front of queue"): BAR's CommandInsert puts an
+-- order given while its key is down at the front of the queue (Space in BAR's keys, which also shows unit stats, picks
+-- idle units in a box and more): the app holds numpad*, which BAR leaves unbound, given the same action.
+local QUEUE_KEYS = { { "insert", "command_skip_current" }, { "numpad/", "command_cancel_last" },
+	{ "Any+numpad*", "commandinsert prepend_between" } }
 local keysLookedAt = nil
 local function bindQueueKeys()
 	for _, k in ipairs(QUEUE_KEYS) do
 		local bound = false
 		for _, key in ipairs(Spring.GetActionHotKeys(k[2]) or {}) do
-			bound = bound or key == k[1]
+			bound = bound or key:lower() == k[1]:lower()
 		end
 		if not bound then
 			Spring.SendCommands("bind " .. k[1] .. " " .. k[2])
@@ -2183,22 +2187,27 @@ end
 -- menu while fingers have units selected, a sticky Shift: on, the app holds Shift, so orders and buildings queue as with
 -- BAR's Shift key, until it is tapped off (bardroid_pad.txt "queue 1", RtsTouch). Over any of BAR's interface it answers
 -- IsAbove, so a tap on it is a click and not an order.
-local queue = { on = false, rect = nil }
+-- Upright the dock's selection row is the button (Kailil, 2026-11-10: "turn the entire selected unit description into the
+-- queue button"): its right two thirds QUEUE, its left third INSERT (bardroid_pad.txt "insert 1": the app holds numpad*
+-- for BAR's CommandInsert, QUEUE_KEYS), one or the other; the dock draws both.
+local queue = { on = false, rect = nil, insert = false, insertRect = nil, dock = false }
 local function queueShows()
-	return queue.on or (WG.BarDroidPadOnly ~= true and WG.BarDroidInput ~= "mouse" and not Spring.GetSpectatingState()
-		and Spring.GetSelectedUnitsCount() > 0)
+	return queue.on or queue.insert or (WG.BarDroidPadOnly ~= true and WG.BarDroidInput ~= "mouse"
+		and not Spring.GetSpectatingState() and Spring.GetSelectedUnitsCount() > 0)
 end
 local function queueLayout(vsx, vsy)
 	if not queueShows() then
-		queue.rect = nil
+		queue.rect, queue.insertRect = nil, nil
 		return
 	end
-	local P = WG.BarDroidPortrait -- (the portrait dock: its place for it, in its top row)
-	local dockRect = P and P.queueRect and P.queueRect()
-	if dockRect then
-		queue.rect = dockRect
+	local P = WG.BarDroidPortrait -- (the portrait dock: its selection row, none while nothing is picked)
+	queue.dock = P and P.active and P.active() or false
+	if queue.dock then
+		queue.rect = P.queueRect and P.queueRect()
+		queue.insertRect = P.insertRect and P.insertRect()
 		return
 	end
+	queue.insertRect = nil
 	local h, w = style.size(0.036), style.size(0.11)
 	local gap = style.size(0.008, 3)
 	local x1, y0 = math.floor(vsx * 0.65), math.floor(vsy * 0.16)
@@ -2215,7 +2224,7 @@ local function drawQueue()
 	local r = queue.rect
 	-- (BAR's order menu's font, the buttons right under it; the plain one read thin and large beside them)
 	local font = WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
-	if not (r and font) then
+	if not (r and font) or queue.dock then
 		return
 	end
 	style.panel(r[1], r[2], r[3], r[4], 1)
@@ -2233,11 +2242,16 @@ local function drawQueue()
 	font:End()
 end
 local function inQueueButton(x, y)
-	local r = queue.rect
-	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+	for _, b in ipairs({ { queue.rect, "queue" }, { queue.insertRect, "insert" } }) do
+		local r = b[1]
+		if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
+			return b[2]
+		end
+	end
+	return nil
 end
 function widget:IsAbove(x, y)
-	return inQueueButton(x, y)
+	return inQueueButton(x, y) ~= nil
 end
 -- Presses before the first draws go no further (2026-10-30): BAR's music widget reads its buttons before it has any, and
 -- BAR takes a widget that fails out of the game: no music, no volume sliders. A tap while the game loads comes in just then.
@@ -2246,8 +2260,14 @@ function widget:MousePress(x, y)
 	if draws < 2 then
 		return true
 	end
-	if inQueueButton(x, y) then
+	local b = inQueueButton(x, y)
+	if b == "queue" then
 		queue.on = not queue.on
+		queue.insert = queue.insert and not queue.on
+		return true
+	elseif b == "insert" then
+		queue.insert = not queue.insert
+		queue.on = queue.on and not queue.insert
 		return true
 	end
 	return false
@@ -2259,8 +2279,9 @@ end
 function widget:Update(dt)
 	padOrders(WG.BarDroidPadOnly == true)
 	padHover()
-	if queue.on and WG.BarDroidPadOnly == true then -- (fingers' button: left on, it would queue every order of the pad's)
-		queue.on = false
+	if (queue.on or queue.insert) and WG.BarDroidPadOnly == true then -- (fingers' buttons: left on, every order of the
+		-- pad's would queue)
+		queue.on, queue.insert = false, false
 	end
 	if area.radius ~= area.target then
 		local r = area.radius + (area.target - area.radius) * math.min(1, (dt or 0) / AREA_EASE)
@@ -2329,7 +2350,7 @@ function widget:Update(dt)
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
+		.. "\ninsert " .. (queue.insert and 1 or 0) .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
 		.. "\nmodal " .. (modal or "none") .. "\n"
 	if padClickAt then -- (the last click's point: the app clicks there, not in the middle)
 		text = text .. string.format("clickat %.4f %.4f\n", padClickAt[1], padClickAt[2])
@@ -2340,7 +2361,8 @@ function widget:Update(dt)
 		keysLookedAt = t
 		bindQueueKeys()
 	end
-	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or text:find("fp 1", 1, true) or modal
+	local keep = focus ~= "none" or pregame or armed ~= "none" or queue.on or queue.insert or text:find("fp 1", 1, true)
+		or modal
 	if text ~= written or (keep and Spring.DiffTimers(t, writtenAt) > 1) then
 		if writeWhole(PAD_FILE, text) then
 			written, writtenAt = text, t
@@ -2462,6 +2484,9 @@ function widget:Initialize()
 		say = note, -- (bardroid_padfp.lua's notes)
 		teammates = teammates, -- (the portrait dock's teammate picker)
 		give = giveTo,
+		queueState = function() -- (the portrait dock draws QUEUE and INSERT: on or off)
+			return queue.on, queue.insert
+		end,
 		-- the words said for a ping (bardroid_touch.lua; LB held + RB three times): a ping with them as its label where
 		-- the middle was then (Kailil, 2026-11-06: as BAR's own labelled ping); BAR's 127 bytes at most, whole letters
 		voicePing = function(text)

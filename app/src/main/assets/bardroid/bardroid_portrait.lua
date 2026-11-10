@@ -1518,7 +1518,8 @@ local function drawSelection()
 	unitTile(best, { r[1] + p, r[2] + p, r[1] + h - p, r[4] - p })
 	local ud = UnitDefs[best]
 	local name = ud and (ud.translatedHumanName or ud.humanName) or ""
-	local x = r[1] + h + L.pad
+	local x = r[1] + floor((r[3] - r[1]) / 3) + L.pad -- (the row's left third is INSERT, its words beside the tile, drawn
+	-- live with QUEUE's: drawQueueZones)
 	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
 	if n > 1 then
 		font:Print("\255\200\200\200" .. n .. " units, " .. bestN .. " of this type", x, r[4] - h * 0.62, h * 0.17, "o")
@@ -1942,6 +1943,48 @@ local function drawDgun()
 	resetGL()
 end
 
+-- The selection row as two buttons (Kailil, 2026-11-10: "turn the entire selected unit description into the queue
+-- button 2/3s is queue on the right. And 1/3 is alt queue modifier so we can insert things in front of queue"):
+-- bardroid_pad.lua's QUEUE (a sticky Shift) and INSERT (BAR's CommandInsert: the front of the queue) take the presses;
+-- here their words, gold and a gold edge while one is on, drawn live over the row
+local function queueZones()
+	local s = L.sel
+	local third = s[1] + floor((s[3] - s[1]) / 3)
+	return { s[1], s[2], third, s[4] }, { third, s[2], s[3], s[4] }
+end
+local function drawQueueZones()
+	if not showSel then
+		return
+	end
+	local Pd = WG.BarDroidPad
+	local qOn, iOn = false, false
+	if Pd and Pd.queueState then
+		qOn, iOn = Pd.queueState()
+	end
+	local ins, que = queueZones()
+	local h = ins[4] - ins[2]
+	local e = max(2, floor(L.pad * 0.3))
+	for _, z in ipairs({ { ins, iOn }, { que, qOn } }) do
+		local r = z[1]
+		if z[2] then
+			gl.Color(1, 0.78, 0.25, 0.14)
+			gl.Rect(r[1], r[2], r[3], r[4])
+			gl.Color(1, 0.78, 0.25, 0.95)
+			gl.Rect(r[1], r[2], r[3], r[2] + e)
+			gl.Rect(r[1], r[4] - e, r[3], r[4])
+			gl.Rect(r[1], r[2], r[1] + e, r[4])
+			gl.Rect(r[3] - e, r[2], r[3], r[4])
+		end
+	end
+	gl.Color(1, 1, 1, 0.16) -- (where one ends and the other begins)
+	gl.Rect(ins[3] - 1, ins[2] + h * 0.18, ins[3] + 1, ins[4] - h * 0.18)
+	gl.Color(1, 1, 1, 1)
+	local size = h * 0.2
+	local gold, white = "\255\255\200\064", "\255\235\235\235"
+	bold:Print((iOn and gold or white) .. "INSERT", (ins[1] + h + ins[3]) / 2, (ins[2] + ins[4]) / 2 - size * 0.35, size, "co")
+	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, que[4] - h * 0.36, size, "ro")
+end
+
 local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
 	if showSel then
@@ -1985,6 +2028,7 @@ local function drawDock()
 	end
 	resetGL()
 	drawResources()
+	drawQueueZones()
 	if rightKind == "place" then
 		drawPlace()
 	end
@@ -2170,14 +2214,19 @@ function widget:Initialize()
 			return active and L.dock or nil
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
-		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the top row's right end)
-			if not active then
+		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the selection row's right two
+			-- thirds; none while nothing is picked)
+			if not (active and showSel) then
 				return nil
 			end
-			local s = L.sel
-			local h = floor((s[4] - s[2]) * 0.42)
-			local w = floor(h * 2.6)
-			return { s[3] - L.pad - w, s[4] - L.pad - h, s[3] - L.pad, s[4] - L.pad }
+			local _, q = queueZones()
+			return q
+		end,
+		insertRect = function() -- (its INSERT, BAR's CommandInsert: the row's left third)
+			if not (active and showSel) then
+				return nil
+			end
+			return (queueZones())
 		end,
 		menu = function()
 			return menu

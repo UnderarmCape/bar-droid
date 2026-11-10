@@ -38,8 +38,14 @@ can, the app picks BAR's command and clicks instead (as the D-gun by touch), whi
 - [x] **The dock's menu times out after 1.25 s** ("make time out for the mouse controls on the bottom half 1.25
       seconds instead"; it was 7 s untouched, `MENU_SECONDS`). Dev phone: open 0.7 s after a tap, the camera pad
       again by 2 s, three taps.
-- [ ] **The selection row is the QUEUE button**: its right 2/3 QUEUE (the sticky Shift), its left 1/3 the "alt queue
-      modifier so we can insert things in front of queue" (BAR's insert at the front).
+- [x] **The selection row is the QUEUE button**: its right 2/3 QUEUE (the sticky Shift), its left 1/3 the "alt queue
+      modifier so we can insert things in front of queue" (BAR's insert at the front). INSERT is BAR's own
+      CommandInsert (a game widget: online too), whose key is Space; Space also shows unit stats, picks idle units in a
+      box, splits builds and loops selections, so `bardroid_pad.lua` binds the unbound numpad* to the same action and
+      the app holds it while INSERT is on (`insert 1` in bardroid_pad.txt). QUEUE and INSERT turn each other off.
+      Dev phone, upright: QUEUE, MOVE, two taps (A, B queued), INSERT, MOVE, a tap: the queue C, A, B. A building
+      placed with PLACE while INSERT is on goes where it fits in the queue, not first (PLACE clicks with Shift: BAR's
+      Space+Shift).
 - [ ] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
       assignments are", on the right, always there while a unit with orders queued, or a factory, is picked.
 - [ ] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message breaks off
