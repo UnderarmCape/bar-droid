@@ -334,9 +334,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       only, kept on the next start).
 - [ ] **BAR's Settings upright is wider than the screen** (found 2026-11-10, dev phone, the top bar's Settings): its
       scale is the screen's height over 1080, so upright it is ~1770 pixels wide on 936 and its values column is cut
-      off. No WG setter for its size; a copy of the widget (as TeamStats) would lose its widget toggles to the user
-      widgets' sandbox. BAR's one-line fix written up in docs/HELP-WANTED.md for BAR's developers; until then Settings
-      is usable sideways. Kailil's call whether to ask them.
+      off. Kailil, 2026-11-10: "Just fix the setting issue. Remember I am creating the official bar android port that I
+      and the devs will be supporting officially". The change to BAR's `gui_options.lua` (its scale by the width too)
+      is made and tested: the dev phone's pool file swapped for the patched one, Settings upright whole (tabs and every
+      value), then BAR's file put back (md5 checked). It is ready for BAR's repository in
+      `docs/upstream/bar-options-upright.md`; players get it with the BAR release that has it. (It cannot ship in the
+      app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's file is in the archive
+      checksum.) Left: BAR merging it (Kailil and the devs).
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of

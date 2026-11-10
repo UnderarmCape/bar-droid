@@ -65,10 +65,10 @@ Not solved:
   column; the minimap is shrunk until tapped.
 - **BAR's windows on a phone held upright.** BAR's Settings (`gui_options.lua`) sizes itself by the screen's height
   alone (`widgetScale = vsy / 1080`, its 950 x 610 at 1080p): on a 936 x 2013 screen it is ~1770 pixels wide, its
-  values column off the right edge. The fix belongs in BAR's file: `widgetScale = math.min(vsy / 1080, vsx / 1000)`
-  in its `ViewResize` (or the same for every window of that kind). The app cannot do it for Settings: a copy, as it
-  runs for TeamStats (`tools/make-teamstats.py`, which patches the same line), would lose Settings' widget toggles to
-  the user widgets' sandbox.
+  values column off the right edge. The change for BAR's file, tested on the dev phone, is ready in
+  [upstream/bar-options-upright.md](upstream/bar-options-upright.md) (`widgetScale` by the width too). It has to be in
+  BAR's game: a copy run by the app, as for TeamStats (`tools/make-teamstats.py`), would lose Settings' widget toggles
+  to the user widgets' sandbox, and the game's own file is part of the archive checksum online games compare.
 - **The map's edge:** solved for the app's touch camera (2026-11-03: a drag past the edge holds the point under the
   finger on the level plane, across the edge too, a pinch there zooms about it, a drag over the sky moves the map;
   `tools/touch-phone-test.ps1`). The engine still keeps the camera's target on the map, so a drag outward stops
