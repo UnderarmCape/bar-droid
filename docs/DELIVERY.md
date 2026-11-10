@@ -196,6 +196,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pad-test and pad-test -Share upright: all passed, but the share list with 15 teammates ran from 211 to 1801 over
       the dock (0-691); it now keeps above the dock, in the middle of the game above it (rows 3-15 of 15 shown, the one
       picked in sight: 753-1865), sideways as before (66-826); the test's check counts the dock upright.
+      pad-test -Dgun upright: all pass; -Online upright: all but "RB: the build menu has the pad". Upright the build menu
+      copy stands down (the dock has its own grid: droid.active), so the pad's RB opens nothing there; the rest of the
+      pad works. The test says SKIP for it upright.
+- [ ] **A gamepad upright: RB on the dock's build grid** (found 2026-11-10 by pad-test -Online upright): the pad's RB
+      opens no build menu upright (the dock's grid stands in the copy's place and the pad does not drive it); building
+      upright is by touch. Not asked for (Kailil plays touch upright, the pad sideways): his call whether the pad should
+      step through the dock's tiles.
 - [x] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
       subtle magnetic snap (pages, not lines). 3 x 2 a page (17 buttons: 3 pages), 60 high in the lobby's larger font;
       a sideways swipe moves them with the finger (past the ends a third as far), let go they settle on the nearest page,

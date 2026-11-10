@@ -47,7 +47,13 @@ local function finish()
 	done = true
 	check("the rule is on: a user widget's order is refused", not pcall(Spring.GiveOrderToUnit, com, CMD.STOP, {}, 0))
 	check("the app's build menu runs in BAR's game", WG.bardroidBuildmenu ~= nil)
-	check("RB: the build menu has the pad", focus)
+	-- (upright the build menu copy stands down, the portrait dock has its own grid: no pad focus there, DELIVERY.md)
+	local P = WG.BarDroidPortrait
+	if P and P.active and P.active() then
+		say("[padtest] SKIP RB: the build menu has the pad (upright: the dock's grid, which the pad does not drive)")
+	else
+		check("RB: the build menu has the pad", focus)
+	end
 	-- (the app's copy of BAR's Order menu: BAR's own has no droidCells; Kailil, 2026-11-03: online "like offline")
 	check("the app's order menu runs in BAR's game", WG.ordermenu ~= nil and WG.ordermenu.droidCells ~= nil)
 	check("the pad's orders hidden: the rest fill the order menu, one cell each", evenOrders > 0, evenOrders)
