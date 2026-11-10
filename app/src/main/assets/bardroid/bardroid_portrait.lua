@@ -138,6 +138,13 @@ local press -- a mouse press on the dock: { side, x, y, button, lastY, lastT, ve
 local typesFrom -- nil, or "local" / "all" / "idle": a list pressed, those units by type on the left
 local multi, multiPicked = false, {}
 local cycleAt = {} -- COMMANDER, IDLE BUILDER: the last one each picked (a tap again: the next)
+-- Giving and the resource panel (Kailil, 2026-11-09: "a transfer unit ... button to the orders menu ... a teammate
+-- selection ui"; a tap on metal or energy: "a drop down that spans the width of the phone" with the conversion (grey)
+-- and share (red) sliders and "a send power or send metal button"). Both take the whole grid while open.
+local sharing = nil -- "units", "metal" or "energy": the teammate picker
+local shareFraction = 0.25 -- of what this team holds (metal, energy)
+local resPanel = nil -- "metal" or "energy": its panel
+local slide = nil -- a slider being dragged: { item, rect }
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
 local menu = false -- the dock's menu is open (fingers press it); else it is the camera pad
@@ -554,6 +561,62 @@ local function pack(items, cols)
 end
 local cellsOf = { left = {}, right = {} }
 
+local function teammateList()
+	local P = WG.BarDroidPad
+	return P and P.teammates and P.teammates() or {}
+end
+
+-- the teammate picker: amounts (resources), the teammates in their colours, CANCEL
+local function shareItems()
+	local items = {}
+	if sharing ~= "units" then
+		for _, f in ipairs({ 0.1, 0.25, 0.5, 1 }) do
+			items[#items + 1] = { kind = "sharestep", value = f, label = floor(f * 100) .. "%" }
+		end
+	end
+	local teams = teammateList()
+	for _, t in ipairs(teams) do
+		items[#items + 1] = { kind = "shareto", teamID = t.teamID, label = string.upper(t.name), color = t.color, w = 2 }
+	end
+	if #teams == 0 then
+		items[#items + 1] = { kind = "none", label = "NO TEAMMATES", w = 2 }
+	end
+	items[#items + 1] = { kind = "sharecancel", label = "CANCEL", w = 2 }
+	return items
+end
+
+-- the resource panel: BAR's top bar's sliders (energy: conversion, grey; both: sharing above, red), SEND, CLOSE
+local function panelItems(res)
+	local items = {}
+	if res == "energy" then
+		items[#items + 1] = { kind = "slider", what = "convert", res = res, label = "CONVERT ENERGY ABOVE", w = 2 }
+	end
+	items[#items + 1] = { kind = "slider", what = "share", res = res, label = "SHARE TO ALLIES ABOVE", w = 2 }
+	if #teammateList() > 0 then
+		items[#items + 1] = { kind = "sendres", res = res, label = res == "metal" and "SEND METAL" or "SEND ENERGY", w = 2 }
+	end
+	items[#items + 1] = { kind = "panelclose", label = "CLOSE", w = 2 }
+	return items
+end
+
+local function sliderValue(item)
+	if item.what == "convert" then
+		return Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75
+	end
+	return select(6, Spring.GetTeamResources(myTeam(), item.res)) or 1
+end
+
+-- a slider set from x across its track (BAR's own calls: SetShareLevel; conversion, its LuaRules message 12-88 %)
+local function setSlider(item, r, x)
+	local v = max(0, min(1, (x - r[1]) / max(1, r[3] - r[1])))
+	if item.what == "convert" then
+		Spring.SendLuaRulesMsg(string.format(string.char(137) .. "%i", max(12, min(88, floor(v * 100 + 0.5)))))
+	else
+		Spring.SetShareLevel(item.res, v)
+	end
+	markDirty()
+end
+
 local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
 
 -- what each half shows, refreshed a few times a second and after every press
@@ -594,6 +657,9 @@ function refreshNow()
 	local newPick = key ~= lastSelection -- (another pick: both halves from their first rows, not the last unit's place)
 	if newPick then
 		lastSelection, factoryItem = key, nil
+		if sharing == "units" then -- (another pick: not what TRANSFER was pressed for)
+			sharing = nil
+		end
 		if #sel > 0 and not multi then
 			typesFrom = nil
 		end
@@ -692,8 +758,19 @@ function refreshNow()
 				newRight[#newRight + 1] = it
 			end
 		end
+		if #teammateList() > 0 then -- (after FIGHT, MOVE, PATROL: the picked units to a teammate)
+			local at = 1
+			while newRight[at] and newRight[at].h do
+				at = at + 1
+			end
+			table.insert(newRight, at, { kind = "transfer", label = "TRANSFER" })
+		end
 		newRight[#newRight + 1] = style
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
+	end
+	if sharing or resPanel then -- (the picker or the panel: the whole grid)
+		newLeft, lk = {}, sharing and "share" or "panel"
+		newRight, rk = sharing and shareItems() or panelItems(resPanel), lk
 	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
@@ -701,8 +778,9 @@ function refreshNow()
 	cellsOf.left, leftRowsN = pack(leftItems, 3)
 	cellsOf.right, rightRowsN = pack(rightItems, 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
-	snapSet(rightScroll, rightRowsN, rk == "home" and HOME_ROWS or L.rightRows or 3,
-		rk == rightKind and not newPick)
+	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
+	snapSet(rightScroll, rightRowsN, rk == "home" and HOME_ROWS or (rk == "share" or rk == "panel") and wideRows
+		or L.rightRows or 3, rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
 			#rightItems)) -- (tools: what the dock shows)
@@ -872,6 +950,22 @@ local function pressItem(item, long)
 		if x and (x > 0 or z > 0) then
 			cameraTo(x, y, z)
 		end
+	elseif k == "transfer" then
+		sharing = "units"
+	elseif k == "sendres" then
+		sharing, resPanel = item.res, nil
+	elseif k == "sharestep" then
+		shareFraction = item.value
+	elseif k == "shareto" then
+		local P = WG.BarDroidPad
+		if P and P.give then
+			P.give(item.teamID, sharing, shareFraction)
+		end
+		sharing = nil
+	elseif k == "sharecancel" then
+		sharing = nil
+	elseif k == "panelclose" then
+		resPanel = nil
 	elseif k == "faction" and Spring.GetGameFrame() == 0 then
 		Spring.SendLuaRulesMsg("changeStartUnit" .. tostring(item.startUnit))
 	elseif k == "pregame" or k == "pregameundo" or k == "pregameclear" then
@@ -906,10 +1000,10 @@ local function half(side)
 	if side == "left" then
 		return L.left, leftScroll, leftItems, 3, L.tile, L.tile
 	end
-	if rightKind == "home" then
+	if rightKind == "home" or rightKind == "share" or rightKind == "panel" then -- (the whole grid)
 		local r = homeRect()
 		return r, rightScroll, rightItems, 2, floor((r[3] - r[1] - L.gap) / 2),
-			floor((r[4] - r[2] + L.gap) / HOME_ROWS) - L.gap
+			rightKind == "home" and floor((r[4] - r[2] + L.gap) / HOME_ROWS) - L.gap or floor(L.btnH * 1.5)
 	end
 	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
 end
@@ -1074,12 +1168,38 @@ local function currentShape()
 	end
 end
 
+local function drawSlider(item, r)
+	button(r)
+	local v = sliderValue(item)
+	local h = r[4] - r[2]
+	local tx0, tx1 = r[1] + h * 0.2, r[3] - h * 0.2
+	local ty0 = r[2] + h * 0.2
+	local ty1 = ty0 + max(4, floor(h * 0.16))
+	gl.Color(0.08, 0.08, 0.08, 0.95)
+	gl.Rect(tx0, ty0, tx1, ty1)
+	if item.what == "convert" then -- (BAR's top bar: the conversion grey, the share red)
+		gl.Color(0.72, 0.72, 0.72, 1)
+	else
+		gl.Color(0.86, 0.2, 0.18, 1)
+	end
+	local kx = tx0 + (tx1 - tx0) * v
+	gl.Rect(tx0, ty0, kx, ty1)
+	gl.Color(1, 1, 1, 1)
+	gl.Rect(kx - 3, ty0 - h * 0.07, kx + 3, ty1 + h * 0.07)
+	textIn(item.label .. "  " .. floor(v * 100 + 0.5) .. "%", r[1], ty1, r[3], r[4], h * 0.24, "\255\235\235\235", font)
+end
+
 local function drawButton(item, r)
+	if item.kind == "slider" then
+		drawSlider(item, r)
+		return
+	end
 	local _, activeID = spGetActiveCommand()
 	local lit = item.kind == "order" and activeID == item.id
 	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
+		or item.kind == "sharestep" and shareFraction == item.value
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
 	else
@@ -1087,7 +1207,12 @@ local function drawButton(item, r)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
 	textIn(item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
-		"\255\240\240\240", font)
+		item.kind == "none" and "\255\140\140\140" or "\255\240\240\240", font)
+	if item.color then -- a teammate: their colour along the bottom
+		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
+		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
+		gl.Color(1, 1, 1, 1)
+	end
 	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
 		local c = STATE_COLORS[min(3, (item.state or 0) + 1)]
 		local w = (r[3] - r[1]) * 0.28
@@ -1683,13 +1808,29 @@ function widget:MousePress(x, y, btn)
 		end
 		return true
 	end
-	local side = rightKind == "home" and inRect(x, y, homeRect()) and "right" -- (the home grid: both halves)
+	local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel"
+	local side = wide and inRect(x, y, homeRect()) and "right" -- (the whole grid: both halves)
 		or inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
+	if side == "right" and rightKind == "panel" then -- a slider: set where pressed, then follows the finger
+		for i, item in ipairs(rightItems) do
+			local cr = cellRect("right", i)
+			if item.kind == "slider" and cr and inRect(x, y, cr) then
+				slide = { item = item, rect = cr }
+				setSlider(item, cr, x)
+				return true
+			end
+		end
+	end
 	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0 }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
 
-function widget:MouseMove(_, y)
+function widget:MouseMove(x, y)
+	if slide then
+		setSlider(slide.item, slide.rect, x)
+		touched()
+		return
+	end
 	local p = press
 	if not (p and p.side) then
 		return
@@ -1708,11 +1849,24 @@ function widget:MouseMove(_, y)
 	touched()
 end
 
-function widget:MouseRelease(_, _, btn)
+function widget:MouseRelease(x, _, btn)
+	if slide then
+		setSlider(slide.item, slide.rect, x)
+		slide = nil
+		refresh()
+		return true
+	end
 	local p = press
 	press = nil
 	if not p then
 		return false
+	end
+	if not p.side and inRect(p.x, p.y, L.res) then -- metal or energy tapped: its panel (again: closed)
+		local res = p.x < (L.res[1] + L.res[3]) / 2 and "metal" or "energy"
+		resPanel = resPanel ~= res and res or nil
+		sharing = nil
+		refresh()
+		return true
 	end
 	if p.side then
 		if p.moved then

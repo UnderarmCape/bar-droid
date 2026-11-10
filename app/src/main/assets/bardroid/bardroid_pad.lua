@@ -1246,6 +1246,47 @@ local function shareConfirm()
 	shareClose("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
 end
 
+-- The portrait dock's giving (bardroid_portrait.lua, Kailil 2026-11-09: a transfer button and a teammate picker,
+-- metal and energy sent from the resource panel): the share list's teammates, rules and notes. what: "units",
+-- "metal" or "energy"; fraction: of what this team holds (resources)
+local function giveTo(teamID, what, fraction)
+	local team
+	for _, t in ipairs(teammates()) do
+		if t.teamID == teamID then
+			team = t
+		end
+	end
+	if not team then
+		note("OUT OF THE GAME")
+		return
+	end
+	if what == "units" then
+		local units = Spring.GetSelectedUnits()
+		if #units == 0 then
+			note("SELECT UNITS FIRST")
+			return
+		end
+		Spring.ShareResources(teamID, "units")
+		given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now() }
+		note("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
+		return
+	end
+	local WHAT = string.upper(what)
+	local mine = Spring.GetTeamResources(Spring.GetMyTeamID(), what) or 0
+	local want = math.floor(mine * (fraction or 0.25))
+	local theirs, storage, _, _, _, slider = Spring.GetTeamResources(teamID, what)
+	local room = (theirs and storage) and math.max(0, math.floor(storage * (slider or 1) - theirs)) or want
+	if want < 1 then
+		note("NO " .. WHAT .. " TO GIVE")
+	elseif room < 1 then
+		note(string.upper(team.name) .. "'S " .. WHAT .. " STORAGE IS FULL")
+	else
+		local amount = math.min(want, room)
+		Spring.ShareResources(teamID, what, amount)
+		note("GIVING " .. shareFmt(amount) .. " " .. WHAT .. " TO " .. string.upper(team.name), SHARE_COLORS[WHAT])
+	end
+end
+
 -- (units BAR kept: all of them in a game whose rules forbid giving units, BAR's disable_unit_sharing; some or all
 -- for its other gadgets: partly built units with "easytax", a teammate at their unit limit. It said "this game does
 -- not allow giving units" only when none went, for any reason, and nothing when some stayed, 2026-11-08)
@@ -2400,6 +2441,8 @@ function widget:Initialize()
 	WG.BarDroidPad = {
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
+		teammates = teammates, -- (the portrait dock's teammate picker)
+		give = giveTo,
 		-- the words said for a ping (bardroid_touch.lua; LB held + RB three times): a ping with them as its label where
 		-- the middle was then (Kailil, 2026-11-06: as BAR's own labelled ping); BAR's 127 bytes at most, whole letters
 		voicePing = function(text)
