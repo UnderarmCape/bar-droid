@@ -35,9 +35,13 @@ try {
     Start-Sleep 1
     & $adb shell "uinput $evemu"   # (the pad plays its script and goes)
     Start-Sleep 1
-    $scales = @(Log '\[lobbytouch\] scale' 9 | ForEach-Object { ($_ -split " ")[-1] }) -join " "
-    if ($scales -eq "100% 130% 100%") { "[lobbytouch] PASS a pad's Start: 100%, 130% and back" }
-    else { "[lobbytouch] FAIL a pad's Start: the scale went $scales" }
+    # (Start: under 115 % to 130 %, else to 100 %; sideways the lobby starts at 100 %, upright at 135 %: 100 130 100 or
+    # 135 100 130)
+    $seen = @(Log '\[lobbytouch\] scale' 9 | ForEach-Object { [int](($_ -split " ")[-1]).TrimEnd('%') })
+    $scales = ($seen | ForEach-Object { "$_%" }) -join " "
+    $want = @(); if ($seen.Count -gt 0) { $want = @($seen[0]); foreach ($i in 1, 2) { $want += $(if ($want[-1] -lt 115) { 130 } else { 100 }) } }
+    if ($seen.Count -eq 3 -and (($seen -join " ") -eq ($want -join " "))) { "[lobbytouch] PASS a pad's Start: $scales" }
+    else { "[lobbytouch] FAIL a pad's Start: the scale went $scales (wanted $(($want | ForEach-Object { "$_%" }) -join ' '))" }
     # (the D-pad: down, down, right, left; the pointer from control to control, Kailil 2026-11-06; the tests' lobby is
     # offline, its login dialog in front: down onto it, right and left between its buttons, nothing behind it)
     & $adb shell "uinput $dpad"

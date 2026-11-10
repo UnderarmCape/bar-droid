@@ -25,6 +25,7 @@ local fails = 0
 local window, scroll, rows, maps, clicked = nil, nil, {}, {}, {}
 local startScroll, dragScroll, clicksBefore, screenSize
 local settleFrom, settleSeconds, scaleLogged
+local scaleBase, scaleFirst = 1, 1.3 -- (the scale before Start, and after it)
 local SCALE_KEY = 302 -- Scroll Lock: what the pad's Start sends in the lobby (ControllerBridge)
 
 -- the next case runs after the widget's own check of the server's settings
@@ -252,9 +253,13 @@ cases = {
 	end,
 	function()
 		local b, s0 = barWindow(), WG.Chili.Screen0
+		-- (upright the bar stands just above the lobby's bottom buttons, sideways at the screen's bottom)
+		local L = WG.BarDroidLobbyTouch
+		local top = L and L.barTop and L.barTop()
 		check("the server bar follows the screen when the phone unfolds (bottom, centred)", b ~= nil
-			and b.y + b.height + 10 == s0.height and math.abs(b.x * 2 + b.width - s0.width) <= 1,
-			b and string.format("bar %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
+			and b.y + b.height + (top and 4 or 10) == (top or s0.height) and math.abs(b.x * 2 + b.width - s0.width) <= 1,
+			b and string.format("bar %d,%d %dx%d on %dx%d%s", b.x, b.y, b.width, b.height, s0.width, s0.height,
+				top and (", upright over the buttons at " .. top) or ""))
 		s0:Resize(screenSize[1], screenSize[2])
 	end,
 	function()
@@ -316,15 +321,19 @@ cases = {
 	function()
 		check("Anonymous Mode: a new warning, though the last was closed", warningWindow() ~= nil
 			and warningText():find("Touch and gamepad controls will not work", 1, true) ~= nil, warningText())
+		-- (Start: the scale under 115 % goes to 130 %, else to 100 %; sideways it starts at 100 %, upright at 135 %)
+		scaleBase = WG.uiScale
 		press(97)
-		check("any other key leaves the scale alone", math.abs(WG.uiScale - 1) < 0.001, tostring(WG.uiScale))
+		check("any other key leaves the scale alone", math.abs(WG.uiScale - scaleBase) < 0.001, tostring(WG.uiScale))
 		press(SCALE_KEY)
 		settle()
 	end,
 	function()
 		local b, s0 = warningWindow(), WG.Chili.Screen0
-		local all, odd = allScalesAre(1.3)
-		check("Start: 130%, on every screen size", math.abs(WG.uiScale - 1.3) < 0.001 and all, odd or tostring(WG.uiScale))
+		scaleFirst = scaleBase < 1.15 and 1.3 or 1
+		local all, odd = allScalesAre(scaleFirst)
+		check(string.format("Start: %d%% from %d%%, on every screen size", scaleFirst * 100 + 0.5, scaleBase * 100 + 0.5),
+			math.abs(WG.uiScale - scaleFirst) < 0.001 and all, odd or tostring(WG.uiScale))
 		check("the warning follows the scale (top, centred, on the screen)", b ~= nil and b.y >= 0
 			and b.x + b.width <= s0.width and math.abs(b.x * 2 + b.width - s0.width) <= 1,
 			b and string.format("warning %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
@@ -336,6 +345,11 @@ cases = {
 	-- speak to chat: the lobby's panel in the lobby, the game's own in a game (2026-11-08: "When in game, the voice chat
 	-- should only send messages to the game chat")
 	function()
+		-- (Start again, checked before the game below loads: back from a game the upright lobby puts its 135 % back)
+		local again = scaleFirst < 1.15 and 1.3 or 1
+		local all, odd = allScalesAre(again)
+		check(string.format("Start again: %d%%", again * 100 + 0.5), math.abs(WG.uiScale - again) < 0.001 and all,
+			odd or tostring(WG.uiScale))
 		appAct("act voice_on")
 		settle()
 	end,
@@ -374,8 +388,6 @@ cases = {
 			px and string.format("panel %dx%d, words %d wide: %s", pw, ph, tw, tostring(cap)))
 	end,
 	function()
-		local all, odd = allScalesAre(1)
-		check("Start again: 100%", math.abs(WG.uiScale - 1) < 0.001 and all, odd or tostring(WG.uiScale))
 		check("out of the server: no warning", warningWindow() == nil, warningText())
 		WG.LibLobby.lobby.modoptions = {}
 		log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED"))

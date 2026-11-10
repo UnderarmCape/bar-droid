@@ -1400,6 +1400,8 @@ end
 function widget:Initialize()
 	-- (tools/lobby-touch-test.ps1: the same input as a finger, without one)
 	WG.BarDroidLobbyTouch = {
+		upright = function() return upright.on end, -- (tools: the lobby test, upright or sideways)
+		barTop = function() return uprightBarTop and uprightBarTop() end, -- (upright: where the server bar stands on)
 		press = function(x, y) return widget:MousePress(x, y, 1) end,
 		move = function(x, y) return widget:MouseMove(x, y, 0, 0, 1) end,
 		release = function(x, y) return widget:MouseRelease(x, y, 1) end,

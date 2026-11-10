@@ -184,8 +184,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a new weak link each lookup: the real objects, UnlinkSafe, to compare parents and to remember a room.) Dev phone,
       upright, offline: the skirmish room's buttons and states whole under the teams, the map larger beside them,
       Start started the game. A server's room (online: the tests never log in) is the same columns; not seen here.
-      lobby-phone-test passes sideways; upright it fails on the scale and the server bar's place (it expects a
-      sideways lobby at 100 %; upright starts at 135 %): the test's, not a fault.
+      lobby-phone-test passes sideways; upright it failed on the scale and the server bar's place (it expected a
+      sideways lobby at 100 %; upright starts at 135 %): the test's, not a fault. Now it holds both ways: the server
+      bar where the widget stands it (upright just above the bottom buttons, `WG.BarDroidLobbyTouch.barTop()`), Start's
+      steps from the scale the lobby starts at (under 115 % to 130 %, else to 100 %: sideways 100 130 100, upright 135
+      100 130), "Start again" checked before the test's game loads (back from a game the upright lobby puts its 135 %
+      back). Dev phone: all pass sideways and upright.
 - [x] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
       subtle magnetic snap (pages, not lines). 3 x 2 a page (17 buttons: 3 pages), 60 high in the lobby's larger font;
       a sideways swipe moves them with the finger (past the ends a third as far), let go they settle on the nearest page,
