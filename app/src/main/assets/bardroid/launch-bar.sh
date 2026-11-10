@@ -459,6 +459,23 @@ if [ -f "$DEV_KEYS" ]; then
   cat "$DEV_ORIG" >> "$BAR/springsettings.cfg" 2>/dev/null
   rm -f "$DEV_KEYS" "$DEV_ORIG"
 fi
+# Upright (the app's "Play upright", BARDROID_PORTRAIT): BAR's loading screen tip off, as BAR wraps it for a wide
+# screen and upright it ran off both sides; the app shows one wrapped to the screen (GameActivity). The player's own
+# line is kept in .bardroid-tips-line and put back at a start that is not upright; their tips off: none from the app
+# either (.bardroid-no-tips).
+TIPS_LINE="$BAR/.bardroid-tips-line"
+if [ "${BARDROID_PORTRAIT:-0}" = 1 ]; then
+  if [ ! -f "$TIPS_LINE" ]; then
+    grep -E '^loadscreen_tips *=' "$BAR/springsettings.cfg" > "$TIPS_LINE" 2>/dev/null || : > "$TIPS_LINE"
+  fi
+  if grep -qE '= *0' "$TIPS_LINE"; then touch "$BAR/.bardroid-no-tips"; else rm -f "$BAR/.bardroid-no-tips"; fi
+  sed -i '/^loadscreen_tips *=/d' "$BAR/springsettings.cfg"
+  echo "loadscreen_tips = 0" >> "$BAR/springsettings.cfg"
+elif [ -f "$TIPS_LINE" ]; then
+  sed -i '/^loadscreen_tips *=/d' "$BAR/springsettings.cfg"
+  cat "$TIPS_LINE" >> "$BAR/springsettings.cfg"
+  rm -f "$TIPS_LINE" "$BAR/.bardroid-no-tips"
+fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
 if [ -f "$BAR/dev-springsettings.cfg" ]; then

@@ -347,6 +347,7 @@ public class GameActivity extends MainActivity {
         @Override public void run() {
             updateCatchup();
             updateFreeMemory();
+            updateLoadTip();
             updateRenderDrop();
             catchupHandler.postDelayed(this, 500);
         }
@@ -400,6 +401,49 @@ public class GameActivity extends MainActivity {
         v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) ->
                 view.setTranslationY(((View) view.getParent()).getHeight() / 6f));
         freeMemory = v;
+    }
+
+    // The loading screen's tip upright (Kailil, 2026-11-09: "the sentences that appear should fit inside of the vertical
+    // aspect ratio"): BAR wraps its own for a wide screen; upright launch-bar.sh turns it off (BAR's loadscreen_tips)
+    // and this shows one of BAR's tips (Installer.writeLoadTips: .bardroid-tips) wrapped to the screen, where BAR's was:
+    // above its loading bar. Not when the player turned BAR's tips off (.bardroid-no-tips, launch-bar.sh).
+    private android.widget.TextView loadTip;
+
+    private void updateLoadTip() {
+        View root = getWindow().getDecorView();
+        boolean upright = root.getHeight() > root.getWidth() * 1.05f;
+        boolean show = upright && GameService.loading() && !isInPictureInPictureMode()
+                && (touch == null || !touch.gameWidgetRunning())
+                && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
+        if (show && loadTip == null) {
+            java.io.File bar = new java.io.File(getFilesDir(), "bar");
+            String[] tips = null;
+            if (!new java.io.File(bar, ".bardroid-no-tips").exists()) {
+                try {
+                    tips = new String(java.nio.file.Files.readAllBytes(new java.io.File(bar, ".bardroid-tips").toPath()),
+                            java.nio.charset.StandardCharsets.UTF_8).split("\n");
+                } catch (java.io.IOException e) { tips = null; }
+            }
+            if (tips == null || tips.length == 0 || tips[0].isEmpty()) return;
+            android.widget.TextView v = new android.widget.TextView(this);
+            float dp = getResources().getDisplayMetrics().density;
+            v.setText(tips[new java.util.Random().nextInt(tips.length)].replace("\\n", "\n"));
+            v.setTextColor(0xFFFFFFFF);
+            v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 17);
+            v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            v.setShadowLayer(4 * dp, 0, dp, 0xE0000000);   // (on the picture, as BAR's: no box)
+            v.setGravity(android.view.Gravity.CENTER);
+            v.setPadding((int) (20 * dp), 0, (int) (20 * dp), 0);
+            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
+                    android.view.Gravity.BOTTOM);
+            lp.bottomMargin = (int) (root.getHeight() * 0.12f);   // (BAR's loading bar: 6.5 % up, 3.8 % tall)
+            addContentView(v, lp);
+            loadTip = v;
+        }
+        if (loadTip != null && (loadTip.getVisibility() == View.VISIBLE) != show) {
+            loadTip.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void updateFreeMemory() {

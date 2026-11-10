@@ -452,6 +452,44 @@ public final class Installer {
             try { writeFile(new File(p.bar, c[3]), md5 + "\n"); }
             catch (IOException e) { Log.e("install", c[3] + " not written: " + e); }
         }
+        writeLoadTips(files);
+    }
+
+    /**
+     * The loading screen's tips, for GameActivity to show upright (Kailil, 2026-11-09: "the sentences that appear should
+     * fit inside of the vertical aspect ratio"): BAR wraps its tip for a wide screen, and its loading screen comes only
+     * from the game's archive (a copy in the write folder is listed but not run, dev phone), so upright launch-bar.sh
+     * turns BAR's off and the app shows one wrapped to the screen. BAR's own: the keys its loading screen picks from
+     * (luaintro/addons/main.lua tipKeys), the English texts (language/en/tips.json), into .bardroid-tips one a line
+     * (its line breaks as \n); those with a key binding to fill in are left out.
+     */
+    private void writeLoadTips(Map<String, String> files) {
+        if (files == null) return;
+        try {
+            String main = poolText(files.get("luaintro/addons/main.lua"));
+            String json = poolText(files.get("language/en/tips.json"));
+            if (main == null || json == null) return;
+            int a = main.indexOf("local tipKeys = {");
+            int b = a < 0 ? -1 : main.indexOf('}', a);
+            if (b < 0) return;
+            org.json.JSONObject tips = new org.json.JSONObject(json).getJSONObject("tips").getJSONObject("loadscreen");
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\"([A-Za-z0-9_]+)\"").matcher(main.substring(a, b));
+            StringBuilder out = new StringBuilder();
+            while (m.find()) {
+                String t = tips.optString(m.group(1), "");
+                if (!t.isEmpty() && !t.contains("%{")) out.append(t.replace("\n", "\\n")).append('\n');
+            }
+            writeFile(new File(p.bar, ".bardroid-tips"), out.toString());
+        } catch (IOException | org.json.JSONException e) {
+            Log.e("install", "the loading screen's tips not read: " + e);
+        }
+    }
+
+    /** A file of BAR's pool by its md5, as text; null without one. */
+    private String poolText(String md5) throws IOException {
+        if (md5 == null || md5.length() < 3) return null;
+        File f = new File(p.bar, "pool/" + md5.substring(0, 2) + "/" + md5.substring(2) + ".gz");
+        try (InputStream in = new GZIPInputStream(new FileInputStream(f))) { return new String(readAll(in), StandardCharsets.UTF_8); }
     }
 
     /**

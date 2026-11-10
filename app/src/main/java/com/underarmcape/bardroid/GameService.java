@@ -254,6 +254,7 @@ public class GameService extends Service {
             env.put("GAMEPAD_GAME", "0");   // (launch-bar.sh: the v0.8.5 game is gone; its controller game branch never runs)
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
+            env.put("BARDROID_PORTRAIT", Prefs.portrait ? "1" : "0");   // (launch-bar.sh: BAR's loading tips off upright)
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : String.valueOf(Prefs.fpsCap));   // libbardroid_pace.so; 0 = none
             // (the explicit Present fence is for the phone's lfdevs Mesa on KGSL; the emulator's virgl keeps Mesa's own path)
             if (Prefs.EMULATOR_BUILD) env.put("BARDROID_PRESENT_FENCE", "0");
