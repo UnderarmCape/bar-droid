@@ -649,7 +649,8 @@ end
 -- And the portrait dock's INSERT (Kailil, 2026-11-10: "insert things in front of queue"): BAR's CommandInsert puts an
 -- order given while its key is down at the front of the queue (Space in BAR's keys, which also shows unit stats, picks
 -- idle units in a box and more): the app holds numpad*, which BAR leaves unbound, given the same action.
-local QUEUE_KEYS = { { "insert", "command_skip_current" }, { "numpad/", "command_cancel_last" },
+-- (Any+: QUEUE's Shift held, the dock's remove buttons still reach them)
+local QUEUE_KEYS = { { "Any+insert", "command_skip_current" }, { "Any+numpad/", "command_cancel_last" },
 	{ "Any+numpad*", "commandinsert prepend_between" } }
 local keysLookedAt = nil
 local function bindQueueKeys()
@@ -685,6 +686,14 @@ local function queueRemove(last)
 	else
 		note("NO ORDERS QUEUED")
 	end
+end
+
+-- The same keys asked of the app for the portrait dock's remove buttons (bardroid_pad.txt "key <n> first|last": RtsTouch
+-- presses Insert or numpad/ when n grows)
+local padKeys, padKeyName = 0, "first"
+local function queueKey(last)
+	padKeys, padKeyName = padKeys + 1, last and "last" or "first"
+	queueRemove(last)
 end
 
 local function pregameBuild()
@@ -2350,7 +2359,7 @@ function widget:Update(dt)
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\ninsert " .. (queue.insert and 1 or 0) .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
+		.. "\ninsert " .. (queue.insert and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
 		.. "\nmodal " .. (modal or "none") .. "\n"
 	if padClickAt then -- (the last click's point: the app clicks there, not in the middle)
 		text = text .. string.format("clickat %.4f %.4f\n", padClickAt[1], padClickAt[2])
@@ -2487,6 +2496,7 @@ function widget:Initialize()
 		queueState = function() -- (the portrait dock draws QUEUE and INSERT: on or off)
 			return queue.on, queue.insert
 		end,
+		queueKey = queueKey, -- (the portrait dock's remove buttons: the next order off, or the last)
 		-- the words said for a ping (bardroid_touch.lua; LB held + RB three times): a ping with them as its label where
 		-- the middle was then (Kailil, 2026-11-06: as BAR's own labelled ping); BAR's 127 bytes at most, whole letters
 		voicePing = function(text)

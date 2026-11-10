@@ -145,6 +145,7 @@ local cycleAt = {} -- COMMANDER, IDLE BUILDER: the last one each picked (a tap a
 local sharing = nil -- "units", "metal" or "energy": the teammate picker
 local shareFraction = 0.25 -- of what this team holds (metal, energy)
 local resPanel = nil -- "metal" or "energy": its panel
+local unqShown = false -- the groups strip's remove-order buttons: a factory picked, or units with orders
 local slide = nil -- a slider being dragged: { item, rect }
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
@@ -817,6 +818,17 @@ function refreshNow()
 		showSel, showGroups = #sel > 0, #sel > 0 or anyGroup
 		layout()
 	end
+	local unq = #sel > 0 and selectedFactory()
+	for i = 1, unq and 0 or #sel do
+		if (Spring.GetUnitCommandCount(sel[i]) or 0) > 0 then
+			unq = true
+			break
+		end
+	end
+	if (unq == true) ~= unqShown then
+		unqShown = unq == true
+		markDirty()
+	end
 	local key = #sel .. ":" .. tostring(sel[1])
 	local newPick = key ~= lastSelection -- (another pick: both halves from their first rows, not the last unit's place)
 	if newPick then
@@ -976,6 +988,34 @@ end
 
 local function selectUnits(units, append)
 	Spring.SelectUnitArray(units or {}, append or false)
+end
+
+-- The first or the last order taken off (Kailil, 2026-11-10: "a way to remove orders at the front or end of a queue"):
+-- a factory's build queue through BAR's own build button right-clicked (the engine takes one of that type off the
+-- back; with Alt the first of it), the last or the first item's type; units' orders through BAR's Command Queue
+-- Manager, whose keys the app presses (bardroid_pad.lua queueKey), as the pad's L3 and R3 do
+local function removeOrder(last)
+	for _, u in ipairs(spGetSelectedUnits() or {}) do
+		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if ud and ud.isFactory then
+			local items = {}
+			for _, c in ipairs(Spring.GetFactoryCommands(u, -1) or {}) do
+				if c.id < 0 then
+					items[#items + 1] = c.id
+				end
+			end
+			local id = last and items[#items] or items[1]
+			local index = id and spGetCmdDescIndex(id)
+			if index then
+				spSetActiveCommand(index, 3, false, true, not last, false, false, false)
+			end
+			return
+		end
+	end
+	local P = WG.BarDroidPad
+	if P and P.queueKey then
+		P.queueKey(last)
+	end
 end
 
 -- the units the filter keeps (an "all" keeps them all)
@@ -1622,6 +1662,20 @@ local function drawGroups()
 	L.groupRects = {}
 	local r = L.groups
 	panel(r)
+	-- the remove-order buttons at the strip's right end (unqShown): the first or the last order of the units picked, or
+	-- of a factory's build queue (removeOrder)
+	local x1 = r[3]
+	if unqShown then
+		local h = r[4] - r[2]
+		local bw = floor(h * 1.7)
+		for i, which in ipairs({ "first", "last" }) do
+			local b = { r[3] - (3 - i) * bw + 3, r[2] + 3, r[3] - (2 - i) * bw - 3, r[4] - 3, unq = which }
+			L.groupRects[#L.groupRects + 1] = b
+			button(b, { 0.3, 0.09, 0.08, 0.9 }, { 0.46, 0.13, 0.11, 0.9 })
+			textIn("\195\151 " .. which:upper(), b[1], b[2], b[3], b[4], h * 0.26, "\255\255\228\218", bold)
+		end
+		x1 = r[3] - 2 * bw
+	end
 	local groups = Spring.GetGroupList() or {}
 	local list = {}
 	for g, c in pairs(groups) do
@@ -1654,10 +1708,10 @@ local function drawGroups()
 		end
 	end
 	if #list == 0 and not free then
-		textIn("Groups: pick units, then + NEW here", r[1], r[2], r[3], r[4], h * 0.24, "\255\140\140\140")
+		textIn("Groups: pick units, then + NEW here", r[1], r[2], x1, r[4], h * 0.24, "\255\140\140\140")
 		return
 	end
-	local w = min(h, floor((r[3] - r[1]) / max(1, #list + (free and 1 or 0))))
+	local w = min(h, floor((x1 - r[1]) / max(1, #list + (free and 1 or 0))))
 	if free then
 		local x0 = r[1] + #list * w
 		local nr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, new = free }
@@ -2184,7 +2238,9 @@ function widget:MouseRelease(x, _, btn)
 		local picked = #(spGetSelectedUnits() or {}) > 0
 		for _, gr in ipairs(L.groupRects) do
 			if inRect(p.x, p.y, gr) then
-				if gr.new then
+				if gr.unq then
+					removeOrder(gr.unq == "last")
+				elseif gr.new then
 					Spring.SendCommands("group set " .. gr.new)
 					Spring.Echo("[bardroid-portrait] group " .. gr.new .. " made") -- (tools)
 				elseif btn == 3 and picked then

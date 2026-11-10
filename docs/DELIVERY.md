@@ -33,8 +33,11 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 ## Backlog (in order)
 
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
-Online: orders the app gives by itself (`GiveOrder`) work only where the host allows unit control widgets; where it
-can, the app picks BAR's command and clicks instead (as the D-gun by touch), which works everywhere.
+Automation is Kailil's and BAR's developers' decision (Kailil, 2026-11-10: touch players must compete fairly with
+keyboard and mouse, "The devs theories consist of automating micro movements ... the decision on balance is up to us"):
+the app's widgets give the orders these need (`GiveOrder`), running as game widgets as the unit control restrictions
+were already set aside for (`BARDROID_GAME_WIDGETS`, the engine branch). Where BAR's own command and a click do the
+same, that stays the simpler way.
 - [x] **The dock's menu times out after 1.25 s** ("make time out for the mouse controls on the bottom half 1.25
       seconds instead"; it was 7 s untouched, `MENU_SECONDS`). Dev phone: open 0.7 s after a tap, the camera pad
       again by 2 s, three taps.
@@ -46,8 +49,14 @@ can, the app picks BAR's command and clicks instead (as the D-gun by touch), whi
       Dev phone, upright: QUEUE, MOVE, two taps (A, B queued), INSERT, MOVE, a tap: the queue C, A, B. A building
       placed with PLACE while INSERT is on goes where it fits in the queue, not first (PLACE clicks with Shift: BAR's
       Space+Shift).
-- [ ] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
+- [x] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
       assignments are", on the right, always there while a unit with orders queued, or a factory, is picked.
+      "× FIRST" and "× LAST" at the groups strip's right end. Units: BAR's Command Queue Manager (its actions bound
+      to Any+insert and Any+numpad/, so QUEUE's Shift does not stop them); the dock asks the app for the key
+      (bardroid_pad.txt "key <n> first|last", RtsTouch presses it). A factory: BAR's build button right-clicked for
+      the last item's type (the engine takes one off the back), with Alt for the first item's (off the front).
+      Dev phone, upright: the commander's three moves (one walked off) to one to none; a Bot Lab's Pawn, Rocko,
+      Pawn to Pawn, Rocko to Rocko.
 - [ ] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message breaks off
       at "Im thinking the l": ask what came next).
 - [ ] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
@@ -67,6 +76,23 @@ can, the app picks BAR's command and clicks instead (as the D-gun by touch), whi
 - [ ] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
       an area mex order over the mex spots within the commander's weapon range, sent at once without confirmation
       (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
+
+Added 2026-11-10 ~05:00 (with screenshots):
+- [ ] **LOCAL UNITS / ALL UNITS pick ALL at once**: the first tap shows the list on ALL with those units selected.
+- [ ] **The dock's menu times out after 2 s** (not 1.25), **and a drag on empty dock space pans the camera** in the
+      menu too.
+- [ ] **The game's start popup fits upright** (a scenario's mission briefing ran off the left and over the dock),
+      **and the game-end recap and its graph**.
+- [ ] **The battle room upright: the selectors in a row of their own** (team size, number of teams: the
+      Autobalance / BalanceMode / Preset row is crushed, its labels over its values; the space under the team lists
+      stands empty).
+- [ ] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
+      subtle magnetic snap (pages, not lines).
+- [ ] **The BAR splash of the first load whole upright**: zoomed out to show all of "BAR"; the picture is not tall
+      enough, so its edges feathered into the same grey as the background, seamless.
+- [ ] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
+      a group button pressed puts that unit type in the group, and every one of that type built later; holding a
+      group's picture takes the assignment off.
 
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon

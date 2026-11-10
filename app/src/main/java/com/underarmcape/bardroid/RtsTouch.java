@@ -1602,12 +1602,17 @@ final class RtsTouch {
                 ? readSmall(padFile) : null;
         String focus = "none", picked = "none", mode = "none";
         boolean before = false, queue = false, insert = false, riding = false;
+        int keys = -1;
+        String keyName = "";
         float[] at = null;
         if (text != null) {
             for (String line : text.split("\n")) {
                 String[] f = line.trim().split(" ");
                 if (f.length == 3 && f[0].equals("clickat")) {
                     try { at = new float[] {Float.parseFloat(f[1]), Float.parseFloat(f[2])}; } catch (NumberFormatException e) { at = null; }
+                }
+                if (f.length == 3 && f[0].equals("key")) {
+                    try { keys = Integer.parseInt(f[1]); keyName = f[2]; } catch (NumberFormatException e) { keys = -1; }
                 }
                 if (f.length != 2) continue;
                 if (f[0].equals("modal")) mode = f[1];
@@ -1640,7 +1645,21 @@ final class RtsTouch {
             firstPerson = riding;
             ui.post(() -> showCursor(cursorWanted));
         }
+        // a key the widget asks for ("key <n> first|last", bardroid_pad.lua queueKey: the portrait dock's remove buttons):
+        // the one BAR's Command Queue Manager has bound for the next order off, or the last; once per n (a new game's
+        // count starts again from 0: taken as it is)
+        if (keys >= 0) {
+            synchronized (keyLock) {
+                if (keysSeen >= 0 && keys > keysSeen) {
+                    final int code = keyName.equals("last") ? KeyEvent.KEYCODE_NUMPAD_DIVIDE : KeyEvent.KEYCODE_INSERT;
+                    ui.post(() -> { view().sendKeyEvent(0, code, true); view().sendKeyEvent(0, code, false); });
+                }
+                keysSeen = keys;
+            }
+        }
     }
+    private final Object keyLock = new Object();
+    private int keysSeen = -1;   // (keyLock)
     private volatile boolean firstPerson;
     /** The gamepad rides a unit (bardroid_padfp.lua). Any thread. */
     boolean firstPerson() { padState(); return firstPerson; }
