@@ -1693,6 +1693,26 @@ local function checkActive()
 end
 
 local refreshAt = 0
+-- The order a drag draws, its cursor through the drag (Kailil, 2026-11-09: for Fight and Patrol "the order is placed
+-- correctly, but the cursor ... stays green"): BAR's formation widget unpicks the order as a one-unit path starts
+-- (cmd_customformations2: SetActiveCommand(0), the order kept as its own), so the pointer showed Move's green cursor
+-- over a Fight or Patrol path. The order picked when the right button went down: its cursor until it comes up.
+local armedCursor, drawCursor = nil, nil
+local function drawingCursor()
+	local _, _, _, _, right = Spring.GetMouseState()
+	if right then
+		drawCursor = drawCursor or armedCursor
+		if drawCursor then
+			Spring.SetMouseCursor(drawCursor)
+		end
+		return
+	end
+	drawCursor = nil
+	local index, id = spGetActiveCommand()
+	local desc = id and DRAW_CMDS[id] and index and Spring.GetActiveCmdDesc(index)
+	armedCursor = desc and desc.cursor or nil
+end
+
 function widget:Update(dt)
 	checkActive()
 	dockLines()
@@ -1700,6 +1720,7 @@ function widget:Update(dt)
 	if not active then
 		return
 	end
+	drawingCursor()
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then
 			markDirty() -- (rows moving: the texture drawn again each frame until they settle)
@@ -1838,6 +1859,9 @@ end
 function widget:DrawScreen()
 	if not active then
 		return
+	end
+	if drawCursor then -- (again here: after the engine has picked its own for the frame)
+		Spring.SetMouseCursor(drawCursor)
 	end
 	font = WG.fonts and WG.fonts.getFont() or font
 	bold = WG.fonts and WG.fonts.getFont(2) or font
