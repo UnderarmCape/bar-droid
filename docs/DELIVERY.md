@@ -297,6 +297,35 @@ Added 2026-11-10 ~05:00 (with screenshots):
       own group where that widget is off), a number some auto group holds is not offered as new, a long press on a
       group's picture takes its types out of the auto groups and its units out of the group. Dev phone: one Pawn of
       six picked, + NEW: group 1 of 6, Pawns in auto group 1; two Pawns more: 8; held: group 1 empty, no auto group.
+- [x] **The dock's D-gun mode, his notes** (2026-11-10, his screenshot of it): "Have the camera follow the commander
+      and keep the commander in the center of the screen"; "unit group selection and first and last row be hidden so
+      the ui is shorter. And hide the commander selected bar"; "an dgun full auto mode by holding fire button then
+      swiping to the right. It should have an animation associated with it and engages it"; "allow the empty Gray space
+      to let me zoom up and down. Or rotate. Not panning". The selection row and the groups strip go while it lasts (the
+      dock 283 X pixels shorter on the dev phone); `DG.follow` keeps the commander in the middle of the game above the
+      dock; a finger on none of its parts zooms (up or down) or turns (sideways), decided by its first slide as the
+      camera pad's; FIRE held shows a track to its right (chevrons, a fill from red to gold, AUTO at its end), swiped to
+      the end it starts full auto (`bardroid_pad.lua` dgunAuto: the D-gun loaded and the energy there, the best enemy
+      in range, a commander first, led by its speed, never through a friend; the button striped gold with AUTO, a flash,
+      the world's ring pulsing with a sweep, brackets on the target); FIRE again ends it. FIRE now shoots as it lets go
+      (one that came down first spent the shot's 500 energy before the swipe). Dev phone, upright: all of it, three
+      enemy bots given by cheat, two D-gunned or shot, our Pawn in the path of the third spared.
+- [x] **The lobby upright: its menu as pages** (2026-11-10, his screenshot of the lobby's 2 x 3 menu): "we need a
+      curser selection and the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat, friends.
+      Next page. Parties, load game, downloads, account, and you sort the rest". The pages and the swipe were there,
+      their dots under Chobby's version and caching lines at the screen's foot. Now the grid takes his order by the
+      buttons' words (Login in Account's place offline), then Replays and Links, the rest as Chobby has them, Exit last;
+      the strip under it is taller with arrows at its ends (a tap: the next page that way, a dot: its page), the page's
+      dot gold, Chobby's caching words in it while they change and its version line off upright. Dev phone, offline
+      lobby: the 17 buttons in that order over 3 pages, the arrows 1 to 3 and back; lobby-phone-test passes. ("curser
+      selection" read as a carousel's page selector; to ask him if he meant the pad's pointer.)
+- [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
+      generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
+      the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of
+      its width across the screen; dev phone: the three whole on the load screen); above and below it for now its own
+      sky and ground mirrored and softened. Left: the generative fill itself, a fill (inpainting) model on the laptop
+      (AI Studio's models were removed after 7 idle days; MOSS-Image draws from words, it does not fill), run while
+      the GPU is free (Monster Hunter Wilds had it at 95 % that afternoon); a download needs his yes.
 
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon
