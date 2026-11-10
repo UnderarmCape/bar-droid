@@ -405,9 +405,46 @@ public class LauncherActivity extends AppCompatActivity {
         return null;
     }
 
+    /**
+     * The maps installed, by the names BAR lists them under ("Starwatcher 1.0"): the engine's archive cache
+     * (cache/ArchiveCache*.lua, each archive's archivedata; a map's modtype is 3), sorted. Empty before a first game.
+     */
+    static java.util.List<String> installedMaps(File bar) {
+        java.util.TreeSet<String> out = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        File[] caches = new File(bar, "cache").listFiles((d, n) -> n.startsWith("ArchiveCache") && n.endsWith(".lua"));
+        if (caches == null || caches.length == 0) return new java.util.ArrayList<>(out);
+        java.util.Arrays.sort(caches, (a, b) -> Long.compare(b.lastModified(), a.lastModified()));   // (the newest)
+        String text;
+        try {
+            text = new String(java.nio.file.Files.readAllBytes(caches[0].toPath()), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (java.io.IOException | OutOfMemoryError e) {
+            return new java.util.ArrayList<>(out);
+        }
+        // (each archive's data, to the next one's: its own fields one tab deeper than "archivedata", nested tables such
+        // as a dependency list deeper still)
+        String[] parts = text.split("archivedata = \\{");
+        java.util.regex.Pattern lead = java.util.regex.Pattern.compile("(\\t+)archivedata = \\{");
+        for (int i = 1; i < parts.length; i++) {
+            java.util.regex.Matcher t = lead.matcher(parts[i - 1].substring(Math.max(0, parts[i - 1].lastIndexOf('\n'))) + "archivedata = {");
+            String tabs = (t.find() ? t.group(1) : "\t\t\t") + "\t";
+            java.util.regex.Matcher type = java.util.regex.Pattern.compile("\\n" + tabs + "modtype = (\\d+),").matcher(parts[i]);
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\n" + tabs + "name = \"([^\"]+)\",").matcher(parts[i]);
+            if (type.find() && "3".equals(type.group(1)) && m.find()) out.add(m.group(1));
+        }
+        return new java.util.ArrayList<>(out);
+    }
+
     private void loadSettingsIntoUi() {
         ((EditText) findViewById(R.id.edWorkers)).setText(String.valueOf(Prefs.workerThreads));
-        ((EditText) findViewById(R.id.edMap)).setText(Prefs.mapName);
+        android.widget.AutoCompleteTextView mapField = findViewById(R.id.edMap);
+        mapField.setText(Prefs.mapName);
+        // (a tap drops down every map installed, typing narrows them; any other name still goes, and is downloaded)
+        android.widget.ArrayAdapter<String> maps = new android.widget.ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, installedMaps(new Paths(this).bar));
+        mapField.setAdapter(maps);
+        Runnable all = () -> maps.getFilter().filter(null, n -> { if (n > 0 && mapField.isShown()) mapField.showDropDown(); });
+        mapField.setOnClickListener(v -> all.run());
+        mapField.setOnFocusChangeListener((v, focused) -> { if (focused) all.run(); });
         ((EditText) findViewById(R.id.edMesaUrl)).setText(Prefs.mesaUrl);
         CheckBox alt = findViewById(R.id.cbZink);
         alt.setChecked("zink".equals(Prefs.mesaDriver) || "llvmpipe".equals(Prefs.mesaDriver));

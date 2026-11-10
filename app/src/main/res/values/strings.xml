@@ -40,7 +40,7 @@
     <string name="settings_graphics">Graphics</string>
     <string name="settings_advanced">Advanced</string>
     <string name="lbl_workers">Worker threads\nThe engine\'s helper threads for the simulation and drawing (BAR\'s WorkerThreadCount)</string>
-    <string name="lbl_map">Map for Play vs AI\nIts name as BAR lists it, with the version</string>
+    <string name="lbl_map">Map for Play vs AI\nTap for the maps installed, or type any map\'s name as BAR lists it, with the version (it is downloaded)</string>
     <string name="lbl_mesa_url">Mesa for Android tarball URL\nThe debian_trixie_arm64 build the container installs</string>
     <string name="cb_zink">Use Turnip + Zink instead of Freedreno (kgsl)\nOpenGL through Mesa\'s Vulkan driver instead of its own OpenGL one; for comparison</string>
     <string name="cb_llvmpipe">Render on the CPU (llvmpipe) instead of the GPU (virgl)\nSlow, for comparison</string>

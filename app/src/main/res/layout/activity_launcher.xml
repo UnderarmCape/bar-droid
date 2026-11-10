@@ -104,7 +104,8 @@
 
             <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
             <!-- (14sp: the settings' size; the field's own 18sp stood out over every setting) -->
-            <EditText android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" />
+            <!-- (a text field that drops down the maps installed: LauncherActivity.installedMaps) -->
+            <AutoCompleteTextView android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" android:completionThreshold="1" />
 
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
