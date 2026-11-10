@@ -109,8 +109,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [ ] **The battle room upright: the selectors in a row of their own** (team size, number of teams: the
       Autobalance / BalanceMode / Preset row is crushed, its labels over its values; the space under the team lists
       stands empty).
-- [ ] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
-      subtle magnetic snap (pages, not lines).
+- [x] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
+      subtle magnetic snap (pages, not lines). 3 x 2 a page (17 buttons: 3 pages), 60 high in the lobby's larger font;
+      a sideways swipe moves them with the finger (past the ends a third as far), let go they settle on the nearest page,
+      a flick on the next, in 0.28 s with a small overshoot; dots under them light as the pages pass. A tap is the
+      button's click. (A strip three screens wide holding them was not drawn by Chili: each button moves instead.) Dev
+      phone, upright, offline lobby: page 1 to 2 by a flick, a short drag back stayed on 2, Settings tapped there opened
+      Settings, a flick to page 3 (Exit last); lobby-phone-test all pass.
 - [ ] **The BAR splash of the first load whole upright**: zoomed out to show all of "BAR"; the picture is not tall
       enough, so its edges feathered into the same grey as the background, seamless.
 - [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and

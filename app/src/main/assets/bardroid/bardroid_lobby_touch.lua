@@ -337,8 +337,25 @@ end
 local UPRIGHT = 1.05
 local SCALE_UPRIGHT = 1.35
 local gameLoaded = false -- a game runs beside the lobby (ActivateGame / ActivateMenu, below): no grid then
-local GRID_COLS, GRID_ROW_H, GRID_GAP = 6, 46, 4
-local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil }
+-- The grid in pages (Kailil, 2026-11-10: "make the buttons larger and allow scrolling ... the magnetic snapping type of
+-- scrolling and it scrolls in pages. Not line by one ... a subtle snap animation to each swipe"): PAGE_COLS x PAGE_ROWS
+-- larger buttons a page, the pages side by side in a strip a sideways swipe moves with the finger; let go it settles on
+-- the nearest page (a flick: the next one) with a small overshoot; dots under it say which page
+local PAGE_COLS, PAGE_ROWS, GRID_ROW_H, GRID_GAP, GRID_DOTS_H = 3, 2, 60, 4, 12
+local PAGE_SETTLE, PAGE_OVERSHOOT, PAGE_FLICK = 0.28, 0.9, 600 -- seconds; easeOutBack's; Chili pixels a second
+local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
+	stripX = 0, anim = nil }
+
+-- The pages' strip moved: each button to its place on its page plus x (a strip of its own, three screens wide, was not
+-- drawn by Chili: its buttons stood in the grid as before)
+local function stripTo(x)
+	upright.stripX = x
+	for _, m in ipairs(upright.mirror) do
+		if m.base and not m.mine.disposed then
+			m.mine:SetPos(math.floor(m.base + x + 0.5))
+		end
+	end
+end
 
 local function chobbyObject(name)
 	return screen0 and screen0.GetObjectByName and screen0:GetObjectByName(name)
@@ -429,37 +446,105 @@ local function uprightGrid()
 		return
 	end
 	local sw, sh = screen0.width, screen0.height
-	local cols = math.min(GRID_COLS, #found)
-	local rows = math.ceil(#found / cols)
-	local h = rows * GRID_ROW_H + (rows + 1) * GRID_GAP
+	local perPage = PAGE_COLS * PAGE_ROWS
+	local pages = math.ceil(#found / perPage)
+	local rows = math.min(PAGE_ROWS, math.ceil(#found / PAGE_COLS))
+	local dots = pages > 1 and GRID_DOTS_H or 0
+	local h = rows * GRID_ROW_H + (rows + 1) * GRID_GAP + dots
 	if upright.grid then
 		upright.grid:Dispose()
 	end
+	upright.pages = pages
+	upright.page = math.min(upright.page, pages - 1)
+	upright.anim = nil
 	upright.grid = Chili.Window:New({
 		name = "bardroidLobbyGrid",
 		parent = screen0,
 		x = 0, y = sh - h, width = sw, height = h,
 		resizable = false, draggable = false,
-		padding = { GRID_GAP, GRID_GAP, GRID_GAP, GRID_GAP },
+		padding = { 0, GRID_GAP, 0, GRID_GAP },
 	})
-	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(2)
+	if pages > 1 then -- (the page dots, under the buttons: the one shown lit)
+		Chili.Control:New({
+			parent = upright.grid,
+			x = 0, bottom = 0, width = "100%", height = dots,
+			padding = { 0, 0, 0, 0 },
+			drawcontrolv2 = true,
+			DrawControl = function(obj)
+				local s, gap = 6, 10
+				local x0 = (obj.width - (upright.pages * s + (upright.pages - 1) * gap)) / 2
+				local at = -upright.stripX / math.max(1, screen0.width)
+				gl.Texture(false)
+				for p = 0, upright.pages - 1 do
+					local lit = math.max(0, 1 - math.abs(at - p)) -- (lit as the strip passes it)
+					gl.Color(1, 1, 1, 0.3 + 0.6 * lit)
+					local x = x0 + p * (s + gap)
+					gl.Rect(x, (obj.height - s) / 2, x + s, (obj.height + s) / 2)
+				end
+				gl.Color(1, 1, 1, 1)
+			end,
+		})
+	end
+	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(3)
 	upright.mirror = {}
-	local w = (sw - 2 * GRID_GAP - (cols - 1) * GRID_GAP) / cols
+	upright.stripX = -upright.page * sw
+	local w = (sw - (PAGE_COLS + 1) * GRID_GAP) / PAGE_COLS
 	for i, f in ipairs(found) do
-		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+		local page, k = math.floor((i - 1) / perPage), (i - 1) % perPage
+		local col, row = k % PAGE_COLS, math.floor(k / PAGE_COLS)
 		local target = f.button
+		local base = math.floor(page * sw + GRID_GAP + col * (w + GRID_GAP))
 		local mine = Chili.Button:New({
 			parent = upright.grid,
-			x = math.floor(col * (w + GRID_GAP)), y = row * (GRID_ROW_H + GRID_GAP),
+			x = base + upright.stripX, y = row * (GRID_ROW_H + GRID_GAP),
 			width = math.floor(w), height = GRID_ROW_H,
 			caption = target.caption,
 			classname = target.classname == "negative_button" and "negative_button" or nil,
 			objectOverrideFont = font,
 			OnClick = { function() target:CallListeners(target.OnClick) end },
 		})
-		upright.mirror[#upright.mirror + 1] = { button = target, mine = mine, top = f.top }
+		upright.mirror[#upright.mirror + 1] = { button = target, mine = mine, top = f.top, base = base }
 	end
 	upright.grid:BringToFront()
+	Spring.Echo(string.format("[bardroid-lobby] grid: %d buttons, %d a page, %d pages", #found, perPage, pages)) -- (tools)
+end
+
+-- The strip settled on a page (a short ease with a small overshoot, uprightAnimate)
+local function uprightSettle(page)
+	if not upright.grid then
+		return
+	end
+	upright.page = math.max(0, math.min(upright.pages - 1, page))
+	upright.anim = { from = upright.stripX, to = -upright.page * screen0.width, t = 0 }
+	Spring.Echo("[bardroid-lobby] grid page " .. (upright.page + 1)) -- (tools)
+end
+
+local function uprightAnimate(dt)
+	local a = upright.anim
+	if not (a and upright.grid) or upright.grid.disposed then
+		upright.anim = nil
+		return
+	end
+	a.t = math.min(1, a.t + dt / PAGE_SETTLE)
+	local t = a.t - 1
+	local e = 1 + (PAGE_OVERSHOOT + 1) * t * t * t + PAGE_OVERSHOOT * t * t -- (easeOutBack)
+	stripTo(a.from + (a.to - a.from) * e)
+	if a.t >= 1 then
+		upright.anim = nil
+	end
+end
+
+-- is the point (Chili's) on the grid
+local function onGrid(hit)
+	local g = real(upright.grid)
+	local obj = hit
+	while obj and g do
+		if real(obj) == g then
+			return true
+		end
+		obj = obj.parent
+	end
+	return false
 end
 
 -- the grid's buttons as Chobby's are now: their words, and the colours that light the menu picked
@@ -493,6 +578,7 @@ local function uprightSet(on)
 		upright.grid:Dispose()
 		upright.grid = nil
 	end
+	upright.anim = nil
 	for _, m in ipairs(upright.mirror) do
 		if m.button.visible == false then
 			m.button:SetVisibility(true)
@@ -724,6 +810,13 @@ function widget:MousePress(x, y, button)
 	if popupButton and battle ~= popupButton then
 		closePopup() -- a tap elsewhere: the details go
 	end
+	if hit and upright.on and upright.grid and onGrid(hit) then -- (the bottom buttons: a sideways swipe pages, a tap
+		-- clicks where it is)
+		press = { grid = true, x = x, y = y, start = upright.stripX, moved = false, lastX = x, lastT = Spring.GetTimer(),
+			vel = 0 }
+		upright.anim = nil
+		return true
+	end
 	if not (panel or battle) then
 		return false
 	end
@@ -732,10 +825,32 @@ function widget:MousePress(x, y, button)
 	return true
 end
 
-function widget:MouseMove(_, y)
+function widget:MouseMove(x, y)
 	local p = press
 	if not p then
 		return false
+	end
+	if p.grid then -- the bottom buttons' strip with the finger (past its ends a third as far: it gives, then settles)
+		if not p.moved and math.abs(x - p.x) > DRAG_PX then
+			p.moved = true
+		end
+		if p.moved and upright.grid then
+			local s = uiScale()
+			local nx, minX = p.start + (x - p.x) / s, -(upright.pages - 1) * screen0.width
+			if nx > 0 then
+				nx = nx / 3
+			elseif nx < minX then
+				nx = minX + (nx - minX) / 3
+			end
+			stripTo(nx)
+			local now = Spring.GetTimer()
+			local dt = Spring.DiffTimers(now, p.lastT)
+			if dt > 0.001 then
+				p.vel = p.vel * 0.6 + (x - p.lastX) / s / dt * 0.4
+				p.lastX, p.lastT = x, now
+			end
+		end
+		return true
 	end
 	if not p.moved and p.panel and math.abs(y - p.y) > DRAG_PX then
 		p.moved = true
@@ -760,6 +875,18 @@ function widget:MouseRelease(x, y)
 		return false
 	end
 	hush = { x = x, y = y } -- (after a drag too: a replay's teams came up where the finger lifted)
+	if p.grid then -- a swipe settles on the nearest page (a flick: the next one that way); a tap is the button's click
+		if p.moved and upright.grid then
+			local page = math.floor(-upright.stripX / math.max(1, screen0.width) + 0.5)
+			if math.abs(p.vel) > PAGE_FLICK and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
+				page = upright.page + (p.vel < 0 and 1 or -1)
+			end
+			uprightSettle(page)
+		elseif not p.moved then
+			click(x, y)
+		end
+		return true
+	end
 	if p.moved then
 		if math.abs(p.vel) > FLING_MIN and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
 			fling = { panel = p.panel, v = p.vel }
@@ -1231,6 +1358,9 @@ function widget:Update() -- (the lobby's Update has no frame time)
 		updateWarning()
 	end
 	uprightUpdate(now)
+	if upright.anim then
+		uprightAnimate(dt)
+	end
 	appUpdate()
 end
 
