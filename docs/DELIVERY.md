@@ -204,6 +204,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (Spring.GetFactoryCommands): +20 queued 100 (it sent Shift and Ctrl, BAR's x100; Shift is 5, Ctrl 20); now Ctrl
       alone: +20 queues 20. CLEAR (right click with both: 100 off) empties it, -1 takes one. Dev phone, upright, a Bot
       Lab with cheats: 20 queued, CLEAR to none.
+- [x] **The home grid's buttons probed** (2026-11-10, dev phone, upright; a probe of the selection and the camera, 7
+      Pawns of which 4 busy, 2 construction bots 2000 elmos off of which 1 busy, the commander): LOCAL UNITS and ALL
+      UNITS pick the 7 Pawns (by design the combat units by type; the list stays until DONE, its ALL counting what
+      can be picked), IDLE UNITS opens its list unpicked (only LOCAL and ALL pick at once), IDLE BUILDER goes round
+      the idle builders (the commander, the far bot with the camera on it, the other bot once its move was done),
+      COMMANDER picks it with the camera on it, BASE takes the camera to the start spot. All as meant.
 - [x] **Spectating upright** (2026-11-10): fp-save-test passes upright and sideways; a replay upright (bench mode's
       `.bardroid-bench-replay`, a Starwatcher game recorded on the dev phone): no dock (a spectator has none), BAR's
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
