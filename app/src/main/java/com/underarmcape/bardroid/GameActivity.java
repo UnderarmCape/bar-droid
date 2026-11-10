@@ -415,10 +415,28 @@ public class GameActivity extends MainActivity {
         v.setVisibility(View.GONE);
         addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.WRAP_CONTENT,
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER));
-        // (a sixth of the screen below its middle: under the engine's logo, above the loading screen's tips)
-        v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) ->
-                view.setTranslationY(((View) view.getParent()).getHeight() / 6f));
+        v.addOnLayoutChangeListener((view, l, t, r, b, ol, ot, or, ob) -> placeFreeMemory());
         freeMemory = v;
+    }
+
+    /**
+     * Sideways a sixth of the screen below its middle: under the engine's logo, above the loading screen's tips.
+     * Upright at the top, under the low memory line where it shows (what the button is for): in the middle it lay over
+     * the load picture's commander (dev phone, 2026-11-10).
+     */
+    private void placeFreeMemory() {
+        View v = freeMemory;
+        View p = v == null ? null : (View) v.getParent();
+        if (p == null || p.getHeight() == 0) return;
+        int ph = p.getHeight();
+        float ty = ph / 6f;
+        if (ph > p.getWidth() * 1.05f) {
+            float dp = getResources().getDisplayMetrics().density;
+            int above = lowRamLine != null && lowRamLine.getVisibility() == View.VISIBLE ? lowRamLine.getBottom()
+                    : (int) (ph * 0.05f);
+            ty = above + 14 * dp - (ph - v.getHeight()) / 2f;
+        }
+        if (v.getTranslationY() != ty) v.setTranslationY(ty);
     }
 
     // The loading screen's tip upright (Kailil, 2026-11-09: "the sentences that appear should fit inside of the vertical
@@ -535,6 +553,7 @@ public class GameActivity extends MainActivity {
         boolean show = GameService.loading() && !isInPictureInPictureMode() && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (show) placeFreeMemory();   // (the low memory line comes up after it, and moves it down)
     }
 
     private void addCatchupView() {
