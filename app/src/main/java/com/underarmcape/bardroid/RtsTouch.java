@@ -134,7 +134,11 @@ final class RtsTouch {
     private static final float PAD_ROTATE_DEAD = 3f;           // slops a sideways drag goes before it rotates (Kailil:
                                                                // "a larger dead zone than the rest"; zoom, tilt: 1)
     private static final float PAD_ROTATE_PER_WIDTH = (float) Math.PI;   // a drag across the screen: half a turn
-    private final Runnable padSingleTap = () -> { padTapCount = 0; act("dock_menu"); };
+    private final Runnable padSingleTap = () -> {   // (with a key tick as the menu opens: the dock's buttons take taps)
+        padTapCount = 0;
+        act("dock_menu");
+        view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+    };
     // of the view's height: one wheel step in BAR's windows (BAR's Settings: ~3.5 rows a step; at 0.045 the list ran
     // 1.7 times as far as the finger, dev phone)
     private static final float SCROLL_STEP = 0.08f;
@@ -1502,6 +1506,9 @@ final class RtsTouch {
     }
 
     private void tap(float vx, float vy) {
+        // (a tap on the dock's menu: the key tick of Android's own buttons, as FIRE has it; Android leaves it out when
+        // touch vibration is off in its settings)
+        if (inDock) view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         if (gridHeld) { gridTap(vx, vy); return; }
         Place place = place();
         if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
