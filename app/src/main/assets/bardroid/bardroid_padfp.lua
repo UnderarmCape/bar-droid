@@ -749,6 +749,9 @@ function widget:Initialize()
 		active = function()
 			return fp ~= nil
 		end,
+		unit = function() -- (the unit ridden, or nil: bardroid_retreat.lua leaves it to the player)
+			return fp and fp.unitID or nil
+		end,
 		stop = stop,
 		toggle = function()
 			if tuning then -- (B closes the tuner first)

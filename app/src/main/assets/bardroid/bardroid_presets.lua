@@ -466,7 +466,7 @@ function widget:MousePress(x, y, btn)
 		say("PRESET CANCELLED")
 		return true
 	end
-	local kind, pos = Spring.TraceScreenRay(x, y, true)
+	local kind, pos = Spring.TraceScreenRay(x, y, true, true) -- (on the minimap: the place it shows there)
 	if kind ~= "ground" or not pos then
 		say("PRESET CANCELLED")
 		return true

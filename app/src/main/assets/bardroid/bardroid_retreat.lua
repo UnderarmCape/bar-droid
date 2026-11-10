@@ -153,6 +153,21 @@ local function say(text)
 	end
 end
 
+-- a unit the player drives right now: ridden in first person (bardroid_padfp.lua) or walked by the pad's D-gun sticks
+-- (bardroid_pad.lua): no retreat, cover or repair order over the player's hand
+local function driven(u)
+	local fp = WG.BarDroidPadFP
+	if fp and fp.unit and fp.unit() == u then
+		return true
+	end
+	local pad = WG.BarDroidPad
+	if pad and pad.modal then
+		local mode, dgunUnit = pad.modal()
+		return mode == "dgun" and dgunUnit == u
+	end
+	return false
+end
+
 local function fallBack(u)
 	local x, _, z = spGetUnitPosition(u)
 	if not x then
@@ -186,7 +201,7 @@ local function commanderRetreat(c, defID, ud)
 	local cx, cz, n = 0, 0, 0
 	for _, u in ipairs(near) do
 		local d = UnitDefs[spGetUnitDefID(u) or -1]
-		if u ~= c and d and combat(d) and healthy(u, HURT) and not Spring.GetUnitTransporter(u) then
+		if u ~= c and d and combat(d) and healthy(u, HURT) and not Spring.GetUnitTransporter(u) and not driven(u) then
 			local ux, uy, uz = spGetUnitPosition(u)
 			cover[u] = { ux, uy, uz }
 			cx, cz, n = cx + ux, cz + uz, n + 1
@@ -205,7 +220,7 @@ local function commanderRetreat(c, defID, ud)
 	end
 	for _, u in ipairs(Spring.GetUnitsInCylinder(x, z, HELPERS, myTeam) or {}) do
 		local d = UnitDefs[spGetUnitDefID(u) or -1]
-		if u ~= c and d and d.isBuilder and d.canRepair ~= false and mobile(d) and not isCommander(d) then
+		if u ~= c and d and d.isBuilder and d.canRepair ~= false and mobile(d) and not isCommander(d) and not driven(u) then
 			spGiveOrderToUnit(u, CMD.INSERT, { 0, CMD.REPAIR, 0, c }, { "alt" })
 			helpers = helpers + 1
 		end
@@ -290,7 +305,7 @@ local function watchCommanders(f)
 end
 
 local function lookAt(u)
-	if fell[u] or not spValidUnitID(u) or Spring.GetUnitTeam(u) ~= myTeam then
+	if fell[u] or not spValidUnitID(u) or Spring.GetUnitTeam(u) ~= myTeam or driven(u) then
 		return
 	end
 	local h, mh, _, _, built = spGetUnitHealth(u)
