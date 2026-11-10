@@ -234,13 +234,20 @@ local function join()
 	end
 end
 
--- centred at the bottom of the screen as it is now (folding or unfolding the phone resizes the lobby's screen)
+-- centred at the bottom of the screen as it is now (folding or unfolding the phone resizes the lobby's screen);
+-- upright: just above the bottom buttons (uprightBarTop), the content shrunk to leave it room
 local barSize
+local uprightBarTop -- (set below: the top of the upright bottom buttons, nil when not upright)
+local uprightRelayout
 placeBar = function()
 	local sw, sh = screen0.width, screen0.height
 	local w, h = math.min(sw - 16, 760), 70
-	bar:SetPos(math.floor((sw - w) / 2), sh - h - 10, w, h)
+	local top = uprightBarTop and uprightBarTop()
+	bar:SetPos(math.floor((sw - w) / 2), (top or sh) - h - (top and 4 or 10), w, h)
 	barSize = sw .. "x" .. sh
+	if uprightRelayout then
+		uprightRelayout()
+	end
 end
 
 makeBar = function()
@@ -279,6 +286,218 @@ makeBar = function()
 		})
 	end
 	bar:Hide()
+end
+
+--------------------------------------------------------------------------------
+-- Upright (Kailil, 2026-11-09: "the vertical menu and scale is too small. Also move the buttons on the side and top
+-- to the very bottom of the screen so its more easy to reach. Then to press next and prev on the different servers it
+-- should appear on top of the buttons at the bottom of the screen and that should shrink the vertical space if the
+-- server list"): Chobby's left column hidden and its buttons, with the top's (Keys, Website, Account), as a grid along
+-- the bottom, each a tap on Chobby's own (its OnClick: the same handlers, its look copied: the menu picked lit); the
+-- content takes the width and ends above the grid, and above the server bar (Close, Previous, Next, Join) while it is
+-- up. The scale larger while upright (SCALE_UPRIGHT; the old one back after). Chobby lays itself out again on its own
+-- (resizes, its panels): checked twice a second and laid out again.
+local UPRIGHT = 1.05
+local SCALE_UPRIGHT = 1.35
+local GRID_COLS, GRID_ROW_H, GRID_GAP = 6, 46, 4
+local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil }
+
+local function chobbyObject(name)
+	return screen0 and screen0.GetObjectByName and screen0:GetObjectByName(name)
+end
+
+-- Chobby's buttons the grid stands for: the left column's (the menus, the panels' tabs, Exit), the top's
+local function chobbyButtons()
+	local out = {}
+	local function walk(obj, top)
+		local list = {}
+		for _, c in ipairs(obj and obj.children or {}) do
+			list[#list + 1] = c
+		end
+		if top then -- (the top's buttons: hidden by uprightRelayout, Chili keeps them in children_hidden)
+			for c in pairs(obj and obj.children_hidden or {}) do
+				list[#list + 1] = c
+			end
+		end
+		for _, c in ipairs(list) do
+			c = real(c)
+			if c.classname == "button" or c.classname == "negative_button" or c.classname == "positive_button"
+				or (c.OnClick and #c.OnClick > 0 and type(c.caption) == "string") then
+				if type(c.caption) == "string" and c.caption ~= "" then
+					out[#out + 1] = { button = c, top = top }
+				end
+			else
+				walk(c, top)
+			end
+		end
+	end
+	walk(chobbyObject("buttonsHolder_buttons"), false)
+	walk(chobbyObject("holder_status"), true)
+	for i, f in ipairs(out) do -- (Exit last, away from the thumbs' first reach: Chobby makes it first)
+		local c = string.lower(f.button.caption)
+		if c == "exit" or c == "quit" then
+			table.insert(out, table.remove(out, i))
+			break
+		end
+	end
+	return out
+end
+
+uprightBarTop = function()
+	if not (upright.on and upright.grid) then
+		return nil
+	end
+	return upright.grid.y
+end
+
+-- the content between the top and the grid (and the server bar while it is up); Chobby's left column hidden
+uprightRelayout = function()
+	if not upright.on then
+		return
+	end
+	local barUp = bar and bar.visible
+	local bottom = (screen0.height - (upright.grid and upright.grid.y or screen0.height)) + (barUp and (bar.height + 4) or 0)
+	local column = chobbyObject("mainWindow_buttonsHolder")
+	if column and column.visible ~= false then
+		column:SetVisibility(false)
+	end
+	for _, name in ipairs({ "mainWindow_mainContent", "holder_submenuWindow" }) do
+		local o = chobbyObject(name)
+		if o and o._relativeBounds then
+			if o.x ~= 0 then
+				o:SetPos(0)
+			end
+			o._relativeBounds.right = 0
+			o._relativeBounds.bottom = name == "holder_submenuWindow" and bottom or 0
+			o:UpdateClientArea()
+		end
+	end
+	local main = chobbyObject("holder_mainWindow")
+	if main and main._relativeBounds then
+		main._relativeBounds.right = 0
+		main._relativeBounds.bottom = bottom
+		main:UpdateClientArea()
+	end
+	for _, m in ipairs(upright.mirror) do -- (the top's buttons: in the grid)
+		if m.top and m.button.visible ~= false then
+			m.button:SetVisibility(false)
+		end
+	end
+end
+
+local function uprightGrid()
+	local found = chobbyButtons()
+	if #found == 0 then
+		return
+	end
+	local sw, sh = screen0.width, screen0.height
+	local cols = math.min(GRID_COLS, #found)
+	local rows = math.ceil(#found / cols)
+	local h = rows * GRID_ROW_H + (rows + 1) * GRID_GAP
+	if upright.grid then
+		upright.grid:Dispose()
+	end
+	upright.grid = Chili.Window:New({
+		name = "bardroidLobbyGrid",
+		parent = screen0,
+		x = 0, y = sh - h, width = sw, height = h,
+		resizable = false, draggable = false,
+		padding = { GRID_GAP, GRID_GAP, GRID_GAP, GRID_GAP },
+	})
+	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(2)
+	upright.mirror = {}
+	local w = (sw - 2 * GRID_GAP - (cols - 1) * GRID_GAP) / cols
+	for i, f in ipairs(found) do
+		local col, row = (i - 1) % cols, math.floor((i - 1) / cols)
+		local target = f.button
+		local mine = Chili.Button:New({
+			parent = upright.grid,
+			x = math.floor(col * (w + GRID_GAP)), y = row * (GRID_ROW_H + GRID_GAP),
+			width = math.floor(w), height = GRID_ROW_H,
+			caption = target.caption,
+			classname = target.classname == "negative_button" and "negative_button" or nil,
+			objectOverrideFont = font,
+			OnClick = { function() target:CallListeners(target.OnClick) end },
+		})
+		upright.mirror[#upright.mirror + 1] = { button = target, mine = mine, top = f.top }
+	end
+	upright.grid:BringToFront()
+end
+
+-- the grid's buttons as Chobby's are now: their words, and the colours that light the menu picked
+local function uprightMirror()
+	for _, m in ipairs(upright.mirror) do
+		local b, mine = m.button, m.mine
+		if type(b.caption) == "string" and mine.caption ~= b.caption then
+			mine:SetCaption(b.caption)
+		end
+		if b.backgroundColor and mine.backgroundColor ~= b.backgroundColor then
+			mine.backgroundColor, mine.focusColor = b.backgroundColor, b.focusColor
+			mine:Invalidate()
+		end
+	end
+end
+
+local function uprightSet(on)
+	local config = WG.Chobby and WG.Chobby.Configuration
+	if on == upright.on then
+		return
+	end
+	upright.on = on
+	if on then
+		if config and config.SetUiScale and (config.uiScale or 1) < SCALE_UPRIGHT then
+			upright.scaleBefore = config.uiScale or 1
+			config:SetUiScale(SCALE_UPRIGHT)
+		end
+		return -- (the grid at the next check: the screen at its new scale)
+	end
+	if upright.grid then
+		upright.grid:Dispose()
+		upright.grid = nil
+	end
+	for _, m in ipairs(upright.mirror) do
+		if m.button.visible == false then
+			m.button:SetVisibility(true)
+		end
+	end
+	upright.mirror = {}
+	local column = chobbyObject("mainWindow_buttonsHolder")
+	if column then
+		column:SetVisibility(true)
+	end
+	if config and config.SetUiScale and upright.scaleBefore then
+		config:SetUiScale(upright.scaleBefore)
+		upright.scaleBefore = nil
+	end
+	local root = WG.Chobby and WG.Chobby.interfaceRoot
+	if root and root.ViewResize then -- (Chobby's own layout back)
+		pcall(root.ViewResize, screen0.width, screen0.height)
+	end
+end
+
+local function uprightUpdate(now)
+	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 then
+		return
+	end
+	upright.checkAt = now
+	if not (screen0 and WG.Chobby and WG.Chobby.interfaceRoot) then
+		return
+	end
+	uprightSet(screen0.height > screen0.width * UPRIGHT)
+	if not upright.on then
+		return
+	end
+	local grid = upright.grid
+	local size = screen0.width .. "x" .. screen0.height
+	if not grid or upright.size ~= size or #upright.mirror ~= #chobbyButtons() then
+		uprightGrid()
+		upright.size = size
+	end
+	uprightMirror()
+	uprightRelayout()
+	if bar and bar.visible then
+		placeBar()
+	end
 end
 
 --------------------------------------------------------------------------------
@@ -971,6 +1190,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 		warningCheck = now
 		updateWarning()
 	end
+	uprightUpdate(now)
 	appUpdate()
 end
 
@@ -1004,6 +1224,9 @@ end
 
 function widget:Shutdown()
 	WG.BarDroidLobbyTouch = nil
+	if screen0 then
+		uprightSet(false)
+	end
 	closePopup()
 	if bar then
 		bar:Dispose()
