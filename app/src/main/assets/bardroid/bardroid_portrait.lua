@@ -1019,7 +1019,19 @@ end
 -- FACTORY_STATE_REST: the units each factory turned out are remembered (UnitFromFactory).
 local FACTORY_STATE_REST = 0.3
 local fromFactory = {} -- factory unitID -> { unitID = true }
-local factoryStateAt -- { cmd, at }: a factory's move state or fly / land pressed last
+local factoryStateAt -- { cmd, give, at }: a factory's move state or fly / land pressed last, the order its units get
+-- An air plant's fly / land is BAR's own button (gadget unit_air_plants, "apLandAt": 0 Fly, 1 Land), which hands its
+-- state to new planes as CMD.IDLEMODE (0 fly, 1 land); the engine's IDLEMODE button is not on an air plant
+local function isLandAt(id)
+	for _, fac in ipairs(spGetSelectedUnits() or {}) do
+		for _, d in ipairs(Spring.GetUnitCmdDescs(fac) or {}) do
+			if d.id == id then
+				return d.name == "apLandAt" or d.action == "apLandAt"
+			end
+		end
+	end
+	return false
+end
 local function factoryStates()
 	local p = factoryStateAt
 	if not p or now() - p.at < FACTORY_STATE_REST then -- (now(): seconds)
@@ -1043,22 +1055,23 @@ local function factoryStates()
 				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
 				if not ud or Spring.GetUnitTeam(u) ~= myTeam() then
 					made[u] = nil -- (gone, or no longer this team's)
-				elseif p.cmd ~= CMD.IDLEMODE or (ud.canFly and not ud.isBuilder) then
+				elseif p.give ~= CMD.IDLEMODE or (ud.canFly and not ud.isBuilder) then
 					units[#units + 1] = u
 				end
 			end
 			if state and #units > 0 then
-				Spring.GiveOrderToUnitArray(units, p.cmd, { state }, 0)
+				Spring.GiveOrderToUnitArray(units, p.give, { state }, 0)
 				total = total + #units
 			end
 		end
 	end
 	if total > 0 then
+		label = (label or ""):match("^%s*(.-)%s*$") -- (BAR's " Fly ")
 		local P = WG.BarDroidPad
 		if P and P.say then
-			P.say(string.format("%d %s: %s", total, total == 1 and "UNIT" or "UNITS", string.upper(label or "")))
+			P.say(string.format("%d %s: %s", total, total == 1 and "UNIT" or "UNITS", string.upper(label)))
 		end
-		Spring.Echo(string.format("[bardroid-portrait] factory state %s to %d units", tostring(label), total)) -- (tools)
+		Spring.Echo(string.format("[bardroid-portrait] factory state %s to %d units", label, total)) -- (tools)
 	end
 end
 
@@ -1169,8 +1182,12 @@ local function pressItem(item, long)
 		WG.BarDroidPad.act("dgun") -- (the pad's D-gun mode, its sticks on the dock: dgunOn)
 	elseif k == "order" then
 		runCommand(item.id, long)
-		if (item.id == CMD.MOVE_STATE or item.id == CMD.IDLEMODE) and selectedFactory() then
-			factoryStateAt = { cmd = item.id, at = now() } -- (its units follow once the state rests: factoryStates)
+		if selectedFactory() then -- (its units follow once the state rests: factoryStates)
+			local give = (item.id == CMD.MOVE_STATE or item.id == CMD.IDLEMODE) and item.id
+				or (isLandAt(item.id) and CMD.IDLEMODE)
+			if give then
+				factoryStateAt = { cmd = item.id, give = give, at = now() }
+			end
 		end
 	elseif k == "units" then
 		typesFrom = typesFrom ~= item.from and item.from or nil
@@ -1684,20 +1701,29 @@ local function tideRelevant() -- (BAR's top bar's test: water 20 deep somewhere,
 	end
 	return tideShown
 end
+-- The wind's or the tide's reading: its picture turning behind the number (a slot as wide as the number), the wind's
+-- range after it, apart from the number
+local function indicatorSlot(text, s)
+	return max(s, bold:GetTextWidth(text) * s * 0.62 + s * 0.24)
+end
+local function indicatorWidth(text, s, extra)
+	return indicatorSlot(text, s) + (extra and s * 0.14 + font:GetTextWidth(extra) * s * 0.5 or 0)
+end
 local function drawIndicator(tex, turn, x, cy, s, text, extra)
-	gl.Color(1, 1, 1, 0.28)
+	local slot = indicatorSlot(text, s)
+	gl.Color(1, 1, 1, 0.5)
 	gl.Texture(tex)
 	gl.PushMatrix()
-	gl.Translate(x + s / 2, cy, 0)
+	gl.Translate(x + slot / 2, cy, 0)
 	gl.Rotate(turn, 0, 0, 1)
-	gl.TexRect(-s * 0.55, -s * 0.55, s * 0.55, s * 0.55)
+	gl.TexRect(-s * 0.6, -s * 0.6, s * 0.6, s * 0.6)
 	gl.PopMatrix()
 	gl.Texture(false)
 	gl.Color(1, 1, 1, 1)
 	local size = s * 0.62
-	bold:Print("\255\255\255\255" .. text, x + s / 2, cy - size * 0.32, size, "co")
+	bold:Print("\255\255\255\255" .. text, x + slot / 2, cy - size * 0.32, size, "co")
 	if extra then
-		font:Print("\255\150\150\150" .. extra, x + s, cy - size * 0.3, size * 0.7, "o")
+		font:Print("\255\185\185\185" .. extra, x + slot + s * 0.14, cy - size * 0.32, s * 0.5, "o")
 	end
 end
 local function drawResources()
@@ -1739,19 +1765,19 @@ local function drawResources()
 			rx = rx - font:GetTextWidth(short(storage)) * small * 0.85 - pad * 3
 			if res == "energy" then
 				local s = rowH
-				if tideRelevant() and rx - s >= left then
-					rx = rx - s
-					drawIndicator(WAVES, 0, rx, cy, s, tostring(floor(Spring.GetTidal() or 0)))
+				local tide = tostring(floor(Spring.GetTidal() or 0))
+				if tideRelevant() and rx - indicatorWidth(tide, s) >= left then
+					rx = rx - indicatorWidth(tide, s)
+					drawIndicator(WAVES, 0, rx, cy, s, tide)
 					rx = rx - pad * 3
 				end
 				if (Game.windMax or 0) > 0 then
 					local range = floor(Game.windMin or 0) .. "-" .. floor(Game.windMax or 0)
-					local rangeW = font:GetTextWidth(range) * s * 0.62 * 0.7
 					local wind = string.format("%.1f", select(4, Spring.GetWind()) or 0)
-					if rx - s - rangeW >= left then
-						drawIndicator(BLADES, windTurn, rx - s - rangeW, cy, s, wind, range)
-					elseif rx - s >= left then
-						drawIndicator(BLADES, windTurn, rx - s, cy, s, wind)
+					if rx - indicatorWidth(wind, s, range) >= left then
+						drawIndicator(BLADES, windTurn, rx - indicatorWidth(wind, s, range), cy, s, wind, range)
+					elseif rx - indicatorWidth(wind, s) >= left then
+						drawIndicator(BLADES, windTurn, rx - indicatorWidth(wind, s), cy, s, wind)
 					end
 				end
 			end

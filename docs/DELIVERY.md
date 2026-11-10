@@ -65,8 +65,9 @@ same, that stays the simpler way.
       Units built later take the factory's state themselves (the engine's); the dock remembers each factory's units
       (UnitFromFactory) and, once its button has rested 0.3 s, gives those the factory's state (GiveOrderToUnitArray),
       with a note ("7 UNITS: MANEUVER"). Dev phone, upright, a Bot Lab's 7 Pawns: Hold to Maneuver, then Roam, all 7
-      each time, one order a rest. Not yet run: an air factory's fly / land with planes (the same code, its builders
-      left out).
+      each time, one order a rest. An air plant's fly / land is BAR's own button (`apLandAt`, gadget unit_air_plants),
+      not the engine's: its planes get CMD.IDLEMODE with its state. Dev phone, an Aircraft Plant's 3 fighters and a
+      construction aircraft: Fly, Land, Fly reached the 3 fighters each time, the construction aircraft kept Land.
 - [ ] **Retreat and cover** ("It is insanely hard to micro units on mobile"): a unit under 50% health falls back;
       the commander retreats behind nearby combat units, which take fight orders to cover it at a distance safe from
       its death blast and go back to where they were once it is out; a commander that lives waits on patrol (repairs
