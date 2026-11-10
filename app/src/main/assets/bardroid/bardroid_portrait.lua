@@ -774,8 +774,12 @@ end
 local function dgunParts()
 	local r = { L.left[1], L.left[2], L.right[3], L.right[4] }
 	local w, h = r[3] - r[1], r[4] - r[2]
-	local rad = floor(min(w * 0.2, h * 0.34))
-	local cy = r[2] + floor(h * 0.42)
+	-- the sticks between their words (MOVE, AIM: under them) and FIRE's foot (on the near-square screen, the Fold7
+	-- unfolded upright, a stick sized by the height alone reached the grid's foot and its word fell off the screen)
+	local words = floor(L.btnH * 0.6)
+	local room = floor(h * 0.74) - L.gap - words
+	local rad = floor(min(w * 0.2, room * 0.5))
+	local cy = r[2] + words + floor(room / 2)
 	local fire = { r[1] + floor(w * 0.3), r[2] + floor(h * 0.74), r[3] - floor(w * 0.3), r[4] - L.gap }
 	local c = floor(min(w * 0.13, h * 0.2))
 	return { l = { r[1] + floor(w * 0.24), cy, rad }, r = { r[3] - floor(w * 0.24), cy, rad }, fire = fire,
@@ -985,10 +989,14 @@ function refreshNow()
 		-- menu copy's panel, in placeRect: RtsTouch places from its rects, bardroid_place.txt)
 		newRight, rk = placeShapes(), "place"
 	elseif factoryItem then -- a factory's item pressed: its queue
-		newRight = { -- (two rows tall each, as the big orders: six buttons filled three short rows of the half)
-			{ kind = "queue", n = 1, label = "+1", h = 2 }, { kind = "queue", n = 5, label = "+5", h = 2 },
-			{ kind = "queue", n = 20, label = "+20", h = 2 }, { kind = "queue", n = -1, label = "-1", h = 2 },
-			{ kind = "clearitem", label = "CLEAR", h = 2 }, { kind = "back", label = "ORDERS", h = 2 },
+		-- (two rows tall each, as the big orders: six buttons filled three short rows of the half; one row where pages
+		-- of two-row pairs would be cut: an odd number of rows under six in sight)
+		local rr = L.rightRows or 3
+		local qh = (rr >= 6 or rr % 2 == 0) and 2 or 1
+		newRight = {
+			{ kind = "queue", n = 1, label = "+1", h = qh }, { kind = "queue", n = 5, label = "+5", h = qh },
+			{ kind = "queue", n = 20, label = "+20", h = qh }, { kind = "queue", n = -1, label = "-1", h = qh },
+			{ kind = "clearitem", label = "CLEAR", h = qh }, { kind = "back", label = "ORDERS", h = qh },
 		}
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
@@ -997,7 +1005,10 @@ function refreshNow()
 			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE; a factory's
 			-- FIGHT, MOVE and PATROL are where its new units go, the same size, and its REPEAT across after them: Kailil,
 			-- 2026-11-10, the factory's order menu "with the larger buttons arrangement too", the rest left to us)
-			local big = { [CMD.FIGHT] = { 1, 2, 2 }, [CMD.MOVE] = { 2, 1, 2 }, [CMD.PATROL] = { 3, 1, 2 },
+			-- (two rows tall where the half shows four or more: three, the unfolded Fold7 upright, cut MOVE and PATROL
+			-- through the middle at its foot, Kailil: "Do not allow scroll to half reveal objects"; one row then)
+			local bh = (L.rightRows or 3) >= 4 and 2 or 1
+			local big = { [CMD.FIGHT] = { 1, 2, bh }, [CMD.MOVE] = { 2, 1, bh }, [CMD.PATROL] = { 3, 1, bh },
 				[CMD.MANUALFIRE] = { 4, 2, 1 } }
 			if not mobilePicked then
 				big[CMD.MANUALFIRE], big[CMD.REPEAT] = nil, { 4, 2, 1 }
