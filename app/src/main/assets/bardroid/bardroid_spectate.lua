@@ -1405,6 +1405,10 @@ local function drawBar()
 			local size = b.size * 0.36 * (b.text or 1)
 			local text = b.label
 			local maxW = (b.x1 - b.x0) * 0.9
+			local w = font:GetTextWidth(text) * size
+			if w > maxW then -- (a long name a little smaller first, to 80 %, before it is cut: "Construction S." upright)
+				size = math.max(size * 0.8, size * maxW / w)
+			end
 			while #text > 4 and font:GetTextWidth(text) * size > maxW do
 				text = text:sub(1, #text - 2) .. "."
 			end
