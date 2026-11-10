@@ -96,7 +96,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   `assets/bardroid/bardroid_missioninfo.lua`: BAR's Mission Info (a scenario's briefing) copied the same way by
   `tools/make-missioninfo.py`: no wider than the screen, upright above the portrait dock; its GetInfo `replaces`
   BAR's (BAR's widget handler then skips BAR's, and brings it back if the copy is not running; the order list alone did
-  not keep a widget BAR had never seen run from starting); launch-bar.sh `mission_info`, `.bardroid-missioninfo`. While a building is picked its page strip is the shape strip (ONE,
+  not keep a widget BAR had never seen run from starting); launch-bar.sh `mission_info`, `.bardroid-missioninfo`.
+  `assets/bardroid/bardroid_teamstats.lua`: BAR's TeamStats panel (its graphs: the awards' Show Graphs, the top bar's
+  Statistics) copied the same way by `tools/make-teamstats.py`: upright the screen's width, between the top bar and the
+  dock; launch-bar.sh `team_stats`, `.bardroid-teamstats`. While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
   the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held

@@ -229,6 +229,26 @@ mission_info() {
     layer_miss "mission info: BAR's gui_mission_info.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-missioninfo.py)"
   fi
 }
+# The app's copy of BAR's TeamStats panel (its graphs: the awards' Show Graphs, the top bar's Statistics) in BAR's
+# place, the same way (Kailil, 2026-11-10: the game-end recap and graph fit upright; BAR's was 2046 wide on 936;
+# bardroid_teamstats.lua, tools/make-teamstats.py)
+team_stats() {
+  copied=$(sed -n 's/^-- BARDROID_TEAMSTATS_FROM //p' "$BAR/LuaUI/Widgets/bardroid_teamstats.lua" 2>/dev/null)
+  bars=$(cat "$BAR/.bardroid-teamstats" 2>/dev/null)
+  failed="$BAR/.bardroid-teamstats-failed"
+  copy_removed 'BAR Droid team stats' && printf '%s game\n' "$bars" > "$failed"
+  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+    widget_order "TeamStats" ""; widget_order "BAR Droid team stats" 0
+    layer_miss "team stats: the app's copy (made from ${copied:-?}) failed on BAR's gui_teamstats.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-teamstats.py)"
+    return
+  fi
+  widget_order "TeamStats" 0; widget_order "BAR Droid team stats" 191
+  if [ "$copied" = "$bars" ]; then
+    log "team stats: the app's copy of BAR's (gui_teamstats.lua $copied), fitted to the screen"
+  else
+    layer_miss "team stats: BAR's gui_teamstats.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-teamstats.py)"
+  fi
+}
 # The app's widgets as the game's (BARDROID_GAME_WIDGETS=1 in dev-env.sh, with an engine-branch build that has
 # BarDroidGameWidgetsDir, docs/ENGINE-SIM.md "The app's widgets as the game's"; Kailil, 2026-11-06, on a BAR developer's
 # advice: they are the phone's mouse and keyboard, not unit-control widgets): they move to $GAME_WIDGETS, which that
@@ -237,7 +257,7 @@ mission_info() {
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
   bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
-  bardroid_presets bardroid_automex"
+  bardroid_presets bardroid_automex bardroid_teamstats"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"
@@ -255,6 +275,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   build_menu
   order_menu
   mission_info
+  team_stats
   if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
     LOBBY_GAME=byar-dev
     widget_order "Build menu (controller)" 165

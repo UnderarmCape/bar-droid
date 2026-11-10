@@ -1,0 +1,61 @@
+-- BAR Droid team stats: BAR's own TeamStats panel (luaui/Widgets/gui_teamstats.lua, by Floris, GPL v2 or later), from
+-- {release}, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
+-- upright): on a screen taller than wide the panel is the screen's width, its words and rows at a scale that keeps its
+-- columns in it, and as tall as the game between BAR's top bar and the app's portrait dock. Made by
+-- tools/make-teamstats.py; do not edit by hand, run it again. launch-bar.sh runs it instead of BAR's TeamStats; when an
+-- update changes BAR's file the phone makes it again from the new file (the line below names the one it was made from;
+-- Installer, BuildMenuPatches).
+-- BARDROID_TEAMSTATS_FROM {md5}
+		name = "TeamStats",
+		desc = "Shows game stats.",
+		name = "BAR Droid team stats", -- BAR Droid: its own name (BAR's sandbox runs no user widget under BAR's)
+		desc = "BAR's TeamStats; upright it fits the screen, above the app's dock (BAR Droid)",
+		-- BAR Droid: BAR's own off while this runs (BAR's widget handler: GetInfo replaces; back on if this one is not
+		-- running)
+		replaces = "TeamStats",
+	vsx, vsy = spGetViewGeometry()
+	widgetScale = (vsy / 1080)
+
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
+	screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
+	vsx, vsy = spGetViewGeometry()
+	widgetScale = (vsy / 1080)
+
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
+	screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
+	-- BAR Droid: on a screen taller than wide (a phone upright: 2046 wide on 936, the charts cut off on both sides) the
+	-- panel is the screen's width, its words and rows at a scale that keeps its columns in it, and as tall as the game
+	-- between BAR's top bar and the app's portrait dock (laid out again as the dock comes, goes or moves: DrawScreen).
+	-- (No new local up top: BAR's file is at Lua's 200; the dock's top is kept in metrics.)
+	local droidP = WG.BarDroidPortrait
+	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
+	metrics.droidDockTop = droidDock and droidDock[4] or false
+	if vsx < vsy then
+		widgetScale = math.min(widgetScale, vsx / 960)
+		local droidBottom = droidDock and droidDock[4] or 0
+		local droidTop = vsy - mathFloor(96 * widgetScale)
+		screenWidth = mathFloor(vsx * 0.98)
+		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
+		screenX = mathFloor((vsx - screenWidth) / 2)
+		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
+	end
+function widget:DrawScreen()
+	if not (show or showOnceMore) then
+		deleteGuishader()
+		return
+	end
+function widget:DrawScreen()
+	if not (show or showOnceMore) then
+		deleteGuishader()
+		return
+	end
+	-- BAR Droid: laid out again when the app's portrait dock comes, goes or moves
+	local droidP = WG.BarDroidPortrait
+	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
+	if (droidDock and droidDock[4] or false) ~= metrics.droidDockTop then
+		widget:ViewResize()
+	end

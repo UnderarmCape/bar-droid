@@ -24,5 +24,5 @@ $env:JAVA_TOOL_OPTIONS = "-Duser.home=$(Join-Path $TC 'home') -Djava.io.tmpdir=$
 & $javac -nowarn -d (Join-Path $Work "classes") (Join-Path $PSScriptRoot "remake-check\src\com\underarmcape\bardroid\RemakeCheck.java") `
   (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\BuildMenuPatches.java")
 if ($LASTEXITCODE -ne 0) { throw "javac failed" }
-& $java -cp (Join-Path $Work "classes") com.underarmcape.bardroid.RemakeCheck $Work (Join-Path $App "app\src\main\assets\bardroid") buildmenu ordermenu missioninfo
+& $java -cp (Join-Path $Work "classes") com.underarmcape.bardroid.RemakeCheck $Work (Join-Path $App "app\src\main\assets\bardroid") buildmenu ordermenu missioninfo teamstats
 exit $LASTEXITCODE

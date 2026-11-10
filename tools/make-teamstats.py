@@ -1,0 +1,138 @@
+"""The app's team stats (app/src/main/assets/bardroid/bardroid_teamstats.lua) from BAR's own TeamStats panel.
+
+Kailil, 2026-11-10: "the game-end recap and graph" must fit upright. BAR's awards fit; its graphs (the awards' Show Graphs,
+the top bar's Statistics) are its TeamStats panel, 1100 x 610 times the screen's height over 1080: upright on the dev
+phone 2046 pixels wide on a 936 wide screen, its 3 x 3 charts cut off on both sides. A user widget cannot resize it, so
+the app runs a copy of it under its own name, as it does with the Build and Order menus and the Mission Info
+(tools/make-buildmenu.py, make-ordermenu.py, make-missioninfo.py): the same code, and on a screen taller than wide the
+panel as wide as the screen (its words and rows at a scale that keeps a table's columns in it) and as tall as the game
+between BAR's top bar and the app's portrait dock (the charts' grid divides the panel, so they stand taller). Each
+change is marked "BAR Droid:" in the copy. BAR's file is at Lua's 200 top-level locals: the patches add none.
+
+Takes BAR's luaui/Widgets/gui_teamstats.lua from the byar:test release (BAR's Windows install, or --adb a phone's) and
+records its pool md5; it also writes the patches beside the copy, and the phone makes the copy again itself when an
+update changes BAR's file (Installer, BuildMenuPatches). A patch that no longer finds its place stops the tool.
+    python -I tools/make-teamstats.py [--bar-data <BAR data folder> | --adb <adb.exe>] [--check]   (ANDROID_SERIAL names the phone)
+"""
+import argparse
+import importlib.util
+import os
+import sys
+
+APP = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUT = os.path.join(APP, "app", "src", "main", "assets", "bardroid", "bardroid_teamstats.lua")
+PATCHES_OUT = os.path.join(APP, "app", "src", "main", "assets", "bardroid", "bardroid_teamstats.patches")
+FILE = "luaui/widgets/gui_teamstats.lua"
+
+
+def bar_file(bar, adb):
+    """(release name, pool md5, bytes) of FILE, read as tools/make-buildmenu.py reads BAR's Build menu."""
+    spec = importlib.util.spec_from_file_location("make_buildmenu", os.path.join(APP, "tools", "make-buildmenu.py"))
+    mb = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mb)
+    mb.FILE = FILE
+    return mb.bar_file(bar, adb)
+
+
+HEADER = """\
+-- BAR Droid team stats: BAR's own TeamStats panel (luaui/Widgets/gui_teamstats.lua, by Floris, GPL v2 or later), from
+-- {release}, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
+-- upright): on a screen taller than wide the panel is the screen's width, its words and rows at a scale that keeps its
+-- columns in it, and as tall as the game between BAR's top bar and the app's portrait dock. Made by
+-- tools/make-teamstats.py; do not edit by hand, run it again. launch-bar.sh runs it instead of BAR's TeamStats; when an
+-- update changes BAR's file the phone makes it again from the new file (the line below names the one it was made from;
+-- Installer, BuildMenuPatches).
+-- BARDROID_TEAMSTATS_FROM {md5}
+"""
+
+# (what to find, exactly once; what goes in its place)
+PATCHES = [
+    ('''		name = "TeamStats",
+		desc = "Shows game stats.",
+''',
+     '''		name = "BAR Droid team stats", -- BAR Droid: its own name (BAR's sandbox runs no user widget under BAR's)
+		desc = "BAR's TeamStats; upright it fits the screen, above the app's dock (BAR Droid)",
+		-- BAR Droid: BAR's own off while this runs (BAR's widget handler: GetInfo replaces; back on if this one is not
+		-- running)
+		replaces = "TeamStats",
+'''),
+    ('''	vsx, vsy = spGetViewGeometry()
+	widgetScale = (vsy / 1080)
+
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
+	screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
+''',
+     '''	vsx, vsy = spGetViewGeometry()
+	widgetScale = (vsy / 1080)
+
+	screenHeight = mathFloor(screenHeightOrg * widgetScale)
+	screenWidth = mathFloor(screenWidthOrg * widgetScale)
+	screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
+	screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
+	-- BAR Droid: on a screen taller than wide (a phone upright: 2046 wide on 936, the charts cut off on both sides) the
+	-- panel is the screen's width, its words and rows at a scale that keeps its columns in it, and as tall as the game
+	-- between BAR's top bar and the app's portrait dock (laid out again as the dock comes, goes or moves: DrawScreen).
+	-- (No new local up top: BAR's file is at Lua's 200; the dock's top is kept in metrics.)
+	local droidP = WG.BarDroidPortrait
+	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
+	metrics.droidDockTop = droidDock and droidDock[4] or false
+	if vsx < vsy then
+		widgetScale = math.min(widgetScale, vsx / 960)
+		local droidBottom = droidDock and droidDock[4] or 0
+		local droidTop = vsy - mathFloor(96 * widgetScale)
+		screenWidth = mathFloor(vsx * 0.98)
+		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
+		screenX = mathFloor((vsx - screenWidth) / 2)
+		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
+	end
+'''),
+    ('''function widget:DrawScreen()
+	if not (show or showOnceMore) then
+		deleteGuishader()
+		return
+	end
+''',
+     '''function widget:DrawScreen()
+	if not (show or showOnceMore) then
+		deleteGuishader()
+		return
+	end
+	-- BAR Droid: laid out again when the app's portrait dock comes, goes or moves
+	local droidP = WG.BarDroidPortrait
+	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
+	if (droidDock and droidDock[4] or false) ~= metrics.droidDockTop then
+		widget:ViewResize()
+	end
+'''),
+]
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--bar-data", default=os.path.join(os.environ.get("LOCALAPPDATA_REAL") or
+                    os.path.expandvars(r"%USERPROFILE%\AppData\Local"), "Programs", "Beyond-All-Reason", "data"))
+    ap.add_argument("--adb", help="read BAR's file off the phone with this adb, not from a BAR data folder")
+    ap.add_argument("--check", action="store_true", help="only see that every patch finds its place; write nothing")
+    args = ap.parse_args()
+    release, md5, raw = bar_file(args.bar_data, args.adb)
+    text = raw.decode("utf-8").replace("\r\n", "\n")
+    for find, repl in PATCHES:
+        n = text.count(find)
+        if n != 1:
+            sys.exit(f"BAR's team stats changed: a patch finds its place {n} times (not once):\n{find}")
+        text = text.replace(find, repl)
+    if args.check:
+        print(f"patches apply: {release}, {FILE} {md5}, {len(PATCHES)} patches")
+        return
+    with open(OUT, "w", encoding="utf-8", newline="\n") as f:
+        f.write(HEADER.format(release=release, md5=md5) + text)
+    # (the same patches for the phone: Installer makes the copy again when an update changes BAR's file, BuildMenuPatches)
+    with open(PATCHES_OUT, "w", encoding="utf-8", newline="\n") as f:
+        f.write("\x1e".join([HEADER] + [part for patch in PATCHES for part in patch]))
+    print(f"{OUT}: {release}, {FILE} {md5}, {len(PATCHES)} patches")
+
+
+if __name__ == "__main__":
+    main()

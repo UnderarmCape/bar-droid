@@ -150,7 +150,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       out again as the dock moves; its GetInfo `replaces` BAR's. Dev phone, upright, a skirmish given a scenario's
       modoption (scenario001): the whole briefing above the dock, BAR's own "not loading (replaced by ...)";
       remake-check: the phone's remake equals the shipped copy; launch-bar-test all pass.
-- [ ] **The game-end recap and its graph fit upright** (BAR's awards, gui_awards.lua, and the graphs).
+- [x] **The game-end recap and its graph fit upright** (BAR's awards, gui_awards.lua, and the graphs). The awards
+      fit (centred, inside the 936 wide screen). The graphs behind their Show Graphs (and the top bar's Statistics) are
+      BAR's TeamStats panel, 1100 x 610 times the screen's height over 1080: 2046 wide upright, its charts cut off on
+      both sides. The app runs a copy (`tools/make-teamstats.py`, 3 patches, `bardroid_teamstats.lua`, remade on the
+      phone like the menus; BAR's file is at Lua's 200 top-level locals, the patches add none): on a screen taller than
+      wide the panel is the screen's width, its words at a scale that keeps a table's columns in it (BAR's over 960
+      wide), and as tall as the game between BAR's top bar and the portrait dock (laid out again as the dock moves); its
+      chart grid divides the panel, so the charts stand taller. Dev phone, upright: Statistics in a game, the panel
+      above the dock, all 12 charts inside the screen; a game lost (the commander self-destructed), Show Graphs: the
+      panel the screen's width and full height, nothing cut off. remake-check: the phone's remake of all four copies
+      equals the shipped ones; the patches also apply to the laptop's BAR (test-31777).
 - [x] **A metal extractor places as easily as other buildings**: PLACE on a mex spot is "very finicky" (2026-11-10).
       BAR's Extractor Snap moves a mex onto the spot nearest the pointer as its Update last saw it, and lets a click
       be only when the pointer last drew over the map; PLACE moved the pointer from where it was to the spot and

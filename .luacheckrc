@@ -10,10 +10,10 @@ read_globals = {
 	"WeaponDefNames", "FeatureDefs", "Game", "CMD", "CMDTYPE", "Script", "BAR", "LOG", "Platform", "Engine",
 	"SendToUnsynced", "tracy",
 }
--- BAR's own Build and Order menus and Mission Info copied by tools/make-buildmenu.py, make-ordermenu.py and
--- make-missioninfo.py (BAR's code and style; their changes are checked in a game)
+-- BAR's own Build and Order menus, Mission Info and TeamStats copied by tools/make-buildmenu.py, make-ordermenu.py,
+-- make-missioninfo.py and make-teamstats.py (BAR's code and style; their changes are checked in a game)
 exclude_files = { "app/src/main/assets/bardroid/bardroid_buildmenu.lua", "app/src/main/assets/bardroid/bardroid_ordermenu.lua",
-	"app/src/main/assets/bardroid/bardroid_missioninfo.lua" }
+	"app/src/main/assets/bardroid/bardroid_missioninfo.lua", "app/src/main/assets/bardroid/bardroid_teamstats.lua" }
 -- the test widgets that stand in for Spring's calls (a teammate's share recorded, speak to chat's sends): on purpose
 files["tools/pad-test/bardroid_pad_share_test.lua"] = { ignore = { "122" } }
 files["tools/pad-test/bardroid_chat_voice_test.lua"] = { ignore = { "122" } }
