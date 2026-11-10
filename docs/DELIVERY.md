@@ -332,6 +332,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       same test for its settings per screen shape: upright shared the unfolded screen's ("square"); it is its own
       ("tall") now, started from a copy of the inner screen's (dev phone: the minimap sized upright saved under tall
       only, kept on the next start).
+- [x] **Chobby's notes over the lobby's page strip upright** (found 2026-11-10): its Chotify notes ("Download
+      Failed", downloads, invites) stacked from the screen's foot over the strip's right arrow; upright they stack from
+      above the grid (and the server bar) now, through WG.Chotify's _Realign. Checked upright on the dev phone: the
+      Quit dialog, the offline login dialog and BAR's awards fit as they are.
 - [ ] **BAR's Settings upright is wider than the screen** (found 2026-11-10, dev phone, the top bar's Settings): its
       scale is the screen's height over 1080, so upright it is ~1770 pixels wide on 936 and its values column is cut
       off. Kailil, 2026-11-10: "Just fix the setting issue. Remember I am creating the official bar android port that I
