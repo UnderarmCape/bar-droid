@@ -408,10 +408,15 @@ public class GameService extends Service {
     }
     private void releaseWakeLock() { if (wakeLock != null && wakeLock.isHeld()) wakeLock.release(); wakeLock = null; }
 
+    // (named for what it is in Android's notification settings, where "BAR Droid", the project's name, meant nothing to
+    // a player of "Beyond All Reason"; made again each start, so an existing channel takes the name: Android keeps the
+    // player's own choices for it, its importance and sound)
     private void createChannel() {
         NotificationManager nm = getSystemService(NotificationManager.class);
-        if (nm != null && nm.getNotificationChannel(CHANNEL) == null)
-            nm.createNotificationChannel(new NotificationChannel(CHANNEL, "BAR Droid", NotificationManager.IMPORTANCE_LOW));
+        if (nm == null) return;
+        NotificationChannel c = new NotificationChannel(CHANNEL, getString(R.string.channel_game), NotificationManager.IMPORTANCE_LOW);
+        c.setDescription(getString(R.string.channel_game_desc));
+        nm.createNotificationChannel(c);
     }
 
     /**
