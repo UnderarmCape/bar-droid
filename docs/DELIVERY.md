@@ -309,7 +309,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       in range, a commander first, led by its speed, never through a friend; the button striped gold with AUTO, a flash,
       the world's ring pulsing with a sweep, brackets on the target); FIRE again ends it. FIRE now shoots as it lets go
       (one that came down first spent the shot's 500 energy before the swipe). Dev phone, upright: all of it, three
-      enemy bots given by cheat, two D-gunned or shot, our Pawn in the path of the third spared.
+      enemy bots given by cheat, two D-gunned or shot, our Pawn in the path of the third spared. Then: full auto with
+      user widgets' orders refused (pad-test's online rule, BAR's default online) fires through the app's click, 14
+      frames after the enemies appeared; pad-test -Dgun passes; entered from far off the camera eases in once to
+      COMMANDER's distance (5000 to 1321 in half a second), the zoom the player's after it.
 - [x] **The lobby upright: its menu as pages** (2026-11-10, his screenshot of the lobby's 2 x 3 menu): "we need a
       curser selection and the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat, friends.
       Next page. Parties, load game, downloads, account, and you sort the rest". The pages and the swipe were there,
