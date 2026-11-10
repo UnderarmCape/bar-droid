@@ -2343,11 +2343,33 @@ local function drawDgun()
 			gl.Rect(f[3] + grow - e, f[2] - grow, f[3] + grow, f[4] + grow)
 		end
 		gl.Color(1, 1, 1, 1)
-		textIn("AUTO", f[1], f[2], f[3], f[4], fh * 0.42, "\255\255\255\255", bold)
 	else
 		button(f, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
-		textIn("FIRE", f[1], f[2], f[3], f[4], fh * 0.42, "\255\255\255\255", bold)
 	end
+	-- whether it can fire now: a thin bar along FIRE's foot, white as the D-gun reloads, amber (and the word dimmed)
+	-- while the team lacks a shot's energy; none once it is ready
+	local loaded, energy = 1, 1
+	if D and D.ready then
+		loaded, energy = D.ready()
+		loaded, energy = loaded or 1, energy or 1
+	end
+	local lacking = energy < 1
+	local part = lacking and energy or loaded
+	if part < 1 then
+		local bh = max(3, floor(fh * 0.07))
+		local x0, x1 = f[1] + e * 2, f[3] - e * 2
+		gl.Color(0, 0, 0, 0.45)
+		gl.Rect(x0, f[2] + e * 2, x1, f[2] + e * 2 + bh)
+		if lacking then
+			gl.Color(1, 0.7, 0.2, 0.95)
+		else
+			gl.Color(1, 1, 1, 0.9)
+		end
+		gl.Rect(x0, f[2] + e * 2, x0 + (x1 - x0) * part, f[2] + e * 2 + bh)
+		gl.Color(1, 1, 1, 1)
+	end
+	textIn(autoOn and "AUTO" or "FIRE", f[1], f[2], f[3], f[4], fh * 0.42,
+		lacking and "\255\200\160\150" or "\255\255\255\255", bold)
 	-- FIRE held: the track beside it, to the grid's edge (RtsTouch measures the swipe against it); chevrons run along it,
 	-- it fills red to gold with the swipe, AUTO at its end; let go short of the end it runs back and fades
 	local held = DG.slide

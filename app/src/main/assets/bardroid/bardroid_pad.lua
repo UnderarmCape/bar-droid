@@ -2625,6 +2625,21 @@ function widget:Initialize()
 		unit = function() -- (the portrait dock's camera follows it)
 			return dgun and dgun.unitID or nil
 		end,
+		ready = function() -- (the dock's FIRE shows them) how far reloaded (0..1), and the energy of a shot held (0..1)
+			if not dgun then
+				return nil
+			end
+			local d, loaded = dgun, 1
+			if d.weapon then
+				local at = Spring.GetUnitWeaponState(d.unitID, d.weapon, "reloadFrame")
+				local secs = Spring.GetUnitWeaponState(d.unitID, d.weapon, "reloadTime")
+				if at and secs and secs > 0 then
+					loaded = math.max(0, math.min(1, 1 - (at - Spring.GetGameFrame()) / (secs * Game.gameSpeed)))
+				end
+			end
+			local energy = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy") or 0
+			return loaded, (d.cost or 0) > 0 and math.min(1, energy / d.cost) or 1
+		end,
 		auto = function() -- full auto on, and for how many seconds
 			if not (dgun and dgun.auto) then
 				return false
