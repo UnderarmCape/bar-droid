@@ -61,7 +61,9 @@ same, that stays the simpler way.
       at "Im thinking the l"; asked, 2026-11-10: "Idk. I ran out of ideas on what buttons would be big", left to us).
       A factory's FIGHT, MOVE and PATROL are where its new units go: the units' sizes (FIGHT across two rows, MOVE and
       PATROL tall), and REPEAT across after them where a commander has its D-gun. Dev phone, upright, a Bot Lab: that
-      layout, REPEAT tapped Off to On.
+      layout, REPEAT tapped Off to On. Probed (2026-11-10, the lab's own orders logged): MOVE, FIGHT and PATROL each
+      arm their command and a tap on the map sets the lab's rally there, the last one replacing the one before
+      (move@1225,6016, then fight@747,5665, then patrol@1653,5376).
 - [x] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
       every unit that came out of it, and every one that will, to the state tapped; a tap cycles the three, a state
       left 0.3 s is applied. The same for an air factory's fly / land: every plane that came out of it, not builders.
