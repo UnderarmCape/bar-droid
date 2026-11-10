@@ -935,7 +935,14 @@ function refreshNow()
 	end
 	if sharing or resPanel then -- (the picker or the panel: the whole grid)
 		newLeft, lk = {}, sharing and "share" or "panel"
+		-- (with nothing picked the home grid stays under the panel, a drop-down over it: it took the whole dock, half of
+		-- it empty below CLOSE; a press on one of them closes the panel)
+		local home = not sharing and rk == "home" and newRight
 		newRight, rk = sharing and shareItems() or panelItems(resPanel), lk
+		for _, it in ipairs(home or {}) do
+			it.home = true
+			newRight[#newRight + 1] = it
+		end
 	end
 	if dgunOn() then -- (the D-gun mode: its sticks, FIRE and cancel over the whole grid)
 		newLeft, lk, newRight, rk = {}, "dgun", {}, "dgun"
@@ -1024,6 +1031,9 @@ local function pressItem(item, long)
 		return
 	end
 	local k = item.kind
+	if item.home then -- (the home grid under the resource panel)
+		resPanel = nil
+	end
 	if k == "build" then
 		if selectedFactory() then -- a factory: one more (a long press: one less), and its queue buttons
 			runCommand(item.id, long)
