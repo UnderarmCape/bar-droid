@@ -78,9 +78,13 @@ same, that stays the simpler way.
       (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
 
 Added 2026-11-10 ~05:00 (with screenshots):
-- [ ] **LOCAL UNITS / ALL UNITS pick ALL at once**: the first tap shows the list on ALL with those units selected.
-- [ ] **The dock's menu times out after 2 s** (not 1.25), **and a drag on empty dock space pans the camera** in the
-      menu too.
+- [x] **LOCAL UNITS / ALL UNITS pick ALL at once**: the first tap shows the list on ALL with those units selected.
+      The list stays (ALL outlined; a type still narrows it). Dev phone: six Pawns, LOCAL UNITS: 6 picked, the list on.
+- [x] **The dock's menu times out after 2 s** (not 1.25), **and a drag on empty dock space pans the camera** in the
+      menu too. A half with nothing to scroll pans whatever the drag starts on (RtsTouch's dockscroll lines carry the
+      sideways move too), and so does the space outside the halves but for the resource bars, the selection row and
+      the group buttons; the camera pad's gain. Dev phone: up and down on the list 920 elmos, sideways 780, the groups
+      strip's empty part 780, each with the finger.
 - [ ] **The game's start popup fits upright** (a scenario's mission briefing ran off the left and over the dock),
       **and the game-end recap and its graph**.
 - [ ] **The battle room upright: the selectors in a row of their own** (team size, number of teams: the

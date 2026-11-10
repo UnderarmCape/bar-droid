@@ -50,8 +50,8 @@ end
 -- landscape HUD squeezed upright, the case the dock is for)
 local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
-local MENU_SECONDS = 1.25 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
--- 2026-11-10: "make time out for the mouse controls on the bottom half 1.25 seconds instead")
+local MENU_SECONDS = 2 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
+-- 2026-11-10: 1.25, then "Extend mouse tap ui delay too instead 2 seconds")
 local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons
 local BLINK = 0.45 -- seconds of the menu's opening pulse
 local DOCK_FILE = "LuaUI/Config/bardroid_dock.txt"
@@ -146,6 +146,7 @@ local sharing = nil -- "units", "metal" or "energy": the teammate picker
 local shareFraction = 0.25 -- of what this team holds (metal, energy)
 local resPanel = nil -- "metal" or "energy": its panel
 local unqShown = false -- the groups strip's remove-order buttons: a factory picked, or units with orders
+local allPicked, keepTypes = false, false -- LOCAL / ALL UNITS: the whole list picked; the list kept through that pick
 local slide = nil -- a slider being dragged: { item, rect }
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
@@ -556,6 +557,24 @@ local function cameraTo(x, y, z, zoom)
 	end
 end
 
+-- The camera dragged from the dock's empty space (Kailil, 2026-11-10: "if I grab empty space in the ui and moved my
+-- finger around, let that pan my camera"), as the camera pad drags it (RtsTouch's PAD_PAN_GAIN): the ground at the
+-- middle of the game above the dock follows the finger's move (GL pixels, y up), a little more than it
+local PAN_GAIN = 1.3
+local function panBy(dx, dy)
+	local s = Spring.GetCameraState()
+	if not (s and s.px) or (dx == 0 and dy == 0) then
+		return
+	end
+	local mx, my = floor(vsx / 2), floor((L.dock[4] + vsy) / 2)
+	local ax, az = planeAt(mx, my, s.py or 0)
+	local bx, bz = planeAt(mx + dx * PAN_GAIN, my + dy * PAN_GAIN, s.py or 0)
+	if ax and bx then
+		s.px, s.pz = s.px - (bx - ax), s.pz - (bz - az)
+		Spring.SetCameraState(s, 0)
+	end
+end
+
 -- Once at the start, after the engine's own move to the start spot (a second): the start spot in the middle of the view
 -- above the dock (the engine's middle is the dock's top edge: the commander sat on it), the view kept on the map
 local startFitted = false
@@ -836,10 +855,12 @@ function refreshNow()
 		if sharing == "units" then -- (another pick: not what TRANSFER was pressed for)
 			sharing = nil
 		end
-		if #sel > 0 and not multi then
+		if #sel > 0 and not multi and not keepTypes then
 			typesFrom = nil
 		end
+		allPicked = allPicked and keepTypes
 	end
+	keepTypes = false
 	local newLeft, newRight, lk, rk
 	local pregame = #sel == 0 and not typesFrom and pregameStart()
 	if pregame then
@@ -1088,7 +1109,18 @@ local function pressItem(item, long)
 		runCommand(item.id, long)
 	elseif k == "units" then
 		typesFrom = typesFrom ~= item.from and item.from or nil
-		multi, multiPicked = false, {}
+		multi, multiPicked, allPicked = false, {}, false
+		if typesFrom == "local" or typesFrom == "all" then -- (Kailil, 2026-11-10: "default to all and have them selected
+			-- upon first tapping all units or local units": the list stays, its ALL lit, a type still narrows it)
+			local all = {}
+			for _, g in ipairs(byType(typesUnits(), combat)) do
+				for _, u in ipairs(g.units) do
+					all[#all + 1] = u
+				end
+			end
+			keepTypes, allPicked = true, #all > 0
+			selectUnits(all)
+		end
 	elseif k == "multi" then
 		multi, multiPicked = not multi, {}
 	elseif k == "done" then
@@ -1352,6 +1384,9 @@ local function drawTile(item, r)
 		button(r, { 0.2, 0.2, 0.2, 0.8 }, { 0.35, 0.35, 0.35, 0.8 })
 		textIn("ALL", r[1], r[2] + h * 0.38, r[3], r[4], h * 0.26, "\255\255\255\255", bold)
 		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, "\255\255\200\064")
+		if allPicked then -- (all of the list picked: LOCAL or ALL UNITS' first tap)
+			selector(r)
+		end
 		return
 	end
 	-- (a pregame option picked: lit as BAR's menu lights its picked cell)
@@ -1814,10 +1849,14 @@ local function dockLines()
 		return
 	end
 	for line in lines:gmatch("[^\n]+") do
-		local side, v = line:match("^dockscroll (%a+) (%S+)")
+		local side, v, vx = line:match("^dockscroll (%a+) (%S+) ?(%S*)")
 		if side and active and menu then
 			local _, s, _, _, _, ch = half(side)
-			snapBy(s, -(tonumber(v) or 0), ch + L.gap) -- (X pixels down: the rows follow the finger)
+			if snapMax(s) == 0 then -- (nothing to scroll there: the drag pans the camera; X pixels, y down)
+				panBy(tonumber(vx) or 0, -(tonumber(v) or 0))
+			else
+				snapBy(s, -(tonumber(v) or 0), ch + L.gap) -- (X pixels down: the rows follow the finger)
+			end
 			touched()
 		end
 		side, v = line:match("^dockfling (%a+) (%S+)")
@@ -2177,9 +2216,23 @@ function widget:MousePress(x, y, btn)
 			end
 		end
 	end
-	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0 }
+	-- (empty space in the open menu: a drag there pans the camera as the camera pad does; Kailil, 2026-11-10: "if I grab
+	-- empty space in the ui and moved my finger around, let that pan my camera"; a half whose rows scroll keeps its drag)
+	local empty -- (a half with nothing to scroll: a drag anywhere on it pans, as the fingers' dockscroll lines do)
+	if side then
+		local _, s = half(side)
+		empty = snapMax(s) == 0
+	else
+		empty = not (inRect(x, y, L.res) or (showSel and inRect(x, y, L.sel)))
+		for _, gr in ipairs(L.groupRects or {}) do
+			empty = empty and not inRect(x, y, gr)
+		end
+	end
+	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0, empty = empty,
+		panX = x, panY = y }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
+
 
 function widget:MouseMove(x, y)
 	if slide then
@@ -2188,6 +2241,16 @@ function widget:MouseMove(x, y)
 		return
 	end
 	local p = press
+	if p and p.empty then
+		if not p.moved and abs(x - p.x) + abs(y - p.y) < vsx * 0.012 then
+			return
+		end
+		p.moved = true
+		panBy(x - p.panX, y - p.panY)
+		p.panX, p.panY = x, y
+		touched()
+		return
+	end
 	if not (p and p.side) then
 		return
 	end
@@ -2216,6 +2279,9 @@ function widget:MouseRelease(x, _, btn)
 	press = nil
 	if not p then
 		return false
+	end
+	if p.empty then -- (a pan, or a tap on nothing)
+		return true
 	end
 	if not p.side and inRect(p.x, p.y, L.res) then -- metal or energy tapped: its panel (again: closed)
 		local res = p.x < (L.res[1] + L.res[3]) / 2 and "metal" or "energy"

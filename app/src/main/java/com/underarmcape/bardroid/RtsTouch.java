@@ -513,6 +513,7 @@ final class RtsTouch {
                         state = State.DOCK_SCROLL;
                         dockSide = side;
                         padY = downY;
+                        padX = downX;
                         dockScroll();
                         return;
                     }
@@ -904,10 +905,11 @@ final class RtsTouch {
         return new float[]{v.getLeft() + vp.exactCenterX(), (top + bottom) / 2};
     }
 
-    private void dockScroll() {
-        if (curY == padY) return;
-        send(String.format(Locale.US, "dockscroll %s %.1f", dockSide, toY(curY) - toY(padY)));
+    private void dockScroll() {   // (and sideways: a half with nothing to scroll pans the camera, bardroid_portrait.lua)
+        if (curY == padY && curX == padX) return;
+        send(String.format(Locale.US, "dockscroll %s %.1f %.1f", dockSide, toY(curY) - toY(padY), toX(curX) - toX(padX)));
         padY = curY;
+        padX = curX;
     }
 
     /** The circle selection: its middle where the finger came down, its edge at the finger (X screen pixels). */
