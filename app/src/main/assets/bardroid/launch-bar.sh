@@ -236,7 +236,7 @@ mission_info() {
 # every start finds them (Installer puts new ones there: a newer one there wins), and moved again after dev-env.sh.
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
-  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo"
+  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"
@@ -720,6 +720,8 @@ sensors_err=$(widget_error 'bardroid_sensors|BAR Droid sensor ranges')
 [ -n "$sensors_err" ] && layer_miss "sensor ranges widget (bardroid_sensors.lua): $sensors_err"
 nano_err=$(widget_error 'bardroid_nano|BAR Droid nano spray')
 [ -n "$nano_err" ] && layer_miss "nano spray widget (bardroid_nano.lua): $nano_err"
+retreat_err=$(widget_error 'bardroid_retreat|BAR Droid retreat')
+[ -n "$retreat_err" ] && layer_miss "retreat widget (bardroid_retreat.lua): $retreat_err"
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f

@@ -52,7 +52,8 @@ local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
 local MENU_SECONDS = 2 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
 -- 2026-11-10: 1.25, then "Extend mouse tap ui delay too instead 2 seconds")
-local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons
+local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons (L.homeRows: as many as its buttons take,
+-- one more at most, refreshNow; no new local here: the file's main chunk is at Lua's 200)
 local BLINK = 0.45 -- seconds of the menu's opening pulse
 local DOCK_FILE = "LuaUI/Config/bardroid_dock.txt"
 local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
@@ -920,6 +921,10 @@ function refreshNow()
 			{ kind = "commander", label = "COMMANDER" },
 			{ kind = "base", label = "BASE" },
 		}
+		if WG.BarDroidRetreat then -- (across the dock under them: hurt units fall back, bardroid_retreat.lua)
+			newRight[#newRight + 1] = { kind = "retreat", w = 2, on = WG.BarDroidRetreat.on(),
+				label = WG.BarDroidRetreat.on() and "AUTO RETREAT: ON" or "AUTO RETREAT: OFF" }
+		end
 		rk = "home"
 	elseif building and not selectedFactory() then -- a building picked: its shapes, and PLACE under them (the build
 		-- menu copy's panel, in placeRect: RtsTouch places from its rects, bardroid_place.txt)
@@ -988,7 +993,10 @@ function refreshNow()
 	cellsOf.right, rightRowsN = pack(rightItems, 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
-	snapSet(rightScroll, rightRowsN, rk == "home" and HOME_ROWS or (rk == "share" or rk == "panel") and wideRows
+	if rk == "home" then -- (all of it on the dock: AUTO RETREAT a fourth row, no scrolling)
+		L.homeRows = max(HOME_ROWS, min(HOME_ROWS + 1, rightRowsN))
+	end
+	snapSet(rightScroll, rightRowsN, rk == "home" and (L.homeRows or HOME_ROWS) or (rk == "share" or rk == "panel") and wideRows
 		or L.rightRows or 3, rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
@@ -1016,15 +1024,18 @@ end
 -- Stopping on a state for .3 seconds still initiate the selection"; and an air factory's fly / land for "all planes that
 -- came out of the factory (except the builders)"). Units built later take the factory's state themselves (the engine's;
 -- BAR's Factory hold position relies on it); those it built before get it once the factory's button has rested
--- FACTORY_STATE_REST: the units each factory turned out are remembered (UnitFromFactory).
-local FACTORY_STATE_REST = 0.3
-local fromFactory = {} -- factory unitID -> { unitID = true }
-local factoryStateAt -- { cmd, give, at }: a factory's move state or fly / land pressed last, the order its units get
+-- fac.REST: the units each factory turned out are remembered (UnitFromFactory). (One table: the file's main chunk is at
+-- Lua's 200 locals.)
+local fac = {
+	REST = 0.3,
+	made = {}, -- factory unitID -> { unitID = true }
+	pressed = nil, -- { cmd, give, at }: a factory's move state or fly / land pressed last, the order its units get
+}
 -- An air plant's fly / land is BAR's own button (gadget unit_air_plants, "apLandAt": 0 Fly, 1 Land), which hands its
 -- state to new planes as CMD.IDLEMODE (0 fly, 1 land); the engine's IDLEMODE button is not on an air plant
-local function isLandAt(id)
-	for _, fac in ipairs(spGetSelectedUnits() or {}) do
-		for _, d in ipairs(Spring.GetUnitCmdDescs(fac) or {}) do
+function fac.isLandAt(id)
+	for _, f in ipairs(spGetSelectedUnits() or {}) do
+		for _, d in ipairs(Spring.GetUnitCmdDescs(f) or {}) do
 			if d.id == id then
 				return d.name == "apLandAt" or d.action == "apLandAt"
 			end
@@ -1033,18 +1044,18 @@ local function isLandAt(id)
 	return false
 end
 local function factoryStates()
-	local p = factoryStateAt
-	if not p or now() - p.at < FACTORY_STATE_REST then -- (now(): seconds)
+	local p = fac.pressed
+	if not p or now() - p.at < fac.REST then -- (now(): seconds)
 		return
 	end
-	factoryStateAt = nil
+	fac.pressed = nil
 	local total, label = 0, nil
-	for _, fac in ipairs(spGetSelectedUnits() or {}) do
-		local fd = UnitDefs[Spring.GetUnitDefID(fac) or -1]
-		local made = fromFactory[fac]
+	for _, f in ipairs(spGetSelectedUnits() or {}) do
+		local fd = UnitDefs[Spring.GetUnitDefID(f) or -1]
+		local made = fac.made[f]
 		if fd and fd.isFactory and made then
 			local state
-			for _, d in ipairs(Spring.GetUnitCmdDescs(fac) or {}) do
+			for _, d in ipairs(Spring.GetUnitCmdDescs(f) or {}) do
 				if d.id == p.cmd and d.params and d.params[1] then
 					state = tonumber(d.params[1])
 					label = d.params[(state or 0) + 2] or label
@@ -1077,13 +1088,13 @@ end
 
 function widget:UnitFromFactory(unitID, _, unitTeam, factID)
 	if unitTeam == myTeam() and factID then
-		fromFactory[factID] = fromFactory[factID] or {}
-		fromFactory[factID][unitID] = true
+		fac.made[factID] = fac.made[factID] or {}
+		fac.made[factID][unitID] = true
 	end
 end
 
 function widget:UnitDestroyed(unitID)
-	fromFactory[unitID] = nil
+	fac.made[unitID] = nil
 end
 
 -- The first or the last order taken off (Kailil, 2026-11-10: "a way to remove orders at the front or end of a queue"):
@@ -1184,9 +1195,9 @@ local function pressItem(item, long)
 		runCommand(item.id, long)
 		if selectedFactory() then -- (its units follow once the state rests: factoryStates)
 			local give = (item.id == CMD.MOVE_STATE or item.id == CMD.IDLEMODE) and item.id
-				or (isLandAt(item.id) and CMD.IDLEMODE)
+				or (fac.isLandAt(item.id) and CMD.IDLEMODE)
 			if give then
-				factoryStateAt = { cmd = item.id, give = give, at = now() }
+				fac.pressed = { cmd = item.id, give = give, at = now() }
 			end
 		end
 	elseif k == "units" then
@@ -1285,6 +1296,8 @@ local function pressItem(item, long)
 		if x and (x > 0 or z > 0) then
 			cameraTo(x, y, z, true)
 		end
+	elseif k == "retreat" and WG.BarDroidRetreat then -- (bardroid_retreat.lua: hurt units fall back, on or off)
+		WG.BarDroidRetreat.set(not WG.BarDroidRetreat.on())
 	elseif k == "transfer" then
 		sharing = "units"
 	elseif k == "sendres" then
@@ -1338,7 +1351,7 @@ local function half(side)
 	if rightKind == "home" or rightKind == "share" or rightKind == "panel" then -- (the whole grid)
 		local r = homeRect()
 		return r, rightScroll, rightItems, 2, floor((r[3] - r[1] - L.gap) / 2),
-			rightKind == "home" and floor((r[4] - r[2] + L.gap) / HOME_ROWS) - L.gap or floor(L.btnH * 1.5)
+			rightKind == "home" and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap or floor(L.btnH * 1.5)
 	end
 	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
 end
@@ -1537,7 +1550,7 @@ local function drawButton(item, r)
 	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
-		or item.kind == "sharestep" and shareFraction == item.value
+		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
 	else
@@ -2417,7 +2430,8 @@ function widget:MouseRelease(x, _, btn)
 	if not p then
 		return false
 	end
-	if p.empty then -- (a pan, or a tap on nothing)
+	if p.empty and (p.moved or not p.side) then -- (a pan, or a tap on nothing; a tap on a half with nothing to scroll is
+		-- its button's: those halves were all "empty" for the pan, and their buttons took no taps, 2026-11-10)
 		return true
 	end
 	if not p.side and inRect(p.x, p.y, L.res) then -- metal or energy tapped: its panel (again: closed)

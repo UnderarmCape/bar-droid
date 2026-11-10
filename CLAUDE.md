@@ -112,7 +112,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   launch-bar.sh move the app's widgets to `bardroid-ui/LuaUI/Widgets`, which that engine shows LuaUI as part of the
   game archive (`BarDroidGameWidgetsDir`): BAR loads them as game widgets, outside the user widgets' sandbox (Kailil,
   2026-11-06, on a BAR developer's advice); `pad-test.ps1 -Engine <build>` tests it. `bardroid_padspeed.lua`: the pad's drawing speed by
-  zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
+  zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). `bardroid_retreat.lua`: hurt units
+  fall back, a hurt commander retreats with its army covering it (GiveOrder; the dock's AUTO RETREAT, docs/DELIVERY.md). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
   6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
@@ -189,6 +190,7 @@ powershell -ExecutionPolicy Bypass -File tools\fp-tuner.ps1 [-Replay <file.sdfz>
 powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-FastMinutes 25] [-ProfileFastAtMinute 15] [-Functions] [-Gadgets] [-Settings @{Key=1}]
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 powershell -ExecutionPolicy Bypass -File tools\remake-check.ps1                    # the phone's remake of the menu copies (BuildMenuPatches) byte for byte against the shipped ones, BAR's files from the dev phone; after make-buildmenu.py / make-ordermenu.py --adb
+python -I tools\lua-locals.py                                           # the app's widgets under Lua's 200 top-level locals (over it a widget does not load; luacheck misses it)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
 python -I tools\tex-memory.py <launcher.log> [--top 25]                  # the engine's textures and GPU buffers summed (a game run with BARDROID_TEX_LOG=1 in dev-env.sh)
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent

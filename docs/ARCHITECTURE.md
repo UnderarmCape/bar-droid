@@ -83,7 +83,12 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   always-shown jammer coverage off: their GPU cost grows with the square of the units; the player's values back in the
   next smaller game), `bardroid_nano.lua` (builders' nano spray drawn by the engine, at most 1000 particles: BAR's own
   setting NanoParticleMode 0, whose gadget then skips its per-frame work, and MaxNanoParticles put back after the
-  gadget's own budget).
+  gadget's own budget), `bardroid_retreat.lua` (touch play's automation, Kailil's and BAR's developers' call: a unit
+  under half health falls back once; a hurt commander retreats past its death blast's reach, the combat units near it
+  fight on its spot and go back once it is out, builders by it repair it first, then it waits on patrol; the dock's
+  AUTO RETREAT switches it, LuaUI/Config/bardroid_retreat.txt).
+- The app's widgets' main chunks stay under Lua's 200 locals (`tools/lua-locals.py`, in laptop-tests and CI): over
+  it a widget does not load at all, and luacheck does not see it.
 
 ## Source map
 

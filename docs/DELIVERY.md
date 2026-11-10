@@ -68,11 +68,25 @@ same, that stays the simpler way.
       each time, one order a rest. An air plant's fly / land is BAR's own button (`apLandAt`, gadget unit_air_plants),
       not the engine's: its planes get CMD.IDLEMODE with its state. Dev phone, an Aircraft Plant's 3 fighters and a
       construction aircraft: Fly, Land, Fly reached the 3 fighters each time, the construction aircraft kept Land.
-- [ ] **Retreat and cover** ("It is insanely hard to micro units on mobile"): a unit under 50% health falls back;
+- [x] **Retreat and cover** ("It is insanely hard to micro units on mobile"): a unit under 50% health falls back;
       the commander retreats behind nearby combat units, which take fight orders to cover it at a distance safe from
       its death blast and go back to where they were once it is out; a commander that lives waits on patrol (repairs
       nearby units) until given orders again; builders very close to the commander get a repair order on it inserted
-      in front of their queue, then go back to it.
+      in front of their queue, then go back to it. `bardroid_retreat.lua` (GiveOrder; the dock's home grid has AUTO
+      RETREAT: ON / OFF across its fourth row, kept in LuaUI/Config/bardroid_retreat.txt). A unit that moves, under
+      half health, moves 600 elmos away from the nearest enemy it sees and toward its start spot, once until it is
+      above 60% again (a player who sends it back keeps it there). A commander under half moves away past its blast's
+      reach (BAR's 350: 600 elmos), turned up to 90 degrees along the map's edge where the edge would stop it; the
+      armed units within 900 fight on its spot (spread as they stood), and once it is there (or 20 s on) those still on
+      that fight go back where they were and it patrols beside its spot; mobile builders within 350 get a repair on it
+      inserted at the front. Dev phone, upright, cheats: 4-8 Cortex Cans 200 elmos from the commander, 6 Pawns and a
+      construction bot by it: "retreats 600 elmos (blast 350), 6 cover, 1 repair it", the bot's first order the
+      repair, hurt Pawns falling back, "out, on patrol, 3 cover back" (the cover's queues: BAR's fight puts its attacks
+      in front of itself, looked past), the commander repairing on patrol; in a map corner it slid along the edge
+      (before: it backed into the corner and stopped). AUTO RETREAT tapped off and on: the file and the log follow.
+      Found on the way: a dock half with nothing to scroll took no taps since the empty-space pan (its press was
+      "empty"): the home grid's buttons and short order lists; a tap that does not move is its button's again. And a
+      new top-level local took the dock over Lua's 200 (it did not load): `tools/lua-locals.py` now checks it.
 - [ ] **Preset orders**: a PRESETS button with combat units picked; the whole dock shows the presets as 2 x 2
       thumbnails (four for now), closed by an X in the corner or Android's Back. Presets: repeated moves along paths
       that make units hard to hit (big zigzags); formations for several units by their types' strengths (short-ranged
