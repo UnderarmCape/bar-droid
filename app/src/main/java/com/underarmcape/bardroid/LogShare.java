@@ -55,7 +55,9 @@ final class LogShare {
                 .putExtra(Intent.EXTRA_STREAM, uri)
                 .putExtra(Intent.EXTRA_SUBJECT, "BAR Droid logs " + stamp)
                 .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        a.startActivity(Intent.createChooser(send, "Share BAR Droid logs"));
+        // (the sheet in the player's words, the app being "Beyond All Reason"; the subject keeps the port's name for
+        // whoever reads the logs)
+        a.startActivity(Intent.createChooser(send, "Share the game's logs"));
     }
 
     private static void add(ZipOutputStream out, File f, String name) throws IOException {
