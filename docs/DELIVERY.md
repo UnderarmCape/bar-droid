@@ -1371,6 +1371,15 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
       spectator upright (no dock) had the bars and indicators all over the buttons: both are off whenever the screen
       is upright now. Dev phone: a skirmish (top bar: its buttons alone; "wind 8.3" in the dock) and the 8v8 Isthmus
       replay at 5:00 (top bar: Info, Statistics, Settings, Quit, nothing over them).
+- [x] Kailil's portrait list of 2026-11-09 evening, each tested on the dev phone (commits of that evening):
+      the camera pad's zoom drag inverted (down: closer); nothing picked: no selection row, no groups strip without
+      groups, big buttons only (LOCAL, ALL, IDLE UNITS, IDLE BUILDER, COMMANDER and BASE: the camera there, in the
+      middle of the game above the dock), SELECT and FILTER with units picked only; FIGHT, MOVE, PATROL the largest
+      orders (and a commander's D-GUN); a drag on the game draws units' paths and lines (BAR's right drag); TRANSFER and
+      a teammate picker; metal and energy panels (BAR's conversion and share sliders, SEND to a teammate); the D-gun's
+      touch sticks, FIRE and cancel; the upright loading screen's tip wrapped to the screen; the upright lobby's buttons
+      in a grid at the bottom, larger. Not seen yet: the lobby's server bar over the grid online (the offline lobby
+      lists no servers), the D-gun's click where the host forbids widget orders (online), anything on the Fold7.
 - [x] Before the game (every online game's start: a start spot, the first buildings queued; 2026-11-09, a skirmish
       with StartPosType=2 through `dev-env.sh`, which the app's own skirmish skips): (1) PLACE queued nothing. The build
       menu copy places pregame buildings too (a tap picks the spot, PLACE is a Shift click), but BAR's pregame queue
