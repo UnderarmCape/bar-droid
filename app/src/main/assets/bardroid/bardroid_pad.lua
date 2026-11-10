@@ -1026,12 +1026,21 @@ local function dgunOrder(cmdID, name, x, y, z, along)
 		return false
 	end
 	clickAt(sx, sy)
+	d.clickedAt = now()
 	return true
 end
 
 local function dgunUpdate()
 	local d = dgun
 	local unitID = selectedCommander()
+	-- (the app's click for the shot or a step sometimes left nothing selected after it, and the mode ended at once:
+	-- the commander picked again within a second of such a click; dev phone, online rules, 2026-11-09)
+	if unitID ~= d.unitID and d.clickedAt and Spring.DiffTimers(now(), d.clickedAt) < 1
+		and Spring.GetUnitIsDead(d.unitID) == false and Spring.GetUnitTeam(d.unitID) == Spring.GetMyTeamID()
+		and Spring.GetSelectedUnitsCount() == 0 then
+		Spring.SelectUnitArray({ d.unitID })
+		unitID = d.unitID
+	end
 	if unitID ~= d.unitID or Spring.GetUnitIsDead(d.unitID) ~= false
 		or Spring.GetUnitTeam(d.unitID) ~= Spring.GetMyTeamID() then
 		dgunExit("D-GUN OFF")

@@ -316,25 +316,10 @@ final class RtsTouch {
     // middle, out to its radius: -1..1, up negative as a pad's), FIRE and the cancel corner act once as they are
     // touched; "dgunsticks lx ly rx ry" lines to the widget (bardroid_portrait.lua hands them to bardroid_pad.lua's
     // D-gun mode). Where the host keeps user widgets from giving orders that mode picks BAR's D-gun or Move and asks the
-    // app for a click at the point ("clickat", PadGame does it for the pad): here the touch side does it (dgunClicks).
+    // app for a click at the point ("clickat"): PadGame makes it, gamepad or not (ControllerBridge ticks it in every
+    // game). (A second click from here, 2026-11-09, made two: the shot lost, or fired and the commander deselected.)
     private final android.util.SparseArray<String> dgunRoles = new android.util.SparseArray<>();
     private String dgunSent = "";
-    private int dgunSeenClicks = -1;
-    private boolean dgunWatching;
-
-    private final Runnable dgunClicks = new Runnable() {
-        @Override public void run() {
-            Dock d = dock();
-            if (d == null || !d.dgun) { dgunWatching = false; dgunSeenClicks = -1; return; }
-            int c = clicks();
-            if (dgunSeenClicks >= 0 && c > dgunSeenClicks) {
-                float[] at = clickAt();
-                if (at != null && screenW > 0 && screenH > 0) clickAt(at[0] * screenW, at[1] * screenH);
-            }
-            dgunSeenClicks = c;
-            ui.postDelayed(this, 40);
-        }
-    };
 
     private static boolean inCircle(float[] c, float x, float y) {
         return c != null && Math.hypot(x - c[0], y - c[1]) <= c[2] * 1.25f;   // (a thumb a little off the ring: still it)
@@ -377,7 +362,6 @@ final class RtsTouch {
             dgunRoles.put(e.getPointerId(i), role);
             if (role.equals("fire")) { act("dgun_fire"); view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); }
             else if (role.equals("cancel")) act("dgun_cancel");
-            if (!dgunWatching) { dgunWatching = true; dgunSeenClicks = clicks(); ui.postDelayed(dgunClicks, 40); }
             dgunSticks(e, d, -1);
             return true;
         }
