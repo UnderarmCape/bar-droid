@@ -314,7 +314,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       frames after the enemies appeared; pad-test -Dgun passes; entered from far off the camera eases in once to
       COMMANDER's distance (5000 to 1321 in half a second), the zoom the player's after it; FIRE shows when it can
       fire (a thin bar along its foot, white as the D-gun reloads, amber with the word dimmed while the energy for a
-      shot is short).
+      shot is short). The ease-in again on a second entry with the same commander (it was skipped: 4500 stayed; now
+      4500 to 1319). Sent to the Fold7 by AirDrop as bar-droid-a6da919.apk (Download), 15:14.
 - [x] **The lobby upright: its menu as pages** (2026-11-10, his screenshot of the lobby's 2 x 3 menu): "we need a
       curser selection and the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat, friends.
       Next page. Parties, load game, downloads, account, and you sort the rest". The pages and the swipe were there,
