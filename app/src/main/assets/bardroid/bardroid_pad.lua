@@ -940,13 +940,16 @@ end
 local DGUN_AIM_DEADZONE, DGUN_MOVE_DEADZONE = 0.5, 0.4
 local DGUN_MOVE_STEP, DGUN_MOVE_EVERY, DGUN_FIRE_EVERY = 150, 0.2, 0.15
 local DGUN_RANGE = 280 -- (v0.8.5's when the D-gun's own is not found)
-local dgun = nil -- { unitID, range, aimX, aimZ, x, y, z: the target, lx, ly, rx, ry: the sticks, moveAt, fireAt }
+local DGUN_SHOT_HOLD = 0.6 -- seconds after a shot is ordered with no step from the stick (a move order replaces it)
+local dgun = nil -- { unitID, range, aimX, aimZ, x, y, z: the target, lx, ly, rx, ry: the sticks, moveAt, fireAt,
+-- weapon, cost, speed: the D-gun's number, energy a shot and speed (elmos a frame); auto, autoAt, target: full auto }
 
-local function dgunRange(def)
-	for _, w in ipairs(def.weapons or {}) do
+-- the D-gun's range, its weapon number (GetUnitWeaponState's), energy a shot and projectile speed
+local function dgunWeapon(def)
+	for i, w in ipairs(def.weapons or {}) do
 		local wd = WeaponDefs[w.weaponDef]
 		if wd and (wd.range or 0) > 0 and (wd.manualFire or wd.type == "DGun") then
-			return wd.range
+			return wd.range, i, wd.energyCost or 0, wd.projectilespeed or 0
 		end
 	end
 	return DGUN_RANGE
@@ -1018,7 +1021,9 @@ local function dgunEnter()
 	else
 		ax, az = stickHeading(0, -1, 0)
 	end
-	dgun = { unitID = unitID, range = dgunRange(def), aimX = ax, aimZ = az, lx = 0, ly = 0, rx = 0, ry = 0 }
+	local range, weapon, cost, speed = dgunWeapon(def)
+	dgun = { unitID = unitID, range = range, weapon = weapon, cost = cost, speed = speed, aimX = ax, aimZ = az,
+		lx = 0, ly = 0, rx = 0, ry = 0 }
 	modal = "dgun"
 	dgunTarget(dgun)
 	note("D-GUN: RIGHT STICK AIMS, RT FIRES, B LEAVES", nil, 3)
@@ -1054,6 +1059,84 @@ local function dgunOrder(cmdID, name, x, y, z, along)
 	return true
 end
 
+-- Full auto (Kailil, 2026-11-10: "add an dgun full auto mode by holding fire button then swiping to the right"; on the
+-- portrait dock, RtsTouch's "act dgun_auto"; FIRE again turns it off): whenever the D-gun is loaded and the energy is
+-- there, it fires at the best enemy in its range seen (a commander first, then the dearest, the nearer the better; no
+-- aircraft), led by the target's speed, and never where the shot's path (out to its full range: it goes through
+-- everything) passes one of our or our allies' units.
+local DGUN_AUTO_EVERY, DGUN_AUTO_SAFE = 0.1, 40 -- seconds between looks; elmos kept between the path and a friend
+local function dgunAuto(d)
+	local t = now()
+	if d.autoAt and Spring.DiffTimers(t, d.autoAt) < DGUN_AUTO_EVERY then
+		return
+	end
+	d.autoAt = t
+	d.target = nil
+	if d.fireAt and Spring.DiffTimers(t, d.fireAt) < DGUN_SHOT_HOLD then
+		return -- (a shot ordered just now: let it go first)
+	end
+	local cx, _, cz = Spring.GetUnitPosition(d.unitID)
+	if not cx then
+		return
+	end
+	local friends, best, bestScore, bx, bz = {}, nil, 0, 0, 0
+	for _, u in ipairs(Spring.GetUnitsInCylinder(cx, cz, d.range + 60) or {}) do
+		if u ~= d.unitID and Spring.IsUnitAllied(u) then
+			friends[#friends + 1] = u
+		end
+	end
+	local loaded = true
+	if d.weapon then
+		local ready = Spring.GetUnitWeaponState(d.unitID, d.weapon, "reloadFrame")
+			or Spring.GetUnitWeaponState(d.unitID, d.weapon, "reloadState")
+		loaded = not ready or ready <= Spring.GetGameFrame()
+	end
+	local energy = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy") or 0
+	for _, u in ipairs(Spring.GetUnitsInCylinder(cx, cz, d.range * 0.95) or {}) do
+		local def = not Spring.IsUnitAllied(u) and UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if def and not def.canFly and Spring.GetUnitIsDead(u) == false then
+			local ux, _, uz = Spring.GetUnitPosition(u)
+			local dist = ux and math.sqrt((ux - cx) ^ 2 + (uz - cz) ^ 2) or 0
+			if ux and dist > 10 then
+				if d.speed and d.speed > 0 then -- (where it will be when the shot gets there)
+					local vx, _, vz = Spring.GetUnitVelocity(u)
+					ux, uz = ux + (vx or 0) * dist / d.speed, uz + (vz or 0) * dist / d.speed
+				end
+				local dx, dz = ux - cx, uz - cz
+				local len = math.sqrt(dx * dx + dz * dz)
+				local clear = len > 1
+				for i = 1, clear and #friends or 0 do -- (the path: a line from the commander out to the range)
+					local fx, _, fz = Spring.GetUnitPosition(friends[i])
+					if fx then
+						local along = ((fx - cx) * dx + (fz - cz) * dz) / len
+						local side = math.abs((fx - cx) * dz - (fz - cz) * dx) / len
+						if along > -20 and along < d.range + 20
+							and side < DGUN_AUTO_SAFE + (Spring.GetUnitRadius(friends[i]) or 16) then
+							clear = false
+							break
+						end
+					end
+				end
+				local value = def.customParams and def.customParams.iscommander and 1e6
+					or (def.metalCost or 0) + (def.energyCost or 0) / 60
+				local score = value / (1 + dist / d.range)
+				if clear and score > bestScore then
+					best, bestScore, bx, bz = u, score, dx / len, dz / len
+				end
+			end
+		end
+	end
+	if not best then
+		return
+	end
+	d.target = best
+	d.aimX, d.aimZ = bx, bz -- (the aim line shows where it will go)
+	if loaded and energy >= (d.cost or 0) and dgunTarget(d)
+		and dgunOrder(CMD.MANUALFIRE, "manualfire", d.x, d.y, d.z, true) then
+		d.fireAt = t
+	end
+end
+
 local function dgunUpdate()
 	local d = dgun
 	local unitID = selectedCommander()
@@ -1071,16 +1154,22 @@ local function dgunUpdate()
 		return
 	end
 	local ax, az = stickHeading(d.rx, d.ry, DGUN_AIM_DEADZONE)
-	if ax then
+	if ax and not d.auto then
 		d.aimX, d.aimZ = ax, az
 	end
 	if not dgunTarget(d) then
 		dgunExit("D-GUN OFF")
 		return
 	end
+	if d.auto then
+		dgunAuto(d)
+	end
 	local mx, mz = stickHeading(d.lx, d.ly, DGUN_MOVE_DEADZONE)
 	local t = now()
-	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY) then
+	-- (no step just after a shot is ordered: the step's move took the shot's place in the queue before the commander
+	-- had turned to it)
+	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY)
+		and not (d.fireAt and Spring.DiffTimers(t, d.fireAt) < DGUN_SHOT_HOLD) then
 		d.moveAt = t
 		local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
 		local x, z = onMap(cx + mx * DGUN_MOVE_STEP, cz + mz * DGUN_MOVE_STEP)
@@ -1091,6 +1180,11 @@ end
 local function dgunFire()
 	local d = dgun
 	if not d then
+		return
+	end
+	if d.auto then -- (FIRE again: full auto off, no shot)
+		d.auto, d.target = false, nil
+		note("AUTO D-GUN OFF")
 		return
 	end
 	local t = now()
@@ -1114,6 +1208,41 @@ local function dgunDraw()
 	gl.DepthTest(false)
 	gl.LineWidth(1.5)
 	gl.Color(1, 0, 0, 0.25) -- (v0.8.5's: a faint range ring, the target in two rings, a line to it)
+	if d.auto then -- (full auto: the ring pulses gold-red, a sweep goes round it, the target held in brackets)
+		local t = Spring.DiffTimers(now(), d.autoOn or now())
+		local pulse = 0.5 + 0.5 * math.sin(t * 6)
+		gl.LineWidth(2 + pulse)
+		gl.Color(1, 0.35 + 0.35 * pulse, 0.1, 0.45 + 0.35 * pulse)
+		if t < 0.5 then -- (as it engages: a ring sweeping out to the range)
+			gl.DrawGroundCircle(cx, cy, cz, d.range * (0.2 + 1.6 * t), 64)
+		end
+		local a = t * 2.5
+		gl.BeginEnd(GL.LINE_STRIP, function()
+			for i = 0, 10 do
+				local b = a + i * 0.06
+				gl.Vertex(cx + math.cos(b) * d.range, cy + 4, cz + math.sin(b) * d.range)
+			end
+		end)
+		local tx, ty, tz
+		if d.target then
+			tx, ty, tz = Spring.GetUnitPosition(d.target)
+		end
+		if tx then
+			local r = (Spring.GetUnitRadius(d.target) or 20) + 10
+			local spin = t * 1.5
+			for k = 0, 3 do
+				local b = spin + k * math.pi / 2
+				gl.BeginEnd(GL.LINE_STRIP, function()
+					for i = -3, 3 do
+						local c = b + i * 0.12
+						gl.Vertex(tx + math.cos(c) * r, ty + 6, tz + math.sin(c) * r)
+					end
+				end)
+			end
+		end
+		gl.LineWidth(1.5)
+		gl.Color(1, 0, 0, 0.25)
+	end
 	gl.DrawGroundCircle(cx, cy, cz, d.range, 64)
 	gl.LineWidth(2.5)
 	gl.Color(1, 0, 0, 0.8)
@@ -1804,6 +1933,12 @@ local ACTIONS = {
 	queue_remove_last = function() queueRemove(true) end,
 	dgun = dgunEnter, -- LB + RB + R3, or Back + R3 (v0.8.5's D-gun mode)
 	dgun_fire = dgunFire, -- RT in it
+	dgun_auto = function() -- the portrait dock's FIRE held and swiped right: full auto on (dgunAuto)
+		if dgun and not dgun.auto then
+			dgun.auto, dgun.autoAt, dgun.autoOn = true, nil, now()
+			note("AUTO D-GUN ON")
+		end
+	end,
 	dgun_cancel = function() -- B in it
 		dgunExit("D-GUN OFF")
 	end,
@@ -2486,6 +2621,15 @@ function widget:Initialize()
 	WG.BarDroidPadDgun = { -- (bardroid_touch.lua hands the sticks to the D-gun mode)
 		active = function()
 			return dgun ~= nil
+		end,
+		unit = function() -- (the portrait dock's camera follows it)
+			return dgun and dgun.unitID or nil
+		end,
+		auto = function() -- full auto on, and for how many seconds
+			if not (dgun and dgun.auto) then
+				return false
+			end
+			return true, Spring.DiffTimers(now(), dgun.autoOn or now())
 		end,
 		sticks = function(lx, ly, rx, ry)
 			if dgun then

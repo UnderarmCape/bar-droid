@@ -577,6 +577,40 @@ local function panBy(dx, dy)
 	end
 end
 
+-- The D-gun mode's camera (DG above): the commander kept in the middle of the game above the dock, caught up with in
+-- FOLLOW seconds (smooth as it enters the mode and between the simulation's frames); the zoom and the turn stay the
+-- player's (the dock's empty space), past the map's edge too
+local DG = { stick = { 0, 0, 0, 0 } } -- the D-gun mode's (below): stick: lx, ly, rx, ry as RtsTouch sent them (the
+-- knobs); slide: FIRE's swipe, 0..1 while held, nil after (slideOff: when it ended, slideLast: how far it had gone)
+function DG.follow(dt)
+	local FOLLOW = 0.08
+	local D = WG.BarDroidPadDgun
+	local u = D and D.unit and D.unit()
+	local x, y, z
+	if u then
+		x, y, z = Spring.GetUnitPosition(u)
+	end
+	local s = x and Spring.GetCameraState()
+	if not (s and s.px) then
+		return
+	end
+	-- the ground at the middle of the game above the dock, at the commander's height: the camera moved by what is
+	-- between them
+	local bx, bz = planeAt(floor(vsx / 2), floor((L.dock[4] + vsy) / 2), y)
+	if not bx then
+		return
+	end
+	local tx, tz = s.px + x - bx, s.pz + z - bz
+	local k = 1 - math.exp(-(dt or 0.033) / FOLLOW)
+	local nx, nz = s.px + (tx - s.px) * k, s.pz + (tz - s.pz) * k
+	if abs(nx - s.px) + abs(nz - s.pz) < 0.05 then
+		return
+	end
+	s.px, s.pz = nx, nz
+	s.py = Spring.GetGroundHeight(nx, nz) or s.py
+	Spring.SetCameraState(s, 0)
+end
+
 -- Once at the start, after the engine's own move to the start spot (a second): the start spot in the middle of the view
 -- above the dock (the engine's middle is the dock's top edge: the commander sat on it), the view kept on the map
 local startFitted = false
@@ -716,7 +750,12 @@ local cellsOf = { left = {}, right = {} }
 -- red fire button for the dgun. Then an in the corner ... to cancel the dgun control"): MOVE (left) walks the
 -- commander, AIM (right) turns the shot, FIRE fires, the corner's cross leaves. RtsTouch reads them from the dock's
 -- file (writeDock) and sends the sticks back (dgunsticks); the mode does the rest as with a pad.
-local dgunStick = { 0, 0, 0, 0 } -- lx, ly, rx, ry as RtsTouch sent them (the knobs)
+-- Kailil, 2026-11-10: while it lasts "unit group selection and first and last row be hidden so the ui is shorter. And
+-- hide the commander selected bar" (refreshNow: the dock's lower rows go and the game takes their room); "Have the camera
+-- follow the commander and keep the commander in the center" (DG.follow: the middle of the game above the dock); "the
+-- empty Gray space to let me zoom up and down. Or rotate. Not panning" (RtsTouch: a finger there, up or down zooms,
+-- sideways turns); full auto "by holding fire button then swiping to the right" (RtsTouch's dgunslide lines: the track
+-- beside FIRE fills, at its end "act dgun_auto"; FIRE again ends it; bardroid_pad.lua dgunAuto)
 local function dgunOn()
 	local D = WG.BarDroidPadDgun
 	return D and D.active and D.active() or false
@@ -835,8 +874,10 @@ function refreshNow()
 			break
 		end
 	end
-	if (#sel > 0) ~= showSel or (#sel > 0 or anyGroup) ~= showGroups then -- (the dock's rows: laid out again)
-		showSel, showGroups = #sel > 0, #sel > 0 or anyGroup
+	local dg = dgunOn() -- (the D-gun mode: neither row, a shorter dock)
+	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup) and not dg
+	if wantSel ~= showSel or wantGroups ~= showGroups then -- (the dock's rows: laid out again)
+		showSel, showGroups = wantSel, wantGroups
 		layout()
 	end
 	local unq = #sel > 0 and selectedFactory()
@@ -2083,10 +2124,18 @@ local function dockLines()
 		end
 		local a, b, c, d = line:match("^dgunsticks (%S+) (%S+) (%S+) (%S+)")
 		if a then -- the D-gun mode's sticks from the dock (RtsTouch): to it, and the knobs drawn
-			dgunStick = { tonumber(a) or 0, tonumber(b) or 0, tonumber(c) or 0, tonumber(d) or 0 }
+			DG.stick = { tonumber(a) or 0, tonumber(b) or 0, tonumber(c) or 0, tonumber(d) or 0 }
 			local D = WG.BarDroidPadDgun
 			if D and D.sticks then
-				D.sticks(dgunStick[1], dgunStick[2], dgunStick[3], dgunStick[4])
+				D.sticks(DG.stick[1], DG.stick[2], DG.stick[3], DG.stick[4])
+			end
+		end
+		local slid = tonumber(line:match("^dgunslide (%S+)") or "")
+		if slid then -- FIRE held: how far it is swiped right (below 0: let go)
+			if slid >= 0 then
+				DG.slide = min(1, slid)
+			elseif DG.slide then
+				DG.slide, DG.slideLast, DG.slideOff = nil, DG.slide, now()
 			end
 		end
 		local tx, ty = line:match("^docktap (%S+) (%S+)")
@@ -2167,6 +2216,9 @@ function widget:Update(dt)
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
+	if rightKind == "dgun" then
+		DG.follow(dt)
+	end
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then
 			markDirty() -- (rows moving: the texture drawn again each frame until they settle)
@@ -2230,7 +2282,7 @@ local function drawDgun()
 		gl.Color(1, 1, 1, 0.3)
 		disc(s[1], s[2], s[3], false)
 		gl.LineWidth(1)
-		local kx, ky = s[1] + dgunStick[i * 2 - 1] * s[3], s[2] - dgunStick[i * 2] * s[3]
+		local kx, ky = s[1] + DG.stick[i * 2 - 1] * s[3], s[2] - DG.stick[i * 2] * s[3]
 		if i == 1 then
 			gl.Color(0.8, 0.8, 0.8, 0.9)
 		else
@@ -2241,8 +2293,94 @@ local function drawDgun()
 		textIn(i == 1 and "MOVE" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3], s[2] - s[3] - L.gap,
 			L.btnH * 0.36, "\255\200\200\200", font)
 	end
-	button(p.fire, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
-	textIn("FIRE", p.fire[1], p.fire[2], p.fire[3], p.fire[4], (p.fire[4] - p.fire[2]) * 0.42, "\255\255\255\255", bold)
+	local D = WG.BarDroidPadDgun
+	local autoOn, autoFor = false, 0
+	if D and D.auto then
+		autoOn, autoFor = D.auto()
+		autoFor = autoFor or 0
+	end
+	local f, t = p.fire, now()
+	local fw, fh = f[3] - f[1], f[4] - f[2]
+	local e = max(2, floor(L.pad * 0.35))
+	if autoOn then -- full auto: FIRE turns gold-orange, stripes run across it, its edge pulses; AUTO on it
+		button(f, { 0.55, 0.2, 0.02, 1 }, { 0.95, 0.48, 0.07, 1 })
+		local step = fh * 0.6
+		local shift = (t * fh * 1.4) % step
+		gl.Scissor(f[1], f[2], fw, fh)
+		gl.Color(1, 0.9, 0.4, 0.18)
+		for sx = f[1] - fh - step + shift, f[3], step do
+			gl.BeginEnd(GL.QUADS, function()
+				gl.Vertex(sx, f[2])
+				gl.Vertex(sx + step * 0.45, f[2])
+				gl.Vertex(sx + step * 0.45 + fh, f[4])
+				gl.Vertex(sx + fh, f[4])
+			end)
+		end
+		gl.Scissor(false)
+		local pulse = 0.5 + 0.5 * math.sin(t * 6)
+		gl.Color(1, 0.85, 0.35, 0.45 + 0.45 * pulse)
+		gl.Rect(f[1], f[2], f[3], f[2] + e)
+		gl.Rect(f[1], f[4] - e, f[3], f[4])
+		gl.Rect(f[1], f[2], f[1] + e, f[4])
+		gl.Rect(f[3] - e, f[2], f[3], f[4])
+		if autoFor < 0.6 then -- (as it engages: a flash, and the edge thrown out around the button)
+			local a, grow = 1 - autoFor / 0.6, autoFor / 0.6 * fh * 0.6
+			gl.Color(1, 0.92, 0.6, 0.55 * a)
+			gl.Rect(f[1], f[2], f[3], f[4])
+			gl.Color(1, 0.8, 0.3, 0.8 * a)
+			gl.Rect(f[1] - grow, f[2] - grow, f[3] + grow, f[2] - grow + e)
+			gl.Rect(f[1] - grow, f[4] + grow - e, f[3] + grow, f[4] + grow)
+			gl.Rect(f[1] - grow, f[2] - grow, f[1] - grow + e, f[4] + grow)
+			gl.Rect(f[3] + grow - e, f[2] - grow, f[3] + grow, f[4] + grow)
+		end
+		gl.Color(1, 1, 1, 1)
+		textIn("AUTO", f[1], f[2], f[3], f[4], fh * 0.42, "\255\255\255\255", bold)
+	else
+		button(f, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
+		textIn("FIRE", f[1], f[2], f[3], f[4], fh * 0.42, "\255\255\255\255", bold)
+	end
+	-- FIRE held: the track beside it, to the grid's edge (RtsTouch measures the swipe against it); chevrons run along it,
+	-- it fills red to gold with the swipe, AUTO at its end; let go short of the end it runs back and fades
+	local held = DG.slide
+	local back = not held and DG.slideOff and t - DG.slideOff < 0.25 and 1 - (t - DG.slideOff) / 0.25
+	if held or back then
+		local v, alpha = held or (DG.slideLast or 0) * back, held and 1 or back
+		local k = { f[3] + L.gap * 2, f[2] + floor(fh * 0.16), L.right[3], f[4] - floor(fh * 0.16) } -- (the track)
+		local tw, th = k[3] - k[1], k[4] - k[2]
+		local ls = th * 0.36 -- (AUTO at the end; the knob stops short of it)
+		local lw = font:GetTextWidth("AUTO") * ls + L.pad * 2
+		if tw > th + lw then
+			gl.Color(0, 0, 0, 0.6 * alpha)
+			gl.Rect(k[1], k[2], k[3], k[4])
+			local fx = k[1] + th * 0.4 + (tw - th * 0.4 - lw) * v
+			gl.Color(0.86 + 0.14 * v, 0.14 + 0.66 * v, 0.11, 0.85 * alpha)
+			gl.Rect(k[1], k[2], fx, k[4])
+			gl.Color(1, 1, 1, 0.3 * alpha)
+			gl.Rect(k[1], k[2], k[3], k[2] + 1)
+			gl.Rect(k[1], k[4] - 1, k[3], k[4])
+			gl.Rect(k[1], k[2], k[1] + 1, k[4])
+			gl.Rect(k[3] - 1, k[2], k[3], k[4])
+			local phase = (t * 1.6) % 1
+			local cw = th * 0.22
+			gl.LineWidth(max(2, floor(th * 0.09)))
+			for i = 0, 2 do
+				local q = (i + phase) / 3
+				local cx, cy = k[1] + th * 0.4 + (tw - th * 0.8 - lw) * q, (k[2] + k[4]) / 2
+				gl.Color(1, 1, 1, math.sin(q * math.pi) * 0.8 * alpha)
+				gl.BeginEnd(GL.LINE_STRIP, function()
+					gl.Vertex(cx - cw * 0.5, cy + cw)
+					gl.Vertex(cx + cw * 0.5, cy)
+					gl.Vertex(cx - cw * 0.5, cy - cw)
+				end)
+			end
+			gl.LineWidth(1)
+			gl.Color(1, 1, 1, alpha)
+			disc(fx, (k[2] + k[4]) / 2, th * 0.4, true)
+			local ready = v >= 0.92 or autoOn
+			bold:Print((ready and "\255\255\200\064" or "\255\190\190\190") .. "AUTO", k[3] - L.pad, (k[2] + k[4]) / 2
+				- ls * 0.36, ls, "ro")
+		end
+	end
 	button(p.cancel)
 	textIn("\226\156\149", p.cancel[1], p.cancel[2], p.cancel[3], p.cancel[4], (p.cancel[4] - p.cancel[2]) * 0.5,
 		"\255\255\150\140", bold)

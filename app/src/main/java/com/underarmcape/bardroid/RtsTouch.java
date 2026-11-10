@@ -316,13 +316,75 @@ final class RtsTouch {
     }
 
     // The D-gun mode on the dock (Dock.dgun): each finger that lands on a stick moves it (its offset from the stick's
-    // middle, out to its radius: -1..1, up negative as a pad's), FIRE and the cancel corner act once as they are
-    // touched; "dgunsticks lx ly rx ry" lines to the widget (bardroid_portrait.lua hands them to bardroid_pad.lua's
+    // middle, out to its radius: -1..1, up negative as a pad's), the cancel corner acts as it is touched, FIRE as its
+    // finger lets go (unless it swiped: full auto, below); "dgunsticks lx ly rx ry" lines to the widget (bardroid_portrait.lua hands them to bardroid_pad.lua's
     // D-gun mode). Where the host keeps user widgets from giving orders that mode picks BAR's D-gun or Move and asks the
     // app for a click at the point ("clickat"): PadGame makes it, gamepad or not (ControllerBridge ticks it in every
     // game). (A second click from here, 2026-11-09, made two: the shot lost, or fired and the commander deselected.)
     private final android.util.SparseArray<String> dgunRoles = new android.util.SparseArray<>();
     private String dgunSent = "";
+    // Kailil, 2026-11-10: full auto "by holding fire button then swiping to the right": FIRE's finger, how far right it
+    // has gone of the track beside FIRE (to the grid's right edge) as "dgunslide f" lines (-1: let go), at 0.92 of it
+    // "act dgun_auto" once; and "the empty Gray space to let me zoom up and down. Or rotate. Not panning": the first
+    // finger on none of the parts, its first slide decides (as the camera pad's after a tap): up or down zooms, sideways
+    // (with the pad's larger dead zone) turns
+    private static final float DGUN_AUTO_AT = 0.92f;
+    private int dgunFireId = -1, dgunCamId = -1;
+    private float dgunFireX, dgunSlide = -1, dgunCamDownX, dgunCamDownY, dgunCamX, dgunCamY;
+    private boolean dgunAutoSent;
+    private PadMove dgunCamMove = PadMove.NONE;
+
+    private void dgunFireSlide(MotionEvent e, Dock d) {
+        int p = dgunFireId < 0 ? -1 : e.findPointerIndex(dgunFireId);
+        if (p < 0 || d == null || d.fire == null || d.right == null) return;
+        float track = Math.max(slop * 4, d.right[2] - d.fire[2]);
+        float f = Math.max(0, Math.min(1, (toX(e.getX(p)) - dgunFireX) / track));
+        if (Math.abs(f - dgunSlide) >= 0.02f || (f >= 1 && dgunSlide < 1)) {
+            dgunSlide = f;
+            send(String.format(Locale.US, "dgunslide %.2f", f));
+        }
+        if (f >= DGUN_AUTO_AT && !dgunAutoSent) {
+            dgunAutoSent = true;
+            act("dgun_auto");
+            view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+        }
+    }
+
+    /** FIRE's finger up: the shot (or full auto off) unless it swiped (a shot as it came down used the D-gun's
+     *  energy before full auto could start, dev phone 2026-11-10); cancelled: none. */
+    private void dgunFireUp(boolean shoot) {
+        if (dgunFireId < 0) return;
+        if (shoot && !dgunAutoSent && dgunSlide < 0.15f) act("dgun_fire");
+        dgunFireId = -1;
+        dgunSlide = -1;
+        send("dgunslide -1");
+    }
+
+    private void dgunCamera(MotionEvent e) {
+        int p = dgunCamId < 0 ? -1 : e.findPointerIndex(dgunCamId);
+        if (p < 0) return;
+        float x = e.getX(p), y = e.getY(p);
+        if (dgunCamMove == PadMove.NONE) {
+            float ax = Math.abs(x - dgunCamDownX), ay = Math.abs(y - dgunCamDownY);
+            if (ay > slop && ay >= ax) dgunCamMove = PadMove.ZOOM;
+            else if (ax > PAD_ROTATE_DEAD * slop && ax > 1.5f * ay) dgunCamMove = PadMove.ROTATE;
+            else return;
+            dgunCamX = x;
+            dgunCamY = y;
+            return;
+        }
+        if (dgunCamMove == PadMove.ZOOM) {   // (as the camera pad's: down closer, up farther)
+            float h = view().getHeight();
+            float[] c = worldCentre();
+            if (h > 0 && y != dgunCamY) send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
+                    Math.exp((y - dgunCamY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
+        } else {
+            float w = view().getWidth();
+            if (w > 0 && x != dgunCamX) send(String.format(Locale.US, "rot %.4f", (x - dgunCamX) / w * PAD_ROTATE_PER_WIDTH));
+        }
+        dgunCamX = x;
+        dgunCamY = y;
+    }
 
     private static boolean inCircle(float[] c, float x, float y) {
         return c != null && Math.hypot(x - c[0], y - c[1]) <= c[2] * 1.25f;   // (a thumb a little off the ring: still it)
@@ -357,31 +419,59 @@ final class RtsTouch {
                 state = State.DGUN;
                 dgunRoles.clear();
                 dgunSent = "";
+                dgunFireId = dgunCamId = -1;
             } else if (state != State.DGUN) {
                 return false;   // (another gesture began above the dock: it keeps its fingers)
             }
             String role = inCircle(d.stickL, x, y) ? "l" : inCircle(d.stickR, x, y) ? "r"
                     : inside(d.fire, x, y) ? "fire" : inside(d.cancel, x, y) ? "cancel" : "none";
-            dgunRoles.put(e.getPointerId(i), role);
-            if (role.equals("fire")) { act("dgun_fire"); view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); }
-            else if (role.equals("cancel")) act("dgun_cancel");
+            int id = e.getPointerId(i);
+            dgunRoles.put(id, role);
+            if (role.equals("fire")) {
+                view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
+                if (dgunFireId < 0) {   // (its swipe: the track shows; the shot as it lets go, dgunFireUp)
+                    dgunFireId = id;
+                    dgunFireX = x;
+                    dgunAutoSent = false;
+                    dgunSlide = 0;
+                    send("dgunslide 0.00");
+                } else {
+                    act("dgun_fire");   // (a second finger on FIRE: at once)
+                }
+            } else if (role.equals("cancel")) act("dgun_cancel");
+            else if (role.equals("none") && dgunCamId < 0) {
+                dgunCamId = id;
+                dgunCamDownX = e.getX(i);
+                dgunCamDownY = e.getY(i);
+                dgunCamMove = PadMove.NONE;
+            }
             dgunSticks(e, d, -1);
             return true;
         }
         if (state != State.DGUN) return false;
         switch (a) {
-            case MotionEvent.ACTION_MOVE:
-                dgunSticks(e, dock(), -1);
+            case MotionEvent.ACTION_MOVE: {
+                Dock d = dock();
+                dgunSticks(e, d, -1);
+                dgunFireSlide(e, d);
+                dgunCamera(e);
                 break;
-            case MotionEvent.ACTION_POINTER_UP:
+            }
+            case MotionEvent.ACTION_POINTER_UP: {
                 dgunSticks(e, dock(), e.getActionIndex());
-                dgunRoles.remove(e.getPointerId(e.getActionIndex()));
+                int id = e.getPointerId(e.getActionIndex());
+                dgunRoles.remove(id);
+                if (id == dgunFireId) dgunFireUp(true);
+                if (id == dgunCamId) dgunCamId = -1;
                 break;
+            }
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 dgunRoles.clear();
                 dgunSent = "dgunsticks 0.00 0.00 0.00 0.00";
                 send(dgunSent);
+                dgunFireUp(a == MotionEvent.ACTION_UP);
+                dgunCamId = -1;
                 state = State.IDLE;
                 break;
             default:
