@@ -12,7 +12,8 @@
 -- or the left (their own setting, setBottomPosition): BAR's older build menu, the controller game's, failed drawing
 -- after the switch (gui_buildmenu.lua:1398, a cell without its command) and BAR removed it until the next start.
 -- A movable HUD for BAR's own panels is BAR's to add (docs/HELP-WANTED.md).
--- The settings are kept per screen shape (wide: a phone folded; near-square: unfolded) in this widget's config.
+-- The settings are kept per screen shape (wide: a phone folded; near-square: unfolded; tall: a phone upright) in this
+-- widget's config.
 -- Panels ask WG.BarDroidLayout.get(id) for theirs ({ dx, dy: moved, of the screen; size; text; pad }) and
 -- register to be edited: register(id, { label, can = { move, size, text, pad }, rect = function() -> x0, y0, x1, y1,
 -- relayout = function() }). Installed into LuaUI/Widgets by the app.
@@ -34,7 +35,7 @@ local DEFAULTS = { dx = 0, dy = 0, size = 1, text = 1, pad = 1 }
 local YELLOW, GREY = { 1, 0.85, 0.2 }, { 0.65, 0.65, 0.65 }
 
 local panels, order = {}, {} -- id -> { label, can, rect, relayout }; the ids in order
-local saved = { wide = {}, square = {} } -- screen shape -> id -> settings
+local saved = { wide = {}, square = {}, tall = {} } -- screen shape -> id -> settings
 local isOpen, picked = false, nil
 local drag -- { x, y: the press; dx, dy: the panel's then }
 local buttons = {} -- the control bar's: { x0, y0, x1, y1, label, action, lit }
@@ -42,7 +43,12 @@ local vsx, vsy = Spring.GetViewGeometry()
 
 local function shape()
 	local w, h = Spring.GetViewGeometry() -- (the panels ask in their own ViewResize, maybe before this widget's)
-	return w * 10 < h * 16 and "square" or "wide" -- (as launch-bar.sh: the inner screen near-square, the cover wide)
+	-- (as launch-bar.sh: the inner screen near-square, the cover wide; a phone upright, taller than 1.6 to 1, is a shape
+	-- of its own: "not wide" alone made it the inner screen's, 2026-11-10)
+	if h * 10 >= w * 16 then
+		return "tall"
+	end
+	return w * 10 < h * 16 and "square" or "wide"
 end
 
 local function get(id)
@@ -607,6 +613,19 @@ function widget:SetConfigData(data)
 	if type(s) == "table" then
 		saved.wide = type(s.wide) == "table" and s.wide or {}
 		saved.square = type(s.square) == "table" and s.square or {}
+		saved.tall = type(s.tall) == "table" and s.tall or nil
+		if not saved.tall then -- (before upright had its own: it had the inner screen's, which it keeps to begin with)
+			saved.tall = {}
+			for id, v in pairs(saved.square) do
+				if type(v) == "table" then
+					local c = {}
+					for k, d in pairs(v) do
+						c[k] = d
+					end
+					saved.tall[id] = c
+				end
+			end
+		end
 		for _, all in pairs(saved) do
 			for id, v in pairs(all) do
 				if type(v) ~= "table" then
