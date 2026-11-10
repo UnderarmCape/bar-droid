@@ -244,6 +244,7 @@ end
 -- second (RtsTouch takes a file older than 5 s for no dock)
 
 local dockWritten, dockWrittenAt = nil, -10
+local dgunLines -- (the D-gun mode's parts for RtsTouch, below)
 local function writeDock(force)
 	local text
 	if active then
@@ -253,7 +254,7 @@ local function writeDock(force)
 		local _, cmd = spGetActiveCommand()
 		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked)
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
-			r(L.left), r(L.right), selStyle, draw and 1 or 0)
+			r(L.left), r(L.right), selStyle, draw and 1 or 0) .. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
 	end
@@ -561,6 +562,41 @@ local function pack(items, cols)
 end
 local cellsOf = { left = {}, right = {} }
 
+-- The pad's D-gun mode (bardroid_pad.lua, v0.8.5's) on the dock (Kailil, 2026-11-09: "two joy sticks appear and a big
+-- red fire button for the dgun. Then an in the corner ... to cancel the dgun control"): MOVE (left) walks the
+-- commander, AIM (right) turns the shot, FIRE fires, the corner's cross leaves. RtsTouch reads them from the dock's
+-- file (writeDock) and sends the sticks back (dgunsticks); the mode does the rest as with a pad.
+local dgunStick = { 0, 0, 0, 0 } -- lx, ly, rx, ry as RtsTouch sent them (the knobs)
+local function dgunOn()
+	local D = WG.BarDroidPadDgun
+	return D and D.active and D.active() or false
+end
+
+-- its parts in the grid: the sticks (x, y, radius), FIRE and the cancel corner (rects); GL pixels
+local function dgunParts()
+	local r = { L.left[1], L.left[2], L.right[3], L.right[4] }
+	local w, h = r[3] - r[1], r[4] - r[2]
+	local rad = floor(min(w * 0.2, h * 0.34))
+	local cy = r[2] + floor(h * 0.42)
+	local fire = { r[1] + floor(w * 0.3), r[2] + floor(h * 0.74), r[3] - floor(w * 0.3), r[4] - L.gap }
+	local c = floor(min(w * 0.13, h * 0.2))
+	return { l = { r[1] + floor(w * 0.24), cy, rad }, r = { r[3] - floor(w * 0.24), cy, rad }, fire = fire,
+		cancel = { r[1], r[4] - c, r[1] + c, r[4] } }
+end
+
+-- (X pixels, top left origin, as the dock's other lines)
+dgunLines = function()
+	if rightKind ~= "dgun" then
+		return ""
+	end
+	local p = dgunParts()
+	local function rect(x)
+		return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
+	end
+	return string.format("dgun 1\nstickl %d %d %d\nstickr %d %d %d\nfire %s\ncancel %s\n", p.l[1], vsy - p.l[2], p.l[3],
+		p.r[1], vsy - p.r[2], p.r[3], rect(p.fire), rect(p.cancel))
+end
+
 local function teammateList()
 	local P = WG.BarDroidPad
 	return P and P.teammates and P.teammates() or {}
@@ -737,7 +773,9 @@ function refreshNow()
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
 		if mobilePicked then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
-			local big = { [CMD.FIGHT] = { 1, 2, 2 }, [CMD.MOVE] = { 2, 1, 2 }, [CMD.PATROL] = { 3, 1, 2 } }
+			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE)
+			local big = { [CMD.FIGHT] = { 1, 2, 2 }, [CMD.MOVE] = { 2, 1, 2 }, [CMD.PATROL] = { 3, 1, 2 },
+				[CMD.MANUALFIRE] = { 4, 2, 1 } }
 			local first, rest = {}, {}
 			for _, it in ipairs(orders) do
 				local b = it.kind == "order" and big[it.id]
@@ -749,7 +787,7 @@ function refreshNow()
 				end
 			end
 			newRight = {}
-			for i = 1, 3 do
+			for i = 1, 4 do
 				if first[i] then
 					newRight[#newRight + 1] = first[i]
 				end
@@ -771,6 +809,9 @@ function refreshNow()
 	if sharing or resPanel then -- (the picker or the panel: the whole grid)
 		newLeft, lk = {}, sharing and "share" or "panel"
 		newRight, rk = sharing and shareItems() or panelItems(resPanel), lk
+	end
+	if dgunOn() then -- (the D-gun mode: its sticks, FIRE and cancel over the whole grid)
+		newLeft, lk, newRight, rk = {}, "dgun", {}, "dgun"
 	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
@@ -863,6 +904,8 @@ local function pressItem(item, long)
 		else
 			runCommand(item.id)
 		end
+	elseif k == "order" and item.id == CMD.MANUALFIRE and not long and WG.BarDroidPad and WG.BarDroidPad.act then
+		WG.BarDroidPad.act("dgun") -- (the pad's D-gun mode, its sticks on the dock: dgunOn)
 	elseif k == "order" then
 		runCommand(item.id, long)
 	elseif k == "units" then
@@ -1595,6 +1638,14 @@ local function dockLines()
 			circleTo(tonumber(cx), tonumber(cy), tonumber(cr))
 			touched()
 		end
+		local a, b, c, d = line:match("^dgunsticks (%S+) (%S+) (%S+) (%S+)")
+		if a then -- the D-gun mode's sticks from the dock (RtsTouch): to it, and the knobs drawn
+			dgunStick = { tonumber(a) or 0, tonumber(b) or 0, tonumber(c) or 0, tonumber(d) or 0 }
+			local D = WG.BarDroidPadDgun
+			if D and D.sticks then
+				D.sticks(dgunStick[1], dgunStick[2], dgunStick[3], dgunStick[4])
+			end
+		end
 		local tx, ty = line:match("^docktap (%S+) (%S+)")
 		if tx and active then -- a second finger on the dock while a box selection is dragged: a filter
 			local item = itemAt("right", tonumber(tx), vsy - tonumber(ty))
@@ -1691,6 +1742,46 @@ local dockTex, texW, texH
 -- frame (a stress test: two GPU driver faults on the dev phone in its first 8 games, none in 18 before it, 2026-11-09)
 local texMode = Spring.GetConfigInt("bardroid_portrait_tex", 1)
 
+-- the D-gun mode's controls (live: the knobs follow the thumbs)
+local function disc(x, y, r, fill)
+	gl.BeginEnd(fill and GL.TRIANGLE_FAN or GL.LINE_LOOP, function()
+		if fill then
+			gl.Vertex(x, y)
+		end
+		for i = 0, 40 do
+			local a = i / 40 * 2 * math.pi
+			gl.Vertex(x + math.cos(a) * r, y + math.sin(a) * r)
+		end
+	end)
+end
+local function drawDgun()
+	local p = dgunParts()
+	for i, s in ipairs({ p.l, p.r }) do
+		gl.Color(0, 0, 0, 0.5)
+		disc(s[1], s[2], s[3], true)
+		gl.LineWidth(2)
+		gl.Color(1, 1, 1, 0.3)
+		disc(s[1], s[2], s[3], false)
+		gl.LineWidth(1)
+		local kx, ky = s[1] + dgunStick[i * 2 - 1] * s[3], s[2] - dgunStick[i * 2] * s[3]
+		if i == 1 then
+			gl.Color(0.8, 0.8, 0.8, 0.9)
+		else
+			gl.Color(1, 0.3, 0.25, 0.95) -- (the aim: the shot's red, as its ring on the ground)
+		end
+		disc(kx, ky, s[3] * 0.36, true)
+		gl.Color(1, 1, 1, 1)
+		textIn(i == 1 and "MOVE" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3], s[2] - s[3] - L.gap,
+			L.btnH * 0.36, "\255\200\200\200", font)
+	end
+	button(p.fire, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
+	textIn("FIRE", p.fire[1], p.fire[2], p.fire[3], p.fire[4], (p.fire[4] - p.fire[2]) * 0.42, "\255\255\255\255", bold)
+	button(p.cancel)
+	textIn("\226\156\149", p.cancel[1], p.cancel[2], p.cancel[3], p.cancel[4], (p.cancel[4] - p.cancel[2]) * 0.5,
+		"\255\255\150\140", bold)
+	resetGL()
+end
+
 local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
 	if showSel then
@@ -1736,6 +1827,10 @@ local function drawDock()
 	drawResources()
 	if rightKind == "place" then
 		drawPlace()
+	end
+	if rightKind == "dgun" then
+		drawDgun()
+		return -- (no camera pad dimming or menu edge: the sticks are always live)
 	end
 	drawMode()
 end

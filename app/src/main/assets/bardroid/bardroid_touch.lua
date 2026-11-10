@@ -667,6 +667,7 @@ local function horizontal(v)
 	return x / len, z / len
 end
 
+local padDgunLive = false -- the pad's sticks moved in the D-gun mode last frame
 local function applyPad(dt)
 	local s = smooth
 	local rider = WG.BarDroidPadFP
@@ -676,7 +677,13 @@ local function applyPad(dt)
 	end
 	local dgun = WG.BarDroidPadDgun
 	if dgun and dgun.active() then -- (v0.8.5's D-gun mode: bardroid_pad.lua has the sticks, the camera stays)
-		dgun.sticks(stick(pad.lx), stick(pad.ly), stick(pad.rx), stick(pad.ry))
+		-- (the pad's sticks while they move and their rest once: else the portrait dock's touch sticks, which zeros
+		-- every frame from here took away, bardroid_portrait.lua)
+		local live = pad.lx ~= 0 or pad.ly ~= 0 or pad.rx ~= 0 or pad.ry ~= 0
+		if live or padDgunLive then
+			dgun.sticks(stick(pad.lx), stick(pad.ly), stick(pad.rx), stick(pad.ry))
+		end
+		padDgunLive = live
 		s.panX, s.panY, s.rotate, s.pitch, s.zoom = 0, 0, 0, 0, 0
 		return
 	end

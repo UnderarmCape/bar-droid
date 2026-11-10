@@ -94,7 +94,7 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DGUN, DONE }
 
     // The portrait dock (bardroid_portrait.lua writes bardroid_dock.txt: its rects in X screen pixels and its mode).
     // Kailil, 2026-11-09: the dock "function as a camera movement pad to pan and zoom around the map ... double tap hold
@@ -112,7 +112,12 @@ final class RtsTouch {
     // or line, BAR's own right drag (cmd_customformations2: a path for one unit, a formation line for more), at once
     // and in either mode; Kailil, 2026-11-09: paths drawn "by dragging my finger in the top half". A tap then a drag
     // still selects; the camera is the dock's.)
-    private static final class Dock { float[] all, left, right; boolean menu, circle, draw; }
+    // (dgun: the pad's D-gun mode on the dock, Kailil 2026-11-09: "the controller mod dgun method where a two joy sticks
+    // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
+    private static final class Dock {
+        float[] all, left, right, stickL, stickR, fire, cancel;
+        boolean menu, circle, draw, dgun;
+    }
     private Dock dockCache;
     private long dockReadAt, dockModified;
     private boolean inDock;                          // this touch began on the dock
@@ -307,9 +312,101 @@ final class RtsTouch {
                 && e.getToolType(e.getActionIndex()) == MotionEvent.TOOL_TYPE_FINGER;
     }
 
+    // The D-gun mode on the dock (Dock.dgun): each finger that lands on a stick moves it (its offset from the stick's
+    // middle, out to its radius: -1..1, up negative as a pad's), FIRE and the cancel corner act once as they are
+    // touched; "dgunsticks lx ly rx ry" lines to the widget (bardroid_portrait.lua hands them to bardroid_pad.lua's
+    // D-gun mode). Where the host keeps user widgets from giving orders that mode picks BAR's D-gun or Move and asks the
+    // app for a click at the point ("clickat", PadGame does it for the pad): here the touch side does it (dgunClicks).
+    private final android.util.SparseArray<String> dgunRoles = new android.util.SparseArray<>();
+    private String dgunSent = "";
+    private int dgunSeenClicks = -1;
+    private boolean dgunWatching;
+
+    private final Runnable dgunClicks = new Runnable() {
+        @Override public void run() {
+            Dock d = dock();
+            if (d == null || !d.dgun) { dgunWatching = false; dgunSeenClicks = -1; return; }
+            int c = clicks();
+            if (dgunSeenClicks >= 0 && c > dgunSeenClicks) {
+                float[] at = clickAt();
+                if (at != null && screenW > 0 && screenH > 0) clickAt(at[0] * screenW, at[1] * screenH);
+            }
+            dgunSeenClicks = c;
+            ui.postDelayed(this, 40);
+        }
+    };
+
+    private static boolean inCircle(float[] c, float x, float y) {
+        return c != null && Math.hypot(x - c[0], y - c[1]) <= c[2] * 1.25f;   // (a thumb a little off the ring: still it)
+    }
+
+    private void dgunSticks(MotionEvent e, Dock d, int leaving) {
+        float lx = 0, ly = 0, rx = 0, ry = 0;
+        for (int p = 0; p < e.getPointerCount(); p++) {
+            if (p == leaving || d == null) continue;
+            String role = dgunRoles.get(e.getPointerId(p));
+            float[] c = "l".equals(role) ? d.stickL : "r".equals(role) ? d.stickR : null;
+            if (c == null || c[2] <= 0) continue;
+            float vx = (toX(e.getX(p)) - c[0]) / c[2], vy = (toY(e.getY(p)) - c[1]) / c[2];
+            float len = (float) Math.hypot(vx, vy);
+            if (len > 1) { vx /= len; vy /= len; }
+            if ("l".equals(role)) { lx = vx; ly = vy; } else { rx = vx; ry = vy; }
+        }
+        String msg = String.format(Locale.US, "dgunsticks %.2f %.2f %.2f %.2f", lx, ly, rx, ry);
+        if (!msg.equals(dgunSent)) { dgunSent = msg; send(msg); }
+    }
+
+    /** The dock's D-gun mode: true when this touch is its (see above). */
+    private boolean dgunTouch(MotionEvent e) {
+        int a = e.getActionMasked();
+        if (a == MotionEvent.ACTION_DOWN || a == MotionEvent.ACTION_POINTER_DOWN) {
+            Dock d = dock();
+            int i = e.getActionIndex();
+            float x = toX(e.getX(i)), y = toY(e.getY(i));
+            if (d == null || !d.dgun || !inside(d.all, x, y)) return state == State.DGUN;
+            if (a == MotionEvent.ACTION_DOWN) {
+                cancelGesture();
+                state = State.DGUN;
+                dgunRoles.clear();
+                dgunSent = "";
+            } else if (state != State.DGUN) {
+                return false;   // (another gesture began above the dock: it keeps its fingers)
+            }
+            String role = inCircle(d.stickL, x, y) ? "l" : inCircle(d.stickR, x, y) ? "r"
+                    : inside(d.fire, x, y) ? "fire" : inside(d.cancel, x, y) ? "cancel" : "none";
+            dgunRoles.put(e.getPointerId(i), role);
+            if (role.equals("fire")) { act("dgun_fire"); view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY); }
+            else if (role.equals("cancel")) act("dgun_cancel");
+            if (!dgunWatching) { dgunWatching = true; dgunSeenClicks = clicks(); ui.postDelayed(dgunClicks, 40); }
+            dgunSticks(e, d, -1);
+            return true;
+        }
+        if (state != State.DGUN) return false;
+        switch (a) {
+            case MotionEvent.ACTION_MOVE:
+                dgunSticks(e, dock(), -1);
+                break;
+            case MotionEvent.ACTION_POINTER_UP:
+                dgunSticks(e, dock(), e.getActionIndex());
+                dgunRoles.remove(e.getPointerId(e.getActionIndex()));
+                break;
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                dgunRoles.clear();
+                dgunSent = "dgunsticks 0.00 0.00 0.00 0.00";
+                send(dgunSent);
+                state = State.IDLE;
+                break;
+            default:
+                break;
+        }
+        return true;
+    }
+
     /** @param e in the coordinates of the LorieView's parent (as Termux:X11's own listener gets it) */
     boolean onTouch(MotionEvent e) {
         if (velocity != null) velocity.addMovement(e);
+        if (dgunTouch(e)) return true;
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 source("touch");
@@ -670,6 +767,11 @@ final class RtsTouch {
             try {
                 for (String line : text.split("\n")) {
                     String[] f = line.trim().split(" ");
+                    if (d != null && f.length == 4 && (f[0].equals("stickl") || f[0].equals("stickr"))) {
+                        float[] c = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3])};
+                        if (f[0].equals("stickl")) d.stickL = c; else d.stickR = c;
+                        continue;
+                    }
                     if (f.length < 5) continue;   // (the "select box|circle" line: below)
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("dock") && f.length == 6) {
@@ -678,10 +780,14 @@ final class RtsTouch {
                         d.menu = f[5].equals("menu");
                     } else if (d != null && f[0].equals("left")) d.left = r;
                     else if (d != null && f[0].equals("right")) d.right = r;
+                    else if (d != null && f[0].equals("fire")) d.fire = r;
+                    else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }
                 if (d != null) {
                     d.circle = text.contains("\nselect circle");
                     d.draw = text.contains("\ndraw 1");
+                    d.dgun = text.contains("\ndgun 1") && d.stickL != null && d.stickR != null && d.fire != null
+                            && d.cancel != null;
                 }
             } catch (NumberFormatException e) { d = null; }
         }
