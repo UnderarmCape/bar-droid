@@ -21,7 +21,8 @@
 -- and menu (taps press, up and down scroll, a drag on the game box-selects with the dock's filters). The mode and the
 -- dock's rects go to RtsTouch in LuaUI/Config/bardroid_dock.txt; its lines come back in the touch log (dockscroll,
 -- dockfling, docktap, act dock_menu / dock_select_start / dock_select_end). A mouse or the pad always press directly.
--- Every press goes through Spring.SetActiveCommand or a selection, as BAR's own menus do (no GiveOrder: online-safe).
+-- Every press goes through Spring.SetActiveCommand or a selection, as BAR's own menus do (online-safe); the one
+-- GiveOrder, a factory's state for the units it built, goes through pcall (a host can forbid widgets' orders).
 -- Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
@@ -921,9 +922,13 @@ function refreshNow()
 			{ kind = "commander", label = "COMMANDER" },
 			{ kind = "base", label = "BASE" },
 		}
-		if WG.BarDroidRetreat then -- (across the dock under them: hurt units fall back, bardroid_retreat.lua)
-			newRight[#newRight + 1] = { kind = "retreat", w = 2, on = WG.BarDroidRetreat.on(),
-				label = WG.BarDroidRetreat.on() and "AUTO RETREAT: ON" or "AUTO RETREAT: OFF" }
+		if WG.BarDroidRetreat then -- (across the dock under them: hurt units fall back, bardroid_retreat.lua; where the
+			-- host forbids widgets' orders it cannot, and says so)
+			local R = WG.BarDroidRetreat
+			local allowed = not R.allowed or R.allowed()
+			newRight[#newRight + 1] = { kind = "retreat", w = 2, on = allowed and R.on(),
+				label = not allowed and "AUTO RETREAT: OFF IN THIS GAME" or R.on() and "AUTO RETREAT: ON"
+					or "AUTO RETREAT: OFF" }
 		end
 		rk = "home"
 	elseif building and not selectedFactory() then -- a building picked: its shapes, and PLACE under them (the build
@@ -1092,8 +1097,9 @@ local function factoryStates()
 					units[#units + 1] = u
 				end
 			end
-			if state and #units > 0 then
-				Spring.GiveOrderToUnitArray(units, p.give, { state }, 0)
+			-- (through pcall: a host can forbid user widgets' orders, BAR's handler then throws, and a widget that throws
+			-- is removed, the whole dock with it; the units built later still take the factory's state)
+			if state and #units > 0 and pcall(Spring.GiveOrderToUnitArray, units, p.give, { state }, 0) then
 				total = total + #units
 			end
 		end
@@ -1319,7 +1325,13 @@ local function pressItem(item, long)
 			cameraTo(x, y, z, true)
 		end
 	elseif k == "retreat" and WG.BarDroidRetreat then -- (bardroid_retreat.lua: hurt units fall back, on or off)
-		WG.BarDroidRetreat.set(not WG.BarDroidRetreat.on())
+		if WG.BarDroidRetreat.allowed and not WG.BarDroidRetreat.allowed() then
+			if WG.BarDroidPad and WG.BarDroidPad.say then
+				WG.BarDroidPad.say("THIS GAME'S HOST TURNED OFF UNIT CONTROL WIDGETS")
+			end
+		else
+			WG.BarDroidRetreat.set(not WG.BarDroidRetreat.on())
+		end
 	elseif k == "presets" and WG.BarDroidPresets then -- (bardroid_presets.lua: the presets over the grid)
 		WG.BarDroidPresets.open()
 	elseif k == "preset" and WG.BarDroidPresets then -- (one picked: the map's next tap is where they go)

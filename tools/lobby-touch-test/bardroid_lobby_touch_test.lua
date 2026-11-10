@@ -284,7 +284,7 @@ cases = {
 		settle()
 	end,
 	function()
-		check("unit control widgets off: only first person", warningWindow() ~= nil
+		check("unit control widgets off: first person and the dock's automation", warningWindow() ~= nil
 			and warningText():find("First person will not work", 1, true) ~= nil, warningText())
 		check("the warning has an OK button", tapOk())
 		settle()

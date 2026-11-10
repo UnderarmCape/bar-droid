@@ -398,10 +398,20 @@ local function closePresets()
 	end
 end
 
+-- whether this game lets the app's widgets give orders (a host can forbid user widgets' Spring.GiveOrder*: BAR's
+-- handler then throws, and a widget that throws is removed): asked once, as first person asks; no PRESETS without it
+local canOrder
+local function mayOrder()
+	if canOrder == nil then
+		canOrder = pcall(Spring.GiveOrderToUnitArray, {}, CMD.STOP, {}, 0)
+	end
+	return canOrder
+end
+
 function widget:Initialize()
 	WG.BarDroidPresets = {
 		fits = function(units)
-			return #combatUnits(units) > 0
+			return mayOrder() and #combatUnits(units) > 0
 		end,
 		isOpen = function()
 			return opened

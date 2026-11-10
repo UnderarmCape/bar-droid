@@ -225,6 +225,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       there (TraceScreenRay with the minimap; it was the world behind the minimap). Dev phone, upright: the commander
       in the D-gun mode with 6 Cans on it, 100 % to 0 % and no retreat; ZIGZAG with the minimap's far corner tapped:
       10804,6383, that corner of the map; the note "ZIGZAG: TAP THE DESTINATION" shows over the map after the pick.
+- [x] **The day's automation where a host forbids widgets' orders** (allowunitcontrolwidgets off; BAR's handler then
+      throws on a user widget's Spring.GiveOrder*, and a widget that throws is removed): auto retreat and presets would
+      each have gone at their first order, and the dock with them at a factory's state for its units. Now retreat and
+      presets ask once, as first person does (a pcall'd empty order), and stand down: the home grid says "AUTO RETREAT:
+      OFF IN THIS GAME" (a tap says why), PRESETS is not offered; the dock's factory-state order goes through pcall;
+      auto mex needs nothing (its orders are BAR's own spot builder's, a game widget's). The lobby's warning for such a
+      server now names them: "First person will not work in this game, nor auto retreat and presets". Dev phone,
+      upright, a skirmish with the modoption (pad-test -Online's online-on.sh): "[bardroid-retreat] off", 3 Pawns with
+      no PRESETS, the home grid's line, a Bot Lab's unit out and its move state tapped to Maneuver: no error, the dock
+      stays; pad-test -Online, -Chat and lobby-phone-test all pass.
 - [x] **A fight with the day's automation** (dev phone, upright, 2026-11-10): 42 units given by cheat (30 Pawns, 6
       Maces, 4 Rocketeers, 2 Shellshockers) sent with BATTLE LINE to the AI's corner by a minimap tap: the march at the
       slowest one's speed, 12 hurt units fell back in the fight, no error from the app's widgets, 57-61 fps.

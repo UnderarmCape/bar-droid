@@ -304,8 +304,22 @@ local function watchCommanders(f)
 	end
 end
 
+-- whether this game lets the app's widgets give orders: a host can forbid user widgets' Spring.GiveOrder* (BAR's
+-- allowunitcontrolwidgets; its handler then throws, and a widget that throws is removed): asked once, as first person
+-- asks (bardroid_padfp.lua); as the game's widgets (an engine-branch build) the answer is yes
+local canOrder
+local function mayOrder()
+	if canOrder == nil then
+		canOrder = pcall(Spring.GiveOrderToUnitArray, {}, CMD.STOP, {}, 0)
+		if not canOrder then
+			Spring.Echo("[bardroid-retreat] off: this game's host does not let widgets give orders") -- (tools)
+		end
+	end
+	return canOrder
+end
+
 local function lookAt(u)
-	if fell[u] or not spValidUnitID(u) or Spring.GetUnitTeam(u) ~= myTeam or driven(u) then
+	if fell[u] or not spValidUnitID(u) or Spring.GetUnitTeam(u) ~= myTeam or driven(u) or not mayOrder() then
 		return
 	end
 	local h, mh, _, _, built = spGetUnitHealth(u)
@@ -335,6 +349,9 @@ function widget:Initialize()
 	WG.BarDroidRetreat = {
 		on = function()
 			return enabled
+		end,
+		allowed = function() -- (the dock's button says when this game's host forbids it)
+			return mayOrder()
 		end,
 		set = function(on)
 			enabled = on and true or false

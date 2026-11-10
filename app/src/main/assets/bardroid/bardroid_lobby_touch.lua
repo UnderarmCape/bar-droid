@@ -627,7 +627,8 @@ end
 --------------------------------------------------------------------------------
 -- A server's settings that stop the app's controls (BAR's luaui/barwidgets.lua). The controls are user widgets:
 -- custom widgets off, or Anonymous Mode, keeps all of them out of a player's game (a spectator's game is exempt);
--- unit control widgets off only stops first person (the rest of the app gives no Spring.GiveOrder).
+-- unit control widgets off stops first person and the dock's automation that gives orders (auto retreat, presets;
+-- the rest of the app gives no Spring.GiveOrder, and auto mex goes through BAR's own spot builder).
 
 local function warningLines(title, why, colour)
 	return "\255\255\255\255" .. title .. "\n" .. colour.why .. why, colour
@@ -644,8 +645,8 @@ local function controlsWarning(options)
 		return warningLines("Touch and gamepad controls will not work if you play here",
 			"The host turned off custom widgets. They do work if you spectate.", WARNING_RED)
 	end
-	if OFF_VALUES[tostring(options.allowunitcontrolwidgets)] then
-		return warningLines("First person will not work in this game",
+	if OFF_VALUES[tostring(options.allowunitcontrolwidgets)] then -- (and the dock's automation that gives orders)
+		return warningLines("First person will not work in this game, nor auto retreat and presets",
 			"The host turned off unit control widgets. Touch and gamepad controls work.", WARNING_AMBER)
 	end
 end
