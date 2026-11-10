@@ -9,6 +9,7 @@ function widget:GetInfo()
 end
 
 local frames, step, waitUntil, repeats, fails = 0, 0, 0, 0, 0
+local uprightDock = false -- (upright: the dock checked in the menus' place)
 local vsx, vsy = Spring.GetViewGeometry()
 local cx = math.floor(vsx / 2)
 
@@ -243,18 +244,33 @@ local cases = {
 	function() camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.9) end,
 	settle,
 	function()
+		-- (upright the portrait dock stands in BAR's menus' place: the pointer on it answers interface)
+		local P = WG.BarDroidPortrait
+		local d = P and P.active and P.active() and P.dock and P.dock()
+		if d then
+			uprightDock = true
+			Spring.WarpMouse(math.floor((d[1] + d[3]) / 2), math.floor((d[2] + d[4]) / 2))
+			return
+		end
 		local o = WG.ordermenu
 		if not (o and o.getPosition and (not o.getIsShowing or o.getIsShowing())) then
 			log("SKIP the menus' answers: no order menu shown")
-			step = step + 6
+			step = step + 5 -- (to the done step: the menus' five steps)
 			return
 		end
 		local x, y, w, h = o.getPosition()
 		Spring.WarpMouse(math.floor((x + w / 2) * vsx), math.floor((y - h / 2) * vsy))
 	end,
-	function() return hoverAnswer("the pointer on the order menu answers interface", 1) end,
+	function()
+		return hoverAnswer(uprightDock and "the pointer on the upright dock answers interface"
+			or "the pointer on the order menu answers interface", 1)
+	end,
 	function()
 		local b = WG.buildmenu
+		if uprightDock then -- (the dock is the build menu too: checked above)
+			step = step + 1
+			return
+		end
 		if not (b and b.getSize and b.getIsShowing and b.getIsShowing()) then
 			log("SKIP the build menu's answer: none shown")
 			step = step + 1

@@ -190,6 +190,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       steps from the scale the lobby starts at (under 115 % to 130 %, else to 100 %: sideways 100 130 100, upright 135
       100 130), "Start again" checked before the test's game loads (back from a game the upright lobby puts its 135 %
       back). Dev phone: all pass sideways and upright.
+      touch-phone-test upright too: its camera checks passed, but with no BAR order menu (the dock stands in its
+      place) its skip jumped six steps where five were left, past its own "done" ("did not finish in 4 minutes");
+      upright it now checks the pointer on the dock answers interface, the map map. Dev phone: all pass both ways.
 - [x] **The lobby's bottom buttons larger, in pages**: fewer, larger buttons a page, a swipe pages through them with a
       subtle magnetic snap (pages, not lines). 3 x 2 a page (17 buttons: 3 pages), 60 high in the lobby's larger font;
       a sideways swipe moves them with the finger (past the ends a third as far), let go they settle on the nearest page,
