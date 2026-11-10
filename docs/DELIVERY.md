@@ -127,6 +127,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [ ] **Every loading screen's logos and pictures natural on every aspect ratio, landscape and upright** (Kailil,
       2026-11-10): the engine's Recoil splash (stretched to the screen), Chobby's picture (16:9, cut to the screen),
       BAR's load screen pictures (bitmaps/loadpictures, cut to the screen: upright a narrow strip of them).
+      Done: the engine's splash (`SplashPicture`: before each start Recoil's logo from the engine's own picture laid on
+      its grey in a picture of the screen's shape, the game's orientation, which the engine's stretch leaves as it is;
+      launch-bar.sh's SplashScreenDir by absolute path; remade only when the shape or the picture changes). Dev phone:
+      1920 x 895 sideways, 895 x 1920 upright, the logo in its proportions both ways. Chobby's picture: upright above;
+      sideways BAR's own cut is fine (the logo is a third of its width). Left: BAR's load pictures upright.
 - [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
       a group button pressed puts that unit type in the group, and every one of that type built later; holding a
       group's picture takes the assignment off. "+ NEW" is BAR's Auto Group's Alt+number

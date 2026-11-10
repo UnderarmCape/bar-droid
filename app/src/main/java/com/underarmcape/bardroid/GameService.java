@@ -246,6 +246,7 @@ public class GameService extends Service {
             startActivity(ui);
 
             setStatus("launching engine (" + mode + ")");
+            SplashPicture.write(this, paths.bar, Prefs.engineVersion, Prefs.portrait);   // (launch-bar.sh: SplashScreenDir)
             Map<String, String> env = new HashMap<>();
             env.put("ENGINE_VER", Prefs.engineVersion);
             env.put("MODE", mode);

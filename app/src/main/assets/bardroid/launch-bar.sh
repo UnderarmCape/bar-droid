@@ -502,26 +502,30 @@ fi
 # MenuLoadscreens/loadscreen.png as a 16:9 picture cut to the screen's shape, so upright only the middle quarter of its
 # width showed, the word cut off. Upright the app's version is there instead (Installer's .bardroid-loadscreen-upright.png:
 # the word scaled into that quarter on the picture's own grey); a picture already there is kept aside and put back at a
-# start that is not upright. The engine shows SplashScreenDir's pictures stretched to the screen: upright it points at
-# none (the engine's own logo, as on a phone without the folder).
-SPLASH_LINE="$BAR/.bardroid-splash-line"
+# start that is not upright.
 LOADPIC="$BAR/MenuLoadscreens/loadscreen.png"
 if [ "${BARDROID_PORTRAIT:-0}" = 1 ] && [ -f "$BAR/.bardroid-loadscreen-upright.png" ]; then
   mkdir -p "$BAR/MenuLoadscreens"
   if [ -f "$LOADPIC" ] && [ ! -f "$BAR/.bardroid-loadscreen-ours" ]; then mv -f "$LOADPIC" "$BAR/.bardroid-loadscreen-orig.png"; fi
   cp -f "$BAR/.bardroid-loadscreen-upright.png" "$LOADPIC" && touch "$BAR/.bardroid-loadscreen-ours"
-  [ -f "$SPLASH_LINE" ] || { grep -E '^SplashScreenDir *=' "$BAR/springsettings.cfg" > "$SPLASH_LINE" 2>/dev/null || : > "$SPLASH_LINE"; }
-  sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
-  echo "SplashScreenDir = ./bardroid-no-splash" >> "$BAR/springsettings.cfg"
 elif [ -f "$BAR/.bardroid-loadscreen-ours" ]; then
   rm -f "$LOADPIC" "$BAR/.bardroid-loadscreen-ours"
   [ -f "$BAR/.bardroid-loadscreen-orig.png" ] && mv -f "$BAR/.bardroid-loadscreen-orig.png" "$LOADPIC"
   rmdir "$BAR/MenuLoadscreens" 2>/dev/null || :
-  if [ -f "$SPLASH_LINE" ]; then
-    sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
-    cat "$SPLASH_LINE" >> "$BAR/springsettings.cfg"
-    rm -f "$SPLASH_LINE"
-  fi
+fi
+# The engine's splash in this screen's shape (GameService made it: SplashPicture): the engine stretches its splash over
+# the screen, and Recoil's 16:9 logo came out of shape upright and on the folded Fold7's wide side. SplashScreenDir by
+# its absolute path (relative, it is the engine's own folder, which has none: the logo in base/). The player's line is
+# kept in .bardroid-splash-line and put back once the picture is gone.
+SPLASH_LINE="$BAR/.bardroid-splash-line"
+if [ -f "$BAR/bardroid-splash/splash.png" ]; then
+  [ -f "$SPLASH_LINE" ] || { grep -E '^SplashScreenDir *=' "$BAR/springsettings.cfg" > "$SPLASH_LINE" 2>/dev/null || : > "$SPLASH_LINE"; }
+  sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
+  echo "SplashScreenDir = $BAR/bardroid-splash" >> "$BAR/springsettings.cfg"
+elif [ -f "$SPLASH_LINE" ]; then
+  sed -i '/^SplashScreenDir *=/d' "$BAR/springsettings.cfg"
+  cat "$SPLASH_LINE" >> "$BAR/springsettings.cfg"
+  rm -f "$SPLASH_LINE"
 fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
