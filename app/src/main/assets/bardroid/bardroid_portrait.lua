@@ -177,6 +177,10 @@ end
 -- buildmenu to 3x4 ... reduce to 3x3 at minimum 3x2"); the dock no taller than it needs, DOCK_MAX at most
 
 local showSel, showGroups = true, true -- the selection row and the groups strip shown (refreshNow decides)
+local mobilePicked = false -- units that move are picked (refreshNow): a drag on the game draws their orders (writeDock)
+-- the orders a drag draws when armed (BAR's custom formations take them with the right button; another order armed
+-- would be cancelled by it)
+local DRAW_CMDS = { [CMD.MOVE] = true, [CMD.FIGHT] = true, [CMD.PATROL] = true, [CMD.ATTACK] = true }
 
 local function layout()
 	markDirty()
@@ -239,8 +243,10 @@ local function writeDock(force)
 		local function r(x)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
-		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\n", r(L.dock), menu and "menu" or "pad", r(L.left),
-			r(L.right), selStyle)
+		local _, cmd = spGetActiveCommand()
+		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked)
+		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
+			r(L.left), r(L.right), selStyle, draw and 1 or 0)
 	else
 		text = "dock none\n"
 	end
@@ -511,6 +517,43 @@ local function placeShapes()
 	}
 end
 
+-- Each item's cell in a half: its row and column and the columns and rows it spans (item.w, item.h, 1 by default),
+-- packed in order, each at the first free place: FIGHT across both columns at twice the height, MOVE and PATROL
+-- side by side as tall, then the rest (Kailil, 2026-11-09: "fight, and move and maybe patrol needs to be the largest
+-- buttons in the orders ui"). Made with the items (refreshNow): cells, rows.
+local function pack(items, cols)
+	local cells, used, rows = {}, {}, 0
+	local function free(r, c, w, h)
+		for rr = r, r + h - 1 do
+			for cc = c, c + w - 1 do
+				if cc >= cols or used[rr * cols + cc] then
+					return false
+				end
+			end
+		end
+		return true
+	end
+	local r, c = 0, 0
+	for i, it in ipairs(items) do
+		local w, h = min(cols, it.w or 1), it.h or 1
+		while not free(r, c, w, h) do
+			c = c + 1
+			if c >= cols then
+				c, r = 0, r + 1
+			end
+		end
+		for rr = r, r + h - 1 do
+			for cc = c, c + w - 1 do
+				used[rr * cols + cc] = true
+			end
+		end
+		cells[i] = { row = r, col = c, w = w, h = h }
+		rows = max(rows, r + h)
+	end
+	return cells, rows
+end
+local cellsOf = { left = {}, right = {} }
+
 local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
 
 -- what each half shows, refreshed a few times a second and after every press
@@ -532,6 +575,14 @@ function refreshNow()
 	for _, c in pairs(Spring.GetGroupList() or {}) do
 		if c > 0 then
 			anyGroup = true
+			break
+		end
+	end
+	mobilePicked = false
+	for d in pairs(spGetSelectedUnitsCounts() or {}) do
+		local ud = type(d) == "number" and UnitDefs[d]
+		if ud and ud.canMove and not ud.isFactory then
+			mobilePicked = true
 			break
 		end
 	end
@@ -619,13 +670,38 @@ function refreshNow()
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
+		if mobilePicked then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
+			local big = { [CMD.FIGHT] = { 1, 2, 2 }, [CMD.MOVE] = { 2, 1, 2 }, [CMD.PATROL] = { 3, 1, 2 } }
+			local first, rest = {}, {}
+			for _, it in ipairs(orders) do
+				local b = it.kind == "order" and big[it.id]
+				if b then
+					it.w, it.h = b[2], b[3]
+					first[b[1]] = it
+				else
+					rest[#rest + 1] = it
+				end
+			end
+			newRight = {}
+			for i = 1, 3 do
+				if first[i] then
+					newRight[#newRight + 1] = first[i]
+				end
+			end
+			for _, it in ipairs(rest) do
+				newRight[#newRight + 1] = it
+			end
+		end
 		newRight[#newRight + 1] = style
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
 	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
-	snapSet(leftScroll, math.ceil(#leftItems / 3), L.leftRows or 2, lk == leftKind and not newPick)
-	snapSet(rightScroll, math.ceil(#rightItems / 2), rk == "home" and HOME_ROWS or L.rightRows or 3,
+	local leftRowsN, rightRowsN
+	cellsOf.left, leftRowsN = pack(leftItems, 3)
+	cellsOf.right, rightRowsN = pack(rightItems, 2)
+	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
+	snapSet(rightScroll, rightRowsN, rk == "home" and HOME_ROWS or L.rightRows or 3,
 		rk == rightKind and not newPick)
 	if lk ~= leftKind or rk ~= rightKind then
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
@@ -838,10 +914,31 @@ local function half(side)
 	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
 end
 
+-- an item's rect in its half as the rows stand scrolled (pack)
+local function cellRect(side, i)
+	local r, s, _, _, cw, ch = half(side)
+	local c = cellsOf[side][i]
+	if not c then
+		return nil
+	end
+	local y1 = r[4] - (c.row - s.pos) * (ch + L.gap)
+	local x0 = r[1] + c.col * (cw + L.gap)
+	return { x0, y1 - (c.h * ch + (c.h - 1) * L.gap), x0 + c.w * cw + (c.w - 1) * L.gap, y1 }
+end
+
 -- the item under a point of a half
 local function itemAt(side, x, y)
 	local r, s, items, cols, cw, ch = half(side)
 	if not inRect(x, y, r) then
+		return nil
+	end
+	if side == "right" then -- (packed: the cell that holds the point)
+		for i, it in ipairs(items) do
+			local cr = cellRect(side, i)
+			if cr and inRect(x, y, cr) then
+				return it
+			end
+		end
 		return nil
 	end
 	local row = floor((r[4] - y) / (ch + L.gap) + s.pos)
@@ -989,7 +1086,8 @@ local function drawButton(item, r)
 		button(r)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
-	textIn(item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * 0.46), "\255\240\240\240", font)
+	textIn(item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
+		"\255\240\240\240", font)
 	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
 		local c = STATE_COLORS[min(3, (item.state or 0) + 1)]
 		local w = (r[3] - r[1]) * 0.28
@@ -1004,21 +1102,15 @@ local function drawButton(item, r)
 end
 
 local function drawHalf(side)
-	local r, s, items, cols, cw, ch = half(side)
+	local r, s, items = half(side)
 	gl.Scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
-	local first = floor(s.pos)
-	for row = first - 1, first + s.visible + 1 do
-		for col = 0, cols - 1 do
-			local item = row >= 0 and items[row * cols + col + 1]
-			if item then
-				local y1 = r[4] - (row - s.pos) * (ch + L.gap)
-				local x0 = r[1] + col * (cw + L.gap)
-				local rect = { x0, y1 - ch, x0 + cw, y1 }
-				if side == "left" then
-					drawTile(item, rect)
-				else
-					drawButton(item, rect)
-				end
+	for i, item in ipairs(items) do
+		local rect = cellRect(side, i)
+		if rect and rect[2] < r[4] and rect[4] > r[2] then -- (in sight)
+			if side == "left" then
+				drawTile(item, rect)
+			else
+				drawButton(item, rect)
 			end
 		end
 	end

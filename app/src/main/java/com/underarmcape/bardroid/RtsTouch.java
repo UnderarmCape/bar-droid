@@ -108,7 +108,11 @@ final class RtsTouch {
     // meanwhile picks one, "docktap x y").
     // (circle: the dock's selection style is CIRCLE, the pad's area selection by finger: "dockcircle x y r" lines from
     // where the finger came down out to it, the widget picks the units in it; else BAR's box)
-    private static final class Dock { float[] all, left, right; boolean menu, circle; }
+    // (draw: units that move are picked, or Move, Fight, Patrol or Attack is armed: a drag on the game draws their path
+    // or line, BAR's own right drag (cmd_customformations2: a path for one unit, a formation line for more), at once
+    // and in either mode; Kailil, 2026-11-09: paths drawn "by dragging my finger in the top half". A tap then a drag
+    // still selects; the camera is the dock's.)
+    private static final class Dock { float[] all, left, right; boolean menu, circle, draw; }
     private Dock dockCache;
     private long dockReadAt, dockModified;
     private boolean inDock;                          // this touch began on the dock
@@ -428,7 +432,7 @@ final class RtsTouch {
                         dockScroll();
                         return;
                     }
-                } else if (!gridHeld && place() == null && dockMenuOpen()) {   // the game above the open dock: a drag
+                } else if (!gridHeld && place() == null && dockMenuOpen() && !dockDraw()) {   // the game above the open dock: a drag
                     dockSelecting = true;                                       // selects: BAR's box, or a circle
                     act("dock_select_start");
                     Dock d = dock();
@@ -675,7 +679,10 @@ final class RtsTouch {
                     } else if (d != null && f[0].equals("left")) d.left = r;
                     else if (d != null && f[0].equals("right")) d.right = r;
                 }
-                if (d != null) d.circle = text.contains("\nselect circle");
+                if (d != null) {
+                    d.circle = text.contains("\nselect circle");
+                    d.draw = text.contains("\ndraw 1");
+                }
             } catch (NumberFormatException e) { d = null; }
         }
         if (d != null && (d.left == null || d.right == null)) d = null;
@@ -686,6 +693,18 @@ final class RtsTouch {
     private boolean dockMenuOpen() {
         Dock d = dock();
         return d != null && d.menu;
+    }
+
+    private boolean dockDraw() {
+        Dock d = dock();
+        return d != null && d.draw;
+    }
+
+    /** A drag on the game with units to order: BAR's right drag from where the finger came down (dockDraw). */
+    private void startRightDrag() {
+        state = State.RIGHT_HOLD;
+        press(downX, downY, InputStub.BUTTON_RIGHT, true);
+        moveCursor(curX, curY);
     }
 
     private void padDown(MotionEvent e) {
@@ -837,6 +856,7 @@ final class RtsTouch {
         }
         ui.removeCallbacks(hoverTimeout);
         if (hover == HOVER_MAP && (startShapeDrag() || startPlaceDrag())) return;
+        if (hover == HOVER_MAP && !gridHeld && place() == null && dockDraw()) { startRightDrag(); return; }
         if (hover == HOVER_SCROLL && Math.abs(curY - downY) >= Math.abs(curX - downX)) startScroll();
         else if (hover == HOVER_INTERFACE || hover == HOVER_SCROLL) startLeftDrag();   // (a window's sliders: sideways)
         else startPan();
