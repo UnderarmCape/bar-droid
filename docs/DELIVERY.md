@@ -325,6 +325,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       dot gold, Chobby's caching words in it while they change and its version line off upright. Dev phone, offline
       lobby: the 17 buttons in that order over 3 pages, the arrows 1 to 3 and back; lobby-phone-test passes. ("curser
       selection" read as a carousel's page selector; to ask him if he meant the pad's pointer.)
+- [x] **The minimap upright was half size** (found 2026-11-10 in a screenshot): `bardroid_minimap.lua`'s half size
+      until tapped is the unfolded screen's (Kailil, 2026-10-28), but it took any screen not wide for that one, so a
+      phone upright (the Fold7's cover screen too) got it after 7 s: about 140x90 pixels of 1080. The unfolded screen is
+      near-square both ways now; upright the minimap stays BAR's size (dev phone: 275x185).
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of
