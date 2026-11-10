@@ -341,7 +341,12 @@ local gameLoaded = false -- a game runs beside the lobby (ActivateGame / Activat
 -- scrolling and it scrolls in pages. Not line by one ... a subtle snap animation to each swipe"): PAGE_COLS x PAGE_ROWS
 -- larger buttons a page, the pages side by side in a strip a sideways swipe moves with the finger; let go it settles on
 -- the nearest page (a flick: the next one) with a small overshoot; dots under it say which page
-local PAGE_COLS, PAGE_ROWS, GRID_ROW_H, GRID_GAP, GRID_DOTS_H = 3, 2, 60, 4, 12
+-- Kailil, 2026-11-10 ("we need a curser selection", his pages unseen under Chobby's version line): the page strip under
+-- the buttons taller, a tap on its arrows turns the page (on a dot: that page), Chobby's caching line in it and its
+-- version line off while upright (both lay over the strip at the screen's foot)
+local PAGE_COLS, PAGE_ROWS, GRID_ROW_H, GRID_GAP, GRID_DOTS_H = 3, 2, 60, 4, 28
+local GRID_ORDER = { "multiplayer", "skirmish", "scenarios", "settings", "chat", "friends",
+	"parties", "load game", "downloads", "account", "login", "replays", "links" } -- (Login: Account's place offline)
 local PAGE_SETTLE, PAGE_OVERSHOOT, PAGE_FLICK = 0.28, 0.9, 600 -- seconds; easeOutBack's; Chili pixels a second
 local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
 	stripX = 0, anim = nil }
@@ -388,13 +393,26 @@ local function chobbyButtons()
 	end
 	walk(chobbyObject("buttonsHolder_buttons"), false)
 	walk(chobbyObject("holder_status"), true)
-	for i, f in ipairs(out) do -- (Exit last, away from the thumbs' first reach: Chobby makes it first)
-		local c = string.lower(f.button.caption)
+	-- Kailil's order (2026-11-10: "the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat,
+	-- friends. Next page. Parties, load game, downloads, account, and you sort the rest"): those by their words, then
+	-- Replays and Links (the page's last two), the rest as Chobby has them, Exit last (away from the thumbs' first reach)
+	local rank = {}
+	for i, f in ipairs(out) do
+		local c = string.lower(f.button.caption):gsub("\255...", ""):gsub("^%s+", "")
+		rank[f] = 100 + i
+		for k, word in ipairs(GRID_ORDER) do
+			if c:sub(1, #word) == word then
+				rank[f] = k
+				break
+			end
+		end
 		if c == "exit" or c == "quit" then
-			table.insert(out, table.remove(out, i))
-			break
+			rank[f] = 1000
 		end
 	end
+	table.sort(out, function(a, b)
+		return rank[a] < rank[b]
+	end)
 	return out
 end
 
@@ -464,25 +482,49 @@ local function uprightGrid()
 		resizable = false, draggable = false,
 		padding = { 0, GRID_GAP, 0, GRID_GAP },
 	})
-	if pages > 1 then -- (the page dots, under the buttons: the one shown lit)
+	upright.caching = nil
+	if pages > 1 then -- (the page strip, under the buttons: arrows at its ends, the dots between, the one shown lit)
 		Chili.Control:New({
 			parent = upright.grid,
 			x = 0, bottom = 0, width = "100%", height = dots,
 			padding = { 0, 0, 0, 0 },
 			drawcontrolv2 = true,
 			DrawControl = function(obj)
-				local s, gap = 6, 10
+				local s, gap = 8, 12
 				local x0 = (obj.width - (upright.pages * s + (upright.pages - 1) * gap)) / 2
 				local at = -upright.stripX / math.max(1, screen0.width)
+				local cy = obj.height / 2
 				gl.Texture(false)
 				for p = 0, upright.pages - 1 do
 					local lit = math.max(0, 1 - math.abs(at - p)) -- (lit as the strip passes it)
-					gl.Color(1, 1, 1, 0.3 + 0.6 * lit)
+					gl.Color(1, 0.78 + 0.2 * (1 - lit), 0.25 + 0.75 * (1 - lit), 0.3 + 0.7 * lit)
 					local x = x0 + p * (s + gap)
-					gl.Rect(x, (obj.height - s) / 2, x + s, (obj.height + s) / 2)
+					gl.Rect(x, cy - s / 2, x + s, cy + s / 2)
 				end
+				local a = obj.height * 0.34 -- (the arrows, dim at the first and the last page)
+				gl.LineWidth(4)
+				for side = -1, 1, 2 do
+					local to = upright.page + side
+					gl.Color(1, 1, 1, (to >= 0 and to < upright.pages) and 0.85 or 0.2)
+					local x = side < 0 and obj.height * 0.6 or obj.width - obj.height * 0.6
+					gl.BeginEnd(GL.LINE_STRIP, function()
+						gl.Vertex(x - side * a * 0.5, cy - a)
+						gl.Vertex(x + side * a * 0.5, cy)
+						gl.Vertex(x - side * a * 0.5, cy + a)
+					end)
+				end
+				gl.LineWidth(1)
 				gl.Color(1, 1, 1, 1)
 			end,
+		})
+		upright.caching = Chili.Label:New({ -- (Chobby's caching words, mirrored: uprightMirror; at the strip's own y: with
+			-- bottom = 0 they stood over the last row's first button)
+			parent = upright.grid,
+			x = dots * 1.2, y = rows * (GRID_ROW_H + GRID_GAP) - GRID_GAP, width = "38%", height = dots,
+			autosize = false,
+			caption = "",
+			valign = "center",
+			objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(1),
 		})
 	end
 	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(3)
@@ -506,7 +548,33 @@ local function uprightGrid()
 		upright.mirror[#upright.mirror + 1] = { button = target, mine = mine, top = f.top, base = base }
 	end
 	upright.grid:BringToFront()
-	Spring.Echo(string.format("[bardroid-lobby] grid: %d buttons, %d a page, %d pages", #found, perPage, pages)) -- (tools)
+	local words = {}
+	for i, f in ipairs(found) do
+		words[i] = f.button.caption:gsub("\255...", "")
+	end
+	Spring.Echo(string.format("[bardroid-lobby] grid: %d buttons, %d a page, %d pages: %s", #found, perPage, pages,
+		table.concat(words, " | "))) -- (tools)
+end
+
+-- a tap on the page strip (Chili's point): the page it asks for (an arrow: the next that way, a dot: its own), else nil
+local function stripPage(hx, hy)
+	local g = upright.grid
+	if not (g and upright.pages > 1) then
+		return nil
+	end
+	local bottom = g.y + g.height - GRID_GAP
+	if hy < bottom - GRID_DOTS_H - GRID_GAP or hy > g.y + g.height then
+		return nil
+	end
+	local x = hx - g.x
+	if x < g.width * 0.3 then
+		return upright.page - 1
+	elseif x > g.width * 0.7 then
+		return upright.page + 1
+	end
+	local s, gap = 8, 12
+	local x0 = (g.width - (upright.pages * s + (upright.pages - 1) * gap)) / 2
+	return math.max(0, math.min(upright.pages - 1, math.floor((x - x0 + gap / 2) / (s + gap))))
 end
 
 -- The strip settled on a page (a short ease with a small overshoot, uprightAnimate)
@@ -559,6 +627,38 @@ local function uprightMirror()
 			mine:Invalidate()
 		end
 	end
+	-- Chobby's caching line and version line (at the screen's foot, over the page strip) off; the caching words in the
+	-- strip while they change (Chobby hides its line when it is done, which it cannot do once hidden here: words that
+	-- stand 3 s are taken for done)
+	local cl = real(chobbyObject("cachingLabel"))
+	if cl then
+		upright.labels = upright.labels or {}
+		if upright.labels[cl] == nil then
+			upright.labels[cl] = cl.visible ~= false
+		end
+		for _, c in ipairs(cl.parent and cl.parent.children or {}) do
+			c = real(c)
+			if upright.labels[c] == nil and type(c.caption) == "string" and c.caption:find("Engine: ", 1, true) then
+				upright.labels[c] = c.visible ~= false
+			end
+		end
+		for l in pairs(upright.labels) do
+			if l.visible ~= false then
+				l:SetVisibility(false)
+			end
+		end
+		local text, t = type(cl.caption) == "string" and cl.caption or "", Spring.GetTimer()
+		if upright.cachingText == nil then
+			upright.cachingText = text -- (the words as first seen: not news)
+		elseif text ~= upright.cachingText then
+			upright.cachingText, upright.cachingAt = text, t
+		end
+		local show = upright.cachingAt and Spring.DiffTimers(t, upright.cachingAt) < 3 and text or ""
+		local mine = upright.caching
+		if mine and not mine.disposed and mine.caption ~= show then
+			mine:SetCaption(show)
+		end
+	end
 end
 
 local function uprightSet(on)
@@ -585,6 +685,14 @@ local function uprightSet(on)
 		end
 	end
 	upright.mirror = {}
+	for l, was in pairs(upright.labels or {}) do -- (Chobby's foot lines back; the caching one only while it still runs)
+		local caching = l.name == "cachingLabel"
+		if was and not l.disposed and (not caching or (upright.cachingAt
+			and Spring.DiffTimers(Spring.GetTimer(), upright.cachingAt) < 3)) then
+			l:SetVisibility(true)
+		end
+	end
+	upright.labels, upright.cachingText, upright.cachingAt = nil, nil, nil
 	local column = chobbyObject("mainWindow_buttonsHolder")
 	if column then
 		column:SetVisibility(true)
@@ -916,7 +1024,13 @@ function widget:MouseRelease(x, y)
 			end
 			uprightSettle(page)
 		elseif not p.moved then
-			click(x, y)
+			local _, _, hx, hy = chiliPoint(x, y)
+			local page = stripPage(hx, hy)
+			if page then
+				uprightSettle(page)
+			else
+				click(x, y)
+			end
 		end
 		return true
 	end
