@@ -81,14 +81,16 @@ local function shrink()
 		return
 	end
 	local target = normalHeight * SMALL
-	if mode() == "row" then -- (as tall as BAR's top bar: its buttons' row, the minimap's padding left out)
+	if mode() == "row" then
+		-- (as tall as BAR's top bar's box: its area less the margin its box keeps inside it, two paddings, and the
+		-- minimap's own padding; as tall as the area it stood 12 pixels below the buttons' box, dev phone 2026-11-10)
 		local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
 		local _, vsy = Spring.GetViewGeometry()
 		if not (p and p[4] and p[2] and p[4] > p[2]) then
 			return
 		end
 		local pad = WG.FlowUI and WG.FlowUI.elementPadding or 0
-		target = math.max(0.02, (p[4] - p[2] - pad) / vsy)
+		target = math.max(0.02, (p[4] - p[2] - 3 * pad) / vsy)
 	end
 	small = true
 	setMaxHeight(target)
