@@ -336,6 +336,7 @@ end
 -- (resizes, its panels): checked twice a second and laid out again.
 local UPRIGHT = 1.05
 local SCALE_UPRIGHT = 1.35
+local gameLoaded = false -- a game runs beside the lobby (ActivateGame / ActivateMenu, below): no grid then
 local GRID_COLS, GRID_ROW_H, GRID_GAP = 6, 46, 4
 local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil }
 
@@ -520,7 +521,7 @@ local function uprightUpdate(now)
 	if not (screen0 and WG.Chobby and WG.Chobby.interfaceRoot) then
 		return
 	end
-	uprightSet(screen0.height > screen0.width * UPRIGHT)
+	uprightSet(not gameLoaded and screen0.height > screen0.width * UPRIGHT)
 	if not upright.on then
 		return
 	end
@@ -936,12 +937,14 @@ end
 -- leaves "voice" lines to it too: Kailil, 2026-11-08, "the voice chat is also sending chats to the lobby")
 -- The rest of speaking goes with the words: "voice_on" put the lobby's "< SPEAK TO SERVER ROOM >" up too, and the
 -- D-pad's channel steps switched the lobby's chat tabs behind the game (2026-11-08).
-local gameLoaded = false
 function widget:ActivateGame()
 	gameLoaded = true
 	voiceOn = false
 	if voicePanel then
 		voicePanel:Hide()
+	end
+	if screen0 then -- (the upright grid is the lobby's: it lay over the game's dock, Kailil's screenshot 2026-11-09)
+		uprightSet(false)
 	end
 end
 function widget:ActivateMenu() gameLoaded = false end
