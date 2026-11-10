@@ -473,6 +473,7 @@ public final class Installer {
             catch (IOException e) { Log.e("install", c[3] + " not written: " + e); }
         }
         writeLoadTips(files);
+        writeLowRamLine(files);
     }
 
     /**
@@ -502,6 +503,26 @@ public final class Installer {
             writeFile(new File(p.bar, ".bardroid-tips"), out.toString());
         } catch (IOException | org.json.JSONException e) {
             Log.e("install", "the loading screen's tips not read: " + e);
+        }
+    }
+
+    /**
+     * The loading screen's low memory line (Kailil, 2026-11-10: upright it ran off the screen): BAR prints it for a
+     * machine under 11 GB as one line centred across the top, sized by the screen's height, from the game's archive
+     * only; GameActivity shows it wrapped over BAR's band. The English text (language/en/interface.json
+     * ui.loadScreen.lowRamWarning), its colours left out, into .bardroid-lowram.
+     */
+    private void writeLowRamLine(Map<String, String> files) {
+        if (files == null) return;
+        try {
+            String json = poolText(files.get("language/en/interface.json"));
+            if (json == null) return;
+            String t = new org.json.JSONObject(json).getJSONObject("ui").getJSONObject("loadScreen")
+                    .optString("lowRamWarning", "");
+            t = t.replaceAll("%\\{[A-Za-z]+\\}", "").replaceAll("\\s+", " ").replace(" .", ".").trim();
+            writeFile(new File(p.bar, ".bardroid-lowram"), t);
+        } catch (IOException | org.json.JSONException e) {
+            Log.e("install", "the loading screen's low memory line not read: " + e);
         }
     }
 

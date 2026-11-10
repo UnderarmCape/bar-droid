@@ -348,6 +348,7 @@ public class GameActivity extends MainActivity {
             updateCatchup();
             updateFreeMemory();
             updateLoadTip();
+            updateLowRamLine();
             updateRenderDrop();
             catchupHandler.postDelayed(this, 500);
         }
@@ -443,6 +444,50 @@ public class GameActivity extends MainActivity {
         }
         if (loadTip != null && (loadTip.getVisibility() == View.VISIBLE) != show) {
             loadTip.setVisibility(show ? View.VISIBLE : View.GONE);
+        }
+    }
+
+    // The loading screen's low memory line upright (Kailil, 2026-11-10: it ran off the screen): BAR prints its warning for
+    // a machine under 11 GB of RAM as one line centred across the top in a band 5 % of the screen tall, sized by the
+    // screen's height, so upright both its ends are cut off; its loading screen runs only from the game's archive. This
+    // covers BAR's band with the same words (Installer.writeLowRamLine: .bardroid-lowram) wrapped to the screen, as tall as
+    // they need, while upright and loading, where BAR shows it (BAR's own test: between 1 and 11 GB).
+    private android.widget.TextView lowRamLine;
+
+    private void updateLowRamLine() {
+        View root = getWindow().getDecorView();
+        boolean upright = root.getHeight() > root.getWidth() * 1.05f;
+        boolean show = upright && GameService.loading() && !isInPictureInPictureMode()
+                && (touch == null || !touch.gameWidgetRunning())
+                && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
+        if (show && lowRamLine == null) {
+            android.app.ActivityManager.MemoryInfo mem = new android.app.ActivityManager.MemoryInfo();
+            ((android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE)).getMemoryInfo(mem);
+            long mb = mem.totalMem / (1024 * 1024);
+            if (mb <= 1000 || mb >= 11000) return;
+            String text;
+            try {
+                text = new String(java.nio.file.Files.readAllBytes(new java.io.File(new java.io.File(getFilesDir(), "bar"),
+                        ".bardroid-lowram").toPath()), java.nio.charset.StandardCharsets.UTF_8).trim();
+            } catch (java.io.IOException e) { return; }
+            if (text.isEmpty()) return;
+            android.widget.TextView v = new android.widget.TextView(this);
+            float dp = getResources().getDisplayMetrics().density;
+            v.setText(text);
+            v.setTextColor(0xFFCCCCCC);
+            v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 13);
+            v.setTypeface(android.graphics.Typeface.DEFAULT_BOLD);
+            v.setGravity(android.view.Gravity.CENTER);
+            v.setBackgroundColor(0xFF1A1A1A);   // (BAR's band is 0.15 grey at 0.7 over the picture: this covers it)
+            v.setMinHeight((int) Math.ceil(root.getHeight() * 0.05f) + 1);
+            v.setPadding((int) (16 * dp), (int) (6 * dp), (int) (16 * dp), (int) (6 * dp));
+            addContentView(v, new android.widget.FrameLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.TOP));
+            lowRamLine = v;
+            Log.i("app", "loading screen: the low memory line wrapped to the upright screen (" + mb + " MB)");
+        }
+        if (lowRamLine != null && (lowRamLine.getVisibility() == View.VISIBLE) != show) {
+            lowRamLine.setVisibility(show ? View.VISIBLE : View.GONE);
         }
     }
 

@@ -205,8 +205,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       NOTICE.md) under BAR's names in the write folder while upright, where the engine looks before the game (only this
       phone's drawing; not synced); a start not upright takes them away. Dev phone: upright the whole Cortex picture,
       sideways BAR's own. Sideways BAR's cut of its pictures stays (as on a wide PC screen).
-- [ ] **BAR's low-memory line at the top of its load screen runs off the left upright** ("... memory. Try running with
-      lower settings", BAR's LuaIntro, drawn for a wide screen; seen 2026-11-10 on the dev phone, 8 GB).
+- [x] **BAR's low-memory line at the top of its load screen runs off the left upright** ("... memory. Try running with
+      lower settings", BAR's LuaIntro, drawn for a wide screen; seen 2026-11-10 on the dev phone, 8 GB). BAR prints it
+      (machines under 11 GB) as one line centred in a band 5 % of the screen tall, sized by the screen's height. Its
+      load screen runs only from the game's archive: an addon of the app's in the write folder's LuaIntro/Addons was
+      not even listed (the handler's scan has no VFS mode set: archive only), and its translations load the same way,
+      so as with the tips (writeLoadTips) the app covers it: Installer.writeLowRamLine puts BAR's English text
+      (language/en/interface.json ui.loadScreen.lowRamWarning, colours out) in .bardroid-lowram, and GameActivity shows
+      it over BAR's band, wrapped to the screen, while upright and loading on a phone BAR's own test picks (1 to 11 GB).
+      Dev phone, upright (7072 MB): the sentence whole on three lines across the top over BAR's band; gone in the game.
 - [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
       a group button pressed puts that unit type in the group, and every one of that type built later; holding a
       group's picture takes the assignment off. "+ NEW" is BAR's Auto Group's Alt+number
