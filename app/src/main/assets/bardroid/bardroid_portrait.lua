@@ -1011,6 +1011,68 @@ local function selectUnits(units, append)
 	Spring.SelectUnitArray(units or {}, append or false)
 end
 
+-- A factory's move state for its units (Kailil, 2026-11-10: "sets every unit that came out of the factory or that will
+-- come out of the factory to the status I toggle it to. Tapping the button will cycle through the three states.
+-- Stopping on a state for .3 seconds still initiate the selection"; and an air factory's fly / land for "all planes that
+-- came out of the factory (except the builders)"). Units built later take the factory's state themselves (the engine's;
+-- BAR's Factory hold position relies on it); those it built before get it once the factory's button has rested
+-- FACTORY_STATE_REST: the units each factory turned out are remembered (UnitFromFactory).
+local FACTORY_STATE_REST = 0.3
+local fromFactory = {} -- factory unitID -> { unitID = true }
+local factoryStateAt -- { cmd, at }: a factory's move state or fly / land pressed last
+local function factoryStates()
+	local p = factoryStateAt
+	if not p or now() - p.at < FACTORY_STATE_REST then -- (now(): seconds)
+		return
+	end
+	factoryStateAt = nil
+	local total, label = 0, nil
+	for _, fac in ipairs(spGetSelectedUnits() or {}) do
+		local fd = UnitDefs[Spring.GetUnitDefID(fac) or -1]
+		local made = fromFactory[fac]
+		if fd and fd.isFactory and made then
+			local state
+			for _, d in ipairs(Spring.GetUnitCmdDescs(fac) or {}) do
+				if d.id == p.cmd and d.params and d.params[1] then
+					state = tonumber(d.params[1])
+					label = d.params[(state or 0) + 2] or label
+				end
+			end
+			local units = {}
+			for u in pairs(made) do
+				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+				if not ud or Spring.GetUnitTeam(u) ~= myTeam() then
+					made[u] = nil -- (gone, or no longer this team's)
+				elseif p.cmd ~= CMD.IDLEMODE or (ud.canFly and not ud.isBuilder) then
+					units[#units + 1] = u
+				end
+			end
+			if state and #units > 0 then
+				Spring.GiveOrderToUnitArray(units, p.cmd, { state }, 0)
+				total = total + #units
+			end
+		end
+	end
+	if total > 0 then
+		local P = WG.BarDroidPad
+		if P and P.say then
+			P.say(string.format("%d %s: %s", total, total == 1 and "UNIT" or "UNITS", string.upper(label or "")))
+		end
+		Spring.Echo(string.format("[bardroid-portrait] factory state %s to %d units", tostring(label), total)) -- (tools)
+	end
+end
+
+function widget:UnitFromFactory(unitID, _, unitTeam, factID)
+	if unitTeam == myTeam() and factID then
+		fromFactory[factID] = fromFactory[factID] or {}
+		fromFactory[factID][unitID] = true
+	end
+end
+
+function widget:UnitDestroyed(unitID)
+	fromFactory[unitID] = nil
+end
+
 -- The first or the last order taken off (Kailil, 2026-11-10: "a way to remove orders at the front or end of a queue"):
 -- a factory's build queue through BAR's own build button right-clicked (the engine takes one of that type off the
 -- back; with Alt the first of it), the last or the first item's type; units' orders through BAR's Command Queue
@@ -1107,6 +1169,9 @@ local function pressItem(item, long)
 		WG.BarDroidPad.act("dgun") -- (the pad's D-gun mode, its sticks on the dock: dgunOn)
 	elseif k == "order" then
 		runCommand(item.id, long)
+		if (item.id == CMD.MOVE_STATE or item.id == CMD.IDLEMODE) and selectedFactory() then
+			factoryStateAt = { cmd = item.id, at = now() } -- (its units follow once the state rests: factoryStates)
+		end
 	elseif k == "units" then
 		typesFrom = typesFrom ~= item.from and item.from or nil
 		multi, multiPicked, allPicked = false, {}, false
@@ -1997,7 +2062,8 @@ function widget:Update(dt)
 		return
 	end
 	startFit()
-	windTurn = (windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
+	factoryStates()
+	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
 	for _, s in ipairs({ leftScroll, rightScroll }) do
 		if s.drag or s.t < 1 then

@@ -59,9 +59,14 @@ same, that stays the simpler way.
       Pawn to Pawn, Rocko to Rocko.
 - [ ] **A factory's order menu with the larger buttons**, as FIGHT / MOVE / PATROL for units (his message breaks off
       at "Im thinking the l": ask what came next).
-- [ ] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
+- [x] **The factory's move state for its units**: the hold position / maneuver / roam button of a picked factory sets
       every unit that came out of it, and every one that will, to the state tapped; a tap cycles the three, a state
       left 0.3 s is applied. The same for an air factory's fly / land: every plane that came out of it, not builders.
+      Units built later take the factory's state themselves (the engine's); the dock remembers each factory's units
+      (UnitFromFactory) and, once its button has rested 0.3 s, gives those the factory's state (GiveOrderToUnitArray),
+      with a note ("7 UNITS: MANEUVER"). Dev phone, upright, a Bot Lab's 7 Pawns: Hold to Maneuver, then Roam, all 7
+      each time, one order a rest. Not yet run: an air factory's fly / land with planes (the same code, its builders
+      left out).
 - [ ] **Retreat and cover** ("It is insanely hard to micro units on mobile"): a unit under 50% health falls back;
       the commander retreats behind nearby combat units, which take fight orders to cover it at a distance safe from
       its death blast and go back to where they were once it is out; a commander that lives waits on patrol (repairs
