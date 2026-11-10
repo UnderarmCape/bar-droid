@@ -591,8 +591,17 @@ function DG.follow(dt)
 		x, y, z = Spring.GetUnitPosition(u)
 	end
 	local s = x and Spring.GetCameraState()
+	if u ~= DG.unitWas then -- (the mode just entered: from far off, the camera eased in once to COMMANDER's distance,
+		-- the D-gun's ring a speck at the start's 5000; dev phone, 2026-11-10; the zoom is the player's from there)
+		DG.unitWas, DG.zoomUntil = u, u and now() + 0.6 or nil
+		DG.zoomTo = u and s and s.dist and s.dist > comfortDist() * 1.2 and comfortDist() or nil
+	end
 	if not (s and s.px) then
 		return
+	end
+	local zooming = DG.zoomTo and now() < DG.zoomUntil and s.dist
+	if zooming then
+		s.dist = s.dist + (DG.zoomTo - s.dist) * (1 - math.exp(-(dt or 0.033) / 0.12))
 	end
 	-- the ground at the middle of the game above the dock, at the commander's height: the camera moved by what is
 	-- between them
@@ -603,7 +612,7 @@ function DG.follow(dt)
 	local tx, tz = s.px + x - bx, s.pz + z - bz
 	local k = 1 - math.exp(-(dt or 0.033) / FOLLOW)
 	local nx, nz = s.px + (tx - s.px) * k, s.pz + (tz - s.pz) * k
-	if abs(nx - s.px) + abs(nz - s.pz) < 0.05 then
+	if abs(nx - s.px) + abs(nz - s.pz) < 0.05 and not zooming then
 		return
 	end
 	s.px, s.pz = nx, nz
