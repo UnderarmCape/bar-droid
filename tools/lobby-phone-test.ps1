@@ -42,8 +42,9 @@ try {
     $want = @(); if ($seen.Count -gt 0) { $want = @($seen[0]); foreach ($i in 1, 2) { $want += $(if ($want[-1] -lt 115) { 130 } else { 100 }) } }
     if ($seen.Count -eq 3 -and (($seen -join " ") -eq ($want -join " "))) { "[lobbytouch] PASS a pad's Start: $scales" }
     else { "[lobbytouch] FAIL a pad's Start: the scale went $scales (wanted $(($want | ForEach-Object { "$_%" }) -join ' '))" }
-    # (the D-pad: down, down, right, left; the pointer from control to control, Kailil 2026-11-06; the tests' lobby is
-    # offline, its login dialog in front: down onto it, right and left between its buttons, nothing behind it)
+    # (the D-pad: down three times, right, left; the pointer from control to control, Kailil 2026-11-06; the tests'
+    # lobby is offline, its login dialog in front: down onto its checkboxes and its buttons, right and left between
+    # them, nothing behind it: upright the bottom grid is hidden under it, bardroid_lobby_touch.lua uprightModal)
     & $adb shell "uinput $dpad"
     Start-Sleep 1
     $on = @(Log '\[bardroid-lobby\] the pad on' 9 | ForEach-Object { $_ -replace '^.*the pad on ', '' })

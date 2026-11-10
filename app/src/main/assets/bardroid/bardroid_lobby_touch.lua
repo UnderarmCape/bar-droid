@@ -49,6 +49,18 @@ local function uiScale()
 	return WG.uiScale or 1
 end
 
+-- The pointer in the engine's pixels, as the call-ins hand them out: Chobby's function_override.lua makes
+-- Spring.GetMouseState answer in its own scaled units (pixels over the lobby's scale) and keeps the engine's as
+-- Spring.Orig.GetMouseState. (Read as pixels the D-pad's pointer was let go after every step and the next one started
+-- from the wrong place at any scale but 100 %: upright, 135 %; dev phone, 2026-11-10.)
+local function mouse()
+	local orig = Spring.Orig and Spring.Orig.GetMouseState
+	if orig then
+		return orig()
+	end
+	return Spring.GetMouseState()
+end
+
 -- Spring's mouse coordinates as Chili's input widget hands them to the screen, and the screen's own hit-test point
 -- (Screen:MouseDown flips y with the engine's view height)
 local function chiliPoint(x, y)
@@ -795,6 +807,33 @@ local function redrawContent()
 	walk(real(chobbyObject("mainWindow_mainContent")), 0)
 	walk(real(chobbyObject("holder_submenuWindow")), 0)
 end
+-- Chobby's modal popups (its PriorityPopup: the login dialog, confirmations) eat every tap outside them, and on the
+-- near-square screen (the Fold7 unfolded upright) the login dialog is taller than the room above the grid: its
+-- Login / Register and Cancel lay under the grid (dev phone, wm size 1080x1198, 2026-11-10). While one is open the grid
+-- is hidden, the popup whole; it comes back as the popup goes.
+local function uprightModal()
+	local g = real(upright.grid)
+	if not (g and not g.disposed) then
+		return
+	end
+	local C = WG.Chobby
+	local ok, popups = pcall(function()
+		return C and C.GetRegisteredPopups and C:GetRegisteredPopups()
+	end)
+	local modal = false
+	for _, p in pairs(ok and type(popups) == "table" and popups or {}) do
+		local w = p.mainWindow and real(p.mainWindow)
+		if w and not w.disposed and w.visible ~= false then
+			modal = true
+			break
+		end
+	end
+	if modal == (g.visible ~= false) then
+		g:SetVisibility(not modal)
+		Spring.Echo("[bardroid-lobby] grid " .. (modal and "hidden under a popup" or "back")) -- (tools)
+	end
+end
+
 local function uprightRedraw()
 	local n = contentCount()
 	-- (20 or more: a screen or a tab, not a server row coming or going online, each a full redraw twice)
@@ -830,6 +869,7 @@ local function uprightUpdate(now)
 	uprightRelayout()
 	uprightBattleRoom()
 	uprightRedraw()
+	uprightModal()
 	if bar and bar.visible then
 		placeBar()
 	end
@@ -1360,7 +1400,7 @@ local function onTop(c)
 end
 
 local function pointerToChili()
-	local mx, my = Spring.GetMouseState()
+	local mx, my = mouse()
 	local _, _, hx, hy = chiliPoint(mx, my)
 	return hx, hy
 end
@@ -1511,7 +1551,7 @@ local function appUpdate()
 		end
 	end
 	if focus then -- (the pointer moved away: let go; the control moved, as a list scrolls: the ring follows)
-		local mx, my = Spring.GetMouseState()
+		local mx, my = mouse()
 		if not focusAt or math.abs(mx - focusAt[1]) + math.abs(my - focusAt[2]) > 24 then
 			Spring.Echo(string.format("[bardroid-lobby] the pad let go: the pointer at %d %d, put at %d %d", mx, my,
 				focusAt and focusAt[1] or -1, focusAt and focusAt[2] or -1))
@@ -1550,7 +1590,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	-- pointer lit as if picked (dev phone, 2026-11-03). Chili hovers a control again only when the pointer reaches another
 	-- (Screen:IsAbove), so one MouseOut keeps it plain; a mouse moving on over that same control lights it again.
 	if hush then
-		local mx, my, left, middle, right = Spring.GetMouseState()
+		local mx, my, left, middle, right = mouse()
 		if math.abs(mx - hush.x) + math.abs(my - hush.y) > DRAG_PX then
 			local out = hush.out
 			hush = nil
