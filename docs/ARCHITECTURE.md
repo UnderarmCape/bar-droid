@@ -86,7 +86,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   gadget's own budget), `bardroid_retreat.lua` (touch play's automation, Kailil's and BAR's developers' call: a unit
   under half health falls back once; a hurt commander retreats past its death blast's reach, the combat units near it
   fight on its spot and go back once it is out, builders by it repair it first, then it waits on patrol; the dock's
-  AUTO RETREAT switches it, LuaUI/Config/bardroid_retreat.txt).
+  AUTO RETREAT switches it, LuaUI/Config/bardroid_retreat.txt), `bardroid_presets.lua` (the dock's PRESETS, 2 x 2 over
+  its grid, then a map tap for the destination: ZIGZAG, and BATTLE LINE, SPREAD and CONCAVE, which form the units up
+  by role where they stand and move them as one with a Ctrl+Shift fight given to them as the selection, the engine's
+  way of keeping a group's shape at its slowest unit's speed).
 - The app's widgets' main chunks stay under Lua's 200 locals (`tools/lua-locals.py`, in laptop-tests and CI): over
   it a widget does not load at all, and luacheck does not see it.
 

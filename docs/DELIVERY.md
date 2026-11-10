@@ -87,7 +87,7 @@ same, that stays the simpler way.
       Found on the way: a dock half with nothing to scroll took no taps since the empty-space pan (its press was
       "empty"): the home grid's buttons and short order lists; a tap that does not move is its button's again. And a
       new top-level local took the dock over Lua's 200 (it did not load): `tools/lua-locals.py` now checks it.
-- [ ] **Preset orders**: a PRESETS button with combat units picked; the whole dock shows the presets as 2 x 2
+- [x] **Preset orders**: a PRESETS button with combat units picked; the whole dock shows the presets as 2 x 2
       thumbnails (four for now), closed by an X in the corner or Android's Back. Presets: repeated moves along paths
       that make units hard to hit (big zigzags); formations for several units by their types' strengths (short-ranged
       and cheap units like Ticks and Pawns at the front, long-ranged at the back; fighters in front of or escorting
@@ -100,7 +100,25 @@ same, that stays the simpler way.
       lets it go). ZIGZAG: to the destination in turns 230 elmos apart, 170 to each side, each unit keeping its place in
       the group (drawn in to 260 of its middle). Dev phone, upright: 6 Pawns, PRESETS, ZIGZAG, a tap 900 elmos off: 4
       orders each (3 turns and the destination), the group's middle swinging right, then left on the way; Back and the X
-      each closed the presets. Still to do: the formations (research running), their three thumbnails.
+      each closed the presets.
+      The research (2026-11-10; BAR's wiki and unit pages, the Recoil engine's source): front-liners and the
+      short-ranged in front (Stout, Brute, Mace, Thug, Pounder, Pawn, Grunt; range up to ~400), skirmishers, rockets and
+      AA a row behind (Rocketeer, Aggravator, Lasher, Whistler; AA such as Crossbow "at the back of your army" but at 760
+      range it covers the front), artillery behind by its range over the front's less 100 (Shellshocker 710: ~230);
+      fighters ahead of bombers; the engine already puts footprint-2 units 64 elmos apart, ~96 against splash such as
+      Janus, Pounder or Quaker; BAR has no mobile shields. **Ctrl on a move given to the selection** keeps each unit's
+      place from the group's middle and holds every unit to the slowest one's speed (SelectedUnitsAI); orders given unit
+      by unit (BAR's line drawing, GiveOrderToUnit) do not. So the formations form up where the units stand, facing the
+      destination, and then take one Ctrl+Shift fight order as the selection (picked for a moment, the player's own
+      selection back in the same call): BATTLE LINE (rows 64 apart, 80 between, every other row half a place over, 12 a
+      row at most), SPREAD (96 apart, 120 between), CONCAVE (the battle line, its ends forward a quarter of its width).
+      Planes are a group of their own, fighters 300 ahead of bombers and transports. The destination is drawn in so every
+      unit's place is on the map. Dev phone, upright, 14 units (4 Pawns, 2 Maces, 2 Rocketeers, a Crossbow, 2
+      Shellshockers, 2 fighters, a bomber): BATTLE LINE: Pawns in front, Rocketeers and the Crossbow ~80 behind, the
+      Shellshockers ~230 behind, all at the slowest one's speed in that order (40 elmos a second, a Pawn makes 87); at
+      the map's edge the Maces' places were off the map and they stayed (now drawn in). CONCAVE to the left: the front in
+      a curve at the spot, every unit moving. Once, the engine hung on the dev phone ~1 s after the selection was emptied
+      with the presets open (the watchdog, no stack); the same steps again ran on without it (as the 11-02 hang).
 - [ ] **The first mexes at the start**: in the game's first 5 s, the commander picked and the metal extractor chosen,
       an area mex order over the mex spots within the commander's weapon range, sent at once without confirmation
       (Kailil: it may also just fire every time; where no spot is that close it does nothing and the player places it).
