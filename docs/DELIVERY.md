@@ -94,9 +94,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       subtle magnetic snap (pages, not lines).
 - [ ] **The BAR splash of the first load whole upright**: zoomed out to show all of "BAR"; the picture is not tall
       enough, so its edges feathered into the same grey as the background, seamless.
-- [ ] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
+- [x] **The groups strip works as BAR's own auto groups** (vanilla and the controller support): a unit picked and
       a group button pressed puts that unit type in the group, and every one of that type built later; holding a
-      group's picture takes the assignment off.
+      group's picture takes the assignment off. "+ NEW" is BAR's Auto Group's Alt+number
+      (`WG.autogroup.addCurrentSelectionToAutogroup`: the types picked, every unit of them now and later; the engine's
+      own group where that widget is off), a number some auto group holds is not offered as new, a long press on a
+      group's picture takes its types out of the auto groups and its units out of the group. Dev phone: one Pawn of
+      six picked, + NEW: group 1 of 6, Pawns in auto group 1; two Pawns more: 8; held: group 1 empty, no auto group.
 
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon

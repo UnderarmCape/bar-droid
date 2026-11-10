@@ -1732,11 +1732,17 @@ local function drawGroups()
 			break
 		end
 	end
-	-- units picked: a "+ NEW" tile after the groups makes them the next free group (no keyboard for Ctrl+number)
+	-- units picked: a "+ NEW" tile after the groups puts their types in the next free group (BAR's auto groups: a
+	-- number held by an auto group's type with no unit left is not free)
 	local free
 	if #sel > 0 then
+		local taken = {}
+		local A = WG.autogroup
+		for _, gr in pairs(A and A.getGroups and A.getGroups() or {}) do
+			taken[tonumber(gr) or -1] = true
+		end
 		for n = 1, 9 do
-			if not groups[n] or groups[n] == 0 then
+			if (not groups[n] or groups[n] == 0) and not taken[n] then
 				free = n
 				break
 			end
@@ -2299,19 +2305,33 @@ function widget:MouseRelease(x, _, btn)
 		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
 		return true
 	end
-	if L.groupRects then -- a control group's picture: those units; a long press: the units picked now become that group;
-		-- "+ NEW": the units picked become the next free group (the engine's own group commands, as BAR's hotkeys)
-		local picked = #(spGetSelectedUnits() or {}) > 0
+	if L.groupRects then -- a control group's picture: those units; "+ NEW": the types picked become the next free group,
+		-- every one of them now and later (Kailil, 2026-11-10: "Unit groups at the bottom should use the unit group vanilla
+		-- behavior. Assigning a unit type to a group", BAR's Auto Group, its Alt+number); a long press on a picture takes
+		-- that group's assignment off ("hold the unit pictures and it unassign the group assignment")
 		for _, gr in ipairs(L.groupRects) do
 			if inRect(p.x, p.y, gr) then
+				local A = WG.autogroup
 				if gr.unq then
 					removeOrder(gr.unq == "last")
 				elseif gr.new then
-					Spring.SendCommands("group set " .. gr.new)
+					if A and A.addCurrentSelectionToAutogroup then
+						A.addCurrentSelectionToAutogroup(gr.new)
+					else -- (no Auto Group: the engine's own group of the units picked, as BAR's Ctrl+number)
+						Spring.SendCommands("group set " .. gr.new)
+					end
 					Spring.Echo("[bardroid-portrait] group " .. gr.new .. " made") -- (tools)
-				elseif btn == 3 and picked then
-					Spring.SendCommands("group set " .. gr.group)
-					Spring.Echo("[bardroid-portrait] group " .. gr.group .. " set")
+				elseif btn == 3 then
+					local types = A and A.getGroups and A.getGroups()
+					for defID, g in pairs(types or {}) do
+						if tonumber(g) == gr.group then
+							types[defID] = nil
+						end
+					end
+					for _, u in ipairs(Spring.GetGroupUnits(gr.group) or {}) do
+						Spring.SetUnitGroup(u, -1)
+					end
+					Spring.Echo("[bardroid-portrait] group " .. gr.group .. " unassigned")
 				else
 					Spring.SendCommands("group select " .. gr.group)
 				end
