@@ -176,6 +176,8 @@ end
 -- Layout: the dock's rects for this screen; the build grid 3 wide with 2-4 rows, as many as fit (Kailil: "Cap the
 -- buildmenu to 3x4 ... reduce to 3x3 at minimum 3x2"); the dock no taller than it needs, DOCK_MAX at most
 
+local showSel, showGroups = true, true -- the selection row and the groups strip shown (refreshNow decides)
+
 local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
@@ -199,17 +201,26 @@ local function layout()
 		tile = max(16, floor((room + gap) / rows) - gap)
 	end
 	local gridH = rows * (tile + gap) - gap
-	local dockH = pad * 5 + resH + selH + gridH + groupsH
 	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
-	L.dock = { 0, 0, vsx, dockH }
-	L.groups = { pad, pad, vsx - pad, pad + groupsH }
-	local gy0 = L.groups[4] + pad
-	L.left = { pad, gy0, half - floor(pad / 2), gy0 + gridH }
-	L.right = { half + floor(pad / 2), gy0, vsx - pad, gy0 + gridH }
-	L.sel = { pad, L.left[4] + pad, vsx - pad, L.left[4] + pad + selH }
+	-- From the bottom: the groups (with groups, or units picked for + NEW), the grid, the selection (units picked),
+	-- metal and energy. A row not shown takes no room: the dock is that much lower and the game taller (Kailil,
+	-- 2026-11-09: "Remove the no units pick bar ... It should just not be there"); the grid keeps its size.
+	local y = pad
+	L.groups = { pad, y, vsx - pad, y + groupsH }
+	if showGroups then
+		y = y + groupsH + pad
+	end
+	L.left = { pad, y, half - floor(pad / 2), y + gridH }
+	L.right = { half + floor(pad / 2), y, vsx - pad, y + gridH }
+	y = y + gridH + pad
+	L.sel = { pad, y, vsx - pad, y + selH }
+	if showSel then
+		y = y + selH + pad
+	end
 	-- metal and energy, at the dock's top (BAR's top bar keeps its wind, units and buttons; its two resource bars are
 	-- off while the dock is up: about 1600 pixels wide at a readable size, they ran over its buttons upright)
-	L.res = { pad, L.sel[4] + pad, vsx - pad, L.sel[4] + pad + resH }
+	L.res = { pad, y, vsx - pad, y + resH }
+	L.dock = { 0, 0, vsx, y + resH + pad }
 	-- order buttons: 2 wide, rows of about 0.42 of a tile in the same height
 	local rw = L.right[3] - L.right[1]
 	L.btnW = floor((rw - gap) / 2)
@@ -516,6 +527,17 @@ function refreshNow()
 	-- again; taken as it was, it threw the build menu back to its first rows after each factory press)
 	if #sel > 0 and #builds == 0 and #orders == 0 and not typesFrom and not selecting then
 		return
+	end
+	local anyGroup = false
+	for _, c in pairs(Spring.GetGroupList() or {}) do
+		if c > 0 then
+			anyGroup = true
+			break
+		end
+	end
+	if (#sel > 0) ~= showSel or (#sel > 0 or anyGroup) ~= showGroups then -- (the dock's rows: laid out again)
+		showSel, showGroups = #sel > 0, #sel > 0 or anyGroup
+		layout()
 	end
 	local key = #sel .. ":" .. tostring(sel[1])
 	local newPick = key ~= lastSelection -- (another pick: both halves from their first rows, not the last unit's place)
@@ -1275,10 +1297,12 @@ local function drawMode()
 		gl.Color(0, 0, 0, 0.32)
 		gl.Rect(d[1], d[2], d[3], d[4])
 		gl.Color(1, 1, 1, 1)
-		local s = L.sel
-		local h = s[4] - s[2]
-		-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it)
-		font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + h * 0.3, h * 0.15, "ro")
+		if showSel then -- (no selection row: the dimmed dock says it alone)
+			local s = L.sel
+			local h = s[4] - s[2]
+			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it)
+			font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", s[3] - L.pad, s[2] + h * 0.3, h * 0.15, "ro")
+		end
 		return
 	end
 	local age = t - menuAt
@@ -1452,10 +1476,16 @@ local texMode = Spring.GetConfigInt("bardroid_portrait_tex", 1)
 
 local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
-	drawSelection()
+	if showSel then
+		drawSelection()
+	end
 	drawHalf("left")
 	drawHalf("right")
-	drawGroups() -- (always: a pick away from any group; Kailil asked for them whenever nothing is picked)
+	if showGroups then
+		drawGroups()
+	else
+		L.groupRects = {}
+	end
 end
 
 local function drawDock()
