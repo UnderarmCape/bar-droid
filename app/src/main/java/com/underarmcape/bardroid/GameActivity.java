@@ -624,6 +624,7 @@ public class GameActivity extends MainActivity {
     // wrapped to the screen: what it waits for and the server's address (GameService.preGameHost), the Free memory
     // button over it.
     private android.widget.TextView preGameView;
+    private int preGameDots = -1;
 
     private void updatePreGame() {
         View root = getWindow().getDecorView();
@@ -649,13 +650,19 @@ public class GameActivity extends MainActivity {
         if (preGameView == null) return;
         if ((preGameView.getVisibility() == View.VISIBLE) != show) preGameView.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return;
-        String title = GameService.preGameData() ? "Checking the game's files" : "Waiting for the server";
+        // (dots that count up with the half-second check: a still screen for a slow server read as frozen; all three
+        // always there, the unlit ones clear, so the centred words stand still)
+        int dots = (int) ((android.os.SystemClock.uptimeMillis() / 500) % 4);
+        String title = (GameService.preGameData() ? "Checking the game's files" : "Waiting for the server") + "...";
         String host = GameService.preGameHost();
         String body = GameService.preGameData() ? "The game loads next" : "Connecting to " + host;
         String text = title + "\n\n" + body;
-        if (text.contentEquals(preGameView.getText())) return;
+        if (text.contentEquals(preGameView.getText()) && dots == preGameDots) return;
+        preGameDots = dots;
         android.text.SpannableString s = new android.text.SpannableString(text);
         s.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, title.length(), 0);
+        if (dots < 3) s.setSpan(new android.text.style.ForegroundColorSpan(0x00FFFFFF), title.length() - 3 + dots,
+                title.length(), 0);
         s.setSpan(new android.text.style.RelativeSizeSpan(1.6f), 0, title.length(), 0);
         s.setSpan(new android.text.style.ForegroundColorSpan(0xFFBBBBBB), title.length(), text.length(), 0);
         preGameView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);

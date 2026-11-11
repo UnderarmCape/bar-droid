@@ -424,6 +424,12 @@ same, that stays the simpler way.
         rows, so the grid takes their room, up to five rows as tall as the build tiles: unfolded 130 / 104 pixels, the
         S23's own shape five rows of about 150 (the dock as tall as the playing one with its rows); laid out again when
         the player turns spectator. dock-phone-test ALL PASS.
+      - [x] **A phone test sweep after the day's changes** (~15:30, dev phone): fp-save-test, lobby-phone-test, pad-test
+        -Dgun, touch-phone-test ALL PASS (dock-phone-test and pad-test -Online passed earlier with them). The menu
+        copies' error in an October replay (BAR's older widget handler has no RegisterUnitCommand) costs only that
+        replay its menus: launch-bar.sh already keeps a replay from marking the copies failed. The join's waiting
+        screen's title counts dots with its half-second check (a still screen for a slow server read as frozen), the
+        unlit dots clear so the words stand still.
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
