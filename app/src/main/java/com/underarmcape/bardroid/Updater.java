@@ -124,6 +124,8 @@ public final class Updater {
 
     /** The end of summary()'s line about the Android layer's misses (LauncherActivity shows it as a warning). */
     static final String MISSES = " of the app's adjustments to BAR did not apply:";
+    /** A start's check result when it did not go online (summary() leaves it out while updates are off). */
+    static final String NOT_CHECKED = "automatic updates off";
 
     /** The launcher's status lines (one fact a line: a phone's width wrapped one long line mid-phrase). */
     public static String summary(Paths p) {
@@ -139,7 +141,10 @@ public final class Updater {
         // line of the four for that, dev phone 2026-11-08. Off is worth its line: nothing checks then)
         String off = "BAR updates: only with Install / Update";
         if (s.getProperty("check") != null) {
-            sb.append("Last check ").append(s.getProperty("check"));
+            // (with updates off the line under it says so: "Last check Nov 11 00:57 (automatic updates off)" over "BAR
+            // updates: only with Install / Update" said it twice, dev phone 2026-11-11)
+            String check = s.getProperty("check");
+            sb.append("Last check ").append(Prefs.autoUpdate ? check : check.replace(" (" + NOT_CHECKED + ")", ""));
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
         } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
         // (an engine's own miss only while that engine plays: after a rollback to the older one, the newer engine's
@@ -185,7 +190,7 @@ public final class Updater {
                 if (l != null && sdp(l[0]).exists()) { state.setProperty("good." + t, l[0]); snapshot(repo(t), goodDir); }
             }
         }
-        String result = "automatic updates off";
+        String result = NOT_CHECKED;
         if (online) {
             st.status("checking for BAR updates");
             JSONObject setup = fetchSetup();

@@ -95,6 +95,12 @@ public final class UpdaterTest {
         check("an older engine plays: the newer one's springsettings miss is not counted", !Updater.summary(p).contains(Updater.MISSES));
         Prefs.engineVersion = "B";
         check("  that engine plays: it is counted and named", Updater.summary(p).contains("1" + Updater.MISSES) && Updater.summary(p).contains(Updater.MISSES + "\nengine B no longer"));
+        write(new File(p.filesDir, "update/state.properties"), "tags=byar\\:test\ncheck=Nov 11 00\\:57 (automatic updates off)\n");
+        Prefs.autoUpdate = false;
+        check("updates off: the last check's line without \"(automatic updates off)\", the line under it says it",
+                Updater.summary(p).contains("Last check Nov 11 00:57\nBAR updates: only with Install / Update"));
+        Prefs.autoUpdate = true;
+        check("  updates on again: the check's result as it was", Updater.summary(p).contains("Last check Nov 11 00:57 (automatic updates off)"));
         p = setup("enginemissrollback", true, NO_FRAME);
         s = state(p);
         s.setProperty("layer.engine", missB);
