@@ -35,6 +35,16 @@ final class StatusText {
      * check's or the benchmark's answer, unless it failed (those say "(see the log)" / "no results"). The launcher shows
      * warnings in amber; "GL check: FD740, OpenGL 4.3" in amber read as a problem (2026-11-05).
      */
+    /**
+     * The GPU as players know it from the OpenGL renderer string: Freedreno's "FD740" is the Adreno 740 ("Adreno 740
+     * (Freedreno)"); anything else as it is (Zink's string already names the Adreno).
+     */
+    static String gpuName(String renderer) {
+        if (renderer == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^FD(\\d{3,4})$").matcher(renderer.trim());
+        return m.find() ? "Adreno " + m.group(1) + " (Freedreno)" : renderer;
+    }
+
     static boolean isResultNote(String note) {
         if (note == null) return false;
         return (note.startsWith("GL check: ") && !note.contains("(see the log)"))

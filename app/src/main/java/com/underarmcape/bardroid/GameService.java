@@ -452,6 +452,7 @@ public class GameService extends Service {
             }
         } catch (java.io.IOException e) { return "GL check: no result (see the log)"; }
         if (renderer == null) return "GL check: no OpenGL from the GPU (see the log)";
+        renderer = StatusText.gpuName(renderer);   // ("FD740": Freedreno's name for the Adreno 740)
         if (version == null) return "GL check: " + renderer;
         // ("4.3 (Compatibility Profile) Mesa 27.0.0-devel (git-6f90e92dfd)": the numbers; the rest is in the log)
         java.util.regex.Matcher mesa = java.util.regex.Pattern.compile("Mesa (\\S+)").matcher(version);

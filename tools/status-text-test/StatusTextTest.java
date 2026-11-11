@@ -52,6 +52,16 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "note \"" + n[0] + "\" -> " + (got ? "result" : "warning"));
         }
+        // StatusText.gpuName: the GL check's GPU as players know it
+        String[][] gpus = { { "FD740", "Adreno 740 (Freedreno)" }, { "FD830", "Adreno 830 (Freedreno)" },
+            { "zink Vulkan 1.3(Turnip Adreno (TM) 740 (MESA_TURNIP))", "zink Vulkan 1.3(Turnip Adreno (TM) 740 (MESA_TURNIP))" },
+            { "llvmpipe (LLVM 19.1.7, 128 bits)", "llvmpipe (LLVM 19.1.7, 128 bits)" } };
+        for (String[] g : gpus) {
+            String got = StatusText.gpuName(g[0]);
+            boolean ok = g[1].equals(got);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "gpu \"" + g[0] + "\" -> \"" + got + "\"");
+        }
         // StatusText.engineFatal: the engine's fatal message from its infolog line (the Fold7's, 2026-11-05)
         Object[][] fatals = {
             { "[t=00:16:13.492054][f=-000001] Fatal: [ExitSpringProcess] errorMsg=\"invalid GameData received: Unpack failure (vector)\" msgCaption=\"Spring: caught content_error: \" mainThread=1",
