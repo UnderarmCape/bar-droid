@@ -765,14 +765,39 @@ local function uprightNotes()
 	end
 	upright.notesHooked = true
 	local own = C._Realign
+	-- a note's words (its captions and texts), to tell a repeat: offline the Skirmish screen's map download failed three
+	-- times, three "Download Failed: Special Creek 1.0" stacked over its Next button (dev phone, 2026-11-11)
+	local function words(o, out, depth)
+		if o and depth < 8 then
+			local t = o.caption or o.text
+			if type(t) == "string" and t ~= "" then
+				out[#out + 1] = t
+			end
+			for _, c in ipairs(o.children or {}) do
+				words(c, out, depth + 1)
+			end
+		end
+		return out
+	end
 	C._Realign = function(self, sorted)
 		local g = upright.on and real(upright.grid)
 		if not (g and not g.disposed) then
 			return own(self, sorted)
 		end
 		local foot = g.y - ((bar and bar.visible) and (bar.height + 4) or 0)
-		for i, n in pairs(sorted) do
-			n.window:SetPos(nil, foot - i * 110 + 5)
+		local seen, row = {}, 0
+		for _, n in pairs(sorted) do
+			local key = table.concat(words(n.window, {}, 0), "|")
+			if key ~= "" and seen[key] then
+				if n.window.y ~= -4000 then
+					Spring.Echo("[bardroid-lobby] a repeated note out of sight: " .. key:sub(1, 60)) -- (tools)
+				end
+				n.window:SetPos(nil, -4000) -- (a repeat: out of sight, it times out as Chobby's own)
+			else
+				seen[key] = true
+				row = row + 1
+				n.window:SetPos(nil, foot - row * 110 + 5)
+			end
 		end
 	end
 	Spring.Echo("[bardroid-lobby] Chobby's notes above the grid upright") -- (tools)
