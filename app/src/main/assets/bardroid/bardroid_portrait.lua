@@ -1652,8 +1652,10 @@ local function drawTile(item, r)
 	end
 end
 
--- BAR's order menu's state lights: green, yellow, red by the state
-local STATE_COLORS = { { 0.3, 0.85, 0.3, 1 }, { 0.95, 0.8, 0.2, 1 }, { 0.9, 0.25, 0.2, 1 } }
+-- BAR's order menu's state lights (gui_ordermenu.lua's DrawCell): the first state red, the second yellow (green when
+-- there are only two), the third and on green; "Fire at will" red and "Hold pos" green here before, the other way
+-- round from BAR's (dev phone screenshot 2026-11-11)
+local STATE_COLORS = { { 0.9, 0.25, 0.2, 1 }, { 0.95, 0.8, 0.2, 1 }, { 0.3, 0.85, 0.3, 1 } }
 
 local function currentShape()
 	local B = WG.bardroidBuildmenu
@@ -1722,7 +1724,8 @@ local function drawButton(item, r)
 		gl.Color(1, 1, 1, 1)
 	end
 	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
-		local c = STATE_COLORS[min(3, (item.state or 0) + 1)]
+		local st = min(3, (item.state or 0) + 1)
+		local c = STATE_COLORS[(item.states == 2 and st == 2) and 3 or st]
 		local w = (r[3] - r[1]) * 0.28
 		local y = r[2] + max(3, (r[4] - r[2]) * 0.1)
 		gl.Color(c)
