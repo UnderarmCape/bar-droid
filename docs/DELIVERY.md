@@ -229,7 +229,8 @@ same, that stays the simpler way.
         of Next and all of the Skirmish screens' Advanced (Chobby lays those along the panel's foot, just above the
         grid), so upright the notes now stack down from the screen's top, over the logo's strip (at its right, over part
         of "Offline" for their few seconds). Dev phone: Next and Advanced clear, the note at the top right;
-        lobby-phone-test ALL PASS.
+        lobby-phone-test ALL PASS. The upright Skirmish screens after (Game Type, Difficulty, Faction, and Advanced's
+        battle room: teams, map, options, Start in reach) looked over: nothing of the app's to change.
       - **The phone tests after the dock-edge and tap changes** (11-11 ~06:45, dev phone, f169632's build):
         touch-phone-test, pad-test, -Online, -Dgun, -Share, -Chat, lobby-phone-test, fp-save-test, with
         dock-phone-test just before: ALL PASS.
