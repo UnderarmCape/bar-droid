@@ -471,7 +471,10 @@ same, that stays the simpler way.
         data: the dev phone's serial as the default device of tools/container-cost/measure.ps1 and trapbench.ps1 (now
         toolchain.ps1's Get-PhoneDevice, from ..\phone-device.txt), and the day's test address in StatusText and its
         test (a 10.x address reads as a home network's: RFC 5737's 198.51.100.7 in the test). publish-check -NoHistory:
-        "Ready to publish"; its self test and status-text-test ALL PASS. (The history question stays Kailil's.) A patch set for BAR's repository, tested by a pool swap as
+        "Ready to publish"; its self test and status-text-test ALL PASS. (The history question stays Kailil's.)
+      - [x] **A player who turns spectator mid-game upright** (~17:35, dev phone, a skirmish, BAR's /spectator at frame
+        450 by a scratch widget, removed after): the dock went from the playing grid to the spectator's the next frame,
+        laid out again at its taller size (SP.laidOut); no error. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
