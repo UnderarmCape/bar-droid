@@ -100,8 +100,10 @@ same, that stays the simpler way.
       - **The phone tests on the newest build** (11-11 ~02:35, dev phone): touch-phone-test, lobby-phone-test,
         pad-test, -Share, -Chat, fp-save-test, then dock-phone-test: ALL PASS. VoiceChat reviewed (sessions numbered,
         the recognizer destroyed per session, close() on onStop): nothing found; a recognizer that never answers would
-        keep "SPEAK TO CHAT" up, not testable without the live microphone. The Play vs AI map's diagonal bands follow
-        its dunes in the placing screenshot: its own sand ripples. Polish from that screenshot: the building PLACE
+        keep "SPEAK TO CHAT" up, not testable without the live microphone. The Play vs AI map's bands: in the placing
+        screenshot (its red ground) the ripples follow the dunes, but in the north-east corner they are straight, even
+        (~70 px) and cross the rough ground too: not settled (the map's texture, or the drawing); to compare with BAR
+        on a PC (the laptop needs Kailil's yes). Polish from that screenshot: the building PLACE
         builds is now marked on the dock (BAR's picked cell, the picture closer in gold light, and the build menu
         copy's gold line); FlowUI's selector alone was a faint border.
       - **A 6-minute upright skirmish, nothing touched** (11-11 ~02:50, dev phone): 30 fps each minute (slowest frame
@@ -111,6 +113,14 @@ same, that stays the simpler way.
         screenshot: the dock's state lights were the other way round from BAR's order menu ("Fire at will" red,
         "Hold pos" and "Repeat Off" green); now as BAR's DrawCell colours them: the first state red, the second yellow
         (green of two), the third green.
+      - **15 minutes upright, nothing touched** (11-11 ~03:15, dev phone): Lua's memory 135-177 MB, its lows not
+        rising (135, 144, 140, 136): no leak; 30 fps, no app error. The upright lobby's screenshot (offline, the login
+        guard): the arrow pointer stood over the lobby until the first touch. The game screen now starts as for
+        fingers when no input has come yet and no external mouse or gamepad is connected (Samsung's built-in
+        "sec_touchpad" reports a mouse: external devices only), sent again at 0.5-15 s as the X server and the lobby
+        come up; any other input brings the pointer back, and a game's gesture shows it as before. Dev phone: the
+        lobby without the arrow; lobby-phone-test (the pad in the lobby), pad-test, touch-phone-test, dock-phone-test
+        (the pointer at the preset's aim): ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
