@@ -123,7 +123,7 @@ public final class Updater {
     }
 
     /** The end of summary()'s line about the Android layer's misses (LauncherActivity shows it as a warning). */
-    static final String MISSES = " of the app's adjustments to BAR did not apply: see the log";
+    static final String MISSES = " of the app's adjustments to BAR did not apply:";
 
     /** The launcher's status lines (one fact a line: a phone's width wrapped one long line mid-phrase). */
     public static String summary(Paths p) {
@@ -154,9 +154,10 @@ public final class Updater {
         } catch (IOException ignored) {}
         if (misses > 0) {
             sb.append("\n").append(misses).append(MISSES);
-            // (which one, in its own words, cut short: a screenshot of the launcher then names it; "see the log" alone
-            // left the Fold7's one unknown for an evening, 2026-11-10)
-            sb.append("\n(").append(first.length() > 110 ? first.substring(0, 107) + "..." : first).append(")");
+            // (which one, in its own words, cut short, on the line under it (LauncherActivity: smaller, grey): a screenshot
+            // of the launcher then names it; "see the log" alone left the Fold7's one unknown for an evening, 2026-11-10)
+            sb.append("\n").append(first.length() > 110 ? first.substring(0, 107) + "..." : first)
+                    .append(misses > 1 ? " (the others in the log)" : "");
         }
         return sb.toString();
     }

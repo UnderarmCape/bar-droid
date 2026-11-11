@@ -253,7 +253,18 @@ public class LauncherActivity extends AppCompatActivity {
         // amber read as a problem, 2026-11-05)
         if (note != null && !StatusText.isResultNote(note)) warn(text, head.length() + 1, head.length() + 1 + note.length());
         int miss = text.toString().indexOf(Updater.MISSES);
-        if (miss >= 0) warn(text, text.toString().lastIndexOf('\n', miss) + 1, miss + Updater.MISSES.length());
+        if (miss >= 0) {
+            int end = miss + Updater.MISSES.length();
+            warn(text, text.toString().lastIndexOf('\n', miss) + 1, end);
+            // (the miss it names, under it as a setting's explanation is: in amber at full size, two lines of an engine
+            // key's name read as a second, louder warning, dev phone 2026-11-11)
+            int detail = text.toString().indexOf('\n', end + 1);
+            if (detail < 0) detail = text.length();
+            if (end + 1 < detail) {
+                text.setSpan(new android.text.style.RelativeSizeSpan(0.82f), end + 1, detail, 0);
+                text.setSpan(new android.text.style.ForegroundColorSpan(secondaryTextColor()), end + 1, detail, 0);
+            }
+        }
         statusView.setText(text);
     }
 

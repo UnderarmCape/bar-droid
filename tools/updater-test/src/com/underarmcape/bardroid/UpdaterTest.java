@@ -94,7 +94,7 @@ public final class UpdaterTest {
         write(new File(p.filesDir, "update/state.properties"), "tags=byar\\:test\ngood.engine=A\nlaunched.engine=A\nlayer.engine=" + missB + "\n");
         check("an older engine plays: the newer one's springsettings miss is not counted", !Updater.summary(p).contains(Updater.MISSES));
         Prefs.engineVersion = "B";
-        check("  that engine plays: it is counted and named", Updater.summary(p).contains("1" + Updater.MISSES) && Updater.summary(p).contains("(engine B no longer"));
+        check("  that engine plays: it is counted and named", Updater.summary(p).contains("1" + Updater.MISSES) && Updater.summary(p).contains(Updater.MISSES + "\nengine B no longer"));
         p = setup("enginemissrollback", true, NO_FRAME);
         s = state(p);
         s.setProperty("layer.engine", missB);
