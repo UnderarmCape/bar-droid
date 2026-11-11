@@ -51,7 +51,8 @@ same, that stays the simpler way.
         1.1 s and a radar wedge sweeping behind a bright line. FIRE's swipe right goes the whole way, past 0.92 the
         track locks full gold with AUTO on it and the button fills gold from the left; AUTO's swipe left has its own
         track to the cancel corner (FIRE at its end; it was frozen), and the gold drains out of the button
-        (`dgun_auto_off`, "dgunauto 1" in the dock file tells RtsTouch which way). Screenshots of each step. No
+        (`dgun_auto_off`, "dgunauto 1" in the dock file tells RtsTouch which way). Screenshots of each step (and at the
+        Fold7's unfolded shape, wm size 1080x1198: both tracks drawn and locking, the left one narrower). No
         gamepad words over the map when the touch dock opens the mode.
       - **Presets: STRAFE in ZIGZAG's place** ("fight to the destination then sit at the destination repeating a
         left and right strafe via a repeat ... via a fight command"): each unit, keeping its place in the group, a
