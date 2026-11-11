@@ -359,7 +359,12 @@ local gameLoaded = false -- a game runs beside the lobby (ActivateGame / Activat
 local PAGE_COLS, PAGE_ROWS, GRID_ROW_H, GRID_GAP, GRID_DOTS_H = 3, 2, 60, 4, 28
 local GRID_ORDER = { "multiplayer", "skirmish", "scenarios", "settings", "chat", "friends",
 	"parties", "load game", "downloads", "account", "login", "replays", "links" } -- (Login: Account's place offline)
-local PAGE_SETTLE, PAGE_OVERSHOOT, PAGE_FLICK = 0.28, 0.9, 600 -- seconds; easeOutBack's; Chili pixels a second
+-- Kailil, 2026-11-10, on the Fold7: "too slow of an animation. It should be super snappy and fast and smooth ... the
+-- swipe sensitivity curve needs to be more aggressive. A small swipe quickly moves the page": the strip goes 1.5 times
+-- the finger's way, a drag of a twentieth of the width (or a light flick) turns the page that way, and it settles in
+-- 0.15 s with a slight overshoot (was 0.28 s, half the width or a 600 flick)
+local PAGE_SETTLE, PAGE_OVERSHOOT, PAGE_FLICK = 0.15, 0.35, 200 -- seconds; easeOutBack's; Chili pixels a second
+local PAGE_GAIN, PAGE_TURN = 1.5, 0.05 -- the strip's move per finger move; the drag (share of the width) that turns
 local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
 	stripX = 0, anim = nil }
 
@@ -1092,7 +1097,7 @@ function widget:MouseMove(x, y)
 		end
 		if p.moved and upright.grid then
 			local s = uiScale()
-			local nx, minX = p.start + (x - p.x) / s, -(upright.pages - 1) * screen0.width
+			local nx, minX = p.start + (x - p.x) / s * PAGE_GAIN, -(upright.pages - 1) * screen0.width
 			if nx > 0 then
 				nx = nx / 3
 			elseif nx < minX then
@@ -1131,10 +1136,16 @@ function widget:MouseRelease(x, y)
 		return false
 	end
 	hush = { x = x, y = y } -- (after a drag too: a replay's teams came up where the finger lifted)
-	if p.grid then -- a swipe settles on the nearest page (a flick: the next one that way); a tap is the button's click
+	if p.grid then -- a swipe turns the page its way (PAGE_TURN, or a flick), a long one to the page it reached; a tap is
+		-- the button's click
 		if p.moved and upright.grid then
-			local page = math.floor(-upright.stripX / math.max(1, screen0.width) + 0.5)
-			if math.abs(p.vel) > PAGE_FLICK and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
+			local w = math.max(1, screen0.width)
+			local nearest = math.floor(-upright.stripX / w + 0.5)
+			local drag = upright.stripX - p.start
+			local page = nearest
+			if math.abs(drag) > PAGE_TURN * w then
+				page = drag < 0 and math.max(upright.page + 1, nearest) or math.min(upright.page - 1, nearest)
+			elseif math.abs(p.vel) > PAGE_FLICK and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
 				page = upright.page + (p.vel < 0 and 1 or -1)
 			end
 			uprightSettle(page)

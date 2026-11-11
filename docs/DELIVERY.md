@@ -355,6 +355,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on there ("AUTO D-GUN: THIS HOST FORBIDS IT"), as AUTO RETREAT stands down; the D-gun by hand still works. pad-test
       -Dgun (orders forbidden) checks it: ALL PASS. A skirmish (orders allowed), an enemy Pawn placed in range after
       full auto was on: the shot given 3 frames later, the Pawn dead 20 frames after.
+- [x] **The lobby's pages snappy, a small swipe turns one** (Kailil, 2026-11-10, on the Fold7: "too slow of an
+      animation. It should be super snappy and fast and smooth ... A small swipe quickly moves the page"): the strip goes
+      1.5 times the finger's way, a drag of a twentieth of the width (or a 200 px/s flick) turns the page that way, a
+      long one to the page it reached, and it settles in 0.15 s with a slight overshoot (was 0.28 s; half the width or
+      a 600 flick). Dev phone: swipes of 70 and 60 pixels each turned a page (2, 3, back to 2); the lobby draws about
+      200 frames a second, so the settle has about 30.
+- [ ] **The lobby's pointer by touch**: an arrow stays where the last finger lifted (every upright screenshot), and the
+      button under it keeps a lit look after a page swipe. Hiding it from RtsTouch (LorieView.setCursorVisible) is
+      undone at once: Termux:X11's X server shows the pointer on every mouse event (cmdentrypoint.cpp EVENT_MOUSE,
+      lorieSetCursorVisible(TRUE)), and each tap is one. Next: patch 0014, a flag in the shared cursor state that the
+      app's hide sets and EVENT_MOUSE respects; then hidden in the lobby while fingers play it, back for a mouse, a
+      keyboard or the pad (RtsTouch.source).
 - [x] **The upright lobby's grid back after a popup** (2026-11-10, dev phone, offline lobby): with Chobby's login dialog
       cancelled the grid was logged "back" but not seen, the strip under the news empty: Chili puts a control shown
       again last among its parent's, drawn under Chobby's full-screen background. It is brought to the front as it comes
