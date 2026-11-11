@@ -95,10 +95,12 @@ try {
   Result ((Test-Path $lic) -and ((Get-Content $lic -TotalCount 2) -join " ") -match "GNU GENERAL PUBLIC LICENSE\s+Version 3") `
     "LICENSE is the GPL-3.0 text"
 
-  # pictures: only the ones known to be the project's own or third parties' with a licence (NOTICE.md)
-  $allowedImages = '^(app/src/main/assets/gamepad/|termux-x11/)'
+  # pictures: only the ones known to be the project's own or third parties' with a licence (NOTICE.md), and the phone
+  # versions made on the laptop from BAR's own pictures, which BAR's developers cleared to ship with the app (Kailil,
+  # 2026-11-06; NOTICE.md credits them: make-loadpictures.ps1's and make-loadscreen-upright.ps1's)
+  $allowedImages = '^(app/src/main/assets/gamepad/|termux-x11/|app/src/main/assets/bardroid/(loadpicture-upright_[^/]+\.jpg|loadscreen-upright\.png)$)'
   $images = @($files | Where-Object { $_ -match '\.(png|jpe?g|webp|gif|bmp|ico|dds|tga)$' -and $_ -notmatch $allowedImages })
-  Result ($images.Count -eq 0) "no pictures outside the allowed places (BAR artwork must never be in the repository)" $images
+  Result ($images.Count -eq 0) "no pictures outside the allowed places (BAR's artwork only as its cleared phone versions, NOTICE.md)" $images
 
   # private data
   $terms = @()

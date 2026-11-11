@@ -464,7 +464,14 @@ same, that stays the simpler way.
         join's and the game's loading screens, the lobby.
         After the day's dock changes (~17:15, dev phone, a 4-minute upright skirmish, the phone warm: GPU held at 348
         MHz, thermal level 6): 29.4, 30.0, 29.9 fps a minute (the first second's dip only), Lua 159-177 MB as on earlier
-        days; the dev phone left clean (no scratch widget, dev file or swapped script; upright off; its own screen size). A patch set for BAR's repository, tested by a pool swap as
+        days; the dev phone left clean (no scratch widget, dev file or swapped script; upright off; its own screen size).
+      - [x] **publish-check after the day** (~17:25): two FAILs, neither new in kind. The upright pictures made from BAR's
+        (loadpicture-upright_*, loadscreen-upright.png) fell under its "no BAR artwork" rule, which predates BAR's
+        developers clearing such phone versions (2026-11-06, NOTICE.md credits them): allowed by name now. And private
+        data: the dev phone's serial as the default device of tools/container-cost/measure.ps1 and trapbench.ps1 (now
+        toolchain.ps1's Get-PhoneDevice, from ..\phone-device.txt), and the day's test address in StatusText and its
+        test (a 10.x address reads as a home network's: RFC 5737's 198.51.100.7 in the test). publish-check -NoHistory:
+        "Ready to publish"; its self test and status-text-test ALL PASS. (The history question stays Kailil's.) A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).

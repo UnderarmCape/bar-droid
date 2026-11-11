@@ -109,8 +109,8 @@ public class StatusTextTest {
         System.out.println((ok4 ? "PASS " : "FAIL ") + "driver watch: another submit error, then the watchdog: nothing");
         // the pre-game screen's server: a join's line, the phone's own game, other lines (the dev phone's lines)
         String[][] pre = {
-            { "13:39:47 [engine] [t=00:00:01.802620][f=-000001] [CPreGame] using client IP 10.255.255.1 and port 8452",
-                "10.255.255.1:8452" },
+            { "13:39:47 [engine] [t=00:00:01.802620][f=-000001] [CPreGame] using client IP 198.51.100.7 and port 8452",
+                "198.51.100.7:8452" },
             { "13:21:02 [engine] [t=00:00:02.562342][f=-000001] [CPreGame] using server IP 127.0.0.1 and port 0", null },
             { "[CPreGame] using client IP 203.0.113.7 and port 0", "203.0.113.7" },
             { "[CPreGame] using client IP ::1 and port 8452", null },

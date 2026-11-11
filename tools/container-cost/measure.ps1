@@ -7,10 +7,11 @@
 # Take the dev phone first (devphone-lock.ps1 take <who>); results in C:\Tools\BARANDROID\engine-sim\runs\<time>-cc-<label>*.
 param([string]$Engine = "gcc-cut", [string]$Label = "base", [int]$Skip = 1210, [int]$Seconds = 120,
       [string[]]$DevEnv = @(), [string[]]$Settings = @(), [string]$Replay = "isthmus8v8-20261026.sdfz",
-      [string]$Device = "R5CW22GVC3D")
+      [string]$Device = "")
 $ErrorActionPreference = "Continue"
 . (Join-Path (Split-Path $PSScriptRoot) "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
+if (-not $Device) { $Device = Get-PhoneDevice $adb }   # (the dev phone: ..\phone-device.txt, outside the repository)
 $out = Join-Path (Split-Path (Split-Path $PSScriptRoot)) "build\container-cost"
 $runs = "C:\Tools\BARANDROID\engine-sim\runs"
 $stamp = (Get-Date).ToString("yyyyMMdd-HHmmss")

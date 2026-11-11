@@ -75,7 +75,7 @@ final class StatusText {
     }
 
     // (a join: "[CPreGame] using client IP <the server> and port <its port>"; the phone's own game: "using server IP
-    // 127.0.0.1 and port 0"; dev phone, a client script at 10.255.255.1, 2026-11-11)
+    // 127.0.0.1 and port 0"; dev phone, a client script to an address nothing answers, 2026-11-11)
     private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
 
     /**
