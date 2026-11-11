@@ -335,8 +335,7 @@ same, that stays the simpler way.
         row: they follow the groups and the row scrolls sideways (a sideways drag on it, RtsTouch's `groups` rect). There
         with nothing picked and with picked units that have no orders; with orders, the remove buttons take the row's
         right and the tiles move left with them. Dev phone: the commander's tile ("1") at the row's right from the
-        start, picked from it with the camera on it (a row full enough to scroll, and the remove buttons beside an idle
-        tile, not yet seen on the phone).
+        start, picked from it with the camera on it (the full row and the remove buttons beside idle tiles: below).
       - **PINGS in IDLE BUILDER's place** ("a button to go to last 4 pings like we have on controller. And to set a
         ping"): LAST PINGS, the camera to the newest ping from someone else, again within 2 s the one before, of the last
         4 ("2 OF 4" on it; the pad's list and cycle, which keeps 5: RB + D-pad up); PING, then a tap on the map (or the
@@ -364,7 +363,7 @@ same, that stays the simpler way.
         rests there, and the order menu copy under the dock showed its tooltip for 2.5 s, "Patrol" or "Fire at will",
         of its own hidden button under the pointer, not the dock's. None over the dock now (make-ordermenu.py,
         tooltipShows). Dev phone: Hold pos tapped, nothing shown a second later. dock-phone-test, touch-phone-test ALL
-        PASS.
+        PASS. On the Fold7 at 12:41 (89f5471's build, BAR not running there), with the batch above.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
