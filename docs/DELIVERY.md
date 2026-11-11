@@ -178,6 +178,11 @@ same, that stays the simpler way.
         the strip eases now finishes the page turn and clicks nothing. Dev phone, upright, offline (the login guard,
         Chobby's account dialog cancelled): a swipe then a tap 0.1 s after, before: page 2 off by 40 px; after: in
         place; a tap at rest still clicks (Downloads opened); lobby-phone-test ALL PASS.
+      - **A tap on a flying lobby list** (11-11 ~05:05, the same review): a press stopped a fling and the release
+        clicked (or opened a server's details) whatever passed under the finger. A tap on a list still flying faster
+        than a fling starts (150 list px a second) now only stops it, as on any phone ("a tap stopped a flying list" in
+        infolog); slower, it clicks as before. Dev phone, upright lobby offline: the news panel flung, a tap at once:
+        stopped, no click, nothing opened; lobby-phone-test ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
