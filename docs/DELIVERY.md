@@ -391,10 +391,22 @@ same, that stays the simpler way.
         made again by `tools/make-loadscreen-upright.ps1` from BAR's picture: the word scaled by Lanczos and
         pre-sharpened (an unsharp mask) for the phone's two scalings on the way (the lobby's X screen under the display,
         then SGSR), the same size on the screen, 151 KB (was 127 KB). Dev phone: rivets and scratch crisp.
-      - [ ] **Spectating in the dock**: the spectator's buttons "much too small"; the same dock as playing; BAR's
+      - [x] **Spectating in the dock**: the spectator's buttons "much too small"; the same dock as playing; BAR's
         player list hidden and a team list in the dock (in the home grid's open place beside the pings); LAST PINGS
-        only, no PING.
-      - [ ] **A toggle that hides the dock**, a small button at the bottom brings it back.
+        only, no PING. Upright and spectating by touch the dock is up with the spectate widget's tools as its big
+        buttons over the whole grid, six narrow columns: < PLAYER CAM > (the player's name in their colour once
+        locked), TEAMS / LAST PINGS / HIDE, < FOLLOW UNIT > (the unit's name), FREE CAM / GROUP / FULL VIEW (BAR's
+        specfullview); following, the camera's views (1st person, Shoulder, Table, Close, Mid, Tune) take the players'
+        row. TEAMS lists every team, each alliance from a new row, the one watched lit, team colours along the bottom; a
+        tap watches that team (BAR's specteam) with its player's camera and closes it. The dock's resources are the
+        watched team's; their panels are off. The spectate widget's small bar stands down while the dock is up (Tune's
+        settings still use it, above the dock). BAR's player list is under the dock; folded (HIDE), BAR's small list
+        shows in its corner again: its API has no way to hide it (scale, columns, spectators only), a change for BAR's
+        list would. Dev phone, a replay upright: the grid, TEAMS (Player, SimpleAI(1) (AI)), SimpleAI picked (the dock's
+        metal went to the AI's), the list kept the menu open; following and its views not seen (the replay ended).
+      - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
+        dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
+        dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
       - [ ] **The button for the home grid's open place** (beside PINGS): Kailil asked for help choosing.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,

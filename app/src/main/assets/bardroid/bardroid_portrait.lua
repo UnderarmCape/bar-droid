@@ -246,6 +246,103 @@ function idleB.buildBusy()
 	return busy
 end
 
+-- Spectating upright in the dock (Kailil, 2026-11-11, a spectated online game: "The spectator mode buttons is much too
+-- small. Unify the look and feel between playing and spectating with the bottom half ui experience. Hide the team list
+-- and create a team list inside of our ui experience ... next to ping and last pings ... last pings shoukd be the only
+-- option instead of ping. Add a toggle to hide the bottom half ui that will leave a small un hide button"): the spectate
+-- widget's tools (bardroid_spectate.lua, WG.BarDroidSpectate) as the dock's big buttons over its whole grid, 6 narrow
+-- columns (the arrows one each); TEAMS lists the players by alliance in the grid's place (BAR's own list, at the
+-- bottom right, is under the dock); HIDE folds the dock to a small SHOW button at the bottom of the screen.
+local SP = { hidden = false, teams = false, COLS = 6 }
+function SP.on()
+	return Spring.GetSpectatingState() and (WG.BarDroidInput or "touch") == "touch"
+end
+function SP.act(name)
+	local S = WG.BarDroidSpectate
+	local a = S and S.actions and S.actions[name]
+	if a then
+		a()
+	end
+end
+-- a team's name: its first player not spectating, else its AI's ("BARb (AI)"); and that player, for the player camera
+function SP.teamName(teamID)
+	for _, p in ipairs(Spring.GetPlayerList(teamID) or {}) do
+		local name, _, spec = Spring.GetPlayerInfo(p, false)
+		if name and not spec then
+			return name, p
+		end
+	end
+	local _, aiName = Spring.GetAIInfo(teamID)
+	return (aiName or ("Team " .. teamID)) .. " (AI)", nil
+end
+-- TEAMS: every team, two to a row, each alliance from a new row, the one watched lit; CLOSE first
+function SP.teamItems()
+	local out = { { kind = "specclose", label = "CLOSE", w = SP.COLS } }
+	local gaia = Spring.GetGaiaTeamID()
+	local watched = Spring.GetMyTeamID()
+	for _, a in ipairs(Spring.GetAllyTeamList() or {}) do
+		local n = 0
+		for _, teamID in ipairs(Spring.GetTeamList(a) or {}) do
+			if teamID ~= gaia then
+				local name, playerID = SP.teamName(teamID)
+				local dead = select(3, Spring.GetTeamInfo(teamID, false))
+				local r, g, b = Spring.GetTeamColor(teamID)
+				out[#out + 1] = { kind = "specteam", team = teamID, player = playerID, label = name, color = { r, g, b },
+					w = SP.COLS / 2, on = teamID == watched, dim = dead }
+				n = n + 1
+			end
+		end
+		if n % 2 == 1 then -- (the next alliance from a new row)
+			out[#out + 1] = { kind = "blank", w = SP.COLS / 2 }
+		end
+	end
+	return out
+end
+-- the grid: following, the camera's views in place of the players (as the spectate bar)
+function SP.items()
+	if SP.teams then
+		return SP.teamItems()
+	end
+	local S = WG.BarDroidSpectate
+	local d = S and S.dockInfo and S.dockInfo() or {}
+	local out = {}
+	local function add(it)
+		out[#out + 1] = it
+	end
+	if d.follow then
+		for _, v in ipairs(S.views and S.views() or {}) do
+			add({ kind = "specact", act = "preset_" .. v.key, label = v.label:upper(), w = 2, on = d.view == v.key })
+		end
+		add({ kind = "specact", act = "tune", label = "TUNE", w = 2, on = d.tuning })
+	else
+		local none = (d.players or 0) == 0
+		add({ kind = "specact", act = "player_prev", label = "<", w = 1, dim = none })
+		add({ kind = "specact", act = "player_next", w = 4, on = d.player ~= nil, dim = none, color = d.player and d.playerColor,
+			label = none and "NO PLAYER CAMS" or d.player and d.playerName or "PLAYER CAM" })
+		add({ kind = "specact", act = "player_next", label = ">", w = 1, dim = none })
+	end
+	add({ kind = "specteams", label = "TEAMS", w = 2 })
+	add({ kind = "pings", w = 2 })
+	add({ kind = "spechide", label = "HIDE", w = 2 })
+	add({ kind = "specact", act = "unit_prev", label = "<", w = 1 })
+	add({ kind = "specact", act = "unit_next", w = 4, on = d.follow, color = d.follow and d.followColor,
+		label = d.follow and d.followName or "FOLLOW UNIT" })
+	add({ kind = "specact", act = "unit_next", label = ">", w = 1 })
+	add({ kind = "specact", act = "free", label = "FREE CAM", w = 2, on = not d.player and not d.follow })
+	add({ kind = "specact", act = "group", label = "GROUP", w = 2, on = d.group })
+	add({ kind = "specfull", label = "FULL VIEW", w = 2, on = select(2, Spring.GetSpectatingState()) and true or false })
+	return out
+end
+-- a team picked in TEAMS: its view (BAR's specteam, the team's sight) and its player's camera; the list closes
+function SP.pick(it)
+	Spring.SendCommands("specteam " .. it.team)
+	local S = WG.BarDroidSpectate
+	if it.player and S and S.lockPlayer then
+		S.lockPlayer(it.player)
+	end
+	SP.teams = false
+end
+
 local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
@@ -294,6 +391,11 @@ local function layout()
 	L.btnW = floor((rw - gap) / 2)
 	L.rightRows = max(3, floor((gridH + gap) / (floor(tile * 0.55) + gap))) -- (about 6 mm tall on a phone: thumbs)
 	L.btnH = floor((gridH + gap) / L.rightRows) - gap
+	-- HIDE (spectating): the dock folded to a SHOW button at the bottom's middle, the game on the whole screen
+	if SP.hidden then
+		local bw, bh = floor(vsx * 0.28), max(floor(vsy * 0.042), resH + 2 * pad)
+		L.dock = { floor((vsx - bw) / 2), pad, floor((vsx + bw) / 2), pad + bh }
+	end
 end
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -310,8 +412,11 @@ local function writeDock(force)
 		end
 		local _, cmd = spGetActiveCommand()
 		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked and not idleB.buildBusy())
+		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
+		local lr = SP.hidden and L.dock
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
-			r(L.left), r(L.right), selStyle, draw and 1 or 0) .. (showGroups and ("groups " .. r(L.groups) .. "\n") or "")
+			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
+			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
@@ -1270,14 +1375,19 @@ function refreshNow()
 	if dgunOn() then -- (the D-gun mode: its sticks, FIRE and cancel over the whole grid)
 		newLeft, lk, newRight, rk = {}, "dgun", {}, "dgun"
 	end
+	if SP.on() then -- (spectating: the spectator's grid over the whole dock, SP.items; or TEAMS)
+		newLeft, lk, newRight, rk = {}, "spec", SP.items(), "home"
+	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
 	local leftRowsN, rightRowsN
 	cellsOf.left, leftRowsN = pack(leftItems, 3)
-	cellsOf.right, rightRowsN = pack(rightItems, 2)
+	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS or 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
-	if rk == "home" then -- (all of it on the dock: AUTO RETREAT a fourth row, no scrolling)
+	if lk == "spec" then -- (the spectator's 4 or 5 rows; TEAMS: 5 in sight, more scroll)
+		L.homeRows = SP.teams and 5 or max(1, min(5, rightRowsN))
+	elseif rk == "home" then -- (all of it on the dock: AUTO RETREAT a fourth row, no scrolling)
 		L.homeRows = max(HOME_ROWS, min(HOME_ROWS + 1, rightRowsN))
 	elseif rk == "presets" then -- (laid out as the home grid, 2 x 2)
 		L.homeRows = 2
@@ -1591,10 +1701,22 @@ local function pressItem(item, long)
 				cameraTo(x, y, z, k == "commander" and 1.3)
 			end
 		end
+	elseif k == "specact" then -- (spectating, SP: the spectate widget's own action)
+		SP.act(item.act)
+	elseif k == "specteams" then
+		SP.teams = true
+	elseif k == "specclose" then
+		SP.teams = false
+	elseif k == "specteam" then
+		SP.pick(item)
+	elseif k == "specfull" then -- (BAR's own: the whole map's view, or the watched team's sight)
+		Spring.SendCommands("specfullview")
+	elseif k == "spechide" then
+		SP.setHidden(true)
 	elseif k == "pings" then -- (left half: the camera to the last 4 pings, again within 2 s the one before; right half:
-		-- the map's next tap is a ping, pressed again: not)
+		-- the map's next tap is a ping, pressed again: not; spectating, the whole of it: the last pings)
 		local r = pingT.rect
-		if r and pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2 then
+		if r and pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2 and leftKind ~= "spec" then
 			pingT.armedAt = not pingT.armed() and now() or nil
 			if WG.BarDroidPad and WG.BarDroidPad.say then
 				WG.BarDroidPad.say(pingT.armedAt and "TAP THE MAP TO PING" or "NO PING")
@@ -1672,7 +1794,8 @@ local function half(side)
 	end
 	if rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets" then -- (the whole grid)
 		local r = homeRect()
-		return r, rightScroll, rightItems, 2, floor((r[3] - r[1] - L.gap) / 2),
+		local cols = leftKind == "spec" and SP.COLS or 2 -- (spectating: 6 narrow columns, SP)
+		return r, rightScroll, rightItems, cols, floor((r[3] - r[1] - (cols - 1) * L.gap) / cols),
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
 	end
@@ -1880,6 +2003,15 @@ local function drawButton(item, r)
 		button(r, { 0, 0, 0, 0.25 }, { 0.12, 0.12, 0.12, 0.3 })
 		return
 	end
+	if item.kind == "pings" and leftKind == "spec" then -- (spectating: LAST PINGS alone, Kailil 2026-11-11)
+		pingT.rect = r
+		local n, step = pingT.state()
+		pingT.drawn = step .. ""
+		button(r)
+		textIn(step > 0 and string.format("PING %d OF %d", step, n) or "LAST PINGS", r[1], r[2], r[3], r[4],
+			min((r[4] - r[2]) * 0.34, L.btnH * 0.46), n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+		return
+	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
 		pingT.rect = r
 		local n, step, armed = pingT.state()
@@ -1915,6 +2047,7 @@ local function drawButton(item, r)
 		armed, armedName = WG.BarDroidPresets.armed()
 	end
 	local on = armed or item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
+		or (item.kind == "specact" or item.kind == "specteam" or item.kind == "specfull") and item.on
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
 		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
@@ -1925,7 +2058,7 @@ local function drawButton(item, r)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
 	textIn(armedName or item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
-		item.kind == "none" and "\255\140\140\140" or "\255\240\240\240", font)
+		(item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240", font)
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
 		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
@@ -2431,6 +2564,18 @@ local function newLines()
 	return text:sub(1, last)
 end
 
+-- HIDE and SHOW (spectating, SP): the dock folded to its SHOW button or open again, laid out and told to RtsTouch
+function SP.setHidden(on)
+	SP.hidden, SP.teams = on, false
+	if on then
+		setMenu(false)
+	end
+	layout()
+	refresh()
+	writeDock(true)
+	Spring.Echo("[bardroid-portrait] dock " .. (on and "hidden: the SHOW button" or "shown again")) -- (tools)
+end
+
 local function dockLines()
 	local lines = newLines()
 	if not lines then
@@ -2502,7 +2647,9 @@ local function dockLines()
 			touched()
 		end
 		local name = line:match("^act (dock_%S+)")
-		if name == "dock_menu" and active then
+		if name == "dock_menu" and active and SP.hidden then -- (the SHOW button tapped: the dock back)
+			SP.setHidden(false)
+		elseif name == "dock_menu" and active then
 			setMenu(true)
 		elseif name == "dock_select_start" and active then
 			selecting = true
@@ -2527,7 +2674,14 @@ end
 local function checkActive()
 	local x, y = Spring.GetViewGeometry()
 	local was = active
-	active = y > x * PORTRAIT and playing()
+	-- (and spectating by touch: the spectator's grid, SP; Kailil, 2026-11-11)
+	active = y > x * PORTRAIT and (playing() or SP.on())
+	if SP.hidden and not (active and SP.on()) then -- (folded only while spectating)
+		SP.hidden, SP.teams = false, false
+		if active then
+			layout()
+		end
+	end
 	if active and (x ~= vsx or y ~= vsy or not was) then
 		layout()
 		refresh()
@@ -2596,7 +2750,9 @@ function widget:Update(dt)
 	-- keeps canceling a place", Kailil 2026-11-10, a Bot Lab; dev phone: the spot tapped, PLACE 2.5 s later, nothing)
 	-- (so with the presets, the teammate picker and the resource panel over the grid: picked to be tapped next; the
 	-- presets' thumbnails went back to the camera pad under a finger reaching for one, dev phone)
-	if rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel" then
+	-- (and the spectator's TEAMS list: a tap on a team after 2 s only opened the menu again, dev phone 2026-11-11)
+	if rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel"
+		or (leftKind == "spec" and SP.teams) then
 		if not menu then
 			setMenu(true)
 		end
@@ -2897,6 +3053,16 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	if not post then
 		L.drawFrame = Spring.GetDrawFrame()
 	end
+	if SP.hidden then -- (folded: its SHOW button only, BAR's dark glass and gold along its top as the open dock's)
+		local d = L.dock
+		button(d, { 0.05, 0.05, 0.06, 0.82 }, { 0.16, 0.16, 0.18, 0.82 })
+		gl.Color(0.9, 0.72, 0.25, 0.9)
+		gl.Rect(d[1] + L.pad, d[4] - max(2, floor(L.pad * 0.35)), d[3] - L.pad, d[4])
+		gl.Color(1, 1, 1, 1)
+		textIn("\226\150\178  SHOW", d[1], d[2], d[3], d[4], (d[4] - d[2]) * 0.42, "\255\240\240\240", bold)
+		resetGL()
+		return
+	end
 	local R = gl.R2tHelper
 	if texMode ~= 0 and R and R.RenderInRect and R.BlendTexRect then
 		local w, h = L.dock[3] - L.dock[1], L.dock[4] - L.dock[2]
@@ -2969,7 +3135,7 @@ end
 function widget:DrawScreenPost()
 	-- (only over a dock drawn this frame: not over the lobby's overlay, a modal window or a hidden interface, when BAR's
 	-- handler skips the widgets' DrawScreen but not this)
-	if not (active and font and dockTex) or texMode == 0 or Spring.GetGameFrame() > 0
+	if not (active and font and dockTex) or texMode == 0 or Spring.GetGameFrame() > 0 or SP.hidden
 		or L.drawFrame ~= Spring.GetDrawFrame() then
 		return
 	end
@@ -3036,6 +3202,10 @@ function widget:MousePress(x, y, btn)
 	end
 	if not (active and inRect(x, y, L.dock)) then
 		return false
+	end
+	if SP.hidden then -- (the SHOW button clicked with a mouse: fingers have it through act dock_menu)
+		SP.setHidden(false)
+		return true
 	end
 	touched()
 	local pr = placeRect()
@@ -3137,7 +3307,8 @@ function widget:MouseRelease(x, _, btn)
 		-- its button's: those halves were all "empty" for the pan, and their buttons took no taps, 2026-11-10)
 		return true
 	end
-	if not p.side and inRect(p.x, p.y, L.res) then -- metal or energy tapped: its panel (again: closed)
+	if not p.side and inRect(p.x, p.y, L.res) and leftKind ~= "spec" then -- metal or energy tapped: its panel (again:
+		-- closed; spectating, nothing to share or convert: none)
 		local res = p.x < (L.res[1] + L.res[3]) / 2 and "metal" or "energy"
 		resPanel = resPanel ~= res and res or nil
 		sharing = nil

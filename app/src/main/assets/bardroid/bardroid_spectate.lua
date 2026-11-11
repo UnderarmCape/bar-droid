@@ -1321,6 +1321,11 @@ local function layout()
 		end
 	end
 	local y = math.max(0, math.min(vsy - 2 * h - gap, math.floor(h * 0.25 + e.dy * vsy)))
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	if dock then -- (upright, over the dock: Tune's rows)
+		y = math.min(vsy - 2 * h - gap, dock[4] + gap)
+	end
 	local wa, wb = width(rowA), width(rowB)
 	-- the room left of BAR's (small) player list at the bottom right: the bar never runs under it
 	local x0, x1 = gap, vsx - gap
@@ -1580,6 +1585,12 @@ function widget:Update(dt)
 	local list = WG.BarDroidPlayers
 	local wasShown = shown
 	shown = active and (not list or (list.barWanted and list.barWanted()) or not (list.minimized and list.minimized()))
+	-- (upright the dock has these as its own big buttons, bardroid_portrait.lua: this bar only for Tune's settings, above
+	-- the dock)
+	local P = WG.BarDroidPortrait
+	if P and P.active and P.active() then
+		shown = active and tuning
+	end
 	if shown and not wasShown then
 		order = players() -- top to bottom as the list shows them now
 		barDirty = true
@@ -1754,6 +1765,22 @@ function widget:Initialize()
 			local taken = widget:MousePress(x, y, 1)
 			widget:MouseRelease(x, y, 1)
 			return taken
+		end,
+		-- the upright dock's spectator grid (bardroid_portrait.lua, Kailil 2026-11-11: "The spectator mode buttons is much
+		-- too small. Unify the look and feel between playing and spectating"): what its buttons say, and a player picked
+		-- from its team list
+		dockInfo = function()
+			local name, color = playerLabel()
+			local fName, fColor = followLabel()
+			return { player = lockedPlayer(), playerName = name, playerColor = color, follow = follow ~= nil,
+				followName = fName, followColor = fColor, group = groupMode, view = view.preset, tuning = tuning,
+				players = #(order or players()) }
+		end,
+		lockPlayer = function(playerID)
+			if lockcamera() and lockcamera().SetPlayerID then
+				stopFollow()
+				lockcamera().SetPlayerID(playerID)
+			end
 		end,
 	}
 end
