@@ -2714,8 +2714,33 @@ local function drawingCursor()
 	armedCursor = desc and desc.cursor or nil
 end
 
+-- No BAR tooltips over the dock: after a tap the pointer rests on it, over BAR's panels under it, whose tooltips BAR's
+-- tooltip widget (gui_tooltip.lua) drew on top, for buttons not to be seen ("Only view what the player can see", BAR's
+-- player list under the spectator's dock; "Patrol", the order menu's; dev phone 2026-11-11). That widget draws what is
+-- asked of it each frame (WG.tooltip.ShowTooltip): an ask while the pointer is over the dock is dropped. (SP holds it:
+-- the file's main chunk is at Lua's 200 locals.)
+function SP.guardTooltips()
+	local T = WG.tooltip
+	if not (T and T.ShowTooltip) or T.ShowTooltip == SP.tipWrap then
+		return
+	end
+	local inner = T.ShowTooltip
+	SP.tipInner, SP.tipOwner = inner, T
+	SP.tipWrap = function(name, value, x, y, title)
+		if active and not SP.hidden and L.dock then
+			local mx, my = Spring.GetMouseState()
+			if inRect(mx, my, L.dock) then
+				return
+			end
+		end
+		return inner(name, value, x, y, title)
+	end
+	T.ShowTooltip = SP.tipWrap
+end
+
 function widget:Update(dt)
 	checkActive()
+	SP.guardTooltips()
 	dockLines()
 	topbarBars(active or upright())
 	if not active then
@@ -3427,6 +3452,9 @@ end
 function widget:Shutdown()
 	if dockTex then
 		gl.DeleteTexture(dockTex)
+	end
+	if SP.tipOwner and SP.tipOwner.ShowTooltip == SP.tipWrap then -- (BAR's tooltip widget as it was)
+		SP.tipOwner.ShowTooltip = SP.tipInner
 	end
 	WG.BarDroidPortrait = nil
 	active = false
