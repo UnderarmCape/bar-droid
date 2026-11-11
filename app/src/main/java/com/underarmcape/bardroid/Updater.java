@@ -142,13 +142,19 @@ public final class Updater {
             sb.append("Last check ").append(s.getProperty("check"));
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
         } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
-        int misses = s.getProperty("layer.engine") != null ? 1 : 0;
+        String first = s.getProperty("layer.engine");
+        int misses = first != null ? 1 : 0;
         // (the last start's own list: the count in the state is written when a game ends, so one stopped kept an old one)
         File layer = new File(p.bar, "logs/android-layer.txt");
         if (layer.exists()) try (BufferedReader r = new BufferedReader(new FileReader(layer))) {
-            for (String l; (l = r.readLine()) != null; ) if (!l.trim().isEmpty()) misses++;
+            for (String l; (l = r.readLine()) != null; ) if (!l.trim().isEmpty()) { misses++; if (first == null) first = l.trim(); }
         } catch (IOException ignored) {}
-        if (misses > 0) sb.append("\n").append(misses).append(MISSES);
+        if (misses > 0) {
+            sb.append("\n").append(misses).append(MISSES);
+            // (which one, in its own words, cut short: a screenshot of the launcher then names it; "see the log" alone
+            // left the Fold7's one unknown for an evening, 2026-11-10)
+            sb.append("\n(").append(first.length() > 110 ? first.substring(0, 107) + "..." : first).append(")");
+        }
         return sb.toString();
     }
 
