@@ -245,8 +245,13 @@ final class RtsTouch {
             sendPan(flingX, flingY, flingX + dx, flingY + dy);
             flingVx *= FLING_DECAY; flingVy *= FLING_DECAY;
             if (Math.hypot(flingVx, flingVy) >= minFling / 4) ui.postDelayed(this, FLING_FRAME_MS);
+            else gliding = false;
         }
     };
+    // The map gliding after a flick, and whether this touch stopped it while it still moved fast: then the touch, lifted
+    // as a tap, is no click (it deselected the units on the ground under it, and opened the dock's menu on the pad; a
+    // flick and a tap to stop the camera, dev phone 2026-11-11)
+    private boolean gliding, glideStopped;
 
     RtsTouch(MainActivity activity) {
         this.activity = activity;
@@ -505,6 +510,10 @@ final class RtsTouch {
                 finishPlacedClick();
                 finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
+                glideStopped = gliding && Math.hypot(flingVx, flingVy) >= minFling;
+                if (gliding) Log.i("touch", String.format(Locale.US, "a touch on the gliding map (%.0f px/s): %s",
+                        Math.hypot(flingVx, flingVy), glideStopped ? "it stops it, no tap" : "slow, a tap as any"));
+                gliding = false;
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
                 Dock dock = dock();
                 inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()));
@@ -747,7 +756,7 @@ final class RtsTouch {
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
         switch (state) {
             case PENDING:
-                tap(downX, downY);
+                if (!glideStopped) tap(downX, downY);   // (a tap that stopped the gliding map only stops it)
                 break;
             case DRAG_WAIT:
                 int quick = hoverAt(downX, downY);
@@ -978,6 +987,10 @@ final class RtsTouch {
 
     /** A finger let go on the pad: a lone quick tap opens the dock's menu once no second tap follows; a pan glides. */
     private void padUp(MotionEvent e) {
+        if (padMove == PadMove.NONE && glideStopped) {   // (a tap that stopped the gliding camera only stops it)
+            padTapCount = 0;
+            return;
+        }
         if (padMove == PadMove.NONE && e.getEventTime() - downTime <= MULTI_TAP_MS) {
             padTapCount = padTaps + 1;
             padTapUpAt = e.getEventTime();
@@ -996,6 +1009,7 @@ final class RtsTouch {
         flingY = c[1];
         flingVx = vx * PAD_PAN_GAIN;
         flingVy = vy * PAD_PAN_GAIN;
+        gliding = true;
         ui.postDelayed(fling, FLING_FRAME_MS);
     }
 
@@ -1454,6 +1468,7 @@ final class RtsTouch {
         Rect vp = v.getInputViewport();
         flingX = v.getLeft() + vp.exactCenterX(); flingY = v.getTop() + vp.exactCenterY();
         flingVx = vx; flingVy = vy;
+        gliding = true;
         ui.postDelayed(fling, FLING_FRAME_MS);
     }
 
