@@ -255,6 +255,7 @@ public class GameActivity extends MainActivity {
         setFlag(BarApp.get().paths().hiddenFlag(), true, "game screen hidden: the engine stops drawing");
         catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
         catchupHandler.removeCallbacks(upscaleCompare);
+        if (voiceChat != null) voiceChat.close();   // (speak to chat stops listening: what is said next is not for the game)
         super.onStop();
     }
 

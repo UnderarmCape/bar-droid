@@ -116,7 +116,13 @@ final class VoiceChat {
         }
     }
 
+    /**
+     * Stops listening: the game screen gone (GameActivity.onStop: the phone locked or another app in front) or closed.
+     * Listening on after the screen went away sent what was said next, perhaps to someone else in the room, to the
+     * game's chat, online a public one.
+     */
     void close() {
+        if (listening) Log.i("app", "voice chat: stopped listening, the game screen went away");
         session++;
         endRecognizer();
         done();
