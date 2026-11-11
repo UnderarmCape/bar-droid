@@ -18,6 +18,7 @@ local OUT, CMD_FILE = "LuaUI/Config/bardroid_docktest.txt", "LuaUI/Config/bardro
 local com, ready, fails, lastCmd = nil, false, 0, nil
 local buildDef -- (the build grid's first building, in sight on any screen shape: an Armada commander's Solar Collector)
 local pawns, maxSpeed = {}, nil
+local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
 
 local function check(case, ok, detail)
 	if not ok then
@@ -170,22 +171,58 @@ function widget:GameFrame(f)
 			pawns = list
 			Spring.SelectUnitArray(pawns)
 			WG.BarDroidPresets.open()
-			local cx, _, cz = Spring.GetUnitPosition(com)
-			local ax, ay, bx2, by2
-			for r = 300, 1200, 60 do -- (two points on open ground on the screen, the second farther on)
-				for a = 0, 345, 15 do
-					local x, z = cx + math.cos(math.rad(a)) * r, cz + math.sin(math.rad(a)) * r
-					local sx, sy = screenOf(x, z)
-					if sx and not ax then
-						ax, ay = sx, sy
-					elseif sx and ax and math.abs(sx - ax) + math.abs(sy - ay) > 200 and not bx2 then
-						bx2, by2 = sx, sy
+			-- the camera 350 elmos inside the map's edge nearest the commander (the west, east or north edge: the south
+			-- one shows under the dock), so the void past it shows above the dock (the drag starts there)
+			local x, _, z = Spring.GetUnitPosition(com)
+			local mx, IN = Game.mapSizeX, 350
+			local d = math.min(x, z, mx - x)
+			edge = { d == x and IN or d == mx - x and mx - IN or x, d == z and IN or z }
+			Spring.SetCameraTarget(edge[1], Spring.GetGroundHeight(edge[1], edge[2]), edge[2], 0)
+			aimAt = f + 45
+		end
+	end
+	if aimAt and f >= aimAt then -- (the aims once the camera is there)
+		aimAt = nil
+		do
+			-- the game between the dock and the top bar on a grid: spots over the ground and over no ground (the void
+			-- past the map's edge); the drag starts at the lowest void spot when there is one (the aim begins once the
+			-- finger reaches the ground), goes to the ground spot nearest it (aim0), then to one 200+ px on (aim1)
+			local vsx, vsy = Spring.GetViewGeometry()
+			local D = WG.BarDroidPortrait
+			local dock = D and D.dock and D.dock()
+			local vx, vy
+			local grounds = {}
+			for gy = (dock and dock[4] or 0) + 80, vsy - 200, 16 do
+				for gx = 80, vsx - 80, 32 do
+					local kind, pos = Spring.TraceScreenRay(gx, gy, true, false)
+					if not kind and not vx then
+						vx, vy = gx, vsy - gy
+					elseif kind == "ground" and pos and pos[1] > 64 and pos[3] > 64 and pos[1] < Game.mapSizeX - 64
+						and pos[3] < Game.mapSizeZ - 64 then
+						grounds[#grounds + 1] = { gx, vsy - gy }
 					end
 				end
 			end
-			write(string.format("aim0 %s %s\naim1 %s %s\n", tostring(ax), tostring(ay), tostring(bx2), tostring(by2)))
-			Spring.Echo(string.format("[docktest] presets open: %d Pawns, aim %s,%s to %s,%s", #pawns, tostring(ax),
-				tostring(ay), tostring(bx2), tostring(by2)))
+			local function dist(p, x, y)
+				return math.abs(p[1] - x) + math.abs(p[2] - y)
+			end
+			local ox, oy = vx or vsx / 2, vy or vsy / 2
+			table.sort(grounds, function(p, q)
+				return dist(p, ox, oy) < dist(q, ox, oy)
+			end)
+			local a0 = grounds[math.min(#grounds, vx and 3 or 1)] -- (a little way off the edge)
+			local ax, ay, bx2, by2 = a0 and a0[1], a0 and a0[2], nil, nil
+			for _, p in ipairs(grounds) do
+				if a0 and not bx2 and dist(p, ax, ay) > 200 then
+					bx2, by2 = p[1], p[2]
+				end
+			end
+			Spring.Echo(string.format("[docktest] camera on the map's edge at %d,%d: %d ground spots on the grid",
+				edge[1], edge[2], #grounds))
+			write(string.format("aim0 %s %s\naim1 %s %s\nvoid %s %s\n", tostring(ax), tostring(ay), tostring(bx2),
+				tostring(by2), tostring(vx), tostring(vy)))
+			Spring.Echo(string.format("[docktest] presets open: %d Pawns, aim %s,%s to %s,%s, void %s,%s", #pawns,
+				tostring(ax), tostring(ay), tostring(bx2), tostring(by2), tostring(vx), tostring(vy)))
 		end
 	end
 	if f % 6 == 0 then

@@ -67,12 +67,21 @@ try {
   # 1. the build grid's first building (its tile from the dock: in sight on any screen shape); a tap opens the menu, a
   # second picks it; its spot; PLACE
   $tile = Mid $spots["tile"] "the first build tile"
-  Tap $tile[0] $tile[1]
   # (the second tap once the dock says its menu is open: just after loading the game is slow, and a tap 0.6 s later
-  # still found the camera pad and only opened the menu again)
-  $until = (Get-Date).AddSeconds(4)
-  while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
-  Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 900
+  # still found the camera pad and only opened the menu again. 2026-11-11, 2 runs in 5: no menu 4 s after the tap, the
+  # second tap only opened it, the spot's tap then picked the ground and the commander went: a note, and one more tap)
+  foreach ($try in 1..2) {
+    Tap $tile[0] $tile[1]
+    $until = (Get-Date).AddSeconds(4); $head = ""
+    while ((Get-Date) -lt $until -and -not ($head -match ' menu')) { Start-Sleep -Milliseconds 200; $head = "$(InApp "head -n 1 $cfg/bardroid_dock.txt")" }
+    if ($head -match ' menu') { break }
+    "[docktest] note: a tap on the dock did not open its menu in 4 s (tap $try; the dock's line: $head)"
+  }
+  Tap $tile[0] $tile[1]
+  # (the spot's tap once the building is picked: PLACE in the build menu's file)
+  $until = (Get-Date).AddSeconds(3)
+  while ((Get-Date) -lt $until -and -not (Rects "bardroid_place.txt")["done"]) { Start-Sleep -Milliseconds 200 }
+  if (-not (Rects "bardroid_place.txt")["done"]) { "[docktest] note: the tile's tap did not pick the building in 3 s (place file: $(InApp "cat $cfg/bardroid_place.txt" | Select-Object -First 2))" }
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
@@ -113,7 +122,14 @@ try {
   $g = @($dock["left"][0], $dock["left"][1], $dock["right"][2], $dock["left"][3])
   Tap ($g[0] + ($g[2] - $g[0]) / 4) ($g[1] + ($g[3] - $g[1]) / 4); Start-Sleep -Milliseconds 900
   $a0 = $aims["aim0"]; $a1 = $aims["aim1"]
-  Touch DOWN $a0[0] $a0[1]; Start-Sleep -Milliseconds 150
+  # (from over the void past the map's edge when the screen shows some: the aim must begin once the finger reaches the
+  # ground; a press there lost the whole drag, 2026-11-11)
+  if ($aims["void"]) {
+    "[docktest] the STRAFE drag starts over the void"
+    $v = $aims["void"]; Touch DOWN $v[0] $v[1]; Start-Sleep -Milliseconds 150
+    Touch MOVE (($v[0] + $a0[0]) / 2) (($v[1] + $a0[1]) / 2); Touch MOVE $a0[0] $a0[1]
+  } else { "[docktest] (no void on the screen: the STRAFE drag starts on the ground)"; Touch DOWN $a0[0] $a0[1] }
+  Start-Sleep -Milliseconds 150
   Touch MOVE (($a0[0] + $a1[0]) / 2) (($a0[1] + $a1[1]) / 2); Touch MOVE $a1[0] $a1[1]
   Start-Sleep -Milliseconds 300; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
   Stage "strafe?"; Start-Sleep 1
