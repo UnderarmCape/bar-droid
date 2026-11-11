@@ -25,30 +25,44 @@ import java.util.zip.ZipOutputStream;
 final class LogShare {
     private LogShare() {}
 
+    /** A zip being made, until its share sheet is started: a second tap meanwhile is let go (it deleted the first's zip
+     *  as it started, and two share sheets stacked, the lower one's file gone; dev phone, a double tap, 2026-11-11). */
+    private static final java.util.concurrent.atomic.AtomicBoolean zipping = new java.util.concurrent.atomic.AtomicBoolean();
+
     /**
      * Zipped off the UI thread (after a long game the infolog alone runs to tens of MB, and zipping it on the UI thread
      * could stall the launcher into Android's "not responding"), then the share sheet.
      */
     static void share(Activity a) {
+        if (!zipping.compareAndSet(false, true)) {
+            Log.i("app", "share logs: already zipping, the tap let go");
+            return;
+        }
         Toast.makeText(a, "Zipping the logs...", Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             long t0 = System.currentTimeMillis();
-            File zip = zip(a);
+            File zip = null;
+            try { zip = zip(a); } finally { if (zip == null) zipping.set(false); }
             if (zip == null) return;
             Log.i("app", "logs zipped: " + zip.length() / 1024 + " KB in " + (System.currentTimeMillis() - t0) + " ms");
+            File made = zip;
             a.runOnUiThread(() -> {
-                if (a.isFinishing() || a.isDestroyed()) return;
-                Uri uri = FileProvider.getUriForFile(a, a.getPackageName() + ".logs", zip);
-                Intent send = new Intent(Intent.ACTION_SEND)
-                        .setType("application/zip")
-                        .putExtra(Intent.EXTRA_STREAM, uri)
-                        .putExtra(Intent.EXTRA_SUBJECT, "BAR Droid logs " + zip.getName().replaceAll("^bardroid-logs-|\\.zip$", ""))
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                // (the sheet in the player's words, the app being "Beyond All Reason"; the subject keeps the port's name
-                // for whoever reads the logs)
-                a.startActivity(Intent.createChooser(send, "Share the game's logs"));
+                try { sheet(a, made); } finally { zipping.set(false); }
             });
         }, "log-share").start();
+    }
+
+    private static void sheet(Activity a, File zip) {
+        if (a.isFinishing() || a.isDestroyed()) return;
+        Uri uri = FileProvider.getUriForFile(a, a.getPackageName() + ".logs", zip);
+        Intent send = new Intent(Intent.ACTION_SEND)
+                .setType("application/zip")
+                .putExtra(Intent.EXTRA_STREAM, uri)
+                .putExtra(Intent.EXTRA_SUBJECT, "BAR Droid logs " + zip.getName().replaceAll("^bardroid-logs-|\\.zip$", ""))
+                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        // (the sheet in the player's words, the app being "Beyond All Reason"; the subject keeps the port's name for
+        // whoever reads the logs)
+        a.startActivity(Intent.createChooser(send, "Share the game's logs"));
     }
 
     private static File zip(Activity a) {
