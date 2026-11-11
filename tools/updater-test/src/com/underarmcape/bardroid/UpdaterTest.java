@@ -171,6 +171,12 @@ public final class UpdaterTest {
         new Updater(p).judgeLastRun();
         check("  nothing pending: nothing changes", "A".equals(state(p).getProperty("good.engine")) && state(p).getProperty("previous.engine") == null);
 
+        // the launcher's "Last check": a start that did not go online keeps the last one that did
+        String online = "Nov 11 10:10 (no answer from BAR)", local = "Nov 11 10:22 (" + Updater.NOT_CHECKED + ")";
+        check("last check: a game start that did not go online keeps the last online check", online.equals(Updater.checkLine(online, false, local)));
+        check("  an online one replaces it", "Nov 11 11:00 (up to date)".equals(Updater.checkLine(online, true, "Nov 11 11:00 (up to date)")));
+        check("  none yet: the start's own", local.equals(Updater.checkLine(null, false, local)));
+
         // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
         check("game version: BAR's name without \"Beyond All Reason\"", "test-31836-b250a16".equals(Updater.gameRelease("Beyond All Reason test-31836-b250a16")));
         check("  another name as it is", "Some Mod 1.2".equals(Updater.gameRelease("Some Mod 1.2")));

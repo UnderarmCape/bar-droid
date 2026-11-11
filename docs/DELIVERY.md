@@ -309,6 +309,11 @@ same, that stays the simpler way.
         player had picked a map of their own (Prefs.mapChosen: the app's smaller map is a default only). Now only
         while the app's choice holds. Dev phone: with it, the note as before; with a map marked the player's, "plainer
         unit shading and map detail; close other apps before a game" on one line.
+      - **The launcher's "Last check" is the last real check**: with updates off every game start wrote its time there
+        (a local check, nothing asked of BAR), and an Install / Update that found no network was gone from the line at
+        the next start. A start that does not go online keeps the last one that did (`Updater.checkLine`). Dev phone,
+        no network: Install / Update at 10:40, a skirmish started at 10:40:20, the launcher after it: "Last check Nov 11
+        10:40 (no answer from BAR)"; updater-test ALL PASS (three new cases).
       - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
         also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden

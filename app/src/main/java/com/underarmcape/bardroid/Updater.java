@@ -127,6 +127,15 @@ public final class Updater {
     /** A start's check result when it did not go online (summary() leaves it out while updates are off). */
     static final String NOT_CHECKED = "automatic updates off";
 
+    /**
+     * The launcher's "Last check" after a start: one that did not go online keeps the last one that did. With updates
+     * off "Last check" gave the last game start's time, when nothing was checked, and an Install / Update that found
+     * no network ("no answer from BAR") was gone from it at the next game start (dev phone, 2026-11-11).
+     */
+    static String checkLine(String before, boolean online, String now) {
+        return online || before == null ? now : before;
+    }
+
     /** The launcher's status lines (one fact a line: a phone's width wrapped one long line mid-phrase). */
     public static String summary(Paths p) {
         Properties s = new Properties();
@@ -229,7 +238,8 @@ public final class Updater {
         for (String t : tags) recordLaunched(t);
         state.setProperty("tags", String.join(",", tags));
         useTags(tags);
-        state.setProperty("check", new SimpleDateFormat("MMM d HH:mm", Locale.US).format(new Date()) + " (" + result + ")");
+        state.setProperty("check", checkLine(state.getProperty("check"), online,
+                new SimpleDateFormat("MMM d HH:mm", Locale.US).format(new Date()) + " (" + result + ")"));
         save();
         setEngine(engine);
         String launched = set("launched", tags), good = set("good", tags);
