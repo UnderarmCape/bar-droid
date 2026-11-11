@@ -461,7 +461,10 @@ same, that stays the simpler way.
         more scroll (130 pixels unfolded).
         The upright lobby at that shape (~17:05, offline): BAR's account dialog and the lobby behind it fit; nothing to
         do. That closes the unfolded sweep of the day's screens: playing dock, PLACE, spectator grid, TEAMS, HIDE, the
-        join's and the game's loading screens, the lobby. A patch set for BAR's repository, tested by a pool swap as
+        join's and the game's loading screens, the lobby.
+        After the day's dock changes (~17:15, dev phone, a 4-minute upright skirmish, the phone warm: GPU held at 348
+        MHz, thermal level 6): 29.4, 30.0, 29.9 fps a minute (the first second's dip only), Lua 159-177 MB as on earlier
+        days; the dev phone left clean (no scratch widget, dev file or swapped script; upright off; its own screen size). A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
