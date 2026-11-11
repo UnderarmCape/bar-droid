@@ -32,7 +32,7 @@ public class StartActivity extends Activity {
             boolean updating = s.startsWith("update: ") || s.startsWith("BAR update");
             if (updating) waitingSince = now;
             updateView.setText(updating ? StatusText.forPlayers(s.replaceFirst("^update: ", "")) : "");   // ("Checking for ...")
-            if (now - waitingSince > GIVE_UP_MS) { toGame = false; openLauncher(); finish(); return; }
+            if (now - waitingSince > GIVE_UP_MS) { toGame = false; openLauncher(); finishAndRemoveTask(); return; }
             handler.postDelayed(this, 500);
         }
     };
@@ -46,16 +46,21 @@ public class StartActivity extends Activity {
                 finishAndRemoveTask();
             } else {
                 openLauncher();   // installing
-                finish();
+                finishAndRemoveTask();
             }
             return;
         }
         boolean lowMemoryExit = GameService.noteLowMemoryExit(this);   // (the launcher says why the game ended)
         if (!Prefs.autoLobby || !new Installer(this, BarApp.get().paths()).isInstalled() || Prefs.lobbyFailedFast(this)
                 || lowMemoryExit) {
-            if (Prefs.lobbyFailedFast(this)) Log.i("app", "the lobby failed on its last start: showing the launcher");
+            // (once: the next tap on the icon tries the lobby again. The flag stayed until a lobby started from the
+            // launcher, and the Fold7's icon opened the launcher every time after one failed start, Kailil 2026-11-10)
+            if (Prefs.lobbyFailedFast(this)) {
+                Log.i("app", "the lobby failed on its last start: showing the launcher (the icon opens the lobby next time)");
+                Prefs.setLobbyFailedFast(this, false);
+            }
             openLauncher();
-            finish();
+            finishAndRemoveTask();   // (the icon's task goes: its next tap starts here again, LauncherActivity's own task)
             return;
         }
         GameService.start(this, GameService.ACTION_PLAY, "lobby");
@@ -99,11 +104,11 @@ public class StartActivity extends Activity {
     protected void onStop() {
         super.onStop();
         handler.removeCallbacksAndMessages(null);
-        if (toGame) finishAndRemoveTask();
-        else finish();
+        finishAndRemoveTask();   // (the game screen and the launcher have tasks of their own)
     }
 
     private void openLauncher() {
-        startActivity(new Intent(this, LauncherActivity.class).addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION));
+        startActivity(new Intent(this, LauncherActivity.class)
+                .addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION | Intent.FLAG_ACTIVITY_NEW_TASK));
     }
 }

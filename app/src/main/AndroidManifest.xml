@@ -63,10 +63,13 @@
             <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
 
-        <!-- Install, settings, logs: long-press the app icon → Launcher (res/xml/shortcuts.xml). -->
+        <!-- Install, settings, logs: long-press the app icon → Launcher (res/xml/shortcuts.xml). A task of its own: in the
+             icon's task, the icon brought it back instead of opening the lobby once it had been shown (Kailil's Fold7,
+             2026-11-10). -->
         <activity
             android:name=".LauncherActivity"
             android:exported="true"
+            android:taskAffinity=".Launcher"
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode|smallestScreenSize|screenLayout" />
 
