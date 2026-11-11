@@ -88,7 +88,7 @@ an old package is just restoring its `versions.gz`.
     more right away on the old set (same X server and game screen). Logged as an error.
   - pending and not failed fast → the set becomes the last good set; engine folders other than the last good and the
     one before it are deleted.
-  - not pending → nothing changes (the existing "lobby failed fast → open the launcher" rule still applies).
+  - not pending → nothing changes (the "lobby failed fast → open the launcher" rule still applies, once: below).
 - When the player pressed Stop or swiped the game away (`Updater.closedByPlayer`): a pending set that ran 120 s or
   showed a game frame becomes the last good set; a shorter one is judged at the next start. (Before 2026-11-08 a set
   was kept only when the engine ended by itself, BAR's Quit: a phone whose games are closed by a swipe kept a day-old
@@ -96,7 +96,12 @@ an old package is just restoring its `versions.gz`.
   "started fine" in the same second, before Android ended the app.
 - The bad list holds whole sets (engine + md5s, last 5). An update that would recreate a bad set is not applied; as
   soon as BAR moves any part (byar:test moves several times a day), the new set is tried. So a broken BAR version
-  costs at most one failed launch per new set, and the engine is never blocked for good.
+  costs at most one failed launch per new set, and the engine is never blocked for good. An app update clears the
+  list too (`Updater.forgetBadAfterAppUpdate`: each mark keeps the app's install time, `bad.app`): the failure may
+  have been the app's, or a fluke, and the Fold7 was kept on an older set all evening while BAR's current one stayed
+  the same (2026-11-10). A set that fails again is marked again.
+- After a lobby that failed fast the app icon opens the launcher once (its log in view), then the lobby again; the
+  launcher is a task of its own, so the icon never just brings it back (`StartActivity`).
 - Caveat: while the app sits on an older engine, online battles hosted on BAR's new engine cannot be joined
   (engine mismatch). Skirmish and the lobby work. The loud log says so.
 
