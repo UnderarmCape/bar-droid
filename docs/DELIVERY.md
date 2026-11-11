@@ -183,6 +183,14 @@ same, that stays the simpler way.
         than a fling starts (150 list px a second) now only stops it, as on any phone ("a tap stopped a flying list" in
         infolog); slower, it clicks as before. Dev phone, upright lobby offline: the news panel flung, a tap at once:
         stopped, no click, nothing opened; lobby-phone-test ALL PASS.
+      - **A tap to stop the gliding camera** (11-11 ~05:15, the same review in the game): a touch stopped the map's
+        glide after a flick, and the touch lifted as a tap then clicked there: on empty ground it deselected the
+        player's units (upright, the dock's camera pad flicked and the game tapped: 1 picked -> 0), and on the pad it
+        opened the dock's menu. A tap that stops a glide still faster than a fling starts is now only that (launcher.log
+        "a touch on the gliding map (N px/s): it stops it, no tap"). Dev phone, upright skirmish: before, the commander
+        deselected; after, kept (12148 px/s logged), and a tap at rest still deselects. The scratch test's timing is
+        loose (adb's tap can come after the 1.2 s glide on a busy phone; such a run is a plain tap at rest), so the
+        log line tells which a run was.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
