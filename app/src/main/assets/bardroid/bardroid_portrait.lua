@@ -1133,10 +1133,10 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Pressing
 
-local function runCommand(id, right, shift, ctrl)
+local function runCommand(id, right, shift, ctrl, alt)
 	local index = spGetCmdDescIndex(id)
 	if index then
-		spSetActiveCommand(index, right and 3 or 1, not right, right or false, false, ctrl or false, false, shift or false)
+		spSetActiveCommand(index, right and 3 or 1, not right, right or false, alt or false, ctrl or false, false, shift or false)
 	end
 end
 
@@ -1403,8 +1403,11 @@ local function pressItem(item, long)
 		if item.n < 0 then
 			runCommand(factoryItem, true)
 		else
-			-- (Shift: 5, Ctrl: 20, as BAR's build menu; both are 100: +20 sent both and queued 100, 2026-11-10)
-			runCommand(factoryItem, false, item.n == 5, item.n == 20)
+			-- (Shift: 5, Ctrl: 20, as BAR's build menu; both are 100: +20 sent both and queued 100, 2026-11-10. INSERT on:
+			-- Alt, BAR's alt-click to the queue's front; bardroid_pad.lua holds no CommandInsert key for factories)
+			local Pd = WG.BarDroidPad
+			local insert = Pd and Pd.queueState and select(2, Pd.queueState())
+			runCommand(factoryItem, false, item.n == 5, item.n == 20, insert or false)
 		end
 	elseif k == "clearitem" and factoryItem then
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)

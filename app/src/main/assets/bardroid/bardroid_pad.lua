@@ -2552,9 +2552,25 @@ function widget:Update(dt)
 	end
 	local focus = orders and "orders" or (buildFocus() and "build" or "none")
 	local pregame = Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()
+	-- (INSERT with only factories picked: no CommandInsert key, whose CMD.INSERT a factory's build queue does not take,
+	-- so +1, +5 and +20 added nothing (Kailil, 2026-11-11); the dock gives those Alt instead, BAR's alt-click to the
+	-- queue's front)
+	local insertKey = queue.insert
+	if insertKey then
+		local counts = Spring.GetSelectedUnitsCounts() or {}
+		local factories = true
+		for d in pairs(counts) do
+			local ud = type(d) == "number" and UnitDefs[d]
+			if ud and not ud.isFactory then
+				factories = false
+				break
+			end
+		end
+		insertKey = not (factories and Spring.GetSelectedUnitsCount() > 0)
+	end
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\ninsert " .. (queue.insert and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
+		.. "\ninsert " .. (insertKey and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
 		.. "\nmodal " .. (modal or "none") .. "\n"
 	if padClickAt then -- (the last click's point: the app clicks there, not in the middle)
 		text = text .. string.format("clickat %.4f %.4f\n", padClickAt[1], padClickAt[2])

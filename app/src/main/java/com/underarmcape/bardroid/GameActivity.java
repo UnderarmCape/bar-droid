@@ -383,6 +383,7 @@ public class GameActivity extends MainActivity {
             updateCatchup();
             updateFreeMemory();
             updateLoadTip();
+            updateLoadBar();
             updateLowRamLine();
             updateRenderDrop();
             catchupHandler.postDelayed(this, 500);
@@ -508,6 +509,57 @@ public class GameActivity extends MainActivity {
         if (loadTip != null && (loadTip.getVisibility() == View.VISIBLE) != show) {
             loadTip.setVisibility(show ? View.VISIBLE : View.GONE);
         }
+    }
+
+    // The loading bar upright (Kailil, 2026-11-11: "The words must fit in the loading bar. I guess make the bar longer to
+    // fit more"): BAR's runs over 60 % of the width there (its ends go by the screen's height) and its words, sized by
+    // the height too, ran off both ends of the screen. This bar covers BAR's from edge to edge with BAR's words (the
+    // engine's load messages, GameService.loadMessage) sized to fit on two lines, filled by BAR's own stages.
+    private android.widget.TextView loadBar;
+    private android.graphics.drawable.ClipDrawable loadFill;
+
+    private void updateLoadBar() {
+        View root = getWindow().getDecorView();
+        int h = root.getHeight();
+        boolean upright = h > root.getWidth() * 1.05f;
+        boolean show = upright && GameService.loading() && GameService.loadScreen() && !isInPictureInPictureMode()
+                && (touch == null || !touch.gameWidgetRunning())
+                && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
+        if (show && loadBar == null && h > 0) {
+            android.widget.TextView v = new android.widget.TextView(this);
+            float dp = getResources().getDisplayMetrics().density;
+            android.graphics.drawable.GradientDrawable back = new android.graphics.drawable.GradientDrawable();
+            back.setColor(0xFF141414);   // (opaque: BAR's larger words under it showed through at 95 %)
+            android.graphics.drawable.GradientDrawable fill = new android.graphics.drawable.GradientDrawable(
+                    android.graphics.drawable.GradientDrawable.Orientation.TOP_BOTTOM, new int[]{0xFFC9A64E, 0xFF7E6020});
+            loadFill = new android.graphics.drawable.ClipDrawable(fill, android.view.Gravity.START,
+                    android.graphics.drawable.ClipDrawable.HORIZONTAL);
+            android.graphics.drawable.GradientDrawable edge = new android.graphics.drawable.GradientDrawable();
+            edge.setColor(0);
+            edge.setStroke(Math.max(1, (int) dp), 0x60FFFFFF);
+            v.setBackground(new android.graphics.drawable.LayerDrawable(
+                    new android.graphics.drawable.Drawable[]{back, loadFill, edge}));
+            v.setTextColor(0xFFE0E0E0);
+            v.setShadowLayer(3 * dp, 0, dp, 0xE0000000);
+            v.setGravity(android.view.Gravity.CENTER);
+            v.setMaxLines(2);
+            v.setPadding((int) (10 * dp), 0, (int) (10 * dp), 0);
+            v.setAutoSizeTextTypeUniformWithConfiguration(8, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
+            // (BAR's bar: 6.5 % up, 3.8 % tall, a border of 0.27 %: covered by one 5 % tall about its middle)
+            int barH = (int) Math.ceil(h * 0.05f);
+            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, barH, android.view.Gravity.BOTTOM);
+            lp.bottomMargin = Math.max(0, (int) (h * 0.084f - barH / 2f));
+            addContentView(v, lp);
+            loadBar = v;
+            Log.i("app", "loading screen: the loading bar across the upright screen, its words fitted");
+        }
+        if (loadBar == null) return;
+        if ((loadBar.getVisibility() == View.VISIBLE) != show) loadBar.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (!show) return;
+        String m = GameService.loadMessage();
+        if (!m.contentEquals(loadBar.getText())) loadBar.setText(m);
+        loadFill.setLevel((int) (GameService.loadProgress() * 10000));
     }
 
     // The loading screen's low memory line upright (Kailil, 2026-11-10: it ran off the screen): BAR prints its warning for

@@ -49,6 +49,61 @@ public class GameService extends Service {
      *  (GameActivity's Free memory button). */
     public static boolean loading() { return loading; }
     private static volatile boolean loading;
+    /**
+     * The loading bar's words and how far it is, as BAR's loading screen has them (luaintro/addons/main.lua: the
+     * engine's load messages, "[LoadScreen::SetLoadMessage] text=...", and its stage table), for GameActivity's upright
+     * bar: BAR's is a band 60 % of the width there with its words sized by the screen's height, cut off at both ends
+     * (Kailil, 2026-11-11: "The words must fit in the loading bar ... make the bar longer").
+     */
+    public static String loadMessage() { return loadMessage; }
+    private static volatile String loadMessage = "";
+    /** A game's loading screen is up (the engine made one): not the lobby's first load, which has no bar. */
+    public static boolean loadScreen() { return loadScreen; }
+    private static volatile boolean loadScreen;
+    /** 0..1: the stage's start, moving on through the stage (BAR's own table) while it lasts. */
+    public static float loadProgress() {
+        float low = loadLow, high = loadHigh;
+        float t = (android.os.SystemClock.elapsedRealtime() - loadStageAt) / 8000f;
+        return low + (high - low) * Math.max(0f, Math.min(1f, t));
+    }
+    private static volatile float loadLow, loadHigh;
+    private static volatile long loadStageAt;
+    private static final String LOAD_MESSAGE = "[LoadScreen::SetLoadMessage] text=\"";
+    // (BAR's progressByLastLine, its stage's start and end in %)
+    private static final Object[][] LOAD_STAGES = {
+            {"Loading Map", 0, 10}, {"Parsing Map Information", 7, 15}, {"Loading GameData Definitions", 10, 20},
+            {"Creating QuadField and CEGs", 13, 22}, {"Creating Unit Textures", 16, 25}, {"Creating Sky", 19, 35},
+            {"Loading Weapon Definitions", 22, 40}, {"Loading Unit Definitions", 25, 45},
+            {"Loading Feature Definitions", 29, 45}, {"Loading Models and Textures", 33, 50},
+            {"Loading Map Tiles", 38, 55}, {"Loading Square Textures", 43, 55}, {"Creating Projectile Textures", 48, 60},
+            {"Creating Water", 54, 65}, {"PathCosts", 58, 65}, {"[LoadFinalize] finalizing PFS", 62, 65},
+            {"Loading LuaRules", 69, 75}, {"Loading LuaUI", 82, 85}, {"Loading Skirmish AIs", 90, 95},
+            {"Finalizing", 100, 100}};
+
+    /** An engine output line: a load message for the upright loading bar. */
+    static void loadLine(String line) {
+        int at = line.indexOf(LOAD_MESSAGE);
+        if (at < 0) return;
+        String text = line.substring(at + LOAD_MESSAGE.length());
+        int end = text.lastIndexOf('"');
+        if (end >= 0) text = text.substring(0, end);
+        loadMessage = text;
+        for (Object[] s : LOAD_STAGES) {
+            if (text.startsWith((String) s[0])) {
+                loadLow = (Integer) s[1] / 100f;
+                loadHigh = (Integer) s[2] / 100f;
+                loadStageAt = android.os.SystemClock.elapsedRealtime();
+                break;
+            }
+        }
+    }
+
+    private static void loadReset(boolean screen) {
+        loadScreen = screen;
+        loadMessage = "";
+        loadLow = loadHigh = 0f;
+        loadStageAt = android.os.SystemClock.elapsedRealtime();
+    }
     /** This game was closed by the app after the GPU driver's fault (DriverWatch): its end is no low-memory kill. */
     private volatile boolean driverLost;
     /** Why the last game ended when the player did not end it (the launcher shows it); null: nothing to say. */
@@ -280,6 +335,7 @@ public class GameService extends Service {
                     // Stopped in every case: a pump left behind (Stop, a failed start) would read the next game's
                     // FIFO too and take half of its sound.
                     try {
+                        loadReset(false);
                         loading = true;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
@@ -294,6 +350,15 @@ public class GameService extends Service {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
                             }
+                            // (a game the lobby starts loads in the same engine: loading again, the Free memory button,
+                            // the upright tip and bar with it; before, only the engine's first load had them, Kailil,
+                            // 2026-11-11: "Allow free memory button in this loading menu too")
+                            if (line.contains("creating LoadScreen")) {
+                                if (!loading) Log.i("svc", "a game loads (from the lobby): the loading screen's buttons again");
+                                loadReset(true);
+                                loading = true;
+                            }
+                            if (loading) loadLine(line);
                             // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
                             if (driver.onLine(line)) {
                                 driverLost = true;
