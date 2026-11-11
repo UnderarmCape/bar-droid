@@ -1063,7 +1063,9 @@ end
 -- portrait dock, RtsTouch's "act dgun_auto"; FIRE again turns it off): whenever the D-gun is loaded and the energy is
 -- there, it fires at the best enemy in its range seen (a commander first, then the dearest, the nearer the better; no
 -- aircraft), led by the target's speed, and never where the shot's path (out to its full range: it goes through
--- everything) passes one of our or our allies' units.
+-- everything) passes one of our or our allies' units. Only where the host lets user widgets give orders (BAR's "Allow
+-- Custom 'Unit Control' Widgets"): it aims and fires on its own, which that rule is there to forbid, so the app's clicks
+-- never stand in for its shots (bardroid_retreat.lua stands down the same way; the D-gun by hand still works there).
 local DGUN_AUTO_EVERY, DGUN_AUTO_SAFE = 0.1, 40 -- seconds between looks; elmos kept between the path and a friend
 local function dgunAuto(d)
 	local t = now()
@@ -1131,8 +1133,8 @@ local function dgunAuto(d)
 	end
 	d.target = best
 	d.aimX, d.aimZ = bx, bz -- (the aim line shows where it will go)
-	if loaded and energy >= (d.cost or 0) and dgunTarget(d)
-		and dgunOrder(CMD.MANUALFIRE, "manualfire", d.x, d.y, d.z, true) then
+	if loaded and energy >= (d.cost or 0) and dgunTarget(d) and unitControl()
+		and pcall(Spring.GiveOrderToUnit, d.unitID, CMD.MANUALFIRE, { d.x, d.y, d.z }, 0) then
 		d.fireAt = t
 	end
 end
@@ -1935,6 +1937,10 @@ local ACTIONS = {
 	dgun_fire = dgunFire, -- RT in it
 	dgun_auto = function() -- the portrait dock's FIRE held and swiped right: full auto on (dgunAuto)
 		if dgun and not dgun.auto then
+			if not unitControl() then -- (the host forbids widgets' orders: no aiming and firing on its own, dgunAuto)
+				note("AUTO D-GUN: THIS HOST FORBIDS IT")
+				return
+			end
 			dgun.auto, dgun.autoAt, dgun.autoOn = true, nil, now()
 			note("AUTO D-GUN ON")
 		end
@@ -2624,6 +2630,9 @@ function widget:Initialize()
 		end,
 		unit = function() -- (the portrait dock's camera follows it)
 			return dgun and dgun.unitID or nil
+		end,
+		range = function() -- (the portrait dock's camera fits it in)
+			return dgun and dgun.range or nil
 		end,
 		ready = function() -- (the dock's FIRE shows them) how far reloaded (0..1), and the energy of a shot held (0..1)
 			if not dgun then

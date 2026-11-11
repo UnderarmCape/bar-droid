@@ -349,6 +349,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Nothing of the app's in the infolog's errors or warnings (BAR's own: its intro's deprecated `AdvSky`, its dev
       widgets that do not load in a released game). The dock's CAMERA PAD label lost its "tap to use the menu" hint
       (Kailil's no-hint-text rule for the dock).
+- [x] **The D-gun's full auto kept to the host's rules** (2026-11-10, code review): where a host forbids user widgets'
+      orders (BAR's "Allow Custom 'Unit Control' Widgets" off) full auto fell back to the app's clicks, aiming and
+      firing on its own around the very rule meant to stop that. Now it fires only by a given order and does not switch
+      on there ("AUTO D-GUN: THIS HOST FORBIDS IT"), as AUTO RETREAT stands down; the D-gun by hand still works. pad-test
+      -Dgun (orders forbidden) checks it: ALL PASS. A skirmish (orders allowed), an enemy Pawn placed in range after
+      full auto was on: the shot given 3 frames later, the Pawn dead 20 frames after.
+- [x] **The D-gun mode's whole reach on the screen upright**: entering it, the camera zooms out as far as the D-gun's
+      ring and a target at its edge need inside the game above the dock (at COMMANDER's distance the ring touched both
+      sides of the narrow screen and the target at its side was cut off). Dev phone: ring and target inside, a margin on
+      each side.
 - [x] **The launcher's map for Play vs AI picked, not typed** (2026-11-10, for a native feel): a tap on the field
       lists the maps installed (the engine's archive cache), typing narrows them; any other name still downloads at
       the start. Dev phone: its ten maps listed.

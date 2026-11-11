@@ -13,6 +13,7 @@ local fails, done = 0, false
 local com
 local seenMode, aimStart, aimTurned, fired, moved, left, clickPoint, noTeammates = false, nil, false, false, false, false, nil, false
 local seenPad, lastTrace = false, nil
+local autoTried, autoRefused = false, nil -- (full auto, the dock's FIRE swiped right: not where orders are forbidden)
 
 local function say(text)
 	Spring.Echo(text)
@@ -39,6 +40,11 @@ local function finish()
 	check("RT: the D-gun (picked and clicked by the app, or given straight as the game's widget)", fired,
 		clickPoint or "given straight")
 	check("the left stick walks the commander (BAR's Move, clicked)", moved)
+	-- (it would aim and fire on its own through the app's clicks, around the host's rule; given straight as the game's
+	-- widget, -Engine, it may run)
+	local given = pcall(Spring.GiveOrderToUnit, com, CMD.STOP, {}, 0)
+	check("full auto (the dock's FIRE swiped right) stays off where widgets' orders are forbidden",
+		autoTried and (given or autoRefused == true), tostring(autoRefused))
 	check("B leaves the mode", left)
 	check("LB + D-pad up tapped, then held: the share list's chord (no teammate here)", noTeammates)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
@@ -79,6 +85,16 @@ function widget:GameFrame(f)
 	local mode, unitID, ax, az, _, _, cx, cy = WG.BarDroidPad.modal()
 	if mode == "dgun" and unitID == com then
 		seenMode = true
+		if not autoTried then
+			autoTried = true
+			WG.BarDroidPad.act("dgun_auto")
+			local _, said = WG.BarDroidPad.note()
+			autoRefused = not WG.BarDroidPadDgun.auto() and said == "AUTO D-GUN: THIS HOST FORBIDS IT"
+			say("[padtest] full auto asked for: " .. (autoRefused and "refused" or "on") .. ", note " .. tostring(said))
+			if not autoRefused then
+				WG.BarDroidPad.act("dgun_fire") -- (FIRE again: off, for the rest of the run)
+			end
+		end
 		if not aimStart then
 			aimStart = { ax, az }
 		elseif math.abs(ax - aimStart[1]) + math.abs(az - aimStart[2]) > 0.5 then
