@@ -452,7 +452,10 @@ same, that stays the simpler way.
       - [x] **The playing dock at the unfolded shape** (~16:30, dev phone at 1080x1198): the home and orders as before, the
         idle commander's tile in the groups row. PLACE there is a short bar, ROTATE and the X as tall as it, and the word
         PLACE was centred on the whole panel, running into ROTATE: beside the buttons when they are as tall as the panel.
-        Dev phone: unfolded, PLACE centred left of ROTATE; the S23's own shape, above them as before. A patch set for BAR's repository, tested by a pool swap as
+        Dev phone: unfolded, PLACE centred left of ROTATE; the S23's own shape, above them as before.
+        The join's pre-game screen and a game's loading screen at that shape (~16:45): both fit; on the loading screen
+        the load picture's commander fills the near-square screen and Free memory's two lines covered his head: there
+        it is its name alone, one line (the S23's own shape keeps both lines). Dev phone, both shapes. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).

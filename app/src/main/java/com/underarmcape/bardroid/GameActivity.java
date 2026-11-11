@@ -398,6 +398,10 @@ public class GameActivity extends MainActivity {
     // the screen, under the engine's logo; gone once the game or the lobby is up (GameService.loading).
     private static final String DEVICE_CARE = "com.samsung.android.sm.ACTION_DASHBOARD";
     private android.widget.TextView freeMemory;
+    // (its name with what a tap does under it; on a near-square screen, the unfolded Fold7 upright, the name alone: the
+    // load picture's commander fills that screen and the two lines covered his head, dev phone at 1080x1198)
+    private CharSequence freeMemoryFull, freeMemoryShort;
+    private boolean freeMemoryCompact;
 
     private void addFreeMemoryButton() {
         android.content.Intent care = new android.content.Intent(DEVICE_CARE);
@@ -414,6 +418,10 @@ public class GameActivity extends MainActivity {
             text.setSpan(new android.text.style.ForegroundColorSpan(0xC8FFFFFF), nl + 1, label.length(), 0);
         }
         v.setText(text);
+        freeMemoryFull = text;
+        android.text.SpannableString name = new android.text.SpannableString(nl > 0 ? label.substring(0, nl) : label);
+        name.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, name.length(), 0);
+        freeMemoryShort = name;
         v.setGravity(android.view.Gravity.CENTER);
         v.setTextColor(0xFFFFFFFF);
         v.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
@@ -678,7 +686,16 @@ public class GameActivity extends MainActivity {
                 && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
-        if (show) placeFreeMemory();   // (the low memory line comes up after it, and moves it down)
+        if (show) {
+            View root = getWindow().getDecorView();
+            int w = root.getWidth(), h = root.getHeight();
+            boolean nearSquare = w > 0 && h < w * 1.3f && w < h * 1.3f;
+            if (freeMemoryCompact != nearSquare && freeMemoryShort != null && freeMemoryFull != null) {
+                freeMemoryCompact = nearSquare;
+                freeMemory.setText(nearSquare ? freeMemoryShort : freeMemoryFull);
+            }
+            placeFreeMemory();   // (the low memory line comes up after it, and moves it down)
+        }
     }
 
     private void addCatchupView() {
