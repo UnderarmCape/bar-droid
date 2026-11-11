@@ -1250,6 +1250,12 @@ local function layout()
 	local e = edits()
 	-- (the presets row is the widest, 6 buttons: on the inner screen it fits left of the player list)
 	local h = math.floor(math.min(vsy * 0.085, vsx / 17) * e.size)
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	if dock then -- (upright over the dock, Tune's rows only: as large as fits the width, two rows of about 9.6 buttons'
+		-- height each; at the old size they were half the dock's, Kailil 2026-11-11: "much too small")
+		h = math.floor(math.min(vsy * 0.085, vsx / 10) * e.size)
+	end
 	local gap = math.floor(h * 0.15 * e.pad)
 	local fLabel, fColor = followLabel()
 	local rowA, rowB
@@ -1321,8 +1327,6 @@ local function layout()
 		end
 	end
 	local y = math.max(0, math.min(vsy - 2 * h - gap, math.floor(h * 0.25 + e.dy * vsy)))
-	local P = WG.BarDroidPortrait
-	local dock = P and P.dock and P.dock()
 	if dock then -- (upright, over the dock: Tune's rows)
 		y = math.min(vsy - 2 * h - gap, dock[4] + gap)
 	end
@@ -1330,7 +1334,8 @@ local function layout()
 	-- the room left of BAR's (small) player list at the bottom right: the bar never runs under it
 	local x0, x1 = gap, vsx - gap
 	local pos = WG.advplayerlist_api and WG.advplayerlist_api.GetPosition and WG.advplayerlist_api.GetPosition()
-	if pos and pos[2] and pos[3] and pos[3] < y + 2 * h + 2 * gap and pos[2] > vsx / 2 then -- { top, left, bottom, right }
+	-- (not over the dock: BAR's list is under it)
+	if not dock and pos and pos[2] and pos[3] and pos[3] < y + 2 * h + 2 * gap and pos[2] > vsx / 2 then -- { top, left, bottom, right }
 		x1 = math.floor(pos[2]) - gap
 	end
 	local room = x1 - x0

@@ -414,6 +414,11 @@ same, that stays the simpler way.
         list scrolled from its right half only: the whole grid's now. And the place after an alliance's odd team is
         left empty (it was drawn as a button with nothing on it). Dev phone, nine NullAI teams in three alliances on
         Supreme Isthmus spectated: TEAMS 7 rows, a swipe on its left half scrolled it to Null8; dock-phone-test ALL PASS.
+        Checked after (~14:50): a join nothing answers ends with the engine's exit and the launcher's "The connection to
+        the game timed out" (nothing to fix). TUNE in the dock: the spectate widget's Tune rows come up over the dock,
+        but at the old bar's size (half the dock's buttons, Kailil's "much too small") and narrowed for BAR's list under
+        the dock: now as large as the width allows (about 1.7 times) across the whole width; dev phone, Distance's + took
+        the taps (1300 to 1350, not saved).
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
