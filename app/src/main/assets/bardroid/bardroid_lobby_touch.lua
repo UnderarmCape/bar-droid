@@ -1073,8 +1073,9 @@ function widget:MousePress(x, y, button)
 	end
 	if hit and upright.on and upright.grid and onGrid(hit) then -- (the bottom buttons: a sideways swipe pages, a tap
 		-- clicks where it is)
+		-- (settling: the strip still easing to its page, a tap's buttons moving under the finger)
 		press = { grid = true, x = x, y = y, start = upright.stripX, moved = false, lastX = x, lastT = Spring.GetTimer(),
-			vel = 0 }
+			vel = 0, settling = upright.anim ~= nil }
 		upright.anim = nil
 		return true
 	end
@@ -1149,6 +1150,10 @@ function widget:MouseRelease(x, y)
 				page = upright.page + (p.vel < 0 and 1 or -1)
 			end
 			uprightSettle(page)
+		elseif not p.moved and p.settling then
+			-- (a tap while the strip eased to its page: the press stopped it there, between two pages, and the click went
+			-- to a button passing under the finger; dev phone, a swipe then a tap, 2026-11-11: the page turn finishes)
+			uprightSettle(upright.page)
 		elseif not p.moved then
 			local _, _, hx, hy = chiliPoint(x, y)
 			local page = stripPage(hx, hy)
