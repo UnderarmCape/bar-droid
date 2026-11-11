@@ -63,7 +63,9 @@ public class GameService extends Service {
     /** (how to close the other apps, not only that: an app may not close them itself, Android 14+) */
     private static String lowMemoryNote(android.content.Context c) {
         boolean galaxy = "samsung".equalsIgnoreCase(android.os.Build.MANUFACTURER);
-        return "Android closed the game: the phone ran out of memory. Close the other apps (Recents, Close all"
+        // (what happened, then on a line of its own what to do: the launcher shows that line as an explanation, smaller
+        // and grey; four amber lines read as one long warning, dev phone 2026-11-11)
+        return "Android closed the game: the phone ran out of memory.\nClose the other apps (Recents, Close all"
                 + (galaxy ? "; or Settings, Device care, Memory, Clean now" : "") + ") and try again"
                 + (LauncherActivity.lowRam(c) ? " (an 8 GB phone has little to spare in a game)." : ".");
     }
@@ -94,7 +96,7 @@ public class GameService extends Service {
                 || e.getTimestamp() <= Prefs.lowMemoryExitSeen(c)) return false;
         Prefs.setLowMemoryExitSeen(c, e.getTimestamp());
         exitNote = lowMemoryNote(c);
-        Log.i("app", "the last run ended for lack of memory (importance " + e.getImportance() + "): " + exitNote);
+        Log.i("app", "the last run ended for lack of memory (importance " + e.getImportance() + "): " + exitNote.replace('\n', ' '));
         return true;
     }
 
@@ -311,7 +313,10 @@ public class GameService extends Service {
                     Log.i("svc", "engine exited (" + rc + ")");   // (tools/phone-bench.ps1, phone-memory.ps1 read this line)
                     // (Stop's own kill is no error: it read "game ended with an error (137)" after the player's Stop)
                     // (closed by the app after the GPU driver's fault: the note under it says why, not "error (137): the log")
-                    setStatus(closing ? "stopped" : rc == 0 || driverLost ? "game ended" : "game ended with an error (" + rc + ")");
+                    // (a SIGKILL from outside, Android's low-memory killer: its note says so; "error (137)" over it read
+                    // as an error of the game's, and Android ending the whole app shows "Ready" with the same note,
+                    // dev phone 2026-11-11)
+                    setStatus(closing ? "stopped" : rc == 0 || driverLost || rc == 137 ? "game ended" : "game ended with an error (" + rc + ")");
                     String fatal = rc != 0 && !closing && !driverLost && rc != 137 ? engineFatal(paths) : null;
                     String coded = rc != 0 && !closing && !driverLost && fatal == null ? StatusText.exitCodeNote(rc) : null;
                     if (driverLost) {
@@ -327,7 +332,7 @@ public class GameService extends Service {
                         // SIGKILL from outside: Android's low-memory killer (Stop and a game swiped away set closing
                         // first). Without a word the player only saw the launcher come back (an 8 GB phone, 2026-10-29).
                         exitNote = lowMemoryNote(this);
-                        Log.i("svc", exitNote);
+                        Log.i("svc", exitNote.replace('\n', ' '));
                     }
                     if (up != null && closing) {   // (the player's Stop or swipe: a set that ran is kept, Updater)
                         try { up.closedByPlayer(android.os.SystemClock.elapsedRealtime() - started); }
