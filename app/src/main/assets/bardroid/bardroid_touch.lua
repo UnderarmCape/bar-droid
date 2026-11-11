@@ -554,6 +554,21 @@ local function readTouch(lines)
 			elseif kind == "spot" then
 				flush()
 				local x, y = args:match("^(%S+) (%S+)")
+				if args == "placed" and b.droidPanel then
+					-- (PLACE on a spot BAR refuses, a slope or a unit's footprint: a word, as the building drawn red and
+					-- nothing queued looked like the place cancelled; Kailil, 2026-11-10, a Bot Lab)
+					local _, spot = b.droidPanel()
+					local _, cmdID = Spring.GetActiveCommand()
+					if spot and cmdID and cmdID < 0 then
+						local facing = Spring.GetBuildFacing and Spring.GetBuildFacing() or 0
+						local bx, by, bz = Spring.Pos2BuildPos(-cmdID, spot[1], spot[2], spot[3], facing)
+						local P = WG.BarDroidPad
+						if bx and Spring.TestBuildOrder(-cmdID, bx, by, bz, facing) == 0 and P and P.say then
+							P.say("CAN'T BUILD THERE: PICK ANOTHER SPOT")
+							Spring.Echo("[bardroid-touch] PLACE on a blocked spot") -- (tools)
+						end
+					end
+				end
 				b.droidSpot(tonumber(x), tonumber(y), args == "placed")
 			elseif kind == "grid" and b.droidSetGrid then
 				flush()
