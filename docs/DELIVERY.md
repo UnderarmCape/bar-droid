@@ -100,10 +100,11 @@ same, that stays the simpler way.
       - **The phone tests on the newest build** (11-11 ~02:35, dev phone): touch-phone-test, lobby-phone-test,
         pad-test, -Share, -Chat, fp-save-test, then dock-phone-test: ALL PASS. VoiceChat reviewed (sessions numbered,
         the recognizer destroyed per session, close() on onStop): nothing found; a recognizer that never answers would
-        keep "SPEAK TO CHAT" up, not testable without the live microphone. The Play vs AI map's bands: in the placing
-        screenshot (its red ground) the ripples follow the dunes, but in the north-east corner they are straight, even
-        (~70 px) and cross the rough ground too: not settled (the map's texture, or the drawing); to compare with BAR
-        on a PC (the laptop needs Kailil's yes). Polish from that screenshot: the building PLACE
+        keep "SPEAK TO CHAT" up, not testable without the live microphone. The Play vs AI map's straight, even diagonal bands
+        (settled 11-11 ~03:40): BAR's fog-of-war stripes, Fog Diagonal Lines GL4, over ground the player does not see;
+        the dev phone's lobby has AdvMapShading = 1, so launch-bar.sh leaves that widget on (it turns it off only with
+        plain map shading, where it draws nothing). As meant, not the drawing (the "sand ripples" guess was wrong).
+        Polish from that screenshot: the building PLACE
         builds is now marked on the dock (BAR's picked cell, the picture closer in gold light, and the build menu
         copy's gold line); FlowUI's selector alone was a faint border.
       - **A 6-minute upright skirmish, nothing touched** (11-11 ~02:50, dev phone): 30 fps each minute (slowest frame
@@ -121,6 +122,13 @@ same, that stays the simpler way.
         come up; any other input brings the pointer back, and a game's gesture shows it as before. Dev phone: the
         lobby without the arrow; lobby-phone-test (the pad in the lobby), pad-test, touch-phone-test, dock-phone-test
         (the pointer at the preset's aim): ALL PASS.
+      - **PLACE's dead column upright** (11-11 ~03:45, from the placing screenshot): the tall green PLACE panel's tap
+        area was only its left part (beside rotate and cancel at its foot), so the column above those two buttons, 40 %
+        of the green, did nothing. Upright PLACE is now the whole panel but the two buttons (make-buildmenu.py's
+        layoutPanel, the copy and its patches remade from the same BAR file, remake-check equal), and RtsTouch tells
+        rotate and cancel first. dock-phone-test taps PLACE at the panel's middle (in the old dead column): queued;
+        and a new case, cancel puts the building away without placing: ALL PASS. The word PLACE sits in the room
+        above the two buttons.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
