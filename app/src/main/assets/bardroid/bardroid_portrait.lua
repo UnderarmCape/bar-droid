@@ -1167,14 +1167,17 @@ function idleB.pick(def)
 	end
 end
 
-local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
+-- The profile (springsettings bardroid_portrait_profile = 1, widget:DrawScreen): the refreshes and their time, the
+-- dock's drawing time and frames since the last line. (One table: the file's main chunk was at Lua's 200 locals.)
+local PROF = { on = Spring.GetConfigInt("bardroid_portrait_profile", 0) == 1, refreshN = 0, refreshMs = 0, sum = 0,
+	n = 0, at = 0 }
 
 -- what each half shows, refreshed a few times a second and after every press
 local refreshNow
 local function refresh()
 	local t0 = spGetTimer()
 	refreshNow()
-	refreshN, refreshMs = refreshN + 1, refreshMs + spDiffTimers(spGetTimer(), t0) * 1000
+	PROF.refreshN, PROF.refreshMs = PROF.refreshN + 1, PROF.refreshMs + spDiffTimers(spGetTimer(), t0) * 1000
 end
 function refreshNow()
 	local sel = spGetSelectedUnits() or {}
@@ -2832,11 +2835,9 @@ function widget:CommandsChanged()
 	end
 end
 
--- springsettings bardroid_portrait_profile = 1: the dock's drawing time, its average every 10 s in the log (tools;
--- 2.1 ms a frame on the dev phone, 2026-11-09; a display list of it made that 4-10 ms, growing: FlowUI's own lists
--- inside it, made again several times a second; BAR's menus keep theirs in a texture, the way to try next)
-local profile = Spring.GetConfigInt("bardroid_portrait_profile", 0) == 1
-local profSum, profN, profAt = 0, 0, 0
+-- springsettings bardroid_portrait_profile = 1 (PROF): the dock's drawing time, its average every 10 s in the log
+-- (tools; 2.1 ms a frame on the dev phone, 2026-11-09; a display list of it made that 4-10 ms, growing: FlowUI's own
+-- lists inside it, made again several times a second; BAR's menus keep theirs in a texture, the way to try next)
 
 -- The dock's still parts in a texture, drawn again only when something changed (dirty: the refresh a few times a
 -- second, a press, rows moving, the layout), as BAR's own build and order menus keep theirs (gl.R2tHelper); the
@@ -3170,17 +3171,17 @@ function widget:DrawScreen()
 	if not font then
 		return
 	end
-	if not profile then
+	if not PROF.on then
 		drawDock()
 		return
 	end
 	local t0 = spGetTimer()
 	drawDock()
-	profSum, profN = profSum + spDiffTimers(spGetTimer(), t0) * 1000, profN + 1
-	if now() - profAt >= 10 then
+	PROF.sum, PROF.n = PROF.sum + spDiffTimers(spGetTimer(), t0) * 1000, PROF.n + 1
+	if now() - PROF.at >= 10 then
 		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each",
-			profSum / max(1, profN), profN, refreshN, refreshMs / max(1, refreshN)))
-		profSum, profN, profAt, refreshN, refreshMs = 0, 0, now(), 0, 0
+			PROF.sum / max(1, PROF.n), PROF.n, PROF.refreshN, PROF.refreshMs / max(1, PROF.refreshN)))
+		PROF.sum, PROF.n, PROF.at, PROF.refreshN, PROF.refreshMs = 0, 0, now(), 0, 0
 	end
 end
 
