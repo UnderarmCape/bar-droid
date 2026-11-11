@@ -79,7 +79,8 @@ same, that stays the simpler way.
       the app logs a hung engine's threads from the kernel's side at BAR's watchdog line (`HangDump`: each thread's
       name, kernel wait, system call and state as "[hang]" lines in launcher.log, once a game): the next hang says
       whether the main thread waits in the GPU driver (ioctl), on a lock (futex) or loops. Checked with the watchdog's
-      words echoed by a scratch widget: 26 threads logged, the main one running. pad-test
+      words echoed by a scratch widget: 26 threads logged, the main one running. Hunted at once: six skirmish starts
+      in a row on the dev phone, each to frame 1700+ in 132-148 s, no hang (two in about 20 starts that evening). pad-test
       deletes the engine screenshots its run took (after copying the ones -Share and -Chat keep): 150
       of them, 255 MB, had piled up on the dev phone since 11-07 (cleared; a run after: none left, ALL PASS).
 - [x] **The lobby's pointer by touch**: hidden while fingers play the lobby, back for a mouse, keyboard or the pad
