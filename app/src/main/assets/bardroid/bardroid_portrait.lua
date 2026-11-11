@@ -1692,7 +1692,13 @@ local function drawButton(item, r)
 	end
 	local _, activeID = spGetActiveCommand()
 	local lit = item.kind == "order" and activeID == item.id
-	local on = item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
+	-- (a preset armed: PRESETS in gold with its name, as long as the map waits for its drag; it looked like any button
+	-- once the pick's note had gone, dev phone screenshot 2026-11-11)
+	local armed, armedName = false, nil
+	if item.kind == "presets" and WG.BarDroidPresets then
+		armed, armedName = WG.BarDroidPresets.armed()
+	end
+	local on = armed or item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
 		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
@@ -1702,7 +1708,7 @@ local function drawButton(item, r)
 		button(r)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
-	textIn(item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
+	textIn(armedName or item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
 		item.kind == "none" and "\255\140\140\140" or "\255\240\240\240", font)
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)

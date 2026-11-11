@@ -430,8 +430,9 @@ function widget:Initialize()
 			end
 			refreshDock()
 		end,
-		armed = function()
-			return armedFor ~= nil
+		armed = function() -- (and the armed preset's name: the dock's PRESETS button shows it, gold)
+			local p = armedFor and PRESETS[armedFor.id]
+			return armedFor ~= nil, p and p.name
 		end,
 		drawThumb = function(id, r)
 			local p = PRESETS[id]

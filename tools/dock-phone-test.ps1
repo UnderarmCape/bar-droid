@@ -5,7 +5,9 @@
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
 # off after. Nothing on the laptop: it runs any time. About 3 minutes.
-#   powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1 [-Shots]
+# -Shots: screenshots of the placing panel, the D-gun mode and a preset's aim, build\dock-*.png (to judge the dock's look)
+param([switch]$Shots)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
@@ -46,6 +48,14 @@ function Rects([string]$file) {
 $script:k = 1.0
 function Tap([double]$x, [double]$y) { & $adb shell input tap ([int]($x * $script:k)) ([int]($y * $script:k)) }
 function Touch([string]$what, [double]$x, [double]$y) { & $adb shell input motionevent $what ([int]($x * $script:k)) ([int]($y * $script:k)) }
+function Shot([string]$name) {
+  if (-not $Shots) { return }
+  & $adb shell screencap -p /sdcard/bardroid-dockshot.png
+  $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"   # (adb pull's progress line on stderr)
+  try { $null = & $adb pull /sdcard/bardroid-dockshot.png (Join-Path (Split-Path $PSScriptRoot) "build\dock-$name.png") 2>&1 }
+  finally { $ErrorActionPreference = $eap }
+  & $adb shell rm -f /sdcard/bardroid-dockshot.png
+}
 function Mid($r, [string]$what = "rect") { if (-not $r) { throw "no $what in the dock's files (bardroid_dock.txt, bardroid_place.txt)" }; return @((($r[0] + $r[2]) / 2), (($r[1] + $r[3]) / 2)) }
 
 & $adb shell am force-stop $pkg
@@ -85,6 +95,7 @@ try {
   "[docktest] (the tile's second tap: the building picked {0:N0} ms after the tap began)" -f ((Get-Date) - $t0).TotalMilliseconds
   if (-not (Rects "bardroid_place.txt")["done"]) { "[docktest] note: the tile's tap did not pick the building in 3 s (place file: $(InApp "cat $cfg/bardroid_place.txt" | Select-Object -First 2); dock: $(InApp "head -n 1 $cfg/bardroid_dock.txt"))" }
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
+  Shot "place"
   Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
   Start-Sleep -Milliseconds 1500
@@ -106,7 +117,7 @@ try {
   $f = Mid $dock["fire"] "FIRE"
   Touch DOWN $f[0] $f[1]; Touch MOVE ($f[0] + 60) $f[1]; Touch MOVE ($dock["right"][2] - 4) $f[1]
   Start-Sleep -Milliseconds 300; Touch UP ($dock["right"][2] - 4) $f[1]; Start-Sleep -Milliseconds 700
-  Stage "auto?"; Start-Sleep 1
+  Stage "auto?"; Shot "dgun-auto"; Start-Sleep 1
   Touch DOWN $f[0] $f[1]; Touch MOVE ($f[0] - 40) $f[1]; Touch MOVE ($dock["cancel"][2] + 2) $f[1]
   Start-Sleep -Milliseconds 300; Touch UP ($dock["cancel"][2] + 2) $f[1]; Start-Sleep -Milliseconds 700
   Stage "autooff?"; Start-Sleep 1
@@ -133,7 +144,7 @@ try {
   } else { "[docktest] (no void on the screen: the STRAFE drag starts on the ground)"; Touch DOWN $a0[0] $a0[1] }
   Start-Sleep -Milliseconds 150
   Touch MOVE (($a0[0] + $a1[0]) / 2) (($a0[1] + $a1[1]) / 2); Touch MOVE $a1[0] $a1[1]
-  Start-Sleep -Milliseconds 300; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
+  Start-Sleep -Milliseconds 300; Shot "preset-aim"; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
   Stage "strafe?"; Start-Sleep 1
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
