@@ -142,7 +142,10 @@ public final class Updater {
             sb.append("Last check ").append(s.getProperty("check"));
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
         } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
+        // (an engine's own miss only while that engine plays: after a rollback to the older one, the newer engine's
+        // "no longer knows springsettings key(s)" stayed in the state and the launcher kept counting it)
         String first = s.getProperty("layer.engine");
+        if (first != null && !first.startsWith("engine " + Prefs.engineVersion + " ")) first = null;
         int misses = first != null ? 1 : 0;
         // (the last start's own list: the count in the state is written when a game ends, so one stopped kept an old one)
         File layer = new File(p.bar, "logs/android-layer.txt");
@@ -612,6 +615,8 @@ public final class Updater {
                 engine = Prefs.engineVersion;
             }
             for (String t : tags) restore(repo(t), goodDir);
+            // (the failed engine's springsettings miss goes with it: the one played again knew every key)
+            if (!engine.equals(state.getProperty("launched.engine"))) state.remove("layer.engine");
             state.setProperty("launched.engine", engine);
             for (String t : tags) recordLaunched(t);   // (the launcher's game version too: the failed update's name went)
             setEngine(engine);

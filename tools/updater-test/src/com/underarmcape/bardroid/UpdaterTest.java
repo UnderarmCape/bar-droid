@@ -87,6 +87,21 @@ public final class UpdaterTest {
         check("  the failed set is on the bad list", s.getProperty("bad.0", "").startsWith("engine B, byar:test bbbbbbbb"));
         check("  the launcher's game version is the last good one's", "Beyond All Reason test-a".equals(s.getProperty("name.byar:test")));
 
+        // the launcher's "adjustments did not apply" line: engine B's springsettings miss counts only while B plays
+        String missB = "engine B no longer knows springsettings key(s) [X] (A did): fix it";
+        p = setup("enginemiss", true, NO_FRAME);
+        Prefs.engineVersion = "A";   // (state from before the fix: rolled back, B's miss still there)
+        write(new File(p.filesDir, "update/state.properties"), "tags=byar\\:test\ngood.engine=A\nlaunched.engine=A\nlayer.engine=" + missB + "\n");
+        check("an older engine plays: the newer one's springsettings miss is not counted", !Updater.summary(p).contains(Updater.MISSES));
+        Prefs.engineVersion = "B";
+        check("  that engine plays: it is counted and named", Updater.summary(p).contains("1" + Updater.MISSES) && Updater.summary(p).contains("(engine B no longer"));
+        p = setup("enginemissrollback", true, NO_FRAME);
+        s = state(p);
+        s.setProperty("layer.engine", missB);
+        try (OutputStream o = new FileOutputStream(new File(p.filesDir, "update/state.properties"))) { s.store(o, null); }
+        new Updater(p).launchEnded(1, 30_000);
+        check("  rolled back from B to A: B's miss leaves the state", state(p).getProperty("layer.engine") == null);
+
         p = setup("crashafterframe", true, A_FRAME);
         r = new Updater(p).launchEnded(139, 70_000);
         s = state(p);
