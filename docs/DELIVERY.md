@@ -430,6 +430,15 @@ same, that stays the simpler way.
         replay its menus: launch-bar.sh already keeps a replay from marking the copies failed. The join's waiting
         screen's title counts dots with its half-second check (a still screen for a slow server read as frozen), the
         unlit dots clear so the words stand still.
+      - [ ] **BAR's player list hidden while the spectator's dock is folded** (from Kailil's "Hide the team list"; the
+        dock covers it while up): BAR's gui_advplayerslist.lua (test-31836) offers only scale, columns, spectators and
+        its position (WG.advplayerlist_api). A hide needs a change in BAR: a SetHidden that skips its DrawScreen and
+        MousePress and gives GetPosition a collapsed rect at the bottom; the panels BAR stacks above it from that
+        position (the Player View / Player Camera / TV buttons, the music player, the clock and speed line) are other
+        widgets of BAR's and draw on unless each follows it. A patch set for BAR's repository, tested by a pool swap as
+        the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
+        dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
+        no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
