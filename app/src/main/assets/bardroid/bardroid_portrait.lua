@@ -2400,9 +2400,15 @@ function DG.track(f, cancel, dir, v, alpha, locked, t)
 	if alpha > 0.2 then
 		local ls = th * 0.36
 		local word = dir > 0 and "AUTO" or "FIRE"
+		local tx = dir > 0 and k[3] - L.pad or k[1] + L.pad
+		local ww = bold:GetTextWidth(word) * ls
+		local mid = tx - dir * ww / 2
+		-- (the white knob under the word: dark letters on it, the gold ones were lost there; dev phone screenshots)
+		local onKnob = not locked and abs(kx - mid) < r + ww * 0.4
 		local col = locked and (dir > 0 and "\255\050\024\000" or "\255\255\255\255")
+			or onKnob and "\255\070\040\010"
 			or (v >= 0.6 and "\255\255\200\064" or "\255\190\190\190")
-		bold:Print(col .. word, dir > 0 and k[3] - L.pad or k[1] + L.pad, cy - ls * 0.36, ls, dir > 0 and "ro" or "o")
+		bold:Print(col .. word, tx, cy - ls * 0.36, ls, dir > 0 and "ro" or "o")
 	end
 	gl.Color(1, 1, 1, 1)
 end
