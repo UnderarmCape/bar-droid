@@ -172,6 +172,12 @@ same, that stays the simpler way.
         start while busy (Play, Lobby, GL check, Benchmark, Install / Update: one run), Display twice quickly opens one
         screen; a landscape skirmish at 1198x1080: the build and order menu copies, QUEUE, the small minimap and
         player list and BAR's panels all in place, nothing over another. Nothing to change.
+      - **A tap on the upright lobby's strip while it settles** (11-11 ~05:00, review of the paging): the press stopped
+        the strip's ease and the release only clicked, so a swipe and a quick tap left the page ~40 px off its place
+        (a sliver of the page before at the edge) and clicked a button sliding under the finger. A tap that lands while
+        the strip eases now finishes the page turn and clicks nothing. Dev phone, upright, offline (the login guard,
+        Chobby's account dialog cancelled): a swipe then a tap 0.1 s after, before: page 2 off by 40 px; after: in
+        place; a tap at rest still clicks (Downloads opened); lobby-phone-test ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
