@@ -74,7 +74,9 @@ same, that stays the simpler way.
         missed adjustment is one of launch-bar.sh's config checks (`layer_miss`), named in the Fold7's launcher.log.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
-      lobby-phone-test all pass): pad-test, -Online, -Dgun (with
+      lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
+      middle of the game above the dock, but that start is by the map's top edge and keepOnMap holds the view on the
+      map (the void above it shows already); re-fitting only pushed it further that way: as meant, left as it is): pad-test, -Online, -Dgun (with
       full auto's refusal and the walk's stop), -Share, lobby-phone-test: ALL PASS. touch-phone-test: its first run's
       skirmish went quiet while loading BAR's gadgets (31 s in, no test line in 4 minutes, no GPU driver fault logged;
       its infolog overwritten by the next test); run again, ALL PASS. One-off so far, as the 11-02 opening-seconds hang.
