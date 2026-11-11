@@ -482,12 +482,15 @@ function widget:MousePress(x, y)
 end
 
 function widget:MouseMove(x, y)
-	if not aiming then
+	if not armedFor then
 		return false
 	end
 	local gx, gz = groundAt(x, y)
-	if gx then
+	if gx and aiming then
 		aiming.x, aiming.z = gx, gz
+	elseif gx then -- (a press over the void past the map's edge or the sky aims once the finger reaches the ground: it
+		-- was lost, the preset still armed, until another press)
+		aiming = { x = gx, z = gz }
 	end
 	return true
 end
@@ -527,7 +530,14 @@ function widget:DrawWorld()
 	gl.LineWidth(3)
 	gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
 	gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
-	local cx, cz = shape(armedFor.units)
+	local cx, cz, n = 0, 0, 0 -- (the group's middle: shape() made a table for each unit, every frame)
+	for _, u in ipairs(armedFor.units) do
+		local ux, _, uz = spGetUnitPosition(u)
+		if ux then
+			cx, cz, n = cx + ux, cz + uz, n + 1
+		end
+	end
+	cx, cz = n > 0 and cx / n or nil, cz / math.max(1, n)
 	if cx then -- (the way from the group: dashes running towards the mark; a plain line at half alpha was lost on the
 		-- ground, dev phone screenshot)
 		local cy = Spring.GetGroundHeight(cx, cz) or ty
