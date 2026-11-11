@@ -475,7 +475,13 @@ same, that stays the simpler way.
       - [x] **A player who turns spectator mid-game upright** (~17:35, dev phone, a skirmish, BAR's /spectator at frame
         450 by a scratch widget, removed after): the dock went from the playing grid to the spectator's the next frame,
         laid out again at its taller size (SP.laidOut); no error. And pad-test -Share and -Chat (~17:45, the two the
-        day's sweep had not run): ALL PASS. A patch set for BAR's repository, tested by a pool swap as
+        day's sweep had not run): ALL PASS.
+      - [x] **Lua's 200 top-level locals** (~17:50): bardroid_portrait.lua was at 199, one short of blocking the next
+        change: the profile's six locals are one table (PROF), 194 now (dev phone: the profile's lines as before,
+        dock-phone-test ALL PASS). bardroid_teamstats.lua is at 200, but so is BAR's own gui_teamstats.lua (test-31836):
+        the copy adds none, so a new top-level local in BAR's file would stop BAR's own widget as well as the copy;
+        the room has to come from BAR's file (a note for BAR's developers), not from rewriting BAR's code inside the copy,
+        which the phone's remake patches could not follow. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
