@@ -90,6 +90,13 @@ same, that stays the simpler way.
         ground of Play vs AI's map near its north-east corner in broad diagonal bands (the interface whole, 36 s in,
         phone shadows off): likely the map's own sand ripples (its west edge's red ground had none); to compare with
         BAR on a PC some time.
+      - **The D-gun's walk stop over a shot** (review, 11-11 ~02:15): fired while walking, then the stick let go: the
+        stop held back over the shot went out 0.6 s later and dropped a shot still turning, walking into range or
+        waiting for energy; a shot ordered after the last step now ends the walk itself (12ae122; pad-test -Dgun's
+        new case: the old build sent a move over the shot, the new none). The infolog and launcher.log of the evening's
+        games: BAR's own warnings only, and the lobby's two downloads failing offline. Polish from the -Shots
+        screenshot: in full auto the stick's red aim line and target ring pointed at a spot AUTO ignores; they are
+        drawn only outside it, and the AIM stick is grey, "AIM: AUTO".
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
