@@ -89,6 +89,23 @@ shoulder, table, close, mid. In 1st person, drag to look around; it turns back t
 **Tune** adjusts the camera for the unit type you follow, one setting at a time, and saves it for the other
 factions' matching unit too.
 
+**Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
+below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
+to turn), triple tap and hold to tilt. A tap opens its menu for 2 seconds: the build grid on the left, the picked
+units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
+metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, IDLE UNITS, IDLE BUILDER,
+COMMANDER, BASE and AUTO RETREAT. While a building is picked, or the presets or a picker are open, the menu stays
+open: tap the map for the spot, then PLACE (a spot BAR refuses says so). A drag on the game with units picked draws
+their path.
+- **PRESETS** (combat units picked): STRAFE (fight to the destination, then back and forth across it on repeat),
+  BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then put your finger on the map: drag
+  to aim, lift to send.
+- **D-Gun** (the commander picked): MOVE and AIM sticks and a big FIRE; the camera follows the commander. Let go of
+  MOVE and it stops. Swipe FIRE to the right for full auto (it fires at the enemy in range most worth a shot, never
+  through your own units; where the host allows unit control widgets), swipe AUTO to the left to end it. The empty
+  space zooms (up and down) or turns (sideways); ✕ leaves.
+- The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
+
 ## Gamepad, mouse and keyboard
 
 - **Gamepads:** in the lobby the pad is a mouse: the D-pad puts the pointer on the next button, tab, list row or box
