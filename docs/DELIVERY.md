@@ -254,8 +254,18 @@ same, that stays the simpler way.
         lobby over the game, a modal window). Without the draft order BAR's start box widget writes its line under
         the dock already. Dev phone, a lobby skirmish upright: RANDOM and the tiles clean before and after the start
         spot; Settings open: BAR's line shows below it, as before; Ready, the game as before; dock-phone-test ALL PASS.
-        (On the way: a white square around the commander for its first seconds, gone by frame 40: BAR's spawn
-        effect; to look at.)
+        (On the way: a white square around the commander for its first seconds, gone by frame 40: next item.)
+      - **Open: a white square at the start on Avalanche** (11-11 ~08:30, dev phone, upright): for about the game's
+        first second a sharp-edged, ground-aligned light square (~120 px, a parallelogram under the camera's tilt)
+        around the commander, a round glow inside it: BAR's commander spawn effect (effects/commander-spawn.lua), its
+        ground flash with its shape gone. Seen in two lobby skirmishes and two launcher skirmishes on Avalanche 3.4
+        (start at the map's top left), not on Starwatcher (screenshot bursts from the first frame). Ruled out: the
+        low-memory mode's texture compression losing the alpha (pace's texture log: Mesa stores the engine's generic
+        GL_COMPRESSED_RGBA as DXT5, which keeps it; a run with DXT5 asked for outright: the same square; a
+        CompressTextures 0 run showed a round flash, but its commander started elsewhere, so that proves nothing).
+        Next: a start at the same spot (a fixed start position) with CompressTextures 0, then GroundDecals 0 and the
+        Fold7 (not in the low-memory mode); `start-burst` style runs (launcher skirmish, its map set in the
+        preferences, `screencap` from the first frame).
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
