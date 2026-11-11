@@ -2398,7 +2398,7 @@ function DG.track(f, cancel, dir, v, alpha, locked, t)
 		disc(kx, cy, r, true)
 	end
 	if alpha > 0.2 then
-		local ls = th * 0.36
+		local ls = fh * 0.245 -- (from FIRE's height, as the right track's: the thinner left one's word came out small)
 		local word = dir > 0 and "AUTO" or "FIRE"
 		local tx = dir > 0 and k[3] - L.pad or k[1] + L.pad
 		local ww = bold:GetTextWidth(word) * ls
