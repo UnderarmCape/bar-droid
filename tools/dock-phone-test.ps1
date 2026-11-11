@@ -65,7 +65,12 @@ try {
   # 1. the build grid's first building (its tile from the dock: in sight on any screen shape); a tap opens the menu, a
   # second picks it; its spot; PLACE
   $tile = Mid $spots["tile"] "the first build tile"
-  Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 600; Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 900
+  Tap $tile[0] $tile[1]
+  # (the second tap once the dock says its menu is open: just after loading the game is slow, and a tap 0.6 s later
+  # still found the camera pad and only opened the menu again)
+  $until = (Get-Date).AddSeconds(4)
+  while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
+  Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 900
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
