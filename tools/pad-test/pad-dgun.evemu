@@ -38,6 +38,14 @@
 {"id":1,"command":"delay","duration":1200}
 {"id":1,"command":"inject","events":[3,1,0,0,0,0]}
 {"id":1,"command":"delay","duration":1200}
+{"id":1,"command":"inject","events":[3,1,-30000,0,0,0]}
+{"id":1,"command":"delay","duration":800}
+{"id":1,"command":"inject","events":[3,5,1023,0,0,0]}
+{"id":1,"command":"delay","duration":120}
+{"id":1,"command":"inject","events":[3,5,0,0,0,0]}
+{"id":1,"command":"delay","duration":100}
+{"id":1,"command":"inject","events":[3,1,0,0,0,0]}
+{"id":1,"command":"delay","duration":1500}
 {"id":1,"command":"inject","events":[1,305,1,0,0,0]}
 {"id":1,"command":"delay","duration":120}
 {"id":1,"command":"inject","events":[1,305,0,0,0,0]}

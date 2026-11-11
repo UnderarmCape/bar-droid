@@ -14,6 +14,9 @@ local com
 local seenMode, aimStart, aimTurned, fired, moved, left, clickPoint, noTeammates = false, nil, false, false, false, false, nil, false
 local seenPad, lastTrace = false, nil
 local autoTried, autoRefused = false, nil -- (full auto, the dock's FIRE swiped right: not where orders are forbidden)
+-- (RT while walking, then the stick let go: the shot already took the walk's place; a stop or move after it dropped a
+-- shot still turning, walking into range or short of energy, 2026-11-11)
+local fires, overShot = 0, nil
 
 local function say(text)
 	Spring.Echo(text)
@@ -40,6 +43,8 @@ local function finish()
 	check("RT: the D-gun (picked and clicked by the app, or given straight as the game's widget)", fired,
 		clickPoint or "given straight")
 	check("the left stick walks the commander (BAR's Move, clicked)", moved)
+	check("RT while walking, the stick let go: no stop or move over the shot", fires >= 2 and overShot == nil,
+		string.format("%d shots, after the second: %s", fires, tostring(overShot)))
 	-- (it would aim and fire on its own through the app's clicks, around the host's rule; given straight as the game's
 	-- widget, -Engine, it may run)
 	local given = pcall(Spring.GiveOrderToUnit, com, CMD.STOP, {}, 0)
@@ -57,8 +62,12 @@ function widget:UnitCommand(unitID, _, _, cmdID)
 	local mode = WG.BarDroidPad and WG.BarDroidPad.modal()
 	if cmdID == CMD.MANUALFIRE then
 		fired = true
+		fires = fires + 1
 	elseif cmdID == CMD.MOVE and mode == "dgun" then
 		moved = true
+	end
+	if fires >= 2 and mode == "dgun" and (cmdID == CMD.MOVE or cmdID == CMD.STOP) then
+		overShot = cmdID == CMD.STOP and "stop" or "move"
 	end
 end
 

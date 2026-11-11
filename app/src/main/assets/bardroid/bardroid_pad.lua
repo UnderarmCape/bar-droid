@@ -1185,6 +1185,12 @@ local function dgunUpdate()
 	elseif not mx and d.walking and not shotHeld then
 		-- (the stick at rest: the commander stops where it is; not over a shot just ordered, which a stop would drop)
 		d.walking = false
+		-- (a shot ordered after the last step took the step's place already: a stop then dropped a shot still turning,
+		-- walking into range or waiting for energy, once the shot's hold was over, 2026-11-11)
+		local shotSince = d.fireAt and (not d.moveAt or Spring.DiffTimers(d.fireAt, d.moveAt) >= 0)
+		if shotSince then
+			return
+		end
 		if not (unitControl() and pcall(Spring.GiveOrderToUnit, d.unitID, CMD.STOP, {}, 0)) then
 			local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
 			dgunOrder(CMD.MOVE, "move", cx, cy, cz, false)
