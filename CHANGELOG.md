@@ -93,7 +93,8 @@ The first version meant for other people's phones: everything since the first bu
   own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
   minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes above them, BAR's Settings drawn in full. Taps on the dock answer
-  with a light vibration.
+  with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
+  formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
 - A game alone (a replay, or no other active player) pauses while the app is out of sight and goes on when you come
   back. The launcher's map field lists the maps you have.
 
