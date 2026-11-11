@@ -168,6 +168,10 @@ same, that stays the simpler way.
         launcher.log). Dev phone, two taps 0.15 s apart: before, two zips and two sheets; after, one zip whole and one
         sheet (closed with Back, nothing sent). No polish this run: the screens looked at had nothing of the app's to
         better.
+      - **Double taps elsewhere and landscape at the Fold7 unfolded** (11-11 ~04:50, dev phone): GameService drops a
+        start while busy (Play, Lobby, GL check, Benchmark, Install / Update: one run), Display twice quickly opens one
+        screen; a landscape skirmish at 1198x1080: the build and order menu copies, QUEUE, the small minimap and
+        player list and BAR's panels all in place, nothing over another. Nothing to change.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
