@@ -501,6 +501,16 @@ function widget:MouseRelease(x, y)
 		aiming = nil
 		return false
 	end
+	-- (lifted over the dock: the aim backs out, the preset stays armed for another drag; it went to the ground hidden
+	-- behind the dock, 2026-11-11)
+	local D = WG.BarDroidPortrait
+	local dock = D and D.dock and D.dock()
+	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
+		aiming = nil
+		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, DRAG TO THE DESTINATION" or "NOT SENT")
+		Spring.Echo("[bardroid-presets] lifted over the dock: not sent, still armed") -- (tools)
+		return true
+	end
 	local gx, gz = groundAt(x, y)
 	local tx, tz = gx or aiming.x, gz and gz or aiming.z
 	local a = armedFor

@@ -120,6 +120,16 @@ local function onCmd(c)
 		P.act("dgun_cancel")
 		local x, y, z = Spring.GetUnitPosition(com)
 		Spring.SendCommands(string.format("give 6 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), x, y, z + 120))
+	elseif c == "dockback?" then -- (STRAFE picked, the drag lifted over the dock: nothing sent, still armed)
+		local fights = 0
+		for _, u in ipairs(pawns) do
+			for _, cmd in ipairs(Spring.GetUnitCommands(u, 5) or {}) do
+				fights = fights + (cmd.id == CMD.FIGHT and 1 or 0)
+			end
+		end
+		local armed = WG.BarDroidPresets and WG.BarDroidPresets.armed()
+		check("STRAFE's drag lifted over the dock: not sent, the preset still armed", fights == 0 and armed == true,
+			string.format("%d fights, armed %s", fights, tostring(armed)))
 	elseif c == "strafe?" then
 		local ok, words = #pawns > 0, {}
 		for _, u in ipairs(pawns) do

@@ -135,6 +135,12 @@ try {
   $g = @($dock["left"][0], $dock["left"][1], $dock["right"][2], $dock["left"][3])
   Tap ($g[0] + ($g[2] - $g[0]) / 4) ($g[1] + ($g[3] - $g[1]) / 4); Start-Sleep -Milliseconds 900
   $a0 = $aims["aim0"]; $a1 = $aims["aim1"]
+  # (first a drag from the map down onto the dock, lifted there: the aim backs out, STRAFE stays armed)
+  $dm = Mid $dock["dock"] "the dock"
+  Touch DOWN $a0[0] $a0[1]; Start-Sleep -Milliseconds 150
+  Touch MOVE $a0[0] (($a0[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
+  Start-Sleep -Milliseconds 200; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 800
+  Stage "dockback?"; Start-Sleep 1
   # (from over the void past the map's edge when the screen shows some: the aim must begin once the finger reaches the
   # ground; a press there lost the whole drag, 2026-11-11)
   if ($aims["void"]) {
