@@ -73,8 +73,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
   `bardroid_minimap.lua` (minimap small until tapped: half size unfolded, upright as tall as the top bar's row, the chat
   the full row under it), `bardroid_portrait.lua` (the launcher's "Play upright": the touch dock under the game, its
-  camera pad, selection and group rows, orders, the D-gun mode with its full auto; the lobby's upright pages are in
-  `bardroid_lobby_touch.lua`), `bardroid_layout.lua` (the layout editor: panels
+  camera pad, selection and group rows (the idle builders by type at the groups row's right), orders, the home grid
+  (PINGS: the last pings from others and a ping of your own), the D-gun mode with its full auto; spectating, the
+  spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it; the lobby's
+  upright pages are in `bardroid_lobby_touch.lua`), `bardroid_layout.lua` (the layout editor: panels
   register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
   copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, up to 5 wide on a wide short screen, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
@@ -90,7 +92,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   under half health falls back once; a hurt commander retreats past its death blast's reach, the combat units near it
   fight on its spot and go back once it is out, builders by it repair it first, then it waits on patrol; the dock's
   AUTO RETREAT switches it, LuaUI/Config/bardroid_retreat.txt), `bardroid_presets.lua` (the dock's PRESETS, 2 x 2 over
-  its grid, then a map tap for the destination: ZIGZAG, and BATTLE LINE, SPREAD and CONCAVE, which form the units up
+  its grid, then a map tap for the destination: STRAFE, and BATTLE LINE, SPREAD and CONCAVE, which form the units up
   by role where they stand and move them as one with a Ctrl+Shift fight given to them as the selection, the engine's
   way of keeping a group's shape at its slowest unit's speed), `bardroid_automex.lua` (the commander picked and a
   metal extractor chosen: the free spots within its weapon range queued at once, through BAR's resource spot API),
@@ -109,7 +111,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 | `app/src/main/assets/gamepad/` | BAR Controller Support v0.8.5, packed by `tools/build-gamepad-game.py` |
 | `app/src/main/jniLibs/<abi>/` | prebuilt helpers (proot, busybox, talloc, ANGLE, virgl), rebuilt by `tools/` |
 | `patches/` | the Termux:X11 changes, applied to `termux-x11/` by `tools/fetch-termux-x11.*` |
-| `tools/` | native builds, laptop checks, phone benchmark, profilers, the 1st person tuner, `worklog.py`, `publish-check.ps1` |
+| `tools/` | native builds, laptop checks, phone benchmark, profilers, the 1st person tuner, the copies of BAR's menus (`make-*menu.py`, `make-missioninfo.py`, `make-teamstats.py`), the upright pictures from BAR's (`make-loadpictures.ps1`, `make-loadscreen-upright.ps1`), `worklog.py`, `publish-check.ps1` |
 
 On the device: `files/rootfs` (container), `files/bar` (engine write dir), `files/logs` (`launcher.log` has
 everything, child processes included), `Android/data/<package>/files/import`.

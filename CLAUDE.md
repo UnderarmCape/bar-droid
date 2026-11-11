@@ -200,6 +200,7 @@ powershell -ExecutionPolicy Bypass -File tools\profile-big-game.ps1 [-AIs 6] [-F
                                                                          # where a big game's CPU goes (widgets, unsynced gadgets, engine timers)
 powershell -ExecutionPolicy Bypass -File tools\remake-check.ps1                    # the phone's remake of the menu copies (BuildMenuPatches) byte for byte against the shipped ones, BAR's files from the dev phone; after make-buildmenu.py / make-ordermenu.py --adb
 python -I tools\lua-locals.py                                           # the app's widgets under Lua's 200 top-level locals (over it a widget does not load; luacheck misses it)
+powershell -ExecutionPolicy Bypass -File tools\make-loadscreen-upright.ps1 -Source <BAR's MenuLoadscreens/loadscreen.png>   # the lobby's first picture upright (loadscreen-upright.png: the word in the quarter Chobby shows, Lanczos + unsharp mask)
 python -I tools\demo-rate.py <replay.sdfz>                               # game message bytes per game-second
 python -I tools\tex-memory.py <launcher.log> [--top 25]                  # the engine's textures and GPU buffers summed (a game run with BARDROID_TEX_LOG=1 in dev-env.sh)
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
