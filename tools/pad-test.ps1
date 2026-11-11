@@ -33,6 +33,8 @@ function Log([string]$pattern, [int]$lines) {
 }
 
 & $adb shell am force-stop $pkg
+$stray = Get-StrayWidgets $adb
+if ($stray) { "[padtest] warning: widgets on the phone that are not the app's (they run in the test's game): $($stray -join ', ')" }
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
 # (the run's start, so the engine screenshots its widgets take are deleted after it, below: 150 of them, 255 MB, had
 # piled up on the dev phone by 2026-11-10)

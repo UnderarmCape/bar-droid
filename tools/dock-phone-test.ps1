@@ -49,6 +49,8 @@ function Touch([string]$what, [double]$x, [double]$y) { & $adb shell input motio
 function Mid($r, [string]$what = "rect") { if (-not $r) { throw "no $what in the dock's files (bardroid_dock.txt, bardroid_place.txt)" }; return @((($r[0] + $r[2]) / 2), (($r[1] + $r[3]) / 2)) }
 
 & $adb shell am force-stop $pkg
+$stray = Get-StrayWidgets $adb @("bardroid_dock_test.lua")
+if ($stray) { "[docktest] warning: widgets on the phone that are not the app's (they run in the test's game): $($stray -join ', ')" }
 AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
   "rm -f files/bar/infolog.txt $cfg/bardroid_docktest.txt $cfg/bardroid_docktest_cmd.txt`n" +
   "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg`n")

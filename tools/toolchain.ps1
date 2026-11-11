@@ -147,6 +147,16 @@ function Invoke-AppScript([string]$adb, [string]$local, [string]$device = "") { 
   & $adb @on exec-out run-as com.underarmcape.bardroid sh $tmp
   & $adb @on shell rm -f $tmp
 }
+# Files in the phone's LuaUI/Widgets that are not the app's (assets/bardroid/bardroid_*.lua) nor $allowed: a scratch
+# widget left behind by a cut-short run opened the D-gun mode in every later test game (2026-11-11). The tests that
+# play a game print them first.
+function Get-StrayWidgets([string]$adb, [string[]]$allowed = @(), [string]$device = "") {
+  $on = if ($device) { @("-s", $device) } else { @() }
+  $assets = Join-Path (Split-Path -Parent $PSScriptRoot) "app\src\main\assets\bardroid"
+  $app = @(Get-ChildItem $assets -Filter "bardroid_*.lua" | ForEach-Object Name) + $allowed
+  $there = @(& $adb @on exec-out run-as com.underarmcape.bardroid sh -c "ls -1 files/bar/LuaUI/Widgets 2>/dev/null")
+  return @($there | ForEach-Object { "$_".Trim() } | Where-Object { $_ -and ($app -notcontains $_) })
+}
 # The screen profile (dark or bench) on a device; prints the settings it changed
 function Set-PhoneScreen([string]$adb, [string]$device, [string]$mode) {
   # (while Kailil watches, ..\devphone-view.hold: the benchmarks' and tests' bench and dark leave the screen at half
