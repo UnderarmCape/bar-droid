@@ -205,6 +205,11 @@ same, that stays the simpler way.
         dock's top at 974). RtsTouch now holds the drawing point at the dock's top edge, moves and release. Dev phone,
         dock-phone-test's new case: let go at y 974 (the edge); BAR's formation still lengthens a line too short for
         six Pawns' spacing a little past its end (by design). ALL PASS.
+      - **A building dragged on into the dock** (11-11 ~06:10): a picked building with no spot yet follows the
+        finger (ONE), and dragged on into the dock it went behind it (the place file had no spot on the screen); a
+        GRID's far corner likewise. Both are now held at the dock's top edge (RtsTouch sendSpot, gridTo).
+        dock-phone-test's new case: the building dragged from the map onto the dock, its spot at y 1037 under a dock
+        top of 1039 (before: none in sight): ALL PASS. The GRID corner's hold is not in a test case.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
