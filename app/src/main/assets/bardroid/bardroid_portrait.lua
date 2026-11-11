@@ -2119,22 +2119,25 @@ local function drawHalf(side)
 		button(x, { 0.42, 0.1, 0.08, 0.95 }, { 0.75, 0.25, 0.2, 0.95 })
 		textIn("\195\151", x[1], x[2], x[3], x[4], (x[4] - x[2]) * 0.7, "\255\250\240\240", bold)
 	end
-	-- more rows: a small gold chevron at the edge they come from
+	-- more rows: a small gold chevron at the edge they come from, its point out in the gap beside the half (all inside
+	-- it, it covered the bottom tile's costs and the order's state line in the middle: dev phone, 2026-11-11)
 	if s.rows > s.visible then
-		local cx, w = (r[1] + r[3]) / 2, (r[3] - r[1]) * 0.05
+		local cx = (r[1] + r[3]) / 2
+		local h = max(6, floor(L.pad * 1.3))
+		local w, out = h * 1.15, max(2, L.pad - 2)
 		gl.Color(1, 0.78, 0.25, 0.85)
 		if s.pos < snapMax(s) - 0.01 then
 			gl.BeginEnd(GL.TRIANGLES, function()
-				gl.Vertex(cx - w, r[2] + w * 0.9)
-				gl.Vertex(cx + w, r[2] + w * 0.9)
-				gl.Vertex(cx, r[2] + 1)
+				gl.Vertex(cx - w, r[2] - out + h)
+				gl.Vertex(cx + w, r[2] - out + h)
+				gl.Vertex(cx, r[2] - out)
 			end)
 		end
 		if s.pos > 0.01 then
 			gl.BeginEnd(GL.TRIANGLES, function()
-				gl.Vertex(cx - w, r[4] - w * 0.9)
-				gl.Vertex(cx + w, r[4] - w * 0.9)
-				gl.Vertex(cx, r[4] - 1)
+				gl.Vertex(cx - w, r[4] + out - h)
+				gl.Vertex(cx + w, r[4] + out - h)
+				gl.Vertex(cx, r[4] + out)
 			end)
 		end
 		gl.Color(1, 1, 1, 1)
