@@ -217,6 +217,9 @@ same, that stays the simpler way.
         of 974); its corner is now held at the dock's top edge (RtsTouch, while the dock selects), and the circle's
         pick keeps only units in sight above the dock (portrait pickCircle). dock-phone-test's new case (box): let go at
         y 974; ALL PASS. The circle's filter is not in a case (the dev phone's dock selects with the box).
+      - **The phone tests after the dock-edge and tap changes** (11-11 ~06:45, dev phone, f169632's build):
+        touch-phone-test, pad-test, -Online, -Dgun, -Share, -Chat, lobby-phone-test, fp-save-test, with
+        dock-phone-test just before: ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
