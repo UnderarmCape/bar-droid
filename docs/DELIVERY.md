@@ -200,6 +200,11 @@ same, that stays the simpler way.
         there it now backs out ("STRAFE: NOT SENT, DRAG TO THE DESTINATION"), the preset still armed for another drag.
         dock-phone-test's new case (a drag from the map onto the dock: 0 fights, still armed), then STRAFE as before:
         ALL PASS. (The Fold7 out of AirDrop's reach since 03:10: no build sent tonight after 9e4e462.)
+      - **A path drawn on into the dock** (11-11 ~06:00): BAR's right drag (units picked, a drag on the game) went on
+        behind the dock and let go there: the order's end on ground the dock hides (Pawns' goals down to y 482 with the
+        dock's top at 974). RtsTouch now holds the drawing point at the dock's top edge, moves and release. Dev phone,
+        dock-phone-test's new case: let go at y 974 (the edge); BAR's formation still lengthens a line too short for
+        six Pawns' spacing a little past its end (by design). ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
