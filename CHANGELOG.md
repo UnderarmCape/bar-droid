@@ -24,7 +24,8 @@ The first version meant for other people's phones: everything since the first bu
   three times; the display's GPU time 23 -> 10 ms a second in a late 8v8), and the game's talk with the app's X server
   no longer stops for the container on every message (the game's main thread stopped 1.05 -> 0.23 % of the time).
 - Engine, game and lobby update at every start as on BAR's PC launcher; a set that fails on its first start is rolled
-  back. BAR's content always comes from BAR's own servers; nothing of BAR is in the APK.
+  back. BAR's content always comes from BAR's own servers; the APK carries only phone versions of a few of BAR's
+  pictures (the upright loading pictures), which BAR's developers cleared (NOTICE.md).
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.
 
 **Touch**
@@ -95,6 +96,15 @@ The first version meant for other people's phones: everything since the first bu
   Scenarios, Settings, Chat, Friends first), notes above them, BAR's Settings drawn in full. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
   formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
+- Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
+  the nearest and goes there, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
+  PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there. Placing a building:
+  a drag moves it slowly at first for fine control, ROTATE and a large X beside PLACE, and while a picked unit has a
+  building queued a one-finger drag pans instead of drawing a move path. COMMANDER frames a wider view.
+- Spectating upright: the same dock with big buttons (player cameras, TEAMS to watch any team, LAST PINGS, follow a
+  unit and its camera views, FREE CAM, GROUP, FULL VIEW) and HIDE, which folds it to a SHOW button.
+- Joining an online game upright: the "Waiting for server response" screen fitted to the screen, with Free memory; the
+  lobby's first BAR picture sharper.
 - A game alone (a replay, or no other active player) pauses while the app is out of sight and goes on when you come
   back. The launcher's map field lists the maps you have.
 
