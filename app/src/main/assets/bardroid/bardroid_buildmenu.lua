@@ -1028,7 +1028,12 @@ function droid.layoutPanel()
 		cs = math_floor(math.min(s * 2, (y1 - y0) - 2 * pad, (x1 - x0) * 0.45))
 	end
 	local cancel = { x1 - pad - cs, my, x1 - pad, my + cs }
-	local rotate = { cancel[1] - pad - s, my, cancel[1] - pad, my + s }
+	-- (upright ROTATE as tall as the X, 80 % as wide: a small square beside it, a thumb's target, 2026-11-11)
+	local rw, rh = s, s
+	if dock then
+		rw, rh = math_floor(cs * 0.8), cs
+	end
+	local rotate = { cancel[1] - pad - rw, my, cancel[1] - pad, my + rh }
 	-- (upright PLACE is the whole panel but its two buttons, which RtsTouch and pressPanel tell first: the column above
 	-- them was a dead part of the green panel, dev phone screenshot 2026-11-11)
 	local place = dock and { x0, y0, x1, y1 } or { x0, y0, rotate[1] - pad, y1 }

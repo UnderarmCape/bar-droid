@@ -1290,6 +1290,9 @@ function refreshNow()
 			#rightItems)) -- (tools: what the dock shows)
 	end
 	leftKind, rightKind = lk, rk
+	if rk ~= "home" and pingT.armedAt then -- (PING armed, then units picked: the next map tap is theirs, not a ping)
+		pingT.armedAt = nil
+	end
 end
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -3017,6 +3020,7 @@ end
 
 -- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
 function widget:MousePress(x, y, btn)
+	pingT.eat = false -- (a ping's release that never came must not eat this press's)
 	if active and btn == 1 and pingT.armed() and not inRect(x, y, L.dock) then -- PINGS' PING: a ping where the map is
 		-- tapped (on the minimap: the place it shows), as BAR's own point marker
 		local kind, pos = Spring.TraceScreenRay(x, y, true, true)

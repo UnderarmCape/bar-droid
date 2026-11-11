@@ -1162,8 +1162,10 @@ final class RtsTouch {
         runPlaceTap();
         Place p = place();
         boolean atFinger = state == State.PENDING && !waitingAtDown;
-        gridX = atFinger || p == null || p.spot == null ? toX(curX) : p.spot[0];
-        gridY = atFinger || p == null || p.spot == null ? toY(curY) : p.spot[1];
+        // (a building being dragged: from the pointer, which moved with it; the place file's spot can be a write behind)
+        boolean dragged = state == State.PLACE_DRAG || state == State.NUDGE;
+        gridX = dragged ? ptrX : atFinger || p == null || p.spot == null ? toX(curX) : p.spot[0];
+        gridY = dragged ? ptrY : atFinger || p == null || p.spot == null ? toY(curY) : p.spot[1];
         send("grid held");
         send("spot none");
         spotSentAt = -1;

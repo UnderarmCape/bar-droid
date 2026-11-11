@@ -364,6 +364,13 @@ same, that stays the simpler way.
         of its own hidden button under the pointer, not the dock's. None over the dock now (make-ordermenu.py,
         tooltipShows). Dev phone: Hold pos tapped, nothing shown a second later. dock-phone-test, touch-phone-test ALL
         PASS. On the Fold7 at 12:41 (89f5471's build, BAR not running there), with the batch above.
+      - **A review of the batch** (11-11 ~13:00): PING stayed armed after units were picked, so the next map tap was a
+        ping, not theirs: it disarms as the home grid goes (dev phone: PING, COMMANDER, a map tap: deselected, no ping).
+        A ping's release that never came could have eaten a later dock tap (reset at each press). A GRID held after a
+        fine drag started from the place file's spot, which can be a write behind: from the pointer now, which moved
+        with the building (dev phone: the 3 x 3 windmills from the dragged one). **ROTATE as tall as the X** (80 % as
+        wide; it was a small square beside it). The Fold7's last game (11:25, the build before) had no errors from the
+        app's widgets. dock-phone-test ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
