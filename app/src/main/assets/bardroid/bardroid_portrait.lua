@@ -2630,7 +2630,10 @@ local function drawStill()
 	end
 end
 
-local function drawDock()
+local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost; the texture as it is, not made again)
+	if not post then
+		L.drawFrame = Spring.GetDrawFrame()
+	end
 	local R = gl.R2tHelper
 	if texMode ~= 0 and R and R.RenderInRect and R.BlendTexRect then
 		local w, h = L.dock[3] - L.dock[1], L.dock[4] - L.dock[2]
@@ -2642,7 +2645,7 @@ local function drawDock()
 			dockTex = gl.CreateTexture(w, h, { target = GL.TEXTURE_2D, format = GL.RGBA8, fbo = true })
 			texW, texH, dirty = w, h, true
 		end
-		if (dirty or texMode == 2) and dockTex then
+		if (dirty or texMode == 2) and dockTex and not post then
 			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], drawStill, true)
 			dirty = false
 		end
@@ -2694,6 +2697,32 @@ function widget:DrawScreen()
 			profSum / max(1, profN), profN, refreshN, refreshMs / max(1, refreshN)))
 		profSum, profN, profAt, refreshN, refreshMs = 0, 0, now(), 0, 0
 	end
+end
+
+-- Before the game, BAR's draft-order pregame (gui_pregameui_draft.lua, layer -999999: drawn after every widget) writes
+-- its lines 19-27 % up the screen ("Pick a starting location within the green area then click Ready", "Waiting for
+-- ..."): upright that is across the dock's tiles and RANDOM. The dock is drawn again over that band, after everything,
+-- unless one of BAR's windows is open there. (map_startbox's own line, without the draft order, is under the dock already.)
+function widget:DrawScreenPost()
+	-- (only over a dock drawn this frame: not over the lobby's overlay, a modal window or a hidden interface, when BAR's
+	-- handler skips the widgets' DrawScreen but not this)
+	if not (active and font and dockTex) or texMode == 0 or Spring.GetGameFrame() > 0
+		or L.drawFrame ~= Spring.GetDrawFrame() then
+		return
+	end
+	for _, name in ipairs({ "options", "gameinfo", "keybinds", "changelog", "widgetselector", "missioninfo", "scavengerinfo" }) do
+		local w = WG[name]
+		if w and w.isvisible and w.isvisible() then
+			return
+		end
+	end
+	local y0, y1 = max(L.dock[2], floor(vsy * 0.19)), min(L.dock[4], math.ceil(vsy * 0.27))
+	if y1 <= y0 then
+		return
+	end
+	gl.Scissor(L.dock[1], y0, L.dock[3] - L.dock[1], y1 - y0)
+	drawDock(true)
+	gl.Scissor(false)
 end
 
 -- the circle being dragged, on the ground in BAR's gold

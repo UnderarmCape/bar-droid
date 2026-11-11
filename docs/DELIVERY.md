@@ -245,9 +245,17 @@ same, that stays the simpler way.
         skirmish), Settings over the hidden tide opened and Statistics after it (lobby skirmish's pregame on Onyx
         Cauldron), no stray tooltips; dock-phone-test ALL PASS. BAR's own fix, `docs/upstream/bar-topbar-hidden.patch`
         (+ .md, a draft for Kailil to post): tried on the dev phone the same way as the windows' patch, with the
-        app's widget off: Statistics and Settings by BAR's own buttons. Seen on the way, left for a later run: the
-        pregame's "Pick a starting location within the green area then click Ready" (BAR's draft-order Pregame UI, 20 %
-        up the screen, drawn over everything) lies across the dock's build tiles and RANDOM upright.
+        app's widget off: Statistics and Settings by BAR's own buttons.
+      - **BAR's pregame lines off the dock upright** (seen with the top bar above): "Pick a starting location within
+        the green area then click Ready" (BAR's draft-order Pregame UI, 20 % up the screen, layer -999999: drawn after
+        every widget) lay across the dock's build tiles and RANDOM. Before the game the dock is drawn again over the
+        band of that widget's lines (19-27 % up: also its "Waiting for ..." ones), after everything (DrawScreenPost,
+        the dock's texture as it is), unless one of BAR's windows is open or the dock was not drawn that frame (the
+        lobby over the game, a modal window). Without the draft order BAR's start box widget writes its line under
+        the dock already. Dev phone, a lobby skirmish upright: RANDOM and the tiles clean before and after the start
+        spot; Settings open: BAR's line shows below it, as before; Ready, the game as before; dock-phone-test ALL PASS.
+        (On the way: a white square around the commander for its first seconds, gone by frame 40: BAR's spawn
+        effect; to look at.)
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
