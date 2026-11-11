@@ -138,9 +138,9 @@ local leftScroll, rightScroll = snapNew(), snapNew()
 local leftItems, rightItems = {}, {} -- what the two halves show now (tiles, buttons)
 local leftKind, rightKind = "", ""
 local press -- a mouse press on the dock: { side, x, y, button, lastY, lastT, vel, moved }
-local typesFrom -- nil, or "local" / "all" / "idle": a list pressed, those units by type on the left
+local typesFrom -- nil, or "local" / "all": a list pressed, those units by type on the left
 local multi, multiPicked = false, {}
-local cycleAt = {} -- COMMANDER, IDLE BUILDER: the last one each picked (a tap again: the next)
+local cycleAt = {} -- COMMANDER, an idle builder type: the last one each picked (a tap again: the next)
 -- Giving and the resource panel (Kailil, 2026-11-09: "a transfer unit ... button to the orders menu ... a teammate
 -- selection ui"; a tap on metal or energy: "a drop down that spans the width of the phone" with the conversion (grey)
 -- and share (red) sliders and "a send power or send metal button"). Both take the whole grid while open.
@@ -193,6 +193,34 @@ local mobilePicked = false -- units that move are picked (refreshNow): a drag on
 -- the orders a drag draws when armed (BAR's custom formations take them with the right button; another order armed
 -- would be cancelled by it)
 local DRAW_CMDS = { [CMD.MOVE] = true, [CMD.FIGHT] = true, [CMD.PATROL] = true, [CMD.ATTACK] = true }
+-- The idle builders in the groups row (drawGroups), and the picked units' build orders (writeDock's draw)
+local idleB = { list = {}, at = -1, sig = "", visited = {}, last = nil, origin = nil, scroll = 0, defs = nil, fac = {},
+	busy = false, busyAt = nil }
+-- (a picked unit with a building queued: a one-finger drag pans the camera, it draws no move path, until the queue's
+-- buildings are done; MOVE, FIGHT or PATROL pressed still draws one. Kailil, 2026-11-11: "It is very easy to place a
+-- move path after placing a build order on accident due to the muscle memory of grabbing the screen")
+function idleB.buildBusy()
+	local t = now()
+	if idleB.busyAt and t - idleB.busyAt < 0.3 then
+		return idleB.busy
+	end
+	idleB.busyAt = t
+	local busy = false
+	local sel = spGetSelectedUnits() or {}
+	for i = 1, min(#sel, 60) do
+		for _, c in ipairs(Spring.GetUnitCommands(sel[i], 16) or {}) do
+			if c.id < 0 then -- (a building)
+				busy = true
+				break
+			end
+		end
+		if busy then
+			break
+		end
+	end
+	idleB.busy = busy
+	return busy
+end
 
 local function layout()
 	markDirty()
@@ -257,9 +285,10 @@ local function writeDock(force)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
 		local _, cmd = spGetActiveCommand()
-		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked)
+		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked and not idleB.buildBusy())
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
-			r(L.left), r(L.right), selStyle, draw and 1 or 0) .. (dgunLines and dgunLines() or "")
+			r(L.left), r(L.right), selStyle, draw and 1 or 0) .. (showGroups and ("groups " .. r(L.groups) .. "\n") or "")
+			.. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
 	end
@@ -406,19 +435,6 @@ local function byType(units, filter)
 		return #a.units > #b.units or (#a.units == #b.units and a.defID < b.defID)
 	end)
 	return list
-end
-
--- my units that move and have no orders (not ones still being built)
-local function idleUnits()
-	local out = {}
-	for _, u in ipairs(Spring.GetTeamUnits(myTeam()) or {}) do
-		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
-		if ud and ud.canMove and not ud.isFactory and not Spring.GetUnitIsBeingBuilt(u)
-			and (Spring.GetUnitCommands(u, 0) or 0) == 0 then
-			out[#out + 1] = u
-		end
-	end
-	return out
 end
 
 local function myCommanders()
@@ -675,9 +691,6 @@ local function startFit()
 end
 
 local function typesUnits()
-	if typesFrom == "idle" then
-		return idleUnits()
-	end
 	if typesFrom == "local" then
 		return Spring.GetVisibleUnits(myTeam(), nil, false)
 	end
@@ -890,6 +903,128 @@ local function setSlider(item, r, x)
 	markDirty()
 end
 
+-- The idle builders in the groups row (Kailil, 2026-11-11: "Add an idle builders grid icon into the unit groups row ...
+-- stack builders of the same type and let me cycle through them like vanilla behavior. It should display the number of
+-- how many are idle of that unit type"; IDLE UNITS and IDLE BUILDER left the home grid): BAR's Idle Builders' units
+-- (gui_idle_builders.lua: build power and something to build or assist; a factory with an empty queue), by type. A tap
+-- picks the nearest one not picked yet, from where the view was as the round began, round them all, and the camera
+-- goes to it. (One table: the main chunk is at Lua's 200 locals.)
+-- The home grid's PINGS (Kailil, 2026-11-11): its left half the camera to the last 4 pings from others (the pad's list,
+-- RB + D-pad up's cycle), its right half a ping of your own where the map is tapped next (armed for PING_ARM seconds)
+local pingT = { armedAt = nil, rect = nil, pressX = nil, eat = false, drawn = nil, ARM = 10, KEPT = 4 }
+function pingT.armed()
+	return pingT.armedAt ~= nil and now() - pingT.armedAt < pingT.ARM
+end
+function pingT.look()
+	local Pd = WG.BarDroidPad
+	if Pd and Pd.pingLook then
+		Pd.pingLook(pingT.KEPT)
+	end
+end
+function pingT.state() -- (what the tile shows: "LAST PINGS" or "PING 2 OF 4", PING lit while armed)
+	local Pd = WG.BarDroidPad
+	local n, step = 0, 0
+	if Pd and Pd.pingCount then
+		n, step = Pd.pingCount()
+	end
+	return min(n, pingT.KEPT), step, pingT.armed()
+end
+function idleB.update()
+	local t = now()
+	if t - idleB.at < 0.5 then
+		return
+	end
+	idleB.at = t
+	if not idleB.defs then
+		idleB.defs = {}
+		for id, ud in pairs(UnitDefs) do
+			local cp = ud.customParams or {}
+			if cp.virtualunit ~= "1" and (ud.buildSpeed or 0) > 0 and not ud.name:find("spy") and not ud.name:find("infestor")
+				and (ud.canAssist or (ud.buildOptions and ud.buildOptions[1])) and not cp.isairbase then
+				idleB.defs[#idleB.defs + 1] = id
+				idleB.fac[id] = ud.isFactory and true or false
+			end
+		end
+	end
+	local byDef, list = {}, {}
+	if not Spring.GetSpectatingState() then
+		for _, u in ipairs(Spring.GetTeamUnitsByDefs(myTeam(), idleB.defs) or {}) do
+			local d = Spring.GetUnitDefID(u)
+			local n = idleB.fac[d] and Spring.GetFactoryCommandCount(u) or Spring.GetUnitCommandCount(u)
+			if (n or 0) == 0 and not Spring.GetUnitIsBeingBuilt(u) then
+				if not byDef[d] then
+					byDef[d] = {}
+					list[#list + 1] = { def = d, units = byDef[d] }
+				end
+				byDef[d][#byDef[d] + 1] = u
+			end
+		end
+	end
+	table.sort(list, function(a, b)
+		return a.def < b.def
+	end)
+	local sig = {}
+	for i, e in ipairs(list) do
+		sig[i] = e.def .. "x" .. #e.units
+	end
+	sig = table.concat(sig, " ")
+	idleB.list = list
+	if sig ~= idleB.sig then -- (the row drawn again: its pictures and counts)
+		idleB.sig = sig
+		markDirty()
+	end
+end
+function idleB.pick(def)
+	local units
+	for _, e in ipairs(idleB.list) do
+		if e.def == def then
+			units = e.units
+		end
+	end
+	if not units or #units == 0 then
+		return
+	end
+	local sel = spGetSelectedUnits() or {}
+	if not (idleB.origin and #sel == 1 and sel[1] == idleB.last) then -- (a new round: from where the view is now)
+		local _, pos = Spring.TraceScreenRay(floor(vsx / 2), floor((vsy + (L.dock and L.dock[4] or 0)) / 2), true)
+		local cx, _, cz = Spring.GetCameraPosition()
+		idleB.origin = pos and { pos[1], pos[3] } or { cx, cz }
+		idleB.visited = {}
+	end
+	local visited = idleB.visited[def] or {}
+	idleB.visited[def] = visited
+	local function nearest()
+		local best, bestD
+		for _, u in ipairs(units) do
+			local x, _, z = Spring.GetUnitPosition(u)
+			if x and not visited[u] then
+				local d = (x - idleB.origin[1]) ^ 2 + (z - idleB.origin[2]) ^ 2
+				if not bestD or d < bestD then
+					best, bestD = u, d
+				end
+			end
+		end
+		return best
+	end
+	local u = nearest()
+	if not u then -- (round them all: again from the nearest)
+		for k in pairs(visited) do
+			visited[k] = nil
+		end
+		u = nearest()
+	end
+	if not u then
+		return
+	end
+	visited[u] = true
+	idleB.last = u
+	Spring.SelectUnitArray({ u })
+	local x, y, z = Spring.GetUnitPosition(u)
+	if x then
+		cameraTo(x, y, z)
+	end
+end
+
 local refreshN, refreshMs = 0, 0 -- (the profile's: refreshes and their time)
 
 -- what each half shows, refreshed a few times a second and after every press
@@ -923,7 +1058,8 @@ function refreshNow()
 		end
 	end
 	local dg = dgunOn() -- (the D-gun mode: neither row, a shorter dock)
-	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup) and not dg
+	idleB.update()
+	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup or #idleB.list > 0) and not dg
 	if wantSel ~= showSel or wantGroups ~= showGroups then -- (the dock's rows: laid out again)
 		showSel, showGroups = wantSel, wantGroups
 		layout()
@@ -957,7 +1093,7 @@ function refreshNow()
 	if pregame then
 		newLeft, lk = pregameItems(pregame), "pregame"
 	elseif typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first (IDLE: every idle unit)
-		local types = byType(typesUnits(), typesFrom ~= "idle" and combat or nil)
+		local types = byType(typesUnits(), combat)
 		newLeft = { { kind = "alltypes", label = "ALL", count = 0 } }
 		for _, g in ipairs(types) do
 			newLeft[#newLeft + 1] = g
@@ -998,18 +1134,20 @@ function refreshNow()
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
-			{ kind = "units", from = "idle", label = "IDLE UNITS" },
 			{ kind = "multi", label = multi and "MULTI: ON" or "MULTI" },
 			{ kind = "done", label = "DONE" },
 		}
 		rk = "units"
-	elseif #sel == 0 then -- nothing picked: the home grid, big buttons across the dock (Kailil, 2026-11-09: idle
-		-- units, the commander with the camera on it, the camera to the base)
+	elseif #sel == 0 then -- nothing picked: the home grid, big buttons across the dock (Kailil, 2026-11-09: the
+		-- commander with the camera on it, the camera to the base; 2026-11-11: no IDLE UNITS or IDLE BUILDER, the idle
+		-- builders are in the groups row, drawGroups)
+		-- (IDLE BUILDER's place: PINGS, Kailil 2026-11-11 "a button to go to last 4 pings like we have on controller. And
+		-- to set a ping"; IDLE UNITS' place open until Kailil picks what goes there)
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
-			{ kind = "units", from = "idle", label = "IDLE UNITS" },
-			{ kind = "idlebuilder", label = "IDLE BUILDER" },
+			{ kind = "blank" },
+			{ kind = "pings" },
 			{ kind = "commander", label = "COMMANDER" },
 			{ kind = "base", label = "BASE" },
 		}
@@ -1413,16 +1551,8 @@ local function pressItem(item, long)
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)
 	elseif k == "back" then
 		factoryItem = nil
-	elseif k == "commander" or k == "idlebuilder" then -- the next one picked and the camera on it (again: the next)
-		local list = k == "commander" and myCommanders() or {}
-		if k == "idlebuilder" then
-			for _, u in ipairs(idleUnits()) do
-				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
-				if ud and ud.isBuilder then
-					list[#list + 1] = u
-				end
-			end
-		end
+	elseif k == "commander" then -- the next one picked and the camera on it (again: the next)
+		local list = myCommanders()
 		if #list > 0 then
 			cycleAt[k] = (cycleAt[k] or 0) % #list + 1
 			local u = list[cycleAt[k]]
@@ -1431,6 +1561,18 @@ local function pressItem(item, long)
 			if x then
 				cameraTo(x, y, z, k == "commander")
 			end
+		end
+	elseif k == "pings" then -- (left half: the camera to the last 4 pings, again within 2 s the one before; right half:
+		-- the map's next tap is a ping, pressed again: not)
+		local r = pingT.rect
+		if r and pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2 then
+			pingT.armedAt = not pingT.armed() and now() or nil
+			if WG.BarDroidPad and WG.BarDroidPad.say then
+				WG.BarDroidPad.say(pingT.armedAt and "TAP THE MAP TO PING" or "NO PING")
+			end
+		else
+			pingT.armedAt = nil
+			pingT.look()
 		end
 	elseif k == "base" then -- the camera where the commander began (the start spot)
 		local x, y, z = Spring.GetTeamStartPosition(myTeam())
@@ -1705,6 +1847,29 @@ local function drawButton(item, r)
 		drawSlider(item, r)
 		return
 	end
+	if item.kind == "blank" then -- (an open place on the home grid: a faint tile)
+		button(r, { 0, 0, 0, 0.25 }, { 0.12, 0.12, 0.12, 0.3 })
+		return
+	end
+	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
+		pingT.rect = r
+		local n, step, armed = pingT.state()
+		pingT.drawn = step .. (armed and "a" or "")
+		local mx = floor((r[1] + r[3]) / 2)
+		local gap = max(2, floor(L.gap / 2))
+		local a, b = { r[1], r[2], mx - gap, r[4] }, { mx + gap, r[2], r[3], r[4] }
+		button(a)
+		if armed then
+			button(b, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
+		else
+			button(b)
+		end
+		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
+		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
+			n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+		textIn(armed and "TAP MAP" or "PING", b[1], b[2], b[3], b[4], th, "\255\240\240\240", font)
+		return
+	end
 	if item.kind == "preset" and WG.BarDroidPresets then -- (its thumbnail, its name under it)
 		button(r)
 		local lh = (r[4] - r[2]) * 0.2
@@ -1820,20 +1985,26 @@ local function drawPlace()
 	-- left a speck of a word, dev phone at 1080x1198 2026-11-11)
 	local pl, rot = p.place, p.rotate
 	local box = pl
-	if rot and rot[4] > pl[2] and rot[4] < pl[4] and bold then
+	local below = rot and p.cancel and max(rot[4], p.cancel[4]) or (rot and rot[4]) -- (the X is the taller since 11-11)
+	if rot and below > pl[2] and below < pl[4] and bold then
 		local tw = max(0.01, bold:GetTextWidth("PLACE"))
 		local function fits(b)
 			return min((b[4] - b[2]) * 0.3, (b[3] - b[1]) * 0.88 / tw)
 		end
-		local above, beside = { pl[1], rot[4], pl[3], pl[4] }, { pl[1], pl[2], rot[1], pl[4] }
+		local above, beside = { pl[1], below, pl[3], pl[4] }, { pl[1], pl[2], rot[1], pl[4] }
 		box = fits(above) >= fits(beside) and above or beside
 	end
 	textIn("PLACE", box[1], box[2], box[3], box[4], (box[4] - box[2]) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	for _, k in ipairs({ "rotate", "cancel" }) do
 		local r = p[k]
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
-		local sym = k == "rotate" and "\226\134\187" or "\226\156\149"
-		textIn(sym, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, k == "rotate" and "\255\235\235\235" or "\255\255\150\140", bold)
+		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees)
+			local h = r[4] - r[2]
+			textIn("ROTATE", r[1], r[2] + h * 0.45, r[3], r[4] - h * 0.08, h * 0.2, "\255\235\235\235", bold)
+			textIn("90\194\176", r[1], r[2] + h * 0.1, r[3], r[2] + h * 0.5, h * 0.24, "\255\255\200\064", bold)
+		else
+			textIn("\226\156\149", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, "\255\255\150\140", bold)
+		end
 	end
 	-- (no "tap the map for the spot" under it any more, Kailil 2026-11-10: the panel's dim green says it is waiting)
 end
@@ -2085,23 +2256,43 @@ local function drawGroups()
 			end
 		end
 	end
-	if #list == 0 and not free then
+	local idle = idleB.list
+	if #list == 0 and not free and #idle == 0 then
 		textIn("Groups: pick units, then + NEW here", r[1], r[2], x1, r[4], h * 0.24, "\255\140\140\140")
 		return
 	end
-	local w = min(h, floor((x1 - r[1]) / max(1, #list + (free and 1 or 0))))
+	-- The row's tiles (Kailil, 2026-11-11): the groups and + NEW from the left, the idle builders from the right, up to
+	-- the remove-order buttons; each side takes the other's room as it grows, and past the row's width it scrolls
+	-- sideways ("dockscroll groups" from RtsTouch, idleB.scroll), the groups first
+	local w = h
+	local nLeft = #list + (free and 1 or 0)
+	local room = x1 - r[1]
+	local over = max(0, (nLeft + #idle) * w - room)
+	idleB.scroll = max(0, min(over, idleB.scroll))
+	local off = r[1] - idleB.scroll
+	local function place(x0, extra) -- a tile's rect, and the part of it in sight for the taps (nil: none)
+		local t = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3 }
+		for k, v in pairs(extra) do
+			t[k] = v
+		end
+		if t[3] > r[1] and t[1] < x1 then
+			local hit = { max(t[1], r[1]), t[2], min(t[3], x1), t[4] }
+			for k, v in pairs(extra) do
+				hit[k] = v
+			end
+			L.groupRects[#L.groupRects + 1] = hit
+		end
+		return t
+	end
+	gl.Scissor(r[1], r[2], max(0, room), h)
 	if free then
-		local x0 = r[1] + #list * w
-		local nr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, new = free }
-		L.groupRects[#L.groupRects + 1] = nr
+		local nr = place(off + #list * w, { new = free })
 		button(nr, { 0.2, 0.2, 0.2, 0.8 }, { 0.32, 0.32, 0.32, 0.8 })
 		textIn("+", nr[1], nr[2] + h * 0.3, nr[3], nr[4], h * 0.42, "\255\255\200\064", bold)
 		textIn("NEW " .. free, nr[1], nr[2], nr[3], nr[2] + h * 0.4, h * 0.2, "\255\220\220\220", font)
 	end
 	for i, g in ipairs(list) do
-		local x0 = r[1] + (i - 1) * w
-		local gr = { x0 + 3, r[2] + 3, x0 + w - 3, r[4] - 3, group = g }
-		L.groupRects[#L.groupRects + 1] = gr
+		local gr = place(off + (i - 1) * w, { group = g })
 		local best, bestN = nil, 0
 		for d, c in pairs(Spring.GetGroupUnitsCounts(g) or {}) do
 			if type(d) == "number" and c > bestN then -- (the counts carry their total as "n")
@@ -2116,6 +2307,14 @@ local function drawGroups()
 		bold:Print("\255\255\200\064" .. g, gr[1] + 6, gr[4] - h * 0.3, h * 0.26, "o")
 		bold:Print("\255\255\255\255" .. groups[g], gr[3] - 6, gr[2] + 6, h * 0.2, "ro")
 	end
+	-- the idle builders: right against the remove buttons while all fits, else straight after the groups
+	local first = over > 0 and (off + nLeft * w) or (x1 - #idle * w)
+	for j, e in ipairs(idle) do
+		local ir = place(first + (j - 1) * w, { idle = e.def })
+		unitTile(e.def, ir, false)
+		bold:Print("\255\255\255\255" .. #e.units, ir[3] - 6, ir[2] + 6, h * 0.26, "ro") -- (how many of it are idle)
+	end
+	gl.Scissor(false)
 end
 
 -- the mode: the camera pad dims the dock a little and names itself; the open menu has BAR's gold along its top,
@@ -2201,6 +2400,14 @@ local function dockLines()
 	end
 	for line in lines:gmatch("[^\n]+") do
 		local side, v, vx = line:match("^dockscroll (%a+) (%S+) ?(%S*)")
+		if side == "groups" then -- (the groups row, sideways: its tiles follow the finger)
+			if active and menu then
+				idleB.scroll = idleB.scroll - (tonumber(vx) or 0)
+				markDirty()
+				touched()
+			end
+			side = nil
+		end
 		if side and active and menu then
 			local _, s, _, _, _, ch = half(side)
 			if snapMax(s) == 0 then -- (nothing to scroll there: the drag pans the camera; X pixels, y down)
@@ -2211,7 +2418,7 @@ local function dockLines()
 			touched()
 		end
 		side, v = line:match("^dockfling (%a+) (%S+)")
-		if side and active then
+		if side and active and side ~= "groups" then
 			local _, s, _, _, _, ch = half(side)
 			snapRelease(s, -(tonumber(v) or 0) / (ch + L.gap))
 			touched()
@@ -2320,6 +2527,13 @@ function widget:Update(dt)
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
+	if rightKind == "home" and pingT.drawn then -- (PINGS: "2 OF 4" back to LAST PINGS after the cycle's pause, TAP MAP
+		-- back to PING when it runs out)
+		local _, step, armed = pingT.state()
+		if step .. (armed and "a" or "") ~= pingT.drawn then
+			markDirty()
+		end
+	end
 	if rightKind == "dgun" then
 		DG.follow(dt)
 	else
@@ -2762,6 +2976,18 @@ end
 
 -- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
 function widget:MousePress(x, y, btn)
+	if active and btn == 1 and pingT.armed() and not inRect(x, y, L.dock) then -- PINGS' PING: a ping where the map is
+		-- tapped (on the minimap: the place it shows), as BAR's own point marker
+		local kind, pos = Spring.TraceScreenRay(x, y, true, true)
+		if kind == "ground" and pos then
+			Spring.MarkerAddPoint(pos[1], pos[2], pos[3], "")
+			Spring.Echo("[bardroid-portrait] a ping at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
+			pingT.armedAt = nil
+			markDirty()
+		end
+		pingT.eat = true
+		return true
+	end
 	if not (active and inRect(x, y, L.dock)) then
 		return false
 	end
@@ -2846,6 +3072,10 @@ function widget:MouseMove(x, y)
 end
 
 function widget:MouseRelease(x, _, btn)
+	if pingT.eat then -- (the ping's tap: not the map's)
+		pingT.eat = false
+		return true
+	end
 	if slide then
 		setSlider(slide.item, slide.rect, x)
 		slide = nil
@@ -2880,6 +3110,7 @@ function widget:MouseRelease(x, _, btn)
 			Spring.Echo("[bardroid-portrait] a tap on settling rows: no press") -- (tools)
 			return true
 		end
+		pingT.pressX = p.x -- (PINGS: which of its halves)
 		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
 		return true
 	end
@@ -2892,6 +3123,8 @@ function widget:MouseRelease(x, _, btn)
 				local A = WG.autogroup
 				if gr.unq then
 					removeOrder(gr.unq == "last")
+				elseif gr.idle then -- an idle builder type: the next of them picked, the camera on it
+					idleB.pick(gr.idle)
 				elseif gr.new then
 					if A and A.addCurrentSelectionToAutogroup then
 						A.addCurrentSelectionToAutogroup(gr.new)

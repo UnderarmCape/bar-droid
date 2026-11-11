@@ -93,10 +93,13 @@ factions' matching unit too.
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
 to turn), triple tap and hold to tilt. A tap opens its menu for 2 seconds: the build grid on the left, the picked
 units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
-metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, IDLE UNITS, IDLE BUILDER,
-COMMANDER, BASE and AUTO RETREAT. While a building is picked, or the presets or a picker are open, the menu stays
-open: tap the map for the spot, then PLACE (a spot BAR refuses says so). A drag on the game with units picked draws
-their path.
+metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, PINGS (LAST PINGS: the camera to
+the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there),
+COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
+its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets
+or a picker are open, the menu stays open: tap the map for the spot (or drag it there: it moves slowly at first, for
+fine placing; hold still for a GRID), ROTATE 90° turns it, then PLACE (a spot BAR refuses says so). A drag on the
+game with units picked draws their path, except while one of them has a building queued: then the drag pans.
 - **PRESETS** (combat units picked): STRAFE (fight to the destination, then back and forth across it on repeat),
   BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then put your finger on the map: drag
   to aim, lift to send.

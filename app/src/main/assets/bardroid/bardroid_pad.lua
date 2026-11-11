@@ -90,6 +90,9 @@ local function addPing(x, y, z)
 		pingStep = math.min(pingStep + 1, #pings) -- (still the same ping for a press that cycles on)
 	end
 end
+-- The camera to the last ping from someone else, then the ones before it (the pad's RB + D-pad up; the portrait dock's
+-- PINGS, kept = 4: Kailil, 2026-11-11, "a button to go to last 4 pings like we have on controller")
+local pingLook -- (defined after now() and note())
 local padClicks = 0 -- clicks asked of the app ("click <n>" in bardroid_pad.txt)
 local padClickAt = nil -- the last one's point if not the middle: { x, y }, fractions of the screen from its top left
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
@@ -289,6 +292,27 @@ local function note(text, color, seconds)
 	toast, toastAt, toastColor, toastFor = text, now(), color or GOLD, seconds or TOAST_SECONDS
 	lastNote, notes = text, notes + 1
 	voiceToast = false
+end
+
+-- (Kailil, 2026-11-05: pressed again within PING_CYCLE_SECONDS, the next older of the last PINGS_KEPT, round to the
+-- newest after the oldest; after a pause, the newest again; kept: fewer of them, the dock's last 4)
+pingLook = function(kept)
+	local n = math.min(#pings, kept or PINGS_KEPT)
+	if n > 0 then
+		local t = now()
+		if pingStepAt and Spring.DiffTimers(t, pingStepAt) <= PING_CYCLE_SECONDS and pingStep <= n then
+			pingStep = pingStep % n + 1
+		else
+			pingStep = 1
+		end
+		pingStepAt = t
+		local p = pings[pingStep]
+		Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
+		note(n == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, n))
+	else
+		Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
+		note("NO PING FROM OTHERS YET")
+	end
 end
 
 -- speak to chat's note, "< SPEAK TO ALLIES >" in the channel's colour (step: the channel changed first; the note keeps
@@ -1915,23 +1939,7 @@ local ACTIONS = {
 		end
 	end,
 	ping_look = function() -- RB + D-pad up: the camera to the last ping from someone else, then the ones before it
-		if #pings > 0 then
-			-- (Kailil, 2026-11-05: pressed again within PING_CYCLE_SECONDS, the next older of the last PINGS_KEPT,
-			-- round to the newest after the oldest; after a pause, the newest again)
-			local t = now()
-			if pingStepAt and Spring.DiffTimers(t, pingStepAt) <= PING_CYCLE_SECONDS then
-				pingStep = pingStep % #pings + 1
-			else
-				pingStep = 1
-			end
-			pingStepAt = t
-			local p = pings[pingStep]
-			Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
-			note(#pings == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, #pings))
-		else
-			Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
-			note("NO PING FROM OTHERS YET")
-		end
+		pingLook()
 	end,
 	select_combat = function() -- RB + D-pad down
 		selectCombat(myUnits(), "COMBAT UNITS")
@@ -2786,6 +2794,11 @@ function widget:Initialize()
 		end,
 		setPing = function(x, y, z) -- (tools/pad-test.ps1: a ping from someone else)
 			addPing(x, y, z)
+		end,
+		pingLook = pingLook, -- (the portrait dock's PINGS: the last 4)
+		pingCount = function() -- (the pings from others seen; the one the camera went to last, 0 after the cycle's pause)
+			local cycling = pingStepAt and Spring.DiffTimers(now(), pingStepAt) <= PING_CYCLE_SECONDS
+			return #pings, cycling and pingStep or 0
 		end,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
 		-- one order; pointer moves recorded instead of made)

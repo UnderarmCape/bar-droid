@@ -87,7 +87,10 @@ final class RtsTouch {
     private static final long JOIN_MS = 250;
     private static final float TILT_DECIDE_SLOPS = 3;          // how far the fingers may move before a tilt is ruled out
     private static final float SWIPE_SCREEN = 0.08f;           // a swipe: this much of the screen's shorter side
-    private static final float NUDGE_GAIN = 0.5f;              // a waiting building moves half the finger's way
+    // A dragged building moves by part of the finger's way, little at first (Kailil, 2026-11-11: "keep the sensitivity
+    // curve very low at first. So I can do very fine control"): NUDGE_FINE of it near where the drag began, rising
+    // smoothly to NUDGE_FAR once the finger is NUDGE_RAMP of the screen's shorter side away
+    private static final float NUDGE_FINE = 0.12f, NUDGE_FAR = 0.6f, NUDGE_RAMP = 0.25f;
     private static final long GRID_REST_MS = 600;              // a finger at rest after moving a building: a GRID
     private static final long GRID_KEYS_MS = 100;              // a GRID placed: Shift+Alt held this much longer
     private static final long GRID_CANCEL_MS = 250;            // a GRID cancelled: the button let go this much later
@@ -115,7 +118,7 @@ final class RtsTouch {
     // (dgun: the pad's D-gun mode on the dock, Kailil 2026-11-09: "the controller mod dgun method where a two joy sticks
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
-        float[] all, left, right, stickL, stickR, fire, cancel;
+        float[] all, left, right, groups, stickL, stickR, fire, cancel;
         boolean menu, circle, draw, dgun, dgunAuto;
     }
     private Dock dockCache;
@@ -184,6 +187,8 @@ final class RtsTouch {
     // One building picked with ONE (startPlaceDrag): at this touch's start, and where the finger last came to rest
     private boolean placingOne, waitingAtDown, onWaiting;
     private float holdX, holdY, moveX, moveY;       // view pixels: the rest point (the GRID hold), the last move sent
+    private float nudgeFromX, nudgeFromY;           // view pixels: where a building's drag began (its gain, nudgeTo)
+    private float ptrX, ptrY;                       // X screen pixels: the pointer, moved with a dragged building
     private boolean gridHeld;                       // a GRID: the left button down with Shift+Alt until PLACE
     private float gridX, gridY;                     // ... and the pointer, its far corner (X screen pixels)
     private volatile boolean queueWanted;           // QUEUE is on (bardroid_pad.txt)
@@ -623,7 +628,10 @@ final class RtsTouch {
                     Dock d = dock();
                     float x = toX(downX), y = toY(downY);
                     String side = d == null ? null : inside(d.left, x, y) ? "left" : inside(d.right, x, y) ? "right" : null;
-                    if (side != null && Math.abs(curY - downY) >= Math.abs(curX - downX)) {
+                    // (the groups row, sideways: its tiles scroll when the groups and idle builders do not fit, Kailil 2026-11-11)
+                    if (side == null && d != null && d.groups != null && inside(d.groups, x, y)
+                            && Math.abs(curX - downX) > Math.abs(curY - downY)) side = "groups";
+                    if (side != null && (side.equals("groups") || Math.abs(curY - downY) >= Math.abs(curX - downX))) {
                         state = State.DOCK_SCROLL;
                         dockSide = side;
                         padY = downY;
@@ -676,8 +684,7 @@ final class RtsTouch {
             case PLACE_DRAG:
             case NUDGE:
                 if (i < 0) return;
-                if (state == State.PLACE_DRAG) sendSpot(curX, curY);   // the building under the finger
-                else nudgeTo(curX, curY);
+                nudgeTo(curX, curY);   // (both: the building by part of the finger's way, startPlaceDrag)
                 if (Math.hypot(curX - holdX, curY - holdY) > slop) {   // still moving: the GRID hold counts from here
                     holdX = curX; holdY = curY;
                     ui.removeCallbacks(gridHold);
@@ -884,6 +891,7 @@ final class RtsTouch {
                         d.menu = f[5].equals("menu");
                     } else if (d != null && f[0].equals("left")) d.left = r;
                     else if (d != null && f[0].equals("right")) d.right = r;
+                    else if (d != null && f[0].equals("groups")) d.groups = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }
@@ -1117,13 +1125,23 @@ final class RtsTouch {
             gridTo(curX, curY);
             return true;
         }
-        moveX = curX; moveY = curY;
+        // (none waiting: the building where the finger came down, then moved as a waiting one is, finely at first; it
+        // followed the finger 1:1, too quick to place exactly, Kailil 2026-11-11)
         if (waitingAtDown) {
             state = State.NUDGE;
         } else {
             state = State.PLACE_DRAG;
-            sendSpot(curX, curY);
+            sendSpot(downX, downY);
         }
+        moveX = downX; moveY = downY;
+        nudgeFromX = downX; nudgeFromY = downY;
+        // (the X pointer goes with the building: BAR's own ghost, red where it cannot stand, is drawn at the pointer,
+        // and it stayed where the finger came down, a second building beside the moved one; dev phone, 2026-11-11)
+        Place p = place();
+        boolean fromSpot = waitingAtDown && p != null && p.spot != null;
+        ptrX = fromSpot ? p.spot[0] : toX(downX);
+        ptrY = fromSpot ? p.spot[1] : toY(aboveDock(downY));
+        nudgeTo(curX, curY);
         ui.postDelayed(gridHold, GRID_REST_MS);
         return true;
     }
@@ -1204,13 +1222,24 @@ final class RtsTouch {
         spotSentAt = SystemClock.uptimeMillis();
     }
 
-    /** The waiting building moved by part of the finger's way since the last move (X screen pixels, y down). */
+    /**
+     * The waiting building moved by part of the finger's way since the last move (X screen pixels, y down): the gain
+     * from NUDGE_FINE to NUDGE_FAR by how far the finger is from where the drag began (smoothstep over NUDGE_RAMP).
+     */
     private void nudgeTo(float vx, float vy) {
-        float k = xPerViewPixel() * NUDGE_GAIN;
         if (vx == moveX && vy == moveY) return;
-        send(String.format(Locale.US, "nudge %.2f %.2f", (vx - moveX) * k, (vy - moveY) * k));
+        float ramp = Math.max(1, NUDGE_RAMP * Math.min(view().getWidth(), view().getHeight()));
+        float t = Math.min(1f, (float) Math.hypot(vx - nudgeFromX, vy - nudgeFromY) / ramp);
+        float k = xPerViewPixel() * (NUDGE_FINE + (NUDGE_FAR - NUDGE_FINE) * t * t * (3 - 2 * t));
+        float dx = (vx - moveX) * k, dy = (vy - moveY) * k;
+        // (moved on toward the upright dock: held at its top edge, in sight; it went behind the dock, docktest)
+        Dock d = dock();
+        if (d != null && d.all != null && ptrY + dy > d.all[1] - 1) dy = Math.min(dy, Math.max(0, d.all[1] - 1 - ptrY));
+        send(String.format(Locale.US, "nudge %.2f %.2f", dx, dy));
         moveX = vx; moveY = vy;
         spotSentAt = SystemClock.uptimeMillis();
+        ptrX += dx; ptrY += dy;
+        view().sendMouseEvent(ptrX, ptrY, InputStub.BUTTON_UNDEFINED, false, false);
     }
 
     /** The GRID's far corner (the pointer) moved by the finger's way since the last move. */

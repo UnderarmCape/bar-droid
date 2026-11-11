@@ -323,6 +323,36 @@ same, that stays the simpler way.
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
         part now (a button's action as before; any other press does nothing, as BAR's Top Bar already made it do, minus
         the sliders). Dev phone upright: a tap on the strip beside the minimap logged as taken; Statistics as before.
+- [x] **Kailil's dock notes, 2026-11-11 ~11:00 and ~11:20** (with screenshots), each on the dev phone upright:
+      - **INSERT with a factory** blocked its +1 / +5 / +20 (BAR's CommandInsert makes a CMD.INSERT, which a factory's
+        queue does not take): with only factories picked no CommandInsert key, the dock gives Alt (BAR's alt-click to
+        the queue's front). **The upright loading bar** across the screen, BAR's words fitted; **Free memory** on the
+        loading screen of a game the lobby starts too (4f640bd).
+      - **No IDLE UNITS or IDLE BUILDER buttons**, the idle units list gone. **The idle builders in the groups row**,
+        at its right: one tile per type (BAR's builders, as its Idle Builders widget counts them), its idle count at the
+        top right; a tap picks the nearest unvisited one from the middle of the view and the camera goes there, taps on
+        go through the rest (BAR's own cycling). Groups from the left, idle builders from the right; too many for the
+        row: they follow the groups and the row scrolls sideways (a sideways drag on it, RtsTouch's `groups` rect). There
+        with nothing picked and with picked units that have no orders; with orders, the remove buttons take the row's
+        right and the tiles move left with them. Dev phone: the commander's tile ("1") at the row's right from the
+        start, picked from it with the camera on it (a row full enough to scroll, and the remove buttons beside an idle
+        tile, not yet seen on the phone).
+      - **PINGS in IDLE BUILDER's place** ("a button to go to last 4 pings like we have on controller. And to set a
+        ping"): LAST PINGS, the camera to the newest ping from someone else, again within 2 s the one before, of the last
+        4 ("2 OF 4" on it; the pad's list and cycle, which keeps 5: RB + D-pad up); PING, then a tap on the map (or the
+        minimap) is a ping there, BAR's point marker (the button gold, "TAP MAP", for 10 s; again: not). Dev phone:
+        "Look here! (map marker)" where the map was tapped; pad-test -Online's cycle ALL PASS. IDLE UNITS' place is open
+        (a blank tile) until Kailil picks what goes there.
+      - **PLACE's X twice the size**, **ROTATE 90°** in the old arrow's place (it read as redo; it turns the building
+        90° a tap, as before). **No green ring at the spot**: the building's footprint, green as the engine's own, turned
+        with it. **A finer drag**: the building comes down where the finger does, then moves by 12 % of the finger's way,
+        rising smoothly to 60 % a quarter of the screen away (it followed the finger 1:1; a waiting one moved 50 %), the
+        pointer with it so BAR's own ghost (red where it cannot stand) is on it; held still: the GRID as before; on
+        into the dock: held at its top edge. Dev phone: 200 px of finger, the building ~50 px.
+      - **No move path drawn after a building order**: while a picked unit has a building queued, a one-finger drag
+        pans the camera; MOVE / FIGHT / PATROL pressed still draws a path, and the drag draws again once the buildings
+        are done. Dev phone: a windmill placed, then a drag: the camera moved, no order.
+      - dock-phone-test, pad-test, pad-test -Online ALL PASS on the build.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

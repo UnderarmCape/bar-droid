@@ -933,7 +933,7 @@ function droid.spotOnScreen()
 	return sx, sy, math_floor(r + 0.5)
 end
 
--- BAR Droid: the building at the spot, as the engine draws a building being placed, and a ring around it
+-- BAR Droid: the building at the spot, as the engine draws a building being placed, and its footprint
 function droid.drawSpot()
 	local bx, by, bz = droid.spotPos()
 	if not bx then
@@ -948,18 +948,14 @@ function droid.drawSpot()
 	gl.UnitShape(droid.defID, Spring.GetMyTeamID(), false, false, false)
 	gl.PopMatrix()
 	gl.DepthTest(false)
-	gl.LineWidth(2)
-	gl.Color(0.3, 1, 0.3, 0.8)
-	-- (the ring at least 2% of the screen's height across its radius: zoomed far out the spot was a 9-pixel dot)
-	local r = def and def.radius or 32
-	local sx, sy = Spring.WorldToScreenCoords(bx, by, bz)
-	local ex, ey = Spring.WorldToScreenCoords(bx + r, by, bz)
-	local px, minPx = math.sqrt((ex - sx) ^ 2 + (ey - sy) ^ 2), math.max(12, vsy * 0.02)
-	if px > 0 and px < minPx then
-		r = r * minPx / px
+	-- (its footprint on the ground, green as the engine's own placement square, turned with the building: Kailil,
+	-- 2026-11-11, "remove the green circle cursor radial that follows my finger"; the ring around it is gone)
+	local fx, fz = (def and def.xsize or 2) * 4, (def and def.zsize or 2) * 4
+	if facing % 2 == 1 then
+		fx, fz = fz, fx
 	end
-	gl.DrawGroundCircle(bx, by, bz, r, 32)
-	gl.LineWidth(1)
+	gl.Color(0.3, 1, 0.3, 0.45)
+	gl.DrawGroundQuad(bx - fx, bz - fz, bx + fx, bz + fz)
 	gl.Color(1, 1, 1, 1)
 end
 
@@ -1025,10 +1021,13 @@ function droid.layoutPanel()
 	local pad = math_floor(math.max(2, (y1 - y0) * 0.08))
 	local s = math_floor(math.min((y1 - y0) * 0.7, (x1 - x0) * 0.2))
 	local my = math_floor((y0 + y1 - s) / 2)
-	if dock then -- (upright, the tall panel: at its bottom right corner; Kailil, 2026-11-10)
+	local cs = s
+	if dock then -- (upright, the tall panel: at its bottom right corner; Kailil, 2026-11-10; its cancel twice the size,
+		-- 2026-11-11: "make the X button on place 100 percent bigger")
 		my = y0 + pad
+		cs = math_floor(math.min(s * 2, (y1 - y0) - 2 * pad, (x1 - x0) * 0.45))
 	end
-	local cancel = { x1 - pad - s, my, x1 - pad, my + s }
+	local cancel = { x1 - pad - cs, my, x1 - pad, my + cs }
 	local rotate = { cancel[1] - pad - s, my, cancel[1] - pad, my + s }
 	-- (upright PLACE is the whole panel but its two buttons, which RtsTouch and pressPanel tell first: the column above
 	-- them was a dead part of the green panel, dev phone screenshot 2026-11-11)

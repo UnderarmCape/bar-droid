@@ -94,7 +94,8 @@ try {
   while ((Get-Date) -lt $until -and -not (Rects "bardroid_place.txt")["done"]) { Start-Sleep -Milliseconds 200 }
   "[docktest] (the tile's second tap: the building picked {0:N0} ms after the tap began)" -f ((Get-Date) - $t0).TotalMilliseconds
   if (-not (Rects "bardroid_place.txt")["done"]) { "[docktest] note: the tile's tap did not pick the building in 3 s (place file: $(InApp "cat $cfg/bardroid_place.txt" | Select-Object -First 2); dock: $(InApp "head -n 1 $cfg/bardroid_dock.txt"))" }
-  # (the building, no spot yet, dragged from the map on into the dock: it follows the finger, held at the dock's top edge)
+  # (the building, no spot yet, dragged from the map on into the dock: it moves by part of the finger's way, held at the
+  # dock's top edge)
   if ($spots["free"]) {
     $dm0 = Mid $dock["dock"] "the dock"; $f0 = $spots["free"]
     Touch DOWN $f0[0] $f0[1]; Start-Sleep -Milliseconds 120
