@@ -33,6 +33,13 @@ try {
   if (-not (Log '\[touchphone\] done' 1)) {
     if (DriverFault) { "[touchphone] FAIL the game ended on the GPU driver's rare fault (DriverWatch closed it): not the touch camera; run it again" }
     else { "[touchphone] FAIL the test did not finish in 4 minutes" }
+    # (the game's own logs kept: the next start overwrites infolog.txt, and a stall while loading left nothing to read,
+    # 2026-11-10; launch-bar.sh's copy at the engine's exit never comes, the test stops the app)
+    $keep = Join-Path (Split-Path -Parent $PSScriptRoot) ("build\touch-phone-test\fail-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+    New-Item -ItemType Directory -Force $keep | Out-Null
+    InApp "cat files/bar/infolog.txt" | Set-Content -Encoding utf8 (Join-Path $keep "infolog.txt")
+    InApp "tail -n 400 files/logs/launcher.log" | Set-Content -Encoding utf8 (Join-Path $keep "launcher.log")
+    "[touchphone] the game's logs: $keep"
   }
   Log '\[touchphone\]|bardroid_touch.*[Ee]rror|\[bardroid-touch\] error' 40 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

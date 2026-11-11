@@ -34,6 +34,9 @@ function Log([string]$pattern, [int]$lines) {
 
 & $adb shell am force-stop $pkg
 & $adb exec-out run-as $pkg rm -f files/bar/infolog.txt $results
+# (the run's start, so the engine screenshots its widgets take are deleted after it, below: 150 of them, 255 MB, had
+# piled up on the dev phone by 2026-11-10)
+& $adb exec-out run-as $pkg touch files/padtest-start
 # the GPU driver's rare fault (docs/DELIVERY.md): counted now, a new one during the run is named in the result
 function FaultCount { [int]("0" + ((& $adb exec-out run-as $pkg sh -c "grep -a -c 'GPU driver refused' files/logs/launcher.log 2>/dev/null") | Select-Object -First 1)) }
 $faults0 = FaultCount
@@ -101,6 +104,8 @@ try {
 } finally {
   & $adb exec-out run-as $pkg rm -f $widget
   & $adb shell am force-stop $pkg
+  # (this run's screenshots, copied to build\ above where they are wanted)
+  & $adb exec-out run-as $pkg sh -c "find files/bar/screenshots -name 'screen_*.png' -newer files/padtest-start -delete 2>/dev/null; rm -f files/padtest-start"
   & $adb shell rm -f $evemu
   if ($Engine -and -not $Online) { & $adb exec-out run-as $pkg rm -f files/bar/dev-env.sh }
   if ($Online) {   # (again while its marker stays: the setting must read as before)

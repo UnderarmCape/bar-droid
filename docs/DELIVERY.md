@@ -70,6 +70,9 @@ same, that stays the simpler way.
       full auto's refusal and the walk's stop), -Share, lobby-phone-test: ALL PASS. touch-phone-test: its first run's
       skirmish went quiet while loading BAR's gadgets (31 s in, no test line in 4 minutes, no GPU driver fault logged;
       its infolog overwritten by the next test); run again, ALL PASS. One-off so far, as the 11-02 opening-seconds hang.
+      touch-phone-test now keeps the game's infolog and launcher.log in build\touch-phone-test\fail-<time> when it
+      fails. pad-test deletes the engine screenshots its run took (after copying the ones -Share and -Chat keep): 150
+      of them, 255 MB, had piled up on the dev phone since 11-07 (cleared; a run after: none left, ALL PASS).
 - [x] **The lobby's pointer by touch**: hidden while fingers play the lobby, back for a mouse, keyboard or the pad
       (patch 0014: the X server's mouse events no longer show a pointer the app hid; RtsTouch.showCursor), and the
       button under the lifted finger no longer stays lit after a page swipe's overshoot (the hush clears a control lit
