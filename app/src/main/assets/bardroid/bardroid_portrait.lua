@@ -2871,6 +2871,15 @@ function widget:Initialize()
 			return menu
 		end,
 		refresh = refresh, -- (bardroid_presets.lua: its presets opened or closed)
+		-- (tools/dock-phone-test.ps1: the first item of a half the test function takes: its cell (GL pixels, where it is
+		-- drawn now: off the half when scrolled away) and the item)
+		itemCell = function(side, test)
+			for i, it in ipairs(side == "left" and leftItems or rightItems) do
+				if test(it) then
+					return cellRect(side, i), it
+				end
+			end
+		end,
 	}
 	checkActive()
 	writeDock(true)

@@ -1,5 +1,5 @@
-# The upright touch dock (bardroid_portrait.lua) by real taps on the dev phone (adb input), in a skirmish: a Bot Lab
-# picked on the dock, its spot tapped and PLACE pressed 2.6 s later (the dock's menu must still take it), PLACE on a
+# The upright touch dock (bardroid_portrait.lua) by real taps on the dev phone (adb input), in a skirmish: the build
+# grid's first building (in sight on any screen shape; the dock's itemCell says where) picked on the dock, its spot tapped and PLACE pressed 2.6 s later (the dock's menu must still take it), PLACE on a
 # blocked spot (its note), the D-gun mode's FIRE swiped right (full auto on) and left (off), its MOVE stick held and let
 # go (the commander stops at once), and the STRAFE preset picked and dragged onto the map. The test widget
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
@@ -46,7 +46,7 @@ function Rects([string]$file) {
 $script:k = 1.0
 function Tap([double]$x, [double]$y) { & $adb shell input tap ([int]($x * $script:k)) ([int]($y * $script:k)) }
 function Touch([string]$what, [double]$x, [double]$y) { & $adb shell input motionevent $what ([int]($x * $script:k)) ([int]($y * $script:k)) }
-function Mid($r) { return @((($r[0] + $r[2]) / 2), (($r[1] + $r[3]) / 2)) }
+function Mid($r, [string]$what = "rect") { if (-not $r) { throw "no $what in the dock's files (bardroid_dock.txt, bardroid_place.txt)" }; return @((($r[0] + $r[2]) / 2), (($r[1] + $r[3]) / 2)) }
 
 & $adb shell am force-stop $pkg
 AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
@@ -62,31 +62,30 @@ try {
   $dock = Rects "bardroid_dock.txt"
   $script:k = [double]$m.Groups[1].Value / $dock["dock"][2]   # (the display's width over the X screen's)
   $spots = Rects "bardroid_docktest.txt"
-  # 1. the Bot Lab: the dock's build grid (3 across), its third row's first tile; a tap opens the menu, a second picks it
-  $L = $dock["left"]; $w = ($L[2] - $L[0]) / 3
-  $tile = @(($L[0] + $w * 0.5), ($L[1] + $w * 2.5))
+  # 1. the build grid's first building (its tile from the dock: in sight on any screen shape); a tap opens the menu, a
+  # second picks it; its spot; PLACE
+  $tile = Mid $spots["tile"] "the first build tile"
   Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 600; Tap $tile[0] $tile[1]; Start-Sleep -Milliseconds 900
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
-  $place = Rects "bardroid_place.txt"
-  if ($place["done"]) { $p = Mid $place["done"]; Tap $p[0] $p[1] }
+  $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
   Start-Sleep -Milliseconds 1500
   Stage "placed?"
   # 2. PLACE on a blocked spot
   if ($spots["blocked"]) {
     Tap $spots["blocked"][0] $spots["blocked"][1]; Start-Sleep -Milliseconds 900
-    $p = Mid (Rects "bardroid_place.txt")["done"]; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 400
+    $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE"; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 400
     Stage "blocked?"
   } else { "[docktest] (no blocked spot on the screen: that case left out)" }
   Start-Sleep 1
   $place = Rects "bardroid_place.txt"
-  if ($place["cancel"]) { $p = Mid $place["cancel"]; Tap $p[0] $p[1]; Start-Sleep 1 }
+  if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1 }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
   Stage "dgun"
   if (-not (WaitLog '\[docktest\] dgun on' 10)) { throw "the D-gun mode did not open" }
   Start-Sleep 1
   $dock = Rects "bardroid_dock.txt"
-  $f = Mid $dock["fire"]
+  $f = Mid $dock["fire"] "FIRE"
   Touch DOWN $f[0] $f[1]; Touch MOVE ($f[0] + 60) $f[1]; Touch MOVE ($dock["right"][2] - 4) $f[1]
   Start-Sleep -Milliseconds 300; Touch UP ($dock["right"][2] - 4) $f[1]; Start-Sleep -Milliseconds 700
   Stage "auto?"; Start-Sleep 1

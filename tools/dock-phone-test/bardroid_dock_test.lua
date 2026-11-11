@@ -2,8 +2,8 @@
 -- dev phone (adb input), which this widget sets up for and checks. The script writes a stage into
 -- LuaUI/Config/bardroid_docktest_cmd.txt; the widget answers in the log ("[docktest] PASS|FAIL <case>") and writes
 -- what the script needs to tap into LuaUI/Config/bardroid_docktest.txt (X screen pixels, top left origin):
---   (frame 300) the commander picked; "free x y" and "blocked x y": a spot where a Bot Lab can go and one it cannot
---   placed?   the Bot Lab queued by the dock's PLACE (picked, its spot tapped, PLACE 2.6 s later)
+--   (frame 320) the commander picked; "tile x0 y0 x1 y1": the build grid's first tile; "free x y", "blocked x y": a spot its building can go, one it cannot
+--   placed?   that building queued by the dock's PLACE (picked, its spot tapped, PLACE 2.6 s later)
 --   blocked?  PLACE on the blocked spot: the note "CAN'T BUILD THERE: PICK ANOTHER SPOT"
 --   dgun      the D-gun mode on the commander;  auto? / autooff?  full auto on / off by FIRE's swipes
 --   walk      the commander's speed watched;    stopped?  it walked, and stands still soon after the stick is let go
@@ -16,6 +16,7 @@ end
 
 local OUT, CMD_FILE = "LuaUI/Config/bardroid_docktest.txt", "LuaUI/Config/bardroid_docktest_cmd.txt"
 local com, ready, fails, lastCmd = nil, false, 0, nil
+local buildDef -- (the build grid's first building, in sight on any screen shape: an Armada commander's Solar Collector)
 local pawns, maxSpeed = {}, nil
 
 local function check(case, ok, detail)
@@ -53,10 +54,10 @@ local function screenOf(x, z)
 	end
 	return math.floor(sx), math.floor(vsy - sy)
 end
--- a Bot Lab spot near the commander on the screen: buildable (TestBuildOrder 2 or 3: rocks the builder reclaims, or
+-- a spot for the building near the commander on the screen: buildable (TestBuildOrder 2 or 3: rocks the builder reclaims, or
 -- open ground; the test map is strewn with rocks) or blocked (0)
 local function labSpot(want)
-	local def = UnitDefNames.armlab.id
+	local def = buildDef
 	local cx, _, cz = Spring.GetUnitPosition(com)
 	for r = 200, 1200, 50 do
 		for a = 0, 345, 15 do
@@ -82,11 +83,11 @@ local function onCmd(c)
 	if c == "placed?" then
 		local found, words = false, {}
 		for _, cmd in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
-			found = found or cmd.id == -UnitDefNames.armlab.id
+			found = found or cmd.id == -buildDef
 			words[#words + 1] = cmd.id < 0 and UnitDefs[-cmd.id] and UnitDefs[-cmd.id].name or tostring(cmd.id)
 		end
 		local _, _, _, active = Spring.GetActiveCommand()
-		check("the Bot Lab picked on the dock, its spot tapped, PLACE 2.6 s later: queued at once", found,
+		check("a building picked on the dock, its spot tapped, PLACE 2.6 s later: queued at once", found,
 			"queue [" .. table.concat(words, " ") .. "], picked " .. tostring(active))
 	elseif c == "blocked?" then
 		local _, note = P.note()
@@ -144,12 +145,22 @@ function widget:GameFrame(f)
 	if maxSpeed and com then
 		maxSpeed = math.max(maxSpeed, speedOf(com))
 	end
-	if com and not ready and f >= 300 then
+	if com and f == 290 then
+		Spring.SelectUnitArray({ com }) -- (the dock's lists filled a few frames on: read at 320)
+	end
+	if com and not ready and f >= 320 then
 		ready = true
-		Spring.SelectUnitArray({ com })
+		local vsy = select(2, Spring.GetViewGeometry())
+		local P = WG.BarDroidPortrait
+		local cell, item = P.itemCell("left", function(it)
+			return it.kind == "build"
+		end)
+		buildDef = item and item.defID or UnitDefNames.armlab.id
 		local fx, fy = labSpot("free")
 		local bx, by = labSpot("blocked")
-		write(string.format("free %s %s\nblocked %s %s\n", tostring(fx), tostring(fy), tostring(bx), tostring(by)))
+		write(string.format("free %s %s\nblocked %s %s\ntile %d %d %d %d\n", tostring(fx), tostring(fy), tostring(bx),
+			tostring(by), cell and cell[1] or 0, cell and vsy - cell[4] or 0, cell and cell[3] or 0, cell and vsy - cell[2] or 0))
+		Spring.Echo("[docktest] the building: " .. tostring(UnitDefs[buildDef] and UnitDefs[buildDef].name))
 		Spring.Echo(string.format("[docktest] ready: free %s,%s blocked %s,%s", tostring(fx), tostring(fy), tostring(bx),
 			tostring(by)))
 	end
