@@ -355,6 +355,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on there ("AUTO D-GUN: THIS HOST FORBIDS IT"), as AUTO RETREAT stands down; the D-gun by hand still works. pad-test
       -Dgun (orders forbidden) checks it: ALL PASS. A skirmish (orders allowed), an enemy Pawn placed in range after
       full auto was on: the shot given 3 frames later, the Pawn dead 20 frames after.
+- [x] **The upright lobby's grid back after a popup** (2026-11-10, dev phone, offline lobby): with Chobby's login dialog
+      cancelled the grid was logged "back" but not seen, the strip under the news empty: Chili puts a control shown
+      again last among its parent's, drawn under Chobby's full-screen background. It is brought to the front as it comes
+      back. Dev phone: the dialog cancelled, the grid's first page and its strip there 3 s later.
+- [x] **Speak to chat stops listening when the game screen goes away** (2026-11-10, code review): locked or another
+      app in front, the recognizer listened on and what was said next, perhaps by someone else in the room, went to the
+      game's chat (online a public one). GameActivity.onStop now ends it (VoiceChat.close, "voice chat: stopped
+      listening" in launcher.log). Checked on the dev phone without the microphone (the no-live-mic rule): a skirmish
+      through a screen off and on, the away pause and the game after it as before; the listening itself is for the
+      live-mic test above.
 - [x] **The D-gun mode's whole reach on the screen upright**: entering it, the camera zooms out as far as the D-gun's
       ring and a target at its edge need inside the game above the dock (at COMMANDER's distance the ring touched both
       sides of the narrow screen and the target at its side was cut off). Dev phone: ring and target inside, a margin on

@@ -830,6 +830,10 @@ local function uprightModal()
 	end
 	if modal == (g.visible ~= false) then
 		g:SetVisibility(not modal)
+		if not modal then -- (Chili puts a control shown again last among its parent's, drawn first: under Chobby's
+			-- full-screen background, the grid "back" and unseen; dev phone, the login dialog cancelled, 2026-11-10)
+			g:BringToFront()
+		end
 		Spring.Echo("[bardroid-lobby] grid " .. (modal and "hidden under a popup" or "back")) -- (tools)
 	end
 end
