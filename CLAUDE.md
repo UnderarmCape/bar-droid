@@ -152,7 +152,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   buttons: BarApp keeps Termux:X11's notification away). docs/CONTAINER-COST.md has
   what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
   with all of them).
-- The app icon opens the lobby (`LauncherActivity.openFromIcon`, setting "Open the lobby when the app starts");
+- The app icon opens the lobby (`StartActivity`, setting "Open the lobby when the app starts"; the launcher is a task of
+  its own, `taskAffinity=".Launcher"`, so the icon never just brings it back; a lobby that failed fast shows it once);
   long-press the icon → "Launcher" (`res/xml/shortcuts.xml`) for the launcher screen. Regenerate a patch with `git diff`
   inside `termux-x11/` (LF endings; git through `toolchain\env.bat`).
 - Gamepad: until 2026-11-06 singleplayer played Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game

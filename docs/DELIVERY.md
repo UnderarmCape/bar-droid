@@ -63,6 +63,11 @@ same, that stays the simpler way.
         failed here before; kept the last good one"): a lobby that ends within 60 s keeps the icon on the launcher
         next time; one the player closed (Stop, swiped away) or the low-memory killer ended no longer counts. Why
         BAR's new release failed on the Fold7 needs its logs (the dev phone has no internet here to fetch it).
+        Then (Kailil, ~23:58, the new build installed: "Why did it boot the launcher instead of the game"): two causes.
+        The flag stayed set until a lobby started from the launcher (his last check was 20:21), and the launcher shared
+        the icon's task, so once shown the icon brought it back without asking StartActivity. Now the flag is cleared
+        as the launcher shows for it (once), and LauncherActivity has a task of its own (StartActivity's closes
+        itself). Dev phone, flag set, icon taps by `monkey`: the launcher, Home, then the lobby (fdb4fe9, sent).
         BAR's Alpha set that evening: engine 2026.07.04 (unchanged), lobby test-4674 (the dev phone's), game
         test-31908-af896c5 (the dev phone has test-31836). The four copies' patches all find their places in
         test-31908's files (GitHub at af896c5: build menu 26, order menu 12, mission info 4, team stats 3), so the
