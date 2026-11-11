@@ -1801,8 +1801,10 @@ local function drawPlace()
 	local ready = spot ~= nil
 	button(p.all, ready and { 0.1, 0.5, 0.1, 1 } or { 0.1, 0.25, 0.1, 1 },
 		ready and { 0.25, 0.8, 0.25, 1 } or { 0.2, 0.35, 0.2, 1 })
+	-- (upright PLACE is the whole panel: its word in the room above rotate and cancel, clear of them)
 	local pl = p.place
-	textIn("PLACE", pl[1], pl[2], pl[3], pl[4], (pl[4] - pl[2]) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
+	local wy = (p.rotate and p.rotate[4] > pl[2] and p.rotate[4] < pl[4]) and p.rotate[4] or pl[2]
+	textIn("PLACE", pl[1], wy, pl[3], pl[4], (pl[4] - wy) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	for _, k in ipairs({ "rotate", "cancel" }) do
 		local r = p[k]
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
