@@ -190,7 +190,7 @@ same, that stays the simpler way.
         "a touch on the gliding map (N px/s): it stops it, no tap"). Dev phone, upright skirmish: before, the commander
         deselected; after, kept (12148 px/s logged), and a tap at rest still deselects. The scratch test's timing is
         loose (adb's tap can come after the 1.2 s glide on a busy phone; such a run is a plain tap at rest), so the
-        log line tells which a run was.
+        log line tells which a run was. After it: touch-phone-test, pad-test and dock-phone-test ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
