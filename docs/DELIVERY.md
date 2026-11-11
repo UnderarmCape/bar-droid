@@ -135,6 +135,12 @@ same, that stays the simpler way.
         fit at frame 120 was tried and found nothing to do: left out, the start fit works. (The skirmish's pregame
         lasts ~2 s, its dock not caught in a screenshot.) Polish: the launcher's "Free storage" and "RAM" in one
         decimal (75.8 GB, 6.9 GB; downloads keep two).
+      - **The evening's dock changes at the Fold7 unfolded** (11-11 ~04:10, dev phone at 1080x1198, then reset):
+        dock-phone-test ALL PASS (the whole-panel PLACE, its cancel case, the gold tile, STRAFE in gold, AIM: AUTO).
+        Its placing screenshot caught a regression of the last run's polish: the one-row PLACE panel there has no
+        room above rotate and cancel, and the word shrank to a speck. The word now goes above the two buttons or
+        beside them, wherever it is the larger: beside on the unfolded shape, above on the tall one; both shapes
+        ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
