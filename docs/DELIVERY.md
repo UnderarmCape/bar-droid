@@ -72,6 +72,10 @@ same, that stays the simpler way.
         test-31908-af896c5 (the dev phone has test-31836). The four copies' patches all find their places in
         test-31908's files (GitHub at af896c5: build menu 26, order menu 12, mission info 4, team stats 3), so the
         missed adjustment is one of launch-bar.sh's config checks (`layer_miss`), named in the Fold7's launcher.log.
+        A review of the warning's code (11-11 ~01:10) found a stale case, not the Fold7's (its engine did not change): a
+        newer engine's springsettings miss stayed counted after a rollback to the older engine; now it counts only
+        while that engine plays (797e625, updater-test). The miss is named on the line under the warning, smaller and
+        grey (0dafd9e).
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
