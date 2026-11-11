@@ -1870,7 +1870,8 @@ local function drawSelection()
 	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
 	L.selCountEnd = nil -- (where the count line ends: the camera pad's words keep right of it, drawMode)
 	if n > 1 then
-		local count = n .. " units, " .. bestN .. " of this type"
+		-- ("6 units, 6 of this type" said the same thing twice: all of one type, the count alone)
+		local count = bestN < n and (n .. " units, " .. bestN .. " of this type") or (n .. " units")
 		font:Print("\255\200\200\200" .. count, x, r[4] - h * 0.62, h * 0.17, "o")
 		L.selCountEnd = x + font:GetTextWidth(count) * h * 0.17
 	end
