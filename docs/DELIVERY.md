@@ -474,7 +474,8 @@ same, that stays the simpler way.
         "Ready to publish"; its self test and status-text-test ALL PASS. (The history question stays Kailil's.)
       - [x] **A player who turns spectator mid-game upright** (~17:35, dev phone, a skirmish, BAR's /spectator at frame
         450 by a scratch widget, removed after): the dock went from the playing grid to the spectator's the next frame,
-        laid out again at its taller size (SP.laidOut); no error. A patch set for BAR's repository, tested by a pool swap as
+        laid out again at its taller size (SP.laidOut); no error. And pad-test -Share and -Chat (~17:45, the two the
+        day's sweep had not run): ALL PASS. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
