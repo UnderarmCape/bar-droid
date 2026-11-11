@@ -75,7 +75,11 @@ same, that stays the simpler way.
       its widget finding the spots and checking: a Bot Lab placed with PLACE 2.6 s after its spot, PLACE on a blocked
       spot's note, FIRE swiped right / AUTO left, MOVE held and let go, STRAFE tapped and dragged: ALL PASS. Its first
       run hung the engine at frame 188, 6 s into the game, before the test did anything (the watchdog, no stack under
-      proot): the third early-game hang (11-02 replay, 21:47 touch-phone-test); the run after it passed. pad-test
+      proot): the third early-game hang (11-02 replay, 21:47 touch-phone-test); the run after it passed. Since then
+      the app logs a hung engine's threads from the kernel's side at BAR's watchdog line (`HangDump`: each thread's
+      name, kernel wait, system call and state as "[hang]" lines in launcher.log, once a game): the next hang says
+      whether the main thread waits in the GPU driver (ioctl), on a lock (futex) or loops. Checked with the watchdog's
+      words echoed by a scratch widget: 26 threads logged, the main one running. pad-test
       deletes the engine screenshots its run took (after copying the ones -Share and -Chat keep): 150
       of them, 255 MB, had piled up on the dev phone since 11-07 (cleared; a run after: none left, ALL PASS).
 - [x] **The lobby's pointer by touch**: hidden while fingers play the lobby, back for a mouse, keyboard or the pad

@@ -281,7 +281,13 @@ public class GameService extends Service {
                         loading = true;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
+                        boolean[] hangLogged = {false};
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
+                            // (BAR's watchdog: where the engine is stuck, from the kernel's side; once a game, HangDump)
+                            if (!hangLogged[0] && line.contains(DriverWatch.HUNG)) {
+                                hangLogged[0] = true;
+                                HangDump.dumpAsync();
+                            }
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
