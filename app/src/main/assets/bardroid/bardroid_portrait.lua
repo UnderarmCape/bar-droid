@@ -195,7 +195,31 @@ local mobilePicked = false -- units that move are picked (refreshNow): a drag on
 local DRAW_CMDS = { [CMD.MOVE] = true, [CMD.FIGHT] = true, [CMD.PATROL] = true, [CMD.ATTACK] = true }
 -- The idle builders in the groups row (drawGroups), and the picked units' build orders (writeDock's draw)
 local idleB = { list = {}, at = -1, sig = "", visited = {}, last = nil, origin = nil, scroll = 0, defs = nil, fac = {},
-	busy = false, busyAt = nil }
+	busy = false, busyAt = nil, tileW = nil, over = 0, snapTo = nil }
+-- (the groups row let go, vx its speed in X pixels a second: the tile it would coast to in 0.15 s, whole; Update eases
+-- there, idleB.settle)
+function idleB.fling(vx)
+	local w = idleB.tileW
+	if not w or w <= 0 then
+		return
+	end
+	local target = floor((idleB.scroll - vx * 0.15) / w + 0.5) * w
+	idleB.snapTo = max(0, min(idleB.over or 0, target))
+	markDirty()
+end
+function idleB.settle(dt)
+	local to = idleB.snapTo
+	if not to then
+		return
+	end
+	local d = to - idleB.scroll
+	if abs(d) < 0.5 then
+		idleB.scroll, idleB.snapTo = to, nil
+	else
+		idleB.scroll = idleB.scroll + d * min(1, (dt or 0.03) * 14)
+	end
+	markDirty()
+end
 -- (a picked unit with a building queued: a one-finger drag pans the camera, it draws no move path, until the queue's
 -- buildings are done; MOVE, FIGHT or PATROL pressed still draws one. Kailil, 2026-11-11: "It is very easy to place a
 -- move path after placing a build order on accident due to the muscle memory of grabbing the screen")
@@ -2268,6 +2292,16 @@ local function drawGroups()
 	local nLeft = #list + (free and 1 or 0)
 	local room = x1 - r[1]
 	local over = max(0, (nLeft + #idle) * w - room)
+	if over > 0 then -- (scrolling: the tiles a little wider, a whole number of them fills the room; at rest no tile is cut,
+		-- Kailil's "Do not allow scroll to half reveal objects", idleB.fling)
+		w = room / max(1, floor(room / h))
+		over = (nLeft + #idle) * w - room
+	end
+	if idleB.tileW and idleB.tileW ~= w and not idleB.snapTo then -- (the room changed, the remove buttons came or went:
+		-- the same first tile in sight)
+		idleB.scroll = floor(idleB.scroll / idleB.tileW + 0.5) * w
+	end
+	idleB.tileW, idleB.over = w, over
 	idleB.scroll = max(0, min(over, idleB.scroll))
 	local off = r[1] - idleB.scroll
 	local function place(x0, extra) -- a tile's rect, and the part of it in sight for the taps (nil: none)
@@ -2403,10 +2437,16 @@ local function dockLines()
 		if side == "groups" then -- (the groups row, sideways: its tiles follow the finger)
 			if active and menu then
 				idleB.scroll = idleB.scroll - (tonumber(vx) or 0)
+				idleB.snapTo = nil
 				markDirty()
 				touched()
 			end
 			side = nil
+		end
+		local fs, _, fvx = line:match("^dockfling (%a+) (%S+) ?(%S*)")
+		if fs == "groups" and active then -- (let go: on to a whole tile, further for a flick)
+			idleB.fling(tonumber(fvx) or 0)
+			touched()
 		end
 		if side and active and menu then
 			local _, s, _, _, _, ch = half(side)
@@ -2545,6 +2585,7 @@ function widget:Update(dt)
 		end
 		snapUpdate(s, dt)
 	end
+	idleB.settle(dt) -- (the groups row on to a whole tile)
 	local t = now()
 	-- (a building picked: the menu stays open, PLACE, rotate and cancel take the first tap. Its 2 s ran out while the
 	-- spot was picked on the map, the dock went back to the camera pad, and PLACE's tap only opened the menu again: "it

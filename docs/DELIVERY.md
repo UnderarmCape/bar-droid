@@ -353,6 +353,18 @@ same, that stays the simpler way.
         pans the camera; MOVE / FIGHT / PATROL pressed still draws a path, and the drag draws again once the buildings
         are done. Dev phone: a windmill placed, then a drag: the camera moved, no order.
       - dock-phone-test, pad-test, pad-test -Online ALL PASS on the build.
+      - **The groups row full, seen on the phone** (11-11 ~12:40, a scratch widget giving ten builder types and
+        factories by cheat in a skirmish): ten idle tiles and the commander's, past the row's width; a sideways drag
+        with the menu open scrolls it, the remove buttons (the commander given a WAIT) take the right and the tiles
+        move left. It stopped mid-tile, half tiles at both ends: now magnetic, as the dock's rows ("Do not allow scroll
+        to half reveal objects"): when it scrolls the tiles are a little wider so a whole number fills the row, and on
+        release (RtsTouch's dockfling with its sideways speed) it eases on to a whole tile, a flick further. Dev phone:
+        a slow drag settled on seven whole tiles, a flick back on the first.
+      - **No BAR order tooltips over the dock** (seen in the screenshots above): after a tap on the dock the pointer
+        rests there, and the order menu copy under the dock showed its tooltip for 2.5 s, "Patrol" or "Fire at will",
+        of its own hidden button under the pointer, not the dock's. None over the dock now (make-ordermenu.py,
+        tooltipShows). Dev phone: Hold pos tapped, nothing shown a second later. dock-phone-test, touch-phone-test ALL
+        PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

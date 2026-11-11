@@ -799,12 +799,15 @@ final class RtsTouch {
                 endDockSelect();
                 break;
             case DOCK_SCROLL: {   // let go: its speed, for the widget's settle (a quick flick: the next rows)
-                float vy = 0;
+                float vy = 0, vx = 0;
                 if (velocity != null) {
                     velocity.computeCurrentVelocity(1000);
                     vy = velocity.getYVelocity(firstId);
+                    vx = velocity.getXVelocity(firstId);
                 }
-                send(String.format(Locale.US, "dockfling %s %.1f", dockSide, vy * yPerViewPixel()));
+                // (and sideways: the groups row settles on whole tiles too)
+                send(String.format(Locale.US, "dockfling %s %.1f %.1f", dockSide, vy * yPerViewPixel(),
+                        vx * xPerViewPixel()));
                 break;
             }
             case RIGHT_HOLD:

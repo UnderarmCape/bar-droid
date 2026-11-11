@@ -36,6 +36,13 @@ function droid.tooltipShows()
 	if x ~= droid.x or y ~= droid.y or not droid.restsFrom then
 		droid.x, droid.y, droid.restsFrom = x, y, now
 	end
+	-- (upright the portrait dock covers this menu: none of its tooltips there, "Patrol" and "Fire at will" showed over
+	-- the dock's own buttons after a tap, dev phone 2026-11-11)
+	local P = WG.BarDroidPortrait
+	local d = P and P.dock and P.dock()
+	if d and x >= d[1] and x <= d[3] and y >= d[2] and y <= d[4] then
+		return false
+	end
 	return WG.BarDroidInput ~= "touch" or Spring.DiffTimers(now, droid.restsFrom) < droid.TOOLTIP_SECONDS
 end
 
