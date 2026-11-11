@@ -4,8 +4,8 @@
 -- buttons, wider there than the quarter of the bar BAR keeps for them, lie over where those were. BAR's Top Bar hides them
 -- from the picture only: still under the pointer, they show their tooltips and take the press (gui_top_bar.lua
 -- hoveringElement), and that widget hears it before Top Bar Buttons (both layer -95000). Here a press on a button over
--- that hidden part does what BAR's button does (gui_top_bar_buttons.lua applyButtonAction, through BAR's WG windows), and
--- the hidden parts' tooltips are taken away. BAR's own fix: docs/upstream/bar-topbar-hidden.patch; with it in BAR this
+-- that hidden part does what BAR's button does (gui_top_bar_buttons.lua applyButtonAction, through BAR's WG windows),
+-- any other press there is taken (not its hidden sliders), and the hidden parts' tooltips are taken away. BAR's own fix: docs/upstream/bar-topbar-hidden.patch; with it in BAR this
 -- widget only repeats what BAR's buttons do. Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
@@ -35,6 +35,7 @@ local chobby = Spring.GetMenuName and string.find(string.lower(Spring.GetMenuNam
 local gameOver = false
 local tipsAt = 0
 local wasHidden = false
+local saidStrip = false
 
 -- where BAR's hidden resource bars and indicators are on its top bar (x0, y0, x1; GL), or nil when none is hidden or the
 -- dock is not up. (Without BAR's Top Bar running, Top Bar Buttons' stand-in GetFreeArea starts where it ends: nothing.)
@@ -69,7 +70,14 @@ function widget:MousePress(x, y, button)
 	end
 	local name = tb.buttonAt and tb.buttonAt(x, y)
 	if not name then
-		return false
+		-- (not a button: taken here, as BAR's Top Bar takes it, but without its hidden sliders: a press on the hidden
+		-- energy bar's conversion knob, or a team game's share knobs, dragged it unseen and set it where the finger let
+		-- go; gui_top_bar.lua MousePress)
+		if not saidStrip then
+			saidStrip = true
+			Spring.Echo("[bardroid-topbar] a press over BAR's hidden top bar, off its buttons: taken (no hidden slider)")
+		end
+		return true
 	end
 	local window = WINDOWS[name]
 	if window then

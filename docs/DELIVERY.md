@@ -280,6 +280,27 @@ same, that stays the simpler way.
         goes through bardroid_topbar.lua too ("save: pressed over BAR's hidden top bar"): a 7 MB save written, the game
         on after it. Every save holds the game about 4.5 s on the dev phone and leaves nothing picked; the same
         sideways with BAR's own Save button (the app's widget not in it), so BAR's or the engine's way, left as it is.
+      - **The Fold7 reached again, its logs read** (11-11 ~09:25, Kailil: "Try the fold again"; adb over Tailscale on
+        Wireless debugging's new port, found by trying the ports; no BAR running, so today's build b220f4f installed).
+        Its launcher.log (to 11-10 23:56) answered the two open questions:
+        - *The adjustment that did not apply* was the order menu copy: removed by BAR in one game on 11-05 23:29, its
+          mark named only BAR's file, so BAR's own order menu ran there through every app update since. The mark names
+          the copy too now (its md5, launch-bar.sh `copy_failed`, all four copies): a new copy gets another try, the
+          same copy keeps giving way. Dev phone, three starts: an old mark, the copy ran; a removal in the last run's
+          infolog, the new mark and BAR's own; the next start, BAR's own still (mark removed after).
+        - *BAR's failed release*: byar:test a27e1c0e failed one start (fast, marked bad) and the lobby fetched it again;
+          after that every start said it had failed before and started it as a "first start", never kept, as every
+          session ended by a swipe (One UI ends the app, "REMOVE TASK", before closedByPlayer). The next start now
+          judges such a run by its infolog (`Updater.judgeLastRun`: a game frame or 120 s, docs/UPDATES.md); the Fold7's
+          last run played 9.5 minutes, so its next start keeps a27e1c0e, and the app update there clears the bad mark.
+          updater-test ALL PASS (four new cases).
+        The build with both and the next item installed on the Fold7 at 09:43 (no BAR running), after dock-phone-test
+        ALL PASS on the dev phone.
+      - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
+        also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
+        dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
+        part now (a button's action as before; any other press does nothing, as BAR's Top Bar already made it do, minus
+        the sliders). Dev phone upright: a tap on the strip beside the minimap logged as taken; Statistics as before.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

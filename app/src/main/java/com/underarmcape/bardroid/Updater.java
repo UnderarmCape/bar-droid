@@ -175,6 +175,7 @@ public final class Updater {
      */
     public void check(boolean online, Status st) throws InterruptedException {
         forgetBadAfterAppUpdate();
+        judgeLastRun();
         String engine = Prefs.engineVersion;
         if (!new File(p.engineDir(engine), "spring").exists()) {
             // Nothing could start without it (an app build that pins another engine): fetched with updates off too.
@@ -680,6 +681,43 @@ public final class Updater {
         if (l != null) state.setProperty("launched." + t, l[0]); else state.remove("launched." + t);
         if (l != null && !l[1].isEmpty()) state.setProperty("name." + t, l[1]); else state.remove("name." + t);
         snapshot(repo(t), launchedDir);
+    }
+
+    /**
+     * At the next start, a run nothing judged when it ended: swiped away from recent apps (One UI then ends the whole
+     * app, "REMOVE TASK", before GameService can call closedByPlayer), Android's low-memory kill (137), a join that
+     * timed out (233), the phone switched off. Its infolog.txt is still the last run's here (the engine writes a new one
+     * after this check): a game frame, or two minutes and more by its last line, and the set that ran started fine.
+     * Before, the Fold7's games, ended by a swipe, left BAR's release "first start" at every start (2026-11-10), and
+     * one failed start later rolled BAR back to an older release.
+     */
+    void judgeLastRun() throws InterruptedException {
+        List<String> tags = tags();
+        if (state.getProperty("launched.engine") == null) return;
+        String launched = set("launched", tags), good = set("good", tags);
+        if (launched.equals(good)) return;
+        long seconds = lastRunSeconds();
+        boolean frame = gameFrameRan();
+        if (seconds * 1000 < FAST_FAIL_MS && !frame) return;
+        Log.i("update", "the last run of " + launched + " ran " + seconds + " s" + (frame ? " with a game" : "")
+                + " and ended from outside: judged now");
+        Result r = keepLaunched(tags, launched, good);
+        save();
+        if (r == Result.PROMOTED) cleanupEngines();
+    }
+
+    private static final Pattern RUN_TIME = Pattern.compile("^\\[t=(\\d+):(\\d+):(\\d+)");
+
+    /** How long the last run's engine ran by its log: its last timed line, in seconds (0 with none). */
+    private long lastRunSeconds() {
+        long last = 0;
+        try (BufferedReader r = new BufferedReader(new FileReader(new File(p.bar, "infolog.txt")))) {
+            for (String l; (l = r.readLine()) != null; ) {
+                Matcher m = RUN_TIME.matcher(l);
+                if (m.find()) last = Long.parseLong(m.group(1)) * 3600 + Long.parseLong(m.group(2)) * 60 + Long.parseLong(m.group(3));
+            }
+        } catch (IOException | NumberFormatException ignored) {}
+        return last;
     }
 
     private static final Pattern GAME_FRAME = Pattern.compile("^\\[t=[^\\]]*\\]\\[f=0*[1-9]");

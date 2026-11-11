@@ -152,6 +152,25 @@ public final class UpdaterTest {
         check("closed while loading (25 s, no game frame): undecided, nothing changes", "A".equals(s.getProperty("good.engine"))
                 && "B".equals(s.getProperty("launched.engine")) && s.getProperty("bad.0") == null);
 
+        // the next start judges a run nothing judged when it ended (swiped away: One UI ends the app first)
+        p = setup("nextlong", true, NO_FRAME + "[t=00:02:31.000000][f=-000001] the lobby, 151 s in\n");
+        new Updater(p).judgeLastRun();
+        s = state(p);
+        check("the next start: the last run's lobby ran 151 s, then the app was ended from outside: the update is kept",
+                "B".equals(s.getProperty("good.engine")) && MD5_B.equals(s.getProperty("good.byar:test"))
+                        && "A".equals(s.getProperty("previous.engine")));
+        p = setup("nextframe", true, A_FRAME);
+        new Updater(p).judgeLastRun();
+        check("  a game frame in its 70 s: kept", "B".equals(state(p).getProperty("good.engine")));
+        p = setup("nextshort", true, NO_FRAME + "[t=00:00:40.000000][f=-000001] loading\n");
+        new Updater(p).judgeLastRun();
+        s = state(p);
+        check("  40 s, no game frame: still undecided (a fast failure next rolls back)", "A".equals(s.getProperty("good.engine"))
+                && "B".equals(s.getProperty("launched.engine")) && s.getProperty("bad.0") == null);
+        p = setup("nextsame", false, A_FRAME);
+        new Updater(p).judgeLastRun();
+        check("  nothing pending: nothing changes", "A".equals(state(p).getProperty("good.engine")) && state(p).getProperty("previous.engine") == null);
+
         // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
         check("game version: BAR's name without \"Beyond All Reason\"", "test-31836-b250a16".equals(Updater.gameRelease("Beyond All Reason test-31836-b250a16")));
         check("  another name as it is", "Some Mod 1.2".equals(Updater.gameRelease("Some Mod 1.2")));

@@ -172,12 +172,19 @@ fi
 copy_removed() {   # copy_removed <widget name>: BAR removed it in the last run, and that run was not a replay
   grep -aq "Removed widget: $1" "$BAR/infolog.txt" 2>/dev/null && ! grep -aq 'PreGame::ReadDataFromDemo' "$BAR/infolog.txt" 2>/dev/null
 }
+# The mark names BAR's file and the copy (its md5): a new copy, from an app update, gets another try. With BAR's file
+# alone, the Fold7's order menu copy, removed in one game on 2026-11-05, gave way to BAR's own through every app update
+# after it (its launcher: "1 of the app's adjustments to BAR did not apply", 2026-11-10).
+copy_failed() {   # copy_failed <widget name> <mark file> <BAR's file md5> <the copy>: true while it gives way
+  key="$3 game $(md5sum "$4" 2>/dev/null | cut -c1-32)"
+  copy_removed "$1" && printf '%s\n' "$key" > "$2"
+  [ -f "$2" ] && [ "$(cat "$2")" = "$key" ]
+}
 build_menu() {
   copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-buildmenu" 2>/dev/null)
   failed="$BAR/.bardroid-buildmenu-failed"
-  copy_removed 'BAR Droid build menu' && printf '%s game\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+  if [ -z "$copied" ] || copy_failed 'BAR Droid build menu' "$failed" "$bars" "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua"; then
     widget_order "Build menu" 165; widget_order "BAR Droid build menu" 0
     layer_miss "build menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_buildmenu.lua ${bars:-not found}: BAR's own, no pad focus on it, until the copy is made again (tools/make-buildmenu.py)"
     return
@@ -196,8 +203,7 @@ order_menu() {
   copied=$(sed -n 's/^-- BARDROID_ORDERMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_ordermenu.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-ordermenu" 2>/dev/null)
   failed="$BAR/.bardroid-ordermenu-failed"
-  copy_removed 'BAR Droid order menu' && printf '%s game\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+  if [ -z "$copied" ] || copy_failed 'BAR Droid order menu' "$failed" "$bars" "$BAR/LuaUI/Widgets/bardroid_ordermenu.lua"; then
     widget_order "Order menu" 189; widget_order "BAR Droid order menu" 0
     layer_miss "order menu: the app's copy (made from ${copied:-?}) failed on BAR's gui_ordermenu.lua ${bars:-not found}: BAR's own, its grid with the pad, until the copy is made again (tools/make-ordermenu.py)"
     return
@@ -216,8 +222,7 @@ mission_info() {
   copied=$(sed -n 's/^-- BARDROID_MISSIONINFO_FROM //p' "$BAR/LuaUI/Widgets/bardroid_missioninfo.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-missioninfo" 2>/dev/null)
   failed="$BAR/.bardroid-missioninfo-failed"
-  copy_removed 'BAR Droid mission info' && printf '%s game\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+  if [ -z "$copied" ] || copy_failed 'BAR Droid mission info' "$failed" "$bars" "$BAR/LuaUI/Widgets/bardroid_missioninfo.lua"; then
     widget_order "Mission Info" ""; widget_order "BAR Droid mission info" 0
     layer_miss "mission info: the app's copy (made from ${copied:-?}) failed on BAR's gui_mission_info.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-missioninfo.py)"
     return
@@ -236,8 +241,7 @@ team_stats() {
   copied=$(sed -n 's/^-- BARDROID_TEAMSTATS_FROM //p' "$BAR/LuaUI/Widgets/bardroid_teamstats.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-teamstats" 2>/dev/null)
   failed="$BAR/.bardroid-teamstats-failed"
-  copy_removed 'BAR Droid team stats' && printf '%s game\n' "$bars" > "$failed"
-  if [ -z "$copied" ] || { [ -f "$failed" ] && [ "$(cat "$failed")" = "$bars game" ]; }; then
+  if [ -z "$copied" ] || copy_failed 'BAR Droid team stats' "$failed" "$bars" "$BAR/LuaUI/Widgets/bardroid_teamstats.lua"; then
     widget_order "TeamStats" ""; widget_order "BAR Droid team stats" 0
     layer_miss "team stats: the app's copy (made from ${copied:-?}) failed on BAR's gui_teamstats.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-teamstats.py)"
     return

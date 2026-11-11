@@ -94,6 +94,12 @@ an old package is just restoring its `versions.gz`.
   was kept only when the engine ended by itself, BAR's Quit: a phone whose games are closed by a swipe kept a day-old
   lobby as the one to fall back to.) Dev phone, 2026-11-08: the game's card swiped up in recent apps after 140 s,
   "started fine" in the same second, before Android ended the app.
+- At the next start (`Updater.judgeLastRun`, first in the check): a set still pending from a run nothing judged (One
+  UI ends the whole app when a game is swiped away, "REMOVE TASK", before closedByPlayer runs; exit 137 or 233; the
+  phone off) is judged by that run's `infolog.txt`, still the last run's then: a game frame, or 120 s and more by its
+  last line, and it becomes the last good set ("the last run of ... ended from outside: judged now"). The Fold7 started
+  BAR's release as a "first start" at every start (its launcher.log, 2026-11-10), its games ended by a swipe; a
+  single failed start then would have rolled it back to an older release. A shorter run stays undecided.
 - The bad list holds whole sets (engine + md5s, last 5). An update that would recreate a bad set is not applied; as
   soon as BAR moves any part (byar:test moves several times a day), the new set is tried. So a broken BAR version
   costs at most one failed launch per new set, and the engine is never blocked for good. An app update clears the
