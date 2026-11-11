@@ -528,12 +528,22 @@ function widget:DrawWorld()
 	gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
 	gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
 	local cx, cz = shape(armedFor.units)
-	if cx then
-		gl.LineWidth(2)
-		gl.Color(1, 0.8, 0.25, 0.5)
+	if cx then -- (the way from the group: dashes running towards the mark; a plain line at half alpha was lost on the
+		-- ground, dev phone screenshot)
+		local cy = Spring.GetGroundHeight(cx, cz) or ty
+		local dx, dz = tx - cx, tz - cz
+		local len = math.sqrt(dx * dx + dz * dz)
+		local dash, run = 40, (os.clock() * 120) % 80
+		gl.LineWidth(3)
+		gl.Color(1, 0.85, 0.3, 0.85)
 		gl.BeginEnd(GL.LINES, function()
-			gl.Vertex(cx, (Spring.GetGroundHeight(cx, cz) or ty) + 8, cz)
-			gl.Vertex(tx, ty + 8, tz)
+			for s = run - 80, len, 80 do
+				local a, b = math.max(0, s) / math.max(1, len), math.min(len, s + dash) / math.max(1, len)
+				if b > a then
+					gl.Vertex(cx + dx * a, cy + (ty - cy) * a + 8, cz + dz * a)
+					gl.Vertex(cx + dx * b, cy + (ty - cy) * b + 8, cz + dz * b)
+				end
+			end
 		end)
 		local p = PRESETS[armedFor.id]
 		if p and p.thumb == "strafe" then
