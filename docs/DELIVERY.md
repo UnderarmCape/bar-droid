@@ -148,6 +148,15 @@ same, that stays the simpler way.
         ...") is now on a line of its own under the warning, smaller and grey, and an engine killed from outside (exit
         137, not the player's Stop) shows "Ready" over it as Android's ending of the whole app does, not "Game ended with
         an error (137)". Dev phone: the engine SIGKILLed mid-game, the launcher's screenshot.
+      - **Share logs** (11-11 ~04:30, the button Kailil is asked to use for the Fold7's logs): it zipped on the UI
+        thread (after a long game the infolog alone runs to tens of MB: the launcher could stall into "not
+        responding"), and left out the updater's own state (BAR's versions kept off as failed, the engine's missed
+        settings: what the Fold7's "failed here before" needs). Now zipped on a thread of its own ("Zipping the
+        logs..."; launcher.log "logs zipped: N KB in M ms"), update-state.properties in it. Dev phone: 2045 KB in 288
+        ms, the share sheet up, closed with Back (nothing sent); the zip holds launcher.log and .old, infolog.txt and
+        BAR's older infologs (logs/), springsettings.cfg, both state files, android-layer.txt.
+        (On the way: `am start --es start skirmish` after an install without a force-stop is ignored on purpose: the
+        launcher is restored with its saved state, as after Android ends the app for memory; the tools force-stop.)
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
