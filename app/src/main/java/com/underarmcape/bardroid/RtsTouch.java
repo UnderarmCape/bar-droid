@@ -1170,9 +1170,10 @@ final class RtsTouch {
     private void gridTap(float vx, float vy) {
         float x = toX(vx), y = toY(vy);
         Place p = place();
-        if (p != null && inside(p.done, x, y)) gridPlace();
-        else if (p != null && inside(p.cancel, x, y)) gridCancel();
+        // (the two buttons first: upright PLACE is the whole panel around them)
+        if (p != null && inside(p.cancel, x, y)) gridCancel();
         else if (p != null && inside(p.rotate, x, y)) send("act rotate_right");
+        else if (p != null && inside(p.done, x, y)) gridPlace();
         else if (nearPlaceTap(vx, vy, downTime)) { placeTapX = -1; placeTapAt = -1; gridPlace(); }
         else { placeTapX = vx; placeTapY = vy; placeTapAt = SystemClock.uptimeMillis(); }
     }
@@ -1580,7 +1581,9 @@ final class RtsTouch {
     private boolean tapBuilding(float vx, float vy, Place place, int hover, int asks) {
         float x = toX(vx), y = toY(vy);
         float[] d = place.done;
-        if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]) {
+        // (not on rotate or cancel: upright PLACE is the whole panel around them; the build menu copy's click does those)
+        if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]
+                && !inside(place.rotate, x, y) && !inside(place.cancel, x, y)) {
             // PLACE: the building at the spot, and it stays picked for the next (Shift held)
             lastTapX = -1; doubleTapX = -1;
             runPlaceTap();

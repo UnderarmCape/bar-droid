@@ -93,6 +93,14 @@ local function onCmd(c)
 	elseif c == "blocked?" then
 		local _, note = P.note()
 		check("PLACE on a blocked spot says so", note == "CAN'T BUILD THERE: PICK ANOTHER SPOT", note)
+	elseif c == "cancelled?" then -- (upright PLACE is the whole panel around rotate and cancel: cancel must not place)
+		local _, cmd = Spring.GetActiveCommand()
+		local queued = 0
+		for _, q in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
+			queued = queued + (q.id == -buildDef and 1 or 0)
+		end
+		check("the panel's cancel puts the building away, nothing placed", not (cmd and cmd < 0) and queued <= 1,
+			"picked " .. tostring(cmd) .. ", queued " .. queued)
 	elseif c == "dgun" then -- (the building put away by the dock's cancel first: the script taps it)
 		Spring.SelectUnitArray({ com })
 		P.act("dgun")

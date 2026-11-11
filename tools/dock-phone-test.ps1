@@ -108,7 +108,7 @@ try {
   } else { "[docktest] (no blocked spot on the screen: that case left out)" }
   Start-Sleep 1
   $place = Rects "bardroid_place.txt"
-  if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1 }
+  if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1; Stage "cancelled?"; Start-Sleep 1 }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
   Stage "dgun"
   if (-not (WaitLog '\[docktest\] dgun on' 10)) { throw "the D-gun mode did not open" }
