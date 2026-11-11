@@ -75,7 +75,14 @@ same, that stays the simpler way.
         A review of the warning's code (11-11 ~01:10) found a stale case, not the Fold7's (its engine did not change): a
         newer engine's springsettings miss stayed counted after a rollback to the older engine; now it counts only
         while that engine plays (797e625, updater-test). The miss is named on the line under the warning, smaller and
-        grey (0dafd9e).
+        grey (0dafd9e). With updates off the last check's line no longer repeats "(automatic updates off)" over "BAR
+        updates: only with Install / Update".
+      - **Presets from the void** (review, 11-11 ~01:20): a preset's drag that began over no ground (the void past
+        the map's edge, upright at the top of the view near an edge) was lost whole, the preset still armed; the aim
+        now begins where the finger reaches the ground (68f62ea). dock-phone-test drags STRAFE from the void by the
+        nearest edge (the old build: no orders; the new: 2 fights each) and, after its build stage lost the commander
+        in 2 runs of 5 (the dock's menu not open 4 s after the first tap, so the spot's tap picked the ground), taps
+        again with a note and waits for the building before its spot (8be7fec): ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
