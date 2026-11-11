@@ -435,7 +435,14 @@ same, that stays the simpler way.
         its position (WG.advplayerlist_api). A hide needs a change in BAR: a SetHidden that skips its DrawScreen and
         MousePress and gives GetPosition a collapsed rect at the bottom; the panels BAR stacks above it from that
         position (the Player View / Player Camera / TV buttons, the music player, the clock and speed line) are other
-        widgets of BAR's and draw on unless each follows it. A patch set for BAR's repository, tested by a pool swap as
+        widgets of BAR's and draw on unless each follows it: gui_advplayerslist_music_new.lua (placed on the list),
+        gui_advplayerslist_unittotals.lua (on the music), gui_advplayerslist_gameinfo.lua (the clock, speed and fps
+        line), camera_player_tv.lua (Player View / Player Camera / TV), gui_advplayerslist_mascot.lua and
+        gui_clearmapmarks.lua (the eraser): seven of BAR's files, each a check in its DrawScreen and MousePress. That
+        stack carries the clock and a replay's speed: Kailil's call whether the folded dock hides it too.
+      - [x] **LAST PINGS says how many wait** (polish, ~16:10): it said nothing of whether there was a ping to see; now
+        their count in gold at its top right, as the idle builders' (playing and spectating). Dev phone, two pings from
+        "someone else" (bardroid_pad.lua's test hook): "2" on it, then 1 OF 2, 2 OF 2. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).

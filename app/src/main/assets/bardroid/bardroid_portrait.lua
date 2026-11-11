@@ -1055,6 +1055,14 @@ function pingT.look()
 		Pd.pingLook(pingT.KEPT)
 	end
 end
+-- (how many pings from others wait, in gold at LAST PINGS' top right as the idle builders' counts: it said nothing of
+-- whether there was one to see)
+function pingT.badge(r, n)
+	if n > 0 and bold then
+		local h = r[4] - r[2]
+		bold:Print("\255\255\200\064" .. n, r[3] - max(4, h * 0.08), r[4] - h * 0.3, h * 0.24, "ro")
+	end
+end
 function pingT.state() -- (what the tile shows: "LAST PINGS" or "PING 2 OF 4", PING lit while armed)
 	local Pd = WG.BarDroidPad
 	local n, step = 0, 0
@@ -2018,6 +2026,7 @@ local function drawButton(item, r)
 		button(r)
 		textIn(step > 0 and string.format("PING %d OF %d", step, n) or "LAST PINGS", r[1], r[2], r[3], r[4],
 			min((r[4] - r[2]) * 0.34, L.btnH * 0.46), n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+		pingT.badge(r, n)
 		return
 	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
@@ -2036,6 +2045,7 @@ local function drawButton(item, r)
 		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
 		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
 			n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+		pingT.badge(a, n)
 		textIn(armed and "TAP MAP" or "PING", b[1], b[2], b[3], b[4], th, "\255\240\240\240", font)
 		return
 	end
