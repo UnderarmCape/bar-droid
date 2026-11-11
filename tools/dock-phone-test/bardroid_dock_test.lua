@@ -19,6 +19,17 @@ local com, ready, fails, lastCmd = nil, false, 0, nil
 local buildDef -- (the build grid's first building, in sight on any screen shape: an Armada commander's Solar Collector)
 local pawns, maxSpeed = {}, nil
 local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
+local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
+-- before, the circle's two points in X pixels)
+
+function widget:UnitCreated(unitID, unitDefID, teamID)
+	if hideAt and not hidden and teamID == Spring.GetMyTeamID() and unitDefID == UnitDefNames.armpw.id then
+		local x, _, z = Spring.GetUnitPosition(unitID)
+		if x and math.abs(x - hideAt[1]) + math.abs(z - hideAt[3]) < 64 then
+			hidden = unitID
+		end
+	end
+end
 
 local function check(case, ok, detail)
 	if not ok then
@@ -90,8 +101,47 @@ local function onCmd(c)
 		-- (the spot snaps to the build grid: a few pixels past the edge it was held at; unheld it was the dock's middle)
 		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
 			string.format("spot y %d, the dock's top %d", y, top))
-	elseif c == "deselect" then
+	elseif c == "deselect" or c == "deselect-again" then
 		Spring.SelectUnitArray({})
+	elseif c == "circle" then -- (a Pawn given just behind the dock's top edge; nothing picked; the circle style; where
+		-- to draw the circle: its middle just above the edge, its edge at the dock's middle)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt.dock()
+		local vsx, vsy = Spring.GetViewGeometry()
+		local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), dock[4] - 80, true)
+		if pos then
+			hideAt = pos
+			Spring.SendCommands(string.format("give 1 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), pos[1], pos[2], pos[3]))
+		end
+		Spring.SelectUnitArray({})
+		styleWas = Pt.selectStyle()
+		Pt.selectStyle("circle")
+		circ = { math.floor(vsx / 2), vsy - (dock[4] + 60), math.floor(vsx / 2), vsy - math.floor((dock[2] + dock[4]) / 2) }
+		write(string.format("circle0 %d %d\ncircle1 %d %d\n", circ[1], circ[2], circ[3], circ[4]))
+		Spring.Echo("[docktest] circle: a Pawn behind the dock at " .. tostring(pos and math.floor(pos[1])) .. ","
+			.. tostring(pos and math.floor(pos[3])) .. ", the style was " .. tostring(styleWas))
+	elseif c == "circledock?" then -- (the circle drawn on into the dock: the Pawn it hides not picked)
+		local picked = false
+		for _, u in ipairs(Spring.GetSelectedUnits() or {}) do
+			picked = picked or u == hidden
+		end
+		-- (the Pawn inside the circle as the dock makes it, circleTo: its middle on the ground, its radius the ground
+		-- across as many pixels; else the case proves nothing)
+		local vsx, vsy = Spring.GetViewGeometry()
+		local inside = false
+		if circ and hidden then
+			local r = math.sqrt((circ[3] - circ[1]) ^ 2 + (circ[4] - circ[2]) ^ 2)
+			local _, a = Spring.TraceScreenRay(circ[1], vsy - circ[2], true)
+			local _, b = Spring.TraceScreenRay(math.min(vsx - 1, circ[1] + r), vsy - circ[2], true)
+			local hx, _, hz = Spring.GetUnitPosition(hidden)
+			if a and b and hx then
+				inside = math.sqrt((hx - a[1]) ^ 2 + (hz - a[3]) ^ 2) <= math.sqrt((b[1] - a[1]) ^ 2 + (b[3] - a[3]) ^ 2)
+			end
+		end
+		check("a circle selection drawn on into the dock: the unit it hides (inside the circle) not picked",
+			hidden ~= nil and inside and not picked, string.format("hidden Pawn %s, inside %s, picked %s, %d picked",
+				tostring(hidden), tostring(inside), tostring(picked), Spring.GetSelectedUnitsCount()))
+		WG.BarDroidPortrait.selectStyle(styleWas or "box")
 	elseif c == "boxdock?" then -- (a box selection dragged on into the dock: let go at the dock's top edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()

@@ -185,6 +185,23 @@ try {
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE ($a1[0] + 80) $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP ($a1[0] + 80) $dm[1]; Start-Sleep -Milliseconds 800
   Stage "boxdock?"; Start-Sleep 1
+  # 8. the circle style: a circle drawn from just above the dock on into it; a Pawn just behind the dock's edge,
+  # inside the circle on the ground, is not picked (the style put back after)
+  # (nothing picked first: the dock is lower without its selection row, and the Pawn must be behind the dock as it is
+  # while the circle is drawn)
+  Stage "deselect-again"; Start-Sleep 2
+  Stage "circle"; Start-Sleep 2
+  $cs = Rects "bardroid_docktest.txt"
+  if ($cs["circle0"] -and $cs["circle1"]) {
+    Tap $dm[0] $dm[1]
+    $until = (Get-Date).AddSeconds(3)
+    while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
+    $c0 = $cs["circle0"]; $c1 = $cs["circle1"]
+    Touch DOWN $c0[0] $c0[1]; Start-Sleep -Milliseconds 120
+    Touch MOVE $c0[0] (($c0[1] + $c1[1]) / 2); Touch MOVE $c1[0] $c1[1]
+    Start-Sleep -Milliseconds 300; Touch UP $c1[0] $c1[1]; Start-Sleep -Milliseconds 1000
+  } else { "[docktest] note: no circle's points" }
+  Stage "circledock?"; Start-Sleep 1
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

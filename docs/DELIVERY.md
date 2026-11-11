@@ -216,7 +216,11 @@ same, that stays the simpler way.
         drag on the game) followed the finger into the dock and picked units it hides (let go at y 482 under a dock top
         of 974); its corner is now held at the dock's top edge (RtsTouch, while the dock selects), and the circle's
         pick keeps only units in sight above the dock (portrait pickCircle). dock-phone-test's new case (box): let go at
-        y 974; ALL PASS. The circle's filter is not in a case (the dev phone's dock selects with the box).
+        y 974; ALL PASS. The circle's filter has its case since (11-11 ~07:00; the portrait's WG selectStyle for tools,
+        put back after): a Pawn given behind the dock, a circle drawn from above the dock on into it, the Pawn inside it
+        on the ground: "6 units in it, 5 in sight above the dock", the hidden one not picked; ALL PASS. (On the way: the
+        dock is lower with nothing picked, its selection row gone, so the case deselects first: placed under the higher
+        dock the Pawn was in sight by the time the circle was drawn.)
       - **The phone tests after the dock-edge and tap changes** (11-11 ~06:45, dev phone, f169632's build):
         touch-phone-test, pad-test, -Online, -Dgun, -Share, -Chat, lobby-phone-test, fp-save-test, with
         dock-phone-test just before: ALL PASS.

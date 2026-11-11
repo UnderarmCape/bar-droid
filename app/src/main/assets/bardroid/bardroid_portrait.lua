@@ -1286,14 +1286,16 @@ local function pickCircle()
 		return
 	end
 	-- (only those in sight above the dock: a circle drawn on into it picked units it hides, 2026-11-11)
-	local seen = {}
-	for _, u in ipairs(Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}) do
+	local seen, all = {}, Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}
+	for _, u in ipairs(all) do
 		local x, y, z = Spring.GetUnitPosition(u)
 		local _, sy = Spring.WorldToScreenCoords(x or 0, y or 0, z or 0)
 		if x and sy >= L.dock[4] then
 			seen[#seen + 1] = u
 		end
 	end
+	Spring.Echo(string.format("[bardroid-portrait] circle: %d units in it, %d in sight above the dock (its top %d)", #all,
+		#seen, L.dock[4])) -- (tools)
 	selectUnits(filtered(seen))
 end
 
@@ -2925,6 +2927,14 @@ function widget:Initialize()
 					return cellRect(side, i), it
 				end
 			end
+		end,
+		-- (tools: the selection's style, "box" or "circle", as SELECT: BOX / CIRCLE sets it; the style now)
+		selectStyle = function(s)
+			if s == "box" or s == "circle" then
+				selStyle = s
+				writeDock(true)
+			end
+			return selStyle
 		end,
 	}
 	checkActive()
