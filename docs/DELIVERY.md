@@ -458,7 +458,10 @@ same, that stays the simpler way.
         it is its name alone, one line (the S23's own shape keeps both lines). Dev phone, both shapes.
         The spectator's TEAMS and HIDE at that shape (~16:55): both work (the SHOW button at the bottom's middle); TEAMS
         always laid out five rows, so a 1v1's three were 70 pixels there: now as many as the spectator's grid, 4 or 5,
-        more scroll (130 pixels unfolded). A patch set for BAR's repository, tested by a pool swap as
+        more scroll (130 pixels unfolded).
+        The upright lobby at that shape (~17:05, offline): BAR's account dialog and the lobby behind it fit; nothing to
+        do. That closes the unfolded sweep of the day's screens: playing dock, PLACE, spectator grid, TEAMS, HIDE, the
+        join's and the game's loading screens, the lobby. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
