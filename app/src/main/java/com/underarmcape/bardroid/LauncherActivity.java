@@ -366,8 +366,11 @@ public class LauncherActivity extends AppCompatActivity {
             sb.append("RAM: ").append(gb(mi.totalMem));
             // (the mode's name on the RAM line, what it does under it a step smaller: run on after an em dash, the
             // sentence wrapped over three lines and read as one more fact, dev phone 2026-11-08)
+            // (the smaller map only while it is the app's choice, Prefs.mapName: a map the player picked is theirs)
             if (lowRam(this)) sb.append(", low-memory mode\n").append(NOTE_START)
-                    .append("plainer unit shading and map detail, skirmish on a smaller map; close other apps before a game")
+                    .append("plainer unit shading and map detail")
+                    .append(!Prefs.mapChosen && Installer.BENCH_MAP.equals(Prefs.mapName) ? ", skirmish on a smaller map" : "")
+                    .append("; close other apps before a game")
                     .append(NOTE_END).append('\n');
             else sb.append('\n').append(NOTE_START).append("a match uses about 5-6 GB, part of it in swap").append(NOTE_END).append('\n');
         }

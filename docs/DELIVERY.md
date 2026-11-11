@@ -305,6 +305,10 @@ same, that stays the simpler way.
         test-31836 for now: its Install / Update found no network (Wi-Fi on, joined to none: "Unable to resolve host";
         no network is joined on it from here). The coloured strip once seen under the opened minimap at a start did not
         come back in two more starts (what stood out there was the minimap's own range rings).
+      - **The launcher's low-memory note only says what applies**: "skirmish on a smaller map" stood there after the
+        player had picked a map of their own (Prefs.mapChosen: the app's smaller map is a default only). Now only
+        while the app's choice holds. Dev phone: with it, the note as before; with a map marked the player's, "plainer
+        unit shading and map detail; close other apps before a game" on one line.
       - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
         also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
