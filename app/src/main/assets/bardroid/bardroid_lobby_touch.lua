@@ -786,6 +786,15 @@ local function uprightNotes()
 		end
 		-- (from the screen's top down, over the logo's strip: above the grid they covered the screens' own buttons along
 		-- the panel's foot, Next and all of Advanced on the Skirmish screens, dev phone 2026-11-11)
+		-- (at its left, over the logo, as wide as the room before the connection state: at Chobby's right a "Download
+		-- Failed" note covered "Offline", the reason it failed, dev phone 2026-11-11; no room for 150: Chobby's right)
+		local room
+		local state = real(chobbyObject("connectivityText"))
+		local box = state and real(state.parent)
+		if box and box.LocalToScreen then
+			local bx = box:LocalToScreen(0, 0)
+			room = bx and bx - 8
+		end
 		local seen, row = {}, 0
 		for _, n in pairs(sorted) do
 			local key = table.concat(words(n.window, {}, 0), "|")
@@ -797,7 +806,13 @@ local function uprightNotes()
 			else
 				seen[key] = true
 				row = row + 1
-				n.window:SetPos(nil, 6 + (row - 1) * 110)
+				local win = n.window
+				win.bardroidW = win.bardroidW or win.width
+				if room and room >= 150 then
+					win:SetPos(2, 6 + (row - 1) * 110, math.min(win.bardroidW, room))
+				else
+					win:SetPos(nil, 6 + (row - 1) * 110)
+				end
 			end
 		end
 	end
