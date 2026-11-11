@@ -314,6 +314,10 @@ same, that stays the simpler way.
         the next start. A start that does not go online keeps the last one that did (`Updater.checkLine`). Dev phone,
         no network: Install / Update at 10:40, a skirmish started at 10:40:20, the launcher after it: "Last check Nov 11
         10:40 (no answer from BAR)"; updater-test ALL PASS (three new cases).
+      - **The top bar on the Fold7's unfolded shape** (dev phone at `wm size 1080x1198`, upright skirmish): the buttons
+        small at the top right, clear of the hidden bars (wider screen), so Statistics opened by BAR's own button (the
+        app's widget not needed there), the panel between the top bar and the dock. (The Fold7 itself was in a game at
+        10:45: today's last two builds wait for it to be free.)
       - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
         also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
