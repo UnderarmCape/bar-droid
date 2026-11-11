@@ -1058,6 +1058,8 @@ function widget:MousePress(x, y, button)
 	if button ~= 1 or not screen0 or Spring.IsGUIHidden() then
 		return false
 	end
+	-- (a list still flying: the tap stops it and is no click, as on any phone; its item under the finger was a passing one)
+	local flying = fling ~= nil and math.abs(fling.v) > FLING_MIN
 	fling = nil
 	local _, _, hx, hy = chiliPoint(x, y)
 	local hit = screen0:HitTest(hx, hy)
@@ -1083,7 +1085,7 @@ function widget:MousePress(x, y, button)
 		return false
 	end
 	press = { x = x, y = y, panel = panel, battle = battle, start = panel and panel.scrollPosY or 0, moved = false,
-		lastY = y, lastT = Spring.GetTimer(), vel = 0 }
+		lastY = y, lastT = Spring.GetTimer(), vel = 0, stopped = flying }
 	return true
 end
 
@@ -1169,6 +1171,8 @@ function widget:MouseRelease(x, y)
 		if math.abs(p.vel) > FLING_MIN and Spring.DiffTimers(Spring.GetTimer(), p.lastT) < 0.1 then
 			fling = { panel = p.panel, v = p.vel }
 		end
+	elseif p.stopped then
+		Spring.Echo("[bardroid-lobby] a tap stopped a flying list (no click)") -- (tools)
 	elseif p.battle then
 		if popupButton == p.battle then
 			join()
