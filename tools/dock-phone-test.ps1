@@ -175,6 +175,16 @@ try {
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1
+  # 7. nothing picked, the dock's menu open: a box selection dragged from the map on into the dock, its corner held at
+  # the dock's top edge
+  Stage "deselect"; Start-Sleep 2
+  Tap $dm[0] $dm[1]
+  $until = (Get-Date).AddSeconds(3)
+  while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
+  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
+  Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE ($a1[0] + 80) $dm[1]
+  Start-Sleep -Milliseconds 300; Touch UP ($a1[0] + 80) $dm[1]; Start-Sleep -Milliseconds 800
+  Stage "boxdock?"; Start-Sleep 1
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

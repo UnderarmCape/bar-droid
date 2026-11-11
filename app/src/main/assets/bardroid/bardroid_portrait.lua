@@ -1285,7 +1285,16 @@ local function pickCircle()
 	if not (c and c.r > 0) then
 		return
 	end
-	selectUnits(filtered(Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}))
+	-- (only those in sight above the dock: a circle drawn on into it picked units it hides, 2026-11-11)
+	local seen = {}
+	for _, u in ipairs(Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}) do
+		local x, y, z = Spring.GetUnitPosition(u)
+		local _, sy = Spring.WorldToScreenCoords(x or 0, y or 0, z or 0)
+		if x and sy >= L.dock[4] then
+			seen[#seen + 1] = u
+		end
+	end
+	selectUnits(filtered(seen))
 end
 
 -- a "dockcircle x y r" line (X screen pixels, top left origin): its middle and edge on the ground

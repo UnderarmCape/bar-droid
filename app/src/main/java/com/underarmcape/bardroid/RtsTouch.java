@@ -667,8 +667,8 @@ final class RtsTouch {
             case SCROLL:
                 if (i >= 0) scrollTo(curY);
                 return;
-            case LEFT_DRAG:
-                if (i >= 0) moveCursor(curX, curY);
+            case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight)
+                if (i >= 0) moveCursor(curX, dockSelecting ? aboveDock(curY) : curY);
                 return;
             case RIGHT_HOLD:
                 if (i >= 0) moveCursor(curX, aboveDock(curY));
@@ -780,7 +780,7 @@ final class RtsTouch {
                 flingIfFast();
                 break;
             case LEFT_DRAG:
-                press(curX, curY, InputStub.BUTTON_LEFT, false);
+                press(curX, dockSelecting ? aboveDock(curY) : curY, InputStub.BUTTON_LEFT, false);
                 releaseKeys();
                 endDockSelect();
                 break;

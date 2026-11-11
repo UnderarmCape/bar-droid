@@ -90,6 +90,15 @@ local function onCmd(c)
 		-- (the spot snaps to the build grid: a few pixels past the edge it was held at; unheld it was the dock's middle)
 		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
 			string.format("spot y %d, the dock's top %d", y, top))
+	elseif c == "deselect" then
+		Spring.SelectUnitArray({})
+	elseif c == "boxdock?" then -- (a box selection dragged on into the dock: let go at the dock's top edge)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = dock and dock[4] or 0
+		local _, my = Spring.GetMouseState()
+		check("a box selection dragged on into the dock: let go at the dock's top edge, the box in sight", my >= top - 2,
+			string.format("let go at y %d, the dock's top %d, %d picked", my, top, Spring.GetSelectedUnitsCount()))
 	elseif c == "griddock?" then -- (a GRID dragged on into the dock: its far corner, the pointer, at the dock's top edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()

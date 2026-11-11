@@ -212,6 +212,11 @@ same, that stays the simpler way.
         top of 1039 (before: none in sight): ALL PASS. The GRID corner's hold has its case since (a finger held on the
         map with the building picked, dragged on into the dock: the pointer held down at y 974, the dock's top; the
         panel's cancel then lets it go, nothing placed): ALL PASS.
+      - **The open dock's selection dragged on into it** (11-11 ~06:25): BAR's box (nothing picked, the menu open, a
+        drag on the game) followed the finger into the dock and picked units it hides (let go at y 482 under a dock top
+        of 974); its corner is now held at the dock's top edge (RtsTouch, while the dock selects), and the circle's
+        pick keeps only units in sight above the dock (portrait pickCircle). dock-phone-test's new case (box): let go at
+        y 974; ALL PASS. The circle's filter is not in a case (the dev phone's dock selects with the box).
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
