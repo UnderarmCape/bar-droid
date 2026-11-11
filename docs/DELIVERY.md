@@ -129,6 +129,12 @@ same, that stays the simpler way.
         rotate and cancel first. dock-phone-test taps PLACE at the panel's middle (in the old dead column): queued;
         and a new case, cancel puts the building away without placing: ALL PASS. The word PLACE sits in the room
         above the two buttons.
+      - **The upright start view** (11-11 ~04:00, two skirmishes): a screenshot within a second of frame 40 shows the
+        commander on the dock's top edge (the engine's middle), the view easing to the start fit (the camera's ease
+        runs longer than its 0.25 s); 6 s later the commander is in the middle of the view above the dock. A second
+        fit at frame 120 was tried and found nothing to do: left out, the start fit works. (The skirmish's pregame
+        lasts ~2 s, its dock not caught in a screenshot.) Polish: the launcher's "Free storage" and "RAM" in one
+        decimal (75.8 GB, 6.9 GB; downloads keep two).
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
