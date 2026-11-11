@@ -2421,6 +2421,12 @@ end
 
 local function drawDgun()
 	local p = dgunParts()
+	local D = WG.BarDroidPadDgun
+	local autoOn, autoFor = false, 0
+	if D and D.auto then
+		autoOn, autoFor = D.auto()
+		autoFor = autoFor or 0
+	end
 	for i, s in ipairs({ p.l, p.r }) do
 		gl.Color(0, 0, 0, 0.5)
 		disc(s[1], s[2], s[3], true)
@@ -2431,19 +2437,15 @@ local function drawDgun()
 		local kx, ky = s[1] + DG.stick[i * 2 - 1] * s[3], s[2] - DG.stick[i * 2] * s[3]
 		if i == 1 then
 			gl.Color(0.8, 0.8, 0.8, 0.9)
+		elseif autoOn then -- (full auto aims itself: the stick greyed, "AIM: AUTO"; its red read as aiming, screenshot)
+			gl.Color(0.45, 0.45, 0.45, 0.6)
 		else
 			gl.Color(1, 0.3, 0.25, 0.95) -- (the aim: the shot's red, as its ring on the ground)
 		end
 		disc(kx, ky, s[3] * 0.36, true)
 		gl.Color(1, 1, 1, 1)
-		textIn(i == 1 and "MOVE" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3], s[2] - s[3] - L.gap,
-			L.btnH * 0.36, "\255\200\200\200", font)
-	end
-	local D = WG.BarDroidPadDgun
-	local autoOn, autoFor = false, 0
-	if D and D.auto then
-		autoOn, autoFor = D.auto()
-		autoFor = autoFor or 0
+		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3],
+			s[2] - s[3] - L.gap, L.btnH * 0.36, "\255\200\200\200", font)
 	end
 	local f, t = p.fire, now()
 	local fw, fh = f[3] - f[1], f[4] - f[2]
