@@ -2750,9 +2750,11 @@ function widget:MousePress(x, y, btn)
 	-- (empty space in the open menu: a drag there pans the camera as the camera pad does; Kailil, 2026-11-10: "if I grab
 	-- empty space in the ui and moved my finger around, let that pan my camera"; a half whose rows scroll keeps its drag)
 	local empty -- (a half with nothing to scroll: a drag anywhere on it pans, as the fingers' dockscroll lines do)
+	local settling -- (its rows still settling after a flick: a tap is no press, its item was passing under the finger)
 	if side then
 		local _, s = half(side)
 		empty = snapMax(s) == 0
+		settling = not s.drag and s.t < 1
 	else
 		empty = not (inRect(x, y, L.res) or (showSel and inRect(x, y, L.sel)))
 		for _, gr in ipairs(L.groupRects or {}) do
@@ -2760,7 +2762,7 @@ function widget:MousePress(x, y, btn)
 		end
 	end
 	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0, empty = empty,
-		panX = x, panY = y }
+		panX = x, panY = y, settling = settling }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
 
@@ -2826,6 +2828,12 @@ function widget:MouseRelease(x, _, btn)
 		if p.moved then
 			local _, s = half(p.side)
 			snapRelease(s, p.vel)
+			return true
+		end
+		-- (a tap while the rows settled after a flick picked the item passing under the finger, a building at random;
+		-- dev phone, a flick and a tap, 2026-11-11: the rows settle on, the tap picks nothing)
+		if p.settling then
+			Spring.Echo("[bardroid-portrait] a tap on settling rows: no press") -- (tools)
 			return true
 		end
 		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
