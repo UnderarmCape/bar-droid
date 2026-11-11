@@ -162,6 +162,12 @@ same, that stays the simpler way.
         settings column through Advanced, the left column scrolling to the log (the version line reachable): nothing
         broken. Polish: GL check names the GPU as players know it, "Adreno 740 (Freedreno)" for Freedreno's "FD740"
         (StatusText.gpuName, status-text-test's new cases).
+      - **Share logs tapped twice** (11-11 ~04:40, review of the evening's LogShare): two quick taps zipped twice, the
+        second deleting the first's zip as it was written (1360 KB of 2048) and two share sheets stacked, the lower one's
+        file gone. A tap while a zip is made, until its sheet is started, is let go ("share logs: already zipping" in
+        launcher.log). Dev phone, two taps 0.15 s apart: before, two zips and two sheets; after, one zip whole and one
+        sheet (closed with Back, nothing sent). No polish this run: the screens looked at had nothing of the app's to
+        better.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
