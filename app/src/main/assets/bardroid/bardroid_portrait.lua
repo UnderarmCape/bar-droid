@@ -2039,7 +2039,7 @@ local function drawGroups()
 	end
 end
 
--- the mode: the camera pad dims the dock a little and says how to open it; the open menu has BAR's gold along its top,
+-- the mode: the camera pad dims the dock a little and names itself; the open menu has BAR's gold along its top,
 -- a pulse as it opens (Kailil: "a quick blink or sparkle or something that fits the BAR aesthetic"), and the time it
 -- has left before the pad comes back
 local function drawMode()
@@ -2053,14 +2053,13 @@ local function drawMode()
 			local s = L.sel
 			local h = s[4] - s[2]
 			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it;
-			-- right of the count line, "6 units, 6 of this type", which it ran under: shorter, or left out, where it does not fit)
+			-- right of the count line, "6 units, 6 of this type", which it ran under: left out where it does not fit; the name
+			-- alone, no "tap to use the menu" beside it: Kailil, 2026-11-09, the dock shows no hint text)
 			local size, right = h * 0.15, s[3] - L.pad
 			local from = (L.selCountEnd or 0) + L.pad * 2
-			local full, brief = "CAMERA PAD  tap to use the menu", "CAMERA PAD"
-			if right - font:GetTextWidth(full) * size >= from then
-				font:Print("\255\190\190\190CAMERA PAD  \255\140\140\140tap to use the menu", right, s[2] + h * 0.3, size, "ro")
-			elseif right - font:GetTextWidth(brief) * size >= from then
-				font:Print("\255\190\190\190" .. brief, right, s[2] + h * 0.3, size, "ro")
+			local label = "CAMERA PAD"
+			if right - font:GetTextWidth(label) * size >= from then
+				font:Print("\255\190\190\190" .. label, right, s[2] + h * 0.3, size, "ro")
 			end
 		end
 		return

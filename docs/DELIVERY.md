@@ -343,7 +343,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       it (a skirmish against AIs, a replay) pauses while the game screen is hidden (locked, another app over it) and
       runs again 0.8 s after it is back; online it runs on, and the floating window (Home) keeps it in sight and
       running. GameActivity writes LuaUI/Config/bardroid_app.txt, bardroid_touch.lua pauses from GameFrame and resumes
-      from Update. Dev phone: locked, paused at frame 8425; woken, running from 8426.
+      from Update. Dev phone: locked, paused at frame 8425; woken, running from 8426. Again in an upright skirmish
+      (2026-11-10 evening): the screen off at frame 114, held there 8 s, back 0.4 s after it came on and 30 frames a
+      second after (911 at 27 s); also when the screen went off during the start countdown (paused at frame 35).
+      Nothing of the app's in the infolog's errors or warnings (BAR's own: its intro's deprecated `AdvSky`, its dev
+      widgets that do not load in a released game). The dock's CAMERA PAD label lost its "tap to use the menu" hint
+      (Kailil's no-hint-text rule for the dock).
 - [x] **The launcher's map for Play vs AI picked, not typed** (2026-11-10, for a native feel): a tap on the field
       lists the maps installed (the engine's archive cache), typing narrows them; any other name still downloads at
       the start. Dev phone: its ten maps listed.
