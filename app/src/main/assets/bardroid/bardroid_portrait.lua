@@ -582,6 +582,33 @@ end
 -- player's (the dock's empty space), past the map's edge too
 local DG = { stick = { 0, 0, 0, 0 } } -- the D-gun mode's (below): stick: lx, ly, rx, ry as RtsTouch sent them (the
 -- knobs); slide: FIRE's swipe, 0..1 while held, nil after (slideOff: when it ended, slideLast: how far it had gone)
+
+-- The camera distance that shows the D-gun's whole reach around the commander: its ring and a target at the ring's
+-- edge (32 across, and a little more) inside the game above the dock with room to spare; upright the screen's width
+-- decides (dev phone, 2026-11-10: at COMMANDER's distance the ring touched both sides and a target at its side was cut
+-- off). On-screen sizes go as one over the distance, so the distance now times how far past the room it reaches.
+function DG.fitDist(u, s)
+	local D = WG.BarDroidPadDgun
+	local range = D and D.range and D.range()
+	local x, y, z = Spring.GetUnitPosition(u)
+	if not (range and x and s and s.dist) then
+		return nil
+	end
+	local ux, uy = Spring.WorldToScreenCoords(x, y, z)
+	local r = range + 48
+	local halfW, halfH = vsx / 2 - L.pad * 2, (vsy - L.dock[4]) / 2 - L.pad * 2
+	local need = 0
+	for i = 0, 15 do
+		local a = i * math.pi / 8
+		local px, pz = x + math.cos(a) * r, z + math.sin(a) * r
+		local sx, sy = Spring.WorldToScreenCoords(px, Spring.GetGroundHeight(px, pz) or y, pz)
+		if sx and halfW > 0 and halfH > 0 then
+			need = max(need, abs(sx - ux) / halfW, abs(sy - uy) / halfH)
+		end
+	end
+	return need > 0 and s.dist * need or nil
+end
+
 function DG.follow(dt)
 	local FOLLOW = 0.08
 	local D = WG.BarDroidPadDgun
@@ -592,9 +619,14 @@ function DG.follow(dt)
 	end
 	local s = x and Spring.GetCameraState()
 	if u ~= DG.unitWas then -- (the mode just entered: from far off, the camera eased in once to COMMANDER's distance,
-		-- the D-gun's ring a speck at the start's 5000; dev phone, 2026-11-10; the zoom is the player's from there)
+		-- the D-gun's ring a speck at the start's 5000; dev phone, 2026-11-10; the zoom is the player's from there), and
+		-- out as far as the D-gun's whole reach needs (fitDist)
 		DG.unitWas, DG.zoomUntil = u, u and now() + 0.6 or nil
-		DG.zoomTo = u and s and s.dist and s.dist > comfortDist() * 1.2 and comfortDist() or nil
+		local fit = u and DG.fitDist(u, s)
+		DG.zoomTo = u and s and s.dist and s.dist > comfortDist() * 1.2 and max(comfortDist(), fit or 0) or nil
+		if u and not DG.zoomTo and fit and s.dist < fit then
+			DG.zoomTo = fit
+		end
 	end
 	if not (s and s.px) then
 		return
