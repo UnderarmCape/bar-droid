@@ -268,6 +268,10 @@ public class LauncherActivity extends AppCompatActivity {
         statusView.setText(text);
     }
 
+    private static String gb(long bytes) {
+        return String.format(java.util.Locale.US, "%.1f GB", bytes / 1073741824.0);
+    }
+
     private static void warn(android.text.SpannableString text, int start, int end) {
         text.setSpan(new android.text.style.ForegroundColorSpan(0xFFF2B84B), start, end, 0);
     }
@@ -345,12 +349,13 @@ public class LauncherActivity extends AppCompatActivity {
             sb.append(adreno ? "GPU: Qualcomm Adreno, supported\n"
                              : "GPU: not a Qualcomm Adreno: BAR's graphics will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
-        sb.append("Free storage: ").append(Downloader.human(st.getAvailableBytes())).append(" (need ~6 GB)\n");
+        // (one decimal: "75.85 GB" and "6.91 GB" said more than a player reads there; downloads keep two, Downloader.human)
+        sb.append("Free storage: ").append(gb(st.getAvailableBytes())).append(" (need ~6 GB)\n");
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
         android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
         if (am != null) {
             am.getMemoryInfo(mi);
-            sb.append("RAM: ").append(Downloader.human(mi.totalMem));
+            sb.append("RAM: ").append(gb(mi.totalMem));
             // (the mode's name on the RAM line, what it does under it a step smaller: run on after an em dash, the
             // sentence wrapped over three lines and read as one more fact, dev phone 2026-11-08)
             if (lowRam(this)) sb.append(", low-memory mode\n").append(NOTE_START)
