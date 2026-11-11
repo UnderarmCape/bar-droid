@@ -63,6 +63,7 @@ PATCHES = [
 		license = "GNU GPL, v2 or later",
 		layer = 1,
 		enabled = false, -- BAR Droid: launch-bar.sh switches it on in place of BAR's Order menu
+		replaces = "Order menu", -- BAR Droid: BAR's handler then knows whose place it took (knownWidgets[...].replacedBy)
 '''),
     ('''local function setupCellGrid(force)
 ''',

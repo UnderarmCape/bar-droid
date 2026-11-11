@@ -1783,7 +1783,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       words reach the chat, launcher.log shows the dropped late error. Until then the dev phone's app has the
       microphone revoked and user-fixed (2026-11-10: no test can open it); for the live test `adb shell pm
       clear-permission-flags com.underarmcape.bardroid android.permission.RECORD_AUDIO user-fixed` and `pm grant` it.
-- [ ] Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
+- [x] Settings' order menu options (2026-11-10, the official port: BAR's code ours to change with its devs): the copy
+      declares `replaces = "Order menu"` (BAR's handler saves `replaced["Order menu"] = "BAR Droid order menu"`), and
+      the change for BAR's Settings to follow that list is ready, `docs/upstream/bar-options-replaced.patch`: tested on
+      the dev phone (pool swap, put back), the old config's colorize 0.7 and the copy's 0.3: Settings showed 0.7
+      without it, 0.3 with it. Players get it with the BAR release that merges it. The notes from then:
+- Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
       colorize, bottom position and always-show options); BAR's game runs the app's copy ("BAR Droid order menu"), the
       controller game v0.8.5's renamed "Order menu (controller)" (infolog: "Options: 'ordermenu_colorize' widgetConfig:
       unknown widget Order menu"). A change in Settings still reaches the running menu (its `WG.ordermenu` setters) and

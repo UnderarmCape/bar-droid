@@ -1,0 +1,42 @@
+diff --git a/luaui/widgets/gui_options.lua b/luaui/widgets/gui_options.lua
+index bd9662a..75ce9c4 100644
+--- a/luaui/widgets/gui_options.lua
++++ b/luaui/widgets/gui_options.lua
+@@ -2539,7 +2539,19 @@ function widget:DrawScreen()
+ 	end
+ end
+ 
++-- a widget another took the place of (its GetInfo replaces; widgetHandler.replacedList) has its settings in the
++-- config of the one running in its place
++local function configName(widgetName)
++	local by = widgetHandler.replacedList and widgetHandler.replacedList[widgetName]
++	local ki = by and widgetHandler.knownWidgets[by]
++	if ki and ki.active then
++		return by
++	end
++	return widgetName
++end
++
+ function saveOptionValue(widgetName, widgetApiName, widgetApiFunction, configVar, configValue, widgetApiFunctionParam)
++	widgetName = configName(widgetName)
+ 	-- if widgetApiFunctionParam not defined then it uses configValue
+ 	if widgetHandler.configData[widgetName] == nil then
+ 		widgetHandler.configData[widgetName] = {}
+@@ -3089,7 +3101,7 @@ end
+ 
+ -- the value at a path in a widget's saved config data, e.g. {'Config','console','maxlines'}; nil when it is missing
+ local function widgetConfigValue(widgetName, path)
+-	local value = widgetHandler.configData[widgetName]
++	local value = widgetHandler.configData[configName(widgetName)]
+ 	for _, key in ipairs(path) do
+ 		if type(value) ~= "table" then
+ 			return nil
+@@ -3197,7 +3209,7 @@ local function checkBindings()
+ 	bindingsChecked = true
+ 	for _, option in ipairs(options) do
+ 		local config = option.widgetConfig
+-		local known = config and widgetHandler.knownWidgets[config[1]]
++		local known = config and widgetHandler.knownWidgets[configName(config[1])]
+ 		local api = config and config.api and WG[config.api]
+ 		local problem
+ 		if config and not known then
