@@ -371,6 +371,10 @@ same, that stays the simpler way.
         with the building (dev phone: the 3 x 3 windmills from the dragged one). **ROTATE as tall as the X** (80 % as
         wide; it was a small square beside it). The Fold7's last game (11:25, the build before) had no errors from the
         app's widgets. dock-phone-test ALL PASS.
+      - **ROTATE and the X the same size, flush in the corner** (Kailil, ~13:05, on that screenshot: "Remove the padding
+        on these buttons and shove them to the corner ... make the buttons the same size"): two squares of the X's size
+        at the panel's bottom right, no padding round them, a hairline between them. Dev phone: ROTATE tapped, the
+        building still picked, nothing placed; the X put it away; dock-phone-test ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

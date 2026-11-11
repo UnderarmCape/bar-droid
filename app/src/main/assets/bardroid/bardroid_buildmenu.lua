@@ -1021,19 +1021,17 @@ function droid.layoutPanel()
 	local pad = math_floor(math.max(2, (y1 - y0) * 0.08))
 	local s = math_floor(math.min((y1 - y0) * 0.7, (x1 - x0) * 0.2))
 	local my = math_floor((y0 + y1 - s) / 2)
-	local cs = s
+	local cs, rs, edge, gap = s, s, pad, pad
 	if dock then -- (upright, the tall panel: at its bottom right corner; Kailil, 2026-11-10; its cancel twice the size,
-		-- 2026-11-11: "make the X button on place 100 percent bigger")
-		my = y0 + pad
-		cs = math_floor(math.min(s * 2, (y1 - y0) - 2 * pad, (x1 - x0) * 0.45))
+		-- 2026-11-11: "make the X button on place 100 percent bigger"; then, with a screenshot: "Remove the padding on these
+		-- buttons and shove them to the corner ... make the buttons the same size": both squares of the X's size, flush
+		-- in the panel's bottom right corner, a hairline between them)
+		cs = math_floor(math.min(s * 2, y1 - y0, (x1 - x0) * 0.45))
+		rs, edge, gap = cs, 0, 2
+		my = y0
 	end
-	local cancel = { x1 - pad - cs, my, x1 - pad, my + cs }
-	-- (upright ROTATE as tall as the X, 80 % as wide: a small square beside it, a thumb's target, 2026-11-11)
-	local rw, rh = s, s
-	if dock then
-		rw, rh = math_floor(cs * 0.8), cs
-	end
-	local rotate = { cancel[1] - pad - rw, my, cancel[1] - pad, my + rh }
+	local cancel = { x1 - edge - cs, my, x1 - edge, my + cs }
+	local rotate = { cancel[1] - gap - rs, my, cancel[1] - gap, my + rs }
 	-- (upright PLACE is the whole panel but its two buttons, which RtsTouch and pressPanel tell first: the column above
 	-- them was a dead part of the green panel, dev phone screenshot 2026-11-11)
 	local place = dock and { x0, y0, x1, y1 } or { x0, y0, rotate[1] - pad, y1 }
