@@ -366,6 +366,11 @@ local function layout()
 		tile = max(16, floor((room + gap) / rows) - gap)
 	end
 	local gridH = rows * (tile + gap) - gap
+	SP.laidOut = SP.on() and true or false
+	if SP.laidOut then -- (spectating: no selection or groups rows; their room to the grid, up to five button rows as tall
+		-- as the build tiles: on the unfolded Fold7 the spectator's five rows were 62 pixels, dev phone at 1080x1198)
+		gridH = max(gridH, min(5 * (tile + gap) - gap, room + selH + groupsH + 2 * pad))
+	end
 	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
 	-- From the bottom: the groups (with groups, or units picked for + NEW), the grid, the selection (units picked),
 	-- metal and energy. A row not shown takes no room: the dock is that much lower and the game taller (Kailil,
@@ -2694,7 +2699,8 @@ local function checkActive()
 			layout()
 		end
 	end
-	if active and (x ~= vsx or y ~= vsy or not was) then
+	-- (laid out again when the player turns spectator too: the spectator's grid is taller, layout)
+	if active and (x ~= vsx or y ~= vsy or not was or (SP.on() and true or false) ~= SP.laidOut) then
 		layout()
 		refresh()
 	end
