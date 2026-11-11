@@ -862,6 +862,24 @@ function widget:ViewResize()
 	end
 end
 
+local drawLines -- (below)
+
+-- upright, the minimap opened (not BarDroidMinimap's small one): its rect (GL: x0, y0, x1, y1), or nil
+local function openMinimap()
+	local M = WG.BarDroidMinimap
+	if chatMinimap == nil or not (M and M.small) or M.small() then
+		return nil
+	end
+	local px, py, sx, sy, minimized = Spring.GetMiniMapGeometry()
+	if not (px and sx and sx > 0 and sy > 0) or minimized then
+		return nil
+	end
+	if not Spring.IsAboveMiniMap(px + sx / 2, py + sy / 2) then -- (its y counted from the top, as bardroid_minimap.lua)
+		py = vsy - py - sy
+	end
+	return px, py, px + sx, py + sy
+end
+
 function widget:DrawScreen()
 	if not hooked or not font or Spring.IsGUIHidden() then
 		return
@@ -916,6 +934,24 @@ function widget:DrawScreen()
 		end
 		right = math.min(boxRight, math.ceil(right + gap))
 	end
+	-- Upright, the minimap opened (a tap, or the game's start) lies over the box's corner: the lines drawn around it, not
+	-- over it (this widget draws after the minimap; "Battle, Started" sat on the opened map, dev phone 2026-11-11)
+	local x0, y0, x1, y1 = openMinimap()
+	if x0 and x0 < right and x1 > boxLeft and y0 < top and y1 > bottom then
+		for _, s in ipairs({ { 0, 0, x0, vsy }, { x1, 0, vsx, vsy }, { x0, 0, x1, y0 }, { x0, y1, x1, vsy } }) do
+			if s[3] > s[1] and s[4] > s[2] then
+				gl.Scissor(s[1], s[2], s[3] - s[1], s[4] - s[2])
+				drawLines(shown, top, bottom, right)
+			end
+		end
+		gl.Scissor(false)
+		return
+	end
+	drawLines(shown, top, bottom, right)
+end
+
+-- (the lines' box, names and text)
+drawLines = function(shown, top, bottom, right)
 	box(boxLeft, bottom, right, top, LINES_BOX)
 	gl.Color(1, 1, 1, 1)
 	local y = top

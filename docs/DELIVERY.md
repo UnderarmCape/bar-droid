@@ -263,9 +263,18 @@ same, that stays the simpler way.
         low-memory mode's texture compression losing the alpha (pace's texture log: Mesa stores the engine's generic
         GL_COMPRESSED_RGBA as DXT5, which keeps it; a run with DXT5 asked for outright: the same square; a
         CompressTextures 0 run showed a round flash, but its commander started elsewhere, so that proves nothing).
-        Next: a start at the same spot (a fixed start position) with CompressTextures 0, then GroundDecals 0 and the
-        Fold7 (not in the low-memory mode); `start-burst` style runs (launcher skirmish, its map set in the
+        Then (11-11 ~09:00) CompressTextures 0 with the top-left start: the same square, so compression is out. It
+        goes with the start spot: all four top-left starts had it, both bottom-right ones a round flash (on brighter
+        snow, where a faint square may not show). (StartPosType 0 in the launcher's script did not fix the spot: BAR
+        still drew it.) Left: GroundDecals 0, the Fold7 (not in the low-memory mode), and BAR on a PC at that spot
+        (the laptop only with Kailil's yes); `start-burst` style runs (launcher skirmish, its map set in the
         preferences, `screencap` from the first frame).
+      - **The chat's lines no longer over the opened minimap upright** (seen in those bursts): the chat box moves up
+        under the top bar while the minimap is open (at the game's start, or a tap), and it draws after the minimap:
+        "Battle, Started" sat on the map. Its lines are drawn around the opened minimap's rect now (scissored), so
+        the minimap lies over the box's corner as the layout meant; a short note under it shows once it is small
+        again. Dev phone: an upright skirmish's first seconds, the opened minimap clean, the note under the small one
+        after; pad-test -Chat ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
