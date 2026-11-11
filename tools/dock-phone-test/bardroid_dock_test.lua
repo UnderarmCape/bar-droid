@@ -90,6 +90,13 @@ local function onCmd(c)
 		-- (the spot snaps to the build grid: a few pixels past the edge it was held at; unheld it was the dock's middle)
 		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
 			string.format("spot y %d, the dock's top %d", y, top))
+	elseif c == "griddock?" then -- (a GRID dragged on into the dock: its far corner, the pointer, at the dock's top edge)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = dock and dock[4] or 0
+		local _, my, held = Spring.GetMouseState()
+		check("a GRID dragged on into the dock: its far corner held at the dock's top edge, in sight",
+			held and my >= top - 2, string.format("button %s, corner y %d, the dock's top %d", tostring(held), my, top))
 	elseif c == "placed?" then
 		local found, words = false, {}
 		for _, cmd in ipairs(Spring.GetUnitCommands(com, 20) or {}) do

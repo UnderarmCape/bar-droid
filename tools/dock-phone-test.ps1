@@ -116,6 +116,15 @@ try {
     Stage "blocked?"
   } else { "[docktest] (no blocked spot on the screen: that case left out)" }
   Start-Sleep 1
+  # (a GRID: a finger held on the map with the building picked, then dragged on into the dock: its far corner, the
+  # pointer held down for BAR's build drag, stays at the dock's top edge; the cancel below lets it go, nothing placed)
+  if ($spots["free"]) {
+    $fr = $spots["free"]; $dmg = Mid $dock["dock"] "the dock"
+    Touch DOWN $fr[0] $fr[1]; Start-Sleep -Milliseconds 1000
+    Touch MOVE $fr[0] (($fr[1] + $dmg[1]) / 2); Touch MOVE $fr[0] $dmg[1]
+    Start-Sleep -Milliseconds 300; Touch UP $fr[0] $dmg[1]; Start-Sleep -Milliseconds 600
+    Stage "griddock?"; Start-Sleep 1
+  }
   $place = Rects "bardroid_place.txt"
   if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1; Stage "cancelled?"; Start-Sleep 1 }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner

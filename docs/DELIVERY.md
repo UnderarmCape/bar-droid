@@ -209,7 +209,9 @@ same, that stays the simpler way.
         finger (ONE), and dragged on into the dock it went behind it (the place file had no spot on the screen); a
         GRID's far corner likewise. Both are now held at the dock's top edge (RtsTouch sendSpot, gridTo).
         dock-phone-test's new case: the building dragged from the map onto the dock, its spot at y 1037 under a dock
-        top of 1039 (before: none in sight): ALL PASS. The GRID corner's hold is not in a test case.
+        top of 1039 (before: none in sight): ALL PASS. The GRID corner's hold has its case since (a finger held on the
+        map with the building picked, dragged on into the dock: the pointer held down at y 974, the dock's top; the
+        panel's cancel then lets it go, nothing placed): ALL PASS.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
