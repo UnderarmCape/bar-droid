@@ -784,7 +784,8 @@ local function uprightNotes()
 		if not (g and not g.disposed) then
 			return own(self, sorted)
 		end
-		local foot = g.y - ((bar and bar.visible) and (bar.height + 4) or 0)
+		-- (from the screen's top down, over the logo's strip: above the grid they covered the screens' own buttons along
+		-- the panel's foot, Next and all of Advanced on the Skirmish screens, dev phone 2026-11-11)
 		local seen, row = {}, 0
 		for _, n in pairs(sorted) do
 			local key = table.concat(words(n.window, {}, 0), "|")
@@ -796,7 +797,7 @@ local function uprightNotes()
 			else
 				seen[key] = true
 				row = row + 1
-				n.window:SetPos(nil, foot - row * 110 + 5)
+				n.window:SetPos(nil, 6 + (row - 1) * 110)
 			end
 		end
 	end

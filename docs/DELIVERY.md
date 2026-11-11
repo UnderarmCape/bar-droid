@@ -225,8 +225,11 @@ same, that stays the simpler way.
         map download three times, each with its own "Download Failed" note, and the three stacked over half the
         screen's Next button. Upright, a note whose words repeat one above it is now put out of sight (it times out as
         Chobby's own; "a repeated note out of sight" in infolog). Dev phone: a failed map's two repeats and a
-        skill-rating download's out of sight, one note left; lobby-phone-test ALL PASS. That one note still covers part
-        of Next for its few seconds (any place above the grid is over some screen's buttons).
+        skill-rating download's out of sight, one note left; lobby-phone-test ALL PASS. That one note still covered part
+        of Next and all of the Skirmish screens' Advanced (Chobby lays those along the panel's foot, just above the
+        grid), so upright the notes now stack down from the screen's top, over the logo's strip (at its right, over part
+        of "Offline" for their few seconds). Dev phone: Next and Advanced clear, the note at the top right;
+        lobby-phone-test ALL PASS.
       - **The phone tests after the dock-edge and tap changes** (11-11 ~06:45, dev phone, f169632's build):
         touch-phone-test, pad-test, -Online, -Dgun, -Share, -Chat, lobby-phone-test, fp-save-test, with
         dock-phone-test just before: ALL PASS.
