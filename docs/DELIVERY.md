@@ -62,6 +62,10 @@ same, that stays the simpler way.
         failed here before; kept the last good one"): a lobby that ends within 60 s keeps the icon on the launcher
         next time; one the player closed (Stop, swiped away) or the low-memory killer ended no longer counts. Why
         BAR's new release failed on the Fold7 needs its logs (the dev phone has no internet here to fetch it).
+        BAR's Alpha set that evening: engine 2026.07.04 (unchanged), lobby test-4674 (the dev phone's), game
+        test-31908-af896c5 (the dev phone has test-31836). The four copies' patches all find their places in
+        test-31908's files (GitHub at af896c5: build menu 26, order menu 12, mission info 4, team stats 3), so the
+        missed adjustment is one of launch-bar.sh's config checks (`layer_miss`), named in the Fold7's launcher.log.
 - [x] **The lobby's pointer by touch**: hidden while fingers play the lobby, back for a mouse, keyboard or the pad
       (patch 0014: the X server's mouse events no longer show a pointer the app hid; RtsTouch.showCursor), and the
       button under the lifted finger no longer stays lit after a page swipe's overshoot (the hush clears a control lit
