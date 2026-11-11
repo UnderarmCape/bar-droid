@@ -71,17 +71,19 @@ try {
   # still found the camera pad and only opened the menu again. 2026-11-11, 2 runs in 5: no menu 4 s after the tap, the
   # second tap only opened it, the spot's tap then picked the ground and the commander went: a note, and one more tap)
   foreach ($try in 1..2) {
-    Tap $tile[0] $tile[1]
+    $t0 = Get-Date; Tap $tile[0] $tile[1]; $tapMs = ((Get-Date) - $t0).TotalMilliseconds
     $until = (Get-Date).AddSeconds(4); $head = ""
     while ((Get-Date) -lt $until -and -not ($head -match ' menu')) { Start-Sleep -Milliseconds 200; $head = "$(InApp "head -n 1 $cfg/bardroid_dock.txt")" }
+    "[docktest] (the tile's first tap: adb {0:N0} ms, the menu in the dock's file {1:N0} ms after the tap began)" -f $tapMs, ((Get-Date) - $t0).TotalMilliseconds
     if ($head -match ' menu') { break }
     "[docktest] note: a tap on the dock did not open its menu in 4 s (tap $try; the dock's line: $head)"
   }
-  Tap $tile[0] $tile[1]
+  $t0 = Get-Date; Tap $tile[0] $tile[1]
   # (the spot's tap once the building is picked: PLACE in the build menu's file)
   $until = (Get-Date).AddSeconds(3)
   while ((Get-Date) -lt $until -and -not (Rects "bardroid_place.txt")["done"]) { Start-Sleep -Milliseconds 200 }
-  if (-not (Rects "bardroid_place.txt")["done"]) { "[docktest] note: the tile's tap did not pick the building in 3 s (place file: $(InApp "cat $cfg/bardroid_place.txt" | Select-Object -First 2))" }
+  "[docktest] (the tile's second tap: the building picked {0:N0} ms after the tap began)" -f ((Get-Date) - $t0).TotalMilliseconds
+  if (-not (Rects "bardroid_place.txt")["done"]) { "[docktest] note: the tile's tap did not pick the building in 3 s (place file: $(InApp "cat $cfg/bardroid_place.txt" | Select-Object -First 2); dock: $(InApp "head -n 1 $cfg/bardroid_dock.txt"))" }
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
