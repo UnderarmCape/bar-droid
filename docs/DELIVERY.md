@@ -455,7 +455,10 @@ same, that stays the simpler way.
         Dev phone: unfolded, PLACE centred left of ROTATE; the S23's own shape, above them as before.
         The join's pre-game screen and a game's loading screen at that shape (~16:45): both fit; on the loading screen
         the load picture's commander fills the near-square screen and Free memory's two lines covered his head: there
-        it is its name alone, one line (the S23's own shape keeps both lines). Dev phone, both shapes. A patch set for BAR's repository, tested by a pool swap as
+        it is its name alone, one line (the S23's own shape keeps both lines). Dev phone, both shapes.
+        The spectator's TEAMS and HIDE at that shape (~16:55): both work (the SHOW button at the bottom's middle); TEAMS
+        always laid out five rows, so a 1v1's three were 70 pixels there: now as many as the spectator's grid, 4 or 5,
+        more scroll (130 pixels unfolded). A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).
