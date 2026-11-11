@@ -1615,7 +1615,10 @@ function widget:Update() -- (the lobby's Update has no frame time)
 		else
 			screen0.currentTooltip = nil
 			local hovered = screen0._lastHoveredControl
-			if hovered and hovered ~= hush.out and not (left or middle or right) then
+			-- (the same control lit again too: a page swipe's overshoot carried a grid button off the spot and back, and
+			-- Chili hovered it anew, which a once-a-control MouseOut left lit; dev phone, 2026-11-10)
+			if hovered and (hovered ~= hush.out or (hovered.state and hovered.state.hovered))
+				and not (left or middle or right) then
 				hush.out = hovered
 				pcall(function() hovered:MouseOut() end) -- (a weak link: its control may be gone)
 			end

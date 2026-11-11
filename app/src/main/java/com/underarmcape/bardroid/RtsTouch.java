@@ -116,7 +116,7 @@ final class RtsTouch {
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
         float[] all, left, right, stickL, stickR, fire, cancel;
-        boolean menu, circle, draw, dgun;
+        boolean menu, circle, draw, dgun, dgunAuto;
     }
     private Dock dockCache;
     private long dockReadAt, dockModified;
@@ -180,6 +180,7 @@ final class RtsTouch {
     private boolean joinedPan;                      // this two-finger gesture began as a one-finger pan: no tap
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
     private boolean cursorHidden, cursorWanted = true;
+    private boolean fingersLast, cursorSynced;      // the last input was a finger (source "touch"); showCursor
     // One building picked with ONE (startPlaceDrag): at this touch's start, and where the finger last came to rest
     private boolean placingOne, waitingAtDown, onWaiting;
     private float holdX, holdY, moveX, moveY;       // view pixels: the rest point (the GRID hold), the last move sent
@@ -332,24 +333,33 @@ final class RtsTouch {
     // "act dgun_auto" once; and "the empty Gray space to let me zoom up and down. Or rotate. Not panning": the first
     // finger on none of the parts, its first slide decides (as the camera pad's after a tap): up or down zooms, sideways
     // (with the pad's larger dead zone) turns
+    // (full auto on, the swipe goes left instead, to the cancel corner: at 0.92 of it "act dgun_auto_off"; Kailil,
+    // 2026-11-10: "when you swipe left to disable auto, the animation doesn't work". "dgunslide f": right 0..1, left
+    // below 0; "dgunslide off": let go)
     private static final float DGUN_AUTO_AT = 0.92f;
     private int dgunFireId = -1, dgunCamId = -1;
     private float dgunFireX, dgunSlide = -1, dgunCamDownX, dgunCamDownY, dgunCamX, dgunCamY;
-    private boolean dgunAutoSent;
+    private boolean dgunAutoSent, dgunSlideLeft;
     private PadMove dgunCamMove = PadMove.NONE;
 
     private void dgunFireSlide(MotionEvent e, Dock d) {
         int p = dgunFireId < 0 ? -1 : e.findPointerIndex(dgunFireId);
         if (p < 0 || d == null || d.fire == null || d.right == null) return;
-        float track = Math.max(slop * 4, d.right[2] - d.fire[2]);
-        float f = Math.max(0, Math.min(1, (toX(e.getX(p)) - dgunFireX) / track));
+        float f;
+        if (dgunSlideLeft) {
+            float track = Math.max(slop * 4, d.fire[0] - (d.cancel != null ? d.cancel[2] : d.left[0]));
+            f = Math.max(0, Math.min(1, (dgunFireX - toX(e.getX(p))) / track));
+        } else {
+            float track = Math.max(slop * 4, d.right[2] - d.fire[2]);
+            f = Math.max(0, Math.min(1, (toX(e.getX(p)) - dgunFireX) / track));
+        }
         if (Math.abs(f - dgunSlide) >= 0.02f || (f >= 1 && dgunSlide < 1)) {
             dgunSlide = f;
-            send(String.format(Locale.US, "dgunslide %.2f", f));
+            send(String.format(Locale.US, "dgunslide %.2f", dgunSlideLeft ? -f : f));
         }
         if (f >= DGUN_AUTO_AT && !dgunAutoSent) {
             dgunAutoSent = true;
-            act("dgun_auto");
+            act(dgunSlideLeft ? "dgun_auto_off" : "dgun_auto");
             view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         }
     }
@@ -361,7 +371,7 @@ final class RtsTouch {
         if (shoot && !dgunAutoSent && dgunSlide < 0.15f) act("dgun_fire");
         dgunFireId = -1;
         dgunSlide = -1;
-        send("dgunslide -1");
+        send("dgunslide off");
     }
 
     private void dgunCamera(MotionEvent e) {
@@ -437,8 +447,9 @@ final class RtsTouch {
                     dgunFireId = id;
                     dgunFireX = x;
                     dgunAutoSent = false;
+                    dgunSlideLeft = d.dgunAuto;
                     dgunSlide = 0;
-                    send("dgunslide 0.00");
+                    send(dgunSlideLeft ? "dgunslide -0.00" : "dgunslide 0.00");
                 } else {
                     act("dgun_fire");   // (a second finger on FIRE: at once)
                 }
@@ -870,6 +881,7 @@ final class RtsTouch {
                     d.draw = text.contains("\ndraw 1");
                     d.dgun = text.contains("\ndgun 1") && d.stickL != null && d.stickR != null && d.fire != null
                             && d.cancel != null;
+                    d.dgunAuto = text.contains("\ndgunauto 1");
                 }
             } catch (NumberFormatException e) { d = null; }
         }
@@ -1025,11 +1037,18 @@ final class RtsTouch {
         return vp.height() > 0 ? v.getInputSourceRect().height() / vp.height() : 1;
     }
 
-    /** The X pointer is hidden while two or more fingers are down, and in first person (its own crosshair). */
+    /**
+     * The X pointer is hidden while two or more fingers are down, in first person (its own crosshair), and in the lobby
+     * while fingers play it (an arrow left where the last tap was, on a touch screen: dev phone screenshots,
+     * 2026-11-10); a mouse, keyboard or the pad brings it back at once (source), a game shows it again as before. The
+     * X server keeps a hidden pointer hidden through the taps' mouse events (patch 0014); the first call of this screen
+     * sets it either way (a hidden one from an earlier screen stays hidden there otherwise).
+     */
     private void showCursor(boolean visible) {
         cursorWanted = visible;
-        visible &= !firstPerson;
-        if (cursorHidden == !visible) return;
+        visible &= !firstPerson && !(fingersLast && !gameWidgetRunning());
+        if (cursorSynced && cursorHidden == !visible) return;
+        cursorSynced = true;
         cursorHidden = !visible;
         view().setCursorVisible(visible);
     }
@@ -1826,6 +1845,11 @@ final class RtsTouch {
      */
     void source(String s) {
         long now = SystemClock.uptimeMillis();
+        boolean fingers = s.equals("touch");
+        if (fingers != fingersLast || !cursorSynced) {   // (the lobby's pointer: hidden for fingers, back for the rest)
+            fingersLast = fingers;
+            showCursor(cursorWanted);
+        }
         if (s.equals("pad")) {
             padInUse = true;
             tapsOffPad = 0;

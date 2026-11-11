@@ -2,15 +2,15 @@
 -- shows the presets as 2 x 2 thumbnails ... closed by an X in the corner or Android's Back"; repeated moves along paths
 -- that make units hard to hit, and formations by their types' strengths). Touch play's automation is his and BAR's
 -- developers' call (GiveOrder). The upright dock (bardroid_portrait.lua) shows PRESETS among the orders while units
--- that fight are picked, and the presets over its whole grid; a preset tapped closes them and the next tap on the map is
--- where the picked units go (Back, or a press of the right button, lets it go).
+-- that fight are picked, and the presets over its whole grid; a preset tapped closes them, a finger on the map then
+-- aims it (a drag moves the mark) and where it lifts is where the picked units go (Back lets it go).
 -- WG.BarDroidPresets: fits(units), isOpen(), open(), close(), items(), pick(id), drawThumb(id, rect), closeRect(rect),
 -- armed(). Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
 		name = "BAR Droid presets",
-		desc = "Preset orders for the picked units: zigzags and formations",
+		desc = "Preset orders for the picked units: a strafe and formations",
 		author = "BAR Droid",
 		license = "GPL-3.0-or-later",
 		layer = -20, -- (before the dock, -10, and BAR's menus: the destination's tap and Back are its first)
@@ -18,9 +18,7 @@ function widget:GetInfo()
 	}
 end
 
-local ZIG_STEP = 230 -- elmos along the way between the zigzag's turns
-local ZIG_SIDE = 170 -- elmos to each side of the way at its turns
-local ZIG_MAX_TURNS = 30
+local STRAFE_SIDE = 150 -- elmos to each side of the destination the strafe goes
 local BLOB = 260 -- elmos: the group's shape kept, at most this far from its middle
 local KEY_ESCAPE = 27
 
@@ -98,35 +96,26 @@ local function way(cx, cz, tx, tz)
 	end
 	return dx / d, dz / d, d
 end
-local function orders(u, list)
-	local cmds = {}
-	for i, p in ipairs(list) do
-		cmds[#cmds + 1] = { CMD.MOVE, p, i == 1 and {} or { "shift" } }
-	end
-	if #cmds > 0 then
-		Spring.GiveOrderArrayToUnitArray({ u }, cmds)
-	end
-end
-
--- ZIGZAG: to the destination in big turns from side to side (slow shots aimed where a unit was going land beside it),
--- each unit keeping its place in the group
-local function zigzag(units, tx, tz)
+-- STRAFE (Kailil, 2026-11-10, in ZIGZAG's place: "a battle formation that make the units straight left or right on
+-- repeat when they reach the destination. So they fight to the destination then sit at the destination repeating a left
+-- and right strafe via a repeat. If its possible to do that via a fight command then great"): each unit, keeping its
+-- place in the group, fights its way to the destination's left side, then fights across to its right side, with the
+-- unit's repeat on, so the two fights go round and round: a strafe across the way, firing at what comes in range
+local function strafe(units, tx, tz)
 	local cx, cz, at = shape(units)
 	if not cx then
 		return 0
 	end
-	local fx, fz, d = way(cx, cz, tx, tz)
-	local px, pz = -fz, fx
-	local turns = math.min(ZIG_MAX_TURNS, math.floor(d / ZIG_STEP))
+	local fx, fz = way(cx, cz, tx, tz)
+	local px, pz = -fz, fx -- (across the way: the strafe's line)
 	local n = 0
 	for u, o in pairs(at) do
-		local list = {}
-		for k = 1, turns do
-			local side = (k % 2 == 1) and ZIG_SIDE or -ZIG_SIDE
-			list[#list + 1] = ground(cx + fx * ZIG_STEP * k + px * side + o[1], cz + fz * ZIG_STEP * k + pz * side + o[2])
-		end
-		list[#list + 1] = ground(tx + o[1], tz + o[2])
-		orders(u, list)
+		local x, z = tx + o[1], tz + o[2]
+		Spring.GiveOrderArrayToUnitArray({ u }, {
+			{ CMD.REPEAT, { 1 }, {} },
+			{ CMD.FIGHT, ground(x + px * STRAFE_SIDE, z + pz * STRAFE_SIDE), {} },
+			{ CMD.FIGHT, ground(x - px * STRAFE_SIDE, z - pz * STRAFE_SIDE), { "shift" } },
+		})
 		n = n + 1
 	end
 	return n
@@ -318,7 +307,7 @@ local function formation(style)
 end
 
 local PRESETS = {
-	{ name = "ZIGZAG", run = zigzag, thumb = "zigzag" },
+	{ name = "STRAFE", run = strafe, thumb = "strafe" },
 	{ name = "BATTLE LINE", run = formation("line"), thumb = "line" },
 	{ name = "SPREAD", run = formation("spread"), thumb = "spread" },
 	{ name = "CONCAVE", run = formation("concave"), thumb = "concave" },
@@ -340,19 +329,22 @@ local function dot(x, y, r, c)
 	gl.Rect(x - r, y - r, x + r, y + r)
 end
 local THUMBS = {}
-function THUMBS.zigzag(x0, y0, x1, y1)
+function THUMBS.strafe(x0, y0, x1, y1) -- (the group up to the destination, then a line across it with arrows both ways)
 	local w, h = x1 - x0, y1 - y0
-	local pts = {}
-	for k = 0, 6 do -- (from the bottom left up to the top right, side to side)
-		local t = k / 6
-		local side = (k == 0 or k == 6) and 0 or ((k % 2 == 1) and 1 or -1)
-		pts[#pts + 1] = { x0 + w * (0.15 + 0.7 * t) + side * w * 0.11, y0 + h * (0.12 + 0.76 * t) - side * h * 0.06 }
+	local gold, lw = { 0.95, 0.78, 0.25, 0.95 }, math.max(2, w * 0.018)
+	local cx, top = x0 + w * 0.5, y0 + h * 0.72
+	line({ { cx, y0 + h * 0.2 }, { cx, top } }, lw, { 0.95, 0.78, 0.25, 0.5 })
+	line({ { x0 + w * 0.18, top }, { x1 - w * 0.18, top } }, lw * 1.4, gold)
+	local a = w * 0.07
+	for _, s in ipairs({ -1, 1 }) do -- (the arrow heads at both ends)
+		local ex = cx + s * (w * 0.32)
+		line({ { ex - s * a, top + a }, { ex, top }, { ex - s * a, top - a } }, lw * 1.4, gold)
 	end
-	line(pts, math.max(2, w * 0.018), { 0.95, 0.78, 0.25, 0.95 })
-	local e = pts[#pts]
-	dot(e[1], e[2], math.max(3, w * 0.025), { 0.95, 0.78, 0.25, 1 })
-	for i = 1, 3 do -- (the group at the start)
-		dot(x0 + w * (0.08 + i * 0.05), y0 + h * (0.1 + (i % 2) * 0.05), math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
+	for i = -2, 2 do -- (the group on the line)
+		dot(cx + i * w * 0.07, top, math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
+	end
+	for i = 1, 3 do -- (and at the start)
+		dot(cx + (i - 2) * w * 0.06, y0 + h * (0.12 + (i % 2) * 0.04), math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
 	end
 end
 
@@ -434,7 +426,7 @@ function widget:Initialize()
 			opened = false
 			if p and #units > 0 then
 				armedFor = { id = id, units = units }
-				say(p.name .. ": TAP THE DESTINATION")
+				say(p.name .. ": DRAG TO THE DESTINATION, LIFT TO SEND")
 			end
 			refreshDock()
 		end,
@@ -461,7 +453,19 @@ function widget:Shutdown()
 	WG.BarDroidPresets = nil
 end
 
-function widget:MousePress(x, y, btn)
+-- The destination by finger (Kailil, 2026-11-10: "allow me to drag my finger and it sets the preset only when I lift
+-- up. The current way is a single tap and its finicky": a drag was the dock's path drawing, BAR's right drag, whose
+-- press cancelled the preset): a press of either button on the map starts aiming, the finger moves the mark (a gold
+-- ring, the line from the group, the strafe's line), and the preset goes where it lifts.
+local aiming -- { x, z }: the destination as the finger is now
+local function groundAt(x, y)
+	local kind, pos = Spring.TraceScreenRay(x, y, true, true) -- (on the minimap: the place it shows there)
+	if kind == "ground" and pos then
+		return pos[1], pos[3]
+	end
+end
+
+function widget:MousePress(x, y)
 	if not armedFor then
 		return false
 	end
@@ -470,17 +474,33 @@ function widget:MousePress(x, y, btn)
 	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
 		return false -- (the dock's own presses)
 	end
+	local gx, gz = groundAt(x, y)
+	if gx then
+		aiming = { x = gx, z = gz }
+	end
+	return true -- (off the map: nothing yet, still armed)
+end
+
+function widget:MouseMove(x, y)
+	if not aiming then
+		return false
+	end
+	local gx, gz = groundAt(x, y)
+	if gx then
+		aiming.x, aiming.z = gx, gz
+	end
+	return true
+end
+
+function widget:MouseRelease(x, y)
+	if not (aiming and armedFor) then
+		aiming = nil
+		return false
+	end
+	local gx, gz = groundAt(x, y)
+	local tx, tz = gx or aiming.x, gz and gz or aiming.z
 	local a = armedFor
-	armedFor = nil
-	if btn ~= 1 then
-		say("PRESET CANCELLED")
-		return true
-	end
-	local kind, pos = Spring.TraceScreenRay(x, y, true, true) -- (on the minimap: the place it shows there)
-	if kind ~= "ground" or not pos then
-		say("PRESET CANCELLED")
-		return true
-	end
+	armedFor, aiming = nil, nil
 	local alive = {}
 	for _, u in ipairs(a.units) do
 		if Spring.ValidUnitID(u) and not Spring.GetUnitIsDead(u) then
@@ -488,10 +508,47 @@ function widget:MousePress(x, y, btn)
 		end
 	end
 	local p = PRESETS[a.id]
-	local n = p and p.run(alive, pos[1], pos[3]) or 0
+	local n = p and p.run(alive, tx, tz) or 0
 	say(string.format("%s: %d %s", p and p.name or "PRESET", n, n == 1 and "UNIT" or "UNITS"))
-	Spring.Echo(string.format("[bardroid-presets] %s to %d,%d: %d units", p and p.name or "?", pos[1], pos[3], n)) -- (tools)
+	Spring.Echo(string.format("[bardroid-presets] %s to %d,%d: %d units", p and p.name or "?", tx, tz, n)) -- (tools)
 	return true
+end
+
+-- the mark while aiming: a pulsing gold ring where the finger is, a line from the group's middle, and for STRAFE the
+-- line it will run along
+function widget:DrawWorld()
+	if not (aiming and armedFor) then
+		return
+	end
+	local tx, tz = aiming.x, aiming.z
+	local ty = Spring.GetGroundHeight(tx, tz) or 0
+	local pulse = 0.5 + 0.5 * math.sin(os.clock() * 8)
+	gl.DepthTest(false)
+	gl.LineWidth(3)
+	gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
+	gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
+	local cx, cz = shape(armedFor.units)
+	if cx then
+		gl.LineWidth(2)
+		gl.Color(1, 0.8, 0.25, 0.5)
+		gl.BeginEnd(GL.LINES, function()
+			gl.Vertex(cx, (Spring.GetGroundHeight(cx, cz) or ty) + 8, cz)
+			gl.Vertex(tx, ty + 8, tz)
+		end)
+		local p = PRESETS[armedFor.id]
+		if p and p.thumb == "strafe" then
+			local fx, fz = way(cx, cz, tx, tz)
+			local px, pz = -fz, fx
+			gl.LineWidth(4)
+			gl.Color(1, 0.8, 0.25, 0.9)
+			gl.BeginEnd(GL.LINES, function()
+				gl.Vertex(tx + px * STRAFE_SIDE, ty + 8, tz + pz * STRAFE_SIDE)
+				gl.Vertex(tx - px * STRAFE_SIDE, ty + 8, tz - pz * STRAFE_SIDE)
+			end)
+		end
+	end
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
 end
 
 -- the formations' moves as one: the units picked for a moment (the engine's Ctrl group move works on the selection),
@@ -526,7 +583,7 @@ function widget:KeyPress(key)
 		return true
 	end
 	if armedFor then
-		armedFor = nil
+		armedFor, aiming = nil, nil
 		say("PRESET CANCELLED")
 		return true
 	end

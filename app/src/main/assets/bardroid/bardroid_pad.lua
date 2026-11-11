@@ -938,7 +938,10 @@ end
 -- v0.8.5; where it does not, BAR's Move or D-gun is picked and the app clicks on the point (it has to be on the screen
 -- and off the interface: a shot aimed off it goes to the farthest point of the aim that is on it, the same way).
 local DGUN_AIM_DEADZONE, DGUN_MOVE_DEADZONE = 0.5, 0.4
-local DGUN_MOVE_STEP, DGUN_MOVE_EVERY, DGUN_FIRE_EVERY = 150, 0.2, 0.15
+-- (the walk's step: 150 ahead walked on for 4 s after the stick was let go; Kailil, 2026-11-10: "move commands to be
+-- way shorter so if I stop moving my analog, the commander almost stops walking immediately": 56 ahead, given more
+-- often, and a stop as the stick comes to rest, dgunUpdate)
+local DGUN_MOVE_STEP, DGUN_MOVE_EVERY, DGUN_FIRE_EVERY = 56, 0.15, 0.15
 local DGUN_RANGE = 280 -- (v0.8.5's when the D-gun's own is not found)
 local DGUN_SHOT_HOLD = 0.6 -- seconds after a shot is ordered with no step from the stick (a move order replaces it)
 local dgun = nil -- { unitID, range, aimX, aimZ, x, y, z: the target, lx, ly, rx, ry: the sticks, moveAt, fireAt,
@@ -1026,7 +1029,10 @@ local function dgunEnter()
 		lx = 0, ly = 0, rx = 0, ry = 0 }
 	modal = "dgun"
 	dgunTarget(dgun)
-	note("D-GUN: RIGHT STICK AIMS, RT FIRES, B LEAVES", nil, 3)
+	local P = WG.BarDroidPortrait -- (the touch dock's sticks and FIRE need no gamepad words over the map)
+	if not (P and P.dock and P.dock()) then
+		note("D-GUN: RIGHT STICK AIMS, RT FIRES, B LEAVES", nil, 3)
+	end
 end
 
 -- An order on the ground for the commander: given where allowed, else picked and clicked (off the screen or over the
@@ -1170,12 +1176,19 @@ local function dgunUpdate()
 	local t = now()
 	-- (no step just after a shot is ordered: the step's move took the shot's place in the queue before the commander
 	-- had turned to it)
-	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY)
-		and not (d.fireAt and Spring.DiffTimers(t, d.fireAt) < DGUN_SHOT_HOLD) then
-		d.moveAt = t
+	local shotHeld = d.fireAt and Spring.DiffTimers(t, d.fireAt) < DGUN_SHOT_HOLD
+	if mx and (not d.moveAt or Spring.DiffTimers(t, d.moveAt) >= DGUN_MOVE_EVERY) and not shotHeld then
+		d.moveAt, d.walking = t, true
 		local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
 		local x, z = onMap(cx + mx * DGUN_MOVE_STEP, cz + mz * DGUN_MOVE_STEP)
 		dgunOrder(CMD.MOVE, "move", x, Spring.GetGroundHeight(x, z) or cy, z, false)
+	elseif not mx and d.walking and not shotHeld then
+		-- (the stick at rest: the commander stops where it is; not over a shot just ordered, which a stop would drop)
+		d.walking = false
+		if not (unitControl() and pcall(Spring.GiveOrderToUnit, d.unitID, CMD.STOP, {}, 0)) then
+			local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
+			dgunOrder(CMD.MOVE, "move", cx, cy, cz, false)
+		end
 	end
 end
 
@@ -1218,13 +1231,34 @@ local function dgunDraw()
 		if t < 0.5 then -- (as it engages: a ring sweeping out to the range)
 			gl.DrawGroundCircle(cx, cy, cz, d.range * (0.2 + 1.6 * t), 64)
 		end
+		-- the sonar (Kailil, 2026-11-10: "make the sonar animation that plays in auto mode more pronounced"): a ping ring
+		-- out from the commander to the range every 1.1 s, thick and bright as it leaves, thin and faded at the edge; a
+		-- radar wedge sweeping round behind a bright leading line, fading over its 0.9 rad tail
+		local ping = (t % 1.1) / 1.1
+		gl.LineWidth(1 + 5 * (1 - ping))
+		gl.Color(1, 0.6, 0.15, 0.9 * (1 - ping))
+		gl.DrawGroundCircle(cx, cy, cz, d.range * ping ^ 0.7, 64)
 		local a = t * 2.5
-		gl.BeginEnd(GL.LINE_STRIP, function()
-			for i = 0, 10 do
-				local b = a + i * 0.06
+		local tail, parts = 0.9, 18
+		gl.BeginEnd(GL.TRIANGLE_FAN, function()
+			gl.Color(1, 0.5, 0.1, 0.3)
+			gl.Vertex(cx, cy + 4, cz)
+			for i = 0, parts do
+				local q = i / parts -- (0: the leading edge, 1: the end of the tail)
+				local b = a - q * tail
+				gl.Color(1, 0.5 + 0.2 * (1 - q), 0.1, 0.42 * (1 - q) ^ 1.5)
 				gl.Vertex(cx + math.cos(b) * d.range, cy + 4, cz + math.sin(b) * d.range)
 			end
 		end)
+		gl.LineWidth(3)
+		gl.Color(1, 0.85, 0.35, 0.95)
+		gl.BeginEnd(GL.LINES, function()
+			gl.Vertex(cx, cy + 5, cz)
+			gl.Vertex(cx + math.cos(a) * d.range, cy + 5, cz + math.sin(a) * d.range)
+		end)
+		gl.LineWidth(2 + pulse)
+		gl.Color(1, 0.35 + 0.35 * pulse, 0.1, 0.55 + 0.4 * pulse)
+		gl.DrawGroundCircle(cx, cy, cz, d.range, 64)
 		local tx, ty, tz
 		if d.target then
 			tx, ty, tz = Spring.GetUnitPosition(d.target)
@@ -1943,6 +1977,12 @@ local ACTIONS = {
 			end
 			dgun.auto, dgun.autoAt, dgun.autoOn = true, nil, now()
 			note("AUTO D-GUN ON")
+		end
+	end,
+	dgun_auto_off = function() -- the dock's AUTO swiped left (Kailil, 2026-11-10)
+		if dgun and dgun.auto then
+			dgun.auto, dgun.target = false, nil
+			note("AUTO D-GUN OFF")
 		end
 	end,
 	dgun_cancel = function() -- B in it

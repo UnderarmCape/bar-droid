@@ -827,8 +827,11 @@ dgunLines = function()
 	local function rect(x)
 		return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 	end
-	return string.format("dgun 1\nstickl %d %d %d\nstickr %d %d %d\nfire %s\ncancel %s\n", p.l[1], vsy - p.l[2], p.l[3],
-		p.r[1], vsy - p.r[2], p.r[3], rect(p.fire), rect(p.cancel))
+	-- (dgunauto: full auto on, FIRE's swipe goes left to end it)
+	local D = WG.BarDroidPadDgun
+	local auto = D and D.auto and D.auto()
+	return string.format("dgun 1\nstickl %d %d %d\nstickr %d %d %d\nfire %s\ncancel %s\ndgunauto %d\n", p.l[1], vsy - p.l[2],
+		p.l[3], p.r[1], vsy - p.r[2], p.r[3], rect(p.fire), rect(p.cancel), auto and 1 or 0)
 end
 
 local function teammateList()
@@ -989,7 +992,9 @@ function refreshNow()
 			newRight[#newRight + 1] = f
 		end
 		rk = "pregame"
-	elseif typesFrom then -- a list on the left: the lists, MULTI and DONE
+	elseif typesFrom and #sel == 0 then -- a list on the left with nothing picked: the lists, MULTI and DONE (with units
+		-- picked, their orders as for any pick: Kailil, 2026-11-10, "For selecting all units or local units. Get rid of the
+		-- buttons thats on the right. Instead show the order buttons that appear when a unit is selected")
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
@@ -2105,7 +2110,8 @@ local function drawMode()
 		gl.Color(1, 0.82, 0.35, 0.9 * a)
 		gl.Rect(d[1], d[4] - edge * 3, d[3], d[4])
 	end
-	local left = max(0, 1 - (t - lastTouch) / MENU_SECONDS)
+	local held = rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel"
+	local left = held and 1 or max(0, 1 - (t - lastTouch) / MENU_SECONDS) -- (placing, picking: no clock)
 	gl.Color(1, 0.78, 0.25, 0.85)
 	gl.Rect(d[1], d[4] - edge, d[1] + (d[3] - d[1]) * left, d[4])
 	gl.Color(1, 1, 1, 1)
@@ -2181,10 +2187,15 @@ local function dockLines()
 				D.sticks(DG.stick[1], DG.stick[2], DG.stick[3], DG.stick[4])
 			end
 		end
-		local slid = tonumber(line:match("^dgunslide (%S+)") or "")
-		if slid then -- FIRE held: how far it is swiped right (below 0: let go)
-			if slid >= 0 then
-				DG.slide = min(1, slid)
+		local slidWord = line:match("^dgunslide (%S+)")
+		if slidWord then -- FIRE held: how far it is swiped, right (to AUTO) or left (below 0: back to FIRE); "off": let go
+			local slid = tonumber(slidWord)
+			if slid then
+				if not DG.slide then -- (a new hold: its way from its first line, "-0.00" on AUTO)
+					DG.slideLocked, DG.slideDir = false, slidWord:sub(1, 1) == "-" and -1 or 1
+				end
+				DG.slide = max(-1, min(1, slid))
+				DG.slideLocked = DG.slideLocked or abs(DG.slide) >= 0.92
 			elseif DG.slide then
 				DG.slide, DG.slideLast, DG.slideOff = nil, DG.slide, now()
 			end
@@ -2279,7 +2290,16 @@ function widget:Update(dt)
 		snapUpdate(s, dt)
 	end
 	local t = now()
-	if menu and not selecting and not leftScroll.drag and not rightScroll.drag and t - lastTouch > MENU_SECONDS then
+	-- (a building picked: the menu stays open, PLACE, rotate and cancel take the first tap. Its 2 s ran out while the
+	-- spot was picked on the map, the dock went back to the camera pad, and PLACE's tap only opened the menu again: "it
+	-- keeps canceling a place", Kailil 2026-11-10, a Bot Lab; dev phone: the spot tapped, PLACE 2.5 s later, nothing)
+	-- (so with the presets, the teammate picker and the resource panel over the grid: picked to be tapped next; the
+	-- presets' thumbnails went back to the camera pad under a finger reaching for one, dev phone)
+	if rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel" then
+		if not menu then
+			setMenu(true)
+		end
+	elseif menu and not selecting and not leftScroll.drag and not rightScroll.drag and t - lastTouch > MENU_SECONDS then
 		setMenu(false)
 	end
 	if filterAt and t >= filterAt then
@@ -2326,6 +2346,67 @@ local function disc(x, y, r, fill)
 		end
 	end)
 end
+-- FIRE's swipe track (Kailil, 2026-11-10: "the fire mode animation doesn't fully slide to the right and fill the auto.
+-- And when you swipe left to disable auto, the animation doesn't work. Its just frozen"): FIRE's to the right, to the
+-- grid's edge, AUTO at its end; AUTO's to the left, to the cancel corner, FIRE at its end (RtsTouch measures the swipe
+-- against the same spans). The knob goes all the way, the track fills behind it (red to gold towards AUTO, gold to red
+-- towards FIRE), chevrons run the way to go; locked (past 0.92) it is full, the knob gone into it, the word on it.
+-- f: FIRE's rect, cancel: the cancel corner's, dir 1 right / -1 left, v 0..1, alpha
+function DG.track(f, cancel, dir, v, alpha, locked, t)
+	local fh = f[4] - f[2]
+	local m = dir > 0 and 0.16 or 0.26 -- (the left one thinner: the cancel corner leaves it less room across)
+	local y0, y1 = f[2] + floor(fh * m), f[4] - floor(fh * m)
+	local k = dir > 0 and { f[3] + L.gap * 2, y0, L.right[3], y1 } or { cancel[3] + L.gap * 2, y0, f[1] - L.gap * 2, y1 }
+	local tw, th = k[3] - k[1], k[4] - k[2]
+	if tw < th * 1.3 or alpha <= 0 then
+		return
+	end
+	local r, cy = th * 0.4, (k[2] + k[4]) / 2
+	local from, to = dir > 0 and k[1] + r or k[3] - r, dir > 0 and k[3] - r or k[1] + r
+	local kx = from + (to - from) * v
+	gl.Color(0, 0, 0, 0.6 * alpha)
+	gl.Rect(k[1], k[2], k[3], k[4])
+	local c = dir > 0 and v or 1 - v
+	gl.Color(0.86 + 0.14 * c, 0.14 + 0.66 * c, 0.11, (locked and 0.95 or 0.85) * alpha)
+	if locked then
+		gl.Rect(k[1], k[2], k[3], k[4])
+	elseif dir > 0 then
+		gl.Rect(k[1], k[2], kx, k[4])
+	else
+		gl.Rect(kx, k[2], k[3], k[4])
+	end
+	gl.Color(1, 1, 1, 0.3 * alpha)
+	gl.Rect(k[1], k[2], k[3], k[2] + 1)
+	gl.Rect(k[1], k[4] - 1, k[3], k[4])
+	gl.Rect(k[1], k[2], k[1] + 1, k[4])
+	gl.Rect(k[3] - 1, k[2], k[3], k[4])
+	if not locked then
+		local phase, cw = (t * 1.6) % 1, th * 0.22
+		gl.LineWidth(max(2, floor(th * 0.09)))
+		for i = 0, 2 do
+			local q = (i + phase) / 3
+			local x = from + (to - from) * q
+			gl.Color(1, 1, 1, math.sin(q * math.pi) * 0.8 * alpha)
+			gl.BeginEnd(GL.LINE_STRIP, function()
+				gl.Vertex(x - dir * cw * 0.5, cy + cw)
+				gl.Vertex(x + dir * cw * 0.5, cy)
+				gl.Vertex(x - dir * cw * 0.5, cy - cw)
+			end)
+		end
+		gl.LineWidth(1)
+		gl.Color(1, 1, 1, alpha)
+		disc(kx, cy, r, true)
+	end
+	if alpha > 0.2 then
+		local ls = th * 0.36
+		local word = dir > 0 and "AUTO" or "FIRE"
+		local col = locked and (dir > 0 and "\255\050\024\000" or "\255\255\255\255")
+			or (v >= 0.6 and "\255\255\200\064" or "\255\190\190\190")
+		bold:Print(col .. word, dir > 0 and k[3] - L.pad or k[1] + L.pad, cy - ls * 0.36, ls, dir > 0 and "ro" or "o")
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
 local function drawDgun()
 	local p = dgunParts()
 	for i, s in ipairs({ p.l, p.r }) do
@@ -2355,6 +2436,10 @@ local function drawDgun()
 	local f, t = p.fire, now()
 	local fw, fh = f[3] - f[1], f[4] - f[2]
 	local e = max(2, floor(L.pad * 0.35))
+	if DG.autoWas and not autoOn then
+		DG.autoOffAt = t -- (full auto just ended: the gold drains out of the button, below)
+	end
+	DG.autoWas = autoOn
 	if autoOn then -- full auto: FIRE turns gold-orange, stripes run across it, its edge pulses; AUTO on it
 		button(f, { 0.55, 0.2, 0.02, 1 }, { 0.95, 0.48, 0.07, 1 })
 		local step = fh * 0.6
@@ -2376,7 +2461,12 @@ local function drawDgun()
 		gl.Rect(f[1], f[4] - e, f[3], f[4])
 		gl.Rect(f[1], f[2], f[1] + e, f[4])
 		gl.Rect(f[3] - e, f[2], f[3], f[4])
-		if autoFor < 0.6 then -- (as it engages: a flash, and the edge thrown out around the button)
+		if autoFor < 0.3 then -- (as it engages the gold fills the button from the left, the red going out at the right)
+			local w = (1 - autoFor / 0.3) ^ 2
+			gl.Color(0.86, 0.14, 0.11, 0.95)
+			gl.Rect(f[3] - fw * w, f[2], f[3], f[4])
+		end
+		if autoFor < 0.6 then -- (and a flash, and the edge thrown out around the button)
 			local a, grow = 1 - autoFor / 0.6, autoFor / 0.6 * fh * 0.6
 			gl.Color(1, 0.92, 0.6, 0.55 * a)
 			gl.Rect(f[1], f[2], f[3], f[4])
@@ -2389,6 +2479,15 @@ local function drawDgun()
 		gl.Color(1, 1, 1, 1)
 	else
 		button(f, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
+		local off = DG.autoOffAt and t - DG.autoOffAt
+		if off and off < 0.4 then -- (full auto ended: the gold drains to the left, a white flash going with it)
+			local w = (1 - off / 0.4) ^ 2
+			gl.Color(0.95, 0.48, 0.07, 0.95)
+			gl.Rect(f[1], f[2], f[1] + fw * w, f[4])
+			gl.Color(1, 1, 1, 0.5 * w)
+			gl.Rect(f[1], f[2], f[3], f[4])
+			gl.Color(1, 1, 1, 1)
+		end
 	end
 	-- whether it can fire now: a thin bar along FIRE's foot, white as the D-gun reloads, amber (and the word dimmed)
 	-- while the team lacks a shot's energy; none once it is ready
@@ -2414,47 +2513,14 @@ local function drawDgun()
 	end
 	textIn(autoOn and "AUTO" or "FIRE", f[1], f[2], f[3], f[4], fh * 0.42,
 		lacking and "\255\200\160\150" or "\255\255\255\255", bold)
-	-- FIRE held: the track beside it, to the grid's edge (RtsTouch measures the swipe against it); chevrons run along it,
-	-- it fills red to gold with the swipe, AUTO at its end; let go short of the end it runs back and fades
+	-- FIRE held: its swipe's track (DG.track). Let go past 0.92 the track stays full and fades; short of it it runs back
 	local held = DG.slide
-	local back = not held and DG.slideOff and t - DG.slideOff < 0.25 and 1 - (t - DG.slideOff) / 0.25
-	if held or back then
-		local v, alpha = held or (DG.slideLast or 0) * back, held and 1 or back
-		local k = { f[3] + L.gap * 2, f[2] + floor(fh * 0.16), L.right[3], f[4] - floor(fh * 0.16) } -- (the track)
-		local tw, th = k[3] - k[1], k[4] - k[2]
-		local ls = th * 0.36 -- (AUTO at the end; the knob stops short of it)
-		local lw = font:GetTextWidth("AUTO") * ls + L.pad * 2
-		if tw > th + lw then
-			gl.Color(0, 0, 0, 0.6 * alpha)
-			gl.Rect(k[1], k[2], k[3], k[4])
-			local fx = k[1] + th * 0.4 + (tw - th * 0.4 - lw) * v
-			gl.Color(0.86 + 0.14 * v, 0.14 + 0.66 * v, 0.11, 0.85 * alpha)
-			gl.Rect(k[1], k[2], fx, k[4])
-			gl.Color(1, 1, 1, 0.3 * alpha)
-			gl.Rect(k[1], k[2], k[3], k[2] + 1)
-			gl.Rect(k[1], k[4] - 1, k[3], k[4])
-			gl.Rect(k[1], k[2], k[1] + 1, k[4])
-			gl.Rect(k[3] - 1, k[2], k[3], k[4])
-			local phase = (t * 1.6) % 1
-			local cw = th * 0.22
-			gl.LineWidth(max(2, floor(th * 0.09)))
-			for i = 0, 2 do
-				local q = (i + phase) / 3
-				local cx, cy = k[1] + th * 0.4 + (tw - th * 0.8 - lw) * q, (k[2] + k[4]) / 2
-				gl.Color(1, 1, 1, math.sin(q * math.pi) * 0.8 * alpha)
-				gl.BeginEnd(GL.LINE_STRIP, function()
-					gl.Vertex(cx - cw * 0.5, cy + cw)
-					gl.Vertex(cx + cw * 0.5, cy)
-					gl.Vertex(cx - cw * 0.5, cy - cw)
-				end)
-			end
-			gl.LineWidth(1)
-			gl.Color(1, 1, 1, alpha)
-			disc(fx, (k[2] + k[4]) / 2, th * 0.4, true)
-			local ready = v >= 0.92 or autoOn
-			bold:Print((ready and "\255\255\200\064" or "\255\190\190\190") .. "AUTO", k[3] - L.pad, (k[2] + k[4]) / 2
-				- ls * 0.36, ls, "ro")
-		end
+	local fade = not held and DG.slideOff and t - DG.slideOff < 0.3 and 1 - (t - DG.slideOff) / 0.3
+	if held or fade then
+		local s = held or DG.slideLast or 0
+		local locked = DG.slideLocked
+		local v = locked and 1 or abs(s) * (held and 1 or fade)
+		DG.track(f, p.cancel, DG.slideDir or (s < 0 and -1 or 1), v, held and 1 or fade, locked, t)
 	end
 	button(p.cancel)
 	textIn("\226\156\149", p.cancel[1], p.cancel[2], p.cancel[3], p.cancel[4], (p.cancel[4] - p.cancel[2]) * 0.5,

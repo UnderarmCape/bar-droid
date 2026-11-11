@@ -1,0 +1,38 @@
+diff --git a/lorie/src/main/cpp/lorie/InitOutput.c b/lorie/src/main/cpp/lorie/InitOutput.c
+index c5ecdcc..23496b2 100644
+--- a/lorie/src/main/cpp/lorie/InitOutput.c
++++ b/lorie/src/main/cpp/lorie/InitOutput.c
+@@ -432,6 +432,8 @@ static Bool lorieCursorFromMouse(DeviceIntPtr pDev) {
+ }
+ 
+ void lorieSetCursorVisible(Bool visible) {
++    if (visible && pvfb->state->cursor.appHidden)   // BAR Droid: hidden by the app (a finger's taps are mouse events)
++        return;
+     pvfb->state->cursor.visible = visible;
+     pvfb->state->cursor.moved = TRUE;
+     pthread_cond_signal(rendererCond);
+diff --git a/lorie/src/main/cpp/lorie/activity.cpp b/lorie/src/main/cpp/lorie/activity.cpp
+index 37f8c75..b2862a2 100644
+--- a/lorie/src/main/cpp/lorie/activity.cpp
++++ b/lorie/src/main/cpp/lorie/activity.cpp
+@@ -455,6 +455,7 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, __unused void *reserved) {
+             {"setCursorVisible", "(JZ)V", (void *) +[](__unused JNIEnv *env, __unused jobject thiz, jlong ptr, jboolean visible) {
+                 auto* r = (LorieViewResources*) ptr;
+                 if (!r || r->destroyed || !r->renderer.state) return;
++                r->renderer.state->cursor.appHidden = !visible;   // (the X server's mouse events keep it so: lorieSetCursorVisible)
+                 r->renderer.state->cursor.visible = visible;
+                 r->renderer.state->cursor.moved = TRUE;   // redraw without it (or with it)
+             }},
+diff --git a/lorie/src/main/cpp/lorie/lorie.h b/lorie/src/main/cpp/lorie/lorie.h
+index 2a54185..051a96d 100644
+--- a/lorie/src/main/cpp/lorie/lorie.h
++++ b/lorie/src/main/cpp/lorie/lorie.h
+@@ -263,6 +263,8 @@ struct lorie_shared_server_state {
+         uint32_t bits[512*512]; // 1 megabyte should be enough for any cursor up to 512x512
+         // Signals to renderer to update cursor's texture or its coordinates
+         volatile uint8_t updated, moved, visible;
++        // BAR Droid: the app hid the pointer (LorieView.setCursorVisible); mouse events leave it hidden until it shows it
++        volatile uint8_t appHidden;
+     } cursor;
+ };
+ 

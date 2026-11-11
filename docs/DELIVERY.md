@@ -38,6 +38,34 @@ keyboard and mouse, "The devs theories consist of automating micro movements ...
 the app's widgets give the orders these need (`GiveOrder`), running as game widgets as the unit control restrictions
 were already set aside for (`BARDROID_GAME_WIDGETS`, the engine branch). Where BAR's own command and a click do the
 same, that stays the simpler way.
+- [x] **Kailil's Fold7 notes, 2026-11-10 ~20:40** (with screenshots), each on the dev phone upright:
+      - **Building by one finger "keeps canceling a place" (a Bot Lab)**: the dock's menu went back to the camera pad
+        2 s after the last touch while the spot was picked on the map, and PLACE's tap then only opened the menu again.
+        The menu now stays open while a building is picked (and while the presets, the teammate picker or the resource
+        panel cover the grid: the presets' tap was lost the same way). Bot Lab, spot, PLACE 3.2 s later: queued at
+        once, the lab still picked. (A spot on a slope shows the lab red and BAR refuses it, as on a PC.)
+      - **LOCAL / ALL UNITS: the picked units' orders on the right** instead of the list buttons (those stay for an
+        empty pick). ALL UNITS with six Pawns: ALL 6 and the Pawn on the left, Fight / Move / Patrol / PRESETS right.
+      - **D-gun mode**: the walk's step 56 ahead every 0.15 s (was 150 every 0.2 s) and a stop as the stick comes to
+        rest: stood still 0.18 s after release (it walked on ~4 s). The sonar: a ping ring out to the range every
+        1.1 s and a radar wedge sweeping behind a bright line. FIRE's swipe right goes the whole way, past 0.92 the
+        track locks full gold with AUTO on it and the button fills gold from the left; AUTO's swipe left has its own
+        track to the cancel corner (FIRE at its end; it was frozen), and the gold drains out of the button
+        (`dgun_auto_off`, "dgunauto 1" in the dock file tells RtsTouch which way). Screenshots of each step. No
+        gamepad words over the map when the touch dock opens the mode.
+      - **Presets: STRAFE in ZIGZAG's place** ("fight to the destination then sit at the destination repeating a
+        left and right strafe via a repeat ... via a fight command"): each unit, keeping its place in the group, a
+        fight to the destination's left side, one to its right side, repeat on. **The destination set where the
+        finger lifts**: a press on the map aims (a gold ring, the line from the group, the strafe's line), a drag
+        moves it (it was BAR's right drag, whose press cancelled the preset). Six Pawns: two fights each, Repeat On.
+      - **BAR not opening from the icon** ("1 of the app's adjustments to BAR did not apply"; "BAR's current version
+        failed here before; kept the last good one"): a lobby that ends within 60 s keeps the icon on the launcher
+        next time; one the player closed (Stop, swiped away) or the low-memory killer ended no longer counts. Why
+        BAR's new release failed on the Fold7 needs its logs (the dev phone has no internet here to fetch it).
+- [x] **The lobby's pointer by touch**: hidden while fingers play the lobby, back for a mouse, keyboard or the pad
+      (patch 0014: the X server's mouse events no longer show a pointer the app hid; RtsTouch.showCursor), and the
+      button under the lifted finger no longer stays lit after a page swipe's overshoot (the hush clears a control lit
+      again). Dev phone: three page swipes, no arrow, no lit button.
 - [x] **The dock's menu times out after 1.25 s** ("make time out for the mouse controls on the bottom half 1.25
       seconds instead"; it was 7 s untouched, `MENU_SECONDS`). Dev phone: open 0.7 s after a tap, the camera pad
       again by 2 s, three taps.
@@ -361,12 +389,6 @@ Added 2026-11-10 ~05:00 (with screenshots):
       long one to the page it reached, and it settles in 0.15 s with a slight overshoot (was 0.28 s; half the width or
       a 600 flick). Dev phone: swipes of 70 and 60 pixels each turned a page (2, 3, back to 2); the lobby draws about
       200 frames a second, so the settle has about 30.
-- [ ] **The lobby's pointer by touch**: an arrow stays where the last finger lifted (every upright screenshot), and the
-      button under it keeps a lit look after a page swipe. Hiding it from RtsTouch (LorieView.setCursorVisible) is
-      undone at once: Termux:X11's X server shows the pointer on every mouse event (cmdentrypoint.cpp EVENT_MOUSE,
-      lorieSetCursorVisible(TRUE)), and each tap is one. Next: patch 0014, a flag in the shared cursor state that the
-      app's hide sets and EVENT_MOUSE respects; then hidden in the lobby while fingers play it, back for a mouse, a
-      keyboard or the pad (RtsTouch.source).
 - [x] **The upright lobby's grid back after a popup** (2026-11-10, dev phone, offline lobby): with Chobby's login dialog
       cancelled the grid was logged "back" but not seen, the strip under the news empty: Chili puts a control shown
       again last among its parent's, drawn under Chobby's full-screen background. It is brought to the front as it comes
