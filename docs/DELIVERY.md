@@ -157,6 +157,11 @@ same, that stays the simpler way.
         BAR's older infologs (logs/), springsettings.cfg, both state files, android-layer.txt.
         (On the way: `am start --es start skirmish` after an install without a force-stop is ignored on purpose: the
         launcher is restored with its saved state, as after Android ends the app for memory; the tools force-stop.)
+      - **The launcher's other buttons and settings** (11-11 ~04:35, dev phone): Display (Termux:X11's pages, our
+        summaries; its touch mode acts when "BAR touch controls" is off), GL check (2 s, the result in white), the
+        settings column through Advanced, the left column scrolling to the log (the version line reachable): nothing
+        broken. Polish: GL check names the GPU as players know it, "Adreno 740 (Freedreno)" for Freedreno's "FD740"
+        (StatusText.gpuName, status-text-test's new cases).
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
