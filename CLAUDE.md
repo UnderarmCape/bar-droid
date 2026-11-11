@@ -188,6 +188,7 @@ powershell -ExecutionPolicy Bypass -File tools\ui-screenshot.ps1 -Screen inner|c
 powershell -ExecutionPolicy Bypass -File tools\catchup-test.ps1 [-Warmup 300]       # a spectator joining late, ~5 min
 powershell -ExecutionPolicy Bypass -File tools\lobby-touch-test.ps1                # the lobby widget (finger scrolling, server details, the warning, the scale), ~30 s
 powershell -ExecutionPolicy Bypass -File tools\lobby-phone-test.ps1                # the same on the dev phone, plus a virtual pad's Start; nothing on the laptop, ~1 min
+powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1                 # the upright touch dock by real taps on the dev phone: a Bot Lab placed (PLACE 2.6 s after the spot), PLACE on a blocked spot, the D-gun's FIRE / AUTO swipes and MOVE's stop, the STRAFE preset dragged; ~3 min
 powershell -ExecutionPolicy Bypass -File tools\touch-phone-test.ps1                # the touch camera at the map's edge on the dev phone (drags on the map, over the void, across the edge, over the sky; a pinch over the void), driven through the touch log; ~2 min
 powershell -ExecutionPolicy Bypass -File tools\fp-save-test.ps1                    # a spectator's 1st person through BAR's mid-game settings save, on the dev phone, ~1.5 min
 powershell -ExecutionPolicy Bypass -File tools\stripes-test.ps1 [-Pairs 3]         # the interface's stripes: skirmishes on the dev phone alternating launch-bar.sh's UBWC off (FD_MESA_DEBUG=noubwc, the default) and on, screenshots + montage in build\stripes-test (DELIVERY.md), ~3 min a start
