@@ -107,6 +107,21 @@ public class StatusTextTest {
                 && !w2.onLine(null) && !w2.lost();
         failed += ok4 ? 0 : 1;
         System.out.println((ok4 ? "PASS " : "FAIL ") + "driver watch: another submit error, then the watchdog: nothing");
+        // the pre-game screen's server: a join's line, the phone's own game, other lines (the dev phone's lines)
+        String[][] pre = {
+            { "13:39:47 [engine] [t=00:00:01.802620][f=-000001] [CPreGame] using client IP 10.255.255.1 and port 8452",
+                "10.255.255.1:8452" },
+            { "13:21:02 [engine] [t=00:00:02.562342][f=-000001] [CPreGame] using server IP 127.0.0.1 and port 0", null },
+            { "[CPreGame] using client IP 203.0.113.7 and port 0", "203.0.113.7" },
+            { "[CPreGame] using client IP ::1 and port 8452", null },
+            { "[PreGame::StartServer] Game/Map archives checksum acquisition took = 64 microseconds", null },
+            { null, null } };
+        for (String[] c : pre) {
+            String got = StatusText.preGameServer(c[0]);
+            boolean ok = c[1] == null ? got == null : c[1].equals(got);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "pre-game server: " + c[1] + " -> " + got);
+        }
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);
     }

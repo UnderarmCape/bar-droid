@@ -442,7 +442,13 @@ same, that stays the simpler way.
         stack carries the clock and a replay's speed: Kailil's call whether the folded dock hides it too.
       - [x] **LAST PINGS says how many wait** (polish, ~16:10): it said nothing of whether there was a ping to see; now
         their count in gold at its top right, as the idle builders' (playing and spectating). Dev phone, two pings from
-        "someone else" (bardroid_pad.lua's test hook): "2" on it, then 1 OF 2, 2 OF 2. A patch set for BAR's repository, tested by a pool swap as
+        "someone else" (bardroid_pad.lua's test hook): "2" on it, then 1 OF 2, 2 OF 2.
+      - [x] **A review of the share code and the laptop's checks** (~16:20): the dock's teammate picker and SEND gives
+        through bardroid_pad.lua's own rules (a teammate out of the game, their storage's share limit, anonymous mode):
+        nothing to fix. updater-test, padgame-test, status-text-test ALL PASS. The join's line reading
+        (`StatusText.preGameServer`, out of GameService, an Android class) now has laptop cases in status-text-test:
+        a join's address and port, the phone's own game, port 0, ::1, other lines (6, ALL PASS); dev phone: the
+        unanswered join still shows the fitted screen. A patch set for BAR's repository, tested by a pool swap as
         the top bar's was (docs/upstream), then the dock calls SetHidden where BAR has it. An upright skirmish on the
         dev phone the same hour, played through the dock (PINGS, COMMANDER, BASE, a windmill placed and rotated):
         no error or warning from the app's widgets in infolog.txt (the engine's "No L2 or L3 cache found on ARM" only).

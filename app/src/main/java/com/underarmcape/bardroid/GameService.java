@@ -110,27 +110,6 @@ public class GameService extends Service {
     public static boolean preGameData() { return preGameData; }
     private static volatile String preGameHost;
     private static volatile boolean preGameData;
-    // (a join: "[CPreGame] using client IP <the server> and port <its port>"; the phone's own game: "using server IP
-    // 127.0.0.1 and port 0"; dev phone, a client script at 10.255.255.1)
-    private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
-
-    /** The server an engine line names ("[CPreGame] using client IP 1.2.3.4 and port 8452"): "1.2.3.4:8452"; null:
-     *  no such line, or the phone's own server. */
-    static String preGameServer(String line) {
-        int at = -1;
-        String key = null;
-        for (String k : PREGAME_LINES) {
-            at = line.indexOf(k);
-            if (at >= 0) { key = k; break; }
-        }
-        if (key == null) return null;
-        String[] w = line.substring(at + key.length()).trim().split("\\s+");
-        String ip = w.length > 0 ? w[0] : "";
-        if (ip.isEmpty() || ip.startsWith("127.") || ip.equals("::1") || ip.equalsIgnoreCase("localhost")
-                || ip.equals("0.0.0.0")) return null;
-        String port = w.length >= 4 && w[1].equals("and") && w[2].equals("port") ? w[3] : "";
-        return port.isEmpty() || port.equals("0") ? ip : ip + ":" + port;
-    }
 
     private static void loadReset(boolean screen) {
         preGameHost = null;
@@ -387,7 +366,7 @@ public class GameService extends Service {
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
                             }
                             // (joining a game hosted elsewhere: the pre-game screen, GameActivity's upright version of it)
-                            String server = preGameServer(line);
+                            String server = StatusText.preGameServer(line);
                             if (server != null) {
                                 preGameHost = server;
                                 preGameData = false;

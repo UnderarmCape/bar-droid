@@ -74,6 +74,32 @@ final class StatusText {
         return "BAR's own message: \"" + msg + "\"";
     }
 
+    // (a join: "[CPreGame] using client IP <the server> and port <its port>"; the phone's own game: "using server IP
+    // 127.0.0.1 and port 0"; dev phone, a client script at 10.255.255.1, 2026-11-11)
+    private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
+
+    /**
+     * The server an engine line names as a game is joined ("[CPreGame] using client IP 1.2.3.4 and port 8452"):
+     * "1.2.3.4:8452"; null: no such line, or the phone's own server (a local game: its pre-game is over in a moment).
+     * GameService's pre-game screen (GameActivity's upright version of the engine's "Waiting for server response").
+     */
+    static String preGameServer(String line) {
+        if (line == null) return null;
+        int at = -1;
+        String key = null;
+        for (String k : PREGAME_LINES) {
+            at = line.indexOf(k);
+            if (at >= 0) { key = k; break; }
+        }
+        if (key == null) return null;
+        String[] w = line.substring(at + key.length()).trim().split("\\s+");
+        String ip = w.length > 0 ? w[0] : "";
+        if (ip.isEmpty() || ip.startsWith("127.") || ip.equals("::1") || ip.equalsIgnoreCase("localhost")
+                || ip.equals("0.0.0.0")) return null;
+        String port = w.length >= 4 && w[1].equals("and") && w[2].equals("port") ? w[3] : "";
+        return port.isEmpty() || port.equals("0") ? ip : ip + ":" + port;
+    }
+
     /**
      * The engine's exit codes (rts/System/SpringExitCode.h) as they arrive, an exit status's low byte: what the launcher
      * says when the engine left no message of its own; null for any other.
