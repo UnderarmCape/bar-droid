@@ -1199,7 +1199,8 @@ final class RtsTouch {
     }
 
     private void sendSpot(float vx, float vy) {
-        send(String.format(Locale.US, "spot %.0f %.0f", toX(vx), toY(vy)));
+        // (dragged on into the upright dock: held at its top edge, the building in sight; it went behind the dock)
+        send(String.format(Locale.US, "spot %.0f %.0f", toX(vx), toY(aboveDock(vy))));
         spotSentAt = SystemClock.uptimeMillis();
     }
 
@@ -1218,6 +1219,8 @@ final class RtsTouch {
         if (vx == moveX && vy == moveY) return;
         gridX += (vx - moveX) * k;
         gridY += (vy - moveY) * k;
+        Dock d = dock();   // (the far corner not behind the upright dock: the grid in sight)
+        if (d != null && d.all != null && gridY >= d.all[1]) gridY = d.all[1] - 1;
         view().sendMouseEvent(gridX, gridY, InputStub.BUTTON_UNDEFINED, false, false);
         moveX = vx; moveY = vy;
     }

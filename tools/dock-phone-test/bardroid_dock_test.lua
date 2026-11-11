@@ -81,7 +81,16 @@ end
 
 local function onCmd(c)
 	local P, D = WG.BarDroidPad, WG.BarDroidPadDgun
-	if c == "placed?" then
+	if c:match("^spotdock%?") then -- (the picked building dragged on into the dock: its spot at the dock's top edge)
+		local y = tonumber(c:match("(%-?%d+)$")) or -1
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local _, vsy = Spring.GetViewGeometry()
+		local top = dock and vsy - dock[4] or 0 -- (X pixels from the top, as the place file's spot)
+		-- (the spot snaps to the build grid: a few pixels past the edge it was held at; unheld it was the dock's middle)
+		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
+			string.format("spot y %d, the dock's top %d", y, top))
+	elseif c == "placed?" then
 		local found, words = false, {}
 		for _, cmd in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
 			found = found or cmd.id == -buildDef
