@@ -104,6 +104,13 @@ same, that stays the simpler way.
         its dunes in the placing screenshot: its own sand ripples. Polish from that screenshot: the building PLACE
         builds is now marked on the dock (BAR's picked cell, the picture closer in gold light, and the build menu
         copy's gold line); FlowUI's selector alone was a faint border.
+      - **A 6-minute upright skirmish, nothing touched** (11-11 ~02:50, dev phone): 30 fps each minute (slowest frame
+        47-349 ms), no error from the app's widgets; Lua's memory 135, 127, 142, 143, 147, 148 MB (the collector's
+        sawtooth; too short to call a leak: watch it in a long game). The share list reviewed (a dead teammate, the
+        storage room under BAR's share slider, units BAR kept): matches pad-test -Share, nothing found. From the late
+        screenshot: the dock's state lights were the other way round from BAR's order menu ("Fire at will" red,
+        "Hold pos" and "Repeat Off" green); now as BAR's DrawCell colours them: the first state red, the second yellow
+        (green of two), the third green.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
