@@ -2166,13 +2166,15 @@ local function drawPlace()
 	local pl, rot = p.place, p.rotate
 	local box = pl
 	local below = rot and p.cancel and max(rot[4], p.cancel[4]) or (rot and rot[4]) -- (the X is the taller since 11-11)
-	if rot and below > pl[2] and below < pl[4] and bold then
+	if rot and below > pl[2] and bold then
 		local tw = max(0.01, bold:GetTextWidth("PLACE"))
 		local function fits(b)
 			return min((b[4] - b[2]) * 0.3, (b[3] - b[1]) * 0.88 / tw)
 		end
 		local above, beside = { pl[1], below, pl[3], pl[4] }, { pl[1], pl[2], rot[1], pl[4] }
-		box = fits(above) >= fits(beside) and above or beside
+		-- (buttons as tall as the panel, a short one: the unfolded Fold7 upright: beside them; centred on the whole
+		-- panel the word ran into ROTATE, dev phone at 1080x1198)
+		box = (below >= pl[4] or fits(beside) > fits(above)) and beside or above
 	end
 	textIn("PLACE", box[1], box[2], box[3], box[4], (box[4] - box[2]) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	for _, k in ipairs({ "rotate", "cancel" }) do
