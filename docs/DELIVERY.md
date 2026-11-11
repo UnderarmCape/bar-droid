@@ -141,6 +141,13 @@ same, that stays the simpler way.
         room above rotate and cancel, and the word shrank to a speck. The word now goes above the two buttons or
         beside them, wherever it is the larger: beside on the unfolded shape, above on the tall one; both shapes
         ALL PASS.
+      - **The evening's starts on the dev phone** (11-11 ~04:20, its two launcher logs): 35 engine starts, no hang, no
+        GPU driver fault, one game closed by Android for memory (the 8 GB phone). The upright lobby at 1080x1198 opens
+        on Chobby's account dialog (offline), nothing of the app's out of place. Polish, from a landscape run Android
+        closed for memory: the launcher's low-memory note was four amber lines; its advice ("Close the other apps
+        ...") is now on a line of its own under the warning, smaller and grey, and an engine killed from outside (exit
+        137, not the player's Stop) shows "Ready" over it as Android's ending of the whole app does, not "Game ended with
+        an error (137)". Dev phone: the engine SIGKILLed mid-game, the launcher's screenshot.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
