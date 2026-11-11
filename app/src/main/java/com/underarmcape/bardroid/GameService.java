@@ -98,7 +98,43 @@ public class GameService extends Service {
         }
     }
 
+    /**
+     * Joining a game hosted elsewhere: the engine's pre-game screen, "Waiting for server response" (Kailil, 2026-11-11,
+     * an online game joined upright: "the loading screen there is not mobile formatted. Also free memory button should be
+     * here too"), from the engine's "[CPreGame] using server IP" (not this phone's own server: a local game's pre-game
+     * is over in a moment) to its loading screen. The server's address; whether the game's data has come (then the
+     * engine checks its files and loads).
+     */
+    public static boolean preGame() { return preGameHost != null; }
+    public static String preGameHost() { String h = preGameHost; return h == null ? "" : h; }
+    public static boolean preGameData() { return preGameData; }
+    private static volatile String preGameHost;
+    private static volatile boolean preGameData;
+    // (a join: "[CPreGame] using client IP <the server> and port <its port>"; the phone's own game: "using server IP
+    // 127.0.0.1 and port 0"; dev phone, a client script at 10.255.255.1)
+    private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
+
+    /** The server an engine line names ("[CPreGame] using client IP 1.2.3.4 and port 8452"): "1.2.3.4:8452"; null:
+     *  no such line, or the phone's own server. */
+    static String preGameServer(String line) {
+        int at = -1;
+        String key = null;
+        for (String k : PREGAME_LINES) {
+            at = line.indexOf(k);
+            if (at >= 0) { key = k; break; }
+        }
+        if (key == null) return null;
+        String[] w = line.substring(at + key.length()).trim().split("\\s+");
+        String ip = w.length > 0 ? w[0] : "";
+        if (ip.isEmpty() || ip.startsWith("127.") || ip.equals("::1") || ip.equalsIgnoreCase("localhost")
+                || ip.equals("0.0.0.0")) return null;
+        String port = w.length >= 4 && w[1].equals("and") && w[2].equals("port") ? w[3] : "";
+        return port.isEmpty() || port.equals("0") ? ip : ip + ":" + port;
+    }
+
     private static void loadReset(boolean screen) {
+        preGameHost = null;
+        preGameData = false;
         loadScreen = screen;
         loadMessage = "";
         loadLow = loadHigh = 0f;
@@ -350,6 +386,20 @@ public class GameService extends Service {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
                             }
+                            // (joining a game hosted elsewhere: the pre-game screen, GameActivity's upright version of it)
+                            String server = preGameServer(line);
+                            if (server != null) {
+                                preGameHost = server;
+                                preGameData = false;
+                                Log.i("svc", "joining a game hosted elsewhere: the pre-game screen until it loads");
+                            } else if (preGameHost != null && line.contains("[PreGame::GameDataReceived]")) {
+                                preGameData = true;
+                            } else if (preGameHost != null && (line.contains("BAR Droid lobby touch")
+                                    || line.contains("server connection timeout"))) {
+                                // (the join failed: back in the lobby, or the engine's own word on it shows)
+                                preGameHost = null;
+                                Log.i("svc", "the join ended before the game loaded: the engine's screen again");
+                            }
                             // (a game the lobby starts loads in the same engine: loading again, the Free memory button,
                             // the upright tip and bar with it; before, only the engine's first load had them, Kailil,
                             // 2026-11-11: "Allow free memory button in this loading menu too")
@@ -373,6 +423,7 @@ public class GameService extends Service {
                         try { rc = engine.waitFor(); } finally { perf.stop(); }
                     } finally {
                         loading = false;
+                        preGameHost = null;
                         if (audio != null) audio.stop();
                     }
                     Log.i("svc", "engine exited (" + rc + ")");   // (tools/phone-bench.ps1, phone-memory.ps1 read this line)

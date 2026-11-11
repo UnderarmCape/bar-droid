@@ -375,6 +375,27 @@ same, that stays the simpler way.
         on these buttons and shove them to the corner ... make the buttons the same size"): two squares of the X's size
         at the panel's bottom right, no padding round them, a hairline between them. Dev phone: ROTATE tapped, the
         building still picked, nothing placed; the X put it away; dock-phone-test ALL PASS.
+- [ ] **Kailil's notes, 2026-11-11 ~13:10** (with screenshots of a spectated online game, its join, the home grid, the
+      lobby's first picture), in order:
+      - [x] **ROTATE without "90°"** ("90 degrees is the only rotate in the game so its redundant"): the word alone.
+      - [x] **COMMANDER 30 % further out** ("too zoomed in"): the camera at 1.3 times the comfortable distance.
+      - [x] **The join's pre-game screen upright, and Free memory on it**: the engine's "Waiting for server response"
+        lays its lines from 60 % of the width on, cut off upright, and the app's loading state began only at the loading
+        screen, so no button. From the engine's "[CPreGame] using client IP" (a game hosted elsewhere) to its loading
+        screen the app covers the engine's screen but its last two lines (the version and the GPL notice) with the same
+        news wrapped to the screen ("Waiting for the server", "Connecting to <address>", then "Checking the game's
+        files"), Free memory at the top; a join that times out, or back in the lobby, gives the engine's screen back.
+        Dev phone: a client script to an address nothing answers (dev-env.sh), the screen as above until the engine's
+        timeout.
+      - [x] **The lobby's first picture sharper** ("bar looks super low res ... keep the resolution and size down"):
+        made again by `tools/make-loadscreen-upright.ps1` from BAR's picture: the word scaled by Lanczos and
+        pre-sharpened (an unsharp mask) for the phone's two scalings on the way (the lobby's X screen under the display,
+        then SGSR), the same size on the screen, 151 KB (was 127 KB). Dev phone: rivets and scratch crisp.
+      - [ ] **Spectating in the dock**: the spectator's buttons "much too small"; the same dock as playing; BAR's
+        player list hidden and a team list in the dock (in the home grid's open place beside the pings); LAST PINGS
+        only, no PING.
+      - [ ] **A toggle that hides the dock**, a small button at the bottom brings it back.
+      - [ ] **The button for the home grid's open place** (beside PINGS): Kailil asked for help choosing.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

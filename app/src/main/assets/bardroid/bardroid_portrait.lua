@@ -573,12 +573,12 @@ end
 
 local function cameraTo(x, y, z, zoom)
 	-- with zoom, the camera's own state (BAR's spring camera): the new distance along its heading, the view measured
-	-- from where the camera will be
+	-- from where the camera will be (zoom a number: that much further out than the comfortable distance)
 	local s = zoom and Spring.GetCameraState()
 	local cam
 	if s and s.name == "spring" and (s.dist or 0) > 1 and s.px then
 		local px, py, pz = Spring.GetCameraPosition()
-		local k = comfortDist() / s.dist
+		local k = comfortDist() * (type(zoom) == "number" and zoom or 1) / s.dist
 		s.dist = s.dist * k
 		cam = { x + (px - s.px) * k, y + (py - s.py) * k, z + (pz - s.pz) * k }
 	else
@@ -1586,7 +1586,9 @@ local function pressItem(item, long)
 			selectUnits({ u })
 			local x, y, z = Spring.GetUnitPosition(u)
 			if x then
-				cameraTo(x, y, z, k == "commander")
+				-- (30 % further out than the comfortable distance: Kailil, 2026-11-11, "Commander button is too zoomed in.
+				-- Zoom out like 30 percent")
+				cameraTo(x, y, z, k == "commander" and 1.3)
 			end
 		end
 	elseif k == "pings" then -- (left half: the camera to the last 4 pings, again within 2 s the one before; right half:
@@ -2025,10 +2027,9 @@ local function drawPlace()
 	for _, k in ipairs({ "rotate", "cancel" }) do
 		local r = p[k]
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
-		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees)
-			local h = r[4] - r[2]
-			textIn("ROTATE", r[1], r[2] + h * 0.45, r[3], r[4] - h * 0.08, h * 0.2, "\255\235\235\235", bold)
-			textIn("90\194\176", r[1], r[2] + h * 0.1, r[3], r[2] + h * 0.5, h * 0.24, "\255\255\200\064", bold)
+		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
+			-- game's only turn, so no "90°" on it: "its redundant")
+			textIn("ROTATE", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.24, "\255\235\235\235", bold)
 		else
 			textIn("\226\156\149", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, "\255\255\150\140", bold)
 		end

@@ -381,6 +381,7 @@ public class GameActivity extends MainActivity {
     private final Runnable catchupCheck = new Runnable() {
         @Override public void run() {
             updateCatchup();
+            updatePreGame();
             updateFreeMemory();
             updateLoadTip();
             updateLoadBar();
@@ -616,11 +617,58 @@ public class GameActivity extends MainActivity {
         }
     }
 
+    // The engine's pre-game screen upright, joining a game hosted elsewhere (Kailil, 2026-11-11, with a screenshot of
+    // "Waiting for server response": "the loading screen there is not mobile formatted. Also free memory button should be
+    // here too"): the engine lays it out for a wide screen, its lines from 60 % of the width on cut off upright. This
+    // covers it, all but its last two lines (the engine's version and its GPL notice, which fit), with the same news
+    // wrapped to the screen: what it waits for and the server's address (GameService.preGameHost), the Free memory
+    // button over it.
+    private android.widget.TextView preGameView;
+
+    private void updatePreGame() {
+        View root = getWindow().getDecorView();
+        int h = root.getHeight();
+        boolean upright = h > root.getWidth() * 1.05f;
+        boolean show = upright && GameService.preGame() && !isInPictureInPictureMode()
+                && (touch == null || !touch.gameWidgetRunning());
+        if (show && preGameView == null && h > 0) {
+            android.widget.TextView v = new android.widget.TextView(this);
+            float dp = getResources().getDisplayMetrics().density;
+            v.setBackgroundColor(0xFF000000);   // (the engine's own black: its words under it gone)
+            v.setTextColor(0xFFFFFFFF);
+            v.setGravity(android.view.Gravity.CENTER);
+            v.setPadding((int) (28 * dp), 0, (int) (28 * dp), 0);
+            v.setClickable(false);   // (touches reach the game under it, as the catch-up screen's)
+            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, (int) (h * 0.9f), android.view.Gravity.TOP);
+            addContentView(v, lp);
+            preGameView = v;
+            if (freeMemory != null) freeMemory.bringToFront();
+            Log.i("app", "pre-game: the engine's waiting screen wrapped to the upright screen");
+        }
+        if (preGameView == null) return;
+        if ((preGameView.getVisibility() == View.VISIBLE) != show) preGameView.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (!show) return;
+        String title = GameService.preGameData() ? "Checking the game's files" : "Waiting for the server";
+        String host = GameService.preGameHost();
+        String body = GameService.preGameData() ? "The game loads next" : "Connecting to " + host;
+        String text = title + "\n\n" + body;
+        if (text.contentEquals(preGameView.getText())) return;
+        android.text.SpannableString s = new android.text.SpannableString(text);
+        s.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, title.length(), 0);
+        s.setSpan(new android.text.style.RelativeSizeSpan(1.6f), 0, title.length(), 0);
+        s.setSpan(new android.text.style.ForegroundColorSpan(0xFFBBBBBB), title.length(), text.length(), 0);
+        preGameView.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 16);
+        preGameView.setText(s);
+    }
+
     private void updateFreeMemory() {
         if (freeMemory == null) return;
         // (and gone once the app's game widget runs: BAR's own interface is up then, the faction picker, "Game starting
         // in 3...", while the engine still loads the AIs; the button lay over them for those seconds, dev phone 2026-11-08)
-        boolean show = GameService.loading() && !isInPictureInPictureMode() && (touch == null || !touch.gameWidgetRunning())
+        // (and on the pre-game screen while a game hosted elsewhere is joined, Kailil 2026-11-11: updatePreGame)
+        boolean show = (GameService.loading() || GameService.preGame()) && !isInPictureInPictureMode()
+                && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) placeFreeMemory();   // (the low memory line comes up after it, and moves it down)
