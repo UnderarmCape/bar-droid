@@ -292,8 +292,8 @@ function SP.teamItems()
 				n = n + 1
 			end
 		end
-		if n % 2 == 1 then -- (the next alliance from a new row)
-			out[#out + 1] = { kind = "blank", w = SP.COLS / 2 }
+		if n % 2 == 1 then -- (the next alliance from a new row: an empty place, no button drawn there)
+			out[#out + 1] = { kind = "gap", w = SP.COLS / 2 }
 		end
 	end
 	return out
@@ -1999,6 +1999,9 @@ local function drawButton(item, r)
 		drawSlider(item, r)
 		return
 	end
+	if item.kind == "gap" then -- (TEAMS: the place after an alliance's odd team)
+		return
+	end
 	if item.kind == "blank" then -- (an open place on the home grid: a faint tile)
 		button(r, { 0, 0, 0, 0.25 }, { 0.12, 0.12, 0.12, 0.3 })
 		return
@@ -2597,6 +2600,12 @@ local function dockLines()
 			idleB.fling(tonumber(fvx) or 0)
 			touched()
 		end
+		-- (a grid over both halves, home, the spectator's and TEAMS, the teammate picker, a panel: a drag on its left half
+		-- is its own; the empty left half took it and panned the camera, so a long TEAMS list scrolled from the right only)
+		local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets"
+		if side == "left" and wide then
+			side = "right"
+		end
 		if side and active and menu then
 			local _, s, _, _, _, ch = half(side)
 			if snapMax(s) == 0 then -- (nothing to scroll there: the drag pans the camera; X pixels, y down)
@@ -2607,6 +2616,9 @@ local function dockLines()
 			touched()
 		end
 		side, v = line:match("^dockfling (%a+) (%S+)")
+		if side == "left" and wide then
+			side = "right"
+		end
 		if side and active and side ~= "groups" then
 			local _, s, _, _, _, ch = half(side)
 			snapRelease(s, -(tonumber(v) or 0) / (ch + L.gap))

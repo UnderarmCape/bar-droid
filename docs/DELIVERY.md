@@ -409,6 +409,11 @@ same, that stays the simpler way.
         let go (the four rows back). There BAR's player list under the dock drew its tooltip ("Only view what the
         player can see") over the dock where the pointer rested: no BAR tooltip is drawn over the dock now (the dock
         drops WG.tooltip.ShowTooltip's asks while the pointer is on it); dock-phone-test ALL PASS.
+        A long TEAMS list (review, 11-11 ~14:40): a drag on the left half of a grid over both halves (home, the
+        spectator's, TEAMS, the teammate picker, a panel) went to the empty left half and panned the camera, so such a
+        list scrolled from its right half only: the whole grid's now. And the place after an alliance's odd team is
+        left empty (it was drawn as a button with nothing on it). Dev phone, nine NullAI teams in three alliances on
+        Supreme Isthmus spectated: TEAMS 7 rows, a swipe on its left half scrolled it to Null8; dock-phone-test ALL PASS.
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
