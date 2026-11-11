@@ -18,6 +18,9 @@ public class BarApp extends LorieApp {
         instance = this;
         paths = new Paths(this);
         paths.mkdirs();
+        try {   // (an app update gives BAR's versions that failed here another try: Updater.forgetBadAfterAppUpdate)
+            Updater.appInstalledAt = getPackageManager().getPackageInfo(getPackageName(), 0).lastUpdateTime;
+        } catch (Exception ignored) {}
         Log.init(paths.logs);
         Prefs.load(this);
         Updater.useInstalled(paths);   // the engine and tags of the last BAR update

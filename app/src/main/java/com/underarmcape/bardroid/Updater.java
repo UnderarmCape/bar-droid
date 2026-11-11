@@ -159,6 +159,7 @@ public final class Updater {
      * otherwise only the local check that every tag points at a downloaded package.
      */
     public void check(boolean online, Status st) throws InterruptedException {
+        forgetBadAfterAppUpdate();
         String engine = Prefs.engineVersion;
         if (!new File(p.engineDir(engine), "spring").exists()) {
             // Nothing could start without it (an app build that pins another engine): fetched with updates off too.
@@ -598,6 +599,7 @@ public final class Updater {
             bad.add(launched);
             for (int i = 0; i < MAX_BAD - 1 && state.getProperty("bad." + i) != null; i++) bad.add(state.getProperty("bad." + i));
             for (int i = 0; i < bad.size(); i++) state.setProperty("bad." + i, bad.get(i));
+            state.setProperty("bad.app", String.valueOf(appInstalled()));   // (forgetBadAfterAppUpdate)
             String engine = state.getProperty("good.engine");
             if (!new File(p.engineDir(engine), "spring").exists()) {
                 Log.e("update", "!!! engine " + engine + " is gone from disk: keeping " + Prefs.engineVersion);
@@ -694,6 +696,28 @@ public final class Updater {
         for (Map.Entry<String, String> e : new TreeMap<>(md5s).entrySet())
             sb.append(", ").append(e.getKey()).append(' ').append(e.getValue().length() > 8 ? e.getValue().substring(0, 8) : e.getValue());
         return sb.toString();
+    }
+
+    /** The app's install time (it changes with every update; BarApp sets it), or -1. No Android classes here: the laptop's
+     *  tools/updater-test.ps1 compiles this file. */
+    static volatile long appInstalledAt = -1;
+
+    private static long appInstalled() {
+        return appInstalledAt;
+    }
+
+    /**
+     * An app update gives BAR's versions that failed to start here another try: the failure may have been the app's, or
+     * a fluke, and a version kept off "until BAR moves on" kept the Fold7 behind BAR's current one (2026-11-10). bad.app
+     * is the app's install time when they were marked; marks from before it was kept count as older.
+     */
+    private void forgetBadAfterAppUpdate() {
+        long now = appInstalled();
+        if (now < 0 || state.getProperty("bad.0") == null) return;
+        if (String.valueOf(now).equals(state.getProperty("bad.app"))) return;
+        for (int i = 0; i < MAX_BAD; i++) state.remove("bad." + i);
+        state.remove("bad.app");
+        Log.i("update", "the app was updated: BAR's versions that failed to start here before get another try");
     }
 
     private boolean isBad(String set) {
