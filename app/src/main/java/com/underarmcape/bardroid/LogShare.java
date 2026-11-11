@@ -25,7 +25,33 @@ import java.util.zip.ZipOutputStream;
 final class LogShare {
     private LogShare() {}
 
+    /**
+     * Zipped off the UI thread (after a long game the infolog alone runs to tens of MB, and zipping it on the UI thread
+     * could stall the launcher into Android's "not responding"), then the share sheet.
+     */
     static void share(Activity a) {
+        Toast.makeText(a, "Zipping the logs...", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            long t0 = System.currentTimeMillis();
+            File zip = zip(a);
+            if (zip == null) return;
+            Log.i("app", "logs zipped: " + zip.length() / 1024 + " KB in " + (System.currentTimeMillis() - t0) + " ms");
+            a.runOnUiThread(() -> {
+                if (a.isFinishing() || a.isDestroyed()) return;
+                Uri uri = FileProvider.getUriForFile(a, a.getPackageName() + ".logs", zip);
+                Intent send = new Intent(Intent.ACTION_SEND)
+                        .setType("application/zip")
+                        .putExtra(Intent.EXTRA_STREAM, uri)
+                        .putExtra(Intent.EXTRA_SUBJECT, "BAR Droid logs " + zip.getName().replaceAll("^bardroid-logs-|\\.zip$", ""))
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                // (the sheet in the player's words, the app being "Beyond All Reason"; the subject keeps the port's name
+                // for whoever reads the logs)
+                a.startActivity(Intent.createChooser(send, "Share the game's logs"));
+            });
+        }, "log-share").start();
+    }
+
+    private static File zip(Activity a) {
         Paths p = BarApp.get().paths();
         File dir = new File(a.getCacheDir(), "share");
         //noinspection ResultOfMethodCallIgnored
@@ -41,23 +67,17 @@ final class LogShare {
             add(out, new File(p.bar, "infolog.txt"), "infolog.txt");
             add(out, new File(p.bar, "springsettings.cfg"), "springsettings.cfg");
             add(out, p.stateFile, "install-state.properties");
+            // (the updater's own: the BAR versions kept off as failed, the last check, the engine's missed settings)
+            add(out, new File(p.filesDir, "update/state.properties"), "update-state.properties");
             add(out, new File(p.rootfsTmp, "pulse/pulse.log"), "pulse.log");
             File[] engineLogs = new File(p.bar, "logs").listFiles();
             if (engineLogs != null) for (File f : engineLogs) add(out, f, "logs/" + f.getName());
         } catch (IOException e) {
             Log.e("app", "could not zip the logs", e);
-            Toast.makeText(a, "Could not zip the logs: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            return;
+            a.runOnUiThread(() -> Toast.makeText(a, "Could not zip the logs: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            return null;
         }
-        Uri uri = FileProvider.getUriForFile(a, a.getPackageName() + ".logs", zip);
-        Intent send = new Intent(Intent.ACTION_SEND)
-                .setType("application/zip")
-                .putExtra(Intent.EXTRA_STREAM, uri)
-                .putExtra(Intent.EXTRA_SUBJECT, "BAR Droid logs " + stamp)
-                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        // (the sheet in the player's words, the app being "Beyond All Reason"; the subject keeps the port's name for
-        // whoever reads the logs)
-        a.startActivity(Intent.createChooser(send, "Share the game's logs"));
+        return zip;
     }
 
     private static void add(ZipOutputStream out, File f, String name) throws IOException {
