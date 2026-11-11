@@ -275,6 +275,11 @@ same, that stays the simpler way.
         the minimap lies over the box's corner as the layout meant; a short note under it shows once it is small
         again. Dev phone: an upright skirmish's first seconds, the opened minimap clean, the note under the small one
         after; pad-test -Chat ALL PASS.
+      - **The phone tests after the top bar, pregame and chat changes** (11-11 ~09:10, dev phone): touch-phone-test,
+        pad-test ALL PASS (dock-phone-test and pad-test -Chat with each change, above). The top bar's Save upright
+        goes through bardroid_topbar.lua too ("save: pressed over BAR's hidden top bar"): a 7 MB save written, the game
+        on after it. Every save holds the game about 4.5 s on the dev phone and leaves nothing picked; the same
+        sideways with BAR's own Save button (the app's widget not in it), so BAR's or the engine's way, left as it is.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
