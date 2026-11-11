@@ -86,6 +86,15 @@ The first version meant for other people's phones: everything since the first bu
 - The unit info panel: a wreck, a tree or a rock under the finger (nothing selected) shows its name and what
   reclaiming it gives, a wreck with the picture of the unit it was; several types selected show a count only above
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
+- Playing upright (launcher setting "Play upright"): the game on top, a touch dock below. Its D-gun mode keeps the
+  commander in the middle of the screen, hides the rows it does not need, fires on FIRE's release, and FIRE swiped to
+  the right switches on full auto (the enemy in range most worth a shot, a commander first, never through a friendly unit), with its
+  own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
+  minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
+  Scenarios, Settings, Chat, Friends first), notes above them, BAR's Settings drawn in full. Taps on the dock answer
+  with a light vibration.
+- A game alone (a replay, or no other active player) pauses while the app is out of sight and goes on when you come
+  back. The launcher's map field lists the maps you have.
 
 **Controllers, mouse and keyboard**
 - Gamepads: a mouse in the lobby, where Start switches its size between 100% and 130%; in every game (skirmish,

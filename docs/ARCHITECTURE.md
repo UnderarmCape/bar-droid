@@ -71,7 +71,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **In-game widgets** (`app/src/main/assets/bardroid/`): `bardroid_touch.lua` (camera, perf log, catch-up mode),
   `bardroid_players.lua` (small player list), `bardroid_spectate.lua` (spectating by touch: player cameras, follow,
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
-  `bardroid_minimap.lua` (minimap small until tapped, unfolded), `bardroid_layout.lua` (the layout editor: panels
+  `bardroid_minimap.lua` (minimap small until tapped: half size unfolded, upright as tall as the top bar's row, the chat
+  the full row under it), `bardroid_portrait.lua` (the launcher's "Play upright": the touch dock under the game, its
+  camera pad, selection and group rows, orders, the D-gun mode with its full auto; the lobby's upright pages are in
+  `bardroid_lobby_touch.lua`), `bardroid_layout.lua` (the layout editor: panels
   register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
   copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, up to 5 wide on a wide short screen, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
