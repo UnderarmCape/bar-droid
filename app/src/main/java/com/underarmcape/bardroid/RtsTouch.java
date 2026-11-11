@@ -1866,6 +1866,19 @@ final class RtsTouch {
         send("src " + s);
     }
 
+    /**
+     * No input yet on a phone without an external mouse or gamepad (GameActivity.onStart): taken as fingers, so the
+     * lobby's pointer is hidden from its start (it stood over the lobby until the first touch, dev phone screenshot
+     * 2026-11-11). Sent again (cursorSynced off): before the X server's shared state is there the view drops the call.
+     * UI thread.
+     */
+    void assumeFingers() {
+        if (inputSource != null) return;
+        fingersLast = true;
+        cursorSynced = false;
+        showCursor(cursorWanted);
+    }
+
     /** A game's widget answers (it writes the hover file at least once a second); not in the lobby. Any thread. */
     boolean gameWidgetRunning() {
         return System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS;

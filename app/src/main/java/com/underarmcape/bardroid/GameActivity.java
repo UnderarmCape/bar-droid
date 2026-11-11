@@ -249,12 +249,29 @@ public class GameActivity extends MainActivity {
         if (!isInPictureInPictureMode()) setFlag(BarApp.get().paths().floatingFlag(), false, "full screen: 30 fps cap");
         catchupHandler.post(catchupCheck);
         if (upscaleLabel != null) catchupHandler.post(upscaleCompare);
+        // (fingers until another input shows: the lobby's pointer hidden from its start; again as the X server and the
+        // lobby come up, a call before the X server's shared state is dropped)
+        if (touch != null && !externalPointerOrPad())
+            for (long ms : new long[] {500, 2000, 6000, 15000}) catchupHandler.postDelayed(assumeFingers, ms);
+    }
+    private final Runnable assumeFingers = () -> { if (touch != null) touch.assumeFingers(); };
+
+    /** An external mouse or gamepad is connected (Samsung's built-in "sec_touchpad" says MOUSE too: external only). */
+    private static boolean externalPointerOrPad() {
+        for (int id : InputDevice.getDeviceIds()) {
+            InputDevice d = InputDevice.getDevice(id);
+            if (d == null || d.isVirtual() || !d.isExternal()) continue;
+            if (d.supportsSource(InputDevice.SOURCE_MOUSE) || d.supportsSource(InputDevice.SOURCE_GAMEPAD)
+                    || d.supportsSource(InputDevice.SOURCE_JOYSTICK)) return true;
+        }
+        return false;
     }
     @Override protected void onStop() {
         writeAppState(true);
         setFlag(BarApp.get().paths().hiddenFlag(), true, "game screen hidden: the engine stops drawing");
         catchupHandler.removeCallbacks(catchupCheck);   // (hidden anyway; the next start looks again)
         catchupHandler.removeCallbacks(upscaleCompare);
+        catchupHandler.removeCallbacks(assumeFingers);
         if (voiceChat != null) voiceChat.close();   // (speak to chat stops listening: what is said next is not for the game)
         super.onStop();
     }
