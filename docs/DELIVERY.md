@@ -300,6 +300,11 @@ same, that stays the simpler way.
         outside: judged now", "... started fine", then "starting" (no longer "first start"), BAR's test-31908-af896c5
         up to date; "order menu: the app's copy of BAR's", no ANDROID LAYER line. The sweep on bd75ca1's build, dev
         phone: pad-test -Share, -Online, -Dgun, lobby-phone-test, dock-phone-test ALL PASS.
+        The Fold7's 10:00 start on BAR's newer release (test-31908-af896c5): all four copies in BAR's place, the build
+        menu's made again on the phone for BAR's changed file (9dde14ed), no ANDROID LAYER line. The dev phone stays on
+        test-31836 for now: its Install / Update found no network (Wi-Fi on, joined to none: "Unable to resolve host";
+        no network is joined on it from here). The coloured strip once seen under the opened minimap at a start did not
+        come back in two more starts (what stood out there was the minimap's own range rings).
       - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
         also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
