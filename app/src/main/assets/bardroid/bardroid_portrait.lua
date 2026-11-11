@@ -1624,7 +1624,13 @@ local function drawTile(item, r)
 	end
 	-- (a pregame option picked: lit as BAR's menu lights its picked cell)
 	local pb = item.kind == "pregame" and WG["pregame-build"]
-	unitTile(item.defID, r, pb and pb.getPreGameDefID and pb.getPreGameDefID() == item.defID or false)
+	-- (the building PLACE will build: BAR's picked cell (the picture closer, gold light) and the gold line of the build
+	-- menu copy's picked cell; FlowUI's selector alone was a faint border nobody saw, dev phone screenshot 2026-11-11)
+	local picked = item.kind == "build" and item.id and activeBuild() == item.id
+	unitTile(item.defID, r, picked or (pb and pb.getPreGameDefID and pb.getPreGameDefID() == item.defID) or false)
+	if picked and WG.BarDroidStyle then
+		WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor(w * 0.04)))
+	end
 	local p, size = max(2, floor(w * 0.05)), h * 0.15
 	if item.kind == "build" or item.kind == "pregame" then -- (as BAR's build menu: metal white, energy yellow, bottom right)
 		local ud = UnitDefs[item.defID]
