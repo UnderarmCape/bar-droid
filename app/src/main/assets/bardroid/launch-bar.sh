@@ -257,7 +257,7 @@ team_stats() {
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
   bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
-  bardroid_presets bardroid_automex bardroid_teamstats"
+  bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"

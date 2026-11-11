@@ -234,6 +234,20 @@ same, that stays the simpler way.
       - **The phone tests after the dock-edge and tap changes** (11-11 ~06:45, dev phone, f169632's build):
         touch-phone-test, pad-test, -Online, -Dgun, -Share, -Chat, lobby-phone-test, fp-save-test, with
         dock-phone-test just before: ALL PASS.
+      - **BAR's top bar buttons upright** (found 11-11 ~07:30, dev phone, a lobby skirmish upright on Onyx Cauldron):
+        Statistics and Settings did nothing, showing the energy bar's and the tide's tooltips instead. Upright the dock
+        hides BAR's resource bars and indicators, and BAR's Top Bar hides them from the picture only: still under the
+        pointer, under the Top Bar Buttons strip (wider there than its quarter of the bar), they took the press first
+        (gui_top_bar.lua hoveringElement). `bardroid_topbar.lua` (new, layer -95500): a press on a button over that
+        hidden part does the button's action through BAR's WG windows (written for all of BAR's buttons; Save and
+        Lobby lay clear of the hidden part in these games, so only Settings and Statistics went through it), and those
+        tooltips are taken away. Dev phone: Statistics over the hidden energy bar opened and closed (launcher
+        skirmish), Settings over the hidden tide opened and Statistics after it (lobby skirmish's pregame on Onyx
+        Cauldron), no stray tooltips; dock-phone-test ALL PASS. BAR's own fix, `docs/upstream/bar-topbar-hidden.patch`
+        (+ .md, a draft for Kailil to post): tried on the dev phone the same way as the windows' patch, with the
+        app's widget off: Statistics and Settings by BAR's own buttons. Seen on the way, left for a later run: the
+        pregame's "Pick a starting location within the green area then click Ready" (BAR's draft-order Pregame UI, 20 %
+        up the screen, drawn over everything) lies across the dock's build tiles and RANDOM upright.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the

@@ -12,3 +12,4 @@ and for AI assistance to be disclosed (RecoilEngine `AI_POLICY.md`); every draft
 | [bar-topbar-warning-banner.md](bar-topbar-warning-banner.md) | github.com/beyond-all-reason/Beyond-All-Reason issues | a screenshot of the cut-off banner (`build/hud-square.png` from the phone) |
 | [bar-options-replaced.md](bar-options-replaced.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `gui_options.lua` (the official port's) | [bar-options-replaced.patch](bar-options-replaced.patch); tested on the dev phone |
 | [bar-windows-upright.md](bar-windows-upright.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to six windows (the official port's) | [bar-windows-upright.patch](bar-windows-upright.patch); tested on the dev phone |
+| [bar-topbar-hidden.md](bar-topbar-hidden.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `gui_top_bar.lua` (the official port's) | [bar-topbar-hidden.patch](bar-topbar-hidden.patch) |

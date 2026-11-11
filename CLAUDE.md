@@ -119,7 +119,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   fall back, a hurt commander retreats with its army covering it (GiveOrder; the dock's AUTO RETREAT, docs/DELIVERY.md).
   `bardroid_presets.lua`: the dock's PRESETS (2 x 2 over its grid, then a map tap: zigzags, formations; WG.BarDroidPresets).
   `bardroid_automex.lua`: the commander picked and an extractor chosen, the free mex spots in its weapon range queued
-  (BAR's resource spot API, as its Area Mex). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
+  (BAR's resource spot API, as its Area Mex). `bardroid_topbar.lua`: upright, BAR's top bar buttons over its hidden
+  resource bars and indicators do their action through WG (BAR's Top Bar takes those presses; docs/upstream). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
   6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every

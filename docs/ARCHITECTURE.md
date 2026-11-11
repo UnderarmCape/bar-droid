@@ -93,7 +93,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   its grid, then a map tap for the destination: ZIGZAG, and BATTLE LINE, SPREAD and CONCAVE, which form the units up
   by role where they stand and move them as one with a Ctrl+Shift fight given to them as the selection, the engine's
   way of keeping a group's shape at its slowest unit's speed), `bardroid_automex.lua` (the commander picked and a
-  metal extractor chosen: the free spots within its weapon range queued at once, through BAR's resource spot API).
+  metal extractor chosen: the free spots within its weapon range queued at once, through BAR's resource spot API),
+  `bardroid_topbar.lua` (upright, BAR's top bar buttons over its hidden resource bars and indicators: the press and
+  the tooltips there are the hidden parts' in BAR's Top Bar, so the button's action is done through BAR's WG windows;
+  BAR's own fix in docs/upstream/bar-topbar-hidden.patch).
 - The app's widgets' main chunks stay under Lua's 200 locals (`tools/lua-locals.py`, in laptop-tests and CI): over
   it a widget does not load at all, and luacheck does not see it.
 

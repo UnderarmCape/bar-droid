@@ -1,0 +1,97 @@
+diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
+index b43170b..215cc00 100644
+--- a/luaui/widgets/gui_top_bar.lua
++++ b/luaui/widgets/gui_top_bar.lua
+@@ -382,7 +382,7 @@ local function updateComs(forceText)
+ 
+ 	comcountChanged = nil
+ 
+-	if WG.tooltip and refreshUi then
++	if WG.tooltip and refreshUi and cache.showIndicators then
+ 		WG.tooltip.AddTooltip(
+ 			"coms",
+ 			area,
+@@ -443,7 +443,7 @@ local function updateWind()
+ 		glPopMatrix()
+ 	end)
+ 
+-	if WG.tooltip and refreshUi then
++	if WG.tooltip and refreshUi and cache.showIndicators then
+ 		local avgWindValueForTooltip = noWind and BAR.I18N("ui.topbar.wind.nowind1") or avgWindValue
+ 		WG.tooltip.AddTooltip(
+ 			"wind",
+@@ -495,7 +495,7 @@ local function updateTidal()
+ 		glPopMatrix()
+ 	end)
+ 
+-	if WG.tooltip and refreshUi then
++	if WG.tooltip and refreshUi and cache.showIndicators then
+ 		WG.tooltip.AddTooltip(
+ 			"tidal",
+ 			area,
+@@ -1663,19 +1663,26 @@ local function updateAllyTeamOverflowing()
+ 	end
+ end
+ 
++-- Hidden parts (setResourceBarsVisible / setIndicatorsVisible) are not under the pointer: on a narrow screen the
++-- Top Bar Buttons strip lies over where they were, and this widget hears the press first.
+ local function hoveringElement(x, y)
+ 	if
+-		resbarArea.metal[1]
++		showResourceBars
++		and resbarArea.metal[1]
+ 		and mathIsInRect(x, y, resbarArea.metal[1], resbarArea.metal[2], resbarArea.metal[3], resbarArea.metal[4])
+ 	then
+ 		return "metal"
+ 	end
+ 	if
+-		resbarArea.energy[1]
++		showResourceBars
++		and resbarArea.energy[1]
+ 		and mathIsInRect(x, y, resbarArea.energy[1], resbarArea.energy[2], resbarArea.energy[3], resbarArea.energy[4])
+ 	then
+ 		return "energy"
+ 	end
++	if not cache.showIndicators then
++		return false
++	end
+ 	if windArea[1] and mathIsInRect(x, y, windArea[1], windArea[2], windArea[3], windArea[4]) then
+ 		return "wind"
+ 	end
+@@ -2767,6 +2774,14 @@ function widget:Initialize()
+ 			resbarHover = nil
+ 			draggingShareIndicator = nil
+ 			draggingConversionIndicator = nil
++			-- and their tooltips (left where the bars were, they showed over whatever is there now)
++			if WG.tooltip then
++				for _, res in ipairs({ "metal", "energy" }) do
++					for _, part in ipairs({ "_share_slider", "_share_slider2", "_metalmaker_slider", "_pull", "_income", "_storage", "_current" }) do
++						WG.tooltip.RemoveTooltip(res .. part)
++					end
++				end
++			end
+ 		end
+ 	end
+ 
+@@ -2781,6 +2796,13 @@ function widget:Initialize()
+ 
+ 		cache.showIndicators = visible
+ 		refreshUi = true
++		if visible then
++			init() -- (their tooltips again)
++		elseif WG.tooltip then
++			WG.tooltip.RemoveTooltip("coms")
++			WG.tooltip.RemoveTooltip("wind")
++			WG.tooltip.RemoveTooltip("tidal")
++		end
+ 	end
+ 
+ 	WG.topbar.getIndicatorsVisible = function()
+@@ -2860,6 +2882,7 @@ function widget:Shutdown()
+ 	if WG.tooltip then
+ 		WG.tooltip.RemoveTooltip("coms")
+ 		WG.tooltip.RemoveTooltip("wind")
++		WG.tooltip.RemoveTooltip("tidal")
+ 		local res = "energy"
+ 		WG.tooltip.RemoveTooltip(res .. "_share_slider")
+ 		WG.tooltip.RemoveTooltip(res .. "_share_slider2")
