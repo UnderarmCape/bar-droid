@@ -152,6 +152,11 @@ try {
   Touch MOVE (($a0[0] + $a1[0]) / 2) (($a0[1] + $a1[1]) / 2); Touch MOVE $a1[0] $a1[1]
   Start-Sleep -Milliseconds 300; Shot "preset-aim"; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
   Stage "strafe?"; Start-Sleep 1
+  # 6. the Pawns' path drawn from the map on into the dock: held at the dock's top edge, every goal in sight
+  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
+  Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
+  Start-Sleep -Milliseconds 300; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 1200
+  Stage "drawdock?"; Start-Sleep 1
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

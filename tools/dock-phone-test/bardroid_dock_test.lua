@@ -130,6 +130,27 @@ local function onCmd(c)
 		local armed = WG.BarDroidPresets and WG.BarDroidPresets.armed()
 		check("STRAFE's drag lifted over the dock: not sent, the preset still armed", fights == 0 and armed == true,
 			string.format("%d fights, armed %s", fights, tostring(armed)))
+	elseif c == "drawdock?" then -- (the Pawns' path drawn from the map on into the dock: its end at the dock's edge)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = dock and dock[4] or 0
+		local n, lowest, ys = 0, nil, {}
+		for _, u in ipairs(pawns) do
+			local cmd = (Spring.GetUnitCommands(u, 1) or {})[1]
+			if cmd and cmd.id == CMD.MOVE and cmd.params[3] then
+				local sx, sy = Spring.WorldToScreenCoords(cmd.params[1], cmd.params[2], cmd.params[3])
+				n = n + 1
+				lowest = lowest and math.min(lowest, sy) or sy
+				ys[#ys + 1] = string.format("%d,%d", sx, sy)
+			end
+		end
+		-- (where the drag let go: at the dock's top edge, not deep in it; BAR's formation lengthens a line too short for
+		-- the units' spacing past its end, so goals may lie a little beyond it)
+		local _, my = Spring.GetMouseState()
+		Spring.Echo("[docktest] the drawn path's goals (GL x,y): " .. table.concat(ys, " "))
+		check("a path drawn on into the dock: let go at the dock's top edge, the path in sight", n > 0 and my >= top - 2,
+			string.format("%d moves, let go at y %d, the dock's top %d, lowest goal y %s", n, my, top,
+				tostring(lowest and math.floor(lowest))))
 	elseif c == "strafe?" then
 		local ok, words = #pawns > 0, {}
 		for _, u in ipairs(pawns) do

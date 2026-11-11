@@ -668,8 +668,10 @@ final class RtsTouch {
                 if (i >= 0) scrollTo(curY);
                 return;
             case LEFT_DRAG:
-            case RIGHT_HOLD:
                 if (i >= 0) moveCursor(curX, curY);
+                return;
+            case RIGHT_HOLD:
+                if (i >= 0) moveCursor(curX, aboveDock(curY));
                 return;
             case PLACE_DRAG:
             case NUDGE:
@@ -799,7 +801,7 @@ final class RtsTouch {
                 break;
             }
             case RIGHT_HOLD:
-                press(curX, curY, InputStub.BUTTON_RIGHT, false);
+                press(curX, aboveDock(curY), InputStub.BUTTON_RIGHT, false);
                 break;
             case VOICE_SWIPE:
                 if (Math.abs(curX - downX) >= 3 * slop) act(curX > downX ? "voice_channel_next" : "voice_channel_prev");
@@ -1965,6 +1967,25 @@ final class RtsTouch {
         RectF src = v.getInputSourceRect();
         if (vp.height() <= 0) return py;
         return clamp(src.top + (py - v.getTop() - vp.top) * src.height() / vp.height(), src.top, src.bottom - 1);
+    }
+
+    /** toY's inverse: an X screen line in view pixels. */
+    private float fromY(float y) {
+        LorieView v = view();
+        Rect vp = v.getInputViewport();
+        RectF src = v.getInputSourceRect();
+        if (src.height() <= 0) return y;
+        return (y - src.top) * vp.height() / src.height() + v.getTop() + vp.top;
+    }
+
+    /**
+     * A path drawn on into the upright dock (BAR's right drag): its point held at the dock's top edge, so the path and
+     * its end stay in sight; released over the dock the order went to ground hidden behind it (2026-11-11).
+     */
+    private float aboveDock(float py) {
+        Dock d = dock();
+        if (d == null || d.all == null || toY(py) < d.all[1]) return py;
+        return fromY(d.all[1] - 1);
     }
 
     private float xPerViewPixel() {
