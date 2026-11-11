@@ -418,8 +418,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       animation. It should be super snappy and fast and smooth ... A small swipe quickly moves the page"): the strip goes
       1.5 times the finger's way, a drag of a twentieth of the width (or a 200 px/s flick) turns the page that way, a
       long one to the page it reached, and it settles in 0.15 s with a slight overshoot (was 0.28 s; half the width or
-      a 600 flick). Dev phone: swipes of 70 and 60 pixels each turned a page (2, 3, back to 2); the lobby draws about
-      200 frames a second, so the settle has about 30.
+      a 600 flick). Dev phone: swipes of 70 and 60 pixels each turned a page (2, 3, back to 2). (The "about 200 frames a
+      second, about 30 in the settle" measured then was the dev phone's frame cap left at 0 by benchmark work; at the
+      players' default cap of 30 the lobby draws 30 a second and the settle has about 5 frames: fast, less smooth.
+      The dev phone is back on 30, 2026-11-11.)
 - [x] **The upright lobby's grid back after a popup** (2026-11-10, dev phone, offline lobby): with Chobby's login dialog
       cancelled the grid was logged "back" but not seen, the strip under the news empty: Chili puts a control shown
       again last among its parent's, drawn under Chobby's full-screen background. It is brought to the front as it comes
