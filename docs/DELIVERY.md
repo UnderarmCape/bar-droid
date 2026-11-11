@@ -295,7 +295,11 @@ same, that stays the simpler way.
           last run played 9.5 minutes, so its next start keeps a27e1c0e, and the app update there clears the bad mark.
           updater-test ALL PASS (four new cases).
         The build with both and the next item installed on the Fold7 at 09:43 (no BAR running), after dock-phone-test
-        ALL PASS on the dev phone.
+        ALL PASS on the dev phone; bd75ca1's at 09:56 (Kailil: "Send the latest to the fold"). Its first start, 10:00:
+        "the app was updated: ... another try", "the last run of ... a27e1c0e ran 572 s with a game and ended from
+        outside: judged now", "... started fine", then "starting" (no longer "first start"), BAR's test-31908-af896c5
+        up to date; "order menu: the app's copy of BAR's", no ANDROID LAYER line. The sweep on bd75ca1's build, dev
+        phone: pad-test -Share, -Online, -Dgun, lobby-phone-test, dock-phone-test ALL PASS.
       - **No hidden sliders under the top strip upright** (found reading BAR's Top Bar for the above): its MousePress
         also hit-tests the hidden energy bar's conversion knob (any game) and the share knobs (team games): a press there
         dragged one unseen and set it where the finger let go. bardroid_topbar.lua takes every press over the hidden
