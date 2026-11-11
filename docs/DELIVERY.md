@@ -82,7 +82,14 @@ same, that stays the simpler way.
         now begins where the finger reaches the ground (68f62ea). dock-phone-test drags STRAFE from the void by the
         nearest edge (the old build: no orders; the new: 2 fights each) and, after its build stage lost the commander
         in 2 runs of 5 (the dock's menu not open 4 s after the first tap, so the spot's tap picked the ground), taps
-        again with a note and waits for the building before its spot (8be7fec): ALL PASS.
+        again with a note and waits for the building before its spot (8be7fec): ALL PASS. Its timings since (1dd18f6;
+        3 runs: the menu 0.5-1.0 s after the first tap, the building 0.26-0.5 s after the second): the lost commander
+        not seen again. `-Shots` keeps screenshots of the placing panel, the D-gun mode and a preset's aim
+        (build\dock-*.png). From one: an armed preset looked like nothing on the dock once its note had gone, so
+        PRESETS is gold with the preset's name (STRAFE) while the map waits for the drag. In the same screenshot the
+        ground of Play vs AI's map near its north-east corner in broad diagonal bands (the interface whole, 36 s in,
+        phone shadows off): likely the map's own sand ripples (its west edge's red ground had none); to compare with
+        BAR on a PC some time.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
