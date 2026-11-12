@@ -1003,7 +1003,8 @@ end
 
 -- its parts in the grid: the sticks (x, y, radius), FIRE and the cancel corner (rects); GL pixels
 local function dgunParts()
-	local r = { L.left[1], L.left[2], L.right[3], L.right[4] }
+	-- (sideways: the band's whole height, the right half's; the left's foot is up by its whole rows)
+	local r = { L.left[1], L.land and L.right[2] or L.left[2], L.right[3], L.right[4] }
 	local w, h = r[3] - r[1], r[4] - r[2]
 	-- the sticks between their words (MOVE, AIM: under them) and FIRE's foot (on the near-square screen, the Fold7
 	-- unfolded upright, a stick sized by the height alone reached the grid's foot and its word fell off the screen)
@@ -3287,7 +3288,9 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		end
 	end
 	resetGL()
-	drawResources()
+	if not (L.land and rightKind == "dgun") then -- (sideways FIRE stands where they are: their edges showed round it)
+		drawResources()
+	end
 	drawQueueZones()
 	if rightKind == "place" then
 		drawPlace()

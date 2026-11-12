@@ -1383,7 +1383,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       setting "Touch dock sideways" (on; launch-bar.sh bardroid_landdock.txt); a pad or a mouse as the input brings
       BAR's own screen back; spectators keep the sideways spectator bar. Dev phone, 2008x938 and 1192x1080 (the
       unfolded Fold7's shape): the dock up, a minimap tap moved the camera, a building picked and its shapes and PLACE
-      on the right. Not yet: spectating with it, the pad on it, the cover screen measured on the Fold7.
+      on the right. Not yet: spectating with it, the pad on it, the cover screen measured on the Fold7. The same
+      day: its D-gun mode sideways (MOVE and AIM under the thumbs, FIRE over the middle, cancel at the left) had
+      FIRE over the metal and energy panels, their edges showing round it; they step aside in that mode now, and the
+      sticks take the band's whole height. Open for Kailil: with nothing picked the home grid fills the right half
+      and the left half stands empty (upright the grid spans both halves; sideways the minimap is between them).
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
