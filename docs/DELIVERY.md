@@ -1397,7 +1397,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       log (what the app writes when the pad is used) took the dock down and brought BAR's own screen back (its
       minimap at the top left, its resource bars), "src touch" the dock again; the chat box, though, stood a third of
       the way across under the top bar while the dock was up (where the minimap had ended): now the row under the top
-      bar from the left edge then, as upright.
+      bar from the left edge then, as upright. Then the unfolded Fold7 turned mid-game (dev phone, an upright skirmish,
+      wm size 1080x1198, 1198x1080, back): the dock went sideways while the screen was wide (BAR's minimap into it),
+      upright again after (the minimap back in its small upright place), no error; and the lobby sideways at the
+      near-square size: the column 15 buttons a page, the screens beside it the whole height.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
