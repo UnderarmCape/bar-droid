@@ -488,7 +488,15 @@ same, that stays the simpler way.
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
-      - [ ] **The button for the home grid's open place** (beside PINGS): Kailil asked for help choosing.
+      - [ ] **The button for the home grid's open place** (beside PINGS): Kailil asked for help choosing. Candidates
+        (2026-11-12; not idle units or builders, his 11-11 call: the idle builders are in the groups row):
+        1. **FACTORIES** (recommended): a tap picks your next factory and puts the camera on it, as COMMANDER cycles
+           (the dock then shows its build menu to queue units). Queuing units is the most frequent errand that has no
+           button upright: today it takes panning the map to each factory and tapping it.
+        2. **CHAT**: opens the chat's typing box (today a three-finger double tap, which nothing on the screen shows);
+           a long press, speak to chat (today a three-finger tap).
+        3. **LOS VIEW**: BAR's line-of-sight overlay on and off (its L key), lit while on.
+        Each fits the half-row tile as the others; none needs BAR's code. Waiting for his pick.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
