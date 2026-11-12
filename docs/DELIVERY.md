@@ -1208,6 +1208,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Dev phone: a planted 1.6 GB "map" dated 2025 with the limit at 2 GB: removed before the skirmish ("[maps] over
       2048 MB of maps: removed zz_bardroid_prune_test.sd7 (1600 MB, downloaded 2025-01-01)"), the real maps kept, the
       skirmish's map recorded; the setting saves and shows "Now: 607 MB in 10 maps".
+- [x] **BAR's Rapid Pool Cache off in the lobby: measured** (2026-11-11; Kailil asked to keep it if it means fewer
+      stutters in game: "The lobby being laggy is okay if it means less stutters in game"). It is no shader cache
+      (Mesa's own shader cache stays, in the container's ~/.cache/mesa_shader_cache): it reads all of BAR's rapid pool
+      so the files are in memory for the game's load. Dev phone, a landscape skirmish from the launcher, BAR's pool,
+      maps and packages dropped from the page cache first (cold: GNU dd iflag=nocache in the container) or read into
+      it (warm: what the Rapid Pool Cache does), twice each: load to "finished loading" cold 47.0 and 53.3 s, warm
+      59.1 and 64.0 s; the first minute cold 29.1 / 28.9 fps with its slowest frame 393 / 402 ms, warm 28.7 / 29.3
+      fps, 1169 / 583 ms; the second minute alike (30 fps, slowest ~55-65 ms). On an 8 GB phone the pre-read files
+      take the memory the load needs: slower and a worse first minute, no smoother after. Off stays (launch-bar.sh's
+      once-off setting and bardroid_lobby_touch.lua); the Fold7's 12 GB not measured.
 - [ ] Playing with no connection (dev phone, 2026-11-08, Wi-Fi and data off; Kailil's road trip): the launcher's Play vs
       AI starts at once on what is installed (the update check gives up on the first "Unable to resolve host"), and
       the lobby opens "Offline" with its Skirmish screens. But the lobby's quick skirmish picks from four maps a mode
