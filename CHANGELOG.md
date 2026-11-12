@@ -13,7 +13,7 @@ The first version meant for other people's phones: everything since the first bu
   Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / no cap in the launcher). The game draws at about 900
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
   the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it. Launcher
-  setting "Lower the resolution when the game slows down" (off by default): under 27 fps the game is drawn smaller a
+  setting "Lower the resolution when fps drops" (off by default): under 27 fps the game is drawn smaller a
   step at a time (85, then 70% of the lines), never under 70%, kept only while each step makes it faster.
 - Map storage (launcher, 3 GB by default; 5 GB or no limit): before a game or the lobby starts, the downloaded
   maps played longest ago are deleted until the rest fit; a map downloads again when a game needs it. The lobby opens

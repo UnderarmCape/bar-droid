@@ -798,7 +798,7 @@ local catchup -- while catching up with a running game (below): the engine's own
 
 -- The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ... Upscaling should
 -- be doing the heavy lifting", then, having watched 50 %: "keep it at 70 percent res drop as the minimum instead"; the
--- app's setting "Lower the resolution when the game slows down", Prefs.lateDrop): from
+-- app's setting "Lower the resolution when fps drops", Prefs.lateDrop): from
 -- game minute DROP_AFTER on, DROP_WINDOW seconds of drawn frames under DROP_BELOW a second ask the app for the next step
 -- down (SCALE: "scale <percent>" of the render resolution's lines; the app keeps 70 % of the full lines at least and
 -- shrinks the X screen as a fold does, SGSR enlarging it). A step stays only if the next DROP_WINDOW seconds (after
