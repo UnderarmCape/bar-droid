@@ -1508,6 +1508,17 @@ local function drawBar()
 			gl.Color(b.color[1], b.color[2], b.color[3], 0.9)
 			gl.Rect(b.x0 + 3, b.y0 + 3, b.x1 - 3, b.y0 + math.max(3, b.size * 0.08))
 		end
+		if b.label == "<" or b.label == ">" then -- (solid, as the dock's: the font's "<" was a thin small mark in a big
+			-- button, dev phone sideways 2026-11-12)
+			local cx, cy = (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2
+			local s, d, g = b.size * 0.36 * 0.45, b.label == "<" and -1 or 1, b.dim and 0.55 or 0.94
+			gl.Color(g, g, g, 1)
+			gl.BeginEnd(GL.TRIANGLES, function()
+				gl.Vertex(cx + d * s * 0.6, cy)
+				gl.Vertex(cx - d * s * 0.4, cy + s)
+				gl.Vertex(cx - d * s * 0.4, cy - s)
+			end)
+		end
 	end
 	gl.Color(1, 1, 1, 1)
 	if font then
@@ -1530,7 +1541,9 @@ local function drawBar()
 			if b.dim then -- (nothing to do there now)
 				text = "\255\140\140\140" .. text
 			end
-			font:Print(text, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2 - size * 0.35, size, "oc")
+			if b.label ~= "<" and b.label ~= ">" then -- (the arrows: triangles, above)
+				font:Print(text, (b.x0 + b.x1) / 2, (b.y0 + b.y1) / 2 - size * 0.35, size, "oc")
+			end
 		end
 		font:End()
 	end
