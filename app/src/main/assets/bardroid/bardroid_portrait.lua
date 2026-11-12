@@ -2086,8 +2086,23 @@ local function drawButton(item, r)
 		button(r)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
-	textIn(armedName or item.label or "", r[1], r[2], r[3], r[4], min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)),
-		(item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240", font)
+	local label = armedName or item.label or ""
+	local th = min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
+	if label == "<" or label == ">" then
+		-- (the spectator's arrows as solid triangles: the font's "<" was a thin small mark in a big button, dev phone
+		-- screenshot 2026-11-12)
+		local cx, cy, s, d = (r[1] + r[3]) / 2, (r[2] + r[4]) / 2, th * 0.45, label == "<" and -1 or 1
+		local g = item.dim and 0.55 or 0.94
+		gl.Color(g, g, g, 1)
+		gl.BeginEnd(GL.TRIANGLES, function()
+			gl.Vertex(cx + d * s * 0.6, cy)
+			gl.Vertex(cx - d * s * 0.4, cy + s)
+			gl.Vertex(cx - d * s * 0.4, cy - s)
+		end)
+		gl.Color(1, 1, 1, 1)
+	else
+		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240", font)
+	end
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
 		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
