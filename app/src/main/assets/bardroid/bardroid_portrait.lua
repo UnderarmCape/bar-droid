@@ -272,7 +272,9 @@ function SP.teamName(teamID)
 			return name, p
 		end
 	end
-	local _, aiName = Spring.GetAIInfo(teamID)
+	-- (BAR's own name for an AI first, as its player list and the name over the commander show it: the start script's
+	-- was another, "BARbArmada (AI)" in the list over "Zagupi (AI)" on the map, dev phone 2026-11-11)
+	local aiName = Spring.GetGameRulesParam("ainame_" .. teamID) or select(2, Spring.GetAIInfo(teamID))
 	return (aiName or ("Team " .. teamID)) .. " (AI)", nil
 end
 -- TEAMS: every team, two to a row, each alliance from a new row, the one watched lit; CLOSE first

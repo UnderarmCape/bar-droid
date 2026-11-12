@@ -1361,7 +1361,8 @@ local function teammates()
 				end
 			end
 			if not name and isAI then
-				local _, aiName = Spring.GetAIInfo(teamID)
+				-- (BAR's own name for it first, the one its player list shows; the start script's was another)
+				local aiName = Spring.GetGameRulesParam("ainame_" .. teamID) or select(2, Spring.GetAIInfo(teamID))
 				name = aiName or ("AI " .. teamID)
 			end
 			if not name and leader and leader >= 0 then
