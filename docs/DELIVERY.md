@@ -887,6 +887,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's files are in the archive
       checksum.) Left: BAR merging it (Kailil and the devs); then a taller layout for upright screens (their text is
       small at the landscape shape).
+- [ ] **BAR's pregame texts upright** (found 2026-11-12, dev phone, an 8v8 replay's draft pregame spectated upright):
+      `map_start_position_suggestions.lua`'s tutorial ("Recommended start positions are the circles ...", shown until
+      it has run once, or with BAR's tutorial notes on) sizes its font by the screen's height (vsy / 1440) and wraps at
+      100 characters, so upright its lines are ~1,500 pixels on 936 and run off both edges; at 61 % of the height it
+      lies on `gui_game_type_info.lua`'s "Victory condition: ..." (55 % in draft games), the two texts over each
+      other. Without draft the victory line sits at 19 % of the height, under the upright dock. Next: one patch for
+      both in `docs/upstream/` (the size by the smaller of the two scales, the wrap by the width, the victory line
+      above the dock's height or the tutorial's), tested by swapping the dev phone's pool files as the Settings patch
+      was, BAR's files put back after.
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of
