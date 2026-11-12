@@ -1,0 +1,13 @@
+diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
+index b43170b..50ae941 100644
+--- a/luaui/widgets/gui_top_bar.lua
++++ b/luaui/widgets/gui_top_bar.lua
+@@ -717,7 +717,7 @@ local function updateResbarText(res, force)
+ 					end
+ 
+ 					dlist.resbar[res][7] = glCreateList(function()
+-						local fontSize = (orgHeight * (1 + (ui_scale - 1) / 1.33) / 4) * widgetScale
++						local fontSize = (orgHeight / 4) * widgetScale -- (widgetScale holds ui_scale: counted twice, the text outgrew the banner)
+ 						local textWidth = font2:GetTextWidth(text) * fontSize
+ 
+ 						-- background
