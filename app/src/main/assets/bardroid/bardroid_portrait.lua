@@ -1226,7 +1226,7 @@ end
 -- The profile (springsettings bardroid_portrait_profile = 1, widget:DrawScreen): the refreshes and their time, the
 -- dock's drawing time and frames since the last line. (One table: the file's main chunk was at Lua's 200 locals.)
 local PROF = { on = Spring.GetConfigInt("bardroid_portrait_profile", 0) == 1, refreshN = 0, refreshMs = 0, sum = 0,
-	n = 0, at = 0 }
+	n = 0, at = 0, texN = 0, texMs = 0 }
 
 -- what each half shows, refreshed a few times a second and after every press
 local refreshNow
@@ -3261,6 +3261,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 			texW, texH, dirty = w, h, true
 		end
 		if (dirty or texMode == 2) and dockTex and not post then
+			local t0 = PROF.on and spGetTimer()
 			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], function()
 				drawStill()
 				local hole = L.hole
@@ -3273,6 +3274,9 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 				end
 			end, true)
 			dirty = false
+			if t0 then
+				PROF.texN, PROF.texMs = PROF.texN + 1, PROF.texMs + spDiffTimers(spGetTimer(), t0) * 1000
+			end
 		end
 		if dockTex then
 			-- (drawn into the texture the dock's panel is no longer opaque: the game and BAR's menus under it showed
@@ -3291,8 +3295,12 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		end
 	end
 	resetGL()
+	local tRes = PROF.on and spGetTimer() -- (profiling: the resource panels' share, drawn live every frame)
 	if not (L.land and rightKind == "dgun") then -- (sideways FIRE stands where they are: their edges showed round it)
 		drawResources()
+	end
+	if tRes then
+		PROF.resMs = (PROF.resMs or 0) + spDiffTimers(spGetTimer(), tRes) * 1000
 	end
 	drawQueueZones()
 	if rightKind == "place" then
@@ -3325,9 +3333,12 @@ function widget:DrawScreen()
 	drawDock()
 	PROF.sum, PROF.n = PROF.sum + spDiffTimers(spGetTimer(), t0) * 1000, PROF.n + 1
 	if now() - PROF.at >= 10 then
-		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each",
-			PROF.sum / max(1, PROF.n), PROF.n, PROF.refreshN, PROF.refreshMs / max(1, PROF.refreshN)))
-		PROF.sum, PROF.n, PROF.at, PROF.refreshN, PROF.refreshMs = 0, 0, now(), 0, 0
+		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each, "
+			.. "%d texture draws taking %.2f ms each, the resources %.2f ms a frame", PROF.sum / max(1, PROF.n), PROF.n,
+			PROF.refreshN, PROF.refreshMs / max(1, PROF.refreshN), PROF.texN, PROF.texMs / max(1, PROF.texN),
+			(PROF.resMs or 0) / max(1, PROF.n)))
+		PROF.sum, PROF.n, PROF.at, PROF.refreshN, PROF.refreshMs, PROF.texN, PROF.texMs = 0, 0, now(), 0, 0, 0, 0
+		PROF.resMs = 0
 	end
 end
 
