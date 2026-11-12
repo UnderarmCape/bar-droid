@@ -2456,13 +2456,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the panel, selection, both grids and the groups strip drawn into a texture (`gl.R2tHelper`), redrawn only when
       the lists, the layout or a scroll change, on an opaque base (the texture's panel lets the game through); the
       resource bars, PLACE and the menu-mode sparkle drawn live on top. 0.6-0.76 ms a frame.
-- [ ] **The dock's cost again** (2026-11-12, dev phone, `bardroid_portrait_profile = 1`, the commander picked): 1.2-1.7
+- [x] **The dock's cost again** (2026-11-12, dev phone, `bardroid_portrait_profile = 1`, the commander picked): 1.2-1.7
       ms a frame now, upright (1.47-1.68) and sideways (1.2-1.6) alike, twice the 0.6-0.76 of 11-09. The profile line
       now also gives the texture draws and the resource panels: one texture draw per refresh (~3.7 a second, 2.3-3.2
       ms each: ~0.3 ms a frame) and the metal and energy panels, drawn live every frame, 0.8-1.0 ms a frame (FlowUI
       panels, five or six outlined prints, the wind blades turning). Next: those panels in a texture of their own,
       drawn again only when what they show changes (the numbers, the bar to the pixel, the blades by a step of their
-      turn), as BAR's top bar keeps its own.
+      turn), as BAR's top bar keeps its own. Done the same day (SP.drawRes): the panels in their own texture, drawn
+      again when their signature changes (the shown numbers, the bar by a two-hundredth, the wind and tide readings,
+      their place), the blades and waves turning live over it. Dev phone: the dock 0.62-0.84 ms a frame sideways
+      (was 1.2-1.6), 0.80-0.89 upright (was 1.47-1.68); the panels 0.10-0.18 ms, drawn again 1-2 times a second;
+      they look as before, the blades turn, the wind reading follows; dock-phone-test all pass.
 - [ ] Speak to chat started, cancelled and started again quickly (2026-11-09, dev phone, a virtual pad's LB + RB twice
       three times in the lobby): Android's `cancel()` answers with a late `onError(5)`. Here it came before the next
       start; had it come after, `done()` would have ended the new session (the note gone, the words dropped). The cure:

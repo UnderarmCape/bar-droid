@@ -2364,15 +2364,19 @@ local function indicatorWidth(text, s, extra)
 end
 local function drawIndicator(tex, turn, x, cy, s, text, extra)
 	local slot = indicatorSlot(text, s)
-	gl.Color(1, 1, 1, 0.8)
-	gl.Texture(tex)
-	gl.PushMatrix()
-	gl.Translate(x + s * 0.42, cy, 0)
-	gl.Rotate(turn, 0, 0, 1)
-	gl.TexRect(-s * 0.42, -s * 0.42, s * 0.42, s * 0.42)
-	gl.PopMatrix()
-	gl.Texture(false)
-	gl.Color(1, 1, 1, 1)
+	if L.resIcons then -- (drawn into the resource panels' texture: its turning picture drawn live over it, SP.drawRes)
+		L.resIcons[#L.resIcons + 1] = { tex, x + s * 0.42, cy, s * 0.42, tex == BLADES }
+	else
+		gl.Color(1, 1, 1, 0.8)
+		gl.Texture(tex)
+		gl.PushMatrix()
+		gl.Translate(x + s * 0.42, cy, 0)
+		gl.Rotate(turn, 0, 0, 1)
+		gl.TexRect(-s * 0.42, -s * 0.42, s * 0.42, s * 0.42)
+		gl.PopMatrix()
+		gl.Texture(false)
+		gl.Color(1, 1, 1, 1)
+	end
 	local size = s * 0.62
 	bold:Print("\255\255\255\255" .. text, x + s * 0.95, cy - size * 0.32, size, "o")
 	if extra then
@@ -3235,6 +3239,61 @@ local function drawStill()
 	end
 end
 
+-- The metal and energy panels in a texture of their own, drawn again only when what they show changes (the numbers,
+-- the bar by a two-hundredth, the wind and tide readings, their place): drawn live every frame they took 0.8-1.0 ms of
+-- the dock's 1.2-1.7 ms a frame (dev phone, 2026-11-12). The wind's blades (and the waves) turn live over it.
+function SP.resSignature()
+	local parts = { L.res[1], L.res[2], L.res[3], L.res[4], tideRelevant() and "t" or "" }
+	for _, res in ipairs({ "metal", "energy" }) do
+		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
+		parts[#parts + 1] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
+			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0) or "-"
+	end
+	parts[#parts + 1] = string.format("%.1f/%d", select(4, Spring.GetWind()) or 0, floor(Spring.GetTidal() or 0))
+	return table.concat(parts, " ")
+end
+function SP.drawRes()
+	local R, r = gl.R2tHelper, L.res
+	if texMode == 0 or not (R and R.RenderInRect and R.BlendTexRect) then
+		drawResources()
+		return
+	end
+	local w, h = r[3] - r[1], r[4] - r[2]
+	if L.resTex and (L.resTexW ~= w or L.resTexH ~= h) then
+		gl.DeleteTexture(L.resTex)
+		L.resTex = nil
+	end
+	if not L.resTex then
+		L.resTex = gl.CreateTexture(w, h, { target = GL.TEXTURE_2D, format = GL.RGBA8, fbo = true })
+		L.resTexW, L.resTexH, L.resSig = w, h, nil
+		if not L.resTex then
+			drawResources()
+			return
+		end
+	end
+	local sig = SP.resSignature()
+	if sig ~= L.resSig then
+		L.resSig, L.resIcons = sig, {}
+		R.RenderInRect(L.resTex, r[1], r[2], r[3], r[4], drawResources, true)
+		L.resIconsLive, L.resIcons = L.resIcons, nil
+		if PROF.on then
+			PROF.resN = (PROF.resN or 0) + 1
+		end
+	end
+	R.BlendTexRect(L.resTex, r[1], r[2], r[3], r[4], true)
+	for _, ic in ipairs(L.resIconsLive or {}) do -- (the turning pictures)
+		gl.Color(1, 1, 1, 0.8)
+		gl.Texture(ic[1])
+		gl.PushMatrix()
+		gl.Translate(ic[2], ic[3], 0)
+		gl.Rotate(ic[5] and windTurn or 0, 0, 0, 1)
+		gl.TexRect(-ic[4], -ic[4], ic[4], ic[4])
+		gl.PopMatrix()
+		gl.Texture(false)
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
 local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost; the texture as it is, not made again)
 	if not post then
 		L.drawFrame = Spring.GetDrawFrame()
@@ -3297,7 +3356,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	resetGL()
 	local tRes = PROF.on and spGetTimer() -- (profiling: the resource panels' share, drawn live every frame)
 	if not (L.land and rightKind == "dgun") then -- (sideways FIRE stands where they are: their edges showed round it)
-		drawResources()
+		SP.drawRes()
 	end
 	if tRes then
 		PROF.resMs = (PROF.resMs or 0) + spDiffTimers(spGetTimer(), tRes) * 1000
@@ -3334,11 +3393,11 @@ function widget:DrawScreen()
 	PROF.sum, PROF.n = PROF.sum + spDiffTimers(spGetTimer(), t0) * 1000, PROF.n + 1
 	if now() - PROF.at >= 10 then
 		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each, "
-			.. "%d texture draws taking %.2f ms each, the resources %.2f ms a frame", PROF.sum / max(1, PROF.n), PROF.n,
-			PROF.refreshN, PROF.refreshMs / max(1, PROF.refreshN), PROF.texN, PROF.texMs / max(1, PROF.texN),
-			(PROF.resMs or 0) / max(1, PROF.n)))
+			.. "%d texture draws taking %.2f ms each, the resources %.2f ms a frame (drawn %d times)", PROF.sum / max(1, PROF.n),
+			PROF.n, PROF.refreshN, PROF.refreshMs / max(1, PROF.refreshN), PROF.texN, PROF.texMs / max(1, PROF.texN),
+			(PROF.resMs or 0) / max(1, PROF.n), PROF.resN or 0))
 		PROF.sum, PROF.n, PROF.at, PROF.refreshN, PROF.refreshMs, PROF.texN, PROF.texMs = 0, 0, now(), 0, 0, 0, 0
-		PROF.resMs = 0
+		PROF.resMs, PROF.resN = 0, 0
 	end
 end
 
@@ -3653,6 +3712,9 @@ end
 function widget:Shutdown()
 	if dockTex then
 		gl.DeleteTexture(dockTex)
+	end
+	if L.resTex then
+		gl.DeleteTexture(L.resTex)
 	end
 	if SP.tipOwner and SP.tipOwner.ShowTooltip == SP.tipWrap then -- (BAR's tooltip widget as it was)
 		SP.tipOwner.ShowTooltip = SP.tipInner
