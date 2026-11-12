@@ -1745,7 +1745,9 @@ local function shareDraw(vsx, vsy)
 
 	-- the keys: A gives, B cancels; centred, as the tabs and the amount above them (at the left they read as stray)
 	local key = math.floor(size * 1.2)
-	local hy = y1 - h + pad * 0.5
+	-- (in the middle of their band, rowH + pad under the amount: half a pad over the panel's foot they sat low, a wide
+	-- empty band over them; dev phone screenshots 2026-11-12)
+	local hy = math.floor(y1 - h + (rowH + pad - key) / 2)
 	local hs = size * 0.8
 	local keysW = 2 * (key + pad * 0.4) + (font:GetTextWidth("GIVE") + font:GetTextWidth("CANCEL")) * hs + pad
 	local hx = math.floor(math.max(x0 + pad, mid - keysW / 2))
