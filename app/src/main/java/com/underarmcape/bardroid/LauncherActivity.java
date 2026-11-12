@@ -164,8 +164,9 @@ public class LauncherActivity extends AppCompatActivity {
             g.setTag(R.id.rgFpsCap, base);
         }
         float size = base;
-        for (float k = 1f; k >= 0.7f; k -= 0.05f) {
-            size = base * k;
+        // (in twentieths: k -= 0.05f came to 0.69999993 after six steps, under 0.7f, and 70 % was never tried)
+        for (int k = 20; k >= 14; k--) {
+            size = base * k / 20f;
             float need = 0;
             for (int i = 0; i < g.getChildCount(); i++) {
                 TextView b = (TextView) g.getChildAt(i);
