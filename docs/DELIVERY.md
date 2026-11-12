@@ -1204,8 +1204,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       middle (under the engine's logo, over BAR's loading picture) from the engine's start until "finished loading"
       or the lobby's widget (`GameService.loading`); opened with `FLAG_ACTIVITY_NO_USER_ACTION`, as a plain tap made
       Termux:X11 shrink the game to its floating window and Back went to the launcher. Dev phone: shown on the engine's
-      splash and the loading picture, Device care opens, Back returns to the loading game, gone in the game. Not tried:
-      Clean now itself while a game loads (the app runs as a foreground service). The launcher's low-memory note now
+      splash and the loading picture, Device care opens, Back returns to the loading game, gone in the game. Clean now
+      itself while a game loads (2026-11-12, dev phone, a skirmish loading its map): Memory's list of what it stops
+      (with View more) has Play Store, Wi-Fi Provisioner, Find My Mobile and Multi Connectivity, not the game (a
+      foreground service); after Clean now the engine and the app kept their process ids, Back twice returned to the
+      game, which had finished loading meanwhile and went on. The launcher's low-memory note now
       says how: Recents, Close all; or Device care, Memory, Clean now.
 - [x] The app's builder queue widget removed in older replays (found in the dev phone's launcher.log, 2026-11-04):
       a replay plays its own BAR release, and test-31465's `WG.BuilderQueueApi` had no `OnBuildCommandTeamChanged`
