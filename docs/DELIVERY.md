@@ -1291,7 +1291,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on the unit followed before followed it again, 1st person turned the engine's first-person camera on (mode 0); so
       on the phone the three behave. Found on the way: upright, 1st person looked into the sky (the game above the
       dock shows the view's upper part); now turned down by dockTilt as Shoulder is, the horizon in the game's upper
-      third, the ground ahead in sight. fp-save-test passes.
+      third, the ground ahead in sight. fp-save-test passes. And Shoulder upright showed a commander taller than the
+      game above the dock, its head cut off (the game is that share of the view's height): its camera now goes back by
+      that share (dockShare), the commander whole at 1080x2316 and at 1080x1198. The pad's own 1st person
+      (`bardroid_padfp.lua`) has the same sky upright, but its crosshair and aim are at the screen's middle, which
+      upright is the game's lower part: left as it is while the pad plays sideways (the open "gamepad upright" item).
 - [ ] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
       one over the other (under 600 dp) the top block (title, status lines, buttons) takes the height it needs and the
       settings get the rest; at font size 1.3x the settings showed one line, at display density 600 and up none. Only
