@@ -1423,8 +1423,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the lobby widget sets the tip for the next load by the screen's shape (in memory, an overlay: the player's own
       value sideways, from .bardroid-tips-line), and the app puts the upright pictures in place or takes them away at
       each turn (`LoadPictures`, the same steps as launch-bar.sh's). Dev phone: sideways (tip on, no pictures),
-      upright (tip off, the 5 pictures there), sideways (tip on, gone). Not seen yet: a game's load screen after a
-      turn (the dev phone has no connection, and the skirmish screen picked maps it could not download). Left: Kailil
+      upright (tip off, the 5 pictures there), sideways (tip on, gone). Then at a real load (a save made in a sideways
+      skirmish, loaded from the lobby's Load Game, as the dev phone has no connection for maps): a lobby started
+      sideways and turned upright loaded it with the upright picture whole and the app's wrapped tip, no BAR line off
+      the sides; a lobby started upright and turned sideways with BAR's own picture and BAR's tip line. Left: Kailil
       turning his Fold7 in a game and the lobby.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).

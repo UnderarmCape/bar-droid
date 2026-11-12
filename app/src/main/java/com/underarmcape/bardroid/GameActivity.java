@@ -484,23 +484,29 @@ public class GameActivity extends MainActivity {
     }
 
     /**
-     * Sideways a sixth of the screen below its middle: under the engine's logo, above the loading screen's tips.
-     * Upright at the top, under the low memory line where it shows (what the button is for): in the middle it lay over
-     * the load picture's commander (dev phone, 2026-11-10).
+     * Sideways a sixth of the screen below its middle: under the logo of the lobby's first load and the engine's, above
+     * the loading screen's tips; while a game's load screen is up (BAR's picture: its commander in the middle, the button
+     * lay over his waist, and at the top middle over the Armada one's head; dev phone 2026-11-12) in the top right
+     * corner, under BAR's low memory band (5 % of the height), over the picture's sky. Upright at the top, under the low
+     * memory line where it shows (what the button is for): in the middle it lay over the load picture's commander (dev
+     * phone, 2026-11-10).
      */
     private void placeFreeMemory() {
         View v = freeMemory;
         View p = v == null ? null : (View) v.getParent();
         if (p == null || p.getHeight() == 0) return;
-        int ph = p.getHeight();
-        float ty = ph / 6f;
-        if (ph > p.getWidth() * 1.05f) {
+        int ph = p.getHeight(), pw = p.getWidth();
+        float ty = ph / 6f, tx = 0f;
+        boolean upright = ph > pw * 1.05f;
+        if (upright || GameService.loadScreen()) {
             float dp = getResources().getDisplayMetrics().density;
             int above = lowRamLine != null && lowRamLine.getVisibility() == View.VISIBLE ? lowRamLine.getBottom()
                     : (int) (ph * 0.05f);
             ty = above + 14 * dp - (ph - v.getHeight()) / 2f;
+            if (!upright) tx = (pw - v.getWidth()) / 2f - 16 * dp;
         }
         if (v.getTranslationY() != ty) v.setTranslationY(ty);
+        if (v.getTranslationX() != tx) v.setTranslationX(tx);
     }
 
     // The loading screen's tip upright (Kailil, 2026-11-09: "the sentences that appear should fit inside of the vertical
