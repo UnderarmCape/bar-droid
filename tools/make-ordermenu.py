@@ -277,6 +277,11 @@ function widget:MousePress(x, y, button)
      '''		(WG.guishader and not displayListGuiShader) or (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0))
 		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) -- BAR Droid: the portrait dock has the orders
 	then'''),
+    # (and not drawn while the dock is up: the dock across the bottom covered it, but sideways for one thumb it leaves
+    # the bottom's other side to the game, and the menu's buttons showed beside it, dev phone 2026-11-12)
+    ('''	if #commands == 0 and (not alwaysShow or spGetGameFrame() == 0) then -- dont show pregame because factions interface is shown''',
+     '''	if (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0)) -- dont show pregame because factions interface is shown
+		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn'''),
 ]
 
 

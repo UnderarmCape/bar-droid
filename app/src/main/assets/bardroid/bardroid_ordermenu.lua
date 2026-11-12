@@ -1738,7 +1738,8 @@ function widget:DrawScreen()
 		tracy.ZoneEnd()
 	end
 
-	if #commands == 0 and (not alwaysShow or spGetGameFrame() == 0) then -- dont show pregame because factions interface is shown
+	if (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0)) -- dont show pregame because factions interface is shown
+		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn
 		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Hide")
 		if displayListGuiShader and WG.guishader then
 			WG.guishader.RemoveDlist("ordermenu")
