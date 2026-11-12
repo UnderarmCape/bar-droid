@@ -89,6 +89,12 @@ public class GameActivity extends MainActivity {
             screenW = w; screenH = h;
             preferRefreshRate();
             touch.screenSize(w, h, refreshHz());
+            // (BAR's load screen pictures for the next load in this shape: a game started from the lobby after a turn)
+            boolean up = h > w * 1.05f;
+            if (w > 0 && h > 0 && (picturesUpright == null || picturesUpright != up)) {
+                picturesUpright = up;
+                LoadPictures.follow(new java.io.File(getFilesDir(), "bar"), up);
+            }
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
         addCatchupView();
@@ -111,6 +117,7 @@ public class GameActivity extends MainActivity {
     };
 
     private volatile int screenW, screenH;
+    private Boolean picturesUpright;   // (the shape LoadPictures last had: UI thread)
 
     /**
      * The pad as a mouse (and in BAR's game a keyboard too: ControllerBridge); events go to the X server on the UI

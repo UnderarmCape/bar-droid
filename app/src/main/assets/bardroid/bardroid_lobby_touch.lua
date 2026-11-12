@@ -471,8 +471,17 @@ local function sideRelayout()
 		column:SetVisibility(false)
 	end
 	local barUp = bar and bar.visible
+	upright.sideBounds = upright.sideBounds or {}
 	for _, name in ipairs({ "holder_mainWindow", "holder_submenuWindow" }) do
 		local o = chobbyObject(name)
+		local r = real(o)
+		if r and r._relativeBounds and not upright.sideBounds[r] then -- (Chobby's own place, for uprightOff)
+			local rb = {}
+			for k, v in pairs(r._relativeBounds) do
+				rb[k] = v
+			end
+			upright.sideBounds[r] = { x = r.x, y = r.y, rb = rb }
+		end
 		if o and o._relativeBounds then
 			if o.x ~= colW or o.y ~= 0 then
 				o:SetPos(colW, 0)
@@ -784,6 +793,21 @@ local function uprightOff()
 		end
 	end
 	upright.sideHidden, upright.status = nil, nil
+	-- (the column's content windows where Chobby had them: its layout keeps a place it did not set, and a turn upright
+	-- left the main window at the column's edge, the whole height, over the status line: dev phone, 2026-11-12)
+	for o, was in pairs(upright.sideBounds or {}) do
+		if not o.disposed then
+			for k in pairs(o._relativeBounds) do
+				o._relativeBounds[k] = nil
+			end
+			for k, v in pairs(was.rb) do
+				o._relativeBounds[k] = v
+			end
+			o:SetPos(was.x, was.y)
+			o:UpdateClientArea()
+		end
+	end
+	upright.sideBounds = nil
 	if upright.grid then
 		upright.grid:Dispose()
 		upright.grid = nil
@@ -815,6 +839,31 @@ local function uprightOff()
 	if root and root.ViewResize then -- (Chobby's own layout back)
 		pcall(root.ViewResize, screen0.width, screen0.height)
 	end
+end
+
+-- BAR's loading screen tip at the next game's load, as the screen is shaped now: launch-bar.sh turns it off for an
+-- upright start (BAR's line ran off both sides; the app shows its own), but a game started here loads in this engine,
+-- after a turn of the phone too ("Turn with the phone"). Upright off, sideways the player's own setting (launch-bar.sh
+-- keeps it in .bardroid-tips-line while it has it off). In memory only (an overlay): the file keeps launch-bar.sh's;
+-- the player's value too, for a lobby loaded again after a game.
+upright.tips = function(isUpright)
+	if upright.tipsUpright == isUpright then
+		return
+	end
+	local mine = Spring.GetConfigInt("bardroid_player_tips", -1)
+	if mine < 0 then
+		local f = io.open(".bardroid-tips-line", "r")
+		local line = f and f:read("*a")
+		if f then
+			f:close()
+		end
+		mine = line and (tonumber(line:match("=%s*(%d+)")) or 1) or Spring.GetConfigInt("loadscreen_tips", 1)
+		Spring.SetConfigInt("bardroid_player_tips", mine, true)
+	end
+	upright.tipsUpright = isUpright
+	Spring.SetConfigInt("loadscreen_tips", isUpright and 0 or mine, true)
+	Spring.Echo("[bardroid-lobby] loading screen tips at the next load: " .. ((isUpright or mine == 0) and "off" or "on")
+		.. (isUpright and " (upright)" or ""))
 end
 
 -- on: the grid (upright) or the column (side: sideways) up; between the two (a turn of the phone) the one goes first
@@ -1144,6 +1193,7 @@ local function uprightUpdate(now)
 		return
 	end
 	uprightNotes()
+	upright.tips(screen0.height > screen0.width * UPRIGHT)
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(not gameLoaded, screen0.height <= screen0.width * UPRIGHT)
 	if not upright.on then

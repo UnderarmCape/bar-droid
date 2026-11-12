@@ -1412,8 +1412,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       BAR's minimap small at the top left), auto-rotate on again sideways (the sideways dock, the minimap in its
       middle); each turn reloads BAR's interface at that shape's scale (as a fold does), about 6 s, no errors. The
       lobby the same way: the column sideways, the upright pages, the column again. The dev phone keeps auto-rotate off
-      (toolchain.ps1 `$PhoneScreen`: its tests pick their orientation with "Play upright"). Left: Kailil turning his
-      Fold7 in a game and the lobby.
+      (toolchain.ps1 `$PhoneScreen`: its tests pick their orientation with "Play upright"). The next run, the lobby
+      turned before a game: (1) turned upright from sideways, Chobby's main window stayed at the side column's edge,
+      the whole height over the status line, on the right half (the side layout's place; Chobby's ViewResize keeps a
+      place it did not set): now uprightOff puts the main and submenu windows back where Chobby had them, and the
+      upright lobby after a turn is the same as one started upright (dev phone: sideways, upright, sideways, upright,
+      the Skirmish screen the full width each time upright; lobby-phone-test passes). (2) A game started from the lobby
+      loads in the same engine, so launch-bar.sh's upright choices for the load screen, made at the engine's start,
+      held after a turn: BAR's tip (off upright) and BAR's load pictures (the upright versions under BAR's names). Now
+      the lobby widget sets the tip for the next load by the screen's shape (in memory, an overlay: the player's own
+      value sideways, from .bardroid-tips-line), and the app puts the upright pictures in place or takes them away at
+      each turn (`LoadPictures`, the same steps as launch-bar.sh's). Dev phone: sideways (tip on, no pictures),
+      upright (tip off, the 5 pictures there), sideways (tip on, gone). Not seen yet: a game's load screen after a
+      turn (the dev phone has no connection, and the skirmish screen picked maps it could not download). Left: Kailil
+      turning his Fold7 in a game and the lobby.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
