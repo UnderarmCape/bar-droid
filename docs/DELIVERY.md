@@ -497,6 +497,10 @@ same, that stays the simpler way.
            a long press, speak to chat (today a three-finger tap).
         3. **LOS VIEW**: BAR's line-of-sight overlay on and off (its L key), lit while on.
         Each fits the half-row tile as the others; none needs BAR's code. Waiting for his pick.
+- [x] **The phone tests after the night of 2026-11-12** (~05:50, dev phone, the build of 11ec9a2 with all that night's
+      changes: the upright spectating cameras, the share list, the lobby's Replays row, the launcher's map list and
+      status line): dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun,
+      -Share, -Chat) and pace-test all pass, ~16 minutes in all.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
