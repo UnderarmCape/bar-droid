@@ -158,7 +158,8 @@ public class GameService extends Service {
             exitLogged = true;
             int r = e.getReason();   // (the cause in words for the launcher's log box; Android's own words in the shared logs)
             Log.i("app", "the last run ended " + new java.text.SimpleDateFormat("MMM d HH:mm:ss", java.util.Locale.US)
-                    .format(new java.util.Date(e.getTimestamp())) + ": " + (r >= 0 && r < EXIT_REASONS.length ? EXIT_REASONS[r] : "reason " + r));
+                    .format(new java.util.Date(e.getTimestamp())) + " (" + (r >= 0 && r < EXIT_REASONS.length ? EXIT_REASONS[r] : "reason " + r)
+                    + ")");   // (in brackets: "09:08:08: force stopped" read as a fourth number of the time, dev phone 2026-11-12)
             Log.detail("app", "the last run's exit: " + e.getDescription() + "; reason " + r + ", importance " + e.getImportance());
         }
         if (e.getReason() != android.app.ApplicationExitInfo.REASON_LOW_MEMORY
