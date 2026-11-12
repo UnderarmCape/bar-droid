@@ -51,8 +51,9 @@ end
 -- landscape HUD squeezed upright, the case the dock is for)
 local PORTRAIT = 1.05
 local DOCK_MAX = 0.54 -- of the screen's height at most
-local MENU_SECONDS = 2 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
--- 2026-11-10: 1.25, then "Extend mouse tap ui delay too instead 2 seconds")
+local MENU_SECONDS = 2.6 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
+-- 2026-11-10: 1.25, then "Extend mouse tap ui delay too instead 2 seconds"; 2026-11-12: "extend bottom UI time out by
+-- 30 percent. its too short")
 local HOME_ROWS = 3 -- nothing picked: the home grid's rows of big buttons (L.homeRows: as many as its buttons take,
 -- one more at most, refreshNow; no new local here: the file's main chunk is at Lua's 200)
 local BLINK = 0.45 -- seconds of the menu's opening pulse
@@ -573,11 +574,13 @@ local function byType(units, filter)
 	return list
 end
 
-local function myCommanders()
+-- my commanders, or (kind "factories") my finished factories, oldest first (COMMANDER and FACTORIES cycle through them)
+local function myCommanders(kind)
 	local out = {}
 	for _, u in ipairs(Spring.GetTeamUnits(myTeam()) or {}) do
 		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
-		if ud and ud.customParams and ud.customParams.iscommander then
+		if ud and (kind == "factories" and ud.isFactory and not select(3, Spring.GetUnitIsStunned(u))
+			or kind ~= "factories" and ud.customParams and ud.customParams.iscommander) then
 			out[#out + 1] = u
 		end
 	end
@@ -1292,11 +1295,20 @@ function refreshNow()
 		-- commander with the camera on it, the camera to the base; 2026-11-11: no IDLE UNITS or IDLE BUILDER, the idle
 		-- builders are in the groups row, drawGroups)
 		-- (IDLE BUILDER's place: PINGS, Kailil 2026-11-11 "a button to go to last 4 pings like we have on controller. And
-		-- to set a ping"; IDLE UNITS' place open until Kailil picks what goes there)
+		-- to set a ping"; IDLE UNITS' place: FACTORIES, Kailil 2026-11-12 "lets do FACTORIES for the button beside
+		-- PINGS": the next factory picked, the camera on it, its build menu in the dock to queue units; dim with none)
+		local hasFactory = false
+		for d in pairs(Spring.GetTeamUnitsCounts(myTeam()) or {}) do
+			local ud = type(d) == "number" and UnitDefs[d]
+			if ud and ud.isFactory then
+				hasFactory = true
+				break
+			end
+		end
 		newRight = {
 			{ kind = "units", from = "local", label = "LOCAL UNITS" },
 			{ kind = "units", from = "all", label = "ALL UNITS" },
-			{ kind = "blank" },
+			{ kind = "factories", label = "FACTORIES", dim = not hasFactory },
 			{ kind = "pings" },
 			{ kind = "commander", label = "COMMANDER" },
 			{ kind = "base", label = "BASE" },
@@ -1710,8 +1722,8 @@ local function pressItem(item, long)
 		runCommand(factoryItem, true, true, true) -- (right click with Shift and Ctrl: the whole queue of it)
 	elseif k == "back" then
 		factoryItem = nil
-	elseif k == "commander" then -- the next one picked and the camera on it (again: the next)
-		local list = myCommanders()
+	elseif k == "commander" or k == "factories" then -- the next one picked and the camera on it (again: the next)
+		local list = myCommanders(k)
 		if #list > 0 then
 			cycleAt[k] = (cycleAt[k] or 0) % #list + 1
 			local u = list[cycleAt[k]]
@@ -1719,8 +1731,8 @@ local function pressItem(item, long)
 			local x, y, z = Spring.GetUnitPosition(u)
 			if x then
 				-- (30 % further out than the comfortable distance: Kailil, 2026-11-11, "Commander button is too zoomed in.
-				-- Zoom out like 30 percent")
-				cameraTo(x, y, z, k == "commander" and 1.3)
+				-- Zoom out like 30 percent"; a factory the same)
+				cameraTo(x, y, z, 1.3)
 			end
 		end
 	elseif k == "specact" then -- (spectating, SP: the spectate widget's own action)

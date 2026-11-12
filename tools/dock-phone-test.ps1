@@ -106,7 +106,7 @@ try {
   }
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Shot "place"
-  Start-Sleep -Milliseconds 2600   # (past the 2 s the dock's menu once had: PLACE's tap only opened it again)
+  Start-Sleep -Milliseconds 3200   # (past the dock menu's 2.6 s: once PLACE's tap after its time-out only opened it again)
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
   Start-Sleep -Milliseconds 1500
   Stage "placed?"
