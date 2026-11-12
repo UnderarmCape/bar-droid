@@ -560,6 +560,26 @@ local function fpFor(def, P) -- (into P when given: 1st person reuses one table 
 	return P
 end
 
+-- Upright over the dock (bardroid_portrait.lua), a view of the unit's own (Shoulder, 1st person) looks almost level,
+-- so no move along the ground can bring it into the game above the dock (the game's middle looks past the horizon):
+-- the angle between the screen's middle and the game's middle above the dock, the camera turned down by it where it
+-- stands (the commander's legs were under the dock, dev phone 2026-11-11). 0 with the dock folded to its SHOW button.
+local function dockTilt()
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	local vsx, vsy = Spring.GetViewGeometry()
+	if not dock or dock[3] - dock[1] < vsx * 0.9 then
+		return 0
+	end
+	local x = math.floor(vsx / 2)
+	local ax, ay, az = Spring.GetPixelDir(x, vsy - math.floor(vsy / 2))
+	local bx, by, bz = Spring.GetPixelDir(x, vsy - math.floor((dock[4] + vsy) / 2))
+	if not (ax and bx) then
+		return 0
+	end
+	return math.acos(math.max(-1, math.min(1, ax * bx + ay * by + az * bz)))
+end
+
 local fpValues = {} -- (fpFor's values, the same table every frame)
 local fpCam = { mode = CAM_FPS, rz = 0 } -- (the camera state set every frame, the same table)
 local function updateFirstPerson(dt)
@@ -620,7 +640,10 @@ local function updateFirstPerson(dt)
 	if look.free then
 		ry, pitchDeg, fov = look.yaw, look.pitch, look.fov
 	end
-	local pitch = math.pi / 2 - math.rad(pitchDeg) -- (rx: pi/2 level, more is down)
+	-- (rx: pi/2 level, more is down) Upright over the dock turned down by dockTilt, as the unit's own views: the game shows
+	-- the upper part of the view only, and 1st person looked into the sky, the horizon at the dock's edge (dev phone,
+	-- 2026-11-12)
+	local pitch = math.pi / 2 - math.rad(pitchDeg) + dockTilt()
 	local c = fpCam
 	c.px, c.py, c.pz, c.rx, c.ry, c.fov = ex, ey, ez, pitch, ry, fov
 	c.dx, c.dy, c.dz = math.sin(pitch) * math.sin(ry), math.cos(pitch), -math.sin(pitch) * math.cos(ry)
@@ -713,25 +736,6 @@ local function dockShift(h, ph, dist)
 		return 0, 0
 	end
 	return sx, sz
-end
-
--- The same for a view of the unit's own (Shoulder), which looks almost level, so no move along the ground can do it
--- (the game's middle looks past the horizon): the angle between the screen's middle and the game's middle above the
--- dock, the camera turned down by it where it stands (the commander's legs were under the dock, dev phone 2026-11-11)
-local function dockTilt()
-	local P = WG.BarDroidPortrait
-	local dock = P and P.dock and P.dock()
-	local vsx, vsy = Spring.GetViewGeometry()
-	if not dock or dock[3] - dock[1] < vsx * 0.9 then
-		return 0
-	end
-	local x = math.floor(vsx / 2)
-	local ax, ay, az = Spring.GetPixelDir(x, vsy - math.floor(vsy / 2))
-	local bx, by, bz = Spring.GetPixelDir(x, vsy - math.floor((dock[4] + vsy) / 2))
-	if not (ax and bx) then
-		return 0
-	end
-	return math.acos(math.max(-1, math.min(1, ax * bx + ay * by + az * bz)))
 end
 
 local function updateFollow(dt)
