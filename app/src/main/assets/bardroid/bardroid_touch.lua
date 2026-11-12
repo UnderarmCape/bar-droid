@@ -161,7 +161,12 @@ local function preloadCursors()
 		Spring.DiffTimers(Spring.GetTimer(), t0) * 1000))
 end
 
+local loadedGame = { pending = false } -- (a saved game loaded: checkLoadedGame; one table for the locals)
 function widget:Initialize()
+	if Spring.GetGameState then
+		local ok, doneLoading, savedGame = pcall(Spring.GetGameState)
+		loadedGame.pending = ok and savedGame == true and doneLoading == false
+	end
 	preloadCursors()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
 	pcall(os.remove, "LuaUI/Config/bardroid_catchup.txt") -- left by a reload while catching up: written again if still behind
@@ -1111,8 +1116,39 @@ local function awayBack() -- (Update: the screen is shown)
 	end
 end
 
+-- A saved game loaded (the lobby's Load Game): BAR's game start does not run again, so nothing was picked and the
+-- camera stood where the engine put it, away from the commander (dev phone, 2026-11-12, upright and sideways). As at a
+-- start: the commander picked, the camera on it (upright above the dock), at the game's first frame. The engine's game
+-- state says a saved game, and that it was still loading when this widget started: not the interface's own reloads (a
+-- fold, its scale), which come with the game loaded. (BAR's "GameID" rules param is no help: the save brings back the
+-- saved game's.) (loadedGame: declared above widget:Initialize, which asks the game state)
+local function checkLoadedGame()
+	loadedGame.pending = false
+	if Spring.GetSpectatingState() or Spring.IsReplay() then
+		return
+	end
+	for _, u in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if ud and ud.customParams and ud.customParams.iscommander then
+			Spring.SelectUnitArray({ u })
+			local x, y, z = Spring.GetUnitPosition(u)
+			local P = WG.BarDroidPortrait
+			if P and P.active and P.active() and P.cameraTo then
+				P.cameraTo(x, y, z)
+			else
+				Spring.SetCameraTarget(x, y, z, 0.5)
+			end
+			Spring.Echo("[bardroid-touch] a saved game loaded: the commander picked, the camera on it")
+			return
+		end
+	end
+end
+
 local function gameFrame(frame)
 	local now = spGetTimer()
+	if loadedGame.pending then
+		checkLoadedGame()
+	end
 	awayWhileRunning(now)
 	if catchup and lastGameFrameAt then
 		local gap = spDiffTimers(now, lastGameFrameAt)
