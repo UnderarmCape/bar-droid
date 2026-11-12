@@ -153,7 +153,11 @@ public final class Updater {
             // (with updates off the line under it says so: "Last check Nov 11 00:57 (automatic updates off)" over "BAR
             // updates: only with Install / Update" said it twice, dev phone 2026-11-11)
             String check = s.getProperty("check");
-            sb.append("Last check ").append(Prefs.autoUpdate ? check : check.replace(" (" + NOT_CHECKED + ")", ""));
+            if (!Prefs.autoUpdate) check = check.replace(" (" + NOT_CHECKED + ")", "");
+            // (the reason in brackets as one piece: a narrow screen wrapped "(no" / "connection)", dev phone 2026-11-12)
+            int open = check.indexOf(" (");
+            if (open >= 0) check = check.substring(0, open + 2) + check.substring(open + 2).replace(' ', ' ');
+            sb.append("Last check ").append(check);
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
         } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
         // (an engine's own miss only while that engine plays: after a rollback to the older one, the newer engine's
