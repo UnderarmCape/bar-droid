@@ -497,6 +497,10 @@ same, that stays the simpler way.
            a long press, speak to chat (today a three-finger tap).
         3. **LOS VIEW**: BAR's line-of-sight overlay on and off (its L key), lit while on.
         Each fits the half-row tile as the others; none needs BAR's code. Waiting for his pick.
+- [ ] **The lobby's Keys window upright** (2026-11-12, dev phone): Chobby's gui_keys_panel.lua lays its six tabs
+      (Keys, CTRL Keys, ALT Keys, three Legacy ones) in one row 180 pixels each; upright the row shows two and a half,
+      ALT Keys cut under Close and the Legacy ones out of reach, the keyboard picture small. It matters with a keyboard
+      only, and sideways it is whole: left as it is. Two rows of three upright (the picture under them) would cure it.
 - [x] **The lobby's Settings, Graphics: Ingame / Menu Display Mode** (2026-11-12, dev phone upright): the tab's only
       two settings, meaningless on a phone, could a player break the picture with them? Menu Display Mode set to
       Fullscreen, then Windowed (Chobby's SetLobbyFullscreenMode 3 and 2; the engine's window attributes changed):
