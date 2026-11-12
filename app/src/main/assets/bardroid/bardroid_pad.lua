@@ -1585,7 +1585,7 @@ local function shareDraw(vsx, vsy)
 	end
 	local barW, numW = math.floor(size * 5), math.ceil(font:GetTextWidth("00.0k") * small)
 	local rowW = nameW + pad + (res and (numW + pad * 0.5 + barW) or 0)
-	local lineW = font:GetTextWidth("GIVE 00.0k ENERGY (100 %)") * size + size * 3
+	local lineW = font:GetTextWidth("GIVE 00.0k ENERGY (100%)") * size + size * 3
 	local w = math.ceil(math.max(rowW, tabsW, lineW, size * 14)) + pad * 2
 	local tabRowH, amountH = math.floor(rowH * 1.15), res and math.floor(rowH * 1.6) or rowH
 	-- the teammates' rows on the screen: closer together, then a window that follows the one picked (a co-op game
@@ -1701,7 +1701,8 @@ local function shareDraw(vsx, vsy)
 		elseif amount < want then
 			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY CAN TAKE)"
 		else
-			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (" .. math.floor(SHARE_STEPS[s.step] * 100 + 0.5) .. " %)"
+			-- ("50%" as the app's other percentages: "(50 %)" was the one with a space, dev phone 2026-11-12)
+			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (" .. math.floor(SHARE_STEPS[s.step] * 100 + 0.5) .. "%)"
 		end
 		-- (within the panel: "GIVE 300 METAL (ALL THEY HAVE ROOM FOR)" ran past both its edges, dev phone 2026-11-08)
 		local ls = math.min(size, size * (w - pad * 2) / math.max(1, font:GetTextWidth(line) * size))
