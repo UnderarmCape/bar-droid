@@ -30,6 +30,21 @@ import java.nio.file.Files;
 final class SplashPicture {
     private SplashPicture() {}
 
+    /**
+     * Sideways the logo's middle at this share of the height, above the screen's middle: the Free memory button goes under
+     * it (Kailil, 2026-11-04: "a button under the bar logo"; GameActivity.placeFreeMemory), clear of the engine's lines at
+     * the foot. Centred, the logo's ENGINE lay under the button (dev phone, 2026-11-12). Upright in the middle.
+     */
+    static final float LOGO_MIDDLE_SIDEWAYS = 0.37f;   // (0.40: the button's foot on the engine's first line)
+    private static final float LOGO_RATIO = 810f / 1750f;   // (the logo's part of the engine's picture: below)
+
+    /** Sideways, the logo's foot as a share of the screen's height (the screen w x h, any unit). */
+    static float logoFootSideways(float w, float h) {
+        float dh = w * 0.46f * LOGO_RATIO;
+        if (dh > h * 0.5f) dh = h * 0.5f;
+        return LOGO_MIDDLE_SIDEWAYS + dh / 2f / h;
+    }
+
     /** Before a start: upright as the game will be (the phone may be held the other way at that moment). */
     static void write(Context ctx, File bar, String engineVersion, boolean upright) {
         try {
@@ -48,7 +63,7 @@ final class SplashPicture {
             int pw = Math.round(w * k), ph = Math.round(h * k);
             File dir = new File(bar, "bardroid-splash");
             File out = new File(dir, "splash.png"), stamp = new File(dir, ".made-for");
-            String key = pw + "x" + ph + " " + src.length() + " " + src.lastModified();
+            String key = "v3 " + pw + "x" + ph + " " + src.length() + " " + src.lastModified();   // (v2: the logo raised)
             if (out.isFile() && stamp.isFile()
                     && key.equals(new String(Files.readAllBytes(stamp.toPath()), StandardCharsets.UTF_8).trim())) return;
             BitmapFactory.Options o = new BitmapFactory.Options();
@@ -65,7 +80,8 @@ final class SplashPicture {
             float share = pw > ph ? 0.46f : 0.78f;   // (of the width; on a 16:9 screen the engine's own picture: 0.46)
             float dw = pw * share, dh = dw * from.height() / (float) from.width();
             if (dh > ph * 0.5f) { dh = ph * 0.5f; dw = dh * from.width() / (float) from.height(); }
-            RectF to = new RectF((pw - dw) / 2f, (ph - dh) / 2f, (pw + dw) / 2f, (ph + dh) / 2f);
+            float mid = ph * (pw > ph ? LOGO_MIDDLE_SIDEWAYS : 0.5f);
+            RectF to = new RectF((pw - dw) / 2f, mid - dh / 2f, (pw + dw) / 2f, mid + dh / 2f);
             cv.drawBitmap(pic, from, to, new Paint(Paint.FILTER_BITMAP_FLAG | Paint.ANTI_ALIAS_FLAG));
             pic.recycle();
             //noinspection ResultOfMethodCallIgnored

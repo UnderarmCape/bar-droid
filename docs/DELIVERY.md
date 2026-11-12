@@ -1428,6 +1428,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sideways and turned upright loaded it with the upright picture whole and the app's wrapped tip, no BAR line off
       the sides; a lobby started upright and turned sideways with BAR's own picture and BAR's tip line. Left: Kailil
       turning his Fold7 in a game and the lobby.
+- [x] **The Free memory button sideways clear of the logo and the commander** (found 2026-11-12, dev phone, a start
+      screenshotted every 0.7 s): a sixth below the middle, where Kailil wanted it under the logo (2026-11-04, when the
+      engine's splash was BAR's picture), it lay over the ENGINE of the app's Recoil splash, and on a game's load screen
+      over BAR's commander. The splash picture now has the logo's middle at 37 % of the height sideways
+      (`SplashPicture.LOGO_MIDDLE_SIDEWAYS`) and the button just under it, above the engine's lines at the foot; while
+      a game's load screen is up, the top right corner under BAR's low memory band. Upright as before.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the

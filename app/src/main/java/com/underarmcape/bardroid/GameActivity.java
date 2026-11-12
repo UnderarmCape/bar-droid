@@ -484,22 +484,23 @@ public class GameActivity extends MainActivity {
     }
 
     /**
-     * Sideways a sixth of the screen below its middle: under the logo of the lobby's first load and the engine's, above
-     * the loading screen's tips; while a game's load screen is up (BAR's picture: its commander in the middle, the button
-     * lay over his waist, and at the top middle over the Armada one's head; dev phone 2026-11-12) in the top right
-     * corner, under BAR's low memory band (5 % of the height), over the picture's sky. Upright at the top, under the low
-     * memory line where it shows (what the button is for): in the middle it lay over the load picture's commander (dev
-     * phone, 2026-11-10).
+     * Sideways just under the engine's logo (SplashPicture raises it above the middle for this: a sixth below the middle
+     * the button lay over its ENGINE, dev phone 2026-11-12), above the engine's lines at the foot; while a game's load
+     * screen is up (BAR's picture: its commander in the middle, the button lay over his waist, and at the top middle
+     * over the Armada one's head; dev phone 2026-11-12) in the top right corner, under BAR's low memory band (5 % of the
+     * height), over the picture's sky. Upright at the top, under the low memory line where it shows (what the button is
+     * for): in the middle it lay over the load picture's commander (dev phone, 2026-11-10).
      */
     private void placeFreeMemory() {
         View v = freeMemory;
         View p = v == null ? null : (View) v.getParent();
         if (p == null || p.getHeight() == 0) return;
         int ph = p.getHeight(), pw = p.getWidth();
-        float ty = ph / 6f, tx = 0f;
+        float dp = getResources().getDisplayMetrics().density;
+        // (the logo's foot has the picture's margin of grey under ENGINE: a little more to it)
+        float ty = SplashPicture.logoFootSideways(pw, ph) * ph + 4 * dp + v.getHeight() / 2f - ph / 2f, tx = 0f;
         boolean upright = ph > pw * 1.05f;
         if (upright || GameService.loadScreen()) {
-            float dp = getResources().getDisplayMetrics().density;
             int above = lowRamLine != null && lowRamLine.getVisibility() == View.VISIBLE ? lowRamLine.getBottom()
                     : (int) (ph * 0.05f);
             ty = above + 14 * dp - (ph - v.getHeight()) / 2f;
