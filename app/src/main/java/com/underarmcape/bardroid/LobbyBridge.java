@@ -159,7 +159,9 @@ final class LobbyBridge {
         boolean ok = false;
         String why = null;   // (a failure's reason on the same line: offline, the lobby asks for each resource four times)
         try {
-            if ("game".equals(type) || "map".equals(type)) {
+            if (("game".equals(type) || "map".equals(type)) && noNetwork()) {
+                why = "no connection (no network on the phone)";
+            } else if ("game".equals(type) || "map".equals(type)) {
                 Proot proot = new Proot(p);
                 int rc = proot.runScript("bridge:" + type, "/opt/bardroid/setup-container.sh", new HashMap<>(),
                         Arrays.asList("game".equals(type) ? "rapid" : "map", name, Prefs.engineVersion));
@@ -176,6 +178,15 @@ final class LobbyBridge {
         JSONObject r = new JSONObject();
         try { r.put("name", name).put("isSuccess", ok).put("isAborted", false); } catch (JSONException ignored) {}
         send(out, "DownloadFinished", r);
+    }
+
+    /** No network at all (Wi-Fi and mobile data off): a game or map download fails at once. Offline the lobby asks for a
+     *  missing map four times, and each ask started the container's downloader (proot, pr-downloader: about a second)
+     *  only to fail on the CDN's name (dev phone, the Skirmish screen). A network without internet still tries. */
+    private boolean noNetwork() {
+        android.net.ConnectivityManager cm =
+                (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm != null && cm.getActiveNetwork() == null;
     }
 
     /** A plain file into the write dir; archives to extract (engines) are not supported. */

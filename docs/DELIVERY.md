@@ -1204,7 +1204,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (BAR's `singleplayerquickskirmish.lua`) and cannot download a missing one: the Fold7 had all of 1v1's and 2v2's,
       1 of 3v3's (Eye of Horus), 1 of Scavengers' and Raptors' (All That Glitters), and not Special Creek 1.0, whose
       download the Skirmish screen also tried. Kailil's call: fetch them ahead (the Fold7 was asked), or the app
-      fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline.
+      fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline. (2026-11-11: with no
+      network at all a map or game download now fails at once in `LobbyBridge`; the lobby's four asks each started
+      proot and pr-downloader before, about a second apiece, to fail on the CDN's name.)
 - [x] A map download in the container failed on the dev phone ("Could not resolve host", 2026-11-08 ~14:20): not the
       container's DNS (1.1.1.1, 8.8.8.8, `Installer`). The download ran through `run-as` with the app closed, and
       Android cuts an app's network while it is in the background (no activity shown, no foreground service): a ping
