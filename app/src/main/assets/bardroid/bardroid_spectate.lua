@@ -1519,8 +1519,10 @@ local function drawBar()
 			local text = b.label
 			local maxW = (b.x1 - b.x0) * 0.9
 			local w = font:GetTextWidth(text) * size
-			if w > maxW then -- (a long name a little smaller first, to 80 %, before it is cut: "Construction S." upright)
-				size = math.max(size * 0.8, size * maxW / w)
+			-- (a long name smaller first, to 65 %, before it is cut: "Construction S." upright; at 80 % the tune bar's
+			-- "Armada Comman." on the dev phone upright, 2026-11-12)
+			if w > maxW then
+				size = math.max(size * 0.65, size * maxW / w)
 			end
 			while #text > 4 and font:GetTextWidth(text) * size > maxW do
 				text = text:sub(1, #text - 2) .. "."
