@@ -58,10 +58,10 @@
     <string name="rb_render85">85%</string>
     <string name="rb_render70">70%</string>
     <string name="rb_render_native">Native</string>
-    <string name="lbl_fps_cap">Frame cap\nThe most frames drawn a second; 30 keeps the phone cooler and the picture steady</string>
+    <string name="lbl_fps_cap">Frame cap\nThe most frames drawn a second; 30 keeps the phone cooler and the picture steady, no cap runs it hot</string>
     <string name="rb_fps30">30 fps</string>
     <string name="rb_fps60">60 fps</string>
-    <string name="rb_fps_none">No cap (runs hot)</string>
+    <string name="rb_fps_none">No cap</string>
     <string name="cb_upscale">Sharper upscaling (Qualcomm SGSR)\nThe game is drawn smaller than the screen and enlarged; SGSR keeps edges sharp where plain enlarging blurs them</string>
     <string name="cb_upscale_compare">Compare upscaling (diagnostic)\nSGSR on and off every 3 seconds, with a label</string>
     <string name="cb_late_drop">Lower the resolution when the game slows down\nUnder 27 fps the game is drawn smaller a step at a time, down to 70% of the render resolution, only while each step helps; the upscaling enlarges it</string>
