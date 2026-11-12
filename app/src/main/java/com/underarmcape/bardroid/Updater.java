@@ -230,7 +230,9 @@ public final class Updater {
             // (the launcher's status line after "Last check <date>": "BAR's launcher config not reachable: started what
             // is installed" wrapped over three lines on an upright phone, at every start away from a network; the
             // version that played is the line above it. launcher.log keeps the reason, "no answer from ...")
-            } else result = "no answer from BAR";
+            // (no name lookup at all: the phone has no connection, not BAR's server down, as "no answer from BAR" read
+            // on a phone with Wi-Fi and data off, dev phone 2026-11-12)
+            } else result = nameLookupFailed ? "no connection" : "no answer from BAR";
         }
         verifyTags(tags);
         // The set that starts now; launchEnded judges it.
@@ -275,6 +277,7 @@ public final class Updater {
     // ---- BAR's launcher config ---------------------------------------------------------------------
 
     private JSONObject fetchSetup() {
+        nameLookupFailed = false;
         Http r = get(CONFIG_URL, null);
         if (r == null || r.code != 200) return null;
         try {
@@ -851,6 +854,9 @@ public final class Updater {
 
     private static final class Http { int code; byte[] body; String etag; }
 
+    /** The last get() found no address for the server's name (no connection at all, or no DNS): fetchSetup's word. */
+    private static volatile boolean nameLookupFailed;
+
     /** GET with the PC launcher's short timeouts; null (logged) when there is no usable answer. */
     private static Http get(String url, String etag) {
         try {
@@ -869,6 +875,7 @@ public final class Updater {
                 return h;
             } finally { c.disconnect(); }
         } catch (IOException e) {
+            if (e instanceof java.net.UnknownHostException) nameLookupFailed = true;
             Log.e("update", "no answer from " + url + ": " + e);
             return null;
         }
