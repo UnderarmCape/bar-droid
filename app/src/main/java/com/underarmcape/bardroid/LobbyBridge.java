@@ -159,7 +159,7 @@ final class LobbyBridge {
         boolean ok = false;
         String why = null;   // (a failure's reason on the same line: offline, the lobby asks for each resource four times)
         try {
-            if (("game".equals(type) || "map".equals(type)) && noNetwork()) {
+            if (("game".equals(type) || "map".equals(type) || "resource".equals(type)) && noNetwork()) {
                 why = "no connection (no network on the phone)";
             } else if ("game".equals(type) || "map".equals(type)) {
                 Proot proot = new Proot(p);
@@ -180,9 +180,10 @@ final class LobbyBridge {
         send(out, "DownloadFinished", r);
     }
 
-    /** No network at all (Wi-Fi and mobile data off): a game or map download fails at once. Offline the lobby asks for a
-     *  missing map four times, and each ask started the container's downloader (proot, pr-downloader: about a second)
-     *  only to fail on the CDN's name (dev phone, the Skirmish screen). A network without internet still tries. */
+    /** No network at all (Wi-Fi and mobile data off): a download fails at once. Offline the lobby asks for a missing
+     *  map four times, and each ask started the container's downloader (proot, pr-downloader: about a second) only to
+     *  fail on the CDN's name (dev phone, the Skirmish screen); its two web files (the widget list, the skill ratings)
+     *  four times at every lobby start, each a name lookup first. A network without internet still tries. */
     private boolean noNetwork() {
         android.net.ConnectivityManager cm =
                 (android.net.ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
