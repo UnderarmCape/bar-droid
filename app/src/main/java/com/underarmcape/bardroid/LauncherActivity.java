@@ -408,12 +408,13 @@ public class LauncherActivity extends AppCompatActivity {
             // (the mode's name on the RAM line, what it does under it a step smaller: run on after an em dash, the
             // sentence wrapped over three lines and read as one more fact, dev phone 2026-11-08)
             // (the smaller map only while it is the app's choice, Prefs.mapName: a map the player picked is theirs)
+            // (a capital first, as each setting's explanation beside it: in lower case it read as a cut-off line)
             if (lowRam(this)) sb.append(", low-memory mode\n").append(NOTE_START)
-                    .append("plainer unit shading and map detail")
+                    .append("Plainer unit shading and map detail")
                     .append(!Prefs.mapChosen && Installer.BENCH_MAP.equals(Prefs.mapName) ? ", skirmish on a smaller map" : "")
                     .append("; close other apps before a game")
                     .append(NOTE_END).append('\n');
-            else sb.append('\n').append(NOTE_START).append("a match uses about 5-6 GB, part of it in swap").append(NOTE_END).append('\n');
+            else sb.append('\n').append(NOTE_START).append("A match uses about 5-6 GB, part of it in swap").append(NOTE_END).append('\n');
         }
         sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
         String branch = engineBranchBuild();
