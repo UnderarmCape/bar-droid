@@ -1368,14 +1368,22 @@ Added 2026-11-10 ~05:00 (with screenshots):
       that share (dockShare), the commander whole at 1080x2316 and at 1080x1198. The pad's own 1st person
       (`bardroid_padfp.lua`) has the same sky upright, but its crosshair and aim are at the screen's middle, which
       upright is the game's lower part: left as it is while the pad plays sideways (the open "gamepad upright" item).
-- [ ] **One touch layout for both orientations** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
+- [ ] **One touch layout for both orientations, sideways: built, his test pending** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
       vertical touch sytem onto the phone's landscape system ... Unless we split the right and left half of the botom
       UI and shove a map into the middle with the eco bars on top of it, so the top row isnt empty with eco stuff and
       that returns vertical real estate back to the actual game world. and the left and right thumbs will have
       sufficient reach"). Mockups (claude.ai artifact "BAR Droid landscape touch layouts": today's landscape HUD; A
       split dock: build left, minimap + eco middle, orders right; A folded to its middle in the camera-pad state; B
-      side rails; C thumb arcs). His pick, the same day: **A, the split dock**. Not started: his go-ahead for the
-      build.
+      side rails; C thumb arcs). His pick, the same day: **A, the split dock**; "yes start building". First build
+      (2026-11-12): the upright dock's widget lays itself out sideways too (bardroid_portrait.lua L.land): a band 0.4 of
+      the height along the bottom; left the selection row over the build grid (2 whole rows, 3-6 columns as fit);
+      middle metal and energy, BAR's own minimap (its Minimap widget's external frame: the engine draws and clicks it
+      there, in the map's shape; the dock's texture and dimming leave it clear; RtsTouch's "map" rect sends its
+      touches to the game) and the groups; right the orders, 3 wide where there is room, or the home grid. Launcher
+      setting "Touch dock sideways" (on; launch-bar.sh bardroid_landdock.txt); a pad or a mouse as the input brings
+      BAR's own screen back; spectators keep the sideways spectator bar. Dev phone, 2008x938 and 1192x1080 (the
+      unfolded Fold7's shape): the dock up, a minimap tap moved the camera, a building picked and its shapes and PLACE
+      on the right. Not yet: spectating with it, the pad on it, the cover screen measured on the Fold7.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
