@@ -83,6 +83,12 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.btnBench).setOnClickListener(v -> start(GameService.ACTION_PLAY, "bench"));
         fitRowOnResize((ViewGroup) install.getParent(), 14, 10);
         fitRowOnResize((ViewGroup) glcheck.getParent(), 11, 9);
+        for (int id : new int[]{R.id.rgFpsCap, R.id.rgRenderScale, R.id.rgMapCap}) {
+            android.widget.RadioGroup g = findViewById(id);
+            g.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> {
+                if (r - l != or - ol) v.post(() -> fitChoices(g));
+            });
+        }
         // With a gamepad or keys (out of touch mode) the focus went to the top scroll view: a grey block over the title
         // and buttons, with nothing to press. The scroll views pass it on to their buttons and settings, Play vs AI first.
         findViewById(R.id.top).setFocusable(false);
@@ -141,6 +147,36 @@ public class LauncherActivity extends AppCompatActivity {
                 ((ViewGroup) v.getParent()).removeView(v);
                 to.addView(v);
             }
+        }
+    }
+
+    /**
+     * A row of choices kept on one line: their words a step smaller at a time (to 70 % at most) until each one's circle,
+     * padding and words fit the row together. At their full size "Native" wrapped as "Nativ e" on the unfolded Fold7's
+     * width (dev phone at 1198x1080); equal shares of the row made "100%" wrap too. Full size wherever they fit.
+     */
+    private void fitChoices(android.widget.RadioGroup g) {
+        int room = g.getWidth() - g.getPaddingLeft() - g.getPaddingRight();
+        if (room <= 0 || g.getChildCount() == 0) return;
+        Float base = (Float) g.getTag(R.id.rgFpsCap);   // (the words' own size, kept: this runs at every resize)
+        if (base == null) {
+            base = ((TextView) g.getChildAt(0)).getTextSize();
+            g.setTag(R.id.rgFpsCap, base);
+        }
+        float size = base;
+        for (float k = 1f; k >= 0.7f; k -= 0.05f) {
+            size = base * k;
+            float need = 0;
+            for (int i = 0; i < g.getChildCount(); i++) {
+                TextView b = (TextView) g.getChildAt(i);
+                android.graphics.Paint p = new android.graphics.Paint(b.getPaint());
+                p.setTextSize(size);
+                need += p.measureText(b.getText().toString()) + b.getCompoundPaddingLeft() + b.getCompoundPaddingRight();
+            }
+            if (need <= room) break;
+        }
+        for (int i = 0; i < g.getChildCount(); i++) {
+            ((TextView) g.getChildAt(i)).setTextSize(android.util.TypedValue.COMPLEX_UNIT_PX, size);
         }
     }
 
