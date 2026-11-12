@@ -892,10 +892,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       it has run once, or with BAR's tutorial notes on) sizes its font by the screen's height (vsy / 1440) and wraps at
       100 characters, so upright its lines are ~1,500 pixels on 936 and run off both edges; at 61 % of the height it
       lies on `gui_game_type_info.lua`'s "Victory condition: ..." (55 % in draft games), the two texts over each
-      other. Without draft the victory line sits at 19 % of the height, under the upright dock. Next: one patch for
-      both in `docs/upstream/` (the size by the smaller of the two scales, the wrap by the width, the victory line
-      above the dock's height or the tutorial's), tested by swapping the dev phone's pool files as the Settings patch
-      was, BAR's files put back after.
+      other. Without draft the victory line sits at 19 % of the height, under the upright dock. The change is made and
+      tested: `docs/upstream/bar-pregame-upright.patch` (the tutorial wrapped to the screen's width too, the victory
+      line at least 7.5 % of the height above its anchor), written up in `bar-pregame-upright.md`. Dev phone, the 8v8
+      replay's draft pregame upright with both pool files swapped: the victory line whole above the tutorial, the
+      tutorial inside the screen; BAR's files put back (md5s checked). On the way: the engine reads a pool file only
+      up to the size BAR's package lists, so a longer patched file was cut short ("unexpected symbol near '<eof>'");
+      a pool swap test needs the patched code at the original's byte size (comment lines dropped, spaces after).
+      Left: BAR merging it (Kailil and the devs). The non-draft line under the dock stays (the dock is the app's).
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of

@@ -1,0 +1,51 @@
+diff --git a/luaui/widgets/gui_game_type_info.lua b/luaui/widgets/gui_game_type_info.lua
+index 0d70f8c..5f8f6c3 100644
+--- a/luaui/widgets/gui_game_type_info.lua
++++ b/luaui/widgets/gui_game_type_info.lua
+@@ -51,7 +51,9 @@ function widget:ViewResize()
+ 	font = WG.fonts.getFont(1, 1.5)
+ 
+ 	if messages[1] then
+-		messages[1].x = widgetScale * 60
++		-- (at least 7.5 % of the screen's height above its anchor: on a tall (portrait) screen the fixed offset left
++		-- it inside the start position suggestions' tutorial, drawn from 61 % of the height down)
++		messages[1].x = math.max(widgetScale * 60, vsy * 0.075)
+ 		messages[1].y = widgetScale * 15.5
+ 	end
+ 
+@@ -61,7 +63,7 @@ function widget:ViewResize()
+ 	end
+ 
+ 	if messages[3] then
+-		messages[3].x = 40 * widgetScale
++		messages[3].x = math.max(40 * widgetScale, vsy * 0.075 - 20 * widgetScale) -- (under the first, as before)
+ 		messages[3].y = 13 * widgetScale
+ 	end
+ end
+diff --git a/luaui/widgets/map_start_position_suggestions.lua b/luaui/widgets/map_start_position_suggestions.lua
+index 3f235a4..aee9a28 100644
+--- a/luaui/widgets/map_start_position_suggestions.lua
++++ b/luaui/widgets/map_start_position_suggestions.lua
+@@ -676,7 +676,13 @@ local function drawTutorial()
+ 	end
+ 
+ 	if not cachedTutorialText then
+-		cachedTutorialText = wrapText(BAR.I18N("ui.startPositionSuggestions.tutorial"), config.tutorialMaxWidthChars)
++		-- wrapped to the screen's width too: the font is sized by the screen's height, and on a tall (portrait)
++		-- screen 100 characters made lines wider than the screen
++		local sample = "the quick brown fox jumps over the lazy dog"
++		local charWidth = fontTutorial:GetTextWidth(sample) / #sample * config.tutorialTextSize * resMult
++		local fits = charWidth > 0 and math.floor(vsx * 0.9 / charWidth) or config.tutorialMaxWidthChars
++		cachedTutorialText = wrapText(BAR.I18N("ui.startPositionSuggestions.tutorial"),
++			math.max(20, math.min(config.tutorialMaxWidthChars, fits)))
+ 	end
+ 
+ 	fontTutorial:SetOutlineColor(0, 0, 0, 1)
+@@ -687,6 +693,7 @@ end
+ function widget:ViewResize()
+ 	vsx, vsy = spGetViewGeometry()
+ 	resMult = vsy / 1440
++	cachedTutorialText = nil -- (wrapped again for the new width)
+ 	local baseFontSize = mathMax(config.playerTextSize, config.roleTextSize) * 0.8
+ 	font = gl.LoadFont(
+ 		"fonts/" .. Spring.GetConfigString("bar_font2", "Exo2-SemiBold.otf"),
