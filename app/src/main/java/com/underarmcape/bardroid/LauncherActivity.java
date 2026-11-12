@@ -267,6 +267,34 @@ public class LauncherActivity extends AppCompatActivity {
         Log.addListener(logListener);
         handler.post(ticker);
         mapCapLabel();   // (the maps' size now: a game since may have downloaded some, its start removed others)
+        refreshMapList();
+    }
+
+    private android.widget.ArrayAdapter<String> mapsAdapter;
+    private long mapsStamp;
+
+    /** The newest engine archive cache's time (0: none): it changes when an engine run scanned the maps again. */
+    static long archiveCacheStamp(File bar) {
+        File[] caches = new File(bar, "cache").listFiles((d, n) -> n.startsWith("ArchiveCache") && n.endsWith(".lua"));
+        long newest = 0;
+        for (File f : caches == null ? new File[0] : caches) newest = Math.max(newest, f.lastModified());
+        return newest;
+    }
+
+    /**
+     * Play vs AI's map list made again when the engine's archive cache changed: it was made once, when the launcher was
+     * created, and kept the maps of then after a game downloaded others or the map storage limit removed some. The
+     * cache is ~4.6 MB, read only when it changed (dev phone, 2026-11-12).
+     */
+    private void refreshMapList() {
+        File bar = new Paths(this).bar;
+        long stamp = archiveCacheStamp(bar);
+        if (mapsAdapter == null || stamp == mapsStamp) return;
+        mapsStamp = stamp;
+        java.util.List<String> now = installedMaps(bar);
+        mapsAdapter.clear();
+        mapsAdapter.addAll(now);
+        Log.i("app", "map list made again: " + now.size() + " maps");   // (tools)
     }
     @Override protected void onStop() { Log.removeListener(logListener); handler.removeCallbacks(ticker); super.onStop(); }
 
@@ -519,8 +547,10 @@ public class LauncherActivity extends AppCompatActivity {
         android.widget.AutoCompleteTextView mapField = findViewById(R.id.edMap);
         mapField.setText(Prefs.mapName);
         // (a tap drops down every map installed, typing narrows them; any other name still goes, and is downloaded)
+        mapsStamp = archiveCacheStamp(new Paths(this).bar);
         android.widget.ArrayAdapter<String> maps = new android.widget.ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, installedMaps(new Paths(this).bar));
+                android.R.layout.simple_dropdown_item_1line, new java.util.ArrayList<>(installedMaps(new Paths(this).bar)));
+        mapsAdapter = maps;   // (made again in onStart when the engine's archive cache changes: refreshMapList)
         mapField.setAdapter(maps);
         Runnable all = () -> maps.getFilter().filter(null, n -> { if (n > 0 && mapField.isShown()) mapField.showDropDown(); });
         mapField.setOnClickListener(v -> all.run());
