@@ -2122,16 +2122,36 @@ local function unitTile(defID, r, inUse)
 	gl.Color(1, 1, 1, 1)
 end
 
-local function textIn(text, x0, y0, x1, y1, size, color, f)
+local function textIn(text, x0, y0, x1, y1, size, color, f, wrap)
 	f = f or font
 	if not f then
 		return
 	end
 	-- (at most 84% of the width: the outline is not in the font's width, and at 88% words that just fit, ROTATE in its
 	-- square on the unfolded Fold7 upright, LAST PINGS, ran up to the button's edges: dev phone, 2026-11-11)
+	local room = (x1 - x0) * 0.84
 	local w = f:GetTextWidth(text) * size
-	if w > (x1 - x0) * 0.84 then
-		size = size * (x1 - x0) * 0.84 / w
+	if w > room then
+		local one = size * room / w
+		-- (wrap, a button's words: two lines where one would shrink under 70 %, broken at the space that evens them;
+		-- sideways for one thumb on the unfolded Fold7 LAST PINGS was a speck in its half, dev phone 2026-11-12)
+		if wrap and one < size * 0.7 then
+			local at, widest
+			for i in text:gmatch("() ") do
+				local m = max(f:GetTextWidth(text:sub(1, i - 1)), f:GetTextWidth(text:sub(i + 1)))
+				if not widest or m < widest then
+					at, widest = i, m
+				end
+			end
+			local two = at and min(size, room / widest, (y1 - y0) / 2.4) or 0
+			if two > one then
+				local cx, cy, c = (x0 + x1) / 2, (y0 + y1) / 2, color or "\255\235\235\235"
+				f:Print(c .. text:sub(1, at - 1), cx, cy + two * 0.2, two, "co")
+				f:Print(c .. text:sub(at + 1), cx, cy - two * 0.85, two, "co")
+				return
+			end
+		end
+		size = one
 	end
 	f:Print((color or "\255\235\235\235") .. text, (x0 + x1) / 2, (y0 + y1) / 2 - size * 0.32, size, "co")
 end
@@ -2231,7 +2251,7 @@ local function drawButton(item, r)
 		pingT.drawn = step .. ""
 		button(r)
 		textIn(step > 0 and string.format("PING %d OF %d", step, n) or "LAST PINGS", r[1], r[2], r[3], r[4],
-			min((r[4] - r[2]) * 0.34, L.btnH * 0.46), n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+			min((r[4] - r[2]) * 0.34, L.btnH * 0.46), n > 0 and "\255\240\240\240" or "\255\140\140\140", font, true)
 		pingT.badge(r, n)
 		return
 	end
@@ -2250,7 +2270,7 @@ local function drawButton(item, r)
 		end
 		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
 		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
-			n > 0 and "\255\240\240\240" or "\255\140\140\140", font)
+			n > 0 and "\255\240\240\240" or "\255\140\140\140", font, true)
 		pingT.badge(a, n)
 		textIn(armed and "TAP MAP" or "PING", b[1], b[2], b[3], b[4], th, "\255\240\240\240", font)
 		return
@@ -2296,7 +2316,8 @@ local function drawButton(item, r)
 		end)
 		gl.Color(1, 1, 1, 1)
 	else
-		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240", font)
+		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240",
+			font, true)
 	end
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
