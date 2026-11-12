@@ -1000,7 +1000,26 @@ local function uprightNotes()
 		return out
 	end
 	C._Realign = function(self, sorted)
-		local g = upright.on and not upright.side and real(upright.grid) -- (sideways, the column: Chobby's own place)
+		local col = upright.on and upright.side and real(upright.grid)
+		if col and not col.disposed then
+			-- Sideways beside the column: repeats out of sight too, the rest from the top down over the middle of the screen
+			-- beside the column (at Chobby's place, its foot at the right, two "Download Failed: All That Simmers" covered
+			-- the Skirmish screen's Advanced, dev phone 2026-11-12; at the top a screen's title is hidden a few seconds)
+			local seen, row = {}, 0
+			for _, n in pairs(sorted) do
+				local key = table.concat(words(n.window, {}, 0), "|")
+				local win = n.window
+				if key ~= "" and seen[key] then
+					win:SetPos(nil, -4000)
+				else
+					seen[key] = true
+					row = row + 1
+					win:SetPos(col.width + math.floor((screen0.width - col.width - win.width) / 2), 6 + (row - 1) * 110)
+				end
+			end
+			return
+		end
+		local g = upright.on and real(upright.grid)
 		if not (g and not g.disposed) then
 			return own(self, sorted)
 		end

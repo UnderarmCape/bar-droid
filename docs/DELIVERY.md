@@ -1414,7 +1414,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (the grid's snap), arrows up and down in its page strip. Upright keeps its grid; a turn of the phone swaps them
       (Chobby's own layout back in between). Dev phone sideways, offline: 17 buttons, 13 a page, 2 pages; a swipe up
       turned to page 2 (Plugins, Website, Keys, Exit), Plugins opened at the full height; lobby-phone-test and
-      dock-phone-test all pass on the build. Also tested that night: FACTORIES (an Aircraft Plant placed from the dock,
+      dock-phone-test all pass on the build. Later the same day: Chobby's notes sideways kept Chobby's place, its
+      foot at the right, two "Download Failed: All That Simmers" over the Skirmish screen's Advanced; now as upright
+      a repeat goes out of sight and the rest stack from the top over the middle beside the column (dev phone: one
+      "Download Failed: Red Comet Remake" at the top, Next and Advanced clear). Also tested that night: FACTORIES (an Aircraft Plant placed from the dock,
       then FACTORIES picked it, the camera on it, its seven aircraft in the dock) and the launcher's one page.
 - [x] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
       one over the other (under 600 dp) the top block (title, status lines, buttons) takes the height it needs and the
