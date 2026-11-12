@@ -99,7 +99,7 @@ the last 4 pings from others, tap again within 2 s for the one before; PING, the
 COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
 its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets
 or a picker are open, the menu stays open: tap the map for the spot (or drag it there: it moves slowly at first, for
-fine placing; hold still for a GRID), ROTATE 90° turns it, then PLACE (a spot BAR refuses says so). A drag on the
+fine placing; hold still for a GRID), ROTATE turns it a quarter, then PLACE (a spot BAR refuses says so). A drag on the
 game with units picked draws their path, except while one of them has a building queued: then the drag pans.
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,

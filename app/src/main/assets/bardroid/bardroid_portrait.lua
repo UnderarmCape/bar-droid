@@ -2012,8 +2012,10 @@ local function drawTile(item, r)
 	local w, h = r[3] - r[1], r[4] - r[2]
 	if item.kind == "alltypes" then
 		button(r, { 0.2, 0.2, 0.2, 0.8 }, { 0.35, 0.35, 0.35, 0.8 })
-		textIn("ALL", r[1], r[2] + h * 0.38, r[3], r[4], h * 0.26, "\255\255\255\255", bold)
-		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, "\255\255\200\064")
+		-- (none: dimmed, as FACTORIES with no factory; a lit "ALL 0" read as a list of something)
+		local none = item.count == 0
+		textIn("ALL", r[1], r[2] + h * 0.38, r[3], r[4], h * 0.26, none and "\255\140\140\140" or "\255\255\255\255", bold)
+		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, none and "\255\140\140\140" or "\255\255\200\064")
 		if allPicked then -- (all of the list picked: LOCAL or ALL UNITS' first tap)
 			selector(r)
 		end
