@@ -1639,7 +1639,17 @@ local function poolCacheCheck(now)
 		return
 	end
 	local C = WG.Chobby and WG.Chobby.Configuration
-	local w = C and C.enableCacheRapidPool == false and widgetHandler.FindByName and widgetHandler:FindByName("Rapid Pool Cache")
+	if not (C and C.enableCacheRapidPool == false) then
+		return
+	end
+	-- (Chobby's "Caching..." label, bottom left over Exit, is the cache's to hide when it ends: stopped before its first
+	-- frame it never found it, and the label stayed for the lobby's whole run; dev phone, 2026-11-12)
+	local root = WG.Chobby.interfaceRoot
+	local label = root and root.GetCachingLabel and root.GetCachingLabel()
+	if label and label.visible ~= false and label.SetVisibility then
+		label:SetVisibility(false)
+	end
+	local w = widgetHandler.FindByName and widgetHandler:FindByName("Rapid Pool Cache")
 	if w then
 		-- (its Shutdown still runs, its last line kept from failing: stopped before its first frame it divides 0 by 0,
 		-- "bad argument #4 to 'format' ... NaN", an error in the log at every lobby start)
