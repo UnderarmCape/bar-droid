@@ -877,8 +877,9 @@ local function startFit()
 end
 
 local function typesUnits()
-	if typesFrom == "local" then
-		return Spring.GetVisibleUnits(myTeam(), nil, false)
+	if typesFrom == "local" then -- (units drawn as icons too, as the pad's ON SCREEN: zoomed out, as sideways's start
+		-- view is, the units on the screen are icons and LOCAL UNITS left them out)
+		return Spring.GetVisibleUnits(myTeam(), nil, true)
 	end
 	return Spring.GetTeamUnits(myTeam())
 end
