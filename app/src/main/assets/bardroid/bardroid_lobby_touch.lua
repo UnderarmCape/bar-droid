@@ -24,6 +24,7 @@ function widget:GetInfo()
 		api = true,
 		layer = -100000,
 		enabled = true,
+		handler = true, -- (the real widgetHandler: stopping BAR's Rapid Pool Cache, poolCacheCheck)
 	}
 end
 
@@ -1627,10 +1628,37 @@ local function appUpdate()
 end
 
 local lastUpdate
+-- BAR's Rapid Pool Cache stopped while the lobby's Settings has it off (launch-bar.sh turns that off once): it reads
+-- all of the rapid pool when the lobby opens, 50 ms of every frame, and through proot its speed test always finds the
+-- cache cold: the lobby at 13-15 fps instead of 30 for its first ~30 s (dev phone, 2026-11-11). BAR's "Disable NonBar
+-- Widgets" starts it at every start, in its first Update, so it is looked for over the first seconds.
+local poolCacheFrom
+local function poolCacheCheck(now)
+	poolCacheFrom = poolCacheFrom or now
+	if Spring.DiffTimers(now, poolCacheFrom) > 15 then
+		return
+	end
+	local C = WG.Chobby and WG.Chobby.Configuration
+	local w = C and C.enableCacheRapidPool == false and widgetHandler.FindByName and widgetHandler:FindByName("Rapid Pool Cache")
+	if w then
+		-- (its Shutdown still runs, its last line kept from failing: stopped before its first frame it divides 0 by 0,
+		-- "bad argument #4 to 'format' ... NaN", an error in the log at every lobby start)
+		local shutdown = w.Shutdown
+		if type(shutdown) == "function" then
+			w.Shutdown = function(...)
+				pcall(shutdown, ...)
+			end
+		end
+		widgetHandler:DisableWidget("Rapid Pool Cache")
+		Spring.Echo("[bardroid-lobby] Rapid Pool Cache stopped (off in the lobby's Settings)") -- (tools)
+	end
+end
+
 function widget:Update() -- (the lobby's Update has no frame time)
 	local now = Spring.GetTimer()
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
 	lastUpdate = now
+	poolCacheCheck(now)
 	if not screen0 then
 		Chili = WG.Chili
 		screen0 = Chili and Chili.Screen0

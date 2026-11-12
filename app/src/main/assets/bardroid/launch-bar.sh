@@ -719,6 +719,20 @@ case "$MODE" in
     else
       mkdir -p "$BAR/LuaMenu/Config" && printf 'return {\n\t["Resolution limiter"] = 0,\n}\n' > "$order"
     fi
+    # Once: the lobby's Settings "Rapid Pool Cache" off. That widget reads all of the rapid pool (every BAR version in
+    # it: 2.2 GB, 21817 files on the dev phone) when the lobby opens, 50 ms of every frame, whenever its first read is
+    # under 80 MB/s, which through proot it is even with the files cached: the lobby at 13-15 fps instead of 30 for its
+    # first ~30 s at every start, a 1.2 s freeze first (dev phone, 2026-11-11), for a page cache an 8 GB phone gives up
+    # to the game. BAR's "Disable NonBar Widgets" starts it at every start whatever its order; bardroid_lobby_touch.lua
+    # stops it again while this setting is off. Ticked again in the lobby's Settings: it runs.
+    if [ ! -f "$BAR/.bardroid-lobby-nocache" ] && [ -f "$BAR/LuaMenu/Config/IGL_data.lua" ]; then
+      if grep -q 'enableCacheRapidPool = ' "$BAR/LuaMenu/Config/IGL_data.lua"; then
+        sed -i 's/enableCacheRapidPool = true/enableCacheRapidPool = false/' "$BAR/LuaMenu/Config/IGL_data.lua" \
+          && touch "$BAR/.bardroid-lobby-nocache" && log "lobby: rapid pool cache off"
+      else
+        layer_miss "lobby rapid pool cache: no enableCacheRapidPool in LuaMenu/Config/IGL_data.lua"
+      fi
+    fi
     log "spring lobby: rapid://${LOBBY_TAG:-byar-chobby:test}"
     ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
   shell)
