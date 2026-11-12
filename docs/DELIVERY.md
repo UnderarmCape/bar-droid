@@ -1073,6 +1073,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Count 2026-11-11 20:54 to 11-12 00:05 (the dev phone's launcher.log and launcher.old.log): 21 games loaded
       (skirmishes landscape and upright, spectated AI games, both screen shapes, the first-frames starts), none of the
       driver's refusal or BAR's watchdog; 2 ended by Android for low memory (the 8 GB phone, both at a start).
+      Count 2026-11-12 02:28 to 06:00 (both launcher logs): 32 engine starts (skirmishes landscape and upright, two of
+      14 minutes, spectated AI games, replays from the launcher and from the lobby, the 8v8 replay, the lobby, GL
+      check, the full test sweep), no "[hang]" line, none of the driver's refusal (the watchdog's lines all its
+      routine thread registrations), no low-memory end.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
