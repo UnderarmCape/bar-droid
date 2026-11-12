@@ -936,7 +936,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Added 2026-11-08: the pad's share list giving metal (`9-`, its teammates the test's stand-ins), speak to chat
       listening (`10-`) and today's launcher (`5b-`). Added 2026-11-10, upright: placing with PLACE (`11-`), the D-gun
       mode on full auto with its sonar (`12-`), the presets (`13-`), aiming STRAFE (`14-`), the lobby's pages (`15-`),
-      the orders after ALL UNITS (`16-`).
+      the orders after ALL UNITS (`16-`). Added 2026-11-11, spectating upright with the dock: a unit followed in Mid
+      (`17-`), TEAMS by BAR's names (`18-`), unfolded: following in Close (`19-`), Shoulder (`20-`); Shoulder on the
+      tall screen (`21-`).
 - [x] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but the first tap on
       "Follow unit" followed nothing. The bar is laid out again every 0.25 s and moves while BAR's player list opens
       beside it, so the button found at the release was a new table (or another button) and the tap was dropped; a
