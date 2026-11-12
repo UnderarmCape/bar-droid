@@ -66,6 +66,7 @@ local hooked, wasInputHistory, wasHidden = false, nil, false
 local CONFIG_VERSION, configVersion = 1, nil
 local relayoutNext = false -- (ViewResize: once more in the next Update, BAR's top bar placed by then)
 local chatMinimap, chatMinimapAt -- upright: the minimap's height the box was laid out under, when it was looked at
+local chatDocked = false -- laid out for the touch dock sideways (the minimap in it)
 local vsx, vsy = Spring.GetViewGeometry()
 local font, nameFont, fontSize, lineHeight
 local boxLeft, boxRight, boxTop, nameWidth, textLeft, gap, maxLines
@@ -149,6 +150,12 @@ end
 
 -- upright, the minimap's height the box goes under: while it waits small (bardroid_minimap.lua: as tall as the top
 -- bar's row); opened by a tap it lies over the box's corner for its few seconds, the box does not jump down and back
+-- the touch dock sideways (layout A, bardroid_portrait.lua) holds the minimap: the top left corner is free
+local function dockSideways()
+	local P = WG.BarDroidPortrait
+	return P and P.sideways and P.sideways() or false
+end
+
 local function smallMinimap()
 	local M = WG.BarDroidMinimap
 	if M and M.small and M.small() and WG.minimap and WG.minimap.getHeight then
@@ -177,13 +184,16 @@ local function layout()
 	maxLines = math.max(2, math.floor(LINES * ed.size + 0.5))
 	local p = WG.topbar and WG.topbar.GetPosition and WG.topbar.GetPosition()
 	local left = p and p[1] or vsx * 0.3
-	if upright then
+	chatDocked = dockSideways()
+	if upright or chatDocked then
 		-- upright: a row of its own across the screen under BAR's top bar and the small minimap beside it (Kailil,
 		-- 2026-11-10: "make chat take up the entire row instead of sharing the row with the map"); under the top bar alone,
 		-- between the minimap and the top bar's buttons, it was a column 38 % wide where a long line took five rows. The
-		-- minimap settles its size a little later: laid out again when it does (widget:Update)
-		local mm = smallMinimap()
-		chatMinimap = mm
+		-- minimap settles its size a little later: laid out again when it does (widget:Update). Sideways with the touch
+		-- dock the same row: the minimap is in the dock, and under the top bar the box began where the minimap had
+		-- ended, a third of the way across (dev phone, 2026-11-12, "You Are Wasting Metal" in mid-air)
+		local mm = upright and smallMinimap() or 0
+		chatMinimap = upright and mm or nil
 		local margin = math.floor(vsx * 0.02)
 		local top = math.min(p and p[2] or vsy * 0.94, vsy - mm) - fontSize * 0.5
 		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, margin + ed.dx * vsx)))
@@ -843,6 +853,9 @@ function widget:Update()
 			if smallMinimap() ~= chatMinimap then
 				relayoutNext = true
 			end
+		end
+		if dockSideways() ~= chatDocked then -- (the touch dock sideways up or down: a pad or the fingers took over)
+			relayoutNext = true
 		end
 		if relayoutNext then
 			relayoutNext = false
