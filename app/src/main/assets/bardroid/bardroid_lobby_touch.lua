@@ -374,7 +374,7 @@ local PAGE_GAIN, PAGE_TURN = 1.5, 0.05 -- the strip's move per finger move; the 
 -- connection state in the column's top line), the content from the column to the right edge, top to bottom; the pages
 -- one under the other, a swipe up or down turns them. (upright.on: the grid or the column is up; stripX: the strip's
 -- offset along its pages, x or y; pageSize: a page's length along it)
-local SIDE_SHARE, SIDE_MIN, SIDE_MAX, SIDE_STATUS_H = 0.2, 190, 300, 28
+local SIDE_SHARE, SIDE_MIN, SIDE_MAX, SIDE_STATUS_H = 0.2, 190, 300, 36
 local upright = { on = false, side = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
 	stripX = 0, pageSize = 1, anim = nil }
 
@@ -572,13 +572,14 @@ local function uprightGrid()
 	})
 	upright.caching, upright.status = nil, nil
 	if isSide then -- (the connection state, Chobby's own words: sideRelayout)
-		upright.status = Chili.Label:New({
+		upright.status = Chili.Label:New({ -- (centred, a size up: in the corner at Chobby's small size it was barely read)
 			parent = upright.grid,
-			x = GRID_GAP * 2, y = 0, right = GRID_GAP, height = SIDE_STATUS_H - GRID_GAP,
+			x = GRID_GAP, y = 0, right = GRID_GAP, height = SIDE_STATUS_H - GRID_GAP,
 			autosize = false,
 			caption = "",
+			align = "center",
 			valign = "center",
-			objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(2),
+			objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(3),
 		})
 	end
 	if pages > 1 then -- (the page strip, under the buttons: arrows at its ends, the dots between, the one shown lit)
