@@ -1606,6 +1606,16 @@ local function shareDraw(vsx, vsy)
 	local h = fixedH + teamH * shown
 	local midY = dock and (top + floorY) / 2 or vsy / 2
 	local x0, y1 = math.floor(vsx / 2 - w / 2), math.min(math.floor(midY + h / 2), top - pad)
+	-- (right of the unit info panel, bottom left, when the list reaches down past its top: 15 teammates ran over its
+	-- right edge; dev phone, pad-test -Share 2026-11-11)
+	local lay = WG.BarDroidLayout
+	local ix0, iy0, ix1, iy1
+	if lay and lay.rect then
+		ix0, iy0, ix1, iy1 = lay.rect("info")
+	end
+	if ix1 and y1 - h < iy1 and y1 > iy0 and x0 < ix1 and x0 + w > ix0 then
+		x0 = math.max(0, math.min(math.floor(ix1 + pad), math.floor(vsx - w - pad)))
+	end
 	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top }
 	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
 
