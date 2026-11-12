@@ -1013,7 +1013,10 @@ local function panelItems(res)
 	if res == "energy" then
 		items[#items + 1] = { kind = "slider", what = "convert", res = res, label = "CONVERT ENERGY ABOVE", w = 2 }
 	end
-	items[#items + 1] = { kind = "slider", what = "share", res = res, label = "SHARE TO ALLIES ABOVE", w = 2 }
+	-- (its resource named, as CONVERT ENERGY's: "SHARE TO ALLIES ABOVE" alone read the same in both panels, dev phone
+	-- 2026-11-12)
+	items[#items + 1] = { kind = "slider", what = "share", res = res, label = "SHARE " .. string.upper(res) .. " TO ALLIES ABOVE",
+		w = 2 }
 	if #teammateList() > 0 then
 		items[#items + 1] = { kind = "sendres", res = res, label = res == "metal" and "SEND METAL" or "SEND ENERGY", w = 2 }
 	end
