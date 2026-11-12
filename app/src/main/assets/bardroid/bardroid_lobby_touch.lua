@@ -547,31 +547,31 @@ local function uprightGrid()
 		return
 	end
 	local sw, sh = screen0.width, screen0.height
-	local side = upright.side
+	local isSide = upright.side
 	local colW = math.floor(math.max(SIDE_MIN, math.min(SIDE_MAX, sw * SIDE_SHARE)))
 	-- (sideways: as many rows as the column holds between its status line and its page strip, one button a row)
 	local sideRows = math.max(1, math.floor((sh - SIDE_STATUS_H - GRID_DOTS_H - GRID_GAP) / (GRID_ROW_H + GRID_GAP)))
-	local perPage = side and sideRows or PAGE_COLS * PAGE_ROWS
+	local perPage = isSide and sideRows or PAGE_COLS * PAGE_ROWS
 	local pages = math.ceil(#found / perPage)
-	local rows = side and math.min(sideRows, #found) or math.min(PAGE_ROWS, math.ceil(#found / PAGE_COLS))
+	local rows = isSide and math.min(sideRows, #found) or math.min(PAGE_ROWS, math.ceil(#found / PAGE_COLS))
 	local dots = pages > 1 and GRID_DOTS_H or 0
-	local h = side and sh or rows * GRID_ROW_H + (rows + 1) * GRID_GAP + dots
+	local h = isSide and sh or rows * GRID_ROW_H + (rows + 1) * GRID_GAP + dots
 	if upright.grid then
 		upright.grid:Dispose()
 	end
 	upright.pages = pages
 	upright.page = math.min(upright.page, pages - 1)
-	upright.pageSize = side and sh or sw -- (a page's length along the strip: off the screen when not shown)
+	upright.pageSize = isSide and sh or sw -- (a page's length along the strip: off the screen when not shown)
 	upright.anim = nil
 	upright.grid = Chili.Window:New({
 		name = "bardroidLobbyGrid",
 		parent = screen0,
-		x = 0, y = sh - h, width = side and colW or sw, height = h,
+		x = 0, y = sh - h, width = isSide and colW or sw, height = h,
 		resizable = false, draggable = false,
 		padding = { 0, GRID_GAP, 0, GRID_GAP },
 	})
 	upright.caching, upright.status = nil, nil
-	if side then -- (the connection state, Chobby's own words: sideRelayout)
+	if isSide then -- (the connection state, Chobby's own words: sideRelayout)
 		upright.status = Chili.Label:New({
 			parent = upright.grid,
 			x = GRID_GAP * 2, y = 0, right = GRID_GAP, height = SIDE_STATUS_H - GRID_GAP,
@@ -621,7 +621,7 @@ local function uprightGrid()
 				gl.Color(1, 1, 1, 1)
 			end,
 		})
-		if not side then -- (sideways the column has no room in its strip: Chobby's own line stays hidden, as upright)
+		if not isSide then -- (sideways the column has no room in its strip: Chobby's own line stays hidden, as upright)
 			upright.caching = Chili.Label:New({ -- (Chobby's caching words, mirrored: uprightMirror; at the strip's own y:
 				-- with bottom = 0 they stood over the last row's first button)
 				parent = upright.grid,
@@ -636,13 +636,13 @@ local function uprightGrid()
 	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(3)
 	upright.mirror = {}
 	upright.stripX = -upright.page * upright.pageSize
-	local w = side and colW - 2 * GRID_GAP or (sw - (PAGE_COLS + 1) * GRID_GAP) / PAGE_COLS
+	local w = isSide and colW - 2 * GRID_GAP or (sw - (PAGE_COLS + 1) * GRID_GAP) / PAGE_COLS
 	for i, f in ipairs(found) do
 		local page, k = math.floor((i - 1) / perPage), (i - 1) % perPage
 		local col, row = k % PAGE_COLS, math.floor(k / PAGE_COLS)
 		local target = f.button
 		local base, x, y
-		if side then -- (one column; base: the button's y on the strip, its page under the one before)
+		if isSide then -- (one column; base: the button's y on the strip, its page under the one before)
 			base = math.floor(page * sh + SIDE_STATUS_H + k * (GRID_ROW_H + GRID_GAP))
 			x, y = GRID_GAP, base + upright.stripX
 		else
@@ -665,7 +665,7 @@ local function uprightGrid()
 	for i, f in ipairs(found) do
 		words[i] = f.button.caption:gsub("\255...", "")
 	end
-	Spring.Echo(string.format("[bardroid-lobby] %s: %d buttons, %d a page, %d pages: %s", side and "column" or "grid", #found,
+	Spring.Echo(string.format("[bardroid-lobby] %s: %d buttons, %d a page, %d pages: %s", isSide and "column" or "grid", #found,
 		perPage, pages, table.concat(words, " | "))) -- (tools)
 end
 
@@ -1930,20 +1930,20 @@ local function replaysRowCheck(now)
 		Spring.Echo("[bardroid-lobby] Links: Game Data hidden (no folder to open on Android)") -- (tools)
 	end
 	widgetsFolder = not replaysRow.pluginsDone and real(widgetsFolder)
-	local bar = widgetsFolder and real(widgetsFolder.parent)
-	if bar then
-		local x0, y0, step = widgetsFolder.x, widgetsFolder.y, nil
-		for _, c in ipairs(bar.children or {}) do -- (the next one along: how far each moves)
-			if c ~= widgetsFolder and c.y == y0 and c.x > x0 and (not step or c.x - x0 < step) then
-				step = c.x - x0
+	local strip = widgetsFolder and real(widgetsFolder.parent)
+	if strip then
+		local x0, y0, stride = widgetsFolder.x, widgetsFolder.y, nil
+		for _, c in ipairs(strip.children or {}) do -- (the next one along: how far each moves)
+			if c ~= widgetsFolder and c.y == y0 and c.x > x0 and (not stride or c.x - x0 < stride) then
+				stride = c.x - x0
 			end
 		end
 		widgetsFolder:SetVisibility(false)
-		for _, c in ipairs(bar.children or {}) do
+		for _, c in ipairs(strip.children or {}) do
 			-- (Contribute and Refresh, the next two: the search box on the same row, at its right, stays)
-			if step and c ~= widgetsFolder and c.y == y0 and c.x > x0 and c.x < x0 + 2.5 * step
+			if stride and c ~= widgetsFolder and c.y == y0 and c.x > x0 and c.x < x0 + 2.5 * stride
 				and type(c.caption) == "string" and c.caption ~= "" and c.SetPos then
-				c:SetPos(c.x - step)
+				c:SetPos(c.x - stride)
 			end
 		end
 		replaysRow.pluginsDone = true
