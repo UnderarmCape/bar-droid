@@ -118,7 +118,7 @@ final class RtsTouch {
     // (dgun: the pad's D-gun mode on the dock, Kailil 2026-11-09: "the controller mod dgun method where a two joy sticks
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
-        float[] all, left, right, groups, stickL, stickR, fire, cancel;
+        float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
         boolean menu, circle, draw, dgun, dgunAuto;
     }
     private Dock dockCache;
@@ -521,7 +521,9 @@ final class RtsTouch {
                 gliding = false;
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
                 Dock dock = dock();
-                inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()));
+                // (sideways, layout A: BAR's minimap in the dock's middle takes its touches as the game does, "map")
+                inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()))
+                        && !(dock.map != null && inside(dock.map, toX(e.getX()), toY(e.getY())));
                 if (inDock && !dock.menu) {   // the dock in pad mode: the camera
                     padDown(e);
                     break;
@@ -895,6 +897,7 @@ final class RtsTouch {
                     } else if (d != null && f[0].equals("left")) d.left = r;
                     else if (d != null && f[0].equals("right")) d.right = r;
                     else if (d != null && f[0].equals("groups")) d.groups = r;
+                    else if (d != null && f[0].equals("map")) d.map = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }

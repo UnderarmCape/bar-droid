@@ -349,6 +349,52 @@ end
 local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
+	L.hole, L.leftCols, L.rightCols = nil, 3, 2
+	if L.land then
+		-- Sideways (layout A): a band along the bottom, 0.4 of the height. Left: the selection over the build grid (2 rows
+		-- of tiles, as many columns as fit); middle: metal and energy, the minimap (the map's shape), the groups; right:
+		-- the orders (their whole height, 3 wide where there is room). The middle as wide as the minimap and a fifth of
+		-- the width at least; the halves take the rest.
+		local pad = max(4, floor(vsy * 0.012))
+		local gap = max(3, floor(pad * 0.6))
+		local bandH = floor(vsy * 0.4)
+		local inner = bandH - 2 * pad
+		local mid0 = max(floor(vsx * 0.2), floor(inner * 0.6)) -- (about the middle's width, for the halves' share)
+		-- (at 0.2 of the height its name and INSERT were half the upright size; no taller than a sixth and a half of its
+		-- width, the upright row's shape: on the unfolded Fold7's narrow halves the name ran into QUEUE)
+		local selH = min(floor(inner * 0.26), floor((vsx - mid0 - 4 * pad) / 2 / 6.5))
+		local gridH = inner - selH - pad
+		local tile = floor((gridH - gap) / 2)
+		local resH = floor(inner * 0.15)
+		local groupsH = floor(inner * 0.2)
+		local mapH = inner - resH - groupsH - 2 * gap
+		local mapW = floor(mapH * (Game.mapSizeX / max(1, Game.mapSizeZ)))
+		local midW = max(floor(vsx * 0.2), min(mapW, floor(vsx * 0.34)))
+		local sideW = floor((vsx - midW - 4 * pad) / 2)
+		L.leftCols = max(3, min(6, floor((sideW + gap) / (tile + gap))))
+		tile = min(tile, floor((sideW - (L.leftCols - 1) * gap) / L.leftCols))
+		L.rightCols = sideW >= 3 * tile and 3 or 2
+		-- (whole rows only, under the selection: tiles narrowed by the width left a part of a third row in sight on the
+		-- unfolded Fold7, "Do not allow scroll to half reveal objects")
+		local rows = max(2, floor((gridH + gap) / (tile + gap)))
+		L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
+		L.left = { pad, pad + gridH - (rows * (tile + gap) - gap), pad + sideW, pad + gridH }
+		L.sel = { pad, pad + gridH + pad, pad + sideW, bandH - pad }
+		L.right = { vsx - pad - sideW, pad, vsx - pad, bandH - pad }
+		local mx0, mx1 = L.left[3] + pad, L.right[1] - pad
+		L.res = { mx0, bandH - pad - resH, mx1, bandH - pad }
+		L.groups = { mx0, pad, mx1, pad + groupsH }
+		local hx0, hy0, hx1, hy1 = mx0, L.groups[4] + gap, mx1, L.res[2] - gap
+		mapW = min(hx1 - hx0, mapW) -- (the map's shape, in the middle of its room)
+		hx0 = floor((hx0 + hx1 - mapW) / 2)
+		L.hole = { hx0, hy0, hx0 + mapW, hy1 }
+		L.dock = { 0, 0, vsx, bandH }
+		L.btnW = floor((sideW - (L.rightCols - 1) * gap) / L.rightCols)
+		L.rightRows = max(3, floor((inner + gap) / (floor(tile * 0.5) + gap)))
+		L.btnH = floor((inner + gap) / L.rightRows) - gap
+		SP.laidOut = false
+		return
+	end
 	local pad = max(4, floor(vsx * 0.012))
 	local gap = max(3, floor(pad * 0.6))
 	-- (by the width, and by the height on a near-square screen: the unfolded Fold7 upright, 1080x1198, gave a quarter
@@ -425,6 +471,7 @@ local function writeDock(force)
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
 			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
 			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
+			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
 			.. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
@@ -1414,8 +1461,9 @@ function refreshNow()
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
 	local leftRowsN, rightRowsN
-	cellsOf.left, leftRowsN = pack(leftItems, 3)
-	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS or 2)
+	cellsOf.left, leftRowsN = pack(leftItems, L.leftCols or 3)
+	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS
+		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or L.rightCols or 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
 	if lk == "spec" then -- (the spectator's 4 or 5 rows; TEAMS: as tall as those, 4 or 5 in sight, more scroll: always 5,
@@ -1817,14 +1865,14 @@ end
 
 -- Nothing picked ("home"): the right half's buttons across both halves, 2 wide and HOME_ROWS tall (Kailil,
 -- 2026-11-09: "much larger buttons ... Only buttons should be there")
-local function homeRect()
-	return { L.left[1], L.left[2], L.right[3], L.right[4] }
+local function homeRect() -- (sideways: the right half's place, the minimap between the halves)
+	return L.land and L.right or { L.left[1], L.left[2], L.right[3], L.right[4] }
 end
 
 -- a half's geometry: its rect, scroll, items, columns, cell width and height
 local function half(side)
 	if side == "left" then
-		return L.left, leftScroll, leftItems, 3, L.tile, L.tile
+		return L.left, leftScroll, leftItems, L.leftCols or 3, L.tile, L.tile
 	end
 	if rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets" then -- (the whole grid)
 		local r = homeRect()
@@ -1833,7 +1881,7 @@ local function half(side)
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
 	end
-	return L.right, rightScroll, rightItems, 2, L.btnW, L.btnH
+	return L.right, rightScroll, rightItems, L.rightCols or 2, L.btnW, L.btnH
 end
 
 -- an item's rect in its half as the rows stand scrolled (pack)
@@ -2362,8 +2410,11 @@ local function drawResources()
 			font:Print(flows, fx, cy - small * 0.32, small, "o")
 			local left = fx + font:GetTextWidth(flows) * small + pad * 2 -- (where the right side's things must stop)
 			local rx = x1 - pad * 1.5
-			font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
-			rx = rx - font:GetTextWidth(short(storage)) * small * 0.85 - pad * 3
+			local sw = font:GetTextWidth(short(storage)) * small * 0.85
+			if rx - sw >= left then -- (sideways in a narrow middle it ran into the income: left out there)
+				font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
+				rx = rx - sw - pad * 3
+			end
 			if res == "energy" then
 				local s = rowH
 				local tide = tostring(floor(Spring.GetTidal() or 0))
@@ -2557,7 +2608,9 @@ local function drawMode()
 	local t = now()
 	if not menu then
 		gl.Color(0, 0, 0, 0.32)
-		gl.Rect(d[1], d[2], d[3], d[4])
+		for _, r in ipairs(SP.around(d, L.hole)) do -- (sideways the minimap not dimmed: it takes taps either way)
+			gl.Rect(r[1], r[2], r[3], r[4])
+		end
 		gl.Color(1, 1, 1, 1)
 		if showSel then -- (no selection row: the dimmed dock says it alone)
 			local s = L.sel
@@ -2741,11 +2794,44 @@ end
 ---------------------------------------------------------------------------------------------------------------------
 -- Callins
 
+-- Sideways too, layout A (Kailil, 2026-11-12, of the landscape mockups: "Split dock: build left, minimap + eco middle,
+-- orders right. Is the best"; his idea: "split the right and left half of the botom UI and shove a map into the middle
+-- with the eco bars on top of it ... that returns vertical real estate back to the actual game world"): with the
+-- launcher's "Touch dock sideways" on (launch-bar.sh: bardroid_landdock.txt), playing, the fingers the input (a pad or
+-- a mouse brings BAR's own screen back). BAR's minimap goes into the dock's middle (its Minimap widget's external
+-- frame: the engine draws and clicks it there), a hole RtsTouch and this widget leave to it (L.hole, "map" line).
+function SP.landMinimap()
+	local m = WG.minimap
+	if not (m and m.setExternalFrame) then
+		return
+	end
+	local h = active and L.land and L.hole or nil
+	local key = h and table.concat(h, " ") or nil
+	if key == L.frameKey then
+		return
+	end
+	L.frameKey = key
+	if h then
+		m.setExternalFrame(h[1], h[2], h[3], h[4], 0)
+	else
+		m.setExternalFrame()
+	end
+end
+-- the rects of d left around h (h inside d): the dock drawn and dimmed around the minimap
+function SP.around(d, h)
+	if not h then
+		return { d }
+	end
+	return { { d[1], h[4], d[3], d[4] }, { d[1], d[2], d[3], h[2] }, { d[1], h[2], h[1], h[4] }, { h[3], h[2], d[3], h[4] } }
+end
+
 local function checkActive()
 	local x, y = Spring.GetViewGeometry()
-	local was = active
+	local was, wasLand = active, L.land
+	local input = WG.BarDroidInput
+	L.land = (y <= x * PORTRAIT and L.landOn and playing() and input ~= "pad" and input ~= "mouse") or false
 	-- (and spectating by touch: the spectator's grid, SP; Kailil, 2026-11-11)
-	active = y > x * PORTRAIT and (playing() or SP.on())
+	active = (y > x * PORTRAIT and (playing() or SP.on())) or L.land
 	if SP.hidden and not (active and SP.on()) then -- (folded only while spectating)
 		SP.hidden, SP.teams = false, false
 		if active then
@@ -2753,15 +2839,17 @@ local function checkActive()
 		end
 	end
 	-- (laid out again when the player turns spectator too: the spectator's grid is taller, layout)
-	if active and (x ~= vsx or y ~= vsy or not was or (SP.on() and true or false) ~= SP.laidOut) then
+	if active and (x ~= vsx or y ~= vsy or not was or (SP.on() and true or false) ~= SP.laidOut or L.land ~= wasLand) then
 		layout()
 		refresh()
 	end
-	if active ~= was then
+	if active ~= was or L.land ~= wasLand then
 		menu, selecting = false, false
-		Spring.Echo("[bardroid-portrait] dock " .. (active and "up" or "down") .. string.format(" (%dx%d)", x, y))
+		Spring.Echo("[bardroid-portrait] dock " .. (active and "up" or "down") .. (L.land and " sideways" or "")
+			.. string.format(" (%dx%d)", x, y))
 		writeDock(true)
 	end
+	SP.landMinimap()
 end
 
 local refreshAt = 0
@@ -3169,19 +3257,34 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 			texW, texH, dirty = w, h, true
 		end
 		if (dirty or texMode == 2) and dockTex and not post then
-			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], drawStill, true)
+			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], function()
+				drawStill()
+				local hole = L.hole
+				if hole then -- (sideways: the minimap's place left clear in the texture; BAR's minimap shows there)
+					gl.Blending(false)
+					gl.Color(0, 0, 0, 0)
+					gl.Rect(hole[1], hole[2], hole[3], hole[4])
+					gl.Blending(true)
+					gl.Color(1, 1, 1, 1)
+				end
+			end, true)
 			dirty = false
 		end
 		if dockTex then
 			-- (drawn into the texture the dock's panel is no longer opaque: the game and BAR's menus under it showed
-			-- through; an opaque base under it)
+			-- through; an opaque base under it; sideways around the minimap)
 			gl.Color(0.03, 0.035, 0.04, 1)
-			gl.Rect(L.dock[1], L.dock[2], L.dock[3], L.dock[4])
+			for _, r in ipairs(SP.around(L.dock, L.hole)) do
+				gl.Rect(r[1], r[2], r[3], r[4])
+			end
 			gl.Color(1, 1, 1, 1)
 			R.BlendTexRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], true)
 		end
 	else
 		drawStill()
+		if L.hole then -- (no texture: the minimap drawn again over the dock's panel)
+			gl.DrawMiniMap()
+		end
 	end
 	resetGL()
 	drawResources()
@@ -3263,7 +3366,7 @@ function widget:DrawWorld()
 end
 
 function widget:IsAbove(x, y)
-	return active and inRect(x, y, L.dock)
+	return active and inRect(x, y, L.dock) and not (L.hole and inRect(x, y, L.hole))
 end
 
 function widget:GetConfigData()
@@ -3282,7 +3385,8 @@ end
 -- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
 function widget:MousePress(x, y, btn)
 	pingT.eat = false -- (a ping's release that never came must not eat this press's)
-	if active and btn == 1 and pingT.armed() and not inRect(x, y, L.dock) then -- PINGS' PING: a ping where the map is
+	local onMap = L.hole and inRect(x, y, L.hole) -- (sideways: BAR's minimap in the dock's middle)
+	if active and btn == 1 and pingT.armed() and (onMap or not inRect(x, y, L.dock)) then -- PINGS' PING: a ping where the map is
 		-- tapped (on the minimap: the place it shows), as BAR's own point marker
 		local kind, pos = Spring.TraceScreenRay(x, y, true, true)
 		if kind == "ground" and pos then
@@ -3294,7 +3398,7 @@ function widget:MousePress(x, y, btn)
 		pingT.eat = true
 		return true
 	end
-	if not (active and inRect(x, y, L.dock)) then
+	if not (active and inRect(x, y, L.dock)) or onMap then
 		return false
 	end
 	if SP.hidden then -- (the SHOW button clicked with a mouse: fingers have it through act dock_menu)
@@ -3470,9 +3574,19 @@ function widget:ViewResize()
 end
 
 function widget:Initialize()
+	do -- (the launcher's "Touch dock sideways": launch-bar.sh leaves this file while it is on)
+		local f = io.open("LuaUI/Config/bardroid_landdock.txt", "r")
+		L.landOn = f ~= nil
+		if f then
+			f:close()
+		end
+	end
 	WG.BarDroidPortrait = {
 		active = function()
 			return active
+		end,
+		sideways = function() -- (layout A: the dock along the bottom of a wide screen, BAR's minimap in it)
+			return active and L.land or false
 		end,
 		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1)
 			return active and L.dock or nil
@@ -3528,6 +3642,7 @@ function widget:Shutdown()
 	end
 	WG.BarDroidPortrait = nil
 	active = false
+	SP.landMinimap() -- (BAR's minimap back in its own place)
 	topbarBars(false)
 	writeDock(true)
 	if logFile then

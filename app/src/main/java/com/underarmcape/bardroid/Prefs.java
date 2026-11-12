@@ -62,6 +62,12 @@ public final class Prefs {
     /** The game upright: the portrait dock for touch (Kailil, 2026-11-09; bardroid_portrait.lua, RtsTouch's pad). */
     public static boolean portrait = false;
     /**
+     * Sideways the same touch dock along the bottom (Kailil, 2026-11-12, layout A of the landscape mockups: build left,
+     * minimap and resources in the middle, orders right); while a pad or mouse is used BAR's own screen layout.
+     * launch-bar.sh: LuaUI/Config/bardroid_landdock.txt, read by bardroid_portrait.lua.
+     */
+    public static boolean landDock = true;
+    /**
      * Android's, One UI's and DeX's keyboard shortcuts stay out of the game screen, their keys go to BAR
      * (KeyboardShortcuts). Off: Termux:X11's defaults.
      */
@@ -162,6 +168,7 @@ public final class Prefs {
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
         portrait = s.getBoolean("portrait", portrait);
+        landDock = s.getBoolean("landDock", landDock);
         captureShortcuts = s.getBoolean("captureShortcuts", captureShortcuts);
         fpsCap = s.getInt("frameCap", fpsCap);
         if (fpsCap != 0 && fpsCap != 30 && fpsCap != 60) fpsCap = 30;
@@ -200,6 +207,7 @@ public final class Prefs {
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
                 .putBoolean("portrait", portrait)
+                .putBoolean("landDock", landDock)
                 .remove("mouseKeyboard")   // the withdrawn mouse capture setting (b148e59)
                 .putBoolean("captureShortcuts", captureShortcuts)
                 .remove("touchOnly")   // the touch-only mode is gone

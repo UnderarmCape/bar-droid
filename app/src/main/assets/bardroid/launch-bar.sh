@@ -506,6 +506,14 @@ if [ -f "$DEV_KEYS" ]; then
   cat "$DEV_ORIG" >> "$BAR/springsettings.cfg" 2>/dev/null
   rm -f "$DEV_KEYS" "$DEV_ORIG"
 fi
+# Sideways the touch dock too (the app's "Touch dock sideways", BARDROID_LAND_DOCK; layout A, bardroid_portrait.lua):
+# this file while it is on
+mkdir -p "$BAR/LuaUI/Config"
+if [ "${BARDROID_LAND_DOCK:-0}" = 1 ]; then
+  echo 1 > "$BAR/LuaUI/Config/bardroid_landdock.txt"
+else
+  rm -f "$BAR/LuaUI/Config/bardroid_landdock.txt"
+fi
 # Upright (the app's "Play upright", BARDROID_PORTRAIT): BAR's loading screen tip off, as BAR wraps it for a wide
 # screen and upright it ran off both sides; the app shows one wrapped to the screen (GameActivity). The player's own
 # line is kept in .bardroid-tips-line and put back at a start that is not upright; their tips off: none from the app

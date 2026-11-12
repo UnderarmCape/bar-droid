@@ -52,8 +52,14 @@ local function mode()
 	end
 	return (vsx * 10 < vsy * 16 and vsy * 10 < vsx * 16) and "half" or nil
 end
+-- the portrait dock holds the minimap sideways (layout A, bardroid_portrait.lua): its own size there, no small one
+local function inDock()
+	local P = WG.BarDroidPortrait
+	return P and P.sideways and P.sideways() or false
+end
+
 local function unfolded()
-	return mode() ~= nil
+	return mode() ~= nil and not inDock()
 end
 
 local overlaid -- the overlay this widget last set
@@ -183,7 +189,7 @@ function widget:ViewResize()
 end
 
 function widget:MousePress(x, y)
-	if not Spring.IsAboveMiniMap(x, y) then
+	if not Spring.IsAboveMiniMap(x, y) or inDock() then
 		return false
 	end
 	if small then
