@@ -898,7 +898,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay's draft pregame upright with both pool files swapped: the victory line whole above the tutorial, the
       tutorial inside the screen; BAR's files put back (md5s checked). On the way: the engine reads a pool file only
       up to the size BAR's package lists, so a longer patched file was cut short ("unexpected symbol near '<eof>'");
-      a pool swap test needs the patched code at the original's byte size (comment lines dropped, spaces after).
+      a pool swap test needs the patched code at the original's byte size (comment lines dropped, spaces after), as
+      the earlier patches' tests did (checked: their scripts made same-size copies); now in `docs/upstream/README.md`.
       Left: BAR merging it (Kailil and the devs). The non-draft line under the dock stays (the dock is the app's).
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and

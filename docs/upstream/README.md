@@ -3,6 +3,14 @@
 Not posted. Each one needs Kailil's go-ahead, and he posts it (or says to). The projects ask for an issue before a PR
 and for AI assistance to be disclosed (RecoilEngine `AI_POLICY.md`); every draft ends with that line.
 
+Testing a change to BAR's own files on the dev phone (the `bar-*` drafts): the release's rapid pool file of each file
+(`files/bar/pool/<md5[:2]>/<md5[2:]>.gz`, the md5 from the release's `packages/<id>.sdp`) is backed up, overwritten with
+the patched file gzipped, and put back after the test, its content's md5 checked against its name. The engine reads a
+pool file only up to the size the package lists, so the test copy must be the original's exact byte size: the patch's
+code with comment lines dropped and spaces added at the end. A longer copy is cut short and the widget fails to load
+("unexpected symbol near '<eof>'"; the pregame test's first run, 2026-11-12). Every `bar-*` patch here makes its files
+longer (2026-11-12, measured against test-31836-b250a16); their tests used same-size copies.
+
 | Draft | Where | Attach |
 | --- | --- | --- |
 | [lfdevs-mesa-kgsl-present-fence.md](lfdevs-mesa-kgsl-present-fence.md) | github.com/lfdevs/mesa-for-android-container issues | nothing (numbers are in the text) |
