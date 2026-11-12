@@ -48,6 +48,14 @@ switch ($Do) {
   "take" {
     if (-not $Who -or $Who -match '[^\w.-]') { throw "who takes it? (letters, digits, . - _)" }
     $mine = Join-Path $qdir "$Who.wait"
+    # (the holder taking it again renews its hold: Waiters drops the holder's own entry, so it waited for itself
+    # forever, stale or not; 2026-11-12)
+    if ((Holder) -match "^$([regex]::Escape($Who)) ") {
+      WriteText $lock "$Who since $(Get-Date -Format 'HH:mm') for $Minutes min"
+      try { [IO.File]::Delete($mine) } catch {}
+      "taken by $Who (renewed)"
+      return
+    }
     if (-not [IO.File]::Exists($mine)) { WriteText $mine (Get-Date -Format 'yyyy-MM-dd HH:mm:ss') }
     while ($true) {
       $first = @(Waiters)[0]
