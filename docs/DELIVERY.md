@@ -1287,6 +1287,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       upright dock, which on the laptop's landscape screen has no dock and only keeps the point on the map) and
       aa0f0e3; not known whether the failures came before them. Next laptop run with his yes: run it on 81ac048 and on
       the newest, and fix what fails.
+- [ ] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
+      one over the other (under 600 dp) the top block (title, status lines, buttons) takes the height it needs and the
+      settings get the rest; at font size 1.3x the settings showed one line, at display density 600 and up none. Only
+      on near-square screens under 600 dp (the Fold7 unfolded is wider at its default zoom and lays them side by side;
+      tall phones have the height). A cure has to choose: cap the top block (its buttons may scroll out of sight) or
+      scroll both as one page. Not changed. The same night: the choice rows' 70 % step was never tried (a float loop
+      ended at 69.99999 %), fixed; the status line's "(no connection)" wrapped mid-bracket, now one piece.
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`. Night of
       2026-10-28: two in tonight's own caching (fixed, bdaae2e); the phone's launcher logs (58,000 lines, Kailil's
       games and tonight's runs) hold no error from the app or its widgets, only BAR's and the engine's own warnings;
