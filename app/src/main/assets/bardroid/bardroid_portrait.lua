@@ -1377,7 +1377,10 @@ function refreshNow()
 		-- (two rows tall each, as the big orders: six buttons filled three short rows of the half; one row where pages
 		-- of two-row pairs would be cut: an odd number of rows under six in sight)
 		local rr = L.rightRows or 3
-		local qh = (rr >= 6 or rr % 2 == 0) and 2 or 1
+		-- (sideways three wide: two rows of them, double height where the half has the rows for it; they were two thin
+		-- rows over an empty half, dev phone 2026-11-12, a Bot Lab)
+		local need = math.ceil(6 / (L.rightCols or 2))
+		local qh = (need * 2 <= rr or rr >= 6 or rr % 2 == 0) and 2 or 1
 		newRight = {
 			{ kind = "queue", n = 1, label = "+1", h = qh }, { kind = "queue", n = 5, label = "+5", h = qh },
 			{ kind = "queue", n = 20, label = "+20", h = qh }, { kind = "queue", n = -1, label = "-1", h = qh },

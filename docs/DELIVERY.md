@@ -1388,6 +1388,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       FIRE over the metal and energy panels, their edges showing round it; they step aside in that mode now, and the
       sticks take the band's whole height. Open for Kailil: with nothing picked the home grid fills the right half
       and the left half stands empty (upright the grid spans both halves; sideways the minimap is between them).
+      Next run: a Bot Lab built from the dock sideways, FACTORIES picked it (its 8 bots on the left), a bot tapped:
+      its queue buttons (+1 +5 +20 / -1 CLEAR ORDERS) came as two thin rows over an empty half; three wide they are
+      double height now where the half has the rows (upright unchanged).
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
