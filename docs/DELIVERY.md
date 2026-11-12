@@ -1197,7 +1197,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       buttons' divider read as a glitch; dev phone, 2026-11-03).
 - [x] The build menu's shape strip (ONE, LINE, GRID, BORDER): the picked shape's pale gold words on its gold read
       worst of the four; now white words on a deeper gold (dev phone, 2026-11-03: ONE and LINE picked, by touch).
-- [ ] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
+- [x] One screenshot of the dev phone during pad-test (2026-11-03 02:44, the "FIRST PERSON OFF" note, a skirmish at
       7 fps) showed white ragged columns about 20 px wide across the whole picture, the interface too (kept as
       `build/white-columns-2026-11-03.png`, not tracked): a frame shown before it was drawn, or a torn screenshot.
       1 of 22 shots in that run; none in 222 back-to-back shots of the next. HANDOFF's "watch for flicker" of the
@@ -1205,6 +1205,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       2026-11-08, pad-test -Share: one engine screenshot lacked the upper part of the interface (the share list's
       panel, tabs and first rows, BAR's minimap) while the rest was drawn; the same run again drew all. No columns
       this time; 1 in ~30 shots that day.
+      2026-11-11 to 11-12: ~150 adb screenshots of running games on the dev phone (upright and landscape, both screen
+      shapes, spectating, the 18 first-frames shots) and pad-test -Share's 8 engine screenshots in two runs: none torn,
+      none with columns. Closed as a watch; reopen with the picture if a white flash or columns show again.
 - [x] **A rolling map storage limit** (Kailil, 2026-11-11: "a rolling map download size limit ... rotate downloaded
       maps"; then "Move forward with that. At the max map size to 3gb"). What grows is maps (20 to 150 MB each); BAR's
       rapid pool stays ~2.26 GB across releases (they share files: 25 MB of the dev phone's pool was only for older
