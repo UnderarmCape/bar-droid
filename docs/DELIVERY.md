@@ -1390,7 +1390,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       and the left half stands empty (upright the grid spans both halves; sideways the minimap is between them).
       Next run: a Bot Lab built from the dock sideways, FACTORIES picked it (its 8 bots on the left), a bot tapped:
       its queue buttons (+1 +5 +20 / -1 CLEAR ORDERS) came as two thin rows over an empty half; three wide they are
-      double height now where the half has the rows (upright unchanged).
+      double height now where the half has the rows (upright unchanged). And the handover: "src pad" in the touch
+      log (what the app writes when the pad is used) took the dock down and brought BAR's own screen back (its
+      minimap at the top left, its resource bars), "src touch" the dock again; the chat box, though, stood a third of
+      the way across under the top bar while the dock was up (where the minimap had ended): now the row under the top
+      bar from the left edge then, as upright.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
