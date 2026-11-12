@@ -48,6 +48,8 @@ public class GameService extends Service {
     /** BAR is loading: the engine started, the game ("finished loading") or the lobby (its BAR Droid widget) not up yet
      *  (GameActivity's Free memory button). */
     public static boolean loading() { return loading; }
+    /** The shape launch-bar.sh was told at the engine's start (BARDROID_PORTRAIT; null: none yet): LoadPictures. */
+    static volatile Boolean startedUpright;
     private static volatile boolean loading;
     /**
      * The loading bar's words and how far it is, as BAR's loading screen has them (luaintro/addons/main.lua: the
@@ -333,6 +335,7 @@ public class GameService extends Service {
 
             setStatus("launching engine (" + mode + ")");
             boolean upright = Prefs.startsUpright(this);   // (turning with the phone: as it is held now)
+            startedUpright = upright;
             SplashPicture.write(this, paths.bar, Prefs.engineVersion, upright);   // (launch-bar.sh: SplashScreenDir)
             Map<String, String> env = new HashMap<>();
             env.put("ENGINE_VER", Prefs.engineVersion);

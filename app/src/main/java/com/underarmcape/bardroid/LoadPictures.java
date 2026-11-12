@@ -22,8 +22,21 @@ final class LoadPictures {
         t.setDaemon(true);
         return t;
     });
-    /** The screen's new shape: applied in order on a thread of its own. */
-    static void follow(File bar, boolean upright) {
+    /**
+     * The screen's new shape: applied in order on a thread of its own. first: the game screen's first shape, which
+     * launch-bar.sh handles at the engine's start; only if it is not the shape GameService gave it, and after launch-bar.sh
+     * is done with the same files (both at once: a removal could take pictures it was still putting in place).
+     */
+    static void follow(File bar, boolean upright, boolean first) {
+        if (first) {
+            Boolean told = GameService.startedUpright;
+            if (told != null && told == upright) return;
+            ONE.execute(() -> {
+                try { Thread.sleep(8000); } catch (InterruptedException e) { return; }
+                apply(bar, upright);
+            });
+            return;
+        }
         ONE.execute(() -> apply(bar, upright));
     }
 

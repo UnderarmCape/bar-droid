@@ -92,8 +92,9 @@ public class GameActivity extends MainActivity {
             // (BAR's load screen pictures for the next load in this shape: a game started from the lobby after a turn)
             boolean up = h > w * 1.05f;
             if (w > 0 && h > 0 && (picturesUpright == null || picturesUpright != up)) {
+                boolean first = picturesUpright == null;
                 picturesUpright = up;
-                LoadPictures.follow(new java.io.File(getFilesDir(), "bar"), up);
+                LoadPictures.follow(new java.io.File(getFilesDir(), "bar"), up, first);
             }
         });
         lorieView.resetRendererZoom();   // undo a magnifier pinch from Termux:X11's own touch handling
