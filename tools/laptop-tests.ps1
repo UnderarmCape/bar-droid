@@ -5,6 +5,7 @@
 #   updater-test         Updater.launchEnded (keep or roll back a BAR update)
 #   padgame-test         PadGame.java (the gamepad in BAR's game: button sequences, the mouse and keys it sends)
 #   status-text-test     StatusText.java (the game service's status in players' words: notification, launcher)
+#   map-store-test       MapStore.java (the map storage limit: a map's last use, the pruning order)
 #   lobby-bridge-test    LobbyBridge.java against the real lobby
 #   lobby-touch-test     bardroid_lobby_touch.lua in the real lobby (finger scrolling, server details first)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
@@ -117,6 +118,7 @@ Run "springsettings merge" "settings-merge-test.ps1" "ALL PASS"
 Run "updater rollback" "updater-test.ps1" "ALL PASS"
 Run "gamepad in BAR's game (PadGame)" "padgame-test.ps1" "ALL PASS"
 Run "status words (StatusText)" "status-text-test.ps1" "ALL PASS"
+Run "map storage limit (MapStore)" "map-store-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
 Run "lobby touch" "lobby-touch-test.ps1" "\[lobbytouch\] done: ALL PASS"
 $pointerArg = @(if ($Pointer) { "-Pointer" })

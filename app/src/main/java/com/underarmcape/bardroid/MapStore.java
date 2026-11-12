@@ -132,6 +132,11 @@ final class MapStore {
             Log.e("maps", "record unsaved", e);
             return;
         }
-        if (!tmp.renameTo(f)) Log.e("maps", "record not renamed");
+        // (a replacing move: File.renameTo onto an existing file fails on some systems, and the record went unsaved)
+        try {
+            java.nio.file.Files.move(tmp.toPath(), f.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            Log.e("maps", "record not saved", e);
+        }
     }
 }
