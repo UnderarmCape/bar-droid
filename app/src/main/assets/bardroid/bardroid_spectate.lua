@@ -681,6 +681,40 @@ local function stateRy(az)
 	return (az < 0 and -1 or 1) * (f > 0 and n + 0.3 + 0.8 * f or n + 0.2) * QUARTER
 end
 
+-- Upright over the dock (bardroid_portrait.lua): the point followed in the middle of the game above the dock, as the
+-- dock's own jumps put it, not in the screen's middle, which is the dock's top edge or under it (a unit followed on the
+-- unfolded Fold7's shape was out of sight, dev phone 2026-11-11). The ground between where the screen's middle meets
+-- the focus's height h and the game's middle the point's height ph, the camera as it is (the same shift for it moved
+-- along with the point); none with the dock folded to its SHOW button, for a view near level (its upper middle past
+-- the horizon) or past the camera's distance.
+local function dockShift(h, ph, dist)
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	local vsx, vsy = Spring.GetViewGeometry()
+	if not dock or dock[3] - dock[1] < vsx * 0.9 then
+		return 0, 0
+	end
+	local px, py, pz = Spring.GetCameraPosition()
+	local function at(sy, height) -- (sy from the bottom, as the dock's; the engine's pixel y from the top)
+		local dx, dy, dz = Spring.GetPixelDir(math.floor(vsx / 2), vsy - sy)
+		if not (px and dx) or dy > -1e-4 then
+			return nil
+		end
+		local t = (height - py) / dy
+		return px + dx * t, pz + dz * t
+	end
+	local ax, az = at(math.floor(vsy / 2), h)
+	local bx, bz = at(math.floor((dock[4] + vsy) / 2), ph)
+	if not (ax and bx) then
+		return 0, 0
+	end
+	local sx, sz = ax - bx, az - bz
+	if dist and sx * sx + sz * sz > dist * dist then
+		return 0, 0
+	end
+	return sx, sz
+end
+
 local function updateFollow(dt)
 	local f = follow
 	if not f then
@@ -738,6 +772,13 @@ local function updateFollow(dt)
 		end
 	end
 	cs.px, cs.pz = f.bx + mx, f.bz + mz
+	if view.frame == "world" then -- (upright: the point in the game's middle above the dock)
+		local sx, sz = dockShift(cs.py or 0, Spring.GetGroundHeight(f.bx, f.bz) or cs.py or 0, cs.dist)
+		-- (kept on the map here: past its edge the engine moved the point back, which the next frame took for a finger's
+		-- pan and kept, the unit 732 elmos off the middle for good; dev phone, a glide to a unit by the map's edge)
+		cs.px = math.max(0, math.min(Game.mapSizeX, cs.px + sx))
+		cs.pz = math.max(0, math.min(Game.mapSizeZ, cs.pz + sz))
+	end
 	if view.frame == "unit" and f.yaw and cs.ry then
 		cs.ry = stateRy(approachAngle(lookAzimuth(cs.ry), f.yaw + view.ryRel, k))
 	end
