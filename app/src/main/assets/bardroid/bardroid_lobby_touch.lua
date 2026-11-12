@@ -1720,27 +1720,36 @@ end
 -- Chobby's Replays tab: Open Folder opens nothing on a phone (the replays are in the app's own storage, which no file
 -- manager shows; LobbyBridge's OpenFile leaves folders), a button that did nothing at a tap (dev phone, 2026-11-12).
 -- Hidden, and the two left of it (Download, More: Chobby anchors the row from the right, 130 apart) close the gap.
-local replaysRow = { at = nil, done = false }
+-- The same for Links' last line, "Game Data: Open game data folder to find config files and logs." (WrapperLoopback's
+-- OpenFolder; on a phone the launcher's Share logs gives the logs): the line hidden, the last, so no gap.
+local replaysRow = { at = nil, done = false, linksDone = false }
 local function replaysRowCheck(now)
-	if replaysRow.done or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
+	if (replaysRow.done and replaysRow.linksDone) or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
 		return
 	end
 	replaysRow.at = now
-	local refresh -- (its Refresh button, by its tooltip: Chobby gives it no name)
+	local refresh, gameData -- (Replays' Refresh by its tooltip, Links' Game Data by its caption: no names on them)
 	local function walk(o, depth)
-		if refresh or not o or depth > 40 then
+		if (refresh and gameData) or not o or depth > 40 then
 			return
 		end
 		if o.tooltip == "Refresh the list of replays" then
 			refresh = o
-			return
+		elseif o.caption == "Game Data" and o.classname ~= "label" then
+			gameData = o
 		end
 		for _, c in ipairs(o.children or {}) do
 			walk(c, depth + 1)
 		end
 	end
 	walk(screen0, 0)
-	local row = refresh and real(refresh.parent)
+	local line = not replaysRow.linksDone and gameData and real(gameData.parent)
+	if line and line.SetVisibility then
+		line:SetVisibility(false)
+		replaysRow.linksDone = true
+		Spring.Echo("[bardroid-lobby] Links: Game Data hidden (no folder to open on Android)") -- (tools)
+	end
+	local row = not replaysRow.done and refresh and real(refresh.parent)
 	if not row then
 		return
 	end
