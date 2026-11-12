@@ -256,6 +256,9 @@ function widget:GameFrame(f)
 			end
 			return realRes(teamID, res, ...)
 		end
+		-- (a pad player's screen, as a real pad's "src pad" makes it: the sideways touch dock steps aside, its
+		-- screenshots showed the dock under the list)
+		WG.BarDroidInput = "pad"
 		say("[padtest] ready, the stand-in teammate: team " .. other)
 		nextAt = f + STEP
 		return

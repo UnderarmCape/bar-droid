@@ -1739,8 +1739,8 @@ local function shareDraw(vsx, vsy)
 	elseif count > 0 then
 		text(count .. (count == 1 and " UNIT SELECTED" or " UNITS SELECTED"), mid,
 			ya + (amountH - size) / 2 + size * 0.14, size, accent, 1, "co")
-	else
-		text("SELECT UNITS FIRST", mid, ya + (amountH - size) / 2 + size * 0.14, size, { 0.7, 0.7, 0.7 }, 0.9, "co")
+	else -- (as the count reads; A's note says what to do: "SELECT UNITS FIRST" here repeated it under the note)
+		text("NO UNITS SELECTED", mid, ya + (amountH - size) / 2 + size * 0.14, size, { 0.7, 0.7, 0.7 }, 0.9, "co")
 	end
 
 	-- the keys: A gives, B cancels; centred, as the tabs and the amount above them (at the left they read as stray)
