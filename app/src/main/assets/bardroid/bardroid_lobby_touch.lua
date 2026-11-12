@@ -366,16 +366,29 @@ local GRID_ORDER = { "multiplayer", "skirmish", "scenarios", "settings", "chat",
 -- 0.15 s with a slight overshoot (was 0.28 s, half the width or a 600 flick)
 local PAGE_SETTLE, PAGE_OVERSHOOT, PAGE_FLICK = 0.15, 0.35, 200 -- seconds; easeOutBack's; Chili pixels a second
 local PAGE_GAIN, PAGE_TURN = 1.5, 0.05 -- the strip's move per finger move; the drag (share of the width) that turns
-local upright = { on = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
-	stripX = 0, anim = nil }
+-- Sideways the same buttons as one column down the left (Kailil, 2026-11-12: "in the landscape Lobby, the buttons on
+-- the left ... Make them big like the vertical buttons look. and move ALL buttons to the left side of the page, even the
+-- buttons in the top right hand corner like login. so the main window has the full vertical space. make all the buttons
+-- come together with minimal padding. allow swiping pages up and down. it will be a single column of buttons"): side
+-- mode, upright.side. The column SIDE_SHARE of the width (SIDE_MIN to SIDE_MAX), Chobby's logo and status line off (the
+-- connection state in the column's top line), the content from the column to the right edge, top to bottom; the pages
+-- one under the other, a swipe up or down turns them. (upright.on: the grid or the column is up; stripX: the strip's
+-- offset along its pages, x or y; pageSize: a page's length along it)
+local SIDE_SHARE, SIDE_MIN, SIDE_MAX, SIDE_STATUS_H = 0.2, 190, 300, 28
+local upright = { on = false, side = false, grid = nil, mirror = {}, scaleBefore = nil, checkAt = nil, page = 0, pages = 1,
+	stripX = 0, pageSize = 1, anim = nil }
 
--- The pages' strip moved: each button to its place on its page plus x (a strip of its own, three screens wide, was not
--- drawn by Chili: its buttons stood in the grid as before)
+-- The pages' strip moved: each button to its place on its page plus the offset (a strip of its own, three screens wide,
+-- was not drawn by Chili: its buttons stood in the grid as before); sideways down the column
 local function stripTo(x)
 	upright.stripX = x
 	for _, m in ipairs(upright.mirror) do
 		if m.base and not m.mine.disposed then
-			m.mine:SetPos(math.floor(m.base + x + 0.5))
+			if upright.side then
+				m.mine:SetPos(nil, math.floor(m.base + x + 0.5))
+			else
+				m.mine:SetPos(math.floor(m.base + x + 0.5))
+			end
 		end
 	end
 end
@@ -435,16 +448,68 @@ local function chobbyButtons()
 end
 
 uprightBarTop = function()
-	if not (upright.on and upright.grid) then
+	if not (upright.on and upright.grid) or upright.side then
 		return nil
 	end
 	return upright.grid.y
+end
+
+-- Sideways: Chobby's logo and status off, the content from the column's right edge, the whole height (the server bar,
+-- while it is up, at the foot over the content as Chobby's own)
+local function sideRelayout()
+	local colW = upright.grid and upright.grid.width or 0
+	upright.sideHidden = upright.sideHidden or {}
+	for _, name in ipairs({ "holder_heading", "holder_status" }) do
+		local o = real(chobbyObject(name))
+		if o and o.visible ~= false then
+			o:SetVisibility(false)
+			upright.sideHidden[o] = true -- (shown again with Chobby's layout: uprightOff)
+		end
+	end
+	local column = chobbyObject("mainWindow_buttonsHolder")
+	if column and column.visible ~= false then
+		column:SetVisibility(false)
+	end
+	local barUp = bar and bar.visible
+	for _, name in ipairs({ "holder_mainWindow", "holder_submenuWindow" }) do
+		local o = chobbyObject(name)
+		if o and o._relativeBounds then
+			if o.x ~= colW or o.y ~= 0 then
+				o:SetPos(colW, 0)
+			end
+			o._relativeBounds.right = 0
+			o._relativeBounds.width = false
+			o._relativeBounds.bottom = barUp and (bar.height + 14) or 0
+			o:UpdateClientArea()
+		end
+	end
+	local content = chobbyObject("mainWindow_mainContent")
+	if content and content._relativeBounds then
+		if content.x ~= 0 then
+			content:SetPos(0)
+		end
+		content._relativeBounds.right = 0
+		content._relativeBounds.bottom = 0
+		content:UpdateClientArea()
+	end
+	for _, m in ipairs(upright.mirror) do -- (the top's buttons: in the column)
+		if m.top and m.button.visible ~= false then
+			m.button:SetVisibility(false)
+		end
+	end
+	local st, s = real(chobbyObject("connectivityText")), upright.status -- (the connection state, in the column's top)
+	if st and s and not s.disposed and type(st.text) == "string" and s.caption ~= st.text then
+		s:SetCaption(st.text)
+	end
 end
 
 -- the content between the top and the grid (and the server bar while it is up); Chobby's left column hidden
 uprightRelayout = function()
 	if not upright.on then
 		return
+	end
+	if upright.side then
+		return sideRelayout()
 	end
 	local barUp = bar and bar.visible
 	local bottom = (screen0.height - (upright.grid and upright.grid.y or screen0.height)) + (barUp and (bar.height + 4) or 0)
@@ -482,25 +547,40 @@ local function uprightGrid()
 		return
 	end
 	local sw, sh = screen0.width, screen0.height
-	local perPage = PAGE_COLS * PAGE_ROWS
+	local side = upright.side
+	local colW = math.floor(math.max(SIDE_MIN, math.min(SIDE_MAX, sw * SIDE_SHARE)))
+	-- (sideways: as many rows as the column holds between its status line and its page strip, one button a row)
+	local sideRows = math.max(1, math.floor((sh - SIDE_STATUS_H - GRID_DOTS_H - GRID_GAP) / (GRID_ROW_H + GRID_GAP)))
+	local perPage = side and sideRows or PAGE_COLS * PAGE_ROWS
 	local pages = math.ceil(#found / perPage)
-	local rows = math.min(PAGE_ROWS, math.ceil(#found / PAGE_COLS))
+	local rows = side and math.min(sideRows, #found) or math.min(PAGE_ROWS, math.ceil(#found / PAGE_COLS))
 	local dots = pages > 1 and GRID_DOTS_H or 0
-	local h = rows * GRID_ROW_H + (rows + 1) * GRID_GAP + dots
+	local h = side and sh or rows * GRID_ROW_H + (rows + 1) * GRID_GAP + dots
 	if upright.grid then
 		upright.grid:Dispose()
 	end
 	upright.pages = pages
 	upright.page = math.min(upright.page, pages - 1)
+	upright.pageSize = side and sh or sw -- (a page's length along the strip: off the screen when not shown)
 	upright.anim = nil
 	upright.grid = Chili.Window:New({
 		name = "bardroidLobbyGrid",
 		parent = screen0,
-		x = 0, y = sh - h, width = sw, height = h,
+		x = 0, y = sh - h, width = side and colW or sw, height = h,
 		resizable = false, draggable = false,
 		padding = { 0, GRID_GAP, 0, GRID_GAP },
 	})
-	upright.caching = nil
+	upright.caching, upright.status = nil, nil
+	if side then -- (the connection state, Chobby's own words: sideRelayout)
+		upright.status = Chili.Label:New({
+			parent = upright.grid,
+			x = GRID_GAP * 2, y = 0, right = GRID_GAP, height = SIDE_STATUS_H - GRID_GAP,
+			autosize = false,
+			caption = "",
+			valign = "center",
+			objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(2),
+		})
+	end
 	if pages > 1 then -- (the page strip, under the buttons: arrows at its ends, the dots between, the one shown lit)
 		Chili.Control:New({
 			parent = upright.grid,
@@ -510,7 +590,7 @@ local function uprightGrid()
 			DrawControl = function(obj)
 				local s, gap = 8, 12
 				local x0 = (obj.width - (upright.pages * s + (upright.pages - 1) * gap)) / 2
-				local at = -upright.stripX / math.max(1, screen0.width)
+				local at = -upright.stripX / math.max(1, upright.pageSize)
 				local cy = obj.height / 2
 				gl.Texture(false)
 				for p = 0, upright.pages - 1 do
@@ -526,37 +606,52 @@ local function uprightGrid()
 					gl.Color(1, 1, 1, (to >= 0 and to < upright.pages) and 0.85 or 0.2)
 					local x = side < 0 and obj.height * 0.6 or obj.width - obj.height * 0.6
 					gl.BeginEnd(GL.LINE_STRIP, function()
-						gl.Vertex(x - side * a * 0.5, cy - a)
-						gl.Vertex(x + side * a * 0.5, cy)
-						gl.Vertex(x - side * a * 0.5, cy + a)
+						if upright.side then -- (pages one under the other: up at the left end, down at the right; Chili y down)
+							gl.Vertex(x - a, cy - side * a * 0.5)
+							gl.Vertex(x, cy + side * a * 0.5)
+							gl.Vertex(x + a, cy - side * a * 0.5)
+						else
+							gl.Vertex(x - side * a * 0.5, cy - a)
+							gl.Vertex(x + side * a * 0.5, cy)
+							gl.Vertex(x - side * a * 0.5, cy + a)
+						end
 					end)
 				end
 				gl.LineWidth(1)
 				gl.Color(1, 1, 1, 1)
 			end,
 		})
-		upright.caching = Chili.Label:New({ -- (Chobby's caching words, mirrored: uprightMirror; at the strip's own y: with
-			-- bottom = 0 they stood over the last row's first button)
-			parent = upright.grid,
-			x = dots * 1.2, y = rows * (GRID_ROW_H + GRID_GAP) - GRID_GAP, width = "38%", height = dots,
-			autosize = false,
-			caption = "",
-			valign = "center",
-			objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(1),
-		})
+		if not side then -- (sideways the column has no room in its strip: Chobby's own line stays hidden, as upright)
+			upright.caching = Chili.Label:New({ -- (Chobby's caching words, mirrored: uprightMirror; at the strip's own y:
+				-- with bottom = 0 they stood over the last row's first button)
+				parent = upright.grid,
+				x = dots * 1.2, y = rows * (GRID_ROW_H + GRID_GAP) - GRID_GAP, width = "38%", height = dots,
+				autosize = false,
+				caption = "",
+				valign = "center",
+				objectOverrideFont = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(1),
+			})
+		end
 	end
 	local font = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration:GetFont(3)
 	upright.mirror = {}
-	upright.stripX = -upright.page * sw
-	local w = (sw - (PAGE_COLS + 1) * GRID_GAP) / PAGE_COLS
+	upright.stripX = -upright.page * upright.pageSize
+	local w = side and colW - 2 * GRID_GAP or (sw - (PAGE_COLS + 1) * GRID_GAP) / PAGE_COLS
 	for i, f in ipairs(found) do
 		local page, k = math.floor((i - 1) / perPage), (i - 1) % perPage
 		local col, row = k % PAGE_COLS, math.floor(k / PAGE_COLS)
 		local target = f.button
-		local base = math.floor(page * sw + GRID_GAP + col * (w + GRID_GAP))
+		local base, x, y
+		if side then -- (one column; base: the button's y on the strip, its page under the one before)
+			base = math.floor(page * sh + SIDE_STATUS_H + k * (GRID_ROW_H + GRID_GAP))
+			x, y = GRID_GAP, base + upright.stripX
+		else
+			base = math.floor(page * sw + GRID_GAP + col * (w + GRID_GAP))
+			x, y = base + upright.stripX, row * (GRID_ROW_H + GRID_GAP)
+		end
 		local mine = Chili.Button:New({
 			parent = upright.grid,
-			x = base + upright.stripX, y = row * (GRID_ROW_H + GRID_GAP),
+			x = x, y = y,
 			width = math.floor(w), height = GRID_ROW_H,
 			caption = target.caption,
 			classname = target.classname == "negative_button" and "negative_button" or nil,
@@ -570,8 +665,8 @@ local function uprightGrid()
 	for i, f in ipairs(found) do
 		words[i] = f.button.caption:gsub("\255...", "")
 	end
-	Spring.Echo(string.format("[bardroid-lobby] grid: %d buttons, %d a page, %d pages: %s", #found, perPage, pages,
-		table.concat(words, " | "))) -- (tools)
+	Spring.Echo(string.format("[bardroid-lobby] %s: %d buttons, %d a page, %d pages: %s", side and "column" or "grid", #found,
+		perPage, pages, table.concat(words, " | "))) -- (tools)
 end
 
 -- a tap on the page strip (Chili's point): the page it asks for (an arrow: the next that way, a dot: its own), else nil
@@ -601,7 +696,7 @@ local function uprightSettle(page)
 		return
 	end
 	upright.page = math.max(0, math.min(upright.pages - 1, page))
-	upright.anim = { from = upright.stripX, to = -upright.page * screen0.width, t = 0 }
+	upright.anim = { from = upright.stripX, to = -upright.page * upright.pageSize, t = 0 }
 	Spring.Echo("[bardroid-lobby] grid page " .. (upright.page + 1)) -- (tools)
 end
 
@@ -679,19 +774,15 @@ local function uprightMirror()
 	end
 end
 
-local function uprightSet(on)
+-- Chobby's own layout back: the grid or the column gone, Chobby's buttons, lines, scale and layout as they were
+local function uprightOff()
 	local config = WG.Chobby and WG.Chobby.Configuration
-	if on == upright.on then
-		return
-	end
-	upright.on = on
-	if on then
-		if config and config.SetUiScale and (config.uiScale or 1) < SCALE_UPRIGHT then
-			upright.scaleBefore = config.uiScale or 1
-			config:SetUiScale(SCALE_UPRIGHT)
+	for o in pairs(upright.sideHidden or {}) do -- (Chobby's logo and status line, hidden for the column)
+		if not o.disposed then
+			o:SetVisibility(true)
 		end
-		return -- (the grid at the next check: the screen at its new scale)
 	end
+	upright.sideHidden, upright.status = nil, nil
 	if upright.grid then
 		upright.grid:Dispose()
 		upright.grid = nil
@@ -723,6 +814,23 @@ local function uprightSet(on)
 	if root and root.ViewResize then -- (Chobby's own layout back)
 		pcall(root.ViewResize, screen0.width, screen0.height)
 	end
+end
+
+-- on: the grid (upright) or the column (side: sideways) up; between the two (a turn of the phone) the one goes first
+local function uprightSet(on, side)
+	side = (on and side) and true or false
+	if on == upright.on and side == upright.side then
+		return
+	end
+	if upright.on then
+		uprightOff()
+	end
+	upright.on, upright.side = on, side
+	local config = WG.Chobby and WG.Chobby.Configuration
+	if on and not side and config and config.SetUiScale and (config.uiScale or 1) < SCALE_UPRIGHT then
+		upright.scaleBefore = config.uiScale or 1
+		config:SetUiScale(SCALE_UPRIGHT)
+	end -- (the grid at the next check: the screen at its new scale)
 end
 
 -- The battle room upright (Kailil, 2026-11-10: "the selectors in a row of their own ... the space under the team lists
@@ -891,7 +999,7 @@ local function uprightNotes()
 		return out
 	end
 	C._Realign = function(self, sorted)
-		local g = upright.on and real(upright.grid)
+		local g = upright.on and not upright.side and real(upright.grid) -- (sideways, the column: Chobby's own place)
 		if not (g and not g.disposed) then
 			return own(self, sorted)
 		end
@@ -1016,7 +1124,8 @@ local function uprightUpdate(now)
 		return
 	end
 	uprightNotes()
-	uprightSet(not gameLoaded and screen0.height > screen0.width * UPRIGHT)
+	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
+	uprightSet(not gameLoaded, screen0.height <= screen0.width * UPRIGHT)
 	if not upright.on then
 		return
 	end
@@ -1028,9 +1137,11 @@ local function uprightUpdate(now)
 	end
 	uprightMirror()
 	uprightRelayout()
-	uprightBattleRoom()
-	uprightScenario()
-	uprightKeys()
+	if not upright.side then
+		uprightBattleRoom()
+		uprightScenario()
+		uprightKeys()
+	end
 	uprightRedraw()
 	uprightModal()
 	if bar and bar.visible then
@@ -1230,8 +1341,8 @@ function widget:MousePress(x, y, button)
 	if hit and upright.on and upright.grid and onGrid(hit) then -- (the bottom buttons: a sideways swipe pages, a tap
 		-- clicks where it is)
 		-- (settling: the strip still easing to its page, a tap's buttons moving under the finger)
-		press = { grid = true, x = x, y = y, start = upright.stripX, moved = false, lastX = x, lastT = Spring.GetTimer(),
-			vel = 0, settling = upright.anim ~= nil }
+		press = { grid = true, x = x, y = y, start = upright.stripX, moved = false, lastX = upright.side and -y or x,
+			lastT = Spring.GetTimer(), vel = 0, settling = upright.anim ~= nil }
 		upright.anim = nil
 		return true
 	end
@@ -1249,12 +1360,17 @@ function widget:MouseMove(x, y)
 		return false
 	end
 	if p.grid then -- the bottom buttons' strip with the finger (past its ends a third as far: it gives, then settles)
-		if not p.moved and math.abs(x - p.x) > DRAG_PX then
+		-- (sideways the column's: up and down; the engine's y runs up, Chili's down)
+		local along, from = x, p.x
+		if upright.side then
+			along, from = -y, -p.y
+		end
+		if not p.moved and math.abs(along - from) > DRAG_PX then
 			p.moved = true
 		end
 		if p.moved and upright.grid then
 			local s = uiScale()
-			local nx, minX = p.start + (x - p.x) / s * PAGE_GAIN, -(upright.pages - 1) * screen0.width
+			local nx, minX = p.start + (along - from) / s * PAGE_GAIN, -(upright.pages - 1) * upright.pageSize
 			if nx > 0 then
 				nx = nx / 3
 			elseif nx < minX then
@@ -1264,8 +1380,8 @@ function widget:MouseMove(x, y)
 			local now = Spring.GetTimer()
 			local dt = Spring.DiffTimers(now, p.lastT)
 			if dt > 0.001 then
-				p.vel = p.vel * 0.6 + (x - p.lastX) / s / dt * 0.4
-				p.lastX, p.lastT = x, now
+				p.vel = p.vel * 0.6 + (along - p.lastX) / s / dt * 0.4
+				p.lastX, p.lastT = along, now
 			end
 		end
 		return true
@@ -1296,7 +1412,7 @@ function widget:MouseRelease(x, y)
 	if p.grid then -- a swipe turns the page its way (PAGE_TURN, or a flick), a long one to the page it reached; a tap is
 		-- the button's click
 		if p.moved and upright.grid then
-			local w = math.max(1, screen0.width)
+			local w = math.max(1, upright.pageSize)
 			local nearest = math.floor(-upright.stripX / w + 0.5)
 			local drag = upright.stripX - p.start
 			local page = nearest
@@ -1927,7 +2043,8 @@ end
 function widget:Initialize()
 	-- (tools/lobby-touch-test.ps1: the same input as a finger, without one)
 	WG.BarDroidLobbyTouch = {
-		upright = function() return upright.on end, -- (tools: the lobby test, upright or sideways)
+		upright = function() return upright.on and not upright.side end, -- (tools: the lobby test, upright or sideways)
+		column = function() return upright.on and upright.side end, -- (tools: sideways, the buttons' column)
 		barTop = function() return uprightBarTop and uprightBarTop() end, -- (upright: where the server bar stands on)
 		press = function(x, y) return widget:MousePress(x, y, 1) end,
 		move = function(x, y) return widget:MouseMove(x, y, 0, 0, 1) end,
