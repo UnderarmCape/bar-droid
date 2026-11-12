@@ -1929,9 +1929,11 @@ local function textIn(text, x0, y0, x1, y1, size, color, f)
 	if not f then
 		return
 	end
+	-- (at most 84% of the width: the outline is not in the font's width, and at 88% words that just fit, ROTATE in its
+	-- square on the unfolded Fold7 upright, LAST PINGS, ran up to the button's edges: dev phone, 2026-11-11)
 	local w = f:GetTextWidth(text) * size
-	if w > (x1 - x0) * 0.88 then
-		size = size * (x1 - x0) * 0.88 / w
+	if w > (x1 - x0) * 0.84 then
+		size = size * (x1 - x0) * 0.84 / w
 	end
 	f:Print((color or "\255\235\235\235") .. text, (x0 + x1) / 2, (y0 + y1) / 2 - size * 0.32, size, "co")
 end
