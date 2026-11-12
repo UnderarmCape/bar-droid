@@ -1246,6 +1246,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       against off was not run: its cost (0.01-0.1 ms a frame) is far below the benchmark's run-to-run noise.
       `WorkerThreadCount` 7 (the research batch's one lead) checked in three alternating pairs: no gain on a hot
       phone, 4 stays (HISTORY.md "Overnight").
+- [ ] **`tools/spectate-test.ps1`: 4 FAILED on 2026-11-11 ~19:50** (run on the laptop by mistake, without Kailil's
+      yes; laptop BAR waits for it): double tap on the ground did not stop following, double tap on a unit did not
+      follow it, 1st person's two checks (mode 0, facing 0.42-0.43). That run had 94faec7 (the follow's shift above the
+      upright dock, which on the laptop's landscape screen has no dock and only keeps the point on the map) and
+      aa0f0e3; not known whether the failures came before them. Next laptop run with his yes: run it on 81ac048 and on
+      the newest, and fix what fails.
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`. Night of
       2026-10-28: two in tonight's own caching (fixed, bdaae2e); the phone's launcher logs (58,000 lines, Kailil's
       games and tonight's runs) hold no error from the app or its widgets, only BAR's and the engine's own warnings;
