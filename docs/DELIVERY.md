@@ -653,7 +653,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       no wider than the screen, its text at its size wrapping, upright in the middle of the game above the dock, laid
       out again as the dock moves; its GetInfo `replaces` BAR's. Dev phone, upright, a skirmish given a scenario's
       modoption (scenario001): the whole briefing above the dock, BAR's own "not loading (replaced by ...)";
-      remake-check: the phone's remake equals the shipped copy; launch-bar-test all pass.
+      remake-check: the phone's remake equals the shipped copy; launch-bar-test all pass. A real scenario from the
+      lobby upright (2026-11-12, dev phone offline: Tick Tock, the one with an installed map, SpeedMetal; the lobby's
+      numbers are not the files' scenarioNNN): the briefing above the dock, the game paused under it; the tap that
+      closed it also clicked the map (BAR closes on a press outside and lets it through) and unpicked the commander.
+      Patch 5 takes a finger's closing tap (a mouse's goes on); patch 6 tells the app's chat where the briefing's tab
+      is, its lines ending above it (a fifth line ran under it). Dev phone: closed by a tap, unpaused, the commander
+      still picked; the top bar's Mission opens it again; remake-check all pass.
 - [x] **The game-end recap and its graph fit upright** (BAR's awards, gui_awards.lua, and the graphs). The awards
       fit (centred, inside the 936 wide screen). The graphs behind their Show Graphs (and the top bar's Statistics) are
       BAR's TeamStats panel, 1100 x 610 times the screen's height over 1080: 2046 wide upright, its charts cut off on

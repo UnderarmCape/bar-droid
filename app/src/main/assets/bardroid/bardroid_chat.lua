@@ -899,6 +899,12 @@ function widget:DrawScreen()
 	if countdownTop and top > countdownTop then
 		budget = math.min(budget, math.floor((top - countdownTop) / lineHeight))
 	end
+	-- a scenario's briefing open (the app's copy of BAR's Mission Info): the lines end above its title tab
+	local mi = WG.missioninfo
+	local briefingTop = mi and mi.droidTop and mi.droidTop()
+	if briefingTop and top > briefingTop then
+		budget = math.min(budget, math.floor((top - briefingTop) / lineHeight - 0.3))
+	end
 	local now = clock()
 	-- the newest lines that fit, oldest first on the screen
 	local shown, used = {}, 0

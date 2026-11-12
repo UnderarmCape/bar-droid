@@ -52,3 +52,34 @@ end
 		widget:ViewResize()
 	end
 	if not textList then
+			-- Outside: close on press but DON'T consume — lets top bar buttons receive the click
+			if not release then
+				showOnceMore = show
+				show = false
+				justClosedFromPress = true
+			end
+			-- Outside: close on press but DON'T consume — lets top bar buttons receive the click
+			if not release then
+				showOnceMore = show
+				show = false
+				justClosedFromPress = true
+				-- BAR Droid: a finger's tap that closes it is taken (a mouse's click goes on, as in BAR): the tap that
+				-- dismissed a scenario's briefing also clicked the map and unpicked the commander, the dock back on its
+				-- home page (dev phone, 2026-11-12). The top bar's buttons still get theirs (above).
+				return WG.BarDroidInput ~= "mouse"
+			end
+	WG.missioninfo.isvisible = function()
+		-- Report true while justClosedFromPress so toggleWindow treats us as
+		-- "was open" and doesn't immediately re-open after our mouseEvent close.
+		return show or justClosedFromPress
+	end
+	WG.missioninfo.isvisible = function()
+		-- Report true while justClosedFromPress so toggleWindow treats us as
+		-- "was open" and doesn't immediately re-open after our mouseEvent close.
+		return show or justClosedFromPress
+	end
+	-- BAR Droid: the top of its title tab (GL y) while it is shown: the app's chat ends its lines above it (upright its
+	-- fifth line ran under the tab, dev phone 2026-11-12)
+	WG.missioninfo.droidTop = function()
+		return show and titleRect and titleRect[4] or nil
+	end

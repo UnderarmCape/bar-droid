@@ -95,6 +95,8 @@ The first version meant for other people's phones: everything since the first bu
 - In a game the build menu's tooltip no longer stays over the next row after a tap, and an order's tooltip goes
   2.5 s after the finger lifts, in every game (the controller game's menus too). In the controller game a drag that
   starts on the build or order menu no longer pans the map, as in BAR's own game.
+- A scenario's briefing: the tap that closes it no longer clicks the map behind it too (it unpicked the commander),
+  and the chat's lines end above it.
 - The unit info panel: a wreck, a tree or a rock under the finger (nothing selected) shows its name and what
   reclaiming it gives, a wreck with the picture of the unit it was; several types selected show a count only above
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
