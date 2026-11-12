@@ -91,9 +91,10 @@ factions' matching unit too.
 
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
-to turn), triple tap and hold to tilt. A tap opens its menu for 2 seconds: the build grid on the left, the picked
+to turn), triple tap and hold to tilt. A tap opens its menu for 2.6 seconds: the build grid on the left, the picked
 units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
-metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, PINGS (LAST PINGS: the camera to
+metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, FACTORIES (your next factory
+picked, the camera on it and its build menu in the dock to queue units; tap again for the next), PINGS (LAST PINGS: the camera to
 the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there),
 COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
 its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets
@@ -103,6 +104,10 @@ game with units picked draws their path, except while one of them has a building
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
 which folds the dock to a SHOW button at the bottom.
+**Sideways too** (launcher setting "Touch dock sideways", on): the same dock along the bottom of the screen, the game
+above it across the whole width: the selection and the build options on the left, metal, energy, BAR's minimap (tap
+it to move the camera) and the unit groups in the middle, the orders (or the buttons above) on the right. Use a
+gamepad or a mouse and BAR's own screen comes back; touch the screen and the dock returns.
 - **PRESETS** (combat units picked): STRAFE (fight to the destination, then back and forth across it on repeat),
   BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then put your finger on the map: drag
   to aim, lift to send.
@@ -111,6 +116,8 @@ which folds the dock to a SHOW button at the bottom.
   through your own units; where the host allows unit control widgets), swipe AUTO to the left to end it. The empty
   space zooms (up and down) or turns (sideways); ✕ leaves.
 - The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
+  Sideways: all its buttons (Keys, Website and Login too) in one column of large buttons on the left, a swipe up or
+  down for the next page; the screens beside it take the whole height.
 
 ## Gamepad, mouse and keyboard
 

@@ -1001,7 +1001,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (`17-`), TEAMS by BAR's names (`18-`), unfolded: following in Close (`19-`), Shoulder (`20-`); Shoulder on the
       tall screen (`21-`). Added 2026-11-12, after that night's camera fixes upright: spectating in 1st person, the
       ground ahead (`22-`); Shoulder with its camera further back (the commander whole and smaller, among its base),
-      tall (`23-`) and unfolded (`24-`), beside `20-` and `21-`; the share list giving energy (`25-`).
+      tall (`23-`) and unfolded (`24-`), beside `20-` and `21-`; the share list giving energy (`25-`). Added 2026-11-12
+      evening, the touch dock sideways (layout A): the commander picked (`26-`), a building placed (`27-`), the
+      unfolded Fold7's shape (`28-`), its D-gun mode (`29-`), a factory's queue (`30-`); and the lobby sideways, its
+      one column of buttons (`31-`).
 - [x] Spectating a replay on the dev phone (2026-11-02): the touch bar came up from the player list, but the first tap on
       "Follow unit" followed nothing. The bar is laid out again every 0.25 s and moves while BAR's player list opens
       beside it, so the button found at the release was a new table (or another button) and the tap was dropped; a
