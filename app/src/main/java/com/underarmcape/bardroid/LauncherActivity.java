@@ -261,7 +261,12 @@ public class LauncherActivity extends AppCompatActivity {
         GameService.start(this, GameService.ACTION_PLAY, start);
     }
 
-    @Override protected void onStart() { super.onStart(); Log.addListener(logListener); handler.post(ticker); }
+    @Override protected void onStart() {
+        super.onStart();
+        Log.addListener(logListener);
+        handler.post(ticker);
+        mapCapLabel();   // (the maps' size now: a game since may have downloaded some, its start removed others)
+    }
     @Override protected void onStop() { Log.removeListener(logListener); handler.removeCallbacks(ticker); super.onStop(); }
 
     private void refresh() {
