@@ -97,7 +97,18 @@ public class GameActivity extends MainActivity {
         preferRefreshRate();
         // The refresh rate settles after a mode request or a fold: keep the widget's frame cap in step.
         getSystemService(DisplayManager.class).registerDisplayListener(displayListener, null);
+        getContentResolver().registerContentObserver(android.provider.Settings.System.getUriFor(
+                android.provider.Settings.System.ACCELEROMETER_ROTATION), false, autoRotateWatch);
     }
+
+    /** The phone's auto-rotate switched mid-game: the setting's orientation again (setRequestedOrientation). */
+    private final android.database.ContentObserver autoRotateWatch =
+            new android.database.ContentObserver(new android.os.Handler(android.os.Looper.getMainLooper())) {
+        @Override public void onChange(boolean selfChange) {
+            if (asked == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED) return;
+            setRequestedOrientation(asked);
+        }
+    };
 
     private volatile int screenW, screenH;
 
@@ -191,11 +202,28 @@ public class GameActivity extends MainActivity {
         return android.os.Build.VERSION.SDK_INT >= 30 ? getDisplay() : getWindowManager().getDefaultDisplay();
     }
 
-    /** Termux:X11 asks for fixed landscape; let the phone flip between the two landscape sides with the sensor. */
+    /** What Termux:X11 last asked for (KeyboardShortcuts: the "Play upright" setting's orientation). */
+    private int asked = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+
+    /**
+     * Termux:X11 asks for the setting's fixed orientation. With "Turn with the phone" and the phone's auto-rotate on,
+     * the phone's own choice instead: upright or sideways as it is held, at any time (the dock, the lobby and BAR's
+     * interface follow the screen's shape; Kailil, 2026-11-12). Otherwise sideways flips between its two sides with
+     * the sensor.
+     */
     @Override
     public void setRequestedOrientation(int requested) {
-        super.setRequestedOrientation(requested == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                ? ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE : requested);
+        boolean fixed = requested == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                || requested == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
+        asked = fixed ? requested : ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED;
+        if (fixed && Prefs.turnWithPhone && Prefs.autoRotate(this)) requested = ActivityInfo.SCREEN_ORIENTATION_USER;
+        else if (requested == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE)
+            requested = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE;
+        if (requested == getRequestedOrientation()) return;
+        super.setRequestedOrientation(requested);
+        Log.i("display", "orientation: " + (requested == ActivityInfo.SCREEN_ORIENTATION_USER ? "turns with the phone (auto-rotate)"
+                : requested == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT ? "upright" : requested
+                == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE ? "sideways" : "the phone's (" + requested + ")"));
     }
 
     /** Termux:X11 closes the display with finishAffinity() (game over): also take the task out of recent apps. */
@@ -208,6 +236,7 @@ public class GameActivity extends MainActivity {
     @Override protected void onDestroy() {
         if (pad != null) {   // (null: a screen that closed itself in onCreate, no game behind it)
             getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
+            getContentResolver().unregisterContentObserver(autoRotateWatch);
             pad.stop();
             touch.close();
             voiceChat.close();

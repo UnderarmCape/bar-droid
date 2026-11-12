@@ -108,6 +108,9 @@ which folds the dock to a SHOW button at the bottom.
 above it across the whole width: the selection and the build options on the left, metal, energy, BAR's minimap (tap
 it to move the camera) and the unit groups in the middle, the orders (or the buttons above) on the right. Use a
 gamepad or a mouse and BAR's own screen comes back; touch the screen and the dock returns.
+**Turning the phone** (launcher setting "Turn with the phone", on): with the phone's auto-rotate on, the lobby and
+the game turn upright or sideways as you hold the phone, at any time, mid-game too (BAR's interface takes a few
+seconds to redraw at the new shape). With auto-rotate off, "Play upright" decides.
 - **PRESETS** (combat units picked): STRAFE (fight to the destination, then back and forth across it on repeat),
   BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then put your finger on the map: drag
   to aim, lift to send.

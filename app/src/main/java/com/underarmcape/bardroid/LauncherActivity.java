@@ -583,6 +583,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbCompat45)).setChecked(Prefs.forceCompat45);
         ((CheckBox) findViewById(R.id.cbAudio)).setChecked(Prefs.audio);
         ((CheckBox) findViewById(R.id.cbRtsTouch)).setChecked(Prefs.rtsTouch);
+        ((CheckBox) findViewById(R.id.cbTurnWithPhone)).setChecked(Prefs.turnWithPhone);
         ((CheckBox) findViewById(R.id.cbPortrait)).setChecked(Prefs.portrait);
         ((CheckBox) findViewById(R.id.cbLandDock)).setChecked(Prefs.landDock);
         ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).setChecked(Prefs.captureShortcuts);
@@ -630,6 +631,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.forceCompat45 = ((CheckBox) findViewById(R.id.cbCompat45)).isChecked();
         Prefs.audio = ((CheckBox) findViewById(R.id.cbAudio)).isChecked();
         Prefs.rtsTouch = ((CheckBox) findViewById(R.id.cbRtsTouch)).isChecked();
+        Prefs.turnWithPhone = ((CheckBox) findViewById(R.id.cbTurnWithPhone)).isChecked();
         Prefs.portrait = ((CheckBox) findViewById(R.id.cbPortrait)).isChecked();
         Prefs.landDock = ((CheckBox) findViewById(R.id.cbLandDock)).isChecked();
         Prefs.captureShortcuts = ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).isChecked();

@@ -1401,6 +1401,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       wm size 1080x1198, 1198x1080, back): the dock went sideways while the screen was wide (BAR's minimap into it),
       upright again after (the minimap back in its small upright place), no error; and the lobby sideways at the
       near-square size: the column 15 buttons a page, the screens beside it the whole height.
+- [ ] **Turning with the phone: built, his test pending** (Kailil, 2026-11-12: "Allow me to have auto rotate enabled
+      on my phone so I can use vertical or landscape in one session anytime I want"). Launcher setting "Turn with the
+      phone" (on): while the phone's auto-rotate is on, GameActivity asks for the phone's own orientation
+      (`SCREEN_ORIENTATION_USER`) in place of "Play upright"'s fixed one, in the lobby and the game; auto-rotate switched
+      mid-game is watched (a ContentObserver), off gives "Play upright"'s again. A game or lobby starting picks its
+      loading picture and launch-bar.sh's upright tweaks by the screen's shape at the start (`Prefs.startsUpright`).
+      Dev phone (it lies flat, so auto-rotate switched instead of turned): a skirmish started with auto-rotate on
+      (sideways), at frame 860 auto-rotate off with "Play upright" on turned it upright mid-game (the upright dock,
+      BAR's minimap small at the top left), auto-rotate on again sideways (the sideways dock, the minimap in its
+      middle); each turn reloads BAR's interface at that shape's scale (as a fold does), about 6 s, no errors. The
+      lobby the same way: the column sideways, the upright pages, the column again. The dev phone keeps auto-rotate off
+      (toolchain.ps1 `$PhoneScreen`: its tests pick their orientation with "Play upright"). Left: Kailil turning his
+      Fold7 in a game and the lobby.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
       short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the

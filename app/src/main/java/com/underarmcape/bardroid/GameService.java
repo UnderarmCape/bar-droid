@@ -332,7 +332,8 @@ public class GameService extends Service {
             startActivity(ui);
 
             setStatus("launching engine (" + mode + ")");
-            SplashPicture.write(this, paths.bar, Prefs.engineVersion, Prefs.portrait);   // (launch-bar.sh: SplashScreenDir)
+            boolean upright = Prefs.startsUpright(this);   // (turning with the phone: as it is held now)
+            SplashPicture.write(this, paths.bar, Prefs.engineVersion, upright);   // (launch-bar.sh: SplashScreenDir)
             Map<String, String> env = new HashMap<>();
             env.put("ENGINE_VER", Prefs.engineVersion);
             env.put("MODE", mode);
@@ -341,7 +342,7 @@ public class GameService extends Service {
             env.put("GAMEPAD_GAME", "0");   // (launch-bar.sh: the v0.8.5 game is gone; its controller game branch never runs)
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
-            env.put("BARDROID_PORTRAIT", Prefs.portrait ? "1" : "0");   // (launch-bar.sh: BAR's loading tips off upright)
+            env.put("BARDROID_PORTRAIT", upright ? "1" : "0");   // (launch-bar.sh: BAR's loading tips off upright)
             env.put("BARDROID_LAND_DOCK", Prefs.landDock ? "1" : "0");   // (launch-bar.sh: the touch dock sideways)
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : String.valueOf(Prefs.fpsCap));   // libbardroid_pace.so; 0 = none
             // (the explicit Present fence is for the phone's lfdevs Mesa on KGSL; the emulator's virgl keeps Mesa's own path)

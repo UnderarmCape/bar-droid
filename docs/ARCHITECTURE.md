@@ -81,7 +81,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   the spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it;
   sideways too with "Touch dock sideways" (layout A: a band along the bottom, BAR's minimap in its middle through the
   Minimap widget's external frame, RtsTouch's "map" rect giving it the touches; a pad or mouse brings BAR's screen
-  back); the lobby's upright pages and sideways column are in `bardroid_lobby_touch.lua`), `bardroid_layout.lua` (the layout editor: panels
+  back); the lobby's upright pages and sideways column are in `bardroid_lobby_touch.lua`; "Turn with the phone":
+  `GameActivity.setRequestedOrientation` asks for the phone's own orientation (`SCREEN_ORIENTATION_USER`) while its
+  auto-rotate is on, watched mid-game, and the widgets follow the screen's shape as they do a fold), `bardroid_layout.lua` (the layout editor: panels
   register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
   copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, up to 5 wide on a wide short screen, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area

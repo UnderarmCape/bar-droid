@@ -75,6 +75,8 @@ function Get-PhoneDevice([string]$adb) {
 # wallpaper dimmed, awake while powered; bench: the minimum brightness, Extra dim off. Only settings that differ are
 # written; the screen is woken if it went off. (A black overlay window was not used: screenshots would be black and
 # Android drops touches through an opaque window of another app; the display's color matrix is refused to the shell.)
+# Auto-rotate off in every mode: the app's "Turn with the phone" would turn its games with however it lies; the tests
+# pick upright or sideways with "Play upright".
 $PhoneScreen = @{
   # (Kailil watching the dev phone's games: half brightness, Extra dim off; devphone.ps1 view, held by ..\devphone-view.hold)
   view = @'
@@ -83,6 +85,7 @@ s system screen_brightness_mode 0
 s system screen_brightness 128
 s secure reduce_bright_colors_activated 0
 s global stay_on_while_plugged_in 15
+s system accelerometer_rotation 0
 dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
 '@
   dark = @'
@@ -93,6 +96,7 @@ s secure reduce_bright_colors_level 100
 s secure reduce_bright_colors_persist_across_reboots 1
 s secure reduce_bright_colors_activated 1
 s global stay_on_while_plugged_in 15
+s system accelerometer_rotation 0
 cmd wallpaper get-dim-amount | grep -q ' 1.0$' || { cmd wallpaper set-dim-amount 1 >/dev/null; echo "wallpaper dim 1.0"; }
 dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
 '@
@@ -102,6 +106,7 @@ s system screen_brightness_mode 0
 s system screen_brightness 1
 s secure reduce_bright_colors_activated 0
 s global stay_on_while_plugged_in 15
+s system accelerometer_rotation 0
 dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
 '@
 }

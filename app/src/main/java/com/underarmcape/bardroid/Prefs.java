@@ -62,6 +62,33 @@ public final class Prefs {
     /** The game upright: the portrait dock for touch (Kailil, 2026-11-09; bardroid_portrait.lua, RtsTouch's pad). */
     public static boolean portrait = false;
     /**
+     * With the phone's auto-rotate on, the lobby and the game turn upright or sideways as the phone is held, at any
+     * time (Kailil, 2026-11-12: "so I can use vertical or landscape in one session anytime I want"); with it off,
+     * {@link #portrait} decides. GameActivity.setRequestedOrientation.
+     */
+    public static boolean turnWithPhone = true;
+
+    /** The phone's auto-rotate (Android's rotation lock off). */
+    static boolean autoRotate(android.content.Context c) {
+        return android.provider.Settings.System.getInt(c.getContentResolver(),
+                android.provider.Settings.System.ACCELEROMETER_ROTATION, 0) == 1;
+    }
+
+    /**
+     * Whether a lobby or game starting now starts upright (its loading picture, launch-bar.sh's upright tweaks): the
+     * setting, or turning with the phone, the screen's shape now (taller than 1.05 times its width, as
+     * bardroid_portrait.lua's dock).
+     */
+    static boolean startsUpright(android.content.Context c) {
+        if (!(turnWithPhone && autoRotate(c))) return portrait;
+        android.view.Display d = c.getSystemService(android.hardware.display.DisplayManager.class)
+                .getDisplay(android.view.Display.DEFAULT_DISPLAY);
+        if (d == null) return portrait;
+        android.util.DisplayMetrics m = new android.util.DisplayMetrics();
+        d.getRealMetrics(m);
+        return m.heightPixels > m.widthPixels * 1.05f;
+    }
+    /**
      * Sideways the same touch dock along the bottom (Kailil, 2026-11-12, layout A of the landscape mockups: build left,
      * minimap and resources in the middle, orders right); while a pad or mouse is used BAR's own screen layout.
      * launch-bar.sh: LuaUI/Config/bardroid_landdock.txt, read by bardroid_portrait.lua.
@@ -168,6 +195,7 @@ public final class Prefs {
         audio = s.getBoolean("audio", audio);
         rtsTouch = s.getBoolean("rtsTouch", rtsTouch);
         portrait = s.getBoolean("portrait", portrait);
+        turnWithPhone = s.getBoolean("turnWithPhone", turnWithPhone);
         landDock = s.getBoolean("landDock", landDock);
         captureShortcuts = s.getBoolean("captureShortcuts", captureShortcuts);
         fpsCap = s.getInt("frameCap", fpsCap);
@@ -207,6 +235,7 @@ public final class Prefs {
                 .putBoolean("audio", audio)
                 .putBoolean("rtsTouch", rtsTouch)
                 .putBoolean("portrait", portrait)
+                .putBoolean("turnWithPhone", turnWithPhone)
                 .putBoolean("landDock", landDock)
                 .remove("mouseKeyboard")   // the withdrawn mouse capture setting (b148e59)
                 .putBoolean("captureShortcuts", captureShortcuts)

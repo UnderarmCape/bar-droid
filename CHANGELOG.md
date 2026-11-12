@@ -100,6 +100,8 @@ The first version meant for other people's phones: everything since the first bu
 - The unit info panel: a wreck, a tree or a rock under the finger (nothing selected) shows its name and what
   reclaiming it gives, a wreck with the picture of the unit it was; several types selected show a count only above
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
+- The lobby and the game turn with the phone (launcher setting "Turn with the phone", on): with the phone's
+  auto-rotate on, upright or sideways as it is held, at any time; with auto-rotate off, "Play upright" decides.
 - The touch dock sideways too (launcher setting "Touch dock sideways", on): along the bottom, the selection and build
   options on the left, metal, energy, the minimap and the unit groups in the middle, the orders on the right; the game
   above it across the whole width, BAR's resource bars and minimap moved into the dock. A gamepad or a mouse brings
