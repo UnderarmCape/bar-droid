@@ -715,6 +715,25 @@ local function dockShift(h, ph, dist)
 	return sx, sz
 end
 
+-- The same for a view of the unit's own (Shoulder), which looks almost level, so no move along the ground can do it
+-- (the game's middle looks past the horizon): the angle between the screen's middle and the game's middle above the
+-- dock, the camera turned down by it where it stands (the commander's legs were under the dock, dev phone 2026-11-11)
+local function dockTilt()
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	local vsx, vsy = Spring.GetViewGeometry()
+	if not dock or dock[3] - dock[1] < vsx * 0.9 then
+		return 0
+	end
+	local x = math.floor(vsx / 2)
+	local ax, ay, az = Spring.GetPixelDir(x, vsy - math.floor(vsy / 2))
+	local bx, by, bz = Spring.GetPixelDir(x, vsy - math.floor((dock[4] + vsy) / 2))
+	if not (ax and bx) then
+		return 0
+	end
+	return math.acos(math.max(-1, math.min(1, ax * bx + ay * by + az * bz)))
+end
+
 local function updateFollow(dt)
 	local f = follow
 	if not f then
@@ -733,6 +752,7 @@ local function updateFollow(dt)
 	if not (cs.px and cs.pz) then
 		return
 	end
+	local readX, readZ = cs.px, cs.pz -- (where it looks now: the camera's heading for dockTilt's turn, below)
 	local yaw = unitYaw(f.unitID)
 	if yaw then
 		f.yaw = f.yaw and approachAngle(f.yaw, yaw, 1 - math.exp(-dt / TURN_SMOOTHING)) or yaw
@@ -814,6 +834,28 @@ local function updateFollow(dt)
 			local height = math.max(1, -cs.dist * math.cos(cs.rx) + up)
 			cs.dist = math.sqrt(across * across + height * height)
 			cs.rx = math.max(RX_MIN, math.min(RX_MAX, math.pi / 2 + math.atan2(height, across)))
+		end
+		-- Upright over the dock, a view of the unit's own: the camera where it stands, turned down by dockTilt, its
+		-- focus on the ground nearer it, so the view centres on the game above the dock as it would on the whole screen
+		local tilt = view.frame == "unit" and dockTilt() or 0
+		local down = cs.rx - math.pi / 2
+		local cx, cy, cz = Spring.GetCameraPosition()
+		local hx, hz = (cx or readX) - readX, (cz or readZ) - readZ -- (towards the camera across the ground)
+		local hl = math.sqrt(hx * hx + hz * hz)
+		local _, _, _, ux, uy, uz = spGetUnitPosition(f.unitID, true) -- (its middle)
+		if tilt > 0.001 and ux and cy and not groupMode then
+			-- aimed at the unit's middle rather than the view's: the game above the dock is short, and with the view's
+			-- middle there a commander's head was cut off (the unit stands above that middle; dev phone, 1080x1198)
+			local vx, vz = ux - cx, uz - cz
+			local above = down - math.atan2(cy - uy, math.sqrt(vx * vx + vz * vz)) -- (the unit over the middle, radians)
+			tilt = math.max(0, math.min(tilt * 1.5, tilt - above))
+		end
+		if tilt > 0.001 and down > 0.01 and hl > 1 then
+			local down2 = math.min(down + tilt, RX_MAX - math.pi / 2)
+			local height = cs.dist * math.sin(down)
+			local nearer = cs.dist * math.cos(down) - height / math.tan(down2)
+			cs.px, cs.pz = cs.px + hx / hl * nearer, cs.pz + hz / hl * nearer
+			cs.rx, cs.dist = math.pi / 2 + down2, height / math.sin(down2)
 		end
 		view.addDist, view.addRx = cs.dist - dist0, cs.rx - rx0
 	end
