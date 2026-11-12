@@ -34,6 +34,8 @@ The first version meant for other people's phones: everything since the first bu
   back. BAR's content always comes from BAR's own servers; the APK carries only phone versions of a few of BAR's
   pictures (the upright loading pictures), which BAR's developers cleared (NOTICE.md).
 - Online play stays exactly BAR's: the engine is BAR's official build, unmodified.
+- BAR's clock, the saved games' names and dates and the lobby's times follow the phone's time zone (they were UTC).
+  Saved games load from the lobby's Load Game.
 
 **Touch**
 - Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and

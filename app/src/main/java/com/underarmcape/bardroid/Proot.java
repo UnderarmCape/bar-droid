@@ -7,10 +7,13 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Builds proot command lines for the Debian container. Mirrors what proot-distro's `login` does on Termux
@@ -100,10 +103,34 @@ public final class Proot {
         e.put("DEBIAN_FRONTEND", "noninteractive");
         e.put("BARDROID", "1");
         e.put("BARDROID_ANDROID_SDK", String.valueOf(Build.VERSION.SDK_INT));
+        e.put("TZ", guestTimeZone(p.rootfs));
         if (guestEnv != null) e.putAll(guestEnv);
         for (Map.Entry<String, String> kv : e.entrySet()) c.add(kv.getKey() + "=" + kv.getValue());
         c.addAll(guestCmd);
         return c;
+    }
+
+    /**
+     * The guest's TZ: the phone's time zone. The container's own is UTC (its /etc/localtime), so BAR's clock, the save
+     * names and dates and the lobby's times were UTC: 12:32 in the game at 07:32 on the phone (dev phone, 2026-11-12).
+     * Android's zone by name when the container has it (tzdata stays in the slimmed container: its summer time too),
+     * else the phone's offset now as a POSIX TZ string (west of UTC counts positive there).
+     */
+    static String guestTimeZone(File rootfs) {
+        TimeZone tz = TimeZone.getDefault();
+        String id = tz.getID();
+        if (id.matches("[A-Za-z0-9_+-]+(/[A-Za-z0-9_+-]+)*")) {
+            java.nio.file.Path z = new File(rootfs, "usr/share/zoneinfo/" + id).toPath();
+            if (Files.isRegularFile(z) || Files.isSymbolicLink(z)) return id;
+        }
+        return posixOffset(tz.getOffset(System.currentTimeMillis()) / 60000);
+    }
+
+    /** "<+0530>-5:30" for minutes east of UTC (330): glibc reads it without zone files. */
+    static String posixOffset(int minutesEast) {
+        int a = Math.abs(minutesEast);
+        return String.format(Locale.ROOT, "<%s%02d%02d>%s%d:%02d", minutesEast < 0 ? "-" : "+", a / 60, a % 60,
+                minutesEast > 0 ? "-" : "", a / 60, a % 60);
     }
 
     /**
