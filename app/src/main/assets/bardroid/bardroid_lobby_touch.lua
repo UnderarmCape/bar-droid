@@ -1664,11 +1664,61 @@ local function poolCacheCheck(now)
 	end
 end
 
+-- Chobby's Replays tab: Open Folder opens nothing on a phone (the replays are in the app's own storage, which no file
+-- manager shows; LobbyBridge's OpenFile leaves folders), a button that did nothing at a tap (dev phone, 2026-11-12).
+-- Hidden, and the two left of it (Download, More: Chobby anchors the row from the right, 130 apart) close the gap.
+local replaysRow = { at = nil, done = false }
+local function replaysRowCheck(now)
+	if replaysRow.done or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
+		return
+	end
+	replaysRow.at = now
+	local refresh -- (its Refresh button, by its tooltip: Chobby gives it no name)
+	local function walk(o, depth)
+		if refresh or not o or depth > 40 then
+			return
+		end
+		if o.tooltip == "Refresh the list of replays" then
+			refresh = o
+			return
+		end
+		for _, c in ipairs(o.children or {}) do
+			walk(c, depth + 1)
+		end
+	end
+	walk(screen0, 0)
+	local row = refresh and real(refresh.parent)
+	if not row then
+		return
+	end
+	local function rightOf(o)
+		return o._relativeBounds and o._relativeBounds.right
+	end
+	for _, c in ipairs(row.children or {}) do
+		local r = rightOf(c)
+		if r == 145 and c ~= refresh and c.classname == "option_button" then
+			c:SetVisibility(false)
+		end
+	end
+	for _, c in ipairs(row.children or {}) do
+		local r = rightOf(c)
+		if (r == 275 or r == 405) and c.classname == "option_button" then
+			c._relativeBounds.right = r - 130
+			c:UpdateClientArea()
+		end
+	end
+	replaysRow.done = true
+	Spring.Echo("[bardroid-lobby] Replays: Open Folder hidden (no folder to open on Android)") -- (tools)
+end
+
 function widget:Update() -- (the lobby's Update has no frame time)
 	local now = Spring.GetTimer()
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
 	lastUpdate = now
 	poolCacheCheck(now)
+	if screen0 and not gameLoaded then -- (no walks of the lobby's controls while a game runs)
+		replaysRowCheck(now)
+	end
 	if not screen0 then
 		Chili = WG.Chili
 		screen0 = Chili and Chili.Screen0
