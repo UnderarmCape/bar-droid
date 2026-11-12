@@ -183,6 +183,7 @@ final class RtsTouch {
     private boolean joinedPan;                      // this two-finger gesture began as a one-finger pan: no tap
     private float flingX, flingY, flingVx, flingVy; // view pixels, pixels per second
     private boolean cursorHidden, cursorWanted = true;
+    private boolean cursorOnDock;   // a finger's last touch ended on the dock: the pointer rests there (showCursor)
     private boolean fingersLast, cursorSynced;      // the last input was a finger (source "touch"); showCursor
     // One building picked with ONE (startPlaceDrag): at this touch's start, and where the finger last came to rest
     private boolean placingOne, waitingAtDown, onWaiting;
@@ -524,6 +525,10 @@ final class RtsTouch {
                 // (sideways, layout A: BAR's minimap in the dock's middle takes its touches as the game does, "map")
                 inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()))
                         && !(dock.map != null && inside(dock.map, toX(e.getX()), toY(e.getY())));
+                if (cursorOnDock != inDock) {   // (the pointer: hidden on the dock, back for a touch on the map)
+                    cursorOnDock = inDock;
+                    showCursor(cursorWanted);
+                }
                 if (inDock && !dock.menu) {   // the dock in pad mode: the camera
                     padDown(e);
                     break;
@@ -839,6 +844,11 @@ final class RtsTouch {
                 break;
             default:
         }
+        // (where the finger let go: on the dock the pointer rests hidden, showCursor; the camera pad is on the dock and
+        // keeps no curX of its own)
+        Dock endDock = dock();
+        cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(curX), toY(curY))
+                && !(endDock.map != null && inside(endDock.map, toX(curX), toY(curY)));
         state = State.IDLE;
         showCursor(true);
         if (velocity != null) { velocity.recycle(); velocity = null; }
@@ -1070,13 +1080,15 @@ final class RtsTouch {
     /**
      * The X pointer is hidden while two or more fingers are down, in first person (its own crosshair), and in the lobby
      * while fingers play it (an arrow left where the last tap was, on a touch screen: dev phone screenshots,
-     * 2026-11-10); a mouse, keyboard or the pad brings it back at once (source), a game shows it again as before. The
-     * X server keeps a hidden pointer hidden through the taps' mouse events (patch 0014); the first call of this screen
-     * sets it either way (a hidden one from an earlier screen stays hidden there otherwise).
+     * 2026-11-10); a mouse, keyboard or the pad brings it back at once (source), a game shows it again as before. In a
+     * game a finger's touch that ended on the dock leaves it hidden until a finger comes down off the dock (the arrow
+     * lay on the dock's buttons where the last tap was, over Fight: dev phone 2026-11-12); on the map it shows, BAR's
+     * command cursor. The X server keeps a hidden pointer hidden through the taps' mouse events (patch 0014); the first
+     * call of this screen sets it either way (a hidden one from an earlier screen stays hidden there otherwise).
      */
     private void showCursor(boolean visible) {
         cursorWanted = visible;
-        visible &= !firstPerson && !(fingersLast && !gameWidgetRunning());
+        visible &= !firstPerson && !(fingersLast && (!gameWidgetRunning() || cursorOnDock));
         if (cursorSynced && cursorHidden == !visible) return;
         cursorSynced = true;
         cursorHidden = !visible;
