@@ -1286,7 +1286,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       follow it, 1st person's two checks (mode 0, facing 0.42-0.43). That run had 94faec7 (the follow's shift above the
       upright dock, which on the laptop's landscape screen has no dock and only keeps the point on the map) and
       aa0f0e3; not known whether the failures came before them. Next laptop run with his yes: run it on 81ac048 and on
-      the newest, and fix what fails.
+      the newest, and fix what fails. On the dev phone by real taps (2026-11-12, an AI-vs-AI skirmish spectated
+      upright, a scratch widget reading what is followed): a double tap on the ground stopped following, a double tap
+      on the unit followed before followed it again, 1st person turned the engine's first-person camera on (mode 0); so
+      on the phone the three behave. Found on the way: upright, 1st person looked into the sky (the game above the
+      dock shows the view's upper part); now turned down by dockTilt as Shoulder is, the horizon in the game's upper
+      third, the ground ahead in sight. fp-save-test passes.
 - [ ] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
       one over the other (under 600 dp) the top block (title, status lines, buttons) takes the height it needs and the
       settings get the rest; at font size 1.3x the settings showed one line, at display density 600 and up none. Only
