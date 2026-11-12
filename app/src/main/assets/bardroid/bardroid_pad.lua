@@ -260,7 +260,9 @@ function style.toast(text, x, y, color, alpha, key, listening)
 	local _, vsy = Spring.GetViewGeometry()
 	local x0 = math.floor(x - w / 2)
 	y = math.min(math.floor(y), vsy - h - 2)
-	style.panel(x0, y, x0 + w, y + h, alpha)
+	-- (the box fades ahead of its words: at the same alpha its light rim outlasted the words, an empty box over the game
+	-- for a moment as a note went, dev phone screenshot 2026-11-12)
+	style.panel(x0, y, x0 + w, y + h, alpha * alpha)
 	if listening then
 		local pulse = 0.55 + 0.45 * math.cos(listening * math.pi * 2.4)
 		local mx, my, r = x0 + pad + dot / 2, y + h / 2, dot / 2 -- (a round dot: style.fill's corners made a diamond)
