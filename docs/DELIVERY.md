@@ -891,8 +891,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay started from the lobby's Replays tab): `gui_top_bar.lua` centres the current amount on its bar
       (`barArea[1] + barWidth / 2`, `height / 2.5 * widgetScale`) and right-aligns the smaller storage number at the
       bar's end (`barArea[3]`); at the app's interface scale 2.0 sideways the bar is short for its font, and "1000"
-      touches "1000" (any amount of four digits or more, so most of a game). Next: an upstream patch (the amount kept
-      left of the storage number when they would meet), tested by a same-size pool swap (`docs/upstream/README.md`).
+      touches "1000" (any amount of four digits or more, so most of a game). The change is made and tested:
+      `docs/upstream/bar-topbar-amount.patch` (the amount centred unless four digits would reach the storage number,
+      then just left of it; set at layout, so the redraw area follows), `bar-topbar-amount.md`. Dev phone, a 1v1
+      replay of the current release sideways (an October replay runs its own older BAR, untouched by a pool swap):
+      "1000" and "1000" apart, both whole; BAR's file put back (md5 checked). Left: BAR merging it.
       The same run: the lobby's flow to a replay and back (Replays, Start, the top bar's Lobby, Return to Battle, Leave
       Battle, the engine's reload into the lobby) without errors; the lobby's Lua state carries through (Rapid Pool
       Cache stays stopped, the Replays row stays fixed); the pointer from the in-game tap shows until the next finger.

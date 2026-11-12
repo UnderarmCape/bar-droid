@@ -1,0 +1,25 @@
+diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
+index b43170b..b3dbbda 100644
+--- a/luaui/widgets/gui_top_bar.lua
++++ b/luaui/widgets/gui_top_bar.lua
+@@ -927,11 +927,18 @@ local function updateResbar(res)
+ 		resbarDrawinfo[res].barGlowRightTexRect =
+ 			{ barArea[3], barArea[2] - glowSize, barArea[3] + (glowSize * 2.5), barArea[4] + glowSize }
+ 
++		-- the amount centred on the bar, unless four digits there would run into the storage number at the bar's
++		-- right end (a short bar at a large interface scale: "1000" over "1000"); then just left of it
++		local currentSize, storageSize = (height / 2.5) * widgetScale, (height / 3.2) * widgetScale
++		local fourDigits = font2:GetTextWidth("8888")
++		local currentX = mathMin(barArea[1] + barWidth / 2,
++			barArea[3] - fourDigits * storageSize - storageSize * 0.5 - fourDigits * currentSize / 2)
++		currentX = mathMax(barArea[1] + fourDigits * currentSize / 2, currentX)
+ 		resbarDrawinfo[res].textCurrent = {
+ 			short(r[res][1]),
+-			barArea[1] + barWidth / 2,
++			currentX,
+ 			barArea[2] + barHeight * 1.8,
+-			(height / 2.5) * widgetScale,
++			currentSize,
+ 			"ocd",
+ 		}
+ 		resbarDrawinfo[res].textStorage = {
