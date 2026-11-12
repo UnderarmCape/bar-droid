@@ -104,9 +104,12 @@ game with units picked draws their path, except while one of them has a building
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
 which folds the dock to a SHOW button at the bottom.
-**Sideways too** (launcher setting "Touch dock sideways", on): the same dock along the bottom of the screen, the game
-above it across the whole width: the selection and the build options on the left, metal, energy, BAR's minimap (tap
-it to move the camera) and the unit groups in the middle, the orders (or the buttons above) on the right. Use a
+**Sideways too** (launcher setting "Touch dock sideways", on): the dock at one side of the bottom, for one thumb, the
+rest of the screen the game's. Next to the edge a panel for the units picked: BUILD | ORDERS tabs (a builder opens on
+BUILD, other units on ORDERS, a building picked on PLACE), the selection row, the tab's buttons; beside it metal,
+energy, BAR's minimap (tap it to move the camera) and the unit groups, with HOME (the home buttons above in the panel)
+and an arrow that moves the dock to the other side of the screen (for the other hand; kept for the next game). With
+nothing picked only the minimap part shows. The D-gun's sticks still span the bottom, one under each thumb. Use a
 gamepad or a mouse and BAR's own screen comes back; touch the screen and the dock returns.
 **Turning the phone** (launcher setting "Turn with the phone", on): with the phone's auto-rotate on, the lobby and
 the game turn upright or sideways as you hold the phone, at any time, mid-game too (BAR's interface takes a few

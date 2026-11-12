@@ -79,9 +79,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   camera pad, selection and group rows (the idle builders by type at the groups row's right), orders, the home grid
   (PINGS: the last pings from others and a ping of your own; FACTORIES), the D-gun mode with its full auto; spectating,
   the spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it;
-  sideways too with "Touch dock sideways" (layout A: a band along the bottom, BAR's minimap in its middle through the
-  Minimap widget's external frame, RtsTouch's "map" rect giving it the touches; a pad or mouse brings BAR's screen
-  back); the lobby's upright pages and sideways column are in `bardroid_lobby_touch.lua`; "Turn with the phone":
+  sideways too with "Touch dock sideways" (for one thumb, `L.thumb`: at the pinned side's edge a panel with BUILD |
+  ORDERS tabs, the other tab laid out off the screen, beside it BAR's minimap through the Minimap widget's external
+  frame, RtsTouch's "map" rect giving it the touches, with HOME and the swap arrow; the D-gun's band across the bottom;
+  a pad or mouse brings BAR's screen back); the lobby's upright pages and sideways column are in `bardroid_lobby_touch.lua`; "Turn with the phone":
   `GameActivity.setRequestedOrientation` asks for the phone's own orientation (`SCREEN_ORIENTATION_USER`) while its
   auto-rotate is on, watched mid-game, and the widgets follow the screen's shape as they do a fold; for a game started
   from the lobby after a turn, `LoadPictures` swaps BAR's upright load pictures and the lobby widget sets BAR's loading

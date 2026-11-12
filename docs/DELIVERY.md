@@ -1401,6 +1401,28 @@ Added 2026-11-10 ~05:00 (with screenshots):
       wm size 1080x1198, 1198x1080, back): the dock went sideways while the screen was wide (BAR's minimap into it),
       upright again after (the minimap back in its small upright place), no error; and the lobby sideways at the
       near-square size: the column 15 buttons a page, the screens beside it the whole height.
+- [ ] **The sideways dock for one thumb: built, his test pending** (Kailil, 2026-11-12: "Only have the map show when no
+      units selected. And keep the bottom ui two slots only instead of 3 slots ... So the bottom ui can be snapped to
+      the left side or right side of the bottom of the phone so it can be used by one finger only. Add a button or
+      symbol to swap what side the bottom ui pins too"; of the choices asked, a HOME button on the map and BUILD |
+      ORDERS tabs). bardroid_portrait.lua `L.thumb` (layout): at the pinned side's edge the panel (the tabs, the
+      selection row, the tab's buttons: the left side's content under BUILD, the right's under ORDERS, PLACE, HOME,
+      LISTS...; the other laid out off the screen, so no draw, press or finger finds it), beside it the map slot (metal
+      and energy, BAR's minimap, the groups; HOME over the swap arrow on the panel's side of the minimap). Nothing
+      picked: the map slot alone, where it stood; a tap on it (the menu opening) or HOME opens the home buttons in the
+      panel, closed again with the menu's time-out. The tab: a builder BUILD, other units ORDERS, a building picked
+      PLACE (its four shapes in one row, PLACE the taller), a factory's queue QUEUE; a tab tapped stays until what the
+      dock shows changes. The side kept in the widget's config. The D-gun mode keeps the band across the bottom (its
+      sticks under both thumbs). The panel stands at the edge, not the map: BAR stacks its player list, clock and music
+      lines up from the bottom right corner, over the minimap there, and no widget can move them; the map slot does
+      not follow the closed panel to the edge for the same reason (and stays under the thumb). On the way: the dock's
+      texture scissors were in screen pixels (right while the dock began at x 0; `SP.scissor`), and BAR's order menu
+      copy drew under the full-width dock all along (now hidden while the dock is up, make-ordermenu.py, remake-check).
+      Dev phone sideways: the tabs, ORDERS, nothing picked (the map slot alone), HOME, the swap to the left and back,
+      COMMANDER from HOME, a wind turbine picked (PLACE came up) and placed (the order log: the build queued), the
+      D-gun's band and back. Open for Kailil: with the panel closed BAR's own corner widgets show at the bottom right
+      (its 1-9 groups, idle builders, player list); the map slot could also slide to the edge then if BAR's player list
+      moved above the dock.
 - [ ] **Turning with the phone: built, his test pending** (Kailil, 2026-11-12: "Allow me to have auto rotate enabled
       on my phone so I can use vertical or landscape in one session anytime I want"). Launcher setting "Turn with the
       phone" (on): while the phone's auto-rotate is on, GameActivity asks for the phone's own orientation

@@ -102,10 +102,10 @@ The first version meant for other people's phones: everything since the first bu
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
 - The lobby and the game turn with the phone (launcher setting "Turn with the phone", on): with the phone's
   auto-rotate on, upright or sideways as it is held, at any time; with auto-rotate off, "Play upright" decides.
-- The touch dock sideways too (launcher setting "Touch dock sideways", on): along the bottom, the selection and build
-  options on the left, metal, energy, the minimap and the unit groups in the middle, the orders on the right; the game
-  above it across the whole width, BAR's resource bars and minimap moved into the dock. A gamepad or a mouse brings
-  BAR's own screen layout back.
+- The touch dock sideways too (launcher setting "Touch dock sideways", on), for one thumb: at one side of the bottom
+  the units' panel with BUILD | ORDERS tabs, and beside it metal, energy, BAR's minimap and the unit groups, with HOME
+  and an arrow that moves the dock to the other side; with nothing picked only the minimap part. BAR's resource bars
+  and minimap move into the dock. A gamepad or a mouse brings BAR's own screen layout back.
 - Playing upright (launcher setting "Play upright"): the game on top, a touch dock below. Its D-gun mode keeps the
   commander in the middle of the screen, hides the rows it does not need, fires on FIRE's release, and FIRE swiped to
   the right switches on full auto (the enemy in range most worth a shot, a commander first, never through a friendly unit; only where the

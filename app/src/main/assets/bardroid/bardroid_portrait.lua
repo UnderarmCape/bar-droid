@@ -134,6 +134,9 @@ end
 local active = false -- the dock is up (a tall screen, playing)
 local vsx, vsy = 0, 0
 local L = {} -- the layout: rects { x0, y0, x1, y1 } (GL: y up from the bottom)
+-- (sideways, one thumb: the pinned side, the panel's tab, whether the panel and its tabs show, HOME's panel open, the
+-- D-gun mode on: refresh decides, layout places)
+L.side, L.tab, L.panelOn, L.tabsOn, L.homeOpen, L.dgun = "right", "right", true, false, false, false
 local font, bold
 local leftScroll, rightScroll = snapNew(), snapNew()
 local leftItems, rightItems = {}, {} -- what the two halves show now (tiles, buttons)
@@ -255,6 +258,14 @@ end
 -- columns (the arrows one each); TEAMS lists the players by alliance in the grid's place (BAR's own list, at the
 -- bottom right, is under the dock); HIDE folds the dock to a small SHOW button at the bottom of the screen.
 local SP = { hidden = false, teams = false, COLS = 6 }
+-- a scissor in screen pixels, also while drawing into the dock's texture (SP.inTex), whose pixels start at the dock's
+-- corner: sideways, one thumb, the dock no longer starts at the screen's left edge, and the halves' rows were cut away
+function SP.scissor(x, y, w, h)
+	if SP.inTex then
+		x, y = x - L.dock[1], y - L.dock[2]
+	end
+	gl.Scissor(x, y, w, h)
+end
 function SP.on()
 	return Spring.GetSpectatingState() and (WG.BarDroidInput or "touch") == "touch"
 end
@@ -350,6 +361,91 @@ local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
 	L.hole, L.leftCols, L.rightCols = nil, 3, 2
+	L.thumb, L.tabs, L.homeBtn, L.swapBtn = false, nil, nil, nil
+	if L.land and not L.dgun then
+		-- Sideways, one thumb (Kailil, 2026-11-12: "keep the bottom ui two slots only ... snapped to the left side or right
+		-- side of the bottom of the phone so it can be used by one finger only. Add a button or symbol to swap what side";
+		-- nothing picked: "Only have the map show"; of the choices, a HOME button on the map and BUILD | ORDERS tabs): at
+		-- the pinned side's edge the map slot (metal and energy, BAR's minimap, the groups; HOME and the swap button
+		-- beside the minimap), the panel beside it (the tabs, the selection, the tab's buttons); the rest of the bottom is
+		-- the game's. Nothing picked: the map slot alone, a tap on it opens the home buttons in the panel (refresh). The
+		-- D-gun mode keeps the band below (its sticks under both thumbs).
+		local pad = max(4, floor(vsy * 0.012))
+		local gap = max(3, floor(pad * 0.6))
+		local bandH = floor(vsy * 0.4)
+		local inner = bandH - 2 * pad
+		local resH = floor(inner * 0.15)
+		local groupsH = floor(inner * 0.2)
+		local mapH = inner - resH - groupsH - 2 * gap
+		local colW = floor(mapH * 0.5)
+		local mapW = min(floor(mapH * (Game.mapSizeX / max(1, Game.mapSizeZ))), floor(vsx * 0.3))
+		local slotW = max(floor(vsx * 0.2), colW + gap + mapW)
+		local panelW = min(floor(vsx * 0.36), vsx - slotW - 3 * pad)
+		-- (the panel at the edge, the map slot beside it, where it stays while the panel is closed: at the edge BAR's
+		-- minimap lay under BAR's player list, clock and music lines, which BAR stacks up from the bottom right corner and
+		-- no widget can move; the panel covers them. The thumb's buttons the nearest, the dock not jumping about)
+		local right = L.side ~= "left"
+		local P = right and { vsx - pad - panelW, pad, vsx - pad, bandH - pad } or { pad, pad, pad + panelW, bandH - pad }
+		local M = right and { P[1] - pad - slotW, pad, P[1] - pad, bandH - pad }
+			or { P[3] + pad, pad, P[3] + pad + slotW, bandH - pad }
+		L.res = { M[1], M[4] - resH, M[3], M[4] }
+		L.groups = { M[1], M[2], M[3], M[2] + groupsH }
+		local my0, my1 = L.groups[4] + gap, L.res[2] - gap
+		-- (HOME over the swap button, on the panel's side of the minimap: next to what it opens)
+		local col = right and { M[3] - colW, my0, M[3], my1 } or { M[1], my0, M[1] + colW, my1 }
+		local cmid = floor((my0 + my1) / 2)
+		L.homeBtn = { col[1], cmid + floor(gap / 2), col[3], col[4] }
+		L.swapBtn = { col[1], col[2], col[3], cmid - floor(gap / 2) }
+		local ax0, ax1 = right and M[1] or col[3] + gap, right and col[1] - gap or M[3]
+		local mw = min(ax1 - ax0, mapW)
+		local hx0 = floor((ax0 + ax1 - mw) / 2)
+		L.hole = { hx0, my0, hx0 + mw, my1 }
+		local top = P[4]
+		if L.tabsOn then
+			local tabH = floor(inner * 0.14)
+			local mx = floor((P[1] + P[3]) / 2)
+			L.tabs = { left = { P[1], top - tabH, mx - floor(gap / 2), top }, right = { mx + floor(gap / 2), top - tabH, P[3], top } }
+			top = top - tabH - gap
+		end
+		local selH = min(floor(inner * 0.24), floor(panelW / 6.5))
+		L.sel = { P[1], top - selH, P[3], top }
+		if showSel then
+			top = top - selH - pad
+		end
+		local gridH = top - P[2]
+		local tile = floor((gridH - gap) / 2)
+		L.leftCols = max(3, min(6, floor((panelW + gap) / (tile + gap))))
+		tile = min(tile, floor((panelW - (L.leftCols - 1) * gap) / L.leftCols))
+		L.rightCols = panelW >= 3 * tile and 3 or 2
+		local rows = max(2, floor((gridH + gap) / (tile + gap)))
+		L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
+		L.left = { P[1], top - (rows * (tile + gap) - gap), P[3], top }
+		L.right = { P[1], P[2], P[3], top }
+		L.btnW = floor((panelW - (L.rightCols - 1) * gap) / L.rightCols)
+		L.rightRows = max(3, floor((gridH + gap) / (floor(tile * 0.5) + gap)))
+		L.btnH = floor((gridH + gap) / L.rightRows) - gap
+		-- the tab not shown, and the whole panel while it is closed: off the screen (not drawn; no press, and no finger
+		-- through RtsTouch's rects, finds it)
+		local away = -4 * vsx
+		local function off(r)
+			return { r[1] + away, r[2], r[3] + away, r[4] }
+		end
+		if not L.panelOn then
+			L.left, L.right, L.sel = off(L.left), off(L.right), off(L.sel)
+		elseif L.tab == "right" then
+			L.left = off(L.left)
+		else
+			L.right = off(L.right)
+		end
+		local x0, x1 = M[1], M[3]
+		if L.panelOn then
+			x0, x1 = min(x0, P[1]), max(x1, P[3])
+		end
+		L.dock = { x0 - pad, 0, x1 + pad, bandH }
+		L.thumb = true
+		SP.laidOut = false
+		return
+	end
 	if L.land then
 		-- Sideways (layout A): a band along the bottom, 0.4 of the height. Left: the selection over the build grid (2 rows
 		-- of tiles, as many columns as fit); middle: metal and energy, the minimap (the map's shape), the groups; right:
@@ -501,6 +597,8 @@ local function setMenu(on)
 	if on then
 		menuAt = now()
 		touched()
+	else -- (sideways, one thumb: HOME's panel closes with the menu, the map slot alone again)
+		L.homeOpen = false
 	end
 	writeDock(true)
 end
@@ -1260,6 +1358,13 @@ function refreshNow()
 		end
 	end
 	local dg = dgunOn() -- (the D-gun mode: neither row, a shorter dock)
+	if dg ~= L.dgun then -- (sideways its sticks under both thumbs: the band across the bottom, layout)
+		L.dgun = dg
+		layout()
+	end
+	if #sel > 0 then -- (HOME's panel was for nothing picked)
+		L.homeOpen = false
+	end
 	idleB.update()
 	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup or #idleB.list > 0) and not dg
 	if wantSel ~= showSel or wantGroups ~= showGroups then -- (the dock's rows: laid out again)
@@ -1463,12 +1568,32 @@ function refreshNow()
 	if SP.on() then -- (spectating: the spectator's grid over the whole dock, SP.items; or TEAMS)
 		newLeft, lk, newRight, rk = {}, "spec", SP.items(), "home"
 	end
+	if L.land and not L.dgun then -- sideways, one thumb: the panel, its tabs and the tab shown (layout)
+		-- (nothing picked: the map slot alone until a tap opens the home buttons; both sides with something: BUILD | ORDERS
+		-- tabs, a builder opening on its build options and other units on their orders, a building picked on PLACE; a tab
+		-- tapped stays until what the dock shows changes)
+		local panelOn = not (lk == "none" and rk == "home" and not L.homeOpen)
+		local tabsOn = panelOn and #newLeft > 0 and #newRight > 0
+		local tab = L.tab
+		if lk ~= leftKind or rk ~= rightKind or newPick then
+			tab = (lk == "build" or lk == "pregame" or lk:sub(1, 6) == "types:") and rk ~= "place" and rk ~= "factory"
+				and rk ~= "filters" and "left" or "right"
+		end
+		if not tabsOn then
+			tab = #newLeft > 0 and "left" or "right"
+		end
+		if panelOn ~= L.panelOn or tabsOn ~= L.tabsOn or tab ~= L.tab then
+			L.panelOn, L.tabsOn, L.tab = panelOn, tabsOn, tab
+			layout()
+		end
+	end
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
 	local leftRowsN, rightRowsN
 	cellsOf.left, leftRowsN = pack(leftItems, L.leftCols or 3)
 	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS
-		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or L.rightCols or 2)
+		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and L.thumb) and 4
+		or L.rightCols or 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
 	if lk == "spec" then -- (the spectator's 4 or 5 rows; TEAMS: as tall as those, 4 or 5 in sight, more scroll: always 5,
@@ -1886,6 +2011,9 @@ local function half(side)
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
 	end
+	if rightKind == "place" and L.thumb then -- (sideways, one thumb: the four shapes in one row, PLACE the taller under it)
+		return L.right, rightScroll, rightItems, 4, floor((L.right[3] - L.right[1] - 3 * L.gap) / 4), L.btnH
+	end
 	return L.right, rightScroll, rightItems, L.rightCols or 2, L.btnW, L.btnH
 end
 
@@ -2191,7 +2319,10 @@ end
 
 local function drawHalf(side)
 	local r, s, items = half(side)
-	gl.Scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
+	if r[3] < 0 then -- (sideways, one thumb: the tab not shown, laid out off the screen)
+		return
+	end
+	SP.scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
 	for i, item in ipairs(items) do
 		local rect = cellRect(side, i)
 		if rect and rect[2] < r[4] and rect[4] > r[2] then -- (in sight)
@@ -2238,7 +2369,7 @@ local function placeRect()
 	if not (active and rightKind == "place") then
 		return nil
 	end
-	local top = L.right[4] - 2 * (L.btnH + L.gap) - L.gap
+	local top = L.right[4] - (L.thumb and 1 or 2) * (L.btnH + L.gap) - L.gap
 	return { L.right[1], L.right[2], L.right[3], top }
 end
 
@@ -2593,7 +2724,7 @@ local function drawGroups()
 		end
 		return t
 	end
-	gl.Scissor(r[1], r[2], max(0, room), h)
+	SP.scissor(r[1], r[2], max(0, room), h)
 	if free then
 		local nr = place(off + #list * w, { new = free })
 		button(nr, { 0.2, 0.2, 0.2, 0.8 }, { 0.32, 0.32, 0.32, 0.8 })
@@ -2800,6 +2931,11 @@ local function dockLines()
 			SP.setHidden(false)
 		elseif name == "dock_menu" and active then
 			setMenu(true)
+			if L.thumb and not L.panelOn then -- (sideways, nothing picked: the tap that opens the menu opens the home
+				-- buttons too, the one thing it holds then)
+				L.homeOpen = true
+				refresh()
+			end
 		elseif name == "dock_select_start" and active then
 			selecting = true
 			touched()
@@ -3243,6 +3379,65 @@ local function drawQueueZones()
 	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, que[4] - h * 0.36, size, "ro")
 end
 
+-- Sideways, one thumb: the tabs over the panel (the one shown in gold), HOME (gold while its buttons are open) and the
+-- swap button, its arrow towards the side the dock would go to
+SP.TAB_LABELS = { build = "BUILD", pregame = "BUILD", seltypes = "UNITS", orders = "ORDERS", place = "PLACE",
+	home = "HOME", units = "LISTS", factory = "QUEUE", filters = "FILTERS" }
+function SP.drawThumb()
+	local gold = { 0.38, 0.3, 0.04, 0.9 }
+	for _, side in ipairs({ "left", "right" }) do
+		local r = L.tabs and L.tabs[side]
+		if r then
+			local kind = side == "left" and leftKind or rightKind
+			local label = SP.TAB_LABELS[kind] or (kind:sub(1, 6) == "types:" and "UNITS")
+				or (side == "left" and "BUILD" or "ORDERS")
+			if L.tab == side then
+				button(r, gold, { 0.66, 0.53, 0.12, 0.9 })
+			else
+				button(r)
+			end
+			textIn(label, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.46, "\255\240\240\240", bold)
+		end
+	end
+	local h = L.homeBtn
+	if L.homeOpen then
+		button(h, gold, { 0.66, 0.53, 0.12, 0.9 })
+	else
+		button(h)
+	end
+	textIn("HOME", h[1], h[2], h[3], h[4], min((h[4] - h[2]) * 0.3, (h[3] - h[1]) * 0.26), "\255\240\240\240", bold)
+	local s = L.swapBtn
+	button(s)
+	local cx, cy = (s[1] + s[3]) / 2, (s[2] + s[4]) / 2
+	local a, d = min(s[3] - s[1], s[4] - s[2]) * 0.22, L.side == "left" and 1 or -1
+	gl.Color(0.94, 0.94, 0.94, 1)
+	gl.BeginEnd(GL.TRIANGLES, function()
+		gl.Vertex(cx + d * a * 0.9, cy)
+		gl.Vertex(cx - d * a * 0.6, cy + a)
+		gl.Vertex(cx - d * a * 0.6, cy - a)
+	end)
+	gl.Rect(cx - d * a * 1.1 - 2, cy - a, cx - d * a * 1.1 + 2, cy + a) -- (a bar behind it: "to the other side")
+	gl.Color(1, 1, 1, 1)
+end
+-- which of them is at x, y: "home", "swap", "left" or "right" (a tab), or nil
+function SP.thumbAt(x, y)
+	if not L.thumb then
+		return nil
+	end
+	if L.homeBtn and inRect(x, y, L.homeBtn) then
+		return "home"
+	end
+	if L.swapBtn and inRect(x, y, L.swapBtn) then
+		return "swap"
+	end
+	for _, side in ipairs({ "left", "right" }) do
+		if L.tabs and L.tabs[side] and inRect(x, y, L.tabs[side]) then
+			return side
+		end
+	end
+	return nil
+end
+
 local function drawStill()
 	panel(L.dock, 1, 1, 0, 0, true)
 	if showSel then
@@ -3250,6 +3445,9 @@ local function drawStill()
 	end
 	drawHalf("left")
 	drawHalf("right")
+	if L.thumb then
+		SP.drawThumb()
+	end
 	if showGroups then
 		drawGroups()
 	else
@@ -3340,7 +3538,9 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		if (dirty or texMode == 2) and dockTex and not post then
 			local t0 = PROF.on and spGetTimer()
 			R.RenderInRect(dockTex, L.dock[1], L.dock[2], L.dock[3], L.dock[4], function()
+				SP.inTex = true
 				drawStill()
+				SP.inTex = false
 				local hole = L.hole
 				if hole then -- (sideways: the minimap's place left clear in the texture; BAR's minimap shows there)
 					gl.Blending(false)
@@ -3464,7 +3664,7 @@ function widget:IsAbove(x, y)
 end
 
 function widget:GetConfigData()
-	return { selStyle = selStyle, selFilter = selFilter }
+	return { selStyle = selStyle, selFilter = selFilter, landSide = L.side }
 end
 
 function widget:SetConfigData(data)
@@ -3473,6 +3673,9 @@ function widget:SetConfigData(data)
 	end
 	if data and type(data.selFilter) == "string" then
 		selFilter = data.selFilter
+	end
+	if data and (data.landSide == "left" or data.landSide == "right") then -- (sideways, one thumb: the side picked)
+		L.side = data.landSide
 	end
 end
 
@@ -3534,7 +3737,7 @@ function widget:MousePress(x, y, btn)
 		empty = snapMax(s) == 0
 		settling = not s.drag and s.t < 1
 	else
-		empty = not (inRect(x, y, L.res) or (showSel and inRect(x, y, L.sel)))
+		empty = not (inRect(x, y, L.res) or (showSel and inRect(x, y, L.sel)) or SP.thumbAt(x, y))
 		for _, gr in ipairs(L.groupRects or {}) do
 			empty = empty and not inRect(x, y, gr)
 		end
@@ -3597,6 +3800,26 @@ function widget:MouseRelease(x, _, btn)
 	end
 	if p.empty and (p.moved or not p.side) then -- (a pan, or a tap on nothing; a tap on a half with nothing to scroll is
 		-- its button's: those halves were all "empty" for the pan, and their buttons took no taps, 2026-11-10)
+		return true
+	end
+	local thumb = not p.side and SP.thumbAt(p.x, p.y)
+	if thumb == "home" then -- (sideways, one thumb: the home buttons in the panel, or closed again)
+		L.homeOpen = not L.homeOpen
+		refresh()
+		return true
+	elseif thumb == "swap" then -- (the dock to the other side of the screen; kept for the next game, GetConfigData)
+		L.side = L.side == "left" and "right" or "left"
+		Spring.Echo("[bardroid-portrait] the dock on the " .. L.side) -- (tools)
+		layout()
+		refresh()
+		writeDock(true)
+		return true
+	elseif thumb then -- a tab: its side's buttons in the panel
+		if L.tab ~= thumb then
+			L.tab = thumb
+			layout()
+			refresh()
+		end
 		return true
 	end
 	if not p.side and inRect(p.x, p.y, L.res) and leftKind ~= "spec" then -- metal or energy tapped: its panel (again:
