@@ -2391,6 +2391,21 @@ local function drawResources()
 	local barH = max(3, floor(h * 0.12))
 	local rowH = h - 3 * pad - barH -- (the text above a thin bar: the numbers about two fifths bigger than they were)
 	local big, small = rowH * 0.92, rowH * 0.62
+	-- (the storage on both boxes or neither: sideways in a narrow middle metal showed its own and energy, with longer
+	-- flows, not, dev phone 2026-11-12)
+	local storageFits = true
+	for i, res in ipairs({ "metal", "energy" }) do
+		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
+		if cur and storage then
+			local x0 = r[1] + (i - 1) * (w + L.pad)
+			local flows = string.format("\255\120\230\120+%s \255\240\110\100-%s", short(income or 0), short(expense or 0))
+			local left = x0 + pad * 1.5 + bold:GetTextWidth(short(cur)) * big + pad * 2 + font:GetTextWidth(flows) * small
+				+ pad * 2
+			if x0 + w - pad * 1.5 - font:GetTextWidth(short(storage)) * small * 0.85 < left then
+				storageFits = false
+			end
+		end
+	end
 	for i, res in ipairs({ "metal", "energy" }) do
 		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
 		local x0 = r[1] + (i - 1) * (w + L.pad)
@@ -2419,7 +2434,7 @@ local function drawResources()
 			local left = fx + font:GetTextWidth(flows) * small + pad * 2 -- (where the right side's things must stop)
 			local rx = x1 - pad * 1.5
 			local sw = font:GetTextWidth(short(storage)) * small * 0.85
-			if rx - sw >= left then -- (sideways in a narrow middle it ran into the income: left out there)
+			if storageFits and rx - sw >= left then -- (sideways in a narrow middle it ran into the income: left out there)
 				font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
 				rx = rx - sw - pad * 3
 			end
