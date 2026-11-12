@@ -83,7 +83,8 @@ The first version meant for other people's phones: everything since the first bu
 - A tap on BAR's top bar (metal, energy) no longer clears the selection, and the spectate bar's buttons work on the
   first tap. BAR's Settings, Statistics, key bindings and other windows scroll with a finger drag up or down (sideways
   still moves their sliders), and the map behind them stays put. Saving a game (the top bar's Save) keeps the units
-  you had picked: the engine unpicks them for the save, the app picks them again.
+  you had picked (the engine unpicks them for the save, the app picks them again) and says "Game saved" in the chat
+  box.
 - Several units of one type selected: the unit info panel shows that type's name and stats with the count on its
   picture; a tap on the picture brings the camera to them.
 - The lobby: a tooltip or a pressed look no longer stays where a finger lifted, and the Settings list scrolls from

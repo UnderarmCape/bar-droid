@@ -173,3 +173,16 @@ end
 function widget:GameOver()
 	gameOver = true
 end
+
+-- A save said nothing: the game stood still ~3 s and went on (dev phone, 2026-11-12). The engine's line for a written
+-- save (ILoadSaveHandler::CreateSave; a user widget's VFS does not see Saves/) puts BAR's message up (WG.messages: the
+-- app's chat box shows it, else BAR's own), with where the save opens again.
+function widget:AddConsoleLine(line)
+	if line:find("[ILoadSaveHandler::CreateSave] saved game to file", 1, true) then
+		local m = WG.messages
+		if m and m.addMessage then
+			m.addMessage("Game saved: the lobby's Load Game opens it")
+		end
+		Spring.Echo("[bardroid-topbar] the save said in BAR's message line: " .. tostring(m and m.addMessage ~= nil))
+	end
+end
