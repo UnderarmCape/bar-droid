@@ -123,6 +123,9 @@ final class VoiceChat {
      */
     void close() {
         if (listening) Log.i("app", "voice chat: stopped listening, the game screen went away");
+        // (and a start waiting for the microphone's permission dropped: a yes given after the screen went away would
+        // have started listening then)
+        waitingForPermission = false;
         session++;
         endRecognizer();
         done();
