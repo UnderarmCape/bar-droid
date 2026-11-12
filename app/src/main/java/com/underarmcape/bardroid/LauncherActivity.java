@@ -461,6 +461,16 @@ public class LauncherActivity extends AppCompatActivity {
         return new java.util.ArrayList<>(out);
     }
 
+    /** Map storage's label with what the maps take now (MapStore). */
+    private void mapCapLabel() {
+        long[] u = MapStore.usage(new Paths(this).bar);
+        String size = u[0] >= (1L << 30) ? String.format(java.util.Locale.ROOT, "%.1f GB", u[0] / (double) (1L << 30))
+                : (u[0] >> 20) + " MB";
+        TextView label = findViewById(R.id.lblMapCap);
+        label.setText(getString(R.string.lbl_map_cap_now, getString(R.string.lbl_map_cap), size, (int) u[1]));
+        explainSettings(label, secondaryTextColor());   // (its name above, what it does smaller: as the other settings)
+    }
+
     private void loadSettingsIntoUi() {
         ((EditText) findViewById(R.id.edWorkers)).setText(String.valueOf(Prefs.workerThreads));
         android.widget.AutoCompleteTextView mapField = findViewById(R.id.edMap);
@@ -486,6 +496,10 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).setChecked(Prefs.captureShortcuts);
         ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
                 Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
+        ((android.widget.RadioGroup) findViewById(R.id.rgMapCap)).check(
+                Prefs.mapCapMb == 5120 ? R.id.rbMap5
+                        : Prefs.mapCapMb == 10240 ? R.id.rbMap10 : Prefs.mapCapMb == 0 ? R.id.rbMapNone : R.id.rbMap3);
+        mapCapLabel();
         ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).check(
                 Prefs.renderScale == 85 ? R.id.rbRender85 : Prefs.renderScale == 70 ? R.id.rbRender70
                         : Prefs.renderScale == 0 ? R.id.rbRenderNative : R.id.rbRender100);
@@ -529,6 +543,9 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.captureShortcuts = ((CheckBox) findViewById(R.id.cbCaptureShortcuts)).isChecked();
         int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
         Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;
+        int maps = ((android.widget.RadioGroup) findViewById(R.id.rgMapCap)).getCheckedRadioButtonId();
+        Prefs.mapCapMb = maps == R.id.rbMap5 ? 5120 : maps == R.id.rbMap10 ? 10240
+                : maps == R.id.rbMapNone ? 0 : 3072;
         int res = ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).getCheckedRadioButtonId();
         Prefs.renderScale = res == R.id.rbRender85 ? 85 : res == R.id.rbRender70 ? 70 : res == R.id.rbRenderNative ? 0 : 100;
         Prefs.upscale = ((CheckBox) findViewById(R.id.cbUpscale)).isChecked();

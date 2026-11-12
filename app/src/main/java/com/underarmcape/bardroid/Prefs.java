@@ -112,6 +112,12 @@ public final class Prefs {
      * the dev phone's 30 fps target; on the Fold7 only with Kailil's say.
      */
     public static boolean lateDrop = false;
+    /**
+     * The downloaded maps kept under this many MB, the ones played longest ago deleted before a game or the lobby starts
+     * (MapStore; Kailil, 2026-11-11: "Move forward with that. At the max map size to 3gb"). 0: no limit.
+     */
+    public static final int MAP_CAP_DEFAULT_MB = 3072;
+    public static int mapCapMb = MAP_CAP_DEFAULT_MB;
 
     /** Guest environment that selects the OpenGL driver (used by the game launch and files/container.sh). */
     public static void putGpuEnv(java.util.Map<String, String> env) {
@@ -169,6 +175,10 @@ public final class Prefs {
         upscale = s.getBoolean("upscale", upscale);
         upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
         lateDrop = s.getBoolean("lateDrop", lateDrop);
+        mapCapMb = s.getInt("mapCapMb", mapCapMb);
+        if (mapCapMb != 0 && mapCapMb != 3072 && mapCapMb != 5120 && mapCapMb != 10240) {
+            mapCapMb = MAP_CAP_DEFAULT_MB;
+        }
         aiName = s.getString("aiName", aiName);
         aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
@@ -205,6 +215,7 @@ public final class Prefs {
                 .remove("upscaleCompare")   // the comparison's first default (on), see upscaleCompare
                 .putBoolean("upscaleCompareOn", upscaleCompare)
                 .putBoolean("lateDrop", lateDrop)
+                .putInt("mapCapMb", mapCapMb)
                 .putString("aiName", aiName)
                 .putString("aiDifficulty", aiDifficulty)
                 .apply();

@@ -68,6 +68,9 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   CDN (`pr-downloader`).
 - **Lobby.** BAR's own Chobby lobby. `LobbyBridge` stands in for the PC launcher behind it (web links, downloads,
   replay info); `bardroid_lobby_touch.lua` makes it finger-friendly.
+- **Map storage.** `MapStore` keeps the downloaded maps under the launcher's limit (3 GB by default): `GameService`
+  records each map's last use from the engine's checksum line for its archive as a game loads (`/data` is mounted
+  noatime) and, before an engine starts, deletes the maps played longest ago until the rest fit.
 - **In-game widgets** (`app/src/main/assets/bardroid/`): `bardroid_touch.lua` (camera, perf log, catch-up mode),
   `bardroid_players.lua` (small player list), `bardroid_spectate.lua` (spectating by touch: player cameras, follow,
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
@@ -106,7 +109,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 
 | Where | What |
 |---|---|
-| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `KeyboardShortcuts`, `PerfLog`, `LogShare` |
+| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `MapStore`, `KeyboardShortcuts`, `PerfLog`, `LogShare` |
 | `app/src/main/assets/bardroid/` | `setup-container.sh`, `launch-bar.sh`, `springsettings.cfg`, the Lua widgets |
 | `app/src/main/assets/gamepad/` | BAR Controller Support v0.8.5, packed by `tools/build-gamepad-game.py` |
 | `app/src/main/jniLibs/<abi>/` | prebuilt helpers (proot, busybox, talloc, ANGLE, virgl), rebuilt by `tools/` |

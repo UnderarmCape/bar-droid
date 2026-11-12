@@ -259,6 +259,18 @@ public class GameService extends Service {
         return u;
     }
 
+    /** The downloaded maps kept under the launcher's limit (MapStore): before an engine starts, never under one. */
+    private void pruneMaps(String keep) {
+        if (Prefs.mapCapMb <= 0) return;
+        try {
+            for (String gone : MapStore.prune(paths.bar, (long) Prefs.mapCapMb << 20, keep)) {
+                Log.i("maps", "over " + Prefs.mapCapMb + " MB of maps: removed " + gone);
+            }
+        } catch (RuntimeException e) {
+            Log.e("maps", "map storage", e);
+        }
+    }
+
     private void play(String mode) {
         updater = null;
         exitNote = null;
@@ -284,6 +296,7 @@ public class GameService extends Service {
             // free text, and without its map the engine ends in 2 s (an 8 GB phone plays the benchmark's map by default,
             // Prefs.mapName, also where the first install fetched the bigger one).
             String map = bench ? Installer.BENCH_MAP : "skirmish".equals(mode) ? Prefs.mapName : null;
+            pruneMaps(map != null ? map : Prefs.mapName);
             if (map != null && !inst.hasMap(map)) {
                 setStatus((bench ? "benchmark" : "skirmish") + ": downloading " + map);
                 int got = new Proot(paths).runScript("bench:map", "/opt/bardroid/setup-container.sh", new HashMap<>(),
@@ -388,6 +401,9 @@ public class GameService extends Service {
                                 loading = true;
                             }
                             if (loading) loadLine(line);
+                            // (the map a game loads on: its last use, for the map storage limit, MapStore)
+                            String mapFile = MapStore.usedIn(line);
+                            if (mapFile != null) MapStore.markUsed(paths.bar, mapFile);
                             // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
                             if (driver.onLine(line)) {
                                 driverLost = true;

@@ -1198,6 +1198,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       2026-11-08, pad-test -Share: one engine screenshot lacked the upper part of the interface (the share list's
       panel, tabs and first rows, BAR's minimap) while the rest was drawn; the same run again drew all. No columns
       this time; 1 in ~30 shots that day.
+- [x] **A rolling map storage limit** (Kailil, 2026-11-11: "a rolling map download size limit ... rotate downloaded
+      maps"; then "Move forward with that. At the max map size to 3gb"). What grows is maps (20 to 150 MB each); BAR's
+      rapid pool stays ~2.26 GB across releases (they share files: 25 MB of the dev phone's pool was only for older
+      releases). `MapStore`: launcher setting Map storage (3 GB by default; 5, 10 GB, no limit); before an engine
+      starts (`GameService`), the maps played longest ago are deleted (with their `.md5.gz`) until the rest fit, never
+      the one played last nor the launcher's Play vs AI map; last uses from the engine's `[CAS::GASCB] Archive file=`
+      line as a game loads (`/data` is noatime), `.bardroid-maps-used`; a map never seen counts from its download.
+      Dev phone: a planted 1.6 GB "map" dated 2025 with the limit at 2 GB: removed before the skirmish ("[maps] over
+      2048 MB of maps: removed zz_bardroid_prune_test.sd7 (1600 MB, downloaded 2025-01-01)"), the real maps kept, the
+      skirmish's map recorded; the setting saves and shows "Now: 607 MB in 10 maps".
 - [ ] Playing with no connection (dev phone, 2026-11-08, Wi-Fi and data off; Kailil's road trip): the launcher's Play vs
       AI starts at once on what is installed (the update check gives up on the first "Unable to resolve host"), and
       the lobby opens "Offline" with its Skirmish screens. But the lobby's quick skirmish picks from four maps a mode

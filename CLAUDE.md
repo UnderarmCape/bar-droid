@@ -55,6 +55,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
   web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
+- `MapStore` — the map storage limit (launcher Map storage, 3 GB by default, Kailil 2026-11-11): each map's last use
+  from the engine's `[CAS::GASCB] Archive file=` line (GameService; `/data` is noatime), the maps played longest ago
+  deleted before an engine starts.
 - `PerfLog` — once a minute while a game runs, `[perf]` in launcher.log: thermal status, GPU/CPU clocks and caps,
   memory (the GPU driver's too, `GpuTotal`); `bardroid_touch.lua` logs `[bardroid-perf]` (fps, slowest frame, frames of each second) to infolog.
 - `app/src/main/jniLibs/<abi>/` — prebuilt helpers, committed: from `tools/fetch-prebuilts.py <abi>` (Termux talloc,

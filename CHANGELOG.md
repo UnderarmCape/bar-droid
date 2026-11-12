@@ -15,6 +15,10 @@ The first version meant for other people's phones: everything since the first bu
   the display; the launcher's render resolution (85%, 70%) and Display settings' display scale lower it. Launcher
   setting "Lower the resolution when the game slows down" (off by default): under 27 fps the game is drawn smaller a
   step at a time (85, then 70% of the lines), never under 70%, kept only while each step makes it faster.
+- Map storage (launcher, 3 GB by default; 5 / 10 GB or no limit): before a game or the lobby starts, the downloaded
+  maps played longest ago are deleted until the rest fit; a map downloads again when a game needs it. The lobby opens
+  without BAR's Rapid Pool Cache (it read all of BAR's 2.2 GB at every start, the lobby at half its frame rate for
+  ~30 s); the lobby's Settings can turn it back on.
 - The app is a game for Android and One UI: Game Booster and Gaming Hub see it, and Android's performance game mode
   (Game Booster's game performance, or `cmd game mode performance`) gave 1-2 fps more in a late 8v8 on a hot S23 Ultra.
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is
