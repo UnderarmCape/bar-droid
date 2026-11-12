@@ -116,8 +116,26 @@ public class LauncherActivity extends AppCompatActivity {
      * Side by side on a wide screen (it opens that way after a game): one over the other left the settings 90 dp. Wide
      * is 600 dp or more, upright too: the Fold7 unfolded stacked them across its whole width, lines of 1,700 pixels.
      */
+    private ViewGroup topContent;   // the title, status lines and buttons: in the top block, or first on the one page
+
     private void fitLayout() {
-        boolean wide = getResources().getConfiguration().screenWidthDp >= 600;
+        android.content.res.Configuration cfg = getResources().getConfiguration();
+        boolean wide = cfg.screenWidthDp >= 600;
+        // One scrolling page on a narrow screen that is not much taller than wide (under 600 dp, under 1.5 times as tall:
+        // the dev phone at 1080x1198, large display sizes): one over the other the top block took the height it needs
+        // and left the settings one line, or none (2026-11-12). Kailil, 2026-11-12: "one scrolling page". The top
+        // block's content goes first in the settings' scroll; a tall phone keeps its buttons in sight above them.
+        boolean onePage = !wide && cfg.screenHeightDp < cfg.screenWidthDp * 1.5f;
+        ScrollView topScroll = findViewById(R.id.top);
+        ViewGroup settingsContent = (ViewGroup) ((ViewGroup) findViewById(R.id.settings)).getChildAt(0);
+        if (topContent == null) topContent = (ViewGroup) topScroll.getChildAt(0);
+        ViewGroup topHome = onePage ? settingsContent : topScroll;
+        if (topContent.getParent() != topHome) {
+            ((ViewGroup) topContent.getParent()).removeView(topContent);
+            if (onePage) settingsContent.addView(topContent, 0); else topScroll.addView(topContent);
+        }
+        topScroll.setVisibility(onePage ? View.GONE : View.VISIBLE);
+        findViewById(R.id.divider).setVisibility(onePage ? View.GONE : View.VISIBLE);
         int fill = LinearLayout.LayoutParams.MATCH_PARENT, wrap = LinearLayout.LayoutParams.WRAP_CONTENT;
         ((LinearLayout) findViewById(R.id.root)).setOrientation(wide ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
         findViewById(R.id.top).setLayoutParams(new LinearLayout.LayoutParams(wide ? 0 : fill, wide ? fill : wrap, wide ? 1 : 0));
@@ -135,10 +153,10 @@ public class LauncherActivity extends AppCompatActivity {
         findViewById(R.id.settings).setLayoutParams(settings);
         // the device lines: under the buttons on a wide screen (half of that side stood empty), else first in the settings
         View device = findViewById(R.id.device);
-        ViewGroup to = (ViewGroup) ((ViewGroup) findViewById(wide ? R.id.top : R.id.settings)).getChildAt(0);
+        ViewGroup to = wide ? topContent : settingsContent;
         if (device.getParent() != to) {
             ((ViewGroup) device.getParent()).removeView(device);
-            if (wide) to.addView(device); else to.addView(device, 0);
+            if (wide) to.addView(device); else to.addView(device, onePage ? 1 : 0);   // (one page: under the buttons)
         }
         // and the log under them on a wide screen: below the device lines the left column stood half empty (the Fold7
         // unfolded, 2026-11-04) while the log came last, under every setting; else last in the settings
