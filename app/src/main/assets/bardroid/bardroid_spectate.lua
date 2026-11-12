@@ -580,6 +580,17 @@ local function dockTilt()
 	return math.acos(math.max(-1, math.min(1, ax * bx + ay * by + az * bz)))
 end
 
+-- the game's share of the screen's height above the dock (1: no dock)
+local function dockShare()
+	local P = WG.BarDroidPortrait
+	local dock = P and P.dock and P.dock()
+	local _, vsy = Spring.GetViewGeometry()
+	if not dock or vsy <= 0 then
+		return 1
+	end
+	return math.max(0.3, math.min(1, (vsy - dock[4]) / vsy))
+end
+
 local fpValues = {} -- (fpFor's values, the same table every frame)
 local fpCam = { mode = CAM_FPS, rz = 0 } -- (the camera state set every frame, the same table)
 local function updateFirstPerson(dt)
@@ -842,6 +853,11 @@ local function updateFollow(dt)
 		-- Upright over the dock, a view of the unit's own: the camera where it stands, turned down by dockTilt, its
 		-- focus on the ground nearer it, so the view centres on the game above the dock as it would on the whole screen
 		local tilt = view.frame == "unit" and dockTilt() or 0
+		if tilt > 0.001 then
+			-- (and back by the game's share of the screen's height: the game shows that share of the view, a commander in
+			-- Shoulder was taller than it, its head cut off; dev phone 1080x2316, 2026-11-12)
+			cs.dist = cs.dist / dockShare()
+		end
 		local down = cs.rx - math.pi / 2
 		local cx, cy, cz = Spring.GetCameraPosition()
 		local hx, hz = (cx or readX) - readX, (cz or readZ) - readZ -- (towards the camera across the ground)
