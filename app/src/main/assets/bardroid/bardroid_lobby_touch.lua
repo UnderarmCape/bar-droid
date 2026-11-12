@@ -808,6 +808,55 @@ local function uprightScenario()
 	Spring.Echo("[bardroid-lobby] scenario page upright: values clear of their labels, the map narrower") -- (tools)
 end
 
+-- Chobby's Keys window upright (gui_keys_panel.lua): its six tabs in one row, 180 each from 20, Close at the right:
+-- upright Keys, CTRL Keys and half of ALT Keys under Close, the three Legacy ones out of reach (dev phone, 2026-11-12).
+-- Upright two rows of three, as wide as the room left of Close, the keyboard picture under them. Laid again whenever
+-- Chobby has moved them back (its holder's OnResize places the picture anew).
+local KEYS_TABS = { "Keys", "CTRL Keys", "ALT Keys", "Legacy Keys", "Legacy CTRL Keys", "Legacy ALT Keys" }
+local function uprightKeys()
+	local holder = real(chobbyObject("buttonsHolder"))
+	local win = holder and real(holder.parent)
+	if not (win and not win.disposed and win.visible ~= false and (holder.width or 0) > 0) then
+		return
+	end
+	local tabs, n = {}, 0
+	for _, c in ipairs(holder.children or {}) do
+		c = real(c)
+		for i, cap in ipairs(KEYS_TABS) do
+			if c.caption == cap then
+				tabs[i], n = c, n + 1
+			end
+		end
+	end
+	if n ~= #KEYS_TABS then
+		return
+	end
+	local x0, gap, h = 20, 6, 35
+	local w = math.floor((holder.width - x0 - 2 * gap) / 3)
+	if w >= 180 then -- (room for Chobby's one row)
+		return
+	end
+	local moved = false
+	for i, t in ipairs(tabs) do
+		local x, y = x0 + ((i - 1) % 3) * (w + gap), 13 + math.floor((i - 1) / 3) * (h + 4)
+		if t.x ~= x or t.y ~= y or t.width ~= w then
+			t:SetPos(x, y, w, h)
+			moved = true
+		end
+	end
+	local top = 13 + 2 * h + 4 + 6
+	for _, c in ipairs(win.children or {}) do
+		c = real(c)
+		if c.name == "imKeys" and (c.y ~= top or c.x ~= 1) then
+			c:SetPos(1, top, win.width - 20, win.height - top - 10)
+			moved = true
+		end
+	end
+	if moved then
+		Spring.Echo("[bardroid-lobby] Keys window upright: its tabs in two rows of three") -- (tools)
+	end
+end
+
 -- Chobby's notes (its Chotify: "Download Failed", downloads, invites) stack up from the screen's foot at its right,
 -- over the grid's page strip and its right arrow upright (dev phone, 2026-11-10): upright they stack up from above the
 -- grid, and the server bar while it is up; not upright, Chobby's own place
@@ -972,6 +1021,7 @@ local function uprightUpdate(now)
 	uprightRelayout()
 	uprightBattleRoom()
 	uprightScenario()
+	uprightKeys()
 	uprightRedraw()
 	uprightModal()
 	if bar and bar.visible then

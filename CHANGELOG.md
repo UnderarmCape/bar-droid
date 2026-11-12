@@ -105,7 +105,8 @@ The first version meant for other people's phones: everything since the first bu
   own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
   minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
-  in full, a scenario's page with its values clear of their labels and its records whole. Taps on the dock answer
+  in full, a scenario's page with its values clear of their labels and its records whole, the Keys window's six tabs
+  in two rows (the three Legacy ones were out of reach). Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
   formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks

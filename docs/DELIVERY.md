@@ -497,10 +497,13 @@ same, that stays the simpler way.
            a long press, speak to chat (today a three-finger tap).
         3. **LOS VIEW**: BAR's line-of-sight overlay on and off (its L key), lit while on.
         Each fits the half-row tile as the others; none needs BAR's code. Waiting for his pick.
-- [ ] **The lobby's Keys window upright** (2026-11-12, dev phone): Chobby's gui_keys_panel.lua lays its six tabs
+- [x] **The lobby's Keys window upright** (2026-11-12, dev phone): Chobby's gui_keys_panel.lua lays its six tabs
       (Keys, CTRL Keys, ALT Keys, three Legacy ones) in one row 180 pixels each; upright the row shows two and a half,
-      ALT Keys cut under Close and the Legacy ones out of reach, the keyboard picture small. It matters with a keyboard
-      only, and sideways it is whole: left as it is. Two rows of three upright (the picture under them) would cure it.
+      ALT Keys cut under Close and the Legacy ones out of reach, the keyboard picture small. Done the same day:
+      `bardroid_lobby_touch.lua` uprightKeys lays them upright in two rows of three as wide as the room left of Close
+      (when that room is under 180 a tab), the picture under them, again whenever Chobby's resize moves the picture
+      back. Dev phone upright: all six whole ("Legacy CTRL Keys" just fits), Legacy ALT Keys shows its picture,
+      no errors. The picture stays small: a wide picture in a tall window, as wide as the window allows.
 - [x] **The lobby's Settings, Graphics: Ingame / Menu Display Mode** (2026-11-12, dev phone upright): the tab's only
       two settings, meaningless on a phone, could a player break the picture with them? Menu Display Mode set to
       Fullscreen, then Windowed (Chobby's SetLobbyFullscreenMode 3 and 2; the engine's window attributes changed):
@@ -510,7 +513,8 @@ same, that stays the simpler way.
 - [x] **The phone tests after the night of 2026-11-12** (~05:50, dev phone, the build of 11ec9a2 with all that night's
       changes: the upright spectating cameras, the share list, the lobby's Replays row, the launcher's map list and
       status line): dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun,
-      -Share, -Chat) and pace-test all pass, ~16 minutes in all.
+      -Share, -Chat) and pace-test all pass, ~16 minutes in all. Again at ~08:15 on the build of 960b3d1 (the
+      container on the phone's time zone, Save keeping the selection and saying so): all 10 pass.
 - [x] **The phone tests after the evening's changes** (2026-11-10 ~21:50, dev phone; and 11-11 ~00:30 on the build
       with the lobby pointer patch, the icon's task and the updater's retry: fp-save-test, pad-test -Chat, dock-phone-test,
       lobby-phone-test all pass. The start view looked high in screenshots: measured, the start spot 190 px above the
