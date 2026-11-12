@@ -6,7 +6,12 @@
 -- hoveringElement), and that widget hears it before Top Bar Buttons (both layer -95000). Here a press on a button over
 -- that hidden part does what BAR's button does (gui_top_bar_buttons.lua applyButtonAction, through BAR's WG windows),
 -- any other press there is taken (not its hidden sliders), and the hidden parts' tooltips are taken away. BAR's own fix: docs/upstream/bar-topbar-hidden.patch; with it in BAR this
--- widget only repeats what BAR's buttons do. Installed into LuaUI/Widgets by the app.
+-- widget only repeats what BAR's buttons do.
+-- A save unpicks every unit: the engine clears the selection before it writes the game (Recoil's CregLoadSaveHandler
+-- SaveGame: a selection would leak on load), so after Save the dock fell back to its home page and the commander had to
+-- be picked again (dev phone, 2026-11-12, upright and sideways alike). The selection is noted when BAR's "savegame"
+-- action runs (the top bar's Save, here or BAR's own, and its key), before BAR's Save Game Menu does the save, and picked
+-- again once the save has cleared it. Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
@@ -36,6 +41,43 @@ local gameOver = false
 local tipsAt = 0
 local wasHidden = false
 local saidStrip = false
+local reselect, reselectLeft = nil, 0 -- the selection before a save, and the updates left to see the save clear it
+
+local function noteSelection()
+	local sel = Spring.GetSelectedUnits()
+	if #sel > 0 then
+		-- (the engine saves at its loop's next turn, before the next update: 3 updates and the selection still there,
+		-- the save did not happen, and a later unpick by the player is left alone)
+		reselect, reselectLeft = sel, 3
+	end
+	return false -- (BAR's Save Game Menu, after this widget in line, does the save)
+end
+
+local function pickAgain()
+	reselectLeft = reselectLeft - 1
+	if Spring.GetSelectedUnitsCount() == 0 then
+		local units = {}
+		for i = 1, #reselect do
+			if Spring.ValidUnitID(reselect[i]) and not Spring.GetUnitIsDead(reselect[i]) then
+				units[#units + 1] = reselect[i]
+			end
+		end
+		Spring.SelectUnitArray(units)
+		Spring.Echo("[bardroid-topbar] the save unpicked the units: " .. #units .. " picked again")
+		reselectLeft = 0
+	end
+	if reselectLeft <= 0 then
+		reselect = nil
+	end
+end
+
+function widget:Initialize()
+	widgetHandler:AddAction("savegame", noteSelection, nil, "t")
+end
+
+function widget:Shutdown()
+	widgetHandler:RemoveAction("savegame")
+end
 
 -- where BAR's hidden resource bars and indicators are on its top bar (x0, y0, x1; GL), or nil when none is hidden or the
 -- dock is not up. (Without BAR's Top Bar running, Top Bar Buttons' stand-in GetFreeArea starts where it ends: nothing.)
@@ -107,6 +149,9 @@ function widget:MousePress(x, y, button)
 end
 
 function widget:Update()
+	if reselect then
+		pickAgain()
+	end
 	local now = os.clock()
 	if now < tipsAt then
 		return
