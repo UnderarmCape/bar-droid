@@ -756,6 +756,58 @@ local function uprightBattleRoom()
 	Spring.Echo("[bardroid-lobby] battle room upright: the teams over its buttons and states, the map beside them") -- (tools)
 end
 
+-- A scenario's page upright (Chobby's gui_scenario_window.lua, laid out in shares of its panel for a wide one): its
+-- values 16 % in ran into their labels ("Est. Resource50K metal"), the loss condition over the map, "Personal Records"
+-- cut at the panel's edge (dev phone, 2026-11-12). Upright the values from 24 % and 36 % wide, the map 40 % wide (from
+-- 60 %), the records' column from 73 %, the picture and the briefing to 71 % (74 %: under the records' first letters).
+-- Each pick of a scenario makes its page anew.
+local scenariosLaidOut = setmetatable({}, { __mode = "k" })
+local function uprightScenario()
+	local mark -- (the page's "Est. Resources" label: new with each page)
+	local function find(o, depth)
+		if mark or not o or depth > 30 or o.visible == false then
+			return
+		end
+		if o.caption == "Est. Resources" then
+			mark = o
+			return
+		end
+		for _, c in ipairs(o.children or {}) do
+			find(c, depth + 1)
+		end
+	end
+	find(real(chobbyObject("holder_mainWindow")), 0)
+	mark = real(mark)
+	local panel = mark and real(mark.parent)
+	if not panel or scenariosLaidOut[mark] then
+		return
+	end
+	scenariosLaidOut[mark] = true
+	local function set(o, left, width, height)
+		o._givenBounds.left, o._relativeBounds.left = left, left
+		o._relativeBounds.width = width
+		if height then
+			o._relativeBounds.height = height
+		end
+		o:UpdateClientArea()
+	end
+	for _, c in ipairs(panel.children or {}) do
+		local b = c._relativeBounds
+		if b and b.left == "16%" and b.width == "50%" then
+			set(c, "24%", "36%")
+		elseif b and b.right == "0%" and b.width == "47%" and b.height == "47%" then -- (the map)
+			c._relativeBounds.width, c._relativeBounds.height = "40%", "40%"
+			c:UpdateClientArea()
+		elseif b and b.left == "76%" and (b.width == "20%" or b.width == "25%") then -- (the records; Start keeps its place)
+			set(c, "73%", "27%")
+		elseif b and b.width == "74%" then -- (the picture and the briefing under it: to 71 %, clear of the records)
+			c._relativeBounds.width = "71%"
+			c:UpdateClientArea()
+		end
+	end
+	Spring.Echo("[bardroid-lobby] scenario page upright: values clear of their labels, the map narrower") -- (tools)
+end
+
 -- Chobby's notes (its Chotify: "Download Failed", downloads, invites) stack up from the screen's foot at its right,
 -- over the grid's page strip and its right arrow upright (dev phone, 2026-11-10): upright they stack up from above the
 -- grid, and the server bar while it is up; not upright, Chobby's own place
@@ -919,6 +971,7 @@ local function uprightUpdate(now)
 	uprightMirror()
 	uprightRelayout()
 	uprightBattleRoom()
+	uprightScenario()
 	uprightRedraw()
 	uprightModal()
 	if bar and bar.visible then
