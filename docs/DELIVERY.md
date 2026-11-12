@@ -497,6 +497,12 @@ same, that stays the simpler way.
            a long press, speak to chat (today a three-finger tap).
         3. **LOS VIEW**: BAR's line-of-sight overlay on and off (its L key), lit while on.
         Each fits the half-row tile as the others; none needs BAR's code. Waiting for his pick.
+- [x] **The lobby's Settings, Graphics: Ingame / Menu Display Mode** (2026-11-12, dev phone upright): the tab's only
+      two settings, meaningless on a phone, could a player break the picture with them? Menu Display Mode set to
+      Fullscreen, then Windowed (Chobby's SetLobbyFullscreenMode 3 and 2; the engine's window attributes changed):
+      the lobby stayed whole at the screen's size each time (the X server keeps a full-screen window at the screen's
+      size, patch 0003), and the next start came back Borderless (springsettings.cfg Fullscreen 0, WindowBorderless 1).
+      Left as they are. The Lobby tab upright fits too (the longest label just clears its checkbox).
 - [x] **The phone tests after the night of 2026-11-12** (~05:50, dev phone, the build of 11ec9a2 with all that night's
       changes: the upright spectating cameras, the share list, the lobby's Replays row, the launcher's map list and
       status line): dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun,
