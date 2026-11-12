@@ -171,7 +171,7 @@ which folds the dock to a SHOW button at the bottom.
   as a PC does), but the game keeps pace, so you stay caught up (a spectated 8v8 with ~3,600 units ran at x0.97-1.02
   of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / no cap).
 - A match uses about 5–6 GB of memory; close other big apps first.
-- Maps downloaded for games are kept under 3 GB by default (launcher: Map storage, 3 / 5 / 10 GB or no limit): before
+- Maps downloaded for games are kept under 3 GB by default (launcher: Map storage, 3 / 5 GB or no limit): before
   a game starts, the maps played longest ago are deleted, and they download again when a game needs them. BAR itself
   stays about 2.3 GB across its updates.
 - Joining a running game catches up first (the screen shows how long it has left).

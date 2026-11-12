@@ -72,7 +72,6 @@
     <string name="lbl_map_cap_now">%1$s. Now: %2$s in %3$d maps</string>
     <string name="rb_map3">3 GB</string>
     <string name="rb_map5">5 GB</string>
-    <string name="rb_map10">10 GB</string>
     <string name="rb_map_none">No limit</string>
     <string name="cb_capture_shortcuts">Keyboard shortcuts go to the game\nAlt+Tab, the Windows key, Ctrl+Space and the soft keyboard\'s language switch reach BAR while it is in front, not Android, One UI or DeX. Off: Android\'s own</string>
     <string name="key_capture_service">Beyond All Reason keyboard shortcuts</string>

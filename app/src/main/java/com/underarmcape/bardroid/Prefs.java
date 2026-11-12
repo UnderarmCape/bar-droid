@@ -176,7 +176,7 @@ public final class Prefs {
         upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
         lateDrop = s.getBoolean("lateDrop", lateDrop);
         mapCapMb = s.getInt("mapCapMb", mapCapMb);
-        if (mapCapMb != 0 && mapCapMb != 3072 && mapCapMb != 5120 && mapCapMb != 10240) {
+        if (mapCapMb != 0 && mapCapMb != 3072 && mapCapMb != 5120) {
             mapCapMb = MAP_CAP_DEFAULT_MB;
         }
         aiName = s.getString("aiName", aiName);

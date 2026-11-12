@@ -497,8 +497,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).check(
                 Prefs.fpsCap == 30 ? R.id.rbFps30 : Prefs.fpsCap == 60 ? R.id.rbFps60 : R.id.rbFpsNone);
         ((android.widget.RadioGroup) findViewById(R.id.rgMapCap)).check(
-                Prefs.mapCapMb == 5120 ? R.id.rbMap5
-                        : Prefs.mapCapMb == 10240 ? R.id.rbMap10 : Prefs.mapCapMb == 0 ? R.id.rbMapNone : R.id.rbMap3);
+                Prefs.mapCapMb == 5120 ? R.id.rbMap5 : Prefs.mapCapMb == 0 ? R.id.rbMapNone : R.id.rbMap3);
         mapCapLabel();
         ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).check(
                 Prefs.renderScale == 85 ? R.id.rbRender85 : Prefs.renderScale == 70 ? R.id.rbRender70
@@ -544,8 +543,7 @@ public class LauncherActivity extends AppCompatActivity {
         int cap = ((android.widget.RadioGroup) findViewById(R.id.rgFpsCap)).getCheckedRadioButtonId();
         Prefs.fpsCap = cap == R.id.rbFps30 ? 30 : cap == R.id.rbFps60 ? 60 : 0;
         int maps = ((android.widget.RadioGroup) findViewById(R.id.rgMapCap)).getCheckedRadioButtonId();
-        Prefs.mapCapMb = maps == R.id.rbMap5 ? 5120 : maps == R.id.rbMap10 ? 10240
-                : maps == R.id.rbMapNone ? 0 : 3072;
+        Prefs.mapCapMb = maps == R.id.rbMap5 ? 5120 : maps == R.id.rbMapNone ? 0 : 3072;
         int res = ((android.widget.RadioGroup) findViewById(R.id.rgRenderScale)).getCheckedRadioButtonId();
         Prefs.renderScale = res == R.id.rbRender85 ? 85 : res == R.id.rbRender70 ? 70 : res == R.id.rbRenderNative ? 0 : 100;
         Prefs.upscale = ((CheckBox) findViewById(R.id.cbUpscale)).isChecked();

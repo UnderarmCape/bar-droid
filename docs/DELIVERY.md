@@ -1201,7 +1201,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] **A rolling map storage limit** (Kailil, 2026-11-11: "a rolling map download size limit ... rotate downloaded
       maps"; then "Move forward with that. At the max map size to 3gb"). What grows is maps (20 to 150 MB each); BAR's
       rapid pool stays ~2.26 GB across releases (they share files: 25 MB of the dev phone's pool was only for older
-      releases). `MapStore`: launcher setting Map storage (3 GB by default; 5, 10 GB, no limit); before an engine
+      releases). `MapStore`: launcher setting Map storage (3 GB by default; 5 GB, no limit: a 10 GB choice made "No limit" wrap
+      on the unfolded Fold7's width); before an engine
       starts (`GameService`), the maps played longest ago are deleted (with their `.md5.gz`) until the rest fit, never
       the one played last nor the launcher's Play vs AI map; last uses from the engine's `[CAS::GASCB] Archive file=`
       line as a game loads (`/data` is noatime), `.bardroid-maps-used`; a map never seen counts from its download.
