@@ -19,7 +19,8 @@ The first version meant for other people's phones: everything since the first bu
   maps played longest ago are deleted until the rest fit; a map downloads again when a game needs it. The lobby opens
   without BAR's Rapid Pool Cache (it read all of BAR's 2.2 GB at every start, the lobby at half its frame rate for
   ~30 s, and measured on an 8 GB phone, games loaded ~11 s slower after it); the lobby's Settings can turn it back
-  on. With no network at all the lobby's downloads fail at once instead of trying each four times.
+  on. With no network at all the lobby's downloads fail at once instead of trying each four times. The lobby's
+  Replays tab has no Open Folder (a phone has no folder view for the app's own storage).
 - The app is a game for Android and One UI: Game Booster and Gaming Hub see it, and Android's performance game mode
   (Game Booster's game performance, or `cmd game mode performance`) gave 1-2 fps more in a late 8v8 on a hot S23 Ultra.
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is
@@ -109,12 +110,13 @@ The first version meant for other people's phones: everything since the first bu
   building queued a one-finger drag pans instead of drawing a move path. COMMANDER frames a wider view.
 - Spectating upright: the same dock with big buttons (player cameras, TEAMS to watch any team, LAST PINGS, follow a
   unit and its camera views, FREE CAM, GROUP, FULL VIEW) and HIDE, which folds it to a SHOW button. A unit followed
-  stays in the middle of the game above the dock (Shoulder turned down onto it, whole); AI teams go by the names BAR
-  gives them, in TEAMS and the gamepad's share list.
+  stays in the middle of the game above the dock (Shoulder turned down onto it and far enough back to show it whole,
+  1st person looking ahead rather than into the sky); AI teams go by the names BAR gives them, in TEAMS and the
+  gamepad's share list.
 - Joining an online game upright: the "Waiting for server response" screen fitted to the screen, with Free memory; the
   lobby's first BAR picture sharper.
 - A game alone (a replay, or no other active player) pauses while the app is out of sight and goes on when you come
-  back. The launcher's map field lists the maps you have.
+  back. The launcher's map field lists the maps you have, again after a game downloaded or removed some.
 
 **Controllers, mouse and keyboard**
 - Gamepads: a mouse in the lobby, where Start switches its size between 100% and 130%; in every game (skirmish,
