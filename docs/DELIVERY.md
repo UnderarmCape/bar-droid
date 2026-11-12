@@ -887,6 +887,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's files are in the archive
       checksum.) Left: BAR merging it (Kailil and the devs); then a taller layout for upright screens (their text is
       small at the landscape shape).
+- [ ] **BAR's top bar: a 4-digit amount runs into its storage number** (found 2026-11-12, dev phone sideways, a
+      replay started from the lobby's Replays tab): `gui_top_bar.lua` centres the current amount on its bar
+      (`barArea[1] + barWidth / 2`, `height / 2.5 * widgetScale`) and right-aligns the smaller storage number at the
+      bar's end (`barArea[3]`); at the app's interface scale 2.0 sideways the bar is short for its font, and "1000"
+      touches "1000" (any amount of four digits or more, so most of a game). Next: an upstream patch (the amount kept
+      left of the storage number when they would meet), tested by a same-size pool swap (`docs/upstream/README.md`).
+      The same run: the lobby's flow to a replay and back (Replays, Start, the top bar's Lobby, Return to Battle, Leave
+      Battle, the engine's reload into the lobby) without errors; the lobby's Lua state carries through (Rapid Pool
+      Cache stays stopped, the Replays row stays fixed); the pointer from the in-game tap shows until the next finger.
 - [ ] **BAR's pregame texts upright** (found 2026-11-12, dev phone, an 8v8 replay's draft pregame spectated upright):
       `map_start_position_suggestions.lua`'s tutorial ("Recommended start positions are the circles ...", shown until
       it has run once, or with BAR's tutorial notes on) sizes its font by the screen's height (vsy / 1440) and wraps at
