@@ -108,12 +108,16 @@ The first version meant for other people's phones: everything since the first bu
   minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
   in full, a scenario's page with its values clear of their labels and its records whole, the Keys window's six tabs
-  in two rows (the three Legacy ones were out of reach). Taps on the dock answer
+  in two rows (the three Legacy ones were out of reach). The lobby sideways: all its buttons, Keys, Website and Login
+  too, in one column of large buttons down the left, close together, a swipe up or down for the next page; the
+  screens beside it take the whole height. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
   formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
-  PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there. Placing a building:
+  PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there. FACTORIES beside
+  them picks your next factory and brings the camera to it, its build menu in the dock to queue units. The dock's
+  menu stays open 2.6 s after the last touch (was 2). Placing a building:
   a drag moves it slowly at first for fine control, ROTATE and a large X beside PLACE, and while a picked unit has a
   building queued a one-finger drag pans instead of drawing a move path. COMMANDER frames a wider view.
 - Spectating upright: the same dock with big buttons (player cameras, TEAMS to watch any team, LAST PINGS, follow a
@@ -175,7 +179,9 @@ The first version meant for other people's phones: everything since the first bu
   first person no longer starts later games in that camera.
 - The launcher's start buttons use what the screen shows: a changed setting no longer needs Save settings first.
   Its status line and the notification say what is happening in the same words from the first moment ("Starting",
-  "Installing: ...", "Skirmish running"), and its buttons and settings no longer crowd their edges.
+  "Installing: ...", "Skirmish running"), and its buttons and settings no longer crowd their edges. On a narrow,
+  near-square screen (large display size or font) it is one scrolling page: the buttons scroll with the settings,
+  which before had a line or two left under them.
 - A Bluetooth or USB-C dock mouse and keyboard work as on a PC; Android's, One UI's and DeX's own keyboard shortcuts
   are kept out of the game.
 

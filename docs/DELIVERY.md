@@ -488,7 +488,10 @@ same, that stays the simpler way.
       - [x] **A toggle that hides the dock**, a small button at the bottom brings it back: HIDE (spectating) folds the
         dock to a SHOW button at the bottom's middle, the game on the whole screen; a tap on it (RtsTouch's act
         dock_menu, or a click) opens the dock again. Dev phone: hidden, then shown.
-      - [ ] **The button for the home grid's open place** (beside PINGS): Kailil asked for help choosing. Candidates
+      - [x] **The button for the home grid's open place** (beside PINGS): Kailil, 2026-11-12: "lets do FACTORIES for the
+        button beside PINGS". Done: FACTORIES picks your next finished factory (again: the next) and puts the camera on
+        it at COMMANDER's distance, the dock then on its build menu; dim while you have none (BAR's unit counts, no
+        scan of your units each refresh). Candidates were
         (2026-11-12; not idle units or builders, his 11-11 call: the idle builders are in the groups row):
         1. **FACTORIES** (recommended): a tap picks your next factory and puts the camera on it, as COMMANDER cycles
            (the dock then shows its build menu to queue units). Queuing units is the most frequent errand that has no
@@ -1295,7 +1298,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       59.1 and 64.0 s; the first minute cold 29.1 / 28.9 fps with its slowest frame 393 / 402 ms, warm 28.7 / 29.3
       fps, 1169 / 583 ms; the second minute alike (30 fps, slowest ~55-65 ms). On an 8 GB phone the pre-read files
       take the memory the load needs: slower and a worse first minute, no smoother after. Off stays (launch-bar.sh's
-      once-off setting and bardroid_lobby_touch.lua); the Fold7's 12 GB not measured.
+      once-off setting and bardroid_lobby_touch.lua); the Fold7's 12 GB not measured. Kailil, 2026-11-12, asked
+      whether it stays off or goes back on: "off". Settled.
 - [ ] Playing with no connection (dev phone, 2026-11-08, Wi-Fi and data off; Kailil's road trip): the launcher's Play vs
       AI starts at once on what is installed (the update check gives up on the first "Unable to resolve host"), and
       the lobby opens "Offline" with its Skirmish screens. But the lobby's quick skirmish picks from four maps a mode
@@ -1348,7 +1352,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       against off was not run: its cost (0.01-0.1 ms a frame) is far below the benchmark's run-to-run noise.
       `WorkerThreadCount` 7 (the research batch's one lead) checked in three alternating pairs: no gain on a hot
       phone, 4 stays (HISTORY.md "Overnight").
-- [ ] **`tools/spectate-test.ps1`: 4 FAILED on 2026-11-11 ~19:50** (run on the laptop by mistake, without Kailil's
+- [x] **`tools/spectate-test.ps1`: 4 FAILED on 2026-11-11 ~19:50** (Kailil, 2026-11-12, asked whether it may run
+      again on the laptop: "no". Closed on the phone checks below; the tool stays for a run he allows.) (run on the laptop by mistake, without Kailil's
       yes; laptop BAR waits for it): double tap on the ground did not stop following, double tap on a unit did not
       follow it, 1st person's two checks (mode 0, facing 0.42-0.43). That run had 94faec7 (the follow's shift above the
       upright dock, which on the laptop's landscape screen has no dock and only keeps the point on the map) and
@@ -1363,12 +1368,38 @@ Added 2026-11-10 ~05:00 (with screenshots):
       that share (dockShare), the commander whole at 1080x2316 and at 1080x1198. The pad's own 1st person
       (`bardroid_padfp.lua`) has the same sky upright, but its crosshair and aim are at the screen's middle, which
       upright is the game's lower part: left as it is while the pad plays sideways (the open "gamepad upright" item).
-- [ ] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
+- [ ] **One touch layout for both orientations** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
+      vertical touch sytem onto the phone's landscape system ... Unless we split the right and left half of the botom
+      UI and shove a map into the middle with the eco bars on top of it, so the top row isnt empty with eco stuff and
+      that returns vertical real estate back to the actual game world. and the left and right thumbs will have
+      sufficient reach"). Mockups (claude.ai artifact "BAR Droid landscape touch layouts": today's landscape HUD; A
+      split dock: build left, minimap + eco middle, orders right; A folded to its middle in the camera-pad state; B
+      side rails; C thumb arcs). His pick, the same day: **A, the split dock**. Not started: his go-ahead for the
+      build.
+- [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
+      short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
+- [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
+      buttons on the left ... Make them big like the vertical buttons look. and move ALL buttons to the left side of the
+      page, even the buttons in the top right hand corner like login. so the main window has the full vertical space.
+      make all the buttons come together with minimal padding. allow swiping pages up and down. it will be a single
+      column of buttons"). bardroid_lobby_touch.lua side mode (upright.side): the upright grid's mirrored buttons as one
+      column down the left (a fifth of the width, 190-300), 60 high, 4 apart, Chobby's top buttons (Keys, Website,
+      Login) in it, its logo and status off (the connection state in the column's top line), the content from the
+      column to the right edge and the whole height; pages one under the other, a swipe up or down turns them
+      (the grid's snap), arrows up and down in its page strip. Upright keeps its grid; a turn of the phone swaps them
+      (Chobby's own layout back in between). Dev phone sideways, offline: 17 buttons, 13 a page, 2 pages; a swipe up
+      turned to page 2 (Plugins, Website, Keys, Exit), Plugins opened at the full height; lobby-phone-test and
+      dock-phone-test all pass on the build. Also tested that night: FACTORIES (an Aircraft Plant placed from the dock,
+      then FACTORIES picked it, the camera on it, its seven aircraft in the dock) and the launcher's one page.
+- [x] **The launcher's settings squeezed under its top block** (found 2026-11-12, dev phone at 1080x1198, 360 dp wide):
       one over the other (under 600 dp) the top block (title, status lines, buttons) takes the height it needs and the
       settings get the rest; at font size 1.3x the settings showed one line, at display density 600 and up none. Only
       on near-square screens under 600 dp (the Fold7 unfolded is wider at its default zoom and lays them side by side;
       tall phones have the height). A cure has to choose: cap the top block (its buttons may scroll out of sight) or
-      scroll both as one page. Not changed. The same night: the choice rows' 70 % step was never tried (a float loop
+      scroll both as one page. Kailil, 2026-11-12: "one scrolling page, (show me examples)", then of the examples
+      (normal and 1.3x font at 1080x1198) "the top one". Done: under 600 dp and under 1.5 times as tall as wide the
+      title, status lines and buttons go first in the settings' scroll (LauncherActivity.fitLayout), the device lines
+      under them; a tall phone keeps its buttons above the settings, a wide screen side by side. The same night: the choice rows' 70 % step was never tried (a float loop
       ended at 69.99999 %), fixed; the status line's "(no connection)" wrapped mid-bracket, now one piece.
 - [ ] Bugs found on the way, each with a check in `tools/spectate-test.ps1` or `tools/laptop-tests.ps1`. Night of
       2026-10-28: two in tonight's own caching (fixed, bdaae2e); the phone's launcher logs (58,000 lines, Kailil's
