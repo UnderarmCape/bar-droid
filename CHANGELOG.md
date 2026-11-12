@@ -19,8 +19,9 @@ The first version meant for other people's phones: everything since the first bu
   maps played longest ago are deleted until the rest fit; a map downloads again when a game needs it. The lobby opens
   without BAR's Rapid Pool Cache (it read all of BAR's 2.2 GB at every start, the lobby at half its frame rate for
   ~30 s, and measured on an 8 GB phone, games loaded ~11 s slower after it); the lobby's Settings can turn it back
-  on. With no network at all the lobby's downloads fail at once instead of trying each four times. The lobby's
-  Replays tab has no Open Folder (a phone has no folder view for the app's own storage).
+  on. With no network at all the lobby's downloads fail at once instead of trying each four times. The lobby's buttons
+  that open a folder (Replays' Open Folder, Links' Game Data, Plugins' Widgets Folder) are gone: a phone has no folder
+  view for the app's own storage, and the launcher's Share logs gives the logs.
 - The app is a game for Android and One UI: Game Booster and Gaming Hub see it, and Android's performance game mode
   (Game Booster's game performance, or `cmd game mode performance`) gave 1-2 fps more in a late 8v8 on a hot S23 Ultra.
 - Smaller on the phone: the Debian container holds only what the game loads (723 -> 375 MB; an earlier install is
@@ -100,7 +101,7 @@ The first version meant for other people's phones: everything since the first bu
   own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
   minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
-  in full. Taps on the dock answer
+  in full, a scenario's page with its values clear of their labels and its records whole. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
   formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
