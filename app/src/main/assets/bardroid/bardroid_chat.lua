@@ -196,9 +196,17 @@ local function layout()
 		chatMinimap = upright and mm or nil
 		local margin = math.floor(vsx * 0.02)
 		local top = math.min(p and p[2] or vsy * 0.94, vsy - mm) - fontSize * 0.5
+		-- (sideways the top bar's row is empty up to its buttons: the minimap is in the dock and BAR's resource bars are
+		-- hidden; the box up there, ending before the buttons, the game below it clear: dev phone 2026-11-12, the box
+		-- under an empty strip of the screen's top)
+		local fa = chatDocked and WG.topbar and WG.topbar.GetFreeArea and WG.topbar.GetFreeArea()
+		local stop = vsx - margin
+		if fa and fa[1] and fa[1] > vsx * 0.4 then
+			top, stop = vsy - fontSize * 0.4, fa[1] - margin
+		end
 		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, margin + ed.dx * vsx)))
 		boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, top + ed.dy * vsy)))
-		boxRight = math.floor(math.min(vsx - margin, boxLeft + (vsx - 2 * margin) * ed.size))
+		boxRight = math.floor(math.min(stop, boxLeft + (vsx - 2 * margin) * ed.size))
 	else
 		chatMinimap = nil
 		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, left + ed.dx * vsx)))
