@@ -1722,21 +1722,26 @@ end
 -- Hidden, and the two left of it (Download, More: Chobby anchors the row from the right, 130 apart) close the gap.
 -- The same for Links' last line, "Game Data: Open game data folder to find config files and logs." (WrapperLoopback's
 -- OpenFolder; on a phone the launcher's Share logs gives the logs): the line hidden, the last, so no gap.
-local replaysRow = { at = nil, done = false, linksDone = false }
+-- And Plugins' "Widgets Folder" (the first of its row: Contribute and Refresh move left into its place).
+local replaysRow = { at = nil, done = false, linksDone = false, pluginsDone = false }
 local function replaysRowCheck(now)
-	if (replaysRow.done and replaysRow.linksDone) or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
+	if (replaysRow.done and replaysRow.linksDone and replaysRow.pluginsDone)
+		or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
 		return
 	end
 	replaysRow.at = now
-	local refresh, gameData -- (Replays' Refresh by its tooltip, Links' Game Data by its caption: no names on them)
+	-- (Replays' Refresh by its tooltip, Links' Game Data and Plugins' Widgets Folder by their captions: no names on them)
+	local refresh, gameData, widgetsFolder
 	local function walk(o, depth)
-		if (refresh and gameData) or not o or depth > 40 then
+		if (refresh and gameData and widgetsFolder) or not o or depth > 40 then
 			return
 		end
 		if o.tooltip == "Refresh the list of replays" then
 			refresh = o
 		elseif o.caption == "Game Data" and o.classname ~= "label" then
 			gameData = o
+		elseif o.caption == "Widgets Folder" and o.classname ~= "label" then
+			widgetsFolder = o
 		end
 		for _, c in ipairs(o.children or {}) do
 			walk(c, depth + 1)
@@ -1748,6 +1753,26 @@ local function replaysRowCheck(now)
 		line:SetVisibility(false)
 		replaysRow.linksDone = true
 		Spring.Echo("[bardroid-lobby] Links: Game Data hidden (no folder to open on Android)") -- (tools)
+	end
+	widgetsFolder = not replaysRow.pluginsDone and real(widgetsFolder)
+	local bar = widgetsFolder and real(widgetsFolder.parent)
+	if bar then
+		local x0, y0, step = widgetsFolder.x, widgetsFolder.y, nil
+		for _, c in ipairs(bar.children or {}) do -- (the next one along: how far each moves)
+			if c ~= widgetsFolder and c.y == y0 and c.x > x0 and (not step or c.x - x0 < step) then
+				step = c.x - x0
+			end
+		end
+		widgetsFolder:SetVisibility(false)
+		for _, c in ipairs(bar.children or {}) do
+			-- (Contribute and Refresh, the next two: the search box on the same row, at its right, stays)
+			if step and c ~= widgetsFolder and c.y == y0 and c.x > x0 and c.x < x0 + 2.5 * step
+				and type(c.caption) == "string" and c.caption ~= "" and c.SetPos then
+				c:SetPos(c.x - step)
+			end
+		end
+		replaysRow.pluginsDone = true
+		Spring.Echo("[bardroid-lobby] Plugins: Widgets Folder hidden (no folder to open on Android)") -- (tools)
 	end
 	local row = not replaysRow.done and refresh and real(refresh.parent)
 	if not row then
