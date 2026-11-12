@@ -1112,7 +1112,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       smaller than every other order) go on two lines at up to the others' size where the button is tall enough
       (`make-ordermenu.py`; the phone's remake gives the copy byte for byte). Dev phone: "Place / Blueprint" at the
       other orders' size.
-- [ ] The whole picture in vertical stripes in a game's first frames (dev phone, 2026-11-04, BAR's game, game time
+- [x] The whole picture in vertical stripes in a game's first frames (dev phone, 2026-11-04, BAR's game, game time
       0:00, the engine just loaded: map, minimap, build and order menus, unit picture, every ~16 px; some text whole),
       clean by 0:25. The same pattern as the build menu's stuck stripes (fixed by drawing it again at 5 s) and the
       white columns in a pad-test screenshot: likely one GPU cause at a game's start, the heaviest frames (a frame
@@ -1141,6 +1141,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a pair with the new default, both whole (the tally 0 of 8 without UBWC, 2 of 10 with); 20:47, two more pairs,
       all four whole: 0 of 10 without, 2 of 12 with. Open until the
       first-frames stripes above are seen gone too (not reproduced on purpose so far).
+      2026-11-12 ~00:05, the first frames looked at on purpose: 6 skirmishes from the launcher, 4 with the default (UBWC
+      off) and 2 with UBWC on, screenshots ~1, ~6 and ~14 s after "finished loading" (game time 0:00-0:15): all 18
+      whole, the build menu whole at full size in the first second of both kinds. With the day's other starts none
+      striped since UBWC went off by default: closed; reopen with a screenshot if it shows again.
 - [x] The build menu's stripes past the 5 s redraw (dev phone, 2026-11-04 evening, the controller game, hot phone):
       still striped at frames 1110, 1803 and 5060, whole at once when a page change drew it again. Measured on the
       screenshot: the empty columns every ~28 screen pixels straight across the cells' borders, so the drawing into
