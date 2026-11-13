@@ -939,8 +939,10 @@ function widget:DrawWorld()
 	end
 	WG.buildmenu.droidPlace = function() -- (and the shape strip: a building picked, the shape, the buttons, a tap)
 		-- (a GRID held from a long press: GRID, its button lit; Kailil, 2026-11-12, ONE stayed lit over the grid)
-		-- (the fourth: the building about to be picked again, after PLACE or ONE: placing goes on)
-		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects, droid.again ~= nil
+		-- (the fourth: the building about to be picked again, after PLACE or ONE: placing goes on; the fifth: a GRID held
+		-- from a long press, which PLACE builds)
+		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects, droid.again ~= nil,
+			droid.gridHeld and true or false
 	end
 	WG.buildmenu.droidPress = droid.press
 	WG.buildmenu.droidSetShape = function(shape) -- (the portrait dock's own shape buttons: one, line, grid, border)

@@ -1068,6 +1068,12 @@ local function pregameFactions()
 	return #out > 1 and out or {}
 end
 
+-- the shapes in one row of four, PLACE two rows tall under them: sideways (one thumb), and upright where the half has
+-- three rows only (the Fold7 unfolded: under two rows of shapes PLACE was one row, its ROTATE and X a thin strip,
+-- dev phone at 1080x1198, 2026-11-12)
+function SP.shapeRow()
+	return L.thumb or (L.rightRows or 9) <= 3
+end
 local function placeShapes()
 	return {
 		{ kind = "shape", shape = "one", label = "ONE" }, { kind = "shape", shape = "line", label = "LINE" },
@@ -1714,7 +1720,7 @@ function refreshNow()
 	local leftRowsN, rightRowsN
 	cellsOf.left, leftRowsN = pack(leftItems, L.leftCols or 3)
 	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS
-		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and L.thumb) and 4
+		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and SP.shapeRow()) and 4
 		or L.rightCols or 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
@@ -2137,7 +2143,7 @@ local function half(side)
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
 	end
-	if rightKind == "place" and L.thumb then -- (sideways, one thumb: the four shapes in one row, PLACE the taller under it)
+	if rightKind == "place" and SP.shapeRow() then -- (the four shapes in one row, PLACE the taller under it: SP.shapeRow)
 		return L.right, rightScroll, rightItems, 4, floor((L.right[3] - L.right[1] - 3 * L.gap) / 4), L.btnH
 	end
 	return L.right, rightScroll, rightItems, L.rightCols or 2, L.btnW, L.btnH
@@ -2573,7 +2579,7 @@ local function placeRect()
 	if not (active and rightKind == "place") then
 		return nil
 	end
-	local top = L.right[4] - (L.thumb and 1 or 2) * (L.btnH + L.gap) - L.gap
+	local top = L.right[4] - (SP.shapeRow() and 1 or 2) * (L.btnH + L.gap) - L.gap
 	return { L.right[1], L.right[2], L.right[3], top }
 end
 
@@ -2588,7 +2594,8 @@ local function drawPlace()
 	if not p then
 		return
 	end
-	local ready = spot ~= nil
+	-- (lit too while a GRID from a long press waits: PLACE builds it, as the build menu copy's own panel shows)
+	local ready = spot ~= nil or (B.droidPlace and select(5, B.droidPlace()) == true)
 	button(p.all, ready and { 0.1, 0.5, 0.1, 1 } or { 0.1, 0.25, 0.1, 1 },
 		ready and { 0.25, 0.8, 0.25, 1 } or { 0.2, 0.35, 0.2, 1 })
 	-- (upright PLACE is the whole panel: its word clear of rotate and cancel, above them or beside them, wherever it is
