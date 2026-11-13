@@ -1145,9 +1145,9 @@ end
 -- near-square screen (the Fold7 unfolded upright) the login dialog is taller than the room above the grid: its
 -- Login / Register and Cancel lay under the grid (dev phone, wm size 1080x1198, 2026-11-10). While one is open the grid
 -- is hidden, the popup whole; it comes back as the popup goes.
--- Upright, a popup's text boxes (the login dialog's name, password and email) as wide as their row allows: Chobby
--- sizes them for the landscape window, a third of the upright one, a long email cut short beside an empty half (dev
--- phone screenshot, 2026-11-12). Each box once; its left edge where Chobby put it.
+-- A popup's text boxes (the login dialog's name, password and email) as wide as their row allows, upright and
+-- sideways: Chobby sizes them for the desktop's window, upright a third of the window, a long email cut short beside
+-- an empty half (dev phone screenshot, 2026-11-12). Each box once; its left edge where Chobby put it.
 upright.widened = setmetatable({}, { __mode = "k" })
 function upright.widenInputs(win)
 	local function walk(o, depth)
@@ -1209,9 +1209,9 @@ local function uprightModal()
 		local w = p.mainWindow and real(p.mainWindow)
 		if w and not w.disposed and w.visible ~= false then
 			modal = true
-			if not upright.side then
-				upright.widenInputs(w)
-			end
+			-- (sideways too: there the Register tab's boxes were 230 pixels in a 660 one, the rest of the row empty,
+			-- dev phone screenshot 2026-11-13)
+			upright.widenInputs(w)
 			break
 		end
 	end
