@@ -102,7 +102,7 @@
 
             <TextView style="@style/LauncherSection" android:text="@string/settings_game" />
 
-            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_map" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@+id/edMap" android:text="@string/lbl_map" />
             <!-- (14sp: the settings' size; the field's own 18sp stood out over every setting) -->
             <!-- (a text field that drops down the maps installed: LauncherActivity.installedMaps) -->
             <AutoCompleteTextView android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" android:completionThreshold="1" />
@@ -146,10 +146,10 @@
             <TextView style="@style/LauncherSection" android:text="@string/settings_advanced" />
 
             <!-- (the name and what it does above the field, as the map's and Mesa's) -->
-            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_workers" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@+id/edWorkers" android:text="@string/lbl_workers" />
             <EditText android:id="@+id/edWorkers" android:layout_width="64dp" android:layout_height="wrap_content" android:inputType="number" android:textSize="14sp" android:importantForAutofill="no" />
 
-            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="@string/lbl_mesa_url" />
+            <TextView style="@style/LauncherFieldLabel" android:layout_width="match_parent" android:layout_height="wrap_content" android:labelFor="@+id/edMesaUrl" android:text="@string/lbl_mesa_url" />
             <!-- (wrapped, the whole address shown: a single line ran off the screen mid-word) -->
             <EditText android:id="@+id/edMesaUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:inputType="textUri|textMultiLine" android:maxLines="4" android:imeOptions="actionDone" android:textSize="11sp" android:importantForAutofill="no" />
 
