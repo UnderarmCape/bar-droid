@@ -1152,7 +1152,8 @@ local function dgunParts()
 		local cy = d[2] + pad + words + rad
 		local cxL, cxR = floor(vsx * 0.13), vsx - floor(vsx * 0.13)
 		local fw, fh = floor(rad * 1.5), floor(rad * 0.95)
-		local fy0 = cy - floor(fh * 0.2)
+		local fy0 = cy - floor(fh / 2) -- (level with the sticks' middles: a third of its height above them, from when
+		-- MOVE and AIM were printed under the sticks, it stood off them, dev phone screenshot 2026-11-13)
 		-- (the X by the band's height too: by the width alone it was 53 pixels on the unfolded Fold7's narrow screen)
 		local c = floor(min(h * 0.2, max(vsx * 0.045, h * 0.17)))
 		return { l = { cxL, cy, rad }, r = { cxR, cy, rad }, float = true,

@@ -1008,6 +1008,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       ALL PASS; their screenshots showed the pad's reticle (the ring in the screen's middle) on the share list's middle
       row, over a teammate's name: not drawn while the list is open now (bardroid_pad.lua; -Share again ALL PASS, the
       ring gone from its screenshots).
+      Then: pad-test -Chat ALL PASS; the upright lobby and its offline login dialog looked right ("Battle, Started" in
+      the chat box is BAR's own message text, shown as BAR sends it). Sideways, the floating D-gun mode's two FIRE
+      buttons stood a third of their height above the sticks' middles (left from when MOVE and AIM were printed under
+      the sticks): level with them now (the dock file: sticks and FIREs at y 765). Dev phone: the right FIRE fired
+      ("D-GUN FIRED", the reload bars on both), its swipe to the middle turned full auto on (AUTO, "AIM: AUTO").
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
