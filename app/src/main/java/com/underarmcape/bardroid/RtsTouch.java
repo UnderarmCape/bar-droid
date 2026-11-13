@@ -119,6 +119,7 @@ final class RtsTouch {
     private static final class Dock {
         float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
         float[] live;   // the build options: their first tap acts though the dock is the camera pad (bardroid_portrait.lua)
+        float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
         boolean menu, circle, draw, dgun, dgunAuto;
     }
     private Dock dockCache;
@@ -209,6 +210,15 @@ final class RtsTouch {
 
     private final Runnable longPress = () -> {
         if (state != State.PENDING || gridHeld) return;
+        if (onPing(downX, downY)) {   // PING held: what is said next labels the ping the map's next tap drops (Kailil,
+            // 2026-11-12: "Holding the ping button should allows me to engage drop a ping with a voice chat text assigned
+            // to it. Like the vanilla game behavior how you can send a ping with words")
+            state = State.DONE;
+            view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            act("dock_voiceping");
+            if (this.voicePing != null) this.voicePing.run();   // (this.: declared further down)
+            return;
+        }
         if (placingOne && hoverAt(downX, downY) == HOVER_MAP) {   // (BAR: a right click would put the building away)
             moveX = curX; moveY = curY;
             startGrid();
@@ -509,6 +519,10 @@ final class RtsTouch {
             case MotionEvent.ACTION_DOWN: {
                 source("touch");
                 finishPlacedClick();
+                if (pingTapLater != null && !onPing(e.getX(), e.getY())) {   // (another touch: PING's single tap goes
+                    ui.removeCallbacks(pingTapLater);   // now, its click finished just below)
+                    pingTapLater.run();
+                }
                 finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
                 glideStopped = gliding && Math.hypot(flingVx, flingVy) >= minFling;
@@ -527,7 +541,10 @@ final class RtsTouch {
                 // (the build options take their first tap: the menu opens with it, and the touch is the menu's; Kailil,
                 // 2026-11-12, "dont require a tap first to engage ... The build menus and factory build menus should all
                 // have this")
-                if (inDock && !dock.menu && dock.live != null && inside(dock.live, toX(e.getX()), toY(e.getY()))) {
+                // (and PING: held at once, or tapped twice, it must not wait for the menu)
+                boolean onPingNow = inDock && dock.ping != null && inside(dock.ping, toX(e.getX()), toY(e.getY()));
+                if (inDock && !dock.menu && (onPingNow
+                        || dock.live != null && inside(dock.live, toX(e.getX()), toY(e.getY())))) {
                     act("dock_menu");
                     dock.menu = true;
                 }
@@ -767,7 +784,9 @@ final class RtsTouch {
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
         switch (state) {
             case PENDING:
-                if (!glideStopped) tap(downX, downY);   // (a tap that stopped the gliding map only stops it)
+                if (glideStopped) break;   // (a tap that stopped the gliding map only stops it)
+                if (onPing(downX, downY)) pingTap(downX, downY);
+                else tap(downX, downY);
                 break;
             case DRAG_WAIT:
                 int quick = hoverAt(downX, downY);
@@ -902,6 +921,7 @@ final class RtsTouch {
                     else if (d != null && f[0].equals("groups")) d.groups = r;
                     else if (d != null && f[0].equals("map")) d.map = r;
                     else if (d != null && f[0].equals("live")) d.live = r;
+                    else if (d != null && f[0].equals("ping")) d.ping = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }
@@ -1731,6 +1751,32 @@ final class RtsTouch {
 
     /** A gamepad button's game action (ControllerBridge, any thread). */
     void padAct(String name) { act(name); }
+
+    private Runnable voicePing;
+    /** What holding the dock's PING does (GameActivity: VoiceChat for a ping's label). */
+    void setVoicePing(Runnable r) { voicePing = r; }
+
+    /** Whether view point (x, y) is on the dock's PING (bardroid_portrait.lua's "ping" rect). */
+    private boolean onPing(float x, float y) {
+        Dock d = dock();
+        return d != null && d.ping != null && inside(d.ping, toX(x), toY(y));
+    }
+
+    // PING tapped: its own tap (the map's next tap a ping) once no second follows within THREE_DOUBLE_MS; a second makes
+    // it CHAT, speak to chat (Kailil, 2026-11-12: "double tap the ping button and it changes it to a chat button ... It
+    // will engage the voice chat chat system we built. Then after chat is sent. The button changes back to saying ping")
+    private Runnable pingTapLater;
+    private void pingTap(float x, float y) {
+        if (pingTapLater != null) {
+            ui.removeCallbacks(pingTapLater);
+            pingTapLater = null;
+            act("dock_chat");
+            if (voiceChat != null) voiceChat.run();
+            return;
+        }
+        pingTapLater = () -> { pingTapLater = null; tap(x, y); };
+        ui.postDelayed(pingTapLater, THREE_DOUBLE_MS);
+    }
 
     private Runnable voiceChat;
     // a three-finger tap: speak to chat unless a second one follows within THREE_DOUBLE_MS (Kailil, 2026-11-06: "Change

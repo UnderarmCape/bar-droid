@@ -95,7 +95,7 @@ to turn), triple tap and hold to tilt. A tap opens its menu for 2.6 seconds: the
 units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
 metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, FACTORIES (your next factory
 picked, the camera on it and its build menu in the dock to queue units; tap again for the next), PINGS (LAST PINGS: the camera to
-the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there),
+the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there; hold PING and say its label; tap PING twice to speak to chat),
 COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
 its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets
 or a picker are open, the menu stays open: tap the map for the spot (or drag it there: it moves slowly at first, for

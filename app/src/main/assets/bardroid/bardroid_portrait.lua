@@ -572,6 +572,9 @@ local function writeDock(force)
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
 			.. ((leftKind == "build" or leftKind == "pregame") and L.left[3] > 0 and not SP.hidden
 				and ("live " .. r(L.left) .. "\n") or "")
+			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
+			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
+				and ("ping " .. r(L.pingBtn) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
@@ -1221,8 +1224,9 @@ end
 -- The home grid's PINGS (Kailil, 2026-11-11): its left half the camera to the last 4 pings from others (the pad's list,
 -- RB + D-pad up's cycle), its right half a ping of your own where the map is tapped next (armed for PING_ARM seconds)
 local pingT = { armedAt = nil, rect = nil, pressX = nil, eat = false, drawn = nil, ARM = 10, KEPT = 4 }
-function pingT.armed()
+function pingT.armed() -- (and while PING held listens for its label: the map's tap is its spot)
 	return pingT.armedAt ~= nil and now() - pingT.armedAt < pingT.ARM
+		or pingT.voice ~= nil and pingT.voice.endedAt == nil
 end
 function pingT.look()
 	local Pd = WG.BarDroidPad
@@ -1245,6 +1249,97 @@ function pingT.state() -- (what the tile shows: "LAST PINGS" or "PING 2 OF 4", P
 		n, step = Pd.pingCount()
 	end
 	return min(n, pingT.KEPT), step, pingT.armed()
+end
+-- PING beside its own tap (Kailil, 2026-11-12): held (RtsTouch "dock_voiceping"), what is said labels the ping the map's
+-- next tap drops, "as the vanilla game ... send a ping with words" (pingT.voice while listening, with its spot when the
+-- map was tapped meanwhile; pingT.label once said); tapped twice ("dock_chat"), CHAT: speak to chat, the button flips to
+-- CHAT with a gold burst, "a sleak pop animation that fits the tone of the game", and back to PING the same way when
+-- the chat is sent or let go (pingT.chat: its start, its end)
+pingT.FLIP, pingT.GROW, pingT.BURST = 0.12, 0.24, 0.5 -- seconds: the old word squashes away, the new one pops in
+function pingT.ease(p) -- (ease out with an overshoot: the pop)
+	local c1 = 1.70158
+	return 1 + (c1 + 1) * (p - 1) ^ 3 + c1 * (p - 1) ^ 2
+end
+-- the flip's state at an age: the height (0..~1.1), whether the new word shows, the burst's progress (nil: none)
+function pingT.flip(age)
+	if age < pingT.FLIP then
+		return math.cos(age / pingT.FLIP * math.pi / 2), false, nil
+	end
+	local p = min(1, (age - pingT.FLIP) / pingT.GROW)
+	local burst = age - pingT.FLIP < pingT.BURST and (age - pingT.FLIP) / pingT.BURST or nil
+	return pingT.ease(p), true, burst
+end
+-- the app's lines for PING: its hold and double tap, and VoiceChat's state ("act voice_on", "voice_off", ...)
+function pingT.act(name)
+	local t, c, v = now(), pingT.chat, pingT.voice
+	if name == "dock_chat" then
+		pingT.armedAt, pingT.voice, pingT.label = nil, nil, nil
+		pingT.chat = { at = t }
+	elseif name == "dock_voiceping" then
+		pingT.chat = nil
+		pingT.voice, pingT.label, pingT.armedAt = { at = t }, nil, t
+	elseif name == "voice_on" and c then
+		c.on = true
+	elseif name == "voice_off" or name == "voice_none" or name == "voice_nomic" then
+		if c and not c.endAt then
+			c.endAt = t
+		end
+		if v and not v.endedAt then
+			v.endedAt = t
+		end
+	else
+		return
+	end
+	markDirty()
+end
+-- each frame: the flips drawn as they go, a chat that never began let go, a spoken ping with no words after the
+-- listening ended: dropped where the map was tapped, plain (else PING stays armed for a tap)
+function pingT.update()
+	local t, c, v = now(), pingT.chat, pingT.voice
+	if c then
+		if c.endAt and t - c.endAt > pingT.FLIP + pingT.BURST then
+			pingT.chat = nil
+		elseif not c.endAt and not c.on and t - c.at > 8 then
+			c.endAt = t
+		end
+		markDirty() -- (the flip, the burst, CHAT's glow)
+	end
+	if v then
+		if v.endedAt and t - v.endedAt > 1.5 or t - v.at > 40 then
+			pingT.voice = nil
+			if v.spot then
+				Spring.MarkerAddPoint(v.spot[1], v.spot[2], v.spot[3], "")
+				pingT.armedAt = nil
+			end
+			markDirty()
+		end
+	end
+end
+-- the words said for a ping (bardroid_touch.lua): taken when PING was held for them; with the spot already tapped the
+-- ping drops there now, else PING waits for the map's tap with them (BAR's 127 bytes at most, whole letters)
+function pingT.voicePing(text)
+	local v = pingT.voice
+	if not (v and now() - v.at < 40) then
+		return false
+	end
+	text = text:gsub("%s+", " "):gsub("^ ", "")
+	if #text > 127 then
+		local after = text:byte(128)
+		text = text:sub(1, 127)
+		if after >= 128 and after < 192 then
+			text = text:gsub("[\192-\255][\128-\191]*$", "")
+		end
+	end
+	pingT.voice = nil
+	if v.spot then
+		Spring.MarkerAddPoint(v.spot[1], v.spot[2], v.spot[3], text)
+		Spring.Echo("[bardroid-portrait] a spoken ping at " .. floor(v.spot[1]) .. " " .. floor(v.spot[3])) -- (tools)
+		pingT.armedAt = nil
+	else
+		pingT.label, pingT.armedAt = text:find("%S") and text or nil, now()
+	end
+	markDirty()
+	return true
 end
 function idleB.update()
 	local t = now()
@@ -2180,6 +2275,67 @@ local function textIn(text, x0, y0, x1, y1, size, color, f, wrap)
 	f:Print((color or "\255\235\235\235") .. text, (x0 + x1) / 2, (y0 + y1) / 2 - size * 0.32, size, "co")
 end
 
+-- PING's half of the tile (b): PING, TAP MAP (the label under it), SPEAK, or CHAT, as the states are
+function pingT.drawBtn(b, armed, th)
+	local t, c, v = now(), pingT.chat, pingT.voice
+	local word, sub = "PING", nil
+	local fill, edge = nil, nil
+	if v and not v.endedAt then
+		word, fill, edge = "SPEAK", { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 }
+		sub = v.spot and "PING SET" or nil
+	elseif armed then
+		word, fill, edge = "TAP MAP", { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 }
+		sub = pingT.label
+	end
+	local sy, burst = 1, nil
+	if c then
+		local chatFill, chatEdge = { 0.04, 0.2, 0.25, 0.95 }, { 0.25, 0.72, 0.85, 0.75 + 0.25 * math.sin(t * 6) ^ 2 }
+		local newWord
+		if c.endAt then -- (back to PING)
+			sy, newWord, burst = pingT.flip(t - c.endAt)
+			if not newWord then
+				word, sub, fill, edge = "CHAT", nil, chatFill, chatEdge
+			end
+		else
+			sy, newWord, burst = pingT.flip(t - c.at)
+			if newWord then
+				word, sub, fill, edge = "CHAT", nil, chatFill, chatEdge
+			end
+		end
+	end
+	local cx, cy, w, h = (b[1] + b[3]) / 2, (b[2] + b[4]) / 2, b[3] - b[1], b[4] - b[2]
+	local sx = max(1, sy) -- (the pop: as wide as it is tall past 1)
+	local r = { cx - w * sx / 2, cy - h * sy / 2, cx + w * sx / 2, cy + h * sy / 2 }
+	if burst then -- (a gold ring bursting out of the button and fading)
+		local k = 1 + 0.32 * burst
+		local a = 0.85 * (1 - burst)
+		local lw = max(2, floor(h * 0.045))
+		local x0, y0, x1, y1 = cx - w * k / 2, cy - h * k / 2, cx + w * k / 2, cy + h * k / 2
+		x0, x1 = max(x0, L.dock[1] + 1), min(x1, L.dock[3] - 1) -- (inside the dock: past the screen's edge it was cut)
+		gl.Color(1, 0.82, 0.35, a)
+		gl.Rect(x0, y0, x1, y0 + lw)
+		gl.Rect(x0, y1 - lw, x1, y1)
+		gl.Rect(x0, y0, x0 + lw, y1)
+		gl.Rect(x1 - lw, y0, x1, y1)
+		gl.Color(1, 1, 1, 1)
+	end
+	if r[4] - r[2] < 2 then
+		return
+	end
+	button(r, fill, edge)
+	if sy < 0.25 then -- (the word too squashed to read: none)
+		return
+	end
+	local size = th * min(1, sy)
+	if sub then
+		local mid = r[2] + (r[4] - r[2]) * 0.38
+		textIn(word, r[1], mid, r[3], r[4], size * 0.9, "\255\240\240\240", font)
+		textIn(sub, r[1], r[2], r[3], mid, size * 0.6, "\255\255\215\120", font)
+	else
+		textIn(word, r[1], r[2], r[3], r[4], size, "\255\240\240\240", font)
+	end
+end
+
 local function drawTile(item, r)
 	local w, h = r[3] - r[1], r[4] - r[2]
 	if item.kind == "alltypes" then
@@ -2270,7 +2426,7 @@ local function drawButton(item, r)
 		return
 	end
 	if item.kind == "pings" and leftKind == "spec" then -- (spectating: LAST PINGS alone, Kailil 2026-11-11)
-		pingT.rect = r
+		pingT.rect, L.pingBtn = r, nil
 		local n, step = pingT.state()
 		pingT.drawn = step .. ""
 		button(r)
@@ -2287,16 +2443,12 @@ local function drawButton(item, r)
 		local gap = max(2, floor(L.gap / 2))
 		local a, b = { r[1], r[2], mx - gap, r[4] }, { mx + gap, r[2], r[3], r[4] }
 		button(a)
-		if armed then
-			button(b, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
-		else
-			button(b)
-		end
 		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
 		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
 			n > 0 and "\255\240\240\240" or "\255\140\140\140", font, true)
 		pingT.badge(a, n)
-		textIn(armed and "TAP MAP" or "PING", b[1], b[2], b[3], b[4], th, "\255\240\240\240", font)
+		L.pingBtn = b -- (RtsTouch's "ping": its hold and its double tap; L: writeDock comes before pingT)
+		pingT.drawBtn(b, armed, th)
 		return
 	end
 	if item.kind == "preset" and WG.BarDroidPresets then -- (its thumbnail, its name under it)
@@ -2971,6 +3123,10 @@ local function dockLines()
 			end
 			touched()
 		end
+		local any = line:match("^act (%S+)")
+		if any and active then -- (PING held or tapped twice, and speak to chat's state: pingT)
+			pingT.act(any)
+		end
 		local name = line:match("^act (dock_%S+)")
 		if name == "dock_menu" and active and SP.hidden then -- (the SHOW button tapped: the dock back)
 			SP.setHidden(false)
@@ -3123,6 +3279,7 @@ function widget:Update(dt)
 			markDirty()
 		end
 	end
+	pingT.update() -- (CHAT's flips, a spoken ping's end)
 	if rightKind == "dgun" then
 		DG.follow(dt)
 	else
@@ -3730,10 +3887,17 @@ function widget:MousePress(x, y, btn)
 	if active and btn == 1 and pingT.armed() and (onMap or not inRect(x, y, L.dock)) then -- PINGS' PING: a ping where the map is
 		-- tapped (on the minimap: the place it shows), as BAR's own point marker
 		local kind, pos = Spring.TraceScreenRay(x, y, true, true)
-		if kind == "ground" and pos then
-			Spring.MarkerAddPoint(pos[1], pos[2], pos[3], "")
-			Spring.Echo("[bardroid-portrait] a ping at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
-			pingT.armedAt = nil
+		local v = pingT.voice
+		if kind == "ground" and pos and v and not v.endedAt then -- (PING held, its words not in yet: the spot, the
+			-- ping drops there with them)
+			v.spot = { pos[1], pos[2], pos[3] }
+			Spring.Echo("[bardroid-portrait] a spoken ping's spot at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
+			markDirty()
+		elseif kind == "ground" and pos then
+			Spring.MarkerAddPoint(pos[1], pos[2], pos[3], pingT.label or "") -- (with what was said for it, if PING was held)
+			Spring.Echo("[bardroid-portrait] a ping at " .. floor(pos[1]) .. " " .. floor(pos[3])
+				.. (pingT.label and " with its words" or "")) -- (tools)
+			pingT.armedAt, pingT.label = nil, nil
 			markDirty()
 		end
 		pingT.eat = true
@@ -3971,6 +4135,12 @@ function widget:Initialize()
 			return menu
 		end,
 		refresh = refresh, -- (bardroid_presets.lua: its presets opened or closed)
+		voicePing = pingT.voicePing, -- (bardroid_touch.lua: words said for PING held; true: taken)
+		pingState = function() -- (tools: PING's states: chat started and ended, a spoken ping waiting, its label)
+			local c, v = pingT.chat, pingT.voice
+			return { chat = c and (c.endAt and "ending" or "on") or nil, voice = v and (v.spot and "spot" or "listening") or nil,
+				label = pingT.label, armed = pingT.armed() }
+		end,
 		cameraTo = cameraTo, -- (bardroid_touch.lua: a point in the middle of the game above the dock; a loaded game)
 		-- (tools/dock-phone-test.ps1: the first item of a half the test function takes: its cell (GL pixels, where it is
 		-- drawn now: off the half when scrolled away) and the item)

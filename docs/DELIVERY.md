@@ -1442,6 +1442,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       front row's own reach, 600 at most. Dev phone upright: dock-phone-test's STRAFE line (6 Pawns, 327 elmos: one
       row 65 apart, then side to side, 300 elmos, repeat on) ALL PASS; BATTLE LINE tapped with 4 Pawns, 3 Rocketeers,
       2 Hammers (repeat on beforehand): repeat off on the way, all 9 there 27 s later, then side to side on repeat.
+- [x] **Kailil, 2026-11-12, PING and CHAT**: "Holding the ping button should allows me to engage drop a ping with a
+      voice chat text assigned to it. Like the vanilla game behavior how you can send a ping with words. Also, allow me
+      to be able to double tao the ping button and it changes it to a chat button with a sleak pop animation that fits
+      the tone of the game. It will engage the voice chat chat system we built. Then after chat is sent. The button
+      changes back to saying ping. With an animation." Done: the dock file's "ping" rect (PING's half of PINGS);
+      RtsTouch: held, `dock_voiceping` and VoiceChat for a ping's label; tapped twice within 350 ms, `dock_chat` and
+      speak to chat (a single tap waits those 350 ms, then arms PING as before); PING takes the first touch with the
+      menu shut. bardroid_portrait.lua pingT: held, SPEAK (gold), the map's tap meanwhile is the spot; the words
+      (bardroid_touch.lua hands them to the dock first) drop BAR's labelled ping there, or PING waits as TAP MAP with
+      the words under it; no words: the spot gets a plain ping. CHAT: the button squashes away and pops back teal as
+      CHAT with a gold ring bursting out, glowing while listening, and flips back to PING the same way at `voice_off`.
+      Dev phone (microphone revoked): a double tap: CHAT, the phone's "no microphone", back to PING; a hold: SPEAK,
+      then PING armed; injected words: spot then words ("attack here") and words then spot ("go here", shown under TAP
+      MAP) each made BAR's point marker with the label; CHAT's frames with voice_on / voice_off injected, three rounds.
+      Once the GPU driver's "submit failed" fault ended the game as CHAT began; three rounds after it ran clean.
 - [ ] **The sideways dock for one thumb: built, his test pending** (Kailil, 2026-11-12: "Only have the map show when no
       units selected. And keep the bottom ui two slots only instead of 3 slots ... So the bottom ui can be snapped to
       the left side or right side of the bottom of the phone so it can be used by one finger only. Add a button or

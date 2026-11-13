@@ -110,7 +110,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   Shift+Alt: the left button stays down from the GRID's start to PLACE, the engine draws and places it). `bardroid_pad.lua`'s
   QUEUE button is a sticky Shift for fingers (`RtsTouch.applyQueue`). A three-finger tap (double: the keyboard) and the pad's LB held +
   RB twice are speak to chat (`VoiceChat`: Android's SpeechRecognizer, the words hex-encoded as a `voice` line to
-  `bardroid_chat.lua`); LB held + RB three times a spoken ping label (`voiceping`, `bardroid_pad.lua` voicePing). The pad's
+  `bardroid_chat.lua`); LB held + RB three times a spoken ping label (`voiceping`, `bardroid_pad.lua` voicePing); the touch dock's PING
+  held is one too (RtsTouch `dock_voiceping` from the dock file's "ping" rect; `bardroid_portrait.lua` pingT takes the
+  words first), PING tapped twice speak to chat (`dock_chat`, the button flips to CHAT until `voice_off`). The pad's
   own modes (`bardroid_pad.lua`, "modal dgun|share" in bardroid_pad.txt): v0.8.5's D-gun mode and the share list;
   a click at a point the game asks for ("clickat") is `PadGame.clickIfAsked`. The late-game resolution drop
   (`Prefs.lateDrop`): `bardroid_touch.lua` writes `bardroid_scale.txt`, `GameActivity.updateRenderDrop` shrinks the

@@ -117,14 +117,18 @@ The first version meant for other people's phones: everything since the first bu
   in two rows (the three Legacy ones were out of reach). The lobby sideways: all its buttons, Keys, Website and Login
   too, in one column of large buttons down the left, close together, a swipe up or down for the next page; the
   screens beside it take the whole height. Taps on the dock answer
-  with a light vibration. The dock's presets (STRAFE: fight to the destination and strafe across it on repeat; three
-  formations) are aimed with a finger and sent where it lifts; PLACE and the presets take the first tap.
+  with a light vibration. The dock's presets (STRAFE: a line abreast with gaps; three formations, the ranged behind the front
+  by their reach) go where the map is tapped, or a line drawn on the map is their front, as wide; there each unit
+  fights side to side across its place on repeat, the group together. PLACE, the presets and the build menus take the
+  first tap; the dock stays open while a building is being placed.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
-  PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there. FACTORIES beside
+  PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with
+  words); PING tapped twice: CHAT, speak to chat, with a flip back to PING when it is sent. FACTORIES beside
   them picks your next factory and brings the camera to it, its build menu in the dock to queue units. The dock's
   menu stays open 2.6 s after the last touch (was 2). Placing a building:
-  a drag moves it slowly at first for fine control, ROTATE and a large X beside PLACE, and while a picked unit has a
+  a drag moves it slowly at first for fine control, ROTATE and X across PLACE's bottom, a GRID only from a still long
+  press (lit while held; ONE ends it), BAR's own blueprint while moving it, a factory's INSERT puts the unit first, and while a picked unit has a
   building queued a one-finger drag pans instead of drawing a move path. COMMANDER frames a wider view.
 - Spectating upright: the same dock with big buttons (player cameras, TEAMS to watch any team, LAST PINGS, follow a
   unit and its camera views, FREE CAM, GROUP, FULL VIEW) and HIDE, which folds it to a SHOW button. A unit followed

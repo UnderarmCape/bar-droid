@@ -501,12 +501,15 @@ local function readTouch(lines)
 		pad.lx, pad.ly, pad.rx, pad.ry = tonumber(lx) or 0, tonumber(ly) or 0, tonumber(rx) or 0, tonumber(ry) or 0
 		pad.lt, pad.lb = tonumber(lt) or 0, lb == "1"
 	end
-	-- words said for a ping's label (the app's VoiceChat; the pad's LB held + RB three times): bardroid_pad.lua's ping
+	-- words said for a ping's label (the app's VoiceChat): the touch dock's PING held (bardroid_portrait.lua takes them
+	-- when it asked), else the pad's LB held + RB three times, bardroid_pad.lua's ping
 	for hex in lines:gmatch("voiceping (%x+)") do
 		local text = hex:gsub("%x%x", function(h)
 			return string.char(tonumber(h, 16))
 		end)
-		if WG.BarDroidPad and WG.BarDroidPad.voicePing then
+		local Pt = WG.BarDroidPortrait
+		if Pt and Pt.voicePing and Pt.voicePing(text) then -- luacheck: ignore 542
+		elseif WG.BarDroidPad and WG.BarDroidPad.voicePing then
 			WG.BarDroidPad.voicePing(text)
 		end
 	end

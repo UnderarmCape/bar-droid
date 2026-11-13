@@ -67,6 +67,7 @@ public class GameActivity extends MainActivity {
             @Override public void denied() { touch.padAct("voice_nomic"); }
         });
         touch.setVoiceChat(voiceChat::start);
+        touch.setVoicePing(() -> voiceChat.start(true));
         touch.setVoiceListening(voiceChat::listening);
         pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
         pad.setMouse(lobbyMouse);
