@@ -1528,7 +1528,9 @@ local function drawBar()
 		for _, b in ipairs(buttons) do
 			local size = b.size * 0.36 * (b.text or 1)
 			local text = b.label
-			local maxW = (b.x1 - b.x0) * 0.9
+			-- (at most 80 % of the button: at 90 % "No player cams" sideways ran nearly to its edges; the dock keeps its
+			-- words to 76 %, dev phone 2026-11-13)
+			local maxW = (b.x1 - b.x0) * 0.8
 			local w = font:GetTextWidth(text) * size
 			-- (a long name smaller first, to 65 %, before it is cut: "Construction S." upright; at 80 % the tune bar's
 			-- "Armada Comman." on the dev phone upright, 2026-11-12)
