@@ -309,10 +309,10 @@ function droid.place()
 		end
 	end
 	local st = armed and not droid.gridHeld and droid.stash
-	if st then
-		local ax, ay, az = Spring.WorldToScreenCoords(st.from[1], st.from[2], st.from[3])
-		local bx, by, bz = Spring.WorldToScreenCoords(st.to[1], st.to[2], st.to[3])
-		if az <= 1 and bz <= 1 then
+	if st then -- (only where a click reaches the map: a corner behind the dock or PLACE had the button go down on them)
+		local ax, ay = droid.clickable(st.from[1], st.from[2], st.from[3])
+		local bx, by = droid.clickable(st.to[1], st.to[2], st.to[3])
+		if ax and bx then
 			text = text .. string.format("stash %d %d %d %d\\n", ax, vsy - ay - 1, bx, vsy - by - 1)
 		end
 	end

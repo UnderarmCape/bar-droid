@@ -2089,6 +2089,11 @@ final class RtsTouch {
      * everything is interface: drags stay mouse drags.
      */
     private int hoverAt(float vx, float vy) {
+        // (the dock is the app's own interface, its gaps too, but its minimap hole: the game's answer for a gap between
+        // its halves was "map", and with a building waiting a drag starting there nudged it; dev phone 2026-11-12)
+        Dock d = dock();
+        if (d != null && d.all != null && inside(d.all, toX(vx), toY(vy)) && !(d.map != null && inside(d.map, toX(vx), toY(vy))))
+            return HOVER_INTERFACE;
         if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return HOVER_INTERFACE;
         byte[] b = new byte[64];
         int n;
