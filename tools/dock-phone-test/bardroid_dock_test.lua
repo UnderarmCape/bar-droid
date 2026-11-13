@@ -8,7 +8,8 @@
 --   dgun      the D-gun mode on the commander;  auto? / autooff?  full auto on / off by FIRE's swipes
 --   walk      the commander's speed watched;    stopped?  it walked, and stands still soon after the stick is let go
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
---   strafe?   STRAFE (its thumbnail tapped, the destination dragged): each Pawn two fights, repeat on
+--   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
+--   sway?     the Pawns there: each two fights across its place, repeat on
 --   end       "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
@@ -226,20 +227,83 @@ local function onCmd(c)
 		check("a path drawn on into the dock: let go at the dock's top edge, the path in sight", n > 0 and my >= top - 2,
 			string.format("%d moves, let go at y %d, the dock's top %d, lowest goal y %s", n, my, top,
 				tostring(lowest and math.floor(lowest))))
-	elseif c == "strafe?" then
-		local ok, words = #pawns > 0, {}
+	elseif c == "strafe?" then -- (the drag drew the front line: each Pawn one fight to its place, no repeat yet, or
+		-- already there; the places in rows along the line (80 elmos apart when it was too short for all six abreast),
+		-- the front row on it, a row's places evenly over the line's length, a Pawn's width or more apart)
+		local Pr = WG.BarDroidPresets
+		local pl = Pr and Pr.lastPlan and Pr.lastPlan()
+		local ok, words, rows = #pawns > 0 and pl ~= nil and pl.W ~= nil, {}, {}
 		for _, u in ipairs(pawns) do
 			local q = Spring.GetUnitCommands(u, 5) or {}
 			local st = Spring.GetUnitStates(u) or {}
-			local fights = 0
+			local s = pl and pl.slots[u]
+			local fights, onIt = 0, false
 			for _, cmd in ipairs(q) do
-				fights = fights + (cmd.id == CMD.FIGHT and 1 or 0)
+				if cmd.id == CMD.FIGHT then
+					fights = fights + 1
+					onIt = s and cmd.params[3] and math.abs(cmd.params[1] - s[1]) + math.abs(cmd.params[3] - s[2]) < 4
+				end
 			end
-			ok = ok and fights == 2 and st["repeat"] == true
-			words[#words + 1] = fights .. (st["repeat"] and "R" or "")
+			if fights == 0 and s then -- (a Pawn that started next to its place may be there already)
+				local x, _, z = Spring.GetUnitPosition(u)
+				onIt = x and (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160
+			end
+			ok = ok and s ~= nil and fights <= 1 and onIt and st["repeat"] == false
+			words[#words + 1] = fights .. (st["repeat"] and "R" or "") .. (onIt and "" or "?")
+			if s then
+				local key = string.format("%.0f", s[3])
+				rows[key] = rows[key] or {}
+				table.insert(rows[key], s[4])
+			end
 		end
-		check("STRAFE tapped, its destination dragged and lifted: each Pawn two fights, repeat on", ok,
-			table.concat(words, " "))
+		local n, near, front = 0, math.huge, false
+		for key, across in pairs(rows) do
+			n = n + 1
+			front = front or tonumber(key) == 0
+			ok = ok and tonumber(key) % 80 == 0
+			table.sort(across)
+			for i = 2, #across do
+				near = math.min(near, across[i] - across[i - 1])
+			end
+			if pl and pl.W and #across > 1 and tonumber(key) == 0 then -- (the front row spread over the line's length)
+				ok = ok and math.abs(across[#across] - across[1] - pl.W) < 2
+			end
+		end
+		ok = ok and front and near >= 30
+		check("STRAFE tapped, its front line drawn: each Pawn one fight to its place, rows along the line, apart, no repeat",
+			ok, string.format("%s; a line %.0f wide, %d rows, nearest two %.0f apart", table.concat(words, " "),
+				pl and pl.W or 0, n, near))
+	elseif c == "sway?" then -- (once they were there: each Pawn two fights across its place, repeat on: 2 x SIDE, or
+		-- less where the map's edge cuts one end)
+		local Pr = WG.BarDroidPresets
+		local pl = Pr and Pr.lastPlan and Pr.lastPlan()
+		local side = Pr and Pr.side or 150
+		local ok, words = #pawns > 0 and pl ~= nil, {}
+		local function onMap(v, size)
+			return math.max(32, math.min(size - 32, v))
+		end
+		for _, u in ipairs(pawns) do
+			local q = Spring.GetUnitCommands(u, 5) or {}
+			local st = Spring.GetUnitStates(u) or {}
+			local s = pl and pl.slots[u]
+			local f = {}
+			for _, cmd in ipairs(q) do
+				if cmd.id == CMD.FIGHT and cmd.params[3] then
+					f[#f + 1] = cmd.params
+				end
+			end
+			local span = #f == 2 and math.sqrt((f[1][1] - f[2][1]) ^ 2 + (f[1][3] - f[2][3]) ^ 2) or 0
+			local want = 0
+			if s then
+				local ax, az = onMap(s[1] + pl.px * side, Game.mapSizeX), onMap(s[2] + pl.pz * side, Game.mapSizeZ)
+				local bx, bz = onMap(s[1] - pl.px * side, Game.mapSizeX), onMap(s[2] - pl.pz * side, Game.mapSizeZ)
+				want = math.sqrt((ax - bx) ^ 2 + (az - bz) ^ 2)
+			end
+			ok = ok and #f == 2 and st["repeat"] == true and math.abs(span - want) < 4
+			words[#words + 1] = string.format("%d%s/%.0f", #f, st["repeat"] and "R" or "", span)
+		end
+		check(string.format("STRAFE: the Pawns there, each fights side to side across its place on repeat (%d elmos)",
+			2 * side), ok, table.concat(words, " "))
 	elseif c == "end" then
 		Spring.Echo("[docktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
@@ -326,8 +390,8 @@ function widget:GameFrame(f)
 			end)
 			local a0 = grounds[math.min(#grounds, vx and 3 or 1)] -- (a little way off the edge)
 			local ax, ay, bx2, by2 = a0 and a0[1], a0 and a0[2], nil, nil
-			for _, p in ipairs(grounds) do
-				if a0 and not bx2 and dist(p, ax, ay) > 200 then
+			for _, p in ipairs(grounds) do -- (the drag a front line for the presets: 400+ px on where there is room)
+				if a0 and dist(p, ax, ay) > (bx2 and dist({ bx2, by2 }, ax, ay) or 200) and dist(p, ax, ay) < 700 then
 					bx2, by2 = p[1], p[2]
 				end
 			end

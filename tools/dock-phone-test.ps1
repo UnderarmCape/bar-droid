@@ -171,6 +171,9 @@ try {
   Touch MOVE (($a0[0] + $a1[0]) / 2) (($a0[1] + $a1[1]) / 2); Touch MOVE $a1[0] $a1[1]
   Start-Sleep -Milliseconds 300; Shot "preset-aim"; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
   Stage "strafe?"; Start-Sleep 1
+  # (once the Pawns stand on the line: their side to side on repeat)
+  if (-not (WaitLog '\[bardroid-presets\] STRAFE: [0-9]+ units there' 75)) { "[docktest] (the Pawns were not there in 75 s)" }
+  Stage "sway?"; Start-Sleep 1
   # 6. the Pawns' path drawn from the map on into the dock: held at the dock's top edge, every goal in sight
   Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]

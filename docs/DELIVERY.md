@@ -1426,6 +1426,22 @@ Added 2026-11-10 ~05:00 (with screenshots):
       or about to be picked again after PLACE or ONE (SP.held, the copy's fourth droidPlace answer). Dev phone upright:
       the wind turbine picked, 4.5 s later the menu still open; spot, PLACE: queued, picked again, the menu open 4 s on;
       X: the orders.
+- [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
+      between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
+      send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that
+      line I draw sets the length of the formation's horizontal size"; "the repeat commands for all the other presets
+      besides strafe should not make it move back to the original move marker then fight marker. Instead, it should
+      make the units on each row repeat move side to side the formation. Remember ranged units further back but still
+      at an appropriate range to be effective". Done (bardroid_presets.lua): a tap on the map sends the preset there
+      (the front's middle), a line drawn on the map is the front: as wide, facing away from the group, the places shown
+      as the finger goes (blue rings, the front's side to side reach). STRAFE is a line abreast (a gap where the width
+      has room, more rows behind when it is full), each unit straight to its place. Every preset turns repeat off for
+      the way there (a repeat left on brought units back round to where they started) and, once every unit is there
+      (or 12 s after the first), each fights 150 elmos to each side of its place on repeat, the group together. The
+      ranged stand behind the front by reach, the shorter first: as far back as still lets them hit 150 elmos past the
+      front row's own reach, 600 at most. Dev phone upright: dock-phone-test's STRAFE line (6 Pawns, 327 elmos: one
+      row 65 apart, then side to side, 300 elmos, repeat on) ALL PASS; BATTLE LINE tapped with 4 Pawns, 3 Rocketeers,
+      2 Hammers (repeat on beforehand): repeat off on the way, all 9 there 27 s later, then side to side on repeat.
 - [ ] **The sideways dock for one thumb: built, his test pending** (Kailil, 2026-11-12: "Only have the map show when no
       units selected. And keep the bottom ui two slots only instead of 3 slots ... So the bottom ui can be snapped to
       the left side or right side of the bottom of the phone so it can be used by one finger only. Add a button or

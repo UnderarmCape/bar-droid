@@ -2,10 +2,12 @@
 -- shows the presets as 2 x 2 thumbnails ... closed by an X in the corner or Android's Back"; repeated moves along paths
 -- that make units hard to hit, and formations by their types' strengths). Touch play's automation is his and BAR's
 -- developers' call (GiveOrder). The upright dock (bardroid_portrait.lua) shows PRESETS among the orders while units
--- that fight are picked, and the presets over its whole grid; a preset tapped closes them, a finger on the map then
--- aims it (a drag moves the mark) and where it lifts is where the picked units go (Back lets it go).
+-- that fight are picked, and the presets over its whole grid; a preset tapped closes them, then a tap on the map sends
+-- it there, or a line drawn on the map is where the formation's front ends up and how wide it is (Back lets it go).
+-- Every preset: the units to their places (no repeat), then, once they are there, each one fights side to side
+-- across its place on repeat, the group together.
 -- WG.BarDroidPresets: fits(units), isOpen(), open(), close(), items(), pick(id), drawThumb(id, rect), closeRect(rect),
--- armed(). Installed into LuaUI/Widgets by the app.
+-- armed(), lastPlan(), side. Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
@@ -18,15 +20,17 @@ function widget:GetInfo()
 	}
 end
 
-local STRAFE_SIDE = 150 -- elmos to each side of the destination the strafe goes
-local BLOB = 260 -- elmos: the group's shape kept, at most this far from its middle
+local SIDE = 150 -- elmos each unit goes to each side of its place, round and round, once the group is there
+local GAP = 40 -- elmos between two units abreast, where the width has room for it
+local LINE_PX = 30 -- screen pixels: a finger that moved this far draws a line; less is a tap
+local LINE_MIN = 64 -- elmos: a line shorter than this is a tap where the finger lifted
 local KEY_ESCAPE = 27
 
 local spGetUnitPosition = Spring.GetUnitPosition
 local spGetUnitDefID = Spring.GetUnitDefID
 
 local opened = false
-local armedFor -- { id, units }: a preset picked, the map's next tap is its destination
+local armedFor -- { id, units }: a preset picked, the map's next tap or line is where it goes
 
 local function say(text)
 	local P = WG.BarDroidPad
@@ -63,30 +67,18 @@ local function ground(x, z)
 	x, z = onMap(x, z)
 	return { x, Spring.GetGroundHeight(x, z), z }
 end
--- the units' middle and each one's place from it (the group's shape, drawn in to BLOB)
-local function shape(units)
-	local cx, cz, n, at = 0, 0, 0, {}
+local function centre(units)
+	local cx, cz, n = 0, 0, 0
 	for _, u in ipairs(units) do
 		local x, _, z = spGetUnitPosition(u)
 		if x then
-			at[u] = { x, z }
 			cx, cz, n = cx + x, cz + z, n + 1
 		end
 	end
 	if n == 0 then
 		return nil
 	end
-	cx, cz = cx / n, cz / n
-	local far = 0
-	for _, p in pairs(at) do
-		p[1], p[2] = p[1] - cx, p[2] - cz
-		far = math.max(far, math.sqrt(p[1] * p[1] + p[2] * p[2]))
-	end
-	local k = far > BLOB and BLOB / far or 1
-	for _, p in pairs(at) do
-		p[1], p[2] = p[1] * k, p[2] * k
-	end
-	return cx, cz, at
+	return cx / n, cz / n
 end
 local function way(cx, cz, tx, tz)
 	local dx, dz = tx - cx, tz - cz
@@ -96,42 +88,21 @@ local function way(cx, cz, tx, tz)
 	end
 	return dx / d, dz / d, d
 end
--- STRAFE (Kailil, 2026-11-10, in ZIGZAG's place: "a battle formation that make the units straight left or right on
--- repeat when they reach the destination. So they fight to the destination then sit at the destination repeating a left
--- and right strafe via a repeat. If its possible to do that via a fight command then great"): each unit, keeping its
--- place in the group, fights its way to the destination's left side, then fights across to its right side, with the
--- unit's repeat on, so the two fights go round and round: a strafe across the way, firing at what comes in range
-local function strafe(units, tx, tz)
-	local cx, cz, at = shape(units)
-	if not cx then
-		return 0
-	end
-	local fx, fz = way(cx, cz, tx, tz)
-	local px, pz = -fz, fx -- (across the way: the strafe's line)
-	local n = 0
-	for u, o in pairs(at) do
-		local x, z = tx + o[1], tz + o[2]
-		Spring.GiveOrderArrayToUnitArray({ u }, {
-			{ CMD.REPEAT, { 1 }, {} },
-			{ CMD.FIGHT, ground(x + px * STRAFE_SIDE, z + pz * STRAFE_SIDE), {} },
-			{ CMD.FIGHT, ground(x - px * STRAFE_SIDE, z - pz * STRAFE_SIDE), { "shift" } },
-		})
-		n = n + 1
-	end
-	return n
-end
 
 -- Formations (research of 2026-11-10: BAR's wiki and unit pages, the Recoil engine's source; docs/DELIVERY.md). Each
--- unit by its role: brawlers and the short-ranged (range up to 400: Pawns, Grunts, Maces, Stouts, Pounders) in the front
--- row; skirmishers, rockets and AA (BAR's unitgroup "aa") a row behind, staggered; artillery (a high trajectory, or a
--- range of 650 or more) behind them by its range over the front's less 100 (150 at least); planes their own group,
--- fighters ahead of bombers and transports. The units form up where they stand, facing the destination, then go there
--- as one: a fight order with Ctrl and Shift given to them as the selection, which the engine moves at the slowest one's
--- speed keeping each one's place (SelectedUnitsAI; Ctrl on orders given unit by unit does not), so the artillery stays
--- at the back while the formation moves.
-local ROW_MAX = 12 -- units a row; more make another row behind it
+-- unit by its role: brawlers and the short-ranged (range up to 400: Pawns, Ticks, Grunts, Maces, Stouts) in the front
+-- row; the ranged behind them by their reach, the shorter first: each row as far back as still lets it hit 150 elmos
+-- past the front row's own reach (Kailil, 2026-11-12: "ranged units further back but still at an appropriate range to
+-- be effective ... They should be able to all strike ahead of the front line units like pawns and ticks"), 600 at
+-- most; planes their own group, fighters ahead of bombers and transports. The units form up where they stand, facing
+-- the destination, then go there as one: a fight order with Ctrl and Shift given to them as the selection, which the
+-- engine moves at the slowest one's speed keeping each one's place (SelectedUnitsAI; Ctrl on orders given unit by unit
+-- does not), so the artillery stays at the back while the formation moves.
+local ROW_MAX = 12 -- units a row without a drawn line; more make another row behind it
 local FORM_AHEAD = 80 -- elmos: where the front forms up, ahead of the group's middle (toward the destination)
 local AIR_LEAD = 300 -- elmos the fighters fly ahead of the bombers and transports
+local BACK_MAX = 600 -- elmos: the farthest a ranged row stands behind the front
+local REACH_AHEAD = 150 -- elmos a ranged row's reach goes past the front row's
 local roleOf = {}
 local function role(defID)
 	local r = roleOf[defID]
@@ -155,47 +126,108 @@ local function role(defID)
 	roleOf[defID] = { r, range }
 	return roleOf[defID]
 end
+local function reach(u)
+	return role(spGetUnitDefID(u))[2]
+end
+local widthOf = {}
+local function unitWidth(u) -- (elmos: its footprint, or its size where that is bigger)
+	local d = spGetUnitDefID(u) or -1
+	local w = widthOf[d]
+	if not w then
+		local ud = UnitDefs[d]
+		w = ud and math.max((ud.xsize or 4) * 8, (ud.radius or 8) * 2) or 32
+		widthOf[d] = w
+	end
+	return w
+end
+
+-- the rows across for a list of units: with a drawn line W elmos long, as many abreast as fit it with no gap, the
+-- rows evened out and each spread over the whole width (a gap between them where it has room: Kailil, 2026-11-12,
+-- "have a gap between them if the space allows it"; "The length of that line I draw sets the length of the
+-- formation's horizontal size"); without one, ROW_MAX a row, `spacing` apart or a unit and a GAP
+local function rowsFor(list, W, spacing)
+	local n = #list
+	if n == 0 then
+		return {}
+	end
+	local wide = 0
+	for _, u in ipairs(list) do
+		wide = math.max(wide, unitWidth(u))
+	end
+	local per = W and math.max(1, math.floor(W / wide) + 1) or ROW_MAX
+	local rows = math.ceil(n / per)
+	per = math.ceil(n / rows)
+	local sp = W and (per > 1 and W / (per - 1) or 0) or math.max(spacing, wide + GAP)
+	local out = {}
+	for i = 1, n, per do
+		local row = {}
+		for k = i, math.min(n, i + per - 1) do
+			row[#row + 1] = list[k]
+		end
+		out[#out + 1] = { units = row, sp = sp }
+	end
+	return out
+end
 
 -- each unit's place (along, across) in formation-local elmos: along toward the destination, the front row at 0
-local function layout(units, style)
+local function layout(units, style, W)
 	local spacing = style == "spread" and 96 or 64
 	local rowGap = style == "spread" and 120 or 80
-	local rows = { front = {}, mid = {}, art = {} }
-	local frontRange, artRange = 0, math.huge
-	for _, u in ipairs(units) do
-		local r = role(spGetUnitDefID(u))
-		local kind = (r[1] == "aa") and "mid" or r[1]
-		rows[kind][#rows[kind] + 1] = u
-		if kind == "front" then
-			frontRange = math.max(frontRange, r[2])
-		elseif kind == "art" then
-			artRange = math.min(artRange, r[2])
-		end
-	end
-	if #rows.front == 0 then -- (no brawlers: the middle row leads)
-		rows.front, rows.mid = rows.mid, {}
-		for _, u in ipairs(rows.front) do
-			frontRange = math.max(frontRange, role(spGetUnitDefID(u))[2])
-		end
-	end
-	local backAt = artRange < math.huge and math.min(600, math.max(150, artRange - frontRange - 100)) or 0
 	local place, rowN = {}, 0
-	local function putRow(list, startAlong, gap)
-		local a = startAlong
-		for i = 1, #list, ROW_MAX do
-			local n = math.min(ROW_MAX, #list - i + 1)
-			local stagger = (rowN % 2) * spacing * 0.5 -- (every other row half a place over: a checkerboard)
-			for k = 0, n - 1 do
-				place[list[i + k]] = { a, (k - (n - 1) / 2) * spacing + stagger }
-			end
-			rowN = rowN + 1
-			a = a - gap
+	local function putRow(row, along)
+		local n = #row.units
+		local stagger = (rowN % 2) * row.sp * 0.5 -- (every other row half a place over: a checkerboard)
+		if W and (n - 1) / 2 * row.sp + stagger > W / 2 + 1 then
+			stagger = 0 -- (a full row of a drawn width stays inside it)
 		end
-		return a
+		for k, u in ipairs(row.units) do
+			place[u] = { along, (k - 1 - (n - 1) / 2) * row.sp + stagger }
+		end
+		rowN = rowN + 1
 	end
-	local along = putRow(rows.front, 0, rowGap)
-	along = putRow(rows.mid, along, rowGap)
-	putRow(rows.art, math.min(along, -backAt), rowGap)
+	if style == "strafe" then -- (one line abreast, more behind it when the width is full)
+		for i, row in ipairs(rowsFor(units, W, 64)) do
+			putRow(row, -(i - 1) * rowGap)
+		end
+		return place
+	end
+	local front, ranged, frontReach = {}, {}, 0
+	for _, u in ipairs(units) do
+		if role(spGetUnitDefID(u))[1] == "front" then
+			front[#front + 1] = u
+			frontReach = math.max(frontReach, reach(u))
+		else
+			ranged[#ranged + 1] = u
+		end
+	end
+	table.sort(ranged, function(a, b)
+		local ra, rb = reach(a), reach(b)
+		if ra ~= rb then
+			return ra < rb
+		end
+		return a < b
+	end)
+	if #front == 0 and #ranged > 0 then -- (no brawlers: the shortest reach leads)
+		local lead, rest = reach(ranged[1]) + 50, {}
+		for _, u in ipairs(ranged) do
+			if reach(u) <= lead then
+				front[#front + 1] = u
+				frontReach = math.max(frontReach, reach(u))
+			else
+				rest[#rest + 1] = u
+			end
+		end
+		ranged = rest
+	end
+	local depth = 0
+	for i, row in ipairs(rowsFor(front, W, spacing)) do
+		depth = (i - 1) * rowGap
+		putRow(row, -depth)
+	end
+	for _, row in ipairs(rowsFor(ranged, W, spacing)) do -- (shortest reach first: its row's least reach is its first)
+		depth = math.max(depth + rowGap, math.min(BACK_MAX, reach(row.units[1]) - frontReach - REACH_AHEAD))
+		putRow(row, -depth)
+	end
 	if style == "concave" then -- (the ends forward: a quarter of the front's width at its tips)
 		local half = 0
 		for _, p in pairs(place) do
@@ -230,44 +262,55 @@ local function airLayout(units)
 	return place
 end
 
-local groupOrders = {} -- { frame, units, x, z }: the move as one, a frame after the form-up orders (SelectedUnitsAI
--- measures each unit's place from where its queue ends)
--- forms the units up where they stand (place: along, across), facing (fx, fz), then sends them to (tx, tz) as one
-local function formUp(units, place, fx, fz, tx, tz)
-	if #units == 0 then
-		return 0
+local PRESETS = {
+	-- STRAFE (Kailil, 2026-11-10: "a battle formation that make the units straight left or right on repeat when they
+	-- reach the destination ... fight to the destination then sit at the destination repeating a left and right strafe
+	-- via a repeat"; 2026-11-12: "each unit walk side and have a gap between them if the space allows it"): a line
+	-- abreast, each unit straight to its place
+	{ name = "STRAFE", style = "strafe", thumb = "strafe" },
+	{ name = "BATTLE LINE", style = "line", thumb = "line" },
+	{ name = "SPREAD", style = "spread", thumb = "spread" },
+	{ name = "CONCAVE", style = "concave", thumb = "concave" },
+}
+
+-- where a preset puts each unit: aim is a tap { x, z } (the front's middle there, facing away from the group) or a
+-- line { ax, az, bx, bz } (the front along it, as wide, facing away from the group's side of it)
+local function plan(id, units, aim)
+	local P = PRESETS[id]
+	local cx, cz = centre(units)
+	if not (P and cx) then
+		return nil
 	end
-	local cx, cz = shape(units)
+	local mx, mz, fx, fz, W
+	if aim.bx then
+		mx, mz = (aim.ax + aim.bx) / 2, (aim.az + aim.bz) / 2
+		local ux, uz, len = way(aim.ax, aim.az, aim.bx, aim.bz)
+		fx, fz, W = -uz, ux, len
+		if (mx - cx) * fx + (mz - cz) * fz < 0 then
+			fx, fz = -fx, -fz
+		end
+	else
+		mx, mz = aim.x, aim.z
+		fx, fz = way(cx, cz, mx, mz)
+	end
 	local px, pz = -fz, fx
+	local land, air = {}, {}
+	for _, u in ipairs(units) do
+		local r = role(spGetUnitDefID(u))
+		local list = (r[1] == "fighter" or r[1] == "air") and air or land
+		list[#list + 1] = u
+	end
+	local place = layout(land, P.style, W)
 	-- (each row's units to its places by their own side to side order: the fewest crossings)
 	local byRow = {}
-	for _, u in ipairs(units) do
+	for _, u in ipairs(land) do
 		local p = place[u]
 		local key = string.format("%.0f", p[1])
-		byRow[key] = byRow[key] or { slots = {}, units = {} }
-		local row = byRow[key]
+		local row = byRow[key] or { slots = {}, units = {} }
+		byRow[key] = row
 		row.slots[#row.slots + 1] = p
 		row.units[#row.units + 1] = u
 	end
-	local ax, az = cx + fx * FORM_AHEAD, cz + fz * FORM_AHEAD
-	-- (the move as one sends each unit to the destination plus its place from the formation's middle: the destination
-	-- drawn in so every place is on the map; on the map's edge the places past it went nowhere and those units stayed)
-	local sx, sz, x0, x1, z0, z1 = 0, 0, math.huge, -math.huge, math.huge, -math.huge
-	for _, u in ipairs(units) do
-		local p = place[u]
-		local wx, wz = fx * p[1] + px * p[2], fz * p[1] + pz * p[2]
-		sx, sz = sx + wx, sz + wz
-		x0, x1, z0, z1 = math.min(x0, wx), math.max(x1, wx), math.min(z0, wz), math.max(z1, wz)
-	end
-	sx, sz = sx / #units, sz / #units
-	local m = 48
-	if Game.mapSizeX - m - (x1 - sx) >= m - (x0 - sx) then
-		tx = math.max(m - (x0 - sx), math.min(Game.mapSizeX - m - (x1 - sx), tx))
-	end
-	if Game.mapSizeZ - m - (z1 - sz) >= m - (z0 - sz) then
-		tz = math.max(m - (z0 - sz), math.min(Game.mapSizeZ - m - (z1 - sz), tz))
-	end
-	local n = 0
 	for _, row in pairs(byRow) do
 		table.sort(row.slots, function(a, b)
 			return a[2] < b[2]
@@ -278,40 +321,146 @@ local function formUp(units, place, fx, fz, tx, tz)
 			side[u] = x and ((x - cx) * px + (z - cz) * pz) or 0
 		end
 		table.sort(row.units, function(a, b)
-			return side[a] < side[b]
+			if side[a] ~= side[b] then
+				return side[a] < side[b]
+			end
+			return a < b
 		end)
 		for i, u in ipairs(row.units) do
-			local s = row.slots[i]
-			Spring.GiveOrderToUnit(u, CMD.MOVE, ground(ax + fx * s[1] + px * s[2], az + fz * s[1] + pz * s[2]), 0)
-			n = n + 1
+			place[u] = row.slots[i]
 		end
 	end
-	groupOrders[#groupOrders + 1] = { frame = Spring.GetGameFrame() + 2, units = units, x = tx, z = tz }
-	return n
+	-- (the middle drawn in so every place is on the map; on the map's edge the places past it went nowhere and those
+	-- units stayed)
+	local x0, x1, z0, z1 = math.huge, -math.huge, math.huge, -math.huge
+	for _, p in pairs(place) do
+		local wx, wz = fx * p[1] + px * p[2], fz * p[1] + pz * p[2]
+		x0, x1, z0, z1 = math.min(x0, wx), math.max(x1, wx), math.min(z0, wz), math.max(z1, wz)
+	end
+	local m = 48
+	if x0 <= x1 then
+		if Game.mapSizeX - m - x1 >= m - x0 then
+			mx = math.max(m - x0, math.min(Game.mapSizeX - m - x1, mx))
+		end
+		if Game.mapSizeZ - m - z1 >= m - z0 then
+			mz = math.max(m - z0, math.min(Game.mapSizeZ - m - z1, mz))
+		end
+	end
+	local slots = {}
+	for u, p in pairs(place) do
+		slots[u] = { mx + fx * p[1] + px * p[2], mz + fz * p[1] + pz * p[2], p[1], p[2] }
+	end
+	return { land = land, air = air, place = place, slots = slots, fx = fx, fz = fz, px = px, pz = pz, mx = mx, mz = mz,
+		cx = cx, cz = cz, W = W }
 end
-local function formation(style)
-	return function(units, tx, tz)
-		local cx, cz = shape(units)
-		if not cx then
-			return 0
+
+local groupOrders = {} -- { frame, units, x, z }: the move as one, a frame after the form-up orders (SelectedUnitsAI
+-- measures each unit's place from where its queue ends)
+-- forms the units up where they stand (place: along, across), facing the way, then sends them as one so that each
+-- lands on its place from the front's middle
+local function formUp(units, place, pl)
+	if #units == 0 then
+		return 0
+	end
+	local fx, fz, px, pz = pl.fx, pl.fz, pl.px, pl.pz
+	local ax, az = pl.cx + fx * FORM_AHEAD, pl.cz + fz * FORM_AHEAD
+	local sx, sz = 0, 0
+	for _, u in ipairs(units) do
+		local p = place[u]
+		local wx, wz = fx * p[1] + px * p[2], fz * p[1] + pz * p[2]
+		sx, sz = sx + wx, sz + wz
+		Spring.GiveOrderToUnit(u, CMD.MOVE, ground(ax + wx, az + wz), 0)
+	end
+	-- (the move as one sends each unit to the target plus its place from the group's middle: the target is the
+	-- front's middle plus that middle, so the front row stands on the drawn line)
+	groupOrders[#groupOrders + 1] = { frame = Spring.GetGameFrame() + 2, units = units, x = pl.mx + sx / #units,
+		z = pl.mz + sz / #units }
+	return #units
+end
+
+-- the side to side fights, once the group is there (Kailil, 2026-11-12: "the repeat commands for all the other presets
+-- besides strafe should not make it move back to the original move marker then fight marker. Instead, it should make
+-- the units on each row repeat move side to side the formation"): the way there is given without repeat; the repeat
+-- and the two fights across each unit's place only when every unit is there, or SWAY_WAIT after the first, so the
+-- rows go side to side together. A unit the player sends elsewhere (its queue without the fight to its place, or
+-- stopped away from it) is let go.
+local SWAY_WAIT = 12 * 30 -- frames
+local GIVE_UP = 120 * 30 -- frames: a group never there by then is let go
+local sways = {}
+local lastPlan -- (the last preset sent: its places, for tools/dock-phone-test)
+local function swayCheck(f)
+	for i = #sways, 1, -1 do
+		local g = sways[i]
+		local keep, there = {}, 0
+		if f - g.since >= 15 then
+			for _, u in ipairs(g.units) do
+				local s = g.slots[u]
+				local x, _, z = spGetUnitPosition(u)
+				if x and not Spring.GetUnitIsDead(u) then
+					local q = Spring.GetUnitCommands(u, 4) or {}
+					if #q == 0 then
+						if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160 then
+							there = there + 1
+							keep[#keep + 1] = u
+						end
+					else
+						for _, c in ipairs(q) do
+							if c.id == CMD.FIGHT and c.params[3] and (c.params[1] - s[1]) ^ 2 + (c.params[3] - s[2]) ^ 2 < 300 * 300 then
+								keep[#keep + 1] = u
+								break
+							end
+						end
+					end
+				end
+			end
+			g.units = keep
+			if there > 0 and not g.first then
+				g.first = f
+			end
 		end
-		local fx, fz = way(cx, cz, tx, tz)
-		local land, air = {}, {}
-		for _, u in ipairs(units) do
-			local r = role(spGetUnitDefID(u))
-			local list = (r[1] == "fighter" or r[1] == "air") and air or land
-			list[#list + 1] = u
+		if f - g.since >= 15 and (#keep == 0 or f - g.since > GIVE_UP) then
+			table.remove(sways, i)
+		elseif f - g.since >= 15 and (there == #keep or (g.first and f - g.first > SWAY_WAIT)) then
+			for _, u in ipairs(keep) do
+				local s = g.slots[u]
+				Spring.GiveOrderArrayToUnitArray({ u }, {
+					{ CMD.REPEAT, { 1 }, {} },
+					{ CMD.FIGHT, ground(s[1] + g.px * SIDE, s[2] + g.pz * SIDE), {} },
+					{ CMD.FIGHT, ground(s[1] - g.px * SIDE, s[2] - g.pz * SIDE), { "shift" } },
+				})
+			end
+			Spring.Echo(string.format("[bardroid-presets] %s: %d units there, side to side on repeat", g.name, #keep)) -- (tools)
+			table.remove(sways, i)
 		end
-		return formUp(land, layout(land, style), fx, fz, tx, tz) + formUp(air, airLayout(air), fx, fz, tx, tz)
 	end
 end
 
-local PRESETS = {
-	{ name = "STRAFE", run = strafe, thumb = "strafe" },
-	{ name = "BATTLE LINE", run = formation("line"), thumb = "line" },
-	{ name = "SPREAD", run = formation("spread"), thumb = "spread" },
-	{ name = "CONCAVE", run = formation("concave"), thumb = "concave" },
-}
+local function send(id, units, aim)
+	local pl = plan(id, units, aim)
+	if not pl then
+		return 0
+	end
+	local P = PRESETS[id]
+	-- (a repeat left on by an earlier preset sent them back round to where they had been: Kailil, 2026-11-12)
+	Spring.GiveOrderToUnitArray(units, CMD.REPEAT, { 0 }, 0)
+	local n = 0
+	if P.style == "strafe" then -- (each straight to its place)
+		for _, u in ipairs(pl.land) do
+			local s = pl.slots[u]
+			Spring.GiveOrderToUnit(u, CMD.FIGHT, ground(s[1], s[2]), 0)
+			n = n + 1
+		end
+	else
+		n = formUp(pl.land, pl.place, pl)
+	end
+	n = n + formUp(pl.air, airLayout(pl.air), pl) -- (planes: their own group, fighters ahead; no side to side)
+	if #pl.land > 0 then
+		sways[#sways + 1] = { units = pl.land, slots = pl.slots, px = pl.px, pz = pl.pz, since = Spring.GetGameFrame(),
+			name = P.name }
+	end
+	lastPlan = pl
+	return n, pl
+end
 
 -- the thumbnails: small drawings of what each does, in the rect (x0, y0, x1, y1), y up
 local function line(points, width, c)
@@ -340,8 +489,8 @@ function THUMBS.strafe(x0, y0, x1, y1) -- (the group up to the destination, then
 		local ex = cx + s * (w * 0.32)
 		line({ { ex - s * a, top + a }, { ex, top }, { ex - s * a, top - a } }, lw * 1.4, gold)
 	end
-	for i = -2, 2 do -- (the group on the line)
-		dot(cx + i * w * 0.07, top, math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
+	for i = -2, 2 do -- (the group on the line, a gap between them)
+		dot(cx + i * w * 0.1, top, math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
 	end
 	for i = 1, 3 do -- (and at the start)
 		dot(cx + (i - 2) * w * 0.06, y0 + h * (0.12 + (i % 2) * 0.04), math.max(3, w * 0.022), { 0.4, 0.7, 1, 1 })
@@ -426,7 +575,7 @@ function widget:Initialize()
 			opened = false
 			if p and #units > 0 then
 				armedFor = { id = id, units = units }
-				say(p.name .. ": DRAG TO THE DESTINATION, LIFT TO SEND")
+				say(p.name .. ": TAP TO SEND, OR DRAW THE FRONT LINE")
 			end
 			refreshDock()
 		end,
@@ -447,6 +596,11 @@ function widget:Initialize()
 			local s = math.floor(math.min(r[3] - r[1], r[4] - r[2]) * 0.14)
 			return { r[3] - s, r[4] - s, r[3], r[4] }
 		end,
+		lastPlan = function() -- (tools: the last sent preset's places, slots[unit] = { x, z, along, across }, the way
+			-- it faces fx, fz, across px, pz, the front's middle mx, mz, a drawn line's length W)
+			return lastPlan
+		end,
+		side = SIDE,
 	}
 end
 
@@ -455,15 +609,23 @@ function widget:Shutdown()
 end
 
 -- The destination by finger (Kailil, 2026-11-10: "allow me to drag my finger and it sets the preset only when I lift
--- up. The current way is a single tap and its finicky": a drag was the dock's path drawing, BAR's right drag, whose
--- press cancelled the preset): a press of either button on the map starts aiming, the finger moves the mark (a gold
--- ring, the line from the group, the strafe's line), and the preset goes where it lifts.
-local aiming -- { x, z }: the destination as the finger is now
+-- up"; 2026-11-12: "All preset commands should be able to be sent via a tap to do a quick order send. Or me draw a line
+-- at the site I want the formation to end and begin the repeat commands. The length of that line I draw sets the
+-- length of the formation's horizontal size"): a press of either button on the map starts aiming; lifted where it
+-- went down it is a tap, the front's middle there; a finger that moved draws the line from where it reached the ground
+-- to where it lifts, the places it gives drawn as it goes.
+local aiming -- { x, z: the finger now; x0, z0: where it reached the ground; sx, sy: there on the screen; line }
 local function groundAt(x, y)
 	local kind, pos = Spring.TraceScreenRay(x, y, true, true) -- (on the minimap: the place it shows there)
 	if kind == "ground" and pos then
 		return pos[1], pos[3]
 	end
+end
+local function aimOf(a)
+	if a.line and (a.x - a.x0) ^ 2 + (a.z - a.z0) ^ 2 >= LINE_MIN * LINE_MIN then
+		return { ax = a.x0, az = a.z0, bx = a.x, bz = a.z }
+	end
+	return { x = a.x, z = a.z }
 end
 
 function widget:MousePress(x, y)
@@ -477,7 +639,7 @@ function widget:MousePress(x, y)
 	end
 	local gx, gz = groundAt(x, y)
 	if gx then
-		aiming = { x = gx, z = gz }
+		aiming = { x = gx, z = gz, x0 = gx, z0 = gz, sx = x, sy = y }
 	end
 	return true -- (off the map: nothing yet, still armed)
 end
@@ -489,9 +651,12 @@ function widget:MouseMove(x, y)
 	local gx, gz = groundAt(x, y)
 	if gx and aiming then
 		aiming.x, aiming.z = gx, gz
+		if not aiming.line and math.abs(x - aiming.sx) + math.abs(y - aiming.sy) > LINE_PX then
+			aiming.line = true
+		end
 	elseif gx then -- (a press over the void past the map's edge or the sky aims once the finger reaches the ground: it
 		-- was lost, the preset still armed, until another press)
-		aiming = { x = gx, z = gz }
+		aiming = { x = gx, z = gz, x0 = gx, z0 = gz, sx = x, sy = y }
 	end
 	return true
 end
@@ -501,18 +666,21 @@ function widget:MouseRelease(x, y)
 		aiming = nil
 		return false
 	end
-	-- (lifted over the dock: the aim backs out, the preset stays armed for another drag; it went to the ground hidden
+	-- (lifted over the dock: the aim backs out, the preset stays armed for another try; it went to the ground hidden
 	-- behind the dock, 2026-11-11)
 	local D = WG.BarDroidPortrait
 	local dock = D and D.dock and D.dock()
 	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
 		aiming = nil
-		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, DRAG TO THE DESTINATION" or "NOT SENT")
+		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, TAP OR DRAW ON THE MAP" or "NOT SENT")
 		Spring.Echo("[bardroid-presets] lifted over the dock: not sent, still armed") -- (tools)
 		return true
 	end
 	local gx, gz = groundAt(x, y)
-	local tx, tz = gx or aiming.x, gz and gz or aiming.z
+	if gx then
+		aiming.x, aiming.z = gx, gz
+	end
+	local aim = aimOf(aiming)
 	local a = armedFor
 	armedFor, aiming = nil, nil
 	local alive = {}
@@ -522,59 +690,101 @@ function widget:MouseRelease(x, y)
 		end
 	end
 	local p = PRESETS[a.id]
-	local n = p and p.run(alive, tx, tz) or 0
+	local n, pl = 0, nil
+	if p then
+		n, pl = send(a.id, alive, aim)
+	end
 	say(string.format("%s: %d %s", p and p.name or "PRESET", n, n == 1 and "UNIT" or "UNITS"))
-	Spring.Echo(string.format("[bardroid-presets] %s to %d,%d: %d units", p and p.name or "?", tx, tz, n)) -- (tools)
+	Spring.Echo(string.format("[bardroid-presets] %s to %.0f,%.0f%s: %d units", p and p.name or "?", pl and pl.mx or 0,
+		pl and pl.mz or 0, pl and pl.W and string.format(" (a line %.0f wide)", pl.W) or " (a tap)", n)) -- (tools)
 	return true
 end
 
--- the mark while aiming: a pulsing gold ring where the finger is, a line from the group's middle, and for STRAFE the
--- line it will run along
+-- while aiming: a tap's pulsing gold ring with dashes from the group, or the drawn line with the way it faces; the
+-- places the units would take (blue rings) and how far the front goes side to side (a faint gold line)
+local preview -- { key, plan }
 function widget:DrawWorld()
 	if not (aiming and armedFor) then
+		preview = nil
 		return
 	end
-	local tx, tz = aiming.x, aiming.z
-	local ty = Spring.GetGroundHeight(tx, tz) or 0
+	local aim = aimOf(aiming)
+	local key = aim.bx and string.format("%.0f %.0f %.0f %.0f", aim.ax, aim.az, aim.bx, aim.bz)
+		or string.format("%.0f %.0f", aim.x, aim.z)
+	if not preview or preview.key ~= key then
+		preview = { key = key, plan = plan(armedFor.id, armedFor.units, aim) }
+	end
+	local pl = preview.plan
 	local pulse = 0.5 + 0.5 * math.sin(os.clock() * 8)
 	gl.DepthTest(false)
-	gl.LineWidth(3)
-	gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
-	gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
-	local cx, cz, n = 0, 0, 0 -- (the group's middle: shape() made a table for each unit, every frame)
-	for _, u in ipairs(armedFor.units) do
-		local ux, _, uz = spGetUnitPosition(u)
-		if ux then
-			cx, cz, n = cx + ux, cz + uz, n + 1
+	if aim.bx then
+		local ay, by = Spring.GetGroundHeight(aim.ax, aim.az) or 0, Spring.GetGroundHeight(aim.bx, aim.bz) or 0
+		gl.LineWidth(5)
+		gl.Color(1, 0.8, 0.25, 0.75 + 0.25 * pulse)
+		gl.BeginEnd(GL.LINES, function()
+			gl.Vertex(aim.ax, ay + 8, aim.az)
+			gl.Vertex(aim.bx, by + 8, aim.bz)
+		end)
+		gl.LineWidth(3)
+		gl.DrawGroundCircle(aim.ax, ay, aim.az, 24, 24)
+		gl.DrawGroundCircle(aim.bx, by, aim.bz, 24, 24)
+		if pl then -- (the way the front faces: an arrow from the line's middle)
+			local mx, mz = (aim.ax + aim.bx) / 2, (aim.az + aim.bz) / 2
+			local my = Spring.GetGroundHeight(mx, mz) or 0
+			local tx, tz = mx + pl.fx * 110, mz + pl.fz * 110
+			gl.BeginEnd(GL.LINE_STRIP, function()
+				gl.Vertex(mx, my + 8, mz)
+				gl.Vertex(tx, my + 8, tz)
+				gl.Vertex(tx - pl.fx * 30 + pl.px * 22, my + 8, tz - pl.fz * 30 + pl.pz * 22)
+			end)
+			gl.BeginEnd(GL.LINES, function()
+				gl.Vertex(tx, my + 8, tz)
+				gl.Vertex(tx - pl.fx * 30 - pl.px * 22, my + 8, tz - pl.fz * 30 - pl.pz * 22)
+			end)
+		end
+	else
+		local tx, tz = aim.x, aim.z
+		local ty = Spring.GetGroundHeight(tx, tz) or 0
+		gl.LineWidth(3)
+		gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
+		gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
+		if pl then -- (the way from the group: dashes running towards the mark; a plain line at half alpha was lost on
+			-- the ground, dev phone screenshot)
+			local cx, cz = pl.cx, pl.cz
+			local cy = Spring.GetGroundHeight(cx, cz) or ty
+			local dx, dz = tx - cx, tz - cz
+			local len = math.sqrt(dx * dx + dz * dz)
+			local dash, run = 40, (os.clock() * 120) % 80
+			gl.Color(1, 0.85, 0.3, 0.85)
+			gl.BeginEnd(GL.LINES, function()
+				for s = run - 80, len, 80 do
+					local a, b = math.max(0, s) / math.max(1, len), math.min(len, s + dash) / math.max(1, len)
+					if b > a then
+						gl.Vertex(cx + dx * a, cy + (ty - cy) * a + 8, cz + dz * a)
+						gl.Vertex(cx + dx * b, cy + (ty - cy) * b + 8, cz + dz * b)
+					end
+				end
+			end)
 		end
 	end
-	cx, cz = n > 0 and cx / n or nil, cz / math.max(1, n)
-	if cx then -- (the way from the group: dashes running towards the mark; a plain line at half alpha was lost on the
-		-- ground, dev phone screenshot)
-		local cy = Spring.GetGroundHeight(cx, cz) or ty
-		local dx, dz = tx - cx, tz - cz
-		local len = math.sqrt(dx * dx + dz * dz)
-		local dash, run = 40, (os.clock() * 120) % 80
-		gl.LineWidth(3)
-		gl.Color(1, 0.85, 0.3, 0.85)
-		gl.BeginEnd(GL.LINES, function()
-			for s = run - 80, len, 80 do
-				local a, b = math.max(0, s) / math.max(1, len), math.min(len, s + dash) / math.max(1, len)
-				if b > a then
-					gl.Vertex(cx + dx * a, cy + (ty - cy) * a + 8, cz + dz * a)
-					gl.Vertex(cx + dx * b, cy + (ty - cy) * b + 8, cz + dz * b)
-				end
+	if pl then
+		local lo, hi = math.huge, -math.huge
+		gl.LineWidth(2)
+		gl.Color(0.55, 0.85, 1, 0.9)
+		for _, s in pairs(pl.slots) do
+			gl.DrawGroundCircle(s[1], Spring.GetGroundHeight(s[1], s[2]) or 0, s[2], 14, 12)
+			if s[3] == 0 then
+				lo, hi = math.min(lo, s[4]), math.max(hi, s[4])
 			end
-		end)
-		local p = PRESETS[armedFor.id]
-		if p and p.thumb == "strafe" then
-			local fx, fz = way(cx, cz, tx, tz)
-			local px, pz = -fz, fx
-			gl.LineWidth(4)
-			gl.Color(1, 0.8, 0.25, 0.9)
+		end
+		if lo <= hi then -- (the front's side to side: as far as its ends go)
+			local ax, az = pl.mx + pl.px * (lo - SIDE), pl.mz + pl.pz * (lo - SIDE)
+			local bx, bz = pl.mx + pl.px * (hi + SIDE), pl.mz + pl.pz * (hi + SIDE)
+			gl.LineWidth(2)
+			gl.Color(1, 0.8, 0.25, 0.35)
 			gl.BeginEnd(GL.LINES, function()
-				gl.Vertex(tx + px * STRAFE_SIDE, ty + 8, tz + pz * STRAFE_SIDE)
-				gl.Vertex(tx - px * STRAFE_SIDE, ty + 8, tz - pz * STRAFE_SIDE)
+				gl.Vertex(ax, (Spring.GetGroundHeight(ax, az) or 0) + 6, az)
+				gl.Vertex(bx, (Spring.GetGroundHeight(bx, bz) or 0) + 6, bz)
 			end)
 		end
 	end
@@ -583,8 +793,11 @@ function widget:DrawWorld()
 end
 
 -- the formations' moves as one: the units picked for a moment (the engine's Ctrl group move works on the selection),
--- the order given, the player's own selection back in the same call
+-- the order given, the player's own selection back in the same call; and the side to side once a group is there
 function widget:GameFrame(f)
+	if #sways > 0 and f % 10 == 0 then
+		swayCheck(f)
+	end
 	if #groupOrders == 0 or groupOrders[1].frame > f then
 		return
 	end
