@@ -1069,6 +1069,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over the open map at the bottom left, a panel not drawn while the dock shows the selection (bardroid_info.lua's
       standDown). Its rect is none while it stands down now: the editor shows Chat, Minimap, Player list and the top
       bar only. Dev phone: the same, no Unit info outline.
+- [x] **Kailil's Fold7 game of 2026-11-13 ~09:00** (read at 17:50, once the laptop's Tailscale reached it again):
+      about 15 minutes, 29.8-30.1 fps every minute up to 152 units, the slowest frame 219 ms at the start then under
+      75 ms; no error from the app's widgets. Two lines that are not the app's: Chobby's "A Player Joined You" has no
+      English text (i18n), liblobby's REMOVESCRIPTTAGS pattern. The day's builds went on at 17:45 (Wireless debugging
+      on a new port, found by a port scan).
 - [ ] **The orders on the first tap too? (asked 2026-11-13)** With the camera pad up the build options, INSERT and
       QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow act on the first tap (Kailil,
       2026-11-12, and the runs after); FIGHT, MOVE, PATROL, D-Gun and the states still take one tap to open the menu,
