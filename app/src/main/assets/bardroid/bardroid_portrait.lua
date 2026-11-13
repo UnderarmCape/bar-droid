@@ -2089,6 +2089,13 @@ local function pressItem(item, long)
 				-- me cycle through factories. Only after I dont press the factories button after .75 seconds does the bottom
 				-- ui switch to show the selected factory screen")
 				L.factoryPick = { unit = u, at = now() + 0.75 }
+				-- (which one, by name and place in the list: factories side by side, the camera's move alone did not say)
+				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+				local P = WG.BarDroidPad
+				if ud and P and P.say then
+					P.say(string.format("%s (%d OF %d)", string.upper(ud.translatedHumanName or ud.humanName or ud.name),
+						cycleAt[k], #list))
+				end
 			else
 				selectUnits({ u })
 			end

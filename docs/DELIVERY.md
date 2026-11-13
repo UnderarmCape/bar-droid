@@ -1169,6 +1169,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       11-13 02:20 (both launcher logs): 24 engine starts (idle skirmishes upright and sideways of 4-6 minutes, the
       dock tests, the full sweep of 10 phone tests, the lobby), none of the driver's refusal, no hang; 1 low-memory end,
       01:27 at a skirmish's loading (Skirmish AIs, the 8 GB phone; its run right after loaded and played).
+      Again 2026-11-13 06:50:21 (plain `pad-test.ps1` in the full sweep, after the Windows update): the driver's
+      refusal, DriverWatch closed the game, the test named the fault; the rerun ALL PASS, the sweep's nine others too.
+      26 engine starts in the dev phone's two logs then.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
