@@ -568,6 +568,10 @@ local function writeDock(force)
 			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
 			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
 			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
+			-- (the build options, a builder's or a factory's, shown: their first tap acts, the camera pad or not; Kailil,
+			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
+			.. ((leftKind == "build" or leftKind == "pregame") and L.left[3] > 0 and not SP.hidden
+				and ("live " .. r(L.left) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
 	else
 		text = "dock none\n"
@@ -1808,7 +1812,11 @@ local function pressItem(item, long)
 	end
 	if k == "build" then
 		if selectedFactory() then -- a factory: one more (a long press: one less), and its queue buttons
-			runCommand(item.id, long)
+			-- (INSERT on: Alt, the queue's front, as BAR's alt-click; Kailil, 2026-11-12: "Insert is still not inserting the
+			-- unit I select in front of everything", the picture's tap went to the end, only +1/+5/+20 had it)
+			local Pd = WG.BarDroidPad
+			local insert = not long and Pd and Pd.queueState and select(2, Pd.queueState())
+			runCommand(item.id, long, false, false, insert or false)
 			factoryItem = item.id
 		else
 			runCommand(item.id)

@@ -1401,6 +1401,24 @@ Added 2026-11-10 ~05:00 (with screenshots):
       wm size 1080x1198, 1198x1080, back): the dock went sideways while the screen was wide (BAR's minimap into it),
       upright again after (the minimap back in its small upright place), no error; and the lobby sideways at the
       near-square size: the column 15 buttons a page, the screens beside it the whole height.
+- [x] **Kailil's notes of 2026-11-12 evening on placing and the factory queue** (his screenshots: a 3 x 3 GRID with
+      ONE lit, a Bot Lab with INSERT lit). Placing: "the build place menu should reflect i am in grid mode ... I should
+      be able to cancel the grid by pressing one"; "I activated grid mode too easily when I was moving around my
+      building placement. Grid mode should only activate with my long press if my finger doesn't move at all"; "when
+      ... doing the fine tune placement adjustments, it is spawning another building ... it should instead use the
+      vanilla system". Done: GRID lit while a GRID is held (the copy's droidPlace), ONE during a GRID ends it unplaced
+      and picks the building again on ONE (RtsTouch gridToOne, "grid one", the place file's "one" rect; picked again 6
+      frames after the button is up); a GRID only from a long press that never moved (the rest-after-a-drag trigger and
+      the drag-from-the-building trigger gone: that drag nudges now); the app's own drawn building only where the
+      pointer cannot be: the pointer is kept on the waiting building (camera moved, or resting on the dock after a tap)
+      and BAR's blueprint is what shows (keepPointer, drawSpot). Factory: "Insert is still not inserting the unit I
+      select in front"; the picture's tap now carries INSERT's Alt (only +1/+5/+20 did); "have the factory build queue
+      unit pictures accept a first time ui bottom click ... for all builders and factories": the build options are a
+      "live" rect in the dock file, RtsTouch opens the menu with their first tap and the tap acts. Dev phone upright
+      (a Bot Lab given with the singleplayer cheat, its queue logged): armck, armpw queued with single taps on a closed
+      dock, INSERT then armrectr: "armrectr armck armpw"; a still long press: GRID lit over a 3 x 2 blueprint, ONE:
+      gone unplaced, ONE lit, the wind turbine still picked; a drag from the waiting building nudged it; one blueprint
+      only; dock-phone-test and remake-check pass.
 - [ ] **The sideways dock for one thumb: built, his test pending** (Kailil, 2026-11-12: "Only have the map show when no
       units selected. And keep the bottom ui two slots only instead of 3 slots ... So the bottom ui can be snapped to
       the left side or right side of the bottom of the phone so it can be used by one finger only. Add a button or

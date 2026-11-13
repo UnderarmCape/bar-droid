@@ -91,7 +91,6 @@ final class RtsTouch {
     // curve very low at first. So I can do very fine control"): NUDGE_FINE of it near where the drag began, rising
     // smoothly to NUDGE_FAR once the finger is NUDGE_RAMP of the screen's shorter side away
     private static final float NUDGE_FINE = 0.12f, NUDGE_FAR = 0.6f, NUDGE_RAMP = 0.25f;
-    private static final long GRID_REST_MS = 600;              // a finger at rest after moving a building: a GRID
     private static final long GRID_KEYS_MS = 100;              // a GRID placed: Shift+Alt held this much longer
     private static final long GRID_CANCEL_MS = 250;            // a GRID cancelled: the button let go this much later
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
@@ -119,6 +118,7 @@ final class RtsTouch {
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
         float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
+        float[] live;   // the build options: their first tap acts though the dock is the camera pad (bardroid_portrait.lua)
         boolean menu, circle, draw, dgun, dgunAuto;
     }
     private Dock dockCache;
@@ -186,8 +186,8 @@ final class RtsTouch {
     private boolean cursorOnDock;   // a finger's last touch ended on the dock: the pointer rests there (showCursor)
     private boolean fingersLast, cursorSynced;      // the last input was a finger (source "touch"); showCursor
     // One building picked with ONE (startPlaceDrag): at this touch's start, and where the finger last came to rest
-    private boolean placingOne, waitingAtDown, onWaiting;
-    private float holdX, holdY, moveX, moveY;       // view pixels: the rest point (the GRID hold), the last move sent
+    private boolean placingOne, waitingAtDown;
+    private float moveX, moveY;       // view pixels: the last move sent
     private float nudgeFromX, nudgeFromY;           // view pixels: where a building's drag began (its gain, nudgeTo)
     private float ptrX, ptrY;                       // X screen pixels: the pointer, moved with a dragged building
     private boolean gridHeld;                       // a GRID: the left button down with Shift+Alt until PLACE
@@ -217,11 +217,6 @@ final class RtsTouch {
         state = State.RIGHT_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         press(downX, downY, InputStub.BUTTON_RIGHT, true);
-    };
-
-    /** A finger at rest for a breath while it places or nudges a building: a GRID from it. */
-    private final Runnable gridHold = () -> {
-        if (state == State.PLACE_DRAG || state == State.NUDGE) startGrid();
     };
 
     /** Two fingers held still: the next swipe picks an action (twoHoldSwipe). */
@@ -529,6 +524,13 @@ final class RtsTouch {
                     cursorOnDock = inDock;
                     showCursor(cursorWanted);
                 }
+                // (the build options take their first tap: the menu opens with it, and the touch is the menu's; Kailil,
+                // 2026-11-12, "dont require a tap first to engage ... The build menus and factory build menus should all
+                // have this")
+                if (inDock && !dock.menu && dock.live != null && inside(dock.live, toX(e.getX()), toY(e.getY()))) {
+                    act("dock_menu");
+                    dock.menu = true;
+                }
                 if (inDock && !dock.menu) {   // the dock in pad mode: the camera
                     padDown(e);
                     break;
@@ -591,7 +593,6 @@ final class RtsTouch {
                 } else if (state == State.PAN || state == State.DRAG_WAIT || state == State.PLACE_DRAG
                         || state == State.NUDGE || state == State.GRID_DRAG) {
                     ui.removeCallbacks(hoverTimeout);
-                    ui.removeCallbacks(gridHold);
                     beginTwoFinger(e, State.TWO_FINGER);   // a second finger joins a pan (or a building's drag): pinch/twist from here
                 }
                 break;
@@ -692,11 +693,6 @@ final class RtsTouch {
             case NUDGE:
                 if (i < 0) return;
                 nudgeTo(curX, curY);   // (both: the building by part of the finger's way, startPlaceDrag)
-                if (Math.hypot(curX - holdX, curY - holdY) > slop) {   // still moving: the GRID hold counts from here
-                    holdX = curX; holdY = curY;
-                    ui.removeCallbacks(gridHold);
-                    ui.postDelayed(gridHold, GRID_REST_MS);
-                }
                 return;
             case GRID_DRAG:
                 if (i >= 0) gridTo(curX, curY);
@@ -767,7 +763,6 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
-        ui.removeCallbacks(gridHold);
         curX = e.getX(); curY = e.getY();
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
         switch (state) {
@@ -783,7 +778,6 @@ final class RtsTouch {
                     press(downX, downY, InputStub.BUTTON_LEFT, true);
                     press(curX, curY, InputStub.BUTTON_LEFT, false);
                 } else if (startPlaceDrag()) {   // (ONE picked: the building moved, the map stays)
-                    ui.removeCallbacks(gridHold);
                 } else {
                     startPan();
                     flingIfFast();
@@ -861,7 +855,6 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
-        ui.removeCallbacks(gridHold);
         if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         endDockSelect();
@@ -908,6 +901,7 @@ final class RtsTouch {
                     else if (d != null && f[0].equals("right")) d.right = r;
                     else if (d != null && f[0].equals("groups")) d.groups = r;
                     else if (d != null && f[0].equals("map")) d.map = r;
+                    else if (d != null && f[0].equals("live")) d.live = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }
@@ -1130,19 +1124,14 @@ final class RtsTouch {
 
     /**
      * ONE picked: a drag on the map moves the building instead of the map. With none waiting it follows the finger;
-     * with one waiting (placed earlier, not by a tap just now) the drag nudges it; a drag that starts on it draws a
-     * GRID from it. False: not ONE.
+     * with one waiting (placed earlier, not by a tap just now) the drag nudges it, from on it too. A GRID only from a
+     * long press that never moved (longPress): a drag from the building made one, and so did a finger resting after a
+     * drag, and both caught fine placing (Kailil, 2026-11-12: "Grid mode should only activate with my long press if my
+     * finger doesn't move at all"). False: not ONE.
      */
     private boolean startPlaceDrag() {
         if (!placingOne) return false;
         runPlaceTap();
-        holdX = curX; holdY = curY;
-        if (onWaiting) {
-            moveX = downX; moveY = downY;
-            startGrid();
-            gridTo(curX, curY);
-            return true;
-        }
         // (none waiting: the building where the finger came down, then moved as a waiting one is, finely at first; it
         // followed the finger 1:1, too quick to place exactly, Kailil 2026-11-11)
         if (waitingAtDown) {
@@ -1160,7 +1149,6 @@ final class RtsTouch {
         ptrX = fromSpot ? p.spot[0] : toX(downX);
         ptrY = fromSpot ? p.spot[1] : toY(aboveDock(downY));
         nudgeTo(curX, curY);
-        ui.postDelayed(gridHold, GRID_REST_MS);
         return true;
     }
 
@@ -1173,7 +1161,6 @@ final class RtsTouch {
      * gestures, "GRID" over it (bardroid_buildmenu.lua).
      */
     private void startGrid() {
-        ui.removeCallbacks(gridHold);
         runPlaceTap();
         Place p = place();
         boolean atFinger = state == State.PENDING && !waitingAtDown;
@@ -1211,6 +1198,16 @@ final class RtsTouch {
         ui.postDelayed(this::gridPlace, GRID_CANCEL_MS);
     }
 
+    /**
+     * ONE tapped while a GRID is held: the GRID ends unplaced as gridCancel's does, and the building is picked again
+     * once the button is up ("grid one", bardroid_buildmenu.lua), on ONE (Kailil, 2026-11-12: "I should be able to
+     * cancel the grid by pressing one").
+     */
+    private void gridToOne() {
+        send("grid one");
+        gridCancel();
+    }
+
     /** Lets go of everything (the building went, the app closes). */
     private void gridLetGo() {
         if (!gridHeld) return;
@@ -1226,6 +1223,7 @@ final class RtsTouch {
         Place p = place();
         // (the two buttons first: upright PLACE is the whole panel around them)
         if (p != null && inside(p.cancel, x, y)) gridCancel();
+        else if (p != null && inside(p.one, x, y)) gridToOne();
         else if (p != null && inside(p.rotate, x, y)) send("act rotate_right");
         else if (p != null && inside(p.done, x, y)) gridPlace();
         else if (nearPlaceTap(vx, vy, downTime)) { placeTapX = -1; placeTapAt = -1; gridPlace(); }
@@ -1328,6 +1326,7 @@ final class RtsTouch {
     private static final class Place {
         String shape;      // one, line, grid or border
         float[] done, rotate, cancel;   // its PLACE, rotate and cancel buttons: x0 y0 x1 y1, X screen pixels
+        float[] one;       // the dock's ONE (a GRID held: back to ONE, gridToOne)
         float[] spot;      // where the spot a tap picked is on the screen now; null: none (or off the screen)
         float spotR;       // the building's size there (X screen pixels from its middle)
     }
@@ -1348,10 +1347,12 @@ final class RtsTouch {
                 if (f[0].equals("place") && f.length == 2 && !f[1].equals("none")) {
                     p = new Place();
                     p.shape = f[1];
-                } else if (p != null && f.length == 5 && (f[0].equals("done") || f[0].equals("rotate") || f[0].equals("cancel"))) {
+                } else if (p != null && f.length == 5 && (f[0].equals("done") || f[0].equals("rotate") || f[0].equals("cancel")
+                        || f[0].equals("one"))) {
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("done")) p.done = r;
                     else if (f[0].equals("rotate")) p.rotate = r;
+                    else if (f[0].equals("one")) p.one = r;
                     else p.cancel = r;
                 } else if (p != null && f[0].equals("spot") && (f.length == 3 || f.length == 4)) {
                     p.spot = new float[]{Float.parseFloat(f[1]), Float.parseFloat(f[2])};
@@ -1373,11 +1374,6 @@ final class RtsTouch {
         // (a quick second touch after a tap that put the building down moves it under the finger again: "a second
         // (delayed) touch" nudges)
         waitingAtDown = waiting && !(placeTapAt >= 0 && placeTapSpot != null && downTime - placeTapAt <= doubleTapMs);
-        onWaiting = false;
-        if (waitingAtDown && p.spot != null) {
-            float r = Math.max(p.spotR, 3 * slop * xPerViewPixel());
-            onWaiting = Math.hypot(toX(downX) - p.spot[0], toY(downY) - p.spot[1]) <= r;
-        }
     }
 
     private boolean nearPlaceTap(float vx, float vy, long when) {
