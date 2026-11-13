@@ -249,15 +249,20 @@ function style.toast(text, x, y, color, alpha, key, listening)
 	if not font then
 		return
 	end
+	local vsx, vsy = Spring.GetViewGeometry()
 	local size = style.size(0.02)
+	-- (no wider than the screen: upright a long note, "BATTLE LINE: TAP TO SEND, OR DRAW THE FRONT LINE", ran off both
+	-- edges, dev phone screenshot 2026-11-12; the words a size smaller until it fits)
+	local textW = font:GetTextWidth(text)
+	local unit = 1.5 + textW + (key and 1.8 or 0) + (listening and 1 or 0) -- (the box's width in sizes, as below)
+	size = math.min(size, (vsx - 16) / unit)
 	local pad = math.floor(size * 0.75)
 	local chip = key and math.floor(size * 1.3) or 0
 	local gap = key and math.floor(size * 0.5) or 0
 	local dot = listening and math.floor(size * 0.55) or 0
 	local dotGap = listening and math.floor(size * 0.45) or 0
-	local tw = math.ceil(font:GetTextWidth(text) * size)
+	local tw = math.ceil(textW * size)
 	local w, h = dot + dotGap + tw + gap + chip + pad * 2, math.floor(size * 2)
-	local _, vsy = Spring.GetViewGeometry()
 	local x0 = math.floor(x - w / 2)
 	y = math.min(math.floor(y), vsy - h - 2)
 	-- (the box fades ahead of its words: at the same alpha its light rim outlasted the words, an empty box over the game
