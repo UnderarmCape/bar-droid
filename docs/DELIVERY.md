@@ -1022,6 +1022,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       screen fine. Found: with a factory picked the groups row's x FIRST and x LAST showed with its build queue empty
       (they act on that queue, removeOrder): shown now only while the factory has something queued. Dev phone: a Bot
       Lab picked, nothing queued: no buttons; a bot queued: both; x LAST: the bot gone, the buttons too.
+      Next: with the camera pad up (the menu closed) a tap on metal or energy only opened the menu, a second one their
+      panel, though the launcher says "A tap on metal or energy opens their sliders" and the home buttons, the groups
+      and the build options act on the first tap (Kailil, 2026-11-12): the bars are a "live" rect now (not while
+      spectating). Dev phone upright, the menu timed out first: metal's panel (its share slider) on one tap, energy's
+      (convert and share) likewise; dock-phone-test ALL PASS.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

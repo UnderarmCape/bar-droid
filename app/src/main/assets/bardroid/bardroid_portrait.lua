@@ -575,6 +575,10 @@ local function writeDock(force)
 			-- (and the groups row: the unit groups and the idle builders, the same "directly click them")
 			.. (showGroups and not SP.hidden and L.groups and L.groups[3] > L.groups[1]
 				and ("live " .. r(L.groups) .. "\n") or "")
+			-- (and metal and energy: their panel on the first tap, as the launcher's words say; with the camera pad up the
+			-- tap only opened the menu, a second one the panel, dev phone 2026-11-13; spectating they open nothing)
+			.. (leftKind ~= "spec" and not SP.hidden and L.res and L.res[3] > L.res[1]
+				and ("live " .. r(L.res) .. "\n") or "")
 			-- (sideways, one thumb: the BUILD | ORDERS tabs; HOME opens with the menu's first tap anyway)
 			.. (L.thumb and L.tabsOn and L.tabs and L.tabs.left and L.tabs.right and not SP.hidden
 				and ("live " .. r(L.tabs.left) .. "\nlive " .. r(L.tabs.right) .. "\n") or "")
