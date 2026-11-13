@@ -91,7 +91,9 @@ factions' matching unit too.
 
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
-to turn), triple tap and hold to tilt. A tap opens its menu for 2.6 seconds: the build grid on the left, the picked
+to turn), triple tap and hold to tilt. The build grid, QUEUE and INSERT, the buttons with nothing picked and the groups
+row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
+open): the build grid on the left, the picked
 units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
 metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, FACTORIES (your next factory
 picked, the camera on it and its build menu in the dock to queue units; tap again for the next), PINGS (LAST PINGS: the camera to
