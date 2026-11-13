@@ -484,6 +484,16 @@ local function layout()
 		L.res = { mx0, bandH - pad - resH, mx1, bandH - pad }
 		L.groups = { mx0, pad, mx1, pad + groupsH }
 		local hx0, hy0, hx1, hy1 = mx0, L.groups[4] + gap, mx1, L.res[2] - gap
+		if L.dgun then -- (the D-gun mode: FIRE over the middle from 0.74 of the height, dgunParts; the minimap's top
+			-- sixth lay under it, dev phone screenshot 2026-11-13. Below FIRE, down into the groups' room, which this mode
+			-- leaves empty; the map's shape kept)
+			local aspect = Game.mapSizeX / max(1, Game.mapSizeZ)
+			hy0, hy1 = pad, pad + floor(inner * 0.74) - gap
+			mapW = floor((hy1 - hy0) * aspect)
+			local mh = floor(min(hx1 - hx0, mapW) / aspect)
+			hy0 = hy0 + floor((hy1 - hy0 - mh) / 2)
+			hy1 = hy0 + mh
+		end
 		mapW = min(hx1 - hx0, mapW) -- (the map's shape, in the middle of its room)
 		hx0 = floor((hx0 + hx1 - mapW) / 2)
 		L.hole = { hx0, hy0, hx0 + mapW, hy1 }
