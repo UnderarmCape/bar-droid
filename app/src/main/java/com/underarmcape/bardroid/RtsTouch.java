@@ -726,7 +726,9 @@ final class RtsTouch {
                     state = State.GRID_DRAG;
                     moveX = downX; moveY = downY;
                     gridTo(curX, curY);
-                } else if (secondTap && place() == null) {
+                } else if (secondTap && !inDock && place() == null) {
+                    // (from the game only: a dock button tapped, then a sideways drag from it, started a box selection
+                    // inside the dock, its filters over the grid; dev phone 2026-11-13, BASE then a drag)
                     Dock d = dock();
                     if (d != null) {   // (the dock's selection: the corner held at its top edge, a second finger's filters)
                         dockSelecting = true;
