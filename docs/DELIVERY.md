@@ -1058,6 +1058,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       where the dock had been scrolled it; closed, the dock back; dock-phone-test ALL PASS. (BAR's minimap stays in the
       dock's middle slot meanwhile; the Quit dialog fits above the dock as it is.) Upright the same: Settings open, the
       dock aside (Settings itself still wider than the screen there, the item above for BAR); closed, the dock back.
+      The game's end sideways (Quit, Resign): the dock gone, BAR's Awards whole in the middle, "Leaving the game in 3 s:
+      tap the screen to stay longer" in the chat box (its last lines touch the Awards title for those seconds; kept, as
+      they carry that notice), then the engine's exit 0 and the launcher back, no errors in infolog.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
