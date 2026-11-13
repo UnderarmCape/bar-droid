@@ -155,7 +155,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the SurfaceView at the X screen's size, the display hardware scales instead of SGSR); 0012 the preference screen's
   version line: "1.03.01, built <yyyy-MM-dd> from BAR Droid <commit>" (the commit is the building checkout's); 0013
   hides the user-action entries that never act here (Back: GameActivity makes it Escape; the notification's tap and
-  buttons: BarApp keeps Termux:X11's notification away). docs/CONTAINER-COST.md has
+  buttons: BarApp keeps Termux:X11's notification away); 0015 Termux:X11's build files in the syntax Gradle 10 keeps
+  (`propName = value`; its two git calls through `providers.exec` from the root, so the version line still names
+  BAR Droid's commit). docs/CONTAINER-COST.md has
   what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
   with all of them).
 - The app icon opens the lobby (`StartActivity`, setting "Open the lobby when the app starts"; the launcher is a task of

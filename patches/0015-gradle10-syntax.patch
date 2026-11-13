@@ -1,0 +1,71 @@
+diff --git a/lorie/build.gradle b/lorie/build.gradle
+index 6a0a454..24cf39b 100644
+--- a/lorie/build.gradle
++++ b/lorie/build.gradle
+@@ -22,26 +22,26 @@ def hostProject = hostProjects[0]
+ def hostApplicationId = hostProject.android.defaultConfig.applicationId ?: hostProject.android.namespace
+ 
+ android {
+-    namespace 'com.termux.x11'
++    namespace = 'com.termux.x11'
+     //noinspection GrDeprecatedAPIUsage
+     compileSdkVersion 34
+-    ndkVersion termuxX11NdkVersion
++    ndkVersion = termuxX11NdkVersion
+     defaultConfig {
+         minSdkVersion 24
+         targetSdkVersion 34
+         buildConfigField "String", "VERSION_NAME", "\"${termuxX11VersionName}\""
+-        buildConfigField "String", "COMMIT", "\"" + ("git rev-parse HEAD\n".execute().getText().trim() ?: (System.getenv('CURRENT_COMMIT') ?: "NO_COMMIT")) + "\""
++        buildConfigField "String", "COMMIT", "\"" + (providers.exec { commandLine 'git', 'rev-parse', 'HEAD'; workingDir = rootDir; ignoreExitValue = true }.standardOutput.asText.get().trim() ?: (System.getenv('CURRENT_COMMIT') ?: "NO_COMMIT")) + "\""
+         buildConfigField "String", "APPLICATION_ID", "\"${hostApplicationId}\""
+ 
+         consumerProguardFiles 'proguard-rules.pro'
+     }
+ 
+-    compileOptions.sourceCompatibility JavaVersion.VERSION_1_9
+-    compileOptions.targetCompatibility JavaVersion.VERSION_1_9
+-    externalNativeBuild.cmake.path "src/main/cpp/CMakeLists.txt"
+-    packagingOptions.jniLibs.useLegacyPackaging false
+-    buildFeatures.aidl true
+-    buildFeatures.buildConfig true
++    compileOptions.sourceCompatibility = JavaVersion.VERSION_1_9
++    compileOptions.targetCompatibility = JavaVersion.VERSION_1_9
++    externalNativeBuild.cmake.path = "src/main/cpp/CMakeLists.txt"
++    packagingOptions.jniLibs.useLegacyPackaging = false
++    buildFeatures.aidl = true
++    buildFeatures.buildConfig = true
+ }
+ 
+ dependencies {
+diff --git a/lorie/version.gradle b/lorie/version.gradle
+index 3ddce12..3284bb5 100644
+--- a/lorie/version.gradle
++++ b/lorie/version.gradle
+@@ -1,5 +1,5 @@
+ ext.termuxX11VersionName = {
+-    def commit = 'git rev-parse --verify --short HEAD'.execute().text.trim()
++    def commit = providers.exec { commandLine 'git', 'rev-parse', '--verify', '--short', 'HEAD'; workingDir = rootDir; ignoreExitValue = true }.standardOutput.asText.get().trim()
+     def version = "1.03.01"
+     // BAR Droid: the commit is the building checkout's (BAR Droid's, not Termux:X11's), the date year first: the line read
+     // "1.03.01-6ac80ca-09.11.26" under "Termux:X11 version", the date as September 11 to US eyes
+diff --git a/shell-loader/stub/build.gradle b/shell-loader/stub/build.gradle
+index 2f460d5..a9ce40c 100644
+--- a/shell-loader/stub/build.gradle
++++ b/shell-loader/stub/build.gradle
+@@ -1,10 +1,10 @@
+ apply plugin: 'com.android.library'
+ 
+-android.namespace 'com.termux.x11.stub'
++android.namespace = 'com.termux.x11.stub'
+ android.defaultConfig.minSdkVersion 24
+ android.compileSdkVersion 34
+-android.buildFeatures.buildConfig false
+-android.buildTypes.release.minifyEnabled false
+-android.compileOptions.sourceCompatibility JavaVersion.VERSION_1_8
+-android.compileOptions.targetCompatibility JavaVersion.VERSION_1_8
++android.buildFeatures.buildConfig = false
++android.buildTypes.release.minifyEnabled = false
++android.compileOptions.sourceCompatibility = JavaVersion.VERSION_1_8
++android.compileOptions.targetCompatibility = JavaVersion.VERSION_1_8
+ dependencies.implementation 'androidx.annotation:annotation:1.11.0'

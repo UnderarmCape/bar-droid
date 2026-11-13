@@ -955,14 +955,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sky and ground mirrored and softened. Left: the generative fill itself, a fill (inpainting) model on the laptop
       (AI Studio's models were removed after 7 idle days; MOSS-Image draws from words, it does not fill), run while
       the GPU is free (Monster Hunter Wilds had it at 95 % that afternoon); a download needs his yes.
-- [ ] **Gradle 10** (found 2026-11-13, `--warning-mode all`; the wrapper is pinned at 9.8.2, nothing breaks now):
+- [x] **Gradle 10** (found 2026-11-13, `--warning-mode all`; the wrapper is pinned at 9.8.2, nothing breaks now):
       Termux:X11's build files use the space-assignment syntax Gradle 10 removes (`termux-x11/shell-loader/stub/
       build.gradle` lines 3 and 6, `termux-x11/lorie/build.gradle` 33 and 42-44) and start a process at configuration
       time (`lorie/version.gradle` line 2, an error in Gradle 11); the Android Gradle plugin's own
       Configuration.setVisible goes with an AGP update. When the wrapper moves: a `patches/00xx` for the two
       Termux:X11 files (`propName = value`; the version through `providers.exec`), and AGP raised with it. The app's
       own build files have none. Android lint the same night: 0 errors (two Android 10 calls guarded, df46f52), the
-      launcher's fields labelled for TalkBack.
+      launcher's fields labelled for TalkBack. Done the same night: `patches/0015-gradle10-syntax.patch` (both files
+      `propName = value` throughout, the git calls through `providers.exec` with the root as their folder: the version
+      line still `from BAR Droid <commit>`); `--warning-mode all` now names only AGP's own setVisible. Dev phone: built,
+      installed, pace-test ALL PASS.
 
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon
