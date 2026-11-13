@@ -1074,6 +1074,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       75 ms; no error from the app's widgets. Two lines that are not the app's: Chobby's "A Player Joined You" has no
       English text (i18n), liblobby's REMOVESCRIPTTAGS pattern. The day's builds went on at 17:45 (Wireless debugging
       on a new port, found by a port scan).
+      That evening on the dev phone, the day's last build: 8 minutes of an untouched sideways skirmish, 29.9-30.0 fps
+      every minute after the first (28.8), Lua's memory steady at 134-152 MB, nothing from the app's widgets among the
+      infolog's warnings and errors (BAR's own yardmap, weapondef and icon warnings; Mesa's loader line at each start).
 - [ ] **The orders on the first tap too? (asked 2026-11-13)** With the camera pad up the build options, INSERT and
       QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow act on the first tap (Kailil,
       2026-11-12, and the runs after); FIGHT, MOVE, PATROL, D-Gun and the states still take one tap to open the menu,
