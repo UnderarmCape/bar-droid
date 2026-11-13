@@ -384,6 +384,7 @@ final class RtsTouch {
     private int dgunFireId = -1, dgunCamId = -1;
     private float dgunFireX, dgunSlide = -1, dgunCamDownX, dgunCamDownY, dgunCamX, dgunCamY;
     private float[] dgunFireRect;   // (the FIRE held)
+    private float dgunTrack;   // (its swipe's length, X pixels: a shot unless the finger went past a dead zone)
     private boolean dgunAutoSent, dgunSlideLeft, dgunTurnOff;
     private PadMove dgunCamMove = PadMove.NONE;
 
@@ -391,16 +392,21 @@ final class RtsTouch {
         int p = dgunFireId < 0 ? -1 : e.findPointerIndex(dgunFireId);
         if (p < 0 || d == null || d.fire == null || d.right == null) return;
         float f;
-        if (d.fire2 != null && dgunFireRect != null) {   // (floating: to the middle)
+        if (d.fire2 != null && dgunFireRect != null) {   // (floating: to the middle, a FIRE's width at least: on the
+            // unfolded Fold7's 1192 wide screen the middle was 106 pixels away, a tap that moved 16 lost its shot)
             float mid = (d.all[0] + d.all[2]) / 2;
-            float track = Math.max(slop * 4, dgunSlideLeft ? dgunFireRect[0] - mid : mid - dgunFireRect[2]);
+            float track = Math.max(slop * 4, Math.max(dgunFireRect[2] - dgunFireRect[0],
+                    dgunSlideLeft ? dgunFireRect[0] - mid : mid - dgunFireRect[2]));
+            dgunTrack = track;
             float gone = dgunSlideLeft ? dgunFireX - toX(e.getX(p)) : toX(e.getX(p)) - dgunFireX;
             f = Math.max(0, Math.min(1, gone / track));
         } else if (dgunSlideLeft) {
             float track = Math.max(slop * 4, d.fire[0] - (d.cancel != null ? d.cancel[2] : d.left[0]));
+            dgunTrack = track;
             f = Math.max(0, Math.min(1, (dgunFireX - toX(e.getX(p))) / track));
         } else {
             float track = Math.max(slop * 4, d.right[2] - d.fire[2]);
+            dgunTrack = track;
             f = Math.max(0, Math.min(1, (toX(e.getX(p)) - dgunFireX) / track));
         }
         if (Math.abs(f - dgunSlide) >= 0.02f || (f >= 1 && dgunSlide < 1)) {
@@ -418,7 +424,9 @@ final class RtsTouch {
      *  energy before full auto could start, dev phone 2026-11-10); cancelled: none. */
     private void dgunFireUp(boolean shoot) {
         if (dgunFireId < 0) return;
-        if (shoot && !dgunAutoSent && dgunSlide < 0.15f) act("dgun_fire");
+        // (a tap's wobble is no swipe: under 15 % of the track, or twice the touch slop on a short one)
+        if (shoot && !dgunAutoSent && dgunSlide * dgunTrack < Math.max(0.15f * dgunTrack, slop * 2 * xPerViewPixel()))
+            act("dgun_fire");
         dgunFireId = -1;
         dgunFireRect = null;
         dgunSlide = -1;

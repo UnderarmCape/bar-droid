@@ -1173,7 +1173,8 @@ local function dgunParts()
 		local cxL, cxR = floor(vsx * 0.13), vsx - floor(vsx * 0.13)
 		local fw, fh = floor(rad * 1.5), floor(rad * 0.95)
 		local fy0 = cy - floor(fh * 0.2)
-		local c = floor(min(vsx * 0.045, h * 0.2))
+		-- (the X by the band's height too: by the width alone it was 53 pixels on the unfolded Fold7's narrow screen)
+		local c = floor(min(h * 0.2, max(vsx * 0.045, h * 0.17)))
 		return { l = { cxL, cy, rad }, r = { cxR, cy, rad }, float = true,
 			fire = { cxL + rad + gap * 3, fy0, cxL + rad + gap * 3 + fw, fy0 + fh },
 			fire2 = { cxR - rad - gap * 3 - fw, fy0, cxR - rad - gap * 3, fy0 + fh },
@@ -3447,8 +3448,11 @@ function DG.track(f, cancel, dir, v, alpha, locked, t, float, toAuto)
 	local fh = f[4] - f[2]
 	local m = (dir > 0 or float) and 0.16 or 0.26 -- (the left one thinner: the cancel corner leaves it less room across)
 	local y0, y1 = f[2] + floor(fh * m), f[4] - floor(fh * m)
-	local mid = floor(vsx / 2)
-	local k = float and (dir > 0 and { f[3] + L.gap * 2, y0, mid - L.gap, y1 } or { mid + L.gap, y0, f[1] - L.gap * 2, y1 })
+	-- (floating: to the middle, a FIRE's width at least, as RtsTouch measures it: on the unfolded Fold7 the middle was
+	-- 106 pixels away)
+	local mid, fw = floor(vsx / 2), f[3] - f[1]
+	local k = float and (dir > 0 and { f[3] + L.gap * 2, y0, max(mid - L.gap, f[3] + L.gap * 2 + fw), y1 }
+			or { min(mid + L.gap, f[1] - L.gap * 2 - fw), y0, f[1] - L.gap * 2, y1 })
 		or dir > 0 and { f[3] + L.gap * 2, y0, L.right[3], y1 } or { cancel[3] + L.gap * 2, y0, f[1] - L.gap * 2, y1 }
 	local tw, th = k[3] - k[1], k[4] - k[2]
 	if tw < th * 1.3 or alpha <= 0 then
