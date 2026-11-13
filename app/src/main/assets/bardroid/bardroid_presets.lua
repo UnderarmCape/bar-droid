@@ -277,6 +277,13 @@ local PRESETS = {
 -- line { ax, az, bx, bz } (the front along it, as wide, facing away from the group's side of it)
 local function plan(id, units, aim)
 	local P = PRESETS[id]
+	local live = {} -- (units picked when it was armed may be gone since: their role, nil's UnitDefs, threw while aiming)
+	for _, u in ipairs(units) do
+		if spGetUnitDefID(u) and not Spring.GetUnitIsDead(u) then
+			live[#live + 1] = u
+		end
+	end
+	units = live
 	local cx, cz = centre(units)
 	if not (P and cx) then
 		return nil
@@ -716,6 +723,12 @@ function widget:DrawWorld()
 	end
 	local pl = preview.plan
 	local pulse = 0.5 + 0.5 * math.sin(os.clock() * 8)
+	-- (the marks' size with the camera's distance: zoomed out the line's ends, the arrow and the places were specks,
+	-- dev phone screenshot 2026-11-12)
+	local mx0, mz0 = aim.bx and (aim.ax + aim.bx) / 2 or aim.x, aim.bx and (aim.az + aim.bz) / 2 or aim.z
+	local camX, camY, camZ = Spring.GetCameraPosition()
+	local camD = math.sqrt((camX - mx0) ^ 2 + (camY - (Spring.GetGroundHeight(mx0, mz0) or 0)) ^ 2 + (camZ - mz0) ^ 2)
+	local k = math.max(1, math.min(3, camD / 1500))
 	gl.DepthTest(false)
 	if aim.bx then
 		local ay, by = Spring.GetGroundHeight(aim.ax, aim.az) or 0, Spring.GetGroundHeight(aim.bx, aim.bz) or 0
@@ -726,20 +739,25 @@ function widget:DrawWorld()
 			gl.Vertex(aim.bx, by + 8, aim.bz)
 		end)
 		gl.LineWidth(3)
-		gl.DrawGroundCircle(aim.ax, ay, aim.az, 24, 24)
-		gl.DrawGroundCircle(aim.bx, by, aim.bz, 24, 24)
+		-- (the ends and the arrow never larger than the line itself: on a short one they hid it)
+		local len = math.sqrt((aim.bx - aim.ax) ^ 2 + (aim.bz - aim.az) ^ 2)
+		local endR = math.min(24 * k, math.max(16, len * 0.12))
+		gl.DrawGroundCircle(aim.ax, ay, aim.az, endR, 24)
+		gl.DrawGroundCircle(aim.bx, by, aim.bz, endR, 24)
 		if pl then -- (the way the front faces: an arrow from the line's middle)
 			local mx, mz = (aim.ax + aim.bx) / 2, (aim.az + aim.bz) / 2
 			local my = Spring.GetGroundHeight(mx, mz) or 0
-			local tx, tz = mx + pl.fx * 110, mz + pl.fz * 110
+			local al = math.min(110 * k, math.max(80, len * 0.6)) -- (the arrow's length)
+			local tx, tz = mx + pl.fx * al, mz + pl.fz * al
+			local hb, hs = al * 0.27, al * 0.2 -- (the head's back and side)
 			gl.BeginEnd(GL.LINE_STRIP, function()
 				gl.Vertex(mx, my + 8, mz)
 				gl.Vertex(tx, my + 8, tz)
-				gl.Vertex(tx - pl.fx * 30 + pl.px * 22, my + 8, tz - pl.fz * 30 + pl.pz * 22)
+				gl.Vertex(tx - pl.fx * hb + pl.px * hs, my + 8, tz - pl.fz * hb + pl.pz * hs)
 			end)
 			gl.BeginEnd(GL.LINES, function()
 				gl.Vertex(tx, my + 8, tz)
-				gl.Vertex(tx - pl.fx * 30 - pl.px * 22, my + 8, tz - pl.fz * 30 - pl.pz * 22)
+				gl.Vertex(tx - pl.fx * hb - pl.px * hs, my + 8, tz - pl.fz * hb - pl.pz * hs)
 			end)
 		end
 	else
@@ -747,7 +765,7 @@ function widget:DrawWorld()
 		local ty = Spring.GetGroundHeight(tx, tz) or 0
 		gl.LineWidth(3)
 		gl.Color(1, 0.8, 0.25, 0.7 + 0.3 * pulse)
-		gl.DrawGroundCircle(tx, ty, tz, 50 + 12 * pulse, 40)
+		gl.DrawGroundCircle(tx, ty, tz, (50 + 12 * pulse) * k, 40)
 		if pl then -- (the way from the group: dashes running towards the mark; a plain line at half alpha was lost on
 			-- the ground, dev phone screenshot)
 			local cx, cz = pl.cx, pl.cz
@@ -771,8 +789,8 @@ function widget:DrawWorld()
 		local lo, hi = math.huge, -math.huge
 		gl.LineWidth(2)
 		gl.Color(0.55, 0.85, 1, 0.9)
-		for _, s in pairs(pl.slots) do
-			gl.DrawGroundCircle(s[1], Spring.GetGroundHeight(s[1], s[2]) or 0, s[2], 14, 12)
+		for _, s in pairs(pl.slots) do -- (larger zoomed out, never over the next place: 22 at most)
+			gl.DrawGroundCircle(s[1], Spring.GetGroundHeight(s[1], s[2]) or 0, s[2], math.min(22, 14 * k), 12)
 			if s[3] == 0 then
 				lo, hi = math.min(lo, s[4]), math.max(hi, s[4])
 			end

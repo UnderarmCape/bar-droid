@@ -1442,6 +1442,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       front row's own reach, 600 at most. Dev phone upright: dock-phone-test's STRAFE line (6 Pawns, 327 elmos: one
       row 65 apart, then side to side, 300 elmos, repeat on) ALL PASS; BATTLE LINE tapped with 4 Pawns, 3 Rocketeers,
       2 Hammers (repeat on beforehand): repeat off on the way, all 9 there 27 s later, then side to side on repeat.
+      Found the same night in review: a unit of the armed preset dying before the finger went down made the preview's
+      layout read UnitDefs[nil] ("Error in DrawWorld(): ... attempt to index local 'ud'", BAR removed the widget); the
+      plan now leaves out units gone since (dev phone: a Pawn self-destructed after STRAFE was armed, aimed after its
+      death: no error, sent to the 5 left). The preview's marks grow with the camera's distance (up to 3x), its line's
+      ends and arrow never larger than the line itself.
 - [x] **Kailil, 2026-11-12, PING and CHAT**: "Holding the ping button should allows me to engage drop a ping with a
       voice chat text assigned to it. Like the vanilla game behavior how you can send a ping with words. Also, allow me
       to be able to double tao the ping button and it changes it to a chat button with a sleak pop animation that fits
