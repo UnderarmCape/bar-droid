@@ -1145,6 +1145,56 @@ end
 -- near-square screen (the Fold7 unfolded upright) the login dialog is taller than the room above the grid: its
 -- Login / Register and Cancel lay under the grid (dev phone, wm size 1080x1198, 2026-11-10). While one is open the grid
 -- is hidden, the popup whole; it comes back as the popup goes.
+-- Upright, a popup's text boxes (the login dialog's name, password and email) as wide as their row allows: Chobby
+-- sizes them for the landscape window, a third of the upright one, a long email cut short beside an empty half (dev
+-- phone screenshot, 2026-11-12). Each box once; its left edge where Chobby put it.
+upright.widened = setmetatable({}, { __mode = "k" })
+function upright.widenInputs(win)
+	local function walk(o, depth)
+		if not o or depth > 12 or o.disposed then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "editbox" and not upright.widened[c] and (c.width or 0) > 0 then
+				-- (to the popup's right edge, whatever panel holds it: the Register tab's boxes sit in a panel as narrow
+				-- as they are)
+				local _, cx = pcall(function() return (c:LocalToScreen(0, 0)) end)
+				local _, wx = pcall(function() return (win:LocalToScreen(0, 0)) end)
+				local winW = win.clientWidth or win.width
+				local want = type(cx) == "number" and type(wx) == "number" and winW
+					and math.floor(wx + winW - winW * 0.05 - cx)
+				upright.widened[c] = true
+				-- (a button beside it in its row: up to that; Recover/Change's "Change Username" went over its button)
+				for _, sib in ipairs(c.parent and c.parent.children or {}) do
+					local s = real(sib)
+					if want and s and s ~= c and s.x and s.y and s.height and s.x >= c.x + c.width - 1
+						and s.y < c.y + c.height and s.y + s.height > c.y then
+						want = math.min(want, s.x - c.x - 6)
+					end
+				end
+				if want and want > c.width * 1.2 then
+					local was = c.width
+					local need, p = c.x + want, c.parent -- (its panels as wide, or the box is cut at their edge)
+					while p and p ~= win and p.width and p.x do
+						local inner = p.clientWidth or p.width
+						if need <= inner then
+							break
+						end
+						p:SetPos(nil, nil, math.floor(need + (p.width - inner) + 2))
+						need, p = p.x + p.width, p.parent
+					end
+					c:SetPos(nil, nil, want)
+					Spring.Echo(string.format("[bardroid-lobby] a popup's text box %d wide, now %d", was, want)) -- (tools)
+				end
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	walk(win, 0)
+end
+
 local function uprightModal()
 	local g = real(upright.grid)
 	if not (g and not g.disposed) then
@@ -1159,6 +1209,9 @@ local function uprightModal()
 		local w = p.mainWindow and real(p.mainWindow)
 		if w and not w.disposed and w.visible ~= false then
 			modal = true
+			if not upright.side then
+				upright.widenInputs(w)
+			end
 			break
 		end
 	end
