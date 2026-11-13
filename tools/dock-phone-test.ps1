@@ -159,22 +159,15 @@ try {
   $g = @($dock["left"][0], $dock["left"][1], $dock["right"][2], $dock["left"][3])
   Tap ($g[0] + ($g[2] - $g[0]) / 4) ($g[1] + ($g[3] - $g[1]) / 4); Start-Sleep -Milliseconds 900
   $a0 = $aims["aim0"]; $a1 = $aims["aim1"]
-  # (first a drag from the map down onto the dock, lifted there: the aim backs out, STRAFE stays armed)
+  # (first a drag from the map down onto the dock: with a preset armed a finger's drag pans (taps only, Kailil
+  # 2026-11-13: "make presets a single tap only"), nothing sent, STRAFE still armed)
   $dm = Mid $dock["dock"] "the dock"
   Touch DOWN $a0[0] $a0[1]; Start-Sleep -Milliseconds 150
   Touch MOVE $a0[0] (($a0[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 200; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 800
   Stage "dockback?"; Start-Sleep 1
-  # (from over the void past the map's edge when the screen shows some: the aim must begin once the finger reaches the
-  # ground; a press there lost the whole drag, 2026-11-11)
-  if ($aims["void"]) {
-    "[docktest] the STRAFE drag starts over the void"
-    $v = $aims["void"]; Touch DOWN $v[0] $v[1]; Start-Sleep -Milliseconds 150
-    Touch MOVE (($v[0] + $a0[0]) / 2) (($v[1] + $a0[1]) / 2); Touch MOVE $a0[0] $a0[1]
-  } else { "[docktest] (no void on the screen: the STRAFE drag starts on the ground)"; Touch DOWN $a0[0] $a0[1] }
-  Start-Sleep -Milliseconds 150
-  Touch MOVE (($a0[0] + $a1[0]) / 2) (($a0[1] + $a1[1]) / 2); Touch MOVE $a1[0] $a1[1]
-  Start-Sleep -Milliseconds 300; Shot "preset-aim"; Touch UP $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
+  # (then a tap on the map: STRAFE sent there)
+  Tap $a1[0] $a1[1]; Start-Sleep -Milliseconds 1500
   Stage "strafe?"; Start-Sleep 1
   # (once the Pawns stand on the line: their side to side on repeat)
   if (-not (WaitLog '\[bardroid-presets\] STRAFE: [0-9]+ units there' 75)) { "[docktest] (the Pawns were not there in 75 s)" }

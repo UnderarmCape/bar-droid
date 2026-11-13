@@ -119,9 +119,11 @@ gamepad or a mouse and BAR's own screen comes back; touch the screen and the doc
 **Turning the phone** (launcher setting "Turn with the phone", on): with the phone's auto-rotate on, the lobby and
 the game turn upright or sideways as you hold the phone, at any time, mid-game too (BAR's interface takes a few
 seconds to redraw at the new shape). With auto-rotate off, "Play upright" decides.
-- **PRESETS** (combat units picked): STRAFE (fight to the destination, then back and forth across it on repeat),
-  BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then put your finger on the map: drag
-  to aim, lift to send.
+- **PRESETS** (in MOVE's big place, any units that move picked): STRAFE (fight to the destination, then back and
+  forth across it on repeat), BATTLE LINE, SPREAD and CONCAVE (formed up by role, moving as one). Pick one, then tap
+  the map where to send it (a drag pans). With QUEUE on, tap each place in turn: the units go to the first, wait
+  there for each other, then on to the next, and go side to side only at the last. With INSERT on the formation goes
+  to the front of their orders.
 - **D-Gun** (the commander picked): MOVE and AIM sticks and a big FIRE; the camera follows the commander. Let go of
   MOVE and it stops. Swipe FIRE to the right for full auto (it fires at the enemy in range most worth a shot, never
   through your own units; where the host allows unit control widgets), swipe AUTO to the left to end it. The empty

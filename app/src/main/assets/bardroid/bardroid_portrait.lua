@@ -545,13 +545,12 @@ local function writeDock(force)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
 		local _, cmd = spGetActiveCommand()
-		-- (a one-finger drag draws a path only with MOVE, FIGHT, PATROL or ATTACK pressed, or a preset armed, whose aim
-		-- takes the press; with units merely picked it pans, their path a press held, then a drag: RtsTouch's long press,
-		-- BAR's right button. Kailil, 2026-11-13, asked whether a drag with units picked should pan too: "Pan, hold for
-		-- paths". Before: picked units without a building queued drew a path, 2026-11-11's "very easy to place a move
-		-- path ... on accident due to the muscle memory of grabbing the screen")
-		local Pr = WG.BarDroidPresets
-		local draw = DRAW_CMDS[cmd] or (Pr and Pr.armed and Pr.armed()) or false
+		-- (a one-finger drag draws a path only with MOVE, FIGHT, PATROL or ATTACK pressed; with units merely picked it
+		-- pans, their path a press held, then a drag: RtsTouch's long press, BAR's right button. Kailil, 2026-11-13, asked
+		-- whether a drag with units picked should pan too: "Pan, hold for paths". Before: picked units without a building
+		-- queued drew a path, 2026-11-11's "very easy to place a move path ... on accident due to the muscle memory of
+		-- grabbing the screen". A preset armed: taps only, a drag pans, Kailil 2026-11-13: "make presets a single tap only")
+		local draw = DRAW_CMDS[cmd] or false
 		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
 		local lr = SP.hidden and L.dock
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
@@ -1685,6 +1684,12 @@ function refreshNow()
 				big[CMD.MANUALFIRE], big[CMD.REPEAT] = nil, { 4, 2, 1 }
 			end
 			local first, rest = {}, {}
+			-- (PRESETS in MOVE's big place, MOVE among the small ones: Kailil, 2026-11-13, "Move is super redundant to have
+			-- as a big button. Put presets in its place"; a long press, then a drag, moves anyway)
+			if mobilePicked and WG.BarDroidPresets and WG.BarDroidPresets.fits(sel) then
+				big[CMD.MOVE] = nil
+				first[2] = { kind = "presets", label = "PRESETS", w = 1, h = bh }
+			end
 			for _, it in ipairs(orders) do
 				local b = it.kind == "order" and big[it.id]
 				if b then
@@ -1711,7 +1716,11 @@ function refreshNow()
 			end
 			table.insert(newRight, at, { kind = "transfer", label = "TRANSFER" })
 		end
-		if WG.BarDroidPresets and WG.BarDroidPresets.fits(sel) then -- (after FIGHT, MOVE, PATROL, D-gun: bardroid_presets.lua)
+		local placed = false -- (PRESETS already in MOVE's big place, above)
+		for _, it in ipairs(newRight) do
+			placed = placed or it.kind == "presets"
+		end
+		if not placed and WG.BarDroidPresets and WG.BarDroidPresets.fits(sel) then -- (after the big ones: bardroid_presets.lua)
 			local at = 1
 			while newRight[at] and newRight[at].h do
 				at = at + 1

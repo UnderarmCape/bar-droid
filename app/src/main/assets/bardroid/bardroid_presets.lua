@@ -1,11 +1,12 @@
 -- BAR Droid presets: preset orders for the picked combat units (Kailil, 2026-11-10: "a PRESETS button ... the whole dock
 -- shows the presets as 2 x 2 thumbnails ... closed by an X in the corner or Android's Back"; repeated moves along paths
 -- that make units hard to hit, and formations by their types' strengths). Touch play's automation is his and BAR's
--- developers' call (GiveOrder). The upright dock (bardroid_portrait.lua) shows PRESETS among the orders while units
--- that fight are picked, and the presets over its whole grid; a preset tapped closes them, then a tap on the map sends
--- it there, or a line drawn on the map is where the formation's front ends up and how wide it is (Back lets it go).
--- Every preset: the units to their places (no repeat), then, once they are there, each one fights side to side
--- across its place on repeat, the group together.
+-- developers' call (GiveOrder). The dock (bardroid_portrait.lua) shows PRESETS in MOVE's big place while units that
+-- move are picked, and the presets over its whole grid; a preset tapped closes them, then a tap on the map sends it
+-- there (taps only: a finger's drag pans; a mouse's drag is the front's line, as wide) (Back lets it go). Every preset:
+-- the units to their places (no repeat), then, once they are there, each one fights side to side across its place on
+-- repeat, the group together. With the dock's QUEUE on the preset stays armed and each tap is the next place (addLeg);
+-- with INSERT on the formation goes to the front of their queues.
 -- WG.BarDroidPresets: fits(units), isOpen(), open(), close(), items(), pick(id), drawThumb(id, rect), closeRect(rect),
 -- armed(), lastPlan(), side. Installed into LuaUI/Widgets by the app.
 
@@ -45,11 +46,12 @@ local function refreshDock()
 	end
 end
 
+-- (every unit that moves, builders and commanders too: Kailil, 2026-11-13, PRESETS "for all the units" in MOVE's big
+-- place; buildings and factories keep their orders)
 local function fighter(ud)
-	return ud and ud.canMove and not ud.isBuilding and (ud.speed or 0) > 0 and not ud.isBuilder
-		and #(ud.weapons or {}) > 0
+	return ud and ud.canMove and not ud.isBuilding and not ud.isFactory and (ud.speed or 0) > 0
 end
--- the picked units presets order: those that move and fight (builders and buildings keep their orders)
+-- the picked units presets order
 local function combatUnits(units)
 	local out = {}
 	for _, u in ipairs(units or {}) do
@@ -114,6 +116,8 @@ local function role(defID)
 	local range = ud.maxWeaponRange or 0
 	if ud.canFly then
 		r = aa and "fighter" or "air"
+	elseif ud.isBuilder and #(ud.weapons or {}) == 0 then -- (constructors: behind the front, with the ranged)
+		r = "mid"
 	elseif ud.highTrajectoryType == 1 or (range >= 650 and not aa) then
 		r = "art"
 	elseif aa then
@@ -274,8 +278,9 @@ local PRESETS = {
 }
 
 -- where a preset puts each unit: aim is a tap { x, z } (the front's middle there, facing away from the group) or a
--- line { ax, az, bx, bz } (the front along it, as wide, facing away from the group's side of it)
-local function plan(id, units, aim)
+-- line { ax, az, bx, bz } (the front along it, as wide, facing away from the group's side of it); from { x, z }: where
+-- the group comes from instead of where it stands (a queued leg: the last leg's place)
+local function plan(id, units, aim, from, prev)
 	local P = PRESETS[id]
 	local live = {} -- (units picked when it was armed may be gone since: their role, nil's UnitDefs, threw while aiming)
 	for _, u in ipairs(units) do
@@ -285,6 +290,9 @@ local function plan(id, units, aim)
 	end
 	units = live
 	local cx, cz = centre(units)
+	if from and cx then
+		cx, cz = from[1], from[2]
+	end
 	if not (P and cx) then
 		return nil
 	end
@@ -325,6 +333,9 @@ local function plan(id, units, aim)
 		local side = {}
 		for _, u in ipairs(row.units) do
 			local x, _, z = spGetUnitPosition(u)
+			if prev and prev[u] then -- (a queued leg: from the unit's place in the last one)
+				x, z = prev[u][1], prev[u][2]
+			end
 			side[u] = x and ((x - cx) * px + (z - cz) * pz) or 0
 		end
 		table.sort(row.units, function(a, b)
@@ -416,8 +427,8 @@ local function swayCheck(f)
 				local s = g.slots[u]
 				local x, _, z = spGetUnitPosition(u)
 				if x and not Spring.GetUnitIsDead(u) then
-					local q = Spring.GetUnitCommands(u, 4) or {}
-					if #q == 0 then
+					local q = Spring.GetUnitCommands(u, 40) or {}
+					if #q == 0 then -- (q: a queued chain of legs is long, its last fight far down the queue)
 						if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160 then
 							there = there + 1
 							keep[#keep + 1] = u
@@ -437,9 +448,11 @@ local function swayCheck(f)
 				g.first = f
 			end
 		end
-		if f - g.since >= 15 and (#keep == 0 or f - g.since > GIVE_UP) then
+		if f - g.since >= 15 and (#keep == 0 or f - g.since > (g.giveUp or GIVE_UP)) then
+			g.done = true
 			table.remove(sways, i)
 		elseif f - g.since >= 15 and (there == #keep or (g.first and f - g.first > SWAY_WAIT)) then
+			g.done = true
 			for _, u in ipairs(keep) do
 				local s = g.slots[u]
 				local a, b = ground(s[1] + g.px * SIDE, s[2] + g.pz * SIDE), ground(s[1] - g.px * SIDE, s[2] - g.pz * SIDE)
@@ -456,12 +469,35 @@ local function swayCheck(f)
 	end
 end
 
-local function send(id, units, aim)
+-- mode "insert" (the dock's INSERT on): each unit straight to its place at the front of its queue, its own orders after
+-- (no side to side, its repeat as it was)
+local function send(id, units, aim, mode)
 	local pl = plan(id, units, aim)
 	if not pl then
 		return 0
 	end
 	local P = PRESETS[id]
+	if mode == "insert" then
+		-- (internal: not taken round again by a repeat on, the side to side of an earlier preset: the units do it once,
+		-- then their loop goes on; given plain it joined the loop, dev phone 2026-11-13)
+		local INSERT_OPTS = CMD.OPT_INTERNAL or 8
+		local n = 0
+		local air = airLayout(pl.air)
+		for _, u in ipairs(pl.land) do
+			local s = pl.slots[u]
+			local g = ground(s[1], s[2])
+			Spring.GiveOrderToUnit(u, CMD.INSERT, { 0, CMD.FIGHT, INSERT_OPTS, g[1], g[2], g[3] }, { "alt" })
+			n = n + 1
+		end
+		for _, u in ipairs(pl.air) do
+			local p = air[u]
+			local g = ground(pl.mx + pl.fx * p[1] + pl.px * p[2], pl.mz + pl.fz * p[1] + pl.pz * p[2])
+			Spring.GiveOrderToUnit(u, CMD.INSERT, { 0, CMD.FIGHT, INSERT_OPTS, g[1], g[2], g[3] }, { "alt" })
+			n = n + 1
+		end
+		lastPlan = pl
+		return n, pl
+	end
 	-- (a repeat left on by an earlier preset sent them back round to where they had been: Kailil, 2026-11-12)
 	Spring.GiveOrderToUnitArray(units, CMD.REPEAT, { 0 }, 0)
 	local n = 0
@@ -475,12 +511,71 @@ local function send(id, units, aim)
 		n = formUp(pl.land, pl.place, pl)
 	end
 	n = n + formUp(pl.air, airLayout(pl.air), pl) -- (planes: their own group, fighters ahead; no side to side)
+	local g
 	if #pl.land > 0 then
-		sways[#sways + 1] = { units = pl.land, slots = pl.slots, px = pl.px, pz = pl.pz, since = Spring.GetGameFrame(),
-			name = P.name }
+		g = { units = pl.land, slots = pl.slots, px = pl.px, pz = pl.pz, since = Spring.GetGameFrame(), name = P.name }
+		sways[#sways + 1] = g
 	end
 	lastPlan = pl
-	return n, pl
+	return n, pl, g
+end
+
+-- QUEUE on (Kailil, 2026-11-13: "If I have queue on and I make multiple taps, I want the formations to move to the first
+-- tap, then wait for all units to reach their destinations in the first formation location, then they move on to the
+-- next and the next. On the final formation location, then they do the repeat commands"): each tap after the first a
+-- leg: BAR's gather wait at the last place (the engine's WaitCommandsAI, given through the selection as its key does:
+-- each unit waits there until all of them are), then on to this place in the formation, facing from the last one; the
+-- side to side only at the final place (the sway group's places moved on). a: the armed chain { id, prev plan, legs,
+-- sway group }. A group already going side to side (the last tap came after they were there): a fresh send instead.
+local function addLeg(a, units, aim)
+	if not (a.sway and not a.sway.done) then
+		local n, pl, g = send(a.id, units, aim)
+		if pl then
+			a.prev, a.sway, a.legs = pl, g, 1
+		end
+		return n, pl
+	end
+	local pl = plan(a.id, units, aim, { a.prev.mx, a.prev.mz }, a.prev.slots)
+	if not pl then
+		return 0
+	end
+	local all = {}
+	for _, u in ipairs(pl.land) do
+		all[#all + 1] = u
+	end
+	for _, u in ipairs(pl.air) do
+		all[#all + 1] = u
+	end
+	local mine = Spring.GetSelectedUnits()
+	Spring.SelectUnitArray(all)
+	Spring.GiveOrder(CMD.GATHERWAIT, {}, { "shift" })
+	Spring.SelectUnitArray(mine)
+	for _, u in ipairs(pl.land) do
+		local s = pl.slots[u]
+		Spring.GiveOrderToUnit(u, CMD.FIGHT, ground(s[1], s[2]), { "shift" })
+	end
+	local air = airLayout(pl.air)
+	for _, u in ipairs(pl.air) do
+		local p = air[u]
+		Spring.GiveOrderToUnit(u, CMD.FIGHT, ground(pl.mx + pl.fx * p[1] + pl.px * p[2], pl.mz + pl.fz * p[1] + pl.pz * p[2]),
+			{ "shift" })
+	end
+	a.legs = a.legs + 1
+	local g = a.sway
+	g.units, g.slots, g.px, g.pz, g.since, g.first = pl.land, pl.slots, pl.px, pl.pz, Spring.GetGameFrame(), nil
+	g.giveUp = GIVE_UP * a.legs -- (the whole way: two minutes a leg)
+	a.prev = pl
+	lastPlan = pl
+	return #all, pl
+end
+
+-- the dock's QUEUE and INSERT (bardroid_pad.lua's, the dock's selection row)
+local function queueMode()
+	local Pd = WG.BarDroidPad
+	if Pd and Pd.queueState then
+		return Pd.queueState()
+	end
+	return false, false
 end
 
 -- the thumbnails: small drawings of what each does, in the rect (x0, y0, x1, y1), y up
@@ -596,7 +691,9 @@ function widget:Initialize()
 			opened = false
 			if p and #units > 0 then
 				armedFor = { id = id, units = units }
-				say(p.name .. ": TAP TO SEND, OR DRAW THE FRONT LINE")
+				-- (taps only: a drag pans, Kailil 2026-11-13 "make presets a single tap only"; QUEUE on: a tap for each
+				-- place in turn)
+				say(p.name .. (queueMode() and ": TAP EACH PLACE IN TURN" or ": TAP WHERE TO SEND"))
 			end
 			refreshDock()
 		end,
@@ -700,7 +797,7 @@ function widget:MouseRelease(x, y)
 	local dock = D and D.dock and D.dock()
 	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
 		aiming = nil
-		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, TAP OR DRAW ON THE MAP" or "NOT SENT")
+		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, TAP THE MAP" or "NOT SENT")
 		Spring.Echo("[bardroid-presets] lifted over the dock: not sent, still armed") -- (tools)
 		return true
 	end
@@ -710,7 +807,7 @@ function widget:MouseRelease(x, y)
 	end
 	local aim = aimOf(aiming)
 	local a = armedFor
-	armedFor, aiming = nil, nil
+	aiming = nil
 	local alive = {}
 	for _, u in ipairs(a.units) do
 		if Spring.ValidUnitID(u) and not Spring.GetUnitIsDead(u) then
@@ -719,13 +816,37 @@ function widget:MouseRelease(x, y)
 	end
 	local p = PRESETS[a.id]
 	local n, pl = 0, nil
-	if p then
-		n, pl = send(a.id, alive, aim)
+	local queued, insert = queueMode()
+	local how = " (a tap)"
+	if p and queued then -- (QUEUE: the preset stays armed, each tap a leg; QUEUE with INSERT the same)
+		if a.prev then
+			n, pl = addLeg(a, alive, aim)
+		else
+			local g
+			n, pl, g = send(a.id, alive, aim)
+			a.prev, a.sway, a.legs = pl, g, 1
+		end
+		how = string.format(" (place %d)", a.legs or 1)
+		say(string.format("%s: PLACE %d, %d %s; TAP THE NEXT", p.name, a.legs or 1, n, n == 1 and "UNIT" or "UNITS"))
+	else
+		armedFor = nil
+		if p then
+			n, pl = send(a.id, alive, aim, insert and "insert" or nil)
+		end
+		how = insert and " (inserted)" or how
+		say(string.format("%s: %d %s%s", p and p.name or "PRESET", n, n == 1 and "UNIT" or "UNITS", insert and ", FIRST" or ""))
 	end
-	say(string.format("%s: %d %s", p and p.name or "PRESET", n, n == 1 and "UNIT" or "UNITS"))
 	Spring.Echo(string.format("[bardroid-presets] %s to %.0f,%.0f%s: %d units", p and p.name or "?", pl and pl.mx or 0,
-		pl and pl.mz or 0, pl and pl.W and string.format(" (a line %.0f wide)", pl.W) or " (a tap)", n)) -- (tools)
+		pl and pl.mz or 0, pl and pl.W and string.format(" (a line %.0f wide)", pl.W) or how, n)) -- (tools)
 	return true
+end
+
+-- a chain of queued places ends when QUEUE goes off (the preset no longer armed; what was sent goes on)
+function widget:Update()
+	if armedFor and armedFor.prev and not queueMode() then
+		armedFor = nil
+		refreshDock()
+	end
 end
 
 -- while aiming: a tap's pulsing gold ring with dashes from the group, or the drawn line with the way it faces; the

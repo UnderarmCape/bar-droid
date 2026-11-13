@@ -120,8 +120,10 @@ The first version meant for other people's phones: everything since the first bu
   too, in one column of large buttons down the left, close together, a swipe up or down for the next page; the
   screens beside it take the whole height. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: a line abreast with gaps; three formations, the ranged behind the front
-  by their reach) go where the map is tapped, or a line drawn on the map is their front, as wide; there each unit
-  fights side to side across its place on repeat, the group together. PLACE, the presets and the build menus take the
+  by their reach) go where the map is tapped; there each unit fights side to side across its place on repeat, the
+  group together. PRESETS sits in MOVE's big place for any units that move (MOVE among the small orders); with QUEUE
+  on each tap is the next place, the units waiting for each other at each one, the side to side only at the last;
+  with INSERT on the formation goes first, their own orders after. PLACE, the presets and the build menus take the
   first tap; the dock stays open while a building is being placed. INSERT, QUEUE, the home buttons, the orders (FIGHT,
   MOVE, PATROL, D-Gun, the states), metal and energy take the first tap too.
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID

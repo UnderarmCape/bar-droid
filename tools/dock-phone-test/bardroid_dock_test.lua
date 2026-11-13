@@ -230,6 +230,11 @@ local function onCmd(c)
 		local armed = WG.BarDroidPresets and WG.BarDroidPresets.armed()
 		check("STRAFE's drag lifted over the dock: not sent, the preset still armed", fights == 0 and armed == true,
 			string.format("%d fights, armed %s", fights, tostring(armed)))
+		-- (that drag panned the camera, a finger's drag with a preset armed since 2026-11-13: back where the aims were
+		-- found, so the next tap's point is on the ground again)
+		if edge then
+			Spring.SetCameraTarget(edge[1], Spring.GetGroundHeight(edge[1], edge[2]), edge[2], 0)
+		end
 	elseif c == "drawdock?" then -- (the Pawns' path drawn from the map on into the dock: its end at the dock's edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()
@@ -262,12 +267,12 @@ local function onCmd(c)
 		end
 		local on = table.concat(rep):find("R") ~= nil
 		check("the path given to the Pawns on the preset's repeat: their repeat off", #rep > 0 and not on, table.concat(rep, " "))
-	elseif c == "strafe?" then -- (the drag drew the front line: each Pawn one fight to its place, no repeat yet, or
-		-- already there; the places in rows along the line (80 elmos apart when it was too short for all six abreast),
-		-- the front row on it, a row's places evenly over the line's length, a Pawn's width or more apart)
+	elseif c == "strafe?" then -- (a tap sent it, taps only since 2026-11-13: each Pawn one fight to its place, no
+		-- repeat yet, or already there; the places in rows abreast (80 elmos apart when more than a row), the front row
+		-- at the tap, a Pawn's width or more apart; a drawn line's width only with a mouse)
 		local Pr = WG.BarDroidPresets
 		local pl = Pr and Pr.lastPlan and Pr.lastPlan()
-		local ok, words, rows = #pawns > 0 and pl ~= nil and pl.W ~= nil, {}, {}
+		local ok, words, rows = #pawns > 0 and pl ~= nil, {}, {}
 		for _, u in ipairs(pawns) do
 			local q = Spring.GetUnitCommands(u, 5) or {}
 			local st = Spring.GetUnitStates(u) or {}
@@ -305,9 +310,9 @@ local function onCmd(c)
 			end
 		end
 		ok = ok and front and near >= 30
-		check("STRAFE tapped, its front line drawn: each Pawn one fight to its place, rows along the line, apart, no repeat",
-			ok, string.format("%s; a line %.0f wide, %d rows, nearest two %.0f apart", table.concat(words, " "),
-				pl and pl.W or 0, n, near))
+		check("STRAFE picked, the map tapped: each Pawn one fight to its place, rows abreast, apart, no repeat",
+			ok, string.format("%s; %d rows, nearest two %.0f apart", table.concat(words, " "), n,
+				near == math.huge and -1 or near))
 	elseif c == "sway?" then -- (once they were there: each Pawn two fights across its place, repeat on: 2 x SIDE, or
 		-- less where the map's edge cuts one end)
 		local Pr = WG.BarDroidPresets

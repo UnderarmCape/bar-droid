@@ -1082,6 +1082,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       ...), 4 in the app's: Prefs.startsUpright and SplashPicture.write's Display.getRealMetrics (still the way to the
       rotated screen's size from a non-activity context; WindowMetrics needs a window context) and StartActivity's
       getStableInset (only on Android 9 and 10: 11 and up take getInsetsIgnoringVisibility). Nothing to change.
+- [x] **Kailil, 2026-11-13 evening, PRESETS**: "replace move with presets for all the units. Move is super redundant
+      to have as a big button. Put presets in its place. And make presets a single tap only. Also, being queue button or
+      insert button into presets. If I have queue on and I make multiple taps, I want the formations to move to the
+      first tap, then wait for all units to reach their destinations in the first formation location, then they move on
+      to the next and the next. On the final formation location, then they do the repeat commands". Done: PRESETS in
+      MOVE's big place for any units that move (builders and commanders too: constructors behind the front row), MOVE
+      among the small orders; a preset armed takes taps only (a finger's drag pans: the dock's draw flag no longer set
+      by it). QUEUE on: the preset stays armed, the first tap sends it, each next tap a leg (addLeg): BAR's gather wait
+      through the selection (WaitCommandsAI: each unit waits until all are there), then a fight to its place in the
+      formation facing from the last; the side to side only once all are at the final place; QUEUE off ends the chain.
+      INSERT on: each unit's fight to its place inserted at the front of its queue as an internal order (not taken round
+      again by a repeat on), its own orders after. Dev phone upright, 6 Pawns: PRESETS in MOVE's place; QUEUE on,
+      STRAFE, three taps: the queue FIGHT, WAIT, FIGHT, WAIT, FIGHT; the first Pawn waited at place 1 (frames 1565-1615)
+      until all six were there; at place 3 all six, then side to side on repeat; INSERT on, BATTLE LINE: its fight at the
+      queue's front. dock-phone-test (its STRAFE now a tap, the camera put back after the drag that pans) ALL PASS.
 - [x] **The orders on the first tap too (asked 2026-11-13; Kailil: "1", yes)** With the camera pad up the build options,
       INSERT and QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow acted on the first
       tap; FIGHT, MOVE, PATROL, D-Gun and the states took one tap to open the menu, then theirs. Now the orders' half is
