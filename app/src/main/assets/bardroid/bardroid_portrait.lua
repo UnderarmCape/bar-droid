@@ -2956,7 +2956,18 @@ local function drawGroups()
 			local b = { r[3] - (3 - i) * bw + 3, r[2] + 3, r[3] - (2 - i) * bw - 3, r[4] - 3, unq = which }
 			L.groupRects[#L.groupRects + 1] = b
 			button(b, { 0.3, 0.09, 0.08, 0.9 }, { 0.46, 0.13, 0.11, 0.9 })
-			textIn("\195\151 " .. which:upper(), b[1], b[2], b[3], b[4], h * 0.26, "\255\255\228\218", bold)
+			-- (the cross larger than the word, as NEW's plus is: at the word's size it was a speck before FIRST and LAST,
+			-- dev phone screenshot 2026-11-13; the pair centred, shrunk together where the button is narrow)
+			local f, word, c = bold or font, which:upper(), "\255\255\228\218"
+			if f then
+				local size, xs = h * 0.26, h * 0.44
+				local ww, xw, gap = f:GetTextWidth(word) * size, f:GetTextWidth("\195\151") * xs, size * 0.3
+				local fit = min(1, (b[3] - b[1]) * 0.8 / (ww + xw + gap))
+				size, xs, ww, xw, gap = size * fit, xs * fit, ww * fit, xw * fit, gap * fit
+				local x0, cy = (b[1] + b[3] - (ww + xw + gap)) / 2, (b[2] + b[4]) / 2
+				f:Print(c .. "\195\151", x0, cy - xs * 0.27, xs, "o")
+				f:Print(c .. word, x0 + xw + gap, cy - size * 0.32, size, "o")
+			end
 		end
 		x1 = r[3] - 2 * bw
 	end
