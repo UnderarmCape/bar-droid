@@ -1037,6 +1037,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Then QUEUE and INSERT together by touch upright (a scratch widget logging the commander's queue and the keys):
       both lit, Alt and Shift held; a wind turbine picked, a spot, PLACE: queued; a spot on the ridge dimmed PLACE (the
       game's blueprint amber, nothing sent); a flat spot, PLACE: the second turbine queued behind the first.
+      Then the sideways dock moved to the left (its arrow): BAR's "D-Gun" tooltip came up over open map at the bottom
+      right, where the dock had been. The order menu copy is not drawn while the dock is up (and takes no press), but
+      its hover pass still ran there: tooltips and BAR's plain pointer. A make-ordermenu.py patch skips it while the
+      menu is not shown (regenerated from the dev phone's BAR file; remake-check: the phone's remake equals it). Also
+      the arrow acts on its first tap now (with the camera pad up it only opened the menu). Dev phone: one tap, the
+      dock on the left, no tooltip over the map; one tap, back on the right; pad-test ALL PASS.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

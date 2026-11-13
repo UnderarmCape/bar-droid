@@ -582,6 +582,9 @@ local function writeDock(force)
 			-- (sideways, one thumb: the BUILD | ORDERS tabs; HOME opens with the menu's first tap anyway)
 			.. (L.thumb and L.tabsOn and L.tabs and L.tabs.left and L.tabs.right and not SP.hidden
 				and ("live " .. r(L.tabs.left) .. "\nlive " .. r(L.tabs.right) .. "\n") or "")
+			-- (and the swap arrow: its first tap moves the dock; with the camera pad up it only opened the menu, dev
+			-- phone 2026-11-13)
+			.. (L.thumb and L.swapBtn and not SP.hidden and ("live " .. r(L.swapBtn) .. "\n") or "")
 			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")

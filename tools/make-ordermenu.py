@@ -282,6 +282,15 @@ function widget:MousePress(x, y, button)
     ('''	if #commands == 0 and (not alwaysShow or spGetGameFrame() == 0) then -- dont show pregame because factions interface is shown''',
      '''	if (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0)) -- dont show pregame because factions interface is shown
 		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn'''),
+    # (nor hovered while not drawn: sideways for one thumb with the dock moved to the left the menu's place is open map,
+    # and its buttons' tooltips ("D-Gun") and its plain pointer showed there, dev phone 2026-11-13)
+    ('''	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
+	if not WG.topbar or not WG.topbar.showingQuit() then
+''',
+     '''	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
+	-- BAR Droid: not while the menu is not shown (the dock has the orders): its place may be open map
+	if ordermenuShows and (not WG.topbar or not WG.topbar.showingQuit()) then
+'''),
 ]
 
 

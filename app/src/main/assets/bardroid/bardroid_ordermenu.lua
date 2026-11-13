@@ -1615,7 +1615,8 @@ function widget:DrawScreen()
 	local x, y = Spring.GetMouseState()
 	local cellHovered
 	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
-	if not WG.topbar or not WG.topbar.showingQuit() then
+	-- BAR Droid: not while the menu is not shown (the dock has the orders): its place may be open map
+	if ordermenuShows and (not WG.topbar or not WG.topbar.showingQuit()) then
 		if math_isInRect(x, y, backgroundRect[1], backgroundRect[2], backgroundRect[3], backgroundRect[4]) then
 			Spring.SetMouseCursor("cursornormal")
 			for cell = 1, #cellRects do
