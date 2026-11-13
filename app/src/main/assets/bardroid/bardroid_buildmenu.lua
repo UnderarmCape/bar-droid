@@ -781,7 +781,11 @@ function droid.place()
 	if armed ~= droid.armed then
 		droid.armed = armed
 		if not armed then
-			droid.gridHeld = nil
+			droid.gridHeld, droid.heldShape = nil, nil
+			if not (droid.oneAgain or droid.again) then -- (put away for good, not ONE's moment between: the kept GRID goes
+				-- too; picked again later, GRID brought back an old one)
+				droid.stash = nil
+			end
 			droid.shape = "one" -- (each building picked starts with ONE: a drag pans the map until a shape is chosen)
 		elseif droid.focus then
 			droid.endFocus() -- (picked with the gamepad: the app glides the pointer to the middle, ready to place it)
@@ -939,7 +943,7 @@ end
 function droid.setGrid(args)
 	local kind, rest = tostring(args):match("^(%S+)%s*(.*)$")
 	if kind == "held" then
-		droid.gridHeld, droid.gridShown, droid.stash = true, Spring.GetTimer(), nil
+		droid.gridHeld, droid.gridShown, droid.stash, droid.heldShape = true, Spring.GetTimer(), nil, nil
 	elseif kind == "shape" then
 		droid.heldShape = rest ~= "" and rest or nil
 	elseif kind == "one" then
