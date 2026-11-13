@@ -2525,6 +2525,10 @@ local function drawButton(item, r)
 		end)
 		gl.Color(1, 1, 1, 1)
 	else
+		if item.kind == "shape" and font then -- (the four shapes in one size, BORDER's: shrunk alone to its width it
+			-- stood smaller than ONE, LINE and GRID beside it, the unfolded Fold7's row of four, dev phone 2026-11-13)
+			th = min(th, (r[3] - r[1]) * 0.76 / max(0.01, font:GetTextWidth("BORDER")))
+		end
 		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240",
 			font, true)
 	end
