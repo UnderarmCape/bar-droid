@@ -585,6 +585,9 @@ local function writeDock(force)
 			-- (and the groups row: the unit groups and the idle builders, the same "directly click them")
 			.. (showGroups and not SP.hidden and L.groups and L.groups[3] > L.groups[1]
 				and ("live " .. r(L.groups) .. "\n") or "")
+			-- (sideways, one thumb: the BUILD | ORDERS tabs; HOME opens with the menu's first tap anyway)
+			.. (L.thumb and L.tabsOn and L.tabs and L.tabs.left and L.tabs.right and not SP.hidden
+				and ("live " .. r(L.tabs.left) .. "\nlive " .. r(L.tabs.right) .. "\n") or "")
 			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
