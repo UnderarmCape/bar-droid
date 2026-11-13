@@ -1046,6 +1046,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       The same check for the build menu copy (its place the bottom left, open map while the dock is on the right): its
       DrawScreen returns before its hover pass while the dock is up (droid.active), and on the dev phone the pointer
       resting there twice showed no tooltip.
+      Then BAR's Statistics (the top bar's; the app's TeamStats copy) sideways: the panel, centred at its landscape
+      size, ran down into the dock, its bottom row of graphs and the dock's bars and tabs drawn through each other. A
+      make-teamstats.py patch: sideways with the dock up the panel goes between the dock's top and BAR's top bar, a
+      size smaller where it needs to be (upright unchanged). Regenerated from the dev phone's BAR file; remake-check:
+      all four remakes equal the shipped copies. Dev phone: sideways the panel whole above the dock; upright as before.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

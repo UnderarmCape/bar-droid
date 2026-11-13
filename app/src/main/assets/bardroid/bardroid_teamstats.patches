@@ -42,6 +42,19 @@
 		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
 		screenX = mathFloor((vsx - screenWidth) / 2)
 		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
+	elseif droidDock then
+		-- BAR Droid: sideways with the dock up: above the dock and below BAR's top bar, a size smaller where it needs to
+		-- be (it ran down into the dock, the two drawn through each other, dev phone 2026-11-13)
+		local droidBottom = droidDock[4]
+		local droidTop = vsy - mathFloor(96 * widgetScale)
+		local room = mathFloor((droidTop - droidBottom) * 0.97)
+		if screenHeight > room and room > 0 then
+			widgetScale = widgetScale * room / screenHeight
+			screenHeight = mathFloor(screenHeightOrg * widgetScale)
+			screenWidth = mathFloor(screenWidthOrg * widgetScale)
+			screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
+		end
+		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
 	end
 function widget:DrawScreen()
 	if not (show or showOnceMore) then
