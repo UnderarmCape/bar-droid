@@ -1027,6 +1027,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       and the build options act on the first tap (Kailil, 2026-11-12): the bars are a "live" rect now (not while
       spectating). Dev phone upright, the menu timed out first: metal's panel (its share slider) on one tap, energy's
       (convert and share) likewise; dock-phone-test ALL PASS.
+      The run after found nothing to fix: the dock's TRANSFER / SEND picker read through (no teammate in a skirmish to
+      try it on; P.give answers an empty selection and a teammate gone); logcat during a sideways skirmish with
+      FACTORIES, a factory's FIGHT path and a pan: the app's own processes logged only the known lines (Adreno's
+      profile lookup, Termux:X11's request log, app_process's boot image notes); a Bot Lab with nothing queued showed no
+      x FIRST / x LAST sideways either.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
