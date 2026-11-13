@@ -118,7 +118,9 @@ final class RtsTouch {
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
         float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
-        float[] live;   // the build options: their first tap acts though the dock is the camera pad (bardroid_portrait.lua)
+        // the build options and the selection row (INSERT, QUEUE): their first tap acts though the dock is the camera pad
+        // (bardroid_portrait.lua, a "live" line each)
+        final java.util.List<float[]> live = new java.util.ArrayList<>();
         float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
         boolean menu, circle, draw, dgun, dgunAuto;
     }
@@ -544,7 +546,7 @@ final class RtsTouch {
                 // (and PING: held at once, or tapped twice, it must not wait for the menu)
                 boolean onPingNow = inDock && dock.ping != null && inside(dock.ping, toX(e.getX()), toY(e.getY()));
                 if (inDock && !dock.menu && (onPingNow
-                        || dock.live != null && inside(dock.live, toX(e.getX()), toY(e.getY())))) {
+                        || insideAny(dock.live, toX(e.getX()), toY(e.getY())))) {
                     act("dock_menu");
                     dock.menu = true;
                 }
@@ -920,7 +922,7 @@ final class RtsTouch {
                     else if (d != null && f[0].equals("right")) d.right = r;
                     else if (d != null && f[0].equals("groups")) d.groups = r;
                     else if (d != null && f[0].equals("map")) d.map = r;
-                    else if (d != null && f[0].equals("live")) d.live = r;
+                    else if (d != null && f[0].equals("live")) d.live.add(r);
                     else if (d != null && f[0].equals("ping")) d.ping = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
@@ -1252,6 +1254,11 @@ final class RtsTouch {
 
     private static boolean inside(float[] r, float x, float y) {
         return r != null && x >= r[0] && x <= r[2] && y >= r[1] && y <= r[3];
+    }
+
+    private static boolean insideAny(java.util.List<float[]> rs, float x, float y) {
+        for (float[] r : rs) if (inside(r, x, y)) return true;
+        return false;
     }
 
     private void sendSpot(float vx, float vy) {

@@ -572,6 +572,11 @@ local function writeDock(force)
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
 			.. ((leftKind == "build" or leftKind == "pregame") and L.left[3] > 0 and not SP.hidden
 				and ("live " .. r(L.left) .. "\n") or "")
+			-- (and the selection row: INSERT and QUEUE. Kailil, 2026-11-12, a Bot Lab: "Insert plus tapoing a unit to build.
+			-- Is not interrupting the build queue": with the camera pad up INSERT's tap only opened the menu, and the unit's
+			-- tap, which acts at once, went to the queue's end)
+			.. (showSel and not SP.hidden and leftKind ~= "spec" and L.sel and L.sel[3] > L.sel[1]
+				and ("live " .. r(L.sel) .. "\n") or "")
 			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
