@@ -1056,7 +1056,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Changelog, the Widget Selector: their WG isvisible): not drawn, "dock none" for RtsTouch, no presses, and BAR's
       own panels kept hidden; back when the window closes (SP.windowOpen). Dev phone sideways: Settings whole, a drag
       where the dock had been scrolled it; closed, the dock back; dock-phone-test ALL PASS. (BAR's minimap stays in the
-      dock's middle slot meanwhile; the Quit dialog fits above the dock as it is.)
+      dock's middle slot meanwhile; the Quit dialog fits above the dock as it is.) Upright the same: Settings open, the
+      dock aside (Settings itself still wider than the screen there, the item above for BAR); closed, the dock back.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
