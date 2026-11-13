@@ -45,7 +45,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map |
 | Drag | Pan the map (a flick glides); on BAR's minimap and sliders it drags them instead; up or down in BAR's Settings, Statistics and other windows it scrolls them |
 | Tap, then drag | Box select |
-| Long press | Right click (move/attack order); keep dragging for a formation |
+| Long press | Right click (move/attack order); keep dragging for a path (one unit) or a formation line (more) |
 | Two-finger tap | Right click |
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
