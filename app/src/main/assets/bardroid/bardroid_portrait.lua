@@ -618,6 +618,10 @@ function SP.held()
 		or (leftKind == "spec" and SP.teams) then
 		return true
 	end
+	if SP.pingBusy and SP.pingBusy() then -- (PING armed, SPEAK or CHAT: sideways HOME's panel closed with the clock,
+		-- TAP MAP and its words gone from sight, dev phone 2026-11-12)
+		return true
+	end
 	local B = WG.bardroidBuildmenu
 	if B and B.droidPlace then
 		local armed, _, _, again = B.droidPlace()
@@ -1268,6 +1272,9 @@ function pingT.flip(age)
 	local p = min(1, (age - pingT.FLIP) / pingT.GROW)
 	local burst = age - pingT.FLIP < pingT.BURST and (age - pingT.FLIP) / pingT.BURST or nil
 	return pingT.ease(p), true, burst
+end
+function SP.pingBusy() -- (SP.held: the menu stays open while PING waits for the map, listens, or is CHAT)
+	return pingT.armed() or pingT.chat ~= nil
 end
 -- the app's lines for PING: its hold and double tap, and VoiceChat's state ("act voice_on", "voice_off", ...)
 function pingT.act(name)
@@ -2600,16 +2607,22 @@ local function drawPlace()
 		-- panel the word ran into ROTATE, dev phone at 1080x1198)
 		box = (below >= pl[4] or fits(beside) > fits(above)) and beside or above
 	end
-	textIn("PLACE", box[1], box[2], box[3], box[4], (box[4] - box[2]) * 0.3, ready and "\255\255\255\255" or "\255\205\225\205", bold)
+	-- (a short panel, sideways: the word a larger share of its height; at 0.3 it was a small word in a wide green bar,
+	-- dev phone screenshot 2026-11-12)
+	local bh = box[4] - box[2]
+	textIn("PLACE", box[1], box[2], box[3], box[4], max(bh * 0.3, min(bh * 0.55, 40)),
+		ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	for _, k in ipairs({ "rotate", "cancel" }) do
 		local r = p[k]
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
 		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
 			-- game's only turn, so no "90°" on it: "its redundant")
 			-- (across half the panel since 2026-11-12: the word at a third of its height)
-			textIn("ROTATE", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.34, "\255\235\235\235", bold)
+			textIn("ROTATE", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30)),
+				"\255\235\235\235", bold)
 		else
-			textIn("\226\156\149", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, "\255\255\150\140", bold)
+			textIn("\226\156\149", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.6, min((r[4] - r[2]) * 0.8, 44)),
+				"\255\255\150\140", bold)
 		end
 	end
 	-- (no "tap the map for the spot" under it any more, Kailil 2026-11-10: the panel's dim green says it is waiting)
