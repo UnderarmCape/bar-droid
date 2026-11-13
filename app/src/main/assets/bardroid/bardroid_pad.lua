@@ -2665,7 +2665,10 @@ function widget:DrawScreen()
 	local cx, cy = math.floor(vsx / 2), math.floor(vsy / 2)
 	local pad = WG.BarDroidInput == "pad"
 	local riding = WG.BarDroidPadFP and WG.BarDroidPadFP.active() -- (first person has its own crosshair)
-	if pad and not riding and not dgun and not modV085 and not orders and not buildFocus() and not freePointer() then
+	-- (not over the share list either: the ring sat on its middle row, a second teammate's name, pad-test -Share's
+	-- screenshots 2026-11-13; the pointer does nothing there)
+	if pad and not riding and not dgun and not share and not modV085 and not orders and not buildFocus()
+		and not freePointer() then
 		-- (a white ring on a dark one: it reads over snow and over water alike)
 		local r = style.size(0.016)
 		for pass = 1, 2 do

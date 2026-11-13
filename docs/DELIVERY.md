@@ -1004,7 +1004,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       The next run: touch-phone-test and lobby-phone-test ALL PASS on that build (the dev phone without a network
       that afternoon: the lobby's manifest and skill downloads failed as they should, the bridge's "no connection";
       LuaMenu's "Missing GetInfo()" lines are Chobby's own libraries). The groups row's FIRST and LAST got a cross
-      larger than the word (a6afa1a; it was a speck at the word's size).
+      larger than the word (a6afa1a; it was a speck at the word's size). The run after: pad-test and pad-test -Share
+      ALL PASS; their screenshots showed the pad's reticle (the ring in the screen's middle) on the share list's middle
+      row, over a teammate's name: not drawn while the list is open now (bardroid_pad.lua; -Share again ALL PASS, the
+      ring gone from its screenshots).
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
