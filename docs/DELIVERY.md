@@ -1432,6 +1432,26 @@ Added 2026-11-10 ~05:00 (with screenshots):
       GRID and BORDER stand in one row and PLACE is two rows tall: ROTATE and X a full button high. PLACE lit while a
       GRID from a long press waits (the copy's fifth droidPlace answer), as the copy's own panel was; dock-phone-test
       passes at 2316 and at 1198 lines.
+- [x] **Kailil, 2026-11-12 night, INSERT, placing, the home buttons, holds on the dock** (his Fold7 still on a build
+      from before the day's fixes: unreachable over adb all evening). INSERT: "Insert plus tapoing a unit to build. Is not
+      interrupting the build queue" (his screenshot: CAMERA PAD up): INSERT's tap only opened the menu; the selection
+      row is now a "live" rect too (dev phone, a Bot Lab mid-build: INSERT, Rector: "armrectr armpw x5", building the
+      Rector at once). Placing: "never ever initiate a grid command if im fine tuning ... Grid can only be initiated by
+      pressing grid, or pressing and holding a finger down ... not miving my finger": a finger settled on the waiting
+      building needs a full second still for a GRID (a pause of 0.3 s then a drag: a nudge); "If I press one, the grid
+      disappears ... the one will be awaiting me to place where the grid initiated. If I press grid again or line, it
+      shoukd restore the grid": ONE keeps the GRID's corners, the building waits at its start (the pointer on it: one
+      blueprint), GRID or LINE holds the drag again, GRID and LINE switch a held one in place. Home buttons: "make rhe
+      commander button. All units and local units buttins not need the ui one tap engage": the home grid is live.
+      Holds: "when i press and hold any button or anywhere on the bottom ui. It jumps the camera south": a long press's
+      release went to the dock's top edge and the dock panned for it (500 to 1300 elmos a hold); it stays with the
+      finger now. dock-phone-test passes.
+- [ ] **BAR's Settings upright, asked again** (Kailil, 2026-11-12 night, with a screenshot: "Resize the setting menu to
+      fit on vertical"): BAR's fix is the patch above (`bar-windows-upright.patch`, waiting on BAR). In the app a copy of
+      gui_options.lua is not workable: 131 uses of the widget handler a user widget does not have (configData,
+      orderList, knownWidgets, EnableWidget ...), and the phone's patcher replaces one place each. The route that works
+      in the app: the app's own upright Settings screen on BAR's options API (WG.options: getOptionsList,
+      getOptionValue, applyOptionValue, toggle), BAR's widget running hidden for the switches. His call.
 - [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
       between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
       send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that
