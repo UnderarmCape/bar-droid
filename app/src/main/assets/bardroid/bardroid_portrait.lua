@@ -414,7 +414,9 @@ local function layout()
 		end
 		local gridH = top - P[2]
 		local tile = floor((gridH - gap) / 2)
-		L.leftCols = max(3, min(6, floor((panelW + gap) / (tile + gap))))
+		-- (up to 7: at 6 the dev phone's panel had a seventh tile's width blank at its end, the "more" arrow off the
+		-- tiles' middle)
+		L.leftCols = max(3, min(7, floor((panelW + gap) / (tile + gap))))
 		tile = min(tile, floor((panelW - (L.leftCols - 1) * gap) / L.leftCols))
 		L.rightCols = panelW >= 3 * tile and 3 or 2
 		local rows = max(2, floor((gridH + gap) / (tile + gap)))
@@ -467,7 +469,7 @@ local function layout()
 		local mapW = floor(mapH * (Game.mapSizeX / max(1, Game.mapSizeZ)))
 		local midW = max(floor(vsx * 0.2), min(mapW, floor(vsx * 0.34)))
 		local sideW = floor((vsx - midW - 4 * pad) / 2)
-		L.leftCols = max(3, min(6, floor((sideW + gap) / (tile + gap))))
+		L.leftCols = max(3, min(7, floor((sideW + gap) / (tile + gap))))
 		tile = min(tile, floor((sideW - (L.leftCols - 1) * gap) / L.leftCols))
 		L.rightCols = sideW >= 3 * tile and 3 or 2
 		-- (whole rows only, under the selection: tiles narrowed by the width left a part of a third row in sight on the

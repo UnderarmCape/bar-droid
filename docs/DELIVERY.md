@@ -1412,6 +1412,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       wm size 1080x1198, 1198x1080, back): the dock went sideways while the screen was wide (BAR's minimap into it),
       upright again after (the minimap back in its small upright place), no error; and the lobby sideways at the
       near-square size: the column 15 buttons a page, the screens beside it the whole height.
+      Polish, 2026-11-13: the one-thumb panel's BUILD grid had 6 columns at most, and on the dev phone sideways a
+      seventh tile's width stood blank at the panel's end, the "more" arrow off the tiles' middle; up to 7 now (both
+      sideways layouts): the tiles reach the panel's end, the arrow under the middle tile, 14 options a page (12).
+      Dev phone: idle skirmishes upright (6 min) and sideways (4 min) with no error of the app's, 30 fps; dock-phone-test
+      all pass.
 - [x] **Kailil's notes of 2026-11-12 evening on placing and the factory queue** (his screenshots: a 3 x 3 GRID with
       ONE lit, a Bot Lab with INSERT lit). Placing: "the build place menu should reflect i am in grid mode ... I should
       be able to cancel the grid by pressing one"; "I activated grid mode too easily when I was moving around my
