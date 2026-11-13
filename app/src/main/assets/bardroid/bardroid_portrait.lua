@@ -306,8 +306,9 @@ function SP.teamItems()
 				n = n + 1
 			end
 		end
-		if n % 2 == 1 then -- (the next alliance from a new row: an empty place, no button drawn there)
-			out[#out + 1] = { kind = "gap", w = SP.COLS / 2 }
+		if n % 2 == 1 then -- (the next alliance from a new row: the alliance's last team across the whole row; with an
+			-- empty half beside it a 1v1's two teams stood in the left half over a blank one, dev phone 2026-11-13)
+			out[#out].w = SP.COLS
 		end
 	end
 	return out
@@ -2451,9 +2452,6 @@ end
 local function drawButton(item, r)
 	if item.kind == "slider" then
 		drawSlider(item, r)
-		return
-	end
-	if item.kind == "gap" then -- (TEAMS: the place after an alliance's odd team)
 		return
 	end
 	if item.kind == "blank" then -- (an open place on the home grid: a faint tile)
