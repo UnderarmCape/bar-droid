@@ -966,6 +966,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       `propName = value` throughout, the git calls through `providers.exec` with the root as their folder: the version
       line still `from BAR Droid <commit>`); `--warning-mode all` now names only AGP's own setVisible. Dev phone: built,
       installed, pace-test ALL PASS.
+- [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
+      green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
+      transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
+      is producing"): while a finger dragged a building RtsTouch moved the X pointer (BAR's blueprint) and sent the
+      widget the same steps for its spot ("nudge"), from a start read off the place file, a screen position the
+      camera could have left since; the two ran apart and PLACE built at the app's green square. Now the drag sends
+      the pointer's own place ("spotto": the spot the ground under the pointer, kept over the sky), and a tap's spot
+      puts the pointer on its build square (rounded apart they stood a square from each other). The app's square is
+      drawn only where the pointer cannot be (on the dock), as before. Dev phone (a scratch widget comparing the
+      spot's build square with the pointer's each frame): after a tap the same at once (was a square apart for 1.5 s),
+      a drag after a camera pan the same each move (a frame behind at most); dock-phone-test ALL PASS. Installed on
+      the Fold7 (05:12).
 - [x] **The D-gun mode sideways floats over the game** (Kailil, 2026-11-13, his screenshot of the band: "Don't do the
       half screen ui for the dgun mode. Instead do floating buttons with fire on both sides and remove the map. So there
       will be no Grey ui bottom half when in dgun mode on landscape"): no band, no minimap (BAR's minimap given a

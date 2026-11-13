@@ -1361,11 +1361,14 @@ final class RtsTouch {
         // (moved on toward the upright dock: held at its top edge, in sight; it went behind the dock, docktest)
         Dock d = dock();
         if (d != null && d.all != null && ptrY + dy > d.all[1] - 1) dy = Math.min(dy, Math.max(0, d.all[1] - 1 - ptrY));
-        send(String.format(Locale.US, "nudge %.2f %.2f", dx, dy));
         moveX = vx; moveY = vy;
         spotSentAt = SystemClock.uptimeMillis();
         ptrX += dx; ptrY += dy;
         view().sendMouseEvent(ptrX, ptrY, InputStub.BUTTON_UNDEFINED, false, false);
+        // (the spot where the pointer is, BAR's own blueprint: moved by the same steps the two drifted apart, from a
+        // start read off the place file while the camera moved, and PLACE built at the app's green square beside the
+        // blueprint; Kailil, 2026-11-13: "Not the two seperate square systems. Only 1 ... the proper vanilla system")
+        send(String.format(Locale.US, "spotto %.0f %.0f", ptrX, ptrY));
     }
 
     /** The GRID's far corner (the pointer) moved by the finger's way since the last move. */

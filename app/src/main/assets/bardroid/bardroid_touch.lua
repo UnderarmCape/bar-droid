@@ -546,7 +546,7 @@ local function readTouch(lines)
 	-- a building picked: the spot a tap or a drag picked for the build menu's PLACE button, a nudge of it, a GRID held
 	-- (bardroid_buildmenu.lua), in the order the app sent them; a frame's nudges summed
 	local b = WG.bardroidBuildmenu
-	if b and b.droidSpot and (lines:find("spot ", 1, true) or lines:find("nudge ", 1, true) or lines:find("grid ", 1, true)) then
+	if b and b.droidSpot and (lines:find("spot", 1, true) or lines:find("nudge ", 1, true) or lines:find("grid ", 1, true)) then
 		local nx, ny = 0, 0
 		local function flush()
 			if (nx ~= 0 or ny ~= 0) and b.droidNudge then
@@ -578,6 +578,32 @@ local function readTouch(lines)
 					end
 				end
 				b.droidSpot(tonumber(x), tonumber(y), args == "placed")
+				-- (a tap's spot: the pointer on its build square, so BAR's blueprint is there; rounded apart the two stood
+				-- a square from each other until the next move, the app's square beside BAR's, dev phone 2026-11-13)
+				local s
+				if b.droidPanel then
+					s = select(2, b.droidPanel())
+				end
+				local _, cmdID = Spring.GetActiveCommand()
+				if tonumber(x) and s and cmdID and cmdID < 0 then
+					local bx, by, bz = Spring.Pos2BuildPos(-cmdID, s[1], s[2], s[3], Spring.GetBuildFacing())
+					local wx, wy, wz = Spring.WorldToScreenCoords(bx, by, bz)
+					if wz and wz <= 1 then
+						Spring.WarpMouse(math.floor(wx + 0.5), math.floor(wy + 0.5))
+					end
+				end
+			elseif kind == "spotto" then -- (a building dragged: the spot under the pointer, BAR's blueprint; over the sky
+				-- or past the map's edge it stays where it was)
+				flush()
+				local x, y = args:match("^(%S+) (%S+)")
+				x, y = tonumber(x), tonumber(y)
+				if x and y then
+					local _, vy = Spring.GetViewGeometry()
+					local _, pos = Spring.TraceScreenRay(x, vy - y - 1, true)
+					if pos then
+						b.droidSpot(x, y, false)
+					end
+				end
 			elseif kind == "grid" and b.droidSetGrid then
 				flush()
 				b.droidSetGrid(args)
