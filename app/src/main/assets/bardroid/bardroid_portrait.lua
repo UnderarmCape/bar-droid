@@ -3552,8 +3552,12 @@ local function drawDgun()
 		end
 		disc(kx, ky, s[3] * 0.36, true)
 		gl.Color(1, 1, 1, 1)
-		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3],
-			s[2] - s[3] - L.gap, L.btnH * 0.36, "\255\200\200\200", font)
+		-- (floating sideways above the stick: under it AIM's word lay on BAR's player list in the bottom right corner, the
+		-- two unreadable, dev phone screenshot 2026-11-13)
+		local wy0 = p.float and s[2] + s[3] + L.gap or s[2] - s[3] - L.btnH * 0.55
+		local wy1 = p.float and s[2] + s[3] + L.btnH * 0.55 or s[2] - s[3] - L.gap
+		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], wy0, s[1] + s[3], wy1, L.btnH * 0.36,
+			"\255\200\200\200", font)
 	end
 	local t = now()
 	if DG.autoWas and not autoOn then
