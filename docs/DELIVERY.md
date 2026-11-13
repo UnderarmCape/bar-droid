@@ -1121,6 +1121,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       14 minutes, spectated AI games, replays from the launcher and from the lobby, the 8v8 replay, the lobby, GL
       check, the full test sweep), no "[hang]" line, none of the driver's refusal (the watchdog's lines all its
       routine thread registrations), no low-memory end.
+      Again 2026-11-12 21:25 (an upright dock skirmish under test): the driver's refusal, then the watchdog;
+      DriverWatch closed the game as built ("engine exited (137)", the launcher's note). Count 2026-11-12 23:58 to
+      11-13 02:20 (both launcher logs): 24 engine starts (idle skirmishes upright and sideways of 4-6 minutes, the
+      dock tests, the full sweep of 10 phone tests, the lobby), none of the driver's refusal, no hang; 1 low-memory end,
+      01:27 at a skirmish's loading (Skirmish AIs, the 8 GB phone; its run right after loaded and played).
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
