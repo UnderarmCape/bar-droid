@@ -966,6 +966,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       `propName = value` throughout, the git calls through `providers.exec` with the root as their folder: the version
       line still `from BAR Droid <commit>`); `--warning-mode all` now names only AGP's own setVisible. Dev phone: built,
       installed, pace-test ALL PASS.
+- [x] **A preset's repeat outlived it** (found 2026-11-13 reviewing bardroid_presets.lua): once a group is there, its
+      side to side is two fights on Repeat; the Repeat stayed on after the player's next order, so a path drawn or a
+      patrol given those units later ran round and round (BAR does that only with Repeat set by hand). Now the
+      player's own next order to a unit going side to side (a move, fight, attack, build, stop, ...; not a state such
+      as its fire state) turns its Repeat off (widget:UnitCommand; the sway's own orders known by their spots), and a
+      queued one comes after the fights in its queue. Dev phone: dock-phone-test's new check, the path drawn to the
+      Pawns on the preset's repeat: their repeat off, all six (on, all six, just before); ALL PASS.
 
 ### Blockers
 - [x] **Public icon.** The project's own icon (`res/drawable/ic_fg.xml`, a unit marker in a ring); Kailil's icon

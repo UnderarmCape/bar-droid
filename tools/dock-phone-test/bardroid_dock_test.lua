@@ -10,6 +10,7 @@
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
+--   drawdock? their path drawn on into the dock: its end at the dock's edge, their repeat off
 --   end       "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
@@ -227,6 +228,17 @@ local function onCmd(c)
 		check("a path drawn on into the dock: let go at the dock's top edge, the path in sight", n > 0 and my >= top - 2,
 			string.format("%d moves, let go at y %d, the dock's top %d, lowest goal y %s", n, my, top,
 				tostring(lowest and math.floor(lowest))))
+		-- (the Pawns were going side to side on the preset's repeat: the player's own order ends it, or the path ran
+		-- round and round)
+		local rep = {}
+		for _, u in ipairs(pawns) do
+			local st = Spring.GetUnitStates(u)
+			if st then
+				rep[#rep + 1] = st["repeat"] and "R" or "-"
+			end
+		end
+		local on = table.concat(rep):find("R") ~= nil
+		check("the path given to the Pawns on the preset's repeat: their repeat off", #rep > 0 and not on, table.concat(rep, " "))
 	elseif c == "strafe?" then -- (the drag drew the front line: each Pawn one fight to its place, no repeat yet, or
 		-- already there; the places in rows along the line (80 elmos apart when it was too short for all six abreast),
 		-- the front row on it, a row's places evenly over the line's length, a Pawn's width or more apart)

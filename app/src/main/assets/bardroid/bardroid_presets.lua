@@ -394,6 +394,18 @@ end
 local SWAY_WAIT = 12 * 30 -- frames
 local GIVE_UP = 120 * 30 -- frames: a group never there by then is let go
 local sways = {}
+-- the units going side to side: the player's own next order ends it, their repeat off (left on, a path or a patrol
+-- given them later ran round and round, which BAR does only with Repeat set by hand); [unit] = { at: the frame the
+-- sway was given, its two ends a, b }
+local swaying = {}
+local ENDS_SWAY = {} -- (orders that move or set the unit to work; a state such as its fire or move state does not)
+for _, c in ipairs({ CMD.MOVE, CMD.FIGHT, CMD.PATROL, CMD.ATTACK, CMD.AREA_ATTACK, CMD.GUARD, CMD.STOP, CMD.RECLAIM,
+	CMD.REPAIR, CMD.RESURRECT, CMD.CAPTURE, CMD.RESTORE, CMD.MANUALFIRE, CMD.LOAD_UNITS, CMD.LOAD_ONTO,
+	CMD.UNLOAD_UNIT, CMD.UNLOAD_UNITS }) do
+	if c then
+		ENDS_SWAY[c] = true
+	end
+end
 local lastPlan -- (the last preset sent: its places, for tools/dock-phone-test)
 local function swayCheck(f)
 	for i = #sways, 1, -1 do
@@ -430,11 +442,13 @@ local function swayCheck(f)
 		elseif f - g.since >= 15 and (there == #keep or (g.first and f - g.first > SWAY_WAIT)) then
 			for _, u in ipairs(keep) do
 				local s = g.slots[u]
+				local a, b = ground(s[1] + g.px * SIDE, s[2] + g.pz * SIDE), ground(s[1] - g.px * SIDE, s[2] - g.pz * SIDE)
 				Spring.GiveOrderArrayToUnitArray({ u }, {
 					{ CMD.REPEAT, { 1 }, {} },
-					{ CMD.FIGHT, ground(s[1] + g.px * SIDE, s[2] + g.pz * SIDE), {} },
-					{ CMD.FIGHT, ground(s[1] - g.px * SIDE, s[2] - g.pz * SIDE), { "shift" } },
+					{ CMD.FIGHT, a, {} },
+					{ CMD.FIGHT, b, { "shift" } },
 				})
+				swaying[u] = { at = f, a = a, b = b }
 			end
 			Spring.Echo(string.format("[bardroid-presets] %s: %d units there, side to side on repeat", g.name, #keep)) -- (tools)
 			table.remove(sways, i)
@@ -841,6 +855,40 @@ function widget:GameFrame(f)
 		end
 	end
 	Spring.SelectUnitArray(mine)
+end
+
+-- a unit going side to side given an order of the player's (or any not the sway's own): its repeat off, as it was
+-- before the preset; a queued order (Shift) then comes after the fights in its queue instead of joining their round
+function widget:UnitCommand(unitID, _, _, cmdID, cmdParams)
+	local s = swaying[unitID]
+	if not s then
+		return
+	end
+	local p = cmdParams or {}
+	if cmdID == CMD.REPEAT then -- (the sway's own, or Repeat set by hand: the player's choice from then on)
+		if not (p[1] == 1 and Spring.GetGameFrame() - s.at < 90) then
+			swaying[unitID] = nil
+		end
+		return
+	end
+	if cmdID == CMD.FIGHT and p[3] then
+		for _, e in ipairs({ s.a, s.b }) do
+			if math.abs(p[1] - e[1]) < 2 and math.abs(p[3] - e[3]) < 2 then
+				return
+			end
+		end
+	end
+	if cmdID < 0 or ENDS_SWAY[cmdID] then
+		swaying[unitID] = nil
+		Spring.GiveOrderToUnit(unitID, CMD.REPEAT, { 0 }, 0)
+	end
+end
+
+function widget:UnitDestroyed(unitID)
+	swaying[unitID] = nil
+end
+function widget:UnitTaken(unitID) -- (given to an ally: theirs to order)
+	swaying[unitID] = nil
 end
 
 function widget:KeyPress(key)
