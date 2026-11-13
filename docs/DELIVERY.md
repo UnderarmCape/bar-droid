@@ -1065,6 +1065,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       The whole sweep on the day's last build (the dock stepping aside, the copies' patches, pan with units picked):
       dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun, -Share,
       -Chat) and pace-test all pass, about 18 minutes.
+- [ ] **The orders on the first tap too? (asked 2026-11-13)** With the camera pad up the build options, INSERT and
+      QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow act on the first tap (Kailil,
+      2026-11-12, and the runs after); FIGHT, MOVE, PATROL, D-Gun and the states still take one tap to open the menu,
+      then theirs (dev phone upright: D-Gun's first tap only opened the menu). Making them live too leaves little of
+      the dock as a camera pad with units picked (one finger on the game pans anyway since 2026-11-13). His call.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
