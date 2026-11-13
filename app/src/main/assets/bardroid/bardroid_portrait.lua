@@ -1527,9 +1527,19 @@ function refreshNow()
 		showSel, showGroups = wantSel, wantGroups
 		layout()
 	end
-	local unq = #sel > 0 and selectedFactory()
-	for i = 1, unq and 0 or #sel do
-		if (Spring.GetUnitCommandCount(sel[i]) or 0) > 0 then
+	-- (a factory picked: its build queue, what the buttons take from (removeOrder); with nothing queued they stood there
+	-- doing nothing, dev phone 2026-11-13, a Bot Lab picked by FACTORIES. Other units: their orders)
+	local unq = false
+	local fac = #sel > 0 and selectedFactory()
+	for i = 1, #sel do
+		local n
+		if fac then
+			local ud = UnitDefs[Spring.GetUnitDefID(sel[i]) or -1]
+			n = ud and ud.isFactory and Spring.GetFactoryCommands(sel[i], 0) or 0
+		else
+			n = Spring.GetUnitCommandCount(sel[i]) or 0
+		end
+		if (tonumber(n) or 0) > 0 then
 			unq = true
 			break
 		end

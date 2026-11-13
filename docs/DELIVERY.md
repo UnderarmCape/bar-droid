@@ -1017,6 +1017,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sent four hurt units back, the dock kept its selection, no errors in infolog, 29.3 fps. BAR's message commas
       ("Battle, Started", "Enemy Units, Detected") are in BAR's own language/en/tips.json. The selection row's CAMERA
       PAD sat below the count line it shares ("14 units, 10 of this type"): on its baseline now.
+      Then the unfolded Fold7's shapes on the dev phone (wm size 1198x1080 and 1080x1198): sideways the floating D-gun
+      mode fits (sticks and FIREs level, y 912; the X at the band's top left), upright FACTORIES' bar and the factory
+      screen fine. Found: with a factory picked the groups row's x FIRST and x LAST showed with its build queue empty
+      (they act on that queue, removeOrder): shown now only while the factory has something queued. Dev phone: a Bot
+      Lab picked, nothing queued: no buttons; a bot queued: both; x LAST: the bot gone, the buttons too.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
