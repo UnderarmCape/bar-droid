@@ -562,6 +562,10 @@ local function writeDock(force)
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
 			.. ((leftKind == "build" or leftKind == "pregame") and L.left[3] > 0 and not SP.hidden
 				and ("live " .. r(L.left) .. "\n") or "")
+			-- (and the orders, a factory's queue buttons too: Kailil, 2026-11-13, asked whether FIGHT, MOVE, PATROL,
+			-- D-Gun and the states should act on the first tap as well: "1", yes; D-Gun's first tap only opened the menu)
+			.. ((rightKind == "orders" or rightKind == "factory") and L.right[3] > 0 and not SP.hidden
+				and ("live " .. r(L.right) .. "\n") or "")
 			-- (and the selection row: INSERT and QUEUE. Kailil, 2026-11-12, a Bot Lab: "Insert plus tapoing a unit to build.
 			-- Is not interrupting the build queue": with the camera pad up INSERT's tap only opened the menu, and the unit's
 			-- tap, which acts at once, went to the queue's end)

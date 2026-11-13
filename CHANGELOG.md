@@ -122,7 +122,8 @@ The first version meant for other people's phones: everything since the first bu
   with a light vibration. The dock's presets (STRAFE: a line abreast with gaps; three formations, the ranged behind the front
   by their reach) go where the map is tapped, or a line drawn on the map is their front, as wide; there each unit
   fights side to side across its place on repeat, the group together. PLACE, the presets and the build menus take the
-  first tap; the dock stays open while a building is being placed. INSERT, QUEUE and the home buttons take the first tap too.
+  first tap; the dock stays open while a building is being placed. INSERT, QUEUE, the home buttons, the orders (FIGHT,
+  MOVE, PATROL, D-Gun, the states), metal and energy take the first tap too.
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
