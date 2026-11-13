@@ -2645,9 +2645,14 @@ local function drawPlace()
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
 		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
 			-- game's only turn, so no "90°" on it: "its redundant")
-			-- (across half the panel since 2026-11-12: the word at a third of its height)
-			textIn("ROTATE", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30)),
-				"\255\235\235\235", bold)
+			-- (across half the panel since 2026-11-12: the word at a third of its height, and over 70 % of its width at
+			-- most: at the textIn's 84 % upright it ran nearly edge to edge, as large as PLACE above it, dev phone
+			-- screenshot 2026-11-13)
+			local size = max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30))
+			if bold then
+				size = min(size, (r[3] - r[1]) * 0.7 / max(0.01, bold:GetTextWidth("ROTATE")))
+			end
+			textIn("ROTATE", r[1], r[2], r[3], r[4], size, "\255\235\235\235", bold)
 		else
 			-- (the cross fills about half its font size: in a mid-height button, the Fold7 unfolded sideways, it stood
 			-- smaller than ROTATE beside it, dev phone at 1192x1080)
