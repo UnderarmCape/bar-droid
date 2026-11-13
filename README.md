@@ -111,7 +111,8 @@ rest of the screen the game's. Next to the edge a panel for the units picked: BU
 BUILD, other units on ORDERS, a building picked on PLACE), the selection row, the tab's buttons; beside it metal,
 energy, BAR's minimap (tap it to move the camera) and the unit groups, with HOME (the home buttons above in the panel)
 and an arrow that moves the dock to the other side of the screen (for the other hand; kept for the next game). With
-nothing picked only the minimap part shows. The D-gun's sticks still span the bottom, one under each thumb. Use a
+nothing picked only the minimap part shows. The D-gun mode floats over the game: MOVE and AIM in the bottom corners,
+a FIRE beside each, no minimap; swipe either FIRE towards the middle for full auto, and again to end it. Use a
 gamepad or a mouse and BAR's own screen comes back; touch the screen and the dock returns.
 **Turning the phone** (launcher setting "Turn with the phone", on): with the phone's auto-rotate on, the lobby and
 the game turn upright or sideways as you hold the phone, at any time, mid-game too (BAR's interface takes a few

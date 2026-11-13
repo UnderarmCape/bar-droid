@@ -105,7 +105,9 @@ The first version meant for other people's phones: everything since the first bu
 - The touch dock sideways too (launcher setting "Touch dock sideways", on), for one thumb: at one side of the bottom
   the units' panel with BUILD | ORDERS tabs, and beside it metal, energy, BAR's minimap and the unit groups, with HOME
   and an arrow that moves the dock to the other side; with nothing picked only the minimap part. BAR's resource bars
-  and minimap move into the dock. A gamepad or a mouse brings BAR's own screen layout back.
+  and minimap move into the dock. A gamepad or a mouse brings BAR's own screen layout back. Sideways the D-gun mode
+  floats over the game, no panel and no minimap: MOVE and AIM low in the bottom corners, a FIRE beside each (either
+  thumb fires), either FIRE swiped towards the middle turns full auto on, or off again, and ✕ at the left leaves.
 - Playing upright (launcher setting "Play upright"): the game on top, a touch dock below. Its D-gun mode keeps the
   commander in the middle of the screen, hides the rows it does not need, fires on FIRE's release, and FIRE swiped to
   the right switches on full auto (the enemy in range most worth a shot, a commander first, never through a friendly unit; only where the

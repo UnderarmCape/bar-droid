@@ -118,6 +118,7 @@ final class RtsTouch {
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
         float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
+        float[] fire2;   // (the D-gun mode floating sideways: a FIRE beside each stick, fire the left one)
         // the build options and the selection row (INSERT, QUEUE): their first tap acts though the dock is the camera pad
         // (bardroid_portrait.lua, a "live" line each)
         final java.util.List<float[]> live = new java.util.ArrayList<>();
@@ -377,17 +378,25 @@ final class RtsTouch {
     // (full auto on, the swipe goes left instead, to the cancel corner: at 0.92 of it "act dgun_auto_off"; Kailil,
     // 2026-11-10: "when you swipe left to disable auto, the animation doesn't work". "dgunslide f": right 0..1, left
     // below 0; "dgunslide off": let go)
+    // (floating sideways, Kailil 2026-11-13: a FIRE beside each stick, fire2; each one's swipe goes towards the screen's
+    // middle, the left FIRE's right, the right one's left, and turns full auto on, or off while it is on)
     private static final float DGUN_AUTO_AT = 0.92f;
     private int dgunFireId = -1, dgunCamId = -1;
     private float dgunFireX, dgunSlide = -1, dgunCamDownX, dgunCamDownY, dgunCamX, dgunCamY;
-    private boolean dgunAutoSent, dgunSlideLeft;
+    private float[] dgunFireRect;   // (the FIRE held)
+    private boolean dgunAutoSent, dgunSlideLeft, dgunTurnOff;
     private PadMove dgunCamMove = PadMove.NONE;
 
     private void dgunFireSlide(MotionEvent e, Dock d) {
         int p = dgunFireId < 0 ? -1 : e.findPointerIndex(dgunFireId);
         if (p < 0 || d == null || d.fire == null || d.right == null) return;
         float f;
-        if (dgunSlideLeft) {
+        if (d.fire2 != null && dgunFireRect != null) {   // (floating: to the middle)
+            float mid = (d.all[0] + d.all[2]) / 2;
+            float track = Math.max(slop * 4, dgunSlideLeft ? dgunFireRect[0] - mid : mid - dgunFireRect[2]);
+            float gone = dgunSlideLeft ? dgunFireX - toX(e.getX(p)) : toX(e.getX(p)) - dgunFireX;
+            f = Math.max(0, Math.min(1, gone / track));
+        } else if (dgunSlideLeft) {
             float track = Math.max(slop * 4, d.fire[0] - (d.cancel != null ? d.cancel[2] : d.left[0]));
             f = Math.max(0, Math.min(1, (dgunFireX - toX(e.getX(p))) / track));
         } else {
@@ -400,7 +409,7 @@ final class RtsTouch {
         }
         if (f >= DGUN_AUTO_AT && !dgunAutoSent) {
             dgunAutoSent = true;
-            act(dgunSlideLeft ? "dgun_auto_off" : "dgun_auto");
+            act(dgunTurnOff ? "dgun_auto_off" : "dgun_auto");
             view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         }
     }
@@ -411,6 +420,7 @@ final class RtsTouch {
         if (dgunFireId < 0) return;
         if (shoot && !dgunAutoSent && dgunSlide < 0.15f) act("dgun_fire");
         dgunFireId = -1;
+        dgunFireRect = null;
         dgunSlide = -1;
         send("dgunslide off");
     }
@@ -478,8 +488,9 @@ final class RtsTouch {
             } else if (state != State.DGUN) {
                 return false;   // (another gesture began above the dock: it keeps its fingers)
             }
+            float[] fireAt = inside(d.fire, x, y) ? d.fire : inside(d.fire2, x, y) ? d.fire2 : null;
             String role = inCircle(d.stickL, x, y) ? "l" : inCircle(d.stickR, x, y) ? "r"
-                    : inside(d.fire, x, y) ? "fire" : inside(d.cancel, x, y) ? "cancel" : "none";
+                    : fireAt != null ? "fire" : inside(d.cancel, x, y) ? "cancel" : "none";
             int id = e.getPointerId(i);
             dgunRoles.put(id, role);
             if (role.equals("fire")) {
@@ -487,8 +498,11 @@ final class RtsTouch {
                 if (dgunFireId < 0) {   // (its swipe: the track shows; the shot as it lets go, dgunFireUp)
                     dgunFireId = id;
                     dgunFireX = x;
+                    dgunFireRect = fireAt;
                     dgunAutoSent = false;
-                    dgunSlideLeft = d.dgunAuto;
+                    dgunTurnOff = d.dgunAuto;
+                    // (upright: right to full auto, left to end it; floating: towards the middle either way)
+                    dgunSlideLeft = d.fire2 != null ? (fireAt[0] + fireAt[2]) / 2 > (d.all[0] + d.all[2]) / 2 : d.dgunAuto;
                     dgunSlide = 0;
                     send(dgunSlideLeft ? "dgunslide -0.00" : "dgunslide 0.00");
                 } else {
@@ -948,6 +962,7 @@ final class RtsTouch {
                     else if (d != null && f[0].equals("live")) d.live.add(r);
                     else if (d != null && f[0].equals("ping")) d.ping = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
+                    else if (d != null && f[0].equals("fire2")) d.fire2 = r;
                     else if (d != null && f[0].equals("cancel")) d.cancel = r;
                 }
                 if (d != null) {

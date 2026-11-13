@@ -362,7 +362,7 @@ local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
 	L.hole, L.leftCols, L.rightCols = nil, 3, 2
-	L.thumb, L.tabs, L.homeBtn, L.swapBtn = false, nil, nil, nil
+	L.thumb, L.tabs, L.homeBtn, L.swapBtn, L.dgFloat = false, nil, nil, nil, false
 	if L.land and not L.dgun then
 		-- Sideways, one thumb (Kailil, 2026-11-12: "keep the bottom ui two slots only ... snapped to the left side or right
 		-- side of the bottom of the phone so it can be used by one finger only. Add a button or symbol to swap what side";
@@ -484,20 +484,17 @@ local function layout()
 		L.res = { mx0, bandH - pad - resH, mx1, bandH - pad }
 		L.groups = { mx0, pad, mx1, pad + groupsH }
 		local hx0, hy0, hx1, hy1 = mx0, L.groups[4] + gap, mx1, L.res[2] - gap
-		if L.dgun then -- (the D-gun mode: FIRE over the middle from 0.74 of the height, dgunParts; the minimap's top
-			-- sixth lay under it, dev phone screenshot 2026-11-13. Below FIRE, down into the groups' room, which this mode
-			-- leaves empty; the map's shape kept)
-			local aspect = Game.mapSizeX / max(1, Game.mapSizeZ)
-			hy0, hy1 = pad, pad + floor(inner * 0.74) - gap
-			mapW = floor((hy1 - hy0) * aspect)
-			local mh = floor(min(hx1 - hx0, mapW) / aspect)
-			hy0 = hy0 + floor((hy1 - hy0 - mh) / 2)
-			hy1 = hy0 + mh
-		end
 		mapW = min(hx1 - hx0, mapW) -- (the map's shape, in the middle of its room)
 		hx0 = floor((hx0 + hx1 - mapW) / 2)
 		L.hole = { hx0, hy0, hx0 + mapW, hy1 }
 		L.dock = { 0, 0, vsx, bandH }
+		-- the D-gun mode sideways floats over the game (Kailil, 2026-11-13: "Don't do the half screen ui for the dgun
+		-- mode. Instead do floating buttons with fire on both sides and remove the map. So there will be no Grey ui bottom
+		-- half"): no band, no minimap; its sticks, a FIRE beside each and the cancel X drawn on the game (dgunParts). The
+		-- band's place stays the mode's for the fingers (RtsTouch: the sticks, FIRE, X, elsewhere zoom or turn)
+		if L.dgun then
+			L.dgFloat, L.hole = true, nil
+		end
 		L.btnW = floor((sideW - (L.rightCols - 1) * gap) / L.rightCols)
 		L.rightRows = max(3, floor((inner + gap) / (floor(tile * 0.5) + gap)))
 		L.btnH = floor((inner + gap) / L.rightRows) - gap
@@ -1162,8 +1159,26 @@ local function dgunOn()
 	return D and D.active and D.active() or false
 end
 
--- its parts in the grid: the sticks (x, y, radius), FIRE and the cancel corner (rects); GL pixels
+-- its parts in the grid: the sticks (x, y, radius), FIRE and the cancel corner (rects); GL pixels. Sideways, floating
+-- (L.dgFloat): the sticks low in the bottom corners, under the thumbs, each with a FIRE on its inner side (fire:
+-- the left one, fire2: the right one; either thumb fires), their swipes towards the middle; the X at the top left of
+-- the band's place, away from the thumbs
 local function dgunParts()
+	if L.dgFloat then
+		local d, pad, gap = L.dock, L.pad, L.gap
+		local h = d[4] - d[2]
+		local words = floor(L.btnH * 0.6)
+		local rad = floor(min(h * 0.33, vsx * 0.1))
+		local cy = d[2] + pad + words + rad
+		local cxL, cxR = floor(vsx * 0.13), vsx - floor(vsx * 0.13)
+		local fw, fh = floor(rad * 1.5), floor(rad * 0.95)
+		local fy0 = cy - floor(fh * 0.2)
+		local c = floor(min(vsx * 0.045, h * 0.2))
+		return { l = { cxL, cy, rad }, r = { cxR, cy, rad }, float = true,
+			fire = { cxL + rad + gap * 3, fy0, cxL + rad + gap * 3 + fw, fy0 + fh },
+			fire2 = { cxR - rad - gap * 3 - fw, fy0, cxR - rad - gap * 3, fy0 + fh },
+			cancel = { d[1] + pad, d[4] - pad - c, d[1] + pad + c, d[4] - pad } }
+	end
 	-- (sideways: the band's whole height, the right half's; the left's foot is up by its whole rows)
 	local r = { L.left[1], L.land and L.right[2] or L.left[2], L.right[3], L.right[4] }
 	local w, h = r[3] - r[1], r[4] - r[2]
@@ -1191,8 +1206,10 @@ dgunLines = function()
 	-- (dgunauto: full auto on, FIRE's swipe goes left to end it)
 	local D = WG.BarDroidPadDgun
 	local auto = D and D.auto and D.auto()
+	-- (fire2: floating sideways, the second FIRE; with it each FIRE's swipe goes towards the middle, on or off)
 	return string.format("dgun 1\nstickl %d %d %d\nstickr %d %d %d\nfire %s\ncancel %s\ndgunauto %d\n", p.l[1], vsy - p.l[2],
 		p.l[3], p.r[1], vsy - p.r[2], p.r[3], rect(p.fire), rect(p.cancel), auto and 1 or 0)
+		.. (p.fire2 and ("fire2 " .. rect(p.fire2) .. "\n") or "")
 end
 
 local function teammateList()
@@ -3167,8 +3184,11 @@ local function dockLines()
 		if slidWord then -- FIRE held: how far it is swiped, right (to AUTO) or left (below 0: back to FIRE); "off": let go
 			local slid = tonumber(slidWord)
 			if slid then
-				if not DG.slide then -- (a new hold: its way from its first line, "-0.00" on AUTO)
+				if not DG.slide then -- (a new hold: its way from its first line, "-0.00" on AUTO; whether it turns full auto
+					-- on or off: floating sideways both FIREs swipe towards the middle, either way)
+					local D = WG.BarDroidPadDgun
 					DG.slideLocked, DG.slideDir = false, slidWord:sub(1, 1) == "-" and -1 or 1
+					DG.slideToAuto = not (D and D.auto and D.auto())
 				end
 				DG.slide = max(-1, min(1, slid))
 				DG.slideLocked = DG.slideLocked or abs(DG.slide) >= 0.92
@@ -3230,6 +3250,10 @@ function SP.landMinimap()
 		return
 	end
 	local h = active and L.land and L.hole or nil
+	if active and L.dgFloat then -- (the D-gun mode sideways shows no minimap: a pixel in the bottom left corner, under
+		-- the band's place; given back its own place BAR's showed at the top left)
+		h = { 0, 0, 1, 1 }
+	end
 	local key = h and table.concat(h, " ") or nil
 	if key == L.frameKey then
 		return
@@ -3414,12 +3438,18 @@ end
 -- grid's edge, AUTO at its end; AUTO's to the left, to the cancel corner, FIRE at its end (RtsTouch measures the swipe
 -- against the same spans). The knob goes all the way, the track fills behind it (red to gold towards AUTO, gold to red
 -- towards FIRE), chevrons run the way to go; locked (past 0.92) it is full, the knob gone into it, the word on it.
--- f: FIRE's rect, cancel: the cancel corner's, dir 1 right / -1 left, v 0..1, alpha
-function DG.track(f, cancel, dir, v, alpha, locked, t)
+-- f: FIRE's rect, cancel: the cancel corner's, dir 1 right / -1 left, v 0..1, alpha. Floating sideways (float): from
+-- the held FIRE to the screen's middle, either way; toAuto: full auto on at its end (else off; upright: rightwards)
+function DG.track(f, cancel, dir, v, alpha, locked, t, float, toAuto)
+	if toAuto == nil then
+		toAuto = dir > 0
+	end
 	local fh = f[4] - f[2]
-	local m = dir > 0 and 0.16 or 0.26 -- (the left one thinner: the cancel corner leaves it less room across)
+	local m = (dir > 0 or float) and 0.16 or 0.26 -- (the left one thinner: the cancel corner leaves it less room across)
 	local y0, y1 = f[2] + floor(fh * m), f[4] - floor(fh * m)
-	local k = dir > 0 and { f[3] + L.gap * 2, y0, L.right[3], y1 } or { cancel[3] + L.gap * 2, y0, f[1] - L.gap * 2, y1 }
+	local mid = floor(vsx / 2)
+	local k = float and (dir > 0 and { f[3] + L.gap * 2, y0, mid - L.gap, y1 } or { mid + L.gap, y0, f[1] - L.gap * 2, y1 })
+		or dir > 0 and { f[3] + L.gap * 2, y0, L.right[3], y1 } or { cancel[3] + L.gap * 2, y0, f[1] - L.gap * 2, y1 }
 	local tw, th = k[3] - k[1], k[4] - k[2]
 	if tw < th * 1.3 or alpha <= 0 then
 		return
@@ -3429,7 +3459,7 @@ function DG.track(f, cancel, dir, v, alpha, locked, t)
 	local kx = from + (to - from) * v
 	gl.Color(0, 0, 0, 0.6 * alpha)
 	gl.Rect(k[1], k[2], k[3], k[4])
-	local c = dir > 0 and v or 1 - v
+	local c = toAuto and v or 1 - v
 	gl.Color(0.86 + 0.14 * c, 0.14 + 0.66 * c, 0.11, (locked and 0.95 or 0.85) * alpha)
 	if locked then
 		gl.Rect(k[1], k[2], k[3], k[4])
@@ -3462,13 +3492,13 @@ function DG.track(f, cancel, dir, v, alpha, locked, t)
 	end
 	if alpha > 0.2 then
 		local ls = fh * 0.245 -- (from FIRE's height, as the right track's: the thinner left one's word came out small)
-		local word = dir > 0 and "AUTO" or "FIRE"
+		local word = toAuto and "AUTO" or "FIRE"
 		local tx = dir > 0 and k[3] - L.pad or k[1] + L.pad
 		local ww = bold:GetTextWidth(word) * ls
 		local mid = tx - dir * ww / 2
 		-- (the white knob under the word: dark letters on it, the gold ones were lost there; dev phone screenshots)
 		local onKnob = not locked and abs(kx - mid) < r + ww * 0.4
-		local col = locked and (dir > 0 and "\255\050\024\000" or "\255\255\255\255")
+		local col = locked and (toAuto and "\255\050\024\000" or "\255\255\255\255")
 			or onKnob and "\255\070\040\010"
 			or (v >= 0.6 and "\255\255\200\064" or "\255\190\190\190")
 		bold:Print(col .. word, tx, cy - ls * 0.36, ls, dir > 0 and "ro" or "o")
@@ -3504,62 +3534,11 @@ local function drawDgun()
 		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], s[2] - s[3] - L.btnH * 0.55, s[1] + s[3],
 			s[2] - s[3] - L.gap, L.btnH * 0.36, "\255\200\200\200", font)
 	end
-	local f, t = p.fire, now()
-	local fw, fh = f[3] - f[1], f[4] - f[2]
-	local e = max(2, floor(L.pad * 0.35))
+	local t = now()
 	if DG.autoWas and not autoOn then
 		DG.autoOffAt = t -- (full auto just ended: the gold drains out of the button, below)
 	end
 	DG.autoWas = autoOn
-	if autoOn then -- full auto: FIRE turns gold-orange, stripes run across it, its edge pulses; AUTO on it
-		button(f, { 0.55, 0.2, 0.02, 1 }, { 0.95, 0.48, 0.07, 1 })
-		local step = fh * 0.6
-		local shift = (t * fh * 1.4) % step
-		gl.Scissor(f[1], f[2], fw, fh)
-		gl.Color(1, 0.9, 0.4, 0.18)
-		for sx = f[1] - fh - step + shift, f[3], step do
-			gl.BeginEnd(GL.QUADS, function()
-				gl.Vertex(sx, f[2])
-				gl.Vertex(sx + step * 0.45, f[2])
-				gl.Vertex(sx + step * 0.45 + fh, f[4])
-				gl.Vertex(sx + fh, f[4])
-			end)
-		end
-		gl.Scissor(false)
-		local pulse = 0.5 + 0.5 * math.sin(t * 6)
-		gl.Color(1, 0.85, 0.35, 0.45 + 0.45 * pulse)
-		gl.Rect(f[1], f[2], f[3], f[2] + e)
-		gl.Rect(f[1], f[4] - e, f[3], f[4])
-		gl.Rect(f[1], f[2], f[1] + e, f[4])
-		gl.Rect(f[3] - e, f[2], f[3], f[4])
-		if autoFor < 0.3 then -- (as it engages the gold fills the button from the left, the red going out at the right)
-			local w = (1 - autoFor / 0.3) ^ 2
-			gl.Color(0.86, 0.14, 0.11, 0.95)
-			gl.Rect(f[3] - fw * w, f[2], f[3], f[4])
-		end
-		if autoFor < 0.6 then -- (and a flash, and the edge thrown out around the button)
-			local a, grow = 1 - autoFor / 0.6, autoFor / 0.6 * fh * 0.6
-			gl.Color(1, 0.92, 0.6, 0.55 * a)
-			gl.Rect(f[1], f[2], f[3], f[4])
-			gl.Color(1, 0.8, 0.3, 0.8 * a)
-			gl.Rect(f[1] - grow, f[2] - grow, f[3] + grow, f[2] - grow + e)
-			gl.Rect(f[1] - grow, f[4] + grow - e, f[3] + grow, f[4] + grow)
-			gl.Rect(f[1] - grow, f[2] - grow, f[1] - grow + e, f[4] + grow)
-			gl.Rect(f[3] + grow - e, f[2] - grow, f[3] + grow, f[4] + grow)
-		end
-		gl.Color(1, 1, 1, 1)
-	else
-		button(f, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
-		local off = DG.autoOffAt and t - DG.autoOffAt
-		if off and off < 0.4 then -- (full auto ended: the gold drains to the left, a white flash going with it)
-			local w = (1 - off / 0.4) ^ 2
-			gl.Color(0.95, 0.48, 0.07, 0.95)
-			gl.Rect(f[1], f[2], f[1] + fw * w, f[4])
-			gl.Color(1, 1, 1, 0.5 * w)
-			gl.Rect(f[1], f[2], f[3], f[4])
-			gl.Color(1, 1, 1, 1)
-		end
-	end
 	-- whether it can fire now: a thin bar along FIRE's foot, white as the D-gun reloads, amber (and the word dimmed)
 	-- while the team lacks a shot's energy; none once it is ready
 	local loaded, energy = 1, 1
@@ -3569,21 +3548,74 @@ local function drawDgun()
 	end
 	local lacking = energy < 1
 	local part = lacking and energy or loaded
-	if part < 1 then
-		local bh = max(3, floor(fh * 0.07))
-		local x0, x1 = f[1] + e * 2, f[3] - e * 2
-		gl.Color(0, 0, 0, 0.45)
-		gl.Rect(x0, f[2] + e * 2, x1, f[2] + e * 2 + bh)
-		if lacking then
-			gl.Color(1, 0.7, 0.2, 0.95)
+	for _, f in ipairs({ p.fire, p.fire2 }) do -- (FIRE; floating sideways, one beside each stick)
+		local fw, fh = f[3] - f[1], f[4] - f[2]
+		local e = max(2, floor(L.pad * 0.35))
+		if autoOn then -- full auto: FIRE turns gold-orange, stripes run across it, its edge pulses; AUTO on it
+			button(f, { 0.55, 0.2, 0.02, 1 }, { 0.95, 0.48, 0.07, 1 })
+			local step = fh * 0.6
+			local shift = (t * fh * 1.4) % step
+			gl.Scissor(f[1], f[2], fw, fh)
+			gl.Color(1, 0.9, 0.4, 0.18)
+			for sx = f[1] - fh - step + shift, f[3], step do
+				gl.BeginEnd(GL.QUADS, function()
+					gl.Vertex(sx, f[2])
+					gl.Vertex(sx + step * 0.45, f[2])
+					gl.Vertex(sx + step * 0.45 + fh, f[4])
+					gl.Vertex(sx + fh, f[4])
+				end)
+			end
+			gl.Scissor(false)
+			local pulse = 0.5 + 0.5 * math.sin(t * 6)
+			gl.Color(1, 0.85, 0.35, 0.45 + 0.45 * pulse)
+			gl.Rect(f[1], f[2], f[3], f[2] + e)
+			gl.Rect(f[1], f[4] - e, f[3], f[4])
+			gl.Rect(f[1], f[2], f[1] + e, f[4])
+			gl.Rect(f[3] - e, f[2], f[3], f[4])
+			if autoFor < 0.3 then -- (as it engages the gold fills the button from the left, the red going out at the right)
+				local w = (1 - autoFor / 0.3) ^ 2
+				gl.Color(0.86, 0.14, 0.11, 0.95)
+				gl.Rect(f[3] - fw * w, f[2], f[3], f[4])
+			end
+			if autoFor < 0.6 then -- (and a flash, and the edge thrown out around the button)
+				local a, grow = 1 - autoFor / 0.6, autoFor / 0.6 * fh * 0.6
+				gl.Color(1, 0.92, 0.6, 0.55 * a)
+				gl.Rect(f[1], f[2], f[3], f[4])
+				gl.Color(1, 0.8, 0.3, 0.8 * a)
+				gl.Rect(f[1] - grow, f[2] - grow, f[3] + grow, f[2] - grow + e)
+				gl.Rect(f[1] - grow, f[4] + grow - e, f[3] + grow, f[4] + grow)
+				gl.Rect(f[1] - grow, f[2] - grow, f[1] - grow + e, f[4] + grow)
+				gl.Rect(f[3] + grow - e, f[2] - grow, f[3] + grow, f[4] + grow)
+			end
+			gl.Color(1, 1, 1, 1)
 		else
-			gl.Color(1, 1, 1, 0.9)
+			button(f, { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 })
+			local off = DG.autoOffAt and t - DG.autoOffAt
+			if off and off < 0.4 then -- (full auto ended: the gold drains to the left, a white flash going with it)
+				local w = (1 - off / 0.4) ^ 2
+				gl.Color(0.95, 0.48, 0.07, 0.95)
+				gl.Rect(f[1], f[2], f[1] + fw * w, f[4])
+				gl.Color(1, 1, 1, 0.5 * w)
+				gl.Rect(f[1], f[2], f[3], f[4])
+				gl.Color(1, 1, 1, 1)
+			end
 		end
-		gl.Rect(x0, f[2] + e * 2, x0 + (x1 - x0) * part, f[2] + e * 2 + bh)
-		gl.Color(1, 1, 1, 1)
-	end
-	textIn(autoOn and "AUTO" or "FIRE", f[1], f[2], f[3], f[4], fh * 0.42,
-		lacking and "\255\200\160\150" or "\255\255\255\255", bold)
+		if part < 1 then
+			local bh = max(3, floor(fh * 0.07))
+			local x0, x1 = f[1] + e * 2, f[3] - e * 2
+			gl.Color(0, 0, 0, 0.45)
+			gl.Rect(x0, f[2] + e * 2, x1, f[2] + e * 2 + bh)
+			if lacking then
+				gl.Color(1, 0.7, 0.2, 0.95)
+			else
+				gl.Color(1, 1, 1, 0.9)
+			end
+			gl.Rect(x0, f[2] + e * 2, x0 + (x1 - x0) * part, f[2] + e * 2 + bh)
+			gl.Color(1, 1, 1, 1)
+		end
+		textIn(autoOn and "AUTO" or "FIRE", f[1], f[2], f[3], f[4], fh * 0.42,
+			lacking and "\255\200\160\150" or "\255\255\255\255", bold)
+	end -- (each FIRE)
 	-- FIRE held: its swipe's track (DG.track). Let go past 0.92 the track stays full and fades; short of it it runs back
 	local held = DG.slide
 	local fade = not held and DG.slideOff and t - DG.slideOff < 0.3 and 1 - (t - DG.slideOff) / 0.3
@@ -3591,7 +3623,10 @@ local function drawDgun()
 		local s = held or DG.slideLast or 0
 		local locked = DG.slideLocked
 		local v = locked and 1 or abs(s) * (held and 1 or fade)
-		DG.track(f, p.cancel, DG.slideDir or (s < 0 and -1 or 1), v, held and 1 or fade, locked, t)
+		local dir = DG.slideDir or (s < 0 and -1 or 1)
+		-- (floating: the left FIRE's swipe goes right, the right one's left, both towards the middle)
+		DG.track(p.fire2 and dir < 0 and p.fire2 or p.fire, p.cancel, dir, v, held and 1 or fade, locked, t, p.float,
+			DG.slideToAuto)
 	end
 	button(p.cancel)
 	textIn("\226\156\149", p.cancel[1], p.cancel[2], p.cancel[3], p.cancel[4], (p.cancel[4] - p.cancel[2]) * 0.5,
@@ -3784,6 +3819,10 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		gl.Color(1, 1, 1, 1)
 		textIn("\226\150\178  SHOW", d[1], d[2], d[3], d[4], (d[4] - d[2]) * 0.42, "\255\240\240\240", bold)
 		resetGL()
+		return
+	end
+	if L.dgFloat and rightKind == "dgun" then -- (the D-gun mode sideways: its controls on the game, no band, layout)
+		drawDgun()
 		return
 	end
 	local R = gl.R2tHelper

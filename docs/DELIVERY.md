@@ -966,6 +966,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       `propName = value` throughout, the git calls through `providers.exec` with the root as their folder: the version
       line still `from BAR Droid <commit>`); `--warning-mode all` now names only AGP's own setVisible. Dev phone: built,
       installed, pace-test ALL PASS.
+- [x] **The D-gun mode sideways floats over the game** (Kailil, 2026-11-13, his screenshot of the band: "Don't do the
+      half screen ui for the dgun mode. Instead do floating buttons with fire on both sides and remove the map. So there
+      will be no Grey ui bottom half when in dgun mode on landscape"): no band, no minimap (BAR's minimap given a
+      pixel's frame in the corner, L.dgFloat); MOVE and AIM low in the bottom corners, a FIRE on each stick's inner side
+      (the dock file's "fire" and "fire2"), X at the band's top left. Each FIRE's swipe runs towards the screen's middle
+      and turns full auto on, or off while it is on (RtsTouch: dgunTurnOff; the track from the FIRE held, its word
+      AUTO or FIRE). The band's place stays the mode's for the fingers (elsewhere in it: zoom or turn). Upright
+      unchanged. Dev phone sideways: no band or map, the left FIRE's swipe to the middle turned full auto on (both
+      FIREs AUTO, AIM: AUTO), the right one's turned it off; dock-phone-test (upright, FIRE's swipes too) ALL PASS.
+      Installed on the Fold7 (04:07). With the band gone BAR's own HUD at the bottom right (the player list, its
+      clock and music lines, Idle Builders, Unit Groups) shows under AIM: user widgets cannot switch BAR's widgets
+      off, and BAR's widget handler's HideInterface takes every click while it hides, where the D-gun mode fires and
+      moves by the app's clicks in games that forbid widgets' orders; Kailil, the same night: "Nevermind to the
+      hide". Left as it is.
 - [x] **A preset's repeat outlived it** (found 2026-11-13 reviewing bardroid_presets.lua): once a group is there, its
       side to side is two fights on Repeat; the Repeat stayed on after the player's next order, so a path drawn or a
       patrol given those units later ran round and round (BAR does that only with Repeat set by hand). Now the
