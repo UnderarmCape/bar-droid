@@ -175,6 +175,13 @@ function droid.place()
 	if defID ~= droid.defID then
 		droid.defID, droid.spot = defID, nil -- (another building: the spot was for the last one)
 	end
+	if droid.spotNext and defID == droid.spotNext.defID then -- (picked again after a GRID's ONE: where it began)
+		droid.spot, droid.spotNext = droid.spotNext.pos, nil
+		droid.warpNow = true -- (the pointer was at the GRID's far corner: BAR's blueprint there, a second building)
+	end
+	if defID and droid.stash and droid.stash.defID ~= defID then -- (another building: the kept GRID was the last one's)
+		droid.stash = nil
+	end
 	if armed ~= droid.armed then
 		droid.armed = armed
 		if not armed then
@@ -206,6 +213,24 @@ function droid.place()
 	end)
 	if one and one[3] > 0 then
 		text = text .. string.format("one %d %d %d %d\n", one[1], vsy - one[4], one[3], vsy - one[2])
+	end
+	-- (the dock's LINE and GRID: tapped while a GRID is held they switch it, RtsTouch's gridTap; with a GRID kept by
+	-- ONE, "stash" its two corners on the screen now, they hold it again from them)
+	for _, s in ipairs({ { "line", "line" }, { "gridb", "grid" } }) do
+		local c = armed and P and P.itemCell and P.itemCell("right", function(it)
+			return it.kind == "shape" and it.shape == s[2]
+		end)
+		if c and c[3] > 0 then
+			text = text .. string.format("%s %d %d %d %d\n", s[1], c[1], vsy - c[4], c[3], vsy - c[2])
+		end
+	end
+	local st = armed and not droid.gridHeld and droid.stash
+	if st then
+		local ax, ay, az = Spring.WorldToScreenCoords(st.from[1], st.from[2], st.from[3])
+		local bx, by, bz = Spring.WorldToScreenCoords(st.to[1], st.to[2], st.to[3])
+		if az <= 1 and bz <= 1 then
+			text = text .. string.format("stash %d %d %d %d\n", ax, vsy - ay - 1, bx, vsy - by - 1)
+		end
 	end
 	local sx, sy, sr = droid.spotOnScreen()
 	if sx then
@@ -248,6 +273,9 @@ function droid.pickAgain()
 		local index = Spring.GetCmdDescIndex(-again.defID)
 		if index then
 			Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+			if again.spot then -- (a GRID's ONE: the building waits where the GRID began, droid.place)
+				droid.spotNext = { defID = again.defID, pos = again.spot }
+			end
 		end
 	elseif id ~= -again.defID or again.frames <= 0 then
 		droid.again = nil -- (another order picked, or Shift never came up)
@@ -256,6 +284,9 @@ end
 
 function droid.setSpot(x, y, placed)
 	droid.spot, droid.nudgeCarry = nil, { 0, 0 }
+	if placed then -- (placed: a GRID kept by ONE is done with)
+		droid.stash = nil
+	end
 	if placed and droid.defID then -- (RtsTouch sent the building off: "spot placed")
 		droid.again = { defID = droid.defID, frames = 30 } -- (frames, not seconds: a slow frame must not lose it)
 	end
@@ -297,17 +328,34 @@ function droid.nudge(dx, dy)
 	droid.place()
 end
 
--- BAR Droid: the app's GRID, BAR's own build drag with its left button held until PLACE (RtsTouch): "held" or "free"
-function droid.setGrid(kind)
+-- BAR Droid: a point of the ground under X screen pixels (top left origin); nil: none there
+function droid.groundAt(x, y)
+	local _, pos = Spring.TraceScreenRay(x, vsy - y - 1, true)
+	return pos and { pos[1], pos[2], pos[3] } or nil
+end
+
+-- BAR Droid: the app's GRID, BAR's own build drag with its left button held until PLACE (RtsTouch): "held", "free",
+-- "shape grid|line" (GRID or LINE tapped while one is held: RtsTouch switched BAR's keys, the drag a grid or a line),
+-- "one x0 y0 x1 y1" (ONE tapped while held: RtsTouch puts the building away and lets go, "free" then; the drag's two
+-- corners kept, the building waiting on ONE at its start; GRID or LINE then holds the drag again from the same
+-- corners: Kailil, 2026-11-12, "If I press one, the grid disappears or clears and the one will be awaiting me to
+-- place where the grid initiated. If I press grid again or line, it shoukd restore the grid")
+function droid.setGrid(args)
+	local kind, rest = tostring(args):match("^(%S+)%s*(.*)$")
 	if kind == "held" then
-		droid.gridHeld, droid.gridShown = true, Spring.GetTimer()
-	elseif kind == "one" then -- (ONE tapped while held: RtsTouch puts the building away and lets go, "free" then)
+		droid.gridHeld, droid.gridShown, droid.stash = true, Spring.GetTimer(), nil
+	elseif kind == "shape" then
+		droid.heldShape = rest ~= "" and rest or nil
+	elseif kind == "one" then
 		droid.oneAgain = droid.defID
+		local x0, y0, x1, y1 = rest:match("^(%S+) (%S+) (%S+) (%S+)")
+		local from = x0 and droid.groundAt(tonumber(x0), tonumber(y0))
+		local to = x1 and droid.groundAt(tonumber(x1), tonumber(y1))
+		droid.stash = from and to and { from = from, to = to, defID = droid.defID } or nil
 	elseif kind == "free" then
-		droid.gridHeld = nil
-		if droid.oneAgain then -- (the building again, on ONE, a few frames on: Kailil, 2026-11-12, "I should be able to
-			-- cancel the grid by pressing one")
-			droid.again = { defID = droid.oneAgain, frames = 40, wait = 6 }
+		droid.gridHeld, droid.heldShape = nil, nil
+		if droid.oneAgain then -- (the building again, on ONE, a few frames on, waiting where the GRID began)
+			droid.again = { defID = droid.oneAgain, frames = 40, wait = 6, spot = droid.stash and droid.stash.from }
 			droid.oneAgain = nil
 		end
 	end
@@ -331,7 +379,8 @@ function droid.keepPointer(sx, sy)
 	local P = WG.BarDroidPortrait
 	local d = P and P.dock and P.dock()
 	local onDock = d and mx >= d[1] and mx <= d[3] and my >= d[2] and my <= d[4]
-	if cameraMoved or onDock then
+	if cameraMoved or onDock or droid.warpNow then
+		droid.warpNow = nil
 		Spring.WarpMouse(sx, sy)
 	end
 end
@@ -538,7 +587,7 @@ function droid.pressPanel(x, y)
 	if inside(p.rotate) then
 		Spring.SendCommands("buildfacing inc")
 	elseif inside(p.cancel) then
-		droid.spot, droid.again = nil, nil
+		droid.spot, droid.again, droid.stash = nil, nil, nil
 		-- (before the game: BAR's pregame queue's setPreGamestartDefID; its old name setPreGameDefID, which this called,
 		-- is gone, and cancel did nothing there)
 		local pb = spGetGameFrame() == 0 and WG["pregame-build"]
@@ -941,7 +990,7 @@ function widget:DrawWorld()
 		-- (a GRID held from a long press: GRID, its button lit; Kailil, 2026-11-12, ONE stayed lit over the grid)
 		-- (the fourth: the building about to be picked again, after PLACE or ONE: placing goes on; the fifth: a GRID held
 		-- from a long press, which PLACE builds)
-		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects, droid.again ~= nil,
+		return droid.armed, droid.gridHeld and (droid.heldShape or "grid") or droid.shape, droid.shapeRects, droid.again ~= nil,
 			droid.gridHeld and true or false
 	end
 	WG.buildmenu.droidPress = droid.press

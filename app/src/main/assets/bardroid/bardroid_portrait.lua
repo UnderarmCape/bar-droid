@@ -577,6 +577,11 @@ local function writeDock(force)
 			-- tap, which acts at once, went to the queue's end)
 			.. (showSel and not SP.hidden and leftKind ~= "spec" and L.sel and L.sel[3] > L.sel[1]
 				and ("live " .. r(L.sel) .. "\n") or "")
+			-- (and the home grid, nothing picked: Kailil, 2026-11-12, "make rhe commander button. All units and local
+			-- units buttins not need the ui one tap engage. Allow me to be able to directly click them"; sideways while
+			-- HOME's panel is open)
+			.. (rightKind == "home" and leftKind ~= "spec" and not SP.hidden and (not L.thumb or L.homeOpen)
+				and ("live " .. r(SP.homeLive()) .. "\n") or "")
 			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
@@ -2134,6 +2139,9 @@ end
 -- 2026-11-09: "much larger buttons ... Only buttons should be there")
 local function homeRect() -- (sideways: the right half's place, the minimap between the halves)
 	return L.land and L.right or { L.left[1], L.left[2], L.right[3], L.right[4] }
+end
+function SP.homeLive() -- (writeDock's "live" home grid: it comes before homeRect)
+	return homeRect()
 end
 
 -- a half's geometry: its rect, scroll, items, columns, cell width and height

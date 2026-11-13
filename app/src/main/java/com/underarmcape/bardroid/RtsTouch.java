@@ -195,6 +195,7 @@ final class RtsTouch {
     private float ptrX, ptrY;                       // X screen pixels: the pointer, moved with a dragged building
     private boolean gridHeld;                       // a GRID: the left button down with Shift+Alt until PLACE
     private float gridX, gridY;                     // ... and the pointer, its far corner (X screen pixels)
+    private float gridStartX, gridStartY;           // ... and its first corner, where the button went down
     private volatile boolean queueWanted;           // QUEUE is on (bardroid_pad.txt)
     private boolean queueHeld;                      // Shift held down for it (UI thread)
     private volatile boolean insertWanted;          // the dock's INSERT is on (bardroid_pad.txt "insert 1")
@@ -210,6 +211,22 @@ final class RtsTouch {
     // (HOVER_SCROLL: one of BAR's windows is open, whose lists and text scroll with the mouse wheel only)
     private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1, HOVER_SCROLL = 2;
 
+    private static final long GRID_ON_BUILDING_MS = 1000;   // a finger still on the waiting building: a GRID this late
+    /** A finger still on the waiting building for GRID_ON_BUILDING_MS: a GRID from it (longPress waits for this). */
+    private final Runnable gridOnBuilding = () -> {
+        if (state != State.PENDING || gridHeld || !placingOne) return;
+        moveX = curX; moveY = curY;
+        startGrid();
+    };
+
+    /** Whether view point (x, y) is on the waiting building (its spot and size in the place file). */
+    private boolean onWaitingBuilding(float vx, float vy) {
+        Place p = waitingAtDown ? place() : null;
+        if (p == null || p.spot == null) return false;
+        float r = Math.max(p.spotR, slop * xPerViewPixel()) * 1.3f;
+        return Math.hypot(toX(vx) - p.spot[0], toY(vy) - p.spot[1]) <= r;
+    }
+
     private final Runnable longPress = () -> {
         if (state != State.PENDING || gridHeld) return;
         if (onPing(downX, downY)) {   // PING held: what is said next labels the ping the map's next tap drops (Kailil,
@@ -222,6 +239,12 @@ final class RtsTouch {
             return;
         }
         if (placingOne && hoverAt(downX, downY) == HOVER_MAP) {   // (BAR: a right click would put the building away)
+            // (a finger settled on the waiting building is how fine placing starts: a GRID there only after a full
+            // GRID_ON_BUILDING_MS still; Kailil, 2026-11-12: "never ever initiate a grid command if im fine tuning")
+            if (onWaitingBuilding(downX, downY)) {
+                ui.postDelayed(gridOnBuilding, GRID_ON_BUILDING_MS - LONG_PRESS_MS);
+                return;
+            }
             moveX = curX; moveY = curY;
             startGrid();
             return;
@@ -319,7 +342,7 @@ final class RtsTouch {
     void close() {
         ui.removeCallbacksAndMessages(null);   // (also a tap still waiting for the game's answer: tapBuilding)
         ui.removeCallbacks(fling);
-        ui.removeCallbacks(longPress);
+        ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
@@ -595,7 +618,7 @@ final class RtsTouch {
                     padTapCount = 0;
                     beginTwoFinger(e, State.TWO_FINGER);
                 } else if (state == State.PENDING) {
-                    ui.removeCallbacks(longPress);
+                    ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
                     state = State.MULTI_PENDING;
                     joinedPan = false;
                     ui.postDelayed(twoHold, TWO_HOLD_MS);
@@ -644,7 +667,7 @@ final class RtsTouch {
         switch (state) {
             case PENDING: {
                 if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop) return;
-                ui.removeCallbacks(longPress);
+                ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
                 // speak to chat listening: a sideways swipe picks the chat's channel, the map stays (Kailil, 2026-11-06)
                 if (voiceListening != null && voiceListening.getAsBoolean() && !gridHeld
                         && Math.abs(curX - downX) > 1.5f * Math.abs(curY - downY)) {
@@ -705,8 +728,8 @@ final class RtsTouch {
             case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight)
                 if (i >= 0) moveCursor(curX, dockSelecting ? aboveDock(curY) : curY);
                 return;
-            case RIGHT_HOLD:
-                if (i >= 0) moveCursor(curX, aboveDock(curY));
+            case RIGHT_HOLD:   // (begun on the dock: the pointer stays with the finger, rightHoldY)
+                if (i >= 0) moveCursor(curX, rightHoldY(curY));
                 return;
             case PLACE_DRAG:
             case NUDGE:
@@ -778,7 +801,7 @@ final class RtsTouch {
     }
 
     private void onLastUp(MotionEvent e) {
-        ui.removeCallbacks(longPress);
+        ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
@@ -833,7 +856,7 @@ final class RtsTouch {
                 break;
             }
             case RIGHT_HOLD:
-                press(curX, aboveDock(curY), InputStub.BUTTON_RIGHT, false);
+                press(curX, rightHoldY(curY), InputStub.BUTTON_RIGHT, false);
                 break;
             case VOICE_SWIPE:
                 if (Math.abs(curX - downX) >= 3 * slop) act(curX > downX ? "voice_channel_next" : "voice_channel_prev");
@@ -872,7 +895,7 @@ final class RtsTouch {
     }
 
     private void cancelGesture() {
-        ui.removeCallbacks(longPress);
+        ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
@@ -1190,6 +1213,7 @@ final class RtsTouch {
         boolean dragged = state == State.PLACE_DRAG || state == State.NUDGE;
         gridX = dragged ? ptrX : atFinger || p == null || p.spot == null ? toX(curX) : p.spot[0];
         gridY = dragged ? ptrY : atFinger || p == null || p.spot == null ? toY(curY) : p.spot[1];
+        gridStartX = gridX; gridStartY = gridY;
         send("grid held");
         send("spot none");
         spotSentAt = -1;
@@ -1226,8 +1250,40 @@ final class RtsTouch {
      * cancel the grid by pressing one").
      */
     private void gridToOne() {
-        send("grid one");
+        // (its two corners kept: the building waits on ONE where it began, and GRID or LINE holds it again, restoreGrid)
+        send(String.format(Locale.US, "grid one %.0f %.0f %.0f %.0f", gridStartX, gridStartY, gridX, gridY));
         gridCancel();
+    }
+
+    /**
+     * GRID or LINE tapped while a GRID is held: BAR's keys for that shape (Shift+Alt a filled rectangle, Shift alone a
+     * line), the drag changes shape where it is; the game's shape strip lights it ("grid shape").
+     */
+    private void gridShape(String shape) {
+        if ("line".equals(shape)) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
+        send("grid shape " + shape);
+    }
+
+    /**
+     * GRID or LINE tapped with a GRID kept by ONE (the place file's "stash"): BAR's build drag held again from its first
+     * corner to its far one, as that shape (Kailil, 2026-11-12: "If I press grid again or line, it shoukd restore the
+     * grid").
+     */
+    private void restoreGrid(float[] stash, String shape) {
+        runPlaceTap();
+        gridStartX = stash[0]; gridStartY = stash[1];
+        gridX = stash[2]; gridY = stash[3];
+        send("grid held");
+        send("spot none");
+        spotSentAt = -1;
+        gridShape(shape);
+        LorieView v = view();
+        v.sendMouseEvent(gridStartX, gridStartY, InputStub.BUTTON_UNDEFINED, false, false);
+        v.sendMouseEvent(gridStartX, gridStartY, InputStub.BUTTON_LEFT, true, false);
+        v.sendMouseEvent(gridX, gridY, InputStub.BUTTON_UNDEFINED, false, false);
+        gridHeld = true;
+        v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
     }
 
     /** Lets go of everything (the building went, the app closes). */
@@ -1246,6 +1302,8 @@ final class RtsTouch {
         // (the two buttons first: upright PLACE is the whole panel around them)
         if (p != null && inside(p.cancel, x, y)) gridCancel();
         else if (p != null && inside(p.one, x, y)) gridToOne();
+        else if (p != null && inside(p.gridBtn, x, y)) gridShape("grid");
+        else if (p != null && inside(p.line, x, y)) gridShape("line");
         else if (p != null && inside(p.rotate, x, y)) send("act rotate_right");
         else if (p != null && inside(p.done, x, y)) gridPlace();
         else if (nearPlaceTap(vx, vy, downTime)) { placeTapX = -1; placeTapAt = -1; gridPlace(); }
@@ -1354,6 +1412,8 @@ final class RtsTouch {
         String shape;      // one, line, grid or border
         float[] done, rotate, cancel;   // its PLACE, rotate and cancel buttons: x0 y0 x1 y1, X screen pixels
         float[] one;       // the dock's ONE (a GRID held: back to ONE, gridToOne)
+        float[] line, gridBtn;   // the dock's LINE and GRID (a GRID held: switched, gridShape; one kept: back, restoreGrid)
+        float[] stash;     // a GRID kept by ONE: its first and far corner on the screen now (x0 y0 x1 y1)
         float[] spot;      // where the spot a tap picked is on the screen now; null: none (or off the screen)
         float spotR;       // the building's size there (X screen pixels from its middle)
     }
@@ -1375,11 +1435,14 @@ final class RtsTouch {
                     p = new Place();
                     p.shape = f[1];
                 } else if (p != null && f.length == 5 && (f[0].equals("done") || f[0].equals("rotate") || f[0].equals("cancel")
-                        || f[0].equals("one"))) {
+                        || f[0].equals("one") || f[0].equals("line") || f[0].equals("gridb") || f[0].equals("stash"))) {
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("done")) p.done = r;
                     else if (f[0].equals("rotate")) p.rotate = r;
                     else if (f[0].equals("one")) p.one = r;
+                    else if (f[0].equals("line")) p.line = r;
+                    else if (f[0].equals("gridb")) p.gridBtn = r;
+                    else if (f[0].equals("stash")) p.stash = r;
                     else p.cancel = r;
                 } else if (p != null && f[0].equals("spot") && (f.length == 3 || f.length == 4)) {
                     p.spot = new float[]{Float.parseFloat(f[1]), Float.parseFloat(f[2])};
@@ -1623,6 +1686,10 @@ final class RtsTouch {
         if (inDock) view().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
         if (gridHeld) { gridTap(vx, vy); return; }
         Place place = place();
+        if (place != null && place.stash != null) {   // (a GRID kept by ONE: GRID or LINE holds it again)
+            String s = inside(place.gridBtn, toX(vx), toY(vy)) ? "grid" : inside(place.line, toX(vx), toY(vy)) ? "line" : null;
+            if (s != null) { restoreGrid(place.stash, s); return; }
+        }
         if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
         runPlaceTap();
         clickWhenSeen(vx, vy, HOVER_ASKS);
@@ -2087,6 +2154,17 @@ final class RtsTouch {
         Dock d = dock();
         if (d == null || d.all == null || toY(py) < d.all[1]) return py;
         return fromY(d.all[1] - 1);
+    }
+
+    /**
+     * Where a long press's held right button is, the finger at view y: a hold that began on the dock stays with the
+     * finger. Held at the dock's top edge (as a drag from the map onto the dock is) its release moved the pointer
+     * there, and the dock read that as a drag on its empty space, which pans: every hold on the dock jumped the camera
+     * south (Kailil, 2026-11-12: "when i press and hold any button or anywhere on the bottom ui. It jumps the camera south
+     * or down a few meters consistently"; dev phone: 500 to 1300 elmos a hold on the groups row).
+     */
+    private float rightHoldY(float py) {
+        return inDock ? py : aboveDock(py);
     }
 
     private float xPerViewPixel() {
