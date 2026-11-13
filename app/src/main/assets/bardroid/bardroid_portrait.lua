@@ -2084,7 +2084,14 @@ local function pressItem(item, long)
 		if #list > 0 then
 			cycleAt[k] = (cycleAt[k] or 0) % #list + 1
 			local u = list[cycleAt[k]]
-			selectUnits({ u })
+			if k == "factories" then -- (picked once FACTORIES rests 0.75 s, Update: picked at once the dock went to the
+				-- factory's screen and the next press had no FACTORIES; Kailil, 2026-11-13: "The factories button should let
+				-- me cycle through factories. Only after I dont press the factories button after .75 seconds does the bottom
+				-- ui switch to show the selected factory screen")
+				L.factoryPick = { unit = u, at = now() + 0.75 }
+			else
+				selectUnits({ u })
+			end
 			local x, y, z = Spring.GetUnitPosition(u)
 			if x then
 				-- (30 % further out than the comfortable distance: Kailil, 2026-11-11, "Commander button is too zoomed in.
@@ -2568,13 +2575,25 @@ local function drawButton(item, r, cap)
 		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
 		gl.Color(1, 1, 1, 1)
 	end
-	if item.states and item.states > 1 then -- a state: its light along the bottom, as BAR's
-		local st = min(3, (item.state or 0) + 1)
-		local c = STATE_COLORS[(item.states == 2 and st == 2) and 3 or st]
-		local w = (r[3] - r[1]) * 0.28
-		local y = r[2] + max(3, (r[4] - r[2]) * 0.1)
-		gl.Color(c)
-		gl.Rect(r[3] - w - 6, y, r[3] - 6, y + max(2, (r[4] - r[2]) * 0.06))
+	if item.states and item.states > 1 then -- a state: one light per state along the bottom, as BAR's order menu
+		-- (Kailil, 2026-11-13: "In vanilla, red is always on the left. Then green on the right. And yellow in the middle
+		-- ... As of now. The lights are staying all to the right side"): the state it is in lit, the first red, the
+		-- second yellow (green when there are two), the rest green; the others dark
+		local n = item.states
+		local cur = min(n, (item.state or 0) + 1)
+		local bw, bh = r[3] - r[1], r[4] - r[2]
+		local m, g = max(6, floor(bw * 0.06)), max(2, floor(bw * 0.025))
+		local sw = (bw - 2 * m - (n - 1) * g) / n
+		local y, h = r[2] + max(3, bh * 0.1), max(2, bh * 0.06)
+		for i = 1, n do
+			if i == cur then
+				gl.Color(STATE_COLORS[i == 1 and 1 or (i == 2 and n > 2) and 2 or 3])
+			else
+				gl.Color(0, 0, 0, 0.4)
+			end
+			local x = r[1] + m + (i - 1) * (sw + g)
+			gl.Rect(x, y, x + sw, y + h)
+		end
 		gl.Color(1, 1, 1, 1)
 	end
 	if lit then
@@ -3383,6 +3402,13 @@ function widget:Update(dt)
 		end
 	end
 	pingT.update() -- (CHAT's flips, a spoken ping's end)
+	local fp = L.factoryPick -- (FACTORIES at rest: the factory it came to picked; something picked meanwhile: dropped)
+	if fp and (now() >= fp.at or Spring.GetSelectedUnitsCount() > 0) then
+		L.factoryPick = nil
+		if Spring.GetSelectedUnitsCount() == 0 and Spring.ValidUnitID(fp.unit) and not Spring.GetUnitIsDead(fp.unit) then
+			selectUnits({ fp.unit })
+		end
+	end
 	if rightKind == "dgun" then
 		DG.follow(dt)
 	else
