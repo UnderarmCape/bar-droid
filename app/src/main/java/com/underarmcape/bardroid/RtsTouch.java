@@ -110,10 +110,11 @@ final class RtsTouch {
     // meanwhile picks one, "docktap x y").
     // (circle: the dock's selection style is CIRCLE, the pad's area selection by finger: "dockcircle x y r" lines from
     // where the finger came down out to it, the widget picks the units in it; else BAR's box)
-    // (draw: units that move are picked, or Move, Fight, Patrol or Attack is armed: a drag on the game draws their path
-    // or line, BAR's own right drag (cmd_customformations2: a path for one unit, a formation line for more), at once
-    // and in either mode; Kailil, 2026-11-09: paths drawn "by dragging my finger in the top half". A tap then a drag
-    // still selects; the camera is the dock's.)
+    // (draw: Move, Fight, Patrol or Attack is armed, or a preset: a drag on the game draws their path or line, BAR's own
+    // right drag (cmd_customformations2: a path for one unit, a formation line for more), at once and in either mode;
+    // Kailil, 2026-11-09: paths drawn "by dragging my finger in the top half". With units merely picked a drag pans
+    // and a press held, then a drag, is the path (longPress: the right button down; Kailil, 2026-11-13, "Pan, hold for
+    // paths"). A tap then a drag still selects.)
     // (dgun: the pad's D-gun mode on the dock, Kailil 2026-11-09: "the controller mod dgun method where a two joy sticks
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {

@@ -179,8 +179,14 @@ try {
   # (once the Pawns stand on the line: their side to side on repeat)
   if (-not (WaitLog '\[bardroid-presets\] STRAFE: [0-9]+ units there' 75)) { "[docktest] (the Pawns were not there in 75 s)" }
   Stage "sway?"; Start-Sleep 1
-  # 6. the Pawns' path drawn from the map on into the dock: held at the dock's top edge, every goal in sight
+  # 6. the Pawns picked: one finger dragged on the game pans, no path (Kailil, 2026-11-13: "Pan, hold for paths"); then
+  # their path by a press held, then a drag, from the map on into the dock: held at the dock's top edge, every goal in sight
+  Stage "campos"; Start-Sleep -Milliseconds 300
   Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
+  Touch MOVE ($a1[0] + 60) ($a1[1] + 40); Touch MOVE ($a1[0] + 160) ($a1[1] + 100)
+  Start-Sleep -Milliseconds 200; Touch UP ($a1[0] + 160) ($a1[1] + 100); Start-Sleep -Milliseconds 800
+  Stage "pickpanned?"; Start-Sleep 1
+  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1

@@ -989,6 +989,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       lights go) now runs out over the 0.75 s; screenshot: the bar part run out, then the Bot Lab picked;
       dock-phone-test ALL PASS. (A tap that lands just after the pause hits the factory screen's INSERT, as the dock
       has changed under it: the bar shows when that is about to happen.)
+- [x] **One finger pans with units picked too; hold, then drag for their path** (Kailil, 2026-11-13, asked whether a
+      drag with units picked should pan, paths by press-and-hold then drag: "Pan, hold for paths"). The dock's `draw`
+      line is now on only with MOVE, FIGHT, PATROL or ATTACK pressed, or a preset armed (its aim takes the press); with
+      units merely picked a drag pans, and RtsTouch's long press (450 ms, BAR's right button down) then a drag is BAR's
+      own path or formation line. 2026-11-11's exception (a picked unit with a building queued pans) is the rule now:
+      `idleB.buildBusy` gone. dock-phone-test: a new check (the six Pawns picked, a drag: the camera 114 elmos on, no
+      moves), its path into the dock now drawn by a hold, then a drag (5 moves, let go at the dock's top edge), the
+      STRAFE preset's drag unchanged: ALL PASS. Sideways on the dev phone with the commander picked: a drag panned, no
+      order; held, then dragged: its path, the waypoints drawn. Launcher texts, README and CHANGELOG updated.
+      Found on the way (dev phone upright): a dock button tapped (BASE), then a sideways drag from it within the double
+      tap time, started BAR's box selection inside the dock, its filters over the grid; the tap-then-drag selection
+      starts from the game only now (77ccdd9; the same again: no `dock_select_start`, the home grid stays).
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

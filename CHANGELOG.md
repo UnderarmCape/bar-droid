@@ -136,8 +136,9 @@ The first version meant for other people's phones: everything since the first bu
   on the game pans with the dock's menu open too; a tap, then a drag selects. The dock's
   menu stays open 2.6 s after the last touch (was 2). Placing a building:
   a drag moves it slowly at first for fine control, ROTATE and X across PLACE's bottom, a GRID only from a still long
-  press (lit while held; ONE ends it), BAR's own blueprint while moving it, a factory's INSERT puts the unit first, and while a picked unit has a
-  building queued a one-finger drag pans instead of drawing a move path. COMMANDER frames a wider view.
+  press (lit while held; ONE ends it), BAR's own blueprint while moving it, a factory's INSERT puts the unit first. A
+  one-finger drag on the game pans with units picked too; hold, then drag draws their path (with MOVE, FIGHT or PATROL
+  pressed a drag still draws it at once). COMMANDER frames a wider view.
 - Spectating upright: the same dock with big buttons (player cameras, TEAMS to watch any team, LAST PINGS, follow a
   unit and its camera views, FREE CAM, GROUP, FULL VIEW) and HIDE, which folds it to a SHOW button. A unit followed
   stays in the middle of the game above the dock (Shoulder turned down onto it and far enough back to show it whole,

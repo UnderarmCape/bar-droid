@@ -10,7 +10,8 @@
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
---   drawdock? their path drawn on into the dock: its end at the dock's edge, their repeat off
+--   pickpanned? (after campos) the Pawns picked, one finger dragged on the game: a pan, no path for them
+--   drawdock? their path drawn (a press held, then a drag) on into the dock: its end at the dock's edge, their repeat off
 --   panned?   (after campos) one finger dragged on the game, the dock's menu open, nothing picked: a pan, no selection
 --   end       "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
@@ -154,6 +155,18 @@ local function onCmd(c)
 		local n = Spring.GetSelectedUnitsCount()
 		check("one finger dragged on the game with the dock's menu open, nothing picked: it pans, nothing selected",
 			moved > 30 and n == 0, string.format("camera moved %.0f, %d picked", moved, n))
+	elseif c == "pickpanned?" then -- (the Pawns picked, one finger dragged on the game: a pan, no path for them; Kailil,
+		-- 2026-11-13: "Pan, hold for paths")
+		local x, _, z = Spring.GetCameraPosition()
+		local moved = camAt and math.sqrt((x - camAt[1]) ^ 2 + (z - camAt[3]) ^ 2) or 0
+		local moves = 0
+		for _, u in ipairs(pawns) do
+			local cmd = (Spring.GetUnitCommands(u, 1) or {})[1]
+			moves = moves + (cmd and cmd.id == CMD.MOVE and 1 or 0)
+		end
+		local n = Spring.GetSelectedUnitsCount()
+		check("units picked, one finger dragged on the game: it pans, no path drawn", moved > 30 and moves == 0 and n > 0,
+			string.format("camera moved %.0f, %d moves, %d picked", moved, moves, n))
 	elseif c == "boxdock?" then -- (a box selection dragged on into the dock: let go at the dock's top edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()

@@ -224,32 +224,6 @@ function idleB.settle(dt)
 	end
 	markDirty()
 end
--- (a picked unit with a building queued: a one-finger drag pans the camera, it draws no move path, until the queue's
--- buildings are done; MOVE, FIGHT or PATROL pressed still draws one. Kailil, 2026-11-11: "It is very easy to place a
--- move path after placing a build order on accident due to the muscle memory of grabbing the screen")
-function idleB.buildBusy()
-	local t = now()
-	if idleB.busyAt and t - idleB.busyAt < 0.3 then
-		return idleB.busy
-	end
-	idleB.busyAt = t
-	local busy = false
-	local sel = spGetSelectedUnits() or {}
-	for i = 1, min(#sel, 60) do
-		for _, c in ipairs(Spring.GetUnitCommands(sel[i], 16) or {}) do
-			if c.id < 0 then -- (a building)
-				busy = true
-				break
-			end
-		end
-		if busy then
-			break
-		end
-	end
-	idleB.busy = busy
-	return busy
-end
-
 -- Spectating upright in the dock (Kailil, 2026-11-11, a spectated online game: "The spectator mode buttons is much too
 -- small. Unify the look and feel between playing and spectating with the bottom half ui experience. Hide the team list
 -- and create a team list inside of our ui experience ... next to ping and last pings ... last pings shoukd be the only
@@ -571,7 +545,13 @@ local function writeDock(force)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
 		local _, cmd = spGetActiveCommand()
-		local draw = DRAW_CMDS[cmd] or (cmd == nil and mobilePicked and not idleB.buildBusy())
+		-- (a one-finger drag draws a path only with MOVE, FIGHT, PATROL or ATTACK pressed, or a preset armed, whose aim
+		-- takes the press; with units merely picked it pans, their path a press held, then a drag: RtsTouch's long press,
+		-- BAR's right button. Kailil, 2026-11-13, asked whether a drag with units picked should pan too: "Pan, hold for
+		-- paths". Before: picked units without a building queued drew a path, 2026-11-11's "very easy to place a move
+		-- path ... on accident due to the muscle memory of grabbing the screen")
+		local Pr = WG.BarDroidPresets
+		local draw = DRAW_CMDS[cmd] or (Pr and Pr.armed and Pr.armed()) or false
 		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
 		local lr = SP.hidden and L.dock
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
