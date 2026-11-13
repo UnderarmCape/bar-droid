@@ -726,10 +726,10 @@ final class RtsTouch {
                 if (i >= 0) scrollTo(curY);
                 return;
             case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight)
-                if (i >= 0) moveCursor(curX, dockSelecting ? aboveDock(curY) : curY);
+                if (i >= 0) moveCursor(curX, dockSelecting ? aboveDock(curX, curY) : curY);
                 return;
             case RIGHT_HOLD:   // (begun on the dock: the pointer stays with the finger, rightHoldY)
-                if (i >= 0) moveCursor(curX, rightHoldY(curY));
+                if (i >= 0) moveCursor(curX, rightHoldY(curX, curY));
                 return;
             case PLACE_DRAG:
             case NUDGE:
@@ -832,7 +832,7 @@ final class RtsTouch {
                 flingIfFast();
                 break;
             case LEFT_DRAG:
-                press(curX, dockSelecting ? aboveDock(curY) : curY, InputStub.BUTTON_LEFT, false);
+                press(curX, dockSelecting ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
                 releaseKeys();
                 endDockSelect();
                 break;
@@ -856,7 +856,7 @@ final class RtsTouch {
                 break;
             }
             case RIGHT_HOLD:
-                press(curX, rightHoldY(curY), InputStub.BUTTON_RIGHT, false);
+                press(curX, rightHoldY(curX, curY), InputStub.BUTTON_RIGHT, false);
                 break;
             case VOICE_SWIPE:
                 if (Math.abs(curX - downX) >= 3 * slop) act(curX > downX ? "voice_channel_next" : "voice_channel_prev");
@@ -1192,7 +1192,7 @@ final class RtsTouch {
         Place p = place();
         boolean fromSpot = waitingAtDown && p != null && p.spot != null;
         ptrX = fromSpot ? p.spot[0] : toX(downX);
-        ptrY = fromSpot ? p.spot[1] : toY(aboveDock(downY));
+        ptrY = fromSpot ? p.spot[1] : toY(aboveDock(downX, downY));
         nudgeTo(curX, curY);
         return true;
     }
@@ -1321,7 +1321,7 @@ final class RtsTouch {
 
     private void sendSpot(float vx, float vy) {
         // (dragged on into the upright dock: held at its top edge, the building in sight; it went behind the dock)
-        send(String.format(Locale.US, "spot %.0f %.0f", toX(vx), toY(aboveDock(vy))));
+        send(String.format(Locale.US, "spot %.0f %.0f", toX(vx), toY(aboveDock(vx, vy))));
         spotSentAt = SystemClock.uptimeMillis();
     }
 
@@ -2153,11 +2153,16 @@ final class RtsTouch {
 
     /**
      * A path drawn on into the upright dock (BAR's right drag): its point held at the dock's top edge, so the path and
-     * its end stay in sight; released over the dock the order went to ground hidden behind it (2026-11-11).
+     * its end stay in sight; released over the dock the order went to ground hidden behind it (2026-11-11). Only over
+     * the dock itself: sideways it holds one side of the bottom, and beside it a finger low on the map had its point
+     * (a path's, a box's corner, a preset's front, a building's spot) moved up to the dock's top, a line drawn level
+     * along the bottom left came out slanting up to it (dev phone, 2026-11-13).
      */
-    private float aboveDock(float py) {
+    private float aboveDock(float px, float py) {
         Dock d = dock();
         if (d == null || d.all == null || toY(py) < d.all[1]) return py;
+        float x = toX(px);
+        if (x < d.all[0] || x > d.all[2]) return py;
         return fromY(d.all[1] - 1);
     }
 
@@ -2168,8 +2173,8 @@ final class RtsTouch {
      * south (Kailil, 2026-11-12: "when i press and hold any button or anywhere on the bottom ui. It jumps the camera south
      * or down a few meters consistently"; dev phone: 500 to 1300 elmos a hold on the groups row).
      */
-    private float rightHoldY(float py) {
-        return inDock ? py : aboveDock(py);
+    private float rightHoldY(float px, float py) {
+        return inDock ? py : aboveDock(px, py);
     }
 
     private float xPerViewPixel() {
