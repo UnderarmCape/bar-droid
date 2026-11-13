@@ -1065,6 +1065,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       The whole sweep on the day's last build (the dock stepping aside, the copies' patches, pan with units picked):
       dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun, -Share,
       -Chat) and pace-test all pass, about 18 minutes.
+- [x] **The layout editor with the dock up** (2026-11-13, dev phone sideways, `/hud` typed): it outlined "Unit info"
+      over the open map at the bottom left, a panel not drawn while the dock shows the selection (bardroid_info.lua's
+      standDown). Its rect is none while it stands down now: the editor shows Chat, Minimap, Player list and the top
+      bar only. Dev phone: the same, no Unit info outline.
 - [ ] **The orders on the first tap too? (asked 2026-11-13)** With the camera pad up the build options, INSERT and
       QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow act on the first tap (Kailil,
       2026-11-12, and the runs after); FIGHT, MOVE, PATROL, D-Gun and the states still take one tap to open the menu,

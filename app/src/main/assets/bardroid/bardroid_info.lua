@@ -1158,7 +1158,14 @@ function widget:Update(dt)
 		editor.register("info", {
 			label = "Unit info",
 			can = { move = true, size = true, text = true, pad = true },
-			rect = function() return rect[1], rect[2], rect[3], rect[4] end,
+			-- (none while the portrait dock shows the selection: the editor outlined a panel not drawn, the bottom left's
+			-- open map, dev phone sideways 2026-11-13)
+			rect = function()
+				if standDown then
+					return nil
+				end
+				return rect[1], rect[2], rect[3], rect[4]
+			end,
 			relayout = function()
 				layout()
 				rebuildAt = 0
