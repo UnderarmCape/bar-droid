@@ -595,7 +595,14 @@ function widget:Initialize()
 			local f = p and THUMBS[p.thumb]
 			if f then
 				local m = math.min(r[3] - r[1], r[4] - r[2]) * 0.08
-				f(r[1] + m, r[2] + m, r[3] - m, r[4] - m)
+				local x0, x1 = r[1] + m, r[3] - m
+				local h = r[4] - r[2] - 2 * m
+				if x1 - x0 > h * 1.6 then -- (a wide tile, sideways: the picture centred at its upright shape; drawn
+					-- across the whole width its dots, sized by the width, overlapped from row to row, dev phone 2026-11-12)
+					local c = (x0 + x1) / 2
+					x0, x1 = c - h * 0.8, c + h * 0.8
+				end
+				f(x0, r[2] + m, x1, r[4] - m)
 				gl.Color(1, 1, 1, 1)
 			end
 		end,
