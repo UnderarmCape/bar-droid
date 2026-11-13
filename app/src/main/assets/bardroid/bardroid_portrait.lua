@@ -540,7 +540,7 @@ local dockWritten, dockWrittenAt = nil, -10
 local dgunLines -- (the D-gun mode's parts for RtsTouch, below)
 local function writeDock(force)
 	local text
-	if active then
+	if active and not L.aside then -- (aside for one of BAR's windows: no dock for RtsTouch, SP.windowOpen)
 		local function r(x)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
@@ -3400,7 +3400,7 @@ function SP.guardTooltips()
 	local inner = T.ShowTooltip
 	SP.tipInner, SP.tipOwner = inner, T
 	SP.tipWrap = function(name, value, x, y, title)
-		if active and not SP.hidden and L.dock then
+		if active and not SP.hidden and not L.aside and L.dock then
 			local mx, my = Spring.GetMouseState()
 			if inRect(mx, my, L.dock) then
 				return
@@ -3474,6 +3474,12 @@ function widget:Update(dt)
 	if t >= refreshAt and not press then
 		refreshAt = t + 0.25
 		refresh()
+	end
+	local aside = SP.windowOpen() -- (one of BAR's big windows open: the dock out of its way until it closes)
+	if aside ~= L.aside then
+		L.aside = aside
+		markDirty()
+		writeDock(true)
 	end
 	writeDock(false)
 end
@@ -3975,7 +3981,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 end
 
 function widget:DrawScreen()
-	if not active then
+	if not active or L.aside then
 		return
 	end
 	if drawCursor then -- (again here: after the engine has picked its own for the frame)
@@ -4014,7 +4020,10 @@ function widget:DrawScreenPost()
 		or L.drawFrame ~= Spring.GetDrawFrame() then
 		return
 	end
-	for _, name in ipairs({ "options", "gameinfo", "keybinds", "changelog", "widgetselector", "missioninfo", "scavengerinfo" }) do
+	if L.aside then
+		return
+	end
+	for _, name in ipairs({ "missioninfo", "scavengerinfo" }) do
 		local w = WG[name]
 		if w and w.isvisible and w.isvisible() then
 			return
@@ -4044,7 +4053,24 @@ function widget:DrawWorld()
 end
 
 function widget:IsAbove(x, y)
-	return active and inRect(x, y, L.dock) and not (L.hole and inRect(x, y, L.hole))
+	return active and not L.aside and inRect(x, y, L.dock) and not (L.hole and inRect(x, y, L.hole))
+end
+
+-- One of BAR's big windows open (Settings, Game info, Keybinds, Changelog, the Widget Selector): centred at their
+-- landscape size they run down over the dock (sideways Settings' Environment rows lay under its bars and tabs, the two
+-- drawn through each other, dev phone 2026-11-13; upright they are wider than the screen as well): the dock steps
+-- aside, not drawn and no rects for RtsTouch ("dock none"), until the window closes; BAR's own panels stay hidden
+function SP.windowOpen()
+	if not active then
+		return false
+	end
+	for _, name in ipairs({ "options", "gameinfo", "keybinds", "changelog", "widgetselector" }) do
+		local w = WG[name]
+		if w and w.isvisible and w.isvisible() then
+			return true
+		end
+	end
+	return false
 end
 
 function widget:GetConfigData()
@@ -4066,6 +4092,9 @@ end
 -- presses come from fingers in menu mode (RtsTouch clicks the dock only then), a mouse, or the pad's pointer
 function widget:MousePress(x, y, btn)
 	pingT.eat = false -- (a ping's release that never came must not eat this press's)
+	if L.aside then -- (stepped aside for one of BAR's windows: SP.windowOpen)
+		return false
+	end
 	local onMap = L.hole and inRect(x, y, L.hole) -- (sideways: BAR's minimap in the dock's middle)
 	if active and btn == 1 and pingT.armed() and (onMap or not inRect(x, y, L.dock)) then -- PINGS' PING: a ping where the map is
 		-- tapped (on the minimap: the place it shows), as BAR's own point marker

@@ -1051,6 +1051,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       make-teamstats.py patch: sideways with the dock up the panel goes between the dock's top and BAR's top bar, a
       size smaller where it needs to be (upright unchanged). Regenerated from the dev phone's BAR file; remake-check:
       all four remakes equal the shipped copies. Dev phone: sideways the panel whole above the dock; upright as before.
+      BAR's Settings sideways did the same (its Environment rows under the dock's bars and tabs), and it is BAR's own
+      file, not a copy. So the dock steps aside while one of BAR's big windows is open (Settings, Game info, Keybinds,
+      Changelog, the Widget Selector: their WG isvisible): not drawn, "dock none" for RtsTouch, no presses, and BAR's
+      own panels kept hidden; back when the window closes (SP.windowOpen). Dev phone sideways: Settings whole, a drag
+      where the dock had been scrolled it; closed, the dock back; dock-phone-test ALL PASS. (BAR's minimap stays in the
+      dock's middle slot meanwhile; the Quit dialog fits above the dock as it is.)
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
