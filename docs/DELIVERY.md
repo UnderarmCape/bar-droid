@@ -983,6 +983,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       INSERT lit together ("queue 1 insert 0 alt 1"), both off after the selection emptied; dock-phone-test's new
       check (a drag with the menu open and nothing picked: the camera 101 elmos on, nothing picked) and its box and circle
       selections now by a tap and a drag: ALL PASS.
+      Later that morning, sideways on the dev phone (two factories given): HOME, FACTORIES three times quickly: BOT LAB
+      (1 OF 2), VEHICLE PLANT (2 OF 2), the Vehicle Plant picked after the pause, its ten vehicles in the dock; no errors
+      in infolog, 29.8 fps. The wait itself was not to be seen: a gold bar along FACTORIES' foot (where a state's
+      lights go) now runs out over the 0.75 s; screenshot: the bar part run out, then the Bot Lab picked;
+      dock-phone-test ALL PASS. (A tap that lands just after the pause hits the factory screen's INSERT, as the dock
+      has changed under it: the bar shows when that is about to happen.)
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

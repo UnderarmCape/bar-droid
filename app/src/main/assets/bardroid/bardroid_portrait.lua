@@ -2088,7 +2088,7 @@ local function pressItem(item, long)
 				-- factory's screen and the next press had no FACTORIES; Kailil, 2026-11-13: "The factories button should let
 				-- me cycle through factories. Only after I dont press the factories button after .75 seconds does the bottom
 				-- ui switch to show the selected factory screen")
-				L.factoryPick = { unit = u, at = now() + 0.75 }
+				L.factoryPick = { unit = u, at = now() + 0.75, wait = 0.75 }
 				-- (which one, by name and place in the list: factories side by side, the camera's move alone did not say)
 				local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
 				local P = WG.BarDroidPad
@@ -2580,6 +2580,17 @@ local function drawButton(item, r, cap)
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
 		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
+		gl.Color(1, 1, 1, 1)
+	end
+	local fp = item.kind == "factories" and L.factoryPick
+	if fp then -- (FACTORIES cycling: a gold bar along its foot, where a state's lights go, runs out over the pause before
+		-- the factory it came to is picked and the dock goes to its screen; the wait was not to be seen)
+		local left = max(0, min(1, (fp.at - now()) / fp.wait))
+		local bw, bh = r[3] - r[1], r[4] - r[2]
+		local m = max(6, floor(bw * 0.06))
+		local y = r[2] + max(3, bh * 0.1)
+		gl.Color(1, 0.78, 0.25, 0.95)
+		gl.Rect(r[1] + m, y, r[1] + m + (bw - 2 * m) * left, y + max(2, bh * 0.06))
 		gl.Color(1, 1, 1, 1)
 	end
 	if item.states and item.states > 1 then -- a state: one light per state along the bottom, as BAR's order menu
@@ -3412,9 +3423,12 @@ function widget:Update(dt)
 	local fp = L.factoryPick -- (FACTORIES at rest: the factory it came to picked; something picked meanwhile: dropped)
 	if fp and (now() >= fp.at or Spring.GetSelectedUnitsCount() > 0) then
 		L.factoryPick = nil
+		markDirty() -- (FACTORIES' bar gone with it)
 		if Spring.GetSelectedUnitsCount() == 0 and Spring.ValidUnitID(fp.unit) and not Spring.GetUnitIsDead(fp.unit) then
 			selectUnits({ fp.unit })
 		end
+	elseif fp then
+		markDirty() -- (FACTORIES' bar running out)
 	end
 	if rightKind == "dgun" then
 		DG.follow(dt)
