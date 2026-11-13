@@ -77,7 +77,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   `bardroid_minimap.lua` (minimap small until tapped: half size unfolded, upright as tall as the top bar's row, the chat
   the full row under it), `bardroid_portrait.lua` (the launcher's "Play upright": the touch dock under the game, its
   camera pad, selection and group rows (the idle builders by type at the groups row's right), orders, the home grid
-  (PINGS: the last pings from others and a ping of your own; FACTORIES), the D-gun mode with its full auto; spectating,
+  (PINGS: the last pings from others and a ping of your own; PING held: its label spoken, VoiceChat; tapped twice:
+  CHAT, speak to chat; FACTORIES), the D-gun mode with its full auto; the dock file's "live" rects (the build options,
+  INSERT and QUEUE, the home grid, the groups row, the sideways tabs) take their first tap in RtsTouch though the dock is
+  the camera pad, and "ping" its hold and double tap; spectating,
   the spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it;
   sideways too with "Touch dock sideways" (for one thumb, `L.thumb`: at the pinned side's edge a panel with BUILD |
   ORDERS tabs, the other tab laid out off the screen, beside it BAR's minimap through the Minimap widget's external
@@ -102,9 +105,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   under half health falls back once; a hurt commander retreats past its death blast's reach, the combat units near it
   fight on its spot and go back once it is out, builders by it repair it first, then it waits on patrol; the dock's
   AUTO RETREAT switches it, LuaUI/Config/bardroid_retreat.txt), `bardroid_presets.lua` (the dock's PRESETS, 2 x 2 over
-  its grid, then a map tap for the destination: STRAFE, and BATTLE LINE, SPREAD and CONCAVE, which form the units up
-  by role where they stand and move them as one with a Ctrl+Shift fight given to them as the selection, the engine's
-  way of keeping a group's shape at its slowest unit's speed), `bardroid_automex.lua` (the commander picked and a
+  its grid, then a map tap for the front's middle or a line drawn on the map for the front, as wide: STRAFE, a line
+  abreast with gaps, each unit straight to its place; BATTLE LINE, SPREAD and CONCAVE, which form the units up by role
+  where they stand, the ranged behind the front by their reach, and move them as one with a Ctrl+Shift fight given to
+  them as the selection, the engine's way of keeping a group's shape at its slowest unit's speed; no repeat on the
+  way, and once the group is there each unit fights side to side across its place on repeat), `bardroid_automex.lua` (the commander picked and a
   metal extractor chosen: the free spots within its weapon range queued at once, through BAR's resource spot API),
   `bardroid_topbar.lua` (upright, BAR's top bar buttons over its hidden resource bars and indicators: the press and
   the tooltips there are the hidden parts' in BAR's Top Bar, so the button's action is done through BAR's WG windows;
