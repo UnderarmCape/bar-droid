@@ -1426,6 +1426,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       or about to be picked again after PLACE or ONE (SP.held, the copy's fourth droidPlace answer). Dev phone upright:
       the wind turbine picked, 4.5 s later the menu still open; spot, PLACE: queued, picked again, the menu open 4 s on;
       X: the orders.
+      Found the same night on the dev phone at 1080x1198 (the Fold7 unfolded upright): there the half has three rows,
+      PLACE under two rows of shapes was one row, and the strip made ROTATE and X ~43 pixels tall (as squares beside
+      PLACE they had been the row's full height). Where the half has three rows (and sideways, as before) ONE, LINE,
+      GRID and BORDER stand in one row and PLACE is two rows tall: ROTATE and X a full button high. PLACE lit while a
+      GRID from a long press waits (the copy's fifth droidPlace answer), as the copy's own panel was; dock-phone-test
+      passes at 2316 and at 1198 lines.
 - [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
       between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
       send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that
