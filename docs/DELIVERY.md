@@ -1001,6 +1001,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Found on the way (dev phone upright): a dock button tapped (BASE), then a sideways drag from it within the double
       tap time, started BAR's box selection inside the dock, its filters over the grid; the tap-then-drag selection
       starts from the game only now (77ccdd9; the same again: no `dock_select_start`, the home grid stays).
+      The next run: touch-phone-test and lobby-phone-test ALL PASS on that build (the dev phone without a network
+      that afternoon: the lobby's manifest and skill downloads failed as they should, the bridge's "no connection";
+      LuaMenu's "Missing GetInfo()" lines are Chobby's own libraries). The groups row's FIRST and LAST got a cross
+      larger than the word (a6afa1a; it was a speck at the word's size).
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
