@@ -1043,6 +1043,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       menu is not shown (regenerated from the dev phone's BAR file; remake-check: the phone's remake equals it). Also
       the arrow acts on its first tap now (with the camera pad up it only opened the menu). Dev phone: one tap, the
       dock on the left, no tooltip over the map; one tap, back on the right; pad-test ALL PASS.
+      The same check for the build menu copy (its place the bottom left, open map while the dock is on the right): its
+      DrawScreen returns before its hover pass while the dock is up (droid.active), and on the dev phone the pointer
+      resting there twice showed no tooltip.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
