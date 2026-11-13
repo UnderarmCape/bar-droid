@@ -2477,7 +2477,7 @@ local function drawSlider(item, r)
 	textIn(item.label .. "  " .. floor(v * 100 + 0.5) .. "%", r[1], ty1, r[3], r[4], h * 0.24, "\255\235\235\235", font)
 end
 
-local function drawButton(item, r)
+local function drawButton(item, r, cap)
 	if item.kind == "slider" then
 		drawSlider(item, r)
 		return
@@ -2557,6 +2557,9 @@ local function drawButton(item, r)
 			-- stood smaller than ONE, LINE and GRID beside it, the unfolded Fold7's row of four, dev phone 2026-11-13)
 			th = min(th, (r[3] - r[1]) * 0.76 / max(0.01, font:GetTextWidth("BORDER")))
 		end
+		if cap then -- (an order: its row's size, drawHalf)
+			th = min(th, cap)
+		end
 		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240",
 			font, true)
 	end
@@ -2584,6 +2587,20 @@ local function drawHalf(side)
 	if r[3] < 0 then -- (sideways, one thumb: the tab not shown, laid out off the screen)
 		return
 	end
+	-- (the orders of a row in one size, the one its longest word fits at, on one line: on the unfolded Fold7 sideways
+	-- "Fire at will" stood shrunk beside "Repeat Off" broken over two larger lines, dev phone screenshot 2026-11-13)
+	local rowCap = {}
+	if side == "right" and font then
+		for i, item in ipairs(items) do
+			local rect = item.kind == "order" and item.label and cellRect(side, i)
+			if rect then
+				local key = rect[2] .. ":" .. rect[4]
+				local th = min((rect[4] - rect[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
+				local fit = min(th, (rect[3] - rect[1]) * 0.76 / max(0.01, font:GetTextWidth(item.label)))
+				rowCap[key] = min(rowCap[key] or fit, fit)
+			end
+		end
+	end
 	SP.scissor(r[1], r[2], r[3] - r[1], r[4] - r[2])
 	for i, item in ipairs(items) do
 		local rect = cellRect(side, i)
@@ -2591,7 +2608,7 @@ local function drawHalf(side)
 			if side == "left" then
 				drawTile(item, rect)
 			else
-				drawButton(item, rect)
+				drawButton(item, rect, item.kind == "order" and rowCap[rect[2] .. ":" .. rect[4]] or nil)
 			end
 		end
 	end
