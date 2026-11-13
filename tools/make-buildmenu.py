@@ -565,9 +565,13 @@ function droid.layoutPanel()
 		-- 2026-11-11: "make the X button on place 100 percent bigger"; then, with a screenshot: "Remove the padding on these
 		-- buttons and shove them to the corner ... make the buttons the same size": both squares of the X's size, flush
 		-- in the panel's bottom right corner, a hairline between them)
-		cs = math_floor(math.min(s * 2, y1 - y0, (x1 - x0) * 0.45))
-		rs, edge, gap = cs, 0, 2
-		my = y0
+		-- 2026-11-12: "Let the rotate and x button take up the whole bottom portion of place. Instead of anchoring
+		-- right": the panel's bottom strip, half each, a hairline between them, PLACE above them)
+		local h = math_floor(math.min(s * 2, (y1 - y0) * 0.45))
+		local mid = math_floor((x0 + x1) / 2)
+		local rotate, cancel = { x0, y0, mid - 1, y0 + h }, { mid + 1, y0, x1, y0 + h }
+		droid.panel = { all = { x0, y0, x1, y1 }, place = { x0, y0, x1, y1 }, rotate = rotate, cancel = cancel }
+		return
 	end
 	local cancel = { x1 - edge - cs, my, x1 - edge, my + cs }
 	local rotate = { cancel[1] - gap - rs, my, cancel[1] - gap, my + rs }
@@ -1049,7 +1053,8 @@ function widget:DrawWorld()
 	end
 	WG.buildmenu.droidPlace = function() -- (and the shape strip: a building picked, the shape, the buttons, a tap)
 		-- (a GRID held from a long press: GRID, its button lit; Kailil, 2026-11-12, ONE stayed lit over the grid)
-		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects
+		-- (the fourth: the building about to be picked again, after PLACE or ONE: placing goes on)
+		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects, droid.again ~= nil
 	end
 	WG.buildmenu.droidPress = droid.press
 	WG.buildmenu.droidSetShape = function(shape) -- (the portrait dock's own shape buttons: one, line, grid, border)

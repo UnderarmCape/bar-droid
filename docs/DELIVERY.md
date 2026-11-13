@@ -1419,6 +1419,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       dock, INSERT then armrectr: "armrectr armck armpw"; a still long press: GRID lit over a 3 x 2 blueprint, ONE:
       gone unplaced, ONE lit, the wind turbine still picked; a drag from the waiting building nudged it; one blueprint
       only; dock-phone-test and remake-check pass.
+- [x] **Kailil, 2026-11-12, the PLACE panel and the dock's clock**: "Let the rotate and x button take up the whole
+      bottom portion of place. Instead of anchoring right"; "When in build place mode, dont let the bottom ui half time
+      out. So it will always accept touch". Done: in the dock ROTATE and X split the panel's bottom strip, half each,
+      PLACE above them (make-buildmenu.py layoutPanel); the dock's menu held open, no clock, while a building is picked
+      or about to be picked again after PLACE or ONE (SP.held, the copy's fourth droidPlace answer). Dev phone upright:
+      the wind turbine picked, 4.5 s later the menu still open; spot, PLACE: queued, picked again, the menu open 4 s on;
+      X: the orders.
 - [ ] **The sideways dock for one thumb: built, his test pending** (Kailil, 2026-11-12: "Only have the map show when no
       units selected. And keep the bottom ui two slots only instead of 3 slots ... So the bottom ui can be snapped to
       the left side or right side of the bottom of the phone so it can be used by one finger only. Add a button or

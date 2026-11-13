@@ -607,6 +607,22 @@ local function setMenu(on)
 	writeDock(true)
 end
 
+-- the menu held open, no clock: placing (Kailil, 2026-11-12: "When in build place mode, dont let the bottom ui half
+-- time out. So it will always accept touch": a building picked, or about to be picked again after PLACE or ONE, the
+-- build menu copy's fourth answer: in those frames the dock showed the orders and its 2.6 s ran out), and picking
+function SP.held()
+	if rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel"
+		or (leftKind == "spec" and SP.teams) then
+		return true
+	end
+	local B = WG.bardroidBuildmenu
+	if B and B.droidPlace then
+		local armed, _, _, again = B.droidPlace()
+		return (armed or again) and true or false
+	end
+	return false
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- What the halves hold
 
@@ -2403,7 +2419,7 @@ local function placeRect()
 end
 
 -- the PLACE panel as the copy laid it out in placeRect (its rects are what RtsTouch places from): green, brighter once a
--- tap has picked the spot, rotate and cancel inside at the right
+-- tap has picked the spot, rotate and cancel across its bottom
 local function drawPlace()
 	local B = WG.bardroidBuildmenu
 	local p, spot = nil, nil
@@ -2438,7 +2454,8 @@ local function drawPlace()
 		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
 		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
 			-- game's only turn, so no "90°" on it: "its redundant")
-			textIn("ROTATE", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.24, "\255\235\235\235", bold)
+			-- (across half the panel since 2026-11-12: the word at a third of its height)
+			textIn("ROTATE", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.34, "\255\235\235\235", bold)
 		else
 			textIn("\226\156\149", r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.6, "\255\255\150\140", bold)
 		end
@@ -2822,8 +2839,7 @@ local function drawMode()
 		gl.Color(1, 0.82, 0.35, 0.9 * a)
 		gl.Rect(d[1], d[4] - edge * 3, d[3], d[4])
 	end
-	local held = rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel"
-	local left = held and 1 or max(0, 1 - (t - lastTouch) / MENU_SECONDS) -- (placing, picking: no clock)
+	local left = SP.held() and 1 or max(0, 1 - (t - lastTouch) / MENU_SECONDS) -- (placing, picking: no clock)
 	gl.Color(1, 0.78, 0.25, 0.85)
 	gl.Rect(d[1], d[4] - edge, d[1] + (d[3] - d[1]) * left, d[4])
 	gl.Color(1, 1, 1, 1)
@@ -3126,8 +3142,7 @@ function widget:Update(dt)
 	-- (so with the presets, the teammate picker and the resource panel over the grid: picked to be tapped next; the
 	-- presets' thumbnails went back to the camera pad under a finger reaching for one, dev phone)
 	-- (and the spectator's TEAMS list: a tap on a team after 2 s only opened the menu again, dev phone 2026-11-11)
-	if rightKind == "place" or rightKind == "presets" or rightKind == "share" or rightKind == "panel"
-		or (leftKind == "spec" and SP.teams) then
+	if SP.held() then
 		if not menu then
 			setMenu(true)
 		end
