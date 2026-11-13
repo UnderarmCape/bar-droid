@@ -37,7 +37,7 @@ final class PerfLog {
 
     private void log() {
         StringBuilder sb = new StringBuilder("thermal ");
-        if (power != null) {
+        if (power != null && Build.VERSION.SDK_INT >= 29) {   // (Android 10's: on Android 9 it threw, lint's NewApi)
             sb.append(power.getCurrentThermalStatus());
             if (Build.VERSION.SDK_INT >= 30) sb.append(String.format(java.util.Locale.US, ", headroom %.2f", power.getThermalHeadroom(0)));
         }

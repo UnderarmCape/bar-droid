@@ -298,7 +298,10 @@ public class GameActivity extends MainActivity {
     private static boolean externalPointerOrPad() {
         for (int id : InputDevice.getDeviceIds()) {
             InputDevice d = InputDevice.getDevice(id);
-            if (d == null || d.isVirtual() || !d.isExternal()) continue;
+            if (d == null || d.isVirtual()) continue;
+            // (isExternal is Android 10's: before it, Samsung's built-in touchpad left out by its name; on Android 9
+            // the call threw NoSuchMethodError, lint's NewApi)
+            if (android.os.Build.VERSION.SDK_INT >= 29 ? !d.isExternal() : "sec_touchpad".equals(d.getName())) continue;
             if (d.supportsSource(InputDevice.SOURCE_MOUSE) || d.supportsSource(InputDevice.SOURCE_GAMEPAD)
                     || d.supportsSource(InputDevice.SOURCE_JOYSTICK)) return true;
         }
