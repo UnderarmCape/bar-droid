@@ -2647,7 +2647,9 @@ local function drawPlace()
 			textIn("ROTATE", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30)),
 				"\255\235\235\235", bold)
 		else
-			textIn("\226\156\149", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.6, min((r[4] - r[2]) * 0.8, 44)),
+			-- (the cross fills about half its font size: in a mid-height button, the Fold7 unfolded sideways, it stood
+			-- smaller than ROTATE beside it, dev phone at 1192x1080)
+			textIn("\226\156\149", r[1], r[2], r[3], r[4], max((r[4] - r[2]) * 0.6, min((r[4] - r[2]) * 0.9, 60)),
 				"\255\255\150\140", bold)
 		end
 	end
