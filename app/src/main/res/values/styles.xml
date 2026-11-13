@@ -37,6 +37,15 @@
         <item name="android:paddingBottom">6dp</item>
     </style>
 
+    <!-- One choice of a row: air after its words, so they read as its own and not the next circle's (they stood ~8 dp
+         from it, as near as to their own circle). 8 dp more: at 12 the last of Game resolution's four, "Native", broke
+         over two lines on a 360 dp wide screen. -->
+    <style name="LauncherRadio">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">8dp</item>
+    </style>
+
     <!-- A text field's name, as a setting's reads (white; an explanation after a line break, smaller and grey:
          LauncherActivity.explainSettings, the tag "explain"). -->
     <style name="LauncherFieldLabel">
