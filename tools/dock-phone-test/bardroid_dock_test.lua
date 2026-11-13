@@ -11,6 +11,7 @@
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
 --   drawdock? their path drawn on into the dock: its end at the dock's edge, their repeat off
+--   panned?   (after campos) one finger dragged on the game, the dock's menu open, nothing picked: a pan, no selection
 --   end       "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
@@ -21,6 +22,7 @@ local com, ready, fails, lastCmd = nil, false, 0, nil
 local buildDef -- (the build grid's first building, in sight on any screen shape: an Armada commander's Solar Collector)
 local pawns, maxSpeed = {}, nil
 local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
+local camAt -- (the camera before the pan's drag)
 local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
 -- before, the circle's two points in X pixels)
 
@@ -144,6 +146,14 @@ local function onCmd(c)
 			hidden ~= nil and inside and not picked, string.format("hidden Pawn %s, inside %s, picked %s, %d picked",
 				tostring(hidden), tostring(inside), tostring(picked), Spring.GetSelectedUnitsCount()))
 		WG.BarDroidPortrait.selectStyle(styleWas or "box")
+	elseif c == "campos" then -- (the camera before a one-finger drag on the game)
+		camAt = { Spring.GetCameraPosition() }
+	elseif c == "panned?" then -- (the dock's menu open, nothing picked: the drag panned, nothing selected)
+		local x, _, z = Spring.GetCameraPosition()
+		local moved = camAt and math.sqrt((x - camAt[1]) ^ 2 + (z - camAt[3]) ^ 2) or 0
+		local n = Spring.GetSelectedUnitsCount()
+		check("one finger dragged on the game with the dock's menu open, nothing picked: it pans, nothing selected",
+			moved > 30 and n == 0, string.format("camera moved %.0f, %d picked", moved, n))
 	elseif c == "boxdock?" then -- (a box selection dragged on into the dock: let go at the dock's top edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()

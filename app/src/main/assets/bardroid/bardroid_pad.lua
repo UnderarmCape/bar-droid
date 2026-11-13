@@ -2494,13 +2494,11 @@ function widget:MousePress(x, y)
 		return true
 	end
 	local b = inQueueButton(x, y)
-	if b == "queue" then
+	if b == "queue" then -- (each on its own; both on: Shift and Alt held, the app's "alt" line)
 		queue.on = not queue.on
-		queue.insert = queue.insert and not queue.on
 		return true
 	elseif b == "insert" then
 		queue.insert = not queue.insert
-		queue.on = queue.on and not queue.insert
 		return true
 	end
 	return false
@@ -2514,6 +2512,10 @@ function widget:Update(dt)
 	padHover()
 	if (queue.on or queue.insert) and WG.BarDroidPadOnly == true then -- (fingers' buttons: left on, every order of the
 		-- pad's would queue)
+		queue.on, queue.insert = false, false
+	end
+	-- (nothing picked: both off; Kailil, 2026-11-13: "remove queue and insert toggle if the unit is not selected")
+	if (queue.on or queue.insert) and Spring.GetSelectedUnitsCount() == 0 then
 		queue.on, queue.insert = false, false
 	end
 	if area.radius ~= area.target then
@@ -2597,9 +2599,14 @@ function widget:Update(dt)
 		end
 		insertKey = not (factories and Spring.GetSelectedUnitsCount() > 0)
 	end
+	-- (QUEUE and INSERT both on: Shift and Alt held, BAR's own with them, in place of the CommandInsert key)
+	local both = queue.on and queue.insert
+	if both then
+		insertKey = false
+	end
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
-		.. "\ninsert " .. (insertKey and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
+		.. "\ninsert " .. (insertKey and 1 or 0) .. "\nalt " .. (both and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
 		.. "\nmodal " .. (modal or "none") .. "\n"
 	if padClickAt then -- (the last click's point: the app clicks there, not in the middle)
 		text = text .. string.format("clickat %.4f %.4f\n", padClickAt[1], padClickAt[2])

@@ -48,6 +48,11 @@ function Rects([string]$file) {
 $script:k = 1.0
 function Tap([double]$x, [double]$y) { & $adb shell input tap ([int]($x * $script:k)) ([int]($y * $script:k)) }
 function Touch([string]$what, [double]$x, [double]$y) { & $adb shell input motionevent $what ([int]($x * $script:k)) ([int]($y * $script:k)) }
+# a tap, then a finger down at the same point within the double tap's time (one adb call): a drag after it selects
+function TapDown([double]$x, [double]$y) {
+  $px = [int]($x * $script:k); $py = [int]($y * $script:k)
+  & $adb shell "input tap $px $py; input motionevent DOWN $px $py"
+}
 function Shot([string]$name) {
   if (-not $Shots) { return }
   & $adb shell screencap -p /sdcard/bardroid-dockshot.png
@@ -179,13 +184,18 @@ try {
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1
-  # 7. nothing picked, the dock's menu open: a box selection dragged from the map on into the dock, its corner held at
-  # the dock's top edge
+  # 7. nothing picked, the dock's menu open: a drag on the game pans (Kailil, 2026-11-13: one finger pans, always), then
+  # a tap and a drag: a box selection dragged from the map on into the dock, its corner held at the dock's top edge
   Stage "deselect"; Start-Sleep 2
   Tap $dm[0] $dm[1]
   $until = (Get-Date).AddSeconds(3)
   while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
+  Stage "campos"; Start-Sleep -Milliseconds 300
   Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
+  Touch MOVE ($a1[0] + 60) ($a1[1] + 40); Touch MOVE ($a1[0] + 160) ($a1[1] + 100)
+  Start-Sleep -Milliseconds 200; Touch UP ($a1[0] + 160) ($a1[1] + 100); Start-Sleep -Milliseconds 800
+  Stage "panned?"; Start-Sleep 1
+  TapDown $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE ($a1[0] + 80) $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP ($a1[0] + 80) $dm[1]; Start-Sleep -Milliseconds 800
   Stage "boxdock?"; Start-Sleep 1
@@ -197,11 +207,8 @@ try {
   Stage "circle"; Start-Sleep 2
   $cs = Rects "bardroid_docktest.txt"
   if ($cs["circle0"] -and $cs["circle1"]) {
-    Tap $dm[0] $dm[1]
-    $until = (Get-Date).AddSeconds(3)
-    while ((Get-Date) -lt $until -and -not ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 200 }
     $c0 = $cs["circle0"]; $c1 = $cs["circle1"]
-    Touch DOWN $c0[0] $c0[1]; Start-Sleep -Milliseconds 120
+    TapDown $c0[0] $c0[1]; Start-Sleep -Milliseconds 120   # (a tap, then the drag: the dock's circle selects)
     Touch MOVE $c0[0] (($c0[1] + $c1[1]) / 2); Touch MOVE $c1[0] $c1[1]
     Start-Sleep -Milliseconds 300; Touch UP $c1[0] $c1[1]; Start-Sleep -Milliseconds 1000
   } else { "[docktest] note: no circle's points" }

@@ -201,6 +201,11 @@ final class RtsTouch {
     private boolean queueHeld;                      // Shift held down for it (UI thread)
     private volatile boolean insertWanted;          // the dock's INSERT is on (bardroid_pad.txt "insert 1")
     private boolean insertHeld;                     // numpad* held down for it, BAR's CommandInsert (UI thread)
+    // QUEUE and INSERT both on ("alt 1"): Shift and Alt held, BAR's own (Kailil, 2026-11-13: "Allow insert and queue to be
+    // toggled on at the same time. It should engage the hold shift and alt vanilla behavior to allow me to send multiple
+    // builders to build a grid starting at separate places")
+    private volatile boolean altWanted;
+    private boolean altHeld;                        // Alt held down for it (UI thread)
     private volatile long padAt;                    // bardroid_pad.txt last read
     // A tap with a building waiting moves it only once no second tap follows (a double tap sends the waiting one)
     private Runnable placeTapLater;
@@ -351,6 +356,7 @@ final class RtsTouch {
         releaseKeys();
         if (queueHeld) { queueHeld = false; view().sendKeyEvent(0, KeyEvent.KEYCODE_SHIFT_LEFT, false); }
         if (insertHeld) { insertHeld = false; view().sendKeyEvent(0, KeyEvent.KEYCODE_NUMPAD_MULTIPLY, false); }
+        if (altHeld) { altHeld = false; view().sendKeyEvent(0, KeyEvent.KEYCODE_ALT_LEFT, false); }
         io.post(() -> { try { if (log != null) log.close(); } catch (IOException ignored) {} });
         ioThread.quitSafely();
     }
@@ -711,22 +717,26 @@ final class RtsTouch {
                         dockScroll();
                         return;
                     }
-                } else if (!gridHeld && place() == null && dockMenuOpen() && !dockDraw()) {   // the game above the open dock: a drag
-                    dockSelecting = true;                                       // selects: BAR's box, or a circle
-                    act("dock_select_start");
-                    Dock d = dock();
-                    if (d != null && d.circle) {
-                        state = State.CIRCLE;
-                        dockCircle();
-                    } else startLeftDrag();
-                    return;
                 }
+                // (one finger on the game pans, whatever the dock shows; selecting is a tap, then a drag, with the dock
+                // its box or circle. Kailil, 2026-11-13: "Lets officially make one finger pan universal instead of it
+                // sometimes being selection. Make selection the double tap drag ... gesture it already is": with the dock's
+                // menu open and nothing picked a drag used to select)
                 if (gridHeld) {   // a GRID waiting for PLACE: a drag moves its far corner further
                     state = State.GRID_DRAG;
                     moveX = downX; moveY = downY;
                     gridTo(curX, curY);
-                } else if (secondTap && place() == null) startLeftDrag();
-                else decideDrag(hoverAt(downX, downY));
+                } else if (secondTap && place() == null) {
+                    Dock d = dock();
+                    if (d != null) {   // (the dock's selection: the corner held at its top edge, a second finger's filters)
+                        dockSelecting = true;
+                        act("dock_select_start");
+                    }
+                    if (d != null && d.circle) {
+                        state = State.CIRCLE;
+                        dockCircle();
+                    } else startLeftDrag();
+                } else decideDrag(hoverAt(downX, downY));
                 return;
             }
             case DRAG_WAIT:
@@ -985,11 +995,6 @@ final class RtsTouch {
         if (d != null && (d.left == null || d.right == null)) d = null;
         dockCache = d;
         return d;
-    }
-
-    private boolean dockMenuOpen() {
-        Dock d = dock();
-        return d != null && d.menu;
     }
 
     private boolean dockDraw() {
@@ -1410,6 +1415,7 @@ final class RtsTouch {
         for (int i = heldKeys.length - 1; i >= 0; i--) view().sendKeyEvent(0, heldKeys[i], false);
         heldKeys = new int[0];
         if (queueHeld) view().sendKeyEvent(0, KeyEvent.KEYCODE_SHIFT_LEFT, true);   // (QUEUE's Shift stays)
+        if (altHeld) view().sendKeyEvent(0, KeyEvent.KEYCODE_ALT_LEFT, true);   // (and QUEUE with INSERT's Alt)
     }
 
     /**
@@ -1425,6 +1431,12 @@ final class RtsTouch {
         if (insertWanted != insertHeld) {
             insertHeld = insertWanted;
             view().sendKeyEvent(0, KeyEvent.KEYCODE_NUMPAD_MULTIPLY, insertHeld);
+        }
+        if (altWanted != altHeld) {
+            altHeld = altWanted;
+            boolean altHere = false;
+            for (int k : heldKeys) altHere |= k == KeyEvent.KEYCODE_ALT_LEFT;
+            if (!altHere) view().sendKeyEvent(0, KeyEvent.KEYCODE_ALT_LEFT, altHeld);
         }
         if (queueWanted == queueHeld) return;
         queueHeld = queueWanted;
@@ -1938,7 +1950,7 @@ final class RtsTouch {
         String text = gameWidgetRunning() && System.currentTimeMillis() - padFile.lastModified() <= HOVER_STALE_MS
                 ? readSmall(padFile) : null;
         String focus = "none", picked = "none", mode = "none";
-        boolean before = false, queue = false, insert = false, riding = false;
+        boolean before = false, queue = false, insert = false, alt = false, riding = false;
         int keys = -1;
         String keyName = "";
         float[] at = null;
@@ -1958,6 +1970,7 @@ final class RtsTouch {
                 if (f[0].equals("armed")) picked = f[1];
                 if (f[0].equals("queue")) queue = f[1].equals("1");
                 if (f[0].equals("insert")) insert = f[1].equals("1");
+                if (f[0].equals("alt")) alt = f[1].equals("1");
                 if (f[0].equals("fp")) riding = f[1].equals("1");
                 if (f[0].equals("click")) {
                     try { padClicks = Integer.parseInt(f[1]); } catch (NumberFormatException e) { /* the last one stands */ }
@@ -1972,10 +1985,11 @@ final class RtsTouch {
         armed = picked;
         padModal = mode;
         clickPoint = at;
-        if (queue != queueWanted || insert != insertWanted) {   // (the widget let go of one, the pad in use: no touch
-            // comes to look it up)
+        if (queue != queueWanted || insert != insertWanted || alt != altWanted) {   // (the widget let go of one, the pad
+            // in use: no touch comes to look it up)
             queueWanted = queue;
             insertWanted = insert;
+            altWanted = alt;
             ui.post(applyQueue);
         }
         if (riding != firstPerson) {

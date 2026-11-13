@@ -94,9 +94,10 @@ below it. The dock is a camera pad at rest: drag to pan, double tap and hold the
 to turn), triple tap and hold to tilt. The build grid, QUEUE and INSERT, the buttons with nothing picked and the groups
 row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
 open): the build grid on the left, the picked
-units' orders on the right (Fight, Move, Patrol first and largest), the selection row as QUEUE and INSERT, and the
+units' orders on the right (Fight, Move, Patrol first and largest; a state's lights as BAR's, red left, green right),
+the selection row as QUEUE and INSERT (both on: Shift and Alt held; off once nothing is picked), and the
 metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, FACTORIES (your next factory
-picked, the camera on it and its build menu in the dock to queue units; tap again for the next), PINGS (LAST PINGS: the camera to
+in turn, the camera on each; its build menu comes up in the dock once you stop tapping for 0.75 s), PINGS (LAST PINGS: the camera to
 the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there; hold PING and say its label; tap PING twice to speak to chat),
 COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
 its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets

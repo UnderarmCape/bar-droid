@@ -966,6 +966,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       `propName = value` throughout, the git calls through `providers.exec` with the root as their folder: the version
       line still `from BAR Droid <commit>`); `--warning-mode all` now names only AGP's own setVisible. Dev phone: built,
       installed, pace-test ALL PASS.
+- [x] **Kailil's notes of 2026-11-13 morning** (after a 34-minute game on the Fold7, 30.1 fps to 445 units), in order:
+      FACTORIES "should let me cycle through factories. Only after I dont press the factories button after .75 seconds
+      does the bottom ui switch to show the selected factory screen": each press the camera on the next factory, picked
+      once the button rests 0.75 s (nothing else picked meanwhile; L.factoryPick). The order buttons' state lights "In
+      vanilla, red is always on the left. Then green on the right. And yellow in the middle": one light per state along
+      the bottom, the one it is in lit (first red, second yellow, or green with two, the rest green), the others dark,
+      as BAR's order menu. "Allow insert and queue to be toggled on at the same time. It should engage the hold shift
+      and alt vanilla behavior": both on, Shift and Alt held (the pad file's "alt 1", RtsTouch altHeld; no CommandInsert
+      key then), and "remove queue and insert toggle if the unit is not selected": both off once nothing is picked.
+      "Lets officially make one finger pan universal instead of it sometimes being selection": with the dock's menu open
+      and nothing picked a drag selected; it pans now, and a tap, then a drag selects (the dock's box or circle, its
+      corner held at the dock's top); a drag with mobile units picked still draws their path. Dev phone upright: two
+      factories given, FACTORIES twice, the camera on each, the second picked after the pause, its screen up; the lights
+      (Repeat Off, Hold pos, Low Priority red on the left; Fire at will, Factory Guard green on the right); QUEUE and
+      INSERT lit together ("queue 1 insert 0 alt 1"), both off after the selection emptied; dock-phone-test's new
+      check (a drag with the menu open and nothing picked: the camera 101 elmos on, nothing picked) and its box and circle
+      selections now by a tap and a drag: ALL PASS.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

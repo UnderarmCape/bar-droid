@@ -130,7 +130,10 @@ The first version meant for other people's phones: everything since the first bu
   the nearest and goes there, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with
   words); PING tapped twice: CHAT, speak to chat, with a flip back to PING when it is sent. FACTORIES beside
-  them picks your next factory and brings the camera to it, its build menu in the dock to queue units. The dock's
+  them brings the camera to your factories in turn, and picks the one it is on once you stop tapping for 0.75 s, its
+  build menu in the dock to queue units. The orders' state lights sit as BAR's (red left, yellow middle, green right).
+  QUEUE and INSERT can be on together: Shift and Alt held, as BAR's; both go off once nothing is picked. One finger
+  on the game pans with the dock's menu open too; a tap, then a drag selects. The dock's
   menu stays open 2.6 s after the last touch (was 2). Placing a building:
   a drag moves it slowly at first for fine control, ROTATE and X across PLACE's bottom, a GRID only from a still long
   press (lit while held; ONE ends it), BAR's own blueprint while moving it, a factory's INSERT puts the unit first, and while a picked unit has a
