@@ -2280,9 +2280,10 @@ local function textIn(text, x0, y0, x1, y1, size, color, f, wrap)
 	if not f then
 		return
 	end
-	-- (at most 84% of the width: the outline is not in the font's width, and at 88% words that just fit, ROTATE in its
-	-- square on the unfolded Fold7 upright, LAST PINGS, ran up to the button's edges: dev phone, 2026-11-11)
-	local room = (x1 - x0) * 0.84
+	-- (at most 76% of the width: the outline is not in the font's width, and at 88% words that just fit, ROTATE in its
+	-- square on the unfolded Fold7 upright, LAST PINGS, ran up to the button's edges: dev phone, 2026-11-11; at 84 %
+	-- LAST PINGS in its half of the home grid upright still stood a few pixels from them, 2026-11-13)
+	local room = (x1 - x0) * 0.76
 	local w = f:GetTextWidth(text) * size
 	if w > room then
 		local one = size * room / w
