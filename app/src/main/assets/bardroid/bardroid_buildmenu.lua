@@ -795,9 +795,18 @@ function droid.place()
 			text = text .. string.format("%s %d %d %d %d\n", b[1], r[1], vsy - r[4], r[3], vsy - r[2])
 		end
 	end
+	-- (the dock's ONE: tapped while a GRID is held it takes the GRID back to ONE, RtsTouch's gridToOne)
+	local P = WG.BarDroidPortrait
+	local one = armed and P and P.itemCell and P.itemCell("right", function(it)
+		return it.kind == "shape" and it.shape == "one"
+	end)
+	if one and one[3] > 0 then
+		text = text .. string.format("one %d %d %d %d\n", one[1], vsy - one[4], one[3], vsy - one[2])
+	end
 	local sx, sy, sr = droid.spotOnScreen()
 	if sx then
 		text = text .. string.format("spot %d %d %d\n", sx, vsy - sy - 1, sr)
+		droid.keepPointer(sx, sy)
 	end
 	-- (written again every second while a building is picked: the app takes an older file for none, so a file left by
 	-- a game that ended with a building picked never turns taps into Shift clicks)
@@ -824,6 +833,10 @@ end
 -- comes up (CGuiHandler needShift), and it stays picked for the next spot, until the cancel button or a long press
 function droid.pickAgain()
 	local again = droid.again
+	if again.wait and again.wait > 0 then -- (a GRID ended by ONE: its button's release must find none picked first)
+		again.wait = again.wait - 1
+		return
+	end
 	local _, id = spGetActiveCommand()
 	again.frames = again.frames - 1
 	if id == nil and spGetGameFrame() > 0 then
@@ -884,10 +897,39 @@ end
 function droid.setGrid(kind)
 	if kind == "held" then
 		droid.gridHeld, droid.gridShown = true, Spring.GetTimer()
+	elseif kind == "one" then -- (ONE tapped while held: RtsTouch puts the building away and lets go, "free" then)
+		droid.oneAgain = droid.defID
 	elseif kind == "free" then
 		droid.gridHeld = nil
+		if droid.oneAgain then -- (the building again, on ONE, a few frames on: Kailil, 2026-11-12, "I should be able to
+			-- cancel the grid by pressing one")
+			droid.again = { defID = droid.oneAgain, frames = 40, wait = 6 }
+			droid.oneAgain = nil
+		end
 	end
 	droid.place()
+end
+
+-- BAR Droid: the pointer kept on the waiting building, so BAR's own blueprint is what shows there (Kailil, 2026-11-12:
+-- "it is spawning another building when in moving it around ... it should instead use the vanilla system"): moved
+-- there when the camera has moved under it (its place on the screen changed, the spot not), and when it rests on the
+-- dock after a tap there (ROTATE, a shape); never with a button down (a tap, a GRID under way). RtsTouch moves it with
+-- the building while a finger drags it.
+function droid.keepPointer(sx, sy)
+	local mx, my, l, m, r = Spring.GetMouseState()
+	local s = droid.spot
+	local key = s and (s[1] .. ":" .. s[3])
+	local cameraMoved = key == droid.keptKey and (sx ~= droid.keptX or sy ~= droid.keptY)
+	droid.keptKey, droid.keptX, droid.keptY = key, sx, sy
+	if droid.gridHeld or l or m or r or (mx == sx and my == sy) then
+		return
+	end
+	local P = WG.BarDroidPortrait
+	local d = P and P.dock and P.dock()
+	local onDock = d and mx >= d[1] and mx <= d[3] and my >= d[2] and my <= d[4]
+	if cameraMoved or onDock then
+		Spring.WarpMouse(sx, sy)
+	end
 end
 
 -- (a point the app may click on the map: on the screen, not under this menu, PLACE or the minimap)
@@ -933,11 +975,20 @@ function droid.spotOnScreen()
 	return sx, sy, math_floor(r + 0.5)
 end
 
--- BAR Droid: the building at the spot, as the engine draws a building being placed, and its footprint
+-- BAR Droid: the building at the spot, as the engine draws a building being placed, and its footprint; not where the
+-- pointer is on it (keepPointer), BAR's own blueprint is drawn there: both showed a second, solid building over it
 function droid.drawSpot()
 	local bx, by, bz = droid.spotPos()
 	if not bx then
 		return
+	end
+	local mx, my = Spring.GetMouseState()
+	local _, mpos = Spring.TraceScreenRay(mx, my, true)
+	if mpos then
+		local px, _, pz = Spring.Pos2BuildPos(droid.defID, mpos[1], mpos[2], mpos[3], Spring.GetBuildFacing())
+		if px == bx and pz == bz then
+			return
+		end
 	end
 	local def = UnitDefs[droid.defID]
 	local facing = Spring.GetBuildFacing()
@@ -3078,7 +3129,8 @@ function widget:Initialize()
 		return colls, rows, pages, cmdsCount
 	end
 	WG.buildmenu.droidPlace = function() -- (and the shape strip: a building picked, the shape, the buttons, a tap)
-		return droid.armed, droid.shape, droid.shapeRects
+		-- (a GRID held from a long press: GRID, its button lit; Kailil, 2026-11-12, ONE stayed lit over the grid)
+		return droid.armed, droid.gridHeld and "grid" or droid.shape, droid.shapeRects
 	end
 	WG.buildmenu.droidPress = droid.press
 	WG.buildmenu.droidSetShape = function(shape) -- (the portrait dock's own shape buttons: one, line, grid, border)
