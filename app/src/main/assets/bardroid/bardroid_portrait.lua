@@ -3102,7 +3102,9 @@ local function drawMode()
 			local from = (L.selCountEnd or 0) + L.pad * 2
 			local label = "CAMERA PAD"
 			if right - font:GetTextWidth(label) * size >= from then
-				font:Print("\255\190\190\190" .. label, right, s[2] + h * 0.3, size, "ro")
+				-- (on the count line's baseline, drawSelection's r[4] - h * 0.62: at 0.3 it sat below the count, the two
+				-- off one line, dev phone screenshot 2026-11-13)
+				font:Print("\255\190\190\190" .. label, right, s[2] + h * 0.38, size, "ro")
 			end
 		end
 		return

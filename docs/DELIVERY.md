@@ -1013,6 +1013,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       buttons stood a third of their height above the sticks' middles (left from when MOVE and AIM were printed under
       the sticks): level with them now (the dock file: sticks and FIREs at y 765). Dev phone: the right FIRE fired
       ("D-GUN FIRED", the reload bars on both), its swipe to the middle turned full auto on (AUTO, "AIM: AUTO").
+      Then a fight on the dev phone upright (14 of my units picked, 12 enemy Grunts given beside them): AUTO RETREAT
+      sent four hurt units back, the dock kept its selection, no errors in infolog, 29.3 fps. BAR's message commas
+      ("Battle, Started", "Enemy Units, Detected") are in BAR's own language/en/tips.json. The selection row's CAMERA
+      PAD sat below the count line it shares ("14 units, 10 of this type"): on its baseline now.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
