@@ -1062,6 +1062,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       tap the screen to stay longer" in the chat box (its last lines touch the Awards title for those seconds; kept, as
       they carry that notice), then the engine's exit 0 and the launcher back, no errors in infolog. The lobby sideways
       (offline): the login dialog whole, then the menu column with its page strip and the Welcome page as they should be.
+      The whole sweep on the day's last build (the dock stepping aside, the copies' patches, pan with units picked):
+      dock-phone-test, touch-phone-test, fp-save-test, lobby-phone-test, pad-test (plain, -Online, -Dgun, -Share,
+      -Chat) and pace-test all pass, about 18 minutes.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod
