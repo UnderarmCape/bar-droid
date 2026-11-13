@@ -1077,6 +1077,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       That evening on the dev phone, the day's last build: 8 minutes of an untouched sideways skirmish, 29.9-30.0 fps
       every minute after the first (28.8), Lua's memory steady at 134-152 MB, nothing from the app's widgets among the
       infolog's warnings and errors (BAR's own yardmap, weapondef and icon warnings; Mesa's loader line at each start).
+      The build's "uses or overrides a deprecated API" note, itemised (javac -Xlint:deprecation through an init script):
+      16 warnings in Termux:X11's own code (Handler(), PreferenceManager, getDefaultDisplay, KeyEvent's characters,
+      ...), 4 in the app's: Prefs.startsUpright and SplashPicture.write's Display.getRealMetrics (still the way to the
+      rotated screen's size from a non-activity context; WindowMetrics needs a window context) and StartActivity's
+      getStableInset (only on Android 9 and 10: 11 and up take getInsetsIgnoringVisibility). Nothing to change.
 - [ ] **The orders on the first tap too? (asked 2026-11-13)** With the camera pad up the build options, INSERT and
       QUEUE, the home buttons, the groups, metal and energy, the tabs and the swap arrow act on the first tap (Kailil,
       2026-11-12, and the runs after); FIGHT, MOVE, PATROL, D-Gun and the states still take one tap to open the menu,
