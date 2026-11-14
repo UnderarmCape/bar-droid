@@ -1137,6 +1137,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
       (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
       tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
+- [x] **Phone tests and the sideways column** (hardening, 2026-11-13): pad-test and pace-test ALL PASS on the day's
+      build; the sideways lobby's column made again on its page 2 (a screen size change) showed page 2 alone, the
+      negative-place fix holding for the column's y too. Polish: the phone Settings sideways a third wider than BAR's
+      shape where the screen has room (1301 of 2008 pixels before, empty sides; the words the same size).
+      remake-check all PASS.
 - [x] **The lobby's button pages overlapping after a rebuild** (hardening, 2026-11-13, dev phone): a lobby skirmish's
       in-game Lobby paged to Leave Battle (page 3 of 4), Yes, back in the lobby: the grid made again for 17 buttons on
       page 3 showed page 2's buttons with page 3's showing through ("Welcome" under "Parties"), the dots on page 3;

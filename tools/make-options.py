@@ -96,7 +96,9 @@ local droid = { upright = false, close = nil, configLoaded = false }
 	else
 		widgetScale = math.min((vsx - 2 * droidM) / screenWidthOrg, (vsy - droidTop - 2 * droidM) / screenHeightOrg)
 		screenHeight = math.floor(screenHeightOrg * widgetScale)
-		screenWidth = math.floor(screenWidthOrg * widgetScale)
+		-- (a third wider than BAR's shape where the screen has it: on 2008 x 938 the window was 1301 wide between two
+		-- empty sides, its long names cut short; the words keep their size)
+		screenWidth = math.min(vsx - 2 * droidM, math.floor(screenWidthOrg * widgetScale * 1.33))
 		screenX = math.floor((vsx - screenWidth) / 2)
 		screenY = vsy - droidTop - droidM
 	end
