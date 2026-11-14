@@ -815,6 +815,25 @@ local function uprightOff()
 		end
 	end
 	upright.sideBounds = nil
+	for o, was in pairs(upright.mapListSaved or {}) do -- (the map picker as Chobby laid it: uprightMapList)
+		if not o.disposed then
+			for k in pairs(o._relativeBounds) do
+				o._relativeBounds[k] = nil
+			end
+			for k, v in pairs(was.rb) do
+				o._relativeBounds[k] = v
+			end
+			for k in pairs(o._givenBounds) do
+				o._givenBounds[k] = nil
+			end
+			for k, v in pairs(was.gb) do
+				o._givenBounds[k] = v
+			end
+			o:SetPosRelative(was.x, was.y, was.w, was.h, nil, true) -- (the numbers only: the bounds are put back above)
+			o:UpdateClientArea()
+		end
+	end
+	upright.mapListSaved, upright.mapListDone = nil, nil
 	if upright.grid then
 		upright.grid:Dispose()
 		upright.grid = nil
@@ -971,6 +990,85 @@ local function uprightScenario()
 		end
 	end
 	Spring.Echo("[bardroid-lobby] scenario page upright: values clear of their labels, the map narrower") -- (tools)
+end
+
+-- Chobby's map picker upright (gui_maplist_panel.lua, a skirmish room's Change Map): laid out for a wide window, its
+-- caption ("Select a Map. Certified maps are recommended.") ran under Manual Download, and the picked map's details,
+-- beside the picture in a third of the width, ran on over Preview and Select Map (dev phone, 2026-11-13, Avalanche).
+-- Upright the caption takes the width, the rest of the window a row lower; the details under the picture across the
+-- panel, Preview and Select Map beside the picture under the map's name; the panel taller, the list under it lower.
+-- Once each window (Chobby keeps the one it made); Chobby's places back for sideways (uprightOff).
+-- (the panel 340: Avalanche's details and two lines of its description took to 300, dev phone; the picture 19 + 166)
+local MAPLIST_DY, MAPLIST_PREVIEW_H, MAPLIST_PIC_BOTTOM = 26, 340, 185
+local function uprightMapList()
+	local cap = real(chobbyObject("captionHolder"))
+	local win = cap and real(cap.parent)
+	upright.mapListDone = upright.mapListDone or setmetatable({}, { __mode = "k" })
+	if not win or win.disposed or win.visible == false or upright.mapListDone[win] then
+		return
+	end
+	local function all(o) -- (a control's children, the hidden ones too: Select Map and Preview until a map is picked)
+		local list = {}
+		for _, c in ipairs(o.children or {}) do
+			list[#list + 1] = real(c)
+		end
+		for c in pairs(o.children_hidden or {}) do
+			list[#list + 1] = real(c)
+		end
+		return list
+	end
+	-- (Chili keeps a number's place in x, y, width, height and _givenBounds; only right and bottom anchors, and shares
+	-- of the parent, in _relativeBounds: SetPosRelative moves the numbers)
+	local preview
+	for _, c in ipairs(all(win)) do
+		if c.classname == "overlay_window" and type(c.y) == "number" and (not preview or c.y < preview.y) then
+			preview = c -- (the top one: not a filter's list)
+		end
+	end
+	local isPicker = false -- (Chobby's text entry popup has a captionHolder too)
+	for _, c in ipairs(preview and all(preview) or {}) do
+		isPicker = isPicker or c.caption == "Select Map"
+	end
+	if not (isPicker and preview._givenBounds and type(preview._givenBounds.height) == "number") then
+		return
+	end
+	upright.mapListDone[win] = true
+	upright.mapListSaved = upright.mapListSaved or setmetatable({}, { __mode = "k" })
+	local saved = upright.mapListSaved
+	local function set(o, x, y, h, anchors) -- (anchors: right / bottom; false drops one)
+		if not saved[o] then
+			local rb, gb = {}, {}
+			for k, v in pairs(o._relativeBounds) do
+				rb[k] = v
+			end
+			for k, v in pairs(o._givenBounds) do
+				gb[k] = v
+			end
+			saved[o] = { rb = rb, gb = gb, x = o.x, y = o.y, w = o.width, h = o.height }
+		end
+		for k, v in pairs(anchors or {}) do
+			o._relativeBounds[k], o._givenBounds[k] = v, v or nil
+		end
+		o:SetPosRelative(x, y, nil, h)
+		o:UpdateClientArea()
+	end
+	local pTop, extra = preview.y, MAPLIST_PREVIEW_H - preview._givenBounds.height
+	for _, c in ipairs(all(win)) do
+		if c ~= cap and c ~= preview and type(c.y) == "number" and c._givenBounds and c._givenBounds.top then
+			set(c, nil, c.y + MAPLIST_DY + (c.y > pTop and extra or 0))
+		end
+	end
+	set(preview, nil, pTop + MAPLIST_DY, MAPLIST_PREVIEW_H)
+	set(cap, nil, nil, nil, { right = 0 })
+	for _, c in ipairs(all(preview)) do
+		if c.classname == "textbox" then -- (the details: under the picture, across the panel)
+			set(c, 10, MAPLIST_PIC_BOTTOM + 10, nil, { bottom = 10 })
+		elseif c.caption == "Select Map" or c.caption == "Preview" then -- (beside the picture, at its foot)
+			set(c, nil, MAPLIST_PIC_BOTTOM - 44, 44, { bottom = false })
+		end
+	end
+	win:UpdateClientArea()
+	Spring.Echo("[bardroid-lobby] map picker upright: the caption clear of Manual Download, the details under the picture") -- (tools)
 end
 
 -- Chobby's Keys window upright (gui_keys_panel.lua): its six tabs in one row, 180 each from 20, Close at the right:
@@ -1284,6 +1382,7 @@ local function uprightUpdate(now)
 		uprightBattleRoom()
 		uprightScenario()
 		uprightKeys()
+		uprightMapList()
 	end
 	uprightRedraw()
 	uprightModal()
