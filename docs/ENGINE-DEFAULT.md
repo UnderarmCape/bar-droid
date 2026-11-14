@@ -44,6 +44,10 @@ Three replays are good evidence and a small sample for code on the synced path t
    source. The branch (`bardroid/sim` and its parts in `hailmary-work`) goes to a public fork of RecoilEngine when the
    app goes public (a push only Kailil does), and README names the changes, as the good-faith rule asks.
 
+**Kailil's answers (2026-11-13):** "1. You're recommendation 2. Inside the apk 3. Yes": the unsynced changes on by
+default, the simulation rewrite off in online games until its replay count is met (on in skirmish and replays); the
+binary inside the APK; the engine's source public with the app (his push).
+
 ## Stages
 
 1. **A release build of the phone engine.** `tools/engine-sim/build-engine.ps1` from the tag BAR's servers run
