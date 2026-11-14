@@ -1778,12 +1778,18 @@ function refreshNow()
 	-- (with orders spilling over, the types as tall as an order, more of them a row, and more rows of orders under them:
 	-- Kailil, 2026-11-13, "shrink them to be as tall as the orders so two rows can fit under it instead of 1 row")
 	SP.overRect, SP.overItems, SP.smallTypes = nil, {}, nil
-	if rk == "orders" and not L.land and not SP.on() and (lk == "seltypes" or lk:sub(1, 6) == "types:") then
+	local listPage = lk:sub(1, 6) == "types:"
+	if (rk == "orders" or listPage) and not L.land and not SP.on() and (lk == "seltypes" or listPage) then
 		local ts = L.btnH
 		local tcols = max(1, floor((L.left[3] - L.left[1] + L.gap) / (ts + L.gap)))
 		local top = L.left[4] - math.ceil(#newLeft / tcols) * (ts + L.gap)
 		local rows = floor((top - L.left[2] + L.gap) / (L.btnH + L.gap))
-		if rows >= 1 then
+		-- (the unit lists keep the small tiles: MULTI lets everyone go, no orders, and the tiles grew back to their full
+		-- size, then shrank again with the first type tapped: the next one moved from under the finger)
+		if listPage and rows >= 1 then
+			SP.smallTypes = { cols = tcols, size = ts }
+		end
+		if rows >= 1 and rk == "orders" then
 			local cells = pack(newRight, L.rightCols or 2)
 			local keep, past = {}, {}
 			for i, it in ipairs(newRight) do
@@ -2539,8 +2545,8 @@ local function drawTile(item, r)
 		if item.id and (activeBuild() == item.id or factoryItem == item.id) then
 			selector(r)
 		end
-	else -- a type: its count
-		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * 1.4, "ro")
+	else -- a type: its count (on the small tiles, SP.smallTypes, half again as large: "10" and "4" were hard to read)
+		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * (SP.smallTypes and 2.1 or 1.4), "ro")
 		if multi and multiPicked[item.defID] then -- (gold, as the toggle's MULTI: FlowUI's selector alone did not show on
 			-- the unit pictures, dev phone 2026-11-13)
 			if WG.BarDroidStyle then

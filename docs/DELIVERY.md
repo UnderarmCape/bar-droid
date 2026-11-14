@@ -1137,6 +1137,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
       (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
       tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
+- [x] **The unit lists' tiles kept small** (hardening, 2026-11-13, read in the overflow code): on LOCAL / ALL UNITS'
+      list MULTI lets everyone go (no orders, no overflow), so the tiles grew back to their full size and shrank again
+      with the first type tapped: the next type moved from under the finger. The lists keep the small tiles whatever
+      is picked. Polish: a small tile's count half again as large ("10" and "4" were hard to read). Dev phone: ALL
+      UNITS, then MULTI, the tiles in the same places; dock-phone-test ALL PASS.
 - [x] **The lobby's map picker upright** (found 2026-11-13, dev phone, a skirmish room's Change Map): Chobby's
       gui_maplist_panel.lua lays it out for a wide window: its caption ran under Manual Download, and the picked map's
       details, beside the picture in a third of the width, ran on over Preview and Select Map. bardroid_lobby_touch.lua
