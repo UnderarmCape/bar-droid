@@ -89,6 +89,7 @@ public final class Installer {
         if (hasImport()) runSetup("import", st, "import", Prefs.engineVersion);
         step("content", st, () -> runSetup("content", st, "content", Prefs.gameTag, Prefs.lobbyTag, Prefs.mapName, Prefs.engineVersion));
         step("files", st, () -> writeGameFiles());
+        installPhoneEngine();   // (refreshHostFiles ran before the official engine was there)
         try { removeGamepadGame(); } catch (IOException e) { Log.e("install", "the controller game's files", e); }
         st.status("done", "Installed", 100);
     }
@@ -118,6 +119,69 @@ public final class Installer {
         extractAssets();
         proot.writeShellScript(new File(p.filesDir, "container.sh"));
         if (new File(p.rootfs, "usr/bin").isDirectory()) installScripts();
+        installPhoneEngine();
+    }
+
+    /**
+     * The phone engine (docs/ENGINE-DEFAULT.md; Kailil, 2026-11-13): the APK's build of BAR's engine for an engine
+     * version (assets phone-engine/&lt;version&gt;/spring and BUILD.txt, from the engine branch: build.gradle's
+     * bardroid.phoneEngine) set up beside BAR's official engine of that version as engine/recoil_&lt;version&gt;-phone:
+     * its spring copied out of the APK (never a path into nativeLibraryDir), every other entry a link into the
+     * official folder. launch-bar.sh starts it unless the launcher's "Phone engine" is off. Cheap when nothing changed
+     * (BUILD.txt compared); a version whose official engine is not installed waits for it; never fails a start.
+     */
+    void installPhoneEngine() {
+        AssetManager am = ctx.getAssets();
+        String[] versions;
+        try { versions = am.list("phone-engine"); } catch (IOException e) { versions = null; }
+        if (versions == null) return;
+        for (String v : versions) {
+            File official = p.engineDir(v);
+            if (!new File(official, "spring").isFile()) continue;
+            File dir = new File(official.getParentFile(), official.getName() + "-phone");
+            try {
+                String build;
+                try (InputStream in = am.open("phone-engine/" + v + "/BUILD.txt")) { build = new String(readAll(in), StandardCharsets.UTF_8); }
+                File stamp = new File(dir, "BUILD.txt"), bin = new File(dir, "spring");
+                String have = "";
+                if (stamp.isFile()) try (InputStream in = new FileInputStream(stamp)) { have = new String(readAll(in), StandardCharsets.UTF_8); }
+                if (!build.equals(have) || !bin.canExecute()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    dir.mkdirs();
+                    //noinspection ResultOfMethodCallIgnored
+                    stamp.delete();   // (a copy cut short is made again)
+                    File part = new File(dir, "spring.part");
+                    try (InputStream in = am.open("phone-engine/" + v + "/spring"); OutputStream o = new FileOutputStream(part)) { copy(in, o); }
+                    if (!part.setExecutable(true, true) || !part.renameTo(bin)) throw new IOException("could not put " + part + " in place");
+                    writeFile(stamp, build);
+                    Log.i("install", "phone engine " + v + ": " + build.split("\n", 2)[0]);
+                }
+                linkOfficial(official, dir);
+            } catch (IOException e) {
+                Log.e("install", "phone engine " + v + ": " + e.getMessage());
+            }
+        }
+    }
+
+    /** Every entry of the official engine folder but spring, linked from the phone engine's (relative links). */
+    private static void linkOfficial(File official, File dir) throws IOException {
+        String[] names = official.list();
+        if (names == null) throw new IOException("cannot list " + official);
+        java.util.Set<String> wanted = new java.util.HashSet<>(Arrays.asList(names));
+        String[] have = dir.list();
+        if (have != null) for (String n : have) {   // (links to what the official folder no longer has)
+            File f = new File(dir, n);
+            if (java.nio.file.Files.isSymbolicLink(f.toPath()) && (!wanted.contains(n) || !f.exists())) //noinspection ResultOfMethodCallIgnored
+                f.delete();
+        }
+        for (String n : names) {
+            if (n.equals("spring") || n.equals("BUILD.txt")) continue;
+            File link = new File(dir, n);
+            if (java.nio.file.Files.isSymbolicLink(link.toPath())) continue;
+            if (link.exists()) continue;   // (a real file of the phone build's own)
+            try { android.system.Os.symlink("../" + official.getName() + "/" + n, link.getPath()); }
+            catch (android.system.ErrnoException e) { throw new IOException("link " + n + ": " + e.getMessage()); }
+        }
     }
 
     /** Copies assets/bardroid/* into files/assets-bardroid (host side) — the scripts are then installed into the rootfs. */

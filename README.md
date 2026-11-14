@@ -2,16 +2,25 @@
 
 Play [Beyond All Reason](https://www.beyondallreason.info/) on an Android phone: BAR's own lobby, online games,
 skirmish against AI and spectating, at about 30 fps on a Snapdragon 8 Elite phone, with touch controls, gamepads, or a
-mouse and keyboard. The app runs BAR's official, unmodified engine, so you play online with everyone else. Nothing of
-BAR is in the app: it downloads the engine and the game from BAR's own servers, as BAR's PC launcher does.
+mouse and keyboard. The app plays BAR's engine at the version BAR's servers run, so you play online with everyone
+else: by default its phone build (below), or BAR's official one. Nothing of BAR's game is in the app: it downloads the
+game, its maps and the official engine from BAR's own servers, as BAR's PC launcher does.
+
+**The phone engine.** The app carries a build of BAR's engine (Recoil) made for phones, from the same source as BAR's
+plus the project's engine branch: the app's touch and gamepad controls load as part of the game, so a host's "no user
+widgets" option no longer turns them off; BAR's Settings laid out for an upright or sideways phone; phone versions of
+BAR's costliest interface code and memory settings that let 8 GB phones load big games. Its exact rewrite of the
+simulation (about 4-5 % faster game speed) runs in skirmishes and replays; online it stays BAR's stock code until it
+has passed many more of BAR's server replays (docs/ENGINE-DEFAULT.md). The launcher's "Phone engine" turns it off: BAR's
+official engine then, the controls as user widgets. Its source goes public with the app (NOTICE.md).
 
 **This is a complete way to play BAR on an Android phone, and all you need.** Full games, online or against the AI,
 from the lobby to the end. Late games chug in big battles but run well, and you stay caught up with the game. Full
 mouse and keyboard support: with a Bluetooth or USB-C mouse and keyboard it plays like BAR on a PC.
 
-It is not a native port: the app runs BAR's official Linux engine for ARM, natively on the phone's CPU and GPU (no
-emulation, no translation), inside a small Linux environment the app carries. That is what keeps online play in step
-with everyone else's.
+It is not a native port: the app runs BAR's Linux engine for ARM, natively on the phone's CPU and GPU (no emulation, no
+translation), inside a small Linux environment the app carries. That is what keeps online play in step with everyone
+else's.
 
 BAR Droid is a fan project, not made by the Beyond All Reason team.
 

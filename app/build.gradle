@@ -76,6 +76,15 @@ android {
         sourceSets.debug.res.srcDir(personalRes)
     }
 
+    // The phone engine (docs/ENGINE-DEFAULT.md): the engine branch's build of BAR's engine, 42 MB, kept out of the
+    // repository. local.properties bardroid.phoneEngine names a folder holding phone-engine/<engine version>/spring and
+    // BUILD.txt (tools/phone-engine-release.ps1 makes it); the APK carries it as assets (17 MB compressed) and
+    // Installer.installPhoneEngine sets it up on the phone. Without it the APK has BAR's official engine only.
+    def phoneEngine = localProps.getProperty('bardroid.phoneEngine')
+    if (phoneEngine && file("$phoneEngine/phone-engine").isDirectory() && rootProject.ext.bardroidAbi == 'arm64-v8a') {
+        sourceSets.main.assets.srcDir(phoneEngine)
+    }
+
     compileOptions.sourceCompatibility = JavaVersion.VERSION_17
     compileOptions.targetCompatibility = JavaVersion.VERSION_17
     buildFeatures.buildConfig = true

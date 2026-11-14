@@ -1,6 +1,7 @@
 # BAR Droid — hand-off (updated 2026-10-28)
 
-Beyond All Reason on Android. An Android app ("BAR Droid") that runs the **unmodified official Recoil engine**
+Beyond All Reason on Android. An Android app ("BAR Droid") that runs **BAR's Recoil engine** (since 2026-11-13 by
+default the app's phone build of the version BAR's servers run, docs/ENGINE-DEFAULT.md; else the official one)
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
 
 **BAR plays on Kailil's Galaxy Z Fold7** (since the evening of 2026-10-25): BAR's lobby, online games, spectating

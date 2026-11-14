@@ -1,8 +1,20 @@
 # Updates: BAR Droid keeps itself current the way BAR's PC launcher does
 
 Goal (Kailil): when BAR updates for PC, the app picks the update up on its next start and applies its Android layer
-on top, with nobody stepping in, at least until BAR ships Android builds of its own. The engine binary stays the
-unmodified official Recoil build, because online play needs the engine BAR's servers run.
+on top, with nobody stepping in, at least until BAR ships Android builds of its own. The engine version stays the one
+BAR's servers run, because online play needs it. Updater installs BAR's official build of it; the app's phone build
+of that version (docs/ENGINE-DEFAULT.md) comes with the APK and sits beside it.
+
+**The phone engine and a new BAR engine** (Kailil, 2026-11-13): the APK carries a phone build for one engine version
+(`assets/phone-engine/<version>`). `Installer.installPhoneEngine` (every start) sets it up as
+`engine/recoil_<version>-phone` once BAR's official engine of that version is installed: its `spring` copied, the
+official folder's other files linked. When BAR moves to a new engine, Updater installs the official one as below and
+the APK has no phone build for it: launch-bar.sh starts the official engine ("this app has no phone build of it" in
+launcher.log; the app's widgets as user widgets, BAR's own Settings) until an app update brings one (the branch rebased
+on the new tag, built, through ENGINE-DEFAULT's gate). Old engine folders go with their `-phone` folder
+(`cleanupEngines`). A phone build that exits with an error before it ran at all (no `[BarDroidSim]` line in the
+infolog: a binary this phone cannot run) is set aside (`.bardroid-phone-failed`, launch-bar.sh): the official engine
+from the next start, until the APK brings another build. One that ran is proven (`.bardroid-phone-ok`).
 
 Code: `Updater.java` (new), called from `GameService.play()` / `install()`; state under `files/update/`.
 
@@ -87,7 +99,7 @@ an old package is just restoring its `versions.gz`.
     the engine goes back to the last good version, the good `versions.gz` files are restored, and the game starts once
     more right away on the old set (same X server and game screen). Logged as an error.
   - pending and not failed fast → the set becomes the last good set; engine folders other than the last good and the
-    one before it are deleted.
+    one before it are deleted (each with its `-phone` folder).
   - not pending → nothing changes (the "lobby failed fast → open the launcher" rule still applies, once: below).
 - When the player pressed Stop or swiped the game away (`Updater.closedByPlayer`): a pending set that ran 120 s or
   showed a game frame becomes the last good set; a shorter one is judged at the next start. (Before 2026-11-08 a set

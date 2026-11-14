@@ -1,6 +1,7 @@
 # How BAR Droid works
 
-BAR Droid runs Beyond All Reason's official, unmodified Recoil engine (the arm64 Linux build) on an Android phone,
+BAR Droid runs Beyond All Reason's Recoil engine (the arm64 Linux build, at the version BAR's servers run: by default
+the app's phone build of it, else BAR's official one; [ENGINE-DEFAULT.md](ENGINE-DEFAULT.md)) on an Android phone,
 without root. The app is a small Android program around four borrowed pieces: a Debian container, an X server, a
 Mesa GPU driver and BAR itself. This page is the map; [HISTORY.md](HISTORY.md) has the measurements and decisions
 behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's settings.
@@ -10,7 +11,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
  ┌──────────────────────────────┐                ┌────────────────────────────────────────┐
  │ LauncherActivity  Installer  │  starts        │ launch-bar.sh: GPU env, Android layer  │
  │ GameService (foreground)     │───────────────▶│   over BAR's settings, then            │
- │ GameActivity: shows X screen │                │ spring (Recoil engine, unmodified)     │
+ │ GameActivity: shows X screen │                │ spring (Recoil engine, phone build)    │
  │   RtsTouch, ControllerBridge │◀── files ─────▶│   LuaUI widgets bardroid_*.lua         │
  │   AudioPump ◀── FIFO ────────│◀───────────────│   OpenAL Soft wave writer              │
  │ XServer (Termux:X11 lorie)   │◀── X11 ────────│   SDL2 window, OpenGL via Mesa         │

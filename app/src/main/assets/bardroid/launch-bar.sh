@@ -580,8 +580,35 @@ elif [ -f "$SPLASH_LINE" ]; then
   cat "$SPLASH_LINE" >> "$BAR/springsettings.cfg"
   rm -f "$SPLASH_LINE"
 fi
+# The phone engine (docs/ENGINE-DEFAULT.md; Kailil, 2026-11-13: "1. You're recommendation 2. Inside the apk 3. Yes"):
+# the engine branch's build of this engine version, carried in the APK and set up beside BAR's official one
+# (Installer.installPhoneEngine: its spring, the official folder's other files linked). It loads the app's widgets as
+# the game's (BarDroidGameWidgetsDir: the touch dock, the pad, presets and the phone Settings in every game, whatever a
+# host allows user widgets) and the phone versions of BAR's costliest Lua, both unsynced; its simulation rewrite runs in
+# skirmishes and replays only, stock code online (the engine's BarDroidSimAllowed). The launcher's "Phone engine" off
+# (BARDROID_PHONE_ENGINE=0): BAR's official engine, the app's widgets as user widgets. A build that failed to run at all
+# waits until the app brings another (.bardroid-phone-failed). dev-env.sh, read next, may still name another engine.
+PHONE_ENGINE="$ENGINE-phone"
+PHONE_BUILD=$(head -n 1 "$PHONE_ENGINE/BUILD.txt" 2>/dev/null)
+PHONE_FIRST=0
+if [ "${BARDROID_PHONE_ENGINE:-1}" != 1 ]; then
+  log "BAR's official engine $ENGINE_VER (the launcher's Phone engine is off)"
+elif [ ! -x "$PHONE_ENGINE/spring" ] || [ -z "$PHONE_BUILD" ]; then
+  log "BAR's official engine $ENGINE_VER (this app has no phone build of it)"
+elif [ "$(cat "$BAR/.bardroid-phone-failed" 2>/dev/null)" = "$PHONE_BUILD" ]; then
+  log "!!! phone engine: $PHONE_BUILD could not run on this phone; BAR's official engine until the app brings another build"
+else
+  ENGINE="$PHONE_ENGINE"
+  [ "$(cat "$BAR/.bardroid-phone-ok" 2>/dev/null)" = "$PHONE_BUILD" ] || PHONE_FIRST=1
+  log "phone engine: $PHONE_BUILD$([ "$PHONE_FIRST" = 1 ] && echo ' (its first start)')"
+fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
+# (the phone engine's defaults, unless dev-env.sh set its own)
+if [ "$ENGINE" = "$PHONE_ENGINE" ]; then
+  BARDROID_GAME_WIDGETS=${BARDROID_GAME_WIDGETS:-1}
+  BARDROID_PHONE_LUA=${BARDROID_PHONE_LUA:-1}
+fi
 if [ -f "$BAR/dev-springsettings.cfg" ]; then
   sed -n 's/^ *\([A-Za-z0-9_]*\) *=.*/\1/p' "$BAR/dev-springsettings.cfg" > "$DEV_KEYS"
   : > "$DEV_ORIG"
@@ -678,6 +705,7 @@ widen=$!
 
 # 4. Launch the engine.
 cd "$ENGINE" || { log "engine dir missing: $ENGINE"; exit 11; }
+ENGINE_STARTED=$(date +%s)
 rm -f "$BAR/infolog.txt"
 case "$MODE" in
   skirmish)
@@ -781,6 +809,17 @@ case "$MODE" in
 esac
 log "spring exited with $rc"
 kill "$widen" 2>/dev/null
+# A phone build until it has run once: an error exit before it wrote its first lines (the engine's [BarDroidSim] line,
+# at once: a binary that does not run on this phone, a missing library) sets the build aside, BAR's official engine
+# from the next start on. An engine that ran proves it, whatever ended it later (a missing map's error exit too).
+if [ "$PHONE_FIRST" = 1 ] && [ "$ENGINE" = "$PHONE_ENGINE" ]; then
+  if grep -q '\[BarDroidSim\]' "$BAR/infolog.txt" 2>/dev/null; then
+    echo "$PHONE_BUILD" > "$BAR/.bardroid-phone-ok"
+  elif [ "$rc" -ne 0 ]; then
+    echo "$PHONE_BUILD" > "$BAR/.bardroid-phone-failed"
+    log "!!! phone engine: $PHONE_BUILD exited with $rc after $(( $(date +%s) - ENGINE_STARTED )) s without running; BAR's official engine from the next start"
+  fi
+fi
 # an error line of one of the app's widgets (the dev profiler's [simdraw] lines name every widget's timers, such as
 # W:VisibleUnitRemoved:BAR Droid touch: not errors; three false warnings in the launcher, 2026-11-05)
 widget_error() { grep -iE "$1" "$BAR/infolog.txt" 2>/dev/null | grep -v '\[simdraw\]' | grep -iE 'error|fail|removed' | head -n 1; }

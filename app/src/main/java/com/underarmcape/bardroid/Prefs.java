@@ -120,6 +120,11 @@ public final class Prefs {
     /** Each lobby/skirmish start first updates BAR like its PC launcher (Updater, docs/UPDATES.md). */
     public static boolean autoUpdate = true;
     /**
+     * Games start on the phone engine, the APK's build of BAR's engine version (Installer.installPhoneEngine,
+     * launch-bar.sh; docs/ENGINE-DEFAULT.md, Kailil 2026-11-13). Off: BAR's official engine.
+     */
+    public static boolean phoneEngine = true;
+    /**
      * The app stands in for BAR's PC launcher behind the lobby (LobbyBridge): replays, web links, resource downloads.
      * On by default since 2026-10-27: the lobby assumes its launcher (the Replays tab hung on "Loading" without it).
      * Saved as "lobbyBridgeOn": the old key held the old default (off) on every phone that saved settings.
@@ -205,7 +210,8 @@ public final class Prefs {
         // the pixels; the launcher shows them as 100% and a Save there writes 100)
         if (renderScale != 0 && (renderScale < 5 || renderScale > 100)) renderScale = 100;
         autoLobby = s.getBoolean("autoLobby", autoLobby);
-       autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
+        autoUpdate = s.getBoolean("autoUpdate", autoUpdate);
+        phoneEngine = s.getBoolean("phoneEngine", phoneEngine);
         lobbyBridge = s.getBoolean("lobbyBridgeOn", lobbyBridge);
         upscale = s.getBoolean("upscale", upscale);
         upscaleCompare = s.getBoolean("upscaleCompareOn", upscaleCompare);
@@ -246,6 +252,7 @@ public final class Prefs {
                 .putBoolean("autoLobby", autoLobby)
                 .remove("gamepadGame")   // (v0.8.5's game, out of the app since 2026-11-06)
                 .putBoolean("autoUpdate", autoUpdate)
+                .putBoolean("phoneEngine", phoneEngine)
                 .remove("lobbyBridge")   // the old default (off), see lobbyBridge
                 .putBoolean("lobbyBridgeOn", lobbyBridge)
                 .putBoolean("upscale", upscale)

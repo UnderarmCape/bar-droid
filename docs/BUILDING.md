@@ -29,6 +29,12 @@ Versions: AGP 9.3.1, Gradle 9.8.2 (wrapper), NDK 29.0.14206865, CMake 3.22.1, JD
 The prebuilt helpers in `app/src/main/jniLibs/` are committed; rebuild them with `tools/fetch-prebuilts.py <abi>`,
 `tools/build-proot.py <abi>` (after fetch-prebuilts) and `tools/build-virgl.py <abi>`.
 
+The phone engine (docs/ENGINE-DEFAULT.md) is not in the repository (42 MB a build): build the engine branch with the
+engine worktree's `tools\engine-sim\build-engine.ps1`, run its gate, then `tools\phone-engine-release.ps1 -Build
+<name>` puts it in `C:\Tools\BARANDROID\engine-sim\release\phone-engine\<version>`, and `bardroid.phoneEngine=<that
+release folder>` in `local.properties` makes arm64 builds carry it (17-19 MB compressed). Without the line the APK
+plays BAR's official engine only.
+
 ## Checks
 
 `powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1` runs every check that needs no phone (about

@@ -18,7 +18,8 @@ For people: README.md (players), docs/BUILDING.md, docs/ARCHITECTURE.md, CONTRIB
 something they describe changes.
 
 ## Architecture in one breath
-Unmodified official **Recoil engine** (amd64 build for the emulator, arm64 for phones) runs inside a **Debian trixie
+BAR's **Recoil engine** (amd64 official build for the emulator; on phones by default its phone build from the engine
+branch, carried in the APK, else the official one: docs/ENGINE-DEFAULT.md) runs inside a **Debian trixie
 proot container** (Termux's proot, built by `tools/build-proot.py`, bundled as `libproot.so`) and draws onto
 **Termux:X11's X server compiled into this APK** (`:lorie` module, GPL-3), shown by
 `GameActivity extends com.termux.x11.MainActivity`. OpenGL: on the emulator,
@@ -261,7 +262,16 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
   (NoDerivatives): it lives outside the repository (`C:\Tools\BARANDROID\personal\res`, local.properties
   `bardroid.personalRes`); public builds (`-PbardroidPublic`, or no such folder) get the project's own icon. An APK
   with his icon must not be published. The app is named "Beyond All Reason".
-- Keep the engine binary unmodified and pinned to the version BAR's servers run (launcher config: https://launcher-config.beyondallreason.dev/config.json).
+- The engine is pinned to the version BAR's servers run (launcher config: https://launcher-config.beyondallreason.dev/config.json):
+  BAR's official build, or its phone build (Kailil, 2026-11-13, docs/ENGINE-DEFAULT.md): the engine branch
+  (`hailmary-work/recoil-src`, `bardroid/sim`; bar-droid-engine docs/ENGINE-SIM.md) built for that version, put in
+  the APK by `tools/phone-engine-release.ps1` (local.properties `bardroid.phoneEngine`), set up as
+  `engine/recoil_<version>-phone` by `Installer.installPhoneEngine`, started by launch-bar.sh unless the launcher's
+  "Phone engine" is off (a build that cannot run on the phone, no `[BarDroidSim]` line before its error exit: the
+  official one). Its synced changes stay exact and
+  run online only once the rewrite has its replay count (the engine's `BarDroidSimAllowed`: off with a remote host or
+  other players). A new phone build ships only after the gate (ENGINE-DEFAULT stage 2: server replays with 0 desync
+  warnings, the phone tests); no APK carrying one goes out before the branch's source is public (NOTICE.md).
 - Upstream PRs to RecoilEngine/CircuitAI must reference an accepted issue and disclose AI assistance (their `AI_POLICY.md`).
 - Device data layout: `files/rootfs` (container), `files/bar` (engine write-dir, bound at `/root/bar`), `files/logs`, `Android/data/<pkg>/files/import`.
 - When something fails on device, first read `files/logs/launcher.log` (everything, including child process output) and `files/bar/infolog.txt`.

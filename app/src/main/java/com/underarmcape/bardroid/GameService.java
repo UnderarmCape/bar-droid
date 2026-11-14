@@ -345,6 +345,7 @@ public class GameService extends Service {
             env.put("GAMEPAD_GAME", "0");   // (launch-bar.sh: the v0.8.5 game is gone; its controller game branch never runs)
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
+            env.put("BARDROID_PHONE_ENGINE", Prefs.phoneEngine ? "1" : "0");   // (launch-bar.sh; the launcher's Phone engine)
             env.put("BARDROID_PORTRAIT", upright ? "1" : "0");   // (launch-bar.sh: BAR's loading tips off upright)
             env.put("BARDROID_LAND_DOCK", Prefs.landDock ? "1" : "0");   // (launch-bar.sh: the touch dock sideways)
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : String.valueOf(Prefs.fpsCap));   // libbardroid_pace.so; 0 = none

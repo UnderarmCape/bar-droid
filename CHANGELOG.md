@@ -9,6 +9,11 @@ measurements and decisions, is in [docs/HISTORY.md](docs/HISTORY.md); the effort
 The first version meant for other people's phones: everything since the first build.
 
 **Playing**
+- The phone engine, on by default (launcher "Phone engine"; off: BAR's official engine): the APK carries BAR's
+  engine version built from the project's engine branch. The touch dock, the pad and presets load as part of the game
+  in every game (a host's user-widget options no longer stop them), BAR's Settings laid out for the phone, phone
+  versions of BAR's costliest Lua. Its exact simulation rewrite (game speed +4-5 %) runs in skirmishes and replays;
+  online the engine keeps BAR's stock simulation code. A build the phone cannot run gives way to the official engine. The APK grows from ~20 to ~39 MB.
 - BAR's own lobby, online games, skirmish against AI and spectating on a Snapdragon phone (tested on a Galaxy Z
   Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / no cap in the launcher). The game draws at about 900
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to

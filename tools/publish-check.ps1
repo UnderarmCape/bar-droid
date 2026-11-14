@@ -144,6 +144,15 @@ try {
     $signed = ($certs | Select-String 'certificate SHA-256 digest: ([0-9a-f]+)') | ForEach-Object { $_.Matches[0].Groups[1].Value }
     if (-not $debugCert) { $certs = @("(could not read the debug key's certificate from app\bardroid-debug.jks)") + $certs }
     Result ($debugCert -and $signed -and -not ($signed -contains $debugCert)) "the APK is signed, and not with the public debug key" $certs
+    # the phone engine (GPL-2.0-or-later): its source public before the binary goes out (NOTICE.md, docs/ENGINE-DEFAULT.md)
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Apk).Path)
+    try { $eng = @($zip.Entries | Where-Object { $_.FullName -like 'assets/phone-engine/*/BUILD.txt' } | ForEach-Object { $_.FullName }) }
+    finally { $zip.Dispose() }
+    if ($eng.Count) {
+      $src = Select-String -Path (Join-Path $App "NOTICE.md") -Pattern '^Phone engine source: (https://\S+)' | Select-Object -First 1
+      Result ($null -ne $src) "the APK's phone engine has its public source in NOTICE.md (a line 'Phone engine source: https://...')" $eng
+    }
   }
 
   # who the commits name: public once pushed

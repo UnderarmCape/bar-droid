@@ -24,6 +24,16 @@ outside the repository and added only when `local.properties` names its folder (
 carrying it must not be published or shared without the BAR team's permission. Build anything that goes out with
 `-PbardroidPublic`.
 
+**The phone engine** (`assets/phone-engine/<version>/spring` in an arm64 APK, put there by
+`tools/phone-engine-release.ps1` from outside the repository; docs/ENGINE-DEFAULT.md): the Recoil engine
+(https://github.com/beyond-all-reason/RecoilEngine, GPL-2.0-or-later, by the Spring and Recoil developers) at the
+version BAR's servers run, with the BAR Droid engine branch's changes (`bardroid/sim`: the app's widgets as the game's,
+BAR's Lua in phone versions, memory and drawing settings for phones, the exact simulation rewrite). `BUILD.txt` beside
+it names the branch's commit. GPL-2.0 asks whoever passes the binary on to offer its complete source: the branch goes
+public as a fork of RecoilEngine together with the app (Kailil's push, 2026-11-13), and no APK carrying it goes out
+before that (`tools/publish-check.ps1 -Apk` fails until a line "Phone engine source: https://..." here names it). Without `bardroid.phoneEngine` in `local.properties` an APK has no phone engine and plays BAR's official
+one.
+
 **Controller game (`app/src/main/assets/gamepad/`):** Kailil's BAR Controller Support v0.8.5 (UnderarmCape, branch
 `controller/codex-v085-release` of the BAR game repository): new Lua widgets and modified copies of ten of BAR's
 interface widgets, GPL-2.0-or-later like BAR's own Lua code, and controller glyph atlases made for it

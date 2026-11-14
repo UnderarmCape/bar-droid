@@ -48,6 +48,28 @@ Three replays are good evidence and a small sample for code on the synced path t
 default, the simulation rewrite off in online games until its replay count is met (on in skirmish and replays); the
 binary inside the APK; the engine's source public with the app (his push).
 
+## Status (2026-11-13)
+
+- **Engine: the rewrite off online** (engine branch 869988d, 528c6a5, bar-droid-engine docs/ENGINE-SIM.md "The rewrite
+  off online"): `BarDroidSimAllowed` in `Game.cpp`; every switch of the rewrite reads 0 (stock code) with a remote host,
+  with more than one player on a local host, or before a game's setup has arrived; as set in the menu, replays and
+  one-player games. `BarDroidSimOnline = 1` turns it on online for tests. The reason is in the infolog
+  (`[BarDroidSim]`).
+- **The first phone build:** `phone-2026.07.04-528c6a5` (gcc-combined: Arm GNU 13.2, `-O3 -march=armv8.2-a
+  -mtune=cortex-x3`, the PGO profile, as gcc-all4 which the Fold7 has played since 2026-11-07), made into the release
+  folder by `tools/phone-engine-release.ps1`.
+- **Into the app** (stage 3): build.gradle carries it as assets when `local.properties` names
+  `bardroid.phoneEngine` (the APK 19 -> 39 MB); `Installer.installPhoneEngine` sets up `engine/recoil_<ver>-phone`
+  at every start once the official engine is there (spring copied when BUILD.txt changed, the rest linked);
+  launch-bar.sh starts it with the app's widgets as the game's and the phone Lua unless the launcher's "Phone engine"
+  is off, and sets a build aside that exits with an error before it ran at all (no `[BarDroidSim]` line: a binary the
+  phone cannot run); `Updater.cleanupEngines` removes a
+  `-phone` folder with its engine. `tools/publish-check.ps1 -Apk` fails an APK carrying it until NOTICE.md names the
+  public source.
+- Not yet defaults: the Fold7's own engine settings (`dev-springsettings.cfg`: model simplification, texture and
+  projectile atlas sizes, the ASTC model textures made on the laptop, deferred swap, ...). They stay Kailil's until
+  each is checked as a default for every phone (the ASTC folder would have to ship too).
+
 ## Stages
 
 1. **A release build of the phone engine.** `tools/engine-sim/build-engine.ps1` from the tag BAR's servers run

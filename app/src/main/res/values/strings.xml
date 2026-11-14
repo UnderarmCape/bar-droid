@@ -48,6 +48,7 @@
     <string name="cb_llvmpipe">Render on the CPU (llvmpipe) instead of the GPU (virgl)\nSlow, for comparison</string>
     <string name="cb_compat45">Force OpenGL 4.5 compatibility profile\nMesa reports OpenGL 4.5 whatever the driver offers; only to test a driver that reports less (MESA_GL_VERSION_OVERRIDE)</string>
     <string name="cb_auto_update">Update BAR at every start\nLike BAR\'s PC launcher: engine, game, lobby; back to the last working version if an update fails to start. Off: only the Install / Update button updates</string>
+    <string name="cb_phone_engine">Phone engine\nBAR\'s engine built for phones: the touch and pad controls in every game, the phone Settings, faster skirmishes and replays. Off: BAR\'s official engine</string>
     <string name="cb_auto_lobby">Open the lobby when the app starts\nLong-press the app icon → Launcher for this screen</string>
     <string name="shortcut_launcher">Launcher</string>
     <string name="shortcut_launcher_long">Launcher and settings</string>

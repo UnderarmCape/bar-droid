@@ -466,6 +466,8 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
         String branch = engineBranchBuild();
         if (branch != null) sb.append(" (BAR Droid build ").append(branch).append(')');
+        else if (Prefs.phoneEngine && new File(new Paths(this).bar, "engine/recoil_" + Prefs.engineVersion + "-phone/spring").isFile())
+            sb.append(" (phone build)");   // (Installer.installPhoneEngine; launch-bar.sh starts it)
         // (the GPU driver by its name, not the setting's word: "kgsl" alone meant nothing to a player; both are Mesa's,
         // which the Mesa setting names: "(Mesa)" stood alone on a line of its own sideways)
         String driver = "kgsl".equals(Prefs.mesaDriver) ? "GPU driver Freedreno"
@@ -601,6 +603,7 @@ public class LauncherActivity extends AppCompatActivity {
         ((CheckBox) findViewById(R.id.cbLobbyBridge)).setChecked(Prefs.lobbyBridge);
         ((CheckBox) findViewById(R.id.cbAutoLobby)).setChecked(Prefs.autoLobby);
         ((CheckBox) findViewById(R.id.cbAutoUpdate)).setChecked(Prefs.autoUpdate);
+        ((CheckBox) findViewById(R.id.cbPhoneEngine)).setChecked(Prefs.phoneEngine);
         ((CheckBox) findViewById(R.id.cbNoSeccomp)).setChecked(Prefs.noSeccomp);
         ((CheckBox) findViewById(R.id.cbVerboseX)).setChecked(Prefs.verboseX);
     }
@@ -647,6 +650,7 @@ public class LauncherActivity extends AppCompatActivity {
         Prefs.lobbyBridge = ((CheckBox) findViewById(R.id.cbLobbyBridge)).isChecked();
         Prefs.autoLobby = ((CheckBox) findViewById(R.id.cbAutoLobby)).isChecked();
         Prefs.autoUpdate = ((CheckBox) findViewById(R.id.cbAutoUpdate)).isChecked();
+        Prefs.phoneEngine = ((CheckBox) findViewById(R.id.cbPhoneEngine)).isChecked();
         Prefs.noSeccomp = ((CheckBox) findViewById(R.id.cbNoSeccomp)).isChecked();
         Prefs.verboseX = ((CheckBox) findViewById(R.id.cbVerboseX)).isChecked();
         Prefs.save(this);

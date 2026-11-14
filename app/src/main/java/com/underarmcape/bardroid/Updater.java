@@ -421,7 +421,10 @@ public final class Updater {
         File[] dirs = new File(p.bar, "engine").listFiles();
         if (dirs != null) for (File d : dirs) {
             String n = d.getName();
-            if (!n.startsWith("recoil_") || keep.contains(n.substring("recoil_".length()))) continue;
+            if (!n.startsWith("recoil_")) continue;
+            String v = n.substring("recoil_".length());
+            if (v.endsWith("-phone")) v = v.substring(0, v.length() - "-phone".length());   // (Installer.installPhoneEngine's, with its official engine)
+            if (keep.contains(v)) continue;
             Log.i("update", "removing old engine " + n);
             removeTree(d);
             //noinspection ResultOfMethodCallIgnored
