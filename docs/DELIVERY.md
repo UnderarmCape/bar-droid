@@ -1720,6 +1720,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Left: players get it only with the
       engine branch; the app ships BAR's official engine (shipping the branch is its own step).
+- [x] **Phone Settings upright: names cut short, dropdowns and the strip checked** (hardening, 2026-11-13, dev phone on
+      gcc-all4): Water quality's dropdown opened under its row and Bloom's tap showed its description in the strip;
+      "Build menu  bottom positi..", "Windows hide the interfa.." were cut: upright the controls' column is 85 % of
+      BAR's, the names whole and "Window 936 x 2013" still in its dropdown. remake-check: all five PASS.
 - [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
       between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
       send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that

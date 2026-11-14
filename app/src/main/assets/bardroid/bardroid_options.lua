@@ -914,6 +914,9 @@ function view.setLayout()
 	layout.sidebarTop = row2Bottom - metrics.inset
 	layout.listX1 = a[1]
 	layout.listTop = layout.sidebarTop - 3 * metrics.groupHeight - metrics.inset * 2
+	-- (the controls' column narrower, the names wider: "Build menu  bottom positi..", "Windows hide the interfa.." were
+	-- cut short, dev phone 2026-11-13; "Window 936 x 2013" still fits its dropdown)
+	metrics.controlW = math.floor(tuning.controlsWidth * 0.85 * s)
 end
 
 -- A family is folded or opened by hand, or all open under "unfold all". Otherwise it starts folded
