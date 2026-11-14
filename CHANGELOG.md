@@ -140,8 +140,9 @@ The first version meant for other people's phones: everything since the first bu
   BAR's official engine BAR's own Settings stays.
 - Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit, with PING
   beside them (tap, then the map; held, its words; tapped twice, CHAT).
-- Units that build nothing picked: their types in one row across the dock's top, the orders under them across the
-  whole dock, four wide (every order in view). The D-Gun button is red.
+- Units that build nothing picked: the orders that would need scrolling move to the empty left side under their
+  types (the types shrunk to an order's height for the room); the orders on the right stay where they always are.
+  The D-Gun button is red.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with

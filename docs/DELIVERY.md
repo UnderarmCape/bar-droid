@@ -1125,6 +1125,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       CHAT not tried (no live-mic tests). (3) "Make the dgun button RED but still fit the ui look and feel": the
       D-Gun order drawn in red in the gold's shades. Dev phone: the commander picked, D-Gun red. dock-phone-test ALL
       PASS.
+- [x] **The orders' overflow, the right side fixed (Kailil, 2026-11-13, later)**: of the four-wide layout above: "i
+      want the orders that originally go on the right side to always stay there. so we can build muscle memory. only
+      orders that arent seen on the first page without scrolling down, move over into the overflow left side of the
+      UI"; then "shrink them [the unit icons] to be as tall as the orders so two rows can fit under it instead of 1
+      row". Now the halves keep their layout; with a pick's types on the left (units that build nothing, the unit
+      lists) the orders past the right's first page go to the left under the types, two wide, the same size
+      (SP.overItems, half "over": drawn, tapped, live on the first tap), what does not fit there stays at the right's
+      end; and while orders spill over the type tiles are an order's height, more a row (SP.smallTypes; the ALL /
+      MULTI tile then "ALL n" over "MULTI"). Dev phone: 10 Pawns and 4 Rockets, the right Fight .. Attack as with any
+      pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
+      (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
+      tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
 - [x] **The lobby's map picker upright** (found 2026-11-13, dev phone, a skirmish room's Change Map): Chobby's
       gui_maplist_panel.lua lays it out for a wide window: its caption ran under Manual Download, and the picked map's
       details, beside the picture in a third of the width, ran on over Preview and Select Map. bardroid_lobby_touch.lua

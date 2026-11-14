@@ -525,21 +525,6 @@ local function layout()
 	L.btnW = floor((rw - gap) / 2)
 	L.rightRows = max(3, floor((gridH + gap) / (floor(tile * 0.55) + gap))) -- (about 6 mm tall on a phone: thumbs)
 	L.btnH = floor((gridH + gap) / L.rightRows) - gap
-	-- A pick's few types: one row of them across the top, the orders under them the dock's whole width, four wide, as
-	-- big as before (Kailil, 2026-11-13, of the empty half under one or a few types: "orders allow more orders to fill
-	-- the space"); SP.wide, set as the dock's contents are made (refreshNow); three grid rows or more only (two: the
-	-- orders' rows would be shorter than the half's)
-	L.gridRows, L.wideCols = rows, max(1, floor((vsx - 2 * pad + gap) / (tile + gap)))
-	if SP.wide and rows >= 3 and not SP.laidOut then
-		local top = L.left[4]
-		L.left = { pad, top - tile, pad + L.wideCols * (tile + gap) - gap, top }
-		L.leftCols, L.leftRows, L.rightCols = L.wideCols, 1, 4
-		L.right = { pad, L.right[2], vsx - pad, top - tile - gap }
-		local h = L.right[4] - L.right[2]
-		L.btnW = floor((L.right[3] - L.right[1] - 3 * gap) / 4)
-		L.rightRows = max(3, floor((h + gap) / (floor(tile * 0.55) + gap)))
-		L.btnH = floor((h + gap) / L.rightRows) - gap
-	end
 	-- HIDE (spectating): the dock folded to a SHOW button at the bottom's middle, the game on the whole screen
 	if SP.hidden then
 		local bw, bh = floor(vsx * 0.28), max(floor(vsy * 0.042), resH + 2 * pad)
@@ -1701,13 +1686,6 @@ function refreshNow()
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
-		-- (a few types picked, no build options: their row on top, the orders across the dock, layout's SP.wide)
-		local wide = not L.land and not SP.on() and (lk == "seltypes" or lk:sub(1, 6) == "types:")
-			and #newLeft <= (L.wideCols or 0) and (L.gridRows or 0) >= 3
-		if wide ~= (SP.wide or false) then
-			SP.wide = wide
-			layout()
-		end
 		if mobilePicked or selectedFactory() then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
 			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE; a factory's
 			-- FIGHT, MOVE and PATROL are where its new units go, the same size, and its REPEAT across after them: Kailil,
@@ -1791,9 +1769,45 @@ function refreshNow()
 	if SP.on() then -- (spectating: the spectator's grid over the whole dock, SP.items; or TEAMS)
 		newLeft, lk, newRight, rk = {}, "spec", SP.items(), "home"
 	end
-	if rk ~= "orders" and SP.wide then -- (no orders: the halves as they were)
-		SP.wide = false
-		layout()
+	-- A pick's few types on the left (units that build nothing, the unit lists): the orders past the right half's first
+	-- page in the left half's empty place under the types, two wide, the same size; the right half as it always is
+	-- (Kailil, 2026-11-13: "i want the orders that originally go on the right side to always stay there. so we can build
+	-- muscle memory. only orders that arent seen on the first page without scrolling down, move over into the overflow
+	-- left side of the UI"; first "orders allow more orders to fill the space"). More than that place holds: at the
+	-- right's end, as before. Upright only (sideways the halves are tabs).
+	-- (with orders spilling over, the types as tall as an order, more of them a row, and more rows of orders under them:
+	-- Kailil, 2026-11-13, "shrink them to be as tall as the orders so two rows can fit under it instead of 1 row")
+	SP.overRect, SP.overItems, SP.smallTypes = nil, {}, nil
+	if rk == "orders" and not L.land and not SP.on() and (lk == "seltypes" or lk:sub(1, 6) == "types:") then
+		local ts = L.btnH
+		local tcols = max(1, floor((L.left[3] - L.left[1] + L.gap) / (ts + L.gap)))
+		local top = L.left[4] - math.ceil(#newLeft / tcols) * (ts + L.gap)
+		local rows = floor((top - L.left[2] + L.gap) / (L.btnH + L.gap))
+		if rows >= 1 then
+			local cells = pack(newRight, L.rightCols or 2)
+			local keep, past = {}, {}
+			for i, it in ipairs(newRight) do
+				local c = cells[i]
+				if c.row + c.h <= (L.rightRows or 3) then
+					keep[#keep + 1] = it
+				else
+					past[#past + 1] = it
+				end
+			end
+			local oc = pack(past, 2)
+			for i, it in ipairs(past) do
+				if oc[i].row + oc[i].h <= rows then
+					SP.overItems[#SP.overItems + 1] = it
+				else
+					keep[#keep + 1] = it
+				end
+			end
+			if #SP.overItems > 0 then
+				newRight = keep
+				SP.overRect = { L.left[1], top - rows * (L.btnH + L.gap) + L.gap, L.left[3], top }
+				SP.smallTypes = { cols = tcols, size = ts }
+			end
+		end
 	end
 	if L.land and not L.dgun then -- sideways, one thumb: the panel, its tabs and the tab shown (layout)
 		-- (nothing picked: the map slot alone until a tap opens the home buttons; both sides with something: BUILD | ORDERS
@@ -1817,7 +1831,9 @@ function refreshNow()
 	leftItems, rightItems = newLeft, newRight
 	markDirty()
 	local leftRowsN, rightRowsN
-	cellsOf.left, leftRowsN = pack(leftItems, L.leftCols or 3)
+	cellsOf.left, leftRowsN = pack(leftItems, SP.smallTypes and SP.smallTypes.cols or L.leftCols or 3)
+	cellsOf.over = pack(SP.overItems or {}, 2) -- (the overflow under a pick's types: never scrolls)
+	SP.overScroll = SP.overScroll or snapNew()
 	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS
 		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and SP.shapeRow()) and 4
 		or L.rightCols or 2)
@@ -2252,7 +2268,14 @@ end
 -- a half's geometry: its rect, scroll, items, columns, cell width and height
 local function half(side)
 	if side == "left" then
+		local st = SP.smallTypes -- (a pick's types as tall as an order while orders spill over: refreshNow)
+		if st then
+			return L.left, leftScroll, leftItems, st.cols, st.size, st.size
+		end
 		return L.left, leftScroll, leftItems, L.leftCols or 3, L.tile, L.tile
+	end
+	if side == "over" then -- (the orders past the right's first page, under a pick's types: refreshNow)
+		return SP.overRect or { 0, 0, -1, -1 }, SP.overScroll, SP.overItems or {}, 2, L.btnW, L.btnH
 	end
 	if rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets" then -- (the whole grid)
 		local r = homeRect()
@@ -2285,7 +2308,7 @@ local function itemAt(side, x, y)
 	if not inRect(x, y, r) then
 		return nil
 	end
-	if side == "right" then -- (packed: the cell that holds the point)
+	if side ~= "left" then -- (packed: the cell that holds the point; the right half and its overflow)
 		for i, it in ipairs(items) do
 			local cr = cellRect(side, i)
 			if cr and inRect(x, y, cr) then
@@ -2475,11 +2498,16 @@ local function drawTile(item, r)
 		-- (none: dimmed, as FACTORIES with no factory; a lit "ALL 0" read as a list of something)
 		local none = item.count == 0
 		local mid, dim = r[2] + floor(h / 2), "\255\120\120\120"
-		textIn("ALL", r[1], mid + h * 0.17, r[3], r[4] - h * 0.02, h * 0.2,
-			(none or multi) and dim or "\255\255\255\255", bold)
-		textIn(tostring(item.count), r[1], mid, r[3], mid + h * 0.19, h * 0.14,
-			(none or multi) and dim or "\255\255\200\064")
-		textIn("MULTI", r[1], r[2], r[3], mid, h * 0.2, multi and "\255\255\255\255" or dim, bold)
+		if SP.smallTypes then -- (as short as an order: ALL and its count on one line, MULTI under it)
+			textIn("ALL " .. item.count, r[1], mid, r[3], r[4], h * 0.3, (none or multi) and dim or "\255\255\255\255", bold)
+			textIn("MULTI", r[1], r[2], r[3], mid, h * 0.3, multi and "\255\255\255\255" or dim, bold)
+		else
+			textIn("ALL", r[1], mid + h * 0.17, r[3], r[4] - h * 0.02, h * 0.2,
+				(none or multi) and dim or "\255\255\255\255", bold)
+			textIn(tostring(item.count), r[1], mid, r[3], mid + h * 0.19, h * 0.14,
+				(none or multi) and dim or "\255\255\200\064")
+			textIn("MULTI", r[1], r[2], r[3], mid, h * 0.2, multi and "\255\255\255\255" or dim, bold)
+		end
 		local S, lw = WG.BarDroidStyle, max(2, floor(w * 0.04))
 		local half = multi and { r[1], r[2], r[3], mid } or { r[1], mid, r[3], r[4] }
 		if S and (multi or allPicked) then
@@ -2705,7 +2733,7 @@ local function drawHalf(side)
 	-- (the orders of a row in one size, the one its longest word fits at, on one line: on the unfolded Fold7 sideways
 	-- "Fire at will" stood shrunk beside "Repeat Off" broken over two larger lines, dev phone screenshot 2026-11-13)
 	local rowCap = {}
-	if side == "right" and font then
+	if side ~= "left" and font then
 		for i, item in ipairs(items) do
 			local rect = item.kind == "order" and item.label and cellRect(side, i)
 			if rect then
@@ -3911,6 +3939,9 @@ local function drawStill()
 	end
 	drawHalf("left")
 	drawHalf("right")
+	if SP.overRect then -- (the orders past the right's first page, under a pick's types)
+		drawHalf("over")
+	end
 	if L.thumb then
 		SP.drawThumb()
 	end
@@ -4217,6 +4248,7 @@ function widget:MousePress(x, y, btn)
 	end
 	local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets"
 	local side = wide and inRect(x, y, homeRect()) and "right" -- (the whole grid: both halves)
+		or SP.overRect and inRect(x, y, SP.overRect) and "over" -- (the orders' overflow under a pick's types)
 		or inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
 	if side == "right" and rightKind == "panel" then -- a slider: set where pressed, then follows the finger
 		for i, item in ipairs(rightItems) do

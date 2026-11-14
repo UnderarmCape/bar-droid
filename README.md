@@ -95,7 +95,8 @@ to turn), triple tap and hold to tilt. The build grid, the orders, QUEUE and INS
 and energy and the groups row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
 open): the build grid on the left, the picked
 units' orders on the right (Fight, PRESETS, Patrol first and largest, the D-Gun red; a state's lights as BAR's, red
-left, green right; units that build nothing: their types in a row on top and the orders across the dock under them),
+left, green right; units that build nothing: the orders that would need scrolling go under their types on the left,
+the types as small as an order, the right side as always),
 the selection row as QUEUE and INSERT (both on: Shift and Alt held; off once nothing is picked), and the
 metal and energy bars on top. With nothing picked it shows LOCAL UNITS and ALL UNITS (every combat unit on screen,
 or all of them, picked and listed by type beside their orders; the list's first tile toggles ALL / MULTI: with MULTI
