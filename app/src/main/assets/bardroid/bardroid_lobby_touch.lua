@@ -1172,6 +1172,12 @@ local function uprightNotes()
 		end
 		return out
 	end
+	-- (one "Download Failed" note at a time, whichever map: with no network every map the lobby asks for fails in turn,
+	-- three notes stacked over the map picker's caption and picture, dev phone 2026-11-13; the rest as repeats)
+	local function noteKey(n)
+		local key = table.concat(words(n.window, {}, 0), "|")
+		return key:find("^Download Failed") and "Download Failed" or key
+	end
 	C._Realign = function(self, sorted)
 		local col = upright.on and upright.side and real(upright.grid)
 		if col and not col.disposed then
@@ -1180,7 +1186,7 @@ local function uprightNotes()
 			-- the Skirmish screen's Advanced, dev phone 2026-11-12; at the top a screen's title is hidden a few seconds)
 			local seen, row = {}, 0
 			for _, n in pairs(sorted) do
-				local key = table.concat(words(n.window, {}, 0), "|")
+				local key = noteKey(n)
 				local win = n.window
 				if key ~= "" and seen[key] then
 					win:SetPos(nil, -4000)
@@ -1209,7 +1215,7 @@ local function uprightNotes()
 		end
 		local seen, row = {}, 0
 		for _, n in pairs(sorted) do
-			local key = table.concat(words(n.window, {}, 0), "|")
+			local key = noteKey(n)
 			if key ~= "" and seen[key] then
 				if n.window.y ~= -4000 then
 					Spring.Echo("[bardroid-lobby] a repeated note out of sight: " .. key:sub(1, 60)) -- (tools)

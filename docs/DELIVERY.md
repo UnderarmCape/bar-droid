@@ -1137,6 +1137,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
       (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
       tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
+- [x] **One "Download Failed" note at a time** (hardening, 2026-11-13, dev phone with no network): pad-test -Share
+      ALL PASS first. With no network every map the lobby asks for fails in turn, and two or three "Download Failed"
+      notes stood stacked over the map picker's caption and picture. The notes' realign (bardroid_lobby_touch.lua
+      noteKey) counts any "Download Failed" as a repeat of the one shown: the rest time out out of sight, as repeats
+      already did. Dev phone: the skirmish room offline, one note, "a repeated note out of sight: Download Failed" for
+      the others; lobby-phone-test ALL PASS.
 - [x] **Phone tests and the sideways column** (hardening, 2026-11-13): pad-test and pace-test ALL PASS on the day's
       build; the sideways lobby's column made again on its page 2 (a screen size change) showed page 2 alone, the
       negative-place fix holding for the column's y too. Polish: the phone Settings sideways a third wider than BAR's
