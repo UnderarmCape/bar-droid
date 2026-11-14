@@ -466,8 +466,15 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append("BAR Droid ").append(BuildConfig.VERSION_NAME).append(", engine ").append(Prefs.engineVersion);
         String branch = engineBranchBuild();
         if (branch != null) sb.append(" (BAR Droid build ").append(branch).append(')');
-        else if (Prefs.phoneEngine && new File(new Paths(this).bar, "engine/recoil_" + Prefs.engineVersion + "-phone/spring").isFile())
-            sb.append(" (phone build)");   // (Installer.installPhoneEngine; launch-bar.sh starts it)
+        else if (Prefs.phoneEngine) {   // (Installer.installPhoneEngine; launch-bar.sh starts it, or BAR's official one
+            // after the build could not run: its name in .bardroid-phone-failed)
+            File bar = new Paths(this).bar, phone = new File(bar, "engine/recoil_" + Prefs.engineVersion + "-phone");
+            if (new File(phone, "spring").isFile()) {
+                String build = firstLine(new File(phone, "BUILD.txt"));
+                sb.append(build != null && build.equals(firstLine(new File(bar, ".bardroid-phone-failed")))
+                        ? " (official: the phone build could not run here)" : " (phone build)");
+            }
+        }
         // (the GPU driver by its name, not the setting's word: "kgsl" alone meant nothing to a player; both are Mesa's,
         // which the Mesa setting names: "(Mesa)" stood alone on a line of its own sideways)
         String driver = "kgsl".equals(Prefs.mesaDriver) ? "GPU driver Freedreno"
@@ -509,6 +516,17 @@ public class LauncherActivity extends AppCompatActivity {
      * files/bar/dev-env.sh names it (ENGINE="$BAR/engine-sim/gcc-fold"), else null. The launcher said BAR's version
      * while the Fold7 ran the 30 fps build (2026-11-05).
      */
+    /** A small text file's first line, trimmed; null when there is none. */
+    private static String firstLine(File f) {
+        if (!f.isFile()) return null;
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
+            String l = r.readLine();
+            return l == null ? null : l.trim();
+        } catch (java.io.IOException e) {
+            return null;
+        }
+    }
+
     private String engineBranchBuild() {
         java.io.File f = new java.io.File(new Paths(this).bar, "dev-env.sh");
         if (!f.isFile()) return null;
