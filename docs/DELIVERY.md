@@ -1762,6 +1762,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
+- [x] **Pregame upright: two thirds sky** (hardening, 2026-11-14, dev phone, a lobby skirmish on Avalanche on the phone
+      engine): BAR's start camera looked at the whole map from far off, the start box small by the dock. The dock now
+      puts my start box in the view above it once, a second into the pregame of games where a start spot is picked
+      (`Game.startPosType` 2), as far out as the box needs (5650e767); random and fixed starts as before (the first
+      version zoomed out to the whole map there: dock-phone-test caught it). Launcher polish: the summary's engine line
+      says "(official: the phone build could not run here)" once launch-bar.sh set a build aside, "(phone build)" else.
 - [x] **Kailil, 2026-11-13, the phone engine as the default**: "yes plan it" (docs/ENGINE-DEFAULT.md), then "1.
       You're recommendation 2. Inside the apk 3. Yes". Engine: `BarDroidSimAllowed` keeps the simulation rewrite to
       skirmishes and replays, stock code online (869988d, 528c6a5). App (f8d22d45, 94cb6f00): the APK carries
