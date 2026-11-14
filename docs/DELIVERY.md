@@ -1669,6 +1669,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       orderList, knownWidgets, EnableWidget ...), and the phone's patcher replaces one place each. The route that works
       in the app: the app's own upright Settings screen on BAR's options API (WG.options: getOptionsList,
       getOptionValue, applyOptionValue, toggle), BAR's widget running hidden for the switches. His call.
+      Kailil, 2026-11-13: option 1, then "Fully rebuild the settings menu to fit mobile. Our vertical and horizontal
+      aspect ratio." Looked into before building (BAR test-31836): WG.options gives ids and values only (no names,
+      types, ranges or choices: those would come from parsing gui_options.lua); its applyOptionValue passes
+      `tonumber(value)`, so a switch (261 of BAR's 470 settings) cannot be turned on or off through it, and the 69 that
+      turn a widget on or off are refused ("denied by sandboxing"); `/option` is a privileged command BAR's sandbox
+      drops from user widgets, deliberately; LuaMenu (the lobby layer, which runs during a game) has no
+      Spring.SendCommands (dev phone: "attempt to call field 'SendCommands'"). So an app screen can only move sliders
+      and lists. The routes left: the app typing `/option` into BAR's chat for the switches (the player's own input
+      path, but any user widget could then ask the app to change settings: it undoes BAR's sandbox for options),
+      the patched engine's game widgets (BARDROID_GAME_WIDGETS: a phone-laid-out copy of gui_options with the real
+      handler), or BAR's own gui_options laid out for phones (a patch for BAR, as bar-windows-upright.patch).
+      Asked Kailil which.
 - [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
       between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
       send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that
