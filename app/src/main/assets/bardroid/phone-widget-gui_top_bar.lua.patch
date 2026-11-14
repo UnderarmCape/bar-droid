@@ -1,7 +1,12 @@
 BAR Droid phone version of BAR's Top Bar (luaui/widgets/gui_top_bar.lua): the resource bars drawn again every 0.15 s
 instead of 0.05 (into the bar's texture), the pointer and team checks every 0.1 s instead of 0.033, and the resource
 numbers read every 0.5 s instead of 0.25. In a late 16-player game the top bar cost 0.6-0.7 % of the dev phone's main
-thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
+thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). And the amount of each resource kept clear of its
+storage number (docs/upstream/bar-topbar-amount.patch, written for BAR: at the app's interface scale sideways a 4-digit
+amount ran into it, "1000" over "1000", most of a game), and drawn again after the overflow warning clears the
+storage number's area, which on a short bar reaches into the amount ("1" of "1000" stayed while the amount did not
+change: dev phone sideways, 2026-11-14), and the overflow banner's words inside the banner (docs/upstream/
+bar-topbar-warning-banner.patch: at the app's interface scale their tops were cut off at the screen's edge). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
 file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 
 @@@ find
@@ -22,4 +27,46 @@ file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 		timers.nextSlowUpdate = now + 0.25
 @@@ with
 		timers.nextSlowUpdate = now + 0.5 -- BAR Droid (phone): 0.25
+@@@ end
+
+@@@ find
+		resbarDrawinfo[res].textCurrent = {
+			short(r[res][1]),
+			barArea[1] + barWidth / 2,
+			barArea[2] + barHeight * 1.8,
+			(height / 2.5) * widgetScale,
+			"ocd",
+		}
+@@@ with
+		-- BAR Droid (phone; docs/upstream/bar-topbar-amount.patch): the amount centred on the bar, unless four digits
+		-- there would run into the storage number at the bar's right end; then just left of it
+		local currentSize, storageSize = (height / 2.5) * widgetScale, (height / 3.2) * widgetScale
+		local fourDigits = font2:GetTextWidth("8888")
+		local currentX = mathMin(barArea[1] + barWidth / 2,
+			barArea[3] - fourDigits * storageSize - storageSize * 0.5 - fourDigits * currentSize / 2)
+		currentX = mathMax(barArea[1] + fourDigits * currentSize / 2, currentX)
+		resbarDrawinfo[res].textCurrent = {
+			short(r[res][1]),
+			currentX,
+			barArea[2] + barHeight * 1.8,
+			currentSize,
+			"ocd",
+		}
+@@@ end
+
+@@@ find
+				cache.warningCleared[res] = true
+				scissorsCount = scissorsCount + 1
+@@@ with
+				cache.warningCleared[res] = true
+				-- BAR Droid (phone): the amount drawn again after this clear (on a short bar the cleared area reaches into the
+				-- amount, whose last digits stayed wiped while it did not change)
+				cache.lastDrawnValue[res] = ""
+				scissorsCount = scissorsCount + 1
+@@@ end
+
+@@@ find
+						local fontSize = (orgHeight * (1 + (ui_scale - 1) / 1.33) / 4) * widgetScale
+@@@ with
+						local fontSize = (orgHeight / 4) * widgetScale -- BAR Droid (phone; docs/upstream/bar-topbar-warning-banner.patch): widgetScale holds ui_scale, counted twice the text outgrew the banner
 @@@ end
