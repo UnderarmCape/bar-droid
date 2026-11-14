@@ -261,7 +261,7 @@ team_stats() {
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
   bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
-  bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar"
+  bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar bardroid_options"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"
@@ -588,6 +588,38 @@ if [ -f "$BAR/dev-springsettings.cfg" ]; then
   while read -r k; do [ -n "$k" ] && grep "^$k *=" "$BAR/springsettings.cfg" >> "$DEV_ORIG"; done < "$DEV_KEYS"
   cat "$BAR/dev-springsettings.cfg" >> "$BAR/springsettings.cfg" && log "appended dev-springsettings.cfg (until a start without it)"
 fi
+# The app's Settings: BAR's Options laid out for a phone, upright and sideways (bardroid_options.lua, tools/make-options.py;
+# Kailil, 2026-11-13: "Fully rebuild the settings menu to fit mobile", by "The engine rebuild/patch method"). Only with
+# the app's widgets as the game's (below): as a user widget it would lack the widget handler Options needs (BAR's
+# sandbox), so otherwise it waits in bardroid-parked and BAR's own Options runs. In BAR's place through its GetInfo
+# replaces; a copy BAR removed in the last game gives way to BAR's own for that BAR file, as the menu copies do.
+PARKED="$BAR/bardroid-parked"
+options_copy() {
+  w="$BAR/LuaUI/Widgets/bardroid_options.lua"
+  mkdir -p "$PARKED"
+  if [ -f "$w" ]; then rm -f "$PARKED/bardroid_options.lua"   # (a newer one from the app: that one)
+  elif [ -f "$PARKED/bardroid_options.lua" ]; then mv -f "$PARKED/bardroid_options.lua" "$w"; fi
+  [ -f "$w" ] || return
+  if [ "${BARDROID_GAME_WIDGETS:-0}" != 1 ]; then
+    mv -f "$w" "$PARKED/bardroid_options.lua"
+    widget_order "BAR Droid settings" ""
+    return
+  fi
+  copied=$(sed -n 's/^-- BARDROID_OPTIONS_FROM //p' "$w" 2>/dev/null)
+  bars=$(cat "$BAR/.bardroid-options" 2>/dev/null)
+  if [ -z "$copied" ] || copy_failed 'BAR Droid settings' "$BAR/.bardroid-options-failed" "$bars" "$w"; then
+    mv -f "$w" "$PARKED/bardroid_options.lua"
+    widget_order "BAR Droid settings" ""
+    layer_miss "settings: the app's copy (made from ${copied:-?}) failed on BAR's gui_options.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-options.py)"
+    return
+  fi
+  if [ "$copied" = "$bars" ]; then
+    log "settings: the app's copy of BAR's Options (gui_options.lua $copied), laid out for the phone"
+  else
+    layer_miss "settings: BAR's gui_options.lua is ${bars:-not found}, the app's copy was made from $copied and could not be made again: the old copy runs (tools/make-options.py)"
+  fi
+}
+options_copy
 if [ "${BARDROID_GAME_WIDGETS:-0}" = 1 ]; then   # (above: the app's widgets as the game's)
   app_widgets_to "$BAR/LuaUI/Widgets" "$GAME_WIDGETS"
   printf 'BarDroidGameWidgetsDir = bardroid-ui\n' >> "$BAR/springsettings.cfg"

@@ -1703,7 +1703,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       path, but any user widget could then ask the app to change settings: it undoes BAR's sandbox for options),
       the patched engine's game widgets (BARDROID_GAME_WIDGETS: a phone-laid-out copy of gui_options with the real
       handler), or BAR's own gui_options laid out for phones (a patch for BAR, as bar-windows-upright.patch).
-      Asked Kailil which.
+      Asked Kailil which: "The engine rebuild/patch method".
+- [x] **The phone Settings, on the engine branch (Kailil, 2026-11-13)**: `tools/make-options.py` makes
+      `bardroid_options.lua` from BAR's gui_options.lua (10 patches, each marked "BAR Droid:"): its own name, GetInfo
+      replaces "Options"; larger rows, tabs and words; upright the window the screen's width under the top bar to its
+      foot (scale by the width), a two-row header (title, search, a red close button; the two switches and the restart
+      note), BAR's tabs a grid three across over the full-width list; sideways BAR's layout as large as the screen
+      allows with the close button; nearly opaque (phones have no blur shader: the map and BAR's panels showed through);
+      BAR's Options' saved state taken over the first time (else the first time setup ran again). It runs only as a
+      game widget (the engine branch's BarDroidGameWidgetsDir: BAR's real widget handler); with BAR's official engine
+      launch-bar.sh parks it (`bardroid-parked`) and BAR's handler switches its own Options back on. Installer remakes it
+      on BAR updates (BAR_COPIES), remake-check and laptop-tests know it. Dev phone, gcc-all4 with
+      BARDROID_GAME_WIDGETS=1 (as the Fold7): "Not loading widget Options (replaced by BAR Droid settings)", "Loading
+      widget from mod: BAR Droid settings"; upright the tab grid and list, Snow switched on and off (its widget loaded
+      and removed: what user widgets cannot), the Interface tab, the close button (the dock back); sideways the window
+      at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
+      place and is not running", BAR's own. remake-check: all five copies PASS. Left: players get it only with the
+      engine branch; the app ships BAR's official engine (shipping the branch is its own step).
 - [x] **Kailil, 2026-11-12, the presets**: "the strafe command needs to have a each unit walk side and have a gap
       between them if the space allows it. All preset commands shoukd be able to be sent via a tap to do a quick order
       send. Or me draw a line at the site I want the formation to end and begin the repeat commands. The length of that

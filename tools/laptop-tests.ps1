@@ -104,7 +104,7 @@ if (Test-Path (Join-Path $gitUsr "sh.exe")) {
 # only, no BAR started.
 $py = Join-Path $TC "hosttools\python\python.exe"
 if (-not (Test-Path $py)) { $py = "python" }
-foreach ($tool in "make-buildmenu.py", "make-ordermenu.py", "make-missioninfo.py", "make-teamstats.py") {
+foreach ($tool in "make-buildmenu.py", "make-ordermenu.py", "make-missioninfo.py", "make-teamstats.py", "make-options.py") {
   Write-Host "== $tool --check"
   $out = & $py -I (Join-Path $Tools $tool) --check 2>&1 | ForEach-Object { "$_" }
   $ok = ($LASTEXITCODE -eq 0) -and ($out | Select-String -Pattern "^patches apply" -Quiet)

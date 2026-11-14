@@ -134,6 +134,10 @@ The first version meant for other people's phones: everything since the first bu
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
+- Settings laid out for the phone (with the engine branch, which runs the app's widgets as the game's): upright the
+  window fills the screen under the top bar, BAR's tabs a grid of buttons over the list, larger rows; sideways as large
+  as the screen allows; a red close button. Every setting works, the ones that turn BAR's widgets on and off too. With
+  BAR's official engine BAR's own Settings stays.
 - Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit, with PING
   beside them (tap, then the map; held, its words; tapped twice, CHAT).
 - Units that build nothing picked: their types in one row across the dock's top, the orders under them across the
