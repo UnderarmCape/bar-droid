@@ -525,6 +525,21 @@ local function layout()
 	L.btnW = floor((rw - gap) / 2)
 	L.rightRows = max(3, floor((gridH + gap) / (floor(tile * 0.55) + gap))) -- (about 6 mm tall on a phone: thumbs)
 	L.btnH = floor((gridH + gap) / L.rightRows) - gap
+	-- A pick's few types: one row of them across the top, the orders under them the dock's whole width, four wide, as
+	-- big as before (Kailil, 2026-11-13, of the empty half under one or a few types: "orders allow more orders to fill
+	-- the space"); SP.wide, set as the dock's contents are made (refreshNow); three grid rows or more only (two: the
+	-- orders' rows would be shorter than the half's)
+	L.gridRows, L.wideCols = rows, max(1, floor((vsx - 2 * pad + gap) / (tile + gap)))
+	if SP.wide and rows >= 3 and not SP.laidOut then
+		local top = L.left[4]
+		L.left = { pad, top - tile, pad + L.wideCols * (tile + gap) - gap, top }
+		L.leftCols, L.leftRows, L.rightCols = L.wideCols, 1, 4
+		L.right = { pad, L.right[2], vsx - pad, top - tile - gap }
+		local h = L.right[4] - L.right[2]
+		L.btnW = floor((L.right[3] - L.right[1] - 3 * gap) / 4)
+		L.rightRows = max(3, floor((h + gap) / (floor(tile * 0.55) + gap)))
+		L.btnH = floor((h + gap) / L.rightRows) - gap
+	end
 	-- HIDE (spectating): the dock folded to a SHOW button at the bottom's middle, the game on the whole screen
 	if SP.hidden then
 		local bw, bh = floor(vsx * 0.28), max(floor(vsy * 0.042), resH + 2 * pad)
@@ -566,7 +581,9 @@ local function writeDock(force)
 				and ("live " .. r(L.left) .. "\n") or "")
 			-- (and the orders, a factory's queue buttons too: Kailil, 2026-11-13, asked whether FIGHT, MOVE, PATROL,
 			-- D-Gun and the states should act on the first tap as well: "1", yes; D-Gun's first tap only opened the menu)
-			.. ((rightKind == "orders" or rightKind == "factory") and L.right[3] > 0 and not SP.hidden
+			-- (and before the start, UNDO LAST, CLEAR QUEUE, the factions and PING: the same)
+			.. ((rightKind == "orders" or rightKind == "factory" or rightKind == "pregame") and L.right[3] > 0
+				and not SP.hidden
 				and ("live " .. r(L.right) .. "\n") or "")
 			-- (and the selection row: INSERT and QUEUE. Kailil, 2026-11-12, a Bot Lab: "Insert plus tapoing a unit to build.
 			-- Is not interrupting the build queue": with the camera pad up INSERT's tap only opened the menu, and the unit's
@@ -591,8 +608,9 @@ local function writeDock(force)
 			-- (and the swap arrow: its first tap moves the dock; with the camera pad up it only opened the menu, dev
 			-- phone 2026-11-13)
 			.. (L.thumb and L.swapBtn and not SP.hidden and ("live " .. r(L.swapBtn) .. "\n") or "")
-			-- (PING on the home grid: held, a spoken ping; tapped twice, CHAT; pingT)
-			.. (rightKind == "home" and leftKind ~= "spec" and L.pingBtn and not SP.hidden and (not L.thumb or L.homeOpen)
+			-- (PING on the home grid and before the start: held, a spoken ping; tapped twice, CHAT; pingT)
+			.. ((rightKind == "home" or rightKind == "pregame") and leftKind ~= "spec" and L.pingBtn and not SP.hidden
+				and (not L.thumb or L.homeOpen or rightKind == "pregame")
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
 	else
@@ -1619,6 +1637,9 @@ function refreshNow()
 		for _, f in ipairs(pregameFactions()) do
 			newRight[#newRight + 1] = f
 		end
+		-- (PING after them, as on the home grid's: tap, then the map; held, its words; tapped twice, CHAT. Kailil,
+		-- 2026-11-13, a pregame screenshot, the place beside RANDOM: "Add ping here. So I can place pings and chat")
+		newRight[#newRight + 1] = { kind = "pings", pingOnly = true }
 		-- (two rows tall where all of them fit so: five short buttons over an empty half, dev phone 2026-11-13)
 		if (L.rightRows or 3) >= 2 * math.ceil(#newRight / (L.rightCols or 2)) then
 			for _, it in ipairs(newRight) do
@@ -1680,6 +1701,13 @@ function refreshNow()
 		rk = "factory"
 	else -- (the box or circle and its filter after the orders: with units picked only, Kailil 2026-11-09)
 		newRight, rk = orders, "orders"
+		-- (a few types picked, no build options: their row on top, the orders across the dock, layout's SP.wide)
+		local wide = not L.land and not SP.on() and (lk == "seltypes" or lk:sub(1, 6) == "types:")
+			and #newLeft <= (L.wideCols or 0) and (L.gridRows or 0) >= 3
+		if wide ~= (SP.wide or false) then
+			SP.wide = wide
+			layout()
+		end
 		if mobilePicked or selectedFactory() then -- (units that move picked: FIGHT, MOVE, PATROL first and largest, pack)
 			-- (and a commander's D-gun across after them: its touch sticks, k == "order" with CMD.MANUALFIRE; a factory's
 			-- FIGHT, MOVE and PATROL are where its new units go, the same size, and its REPEAT across after them: Kailil,
@@ -1763,6 +1791,10 @@ function refreshNow()
 	if SP.on() then -- (spectating: the spectator's grid over the whole dock, SP.items; or TEAMS)
 		newLeft, lk, newRight, rk = {}, "spec", SP.items(), "home"
 	end
+	if rk ~= "orders" and SP.wide then -- (no orders: the halves as they were)
+		SP.wide = false
+		layout()
+	end
 	if L.land and not L.dgun then -- sideways, one thumb: the panel, its tabs and the tab shown (layout)
 		-- (nothing picked: the map slot alone until a tap opens the home buttons; both sides with something: BUILD | ORDERS
 		-- tabs, a builder opening on its build options and other units on their orders, a building picked on PLACE; a tab
@@ -1807,7 +1839,8 @@ function refreshNow()
 			#rightItems)) -- (tools: what the dock shows)
 	end
 	leftKind, rightKind = lk, rk
-	if rk ~= "home" and pingT.armedAt then -- (PING armed, then units picked: the next map tap is theirs, not a ping)
+	if rk ~= "home" and rk ~= "pregame" and pingT.armedAt then -- (PING armed, then units picked: the next map tap is
+		-- theirs, not a ping)
 		pingT.armedAt = nil
 	end
 end
@@ -2142,7 +2175,7 @@ local function pressItem(item, long)
 	elseif k == "pings" then -- (left half: the camera to the last 4 pings, again within 2 s the one before; right half:
 		-- the map's next tap is a ping, pressed again: not; spectating, the whole of it: the last pings)
 		local r = pingT.rect
-		if r and pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2 and leftKind ~= "spec" then
+		if r and (item.pingOnly or pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2) and leftKind ~= "spec" then
 			pingT.armedAt = not pingT.armed() and now() or nil
 			if WG.BarDroidPad and WG.BarDroidPad.say then
 				WG.BarDroidPad.say(pingT.armedAt and "TAP THE MAP TO PING" or "NO PING")
@@ -2544,6 +2577,14 @@ local function drawButton(item, r, cap)
 		pingT.badge(r, n)
 		return
 	end
+	if item.kind == "pings" and item.pingOnly then -- (pregame: PING alone, the whole place)
+		pingT.rect = r
+		local _, _, armed = pingT.state()
+		pingT.drawn = "0" .. (armed and "a" or "")
+		L.pingBtn = r
+		pingT.drawBtn(r, armed, min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)))
+		return
+	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
 		pingT.rect = r
 		local n, step, armed = pingT.state()
@@ -2582,6 +2623,9 @@ local function drawButton(item, r, cap)
 		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
+	elseif item.kind == "order" and item.id == CMD.MANUALFIRE then -- (the D-Gun red, in the gold's shades: Kailil,
+		-- 2026-11-13, "Make the dgun button RED but still fit the ui look and feel")
+		button(r, { 0.42, 0.07, 0.05, 0.9 }, { 0.74, 0.17, 0.12, 0.9 })
 	else
 		button(r)
 	end
@@ -3459,10 +3503,10 @@ function widget:Update(dt)
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
-	if rightKind == "home" and pingT.drawn then -- (PINGS: "2 OF 4" back to LAST PINGS after the cycle's pause, TAP MAP
-		-- back to PING when it runs out)
+	if (rightKind == "home" or rightKind == "pregame") and pingT.drawn then -- (PINGS: "2 OF 4" back to LAST PINGS after
+		-- the cycle's pause, TAP MAP back to PING when it runs out; pregame's PING alone draws no step)
 		local _, step, armed = pingT.state()
-		if step .. (armed and "a" or "") ~= pingT.drawn then
+		if (rightKind == "pregame" and "0" or step) .. (armed and "a" or "") ~= pingT.drawn then
 			markDirty()
 		end
 	end

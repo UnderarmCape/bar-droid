@@ -1114,6 +1114,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the first tap (MULTI's first tap only opened the menu). Dev phone upright, 10 Pawns and 4 Rockets: ALL UNITS, 14
       picked, the orders beside; MULTI, 0 and an empty right half; Pawn 10, Rocket 14, both gold; ALL 14; a Rocket tap
       with ALL on, the 4 Rockets alone.
+- [x] **Kailil, 2026-11-13 evening, three dock changes**: (1) the empty space under a few types: "orders allow more
+      orders to fill the space" (his pick of the three offered): a pick whose types fit one row across the dock (units
+      that build nothing, the unit lists) shows them as that row on top and the orders under it across the whole dock,
+      four wide at the same size (layout's SP.wide; three grid rows or more, so not on the unfolded Fold7's two). Dev
+      phone, 10 Pawns and 4 Rockets: Fight, PRESETS, Patrol and the 11 others all in view, no scrolling. (2) His
+      pregame screenshot, the place beside RANDOM: "Add ping here. So I can place pings and chat": PING there (pingOnly:
+      tap, then the map; held, words; tapped twice, CHAT; RtsTouch's "ping" rect in pregame too), and the pregame
+      buttons act on the first tap. Dev phone, a lobby skirmish's pregame: PING, a map tap, "Look here! (map marker)".
+      CHAT not tried (no live-mic tests). (3) "Make the dgun button RED but still fit the ui look and feel": the
+      D-Gun order drawn in red in the gold's shades. Dev phone: the commander picked, D-Gun red. dock-phone-test ALL
+      PASS.
 - [x] **The lobby's map picker upright** (found 2026-11-13, dev phone, a skirmish room's Change Map): Chobby's
       gui_maplist_panel.lua lays it out for a wide window: its caption ran under Manual Download, and the picked map's
       details, beside the picture in a third of the width, ran on over Preview and Select Map. bardroid_lobby_touch.lua

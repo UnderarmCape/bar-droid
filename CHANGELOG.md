@@ -134,7 +134,10 @@ The first version meant for other people's phones: everything since the first bu
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
-- Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit.
+- Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit, with PING
+  beside them (tap, then the map; held, its words; tapped twice, CHAT).
+- Units that build nothing picked: their types in one row across the dock's top, the orders under them across the
+  whole dock, four wide (every order in view). The D-Gun button is red.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with
