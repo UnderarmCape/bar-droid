@@ -125,12 +125,15 @@ The first version meant for other people's phones: everything since the first bu
   on each tap is the next place, the units waiting for each other at each one, the side to side only at the last;
   with INSERT on the formation goes first, their own orders after. PLACE, the presets and the build menus take the
   first tap; the dock stays open while a building is being placed. INSERT, QUEUE, the home buttons, the orders (FIGHT,
-  MOVE, PATROL, D-Gun, the states), metal and energy take the first tap too.
+  MOVE, PATROL, D-Gun, the states), metal and energy take the first tap too, and so do the unit types.
+  LOCAL UNITS and ALL UNITS pick every combat unit and list them by type, the orders beside them (no more list
+  buttons and DONE there); the list's first tile is an ALL / MULTI toggle: MULTI lets everyone go and each type you
+  tap joins the pick (gold), ALL picks the whole list again. A type tapped with ALL on picks that type alone.
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
-  the nearest and goes there, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
+  the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with
   words); PING tapped twice: CHAT, speak to chat, with a flip back to PING when it is sent. FACTORIES beside
   them brings the camera to your factories in turn, and picks the one it is on once you stop tapping for 0.75 s (a

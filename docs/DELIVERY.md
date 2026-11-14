@@ -1103,6 +1103,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a "live" rect too (and a factory's queue buttons in its place). Dev phone, the camera pad up: upright one tap on
       D-Gun started the D-gun mode; sideways the same from the ORDERS tab after the menu had timed out;
       dock-phone-test and touch-phone-test ALL PASS. Launcher text, README and CHANGELOG say so.
+- [x] **The unit lists: ALL / MULTI, no list buttons (Kailil, 2026-11-13)**: "The all units or local units lower ui half
+      page needs to be removed. Just display the orders for the units selected. Get rid of the right half of the page
+      that has the all units, local units, and done. Its redundant. And replace the ALL BUTTON with an all/multi
+      toggle. Toggling multi will allow me to select multiple unit types and give them orders instead of everyone
+      selected." Done: the right half's LOCAL UNITS, ALL UNITS, MULTI and DONE are gone (empty only while MULTI has no
+      type yet); the list's first tile is ALL (its count) over MULTI, the side on outlined gold. MULTI lets everyone go,
+      each type tapped joins (gold outline: FlowUI's selector did not show on the unit pictures), ALL picks the list
+      again; the list's units all let go with ALL on, the home grid comes back. The list's types and a pick's types take
+      the first tap (MULTI's first tap only opened the menu). Dev phone upright, 10 Pawns and 4 Rockets: ALL UNITS, 14
+      picked, the orders beside; MULTI, 0 and an empty right half; Pawn 10, Rocket 14, both gold; ALL 14; a Rocket tap
+      with ALL on, the 4 Rockets alone.
+- [x] **The idle builders zoom in as COMMANDER (Kailil, 2026-11-13)**: "When you select commander, or cycle to an idle
+      builder, it should zoom you into that unit as well ... The zoom needs to be the same zoom level pressing the
+      commander button is." The groups row's idle builder tiles now take COMMANDER's camera (cameraTo, 1.3). Dev phone:
+      from the start view zoomed far out, one tap on the idle commander's tile, the same zoom as COMMANDER's.
 - [x] **Placing: one square, BAR's own** (Kailil, 2026-11-13, his screenshot of a wind turbine being dragged: "that
       green square ... is acting as the actual placement target when I confirm my placement ... I want only where the
       transparent windmill with the squares under it to be what I see ... Remove the extra square thing that the mod

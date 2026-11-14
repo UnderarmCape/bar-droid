@@ -559,7 +559,10 @@ local function writeDock(force)
 			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
 			-- (the build options, a builder's or a factory's, shown: their first tap acts, the camera pad or not; Kailil,
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
-			.. ((leftKind == "build" or leftKind == "pregame") and L.left[3] > 0 and not SP.hidden
+			-- (and the unit lists' types, ALL / MULTI first, and a pick's types: as the home grid's LOCAL and ALL UNITS that
+			-- open them; MULTI's tap only opened the menu, dev phone 2026-11-13)
+			.. ((leftKind == "build" or leftKind == "pregame" or leftKind == "seltypes"
+				or tostring(leftKind):sub(1, 6) == "types:") and L.left[3] > 0 and not SP.hidden
 				and ("live " .. r(L.left) .. "\n") or "")
 			-- (and the orders, a factory's queue buttons too: Kailil, 2026-11-13, asked whether FIGHT, MOVE, PATROL,
 			-- D-Gun and the states should act on the first tap as well: "1", yes; D-Gun's first tap only opened the menu)
@@ -1484,7 +1487,9 @@ function idleB.pick(def)
 	Spring.SelectUnitArray({ u })
 	local x, y, z = Spring.GetUnitPosition(u)
 	if x then
-		cameraTo(x, y, z)
+		-- (zoomed in as COMMANDER does, not only moved: Kailil, 2026-11-13, "When you select commander, or cycle to an
+		-- idle builder, it should zoom you into that unit as well ... the same zoom level pressing the commander button is")
+		cameraTo(x, y, z, 1.3)
 	end
 end
 
@@ -1571,6 +1576,10 @@ function refreshNow()
 		allPicked = allPicked and keepTypes
 	end
 	keepTypes = false
+	if typesFrom and #sel == 0 and not multi then -- (the list's units all let go, ALL on: the home grid again; its LOCAL,
+		-- ALL UNITS, MULTI and DONE half went, Kailil 2026-11-13: "Its redundant")
+		typesFrom, allPicked = nil, false
+	end
 	local newLeft, newRight, lk, rk
 	local pregame = #sel == 0 and not typesFrom and pregameStart()
 	if pregame then
@@ -1611,16 +1620,10 @@ function refreshNow()
 			newRight[#newRight + 1] = f
 		end
 		rk = "pregame"
-	elseif typesFrom and #sel == 0 then -- a list on the left with nothing picked: the lists, MULTI and DONE (with units
-		-- picked, their orders as for any pick: Kailil, 2026-11-10, "For selecting all units or local units. Get rid of the
-		-- buttons thats on the right. Instead show the order buttons that appear when a unit is selected")
-		newRight = {
-			{ kind = "units", from = "local", label = "LOCAL UNITS" },
-			{ kind = "units", from = "all", label = "ALL UNITS" },
-			{ kind = "multi", label = multi and "MULTI: ON" or "MULTI" },
-			{ kind = "done", label = "DONE" },
-		}
-		rk = "units"
+	elseif typesFrom and #sel == 0 then -- MULTI on, no type tapped yet: nothing to order (with units picked, their orders
+		-- as for any pick; Kailil, 2026-11-13: "Get rid of the right half of the page that has the all units, local units,
+		-- and done. Its redundant")
+		newRight, rk = {}, "none"
 	elseif #sel == 0 then -- nothing picked: the home grid, big buttons across the dock (Kailil, 2026-11-09: the
 		-- commander with the camera on it, the camera to the base; 2026-11-11: no IDLE UNITS or IDLE BUILDER, the idle
 		-- builders are in the groups row, drawGroups)
@@ -2028,19 +2031,20 @@ local function pressItem(item, long)
 			keepTypes, allPicked = true, #all > 0
 			selectUnits(all)
 		end
-	elseif k == "multi" then
+	elseif k == "alltypes" then -- the ALL / MULTI toggle (Kailil, 2026-11-13: "replace the ALL BUTTON with an all/multi
+		-- toggle. Toggling multi will allow me to select multiple unit types and give them orders instead of everyone
+		-- selected"): MULTI lets everyone go, each type tapped joins; ALL picks the whole list again; the list stays
 		multi, multiPicked = not multi, {}
-	elseif k == "done" then
-		typesFrom, multi, multiPicked = nil, false, {}
-	elseif k == "alltypes" then
 		local all = {}
-		for _, g in ipairs(leftItems) do
-			for _, u in ipairs(g.units or {}) do
-				all[#all + 1] = u
+		if not multi then
+			for _, g in ipairs(leftItems) do
+				for _, u in ipairs(g.units or {}) do
+					all[#all + 1] = u
+				end
 			end
 		end
+		keepTypes, allPicked = true, #all > 0
 		selectUnits(all)
-		typesFrom, multi, multiPicked = nil, false, {}
 	elseif k == "type" then
 		if multi then
 			multiPicked[item.defID] = not multiPicked[item.defID] or nil
@@ -2427,14 +2431,22 @@ end
 
 local function drawTile(item, r)
 	local w, h = r[3] - r[1], r[4] - r[2]
-	if item.kind == "alltypes" then
+	if item.kind == "alltypes" then -- the ALL / MULTI toggle: ALL and its count above, MULTI below, the side on lit
 		button(r, { 0.2, 0.2, 0.2, 0.8 }, { 0.35, 0.35, 0.35, 0.8 })
 		-- (none: dimmed, as FACTORIES with no factory; a lit "ALL 0" read as a list of something)
 		local none = item.count == 0
-		textIn("ALL", r[1], r[2] + h * 0.38, r[3], r[4], h * 0.26, none and "\255\140\140\140" or "\255\255\255\255", bold)
-		textIn(tostring(item.count), r[1], r[2], r[3], r[2] + h * 0.42, h * 0.2, none and "\255\140\140\140" or "\255\255\200\064")
-		if allPicked then -- (all of the list picked: LOCAL or ALL UNITS' first tap)
-			selector(r)
+		local mid, dim = r[2] + floor(h / 2), "\255\120\120\120"
+		textIn("ALL", r[1], mid + h * 0.17, r[3], r[4] - h * 0.02, h * 0.2,
+			(none or multi) and dim or "\255\255\255\255", bold)
+		textIn(tostring(item.count), r[1], mid, r[3], mid + h * 0.19, h * 0.14,
+			(none or multi) and dim or "\255\255\200\064")
+		textIn("MULTI", r[1], r[2], r[3], mid, h * 0.2, multi and "\255\255\255\255" or dim, bold)
+		local S, lw = WG.BarDroidStyle, max(2, floor(w * 0.04))
+		local half = multi and { r[1], r[2], r[3], mid } or { r[1], mid, r[3], r[4] }
+		if S and (multi or allPicked) then
+			S.outline(half[1], half[2], half[3], half[4], S.GOLD, 1, lw)
+		elseif multi or allPicked then
+			selector(half)
 		end
 		return
 	end
@@ -2462,8 +2474,13 @@ local function drawTile(item, r)
 		end
 	else -- a type: its count
 		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * 1.4, "ro")
-		if multi and multiPicked[item.defID] then
-			selector(r)
+		if multi and multiPicked[item.defID] then -- (gold, as the toggle's MULTI: FlowUI's selector alone did not show on
+			-- the unit pictures, dev phone 2026-11-13)
+			if WG.BarDroidStyle then
+				WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor(w * 0.04)))
+			else
+				selector(r)
+			end
 		end
 	end
 end
@@ -2552,7 +2569,7 @@ local function drawButton(item, r, cap)
 	if item.kind == "presets" and WG.BarDroidPresets then
 		armed, armedName = WG.BarDroidPresets.armed()
 	end
-	local on = armed or item.kind == "units" and typesFrom == item.from or item.kind == "multi" and multi
+	local on = armed or item.kind == "units" and typesFrom == item.from
 		or (item.kind == "specact" or item.kind == "specteam" or item.kind == "specfull") and item.on
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit

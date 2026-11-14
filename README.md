@@ -96,11 +96,13 @@ and energy and the groups row act on the first tap; elsewhere a tap opens its me
 open): the build grid on the left, the picked
 units' orders on the right (Fight, Move, Patrol first and largest; a state's lights as BAR's, red left, green right),
 the selection row as QUEUE and INSERT (both on: Shift and Alt held; off once nothing is picked), and the
-metal and energy bars on top. With nothing picked it shows LOCAL UNITS, ALL UNITS, FACTORIES (your next factory
+metal and energy bars on top. With nothing picked it shows LOCAL UNITS and ALL UNITS (every combat unit on screen,
+or all of them, picked and listed by type beside their orders; the list's first tile toggles ALL / MULTI: with MULTI
+each type you tap joins the pick), FACTORIES (your next factory
 in turn, the camera on each; its build menu comes up in the dock once you stop tapping for 0.75 s), PINGS (LAST PINGS: the camera to
 the last 4 pings from others, tap again within 2 s for the one before; PING, then tap the map for a ping there; hold PING and say its label; tap PING twice to speak to chat),
 COMMANDER, BASE and AUTO RETREAT. The idle builders sit at the right of the unit groups row, one tile per type with
-its count: tap to pick the nearest and go there, tap again for the next. While a building is picked, or the presets
+its count: tap to pick the nearest and go there (zoomed in, as COMMANDER), tap again for the next. While a building is picked, or the presets
 or a picker are open, the menu stays open: tap the map for the spot (or drag it there: it moves slowly at first, for
 fine placing; hold still for a GRID), ROTATE turns it a quarter, then PLACE (a spot BAR refuses says so). A drag on the
 game pans, units picked or not; hold, then drag to draw the picked units' path (with MOVE, FIGHT or PATROL pressed a
