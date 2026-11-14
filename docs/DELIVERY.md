@@ -1137,6 +1137,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
       (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
       tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
+- [x] **The type tiles as tall as Fight (Kailil, 2026-11-13)**: of the small tiles, with a screenshot: "I meant, it
+      match the size of the fight button". The tiles are FIGHT's height (two order rows where the half shows four or
+      more, else one: the unfolded Fold7 as before), the overflow starting level with PRESETS; the ALL / MULTI tile's
+      three lines and the plain count size back on tiles that tall. Dev phone: ALL UNITS (ALL, Pawn in FIGHT's row,
+      Rocket in PRESETS'), MULTI the same places; dock-phone-test ALL PASS.
 - [x] **The unit lists' tiles kept small** (hardening, 2026-11-13, read in the overflow code): on LOCAL / ALL UNITS'
       list MULTI lets everyone go (no orders, no overflow), so the tiles grew back to their full size and shrank again
       with the first type tapped: the next type moved from under the finger. The lists keep the small tiles whatever

@@ -141,7 +141,7 @@ The first version meant for other people's phones: everything since the first bu
 - Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit, with PING
   beside them (tap, then the map; held, its words; tapped twice, CHAT).
 - Units that build nothing picked: the orders that would need scrolling move to the empty left side under their
-  types (the types shrunk to an order's height for the room); the orders on the right stay where they always are.
+  types (the type tiles as tall as the Fight button beside them); the orders on the right stay where they always are.
   The D-Gun button is red.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST

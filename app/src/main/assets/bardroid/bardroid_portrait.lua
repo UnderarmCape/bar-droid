@@ -1780,7 +1780,10 @@ function refreshNow()
 	SP.overRect, SP.overItems, SP.smallTypes = nil, {}, nil
 	local listPage = lk:sub(1, 6) == "types:"
 	if (rk == "orders" or listPage) and not L.land and not SP.on() and (lk == "seltypes" or listPage) then
-		local ts = L.btnH
+		-- (as tall as FIGHT beside them, its rows' height: Kailil, 2026-11-13, "I meant, it match the size of the fight
+		-- button"; the overflow then starts level with PRESETS)
+		local fh = (L.rightRows or 3) >= 4 and 2 or 1
+		local ts = fh * L.btnH + (fh - 1) * L.gap
 		local tcols = max(1, floor((L.left[3] - L.left[1] + L.gap) / (ts + L.gap)))
 		local top = L.left[4] - math.ceil(#newLeft / tcols) * (ts + L.gap)
 		local rows = floor((top - L.left[2] + L.gap) / (L.btnH + L.gap))
@@ -2504,7 +2507,7 @@ local function drawTile(item, r)
 		-- (none: dimmed, as FACTORIES with no factory; a lit "ALL 0" read as a list of something)
 		local none = item.count == 0
 		local mid, dim = r[2] + floor(h / 2), "\255\120\120\120"
-		if SP.smallTypes then -- (as short as an order: ALL and its count on one line, MULTI under it)
+		if SP.smallTypes and h < L.tile * 0.8 then -- (as short as an order: ALL and its count on one line, MULTI under it)
 			textIn("ALL " .. item.count, r[1], mid, r[3], r[4], h * 0.3, (none or multi) and dim or "\255\255\255\255", bold)
 			textIn("MULTI", r[1], r[2], r[3], mid, h * 0.3, multi and "\255\255\255\255" or dim, bold)
 		else
@@ -2546,7 +2549,7 @@ local function drawTile(item, r)
 			selector(r)
 		end
 	else -- a type: its count (on the small tiles, SP.smallTypes, half again as large: "10" and "4" were hard to read)
-		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * (SP.smallTypes and 2.1 or 1.4), "ro")
+		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * (h < L.tile * 0.8 and 2.1 or 1.4), "ro")
 		if multi and multiPicked[item.defID] then -- (gold, as the toggle's MULTI: FlowUI's selector alone did not show on
 			-- the unit pictures, dev phone 2026-11-13)
 			if WG.BarDroidStyle then
