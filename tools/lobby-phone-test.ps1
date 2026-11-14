@@ -24,6 +24,10 @@ InApp "rm -f files/bar/infolog.txt"
 Push (Join-Path $PSScriptRoot "lobby-login\bardroid_login_wait.lua")
 Push (Join-Path $PSScriptRoot "lobby-touch-test\bardroid_lobby_touch_test.lua")
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
+# (the warnings about a host's widget options are for the app's widgets as user widgets, BAR's official engine; the
+# phone engine loads them as the game's and launch-bar.sh turns the warnings off: the test widget checks them, so the
+# app's widgets go in as user widgets here)
+InApp "[ -f files/bar/dev-env.sh ] && cp files/bar/dev-env.sh files/bar/.dev-env-before-lobbytest; echo 'BARDROID_GAME_WIDGETS=0' >> files/bar/dev-env.sh"
 & $adb push (Join-Path $PSScriptRoot "lobby-touch-test\pad-start.evemu") $evemu | Out-Null
 & $adb push (Join-Path $PSScriptRoot "lobby-touch-test\pad-dpad.evemu") $dpad | Out-Null
 try {
@@ -61,6 +65,7 @@ try {
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   InApp "rm -f $widgets/bardroid_login_wait.lua $widgets/bardroid_lobby_touch_test.lua files/bar/dev-springsettings.cfg"   # (its LogFlushLevel: launch-bar.sh puts the old one back)
+  InApp "rm -f files/bar/dev-env.sh; [ -f files/bar/.dev-env-before-lobbytest ] && mv files/bar/.dev-env-before-lobbytest files/bar/dev-env.sh; true"
   & $adb shell am force-stop $pkg
   & $adb shell rm -f $evemu $dpad
 }

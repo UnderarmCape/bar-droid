@@ -600,7 +600,7 @@ elif [ "$(cat "$BAR/.bardroid-phone-failed" 2>/dev/null)" = "$PHONE_BUILD" ]; th
 else
   ENGINE="$PHONE_ENGINE"
   [ "$(cat "$BAR/.bardroid-phone-ok" 2>/dev/null)" = "$PHONE_BUILD" ] || PHONE_FIRST=1
-  log "phone engine: $PHONE_BUILD$([ "$PHONE_FIRST" = 1 ] && echo ' (its first start)')"
+  log "phone engine: $PHONE_BUILD$([ "$PHONE_FIRST" = 1 ] && echo ' (not yet proven on this phone)')"
 fi
 # Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
 [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
@@ -707,6 +707,14 @@ widen=$!
 cd "$ENGINE" || { log "engine dir missing: $ENGINE"; exit 11; }
 ENGINE_STARTED=$(date +%s)
 rm -f "$BAR/infolog.txt"
+# (a phone build not yet proven here: proven once it has written its first lines, while it runs, so that a game the
+# app or a swipe ends still counts; below, after the exit, the same test decides a build that never ran)
+if [ "$PHONE_FIRST" = 1 ]; then
+  ( for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+      sleep 3
+      grep -q '\[BarDroidSim\]' "$BAR/infolog.txt" 2>/dev/null && { echo "$PHONE_BUILD" > "$BAR/.bardroid-phone-ok"; break; }
+    done ) &
+fi
 case "$MODE" in
   skirmish)
     log "spring skirmish: $BAR/skirmish.txt"
