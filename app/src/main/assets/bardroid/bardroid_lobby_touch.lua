@@ -380,15 +380,31 @@ local upright = { on = false, side = false, grid = nil, mirror = {}, scaleBefore
 
 -- The pages' strip moved: each button to its place on its page plus the offset (a strip of its own, three screens wide,
 -- was not drawn by Chili: its buttons stood in the grid as before); sideways down the column
+-- A button's place on the strip. Chili takes a negative number as measured from the parent's far edge (util.lua
+-- ProcessRelativeCoord: total + num), so a page left of the one shown came back onto the screen: the grid made again
+-- on page 3 (back from a game, 19 buttons to 17) drew page 2's over page 3's, "Welcome" showing through "Parties"
+-- (dev phone, 2026-11-13). A negative place is set as the plain number it is.
+local function stripPlace(c, v)
+	v = math.floor(v + 0.5)
+	local key, bound = upright.side and "y" or "x", upright.side and "top" or "left"
+	if v >= 0 then
+		if upright.side then
+			c:SetPos(nil, v)
+		else
+			c:SetPos(v)
+		end
+	elseif c[key] ~= v then
+		c[key] = v
+		c._relativeBounds[bound], c._givenBounds[bound] = false, v
+		c:UpdateClientArea(true)
+	end
+end
+
 local function stripTo(x)
 	upright.stripX = x
 	for _, m in ipairs(upright.mirror) do
 		if m.base and not m.mine.disposed then
-			if upright.side then
-				m.mine:SetPos(nil, math.floor(m.base + x + 0.5))
-			else
-				m.mine:SetPos(math.floor(m.base + x + 0.5))
-			end
+			stripPlace(m.mine, m.base + x)
 		end
 	end
 end
@@ -668,7 +684,7 @@ local function uprightGrid()
 		end
 		local mine = Chili.Button:New({
 			parent = upright.grid,
-			x = x, y = y,
+			x = math.max(0, x), y = math.max(0, y), -- (a page before the one shown: placed below, stripPlace)
 			width = math.floor(w), height = GRID_ROW_H,
 			caption = target.caption,
 			classname = target.classname == "negative_button" and "negative_button" or nil,
@@ -676,6 +692,9 @@ local function uprightGrid()
 			OnClick = { function() target:CallListeners(target.OnClick) end },
 		})
 		upright.mirror[#upright.mirror + 1] = { button = target, mine = mine, top = f.top, base = base }
+		if (isSide and y or x) < 0 then
+			stripPlace(mine, isSide and y or x)
+		end
 	end
 	upright.grid:BringToFront()
 	local words = {}

@@ -1137,6 +1137,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pick, Move, Guard, Set Target, SELECT: BOX, FILTER: ALL on the left (SELECT: BOX's tap: circle); at 1080x1198
       (the Fold7 unfolded, five orders in sight before) Repeat Off, Wait, Stop, Attack in two rows under the small
       tiles; a small tile's tap picked its type. dock-phone-test ALL PASS, both shapes.
+- [x] **The lobby's button pages overlapping after a rebuild** (hardening, 2026-11-13, dev phone): a lobby skirmish's
+      in-game Lobby paged to Leave Battle (page 3 of 4), Yes, back in the lobby: the grid made again for 17 buttons on
+      page 3 showed page 2's buttons with page 3's showing through ("Welcome" under "Parties"), the dots on page 3;
+      paging once each way set it right. Chili takes a negative number as measured from the parent's far edge
+      (util.lua ProcessRelativeCoord: total + num), and the pages left of the one shown have negative places: page 2
+      came back onto the screen. bardroid_lobby_touch.lua stripPlace sets a negative place as the plain number (the
+      new buttons made at 0, then placed). Dev phone: the lobby on page 3, a screen size change (the grid made again):
+      page 3 alone; pages 2 and 1 clean after; the whole Leave Battle path (in-game Lobby, page 3, Leave Battle, Yes,
+      the lobby back) checked. lobby-phone-test, touch-phone-test ALL PASS.
 - [x] **The type tiles as tall as Fight (Kailil, 2026-11-13)**: of the small tiles, with a screenshot: "I meant, it
       match the size of the fight button". The tiles are FIGHT's height (two order rows where the half shows four or
       more, else one: the unfolded Fold7 as before), the overflow starting level with PRESETS; the ALL / MULTI tile's
