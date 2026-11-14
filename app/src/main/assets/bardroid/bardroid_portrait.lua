@@ -1023,6 +1023,42 @@ local function startFit()
 	end
 end
 
+-- Pregame, once, a second into it: my team's start box in the middle of the view above the dock, the camera as far as
+-- the box needs to fit across and above the dock (BAR's own start camera looked at the whole map from far off: upright,
+-- two thirds of the screen were sky beyond the map's far edge, the start box small near the dock; dev phone, 2026-11-14,
+-- a lobby skirmish on Avalanche). The camera is the player's after that.
+SP.pregameFit = { wait = 0 }
+function SP.pregameView(dt)
+	local pf = SP.pregameFit
+	if pf.done or Spring.GetGameFrame() > 0 or Spring.GetSpectatingState() then
+		return
+	end
+	pf.wait = pf.wait + (dt or 0)
+	if pf.wait < 1 then
+		return
+	end
+	pf.done = true
+	-- (only where the player picks a start spot in the box: with fixed or random start positions the "box" is the whole
+	-- map, and the camera went to the map's size before the start view; dock-phone-test, 2026-11-14)
+	if Game.startPosType ~= 2 then
+		return
+	end
+	local x1, z1, x2, z2 = Spring.GetAllyTeamStartBox(Spring.GetMyAllyTeamID())
+	if not (x1 and x2 and x2 > x1 and z2 > z1) then
+		return
+	end
+	local w, h = x2 - x1, z2 - z1
+	local cx, cz = (x1 + x2) / 2, (z1 + z2) / 2
+	-- (seen from straight above: the field's width at distance d is 2 d tan(hfov / 2), its depth above the dock that of
+	-- the screen's lines above the dock; a tilted camera sees more ground in depth, so the box fits with room)
+	local tv = math.tan(math.rad((Spring.GetCameraFOV and Spring.GetCameraFOV() or 45) / 2))
+	local above = max(0.2, (vsy - L.dock[4]) / vsy)
+	local d = max(w / (2 * tv * vsx / vsy), h / (2 * tv * above)) * 1.1
+	local zoom = max(0.6, min(5, d / comfortDist()))
+	cameraTo(cx, Spring.GetGroundHeight(cx, cz) or 0, cz, zoom)
+	Spring.Echo(string.format("[bardroid-portrait] pregame view on the start box (%d x %d, zoom %.2f)", w, h, zoom))
+end
+
 local function typesUnits()
 	if typesFrom == "local" then -- (units drawn as icons too, as the pad's ON SCREEN: zoomed out, as sideways's start
 		-- view is, the units on the screen are icons and LOCAL UNITS left them out)
@@ -3537,6 +3573,7 @@ function widget:Update(dt)
 		return
 	end
 	startFit()
+	SP.pregameView(dt)
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
