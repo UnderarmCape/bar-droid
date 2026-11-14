@@ -33,6 +33,7 @@ function widget:GetInfo()
 		license = "GPL-3.0-or-later",
 		layer = -10, -- (before BAR's menus and the touch widget: the dock answers IsAbove and presses first)
 		enabled = true,
+		handler = true, -- (BAR's widget handler as a game widget, the phone engine: SP.factionPicker; a user widget gets none)
 	}
 end
 
@@ -1057,6 +1058,29 @@ function SP.pregameView(dt)
 	local zoom = max(0.6, min(5, d / comfortDist()))
 	cameraTo(cx, Spring.GetGroundHeight(cx, cz) or 0, cz, zoom)
 	Spring.Echo(string.format("[bardroid-portrait] pregame view on the start box (%d x %d, zoom %.2f)", w, h, zoom))
+end
+
+-- BAR's faction picker (gui_factionpicker.lua) stands down for this game while the dock is up before the start: the
+-- dock's ARMADA / CORTEX / RANDOM make the same choice, and BAR's panel sits by its order menu at the bottom, under the
+-- dock (upright all of it; sideways half of it stuck out left of the dock, its buttons under the dock's minimap: dev
+-- phone, 2026-11-14). Removed as BAR's picker removes itself when the game starts (for this game only, its order in
+-- BYAR.lua untouched). Only a game widget has the widget handler for it (the phone engine; GetInfo's handler); as a
+-- user widget, on BAR's official engine, BAR's picker stays.
+function SP.factionPicker()
+	if SP.pickerDone or Spring.GetGameFrame() > 0 then
+		return
+	end
+	local wh = widgetHandler
+	if not (wh and wh.FindWidget and wh.RemoveWidget) then
+		SP.pickerDone = true
+		return
+	end
+	local w = wh:FindWidget("Factionpicker")
+	if w then
+		wh:RemoveWidget(w)
+		SP.pickerDone = true
+		Spring.Echo("[bardroid-portrait] BAR's faction picker off for this game: the dock's factions")
+	end
 end
 
 local function typesUnits()
@@ -3574,6 +3598,9 @@ function widget:Update(dt)
 	end
 	startFit()
 	SP.pregameView(dt)
+	if rightKind == "pregame" then
+		SP.factionPicker()
+	end
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
 	drawingCursor()
@@ -3929,8 +3956,10 @@ function SP.drawThumb()
 		local r = L.tabs and L.tabs[side]
 		if r then
 			local kind = side == "left" and leftKind or rightKind
-			local label = SP.TAB_LABELS[kind] or (kind:sub(1, 6) == "types:" and "UNITS")
-				or (side == "left" and "BUILD" or "ORDERS")
+			-- (before the start the right page holds UNDO LAST, CLEAR QUEUE, the factions and PING: "START", not a second
+			-- "BUILD" beside the build page's; dev phone sideways, 2026-11-14)
+			local label = (side == "right" and kind == "pregame" and "START") or SP.TAB_LABELS[kind]
+				or (kind:sub(1, 6) == "types:" and "UNITS") or (side == "left" and "BUILD" or "ORDERS")
 			if L.tab == side then
 				button(r, gold, { 0.66, 0.53, 0.12, 0.9 })
 			else
