@@ -1760,8 +1760,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       widget from mod: BAR Droid settings"; upright the tab grid and list, Snow switched on and off (its widget loaded
       and removed: what user widgets cannot), the Interface tab, the close button (the dock back); sideways the window
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
-      place and is not running", BAR's own. remake-check: all five copies PASS. Left: players get it only with the
-      engine branch; the app ships BAR's official engine (shipping the branch is its own step).
+      place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
+      the app's default since 2026-11-13 (next item).
+- [x] **Kailil, 2026-11-13, the phone engine as the default**: "yes plan it" (docs/ENGINE-DEFAULT.md), then "1.
+      You're recommendation 2. Inside the apk 3. Yes". Engine: `BarDroidSimAllowed` keeps the simulation rewrite to
+      skirmishes and replays, stock code online (869988d, 528c6a5). App (f8d22d45, 94cb6f00): the APK carries
+      `phone-2026.07.04-528c6a5`, Installer sets it up as `engine/recoil_2026.07.04-phone`, launch-bar.sh starts it
+      with the app's widgets as the game's and the phone Lua, launcher "Phone engine" (off: official), a build that
+      cannot run set aside. Gate: the 8v8 server replay with the rewrite and the 1v1 with every switch off, 0 desync
+      warnings each; the phone tests ALL PASS. Fold7: the APK installed, its dev-env.sh down to the late pacing line
+      (its own engine settings in dev-springsettings.cfg kept). Left: the rewrite online after ~20 server replays and
+      Kailil's say; the Fold7's engine settings as defaults for every phone, each checked; the branch's source public
+      before any APK carrying it goes out (publish-check enforces it).
 - [x] **Phone Settings upright: names cut short, dropdowns and the strip checked** (hardening, 2026-11-13, dev phone on
       gcc-all4): Water quality's dropdown opened under its row and Bloom's tap showed its description in the strip;
       "Build menu  bottom positi..", "Windows hide the interfa.." were cut: upright the controls' column is 85 % of
