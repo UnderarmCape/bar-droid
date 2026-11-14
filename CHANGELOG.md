@@ -113,7 +113,8 @@ The first version meant for other people's phones: everything since the first bu
   the right switches on full auto (the enemy in range most worth a shot, a commander first, never through a friendly unit; only where the
   host allows unit control widgets), with its
   own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
-  minimap shrunk to the top bar's height. The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
+  minimap shrunk to the top bar's height. A game's Lobby button shows the phone lobby too (Return to Battle first
+  among its buttons; it was Chobby's wide layout). The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
   in full, a scenario's page with its values clear of their labels and its records whole, the Keys window's six tabs
   in two rows (the three Legacy ones were out of reach). The lobby sideways: all its buttons, Keys, Website and Login

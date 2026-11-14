@@ -132,7 +132,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   space zooms (up and down) or turns (sideways); ✕ leaves.
 - The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
   Sideways: all its buttons (Keys, Website and Login too) in one column of large buttons on the left, a swipe up or
-  down for the next page; the screens beside it take the whole height.
+  down for the next page; the screens beside it take the whole height. The same in a game's Lobby (the top bar's
+  Lobby button), Return to Battle first and Leave Battle with the buttons.
 
 ## Gamepad, mouse and keyboard
 

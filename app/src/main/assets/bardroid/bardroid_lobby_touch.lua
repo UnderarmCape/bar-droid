@@ -424,6 +424,9 @@ local function chobbyButtons()
 	end
 	walk(chobbyObject("buttonsHolder_buttons"), false)
 	walk(chobbyObject("holder_status"), true)
+	if gameLoaded then -- (over a game: Chobby's top bar, Return to Battle and Leave Battle, in the grid too)
+		walk(chobbyObject("holder_topBar"), true)
+	end
 	-- Kailil's order (2026-11-10: "the first 6 buttins shoukd be multi-player, skirmish, scenarios, settings, chat,
 	-- friends. Next page. Parties, load game, downloads, account, and you sort the rest"): those by their words, then
 	-- Replays and Links (the page's last two), the rest as Chobby has them, Exit last (away from the thumbs' first reach)
@@ -439,6 +442,10 @@ local function chobbyButtons()
 		end
 		if c == "exit" or c == "quit" then
 			rank[f] = 1000
+		elseif c == "return to battle" then -- (over a game: back to it first, leaving it last but Exit)
+			rank[f] = 0
+		elseif c == "leave battle" then
+			rank[f] = 999
 		end
 	end
 	table.sort(out, function(a, b)
@@ -1237,18 +1244,31 @@ local function uprightRedraw()
 	end
 end
 
+-- The lobby on the screen: always, but in a game only while Chobby's lobby is over it (BAR's Lobby button, Chobby's
+-- SetMainInterfaceVisible; Kailil, 2026-11-13: "when you're in game and you press lobby, you get this screen. I want it
+-- to reflect how lobby looks in our phone friendly lobby overhaul": the grid and the column were off in a game)
+local function lobbyShown()
+	if not gameLoaded then
+		return true
+	end
+	local root = WG.Chobby and WG.Chobby.interfaceRoot
+	local h = root and root.GetLobbyInterfaceHolder and root.GetLobbyInterfaceHolder()
+	return h and h.visible ~= false or false
+end
+
 local function uprightUpdate(now)
-	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 then
+	local shown = lobbyShown() -- (a change at once: Chobby's own layout half a second over the game before)
+	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 and shown == upright.wasShown then
 		return
 	end
-	upright.checkAt = now
+	upright.checkAt, upright.wasShown = now, shown
 	if not (screen0 and WG.Chobby and WG.Chobby.interfaceRoot) then
 		return
 	end
 	uprightNotes()
 	upright.tips(screen0.height > screen0.width * UPRIGHT)
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
-	uprightSet(not gameLoaded, screen0.height <= screen0.width * UPRIGHT)
+	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
 	if not upright.on then
 		return
 	end

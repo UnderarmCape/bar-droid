@@ -1114,6 +1114,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the first tap (MULTI's first tap only opened the menu). Dev phone upright, 10 Pawns and 4 Rockets: ALL UNITS, 14
       picked, the orders beside; MULTI, 0 and an empty right half; Pawn 10, Rocket 14, both gold; ALL 14; a Rocket tap
       with ALL on, the 4 Rockets alone.
+- [x] **A game's Lobby in the phone layout (Kailil, 2026-11-13)**: "when you're in game and you press lobby, you get
+      this screen. I want it to reflect how lobby looks in our phone friendly lobby overhaul. Not this." BAR's Lobby
+      button shows Chobby's lobby over the game (SetMainInterfaceVisible); bardroid_lobby_touch.lua turned its grid and
+      column off for as long as a game ran (gameLoaded). Now they follow the lobby's holder: on while it is over the
+      game (checked every frame, not twice a second, so Chobby's wide layout never shows), off with Return to Battle;
+      Chobby's in-game top bar buttons join the grid, Return to Battle first, Leave Battle before Exit. Dev phone
+      upright: a skirmish started from the lobby (Avalanche, offline), Lobby: the grid, "Return to Battle | Multiplayer
+      | Skirmish ..."; Return to Battle: the game and its dock; Lobby and back again the same.
 - [x] **The idle builders zoom in as COMMANDER (Kailil, 2026-11-13)**: "When you select commander, or cycle to an idle
       builder, it should zoom you into that unit as well ... The zoom needs to be the same zoom level pressing the
       commander button is." The groups row's idle builder tiles now take COMMANDER's camera (cameraTo, 1.3). Dev phone:
