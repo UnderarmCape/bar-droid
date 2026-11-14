@@ -117,7 +117,8 @@ The first version meant for other people's phones: everything since the first bu
   among its buttons; it was Chobby's wide layout). The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
   in full, a scenario's page with its values clear of their labels and its records whole, the Keys window's six tabs
-  in two rows (the three Legacy ones were out of reach). The lobby sideways: all its buttons, Keys, Website and Login
+  in two rows (the three Legacy ones were out of reach), the map picker's details under the map's picture, clear of
+  Preview and Select Map. The lobby sideways: all its buttons, Keys, Website and Login
   too, in one column of large buttons down the left, close together, a swipe up or down for the next page; the
   screens beside it take the whole height. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: a line abreast with gaps; three formations, the ranged behind the front
@@ -133,6 +134,7 @@ The first version meant for other people's phones: everything since the first bu
   A GRID comes only from a long press that never moved (on the waiting building, a full second): ONE during a GRID
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
+- Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with

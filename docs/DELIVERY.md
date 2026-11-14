@@ -1114,6 +1114,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the first tap (MULTI's first tap only opened the menu). Dev phone upright, 10 Pawns and 4 Rockets: ALL UNITS, 14
       picked, the orders beside; MULTI, 0 and an empty right half; Pawn 10, Rocket 14, both gold; ALL 14; a Rocket tap
       with ALL on, the 4 Rockets alone.
+- [x] **The lobby's map picker upright** (found 2026-11-13, dev phone, a skirmish room's Change Map): Chobby's
+      gui_maplist_panel.lua lays it out for a wide window: its caption ran under Manual Download, and the picked map's
+      details, beside the picture in a third of the width, ran on over Preview and Select Map. bardroid_lobby_touch.lua
+      (uprightMapList) upright: the caption across the window, the rest a row lower; the details under the picture
+      across the panel (340 tall), Preview and Select Map beside the picture under the map's name, the list lower;
+      Chobby's places back sideways. (Chili keeps a number's place in x/y and _givenBounds, only anchors and shares
+      in _relativeBounds: the first try, through _relativeBounds, moved nothing.) Dev phone: Avalanche and Adamantium
+      Factory, details and description whole, Select Map picked the map.
+- [x] **Pregame dock buttons two rows tall** (UI polish, dev phone 2026-11-13): before the start the right half had
+      UNDO LAST, CLEAR QUEUE, ARMADA, CORTEX, RANDOM in three short rows over an empty lower half; now two rows tall
+      when they all fit (as the factory queue's). Dev phone, a lobby skirmish's pregame: the half filled, CORTEX's tap
+      picked Cortex (its buildings in the grid).
 - [x] **A game's Lobby in the phone layout (Kailil, 2026-11-13)**: "when you're in game and you press lobby, you get
       this screen. I want it to reflect how lobby looks in our phone friendly lobby overhaul. Not this." BAR's Lobby
       button shows Chobby's lobby over the game (SetMainInterfaceVisible); bardroid_lobby_touch.lua turned its grid and

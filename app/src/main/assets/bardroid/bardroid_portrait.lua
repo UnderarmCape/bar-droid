@@ -1619,6 +1619,12 @@ function refreshNow()
 		for _, f in ipairs(pregameFactions()) do
 			newRight[#newRight + 1] = f
 		end
+		-- (two rows tall where all of them fit so: five short buttons over an empty half, dev phone 2026-11-13)
+		if (L.rightRows or 3) >= 2 * math.ceil(#newRight / (L.rightCols or 2)) then
+			for _, it in ipairs(newRight) do
+				it.h = 2
+			end
+		end
 		rk = "pregame"
 	elseif typesFrom and #sel == 0 then -- MULTI on, no type tapped yet: nothing to order (with units picked, their orders
 		-- as for any pick; Kailil, 2026-11-13: "Get rid of the right half of the page that has the all units, local units,
