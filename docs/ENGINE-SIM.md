@@ -636,6 +636,19 @@ game until the replay and spectating stages below say it computes exactly what t
     warnings** in both. So three server replays of three BAR releases, every switch of the rewrite on.
   - 2026-11-07 ~17:00 the account's weekly limit stopped sim-move and sim-lua mid-work (sim-units had finished);
     their branches hold everything they committed (move 73d5800, lua-vm 29ac63f, units 293c464).
+- **The rewrite off online** (`rts/Game/BarDroidSimGuard.h`, `BarDroidSimAllowed` in `Game.cpp`; 869988d, 528c6a5;
+  Kailil, 2026-11-13, the app's docs/ENGINE-DEFAULT.md: the phone engine ships in the APK, its simulation rewrite off in
+  online games until it has passed many more server replays). Every package's per-frame `ReadConfig` (movement,
+  units, the Lua VM's switches, `BarDroidForGrain`, `BarDroidPrevSkip`) asks it; where it says no, every switch reads
+  as 0: stock code. No: a game whose setup has not arrived yet, a remote host (`gameServer` null: every online game),
+  a local host with more than one player listed. Yes: no game (the menu: neither CGame nor PreGame), a replay
+  (`hostDemo`), a game hosted here for one player (a skirmish, a scenario); `BarDroidSimOnline = 1` says yes online too
+  (tests). `gameSetup` is never null (a blank setup until one is loaded), hence the CGame/PreGame test. Its reason goes
+  to the infolog when it changes (`[BarDroidSim] the simulation rewrite as set (...)` / `off, stock code (...)`). Dev
+  phone (phone-guard3 = 528c6a5, the app's widgets as the game's and phone Lua): the menu as set; a skirmish "off
+  (a game starting, its setup not received yet)" then "as set (a game hosted here for one player)", pad-test ALL PASS;
+  the same skirmish with a second (spectator) player listed "off, stock code (online: other players on this host)"
+  from its PreGame on, the game running to its first frames.
 - **The app's widgets as the game's** (`rts/Lua/LuaVFS.cpp`, `BarDroidGameWidgetsDir`; Kailil, 2026-11-06, on a BAR
   developer's advice: BAR's "unit control widgets" lobby option is an opt-in label for widgets that automate play,
   and the app's touch and gamepad widgets are the phone's mouse and keyboard, needed to play BAR on Android at all;
