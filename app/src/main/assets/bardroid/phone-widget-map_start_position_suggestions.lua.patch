@@ -1,0 +1,25 @@
+BAR Droid phone version of BAR's Start Position Suggestions (luaui/widgets/map_start_position_suggestions.lua): its
+tutorial ("Recommended start positions are the circles ...") wrapped to the screen's width too
+(docs/upstream/bar-pregame-upright.patch, written for BAR: its font is sized by the screen's height and its lines by
+100 characters, so upright they were ~1,500 pixels wide on 936 and ran off both edges). Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+		cachedTutorialText = wrapText(BAR.I18N("ui.startPositionSuggestions.tutorial"), config.tutorialMaxWidthChars)
+@@@ with
+		-- BAR Droid (phone; docs/upstream/bar-pregame-upright.patch): wrapped to the screen's width too
+		local sample = "the quick brown fox jumps over the lazy dog"
+		local charWidth = fontTutorial:GetTextWidth(sample) / #sample * config.tutorialTextSize * resMult
+		local fits = charWidth > 0 and math.floor(vsx * 0.9 / charWidth) or config.tutorialMaxWidthChars
+		cachedTutorialText = wrapText(BAR.I18N("ui.startPositionSuggestions.tutorial"),
+			math.max(20, math.min(config.tutorialMaxWidthChars, fits)))
+@@@ end
+
+@@@ find
+	resMult = vsy / 1440
+	local baseFontSize
+@@@ with
+	resMult = vsy / 1440
+	cachedTutorialText = nil -- BAR Droid (phone): wrapped again for the new width
+	local baseFontSize
+@@@ end

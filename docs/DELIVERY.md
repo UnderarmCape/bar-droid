@@ -942,7 +942,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sideways without the dock: "1000" / "1000" whole, "Wasting metal" inside its banner; phone-lua-check 6 blocks on
       test-31836; pad-test and touch-phone-test ALL PASS. On BAR's official engine BAR's own top bar runs (until BAR takes
       the patches).
-- [ ] **BAR's pregame texts upright** (found 2026-11-12, dev phone, an 8v8 replay's draft pregame spectated upright):
+- [x] **BAR's pregame texts upright** (found 2026-11-12, dev phone, an 8v8 replay's draft pregame spectated upright):
       `map_start_position_suggestions.lua`'s tutorial ("Recommended start positions are the circles ...", shown until
       it has run once, or with BAR's tutorial notes on) sizes its font by the screen's height (vsy / 1440) and wraps at
       100 characters, so upright its lines are ~1,500 pixels on 936 and run off both edges; at 61 % of the height it
@@ -956,6 +956,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a pool swap test needs the patched code at the original's byte size (comment lines dropped, spaces after), as
       the earlier patches' tests did (checked: their scripts made same-size copies); now in `docs/upstream/README.md`.
       Left: BAR merging it (Kailil and the devs). The non-draft line under the dock stays (the dock is the app's).
+      Shipped to players 2026-11-14 as the phone engine's phone versions of both files
+      (`phone-widget-gui_game_type_info.lua.patch`, `phone-widget-map_start_position_suggestions.lua.patch`, 2 blocks
+      each; phone-lua-check on test-31836). Dev phone upright, a skirmish with start spots picked: both loaded ("2
+      patches" each, no Lua errors), the victory line higher on the screen (773 of 2316 px from the top, was 918);
+      the tutorial does not show on that map (no suggested start positions), its wrap is the code tested on 11-12;
+      dock-phone-test ALL PASS. BAR's official engine keeps BAR's own files until BAR takes the patch.
 - [ ] **The upright load screen's picture** (2026-11-10, his screenshot with a box drawn on BAR's picture): "add
       generative fill and zoom in. All we need to see is the full view of the commander and the pawn to the left and
       the large titan to the right". The zoom is done (`tools/make-loadpictures.ps1` `$ZOOM`: cortex.jpg 18-77 % of

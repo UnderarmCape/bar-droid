@@ -1,0 +1,17 @@
+BAR Droid phone version of BAR's Game Type Info (luaui/widgets/gui_game_type_info.lua): the "Victory condition: ..."
+line at least 7.5 % of the screen's height above its anchor (docs/upstream/bar-pregame-upright.patch, written for BAR:
+upright its fixed offset left it inside the start position suggestions' tutorial, the two texts over each other).
+Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+runs.
+
+@@@ find
+		messages[1].x = widgetScale * 60
+@@@ with
+		messages[1].x = math.max(widgetScale * 60, vsy * 0.075) -- BAR Droid (phone; docs/upstream/bar-pregame-upright.patch): clear of the start position tutorial upright
+@@@ end
+
+@@@ find
+		messages[3].x = 40 * widgetScale
+@@@ with
+		messages[3].x = math.max(40 * widgetScale, vsy * 0.075 - 20 * widgetScale) -- BAR Droid (phone): under the first, as before
+@@@ end
