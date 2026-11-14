@@ -1728,7 +1728,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Holds: "when i press and hold any button or anywhere on the bottom ui. It jumps the camera south": a long press's
       release went to the dock's top edge and the dock panned for it (500 to 1300 elmos a hold); it stays with the
       finger now. dock-phone-test passes.
-- [ ] **BAR's Settings upright, asked again** (Kailil, 2026-11-12 night, with a screenshot: "Resize the setting menu to
+- [x] **BAR's Settings upright, asked again** (Kailil, 2026-11-12 night, with a screenshot: "Resize the setting menu to
       fit on vertical"): BAR's fix is the patch above (`bar-windows-upright.patch`, waiting on BAR). In the app a copy of
       gui_options.lua is not workable: 131 uses of the widget handler a user widget does not have (configData,
       orderList, knownWidgets, EnableWidget ...), and the phone's patcher replaces one place each. The route that works
@@ -1745,7 +1745,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       path, but any user widget could then ask the app to change settings: it undoes BAR's sandbox for options),
       the patched engine's game widgets (BARDROID_GAME_WIDGETS: a phone-laid-out copy of gui_options with the real
       handler), or BAR's own gui_options laid out for phones (a patch for BAR, as bar-windows-upright.patch).
-      Asked Kailil which: "The engine rebuild/patch method".
+      Asked Kailil which: "The engine rebuild/patch method". Done: the phone Settings (next item), every player's
+      since the phone engine became the default (2026-11-13); dev phone 2026-11-14 at the Fold7's unfolded shape
+      (wm size 1080x1198): the tab grid three across, whole rows, the description strip under them.
+- [x] **Pregame sideways: BAR's faction picker under the dock** (hardening, 2026-11-14, dev phone sideways, a skirmish
+      with start spots picked): BAR's "Pick your faction" sits by its order menu at the bottom; sideways half of it
+      stuck out left of the dock, its buttons under the dock's minimap, and the dock's two tabs both read "BUILD" (the
+      right page holds the factions). The dock now removes BAR's picker for the game while it is up before the start
+      (as BAR's picker removes itself at the start; with the widget handler a game widget has, the phone engine), and
+      the right tab reads "START". Dev phone sideways: the picker gone ("BAR's faction picker off for this game"),
+      START shows UNDO LAST, CLEAR QUEUE, ARMADA, CORTEX, RANDOM, PING, CORTEX picked from it; dock-phone-test and
+      pad-test ALL PASS.
 - [x] **The phone Settings, on the engine branch (Kailil, 2026-11-13)**: `tools/make-options.py` makes
       `bardroid_options.lua` from BAR's gui_options.lua (10 patches, each marked "BAR Droid:"): its own name, GetInfo
       replaces "Options"; larger rows, tabs and words; upright the window the screen's width under the top bar to its
