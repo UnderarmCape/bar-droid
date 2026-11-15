@@ -1931,11 +1931,21 @@ final class RtsTouch {
      */
     void voice(String text, boolean ping) {
         byte[] b = text.replace('\n', ' ').getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        Boolean atStart = voiceGameAtStart;
+        voiceGameAtStart = null;
+        boolean game = atStart != null ? atStart : gameWidgetRunning();
         StringBuilder hex = new StringBuilder(b.length * 2 + 10)
-                .append(ping ? "voiceping " : (gameWidgetRunning() ? "voicegame " : "voice "));
+                .append(ping ? "voiceping " : (game ? "voicegame " : "voice "));
         for (byte x : b) hex.append(Character.forDigit((x >> 4) & 15, 16)).append(Character.forDigit(x & 15, 16));
         send(hex.toString());
     }
+
+    // whether a game's widget ran as listening began (voiceStarted): its words go to that game's chat even when they come
+    // in after the game ended and the lobby is back (picked as they came, a "good game" said at the end went to the
+    // lobby's server room; review 2026-11-15)
+    private volatile Boolean voiceGameAtStart;
+    /** Speak to chat began listening (GameActivity's VoiceChat.Sink): its words' place fixed now. */
+    void voiceStarted() { voiceGameAtStart = gameWidgetRunning(); }
 
     private final File gameFile = new File(widgetDir, "bardroid_game.txt");
     private volatile long gameFileAt = -1;

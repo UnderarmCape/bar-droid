@@ -37,6 +37,10 @@ final class VoiceChat {
     private int session;   // the session listening now (main thread)
     private volatile boolean listening;
     private boolean waitingForPermission;
+    // the game screen stopped (close) until it starts again (opened): a start already on its way (the three-finger tap's
+    // 350 ms wait for a double tap, the pad's chord, a post) does not begin listening behind a locked phone; review
+    // 2026-11-15
+    private boolean screenGone;
     private volatile boolean ping;   // what this listening is for: a ping's label (the pad: hold LB, RB three times), else chat
 
     VoiceChat(Activity activity, Sink sink) {
@@ -57,6 +61,10 @@ final class VoiceChat {
     void start(boolean forPing) {
         if (listening) {
             cancel();
+            return;
+        }
+        if (screenGone) {
+            Log.i("app", "voice chat: not started, the game screen is gone");
             return;
         }
         if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
@@ -121,7 +129,13 @@ final class VoiceChat {
      * Listening on after the screen went away sent what was said next, perhaps to someone else in the room, to the
      * game's chat, online a public one.
      */
+    /** The game screen started again (GameActivity.onStart): starts are taken again. */
+    void opened() {
+        screenGone = false;
+    }
+
     void close() {
+        screenGone = true;
         if (listening) Log.i("app", "voice chat: stopped listening, the game screen went away");
         // (and a start waiting for the microphone's permission dropped: a yes given after the screen went away would
         // have started listening then)

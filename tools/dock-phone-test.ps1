@@ -212,9 +212,12 @@ try {
   Touch MOVE ($a1[0] + 60) ($a1[1] + 40); Touch MOVE ($a1[0] + 160) ($a1[1] + 100)
   Start-Sleep -Milliseconds 200; Touch UP ($a1[0] + 160) ($a1[1] + 100); Start-Sleep -Milliseconds 800
   Stage "panned?"; Start-Sleep 1
+  # (on the split dock its end on the right block's inner edge: 80 pixels right of the aim point fell between the blocks
+  # when the aim point lay in the middle, the game's own place, no hold, the case failed; 2026-11-15)
+  $bx = if ($dock["gap"]) { $dock["right"][0] + 12 } else { $a1[0] + 80 }
   TapDown $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
-  Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE ($a1[0] + 80) $dm[1]
-  Start-Sleep -Milliseconds 300; Touch UP ($a1[0] + 80) $dm[1]; Start-Sleep -Milliseconds 800
+  Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $bx $dm[1]
+  Start-Sleep -Milliseconds 300; Touch UP $bx $dm[1]; Start-Sleep -Milliseconds 800
   Stage "boxdock?"; Start-Sleep 1
   # 8. the circle style: a circle drawn from just above the dock on into it; a Pawn just behind the dock's edge,
   # inside the circle on the ground, is not picked (the style put back after)

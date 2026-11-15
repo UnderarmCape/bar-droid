@@ -1417,8 +1417,18 @@ end
 -- RB + D-pad up's cycle), its right half a ping of your own where the map is tapped next (armed for PING_ARM seconds)
 local pingT = { armedAt = nil, rect = nil, pressX = nil, eat = false, drawn = nil, ARM = 10, KEPT = 4 }
 function pingT.armed() -- (and while PING held listens for its label: the map's tap is its spot)
+	local v = pingT.voice
 	return pingT.armedAt ~= nil and now() - pingT.armedAt < pingT.ARM
-		or pingT.voice ~= nil and pingT.voice.endedAt == nil
+		or v ~= nil and v.endedAt == nil and not v.cancelled
+end
+-- PING let go (tapped again, LAST PINGS, units picked): its words said already go with it, and a session still listening
+-- is marked so its words, when they come, are swallowed (dropped, they went to the pad's ping at its aim); before, a
+-- label outlived the arm and came back on a later plain ping, and a ping let go while its words were spoken dropped
+-- anyway (review 2026-11-15)
+function pingT.cancel()
+	local v = pingT.voice
+	pingT.voice = v and not v.endedAt and { at = v.at, cancelled = true } or nil
+	pingT.armedAt, pingT.label = nil, nil
 end
 function pingT.look()
 	local Pd = WG.BarDroidPad
@@ -1479,7 +1489,8 @@ function pingT.act(name)
 		if c and not c.endAt then
 			c.endAt = t
 		end
-		if v and not v.endedAt then
+		if v and not v.endedAt then -- (a session let go meanwhile too: VoiceChat's end comes before its words, which it
+			-- still swallows until update lets it go, 1.5 s on)
 			v.endedAt = t
 		end
 	else
@@ -1494,15 +1505,20 @@ function pingT.update()
 	if c then
 		if c.endAt and t - c.endAt > pingT.FLIP + pingT.BURST then
 			pingT.chat = nil
-		elseif not c.endAt and not c.on and t - c.at > 8 then
+		elseif not c.endAt and (not c.on and t - c.at > 8 or t - c.at > 60) then -- (a minute at most: a session's end
+			-- lost meanwhile left CHAT on and the menu open)
 			c.endAt = t
 		end
 		markDirty() -- (the flip, the burst, CHAT's glow)
 	end
+	if pingT.label and not pingT.armed() then -- (the words said for a ping go when its arm runs out)
+		pingT.label = nil
+		markDirty()
+	end
 	if v then
 		if v.endedAt and t - v.endedAt > 1.5 or t - v.at > 40 then
 			pingT.voice = nil
-			if v.spot then
+			if v.spot and not v.cancelled then
 				Spring.MarkerAddPoint(v.spot[1], v.spot[2], v.spot[3], "")
 				pingT.armedAt = nil
 			end
@@ -1516,6 +1532,11 @@ function pingT.voicePing(text)
 	local v = pingT.voice
 	if not (v and now() - v.at < 40) then
 		return false
+	end
+	if v.cancelled then -- (PING let go while they were spoken: swallowed, not the pad's ping either)
+		pingT.voice = nil
+		markDirty()
+		return true
 	end
 	text = text:gsub("%s+", " "):gsub("^ ", "")
 	if #text > 127 then
@@ -2023,9 +2044,9 @@ function refreshNow()
 			#rightItems)) -- (tools: what the dock shows)
 	end
 	leftKind, rightKind = lk, rk
-	if rk ~= "home" and rk ~= "pregame" and pingT.armedAt then -- (PING armed, then units picked: the next map tap is
-		-- theirs, not a ping)
-		pingT.armedAt = nil
+	if rk ~= "home" and rk ~= "pregame" and pingT.armed() then -- (PING armed, then units picked: the next map tap is
+		-- theirs, not a ping; listening for its words too)
+		pingT.cancel()
 	end
 end
 
@@ -2360,12 +2381,16 @@ local function pressItem(item, long)
 		-- the map's next tap is a ping, pressed again: not; spectating, the whole of it: the last pings)
 		local r = pingT.rect
 		if r and (item.pingOnly or pingT.pressX and pingT.pressX >= (r[1] + r[3]) / 2) and leftKind ~= "spec" then
-			pingT.armedAt = not pingT.armed() and now() or nil
+			if pingT.armed() then
+				pingT.cancel()
+			else
+				pingT.armedAt = now()
+			end
 			if WG.BarDroidPad and WG.BarDroidPad.say then
 				WG.BarDroidPad.say(pingT.armedAt and "TAP THE MAP TO PING" or "NO PING")
 			end
 		else
-			pingT.armedAt = nil
+			pingT.cancel()
 			pingT.look()
 		end
 	elseif k == "base" then -- the camera where the commander began (the start spot)
@@ -2609,7 +2634,7 @@ function pingT.drawBtn(b, armed, th)
 	local t, c, v = now(), pingT.chat, pingT.voice
 	local word, sub = "PING", nil
 	local fill, edge = nil, nil
-	if v and not v.endedAt then
+	if v and not v.endedAt and not v.cancelled then
 		word, fill, edge = "SPEAK", { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 }
 		sub = v.spot and "PING SET" or nil
 	elseif armed then
@@ -3571,7 +3596,9 @@ local function dockLines()
 			touched()
 		end
 		local any = line:match("^act (%S+)")
-		if any and active then -- (PING held or tapped twice, and speak to chat's state: pingT)
+		-- (PING held or tapped twice, and speak to chat's state: pingT; the state's lines even while the dock is down: a
+		-- session's end lost while the phone was turned left CHAT on and the menu open, review 2026-11-15)
+		if any and (active or any:match("^voice_")) then
 			pingT.act(any)
 		end
 		local name = line:match("^act (dock_%S+)")
@@ -4440,7 +4467,12 @@ function widget:MousePress(x, y, btn)
 			Spring.MarkerAddPoint(pos[1], pos[2], pos[3], pingT.label or "") -- (with what was said for it, if PING was held)
 			Spring.Echo("[bardroid-portrait] a ping at " .. floor(pos[1]) .. " " .. floor(pos[3])
 				.. (pingT.label and " with its words" or "")) -- (tools)
+			-- (and a spoken ping's spot that got no words goes: this tap is the ping; it dropped a second, plain, at that
+			-- spot 1.5 s after the listening ended, review 2026-11-15)
 			pingT.armedAt, pingT.label = nil, nil
+			if v and v.endedAt then
+				pingT.voice = nil
+			end
 			markDirty()
 		end
 		pingT.eat = true

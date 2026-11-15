@@ -1767,6 +1767,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Fixed in the test: the path started at the STRAFE aim point, picked before that pan; now the widget's "pathstart"
       gives the aim point if ground is still under it, else the first point up the screen that has some. Dev phone at
       1080x1198: 3 runs in 3 ALL PASS, one of them with the camera moved 183; the S23's own shape ALL PASS.
+      A third review (speak to chat and PING's voice, 2026-11-15 evening): (1) the words said for a ping outlived its
+      arm (run out, PING tapped again, units picked) and labelled a later plain ping: they go with the arm now; (2) PING
+      let go while its words were spoken still dropped the labelled ping, and its words, once in, went to the pad's
+      ping at its aim: pingT.cancel marks the session, its words swallowed when they come (VoiceChat ends the session
+      before it hands the words over), units picked cancel it too; (3) a "good game" said at a game's end went to the
+      lobby's server room when the words came after the lobby was back: their place (game or lobby) is fixed as
+      listening begins (RtsTouch.voiceStarted); (4) CHAT stayed on, the menu open, when the session's end came while
+      the dock was down (the phone turned): the voice lines are read then too, and a chat ends after a minute at most;
+      (5) a start already on its way when the screen went (the three-finger tap's 350 ms, the pad's chord) began
+      listening behind a locked phone: VoiceChat takes no start between onStop and onStart; (6) a spoken ping's spot
+      with no words, then another tap, dropped two pings: the tap is the ping. Dev phone at 1080x1198 upright, the
+      app's voice lines written into the touch log (no microphone): PING held then tapped, its words in: no ping; words
+      with no spot, 10 s on: the label gone, the next ping plain; a spot, no words, a second tap: one ping, there; held,
+      spot, words: the labelled ping at the spot. pad-test -Chat ALL PASS; dock-phone-test ALL PASS twice (its box case
+      now ends on the right block in the split: 80 pixels right of the aim point fell between the blocks once).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

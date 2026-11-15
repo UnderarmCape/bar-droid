@@ -61,7 +61,10 @@ public class GameActivity extends MainActivity {
         KeyboardShortcuts.start(this);
         touch = new RtsTouch(this);
         voiceChat = new VoiceChat(this, new VoiceChat.Sink() {
-            @Override public void listening(boolean on, boolean ping) { touch.padAct(on ? (ping ? "voice_on_ping" : "voice_on") : "voice_off"); }
+            @Override public void listening(boolean on, boolean ping) {
+                if (on) touch.voiceStarted();   // (where the words go is fixed as listening begins: RtsTouch.voice)
+                touch.padAct(on ? (ping ? "voice_on_ping" : "voice_on") : "voice_off");
+            }
             @Override public void heard(String text, boolean ping) { touch.voice(text, ping); }
             @Override public void unavailable() { touch.padAct("voice_none"); }
             @Override public void denied() { touch.padAct("voice_nomic"); }
@@ -282,6 +285,7 @@ public class GameActivity extends MainActivity {
 
     @Override protected void onStart() {
         super.onStart();
+        if (voiceChat != null) voiceChat.opened();   // (speak to chat takes starts again: VoiceChat.close)
         writeAppState(false);
         setFlag(BarApp.get().paths().hiddenFlag(), false, "game screen shown: the engine draws");
         if (!isInPictureInPictureMode()) setFlag(BarApp.get().paths().floatingFlag(), false, "full screen: 30 fps cap");
