@@ -1,0 +1,38 @@
+BAR Droid phone version of BAR's Idle Builders (luaui/widgets/gui_idle_builders.lua): not drawn and taking no presses
+while the app's touch dock is up (WG.BarDroidPortrait.active()), whose groups strip shows the idle builders by type.
+BAR places this box right of its Unit Groups (see phone-widget-gui_unitgroups.lua.patch, the same reason: on the
+unfolded Fold7 sideways a sliver of the two showed at the split dock's right block whenever the dock's groups strip was
+hidden, dev phone 2026-11-15). Its DrawScreen also runs its update; skipped meanwhile, it runs again once the dock is
+gone (the pad: BAR's own screen back). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if
+a block finds no place, BAR's own file runs. Both places are the same in every BAR release on the dev phone,
+test-31465 to test-31958.
+
+@@@ find
+function widget:DrawScreen()
+	gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	if not spec or showWhenSpec then
+@@@ with
+function widget:DrawScreen()
+	-- BAR Droid (phone): the touch dock up, its groups strip has the idle builders
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active and WG.BarDroidPortrait.active() then
+		return
+	end
+	gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	if not spec or showWhenSpec then
+@@@ end
+
+@@@ find
+function widget:MousePress(x, y, button)
+	if Spring.IsGUIHidden() then
+		return
+	end
+@@@ with
+function widget:MousePress(x, y, button)
+	if Spring.IsGUIHidden() then
+		return
+	end
+	-- BAR Droid (phone): not drawn while the touch dock is up, so no presses either
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active and WG.BarDroidPortrait.active() then
+		return
+	end
+@@@ end

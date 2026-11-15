@@ -1,0 +1,38 @@
+BAR Droid phone version of BAR's Unit Groups (luaui/widgets/gui_unitgroups.lua): not drawn and taking no presses while
+the app's touch dock is up (WG.BarDroidPortrait.active()), whose groups strip shows the groups. BAR places this box
+right of the order menu's reported place and reads it only when the screen resizes; under the dock it lay hidden, but
+on the unfolded Fold7 sideways about 20 pixels of it (its empty "1-9") showed at the split dock's right block whenever
+the dock's groups strip was hidden (pregame; nothing picked, no groups, no idle builders; dev phone at 1080x1198,
+2026-11-15). With the pad, BAR's own screen back (the dock not active), the box draws as before. Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs. Both places
+are the same in every BAR release on the dev phone, test-31465 to test-31958.
+
+@@@ find
+function widget:DrawScreen()
+	gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	if not spec or showWhenSpec then
+@@@ with
+function widget:DrawScreen()
+	-- BAR Droid (phone): the touch dock up, its groups strip has the groups
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active and WG.BarDroidPortrait.active() then
+		return
+	end
+	gl.Blending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+	if not spec or showWhenSpec then
+@@@ end
+
+@@@ find
+function widget:MousePress(x, y, button)
+	if Spring.IsGUIHidden() then
+		return
+	end
+@@@ with
+function widget:MousePress(x, y, button)
+	if Spring.IsGUIHidden() then
+		return
+	end
+	-- BAR Droid (phone): not drawn while the touch dock is up, so no presses either
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active and WG.BarDroidPortrait.active() then
+		return
+	end
+@@@ end
