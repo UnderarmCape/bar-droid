@@ -556,7 +556,9 @@ local function refreshCommands()
 		if type(command) == "table" and not disabledCommand[command.name] then
 			if command.type == CMDTYPE_ICON_MODE then
 				isStateCommand[command.id] = true
-				widgetHandler:RegisterUnitCommand(command.id)
+				if widgetHandler.RegisterUnitCommand then -- BAR Droid: not in an older BAR's handler (a replay)
+					widgetHandler:RegisterUnitCommand(command.id)
+				end
 			end
 			if
 				not hiddenCommands[command.id]
@@ -805,7 +807,9 @@ end
 local function reloadBindings()
 	currentLayout = Spring.GetConfigString("KeyboardLayout", "qwerty")
 	actionHotkeys = require("luaui/Include/action_hotkeys")
-	tapHotkeys = require("luaui/Include/action_tap_hotkeys")
+	-- BAR Droid: none where BAR's file is not (a replay of an older release plays its own files: without it this copy
+	-- did not load there)
+	tapHotkeys = VFS.FileExists("luaui/Include/action_tap_hotkeys.lua") and require("luaui/Include/action_tap_hotkeys") or {}
 	tapHotkeyLines = {}
 end
 
@@ -875,7 +879,11 @@ function widget:Initialize()
 		widgetHandler:RemoveWidget()
 		return
 	end
-	widgetHandler:RegisterUnitCommand(CMD.WAIT)
+	-- BAR Droid: an older BAR's handler (a replay of an older release plays its own files) has no RegisterUnitCommand and
+	-- hands every unit command to every widget anyway
+	if widgetHandler.RegisterUnitCommand then
+		widgetHandler:RegisterUnitCommand(CMD.WAIT)
+	end
 	OrderMenuFirestate.init({
 		onOrderGiven = function()
 			doUpdate = true

@@ -23,7 +23,12 @@ $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 if (-not $env:ANDROID_SERIAL) { $env:ANDROID_SERIAL = Get-PhoneDevice $adb }   # toolchain.ps1's choice: the dev phone
 if (-not $env:ANDROID_SERIAL) { throw "No phone: connect one over adb, or name it (ANDROID_SERIAL, BARDROID_DEVICE, phone-device.txt)" }
 $pkg = "com.underarmcape.bardroid"
-$widget = "files/bar/LuaUI/Widgets/bardroid_pad_test.lua"
+# (-Share, -Chat: the recorder among the game's widgets: on the phone engine, the app's default since 2026-11-13, the
+# app's widgets load as the game's and call BAR's real Spring functions, which a user widget's stand-ins never see;
+# -Dgun: its cases are the official engine's route, the app's widgets as user widgets under the host's rule)
+$gameDir = ($Share -or $Chat)
+$widget = if ($gameDir) { "files/bar/bardroid-ui/LuaUI/Widgets/bardroid_pad_test.lua" } else { "files/bar/LuaUI/Widgets/bardroid_pad_test.lua" }
+if ($gameDir) { & $adb exec-out run-as $pkg mkdir -p files/bar/bardroid-ui/LuaUI/Widgets }
 $evemu = "/data/local/tmp/bardroid-pad.evemu"
 
 $results = "files/bar/LuaUI/Config/bardroid_padtest.txt"   # (-Online: the test's own file, the game's log is late on a phone)
@@ -50,6 +55,11 @@ Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null
 try {
   if ($Online) { InApp "online-on.sh" }
+  if ($Dgun) {   # (after online-on.sh, which writes dev-env.sh anew: the app's widgets as user widgets, see $gameDir)
+    $f = Join-Path $TC "tmp\padtest-userwidgets.sh"
+    [IO.File]::WriteAllText($f, "printf '%s\n' 'BARDROID_GAME_WIDGETS=0' >> files/bar/dev-env.sh`n", (New-Object Text.ASCIIEncoding))
+    Invoke-AppScript $adb $f
+  }
   if ($Engine) {   # (after online-on.sh, which writes dev-env.sh anew)
     $f = Join-Path $TC "tmp\padtest-engine.sh"
     [IO.File]::WriteAllText($f, ("printf '%s\n' 'ENGINE=`"`$BAR/engine-sim/$Engine`"' 'export BARDROID_GAME_WIDGETS=1' 'log `"pad-test: engine-sim/$Engine, the app widgets as the game''s`"' >> files/bar/dev-env.sh`n"), (New-Object Text.ASCIIEncoding))

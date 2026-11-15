@@ -1797,6 +1797,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
+- [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
+      the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
+      no RegisterUnitCommand; the order menu's `action_tap_hotkeys.lua` is not in it): make-buildmenu.py's and
+      make-ordermenu.py's patches register only where the handler can (older handlers hand every unit command to every
+      widget anyway) and the tap hotkeys are empty where BAR's file is not. Dev phone, the same replay: both copies load,
+      no Lua error in the whole log, 0 desync warnings. A phone test sweep after the day's changes found pad-test -Share,
+      -Chat and -Dgun failing: their recorders wrapped Spring functions in the user widgets' environment, which the app's
+      widgets no longer use on the phone engine; -Share and -Chat now put their recorder among the game's widgets (as
+      shipped), -Dgun keeps the official engine's route (BARDROID_GAME_WIDGETS=0: its cases are the host's rule over user
+      widgets). All three ALL PASS; lobby-phone-test, touch-phone-test, pace-test, fp-save-test, pad-test, pad-test
+      -Online, dock-phone-test, remake-check PASS.
 - [x] **No Settings in a replay of an older BAR release** (hardening, 2026-11-15, the dev phone's logs of a server
       replay of the 2026-10-01 release): a replay plays its own release's files; the app's Settings copy (made from today's
       gui_options.lua) includes `luaui/Include/squad_selection_presets.lua`, which that release does not have, so it

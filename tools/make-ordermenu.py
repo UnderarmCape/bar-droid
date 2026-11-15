@@ -168,8 +168,22 @@ local function setupCellGrid(force)
 		widgetHandler:RemoveWidget()
 		return
 	end
-	widgetHandler:RegisterUnitCommand(CMD.WAIT)
+	-- BAR Droid: an older BAR's handler (a replay of an older release plays its own files) has no RegisterUnitCommand and
+	-- hands every unit command to every widget anyway
+	if widgetHandler.RegisterUnitCommand then
+		widgetHandler:RegisterUnitCommand(CMD.WAIT)
+	end
 '''),
+    ('''				isStateCommand[command.id] = true
+				widgetHandler:RegisterUnitCommand(command.id)''',
+     '''				isStateCommand[command.id] = true
+				if widgetHandler.RegisterUnitCommand then -- BAR Droid: not in an older BAR's handler (a replay)
+					widgetHandler:RegisterUnitCommand(command.id)
+				end'''),
+    ('''	tapHotkeys = require("luaui/Include/action_tap_hotkeys")''',
+     '''	-- BAR Droid: none where BAR's file is not (a replay of an older release plays its own files: without it this copy
+	-- did not load there)
+	tapHotkeys = VFS.FileExists("luaui/Include/action_tap_hotkeys.lua") and require("luaui/Include/action_tap_hotkeys") or {}'''),
     ('''	WG.ordermenu.getIsShowing = function()
 		return ordermenuShows
 	end

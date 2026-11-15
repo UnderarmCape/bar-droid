@@ -1080,8 +1080,12 @@ function widget:DrawWorld()
 		Spring.Echo("[bardroid-buildmenu] the controller game: beside its own build menu, shown with the app's controls")
 		droid.ctl = true
 	end
-	widgetHandler:RegisterUnitCommand(CMD.BUILD) -- BAR Droid: the handler's stand-in for user widgets
-	widgetHandler:RegisterUnitCommand(CMD_STOP_PRODUCTION)'''),
+	-- BAR Droid: the handler's stand-in for user widgets; an older BAR's handler (a replay of an older release plays its own
+	-- files) has none and hands every unit command to every widget anyway
+	if widgetHandler.RegisterUnitCommand then
+		widgetHandler:RegisterUnitCommand(CMD.BUILD)
+		widgetHandler:RegisterUnitCommand(CMD_STOP_PRODUCTION)
+	end'''),
     ('''	if widgetHandler:IsWidgetKnown("Grid menu") then
 		-- Grid menu needs to be disabled right now and before we recreate
 		-- WG['buildmenu'] since its Shutdown will destroy it.
