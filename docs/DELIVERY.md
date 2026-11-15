@@ -1727,6 +1727,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       factions, RANDOM, PING) at the orders' height left two rows empty under them: their rows fill the block now (96
       pixels at 1080, were 53). Dev phone upright: the three rows, CORTEX tapped at its new place switched the grid to
       Cortex's buildings. publish-check -NoHistory: ready.
+      Sideways the same (pregame's three rows; a building picked: ONE / LINE / GRID / BORDER, PLACE, ROTATE, X). Known,
+      left: with the groups strip hidden (pregame; or nothing picked, no groups, no idle builders) a sliver of BAR's Unit
+      Groups box (its "1-9" when empty), about 20 pixels, shows at the right block's left edge sideways at 1080 (upright
+      it lies wholly under the block). BAR's gui_unitgroups.lua and gui_idle_builders.lua sit right of
+      WG.ordermenu.getPosition() and read it in ViewResize only: the order menu copy reporting an off-screen place
+      while the dock is up would hide them, but they would then stay off-screen when the pad brings BAR's own screen
+      back (no resize). A change in those two of BAR's (follow the position each Update) would allow it.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
