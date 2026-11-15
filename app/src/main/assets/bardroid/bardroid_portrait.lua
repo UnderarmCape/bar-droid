@@ -3786,6 +3786,17 @@ local function drawDgun()
 		autoOn, autoFor = D.auto()
 		autoFor = autoFor or 0
 	end
+	-- (the two sticks' words one size, the one "AIM: AUTO" fits at: textIn shrank only a word too wide for its stick, so
+	-- on the unfolded Fold7's narrower sticks MOVE stood large beside a small AIM: AUTO, and AIM's size jumped as full
+	-- auto came and went; dev phone at 1080x1198, 2026-11-15)
+	local wordSize = L.btnH * 0.36
+	if font then
+		local wide = font:GetTextWidth("AIM: AUTO") * wordSize
+		local room = min(p.l[3], p.r[3]) * 2 * 0.76 -- (textIn's room: 76 % of the width it is given)
+		if wide > room then
+			wordSize = wordSize * room / wide
+		end
+	end
 	for i, s in ipairs({ p.l, p.r }) do
 		gl.Color(0, 0, 0, 0.5)
 		disc(s[1], s[2], s[3], true)
@@ -3807,7 +3818,7 @@ local function drawDgun()
 		-- two unreadable, dev phone screenshot 2026-11-13)
 		local wy0 = p.float and s[2] + s[3] + L.gap or s[2] - s[3] - L.btnH * 0.55
 		local wy1 = p.float and s[2] + s[3] + L.btnH * 0.55 or s[2] - s[3] - L.gap
-		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], wy0, s[1] + s[3], wy1, L.btnH * 0.36,
+		textIn(i == 1 and "MOVE" or autoOn and "AIM: AUTO" or "AIM", s[1] - s[3], wy0, s[1] + s[3], wy1, wordSize,
 			"\255\200\200\200", font)
 	end
 	local t = now()
