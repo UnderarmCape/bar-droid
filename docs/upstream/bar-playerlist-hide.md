@@ -1,14 +1,15 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, a way to hide the player list
 
 For BAR's repository (the official Android port). The change: [bar-playerlist-hide.patch](bar-playerlist-hide.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). Asked for 2026-11-11 (Kailil: "Hide the team
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). Asked for 2026-11-11 (Kailil: "Hide the team
 list"), built and tested on 2026-11-15.
 
 **Title:** AdvPlayersList: `WG.advplayerlist_api.SetHidden` to hide the list for a while
 
 **Body:**
 
-`luaui/widgets/gui_advplayerslist.lua`'s API offers scale, columns, spectators and the list's position, but no way to
+`luaui/Widgets/gui_advplayerslist.lua`'s API offers scale, columns, spectators and the list's position, but no way to
 put the list away. A phone's interface that covers the screen's foot (the BAR Droid port's touch dock, folded to a
 small button while spectating so the whole map shows) needs the list out of the way then, and back after.
 

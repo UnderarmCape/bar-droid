@@ -1,7 +1,7 @@
-diff --git a/luaui/widgets/gui_game_type_info.lua b/luaui/widgets/gui_game_type_info.lua
+diff --git a/luaui/Widgets/gui_game_type_info.lua b/luaui/Widgets/gui_game_type_info.lua
 index 0d70f8c..5f8f6c3 100644
---- a/luaui/widgets/gui_game_type_info.lua
-+++ b/luaui/widgets/gui_game_type_info.lua
+--- a/luaui/Widgets/gui_game_type_info.lua
++++ b/luaui/Widgets/gui_game_type_info.lua
 @@ -51,7 +51,9 @@ function widget:ViewResize()
  	font = WG.fonts.getFont(1, 1.5)
  
@@ -22,10 +22,10 @@ index 0d70f8c..5f8f6c3 100644
  		messages[3].y = 13 * widgetScale
  	end
  end
-diff --git a/luaui/widgets/map_start_position_suggestions.lua b/luaui/widgets/map_start_position_suggestions.lua
+diff --git a/luaui/Widgets/map_start_position_suggestions.lua b/luaui/Widgets/map_start_position_suggestions.lua
 index 3f235a4..aee9a28 100644
---- a/luaui/widgets/map_start_position_suggestions.lua
-+++ b/luaui/widgets/map_start_position_suggestions.lua
+--- a/luaui/Widgets/map_start_position_suggestions.lua
++++ b/luaui/Widgets/map_start_position_suggestions.lua
 @@ -676,7 +676,13 @@ local function drawTutorial()
  	end
  

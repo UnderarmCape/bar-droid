@@ -1819,9 +1819,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       start (the copy's replaces keeps it off; BAR's handler had saved it at 0). Dev phone on 31958: upright the tab grid
       (BAR's new Plugins tab with it), full width, the close button; sideways as large as fits; Snow switched on and off
       through it; no Lua errors; the 2026-10-01 replay: the copy stands down, BAR's own Options loads, 0 desync warnings;
-      remake-check (all 5 copies, 11 phone patches), dock-phone-test, pad-test, lobby-phone-test PASS. Still left:
-      docs/upstream's patches refreshed against 31958 (their old copies run meanwhile without Lua errors: the
-      launcher's two layer misses on the Fold7 and the dev phone); docs/upstream's patches refreshed against 31958.
+      remake-check (all 5 copies, 11 phone patches), dock-phone-test, pad-test, lobby-phone-test PASS. docs/upstream's
+      nine `bar-*` patches refreshed against 31958 (same day): four had stopped applying (Settings' config reads moved
+      into `options/model.lua`, the tooltip rewritten, the wind tooltip into `setWindTooltip`, Settings' widgetScale
+      lines moved), made again there; all nine now apply as they are to 31958 and to BAR's master 8ff9f0a (the same
+      files that day), in the repository's path case (`luaui/Widgets/`, `luaui/Include/`: the old lower-case paths
+      missed on a case-sensitive checkout); every patched file parses (luacheck). Their dev-phone tests are from before.
 - [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
       the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
       no RegisterUnitCommand; the order menu's `action_tap_hotkeys.lua` is not in it): make-buildmenu.py's and

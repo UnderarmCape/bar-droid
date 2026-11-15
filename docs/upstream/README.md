@@ -11,6 +11,13 @@ code with comment lines dropped and spaces added at the end. A longer copy is cu
 ("unexpected symbol near '<eof>'"; the pregame test's first run, 2026-11-12). Every `bar-*` patch here makes its files
 longer (2026-11-12, measured against test-31836-b250a16); their tests used same-size copies.
 
+Refreshed 2026-11-15 against test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of that day: every `bar-*`
+patch applies with `git apply` as it is (no offsets), its paths in the repository's case (`luaui/Widgets/`,
+`luaui/Include/`; the release's pool lists them lower case, and `git apply` on a case-sensitive checkout missed them),
+every patched file parses (luacheck). Made by the scratchpad's refresh: the release's files, the change made again where
+BAR moved the code (Settings' config reads into `options/model.lua`, the tooltip's text measured as `text`, the
+wind's tooltip set in `setWindTooltip`), diffed back. Their dev-phone tests are from before the refresh.
+
 | Draft | Where | Attach |
 | --- | --- | --- |
 | [lfdevs-mesa-kgsl-present-fence.md](lfdevs-mesa-kgsl-present-fence.md) | github.com/lfdevs/mesa-for-android-container issues | nothing (numbers are in the text) |
@@ -18,7 +25,7 @@ longer (2026-11-12, measured against test-31836-b250a16); their tests used same-
 | [recoil-save-load-crash.md](recoil-save-load-crash.md) | github.com/beyond-all-reason/RecoilEngine issues (or BAR's Discord bug channel first) | Kailil's save `Saves/20261026_063343.ssf` |
 | [recoil-compresstextures-fbo.md](recoil-compresstextures-fbo.md) | github.com/beyond-all-reason/RecoilEngine issues | an infolog with the lines; a screenshot of the black icons |
 | [bar-topbar-warning-banner.md](bar-topbar-warning-banner.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `gui_top_bar.lua` (the official port's) | [bar-topbar-warning-banner.patch](bar-topbar-warning-banner.patch); tested on the dev phone |
-| [bar-options-replaced.md](bar-options-replaced.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `gui_options.lua` (the official port's) | [bar-options-replaced.patch](bar-options-replaced.patch); tested on the dev phone |
+| [bar-options-replaced.md](bar-options-replaced.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `luaui/Include/options/model.lua` (Settings' model since test-31958; the official port's) | [bar-options-replaced.patch](bar-options-replaced.patch); tested on the dev phone |
 | [bar-windows-upright.md](bar-windows-upright.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to six windows (the official port's) | [bar-windows-upright.patch](bar-windows-upright.patch); tested on the dev phone |
 | [bar-pregame-upright.md](bar-pregame-upright.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `map_start_position_suggestions.lua` and `gui_game_type_info.lua` (the official port's) | [bar-pregame-upright.patch](bar-pregame-upright.patch); tested on the dev phone |
 | [bar-topbar-amount.md](bar-topbar-amount.md) | github.com/beyond-all-reason/Beyond-All-Reason, a change to `gui_top_bar.lua` (the official port's) | [bar-topbar-amount.patch](bar-topbar-amount.patch); tested on the dev phone |

@@ -1,7 +1,8 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, the top bar's hidden parts out of the pointer's way
 
 For BAR's repository (the official Android port, 2026-11-11). The change: [bar-topbar-hidden.patch](bar-topbar-hidden.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16).
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase).
 
 **Title:** Top Bar: hidden resource bars and indicators no longer take the pointer (or show tooltips)
 
@@ -21,8 +22,8 @@ The patch:
   `cache.showIndicators` is false;
 - hiding the resource bars removes their tooltips (they come back with `init()` when shown, as now);
 - hiding the indicators removes the coms, wind and tide tooltips, showing them again runs `init()` (as showing the
-  resource bars does) so their tooltips come back, and `updateComs` / `updateWind` / `updateTidal` add a tooltip only
-  while the indicators show;
+  resource bars does) so their tooltips come back, and `updateComs` / `updateTidal` and `setWindTooltip` (since test-31958 the
+  wind's, refreshed by each wind sample too) add a tooltip only while the indicators show;
 - `Shutdown` removes the tide's tooltip too (it was left behind).
 
 Nothing changes while both are shown.

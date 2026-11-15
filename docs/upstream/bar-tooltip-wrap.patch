@@ -1,10 +1,11 @@
-diff --git a/luaui/widgets/gui_tooltip.lua b/luaui/widgets/gui_tooltip.lua
---- a/luaui/widgets/gui_tooltip.lua
-+++ b/luaui/widgets/gui_tooltip.lua
-@@ -348,6 +348,20 @@ local function drawTooltip(name, x, y)
- 		if tooltips[name].value and tooltips[name].value ~= "" then
+diff --git a/luaui/Widgets/gui_tooltip.lua b/luaui/Widgets/gui_tooltip.lua
+index d9b2703..0592d74 100644
+--- a/luaui/Widgets/gui_tooltip.lua
++++ b/luaui/Widgets/gui_tooltip.lua
+@@ -1057,6 +1057,20 @@ local function drawTooltip(name, x, y)
+ 		if text and text ~= "" then
  			-- get text dimensions
- 			lines = string_lines(tooltips[name].value)
+ 			lines = string_lines(text)
 +			-- a line wider than the screen (less the box's padding) wrapped to it: callers wrap by the font's size,
 +			-- which follows the screen's height, so on a tall (portrait) screen their lines were wider than it
 +			local fit = vsx - (paddingW * 4)

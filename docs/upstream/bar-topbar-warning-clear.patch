@@ -1,7 +1,8 @@
-diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
---- a/luaui/widgets/gui_top_bar.lua
-+++ b/luaui/widgets/gui_top_bar.lua
-@@ -2473,5 +2473,8 @@ function widget:DrawScreen()
+diff --git a/luaui/Widgets/gui_top_bar.lua b/luaui/Widgets/gui_top_bar.lua
+index 35d9223..e27f5cb 100644
+--- a/luaui/Widgets/gui_top_bar.lua
++++ b/luaui/Widgets/gui_top_bar.lua
+@@ -2507,6 +2507,9 @@ function widget:DrawScreen()
  				and resbarDrawinfo[res].textStorage
  			then
  				cache.warningCleared[res] = true
@@ -10,3 +11,4 @@ diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
 +				cache.lastDrawnValue[res] = ""
  				scissorsCount = scissorsCount + 1
  				local scissor = storageScissors[scissorsCount]
+ 				scissor[1] = (resbarDrawinfo[res].textStorage[2] - topbarArea[1])

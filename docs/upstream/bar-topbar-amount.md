@@ -1,13 +1,14 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, the top bar's amount clear of its storage number
 
 For BAR's repository (the official Android port). The change: [bar-topbar-amount.patch](bar-topbar-amount.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). Found and tested on 2026-11-12.
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). Found and tested on 2026-11-12.
 
 **Title:** Top bar: the metal / energy amount runs into the storage number on a short resource bar
 
 **Body:**
 
-In `luaui/widgets/gui_top_bar.lua` (`updateResbar`) the current amount is centred on its bar
+In `luaui/Widgets/gui_top_bar.lua` (`updateResbar`) the current amount is centred on its bar
 (`barArea[1] + barWidth / 2`, at `height / 2.5 * widgetScale`) and the storage number is right-aligned at the bar's
 right end (`barArea[3]`, at `height / 3.2 * widgetScale`). When the bar is short for its font, as on a phone at a
 large interface scale (2.0 on a 2008 x 938 screen here), an amount of four digits reaches the storage number: "1000"

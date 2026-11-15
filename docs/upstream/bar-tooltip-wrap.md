@@ -1,13 +1,14 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, tooltip lines wrapped to the screen's width
 
 For BAR's repository (the official Android port). The change: [bar-tooltip-wrap.patch](bar-tooltip-wrap.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). Found and tested on 2026-11-15.
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). Found and tested on 2026-11-15.
 
 **Title:** Tooltip: a line wider than the screen runs off it on a tall (portrait) screen
 
 **Body:**
 
-`luaui/widgets/gui_tooltip.lua` moves a tooltip box that would pass the screen's right edge to the pointer's left
+`luaui/Widgets/gui_tooltip.lua` moves a tooltip box that would pass the screen's right edge to the pointer's left
 (`drawTooltip`), but never wraps a line. The widgets that show tooltips wrap their text by the font's size (the
 Widget Selector's, the faction picker's `WG.tooltip.getFontsize() * 80` and the like), and the font's size follows
 the screen's height. On a portrait screen, as on a phone held upright (936 x 2013 at interface scale 2.0 here), a

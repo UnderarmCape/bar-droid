@@ -1,7 +1,8 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, the pregame texts on a tall screen
 
 For BAR's repository (the official Android port). The change: [bar-pregame-upright.patch](bar-pregame-upright.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). Found and tested on 2026-11-12.
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). Found and tested on 2026-11-12.
 
 **Title:** Start position tutorial and victory condition text: readable on a tall (portrait) screen
 
@@ -9,12 +10,12 @@ For BAR's repository (the official Android port). The change: [bar-pregame-uprig
 
 Before a game starts, two widgets write over the map:
 
-- `luaui/widgets/map_start_position_suggestions.lua` draws its tutorial ("Recommended start positions and roles are
+- `luaui/Widgets/map_start_position_suggestions.lua` draws its tutorial ("Recommended start positions and roles are
   indicated within the circles. To disable this, ...") centred at 61 % of the screen's height, its font sized by the
   height (`resMult = vsy / 1440`) and wrapped at `tutorialMaxWidthChars` (100) characters. On a tall screen (a phone
   held upright: 936 x 2013 here) the font is 1.4 times its 1440p size and 100 characters make lines of about 1,500
   pixels: they run off both edges.
-- `luaui/widgets/gui_game_type_info.lua` draws "Victory condition: ..." a fixed `60 * widgetScale` above its anchor
+- `luaui/Widgets/gui_game_type_info.lua` draws "Victory condition: ..." a fixed `60 * widgetScale` above its anchor
   (55 % of the height in draft games). On a landscape screen that is above the tutorial; on a tall one the anchor is
   higher and the offset relatively smaller, and the line lands inside the tutorial: the two texts over each other.
 

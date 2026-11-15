@@ -1,8 +1,8 @@
-diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
-index b43170b..215cc00 100644
---- a/luaui/widgets/gui_top_bar.lua
-+++ b/luaui/widgets/gui_top_bar.lua
-@@ -382,7 +382,7 @@ local function updateComs(forceText)
+diff --git a/luaui/Widgets/gui_top_bar.lua b/luaui/Widgets/gui_top_bar.lua
+index 35d9223..f0a330c 100644
+--- a/luaui/Widgets/gui_top_bar.lua
++++ b/luaui/Widgets/gui_top_bar.lua
+@@ -380,7 +380,7 @@ local function updateComs(forceText)
  
  	comcountChanged = nil
  
@@ -11,16 +11,17 @@ index b43170b..215cc00 100644
  		WG.tooltip.AddTooltip(
  			"coms",
  			area,
-@@ -443,7 +443,7 @@ local function updateWind()
- 		glPopMatrix()
- 	end)
+@@ -430,6 +430,9 @@ local function windGraph()
+ end
  
--	if WG.tooltip and refreshUi then
-+	if WG.tooltip and refreshUi and cache.showIndicators then
- 		local avgWindValueForTooltip = noWind and BAR.I18N("ui.topbar.wind.nowind1") or avgWindValue
- 		WG.tooltip.AddTooltip(
- 			"wind",
-@@ -495,7 +495,7 @@ local function updateTidal()
+ local function setWindTooltip()
++	if not cache.showIndicators then
++		return
++	end
+ 	WG.tooltip.AddTooltip("wind", windArea, {
+ 		rows = {
+ 			{ BAR.I18N("ui.minimap.windAverage"), noWind and BAR.I18N("ui.topbar.wind.nowind1") or avgWindValue },
+@@ -527,7 +530,7 @@ local function updateTidal()
  		glPopMatrix()
  	end)
  
@@ -29,7 +30,7 @@ index b43170b..215cc00 100644
  		WG.tooltip.AddTooltip(
  			"tidal",
  			area,
-@@ -1663,19 +1663,26 @@ local function updateAllyTeamOverflowing()
+@@ -1698,19 +1701,26 @@ local function updateAllyTeamOverflowing()
  	end
  end
  
@@ -58,7 +59,7 @@ index b43170b..215cc00 100644
  	if windArea[1] and mathIsInRect(x, y, windArea[1], windArea[2], windArea[3], windArea[4]) then
  		return "wind"
  	end
-@@ -2767,6 +2774,14 @@ function widget:Initialize()
+@@ -2796,6 +2806,14 @@ function widget:Initialize()
  			resbarHover = nil
  			draggingShareIndicator = nil
  			draggingConversionIndicator = nil
@@ -73,7 +74,7 @@ index b43170b..215cc00 100644
  		end
  	end
  
-@@ -2781,6 +2796,13 @@ function widget:Initialize()
+@@ -2810,6 +2828,13 @@ function widget:Initialize()
  
  		cache.showIndicators = visible
  		refreshUi = true
@@ -87,7 +88,7 @@ index b43170b..215cc00 100644
  	end
  
  	WG.topbar.getIndicatorsVisible = function()
-@@ -2860,6 +2882,7 @@ function widget:Shutdown()
+@@ -2889,6 +2914,7 @@ function widget:Shutdown()
  	if WG.tooltip then
  		WG.tooltip.RemoveTooltip("coms")
  		WG.tooltip.RemoveTooltip("wind")

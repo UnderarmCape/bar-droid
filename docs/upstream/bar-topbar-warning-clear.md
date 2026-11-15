@@ -1,13 +1,14 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, the amount whole after the overflow warning's clear
 
 For BAR's repository (the official Android port). The change: [bar-topbar-warning-clear.patch](bar-topbar-warning-clear.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). Found and tested on 2026-11-14.
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). Found and tested on 2026-11-14.
 
 **Title:** Top bar: the metal / energy amount loses its last digits when "Wasting" shows on a short resource bar
 
 **Body:**
 
-In `luaui/widgets/gui_top_bar.lua` (`widget:DrawScreen`), when the overflow warning first shows, the storage number's
+In `luaui/Widgets/gui_top_bar.lua` (`widget:DrawScreen`), when the overflow warning first shows, the storage number's
 area of the text texture is cleared once (`clearFn` through `storageScissors`: from 4 storage font sizes left of the
 bar's right end), and the storage number is not drawn while the warning shows. On a short bar, as on a phone at a large
 interface scale (2.0 on a 2008 x 938 screen), that area reaches into the current amount, centred on the bar. The amount

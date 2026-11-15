@@ -1,8 +1,8 @@
-diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
-index b43170b..b3dbbda 100644
---- a/luaui/widgets/gui_top_bar.lua
-+++ b/luaui/widgets/gui_top_bar.lua
-@@ -927,11 +927,18 @@ local function updateResbar(res)
+diff --git a/luaui/Widgets/gui_top_bar.lua b/luaui/Widgets/gui_top_bar.lua
+index 35d9223..3034d99 100644
+--- a/luaui/Widgets/gui_top_bar.lua
++++ b/luaui/Widgets/gui_top_bar.lua
+@@ -959,11 +959,18 @@ local function updateResbar(res)
  		resbarDrawinfo[res].barGlowRightTexRect =
  			{ barArea[3], barArea[2] - glowSize, barArea[3] + (glowSize * 2.5), barArea[4] + glowSize }
  

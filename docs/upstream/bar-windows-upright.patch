@@ -1,7 +1,7 @@
-diff --git a/luaui/widgets/gui_changelog_info.lua b/luaui/widgets/gui_changelog_info.lua
-index 8e7740c..651fbfa 100644
---- a/luaui/widgets/gui_changelog_info.lua
-+++ b/luaui/widgets/gui_changelog_info.lua
+diff --git a/luaui/Widgets/gui_changelog_info.lua b/luaui/Widgets/gui_changelog_info.lua
+index fd7212c..f3fef3f 100644
+--- a/luaui/Widgets/gui_changelog_info.lua
++++ b/luaui/Widgets/gui_changelog_info.lua
 @@ -48,7 +48,7 @@ local centerPosX = 0.5
  local centerPosY = 0.5
  local screenX = mathFloor((vsx * centerPosX) - (screenWidth / 2))
@@ -11,7 +11,7 @@ index 8e7740c..651fbfa 100644
  
  -- The changelog is markdown: the month column lists its chapter headings (the
  -- shallowest heading level the file uses), and the text is rendered by the shared
-@@ -576,7 +576,7 @@ end
+@@ -530,7 +530,7 @@ end
  
  function widget:ViewResize()
  	vsx, vsy = spGetViewGeometry()
@@ -20,11 +20,11 @@ index 8e7740c..651fbfa 100644
  
  	screenHeight = mathFloor(screenHeightOrg * widgetScale)
  	screenWidth = mathFloor(screenWidthOrg * widgetScale)
-diff --git a/luaui/widgets/gui_gameinfo.lua b/luaui/widgets/gui_gameinfo.lua
-index a47fb5c..06e141f 100644
---- a/luaui/widgets/gui_gameinfo.lua
-+++ b/luaui/widgets/gui_gameinfo.lua
-@@ -61,7 +61,7 @@ local screenHeight = screenHeightOrg
+diff --git a/luaui/Widgets/gui_gameinfo.lua b/luaui/Widgets/gui_gameinfo.lua
+index 5473994..fdcbb96 100644
+--- a/luaui/Widgets/gui_gameinfo.lua
++++ b/luaui/Widgets/gui_gameinfo.lua
+@@ -54,7 +54,7 @@ local screenHeight = screenHeightOrg
  local screenWidth = screenWidthOrg
  
  local vsx, vsy = spGetViewGeometry()
@@ -33,7 +33,7 @@ index a47fb5c..06e141f 100644
  local screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
  local screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
  
-@@ -2341,7 +2341,7 @@ end
+@@ -1292,7 +1292,7 @@ end
  
  function widget:ViewResize()
  	vsx, vsy = spGetViewGeometry()
@@ -42,11 +42,11 @@ index a47fb5c..06e141f 100644
  
  	screenHeight = mathFloor(screenHeightOrg * widgetScale)
  	screenWidth = mathFloor(screenWidthOrg * widgetScale)
-diff --git a/luaui/widgets/gui_keybind_info.lua b/luaui/widgets/gui_keybind_info.lua
-index 5b56a1d..4c4b9b9 100644
---- a/luaui/widgets/gui_keybind_info.lua
-+++ b/luaui/widgets/gui_keybind_info.lua
-@@ -47,7 +47,7 @@ local elementCorner = WG.FlowUI.elementCorner
+diff --git a/luaui/Widgets/gui_keybind_info.lua b/luaui/Widgets/gui_keybind_info.lua
+index 6e4525d..9d7c14c 100644
+--- a/luaui/Widgets/gui_keybind_info.lua
++++ b/luaui/Widgets/gui_keybind_info.lua
+@@ -48,7 +48,7 @@ local elementCorner = WG.FlowUI.elementCorner
  
  local showOnceMore = false
  
@@ -55,7 +55,7 @@ index 5b56a1d..4c4b9b9 100644
  local centerPosX = 0.5
  local centerPosY = 0.5
  local screenX = mathFloor((vsx * centerPosX) - (screenWidth / 2))
-@@ -111,8 +111,8 @@ end
+@@ -104,8 +104,8 @@ end
  -- Rebuilds every rect and display list against the new screen size.
  function widget:ViewResize()
  	vsx, vsy = spGetViewGeometry()
@@ -65,21 +65,21 @@ index 5b56a1d..4c4b9b9 100644
  
  	screenHeight = mathFloor(screenHeightOrg * widgetScale)
  	screenWidth = mathFloor(screenWidthOrg * widgetScale)
-diff --git a/luaui/widgets/gui_options.lua b/luaui/widgets/gui_options.lua
-index bd9662a..24bacbf 100644
---- a/luaui/widgets/gui_options.lua
-+++ b/luaui/widgets/gui_options.lua
-@@ -197,7 +197,7 @@ if select(3, Spring.GetGroundExtremes()) < 0 then
- end
- local heightmapChangeBuffer = {}
+diff --git a/luaui/Widgets/gui_options.lua b/luaui/Widgets/gui_options.lua
+index f86ac23..6a54f69 100644
+--- a/luaui/Widgets/gui_options.lua
++++ b/luaui/Widgets/gui_options.lua
+@@ -105,7 +105,7 @@ local RectRound, elementCorner, elementMargin, elementPadding, UiElement, UiSlid
+ ---@type FlowUIScroller
+ local listScroller
  
 -local widgetScale = (vsy / 1080)
 +local widgetScale = math.min(vsy / 1080, vsx / (screenWidthOrg + 50)) -- no wider than the screen (a phone upright)
  
- local edgeMoveWidth = tonumber(Spring.GetConfigFloat("EdgeMoveWidth", 1) or 0.02)
- 
-@@ -502,7 +502,7 @@ end
- function widget:ViewResize()
+ -- The window, in the shape of the game info panel: the tabs and the open tab's sections in a
+ -- column on the left, that tab's settings in one list that scrolls, the search field and the
+@@ -235,7 +235,7 @@ local showOnceMore = false -- used because of GUI shader delay
+ function view.resize()
  	vsx, vsy = Spring.GetViewGeometry()
  
 -	widgetScale = (vsy / 1080)
@@ -87,11 +87,11 @@ index bd9662a..24bacbf 100644
  
  	screenHeight = math.floor(screenHeightOrg * widgetScale)
  	screenWidth = math.floor(screenWidthOrg * widgetScale)
-diff --git a/luaui/widgets/gui_teamstats.lua b/luaui/widgets/gui_teamstats.lua
-index 77d0595..8ccf1f5 100644
---- a/luaui/widgets/gui_teamstats.lua
-+++ b/luaui/widgets/gui_teamstats.lua
-@@ -70,7 +70,7 @@ local screenHeight = screenHeightOrg
+diff --git a/luaui/Widgets/gui_teamstats.lua b/luaui/Widgets/gui_teamstats.lua
+index ac4ee1c..310629a 100644
+--- a/luaui/Widgets/gui_teamstats.lua
++++ b/luaui/Widgets/gui_teamstats.lua
+@@ -50,7 +50,7 @@ local screenHeight = screenHeightOrg
  local screenWidth = screenWidthOrg
  
  local vsx, vsy = spGetViewGeometry()
@@ -100,7 +100,7 @@ index 77d0595..8ccf1f5 100644
  local screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
  local screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
  
-@@ -3562,7 +3562,7 @@ end
+@@ -1679,7 +1679,7 @@ end
  
  function widget:ViewResize()
  	vsx, vsy = spGetViewGeometry()
@@ -109,10 +109,10 @@ index 77d0595..8ccf1f5 100644
  
  	screenHeight = mathFloor(screenHeightOrg * widgetScale)
  	screenWidth = mathFloor(screenWidthOrg * widgetScale)
-diff --git a/luaui/widgets/widget_selector.lua b/luaui/widgets/widget_selector.lua
-index a2bfa04..7468954 100644
---- a/luaui/widgets/widget_selector.lua
-+++ b/luaui/widgets/widget_selector.lua
+diff --git a/luaui/Widgets/widget_selector.lua b/luaui/Widgets/widget_selector.lua
+index 226af63..68f865f 100644
+--- a/luaui/Widgets/widget_selector.lua
++++ b/luaui/Widgets/widget_selector.lua
 @@ -63,7 +63,7 @@ local screenHeight = screenHeightOrg
  local screenWidth = screenWidthOrg
  
@@ -122,7 +122,7 @@ index a2bfa04..7468954 100644
  local screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
  local screenY = mathFloor((vsy * 0.5) + (screenHeight / 2))
  
-@@ -3586,7 +3586,7 @@ end
+@@ -1761,7 +1761,7 @@ local refreshContent = model.refreshContent
  
  function widget:ViewResize()
  	vsx, vsy = spGetViewGeometry()

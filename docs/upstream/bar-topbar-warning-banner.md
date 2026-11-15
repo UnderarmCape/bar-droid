@@ -1,14 +1,15 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, the overflow banner's text inside its banner
 
 For BAR's repository (the official Android port). The change: [bar-topbar-warning-banner.patch](bar-topbar-warning-banner.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16). First written up as an issue on 2026-11-02;
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase). First written up as an issue on 2026-11-02;
 the patch and the phone test 2026-11-11.
 
 **Title:** Top bar: the "Wasting metal / energy" banner's text inside its banner at a large interface scale
 
 **Body:**
 
-In `luaui/widgets/gui_top_bar.lua` the overflow banner's text size is
+In `luaui/Widgets/gui_top_bar.lua` the overflow banner's text size is
 
     local fontSize = (orgHeight * (1 + (ui_scale - 1) / 1.33) / 4) * widgetScale
 

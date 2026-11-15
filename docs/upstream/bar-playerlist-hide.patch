@@ -1,6 +1,7 @@
-diff --git a/luaui/widgets/gui_advplayerslist.lua b/luaui/widgets/gui_advplayerslist.lua
---- a/luaui/widgets/gui_advplayerslist.lua
-+++ b/luaui/widgets/gui_advplayerslist.lua
+diff --git a/luaui/Widgets/gui_advplayerslist.lua b/luaui/Widgets/gui_advplayerslist.lua
+index 792bfd2..0953574 100644
+--- a/luaui/Widgets/gui_advplayerslist.lua
++++ b/luaui/Widgets/gui_advplayerslist.lua
 @@ -1065,8 +1065,26 @@ function widget:Initialize()
  		updateWidgetScale()
  	end

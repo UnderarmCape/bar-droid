@@ -1,7 +1,8 @@
 # DRAFT (not posted): beyond-all-reason/Beyond-All-Reason, BAR's windows no wider than the screen
 
 For BAR's repository (the official Android port, 2026-11-10). The change: [bar-windows-upright.patch](bar-windows-upright.patch)
-(`git apply` in BAR's checkout; made against release test-31836-b250a16).
+(`git apply` in BAR's checkout; made against release test-31958-7ffdbab, whose files are BAR's master 8ff9f0a of 2026-11-15; first made against
+test-31836-b250a16, the test below is from before this rebase).
 
 **Title:** Settings, Game info, Widget Selector, TeamStats, Keybinds, Changelog: no wider than the screen (a phone
 held upright)

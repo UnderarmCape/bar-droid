@@ -1,8 +1,8 @@
-diff --git a/luaui/widgets/gui_top_bar.lua b/luaui/widgets/gui_top_bar.lua
-index b43170b..50ae941 100644
---- a/luaui/widgets/gui_top_bar.lua
-+++ b/luaui/widgets/gui_top_bar.lua
-@@ -717,7 +717,7 @@ local function updateResbarText(res, force)
+diff --git a/luaui/Widgets/gui_top_bar.lua b/luaui/Widgets/gui_top_bar.lua
+index 35d9223..49c2152 100644
+--- a/luaui/Widgets/gui_top_bar.lua
++++ b/luaui/Widgets/gui_top_bar.lua
+@@ -749,7 +749,7 @@ local function updateResbarText(res, force)
  					end
  
  					dlist.resbar[res][7] = glCreateList(function()
