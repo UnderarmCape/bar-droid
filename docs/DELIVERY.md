@@ -342,8 +342,8 @@ same, that stays the simpler way.
         minimap) is a ping there, BAR's point marker (the button gold, "TAP MAP", for 10 s; again: not). Dev phone:
         "Look here! (map marker)" where the map was tapped; pad-test -Online's cycle ALL PASS. IDLE UNITS' place is open
         (a blank tile) until Kailil picks what goes there.
-      - **PLACE's X twice the size**, **ROTATE 90Â°** in the old arrow's place (it read as redo; it turns the building
-        90Â° a tap, as before). **No green ring at the spot**: the building's footprint, green as the engine's own, turned
+      - **PLACE's X twice the size**, **ROTATE 90°** in the old arrow's place (it read as redo; it turns the building
+        90° a tap, as before). **No green ring at the spot**: the building's footprint, green as the engine's own, turned
         with it. **A finer drag**: the building comes down where the finger does, then moves by 12 % of the finger's way,
         rising smoothly to 60 % a quarter of the screen away (it followed the finger 1:1; a waiting one moved 50 %), the
         pointer with it so BAR's own ghost (red where it cannot stand) is on it; held still: the GRID as before; on
@@ -377,7 +377,7 @@ same, that stays the simpler way.
         building still picked, nothing placed; the X put it away; dock-phone-test ALL PASS.
 - [ ] **Kailil's notes, 2026-11-11 ~13:10** (with screenshots of a spectated online game, its join, the home grid, the
       lobby's first picture), in order:
-      - [x] **ROTATE without "90Â°"** ("90 degrees is the only rotate in the game so its redundant"): the word alone.
+      - [x] **ROTATE without "90°"** ("90 degrees is the only rotate in the game so its redundant"): the word alone.
       - [x] **COMMANDER 30 % further out** ("too zoomed in"): the camera at 1.3 times the comfortable distance.
       - [x] **The join's pre-game screen upright, and Free memory on it**: the engine's "Waiting for server response"
         lays its lines from 60 % of the width on, cut off upright, and the app's loading state began only at the loading
@@ -563,7 +563,7 @@ same, that stays the simpler way.
       Space+Shift).
 - [x] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
       assignments are", on the right, always there while a unit with orders queued, or a factory, is picked.
-      "Ã— FIRST" and "Ã— LAST" at the groups strip's right end. Units: BAR's Command Queue Manager (its actions bound
+      "× FIRST" and "× LAST" at the groups strip's right end. Units: BAR's Command Queue Manager (its actions bound
       to Any+insert and Any+numpad/, so QUEUE's Shift does not stop them); the dock asks the app for the key
       (bardroid_pad.txt "key <n> first|last", RtsTouch presses it). A factory: BAR's build button right-clicked for
       the last item's type (the engine takes one off the back), with Alt for the first item's (off the front).
@@ -2517,7 +2517,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       order menu, which stays where BAR's widget puts it (right of the panel's default width; no setter), and covered
       D-Gun and Set Target. The panel now stops at the order menu's left edge and grows in height and text only; at
       126% on the dev phone the orders show whole.
-- [x] The same panel made taller covered the build menu's page strip (â€¹ 1/2 â€º): the menu's bottom was BAR's fixed 14%
+- [x] The same panel made taller covered the build menu's page strip (‹ 1/2 ›): the menu's bottom was BAR's fixed 14%
       of the screen, the unit panel's default height. The app's copy now keeps its bottom above the unit panel's
       height as `WG.info` tells it (`droid.infoTall`, `tools/make-buildmenu.py`; the copy made again from the phone's
       test-31783) and lays itself out again when that changes. In BAR's game on the dev phone, Unit info at 126%: the
@@ -2549,7 +2549,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       it already held back, until the pointer moves on. On the dev phone: "Code of Conduct" plain after Cancel, the
       Skirmish tab still shown as the open one. lobby-phone-test: all pass.
 - [x] Spectating by touch on the dev phone (2026-11-03): a replay from the lobby's Replays tab (the benchmark's, 1300
-      units at 9-11 fps), "skip", a tap on the small player list brought the spectate bar, its â€º followed a Grunt and
+      units at 9-11 fps), "skip", a tap on the small player list brought the spectate bar, its › followed a Grunt and
       the bar turned to the camera presets. Its buttons were BAR's panels at BAR's 70% opacity without the blur BAR's
       GUI shader puts behind its own (a blur pass more per frame on a phone), so the battle showed through the words;
       now 85% at least, BAR's look kept. (A tap 7 s after the bar opened found it closed, as designed.)
