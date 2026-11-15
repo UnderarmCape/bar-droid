@@ -2928,6 +2928,9 @@ local function drawHalf(side)
 		local cx = (r[1] + r[3]) / 2
 		local h = max(6, floor(L.pad * 1.3))
 		local w, out = h * 1.15, max(2, L.pad - 2)
+		-- (wholly in the gap, its base a pixel over the half's edge: reaching a third of a pad in, it touched the bottom
+		-- tile's cost in the split dock, dev phone 2026-11-15)
+		h = max(4, out + 1)
 		gl.Color(1, 0.78, 0.25, 0.85)
 		if s.pos < snapMax(s) - 0.01 then
 			gl.BeginEnd(GL.TRIANGLES, function()
