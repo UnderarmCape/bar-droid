@@ -1782,6 +1782,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       with no spot, 10 s on: the label gone, the next ping plain; a spot, no words, a second tap: one ping, there; held,
       spot, words: the labelled ping at the spot. pad-test -Chat ALL PASS; dock-phone-test ALL PASS twice (its box case
       now ends on the right block in the split: 80 pixels right of the aim point fell between the blocks once).
+      A fourth review (the share list and the dock's SEND, against BAR's gadgets): (1) a teammate who left, went away or
+      lags (BAR's numActivePlayers 0, cmd_idle_players.lua) takes no gift, and A said "GIVING" while nothing moved: both
+      front ends now say "<NAME> IS AWAY: THIS GAME GIVES THEM NOTHING" (read from the team's rules param, allied teams'
+      private params are readable); (2) the pad's list stayed open when the fingers took over (it takes no touches, held
+      the dock's D-GUN and the pad's next A): it closes; (3) the units-kept check ran at 1.5 s of wall time, so a phone
+      behind its game said "NOT GIVEN" before the share ran, and a second give took the first's place: each give has its
+      own check, and one with none gone yet waits up to 6 s; (4) the dock's SEND gave from a spectator (the engine drops
+      it): refused as the list does; (5) anonymous mode numbered teammates by row, so a death renumbered them: by team now,
+      the dead counted; (6) with Tax Resource Sharing (easytax 30 %) the amount sent was capped at the teammate's room, so
+      70 % of it arrived: it is sent so what arrives fills the room, and the note says what arrives and the tax.
+      Dev phone: pad-test -Share and pad-test ALL PASS (no away teammate or tax game offline: those two read BAR's code).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

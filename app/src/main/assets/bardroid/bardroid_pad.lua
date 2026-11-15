@@ -1349,10 +1349,41 @@ local SHARE_STEPS = { 0.1, 0.25, 0.5, 0.75, 1 }
 local SHARE_COLORS = { UNITS = { 1, 0.78, 0.25 }, METAL = { 0.8, 0.84, 0.92 }, ENERGY = { 1, 0.86, 0.22 } }
 local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TABS), step (SHARE_STEPS) }
 local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
-local given = nil -- units just given: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later: BAR kept them
+-- units just given, each give its own: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later with some gone:
+-- BAR kept the rest; none gone: the share may not have run yet (a phone behind its game), so up to SHARE_WAIT_SECONDS
+-- (a second give within the first's 1.5 s took its place, its report lost; review 2026-11-15)
+local given = {}
 local shareRect = nil -- the list as drawn last: x0, y0, x1, y1, the first teammate shown, how many (tools/pad-test.ps1)
 local toastDrawnAt = nil -- the note as drawn last: its bottom and top (tools/pad-test.ps1)
-local SHARE_CHECK_SECONDS = 1.5
+local SHARE_CHECK_SECONDS, SHARE_WAIT_SECONDS = 1.5, 6
+
+-- BAR's rules for a gift, as its gadgets apply them (review 2026-11-15): a team with nobody at its controls (left,
+-- away, lagging: its numActivePlayers 0) takes nothing (cmd_idle_players.lua, unless cheats are on), A said "GIVING"
+-- and nothing moved; and Tax Resource Sharing (a modoption, easytax's 30 %) gives the teammate (1 - tax) of a transfer,
+-- up to their room, the sender paying it all: sent at their room, a third of it was lost
+local shareRules = {}
+function shareRules.away(teamID)
+	local n = Spring.GetTeamRulesParam(teamID, "numActivePlayers")
+	return n ~= nil and n == 0 and not Spring.IsCheatingEnabled()
+end
+function shareRules.tax()
+	local mo = Spring.GetModOptions() or {}
+	local e = mo.easytax
+	if e == true or e == "1" or e == "true" then
+		return 0.3
+	end
+	local t = tonumber(mo.tax_resource_sharing_amount) or 0
+	return (t > 0 and t < 1) and t or 0
+end
+-- what to send for a want and their room, and what arrives (whole numbers)
+function shareRules.amount(want, room)
+	local tax = shareRules.tax()
+	local amount = math.min(want, tax > 0 and math.floor(room / (1 - tax)) or room)
+	return amount, math.floor(math.min((1 - tax) * amount, room)), tax
+end
+function shareRules.taxWords(tax)
+	return tax > 0 and (" (" .. math.floor(tax * 100 + 0.5) .. "% TAX)") or ""
+end
 
 local function teammates()
 	local list = {}
@@ -1360,8 +1391,13 @@ local function teammates()
 	-- (BAR's anonymous mode hides who plays which team: the list shows them by colour and number only)
 	local mode = (Spring.GetModOptions() or {}).teamcolors_anonymous_mode
 	local anonymous = mode ~= nil and mode ~= "" and mode ~= "disabled"
+	local number = 0 -- (anonymous: each teammate numbered by team, the dead counted too, so the numbers never move: a
+	-- death renumbered the rest, the pick's row then another team under the same label; review 2026-11-15)
 	for _, teamID in ipairs(Spring.GetTeamList(Spring.GetMyAllyTeamID()) or {}) do
 		local _, leader, isDead, isAI = Spring.GetTeamInfo(teamID, false)
+		if teamID ~= myTeam then
+			number = number + 1
+		end
 		if teamID ~= myTeam and not isDead then
 			local name
 			for _, playerID in ipairs(Spring.GetPlayerList(teamID, true) or {}) do
@@ -1380,7 +1416,7 @@ local function teammates()
 			end
 			if name then
 				if anonymous then
-					name = "TEAMMATE " .. (#list + 1)
+					name = "TEAMMATE " .. number
 				end
 				local r, g, b = Spring.GetTeamColor(teamID)
 				list[#list + 1] = { teamID = teamID, name = name, color = { r or 1, g or 1, b or 1 } }
@@ -1425,7 +1461,7 @@ local function shareAmount(s, team)
 	local want = math.floor(mine * SHARE_STEPS[s.step])
 	local theirs, storage, _, _, _, slider = Spring.GetTeamResources(team.teamID, res)
 	local room = (theirs and storage) and math.max(0, math.floor(storage * (slider or 1) - theirs)) or want
-	return math.min(want, room), want, room
+	return shareRules.amount(want, room), want, room
 end
 
 local function shareFmt(n)
@@ -1463,6 +1499,10 @@ local function shareConfirm()
 		note(string.upper(team.name) .. " IS OUT OF THE GAME")
 		return
 	end
+	if shareRules.away(team.teamID) then -- (the list stays: another teammate may be picked)
+		note(string.upper(team.name) .. " IS AWAY: THIS GAME GIVES THEM NOTHING")
+		return
+	end
 	local res = shareResource(s)
 	if res then
 		local amount, want, room = shareAmount(s, team)
@@ -1472,8 +1512,10 @@ local function shareConfirm()
 		elseif room < 1 then
 			shareClose(string.upper(team.name) .. "'S " .. what .. " STORAGE IS FULL")
 		else
+			local _, arrives, tax = shareRules.amount(want, room)
 			Spring.ShareResources(team.teamID, res, amount)
-			shareClose("GIVING " .. shareFmt(amount) .. " " .. what .. " TO " .. string.upper(team.name), SHARE_COLORS[what])
+			shareClose("GIVING " .. shareFmt(arrives) .. " " .. what .. " TO " .. string.upper(team.name)
+				.. shareRules.taxWords(tax), SHARE_COLORS[what])
 		end
 		return
 	end
@@ -1483,7 +1525,7 @@ local function shareConfirm()
 		return
 	end
 	Spring.ShareResources(team.teamID, "units")
-	given = { units = units, teamID = team.teamID, from = Spring.GetMyTeamID(), at = now() }
+	given[#given + 1] = { units = units, teamID = team.teamID, from = Spring.GetMyTeamID(), at = now() }
 	shareClose("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
 end
 
@@ -1501,6 +1543,16 @@ local function giveTo(teamID, what, fraction)
 		note("OUT OF THE GAME")
 		return
 	end
+	-- (the share list's rules: no gift from a spectator, the engine dropped it with "GIVING" said; none to a team BAR
+	-- will not give to; review 2026-11-15)
+	if Spring.GetSpectatingState() then
+		note("NOT WHILE SPECTATING")
+		return
+	end
+	if shareRules.away(teamID) then
+		note(string.upper(team.name) .. " IS AWAY: THIS GAME GIVES THEM NOTHING")
+		return
+	end
 	if what == "units" then
 		local units = Spring.GetSelectedUnits()
 		if #units == 0 then
@@ -1508,7 +1560,7 @@ local function giveTo(teamID, what, fraction)
 			return
 		end
 		Spring.ShareResources(teamID, "units")
-		given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now() }
+		given[#given + 1] = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now() }
 		note("GIVING " .. #units .. (#units == 1 and " UNIT TO " or " UNITS TO ") .. string.upper(team.name))
 		return
 	end
@@ -1522,9 +1574,10 @@ local function giveTo(teamID, what, fraction)
 	elseif room < 1 then
 		note(string.upper(team.name) .. "'S " .. WHAT .. " STORAGE IS FULL")
 	else
-		local amount = math.min(want, room)
+		local amount, arrives, tax = shareRules.amount(want, room)
 		Spring.ShareResources(teamID, what, amount)
-		note("GIVING " .. shareFmt(amount) .. " " .. WHAT .. " TO " .. string.upper(team.name), SHARE_COLORS[WHAT])
+		note("GIVING " .. shareFmt(arrives) .. " " .. WHAT .. " TO " .. string.upper(team.name) .. shareRules.taxWords(tax),
+			SHARE_COLORS[WHAT])
 	end
 end
 
@@ -1532,29 +1585,33 @@ end
 -- for its other gadgets: partly built units with "easytax", a teammate at their unit limit. It said "this game does
 -- not allow giving units" only when none went, for any reason, and nothing when some stayed, 2026-11-08)
 local function shareCheck()
-	if not given.checkNow and Spring.DiffTimers(now(), given.at) < SHARE_CHECK_SECONDS then
-		return
-	end
-	local moved, kept = 0, 0
-	for _, unitID in ipairs(given.units) do
-		local team = Spring.GetUnitTeam(unitID) -- (nil: gone meanwhile, counted neither way)
-		if team == given.teamID then
-			moved = moved + 1
-		elseif team == given.from then
-			kept = kept + 1
+	for i = #given, 1, -1 do
+		local g = given[i]
+		local t = Spring.DiffTimers(now(), g.at)
+		if g.checkNow or t >= SHARE_CHECK_SECONDS then
+			local moved, kept = 0, 0
+			for _, unitID in ipairs(g.units) do
+				local team = Spring.GetUnitTeam(unitID) -- (nil: gone meanwhile, counted neither way)
+				if team == g.teamID then
+					moved = moved + 1
+				elseif team == g.from then
+					kept = kept + 1
+				end
+			end
+			-- (none gone yet: the share may still be on its way; said once SHARE_WAIT_SECONDS have passed)
+			if kept == 0 or moved > 0 or g.checkNow or t >= SHARE_WAIT_SECONDS then
+				table.remove(given, i)
+				local rule = (Spring.GetModOptions() or {}).disable_unit_sharing
+				if kept == 0 then -- luacheck: ignore 542
+				elseif moved > 0 then
+					note("GAVE " .. moved .. " OF " .. (moved + kept) .. ": THIS GAME KEPT THE REST", nil, 2.5)
+				elseif rule == true or rule == "1" or rule == "true" then
+					note("THIS GAME DOES NOT ALLOW GIVING UNITS", nil, 2.5)
+				else
+					note("NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT", nil, 2.5)
+				end
+			end
 		end
-	end
-	given = nil
-	if kept == 0 then
-		return
-	end
-	local rule = (Spring.GetModOptions() or {}).disable_unit_sharing
-	if moved > 0 then
-		note("GAVE " .. moved .. " OF " .. (moved + kept) .. ": THIS GAME KEPT THE REST", nil, 2.5)
-	elseif rule == true or rule == "1" or rule == "true" then
-		note("THIS GAME DOES NOT ALLOW GIVING UNITS", nil, 2.5)
-	else
-		note("NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT", nil, 2.5)
 	end
 end
 
@@ -2574,10 +2631,12 @@ function widget:Update(dt)
 	if dgun then
 		dgunUpdate()
 	end
-	if share and Spring.GetSpectatingState() then -- (no units selected: the list stays, for metal and energy)
+	-- (no units selected: the list stays, for metal and energy; the fingers the input, the pad gone: it closes, it took no
+	-- touches and held D-GUN and the next A, review 2026-11-15)
+	if share and (Spring.GetSpectatingState() or WG.BarDroidInput == "touch") then
 		shareClose()
 	end
-	if given then
+	if #given > 0 then
 		shareCheck()
 	end
 	local armed = armedKind()
@@ -2819,7 +2878,7 @@ function widget:Initialize()
 			return toastDrawnAt
 		end,
 		shareGiven = function(units, teamID) -- (tools/pad-test.ps1 -Share: units just given, checked at the next update)
-			given = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }
+			given[#given + 1] = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }
 		end,
 		shareAmount = function() -- (all three: "a and f()" kept only the amount, and the test's checks went blind)
 			if share and shareResource(share) then
