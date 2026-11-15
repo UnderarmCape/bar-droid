@@ -512,8 +512,10 @@ local function layout()
 		-- as the build tiles: on the unfolded Fold7 the spectator's five rows were 62 pixels, dev phone at 1080x1198)
 		gridH = max(gridH, min(5 * (tile + gap) - gap, room + selH + groupsH + 2 * pad))
 	end
-	if square and L.dgun then -- (the D-gun mode, which has neither row, its sticks and X a thumb's size: in the 0.32
-		-- dock's grid height they were 90 pixels and the X 34, dev phone at 1080x1198; its band still a quarter of the screen)
+	if square and (L.dgun or not showSel) then -- (without the selection row, nothing picked or the D-gun mode, the grid
+		-- takes its room: in the 0.32 dock's grid height the D-gun's sticks were 90 pixels and its X 34, the home buttons'
+		-- 4 rows 37, small for a thumb, dev phone at 1080x1198; now 56, and the dock all but still as a pick comes and goes
+		-- (0.31 to 0.32; a box drag's filters page between them had made it jump)
 		gridH = max(gridH, floor(vsy * 0.2))
 	end
 	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows

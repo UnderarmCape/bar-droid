@@ -1688,7 +1688,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       not 3), the order buttons in the same height. The D-gun mode, which has neither row, keeps a 0.2 grid for its
       sticks and X (in the 0.32 grid they were 90 and 34 lines). Dev phone at 1080x1198: the dock's top at 382 of 1198
       (32 %), 302 with nothing picked, the D-gun band 25 %; dock-phone-test ALL PASS there; tall phones as before (the
-      dev phone upright at 936x2013: the dock's top at 974, dock-phone-test ALL PASS). Left: Kailil's look on the Fold7.
+      dev phone upright at 936x2013: the dock's top at 974, dock-phone-test ALL PASS). Then (same day) the home buttons,
+      nothing picked: in the short grid their 4 rows were 37 lines, too small for a thumb; without the selection row (nothing
+      picked, the D-gun mode, a box drag's filters) the grid now takes 0.2 of the height, rows of 56, the dock at 372
+      (0.31) where it is 382 with a pick: it all but stays put as picks come and go (a home-only rule had it jump for the
+      box drag's filters page, which dock-phone-test caught). dock-phone-test ALL PASS at 1080x1198. And BAR's replay speed
+      buttons above the dock (a phone version of gui_replaybuttons.lua, below). Left: Kailil's look on the Fold7.
 - [ ] **One touch layout for both orientations, sideways: built, his test pending** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
       vertical touch sytem onto the phone's landscape system ... Unless we split the right and left half of the botom
       UI and shove a map into the middle with the eco bars on top of it, so the top row isnt empty with eco stuff and
