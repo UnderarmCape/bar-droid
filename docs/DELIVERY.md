@@ -1405,6 +1405,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Again 2026-11-13 06:50:21 (plain `pad-test.ps1` in the full sweep, after the Windows update): the driver's
       refusal, DriverWatch closed the game, the test named the fault; the rerun ALL PASS, the sweep's nine others too.
       26 engine starts in the dev phone's two logs then.
+      Again 2026-11-15 09:58:43 (the app's replay mode under its phone engine: the 2026-10-26 server 8v8
+      fast-forwarding to 10:00, frame 17906 of 18000, the engine drawing a frame only every 5-6 s; a hot phone: GPU
+      held at 295-348 MHz, thermal level 6-7, 99 % busy at the last `[perf]`): 72 of the driver's lines in one second,
+      the watchdog 31 s later; DriverWatch closed the game as built ("engine exited (137)", the launcher's note). None in
+      the day's other dev phone runs whose results were read (skirmishes both ways, the lobby, the Settings checks, the
+      dock, pad, lobby, touch, fp-save and pace tests).
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57

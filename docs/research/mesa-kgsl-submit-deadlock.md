@@ -16,12 +16,12 @@ A draft for Kailil to post (or not) as an issue at https://github.com/lfdevs/mes
   in a Debian trixie proot container; the X server is Termux:X11 (built into the app).
 - The program: the Recoil RTS engine (Beyond All Reason), OpenGL, playing back a recorded game.
 
-**What happens** (6 times over eight days of daily test runs, 2026-11-02 to 09, a few hundred game starts; lately
-about 1 in 25)
+**What happens** (11 times over two weeks of daily test runs, 2026-11-02 to 15, several hundred game starts; at
+its most frequent about 1 in 25)
 ```
 MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)
 MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)
-... (13-21 times within a second)
+... (13-72 times within a second)
 ```
 then no frame is ever presented again; the engine's watchdog reports the main thread hung 30 s later. The process
 must be killed. The phone itself recovers (the next start works).
@@ -35,6 +35,9 @@ must be killed. The phone itself recovers (the next start works).
 - In skirmishes too since: 2026-11-05 19:52 (frame 741, a minute in), 2026-11-09 06:43 (frame 776) and 11:14
   (frame 104, 5 s after loading, right after a 13-minute benchmark: GPU capped at 615 MHz, thermal level 2, 96 %
   busy, 59 C). Cool and hot phones, idle and busy GPUs, early and a minute in: no pattern yet.
+- Since: 2026-11-09 15:54 and 16:37 (skirmishes, the phone upright), 2026-11-12 21:25 and 11-13 06:50 (skirmishes);
+  2026-11-15 09:58 a recorded 8v8 fast-forwarded at frame 17906 on a hot phone (GPU held at 295-348 MHz by thermal
+  limits, 99 % busy), 72 of the lines in one second, the watchdog 31 s later.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,
