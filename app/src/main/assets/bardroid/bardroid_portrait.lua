@@ -1761,7 +1761,8 @@ function refreshNow()
 		-- 2026-11-13, a pregame screenshot, the place beside RANDOM: "Add ping here. So I can place pings and chat")
 		newRight[#newRight + 1] = { kind = "pings", pingOnly = true }
 		-- (two rows tall where all of them fit so: five short buttons over an empty half, dev phone 2026-11-13)
-		if (L.rightRows or 3) >= 2 * math.ceil(#newRight / (L.rightCols or 2)) then
+		-- (unfolded, the split dock: their rows fill the block instead, half())
+		if not L.split and (L.rightRows or 3) >= 2 * math.ceil(#newRight / (L.rightCols or 2)) then
 			for _, it in ipairs(newRight) do
 				it.h = 2
 			end
@@ -2444,6 +2445,12 @@ local function half(side)
 		return r, rightScroll, rightItems, cols, floor((r[3] - r[1] - (cols - 1) * L.gap) / cols),
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
+	end
+	if rightKind == "pregame" and L.split then -- (unfolded: the pregame buttons' rows fill the right block; at the orders'
+		-- height three rows left two empty under them, dev phone 2026-11-15)
+		local rows = max(1, math.ceil(#rightItems / (L.rightCols or 2)))
+		return L.right, rightScroll, rightItems, L.rightCols or 2, L.btnW,
+			max(L.btnH, floor((L.right[4] - L.right[2] + L.gap) / rows) - L.gap)
 	end
 	if rightKind == "place" and SP.shapeRow() then -- (the four shapes in one row, PLACE the taller under it: SP.shapeRow)
 		return L.right, rightScroll, rightItems, 4, floor((L.right[3] - L.right[1] - 3 * L.gap) / 4), L.btnH

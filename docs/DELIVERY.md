@@ -1723,6 +1723,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       fps 1) its minimap, top bar and clock lines are still at the old screen's places, then all settle. No Lua errors.
       A fight upright at 1080x1198 (14 picked, 12 enemy Grunts beside them, the presets opened in the right block): no
       errors; pad-test -Share ALL PASS at 1080x1198 sideways (the pad brings BAR's own screen back, the list centred).
+      Pregame there (picking a start, StartPosType 2): the right block's six buttons (UNDO LAST, CLEAR QUEUE, the
+      factions, RANDOM, PING) at the orders' height left two rows empty under them: their rows fill the block now (96
+      pixels at 1080, were 53). Dev phone upright: the three rows, CORTEX tapped at its new place switched the grid to
+      Cortex's buildings. publish-check -NoHistory: ready.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
