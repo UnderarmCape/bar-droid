@@ -1790,6 +1790,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
+- [x] **BAR's tooltips upright run off the screen** (hardening, 2026-11-15, dev phone upright, the Widget Selector's row
+      tooltips): BAR's Tooltip moves a box past the right edge to the pointer's left but never wraps a line, and its
+      callers wrap by the font's size (sized by the screen's height), so upright a line was wider than the screen. The
+      phone engine's phone version of gui_tooltip.lua (`phone-widget-gui_tooltip.lua.patch`, 1 block) wraps a line wider
+      than the screen to it (the font's WrapText). Dev phone upright: the Widget Selector's star tooltip in five lines
+      inside the screen (before: cut at the right edge); dock-phone-test ALL PASS.
 - [x] **Pregame upright: two thirds sky** (hardening, 2026-11-14, dev phone, a lobby skirmish on Avalanche on the phone
       engine): BAR's start camera looked at the whole map from far off, the start box small by the dock. The dock now
       puts my start box in the view above it once, a second into the pregame of games where a start spot is picked

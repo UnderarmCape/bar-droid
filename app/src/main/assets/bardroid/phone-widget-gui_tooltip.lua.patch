@@ -1,0 +1,27 @@
+BAR Droid phone version of BAR's Tooltip (luaui/widgets/gui_tooltip.lua): a line wider than the screen wrapped to it.
+BAR's tooltip moves a box that would run past the screen's right edge to the pointer's left, but never wraps a line;
+its callers wrap their text by the font's size (80 characters and the like), and the font is sized by the screen's
+height, so upright on a phone a tooltip's lines are wider than the screen and run off it (dev phone, 2026-11-15: the
+Widget Selector's row tooltips cut at the right edge). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as
+LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+			lines = string_lines(tooltips[name].value)
+			for i, line in ipairs(lines) do
+@@@ with
+			lines = string_lines(tooltips[name].value)
+			-- BAR Droid (phone): a line wider than the screen (less the box's padding) wrapped to it
+			local fit = vsx - (paddingW * 4)
+			local wrapped = {}
+			for _, line in ipairs(lines) do
+				if fit > 0 and font:GetTextWidth(line) * fontSize > fit then
+					for part in (font:WrapText(line, fit, nil, fontSize) .. "\n"):gmatch("(.-)\n") do
+						wrapped[#wrapped + 1] = part
+					end
+				else
+					wrapped[#wrapped + 1] = line
+				end
+			end
+			lines = wrapped
+			for i, line in ipairs(lines) do
+@@@ end
