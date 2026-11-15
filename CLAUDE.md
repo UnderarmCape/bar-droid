@@ -158,7 +158,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   sets and moves dropped), `[display-cost]` lines in logcat every 5 s (the X server's CPU copy of each picture, the
   display pass's GPU time, draws per picture), and `LorieView.surfaceAtScreenSize` (dev: `files/bar/.bardroid-display-scales`,
   the SurfaceView at the X screen's size, the display hardware scales instead of SGSR); 0012 the preference screen's
-  version line: "1.03.01, built <yyyy-MM-dd> from BAR Droid <commit>" (the commit is the building checkout's); 0013
+  version line: "1.03.01, built <yyyy-MM-dd> from BAR Droid <commit>" (the commit is the building checkout's; 0016
+  adds " + changes" when its tracked files differ from that commit); 0013
   hides the user-action entries that never act here (Back: GameActivity makes it Escape; the notification's tap and
   buttons: BarApp keeps Termux:X11's notification away); 0015 Termux:X11's build files in the syntax Gradle 10 keeps
   (`propName = value`; its two git calls through `providers.exec` from the root, so the version line still names
