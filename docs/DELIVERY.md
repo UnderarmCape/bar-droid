@@ -3056,7 +3056,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       declares `replaces = "Order menu"` (BAR's handler saves `replaced["Order menu"] = "BAR Droid order menu"`), and
       the change for BAR's Settings to follow that list is ready, `docs/upstream/bar-options-replaced.patch`: tested on
       the dev phone (pool swap, put back), the old config's colorize 0.7 and the copy's 0.3: Settings showed 0.7
-      without it, 0.3 with it. Players get it with the BAR release that merges it. The notes from then:
+      without it, 0.3 with it. Players get it with the BAR release that merges it. And in the app now (2026-11-15):
+      the app runs its own Settings copy, which at its Initialize points the saved config of each widget an active
+      copy runs in place of (the Order menu by the copy's replaces, the Build menu by launch-bar.sh's order) at that
+      copy's config table, before BAR's model reads them (`tools/make-options.py`; only where the old widget is not
+      running and the copy has a saved config; not Options itself). Dev phone, 31958, the old configs set to colorize
+      0.7 and maxPosY 0.7, the copies' to 0.3 and 0.8: Settings' `ordermenu_colorize` / `buildmenu_maxposy` read 0.7 /
+      0.7 with the previous copy (the running menus at 0.3 / 0.8), 0.3 / 0.8 with this one; at the game's end both
+      names saved the copies' values; remake-check PASS. The notes from then:
 - Settings' order menu options in both games (2026-11-03): BAR's Settings name the widget "Order menu" (its
       colorize, bottom position and always-show options); BAR's game runs the app's copy ("BAR Droid order menu"), the
       controller game v0.8.5's renamed "Order menu (controller)" (infolog: "Options: 'ordermenu_colorize' widgetConfig:

@@ -237,6 +237,24 @@ function draw.sidebar()
 	if not droid.configLoaded and type(widgetHandler.configData["Options"]) == "table" then
 		widget:SetConfigData(widgetHandler.configData["Options"])
 	end
+	-- BAR Droid: the rows of a widget one of the app's copies runs in place of (the Order menu: the copy's GetInfo
+	-- replaces, widgetHandler.replacedList; the Build menu: launch-bar.sh's order) read and save that copy's config:
+	-- BAR's model reads a widget's config by the name in the row, so Settings showed the old widget's last values, not
+	-- the running menu's (its colorize, its height). Its config table is the copy's for this game (the handler marks a
+	-- widget active as it reads its file, before any Initialize; it saves the copy's own GetConfigData at the end).
+	-- docs/upstream/bar-options-replaced.patch does the same in BAR's model.
+	local copies = { ["Build menu"] = "BAR Droid build menu" }
+	for old, by in pairs(widgetHandler.replacedList or {}) do
+		copies[old] = by
+	end
+	for old, by in pairs(copies) do
+		local ki = widgetHandler.knownWidgets and widgetHandler.knownWidgets[by]
+		local own = widgetHandler.knownWidgets and widgetHandler.knownWidgets[old]
+		if old ~= "Options" and ki and ki.active and not (own and own.active)
+			and type(widgetHandler.configData[by]) == "table" then
+			widgetHandler.configData[old] = widgetHandler.configData[by]
+		end
+	end
 	upkeep.initialize(self)function widget:SetConfigData(data)
 	model.setConfigData(data)function widget:SetConfigData(data)
 	droid.configLoaded = true -- BAR Droid: its own saved state (Initialize takes BAR's Options' without one)
