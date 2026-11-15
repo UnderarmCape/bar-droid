@@ -355,7 +355,9 @@ local function layout()
 		local gap = max(3, floor(pad * 0.6))
 		local tile = floor(short * 0.075)
 		local w = 4 * tile + 3 * gap
-		local resH, selH, groupsH = floor(short * 0.036), floor(short * 0.06), floor(short * 0.05)
+		-- (the groups as tall as a build tile, their top level with the grid's bottom row: Kailil, 2026-11-15, of the
+		-- groups between the blocks, "should be taller", a red line at that row's top; the panel's rim reaches a pad out)
+		local resH, selH, groupsH = floor(short * 0.036), floor(short * 0.06), tile - pad
 		local gridH = 3 * tile + 2 * gap
 		local h = pad + gridH + pad + resH + pad
 		local bw = w + 2 * pad -- (a block, its pads in)
@@ -1917,11 +1919,23 @@ function refreshNow()
 	if (rk == "orders" or listPage) and (not L.land or L.split) and not SP.on() and (lk == "seltypes" or listPage) then
 		-- (as tall as FIGHT beside them, its rows' height: Kailil, 2026-11-13, "I meant, it match the size of the fight
 		-- button"; the overflow then starts level with PRESETS)
-		local fh = (L.rightRows or 3) >= 4 and 2 or 1
+		local fh = (L.rightRows or 3) >= 4 and not L.split and 2 or 1
 		local ts = fh * L.btnH + (fh - 1) * L.gap
 		local tcols = max(1, floor((L.left[3] - L.left[1] + L.gap) / (ts + L.gap)))
 		local top = L.left[4] - math.ceil(#newLeft / tcols) * (ts + L.gap)
 		local rows = floor((top - L.left[2] + L.gap) / (L.btnH + L.gap))
+		-- (unfolded, the split dock: the types grown into what the whole order rows leave, so three rows of orders fill
+		-- the block under one row of types; Kailil, 2026-11-15: the picked unit's picture "too big. There should be 3
+		-- rows of orders with the selected units boxes above those. So the 3 order rows fit perfectly")
+		if L.split and rows >= 1 then
+			local typeRows = math.ceil(#newLeft / tcols)
+			local grown = ts + floor(((L.left[4] - L.left[2] + L.gap) - (typeRows + rows) * (L.btnH + L.gap)) / max(1, typeRows))
+			local gcols = max(1, floor((L.left[3] - L.left[1] + L.gap) / (grown + L.gap)))
+			if math.ceil(#newLeft / gcols) == typeRows then
+				ts, tcols = grown, gcols
+				top = L.left[4] - typeRows * (ts + L.gap)
+			end
+		end
 		-- (the unit lists keep the small tiles: MULTI lets everyone go, no orders, and the tiles grew back to their full
 		-- size, then shrank again with the first type tapped: the next one moved from under the finger)
 		if listPage and rows >= 1 then
@@ -3224,7 +3238,9 @@ local function drawGroups()
 	local x1 = r[3]
 	if unqShown then
 		local h = r[4] - r[2]
-		local bw = floor(h * 1.7)
+		-- (in the split dock's narrow middle no wider than a fifth of it each: at 1.7 heights the pair left one group in
+		-- sight upright)
+		local bw = floor(L.split and min(h * 1.7, max(h, (r[3] - r[1]) * 0.22)) or h * 1.7)
 		for i, which in ipairs({ "first", "last" }) do
 			local b = { r[3] - (3 - i) * bw + 3, r[2] + 3, r[3] - (2 - i) * bw - 3, r[4] - 3, unq = which }
 			L.groupRects[#L.groupRects + 1] = b

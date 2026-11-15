@@ -1706,6 +1706,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       each gave a move path ending at the dock's top (313), into the game between the blocks one ending where the finger
       was (247). dock-phone-test's path case failed 1 run in 3 there (its camera at the map's edge, panned just before):
       the test's geometry, not the dock's.
+      Then (Kailil, the same day, two Fold7 screenshots): the groups strip "should be taller", a red line at the top of
+      the build grid's last row; and with a Lazarus picked upright, its picture on the left "too big. There should be 3
+      rows of orders with the selected units boxes above those. So the 3 order rows fit perfectly". Built: the strip as
+      tall as a build tile less a pad (its rim level with that row's top; 73 lines at 1080, it was 54); x FIRST / x LAST
+      in the middle at most a fifth of it each (at 1.7 heights the pair left one group in sight upright); a pick's types
+      one order tall in the split (FIGHT is one row there; they were two, 110 lines), then grown into what the whole order
+      rows leave: one row of 80-line boxes over three order rows that end at the block's bottom. Dev phone at 1080x1198:
+      a Lazarus (Move, Guard, Repair, Reclaim, Restore, Resurrect on the left) and 4 Pawns + 2 Rockets (two boxes, Stop,
+      Attack, Move, Guard, Set Target, SELECT: BOX) both ways up; the commander's grid sideways with the strip level with
+      its last row; dock-phone-test ALL PASS upright.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
