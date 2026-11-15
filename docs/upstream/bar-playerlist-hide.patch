@@ -1,0 +1,50 @@
+diff --git a/luaui/widgets/gui_advplayerslist.lua b/luaui/widgets/gui_advplayerslist.lua
+--- a/luaui/widgets/gui_advplayerslist.lua
++++ b/luaui/widgets/gui_advplayerslist.lua
+@@ -1065,8 +1065,26 @@ function widget:Initialize()
+ 		updateWidgetScale()
+ 	end
+ 	WG.advplayerlist_api.GetPosition = function()
++		-- hidden (SetHidden): a rect collapsed onto the list's foot (the panels BAR stacks on it stay there); a
++		-- new table only when the list's own changes (the panels stacked on the list ask every frame)
++		local api = WG.advplayerlist_api
++		if api._hidden then
++			if api._collapsedFrom ~= apiAbsPosition then
++				local p = apiAbsPosition
++				api._collapsedFrom, api._collapsed = p, { p[3], p[2], p[3], p[4], p[5], p[6], p[7] }
++			end
++			return api._collapsed
++		end
+ 		return apiAbsPosition
+ 	end
++	-- the list hidden or shown again (a phone's interface folded away while spectating)
++	WG.advplayerlist_api.SetHidden = function(hidden)
++		WG.advplayerlist_api._hidden = hidden and true or nil
++		WG.advplayerlist_api._collapsedFrom = nil
++	end
++	WG.advplayerlist_api.GetHidden = function()
++		return WG.advplayerlist_api._hidden == true
++	end
+ 	WG.advplayerlist_api.GetAbsoluteResbars = function()
+ 		return absoluteResbarValues
+ 	end
+@@ -1872,6 +1890,9 @@ end
+ ---------------------------------------------------------------------------------------------------
+ 
+ function widget:DrawScreen()
++	if WG.advplayerlist_api and WG.advplayerlist_api._hidden then -- hidden (SetHidden)
++		return
++	end
+ 	local drawGameFrame = spGetGameFrame()
+ 	local drawState = self._advPlayersListDrawState
+ 	local renderOnlyFrame = drawGameFrame == drawState.lastDrawGameFrame
+@@ -4049,6 +4070,9 @@ end
+ ---------------------------------------------------------------------------------------------------
+ 
+ function widget:MousePress(x, y, button)
++	if WG.advplayerlist_api and WG.advplayerlist_api._hidden then -- hidden (SetHidden)
++		return false
++	end
+ 	--super ugly code here
+ 	local t = false -- true if the object is a team leader
+ 	local clickedPlayer
