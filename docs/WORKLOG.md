@@ -6,14 +6,14 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 
 | | |
 |---|---|
-| Days | 21 (2026-10-25 to 2026-11-14) |
+| Days | 22 (2026-10-25 to 2026-11-15) |
 | Claude Code sessions | 14 |
-| Kailil's messages | 491 (24983 words, 86 screenshots) |
-| Kailil's time | 57.9 h in 148 sittings |
-| Claude's time | 357.0 h |
-| Claude's tool calls | 39685 |
+| Kailil's messages | 492 (24986 words, 86 screenshots) |
+| Kailil's time | 58.0 h in 149 sittings |
+| Claude's time | 357.4 h |
+| Claude's tool calls | 39712 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 1528 |
+| Commits | 1530 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -41,7 +41,8 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-11](worklog/2026-11-11.md) | 11 | 1.9 | 23.8 | 223 |
 | [2026-11-12](worklog/2026-11-12.md) | 14 | 1.4 | 22.5 | 187 |
 | [2026-11-13](worklog/2026-11-13.md) | 27 | 3.3 | 17.1 | 137 |
-| [2026-11-14](worklog/2026-11-14.md) | 2 | 0.1 | 1.8 | 13 |
+| [2026-11-14](worklog/2026-11-14.md) | 2 | 0.1 | 1.8 | 14 |
+| [2026-11-15](worklog/2026-11-15.md) | 1 | 0.1 | 0.5 | 1 |
 
 ## Sessions
 
@@ -50,7 +51,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-14 01:38 | 377 | 296.8 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-15 04:44 | 378 | 297.2 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
