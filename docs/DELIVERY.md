@@ -1716,6 +1716,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a Lazarus (Move, Guard, Repair, Reclaim, Restore, Resurrect on the left) and 4 Pawns + 2 Rockets (two boxes, Stop,
       Attack, Move, Guard, Set Target, SELECT: BOX) both ways up; the commander's grid sideways with the strip level with
       its last row; dock-phone-test ALL PASS upright.
+      Folding and unfolding mid-game (dev phone, wm size between 1080x2316 and 1080x1198 in a skirmish, 2026-11-15):
+      upright, the full-width dock after folding and the split after unfolding, the Pawns and Rockets still picked, their
+      types and orders laid out for each; sideways, the one-thumb dock after folding with BAR's minimap back in its
+      middle and the split after unfolding. BAR's widgets load again after each resize: for 5 to 10 s (the game slowed,
+      fps 1) its minimap, top bar and clock lines are still at the old screen's places, then all settle. No Lua errors.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
