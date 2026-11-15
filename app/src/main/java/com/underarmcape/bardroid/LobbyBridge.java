@@ -261,8 +261,12 @@ final class LobbyBridge {
             // own replays). An engine that did not end cleanly wrote neither (demoStreamSize 0): "Unknown Result".
             JSONArray winners = new JSONArray();
             if (demoStreamSize > 0 && winnersSize > 0 && winnersSize <= 255) {
-                if (!streamRead) skip(in, demoStreamSize);
-                for (int i = 0; i < winnersSize; i++) winners.put(in.readUnsignedByte());
+                try {
+                    if (!streamRead) skip(in, demoStreamSize);
+                    for (int i = 0; i < winnersSize; i++) winners.put(in.readUnsignedByte());
+                } catch (IOException e) {   // (a damaged file: its result unknown, the replay still listed)
+                    winners = new JSONArray();
+                }
             }
             JSONObject r = new JSONObject();
             r.put("relativePath", rel).put("engine", engine).put("game", game.getOrDefault("gametype", ""))
@@ -354,8 +358,9 @@ final class LobbyBridge {
                 pos += length;
             }
             if (size > 0 && pos < size) skip(in, size - pos);   // (to the stream's end: what follows it is read next)
-        } catch (EOFException e) {
-            // (a file cut short ends here)
+        } catch (IOException e) {
+            // (a file cut short ends here, and a damaged one, gzip's ZipException: before the length was read from the
+            // stream such a replay was listed as "time unknown", and that stays so; review 2026-11-15)
         }
         return last;
     }

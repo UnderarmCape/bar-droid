@@ -1370,7 +1370,10 @@ final class RtsTouch {
         float dx = (vx - moveX) * k, dy = (vy - moveY) * k;
         // (moved on toward the upright dock: held at its top edge, in sight; it went behind the dock, docktest)
         Dock d = dock();
-        if (d != null && d.all != null && ptrY + dy > d.all[1] - 1) dy = Math.min(dy, Math.max(0, d.all[1] - 1 - ptrY));
+        if (d != null && d.all != null) {
+            float lim = lowestFree(d, ptrX + dx);
+            if (ptrY + dy > lim) dy = Math.min(dy, Math.max(0, lim - ptrY));
+        }
         moveX = vx; moveY = vy;
         spotSentAt = SystemClock.uptimeMillis();
         ptrX += dx; ptrY += dy;
@@ -1388,9 +1391,21 @@ final class RtsTouch {
         gridX += (vx - moveX) * k;
         gridY += (vy - moveY) * k;
         Dock d = dock();   // (the far corner not behind the upright dock: the grid in sight)
-        if (d != null && d.all != null && gridY >= d.all[1]) gridY = d.all[1] - 1;
+        if (d != null && d.all != null) gridY = Math.min(gridY, lowestFree(d, gridX));
         view().sendMouseEvent(gridX, gridY, InputStub.BUTTON_UNDEFINED, false, false);
         moveX = vx; moveY = vy;
+    }
+
+    /**
+     * The lowest X screen line a moved building or a GRID's far corner may reach at x (y down): the dock's top edge;
+     * between the split dock's blocks the gap's foot, as aboveDock (both stopped at the blocks' top across the whole
+     * width, so neither could reach the game between them; review 2026-11-15); beside the sideways dock the screen's
+     * foot (the dock's own).
+     */
+    private float lowestFree(Dock d, float x) {
+        if (x < d.all[0] || x > d.all[2]) return d.all[3] - 1;
+        if (d.gap != null && x >= d.gap[0] && x <= d.gap[2]) return d.gap[3] - 1;
+        return d.all[1] - 1;
     }
 
     /**

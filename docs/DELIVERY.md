@@ -1751,6 +1751,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       blocks' top, some 220 pixels above the finger: at the gap's foot now. Dev phone at 1080x1198: a building's spot
       tapped between the blocks lit PLACE; a FIGHT path dragged onto the strip ran down to the map's edge (1055, the old
       hold 885); sideways the minimap waits half size again; dock-phone-test ALL PASS split and tall; remake-check PASS.
+      A second review (the day's Java, launch-bar.sh, phone patches and copy makers): (a) a damaged replay (gzip's
+      ZipException, from the new key-frame scan) left the Replays tab: the scan and the winners' read take any read
+      error as the file's end, the replay listed as "time unknown" as before (the real LobbyBridge.lastKeyFrame on the
+      laptop against a stream damaged early: 0, no exception; clean 9000, cut short 4020); (b) a building moved with ONE
+      or a GRID's far corner stopped at the blocks' top across the whole width: between the blocks they go down to the
+      gap's foot now, beside the sideways dock to the screen's foot (dev phone at 1080x1198: a building dragged from
+      y 840 went to 987, the old stop 885); (c) the Settings and TeamStats copies end with `return false` in a replay of
+      a release without their model (BAR's silent way out; a bare return logged "Failed to load ... no GetInfo()
+      call"), both copies made again from test-31958. Left: BAR's GUI Shader blur stays registered for a list or box the
+      phone versions hide (advplayerslist, unit groups, idle builders) and the replay buttons' blur does not follow
+      their move; the GUI Shader is not among the widgets either phone loads (the Fold7's 239), so nothing shows.
+      dock-phone-test at 1080x1198: its path case failed 2 of 3 runs, each time when the pan before it had moved the
+      camera 183 (passing: 124), near the map's edge: the test's geometry, as on 11-15 morning, the rest ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

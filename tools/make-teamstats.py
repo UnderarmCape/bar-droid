@@ -121,9 +121,10 @@ PATCHES = [
 '''),
     ('''function widget:GetInfo()''',
      '''-- BAR Droid: a release without the model this copy is made on (a replay of an older BAR release plays its own files):
--- no GetInfo, so the handler loads BAR's own TeamStats instead (this copy's replaces never takes its place)
+-- nothing registered, so the handler loads BAR's own TeamStats instead (this copy's replaces never takes its place);
+-- false is BAR's silent way out, a bare return went on to "Failed to load ... (no GetInfo() call)"
 if not VFS.FileExists("luaui/Include/teamstats_model.lua") then
-	return
+	return false
 end
 
 function widget:GetInfo()'''),
