@@ -1797,6 +1797,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
+- [x] **No Settings in a replay of an older BAR release** (hardening, 2026-11-15, the dev phone's logs of a server
+      replay of the 2026-10-01 release): a replay plays its own release's files; the app's Settings copy (made from today's
+      gui_options.lua) includes `luaui/Include/squad_selection_presets.lua`, which that release does not have, so it
+      failed to load ("Failed to load: bardroid_options.lua"), and BAR's Options, switched off for it, stayed off: no
+      Settings window, and BAR's Minimap Rotation Manager erred on the missing WG.options. make-options.py's 11th patch:
+      the presets empty where the file is not. Dev phone, the same replay: "Loading widget from mod: BAR Droid
+      settings", no Minimap Rotation Manager error, 0 desync warnings; a current skirmish loads it as before;
+      remake-check (5 copies, 10 phone patches) and dock-phone-test PASS.
 - [x] **BAR's tooltips upright run off the screen** (hardening, 2026-11-15, dev phone upright, the Widget Selector's row
       tooltips): BAR's Tooltip moves a box past the right edge to the pointer's left but never wraps a line, and its
       callers wrap by the font's size (sized by the screen's height), so upright a line was wider than the screen. The

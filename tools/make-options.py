@@ -308,6 +308,11 @@ function draw.sidebar()
      '''function widget:SetConfigData(data)
 	droid.configLoaded = true -- BAR Droid: its own saved state (Initialize takes BAR's Options' without one)
 	if data.version ~= nil then'''),
+    ('''	definitions = VFS.Include("luaui/Include/squad_selection_presets.lua"),''',
+     '''	-- BAR Droid: none where BAR's file is not (a replay of an older BAR release, which plays that release's files: this
+	-- copy failed to load there, and BAR's Options, switched off for it, stayed off: no Settings in that replay)
+	definitions = VFS.FileExists("luaui/Include/squad_selection_presets.lua")
+			and VFS.Include("luaui/Include/squad_selection_presets.lua") or { names = {}, values = {} },'''),
 ]
 
 
