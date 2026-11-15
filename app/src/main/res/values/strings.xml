@@ -29,6 +29,8 @@
     <string name="lorie_pref_configureResponseToUserActions_summary">Swipes (with BAR touch controls off), the volume and media keys; Back is always Escape in the game</string>
     <string name="lorie_pref_other_summary">Clipboard, what swipes and the volume keys do</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
+    <!-- (Output's one switch with no explanation; MainActivity.applyWindowSettings: on, the window's cutout mode ALWAYS) -->
+    <string name="lorie_pref_hideCutout_summary">The game also fills the screen around the camera\'s hole; off, it stops short of that edge (a black strip there)</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
     <string name="btn_lobby">Lobby</string>
