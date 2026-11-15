@@ -1,0 +1,16 @@
+BAR Droid phone version of BAR's Game info (luaui/widgets/gui_gameinfo.lua): the window no wider than the screen
+(docs/upstream/bar-windows-upright.patch, written for BAR: its scale is the screen's height over 1080, so upright it was
+about twice the width of the screen, its right side cut off). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as
+LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+local widgetScale = (vsy / 1080)
+@@@ with
+local widgetScale = math.min(vsy / 1080, vsx / (screenWidthOrg + 50)) -- BAR Droid (phone; docs/upstream/bar-windows-upright.patch): no wider than the screen
+@@@ end
+
+@@@ find
+	widgetScale = (vsy / 1080)
+@@@ with
+	widgetScale = math.min(vsy / 1080, vsx / (screenWidthOrg + 50)) -- BAR Droid (phone): no wider than the screen
+@@@ end

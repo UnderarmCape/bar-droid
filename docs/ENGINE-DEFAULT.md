@@ -12,6 +12,9 @@ since 2026-11-07.
   presets or auto retreat off, and first person works in every game.
 - **The phone Settings** (`bardroid_options.lua`): BAR's Options laid out for upright and sideways, every switch
   working. Without the phone engine players keep BAR's own window, too wide upright.
+- **BAR's interface fixed for phones before BAR takes the fixes** (since 2026-11-14, the same mechanism as the next
+  item): the top bar's amounts and overflow banner, the pregame texts upright, Game info and the Widget Selector no
+  wider than the screen (docs/upstream's patches, as phone versions of BAR's files).
 - **The phone versions of BAR's costliest Lua** (`BarDroidPhoneLuaDir`, 7 patches to BAR's own widgets and unsynced
   gadgets) and the memory settings that let 8 GB phones load 16-player games (`ProjectileAtlasDownscale`,
   `NamedTextureMaxSize`, `S3DModelVAO` ...).

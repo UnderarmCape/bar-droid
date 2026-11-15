@@ -342,8 +342,8 @@ same, that stays the simpler way.
         minimap) is a ping there, BAR's point marker (the button gold, "TAP MAP", for 10 s; again: not). Dev phone:
         "Look here! (map marker)" where the map was tapped; pad-test -Online's cycle ALL PASS. IDLE UNITS' place is open
         (a blank tile) until Kailil picks what goes there.
-      - **PLACE's X twice the size**, **ROTATE 90°** in the old arrow's place (it read as redo; it turns the building
-        90° a tap, as before). **No green ring at the spot**: the building's footprint, green as the engine's own, turned
+      - **PLACE's X twice the size**, **ROTATE 90Â°** in the old arrow's place (it read as redo; it turns the building
+        90Â° a tap, as before). **No green ring at the spot**: the building's footprint, green as the engine's own, turned
         with it. **A finer drag**: the building comes down where the finger does, then moves by 12 % of the finger's way,
         rising smoothly to 60 % a quarter of the screen away (it followed the finger 1:1; a waiting one moved 50 %), the
         pointer with it so BAR's own ghost (red where it cannot stand) is on it; held still: the GRID as before; on
@@ -377,7 +377,7 @@ same, that stays the simpler way.
         building still picked, nothing placed; the X put it away; dock-phone-test ALL PASS.
 - [ ] **Kailil's notes, 2026-11-11 ~13:10** (with screenshots of a spectated online game, its join, the home grid, the
       lobby's first picture), in order:
-      - [x] **ROTATE without "90°"** ("90 degrees is the only rotate in the game so its redundant"): the word alone.
+      - [x] **ROTATE without "90Â°"** ("90 degrees is the only rotate in the game so its redundant"): the word alone.
       - [x] **COMMANDER 30 % further out** ("too zoomed in"): the camera at 1.3 times the comfortable distance.
       - [x] **The join's pre-game screen upright, and Free memory on it**: the engine's "Waiting for server response"
         lays its lines from 60 % of the width on, cut off upright, and the app's loading state began only at the loading
@@ -556,7 +556,7 @@ same, that stays the simpler way.
       Space+Shift).
 - [x] **Remove-order buttons**: remove the first or the last order of the queue, "in the bottom where the unit group
       assignments are", on the right, always there while a unit with orders queued, or a factory, is picked.
-      "× FIRST" and "× LAST" at the groups strip's right end. Units: BAR's Command Queue Manager (its actions bound
+      "Ã— FIRST" and "Ã— LAST" at the groups strip's right end. Units: BAR's Command Queue Manager (its actions bound
       to Any+insert and Any+numpad/, so QUEUE's Shift does not stop them); the dock asks the app for the key
       (bardroid_pad.txt "key <n> first|last", RtsTouch presses it). A factory: BAR's build button right-clicked for
       the last item's type (the engine takes one off the back), with Alt for the first item's (off the front).
@@ -910,7 +910,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Failed", downloads, invites) stacked from the screen's foot over the strip's right arrow; upright they stack from
       above the grid (and the server bar) now, through WG.Chotify's _Realign. Checked upright on the dev phone: the
       Quit dialog, the offline login dialog and BAR's awards fit as they are.
-- [ ] **BAR's Settings upright is wider than the screen** (found 2026-11-10, dev phone, the top bar's Settings): its
+- [x] **BAR's Settings upright is wider than the screen** (found 2026-11-10, dev phone, the top bar's Settings): its
       scale is the screen's height over 1080, so upright it is ~1770 pixels wide on 936 and its values column is cut
       off. Kailil, 2026-11-10: "Just fix the setting issue. Remember I am creating the official bar android port that I
       and the devs will be supporting officially". The change to BAR's `gui_options.lua` (its scale by the width too)
@@ -921,7 +921,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       `docs/upstream/bar-windows-upright.md`; players get it with the BAR release that has it. (It cannot ship in the
       app: a copy would lose Settings' widget toggles to the user widgets' sandbox, and BAR's files are in the archive
       checksum.) Left: BAR merging it (Kailil and the devs); then a taller layout for upright screens (their text is
-      small at the landscape shape).
+      small at the landscape shape). 2026-11-15, on the phone engine: Settings and TeamStats are the app's copies (laid
+      out for the phone); Game info and the Widget Selector carry the change as phone versions of BAR's files
+      (`phone-widget-gui_gameinfo.lua.patch`, `widget_selector`'s 2 -> 4 blocks); Keybinds and Changelog are off on
+      phones (launch-bar.sh), so none for them. Dev phone upright: both windows within the screen's width (before about
+      twice it), "2 patches" / "4 patches", no Lua errors.
 - [x] **BAR's top bar: a 4-digit amount runs into its storage number** (found 2026-11-12, dev phone sideways, a
       replay started from the lobby's Replays tab): `gui_top_bar.lua` centres the current amount on its bar
       (`barArea[1] + barWidth / 2`, `height / 2.5 * widgetScale`) and right-aligns the smaller storage number at the
@@ -1637,7 +1641,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
 
 ### Hardening and overhead (the spectator tools first)
 - [x] Measure what `bardroid_spectate.lua` costs per frame (`tools/spectate-test.ps1 -Cost`: off, the bar, following,
-      group, 1st person) and cut it: the bar into a display list (0.43 → 0.06 ms, 54 → 4 KB a frame), 1st person
+      group, 1st person) and cut it: the bar into a display list (0.43 â†’ 0.06 ms, 54 â†’ 4 KB a frame), 1st person
       without per-frame tables (0 KB); HISTORY.md "Overnight". Left as they are (measured or rare): `GetVisibleUnits`
       per tap, the group refresh twice a second, the camera state read each frame while following.
 - [x] `bardroid_touch.lua`: measured before at ~0.08 ms a frame (HISTORY.md, 2026-10-27 afternoon);
@@ -1898,7 +1902,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (`SplashPicture.LOGO_MIDDLE_SIDEWAYS`) and the button just under it, above the engine's lines at the foot; while
       a game's load screen is up, the top right corner under BAR's low memory band. Upright as before.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
-      short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
+      short"): 2 â†’ 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
       buttons on the left ... Make them big like the vertical buttons look. and move ALL buttons to the left side of the
       page, even the buttons in the top right hand corner like login. so the main window has the full vertical space.
@@ -2236,7 +2240,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] A building placed by touch did not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md said it did: the engine
       keeps a Shift click's building only while Shift stays down (CGuiHandler `needShift`), and the app lets go of Shift
       100 ms later (seen on the dev phone: active -212 until Shift up, then nil). RtsTouch now says "spot placed", and the
-      build menu picks the building again once it is let go; ✕ or a long press puts it away, QUEUE's Shift keeps it as
+      build menu picks the building again once it is let go; âœ• or a long press puts it away, QUEUE's Shift keeps it as
       before. On the dev phone, taps from adb: Shift up with the building still picked, PLACE still up, the builder's
       order kept and the building behind it; touch-widget-test has a check. The layout editor's hint no longer lets the
       build menu show through its words.
@@ -2441,7 +2445,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       order menu, which stays where BAR's widget puts it (right of the panel's default width; no setter), and covered
       D-Gun and Set Target. The panel now stops at the order menu's left edge and grows in height and text only; at
       126% on the dev phone the orders show whole.
-- [x] The same panel made taller covered the build menu's page strip (‹ 1/2 ›): the menu's bottom was BAR's fixed 14%
+- [x] The same panel made taller covered the build menu's page strip (â€¹ 1/2 â€º): the menu's bottom was BAR's fixed 14%
       of the screen, the unit panel's default height. The app's copy now keeps its bottom above the unit panel's
       height as `WG.info` tells it (`droid.infoTall`, `tools/make-buildmenu.py`; the copy made again from the phone's
       test-31783) and lays itself out again when that changes. In BAR's game on the dev phone, Unit info at 126%: the
@@ -2473,7 +2477,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       it already held back, until the pointer moves on. On the dev phone: "Code of Conduct" plain after Cancel, the
       Skirmish tab still shown as the open one. lobby-phone-test: all pass.
 - [x] Spectating by touch on the dev phone (2026-11-03): a replay from the lobby's Replays tab (the benchmark's, 1300
-      units at 9-11 fps), "skip", a tap on the small player list brought the spectate bar, its › followed a Grunt and
+      units at 9-11 fps), "skip", a tap on the small player list brought the spectate bar, its â€º followed a Grunt and
       the bar turned to the camera presets. Its buttons were BAR's panels at BAR's 70% opacity without the blur BAR's
       GUI shader puts behind its own (a blur pass more per frame on a phone), so the battle showed through the words;
       now 85% at least, BAR's look kept. (A tap 7 s after the bar opened found it closed, as designed.)
