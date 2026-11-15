@@ -629,8 +629,15 @@ local function uprightGrid()
 				for p = 0, upright.pages - 1 do
 					local lit = math.max(0, 1 - math.abs(at - p)) -- (lit as the strip passes it)
 					gl.Color(1, 0.78 + 0.2 * (1 - lit), 0.25 + 0.75 * (1 - lit), 0.3 + 0.7 * lit)
-					local x = x0 + p * (s + gap)
-					gl.Rect(x, cy - s / 2, x + s, cy + s / 2)
+					-- (round, a little wider than their 8 px slot, which stripPage's taps go by: squares read as specks)
+					local cx, r = x0 + p * (s + gap) + s / 2, s * 0.65
+					gl.BeginEnd(GL.TRIANGLE_FAN, function()
+						gl.Vertex(cx, cy)
+						for k = 0, 20 do
+							local t = k * math.pi / 10
+							gl.Vertex(cx + r * math.cos(t), cy + r * math.sin(t))
+						end
+					end)
 				end
 				local a = obj.height * 0.34 -- (the arrows, dim at the first and the last page)
 				gl.LineWidth(4)

@@ -44,7 +44,8 @@ import java.util.zip.GZIPInputStream;
  *   OpenFile        web links open in Android's browser; folders are ignored
  *   Download        game and map: the engine's pr-downloader in the container; resource: an HTTP download into the
  *                   write dir (archives that would have to be extracted, i.e. other engines, fail)
- *   ReadReplayInfo  engine, game, map, players and game time from the replay's header and start script
+ *   ReadReplayInfo  engine, game, map, players and game time from the replay's header and start script (a game left
+ *                   before its end, game time 0 there: its last key frame's)
  *   ParseMiniMap, StartNewSpring, UploadLog, DiscordSetActivity, LoadArchiveExtensions: not here (logged)
  */
 final class LobbyBridge {
