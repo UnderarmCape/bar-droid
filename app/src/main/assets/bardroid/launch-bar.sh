@@ -642,6 +642,9 @@ options_copy() {
     layer_miss "settings: the app's copy (made from ${copied:-?}) failed on BAR's gui_options.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-options.py)"
     return
   fi
+  # (BAR's own at its default: the copy's GetInfo replaces keeps it off while the copy runs, and BAR's handler saves it
+  # at 0 then; a copy that stands down in an older release's replay, without its model, must leave BAR's own on)
+  widget_order "Options" ""
   if [ "$copied" = "$bars" ]; then
     log "settings: the app's copy of BAR's Options (gui_options.lua $copied), laid out for the phone"
   else

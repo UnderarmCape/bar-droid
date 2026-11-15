@@ -124,7 +124,7 @@ function droid.tabs()
 	local a = layout.area
 	font:Print(look.title .. BAR.I18N("ui.topbar.button.settings"), a[1] + metrics.sidePad, a[4] - metrics.titleY,
 		metrics.titleFs, "ov")
-	if changesRequireRestart then
+	if model.changesRequireRestart then
 		local w = layout.unfoldSwitchHit[1] - a[1] - metrics.sidePad * 2
 		font:Print(look.restart .. text.fit(font, BAR.I18N("ui.settings.madechanges"), w, metrics.sectionFs),
 			a[1] + metrics.sidePad, math.floor((layout.switchHit[2] + layout.switchHit[4]) * 0.5), metrics.sectionFs, "ov")
@@ -136,10 +136,10 @@ function droid.tabs()
 	local cols, gap = 3, metrics.inset
 	local w = math.floor((a[3] - a[1] - (cols - 1) * gap) / cols)
 	local n = 0
-	for _, group in ipairs(optionGroups) do
+	for _, group in ipairs(model.groups) do
 		if
 			group.numOptions > 0
-			and (devMode or devUI or group.id ~= "dev")
+			and (model.devMode or model.devUI or group.id ~= "dev")
 			and (not searching or view.matches[group])
 			and n < 3 * cols
 		then
@@ -220,7 +220,7 @@ function draw.sidebar()
 	local inWindow = inRect(layout.window, mx, my)
 	local pressedInside = view.pressedInside
 function widget:Initialize()
-	-- Restart-with-state restore:function widget:Initialize()
+	upkeep.initialize(self)function widget:Initialize()
 	-- BAR Droid: only as one of the game's widgets (the engine branch's BarDroidGameWidgetsDir), where it has the widget
 	-- handler Options needs; a user widget (BAR's official engine) gives way to BAR's own (GetInfo replaces: back on
 	-- while this one is not running)
@@ -237,10 +237,13 @@ function draw.sidebar()
 	if not droid.configLoaded and type(widgetHandler.configData["Options"]) == "table" then
 		widget:SetConfigData(widgetHandler.configData["Options"])
 	end
-	-- Restart-with-state restore:function widget:SetConfigData(data)
-	if data.version ~= nil thenfunction widget:SetConfigData(data)
+	upkeep.initialize(self)function widget:SetConfigData(data)
+	model.setConfigData(data)function widget:SetConfigData(data)
 	droid.configLoaded = true -- BAR Droid: its own saved state (Initialize takes BAR's Options' without one)
-	if data.version ~= nil then	definitions = VFS.Include("luaui/Include/squad_selection_presets.lua"),	-- BAR Droid: none where BAR's file is not (a replay of an older BAR release, which plays that release's files: this
-	-- copy failed to load there, and BAR's Options, switched off for it, stayed off: no Settings in that replay)
-	definitions = VFS.FileExists("luaui/Include/squad_selection_presets.lua")
-			and VFS.Include("luaui/Include/squad_selection_presets.lua") or { names = {}, values = {} },
+	model.setConfigData(data)function widget:GetInfo()-- BAR Droid: a release without the model this copy is made on (a replay of an older BAR release plays its own files):
+-- no GetInfo, so the handler loads BAR's own Options instead (this copy's replaces never takes its place)
+if not VFS.FileExists("luaui/Include/options/model.lua") then
+	return
+end
+
+function widget:GetInfo()

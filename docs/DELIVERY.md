@@ -1797,7 +1797,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
-- [ ] **BAR test-31958: the Settings and TeamStats copies to rebuild** (found 2026-11-15 on Kailil's Fold7, whose BAR
+- [x] **BAR test-31958: the Settings and TeamStats copies to rebuild** (found 2026-11-15 on Kailil's Fold7, whose BAR
       updated; the dev phone, without internet, was on test-31836): BAR split gui_options.lua (83 KB, now with
       `luaui/Include/options/model.lua`), gui_teamstats.lua (with teamstats_model/graphs/tables) and widget_selector.lua
       (with `widget_selector/model.lua`) into modules and rewrote gui_tooltip.lua. The dev phone has 31958 now (its
@@ -1812,7 +1812,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       copy's GetInfo replaces keeps it off): in the 2026-10-01 replay BAR's own TeamStats loads, on 31958 the copy (its
       Statistics upright between the top bar and the dock); remake-check and dock-phone-test PASS. Left: the Settings copy
       (`bardroid_options.lua`, 408 KB from 31836's single file; on 31958 its patches 9-11 find no place: Initialize,
-      SetConfigData, the presets include moved into options/model.lua) rebuilt on 31958's modules (their old copies run meanwhile without Lua errors: the
+      SetConfigData, the presets include moved into options/model.lua) rebuilt on 31958's modules. Done (same day): the
+      Initialize and SetConfigData patches anchored on 31958's lines, the presets patch replaced by a stand-down (no
+      GetInfo where `options/model.lua` is not), the sidebar patch's names from the model (`model.groups`,
+      `model.devMode`/`devUI`, `model.changesRequireRestart`), launch-bar.sh resets BAR's Options to its default each
+      start (the copy's replaces keeps it off; BAR's handler had saved it at 0). Dev phone on 31958: upright the tab grid
+      (BAR's new Plugins tab with it), full width, the close button; sideways as large as fits; Snow switched on and off
+      through it; no Lua errors; the 2026-10-01 replay: the copy stands down, BAR's own Options loads, 0 desync warnings;
+      remake-check (all 5 copies, 11 phone patches), dock-phone-test, pad-test, lobby-phone-test PASS. Still left:
+      docs/upstream's patches refreshed against 31958 (their old copies run meanwhile without Lua errors: the
       launcher's two layer misses on the Fold7 and the dev phone); docs/upstream's patches refreshed against 31958.
 - [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
       the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
