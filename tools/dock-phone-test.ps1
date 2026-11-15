@@ -184,10 +184,15 @@ try {
   Touch MOVE ($a1[0] + 60) ($a1[1] + 40); Touch MOVE ($a1[0] + 160) ($a1[1] + 100)
   Start-Sleep -Milliseconds 200; Touch UP ($a1[0] + 160) ($a1[1] + 100); Start-Sleep -Milliseconds 800
   Stage "pickpanned?"; Start-Sleep 1
-  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
   # (on the split dock its end on the right block's inner edge: at the block's middle, straight under the aim and held
   # at the dock's top, the path was ~100 pixels long and no order came; the full dock's diagonal to its middle ~400)
-  $dp = if ($dock["gap"]) { @(($dock["right"][0] + 12), $dm[1]) } else { $dm }
+  # (and in a column with ground on the line just above the dock, the widget's pick: the camera at the map's edge, panned
+  # since the aims, had the end over no ground once)
+  $cands = if ($dock["gap"]) { @(($dock["right"][0] + 12), (($dock["right"][0] + $dock["right"][2]) / 2), ($dock["left"][2] - 12), (($dock["left"][0] + $dock["left"][2]) / 2)) } else { @($dm[0]) }
+  Stage ("pathend " + (($cands | ForEach-Object { [int]$_ }) -join " ")); Start-Sleep -Milliseconds 800
+  $pe = (Rects "bardroid_docktest.txt")["pathend"]
+  $dp = @($(if ($pe) { $pe[0] } else { $cands[0] }), $dm[1])
+  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
   Touch MOVE $a1[0] (($a1[1] + $dp[1]) / 2); Touch MOVE $dp[0] $dp[1]
   Start-Sleep -Milliseconds 300; Touch UP $dp[0] $dp[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1

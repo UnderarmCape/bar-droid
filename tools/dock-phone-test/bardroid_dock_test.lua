@@ -147,6 +147,23 @@ local function onCmd(c)
 			hidden ~= nil and inside and not picked, string.format("hidden Pawn %s, inside %s, picked %s, %d picked",
 				tostring(hidden), tostring(inside), tostring(picked), Spring.GetSelectedUnitsCount()))
 		WG.BarDroidPortrait.selectStyle(styleWas or "box")
+	elseif c:match("^pathend") then -- (the drawn path's end: the first of the script's columns with ground on the line
+		-- just above the dock, where RtsTouch holds the end: the camera at the map's edge, panned since the aims, had it
+		-- over no ground once, and the path gave no order; dev phone, the split dock at 1080x1198, 2026-11-15)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = (dock and dock[4] or 0) + 3
+		local pick
+		for xs in c:gmatch("(%-?%d+)") do
+			local x = tonumber(xs)
+			local kind, pos = Spring.TraceScreenRay(x, top, true, false)
+			if not pick and kind == "ground" and pos and pos[1] > 64 and pos[3] > 64 and pos[1] < Game.mapSizeX - 64
+				and pos[3] < Game.mapSizeZ - 64 then
+				pick = x
+			end
+		end
+		write(string.format("pathend %s 0\n", tostring(pick)))
+		Spring.Echo("[docktest] the path's end column: " .. tostring(pick))
 	elseif c == "campos" then -- (the camera before a one-finger drag on the game)
 		camAt = { Spring.GetCameraPosition() }
 	elseif c == "panned?" then -- (the dock's menu open, nothing picked: the drag panned, nothing selected)
