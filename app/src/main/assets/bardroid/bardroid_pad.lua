@@ -1261,7 +1261,10 @@ local function dgunDraw()
 	gl.LineWidth(1.5)
 	gl.Color(1, 0, 0, 0.25) -- (v0.8.5's: a faint range ring, the target in two rings, a line to it)
 	if d.auto then -- (full auto: the ring pulses gold-red, a sweep goes round it, the target held in brackets)
-		local t = Spring.DiffTimers(now(), d.autoOn or now())
+		-- (never under 0, nor NaN: math.max(0, NaN) is 0. A difference of two timers came out just under 0 or not a
+		-- number, its sonar ring's ping ^ 0.7 was NaN, and DrawGroundCircle's error took this whole widget out, the
+		-- D-gun mode with it: dev phone, dock-phone-test, FIRE swiped right, 2026-11-15)
+		local t = math.max(0, Spring.DiffTimers(now(), d.autoOn or now()))
 		local pulse = 0.5 + 0.5 * math.sin(t * 6)
 		gl.LineWidth(2 + pulse)
 		gl.Color(1, 0.35 + 0.35 * pulse, 0.1, 0.45 + 0.35 * pulse)
@@ -1271,7 +1274,7 @@ local function dgunDraw()
 		-- the sonar (Kailil, 2026-11-10: "make the sonar animation that plays in auto mode more pronounced"): a ping ring
 		-- out from the commander to the range every 1.1 s, thick and bright as it leaves, thin and faded at the edge; a
 		-- radar wedge sweeping round behind a bright leading line, fading over its 0.9 rad tail
-		local ping = (t % 1.1) / 1.1
+		local ping = math.max(0, math.min(1, (t % 1.1) / 1.1))
 		gl.LineWidth(1 + 5 * (1 - ping))
 		gl.Color(1, 0.6, 0.15, 0.9 * (1 - ping))
 		gl.DrawGroundCircle(cx, cy, cz, d.range * ping ^ 0.7, 64)
@@ -2757,7 +2760,7 @@ function widget:Initialize()
 			if not (dgun and dgun.auto) then
 				return false
 			end
-			return true, Spring.DiffTimers(now(), dgun.autoOn or now())
+			return true, math.max(0, Spring.DiffTimers(now(), dgun.autoOn or now())) -- (never under 0 nor NaN: dgunDraw)
 		end,
 		sticks = function(lx, ly, rx, ry)
 			if dgun then
