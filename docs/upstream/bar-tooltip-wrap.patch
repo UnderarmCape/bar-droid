@@ -1,0 +1,24 @@
+diff --git a/luaui/widgets/gui_tooltip.lua b/luaui/widgets/gui_tooltip.lua
+--- a/luaui/widgets/gui_tooltip.lua
++++ b/luaui/widgets/gui_tooltip.lua
+@@ -348,6 +348,20 @@ local function drawTooltip(name, x, y)
+ 		if tooltips[name].value and tooltips[name].value ~= "" then
+ 			-- get text dimensions
+ 			lines = string_lines(tooltips[name].value)
++			-- a line wider than the screen (less the box's padding) wrapped to it: callers wrap by the font's size,
++			-- which follows the screen's height, so on a tall (portrait) screen their lines were wider than it
++			local fit = vsx - (paddingW * 4)
++			local wrapped = {}
++			for _, line in ipairs(lines) do
++				if fit > 0 and font:GetTextWidth(line) * fontSize > fit then
++					for part in (font:WrapText(line, fit, nil, fontSize) .. "\n"):gmatch("(.-)\n") do
++						wrapped[#wrapped + 1] = part
++					end
++				else
++					wrapped[#wrapped + 1] = line
++				end
++			end
++			lines = wrapped
+ 			for i, line in ipairs(lines) do
+ 				maxWidth = math_ceil(mathMax(maxWidth, (font:GetTextWidth(line) * fontSize)))
+ 				maxHeight = math_ceil(maxHeight + lineHeight)
