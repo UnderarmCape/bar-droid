@@ -437,12 +437,18 @@ public class LauncherActivity extends AppCompatActivity {
         sb.append(phoneName(Build.MANUFACTURER, Build.MODEL)).append(", Android ").append(Build.VERSION.RELEASE)
           .append(", SoC ").append(Build.VERSION.SDK_INT >= 31 ? Build.SOC_MODEL : Build.HARDWARE).append('\n');
         boolean adreno = new File("/dev/kgsl-3d0").exists();
+        // (the GPU driver by its name, not the setting's word: "kgsl" alone meant nothing to a player; both are Mesa's,
+        // which the Mesa setting names. On the GPU's line: at the end of the version line it wrapped, "Freedreno" alone
+        // on a line under "GPU driver", dev phone 2026-11-15)
+        String driver = "kgsl".equals(Prefs.mesaDriver) ? "driver Freedreno"
+                : "zink".equals(Prefs.mesaDriver) ? "driver Turnip + Zink"
+                : "llvmpipe".equals(Prefs.mesaDriver) ? "drawn on the CPU (llvmpipe)" : Prefs.mesaDriver;
         if (Prefs.EMULATOR_BUILD)
             sb.append("Emulator build (x86_64): OpenGL ")
               .append("virpipe".equals(Prefs.mesaDriver) ? "on the GPU through Android's GLES (virgl)" : "on the CPU (llvmpipe), slow")
               .append("; ").append(Runtime.getRuntime().availableProcessors()).append(" CPU cores\n");
         else
-            sb.append(adreno ? "GPU: Qualcomm Adreno, supported\n"
+            sb.append(adreno ? "GPU: Qualcomm Adreno, supported; " + driver + "\n"
                              : "GPU: not a Qualcomm Adreno: BAR's graphics will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
         // (one decimal: "75.85 GB" and "6.91 GB" said more than a player reads there; downloads keep two, Downloader.human)
@@ -475,13 +481,6 @@ public class LauncherActivity extends AppCompatActivity {
                         ? " (official: the phone build could not run here)" : " (phone build)");
             }
         }
-        // (the GPU driver by its name, not the setting's word: "kgsl" alone meant nothing to a player; both are Mesa's,
-        // which the Mesa setting names: "(Mesa)" stood alone on a line of its own sideways)
-        String driver = "kgsl".equals(Prefs.mesaDriver) ? "GPU driver Freedreno"
-                : "zink".equals(Prefs.mesaDriver) ? "GPU driver Turnip + Zink"
-                : "llvmpipe".equals(Prefs.mesaDriver) ? "CPU rendering (llvmpipe)"
-                : "virpipe".equals(Prefs.mesaDriver) ? "virgl" : Prefs.mesaDriver;
-        sb.append(", ").append(driver);
         return styleSummary(sb.toString());
     }
 
