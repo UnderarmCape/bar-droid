@@ -188,12 +188,17 @@ try {
   # at the dock's top, the path was ~100 pixels long and no order came; the full dock's diagonal to its middle ~400)
   # (and in a column with ground on the line just above the dock, the widget's pick: the camera at the map's edge, panned
   # since the aims, had the end over no ground once)
+  # (its start where there is ground: the pan just above moved the camera, and when far the aim point lay past the map's
+  # edge, no path; 2026-11-15, 2 runs in 3 at 1080x1198)
+  Stage ("pathstart " + [int]$a1[0] + " " + [int]$a1[1]); Start-Sleep -Milliseconds 800
+  $ps = (Rects "bardroid_docktest.txt")["pathstart"]
+  $s0 = if ($ps -and $ps.Count -ge 2) { $ps } else { $a1 }
   $cands = if ($dock["gap"]) { @(($dock["right"][0] + 12), (($dock["right"][0] + $dock["right"][2]) / 2), ($dock["left"][2] - 12), (($dock["left"][0] + $dock["left"][2]) / 2)) } else { @($dm[0]) }
   Stage ("pathend " + (($cands | ForEach-Object { [int]$_ }) -join " ")); Start-Sleep -Milliseconds 800
   $pe = (Rects "bardroid_docktest.txt")["pathend"]
   $dp = @($(if ($pe) { $pe[0] } else { $cands[0] }), $dm[1])
-  Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
-  Touch MOVE $a1[0] (($a1[1] + $dp[1]) / 2); Touch MOVE $dp[0] $dp[1]
+  Touch DOWN $s0[0] $s0[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
+  Touch MOVE $s0[0] (($s0[1] + $dp[1]) / 2); Touch MOVE $dp[0] $dp[1]
   Start-Sleep -Milliseconds 300; Touch UP $dp[0] $dp[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1
   # 7. nothing picked, the dock's menu open: a drag on the game pans (Kailil, 2026-11-13: one finger pans, always), then

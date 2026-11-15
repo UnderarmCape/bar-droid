@@ -164,6 +164,38 @@ local function onCmd(c)
 		end
 		write(string.format("pathend %s 0\n", tostring(pick)))
 		Spring.Echo("[docktest] the path's end column: " .. tostring(pick))
+	elseif c:match("^pathstart") then -- (the drawn path's start, X screen pixels, y down: the aim point the script names if
+		-- there is ground under it, else the first point up the screen from it, then up the game's middle, that has: the
+		-- pan just before moved the camera, and when it moved far the aim point lay past the map's edge, no path and no
+		-- order; dev phone at 1080x1198, 2026-11-15, 2 runs in 3)
+		local vsx, vsy = Spring.GetViewGeometry()
+		local ax, ay = c:match("^pathstart (%-?%d+) (%-?%d+)")
+		ax, ay = tonumber(ax), tonumber(ay)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = dock and dock[4] or 0
+		local cands = {}
+		if ax and ay then
+			for i = 0, 8 do
+				cands[#cands + 1] = { ax, ay - i * 60 }
+			end
+		end
+		for i = 2, 8 do
+			cands[#cands + 1] = { math.floor(vsx / 2), math.floor((vsy - top) * i / 10) }
+		end
+		local pick
+		for _, p in ipairs(cands) do
+			local gy = vsy - p[2]
+			if not pick and p[2] > 0 and gy > top + 40 then
+				local kind, pos = Spring.TraceScreenRay(p[1], gy, true, false)
+				if kind == "ground" and pos and pos[1] > 64 and pos[3] > 64 and pos[1] < Game.mapSizeX - 64
+					and pos[3] < Game.mapSizeZ - 64 then
+					pick = p
+				end
+			end
+		end
+		write(pick and string.format("pathstart %d %d\n", pick[1], pick[2]) or "pathstart nil nil\n")
+		Spring.Echo("[docktest] the path's start: " .. (pick and (pick[1] .. "," .. pick[2]) or "none"))
 	elseif c == "campos" then -- (the camera before a one-finger drag on the game)
 		camAt = { Spring.GetCameraPosition() }
 	elseif c == "panned?" then -- (the dock's menu open, nothing picked: the drag panned, nothing selected)

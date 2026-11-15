@@ -1764,6 +1764,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       their move; the GUI Shader is not among the widgets either phone loads (the Fold7's 239), so nothing shows.
       dock-phone-test at 1080x1198: its path case failed 2 of 3 runs, each time when the pan before it had moved the
       camera 183 (passing: 124), near the map's edge: the test's geometry, as on 11-15 morning, the rest ALL PASS.
+      Fixed in the test: the path started at the STRAFE aim point, picked before that pan; now the widget's "pathstart"
+      gives the aim point if ground is still under it, else the first point up the screen that has some. Dev phone at
+      1080x1198: 3 runs in 3 ALL PASS, one of them with the camera moved 183; the S23's own shape ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
