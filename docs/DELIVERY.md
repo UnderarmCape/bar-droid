@@ -1679,6 +1679,26 @@ Added 2026-11-10 ~05:00 (with screenshots):
       that share (dockShare), the commander whole at 1080x2316 and at 1080x1198. The pad's own 1st person
       (`bardroid_padfp.lua`) has the same sky upright, but its crosshair and aim are at the screen's middle, which
       upright is the game's lower part: left as it is while the pad plays sideways (the open "gamepad upright" item).
+- [ ] **The unfolded dock split in two, both ways up: built, his test pending** (Kailil, 2026-11-15, after the
+      third-of-the-height dock below, on the Fold7 unfolded: "the bottom dock in both vertical and horizontal is
+      entirely too large. The footprint is too large, can you make it smaller and split with no map in the middle. Split
+      so the right and left thumb can easily reach the buttons ... the amount of buttons seen on the dock should never be
+      less buttons than when phone is unfolded and vertical"; then of the groups row across the bottom: "this bottom bar
+      is entirely wasted space ... maybe it can sit in the middle, separating the left and right"; and "remove the auto
+      hide behavior in landscape where the byttobs that aren't the map auto hide and I have to press home to see them").
+      Built (bardroid_portrait.lua layout, L.split): on a near-square screen (the longer side under 1.5 times the
+      shorter), playing, either way up, two blocks in the bottom corners, the same both ways up (sized by the short side):
+      left, metal and energy over the build grid 4 x 3 (12 tiles of 81 lines at 1080); right, the selection over the
+      orders, one row each (FIGHT, PRESETS | PATROL, D-GUN, the states: 6 in sight, more scroll); the groups strip at the
+      bottom between them; above it the game, the dock's hole (L.hole: the panels, the texture, IsAbove and RtsTouch's
+      "map" leave it to the game; no minimap there; "gap": a path or box dragged there keeps its point, RtsTouch.aboveDock).
+      The home buttons, presets and teammate panels in the right block; the D-gun mode floating, as sideways; spectating
+      keeps the full-width dock (its six columns). 313 lines tall at 1080 (26 % upright, 29 % sideways), each block 344
+      wide: the game between them 392 upright, 510 sideways. Sideways one thumb (tall phones): the panel always open, the
+      home buttons with nothing picked; HOME lets the pick go (it had opened the hidden panel). Dev phone at 1080x1198:
+      upright and sideways screenshots; dock-phone-test ALL PASS upright there (its taps and drags made split-aware:
+      DockMid, WholeGrid; the path case ends on the right block's inner edge, straight down it was a 100-pixel path and
+      gave no order) and at 936x2013; the tall sideways dock with nothing picked shows the home buttons.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

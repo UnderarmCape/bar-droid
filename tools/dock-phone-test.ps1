@@ -62,6 +62,11 @@ function Shot([string]$name) {
   & $adb shell rm -f /sdcard/bardroid-dockshot.png
 }
 function Mid($r, [string]$what = "rect") { if (-not $r) { throw "no $what in the dock's files (bardroid_dock.txt, bardroid_place.txt)" }; return @((($r[0] + $r[2]) / 2), (($r[1] + $r[3]) / 2)) }
+# the dock's middle for a drag or tap onto it: on a near-square screen the split dock's right block (its middle is the
+# game's, the dock file's "gap"), else the whole dock's
+function DockMid($d) { if ($d["gap"]) { return Mid $d["right"] "the dock's right block" }; return Mid $d["dock"] "the dock" }
+# the grid the home buttons and the presets take: the split dock's right block, else both halves
+function WholeGrid($d) { if ($d["gap"]) { return $d["right"] }; return @($d["left"][0], $d["left"][1], $d["right"][2], $d["left"][3]) }
 
 & $adb shell am force-stop $pkg
 $stray = Get-StrayWidgets $adb @("bardroid_dock_test.lua")
@@ -102,7 +107,7 @@ try {
   # (the building, no spot yet, dragged from the map on into the dock: it moves by part of the finger's way, held at the
   # dock's top edge)
   if ($spots["free"]) {
-    $dm0 = Mid $dock["dock"] "the dock"; $f0 = $spots["free"]
+    $dm0 = DockMid $dock; $f0 = $spots["free"]
     Touch DOWN $f0[0] $f0[1]; Start-Sleep -Milliseconds 120
     Touch MOVE $f0[0] (($f0[1] + $dm0[1]) / 2); Touch MOVE $dm0[0] $dm0[1]
     Start-Sleep -Milliseconds 300; Touch UP $dm0[0] $dm0[1]; Start-Sleep -Milliseconds 700
@@ -125,7 +130,7 @@ try {
   # (a GRID: a finger held on the map with the building picked, then dragged on into the dock: its far corner, the
   # pointer held down for BAR's build drag, stays at the dock's top edge; the cancel below lets it go, nothing placed)
   if ($spots["free"]) {
-    $fr = $spots["free"]; $dmg = Mid $dock["dock"] "the dock"
+    $fr = $spots["free"]; $dmg = DockMid $dock
     Touch DOWN $fr[0] $fr[1]; Start-Sleep -Milliseconds 1000
     Touch MOVE $fr[0] (($fr[1] + $dmg[1]) / 2); Touch MOVE $fr[0] $dmg[1]
     Start-Sleep -Milliseconds 300; Touch UP $fr[0] $dmg[1]; Start-Sleep -Milliseconds 600
@@ -156,12 +161,12 @@ try {
   if (-not (WaitLog '\[docktest\] presets open' 20)) { throw "the presets did not open" }
   Start-Sleep 1
   $dock = Rects "bardroid_dock.txt"; $aims = Rects "bardroid_docktest.txt"
-  $g = @($dock["left"][0], $dock["left"][1], $dock["right"][2], $dock["left"][3])
+  $g = WholeGrid $dock
   Tap ($g[0] + ($g[2] - $g[0]) / 4) ($g[1] + ($g[3] - $g[1]) / 4); Start-Sleep -Milliseconds 900
   $a0 = $aims["aim0"]; $a1 = $aims["aim1"]
   # (first a drag from the map down onto the dock: with a preset armed a finger's drag pans (taps only, Kailil
   # 2026-11-13: "make presets a single tap only"), nothing sent, STRAFE still armed)
-  $dm = Mid $dock["dock"] "the dock"
+  $dm = DockMid $dock
   Touch DOWN $a0[0] $a0[1]; Start-Sleep -Milliseconds 150
   Touch MOVE $a0[0] (($a0[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 200; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 800
@@ -180,8 +185,11 @@ try {
   Start-Sleep -Milliseconds 200; Touch UP ($a1[0] + 160) ($a1[1] + 100); Start-Sleep -Milliseconds 800
   Stage "pickpanned?"; Start-Sleep 1
   Touch DOWN $a1[0] $a1[1]; Start-Sleep -Milliseconds 700   # (held past RtsTouch's long press, 450 ms: the right button)
-  Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
-  Start-Sleep -Milliseconds 300; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 1200
+  # (on the split dock its end on the right block's inner edge: at the block's middle, straight under the aim and held
+  # at the dock's top, the path was ~100 pixels long and no order came; the full dock's diagonal to its middle ~400)
+  $dp = if ($dock["gap"]) { @(($dock["right"][0] + 12), $dm[1]) } else { $dm }
+  Touch MOVE $a1[0] (($a1[1] + $dp[1]) / 2); Touch MOVE $dp[0] $dp[1]
+  Start-Sleep -Milliseconds 300; Touch UP $dp[0] $dp[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1
   # 7. nothing picked, the dock's menu open: a drag on the game pans (Kailil, 2026-11-13: one finger pans, always), then
   # a tap and a drag: a box selection dragged from the map on into the dock, its corner held at the dock's top edge

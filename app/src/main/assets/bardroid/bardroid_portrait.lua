@@ -338,6 +338,49 @@ local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	L.hole, L.leftCols, L.rightCols = nil, 3, 2
 	L.thumb, L.tabs, L.homeBtn, L.swapBtn, L.dgFloat = false, nil, nil, nil, false
+	-- Unfolded (a near-square screen, either way up), playing: two blocks in the bottom corners, one under each thumb,
+	-- the game between them (Kailil, 2026-11-15, of the unfolded Fold7: "the bottom dock in both vertical and horizontal
+	-- is entirely too large. The footprint is too large, can you make it smaller and split with no map in the middle.
+	-- Split so the right and left thumb can easily reach the buttons ... the amount of buttons seen on the dock should
+	-- never be less buttons than when phone is unfolded and vertical"). The same blocks both ways up, so the same buttons:
+	-- left, metal and energy over the build grid (4 x 3); right, the selection over the orders (2 wide). Both as tall; the
+	-- groups between them at the bottom (Kailil, the same day, of the groups row across the bottom: "this bottom bar is
+	-- entirely wasted space ... maybe it can sit in the middle, separating the left and right"); over the groups the gap
+	-- is the dock's hole (L.hole, RtsTouch's "map" and "gap"): the game's. Spectating keeps the full-width dock (its six
+	-- narrow columns).
+	local short = min(vsx, vsy)
+	L.split = max(vsx, vsy) < short * 1.5 and not SP.on()
+	if L.split then
+		local pad = max(4, floor(short * 0.008))
+		local gap = max(3, floor(pad * 0.6))
+		local tile = floor(short * 0.075)
+		local w = 4 * tile + 3 * gap
+		local resH, selH, groupsH = floor(short * 0.036), floor(short * 0.06), floor(short * 0.05)
+		local gridH = 3 * tile + 2 * gap
+		local h = pad + gridH + pad + resH + pad
+		local bw = w + 2 * pad -- (a block, its pads in)
+		L.splitL, L.splitR = { 0, 0, bw, h }, { vsx - bw, 0, vsx, h }
+		L.dock = { 0, 0, vsx, h }
+		L.groups = { bw + pad, pad, vsx - bw - pad, pad + groupsH } -- (between the blocks, at the bottom)
+		L.hole = { bw, showGroups and (2 * pad + groupsH) or 0, vsx - bw, h }
+		L.pad, L.gap, L.tile, L.leftRows, L.leftCols = pad, gap, tile, 3, 4
+		L.left = { pad, pad, pad + w, pad + gridH }
+		L.res = { pad, h - pad - resH, pad + w, h - pad }
+		local x0, x1, y0, y1 = vsx - bw + pad, vsx - pad, pad, h - pad
+		L.sel = { x0, y1 - selH, x1, y1 }
+		if showSel then
+			y1 = y1 - selH - pad
+		end
+		L.right = { x0, y0, x1, y1 } -- (the orders, and with nothing picked the home buttons: homeRect)
+		L.btnW = floor((w - gap) / 2)
+		L.rightRows = max(3, floor((y1 - y0 + gap) / (floor(tile * 0.62) + gap)))
+		L.btnH = floor((y1 - y0 + gap) / L.rightRows) - gap
+		if L.dgun then -- (the D-gun mode: its sticks and FIRE in the two corners over the game, as sideways; no hole)
+			L.dgFloat, L.hole = true, nil
+		end
+		SP.laidOut = false
+		return
+	end
 	if L.land and not L.dgun then
 		-- Sideways, one thumb (Kailil, 2026-11-12: "keep the bottom ui two slots only ... snapped to the left side or right
 		-- side of the bottom of the phone so it can be used by one finger only. Add a button or symbol to swap what side";
@@ -586,6 +629,8 @@ local function writeDock(force)
 			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
 			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
 			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
+			-- (unfolded: the game between the two blocks; a drag ending there keeps its point, RtsTouch.aboveDock)
+			.. (L.split and L.hole and ("gap " .. r(L.hole) .. "\n") or "")
 			-- (the build options, a builder's or a factory's, shown: their first tap acts, the camera pad or not; Kailil,
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
 			-- (and the unit lists' types, ALL / MULTI first, and a pick's types: as the home grid's LOCAL and ALL UNITS that
@@ -605,9 +650,9 @@ local function writeDock(force)
 			.. (showSel and not SP.hidden and leftKind ~= "spec" and L.sel and L.sel[3] > L.sel[1]
 				and ("live " .. r(L.sel) .. "\n") or "")
 			-- (and the home grid, nothing picked: Kailil, 2026-11-12, "make rhe commander button. All units and local
-			-- units buttins not need the ui one tap engage. Allow me to be able to directly click them"; sideways while
-			-- HOME's panel is open)
-			.. (rightKind == "home" and leftKind ~= "spec" and not SP.hidden and (not L.thumb or L.homeOpen)
+			-- units buttins not need the ui one tap engage. Allow me to be able to directly click them"; sideways in the
+			-- panel, which is always open now)
+			.. (rightKind == "home" and leftKind ~= "spec" and not SP.hidden and (not L.thumb or L.panelOn)
 				and ("live " .. r(SP.homeLive()) .. "\n") or "")
 			-- (and the groups row: the unit groups and the idle builders, the same "directly click them")
 			.. (showGroups and not SP.hidden and L.groups and L.groups[3] > L.groups[1]
@@ -624,7 +669,7 @@ local function writeDock(force)
 			.. (L.thumb and L.swapBtn and not SP.hidden and ("live " .. r(L.swapBtn) .. "\n") or "")
 			-- (PING on the home grid and before the start: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. ((rightKind == "home" or rightKind == "pregame") and leftKind ~= "spec" and L.pingBtn and not SP.hidden
-				and (not L.thumb or L.homeOpen or rightKind == "pregame")
+				and (not L.thumb or L.panelOn or rightKind == "pregame")
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
 	else
@@ -1780,7 +1825,9 @@ function refreshNow()
 			-- 2026-11-10, the factory's order menu "with the larger buttons arrangement too", the rest left to us)
 			-- (two rows tall where the half shows four or more: three, the unfolded Fold7 upright, cut MOVE and PATROL
 			-- through the middle at its foot, Kailil: "Do not allow scroll to half reveal objects"; one row then)
-			local bh = (L.rightRows or 3) >= 4 and 2 or 1
+			-- (unfolded, the split dock's right block: one row, so its four rows show six orders, not three; Kailil,
+			-- 2026-11-15, never fewer buttons than the unfolded upright dock showed)
+			local bh = (L.rightRows or 3) >= 4 and not L.split and 2 or 1
 			local big = { [CMD.FIGHT] = { 1, 2, bh }, [CMD.MOVE] = { 2, 1, bh }, [CMD.PATROL] = { 3, 1, bh },
 				[CMD.MANUALFIRE] = { 4, 2, 1 } }
 			if not mobilePicked then
@@ -1867,7 +1914,7 @@ function refreshNow()
 	-- Kailil, 2026-11-13, "shrink them to be as tall as the orders so two rows can fit under it instead of 1 row")
 	SP.overRect, SP.overItems, SP.smallTypes = nil, {}, nil
 	local listPage = lk:sub(1, 6) == "types:"
-	if (rk == "orders" or listPage) and not L.land and not SP.on() and (lk == "seltypes" or listPage) then
+	if (rk == "orders" or listPage) and (not L.land or L.split) and not SP.on() and (lk == "seltypes" or listPage) then
 		-- (as tall as FIGHT beside them, its rows' height: Kailil, 2026-11-13, "I meant, it match the size of the fight
 		-- button"; the overflow then starts level with PRESETS)
 		local fh = (L.rightRows or 3) >= 4 and 2 or 1
@@ -1906,11 +1953,14 @@ function refreshNow()
 			end
 		end
 	end
-	if L.land and not L.dgun then -- sideways, one thumb: the panel, its tabs and the tab shown (layout)
-		-- (nothing picked: the map slot alone until a tap opens the home buttons; both sides with something: BUILD | ORDERS
-		-- tabs, a builder opening on its build options and other units on their orders, a building picked on PLACE; a tab
-		-- tapped stays until what the dock shows changes)
-		local panelOn = not (lk == "none" and rk == "home" and not L.homeOpen)
+	if L.land and not L.dgun and not L.split then -- sideways, one thumb: the panel, its tabs and the tab shown (layout)
+		-- (nothing picked: the home buttons in the panel; both sides with something: BUILD | ORDERS tabs, a builder opening
+		-- on its build options and other units on their orders, a building picked on PLACE; a tab tapped stays until what
+		-- the dock shows changes)
+		-- (the panel always open: with nothing picked it had closed to the map slot alone until HOME was tapped; Kailil,
+		-- 2026-11-15, "remove the auto hide behavior in landscape where the byttobs that aren't the map auto hide and I
+		-- have to press home to see them")
+		local panelOn = true
 		local tabsOn = panelOn and #newLeft > 0 and #newRight > 0
 		local tab = L.tab
 		if lk ~= leftKind or rk ~= rightKind or newPick then
@@ -2355,8 +2405,8 @@ end
 
 -- Nothing picked ("home"): the right half's buttons across both halves, 2 wide and HOME_ROWS tall (Kailil,
 -- 2026-11-09: "much larger buttons ... Only buttons should be there")
-local function homeRect() -- (sideways: the right half's place, the minimap between the halves)
-	return L.land and L.right or { L.left[1], L.left[2], L.right[3], L.right[4] }
+local function homeRect() -- (sideways: the right half's place, the minimap between the halves; unfolded: the right block)
+	return (L.land or L.split) and L.right or { L.left[1], L.left[2], L.right[3], L.right[4] }
 end
 function SP.homeLive() -- (writeDock's "live" home grid: it comes before homeRect)
 	return homeRect()
@@ -3528,8 +3578,8 @@ function SP.landMinimap()
 	if not (m and m.setExternalFrame) then
 		return
 	end
-	local h = active and L.land and L.hole or nil
-	if active and L.dgFloat then -- (the D-gun mode sideways shows no minimap: a pixel in the bottom left corner, under
+	local h = active and L.land and not L.split and L.hole or nil -- (unfolded the hole is the game's: no minimap)
+	if active and L.dgFloat and not L.split then -- (the D-gun mode sideways shows no minimap: a pixel in the bottom left corner, under
 		-- the band's place; given back its own place BAR's showed at the top left)
 		h = { 0, 0, 1, 1 }
 	end
@@ -4055,7 +4105,12 @@ function SP.thumbAt(x, y)
 end
 
 local function drawStill()
-	panel(L.dock, 1, 1, 0, 0, true)
+	if L.split then -- (unfolded: a panel for each block, the game between them)
+		panel(L.splitL, 1, 1, 0, 0, true)
+		panel(L.splitR, 1, 1, 0, 0, true)
+	else
+		panel(L.dock, 1, 1, 0, 0, true)
+	end
 	if showSel then
 		drawSelection()
 	end
@@ -4190,7 +4245,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		end
 	else
 		drawStill()
-		if L.hole then -- (no texture: the minimap drawn again over the dock's panel)
+		if L.hole and not L.split then -- (no texture: the minimap drawn again over the dock's panel)
 			gl.DrawMiniMap()
 		end
 	end
@@ -4457,8 +4512,10 @@ function widget:MouseRelease(x, _, btn)
 		return true
 	end
 	local thumb = not p.side and SP.thumbAt(p.x, p.y)
-	if thumb == "home" then -- (sideways, one thumb: the home buttons in the panel, or closed again)
-		L.homeOpen = not L.homeOpen
+	if thumb == "home" then -- (sideways, one thumb: the home buttons in the panel, which no longer hides them: HOME lets
+		-- the pick go, so they show; it had opened and closed the hidden panel)
+		Spring.SelectUnitArray({})
+		L.homeOpen = false
 		refresh()
 		return true
 	elseif thumb == "swap" then -- (the dock to the other side of the screen; kept for the next game, GetConfigData)

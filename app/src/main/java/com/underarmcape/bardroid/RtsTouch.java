@@ -119,6 +119,7 @@ final class RtsTouch {
     // appear and a big red fire button ... in the corner ... to cancel": stickL, stickR (x, y, radius), fire, cancel)
     private static final class Dock {
         float[] all, left, right, groups, stickL, stickR, fire, cancel, map;
+        float[] gap;   // (unfolded: the game between the dock's two blocks, "gap": a drag there keeps its point, aboveDock)
         float[] fire2;   // (the D-gun mode floating sideways: a FIRE beside each stick, fire the left one)
         // the build options and the selection row (INSERT, QUEUE): their first tap acts though the dock is the camera pad
         // (bardroid_portrait.lua, a "live" line each)
@@ -980,6 +981,7 @@ final class RtsTouch {
                     else if (d != null && f[0].equals("right")) d.right = r;
                     else if (d != null && f[0].equals("groups")) d.groups = r;
                     else if (d != null && f[0].equals("map")) d.map = r;
+                    else if (d != null && f[0].equals("gap")) d.gap = r;
                     else if (d != null && f[0].equals("live")) d.live.add(r);
                     else if (d != null && f[0].equals("ping")) d.ping = r;
                     else if (d != null && f[0].equals("fire")) d.fire = r;
@@ -2206,6 +2208,8 @@ final class RtsTouch {
         if (d == null || d.all == null || toY(py) < d.all[1]) return py;
         float x = toX(px);
         if (x < d.all[0] || x > d.all[2]) return py;
+        // (unfolded, between the dock's two blocks: the game's own place, as beside the sideways dock)
+        if (d.gap != null && inside(d.gap, x, toY(py))) return py;
         return fromY(d.all[1] - 1);
     }
 
