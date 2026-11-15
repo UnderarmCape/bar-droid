@@ -51,7 +51,7 @@ end
 -- taller than wide by this much: the dock is up (the unfolded Fold7 upright is 1080x1198, 1.11: at 1.15 it got BAR's
 -- landscape HUD squeezed upright, the case the dock is for)
 local PORTRAIT = 1.05
-local DOCK_MAX = 0.54 -- of the screen's height at most
+local DOCK_MAX = 0.54 -- of the screen's height at most (a tall phone's; a near-square screen's: 0.32, layout)
 local MENU_SECONDS = 2.6 -- the menu goes back to the camera pad after this long untouched (Kailil: "5-10seconds";
 -- 2026-11-10: 1.25, then "Extend mouse tap ui delay too instead 2 seconds"; 2026-11-12: "extend bottom UI time out by
 -- 30 percent. its too short")
@@ -476,30 +476,45 @@ local function layout()
 		SP.laidOut = false
 		return
 	end
-	local pad = max(4, floor(vsx * 0.012))
+	-- A near-square screen (the unfolded Fold7 upright, 1080x1198) keeps the dock to 0.32 of its height (Kailil,
+	-- 2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
+	-- real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"; it was 0.54, DOCK_MAX):
+	-- its rows and gaps by the height, the build grid's tiles as small as two rows need and as many across as fill the
+	-- half. Tall phones keep the width's sizes.
+	local square = vsy < vsx * 1.5
+	local pad = square and max(4, floor(vsy * 0.008)) or max(4, floor(vsx * 0.012))
 	local gap = max(3, floor(pad * 0.6))
 	-- (by the width, and by the height on a near-square screen: the unfolded Fold7 upright, 1080x1198, gave a quarter
 	-- of its short dock to these rows and the build grid small tiles beside a blank strip; tall phones keep the width's)
-	local selH = floor(min(vsx * 0.15, vsy * 0.09))
-	local groupsH = floor(min(vsx * 0.13, vsy * 0.075))
+	local selH = square and floor(vsy * 0.06) or floor(min(vsx * 0.15, vsy * 0.09))
+	local groupsH = square and floor(vsy * 0.05) or floor(min(vsx * 0.13, vsy * 0.075))
 	local half = floor(vsx * 0.5)
 	local tile = floor((half - pad - floor(pad / 2) - 2 * gap) / 3)
-	local room = floor(vsy * DOCK_MAX) - (pad * 4 + selH + groupsH) -- the grid's height at most
+	local room = floor(vsy * (square and 0.32 or DOCK_MAX)) - (pad * 4 + selH + groupsH) -- the grid's height at most
 	local rows = max(2, min(4, floor((room + gap) / (tile + gap))))
 	if rows * (tile + gap) - gap > room then -- (2 rows that do not fit: smaller tiles)
 		tile = max(16, floor((room + gap) / rows) - gap)
 	end
-	local resH = floor(min(vsx * 0.06, vsy * 0.04))
+	local resH = square and floor(vsy * 0.032) or floor(min(vsx * 0.06, vsy * 0.04))
 	room = room - resH - pad
 	rows = max(2, min(4, floor((room + gap) / (tile + gap))))
 	if rows * (tile + gap) - gap > room then
 		tile = max(16, floor((room + gap) / rows) - gap)
+	end
+	if square then -- (the smaller tiles across the whole half: 3 of them left most of it blank)
+		local halfW = half - pad - floor(pad / 2)
+		L.leftCols = max(3, min(6, floor((halfW + gap) / (tile + gap) + 0.5)))
+		tile = min(tile, floor((halfW - (L.leftCols - 1) * gap) / L.leftCols))
 	end
 	local gridH = rows * (tile + gap) - gap
 	SP.laidOut = SP.on() and true or false
 	if SP.laidOut then -- (spectating: no selection or groups rows; their room to the grid, up to five button rows as tall
 		-- as the build tiles: on the unfolded Fold7 the spectator's five rows were 62 pixels, dev phone at 1080x1198)
 		gridH = max(gridH, min(5 * (tile + gap) - gap, room + selH + groupsH + 2 * pad))
+	end
+	if square and L.dgun then -- (the D-gun mode, which has neither row, its sticks and X a thumb's size: in the 0.32
+		-- dock's grid height they were 90 pixels and the X 34, dev phone at 1080x1198; its band still a quarter of the screen)
+		gridH = max(gridH, floor(vsy * 0.2))
 	end
 	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
 	-- From the bottom: the groups (with groups, or units picked for + NEW), the grid, the selection (units picked),

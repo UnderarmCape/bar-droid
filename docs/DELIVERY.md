@@ -1679,6 +1679,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       that share (dockShare), the commander whole at 1080x2316 and at 1080x1198. The pad's own 1st person
       (`bardroid_padfp.lua`) has the same sky upright, but its crosshair and aim are at the screen's middle, which
       upright is the game's lower part: left as it is while the pad plays sideways (the open "gamepad upright" item).
+- [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
+      2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
+      real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
+      height (DOCK_MAX), 646 of the unfolded upright screen's 1198 lines. On a near-square screen (taller than wide by
+      less than 1.5) the dock is now 0.32 at most: its gaps, resources, selection and groups rows by the height (9, 38,
+      71, 59 lines), the build grid two rows of tiles as small as fit (82 lines) and as many across as fill its half (6,
+      not 3), the order buttons in the same height. The D-gun mode, which has neither row, keeps a 0.2 grid for its
+      sticks and X (in the 0.32 grid they were 90 and 34 lines). Dev phone at 1080x1198: the dock's top at 382 of 1198
+      (32 %), 302 with nothing picked, the D-gun band 25 %; dock-phone-test ALL PASS there; tall phones as before (the
+      dev phone upright at 936x2013: the dock's top at 974, dock-phone-test ALL PASS). Left: Kailil's look on the Fold7.
 - [ ] **One touch layout for both orientations, sideways: built, his test pending** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
       vertical touch sytem onto the phone's landscape system ... Unless we split the right and left half of the botom
       UI and shove a map into the middle with the eco bars on top of it, so the top row isnt empty with eco stuff and
