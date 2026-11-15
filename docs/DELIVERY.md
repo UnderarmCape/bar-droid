@@ -1698,7 +1698,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       home buttons with nothing picked; HOME lets the pick go (it had opened the hidden panel). Dev phone at 1080x1198:
       upright and sideways screenshots; dock-phone-test ALL PASS upright there (its taps and drags made split-aware:
       DockMid, WholeGrid; the path case ends on the right block's inner edge, straight down it was a 100-pixel path and
-      gave no order) and at 936x2013; the tall sideways dock with nothing picked shows the home buttons.
+      gave no order) and at 936x2013; the tall sideways dock with nothing picked shows the home buttons. Sideways split
+      checked (same day): a Bot Lab picked (8 options, the orders, x FIRST / x LAST in the middle strip), a building
+      picked (ONE / LINE / GRID / BORDER, PLACE, ROTATE, X in the right block); the open menu's gold line had run across
+      the game between the blocks: drawn on each block now. Paths drawn by hand upright at 1080x1198, a long press then a
+      drag (a scratch widget logging the commander's orders): onto the right block, the left block and the middle strip
+      each gave a move path ending at the dock's top (313), into the game between the blocks one ending where the finger
+      was (247). dock-phone-test's path case failed 1 run in 3 there (its camera at the map's edge, panned just before):
+      the test's geometry, not the dock's.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

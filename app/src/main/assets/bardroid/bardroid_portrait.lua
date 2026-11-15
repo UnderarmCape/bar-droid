@@ -3385,16 +3385,21 @@ local function drawMode()
 	end
 	local age = t - menuAt
 	local edge = max(2, floor(L.pad * 0.3))
-	if age < BLINK then -- two quick pulses of light over the dock, gold at its top edge
-		local a = math.sin(age / BLINK * math.pi * 2) ^ 2
-		gl.Color(1, 0.9, 0.6, 0.16 * a)
-		gl.Rect(d[1], d[2], d[3], d[4])
-		gl.Color(1, 0.82, 0.35, 0.9 * a)
-		gl.Rect(d[1], d[4] - edge * 3, d[3], d[4])
-	end
+	-- (unfolded, the split dock: on each block, not across the game between them; the line ran over it, dev phone
+	-- sideways at 1080x1198)
+	local blocks = L.split and L.splitL and L.splitR and { L.splitL, L.splitR } or { d }
 	local left = SP.held() and 1 or max(0, 1 - (t - lastTouch) / MENU_SECONDS) -- (placing, picking: no clock)
-	gl.Color(1, 0.78, 0.25, 0.85)
-	gl.Rect(d[1], d[4] - edge, d[1] + (d[3] - d[1]) * left, d[4])
+	for _, b in ipairs(blocks) do
+		if age < BLINK then -- two quick pulses of light over the dock, gold at its top edge
+			local a = math.sin(age / BLINK * math.pi * 2) ^ 2
+			gl.Color(1, 0.9, 0.6, 0.16 * a)
+			gl.Rect(b[1], b[2], b[3], b[4])
+			gl.Color(1, 0.82, 0.35, 0.9 * a)
+			gl.Rect(b[1], b[4] - edge * 3, b[3], b[4])
+		end
+		gl.Color(1, 0.78, 0.25, 0.85)
+		gl.Rect(b[1], b[4] - edge, b[1] + (b[3] - b[1]) * left, b[4])
+	end
 	gl.Color(1, 1, 1, 1)
 end
 
