@@ -518,7 +518,18 @@ local function layout()
 		-- (0.31 to 0.32; a box drag's filters page between them had made it jump)
 		gridH = max(gridH, floor(vsy * 0.2))
 	end
-	L.pad, L.gap, L.tile, L.leftRows = pad, gap, tile, rows
+	-- the build grid's tiles: in that taller grid (pregame's) whole rows filling it, as many across as fill the half (two
+	-- rows of the short grid's tiles left the top of a third in sight under them, "Do not allow scroll to half reveal
+	-- objects"; dev phone at 1080x1198); the order buttons keep the short grid's rows (tile, below)
+	local leftTile, leftRows = tile, rows
+	if square and leftRows * (tile + gap) - gap < gridH - floor(tile / 3) then
+		leftRows = max(2, floor((gridH + gap) / (tile + gap) + 0.5))
+		leftTile = floor((gridH + gap) / leftRows) - gap
+		local halfW = half - pad - floor(pad / 2)
+		L.leftCols = max(3, min(6, floor((halfW + gap) / (leftTile + gap) + 0.5)))
+		leftTile = min(leftTile, floor((halfW - (L.leftCols - 1) * gap) / L.leftCols))
+	end
+	L.pad, L.gap, L.tile, L.leftRows = pad, gap, leftTile, leftRows
 	-- From the bottom: the groups (with groups, or units picked for + NEW), the grid, the selection (units picked),
 	-- metal and energy. A row not shown takes no room: the dock is that much lower and the game taller (Kailil,
 	-- 2026-11-09: "Remove the no units pick bar ... It should just not be there"); the grid keeps its size.

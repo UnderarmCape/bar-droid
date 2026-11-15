@@ -1692,7 +1692,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       nothing picked: in the short grid their 4 rows were 37 lines, too small for a thumb; without the selection row (nothing
       picked, the D-gun mode, a box drag's filters) the grid now takes 0.2 of the height, rows of 56, the dock at 372
       (0.31) where it is 382 with a pick: it all but stays put as picks come and go (a home-only rule had it jump for the
-      box drag's filters page, which dock-phone-test caught). dock-phone-test ALL PASS at 1080x1198. And BAR's replay speed
+      box drag's filters page, which dock-phone-test caught). dock-phone-test ALL PASS at 1080x1198. Pregame's build grid
+      in that taller grid showed two rows and the top of a third: its tiles now whole rows filling it (6 x 3 of 76 lines),
+      the order buttons beside them as before; a Bot Lab picked (6 x 2 options, three order rows, the groups row's
+      x FIRST / x LAST) looked right as it was; dock-phone-test ALL PASS at 1080x1198 and at 936x2013. And BAR's replay speed
       buttons above the dock (a phone version of gui_replaybuttons.lua, below). Left: Kailil's look on the Fold7.
 - [ ] **One touch layout for both orientations, sideways: built, his test pending** (Kailil, 2026-11-12: "Eventually, im going to unify/overwrite the
       vertical touch sytem onto the phone's landscape system ... Unless we split the right and left half of the botom
