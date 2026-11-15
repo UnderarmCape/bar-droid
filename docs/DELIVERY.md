@@ -1797,6 +1797,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       at 1.37 x BAR's size with its close button. Official engine: "Switched Options back on: BAR Droid settings took its
       place and is not running", BAR's own. remake-check: all five copies PASS. Players get it with the phone engine,
       the app's default since 2026-11-13 (next item).
+- [ ] **BAR test-31958: the Settings and TeamStats copies to rebuild** (found 2026-11-15 on Kailil's Fold7, whose BAR
+      updated; the dev phone, without internet, was on test-31836): BAR split gui_options.lua (83 KB, now with
+      `luaui/Include/options/model.lua`), gui_teamstats.lua (with teamstats_model/graphs/tables) and widget_selector.lua
+      (with `widget_selector/model.lua`) into modules and rewrote gui_tooltip.lua. The dev phone has 31958 now (its
+      1,733 missing pool files, 7.6 MB, the package and the index copied from the Fold7; the old index kept as
+      `versions.gz.test-31836`). Done the same day: the tooltip and Widget Selector phone patches made for 31958 (the
+      profiler switch now in the model, reached through the shared `filters`), the build, order and mission info
+      copies remade from 31958, all 11 phone patches apply (remake-check), and the app no longer keeps assets an older
+      APK had (the dropped Keybinds and Changelog patches had gone on being applied). Dev phone on 31958: dock-phone-test,
+      pad-test, pad-test -Online ALL PASS. Left: the Settings copy (`bardroid_options.lua`, 408 KB from 31836's single
+      file) and the TeamStats copy rebuilt on 31958's modules (their old copies run meanwhile without Lua errors: the
+      launcher's two layer misses on the Fold7 and the dev phone); docs/upstream's patches refreshed against 31958.
 - [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
       the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
       no RegisterUnitCommand; the order menu's `action_tap_hotkeys.lua` is not in it): make-buildmenu.py's and

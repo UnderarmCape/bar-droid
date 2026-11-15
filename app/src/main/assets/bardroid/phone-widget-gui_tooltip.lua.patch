@@ -3,13 +3,14 @@ BAR's tooltip moves a box that would run past the screen's right edge to the poi
 its callers wrap their text by the font's size (80 characters and the like), and the font is sized by the screen's
 height, so upright on a phone a tooltip's lines are wider than the screen and run off it (dev phone, 2026-11-15: the
 Widget Selector's row tooltips cut at the right edge). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as
-LuaUI loads it; if a block finds no place, BAR's own file runs.
+LuaUI loads it; if a block finds no place, BAR's own file runs. (Since BAR test-31958: the text it measures is
+`text`, the value or its content's text.)
 
 @@@ find
-			lines = string_lines(tooltips[name].value)
+			lines = string_lines(text)
 			for i, line in ipairs(lines) do
 @@@ with
-			lines = string_lines(tooltips[name].value)
+			lines = string_lines(text)
 			-- BAR Droid (phone): a line wider than the screen (less the box's padding) wrapped to it
 			local fit = vsx - (paddingW * 4)
 			local wrapped = {}

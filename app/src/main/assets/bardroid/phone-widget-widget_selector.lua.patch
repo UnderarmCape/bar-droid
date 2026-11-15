@@ -3,20 +3,28 @@ With the column on (BAR's default, saved on), the selector keeps BAR's widget pr
 is open or not (luaui/Include/widget_profiling.lua): every call-in of every widget wrapped, each call reading the timer
 and Lua's memory counter twice, hundreds of calls a frame. On the dev phone in a late 16-player game that is spread over
 every widget's time (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). The column can still be switched on in
-the panel for the rest of the game. And the panel no wider than the screen (docs/upstream/bar-windows-upright.patch,
-written for BAR: upright it was about twice the screen's width). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a
-block finds no place, BAR's own file runs.
+the panel for the rest of the game. Since BAR test-31958 the switch lives in luaui/Include/widget_selector/model.lua,
+which the engine's phone versions do not reach: the widget turns off the model's shared filters after the model loads
+and after it reads the saved config. And the panel no wider than the screen (docs/upstream/bar-windows-upright.patch,
+written for BAR: upright it was about twice the screen's width). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
+file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 
 @@@ find
-local filters = { enabledOnly = false, errorsOnly = false, byOrder = false, profiler = true, byLoad = false }
+local fav, filters, deps = model.fav, model.filters, model.deps
 @@@ with
-local filters = { enabledOnly = false, errorsOnly = false, byOrder = false, profiler = false, byLoad = false } -- BAR Droid (phone): profiler = true
+local fav, filters, deps = model.fav, model.filters, model.deps
+filters.profiler = false -- BAR Droid (phone): the Cost column off at every start (the model's default: on)
 @@@ end
 
 @@@ find
-	filters.profiler = data.profiler ~= false
+function widget:SetConfigData(data)
+	model.setConfigData(data)
+end
 @@@ with
-	filters.profiler = false -- BAR Droid (phone): data.profiler ~= false (off at every start)
+function widget:SetConfigData(data)
+	model.setConfigData(data)
+	filters.profiler, filters.byLoad = false, false -- BAR Droid (phone): off at every start, whatever was saved
+end
 @@@ end
 
 @@@ find

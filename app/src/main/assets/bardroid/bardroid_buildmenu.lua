@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31836-b250a16, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31958-7ffdbab, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -7,7 +7,7 @@
 -- new file (the line below names the one it was made from; Installer, BuildMenuPatches); in the controller game, which keeps its
 -- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
 -- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
--- BARDROID_BUILDMENU_FROM 5fd93aec8f49ed557597312788ecdb14
+-- BARDROID_BUILDMENU_FROM 495f86b19a79abb5f11da2a4ad479c82
 local widget = widget ---@type Widget
 
 function widget:GetInfo()
@@ -33,14 +33,12 @@ local spGetMyTeamID = Spring.GetLocalTeamID
 local spGetViewGeometry = Spring.GetViewGeometry
 local spGetSpectatingState = Spring.GetSpectatingState
 
-include("keysym.h.lua")
 local dynamicBuildOptions = require("common/dynamicBuildOptions")
 
 local pairs = pairs
 local ipairs = ipairs
 local tonumber = tonumber
 local string_format = string.format
-local table_invert = table.invert
 local pcall = pcall
 --- CHANGE START ---
 -- Helper function to clear a table without creating garbage, using the standard Lua method.
@@ -50,8 +48,6 @@ local function clearTable(t)
 	end
 end
 --- CHANGE END ---
-
-SYMKEYS = table_invert(KEYSYMS)
 
 local CMD_STOP_PRODUCTION = GameCMD.STOP_PRODUCTION
 
@@ -249,7 +245,7 @@ local function refreshUnitDefs()
 			iconTypes[ud.name] = orgIconTypes[ud.iconType].bitmap
 		end
 	end
-	dynamicBuildOptions.apply(unitBuildOptions)
+	dynamicBuildOptions.apply(unitBuildOptions, myTeamID)
 	for udid, buildOptions in pairs(unitBuildOptions) do
 		local set = {}
 		for i = 1, #buildOptions do
@@ -471,7 +467,14 @@ end
 
 function widget:PlayerChanged(playerID)
 	isSpec = spGetSpectatingState()
+	local previousTeamID = myTeamID
 	myTeamID = spGetMyTeamID()
+	if myTeamID ~= previousTeamID then
+		-- build options can differ per team
+		refreshUnitDefs()
+		cachedActiveCmdDescs = nil
+		doUpdate = true
+	end
 end
 
 local function UpdateGridGeometry()
@@ -2781,6 +2784,10 @@ function widget:SelectionChanged(sel)
 		throttleDelay = 0.015
 	end
 
+	if (SelectedUnitsCount == 0) ~= (selCount == 0) then
+		throttleDelay = 0 -- units picked from none, or all let go: this frame
+	end
+
 	selectionUpdateTime = os_clock() + throttleDelay
 	-- Invalidate cached commands on selection change
 	cachedActiveCmdDescs = nil
@@ -3395,7 +3402,10 @@ function widget:UnitBlocked(unitDefID, reasons, builderUnitDefID)
 	end
 end
 
-function widget:BuildOptionsChanged(builderUnitDefID, builtUnitDefID, added)
+function widget:BuildOptionsChanged(builderUnitDefID, builtUnitDefID, added, teamID)
+	if teamID and teamID ~= myTeamID then
+		return
+	end
 	local buildOptions = unitBuildOptions[builderUnitDefID]
 	if buildOptions then
 		dynamicBuildOptions.patch(buildOptions, builtUnitDefID, added)

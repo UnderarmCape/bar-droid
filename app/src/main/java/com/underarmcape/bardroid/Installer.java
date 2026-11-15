@@ -195,6 +195,13 @@ public final class Installer {
         for (String n : names) {
             try (InputStream in = am.open("bardroid/" + n); OutputStream o = new FileOutputStream(new File(out, n))) { copy(in, o); }
         }
+        // (files an older APK had and this one has not: the phone versions of BAR's files are picked from this folder by
+        // their names, so a patch dropped from the app went on being applied; dev phone, 2026-11-15)
+        java.util.Set<String> current = new java.util.HashSet<>(Arrays.asList(names));
+        String[] have = out.list();
+        if (have != null) for (String n : have) {
+            if (!current.contains(n) && !new File(out, n).delete()) Log.e("install", "could not remove the old asset " + n);
+        }
     }
 
     /**
