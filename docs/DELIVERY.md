@@ -1807,7 +1807,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       widgets no longer use on the phone engine; -Share and -Chat now put their recorder among the game's widgets (as
       shipped), -Dgun keeps the official engine's route (BARDROID_GAME_WIDGETS=0: its cases are the host's rule over user
       widgets). All three ALL PASS; lobby-phone-test, touch-phone-test, pace-test, fp-save-test, pad-test, pad-test
-      -Online, dock-phone-test, remake-check PASS.
+      -Online, dock-phone-test, remake-check PASS. And the TeamStats copy (the top bar's Statistics) failed the same
+      way (`luaui/Include/teamstats_store.lua` not in that release): make-teamstats.py's 4th patch, a stand-in store
+      there (nothing kept apart from the config BAR saves). Dev phone, the replay: it loads, no Lua error, 0 desync
+      warnings; remake-check and dock-phone-test PASS. Every app copy of BAR's widgets now loads in that release (Mission
+      Info's `no GetInfo` there is BAR's own file's: no mission).
 - [x] **No Settings in a replay of an older BAR release** (hardening, 2026-11-15, the dev phone's logs of a server
       replay of the 2026-10-01 release): a replay plays its own release's files; the app's Settings copy (made from today's
       gui_options.lua) includes `luaui/Include/squad_selection_presets.lua`, which that release does not have, so it

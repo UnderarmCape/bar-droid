@@ -119,6 +119,12 @@ PATCHES = [
 		widget:ViewResize()
 	end
 '''),
+    ('''local store = require("luaui/Include/teamstats_store").new("LuaUI/Config/teamstats.json")''',
+     '''-- BAR Droid: a stand-in where BAR's file is not (a replay of an older release plays its own files: without it this
+-- copy did not load there, and the top bar's Statistics showed nothing): nothing kept apart, the config as BAR saves it
+local store = VFS.FileExists("luaui/Include/teamstats_store.lua")
+		and require("luaui/Include/teamstats_store").new("LuaUI/Config/teamstats.json")
+	or { loaded = function() return false end, write = function() end, merge = function(data) return data end }'''),
 ]
 
 
