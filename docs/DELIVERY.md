@@ -1841,6 +1841,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       lines moved), made again there; all nine now apply as they are to 31958 and to BAR's master 8ff9f0a (the same
       files that day), in the repository's path case (`luaui/Widgets/`, `luaui/Include/`: the old lower-case paths
       missed on a case-sensitive checkout); every patched file parses (luacheck). Their dev-phone tests are from before.
+- [x] **A replay's speed buttons under the upright dock** (hardening, 2026-11-15, a server 1v1 replay spectated upright
+      on the dev phone at 1080x1198): BAR's Replay buttons stack skip / pause and 0.5x to 20x at the screen's left edge
+      from 14.5 % of its height up; the dock lay over all below 4x, 1x among them (more of them on tall phones, the dock
+      a half there). A phone version (`phone-widget-gui_replaybuttons.lua.patch`, the file the same in all 12 releases on
+      the dev phone, so it fits every replay): each Update the column starts just above the dock's top where the dock
+      lies under it, back at BAR's place when the dock is elsewhere or gone. Dev phone, the same replay: the whole column
+      above the dock, a tap on 4x then 1x set those speeds ("Speed set to 4.0", "1.0"); remake-check's phone patches
+      PASS (12 now).
 - [x] **The phone patches in replays of older BAR releases** (hardening, 2026-11-15): checked against every release
       whose package is on the dev phone (12, test-31465 to test-31958, `phone-lua-check.py` per release): 9 of the 11
       fit all of them (Defense Range all but 31465); the Tooltip's and the Widget Selector's, remade for 31958, fit
