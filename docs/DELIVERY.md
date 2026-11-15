@@ -1737,6 +1737,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       touch dock is up (WG.BarDroidPortrait.active()), whose groups strip has the groups and idle builders. Dev phone at
       1080x1198 sideways: pregame, no sliver; pad-test -Share ALL PASS with BAR's two boxes drawn at the bottom again
       (the pad); dock-phone-test ALL PASS upright there; remake-check: both "2 patches".
+      A review of the day's dock changes (an independent read of the diff, 2026-11-15 evening) found six faults, all
+      fixed: (1) WG.BarDroidPortrait.dock() is the whole bottom band, the split's game between the blocks included, so
+      the build menu copy took no building spot there (PLACE stayed dim) and a preset's tap there fell through: a new
+      onDock(x, y) leaves the split's hole out, used by the copy's spot and pointer checks (make-buildmenu.py, the copy
+      made again from the dev phone's test-31958) and the presets' presses; (2) sideways() said the dock held BAR's
+      minimap in the split too, so the minimap no longer waited half size and the chat laid itself over it: false in
+      the split; (3) the share list's and a panel's rows in sight were counted by the left block's height but drawn in
+      the right block (a third row 20 pixels under it): counted from homeRect; (4) the split's order height followed the
+      selection row, so a MULTI list's tiles changed size as its first type was tapped: always the height under that
+      row; (5) the spectator's folded dock let go without SetHidden(false) (turned sideways, or the widget gone): BAR's
+      player list stayed hidden for the rest of the game; (6) RtsTouch held a drag ending on the groups strip at the
+      blocks' top, some 220 pixels above the finger: at the gap's foot now. Dev phone at 1080x1198: a building's spot
+      tapped between the blocks lit PLACE; a FIGHT path dragged onto the strip ran down to the map's edge (1055, the old
+      hold 885); sideways the minimap waits half size again; dock-phone-test ALL PASS split and tall; remake-check PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

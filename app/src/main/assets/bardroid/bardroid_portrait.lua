@@ -375,8 +375,11 @@ local function layout()
 		end
 		L.right = { x0, y0, x1, y1 } -- (the orders, and with nothing picked the home buttons: homeRect)
 		L.btnW = floor((w - gap) / 2)
-		L.rightRows = max(3, floor((y1 - y0 + gap) / (floor(tile * 0.62) + gap)))
-		L.btnH = floor((y1 - y0 + gap) / L.rightRows) - gap
+		-- (the orders' rows by the height under the selection row, picked or not: by the block's whole height with
+		-- nothing picked, a MULTI list's tiles changed size as its first type was tapped, review 2026-11-15)
+		local yr = h - pad - selH - pad
+		L.rightRows = max(3, floor((yr - y0 + gap) / (floor(tile * 0.62) + gap)))
+		L.btnH = floor((yr - y0 + gap) / L.rightRows) - gap
 		if L.dgun then -- (the D-gun mode: its sticks and FIRE in the two corners over the game, as sideways; no hole)
 			L.dgFloat, L.hole = true, nil
 		end
@@ -2000,7 +2003,10 @@ function refreshNow()
 		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and SP.shapeRow()) and 4
 		or L.rightCols or 2)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
-	local wideRows = max(1, floor((L.left[4] - L.left[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
+	-- (the share list's and a panel's rows in sight, from the place they are drawn, homeRect: the split dock's right
+	-- block is not the left's height, a third row ran 20 pixels under it, review 2026-11-15)
+	local hr = SP.homeLive()
+	local wideRows = max(1, floor((hr[4] - hr[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
 	if lk == "spec" then -- (the spectator's 4 or 5 rows; TEAMS: as tall as those, 4 or 5 in sight, more scroll: always 5,
 		-- a 1v1's three rows were small, the unfolded Fold7's 70 pixels)
 		L.homeRows = SP.teams and max(4, min(5, rightRowsN)) or max(1, min(5, rightRowsN))
@@ -3642,6 +3648,12 @@ local function checkActive()
 	active = (y > x * PORTRAIT and (playing() or SP.on())) or L.land
 	if SP.hidden and not (active and SP.on()) then -- (folded only while spectating)
 		SP.hidden, SP.teams = false, false
+		-- (and BAR's player list with it, as SP.setHidden: folded upright, then turned sideways, it stayed hidden for the
+		-- rest of the game, review 2026-11-15)
+		local api = WG.advplayerlist_api
+		if api and api.SetHidden then
+			api.SetHidden(false)
+		end
 		if active then
 			layout()
 		end
@@ -4644,11 +4656,23 @@ function widget:Initialize()
 		active = function()
 			return active
 		end,
-		sideways = function() -- (layout A: the dock along the bottom of a wide screen, BAR's minimap in it)
-			return active and L.land or false
+		sideways = function() -- (layout A: the dock along the bottom of a wide screen, BAR's minimap in it; not the split
+			-- dock, which gives BAR's minimap its own corner back: the chat had laid itself over it and the minimap no
+			-- longer waited half size, review 2026-11-15)
+			return active and L.land and not L.split or false
 		end,
 		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1)
 			return active and L.dock or nil
+		end,
+		-- (a screen point on the dock itself: the split dock's band less the game between its blocks, where a building's
+		-- spot or a preset's tap belongs to the game; dock() alone refused both there, review 2026-11-15)
+		onDock = function(x, y)
+			local d = active and L.dock
+			if not (d and x >= d[1] and x <= d[3] and y >= d[2] and y <= d[4]) then
+				return false
+			end
+			local h = L.split and L.hole
+			return not (h and x >= h[1] and x <= h[3] and y >= h[2] and y <= h[4])
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
 		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the selection row's right two
@@ -4710,6 +4734,9 @@ function widget:Shutdown()
 	end
 	WG.BarDroidPortrait = nil
 	active = false
+	if SP.hidden and WG.advplayerlist_api and WG.advplayerlist_api.SetHidden then -- (BAR's player list back too)
+		WG.advplayerlist_api.SetHidden(false)
+	end
 	SP.landMinimap() -- (BAR's minimap back in its own place)
 	topbarBars(false)
 	writeDock(true)

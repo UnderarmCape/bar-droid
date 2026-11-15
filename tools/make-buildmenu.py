@@ -467,6 +467,9 @@ function droid.keepPointer(sx, sy)
 	local P = WG.BarDroidPortrait
 	local d = P and P.dock and P.dock()
 	local onDock = d and mx >= d[1] and mx <= d[3] and my >= d[2] and my <= d[4]
+	if P and P.onDock then -- (the split dock: the game between its blocks is not the dock)
+		onDock = P.onDock(mx, my)
+	end
 	if cameraMoved or onDock or droid.warpNow then
 		droid.warpNow = nil
 		Spring.WarpMouse(sx, sy)
@@ -479,9 +482,14 @@ function droid.clickable(bx, by, bz)
 	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
 		return nil
 	end
-	local P = WG.BarDroidPortrait -- (not under the portrait dock either: the click would land on it)
+	local P = WG.BarDroidPortrait -- (not under the portrait dock either: the click would land on it; the split dock's
+	-- game between its blocks is clickable, P.onDock)
 	local d = P and P.dock and P.dock()
-	if d and sx >= d[1] and sx <= d[3] and sy >= d[2] and sy <= d[4] then
+	if P and P.onDock then
+		if P.onDock(sx, sy) then
+			return nil
+		end
+	elseif d and sx >= d[1] and sx <= d[3] and sy >= d[2] and sy <= d[4] then
 		return nil
 	end
 	return math_floor(sx), math_floor(sy)

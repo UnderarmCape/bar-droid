@@ -753,13 +753,21 @@ local function aimOf(a)
 	return { x = a.x, z = a.z }
 end
 
+-- (a point on the portrait dock: its own presses; the split dock's game between its blocks is the map's)
+local function onDock(x, y)
+	local D = WG.BarDroidPortrait
+	if D and D.onDock then
+		return D.onDock(x, y)
+	end
+	local dock = D and D.dock and D.dock()
+	return dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] or false
+end
+
 function widget:MousePress(x, y)
 	if not armedFor then
 		return false
 	end
-	local D = WG.BarDroidPortrait
-	local dock = D and D.dock and D.dock()
-	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
+	if onDock(x, y) then
 		return false -- (the dock's own presses)
 	end
 	local gx, gz = groundAt(x, y)
@@ -793,9 +801,7 @@ function widget:MouseRelease(x, y)
 	end
 	-- (lifted over the dock: the aim backs out, the preset stays armed for another try; it went to the ground hidden
 	-- behind the dock, 2026-11-11)
-	local D = WG.BarDroidPortrait
-	local dock = D and D.dock and D.dock()
-	if dock and x >= dock[1] and x <= dock[3] and y >= dock[2] and y <= dock[4] then
+	if onDock(x, y) then
 		aiming = nil
 		say(PRESETS[armedFor.id] and PRESETS[armedFor.id].name .. ": NOT SENT, TAP THE MAP" or "NOT SENT")
 		Spring.Echo("[bardroid-presets] lifted over the dock: not sent, still armed") -- (tools)

@@ -2210,6 +2210,9 @@ final class RtsTouch {
         if (x < d.all[0] || x > d.all[2]) return py;
         // (unfolded, between the dock's two blocks: the game's own place, as beside the sideways dock)
         if (d.gap != null && inside(d.gap, x, toY(py))) return py;
+        // (under the gap, on the groups strip between the blocks: held at the gap's foot, just over the strip; at the
+        // dock's top edge it went some 220 pixels above the finger, review 2026-11-15)
+        if (d.gap != null && x >= d.gap[0] && x <= d.gap[2] && toY(py) > d.gap[3]) return fromY(d.gap[3] - 1);
         return fromY(d.all[1] - 1);
     }
 
