@@ -247,11 +247,20 @@ final class LobbyBridge {
             in.readFully(script);
             Map<String, Map<String, String>> sections = parseScript(new String(script, StandardCharsets.UTF_8));
             Map<String, String> game = sections.getOrDefault("game", new HashMap<>());
+            // The engine writes the game's length only when the game ends: one left or quit before its end has 0, which
+            // the lobby shows as "time unknown" (dev phone, 2026-11-15: every game quit early, an online game left
+            // midway too). Its last key frame's number is how far it got (finished games: within seconds of the header's).
+            boolean streamRead = false;
+            if (gameTime <= 0) {
+                int frame = lastKeyFrame(in, demoStreamSize);
+                if (frame > 0) gameTime = frame / GAME_SPEED;
+                streamRead = true;
+            }
             // The winning ally teams follow the demo stream, one byte each (the lobby shows Won/Lost for the player's
             // own replays). An engine that did not end cleanly wrote neither (demoStreamSize 0): "Unknown Result".
             JSONArray winners = new JSONArray();
             if (demoStreamSize > 0 && winnersSize > 0 && winnersSize <= 255) {
-                skip(in, demoStreamSize);
+                if (!streamRead) skip(in, demoStreamSize);
                 for (int i = 0; i < winnersSize; i++) winners.put(in.readUnsignedByte());
             }
             JSONObject r = new JSONObject();
@@ -314,6 +323,48 @@ final class LobbyBridge {
 
     private static int parseInt(String s, int dflt) {
         try { return Integer.parseInt(s.trim()); } catch (Exception e) { return dflt; }
+    }
+
+    private static final int GAME_SPEED = 30;   // game frames a second
+    private static final int NETMSG_KEYFRAME = 1;   // BaseNetProtocol.h: the id byte, then the frame number (int32)
+
+    /**
+     * The demo stream read to its end (size bytes; 0: an engine that did not end cleanly wrote no size, so up to where
+     * the file stops): the frame number of its last key frame, 0 without one. Each chunk: DemoStreamChunkHeader
+     * (float modGameTime, uint32 length), then a net message of that length.
+     */
+    static int lastKeyFrame(InputStream in, long size) throws IOException {
+        byte[] h = new byte[8], m = new byte[5];
+        int last = 0;
+        long pos = 0;   // (bytes of the stream read)
+        try {
+            while (size <= 0 || pos + 8 <= size) {
+                readFully(in, h, 8);
+                pos += 8;
+                long length = le(h, 4) & 0xffffffffL;
+                if (length > 1 << 24 || (size > 0 && pos + length > size)) break;   // (not a chunk: stop there)
+                if (length >= 5) {
+                    readFully(in, m, 5);
+                    if (m[0] == NETMSG_KEYFRAME) last = le(m, 1);
+                    skip(in, length - 5);
+                } else {
+                    skip(in, length);
+                }
+                pos += length;
+            }
+            if (size > 0 && pos < size) skip(in, size - pos);   // (to the stream's end: what follows it is read next)
+        } catch (EOFException e) {
+            // (a file cut short ends here)
+        }
+        return last;
+    }
+
+    private static void readFully(InputStream in, byte[] b, int n) throws IOException {
+        for (int off = 0; off < n; ) {
+            int k = in.read(b, off, n - off);
+            if (k < 0) throw new EOFException();
+            off += k;
+        }
     }
 
     private static int le(byte[] b, int off) {

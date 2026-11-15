@@ -2460,6 +2460,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       game) before "Beginning demo playback" reaches the game, which BAR's replay "skip" button jumps; then 0:22, x1.00.
       A stopped game's replay lists its players as "Player" and "InactiveAI(1)" (the quit one: "Phone",
       "BARbarianAI(1)"). Nothing for the app to change; the empty ones are already removed (above).
+      Changed 2026-11-15: a game left before its end (an online game too) listed as "time unknown" is worth its
+      length, and the replay has it: `LobbyBridge` reads a header with game time 0 to the end of its demo stream and
+      takes the last key frame's number (NETMSG_KEYFRAME, frame / 30). On replays that ended it matches the header's
+      time within seconds (laptop, the JDK: Onyx 376 s / 388, the server 8v8s 1038 / 1043 and 1747 / 1750, the 1v1
+      2619 / 2619; their winners still read after it), ~0.2 s for a 30-minute 8v8 (already read to its end for the
+      winners). Dev phone lobby, offline: the 8v8 with its header's time zeroed listed "time unknown" before, "29
+      minutes" with this; replays under a minute (the tests' 2-4 s quits) now drop out of the list, as the lobby drops
+      any timed replay under a minute (BYAR-Chobby gui_replay_handler.lua); one without a key frame stays "time unknown".
 - [x] Half-made settings copies (2026-11-02): `sed -i` writes a whole copy (`sedXXXXXX`) beside the file it edits and
       renames it over the file, so a start stopped in between left the copy: a 28 KB `BYAR.lua` in `LuaUI/Config` on the
       dev phone since 10-31. `launch-bar.sh` now removes them before it edits anything; on the dev phone: "1 half-made
