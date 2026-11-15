@@ -30,6 +30,9 @@
     <string name="lorie_pref_other_summary">Clipboard, what swipes and the volume keys do</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <!-- (Output's one switch with no explanation; MainActivity.applyWindowSettings: on, the window's cutout mode ALWAYS) -->
+    <!-- (Pointer's two switches with no explanation: TouchInputHandler's tap in trackpad mode; renderer.cpp followCursorPan) -->
+    <string name="lorie_pref_tapToMove_summary">Trackpad mode only: a tap clicks a moment later, and a tap then a held finger drags</string>
+    <string name="lorie_pref_zoomFollowsCursor_summary">With BAR touch controls off, a display zoomed in by a pinch moves along with the pointer</string>
     <string name="lorie_pref_hideCutout_summary">The game also fills the screen around the camera\'s hole; off, it stops short of that edge (a black strip there)</string>
     <string name="btn_install">Install / Update</string>
     <string name="btn_play">Play vs AI</string>
