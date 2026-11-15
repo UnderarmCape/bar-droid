@@ -1793,6 +1793,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the dead counted; (6) with Tax Resource Sharing (easytax 30 %) the amount sent was capped at the teammate's room, so
       70 % of it arrived: it is sent so what arrives fills the room, and the note says what arrives and the tax.
       Dev phone: pad-test -Share and pad-test ALL PASS (no away teammate or tax game offline: those two read BAR's code).
+      AUTO RETREAT in a real fight (dev phone, a skirmish, 8 Pawns by the commander and 14 Cortex bots given on them by a
+      scratch widget, 2026-11-15 evening): all 8 Pawns fell back as they were hurt, 5 lost, 2 bots killed, the commander
+      down to 84 % and mending; no Lua error. (The scratch widget's first try put both groups north of a corner start,
+      off the map: groups toward the map's middle now.)
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
