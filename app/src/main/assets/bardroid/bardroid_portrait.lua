@@ -3320,7 +3320,9 @@ local function drawMode()
 			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it;
 			-- right of the count line, "6 units, 6 of this type", which it ran under: left out where it does not fit; the name
 			-- alone, no "tap to use the menu" beside it: Kailil, 2026-11-09, the dock shows no hint text)
-			local size, right = h * 0.15, s[3] - L.pad
+			-- (a floor by the screen's height: the near-square dock's shorter row made it 11 pixels, unreadable on the
+			-- unfolded Fold7, dev phone at 1080x1198 both ways; tall phones' 21 as before)
+			local size, right = max(h * 0.15, min(h * 0.24, vsy * 0.014)), s[3] - L.pad
 			local from = (L.selCountEnd or 0) + L.pad * 2
 			local label = "CAMERA PAD"
 			if right - font:GetTextWidth(label) * size >= from then
