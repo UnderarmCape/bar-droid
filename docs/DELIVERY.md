@@ -1831,6 +1831,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       lines moved), made again there; all nine now apply as they are to 31958 and to BAR's master 8ff9f0a (the same
       files that day), in the repository's path case (`luaui/Widgets/`, `luaui/Include/`: the old lower-case paths
       missed on a case-sensitive checkout); every patched file parses (luacheck). Their dev-phone tests are from before.
+- [x] **The phone patches in replays of older BAR releases** (hardening, 2026-11-15): checked against every release
+      whose package is on the dev phone (12, test-31465 to test-31958, `phone-lua-check.py` per release): 9 of the 11
+      fit all of them (Defense Range all but 31465); the Tooltip's and the Widget Selector's, remade for 31958, fit
+      31958 alone, so every replay recorded before that update ran BAR's own (the 2026-10-26 8v8's infolog: "patch 1
+      finds no place"). The Tooltip's now sits on its measuring loop's first two lines, once in all 12 (the line above
+      it is what 31958 changed); all 12 parse with it and its names are locals there (luacheck); dev phone: applied in
+      a 31958 skirmish and in the test-31465 1v1 replay; remake-check PASS. The Widget Selector's stays 31958's (31958
+      moved its filters into a model): an older release opens it at BAR's width upright, but its profiler stays off
+      there too, as those releases read the saved `profiler = false` the patched one writes.
 - [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
       the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
       no RegisterUnitCommand; the order menu's `action_tap_hotkeys.lua` is not in it): make-buildmenu.py's and
