@@ -33,7 +33,7 @@ foreach ($r in 1..$Rounds) {
     $e = $spec -replace '\+auto|\+allcpu', ''
     DevSettings ($spec -match '\+auto')
     & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $e -Device $Device
-    if ($e -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device }
+    if ($e -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use official -Device $Device }
     if ($spec -match '\+allcpu') { AllCpu }
     $e = $spec
     # (phone-bench.ps1 writes build\phone-bench.csv in this worktree; -NoWarm after the first run: the phone stays hot)

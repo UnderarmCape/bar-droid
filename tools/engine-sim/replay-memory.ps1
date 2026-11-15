@@ -33,7 +33,7 @@ function AppRun([string]$text, [string]$name) {
   Invoke-AppScript $adb $f $Device
 }
 & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $Engine -Device $Device | Out-Null
-if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
+if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use official -Device $Device | Out-Null }
 else {
   # (a -Use whose adb script did not arrive left dev-env.sh without the engine: the run then measured BAR's official
   # engine without any of the branch's settings, 2026-11-06; checked, tried once more, else the run stops here)

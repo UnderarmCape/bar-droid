@@ -43,7 +43,7 @@ foreach ($r in 1..$Rounds) {
     $ds = if ($spec -match '\+auto') { "printf 'WorkerThreadCount = -1\nThreadPinPolicy = 1\n' > files/bar/dev-springsettings.cfg" } else { "rm -f files/bar/dev-springsettings.cfg" }
     AppRun $ds "es-c2.sh" | Out-Null
     & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $e -Device $Device | Out-Null
-    if ($e -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
+    if ($e -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use official -Device $Device | Out-Null }
     if ($spec -match '\+allcpu') {
       Send-AppFile $adb "$PSScriptRoot\dev-env-allcpu.sh" "files/bar/es-allcpu.txt" $Device
       AppRun "cat files/bar/es-allcpu.txt >> files/bar/dev-env.sh; rm -f files/bar/es-allcpu.txt" "es-c3.sh" | Out-Null

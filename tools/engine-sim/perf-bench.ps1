@@ -16,7 +16,7 @@ function AppRun([string]$text, [string]$name) {
 }
 if ("$(AppRun '[ -x files/simpleperf ] && echo yes' 'es-pf0.sh')".Trim() -ne "yes") { Send-AppFile $adb "$sp\android\arm64\simpleperf" "files/simpleperf" $Device; AppRun "chmod 755 files/simpleperf" "es-pf1.sh" | Out-Null }
 & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use $Engine -Device $Device | Out-Null
-if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Off -Device $Device | Out-Null }
+if ($Engine -eq "official") { & powershell -ExecutionPolicy Bypass -File "$PSScriptRoot\phone-engine.ps1" -Use official -Device $Device | Out-Null }
 AppRun "rm -f files/bar/.bardroid-bench-replay files/bar/infolog.txt files/es-perf.data" "es-pf2.sh" | Out-Null
 & $adb -s $Device shell "setprop security.perf_harden 0; am force-stop com.underarmcape.bardroid; sleep 1; input keyevent KEYCODE_WAKEUP; am start -n com.underarmcape.bardroid/.LauncherActivity --es start bench" | Out-Null
 Start-Sleep 5

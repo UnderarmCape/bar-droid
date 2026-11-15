@@ -1,9 +1,11 @@
 # The engine branch's builds on the dev phone (docs/ENGINE-SIM.md), kept apart from the app's own engine:
 #   phone-engine.ps1 -Install <build>   C:\Tools\BARANDROID\engine-sim\out\<build>\spring -> files/bar/engine-sim/<build>/
 #                                       (every other file of the official engine dir linked, not copied)
-#   phone-engine.ps1 -Use <build>       files/bar/dev-env.sh starts that engine at the next game start
-#   phone-engine.ps1 -Off               dev-env.sh removed: the official engine again
-#   phone-engine.ps1 -Replay <file.sdfz> -Engine <build|official> [-Skip 900] [-Seconds 120] [-Timeout 3600]
+#   phone-engine.ps1 -Use <build>       files/bar/dev-env.sh starts that engine at the next game start; -Use official:
+#                                       BAR's official engine (dev-env.sh names it: the app's default is its phone engine
+#                                       since 2026-11-13, app docs/ENGINE-DEFAULT.md)
+#   phone-engine.ps1 -Off               dev-env.sh removed: the app's default again (its phone engine)
+#   phone-engine.ps1 -Replay <file.sdfz> -Engine <build|official|default> [-Skip 900] [-Seconds 120] [-Timeout 3600]
 #       a replay through the app's replay benchmark with that engine: fast-forwards to game second -Skip (every frame
 #       simulated and, in a replay BAR's server recorded, checked against every player's checksum), then measures the
 #       game's speed for -Seconds. Prints the [DESYNC WARNING] count and the speed lines; the infolog goes to
@@ -30,7 +32,15 @@ function App-Script([string]$text, [string]$name = "es.sh") {
   Invoke-AppScript $adb $f $Device
 }
 function Set-DevEnv([string]$build) {
-  if ($build -eq "official") { App-Script "rm -f files/bar/dev-env.sh; echo 'dev-env.sh removed'" ; return }
+  if ($build -eq "default") { App-Script "rm -f files/bar/dev-env.sh; echo 'dev-env.sh removed: the app default engine'" ; return }
+  if ($build -eq "official") {
+    # (BAR's official engine by name: without dev-env.sh the app starts its phone engine, 2026-11-13)
+    App-Script @"
+printf '%s\n' '# official engine (phone-engine.ps1 -Use official; -Off removes this file: the app default)' 'ENGINE="`$BAR/engine/recoil_`${ENGINE_VER}"' 'log "official engine: `$ENGINE"' > files/bar/dev-env.sh
+echo "dev-env.sh: the official engine"
+"@
+    return
+  }
   App-Script @"
 [ -x files/bar/engine-sim/$build/spring ] || { echo 'not installed: $build'; exit 1; }
 printf '%s\n' '# engine branch (docs/ENGINE-SIM.md): phone-engine.ps1 -Use; -Off removes this file' 'ENGINE="`$BAR/engine-sim/$build"' 'log "engine-sim: `$ENGINE"' > files/bar/dev-env.sh
@@ -51,7 +61,7 @@ echo "installed ${Install}:`$(ls | wc -l) entries, spring `$(wc -c < spring) byt
 "@
 }
 if ($Use) { Set-DevEnv $Use }
-if ($Off) { Set-DevEnv "official" }
+if ($Off) { Set-DevEnv "default" }
 
 if ($Replay) {
   $name = Split-Path $Replay -Leaf
