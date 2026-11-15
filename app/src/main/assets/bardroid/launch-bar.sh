@@ -246,7 +246,9 @@ team_stats() {
     layer_miss "team stats: the app's copy (made from ${copied:-?}) failed on BAR's gui_teamstats.lua ${bars:-not found}: BAR's own, too wide upright, until the copy is made again (tools/make-teamstats.py)"
     return
   fi
-  widget_order "TeamStats" 0; widget_order "BAR Droid team stats" 191
+  # (BAR's own at its default: the copy's GetInfo replaces keeps it off while the copy runs, and a copy that stands down
+  # in an older release's replay, without its model, leaves BAR's own on; at 0 here it stayed off there too)
+  widget_order "TeamStats" ""; widget_order "BAR Droid team stats" 191
   if [ "$copied" = "$bars" ]; then
     log "team stats: the app's copy of BAR's (gui_teamstats.lua $copied), fitted to the screen"
   else

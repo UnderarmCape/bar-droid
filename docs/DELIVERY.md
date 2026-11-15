@@ -1806,8 +1806,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       profiler switch now in the model, reached through the shared `filters`), the build, order and mission info
       copies remade from 31958, all 11 phone patches apply (remake-check), and the app no longer keeps assets an older
       APK had (the dropped Keybinds and Changelog patches had gone on being applied). Dev phone on 31958: dock-phone-test,
-      pad-test, pad-test -Online ALL PASS. Left: the Settings copy (`bardroid_options.lua`, 408 KB from 31836's single
-      file) and the TeamStats copy rebuilt on 31958's modules (their old copies run meanwhile without Lua errors: the
+      pad-test, pad-test -Online ALL PASS. TeamStats done (same day): 31958's widget takes the copy's three layout patches
+      as they were; the store moved into its model, so the store patch went, and in its place the copy stands down (no
+      GetInfo) where `teamstats_model.lua` is not, and launch-bar.sh no longer pins BAR's TeamStats at order 0 (the
+      copy's GetInfo replaces keeps it off): in the 2026-10-01 replay BAR's own TeamStats loads, on 31958 the copy (its
+      Statistics upright between the top bar and the dock); remake-check and dock-phone-test PASS. Left: the Settings copy
+      (`bardroid_options.lua`, 408 KB from 31836's single file; on 31958 its patches 9-11 find no place: Initialize,
+      SetConfigData, the presets include moved into options/model.lua) rebuilt on 31958's modules (their old copies run meanwhile without Lua errors: the
       launcher's two layer misses on the Fold7 and the dev phone); docs/upstream's patches refreshed against 31958.
 - [x] **The menu copies in a replay of an older BAR release; pad-test on the phone engine** (hardening, 2026-11-15): in
       the 2026-10-01 release's server replay the build and order menu copies failed (that release's widget handler has
