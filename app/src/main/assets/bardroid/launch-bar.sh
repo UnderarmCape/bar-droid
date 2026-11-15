@@ -57,7 +57,7 @@ log() { echo "[launch] $*"; }
 # Android layer (docs/UPDATES.md): a tweak of BAR's files that no longer finds its target is never skipped silently.
 # The app reads the list after the engine exits and shows it in the launcher.
 : > "$LOGS/android-layer.txt"
-layer_miss() { log "!!! ANDROID LAYER: $* -- BAR changed this; fix launch-bar.sh"; echo "$*" >> "$LOGS/android-layer.txt"; }
+layer_miss() { log "!!! ANDROID LAYER: $* -- BAR changed this; the app needs a fix"; echo "$*" >> "$LOGS/android-layer.txt"; }
 
 # 1. Wait for the X server socket (the app starts it right before us).
 for i in $(seq 1 100); do
@@ -853,6 +853,16 @@ presets_err=$(widget_error 'bardroid_presets|BAR Droid presets')
 [ -n "$presets_err" ] && layer_miss "presets widget (bardroid_presets.lua): $presets_err"
 automex_err=$(widget_error 'bardroid_automex|BAR Droid auto mex')
 [ -n "$automex_err" ] && layer_miss "auto mex widget (bardroid_automex.lua): $automex_err"
+# A phone version of one of BAR's files (the phone engine's BarDroidPhoneLuaDir: assets/bardroid/phone-*.lua.patch) that
+# no longer fits BAR's file after an update: the engine loaded BAR's own file instead ("[BarDroid] phone version of
+# <file> (<state>): patch N finds no place: the game's own file loads"), so its fixes and savings are gone until the
+# patch is made again (tools/phone-lua-check.py). A replay plays the BAR release it was recorded with, whose files may
+# differ: not counted, as for the menu copies (copy_removed).
+if ! grep -aq 'PreGame::ReadDataFromDemo' "$BAR/infolog.txt" 2>/dev/null; then
+  grep -a "\[BarDroid\] phone version of .*: the game's own file loads" "$BAR/infolog.txt" 2>/dev/null \
+    | sed -e 's/^.*\[BarDroid\] phone version of //' -e 's/ ([^)]*): /: /' -e "s/: the game's own file loads\$//" | sort -u \
+    | while read -r miss; do layer_miss "phone Lua: $miss, BAR's own file ran (assets/bardroid/phone-*.lua.patch)"; done
+fi
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)
 ls -t "$LOGS"/infolog-*.txt 2>/dev/null | tail -n +21 | xargs -r rm -f
