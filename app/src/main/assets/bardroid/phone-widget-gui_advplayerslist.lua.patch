@@ -1,8 +1,11 @@
 BAR Droid phone version of BAR's AdvPlayersList (luaui/widgets/gui_advplayerslist.lua): the player list drawn again half as
 often (every 1.6 s instead of 0.8) and its resource bars a quarter as often (0.6 s instead of 0.15; BAR stretches both
 with the number of players). Each redraw renders the whole list into its textures: in a late 16-player game the list cost
-0.4-0.5 % of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). Applied by the engine
-(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+0.4-0.5 % of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). And a way to hide the
+list (WG.advplayerlist_api.SetHidden: no drawing, no presses, its position collapsed onto its foot so the panels BAR
+stacks on it stay in place): the app's dock folded while spectating hides it (Kailil, 2026-11-11: "Hide the team list").
+Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+runs.
 
 @@@ find
 local updateRate = 0.8
@@ -14,4 +17,48 @@ local updateRate = 1.6 -- BAR Droid (phone): 0.8
 local updateFastRate = 0.15 -- only updates resources
 @@@ with
 local updateFastRate = 0.6 -- only updates resources -- BAR Droid (phone): 0.15
+@@@ end
+
+@@@ find
+	WG.advplayerlist_api.GetPosition = function()
+		return apiAbsPosition
+	end
+@@@ with
+	WG.advplayerlist_api.GetPosition = function()
+		-- BAR Droid (phone): hidden, a rect collapsed onto the list's foot (the panels BAR stacks on it stay there)
+		if WG.advplayerlist_api._bardroidHidden then
+			local p = apiAbsPosition
+			return { p[3], p[2], p[3], p[4], p[5], p[6], p[7] }
+		end
+		return apiAbsPosition
+	end
+	-- BAR Droid (phone): the list hidden or shown again (the app's dock folded while spectating)
+	WG.advplayerlist_api.SetHidden = function(hidden)
+		WG.advplayerlist_api._bardroidHidden = hidden and true or nil
+	end
+	WG.advplayerlist_api.GetHidden = function()
+		return WG.advplayerlist_api._bardroidHidden == true
+	end
+@@@ end
+
+@@@ find
+function widget:DrawScreen()
+	local drawGameFrame = spGetGameFrame()
+@@@ with
+function widget:DrawScreen()
+	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidHidden then -- BAR Droid (phone): hidden
+		return
+	end
+	local drawGameFrame = spGetGameFrame()
+@@@ end
+
+@@@ find
+function widget:MousePress(x, y, button)
+	--super ugly code here
+@@@ with
+function widget:MousePress(x, y, button)
+	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidHidden then -- BAR Droid (phone): hidden
+		return false
+	end
+	--super ugly code here
 @@@ end

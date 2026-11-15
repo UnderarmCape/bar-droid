@@ -3359,6 +3359,12 @@ function SP.setHidden(on)
 	if on then
 		setMenu(false)
 	end
+	-- BAR's player list with it (Kailil, 2026-11-11: "Hide the team list"; up, the dock covers it): the phone engine's
+	-- phone version of BAR's list has SetHidden (phone-widget-gui_advplayerslist.lua.patch); BAR's own has not
+	local api = WG.advplayerlist_api
+	if api and api.SetHidden then
+		api.SetHidden(on)
+	end
 	layout()
 	refresh()
 	writeDock(true)

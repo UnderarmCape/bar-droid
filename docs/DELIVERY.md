@@ -430,7 +430,7 @@ same, that stays the simpler way.
         replay its menus: launch-bar.sh already keeps a replay from marking the copies failed. The join's waiting
         screen's title counts dots with its half-second check (a still screen for a slow server read as frozen), the
         unlit dots clear so the words stand still.
-      - [ ] **BAR's player list hidden while the spectator's dock is folded** (from Kailil's "Hide the team list"; the
+      - [x] **BAR's player list hidden while the spectator's dock is folded** (from Kailil's "Hide the team list"; the
         dock covers it while up): BAR's gui_advplayerslist.lua (test-31836) offers only scale, columns, spectators and
         its position (WG.advplayerlist_api). A hide needs a change in BAR: a SetHidden that skips its DrawScreen and
         MousePress and gives GetPosition a collapsed rect at the bottom; the panels BAR stacks above it from that
@@ -440,6 +440,13 @@ same, that stays the simpler way.
         line), camera_player_tv.lua (Player View / Player Camera / TV), gui_advplayerslist_mascot.lua and
         gui_clearmapmarks.lua (the eraser): seven of BAR's files, each a check in its DrawScreen and MousePress. That
         stack carries the clock and a replay's speed: Kailil's call whether the folded dock hides it too.
+        Done 2026-11-15 for the list on the phone engine: its phone version of gui_advplayerslist.lua (2 -> 5 blocks)
+        has `WG.advplayerlist_api.SetHidden` (no drawing, no presses, GetPosition collapsed onto the list's foot), and
+        the dock's HIDE / SHOW call it. The stacked panels stay, moved down onto the folded list's foot (Player View /
+        Player Camera / TV, the clock and speed line, the music line, bottom right): hiding them too stays his call.
+        Dev phone upright, a server replay (2026-10-01 release, the patch applied there too: "5 patches"): HIDE, the
+        list gone and the panels at the bottom right; SHOW, the dock back; dock-phone-test and pad-test ALL PASS. On
+        BAR's official engine the list has no SetHidden and stays as before.
       - [x] **LAST PINGS says how many wait** (polish, ~16:10): it said nothing of whether there was a ping to see; now
         their count in gold at its top right, as the idle builders' (playing and spectating). Dev phone, two pings from
         "someone else" (bardroid_pad.lua's test hook): "2" on it, then 1 OF 2, 2 OF 2.
