@@ -2171,6 +2171,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       phone engine's phone version of gui_tooltip.lua (`phone-widget-gui_tooltip.lua.patch`, 1 block) wraps a line wider
       than the screen to it (the font's WrapText). Dev phone upright: the Widget Selector's star tooltip in five lines
       inside the screen (before: cut at the right edge); dock-phone-test ALL PASS.
+- [ ] **A tooltip's dimmer note still unwrapped** (hardening, 2026-11-16, dev phone upright, Statistics' Summary): BAR
+      31958's content tooltips measure their `note` apart (gui_tooltip.lua measureParts), which the block above never
+      sees, so a note wider than the screen ran off it. Fixed where the app owns the caller: the Statistics copy wraps
+      its text and note to 85 % of the screen (cfb86e89). Left open in the phone tooltip patch: a second block anchored
+      in measureParts would find no place in releases before 31958, and the engine then runs BAR's own file whole, so
+      replays of those releases would lose the block above. Worth doing if the patch format gets optional blocks, or
+      once replays before 31958 no longer matter; any other widget's note wider than the screen shows it.
 - [x] **Pregame upright: two thirds sky** (hardening, 2026-11-14, dev phone, a lobby skirmish on Avalanche on the phone
       engine): BAR's start camera looked at the whole map from far off, the start box small by the dock. The dock now
       puts my start box in the view above it once, a second into the pregame of games where a start spot is picked
