@@ -45,6 +45,10 @@ local press, fling
 local hush -- where the last press left the pointer: Chili's hover tooltip held back until it moves (Update)
 local popupButton, bar
 local warning, warningTitle, warningWhy, warningColour, warningShown, warningClosed, warningBattle, warningSize, warningCheck
+-- a press or the pad's click, when: a lobby tab may have opened, replaysRowCheck looks for a few seconds after (it walked
+-- every control once a second for the whole session until Replays, Links and Plugins had all been opened; review
+-- 2026-11-15)
+local tabWake = { at = nil }
 
 local function uiScale()
 	return WG.uiScale or 1
@@ -156,6 +160,7 @@ end
 
 -- the click Chili's input widget would have sent
 local function click(x, y)
+	tabWake.at = Spring.GetTimer()
 	local sx, sy = chiliPoint(x, y)
 	local m = mods()
 	screen0:MouseDown(sx, sy, 1, m)
@@ -289,12 +294,20 @@ end
 local barSize
 local uprightBarTop -- (set below: the top of the upright bottom buttons, nil when not upright)
 local uprightRelayout
+-- (sideways, the column of big buttons' right edge, 0 without it: the bar and the warning centred in the room beside it;
+-- on the whole screen the bar's Close lay over the column's down arrow and the warning over Multiplayer, review
+-- 2026-11-15; set below, where the column is)
+local sideLeft
+local function sideKey()
+	return screen0.width .. "x" .. screen0.height .. "+" .. (sideLeft and sideLeft() or 0)
+end
 placeBar = function()
 	local sw, sh = screen0.width, screen0.height
-	local w, h = math.min(sw - 16, 760), 70
+	local left = sideLeft and sideLeft() or 0
+	local w, h = math.min(sw - left - 16, 760), 70
 	local top = uprightBarTop and uprightBarTop()
-	bar:SetPos(math.floor((sw - w) / 2), (top or sh) - h - (top and 4 or 10), w, h)
-	barSize = sw .. "x" .. sh
+	bar:SetPos(left + math.floor((sw - left - w) / 2), (top or sh) - h - (top and 4 or 10), w, h)
+	barSize = sideKey()
 	if uprightRelayout then
 		uprightRelayout()
 	end
@@ -475,6 +488,10 @@ uprightBarTop = function()
 		return nil
 	end
 	return upright.grid.y
+end
+sideLeft = function()
+	local col = upright.on and upright.side and real(upright.grid)
+	return col and not col.disposed and math.floor((col.x or 0) + (col.width or 0)) or 0
 end
 
 -- Sideways: Chobby's logo and status off, the content from the column's right edge, the whole height (the server bar,
@@ -1453,9 +1470,10 @@ end
 -- at the top of the screen as it is now (the scale and folding the phone both resize the lobby's screen)
 local function placeWarning()
 	local sw = screen0.width
-	local w = math.min(sw - 16, 900)
-	warning:SetPos(math.floor((sw - w) / 2), 8, w, 92)
-	warningSize = sw .. "x" .. screen0.height
+	local left = sideLeft and sideLeft() or 0 -- (sideways beside the column: sideLeft)
+	local w = math.min(sw - left - 16, 900)
+	warning:SetPos(left + math.floor((sw - left - w) / 2), 8, w, 92)
+	warningSize = sideKey()
 end
 
 local function closeWarning()
@@ -1561,7 +1579,7 @@ local function updateWarning()
 		else
 			warning:Hide()
 		end
-	elseif warningShown and warningSize ~= screen0.width .. "x" .. screen0.height then
+	elseif warningShown and warningSize ~= sideKey() then
 		placeWarning()
 	end
 end
@@ -1594,6 +1612,7 @@ end
 
 function widget:MousePress(x, y, button)
 	hush = { x = x, y = y } -- (any button: a finger's long press is a right click, and lifted there too)
+	tabWake.at = Spring.GetTimer()
 	if button ~= 1 or not screen0 or Spring.IsGUIHidden() then
 		return false
 	end
@@ -1699,6 +1718,10 @@ function widget:MouseRelease(x, y)
 		elseif not p.moved and p.settling then
 			-- (a tap while the strip eased to its page: the press stopped it there, between two pages, and the click went
 			-- to a button passing under the finger; dev phone, a swipe then a tap, 2026-11-11: the page turn finishes)
+			uprightSettle(upright.page)
+		elseif not p.moved and (math.abs(x - p.x) > DRAG_PX or math.abs(y - p.y) > DRAG_PX) then
+			-- (a slide across the paging way, off the buttons: no click; it went to whatever was under the lifted finger,
+			-- sideways a server row, which Chobby joined; review 2026-11-15)
 			uprightSettle(upright.page)
 		elseif not p.moved then
 			local _, _, hx, hy = chiliPoint(x, y)
@@ -2175,7 +2198,9 @@ end
 local replaysRow = { at = nil, done = false, linksDone = false, pluginsDone = false }
 local function replaysRowCheck(now)
 	if (replaysRow.done and replaysRow.linksDone and replaysRow.pluginsDone)
-		or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1) then
+		or (replaysRow.at and Spring.DiffTimers(now, replaysRow.at) < 1)
+		or (replaysRow.at and not (tabWake.at and Spring.DiffTimers(now, tabWake.at) < 4)) then -- (once at the start,
+		-- then for 4 s after a press: tabs open on one)
 		return
 	end
 	replaysRow.at = now
@@ -2214,8 +2239,9 @@ local function replaysRowCheck(now)
 		end
 		widgetsFolder:SetVisibility(false)
 		for _, c in ipairs(strip.children or {}) do
-			-- (Contribute and Refresh, the next two: the search box on the same row, at its right, stays)
-			if stride and c ~= widgetsFolder and c.y == y0 and c.x > x0 and c.x < x0 + 2.5 * stride
+			-- (Contribute, Refresh and Update All, made with them though shown only with updates (it stood alone after a
+			-- gap, review 2026-11-15): every captioned button right of it; the search box, no caption, stays)
+			if stride and c ~= widgetsFolder and c.y == y0 and c.x > x0
 				and type(c.caption) == "string" and c.caption ~= "" and c.SetPos then
 				c:SetPos(c.x - stride)
 			end
@@ -2300,7 +2326,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	end
 	if popupButton and (popupButton.disposed or not popupButton.parent or popupButton.visible == false) then
 		closePopup() -- the list went away (another screen, the server closed)
-	elseif popupButton and barSize ~= screen0.width .. "x" .. screen0.height then
+	elseif popupButton and barSize ~= sideKey() then
 		placeBar() -- folded or unfolded
 	end
 	if not warningCheck or Spring.DiffTimers(now, warningCheck) >= WARNING_CHECK_S then
@@ -2320,6 +2346,7 @@ function widget:Initialize()
 		upright = function() return upright.on and not upright.side end, -- (tools: the lobby test, upright or sideways)
 		column = function() return upright.on and upright.side end, -- (tools: sideways, the buttons' column)
 		barTop = function() return uprightBarTop and uprightBarTop() end, -- (upright: where the server bar stands on)
+		sideLeft = function() return sideLeft and sideLeft() or 0 end, -- (sideways: the column's edge, the bar centred beside it)
 		press = function(x, y) return widget:MousePress(x, y, 1) end,
 		move = function(x, y) return widget:MouseMove(x, y, 0, 0, 1) end,
 		release = function(x, y) return widget:MouseRelease(x, y, 1) end,

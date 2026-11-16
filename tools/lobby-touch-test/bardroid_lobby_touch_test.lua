@@ -256,8 +256,10 @@ cases = {
 		-- (upright the bar stands just above the lobby's bottom buttons, sideways at the screen's bottom)
 		local L = WG.BarDroidLobbyTouch
 		local top = L and L.barTop and L.barTop()
+		-- (sideways: centred in the room beside the column of big buttons, L.sideLeft its edge; 0 without the column)
+		local left = L and L.sideLeft and L.sideLeft() or 0
 		check("the server bar follows the screen when the phone unfolds (bottom, centred)", b ~= nil
-			and b.y + b.height + (top and 4 or 10) == (top or s0.height) and math.abs(b.x * 2 + b.width - s0.width) <= 1,
+			and b.y + b.height + (top and 4 or 10) == (top or s0.height) and math.abs(b.x * 2 + b.width - s0.width - left) <= 1,
 			b and string.format("bar %d,%d %dx%d on %dx%d%s", b.x, b.y, b.width, b.height, s0.width, s0.height,
 				top and (", upright over the buttons at " .. top) or ""))
 		s0:Resize(screenSize[1], screenSize[2])
@@ -334,8 +336,10 @@ cases = {
 		local all, odd = allScalesAre(scaleFirst)
 		check(string.format("Start: %d%% from %d%%, on every screen size", scaleFirst * 100 + 0.5, scaleBase * 100 + 0.5),
 			math.abs(WG.uiScale - scaleFirst) < 0.001 and all, odd or tostring(WG.uiScale))
+		local L = WG.BarDroidLobbyTouch
+		local left = L and L.sideLeft and L.sideLeft() or 0 -- (sideways: beside the column)
 		check("the warning follows the scale (top, centred, on the screen)", b ~= nil and b.y >= 0
-			and b.x + b.width <= s0.width and math.abs(b.x * 2 + b.width - s0.width) <= 1,
+			and b.x + b.width <= s0.width and b.x >= left and math.abs(b.x * 2 + b.width - s0.width - left) <= 1,
 			b and string.format("warning %d,%d %dx%d on %dx%d", b.x, b.y, b.width, b.height, s0.width, s0.height))
 		press(SCALE_KEY)
 		WG.LibLobby.lobby.myBattleID = nil

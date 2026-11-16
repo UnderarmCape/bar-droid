@@ -1800,6 +1800,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pad-test -Dgun and -Online at 1080x1198 sideways (the unfolded Fold7 held wide, where the pad plays): ALL PASS.
       The touch D-GUN there sideways: MOVE and AIM low in the corners, a FIRE beside each, the cancel X above MOVE, as
       upright; no error. As upright, AIM's circle reaches the corner of BAR's small player list (bottom right).
+      A fifth review (the lobby widget's changes since 11-12): (1) a press on the bottom buttons (upright grid, sideways
+      column) that slid across their paging way and lifted elsewhere was a tap, clicked where it lifted: sideways a
+      server row, which Chobby joined at once; any slide past the drag distance is no click now; (2) sideways the server
+      bar and the warning were centred on the whole screen, over the column (the bar's Close on its down arrow, at 130 %
+      the warning over Multiplayer): centred in the room beside it (lobby-touch-test's two checks with it); (3) Replays,
+      Links and Plugins were looked for in every control once a second for the whole session unless all three were
+      opened: once at the start, then for 4 s after a press or the pad's click (tabs open on one); (4) Plugins' Update
+      All (made with the row, shown with updates) stood alone after a gap: every captioned button right of Widgets
+      Folder moves left. Left as is: putting Chobby's anchors back after the column with SetPos(x, y) clears its right
+      and bottom ones; the next layout pass mends it, so it shows only if the widget unloads while sideways.
+      lobby-phone-test ALL PASS at 1080x1198 both ways and at the S23's own shape.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
