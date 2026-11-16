@@ -333,9 +333,14 @@ public class LauncherActivity extends AppCompatActivity {
                 // (what the service does, in the notification's words: "Installed, running (skirmish)" said the install
                 // state with the service's own word for it)
                 : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? StatusText.forPlayers(s) : "Ready";
+        String summary = Updater.summary(BarApp.get().paths());
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
-                + "\n" + Updater.summary(BarApp.get().paths()));
+                + "\n" + summary);
         text.setSpan(new android.text.style.StyleSpan(android.graphics.Typeface.BOLD), 0, head.length(), 0);
+        // (the version and update lines grey, as the device lines under the buttons are: all in white at the status's
+        // size, "Ready" read as one more line of four, dev phone 2026-11-16; a miss in them still turns amber below)
+        text.setSpan(new android.text.style.ForegroundColorSpan(secondaryTextColor()), text.length() - summary.length(),
+                text.length(), 0);
         // (the two warnings in amber: among the facts they read as one more status line, dev phone 2026-11-04; a GL
         // check's or the benchmark's answer is a result, amber only when it failed: "GL check: FD740, OpenGL 4.3" in
         // amber read as a problem, 2026-11-05)
