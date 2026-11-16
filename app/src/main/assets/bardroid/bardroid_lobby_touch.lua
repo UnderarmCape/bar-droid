@@ -1371,7 +1371,10 @@ local function uprightNotes()
 				local win = n.window
 				win.bardroidW = win.bardroidW or win.width
 				if room and room >= 150 then
-					win:SetPos(2, 6 + (row - 1) * 110, math.min(win.bardroidW, room))
+					-- (as wide as that room, up to 1.4 times Chobby's: at Chobby's width "Download Failed / Red Comet Remake
+					-- 1.8 of type" broke "map" onto a line of its own with ~80 pixels left before "Offline", dev phone
+					-- upright 2026-11-16)
+					win:SetPos(2, 6 + (row - 1) * 110, math.min(math.floor(win.bardroidW * 1.4), room))
 				else
 					win:SetPos(nil, 6 + (row - 1) * 110)
 				end
