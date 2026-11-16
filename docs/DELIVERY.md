@@ -2179,6 +2179,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       press by the element under it (9th block of `phone-widget-gui_top_bar.lua.patch`, its anchor in 31723, 31836
       and 31958 alike); for BAR, `docs/upstream/bar-topbar-press-hover.patch`. Dev phone: Save then Quit opened the
       dialog three times in three; dock-phone-test ALL PASS; remake-check PASS.
+- [x] **Saved games upright, end to end** (hardening, 2026-11-16, dev phone): Save in a skirmish (the note, the
+      commander picked again), the lobby's Load Game list (map, date, version, Load and Delete whole on the 936 wide
+      screen), Load (the commander picked, the camera on it, the dock up) and the loaded game's Lobby button (Chobby
+      over the game on Load Game): nothing to fix. Launcher polish looked for in Display & touch preferences: the
+      switches only seem out of line (the thumb overhangs left when off, right when on); nothing changed. The test
+      saves made that morning removed from the dev phone.
 - [ ] **A tooltip's dimmer note still unwrapped** (hardening, 2026-11-16, dev phone upright, Statistics' Summary): BAR
       31958's content tooltips measure their `note` apart (gui_tooltip.lua measureParts), which the block above never
       sees, so a note wider than the screen ran off it. Fixed where the app owns the caller: the Statistics copy wraps
