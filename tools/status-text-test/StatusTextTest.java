@@ -34,6 +34,19 @@ public class StatusTextTest {
             System.out.println((ok ? "PASS " : "FAIL ") + "\"" + c[0] + "\" -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[1] + "\")"));
         }
         if (StatusText.forPlayers(null).length() != 0) { failed++; System.out.println("FAIL null -> not empty"); }
+        // ... and on the loading screen: a skirmish or benchmark loading, the lobby and the rest as they are
+        String[][] loading = {
+            { "running (skirmish)", "Skirmish loading" },
+            { "running (bench)", "Benchmark loading" },
+            { "running (lobby)", "Lobby running" },
+            { "starting (skirmish)", "Starting" },
+        };
+        for (String[] c : loading) {
+            String got = StatusText.forPlayers(c[0], true);
+            boolean ok = got.equals(c[1]);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "loading \"" + c[0] + "\" -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[1] + "\")"));
+        }
         // StatusText.isResultNote: the launcher's note in its own colour (a result) or in amber (a warning)
         Object[][] notes = {
             { "GL check: FD740, OpenGL 4.3, Mesa 27.0.0-devel", true },

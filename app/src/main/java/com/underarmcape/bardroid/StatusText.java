@@ -9,6 +9,19 @@ package com.underarmcape.bardroid;
 final class StatusText {
     private StatusText() {}
 
+    /**
+     * The same, with the engine still on its loading screen (GameService.loading): a skirmish or benchmark is "loading"
+     * until it is in, as the launcher said "Skirmish running" over the loading screen (dev phone, 2026-11-16). The lobby
+     * keeps its word: its loading also counts a game started from it.
+     */
+    static String forPlayers(String s, boolean loading) {
+        String t = forPlayers(s);
+        if (loading && ("Skirmish running".equals(t) || "Benchmark running".equals(t))) {
+            return t.replace(" running", " loading");
+        }
+        return t;
+    }
+
     static String forPlayers(String s) {
         if (s == null || s.isEmpty()) return "";
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("^running \\((\\w+)\\)$").matcher(s);

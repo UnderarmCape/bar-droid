@@ -347,7 +347,7 @@ public class LauncherActivity extends AppCompatActivity {
                 : !GameService.busy() && s.startsWith("game ended with an error") ? StatusText.forPlayers(s) + (note != null ? "" : ": the log below says why")
                 // (what the service does, in the notification's words: "Installed, running (skirmish)" said the install
                 // state with the service's own word for it)
-                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? StatusText.forPlayers(s) : "Ready";
+                : GameService.busy() || (!s.equals("idle") && !s.equals("stopped") && !s.equals("game ended")) ? StatusText.forPlayers(s, GameService.loading()) : "Ready";
         String summary = Updater.summary(BarApp.get().paths());
         android.text.SpannableString text = new android.text.SpannableString(head + (note != null ? "\n" + note : "")
                 + "\n" + summary);
