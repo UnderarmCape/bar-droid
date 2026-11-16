@@ -12,6 +12,11 @@
          server": the app's ControllerBridge takes the sticks and every button it maps first (GameActivity), so the switch
          reaches only a pad's other buttons -->
     <string name="lorie_pref_ignoreGamepadEvents_summary">A pad\'s buttons the app\'s gamepad controls do not use are not passed to the game as keys; the controls themselves stay on</string>
+    <!-- Pointer's three other upstream summaries ("Make your stylus ...", "Enable this option to ...", "Intercept all
+         hardware pointer events."): plain, as their neighbours (dev phone screenshot, 2026-11-16) -->
+    <string name="lorie_pref_stylusIsMouse_summary">The stylus moves the pointer and clicks as a mouse does, without pressure, angle or tilt</string>
+    <string name="lorie_pref_stylusButtonContactModifierMode_summary">The stylus button gives a right or middle click only while the stylus touches the screen</string>
+    <string name="lorie_pref_pointerCapture_summary">Every move of a mouse or touchpad goes to the game; Escape gives the pointer back to Android</string>
     <!-- Keyboard's shortcut entries, upstream titles ending in full stops, "Samsung Dex", and the service unnamed: the
          service is the one the launcher's "Keyboard shortcuts go to the game" names (key_capture_service) -->
     <string name="lorie_pref_dexMetaKeyCapture_summary">Samsung DeX only: Alt+F4, Meta+D, Meta+E and the like go to the game, not to DeX</string>
