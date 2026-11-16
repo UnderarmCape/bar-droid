@@ -1236,10 +1236,10 @@ final class RtsTouch {
         nudgeFromX = downX; nudgeFromY = downY;
         // (the X pointer goes with the building: BAR's own ghost, red where it cannot stand, is drawn at the pointer,
         // and it stayed where the finger came down, a second building beside the moved one; dev phone, 2026-11-11)
-        Place p = place();
-        boolean fromSpot = waitingAtDown && p != null && p.spot != null;
-        ptrX = fromSpot ? p.spot[0] : toX(downX);
-        ptrY = fromSpot ? p.spot[1] : toY(aboveDock(downX, downY));
+        float[] spot = spotNow(place());   // (a tap's move just sent: from there, not the place file's older spot)
+        boolean fromSpot = waitingAtDown && spot != null;
+        ptrX = fromSpot ? spot[0] : toX(downX);
+        ptrY = fromSpot ? spot[1] : toY(aboveDock(downX, downY));
         nudgeTo(curX, curY);
         return true;
     }
@@ -1254,16 +1254,17 @@ final class RtsTouch {
      */
     private void startGrid() {
         runPlaceTap();
-        Place p = place();
+        float[] spot = spotNow(place());   // (a tap's move just sent: from there, not the place file's older spot)
         boolean atFinger = state == State.PENDING && !waitingAtDown;
         // (a building being dragged: from the pointer, which moved with it; the place file's spot can be a write behind)
         boolean dragged = state == State.PLACE_DRAG || state == State.NUDGE;
-        gridX = dragged ? ptrX : atFinger || p == null || p.spot == null ? toX(curX) : p.spot[0];
-        gridY = dragged ? ptrY : atFinger || p == null || p.spot == null ? toY(curY) : p.spot[1];
+        gridX = dragged ? ptrX : atFinger || spot == null ? toX(curX) : spot[0];
+        gridY = dragged ? ptrY : atFinger || spot == null ? toY(curY) : spot[1];
         gridStartX = gridX; gridStartY = gridY;
         send(String.format(Locale.US, "grid held %.0f %.0f", gridStartX, gridStartY));   // (its first corner: ground now)
         send("spot none");
         spotSentAt = -1;
+        sentSpot = null;
         state = State.GRID_DRAG;
         holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
         LorieView v = view();
@@ -1349,6 +1350,7 @@ final class RtsTouch {
         send(String.format(Locale.US, "grid held %.0f %.0f", gridStartX, gridStartY));
         send("spot none");
         spotSentAt = -1;
+        sentSpot = null;
         gridShape(shape);
         LorieView v = view();
         v.sendMouseEvent(gridStartX, gridStartY, InputStub.BUTTON_UNDEFINED, false, false);
@@ -1393,8 +1395,29 @@ final class RtsTouch {
 
     private void sendSpot(float vx, float vy) {
         // (dragged on into the upright dock: held at its top edge, the building in sight; it went behind the dock)
-        send(String.format(Locale.US, "spot %.0f %.0f", toX(vx), toY(aboveDock(vx, vy))));
+        spotTo(toX(vx), toY(aboveDock(vx, vy)));
+    }
+
+    /** The building to X screen pixel (x, y): a "spot" line, and kept until the place file says where it is. */
+    private void spotTo(float x, float y) {
+        send(String.format(Locale.US, "spot %.0f %.0f", x, y));
         spotSentAt = SystemClock.uptimeMillis();
+        sentSpot = new float[]{x, y};
+        sentSpotWall = System.currentTimeMillis();
+    }
+
+    private float[] sentSpot;      // the last "spot" this app sent (X screen pixels); null after "spot none" or a place
+    private long sentSpotWall;     // when (wall clock: the place file's time is compared with it)
+    private static final long PLACE_ECHO_MS = 100;   // the place file this much newer than a "spot" line has it
+
+    /**
+     * Where the waiting building is now: the place file's spot, or the spot this app has just sent while that file is
+     * older than it. A tap that moved the building and a drag within the double tap's time started from the old spot,
+     * the file not yet written again, and took the building back there (review 2026-11-15).
+     */
+    private float[] spotNow(Place p) {
+        if (sentSpot != null && placeFile.lastModified() < sentSpotWall + PLACE_ECHO_MS) return sentSpot;
+        return p != null ? p.spot : null;
     }
 
     /**
@@ -1423,6 +1446,8 @@ final class RtsTouch {
         // start read off the place file while the camera moved, and PLACE built at the app's green square beside the
         // blueprint; Kailil, 2026-11-13: "Not the two seperate square systems. Only 1 ... the proper vanilla system")
         send(String.format(Locale.US, "spotto %.0f %.0f", ptrX, ptrY));
+        sentSpot = new float[]{ptrX, ptrY};   // (the newest spot sent: spotNow)
+        sentSpotWall = System.currentTimeMillis();
     }
 
     /** The GRID's far corner (the pointer) moved by the finger's way since the last move. */
@@ -1610,14 +1635,12 @@ final class RtsTouch {
             placeTapSpot = null;
             placeTapLater = () -> {
                 placeTapLater = null;
-                send(String.format(Locale.US, "spot %.0f %.0f", x, y));
-                spotSentAt = SystemClock.uptimeMillis();
+                spotTo(x, y);
             };
             ui.postDelayed(placeTapLater, doubleTapMs);
         } else {
             placeTapSpot = new float[]{x, y};
-            send(String.format(Locale.US, "spot %.0f %.0f", x, y));
-            spotSentAt = SystemClock.uptimeMillis();
+            spotTo(x, y);
         }
     }
 
@@ -1664,6 +1687,7 @@ final class RtsTouch {
             }
             // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
             send(queueHeld ? "spot none" : "spot placed");
+            sentSpot = null;
         };
         ui.postDelayed(placedClick, PLACE_SETTLE_MS);
         spotSentAt = -1;
@@ -1914,7 +1938,7 @@ final class RtsTouch {
                 tapOne(vx, vy, place);
                 return true;
             }
-            send(String.format(Locale.US, "spot %.0f %.0f", x, y));
+            spotTo(x, y);
             return true;
         }
         return false;

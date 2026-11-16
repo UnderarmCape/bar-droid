@@ -1865,7 +1865,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       are up, ~0.4 s at most. Dev phone, a skirmish with chosen start positions (dev-env.sh, scratch), PLACE then a map
       tap 0 to 60 ms later: 5 of 6 dropped before, 6 of 6 queued after (each round: the release with Shift down, the
       building queued, then the map tap); PLACE alone queued both times. dock-phone-test ALL PASS at both shapes,
-      touch-phone-test ALL PASS.
+      touch-phone-test ALL PASS. A sixth: a tap that moved the waiting building and a drag within the double tap's
+      time took it back to its old spot. The drag sent the tap's move but started from the place file's spot, not yet
+      written again; RtsTouch now keeps the last spot it sent and starts from it while the file is older (spotNow; a
+      GRID's first corner too). Dev phone sideways, a building at S, a tap at T 500 pixels away, a drag 0.12 to 0.18 s
+      later: before, 6 of 6 ended 69 elmos from S; after, 6 of 6 64 from T (the drag's own nudge). dock-phone-test ALL
+      PASS at both shapes, touch-phone-test ALL PASS. Of the eighth review's left items, none is open now.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
