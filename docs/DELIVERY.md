@@ -1811,6 +1811,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Folder moves left. Left as is: putting Chobby's anchors back after the column with SetPos(x, y) clears its right
       and bottom ones; the next layout pass mends it, so it shows only if the widget unloads while sideways.
       lobby-phone-test ALL PASS at 1080x1198 both ways and at the S23's own shape.
+      A sixth review (PRESETS, auto mex, AUTO RETREAT): (1) a rejoin replays the game, and AUTO RETREAT gave a fall-back
+      for every unit ever hurt and pulled every past commander's cover again, all landing at the live frame: it stands
+      down while bardroid_touch.lua catches up (WG.BarDroidCatchingUp); (2) a commander's retreat read its queue before
+      its own MOVE came back (one time in five offline, more with ping) and took it for the player's orders: the cover
+      let go with no FIGHT kept, the watch dropped; the first 3 s are not read now; a commander out of sight lets its
+      cover go, and one given away too (UnitTaken); (3) an INSERT (the dock's INSERT, BAR's Space, a helper's repair) did
+      not end a preset's side to side and joined its loop: the order inside decides; (4) the side to side's first look,
+      half a second on, dropped units whose order had not come yet: kept 3 s; (5) the presets' shutdown leaves no unit
+      on repeat. Left as reviewed: auto mex goes through BAR's own Area Mex, so it works where hosts forbid widget orders
+      (as decided before, line ~800); cover units' own orders are replaced by the FIGHT; Ctrl's formation speed stays
+      on units after a preset. Dev phone: dock-phone-test ALL PASS (STRAFE's side to side), the fight: 8 Pawns fell back,
+      no Lua error (the commander kept above 89 %, its retreat not reached).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

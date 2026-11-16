@@ -274,6 +274,12 @@ local function watchCommanders(f)
 		if not spValidUnitID(c) or Spring.GetUnitIsDead(c) then
 			releaseCover(s)
 			coms[c] = nil
+		elseif not s.ended and f - s.since < 90 then -- luacheck: ignore 542
+			-- (its MOVE not back yet, by ping, or the same frame: read as the player's own orders, the cover let go at once
+			-- with no FIGHT kept, the commander's watch dropped; review 2026-11-15)
+		elseif not s.ended and not spGetUnitPosition(c) then -- (no place to read, out of sight: let it go)
+			releaseCover(s)
+			coms[c] = nil
 		elseif not s.ended then
 			local x, _, z = spGetUnitPosition(c)
 			local _, _, d = norm(x - s.to[1], z - s.to[2])
@@ -370,8 +376,17 @@ function widget:PlayerChanged()
 	updatePlaying()
 end
 
+-- catching up with a running game (a rejoin replays it from the start): no retreat then, every past hurt unit fell back
+-- and every past commander retreat pulled its cover again, hundreds of orders landing at the live frame (bardroid_touch.lua
+-- tells; review 2026-11-15)
+local function catchingUp()
+	local f = WG.BarDroidCatchingUp
+	return f and f() or false
+end
+
 function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer)
-	if enabled and playing and unitTeam == myTeam and not paralyzer and damage > 0 and not fell[unitID] then
+	if enabled and playing and unitTeam == myTeam and not paralyzer and damage > 0 and not fell[unitID]
+		and not catchingUp() then
 		pending[unitID] = true
 	end
 end
@@ -384,8 +399,20 @@ function widget:UnitGiven(unitID)
 	fell[unitID] = nil
 end
 
+function widget:UnitTaken(unitID) -- (given away: not ours to order; a retreating commander's cover goes back)
+	pending[unitID], fell[unitID] = nil, nil
+	if coms[unitID] then
+		releaseCover(coms[unitID])
+		coms[unitID] = nil
+	end
+end
+
 function widget:GameFrame(f)
 	if not enabled or not playing then
+		return
+	end
+	if catchingUp() then
+		pending = {}
 		return
 	end
 	if f % 3 == 0 and next(pending) then

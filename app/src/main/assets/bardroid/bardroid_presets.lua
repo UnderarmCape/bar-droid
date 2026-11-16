@@ -432,6 +432,9 @@ local function swayCheck(f)
 						if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160 then
 							there = there + 1
 							keep[#keep + 1] = u
+						elseif f - g.since < 90 then -- (its order not come yet, by ping: kept for 3 s; dropped at the first
+							-- look, half a second on, a group could end with nobody swaying, review 2026-11-15)
+							keep[#keep + 1] = u
 						end
 					else
 						for _, c in ipairs(q) do
@@ -731,6 +734,10 @@ end
 
 function widget:Shutdown()
 	WG.BarDroidPresets = nil
+	for u in pairs(swaying) do -- (the side to side's repeat off: left on, the units walked their two legs for good; a
+		-- host that forbids widget orders throws, hence pcall; review 2026-11-15)
+		pcall(Spring.GiveOrderToUnit, u, CMD.REPEAT, { 0 }, 0)
+	end
 end
 
 -- The destination by finger (Kailil, 2026-11-10: "allow me to drag my finger and it sets the preset only when I lift
@@ -997,6 +1004,10 @@ function widget:UnitCommand(unitID, _, _, cmdID, cmdParams)
 			swaying[unitID] = nil
 		end
 		return
+	end
+	if cmdID == CMD.INSERT and p[2] then -- (the dock's INSERT, BAR's Space, a helper's repair: the order inside decides; an
+		-- insert ended nothing, it joined the side to side's loop and came back every lap, review 2026-11-15)
+		cmdID, p = p[2], { p[4], p[5], p[6] }
 	end
 	if cmdID == CMD.FIGHT and p[3] then
 		for _, e in ipairs({ s.a, s.b }) do

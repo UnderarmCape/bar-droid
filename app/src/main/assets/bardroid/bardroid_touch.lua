@@ -829,6 +829,11 @@ end
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
 local perSecond, secondStart, secondFrames = {}, nil, 0
 local catchup -- while catching up with a running game (below): the engine's own settings, where the last log line was
+-- (for the widgets that give orders by themselves: a rejoin replays the game, their callins fire for every past frame
+-- and their orders land at the live one; bardroid_retreat.lua stands down meanwhile, review 2026-11-15)
+WG.BarDroidCatchingUp = function()
+	return catchup ~= nil
+end
 
 -- The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ... Upscaling should
 -- be doing the heavy lifting", then, having watched 50 %: "keep it at 70 percent res drop as the minimum instead"; the
