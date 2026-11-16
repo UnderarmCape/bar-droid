@@ -6,7 +6,9 @@ storage number (docs/upstream/bar-topbar-amount.patch, written for BAR: at the a
 amount ran into it, "1000" over "1000", most of a game), and drawn again after the overflow warning clears the
 storage number's area, which on a short bar reaches into the amount ("1" of "1000" stayed while the amount did not
 change: dev phone sideways, 2026-11-14), and the overflow banner's words inside the banner (docs/upstream/
-bar-topbar-warning-banner.patch: at the app's interface scale their tops were cut off at the screen's edge). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
+bar-topbar-warning-banner.patch: at the app's interface scale their tops were cut off at the screen's edge), and a press
+taken by what is under it, not by what the pointer was over at the last check (docs/upstream/bar-topbar-press-hover.patch:
+a finger's tap on Quit right after Save did nothing). Applied by the engine (BarDroidPhoneLuaDir) to BAR's
 file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 
 @@@ find
@@ -87,4 +89,24 @@ file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 			if showingWarning[res] then
 				showingWarning[res] = false
 				cache.lastDrawnValue[res] = "" -- BAR Droid (phone): as above, the warning's end clears that rect too
+@@@ end
+
+@@@ find
+	if hoveringTopbar then
+		return true
+	end
+end
+
+function widget:MouseRelease(x, y, button)
+@@@ with
+	-- BAR Droid (phone): the element under the press itself, not the one under the pointer at the last check (every
+	-- 0.1 s here): a finger moves the pointer and presses in one frame, so right after Save, the pointer left over the
+	-- resource bars, a tap on Quit was taken here and did nothing (dev phone upright, 2026-11-16;
+	-- docs/upstream/bar-topbar-press-hover.patch)
+	if x > topbarArea[1] and y > topbarArea[2] and hoveringElement(x, y) then
+		return true
+	end
+end
+
+function widget:MouseRelease(x, y, button)
 @@@ end

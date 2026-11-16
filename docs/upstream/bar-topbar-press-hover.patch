@@ -1,0 +1,16 @@
+diff --git a/luaui/Widgets/gui_top_bar.lua b/luaui/Widgets/gui_top_bar.lua
+index 35d9223..a07c8cb 100644
+--- a/luaui/Widgets/gui_top_bar.lua
++++ b/luaui/Widgets/gui_top_bar.lua
+@@ -2661,7 +2661,10 @@ function widget:MousePress(x, y, button)
+ 		end
+ 	end
+ 
+-	if hoveringTopbar then
++	-- the element under the press itself: the hover is checked in Update (every 0.033 s), and a touch screen moves the
++	-- pointer and presses in the same frame, so a tap on a top bar button right after one over the resource bars was
++	-- taken here as a press on them and did nothing
++	if x > topbarArea[1] and y > topbarArea[2] and hoveringElement(x, y) then
+ 		return true
+ 	end
+ end

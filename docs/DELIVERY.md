@@ -2171,6 +2171,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       phone engine's phone version of gui_tooltip.lua (`phone-widget-gui_tooltip.lua.patch`, 1 block) wraps a line wider
       than the screen to it (the font's WrapText). Dev phone upright: the Widget Selector's star tooltip in five lines
       inside the screen (before: cut at the right edge); dock-phone-test ALL PASS.
+- [x] **Quit right after Save did nothing** (hardening, 2026-11-16, dev phone upright, a skirmish): one tap on Quit
+      after Save opened no dialog, three times in three; a second tap worked. BAR's Top Bar hears a press before Top
+      Bar Buttons and takes it when `hoveringTopbar`, worked out in its Update from the pointer's last place, names an
+      element; a finger moves the pointer and presses in one frame, so after Save (upright its button lies over the
+      hidden resource bars) the Quit press went to the energy bar. The phone version of gui_top_bar.lua judges the
+      press by the element under it (9th block of `phone-widget-gui_top_bar.lua.patch`, its anchor in 31723, 31836
+      and 31958 alike); for BAR, `docs/upstream/bar-topbar-press-hover.patch`. Dev phone: Save then Quit opened the
+      dialog three times in three; dock-phone-test ALL PASS; remake-check PASS.
 - [ ] **A tooltip's dimmer note still unwrapped** (hardening, 2026-11-16, dev phone upright, Statistics' Summary): BAR
       31958's content tooltips measure their `note` apart (gui_tooltip.lua measureParts), which the block above never
       sees, so a note wider than the screen ran off it. Fixed where the app owns the caller: the Statistics copy wraps
