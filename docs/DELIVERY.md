@@ -2222,6 +2222,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The day's in-game changes on a near-square screen** (hardening, 2026-11-16, dev phone at 1080x1198 upright,
+      the unfolded Fold7's shape, the split dock): Statistics between BAR's top bar and the dock, opaque, no chat line
+      over its title, the Summary's tooltip whole on two lines; Settings in its upright layout, the Resolution list
+      inside the window (picked back to the same value: no display change); no Lua errors. The quick Skirmish's map
+      rows needed a fix at that shape (760855bb); these did not.
 - [x] **Saved games upright, end to end** (hardening, 2026-11-16, dev phone): Save in a skirmish (the note, the
       commander picked again), the lobby's Load Game list (map, date, version, Load and Delete whole on the 936 wide
       screen), Load (the commander picked, the camera on it, the dock up) and the loaded game's Lobby button (Chobby
