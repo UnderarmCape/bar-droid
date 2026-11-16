@@ -1250,6 +1250,11 @@ function upright.quickMaps(tall)
 			local colW, gapX = math.floor(w * 0.44), math.floor(w * 0.04)
 			local h = math.floor(colW * 0.92) + labelH -- (a square map whole at the column's width)
 			local y0 = saved[found[1]] and saved[found[1]].y or b.y
+			-- (and both rows above the hint and the buttons at the panel's foot: on a near-square screen, 1080x1198 as the
+			-- unfolded Fold7, the second row ran under Back and Advanced and off the panel; dev phone 2026-11-16)
+			local adv = panel:GetChildByName("advButton")
+			local foot = (adv and adv.y or math.floor((panel.clientHeight or panel.height or 0) * 0.9)) - 70
+			h = math.max(labelH + 40, math.min(h, math.floor((foot - y0 - 16) / 2)))
 			local x = gapX + ((i - 1) % 2) * (colW + gapX)
 			local y = y0 + math.floor((i - 1) / 2) * (h + 16)
 			if b.x ~= x or b.y ~= y or b.width ~= colW or b.height ~= h then
