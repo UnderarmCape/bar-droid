@@ -1858,7 +1858,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (droid.freeAt asks bardroid_touch.lua's WG.BarDroidOnInterface and the list's position): PLACE clicked the panel
       (a top bar button, the list opened) and built nothing; now PLACE waits, as under the dock. Checked on the dev
       phone sideways (2008x938): a spot under the top bar and under the list, no spot line; on the open map, one.
-      dock-phone-test ALL PASS at both shapes, remake-check PASS.
+      dock-phone-test ALL PASS at both shapes, remake-check PASS. A fifth: before the game, a touch soon after PLACE
+      dropped the building. BAR's pregame queue takes it only when its Update sees the button let go with Shift still
+      down; the next touch let the button and Shift go at once, and with Shift up first BAR puts the building away.
+      RtsTouch now holds a touch that comes during that click (holdTouch) and plays it once the button and the keys
+      are up, ~0.4 s at most. Dev phone, a skirmish with chosen start positions (dev-env.sh, scratch), PLACE then a map
+      tap 0 to 60 ms later: 5 of 6 dropped before, 6 of 6 queued after (each round: the release with Shift down, the
+      building queued, then the map tap); PLACE alone queued both times. dock-phone-test ALL PASS at both shapes,
+      touch-phone-test ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

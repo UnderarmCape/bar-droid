@@ -350,6 +350,9 @@ final class RtsTouch {
 
     void close() {
         ui.removeCallbacksAndMessages(null);   // (also a tap still waiting for the game's answer: tapBuilding)
+        for (MotionEvent m : heldTouches) m.recycle();
+        heldTouches.clear();
+        replayLater = false;
         ui.removeCallbacks(fling);
         ui.removeCallbacks(longPress); ui.removeCallbacks(gridOnBuilding);
         ui.removeCallbacks(hoverTimeout);
@@ -569,6 +572,7 @@ final class RtsTouch {
 
     /** @param e in the coordinates of the LorieView's parent (as Termux:X11's own listener gets it) */
     boolean onTouch(MotionEvent e) {
+        if (holdTouch(e)) return true;
         if (velocity != null) velocity.addMovement(e);
         if (dgunTouch(e)) return true;
         switch (e.getActionMasked()) {
@@ -1645,11 +1649,18 @@ final class RtsTouch {
                     placedRelease = null;
                     view().sendMouseEvent(s[0], s[1], InputStub.BUTTON_LEFT, false, false);
                     ui.postDelayed(keysUp, GRID_KEYS_MS);
+                    // (held touches once Shift is up too: BAR's pregame puts the building away when Shift comes up
+                    // before its Update has queued it, and the next touch let the keys go at once; dev phone 2026-11-16)
+                    if (!heldTouches.isEmpty()) {
+                        replayLater = true;
+                        ui.postDelayed(replayAfterKeys, GRID_KEYS_MS + REPLAY_AFTER_KEYS_MS);
+                    }
                 };
                 ui.postDelayed(placedRelease, PREGAME_CLICK_MS);
             } else {
                 clickAt(s[0], s[1]);
                 ui.postDelayed(keysUp, GRID_KEYS_MS);
+                replayHeldTouches();   // (the game began while it waited: touches held for it, holdTouch)
             }
             // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
             send(queueHeld ? "spot none" : "spot placed");
@@ -1662,6 +1673,37 @@ final class RtsTouch {
     private static final long PREGAME_CLICK_MS = 120;   // a building's click before the game: the button down this long
     private Runnable placedClick;   // a building's click, waiting for its Shift
     private Runnable placedRelease; // its button coming up (before the game)
+    // (touches that came while a building's click before the game held its button, played once it is up)
+    private final java.util.ArrayList<MotionEvent> heldTouches = new java.util.ArrayList<>();
+    private static final int HELD_TOUCHES_MAX = 400;
+    private static final long REPLAY_AFTER_KEYS_MS = 40;   // held touches played this long after the click's keys are up
+    private boolean replayLater;   // held touches wait for the click's keys (replayAfterKeys)
+    private final Runnable replayAfterKeys = () -> { replayLater = false; replayHeldTouches(); };
+
+    /**
+     * Whether this touch waits for a building's click before the game: BAR's pregame queue takes the building only
+     * once its Update has seen the button down at the spot and then up with Shift still held (sendPlaced). A touch soon
+     * after PLACE let the button up at once (finishPlacedClick) and the keys with it: the building was dropped, 5 of 6
+     * on the dev phone (2026-11-16, review 2026-11-15). Its events are kept and played in order once the button and
+     * the keys are up, ~0.4 s at most.
+     */
+    private boolean holdTouch(MotionEvent e) {
+        boolean busy = placedRelease != null || replayLater || (placedClick != null && pregame());
+        if (!busy && heldTouches.isEmpty()) return false;
+        if (heldTouches.size() < HELD_TOUCHES_MAX) heldTouches.add(MotionEvent.obtain(e));
+        if (!busy) replayHeldTouches();   // (a click finished some other way: play them now)
+        return true;
+    }
+
+    private void replayHeldTouches() {
+        if (heldTouches.isEmpty()) return;
+        java.util.ArrayList<MotionEvent> todo = new java.util.ArrayList<>(heldTouches);
+        heldTouches.clear();
+        for (MotionEvent m : todo) {
+            onTouch(m);
+            m.recycle();
+        }
+    }
 
     /** The click now, before the next touch moves the pointer away. */
     private void finishPlacedClick() {
