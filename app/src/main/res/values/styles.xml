@@ -30,8 +30,11 @@
         <item name="android:textSize">11sp</item>
     </style>
 
-    <!-- A setting: air between the long ones, the box at the first line. -->
+    <!-- A setting: air between the long ones, the box at the first line, the box on the column's edge (the checkbox's
+         own inset put it 7 dp in from the words, the map field's line and the section names above it; dev phone
+         screenshot 2026-11-16, as the buttons' -4dp). -->
     <style name="LauncherCheck">
+        <item name="android:layout_marginStart">-7dp</item>
         <item name="android:gravity">top</item>
         <item name="android:paddingTop">6dp</item>
         <item name="android:paddingBottom">6dp</item>
