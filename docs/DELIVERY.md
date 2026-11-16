@@ -1843,7 +1843,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       player list); a building nudged sideways low in the split's gap can slide under a block; in pregame a quick next
       touch after PLACE can drop it; a tap then a drag within the double tap's time reads the old spot; the place
       file's spot is rounded down, a square off when zoomed far out. dock-phone-test ALL PASS at the S23's shape and
-      1080x1198.
+      1080x1198. Two of those left since fixed: ONE after a GRID and a camera move takes the GRID's start where it was
+      on the ground (RtsTouch sends "grid held x y", the copy keeps that ground point as gridFrom; checked on the dev
+      phone at 1080x1198 with the camera panned 1.2 s into a held GRID: the spot stayed on the first corner), and a
+      building nudged sideways from the gap into a block rises to that block's top (nudgeTo, lowestFree). dock-phone-test
+      ALL PASS at both shapes, remake-check PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

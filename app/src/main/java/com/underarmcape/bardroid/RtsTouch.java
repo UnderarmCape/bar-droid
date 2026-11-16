@@ -1257,7 +1257,7 @@ final class RtsTouch {
         gridX = dragged ? ptrX : atFinger || p == null || p.spot == null ? toX(curX) : p.spot[0];
         gridY = dragged ? ptrY : atFinger || p == null || p.spot == null ? toY(curY) : p.spot[1];
         gridStartX = gridX; gridStartY = gridY;
-        send("grid held");
+        send(String.format(Locale.US, "grid held %.0f %.0f", gridStartX, gridStartY));   // (its first corner: ground now)
         send("spot none");
         spotSentAt = -1;
         state = State.GRID_DRAG;
@@ -1342,7 +1342,7 @@ final class RtsTouch {
         runPlaceTap();
         gridStartX = stash[0]; gridStartY = stash[1];
         gridX = stash[2]; gridY = stash[3];
-        send("grid held");
+        send(String.format(Locale.US, "grid held %.0f %.0f", gridStartX, gridStartY));
         send("spot none");
         spotSentAt = -1;
         gridShape(shape);
@@ -1406,8 +1406,10 @@ final class RtsTouch {
         // (moved on toward the upright dock: held at its top edge, in sight; it went behind the dock, docktest)
         Dock d = dock();
         if (d != null && d.all != null) {
+            // (and up to it when it slides sideways out of the split's gap into a block's columns: it stayed low, under
+            // the block, PLACE clicking the block; review 2026-11-15)
             float lim = lowestFree(d, ptrX + dx);
-            if (ptrY + dy > lim) dy = Math.min(dy, Math.max(0, lim - ptrY));
+            if (ptrY + dy > lim) dy = lim - ptrY;
         }
         moveX = vx; moveY = vy;
         spotSentAt = SystemClock.uptimeMillis();

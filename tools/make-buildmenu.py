@@ -432,16 +432,20 @@ function droid.setGrid(args)
 	local kind, rest = tostring(args):match("^(%S+)%s*(.*)$")
 	if kind == "held" then
 		droid.gridHeld, droid.gridShown, droid.stash, droid.heldShape = true, Spring.GetTimer(), nil, nil
+		-- (its first corner on the ground now, "held x y": ONE after a pan or a pinch took it from the screen pixels at
+		-- the camera then, the building waiting elsewhere; review 2026-11-15)
+		local hx, hy = rest:match("^(%S+) (%S+)")
+		droid.gridFrom = hx and droid.groundAt(tonumber(hx), tonumber(hy)) or nil
 	elseif kind == "shape" then
 		droid.heldShape = rest ~= "" and rest or nil
 	elseif kind == "one" then
 		droid.oneAgain = droid.defID
 		local x0, y0, x1, y1 = rest:match("^(%S+) (%S+) (%S+) (%S+)")
-		local from = x0 and droid.groundAt(tonumber(x0), tonumber(y0))
+		local from = droid.gridFrom or x0 and droid.groundAt(tonumber(x0), tonumber(y0))
 		local to = x1 and droid.groundAt(tonumber(x1), tonumber(y1))
 		droid.stash = from and to and { from = from, to = to, defID = droid.defID } or nil
 	elseif kind == "free" then
-		droid.gridHeld, droid.heldShape = nil, nil
+		droid.gridHeld, droid.heldShape, droid.gridFrom = nil, nil, nil
 		if droid.oneAgain then -- (the building again, on ONE, a few frames on, waiting where the GRID began)
 			droid.again = { defID = droid.oneAgain, frames = 40, wait = 6, spot = droid.stash and droid.stash.from }
 			droid.oneAgain = nil
