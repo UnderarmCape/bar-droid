@@ -1927,7 +1927,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       place-file write: the newest alone is applied, once a frame, in order with the other lines; (4) the dock's LAST
       PINGS put the ping at the screen's middle, at or behind the dock: the dock's own camera move now, and a new ping
       while cycling no longer reads "PING 5 OF 4"; (5) a spot under a panel had the old rounding warp the pointer onto it
-      (BAR's hover there): only with an older menu copy now. Left: a table each frame while INSERT is on (low). Dev phone:
+      (BAR's hover there): only with an older menu copy now. Left: a table each frame while INSERT is on (low); since
+      fixed, worked out once per pick (SelectionChanged; a Bot Lab, the commander, the lab: insert 0, 1, 0). Dev phone:
       in a plain skirmish WG.BarDroidCatchingUp false in 50 checks of 50 (the true side read from the code: catchup-test
       runs BAR on the laptop); a sped-up 14-minute skirmish, 13 units, 30 fps, no error or warning from the app;
       dock-phone-test ALL PASS at both shapes, touch-phone-test and pad-test ALL PASS. dock-phone-test's circle case put its "hidden" Pawn at the
