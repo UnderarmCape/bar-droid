@@ -4,6 +4,8 @@ with the number of players). Each redraw renders the whole list into its texture
 0.4-0.5 % of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). And a way to hide the
 list (WG.advplayerlist_api.SetHidden: no drawing, no presses, its position collapsed onto its foot so the panels BAR
 stacks on it stay in place): the app's dock folded while spectating hides it (Kailil, 2026-11-11: "Hide the team list").
+And a press taken by the list under it, not by where the pointer was at the last check (a finger's tap after one on the
+list went to the list).
 Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
 runs.
 
@@ -80,4 +82,21 @@ function widget:MousePress(x, y, button)
 	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidHidden then
 		mx, my = -1, -1
 	end
+@@@ end
+
+@@@ find
+	prevClickTime = clickTime
+	if hoverPlayerlist then
+		return true
+	end
+end
+@@@ with
+	prevClickTime = clickTime
+	-- BAR Droid (phone): the list under the press itself, not under the pointer at its last check (Update's rect): a
+	-- finger moves the pointer and presses in one frame, so right after a tap on the list the next tap elsewhere was
+	-- taken here, as the top bar's (docs/upstream/bar-topbar-press-hover.patch); hidden, the press returned above
+	if math_isInRect(x, y, apiAbsPosition[2] - 1, apiAbsPosition[3] - 1, apiAbsPosition[4] + 1, apiAbsPosition[1] + 1) then
+		return true
+	end
+end
 @@@ end

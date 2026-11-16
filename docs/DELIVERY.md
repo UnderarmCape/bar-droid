@@ -2217,7 +2217,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sets them up (the player list hidden while the dock is up or folded for spectating, the Build Bar BAR's "Factory
       dock", off), so not patched; with the sideways dock off and a finger (BAR's own screen, touch modes from Display)
       the first tap after the pointer rested over them could be taken by them. Patch them the way of the top bar's two
-      if that setup gets used.
+      if that setup gets used. The player list done the same day: a 7th block of phone-widget-gui_advplayerslist.lua.patch
+      (its anchor and Update's rect alike in 31723, 31836 and 31958; hidden, its MousePress returns before it) judges
+      the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
+      with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
+      tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
 - [x] **Saved games upright, end to end** (hardening, 2026-11-16, dev phone): Save in a skirmish (the note, the
       commander picked again), the lobby's Load Game list (map, date, version, Load and Delete whole on the 936 wide
       screen), Load (the commander picked, the camera on it, the dock up) and the loaded game's Lobby button (Chobby
