@@ -338,6 +338,7 @@ local function layout()
 	vsx, vsy = Spring.GetViewGeometry()
 	L.hole, L.leftCols, L.rightCols = nil, 3, 2
 	L.thumb, L.tabs, L.homeBtn, L.swapBtn, L.dgFloat, L.windCol = false, nil, nil, nil, false, nil
+	L.windW, L.windT = nil, nil -- (SP.windRects: made again from this layout)
 	-- Unfolded (a near-square screen, either way up), playing: two blocks in the bottom corners, one under each thumb,
 	-- the game between them (Kailil, 2026-11-15, of the unfolded Fold7: "the bottom dock in both vertical and horizontal
 	-- is entirely too large. The footprint is too large, can you make it smaller and split with no map in the middle.
@@ -3316,8 +3317,17 @@ end
 -- unit group bar when in unfolded. WHen in landscape folded, Replace the home button with the water tidal widget and
 -- wind speed stuff"): unfolded, side by side on the groups between the blocks; sideways folded, one over the other in
 -- HOME's place by the minimap; elsewhere over metal and energy, out of the dock and held to it. The wind's, then the
--- tide's rect, or nil.
+-- tide's rect, or nil. Made once a layout (layout() clears them): drawing, the dock file and the dock's rect ask each frame.
 function SP.windRects()
+	if L.windW == nil then
+		L.windW, L.windT = SP.windRectsNow()
+		L.windW = L.windW or false
+	end
+	if L.windW then
+		return L.windW, L.windT
+	end
+end
+function SP.windRectsNow()
 	local pad, g, r = L.pad or 4, L.groups, L.res
 	if not (r and r[3] > r[1]) then
 		return nil
