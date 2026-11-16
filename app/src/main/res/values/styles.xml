@@ -48,6 +48,14 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginEnd">8dp</item>
     </style>
+    <!-- A row of choices: its first circle on the column's edge, as the settings' boxes (the radio button's own inset put
+         it 6 dp in; dev phone screenshot 2026-11-16). -->
+    <style name="LauncherRadioRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginStart">-6dp</item>
+        <item name="android:orientation">horizontal</item>
+    </style>
 
     <!-- A text field's name, as a setting's reads (white; an explanation after a line break, smaller and grey:
          LauncherActivity.explainSettings, the tag "explain"). -->
