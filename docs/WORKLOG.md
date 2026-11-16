@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 22 (2026-10-25 to 2026-11-15) |
 | Claude Code sessions | 14 |
-| Kailil's messages | 497 (25218 words, 91 screenshots) |
-| Kailil's time | 58.5 h in 153 sittings |
-| Claude's time | 371.7 h |
-| Claude's tool calls | 41131 |
+| Kailil's messages | 498 (25218 words, 92 screenshots) |
+| Kailil's time | 58.5 h in 154 sittings |
+| Claude's time | 372.1 h |
+| Claude's tool calls | 41183 |
 | Kailil stopped Claude mid-answer | 8 times |
-| Commits | 1624 |
+| Commits | 1626 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -42,7 +42,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-12](worklog/2026-11-12.md) | 14 | 1.4 | 22.5 | 187 |
 | [2026-11-13](worklog/2026-11-13.md) | 27 | 3.3 | 17.1 | 137 |
 | [2026-11-14](worklog/2026-11-14.md) | 2 | 0.1 | 1.8 | 14 |
-| [2026-11-15](worklog/2026-11-15.md) | 6 | 0.5 | 14.7 | 95 |
+| [2026-11-15](worklog/2026-11-15.md) | 7 | 0.6 | 15.1 | 97 |
 
 ## Sessions
 
@@ -51,7 +51,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-15 19:04 | 383 | 311.5 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-15 19:42 | 384 | 311.9 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
