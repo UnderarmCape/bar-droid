@@ -3491,7 +3491,7 @@ function SP.drawWindInfo()
 	local x0 = max(lo0, min(hi0 - W, floor((b[1] + b[3]) / 2 - W / 2)))
 	local r = { x0, base, x0 + W, base + floor(height) }
 	info.rect = r
-	panel(r)
+	panel(r, nil, nil, nil, nil, true) -- (opaque, as its boxes: the game's metal spot rings sat on its numbers)
 	local y = r[4] - pad
 	bold:Print("\255\255\255\255" .. SP.windWord(wind and "title" or "tide"), r[1] + pad, y - rowH * 0.5, fs * 1.1, "ov")
 	if not wind then
