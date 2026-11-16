@@ -1202,6 +1202,18 @@ function upright.replayTeams(panel)
 	walk(panel, 0)
 	local fitted = 0
 	for _, u in ipairs(lists) do
+		-- (the list's top edge 4 higher, its contents where they were: the team headers stand at its top and their
+		-- capitals' tops were cut, "Ieam 1" upright)
+		if not u.bardroidLifted and (u.y or 0) >= 4 then
+			u.bardroidLifted = true
+			u:SetPos(nil, u.y - 4, nil, (u.height or 0) + 4)
+			for _, ch in ipairs(u.children or {}) do
+				local c = real(ch)
+				if c then
+					c:SetPos(nil, (c.y or 0) + 4)
+				end
+			end
+		end
 		local room = u.clientWidth or u.width or 0
 		if room > 50 and u.bardroidRoom ~= room then
 			u.bardroidRoom = room
