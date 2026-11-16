@@ -1903,6 +1903,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       never answers, Stop tapped mid-download: "stopped", no engine in the next 30 s (and a fetch that failed went on to
       the start with no online update, one offline check); the screen made 1080x1198 mid-load upright: the bar 60 pixels,
       70 up, covering BAR's; dock-phone-test ALL PASS.
+      An eleventh review (bardroid_portrait.lua's changes 11-12 to 11-15 evening), seven fixed: (1) CHAT redrew the whole
+      dock texture every frame for as long as it listened (up to a minute, 1 to 2 ms a frame): its glow steps 8 times a
+      second, the flip and burst still frame by frame; (2) the split's factory queue made two-row buttons in its four
+      rows, CLEAR and ORDERS a scroll away: one row each there, all six in sight; (3) BAR's faction picker, removed while
+      the dock is up before the start, stayed gone when the dock went down (turned sideways with no sideways dock, the pad
+      taken up): it comes back then (EnableWidget) and goes again with the dock; (4) a circle in the split's game between
+      the blocks picked nothing (only units above the blocks' top were kept); (5) in the split's narrow right block a long
+      unit name ran under QUEUE: sized to the room left of it; (6) sideways one thumb, HOME took two taps with the camera
+      pad up (no live rect, as the swap arrow had), and with MULTI on it left the unit list up: a live rect, and the list
+      let go; (7) in the split and sideways a drag on the left block scrolled the right block's share list or panel (a
+      rule for grids spanning both halves; there the grid is the right block's). Left: the dock's per-frame garbage
+      (writeDock's compare strings, SP.around's tables), low. dock-phone-test's circle case put its "hidden" Pawn at the
+      screen's middle, the split's game: behind the right block there now. Dev phone: dock-phone-test ALL PASS at both
+      shapes (the circle case at 1080x1198 first failed as it should: the Pawn in the gap picked), touch-phone-test and
+      pad-test -Chat ALL PASS; a screenshot of the split with the commander picked: its name fits beside QUEUE.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

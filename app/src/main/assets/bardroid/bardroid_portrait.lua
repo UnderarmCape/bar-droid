@@ -672,6 +672,9 @@ local function writeDock(force)
 			-- (and the swap arrow: its first tap moves the dock; with the camera pad up it only opened the menu, dev
 			-- phone 2026-11-13)
 			.. (L.thumb and L.swapBtn and not SP.hidden and ("live " .. r(L.swapBtn) .. "\n") or "")
+			-- (and HOME: with the camera pad up its first tap only opened the menu, on the orders of the units still picked;
+			-- review 2026-11-16)
+			.. (L.thumb and L.homeBtn and not SP.hidden and ("live " .. r(L.homeBtn) .. "\n") or "")
 			-- (PING on the home grid and before the start: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. ((rightKind == "home" or rightKind == "pregame") and leftKind ~= "spec" and L.pingBtn and not SP.hidden
 				and (not L.thumb or L.panelOn or rightKind == "pregame")
@@ -1156,9 +1159,22 @@ function SP.factionPicker()
 	local w = wh:FindWidget("Factionpicker")
 	if w then
 		wh:RemoveWidget(w)
-		SP.pickerDone = true
+		SP.pickerDone, SP.pickerRemoved = true, true
 		Spring.Echo("[bardroid-portrait] BAR's faction picker off for this game: the dock's factions")
 	end
+end
+-- (back when the dock goes down before the start: turned sideways with no sideways dock, or the pad taken up, BAR's own
+-- screen came back with no faction picker; removed again if the dock comes back up; review 2026-11-16)
+function SP.factionPickerBack()
+	if not SP.pickerRemoved or Spring.GetGameFrame() > 0 then
+		return
+	end
+	local wh = widgetHandler
+	if wh and wh.EnableWidget then
+		wh:EnableWidget("Factionpicker")
+		Spring.Echo("[bardroid-portrait] BAR's faction picker back: the dock is down before the start")
+	end
+	SP.pickerDone, SP.pickerRemoved = false, false
 end
 
 local function typesUnits()
@@ -1509,7 +1525,13 @@ function pingT.update()
 			-- lost meanwhile left CHAT on and the menu open)
 			c.endAt = t
 		end
-		markDirty() -- (the flip, the burst, CHAT's glow)
+		-- (the flip and the burst frame by frame, CHAT's glow 8 times a second: each mark redraws the whole dock's
+		-- texture, 1 to 2 ms, and it ran every frame of a chat up to a minute long; review 2026-11-16)
+		local step = math.floor(t * 8)
+		if t - (c.endAt or c.at) < pingT.FLIP + pingT.BURST or step ~= c.glowStep then
+			c.glowStep = step
+			markDirty()
+		end
 	end
 	if pingT.label and not pingT.armed() then -- (the words said for a ping go when its arm runs out)
 		pingT.label = nil
@@ -1837,7 +1859,9 @@ function refreshNow()
 		-- (sideways three wide: two rows of them, double height where the half has the rows for it; they were two thin
 		-- rows over an empty half, dev phone 2026-11-12, a Bot Lab)
 		local need = math.ceil(6 / (L.rightCols or 2))
-		local qh = (need * 2 <= rr or rr >= 6 or rr % 2 == 0) and 2 or 1
+		-- (not in the split's four rows: two-row buttons there were six rows, four in sight, CLEAR and ORDERS a scroll
+		-- away; one row each, all six in sight, as upright before the split; review 2026-11-16)
+		local qh = (need * 2 <= rr or not L.split and (rr >= 6 or rr % 2 == 0)) and 2 or 1
 		newRight = {
 			{ kind = "queue", n = 1, label = "+1", h = qh }, { kind = "queue", n = 5, label = "+5", h = qh },
 			{ kind = "queue", n = 20, label = "+20", h = qh }, { kind = "queue", n = -1, label = "-1", h = qh },
@@ -2209,8 +2233,10 @@ local function pickCircle()
 	local seen, all = {}, Spring.GetUnitsInCylinder(c.x, c.z, c.r, myTeam()) or {}
 	for _, u in ipairs(all) do
 		local x, y, z = Spring.GetUnitPosition(u)
-		local _, sy = Spring.WorldToScreenCoords(x or 0, y or 0, z or 0)
-		if x and sy >= L.dock[4] then
+		local sx, sy = Spring.WorldToScreenCoords(x or 0, y or 0, z or 0)
+		-- (and in the split dock's game between its blocks, which is the map: a circle there picked nothing; review
+		-- 2026-11-16)
+		if x and (sy >= L.dock[4] or L.split and L.hole and inRect(sx, sy, L.hole)) then
 			seen[#seen + 1] = u
 		end
 	end
@@ -2643,7 +2669,8 @@ function pingT.drawBtn(b, armed, th)
 	end
 	local sy, burst = 1, nil
 	if c then
-		local chatFill, chatEdge = { 0.04, 0.2, 0.25, 0.95 }, { 0.25, 0.72, 0.85, 0.75 + 0.25 * math.sin(t * 6) ^ 2 }
+		local glow = math.floor(t * 8) / 8 -- (in the steps pingT.update redraws it at)
+		local chatFill, chatEdge = { 0.04, 0.2, 0.25, 0.95 }, { 0.25, 0.72, 0.85, 0.75 + 0.25 * math.sin(glow * 6) ^ 2 }
 		local newWord
 		if c.endAt then -- (back to PING)
 			sy, newWord, burst = pingT.flip(t - c.endAt)
@@ -3088,7 +3115,11 @@ local function drawSelection()
 	local name = ud and (ud.translatedHumanName or ud.humanName) or ""
 	local x = r[1] + floor((r[3] - r[1]) / 3) + L.pad -- (the row's left third is INSERT, its words beside the tile, drawn
 	-- live with QUEUE's: drawQueueZones)
-	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, h * 0.24, "o")
+	-- (no wider than the room left of QUEUE, on the same line: in the split dock's narrow right block "Advanced
+	-- Construction Bot" ran under it and off the screen; review 2026-11-16)
+	local room = r[3] - L.pad * 2 - bold:GetTextWidth("QUEUE") * h * 0.2 - x
+	local nameSize = min(h * 0.24, room / max(1, bold:GetTextWidth(name)))
+	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, max(h * 0.12, nameSize), "o")
 	L.selCountEnd = nil -- (where the count line ends: the camera pad's words keep right of it, drawMode)
 	if n > 1 then
 		-- ("6 units, 6 of this type" said the same thing twice: all of one type, the count alone)
@@ -3536,7 +3567,10 @@ local function dockLines()
 		end
 		-- (a grid over both halves, home, the spectator's and TEAMS, the teammate picker, a panel: a drag on its left half
 		-- is its own; the empty left half took it and panned the camera, so a long TEAMS list scrolled from the right only)
-		local wide = rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets"
+		-- (only where that grid spans both halves: sideways and in the split it is the right block's alone, homeRect, and a
+		-- drag on the left block scrolled the share list or a panel on the right; review 2026-11-16)
+		local wide = (rightKind == "home" or rightKind == "share" or rightKind == "panel" or rightKind == "presets")
+			and not (L.land or L.split)
 		if side == "left" and wide then
 			side = "right"
 		end
@@ -3695,6 +3729,9 @@ local function checkActive()
 		Spring.Echo("[bardroid-portrait] dock " .. (active and "up" or "down") .. (L.land and " sideways" or "")
 			.. string.format(" (%dx%d)", x, y))
 		writeDock(true)
+		if not active then
+			SP.factionPickerBack()
+		end
 	end
 	SP.landMinimap()
 end
@@ -4590,6 +4627,9 @@ function widget:MouseRelease(x, _, btn)
 	if thumb == "home" then -- (sideways, one thumb: the home buttons in the panel, which no longer hides them: HOME lets
 		-- the pick go, so they show; it had opened and closed the hidden panel)
 		Spring.SelectUnitArray({})
+		-- (and a unit list with MULTI on let go too: the list stayed, its right half empty, not the home buttons; review
+		-- 2026-11-16)
+		typesFrom, multi, multiPicked, allPicked = nil, false, {}, false
 		L.homeOpen = false
 		refresh()
 		return true

@@ -113,7 +113,25 @@ local function onCmd(c)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt.dock()
 		local vsx, vsy = Spring.GetViewGeometry()
-		local _, pos = Spring.TraceScreenRay(math.floor(vsx / 2), dock[4] - 80, true)
+		-- (behind the dock: in the split the screen's middle is the game between the blocks, where a circle picks units,
+		-- 2026-11-16: the right block's middle there)
+		local hx = math.floor(vsx / 2)
+		if Pt.onDock and not Pt.onDock(hx, dock[4] - 80) then
+			local a, b
+			for x = hx, vsx - 1, 4 do
+				local on = Pt.onDock(x, dock[4] - 80)
+				if on and not a then
+					a = x
+				elseif a and not on then
+					b = x - 4
+					break
+				end
+			end
+			if a then
+				hx = math.floor((a + (b or vsx - 1)) / 2)
+			end
+		end
+		local _, pos = Spring.TraceScreenRay(hx, dock[4] - 80, true)
 		if pos then
 			hideAt = pos
 			Spring.SendCommands(string.format("give 1 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), pos[1], pos[2], pos[3]))
@@ -121,7 +139,7 @@ local function onCmd(c)
 		Spring.SelectUnitArray({})
 		styleWas = Pt.selectStyle()
 		Pt.selectStyle("circle")
-		circ = { math.floor(vsx / 2), vsy - (dock[4] + 60), math.floor(vsx / 2), vsy - math.floor((dock[2] + dock[4]) / 2) }
+		circ = { hx, vsy - (dock[4] + 60), hx, vsy - math.floor((dock[2] + dock[4]) / 2) }
 		write(string.format("circle0 %d %d\ncircle1 %d %d\n", circ[1], circ[2], circ[3], circ[4]))
 		Spring.Echo("[docktest] circle: a Pawn behind the dock at " .. tostring(pos and math.floor(pos[1])) .. ","
 			.. tostring(pos and math.floor(pos[3])) .. ", the style was " .. tostring(styleWas))
