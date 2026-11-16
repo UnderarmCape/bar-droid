@@ -1172,6 +1172,126 @@ local function uprightKeys()
 	end
 end
 
+-- Chobby's quick Skirmish, its last page, Select Map (gui_battle_room_window.lua's simple skirmish): four minimaps a
+-- quarter of the panel wide, each map's name only in a hover tooltip, which a finger never brings up, and nothing said
+-- which are downloaded (dev phone upright, 2026-11-16: four small unnamed squares; offline a tap on one not downloaded
+-- started its download, "Download Failed", Start waiting on it). Each map's name under its picture, "not downloaded"
+-- under that while it is not, both ways up; upright the four in two columns across the panel, larger. Chobby's places
+-- kept, and put back sideways. A new game type makes the page's buttons anew.
+function upright.quickMaps(tall)
+	upright.quickSaved = upright.quickSaved or setmetatable({}, { __mode = "k" })
+	upright.quickLabels = upright.quickLabels or setmetatable({}, { __mode = "k" })
+	local saved, labels = upright.quickSaved, upright.quickLabels
+	local found = {}
+	local function walk(o, depth)
+		if not o or depth > 25 or o.disposed or o.visible == false then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			local p = c and real(c.parent)
+			if c and c.classname == "button_simple" and type(c.tooltip) == "string"
+				and c.tooltip:sub(1, 16) == "minimap_tooltip_" and p and p.GetChildByName and p:GetChildByName("titleLabel") then
+				found[#found + 1] = c
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	for _, name in ipairs({ "holder_mainWindow", "mainWindow_mainContent", "holder_submenuWindow" }) do
+		if #found == 0 then
+			walk(real(chobbyObject(name)), 0)
+		end
+	end
+	local config = WG.Chobby and WG.Chobby.Configuration
+	local font = config and config:GetFont(1)
+	local labelH = math.floor(((font and font.size) or 16) * 2.4) + 4
+	local function keep(o) -- (Chobby's place, before the first move)
+		if not saved[o] then
+			local rb, gb = {}, {}
+			for k, v in pairs(o._relativeBounds or {}) do
+				rb[k] = v
+			end
+			for k, v in pairs(o._givenBounds or {}) do
+				gb[k] = v
+			end
+			saved[o] = { rb = rb, gb = gb, x = o.x, y = o.y, w = o.width, h = o.height }
+		end
+	end
+	local panel
+	for i, b in ipairs(found) do
+		local name = b.tooltip:sub(17):match("^(.-)|") or b.tooltip:sub(17)
+		local have = VFS.HasArchive(name)
+		local caption = name .. (have and "" or "\n\255\160\160\160not downloaded")
+		local label = labels[b]
+		if not label or label.disposed then
+			-- (over the picture's foot, the picture left as Chobby made it: a picture shortened for the label's room drew
+			-- nothing, three of four blank, dev phone 2026-11-16)
+			label = Chili.Label:New({ -- (at the left: centred, its two lines drifted right, the colour code counted in)
+				x = 8,
+				right = 4,
+				bottom = 0,
+				height = labelH,
+				align = "left",
+				valign = "center",
+				caption = caption,
+				objectOverrideFont = font,
+				parent = b,
+			})
+			label:BringToFront() -- (Chili draws a child added last first: under the picture, its name hidden)
+			labels[b] = label
+		elseif label.caption ~= caption then -- (downloaded since)
+			label:SetCaption(caption)
+		end
+		panel = panel or real(b.parent)
+		if tall and panel then
+			keep(b)
+			local w = panel.clientWidth or panel.width or 0
+			local colW, gapX = math.floor(w * 0.44), math.floor(w * 0.04)
+			local h = math.floor(colW * 0.92) + labelH -- (a square map whole at the column's width)
+			local y0 = saved[found[1]] and saved[found[1]].y or b.y
+			local x = gapX + ((i - 1) % 2) * (colW + gapX)
+			local y = y0 + math.floor((i - 1) / 2) * (h + 16)
+			if b.x ~= x or b.y ~= y or b.width ~= colW or b.height ~= h then
+				b:SetPos(x, y, colW, h)
+			end
+			local tip = panel:GetChildByName("tipTextBox")
+			if tip and i == #found then
+				keep(tip)
+				local ty = y + h + 24
+				if tip.y ~= ty then
+					tip:SetPos(nil, ty)
+				end
+			end
+		end
+	end
+	if not tall then -- (sideways: Chobby's places back)
+		for o, was in pairs(saved) do
+			if not o.disposed then
+				for k in pairs(o._relativeBounds) do
+					o._relativeBounds[k] = nil
+				end
+				for k, v in pairs(was.rb) do
+					o._relativeBounds[k] = v
+				end
+				for k in pairs(o._givenBounds) do
+					o._givenBounds[k] = nil
+				end
+				for k, v in pairs(was.gb) do
+					o._givenBounds[k] = v
+				end
+				o:SetPosRelative(was.x, was.y, was.w, was.h, nil, true)
+				o:UpdateClientArea()
+			end
+			saved[o] = nil
+		end
+	end
+	if #found > 0 and upright.quickSeen ~= found[1] then -- (tools)
+		upright.quickSeen = found[1]
+		Spring.Echo("[bardroid-lobby] quick skirmish maps named" .. (tall and ", two columns across the panel" or ""))
+	end
+end
+
 -- Chobby's notes (its Chotify: "Download Failed", downloads, invites) stack up from the screen's foot at its right,
 -- over the grid's page strip and its right arrow upright (dev phone, 2026-11-10): upright they stack up from above the
 -- grid, and the server bar while it is up; not upright, Chobby's own place
@@ -1414,6 +1534,9 @@ local function uprightUpdate(now)
 	end
 	uprightNotes()
 	upright.tips(screen0.height > screen0.width * UPRIGHT)
+	if shown then
+		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
+	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
 	if not upright.on then
