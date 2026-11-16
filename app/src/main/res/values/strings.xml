@@ -21,6 +21,13 @@
     <string name="lorie_pref_enableAccessibilityServiceAutomatically_summary">Needs the WRITE_SECURE_SETTINGS permission (granted over adb)</string>
     <string name="lorie_pref_filterOutWinkey">Leave the Win (Meta) key to DeX</string>
     <string name="lorie_pref_filterOutWinkey_summary">DeX\'s own Win key shortcuts keep working while the others go to the game; needs the Accessibility service</string>
+    <!-- Keyboard's other three, upstream's words ("Show IME with external keyboard", summaries ending in full stops):
+         plain, as their neighbours (dev phone screenshot, 2026-11-16). MainActivity.toggleKeyboardVisibility,
+         InputEventSender (preferScancodes: the key's scan code instead of its character), LorieView. -->
+    <string name="lorie_pref_showIMEWhileExternalConnected">On-screen keyboard with a hardware keyboard</string>
+    <string name="lorie_pref_showIMEWhileExternalConnected_summary">The soft keyboard still opens while a hardware keyboard is connected</string>
+    <string name="lorie_pref_preferScancodes_summary">A hardware keyboard\'s keys go as key codes, read with the X server\'s layout (US) instead of Android\'s</string>
+    <string name="lorie_pref_hardwareKbdScancodesWorkaround_summary">For hardware keys that arrive wrong on some phones; can mix up keys with more than one layout</string>
     <!-- Other's two entries had no summary (LoriePreferences finds lorie_pref_<key>_summary by name, in this package too) -->
     <string name="lorie_pref_clipboardEnable_summary">The phone\'s clipboard and the game\'s are shared both ways</string>
     <string name="lorie_pref_configureResponseToUserActions">What swipes and keys do</string>
