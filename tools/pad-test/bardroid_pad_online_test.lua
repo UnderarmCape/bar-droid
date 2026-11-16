@@ -163,7 +163,17 @@ function widget:GameFrame(f)
 		end
 	end
 	local cs = Spring.GetCameraState()
-	if myPing and cs.px and math.abs(cs.px - PING[1]) < 300 and math.abs(cs.pz - PING[2]) < 300 then
+	local Pd = WG.BarDroidPortrait
+	if myPing and Pd and Pd.active and Pd.active() and Pd.dock then
+		-- (the dock up: the ping in the middle of the game above it, the dock's own camera move, as its other jumps;
+		-- the camera's look point is then nearer the camera than the ping; 2026-11-16)
+		local vsx, vsy = Spring.GetViewGeometry()
+		local d = Pd.dock()
+		local sx, sy = Spring.WorldToScreenCoords(PING[1], Spring.GetGroundHeight(PING[1], PING[2]) or 0, PING[2])
+		if math.abs(sx - vsx / 2) < vsx * 0.15 and math.abs(sy - (d[4] + vsy) / 2) < (vsy - d[4]) * 0.15 then
+			jumped = true
+		end
+	elseif myPing and cs.px and math.abs(cs.px - PING[1]) < 300 and math.abs(cs.pz - PING[2]) < 300 then
 		jumped = true
 	end
 	-- after the jump the lab's turn: selected and queued as BAR's menu does; the pad's LB + B comes next
