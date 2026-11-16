@@ -4018,6 +4018,11 @@ local function checkActive()
 		writeDock(true)
 		if not active then
 			SP.factionPickerBack()
+			local api = WG.advplayerlist_api -- (BAR's player list, hidden in widget:Update: back with the dock gone)
+			if SP.listOff and api and api.SetHidden then
+				api.SetHidden(false)
+			end
+			SP.listOff = nil
 		end
 	end
 	SP.landMinimap()
@@ -4151,14 +4156,19 @@ function widget:Update(dt)
 	local aside = SP.windowOpen() -- (one of BAR's big windows open: the dock out of its way until it closes)
 	if aside ~= L.aside then
 		L.aside = aside
-		-- (BAR's player list too, which the dock covers: with the dock aside it showed beside or under the window, cut
-		-- by its edge, sideways at the bottom right, upright at 1080x1198 under Settings' corner; dev phone 2026-11-16)
-		local api = WG.advplayerlist_api
-		if api and api.SetHidden then
-			api.SetHidden(aside or SP.hidden or false)
-		end
 		markDirty()
 		writeDock(true)
+	end
+	-- BAR's player list, which the dock covers, hidden where the dock is not: aside for a window (it showed beside or under
+	-- the window, cut by its edge, sideways at the bottom right, upright at 1080x1198 under Settings' corner), folded
+	-- (HIDE), and the D-gun mode's sticks without the dock (sideways in the corner under AIM's stick); dev phone 2026-11-16
+	local listOff = aside or SP.windOff() or false
+	if listOff ~= SP.listOff then
+		SP.listOff = listOff
+		local api = WG.advplayerlist_api
+		if api and api.SetHidden then
+			api.SetHidden(listOff)
+		end
 	end
 	writeDock(false)
 end
