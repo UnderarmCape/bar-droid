@@ -1172,6 +1172,44 @@ local function uprightKeys()
 	end
 end
 
+-- Chobby's Plugins (chobby/components/plugins_window.lua): Contribute, Refresh, Update All and the search box 28 high,
+-- the page arrows 40 x 30, fonts of 12 and 13 whatever the lobby's scale: too small for a finger (dev phone upright,
+-- 2026-11-16, about 3 mm tall). Its header and page rows have the room (the rows 48 and 40 high, the list placed below
+-- them by constants): the buttons and the box 40 high, the arrows 52 x 40, their words larger, nothing else moved.
+function upright.pluginButtons(win)
+	if not win or win.disposed then
+		return
+	end
+	local function bigger(c, size)
+		local f = c.font
+		if f and f.SetSize then
+			pcall(f.SetSize, f, size)
+		end
+	end
+	local resized = 0
+	local pw = win.clientWidth or win.width or 0
+	-- (the arrows at their new places: SetPos takes them absolute and works their right anchors out from them)
+	local arrowX = { ["<<"] = 0, ["<"] = 60, [">"] = pw - 112, [">>"] = pw - 52 }
+	for _, ch in ipairs(win.children or {}) do
+		local c = real(ch)
+		local cls = c and tostring(c.classname or "")
+		if c and c.height == 28 and (cls:find("button") or cls == "editbox") then -- (the header row's four)
+			c:SetPos(nil, nil, nil, 40)
+			bigger(c, 15)
+			resized = resized + 1
+		elseif c and c.height == 30 and c.width == 40 and arrowX[c.caption] and pw > 300 then -- (<< < > >>)
+			c:SetPos(arrowX[c.caption], nil, 52, 40)
+			bigger(c, 17)
+			resized = resized + 1
+		elseif c and c.height == 30 and c.classname == "label" and c.x == 96 and pw > 300 then -- (the page number)
+			c:SetPos(120, nil, pw - 240, 40)
+		end
+	end
+	if resized > 0 then
+		Spring.Echo("[bardroid-lobby] Plugins: " .. resized .. " buttons sized for a finger") -- (tools)
+	end
+end
+
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
 -- wide whatever the room): upright the second and third columns ran under Start and Delete, the names cut by them
 -- ("SimpleA", "Inactive/"; dev phone upright, 2026-11-16). Where the columns do not fit the room the list gives them,
@@ -2473,6 +2511,7 @@ local function replaysRowCheck(now)
 		end
 		replaysRow.pluginsDone = true
 		Spring.Echo("[bardroid-lobby] Plugins: Widgets Folder hidden (no folder to open on Android)") -- (tools)
+		upright.pluginButtons(strip)
 	end
 	local row = not replaysRow.done and refresh and real(refresh.parent)
 	if not row then
