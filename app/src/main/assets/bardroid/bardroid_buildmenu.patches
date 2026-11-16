@@ -397,9 +397,20 @@ function droid.keepPointer(sx, sy)
 end
 
 -- (a pixel where a click reaches the map: not this menu, PLACE, the minimap or the portrait dock, where the click would
--- land on them; the split dock's game between its blocks is clickable, P.onDock)
+-- land on them; the split dock's game between its blocks is clickable, P.onDock. Nor BAR's top bar, an open BAR window,
+-- the order menu (bardroid_touch.lua's answer) or the player list: PLACE clicked them, a top bar button or the list
+-- opened, no building; review 2026-11-15)
 function droid.freeAt(x, y)
 	if widget:IsAbove(x, y) or Spring.IsAboveMiniMap(x, y) then
+		return false
+	end
+	local onUi = WG.BarDroidOnInterface
+	if onUi and onUi(x, y) then
+		return false
+	end
+	local list = WG.advplayerlist_api -- ({ top, left, bottom, right }; hidden, its foot only)
+	local p = list and list.GetPosition and list.GetPosition()
+	if type(p) == "table" and p[1] and x >= p[2] and x <= p[4] and y >= p[3] and y <= p[1] then
 		return false
 	end
 	local P = WG.BarDroidPortrait

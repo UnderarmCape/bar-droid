@@ -1853,7 +1853,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       whose click lands nearest the building's middle and builds it on its own square (droid.onSquare, kept until the
       camera or the building moves); bardroid_touch.lua puts the pointer, BAR's blueprint, on that same pixel. 157 picks
       zoomed out, up to 14 elmos a pixel: 0.33 pixels off on average, 0.55 at most (rounded down 0.50 and 1.37), all on
-      their square (rounded down: one a square off). dock-phone-test ALL PASS at both shapes, remake-check PASS.
+      their square (rounded down: one a square off). dock-phone-test ALL PASS at both shapes, remake-check PASS. A
+      fourth: a spot under BAR's top bar, an open BAR window, the order menu or the player list is no longer clickable
+      (droid.freeAt asks bardroid_touch.lua's WG.BarDroidOnInterface and the list's position): PLACE clicked the panel
+      (a top bar button, the list opened) and built nothing; now PLACE waits, as under the dock. Checked on the dev
+      phone sideways (2008x938): a spot under the top bar and under the list, no spot line; on the open map, one.
+      dock-phone-test ALL PASS at both shapes, remake-check PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
