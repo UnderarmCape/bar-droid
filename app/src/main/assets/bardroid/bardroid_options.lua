@@ -1733,6 +1733,14 @@ function draw.selectPopup(mx, my)
 		numItems = numItems + 1
 		width = math.max(width, math.floor(font:GetTextWidth(tostring(value)) * fontSize) + pad * 6)
 	end
+	-- BAR Droid: the entries inside the window: wider than their button, they ran from its left edge past the window's
+	-- right one, upright to the screen's edge ("Window 936 x 2013 (120hz)", dev phone screenshot 2026-11-16); moved left
+	-- as far as they need, the button's outline where the button is (droidButton)
+	local droidButton = button
+	local over = button[1] + width - (layout.window[3] - metrics.inset)
+	if over > 0 then
+		button = { math.max(layout.window[1] + metrics.inset, button[1] - over), button[2], button[3], button[4] }
+	end
 	local maxVisible = math.min(numItems, 16)
 	selectScrollOffset = math.max(0, math.min(selectScrollOffset or 0, numItems - maxVisible))
 	local height = step * maxVisible
@@ -1820,7 +1828,7 @@ function draw.selectPopup(mx, my)
 				WG.guishader and look.selectBack or look.selectBackSolid,
 				WG.guishader and look.selectBackTop or look.selectBackSolidTop
 			)
-			UiSelector(button[1], button[2], button[3], button[4])
+			UiSelector(droidButton[1], droidButton[2], droidButton[3], droidButton[4]) -- BAR Droid: the button where it is
 			for _, item in ipairs(items) do
 				local k = item[5]
 				if k == option.value then
