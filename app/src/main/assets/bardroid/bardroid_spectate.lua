@@ -288,8 +288,17 @@ local function players()
 end
 
 local function cyclePlayer(step)
-	order = order or players()
-	local list = order
+	-- (upright the order is kept from the first arrow for the whole game, the bar never opening: who resigned or left
+	-- since is passed over (their name came up and the camera stayed), and one taken before anyone was listed is taken
+	-- again; review 2026-11-16)
+	order = (order and #order > 0) and order or players()
+	local list = {}
+	for _, p in ipairs(order) do
+		local _, playing, spec = Spring.GetPlayerInfo(p.id, false)
+		if playing and not spec then
+			list[#list + 1] = p
+		end
+	end
 	if #list == 0 or not (lockcamera() and lockcamera().SetPlayerID) then
 		return
 	end
@@ -654,7 +663,9 @@ local function updateFirstPerson(dt)
 	-- (rx: pi/2 level, more is down) Upright over the dock turned down by dockTilt, as the unit's own views: the game shows
 	-- the upper part of the view only, and 1st person looked into the sky, the horizon at the dock's edge (dev phone,
 	-- 2026-11-12)
-	local pitch = math.pi / 2 - math.rad(pitchDeg) + dockTilt()
+	-- (kept short of straight down and up: the dock's turn is added after free look's 85 degrees, and past pi the view
+	-- flipped over, upside down; the engine's own mouse look stops at 0.01 and 0.99 pi; review 2026-11-16)
+	local pitch = math.max(0.01, math.min(math.pi * 0.99, math.pi / 2 - math.rad(pitchDeg) + dockTilt()))
 	local c = fpCam
 	c.px, c.py, c.pz, c.rx, c.ry, c.fov = ex, ey, ez, pitch, ry, fov
 	c.dx, c.dy, c.dz = math.sin(pitch) * math.sin(ry), math.cos(pitch), -math.sin(pitch) * math.cos(ry)
@@ -878,7 +889,18 @@ local function updateFollow(dt)
 			cs.rx, cs.dist = math.pi / 2 + down2, height / math.sin(down2)
 		end
 		view.addDist, view.addRx = cs.dist - dist0, cs.rx - rx0
+		-- (upright the dock's share and turn bring the camera nearer than the view's own distance: under BAR's minimum
+		-- the engine pushed it back out, which the next frame took for the view's distance, growing it for good; the
+		-- minimum lowered as for 1st person, back when following ends; review 2026-11-16)
+		if not minZoomOwn and cs.dist < Spring.GetConfigFloat(MIN_ZOOM_KEY, 300) then
+			closeZoom(true)
+		end
 	end
+	-- (the point kept on the map, an elmo inside: the engine moves one past the edge back (SpringController, 0.01 in),
+	-- and the next frame took that for a finger's pan and kept it; upright the dock's turn moves a unit's own view's
+	-- point back toward the camera, past the edge behind a unit there; review 2026-11-16)
+	cs.px = math.max(1, math.min(Game.mapSizeX - 1, cs.px))
+	cs.pz = math.max(1, math.min(Game.mapSizeZ - 1, cs.pz))
 	spSetCameraState(cs, 0)
 	f.setX, f.setZ, f.setRy = cs.px, cs.pz, cs.ry
 end

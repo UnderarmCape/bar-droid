@@ -1871,6 +1871,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       GRID's first corner too). Dev phone sideways, a building at S, a tap at T 500 pixels away, a drag 0.12 to 0.18 s
       later: before, 6 of 6 ended 69 elmos from S; after, 6 of 6 64 from T (the drag's own nudge). dock-phone-test ALL
       PASS at both shapes, touch-phone-test ALL PASS. Of the eighth review's left items, none is open now.
+      A ninth review (spectating by touch since 11-11, and the Settings copy), four fixed in bardroid_spectate.lua:
+      (1) 1st person upright looking down past about 68 degrees flipped over, upside down: the dock's turn was added after
+      free look's limit, and the engine takes any pitch; kept between 0.01 and 0.99 pi as its own mouse look; (2) a
+      unit's own view (Shoulder) upright puts the look point nearer the camera, past the map's edge behind a unit there;
+      the engine moved it back and the next frame kept that as a finger's pan, the unit off the middle for good; the
+      point is kept an elmo inside the map for every view (the world views' clamp at the edge itself still crept 0.01 a
+      frame); (3) the dock's share and turn brought Shoulder nearer than BAR's minimum zoom, the engine pushed it out
+      and the next frame took that for the view's distance, growing it: the minimum is lowered for the session then, as
+      for 1st person; (4) upright the player arrows kept their order from the first tap all game: a player who left or
+      resigned is passed over now, and an order taken before anyone was listed is taken again. Checked on the dev phone:
+      a replay (a temporary dev-env.sh wrote a demofile script) has its recorded player active, not a spectator, the
+      next-player arrow on that player; fp-save-test ALL PASS. Left: the Settings copy's fallback as a user widget (it
+      removes itself after BAR's Options was already kept off, and its Shutdown errors) cannot happen while launch-bar.sh
+      parks the file there; spectate-test (laptop) not run, BAR on the laptop needs Kailil's yes.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
