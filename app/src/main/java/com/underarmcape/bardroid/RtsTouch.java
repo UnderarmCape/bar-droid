@@ -138,6 +138,7 @@ final class RtsTouch {
     private float padX, padY;                        // view pixels: the finger at the last camera line
     private String dockSide;                         // a menu-mode scroll: "left" or "right"
     private boolean dockSelecting;                   // a menu-mode drag on the game: a box selection
+    private boolean shapeDragging;                   // a LINE, GRID or BORDER drag (startShapeDrag)
     private static final float PAD_PAN_GAIN = 1.3f;            // the map moves this much more than the finger
     private static final float PAD_ZOOM_PER_SCREEN = 3.0f;     // a drag the screen's height up: e^3 times closer
     private static final float PAD_ROTATE_DEAD = 3f;           // slops a sideways drag goes before it rotates (Kailil:
@@ -609,7 +610,7 @@ final class RtsTouch {
                 }
                 ui.removeCallbacks(applyQueue);
                 applyQueue.run();
-                if (gridHeld && place() == null) gridLetGo();   // (the building went some other way)
+                if (gridHeld && placeGone()) gridLetGo();   // (the building went some other way)
                 state = State.PENDING;
                 firstId = e.getPointerId(0);
                 downX = curX = e.getX(); downY = curY = e.getY();
@@ -761,8 +762,9 @@ final class RtsTouch {
             case SCROLL:
                 if (i >= 0) scrollTo(curY);
                 return;
-            case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight)
-                if (i >= 0) moveCursor(curX, dockSelecting ? aboveDock(curX, curY) : curY);
+            case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight; a
+                // LINE, GRID or BORDER drag too: dragged into the dock its buildings were queued out of sight)
+                if (i >= 0) moveCursor(curX, dockSelecting || shapeDragging ? aboveDock(curX, curY) : curY);
                 return;
             case RIGHT_HOLD:   // (begun on the dock: the pointer stays with the finger, rightHoldY)
                 if (i >= 0) moveCursor(curX, rightHoldY(curX, curY));
@@ -868,9 +870,10 @@ final class RtsTouch {
                 flingIfFast();
                 break;
             case LEFT_DRAG:
-                press(curX, dockSelecting ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
+                press(curX, dockSelecting || shapeDragging ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
                 releaseKeys();
                 endDockSelect();
+                shapeDragging = false;
                 break;
             case PAD:
                 padUp(e);
@@ -935,10 +938,17 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
-        if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
+        boolean shapeCancelled = state == State.LEFT_DRAG && shapeDragging;
+        shapeDragging = false;
+        if (shapeCancelled) {
+            // (a LINE, GRID or BORDER drag the system took back, a palm or the screen going off: the building put away, then
+            // the button up with its keys; let go at once it queued one at the drag's start, review 2026-11-15)
+            final float x = downX, y = downY;
+            releaseAfterCancel(() -> { press(x, y, InputStub.BUTTON_LEFT, false); if (!gridHeld) releaseKeys(); });
+        } else if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
         endDockSelect();
-        if (!gridHeld) releaseKeys();
+        if (!gridHeld && !shapeCancelled) releaseKeys();
         state = State.IDLE;
         showCursor(true);
     }
@@ -1273,8 +1283,33 @@ final class RtsTouch {
 
     /** The building put away first, then the button let go: nothing is placed. */
     private void gridCancel() {
+        releaseAfterCancel(this::gridPlace);
+    }
+
+    /**
+     * Whether the building is put away for certain: the game's place file fresh and naming none, or no game. A stale
+     * file (the game screen away: the engine does not draw, so does not write it) is not "none": a GRID held over it
+     * was let go with Shift+Alt down and built (review 2026-11-15).
+     */
+    private boolean placeGone() {
+        if (!gameWidgetRunning()) return true;
+        return System.currentTimeMillis() - placeFile.lastModified() <= HOVER_STALE_MS && place() == null;
+    }
+
+    /**
+     * The building put away ("act cancel"), and the button let go only once the game shows it gone (GRID_CANCEL_MS
+     * between looks, 2 s at most): let go after a blind 250 ms, a frame stall had the button up first and the whole GRID
+     * built (review 2026-11-15).
+     */
+    private void releaseAfterCancel(Runnable release) {
         send("act cancel");
-        ui.postDelayed(this::gridPlace, GRID_CANCEL_MS);
+        final long until = SystemClock.uptimeMillis() + 2000;
+        ui.postDelayed(new Runnable() {
+            @Override public void run() {
+                if (placeGone() || SystemClock.uptimeMillis() >= until) release.run();
+                else ui.postDelayed(this, 50);
+            }
+        }, GRID_CANCEL_MS);
     }
 
     /**
@@ -1293,7 +1328,7 @@ final class RtsTouch {
      * line), the drag changes shape where it is; the game's shape strip lights it ("grid shape").
      */
     private void gridShape(String shape) {
-        if ("line".equals(shape)) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        if ("line".equals(shape)) lineKeys();
         else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
         send("grid shape " + shape);
     }
@@ -1419,9 +1454,20 @@ final class RtsTouch {
         if (shape == null || shape.equals("one")) return false;
         if (shape.equals("grid")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
         else if (shape.equals("border")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_CTRL_LEFT);
-        else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        else lineKeys();
         startLeftDrag();
+        shapeDragging = true;   // (its corner held at the dock's top, as a box selection's: onMove, onUp)
         return true;
+    }
+
+    /**
+     * A LINE's keys: Shift alone. QUEUE with INSERT holds Alt (altHeld), and Alt makes BAR's build drag a filled
+     * rectangle: a LINE dragged under it laid out a whole grid (review 2026-11-15); Alt up for the drag, down again with
+     * the keys (releaseKeys).
+     */
+    private void lineKeys() {
+        holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        if (altHeld) view().sendKeyEvent(0, KeyEvent.KEYCODE_ALT_LEFT, false);
     }
 
     private void holdKeys(int... keys) {
@@ -1639,6 +1685,7 @@ final class RtsTouch {
 
     private void startLeftDrag() {
         state = State.LEFT_DRAG;
+        shapeDragging = false;   // (startShapeDrag sets it after)
         if (secondTap) lastTapX = -1;   // the tap before a box select does not start a double click
         press(downX, downY, InputStub.BUTTON_LEFT, true);
         moveCursor(curX, curY);

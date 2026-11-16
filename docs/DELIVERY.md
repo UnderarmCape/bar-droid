@@ -1831,6 +1831,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       judgeLastRun, closedByPlayer, launchEnded undecided; one that did still rolls back); the dev phone's skirmish starts
       and records launched.at. Left: a phone build failing right after a fresh BAR engine's first start is blamed on
       BAR's update (narrow); two rapid host folders could give the menu copies another release's files (not seen).
+      An eighth review (placing buildings by touch, RtsTouch and the build menu copy), five fixed: (1) a GRID's cancel (X,
+      ONE) let the button up a blind 250 ms after "act cancel", Shift+Alt down: a frame stall had the button up first and
+      the whole GRID built; the button now goes up once the place file shows the building gone (2 s at most); (2) a stale
+      place file (the screen away, the engine not drawing) read as "building put away", and the next touch let a held
+      GRID go and built it: only a fresh file says so (placeGone); (3) with QUEUE and INSERT on, Alt stayed down and a
+      LINE drag laid out a filled grid: Alt up for a LINE; (4) LINE, GRID and BORDER drags went on under the dock and
+      queued buildings out of sight: held at the dock's top as a box selection is; (5) a shape drag the system cancelled
+      (a palm, the screen off) queued one building at its start: put away first, as (1). Left, reviewed: ONE after a
+      GRID and a camera move takes the GRID's start from screen pixels; the spot may sit under BAR's own panels (top bar,
+      player list); a building nudged sideways low in the split's gap can slide under a block; in pregame a quick next
+      touch after PLACE can drop it; a tap then a drag within the double tap's time reads the old spot; the place
+      file's spot is rounded down, a square off when zoomed far out. dock-phone-test ALL PASS at the S23's shape and
+      1080x1198.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
