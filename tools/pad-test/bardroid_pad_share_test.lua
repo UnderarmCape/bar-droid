@@ -197,6 +197,13 @@ local STEPS = {
 				and 15 <= r[5] + r[6] - 1,
 			r and string.format("y %d-%d, top bar from %d of %d%s, rows %d-%d, picked %s", r[2], r[4], r[7], vsy,
 				dock and (", dock to " .. math.floor(floorY)) or "", r[5], r[5] + r[6] - 1, tostring(index)))
+		-- (the note from the step before, still up: under the long list it lay across the dock's top edge and its
+		-- resource bars, 2026-11-16)
+		local t, showing = pad().toastRect(), pad().note() ~= nil
+		check("15 teammates: a note with them stays off the list's rows and above the dock", not showing
+			or (r ~= nil and t ~= nil and t[1] >= floorY and (t[1] >= r[4] or t[2] <= r[2])),
+			showing and r and t and string.format("note %d-%d, list %d-%d, dock to %d", t[1], t[2], r[2], r[4],
+				math.floor(floorY)) or "no note up")
 		pad().act("share_cancel")
 		-- a teammate out of the game since the list opened (their team dead, as BAR's GetTeamInfo says)
 		open()

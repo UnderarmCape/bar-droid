@@ -1364,7 +1364,8 @@ local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last us
 -- BAR kept the rest; none gone: the share may not have run yet (a phone behind its game), so up to SHARE_WAIT_SECONDS
 -- (a second give within the first's 1.5 s took its place, its report lost; review 2026-11-15)
 local given = {}
-local shareRect = nil -- the list as drawn last: x0, y0, x1, y1, the first teammate shown, how many (tools/pad-test.ps1)
+local shareRect = nil -- the list as drawn last: x0, y0, x1, y1, the first teammate shown, how many, the room's top and
+-- floor (tools/pad-test.ps1)
 local toastDrawnAt = nil -- the note as drawn last: its bottom and top (tools/pad-test.ps1)
 local SHARE_CHECK_SECONDS, SHARE_WAIT_SECONDS = 1.5, 6
 
@@ -1676,7 +1677,10 @@ local function shareDraw(vsx, vsy)
 	local P = WG.BarDroidPortrait
 	local dock = P and P.active and P.active() and P.dock and P.dock()
 	local floorY = dock and math.floor(dock[4]) or 0
-	local roomH = top - floorY - pad * 2 - fixedH
+	-- (a long list leaves a note's height under it: "NOT GIVEN: PARTLY BUILT, OR THEIR UNIT LIMIT" lay across the
+	-- dock's top edge and its resource bars, pad-test -Share's screenshots 2026-11-16)
+	local noteRoom = math.floor(style.size(0.02) * 2) + style.size(0.008, 3) * 2
+	local roomH = top - floorY - pad * 2 - fixedH - noteRoom
 	local teamH = math.max(math.floor(size * 1.35), math.min(rowH, math.floor(roomH / nTeams)))
 	local shown = math.max(1, math.min(nTeams, math.floor(roomH / teamH)))
 	local first = math.max(1, math.min(s.index - math.floor((shown - 1) / 2), nTeams - shown + 1))
@@ -1694,7 +1698,7 @@ local function shareDraw(vsx, vsy)
 	if ix1 and y1 - h < iy1 and y1 > iy0 and x0 < ix1 and x0 + w > ix0 then
 		x0 = math.max(0, math.min(math.floor(ix1 + pad), math.floor(vsx - w - pad)))
 	end
-	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top }
+	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top, floorY }
 	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
 
 	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
@@ -2800,7 +2804,7 @@ function widget:DrawScreen()
 		local r = share and shareRect
 		if r then
 			local h, gap = math.floor(style.size(0.02) * 2), style.size(0.008, 3)
-			ty = (r[4] + gap + h <= (r[7] or vsy)) and (r[4] + gap) or math.max(0, r[2] - gap - h)
+			ty = (r[4] + gap + h <= (r[7] or vsy)) and (r[4] + gap) or math.max((r[8] or 0) + gap, r[2] - gap - h)
 		end
 		style.toast(words or toast, cx, ty, toastColor, alpha, key, voiceToast and age or nil)
 		toastDrawnAt = { ty, ty + math.floor(style.size(0.02) * 2) }
