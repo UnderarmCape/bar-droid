@@ -3343,7 +3343,7 @@ function SP.drawWindTide()
 	for i, box in ipairs({ wb, tb }) do
 		local hh, bw = box[4] - box[2], box[3] - box[1]
 		local s = hh * 0.86
-		panel(box)
+		panel(box, nil, nil, nil, nil, true) -- (opaque: the game's metal spot rings showed through, over the reading)
 		if SP.windInfo and SP.windInfo.kind == (i == 1 and "wind" or "tide") then
 			gl.Color(1, 0.8, 0.25, 0.18)
 			gl.Rect(box[1], box[2], box[3], box[4])
