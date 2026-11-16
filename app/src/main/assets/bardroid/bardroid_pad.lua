@@ -2495,6 +2495,10 @@ end
 -- queue button"): its right two thirds QUEUE, its left third INSERT (bardroid_pad.txt "insert 1": the app holds numpad*
 -- for BAR's CommandInsert, QUEUE_KEYS), one or the other; the dock draws both.
 local queue = { on = false, rect = nil, insert = false, insertRect = nil, dock = false }
+local factoriesPicked -- (only factories picked, for INSERT's key: nil until worked out for this pick, widget:Update)
+function widget:SelectionChanged()
+	factoriesPicked = nil
+end
 local function queueShows()
 	return queue.on or queue.insert or (WG.BarDroidPadOnly ~= true and WG.BarDroidInput ~= "mouse"
 		and not Spring.GetSpectatingState() and Spring.GetSelectedUnitsCount() > 0)
@@ -2664,16 +2668,21 @@ function widget:Update(dt)
 	-- queue's front)
 	local insertKey = queue.insert
 	if insertKey then
-		local counts = Spring.GetSelectedUnitsCounts() or {}
-		local factories = true
-		for d in pairs(counts) do
-			local ud = type(d) == "number" and UnitDefs[d]
-			if ud and not ud.isFactory then
-				factories = false
-				break
+		-- (worked out again only when the pick changes, SelectionChanged: a table of counts each frame for as long as
+		-- INSERT stayed on, minutes; review 2026-11-16)
+		if factoriesPicked == nil then
+			local counts = Spring.GetSelectedUnitsCounts() or {}
+			local factories = true
+			for d in pairs(counts) do
+				local ud = type(d) == "number" and UnitDefs[d]
+				if ud and not ud.isFactory then
+					factories = false
+					break
+				end
 			end
+			factoriesPicked = factories and Spring.GetSelectedUnitsCount() > 0
 		end
-		insertKey = not (factories and Spring.GetSelectedUnitsCount() > 0)
+		insertKey = not factoriesPicked
 	end
 	-- (QUEUE and INSERT both on: Shift and Alt held, BAR's own with them, in place of the CommandInsert key)
 	local both = queue.on and queue.insert
