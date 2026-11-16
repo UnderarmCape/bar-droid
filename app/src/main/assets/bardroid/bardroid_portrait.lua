@@ -3495,7 +3495,8 @@ function SP.drawWindInfo()
 	local y = r[4] - pad
 	bold:Print("\255\255\255\255" .. SP.windWord(wind and "title" or "tide"), r[1] + pad, y - rowH * 0.5, fs * 1.1, "ov")
 	if not wind then
-		bold:Print("\255\255\255\255" .. (tideRelevant() and tostring(floor(Spring.GetTidal() or 0)) or "NO WATER"),
+		local tidal = tideRelevant() -- (NO WATER grey, as in its box: in white it read as a value)
+		bold:Print(tidal and "\255\255\255\255" .. floor(Spring.GetTidal() or 0) or "\255\150\150\150NO WATER",
 			r[3] - pad, y - rowH * 0.5, fs * 1.1, "orv")
 	end
 	y = y - rowH

@@ -2196,9 +2196,14 @@ final class RtsTouch {
     }
 
     private static String readSmall(File file) {
-        byte[] b = new byte[320];
-        int n;
-        try (FileInputStream in = new FileInputStream(file)) { n = in.read(b); } catch (IOException e) { return null; }
+        // (the whole file, up to 8 KB: at a fixed 320 bytes the dock file's last lines were lost once it grew past
+        // them, the tide's "live" box sideways for one thumb at 343: its first tap moved the camera pad instead,
+        // dev phone 2026-11-16; a little room over its length for a write between the two)
+        byte[] b = new byte[(int) Math.max(64, Math.min(8192, file.length() + 64))];
+        int n = 0, r;
+        try (FileInputStream in = new FileInputStream(file)) {
+            while (n < b.length && (r = in.read(b, n, b.length - n)) > 0) n += r;
+        } catch (IOException e) { return null; }
         return n <= 0 ? null : new String(b, 0, n, StandardCharsets.US_ASCII);
     }
 
