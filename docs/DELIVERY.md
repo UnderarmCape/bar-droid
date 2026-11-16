@@ -1990,6 +1990,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       - **Two questions asked with pictures, answered the same day: "Both look right"**: the split dock's size and
         sides (unfolded) and the cover screen's upright dock (about 45 % of its height) stay as they are; neither is to
         be made smaller unasked.
+      - **Hardening after it, the same afternoon** (dev phone): the details panel kept the tapped box's place after a
+        fold or turn, off the top of the screen for its 15 s: it follows its box (e38c021e); the tide's box sideways for
+        one thumb took no first tap with the camera pad up, as RtsTouch read only the dock file's first 320 bytes and the
+        two boxes' lines made it 343: the whole file now, up to 8 KB, the place, game, pad and hover files too
+        (a42fbbf9); BAR's player list came back under AIM's stick in the D-gun mode sideways: hidden wherever the dock
+        is not, and given back when the widget stops (e08c6fdf, 2c9dbd78); the boxes and the panel opaque (the metal spot
+        rings showed through), the readings centred, NO WATER grey; the boxes' rects made once a layout (38d236f9).
+        Checked with nothing to fix: the quick grid scrolls, the boxes go with the dock swapped left, reshapes mid-game,
+        a 9-minute skirmish (LuaUI memory levels off near 145 MB); lobby, touch, fp-save, pace, dock and pad (-Share,
+        -Chat, -Dgun, -Online) phone tests ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
