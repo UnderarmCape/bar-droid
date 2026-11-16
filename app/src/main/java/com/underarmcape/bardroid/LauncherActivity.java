@@ -253,8 +253,14 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     /** A start takes what the screen shows: a setting changed and left unsaved was ignored without a word. */
+    private static final int[] START_BUTTONS = { R.id.btnInstall, R.id.btnPlay, R.id.btnLobby, R.id.btnGlCheck, R.id.btnBench };
+
     private void start(String action, String mode) {
         saveSettings(false);
+        if (GameService.busy()) {   // (the service ignores it: said, not a tap that did nothing)
+            Toast.makeText(this, "A game is running: Stop ends it", Toast.LENGTH_SHORT).show();
+            return;
+        }
         GameService.start(this, action, mode);
     }
 
@@ -324,6 +330,12 @@ public class LauncherActivity extends AppCompatActivity {
         String s = GameService.status();
         // (nothing to stop: dim, not off: after a crash here "idle" can hide a game's processes, which Stop still ends)
         stopButton.setAlpha(GameService.busy() ? 1f : 0.5f);
+        // (and the buttons that start something dim while a game runs: the service takes no start then, and they looked
+        // ready, dev phone 2026-11-16; a tap says so, start)
+        for (int id : START_BUTTONS) {
+            View b = findViewById(id);
+            if (b != null) b.setAlpha(GameService.busy() ? 0.5f : 1f);
+        }
         // (again on each refresh in the process's first 20 s: Android restarts the app within a second of ending it and
         // files the reason a moment later, so the launcher it restores asked too early; an IPC, not for every tick)
         if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
