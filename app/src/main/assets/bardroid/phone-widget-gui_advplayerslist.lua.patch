@@ -68,3 +68,16 @@ function widget:MousePress(x, y, button)
 	end
 	--super ugly code here
 @@@ end
+
+@@@ find
+	--handles takes & related messages
+	local mx, my = spGetMouseState()
+@@@ with
+	--handles takes & related messages
+	local mx, my = spGetMouseState()
+	-- BAR Droid (phone): hidden, no hover either: its tooltip text was kept from before and showed over the map wherever
+	-- the list had been (review 2026-11-16)
+	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidHidden then
+		mx, my = -1, -1
+	end
+@@@ end

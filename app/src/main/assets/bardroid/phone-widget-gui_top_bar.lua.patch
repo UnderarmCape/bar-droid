@@ -70,3 +70,21 @@ file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 @@@ with
 						local fontSize = (orgHeight / 4) * widgetScale -- BAR Droid (phone; docs/upstream/bar-topbar-warning-banner.patch): widgetScale holds ui_scale, counted twice the text outgrew the banner
 @@@ end
+
+@@@ find
+		if cache.lastStorageText[res] ~= storageText or force then
+			cache.lastStorageText[res] = storageText
+@@@ with
+		if cache.lastStorageText[res] ~= storageText or force then
+			cache.lastStorageText[res] = storageText
+			cache.lastDrawnValue[res] = "" -- BAR Droid (phone): the amount drawn again too: its moved place reaches into the storage's cleared rect, its last digits went (review 2026-11-16)
+@@@ end
+
+@@@ find
+			if showingWarning[res] then
+				showingWarning[res] = false
+@@@ with
+			if showingWarning[res] then
+				showingWarning[res] = false
+				cache.lastDrawnValue[res] = "" -- BAR Droid (phone): as above, the warning's end clears that rect too
+@@@ end

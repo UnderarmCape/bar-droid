@@ -36,3 +36,20 @@ function widget:MousePress(x, y, button)
 		return
 	end
 @@@ end
+
+@@@ find
+function widget:Update(dt)
+	if not (not spec or showWhenSpec) then
+		return
+	end
+@@@ with
+function widget:Update(dt)
+	if not (not spec or showWhenSpec) then
+		return
+	end
+	-- BAR Droid (phone): not drawn while the touch dock is up, so no hover, tooltip or cursor either: its box's last place
+	-- (sideways with the pad, before the dock came back) showed "Unit Groups" over the map (review 2026-11-16)
+	if WG.BarDroidPortrait and WG.BarDroidPortrait.active and WG.BarDroidPortrait.active() then
+		return
+	end
+@@@ end

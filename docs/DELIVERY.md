@@ -1945,6 +1945,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       bar's hidden span takes no press in a release without WG.topbar.buttonAt (none seen: BAR's own then). Dev phone
       sideways, the dock up from the start, the commander picked, then "src mouse": the dock down and the Order menu with
       the commander's orders (the old copy not run); remake-check PASS, dock-phone-test and pad-test -Chat ALL PASS.
+      A fourteenth review (the phone versions of BAR's widgets, launch-bar.sh, LobbyBridge and Prefs since 11-12), three
+      fixed, all in phone-widget patches: (1) the player list hidden (spectating, the dock folded) still hovered by its
+      real place in Update, its tooltip text kept from before shown over the map wherever the list had been: no hover
+      while hidden; (2) Unit Groups, not drawn while the dock is up, still hovered by its box's last place (sideways with
+      the pad, then fingers): "Unit Groups" over the map; its Update stands down with the dock; (3) the top bar's amount,
+      moved left by the patch, lost its last digits when only the storage text changed or the warning ended (that redraw
+      clears the storage's rect, which the amount reaches into): the amount drawn again with it. Every block applies once
+      on test-31723, 31836 and 31958 (phone-lua-check; Unit Groups' on all twelve kept releases). Dev phone: the 14 patch
+      files loaded, no Lua error or layer miss; dock-phone-test ALL PASS, fp-save-test with no failure. launch-bar.sh,
+      LobbyBridge and Prefs found fine.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
