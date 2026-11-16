@@ -1987,6 +1987,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
         middle, INSERT's size; the name has the line to the right edge.
       Dev phone: unfolded 1968x2184, sideways folded 2520x1080, tall upright 1080x2520 screenshots with the details
       open; dock-phone-test ALL PASS upright.
+      - **Two questions asked with pictures, answered the same day: "Both look right"**: the split dock's size and
+        sides (unfolded) and the cover screen's upright dock (about 45 % of its height) stay as they are; neither is to
+        be made smaller unasked.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
