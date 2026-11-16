@@ -36,6 +36,9 @@
     <!-- Other's two entries had no summary (LoriePreferences finds lorie_pref_<key>_summary by name, in this package too) -->
     <string name="lorie_pref_clipboardEnable_summary">The phone\'s clipboard and the game\'s are shared both ways</string>
     <string name="lorie_pref_configureResponseToUserActions">What swipes and keys do</string>
+    <!-- (and the page it opens by the same name: its title was still upstream's "Response to user actions", dev phone
+         2026-11-16; LoriePreferences names a page's title by its fragment, userActions) -->
+    <string name="lorie_pref_userActions">What swipes and keys do</string>
     <!-- (patch 0013 hides Back, which the game always takes as Escape, and the notification's tap and buttons: BarApp
          keeps Termux:X11's notification away) -->
     <string name="lorie_pref_configureResponseToUserActions_summary">Swipes (with BAR touch controls off), the volume and media keys; Back is always Escape in the game</string>
