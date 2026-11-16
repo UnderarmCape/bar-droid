@@ -3387,11 +3387,21 @@ end
 function SP.windOff()
 	return SP.hidden or (rightKind == "dgun" and (L.land or L.dgFloat))
 end
--- the dock's rect for the fingers (RtsTouch's "dock"): with the wind and the tide over metal and energy, up to their top
+-- the dock's rect with the wind and the tide over metal and energy, up to their top: for the fingers (RtsTouch's "dock")
+-- and for the other widgets (WG.BarDroidPortrait.dock and onDock: BAR's replay speeds went under the wind's box, dev
+-- phone 2026-11-16, a replay spectated upright). The same table while the dock and the boxes stay (asked each frame).
 function SP.dockAll()
 	local d = L.dock
 	local wb = d and not (L.split or L.thumb or SP.windOff()) and SP.windRects()
-	return wb and wb[4] > d[4] and { d[1], d[2], d[3], wb[4] } or d
+	if not (wb and wb[4] > d[4]) then
+		return d
+	end
+	local c = L.dockAllR
+	if not (c and c.d == d and c.w == wb) then
+		c = { d[1], d[2], d[3], wb[4], d = d, w = wb }
+		L.dockAllR = c
+	end
+	return c
 end
 -- their boxes take the first tap (RtsTouch's "live"): the details open at once, the camera pad up or not
 function SP.windLive(r)
@@ -5087,13 +5097,13 @@ function widget:Initialize()
 			-- longer waited half size, review 2026-11-15)
 			return active and L.land and not L.split or false
 		end,
-		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1)
-			return active and L.dock or nil
+		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1; the wind's and tide's boxes over it with it)
+			return active and SP.dockAll() or nil
 		end,
 		-- (a screen point on the dock itself: the split dock's band less the game between its blocks, where a building's
 		-- spot or a preset's tap belongs to the game; dock() alone refused both there, review 2026-11-15)
 		onDock = function(x, y)
-			local d = active and L.dock
+			local d = active and SP.dockAll()
 			if not (d and x >= d[1] and x <= d[3] and y >= d[2] and y <= d[4]) then
 				return false
 			end
