@@ -3873,6 +3873,12 @@ function widget:Update(dt)
 	local aside = SP.windowOpen() -- (one of BAR's big windows open: the dock out of its way until it closes)
 	if aside ~= L.aside then
 		L.aside = aside
+		-- (BAR's player list too, which the dock covers: with the dock aside it showed beside or under the window, cut
+		-- by its edge, sideways at the bottom right, upright at 1080x1198 under Settings' corner; dev phone 2026-11-16)
+		local api = WG.advplayerlist_api
+		if api and api.SetHidden then
+			api.SetHidden(aside or SP.hidden or false)
+		end
 		markDirty()
 		writeDock(true)
 	end
