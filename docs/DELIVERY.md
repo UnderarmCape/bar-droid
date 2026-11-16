@@ -2179,6 +2179,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       press by the element under it (9th block of `phone-widget-gui_top_bar.lua.patch`, its anchor in 31723, 31836
       and 31958 alike); for BAR, `docs/upstream/bar-topbar-press-hover.patch`. Dev phone: Save then Quit opened the
       dialog three times in three; dock-phone-test ALL PASS; remake-check PASS.
+- [x] **A map tap after the quit dialog closed did nothing** (hardening, 2026-11-16, dev phone upright): the same
+      fault as the one above in BAR's Top Bar Buttons, whose MousePress ends `if hoveringButtons then return true end`
+      with the hover from its last Update. Found by a scan of BAR's widgets for press handlers that decide by an
+      earlier hover (gui_top_bar, gui_top_bar_buttons; gui_advplayerslist, gui_buildbar and gui_pip too, hidden or off
+      on phones), then probes logging presses first and last in the widget order: Quit, Quit again (the dialog
+      closed, the pointer on the strip), a tap on the map reached the first probe only. The new phone version
+      `phone-widget-gui_top_bar_buttons.lua.patch` (1 block, its anchor in 31723, 31836 and 31958; the strip test
+      written to work in all three) judges the press by the strip under it; for BAR,
+      `docs/upstream/bar-topbar-buttons-press-hover.patch`. Dev phone: three of three map taps through; remake-check
+      PASS.
 - [x] **Saved games upright, end to end** (hardening, 2026-11-16, dev phone): Save in a skirmish (the note, the
       commander picked again), the lobby's Load Game list (map, date, version, Load and Delete whole on the 936 wide
       screen), Load (the commander picked, the camera on it, the dock up) and the loaded game's Lobby button (Chobby

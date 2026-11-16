@@ -1,0 +1,30 @@
+BAR Droid phone version of BAR's Top Bar Buttons (luaui/widgets/gui_top_bar_buttons.lua): a press taken when the strip
+of buttons is under the press itself, not when the pointer was over it at the last check. Its MousePress ends with
+`if hoveringButtons then return true end`, worked out in Update from where the pointer was; a finger moves the pointer
+and presses in one frame, so after the quit dialog was closed from the Quit button, the pointer left on the strip, the
+next tap on the map was taken here and did nothing (dev phone upright, 2026-11-16;
+docs/upstream/bar-topbar-buttons-press-hover.patch). The strip as BAR's own check has it: 31958's overStrip (only the
+reveal band while auto-hidden buttons are away), the whole button area before it (test-31723, test-31836). Applied by
+the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+	if hoveringButtons then
+		return true
+	end
+end
+
+function widget:MouseWheel(up, value) -- up = true/false , value = -1/1
+@@@ with
+	-- BAR Droid (phone): the strip under the press itself, not under the pointer at the last check (a finger moves the
+	-- pointer and presses in one frame: after the quit dialog closed from Quit, a tap on the map was taken here)
+	if buttonsArea[1] then
+		local bottom = (showButtons or not cfg.revealHeight) and buttonsArea[2]
+			or (buttonsArea[4] - mathFloor(cfg.revealHeight * widgetScale))
+		if mathIsInRect(x, y, buttonsArea[1], bottom, buttonsArea[3], buttonsArea[4]) then
+			return true
+		end
+	end
+end
+
+function widget:MouseWheel(up, value) -- up = true/false , value = -1/1
+@@@ end

@@ -1,0 +1,50 @@
+diff --git a/luaui/Widgets/gui_top_bar_buttons.lua b/luaui/Widgets/gui_top_bar_buttons.lua
+index 45f98e1..206f6f5 100644
+--- a/luaui/Widgets/gui_top_bar_buttons.lua
++++ b/luaui/Widgets/gui_top_bar_buttons.lua
+@@ -1161,6 +1161,16 @@ function widget:DrawScreen()
+ 	glColor(1, 1, 1, 1)
+ end
+ 
++-- Hidden, only a thin band along the screen's top brings the strip back: the panels that moved up
++-- into its place can be hovered. Once it shows, all of it keeps it open.
++local function overStrip(x, y)
++	if not buttonsArea[1] then
++		return false
++	end
++	local bottom = showButtons and buttonsArea[2] or (buttonsArea[4] - mathFloor(cfg.revealHeight * widgetScale))
++	return mathIsInRect(x, y, buttonsArea[1], bottom, buttonsArea[3], buttonsArea[4])
++end
++
+ function widget:MousePress(x, y, button)
+ 	if saveDialog then
+ 		if button == 1 then
+@@ -1278,8 +1288,9 @@ function widget:MousePress(x, y, button)
+ 		end
+ 	end
+ 
+-	-- a click on the strip itself never falls through to the world
+-	if hoveringButtons then
++	-- a click on the strip itself never falls through to the world: the strip under the click, not under the pointer
++	-- at the last check (a touch screen moves the pointer and presses in the same frame)
++	if overStrip(x, y) then
+ 		return true
+ 	end
+ end
+@@ -1418,16 +1429,6 @@ local function currentButtonSignature()
+ 	}, ",")
+ end
+ 
+--- Hidden, only a thin band along the screen's top brings the strip back: the panels that moved up
+--- into its place can be hovered. Once it shows, all of it keeps it open.
+-local function overStrip(x, y)
+-	if not buttonsArea[1] then
+-		return false
+-	end
+-	local bottom = showButtons and buttonsArea[2] or (buttonsArea[4] - mathFloor(cfg.revealHeight * widgetScale))
+-	return mathIsInRect(x, y, buttonsArea[1], bottom, buttonsArea[3], buttonsArea[4])
+-end
+-
+ function widget:Update(dt)
+ 	now = osClock()
+ 
