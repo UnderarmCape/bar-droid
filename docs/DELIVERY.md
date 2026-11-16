@@ -1884,7 +1884,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       a replay (a temporary dev-env.sh wrote a demofile script) has its recorded player active, not a spectator, the
       next-player arrow on that player; fp-save-test ALL PASS. Left: the Settings copy's fallback as a user widget (it
       removes itself after BAR's Options was already kept off, and its Shutdown errors) cannot happen while launch-bar.sh
-      parks the file there; spectate-test (laptop) not run, BAR on the laptop needs Kailil's yes.
+      parks the file there; spectate-test (laptop) not run, BAR on the laptop needs Kailil's yes. Since then the copy's
+      stand-down is clean: Shutdown does nothing and GetConfigData gives its saved state back (it saved the empty
+      model's over it). Checked on the dev phone, the copy run inside a scratch widget with a handler as user widgets
+      have it (no orderList or configData): the old copy's Shutdown erred ("listScroller" nil) and its state was lost,
+      the new one PASS both; remake-check PASS. BAR's own Options still comes back only at the next start.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

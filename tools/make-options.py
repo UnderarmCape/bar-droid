@@ -291,6 +291,9 @@ function draw.sidebar()
 	-- while this one is not running)
 	if not widgetHandler.orderList or not widgetHandler.configData then
 		Spring.Echo("[bardroid-settings] not one of the game's widgets: BAR's own Options instead")
+		-- (Shutdown and GetConfigData stand down too: Shutdown's view.close() erred on a list never made, and the
+		-- handler would have saved an empty state over this copy's; review 2026-11-16)
+		droid.standDown = true
 		if widgetHandler.RemoveWidget then
 			widgetHandler:RemoveWidget(self)
 		end
@@ -325,7 +328,22 @@ function draw.sidebar()
 	model.setConfigData(data)''',
      '''function widget:SetConfigData(data)
 	droid.configLoaded = true -- BAR Droid: its own saved state (Initialize takes BAR's Options' without one)
+	droid.saved = data -- BAR Droid: and kept as it came, for GetConfigData when this copy stands down (Initialize)
 	model.setConfigData(data)'''),
+    ('''function widget:Shutdown()
+	view.close()''',
+     '''function widget:Shutdown()
+	if droid.standDown then -- BAR Droid: removed itself in Initialize, nothing made to close
+		return
+	end
+	view.close()'''),
+    ('''function widget:GetConfigData()
+	local data = model.getConfigData()''',
+     '''function widget:GetConfigData()
+	if droid.standDown then -- BAR Droid: removed itself in Initialize: its saved state kept as it was
+		return droid.saved
+	end
+	local data = model.getConfigData()'''),
     ('''function widget:GetInfo()''',
      '''-- BAR Droid: a release without the model this copy is made on (a replay of an older BAR release plays its own files):
 -- nothing registered, so the handler loads BAR's own Options instead (this copy's replaces never takes its place);
