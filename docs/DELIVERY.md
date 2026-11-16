@@ -1955,6 +1955,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on test-31723, 31836 and 31958 (phone-lua-check; Unit Groups' on all twelve kept releases). Dev phone: the 14 patch
       files loaded, no Lua error or layer miss; dock-phone-test ALL PASS, fp-save-test with no failure. launch-bar.sh,
       LobbyBridge and Prefs found fine.
+      A fifteenth review (the day's changes of 11-16: the pad's note, the presets' X, the Settings and Statistics copies,
+      the chat over them, the two top bar press patches, the launcher's margins): no correctness fault (scopes in all
+      three releases, the tooltip width's units, the dropdown's hit rects checked); two small ones fixed: (1) the share
+      list centred over all its room, half the note's room above it, so a note under a full list could touch its last
+      row: centred over the room above the note's (pad-test -Share, 15 teammates: the note 15-16 px under the list
+      upright and sideways); (2) the chat's upright gate for Settings at the copy's own 1.05, not 1.0. Left: the
+      settings' boxes and choices' moved 6-7 dp lie outside the scroll column, so the left of their press ripple is
+      cut (the box and circle whole and pressed as before).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

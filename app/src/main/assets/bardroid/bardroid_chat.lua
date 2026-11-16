@@ -916,12 +916,14 @@ function widget:DrawScreen()
 		return
 	end
 	local barTyping = WG.chat and WG.chat.isInputActive and WG.chat.isInputActive() -- (BAR's box: a map marker)
-	-- upright, BAR's Settings or Statistics open (the app's copies): no lines over them. Both hang from BAR's top bar
-	-- across the screen, where the lines are: "Phone paused the game", said as the window opened, lay across its title
-	-- (dev phone, 2026-11-16). The lines come back as it closes; typing shows them as before.
+	-- upright, BAR's Settings or Statistics open (the app's copies; with BAR's official engine BAR's own Options, which
+	-- upright is wider than the screen too): no lines over them. Both hang from BAR's top bar across the screen, where
+	-- the lines are: "Phone paused the game", said as the window opened, lay across its title (dev phone, 2026-11-16).
+	-- The lines come back as it closes; typing shows them as before. Each by its own upright test (Settings' copy lays
+	-- itself out upright only past 1.05; review 2026-11-16).
 	if not (typing or barTyping) and vsy > vsx then
 		local o, t = WG.options, WG.teamstats
-		if (o and o.isvisible and o.isvisible()) or (t and t.isvisible and t.isvisible()) then
+		if (vsy > vsx * 1.05 and o and o.isvisible and o.isvisible()) or (t and t.isvisible and t.isvisible()) then
 			return
 		end
 	end

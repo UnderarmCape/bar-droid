@@ -1686,7 +1686,9 @@ local function shareDraw(vsx, vsy)
 	local first = math.max(1, math.min(s.index - math.floor((shown - 1) / 2), nTeams - shown + 1))
 	local nameSize = math.min(size, math.floor(teamH / 1.9 + 0.5))
 	local h = fixedH + teamH * shown
-	local midY = dock and (top + floorY) / 2 or vsy / 2
+	-- (centred over the room left above the note's: centred over all of it, half the note's room went above the list
+	-- and a note under a full list overlapped its last row by a few pixels; review 2026-11-16)
+	local midY = (top + floorY + noteRoom) / 2
 	local x0, y1 = math.floor(vsx / 2 - w / 2), math.min(math.floor(midY + h / 2), top - pad)
 	-- (right of the unit info panel, bottom left, when the list reaches down past its top: 15 teammates ran over its
 	-- right edge; dev phone, pad-test -Share 2026-11-11)
