@@ -916,6 +916,15 @@ function widget:DrawScreen()
 		return
 	end
 	local barTyping = WG.chat and WG.chat.isInputActive and WG.chat.isInputActive() -- (BAR's box: a map marker)
+	-- upright, BAR's Settings or Statistics open (the app's copies): no lines over them. Both hang from BAR's top bar
+	-- across the screen, where the lines are: "Phone paused the game", said as the window opened, lay across its title
+	-- (dev phone, 2026-11-16). The lines come back as it closes; typing shows them as before.
+	if not (typing or barTyping) and vsy > vsx then
+		local o, t = WG.options, WG.teamstats
+		if (o and o.isvisible and o.isvisible()) or (t and t.isvisible and t.isvisible()) then
+			return
+		end
+	end
 	local budget = (typing or barTyping) and math.max(maxLines, LINES_TYPING) or maxLines
 	-- before the game starts: the lines end above BAR's start countdown
 	local countdownTop = WG.bardroidChat and WG.bardroidChat.countdownTop()
