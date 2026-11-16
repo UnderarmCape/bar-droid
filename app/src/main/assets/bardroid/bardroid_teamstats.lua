@@ -1592,7 +1592,10 @@ local function drawWindow()
 		1,
 		1,
 		1,
-		WG.FlowUI.clampedOpacity
+		-- BAR Droid: nearly opaque, as the app's Settings: without the GUI shader's blur (off on phones) the game showed
+		-- through, the chat's "Phone paused the game" across the title and BAR's GAME PAUSED across the charts (dev
+		-- phone, upright, 2026-11-16)
+		math.max(0.94, WG.FlowUI.clampedOpacity or 0)
 	)
 end
 
@@ -1925,6 +1928,13 @@ function widget:DrawScreen()
 			end
 			if tip then
 				local width = WG.tooltip.getFontsize() * 90
+				-- BAR Droid: no wider than the screen: upright the Summary's "Right-click to rename or move it, or put its
+				-- columns back ..." ran off its right edge (dev phone, 2026-11-16). WrapText measures at the font's own
+				-- size, the tooltip prints at its own: the room scaled from the one to the other.
+				local droidFs = WG.tooltip.getFontsize()
+				if droidFs and droidFs > 0 then
+					width = math.min(width, vsx * 0.85 * ((font and font.size or droidFs) / droidFs))
+				end
 				WG.tooltip.ShowTooltip("teamstats", model.wrapTip(tip, font, width), nil, nil, title)
 			end
 		end
