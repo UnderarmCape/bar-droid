@@ -110,7 +110,10 @@ function widget:MousePress(x, y, button)
 	if tb.showingQuit and tb.showingQuit() then -- (BAR's quit dialog up: its own)
 		return false
 	end
-	local name = tb.buttonAt and tb.buttonAt(x, y)
+	if not tb.buttonAt then -- (a release without it: BAR's own Top Bar takes the press, its buttons work; review 2026-11-16)
+		return false
+	end
+	local name = tb.buttonAt(x, y)
 	if not name then
 		-- (not a button: taken here, as BAR's Top Bar takes it, but without its hidden sliders: a press on the hidden
 		-- energy bar's conversion knob, or a team game's share knobs, dragged it unseen and set it where the finger let

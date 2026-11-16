@@ -1898,9 +1898,13 @@ function widget:DrawScreen()
 			WG.guishader.RemoveDlist("ordermenu")
 		end
 		doUpdate = nil
+		droid.hidden = true -- BAR Droid: hidden (the dock up, or no orders): drawn again once it shows
 		tracy.ZoneEnd()
 	else
 		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Visible")
+		if droid.hidden then -- BAR Droid: shown again: its orders' picture made anew
+			droid.hidden, doUpdate = nil, true
+		end
 		if displayListGuiShader and WG.guishader then
 			WG.guishader.InsertDlist(displayListGuiShader, "ordermenu")
 		end

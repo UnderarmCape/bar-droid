@@ -201,10 +201,12 @@ local function layout()
 		-- under an empty strip of the screen's top)
 		local fa = chatDocked and WG.topbar and WG.topbar.GetFreeArea and WG.topbar.GetFreeArea()
 		local stop = vsx - margin
-		if fa and fa[1] and fa[1] > vsx * 0.4 then
+		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, margin + ed.dx * vsx)))
+		-- (only while the box has room there, a quarter of the screen: moved right in the layout editor it began past the
+		-- buttons' start and ended before it began, one letter a line; under the top bar then; review 2026-11-16)
+		if fa and fa[1] and fa[1] > vsx * 0.4 and fa[1] - margin > boxLeft + vsx * 0.25 then
 			top, stop = vsy - fontSize * 0.4, fa[1] - margin
 		end
-		boxLeft = math.floor(math.max(0, math.min(vsx * 0.9, margin + ed.dx * vsx)))
 		boxTop = math.floor(math.max(vsy * 0.1, math.min(vsy, top + ed.dy * vsy)))
 		boxRight = math.floor(math.min(stop, boxLeft + (vsx - 2 * margin) * ed.size))
 	else

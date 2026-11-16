@@ -296,6 +296,23 @@ function widget:MousePress(x, y, button)
     ('''	if #commands == 0 and (not alwaysShow or spGetGameFrame() == 0) then -- dont show pregame because factions interface is shown''',
      '''	if (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0)) -- dont show pregame because factions interface is shown
 		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn'''),
+    # (and drawn again when it shows after the dock: hidden with orders to show, its last picture was of the pick before
+    # the dock's, or never made, while the orders under it were the live ones; BAR hides it only with no orders, so its
+    # next shown frame always counted as a change; review 2026-11-16)
+    ('''		doUpdate = nil
+		tracy.ZoneEnd()
+	else
+		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Visible")
+''',
+     '''		doUpdate = nil
+		droid.hidden = true -- BAR Droid: hidden (the dock up, or no orders): drawn again once it shows
+		tracy.ZoneEnd()
+	else
+		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Visible")
+		if droid.hidden then -- BAR Droid: shown again: its orders' picture made anew
+			droid.hidden, doUpdate = nil, true
+		end
+'''),
     # (nor hovered while not drawn: sideways for one thumb with the dock moved to the left the menu's place is open map,
     # and its buttons' tooltips ("D-Gun") and its plain pointer showed there, dev phone 2026-11-13)
     ('''	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")

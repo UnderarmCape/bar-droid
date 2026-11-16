@@ -223,7 +223,19 @@ function widget:MousePress(x, y, button)
 	then		(WG.guishader and not displayListGuiShader) or (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0))
 		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) -- BAR Droid: the portrait dock has the orders
 	then	if #commands == 0 and (not alwaysShow or spGetGameFrame() == 0) then -- dont show pregame because factions interface is shown	if (#commands == 0 and (not alwaysShow or spGetGameFrame() == 0)) -- dont show pregame because factions interface is shown
-		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
+		or (WG.BarDroidPortrait and WG.BarDroidPortrait.active()) then -- BAR Droid: the dock has the orders, not drawn		doUpdate = nil
+		tracy.ZoneEnd()
+	else
+		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Visible")
+		doUpdate = nil
+		droid.hidden = true -- BAR Droid: hidden (the dock up, or no orders): drawn again once it shows
+		tracy.ZoneEnd()
+	else
+		tracy.ZoneBeginN("W:OrderMenu:DrawScreen:Visible")
+		if droid.hidden then -- BAR Droid: shown again: its orders' picture made anew
+			droid.hidden, doUpdate = nil, true
+		end
+	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
 	if not WG.topbar or not WG.topbar.showingQuit() then
 	tracy.ZoneBeginN("W:OrderMenu:DrawScreen:HoverScan")
 	-- BAR Droid: not while the menu is not shown (the dock has the orders): its place may be open map

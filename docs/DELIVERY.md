@@ -1914,7 +1914,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pad up (no live rect, as the swap arrow had), and with MULTI on it left the unit list up: a live rect, and the list
       let go; (7) in the split and sideways a drag on the left block scrolled the right block's share list or panel (a
       rule for grids spanning both halves; there the grid is the right block's). Left: the dock's per-frame garbage
-      (writeDock's compare strings, SP.around's tables), low. Since cut: SP.around's rects kept while the dock and hole
+      (writeDock's compare strings, SP.around's tables), low. dock-phone-test's circle case put its "hidden" Pawn at the
+      screen's middle, the split's game: behind the right block there now. Dev phone: dock-phone-test ALL PASS at both
+      shapes (the circle case at 1080x1198 first failed as it should: the Pawn in the gap picked), touch-phone-test and
+      pad-test -Chat ALL PASS; a screenshot of the split with the commander picked: its name fits beside QUEUE.
+      Since cut: SP.around's rects kept while the dock and hole
       stay (ten tables a frame), the window names, the resource signature's tables and the minimap frame's string made
       once; writeDock's compare left as it is (its lines are what RtsTouch reads, any change in them must still go out).
       Dev phone: dock-phone-test ALL PASS; sideways the minimap still in the dock's middle, the dock dimmed around it.
@@ -1931,10 +1935,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       fixed, worked out once per pick (SelectionChanged; a Bot Lab, the commander, the lab: insert 0, 1, 0). Dev phone:
       in a plain skirmish WG.BarDroidCatchingUp false in 50 checks of 50 (the true side read from the code: catchup-test
       runs BAR on the laptop); a sped-up 14-minute skirmish, 13 units, 30 fps, no error or warning from the app;
-      dock-phone-test ALL PASS at both shapes, touch-phone-test and pad-test ALL PASS. dock-phone-test's circle case put its "hidden" Pawn at the
-      screen's middle, the split's game: behind the right block there now. Dev phone: dock-phone-test ALL PASS at both
-      shapes (the circle case at 1080x1198 first failed as it should: the Pawn in the gap picked), touch-phone-test and
-      pad-test -Chat ALL PASS; a screenshot of the split with the commander picked: its name fits beside QUEUE.
+      dock-phone-test ALL PASS at both shapes, touch-phone-test and pad-test ALL PASS.
+      A thirteenth review (bardroid_topbar.lua, bardroid_chat.lua, the Order menu and TeamStats copies since 11-11): (1)
+      the Order menu copy, hidden while the dock is up, kept the orders' picture of the pick before the dock (or none,
+      never shown): when the dock went down (sideways, a mouse or keyboard taken up) it showed stale or blank buttons over
+      the live ones; BAR hides it only with no orders, so its next frame always counted as a change: it is drawn anew
+      once shown again (make-ordermenu.py); (2) the chat box sideways with the dock, moved right in the layout editor,
+      ended before it began (one letter a line): the top row only while it has a quarter of the screen there; (3) the top
+      bar's hidden span takes no press in a release without WG.topbar.buttonAt (none seen: BAR's own then). Dev phone
+      sideways, the dock up from the start, the commander picked, then "src mouse": the dock down and the Order menu with
+      the commander's orders (the old copy not run); remake-check PASS, dock-phone-test and pad-test -Chat ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
