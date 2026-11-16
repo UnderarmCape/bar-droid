@@ -5150,7 +5150,8 @@ function widget:Shutdown()
 	end
 	WG.BarDroidPortrait = nil
 	active = false
-	if SP.hidden and WG.advplayerlist_api and WG.advplayerlist_api.SetHidden then -- (BAR's player list back too)
+	-- (BAR's player list back too: folded, or hidden under the D-gun mode's sticks or with the dock aside, widget:Update)
+	if (SP.hidden or SP.listOff) and WG.advplayerlist_api and WG.advplayerlist_api.SetHidden then
 		WG.advplayerlist_api.SetHidden(false)
 	end
 	SP.landMinimap() -- (BAR's minimap back in its own place)
