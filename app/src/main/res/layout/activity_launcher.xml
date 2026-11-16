@@ -39,9 +39,13 @@
                 android:paddingTop="6dp"
                 android:paddingBottom="6dp" />
 
+            <!-- (the rows 4 dp wider on each side: the button's background keeps a 4 dp transparent edge, and their faces
+                 stood inside the text and the divider's line, dev phone 2026-11-16) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="-4dp"
+                android:layout_marginEnd="-4dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
                 <Button style="@style/LauncherButton" android:id="@+id/btnInstall" android:text="@string/btn_install" />
@@ -52,6 +56,8 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="-4dp"
+                android:layout_marginEnd="-4dp"
                 android:baselineAligned="false"
                 android:orientation="horizontal">
                 <Button style="@style/LauncherButton.Small" android:id="@+id/btnGlCheck" android:text="@string/btn_glcheck" />
@@ -159,7 +165,7 @@
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbLobbyBridge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_lobby_bridge" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbNoSeccomp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_noseccomp" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbVerboseX" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_verbosex" />
-            <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:textAllCaps="false" android:text="@string/btn_save" />
+            <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:layout_marginStart="-4dp" android:layout_marginEnd="-4dp" android:textAllCaps="false" android:text="@string/btn_save" />
 
             <!-- (the log: under the buttons on a wide screen, LauncherActivity.fitLayout) -->
             <TextView style="@style/LauncherSection" android:id="@+id/logTitle" android:text="@string/log_title" />
