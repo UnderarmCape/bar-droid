@@ -1889,6 +1889,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       model's over it). Checked on the dev phone, the copy run inside a scratch widget with a handler as user widgets
       have it (no orderList or configData): the old copy's Shutdown erred ("listScroller" nil) and its state was lost,
       the new one PASS both; remake-check PASS. BAR's own Options still comes back only at the next start.
+      A tenth review (GameService, GameActivity, LauncherActivity since 11-11), five fixed: (1) Stop while a start fetched
+      a newer Mesa (an app update's) let the start go on: the older Mesa still counts as installed, and the engine came
+      up after Stop with the service gone; play now ends when Stop came (closing, the thread's interrupt kept); (2) that
+      fetch ran Install / Update's forced online BAR update at every start until the new Mesa came (30 s waits offline):
+      only a first install does now, the start's own check after it; (3) the launcher's engine line kept "(phone build)"
+      after the game set a phone build aside, until the launcher was made again: the device lines are read again at each
+      onStart; (4) the upright loading bar and the pre-game cover kept the size of the screen they were made on, so after
+      a fold mid-load BAR's own bar stood out above the app's: sized again when the window's height changes; (5) the load
+      pictures' first check skipped when the screen's shape matched the engine's start, not the files: a game screen made
+      again after the old one turned left the next game's pictures in the turned shape; the delayed check always runs
+      (it changes files only when their shape is wrong). Dev phone: the Mesa URL pointed at an adb-reversed socket that
+      never answers, Stop tapped mid-download: "stopped", no engine in the next 30 s (and a fetch that failed went on to
+      the start with no online update, one offline check); the screen made 1080x1198 mid-load upright: the bar 60 pixels,
+      70 up, covering BAR's; dock-phone-test ALL PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

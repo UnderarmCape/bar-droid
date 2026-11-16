@@ -240,15 +240,23 @@ public class GameService extends Service {
         worker.start();
     }
 
-    private void install() {
+    private void install() { install(true); }
+
+    /**
+     * The install's steps, and with updateBar BAR's own update too (Install / Update, and a first install: with automatic
+     * updates off too). A start that only fetches a step an app update added (a newer Mesa) leaves BAR to its own check
+     * (play): it forced an online update at every start until the new Mesa came, 30 s waits offline (review 2026-11-16).
+     */
+    private void install(boolean updateBar) {
         setStatus("installing");
         installer = new Installer(this, paths);
         try {
             installer.installAll((step, detail, pct) -> setStatus("install " + step + ": " + detail + (pct >= 0 ? " (" + pct + "%)" : "")));
-            update(true);   // Install / Update also updates BAR, with automatic updates off too
+            if (updateBar) update(true);
             setStatus("installed");
         } catch (InterruptedException e) {
             setStatus("install stopped");
+            Thread.currentThread().interrupt();   // (the start that called it stops too: play)
         } catch (Exception e) {
             Log.e("install", "failed", e);
             setStatus("install failed: " + e.getMessage());
@@ -281,9 +289,11 @@ public class GameService extends Service {
         if ((!inst.isInstalled() || inst.mesaOutdated()) && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa: fetched when it can be, the
             // installed one running meanwhile): run what is missing.
-            install();
+            install(!inst.isInstalled());
             inst = new Installer(this, paths);
-            if (!inst.isInstalled()) return;
+            // (Stop during it ends the start: the older Mesa still counts as installed, and the game went on after Stop,
+            // the service already gone; review 2026-11-16)
+            if (closing || Thread.currentThread().isInterrupted() || !inst.isInstalled()) return;
         }
         boolean showLauncher = true;
         try {

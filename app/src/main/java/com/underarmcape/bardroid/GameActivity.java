@@ -578,6 +578,16 @@ public class GameActivity extends MainActivity {
     // engine's load messages, GameService.loadMessage) sized to fit on two lines, filled by BAR's own stages.
     private android.widget.TextView loadBar;
     private android.graphics.drawable.ClipDrawable loadFill;
+    private int loadBarForH;   // the window height the bar was sized for
+
+    /** BAR's bar: 6.5 % up, 3.8 % tall, a border of 0.27 %: covered by one 5 % tall about its middle. */
+    private static android.widget.FrameLayout.LayoutParams loadBarParams(int h) {
+        int barH = (int) Math.ceil(h * 0.05f);
+        android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT, barH, android.view.Gravity.BOTTOM);
+        lp.bottomMargin = Math.max(0, (int) (h * 0.084f - barH / 2f));
+        return lp;
+    }
 
     private void updateLoadBar() {
         View root = getWindow().getDecorView();
@@ -606,16 +616,18 @@ public class GameActivity extends MainActivity {
             v.setMaxLines(2);
             v.setPadding((int) (10 * dp), 0, (int) (10 * dp), 0);
             v.setAutoSizeTextTypeUniformWithConfiguration(8, 15, 1, android.util.TypedValue.COMPLEX_UNIT_SP);
-            // (BAR's bar: 6.5 % up, 3.8 % tall, a border of 0.27 %: covered by one 5 % tall about its middle)
-            int barH = (int) Math.ceil(h * 0.05f);
-            android.widget.FrameLayout.LayoutParams lp = new android.widget.FrameLayout.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT, barH, android.view.Gravity.BOTTOM);
-            lp.bottomMargin = Math.max(0, (int) (h * 0.084f - barH / 2f));
-            addContentView(v, lp);
+            addContentView(v, loadBarParams(h));
             loadBar = v;
+            loadBarForH = h;
             Log.i("app", "loading screen: the loading bar across the upright screen, its words fitted");
         }
         if (loadBar == null) return;
+        // (folded or unfolded while loading: sized again for the new height; BAR's bar, sized by the height, stood out
+        // above the app's after a fold; review 2026-11-16)
+        if (show && h > 0 && h != loadBarForH) {
+            loadBar.setLayoutParams(loadBarParams(h));
+            loadBarForH = h;
+        }
         if ((loadBar.getVisibility() == View.VISIBLE) != show) loadBar.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return;
         String m = GameService.loadMessage();
@@ -684,6 +696,7 @@ public class GameActivity extends MainActivity {
     // wrapped to the screen: what it waits for and the server's address (GameService.preGameHost), the Free memory
     // button over it.
     private android.widget.TextView preGameView;
+    private int preGameForH;   // the window height it was sized for
     private int preGameDots = -1;
 
     private void updatePreGame() {
@@ -704,10 +717,17 @@ public class GameActivity extends MainActivity {
                     android.view.ViewGroup.LayoutParams.MATCH_PARENT, (int) (h * 0.9f), android.view.Gravity.TOP);
             addContentView(v, lp);
             preGameView = v;
+            preGameForH = h;
             if (freeMemory != null) freeMemory.bringToFront();
             Log.i("app", "pre-game: the engine's waiting screen wrapped to the upright screen");
         }
         if (preGameView == null) return;
+        if (show && h > 0 && h != preGameForH) {   // (folded or unfolded meanwhile: 90 % of the new height, as loadBar)
+            android.view.ViewGroup.LayoutParams lp = preGameView.getLayoutParams();
+            lp.height = (int) (h * 0.9f);
+            preGameView.setLayoutParams(lp);
+            preGameForH = h;
+        }
         if ((preGameView.getVisibility() == View.VISIBLE) != show) preGameView.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show) return;
         // (dots that count up with the half-second check: a still screen for a slow server read as frozen; all three

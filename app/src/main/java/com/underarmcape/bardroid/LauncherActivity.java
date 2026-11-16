@@ -285,6 +285,9 @@ public class LauncherActivity extends AppCompatActivity {
         Log.addListener(logListener);
         handler.post(ticker);
         mapCapLabel();   // (the maps' size now: a game since may have downloaded some, its start removed others)
+        // (and the device lines: a phone build set aside by the game since, or a BAR update, changed the engine line;
+        // it said "(phone build)" until the launcher was made again; review 2026-11-16)
+        deviceView.setText(deviceSummary());
         refreshMapList();
     }
 

@@ -113,7 +113,8 @@
                  side, as the buttons: their background's transparent edge kept the text and the line inside the labels
                  above them, dev phone 2026-11-16) -->
             <!-- (a text field that drops down the maps installed: LauncherActivity.installedMaps) -->
-            <AutoCompleteTextView android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="-4dp" android:layout_marginEnd="-4dp" android:inputType="text" android:textSize="14sp" android:importantForAutofill="no" android:completionThreshold="1" />
+            <!-- (Done on the keyboard, as the Mesa field: its Next took the focus to a setting below, the keyboard up) -->
+            <AutoCompleteTextView android:id="@+id/edMap" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginStart="-4dp" android:layout_marginEnd="-4dp" android:inputType="text" android:imeOptions="actionDone" android:textSize="14sp" android:importantForAutofill="no" android:completionThreshold="1" />
 
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAudio" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_audio" />
             <CheckBox style="@style/LauncherCheck" android:id="@+id/cbAutoLobby" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/cb_auto_lobby" />
