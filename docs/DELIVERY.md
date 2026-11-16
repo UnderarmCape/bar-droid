@@ -2204,13 +2204,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over the game on Load Game): nothing to fix. Launcher polish looked for in Display & touch preferences: the
       switches only seem out of line (the thumb overhangs left when off, right when on); nothing changed. The test
       saves made that morning removed from the dev phone.
-- [ ] **A tooltip's dimmer note still unwrapped** (hardening, 2026-11-16, dev phone upright, Statistics' Summary): BAR
+- [x] **A tooltip's dimmer note still unwrapped** (hardening, 2026-11-16, dev phone upright, Statistics' Summary): BAR
       31958's content tooltips measure their `note` apart (gui_tooltip.lua measureParts), which the block above never
       sees, so a note wider than the screen ran off it. Fixed where the app owns the caller: the Statistics copy wraps
       its text and note to 85 % of the screen (cfb86e89). Left open in the phone tooltip patch: a second block anchored
       in measureParts would find no place in releases before 31958, and the engine then runs BAR's own file whole, so
       replays of those releases would lose the block above. Worth doing if the patch format gets optional blocks, or
       once replays before 31958 no longer matter; any other widget's note wider than the screen shows it.
+      Closed the same day by an audit of all 325 widgets of test-31958 (read off the dev phone's pool): the content
+      tooltips with a note are TeamStats' (wrapped by the copy), the top bar's wind (`ui.minimap.windAdvice`) and Unit
+      Groups' auto note, both only while BAR's own top bar and groups show, that is with the dock off, sideways on a
+      screen some 2000 pixels wide; the others are a developer tool's (dbg_ceg_auto_reloader) and Settings' restart
+      line, which is not a tooltip. Nothing a player sees upright. To look at again if BAR gives more tooltips notes.
 - [x] **Pregame upright: two thirds sky** (hardening, 2026-11-14, dev phone, a lobby skirmish on Avalanche on the phone
       engine): BAR's start camera looked at the whole map from far off, the start box small by the dock. The dock now
       puts my start box in the view above it once, a second into the pregame of games where a start spot is picked
