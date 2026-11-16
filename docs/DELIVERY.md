@@ -1798,6 +1798,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       down to 84 % and mending; no Lua error. (The scratch widget's first try put both groups north of a corner start,
       off the map: groups toward the map's middle now.)
       pad-test -Dgun and -Online at 1080x1198 sideways (the unfolded Fold7 held wide, where the pad plays): ALL PASS.
+      The touch D-GUN there sideways: MOVE and AIM low in the corners, a FIRE beside each, the cancel X above MOVE, as
+      upright; no error. As upright, AIM's circle reaches the corner of BAR's small player list (bottom right).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
