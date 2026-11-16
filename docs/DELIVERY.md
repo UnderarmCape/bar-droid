@@ -2198,6 +2198,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       written to work in all three) judges the press by the strip under it; for BAR,
       `docs/upstream/bar-topbar-buttons-press-hover.patch`. Dev phone: three of three map taps through; remake-check
       PASS.
+- [ ] **The lobby's quick Skirmish: its maps unnamed by touch** (hardening, 2026-11-16, dev phone upright, offline):
+      Skirmish, then game type, difficulty and faction (each step whole upright), then Select Map: four thumbnails, about
+      a fifth of the panel, no names (on a desktop a hover names them; a finger has none), and nothing says which are
+      installed. Offline, a tap on one not installed (Red Comet Remake 1.8) starts its download, "Download Failed" in
+      the corner, and Start then waits on it; the launcher's Play vs AI uses installed maps only. Worth doing in
+      bardroid_lobby_touch.lua's upright layout: the thumbnails across the panel's width with their names under them,
+      the ones not installed marked. Not started.
 - [ ] **The same stale hover in BAR's player list and Build Bar** (hardening, 2026-11-16; the scan above rerun on all
       325 widgets of test-31958): gui_advplayerslist's MousePress reads `hoverPlayerlist` and gui_buildbar's
       `hoveredBOpt` / `hoveredFac`, both set in Update from the pointer's last place. Neither shows on phones as the app
