@@ -548,15 +548,33 @@ local function readTouch(lines)
 	local b = WG.bardroidBuildmenu
 	if b and b.droidSpot and (lines:find("spot", 1, true) or lines:find("nudge ", 1, true) or lines:find("grid ", 1, true)) then
 		local nx, ny = 0, 0
-		local function flush()
+		-- (the newest "spotto" not applied yet: a drag sends about four a frame, each a ground trace, the building placed
+		-- again and the place file written; the newest alone is where it goes, one a frame; review 2026-11-16)
+		local tx, ty
+		local function applySpotto()
+			if tx then
+				local _, vy = Spring.GetViewGeometry()
+				local _, pos = Spring.TraceScreenRay(tx, vy - ty - 1, true)
+				if pos then
+					b.droidSpot(tx, ty, false)
+				end
+				tx, ty = nil, nil
+			end
+		end
+		local function flushNudges()
 			if (nx ~= 0 or ny ~= 0) and b.droidNudge then
 				b.droidNudge(nx, ny)
 			end
 			nx, ny = 0, 0
 		end
+		local function flush() -- (in the order they came: a spotto waits only while no nudge follows it)
+			applySpotto()
+			flushNudges()
+		end
 		for line in lines:gmatch("[^\n]+") do
 			local kind, args = line:match("^(%a+) (.*)$")
 			if kind == "nudge" then
+				applySpotto()
 				local x, y = args:match("^(%S+) (%S+)")
 				nx, ny = nx + (tonumber(x) or 0), ny + (tonumber(y) or 0)
 			elseif kind == "spot" then
@@ -593,7 +611,9 @@ local function readTouch(lines)
 				end
 				if px then
 					Spring.WarpMouse(px, py)
-				elseif tonumber(x) and s and cmdID and cmdID < 0 then
+				-- (the rounded pixel only with an older copy: this one's nil means the spot is under a panel, and the
+				-- pointer went onto it, BAR's hover there; review 2026-11-16)
+				elseif not b.droidSpotPixel and tonumber(x) and s and cmdID and cmdID < 0 then
 					local bx, by, bz = Spring.Pos2BuildPos(-cmdID, s[1], s[2], s[3], Spring.GetBuildFacing())
 					local wx, wy, wz = Spring.WorldToScreenCoords(bx, by, bz)
 					if wz and wz <= 1 then
@@ -601,16 +621,12 @@ local function readTouch(lines)
 					end
 				end
 			elseif kind == "spotto" then -- (a building dragged: the spot under the pointer, BAR's blueprint; over the sky
-				-- or past the map's edge it stays where it was)
-				flush()
+				-- or past the map's edge it stays where it was: applySpotto)
+				flushNudges()
 				local x, y = args:match("^(%S+) (%S+)")
 				x, y = tonumber(x), tonumber(y)
 				if x and y then
-					local _, vy = Spring.GetViewGeometry()
-					local _, pos = Spring.TraceScreenRay(x, vy - y - 1, true)
-					if pos then
-						b.droidSpot(x, y, false)
-					end
+					tx, ty = x, y
 				end
 			elseif kind == "grid" and b.droidSetGrid then
 				flush()
@@ -837,10 +853,13 @@ end
 local perfFrames, perfStart, perfLast, perfWorst = 0, nil, nil, 0
 local perSecond, secondStart, secondFrames = {}, nil, 0
 local catchup -- while catching up with a running game (below): the engine's own settings, where the last log line was
+local behindNow, runningFast -- (updateCatchup: game frames behind by GameProgress, nil before it; faster than its speed)
 -- (for the widgets that give orders by themselves: a rejoin replays the game, their callins fire for every past frame
--- and their orders land at the live one; bardroid_retreat.lua stands down meanwhile, review 2026-11-15)
+-- and their orders land at the live one; bardroid_retreat.lua stands down meanwhile, review 2026-11-15. Not only while
+-- the no-drawing mode is on: it gives up on a game it gains nothing on, minutes behind, and starts 2 s in; still
+-- behind by more than 5 s, or running faster than its speed, is catching up too; review 2026-11-16)
 WG.BarDroidCatchingUp = function()
-	return catchup ~= nil
+	return catchup ~= nil or (behindNow or 0) > 5 * 30 or runningFast == true
 end
 
 -- The late-game drop (Kailil, 2026-11-06: "Allow 50 percent resolution as the minimum late game drop ... Upscaling should
@@ -1031,6 +1050,7 @@ local function updateCatchup(now, frame, rate)
 	-- (springsettings bardroid_catchup = 0: the engine's own balance, for comparisons)
 	if Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then
 		endCatchup()
+		behindNow, runningFast = nil, false
 		return
 	end
 	local speed, _, paused = Spring.GetGameSpeed()
@@ -1041,6 +1061,7 @@ local function updateCatchup(now, frame, rate)
 	end
 	fastChecks = rate > CATCHUP_FAST * speed and fastChecks + 1 or 0
 	slowChecks = rate < 1.2 * speed and slowChecks + 1 or 0
+	behindNow, runningFast = behind, fastChecks > 0 -- (WG.BarDroidCatchingUp)
 	if not speedAt or spDiffTimers(now, speedAt) >= 3 then
 		speedNow = speedAt and (frame - speedFrame) / 30 / spDiffTimers(now, speedAt) or 0
 		speedFrame, speedAt = frame, now

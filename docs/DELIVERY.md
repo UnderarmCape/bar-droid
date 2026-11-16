@@ -1917,7 +1917,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (writeDock's compare strings, SP.around's tables), low. Since cut: SP.around's rects kept while the dock and hole
       stay (ten tables a frame), the window names, the resource signature's tables and the minimap frame's string made
       once; writeDock's compare left as it is (its lines are what RtsTouch reads, any change in them must still go out).
-      Dev phone: dock-phone-test ALL PASS; sideways the minimap still in the dock's middle, the dock dimmed around it. dock-phone-test's circle case put its "hidden" Pawn at the
+      Dev phone: dock-phone-test ALL PASS; sideways the minimap still in the dock's middle, the dock dimmed around it.
+      A twelfth review (bardroid_pad.lua and bardroid_touch.lua since 11-11, beyond the share list, the voice ping and
+      placing), five fixed: (1) WG.BarDroidCatchingUp said only whether the no-drawing mode was on, which gives up on a
+      game it gains nothing on (minutes behind) and starts 2 s in: AUTO RETREAT gave the replayed past's fall-backs in
+      those gaps; it now also answers true while more than 5 s behind by GameProgress or running faster than the game's
+      speed; (2) INSERT left on from the upright dock stayed held sideways without the dock, no button to see or tap off:
+      let go there; (3) a building's drag sent about four "spotto" lines a frame, each a ground trace, a placement and a
+      place-file write: the newest alone is applied, once a frame, in order with the other lines; (4) the dock's LAST
+      PINGS put the ping at the screen's middle, at or behind the dock: the dock's own camera move now, and a new ping
+      while cycling no longer reads "PING 5 OF 4"; (5) a spot under a panel had the old rounding warp the pointer onto it
+      (BAR's hover there): only with an older menu copy now. Left: a table each frame while INSERT is on (low). Dev phone:
+      in a plain skirmish WG.BarDroidCatchingUp false in 50 checks of 50 (the true side read from the code: catchup-test
+      runs BAR on the laptop); a sped-up 14-minute skirmish, 13 units, 30 fps, no error or warning from the app;
+      dock-phone-test ALL PASS at both shapes, touch-phone-test and pad-test ALL PASS. dock-phone-test's circle case put its "hidden" Pawn at the
       screen's middle, the split's game: behind the right block there now. Dev phone: dock-phone-test ALL PASS at both
       shapes (the circle case at 1080x1198 first failed as it should: the Pawn in the gap picked), touch-phone-test and
       pad-test -Chat ALL PASS; a screenshot of the split with the commander picked: its name fits beside QUEUE.

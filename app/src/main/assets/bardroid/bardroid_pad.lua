@@ -83,11 +83,14 @@ local PINGS_KEPT = 5
 local PING_CYCLE_SECONDS = 2
 local pings = {}
 local pingStep, pingStepAt = 0, nil
+local pingKept = PINGS_KEPT -- (how many the cycle under way goes through: the pad's 5, the dock's 4)
 local function addPing(x, y, z)
 	table.insert(pings, 1, { x, y, z })
 	pings[PINGS_KEPT + 1] = nil
 	if pingStepAt and pingStep > 0 then
-		pingStep = math.min(pingStep + 1, #pings) -- (still the same ping for a press that cycles on)
+		-- (still the same ping for a press that cycles on; the dock shows its last 4: "PING 5 OF 4" past them, the next
+		-- tap back to the newest; review 2026-11-16)
+		pingStep = math.min(pingStep + 1, #pings, pingKept)
 	end
 end
 -- The camera to the last ping from someone else, then the ones before it (the pad's RB + D-pad up; the portrait dock's
@@ -304,7 +307,8 @@ end
 -- (Kailil, 2026-11-05: pressed again within PING_CYCLE_SECONDS, the next older of the last PINGS_KEPT, round to the
 -- newest after the oldest; after a pause, the newest again; kept: fewer of them, the dock's last 4)
 pingLook = function(kept)
-	local n = math.min(#pings, kept or PINGS_KEPT)
+	pingKept = kept or PINGS_KEPT
+	local n = math.min(#pings, pingKept)
 	if n > 0 then
 		local t = now()
 		if pingStepAt and Spring.DiffTimers(t, pingStepAt) <= PING_CYCLE_SECONDS and pingStep <= n then
@@ -314,7 +318,14 @@ pingLook = function(kept)
 		end
 		pingStepAt = t
 		local p = pings[pingStep]
-		Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
+		-- (upright the dock's own camera move: the ping in the game's middle above the dock, as its other jumps; the
+		-- screen's middle was at or behind the dock; review 2026-11-16)
+		local P = WG.BarDroidPortrait
+		if P and P.active and P.active() and P.cameraTo then
+			P.cameraTo(p[1], p[2], p[3])
+		else
+			Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
+		end
 		note(n == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, n))
 	else
 		Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
@@ -2501,6 +2512,9 @@ local function queueLayout(vsx, vsy)
 		return
 	end
 	queue.insertRect = nil
+	-- (no dock, no INSERT button: one left on from the upright dock let go, else every finger order went to the front of
+	-- the queues with nothing on the screen to say so or tap off; review 2026-11-16)
+	queue.insert = false
 	local h, w = style.size(0.036), style.size(0.11)
 	local gap = style.size(0.008, 3)
 	local x1, y0 = math.floor(vsx * 0.65), math.floor(vsy * 0.16)
