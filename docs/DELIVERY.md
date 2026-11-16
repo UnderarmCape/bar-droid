@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [ ] **Spectating upright: the dock's buttons on the first tap?** (found 2026-11-16, a replay watched from the lobby
+      on the dev phone): playing, the home grid's buttons act on the first tap ("live", Kailil 2026-11-12: "not need
+      the ui one tap engage"); spectating, the grid (PLAYER CAM, TEAMS, FOLLOW UNIT, FREE CAM, ...) is left out
+      (writeDock's `leftKind ~= "spec"`), so its first tap only wakes the dock and drags on it pan the camera. Live, a
+      drag starting on it would no longer pan (the map above still does). His call; nothing changed.
 - [ ] **A gamepad upright: RB on the dock's build grid** (found 2026-11-10 by pad-test -Online upright): the pad's RB
       opens no build menu upright (the dock's grid stands in the copy's place and the pad does not drive it); building
       upright is by touch. Not asked for (Kailil plays touch upright, the pad sideways): his call whether the pad should
