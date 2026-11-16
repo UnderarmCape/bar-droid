@@ -5100,6 +5100,15 @@ function widget:Initialize()
 		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1; the wind's and tide's boxes over it with it)
 			return active and SP.dockAll() or nil
 		end,
+		-- (the wind's and the tide's boxes where they are shown, and which one's details are open: tools/dock-phone-test)
+		windRects = function()
+			if active and not SP.windOff() then
+				return SP.windRects()
+			end
+		end,
+		windOpen = function()
+			return SP.windInfo and SP.windInfo.kind or nil
+		end,
 		-- (a screen point on the dock itself: the split dock's band less the game between its blocks, where a building's
 		-- spot or a preset's tap belongs to the game; dock() alone refused both there, review 2026-11-15)
 		onDock = function(x, y)

@@ -411,6 +411,21 @@ local function onCmd(c)
 		end
 		check(string.format("STRAFE: the Pawns there, each fights side to side across its place on repeat (%d elmos)",
 			2 * side), ok, table.concat(words, " "))
+	elseif c == "windrects" then -- (the wind's and the tide's boxes, X pixels from the top left)
+		local P, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
+		local wb, tb
+		if P and P.windRects then
+			wb, tb = P.windRects()
+		end
+		local function line(name, r)
+			return r and string.format("%s %d %d %d %d\n", name, r[1], vsy - r[4], r[3], vsy - r[2]) or (name .. " nil nil\n")
+		end
+		write(line("wind", wb) .. line("tide", tb))
+	elseif c == "tide?" or c == "wind?" then -- (a first tap on the box, the dock's camera pad up: its details open)
+		local P = WG.BarDroidPortrait
+		local open = P and P.windOpen and P.windOpen()
+		local kind = c:sub(1, 4)
+		check("the " .. kind .. "'s box, its first tap with the camera pad up: its details open", open == kind, open or "none open")
 	elseif c == "end" then
 		Spring.Echo("[docktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end

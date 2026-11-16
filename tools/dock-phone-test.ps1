@@ -1,7 +1,8 @@
 # The upright touch dock (bardroid_portrait.lua) by real taps on the dev phone (adb input), in a skirmish: the build
 # grid's first building (in sight on any screen shape; the dock's itemCell says where) picked on the dock, its spot tapped and PLACE pressed 2.6 s later (the dock's menu must still take it), PLACE on a
 # blocked spot (its note), the D-gun mode's FIRE swiped right (full auto on) and left (off), its MOVE stick held and let
-# go (the commander stops at once), and the STRAFE preset picked and dragged onto the map. The test widget
+# go (the commander stops at once), the STRAFE preset picked and dragged onto the map, and the wind's and the tide's
+# boxes tapped with the camera pad up (their details open at the first tap). The test widget
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
 # off after. Nothing on the laptop: it runs any time. About 3 minutes.
@@ -233,6 +234,18 @@ try {
     Start-Sleep -Milliseconds 300; Touch UP $c1[0] $c1[1]; Start-Sleep -Milliseconds 1000
   } else { "[docktest] note: no circle's points" }
   Stage "circledock?"; Start-Sleep 1
+  # 9. the wind's and the tide's boxes: the first tap on each, the dock's camera pad up again, opens its details (the
+  # tide's "live" line once fell past the 320 bytes RtsTouch read of the dock file and its tap moved the pad; 2026-11-16)
+  Stage "windrects"; Start-Sleep 1
+  $wt = Rects "bardroid_docktest.txt"
+  if ($wt["wind"] -and $wt["tide"]) {
+    $until = (Get-Date).AddSeconds(15)   # (the dock's menu closes by itself: the camera pad again)
+    while ((Get-Date) -lt $until -and ((InApp "head -n 1 $cfg/bardroid_dock.txt") -match ' menu')) { Start-Sleep -Milliseconds 500 }
+    $tm = Mid $wt["tide"]; Tap $tm[0] $tm[1]; Start-Sleep -Milliseconds 1200
+    Stage "tide?"; Start-Sleep 1
+    $wm = Mid $wt["wind"]; Tap $wm[0] $wm[1]; Start-Sleep -Milliseconds 1200
+    Stage "wind?"; Start-Sleep 1
+  } else { "[docktest] (no wind or tide boxes in sight: that case left out)" }
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
