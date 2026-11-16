@@ -1960,9 +1960,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       three releases, the tooltip width's units, the dropdown's hit rects checked); two small ones fixed: (1) the share
       list centred over all its room, half the note's room above it, so a note under a full list could touch its last
       row: centred over the room above the note's (pad-test -Share, 15 teammates: the note 15-16 px under the list
-      upright and sideways); (2) the chat's upright gate for Settings at the copy's own 1.05, not 1.0. Left: the
-      settings' boxes and choices' moved 6-7 dp lie outside the scroll column, so the left of their press ripple is
-      cut (the box and circle whole and pressed as before).
+      upright and sideways); (2) the chat's upright gate for Settings at the copy's own 1.05, not 1.0. Its third, the
+      settings' boxes' moved 6-7 dp outside the scroll column cutting the left of their press ripple, did not hold on
+      the phone: a press held on Sound showed the ripple's whole circle out to the screen's edge (the checkbox's
+      ripple is borderless, drawn by an ancestor, not clipped by the column); nothing changed.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
