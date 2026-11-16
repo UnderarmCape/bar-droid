@@ -1172,6 +1172,87 @@ local function uprightKeys()
 	end
 end
 
+-- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
+-- wide whatever the room): upright the second and third columns ran under Start and Delete, the names cut by them
+-- ("SimpleA", "Inactive/"; dev phone upright, 2026-11-16). Where the columns do not fit the room the list gives them,
+-- they share it evenly and the names are shortened to their column with Chobby's own ".." (its OnResize); back to
+-- Chobby's places where they fit (sideways). Only the open Replays tab is walked (upright.replayPanel, replaysRowCheck).
+function upright.replayTeams(panel)
+	local prefix = WG.Chobby and WG.Chobby.Configuration and WG.Chobby.Configuration.REPLAY_TOOLTIP_PREFIX
+	if not (prefix and panel and not panel.disposed and panel.visible ~= false
+		and (not panel.IsVisibleOnScreen or panel:IsVisibleOnScreen())) then
+		return
+	end
+	upright.replayOrig = upright.replayOrig or setmetatable({}, { __mode = "k" })
+	local orig = upright.replayOrig
+	local lists = {}
+	local function walk(o, depth)
+		if not o or depth > 12 or o.disposed then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.greedyHitTest and type(c.tooltip) == "string" and c.tooltip:sub(1, #prefix) == prefix then
+				lists[#lists + 1] = c
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	walk(panel, 0)
+	local fitted = 0
+	for _, u in ipairs(lists) do
+		local room = u.clientWidth or u.width or 0
+		if room > 50 and u.bardroidRoom ~= room then
+			u.bardroidRoom = room
+			local cols, maxX = {}, 0
+			for _, ch in ipairs(u.children or {}) do
+				local c = real(ch)
+				if c then
+					orig[c] = orig[c] or c.x
+					cols[orig[c]] = true
+					maxX = math.max(maxX, orig[c])
+				end
+			end
+			local n = 0
+			for _ in pairs(cols) do
+				n = n + 1
+			end
+			local fits = maxX + 18 + 115 <= room
+			local f = (fits or maxX <= 0) and 1 or (room - room / n) / maxX -- (the last column's start at room - room / n)
+			local nameW = fits and 115 or math.max(30, math.floor(room / n) - 18 - 6)
+			for _, ch in ipairs(u.children or {}) do
+				local c = real(ch)
+				local x = c and math.floor(orig[c] * f)
+				if c and (c.x ~= x or c.x + (c.width or 0) ~= room) then
+					c:SetPos(x, nil, math.max(10, room - x)) -- (to the list's right edge, as Chobby's right = 0: moved alone
+					-- it kept its width, and a moved column's box cut its name short)
+				end
+				local name = c and c.GetChildByName and c:GetChildByName("userName")
+				if name and name.width ~= nameW then
+					-- (shortened here: its own OnResize ran before a moved column's new width, and the name wrapped,
+					-- its second line hidden: "SimpleA", no "..")
+					orig[name] = orig[name] or name.text or ""
+					name:SetPos(nil, nil, nameW)
+					local text, font = orig[name], name.font
+					if font and font.GetTextWidth and font:GetTextWidth(text) > nameW - 2 then
+						local i = #text - 1
+						while i > 1 and font:GetTextWidth(text:sub(1, i) .. "..") > nameW - 2 do
+							i = i - 1
+						end
+						text = text:sub(1, i) .. ".."
+					end
+					name:SetText(text)
+				end
+			end
+			fitted = fitted + (fits and 0 or 1)
+		end
+	end
+	if fitted > 0 then
+		Spring.Echo("[bardroid-lobby] Replays upright: " .. fitted .. " rows' teams fitted to their room") -- (tools)
+	end
+end
+
 -- Chobby's quick Skirmish, its last page, Select Map (gui_battle_room_window.lua's simple skirmish): four minimaps a
 -- quarter of the panel wide, each map's name only in a hover tooltip, which a finger never brings up, and nothing said
 -- which are downloaded (dev phone upright, 2026-11-16: four small unnamed squares; offline a tap on one not downloaded
@@ -1544,6 +1625,7 @@ local function uprightUpdate(now)
 	upright.tips(screen0.height > screen0.width * UPRIGHT)
 	if shown then
 		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
+		upright.replayTeams(upright.replayPanel)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
@@ -2384,6 +2466,7 @@ local function replaysRowCheck(now)
 	if not row then
 		return
 	end
+	upright.replayPanel = real(row.parent) -- (the Replays tab: upright.replayTeams fits its rows' teams)
 	local function rightOf(o)
 		return o._relativeBounds and o._relativeBounds.right
 	end
