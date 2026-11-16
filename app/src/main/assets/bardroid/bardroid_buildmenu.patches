@@ -396,23 +396,77 @@ function droid.keepPointer(sx, sy)
 	end
 end
 
--- (a point the app may click on the map: on the screen, not under this menu, PLACE or the minimap)
+-- (a pixel where a click reaches the map: not this menu, PLACE, the minimap or the portrait dock, where the click would
+-- land on them; the split dock's game between its blocks is clickable, P.onDock)
+function droid.freeAt(x, y)
+	if widget:IsAbove(x, y) or Spring.IsAboveMiniMap(x, y) then
+		return false
+	end
+	local P = WG.BarDroidPortrait
+	if P and P.onDock then
+		return not P.onDock(x, y)
+	end
+	local d = P and P.dock and P.dock()
+	return not (d and x >= d[1] and x <= d[3] and y >= d[2] and y <= d[4])
+end
+
+-- (a point the app may click on the map: on the screen, at a free pixel, Lua's y up; which whole pixel's click lands
+-- nearest it on the ground depends on the camera's tilt, dev phone 2026-11-15: rounded down 0.48 pixels off on
+-- average and rounded 0.51 at one tilt, 1.01 and 0.47 at another; droid.onSquare looks)
 function droid.clickable(bx, by, bz)
 	local sx, sy, sz = Spring.WorldToScreenCoords(bx, by, bz)
-	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy or widget:IsAbove(sx, sy) or Spring.IsAboveMiniMap(sx, sy) then
+	if sz > 1 or sx < 0 or sy < 0 or sx >= vsx or sy >= vsy then
 		return nil
 	end
-	local P = WG.BarDroidPortrait -- (not under the portrait dock either: the click would land on it; the split dock's
-	-- game between its blocks is clickable, P.onDock)
-	local d = P and P.dock and P.dock()
-	if P and P.onDock then
-		if P.onDock(sx, sy) then
-			return nil
+	local ix, iy = math_floor(sx), math_floor(sy)
+	if not droid.freeAt(ix, iy) then
+		return nil
+	end
+	return ix, iy
+end
+
+-- (how far from bx, bz on the ground a click at pixel x, y lands, squared, when it builds the picked building there
+-- (its ground snapped to the build grid there); nil: elsewhere)
+function droid.landsFrom(x, y, bx, bz, facing)
+	local _, pos = Spring.TraceScreenRay(x, y, true)
+	if not pos then
+		return nil
+	end
+	local px, _, pz = Spring.Pos2BuildPos(droid.defID, pos[1], pos[2], pos[3], facing)
+	if px ~= bx or pz ~= bz then
+		return nil
+	end
+	return (pos[1] - bx) ^ 2 + (pos[3] - bz) ^ 2
+end
+
+-- (of the pixel and its eight neighbours the one whose click lands nearest the building's middle and builds it there,
+-- so PLACE and BAR's blueprint at the pointer land on its own square: zoomed far out a pixel spans much of a square,
+-- and the pixel alone built a square off past 6 elmos a pixel, review 2026-11-15. Looked for again only when the
+-- camera, the building or its place has changed)
+droid.around = { { 0, 0 }, { 0, 1 }, { 0, -1 }, { 1, 0 }, { -1, 0 }, { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 } }
+droid.squareCache = {}
+function droid.onSquare(sx, sy, bx, bz)
+	local facing = Spring.GetBuildFacing()
+	local cx, cy, cz = Spring.GetCameraPosition()
+	local dx, dy, dz = Spring.GetCameraDirection()
+	local c = droid.squareCache -- (no table made each frame: a building waits on the screen for minutes)
+	if c[1] == sx and c[2] == sy and c[3] == bx and c[4] == bz and c[5] == droid.defID and c[6] == facing and c[7] == vsx
+		and c[8] == vsy and c[9] == cx and c[10] == cy and c[11] == cz and c[12] == dx and c[13] == dy and c[14] == dz then
+		return c[15], c[16]
+	end
+	local bestX, bestY, best = sx, sy, nil
+	for _, d in ipairs(droid.around) do
+		local x, y = sx + d[1], sy + d[2]
+		if x >= 0 and y >= 0 and x < vsx and y < vsy and (d[1] == 0 and d[2] == 0 or droid.freeAt(x, y)) then
+			local e = droid.landsFrom(x, y, bx, bz, facing)
+			if e and (not best or e < best) then
+				bestX, bestY, best = x, y, e
+			end
 		end
-	elseif d and sx >= d[1] and sx <= d[3] and sy >= d[2] and sy <= d[4] then
-		return nil
 	end
-	return math_floor(sx), math_floor(sy)
+	c[1], c[2], c[3], c[4], c[5], c[6], c[7], c[8] = sx, sy, bx, bz, droid.defID, facing, vsx, vsy
+	c[9], c[10], c[11], c[12], c[13], c[14], c[15], c[16] = cx, cy, cz, dx, dy, dz, bestX, bestY
+	return bestX, bestY
 end
 
 -- (the building's place on the build grid at the spot, and where that is on the screen)
@@ -434,6 +488,7 @@ function droid.spotOnScreen()
 	if not sx then
 		return nil
 	end
+	sx, sy = droid.onSquare(sx, sy, bx, bz)
 	local def = UnitDefs[droid.defID]
 	local half = math.max(def.xsize, def.zsize) * 4
 	local r = 0
@@ -1024,6 +1079,11 @@ function widget:DrawWorld()
 	end
 	WG.buildmenu.droidPressPanel = droid.pressPanel
 	WG.buildmenu.droidSpot = droid.setSpot -- (bardroid_touch.lua: the app's "spot" lines)
+	WG.buildmenu.droidSpotPixel = function() -- (the same: the pixel PLACE clicks, Lua's y up; nil off the screen or under
+		-- the menus)
+		local x, y = droid.spotOnScreen()
+		return x, y
+	end
 	WG.buildmenu.droidNudge = droid.nudge -- (the app's "nudge" lines)
 	WG.buildmenu.droidSetGrid = droid.setGrid -- (the app's "grid" lines)
 	WG.buildmenu.droidPad = droid.pad -- (bardroid_touch.lua: the gamepad's pad_* actions)

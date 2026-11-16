@@ -1847,7 +1847,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on the ground (RtsTouch sends "grid held x y", the copy keeps that ground point as gridFrom; checked on the dev
       phone at 1080x1198 with the camera panned 1.2 s into a held GRID: the spot stayed on the first corner), and a
       building nudged sideways from the gap into a block rises to that block's top (nudgeTo, lowestFree). dock-phone-test
-      ALL PASS at both shapes, remake-check PASS.
+      ALL PASS at both shapes, remake-check PASS. A third: the spot's pixel. Which whole pixel's click lands nearest a
+      point depends on the camera's tilt (measured on the dev phone: rounded down 0.48 pixels off on average at one tilt,
+      1.01 at another, rounded 0.51 and 0.47), so the copy now tries the pixel and its eight neighbours and keeps the one
+      whose click lands nearest the building's middle and builds it on its own square (droid.onSquare, kept until the
+      camera or the building moves); bardroid_touch.lua puts the pointer, BAR's blueprint, on that same pixel. 157 picks
+      zoomed out, up to 14 elmos a pixel: 0.33 pixels off on average, 0.55 at most (rounded down 0.50 and 1.37), all on
+      their square (rounded down: one a square off). dock-phone-test ALL PASS at both shapes, remake-check PASS.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

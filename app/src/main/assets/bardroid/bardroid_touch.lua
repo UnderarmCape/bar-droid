@@ -585,7 +585,15 @@ local function readTouch(lines)
 					s = select(2, b.droidPanel())
 				end
 				local _, cmdID = Spring.GetActiveCommand()
-				if tonumber(x) and s and cmdID and cmdID < 0 then
+				-- (the pixel PLACE clicks, which builds on the spot's square: zoomed far out the rounded one stood a
+				-- square off, BAR's blueprint beside the building PLACE built; review 2026-11-15)
+				local px, py
+				if tonumber(x) and s and cmdID and cmdID < 0 and b.droidSpotPixel then
+					px, py = b.droidSpotPixel()
+				end
+				if px then
+					Spring.WarpMouse(px, py)
+				elseif tonumber(x) and s and cmdID and cmdID < 0 then
 					local bx, by, bz = Spring.Pos2BuildPos(-cmdID, s[1], s[2], s[3], Spring.GetBuildFacing())
 					local wx, wy, wz = Spring.WorldToScreenCoords(bx, by, bz)
 					if wz and wz <= 1 then
