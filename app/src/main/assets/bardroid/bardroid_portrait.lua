@@ -2951,6 +2951,14 @@ local function drawButton(item, r, cap)
 	end
 end
 
+-- the presets' X a little in from the grid's corner, drawn and pressed there: flush with it, the square sat over the
+-- top right preset's rounded corner and border and stood a pixel or two past them (dev phone screenshot 2026-11-16)
+function SP.presetsX(r)
+	local x = WG.BarDroidPresets.closeRect(r)
+	local m = max(3, floor(L.pad * 0.5))
+	return { x[1] - m, x[2] - m, x[3] - m, x[4] - m }
+end
+
 local function drawHalf(side)
 	local r, s, items = half(side)
 	if r[3] < 0 then -- (sideways, one thumb: the tab not shown, laid out off the screen)
@@ -2983,7 +2991,7 @@ local function drawHalf(side)
 	end
 	gl.Scissor(false)
 	if side == "right" and rightKind == "presets" and WG.BarDroidPresets then -- (the presets' X, in the corner)
-		local x = WG.BarDroidPresets.closeRect(r)
+		local x = SP.presetsX(r)
 		button(x, { 0.42, 0.1, 0.08, 0.95 }, { 0.75, 0.25, 0.2, 0.95 })
 		textIn("\195\151", x[1], x[2], x[3], x[4], (x[4] - x[2]) * 0.7, "\255\250\240\240", bold)
 	end
@@ -4548,7 +4556,7 @@ function widget:MousePress(x, y, btn)
 		end
 		return true
 	end
-	if rightKind == "presets" and WG.BarDroidPresets and inRect(x, y, WG.BarDroidPresets.closeRect(homeRect())) then
+	if rightKind == "presets" and WG.BarDroidPresets and inRect(x, y, SP.presetsX(homeRect())) then
 		WG.BarDroidPresets.close() -- (the presets' X)
 		return true
 	end
