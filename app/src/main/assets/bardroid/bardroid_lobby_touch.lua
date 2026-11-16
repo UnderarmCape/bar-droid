@@ -1176,6 +1176,8 @@ end
 -- the page arrows 40 x 30, fonts of 12 and 13 whatever the lobby's scale: too small for a finger (dev phone upright,
 -- 2026-11-16, about 3 mm tall). Its header and page rows have the room (the rows 48 and 40 high, the list placed below
 -- them by constants): the buttons and the box 40 high, the arrows 52 x 40, their words larger, nothing else moved.
+-- Asked every half second (the window's own children only): a control already sized no longer matches, and the
+-- arrows wait for the window's width (found before its first layout sideways, they were left small).
 function upright.pluginButtons(win)
 	if not win or win.disposed then
 		return
@@ -1676,6 +1678,7 @@ local function uprightUpdate(now)
 	if shown then
 		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
 		upright.replayTeams(upright.replayPanel)
+		upright.pluginButtons(upright.pluginsWin)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
@@ -2511,7 +2514,7 @@ local function replaysRowCheck(now)
 		end
 		replaysRow.pluginsDone = true
 		Spring.Echo("[bardroid-lobby] Plugins: Widgets Folder hidden (no folder to open on Android)") -- (tools)
-		upright.pluginButtons(strip)
+		upright.pluginsWin = strip -- (its buttons sized for a finger, upright.pluginButtons)
 	end
 	local row = not replaysRow.done and refresh and real(refresh.parent)
 	if not row then

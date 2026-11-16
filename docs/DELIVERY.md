@@ -1999,7 +1999,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
         rings showed through), the readings centred, NO WATER grey; the boxes' rects made once a layout (38d236f9).
         Checked with nothing to fix: the quick grid scrolls, the boxes go with the dock swapped left, reshapes mid-game,
         a 9-minute skirmish (LuaUI memory levels off near 145 MB); lobby, touch, fp-save, pace, dock and pad (-Share,
-        -Chat, -Dgun, -Online) phone tests ALL PASS.
+        -Chat, -Dgun, -Online) phone tests ALL PASS. Later the same evening: a replay spectated upright from the lobby
+        put BAR's replay speeds' skip under the wind's box (the boxes now count as the dock for the other widgets,
+        2d60b4e7); in the lobby upright, the Replays rows' second team ran under Start, names cut ("SimpleA"): the
+        columns share the room, names shortened with ".." (dc3f3be1), their "Team 1" headers whole (219d1653); the
+        Plugins page's buttons 40 high and its page arrows 52 x 40, both ways up (7b517609 and after).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
