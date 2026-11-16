@@ -62,6 +62,7 @@ public final class Updater {
     private static final Pattern PROGRESS = Pattern.compile("\\[Progress\\].*?(\\d+)/(\\d+)");
     private static final Pattern CONFIG_VAR = Pattern.compile("\"([A-Za-z0-9_]+)\"\\s*:\\s*\\{");
     private static final int MAX_BAD = 5;
+    private static final long ENGINE_RETRY_MS = 12 * 3600_000L;   // an engine archive that would not install: tried again after
 
     private final Paths p;
     private final Proot proot;
@@ -239,8 +240,9 @@ public final class Updater {
             } else result = nameLookupFailed ? "no connection" : "no answer from BAR";
         }
         verifyTags(tags);
-        // The set that starts now; launchEnded judges it.
+        // The set that starts now; launchEnded judges it. (When: a run's log older than this is not its own, ranSince.)
         state.setProperty("launched.engine", engine);
+        state.setProperty("launched.at", String.valueOf(System.currentTimeMillis()));
         for (String t : tags) recordLaunched(t);
         state.setProperty("tags", String.join(",", tags));
         useTags(tags);
@@ -342,12 +344,27 @@ public final class Updater {
     private boolean installEngine(String old, String ver, String url, Status st) throws InterruptedException {
         File dest = p.engineDir(ver);
         if (new File(dest, "spring").exists()) { Log.i("update", "engine " + ver + " is already on disk"); return true; }
+        // (an archive that downloaded but would not install, 7z failing, "engine does not run", a file missing: not
+        // fetched again for ENGINE_RETRY_MS or until the app is updated; it came down again, ~100 MB, at every start,
+        // review 2026-11-15; a download that failed is tried again at once, as before)
+        String failKey = "engine.failed." + ver;
+        String[] failed = state.getProperty(failKey, "").split(",");
+        long failedAt = 0;
+        try { failedAt = Long.parseLong(failed[0]); } catch (NumberFormatException ignored) {}
+        if (failedAt > 0 && System.currentTimeMillis() - failedAt < ENGINE_RETRY_MS
+                && failed.length > 1 && failed[1].equals(String.valueOf(appInstalled()))) {
+            Log.e("update", "!!! engine " + ver + " would not install here " + (System.currentTimeMillis() - failedAt) / 60000
+                    + " min ago: staying on " + old + ", tried again later");
+            return false;
+        }
         Log.i("update", "==== new engine " + ver + " (was " + old + ")");
         File tmp = p.engineDir(ver + ".new");
         File z = new File(p.downloads, url.substring(url.lastIndexOf('/') + 1));
+        boolean downloaded = false;
         try {
             z = dl.download(url, z, null, (done, total) ->
                     st.status("downloading engine " + ver + " " + Downloader.human(done) + " / " + Downloader.human(total)));
+            downloaded = true;
             st.status("installing engine " + ver);
             removeTree(tmp);
             removeTree(dest);   // (one half deleted, with no spring: the rename below would fail at every try)
@@ -360,8 +377,10 @@ public final class Updater {
             if (!tmp.renameTo(dest)) throw new IOException("could not rename " + tmp + " to " + dest);
             //noinspection ResultOfMethodCallIgnored
             z.delete();
+            state.remove(failKey);
         } catch (IOException e) {
             Log.e("update", "!!! engine " + ver + " not installed, staying on " + old + ": " + e.getMessage());
+            if (downloaded) state.setProperty(failKey, System.currentTimeMillis() + "," + appInstalled());
             removeTree(tmp);
             // A whole but damaged archive would otherwise be taken as downloaded at every later try (a .part resumes)
             if (z.isFile()) //noinspection ResultOfMethodCallIgnored
@@ -624,6 +643,11 @@ public final class Updater {
             save();
             return Result.NONE;
         }
+        if (!ranSince()) {   // (the start ended before its engine: the set is not to blame, nor shown to work)
+            if (!launched.equals(good)) Log.i("update", launched + " never reached its engine: judged at its next start");
+            save();
+            return Result.NONE;
+        }
         // A crash once a game ran (loading one of Kailil's saves crashes the engine on every platform, ~70 s after the
         // app started) is not the update failing to start: it must not roll BAR back to a version online games reject.
         boolean fast = rc != 0 && ms < FAST_FAIL_MS && !gameFrameRan();
@@ -665,7 +689,7 @@ public final class Updater {
     public void closedByPlayer(long ms) throws InterruptedException {
         List<String> tags = tags();
         if (state.getProperty("launched.engine") == null) return;
-        if (ms < FAST_FAIL_MS && !gameFrameRan()) return;
+        if (!ranSince() || ms < FAST_FAIL_MS && !gameFrameRan()) return;
         readLayerMisses();
         Result r = keepLaunched(tags, set("launched", tags), set("good", tags));
         save();
@@ -715,7 +739,7 @@ public final class Updater {
         List<String> tags = tags();
         if (state.getProperty("launched.engine") == null) return;
         String launched = set("launched", tags), good = set("good", tags);
-        if (launched.equals(good)) return;
+        if (launched.equals(good) || !ranSince()) return;
         long seconds = lastRunSeconds();
         boolean frame = gameFrameRan();
         if (seconds * 1000 < FAST_FAIL_MS && !frame) return;
@@ -741,6 +765,20 @@ public final class Updater {
     }
 
     private static final Pattern GAME_FRAME = Pattern.compile("^\\[t=[^\\]]*\\]\\[f=0*[1-9]");
+
+    /**
+     * Whether infolog.txt can be the launched set's own: launch-bar.sh deletes it just before the engine starts, so one
+     * older than the set's start is the run before's, the start having ended earlier (stopped while a map downloaded,
+     * "no map", the X server failing, the script's own exits). Judged by that log, a set that never ran was kept as
+     * good after the run before it had played ten minutes, and its rollback lost (review 2026-11-15). No log at all: the
+     * engine was reached (an engine that dies before writing one still rolls back). State from before: as before.
+     */
+    private boolean ranSince() {
+        long at;
+        try { at = Long.parseLong(state.getProperty("launched.at", "0")); } catch (NumberFormatException e) { at = 0; }
+        File log = new File(p.bar, "infolog.txt");
+        return at == 0 || !log.exists() || log.lastModified() >= at - 2000;
+    }
 
     /** Whether the engine's log of this run shows a game frame (a game or a loaded save ran). */
     private boolean gameFrameRan() {

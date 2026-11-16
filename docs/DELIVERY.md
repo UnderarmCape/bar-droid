@@ -1823,6 +1823,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (as decided before, line ~800); cover units' own orders are replaced by the FIGHT; Ctrl's formation speed stays
       on units after a preset. Dev phone: dock-phone-test ALL PASS (STRAFE's side to side), the fight: 8 Pawns fell back,
       no Lua error (the commander kept above 89 %, its retreat not reached).
+      A seventh review (Updater, Installer, MapStore): three fixed, written up in docs/UPDATES.md: a set that never
+      reached its engine was judged by the run before's log (kept as good, its rollback lost): only its own run counts
+      now (Updater.ranSince, launched.at); an engine archive that will not install came down again at every start: not
+      for 12 h or until an app update; a newer Mesa in an app update stopped every start offline: fetched first, the
+      installed one running meanwhile. updater-test ALL PASS with four new cases (a start that never reached its engine:
+      judgeLastRun, closedByPlayer, launchEnded undecided; one that did still rolls back); the dev phone's skirmish starts
+      and records launched.at. Left: a phone build failing right after a fresh BAR engine's first start is blamed on
+      BAR's update (narrow); two rapid host folders could give the menu copies another release's files (not seen).
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the

@@ -66,6 +66,13 @@ public final class UpdaterTest {
         return p;
     }
 
+    /** The set's start time in the state (Updater.check writes it as the set starts). */
+    static void launchedAt(Paths p, long at) throws IOException {
+        try (OutputStream out = new FileOutputStream(new File(p.filesDir, "update/state.properties"), true)) {
+            out.write(("launched.at=" + at + "\n").getBytes(StandardCharsets.UTF_8));
+        }
+    }
+
     static Properties state(Paths p) throws IOException {
         Properties s = new Properties();
         try (InputStream in = new FileInputStream(new File(p.filesDir, "update/state.properties"))) { s.load(in); }
@@ -171,6 +178,37 @@ public final class UpdaterTest {
         p = setup("nextsame", false, A_FRAME);
         new Updater(p).judgeLastRun();
         check("  nothing pending: nothing changes", "A".equals(state(p).getProperty("good.engine")) && state(p).getProperty("previous.engine") == null);
+
+        // a start that ended before its engine (stopped while a map downloaded, the X server failing): the log there is
+        // the run before's, older than the set's start, and says nothing of the set (review 2026-11-15)
+        long now = System.currentTimeMillis();
+        p = setup("stalelong", true, NO_FRAME + "[t=00:10:00.000000][f=-000001] the run before, 600 s\n");
+        launchedAt(p, now);
+        //noinspection ResultOfMethodCallIgnored
+        new File(p.bar, "infolog.txt").setLastModified(now - 3_600_000);
+        new Updater(p).judgeLastRun();
+        s = state(p);
+        check("a start that never reached its engine, the run before's 600 s log there: not judged, the update undecided",
+                "A".equals(s.getProperty("good.engine")) && "B".equals(s.getProperty("launched.engine")));
+        p = setup("staleclosed", true, A_FRAME);
+        launchedAt(p, now);
+        //noinspection ResultOfMethodCallIgnored
+        new File(p.bar, "infolog.txt").setLastModified(now - 3_600_000);
+        new Updater(p).closedByPlayer(400_000);
+        check("  closed by the player 400 s in (a long map download), the old log a game frame: undecided",
+                "A".equals(state(p).getProperty("good.engine")));
+        p = setup("stalefast", true, NO_FRAME);
+        launchedAt(p, now);
+        //noinspection ResultOfMethodCallIgnored
+        new File(p.bar, "infolog.txt").setLastModified(now - 3_600_000);
+        new Updater(p).launchEnded(10, 5_000);
+        s = state(p);
+        check("  ended by the script in 5 s before the engine: no rollback, not on the bad list",
+                "B".equals(s.getProperty("launched.engine")) && s.getProperty("bad.0") == null);
+        p = setup("freshfast", true, NO_FRAME);
+        launchedAt(p, now - 10_000);
+        new Updater(p).launchEnded(1, 5_000);
+        check("  the engine's own log, written since: a fast failure still rolls back", state(p).getProperty("bad.0") != null);
 
         // the launcher's "Last check": a start that did not go online keeps the last one that did
         String online = "Nov 11 10:10 (no answer from BAR)", local = "Nov 11 10:22 (" + Updater.NOT_CHECKED + ")";

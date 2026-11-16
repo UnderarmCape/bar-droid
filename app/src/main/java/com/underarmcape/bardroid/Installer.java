@@ -56,13 +56,18 @@ public final class Installer {
         try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, "bardroid install state"); }
     }
     public boolean isDone(String step) { return "done".equals(state.getProperty(step)); }
+    /**
+     * Every step done. A Mesa older than this build's still counts (mesaOutdated: installAll fetches the new one when it
+     * can): as "not installed" it stopped every start offline after an app update, the old Mesa there and working
+     * (review 2026-11-15).
+     */
     public boolean isInstalled() {
         for (String s : STEPS) if (!isDone(s) && !s.equals("import")) return false;
-        return !mesaOutdated();
+        return true;
     }
 
     /** The installed Mesa is not the one this build ships with (installs from before the URL was recorded: the first default). */
-    private boolean mesaOutdated() {
+    public boolean mesaOutdated() {
         if (!isDone("mesa") || Prefs.mesaUrl.isEmpty()) return false;
         return !Prefs.mesaUrl.equals(state.getProperty("mesaUrl", Prefs.OLD_MESA_URLS[0]));
     }
@@ -81,7 +86,22 @@ public final class Installer {
         }
         step("rootfs", st, () -> installRootfs(st));
         step("apt", st, () -> runSetup("apt", st, "apt"));
-        if (mesaOutdated()) { Log.i("install", "Mesa changed to " + Prefs.mesaUrl); state.remove("mesa"); save(); }
+        if (mesaOutdated()) {
+            // (the new one fetched first: the installed one stays marked, and runs, until it is here; offline the start
+            // goes on with it, the next start tries again)
+            Log.i("install", "Mesa changed to " + Prefs.mesaUrl);
+            File tgz = null;
+            try { tgz = downloadMesa(st); }
+            catch (Exception e) {
+                if (cancelled) throw e;
+                Log.e("install", "the new Mesa could not be downloaded (" + e.getMessage() + "): the installed one runs, tried again at the next start");
+            }
+            if (tgz != null) {
+                final File got = tgz;
+                state.remove("mesa"); save();   // (replaced from here: a failure leaves it to be installed again)
+                step("mesa", st, () -> { setupMesa(st, got); state.setProperty("mesaUrl", Prefs.mesaUrl); });
+            }
+        }
         step("mesa", st, () -> { installMesa(st); state.setProperty("mesaUrl", Prefs.mesaUrl); });
         slimContainer(st);
         step("engine", st, () -> installEngine(st));
@@ -305,9 +325,16 @@ public final class Installer {
 
     private void installMesa(Status st) throws Exception {
         if (Prefs.mesaUrl.isEmpty()) { Log.i("install", "emulator build: keeping Debian's Mesa (llvmpipe software GL)"); return; }
+        setupMesa(st, downloadMesa(st));
+    }
+
+    private File downloadMesa(Status st) throws Exception {
         String name = Prefs.mesaUrl.substring(Prefs.mesaUrl.lastIndexOf('/') + 1);   // one file per release: no stale reuse
-        File tgz = dl.download(Prefs.mesaUrl, new File(p.downloads, name), null,
+        return dl.download(Prefs.mesaUrl, new File(p.downloads, name), null,
                 (done, total) -> st.status("mesa", "downloading Mesa " + Downloader.human(done) + " / " + Downloader.human(total), 40));
+    }
+
+    private void setupMesa(Status st, File tgz) throws Exception {
         try { runSetup("mesa", st, "mesa", "/root/downloads/" + tgz.getName()); }
         finally { //noinspection ResultOfMethodCallIgnored
             tgz.delete(); }   // a damaged download must not be taken for a finished one on the next try

@@ -278,8 +278,9 @@ public class GameService extends Service {
         updater = null;
         exitNote = null;
         Installer inst = new Installer(this, paths);
-        if (!inst.isInstalled() && !"shell".equals(mode)) {
-            // A first install, or a step an app update added or changed (e.g. a newer Mesa): run what is missing.
+        if ((!inst.isInstalled() || inst.mesaOutdated()) && !"shell".equals(mode)) {
+            // A first install, or a step an app update added or changed (e.g. a newer Mesa: fetched when it can be, the
+            // installed one running meanwhile): run what is missing.
             install();
             inst = new Installer(this, paths);
             if (!inst.isInstalled()) return;

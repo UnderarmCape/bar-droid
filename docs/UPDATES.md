@@ -112,6 +112,18 @@ an old package is just restoring its `versions.gz`.
   last line, and it becomes the last good set ("the last run of ... ended from outside: judged now"). The Fold7 started
   BAR's release as a "first start" at every start (its launcher.log, 2026-11-10), its games ended by a swipe; a
   single failed start then would have rolled it back to an older release. A shorter run stays undecided.
+- Only the set's own run is judged (`Updater.ranSince`, 2026-11-15): `check` notes when the set started
+  (`launched.at`), and launch-bar.sh deletes `infolog.txt` just before the engine starts, so a log older than that is
+  the run before's (the start ended earlier: stopped while a map downloaded, "no map", the X server failing). Such a
+  start is neither kept nor rolled back (launchEnded, closedByPlayer and judgeLastRun all leave it undecided); before,
+  the run before's ten-minute log made a set that never ran the last good one, its rollback lost. No log at all counts
+  as the engine reached (one that dies before writing a line still rolls back).
+- An engine archive that downloads but will not install (7z failing, "engine does not run", a file missing) is not
+  fetched again for 12 hours or until the app is updated (`engine.failed.<version>` in the state); before, ~100 MB came
+  down at every start. A download that fails is tried again at the next start, as before.
+- A newer Mesa in an app update (`Installer.mesaOutdated`) is fetched before the installed one is let go: offline the
+  start goes on with the installed one, and the next start tries again; before, every start stopped at "install failed"
+  until there was a connection.
 - The bad list holds whole sets (engine + md5s, last 5). An update that would recreate a bad set is not applied; as
   soon as BAR moves any part (byar:test moves several times a day), the new set is tried. So a broken BAR version
   costs at most one failed launch per new set, and the engine is never blocked for good. An app update clears the
