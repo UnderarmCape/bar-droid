@@ -3358,12 +3358,15 @@ function SP.drawWindTide()
 				local room = box[3] - 3 - px
 				s = min(s, s * room / indicatorWidth(wind, s)) -- (narrow, in HOME's place: smaller, the range left out)
 				local fits = px + indicatorWidth(wind, s, range) <= box[3] - 3
+				-- (in the middle of its box, as NO WATER beside it: at the left the wide box upright was mostly empty)
+				px = max(px, floor((box[1] + box[3] - indicatorWidth(wind, s, fits and range or nil)) / 2))
 				drawIndicator(BLADES, windTurn, px, box[2] + hh / 2, s, wind, fits and range or nil)
 			else
 				textIn("NO WIND", box[1], box[2], box[3], box[4], small, "\255\150\150\150", font)
 			end
 		elseif tideRelevant() then
-			drawIndicator(WAVES, 0, px, cy, s, tostring(floor(Spring.GetTidal() or 0)))
+			local tide = tostring(floor(Spring.GetTidal() or 0))
+			drawIndicator(WAVES, 0, max(px, floor((box[1] + box[3] - indicatorWidth(tide, s)) / 2)), cy, s, tide)
 		else
 			textIn("NO WATER", box[1], box[2], box[3], box[4], small, "\255\150\150\150", font)
 		end
@@ -3446,6 +3449,12 @@ function SP.drawWindInfo()
 		return
 	end
 	local wind = info.kind == "wind"
+	local wb, tb = SP.windRects() -- (its box where it stands now: a fold, a turn or a swap moves it; the tapped one's
+	if SP.windOff() or not wb then -- place kept the panel over nothing for its 15 s)
+		SP.windInfo = nil
+		return
+	end
+	info.box = wind and wb or tb
 	local fs = max(13, min(30, floor(min(vsx, vsy) * 0.024)))
 	local pad, rowH, dim = max(6, floor(fs * 0.6)), floor(fs * 1.5), "\255\170\176\174"
 	local W = min(vsx - 2 * (L.pad or 4), floor(fs * 17))
