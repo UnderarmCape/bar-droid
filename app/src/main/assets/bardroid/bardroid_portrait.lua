@@ -337,7 +337,7 @@ local function layout()
 	markDirty()
 	vsx, vsy = Spring.GetViewGeometry()
 	L.hole, L.leftCols, L.rightCols = nil, 3, 2
-	L.thumb, L.tabs, L.homeBtn, L.swapBtn, L.dgFloat = false, nil, nil, nil, false
+	L.thumb, L.tabs, L.homeBtn, L.swapBtn, L.dgFloat, L.windCol = false, nil, nil, nil, false, nil
 	-- Unfolded (a near-square screen, either way up), playing: two blocks in the bottom corners, one under each thumb,
 	-- the game between them (Kailil, 2026-11-15, of the unfolded Fold7: "the bottom dock in both vertical and horizontal
 	-- is entirely too large. The footprint is too large, can you make it smaller and split with no map in the middle.
@@ -364,7 +364,9 @@ local function layout()
 		L.splitL, L.splitR = { 0, 0, bw, h }, { vsx - bw, 0, vsx, h }
 		L.dock = { 0, 0, vsx, h }
 		L.groups = { bw + pad, pad, vsx - bw - pad, pad + groupsH } -- (between the blocks, at the bottom)
-		L.hole = { bw, showGroups and (2 * pad + groupsH) or 0, vsx - bw, h }
+		-- (the gap's foot over the groups and the wind and tide boxes on them, SP.windRects: Kailil, 2026-11-16, "Move the
+		-- widgets to be on top of the idle unit or unit group bar when in unfolded")
+		L.hole = { bw, 3 * pad + groupsH + max(10, floor(resH * 0.9)), vsx - bw, h }
 		L.pad, L.gap, L.tile, L.leftRows, L.leftCols = pad, gap, tile, 3, 4
 		L.left = { pad, pad, pad + w, pad + gridH }
 		L.res = { pad, h - pad - resH, pad + w, h - pad }
@@ -415,10 +417,12 @@ local function layout()
 		L.res = { M[1], M[4] - resH, M[3], M[4] }
 		L.groups = { M[1], M[2], M[3], M[2] + groupsH }
 		local my0, my1 = L.groups[4] + gap, L.res[2] - gap
-		-- (HOME over the swap button, on the panel's side of the minimap: next to what it opens)
+		-- (the wind and the tide over the swap button, on the panel's side of the minimap, where HOME was: Kailil,
+		-- 2026-11-16, "When in landscape folded, Replace the home button with the water tidal widget and wind speed stuff";
+		-- the home buttons still show with nothing picked, SP.windRects)
 		local col = right and { M[3] - colW, my0, M[3], my1 } or { M[1], my0, M[1] + colW, my1 }
 		local cmid = floor((my0 + my1) / 2)
-		L.homeBtn = { col[1], cmid + floor(gap / 2), col[3], col[4] }
+		L.windCol = { col[1], cmid + floor(gap / 2), col[3], col[4] }
 		L.swapBtn = { col[1], col[2], col[3], cmid - floor(gap / 2) }
 		local ax0, ax1 = right and M[1] or col[3] + gap, right and col[1] - gap or M[3]
 		local mw = min(ax1 - ax0, mapW)
@@ -630,7 +634,7 @@ local function writeDock(force)
 		local draw = DRAW_CMDS[cmd] or false
 		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
 		local lr = SP.hidden and L.dock
-		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(L.dock), menu and "menu" or "pad",
+		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(SP.dockAll()), menu and "menu" or "pad",
 			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
 			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
 			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
@@ -640,7 +644,7 @@ local function writeDock(force)
 			-- 2026-11-12, "The build menus and factory build menus should all have this no tap required")
 			-- (and the unit lists' types, ALL / MULTI first, and a pick's types: as the home grid's LOCAL and ALL UNITS that
 			-- open them; MULTI's tap only opened the menu, dev phone 2026-11-13)
-			.. ((leftKind == "build" or leftKind == "pregame" or leftKind == "seltypes"
+			.. ((leftKind == "build" or leftKind == "quick" or leftKind == "pregame" or leftKind == "seltypes"
 				or tostring(leftKind):sub(1, 6) == "types:") and L.left[3] > 0 and not SP.hidden
 				and ("live " .. r(L.left) .. "\n") or "")
 			-- (and the orders, a factory's queue buttons too: Kailil, 2026-11-13, asked whether FIGHT, MOVE, PATROL,
@@ -675,6 +679,8 @@ local function writeDock(force)
 			-- (and HOME: with the camera pad up its first tap only opened the menu, on the orders of the units still picked;
 			-- review 2026-11-16)
 			.. (L.thumb and L.homeBtn and not SP.hidden and ("live " .. r(L.homeBtn) .. "\n") or "")
+			-- (and the wind's and the tide's boxes: their details at once, SP.drawWindInfo)
+			.. SP.windLive(r)
 			-- (PING on the home grid and before the start: held, a spoken ping; tapped twice, CHAT; pingT)
 			.. ((rightKind == "home" or rightKind == "pregame") and leftKind ~= "spec" and L.pingBtn and not SP.hidden
 				and (not L.thumb or L.panelOn or rightKind == "pregame")
@@ -861,6 +867,30 @@ local function myCommanders(kind)
 		end
 	end
 	return out
+end
+
+-- Nothing picked, the split dock's empty left block (the unfolded Fold7): the build grid of the builder last picked alone,
+-- else the commander, dimmed; its tap picks that builder and its building at once (Kailil, 2026-11-16, of the empty block
+-- circled in a screenshot: "lets try 2", build without picking first). In the order its own grid had when it was last
+-- picked (refreshNow keeps it), else its UnitDef's.
+function SP.quickBuilds()
+	if not (L.split and active) or Spring.GetSpectatingState() then
+		return {}
+	end
+	local u = SP.lastBuilder
+	if not (u and Spring.ValidUnitID(u) and not Spring.GetUnitIsDead(u) and Spring.GetUnitTeam(u) == myTeam()) then
+		u = myCommanders("commander")[1]
+	end
+	local d = u and Spring.GetUnitDefID(u)
+	local ud = d and UnitDefs[d]
+	if not ud then
+		return {}
+	end
+	local items = {}
+	for _, b in ipairs(SP.lastBuilds and SP.lastBuilds[d] or ud.buildOptions or {}) do
+		items[#items + 1] = { kind = "quickbuild", id = -b, defID = b, unit = u }
+	end
+	return items
 end
 
 -- The camera on a point of the map, the point in the middle of the game above the dock: the engine's camera target is
@@ -1692,6 +1722,17 @@ end
 function refreshNow()
 	local sel = spGetSelectedUnits() or {}
 	local builds, orders = readCommands()
+	if #sel == 1 and #builds > 0 then -- (a builder picked alone: its grid kept for nothing picked, SP.quickBuilds)
+		local d = Spring.GetUnitDefID(sel[1])
+		if d and builder(UnitDefs[d]) then
+			local list = {}
+			for i, b in ipairs(builds) do
+				list[i] = b.defID
+			end
+			SP.lastBuilder, SP.lastBuilds = sel[1], SP.lastBuilds or {}
+			SP.lastBuilds[d] = list
+		end
+	end
 	-- (units picked and no command at all: the engine's list for a frame after a press or a pick, before it is made
 	-- again; taken as it was, it threw the build menu back to its first rows after each factory press)
 	if #sel > 0 and #builds == 0 and #orders == 0 and not typesFrom and not selecting then
@@ -1776,8 +1817,9 @@ function refreshNow()
 			newLeft[1].count = newLeft[1].count + #g.units
 		end
 		lk = "types:" .. typesFrom
-	elseif #sel == 0 then
-		newLeft, lk = {}, "none"
+	elseif #sel == 0 then -- (the split dock: a builder's grid, dimmed, SP.quickBuilds)
+		newLeft = SP.quickBuilds()
+		lk = #newLeft > 0 and "quick" or "none"
 	elseif #builds > 0 then
 		newLeft, lk = builds, "build"
 	else -- units that build nothing: the selection by type (a tap keeps one type)
@@ -2276,6 +2318,10 @@ local function pressItem(item, long)
 		else
 			runCommand(item.id)
 		end
+	elseif k == "quickbuild" then -- (nothing picked: its builder picked; the building once the engine has made that
+		-- builder's commands, a frame or two later, widget:Update)
+		selectUnits({ item.unit })
+		SP.quickPending = { id = item.id, unit = item.unit, at = now() }
 	elseif k == "order" and item.id == CMD.MANUALFIRE and not long and WG.BarDroidPad and WG.BarDroidPad.act then
 		WG.BarDroidPad.act("dgun") -- (the pad's D-gun mode, its sticks on the dock: dgunOn)
 	elseif k == "order" then
@@ -2753,7 +2799,8 @@ local function drawTile(item, r)
 		WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor(w * 0.04)))
 	end
 	local p, size = max(2, floor(w * 0.05)), h * 0.15
-	if item.kind == "build" or item.kind == "pregame" then -- (as BAR's build menu: metal white, energy yellow, bottom right)
+	if item.kind == "build" or item.kind == "pregame" or item.kind == "quickbuild" then -- (as BAR's build menu: metal
+		-- white, energy yellow, bottom right)
 		local ud = UnitDefs[item.defID]
 		if ud then
 			font:Print("\255\245\245\245" .. floor(ud.metalCost or 0), r[3] - p, r[2] + p + size * 1.05, size, "ro")
@@ -2762,8 +2809,13 @@ local function drawTile(item, r)
 		if item.queued and item.queued > 0 then
 			bold:Print("\255\255\255\255" .. item.queued, r[1] + p * 1.5, r[4] - p - size * 1.5, size * 1.5, "o")
 		end
-		if item.id and (activeBuild() == item.id or factoryItem == item.id) then
+		if item.kind ~= "quickbuild" and item.id and (activeBuild() == item.id or factoryItem == item.id) then
 			selector(r)
+		end
+		if item.kind == "quickbuild" then -- (dimmed: no builder picked yet, the tap picks it)
+			gl.Color(0, 0, 0, 0.38)
+			gl.Rect(r[1], r[2], r[3], r[4])
+			gl.Color(1, 1, 1, 1)
 		end
 	else -- a type: its count (on the small tiles, SP.smallTypes, half again as large: "10" and "4" were hard to read)
 		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * (h < L.tile * 0.8 and 2.1 or 1.4), "ro")
@@ -3125,7 +3177,8 @@ local function drawSelection()
 	-- live with QUEUE's: drawQueueZones)
 	-- (no wider than the room left of QUEUE, on the same line: in the split dock's narrow right block "Advanced
 	-- Construction Bot" ran under it and off the screen; review 2026-11-16)
-	local room = r[3] - L.pad * 2 - bold:GetTextWidth("QUEUE") * h * 0.2 - x
+	-- (QUEUE now under the name's line, at the row's middle: the name has the line to the right edge; drawQueueZones)
+	local room = r[3] - L.pad * 2 - x
 	local nameSize = min(h * 0.24, room / max(1, bold:GetTextWidth(name)))
 	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, max(h * 0.12, nameSize), "o")
 	L.selCountEnd = nil -- (where the count line ends: the camera pad's words keep right of it, drawMode)
@@ -3250,26 +3303,244 @@ local function drawResources()
 				font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
 				rx = rx - sw - pad * 3
 			end
-			if res == "energy" then
-				local s = rowH
-				local tide = tostring(floor(Spring.GetTidal() or 0))
-				if tideRelevant() and rx - indicatorWidth(tide, s) >= left then
-					rx = rx - indicatorWidth(tide, s)
-					drawIndicator(WAVES, 0, rx, cy, s, tide)
-					rx = rx - pad * 3
-				end
-				if (Game.windMax or 0) > 0 then
-					local range = floor(Game.windMin or 0) .. "-" .. floor(Game.windMax or 0)
-					local wind = string.format("%.1f", select(4, Spring.GetWind()) or 0)
-					if rx - indicatorWidth(wind, s, range) >= left then
-						drawIndicator(BLADES, windTurn, rx - indicatorWidth(wind, s, range), cy, s, wind, range)
-					elseif rx - indicatorWidth(wind, s) >= left then
-						drawIndicator(BLADES, windTurn, rx - indicatorWidth(wind, s), cy, s, wind)
-					end
-				end
-			end
+			-- (the wind and the tide: their own boxes above these now, SP.drawWindTide; in the energy box they fitted
+			-- only where it was wide, never in the split dock's)
 		end
 	end
+end
+
+-- The wind and the tide in boxes of their own (Kailil, 2026-11-16: "show the wind speed widget just above the eco
+-- NUMBERS. it can be outside of the bottom UI anchored to it. it should displa wind speed, and water power generation
+-- widget too"): the wind's blades turning, the speed and the map's range; the tide's waves and strength, "NO WATER" where
+-- tidal generators cannot stand (BAR's own test). Where (the same day: "Move the widgets to be on top of the idle unit or
+-- unit group bar when in unfolded. WHen in landscape folded, Replace the home button with the water tidal widget and
+-- wind speed stuff"): unfolded, side by side on the groups between the blocks; sideways folded, one over the other in
+-- HOME's place by the minimap; elsewhere over metal and energy, out of the dock and held to it. The wind's, then the
+-- tide's rect, or nil.
+function SP.windRects()
+	local pad, g, r = L.pad or 4, L.groups, L.res
+	if not (r and r[3] > r[1]) then
+		return nil
+	end
+	local hh = max(10, floor((r[4] - r[2]) * 0.9)) -- (at 0.72 the reading was small beside the numbers under it)
+	if L.split and g then -- (the hole's foot over them: layout's split dock)
+		local w, y0 = floor((g[3] - g[1] - pad) / 2), g[4] + pad
+		return { g[1], y0, g[1] + w, y0 + hh }, { g[3] - w, y0, g[3], y0 + hh }
+	elseif L.thumb and L.windCol then
+		local c, half = L.windCol, floor((L.gap or 3) / 2)
+		local mid = floor((c[2] + c[4]) / 2)
+		return { c[1], mid + half, c[3], c[4] }, { c[1], c[2], c[3], mid - half }
+	end
+	local w, y0 = floor((r[3] - r[1] - pad) / 2), r[4] + pad + max(2, floor(pad * 0.5)) -- (a gap over the dock's edge)
+	return { r[1], y0, r[1] + w, y0 + hh }, { r[1] + w + pad, y0, r[1] + 2 * w + pad, y0 + hh }
+end
+-- Drawn live: a few rectangles and words; the box whose details are open lit gold
+function SP.drawWindTide()
+	local wb, tb = SP.windRects()
+	if not wb then
+		return
+	end
+	for i, box in ipairs({ wb, tb }) do
+		local hh, bw = box[4] - box[2], box[3] - box[1]
+		local s = hh * 0.86
+		panel(box)
+		if SP.windInfo and SP.windInfo.kind == (i == 1 and "wind" or "tide") then
+			gl.Color(1, 0.8, 0.25, 0.18)
+			gl.Rect(box[1], box[2], box[3], box[4])
+			gl.Color(1, 1, 1, 1)
+		end
+		local cy, px = box[2] + hh / 2, box[1] + max(3, floor(hh * 0.18))
+		local small = min(hh * 0.42, bw * 0.16)
+		if i == 1 then
+			if (Game.windMax or 0) > 0 then
+				local wind = string.format("%.1f", select(4, Spring.GetWind()) or 0)
+				local range = floor(Game.windMin or 0) .. "-" .. floor(Game.windMax or 0)
+				local room = box[3] - 3 - px
+				s = min(s, s * room / indicatorWidth(wind, s)) -- (narrow, in HOME's place: smaller, the range left out)
+				local fits = px + indicatorWidth(wind, s, range) <= box[3] - 3
+				drawIndicator(BLADES, windTurn, px, box[2] + hh / 2, s, wind, fits and range or nil)
+			else
+				textIn("NO WIND", box[1], box[2], box[3], box[4], small, "\255\150\150\150", font)
+			end
+		elseif tideRelevant() then
+			drawIndicator(WAVES, 0, px, cy, s, tostring(floor(Spring.GetTidal() or 0)))
+		else
+			textIn("NO WATER", box[1], box[2], box[3], box[4], small, "\255\150\150\150", font)
+		end
+	end
+	gl.Color(1, 1, 1, 1)
+end
+-- not shown: the dock hidden, or the D-gun mode's sticks and FIRE where they stand (drawDock)
+function SP.windOff()
+	return SP.hidden or (rightKind == "dgun" and (L.land or L.dgFloat))
+end
+-- the dock's rect for the fingers (RtsTouch's "dock"): with the wind and the tide over metal and energy, up to their top
+function SP.dockAll()
+	local d = L.dock
+	local wb = d and not (L.split or L.thumb or SP.windOff()) and SP.windRects()
+	return wb and wb[4] > d[4] and { d[1], d[2], d[3], wb[4] } or d
+end
+-- their boxes take the first tap (RtsTouch's "live"): the details open at once, the camera pad up or not
+function SP.windLive(r)
+	local wb, tb
+	if not SP.windOff() then
+		wb, tb = SP.windRects()
+	end
+	return wb and ("live " .. r(wb) .. "\nlive " .. r(tb) .. "\n") or ""
+end
+
+-- A tap on the wind's box shows what BAR's top bar shows for a mouse over its wind (Kailil, 2026-11-16: "when pressing
+-- the wind speed widget, it should display the same info that the vanilla one does, like telling us how much of the time,
+-- the windspeed will be at the lowest number"): its average, minimum, maximum, the share of the time under 6 and its
+-- advice, in its words, over a graph of the last five minutes; the tide's, its strength and its words. Any tap closes it.
+SP.WIND_WORDS = {
+	title = { "ui.topbar.windspeed", "Wind speed" }, avg = { "ui.minimap.windAverage", "Average" },
+	min = { "ui.minimap.windMinimum", "Minimum" }, max = { "ui.minimap.windMaximum", "Maximum" },
+	low = { "ui.minimap.windLow", "Under 6" }, note = { "ui.minimap.windAdvice" }, none = { "ui.topbar.wind.nowind1", "None" },
+	tide = { "ui.topbar.tidalspeed", "Tidal speed" }, tideNote = { "ui.topbar.tidalspeedTooltip" },
+}
+function SP.windWord(k)
+	local w = SP.WIND_WORDS[k]
+	return tr(w[1]) or w[2]
+end
+-- BAR's numbers (common/wind_functions.lua, as its top bar): the average from its table, else its guess; the share of
+-- the time under 6 from its table; nil where its file is missing
+function SP.windFacts()
+	if SP.windF == nil then
+		local ok, wf = pcall(VFS.Include, "common/wind_functions.lua")
+		SP.windF = ok and type(wf) == "table" and wf or false
+		if not SP.windF then
+			Spring.Echo("[bardroid-portrait] BAR's wind table not found: " .. tostring(wf)) -- (tools)
+		end
+	end
+	local lo, hi, wf = Game.windMin or 0, Game.windMax or 0, SP.windF
+	local t = wf and wf.averageWindLookup
+	local ok, risk = pcall(function()
+		return wf and wf.getWindRisk and wf.getWindRisk()
+	end)
+	return t and t[lo] and t[lo][hi] or ("~" .. tostring(max(lo, hi * 0.75))), ok and risk or nil, lo, hi
+end
+-- the graph's samples, as BAR's top bar takes them: every 150 frames, the last five minutes
+SP.windHist = { f = {}, v = {} }
+function SP.windSample()
+	local n = Spring.GetGameFrame()
+	local H = SP.windHist
+	if n <= 0 or n < (H.next or 0) or (Game.windMin or 0) + (Game.windMax or 0) < 0.5 then
+		return
+	end
+	H.next = n - n % 150 + 150
+	H.f[#H.f + 1], H.v[#H.v + 1] = n, select(4, Spring.GetWind()) or 0
+	local from = n - 300 * Game.gameSpeed
+	while #H.f > 2 and H.f[1] < from do
+		table.remove(H.f, 1)
+		table.remove(H.v, 1)
+	end
+end
+function SP.drawWindInfo()
+	local info = SP.windInfo
+	if not info then
+		return
+	end
+	if now() - info.at > 15 then -- (a tap that never reached the widget: it goes by itself)
+		SP.windInfo = nil
+		return
+	end
+	local wind = info.kind == "wind"
+	local fs = max(13, min(30, floor(min(vsx, vsy) * 0.024)))
+	local pad, rowH, dim = max(6, floor(fs * 0.6)), floor(fs * 1.5), "\255\170\176\174"
+	local W = min(vsx - 2 * (L.pad or 4), floor(fs * 17))
+	local lo0, hi0 = L.pad or 4, vsx - (L.pad or 4) -- (where it may stand: unfolded, in the gap between the blocks; wider, it
+	if L.split and L.hole then -- covered the build grid and metal and energy, dev phone at 1080x1198)
+		lo0, hi0 = L.hole[1] + L.pad, L.hole[3] - L.pad
+		W = min(W, hi0 - lo0)
+	end
+	local avg, risk, lo, hi = SP.windFacts()
+	local rows
+	if wind then
+		local none = lo + hi < 0.5
+		rows = { { SP.windWord("avg"), none and SP.windWord("none") or avg }, { SP.windWord("min"), lo, true },
+			{ SP.windWord("max"), hi, true }, { SP.windWord("low"), risk and (risk .. "%") or "-", true } }
+	else -- (the tide's strength on its title's line: as a row its name stood twice, dev phone 2026-11-16)
+		rows = {}
+	end
+	local note = SP.windWord(wind and "note" or "tideNote")
+	local noteFs, lines = fs * 0.82, {}
+	if note then
+		note = note:gsub("%s*\n%s*", " ") -- (BAR's own line break, for its tooltip's width: "average" alone on a line here)
+		local ok, wrapped = pcall(font.WrapText, font, note, W - 2 * pad, nil, noteFs)
+		for line in tostring(ok and wrapped or note):gmatch("[^\n]+") do
+			lines[#lines + 1] = line
+		end
+	end
+	local H = SP.windHist
+	local graph = wind and #H.f >= 2 and hi > lo
+	local graphH, axisFs = floor(fs * 3), fs * 0.68
+	local height = pad * 2 + rowH * (1 + #rows) + (#lines > 0 and (#lines * noteFs * 1.2 + pad * 0.5) or 0)
+		+ (graph and (graphH + axisFs * 1.6 + pad) or 0)
+	local b = info.box
+	local base = (L.thumb and L.dock and L.dock[4] or b[4]) + (L.pad or 4) -- (over the box; folded sideways over the dock)
+	local x0 = max(lo0, min(hi0 - W, floor((b[1] + b[3]) / 2 - W / 2)))
+	local r = { x0, base, x0 + W, base + floor(height) }
+	info.rect = r
+	panel(r)
+	local y = r[4] - pad
+	bold:Print("\255\255\255\255" .. SP.windWord(wind and "title" or "tide"), r[1] + pad, y - rowH * 0.5, fs * 1.1, "ov")
+	if not wind then
+		bold:Print("\255\255\255\255" .. (tideRelevant() and tostring(floor(Spring.GetTidal() or 0)) or "NO WATER"),
+			r[3] - pad, y - rowH * 0.5, fs * 1.1, "orv")
+	end
+	y = y - rowH
+	for i, row in ipairs(rows) do
+		if i % 2 == 1 then -- (BAR's tooltip's stripes)
+			gl.Color(1, 1, 1, 0.05)
+			gl.Rect(r[1] + pad * 0.5, y - rowH, r[3] - pad * 0.5, y)
+			gl.Color(1, 1, 1, 1)
+		end
+		font:Print((row[3] and dim or "\255\235\235\235") .. row[1], r[1] + pad, y - rowH * 0.5, fs, "ov")
+		bold:Print((row[3] and "\255\210\210\210" or "\255\255\255\255") .. tostring(row[2]), r[3] - pad, y - rowH * 0.5, fs,
+			"orv")
+		y = y - rowH
+	end
+	if #lines > 0 then
+		y = y - pad * 0.5
+		for _, line in ipairs(lines) do
+			font:Print(dim .. line, r[1] + pad, y - noteFs * 0.6, noteFs, "ov")
+			y = y - noteFs * 1.2
+		end
+	end
+	if graph then
+		local top = y - pad
+		local bottom = top - graphH
+		local left, right = r[1] + pad + font:GetTextWidth(tostring(hi)) * axisFs + pad * 0.6, r[3] - pad
+		gl.Color(1, 1, 1, 0.1)
+		gl.Rect(left, top - 1, right, top)
+		gl.Rect(left, bottom, right, bottom + 1)
+		gl.Color(1, 1, 1, 1)
+		font:Print(dim .. hi, left - pad * 0.5, top, axisFs, "orv")
+		font:Print(dim .. "0", left - pad * 0.5, bottom, axisFs, "orv")
+		font:Print(dim .. "-5:00", left, bottom - axisFs * 0.85, axisFs, "ov")
+		font:Print(dim .. "0:00", right, bottom - axisFs * 0.85, axisFs, "orv")
+		local span, from = 300 * Game.gameSpeed, H.f[#H.f] - 300 * Game.gameSpeed
+		local sx, sy = (right - left) / span, (top - bottom) / max(1, hi)
+		gl.BeginEnd(GL.TRIANGLE_STRIP, function() -- (BAR's fill: fading down to the axis)
+			for i = 1, #H.f do
+				local x, v = left + max(0, H.f[i] - from) * sx, min(hi, H.v[i])
+				gl.Color(0.96, 0.96, 0.96, 0)
+				gl.Vertex(x, bottom)
+				gl.Color(0.96, 0.96, 0.96, 0.28 * v / max(1, hi))
+				gl.Vertex(x, bottom + v * sy)
+			end
+		end)
+		gl.LineWidth(max(1, fs * 0.08))
+		gl.Color(0.96, 0.96, 0.96, 1)
+		gl.BeginEnd(GL.LINE_STRIP, function()
+			for i = 1, #H.f do
+				gl.Vertex(left + max(0, H.f[i] - from) * sx, bottom + min(hi, H.v[i]) * sy)
+			end
+		end)
+		gl.LineWidth(1)
+	end
+	gl.Color(1, 1, 1, 1)
 end
 
 -- BAR's top bar's own resource bars: off while the screen is upright (the dock shows them; a spectator has no dock, and
@@ -3460,23 +3731,8 @@ local function drawMode()
 			gl.Rect(r[1], r[2], r[3], r[4])
 		end
 		gl.Color(1, 1, 1, 1)
-		if showSel then -- (no selection row: the dimmed dock says it alone)
-			local s = L.sel
-			local h = s[4] - s[2]
-			-- (just above the picked unit's health bar, drawSelection's r[2] + h * 0.25: at the bottom it was printed over it;
-			-- right of the count line, "6 units, 6 of this type", which it ran under: left out where it does not fit; the name
-			-- alone, no "tap to use the menu" beside it: Kailil, 2026-11-09, the dock shows no hint text)
-			-- (a floor by the screen's height: the near-square dock's shorter row made it 11 pixels, unreadable on the
-			-- unfolded Fold7, dev phone at 1080x1198 both ways; tall phones' 21 as before)
-			local size, right = max(h * 0.15, min(h * 0.24, vsy * 0.014)), s[3] - L.pad
-			local from = (L.selCountEnd or 0) + L.pad * 2
-			local label = "CAMERA PAD"
-			if right - font:GetTextWidth(label) * size >= from then
-				-- (on the count line's baseline, drawSelection's r[4] - h * 0.62: at 0.3 it sat below the count, the two
-				-- off one line, dev phone screenshot 2026-11-13)
-				font:Print("\255\190\190\190" .. label, right, s[2] + h * 0.38, size, "ro")
-			end
-		end
+		-- (no "CAMERA PAD" on the selection row any more: it sat in the QUEUE button's corner, Kailil 2026-11-16: "remove
+		-- the camera pad label in the QUEUE button"; the dimmed dock says the mode alone)
 		return
 	end
 	local age = t - menuAt
@@ -3817,6 +4073,7 @@ function widget:Update(dt)
 	end
 	factoryStates()
 	windTurn =(windTurn + (select(4, Spring.GetWind()) or 0) * 0.2 * (dt or 0) * 30) % 360 -- (BAR's top bar's blade speed)
+	SP.windSample() -- (the wind details' graph)
 	drawingCursor()
 	if (rightKind == "home" or rightKind == "pregame") and pingT.drawn then -- (PINGS: "2 OF 4" back to LAST PINGS after
 		-- the cycle's pause, TAP MAP back to PING when it runs out; pregame's PING alone draws no step)
@@ -3869,6 +4126,17 @@ function widget:Update(dt)
 	if t >= refreshAt and not press then
 		refreshAt = t + 0.25
 		refresh()
+	end
+	local q = SP.quickPending -- (a building tapped with nothing picked: placed once its builder's commands are there)
+	if q then
+		local s = spGetSelectedUnits() or {}
+		if #s == 1 and s[1] == q.unit and spGetCmdDescIndex(q.id) then
+			SP.quickPending = nil
+			runCommand(q.id)
+			Spring.Echo("[bardroid-portrait] built without picking first: " .. ((UnitDefs[-q.id] or {}).name or q.id)) -- (tools)
+		elseif now() - q.at > 1.5 then
+			SP.quickPending = nil
+		end
 	end
 	local aside = SP.windowOpen() -- (one of BAR's big windows open: the dock out of its way until it closes)
 	if aside ~= L.aside then
@@ -4174,7 +4442,9 @@ local function drawQueueZones()
 	local size = h * 0.2
 	local gold, white = "\255\255\200\064", "\255\235\235\235"
 	bold:Print((iOn and gold or white) .. "INSERT", (ins[1] + h + ins[3]) / 2, (ins[2] + ins[4]) / 2 - size * 0.35, size, "co")
-	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, que[4] - h * 0.36, size, "ro")
+	-- (QUEUE as INSERT: its middle on the row's, between the name and the health bar, where the camera pad's words were;
+	-- on the name's line at the top right it read smaller, Kailil 2026-11-16: "make QUEUE larger, the same size as insert")
+	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, (que[2] + que[4]) / 2 - size * 0.35, size, "ro")
 end
 
 -- Sideways, one thumb: the tabs over the panel (the one shown in gold), HOME (gold while its buttons are open) and the
@@ -4199,13 +4469,15 @@ function SP.drawThumb()
 			textIn(label, r[1], r[2], r[3], r[4], (r[4] - r[2]) * 0.46, "\255\240\240\240", bold)
 		end
 	end
-	local h = L.homeBtn
-	if L.homeOpen then
-		button(h, gold, { 0.66, 0.53, 0.12, 0.9 })
-	else
-		button(h)
+	local h = L.homeBtn -- (none now: the wind and the tide have its place, SP.windRects; kept for a layout that has one)
+	if h then
+		if L.homeOpen then
+			button(h, gold, { 0.66, 0.53, 0.12, 0.9 })
+		else
+			button(h)
+		end
+		textIn("HOME", h[1], h[2], h[3], h[4], min((h[4] - h[2]) * 0.3, (h[3] - h[1]) * 0.26), "\255\240\240\240", bold)
 	end
-	textIn("HOME", h[1], h[2], h[3], h[4], min((h[4] - h[2]) * 0.3, (h[3] - h[1]) * 0.26), "\255\240\240\240", bold)
 	local s = L.swapBtn
 	button(s)
 	local cx, cy = (s[1] + s[3]) / 2, (s[2] + s[4]) / 2
@@ -4276,7 +4548,7 @@ function SP.resSignature() -- (its parts in one table kept for it: made each fra
 		parts[5 + i] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
 			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0) or "-"
 	end
-	parts[8] = string.format("%.1f/%d", select(4, Spring.GetWind()) or 0, floor(Spring.GetTidal() or 0))
+	parts[8] = "" -- (the wind and tide: their own boxes now, drawn live, SP.drawWindTide)
 	return table.concat(parts, " ")
 end
 function SP.drawRes()
@@ -4390,6 +4662,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	local tRes = PROF.on and spGetTimer() -- (profiling: the resource panels' share, drawn live every frame)
 	if not (L.land and rightKind == "dgun") then -- (sideways FIRE stands where they are: their edges showed round it)
 		SP.drawRes()
+		SP.drawWindTide()
 	end
 	if tRes then
 		PROF.resMs = (PROF.resMs or 0) + spDiffTimers(spGetTimer(), tRes) * 1000
@@ -4403,6 +4676,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		return -- (no camera pad dimming or menu edge: the sticks are always live)
 	end
 	drawMode()
+	SP.drawWindInfo() -- (over the camera pad's dimming: it is open, it reads as such)
 end
 
 function widget:DrawScreen()
@@ -4520,6 +4794,25 @@ function widget:MousePress(x, y, btn)
 	pingT.eat = false -- (a ping's release that never came must not eat this press's)
 	if L.aside then -- (stepped aside for one of BAR's windows: SP.windowOpen)
 		return false
+	end
+	-- BAR's wind or tide details (SP.drawWindInfo): any press closes them, one on them or on their box is theirs; a press on
+	-- the wind's or the tide's box opens them
+	local info = SP.windInfo
+	if info then
+		SP.windInfo = nil
+		if inRect(x, y, info.rect) or inRect(x, y, info.box) then
+			return true
+		end
+	end
+	if active and not SP.windOff() then
+		local wb, tb = SP.windRects()
+		local hit = inRect(x, y, wb) and "wind" or inRect(x, y, tb) and "tide"
+		if hit then
+			SP.windInfo = { kind = hit, box = hit == "wind" and wb or tb, at = now() }
+			Spring.Echo("[bardroid-portrait] the " .. hit .. "'s details") -- (tools)
+			touched()
+			return true
+		end
 	end
 	local onMap = L.hole and inRect(x, y, L.hole) -- (sideways: BAR's minimap in the dock's middle)
 	if active and btn == 1 and pingT.armed() and (onMap or not inRect(x, y, L.dock)) then -- PINGS' PING: a ping where the map is

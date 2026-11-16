@@ -1964,6 +1964,29 @@ Added 2026-11-10 ~05:00 (with screenshots):
       settings' boxes' moved 6-7 dp outside the scroll column cutting the left of their press ripple, did not hold on
       the phone: a press held on Sound showed the ripple's whole circle out to the screen's edge (the checkbox's
       ripple is borderless, drawn by an ancestor, not clipped by the column); nothing changed.
+- [ ] **Kailil's dock asks of 2026-11-16: built, his test pending** (on the Fold7, with screenshots), each on the dev
+      phone:
+      - **The empty left block with nothing picked** (his circle on it: "I need ideas on what can go in this empty
+        space"; of five ideas, "lets try 2"): **build without picking first**. Unfolded, nothing picked, the left block
+        shows the grid of the builder last picked alone (else the commander), dimmed; a tap picks that builder and
+        starts the building's placing at once (SP.quickBuilds, quickPending). Dev phone at 1968x2184: "0 picked: left
+        quick (26)", a wind turbine tapped, "built without picking first: armwin", PLACE up.
+      - **Wind and tide in boxes of their own** ("show the wind speed widget just above the eco NUMBERS ... it should
+        displa wind speed, and water power generation widget too"), then **where** ("Move the widgets to be on top of
+        the idle unit or unit group bar when in unfolded. WHen in landscape folded, Replace the home button with the
+        water tidal widget and wind speed stuff"): unfolded, side by side on the groups strip between the blocks (the
+        gap above them the game's); sideways folded, one over the other in HOME's place over the swap arrow (HOME gone:
+        with nothing picked the home buttons show in the panel as before; a tap on empty ground lets a pick go); tall
+        upright, over metal and energy (SP.windRects). The energy box's own wind and tide removed.
+      - **A tap on the wind shows what BAR's top bar shows for a mouse over it** ("telling us how much of the time, the
+        windspeed will be at the lowest number. like vaniklla does"): BAR's own words and numbers
+        (common/wind_functions.lua, BAR.I18N): Average speed, Minimum, Maximum, Time below 6 (16.4 % on Mars 4-12), the
+        Solar Collectors advice, the last five minutes' graph; the tide's box its Tidal Speed and words. Any tap closes
+        it, else 15 s (SP.drawWindInfo). Unfolded it keeps to the gap between the blocks (wider, it covered the grid).
+      - **QUEUE as large as INSERT, CAMERA PAD gone** (his screenshot, CAMERA PAD struck through): QUEUE at the row's
+        middle, INSERT's size; the name has the line to the right edge.
+      Dev phone: unfolded 1968x2184, sideways folded 2520x1080, tall upright 1080x2520 screenshots with the details
+      open; dock-phone-test ALL PASS upright.
 - [ ] **The upright dock on the unfolded Fold7 a third of the screen at most: built, his test pending** (Kailil,
       2026-11-15, his screenshot with a red line a third of the way up: "The bottom ui takes up FARRRRRR TOo much screen
       real-estate ... The max it shoukd come up is the red line I drew. Smaller would be better"): it was 0.54 of the
