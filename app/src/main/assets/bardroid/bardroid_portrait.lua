@@ -3671,6 +3671,7 @@ end
 -- launcher's "Touch dock sideways" on (launch-bar.sh: bardroid_landdock.txt), playing, the fingers the input (a pad or
 -- a mouse brings BAR's own screen back). BAR's minimap goes into the dock's middle (its Minimap widget's external
 -- frame: the engine draws and clicks it there), a hole RtsTouch and this widget leave to it (L.hole, "map" line).
+SP.NO_MINIMAP = { 0, 0, 1, 1 }
 function SP.landMinimap()
 	local m = WG.minimap
 	if not (m and m.setExternalFrame) then
@@ -3679,13 +3680,14 @@ function SP.landMinimap()
 	local h = active and L.land and not L.split and L.hole or nil -- (unfolded the hole is the game's: no minimap)
 	if active and L.dgFloat and not L.split then -- (the D-gun mode sideways shows no minimap: a pixel in the bottom left corner, under
 		-- the band's place; given back its own place BAR's showed at the top left)
-		h = { 0, 0, 1, 1 }
+		h = SP.NO_MINIMAP
 	end
-	local key = h and table.concat(h, " ") or nil
-	if key == L.frameKey then
+	-- (its numbers against the last ones: a string made of them each frame, before)
+	local f = L.frameWas
+	if h == f or h and f and h[1] == f[1] and h[2] == f[2] and h[3] == f[3] and h[4] == f[4] then
 		return
 	end
-	L.frameKey = key
+	L.frameWas = h and { h[1], h[2], h[3], h[4] } or nil
 	if h then
 		m.setExternalFrame(h[1], h[2], h[3], h[4], 0)
 	else
@@ -3693,11 +3695,22 @@ function SP.landMinimap()
 	end
 end
 -- the rects of d left around h (h inside d): the dock drawn and dimmed around the minimap
+-- (kept while d and h stay as they are: made twice a frame, five tables each; the callers only read them; review
+-- 2026-11-16)
 function SP.around(d, h)
 	if not h then
-		return { d }
+		SP.aroundOne = SP.aroundOne or {}
+		SP.aroundOne[1] = d
+		return SP.aroundOne
 	end
-	return { { d[1], h[4], d[3], d[4] }, { d[1], d[2], d[3], h[2] }, { d[1], h[2], h[1], h[4] }, { h[3], h[2], d[3], h[4] } }
+	local c = SP.aroundCache
+	if c and c[1] == d[1] and c[2] == d[2] and c[3] == d[3] and c[4] == d[4] and c[5] == h[1] and c[6] == h[2]
+		and c[7] == h[3] and c[8] == h[4] then
+		return c.rects
+	end
+	SP.aroundCache = { d[1], d[2], d[3], d[4], h[1], h[2], h[3], h[4], rects = { { d[1], h[4], d[3], d[4] },
+		{ d[1], d[2], d[3], h[2] }, { d[1], h[2], h[1], h[4] }, { h[3], h[2], d[3], h[4] } } }
+	return SP.aroundCache.rects
 end
 
 local function checkActive()
@@ -4239,14 +4252,17 @@ end
 -- The metal and energy panels in a texture of their own, drawn again only when what they show changes (the numbers,
 -- the bar by a two-hundredth, the wind and tide readings, their place): drawn live every frame they took 0.8-1.0 ms of
 -- the dock's 1.2-1.7 ms a frame (dev phone, 2026-11-12). The wind's blades (and the waves) turn live over it.
-function SP.resSignature()
-	local parts = { L.res[1], L.res[2], L.res[3], L.res[4], tideRelevant() and "t" or "" }
-	for _, res in ipairs({ "metal", "energy" }) do
+SP.RES_KINDS = { "metal", "energy" }
+function SP.resSignature() -- (its parts in one table kept for it: made each frame, two tables a frame)
+	local parts = SP.resParts or {}
+	SP.resParts = parts
+	parts[1], parts[2], parts[3], parts[4], parts[5] = L.res[1], L.res[2], L.res[3], L.res[4], tideRelevant() and "t" or ""
+	for i, res in ipairs(SP.RES_KINDS) do
 		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
-		parts[#parts + 1] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
+		parts[5 + i] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
 			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0) or "-"
 	end
-	parts[#parts + 1] = string.format("%.1f/%d", select(4, Spring.GetWind()) or 0, floor(Spring.GetTidal() or 0))
+	parts[8] = string.format("%.1f/%d", select(4, Spring.GetWind()) or 0, floor(Spring.GetTidal() or 0))
 	return table.concat(parts, " ")
 end
 function SP.drawRes()
@@ -4455,11 +4471,12 @@ end
 -- landscape size they run down over the dock (sideways Settings' Environment rows lay under its bars and tabs, the two
 -- drawn through each other, dev phone 2026-11-13; upright they are wider than the screen as well): the dock steps
 -- aside, not drawn and no rects for RtsTouch ("dock none"), until the window closes; BAR's own panels stay hidden
+SP.WINDOWS = { "options", "gameinfo", "keybinds", "changelog", "widgetselector" } -- (once, not a list each frame)
 function SP.windowOpen()
 	if not active then
 		return false
 	end
-	for _, name in ipairs({ "options", "gameinfo", "keybinds", "changelog", "widgetselector" }) do
+	for _, name in ipairs(SP.WINDOWS) do
 		local w = WG[name]
 		if w and w.isvisible and w.isvisible() then
 			return true

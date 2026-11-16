@@ -1914,7 +1914,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       pad up (no live rect, as the swap arrow had), and with MULTI on it left the unit list up: a live rect, and the list
       let go; (7) in the split and sideways a drag on the left block scrolled the right block's share list or panel (a
       rule for grids spanning both halves; there the grid is the right block's). Left: the dock's per-frame garbage
-      (writeDock's compare strings, SP.around's tables), low. dock-phone-test's circle case put its "hidden" Pawn at the
+      (writeDock's compare strings, SP.around's tables), low. Since cut: SP.around's rects kept while the dock and hole
+      stay (ten tables a frame), the window names, the resource signature's tables and the minimap frame's string made
+      once; writeDock's compare left as it is (its lines are what RtsTouch reads, any change in them must still go out).
+      Dev phone: dock-phone-test ALL PASS; sideways the minimap still in the dock's middle, the dock dimmed around it. dock-phone-test's circle case put its "hidden" Pawn at the
       screen's middle, the split's game: behind the right block there now. Dev phone: dock-phone-test ALL PASS at both
       shapes (the circle case at 1080x1198 first failed as it should: the Pawn in the gap picked), touch-phone-test and
       pad-test -Chat ALL PASS; a screenshot of the split with the commander picked: its name fits beside QUEUE.
