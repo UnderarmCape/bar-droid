@@ -1371,6 +1371,20 @@ end
 -- started its download, "Download Failed", Start waiting on it). Each map's name under its picture, "not downloaded"
 -- under that while it is not, both ways up; upright the four in two columns across the panel, larger. Chobby's places
 -- kept, and put back sideways. A new game type makes the page's buttons anew.
+-- Chobby's place of a control before the first move (upright.quickSaved: quickMaps puts them all back sideways)
+function upright.quickKeep(o)
+	local saved = upright.quickSaved
+	if not saved[o] then
+		local rb, gb = {}, {}
+		for k, v in pairs(o._relativeBounds or {}) do
+			rb[k] = v
+		end
+		for k, v in pairs(o._givenBounds or {}) do
+			gb[k] = v
+		end
+		saved[o] = { rb = rb, gb = gb, x = o.x, y = o.y, w = o.width, h = o.height }
+	end
+end
 function upright.quickMaps(tall)
 	upright.quickSaved = upright.quickSaved or setmetatable({}, { __mode = "k" })
 	upright.quickLabels = upright.quickLabels or setmetatable({}, { __mode = "k" })
@@ -1399,18 +1413,7 @@ function upright.quickMaps(tall)
 	local config = WG.Chobby and WG.Chobby.Configuration
 	local font = config and config:GetFont(1)
 	local labelH = math.floor(((font and font.size) or 16) * 2.4) + 4
-	local function keep(o) -- (Chobby's place, before the first move)
-		if not saved[o] then
-			local rb, gb = {}, {}
-			for k, v in pairs(o._relativeBounds or {}) do
-				rb[k] = v
-			end
-			for k, v in pairs(o._givenBounds or {}) do
-				gb[k] = v
-			end
-			saved[o] = { rb = rb, gb = gb, x = o.x, y = o.y, w = o.width, h = o.height }
-		end
-	end
+	local keep = upright.quickKeep
 	local panel
 	for i, b in ipairs(found) do
 		local name = b.tooltip:sub(17):match("^(.-)|") or b.tooltip:sub(17)
@@ -1487,6 +1490,89 @@ function upright.quickMaps(tall)
 	if #found > 0 and upright.quickSeen ~= found[1] then -- (tools)
 		upright.quickSeen = found[1]
 		Spring.Echo("[bardroid-lobby] quick skirmish maps named" .. (tall and ", two columns across the panel" or ""))
+	end
+end
+
+-- The quick Skirmish's pages with a picture (Select Game Type, the difficulty, the faction): laid out for a wide panel,
+-- the picture in its left half, the buttons in its right; upright the picture a sliver cut from the middle of its 16:9
+-- and the right column empty under the buttons for most of the panel (dev phone, 2026-11-17). Upright the picture across
+-- the panel at its own 16:9 (shorter where the panel is), the buttons under it as wide. After quickMaps, which puts
+-- Chobby's places back sideways.
+function upright.quickPages(tall)
+	local saved = upright.quickSaved
+	if not (tall and saved) then
+		return
+	end
+	local pictures = {}
+	local function walk(o, depth)
+		if not o or depth > 25 or o.disposed or o.visible == false then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.name == "skirmishPreviewPanel" then
+				pictures[#pictures + 1] = c
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	for _, name in ipairs({ "holder_mainWindow", "mainWindow_mainContent", "holder_submenuWindow" }) do
+		if #pictures == 0 then
+			walk(real(chobbyObject(name)), 0)
+		end
+	end
+	local keep = upright.quickKeep
+	for _, pic in ipairs(pictures) do
+		local panel = real(pic.parent)
+		local w = panel and (panel.clientWidth or panel.width) or 0
+		local buttons = {}
+		for _, ch in ipairs(panel and panel.children or {}) do -- (the page's own: Chobby puts them at 52 % across)
+			local c = real(ch)
+			local rb = c and (saved[c] and saved[c].rb or c._relativeBounds)
+			if c and c.classname == "button_simple" and rb and rb.left == "52%" then
+				buttons[#buttons + 1] = c
+			end
+		end
+		local function y0of(o)
+			return saved[o] and saved[o].y or o.y
+		end
+		table.sort(buttons, function(a, b)
+			return y0of(a) < y0of(b)
+		end)
+		local n = #buttons
+		if w > 0 and n > 0 then
+			local bh = saved[buttons[1]] and saved[buttons[1]].h or buttons[1].height
+			local gap, x0, pw, top = 14, math.floor(w * 0.04), math.floor(w * 0.92), y0of(pic)
+			local adv = panel:GetChildByName("advButton")
+			local foot = (adv and adv.y or math.floor((panel.clientHeight or panel.height or 0) * 0.9)) - 24
+			local ph = math.min(math.floor(pw * 9 / 16), foot - top - 16 - n * (bh + gap))
+			if ph >= math.floor(pw * 0.3) then -- (no room for a picture worth the name: Chobby's layout stays)
+				keep(pic)
+				if pic.x ~= x0 or pic.y ~= top or pic.width ~= pw or pic.height ~= ph then
+					pic:SetPos(x0, top, pw, ph)
+				end
+				for i, b in ipairs(buttons) do
+					keep(b)
+					local y = top + ph + 16 + (i - 1) * (bh + gap)
+					if b.x ~= x0 or b.y ~= y or b.width ~= pw or b.height ~= bh then
+						b:SetPos(x0, y, pw, bh)
+					end
+				end
+				local tip = panel:GetChildByName("tipTextBox")
+				if tip then
+					keep(tip)
+					local ty = top + ph + 16 + n * (bh + gap) + 8
+					if tip.y ~= ty then
+						tip:SetPos(nil, ty)
+					end
+				end
+				if upright.pagesSeen ~= pic then -- (tools)
+					upright.pagesSeen = pic
+					Spring.Echo("[bardroid-lobby] quick skirmish page upright: the picture across, " .. n .. " buttons under it")
+				end
+			end
+		end
 	end
 end
 
@@ -1753,6 +1839,7 @@ local function uprightUpdate(now)
 	upright.tips(screen0.height > screen0.width * UPRIGHT)
 	if shown then
 		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
+		upright.quickPages(screen0.height > screen0.width * UPRIGHT)
 		upright.replayTeams(upright.replayPanel)
 		upright.pluginButtons(upright.pluginsWin)
 		upright.settingsRows(true) -- (both ways up: sideways its rows were the densest, about 2 mm)

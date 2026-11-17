@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The quick Skirmish's picture pages upright; the voice chat code read** (hardening, 2026-11-17 ~13:35, dev phone,
+      the lobby offline, never logged in): VoiceChat.java read through (a recognizer per session, a past session's late
+      calls dropped by number, the offline note for errors that need a connection): nothing to change. The lobby
+      upright: its pages of buttons as they should be. Chobby's Skirmish, Select Game Type (gui_battle_room_window.lua's
+      simple skirmish, laid out for a wide panel): the picture in the left half cut from its 16:9 to a sliver, the
+      buttons in the right half, three quarters of that column empty under them. Upright now (bardroid_lobby_touch.lua
+      upright.quickPages, after quickMaps, which puts Chobby's places back sideways; its keep is upright.quickKeep for
+      both): the picture across the panel at its own 16:9, the buttons as wide under it; the same for Select Difficulty
+      (5) and Select your Faction (3). Dev phone: each page, 2v2 picked and Next through to Select Map (quickMaps' two
+      columns as before); lobby-phone-test ALL PASS. Sideways not run (the function returns there).
 - [x] **Spectating upright with the nook** (hardening, 2026-11-17 ~13:15, dev phone): fp-save-test passes
       (spectate-test runs BAR on the laptop: not while Kailil uses it). A replay spectated upright (bench mode's replay
       marker, speedmetal1v1-20261001, removed after): the spectator's dock, but the wind and the tide still as the old
