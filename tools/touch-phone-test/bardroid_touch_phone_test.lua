@@ -1,8 +1,8 @@
 -- User widget for tools/touch-phone-test.ps1: the touch camera (bardroid_touch.lua) on the phone, driven by lines this
 -- widget appends to LuaUI/Config/bardroid_touch.txt as the app writes them (pan, zoom: X pixels, top-left origin). A
 -- drag holds the map point under the finger: on the map, over the void past its edge (across and up), across the edge;
--- a pinch over the void zooms about its point; a drag over the sky moves the map. Logs "[touchphone] PASS|FAIL|SKIP
--- <case>" and "[touchphone] done".
+-- a pinch over the void zooms about its point; a drag over the sky moves the map; under BAR's lobby over the game the
+-- fingers leave the camera and the dock steps aside. Logs "[touchphone] PASS|FAIL|SKIP <case>" and "[touchphone] done".
 function widget:GetInfo()
 	return { name = "BAR Droid touch phone test", desc = "Checks the touch camera at the map's edge", author = "BAR Droid",
 		layer = 0, enabled = true }
@@ -104,6 +104,25 @@ local function hoverAnswer(case, want)
 	local ok = got == want
 	fails = fails + (ok and 0 or 1)
 	log(string.format("%s %s: %s", ok and "PASS" or "FAIL", case, tostring(got)))
+end
+
+-- The overlay file the touch widget writes for the app (LuaUI/Config/bardroid_overlay.txt: "1" BAR's lobby is over the
+-- game, "0" not); false (try again) until it says want, up to the runner's 30 tries
+local overlayTries = 0
+local function overlayIs(case, want)
+	local f = io.open("LuaUI/Config/bardroid_overlay.txt", "r")
+	local got = f and (f:read("*l") or "") or "none"
+	if f then
+		f:close()
+	end
+	if got ~= want and overlayTries < 20 then
+		overlayTries = overlayTries + 1
+		return false
+	end
+	overlayTries = 0
+	local ok = got == want
+	fails = fails + (ok and 0 or 1)
+	log(string.format("%s %s: %s", ok and "PASS" or "FAIL", case, got))
 end
 
 local before, grab, endX, endY, row, mapRow
@@ -285,6 +304,52 @@ local cases = {
 	function() return hoverAnswer("the pointer on the build menu answers interface", 1) end,
 	function() Spring.WarpMouse(math.floor(vsx * 0.6), math.floor(vsy * 0.55)) end,
 	function() return hoverAnswer("the pointer on the map answers map", 0) end,
+	-- BAR's lobby over the game (the top bar's Lobby): BAR tells the widgets "LobbyOverlayActive1" / "0", sent here the
+	-- same way. The app is told (bardroid_overlay.txt), the dock steps aside ("dock none"), and the fingers' camera lines
+	-- leave the game behind the lobby; with the lobby gone they pan again (2026-11-17)
+	function()
+		camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.9)
+		Spring.SendLuaUIMsg("LobbyOverlayActive1")
+	end,
+	function() return overlayIs("the app is told BAR's lobby is over the game", "1") end,
+	function()
+		local P = WG.BarDroidPortrait
+		if P and P.active and P.active() then
+			local f = io.open("LuaUI/Config/bardroid_dock.txt", "r")
+			local head = f and f:read("*l") or ""
+			if f then
+				f:close()
+			end
+			local ok = head == "dock none"
+			fails = fails + (ok and 0 or 1)
+			log(string.format("%s the dock steps aside under BAR's lobby: %s", ok and "PASS" or "FAIL", head))
+		end
+		before = Spring.GetCameraState()
+		local y = math.floor(vsy * 0.4)
+		touch(string.format("pan %d %d %d %d", cx, y, cx + 150, y + 90))
+		touch(string.format("zoom 1.5 %d %d", cx, y))
+	end,
+	settle,
+	function()
+		local cs = Spring.GetCameraState()
+		local m = moved() + math.abs((cs.dist or 0) - (before.dist or 0))
+		local ok = m < 1
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s a drag and a pinch on BAR's lobby leave the game's camera: %.1f", ok and "PASS" or "FAIL", m))
+		Spring.SendLuaUIMsg("LobbyOverlayActive0")
+	end,
+	function() return overlayIs("the app is told BAR's lobby is gone", "0") end,
+	function()
+		before = Spring.GetCameraState()
+		local y = math.floor(vsy * 0.4)
+		touch(string.format("pan %d %d %d %d", cx, y, cx + 150, y + 90))
+	end,
+	settle,
+	function()
+		local ok = moved() > 1
+		fails = fails + (ok and 0 or 1)
+		log(string.format("%s with BAR's lobby gone a drag pans again: %.0f", ok and "PASS" or "FAIL", moved()))
+	end,
 	function()
 		log(fails == 0 and "done: ALL PASS" or ("done: " .. fails .. " FAILED"))
 		widgetHandler:RemoveWidget()
