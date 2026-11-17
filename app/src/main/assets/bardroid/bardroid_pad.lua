@@ -1703,7 +1703,10 @@ local function shareDraw(vsx, vsy)
 		x0 = math.max(0, math.min(math.floor(ix1 + pad), math.floor(vsx - w - pad)))
 	end
 	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top, floorY }
-	style.panel(x0, y1 - h, x0 + w, y1, 0.8) -- (semi-transparent: the battle shows through)
+	-- (as the pad's other panels, BAR's opacity: at 0.8 of it, 0.64, the commander's name and the metal spots' rings lay
+	-- between the tabs and the rows, BAR's GUI blur being off on phones; pad-test -Share's screenshots 2026-11-17. The
+	-- battle still shows faintly)
+	style.panel(x0, y1 - h, x0 + w, y1, 1)
 
 	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
 	local tabH = math.floor(size * 1.45)
