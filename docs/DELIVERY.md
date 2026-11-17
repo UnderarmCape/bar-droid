@@ -747,9 +747,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       reach, only the countdown left the game. (Sideways on a tall phone the dock is down while spectating, so the end
       looked right there.) Now the dock steps aside once the game is over (bardroid_portrait.lua widget:GameOver,
       SP.gameOver in SP.windowOpen): "dock none", the Awards whole with Show Graphs and Leave; Show Graphs opened the
-      game's Statistics (You against the AI); the engine's exit 0. No Lua errors. Left as it is: those Statistics
-      upright keep the dock's room under them though the dock is aside then (bardroid_teamstats.lua sizes by the dock's
-      rect).
+      game's Statistics (You against the AI); the engine's exit 0. No Lua errors. Those Statistics upright kept the
+      dock's room empty under them though the dock was aside (bardroid_teamstats.lua sized by the dock's rect): the
+      next run (~08:25) made them take the whole height while the dock is aside upright (WG.BarDroidPortrait.aside;
+      make-teamstats.py's layout and DrawScreen patches), the charts twice as tall at the game's end; remake-check PASS,
+      dock-phone-test ALL PASS. Seen there and left for now: a finger's tap on Show Graphs leaves the pointer on a chart,
+      whose hover tooltip ("Map · Front line ...") then covers part of the charts.
 - [x] **Save and load by touch, upright; the load tip over the pre-game frame** (hardening, 2026-11-17 ~08:05, dev
       phone upright): a skirmish's top bar Save (bardroid_topbar.lua through BAR's hidden bar): "Game saved: the lobby's
       Load Game opens it", Saves/20261117_075052.ssf (7 MB; kept on the dev phone for later checks); the lobby's Load
