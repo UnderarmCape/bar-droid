@@ -740,6 +740,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **PING's speak-to-chat with the microphone revoked** (hardening, 2026-11-17 ~04:10, dev phone upright, a
+      skirmish, nothing picked): a double tap on PING showed "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S
+      SETTINGS", PING back after it, launcher.log "voice chat: the microphone was not allowed"; no Lua errors. Nothing to
+      fix; no UI polish this run.
 - [x] **fp-save-test and pace-test after the night's changes** (hardening, 2026-11-17 ~04:00, dev phone): a
       spectator's 1st person through BAR's mid-game settings save, and the shipped libbardroid_pace.so's frame cap
       (pace-test -Shipped): both ALL PASS. The Fold7 still off adb (no answer on its port, nothing in mdns). No UI
