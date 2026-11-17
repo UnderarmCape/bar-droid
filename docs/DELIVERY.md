@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A factory picked upright** (hardening, 2026-11-17 ~16:30, dev phone; a Bot Lab given by a temporary widget,
+      removed after): the selection row "Bot Lab" under the wind and the tide's nook, its 8 bots in the grid, its orders
+      (Repeat, Fire at will, Hold pos, Low Priority, Factory Guard); three taps on bots queued them (counts 2 and 1 on
+      their tiles, bold and outlined, the size of the costs), the right side +1 / +5 / +20 / -1 / CLEAR / ORDERS, the
+      groups row x FIRST / x LAST; the dock dimmed back to the camera pad after the taps, as meant. No Lua error;
+      nothing to change.
 - [x] **The pause after a replay's skip: the app's own ruled out; chat upright** (hardening, 2026-11-17 ~16:20, dev
       phone): the app's Lua pauses a game in one place only (bardroid_touch.lua: the game screen hidden, a game with no
       other player, a replay too), and logs "the game screen is hidden: paused until it is back" when it does: not in
