@@ -1979,11 +1979,15 @@ function refreshNow()
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }
 	end
 	if sharing or resPanel then -- (the picker or the panel: the whole grid)
-		newLeft, lk = {}, sharing and "share" or "panel"
+		-- (the split dock: the left block keeps its own, the picker or panel in the right block, its place (homeRect); the
+		-- left had stood empty beside it, dev phone at 1080x1198, 2026-11-17; a press there puts them away, MouseRelease)
+		if not L.split then
+			newLeft, lk = {}, sharing and "share" or "panel"
+		end
 		-- (with nothing picked the home grid stays under the panel, a drop-down over it: it took the whole dock, half of
 		-- it empty below CLOSE; a press on one of them closes the panel)
 		local home = not sharing and rk == "home" and newRight
-		newRight, rk = sharing and shareItems() or panelItems(resPanel), lk
+		newRight, rk = sharing and shareItems() or panelItems(resPanel), sharing and "share" or "panel"
 		for _, it in ipairs(home or {}) do
 			it.home = true
 			newRight[#newRight + 1] = it
@@ -2993,19 +2997,33 @@ local function drawSlider(item, r)
 	local y0, y1 = b[4] + bh * 1.4, r[4] - h * 0.04
 	local size = h * 0.22
 	local share = floor(sliderValue(item, "share") * 100 + 0.5) .. "%"
+	-- (the first wording that fits at 80 % of the words' size, else the shortest: in the unfolded split's narrow block
+	-- energy's two long ones came out at half the size, dev phone at 1080x1198, 2026-11-17)
+	local function fitting(room, ...)
+		local pick, fit
+		for _, words in ipairs({ ... }) do
+			local wide = 0
+			for _, s in ipairs(words) do
+				wide = max(wide, font and font:GetTextWidth(s) or 0)
+			end
+			pick, fit = words, min(size, room * 0.76 / max(0.01, wide))
+			if fit >= size * 0.8 then
+				break
+			end
+		end
+		return pick, fit
+	end
 	if item.res == "metal" then
-		textIn("SHARE METAL TO ALLIES ABOVE  " .. share, r[1], y0, r[3], y1, size, "\255\235\235\235", font)
+		local w, fit = fitting(r[3] - r[1], { "SHARE METAL TO ALLIES ABOVE  " .. share }, { "SHARE METAL ABOVE  " .. share })
+		textIn(w[1], r[1], y0, r[3], y1, fit, "\255\235\235\235", font)
 	else -- (each value in its knob's colour, over its own half, both one size: the longer had come out smaller,
 		-- sideways, dev phone 2026-11-17)
 		local mid = (r[1] + r[3]) / 2
-		local s1 = "SHARE ENERGY ABOVE  " .. share
-		local s2 = "CONVERT ABOVE  " .. floor(sliderValue(item, "convert") * 100 + 0.5) .. "%"
-		if font then
-			local room = (mid - r[1]) * 0.76 -- (textIn's room)
-			size = min(size, room / max(0.01, font:GetTextWidth(s1)), room / max(0.01, font:GetTextWidth(s2)))
-		end
-		textIn(s1, r[1], y0, mid, y1, size, "\255\255\150\140", font)
-		textIn(s2, mid, y0, r[3], y1, size, "\255\242\242\190", font)
+		local conv = floor(sliderValue(item, "convert") * 100 + 0.5) .. "%"
+		local w, fit = fitting(mid - r[1], { "SHARE ENERGY ABOVE  " .. share, "CONVERT ABOVE  " .. conv },
+			{ "SHARE ABOVE  " .. share, "CONVERT ABOVE  " .. conv }, { "SHARE  " .. share, "CONVERT  " .. conv })
+		textIn(w[1], r[1], y0, mid, y1, fit, "\255\255\150\140", font)
+		textIn(w[2], mid, y0, r[3], y1, fit, "\255\242\242\190", font)
 	end
 	SP.drawResBar(item, r, SP.inTex and "track" or nil)
 end
@@ -5538,7 +5556,12 @@ function widget:MouseRelease(x, _, btn)
 			return true
 		end
 		pingT.pressX = p.x -- (PINGS: which of its halves)
-		pressItem(itemAt(p.side, p.x, p.y), btn == 3)
+		local item = itemAt(p.side, p.x, p.y)
+		if item and L.split and p.side == "left" and (resPanel or sharing) then -- (the split's left block beside an open
+			-- panel or picker, refreshNow: its press puts them away first)
+			resPanel, sharing = nil, nil
+		end
+		pressItem(item, btn == 3)
 		return true
 	end
 	if L.groupRects then -- a control group's picture: those units; "+ NEW": the types picked become the next free group,

@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The unfolded split dock: the left block kept beside a resource panel; the bar's words fitted** (hardening,
+      2026-11-17 ~17:55, dev phone at 1080x1198, the Fold7 unfolded, upright): metal or energy tapped emptied the left
+      block (the panel and the share list took "the whole grid", which in the split is the right block alone,
+      homeRect), so the build grid vanished beside it. In the split the left block now keeps its own; a press there puts
+      the panel or the share list away first (MouseRelease), so a building picked beside an open panel goes on to PLACE.
+      And energy's two words over its halves of the narrow block, "SHARE ENERGY ABOVE 95%" and "CONVERT ABOVE 75%", came
+      out at half the size: each label now takes the first wording that fits at 80 % of its size, else the shortest
+      ("SHARE 95%" / "CONVERT 75%"; metal's "SHARE METAL ABOVE"), the full one wherever it fits (upright on a phone, the
+      sideways panel). Dev phone: the energy panel with the build grid beside it, a solar tapped there: the panel gone,
+      ONE / LINE / GRID / BORDER and PLACE; metal's long words in the block; the dock phone test at 1080x1198 all pass.
 - [x] **The resource bar's track in the dock's texture; the launcher's words for the bar and the swipe** (hardening,
       2026-11-17 ~17:30, dev phone upright, the dock's profile on: `bardroid_portrait_profile = 1` in a
       dev-springsettings.cfg for the run): the new bar was drawn whole every frame; an open energy panel took the dock
