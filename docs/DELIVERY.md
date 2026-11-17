@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The Awards' close X for a finger; Statistics at a game's end sideways** (hardening, 2026-11-17 ~15:30, dev
+      phone): the Awards patch's third block, its X's strip 25 more to its left, to the panel's edge, 52 under the top
+      (BAR's about 22 by 27); upright a tap 25 left of and 20 under the X closed it. Sideways the game's end: the Awards
+      as upright, a tap 28 under Show Graphs opened the graphs. They came at BAR's own size there, some 60 % of the
+      screen, words about 11 pixels: with no dock the copy took BAR's place. Now with no dock as with the sideways one,
+      as large as fits under BAR's top bar (make-teamstats.py). Dev phone: the graphs over most of the screen, words
+      larger; remake-check: all five copies and the phone patches PASS; no Lua error.
 - [x] **A game's end upright; the Awards' buttons for a finger** (hardening, 2026-11-17 ~15:20, dev phone): a skirmish
       ended upright (a temporary widget had the commander self-destruct, removed after): "Leaving the game in N s: tap
       the screen to stay longer", a tap kept it; BAR's Awards over the game, Show Graphs opened the app's Statistics at

@@ -92,10 +92,12 @@ PATCHES = [
 		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
 		screenX = mathFloor((vsx - screenWidth) / 2)
 		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
-	elseif droidDock and droidP.sideways and droidP.sideways() then
+	elseif droidP and (not droidDock or (droidP.sideways and droidP.sideways())) then
 		-- BAR Droid: sideways on a tall phone (the dock along the bottom): as large as fits below BAR's top bar, over the
 		-- dock, which steps aside while the panel is open, as for BAR's Settings (bardroid_portrait.lua SP.windowOpen).
-		-- Fitted above the dock its words were about 11 pixels on a 1080 high screen (dev phone, 2026-11-17)
+		-- Fitted above the dock its words were about 11 pixels on a 1080 high screen (dev phone, 2026-11-17). And with no
+		-- dock at all (the game over: the Awards' Show Graphs): BAR's size there was some 60 % of the screen, its words
+		-- as small (dev phone, sideways, 2026-11-17)
 		local droidTop = vsy - mathFloor(96 * widgetScale)
 		local droidM = math.max(4, mathFloor(vsy * 0.012))
 		widgetScale = math.min((vsx - 2 * droidM) / screenWidthOrg, (droidTop - 2 * droidM) / screenHeightOrg)
