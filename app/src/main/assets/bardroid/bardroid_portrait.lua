@@ -4471,6 +4471,26 @@ local function disc(x, y, r, fill)
 		end
 	end)
 end
+-- a disc shaded from a point inside it (ox, oy: that point's offset from the middle, shares of r) to its rim: c0 there,
+-- c1 at the rim (the D-gun sticks' wells and knobs; flat discs read as holes cut in the dock, dev phone screenshot
+-- 2026-11-17)
+function DG.litDisc(x, y, r, c0, c1, ox, oy)
+	gl.BeginEnd(GL.TRIANGLE_FAN, function()
+		gl.Color(c0[1], c0[2], c0[3], c0[4])
+		gl.Vertex(x + (ox or 0) * r, y + (oy or 0) * r)
+		gl.Color(c1[1], c1[2], c1[3], c1[4])
+		for i = 0, 40 do
+			local a = i / 40 * 2 * math.pi
+			gl.Vertex(x + math.cos(a) * r, y + math.sin(a) * r)
+		end
+	end)
+end
+DG.STICK_C = {
+	well0 = { 0, 0, 0, 0.72 }, well1 = { 0.11, 0.115, 0.13, 0.66 }, -- (a bowl: dark in the middle, lighter to the rim)
+	move0 = { 0.97, 0.97, 0.97, 0.95 }, move1 = { 0.6, 0.61, 0.64, 0.95 }, -- (the knobs lit from their top left)
+	aim0 = { 1, 0.52, 0.44, 0.97 }, aim1 = { 0.76, 0.15, 0.11, 0.97 },
+	auto0 = { 0.56, 0.56, 0.57, 0.6 }, auto1 = { 0.33, 0.33, 0.35, 0.6 },
+}
 -- FIRE's swipe track (Kailil, 2026-11-10: "the fire mode animation doesn't fully slide to the right and fill the auto.
 -- And when you swipe left to disable auto, the animation doesn't work. Its just frozen"): FIRE's to the right, to the
 -- grid's edge, AUTO at its end; AUTO's to the left, to the cancel corner, FIRE at its end (RtsTouch measures the swipe
@@ -4566,22 +4586,39 @@ local function drawDgun()
 			wordSize = wordSize * room / wide
 		end
 	end
+	local C = DG.STICK_C
 	for i, s in ipairs({ p.l, p.r }) do
-		gl.Color(0, 0, 0, 0.5)
-		disc(s[1], s[2], s[3], true)
+		DG.litDisc(s[1], s[2], s[3], C.well0, C.well1)
 		gl.LineWidth(2)
-		gl.Color(1, 1, 1, 0.3)
+		gl.Color(1, 1, 1, 0.2)
 		disc(s[1], s[2], s[3], false)
 		gl.LineWidth(1)
+		-- (four small marks inside the rim, the ways the stick goes)
+		gl.Color(1, 1, 1, 0.16)
+		local m, mr = s[3] * 0.07, s[3] * 0.86
+		gl.BeginEnd(GL.TRIANGLES, function()
+			for _, d in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+				local ax, ay = s[1] + d[1] * mr, s[2] + d[2] * mr
+				gl.Vertex(ax, ay)
+				gl.Vertex(ax - d[1] * m * 1.4 - d[2] * m, ay - d[2] * m * 1.4 - d[1] * m)
+				gl.Vertex(ax - d[1] * m * 1.4 + d[2] * m, ay - d[2] * m * 1.4 + d[1] * m)
+			end
+		end)
 		local kx, ky = s[1] + DG.stick[i * 2 - 1] * s[3], s[2] - DG.stick[i * 2] * s[3]
-		if i == 1 then
-			gl.Color(0.8, 0.8, 0.8, 0.9)
-		elseif autoOn then -- (full auto aims itself: the stick greyed, "AIM: AUTO"; its red read as aiming, screenshot)
-			gl.Color(0.45, 0.45, 0.45, 0.6)
-		else
-			gl.Color(1, 0.3, 0.25, 0.95) -- (the aim: the shot's red, as its ring on the ground)
+		local kr = s[3] * 0.36
+		local c0, c1 = C.move0, C.move1
+		if i == 2 and autoOn then -- (full auto aims itself: the stick greyed, "AIM: AUTO"; its red read as aiming, screenshot)
+			c0, c1 = C.auto0, C.auto1
+		elseif i == 2 then -- (the aim: the shot's red, as its ring on the ground)
+			c0, c1 = C.aim0, C.aim1
 		end
-		disc(kx, ky, s[3] * 0.36, true)
+		gl.Color(0, 0, 0, 0.35 * c0[4]) -- (its shadow, a little lower)
+		disc(kx, ky - kr * 0.1, kr * 1.06, true)
+		DG.litDisc(kx, ky, kr, c0, c1, -0.3, 0.35)
+		gl.LineWidth(1.5)
+		gl.Color(1, 1, 1, 0.25 * c0[4])
+		disc(kx, ky, kr, false)
+		gl.LineWidth(1)
 		gl.Color(1, 1, 1, 1)
 		-- (floating sideways above the stick: under it AIM's word lay on BAR's player list in the bottom right corner, the
 		-- two unreadable, dev phone screenshot 2026-11-13)
