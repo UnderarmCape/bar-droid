@@ -6,7 +6,8 @@ under the column it starts just above the dock's top; back at BAR's place when t
 right, folded away by HIDE, no dock). The file is the same in every BAR release on the dev phone (test-31465 to
 test-31958), so this fits replays of all of them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI
 loads it; if a block finds no place, BAR's own file runs. Upright the column is also as wide and its words as large as on
-the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, some 35 pixels wide upright, words of 11).
+the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, some 35 pixels wide upright, words of 11),
+and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it).
 
 @@@ find
 function widget:Update(dt)
@@ -24,7 +25,19 @@ function widget:Update(dt)
 	if dock and dock[1] <= bWidth * vsx then
 		base = math.max(base, (dock[4] + 8) / vsy)
 	end
-	if #buttons > 0 and buttons[#buttons].y ~= base then
+	-- and its buttons no taller than the room under BAR's minimap allows: with a phone's interface scale the eleven ran
+	-- up under the minimap sideways, 20x, 15x and 10x out of sight (dev phone, a replay, 2026-11-17)
+	local h = buttonHeight * ui_scale
+	local mx, my, msx, msy, minimized = Spring.GetMiniMapGeometry()
+	if mx and msx and msx > 0 and msy and msy > 0 and not minimized and mx < bWidth * vsx then
+		local bottom = Spring.IsAboveMiniMap(mx + msx / 2, my + msy / 2) and my or vsy - my - msy -- (its y from the top)
+		local room = bottom / vsy - base - 0.004
+		if room > 0 then
+			h = math.min(h, room / (#speeds + 1))
+		end
+	end
+	if #buttons > 0 and (buttons[#buttons].y ~= base or h ~= bHeight) then
+		bHeight = h
 		local dy = 0
 		for i = 1, #speeds do
 			dy = dy + bHeight
