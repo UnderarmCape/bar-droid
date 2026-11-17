@@ -3651,11 +3651,15 @@ end
 -- the wind speed widget, it should display the same info that the vanilla one does, like telling us how much of the time,
 -- the windspeed will be at the lowest number"): its average, minimum, maximum, the share of the time under 6 and its
 -- advice, in its words, over a graph of the last five minutes; the tide's, its strength and its words. Any tap closes it.
+-- (the second: the words where BAR's are missing, BAR's own English of test-31958: a replay of an October game, its BAR
+-- without the minimap's, read "Average", "Under 6" where the game's read "Average speed", "Time below 6"; dev phone
+-- 2026-11-17)
 SP.WIND_WORDS = {
-	title = { "ui.topbar.windspeed", "Wind speed" }, avg = { "ui.minimap.windAverage", "Average" },
-	min = { "ui.minimap.windMinimum", "Minimum" }, max = { "ui.minimap.windMaximum", "Maximum" },
-	low = { "ui.minimap.windLow", "Under 6" }, note = { "ui.minimap.windAdvice" }, none = { "ui.topbar.wind.nowind1", "None" },
-	tide = { "ui.topbar.tidalspeed", "Tidal speed" }, tideNote = { "ui.topbar.tidalspeedTooltip" },
+	title = { "ui.topbar.windspeed", "Wind Speed" }, avg = { "ui.minimap.windAverage", "Average speed" },
+	min = { "ui.minimap.windMinimum", "Minimum speed" }, max = { "ui.minimap.windMaximum", "Maximum speed" },
+	low = { "ui.minimap.windLow", "Time below 6" }, note = { "ui.minimap.windAdvice" },
+	none = { "ui.topbar.wind.nowind1", "None" },
+	tide = { "ui.topbar.tidalspeed", "Tidal Speed" }, tideNote = { "ui.topbar.tidalspeedTooltip" },
 }
 function SP.windWord(k)
 	local w = SP.WIND_WORDS[k]

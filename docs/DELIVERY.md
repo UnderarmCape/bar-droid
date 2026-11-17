@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The dock unfolded after the nook; the wind's words where BAR's are missing** (hardening, 2026-11-17 ~14:05, dev
+      phone): dock-phone-test at 1080x1198 (the Fold7 unfolded) ALL PASS, the wind's and the tide's first taps among
+      them. Screenshots unfolded upright, nothing picked and 6 units picked (the pill on the groups between the blocks,
+      the selection row in the right block, name, count and QUEUE clear of each other), and folded upright a building
+      picked and its spot tapped (ONE / LINE / GRID / BORDER, PLACE, ROTATE, the cross): as they should be. Polish: an
+      older BAR (a replay of an October game) lacks the minimap's wind words, and the details read the app's own then,
+      "Average", "Under 6", where the game's read "Average speed", "Time below 6"; the app's are BAR's current English
+      now (SP.WIND_WORDS: Wind Speed, Average speed, Minimum speed, Maximum speed, Time below 6, Tidal Speed). Dev phone:
+      that replay upright, the wind tapped, its words as the game's.
 - [x] **The lobby's Links spaced for a finger; the Skirmish pages sideways** (hardening, 2026-11-17 ~13:50, dev phone,
       the lobby offline, never logged in): upright screenshots of Chat, Friends, Parties (login needed: as they should
       be), Downloads, Links. Links (helpsubmenuconfig.lua, a SortableList): 17 link buttons 34 high, rows 43 apart,
