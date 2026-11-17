@@ -8,8 +8,11 @@
 local _modOpts = Spring.GetModOptions()
 local isScenario = _modOpts ~= nil and _modOpts.scenariooptions ~= nil
 
+-- BAR Droid: false, BAR's widget handler's silent way out: as a user widget the bare return logged "Failed to load:
+-- bardroid_missioninfo.lua (no GetInfo() call)" at every game that is no scenario (dev phone's launcher.log,
+-- 2026-11-17; the team stats copy does the same)
 if not isScenario then
-	return
+	return false
 end
 
 local widget = widget ---@type Widget

@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The day's launcher.log read through; the mission info copy's load error** (hardening, 2026-11-17 ~10:30, dev
+      phone): launcher.log and launcher.old.log (07:50 to 10:27) grouped by message: app-side only the lobby's offline
+      downloads (the skill ratings, the widget manifest, a map: "no connection"); engine-side "[bardroid-lobby] a
+      repeated note out of sight" (the lobby widget at work), Chobby's own "Missing self.client!!!" at a game's start,
+      and "Failed to load: bardroid_missioninfo.lua (no GetInfo() call)" at every game that is no scenario (24 times):
+      BAR's Mission Info ends with a bare return outside scenarios, which the app's copy, a user widget, kept. Now
+      "return false", BAR's handler's silent way out, as the team stats copy has it (tools/make-missioninfo.py, its 7th
+      patch, the copy and its .patches made again with --adb). A Play vs AI game: no mission info line at all;
+      remake-check: the phone's remake of all five copies equals the shipped ones, the phone patches PASS. No UI
+      polish this run.
 - [x] **Display's Pointer and Other screens** (hardening, 2026-11-17 ~10:25, dev phone upright): nothing there the
       launcher overwrites; Other's swipes already say "(with BAR touch controls off)". UI polish: Pointer's "Touchscreen
       input mode: Simulated touchscreen" read as live, but with the launcher's BAR touch controls on every finger is the
