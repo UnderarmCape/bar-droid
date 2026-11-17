@@ -2267,6 +2267,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The phone tests again after the dock's rect took in the wind and tide boxes** (hardening, 2026-11-16 ~21:00,
+      dev phone; 2d60b4e7 changed what WG.BarDroidPortrait.dock() gives every widget): touch-phone-test, pad-test,
+      -Dgun and -Share ALL PASS (the share list's screenshots above the boxes); the other readers read through (the
+      order menu's tooltips, the build menu copy's pointer, the presets' taps): right with the boxes in. A sideways
+      skirmish: BUILD | ORDERS, the wind's details over its box, no Lua errors. UI polish: the launcher's "Touch dock
+      sideways" still said HOME opens the home buttons; HOME is gone (its place the boxes'), now "the home buttons with
+      nothing picked" (092d03d0).
 - [x] **The dock's giving with a real teammate** (hardening, 2026-11-16 evening, dev phone upright; a skirmish with an
       allied BARb added for the run by a dev-env.sh, removed after): the metal panel's SEND METAL, 50 %, the ally in its
       green: "GIVING 485 METAL TO INFERNO", the metal gone; energy 10 %: 96 given; TRANSFER with 3 cheated Pawns picked:
