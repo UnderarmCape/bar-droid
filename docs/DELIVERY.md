@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Replays' Add upright; Load Game's dates** (hardening, 2026-11-17 ~06:20, dev phone upright, the lobby offline):
+      the Replays header holds More, Download, Add and Refresh beside its title; Add opened the picker upright, Back once
+      went up from Download to the phone's storage, again back to the lobby ("nothing picked"). ReplayImportActivity read
+      again (a recreate while the picker is up, an import cut short leaving a .sdfz.part the lobby does not list, the
+      bridge's path match): nothing to change. UI polish: Load Game wrote a save's date day first, "12/11/2026" over
+      "15:17:38" (Chobby's gui_loadgame.lua WriteDate), on a US phone December 11 beside Replays' "2026-11-16 19:23"; the
+      lobby widget rewrites it year first, "2026-11-12" over "15:17" (saveDates, walked once a second for 4 s after a
+      press as the tabs' other fixes; Chobby's own sort by its date string unchanged). Dev phone: the one save so;
+      lobby-phone-test ALL PASS; no Lua errors.
 - [x] **Replays downloaded on the phone** (found 2026-11-17 ~05:45, built ~06:10): the lobby's Replays Download opens
       BAR's replays website, but a replay the browser downloads lands in the phone's Downloads, where the app never looked
       (its list is the engine's demos folder in the app's own storage; the import folder takes only pool, packages, rapid,
