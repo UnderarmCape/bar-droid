@@ -48,6 +48,9 @@
     <string name="lorie_pref_other_summary">Clipboard, what swipes and the volume keys do</string>
     <string name="lorie_pref_fullscreen_summary">The game over the whole screen: Android\'s status and navigation bars hidden until a swipe from the edge</string>
     <!-- (Output's one switch with no explanation; MainActivity.applyWindowSettings: on, the window's cutout mode ALWAYS) -->
+    <!-- Pointer's touch mode, for fingers only with the launcher's BAR touch controls off (RtsTouch.handles takes every
+         finger otherwise): it read as live; as Other's swipes say it -->
+    <string name="lorie_pref_touchMode">Touchscreen input mode (with BAR touch controls off)</string>
     <!-- (Pointer's two switches with no explanation: TouchInputHandler's tap in trackpad mode; renderer.cpp followCursorPan) -->
     <string name="lorie_pref_tapToMove_summary">Trackpad mode only: a tap clicks a moment later, and a tap then a held finger drags</string>
     <string name="lorie_pref_zoomFollowsCursor_summary">With BAR touch controls off, a display zoomed in by a pinch moves along with the pointer</string>

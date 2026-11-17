@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Display's Pointer and Other screens** (hardening, 2026-11-17 ~10:25, dev phone upright): nothing there the
+      launcher overwrites; Other's swipes already say "(with BAR touch controls off)". UI polish: Pointer's "Touchscreen
+      input mode: Simulated touchscreen" read as live, but with the launcher's BAR touch controls on every finger is the
+      app's (RtsTouch.handles) and the mode never applies; its title now says "(with BAR touch controls off)", as Other
+      does (the app's strings.xml over Termux:X11's). Checked on the phone.
 - [x] **Keyboard's two more launcher-set entries hidden** (hardening, 2026-11-17 ~10:20, dev phone upright): after
       Output's orientation, the other entries applyTermuxPrefs writes at every game start: Keyboard's "Intercept system
       shortcuts" (DeX's Meta key capture) and "Hardware keyboard scancodes workaround", both from the launcher's
