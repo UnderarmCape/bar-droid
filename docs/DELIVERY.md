@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A replay upright with the evening's changes** (hardening, 2026-11-17 ~01:35, dev phone, yesterday's 10-minute 1v1
+      started from the lobby's Replays): before the start the wind box "4-12" and BAR's speed column above the boxes
+      (its "skip" turning into pause once the replay runs, BAR's own); the spectator dock's FOLLOW UNIT by one tap from
+      the camera pad followed the Armada Commander; no Lua errors. UI polish: BAR sizes that column by fractions of the
+      width, upright some 35 pixels wide with words of 11; three blocks more in phone-widget-gui_replaybuttons.lua.patch
+      make it as wide and its words as large as on the same screen sideways (0022a73f): about twice as wide, 4x and 1x
+      tapped and set, remake-check's phone patches PASS. (The Fold7 install of 01:15 stalled twice over its connection,
+      150 s and 300 s, stopped; it keeps the 00:18 build.)
 - [x] **Pregame on the unfolded split dock** (hardening, 2026-11-17 ~01:15, dev phone at 1080x1198, a skirmish with a
       pregame by a dev-env.sh, removed after): the build grid left, UNDO LAST, CLEAR QUEUE, the factions, RANDOM and
       PING right, the wind box "4-12" between them, BAR's victory line in the game; no Lua errors. UI polish: CLEAR
