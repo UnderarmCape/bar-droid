@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The nook with several units and a long name** (hardening, 2026-11-17 ~12:30, dev phone upright, a skirmish with
+      4 Advanced Construction Bots and 2 Pawns given by a temporary probe widget, removed after): "Advanced Construction
+      Bot" fits on QUEUE's line with room to spare, "6 units, 4 of this type" right-aligned beside the nook inside the
+      row (the count's size follows its room, so two- and three-digit counts shrink rather than run off); a tap on the
+      wind box with the 6 picked opens the wind's details, the box lit, the units still picked. Nothing to change.
 - [x] **The wind and the tide in a nook in the selection row** (Kailil, 2026-11-17 ~11:20, a screenshot with a red box round
       the picked unit's name: "lets move the wind and tidal widgets to inside of this red box instead. it will be like a
       nudge/nook looking thing with the widgets in it. tapping on it shows the same widget popup"): upright with units
