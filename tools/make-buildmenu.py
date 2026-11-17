@@ -564,6 +564,34 @@ function droid.onSquare(sx, sy, bx, bz)
 	return bestX, bestY
 end
 
+-- (its middle just past the edge it was held at: RtsTouch holds a building dragged on into the upright dock a pixel
+-- above the dock's top, and the build grid's snap can take its middle a pixel or two behind it; no spot was then
+-- written, PLACE dark, dock-phone-test 2026-11-16 once the wind's and tide's boxes counted as the dock. The first free
+-- pixel above the middle, within the building's size on the screen, if a click there still builds it there)
+function droid.aboveEdge(bx, by, bz)
+	local x, y, z = Spring.WorldToScreenCoords(bx, by, bz)
+	if z > 1 or x < 0 or y < 0 or x >= vsx or y >= vsy then
+		return nil
+	end
+	local def = UnitDefs[droid.defID]
+	local half = math.max(def.xsize, def.zsize) * 4
+	local reach = 0
+	for _, d in ipairs({ { half, 0 }, { 0, half } }) do
+		local ex, ey = Spring.WorldToScreenCoords(bx + d[1], by, bz + d[2])
+		reach = math.max(reach, math.sqrt((ex - x) ^ 2 + (ey - y) ^ 2))
+	end
+	local ix, iy = math_floor(x), math_floor(y)
+	for ty = iy + 1, math.min(vsy - 1, iy + math.min(32, math_floor(reach))) do
+		if droid.freeAt(ix, ty) then
+			if droid.landsFrom(ix, ty, bx, bz, Spring.GetBuildFacing()) then
+				return ix, ty
+			end
+			return nil
+		end
+	end
+	return nil
+end
+
 -- (the building's place on the build grid at the spot, and where that is on the screen)
 function droid.spotPos()
 	local s = droid.spot
@@ -581,7 +609,10 @@ function droid.spotOnScreen()
 	end
 	local sx, sy = droid.clickable(bx, by, bz)
 	if not sx then
-		return nil
+		sx, sy = droid.aboveEdge(bx, by, bz)
+		if not sx then
+			return nil
+		end
 	end
 	sx, sy = droid.onSquare(sx, sy, bx, bz)
 	local def = UnitDefs[droid.defID]
