@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The launcher's GL check and an update without a connection** (hardening, 2026-11-17 ~08:40, dev phone, no
+      network): GL check: "Adreno 740 (Freedreno), OpenGL 4.3, Mesa 27.0.0-devel" under the status. Install / Update
+      offline: every step "already done", the update check "no answer from launcher-config..." (UnknownHostException),
+      the set kept (engine 2026.07.04, byar-chobby:test, byar:test), "Installed" and "Last check Nov 17 08:35 (no
+      connection)". Nothing to fix; no UI polish this run.
 - [x] **A game's end upright: the Awards under the dock** (hardening, 2026-11-17 ~08:15, dev phone upright, a
       skirmish): Quit's dialog (Stay, Resign, Quit) above the dock; Resign: "Defeat!", "Leaving the game in 12 s: tap
       the screen to stay longer", and BAR's Awards centred on the screen, its lower half under the dock (which stays up
