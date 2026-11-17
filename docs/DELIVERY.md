@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A replay sideways: the speeds under the minimap** (hardening, 2026-11-17 ~02:40, dev phone, yesterday's 1v1
+      replay from the lobby's Replays sideways: BAR's own spectator screen, its top bar, player list and bar): the speed
+      column's eleven buttons (BAR's height times the phone's interface scale) ran up under BAR's minimap, 20x, 15x and
+      10x out of sight. The phone patch now keeps them no taller than the room under the minimap (c9272f01): all eleven
+      in sight, 20x and 1x tapped and set; upright unchanged; remake-check's phone patches PASS, the patched file
+      compiles. (The lobby over the game sideways not tried this run: the same dock and RtsTouch paths as upright.)
 - [x] **BAR's lobby over a running game: drags** (hardening, 2026-11-17 ~02:20, dev phone upright, a replay): a drag on
       the lobby's Replays list panned the camera behind it and the list stood still. The dock under the lobby still
       gave RtsTouch its rects in camera pad mode ("dock ... pad" with the overlay "1"), and outside it the game's widget
