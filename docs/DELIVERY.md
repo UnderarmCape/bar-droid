@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The day's changes at the cover screen's shape, online rules and the copies** (hardening, 2026-11-17 ~01:00, dev
+      phone): dock-phone-test at 1080x2520 (the Fold7 folded) ALL PASS; pad-test -Online and -Chat ALL PASS;
+      remake-check after the build menu copy's new patch: buildmenu, ordermenu, missioninfo, teamstats and options
+      remade on the phone equal to the shipped copies, the phone patches PASS. A skirmish at 1080x2520 upright: the
+      dock, the boxes and the build grid as on the tall shape. No UI polish this run.
 - [x] **The Fold7's own logs; the evening's code read again** (hardening, 2026-11-17 ~00:50): Kailil's last use of the
       Fold7 was the lobby on 2026-11-16 at 14:56 (no game since; its infolog clean), so nothing of his to read. Read
       through for edge cases: the build menu copy's aboveEdge (bounded by the building's size on the screen, only when
