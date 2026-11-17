@@ -23,6 +23,8 @@
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
 --                                                                               2 = a BAR window open that scrolls)
+--   LuaUI/Config/bardroid_overlay.txt widget:         <0|1>                     (1: BAR's lobby over the game; the app
+--                                                                               hides the pointer for fingers then)
 --   LuaUI/Config/bardroid_game.txt    widget, at start: controller <0|1>        (1: the controller game, v0.8.5 reads
 --                                                                               the pad; 0: the pad is a mouse and keys)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up

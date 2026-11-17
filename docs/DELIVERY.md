@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's lobby over a running game, by touch** (hardening, 2026-11-17 ~02:00, dev phone upright, a replay from
+      the lobby; the top bar's Lobby): the lobby's upright pages over the game (Return to Battle first), Return to
+      Battle back to the replay with the dock. Bug: an X arrow stood where Lobby had been tapped and followed each tap
+      on the lobby; the lobby hides the pointer for fingers, but over a game the game's widget still answers.
+      bardroid_touch.lua now writes bardroid_overlay.txt as BAR tells its widgets ("LobbyOverlayActive1" / "0") and
+      RtsTouch hides the pointer for fingers while it says "1" (a47aab0f): no arrow on the lobby, the pointer back on
+      the map after Return to Battle; touch-phone-test ALL PASS. (The Fold7 this hour: a bare adb echo took 9.6 s, so no
+      install tried; it keeps the 00:18 build.)
 - [x] **A replay upright with the evening's changes** (hardening, 2026-11-17 ~01:35, dev phone, yesterday's 10-minute 1v1
       started from the lobby's Replays): before the start the wind box "4-12" and BAR's speed column above the boxes
       (its "skip" turning into pause once the replay runs, BAR's own); the spectator dock's FOLLOW UNIT by one tap from
