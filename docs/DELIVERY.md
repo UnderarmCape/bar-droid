@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The new nook played upright and sideways; the sideways pill** (hardening, 2026-11-17 ~12:20, dev phone): an
+      upright skirmish (the commander picked, the nook in the selection row) and a sideways one: no Lua error or warning
+      once the game ran, launcher.log only BAR's known "no GetInfo" lines. Polish: sideways folded the wind and the tide
+      still stood as two flat boxes one over the other in HOME's place; now the same pill, upright (SP.drawPill: its top
+      corners round on the wind, the bottom ones on the tide, a hairline across between them, the open half gold and
+      underlined; the two boxes meet in the middle, no gap). L.windPill says where the pill is drawn (everywhere but the
+      boxes over metal and energy, a layout that has neither nook nor HOME's place). Screenshots up close before and after
+      a tap; the wind's and the tide's taps sideways open their details.
 - [x] **The nook with nothing picked, and a sleeker nook** (Kailil, 2026-11-17 ~11:50: "Nook there too", then "make the
       Nook sleak and look better, give it a nice look. it looks jank right now"): with nothing picked the nook is sunk
       into the dock's top edge between metal and energy, their boxes either side of it (SP.resBoxes; the strip above the

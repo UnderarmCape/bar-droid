@@ -3392,18 +3392,19 @@ function SP.windRects()
 end
 function SP.windRectsNow()
 	L.windNook = nil -- (set below while they stand in the selection row's nook)
+	L.windPill = true -- (one pill, as in the nook, SP.drawPill: everywhere but over metal and energy, at the end)
 	local pad, g, r = L.pad or 4, L.groups, L.res
 	if not (r and r[3] > r[1]) then
 		return nil
 	end
 	local hh = max(10, floor((r[4] - r[2]) * 0.9)) -- (at 0.72 the reading was small beside the numbers under it)
-	if L.split and g then -- (the hole's foot over them: layout's split dock; one pill, as in the nook: SP.drawPill)
+	if L.split and g then -- (the hole's foot over them: layout's split dock)
 		local y0, mid = g[4] + pad, floor((g[1] + g[3]) / 2)
 		return { g[1], y0, mid, y0 + hh }, { mid, y0, g[3], y0 + hh }
-	elseif L.thumb and L.windCol then
-		local c, half = L.windCol, floor((L.gap or 3) / 2)
+	elseif L.thumb and L.windCol then -- (one over the other, the wind on top)
+		local c = L.windCol
 		local mid = floor((c[2] + c[4]) / 2)
-		return { c[1], mid + half, c[3], c[4] }, { c[1], c[2], c[3], mid - half }
+		return { c[1], mid, c[3], c[4] }, { c[1], c[2], c[3], mid }
 	end
 	-- Upright with units picked: side by side in a nook at the selection row's top, where the unit's name was (Kailil,
 	-- 2026-11-17, a screenshot with a red box round "Armada Commander": "lets move the wind and tidal widgets to inside of
@@ -3433,6 +3434,7 @@ function SP.windRectsNow()
 		L.windNook = { x0 - inset, y0 - inset, x0 + pw + inset, d[4], kind = "res" }
 		return { x0, y0, mid, y0 + hh }, { mid, y0, x0 + pw, y0 + hh }
 	end
+	L.windPill = false
 	local w, y0 = floor((r[3] - r[1] - pad) / 2), r[4] + pad + max(2, floor(pad * 0.5)) -- (a gap over the dock's edge)
 	return { r[1], y0, r[1] + w, y0 + hh }, { r[1] + w + pad, y0, r[1] + 2 * w + pad, y0 + hh }
 end
@@ -3518,19 +3520,26 @@ function SP.drawNook(nk, wb, tb)
 	gl.BeginEnd(TF, fan, nk.shR, nk, 0, C.well1, C.well1)
 	SP.drawPill(wb, tb, nk)
 end
--- the wind and the tide side by side as one pill (in the nook, and unfolded on the groups between the blocks); its
--- outlines kept in cache (a table made again with the layout)
+-- the wind and the tide as one pill: side by side (in the nook, and unfolded on the groups between the blocks) or one
+-- over the other (sideways folded, in HOME's place); its outlines kept in cache (a table made again with the layout)
 function SP.drawPill(wb, tb, cache)
 	local C = SP.NOOK_C
 	local ph = wb[4] - wb[2]
-	local rp = floor(ph * 0.3)
+	local up = tb[4] <= wb[2] + 1
+	local rp = floor(min(ph, wb[3] - wb[1]) * 0.3)
 	local pb = cache.pb
 	if not pb then
-		pb = { wb[1], wb[2], tb[3], wb[4] }
+		if up then
+			pb = { wb[1], tb[2], wb[3], wb[4] }
+			cache.wind = SP.roundPath(wb[1], wb[2], wb[3], wb[4], rp, rp, 0, 0)
+			cache.tide = SP.roundPath(tb[1], tb[2], tb[3], tb[4], 0, 0, rp, rp)
+		else
+			pb = { wb[1], wb[2], tb[3], wb[4] }
+			cache.wind = SP.roundPath(wb[1], wb[2], wb[3], wb[4], rp, 0, 0, rp)
+			cache.tide = SP.roundPath(tb[1], tb[2], tb[3], tb[4], 0, rp, rp, 0)
+		end
 		cache.pb = pb
 		cache.pill = SP.roundPath(pb[1], pb[2], pb[3], pb[4], rp, rp, rp, rp)
-		cache.wind = SP.roundPath(wb[1], wb[2], wb[3], wb[4], rp, 0, 0, rp)
-		cache.tide = SP.roundPath(tb[1], tb[2], tb[3], tb[4], 0, rp, rp, 0)
 	end
 	gl.Texture(false)
 	local fan, TF = SP.fan, GL.TRIANGLE_FAN
@@ -3545,9 +3554,14 @@ function SP.drawPill(wb, tb, cache)
 		gl.Color(1, 0.8, 0.3, 0.95)
 		gl.Rect(lit[1] + rp, lit[2] + u, lit[3] - rp, lit[2] + 2 * u)
 	end
-	local mx = floor(wb[3])
-	gl.Color(1, 1, 1, 0.14)
-	gl.Rect(mx, pb[2] + floor(ph * 0.22), mx + 1, pb[4] - floor(ph * 0.22))
+	gl.Color(1, 1, 1, 0.14) -- (the hairline between them)
+	if up then
+		local my, pw = floor(wb[2]), pb[3] - pb[1]
+		gl.Rect(pb[1] + floor(pw * 0.18), my, pb[3] - floor(pw * 0.18), my + 1)
+	else
+		local mx = floor(wb[3])
+		gl.Rect(mx, pb[2] + floor(ph * 0.22), mx + 1, pb[4] - floor(ph * 0.22))
+	end
 	resetGL()
 end
 -- Drawn live: a few rectangles and words; the box whose details are open lit gold
@@ -3557,7 +3571,7 @@ function SP.drawWindTide()
 		return
 	end
 	local nk = L.windNook
-	local pill = nk or (L.split and not L.thumb)
+	local pill = nk or L.windPill
 	if nk then
 		SP.drawNook(nk, wb, tb)
 	elseif pill then
