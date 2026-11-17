@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A skirmish sideways by touch: the one-thumb dock's pages** (hardening, 2026-11-17 ~10:10, dev phone sideways,
+      Play vs AI): the commander picked at the start (BUILD: the selection row and 14 buildings), ORDERS (Fight,
+      PRESETS, Patrol, D-Gun, the states), a building picked (the PLACE page: ONE / LINE / GRID / BORDER, PLACE dim
+      until a map tap, lit after it, ROTATE, the cross), PLACE queued it (the groups row turned to x FIRST / x LAST, the
+      commander built it), nothing picked (the home grid). Infolog: only BAR's own content warnings (AdvSky, yardmaps,
+      weapon tags), none from the app. Looked at and left: the "more rows" chevrons under the build grid and the
+      orders sit in the panel's bottom margin, 2 pixels from the screen's edge (sideways no groups row lies under the
+      panel); whole, on the S23's curved edge a little dimmed. Nothing to fix; no UI polish this run.
 - [x] **The share list upright and sideways** (hardening, 2026-11-17 ~10:00, dev phone): pad-test -Share ALL PASS
       upright, then sideways (rotation locked: the test follows the phone's way up), its screenshots judged: tabs
       readable (dark words on the picked tab's colour), rows, sliders and notes clear of each other. Sideways the list
