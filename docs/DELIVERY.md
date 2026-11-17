@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's lobby over a running game: the gestures' actions** (hardening, 2026-11-17 ~03:20, dev phone upright, a
+      replay): over a game the app still sent its gestures' actions and the game behind the lobby took them (a
+      two-finger swipe picked every unit, armed FIGHT or stopped them; a three-finger one moved the camera; a double tap
+      picked a type). With no game the app sends none. bardroid_touch.lua leaves them while BAR's lobby is up, but the
+      input-source note (40bae4ef): "act overview_in" appended with the lobby up left the view, after Return to Battle
+      it switched to the overview; touch-phone-test ALL PASS. The Fold7 got the build before this one at 03:03 (copied
+      to its /data/local/tmp in 373 s, then pm install there); this one is copying the same way.
 - [x] **BAR's lobby over a running game: two fingers** (hardening, 2026-11-17 ~03:05, dev phone upright, a replay): a
       pinch, two-finger pan, twist or tilt on the lobby still sent the camera's lines and moved the game behind it (one
       finger was fixed in 6346ef90). bardroid_touch.lua drops the fingers' pan, zoom, twist and tilt while BAR's lobby
