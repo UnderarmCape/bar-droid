@@ -170,6 +170,11 @@ end
 local loadedGame = { pending = false } -- (a saved game loaded: checkLoadedGame; one table for the locals)
 function widget:Initialize()
 	writeWhole(OVERLAY, "0\n") -- (one left at "1" by a game that ended under the lobby)
+	-- (and BAR's lobby asked whether it is over the game: BAR says so only as it opens or closes, and a fold or turn
+	-- reloads LuaUI between the two; the app's lobby widget answers with BAR's own "LobbyOverlayActive1")
+	if Spring.SendLuaMenuMsg then
+		Spring.SendLuaMenuMsg("BarDroidOverlay?")
+	end
 	if Spring.GetGameState then
 		local ok, doneLoading, savedGame = pcall(Spring.GetGameState)
 		loadedGame.pending = ok and savedGame == true and doneLoading == false

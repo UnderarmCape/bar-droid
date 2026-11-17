@@ -1731,6 +1731,15 @@ local function lobbyShown()
 	return h and h.visible ~= false or false
 end
 
+-- A game's touch widget starting again (a fold or turn reloads LuaUI) asks whether BAR's lobby is over the game: it
+-- hears Chobby's "LobbyOverlayActive" only as the lobby opens or closes (bardroid_touch.lua's Initialize). The answer is
+-- Chobby's own message, to LuaUI as Chobby sends it.
+function widget:RecvLuaMsg(msg)
+	if msg == "BarDroidOverlay?" and gameLoaded and lobbyShown() and Spring.SendLuaUIMsg then
+		Spring.SendLuaUIMsg("LobbyOverlayActive1")
+	end
+end
+
 local function uprightUpdate(now)
 	local shown = lobbyShown() -- (a change at once: Chobby's own layout half a second over the game before)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 and shown == upright.wasShown then
