@@ -101,8 +101,8 @@ factions' matching unit too.
 
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
-to turn), triple tap and hold to tilt. The build grid, the orders, QUEUE and INSERT, the buttons with nothing picked, metal
-and energy and the groups row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
+to turn), triple tap and hold to tilt. The build grid, the orders, QUEUE and INSERT, the buttons with nothing picked (and the
+spectator's), metal and energy and the groups row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
 open): the build grid on the left, the picked
 units' orders on the right (Fight, PRESETS, Patrol first and largest, the D-Gun red; a state's lights as BAR's, red
 left, green right; units that build nothing: the orders that would need scrolling go under their types on the left,

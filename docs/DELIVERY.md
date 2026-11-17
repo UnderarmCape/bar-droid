@@ -740,11 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [ ] **Spectating upright: the dock's buttons on the first tap?** (found 2026-11-16, a replay watched from the lobby
+- [x] **Spectating upright: the dock's buttons on the first tap** (found 2026-11-16, a replay watched from the lobby
       on the dev phone): playing, the home grid's buttons act on the first tap ("live", Kailil 2026-11-12: "not need
-      the ui one tap engage"); spectating, the grid (PLAYER CAM, TEAMS, FOLLOW UNIT, FREE CAM, ...) is left out
-      (writeDock's `leftKind ~= "spec"`), so its first tap only wakes the dock and drags on it pan the camera. Live, a
-      drag starting on it would no longer pan (the map above still does). His call; nothing changed.
+      the ui one tap engage"); spectating, the grid (PLAYER CAM, TEAMS, FOLLOW UNIT, FREE CAM, ...) was left out
+      (writeDock's `leftKind ~= "spec"`), so its first tap only woke the dock and drags on it panned the camera. Kailil,
+      2026-11-17: "Yes, first tap". Done (438daa97): the grid is live spectating too; a drag starting on it no longer
+      pans, the game above it does. Dev phone upright, an AI-against-AI skirmish watched as a spectator (a dev-env.sh
+      for the run: Spectator=1, a second BARb on team 0): TEAMS opened by one tap with the camera pad up, a team picked,
+      FOLLOW UNIT's next arrow from the camera pad followed that team's commander at once; no Lua errors. (A
+      `/spectator` in a lone skirmish resigns and BAR's autoquit ends it: not a way to spectate.)
 - [ ] **A gamepad upright: RB on the dock's build grid** (found 2026-11-10 by pad-test -Online upright): the pad's RB
       opens no build menu upright (the dock's grid stands in the copy's place and the pad does not drive it); building
       upright is by touch. Not asked for (Kailil plays touch upright, the pad sideways): his call whether the pad should
