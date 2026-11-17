@@ -72,8 +72,11 @@ try {
   if (-not (Log '\[padtest\] ready' 1)) { throw "the game did not get to frame 300 in 5 minutes" }
   # (the pad, which plays its script and goes; BAR's game in skirmish too since v0.8.5's game went, 2026-11-06)
   if ($Share) {   # (no pad: the test widget drives the list itself, then copies of its four screenshots)
-    $until = (Get-Date).AddSeconds(30)
+    # (90 s and a moment after "done": at 30 s the widget was still at its cases and only the first two screenshots
+    # were there, the note's and the 15 teammates' never copied, dev phone 2026-11-17)
+    $until = (Get-Date).AddSeconds(90)
     while ((Get-Date) -lt $until -and -not (Log '\[padtest\] done' 1)) { Start-Sleep 2 }
+    Start-Sleep 3   # (the engine writes the last one a moment later)
     $shots = @(& $adb exec-out run-as $pkg sh -c "ls -t files/bar/screenshots/*.png 2>/dev/null | head -4")
     $build = Join-Path (Split-Path $PSScriptRoot) "build"
     New-Item -ItemType Directory -Force $build | Out-Null
@@ -116,8 +119,8 @@ try {
 } finally {
   & $adb exec-out run-as $pkg rm -f $widget
   & $adb shell am force-stop $pkg
-  # (this run's screenshots, copied to build\ above where they are wanted)
-  & $adb exec-out run-as $pkg sh -c "find files/bar/screenshots -name 'screen_*.png' -newer files/padtest-start -delete 2>/dev/null; rm -f files/padtest-start"
+  # (this run's screenshots, copied to build\ above where they are wanted; Android's find lists what it deletes)
+  & $adb exec-out run-as $pkg sh -c "find files/bar/screenshots -name 'screen_*.png' -newer files/padtest-start -delete >/dev/null 2>&1; rm -f files/padtest-start"
   & $adb shell rm -f $evemu
   if ($Engine -and -not $Online) { & $adb exec-out run-as $pkg rm -f files/bar/dev-env.sh }
   if ($Online) {   # (again while its marker stays: the setting must read as before)
