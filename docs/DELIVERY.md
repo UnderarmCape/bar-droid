@@ -2267,6 +2267,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The dock's giving with a real teammate** (hardening, 2026-11-16 evening, dev phone upright; a skirmish with an
+      allied BARb added for the run by a dev-env.sh, removed after): the metal panel's SEND METAL, 50 %, the ally in its
+      green: "GIVING 485 METAL TO INFERNO", the metal gone; energy 10 %: 96 given; TRANSFER with 3 cheated Pawns picked:
+      they turned the ally's colour, BAR's chat "Phone shared 3 Pawn to BARb (AI)" (BAR's name for it; the app's is the
+      player list's, Inferno). With the commander picked (the default upright) TRANSFER gives it as BAR's player list
+      does; the dock's info box above the picker names what goes ("Armada Commander"), so nothing changed. No Lua errors,
+      30 fps with 70 units. On the way: the dock test's "building dragged on into the dock" failed twice (no spot): since
+      the wind's and tide's boxes count as the dock (2d60b4e7) the building held a pixel above the dock's top had its
+      snapped middle a pixel or two behind it, and the build menu copy wrote no spot (PLACE dark). Fixed in
+      tools/make-buildmenu.py (dd79799d: the first free pixel above that still builds it there); dock-phone-test ALL PASS
+      upright and at 1080x1198. UI polish: the home grid's words one size a row, as the orders' (de1d8ada; the split
+      dock's LOCAL UNITS had stood smaller than ALL UNITS, COMMANDER than BASE).
 - [x] **The day's in-game changes on a near-square screen** (hardening, 2026-11-16, dev phone at 1080x1198 upright,
       the unfolded Fold7's shape, the split dock): Statistics between BAR's top bar and the dock, opaque, no chat line
       over its title, the Summary's tooltip whole on two lines; Settings in its upright layout, the Resolution list
