@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The Fold7's own logs; the evening's code read again** (hardening, 2026-11-17 ~00:50): Kailil's last use of the
+      Fold7 was the lobby on 2026-11-16 at 14:56 (no game since; its infolog clean), so nothing of his to read. Read
+      through for edge cases: the build menu copy's aboveEdge (bounded by the building's size on the screen, only when
+      the spot's middle is not free), upright.settingsRows (Chobby's values kept per control, rows walked only while
+      Settings shows), the popup checkboxes (each changed once: boxsize under 22), the pregame wind (GetGameFrame), the
+      spectator grid's live rect and the layout editor's dockTop (vsx and vsy kept by its ViewResize): nothing found.
 - [x] **Ten untouched minutes upright with the day's dock** (hardening, 2026-11-17 00:31-00:42, dev phone, a launcher
       skirmish against BARb, the commander alone): 29.7-30.0 fps every minute, the slowest frame 227 ms in the first
       minute then 44-122 ms; Lua memory 121, 114, 125, 131, 140, 150, 155, then 148, 143, 144 MB: Lua's collector
