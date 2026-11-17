@@ -1212,6 +1212,59 @@ function upright.pluginButtons(win)
 	end
 end
 
+-- Chobby's Settings (gui_settings_window.lua): each tab a list of rows 36 apart, their checkboxes, sliders and lists 30
+-- high, under 3 mm a row on a phone upright (dev phone screenshot, 2026-11-16: thirty rows down the screen, a 20 box a
+-- checkbox). Upright the rows SETTINGS_ROW times as far apart and their controls as tall (a checkbox's box with it), a
+-- row's words beside its control's middle as before; Chobby's places put back sideways. The tab shown only, asked every
+-- half second (Chobby builds the window when it is first opened, a tab's list when it is first shown).
+upright.SETTINGS_ROW = 1.5
+function upright.settingsRows(tall)
+	local win = real(chobbyObject("settingsWindow"))
+	if not (win and not win.disposed and win.visible ~= false) then
+		return
+	end
+	upright.settingsSaved = upright.settingsSaved or setmetatable({}, { __mode = "k" })
+	local saved, f, moved = upright.settingsSaved, tall and upright.SETTINGS_ROW or 1, 0
+	local function walk(o, depth)
+		if not o or depth > 8 or o.disposed then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "scrollpanel" then
+				for _, row in ipairs(c.children or {}) do
+					local r = real(row)
+					if r and type(r.y) == "number" and type(r.height) == "number" then
+						local s = saved[r]
+						if not s then
+							s = { y = r.y, h = r.height, box = r.boxsize }
+							saved[r] = s
+						end
+						if (s.f or 1) ~= f then
+							s.f, moved = f, moved + 1
+							-- (a row's words, 6 below its control's top in a box as tall: as far from its middle as before)
+							local words = r.classname == "label"
+							local y = words and math.floor((s.y - 6) * f + 15 * (f - 1) + 6) or math.floor(s.y * f)
+							r:SetPos(nil, y, nil, words and s.h or math.floor(s.h * f))
+							if s.box then
+								-- (24: "Show Battles with Test Engine Versions" ran up to a 28 box, the words as wide as before)
+								r.boxsize = f > 1 and math.min(24, math.floor(s.h * f) - 14) or s.box
+								r:Invalidate()
+							end
+						end
+					end
+				end
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	walk(win, 0)
+	if moved > 0 then
+		Spring.Echo("[bardroid-lobby] Settings: " .. moved .. " rows " .. (f > 1 and "spaced for a finger" or "back")) -- (tools)
+	end
+end
+
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
 -- wide whatever the room): upright the second and third columns ran under Start and Delete, the names cut by them
 -- ("SimpleA", "Inactive/"; dev phone upright, 2026-11-16). Where the columns do not fit the room the list gives them,
@@ -1686,6 +1739,7 @@ local function uprightUpdate(now)
 		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
 		upright.replayTeams(upright.replayPanel)
 		upright.pluginButtons(upright.pluginsWin)
+		upright.settingsRows(screen0.height > screen0.width * UPRIGHT)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
