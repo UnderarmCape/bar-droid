@@ -740,10 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **The phone tests after the night's changes** (hardening, 2026-11-17 ~05:30, dev phone): dock-phone-test,
+- [x] **BAR's Statistics sideways on a tall phone** (hardening, 2026-11-17 ~05:00, dev phone at 1080x2316 sideways, a
+      skirmish): no Lua errors, launcher.log only BAR's own warnings. The top bar's Statistics (the app's TeamStats
+      copy) was fitted above the dock there, 838 x 465 of the 2008 x 938 screen, its words about 11 pixels high. Now,
+      as BAR's Settings, it is as large as fits under BAR's top bar and the dock steps aside while it is open
+      (make-teamstats.py's layout patch by WG.BarDroidPortrait.sideways; bardroid_portrait.lua SP.windowOpen): the
+      words about 1.8 times larger. Upright and over the split dock of a near-square screen it fits above the dock as
+      before. Dev phone: opened, "dock none"; Combat tapped, its page; closed, the dock back. Regenerated from the
+      phone's BAR file; remake-check PASS; dock-phone-test ALL PASS. Also: three arrows and a cross in this file stored
+      twice encoded (UTF-8 read as Windows-1252 and saved again) put right, and ten of the night's entry times here corrected
+      from their commits (they ran up to 45 minutes ahead). The Fold7 still off adb.
+- [x] **The phone tests after the night's changes** (hardening, 2026-11-17 ~04:45, dev phone): dock-phone-test,
       touch-phone-test (with its new lobby-over-the-game cases), lobby-phone-test, pad-test, -Dgun and -Share: all ALL
       PASS. The Fold7 still off adb (keeps the 03:03 build; the newest copy to it failed as it dropped).
-- [x] **A test for BAR's lobby over the game** (hardening, 2026-11-17 ~05:05): touch-phone-test's widget now sends BAR's
+- [x] **A test for BAR's lobby over the game** (hardening, 2026-11-17 ~04:10): touch-phone-test's widget now sends BAR's
       own "LobbyOverlayActive1" / "0" (Spring.SendLuaUIMsg, as BAR's lobby tells the widgets) and checks the night's
       fixes: the app told (bardroid_overlay.txt), the dock aside ("dock none"), a drag and a pinch leaving the camera,
       and a drag panning again once the lobby is gone (f9228f76). Dev phone sideways and upright: all PASS. Left open
@@ -754,29 +764,29 @@ Added 2026-11-10 ~05:00 (with screenshots):
       phone upright, a replay, the lobby over it, LuaUI reloaded by a throwaway test widget (removed): "1" and "dock
       none" before and after. Online-safe: both calls stay on the phone (the engine's LuaUnsyncedCtrl::SendLuaMenuMsg
       calls luaMenu->RecvLuaMsg, CLuaMenu::SendLuaUIMsg calls luaUI->RecvLuaMsg; no network message).
-- [x] **The home grid's LAST PINGS | PING pair** (hardening, 2026-11-17 ~04:50, dev phone upright): LAST PINGS shrank
+- [x] **The home grid's LAST PINGS | PING pair** (hardening, 2026-11-17 ~04:00, dev phone upright): LAST PINGS shrank
       to fit its half, PING stood larger beside it. PING takes LAST PINGS' size now, unless that breaks over two lines
       (the split dock's half, where PING stays) (d979e6cd). Tried first and dropped: the whole row at the pair's size,
       which left FACTORIES smaller than the rows around it. No Lua errors. The Fold7 still off adb.
-- [x] **Pregame sideways** (hardening, 2026-11-17 ~04:35, dev phone, a skirmish with a pregame by a dev-env.sh, removed
+- [x] **Pregame sideways** (hardening, 2026-11-17 ~03:50, dev phone, a skirmish with a pregame by a dev-env.sh, removed
       after): the narrow wind box "4-12" whole beside NO WATER and the swap arrow, BUILD | START tabs, START's UNDO LAST,
       CLEAR QUEUE, the factions, RANDOM and PING one size a row; no Lua errors. UI polish: PING (drawn apart) stood
       larger than RANDOM beside it upright and CORTEX and RANDOM sideways; it takes its row's size now (b77891b2);
       dock-phone-test ALL PASS. The Fold7 still off adb.
-- [x] **PING by tap and by hold, the microphone revoked** (hardening, 2026-11-17 ~04:20, dev phone upright, a skirmish):
+- [x] **PING by tap and by hold, the microphone revoked** (hardening, 2026-11-17 ~03:35, dev phone upright, a skirmish):
       PING tapped: "TAP THE MAP TO PING", then a tap on the map placed BAR's marker ("Look here!"), PING back. PING held
       (a spoken label): the ping armed (TAP MAP) and the note "SPEAK TO CHAT: ALLOW THE MICROPHONE ..." though no chat
       was asked for. UI polish: the note now reads "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" in the game
       and the lobby (4351bcd4), within the width upright for the hold and the double tap; lobby-phone-test ALL PASS.
-- [x] **PING's speak-to-chat with the microphone revoked** (hardening, 2026-11-17 ~04:10, dev phone upright, a
+- [x] **PING's speak-to-chat with the microphone revoked** (hardening, 2026-11-17 ~03:25, dev phone upright, a
       skirmish, nothing picked): a double tap on PING showed "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S
       SETTINGS", PING back after it, launcher.log "voice chat: the microphone was not allowed"; no Lua errors. Nothing to
       fix; no UI polish this run.
-- [x] **fp-save-test and pace-test after the night's changes** (hardening, 2026-11-17 ~04:00, dev phone): a
+- [x] **fp-save-test and pace-test after the night's changes** (hardening, 2026-11-17 ~03:20, dev phone): a
       spectator's 1st person through BAR's mid-game settings save, and the shipped libbardroid_pace.so's frame cap
       (pace-test -Shipped): both ALL PASS. The Fold7 still off adb (no answer on its port, nothing in mdns). No UI
       polish this run.
-- [x] **BAR's lobby over a player's game** (hardening, 2026-11-17 ~03:40, dev phone upright, offline lobby: Skirmish,
+- [x] **BAR's lobby over a player's game** (hardening, 2026-11-17 ~03:10, dev phone upright, offline lobby: Skirmish,
       1v1, Beginner, Armada, Onyx Cauldron 2.2.2, Start): the pregame with its start box, the wind's range "1-29" and
       the tide "20", the top bar's Lobby; a start picked, Ready; in the game Lobby put the dock aside (overlay "1",
       "dock none") over Chobby's Skirmish page, Return to Battle brought it back ("0", "dock ... pad"), the commander
@@ -786,14 +796,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       there: Chobby loads them as the page opens, the phone engine shrinking the 1760x1377 picture to 1024 wide
       ("[NamedTextures] BAR Droid: ...beginner.jpg ... shrunk"). A moment's wait, no fault.)
       The Fold7 stayed off adb this run (no answer on its port, nothing in mdns).
-- [x] **BAR's lobby over a running game: the gestures' actions** (hardening, 2026-11-17 ~03:20, dev phone upright, a
+- [x] **BAR's lobby over a running game: the gestures' actions** (hardening, 2026-11-17 ~03:05, dev phone upright, a
       replay): over a game the app still sent its gestures' actions and the game behind the lobby took them (a
       two-finger swipe picked every unit, armed FIGHT or stopped them; a three-finger one moved the camera; a double tap
       picked a type). With no game the app sends none. bardroid_touch.lua leaves them while BAR's lobby is up, but the
       input-source note (40bae4ef): "act overview_in" appended with the lobby up left the view, after Return to Battle
       it switched to the overview; touch-phone-test ALL PASS. The Fold7 got the build before this one at 03:03 (copied
       to its /data/local/tmp in 373 s, then pm install there); this one is copying the same way.
-- [x] **BAR's lobby over a running game: two fingers** (hardening, 2026-11-17 ~03:05, dev phone upright, a replay): a
+- [x] **BAR's lobby over a running game: two fingers** (hardening, 2026-11-17 ~02:55, dev phone upright, a replay): a
       pinch, two-finger pan, twist or tilt on the lobby still sent the camera's lines and moved the game behind it (one
       finger was fixed in 6346ef90). bardroid_touch.lua drops the fingers' pan, zoom, twist and tilt while BAR's lobby
       is up, as for the layout editor (e082803e). Checked by the touch test's way, lines appended to the touch log:
@@ -1784,7 +1794,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
 
 ### Hardening and overhead (the spectator tools first)
 - [x] Measure what `bardroid_spectate.lua` costs per frame (`tools/spectate-test.ps1 -Cost`: off, the bar, following,
-      group, 1st person) and cut it: the bar into a display list (0.43 â†’ 0.06 ms, 54 â†’ 4 KB a frame), 1st person
+      group, 1st person) and cut it: the bar into a display list (0.43 → 0.06 ms, 54 → 4 KB a frame), 1st person
       without per-frame tables (0 KB); HISTORY.md "Overnight". Left as they are (measured or rare): `GetVisibleUnits`
       per tap, the group refresh twice a second, the camera state read each frame while following.
 - [x] `bardroid_touch.lua`: measured before at ~0.08 ms a frame (HISTORY.md, 2026-10-27 afternoon);
@@ -2602,7 +2612,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       (`SplashPicture.LOGO_MIDDLE_SIDEWAYS`) and the button just under it, above the engine's lines at the foot; while
       a game's load screen is up, the top right corner under BAR's low memory band. Upright as before.
 - [x] **The dock's menu time-out 30 % longer** (Kailil, 2026-11-12: "extend bottom UI time out by 30 percent. its too
-      short"): 2 â†’ 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
+      short"): 2 → 2.6 s (bardroid_portrait.lua MENU_SECONDS; the launcher's text and dock-phone-test's wait with it).
 - [x] **The landscape lobby: one paged column of big buttons** (Kailil, 2026-11-12: "in the landscape Lobby, the
       buttons on the left ... Make them big like the vertical buttons look. and move ALL buttons to the left side of the
       page, even the buttons in the top right hand corner like login. so the main window has the full vertical space.
@@ -2940,7 +2950,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] A building placed by touch did not stay picked, though `RtsTouch.tapBuilding` and HISTORY.md said it did: the engine
       keeps a Shift click's building only while Shift stays down (CGuiHandler `needShift`), and the app lets go of Shift
       100 ms later (seen on the dev phone: active -212 until Shift up, then nil). RtsTouch now says "spot placed", and the
-      build menu picks the building again once it is let go; âœ• or a long press puts it away, QUEUE's Shift keeps it as
+      build menu picks the building again once it is let go; ✕ or a long press puts it away, QUEUE's Shift keeps it as
       before. On the dev phone, taps from adb: Shift up with the building still picked, PLACE still up, the builder's
       order kept and the building behind it; touch-widget-test has a check. The layout editor's hint no longer lets the
       build menu show through its words.
