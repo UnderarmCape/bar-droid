@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's speech panel over BAR's logo; the app's logs** (hardening, 2026-11-17 ~07:25, dev phone upright,
+      the lobby offline): upright the lobby's speech panel (its "NOTHING SENT: ..." note) lies over BAR's logo and the
+      "Offline" line, both drawn above it, its window see-through. Tried: a background colour on it, no change (Chili's
+      DrawWindow tints its skin's texture with obj.color, which only lowers the texture's own alpha; the logo is drawn
+      above the panel anyway); reverted, the words read clearly as they are. launcher.log scanned for the app's own
+      warnings: only BAR's lobby's "Missing self.client!!!" offline. Nothing to fix. The Fold7 still off adb.
 - [x] **Speak to chat without a connection** (hardening, 2026-11-17 ~07:15, VoiceChat.java read again, dev phone): the
       sessions (a fresh recognizer each, a past one's words dropped by number), the permission's wait and its drop when
       the screen goes, cancel on a second start: sound. Gap: a recognizer that needs the network (none, as on the dev phone
