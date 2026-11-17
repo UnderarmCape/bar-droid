@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's lobby over a running game: two fingers** (hardening, 2026-11-17 ~03:05, dev phone upright, a replay): a
+      pinch, two-finger pan, twist or tilt on the lobby still sent the camera's lines and moved the game behind it (one
+      finger was fixed in 6346ef90). bardroid_touch.lua drops the fingers' pan, zoom, twist and tilt while BAR's lobby
+      is up, as for the layout editor (e082803e). Checked by the touch test's way, lines appended to the touch log:
+      with terrain behind the lobby three pans and a 1.8 times zoom left it still; after Return to Battle the same
+      lines panned and zoomed. The Fold7's link moved ~85 KB/s this hour (its 37 MB install stalled at 180 s again);
+      the APK copied to its /data/local/tmp in the background instead, to install from there (pm install, seconds)
+      once the copy is done and BAR is not running there.
 - [x] **A replay sideways: the speeds under the minimap** (hardening, 2026-11-17 ~02:40, dev phone, yesterday's 1v1
       replay from the lobby's Replays sideways: BAR's own spectator screen, its top bar, player list and bar): the speed
       column's eleven buttons (BAR's height times the phone's interface scale) ran up under BAR's minimap, 20x, 15x and
