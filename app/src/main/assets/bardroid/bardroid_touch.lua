@@ -1493,7 +1493,9 @@ local function fingersTooltip(name)
 		return true
 	elseif name == "buildmenu" then
 		return false
-	elseif name ~= "ordermenu" then
+	elseif name ~= "ordermenu" and name ~= "teamstats" then
+		-- (the Statistics copy's too: the finger that tapped Show Graphs or Statistics left the pointer on a chart as
+		-- the panel opened under it, and that chart's explanation stood over the charts below it; dev phone 2026-11-17)
 		return true
 	end
 	local x, y = spGetMouseState()
