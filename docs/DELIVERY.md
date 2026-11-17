@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The Fold7's two "killed" ends: neither a game; the exit line says "in the background"** (hardening,
+      2026-11-17 ~16:45, the Fold7's launcher.log read while idle): "the last run ended Nov 17 10:15:57 (low memory)"
+      was the app started at 10:08 and left in the background, Android's low-memory kill of a cached app (importance
+      400, nothing logged after its start; the launcher rightly said nothing, its note only for an app in front or
+      running a game); the older "engine exited (137)" followed "game removed from recent apps: closing" (the game
+      swiped away: the app's own stop). "(low memory)" alone read as a game killed (it did here): the line now adds
+      "in the background" when the app was not in front (GameService.noteLowMemoryExit). Dev phone: the launcher put
+      in the background and killed there, started again: "the last run ended ... (force stopped, in the background)";
+      the ends with the app in front as before.
 - [ ] **BAR moved to engine 2026.09.02, then 2026.09.03: the Fold7 on the official engine** (hardening, 2026-11-17
       ~16:40, the Fold7's launcher.log read while it was idle, then the dev phone): BAR's update moved its engine from
       2026.07.04 to 2026.09.02 (Updater "new engine 2026.09.02 (was 2026.07.04)", about 2026-11-16) and today to
@@ -751,8 +760,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       2026.07.04 and test-31958, its phone engine on: this day's tests ran there. Checked on the dev phone with the
       launcher's Phone engine off (BAR's official 2026.07.04, the app's widgets as user widgets): the wind and the
       tide's nooks (nothing picked, 6 units), Statistics' 3 x 4 upright (its load of BAR's Graphs page works as a user
-      widget), no Lua error; Phone engine back on. Also in the Fold7's log: this morning's game ended "low memory"
-      (10:15:57, Android's kill), an older one with exit 137. Open: the phone engine for 2026.09.03 (stage 4: the branch
+      widget), no Lua error; Phone engine back on. (The Fold7's two other ends read again the next run: neither a game
+      killed; see the entry above.) Open: the phone engine for 2026.09.03 (stage 4: the branch
       rebased on the tag, built, the gate, a new APK); the dev phone back on a network for BAR's new release and the gate.
 - [x] **A factory picked upright** (hardening, 2026-11-17 ~16:30, dev phone; a Bot Lab given by a temporary widget,
       removed after): the selection row "Bot Lab" under the wind and the tide's nook, its 8 bots in the grid, its orders
