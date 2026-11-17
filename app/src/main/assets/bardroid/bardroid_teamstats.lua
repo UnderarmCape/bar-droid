@@ -1717,7 +1717,10 @@ function widget:ViewResize()
 	local droidAside = droidDock and vsx < vsy and droidP.aside and droidP.aside() or false
 	metrics.droidDockTop = droidDock and (droidAside and 0 or droidDock[4]) or false
 	if vsx < vsy then
-		widgetScale = math.min(widgetScale, vsx / 960)
+		-- (vsx / 800: at vsx / 960 its menu's rows were about 32 pixels apart and the charts' words 14, under 2 mm and
+		-- 1 mm on the dev phone; with 12 charts a page three across, below, their titles have the room; at vsx / 760
+		-- "Activity  Actions per minute" lost its last letter at the panel's edge, 2026-11-17)
+		widgetScale = math.min(widgetScale, vsx / 800)
 		local droidBottom = droidDock and not droidAside and droidDock[4] or 0
 		local droidTop = vsy - mathFloor(96 * widgetScale)
 		screenWidth = mathFloor(vsx * 0.98)
@@ -1749,6 +1752,17 @@ function widget:ViewResize()
 			screenX = mathFloor((vsx * 0.5) - (screenWidth / 2))
 		end
 		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
+	end
+	-- BAR Droid: upright BAR's 12 charts a page three across and four down (its 4 x 3 left their titles running into
+	-- each other at a scale a finger can use, "Metal income by sourceComposition", dev phone 2026-11-17); sideways 4 x 3
+	-- as BAR has it. The player's setting stays 12. (BAR's grids: metrics.droidPages, metrics.droidGraphsModule.)
+	for _, spec in ipairs(metrics.droidPages or {}) do
+		if spec.n == 12 then
+			spec.cols, spec.rows = vsx < vsy and 3 or 4, vsx < vsy and 4 or 3
+		end
+	end
+	if graphs and graphs.invalidate then
+		graphs.invalidate()
 	end
 
 	font = WG.fonts.getFont()
@@ -2418,7 +2432,32 @@ end
 
 -- The Graphs page, handed everything of the panel's it reads. Made here, at the end, so
 -- every function above is in reach of it; the callins run later than this.
-graphs = require("luaui/Include/teamstats_graphs").new(model.pageContext({
+-- BAR Droid: BAR's Graphs page as require loads it (luaui/Include/teamstats_graphs.lua, in this file's environment),
+-- its list of grids (PAGES) handed to this copy on the way, so that upright its 12 a page can be laid out three across
+-- (ViewResize); BAR's own require where its text is not as expected or does not load. (Fields, not locals: BAR's file
+-- is at Lua's 200.)
+metrics.droidGraphsModule = function()
+	local src = VFS.LoadFile("luaui/Include/teamstats_graphs.lua", VFS.ZIP)
+	local text, n = (src or ""):gsub("local PAGES = (%b{})", "local PAGES = WG.BarDroidStatsPages(%1)", 1)
+	local chunk = n == 1 and loadstring(text, "@luaui/include/teamstats_graphs.lua")
+	if chunk then
+		WG.BarDroidStatsPages = function(pages)
+			metrics.droidPages = pages
+			return pages
+		end
+		setfenv(chunk, getfenv(1))
+		local ok, mod = pcall(chunk)
+		WG.BarDroidStatsPages = nil
+		if ok and type(mod) == "table" then
+			return mod
+		end
+		metrics.droidPages = nil
+		Spring.Echo("[bardroid-teamstats] BAR's Graphs page as BAR loads it: " .. tostring(mod)) -- (tools)
+	end
+	local mod = require("luaui/Include/teamstats_graphs")
+	return mod
+end
+graphs = metrics.droidGraphsModule().new(model.pageContext({
 	-- The history behind every number on screen, for the page's trend list: in the team's
 	-- own colour, a band's in its team's when it is one team's, else in the header's hue;
 	-- beside the number, in what it leaves of its cell, so neither is read through the other.

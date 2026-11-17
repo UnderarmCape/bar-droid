@@ -740,7 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [ ] **Statistics upright: small words** (hardening, 2026-11-17 ~14:45, dev phone): the TeamStats copy upright scales
+- [x] **Statistics upright: 12 charts three across, its words larger** (hardening, 2026-11-17 ~15:00, dev phone; the
+      item below): BAR's require is VFS.Include in the caller's environment, so the copy loads BAR's Graphs page itself
+      (metrics.droidGraphsModule: the include's text, its list of grids, PAGES, handed to the copy on the way through
+      WG.BarDroidStatsPages; BAR's own require where the text is not as expected or does not load). Upright the 12 a
+      page grid is three across and four down (the copy's ViewResize; sideways 4 x 3 as BAR's), the player's setting
+      still 12; the scale upright vsx / 800 (from vsx / 960: at vsx / 760 "Activity  Actions per minute" lost its last
+      letter at the panel's edge). Dev phone: upright the menu rows about 38 pixels apart, the titles clear of each
+      other; "Graphs per page" cycled 16 (BAR's smallest grid that holds the 12 Overview charts: 3 x 4), 9 (3 x 3), 12
+      (3 x 4); sideways 4 x 3 at BAR's scale; no Lua error; remake-check: all five copies and the phone patches PASS.
+- [x] **Statistics upright: small words** (hardening, 2026-11-17 ~14:45, dev phone): the TeamStats copy upright scales
       BAR's layout to the screen's width (make-teamstats.py, widgetScale min(vsy / 1080, vsx / 960): 0.975 on the dev
       phone): its menu rows (Overview, Flow, Economy ...) about 32 pixels apart, under 2 mm for a finger, the charts'
       words about 14 pixels. Tried vsx / 760 (1.23): the menu read well, rows 40 apart, but at BAR's default 12 charts
