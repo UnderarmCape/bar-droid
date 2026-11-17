@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 23 (2026-10-25 to 2026-11-16) |
 | Claude Code sessions | 14 |
-| Kailil's messages | 508 (25413 words, 96 screenshots) |
-| Kailil's time | 59.3 h in 157 sittings |
-| Claude's time | 395.1 h |
-| Claude's tool calls | 43793 |
+| Kailil's messages | 509 (25417 words, 96 screenshots) |
+| Kailil's time | 59.4 h in 158 sittings |
+| Claude's time | 395.3 h |
+| Claude's tool calls | 43832 |
 | Kailil stopped Claude mid-answer | 9 times |
-| Commits | 1789 |
+| Commits | 1792 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -43,7 +43,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-13](worklog/2026-11-13.md) | 27 | 3.3 | 17.1 | 137 |
 | [2026-11-14](worklog/2026-11-14.md) | 2 | 0.1 | 1.8 | 14 |
 | [2026-11-15](worklog/2026-11-15.md) | 8 | 0.7 | 18.0 | 106 |
-| [2026-11-16](worklog/2026-11-16.md) | 9 | 0.7 | 20.1 | 154 |
+| [2026-11-16](worklog/2026-11-16.md) | 10 | 0.7 | 20.4 | 157 |
 
 ## Sessions
 
@@ -52,7 +52,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-16 21:29 | 394 | 334.9 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-16 21:46 | 395 | 335.1 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
