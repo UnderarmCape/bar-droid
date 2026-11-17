@@ -740,6 +740,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [ ] **Replays downloaded on the phone** (found 2026-11-17 ~05:45): the lobby's Replays Download opens BAR's replays
+      website, but a replay the browser downloads lands in the phone's Downloads, where the app never looks (its list is
+      the engine's demos folder in the app's own storage; the import folder takes only pool, packages, rapid, maps and
+      games). A way in: the app offered for .sdfz files (an Open with / share target that copies them into demos), then
+      Refresh lists them. Until then the button's tooltip says so (below).
+- [x] **The pad in BAR's real lobby over a replay; the Replays Download tooltip** (hardening, 2026-11-17 ~05:45, dev
+      phone sideways, the lobby offline, the 10-minute 1v1 replay started from its Replays, then the top bar's Lobby):
+      the last run's open check. The virtual pad: "pad mouse on (the lobby, or no game running)", its D-pad from control
+      to control over the game (Start, Delete, Refresh, Download, the gold ring and Download's tooltip), the left stick
+      moving BAR's arrow freely (up and right: to the top right corner); Return to Battle: "pad mouse and keys on (BAR's
+      game)", the overlay file "0". No Lua errors. (A first stick test seemed to show no pointer: it had pushed it to the
+      screen's bottom edge, where only the arrow's tip is on the screen; a short push up showed it, in the plain lobby and
+      over the game.) UI polish: Download's tooltip asked for the .sdfz files "into your data/demos folder", which a
+      phone's player cannot reach; it now reads "BAR's replays website. A replay downloaded there goes to the phone's
+      Downloads, not this list" (one line, as BAR's; a longer first wording wrapped). lobby-phone-test ALL PASS.
 - [x] **The pad under BAR's lobby over a game** (hardening, 2026-11-17 ~05:30, code read, dev phone): with BAR's lobby
       opened over a running game the pad kept the game's controls (GameActivity's PadMouse.mode asked only whether a game
       widget answers): the pointer held in the lobby's middle, the sticks panning the camera behind it, so a pad player
