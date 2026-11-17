@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's "new window" for another engine: said on the screen** (hardening, 2026-11-17 ~11:00, dev phone
+      upright, the lobby offline): Chobby asks its launcher for StartNewSpring, a second engine, for a saved game of
+      another engine version (gui_loadgame.lua) and for a battle on an engine it does not have (lobby.lua); on the phone
+      its popup said "it will be opened in a new window" and nothing followed ("not handled on Android" in the log
+      only). LobbyBridge now answers with a toast: "Can't open on a phone: needs engine 2025.09.01 (app: 2026.07.04)"
+      (or "no second game window here" for the same engine), two lines at most (Android cut the first wording
+      after "the app has 2026..."). Tested with a copy of today's save relabelled engine 2025.09.01 (removed after): the
+      toast whole under Chobby's popup, the lobby running on.
 - [x] **Saved games: which load** (hardening, 2026-11-17 ~10:50, dev phone upright, the lobby offline): Chobby's Load
       Game (gui_loadgame.lua) loads a save with the game it names (downloading it if missing) and, when the save's
       engine version differs, asks the launcher for StartNewSpring, which the app's bridge does not do ("not handled on

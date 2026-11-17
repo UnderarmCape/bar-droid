@@ -47,7 +47,8 @@ import java.util.zip.GZIPInputStream;
  *                   write dir (archives that would have to be extracted, i.e. other engines, fail)
  *   ReadReplayInfo  engine, game, map, players and game time from the replay's header and start script (a game left
  *                   before its end, game time 0 there: its last key frame's)
- *   ParseMiniMap, StartNewSpring, UploadLog, DiscordSetActivity, LoadArchiveExtensions: not here (logged)
+ *   StartNewSpring  a second engine for a save or battle of another engine version: not on a phone, said on the screen
+ *   ParseMiniMap, UploadLog, DiscordSetActivity, LoadArchiveExtensions: not here (logged)
  */
 final class LobbyBridge {
     private final Context ctx;
@@ -145,6 +146,20 @@ final class LobbyBridge {
                 final JSONObject c = cmd;
                 try { downloads.execute(() -> download(c, out)); }
                 catch (java.util.concurrent.RejectedExecutionException e) { Log.i("bridge", "stopped: download not started"); }
+                break;
+            }
+            case "StartNewSpring": {
+                // (Chobby's second engine window: a saved game or a battle on another engine version, gui_loadgame.lua and
+                // lobby.lua. No second engine on a phone; the lobby said "it will be opened in a new window" and then
+                // nothing happened, only "not handled on Android" in the log, dev phone 2026-11-17: said on the screen)
+                String engine = cmd.optString("Engine").replaceFirst("^(recoil_|rel\\d{4}\\.)", "");
+                // (two lines at most: Android cuts a toast's words there, "...the app has 2026..." on the dev phone)
+                String why = engine.isEmpty() || engine.equals(Prefs.engineVersion)
+                        ? "no second game window here"
+                        : "needs engine " + engine + " (app: " + Prefs.engineVersion + ")";
+                Log.i("bridge", "StartNewSpring (" + cmd.optString("Engine") + "): not possible on Android, " + why);
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                        android.widget.Toast.makeText(ctx, "Can't open on a phone: " + why, android.widget.Toast.LENGTH_LONG).show());
                 break;
             }
             case "ReadReplayInfo": {
