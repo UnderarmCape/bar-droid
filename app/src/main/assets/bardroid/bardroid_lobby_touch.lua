@@ -1602,6 +1602,13 @@ function upright.widenInputs(win)
 					c:SetPos(nil, nil, want)
 					Spring.Echo(string.format("[bardroid-lobby] a popup's text box %d wide, now %d", was, want)) -- (tools)
 				end
+			elseif c and c.classname == "checkbox" and (c.boxsize or 0) < 22 and (c.height or 0) >= 32 then
+				-- (and its checkboxes' boxes as tall as their row allows: the login dialog's Remember password and Login
+				-- automatically drew a 15 box in a row 35 high, a speck beside the words, dev phone screenshot 2026-11-16;
+				-- the whole row was always the tap's)
+				c.boxsize = math.min(24, c.height - 8)
+				c:Invalidate()
+				Spring.Echo("[bardroid-lobby] a popup's checkbox box " .. c.boxsize) -- (tools)
 			elseif c then
 				walk(c, depth + 1)
 			end
