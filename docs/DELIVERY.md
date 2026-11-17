@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Ten minutes of BARb against BARb, spectated upright** (hardening, 2026-11-17 ~07:50, dev phone, a dev-env.sh
+      removed after; laptop tests such as catchup-test need Kailil's yes, and every phone test ran tonight): 29.7 to
+      30.0 fps each minute from 13 to 169 units, the slowest frame 214 ms at the start then 55 to 129 ms; Lua's memory
+      120 to 177 MB as the units grew; the GPU held down by the phone's heat (348 MHz at thermal level 6 and 52.5 °C,
+      then 295 MHz at level 7 and 54.1 °C) and the cap still held. No Lua errors, nothing from the app's widgets beyond their start lines.
+      bardroid_retreat.lua read again meanwhile (spectating and a host's forbidden orders handled): nothing to change.
+      No UI polish this run. The Fold7 still off adb.
 - [x] **The pad's tests after the speech note; D-gun mode sideways** (hardening, 2026-11-17 ~07:40, dev phone
       sideways, the committed build installed): pad-test -Chat and -Dgun ALL PASS; -Online ended once on the GPU
       driver's rare fault (MESA submit failed, the test's own diagnosis) and passed run again. A skirmish sideways: the
