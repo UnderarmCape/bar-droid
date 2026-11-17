@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's lobby over a player's game** (hardening, 2026-11-17 ~03:40, dev phone upright, offline lobby: Skirmish,
+      1v1, Beginner, Armada, Onyx Cauldron 2.2.2, Start): the pregame with its start box, the wind's range "1-29" and
+      the tide "20", the top bar's Lobby; a start picked, Ready; in the game Lobby put the dock aside (overlay "1",
+      "dock none") over Chobby's Skirmish page, Return to Battle brought it back ("0", "dock ... pad"), the commander
+      still picked, and a build tile's first tap queued its building (the queue's remove buttons up). BAR paused the
+      game while its lobby was up and resumed it after. Nothing to fix; no UI polish this run. (The quick skirmish's
+      Select Difficulty page shows no picture beside the levels upright, the others do; Chobby's, not looked into.)
+      The Fold7 stayed off adb this run (no answer on its port, nothing in mdns).
 - [x] **BAR's lobby over a running game: the gestures' actions** (hardening, 2026-11-17 ~03:20, dev phone upright, a
       replay): over a game the app still sent its gestures' actions and the game behind the lobby took them (a
       two-finger swipe picked every unit, armed FIGHT or stopped them; a three-finger one moved the camera; a double tap
