@@ -2904,12 +2904,15 @@ local function drawButton(item, r, cap)
 		local gap = max(2, floor(L.gap / 2))
 		local a, b = { r[1], r[2], mx - gap, r[4] }, { mx + gap, r[2], r[3], r[4] }
 		button(a)
+		-- (not its row's size: FACTORIES beside the pair shrank to LAST PINGS', smaller than the rows around it upright)
 		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
 		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
 			n > 0 and "\255\240\240\240" or "\255\140\140\140", font, true)
 		pingT.badge(a, n)
 		L.pingBtn = b -- (RtsTouch's "ping": its hold and its double tap; L: writeDock comes before pingT)
-		pingT.drawBtn(b, armed, th)
+		-- (PING as large as LAST PINGS beside it, unless that breaks over two lines: PING stood larger, 2026-11-17)
+		local last = font and min(th, (a[3] - a[1]) * 0.76 / max(0.01, font:GetTextWidth("LAST PINGS"))) or th
+		pingT.drawBtn(b, armed, last >= th * 0.7 and last or th)
 		return
 	end
 	if item.kind == "preset" and WG.BarDroidPresets then -- (its thumbnail, its name under it)
