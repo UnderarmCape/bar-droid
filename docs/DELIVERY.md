@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Downloads: rows for a finger** (hardening, 2026-11-17 ~18:15, dev phone sideways, the lobby
+      offline): Chobby's Downloads (gui_download_window.lua) lists its rows 40 high, 43 apart (a SortableList), their
+      Retry, Cancel and To Front buttons 34 high, about 1.8 mm on the phone sideways (the dev phone with no network
+      shows plugin_manifest and open-skill-snapshot failed). Each row is now 1.5 times as tall and as far apart, as the
+      Settings' and Links' rows, the buttons and progress bar with it (held to the row's top and bottom), the name and
+      status moved to the row's middle (`upright.downloadRows`, every half second both ways up: the list puts its rows
+      back when one is added, not on a progress update). Dev phone: both rows spaced, words beside the buttons' middle; a
+      Retry tapped ran the download again (it failed, no network) and the re-sorted rows were spaced again within half
+      a second; lobby-phone-test all pass. (Also this run: the dock's texture redraw item below got its list of live
+      sources and was left as it is.)
 - [x] **The unfolded split dock: the left block kept beside a resource panel; the bar's words fitted** (hardening,
       2026-11-17 ~17:55, dev phone at 1080x1198, the Fold7 unfolded, upright): metal or energy tapped emptied the left
       block (the panel and the share list took "the whole grid", which in the split is the right block alone,
@@ -764,7 +774,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       marks it dirty, so the texture is drawn again each time: ~38 draws of 2-3 ms per 10 s, about 0.3-0.4 ms a frame on
       average, as single 3 ms frames. A refresh whose halves and their items come out the same could leave the texture
       as it is; first list everything the dock draws that is not in its items (queue counts, state lights, idle
-      builders, the groups) so nothing stale stays on it.
+      builders, the groups) so nothing stale stays on it. Listed the next run (~18:05): the texture's drawing reads, beside
+      the items, the active command (drawButton), the presets' state and thumbnails, the pregame's startUnit, a timed
+      wait's countdown (drawButton's fp), the build menu copy's pick and place state (drawTile, drawHalf), PING's chat and
+      voice states with their times, the selection's counts, start position and the first unit's health
+      (drawSelection), BAR's groups, the picked unit's group, Auto Group's types and each group's unit counts and a timed
+      part (drawGroups), MULTI's picks. Ten sources, three of them timed: a "same as last time" test over all of them
+      saves ~0.3 ms a frame, and one missed leaves a stale button on the dock (a group count, a health bar). Left as
+      it is; worth it only if the dock's cost matters in a measured late game.
 - [x] **The resource panel's bar as BAR's own; sideways, a swipe changes the tab** (Kailil, 2026-11-17, of the
       share slider: "Make this bar relative. And make it have the same look as the actual power yellow bar and red line
       as the share value. And have the mex conversion Grey bar be on it too. It shoukd look vanilla. Also, in horizontal

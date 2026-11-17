@@ -1373,6 +1373,96 @@ function upright.linkRows()
 	end
 end
 
+-- Chobby's Downloads (gui_download_window.lua): a SortableList of rows 40 high, 43 apart, their Retry, Cancel and To
+-- Front buttons 34 high (y 3, bottom 3) and the name and status 20 high from y 12; sideways about 1.8 mm a button
+-- (dev phone, the failed downloads of a phone with no network, 2026-11-17). Each row SETTINGS_ROW times as tall and far
+-- apart, its buttons and progress bar with it (held to its top and bottom), its words moved down by half the growth.
+-- The list puts its rows back when one is added (SortableList:RecalculatePosition), not on a progress update: asked
+-- every half second, rows moved only where they are not in place. A list longer than the panel scrolls further.
+function upright.downloadRows()
+	local mark
+	local function find(o, depth)
+		if mark or not o or depth > 14 or o.disposed or o.visible == false then
+			return
+		end
+		if o.classname == "label" and o.caption == "Downloads" then
+			mark = o
+			return
+		end
+		for _, c in ipairs(o.children or {}) do
+			find(real(c), depth + 1)
+		end
+	end
+	for _, name in ipairs({ "holder_submenuWindow", "holder_mainWindow", "mainWindow_mainContent" }) do
+		if not mark then
+			find(real(chobbyObject(name)), 0)
+		end
+	end
+	local panel = mark and real(mark.parent)
+	local list
+	local function findList(o, depth)
+		if list or not o or depth > 6 then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "scrollpanel" then
+				list = c
+				return
+			end
+			findList(c, depth + 1)
+		end
+	end
+	findList(panel, 0)
+	if not list then
+		return
+	end
+	upright.dlSaved = upright.dlSaved or setmetatable({}, { __mode = "k" })
+	local saved, rows = upright.dlSaved, {}
+	for _, ch in ipairs(list.children or {}) do
+		local r = real(ch)
+		if r and type(r.y) == "number" and type(r.height) == "number" then
+			rows[#rows + 1] = r
+		end
+	end
+	if #rows == 0 then
+		return
+	end
+	table.sort(rows, function(a, b)
+		return a.y < b.y
+	end)
+	local base = saved[list]
+	if not base then -- (Chobby's spacing: SortableList's 40 high, 3 between, from its first row)
+		base = { step = #rows > 1 and rows[2].y - rows[1].y or rows[1].height + 3, h = rows[1].height, top = rows[1].y }
+		saved[list] = base
+	end
+	local f = upright.SETTINGS_ROW
+	local grow = math.floor(base.h * f) - base.h
+	local moved = 0
+	for i, r in ipairs(rows) do
+		local y, h = math.floor((i - 1) * base.step * f + base.top), base.h + grow
+		if r.y ~= y or r.height ~= h then
+			r:SetPos(nil, y, nil, h)
+			moved = moved + 1
+		end
+		for _, ch in ipairs(r.children or {}) do -- (the name and status: down by half the growth)
+			local c = real(ch)
+			if c and c.classname == "textbox" then
+				if not saved[c] then
+					saved[c] = { y = c.y }
+				end
+				local ty = saved[c].y + math.floor(grow / 2)
+				if c.y ~= ty then
+					c:SetPos(nil, ty)
+				end
+			end
+		end
+	end
+	if moved > 0 then
+		Spring.Echo(string.format("[bardroid-lobby] Downloads: %d rows spaced %.2f times for a finger", moved, f)) -- (tools)
+	end
+end
+
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
 -- wide whatever the room): upright the second and third columns ran under Start and Delete, the names cut by them
 -- ("SimpleA", "Inactive/"; dev phone upright, 2026-11-16). Where the columns do not fit the room the list gives them,
@@ -1954,6 +2044,7 @@ local function uprightUpdate(now)
 		upright.pluginButtons(upright.pluginsWin)
 		upright.settingsRows(true) -- (both ways up: sideways its rows were the densest, about 2 mm)
 		upright.linkRows() -- (both ways up, as far as the panel has room)
+		upright.downloadRows() -- (both ways up)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
