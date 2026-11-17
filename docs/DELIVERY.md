@@ -740,6 +740,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The home grid's LAST PINGS | PING pair** (hardening, 2026-11-17 ~04:50, dev phone upright): LAST PINGS shrank
+      to fit its half, PING stood larger beside it. PING takes LAST PINGS' size now, unless that breaks over two lines
+      (the split dock's half, where PING stays) (d979e6cd). Tried first and dropped: the whole row at the pair's size,
+      which left FACTORIES smaller than the rows around it. No Lua errors. The Fold7 still off adb.
 - [x] **Pregame sideways** (hardening, 2026-11-17 ~04:35, dev phone, a skirmish with a pregame by a dev-env.sh, removed
       after): the narrow wind box "4-12" whole beside NO WATER and the swap arrow, BUILD | START tabs, START's UNDO LAST,
       CLEAR QUEUE, the factions, RANDOM and PING one size a row; no Lua errors. UI polish: PING (drawn apart) stood
