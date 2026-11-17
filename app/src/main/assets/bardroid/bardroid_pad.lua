@@ -1756,10 +1756,14 @@ local function shareDraw(vsx, vsy)
 			if frac > 0 then
 				style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, math.floor(bh / 2))
 			end
-			-- (their share slider below the top: a tick where their room ends, what BAR lets in)
-			if slider and slider < 0.995 then
-				local sx = math.floor(bx0 + (bx1 - bx0) * math.max(0, slider))
-				style.fill(sx - 1, by - 3, sx + 1, by + bh + 3, style.TEXT, 0.9)
+			-- (their share slider: a mark where their room ends, what BAR lets in; in BAR's share red, as the dock's
+			-- resource bar and BAR's top bar show it (Kailil, 2026-11-17, of the dock's: "red line as the share value"),
+			-- at the bar's end too; it was a white tick, left out at the top)
+			if slider then
+				local sx = math.floor(bx0 + (bx1 - bx0) * math.max(0, math.min(1, slider)))
+				sx = math.max(bx0 + 2, math.min(bx1 - 2, sx))
+				style.fill(sx - 3, by - 4, sx + 3, by + bh + 4, { 0, 0, 0 }, 0.6)
+				style.fill(sx - 2, by - 3, sx + 2, by + bh + 3, { 0.85, 0, 0 }, 1)
 			end
 			text(shareFmt(theirs), bx0 - pad * 0.5, yr + teamH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
 		end

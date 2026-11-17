@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad's share list: the teammates' share marks in BAR's red** (hardening UI polish, 2026-11-17 ~18:25, dev
+      phone, pad-test -Share): each teammate's storage bar had a thin white tick at their share slider, left out at the
+      top; now a red mark (BAR's share red, as the dock's resource bar since Kailil's ask the same day) with a dark edge,
+      at the top too (screenshots: metal at 50 %, energy at the end). pad-test -Share all pass. The run's check: the
+      lobby's Downloads upright, its rows spaced as sideways (Retry about 110 x 75).
 - [x] **The lobby's Downloads: rows for a finger** (hardening, 2026-11-17 ~18:15, dev phone sideways, the lobby
       offline): Chobby's Downloads (gui_download_window.lua) lists its rows 40 high, 43 apart (a SortableList), their
       Retry, Cancel and To Front buttons 34 high, about 1.8 mm on the phone sideways (the dev phone with no network
