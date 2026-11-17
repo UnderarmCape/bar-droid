@@ -2650,6 +2650,24 @@ local function replaysAdded(now)
 	replaysRow.stamp = t
 end
 
+-- Chobby's Load Game writes a save's date day first, "12/11/2026" over "15:17:38" (gui_loadgame.lua WriteDate), which
+-- on a US phone reads as December 11, beside Replays' "2026-11-16 19:23" (dev phone upright, 2026-11-17): the same
+-- year-first way here, its minutes last. Walked once a second for 4 s after a press, as the tabs' fixes (Update).
+local function saveDates(o, depth)
+	if not o or o.disposed or depth > 40 then
+		return
+	end
+	if o.classname == "textbox" and type(o.text) == "string" and o.SetText then
+		local d, m, y, hh, mm = o.text:match("^(%d%d)/(%d%d)/(%d%d%d%d)\n(%d%d):(%d%d):%d%d$")
+		if d then
+			o:SetText(string.format("%s-%s-%s\n%s:%s", y, m, d, hh, mm))
+		end
+	end
+	for _, c in ipairs(o.children or {}) do
+		saveDates(real(c), depth + 1)
+	end
+end
+
 function widget:Update() -- (the lobby's Update has no frame time)
 	local now = Spring.GetTimer()
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
@@ -2657,6 +2675,11 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	poolCacheCheck(now)
 	if screen0 and not gameLoaded then -- (no walks of the lobby's controls while a game runs)
 		replaysRowCheck(now)
+		if tabWake.at and Spring.DiffTimers(now, tabWake.at) < 4
+			and not (replaysRow.datesAt and Spring.DiffTimers(now, replaysRow.datesAt) < 1) then
+			replaysRow.datesAt = now
+			saveDates(real(screen0), 0)
+		end
 	end
 	replaysAdded(now)
 	if not screen0 then
