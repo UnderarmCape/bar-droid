@@ -3217,15 +3217,29 @@ local function drawSelection()
 	-- (no wider than the room left of QUEUE, on the same line: in the split dock's narrow right block "Advanced
 	-- Construction Bot" ran under it and off the screen; review 2026-11-16)
 	-- (QUEUE now under the name's line, at the row's middle: the name has the line to the right edge; drawQueueZones)
-	local room = r[3] - L.pad * 2 - x
-	local nameSize = min(h * 0.24, room / max(1, bold:GetTextWidth(name)))
-	bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, max(h * 0.12, nameSize), "o")
-	L.selCountEnd = nil -- (where the count line ends: the camera pad's words keep right of it, drawMode)
-	if n > 1 then
-		-- ("6 units, 6 of this type" said the same thing twice: all of one type, the count alone)
-		local count = bestN < n and (n .. " units, " .. bestN .. " of this type") or (n .. " units")
-		font:Print("\255\200\200\200" .. count, x, r[4] - h * 0.62, h * 0.17, "o")
-		L.selCountEnd = x + font:GetTextWidth(count) * h * 0.17
+	local nk = not SP.windOff() and SP.windRects() and L.windNook
+	-- ("6 units, 6 of this type" said the same thing twice: all of one type, the count alone)
+	local count = n > 1 and (bestN < n and (n .. " units, " .. bestN .. " of this type") or (n .. " units")) or nil
+	if nk then
+		-- (the wind's and the tide's nook in the name's place at the top, Kailil 2026-11-17: the name on the row's middle
+		-- line, left of QUEUE at the same height; the count beside the nook at the top right)
+		local qw = bold:GetTextWidth("QUEUE") * h * 0.2
+		local room = r[3] - L.pad * 3 - qw - x
+		local nameSize = min(h * 0.22, room / max(1, bold:GetTextWidth(name)))
+		nameSize = max(h * 0.12, nameSize)
+		bold:Print("\255\255\255\255" .. name, x, SP.selLineY(r, nk) - nameSize * 0.35, nameSize, "o")
+		if count then
+			local cx0, cx1 = nk[3] + L.pad, r[3] - L.pad
+			local cs = min(h * 0.17, (cx1 - cx0) / max(1, font:GetTextWidth(count)))
+			font:Print("\255\200\200\200" .. count, cx1, (nk[2] + nk[4]) / 2 - cs * 0.35, max(h * 0.1, cs), "ro")
+		end
+	else
+		local room = r[3] - L.pad * 2 - x
+		local nameSize = min(h * 0.24, room / max(1, bold:GetTextWidth(name)))
+		bold:Print("\255\255\255\255" .. name, x, r[4] - h * 0.36, max(h * 0.12, nameSize), "o")
+		if count then
+			font:Print("\255\200\200\200" .. count, x, r[4] - h * 0.62, h * 0.17, "o")
+		end
 	end
 	local hp, maxHp = Spring.GetUnitHealth(sel[1])
 	if hp and maxHp and maxHp > 0 then
@@ -3366,6 +3380,7 @@ function SP.windRects()
 	end
 end
 function SP.windRectsNow()
+	L.windNook = nil -- (set below while they stand in the selection row's nook)
 	local pad, g, r = L.pad or 4, L.groups, L.res
 	if not (r and r[3] > r[1]) then
 		return nil
@@ -3379,14 +3394,46 @@ function SP.windRectsNow()
 		local mid = floor((c[2] + c[4]) / 2)
 		return { c[1], mid + half, c[3], c[4] }, { c[1], c[2], c[3], mid - half }
 	end
+	-- Upright with units picked: side by side in a nook at the selection row's top, where the unit's name was (Kailil,
+	-- 2026-11-17, a screenshot with a red box round "Armada Commander": "lets move the wind and tidal widgets to inside of
+	-- this red box instead. it will be like a nudge/nook looking thing with the widgets in it. tapping on it shows the same
+	-- widget popup"): from the INSERT third's edge to seven tenths across, the name a line lower (drawSelection). Nothing
+	-- picked (no selection row): over metal and energy as before.
+	local s = L.sel
+	if not L.land and showSel and leftKind ~= "spec" and s and s[3] > s[1] and s[4] > s[2] then
+		local h = s[4] - s[2]
+		local inset = max(2, floor(pad * 0.6))
+		local x0 = s[1] + floor((s[3] - s[1]) / 3) + pad
+		local x1 = s[1] + floor((s[3] - s[1]) * 0.70)
+		local y1 = s[4] - inset
+		local y0 = y1 - floor(h * 0.36)
+		local w = floor((x1 - x0 - inset) / 2)
+		L.windNook = { x0 - inset, y0 - inset, x1 + inset, s[4] }
+		return { x0, y0, x0 + w, y1 }, { x1 - w, y0, x1, y1 }
+	end
 	local w, y0 = floor((r[3] - r[1] - pad) / 2), r[4] + pad + max(2, floor(pad * 0.5)) -- (a gap over the dock's edge)
 	return { r[1], y0, r[1] + w, y0 + hh }, { r[1] + w + pad, y0, r[1] + 2 * w + pad, y0 + hh }
+end
+-- the selection row's line under the nook (the name's and QUEUE's): between the health bar's top and the nook's foot
+function SP.selLineY(r, nk)
+	return (r[2] + (r[4] - r[2]) * 0.25 + nk[2]) / 2
 end
 -- Drawn live: a few rectangles and words; the box whose details are open lit gold
 function SP.drawWindTide()
 	local wb, tb = SP.windRects()
 	if not wb then
 		return
+	end
+	local nk = L.windNook
+	if nk then -- (the nook: a dark well sunk into the selection row's top, a rim on three sides, open to the dock's edge)
+		local e = max(1, floor((L.pad or 4) * 0.25))
+		gl.Color(0, 0, 0, 0.6)
+		gl.Rect(nk[1], nk[2], nk[3], nk[4])
+		gl.Color(1, 1, 1, 0.14)
+		gl.Rect(nk[1], nk[2], nk[1] + e, nk[4])
+		gl.Rect(nk[3] - e, nk[2], nk[3], nk[4])
+		gl.Rect(nk[1], nk[2], nk[3], nk[2] + e)
+		gl.Color(1, 1, 1, 1)
 	end
 	for i, box in ipairs({ wb, tb }) do
 		local hh, bw = box[4] - box[2], box[3] - box[1]
@@ -4532,7 +4579,10 @@ local function drawQueueZones()
 	bold:Print((iOn and gold or white) .. "INSERT", (ins[1] + h + ins[3]) / 2, (ins[2] + ins[4]) / 2 - size * 0.35, size, "co")
 	-- (QUEUE as INSERT: its middle on the row's, between the name and the health bar, where the camera pad's words were;
 	-- on the name's line at the top right it read smaller, Kailil 2026-11-16: "make QUEUE larger, the same size as insert")
-	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, (que[2] + que[4]) / 2 - size * 0.35, size, "ro")
+	-- (with the wind's and the tide's nook up: on the name's line under it, SP.selLineY)
+	local nk = not SP.windOff() and SP.windRects() and L.windNook
+	local qy = nk and SP.selLineY(L.sel, nk) or (que[2] + que[4]) / 2
+	bold:Print((qOn and gold or white) .. "QUEUE", que[3] - L.pad, qy - size * 0.35, size, "ro")
 end
 
 -- Sideways, one thumb: the tabs over the panel (the one shown in gold), HOME (gold while its buttons are open) and the

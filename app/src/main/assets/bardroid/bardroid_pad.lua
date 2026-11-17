@@ -2573,6 +2573,17 @@ local function drawQueue()
 	font:End()
 end
 local function inQueueButton(x, y)
+	-- (not on the wind's or the tide's box, in the upright dock's selection row since 2026-11-17: a tap there opens its
+	-- details, bardroid_portrait.lua, and left QUEUE as it was)
+	local P = queue.dock and WG.BarDroidPortrait
+	if P and P.windRects then
+		local wb, tb = P.windRects()
+		for _, r in ipairs({ wb or false, tb or false }) do
+			if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
+				return nil
+			end
+		end
+	end
 	for _, b in ipairs({ { queue.rect, "queue" }, { queue.insertRect, "insert" } }) do
 		local r = b[1]
 		if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then

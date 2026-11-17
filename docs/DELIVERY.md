@@ -740,6 +740,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The wind and the tide in a nook in the selection row** (Kailil, 2026-11-17 ~11:20, a screenshot with a red box round
+      the picked unit's name: "lets move the wind and tidal widgets to inside of this red box instead. it will be like a
+      nudge/nook looking thing with the widgets in it. tapping on it shows the same widget popup"): upright with units
+      picked the two boxes stand side by side in a nook at the selection row's top, from the INSERT third's edge to seven
+      tenths across (SP.windRectsNow, L.windNook): a dark well with a rim on three sides, open to the dock's edge; the
+      strip above the dock is gone then (the game that much taller). The unit's name moves to QUEUE's line under the nook
+      (SP.selLineY, between the health bar and the nook's foot; QUEUE follows it), the count of units picked beside the
+      nook at the top right. A tap on a box opens the same details (MousePress takes it first); bardroid_pad.lua's
+      QUEUE/INSERT leave taps on the boxes alone. With nothing picked (no selection row) the boxes stand over metal and
+      energy as before; sideways and unfolded unchanged. Checked on the dev phone: the nook with "6.0 4-12" and NO WATER,
+      the wind's details open from it, QUEUE untouched; dock-phone-test ALL PASS (the wind's and the tide's taps among
+      them); sideways the one-thumb dock as before.
 - [x] **A scenario from the lobby upright; the drop-down lists** (hardening, 2026-11-17 ~11:15, dev phone upright, the
       lobby offline): Scenarios lists 24; the list's order is not the files' (Steal Cortex's Tech! is scenario005.lua,
       map BarR, not on the phone: "You do not have the map", the lobby's own). Tick Tock (SpeedMetal) started: the

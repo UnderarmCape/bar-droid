@@ -119,8 +119,9 @@ or a picker are open, the menu stays open: tap the map for the spot (or drag it 
 fine placing; hold still for a GRID), ROTATE turns it a quarter, then PLACE (a spot BAR refuses says so). A drag on the
 game pans, units picked or not; hold, then drag to draw the picked units' path (with MOVE, FIGHT or PATROL pressed a
 drag draws it at once).
-Over metal and energy two boxes show the wind (its speed, the map's range; before the game starts the range alone, as
-BAR's top bar) and the tide; tap one for BAR's own details: the average, lowest and highest wind, how much of the time
+Two boxes show the wind (its speed, the map's range; before the game starts the range alone, as BAR's top bar) and the
+tide: with units picked in a nook at the top of the selection row (the unit's name under it, beside QUEUE), with nothing
+picked over metal and energy; tap one for BAR's own details: the average, lowest and highest wind, how much of the time
 it is under 6, the solar advice and the last five minutes as a graph (any tap closes them).
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
