@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Settings sideways and its display modes** (hardening, 2026-11-17 ~05:15, dev phone, the lobby
+      offline): the Lobby tab's rows each level with its control; the Graphics tab's Ingame and Menu Display Mode do
+      no harm on a phone: Menu set to Fullscreen, then an unfold (wm size 1080x1198: the lobby at 1192 x 1080, whole),
+      then Windowed and a fold back (2008 x 938, whole); Borderless again after. No Lua errors. Statistics upright as
+      before the last run's change (between the top bar and the dock, the dock in place). UI polish: the launcher's
+      "Free storage: 75.4 GB (need ~6 GB)" read as a warning once BAR is installed; the note now shows only before the
+      install, and after it only under 2 GB free ("low: BAR's updates and new maps need room"). Dev phone: "Free
+      storage: 75.4 GB". CLAUDE.md's late-game resolution floor said half the lines; it is 70 % (RENDER_DROP_FLOOR).
+      The Fold7 still off adb.
 - [x] **BAR's Statistics sideways on a tall phone** (hardening, 2026-11-17 ~05:00, dev phone at 1080x2316 sideways, a
       skirmish): no Lua errors, launcher.log only BAR's own warnings. The top bar's Statistics (the app's TeamStats
       copy) was fitted above the dock there, 838 x 465 of the 2008 x 938 screen, its words about 11 pixels high. Now,
