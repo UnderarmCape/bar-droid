@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad's tests after the speech note; D-gun mode sideways** (hardening, 2026-11-17 ~07:40, dev phone
+      sideways, the committed build installed): pad-test -Chat and -Dgun ALL PASS; -Online ended once on the GPU
+      driver's rare fault (MESA submit failed, the test's own diagnosis) and passed run again. A skirmish sideways: the
+      ORDERS tab (Fight, PRESETS, Patrol, D-Gun, the states), D-Gun tapped: its MOVE and AIM sticks, a FIRE by each, the
+      X; X: the dock back. No Lua errors. No UI polish this run. The Fold7 still off adb.
 - [x] **The lobby's speech panel over BAR's logo; the app's logs** (hardening, 2026-11-17 ~07:25, dev phone upright,
       the lobby offline): upright the lobby's speech panel (its "NOTHING SENT: ..." note) lies over BAR's logo and the
       "Offline" line, both drawn above it, its window see-through. Tried: a background colour on it, no change (Chili's
