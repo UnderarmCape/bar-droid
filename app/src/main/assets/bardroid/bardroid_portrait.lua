@@ -3019,15 +3019,21 @@ local function drawHalf(side)
 	end
 	-- (the orders of a row in one size, the one its longest word fits at, on one line: on the unfolded Fold7 sideways
 	-- "Fire at will" stood shrunk beside "Repeat Off" broken over two larger lines, dev phone screenshot 2026-11-13)
+	-- The home grid's rows likewise (the split dock's narrow halves: LOCAL UNITS stood smaller than ALL UNITS beside it,
+	-- COMMANDER than BASE, dev phone screenshot 2026-11-16); a word that breaks over two lines there (textIn's wrap, LAST
+	-- PINGS) sets no size for the rest of its row
 	local rowCap = {}
+	local home = rightKind == "home"
 	if side ~= "left" and font then
 		for i, item in ipairs(items) do
-			local rect = item.kind == "order" and item.label and cellRect(side, i)
+			local rect = (item.kind == "order" or home and item.kind ~= "pings") and item.label and cellRect(side, i)
 			if rect then
 				local key = rect[2] .. ":" .. rect[4]
 				local th = min((rect[4] - rect[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
 				local fit = min(th, (rect[3] - rect[1]) * 0.76 / max(0.01, font:GetTextWidth(item.label)))
-				rowCap[key] = min(rowCap[key] or fit, fit)
+				if item.kind == "order" or fit >= th * 0.7 or not item.label:find(" ") then
+					rowCap[key] = min(rowCap[key] or fit, fit)
+				end
 			end
 		end
 	end
@@ -3038,7 +3044,7 @@ local function drawHalf(side)
 			if side == "left" then
 				drawTile(item, rect)
 			else
-				drawButton(item, rect, item.kind == "order" and rowCap[rect[2] .. ":" .. rect[4]] or nil)
+				drawButton(item, rect, (item.kind == "order" or home) and rowCap[rect[2] .. ":" .. rect[4]] or nil)
 			end
 		end
 	end
