@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Pace, the pad online, sideways screens** (hardening, 2026-11-17 ~14:20, dev phone): pace-test ALL PASS (the cap
+      on the vsync grid, a stall fading, a stale vsync), pad-test -Online ALL PASS (BAR's game, user widgets' orders
+      forbidden). Sideways screenshots: 6 units picked (the selection row, the wind and the tide's upright pill in HOME's
+      place), the commander's ORDERS tab, the D-gun mode floating (the sticks low in the corners, a FIRE beside each, the
+      X at the left): all as they should be, no Lua error in the games. Nothing to change this run.
 - [x] **The dock unfolded after the nook; the wind's words where BAR's are missing** (hardening, 2026-11-17 ~14:05, dev
       phone): dock-phone-test at 1080x1198 (the Fold7 unfolded) ALL PASS, the wind's and the tide's first taps among
       them. Screenshots unfolded upright, nothing picked and 6 units picked (the pill on the groups between the blocks,
