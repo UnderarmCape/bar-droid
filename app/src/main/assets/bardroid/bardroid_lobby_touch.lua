@@ -2182,7 +2182,7 @@ local function voiceCurrent(targets)
 end
 
 -- say: a note in the panel instead of the target (the microphone not allowed: voice_nomic, VOICE_NOMIC_SECONDS)
-local VOICE_NOMIC = "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" -- (bardroid_pad.lua's in a game)
+local VOICE_NOMIC = "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" -- (bardroid_pad.lua's in a game)
 local VOICE_NOMIC_SECONDS = 4
 local voiceNoteAt = nil -- the note's start; the panel goes after VOICE_NOMIC_SECONDS
 local function voiceShow(say)

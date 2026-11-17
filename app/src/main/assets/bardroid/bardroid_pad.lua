@@ -57,7 +57,9 @@ end
 local TOAST_SECONDS = 1.3
 local VOICE_PING_NOTE = "SPEAK THE PING" -- (voice_on_ping: what is said labels a ping, voicePing)
 local VOICE_SECONDS = 15 -- the listening note's longest stay (the app ends it: voice_off)
-local VOICE_NOMIC_NOTE = "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" -- (voice_nomic; the lobby's the same)
+-- (voice_nomic; the lobby's the same. Not "SPEAK TO CHAT: ...": a ping's spoken label asks for the microphone too, PING
+-- held, and the note spoke of chat; dev phone 2026-11-17)
+local VOICE_NOMIC_NOTE = "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS"
 local voiceToast = false -- the note showing is the listening one
 local VOICE_PING_SECONDS = 30 -- the ping's place kept this long for the words
 local voicePingAt = nil -- where the spoken ping goes: { x, y, z, at }
