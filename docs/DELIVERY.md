@@ -740,6 +740,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The resource panel's bar as BAR's own; sideways, a swipe changes the tab** (Kailil, 2026-11-17, of the
+      share slider: "Make this bar relative. And make it have the same look as the actual power yellow bar and red line
+      as the share value. And have the mex conversion Grey bar be on it too. It shoukd look vanilla. Also, in horizontal
+      landscape mode, allow me to change tabs out of the build tab/orders by swiping right to left"): the metal and
+      energy panels' slider was a red fill from 0 to the share level (energy's conversion a second slider of its own).
+      Now one bar each, drawn as BAR's top bar draws its resource bars (gui_top_bar.lua): the dark track with its
+      outlines, noise and gloss, the storage's fill (metal grey to white, energy dark to bright yellow, its glow and
+      shimmer), FlowUI's slider knobs: the share red, on energy's bar the conversion pale beside it; a press moves the
+      nearer knob, which grows while held as BAR's hovered one; each value above in its knob's colour. The bar is drawn
+      live over the dock's texture (its fill moves). Sideways with BUILD | ORDERS, a sideways swipe on the panel changes
+      the tab, either way (before, RtsTouch handed it over as a mouse drag and its release pressed the tile it began
+      on). Dev phone: upright, metal's bar full with its red knob, energy's yellow with both, the share dragged to 52 %
+      and the conversion to 28 % each alone; sideways the swipes ORDERS to BUILD and back, from PRESETS without opening
+      it, after a turn to upright and back too; the dock phone test all pass.
+- [x] **The D-gun sticks shaded** (hardening UI polish, 2026-11-17 ~16:50, dev phone): their wells were flat black
+      discs and the knobs flat circles; now a bowl with four small marks for the stick's ways, the knobs lit from the
+      top left with a soft shadow and rim (screenshot of the D-gun mode; dock phone test all pass).
 - [x] **The launcher's device lines name why the official engine runs** (hardening, 2026-11-17 ~16:40, dev phone;
       on the Fold7 at 16:42, BAR not running):
       with no phone build for BAR's current engine (ENGINE-DEFAULT stage 4, the Fold7 since BAR's 2026.09.02) the

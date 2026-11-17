@@ -154,7 +154,7 @@ local shareFraction = 0.25 -- of what this team holds (metal, energy)
 local resPanel = nil -- "metal" or "energy": its panel
 local unqShown = false -- the groups strip's remove-order buttons: a factory picked, or units with orders
 local allPicked, keepTypes = false, false -- LOCAL / ALL UNITS: the whole list picked; the list kept through that pick
-local slide = nil -- a slider being dragged: { item, rect }
+local slide = nil -- a resource bar's knob being dragged: { item, rect, what: "share" or "convert" }
 local factoryItem -- a factory's build option pressed last: its queue buttons on the right
 local lastSelection = ""
 local menu = false -- the dock's menu is open (fingers press it); else it is the camera pad
@@ -1423,16 +1423,14 @@ local function shareItems()
 	return items
 end
 
--- the resource panel: BAR's top bar's sliders (energy: conversion, grey; both: sharing above, red), SEND, CLOSE
+-- the resource panel: BAR's top bar's resource bar, SEND, CLOSE. One bar as BAR's (Kailil, 2026-11-17, of the share
+-- slider: "Make this bar relative. And make it have the same look as the actual power yellow bar and red line as the
+-- share value. And have the mex conversion Grey bar be on it too. It shoukd look vanilla"): the storage's fill in BAR's
+-- colours, the share knob (red) on it and on energy's the conversion knob (pale) too; it was a red fill up to the share
+-- level, conversion a second slider of its own (SP.drawResBar)
 local function panelItems(res)
 	local items = {}
-	if res == "energy" then
-		items[#items + 1] = { kind = "slider", what = "convert", res = res, label = "CONVERT ENERGY ABOVE", w = 2 }
-	end
-	-- (its resource named, as CONVERT ENERGY's: "SHARE TO ALLIES ABOVE" alone read the same in both panels, dev phone
-	-- 2026-11-12)
-	items[#items + 1] = { kind = "slider", what = "share", res = res, label = "SHARE " .. string.upper(res) .. " TO ALLIES ABOVE",
-		w = 2 }
+	items[#items + 1] = { kind = "slider", res = res, w = 2 }
 	if #teammateList() > 0 then
 		items[#items + 1] = { kind = "sendres", res = res, label = res == "metal" and "SEND METAL" or "SEND ENERGY", w = 2 }
 	end
@@ -1440,17 +1438,19 @@ local function panelItems(res)
 	return items
 end
 
-local function sliderValue(item)
-	if item.what == "convert" then
+-- what: "share" or "convert" (energy's conversion)
+local function sliderValue(item, what)
+	if what == "convert" then
 		return Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75
 	end
 	return select(6, Spring.GetTeamResources(myTeam(), item.res)) or 1
 end
 
--- a slider set from x across its track (BAR's own calls: SetShareLevel; conversion, its LuaRules message 12-88 %)
-local function setSlider(item, r, x)
-	local v = max(0, min(1, (x - r[1]) / max(1, r[3] - r[1])))
-	if item.what == "convert" then
+-- a knob set from x along its bar (BAR's own calls: SetShareLevel; conversion, its LuaRules message 12-88 %)
+local function setSlider(item, r, x, what)
+	local b = SP.barArea(r)
+	local v = max(0, min(1, (x - b[1]) / max(1, b[3] - b[1])))
+	if what == "convert" then
 		Spring.SendLuaRulesMsg(string.format(string.char(137) .. "%i", max(12, min(88, floor(v * 100 + 0.5)))))
 	else
 		Spring.SetShareLevel(item.res, v)
@@ -2857,25 +2857,154 @@ local function currentShape()
 	end
 end
 
-local function drawSlider(item, r)
-	button(r)
-	local v = sliderValue(item)
+-- the resource bar in a panel's slider cell: its rect and height (the knobs' halves fit at its ends)
+function SP.barArea(r)
 	local h = r[4] - r[2]
-	local tx0, tx1 = r[1] + h * 0.2, r[3] - h * 0.2
-	local ty0 = r[2] + h * 0.2
-	local ty1 = ty0 + max(4, floor(h * 0.16))
-	gl.Color(0.08, 0.08, 0.08, 0.95)
-	gl.Rect(tx0, ty0, tx1, ty1)
-	if item.what == "convert" then -- (BAR's top bar: the conversion grey, the share red)
-		gl.Color(0.72, 0.72, 0.72, 1)
-	else
-		gl.Color(0.86, 0.2, 0.18, 1)
+	local bh = max(5, floor(h * 0.12 + 0.5))
+	local side = floor((bh + 2 * bh / 0.75) * 0.5 + h * 0.14)
+	local y0 = r[2] + floor(h * 0.26)
+	return { r[1] + side, y0, r[3] - side, y0 + bh }, bh
+end
+SP.KNOB = { share = { 0.85, 0, 0, 1 }, convert = { 0.95, 0.95, 0.7, 1 } } -- (gui_top_bar.lua's)
+function SP.glowQuad(x0, y0, x1, y1, o) -- (gui_top_bar.lua's RectQuad)
+	gl.BeginEnd(GL.QUADS, function()
+		gl.TexCoord(o, 1 - o)
+		gl.Vertex(x0, y0)
+		gl.TexCoord(1 - o, 1 - o)
+		gl.Vertex(x1, y0)
+		gl.TexCoord(1 - o, o)
+		gl.Vertex(x1, y1)
+		gl.TexCoord(o, o)
+		gl.Vertex(x0, y1)
+	end)
+end
+-- BAR's top bar's resource bar as gui_top_bar.lua draws it, at this cell's size: the track (its dark outlines, inner
+-- light edge, noise and gloss), the storage's fill (metal grey to white, energy dark to bright yellow, its glow; energy's
+-- shimmer), and FlowUI's slider knobs: the share red, energy's conversion pale; a knob held as BAR's hovered one. Live
+-- each frame (the fill moves): drawDock, over the dock's texture
+function SP.drawResBar(item, r)
+	local f = flow()
+	local b, bh = SP.barArea(r)
+	local res = item.res
+	local metal = res == "metal"
+	local cur, storage = Spring.GetTeamResources(myTeam(), res)
+	local w = b[3] - b[1]
+	local frac = (storage or 0) > 0 and max(0, min(1, (cur or 0) / storage)) or 0
+	local fw = max(math.ceil(bh * 0.2), floor(frac * w))
+	if not (f and f.RectRound and f.RectRoundOutline and f.TexturedRectRound and f.SliderKnob) then
+		gl.Color(0.08, 0.08, 0.08, 0.95)
+		gl.Rect(b[1], b[2], b[3], b[4])
+		gl.Color(metal and 0.9 or 1, metal and 0.9 or 0.86, metal and 0.9 or 0.15, 1)
+		gl.Rect(b[1], b[2], b[1] + fw, b[4])
+		for _, what in ipairs(metal and { "share" } or { "convert", "share" }) do
+			local c = SP.KNOB[what]
+			local kx = b[1] + w * sliderValue(item, what)
+			gl.Color(c[1], c[2], c[3], 1)
+			gl.Rect(kx - bh * 0.6, b[2] - bh * 0.6, kx + bh * 0.6, b[4] + bh * 0.6)
+		end
+		gl.Color(1, 1, 1, 1)
+		return
 	end
-	local kx = tx0 + (tx1 - tx0) * v
-	gl.Rect(tx0, ty0, kx, ty1)
-	gl.Color(1, 1, 1, 1)
-	gl.Rect(kx - 3, ty0 - h * 0.07, kx + 3, ty1 + h * 0.07)
-	textIn(item.label .. "  " .. floor(v * 100 + 0.5) .. "%", r[1], ty1, r[3], r[4], h * 0.24, "\255\235\235\235", font)
+	local add = max(1, floor(bh * 0.15 + 0.5))
+	local fh = add * 4
+	f.RectRound(b[1], b[2], b[3], b[4], bh * 0.2, 1, 1, 1, 1, { 0, 0, 0, 0.15 }, { 0, 0, 0, 0.2 })
+	f.RectRoundOutline(b[1] - add - fh - 1, b[2] - add - fh - 1, b[3] + add + fh + 1, b[4] + add + fh + 1, bh * 0.8, fh,
+		1, 1, 1, 1, { 0, 0, 0, 0 }, { 0, 0, 0, 0.22 })
+	f.RectRoundOutline(b[1] - 2 * add - 1, b[2] - 2 * add - 1, b[3] + 2 * add + 1, b[4] + 2 * add + 1, add * 1.5, add,
+		1, 1, 1, 1, { 0, 0, 0, 0 }, { 0, 0, 0, 0.66 })
+	f.RectRoundOutline(b[1] - add - 1, b[2] - add - 1, b[3] + add + 1, b[4] + add + 1, bh * 0.33, bh * 0.1,
+		1, 1, 1, 1, { 1, 1, 1, 0.3 }, { 1, 1, 1, 0 })
+	gl.Blending(GL.SRC_ALPHA, GL.ONE)
+	gl.Texture(":g:LuaUI/Images/rgbnoise.png")
+	gl.Color(1, 1, 1, 0.88)
+	f.TexturedRectRound(b[1] - 1, b[2] - 1, b[3] + 1, b[4] + 1, bh * 0.33, 1, 1, 1, 1, w * 0.33, 0)
+	gl.Texture(false)
+	f.RectRound(b[1] - add - 1, b[2] - add - 1, b[3] + add + 1, b[4] + add + 1, bh * 0.33, 1, 1, 1, 1,
+		{ 0, 0, 0, 0.1 }, { 0, 0, 0, 0.1 })
+	f.RectRound(b[1] - add, b[2] - add, b[3] + add, b[4] + add, bh * 0.33, 1, 1, 1, 1,
+		{ 0.15, 0.15, 0.15, 0.17 }, { 0.8, 0.8, 0.8, 0.13 })
+	f.RectRound(b[1] - add, b[2] + add, b[3] + add, b[4] + add, bh * 0.33, 1, 1, 0, 0, { 1, 1, 1, 0 }, { 1, 1, 1, 0.05 })
+	f.RectRound(b[1] - add, b[2] - add, b[3] + add, b[2] + add * 2.5, bh * 0.2, 0, 0, 1, 1, { 1, 1, 1, 0.08 }, { 1, 1, 1, 0 })
+	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+	-- the fill
+	f.RectRound(b[1], b[2], b[1] + fw, b[4], bh * 0.2, 1, 1, 1, 1,
+		metal and { 0.51, 0.51, 0.5, 1 } or { 0.5, 0.45, 0, 1 }, metal and { 0.95, 0.95, 0.95, 1 } or { 0.8, 0.75, 0, 1 })
+	f.RectRound(b[1] + 1, b[2] + 1, b[1] + fw - 1, b[4] - 1, bh * 0.2, 1, 1, 1, 1, { 0, 0, 0, 0.1 }, { 0, 0, 0, 0.17 })
+	gl.Blending(GL.SRC_ALPHA, GL.ONE)
+	local g = min(bh * 3, (r[4] - r[2]) * 0.3) -- (BAR's glow reaches 7 bar heights: here within the cell)
+	local ga = metal and 0.025 + 0.05 * min(1, frac * 40) or 0.035 + 0.07 * min(1, frac * 40)
+	gl.Color(1, 1, metal and 1 or 0, ga * 2)
+	gl.Texture(":l:LuaUI/Images/barglow-center.png")
+	SP.glowQuad(b[1], b[2] - g, b[1] + fw, b[4] + g, 0.008)
+	gl.Texture(":l:LuaUI/Images/barglow-edge.png")
+	SP.glowQuad(b[1] - g * 2.5, b[2] - g, b[1], b[4] + g, 0.008)
+	SP.glowQuad(b[1] + fw + g * 3, b[2] - g, b[1] + fw, b[4] + g, 0.008)
+	if metal then
+		gl.Texture(":g:LuaUI/Images/rgbnoise.png")
+		gl.Color(1, 1, 1, 0.37)
+		f.TexturedRectRound(b[1], b[2], b[1] + fw, b[4], bh * 0.2, 1, 1, 1, 1, w * 0.33, 0)
+	else -- (energy's shimmer, its texture drifting as BAR's)
+		local t = now()
+		gl.Texture("LuaUI/Images/paralyzed.png")
+		gl.Color(1, 1, 1, 0.33)
+		for _, k in ipairs({ { -80, 0.5 }, { 70, 0.33 }, { -55, 0.45 } }) do
+			f.TexturedRectRound(b[1], b[2], b[1] + fw, b[4], bh * 0.2, 0, 0, 1, 1, w / k[2], (t / k[1]) % 1)
+		end
+		gl.Texture(false)
+		gl.Color(1, 1, 0, 0.14)
+		f.RectRound(b[1] - add, b[2] - add, b[1] + fw + add, b[4] + add, bh * 0.33)
+	end
+	gl.Texture(false)
+	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+	-- the knobs (energy: conversion first, the share over it, as BAR's)
+	for _, what in ipairs(metal and { "share" } or { "convert", "share" }) do
+		local held = slide and slide.item == item and slide.what == what
+		local kw = bh + 2 * (held and bh / 0.75 or floor(bh / 1.55))
+		f.SliderKnob(floor(b[1] + w * sliderValue(item, what)), floor((b[2] + b[4]) / 2), floor(kw / 2), SP.KNOB[what])
+	end
+	resetGL()
+end
+
+-- a resource panel's bar cell: BAR's dark panel and the words above the bar (in the dock's texture); the bar itself
+-- live (SP.drawResBar: drawn here without the texture)
+local function drawSlider(item, r)
+	panel(r)
+	local h = r[4] - r[2]
+	local b, bh = SP.barArea(r)
+	local y0, y1 = b[4] + bh * 1.4, r[4] - h * 0.04
+	local size = h * 0.22
+	local share = floor(sliderValue(item, "share") * 100 + 0.5) .. "%"
+	if item.res == "metal" then
+		textIn("SHARE METAL TO ALLIES ABOVE  " .. share, r[1], y0, r[3], y1, size, "\255\235\235\235", font)
+	else -- (each value in its knob's colour, over its own half, both one size: the longer had come out smaller,
+		-- sideways, dev phone 2026-11-17)
+		local mid = (r[1] + r[3]) / 2
+		local s1 = "SHARE ENERGY ABOVE  " .. share
+		local s2 = "CONVERT ABOVE  " .. floor(sliderValue(item, "convert") * 100 + 0.5) .. "%"
+		if font then
+			local room = (mid - r[1]) * 0.76 -- (textIn's room)
+			size = min(size, room / max(0.01, font:GetTextWidth(s1)), room / max(0.01, font:GetTextWidth(s2)))
+		end
+		textIn(s1, r[1], y0, mid, y1, size, "\255\255\150\140", font)
+		textIn(s2, mid, y0, r[3], y1, size, "\255\242\242\190", font)
+	end
+	if not SP.inTex then
+		SP.drawResBar(item, r)
+	end
+end
+-- the open resource panel's bars over the dock's texture (drawDock: the fill moves, the texture is made again only when
+-- the dock changes)
+function SP.drawResBars()
+	if rightKind ~= "panel" then
+		return
+	end
+	local hr = homeRect()
+	for i, item in ipairs(rightItems) do
+		local cr = item.kind == "slider" and cellRect("right", i)
+		if cr and cr[2] >= hr[2] - 1 and cr[4] <= hr[4] + 1 then -- (wholly in sight; scrolled part way: the texture's words)
+			SP.drawResBar(item, cr)
+		end
+	end
 end
 
 local function drawButton(item, r, cap)
@@ -4941,7 +5070,8 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		return
 	end
 	local R = gl.R2tHelper
-	if texMode ~= 0 and R and R.RenderInRect and R.BlendTexRect then
+	local inTex = texMode ~= 0 and R and R.RenderInRect and R.BlendTexRect
+	if inTex then
 		local w, h = L.dock[3] - L.dock[1], L.dock[4] - L.dock[2]
 		if dockTex and (texW ~= w or texH ~= h) then
 			gl.DeleteTexture(dockTex)
@@ -4997,6 +5127,9 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		PROF.resMs = (PROF.resMs or 0) + spDiffTimers(spGetTimer(), tRes) * 1000
 	end
 	drawQueueZones()
+	if inTex and dockTex then -- (a resource panel's bar: live over the texture)
+		SP.drawResBars()
+	end
 	if rightKind == "place" then
 		drawPlace()
 	end
@@ -5222,12 +5355,21 @@ function widget:MousePress(x, y, btn)
 	local side = wide and inRect(x, y, homeRect()) and "right" -- (the whole grid: both halves)
 		or SP.overRect and inRect(x, y, SP.overRect) and "over" -- (the orders' overflow under a pick's types)
 		or inRect(x, y, L.left) and "left" or inRect(x, y, L.right) and "right" or nil
-	if side == "right" and rightKind == "panel" then -- a slider: set where pressed, then follows the finger
+	if side == "right" and rightKind == "panel" then -- a resource bar: its nearer knob (energy: share or conversion) set
+		-- where pressed, then follows the finger
 		for i, item in ipairs(rightItems) do
 			local cr = cellRect("right", i)
 			if item.kind == "slider" and cr and inRect(x, y, cr) then
-				slide = { item = item, rect = cr }
-				setSlider(item, cr, x)
+				local what = "share"
+				if item.res == "energy" then
+					local b = SP.barArea(cr)
+					local w = b[3] - b[1]
+					local dc = abs(b[1] + w * sliderValue(item, "convert") - x)
+					local ds = abs(b[1] + w * sliderValue(item, "share") - x)
+					what = dc < ds and "convert" or "share"
+				end
+				slide = { item = item, rect = cr, what = what }
+				setSlider(item, cr, x, what)
 				return true
 			end
 		end
@@ -5246,19 +5388,32 @@ function widget:MousePress(x, y, btn)
 			empty = empty and not inRect(x, y, gr)
 		end
 	end
+	-- (sideways with BUILD | ORDERS: a sideways swipe on the panel changes the tab; Kailil, 2026-11-17, "in horizontal
+	-- landscape mode, allow me to change tabs out of the build tab/orders by swiping right to left". RtsTouch hands a
+	-- sideways drag on the dock over as a mouse drag; before, its release pressed the tile it began on)
+	local swipeOk = L.land and L.tabsOn and not L.split and not L.dgun and (side == "left" or side == "right"
+		or showSel and inRect(x, y, L.sel) or L.tabs and (inRect(x, y, L.tabs.left) or inRect(x, y, L.tabs.right)))
 	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0, empty = empty,
-		panX = x, panY = y, settling = settling }
+		panX = x, panY = y, settling = settling, swipeOk = swipeOk }
 	return true -- (the dock is the dock's: no press goes through to the map under it)
 end
 
 
 function widget:MouseMove(x, y)
 	if slide then
-		setSlider(slide.item, slide.rect, x)
+		setSlider(slide.item, slide.rect, x, slide.what)
 		touched()
 		return
 	end
 	local p = press
+	if p and p.swipeOk and not p.moved and not p.swiping and abs(x - p.x) >= vsx * 0.012
+		and abs(x - p.x) > 1.5 * abs(y - p.y) then
+		p.swiping = true -- (the tab swipe: neither a pan nor the rows' scroll, MouseRelease)
+	end
+	if p and p.swiping then
+		touched()
+		return
+	end
 	if p and p.empty then
 		if not p.moved and abs(x - p.x) + abs(y - p.y) < vsx * 0.012 then
 			return
@@ -5292,7 +5447,7 @@ function widget:MouseRelease(x, _, btn)
 		return true
 	end
 	if slide then
-		setSlider(slide.item, slide.rect, x)
+		setSlider(slide.item, slide.rect, x, slide.what)
 		slide = nil
 		refresh()
 		return true
@@ -5301,6 +5456,15 @@ function widget:MouseRelease(x, _, btn)
 	press = nil
 	if not p then
 		return false
+	end
+	if p.swiping then -- the tab swipe (either way: two tabs), far enough; a shorter one does nothing
+		if abs(x - p.x) >= vsx * 0.035 and L.land and L.tabsOn then
+			L.tab = L.tab == "left" and "right" or "left"
+			Spring.Echo("[bardroid-portrait] swiped to the " .. L.tab .. " tab") -- (tools)
+			layout()
+			refresh()
+		end
+		return true
 	end
 	if p.empty and (p.moved or not p.side) then -- (a pan, or a tap on nothing; a tap on a half with nothing to scroll is
 		-- its button's: those halves were all "empty" for the pan, and their buttons took no taps, 2026-11-10)
