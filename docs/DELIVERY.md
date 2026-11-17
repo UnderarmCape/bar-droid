@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A game's end upright; the Awards' buttons for a finger** (hardening, 2026-11-17 ~15:20, dev phone): a skirmish
+      ended upright (a temporary widget had the commander self-destruct, removed after): "Leaving the game in N s: tap
+      the screen to stay longer", a tap kept it; BAR's Awards over the game, Show Graphs opened the app's Statistics at
+      the screen's height (the dock aside at the game's end), its 12 charts three across. BAR's Awards' Leave and Show
+      Graphs are words pressed in a strip 5 under and 5 over them, about 27 high, some 1.5 mm upright. A phone version
+      of gui_awards.lua (assets phone-widget-gui_awards.lua.patch, two blocks, the phone engine's BarDroidPhoneLuaDir):
+      the strips 22 under and over, the words as BAR draws them. remake-check: every phone patch PASS; dev phone: the
+      launch's "16 patches", a tap 28 pixels under Show Graphs (outside BAR's strip) opened the graphs. No Lua error.
 - [x] **Statistics upright at its larger scale: the Summary table** (hardening, 2026-11-17 ~15:10, dev phone): the
       Tables' Summary upright still fits the panel, its 8 columns whole, the values readable; their headers' first words
       cut shorter by BAR's own fitting at the larger words ("Met.. Prod.", "Ener.. Prod.", "Da.. Dealt", "Acti.. APM"),

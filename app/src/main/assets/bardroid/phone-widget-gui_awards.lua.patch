@@ -1,0 +1,35 @@
+BAR Droid phone version of BAR's Awards (luaui/widgets/gui_awards.lua), the panel at a game's end: its Leave and Show
+Graphs are words, pressed in a strip 5 under and 5 over them, about 27 high in all: upright on a phone about 1.5 mm for
+a finger (dev phone, 2026-11-17, a skirmish ended upright). The press strips 22 under and over the words, the words and
+their places as BAR has them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block
+finds no place, BAR's own file runs.
+
+@@@ find
+			and (y > widgetY + mathFloor((50 - 5) * widgetScale))
+			and (y < widgetY + mathFloor((50 + 17 + 5) * widgetScale))
+		then
+			if chobbyLoaded then
+@@@ with
+			-- BAR Droid (phone): a finger's strip, 22 under and over the words (BAR's 5: about 1.5 mm in all upright)
+			and (y > widgetY + mathFloor((50 - 22) * widgetScale))
+			and (y < widgetY + mathFloor((50 + 17 + 22) * widgetScale))
+		then
+			if chobbyLoaded then
+@@@ end
+
+@@@ find
+			and (
+				y > widgetY + mathFloor((50 - 5) * widgetScale)
+				and (y < widgetY + mathFloor((50 + 17 + 5) * widgetScale))
+			)
+		then
+			-- The team stats panel on its Graphs page, not the engine's end-game box:
+@@@ with
+			and (
+				-- BAR Droid (phone): a finger's strip, as Leave's
+				y > widgetY + mathFloor((50 - 22) * widgetScale)
+				and (y < widgetY + mathFloor((50 + 17 + 22) * widgetScale))
+			)
+		then
+			-- The team stats panel on its Graphs page, not the engine's end-game box:
+@@@ end
