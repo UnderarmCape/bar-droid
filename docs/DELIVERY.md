@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Pregame sideways** (hardening, 2026-11-17 ~04:35, dev phone, a skirmish with a pregame by a dev-env.sh, removed
+      after): the narrow wind box "4-12" whole beside NO WATER and the swap arrow, BUILD | START tabs, START's UNDO LAST,
+      CLEAR QUEUE, the factions, RANDOM and PING one size a row; no Lua errors. UI polish: PING (drawn apart) stood
+      larger than RANDOM beside it upright and CORTEX and RANDOM sideways; it takes its row's size now (b77891b2);
+      dock-phone-test ALL PASS. The Fold7 still off adb.
 - [x] **PING by tap and by hold, the microphone revoked** (hardening, 2026-11-17 ~04:20, dev phone upright, a skirmish):
       PING tapped: "TAP THE MAP TO PING", then a tap on the map placed BAR's marker ("Look here!"), PING back. PING held
       (a spoken label): the ping armed (TAP MAP) and the note "SPEAK TO CHAT: ALLOW THE MICROPHONE ..." though no chat
