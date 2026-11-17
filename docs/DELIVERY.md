@@ -2267,6 +2267,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The lobby after the day's Replays and Plugins changes; the voice chat code read again** (hardening, 2026-11-16
+      ~21:15, dev phone, offline): lobby-phone-test ALL PASS. Its log's only warnings: Chobby's plugin manifest and
+      OpenSkill downloads failed four times in 0.2 s, the dev phone having no network at all ("Network is unreachable"),
+      as LobbyBridge fails them at once since 2026-11-11 (the open item "Playing with no connection" waits on Kailil).
+      VoiceChat.java read through (a recognizer a session, past sessions' callbacks dropped by number, the screen gone
+      and the permission's answer): nothing found; its own open item needs a live microphone. UI polish: the login
+      dialog's Remember password and Login automatically boxes were Chobby's 15 in rows 35 high, a speck beside the
+      words; a popup's checkboxes now take a 24 box (3f0ee478; a tap toggles as before, lobby-phone-test ALL PASS).
 - [x] **The phone tests again after the dock's rect took in the wind and tide boxes** (hardening, 2026-11-16 ~21:00,
       dev phone; 2d60b4e7 changed what WG.BarDroidPortrait.dock() gives every widget): touch-phone-test, pad-test,
       -Dgun and -Share ALL PASS (the share list's screenshots above the boxes); the other readers read through (the
