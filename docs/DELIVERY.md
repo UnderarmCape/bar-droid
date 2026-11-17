@@ -740,11 +740,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [ ] **Replays downloaded on the phone** (found 2026-11-17 ~05:45): the lobby's Replays Download opens BAR's replays
-      website, but a replay the browser downloads lands in the phone's Downloads, where the app never looks (its list is
-      the engine's demos folder in the app's own storage; the import folder takes only pool, packages, rapid, maps and
-      games). A way in: the app offered for .sdfz files (an Open with / share target that copies them into demos), then
-      Refresh lists them. Until then the button's tooltip says so (below).
+- [x] **Replays downloaded on the phone** (found 2026-11-17 ~05:45, built ~06:10): the lobby's Replays Download opens
+      BAR's replays website, but a replay the browser downloads lands in the phone's Downloads, where the app never looked
+      (its list is the engine's demos folder in the app's own storage; the import folder takes only pool, packages, rapid,
+      maps and games). Chobby's Open Folder, hidden on phones since 11-12, is "Add" now: LobbyBridge takes its OpenFile of
+      demos/ to `ReplayImportActivity`, Android's file picker (several at once, opened in Downloads; no storage
+      permission), and each pick that is a BAR replay (.sdfz, its header "spring demofile") is copied into demos/, never
+      over one there; a toast says how many. The lobby widget sees the activity's stamp file and makes the list again as
+      Refresh does. The lobby lists a replay only with its date at the start of its name (the engine's naming): a renamed
+      one gets its game's start from its header in front, in UTC as the lobby reads it. Download's tooltip now points at
+      Add. No "Open with" for .sdfz (it would put the app in every binary file's list). Dev phone sideways, the lobby
+      offline: the 10-minute 1v1 copied to the phone's Downloads as bd-import-test.sdfz, Add, the picker in Download, the
+      file searched and tapped: launcher.log "replay import: 2026-11-17_00-23-57-000_bd-import-test.sdfz (112 KB)", "1
+      replay added", infolog "the list made again after Add", the list with the copy beside the original (2026-11-16
+      19:23, 10 minutes). A first try with the name as it was: copied, never listed (the date rule found then). The
+      picker cancelled: "nothing picked", back in the lobby. lobby-phone-test ALL PASS; the test copies removed.
 - [x] **The pad in BAR's real lobby over a replay; the Replays Download tooltip** (hardening, 2026-11-17 ~05:45, dev
       phone sideways, the lobby offline, the 10-minute 1v1 replay started from its Replays, then the top bar's Lobby):
       the last run's open check. The virtual pad: "pad mouse on (the lobby, or no game running)", its D-pad from control
