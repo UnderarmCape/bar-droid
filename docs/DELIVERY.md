@@ -743,10 +743,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] **A test for BAR's lobby over the game** (hardening, 2026-11-17 ~05:05): touch-phone-test's widget now sends BAR's
       own "LobbyOverlayActive1" / "0" (Spring.SendLuaUIMsg, as BAR's lobby tells the widgets) and checks the night's
       fixes: the app told (bardroid_overlay.txt), the dock aside ("dock none"), a drag and a pinch leaving the camera,
-      and a drag panning again once the lobby is gone (f9228f76). Dev phone sideways and upright: all PASS. Left open:
-      a fold or turn while BAR's lobby is over the game reloads LuaUI, whose widgets start with the lobby taken as gone
-      (BAR sends its message only when the lobby opens or closes), so until it is closed and opened again the dock and
-      the fingers act as without it. Rare; no way seen yet for LuaUI to ask whether the lobby is up.
+      and a drag panning again once the lobby is gone (f9228f76). Dev phone sideways and upright: all PASS. Left open
+      then: a LuaUI reload (a fold or turn) while BAR's lobby is over the game started the widgets with the lobby
+      taken as gone (BAR sends its message only as the lobby opens or closes). Closed the next run (5b7d5616): the
+      touch widget asks at its start (Spring.SendLuaMenuMsg "BarDroidOverlay?", as BAR's own widgets send "showLobby")
+      and the lobby widget answers with Chobby's own "LobbyOverlayActive1" while its lobby is over a loaded game. Dev
+      phone upright, a replay, the lobby over it, LuaUI reloaded by a throwaway test widget (removed): "1" and "dock
+      none" before and after.
 - [x] **The home grid's LAST PINGS | PING pair** (hardening, 2026-11-17 ~04:50, dev phone upright): LAST PINGS shrank
       to fit its half, PING stood larger beside it. PING takes LAST PINGS' size now, unless that breaks over two lines
       (the split dock's half, where PING stays) (d979e6cd). Tried first and dropped: the whole row at the pair's size,
