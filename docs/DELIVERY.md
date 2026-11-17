@@ -740,6 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The phone tests after the day's dock changes, and the unfolded pregame** (hardening, 2026-11-17 ~09:30, dev
+      phone): dock-phone-test (-Shots) and touch-phone-test ALL PASS after the pregame's filled rows and the sideways
+      minimap redraw; their placing and D-gun screenshots look right. A skirmish from the lobby at 1080x1198 (the Fold7
+      unfolded, wm size): the split dock's pregame right block unchanged by the filled rows (its three rows fill it, as
+      before). UI polish: its words were an order button's (0.46 of the order rows' height) in buttons twice as tall,
+      smaller than the same buttons upright or sideways (two rows tall there: 0.6); now 0.6 there too
+      (bardroid_portrait.lua SP.wordsK, for the button, PING and the row sizes): ARMADA, CORTEX, RANDOM and PING larger.
+      That left CLEAR QUEUE smaller than UNDO LAST beside it again: the row-size pass left it out as breaking over two
+      lines (judged at the full size), but at its row's smaller size it fits on one line, shrunk alone. Such a word now
+      sets its row's size too (a second pass): the two even. The tall upright pregame unchanged (UNDO / LAST, CLEAR /
+      QUEUE on two lines, the rows to the grid's foot). Every game's 36 "Failed to load: ... (no GetInfo() call)" lines
+      (tf_noise.lua, blueprints.lua, ...) are BAR's own helper files, the same in each game: left alone. (A test note:
+      an install over a running game put One UI's "app updated" screen on top; taps sent blind then landed on the home
+      screen. Stop the app before installing, and wait for the engine's pid before reading the log.)
 - [x] **A skirmish from the lobby's Skirmish tab, sideways** (hardening, 2026-11-17 ~09:15, dev phone sideways, the
       lobby offline): the wizard fits (the map page's four installed maps in small tiles, Chobby's own), Avalanche 3.4
       loaded into BAR's draft-order pregame with the one-thumb dock (BUILD and START tabs, the minimap, wind, NO

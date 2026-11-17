@@ -2531,6 +2531,12 @@ end
 local function homeRect() -- (sideways: the right half's place, the minimap between the halves; unfolded: the right block)
 	return (L.land or L.split) and L.right or { L.left[1], L.left[2], L.right[3], L.right[4] }
 end
+-- A button's words by the order rows' height (L.btnH): two rows tall, a little larger. The unfolded dock's pregame
+-- buttons too: one row each there, their rows filling the block (half), their words were an order button's in buttons
+-- twice as tall, smaller than the same buttons upright or sideways (dev phone at 1080x1198, 2026-11-17)
+function SP.wordsK(item)
+	return ((item.h or 1) > 1 or L.split and rightKind == "pregame" and item.kind ~= "build") and 0.6 or 0.46
+end
 function SP.homeLive() -- (writeDock's "live" home grid: it comes before homeRect)
 	return homeRect()
 end
@@ -2896,7 +2902,7 @@ local function drawButton(item, r, cap)
 		pingT.drawn = "0" .. (armed and "a" or "")
 		L.pingBtn = r
 		-- (its row's size too, drawHalf: PING stood larger than RANDOM beside it before the start, 2026-11-17)
-		pingT.drawBtn(r, armed, min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46), cap or math.huge))
+		pingT.drawBtn(r, armed, min((r[4] - r[2]) * 0.34, L.btnH * SP.wordsK(item), cap or math.huge))
 		return
 	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
@@ -2948,7 +2954,7 @@ local function drawButton(item, r, cap)
 	end
 	-- (the home grid's tall buttons: their words a little larger than the order buttons', not by their height)
 	local label = armedName or item.label or ""
-	local th = min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
+	local th = min((r[4] - r[2]) * 0.34, L.btnH * SP.wordsK(item))
 	if label == "<" or label == ">" then
 		-- (the spectator's arrows as solid triangles: the font's "<" was a thin small mark in a big button, dev phone
 		-- screenshot 2026-11-12)
@@ -3036,6 +3042,7 @@ local function drawHalf(side)
 	local rowCap = {}
 	local home = rightKind == "home" or rightKind == "pregame"
 	if side ~= "left" and font then
+		local wraps = {} -- (the words left out, as breaking over two lines: key, fit)
 		for i, item in ipairs(items) do
 			-- (PING alone in its place, before the start: as the word "PING")
 			local label = item.kind == "pings" and item.pingOnly and "PING" or item.label
@@ -3043,11 +3050,22 @@ local function drawHalf(side)
 				and cellRect(side, i)
 			if rect then
 				local key = rect[2] .. ":" .. rect[4]
-				local th = min((rect[4] - rect[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
+				local th = min((rect[4] - rect[2]) * 0.34, L.btnH * SP.wordsK(item))
 				local fit = min(th, (rect[3] - rect[1]) * 0.76 / max(0.01, font:GetTextWidth(label)))
 				if item.kind == "order" or fit >= th * 0.7 or not label:find(" ") then
 					rowCap[key] = min(rowCap[key] or fit, fit)
+				else
+					wraps[#wraps + 1] = { key, fit }
 				end
+			end
+		end
+		-- (one that fits on one line at its row's smaller size does not break there, textIn: shrunk alone it stood smaller
+		-- than the row, CLEAR QUEUE beside UNDO LAST on the split dock once their words were larger, 2026-11-17: the row
+		-- at its size)
+		for _, w in ipairs(wraps) do
+			local cap = rowCap[w[1]]
+			if cap and w[2] >= cap * 0.7 then
+				rowCap[w[1]] = min(cap, w[2])
 			end
 		end
 	end
