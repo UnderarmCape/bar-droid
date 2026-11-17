@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Statistics upright at its larger scale: the Summary table** (hardening, 2026-11-17 ~15:10, dev phone): the
+      Tables' Summary upright still fits the panel, its 8 columns whole, the values readable; their headers' first words
+      cut shorter by BAR's own fitting at the larger words ("Met.. Prod.", "Ener.. Prod.", "Da.. Dealt", "Acti.. APM"),
+      each column still told by its second line, and its Columns... hides the ones a player does not want. Left as it
+      is for the larger menu and charts. No Lua error.
 - [x] **Statistics upright: 12 charts three across, its words larger** (hardening, 2026-11-17 ~15:00, dev phone; the
       item below): BAR's require is VFS.Include in the caller's environment, so the copy loads BAR's Graphs page itself
       (metrics.droidGraphsModule: the include's text, its list of grids, PAGES, handed to the copy on the way through
