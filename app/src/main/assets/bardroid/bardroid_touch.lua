@@ -545,7 +545,11 @@ local function readTouch(lines)
 	end
 	for name in lines:gmatch("act (%S+)") do
 		local action = ACTIONS[name]
-		if WG.BarDroidPadSpeed and WG.BarDroidPadSpeed.act(name) then -- luacheck: ignore 542 (the path speed tuner's)
+		-- (BAR's lobby over the game: the gestures on it are the lobby's, which reads them itself; a two-finger swipe there
+		-- picked every unit, armed FIGHT or stopped them behind the lobby, a three-finger one moved the camera. With no
+		-- game the app sends none of them; 2026-11-17)
+		if lobbyOver and name ~= "fingers" then -- luacheck: ignore 542
+		elseif WG.BarDroidPadSpeed and WG.BarDroidPadSpeed.act(name) then -- luacheck: ignore 542 (the path speed tuner's)
 		elseif action then
 			action()
 		elseif WG.BarDroidPad then
