@@ -740,7 +740,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **The launcher's device lines name why the official engine runs** (hardening, 2026-11-17 ~17:00, dev phone):
+- [x] **The launcher's device lines name why the official engine runs** (hardening, 2026-11-17 ~16:40, dev phone;
+      on the Fold7 at 16:42, BAR not running):
       with no phone build for BAR's current engine (ENGINE-DEFAULT stage 4, the Fold7 since BAR's 2026.09.02) the
       launcher said only "engine 2026.09.03", as with the Phone engine switched off: no word on which engine. Now, beside
       "(phone build)" and "(official: the phone build could not run here)": "(official: the phone build waits for an app
