@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The share list read again; its panel darker** (hardening, 2026-11-17 ~07:05, code read, dev phone upright):
+      bardroid_pad.lua's share list and the dock's giving (giveTo): BAR's rules for a gift (a team away, the tax, their
+      room at their share slider), the anonymous numbering kept through deaths, a dead pick's list made again, units BAR
+      kept said: nothing to change. UI polish: its panel was drawn at 0.8 of BAR's panel opacity, 0.64, the most
+      see-through of the pad's panels; with BAR's GUI blur off on phones the commander's name and the metal spots' rings
+      lay between its tabs and rows (pad-test -Share's screenshots). Now at BAR's own opacity as the pad's others, the
+      battle faint behind it. pad-test -Share ALL PASS (its screenshots: the rows clear).
 - [x] **Phone tests after the night's later changes; spectating sideways** (hardening, 2026-11-17 ~06:55, dev phone):
       dock-phone-test ALL PASS upright (after the HIDE fix in bardroid_portrait.lua), fp-save-test passes. BARb against
       BARb spectated sideways (a dev-env.sh, removed after): on a tall phone the dock is down there and BAR's own screen
