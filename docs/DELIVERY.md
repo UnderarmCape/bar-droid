@@ -746,6 +746,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       10x out of sight. The phone patch now keeps them no taller than the room under the minimap (c9272f01): all eleven
       in sight, 20x and 1x tapped and set; upright unchanged; remake-check's phone patches PASS, the patched file
       compiles. (The lobby over the game sideways not tried this run: the same dock and RtsTouch paths as upright.)
+      Tried the next run (~02:55): sideways the top bar's Lobby over the replay brought Chobby's column, Return to
+      Battle first (the overlay "1", "dock none"); a drag on Replays scrolled it, the replay behind still, no arrow;
+      Return to Battle back to the replay ("0"), all eleven speeds in sight. No UI polish that run.
 - [x] **BAR's lobby over a running game: drags** (hardening, 2026-11-17 ~02:20, dev phone upright, a replay): a drag on
       the lobby's Replays list panned the camera behind it and the list stood still. The dock under the lobby still
       gave RtsTouch its rects in camera pad mode ("dock ... pad" with the overlay "1"), and outside it the game's widget
