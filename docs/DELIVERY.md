@@ -740,6 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [ ] **BAR moved to engine 2026.09.02, then 2026.09.03: the Fold7 on the official engine** (hardening, 2026-11-17
+      ~16:40, the Fold7's launcher.log read while it was idle, then the dev phone): BAR's update moved its engine from
+      2026.07.04 to 2026.09.02 (Updater "new engine 2026.09.02 (was 2026.07.04)", about 2026-11-16) and today to
+      2026.09.03, and its game to test-31992-e7a6cff (from test-31958); since then every Fold7 start says "BAR's official
+      engine ... (this app has no phone build of it)" (ENGINE-DEFAULT stage 4, as designed): the app's widgets run as
+      user widgets, its Settings copy parked (BAR's own Settings), the phone patches (BarDroidPhoneLuaDir: the Awards'
+      strips, the top bar's, the player list's...) and the phone engine's own changes off. The build menu's copy was made
+      again on the phone from test-31992 ("the app's copy made again"). The dev phone has no network and still runs
+      2026.07.04 and test-31958, its phone engine on: this day's tests ran there. Checked on the dev phone with the
+      launcher's Phone engine off (BAR's official 2026.07.04, the app's widgets as user widgets): the wind and the
+      tide's nooks (nothing picked, 6 units), Statistics' 3 x 4 upright (its load of BAR's Graphs page works as a user
+      widget), no Lua error; Phone engine back on. Also in the Fold7's log: this morning's game ended "low memory"
+      (10:15:57, Android's kill), an older one with exit 137. Open: the phone engine for 2026.09.03 (stage 4: the branch
+      rebased on the tag, built, the gate, a new APK); the dev phone back on a network for BAR's new release and the gate.
 - [x] **A factory picked upright** (hardening, 2026-11-17 ~16:30, dev phone; a Bot Lab given by a temporary widget,
       removed after): the selection row "Bot Lab" under the wind and the tide's nook, its 8 bots in the grid, its orders
       (Repeat, Fire at will, Hold pos, Low Priority, Factory Guard); three taps on bots queued them (counts 2 and 1 on
