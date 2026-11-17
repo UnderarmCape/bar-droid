@@ -2668,7 +2668,27 @@ local function saveDates(o, depth)
 	end
 end
 
+-- Chobby's Load Game, a save of another engine version: "it will be opened in a new window", and on a phone none opens
+-- (no second engine; LobbyBridge's toast gives the versions). Its popup says so instead (dev phone, 2026-11-17)
+local NEW_WINDOW = "uses a different engine, so it will be opened in a new window"
+local infoPopupWrapped = false
+local function wrapInfoPopup()
+	local C = WG.Chobby
+	if infoPopupWrapped or not (C and C.InformationPopup) then
+		return
+	end
+	infoPopupWrapped = true
+	local orig = C.InformationPopup
+	C.InformationPopup = function(text, ...)
+		if type(text) == "string" and text:find(NEW_WINDOW, 1, true) then
+			text = "The saved game uses a different engine version, which this phone cannot open."
+		end
+		return orig(text, ...)
+	end
+end
+
 function widget:Update() -- (the lobby's Update has no frame time)
+	wrapInfoPopup()
 	local now = Spring.GetTimer()
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
 	lastUpdate = now

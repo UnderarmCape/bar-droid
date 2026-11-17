@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Load Game's "it will be opened in a new window" reworded** (hardening, 2026-11-17 ~11:05, dev phone upright, the
+      lobby offline): Chobby's popup for a save of another engine version still promised a new window above the app's
+      toast saying it cannot open. The lobby widget (bardroid_lobby_touch.lua) now wraps WG.Chobby.InformationPopup
+      for that one message: "The saved game uses a different engine version, which this phone cannot open.", the toast
+      with the versions under it. Tested with a relabelled copy of a save (removed after); lobby-phone-test ALL PASS.
 - [x] **The lobby's "new window" for another engine: said on the screen** (hardening, 2026-11-17 ~11:00, dev phone
       upright, the lobby offline): Chobby asks its launcher for StartNewSpring, a second engine, for a saved game of
       another engine version (gui_loadgame.lua) and for a battle on an engine it does not have (lobby.lua); on the phone
