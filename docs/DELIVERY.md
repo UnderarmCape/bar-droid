@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A skirmish from the lobby's Skirmish tab, sideways** (hardening, 2026-11-17 ~09:15, dev phone sideways, the
+      lobby offline): the wizard fits (the map page's four installed maps in small tiles, Chobby's own), Avalanche 3.4
+      loaded into BAR's draft-order pregame with the one-thumb dock (BUILD and START tabs, the minimap, wind, NO
+      WATER); a map tap picked the spot, BAR's Ready beside it started the game, BAR's fog-of-war diagonal lines over
+      the unseen ground (settled 11-11). No errors or warnings in infolog from the pregame on. Bug: BAR's draft line
+      "Pick a starting location within the green area then click Ready" (gui_pregameui_draft.lua, vsy * 0.23, drawn
+      after every widget) showed through the dock's minimap: the dock is drawn again over that band
+      (DrawScreenPost), but its texture leaves the minimap's place clear, so "...ocation within the green area t" lay
+      across the map. Now the minimap is drawn again over the band too (gl.DrawMiniMap, as drawDock does without the
+      texture): the minimap clean, its start boxes and the camera's outline whole. Left: the line's first words
+      ("Pick a star") on the game left of the dock, BAR's text at the screen's middle (no widget can move it).
 - [x] **A skirmish from the lobby's Skirmish tab, upright** (hardening, 2026-11-17 ~09:00, dev phone upright, the lobby
       offline): Chobby's wizard (game type, difficulty, faction, map: the installed maps; the offline notice "Download
       Failed ... of type map" for its default map) fits the screen; Start loaded Onyx Cauldron in BAR's draft-order

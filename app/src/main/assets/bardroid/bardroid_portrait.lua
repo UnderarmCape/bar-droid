@@ -4804,6 +4804,13 @@ function widget:DrawScreenPost()
 	end
 	gl.Scissor(L.dock[1], y0, L.dock[3] - L.dock[1], y1 - y0)
 	drawDock(true)
+	-- (sideways the texture leaves the minimap's place clear: BAR's line showed through there, "...ocation within the
+	-- green area t" across the map, dev phone 2026-11-17, a skirmish from the lobby; the minimap drawn again over the band,
+	-- as drawDock does without the texture)
+	if L.hole and not L.split and dockTex then
+		gl.DrawMiniMap()
+		resetGL()
+	end
 	gl.Scissor(false)
 end
 
