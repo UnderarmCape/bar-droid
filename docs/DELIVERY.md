@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Replays and Load Game upright; "1 minute"** (hardening, 2026-11-17 ~15:50, dev phone, the lobby
+      offline, never logged in): both as they should be. Seen and left: two of today's replays "time unknown" at the
+      list's top, both 961 bytes, their start script only (games closed by force before the engine wrote any of the
+      stream), and today's later ones not listed (BAR's lobby hides games under a minute: the game's-end tests, ~15 s).
+      Fixed: Chobby writes a row's length "N minutes" and "N hour" (gui_replay_handler.lua), "1 minutes" in the list,
+      and over an hour "2 hour 5 minutes"; the app's lobby widget corrects the row's words as it walks the Replays rows
+      (upright.replayTeams, both ways up): "1 minute", "N hours". Dev phone: the 1-minute rows "1 minute", "6 minutes"
+      as it was (no replay over an hour on the phone: that wording untried there); lobby-phone-test ALL PASS.
 - [x] **The app's logs read; the Display screens; the Awards change for BAR** (hardening, 2026-11-17 ~15:40, dev phone):
       launcher.log and the one before: no layer miss, no phone patch miss, no error of the app's; the bridge's failures
       all the dev phone's lack of a network (maps, skill data, the widget manifest: at once, "no network on the phone"),

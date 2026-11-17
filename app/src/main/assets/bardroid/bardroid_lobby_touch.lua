@@ -1395,6 +1395,15 @@ function upright.replayTeams(panel)
 			local c = real(ch)
 			if c and c.greedyHitTest and type(c.tooltip) == "string" and c.tooltip:sub(1, #prefix) == prefix then
 				lists[#lists + 1] = c
+			elseif c and c.classname == "textbox" and type(c.text) == "string" and c.text:find(" minutes$") then
+				-- (a row's length: Chobby writes "N minutes" and "N hour", "1 minutes" and "2 hour 5 minutes" in the list,
+				-- dev phone 2026-11-17)
+				local text = c.text:gsub("^(%d+) hour ", function(h)
+					return h .. (h == "1" and " hour " or " hours ")
+				end):gsub("%f[%d]1 minutes$", "1 minute")
+				if text ~= c.text then
+					c:SetText(text)
+				end
 			elseif c then
 				walk(c, depth + 1)
 			end
