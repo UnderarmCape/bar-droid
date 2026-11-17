@@ -2687,8 +2687,27 @@ local function wrapInfoPopup()
 	end
 end
 
+-- Chili's drop-down lists stop at 200 high (maxDropDownHeight): upright, the Scenarios' list of 24 showed five and a
+-- half titles on a screen 2000 tall (dev phone, 2026-11-17). Upright, up to 45 % of the screen; its own size otherwise.
+local comboWrapped = false
+local function wrapComboBox()
+	local CB = Chili and Chili.ComboBox
+	if comboWrapped or not (CB and CB.MouseDown) then
+		return
+	end
+	comboWrapped = true
+	local orig = CB.MouseDown
+	CB.MouseDown = function(self, ...)
+		self.droidMaxH = self.droidMaxH or self.maxDropDownHeight
+		local tall = upright.on and not upright.side and screen0 and screen0.height
+		self.maxDropDownHeight = tall and math.max(self.droidMaxH, math.floor(tall * 0.45)) or self.droidMaxH
+		return orig(self, ...)
+	end
+end
+
 function widget:Update() -- (the lobby's Update has no frame time)
 	wrapInfoPopup()
+	wrapComboBox()
 	local now = Spring.GetTimer()
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
 	lastUpdate = now

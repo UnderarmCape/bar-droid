@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A scenario from the lobby upright; the drop-down lists** (hardening, 2026-11-17 ~11:15, dev phone upright, the
+      lobby offline): Scenarios lists 24; the list's order is not the files' (Steal Cortex's Tech! is scenario005.lua,
+      map BarR, not on the phone: "You do not have the map", the lobby's own). Tick Tock (SpeedMetal) started: the
+      mission info copy (since the morning's "return false" outside scenarios) over the game at the screen's width, above
+      the dock, the game paused under it as BAR has it; the dock up, the commander picked. Seen and left: for about 3 s
+      while the AIs load (from the app's game widget starting to "finished loading") BAR's own load screen shows, its
+      bar and its memory note running off the upright screen, the app's overlay gone (the 11-08 choice: it hides once
+      the game widget runs, BAR's faction picker coming then). UI polish: Chili's drop-down lists stop at 200 high
+      (combobox.lua maxDropDownHeight): the scenario list showed five and a half of 24 titles on a screen 2000 tall.
+      Upright the lobby widget raises it to 45 % of the screen before a list opens (ComboBox.MouseDown wrapped; its own
+      size sideways): 19 titles at once.
 - [x] **Load Game's "it will be opened in a new window" reworded** (hardening, 2026-11-17 ~11:05, dev phone upright, the
       lobby offline): Chobby's popup for a save of another engine version still promised a new window above the app's
       toast saying it cannot open. The lobby widget (bardroid_lobby_touch.lua) now wraps WG.Chobby.InformationPopup
