@@ -3369,14 +3369,18 @@ function SP.drawWindTide()
 		local small = min(hh * 0.42, bw * 0.16)
 		if i == 1 then
 			if (Game.windMax or 0) > 0 then
-				local wind = string.format("%.1f", select(4, Spring.GetWind()) or 0)
 				local range = floor(Game.windMin or 0) .. "-" .. floor(Game.windMax or 0)
+				-- (before the game starts there is no wind yet: its range alone, as BAR's top bar shows only its minimum and
+				-- maximum then; "0.0" read as a windless map while the start was picked, dev phone pregame 2026-11-16)
+				local started = Spring.GetGameFrame() > 0
+				local wind = started and string.format("%.1f", select(4, Spring.GetWind()) or 0) or range
+				local extra = started and range or nil
 				local room = box[3] - 3 - px
 				s = min(s, s * room / indicatorWidth(wind, s)) -- (narrow, in HOME's place: smaller, the range left out)
-				local fits = px + indicatorWidth(wind, s, range) <= box[3] - 3
+				local fits = extra and px + indicatorWidth(wind, s, extra) <= box[3] - 3
 				-- (in the middle of its box, as NO WATER beside it: at the left the wide box upright was mostly empty)
-				px = max(px, floor((box[1] + box[3] - indicatorWidth(wind, s, fits and range or nil)) / 2))
-				drawIndicator(BLADES, windTurn, px, box[2] + hh / 2, s, wind, fits and range or nil)
+				px = max(px, floor((box[1] + box[3] - indicatorWidth(wind, s, fits and extra or nil)) / 2))
+				drawIndicator(BLADES, windTurn, px, box[2] + hh / 2, s, wind, fits and extra or nil)
 			else
 				textIn("NO WIND", box[1], box[2], box[3], box[4], small, "\255\150\150\150", font)
 			end
