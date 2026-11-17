@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby offline; touch-phone-test after the pad's change** (hardening, 2026-11-17 ~06:30, dev phone): the
+      bridge's "no connection (no network on the phone)" for the lobby's resource downloads is right: the dev phone has
+      no network now (dumpsys connectivity "Active default network: none", its Wi-Fi without a connection; left as it
+      is). Offline the lobby's Downloads lists BAR's two optional resources (plugin_manifest, open-skill-snapshot) as
+      Failed with Retry, both ways up; Chobby's DownloadFinished carries no reason to show, left as BAR shows it.
+      touch-phone-test ALL PASS after the pad's lobby-over-the-game change in RtsTouch. The app's notification while a
+      skirmish runs reads "Skirmish running / Tap to return to the game; Stop ends it". No UI polish this run (the
+      Downloads tab and the notification read right). The Fold7 still off adb.
 - [x] **Replays' Add upright; Load Game's dates** (hardening, 2026-11-17 ~06:20, dev phone upright, the lobby offline):
       the Replays header holds More, Download, Add and Refresh beside its title; Add opened the picker upright, Back once
       went up from Download to the phone's storage, again back to the lobby ("nothing picked"). ReplayImportActivity read
