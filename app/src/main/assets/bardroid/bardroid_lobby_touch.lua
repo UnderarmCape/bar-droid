@@ -2452,9 +2452,9 @@ local function appUpdate()
 					voiceNoteAt = nil
 					voiceShow()
 				end
-			elseif name == "voice_nomic" then
+			elseif name == "voice_nomic" or name == "voice_nonet" then -- (no network: the recognizer needed one)
 				if not gameLoaded then
-					voiceShow(VOICE_NOMIC)
+					voiceShow(name == "voice_nomic" and VOICE_NOMIC or "NOTHING SENT: SPEECH NEEDS A CONNECTION")
 					voiceNoteAt = Spring.GetTimer()
 				end
 			elseif name == "voice_off" then

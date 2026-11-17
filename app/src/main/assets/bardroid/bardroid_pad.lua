@@ -60,6 +60,8 @@ local VOICE_SECONDS = 15 -- the listening note's longest stay (the app ends it: 
 -- (voice_nomic; the lobby's the same. Not "SPEAK TO CHAT: ...": a ping's spoken label asks for the microphone too, PING
 -- held, and the note spoke of chat; dev phone 2026-11-17)
 local VOICE_NOMIC_NOTE = "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS"
+-- (voice_nonet: the phone's recognizer needed the network, none or its server not answering; the lobby's the same)
+local VOICE_NONET_NOTE = "NOTHING SENT: SPEECH NEEDS A CONNECTION"
 local voiceToast = false -- the note showing is the listening one
 local VOICE_PING_SECONDS = 30 -- the ping's place kept this long for the words
 local voicePingAt = nil -- where the spoken ping goes: { x, y, z, at }
@@ -2174,6 +2176,9 @@ local ACTIONS = {
 	end,
 	voice_nomic = function() -- (the microphone not allowed; after two "Don't allow" Android no longer asks)
 		note(VOICE_NOMIC_NOTE, nil, 4)
+	end,
+	voice_nonet = function() -- (said and lost: the recognizer needed a connection)
+		note(VOICE_NONET_NOTE, nil, 4)
 	end,
 	share_confirm = shareConfirm, -- A on the list
 	share_cancel = function() -- B on it

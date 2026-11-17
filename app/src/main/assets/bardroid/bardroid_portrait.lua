@@ -1535,7 +1535,7 @@ function pingT.act(name)
 		pingT.voice, pingT.label, pingT.armedAt = { at = t }, nil, t
 	elseif name == "voice_on" and c then
 		c.on = true
-	elseif name == "voice_off" or name == "voice_none" or name == "voice_nomic" then
+	elseif name == "voice_off" or name == "voice_none" or name == "voice_nomic" or name == "voice_nonet" then
 		if c and not c.endAt then
 			c.endAt = t
 		end

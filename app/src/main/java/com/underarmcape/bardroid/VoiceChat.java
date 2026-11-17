@@ -26,6 +26,7 @@ final class VoiceChat {
         void heard(String text, boolean ping);      // what was said: to chat, or a ping's label
         void unavailable();                         // the phone has no recognition service
         void denied();                              // the microphone is not allowed: a note says where to allow it
+        void offline();                             // the recognition needed a connection: a note says nothing went
     }
 
     private final Activity activity;
@@ -195,6 +196,10 @@ final class VoiceChat {
             endRecognizer();   // (busy, error 8, too: the next session's recognizer is a new one)
             done();
             if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) sink.denied();
+            // (a recognizer that needs the network, with none or a server not answering: what was said is lost, and the
+            // note only went away, as for silence; review 2026-11-17, the dev phone without a connection)
+            else if (error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT || error == SpeechRecognizer.ERROR_NETWORK
+                    || error == SpeechRecognizer.ERROR_SERVER) sink.offline();
         }
 
         @Override public void onResults(Bundle results) {
