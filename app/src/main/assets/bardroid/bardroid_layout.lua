@@ -191,11 +191,13 @@ local function rectOf(id)
 	end
 end
 
--- the screen's height above the touch dock, where the editor's buttons go (0 without it)
+-- the screen's height above the touch dock where it runs across the whole width (upright, unfolded), where the
+-- editor's buttons go; 0 without it or beside the sideways dock for one thumb (the screen's middle is clear of it there,
+-- and the room above it ran into the Chat panel)
 local function dockTop()
 	local P = WG.BarDroidPortrait
 	local d = P and P.dock and P.dock()
-	return d and d[4] < vsy * 0.9 and d[4] or 0
+	return d and d[3] - d[1] >= vsx * 0.9 and d[4] < vsy * 0.9 and d[4] or 0
 end
 
 local function editable(p)
