@@ -2267,6 +2267,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **Pregame upright with the wind and tide boxes** (hardening, 2026-11-16 ~21:45, dev phone, a launcher skirmish
+      with StartPosType 2 by a dev-env.sh for the run, removed after): the dock's pregame grid (UNDO LAST, CLEAR QUEUE,
+      the factions, RANDOM, PING), BAR's victory line clear of it, a tap picks the start and BAR's Ready comes up in the
+      game above. The wind box read "0.0 4-12" all through the pregame (Spring has no wind before the first frame): a
+      windless map at a glance while choosing where to start. BAR's top bar shows only the minimum and maximum until
+      gameFrame > 0; the box now does too (01bf9b3d): "4-12" before Ready, "10.6 4-12" after the start; no Lua errors,
+      dock-phone-test ALL PASS. That is this run's UI polish as well.
 - [x] **The windows that keep out of the dock, after its rect took in the wind and tide boxes** (hardening, 2026-11-16
       ~21:35, dev phone upright, a skirmish): Statistics between BAR's top bar and the boxes, opaque; Settings (the app's
       copy) the screen's height with the dock stepped aside, its Interface tab; a tap on an option's words selects it
