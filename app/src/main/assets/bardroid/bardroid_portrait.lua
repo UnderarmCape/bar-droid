@@ -661,8 +661,9 @@ local function writeDock(force)
 				and ("live " .. r(L.sel) .. "\n") or "")
 			-- (and the home grid, nothing picked: Kailil, 2026-11-12, "make rhe commander button. All units and local
 			-- units buttins not need the ui one tap engage. Allow me to be able to directly click them"; sideways in the
-			-- panel, which is always open now)
-			.. (rightKind == "home" and leftKind ~= "spec" and not SP.hidden and (not L.thumb or L.panelOn)
+			-- panel, which is always open now. Spectating its grid too, PLAYER CAM, TEAMS, FOLLOW UNIT...: Kailil,
+			-- 2026-11-17, "Yes, first tap"; a drag starting on it no longer pans, the game above it does)
+			.. (rightKind == "home" and not SP.hidden and (not L.thumb or L.panelOn)
 				and ("live " .. r(SP.homeLive()) .. "\n") or "")
 			-- (and the groups row: the unit groups and the idle builders, the same "directly click them")
 			.. (showGroups and not SP.hidden and L.groups and L.groups[3] > L.groups[1]
