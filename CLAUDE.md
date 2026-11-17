@@ -166,7 +166,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   buttons: BarApp keeps Termux:X11's notification away); 0015 Termux:X11's build files in the syntax Gradle 10 keeps
   (`propName = value`; its two git calls through `providers.exec` from the root, so the version line still names
   BAR Droid's commit); 0017 "Android's volume control" for upstream's lowercase "android ..." in the volume and media
-  keys' "no action (...)" (the app's own strings.xml overrides the rest of that screen's words). docs/CONTAINER-COST.md has
+  keys' "no action (...)" (the app's own strings.xml overrides the rest of that screen's words); 0018 hides Output's
+"Screen orientation", which the launcher's Play upright writes at every start (`KeyboardShortcuts.applyTermuxPrefs`). docs/CONTAINER-COST.md has
   what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
   with all of them).
 - The app icon opens the lobby (`StartActivity`, setting "Open the lobby when the app starts"; the launcher is a task of

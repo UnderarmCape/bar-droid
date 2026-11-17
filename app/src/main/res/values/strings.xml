@@ -7,6 +7,9 @@
     <!-- and its "Version", which is Termux:X11's (1.03.01, built ... from BAR Droid <commit>: patch 0012), not the
          app's: said whose it is -->
     <string name="lorie_pref_version">Display server (Termux:X11) version</string>
+    <!-- Output's summary (patch 0010's) without "orientation": its Screen orientation entry is hidden (patch 0018), the
+         launcher's Play upright and Turn with the phone set it at every start (KeyboardShortcuts.applyTermuxPrefs) -->
+    <string name="lorie_pref_output_summary">Resolution, display scale, filtering, screen timeout</string>
     <!-- Output's Fullscreen, upstream "Toggle immersive mode in your device display": said what it does -->
     <!-- Pointer's "Ignore gamepad input events", upstream "Prevent gamepad and joystick events from being forwarded to X
          server": the app's ControllerBridge takes the sticks and every button it maps first (GameActivity), so the switch

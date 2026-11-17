@@ -1,0 +1,12 @@
+diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
+--- a/lorie/src/main/res/xml/preferences.xml
++++ b/lorie/src/main/res/xml/preferences.xml
+@@ -20,7 +20,7 @@
+         <SwitchPreferenceCompat app:key="Reseed" app:defaultValue="false" />
+         <SwitchPreferenceCompat app:key="PIP" app:defaultValue="false" />
+         <SwitchPreferenceCompat app:key="fullscreen" app:defaultValue="false" />
+-        <ListPreference app:key="forceOrientation" app:defaultValue="auto" app:entries="@array/forceOrientationVariants" app:entryValues="@array/forceOrientationVariants" />
++        <ListPreference app:isPreferenceVisible="false" app:key="forceOrientation" app:defaultValue="auto" app:entries="@array/forceOrientationVariants" app:entryValues="@array/forceOrientationVariants" />
+         <SwitchPreferenceCompat app:key="hideCutout" app:defaultValue="false" />
+         <ListPreference app:key="screenIdleTimeout" app:defaultValue="system" app:entries="@array/screenIdleTimeoutEntries" app:entryValues="@array/screenIdleTimeoutValues" />
+     </PreferenceScreen>

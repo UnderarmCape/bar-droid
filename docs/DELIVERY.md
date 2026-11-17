@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The launcher's settings and Display screens; Output's dead "Screen orientation"** (hardening, 2026-11-17
+      ~10:15, dev phone upright): the launcher's pages (Game, Graphics, Advanced, the log) and Display & touch
+      preferences read right. Output listed Termux:X11's "Screen orientation: landscape", which the launcher's Play
+      upright writes back at every start (KeyboardShortcuts.applyTermuxPrefs), so a choice made there was undone at the
+      next game, and Turn with the phone decides over both. Hidden now as the other inert entries (patch 0018,
+      isPreferenceVisible false, as 0013), and Output's summary no longer names orientation (the app's strings.xml
+      overrides 0010's). Checked on the phone: the entry gone, the summary "Resolution, display scale, filtering, screen
+      timeout".
 - [x] **A skirmish sideways by touch: the one-thumb dock's pages** (hardening, 2026-11-17 ~10:10, dev phone sideways,
       Play vs AI): the commander picked at the start (BUILD: the selection row and 14 buildings), ORDERS (Fight,
       PRESETS, Patrol, D-Gun, the states), a building picked (the PLACE page: ONE / LINE / GRID / BORDER, PLACE dim
