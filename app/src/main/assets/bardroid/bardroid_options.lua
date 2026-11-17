@@ -1422,9 +1422,10 @@ end
 function DrawWindow()
 	glTexture(false)
 	local w, a = layout.window, layout.area
-	-- BAR Droid: nearly opaque: without the GUI shader's blur (off on phones) the map, the chat and BAR's panels under it
-	-- showed through its rows (dev phone, upright, 2026-11-13)
-	UiElement(w[1], w[2], w[3], w[4], 1, 1, 1, 1, 1, 1, 1, 1, math.max(0.94, WG.FlowUI.clampedOpacity or 0))
+	-- BAR Droid: opaque: without the GUI shader's blur (off on phones) the map, the chat and BAR's panels under it showed
+	-- through its rows (dev phone, upright, 2026-11-13); at 0.94 BAR's clock and fps line still read through the
+	-- description strip at the foot (dev phone screenshot, 2026-11-17)
+	UiElement(w[1], w[2], w[3], w[4], 1, 1, 1, 1, 1, 1, 1, 1, 1)
 	RectRound(
 		layout.listX1,
 		a[2],

@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Four minutes upright; Settings opaque** (hardening, 2026-11-17 ~14:30, dev phone): an upright skirmish left to
+      run 4 minutes: 29.7-30.0 fps each minute, no Lua error, memory steady (837-913 MB available, the engine 1.6-1.9
+      GB), thermal 0. The app's Settings upright (bardroid_options.lua): the space at its foot is BAR's description
+      strip (blank until a row is touched; a tap on "Water quality" filled it), but at 0.94 opacity BAR's clock and fps
+      line, out while the dock steps aside, read through that strip. The window is opaque now (tools/make-options.py,
+      the copy and its patches made again with --adb; remake-check: all five copies and the phone patches PASS). Dev
+      phone: the strip clean under the touched row's name; Settings closed by its X, no error. BAR's music line at the
+      screen's foot stays (outside the window).
 - [x] **Pace, the pad online, sideways screens** (hardening, 2026-11-17 ~14:20, dev phone): pace-test ALL PASS (the cap
       on the vsync grid, a stall fading, a stale vsync), pad-test -Online ALL PASS (BAR's game, user widgets' orders
       forbidden). Sideways screenshots: 6 units picked (the selection row, the wind and the tide's upright pill in HOME's
