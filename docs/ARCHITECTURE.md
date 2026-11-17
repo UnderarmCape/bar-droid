@@ -68,7 +68,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   config), re-applies the layer and rolls back a set that fails on its first start. Content only ever comes from BAR's
   CDN (`pr-downloader`).
 - **Lobby.** BAR's own Chobby lobby. `LobbyBridge` stands in for the PC launcher behind it (web links, downloads,
-  replay info); `bardroid_lobby_touch.lua` makes it finger-friendly.
+  replay info); `bardroid_lobby_touch.lua` makes it finger-friendly. Besides its own grid and column it walks some of
+  Chobby's screens every half second and resizes their controls in place, Chobby's values kept in weak tables to put
+  back: `upright.settingsRows` (Settings' rows 1.5 times apart, taller controls and list choices, both ways up),
+  `upright.widenInputs` (a popup's text boxes to its width, its checkboxes' boxes larger), `upright.replayTeams`
+  (Replays' team columns fitted upright) and `upright.pluginButtons` (Plugins' buttons and arrows).
 - **Map storage.** `MapStore` keeps the downloaded maps under the launcher's limit (3 GB by default): `GameService`
   records each map's last use from the engine's checksum line for its archive as a game loads (`/data` is mounted
   noatime) and, before an engine starts, deletes the maps played longest ago until the rest fit.
@@ -96,7 +100,8 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   auto-rotate is on, watched mid-game, and the widgets follow the screen's shape as they do a fold; for a game started
   from the lobby after a turn, `LoadPictures` swaps BAR's upright load pictures and the lobby widget sets BAR's loading
   tip in memory, as launch-bar.sh does at an engine start), `bardroid_layout.lua` (the layout editor: panels
-  register with `WG.BarDroidLayout` and read their settings from it), `bardroid_buildmenu.lua` (BAR's Build menu
+  register with `WG.BarDroidLayout` and read their settings from it; a panel the touch dock covers whole is left out,
+  `WG.BarDroidPortrait.onDock`, and its buttons sit above a dock that runs across the width), `bardroid_buildmenu.lua` (BAR's Build menu
   copied by `tools/make-buildmenu.py`: a sizeable 3x3 grid, up to 5 wide on a wide short screen, the touch building's shape strip and PLACE button, the
   gamepad's focus), `bardroid_pad.lua` (the gamepad in BAR's game: the order menu on the pad, groups, idle units, area
   select, LB orders, the touch QUEUE button), `bardroid_padspeed.lua` (the pad's drawing speed by zoom, and its tuner),

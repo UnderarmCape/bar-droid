@@ -78,7 +78,8 @@ double tap places one there and sends it at once). Hold your finger still on it 
 waiting building) and "GRID" pops up with a buzz: the drag now draws a grid of them from it; PLACE or a double tap
 sends the grid. Two fingers still pan and zoom.
 
-**The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline. Tap one, drag
+**The layout editor** (three fingers held, or type `/hud` in the chat): every panel shows its outline (none for a
+panel the touch dock covers whole; with the dock across the bottom its buttons sit in the game above it). Tap one, drag
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
 build menu is the app's copy of BAR's own Build menu, a 3x3 grid (9 build options a page, the page arrows in a strip
@@ -118,9 +119,9 @@ or a picker are open, the menu stays open: tap the map for the spot (or drag it 
 fine placing; hold still for a GRID), ROTATE turns it a quarter, then PLACE (a spot BAR refuses says so). A drag on the
 game pans, units picked or not; hold, then drag to draw the picked units' path (with MOVE, FIGHT or PATROL pressed a
 drag draws it at once).
-Over metal and energy two boxes show the wind (its speed, the map's range) and the tide; tap one for BAR's own
-details: the average, lowest and highest wind, how much of the time it is under 6, the solar advice and the last
-five minutes as a graph (any tap closes them).
+Over metal and energy two boxes show the wind (its speed, the map's range; before the game starts the range alone, as
+BAR's top bar) and the tide; tap one for BAR's own details: the average, lowest and highest wind, how much of the time
+it is under 6, the solar advice and the last five minutes as a graph (any tap closes them).
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
 which folds the dock to a SHOW button at the bottom.
@@ -152,7 +153,10 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 - The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
   Sideways: all its buttons (Keys, Website and Login too) in one column of large buttons on the left, a swipe up or
   down for the next page; the screens beside it take the whole height. The same in a game's Lobby (the top bar's
-  Lobby button), Return to Battle first and Leave Battle with the buttons.
+  Lobby button), Return to Battle first and Leave Battle with the buttons. Both ways up the lobby's Settings rows
+  stand further apart with taller sliders, lists and checkboxes (their choices taller too), the login dialog's
+  checkboxes are larger, and upright Replays fits each team's names to its column and Plugins' buttons are finger
+  sized.
 
 ## Gamepad, mouse and keyboard
 
