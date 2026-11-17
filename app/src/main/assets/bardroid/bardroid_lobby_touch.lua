@@ -1373,19 +1373,18 @@ function upright.linkRows()
 	end
 end
 
--- Chobby's Downloads (gui_download_window.lua): a SortableList of rows 40 high, 43 apart, their Retry, Cancel and To
--- Front buttons 34 high (y 3, bottom 3) and the name and status 20 high from y 12; sideways about 1.8 mm a button
--- (dev phone, the failed downloads of a phone with no network, 2026-11-17). Each row SETTINGS_ROW times as tall and far
--- apart, its buttons and progress bar with it (held to its top and bottom), its words moved down by half the growth.
--- The list puts its rows back when one is added (SortableList:RecalculatePosition), not on a progress update: asked
--- every half second, rows moved only where they are not in place. A list longer than the panel scrolls further.
-function upright.downloadRows()
+-- A SortableList's rows for a finger (Downloads, Load Game): the list under the label captioned `caption` in the open
+-- tab, each row SETTINGS_ROW times as tall and as far apart; place(c, s, grow, rowH, baseH) puts each control of a row
+-- (s: its place as Chobby made it). The list puts its rows back when one is added or removed
+-- (SortableList:RecalculatePosition): asked every half second, rows moved only where they are not in place. A list
+-- longer than the panel scrolls further. tag names it in the log.
+function upright.spaceListRows(caption, tag, place)
 	local mark
 	local function find(o, depth)
 		if mark or not o or depth > 14 or o.disposed or o.visible == false then
 			return
 		end
-		if o.classname == "label" and o.caption == "Downloads" then
+		if o.classname == "label" and o.caption == caption then
 			mark = o
 			return
 		end
@@ -1417,8 +1416,8 @@ function upright.downloadRows()
 	if not list then
 		return
 	end
-	upright.dlSaved = upright.dlSaved or setmetatable({}, { __mode = "k" })
-	local saved, rows = upright.dlSaved, {}
+	upright.rowsSaved = upright.rowsSaved or setmetatable({}, { __mode = "k" })
+	local saved, rows = upright.rowsSaved, {}
 	for _, ch in ipairs(list.children or {}) do
 		local r = real(ch)
 		if r and type(r.y) == "number" and type(r.height) == "number" then
@@ -1432,7 +1431,7 @@ function upright.downloadRows()
 		return a.y < b.y
 	end)
 	local base = saved[list]
-	if not base then -- (Chobby's spacing: SortableList's 40 high, 3 between, from its first row)
+	if not base then -- (Chobby's spacing: the SortableList's row height, 3 between, from its first row)
 		base = { step = #rows > 1 and rows[2].y - rows[1].y or rows[1].height + 3, h = rows[1].height, top = rows[1].y }
 		saved[list] = base
 	end
@@ -1445,22 +1444,62 @@ function upright.downloadRows()
 			r:SetPos(nil, y, nil, h)
 			moved = moved + 1
 		end
-		for _, ch in ipairs(r.children or {}) do -- (the name and status: down by half the growth)
+		for _, ch in ipairs(r.children or {}) do
 			local c = real(ch)
-			if c and c.classname == "textbox" then
+			if c then
 				if not saved[c] then
-					saved[c] = { y = c.y }
+					saved[c] = { y = c.y, h = c.height }
 				end
-				local ty = saved[c].y + math.floor(grow / 2)
-				if c.y ~= ty then
-					c:SetPos(nil, ty)
-				end
+				place(c, saved[c], grow, h, base.h)
 			end
 		end
 	end
 	if moved > 0 then
-		Spring.Echo(string.format("[bardroid-lobby] Downloads: %d rows spaced %.2f times for a finger", moved, f)) -- (tools)
+		Spring.Echo(string.format("[bardroid-lobby] %s: %d rows spaced %.2f times for a finger", tag, moved, f)) -- (tools)
 	end
+end
+-- a row's control down by half the row's growth (its middle stays the row's)
+function upright.rowMiddle(c, s, grow)
+	local ty = s.y + math.floor(grow / 2)
+	if c.y ~= ty then
+		c:SetPos(nil, ty)
+	end
+end
+
+-- Chobby's Downloads (gui_download_window.lua): a SortableList of rows 40 high, 43 apart, their Retry, Cancel and To
+-- Front buttons 34 high (y 3, bottom 3) and the name and status 20 high from y 12; sideways about 1.8 mm a button
+-- (dev phone, the failed downloads of a phone with no network, 2026-11-17). Its buttons and progress bar grow with the
+-- row (held to its top and bottom), its words go to the row's middle.
+function upright.downloadRows()
+	upright.spaceListRows("Downloads", "Downloads", function(c, s, grow)
+		if c.classname == "textbox" then
+			upright.rowMiddle(c, s, grow)
+		end
+	end)
+end
+
+-- Chobby's Load Game (gui_loadgame.lua): rows 80 high, Load (y 3) above Delete (bottom 4) at the row's end, each 65 x 35
+-- with 3 pixels between them (dev phone sideways, 2026-11-17; Delete asks first, Load does not). Each row 1.5 times
+-- as tall: Load and Delete as much taller at its top and bottom, now well apart; the map's picture and the words in the
+-- row's middle.
+function upright.saveRows()
+	local caption = "Load saved game"
+	if type(i18n) == "function" then -- (Chobby's words in the lobby's language)
+		local ok, words = pcall(i18n, "load_saved_game")
+		caption = ok and type(words) == "string" and words or caption
+	end
+	local f = upright.SETTINGS_ROW
+	upright.spaceListRows(caption, "Load Game", function(c, s, grow, rowH, baseH)
+		if c.classname == "textbox" or c.name == "minimap" then
+			upright.rowMiddle(c, s, grow)
+		elseif (c.classname == "action_button" or c.classname == "negative_button") and s.h then
+			local h = math.floor(s.h * f)
+			local y = s.y < baseH / 2 and s.y or rowH - (baseH - s.y - s.h) - h -- (at the top, or at the bottom as before)
+			if c.y ~= y or c.height ~= h then
+				c:SetPos(nil, y, nil, h)
+			end
+		end
+	end)
 end
 
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
@@ -2045,6 +2084,7 @@ local function uprightUpdate(now)
 		upright.settingsRows(true) -- (both ways up: sideways its rows were the densest, about 2 mm)
 		upright.linkRows() -- (both ways up, as far as the panel has room)
 		upright.downloadRows() -- (both ways up)
+		upright.saveRows() -- (both ways up)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)

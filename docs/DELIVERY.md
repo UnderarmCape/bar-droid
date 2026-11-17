@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Load Game: Load and Delete apart, for a finger** (hardening UI polish, 2026-11-17 ~18:50, dev
+      phone, the lobby offline): Chobby's Load Game (gui_loadgame.lua) rows are 80 high, Load (y 3) right above Delete
+      (bottom 4) at the row's end, each 65 x 35 with 3 pixels between them (Delete asks first; Load does not). Each row
+      is now 1.5 times as tall, Load and Delete as much taller at its top and bottom (sideways ~16 pixels apart, upright
+      ~20), the map's picture and the words in the row's middle. The Downloads spacing and this one now share
+      `upright.spaceListRows` (the list under a captioned label, each control placed by a callback; Load Game's caption
+      through Chobby's i18n). Dev phone sideways and upright: both saves' rows spaced; Delete tapped: its "Are you sure"
+      came up, Cancel, both saves still there; Downloads still spaced; lobby-phone-test all pass. The run's other checks:
+      touch-phone-test and fp-save-test all pass.
 - [x] **Speak to chat: a second start while Android's microphone question is open** (hardening, review of VoiceChat,
       2026-11-17 ~18:35): a start while the question is open (a start already on its way, the pad's chord) asked
       Android again; an Activity takes one permission request at a time and answers a second at once with an empty
