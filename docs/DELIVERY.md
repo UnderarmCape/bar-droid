@@ -746,7 +746,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       "dock none") over Chobby's Skirmish page, Return to Battle brought it back ("0", "dock ... pad"), the commander
       still picked, and a build tile's first tap queued its building (the queue's remove buttons up). BAR paused the
       game while its lobby was up and resumed it after. Nothing to fix; no UI polish this run. (The quick skirmish's
-      Select Difficulty page shows no picture beside the levels upright, the others do; Chobby's, not looked into.)
+      Select Difficulty page showed no picture or rank icons 3 s after it opened; the next run, at 8 s, both were
+      there: Chobby loads them as the page opens, the phone engine shrinking the 1760x1377 picture to 1024 wide
+      ("[NamedTextures] BAR Droid: ...beginner.jpg ... shrunk"). A moment's wait, no fault.)
       The Fold7 stayed off adb this run (no answer on its port, nothing in mdns).
 - [x] **BAR's lobby over a running game: the gestures' actions** (hardening, 2026-11-17 ~03:20, dev phone upright, a
       replay): over a game the app still sent its gestures' actions and the game behind the lobby took them (a
