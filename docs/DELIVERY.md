@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Links spaced for a finger; the Skirmish pages sideways** (hardening, 2026-11-17 ~13:50, dev phone,
+      the lobby offline, never logged in): upright screenshots of Chat, Friends, Parties (login needed: as they should
+      be), Downloads, Links. Links (helpsubmenuconfig.lua, a SortableList): 17 link buttons 34 high, rows 43 apart,
+      under 3 mm a button, the panel's lower third empty. Now (bardroid_lobby_touch.lua upright.linkRows, both ways up)
+      the rows as much as 1.5 times as far apart as the panel has room for, the buttons as much taller, the words beside
+      their middles; the list puts its rows back when it resizes, so each half-second check moves only rows not in
+      place. Dev phone: upright 1.50 (the list to the panel's foot), sideways 1.11 (as far as it has room); the
+      Skirmish pages sideways Chobby's own, as meant (last run's change returns there); lobby-phone-test ALL PASS.
 - [x] **The quick Skirmish's picture pages upright; the voice chat code read** (hardening, 2026-11-17 ~13:35, dev phone,
       the lobby offline, never logged in): VoiceChat.java read through (a recognizer per session, a past session's late
       calls dropped by number, the offline note for errors that need a connection): nothing to change. The lobby

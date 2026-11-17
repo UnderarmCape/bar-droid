@@ -1272,6 +1272,107 @@ function upright.settingsRows(tall)
 	end
 end
 
+-- Chobby's Links (helpsubmenuconfig.lua, "Community and development links"): its link buttons 34 high in rows 43 apart
+-- (a SortableList), under 3 mm a button upright and the panel's lower third empty (dev phone, 2026-11-17). The rows as
+-- much as SETTINGS_ROW times as far apart as the panel has room for (sideways it has less), their buttons as much
+-- taller, each row's words beside its button's middle as before. The list puts its rows back when it resizes
+-- (SortableList:RecalculatePosition): asked every half second, rows moved only where they are not in place.
+function upright.linkRows()
+	local mark
+	local function find(o, depth)
+		if mark or not o or depth > 14 or o.disposed or o.visible == false then
+			return
+		end
+		if o.caption == "Community and development links" then
+			mark = o
+			return
+		end
+		for _, c in ipairs(o.children or {}) do
+			find(real(c), depth + 1)
+		end
+	end
+	for _, name in ipairs({ "holder_submenuWindow", "holder_mainWindow", "mainWindow_mainContent" }) do
+		if not mark then
+			find(real(chobbyObject(name)), 0)
+		end
+	end
+	local panel = mark and real(mark.parent)
+	local list
+	local function findList(o, depth)
+		if list or not o or depth > 6 then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "scrollpanel" then
+				list = c
+				return
+			end
+			findList(c, depth + 1)
+		end
+	end
+	findList(panel, 0)
+	if not list then
+		return
+	end
+	upright.linkSaved = upright.linkSaved or setmetatable({}, { __mode = "k" })
+	local saved, rows = upright.linkSaved, {}
+	for _, ch in ipairs(list.children or {}) do
+		local r = real(ch)
+		if r and type(r.y) == "number" and type(r.height) == "number" then
+			rows[#rows + 1] = r
+		end
+	end
+	if #rows < 2 then
+		return
+	end
+	table.sort(rows, function(a, b)
+		return a.y < b.y
+	end)
+	local base = saved[list]
+	if not base then -- (Chobby's spacing, as the list first stands)
+		base = { step = rows[2].y - rows[1].y, h = rows[1].height, top = rows[1].y }
+		saved[list] = base
+	end
+	local room = (list.clientHeight or list.height or 0) - 2 * base.top
+	local f = math.max(1, math.min(upright.SETTINGS_ROW, room / (#rows * base.step)))
+	local moved = 0
+	for i, r in ipairs(rows) do
+		local y, h = math.floor((i - 1) * base.step * f + base.top), math.floor(base.h * f)
+		if r.y ~= y or r.height ~= h then
+			r:SetPos(nil, y, nil, h)
+			moved = moved + 1
+		end
+		local button
+		for _, ch in ipairs(r.children or {}) do
+			local c = real(ch)
+			if c and not saved[c] then
+				saved[c] = { y = c.y, h = c.height }
+			end
+			if c and c.classname == "option_button" then
+				button = c
+				local bh = math.floor(saved[c].h * f)
+				if c.height ~= bh then
+					c:SetPos(nil, nil, nil, bh)
+				end
+			end
+		end
+		for _, ch in ipairs(r.children or {}) do -- (the words: as far from the button's middle as before)
+			local c = real(ch)
+			if c and c ~= button and button and c.classname == "textbox" then
+				local ty = math.floor(saved[c].y + (saved[button].h * f - saved[button].h) / 2)
+				if c.y ~= ty then
+					c:SetPos(nil, ty)
+				end
+			end
+		end
+	end
+	if moved > 0 then
+		Spring.Echo(string.format("[bardroid-lobby] Links: %d rows %s", moved, f > 1 and
+			string.format("spaced %.2f times for a finger", f) or "as Chobby's")) -- (tools)
+	end
+end
+
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
 -- wide whatever the room): upright the second and third columns ran under Start and Delete, the names cut by them
 -- ("SimpleA", "Inactive/"; dev phone upright, 2026-11-16). Where the columns do not fit the room the list gives them,
@@ -1843,6 +1944,7 @@ local function uprightUpdate(now)
 		upright.replayTeams(upright.replayPanel)
 		upright.pluginButtons(upright.pluginsWin)
 		upright.settingsRows(true) -- (both ways up: sideways its rows were the densest, about 2 mm)
+		upright.linkRows() -- (both ways up, as far as the panel has room)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
