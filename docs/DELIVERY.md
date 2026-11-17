@@ -740,6 +740,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The phone tests after the night's changes** (hardening, 2026-11-17 ~05:30, dev phone): dock-phone-test,
+      touch-phone-test (with its new lobby-over-the-game cases), lobby-phone-test, pad-test, -Dgun and -Share: all ALL
+      PASS. The Fold7 still off adb (keeps the 03:03 build; the newest copy to it failed as it dropped).
 - [x] **A test for BAR's lobby over the game** (hardening, 2026-11-17 ~05:05): touch-phone-test's widget now sends BAR's
       own "LobbyOverlayActive1" / "0" (Spring.SendLuaUIMsg, as BAR's lobby tells the widgets) and checks the night's
       fixes: the app told (bardroid_overlay.txt), the dock aside ("dock none"), a drag and a pinch leaving the camera,
