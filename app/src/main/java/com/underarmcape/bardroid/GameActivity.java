@@ -534,7 +534,11 @@ public class GameActivity extends MainActivity {
     private void updateLoadTip() {
         View root = getWindow().getDecorView();
         boolean upright = root.getHeight() > root.getWidth() * 1.05f;
+        // (a game's load screen made but none of its words yet: the engine's last pre-game frame, "Waiting for server
+        // response" and its "Press SHIFT + ESC to quit", still shows for a moment, which the tip lay across; a saved game
+        // loaded from the lobby, dev phone 2026-11-17. The tip comes with the load's first words, BAR's picture with them)
         boolean show = upright && GameService.loading() && !isInPictureInPictureMode()
+                && !(GameService.loadScreen() && GameService.loadMessage().isEmpty())
                 && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if (show && loadTip == null) {
@@ -597,6 +601,7 @@ public class GameActivity extends MainActivity {
         int h = root.getHeight();
         boolean upright = h > root.getWidth() * 1.05f;
         boolean show = upright && GameService.loading() && GameService.loadScreen() && !isInPictureInPictureMode()
+                && !GameService.loadMessage().isEmpty()   // (as the tip: an empty bar over the engine's pre-game frame)
                 && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if (show && loadBar == null && h > 0) {
