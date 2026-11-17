@@ -5150,6 +5150,11 @@ function widget:Initialize()
 		dock = function() -- (other widgets keep out of it: x0, y0, x1, y1; the wind's and tide's boxes over it with it)
 			return active and SP.dockAll() or nil
 		end,
+		-- (stepped aside, its room free: one of BAR's big windows, BAR's lobby over the game, the game over; dock() still
+		-- answers its rect: bardroid_teamstats.lua upright takes the whole height then)
+		aside = function()
+			return active and L.aside or false
+		end,
 		-- (the wind's and the tide's boxes where they are shown, and which one's details are open: tools/dock-phone-test)
 		windRects = function()
 			if active and not SP.windOff() then

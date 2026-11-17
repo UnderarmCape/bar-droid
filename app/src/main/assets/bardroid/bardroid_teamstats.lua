@@ -1712,10 +1712,13 @@ function widget:ViewResize()
 	-- (No new local up top: BAR's file is at Lua's 200; the dock's top is kept in metrics.)
 	local droidP = WG.BarDroidPortrait
 	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
-	metrics.droidDockTop = droidDock and droidDock[4] or false
+	-- (upright with the dock stepped aside, the game over or one of BAR's big windows open: its room is the panel's too;
+	-- after the Awards' Show Graphs the panel kept the dock's room empty under it, dev phone 2026-11-17)
+	local droidAside = droidDock and vsx < vsy and droidP.aside and droidP.aside() or false
+	metrics.droidDockTop = droidDock and (droidAside and 0 or droidDock[4]) or false
 	if vsx < vsy then
 		widgetScale = math.min(widgetScale, vsx / 960)
-		local droidBottom = droidDock and droidDock[4] or 0
+		local droidBottom = droidDock and not droidAside and droidDock[4] or 0
 		local droidTop = vsy - mathFloor(96 * widgetScale)
 		screenWidth = mathFloor(vsx * 0.98)
 		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
@@ -1774,10 +1777,11 @@ function widget:DrawScreen()
 		deleteGuishader()
 		return
 	end
-	-- BAR Droid: laid out again when the app's portrait dock comes, goes or moves
+	-- BAR Droid: laid out again when the app's portrait dock comes, goes, moves or steps aside (upright: ViewResize)
 	local droidP = WG.BarDroidPortrait
 	local droidDock = droidP and droidP.active and droidP.active() and droidP.dock and droidP.dock() or nil
-	if (droidDock and droidDock[4] or false) ~= metrics.droidDockTop then
+	local droidAside = droidDock and vsx < vsy and droidP.aside and droidP.aside() or false
+	if (droidDock and (droidAside and 0 or droidDock[4]) or false) ~= metrics.droidDockTop then
 		widget:ViewResize()
 	end
 
