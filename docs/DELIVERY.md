@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The share list and speak to chat on the dev phone; the share list's UNITS green** (hardening, 2026-11-17 ~12:45):
+      pad-test -Share and -Chat ALL PASS. Found: -Share copied two of its four screenshots (its wait for the widget's
+      "done" was 30 s, the widget still at its cases then: the note's and the 15 teammates' screenshots were never seen);
+      now 90 s and a moment after, all four in build\. Its cleanup printed the screenshots it deleted (Android's find
+      lists them): quiet now. Polish from those screenshots: UNITS in the tab strip was gold beside ENERGY's yellow, the
+      two read alike; UNITS is a soft green now (its tab, its amount line and its notes).
 - [x] **The touch and lobby phone tests after the nook; the wind's details over the dock** (hardening, 2026-11-17 ~12:35,
       dev phone): touch-phone-test and lobby-phone-test ALL PASS; the launcher's screens scrolled top to bottom, nothing
       to change. Found in the screenshots: the wind's and the tide's details stood just over the tapped box, right for

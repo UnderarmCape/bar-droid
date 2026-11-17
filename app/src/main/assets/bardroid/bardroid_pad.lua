@@ -1361,7 +1361,8 @@ end
 -- never more than the teammate has room for (BAR's storage: the rest would be lost).
 local SHARE_TABS = { "UNITS", "METAL", "ENERGY" }
 local SHARE_STEPS = { 0.1, 0.25, 0.5, 0.75, 1 }
-local SHARE_COLORS = { UNITS = { 1, 0.78, 0.25 }, METAL = { 0.8, 0.84, 0.92 }, ENERGY = { 1, 0.86, 0.22 } }
+-- (UNITS a soft green: in gold beside ENERGY's yellow the two tabs read alike, dev phone 2026-11-17)
+local SHARE_COLORS = { UNITS = { 0.55, 0.88, 0.55 }, METAL = { 0.8, 0.84, 0.92 }, ENERGY = { 1, 0.86, 0.22 } }
 local share = nil -- { index, teams = { { teamID, name, color } }, tab (SHARE_TABS), step (SHARE_STEPS) }
 local shareLastTab, shareLastStep = 2, 2 -- (the resource and the amount last used: metal, a quarter)
 -- units just given, each give its own: { units, teamID, from, at }; still ours SHARE_CHECK_SECONDS later with some gone:
