@@ -740,6 +740,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad under BAR's lobby over a game** (hardening, 2026-11-17 ~05:30, code read, dev phone): with BAR's lobby
+      opened over a running game the pad kept the game's controls (GameActivity's PadMouse.mode asked only whether a game
+      widget answers): the pointer held in the lobby's middle, the sticks panning the camera behind it, so a pad player
+      could not use the lobby there. The pad is the lobby's mouse now while bardroid_overlay.txt says "1"
+      (RtsTouch.lobbyOverGame, any thread, the file read at most every 250 ms). Dev phone, a sideways skirmish with the
+      file set as bardroid_touch.lua sets it on BAR's message and a virtual pad's left stick pushed right 1.5 s:
+      launcher.log "pad mouse on (the lobby, or no game running)", the pointer at x 2007 of 2008; the file back at "0"
+      and the same push: "pad mouse and keys on (BAR's game)", the pointer held at the middle (1004, 469). pad-test ALL
+      PASS. Not checked: the D-pad's control to control in BAR's real lobby over a game (a game started from the lobby;
+      the launcher's skirmish runs no lobby: its "act lobby_nav_down" reached the touch log, no lobby to read it). Also
+      checked: Statistics on the unfolded split dock sideways stays above the dock at full size, the dock in place (the
+      last runs' change is for tall phones only). No UI polish this run (the launcher's Display and Other screens read
+      right).
 - [x] **The lobby's Settings sideways and its display modes** (hardening, 2026-11-17 ~05:15, dev phone, the lobby
       offline): the Lobby tab's rows each level with its control; the Graphics tab's Ingame and Menu Display Mode do
       no harm on a phone: Menu set to Fullscreen, then an unfold (wm size 1080x1198: the lobby at 1192 x 1080, whole),
