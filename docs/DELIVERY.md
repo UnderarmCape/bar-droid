@@ -749,7 +749,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       touch widget asks at its start (Spring.SendLuaMenuMsg "BarDroidOverlay?", as BAR's own widgets send "showLobby")
       and the lobby widget answers with Chobby's own "LobbyOverlayActive1" while its lobby is over a loaded game. Dev
       phone upright, a replay, the lobby over it, LuaUI reloaded by a throwaway test widget (removed): "1" and "dock
-      none" before and after.
+      none" before and after. Online-safe: both calls stay on the phone (the engine's LuaUnsyncedCtrl::SendLuaMenuMsg
+      calls luaMenu->RecvLuaMsg, CLuaMenu::SendLuaUIMsg calls luaUI->RecvLuaMsg; no network message).
 - [x] **The home grid's LAST PINGS | PING pair** (hardening, 2026-11-17 ~04:50, dev phone upright): LAST PINGS shrank
       to fit its half, PING stood larger beside it. PING takes LAST PINGS' size now, unless that breaks over two lines
       (the split dock's half, where PING stays) (d979e6cd). Tried first and dropped: the whole row at the pair's size,
