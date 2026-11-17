@@ -2267,6 +2267,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The windows that keep out of the dock, after its rect took in the wind and tide boxes** (hardening, 2026-11-16
+      ~21:35, dev phone upright, a skirmish): Statistics between BAR's top bar and the boxes, opaque; Settings (the app's
+      copy) the screen's height with the dock stepped aside, its Interface tab; a tap on an option's words selects it
+      and fills BAR's description strip at the window's foot (the empty band there until then is that strip, no fault),
+      the option unchanged. The confirmation popup's "Do not ask again" (150 x 35, a smaller font) has room for the
+      login dialog's new 24 box. launcher.log over the day: only the lobby's downloads refused offline. White text seen
+      in the gap between the boxes and the dock was a metal spot's value on the map (it left with a pan). No UI polish
+      this run: nothing looked off in the app's own screens beyond BAR's music title cut at the corner under Settings
+      (BAR's widget).
 - [x] **The lobby after the day's Replays and Plugins changes; the voice chat code read again** (hardening, 2026-11-16
       ~21:15, dev phone, offline): lobby-phone-test ALL PASS. Its log's only warnings: Chobby's plugin manifest and
       OpenSkill downloads failed four times in 0.2 s, the dev phone having no network at all ("Network is unreachable"),
