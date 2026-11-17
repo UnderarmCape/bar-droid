@@ -56,6 +56,7 @@ local GAME = "LuaUI/Config/bardroid_game.txt"
 -- BAR's lobby over the game ("LobbyOverlayActive1" / "0", the top bar's Lobby button), for the app: "1" or "0"
 -- (RtsTouch hides the pointer for fingers there, as in the lobby; widget:RecvLuaMsg)
 local OVERLAY = "LuaUI/Config/bardroid_overlay.txt"
+local lobbyOver = false -- (BAR's lobby is over the game now: the fingers' camera moves dropped, readTouch)
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- a drag over the screen height tilts this much (Kailil: +75%, then +50%)
 -- Finger moves reach the camera over a few frames instead of in whatever batch each frame happened to collect
 -- (Kailil, 2026-10-26: "super juttery", "like a super cheap touch screen mp3 player"); seconds.
@@ -462,6 +463,8 @@ local function readTouch(lines)
 		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
 	elseif WG.BarDroidFirstPerson and WG.BarDroidLook then
 		readLook(lines, WG.BarDroidLook)
+		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
+	elseif lobbyOver then -- (BAR's lobby over the game: two fingers on it moved the camera behind it)
 		lines = lines:gsub("pan [^\n]*", ""):gsub("zoom [^\n]*", ""):gsub("rot [^\n]*", ""):gsub("tilt [^\n]*", "")
 	end
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
@@ -1281,7 +1284,8 @@ local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrappe
 -- BAR's lobby over the game or gone again: told to the app (OVERLAY)
 function widget:RecvLuaMsg(msg)
 	if msg:sub(1, 18) == "LobbyOverlayActive" then
-		writeWhole(OVERLAY, msg:sub(1, 19) == "LobbyOverlayActive1" and "1\n" or "0\n")
+		lobbyOver = msg:sub(1, 19) == "LobbyOverlayActive1"
+		writeWhole(OVERLAY, lobbyOver and "1\n" or "0\n")
 	end
 end
 
