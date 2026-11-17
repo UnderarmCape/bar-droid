@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Saved games: which load** (hardening, 2026-11-17 ~10:50, dev phone upright, the lobby offline): Chobby's Load
+      Game (gui_loadgame.lua) loads a save with the game it names (downloading it if missing) and, when the save's
+      engine version differs, asks the launcher for StartNewSpring, which the app's bridge does not do ("not handled on
+      Android", Chobby's "opened in a new window" then nothing; not met here). Both saves here name engine 2026.07.04:
+      today's (BAR 31958, the phone engine build) loaded and plays (frame 839, the dock up, no errors); the one of
+      11-12 (BAR 31836, made before the phone engine build became the default on 11-13) stops with "Package file was
+      saved with a different version": a save's data follows the engine's build, which the version string does not tell
+      apart. Left as it is (the launcher now says that message whole). A test note: after that failed load the app opened
+      the launcher once instead of the lobby ("a lobby that failed fast"), and taps sent blind ticked off two of its boxes
+      on screen (not saved: the prefs file unchanged, a force-stop put the screen back). Taps now wait for the lobby's
+      own line and GameActivity in front.
 - [x] **A saved game of another BAR version: the launcher's note said only "Errors:"** (hardening, 2026-11-17 ~10:40,
       dev phone upright, the lobby offline): the lobby's Load Game lists two saves, its dates the phone's local time.
       Load on the one saved with BAR-31836 (the phone has 31958 now): the engine stops ("Metadata checksum error: Package
