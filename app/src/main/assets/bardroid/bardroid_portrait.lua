@@ -3847,6 +3847,7 @@ function SP.setHidden(on)
 	if on then
 		setMenu(false)
 	end
+	SP.hiddenAt = on and Spring.GetTimer() or nil -- (the HIDE tap's own dock_menu line comes after it: act below)
 	-- BAR's player list with it (Kailil, 2026-11-11: "Hide the team list"; up, the dock covers it): the phone engine's
 	-- phone version of BAR's list has SetHidden (phone-widget-gui_advplayerslist.lua.patch); BAR's own has not
 	local api = WG.advplayerlist_api
@@ -3952,7 +3953,12 @@ local function dockLines()
 		end
 		local name = line:match("^act (dock_%S+)")
 		if name == "dock_menu" and active and SP.hidden then -- (the SHOW button tapped: the dock back)
-			SP.setHidden(false)
+			-- (but not the HIDE tap's own line: RtsTouch writes it as the finger comes down on the dock, the tap's click
+			-- comes as it lifts, and when both fall in one frame the click is handled first, so HIDE hid the dock and
+			-- its own line opened it again 9 ms later; dev phone spectating upright, 2026-11-17)
+			if not (SP.hiddenAt and Spring.DiffTimers(Spring.GetTimer(), SP.hiddenAt) < 0.3) then
+				SP.setHidden(false)
+			end
 		elseif name == "dock_menu" and active then
 			setMenu(true)
 			if L.thumb and not L.panelOn then -- (sideways, nothing picked: the tap that opens the menu opens the home
