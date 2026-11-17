@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Spectating upright with the nook** (hardening, 2026-11-17 ~13:15, dev phone): fp-save-test passes
+      (spectate-test runs BAR on the laptop: not while Kailil uses it). A replay spectated upright (bench mode's replay
+      marker, speedmetal1v1-20261001, removed after): the spectator's dock, but the wind and the tide still as the old
+      flat boxes over metal and energy; spectators were left out of the new nook. Now theirs too (the same row of metal
+      and energy): the pill in the dock's top edge, the game taller, BAR's replay speeds moved down with the dock, the
+      wind's details open over the dock. Seen and left: the replay stood at frame -1 for about two minutes, no driver
+      line, no watchdog, 30 fps: it plays the recorded players' loading in real time (their load messages came at 3:07);
+      BAR's "skip" is for that. That BAR version (October) lacks the wind words' translations: ten "not translated" lines
+      once a game; the details use the app's own words then.
 - [x] **The pad tests; the D-gun mode's X on FIRE's line** (hardening, 2026-11-17 ~13:00, dev phone): DELIVERY's open
       items all wait on Kailil (his tests, his calls) or a live microphone. pad-test and pad-test -Dgun ALL PASS, no Lua
       error in the games. Screenshots upright: PRESETS (2 x 2, its X) as it should be; in the D-gun mode the cancel X

@@ -3427,7 +3427,8 @@ function SP.windRectsNow()
 		return { x0, y0, mid, y1 }, { mid, y0, x1, y1 }
 	end
 	local d = L.dock
-	if not L.land and not showSel and leftKind ~= "spec" and d and d[4] > r[4] then
+	-- (spectating too: they stood over metal and energy as flat boxes, dev phone screenshot of a replay 2026-11-17)
+	if not L.land and not showSel and d and d[4] > r[4] then
 		local pw = floor((r[3] - r[1]) * (0.70 - 1 / 3)) - pad
 		local x0 = floor((r[1] + r[3] - pw) / 2)
 		local y0 = floor((r[2] + r[4] - hh) / 2)
