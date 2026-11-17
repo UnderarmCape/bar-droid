@@ -103,7 +103,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   not keep a widget BAR had never seen run from starting); launch-bar.sh `mission_info`, `.bardroid-missioninfo`.
   `assets/bardroid/bardroid_teamstats.lua`: BAR's TeamStats panel (its graphs: the awards' Show Graphs, the top bar's
   Statistics) copied the same way by `tools/make-teamstats.py`: upright the screen's width, between the top bar and the
-  dock; launch-bar.sh `team_stats`, `.bardroid-teamstats`. `assets/bardroid/bardroid_options.lua`: BAR's Options
+  dock; sideways on a tall phone as large as fits, the dock aside meanwhile (`bardroid_portrait.lua` SP.windowOpen), above
+  the split dock otherwise; launch-bar.sh `team_stats`, `.bardroid-teamstats`. `assets/bardroid/bardroid_options.lua`: BAR's Options
   (Settings) copied the same way by `tools/make-options.py`, laid out for a phone (upright a tab grid over a full-width
   list, sideways as large as fits, a close button); it needs BAR's widget handler, so it runs only as a game widget
   (`BARDROID_GAME_WIDGETS=1`, the engine branch) and is parked in `bardroid-parked` otherwise (launch-bar.sh

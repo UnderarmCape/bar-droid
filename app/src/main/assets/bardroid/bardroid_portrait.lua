@@ -4831,7 +4831,11 @@ function SP.windowOpen()
 			return true
 		end
 	end
-	return false
+	-- (and BAR's Statistics sideways on a tall phone: the app's copy is as large as fits there, over the dock; fitted
+	-- above it its words were about 11 pixels high. Upright and over the split dock it fits above the dock:
+	-- bardroid_teamstats.lua ViewResize, by WG.BarDroidPortrait.sideways)
+	local ts = WG.teamstats
+	return L.land and not L.split and ts and ts.isvisible and ts.isvisible() or false
 end
 
 -- BAR's lobby over the game (its "LobbyOverlayActive1" / "0" to the widgets: the top bar's Lobby button): the dock out

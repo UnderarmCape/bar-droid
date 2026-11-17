@@ -86,9 +86,21 @@ PATCHES = [
 		screenHeight = mathFloor((droidTop - droidBottom) * 0.97)
 		screenX = mathFloor((vsx - screenWidth) / 2)
 		screenY = mathFloor((droidTop + droidBottom) / 2 + screenHeight / 2)
+	elseif droidDock and droidP.sideways and droidP.sideways() then
+		-- BAR Droid: sideways on a tall phone (the dock along the bottom): as large as fits below BAR's top bar, over the
+		-- dock, which steps aside while the panel is open, as for BAR's Settings (bardroid_portrait.lua SP.windowOpen).
+		-- Fitted above the dock its words were about 11 pixels on a 1080 high screen (dev phone, 2026-11-17)
+		local droidTop = vsy - mathFloor(96 * widgetScale)
+		local droidM = math.max(4, mathFloor(vsy * 0.012))
+		widgetScale = math.min((vsx - 2 * droidM) / screenWidthOrg, (droidTop - 2 * droidM) / screenHeightOrg)
+		screenHeight = mathFloor(screenHeightOrg * widgetScale)
+		screenWidth = mathFloor(screenWidthOrg * widgetScale)
+		screenX = mathFloor((vsx - screenWidth) / 2)
+		screenY = mathFloor(droidTop / 2 + screenHeight / 2)
 	elseif droidDock then
-		-- BAR Droid: sideways with the dock up: above the dock and below BAR's top bar, a size smaller where it needs to
-		-- be (it ran down into the dock, the two drawn through each other, dev phone 2026-11-13)
+		-- BAR Droid: sideways with the dock up (the split dock of a near-square screen): above the dock and below BAR's
+		-- top bar, a size smaller where it needs to be (it ran down into the dock, the two drawn through each other, dev
+		-- phone 2026-11-13)
 		local droidBottom = droidDock[4]
 		local droidTop = vsy - mathFloor(96 * widgetScale)
 		local room = mathFloor((droidTop - droidBottom) * 0.97)
