@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Speak to chat without a connection** (hardening, 2026-11-17 ~07:15, VoiceChat.java read again, dev phone): the
+      sessions (a fresh recognizer each, a past one's words dropped by number), the permission's wait and its drop when
+      the screen goes, cancel on a second start: sound. Gap: a recognizer that needs the network (none, as on the dev phone
+      now, or its server not answering: errors 1, 2, 4) lost what was said and only took the note away, as for silence.
+      Now "NOTHING SENT: SPEECH NEEDS A CONNECTION" for 4 s, in the game (bardroid_pad.lua, voice_nonet) and the lobby
+      (bardroid_lobby_touch.lua's panel), PING's state ended by it as by voice_off (bardroid_portrait.lua). Tested through
+      the touch log, no live microphone: the note whole across the game upright and in the lobby's panel; lobby-phone-test
+      ALL PASS. The Java side (onError to the sink) is not exercised on the phone.
 - [x] **The share list read again; its panel darker** (hardening, 2026-11-17 ~07:05, code read, dev phone upright):
       bardroid_pad.lua's share list and the dock's giving (giveTo): BAR's rules for a gift (a team away, the tax, their
       room at their share slider), the anonymous numbering kept through deaths, a dead pick's list made again, units BAR
