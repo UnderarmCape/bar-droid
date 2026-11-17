@@ -1238,7 +1238,7 @@ function upright.settingsRows(tall)
 					if r and type(r.y) == "number" and type(r.height) == "number" then
 						local s = saved[r]
 						if not s then
-							s = { y = r.y, h = r.height, box = r.boxsize }
+							s = { y = r.y, h = r.height, box = r.boxsize, ih = r.itemHeight, dh = r.maxDropDownHeight }
 							saved[r] = s
 						end
 						if (s.f or 1) ~= f then
@@ -1251,6 +1251,12 @@ function upright.settingsRows(tall)
 								-- (24: "Show Battles with Test Engine Versions" ran up to a 28 box, the words as wide as before)
 								r.boxsize = f > 1 and math.min(24, math.floor(s.h * f) - 14) or s.box
 								r:Invalidate()
+							end
+							-- (a list's choices, made as it opens: Chili's 20 high, about 1.6 mm, "Remember Last" over "Always
+							-- Spectator"; 1.6 times, the drop-down as much taller, dev phone 2026-11-16)
+							if r.classname == "combobox" and s.ih then
+								r.itemHeight = f > 1 and math.floor(s.ih * 1.6) or s.ih
+								r.maxDropDownHeight = s.dh and math.floor(s.dh * (f > 1 and 1.6 or 1)) or nil
 							end
 						end
 					end
