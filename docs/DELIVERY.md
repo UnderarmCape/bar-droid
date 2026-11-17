@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [ ] **Statistics upright: small words** (hardening, 2026-11-17 ~14:45, dev phone): the TeamStats copy upright scales
+      BAR's layout to the screen's width (make-teamstats.py, widgetScale min(vsy / 1080, vsx / 960): 0.975 on the dev
+      phone): its menu rows (Overview, Flow, Economy ...) about 32 pixels apart, under 2 mm for a finger, the charts'
+      words about 14 pixels. Tried vsx / 760 (1.23): the menu read well, rows 40 apart, but at BAR's default 12 charts
+      a page (4 x 3) the titles ran into each other ("Metal income by sourceComposition", "Value efficiencyActivity");
+      at 4 columns they meet at about 1.03 (the menu column grows with the scale, the charts' narrow). Reverted. BAR's
+      9 a page (3 x 3, its "Graphs per page" setting, which a tap cycles) would leave the room; the default is BAR's
+      and the player's saved setting, the charts' grids live in BAR's include (teamstats_graphs.lua PAGES), not in the
+      copy. Open: upright, 3 columns (a copy of the include, or the copy choosing 9 while upright without saving it)
+      with the larger scale. Also seen: Settings' Interface tab and an open drop-down upright, as they should be.
 - [x] **Four minutes upright; Settings opaque** (hardening, 2026-11-17 ~14:30, dev phone): an upright skirmish left to
       run 4 minutes: 29.7-30.0 fps each minute, no Lua error, memory steady (837-913 MB available, the engine 1.6-1.9
       GB), thermal 0. The app's Settings upright (bardroid_options.lua): the space at its foot is BAR's description
