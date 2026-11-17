@@ -2892,7 +2892,8 @@ local function drawButton(item, r, cap)
 		local _, _, armed = pingT.state()
 		pingT.drawn = "0" .. (armed and "a" or "")
 		L.pingBtn = r
-		pingT.drawBtn(r, armed, min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46)))
+		-- (its row's size too, drawHalf: PING stood larger than RANDOM beside it before the start, 2026-11-17)
+		pingT.drawBtn(r, armed, min((r[4] - r[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46), cap or math.huge))
 		return
 	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
@@ -3030,12 +3031,15 @@ local function drawHalf(side)
 	local home = rightKind == "home" or rightKind == "pregame"
 	if side ~= "left" and font then
 		for i, item in ipairs(items) do
-			local rect = (item.kind == "order" or home and item.kind ~= "pings") and item.label and cellRect(side, i)
+			-- (PING alone in its place, before the start: as the word "PING")
+			local label = item.kind == "pings" and item.pingOnly and "PING" or item.label
+			local rect = (item.kind == "order" or home and (item.kind ~= "pings" or item.pingOnly)) and label
+				and cellRect(side, i)
 			if rect then
 				local key = rect[2] .. ":" .. rect[4]
 				local th = min((rect[4] - rect[2]) * 0.34, L.btnH * ((item.h or 1) > 1 and 0.6 or 0.46))
-				local fit = min(th, (rect[3] - rect[1]) * 0.76 / max(0.01, font:GetTextWidth(item.label)))
-				if item.kind == "order" or fit >= th * 0.7 or not item.label:find(" ") then
+				local fit = min(th, (rect[3] - rect[1]) * 0.76 / max(0.01, font:GetTextWidth(label)))
+				if item.kind == "order" or fit >= th * 0.7 or not label:find(" ") then
 					rowCap[key] = min(rowCap[key] or fit, fit)
 				end
 			end
