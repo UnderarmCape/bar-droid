@@ -751,8 +751,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       dock's room empty under them though the dock was aside (bardroid_teamstats.lua sized by the dock's rect): the
       next run (~08:25) made them take the whole height while the dock is aside upright (WG.BarDroidPortrait.aside;
       make-teamstats.py's layout and DrawScreen patches), the charts twice as tall at the game's end; remake-check PASS,
-      dock-phone-test ALL PASS. Seen there and left for now: a finger's tap on Show Graphs leaves the pointer on a chart,
-      whose hover tooltip ("Map · Front line ...") then covers part of the charts.
+      dock-phone-test ALL PASS. Seen there: a finger's tap on Show Graphs left the pointer on a chart, whose hover
+      tooltip ("Map · Front line ...") then stood over the charts below it until the next touch. The next run (~08:35):
+      the Statistics copy's tooltips ("teamstats") now go for fingers as the order menu's do, 2.5 s after the pointer
+      came to rest (bardroid_touch.lua fingersTooltip); a tap on a chart still shows its explanation that long. Dev
+      phone: the tooltip at 1 s, gone at 4 s; touch-phone-test ALL PASS.
 - [x] **Save and load by touch, upright; the load tip over the pre-game frame** (hardening, 2026-11-17 ~08:05, dev
       phone upright): a skirmish's top bar Save (bardroid_topbar.lua through BAR's hidden bar): "Game saved: the lobby's
       Load Game opens it", Saves/20261117_075052.ssf (7 MB; kept on the dev phone for later checks); the lobby's Load
