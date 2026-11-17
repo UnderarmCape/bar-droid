@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A replay from the lobby and back** (hardening, 2026-11-17 ~16:10, dev phone upright, the lobby offline): the
+      10-minute Starwatcher replay from Replays' Start: its recorded pre-game, BAR's skip, the game from frame 40 with
+      the spectator's dock; the top bar's Lobby brought BAR's lobby over the game upright (the grid with Return to
+      Battle first, Replays as it was left); no Lua error. Seen once, not again: the first time, one tap on skip was
+      followed 10 frames after the start by "Player (spec) paused the demo" (BAR's button pauses on a press once the
+      game runs, skips before it: as if the tap arrived twice); the same tap on a fresh start of the replay skipped and
+      nothing paused in 12 s. Watch for a pause right after a replay's skip.
 - [x] **An empty replay said so** (hardening, 2026-11-17 ~16:00, dev phone, the lobby offline): Start on one of the
       961-byte "time unknown" replays loaded the whole game (about 40 s), then the engine's "End of demo reached" at
       frame -1, and the player sat on a still, empty map with the spectator's dock and no word why. GameService now
