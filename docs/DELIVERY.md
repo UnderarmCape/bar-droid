@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad tests; the D-gun mode's X on FIRE's line** (hardening, 2026-11-17 ~13:00, dev phone): DELIVERY's open
+      items all wait on Kailil (his tests, his calls) or a live microphone. pad-test and pad-test -Dgun ALL PASS, no Lua
+      error in the games. Screenshots upright: PRESETS (2 x 2, its X) as it should be; in the D-gun mode the cancel X
+      stood at the band's top, a gap above FIRE's, its square ending well above FIRE's foot. Its top is FIRE's now
+      (dgunParts, upright; sideways floating unchanged). The X's tap still leaves the mode; dock-phone-test ALL PASS
+      (FIRE's and AUTO's swipes, MOVE).
 - [x] **The share list and speak to chat on the dev phone; the share list's UNITS green** (hardening, 2026-11-17 ~12:45):
       pad-test -Share and -Chat ALL PASS. Found: -Share copied two of its four screenshots (its wait for the widget's
       "done" was 30 s, the widget still at its cases then: the note's and the 15 teammates' screenshots were never seen);

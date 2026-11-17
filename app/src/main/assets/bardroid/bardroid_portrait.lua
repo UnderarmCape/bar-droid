@@ -1375,9 +1375,10 @@ local function dgunParts()
 	local rad = floor(min(w * 0.2, room * 0.5))
 	local cy = r[2] + words + floor(room / 2)
 	local fire = { r[1] + floor(w * 0.3), r[2] + floor(h * 0.74), r[3] - floor(w * 0.3), r[4] - L.gap }
+	-- (the X's top on FIRE's: at the band's own top it stood a gap above FIRE, dev phone screenshot 2026-11-17)
 	local c = floor(min(w * 0.13, h * 0.2))
 	return { l = { r[1] + floor(w * 0.24), cy, rad }, r = { r[3] - floor(w * 0.24), cy, rad }, fire = fire,
-		cancel = { r[1], r[4] - c, r[1] + c, r[4] } }
+		cancel = { r[1], fire[4] - c, r[1] + c, fire[4] } }
 end
 
 -- (X pixels, top left origin, as the dock's other lines)
