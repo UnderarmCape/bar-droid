@@ -5,7 +5,8 @@ app's dock, upright a third to a half of the height, lay over all but the fastes
 under the column it starts just above the dock's top; back at BAR's place when the dock goes (sideways pinned to the
 right, folded away by HIDE, no dock). The file is the same in every BAR release on the dev phone (test-31465 to
 test-31958), so this fits replays of all of them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI
-loads it; if a block finds no place, BAR's own file runs.
+loads it; if a block finds no place, BAR's own file runs. Upright the column is also as wide and its words as large as on
+the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, some 35 pixels wide upright, words of 11).
 
 @@@ find
 function widget:Update(dt)
@@ -34,4 +35,45 @@ function widget:Update(dt)
 		sceduleUpdate = true
 	end
 end
+@@@ end
+
+@@@ find
+	bHeight = buttonHeight * ui_scale
+	bWidth = buttonWidth * ui_scale
+@@@ with
+	bHeight = buttonHeight * ui_scale
+	bWidth = buttonWidth * ui_scale
+	-- BAR Droid (phone): upright the column as wide as on the same screen sideways (a fraction of the width made the
+	-- buttons some 35 pixels wide on a phone upright, their words 11 pixels)
+	if vsy > vsx then
+		bWidth = bWidth * vsy / vsx
+	end
+@@@ end
+
+@@@ find
+		font:Print(
+			b[i].text,
+			mathFloor((b[i].x * vsx) + 0.5),
+			mathFloor(((b[i].y + bHeight / 2) * vsy) + 0.5),
+			mathFloor((0.0115 * vsx) + 0.5),
+@@@ with
+		font:Print(
+			b[i].text,
+			mathFloor((b[i].x * vsx) + 0.5),
+			mathFloor(((b[i].y + bHeight / 2) * vsy) + 0.5),
+			mathFloor((0.0115 * math.max(vsx, vsy)) + 0.5), -- BAR Droid (phone): upright as large as sideways
+@@@ end
+
+@@@ find
+				font:Print(
+					b[i].text,
+					mathFloor((b[i].x * vsx) + 0.5),
+					mathFloor(((b[i].y + bHeight / 2) * vsy) + 0.5),
+					mathFloor((0.0115 * vsx) + 0.5),
+@@@ with
+				font:Print(
+					b[i].text,
+					mathFloor((b[i].x * vsx) + 0.5),
+					mathFloor(((b[i].y + bHeight / 2) * vsy) + 0.5),
+					mathFloor((0.0115 * math.max(vsx, vsy)) + 0.5), -- BAR Droid (phone): upright as large as sideways
 @@@ end
