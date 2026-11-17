@@ -79,13 +79,18 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   the full row under it), `bardroid_portrait.lua` (the launcher's "Play upright": the touch dock under the game, its
   camera pad, selection and group rows (the idle builders by type at the groups row's right), orders, the home grid
   (PINGS: the last pings from others and a ping of your own; PING held: its label spoken, VoiceChat; tapped twice:
-  CHAT, speak to chat; FACTORIES), the D-gun mode with its full auto; the dock file's "live" rects (the build options,
-  INSERT and QUEUE, the home grid, the groups row, the sideways tabs) take their first tap in RtsTouch though the dock is
-  the camera pad, and "ping" its hold and double tap; spectating,
+  CHAT, speak to chat; FACTORIES), the D-gun mode with its full auto, the wind's and the tide's boxes over metal and
+  energy (a tap: BAR's own wind details, common/wind_functions.lua and its I18N words; with them WG.BarDroidPortrait's
+  dock() and onDock(), what other widgets keep out of); the dock file's "live" rects (the build options,
+  INSERT and QUEUE, the home grid, the groups row, the sideways tabs, the wind and tide) take their first tap in RtsTouch
+  though the dock is the camera pad (RtsTouch reads the whole file, up to 8 KB), and "ping" its hold and double tap;
+  unfolded (a near-square screen, `L.split`) two blocks in the bottom corners with the game between them, and with
+  nothing picked the last builder's grid to build from at once; spectating,
   the spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it;
   sideways too with "Touch dock sideways" (for one thumb, `L.thumb`: at the pinned side's edge a panel with BUILD |
   ORDERS tabs, the other tab laid out off the screen, beside it BAR's minimap through the Minimap widget's external
-  frame, RtsTouch's "map" rect giving it the touches, with HOME and the swap arrow; the D-gun's band across the bottom;
+  frame, RtsTouch's "map" rect giving it the touches, with the wind's and the tide's boxes and the swap arrow; the
+  D-gun's band across the bottom;
   a pad or mouse brings BAR's screen back); the lobby's upright pages and sideways column are in `bardroid_lobby_touch.lua`; "Turn with the phone":
   `GameActivity.setRequestedOrientation` asks for the phone's own orientation (`SCREEN_ORIENTATION_USER`) while its
   auto-rotate is on, watched mid-game, and the widgets follow the screen's shape as they do a fold; for a game started
