@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The spectator dock's HIDE undone by its own tap** (hardening, 2026-11-17 ~06:45, dev phone upright, BARb
+      against BARb spectated for 6 minutes by a dev-env.sh, removed after): 30 fps throughout (37 to 70 units), no Lua
+      errors (the one deprecation, KEYSYMS.ESCAPE, is BAR's widget handler's). FOLLOW UNIT's first pick a Sentry (the
+      unit nearest the view; armed buildings followable at Kailil's word); NO PLAYER CAMS' arrows already dimmed. Bug:
+      HIDE did nothing; infolog "dock hidden: the SHOW button", then "dock shown again" 9 ms later. RtsTouch writes
+      "act dock_menu" as a finger comes down on the dock and the tap's click comes as it lifts; when both fall in one
+      frame (adb's taps; a very quick finger) the click is handled first, so HIDE hid the dock and the line that
+      followed counted as the SHOW button's tap. A dock_menu within 0.3 s of HIDE no longer shows it again
+      (bardroid_portrait.lua SP.hiddenAt). Dev phone: HIDE folds the dock to SHOW (BAR's player list and clock at the
+      bottom right), SHOW brings it back, twice over; no Lua errors.
 - [x] **The lobby offline; touch-phone-test after the pad's change** (hardening, 2026-11-17 ~06:30, dev phone): the
       bridge's "no connection (no network on the phone)" for the lobby's resource downloads is right: the dev phone has
       no network now (dumpsys connectivity "Active default network: none", its Wi-Fi without a connection; left as it
