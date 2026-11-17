@@ -157,7 +157,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   lists scroll, the game behind it stays as it was, the dock out of the way until you return). Both ways up the lobby's Settings rows
   stand further apart with taller sliders, lists and checkboxes (their choices taller too), the login dialog's
   checkboxes are larger, and upright Replays fits each team's names to its column and Plugins' buttons are finger
-  sized.
+  sized. Replays' **Add** opens Android's file picker in Downloads: replays (.sdfz) you downloaded from BAR's website
+  (Replays' Download) are copied into the game's list.
 
 ## Gamepad, mouse and keyboard
 

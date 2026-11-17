@@ -68,7 +68,8 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   config), re-applies the layer and rolls back a set that fails on its first start. Content only ever comes from BAR's
   CDN (`pr-downloader`).
 - **Lobby.** BAR's own Chobby lobby. `LobbyBridge` stands in for the PC launcher behind it (web links, downloads,
-  replay info); `bardroid_lobby_touch.lua` makes it finger-friendly. Besides its own grid and column it walks some of
+  replay info; Replays' Open Folder, "Add" on a phone, starts `ReplayImportActivity`: Android's file picker, the .sdfz
+  files copied into demos/, a stamp file the lobby widget answers by making its list again); `bardroid_lobby_touch.lua` makes it finger-friendly. Besides its own grid and column it walks some of
   Chobby's screens every half second and resizes their controls in place, Chobby's values kept in weak tables to put
   back: `upright.settingsRows` (Settings' rows 1.5 times apart, taller controls and list choices, both ways up),
   `upright.widenInputs` (a popup's text boxes to its width, its checkboxes' boxes larger), `upright.replayTeams`

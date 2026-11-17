@@ -2533,8 +2533,9 @@ local function poolCacheCheck(now)
 end
 
 -- Chobby's Replays tab: Open Folder opens nothing on a phone (the replays are in the app's own storage, which no file
--- manager shows; LobbyBridge's OpenFile leaves folders), a button that did nothing at a tap (dev phone, 2026-11-12).
--- Hidden, and the two left of it (Download, More: Chobby anchors the row from the right, 130 apart) close the gap.
+-- manager shows), a button that did nothing at a tap (dev phone, 2026-11-12; it was hidden). It is "Add" now: LobbyBridge
+-- takes its OpenFile of demos/ to Android's file picker, and the replays picked (a browser's downloads from BAR's
+-- replays website, the tab's Download) are copied into demos/ (ReplayImportActivity; 2026-11-17).
 -- The same for Links' last line, "Game Data: Open game data folder to find config files and logs." (WrapperLoopback's
 -- OpenFolder; on a phone the launcher's Share logs gives the logs): the line hidden, the last, so no gap.
 -- And Plugins' "Widgets Folder" (the first of its row: Contribute and Refresh move left into its place).
@@ -2604,24 +2605,49 @@ local function replaysRowCheck(now)
 	for _, c in ipairs(row.children or {}) do
 		local r = rightOf(c)
 		if r == 145 and c ~= refresh and c.classname == "option_button" then
-			c:SetVisibility(false)
-		end
-	end
-	for _, c in ipairs(row.children or {}) do
-		local r = rightOf(c)
-		if (r == 275 or r == 405) and c.classname == "option_button" then
-			c._relativeBounds.right = r - 130
-			c:UpdateClientArea()
+			if c.SetCaption then
+				c:SetCaption("Add")
+			else
+				c.caption = "Add"
+			end
+			c.tooltip = "Adds replays (.sdfz) from the phone, as the browser downloads them"
+			c:Invalidate()
 		end
 		-- (Download's tooltip asked for the .sdfz files in "your data/demos folder", which a phone's player cannot reach:
 		-- a replay the browser downloads stays in the phone's Downloads; dev phone, the pad's ring on it, 2026-11-17)
 		if type(c.tooltip) == "string" and c.tooltip:find("data/demos", 1, true) then
 			-- (as short as BAR's: a longer one wrapped, its last word alone on a second line)
-			c.tooltip = "BAR's replays website. A replay downloaded there goes to the phone's Downloads, not this list"
+			c.tooltip = "BAR's replays website: Add brings a replay downloaded there into this list"
 		end
 	end
 	replaysRow.done = true
-	Spring.Echo("[bardroid-lobby] Replays: Open Folder hidden (no folder to open on Android)") -- (tools)
+	replaysRow.refresh = refresh -- (the list made again after the app's Add, replaysAdded)
+	Spring.Echo("[bardroid-lobby] Replays: Open Folder is Add (Android's file picker, ReplayImportActivity)") -- (tools)
+end
+
+-- The app's Add copied replays into demos/ (ReplayImportActivity writes the time to STAMP): the list made again as
+-- Refresh makes it. Read once a second; the first read only notes what is there (an Add of an earlier lobby).
+local REPLAYS_STAMP = "LuaUI/Config/bardroid_replays.txt"
+local function replaysAdded(now)
+	if not replaysRow.refresh or (replaysRow.stampAt and Spring.DiffTimers(now, replaysRow.stampAt) < 1) then
+		return
+	end
+	replaysRow.stampAt = now
+	local f = io.open(REPLAYS_STAMP, "r")
+	local t = f and f:read("*l") or ""
+	if f then
+		f:close()
+	end
+	if replaysRow.stamp ~= nil and t ~= replaysRow.stamp then
+		local button = real(replaysRow.refresh)
+		if button and not button.disposed then
+			for _, fn in ipairs(button.OnClick or {}) do
+				pcall(fn, button)
+			end
+			Spring.Echo("[bardroid-lobby] Replays: the list made again after Add") -- (tools)
+		end
+	end
+	replaysRow.stamp = t
 end
 
 function widget:Update() -- (the lobby's Update has no frame time)
@@ -2632,6 +2658,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	if screen0 and not gameLoaded then -- (no walks of the lobby's controls while a game runs)
 		replaysRowCheck(now)
 	end
+	replaysAdded(now)
 	if not screen0 then
 		Chili = WG.Chili
 		screen0 = Chili and Chili.Screen0

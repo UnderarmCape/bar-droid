@@ -54,7 +54,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   still copies from it: white blocks after a camera jump); `BARDROID_TEX_LOG=1` in dev-env.sh logs the engine's
   textures (64x64 or more) and GPU buffers (64 KB or more); `tools/pace-test.ps1`, `tools/pad-test.ps1`).
 - `LobbyBridge` — stand-in for BAR's PC launcher behind the lobby, on by default (Chobby's `WG.Connector`, sl-connection.json):
-  web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"). Test it against the real
+  web links, the lobby's downloads, replay info for the Replays tab (HANDOFF "Next steps"), and Replays' Open Folder,
+  "Add" on a phone: `ReplayImportActivity` (Android's file picker, .sdfz copied into demos/, the lobby's list made again). Test it against the real
   lobby on the laptop with `tools/lobby-bridge-test.ps1` (~30 s, isolated write dir).
 - `MapStore` — the map storage limit (launcher Map storage, 3 GB by default, Kailil 2026-11-11): each map's last use
   from the engine's `[CAS::GASCB] Archive file=` line (GameService; `/data` is noatime), the maps played longest ago

@@ -41,7 +41,8 @@ import java.util.zip.GZIPInputStream;
  * (WG.WrapperLoopback) makes the calls. Without it the lobby's Replays tab cannot read replays, web links do nothing
  * and "resource" downloads (the OpenSkill ratings, clan images) are refused. With it every lobby download goes
  * through here, so each one is answered (DownloadFinished), success or not, or the lobby's queue would stall.
- *   OpenFile        web links open in Android's browser; folders are ignored
+ *   OpenFile        web links open in Android's browser; the replays folder (the Replays tab's "Add") Android's file
+ *                   picker for replays ({@link ReplayImportActivity}); other folders are ignored
  *   Download        game and map: the engine's pr-downloader in the container; resource: an HTTP download into the
  *                   write dir (archives that would have to be extracted, i.e. other engines, fail)
  *   ReadReplayInfo  engine, game, map, players and game time from the replay's header and start script (a game left
@@ -133,6 +134,10 @@ final class LobbyBridge {
                         ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(path)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                         Log.i("bridge", "opened " + path);
                     } catch (Exception e) { Log.e("bridge", "could not open " + path + ": " + e); }
+                } else if (path.matches("file://.*/demos/?")) {   // (the Replays tab's Open Folder, "Add" on a phone)
+                    try {
+                        ctx.startActivity(new Intent(ctx, ReplayImportActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    } catch (Exception e) { Log.e("bridge", "replay import: " + e); }
                 } else Log.i("bridge", "not opened (no file manager here): " + path);
                 break;
             }

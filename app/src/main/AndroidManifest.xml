@@ -85,6 +85,16 @@
             android:resizeableActivity="true"
             android:windowSoftInputMode="stateHidden|adjustNothing" />
 
+        <!-- The lobby's Replays "Add": Android's file picker for .sdfz replays, copied into demos/ (LobbyBridge starts
+             it); see-through over the lobby, in the game's task, turned as the lobby is. -->
+        <activity
+            android:name=".ReplayImportActivity"
+            android:exported="false"
+            android:taskAffinity=".GameActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:screenOrientation="behind"
+            android:configChanges="orientation|screenSize|keyboard|keyboardHidden|uiMode|smallestScreenSize|screenLayout" />
+
         <!-- Keep Termux:X11's own activity (internal intents reference it) but take it out of the launcher.
              Termux:X11 exports these for the Termux app (another UID); our X server runs under our own UID,
              so nothing needs to reach them from outside. -->
