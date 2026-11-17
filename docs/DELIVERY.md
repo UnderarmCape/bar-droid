@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **PING by tap and by hold, the microphone revoked** (hardening, 2026-11-17 ~04:20, dev phone upright, a skirmish):
+      PING tapped: "TAP THE MAP TO PING", then a tap on the map placed BAR's marker ("Look here!"), PING back. PING held
+      (a spoken label): the ping armed (TAP MAP) and the note "SPEAK TO CHAT: ALLOW THE MICROPHONE ..." though no chat
+      was asked for. UI polish: the note now reads "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS" in the game
+      and the lobby (4351bcd4), within the width upright for the hold and the double tap; lobby-phone-test ALL PASS.
 - [x] **PING's speak-to-chat with the microphone revoked** (hardening, 2026-11-17 ~04:10, dev phone upright, a
       skirmish, nothing picked): a double tap on PING showed "SPEAK TO CHAT: ALLOW THE MICROPHONE IN ANDROID'S
       SETTINGS", PING back after it, launcher.log "voice chat: the microphone was not allowed"; no Lua errors. Nothing to
