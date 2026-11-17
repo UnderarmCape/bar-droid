@@ -135,7 +135,9 @@ public class GameActivity extends MainActivity {
             // turned into the lobby's free mouse: A clicked into the game unseen behind the progress screen. Off until
             // caught up (nothing queued for afterwards either).
             if (catchingUp) return ControllerBridge.MODE_OFF;
-            return touch.gameWidgetRunning() ? ControllerBridge.MODE_GAME : ControllerBridge.MODE_LOBBY;
+            // (BAR's lobby over the game: the pad is the lobby's mouse there, as with no game. The game's controls held
+            // the pointer in the lobby's middle and panned the camera behind it; review 2026-11-17)
+            return touch.gameWidgetRunning() && !touch.lobbyOverGame() ? ControllerBridge.MODE_GAME : ControllerBridge.MODE_LOBBY;
         }
         @Override public float pixelsPerSecond() { return 0.75f * Math.max(1080, Math.max(screenW, screenH)); }
         @Override public boolean onInterface() { return touch.pointerOnInterface(); }

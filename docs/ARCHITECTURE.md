@@ -56,7 +56,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   renamed, since the app reads them many times a second. Gamepads: `ControllerBridge`
   streams `BARCTRL1` packets over UDP 28777 to BAR Controller Support (v0.8.5, the singleplayer game); in BAR's own
   game `PadGame` rebuilds v0.8.5's controls from X mouse and key events (the pointer held in the middle, the camera
-  through the touch widget's pad lines, the rest as actions to `bardroid_pad.lua`); in the lobby the pad is a mouse.
+  through the touch widget's pad lines, the rest as actions to `bardroid_pad.lua`); in the lobby the pad is a mouse, also with BAR's lobby opened over a game.
   In the controller game a triple tap switches between the two. Mouse and keyboard: Termux:X11's delivery;
   `KeyboardShortcuts` keeps Android's own shortcuts out of the game.
 - **BAR's settings.** `launch-bar.sh` puts the Android layer over BAR's and the lobby's saved settings at every start

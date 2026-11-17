@@ -278,7 +278,7 @@ public final class ControllerBridge {
         if (now >= mouseCheckAt) {
             int m = mouse.mode();
             if (m != mode) {
-                Log.i("pad", m == MODE_LOBBY ? "pad mouse on (no game running)"
+                Log.i("pad", m == MODE_LOBBY ? "pad mouse on (the lobby, or no game running)"
                         : m == MODE_GAME ? "pad mouse and keys on (BAR's game)" : "pad mouse off (catching up with the game)");
                 releaseAll();   // nothing stays held across a change
             }

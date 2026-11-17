@@ -161,7 +161,7 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 
 ## Gamepad, mouse and keyboard
 
-- **Gamepads:** in the lobby the pad is a mouse: the D-pad puts the pointer on the next button, tab, list row or box
+- **Gamepads:** in the lobby (also when it is opened over a game) the pad is a mouse: the D-pad puts the pointer on the next button, tab, list row or box
   that way (ringed in gold; A clicks it), and Start switches the lobby's size between 100% and 130% (each start is at
   100%). In every game (skirmish, online, spectating) the app rebuilds BAR Controller Support v0.8.5's controls from a mouse and keyboard, which
   every game allows; the pointer stays in the middle of the screen, as v0.8.5's reticle:

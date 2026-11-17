@@ -181,7 +181,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the middle, the camera through `bardroid_touch.lua`'s pad lines; which game it is: `bardroid_game.txt`) and sends
   the rest as actions to `assets/bardroid/bardroid_pad.lua` (the order menu on the pad, groups, idle units, LB
   orders; it writes `bardroid_pad.txt`: which menu has the pad, pregame, what is picked); in the lobby the pad is a
-  mouse (its D-pad from control to control: `bardroid_lobby_touch.lua` reads `lobby_nav_*` from the touch log).
+  mouse (its D-pad from control to control: `bardroid_lobby_touch.lua` reads `lobby_nav_*` from the touch log), BAR's
+  lobby over a game too (`bardroid_overlay.txt`, `RtsTouch.lobbyOverGame`).
   `PadGame` runs on the laptop
   against a made-up pointer (`tools/padgame-test.ps1`, `PadMouse`/`PadButtons` keep it free of Android classes). Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
   Packaged from BARGAMEPAD branch `controller/codex-v085-perf` (performance work, same behaviour; HANDOFF.md

@@ -2277,6 +2277,22 @@ final class RtsTouch {
         return overlayLast;
     }
 
+    private volatile boolean padOverlay;
+    private volatile long padOverlayAt;
+    /**
+     * BAR's lobby over a running game, for the pad's mode (ControllerBridge's thread, GameActivity's PadMouse.mode; the
+     * file read at most every 250 ms, apart from the fingers' lobbyOverlay on the UI thread). Any thread.
+     */
+    boolean lobbyOverGame() {
+        long now = SystemClock.uptimeMillis();
+        if (now - padOverlayAt >= 250) {
+            padOverlayAt = now;
+            String t = gameWidgetRunning() ? readSmall(overlayFile) : null;
+            padOverlay = t != null && t.trim().equals("1");
+        }
+        return padOverlay;
+    }
+
     /** A game's widget answers (it writes the hover file at least once a second); not in the lobby. Any thread. */
     boolean gameWidgetRunning() {
         return System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS;
