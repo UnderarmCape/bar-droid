@@ -504,7 +504,13 @@ public class LauncherActivity extends AppCompatActivity {
                 String build = firstLine(new File(phone, "BUILD.txt"));
                 sb.append(build != null && build.equals(firstLine(new File(bar, ".bardroid-phone-failed")))
                         ? " (official: the phone build could not run here)" : " (phone build)");
+            } else {
+                // (BAR moved to an engine this APK has no phone build of, ENGINE-DEFAULT stage 4: the official one runs
+                // until an app update brings one; the line said only "engine 2026.09.03" on the Fold7, 2026-11-17)
+                sb.append(" (official: the phone build waits for an app update)");
             }
+        } else {
+            sb.append(" (official)");   // (the launcher's Phone engine off)
         }
         return styleSummary(sb.toString());
     }
