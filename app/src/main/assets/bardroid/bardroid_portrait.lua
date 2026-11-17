@@ -2882,7 +2882,9 @@ end
 -- light edge, noise and gloss), the storage's fill (metal grey to white, energy dark to bright yellow, its glow; energy's
 -- shimmer), and FlowUI's slider knobs: the share red, energy's conversion pale; a knob held as BAR's hovered one. Live
 -- each frame (the fill moves): drawDock, over the dock's texture
-function SP.drawResBar(item, r)
+-- part: "track" (still: into the dock's texture), "live" (the fill and knobs: each frame over it), nil both. The track
+-- had been drawn live too: the open panel took the dock from 1.1-1.3 to 1.6-1.8 ms a frame (dev phone, 2026-11-17)
+function SP.drawResBar(item, r, part)
 	local f = flow()
 	local b, bh = SP.barArea(r)
 	local res = item.res
@@ -2892,21 +2894,36 @@ function SP.drawResBar(item, r)
 	local frac = (storage or 0) > 0 and max(0, min(1, (cur or 0) / storage)) or 0
 	local fw = max(math.ceil(bh * 0.2), floor(frac * w))
 	if not (f and f.RectRound and f.RectRoundOutline and f.TexturedRectRound and f.SliderKnob) then
-		gl.Color(0.08, 0.08, 0.08, 0.95)
-		gl.Rect(b[1], b[2], b[3], b[4])
-		gl.Color(metal and 0.9 or 1, metal and 0.9 or 0.86, metal and 0.9 or 0.15, 1)
-		gl.Rect(b[1], b[2], b[1] + fw, b[4])
-		for _, what in ipairs(metal and { "share" } or { "convert", "share" }) do
-			local c = SP.KNOB[what]
-			local kx = b[1] + w * sliderValue(item, what)
-			gl.Color(c[1], c[2], c[3], 1)
-			gl.Rect(kx - bh * 0.6, b[2] - bh * 0.6, kx + bh * 0.6, b[4] + bh * 0.6)
+		if part ~= "live" then
+			gl.Color(0.08, 0.08, 0.08, 0.95)
+			gl.Rect(b[1], b[2], b[3], b[4])
+		end
+		if part ~= "track" then
+			gl.Color(metal and 0.9 or 1, metal and 0.9 or 0.86, metal and 0.9 or 0.15, 1)
+			gl.Rect(b[1], b[2], b[1] + fw, b[4])
+			for _, what in ipairs(metal and { "share" } or { "convert", "share" }) do
+				local c = SP.KNOB[what]
+				local kx = b[1] + w * sliderValue(item, what)
+				gl.Color(c[1], c[2], c[3], 1)
+				gl.Rect(kx - bh * 0.6, b[2] - bh * 0.6, kx + bh * 0.6, b[4] + bh * 0.6)
+			end
 		end
 		gl.Color(1, 1, 1, 1)
 		return
 	end
 	local add = max(1, floor(bh * 0.15 + 0.5))
 	local fh = add * 4
+	if part ~= "live" then
+		SP.drawResTrack(f, b, bh, w, add, fh)
+		if part == "track" then
+			resetGL()
+			return
+		end
+	end
+	SP.drawResFill(f, item, b, bh, w, add, fw, frac, metal, r)
+end
+-- the bar's track: gui_top_bar.lua's background, dark outlines, inner light edge, noise and gloss
+function SP.drawResTrack(f, b, bh, w, add, fh)
 	f.RectRound(b[1], b[2], b[3], b[4], bh * 0.2, 1, 1, 1, 1, { 0, 0, 0, 0.15 }, { 0, 0, 0, 0.2 })
 	f.RectRoundOutline(b[1] - add - fh - 1, b[2] - add - fh - 1, b[3] + add + fh + 1, b[4] + add + fh + 1, bh * 0.8, fh,
 		1, 1, 1, 1, { 0, 0, 0, 0 }, { 0, 0, 0, 0.22 })
@@ -2926,7 +2943,9 @@ function SP.drawResBar(item, r)
 	f.RectRound(b[1] - add, b[2] + add, b[3] + add, b[4] + add, bh * 0.33, 1, 1, 0, 0, { 1, 1, 1, 0 }, { 1, 1, 1, 0.05 })
 	f.RectRound(b[1] - add, b[2] - add, b[3] + add, b[2] + add * 2.5, bh * 0.2, 0, 0, 1, 1, { 1, 1, 1, 0.08 }, { 1, 1, 1, 0 })
 	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
-	-- the fill
+end
+-- the bar's fill (its glow, energy's shimmer) and knobs: live
+function SP.drawResFill(f, item, b, bh, w, add, fw, frac, metal, r)
 	f.RectRound(b[1], b[2], b[1] + fw, b[4], bh * 0.2, 1, 1, 1, 1,
 		metal and { 0.51, 0.51, 0.5, 1 } or { 0.5, 0.45, 0, 1 }, metal and { 0.95, 0.95, 0.95, 1 } or { 0.8, 0.75, 0, 1 })
 	f.RectRound(b[1] + 1, b[2] + 1, b[1] + fw - 1, b[4] - 1, bh * 0.2, 1, 1, 1, 1, { 0, 0, 0, 0.1 }, { 0, 0, 0, 0.17 })
@@ -2965,8 +2984,8 @@ function SP.drawResBar(item, r)
 	resetGL()
 end
 
--- a resource panel's bar cell: BAR's dark panel and the words above the bar (in the dock's texture); the bar itself
--- live (SP.drawResBar: drawn here without the texture)
+-- a resource panel's bar cell: BAR's dark panel, the words above the bar and its track (in the dock's texture); its
+-- fill and knobs live (SP.drawResBars; all of it here without the texture)
 local function drawSlider(item, r)
 	panel(r)
 	local h = r[4] - r[2]
@@ -2988,9 +3007,7 @@ local function drawSlider(item, r)
 		textIn(s1, r[1], y0, mid, y1, size, "\255\255\150\140", font)
 		textIn(s2, mid, y0, r[3], y1, size, "\255\242\242\190", font)
 	end
-	if not SP.inTex then
-		SP.drawResBar(item, r)
-	end
+	SP.drawResBar(item, r, SP.inTex and "track" or nil)
 end
 -- the open resource panel's bars over the dock's texture (drawDock: the fill moves, the texture is made again only when
 -- the dock changes)
@@ -3001,8 +3018,9 @@ function SP.drawResBars()
 	local hr = homeRect()
 	for i, item in ipairs(rightItems) do
 		local cr = item.kind == "slider" and cellRect("right", i)
-		if cr and cr[2] >= hr[2] - 1 and cr[4] <= hr[4] + 1 then -- (wholly in sight; scrolled part way: the texture's words)
-			SP.drawResBar(item, cr)
+		if cr and cr[2] >= hr[2] - 1 and cr[4] <= hr[4] + 1 then -- (wholly in sight; scrolled part way: the texture's
+			-- words and track)
+			SP.drawResBar(item, cr, "live")
 		end
 	end
 end
