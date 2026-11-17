@@ -51,6 +51,9 @@ local TOUCH = "LuaUI/Config/bardroid_touch.txt"
 local SCREEN = "LuaUI/Config/bardroid_screen.txt"
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
 local GAME = "LuaUI/Config/bardroid_game.txt"
+-- BAR's lobby over the game ("LobbyOverlayActive1" / "0", the top bar's Lobby button), for the app: "1" or "0"
+-- (RtsTouch hides the pointer for fingers there, as in the lobby; widget:RecvLuaMsg)
+local OVERLAY = "LuaUI/Config/bardroid_overlay.txt"
 local TILT_RANGE = math.pi / 2 * 1.75 * 1.5 -- a drag over the screen height tilts this much (Kailil: +75%, then +50%)
 -- Finger moves reach the camera over a few frames instead of in whatever batch each frame happened to collect
 -- (Kailil, 2026-10-26: "super juttery", "like a super cheap touch screen mp3 player"); seconds.
@@ -163,6 +166,7 @@ end
 
 local loadedGame = { pending = false } -- (a saved game loaded: checkLoadedGame; one table for the locals)
 function widget:Initialize()
+	writeWhole(OVERLAY, "0\n") -- (one left at "1" by a game that ended under the lobby)
 	if Spring.GetGameState then
 		local ok, doneLoading, savedGame = pcall(Spring.GetGameState)
 		loadedGame.pending = ok and savedGame == true and doneLoading == false
@@ -1272,7 +1276,15 @@ end
 
 local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrapped for fingers (wrapTooltips)
 
+-- BAR's lobby over the game or gone again: told to the app (OVERLAY)
+function widget:RecvLuaMsg(msg)
+	if msg:sub(1, 18) == "LobbyOverlayActive" then
+		writeWhole(OVERLAY, msg:sub(1, 19) == "LobbyOverlayActive1" and "1\n" or "0\n")
+	end
+end
+
 function widget:Shutdown()
+	writeWhole(OVERLAY, "0\n")
 	WG.BarDroidOnInterface = nil
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")

@@ -161,6 +161,11 @@ final class RtsTouch {
     private final Handler io;
     private final HandlerThread ioThread = new HandlerThread("touch-io");
     private final File widgetDir = new File(BarApp.get().paths().bar, "LuaUI/Config");   // the game's write dir
+    // BAR's lobby over the game (the top bar's Lobby button): bardroid_touch.lua writes "1" or "0" as BAR tells its
+    // widgets ("LobbyOverlayActive"); fingers there hide the pointer as in the lobby (lobbyOverlay)
+    private final File overlayFile = new File(widgetDir, "bardroid_overlay.txt");
+    private boolean overlayLast;
+    private long overlayAt;
     private final File touchLog = new File(widgetDir, "bardroid_touch.txt");
     private final File screenFile = new File(widgetDir, "bardroid_screen.txt");
     private final File hoverFile = new File(widgetDir, "bardroid_hover.txt");
@@ -1174,7 +1179,7 @@ final class RtsTouch {
      */
     private void showCursor(boolean visible) {
         cursorWanted = visible;
-        visible &= !firstPerson && !(fingersLast && (!gameWidgetRunning() || cursorOnDock));
+        visible &= !firstPerson && !(fingersLast && (!gameWidgetRunning() || cursorOnDock || overlayLast));
         if (cursorSynced && cursorHidden == !visible) return;
         cursorSynced = true;
         cursorHidden = !visible;
@@ -2224,8 +2229,12 @@ final class RtsTouch {
     void source(String s) {
         long now = SystemClock.uptimeMillis();
         boolean fingers = s.equals("touch");
-        if (fingers != fingersLast || !cursorSynced) {   // (the lobby's pointer: hidden for fingers, back for the rest)
+        boolean overlay = fingers ? lobbyOverlay() : overlayLast;
+        if (fingers != fingersLast || !cursorSynced || overlay != overlayLast) {   // (the lobby's pointer: hidden for
+            // fingers, back for the rest; BAR's lobby over the game the same: an arrow stood where its Lobby button had
+            // been tapped and followed each tap on the lobby, dev phone 2026-11-17)
             fingersLast = fingers;
+            overlayLast = overlay;
             showCursor(cursorWanted);
         }
         if (s.equals("pad")) {
@@ -2255,6 +2264,17 @@ final class RtsTouch {
         fingersLast = true;
         cursorSynced = false;
         showCursor(cursorWanted);
+    }
+
+    /** BAR's lobby is over a running game (bardroid_overlay.txt; read at most every 250 ms). UI thread. */
+    private boolean lobbyOverlay() {
+        long now = SystemClock.uptimeMillis();
+        if (now - overlayAt >= 250) {
+            overlayAt = now;
+            String t = gameWidgetRunning() ? readSmall(overlayFile) : null;
+            return t != null && t.trim().equals("1");
+        }
+        return overlayLast;
     }
 
     /** A game's widget answers (it writes the hover file at least once a second); not in the lobby. Any thread. */
