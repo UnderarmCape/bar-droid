@@ -178,8 +178,24 @@ local function rectOf(id)
 	end
 	local ok, x0, y0, x1, y1 = pcall(p.rect)
 	if ok and x0 and y1 and x1 > x0 and y1 > y0 then
+		-- (none where the touch dock covers it whole: BAR's player list under the upright dock was outlined over the
+		-- dock's buttons, nothing of it to see or size; dev phone upright, 2026-11-16)
+		-- (its corners a few pixels in: the list's rect runs to the screen's edge, the dock's stops short of it)
+		local P = WG.BarDroidPortrait
+		local on = P and P.onDock
+		local a, b, c, e = x0 + 8, y0 + 8, x1 - 8, y1 - 8
+		if on and c > a and e > b and on(a, b) and on(c, e) and on(a, e) and on(c, b) and on((a + c) / 2, (b + e) / 2) then
+			return nil
+		end
 		return x0, y0, x1, y1
 	end
+end
+
+-- the screen's height above the touch dock, where the editor's buttons go (0 without it)
+local function dockTop()
+	local P = WG.BarDroidPortrait
+	local d = P and P.dock and P.dock()
+	return d and d[4] < vsy * 0.9 and d[4] or 0
 end
 
 local function editable(p)
@@ -266,7 +282,11 @@ local function layoutButtons()
 	end
 	-- rows no wider than the room the panels leave in the middle of the screen, where they go, if that is half the
 	-- screen at least, else than the screen (one row of a picked panel's buttons crossed the build menu, 2026-11-03)
-	local lo, hi = freeSpan(vsy / 2 - h * 1.5, vsy / 2 + h * 1.5)
+	-- (the middle of the room above the touch dock: upright the screen's middle fell on the wind's and tide's boxes,
+	-- just above the dock, and the hint covered them; dev phone 2026-11-16)
+	local floorY = dockTop()
+	local midY = (vsy + floorY) / 2
+	local lo, hi = freeSpan(midY - h * 1.5, midY + h * 1.5)
 	local maxW = hi - lo - 2 * gap
 	if maxW < vsx * 0.5 then
 		maxW = vsx - 2 * gap
@@ -295,7 +315,7 @@ local function layoutButtons()
 	-- in the middle of the screen (the panels sit at its edges), else just above or below the panel picked
 	buttons = {}
 	local total = #rows * h + (#rows - 1) * gap
-	local top = math.floor((vsy + total) / 2)
+	local top = math.floor(midY + total / 2)
 	if picked then
 		local _, y0, _, y1 = rectOf(picked)
 		if y0 and top - total < y1 + gap and top > y0 - gap then
