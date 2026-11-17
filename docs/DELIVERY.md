@@ -2273,9 +2273,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       rows down the screen at under 3 mm each. Upright each tab's rows stand 1.5 times as far apart now, their controls
       as tall (a checkbox's box 24: at 28 "Show Battles with Test Engine Versions" ran up to it), a row's words beside
       its control's middle (1b333033). Dev phone: the Lobby tab's 48 rows and the Graphics tab spaced, "Show country
-      flags" on and off again by a tap each (the right row), lobby-phone-test ALL PASS. Chobby's places are kept and
-      put back sideways; that way back is not seen yet (the dev phone lies flat and does not turn while the lobby is
-      open): to look at on the Fold7.
+      flags" on and off again by a tap each (the right row), lobby-phone-test ALL PASS. The next run (~22:50): sideways
+      the rows were the densest, about 40 pixels (2 mm) each, so the spacing applies both ways up now (5991d86f); dev
+      phone sideways the 48 rows spaced, the same tap check, lobby-phone-test ALL PASS. The run's other checks:
+      touch-phone-test and pad-test ALL PASS after the evening's changes; the lobby's Skirmish and Scenarios pages
+      upright fine (the offline quick skirmish's "Download Failed" note is the open "Playing with no connection" item).
 - [x] **The layout editor upright with today's dock** (hardening, 2026-11-16 ~22:10, dev phone, `/hud` typed): it
       outlined BAR's player list over the dock's bottom right (the list lies under the upright dock: nothing of it to
       see or size), and its hint and buttons stood at the screen's middle, upright on the wind's and tide's boxes. A
