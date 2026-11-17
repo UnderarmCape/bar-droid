@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The voice chat's offline note reviewed; the launcher's GL check line** (hardening, 2026-11-17 ~09:55, dev
+      phone): VoiceChat's offline note (no network, a network timeout, the server) left out error 13
+      (ERROR_LANGUAGE_UNAVAILABLE: the phone's language not downloaded for recognition without a connection), which still
+      ended in silence: it gets the same "NOTHING SENT: SPEECH NEEDS A CONNECTION" now (not testable here: no live
+      microphone). UI polish: the launcher's GL check answer broke between "Mesa" and its version ("... OpenGL 4.3, Mesa
+      / 27.0.0-devel"); each name now keeps its number (no-break space, the version's hyphen a no-break one): "...
+      OpenGL 4.3," / "Mesa 27.0.0-devel". The launcher's status read "Ready" after the morning's offline update (the
+      "Installed" seen then was the step's own word).
 - [x] **Replays' Add reviewed: a provider's error, a short first read, files that are not replays** (hardening,
       2026-11-17 ~09:45, dev phone upright, the lobby offline): ReplayImportActivity's copy runs on a thread of its own;
       a RuntimeException there (a provider's SecurityException or IllegalArgumentException) was not caught and would

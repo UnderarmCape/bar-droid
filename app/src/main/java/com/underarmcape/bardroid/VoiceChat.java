@@ -198,8 +198,10 @@ final class VoiceChat {
             if (error == SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS) sink.denied();
             // (a recognizer that needs the network, with none or a server not answering: what was said is lost, and the
             // note only went away, as for silence; review 2026-11-17, the dev phone without a connection)
+            // (13, ERROR_LANGUAGE_UNAVAILABLE: the phone's language not downloaded for recognition without a connection;
+            // the same note, the connection is what it needs then; review 2026-11-17)
             else if (error == SpeechRecognizer.ERROR_NETWORK_TIMEOUT || error == SpeechRecognizer.ERROR_NETWORK
-                    || error == SpeechRecognizer.ERROR_SERVER) sink.offline();
+                    || error == SpeechRecognizer.ERROR_SERVER || error == 13) sink.offline();
         }
 
         @Override public void onResults(Bundle results) {

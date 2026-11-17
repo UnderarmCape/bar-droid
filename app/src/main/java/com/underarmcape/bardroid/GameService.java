@@ -585,7 +585,10 @@ public class GameService extends Service {
         if (version == null) return "GL check: " + renderer;
         // ("4.3 (Compatibility Profile) Mesa 27.0.0-devel (git-6f90e92dfd)": the numbers; the rest is in the log)
         java.util.regex.Matcher mesa = java.util.regex.Pattern.compile("Mesa (\\S+)").matcher(version);
-        return "GL check: " + renderer + ", OpenGL " + version.split(" ")[0] + (mesa.find() ? ", Mesa " + mesa.group(1) : "");
+        // (each name kept with its number, no-break spaces and hyphens: the launcher broke the line between "Mesa" and
+        // "27.0.0-devel", dev phone 2026-11-17)
+        return "GL check: " + renderer + ", OpenGL " + version.split(" ")[0]
+                + (mesa.find() ? ", Mesa " + mesa.group(1).replace('-', '‑') : "");
     }
 
     /**
