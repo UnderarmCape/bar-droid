@@ -740,6 +740,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **fp-save-test and pace-test after the night's changes** (hardening, 2026-11-17 ~04:00, dev phone): a
+      spectator's 1st person through BAR's mid-game settings save, and the shipped libbardroid_pace.so's frame cap
+      (pace-test -Shipped): both ALL PASS. The Fold7 still off adb (no answer on its port, nothing in mdns). No UI
+      polish this run.
 - [x] **BAR's lobby over a player's game** (hardening, 2026-11-17 ~03:40, dev phone upright, offline lobby: Skirmish,
       1v1, Beginner, Armada, Onyx Cauldron 2.2.2, Start): the pregame with its start box, the wind's range "1-29" and
       the tide "20", the top bar's Lobby; a start picked, Ready; in the game Lobby put the dock aside (overlay "1",
