@@ -3740,7 +3740,9 @@ function SP.drawWindInfo()
 	local height = pad * 2 + rowH * (1 + #rows) + (#lines > 0 and (#lines * noteFs * 1.2 + pad * 0.5) or 0)
 		+ (graph and (graphH + axisFs * 1.6 + pad) or 0)
 	local b = info.box
-	local base = (L.thumb and L.dock and L.dock[4] or b[4]) + (L.pad or 4) -- (over the box; folded sideways over the dock)
+	-- (over the box; folded sideways, and from either nook, over the dock: over the nook in the selection row it covered
+	-- metal and energy, dev phone 2026-11-17)
+	local base = ((L.thumb or L.windNook) and L.dock and L.dock[4] or b[4]) + (L.pad or 4)
 	local x0 = max(lo0, min(hi0 - W, floor((b[1] + b[3]) / 2 - W / 2)))
 	local r = { x0, base, x0 + W, base + floor(height) }
 	info.rect = r

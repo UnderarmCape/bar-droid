@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The touch and lobby phone tests after the nook; the wind's details over the dock** (hardening, 2026-11-17 ~12:35,
+      dev phone): touch-phone-test and lobby-phone-test ALL PASS; the launcher's screens scrolled top to bottom, nothing
+      to change. Found in the screenshots: the wind's and the tide's details stood just over the tapped box, right for
+      boxes over the dock, but from the nook in the selection row the panel came down over metal and energy (the metal
+      bar half hidden), and from the nook between them over the dock's rim. From either nook it now stands over the dock
+      with a gap (SP.drawWindInfo, as sideways). Checked by taps on both nooks: metal and energy whole under it.
 - [x] **The new nook played upright and sideways; the sideways pill** (hardening, 2026-11-17 ~12:20, dev phone): an
       upright skirmish (the commander picked, the nook in the selection row) and a sideways one: no Lua error or warning
       once the game ran, launcher.log only BAR's known "no GetInfo" lines. Polish: sideways folded the wind and the tide
