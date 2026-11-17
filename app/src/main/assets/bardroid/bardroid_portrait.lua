@@ -3301,9 +3301,20 @@ local function drawIndicator(tex, turn, x, cy, s, text, extra)
 		font:Print("\255\185\185\185" .. extra, x + slot + s * 0.14, cy - size * 0.32, s * 0.5, "o")
 	end
 end
+-- metal's and energy's boxes: the two halves of their row, or either side of the wind's and the tide's nook in its middle
+function SP.resBoxes()
+	local r, pad = L.res, L.pad
+	local nk = not SP.windOff() and SP.windRects() and L.windNook
+	if nk and nk.kind == "res" then
+		local g = max(2, floor(pad * 0.5))
+		return { r[1], r[2], nk[1] - g, r[4] }, { nk[3] + g, r[2], r[3], r[4] }
+	end
+	local w = floor((r[3] - r[1] - pad) / 2)
+	return { r[1], r[2], r[1] + w, r[4] }, { r[1] + w + pad, r[2], r[1] + 2 * w + pad, r[4] }
+end
 local function drawResources()
 	local r = L.res
-	local w = floor((r[3] - r[1] - L.pad) / 2)
+	local mB, eB = SP.resBoxes()
 	local h = r[4] - r[2]
 	local pad = max(2, floor(h * 0.1))
 	local barH = max(3, floor(h * 0.12))
@@ -3315,20 +3326,20 @@ local function drawResources()
 	for i, res in ipairs({ "metal", "energy" }) do
 		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
 		if cur and storage then
-			local x0 = r[1] + (i - 1) * (w + L.pad)
+			local b = i == 1 and mB or eB
+			local x0 = b[1]
 			local flows = string.format("\255\120\230\120+%s \255\240\110\100-%s", short(income or 0), short(expense or 0))
 			local left = x0 + pad * 1.5 + bold:GetTextWidth(short(cur)) * big + pad * 2 + font:GetTextWidth(flows) * small
 				+ pad * 2
-			if x0 + w - pad * 1.5 - font:GetTextWidth(short(storage)) * small * 0.85 < left then
+			if b[3] - pad * 1.5 - font:GetTextWidth(short(storage)) * small * 0.85 < left then
 				storageFits = false
 			end
 		end
 	end
 	for i, res in ipairs({ "metal", "energy" }) do
 		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
-		local x0 = r[1] + (i - 1) * (w + L.pad)
-		local x1 = x0 + w
-		local box = { x0, r[2], x1, r[4] }
+		local box = i == 1 and mB or eB
+		local x0, x1 = box[1], box[3]
 		panel(box)
 		if cur and storage then
 			local by0, by1 = r[2] + pad, r[2] + pad + barH
@@ -3386,9 +3397,9 @@ function SP.windRectsNow()
 		return nil
 	end
 	local hh = max(10, floor((r[4] - r[2]) * 0.9)) -- (at 0.72 the reading was small beside the numbers under it)
-	if L.split and g then -- (the hole's foot over them: layout's split dock)
-		local w, y0 = floor((g[3] - g[1] - pad) / 2), g[4] + pad
-		return { g[1], y0, g[1] + w, y0 + hh }, { g[3] - w, y0, g[3], y0 + hh }
+	if L.split and g then -- (the hole's foot over them: layout's split dock; one pill, as in the nook: SP.drawPill)
+		local y0, mid = g[4] + pad, floor((g[1] + g[3]) / 2)
+		return { g[1], y0, mid, y0 + hh }, { mid, y0, g[3], y0 + hh }
 	elseif L.thumb and L.windCol then
 		local c, half = L.windCol, floor((L.gap or 3) / 2)
 		local mid = floor((c[2] + c[4]) / 2)
@@ -3398,18 +3409,29 @@ function SP.windRectsNow()
 	-- 2026-11-17, a screenshot with a red box round "Armada Commander": "lets move the wind and tidal widgets to inside of
 	-- this red box instead. it will be like a nudge/nook looking thing with the widgets in it. tapping on it shows the same
 	-- widget popup"): from the INSERT third's edge to seven tenths across, the name a line lower (drawSelection). Nothing
-	-- picked (no selection row): over metal and energy as before.
+	-- picked (no selection row; Kailil, the same day: "Nook there too"): a nook as wide in the dock's top edge between
+	-- metal and energy, their boxes either side of it (SP.resBoxes), the pill on their row. The two boxes one pill
+	-- (SP.drawNook), the nook's top the edge it is sunk from (kind: whose).
 	local s = L.sel
+	local inset = max(2, floor(pad * 0.6))
 	if not L.land and showSel and leftKind ~= "spec" and s and s[3] > s[1] and s[4] > s[2] then
 		local h = s[4] - s[2]
-		local inset = max(2, floor(pad * 0.6))
 		local x0 = s[1] + floor((s[3] - s[1]) / 3) + pad
 		local x1 = s[1] + floor((s[3] - s[1]) * 0.70)
 		local y1 = s[4] - inset
 		local y0 = y1 - floor(h * 0.36)
-		local w = floor((x1 - x0 - inset) / 2)
-		L.windNook = { x0 - inset, y0 - inset, x1 + inset, s[4] }
-		return { x0, y0, x0 + w, y1 }, { x1 - w, y0, x1, y1 }
+		local mid = floor((x0 + x1) / 2)
+		L.windNook = { x0 - inset, y0 - inset, x1 + inset, s[4], kind = "sel" }
+		return { x0, y0, mid, y1 }, { mid, y0, x1, y1 }
+	end
+	local d = L.dock
+	if not L.land and not showSel and leftKind ~= "spec" and d and d[4] > r[4] then
+		local pw = floor((r[3] - r[1]) * (0.70 - 1 / 3)) - pad
+		local x0 = floor((r[1] + r[3] - pw) / 2)
+		local y0 = floor((r[2] + r[4] - hh) / 2)
+		local mid = x0 + floor(pw / 2)
+		L.windNook = { x0 - inset, y0 - inset, x0 + pw + inset, d[4], kind = "res" }
+		return { x0, y0, mid, y0 + hh }, { mid, y0, x0 + pw, y0 + hh }
 	end
 	local w, y0 = floor((r[3] - r[1] - pad) / 2), r[4] + pad + max(2, floor(pad * 0.5)) -- (a gap over the dock's edge)
 	return { r[1], y0, r[1] + w, y0 + hh }, { r[1] + w + pad, y0, r[1] + 2 * w + pad, y0 + hh }
@@ -3418,6 +3440,116 @@ end
 function SP.selLineY(r, nk)
 	return (r[2] + (r[4] - r[2]) * 0.25 + nk[2]) / 2
 end
+-- The nook's look (Kailil, 2026-11-17: "make the Nook sleak and look better, give it a nice look. it looks jank right
+-- now"; it was a flat dark box with a hard rim and two boxes in it): a channel sunk from the edge, its foot rounded round
+-- the pill's at the same distance, curved shoulders where it leaves the edge, darker under the edge and a faint light on
+-- its lower lip; in it the wind and the tide one pill, lit along its top, a hairline between them, the open one's half
+-- tinted gold and underlined. Its own round corners: FlowUI's RectRound cuts them straight (BAR's bevel), the pill read
+-- as an octagon (dev phone, 2026-11-17).
+-- a rounded rect's outline, x and y in turn, its corners' radii tl, tr, br, bl (0: square)
+function SP.roundPath(x0, y0, x1, y1, tl, tr, br, bl)
+	local pts, n, q = {}, 8, math.pi / 2
+	for _, c in ipairs({ { x1 - tr, y1 - tr, tr, 0 }, { x0 + tl, y1 - tl, tl, q }, { x0 + bl, y0 + bl, bl, 2 * q },
+		{ x1 - br, y0 + br, br, 3 * q } }) do
+		for i = 0, c[3] > 0 and n or 0 do
+			local t = c[4] + q * i / n
+			pts[#pts + 1] = c[1] + c[3] * math.cos(t)
+			pts[#pts + 1] = c[2] + c[3] * math.sin(t)
+		end
+	end
+	return pts
+end
+-- a shoulder: the corner where the channel leaves the edge, filled out to an arc from the edge down its side (s: 1 the
+-- left one, -1 the right one)
+function SP.shoulderPath(x, y, rs, s)
+	local pts, n, q = { x, y }, 8, math.pi / 2
+	for i = 0, n do
+		local t = q * i / n
+		pts[#pts + 1] = x - s * rs + s * rs * math.cos(t)
+		pts[#pts + 1] = y - rs + rs * math.sin(t)
+	end
+	return pts
+end
+function SP.fanColor(c1, c2, t)
+	t = max(0, min(1, t))
+	gl.Color(c1[1] + (c2[1] - c1[1]) * t, c1[2] + (c2[2] - c1[2]) * t, c1[3] + (c2[3] - c1[3]) * t,
+		c1[4] + (c2[4] - c1[4]) * t)
+end
+-- gl.BeginEnd's fan over an outline: from its first point (center: from b's middle), c1 at b's foot to c2 at its top, dy
+-- lower
+function SP.fan(pts, b, dy, c1, c2, center)
+	local y0, span = b[2], max(1, b[4] - b[2])
+	if center then
+		SP.fanColor(c1, c2, 0.5)
+		gl.Vertex((b[1] + b[3]) / 2, (b[2] + b[4]) / 2 - dy)
+	end
+	for i = 1, #pts, 2 do
+		SP.fanColor(c1, c2, (pts[i + 1] - y0) / span)
+		gl.Vertex(pts[i], pts[i + 1] - dy)
+	end
+	if center then
+		SP.fanColor(c1, c2, (pts[2] - y0) / span)
+		gl.Vertex(pts[1], pts[2] - dy)
+	end
+end
+SP.NOOK_C = {
+	lip0 = { 1, 1, 1, 0.12 }, lip1 = { 1, 1, 1, 0 }, -- (the lower lip's light: the channel drawn a little lower first)
+	well0 = { 0, 0, 0, 0.45 }, well1 = { 0, 0, 0, 0.82 },
+	edge = { 1, 1, 1, 0.16 }, -- (the pill's top lit: the pill drawn a pixel higher first)
+	pill0 = { 0.075, 0.08, 0.09, 1 }, pill1 = { 0.165, 0.17, 0.185, 1 },
+	gold0 = { 1, 0.78, 0.25, 0.06 }, gold1 = { 1, 0.78, 0.25, 0.22 },
+}
+function SP.drawNook(nk, wb, tb)
+	local C = SP.NOOK_C
+	local pad = L.pad or 4
+	if not nk.body then -- (made once a layout: the nook is made again with it)
+		local rp = floor((wb[4] - wb[2]) * 0.3)
+		local rw = min(rp + (wb[1] - nk[1]), floor((nk[4] - nk[2]) / 2), floor((nk[3] - nk[1]) / 2))
+		local rs = max(3, floor(pad * 0.9))
+		nk.body = SP.roundPath(nk[1], nk[2], nk[3], nk[4], 0, 0, rw, rw)
+		nk.shL = SP.shoulderPath(nk[1], nk[4], rs, 1)
+		nk.shR = SP.shoulderPath(nk[3], nk[4], rs, -1)
+	end
+	gl.Texture(false)
+	local fan, TF = SP.fan, GL.TRIANGLE_FAN
+	gl.BeginEnd(TF, fan, nk.body, nk, max(1, floor(pad * 0.2)), C.lip0, C.lip1, true)
+	gl.BeginEnd(TF, fan, nk.body, nk, 0, C.well0, C.well1, true)
+	gl.BeginEnd(TF, fan, nk.shL, nk, 0, C.well1, C.well1)
+	gl.BeginEnd(TF, fan, nk.shR, nk, 0, C.well1, C.well1)
+	SP.drawPill(wb, tb, nk)
+end
+-- the wind and the tide side by side as one pill (in the nook, and unfolded on the groups between the blocks); its
+-- outlines kept in cache (a table made again with the layout)
+function SP.drawPill(wb, tb, cache)
+	local C = SP.NOOK_C
+	local ph = wb[4] - wb[2]
+	local rp = floor(ph * 0.3)
+	local pb = cache.pb
+	if not pb then
+		pb = { wb[1], wb[2], tb[3], wb[4] }
+		cache.pb = pb
+		cache.pill = SP.roundPath(pb[1], pb[2], pb[3], pb[4], rp, rp, rp, rp)
+		cache.wind = SP.roundPath(wb[1], wb[2], wb[3], wb[4], rp, 0, 0, rp)
+		cache.tide = SP.roundPath(tb[1], tb[2], tb[3], tb[4], 0, rp, rp, 0)
+	end
+	gl.Texture(false)
+	local fan, TF = SP.fan, GL.TRIANGLE_FAN
+	gl.BeginEnd(TF, fan, cache.pill, pb, -1, C.edge, C.edge, true)
+	gl.BeginEnd(TF, fan, cache.pill, pb, 0, C.pill0, C.pill1, true)
+	local info = SP.windInfo
+	local kind = info and info.kind
+	local lit = kind == "wind" and wb or kind == "tide" and tb
+	if lit then
+		gl.BeginEnd(TF, fan, cache[kind], lit, 0, C.gold0, C.gold1, true)
+		local u = max(2, floor(ph * 0.05))
+		gl.Color(1, 0.8, 0.3, 0.95)
+		gl.Rect(lit[1] + rp, lit[2] + u, lit[3] - rp, lit[2] + 2 * u)
+	end
+	local mx = floor(wb[3])
+	gl.Color(1, 1, 1, 0.14)
+	gl.Rect(mx, pb[2] + floor(ph * 0.22), mx + 1, pb[4] - floor(ph * 0.22))
+	resetGL()
+end
 -- Drawn live: a few rectangles and words; the box whose details are open lit gold
 function SP.drawWindTide()
 	local wb, tb = SP.windRects()
@@ -3425,24 +3557,22 @@ function SP.drawWindTide()
 		return
 	end
 	local nk = L.windNook
-	if nk then -- (the nook: a dark well sunk into the selection row's top, a rim on three sides, open to the dock's edge)
-		local e = max(1, floor((L.pad or 4) * 0.25))
-		gl.Color(0, 0, 0, 0.6)
-		gl.Rect(nk[1], nk[2], nk[3], nk[4])
-		gl.Color(1, 1, 1, 0.14)
-		gl.Rect(nk[1], nk[2], nk[1] + e, nk[4])
-		gl.Rect(nk[3] - e, nk[2], nk[3], nk[4])
-		gl.Rect(nk[1], nk[2], nk[3], nk[2] + e)
-		gl.Color(1, 1, 1, 1)
+	local pill = nk or (L.split and not L.thumb)
+	if nk then
+		SP.drawNook(nk, wb, tb)
+	elseif pill then
+		SP.drawPill(wb, tb, wb)
 	end
 	for i, box in ipairs({ wb, tb }) do
 		local hh, bw = box[4] - box[2], box[3] - box[1]
 		local s = hh * 0.86
-		panel(box, nil, nil, nil, nil, true) -- (opaque: the game's metal spot rings showed through, over the reading)
-		if SP.windInfo and SP.windInfo.kind == (i == 1 and "wind" or "tide") then
-			gl.Color(1, 0.8, 0.25, 0.18)
-			gl.Rect(box[1], box[2], box[3], box[4])
-			gl.Color(1, 1, 1, 1)
+		if not pill then
+			panel(box, nil, nil, nil, nil, true) -- (opaque: the game's metal spot rings showed through, over the reading)
+			if SP.windInfo and SP.windInfo.kind == (i == 1 and "wind" or "tide") then
+				gl.Color(1, 0.8, 0.25, 0.18)
+				gl.Rect(box[1], box[2], box[3], box[4])
+				gl.Color(1, 1, 1, 1)
+			end
 		end
 		local cy, px = box[2] + hh / 2, box[1] + max(3, floor(hh * 0.18))
 		local small = min(hh * 0.42, bw * 0.16)
@@ -4686,7 +4816,9 @@ function SP.resSignature() -- (its parts in one table kept for it: made each fra
 		parts[5 + i] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
 			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0) or "-"
 	end
-	parts[8] = "" -- (the wind and tide: their own boxes now, drawn live, SP.drawWindTide)
+	-- (the wind and tide: their own boxes now, drawn live, SP.drawWindTide; their nook between metal and energy narrows them)
+	local nk = not SP.windOff() and SP.windRects() and L.windNook
+	parts[8] = nk and nk.kind == "res" and (nk[1] .. "," .. nk[3]) or ""
 	return table.concat(parts, " ")
 end
 function SP.drawRes()
@@ -5138,6 +5270,10 @@ function widget:MouseRelease(x, _, btn)
 			layout()
 			refresh()
 		end
+		return true
+	end
+	local nk = L.windNook -- (the nook between metal and energy: its edges around the pill open neither)
+	if nk and nk.kind == "res" and not SP.windOff() and inRect(p.x, p.y, nk) then
 		return true
 	end
 	if not p.side and inRect(p.x, p.y, L.res) and leftKind ~= "spec" then -- metal or energy tapped: its panel (again:

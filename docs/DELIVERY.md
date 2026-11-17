@@ -740,7 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **The nook with several units and a long name** (hardening, 2026-11-17 ~12:30, dev phone upright, a skirmish with
+- [x] **The nook with nothing picked, and a sleeker nook** (Kailil, 2026-11-17 ~11:50: "Nook there too", then "make the
+      Nook sleak and look better, give it a nice look. it looks jank right now"): with nothing picked the nook is sunk
+      into the dock's top edge between metal and energy, their boxes either side of it (SP.resBoxes; the strip above the
+      dock gone, the game that much taller); its edges around the pill open neither panel. Both nooks now one shape of
+      their own (SP.drawNook): a channel with a rounded foot round the pill's at the same distance, curved shoulders
+      where it leaves the edge, darker under the edge, a faint light on its lower lip; the wind and the tide one pill in
+      it (SP.drawPill), lit along its top, a hairline between them, the open half tinted gold and underlined. True round
+      corners (SP.roundPath, triangle fans): FlowUI's RectRound bevels them, and the pill read as an octagon; the first
+      fan over the shoulders left a dotted seam along the edge, now each shoulder its own fan from its corner. Unfolded,
+      the two boxes on the groups between the blocks are the same pill (no nook there). Checked on the dev phone,
+      screenshots up close: nothing picked, the wind tapped (its details, its half gold), 6 units picked with "Advanced
+      Construction Bot", and at 1080x1198 the pill with the tide tapped; dock-phone-test ALL PASS (the tide's and the
+      wind's first taps among them).
+- [x] **The nook with several units and a long name** (hardening, 2026-11-17 ~11:40, dev phone upright, a skirmish with
       4 Advanced Construction Bots and 2 Pawns given by a temporary probe widget, removed after): "Advanced Construction
       Bot" fits on QUEUE's line with room to spare, "6 units, 4 of this type" right-aligned beside the nook inside the
       row (the count's size follows its room, so two- and three-digit counts shrink rather than run off); a tap on the
