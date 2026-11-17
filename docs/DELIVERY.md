@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Ten untouched minutes upright with the day's dock** (hardening, 2026-11-17 00:31-00:42, dev phone, a launcher
+      skirmish against BARb, the commander alone): 29.7-30.0 fps every minute, the slowest frame 227 ms in the first
+      minute then 44-122 ms; Lua memory 121, 114, 125, 131, 140, 150, 155, then 148, 143, 144 MB: Lua's collector
+      cycling (it climbed ~9 MB a minute and came back), no leak; no Lua errors. The screen at ten minutes as at the
+      start (the wind box live, the dock whole). No UI polish this run.
 - [x] **The app's log folders over time** (hardening, 2026-11-17 ~00:30): the dev phone's files/logs held a
       `hang-2026-11-02.log` (3.4 MB) from that night's manual hang investigation; nothing in the app writes such files
       (HangDump's "[hang]" lines go to launcher.log) and Share logs names its files, so it is never shared. BAR's own
