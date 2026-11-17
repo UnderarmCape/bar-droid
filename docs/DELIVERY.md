@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Speak to chat: a second start while Android's microphone question is open** (hardening, review of VoiceChat,
+      2026-11-17 ~18:35): a start while the question is open (a start already on its way, the pad's chord) asked
+      Android again; an Activity takes one permission request at a time and answers a second at once with an empty
+      result, so the "allow the microphone in Android's settings" note showed over the question and the waiting start
+      was taken: an Allow then started nothing. Such a start is now dropped (logged "not started, the microphone question
+      is still open"). Not reproduced: the dev phone's microphone is denied and user-fixed, so Android answers without a
+      question (changing that flag is left to Kailil's live test, the open item below). Dev phone: PING tapped twice,
+      twice: "the microphone was not allowed" and the note both times (the guard clears with the answer); pad-test -Chat
+      and lobby-phone-test all pass. And the D-gun sticks' shading looked at sideways, floating over the game: as upright.
 - [x] **The pad's share list: the teammates' share marks in BAR's red** (hardening UI polish, 2026-11-17 ~18:25, dev
       phone, pad-test -Share): each teammate's storage bar had a thin white tick at their share slider, left out at the
       top; now a red mark (BAR's share red, as the dock's resource bar since Kailil's ask the same day) with a dark edge,

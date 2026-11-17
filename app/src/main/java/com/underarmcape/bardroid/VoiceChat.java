@@ -68,6 +68,13 @@ final class VoiceChat {
             Log.i("app", "voice chat: not started, the game screen is gone");
             return;
         }
+        // (Android's microphone question still open: a second request is answered at once with an empty "no"
+        // (Activity: one set of permissions at a time), which showed the "not allowed" note over the question and took
+        // the waiting start, so an Allow then started nothing; review 2026-11-17)
+        if (waitingForPermission) {
+            Log.i("app", "voice chat: not started, the microphone question is still open");
+            return;
+        }
         if (!SpeechRecognizer.isRecognitionAvailable(activity)) {
             Log.i("app", "voice chat: no speech recognition on this phone");
             sink.unavailable();
