@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pause after a replay's skip: the app's own ruled out; chat upright** (hardening, 2026-11-17 ~16:20, dev
+      phone): the app's Lua pauses a game in one place only (bardroid_touch.lua: the game screen hidden, a game with no
+      other player, a replay too), and logs "the game screen is hidden: paused until it is back" when it does: not in
+      that replay's log, so the pause came through BAR's own button (a press there once the game runs). Not seen again;
+      left to watch. The chat's typing box upright (Enter): "Allies:" across the top under the minimap row, as it
+      should be. The lobby over a game keeps the game's pointer where the last tap was, as in the game: left.
 - [x] **A replay from the lobby and back** (hardening, 2026-11-17 ~16:10, dev phone upright, the lobby offline): the
       10-minute Starwatcher replay from Replays' Start: its recorded pre-game, BAR's skip, the game from frame 40 with
       the spectator's dock; the top bar's Lobby brought BAR's lobby over the game upright (the grid with Return to
