@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Pregame on the unfolded split dock** (hardening, 2026-11-17 ~01:15, dev phone at 1080x1198, a skirmish with a
+      pregame by a dev-env.sh, removed after): the build grid left, UNDO LAST, CLEAR QUEUE, the factions, RANDOM and
+      PING right, the wind box "4-12" between them, BAR's victory line in the game; no Lua errors. UI polish: CLEAR
+      QUEUE stood smaller than UNDO LAST beside it; the pregame grid takes the home grid's one size a row (113370c3),
+      the tall dock unchanged.
 - [x] **The day's changes at the cover screen's shape, online rules and the copies** (hardening, 2026-11-17 ~01:00, dev
       phone): dock-phone-test at 1080x2520 (the Fold7 folded) ALL PASS; pad-test -Online and -Chat ALL PASS;
       remake-check after the build menu copy's new patch: buildmenu, ordermenu, missioninfo, teamstats and options
