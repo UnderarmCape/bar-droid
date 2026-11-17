@@ -1701,7 +1701,11 @@ local function shareDraw(vsx, vsy)
 	if lay and lay.rect then
 		ix0, iy0, ix1, iy1 = lay.rect("info")
 	end
-	if ix1 and y1 - h < iy1 and y1 > iy0 and x0 < ix1 and x0 + w > ix0 then
+	-- (only while it shows: with nothing picked it draws nothing, and the list stood 94 pixels right of the screen's
+	-- middle, of the note under it too, beside an empty corner; pad-test -Share sideways, dev phone 2026-11-17)
+	local info = WG.info
+	local infoShows = not (info and info.getIsShowing) or info.getIsShowing()
+	if infoShows and ix1 and y1 - h < iy1 and y1 > iy0 and x0 < ix1 and x0 + w > ix0 then
 		x0 = math.max(0, math.min(math.floor(ix1 + pad), math.floor(vsx - w - pad)))
 	end
 	shareRect = { x0, y1 - h, x0 + w, y1, first, shown, top, floorY }

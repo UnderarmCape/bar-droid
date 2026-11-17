@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The share list upright and sideways** (hardening, 2026-11-17 ~10:00, dev phone): pad-test -Share ALL PASS
+      upright, then sideways (rotation locked: the test follows the phone's way up), its screenshots judged: tabs
+      readable (dark words on the picked tab's colour), rows, sliders and notes clear of each other. Sideways the list
+      stood 94 pixels right of the screen's middle (742-1455 on 2008) while the note under it was centred: it steps
+      right of the unit info panel when they would overlap (2026-11-11, 15 teammates), and the info panel's rect is
+      there with nothing picked, when it draws nothing. Now it steps aside only while the panel shows (BAR's
+      WG.info.getIsShowing, which the app's info panel answers): sideways the list centred, over the note (648-1360).
+      ALL PASS again.
 - [x] **The voice chat's offline note reviewed; the launcher's GL check line** (hardening, 2026-11-17 ~09:55, dev
       phone): VoiceChat's offline note (no network, a network timeout, the server) left out error 13
       (ERROR_LANGUAGE_UNAVAILABLE: the phone's language not downloaded for recognition without a connection), which still
