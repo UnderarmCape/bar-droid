@@ -1,8 +1,8 @@
 BAR Droid phone version of BAR's Awards (luaui/widgets/gui_awards.lua), the panel at a game's end: its Leave and Show
 Graphs are words, pressed in a strip 5 under and 5 over them, about 27 high in all: upright on a phone about 1.5 mm for
-a finger (dev phone, 2026-11-17, a skirmish ended upright). The press strips 22 under and over the words, the words and
-their places as BAR has them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block
-finds no place, BAR's own file runs.
+a finger (dev phone, 2026-11-17, a skirmish ended upright). The press strips 22 under and over the words; its close X's
+strip as much wider and taller, within the panel; the words and their places as BAR has them. Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 
 @@@ find
 			and (y > widgetY + mathFloor((50 - 5) * widgetScale))
@@ -32,4 +32,28 @@ finds no place, BAR's own file runs.
 			)
 		then
 			-- The team stats panel on its Graphs page, not the engine's end-game box:
+@@@ end
+
+@@@ find
+			(x > widgetX + widgetWidthScaled - closeRightX - mathFloor(5 * widgetScale))
+			and (x < widgetX + widgetWidthScaled - closeRightX + mathFloor(20 * widgetScale) * font:GetTextWidth("X") + mathFloor(
+				5 * widgetScale
+			))
+			and (
+				y > widgetY + widgetHeightScaled - mathFloor((10 + 17 + 5) * widgetScale)
+				and (y < widgetY + widgetHeightScaled - mathFloor((10 - 5) * widgetScale))
+			)
+		then
+			if WG.guishader then
+@@@ with
+			-- BAR Droid (phone): the X's strip 25 more to its left, to the panel's edge on its right, down to 52 under
+			-- the top (BAR's about 22 by 27 round a 12 wide X)
+			(x > widgetX + widgetWidthScaled - closeRightX - mathFloor(30 * widgetScale))
+			and (x < widgetX + widgetWidthScaled)
+			and (
+				y > widgetY + widgetHeightScaled - mathFloor((10 + 17 + 25) * widgetScale)
+				and (y < widgetY + widgetHeightScaled - mathFloor((10 - 5) * widgetScale))
+			)
+		then
+			if WG.guishader then
 @@@ end
