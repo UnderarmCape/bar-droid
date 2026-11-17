@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A game's end upright: the Awards under the dock** (hardening, 2026-11-17 ~08:15, dev phone upright, a
+      skirmish): Quit's dialog (Stay, Resign, Quit) above the dock; Resign: "Defeat!", "Leaving the game in 12 s: tap
+      the screen to stay longer", and BAR's Awards centred on the screen, its lower half under the dock (which stays up
+      upright, turned to the spectator's grid as the player becomes one): its Leave and Show Graphs at its foot out of
+      reach, only the countdown left the game. (Sideways on a tall phone the dock is down while spectating, so the end
+      looked right there.) Now the dock steps aside once the game is over (bardroid_portrait.lua widget:GameOver,
+      SP.gameOver in SP.windowOpen): "dock none", the Awards whole with Show Graphs and Leave; Show Graphs opened the
+      game's Statistics (You against the AI); the engine's exit 0. No Lua errors. Left as it is: those Statistics
+      upright keep the dock's room under them though the dock is aside then (bardroid_teamstats.lua sizes by the dock's
+      rect).
 - [x] **Save and load by touch, upright; the load tip over the pre-game frame** (hardening, 2026-11-17 ~08:05, dev
       phone upright): a skirmish's top bar Save (bardroid_topbar.lua through BAR's hidden bar): "Game saved: the lobby's
       Load Game opens it", Saves/20261117_075052.ssf (7 MB; kept on the dev phone for later checks); the lobby's Load
