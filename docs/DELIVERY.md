@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The app's log folders over time** (hardening, 2026-11-17 ~00:30): the dev phone's files/logs held a
+      `hang-2026-11-02.log` (3.4 MB) from that night's manual hang investigation; nothing in the app writes such files
+      (HangDump's "[hang]" lines go to launcher.log) and Share logs names its files, so it is never shared. BAR's own
+      bar/logs, all of which Share logs takes: 22 files, 3.5 MB on the dev phone and 4.8 MB on the Fold7, BAR's own
+      rotation keeping it there. Nothing to change. The launcher's Display & touch preferences looked over: fine.
 - [x] **Spectating upright: the dock's buttons on the first tap** (found 2026-11-16, a replay watched from the lobby
       on the dev phone): playing, the home grid's buttons act on the first tap ("live", Kailil 2026-11-12: "not need
       the ui one tap engage"); spectating, the grid (PLAYER CAM, TEAMS, FOLLOW UNIT, FREE CAM, ...) was left out
