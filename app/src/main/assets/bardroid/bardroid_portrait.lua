@@ -3022,9 +3022,10 @@ local function drawHalf(side)
 	-- "Fire at will" stood shrunk beside "Repeat Off" broken over two larger lines, dev phone screenshot 2026-11-13)
 	-- The home grid's rows likewise (the split dock's narrow halves: LOCAL UNITS stood smaller than ALL UNITS beside it,
 	-- COMMANDER than BASE, dev phone screenshot 2026-11-16); a word that breaks over two lines there (textIn's wrap, LAST
-	-- PINGS) sets no size for the rest of its row
+	-- PINGS) sets no size for the rest of its row. And the pregame's (CLEAR QUEUE smaller than UNDO LAST beside it on
+	-- the split dock, dev phone screenshot 2026-11-17)
 	local rowCap = {}
-	local home = rightKind == "home"
+	local home = rightKind == "home" or rightKind == "pregame"
 	if side ~= "left" and font then
 		for i, item in ipairs(items) do
 			local rect = (item.kind == "order" or home and item.kind ~= "pings") and item.label and cellRect(side, i)
