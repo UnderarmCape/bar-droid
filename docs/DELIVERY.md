@@ -740,6 +740,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The resource bar's track in the dock's texture; the launcher's words for the bar and the swipe** (hardening,
+      2026-11-17 ~17:30, dev phone upright, the dock's profile on: `bardroid_portrait_profile = 1` in a
+      dev-springsettings.cfg for the run): the new bar was drawn whole every frame; an open energy panel took the dock
+      from 1.1-1.3 to 1.6-1.8 ms a frame. Its still track (background, outlines, noise, gloss) now goes into the dock's
+      texture with the cell's words, only the fill, its glow, energy's shimmer and the knobs live: 1.4-1.5 ms. Looked at
+      with metal at 1 of 1200 (the track, a sliver of fill, the red knob) and energy at 79 % (yellow to there, the track
+      after it, both knobs), a temporary widget ordering three Bot Labs to drain them (removed after). The launcher's
+      "Play upright" and "Touch dock sideways" descriptions, README and CHANGELOG say what the bar shows and that a
+      sideways swipe changes the tab.
+- [ ] **The dock's texture drawn again at every refresh, changed or not** (hardening, 2026-11-17, from the same
+      profile): with one idle commander picked the dock refreshes 4 times a second (Update's 0.25 s) and each refresh
+      marks it dirty, so the texture is drawn again each time: ~38 draws of 2-3 ms per 10 s, about 0.3-0.4 ms a frame on
+      average, as single 3 ms frames. A refresh whose halves and their items come out the same could leave the texture
+      as it is; first list everything the dock draws that is not in its items (queue counts, state lights, idle
+      builders, the groups) so nothing stale stays on it.
 - [x] **The resource panel's bar as BAR's own; sideways, a swipe changes the tab** (Kailil, 2026-11-17, of the
       share slider: "Make this bar relative. And make it have the same look as the actual power yellow bar and red line
       as the share value. And have the mex conversion Grey bar be on it too. It shoukd look vanilla. Also, in horizontal

@@ -129,7 +129,8 @@ to watch it), LAST PINGS, follow a unit (its camera views while following), FREE
 which folds the dock to a SHOW button at the bottom.
 **Sideways too** (launcher setting "Touch dock sideways", on): the dock at one side of the bottom, for one thumb, the
 rest of the screen the game's. Next to the edge a panel for the units picked: BUILD | ORDERS tabs (a builder opens on
-BUILD, other units on ORDERS, a building picked on PLACE), the selection row, the tab's buttons; beside it metal,
+BUILD, other units on ORDERS, a building picked on PLACE; a sideways swipe on the panel changes the tab), the
+selection row, the tab's buttons; beside it metal,
 energy, BAR's minimap (tap it to move the camera) and the unit groups, with the wind's and the tide's boxes and an
 arrow that moves the dock to the other side of the screen (for the other hand; kept for the next game). With
 nothing picked the panel holds the home buttons. The D-gun mode floats over the game: MOVE and AIM in the bottom

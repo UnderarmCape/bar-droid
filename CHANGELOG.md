@@ -107,8 +107,12 @@ The first version meant for other people's phones: everything since the first bu
   1, a long count small enough to leave the picture visible; its largest text a size smaller.
 - The lobby and the game turn with the phone (launcher setting "Turn with the phone", on): with the phone's
   auto-rotate on, upright or sideways as it is held, at any time; with auto-rotate off, "Play upright" decides.
+- The dock's metal and energy open BAR's own resource bar, drawn as BAR's top bar draws it: the storage's fill
+  (metal grey to white, energy yellow), the red share knob and, on energy's bar, the pale conversion knob; a press
+  moves the nearer knob.
 - The touch dock sideways too (launcher setting "Touch dock sideways", on), for one thumb: at one side of the bottom
-  the units' panel with BUILD | ORDERS tabs, and beside it metal, energy, BAR's minimap and the unit groups, with HOME
+  the units' panel with BUILD | ORDERS tabs (a sideways swipe on the panel changes the tab), and beside it metal,
+  energy, BAR's minimap and the unit groups, with HOME
   and an arrow that moves the dock to the other side; with nothing picked only the minimap part. BAR's resource bars
   and minimap move into the dock. A gamepad or a mouse brings BAR's own screen layout back. Sideways the D-gun mode
   floats over the game, no panel and no minimap: MOVE and AIM low in the bottom corners, a FIRE beside each (either
