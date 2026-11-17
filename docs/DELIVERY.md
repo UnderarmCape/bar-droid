@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Save and load by touch, upright; the load tip over the pre-game frame** (hardening, 2026-11-17 ~08:05, dev
+      phone upright): a skirmish's top bar Save (bardroid_topbar.lua through BAR's hidden bar): "Game saved: the lobby's
+      Load Game opens it", Saves/20261117_075052.ssf (7 MB; kept on the dev phone for later checks); the lobby's Load
+      Game lists it first ("2026-11-17 07:50", BAR-31958), its Load: the game back at frame 840, "a saved game loaded:
+      the commander picked, the camera on it". Bug: as the engine made the load screen the app's upright tip and an
+      empty bar came at once, over the engine's last pre-game frame ("Waiting for server response", its "Press SHIFT +
+      ESC to quit" under the tip) for under a second (ten screenshots through the load). The tip and the bar now come
+      with the load's first words (GameService.loadMessage), BAR's picture with them. Ten screenshots again: the
+      pre-game frame clean, then the picture, the tip and "Parsing Map Information"; the save loaded. No Lua errors.
 - [x] **Ten minutes of BARb against BARb, spectated upright** (hardening, 2026-11-17 ~07:50, dev phone, a dev-env.sh
       removed after; laptop tests such as catchup-test need Kailil's yes, and every phone test ran tonight): 29.7 to
       30.0 fps each minute from 13 to 169 units, the slowest frame 214 ms at the start then 55 to 129 ms; Lua's memory
