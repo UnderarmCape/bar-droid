@@ -122,7 +122,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   own modes (`bardroid_pad.lua`, "modal dgun|share" in bardroid_pad.txt): v0.8.5's D-gun mode and the share list;
   a click at a point the game asks for ("clickat") is `PadGame.clickIfAsked`. The late-game resolution drop
   (`Prefs.lateDrop`): `bardroid_touch.lua` writes `bardroid_scale.txt`, `GameActivity.updateRenderDrop` shrinks the
-  X screen (floor: half the full lines). With an engine-branch build, `BARDROID_GAME_WIDGETS=1` in dev-env.sh makes
+  X screen (floor: 70 % of the render resolution, `RENDER_DROP_FLOOR`). With an engine-branch build, `BARDROID_GAME_WIDGETS=1` in dev-env.sh makes
   launch-bar.sh move the app's widgets to `bardroid-ui/LuaUI/Widgets`, which that engine shows LuaUI as part of the
   game archive (`BarDroidGameWidgetsDir`): BAR loads them as game widgets, outside the user widgets' sandbox (Kailil,
   2026-11-06, on a BAR developer's advice); `pad-test.ps1 -Engine <build>` tests it. `bardroid_padspeed.lua`: the pad's drawing speed by

@@ -472,7 +472,12 @@ public class LauncherActivity extends AppCompatActivity {
                              : "GPU: not a Qualcomm Adreno: BAR's graphics will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
         // (one decimal: "75.85 GB" and "6.91 GB" said more than a player reads there; downloads keep two, Downloader.human)
-        sb.append("Free storage: ").append(gb(st.getAvailableBytes())).append(" (need ~6 GB)\n");
+        // (what BAR needs only until it is installed: after that "(need ~6 GB)" beside 75 GB free read as a warning, dev
+        // phone 2026-11-17; once installed a note only when updates and new maps may not fit)
+        long free = st.getAvailableBytes();
+        sb.append("Free storage: ").append(gb(free))
+          .append(!new Installer(this, BarApp.get().paths()).isInstalled() ? " (need ~6 GB)"
+                  : free < 2L << 30 ? " (low: BAR's updates and new maps need room)" : "").append('\n');
         android.app.ActivityManager am = getSystemService(android.app.ActivityManager.class);
         android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
         if (am != null) {
