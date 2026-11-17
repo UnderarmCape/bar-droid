@@ -740,6 +740,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A skirmish from the lobby's Skirmish tab, upright** (hardening, 2026-11-17 ~09:00, dev phone upright, the lobby
+      offline): Chobby's wizard (game type, difficulty, faction, map: the installed maps; the offline notice "Download
+      Failed ... of type map" for its default map) fits the screen; Start loaded Onyx Cauldron in BAR's draft-order
+      pregame: a map tap picked the spot, BAR's Ready came up beside it, the game started on the spot at 30 fps. The top
+      bar's Lobby opened the lobby over the game (paused, "Return to Battle" first on the grid; back: "Player unpaused
+      the game"). The minimap's tap opened it, a tap on it within its 7 s moved the camera to the lake. One engine line,
+      `[Shader] Error: [GLSL-PO::Validate] SMFShaderGLSL-Forward-Adv is not valid ... active samplers with a different
+      type refer to the same texture image unit` at frame 7 (Mesa's validate at the shader's first use, the shadows
+      off): the lake, its shore and the ground drawn right, left alone. UI polish: the pregame dock's right buttons
+      (UNDO LAST, CLEAR QUEUE, the factions, PING, two rows tall each) stopped one short row above the build grid's
+      bottom upright, an empty strip under RANDOM and PING; their rows now fill the right half to the grid's foot, as
+      the unfolded dock's already did (bardroid_portrait.lua half(), SP.rightRowsN); CORTEX and RANDOM picked by taps
+      in the new room.
 - [x] **The launcher's GL check and an update without a connection** (hardening, 2026-11-17 ~08:40, dev phone, no
       network): GL check: "Adreno 740 (Freedreno), OpenGL 4.3, Mesa 27.0.0-devel" under the status. Install / Update
       offline: every step "already done", the update check "no answer from launcher-config..." (UnknownHostException),

@@ -2093,6 +2093,7 @@ function refreshNow()
 	cellsOf.right, rightRowsN = pack(rightItems, lk == "spec" and SP.COLS
 		or (rk == "home" or rk == "presets" or rk == "share" or rk == "panel") and 2 or (rk == "place" and SP.shapeRow()) and 4
 		or L.rightCols or 2)
+	SP.rightRowsN = rightRowsN -- (half: the pregame's rows filling the right)
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	-- (the share list's and a panel's rows in sight, from the place they are drawn, homeRect: the split dock's right
 	-- block is not the left's height, a third row ran 20 pixels under it, review 2026-11-15)
@@ -2553,9 +2554,11 @@ local function half(side)
 			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
 			or floor(L.btnH * 1.5)
 	end
-	if rightKind == "pregame" and L.split then -- (unfolded: the pregame buttons' rows fill the right block; at the orders'
-		-- height three rows left two empty under them, dev phone 2026-11-15)
-		local rows = max(1, math.ceil(#rightItems / (L.rightCols or 2)))
+	if rightKind == "pregame" and (L.split or not L.land) then -- (unfolded: the pregame buttons' rows fill the right
+		-- block; at the orders' height three rows left two empty under them, dev phone 2026-11-15. Upright likewise: their
+		-- two-row-tall buttons left one short row empty under RANDOM and PING, above the build grid's bottom, dev phone
+		-- 2026-11-17, a skirmish from the lobby; the packed rows, refreshNow, so a two-row button stays two)
+		local rows = max(1, SP.rightRowsN or math.ceil(#rightItems / (L.rightCols or 2)))
 		return L.right, rightScroll, rightItems, L.rightCols or 2, L.btnW,
 			max(L.btnH, floor((L.right[4] - L.right[2] + L.gap) / rows) - L.gap)
 	end
