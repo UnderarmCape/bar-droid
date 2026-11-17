@@ -2267,6 +2267,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **A turn mid-game with the dock's panels open; the Replays names code read** (hardening, 2026-11-16 ~22:00, dev
+      phone, "Turn with the phone" on): a skirmish started with auto-rotate on (sideways), the energy panel opened in the
+      sideways dock, auto-rotate off with "Play upright" on: upright. 12 s after the turn the screen was still between
+      shapes (BAR's top bar at the sideways scale, metal and energy cut under the boxes); 10 s later all settled, the
+      upright dock whole, the panel closed by BAR's interface reload (as a fold does; nothing kept across it, as noted
+      in "Turning with the phone"). The wind's details open upright over their box; toggling auto-rotate off and on
+      again left the phone upright (it lies flat) and closed them. The turn back sideways not seen this time (the flat
+      phone keeps its rotation). upright.replayTeams read through (originals kept per label in weak tables, Chobby's
+      places back where the columns fit, refitted when the room changes): nothing found. No UI polish this run.
 - [x] **Pregame upright with the wind and tide boxes** (hardening, 2026-11-16 ~21:45, dev phone, a launcher skirmish
       with StartPosType 2 by a dev-env.sh for the run, removed after): the dock's pregame grid (UNDO LAST, CLEAR QUEUE,
       the factions, RANDOM, PING), BAR's victory line clear of it, a tap picks the start and BAR's Ready comes up in the
