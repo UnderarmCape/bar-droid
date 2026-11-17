@@ -4831,6 +4831,11 @@ function SP.windowOpen()
 	if not active then
 		return false
 	end
+	-- (and the game over: BAR's Awards, centred, ran down under the dock, its Leave and Show Graphs at its foot out of
+	-- reach upright, the player resigned and the spectator's grid up; dev phone 2026-11-17. Nothing to order then)
+	if SP.gameOver then
+		return true
+	end
 	for _, name in ipairs(SP.WINDOWS) do
 		local w = WG[name]
 		if w and w.isvisible and w.isvisible() then
@@ -4842,6 +4847,11 @@ function SP.windowOpen()
 	-- bardroid_teamstats.lua ViewResize, by WG.BarDroidPortrait.sideways)
 	local ts = WG.teamstats
 	return L.land and not L.split and ts and ts.isvisible and ts.isvisible() or false
+end
+
+-- The game over (BAR's Awards up): the dock steps aside for good (SP.windowOpen)
+function widget:GameOver()
+	SP.gameOver = true
 end
 
 -- BAR's lobby over the game (its "LobbyOverlayActive1" / "0" to the widgets: the top bar's Lobby button): the dock out
