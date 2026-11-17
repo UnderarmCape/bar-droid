@@ -2267,6 +2267,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The layout editor upright with today's dock** (hardening, 2026-11-16 ~22:10, dev phone, `/hud` typed): it
+      outlined BAR's player list over the dock's bottom right (the list lies under the upright dock: nothing of it to
+      see or size), and its hint and buttons stood at the screen's middle, upright on the wind's and tide's boxes. A
+      panel the dock covers whole has no outline now (its corners a few pixels in, onDock), and the buttons go to the
+      middle of the room above a dock that runs across the whole width (9f3be124, 6295bec5; beside the sideways dock for
+      one thumb the screen's middle as before: the room above that dock put the hint into Chat's outline). Dev phone
+      upright: Chat, Minimap and the top bar outlined, the hint in the game area, Chat picked with its buttons below it,
+      Done; sideways the hint in the middle, clear of Chat and the dock; no Lua errors. That is the run's UI polish too.
 - [x] **A turn mid-game with the dock's panels open; the Replays names code read** (hardening, 2026-11-16 ~22:00, dev
       phone, "Turn with the phone" on): a skirmish started with auto-rotate on (sideways), the energy panel opened in the
       sideways dock, auto-rotate off with "Play upright" on: upright. 12 s after the turn the screen was still between
