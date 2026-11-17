@@ -744,8 +744,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       on the dev phone): playing, the home grid's buttons act on the first tap ("live", Kailil 2026-11-12: "not need
       the ui one tap engage"); spectating, the grid (PLAYER CAM, TEAMS, FOLLOW UNIT, FREE CAM, ...) was left out
       (writeDock's `leftKind ~= "spec"`), so its first tap only woke the dock and drags on it panned the camera. Kailil,
-      2026-11-17: "Yes, first tap". Done (438daa97): the grid is live spectating too; a drag starting on it no longer
-      pans, the game above it does. Dev phone upright, an AI-against-AI skirmish watched as a spectator (a dev-env.sh
+      2026-11-17: "Yes, first tap". Done (438daa97): the grid is live spectating too. (Its note there that a drag on it
+      would no longer pan was wrong: a live touch opens the menu and is the menu's, whose drags pan; a drag across the
+      grid from the camera pad panned, dev phone, the next run.) Dev phone upright, an AI-against-AI skirmish watched as a spectator (a dev-env.sh
       for the run: Spectator=1, a second BARb on team 0): TEAMS opened by one tap with the camera pad up, a team picked,
       FOLLOW UNIT's next arrow from the camera pad followed that team's commander at once; no Lua errors. (A
       `/spectator` in a lone skirmish resigns and BAR's autoquit ends it: not a way to spectate.)
