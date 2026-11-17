@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **An empty replay said so** (hardening, 2026-11-17 ~16:00, dev phone, the lobby offline): Start on one of the
+      961-byte "time unknown" replays loaded the whole game (about 40 s), then the engine's "End of demo reached" at
+      frame -1, and the player sat on a still, empty map with the spectator's dock and no word why. GameService now
+      says so when a replay ends before its game began (that line at frame -1): a toast, "This replay is empty (cut
+      off before its game began): tap Lobby to go back" (two lines), launcher.log "a replay with no game in it". A
+      replay that plays ends at a later frame: no toast. Dev phone: that replay again, the toast over the dock.
 - [x] **The lobby's Replays and Load Game upright; "1 minute"** (hardening, 2026-11-17 ~15:50, dev phone, the lobby
       offline, never logged in): both as they should be. Seen and left: two of today's replays "time unknown" at the
       list's top, both 961 bytes, their start script only (games closed by force before the engine wrote any of the

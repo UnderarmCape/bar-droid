@@ -419,6 +419,16 @@ public class GameService extends Service {
                                 loading = true;
                             }
                             if (loading) loadLine(line);
+                            // (a replay that ends before its game began: its game closed by force before the engine
+                            // wrote any of it, the file its start script only; the lobby lists it "time unknown", and it
+                            // loaded to a still, empty map without a word, dev phone 2026-11-17: said on the screen)
+                            if (line.contains("End of demo reached") && line.contains("[f=-000001]")) {
+                                Log.i("svc", "a replay with no game in it: said on the screen");
+                                new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
+                                        android.widget.Toast.makeText(getApplicationContext(),
+                                                "This replay is empty (cut off before its game began): tap Lobby to go back",
+                                                android.widget.Toast.LENGTH_LONG).show());
+                            }
                             // (the map a game loads on: its last use, for the map storage limit, MapStore)
                             String mapFile = MapStore.usedIn(line);
                             if (mapFile != null) MapStore.markUsed(paths.bar, mapFile);
