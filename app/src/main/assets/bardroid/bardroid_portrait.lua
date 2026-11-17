@@ -622,7 +622,9 @@ local dockWritten, dockWrittenAt = nil, -10
 local dgunLines -- (the D-gun mode's parts for RtsTouch, below)
 local function writeDock(force)
 	local text
-	if active and not L.aside then -- (aside for one of BAR's windows: no dock for RtsTouch, SP.windowOpen)
+	-- (aside for one of BAR's windows: no dock for RtsTouch, SP.windowOpen; and under BAR's lobby over the game, which
+	-- covers it: there a drag on the lobby's lists was the camera pad's and panned the game behind it, SP.lobbyOver)
+	if active and not L.aside and not SP.lobbyOver then
 		local function r(x)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
@@ -4823,6 +4825,15 @@ function SP.windowOpen()
 		end
 	end
 	return false
+end
+
+-- BAR's lobby over the game (its "LobbyOverlayActive1" / "0" to the widgets: the top bar's Lobby button): the dock out
+-- of RtsTouch's way under it (writeDock), back with the game
+function widget:RecvLuaMsg(msg)
+	if msg:sub(1, 18) == "LobbyOverlayActive" then
+		SP.lobbyOver = msg:sub(1, 19) == "LobbyOverlayActive1"
+		writeDock(true)
+	end
 end
 
 function widget:GetConfigData()

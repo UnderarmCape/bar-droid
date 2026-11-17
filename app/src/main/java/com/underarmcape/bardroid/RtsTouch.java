@@ -2305,6 +2305,10 @@ final class RtsTouch {
         if (d != null && d.all != null && inside(d.all, toX(vx), toY(vy)) && !(d.map != null && inside(d.map, toX(vx), toY(vy))))
             return HOVER_INTERFACE;
         if (System.currentTimeMillis() - hoverFile.lastModified() > HOVER_STALE_MS) return HOVER_INTERFACE;
+        // (BAR's lobby over the game: all of it the lobby's, as with no game. The game's widget answered "map" under the
+        // lobby, and a drag on its Replays list panned the camera behind it, the list still; dev phone 2026-11-17.
+        // overlayLast is read at the touch's start, source)
+        if (overlayLast) return HOVER_INTERFACE;
         byte[] b = new byte[64];
         int n;
         try (FileInputStream in = new FileInputStream(hoverFile)) { n = in.read(b); } catch (IOException e) { return HOVER_UNKNOWN; }
