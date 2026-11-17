@@ -2267,6 +2267,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+- [x] **The lobby's Settings upright: rows for a finger** (hardening, 2026-11-16 ~22:30, dev phone, offline lobby; the
+      layout editor checked first at 1080x1198: the hint above the split dock, no player list outline): Chobby's
+      Settings (gui_settings_window.lua) lists its rows 36 apart, their checkboxes, sliders and lists 30 high, thirty
+      rows down the screen at under 3 mm each. Upright each tab's rows stand 1.5 times as far apart now, their controls
+      as tall (a checkbox's box 24: at 28 "Show Battles with Test Engine Versions" ran up to it), a row's words beside
+      its control's middle (1b333033). Dev phone: the Lobby tab's 48 rows and the Graphics tab spaced, "Show country
+      flags" on and off again by a tap each (the right row), lobby-phone-test ALL PASS. Chobby's places are kept and
+      put back sideways; that way back is not seen yet (the dev phone lies flat and does not turn while the lobby is
+      open): to look at on the Fold7.
 - [x] **The layout editor upright with today's dock** (hardening, 2026-11-16 ~22:10, dev phone, `/hud` typed): it
       outlined BAR's player list over the dock's bottom right (the list lies under the upright dock: nothing of it to
       see or size), and its hint and buttons stood at the screen's middle, upright on the wind's and tide's boxes. A
