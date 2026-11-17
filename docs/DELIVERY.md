@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's lobby over a running game: drags** (hardening, 2026-11-17 ~02:20, dev phone upright, a replay): a drag on
+      the lobby's Replays list panned the camera behind it and the list stood still. The dock under the lobby still
+      gave RtsTouch its rects in camera pad mode ("dock ... pad" with the overlay "1"), and outside it the game's widget
+      answered "map" under the lobby. Now the dock steps aside while BAR's lobby is up (bardroid_portrait.lua's
+      RecvLuaMsg: "dock none") and RtsTouch takes every point for the lobby's then (hoverAt), as with no game
+      (6346ef90): the list scrolled, the game still; Return to Battle brought the dock's rects back, TEAMS by one tap;
+      touch-phone-test and dock-phone-test ALL PASS. The Fold7: echo 1.6 s this time, but the install stalled again
+      (180 s); it keeps the 00:18 build.
 - [x] **BAR's lobby over a running game, by touch** (hardening, 2026-11-17 ~02:00, dev phone upright, a replay from
       the lobby; the top bar's Lobby): the lobby's upright pages over the game (Return to Battle first), Return to
       Battle back to the replay with the dock. Bug: an X arrow stood where Lobby had been tapped and followed each tap
