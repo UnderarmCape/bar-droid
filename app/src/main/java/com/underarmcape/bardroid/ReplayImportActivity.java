@@ -84,7 +84,7 @@ public class ReplayImportActivity extends Activity {
         File demos = new File(bar, "demos");
         //noinspection ResultOfMethodCallIgnored
         demos.mkdirs();
-        int added = 0, there = 0, notReplays = 0, failed = 0;
+        int added = 0, there = 0, notReplays = 0, failed = 0, shortOnes = 0;
         for (Uri uri : picked) {
             String name = displayName(cr, uri);
             if (name == null || name.contains("/") || !name.toLowerCase(Locale.US).endsWith(".sdfz")) {
@@ -98,14 +98,19 @@ public class ReplayImportActivity extends Activity {
                 // (the lobby lists a replay only with its date at the start of its name, the engine's way: one renamed
                 // on the way, "bd-import-test.sdfz", was copied and never shown, dev phone 2026-11-17; the game's start
                 // from its header goes in front, in UTC as the lobby reads it)
-                long started = startTime(part);
+                long[] hd = header(part);
+                long started = hd[0];
+                // (BAR's list leaves out a replay under a minute long, gui_replay_handler.lua: "1 replay added" for one it
+                // then did not show, a 16 s test game, dev phone 2026-11-17; said so)
+                boolean isShort = hd[1] > 0 && hd[1] < 60;
                 if (!DATED.matcher(name).find())
                     name = new java.text.SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS_", Locale.US) {{
                         setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
                     }}.format(new java.util.Date(started > 0 ? started * 1000 : System.currentTimeMillis())) + name;
                 File out = new File(demos, name);
                 if (out.exists()) {
-                    there++;
+                    if (isShort) shortOnes++;
+                    else there++;
                     //noinspection ResultOfMethodCallIgnored
                     part.delete();
                     Log.i("bridge", "replay import: already in the list: " + name);
@@ -113,12 +118,20 @@ public class ReplayImportActivity extends Activity {
                 }
                 if (!part.renameTo(out)) throw new IOException("could not name it " + name);
                 added++;
+                if (isShort) shortOnes++;
                 Log.i("bridge", "replay import: " + name + " (" + n / 1024 + " KB)");
-            } catch (IOException e) {
+            } catch (NotReplay e) {   // (named .sdfz, but not one inside: said as such, not "could not be copied")
+                notReplays++;
+                //noinspection ResultOfMethodCallIgnored
+                part.delete();
+                Log.i("bridge", "replay import: " + name + ": " + e.getMessage());
+            } catch (IOException | RuntimeException e) {
+                // (RuntimeException too: a provider's SecurityException or IllegalArgumentException in this thread would
+                // have ended the app's process, the lobby with it)
                 failed++;
                 //noinspection ResultOfMethodCallIgnored
                 part.delete();
-                Log.e("bridge", "replay import: " + name + ": " + e.getMessage());
+                Log.e("bridge", "replay import: " + name + ": " + e);
             }
         }
         if (added > 0) {
@@ -131,6 +144,7 @@ public class ReplayImportActivity extends Activity {
         }
         List<String> parts = new ArrayList<>();
         if (added > 0) parts.add(added + (added == 1 ? " replay added" : " replays added"));
+        if (shortOnes > 0) parts.add(shortOnes + (shortOnes == 1 ? " is" : " are") + " under a minute long, which the list leaves out");
         if (there > 0) parts.add(there + " already in the list");
         if (notReplays > 0) parts.add(notReplays + (notReplays == 1 ? " file is not" : " files are not") + " a BAR replay (.sdfz)");
         if (failed > 0) parts.add(failed + " could not be copied");
@@ -143,18 +157,25 @@ public class ReplayImportActivity extends Activity {
     private static final java.util.regex.Pattern DATED = java.util.regex.Pattern.compile("^\\d{4}-?\\d{2}-?\\d{2}_\\d{2}-?\\d{2}-?\\d{2}");
 
     /**
-     * The game's start (Unix seconds, 0 if not written) from the replay's header (demofile.h DemoFileHeader: magic,
-     * version, headerSize, versionString[256], gameID[16], unixTime int64); not a BAR replay: an IOException.
+     * The game's start (Unix seconds) and length (game seconds), 0 where not written, from the replay's header
+     * (demofile.h DemoFileHeader: magic, version, headerSize, versionString[256], gameID[16], unixTime int64,
+     * scriptSize, demoStreamSize, gameTime, ...); not a BAR replay: a {@link NotReplay}.
      */
-    private static long startTime(File f) throws IOException {
+    private static long[] header(File f) throws IOException {
         try (java.io.DataInputStream in = new java.io.DataInputStream(new java.util.zip.GZIPInputStream(new java.io.FileInputStream(f)))) {
-            byte[] h = new byte[16 + 4 + 4 + 256 + 16 + 8];
+            byte[] h = new byte[16 + 4 + 4 + 256 + 16 + 8 + 3 * 4];
             in.readFully(h);
-            if (!new String(h, 0, 15, StandardCharsets.US_ASCII).equals("spring demofile")) throw new IOException("not a BAR replay");
+            if (!new String(h, 0, 15, StandardCharsets.US_ASCII).equals("spring demofile")) throw new NotReplay("not a BAR replay");
             long t = 0;
             for (int i = 7; i >= 0; i--) t = (t << 8) | (h[296 + i] & 0xff);
-            return t;
-        } catch (java.io.EOFException | java.util.zip.ZipException e) { throw new IOException("not a BAR replay"); }
+            long len = (h[312] & 0xff) | (h[313] & 0xff) << 8 | (h[314] & 0xff) << 16 | (long) (h[315] & 0xff) << 24;
+            return new long[]{t, len > Integer.MAX_VALUE ? 0 : len};
+        } catch (java.io.EOFException | java.util.zip.ZipException e) { throw new NotReplay("not a BAR replay"); }
+    }
+
+    /** A file named .sdfz that holds no replay. */
+    private static final class NotReplay extends IOException {
+        NotReplay(String why) { super(why); }
     }
 
     /** A replay is a gzip file: its first two bytes checked as it is copied. */
@@ -163,14 +184,18 @@ public class ReplayImportActivity extends Activity {
             if (in == null) throw new IOException("could not be read");
             byte[] b = new byte[64 * 1024];
             long total = 0;
+            int first = -1;   // (the first byte, until the second comes: a provider's first read may give one byte alone)
             for (int r; (r = in.read(b)) > 0; ) {
-                if (total == 0 && (r < 2 || (b[0] & 0xff) != 0x1f || (b[1] & 0xff) != 0x8b))
-                    throw new IOException("not a BAR replay (no gzip header)");
+                for (int i = 0; i < r && total + i < 2; i++) {
+                    int v = b[i] & 0xff;
+                    if (total + i == 0) first = v;
+                    else if (first != 0x1f || v != 0x8b) throw new NotReplay("not a BAR replay (no gzip header)");
+                }
                 total += r;
                 if (total > MAX_BYTES) throw new IOException("larger than " + (MAX_BYTES >> 20) + " MB");
                 o.write(b, 0, r);
             }
-            if (total == 0) throw new IOException("empty");
+            if (total < 2) throw new NotReplay(total == 0 ? "empty" : "not a BAR replay (no gzip header)");
             return total;
         }
     }

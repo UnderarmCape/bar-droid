@@ -740,6 +740,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Replays' Add reviewed: a provider's error, a short first read, files that are not replays** (hardening,
+      2026-11-17 ~09:45, dev phone upright, the lobby offline): ReplayImportActivity's copy runs on a thread of its own;
+      a RuntimeException there (a provider's SecurityException or IllegalArgumentException) was not caught and would
+      have ended the app's process, the lobby with it: now counted as "could not be copied". The gzip check wanted both
+      magic bytes in the provider's first read; one byte alone failed a real replay: checked as the bytes come now. A
+      file named .sdfz with no replay in it (empty, not gzip, no "spring demofile") said "could not be copied": now "...
+      is not a BAR replay (.sdfz)". Tested by the picker with my own three files in Downloads (indexed for its search, so
+      no one else's files were looked at, removed after): "1 replay added; 2 files are not a BAR replay (.sdfz)", no
+      .part left, the lobby running on. Why that replay and the day's tests' never showed in the list (a probe widget
+      logged the lobby's asks and the app's answers, all answered): BAR's lobby leaves out a replay under a minute long
+      (gui_replay_handler.lua; the test games run 11 to 28 s), BAR's own rule. UI polish: Add said "1 replay added" for
+      one the list then did not show; it now reads the game's length from the header too: "1 replay added; 1 is under
+      a minute long, which the list leaves out". lobby-phone-test ALL PASS.
 - [x] **The phone tests after the day's dock changes, and the unfolded pregame** (hardening, 2026-11-17 ~09:30, dev
       phone): dock-phone-test (-Shots) and touch-phone-test ALL PASS after the pregame's filled rows and the sideways
       minimap redraw; their placing and D-gun screenshots look right. A skirmish from the lobby at 1080x1198 (the Fold7
