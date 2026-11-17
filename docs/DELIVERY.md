@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Keyboard's two more launcher-set entries hidden** (hardening, 2026-11-17 ~10:20, dev phone upright): after
+      Output's orientation, the other entries applyTermuxPrefs writes at every game start: Keyboard's "Intercept system
+      shortcuts" (DeX's Meta key capture) and "Hardware keyboard scancodes workaround", both from the launcher's
+      "Keyboard shortcuts go to the game" (on: capture on, the workaround off). Switched there, they flipped back at the
+      next game. Hidden (patch 0019, as 0013 and 0018; upstream only ever hides the DeX one, never shows it again), their
+      summaries out of the app's strings.xml. Checked on the phone: Keyboard lists the extra key bar, the soft keyboard,
+      scancodes, the Accessibility service and its own entries. (The once-only defaults BarApp sets, the touch mode,
+      display scale and the like, stay the player's to change.)
 - [x] **The launcher's settings and Display screens; Output's dead "Screen orientation"** (hardening, 2026-11-17
       ~10:15, dev phone upright): the launcher's pages (Game, Graphics, Advanced, the log) and Display & touch
       preferences read right. Output listed Termux:X11's "Screen orientation: landscape", which the launcher's Play

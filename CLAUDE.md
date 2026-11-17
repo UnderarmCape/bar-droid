@@ -167,7 +167,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   (`propName = value`; its two git calls through `providers.exec` from the root, so the version line still names
   BAR Droid's commit); 0017 "Android's volume control" for upstream's lowercase "android ..." in the volume and media
   keys' "no action (...)" (the app's own strings.xml overrides the rest of that screen's words); 0018 hides Output's
-"Screen orientation", which the launcher's Play upright writes at every start (`KeyboardShortcuts.applyTermuxPrefs`). docs/CONTAINER-COST.md has
+"Screen orientation", which the launcher's Play upright writes at every start (`KeyboardShortcuts.applyTermuxPrefs`), 0019
+Keyboard's "Intercept system shortcuts" and scancodes workaround, which its "Keyboard shortcuts go to the game" writes. docs/CONTAINER-COST.md has
   what proot, the X server and the display pass cost; `tools/container-cost/` the probes (`measure.ps1`: a late 8v8
   with all of them).
 - The app icon opens the lobby (`StartActivity`, setting "Open the lobby when the app starts"; the launcher is a task of

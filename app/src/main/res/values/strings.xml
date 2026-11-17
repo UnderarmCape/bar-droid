@@ -22,7 +22,8 @@
     <string name="lorie_pref_pointerCapture_summary">Every move of a mouse or touchpad goes to the game; Escape gives the pointer back to Android</string>
     <!-- Keyboard's shortcut entries, upstream titles ending in full stops, "Samsung Dex", and the service unnamed: the
          service is the one the launcher's "Keyboard shortcuts go to the game" names (key_capture_service) -->
-    <string name="lorie_pref_dexMetaKeyCapture_summary">Samsung DeX only: Alt+F4, Meta+D, Meta+E and the like go to the game, not to DeX</string>
+    <!-- (DeX's "Intercept system shortcuts" and the scancodes workaround hidden, patch 0019: the launcher's "Keyboard
+         shortcuts go to the game" sets both at every start, KeyboardShortcuts.applyTermuxPrefs) -->
     <string name="lorie_pref_enableAccessibilityService">Accessibility service for system shortcuts</string>
     <string name="lorie_pref_enableAccessibilityService_summary">Opens Android\'s Accessibility settings: turn on \"Beyond All Reason keyboard shortcuts\" there</string>
     <string name="lorie_pref_enableAccessibilityServiceAutomatically">Turn that service on automatically</string>
@@ -35,7 +36,6 @@
     <string name="lorie_pref_showIMEWhileExternalConnected">On-screen keyboard with a hardware keyboard</string>
     <string name="lorie_pref_showIMEWhileExternalConnected_summary">The soft keyboard still opens while a hardware keyboard is connected</string>
     <string name="lorie_pref_preferScancodes_summary">A hardware keyboard\'s keys go as key codes, read with the X server\'s layout (US) instead of Android\'s</string>
-    <string name="lorie_pref_hardwareKbdScancodesWorkaround_summary">For hardware keys that arrive wrong on some phones; can mix up keys with more than one layout</string>
     <!-- Other's two entries had no summary (LoriePreferences finds lorie_pref_<key>_summary by name, in this package too) -->
     <string name="lorie_pref_clipboardEnable_summary">The phone\'s clipboard and the game\'s are shared both ways</string>
     <string name="lorie_pref_configureResponseToUserActions">What swipes and keys do</string>
