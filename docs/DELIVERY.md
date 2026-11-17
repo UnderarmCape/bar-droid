@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Phone tests after the night's later changes; spectating sideways** (hardening, 2026-11-17 ~06:55, dev phone):
+      dock-phone-test ALL PASS upright (after the HIDE fix in bardroid_portrait.lua), fp-save-test passes. BARb against
+      BARb spectated sideways (a dev-env.sh, removed after): on a tall phone the dock is down there and BAR's own screen
+      shows, the touch tools' bar opening with a tap on the player list ("No player cams" with its arrows dimmed, Free,
+      Follow unit, Group); no Lua errors. No UI polish this run. The Fold7 still off adb.
 - [x] **The spectator dock's HIDE undone by its own tap** (hardening, 2026-11-17 ~06:45, dev phone upright, BARb
       against BARb spectated for 6 minutes by a dev-env.sh, removed after): 30 fps throughout (37 to 70 units), no Lua
       errors (the one deprecation, KEYSYMS.ESCAPE, is BAR's widget handler's). FOLLOW UNIT's first pick a Sentry (the
