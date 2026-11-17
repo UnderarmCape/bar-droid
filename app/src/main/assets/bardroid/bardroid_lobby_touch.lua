@@ -2613,6 +2613,12 @@ local function replaysRowCheck(now)
 			c._relativeBounds.right = r - 130
 			c:UpdateClientArea()
 		end
+		-- (Download's tooltip asked for the .sdfz files in "your data/demos folder", which a phone's player cannot reach:
+		-- a replay the browser downloads stays in the phone's Downloads; dev phone, the pad's ring on it, 2026-11-17)
+		if type(c.tooltip) == "string" and c.tooltip:find("data/demos", 1, true) then
+			-- (as short as BAR's: a longer one wrapped, its last word alone on a second line)
+			c.tooltip = "BAR's replays website. A replay downloaded there goes to the phone's Downloads, not this list"
+		end
 	end
 	replaysRow.done = true
 	Spring.Echo("[bardroid-lobby] Replays: Open Folder hidden (no folder to open on Android)") -- (tools)
