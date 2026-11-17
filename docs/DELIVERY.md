@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The app's logs read; the Display screens; the Awards change for BAR** (hardening, 2026-11-17 ~15:40, dev phone):
+      launcher.log and the one before: no layer miss, no phone patch miss, no error of the app's; the bridge's failures
+      all the dev phone's lack of a network (maps, skill data, the widget manifest: at once, "no network on the phone"),
+      and "not handled on Android: DiscordSetActivity" a few times a lobby (logged by design). The launcher's Display
+      screens (Display & touch, Pointer) as they should be. For BAR's repository, the Awards' strips as a draft:
+      docs/upstream/bar-awards-touch-strips.md and .patch (git apply on test-31958's file, luacheck clean; not posted).
 - [x] **The Awards' close X for a finger; Statistics at a game's end sideways** (hardening, 2026-11-17 ~15:30, dev
       phone): the Awards patch's third block, its X's strip 25 more to its left, to the panel's edge, 52 under the top
       (BAR's about 22 by 27); upright a tap 25 left of and 20 under the X closed it. Sideways the game's end: the Awards

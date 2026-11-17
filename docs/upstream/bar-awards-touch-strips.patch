@@ -1,0 +1,44 @@
+diff --git a/luaui/Widgets/gui_awards.lua b/luaui/Widgets/gui_awards.lua
+--- a/luaui/Widgets/gui_awards.lua
++++ b/luaui/Widgets/gui_awards.lua
+@@ -417,8 +417,9 @@
+ 			and (x < widgetX + widgetWidthScaled - quitRightX + mathFloor(20 * widgetScale) * font:GetTextWidth(
+ 				BAR.I18N("ui.awards.leave")
+ 			) + mathFloor(5 * widgetScale))
+-			and (y > widgetY + mathFloor((50 - 5) * widgetScale))
+-			and (y < widgetY + mathFloor((50 + 17 + 5) * widgetScale))
++			-- a strip a finger can hit on a touch screen: 22 under and over the words
++			and (y > widgetY + mathFloor((50 - 22) * widgetScale))
++			and (y < widgetY + mathFloor((50 + 17 + 22) * widgetScale))
+ 		then
+ 			if chobbyLoaded then
+ 				Spring.Reload("")
+@@ -434,8 +435,9 @@
+ 				BAR.I18N("ui.awards.showGraphs")
+ 			) + mathFloor(5 * widgetScale))
+ 			and (
+-				y > widgetY + mathFloor((50 - 5) * widgetScale)
+-				and (y < widgetY + mathFloor((50 + 17 + 5) * widgetScale))
++				-- a finger's strip, as Leave's
++				y > widgetY + mathFloor((50 - 22) * widgetScale)
++				and (y < widgetY + mathFloor((50 + 17 + 22) * widgetScale))
+ 			)
+ 		then
+ 			-- The team stats panel on its Graphs page, not the engine's end-game box:
+@@ -452,12 +454,11 @@
+ 
+ 		-- Close button
+ 		if
+-			(x > widgetX + widgetWidthScaled - closeRightX - mathFloor(5 * widgetScale))
+-			and (x < widgetX + widgetWidthScaled - closeRightX + mathFloor(20 * widgetScale) * font:GetTextWidth("X") + mathFloor(
+-				5 * widgetScale
+-			))
++			-- the X's strip wider and taller, for a finger: to the panel's edge on its right, 52 under the top
++			(x > widgetX + widgetWidthScaled - closeRightX - mathFloor(30 * widgetScale))
++			and (x < widgetX + widgetWidthScaled)
+ 			and (
+-				y > widgetY + widgetHeightScaled - mathFloor((10 + 17 + 5) * widgetScale)
++				y > widgetY + widgetHeightScaled - mathFloor((10 + 17 + 25) * widgetScale)
+ 				and (y < widgetY + widgetHeightScaled - mathFloor((10 - 5) * widgetScale))
+ 			)
+ 		then
