@@ -2278,6 +2278,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       phone sideways the 48 rows spaced, the same tap check, lobby-phone-test ALL PASS. The run's other checks:
       touch-phone-test and pad-test ALL PASS after the evening's changes; the lobby's Skirmish and Scenarios pages
       upright fine (the offline quick skirmish's "Download Failed" note is the open "Playing with no connection" item).
+      The run after (~23:05): a Settings list opens under its moved row, but its choices were Chili's 20 high, about
+      1.6 mm; with the rows spaced they are 1.6 times as tall, the drop-down too (73ea1b0f: Battle join state's three
+      choices about 50 pixels, the current one picked again closes it unchanged; lobby-phone-test ALL PASS). README and
+      ARCHITECTURE updated for the evening's lobby, layout editor and pregame wind changes (c52b8b36).
 - [x] **The layout editor upright with today's dock** (hardening, 2026-11-16 ~22:10, dev phone, `/hud` typed): it
       outlined BAR's player list over the dock's bottom right (the list lies under the upright dock: nothing of it to
       see or size), and its hint and buttons stood at the screen's middle, upright on the wind's and tide's boxes. A
