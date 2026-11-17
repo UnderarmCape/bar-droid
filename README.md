@@ -153,7 +153,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 - The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
   Sideways: all its buttons (Keys, Website and Login too) in one column of large buttons on the left, a swipe up or
   down for the next page; the screens beside it take the whole height. The same in a game's Lobby (the top bar's
-  Lobby button), Return to Battle first and Leave Battle with the buttons. Both ways up the lobby's Settings rows
+  Lobby button), Return to Battle first and Leave Battle with the buttons; there your fingers are the lobby's (its
+  lists scroll, the game behind it stays as it was, the dock out of the way until you return). Both ways up the lobby's Settings rows
   stand further apart with taller sliders, lists and checkboxes (their choices taller too), the login dialog's
   checkboxes are larger, and upright Replays fits each team's names to its column and Plugins' buttons are finger
   sized.

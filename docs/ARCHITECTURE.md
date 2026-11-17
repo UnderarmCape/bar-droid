@@ -86,8 +86,12 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   CHAT, speak to chat; FACTORIES), the D-gun mode with its full auto, the wind's and the tide's boxes over metal and
   energy (a tap: BAR's own wind details, common/wind_functions.lua and its I18N words; with them WG.BarDroidPortrait's
   dock() and onDock(), what other widgets keep out of); the dock file's "live" rects (the build options,
-  INSERT and QUEUE, the home grid, the groups row, the sideways tabs, the wind and tide) take their first tap in RtsTouch
-  though the dock is the camera pad (RtsTouch reads the whole file, up to 8 KB), and "ping" its hold and double tap;
+  INSERT and QUEUE, the home grid, the groups row, the sideways tabs, the wind and tide, the spectator's grid) take their
+  first tap in RtsTouch though the dock is the camera pad (RtsTouch reads the whole file, up to 8 KB), and "ping" its hold
+  and double tap; under BAR's lobby over the game (its "LobbyOverlayActive" message to LuaUI) the dock steps aside
+  ("dock none"), `bardroid_touch.lua` drops the fingers' camera lines and gesture actions and writes
+  `bardroid_overlay.txt` for RtsTouch (the pointer hidden for fingers, every point the lobby's), and after a LuaUI reload
+  it asks the lobby widget ("BarDroidOverlay?", answered with Chobby's own message; both calls local to the phone);
   unfolded (a near-square screen, `L.split`) two blocks in the bottom corners with the game between them, and with
   nothing picked the last builder's grid to build from at once; spectating,
   the spectate widget's tools as its own big buttons with TEAMS and HIDE / SHOW; no BAR tooltip drawn over it;
