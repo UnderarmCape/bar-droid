@@ -611,11 +611,23 @@ public class GameService extends Service {
         return "Benchmark, ms per frame: " + String.join(", ", parts);
     }
 
-    /** The engine's fatal error in this run's infolog (StatusText.engineFatal), the last one; null if there is none. */
+    /**
+     * The engine's fatal error in this run's infolog (StatusText.engineFatal), the last one; null if there is none. A
+     * message over several lines ("Errors:" and the content errors under it) is read up to its closing quote.
+     */
     static String engineFatal(Paths paths) {
         String found = null;
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(paths.bar, "infolog.txt")))) {
             for (String l; (l = r.readLine()) != null; ) {
+                if (l.contains("[ExitSpringProcess] errorMsg=\"")) {
+                    StringBuilder all = new StringBuilder(l);
+                    for (int n = 0; n < 20 && all.indexOf("\" msgCaption=") < 0; n++) {
+                        String next = r.readLine();
+                        if (next == null) break;
+                        all.append('\n').append(next);
+                    }
+                    l = all.toString();
+                }
                 String m = StatusText.engineFatal(l);
                 if (m != null) found = m;
             }

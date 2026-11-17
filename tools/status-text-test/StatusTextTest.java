@@ -82,6 +82,11 @@ public class StatusTextTest {
             { "[t=1] Fatal: [ExitSpringProcess] errorMsg=\"a \"quoted\" word\" msgCaption=\"x\"", "a \"quoted\" word" },
             { "[t=1] Error: [Watchdog::ClearTimer(id)] Invalid thread 4", null },
             { "[t=1] Fatal: [ExitSpringProcess] errorMsg=\"\" msgCaption=\"x\"", null },
+            // (content errors over several lines, as GameService.engineFatal joins them; a save of another BAR version,
+            // dev phone 2026-11-17)
+            { "[t=00:00:57.972796][f=-000001] Fatal: [ExitSpringProcess] errorMsg=\"Errors:\nMetadata checksum error: Package file was saved with a different version\" msgCaption=\"Recoil: caught content_error(s)\" mainThread=1",
+              "Metadata checksum error: Package file was saved with a different version" },
+            { "[t=1] Fatal: [ExitSpringProcess] errorMsg=\"Errors:\nfirst\n\nsecond\" msgCaption=\"x\"", "first; second" },
             { null, null },
         };
         for (Object[] f : fatals) {

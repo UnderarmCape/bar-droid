@@ -78,6 +78,16 @@ final class StatusText {
         int end = rest.indexOf("\" msgCaption=");
         if (end < 0) end = rest.lastIndexOf('"');
         String msg = (end >= 0 ? rest.substring(0, end) : rest).trim();
+        // (a list of content errors runs over several lines, "Errors:" first, GameService joins them: the launcher said
+        // only "Errors:", a saved game of another BAR version, dev phone 2026-11-17; the errors themselves, joined)
+        if (msg.indexOf('\n') >= 0) {
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            for (String l : msg.split("\n")) {
+                l = l.trim();
+                if (!l.isEmpty() && !l.equals("Errors:")) parts.add(l);
+            }
+            msg = String.join("; ", parts);
+        }
         if (msg.isEmpty()) return null;
         return msg.length() > 200 ? msg.substring(0, 200) + "..." : msg;
     }

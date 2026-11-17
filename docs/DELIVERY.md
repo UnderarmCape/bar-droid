@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A saved game of another BAR version: the launcher's note said only "Errors:"** (hardening, 2026-11-17 ~10:40,
+      dev phone upright, the lobby offline): the lobby's Load Game lists two saves, its dates the phone's local time.
+      Load on the one saved with BAR-31836 (the phone has 31958 now): the engine stops ("Metadata checksum error: Package
+      file was saved with a different version", BAR's own rule: a save loads only with its version), and the launcher
+      said "Game ended with an error (21)" and "BAR's own message: "Errors:"", the engine's message being a list over
+      several lines. GameService.engineFatal now reads it to its closing quote and StatusText.engineFatal drops the bare
+      "Errors:" and joins the rest ("; "): "BAR's own message: "Metadata checksum error: Package file was saved with a
+      different version"" on the phone; status-text-test ALL PASS with two cases for it. The mission info fix checked
+      in this game's infolog too: 35 "no GetInfo" lines, BAR's own gui_mission_info.lua's among them as always, the
+      app's gone. No UI polish beyond the note.
 - [x] **The day's launcher.log read through; the mission info copy's load error** (hardening, 2026-11-17 ~10:30, dev
       phone): launcher.log and launcher.old.log (07:50 to 10:27) grouped by message: app-side only the lobby's offline
       downloads (the skill ratings, the widget manifest, a map: "no connection"); engine-side "[bardroid-lobby] a
