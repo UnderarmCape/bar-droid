@@ -1213,10 +1213,11 @@ function upright.pluginButtons(win)
 end
 
 -- Chobby's Settings (gui_settings_window.lua): each tab a list of rows 36 apart, their checkboxes, sliders and lists 30
--- high, under 3 mm a row on a phone upright (dev phone screenshot, 2026-11-16: thirty rows down the screen, a 20 box a
--- checkbox). Upright the rows SETTINGS_ROW times as far apart and their controls as tall (a checkbox's box with it), a
--- row's words beside its control's middle as before; Chobby's places put back sideways. The tab shown only, asked every
--- half second (Chobby builds the window when it is first opened, a tab's list when it is first shown).
+-- high, under 3 mm a row on a phone upright and 2 mm sideways (dev phone screenshots, 2026-11-16: thirty rows down the
+-- screen, a 20 box a checkbox). Both ways up the rows SETTINGS_ROW times as far apart and their controls as tall (a
+-- checkbox's box with it), a row's words beside its control's middle as before (tall false puts Chobby's places back).
+-- The tab shown only, asked every half second (Chobby builds the window when it is first opened, a tab's list when it
+-- is first shown).
 upright.SETTINGS_ROW = 1.5
 function upright.settingsRows(tall)
 	local win = real(chobbyObject("settingsWindow"))
@@ -1739,7 +1740,7 @@ local function uprightUpdate(now)
 		upright.quickMaps(screen0.height > screen0.width * UPRIGHT)
 		upright.replayTeams(upright.replayPanel)
 		upright.pluginButtons(upright.pluginsWin)
-		upright.settingsRows(screen0.height > screen0.width * UPRIGHT)
+		upright.settingsRows(true) -- (both ways up: sideways its rows were the densest, about 2 mm)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
