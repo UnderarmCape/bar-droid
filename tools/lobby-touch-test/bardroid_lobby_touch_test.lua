@@ -269,6 +269,41 @@ local function scenarioCheck()
 		map and (worst ~= "" and worst or string.format("map from %d", map.x)) or "no map found")
 end
 
+-- The Keys window upright (bardroid_lobby_touch.lua uprightKeys): the picture under the tabs and the window no taller
+-- than they are, on the screen; Chobby's was the screen's height, two thirds empty (2026-11-18). Then its Close.
+local function keysCheck()
+	local img = findAny(WG.Chili.Screen0, 0, function(o)
+		return o.name == "imKeys"
+	end)
+	local win = img and real(img.parent)
+	if not win or win.visible == false then
+		check("the Keys window", false, "not shown")
+		return
+	end
+	local s0 = WG.Chili.Screen0
+	if s0.height > s0.width * 1.05 then
+		local foot = img.y + img.height
+		local frame = win.height - (win.clientHeight or win.height)
+		check("the Keys window upright: as tall as its tabs and picture, on the screen",
+			win.height <= foot + frame + 40 and win.y >= 0 and win.y + win.height <= s0.height,
+			string.format("window %d,%d %dx%d, picture to %d, screen %dx%d", win.x, win.y, win.width, win.height, foot,
+				s0.width, s0.height))
+	else
+		log("the Keys window: sideways, Chobby's own layout")
+	end
+	local close
+	for _, ch in ipairs(win.children or {}) do
+		local c = real(ch)
+		if c and c.caption == "Close" then
+			close = c
+		end
+	end
+	if close then
+		close:CallListeners(close.OnClick)
+	end
+	check("the Keys window has its Close", close ~= nil)
+end
+
 local function barWindow()
 	for _, c in ipairs(WG.Chili.Screen0.children) do
 		if c.name == "bardroidServerBar" and c.visible ~= false then
@@ -579,6 +614,14 @@ cases = {
 	function()
 		scenarioCheck()
 		clickCaption("Welcome") -- (the lobby's first page again)
+		settle()
+	end,
+	function()
+		check("the lobby's Keys open", clickCaption("Keys"))
+		settle(1.5) -- (the picture's size known once Chili has loaded it; the widget lays the window every half second)
+	end,
+	function()
+		keysCheck()
 		settle()
 	end,
 	function()
