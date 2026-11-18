@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Speak to chat's sessions checked on the laptop; the launcher's map field marked as a list** (hardening,
+      2026-11-18 ~18:25-18:35). (1) VoiceChat.java read over and `tools/voice-chat-test.ps1` added (19 cases, the
+      entry "Speak to chat started, cancelled and started again quickly" below). (2) UI polish: the map field for Play
+      vs AI drops down the maps installed at a tap, but looked like a plain text box; now Material's drop-down arrow at
+      its right end in the secondary text colour (res/drawable/ic_dropdown.xml; dev phone screenshot; a tap on the
+      arrow drops the list down).
 - [x] **The phone tests' stray widget warning for BAR's manifests.json; the launcher's log box** (hardening,
       2026-11-18 ~18:10-18:20, dev phone). (1) dock-phone-test warned "widgets on the phone that are not the app's ...:
       manifests.json": BAR's lobby writes its community widgets' list (from BAR-Widgets, 25 KB) into LuaUI/Widgets at
@@ -5064,6 +5070,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       words reach the chat, launcher.log shows the dropped late error. Until then the dev phone's app has the
       microphone revoked and user-fixed (2026-11-10: no test can open it); for the live test `adb shell pm
       clear-permission-flags com.underarmcape.bardroid android.permission.RECORD_AUDIO user-fixed` and `pm grant` it.
+      The code's side checked on the laptop (hardening, 2026-11-18 ~18:30; the code read over first, nothing wrong
+      found): `tools/voice-chat-test.ps1` runs VoiceChat.java against stand-ins for Android's speech recognition that
+      call back even a destroyed recognizer (the worst case) and passes 19 cases: started, cancelled, started again with
+      the first one's late error 5 after the new start (dropped, logged; the new session listens on and its words reach
+      chat), three quick start-and-cancels then one (three late errors dropped, the last words sent), a busy recognizer
+      never used again, each error's note (silence none, the network's "offline", the microphone's "denied"), blank
+      words, a ping's label, the screen gone (listening off, its late words dropped, starts refused until it is back),
+      the microphone asked once at a time, Allow after the screen went away starting nothing. With the session check
+      taken out it fails 3 (the late error ends the new session; the old words, said after the lock too, go to chat).
+      In laptop-tests.ps1 and java-checks.sh (CI). Left: the live run with a microphone, where the dev phone is alone.
 - [x] Settings' order menu options (2026-11-10, the official port: BAR's code ours to change with its devs): the copy
       declares `replaces = "Order menu"` (BAR's handler saves `replaced["Order menu"] = "BAR Droid order menu"`), and
       the change for BAR's Settings to follow that list is ready, `docs/upstream/bar-options-replaced.patch`: tested on
