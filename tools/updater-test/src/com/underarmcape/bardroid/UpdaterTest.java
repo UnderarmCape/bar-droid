@@ -105,10 +105,10 @@ public final class UpdaterTest {
         write(new File(p.filesDir, "update/state.properties"), "tags=byar\\:test\ncheck=Nov 11 00\\:57 (automatic updates off)\n");
         Prefs.autoUpdate = false;
         check("updates off: the last check's line without \"(automatic updates off)\", the line under it says it",
-                Updater.summary(p).contains("Last check Nov 11 00:57\nBAR updates: only with Install / Update"));
+                Updater.summary(p).contains("Update check Nov 11 00:57\nBAR updates: only with Install / Update"));
         Prefs.autoUpdate = true;
         check("  updates on again: the check's result as it was, in brackets as one piece (no-break spaces)",
-                Updater.summary(p).contains("Last check Nov 11 00:57 (automatic updates off)"));
+                Updater.summary(p).contains("Update check Nov 11 00:57 (automatic updates off)"));
         p = setup("enginemissrollback", true, NO_FRAME);
         s = state(p);
         s.setProperty("layer.engine", missB);

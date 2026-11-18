@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Ten turns: no Lua memory kept; the official engine's tests and game end; the launcher's "Update check"**
+      (hardening, 2026-11-18 ~11:45, dev phone): five sideways ↔ square round trips on the phone engine, each 21
+      widgets loaded again (0.98 s the first, then 0.60-0.66 s): Lua 130 MB before, 144 during, then 132, 134, 134, 148
+      over the next minutes (BAR's collection's usual swing), so the old widgets' copies are let go. With the launcher's
+      Phone engine off (the Fold7's engine now): pad-test, dock-phone-test and touch-phone-test ALL PASS; upright, the
+      top bar's Quit opens BAR's quit dialog whole, Resign brings BAR's Awards (whole on the screen, its Show Graphs and
+      Leave plain small words there: the phone patch with its touch strips is the phone engine's) and the app's
+      "Leaving the game in ... s" countdown. UI polish: the launcher's "Last check Nov 18 07:51 (no connection)" did not
+      say what was checked; now "Update check ..." (Updater.summary; updater-test ALL PASS with the words changed).
 - [x] **BAR's own Settings upright on the official engine; Output's filtering said when it applies** (hardening,
       2026-11-18 ~11:15, dev phone upright with the launcher's Phone engine off, as the Fold7 runs): the app's Settings
       copy is parked on that engine, and BAR's own opens ~1770 pixels wide on a 936-wide screen, its values cut off

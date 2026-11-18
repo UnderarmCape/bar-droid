@@ -158,7 +158,8 @@ public final class Updater {
             // (the reason in brackets as one piece: a narrow screen wrapped "(no" / "connection)", dev phone 2026-11-12)
             int open = check.indexOf(" (");
             if (open >= 0) check = check.substring(0, open + 2) + check.substring(open + 2).replace(' ', ' ');
-            sb.append("Last check ").append(check);
+            // ("Update check", not "Last check": the line did not say what was checked; UI polish 2026-11-18)
+            sb.append("Update check ").append(check);
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
         } else sb.append(Prefs.autoUpdate ? "BAR updates at every start" : off);
         // (an engine's own miss only while that engine plays: after a rollback to the older one, the newer engine's
