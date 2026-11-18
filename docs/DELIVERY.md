@@ -740,6 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [ ] **laptop-tests after 2½ weeks: five checks fail** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
+      full run on record 10-31, all 15 PASS): 614 s, PASS for lua locals, powershell syntax, GameActivity, the five
+      make-*.py patches on the laptop's BAR, publish patterns, downloader, settings merge, updater, PadGame,
+      StatusText, MapStore, quit in first person, the pad with unit control off. FAIL: **lua lint** (fixed this run,
+      below), **launch-bar build menus**, **lobby bridge**, **lobby touch**, **touch widget** in BAR's game and the
+      controller game (7 of its cases: "pad input: Move, Stop and the rest gone from the order menu", "one touch: the
+      pad's orders stay hidden", "a few taps: the order menu's orders back", "cover screen: no interface reload within
+      20 frames", three more). Each to be run alone and judged: a test left behind by a later change of the app's (to
+      update) or a fault (to fix). Lua lint: bardroid_options.lua, the Settings copy make-options.py makes from
+      BAR's, came after .luacheckrc's list of BAR copies and brought BAR's 34 warnings: excluded as the other four;
+      Chobby's `i18n` (the lobby widget's Load Game rows, 11-17) declared for bardroid_lobby_touch.lua; and eight of
+      the app's own: a local `half` over the function, a `tr` and a `mid` over upvalues, `rx` set and never read
+      (the dock), `P` over the test widget's pad in four of the dock test's stages: renamed or dropped. luacheck 0
+      warnings in 47 files.
 - [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
       everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
       file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old

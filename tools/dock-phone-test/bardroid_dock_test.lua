@@ -421,18 +421,18 @@ local function onCmd(c)
 		check(string.format("STRAFE: the Pawns there, each fights side to side across its place on repeat (%d elmos)",
 			2 * side), ok, table.concat(words, " "))
 	elseif c == "windrects" then -- (the wind's and the tide's boxes, X pixels from the top left)
-		local P, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
+		local Pt, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
 		local wb, tb
-		if P and P.windRects then
-			wb, tb = P.windRects()
+		if Pt and Pt.windRects then
+			wb, tb = Pt.windRects()
 		end
 		local function line(name, r)
 			return r and string.format("%s %d %d %d %d\n", name, r[1], vsy - r[4], r[3], vsy - r[2]) or (name .. " nil nil\n")
 		end
 		write(line("wind", wb) .. line("tide", tb))
 	elseif c == "tide?" or c == "wind?" then -- (a first tap on the box, the dock's camera pad up: its details open)
-		local P = WG.BarDroidPortrait
-		local open = P and P.windOpen and P.windOpen()
+		local Pt = WG.BarDroidPortrait
+		local open = Pt and Pt.windOpen and Pt.windOpen()
 		local kind = c:sub(1, 4)
 		check("the " .. kind .. "'s box, its first tap with the camera pad up: its details open", open == kind, open or "none open")
 	elseif c == "areamex" then -- (Area Mex, Kailil 2026-11-17: two Construction Bots given by the commander)
@@ -442,7 +442,7 @@ local function onCmd(c)
 		-- the dock, the dock's own camera move: SetCameraTarget left it off the screen, the view's middle is the dock's edge)
 		local cks = Spring.GetTeamUnitsByDefs(Spring.GetMyTeamID(), UnitDefNames.armck.id) or {}
 		Spring.SelectUnitArray(cks)
-		local F, P = WG.resource_spot_finder, WG.BarDroidPortrait
+		local F, Pt = WG.resource_spot_finder, WG.BarDroidPortrait
 		local cx, _, cz = Spring.GetUnitPosition(com)
 		local best, bd
 		for _, s in ipairs(F and F.metalSpotsList or {}) do
@@ -451,8 +451,8 @@ local function onCmd(c)
 				best, bd = s, d
 			end
 		end
-		if best and P and P.cameraTo then
-			P.cameraTo(best.x, Spring.GetGroundHeight(best.x, best.z), best.z)
+		if best and Pt and Pt.cameraTo then
+			Pt.cameraTo(best.x, Spring.GetGroundHeight(best.x, best.z), best.z)
 		end
 		Spring.Echo("[docktest] area mex: " .. #cks .. " Construction Bots picked, the camera on a spot "
 			.. tostring(best and math.floor(best.x)) .. "," .. tostring(best and math.floor(best.z)))
@@ -502,18 +502,18 @@ local function onCmd(c)
 		Spring.SelectUnitArray({})
 	elseif c == "resrects" or c == "slider" then -- (metal's and energy's boxes; with the energy panel open, its bar's
 		-- cell: X pixels from the top left)
-		local P, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
+		local Pt, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
 		local function line(name, r)
 			return r and string.format("%s %d %d %d %d\n", name, r[1], vsy - r[4], r[3], vsy - r[2]) or (name .. " nil nil\n")
 		end
 		if c == "resrects" then
 			local mb, eb
-			if P and P.resBoxes then
-				mb, eb = P.resBoxes()
+			if Pt and Pt.resBoxes then
+				mb, eb = Pt.resBoxes()
 			end
 			write(line("metal", mb) .. line("energy", eb))
 		else
-			local r = P and P.itemCell and P.itemCell("right", function(it)
+			local r = Pt and Pt.itemCell and Pt.itemCell("right", function(it)
 				return it.kind == "slider" and it.res == "energy"
 			end)
 			write(line("bar", r))

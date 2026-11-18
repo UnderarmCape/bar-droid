@@ -2844,11 +2844,11 @@ local function drawTile(item, r)
 			textIn("MULTI", r[1], r[2], r[3], mid, h * 0.2, multi and "\255\255\255\255" or dim, bold)
 		end
 		local S, lw = WG.BarDroidStyle, max(2, floor(w * 0.04))
-		local half = multi and { r[1], r[2], r[3], mid } or { r[1], mid, r[3], r[4] }
+		local lit = multi and { r[1], r[2], r[3], mid } or { r[1], mid, r[3], r[4] }
 		if S and (multi or allPicked) then
-			S.outline(half[1], half[2], half[3], half[4], S.GOLD, 1, lw)
+			S.outline(lit[1], lit[2], lit[3], lit[4], S.GOLD, 1, lw)
 		elseif multi or allPicked then
-			selector(half)
+			selector(lit)
 		end
 		return
 	end
@@ -3606,7 +3606,6 @@ local function drawResources()
 			local sw = font:GetTextWidth(short(storage)) * small * 0.85
 			if storageFits and rx - sw >= left then -- (sideways in a narrow middle it ran into the income: left out there)
 				font:Print("\255\150\150\150" .. short(storage), rx, cy - small * 0.32, small * 0.85, "ro")
-				rx = rx - sw - pad * 3
 			end
 			-- (the wind and the tide: their own boxes above these now, SP.drawWindTide; in the energy box they fitted
 			-- only where it was wide, never in the split dock's)
@@ -3691,10 +3690,10 @@ end
 -- tinted gold and underlined. Its own round corners: FlowUI's RectRound cuts them straight (BAR's bevel), the pill read
 -- as an octagon (dev phone, 2026-11-17).
 -- a rounded rect's outline, x and y in turn, its corners' radii tl, tr, br, bl (0: square)
-function SP.roundPath(x0, y0, x1, y1, tl, tr, br, bl)
+function SP.roundPath(x0, y0, x1, y1, rtl, rtr, rbr, rbl)
 	local pts, n, q = {}, 8, math.pi / 2
-	for _, c in ipairs({ { x1 - tr, y1 - tr, tr, 0 }, { x0 + tl, y1 - tl, tl, q }, { x0 + bl, y0 + bl, bl, 2 * q },
-		{ x1 - br, y0 + br, br, 3 * q } }) do
+	for _, c in ipairs({ { x1 - rtr, y1 - rtr, rtr, 0 }, { x0 + rtl, y1 - rtl, rtl, q }, { x0 + rbl, y0 + rbl, rbl, 2 * q },
+		{ x1 - rbr, y0 + rbr, rbr, 3 * q } }) do
 		for i = 0, c[3] > 0 and n or 0 do
 			local t = c[4] + q * i / n
 			pts[#pts + 1] = c[1] + c[3] * math.cos(t)
@@ -4798,9 +4797,9 @@ function DG.track(f, cancel, dir, v, alpha, locked, t, float, toAuto)
 		local word = toAuto and "AUTO" or "FIRE"
 		local tx = dir > 0 and k[3] - L.pad or k[1] + L.pad
 		local ww = bold:GetTextWidth(word) * ls
-		local mid = tx - dir * ww / 2
+		local wordMid = tx - dir * ww / 2
 		-- (the white knob under the word: dark letters on it, the gold ones were lost there; dev phone screenshots)
-		local onKnob = not locked and abs(kx - mid) < r + ww * 0.4
+		local onKnob = not locked and abs(kx - wordMid) < r + ww * 0.4
 		local col = locked and (toAuto and "\255\050\024\000" or "\255\255\255\255")
 			or onKnob and "\255\070\040\010"
 			or (v >= 0.6 and "\255\255\200\064" or "\255\190\190\190")
