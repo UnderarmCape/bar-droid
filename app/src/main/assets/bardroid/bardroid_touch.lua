@@ -1353,10 +1353,14 @@ function uiRescale.atLoad(src)
 		at = i + 8
 	end
 end
+-- (only BAR's own handler: a user widget, as under BAR's official engine, gets a stand-in whose every member answers
+-- with an empty table or a function that does nothing, and a warning; read past it. The first build without this
+-- set the new scale under the official engine and loaded nothing again: BAR's panels kept the old size, dev phone)
 function uiRescale.handler()
-	local wh = widgetHandler
-	if wh and type(wh.widgets) == "table" and wh.knownWidgets and type(wh.DisableWidget) == "function"
-		and type(wh.EnableWidget) == "function" and type(wh.ViewResize) == "function" then
+	local wh, get = widgetHandler, rawget
+	if wh and get and type(get(wh, "widgets")) == "table" and type(get(wh, "knownWidgets")) == "table"
+		and type(get(wh, "DisableWidget")) == "function" and type(get(wh, "EnableWidget")) == "function"
+		and type(get(wh, "ViewResize")) == "function" then
 		return wh
 	end
 end
@@ -1421,6 +1425,9 @@ local function rescaleWidgets(screen, want)
 	end
 	if first then
 		table.insert(names, 1, first)
+	end
+	if not first or #names < 2 then -- (no FlowUI among them: not BAR's widgets as known; the whole reload instead)
+		return false
 	end
 	local t0 = Spring.GetTimer()
 	for _, name in ipairs(names) do
@@ -1705,12 +1712,14 @@ local function update(dt)
 			local size = w and w .. "x" .. h
 			if not size or size == lastScreen then
 				uiRescale.seen = nil
-			elseif lastScreen == nil or uiRescale.seen == size then -- the size: the 60/120 Hz switches change the rest
+			elseif uiRescale.seen == size then -- the size: the 60/120 Hz switches change the rest
 				lastScreen, uiRescale.seen = size, nil
 				applyUiScale(tonumber(w), tonumber(h))
 			else
 				-- (a new size counts once two reads 0.5 s apart agree: a tilt that auto-rotate turned back at once changes
-				-- nothing. Kailil's Fold7, 2026-11-17: sideways and upright again within one reload, twice in a game)
+				-- nothing. Kailil's Fold7, 2026-11-17: sideways and upright again within one reload, twice in a game, the
+				-- first at its start. BAR's official engine, which his Fold7 runs since BAR's 2026.09.03, reloads the whole
+				-- interface for each: rescaleWidgets needs the phone engine's handler)
 				uiRescale.seen, screenFast, screenCheck = size, math.max(screenFast, 1), 0.5
 			end
 		end

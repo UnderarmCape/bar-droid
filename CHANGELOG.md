@@ -64,7 +64,8 @@ The first version meant for other people's phones: everything since the first bu
   100% on both screens. Unfolded, the minimap is half size until tapped. Turning the folded phone (sideways 2.0,
   upright 1.0) loads again only the widgets that read the scale: a freeze of about 1 s (a game's first turn 1.5-3 s) instead of
   ~10 s (with the phone
-  engine; BAR's official engine still reloads the whole interface).
+  engine; BAR's official engine still reloads the whole interface). A tilt the phone turns back at once changes
+  nothing.
 - Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.
 - A layout editor: hold three fingers on the screen (or type `/hud` in the chat) to move and size the chat, the unit

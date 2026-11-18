@@ -740,6 +740,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The folded turn's fix broke the turn on BAR's official engine, which the Fold7 runs** (hardening, 2026-11-18
+      ~10:15, dev phone sideways with the launcher's Phone engine off, then on): since BAR's 2026.09.03 the Fold7 runs
+      BAR's official engine (the entry "BAR moved to engine 2026.09.02, then 2026.09.03"), where the app's widgets are
+      user widgets. BAR hands a user widget a stand-in handler whose every member answers (an empty table, a function
+      that does nothing, one warning each), so the touch widget's check for BAR's handler passed: a turn set the new
+      scale and loaded "0 widgets ... again" and nothing reloaded, BAR's panels at the old size (the top bar's 2.0 on
+      the square screen). That has been on the Fold7 since the 09:03 install. Now the check reads the handler's members
+      raw (`rawget`; `bardroid_sensors.lua` already did) and gives up without FlowUI among the widgets found: on the
+      official engine "reloading the interface" again and the top bar at 1.0 (screenshot), no sandbox warning; on the
+      phone engine 21 widgets in 0.7-1.0 s as before. So on the Fold7 a folded turn stays a whole reload until the app
+      carries a phone build for 2026.09.03 (user widgets cannot load single widgets: BAR refuses their enablewidget /
+      disablewidget); what helps there is one reload instead of two: the tilt check of the entry below, and now a
+      game's first screen size waits for the same agreement (the Fold7's 2026-11-17 game reloaded twice at its start).
+      The portrait widget's faction picker check had the same trap (the stand-in's FindWidget called every frame before
+      the start, a warning each game): raw too; the phone engine still removes BAR's picker ("faction picker off"),
+      the official engine logs no warning. dock-phone-test, touch-phone-test ALL PASS; pad-test ALL PASS before the
+      portrait change. No UI polish this run. The Fold7 still unreachable: the fix waits for its wireless debugging.
 - [x] **A quick tilt no longer rescales the interface; Output's lists in words** (hardening, 2026-11-18 ~09:55, dev
       phone sideways): the Fold7's last game (2026-11-17) changed BAR's interface scale and back within seconds, twice
       (sideways and upright again during one reload). `bardroid_touch.lua` now takes a new screen size only once two
