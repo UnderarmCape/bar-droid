@@ -1182,6 +1182,7 @@ local function uprightKeys()
 	-- (the picture's box as tall as the picture at that width: Chili centres a kept-aspect picture in its box, and in the
 	-- tall window it stood mid-screen, ~800 pixels under the tabs; its size known once Chili has loaded it)
 	local top = 13 + 2 * h + 4 + 6
+	local fitTo -- (the picture's foot, its size known)
 	for _, c in ipairs(win.children or {}) do
 		c = real(c)
 		if c.name == "imKeys" then
@@ -1189,11 +1190,23 @@ local function uprightKeys()
 			local ok, info = pcall(gl.TextureInfo, c.file)
 			if ok and type(info) == "table" and (info.xsize or 0) > 0 and (info.ysize or 0) > 0 then
 				ih = math.min(ih, math.ceil(iw * info.ysize / info.xsize))
+				fitTo = top + ih
 			end
 			if c.y ~= top or c.x ~= 1 or math.abs((c.width or 0) - iw) > 1 or math.abs((c.height or 0) - ih) > 1 then
 				c:SetPos(1, top, iw, ih)
 				moved = true
 			end
+		end
+	end
+	-- (and the window as tall as its tabs and the picture, in the middle of the screen: Chobby's is the screen's height
+	-- less 100, two thirds of it empty under the picture upright, dev phone screenshot 2026-11-18)
+	local parent = real(win.parent)
+	if fitTo and parent and (parent.height or 0) > 0 then
+		local want = fitTo + 14 + (win.height - (win.clientHeight or win.height))
+		local y = math.floor((parent.height - want) / 2)
+		if want < win.height - 40 or (math.abs(win.height - want) <= 1 and win.y ~= y) then
+			win:SetPos(win.x, y, win.width, want)
+			moved = true
 		end
 	end
 	if moved then
