@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Fold7 builds kept off the ungated 2026.09.03 phone engine** (hardening, 2026-11-17 ~19:50): the engine
+      session put its new build of 2026.09.03 in engine-sim\release, where local.properties' bardroid.phoneEngine points,
+      so this checkout's 19:34 APK carried it (assets/phone-engine/2026.09.03, 45 MB). The Fold7 runs BAR 2026.09.03 and
+      would have installed and run it before the gate (stage 2); its install had failed (the Fold7 refused adb), so it
+      never got there. The dev phone (BAR 2026.07.04) installs only the matching phone engine: it kept
+      recoil_2026.07.04-phone. Until the gate passes, the Fold7's APK is built with bardroid.phoneEngine set to
+      engine-sim\release-archive (the shipped 2026.07.04) for that build only, local.properties restored after
+      (apk\bar-droid-phone-fold7-0704engine.apk, its phone-engine folder checked); the engine session told. The Fold7
+      still refuses adb at its old port: its new Wireless debugging port asked of Kailil.
 - [x] **Area Mex by tap, then drag, as Repair and Restore** (Kailil, 2026-11-17 ~19:35: "The other radial commands
       such as repair restore etc are working when i do the double tap drag on second press. But area mex isn't"; his
       Fold7 still had the build before the entry below, the install had failed): with Area Mex armed the tap's click
