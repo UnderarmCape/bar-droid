@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A replay from the lobby's Replays upright** (hardening, 2026-11-18 ~08:20, dev phone upright, offline lobby):
+      Replays' first row (the benchmark scenario recorded at 04:17), Start: the game loaded, the spectator dock (PLAYER
+      CAM with its arrows, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW), BAR's replay speeds down
+      the left, 29.8 fps; the wind's box showed its range only until the game's first frame, then "8.0 4-12". The
+      infolog: only Chobby's offline downloads and its library files without GetInfo. A scenario's replay opens the
+      app's Mission Info, which upright covers BAR's speeds from 20x to 3x; the top bar's Mission closes it (all
+      speeds then in reach). Left as it is: a scenario's replay only, one tap away, and the speeds' column's width is
+      nothing the copy can read. No UI polish this run.
 - [x] **publish-check finds a join password too** (hardening, 2026-11-18 ~08:10): after the Share logs fix, the
       repository searched for one (git grep, values hidden): none, only DELIVERY's own words. publish-check's private
       data now has "a join password", `MyPasswd=` with a value of 3 letters or digits or more (a pasted log; "(removed)",
