@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Voice chat and the share sliders reviewed; BAR's benchmark battle; quick Skirmish's Back and Advanced as tall
+      as Next** (hardening, 2026-11-18 ~04:35, dev phone): `VoiceChat` read again (a recognizer per session, late
+      callbacks dropped by number, the screen gone and the microphone question handled): nothing to change; its live
+      test still needs a microphone (revoked on the dev phone). The resource panel's knobs (`sliderValue`, `setSlider`):
+      whole percents, conversion within BAR's 12-88 %, the finger's value held 3 s at most: sound. BAR's benchmark
+      battle sideways ran to its end (Sim 25.4, Draw 2.8, Update 3.0 ms a frame) with no line of the app's widgets in
+      the infolog. Upright the load screen and the start's dock as before. UI polish, from the upright quick Skirmish's
+      screenshots: Back and Advanced at its foot were Chobby's 48 high beside Next's larger height, 68 pixels on the dev
+      phone, under Android's 48 dp for a finger; upright both now as tall as Next and level with it (`quickFoot`, kept
+      and put back sideways with the page's other controls). Dev phone: Select Game Type and Select Difficulty, Back
+      back to the game type; lobby-phone-test ALL PASS on the rebuilt APK. The Fold7 stayed off adb.
 - [x] **pad-test -Share and -Dgun; Display settings' scale said in words** (hardening, 2026-11-18 ~04:15, dev phone):
       pad-test -Share ALL PASS (the list's tabs, amounts, notes, 15 teammates in sight above the dock; its screenshots
       all clean) and -Dgun ALL PASS; the logs nothing of the app's. The launcher sideways: the left column scrolls by
