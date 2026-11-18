@@ -62,7 +62,8 @@ The first version meant for other people's phones: everything since the first bu
   the settings can be tuned per unit type on the phone (Tune) and apply to the other factions' equivalents.
 - BAR's interface scale fits each Fold screen (cover and inner), and follows fold/unfold during a game; the lobby at
   100% on both screens. Unfolded, the minimap is half size until tapped. Turning the folded phone (sideways 2.0,
-  upright 1.0) loads again only the widgets that read the scale: a freeze of ~2 s instead of ~10 s (with the phone
+  upright 1.0) loads again only the widgets that read the scale: a freeze of about 1 s (a game's first turn 1.5-3 s) instead of
+  ~10 s (with the phone
   engine; BAR's official engine still reloads the whole interface).
 - Camera views while following: Table, Close and Mid are the same for every unit; Shoulder (centred close behind the
   unit by default, on any ground) and 1st person can be tuned per unit type; a view's Up raises the camera.

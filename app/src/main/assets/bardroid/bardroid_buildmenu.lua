@@ -1548,6 +1548,10 @@ end
 function widget:ViewResize()
 	tracy.ZoneBeginN("W:BuildMenu:ViewResize")
 	vsx, vsy = spGetViewGeometry()
+	-- BAR Droid: the interface scale read again here (bardroid-rescale: ViewResize). A turn of the folded phone changes
+	-- it, and bardroid_touch.lua then sizes the menu through this call instead of loading it again: its load was
+	-- 0.8-2.3 s of the turn's freeze (dev phone, 2026-11-18)
+	ui_scale = Spring.GetConfigFloat("ui_scale", 1)
 
 	local outlineMult = math.clamp(1 / (vsy / 1400), 1, 1.5)
 	font2 = WG.fonts.getFont(2)

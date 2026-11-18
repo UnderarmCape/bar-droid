@@ -740,6 +740,22 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The folded turn's rescale: the files read ahead, the build menu sized in place; Play upright's summary**
+      (hardening, 2026-11-18 ~09:30, dev phone sideways ↔ square and upright 1.0 ↔ 2.0): each turn read all 227 of
+      the game's widget files again to find the 22 that read `ui_scale` (0.5-0.8 s of the freeze); the answers are
+      now kept per file and read ahead from 20 s into a game, ~1 ms a frame (done ~8 s later, no frame drop seen), a
+      turn's scan 0 ms. The app's Build menu copy was the slowest of the 22 (0.8 s, 2.3 s on a first turn): it read
+      the scale once at load and used it only in its ViewResize, so `make-buildmenu.py` has it read the scale there
+      again (marked `(bardroid-rescale: ViewResize)`, which the touch widget's check reads as "no load needed"; the
+      same BAR release, 4 lines). A turn now 0.86-0.92 s (was 1.5-1.7), the first 1.3 s (was 3.5) sideways; upright
+      the first 2.7 s (was 3.8), the next 0.83 s. The first change to a scale the game has not used yet still costs
+      ~1-2 s more in one widget or another (the build menu, gui_messages): likely the engine making fonts at the new
+      size; not chased yet. The layouts after four changes match the start's and a full reload's pictures (sideways,
+      square, upright). The Fold7's last game (2026-11-17, the old build) had two full reloads at its start too (the
+      screen 2096x900 for a moment, then upright). UI polish: the launcher's Play upright summary was 13 lines of
+      gestures over the settings; now two lines, the gestures in the README (which gained the metal and energy bars'
+      tap). touch-phone-test, dock-phone-test, pad-test, remake-check ALL PASS; luacheck 0 warnings. Not on the Fold7
+      yet: two installs broke off and then its wireless debugging port refused (09:38; Tailscale ping 100-260 ms).
 - [x] **A turn of the folded Fold7 froze the game ~10 s** (Kailil, 2026-11-18 ~08:15: "When folded, if I swap
       between vertical and landscape, or vise versa, the game freezes and takes about 10 seconds to resume ... It's
       like the lua reset command is being sent when I rotate my phone. This behavior doesn't occur when I rotate my

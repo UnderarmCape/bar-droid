@@ -1335,6 +1335,10 @@ local uiRescale = { pending = nil }
 -- build menu copy alone took 0.5-1.2 s of 1.5-2.6 s loaded again, dev phone. Any reading outside ViewResize's body,
 -- up to the file's next top-level function, counts as at load: a misread loads one more, never one too few)
 function uiRescale.atLoad(src)
+	-- (the app's Build menu copy reads it again in its ViewResize: make-buildmenu.py says so with this mark)
+	if src:find("(bardroid-rescale: ViewResize)", 1, true) then
+		return false
+	end
 	local vr = src:find("function widget:ViewResize", 1, true)
 	local vrEnd = vr and (src:find("\nfunction ", vr + 10, true) or #src)
 	local at = 1
@@ -1349,10 +1353,55 @@ function uiRescale.atLoad(src)
 		at = i + 8
 	end
 end
-local function rescaleWidgets(screen, want)
+function uiRescale.handler()
 	local wh = widgetHandler
-	if not (wh and type(wh.widgets) == "table" and wh.knownWidgets and type(wh.DisableWidget) == "function"
-		and type(wh.EnableWidget) == "function" and type(wh.ViewResize) == "function") then
+	if wh and type(wh.widgets) == "table" and wh.knownWidgets and type(wh.DisableWidget) == "function"
+		and type(wh.EnableWidget) == "function" and type(wh.ViewResize) == "function" then
+		return wh
+	end
+end
+-- Each file's answer kept: a turn read all 227 of the game's widget files again, 0.5-0.8 s of its freeze (dev phone).
+-- From 20 s into a game they are read ahead, at most ~1 ms a frame, so even the first turn finds them read.
+uiRescale.reads, uiRescale.ahead, uiRescale.updates = {}, 1, 0
+function uiRescale.readsAtLoad(file)
+	local r = uiRescale.reads[file]
+	if r == nil then
+		local ok, src = pcall(VFS.LoadFile, file)
+		r = ok and type(src) == "string" and uiRescale.atLoad(src) or false
+		uiRescale.reads[file] = r
+	end
+	return r
+end
+function uiRescale.readAhead()
+	uiRescale.updates = uiRescale.updates + 1
+	if uiRescale.updates < 600 then
+		return
+	end
+	local wh = uiRescale.handler()
+	if not wh then
+		uiRescale.ahead = nil
+		return
+	end
+	local t0 = Spring.GetTimer()
+	while uiRescale.ahead do
+		local w = wh.widgets[uiRescale.ahead]
+		if not w then
+			uiRescale.ahead = nil
+			return
+		end
+		uiRescale.ahead = uiRescale.ahead + 1
+		local file = w.whInfo and w.whInfo.filename
+		if file then
+			uiRescale.readsAtLoad(file)
+			if Spring.DiffTimers(Spring.GetTimer(), t0) * 1000 >= 1 then
+				return
+			end
+		end
+	end
+end
+local function rescaleWidgets(screen, want)
+	local wh = uiRescale.handler()
+	if not wh then
 		return false
 	end
 	local me, first, names, seen = widget:GetInfo().name, nil, {}, {}
@@ -1361,8 +1410,7 @@ local function rescaleWidgets(screen, want)
 		local file, name = info and info.filename, info and info.name
 		if name and file and name ~= me and not seen[name] then
 			seen[name] = true
-			local ok, src = pcall(VFS.LoadFile, file)
-			if ok and type(src) == "string" and uiRescale.atLoad(src) then
+			if uiRescale.readsAtLoad(file) then
 				if file:find("gui_flowui", 1, true) then
 					first = name
 				else
@@ -1678,6 +1726,8 @@ function widget:Update(dt)
 	WG.BarDroidOnInterface = pointOnInterface
 	if uiRescale.pending then -- (a new interface scale: the reloaded widgets in, every widget told the screen's size)
 		rescaleFinish()
+	elseif uiRescale.ahead then
+		uiRescale.readAhead()
 	end
 	guarded(update, dt)
 end
