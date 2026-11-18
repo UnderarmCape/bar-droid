@@ -7,6 +7,7 @@
 --   blocked?  PLACE on the blocked spot: the note "CAN'T BUILD THERE: PICK ANOTHER SPOT"
 --   dgun      the D-gun mode on the commander;  auto? / autooff?  full auto on / off by FIRE's swipes
 --   walk      the commander's speed watched;    stopped?  it walked, and stands still soon after the stick is let go
+--   xoff?     the mode's X tapped: the D-gun mode off
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
@@ -287,6 +288,8 @@ local function onCmd(c)
 		check("MOVE held: the commander walks; let go: it stands still at once", (maxSpeed or 0) > 15 and now < 4,
 			string.format("top %.0f, now %.0f", maxSpeed or 0, now))
 		maxSpeed = nil
+	elseif c == "xoff?" then -- (the X tapped by a finger)
+		check("the D-gun mode's X tapped: the mode off", D.active() == false, "active " .. tostring(D.active()))
 	elseif c == "presets" then
 		P.act("dgun_cancel")
 		local x, y, z = Spring.GetUnitPosition(com)

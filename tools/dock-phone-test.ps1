@@ -159,6 +159,9 @@ try {
   & $adb shell input swipe ([int]($s[0] * $script:k)) ([int]($s[1] * $script:k)) ([int]($s[0] * $script:k)) ([int](($s[1] - $s[2] * 0.9) * $script:k)) 1800
   Start-Sleep -Milliseconds 700
   Stage "stopped?"; Start-Sleep 1
+  # (and its X tapped: the mode off; the presets' stage had turned it off by the dock's own act, never by a finger)
+  $x = Mid $dock["cancel"] "the D-gun mode's X"; Tap $x[0] $x[1]; Start-Sleep -Milliseconds 900
+  Stage "xoff?"; Start-Sleep 1
   # 5. the presets: STRAFE (the grid's top left quarter), then a drag on the map, lifted at its end
   Stage "presets"
   if (-not (WaitLog '\[docktest\] presets open' 20)) { throw "the presets did not open" }

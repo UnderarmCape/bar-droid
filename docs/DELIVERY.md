@@ -740,6 +740,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **dock-phone-test taps the D-gun mode's X** (hardening, 2026-11-17 ~23:50, dev phone): the test turned the mode
+      off by the dock's own act ("dgun_cancel", the presets' stage), never by a finger, so a dead X (RtsTouch's
+      "cancel" role) would have passed. After MOVE's stop the script now taps the X from the dock file's cancel rect and
+      checks the mode is off ("xoff?"). Dev phone: PASS (active false), the run ALL PASS. No UI change.
 - [x] **The D-gun mode sideways, folded** (hardening, 2026-11-17 ~23:45, dev phone at 2316x1080, a skirmish): ORDERS by
       its tab, D-Gun tapped: the floating layout as meant, MOVE's and AIM's sticks low in the corners, a FIRE on each
       one's inner side, the X at the left above MOVE, the commander's aim drawn on the map; BAR's clock and music line
