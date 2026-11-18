@@ -1503,6 +1503,12 @@ local function shareConfirm()
 		shareClose()
 		return
 	end
+	-- (a spectator now: resigned, or out of the game, with the list open; the engine drops a spectator's share and A
+	-- said "GIVING"; the dock's giving checked it, the list only as it opened; review 2026-11-18)
+	if Spring.GetSpectatingState() then
+		shareClose("NOT WHILE SPECTATING")
+		return
+	end
 	-- (the list is made when it opens: a teammate who died or resigned since was still there, and A said "GIVING"
 	-- to a team that takes nothing; the list made again, the pick kept in range)
 	local _, _, isDead = Spring.GetTeamInfo(team.teamID, false)
@@ -1825,17 +1831,21 @@ local function shareDraw(vsx, vsy)
 		local sx0, sx1 = x0 + pad * 2 + tri, x0 + w - pad * 2 - tri
 		arrow(x0 + pad + tri, -1)
 		arrow(x0 + w - pad - tri, 1)
+		-- (each step's segment as wide as the share it adds: five equal ones lit three of five at 50 %, which read as
+		-- 60 %; now the lit part is the share given, UI polish 2026-11-18)
 		local n = #SHARE_STEPS
 		local sg = math.max(2, math.floor(size * 0.2))
-		local segW = (sx1 - sx0 - sg * (n - 1)) / n
+		local span = sx1 - sx0 - sg * (n - 1)
+		local a0 = sx0
 		for k = 1, n do
-			local a0 = sx0 + (k - 1) * (segW + sg)
+			local segW = span * (SHARE_STEPS[k] - (SHARE_STEPS[k - 1] or 0))
 			if k <= s.step then
 				style.fill(a0, sy, a0 + segW, sy + sh, idle and { 0.4, 0.4, 0.42 } or accent, idle and 0.7 or 0.95,
 					math.floor(sh / 2))
 			else
 				style.fill(a0, sy, a0 + segW, sy + sh, { 0.12, 0.12, 0.14 }, 0.85, math.floor(sh / 2))
 			end
+			a0 = a0 + segW + sg
 		end
 	elseif count > 0 then
 		text(count .. (count == 1 and " UNIT SELECTED" or " UNITS SELECTED"), mid,

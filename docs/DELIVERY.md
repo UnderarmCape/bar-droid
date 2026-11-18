@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The share list read again: A after a resign; its amount bar as wide as the share** (hardening, 2026-11-18
+      ~11:05, dev phone): the dev phone's launcher.log across the day's starts holds no app warning but the lobby's
+      downloads with no network (it rotates at ~4 MB). The share list (`bardroid_pad.lua`) read again: dead and away
+      teammates, the tax, BAR's share-slider room and anonymous mode as before; one gap: A checked spectating only as
+      the list opened, so a resign with the list open gave a "GIVING ..." the engine drops (the dock's giving checked
+      it). Now A says "NOT WHILE SPECTATING" and closes it (not reached by a test: a resign with the list open). UI
+      polish: the amount strip's five equal segments lit three of five at 50 % (read as 60 %); each step's segment is
+      now as wide as the share it adds (10, 15, 25, 25, 25 %), so the lit part is the share given: 50 % half the strip,
+      75 % three quarters (pad-test -Share screenshots). pad-test -Share, pad-test, dock-phone-test ALL PASS. The
+      Fold7 still unreachable.
 - [x] **The official engine checked over; the login dialog's rows for a finger** (hardening, 2026-11-18 ~10:45, dev
       phone with the launcher's Phone engine off, as the Fold7 runs now): a sideways skirmish's infolog has no warning
       or error from the app's widgets (BAR's own load-time ones only), lobby-phone-test ALL PASS on that engine.
