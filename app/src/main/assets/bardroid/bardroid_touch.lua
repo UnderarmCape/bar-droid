@@ -1702,9 +1702,16 @@ local function update(dt)
 			local s = f:read("*l")
 			f:close()
 			local w, h = (s or ""):match("^(%d+) (%d+) ")
-			if w and w .. "x" .. h ~= lastScreen then -- the size: the display's 60/120 Hz switches change the rest
-				lastScreen = w .. "x" .. h
+			local size = w and w .. "x" .. h
+			if not size or size == lastScreen then
+				uiRescale.seen = nil
+			elseif lastScreen == nil or uiRescale.seen == size then -- the size: the 60/120 Hz switches change the rest
+				lastScreen, uiRescale.seen = size, nil
 				applyUiScale(tonumber(w), tonumber(h))
+			else
+				-- (a new size counts once two reads 0.5 s apart agree: a tilt that auto-rotate turned back at once changes
+				-- nothing. Kailil's Fold7, 2026-11-17: sideways and upright again within one reload, twice in a game)
+				uiRescale.seen, screenFast, screenCheck = size, math.max(screenFast, 1), 0.5
 			end
 		end
 		zoneEnd()

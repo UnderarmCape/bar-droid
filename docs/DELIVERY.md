@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A quick tilt no longer rescales the interface; Output's lists in words** (hardening, 2026-11-18 ~09:55, dev
+      phone sideways): the Fold7's last game (2026-11-17) changed BAR's interface scale and back within seconds, twice
+      (sideways and upright again during one reload). `bardroid_touch.lua` now takes a new screen size only once two
+      reads of the app's screen file 0.5 s apart agree (the first one at a game's start at once). Against the installed
+      build, two of three 0.3 s flicks (`wm size 1080x1080; sleep 0.3; wm size reset`) each rescaled twice (1.8 + 0.7 s,
+      1.1 + 0.7 s of freeze); with the change none did, and a held change rescales 0.5-0.7 s after the resize (in
+      0.7-1.2 s). UI polish: Display settings' Output showed its two lists' raw values, "scaled" and "bilinear", where
+      the rest of the screens use words; patch 0020 gives them names (Native, Scaled, Exact, Custom; Bilinear (smooth),
+      Nearest (sharp pixels)), the stored values and so every saved setting unchanged (the Bilinear choice still ticked),
+      and its two "Needs ..." notes quote them so. touch-phone-test, dock-phone-test, pad-test ALL PASS. The Fold7 still
+      unreachable (its wireless debugging port refuses; no mdns entry).
 - [x] **The folded turn's rescale: the files read ahead, the build menu sized in place; Play upright's summary**
       (hardening, 2026-11-18 ~09:30, dev phone sideways ↔ square and upright 1.0 ↔ 2.0): each turn read all 227 of
       the game's widget files again to find the 22 that read `ui_scale` (0.5-0.8 s of the freeze); the answers are
