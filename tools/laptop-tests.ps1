@@ -7,6 +7,8 @@
 #   status-text-test     StatusText.java (the game service's status in players' words: notification, launcher)
 #   map-store-test       MapStore.java (the map storage limit: a map's last use, the pruning order)
 #   log-redact-test      LogRedact.java (Share logs: an online game's join password out of the logs it hands on)
+#   voice-chat-test      VoiceChat.java (speak to chat: a past session's late callbacks dropped, restarts, the
+#                        microphone question; stand-ins for Android's speech recognition, no microphone)
 #   lobby-bridge-test    LobbyBridge.java against the real lobby
 #   lobby-touch-test     bardroid_lobby_touch.lua in the real lobby (finger scrolling, server details first)
 #   touch-widget-test    bardroid_touch.lua in BAR's game and in the controller game (when tools\profile-gamepad-game.ps1
@@ -121,6 +123,7 @@ Run "gamepad in BAR's game (PadGame)" "padgame-test.ps1" "ALL PASS"
 Run "status words (StatusText)" "status-text-test.ps1" "ALL PASS"
 Run "map storage limit (MapStore)" "map-store-test.ps1" "ALL PASS"
 Run "shared logs without join passwords (LogRedact)" "log-redact-test.ps1" "ALL PASS"
+Run "speak to chat sessions (VoiceChat)" "voice-chat-test.ps1" "ALL PASS"
 Run "lobby bridge" "lobby-bridge-test.ps1" "\[bridgetest\] done: [1-9]"
 Run "lobby touch" "lobby-touch-test.ps1" "\[lobbytouch\] done: ALL PASS"
 $pointerArg = @(if ($Pointer) { "-Pointer" })
