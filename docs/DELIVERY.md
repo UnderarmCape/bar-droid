@@ -740,7 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **Every file the docs name, checked** (hardening, 2026-11-18 ~02:55): a scan of README, CLAUDE.md,
+- [x] **HANDOFF.md after the move to GitHub** (hardening, 2026-11-18 ~02:55): its table still had "the push" left for
+      Kailil and no word of the private copy; the public-release row names the two private repositories, the
+      latest-build pre-release and github-sync.ps1 now, "making it public" staying his; the work log row says the
+      answers are whole, the conversation archive. The other docs had nothing the move made wrong.
+- [x] **Every file the docs name, checked** (hardening, 2026-11-18 ~02:50): a scan of README, CLAUDE.md,
       CONTRIBUTING, HANDOFF and docs/*.md (but the logs) for tools/, app/, docs/ and scripts/ paths found none missing
       but the engine branch's own (tools/engine-sim/build-engine.ps1, docs/ENGINE-SIM.md), named as such everywhere but
       one place in ENGINE-DEFAULT.md: now so there too. And ENGINE-DEFAULT.md's opening still said the app ships BAR's
