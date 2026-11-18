@@ -126,6 +126,7 @@ final class RtsTouch {
         final java.util.List<float[]> live = new java.util.ArrayList<>();
         float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
         boolean menu, circle, draw, dgun, dgunAuto;
+        boolean area;   // an area order armed (Area Mex, Reclaim...): a drag on the game draws its circle, "draw 2"
     }
     private Dock dockCache;
     private long dockReadAt, dockModified;
@@ -139,6 +140,7 @@ final class RtsTouch {
     private String dockSide;                         // a menu-mode scroll: "left" or "right"
     private boolean dockSelecting;                   // a menu-mode drag on the game: a box selection
     private boolean shapeDragging;                   // a LINE, GRID or BORDER drag (startShapeDrag)
+    private boolean areaDragging;                    // an area order's circle drawn (startAreaDrag)
     private static final float PAD_PAN_GAIN = 1.3f;            // the map moves this much more than the finger
     private static final float PAD_ZOOM_PER_SCREEN = 3.0f;     // a drag the screen's height up: e^3 times closer
     private static final float PAD_ROTATE_DEAD = 3f;           // slops a sideways drag goes before it rotates (Kailil:
@@ -773,7 +775,7 @@ final class RtsTouch {
                 return;
             case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight; a
                 // LINE, GRID or BORDER drag too: dragged into the dock its buildings were queued out of sight)
-                if (i >= 0) moveCursor(curX, dockSelecting || shapeDragging ? aboveDock(curX, curY) : curY);
+                if (i >= 0) moveCursor(curX, dockSelecting || shapeDragging || areaDragging ? aboveDock(curX, curY) : curY);
                 return;
             case RIGHT_HOLD:   // (begun on the dock: the pointer stays with the finger, rightHoldY)
                 if (i >= 0) moveCursor(curX, rightHoldY(curX, curY));
@@ -879,10 +881,12 @@ final class RtsTouch {
                 flingIfFast();
                 break;
             case LEFT_DRAG:
-                press(curX, dockSelecting || shapeDragging ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
+                press(curX, dockSelecting || shapeDragging || areaDragging ? aboveDock(curX, curY) : curY,
+                        InputStub.BUTTON_LEFT, false);
                 releaseKeys();
                 endDockSelect();
                 shapeDragging = false;
+                areaDragging = false;
                 break;
             case PAD:
                 padUp(e);
@@ -949,6 +953,7 @@ final class RtsTouch {
         ui.removeCallbacks(threeHold);
         boolean shapeCancelled = state == State.LEFT_DRAG && shapeDragging;
         shapeDragging = false;
+        areaDragging = false;
         if (shapeCancelled) {
             // (a LINE, GRID or BORDER drag the system took back, a palm or the screen going off: the building put away, then
             // the button up with its keys; let go at once it queued one at the drag's start, review 2026-11-15)
@@ -1010,6 +1015,7 @@ final class RtsTouch {
                 if (d != null) {
                     d.circle = text.contains("\nselect circle");
                     d.draw = text.contains("\ndraw 1");
+                    d.area = text.contains("\ndraw 2");
                     d.dgun = text.contains("\ndgun 1") && d.stickL != null && d.stickR != null && d.fire != null
                             && d.cancel != null;
                     d.dgunAuto = text.contains("\ndgunauto 1");
@@ -1024,6 +1030,21 @@ final class RtsTouch {
     private boolean dockDraw() {
         Dock d = dock();
         return d != null && d.draw;
+    }
+
+    private boolean dockArea() {
+        Dock d = dock();
+        return d != null && d.area;
+    }
+
+    /**
+     * An area order armed (Area Mex, Reclaim, Repair...): a drag on the game is BAR's left drag, which draws the order's
+     * circle from where the finger came down (Kailil, 2026-11-17: "Area mex command is not working anymore. I cant draw
+     * the vanilla circle thing to expand it"; the drag had panned). Its edge held at the dock's top, as a path's.
+     */
+    private void startAreaDrag() {
+        startLeftDrag();
+        areaDragging = true;
     }
 
     /** A drag on the game with units to order: BAR's right drag from where the finger came down (dockDraw). */
@@ -1198,6 +1219,7 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         if (hover == HOVER_MAP && (startShapeDrag() || startPlaceDrag())) return;
         if (hover == HOVER_MAP && !gridHeld && place() == null && dockDraw()) { startRightDrag(); return; }
+        if (hover == HOVER_MAP && !gridHeld && place() == null && dockArea()) { startAreaDrag(); return; }
         if (hover == HOVER_SCROLL && Math.abs(curY - downY) >= Math.abs(curX - downX)) startScroll();
         else if (hover == HOVER_INTERFACE || hover == HOVER_SCROLL) startLeftDrag();   // (a window's sliders: sideways)
         else startPan();
@@ -1759,6 +1781,7 @@ final class RtsTouch {
     private void startLeftDrag() {
         state = State.LEFT_DRAG;
         shapeDragging = false;   // (startShapeDrag sets it after)
+        areaDragging = false;    // (startAreaDrag too)
         if (secondTap) lastTapX = -1;   // the tap before a box select does not start a double click
         press(downX, downY, InputStub.BUTTON_LEFT, true);
         moveCursor(curX, curY);

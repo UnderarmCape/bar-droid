@@ -740,6 +740,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Area Mex (and the other area orders) draw their circle again** (Kailil, 2026-11-17 ~19:10, with a screenshot
+      of a Construction Bot picked upright: "Area mex command is not working anymore. I cant draw the vanilla circle
+      thing to expand it"): since one finger pans whatever is picked (2026-11-13) a drag on the game drew only with
+      MOVE, FIGHT, PATROL or ATTACK armed (the dock's "draw 1", BAR's right drag for their paths); with Area Mex armed
+      the drag panned the camera. Now an armed order of an area type (Spring's ICON_AREA, ICON_UNIT_OR_AREA,
+      ICON_UNIT_FEATURE_OR_AREA, ICON_UNIT_OR_RECTANGLE: Area Mex, Reclaim, Repair, Restore, Capture, Load units...)
+      writes "draw 2" in the dock file (bardroid_portrait.lua SP.AREA_TYPES), and RtsTouch makes a drag on the map BAR's
+      left drag from where the finger came down (startAreaDrag), the circle's edge held at the dock's top edge as a
+      path's. Dev phone upright: 3 Construction Bots picked (a temporary widget, removed after), Area Mex tapped (the
+      dock file "draw 2"), a drag on the map: BAR's circle, 9 mex orders queued over the three bots, the first mex going
+      up; dock-phone-test all pass. (The run before it: the lobby's Replays, Scenarios and the game's Settings sideways
+      looked at, fine.)
 - [x] **The lobby's Load Game: Load and Delete apart, for a finger** (hardening UI polish, 2026-11-17 ~18:50, dev
       phone, the lobby offline): Chobby's Load Game (gui_loadgame.lua) rows are 80 high, Load (y 3) right above Delete
       (bottom 4) at the row's end, each 65 x 35 with 3 pixels between them (Delete asks first; Load does not). Each row

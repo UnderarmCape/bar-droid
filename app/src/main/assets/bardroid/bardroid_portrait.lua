@@ -244,6 +244,16 @@ end
 function SP.on()
 	return Spring.GetSpectatingState() and (WG.BarDroidInput or "touch") == "touch"
 end
+-- The command types whose order a drag on the map draws as an area, BAR's circle (Area Mex, Reclaim, Repair, Restore,
+-- Capture, Load units...): with one armed a one-finger drag is a left drag, writeDock's "draw 2" (Kailil, 2026-11-17:
+-- "Area mex command is not working anymore. I cant draw the vanilla circle thing to expand it": since one finger pans
+-- whatever is picked, 2026-11-13, only MOVE, FIGHT, PATROL and ATTACK drew, and an area order's drag panned)
+SP.AREA_TYPES = {}
+for _, name in ipairs({ "ICON_AREA", "ICON_UNIT_OR_AREA", "ICON_UNIT_FEATURE_OR_AREA", "ICON_UNIT_OR_RECTANGLE" }) do
+	if CMDTYPE and CMDTYPE[name] then
+		SP.AREA_TYPES[CMDTYPE[name]] = true
+	end
+end
 function SP.act(name)
 	local S = WG.BarDroidSpectate
 	local a = S and S.actions and S.actions[name]
@@ -628,17 +638,18 @@ local function writeDock(force)
 		local function r(x)
 			return string.format("%d %d %d %d", x[1], vsy - x[4], x[3], vsy - x[2])
 		end
-		local _, cmd = spGetActiveCommand()
+		local _, cmd, cmdType = spGetActiveCommand()
 		-- (a one-finger drag draws a path only with MOVE, FIGHT, PATROL or ATTACK pressed; with units merely picked it
 		-- pans, their path a press held, then a drag: RtsTouch's long press, BAR's right button. Kailil, 2026-11-13, asked
 		-- whether a drag with units picked should pan too: "Pan, hold for paths". Before: picked units without a building
 		-- queued drew a path, 2026-11-11's "very easy to place a move path ... on accident due to the muscle memory of
 		-- grabbing the screen". A preset armed: taps only, a drag pans, Kailil 2026-11-13: "make presets a single tap only")
-		local draw = DRAW_CMDS[cmd] or false
+		-- (an area order armed, SP.AREA_TYPES: 2, a left drag that draws its circle)
+		local draw = DRAW_CMDS[cmd] and 1 or cmd and SP.AREA_TYPES[cmdType] and 2 or 0
 		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
 		local lr = SP.hidden and L.dock
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(SP.dockAll()), menu and "menu" or "pad",
-			r(lr or L.left), r(lr or L.right), selStyle, draw and 1 or 0)
+			r(lr or L.left), r(lr or L.right), selStyle, draw)
 			.. (showGroups and not SP.hidden and ("groups " .. r(L.groups) .. "\n") or "")
 			.. (L.hole and ("map " .. r(L.hole) .. "\n") or "") -- (sideways: BAR's minimap, its touches the engine's)
 			-- (unfolded: the game between the two blocks; a drag ending there keeps its point, RtsTouch.aboveDock)
