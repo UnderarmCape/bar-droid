@@ -151,16 +151,27 @@ def scan(path, use_cache=True):
                               + ".json")
     with open(path, "rb") as fh:
         head = fh.read(4096)
-    c = None
+    c, why = None, None
     if use_cache:
         try:
             with open(cache_file, encoding="utf-8") as fh:
                 c = json.load(fh)
-        except (OSError, ValueError):
+        except OSError:
             c = None
+        except ValueError:
+            c, why = None, "its cache file unreadable"
         # (the same file grown, not another one: its first bytes the same, no shorter)
-        if c and (c.get("head") != head.hex() or os.path.getsize(path) < c.get("offset", 0) or c.get("v") != CACHE_V):
-            c = None
+        if c:
+            why = ("an older cache" if c.get("v") != CACHE_V else "its first bytes changed" if c.get("head") != head.hex()
+                   else "shorter than its cache" if os.path.getsize(path) < c.get("offset", 0) else None)
+            if why:
+                c = None
+    # (a big one read whole says why: twice on 2026-11-17 a run took 262 s instead of 20, a 3.3 GB transcript read
+    # from the start, the cause not known then)
+    size = os.path.getsize(path)
+    if why and size > 200e6:
+        print("worklog: %s (%.0f MB) read whole: %s" % (os.path.basename(path), size / 1e6, why), file=sys.stderr)
+    before = c and (c.get("offset"), c.get("markers"), c.get("parsed"), c.get("title"))
     state = c or {"v": CACHE_V, "head": head.hex(), "offset": 0, "markers": 0, "parsed": False, "title": None,
                   "entries": []}
 
@@ -191,10 +202,14 @@ def scan(path, use_cache=True):
         if state["markers"] >= MIN_MARKERS:  # (named often enough now: parsed whole once, from the start)
             state.update(markers=0, parsed=True, title=None, entries=[])
             state["offset"] = read_lines(path, 0, parse)
-    if use_cache:
+    # (written only when it changed, and whole or not at all: each of the ~1450 rewritten in place every run, a run
+    # cut short or two at once could leave one cut off, and the next read its transcript whole)
+    if use_cache and before != (state["offset"], state["markers"], state["parsed"], state["title"]):
         os.makedirs(CACHE, exist_ok=True)
-        with open(cache_file, "w", encoding="utf-8") as fh:
+        tmp = cache_file + ".%d.tmp" % os.getpid()
+        with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(state, fh)
+        os.replace(tmp, cache_file)
     if not state["parsed"] or state["markers"] < MIN_MARKERS:
         return None, state["markers"], []
     return state["title"], state["markers"], state["entries"]

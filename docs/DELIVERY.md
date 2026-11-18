@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **tools/worklog.py: its cache written whole and only when changed; a whole read says why** (hardening,
+      2026-11-17 ~22:15): two runs this evening took 262 s instead of ~20. Measured: the cached scan of all 1454
+      transcripts takes 12.6 s and a whole uncached run 25 s warm, so the slow runs read the 3.3 GB transcript from its
+      start, cold; its first 4 KB are stable entries (title, agent name, mode). The likeliest cause: every run rewrote
+      all ~1450 cache files in place (the big one 30 MB), so a run cut short or two at once could leave one cut off
+      and the next read its transcript whole. Now a cache file is written only when its transcript grew (to a .tmp
+      file, then renamed), and a transcript over 200 MB read whole prints why (cache unreadable, first bytes changed,
+      shorter, older cache). Checked: a cached run 15 s writing 2 files, the next 2.6 s writing none; the big cache
+      cut to 1000 bytes: named on stderr, read whole once (15 s warm), then fast again; output the same as
+      `--no-cache`. Polish: the groups row's "NEW n" under its "+" as large as the tiles' counts and bold (it was the
+      row's smallest words, about 14 pixels on the folded sideways panel); dev phone screenshot after.
 - [x] **The Fold7's evening game read; the touch tests after the cancel fix** (hardening, 2026-11-17 ~21:50): his
       23-minute game (folded and upright, 100 units at the end) held 30.1-30.2 fps every minute (slowest frame
       50-118 ms, Lua 257-307 MB), no Lua error, no app warning; he saved from the top bar (said in BAR's message

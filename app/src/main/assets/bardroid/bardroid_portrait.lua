@@ -4158,7 +4158,9 @@ local function drawGroups()
 		local nr = place(off + #list * w, { new = free })
 		button(nr, { 0.2, 0.2, 0.2, 0.8 }, { 0.32, 0.32, 0.32, 0.8 })
 		textIn("+", nr[1], nr[2] + h * 0.3, nr[3], nr[4], h * 0.42, "\255\255\200\064", bold)
-		textIn("NEW " .. free, nr[1], nr[2], nr[3], nr[2] + h * 0.4, h * 0.2, "\255\220\220\220", font)
+		-- (as large as the tiles' counts beside it, bold: at a fifth of the row in the plain font it was the row's
+		-- smallest words, 14 pixels on the folded Fold7 sideways; dev phone screenshot 2026-11-17)
+		textIn("NEW " .. free, nr[1], nr[2], nr[3], nr[2] + h * 0.4, h * 0.25, "\255\225\225\225", bold)
 	end
 	for i, g in ipairs(list) do
 		local gr = place(off + (i - 1) * w, { group = g })
