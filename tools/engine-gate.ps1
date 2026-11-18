@@ -18,6 +18,10 @@
 param([Parameter(Mandatory)][string]$Version, [string[]]$Replays = @(), [string[]]$OffReplays = @(),
       [string[]]$Tests = @("all"), [string]$Who = "engine-gate", [string]$Device = "")
 $ErrorActionPreference = "Stop"
+# (powershell -File hands "a.sdfz,b.sdfz" over as one string: the first gate run looked for a file of both names)
+$Replays = @($Replays | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
+$OffReplays = @($OffReplays | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
+$Tests = @($Tests | ForEach-Object { $_ -split ',' } | Where-Object { $_ })
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 if (-not $Device) { $Device = Get-PhoneDevice $adb }
@@ -54,7 +58,9 @@ function Run-Replay([string]$file, [bool]$switchesOff) {
   $infolog = if ($line -match 'infolog (.+\.txt)$') { $Matches[1] } else { "" }
   $desync = if ($line -match ': (\d+) desync warnings') { [int]$Matches[1] } else { -1 }
   $log = if ($infolog -and (Test-Path $infolog)) { Get-Content $infolog } else { @() }
-  $end = $log | Select-String -Pattern 'End of demo reached|[Gg]ame ?[Oo]ver' | Select-Object -First 1
+  # (a replay whose players all left before its file ends: "No clients connected, shutting down server" at its last
+  # frame, speedmetal2v2-20261117 on 2026.09.03 at f=43340 of its 24.0 min)
+  $end = $log | Select-String -Pattern 'End of demo reached|[Gg]ame ?[Oo]ver|No clients connected, shutting down server' | Select-Object -First 1
   $ran = $log | Select-String -SimpleMatch "[BarDroidSim]" | Select-Object -First 1
   $ver = $log | Select-String -Pattern 'Spring Engine Version: (.+)$' | Select-Object -First 1
   $launch = AppLog "grep -E 'phone engine: |official engine ' files/logs/launcher.log | tail -n 1"
