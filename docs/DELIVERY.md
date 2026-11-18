@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The share list and the touch camera on the newest APK; the share list's storage bars** (hardening, 2026-11-18
+      ~18:40-18:55, dev phone upright, the 2026.09.03 phone engine): pad-test -Share ALL PASS (20 checks: METAL and
+      ENERGY given within the teammate's room, the notes, 15 teammates on the screen, a teammate out of the game) and
+      touch-phone-test ALL PASS (16, the void's drags and pinch, BAR's lobby over the game) after the day's touch widget
+      change. UI polish: each teammate's storage bar in the share list was two flat strips; now as the dock's resource
+      bars, a dark outlined track and the fill shaded from its foot with a gloss on its top half (bardroid_pad.lua;
+      pad-test -Share again ALL PASS, its screenshots).
 - [x] **Speak to chat's sessions checked on the laptop; the launcher's map field marked as a list** (hardening,
       2026-11-18 ~18:25-18:35). (1) VoiceChat.java read over and `tools/voice-chat-test.ps1` added (19 cases, the
       entry "Speak to chat started, cancelled and started again quickly" below). (2) UI polish: the map field for Play
