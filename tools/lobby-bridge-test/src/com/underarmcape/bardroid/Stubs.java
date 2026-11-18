@@ -11,6 +11,9 @@ final class Log {
 
 final class BuildConfig { static final String VERSION_NAME = "test"; }
 
+// (the Replays tab's "Add" on a phone, 2026-11-17: only named in the test's startActivity line)
+final class ReplayImportActivity {}
+
 final class Prefs { static String engineVersion = "2026.09.01"; }
 
 final class Paths {
