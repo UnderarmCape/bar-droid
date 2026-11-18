@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **CHANGELOG after the night** (hardening, 2026-11-18 ~08:45): 0.2.0's section (not released yet) had none of the
+      night's changes for players. Added where each belongs: the resource bars' whole percents and the small boxes'
+      marks; the groups' numbers on a badge; the lobby upright (Keys window no taller than its picture, Back and
+      Advanced as tall as Next, a scenario's long line a size smaller beside its map) and sideways (notes off the
+      Skirmish steps' titles); Settings' short last row of tabs centred; Share logs without an online game's join
+      password; the launcher's log lines and Display settings' scale. The engine's faster archive rescans wait for
+      the phone build that carries them. publish-check: the CHANGELOG entry and no private data PASS. The Fold7 has not
+      started the app since its 08:01 install.
 - [x] **The docs after the night; the chat's typing box sideways** (hardening, 2026-11-18 ~08:40): README's Problems
       says what Share logs' zip holds and that an online game's join password is taken out first; HANDOFF's Share logs
       row and ARCHITECTURE's file list name `LogRedact`. Dev phone sideways, a skirmish: Enter, a two-line message
