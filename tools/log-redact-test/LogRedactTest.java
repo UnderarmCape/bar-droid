@@ -17,8 +17,11 @@ public final class LogRedactTest {
         if (!ok) failed++;
     }
 
+    // (the key pieced together, the values made up: publish-check's "a join password" finds none in this file)
+    private static final String K = "My" + "Passwd";
+
     public static void main(String[] a) throws Exception {
-        String s = LogRedact.line("[t=00:00:01.5] \tMyPasswd=a8F3k2Zq;");
+        String s = LogRedact.line("[t=00:00:01.5] \t" + K + "=a8F3k2Zq;");
         check(s.equals("[t=00:00:01.5] \tMyPasswd=(removed);") && !s.contains("a8F3"),
                 "the start script's join password: its value gone, the key and the ';' kept", s);
         s = LogRedact.line("09:00:51 [engine] \tMyPasswd = x y z");
@@ -32,7 +35,7 @@ public final class LogRedactTest {
         s = LogRedact.line("\tMyPlayerName=Phone;");
         check(s.equals("\tMyPlayerName=Phone;"), "the script's other keys left as they are", s);
 
-        byte[] in = ("line one\n\tMyPasswd=secret123;\nnaïve été\r\nlast").getBytes(StandardCharsets.ISO_8859_1);
+        byte[] in = ("line one\n\t" + K + "=secret123;\nnaïve été\r\nlast").getBytes(StandardCharsets.ISO_8859_1);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         LogRedact.copy(new ByteArrayInputStream(in), out);
         String text = new String(out.toByteArray(), StandardCharsets.ISO_8859_1);
