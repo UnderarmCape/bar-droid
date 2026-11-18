@@ -1199,8 +1199,10 @@ function SP.factionPicker()
 	if SP.pickerDone or Spring.GetGameFrame() > 0 then
 		return
 	end
-	local wh = widgetHandler
-	if not (wh and wh.FindWidget and wh.RemoveWidget) then
+	-- (looked up raw: a user widget's stand-in answers every member with a function that does nothing, and a warning;
+	-- that one was called every frame before the start, dev phone 2026-11-18)
+	local wh, get = widgetHandler, rawget
+	if not (wh and get and get(wh, "FindWidget") and get(wh, "RemoveWidget")) then
 		SP.pickerDone = true
 		return
 	end
@@ -1217,8 +1219,8 @@ function SP.factionPickerBack()
 	if not SP.pickerRemoved or Spring.GetGameFrame() > 0 then
 		return
 	end
-	local wh = widgetHandler
-	if wh and wh.EnableWidget then
+	local wh, get = widgetHandler, rawget
+	if wh and get and get(wh, "EnableWidget") then
 		wh:EnableWidget("Factionpicker")
 		Spring.Echo("[bardroid-portrait] BAR's faction picker back: the dock is down before the start")
 	end
