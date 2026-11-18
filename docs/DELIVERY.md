@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **GitHub's CI: fixed, and on demand only** (hardening, 2026-11-18 ~02:45): every push tonight ran
+      .github/workflows/build.yml, and each run's apk job stopped within 30 s at android-actions/setup-android@v3, whose
+      default asks for the old SDK Tools package ("Failed to find package 'tools'"); GitHub mails the owner each
+      failed run (about 15 tonight, the morning's inbox). It asks for platform-tools only now, and the workflow runs on
+      demand (Actions, "Run workflow") and on pull requests, no longer on every push: the private repository gets a
+      push after every hardening run, and an APK build each time would spend the free Actions minutes in days. A
+      manual run on GitHub: apk, java-checks, lua-lint all passed (run 44260249828), the APK as its artifact.
 - [x] **The folded sideways home grid** (hardening, 2026-11-18 ~02:35, dev phone at 2316x1080, nothing picked): the
       one-thumb panel's home buttons as upright (LOCAL UNITS, ALL UNITS; FACTORIES, LAST PINGS dimmed with none yet,
       PING; COMMANDER, BASE; AUTO RETREAT: ON), the minimap, the wind box and the swap button beside them, the idle
