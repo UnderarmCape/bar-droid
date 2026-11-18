@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **tools/worklog.py reads only what is new** (hardening, 2026-11-17 ~21:00): after the 386 s run, each
+      transcript's scan is cached in build/worklog-cache (its entries slimmed to what the log reads: ids, times, words,
+      image and tool-call counts; 44 MB for 1452 transcripts) and read on from the byte offset the last run stopped at
+      (transcripts only grow; a changed first 4 KB or a shorter file starts it over; a line still being written waits
+      for the next run). `--no-cache` reads everything whole. Its WORKLOG.md, sessions.json and messages.jsonl
+      identical to the uncached run's; 24 s building the cache, 13 s after, 18 s uncached on a quiet disk (the 386 s
+      came while the engine session was building).
 - [x] **dock-phone-test: Area Mex by a tap, then a drag** (hardening, 2026-11-17 ~20:45): the day's Area Mex fixes get
       a check: two Construction Bots given and picked, the camera on the metal spot nearest the commander (the dock's
       cameraTo: SetCameraTarget had left the spots off the screen, the view's middle is the dock's edge upright), Area

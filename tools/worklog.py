@@ -37,6 +37,8 @@ LEAD_IN_S = 5 * 60
 MESSAGE_CHARS = 4000
 ANSWER_CHARS = 700
 BIG_DATA = re.compile(r'"data":"[A-Za-z0-9+/=]{1000,}"')   # (an image's base64, scan)
+CACHE = os.path.join(ROOT, "build", "worklog-cache")   # (scan's, per transcript; not in the repository)
+CACHE_V = 1
 
 
 def parse_time(ts):
@@ -99,34 +101,103 @@ def is_human(entry):
     return isinstance(origin, dict) and origin.get("kind") == "human"
 
 
-def scan(path):
-    """One transcript: (title, markers, entries) without parsing JSON unless the project is named often enough."""
-    markers = 0
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            # Claude's own entries only: the memory index every session is given names the project too.
-            if '"type":"assistant"' in line:
-                low = line.lower()
-                markers += sum(low.count(m) for m in MARKERS)
-    if markers < MIN_MARKERS:
-        return None, markers, []
-    title, entries = None, []
-    # (read line by line, a screenshot's base64 dropped before parsing: the log counts images, never keeps them. A
-    # day of phone screenshots made one transcript 3.1 GB, and reading it whole into memory first swapped the laptop for
-    # minutes, the run never ending; 2026-11-17)
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            if len(line) > 100000:
-                line = BIG_DATA.sub('"data":""', line)
-            try:
-                e = json.loads(line)
-            except ValueError:
-                continue
-            if e.get("type") in ("custom-title", "agent-name"):
-                title = e.get("customTitle") or e.get("agentName") or title
-            elif e.get("timestamp") and e.get("type") in ("user", "assistant", "attachment", "system"):
-                entries.append(e)
-    return title, markers, entries
+def slim_content(content):
+    """A message's content with only what the log reads: its words, its images (counted), its tool calls (counted)."""
+    if not isinstance(content, list):
+        return content
+    out = []
+    for b in content:
+        if not isinstance(b, dict):
+            continue
+        t = b.get("type")
+        if t == "text":
+            out.append({"type": "text", "text": b.get("text", "")})
+        elif t in ("image", "tool_use"):
+            out.append({"type": t})
+    return out
+
+
+def slim(e):
+    """An entry with only the fields session_records reads (a tool's output, a screenshot's data: dropped)."""
+    s = {k: e[k] for k in ("uuid", "timestamp", "type", "origin") if k in e}
+    msg = e.get("message")
+    if isinstance(msg, dict):
+        s["message"] = {"content": slim_content(msg.get("content"))}
+    a = e.get("attachment")
+    if isinstance(a, dict):
+        s["attachment"] = {k: a[k] for k in ("type", "prompt", "origin") if k in a}
+    return s
+
+
+def read_lines(path, start, take):
+    """The transcript's whole lines from byte `start`: take(line) each; the offset after the last whole line (a line
+    still being written is left for the next run)."""
+    offset = start
+    with open(path, "rb") as fh:
+        fh.seek(start)
+        for raw in fh:
+            if not raw.endswith(b"\n"):
+                break
+            offset += len(raw)
+            take(raw.decode("utf-8", "replace"))
+    return offset
+
+
+def scan(path, use_cache=True):
+    """One transcript: (title, markers, entries) without parsing JSON unless the project is named often enough.
+    Cached in build/worklog-cache (entries slimmed, slim()), each transcript read on from where the last run stopped:
+    they only grow, and today's ran to 3.1 and 1.9 GB of screenshots, 6.5 minutes a run read whole (2026-11-17)."""
+    cache_file = os.path.join(CACHE, re.sub(r"[^\w.-]", "_", os.path.relpath(path, os.path.dirname(os.path.dirname(path))))
+                              + ".json")
+    with open(path, "rb") as fh:
+        head = fh.read(4096)
+    c = None
+    if use_cache:
+        try:
+            with open(cache_file, encoding="utf-8") as fh:
+                c = json.load(fh)
+        except (OSError, ValueError):
+            c = None
+        # (the same file grown, not another one: its first bytes the same, no shorter)
+        if c and (c.get("head") != head.hex() or os.path.getsize(path) < c.get("offset", 0) or c.get("v") != CACHE_V):
+            c = None
+    state = c or {"v": CACHE_V, "head": head.hex(), "offset": 0, "markers": 0, "parsed": False, "title": None,
+                  "entries": []}
+
+    def count(line):
+        # Claude's own entries only: the memory index every session is given names the project too.
+        if '"type":"assistant"' in line:
+            low = line.lower()
+            state["markers"] += sum(low.count(m) for m in MARKERS)
+
+    def parse(line):
+        count(line)
+        # (a screenshot's base64 dropped before parsing: the log counts images, never keeps them)
+        if len(line) > 100000:
+            line = BIG_DATA.sub('"data":""', line)
+        try:
+            e = json.loads(line)
+        except ValueError:
+            return
+        if e.get("type") in ("custom-title", "agent-name"):
+            state["title"] = e.get("customTitle") or e.get("agentName") or state["title"]
+        elif e.get("timestamp") and e.get("type") in ("user", "assistant", "attachment", "system"):
+            state["entries"].append(slim(e))
+
+    if state["parsed"]:
+        state["offset"] = read_lines(path, state["offset"], parse)
+    else:
+        state["offset"] = read_lines(path, state["offset"], count)
+        if state["markers"] >= MIN_MARKERS:  # (named often enough now: parsed whole once, from the start)
+            state.update(markers=0, parsed=True, title=None, entries=[])
+            state["offset"] = read_lines(path, 0, parse)
+    if use_cache:
+        os.makedirs(CACHE, exist_ok=True)
+        with open(cache_file, "w", encoding="utf-8") as fh:
+            json.dump(state, fh)
+    if not state["parsed"] or state["markers"] < MIN_MARKERS:
+        return None, state["markers"], []
+    return state["title"], state["markers"], state["entries"]
 
 
 def session_records(sid, entries, seen):
@@ -353,13 +424,14 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--transcripts", default=transcripts_dir())
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--no-cache", action="store_true", help="read every transcript whole (build/worklog-cache unused)")
     args = ap.parse_args()
 
     sessions, messages = load_existing()
     files = glob.glob(os.path.join(args.transcripts, "*", "*.jsonl"))
     found = []
     for path in files:
-        title, markers, entries = scan(path)
+        title, markers, entries = scan(path, not args.no_cache)
         if entries:
             found.append((entries[0]["timestamp"], os.path.basename(path)[:-6], title, entries))
     seen = set()
