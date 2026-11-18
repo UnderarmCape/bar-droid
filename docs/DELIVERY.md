@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The day's fixes on the Fold7** (2026-11-18 12:54, Kailil's new port, Tailscale; BAR not running; the APK's phone
+      engine 2026.07.04): the official engine's turn fix (BAR's handler read raw, the whole reload again), the 1.5 s
+      settle, the read-ahead and the build menu sized in place, the portrait's raw lookups, the login dialog's rows, the
+      share list's spectating check and strip, Output's words. A push install (`--no-streaming`: this morning's streamed
+      ones broke off). latest-build released (built from 5d1788de + the settle, the code of 8e0b237d). The Fold7 has
+      not started a game since 2026-11-17 21:23: its remake of the Build menu copy from test-31992 (the new ViewResize
+      patch) shows at its next start.
 - [x] **A fold or turn in the lobby: laid out again in place** (hardening, 2026-11-18 ~12:45, dev phone sideways, the
       lobby offline with tools/lobby-login's widget, removed after): the Welcome screen at 2008x938, then 1080x1080
       (`wm size`), then back: Chili lays the menu column and the panel out again at once, no LuaMenu reload, no stop and
