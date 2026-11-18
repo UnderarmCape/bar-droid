@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **spectate-test again after 2½ weeks; remake-check** (hardening, 2026-11-18 ~02:20, laptop and dev phone):
+      remake-check PASS (the phone's remakes of all five BAR copies equal the shipped ones, test-31958; the phone
+      patches place). spectate-test (laptop, a replay; last full run 11-01) failed 7, all the test's, none the
+      widget's: its ground point for "double tap on the ground stops following" lay within the widget's 70 px pick of
+      a unit in tonight's busier replay (16 players), so the double tap followed that unit as meant, and five cases
+      after it (unit B off the screen, 1st person, its look, its recenter, the mouse) failed in turn. The ground point
+      keeps 110 px clear of every unit now; the double tap on a unit accepts the unit nearest the finger (another stood
+      nearer the off-centre taps than unit B) and the cases go on with the one followed; the mouse case selects a
+      unit alive then (unit B had died). spectate-test ALL PASS.
 - [x] **pad-test plain and -Chat; BAR's benchmark upright** (hardening, 2026-11-18 ~02:00, dev phone): both pad tests
       ALL PASS. The launcher's bench start (BAR's Benchmark BAR scenario, 650 units against 650, upright): the app's
       Mission Info copy fitted upright with the scenario's briefing, the dock's home grid under it; the run resumed

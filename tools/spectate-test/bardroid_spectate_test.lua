@@ -90,10 +90,31 @@ end
 -- an X screen point (bottom-up, as the engine's mouse callins) over the ground, away from units
 local function groundPoint()
 	local vsx, vsy = Spring.GetViewGeometry()
+	-- (and no unit within 110 px: a tap picks the unit within 70 px of the finger and a double tap there follows it,
+	-- as the widget means; in a busier replay the first ground point lay that near a unit, and "double tap on the
+	-- ground: following stops" followed it instead, the cases after it failing in turn; 2026-11-18)
+	local near = {}
+	for _, u in ipairs(Spring.GetAllUnits()) do
+		local ux, uy, uz = Spring.GetUnitPosition(u)
+		if ux then
+			local sx, sy, sz = Spring.WorldToScreenCoords(ux, uy, uz)
+			if sz < 1 then
+				near[#near + 1] = { sx, sy }
+			end
+		end
+	end
+	local function clear(x, y)
+		for _, p in ipairs(near) do
+			if math.abs(p[1] - x) < 110 and math.abs(p[2] - y) < 110 then
+				return false
+			end
+		end
+		return true
+	end
 	for fy = 0.9, 0.3, -0.1 do
 		for fx = 0.1, 0.9, 0.1 do
 			local x, y = math.floor(vsx * fx), math.floor(vsy * fy)
-			if Spring.TraceScreenRay(x, y) == "ground" then
+			if Spring.TraceScreenRay(x, y) == "ground" and clear(x, y) then
 				return x, y
 			end
 		end
@@ -186,8 +207,18 @@ local cases = {
 		local taken = S().tap(sx + 18, sy + 12)
 		S().tap(sx - 20, sy + 30)
 		check("a tap on the map is taken (it selects nothing)", taken == true)
-		check("double tap on a unit: follows it, centred", S().following() == unitB and select(1, S().offset()) == 0,
-			string.format("tapped %.0f,%.0f: following %s", sx, sy, tostring(S().following())))
+		-- (the unit nearest the finger, as the widget picks: in a busy replay another unit stood nearer the off-centre
+		-- taps than unit B, and the cases after measured from B; 2026-11-18. Any unit within the pick, then on with it)
+		local f = S().following()
+		local fsx, fsy = 1e9, 1e9
+		if f then
+			local fx, fy, fz = Spring.GetUnitPosition(f)
+			fsx, fsy = Spring.WorldToScreenCoords(fx, fy, fz)
+		end
+		check("double tap on a unit: follows it, centred", f ~= nil and math.abs(fsx - sx) < 110 and math.abs(fsy - sy) < 110
+			and select(1, S().offset()) == 0, string.format("tapped %.0f,%.0f: following %s (unit B %s)", sx, sy,
+			tostring(f), tostring(unitB)))
+		unitB = f or unitB
 		S().actions.preset_first()
 		return 2
 	end,
@@ -421,7 +452,17 @@ local cases = {
 	end,
 	function()
 		check("a mouse: the touch tools step aside", WG.BarDroidSpectating == false)
-		Spring.SelectUnitArray({ unitB })
+		-- (a unit alive now: unit B, the one a double tap followed, can have died by here in a busy replay; 2026-11-18)
+		local pick = unitB
+		if not (pick and Spring.ValidUnitID(pick) and not Spring.GetUnitIsDead(pick)) then
+			for _, u in ipairs(Spring.GetAllUnits()) do
+				if not Spring.GetUnitIsDead(u) then
+					pick = u
+					break
+				end
+			end
+		end
+		Spring.SelectUnitArray({ pick })
 		return 0.5
 	end,
 	function()
