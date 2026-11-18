@@ -1624,6 +1624,24 @@ function upright.quickKeep(o)
 		saved[o] = { rb = rb, gb = gb, x = o.x, y = o.y, w = o.width, h = o.height }
 	end
 end
+-- Back and Advanced at a page's foot as tall as Next between them: Chobby's 48 beside Next's own height, 68 pixels on
+-- the dev phone upright, under Android's 48 dp for a finger (dev phone screenshot 2026-11-18); put back sideways with
+-- the rest (quickMaps)
+function upright.quickFoot(panel)
+	local nextB = panel and panel.GetChildByName and real(panel:GetChildByName("nextButton"))
+	if not (nextB and not nextB.disposed) then
+		return
+	end
+	for _, name in ipairs({ "prevPage", "advButton" }) do
+		local c = real(panel:GetChildByName(name))
+		local was = c and upright.quickSaved[c]
+		if c and not c.disposed and nextB.height > (was and was.h or c.height)
+			and (c.height ~= nextB.height or c.y ~= nextB.y) then
+			upright.quickKeep(c)
+			c:SetPos(c.x, nextB.y, c.width, nextB.height)
+		end
+	end
+end
 function upright.quickMaps(tall)
 	upright.quickSaved = upright.quickSaved or setmetatable({}, { __mode = "k" })
 	upright.quickLabels = upright.quickLabels or setmetatable({}, { __mode = "k" })
@@ -1705,6 +1723,9 @@ function upright.quickMaps(tall)
 			end
 		end
 	end
+	if tall and panel then
+		upright.quickFoot(panel)
+	end
 	if not tall then -- (sideways: Chobby's places back)
 		for o, was in pairs(saved) do
 			if not o.disposed then
@@ -1765,6 +1786,7 @@ function upright.quickPages(tall)
 	for _, pic in ipairs(pictures) do
 		local panel = real(pic.parent)
 		local w = panel and (panel.clientWidth or panel.width) or 0
+		upright.quickFoot(panel)
 		local buttons = {}
 		for _, ch in ipairs(panel and panel.children or {}) do -- (the page's own: Chobby puts them at 52 % across)
 			local c = real(ch)
