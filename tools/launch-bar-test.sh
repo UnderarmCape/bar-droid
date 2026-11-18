@@ -11,27 +11,42 @@ here=$(cd "$(dirname "$0")/.." && pwd)
 src="$here/app/src/main/assets/bardroid/launch-bar.sh"
 copy="$here/app/src/main/assets/bardroid/bardroid_buildmenu.lua"
 ocopy="$here/app/src/main/assets/bardroid/bardroid_ordermenu.lua"
+mcopy="$here/app/src/main/assets/bardroid/bardroid_missioninfo.lua"
+tcopy="$here/app/src/main/assets/bardroid/bardroid_teamstats.lua"
 work="$here/build/launch-bar-test"
 fails=0
 
-fn=$(awk '/^widget_order\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
-removed=$(awk '/^copy_removed\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
-menu=$(awk '/^build_menu\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
-omenu=$(awk '/^order_menu\(\) \{/ { on = 1 } on { print } on && /^}/ { exit }' "$src")
+body() { awk -v f="^$1\\\\(\\\\) \\\\{" '$0 ~ f { on = 1 } on { print } on && /^}/ { exit }' "$src"; }
+fn=$(body widget_order)
+removed=$(body copy_removed)
+# (copy_failed, mission_info and team_stats came later, 11-10 and 11-11: build_menu and the controller-game block call
+# them, and this test, which took the first four only, failed five cases on "command not found" until 2026-11-18)
+failedfn=$(body copy_failed)
+menu=$(body build_menu)
+omenu=$(body order_menu)
+minfo=$(body mission_info)
+tstats=$(body team_stats)
 block=$(awk '/^  widget_order "Grid menu" 0$/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
-[ -n "$fn" ] && [ -n "$removed" ] && [ -n "$menu" ] && [ -n "$omenu" ] && [ -n "$block" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, copy_removed, build_menu, order_menu or the controller-game block not found"; exit 1; }
+for part in "$fn" "$removed" "$failedfn" "$menu" "$omenu" "$minfo" "$tstats" "$block"; do
+  [ -n "$part" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, copy_removed, copy_failed, build_menu, order_menu, mission_info, team_stats or the controller-game block not found"; exit 1; }
+done
 
 BAR="$work/bar"; LOGS="$work/logs"
 log() { :; }
 layer_miss() { echo "$*" >> "$LOGS/android-layer.txt"; }
 eval "$fn"
 eval "$removed"
+eval "$failedfn"
 eval "$menu"
 eval "$omenu"
+eval "$minfo"
+eval "$tstats"
 start() {   # one launch-bar.sh start: start <GAMEPAD_GAME> <build menu md5 Installer found in BAR's release> [<order menu's>]
   GAMEPAD_GAME=$1
   printf '%s\n' "$2" > "$BAR/.bardroid-buildmenu"
   printf '%s\n' "${3-$omade}" > "$BAR/.bardroid-ordermenu"
+  printf '%s\n' "$mmade" > "$BAR/.bardroid-missioninfo"   # (Mission Info's and TeamStats' copies as made: quiet)
+  printf '%s\n' "$tmade" > "$BAR/.bardroid-teamstats"
   : > "$LOGS/android-layer.txt"
   eval "$block"
 }
@@ -51,9 +66,11 @@ widget_error_found() { widget_error "$1" | grep -q 'attempt to index nil'; }
 
 rm -rf "$work"
 mkdir -p "$BAR/LuaUI/Config" "$BAR/LuaUI/Widgets" "$LOGS"
-cp "$copy" "$ocopy" "$BAR/LuaUI/Widgets/"
+cp "$copy" "$ocopy" "$mcopy" "$tcopy" "$BAR/LuaUI/Widgets/"
 made=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$copy")
 omade=$(sed -n 's/^-- BARDROID_ORDERMENU_FROM //p' "$ocopy")
+mmade=$(sed -n 's/^-- BARDROID_MISSIONINFO_FROM //p' "$mcopy")
+tmade=$(sed -n 's/^-- BARDROID_TEAMSTATS_FROM //p' "$tcopy")
 check "the copy says which BAR file it was made from" [ -n "$made" ]
 check "the order menu copy too" [ -n "$omade" ]
 # as BAR writes it: an order table one tab in, a widget's own "order = {" inside its data, the Build menu from before

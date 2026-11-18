@@ -767,6 +767,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the app's own: a local `half` over the function, a `tr` and a `mid` over upvalues, `rx` set and never read
       (the dock), `P` over the test widget's pad in four of the dock test's stages: renamed or dropped. luacheck 0
       warnings in 47 files.
+      **launch-bar build menus** (2026-11-18 ~01:05): the test, not launch-bar.sh. tools/launch-bar-test.sh lifts
+      launch-bar.sh's functions and runs them on a scratch write dir, but took only widget_order, copy_removed,
+      build_menu and order_menu; build_menu has called copy_failed (the mark naming the copy's md5, 11-10) and the
+      controller-game block mission_info and team_stats (11-10, 11-11) since, so five copy-failed cases broke on
+      "command not found". It lifts all seven now (one awk helper) and gives Mission Info's and TeamStats' copies their
+      marks as made, so they stay quiet as on a phone: 66 cases ALL PASS.
 - [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
       everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
       file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old
