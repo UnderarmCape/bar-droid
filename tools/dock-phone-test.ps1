@@ -9,7 +9,7 @@
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
 # off after. Nothing on the laptop: it runs any time. About 3 minutes.
 #   powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1 [-Shots]
-# -Shots: screenshots of the placing panel, the D-gun mode and a preset's aim, build\dock-*.png (to judge the dock's look)
+# -Shots: screenshots of the placing panel, the D-gun mode and a preset armed, build\dock-*.png (to judge the dock's look)
 param([switch]$Shots)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -166,6 +166,7 @@ try {
   $dock = Rects "bardroid_dock.txt"; $aims = Rects "bardroid_docktest.txt"
   $g = WholeGrid $dock
   Tap ($g[0] + ($g[2] - $g[0]) / 4) ($g[1] + ($g[3] - $g[1]) / 4); Start-Sleep -Milliseconds 900
+  Shot "preset-armed"   # (STRAFE armed, before the map's tap: presets are a tap since 2026-11-13, no drag to aim)
   $a0 = $aims["aim0"]; $a1 = $aims["aim1"]
   # (first a drag from the map down onto the dock: with a preset armed a finger's drag pans (taps only, Kailil
   # 2026-11-13: "make presets a single tap only"), nothing sent, STRAFE still armed)

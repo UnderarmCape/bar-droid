@@ -740,7 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **dock-phone-test checks the share knob** (hardening, 2026-11-17 ~23:35, dev phone): the evening's knob fix
+- [x] **dock-phone-test -Shots: a preset armed in place of the aim** (hardening, 2026-11-17 ~23:40, dev phone): the
+      script promised three pictures, "a preset's aim" the third, but took two; its dock-preset-aim.png was 11-13's,
+      from before presets became a tap (Kailil, 2026-11-13: "make presets a single tap only"), so there is no drag to
+      aim. Now dock-preset-armed.png, STRAFE armed before the map's tap (the stale one deleted). The run ALL PASS; the
+      three pictures read well (PRESETS lit as STRAFE in gold, "STRAFE: TAP WHERE TO SEND" over the game, the pick's
+      orders spilling under its type), so no UI change.
+- [x] **dock-phone-test checks the share knob** (hardening, 2026-11-17 ~23:25, dev phone): the evening's knob fix
       (a4fd9190: whole percents, sent only when changed) had been measured with a probe only; case 11 now taps the
       energy box (its panel at the first tap), drags the share knob from near the bar's end to 40 % and checks the
       game's share is a whole percent and the conversion knob was left at 75 % (the old code stored the finger's
