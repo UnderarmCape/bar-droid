@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The D-gun mode sideways, folded** (hardening, 2026-11-17 ~23:45, dev phone at 2316x1080, a skirmish): ORDERS by
+      its tab, D-Gun tapped: the floating layout as meant, MOVE's and AIM's sticks low in the corners, a FIRE on each
+      one's inner side, the X at the left above MOVE, the commander's aim drawn on the map; BAR's clock and music line
+      in the bottom right corner stays clear of AIM's ring. The log: the mode on ("left dgun, right dgun"), no error.
+      No UI change.
 - [x] **dock-phone-test -Shots: a preset armed in place of the aim** (hardening, 2026-11-17 ~23:40, dev phone): the
       script promised three pictures, "a preset's aim" the third, but took two; its dock-preset-aim.png was 11-13's,
       from before presets became a tap (Kailil, 2026-11-13: "make presets a single tap only"), so there is no drag to
