@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The phone tests' stray widget warning for BAR's manifests.json; the launcher's log box** (hardening,
+      2026-11-18 ~18:10-18:20, dev phone). (1) dock-phone-test warned "widgets on the phone that are not the app's ...:
+      manifests.json": BAR's lobby writes its community widgets' list (from BAR-Widgets, 25 KB) into LuaUI/Widgets at
+      every start, the Fold7 too; it is no widget. toolchain.ps1 Get-StrayWidgets now reports only .lua files (dock-
+      and pad-test): none on the dev phone. (2) UI polish: the launcher's log was a square block barely darker than the
+      screen under the round buttons; now a round-cornered box a little darker (res/drawable/log_box.xml; screenshot).
+      (Looked at and left: the launcher's settings already fade under the buttons; the empty band at the foot of the
+      app's Settings is BAR's description strip, which shows the touched option's text.)
 - [x] **The cursors loaded once again; the selection's health bar as the resource bars** (hardening, 2026-11-18
       ~17:40-17:55, dev phone upright, the phone engine on BAR test-31992). A 5-minute skirmish: 30 fps, no warning or
       error from the app's widgets (BAR's own: yardmaps, weapon tags, icons, the area attack cursor). (1) BAR's Cursor
