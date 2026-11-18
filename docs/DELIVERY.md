@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **pad-test plain and -Chat; BAR's benchmark upright** (hardening, 2026-11-18 ~02:00, dev phone): both pad tests
+      ALL PASS. The launcher's bench start (BAR's Benchmark BAR scenario, 650 units against 650, upright): the app's
+      Mission Info copy fitted upright with the scenario's briefing, the dock's home grid under it; the run resumed
+      the paused start itself, 27.6 fps over its first minute at 1305 units (slowest frame 401 ms), os.clock in real
+      time (x1.00), done and quit after 2000 frames; no error or app warning in the log. No UI change.
 - [x] **The pad tests after the night's changes; the share list's strip dimmed when nothing can go** (hardening,
       2026-11-18 ~01:50, dev phone): pad-test -Online ALL PASS, -Dgun ALL PASS, pace-test ALL PASS, -Share ALL PASS.
       Polish from its screenshots: with a teammate's storage full ("THEIR METAL STORAGE IS FULL" in red) or nothing
