@@ -753,7 +753,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       stay private with the repository (going public still needs the fresh-history decision above). The conversation
       archive: the work log's day pages (docs/worklog/), Kailil's every message and Claude's answer, now whole (they
       were cut at 700 characters; tools/worklog.py), linked from the README.
-- [ ] **laptop-tests after 2½ weeks: five checks fail** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
+- [x] **laptop-tests after 2½ weeks: five checks fail, all answered (23 of 23 PASS, 2026-11-18 ~01:55)** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
       full run on record 10-31, all 15 PASS): 614 s, PASS for lua locals, powershell syntax, GameActivity, the five
       make-*.py patches on the laptop's BAR, publish patterns, downloader, settings merge, updater, PadGame,
       StatusText, MapStore, quit in first person, the pad with unit control off. FAIL: **lua lint** (fixed this run,
@@ -796,9 +796,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       commander was picked in the same step as the press, before BAR had made its order list for the pick ("NOT FOR
       THESE UNITS"): picked a step before. The cover screen: the touch widget reads the screen file every 3 s (every
       0.5 s only for 2 s after a resize, which the file alone is not) and the case gave it 60 frames, 0.15 s at the
-      laptop's 130 fps: two waits of 2 s. ALL PASS. **touch widget, the controller game** (-GamepadGame) still fails
-      5, all of v0.8.5's order menu (Back + RB's first order, the switch's note, "Move, Stop and the rest gone", one
-      touch, a few taps): the next run.
+      laptop's 130 fps: two waits of 2 s. ALL PASS. **touch widget, the controller game** (-GamepadGame, ~01:40):
+      the laptop's controller game (build\profile, unpacked by profile-gamepad-game.ps1) predated the packager's
+      naming v0.8.5's order menu "Order menu (controller)" (tools/build-gamepad-game.py, as the phone's is): its order
+      menu was plain "Order menu", which the test's widget list (as launch-bar.sh sets it) turns off for the app's
+      copy, and the copy stands down in the controller game, so no order menu ran: four order-menu cases failed. Made
+      again with the packager (31 files from v0.8.5's 8d11861c5b on BAR test-31691; the phone's launch-bar.sh was
+      right all along); touch-widget-test.ps1 now names a copy from before the names. And the switch's note stays
+      2.5 s since a dev phone finding (MOD_NOTE_SECONDS; the case waited 1.6 s for it to fade): waits 2.8 s. ALL PASS.
+      laptop-tests' five failures of 2026-11-18 ~00:40 are all answered: four were tests left behind, one (the lobby
+      widget's first line) a fault.
 - [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
       everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
       file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old

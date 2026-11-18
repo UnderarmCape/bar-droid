@@ -926,7 +926,7 @@ cases = {
 			return
 		end
 		touch("act mod_bardroid") -- (a change: the note)
-		return 1.6
+		return 2.8 -- (the switch's note stays 2.5 s since 1.3 s was gone before the eye found it: MOD_NOTE_SECONDS)
 	end,
 	function()
 		if not before.ctl then
@@ -934,7 +934,7 @@ cases = {
 		end
 		local showing, last, count = WG.BarDroidPad.note()
 		before.notes = count
-		verify("controller game: the switch noted, the note faded after 1.3 s", last == "CONTROLLER MOD: BAR DROID"
+		verify("controller game: the switch noted, the note faded after 2.5 s", last == "CONTROLLER MOD: BAR DROID"
 			and showing == nil, tostring(last) .. ", " .. tostring(showing))
 		touch("act mod_bardroid") -- (the same mode again, as the app's resend)
 		return 0.3

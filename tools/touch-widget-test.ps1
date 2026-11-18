@@ -74,6 +74,11 @@ try {
   if ($GamepadGame) {
     $sdd = Join-Path $App "build\profile\data\games\BAR-gamepad.sdd"
     if (-not (Test-Path "$sdd\modinfo.lua")) { throw "no ${sdd}: run tools\profile-gamepad-game.ps1 once" }
+    # (one unpacked before build-gamepad-game.py named v0.8.5's order menu "Order menu (controller)" ran no order menu
+    # at all here, BAR's "Order menu" being off: five cases failed, 2026-11-18)
+    if (-not (Select-String -Path "$sdd\luaui\Widgets\gui_ordermenu.lua" -Pattern 'Order menu \(controller\)' -Quiet)) {
+      throw "${sdd} is from before the packager's menu names: run tools\profile-gamepad-game.ps1 again"
+    }
     New-Item -ItemType Directory -Force -Path "$Data\games" | Out-Null
     $gameLink = Join-Path $Data "games\BAR-gamepad.sdd"
     if (-not (Test-Path $gameLink)) { cmd /c mklink /J "$gameLink" "$sdd" | Out-Null }
