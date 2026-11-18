@@ -732,6 +732,11 @@ local function hook()
 		lines = function()
 			return #entries
 		end,
+		-- (the newest line's words: a count of lines is no measure, a line in drops the notes whose time is up)
+		lastText = function()
+			local e = entries[#entries]
+			return e and e.text
+		end,
 		widget = widget, -- (its KeyPress and TextInput: a widget cannot send the engine's key events)
 		typing = function()
 			return typing and { text = table.concat(typing.chars), mode = typing.mode, lines = #typed.lines,

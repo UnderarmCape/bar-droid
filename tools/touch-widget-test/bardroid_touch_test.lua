@@ -585,8 +585,12 @@ cases = {
 		Spring.SendCommands("say touch test chat line")
 	end,
 	function()
-		local now = WG.bardroidChat and WG.bardroidChat.lines()
-		near("chat: a said line reaches BAR Droid chat", (before and now) and now - before or -1, 1, 0)
+		-- (the newest line, not a count: a line in drops the notes whose time is up, and the count went down by 2 on the
+		-- laptop, 2026-11-18)
+		local C = WG.bardroidChat
+		local last = C and C.lastText and C.lastText()
+		verify("chat: a said line reaches BAR Droid chat", type(last) == "string"
+			and last:find("touch test chat line", 1, true) ~= nil, tostring(last))
 	end,
 	-- the app's typing box (bardroid_chat.lua): Enter opens it (allies, playing), a long message wraps and gets smaller,
 	-- Backspace, Escape; a message sent reaches the chat; "/hud" opens the layout editor
@@ -683,12 +687,14 @@ cases = {
 		C.widget:KeyPress(27, {})
 		L.open()
 		local x0, y0, x1, y1 = L.rect("info")
-		before.infoW = x1 - x0
+		before.infoH = y1 - y0
 		L.press(math.floor((x0 + x1) / 2), math.floor((y0 + y1) / 2))
 		verify("layout: a tap picks the unit info panel", L.picked() == "info", L.picked())
 		L.act("size+")
-		local ix0, _, ix1 = L.rect("info")
-		near("layout: Size + makes the unit info panel bigger", (ix1 - ix0) / before.infoW, 1.08, 0.02)
+		-- (its height: its width stops at BAR's order menu's left edge, bardroid_info.lua's layout, and at 1280x720 it
+		-- already stands there, so the width stayed and the case failed; 2026-11-18)
+		local _, iy0, _, iy1 = L.rect("info")
+		near("layout: Size + makes the unit info panel bigger", (iy1 - iy0) / before.infoH, 1.08, 0.02)
 		local a = WG.advplayerlist_api
 		x0, y0, x1, y1 = L.rect("players")
 		before.scale = a.GetScale()
@@ -1433,9 +1439,10 @@ cases = {
 			return
 		end
 		-- (L3 and R3 press these keys, PadGame; tools/pad-test.ps1 -Online presses them on a phone)
-		local function bound(action, key)
+		local function bound(action, key) -- (as "Any+<key>" since the dock's QUEUE: Shift held, they still reach them)
 			for _, k in ipairs(Spring.GetActionHotKeys(action) or {}) do
-				if k == key then
+				k = k:lower()
+				if k == key or k == "any+" .. key then
 					return true
 				end
 			end
@@ -1514,6 +1521,9 @@ cases = {
 		-- 400 elmos off the commander (a patrol to where it stands ends at once: the queue was empty, the order given)
 		local x, y, z = Spring.GetUnitPosition(before.com)
 		Spring.SetCameraTarget(x + 400, y, z, 0)
+		-- (picked a step before LB + Y, as a player's pick always is: picked in the same step, the pad read BAR's
+		-- order list before BAR had made it for the pick, "NOT FOR THESE UNITS"; laptop 2026-11-18)
+		Spring.SelectUnitArray({ before.com })
 		return 0.5
 	end,
 	function()
@@ -1547,8 +1557,11 @@ cases = {
 		if not before.com then
 			return
 		end
-		local _, active = Spring.GetActiveCommand()
-		verify("pad: Back + R3 picks the commander's D-gun", active == CMD.MANUALFIRE, tostring(active))
+		-- (v0.8.5's D-gun mode since 2026-11-06, its sticks and FIRE: no longer BAR's D-gun order picked for A)
+		local D = WG.BarDroidPadDgun
+		local on = D and D.active and D.active()
+		verify("pad: Back + R3 turns the commander's D-gun mode on", on == true, tostring(on))
+		touch("act dgun_cancel")
 		touch("act cancel")
 		-- a camera bookmark (LT + D-pad up stores, D-pad up returns)
 		before.mark = Spring.GetCameraState()
@@ -1749,11 +1762,13 @@ cases = {
 		f:write("1680 720 60 0\n")
 		f:close()
 	end,
-	function() end, -- the touch widget looks at the screen file every 0.5 s
-	function() end,
+	-- the touch widget looks at the screen file every 3 s (every 0.5 s only for 2 s after a fold resizes the view, which
+	-- this file alone does not): two waits of 2 s (20 frames a step, 0.15 s at a laptop's 130 fps, failed; 2026-11-18)
+	function() return 2 end,
+	function() return 2 end,
 	function()
 		fails = fails + 1
-		log("FAIL cover screen: no interface reload within 20 frames")
+		log("FAIL cover screen: no interface reload within 4 s")
 	end,
 	function() log("done: " .. (fails == 0 and "ALL PASS" or fails .. " FAILED")) end,
 }

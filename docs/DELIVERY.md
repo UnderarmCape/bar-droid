@@ -787,6 +787,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the app's first line lost that line: a log that was not there at the widget's first look is read from its start
       now (a phone whose app makes the log after the lobby looked would have lost a first "act" too). Laptop: ALL
       PASS; dev phone lobby-phone-test: ALL PASS.
+      **touch widget, BAR's game** (~01:25): seven cases, none the app's behaviour. The chat's count of lines went
+      down by 2 when a line came in (a line in drops the notes whose time is up): the case looks for its line as the
+      newest now (bardroid_chat.lua gives tools lastText). The unit info panel's Size +: its width stops at BAR's
+      order menu by design and at 1280x720 already stood there: measured by its height. L3/R3's keys are bound
+      "Any+insert" / "Any+numpad/" since the dock's QUEUE: the case takes the Any+ form. Back + R3 enters v0.8.5's
+      D-gun mode since 11-06 (no BAR D-gun order picked): checked so, the mode left with dgun_cancel. LB + Y: the
+      commander was picked in the same step as the press, before BAR had made its order list for the pick ("NOT FOR
+      THESE UNITS"): picked a step before. The cover screen: the touch widget reads the screen file every 3 s (every
+      0.5 s only for 2 s after a resize, which the file alone is not) and the case gave it 60 frames, 0.15 s at the
+      laptop's 130 fps: two waits of 2 s. ALL PASS. **touch widget, the controller game** (-GamepadGame) still fails
+      5, all of v0.8.5's order menu (Back + RB's first order, the switch's note, "Move, Stop and the rest gone", one
+      touch, a few taps): the next run.
 - [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
       everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
       file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old
