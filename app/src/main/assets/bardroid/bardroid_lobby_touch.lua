@@ -2022,11 +2022,74 @@ end
 -- sideways: Chobby sizes them for the desktop's window, upright a third of the window, a long email cut short beside
 -- an empty half (dev phone screenshot, 2026-11-12). Each box once; its left edge where Chobby put it.
 upright.widened = setmetatable({}, { __mode = "k" })
+-- The login dialog's Login and Register tabs (Chobby's components/login_window.lua): rows 40 apart, the boxes 35 high,
+-- under 3 mm a row upright with the dialog's lower half empty above its checkboxes (dev phone screenshot, 2026-11-18).
+-- A panel's rows that hold a text box (the words beside it) and the lines just under them stand up to SETTINGS_ROW
+-- times as far apart, as far as the room down to the panel's next control allows (Chobby's error line, the
+-- checkboxes), the boxes as much taller up to 1.3 times; the rest where Chobby put it. Asked again with each check, from
+-- the places Chobby gave (a turn: the room it has then). A panel with a button in the boxes' rows (Recover/Change) is
+-- left as it is.
+upright.formSaved, upright.formF = setmetatable({}, { __mode = "k" }), setmetatable({}, { __mode = "k" })
+function upright.spreadForm(panel)
+	local kids, boxes = {}, 0
+	for _, ch in ipairs(panel.children or {}) do
+		local c = real(ch)
+		if c and not c.disposed and type(c.y) == "number" and type(c.height) == "number" then
+			local s = upright.formSaved[c]
+			if not s then
+				s = { y = c.y, h = c.height }
+				upright.formSaved[c] = s
+			end
+			kids[#kids + 1] = c
+			boxes = boxes + (c.classname == "editbox" and 1 or 0)
+		end
+	end
+	if boxes < 2 then
+		return
+	end
+	local top, last = math.huge, -math.huge
+	for _, c in ipairs(kids) do
+		if c.classname == "editbox" then
+			local s = upright.formSaved[c]
+			top, last = math.min(top, s.y), math.max(last, s.y)
+		end
+	end
+	local form, bottom, below = {}, top, panel.clientHeight or panel.height or math.huge
+	for _, c in ipairs(kids) do
+		local s = upright.formSaved[c]
+		if s.y >= top - 12 and s.y <= last + 60 then
+			if c.classname == "button" or c.classname == "checkbox" then
+				return
+			end
+			form[#form + 1] = c
+			bottom = math.max(bottom, s.y + math.min(s.h, 70)) -- (the Login tab's error box is 400 high, its words on top)
+		elseif s.y > last + 60 and c.visible ~= false then
+			below = math.min(below, s.y)
+		end
+	end
+	local f = bottom > top and math.max(1, math.min(upright.SETTINGS_ROW, (below - 12 - top) / (bottom - top))) or 1
+	if math.abs((upright.formF[panel] or 1) - f) < 0.02 then
+		return
+	end
+	upright.formF[panel] = f
+	local grow = math.min(f, 1.3)
+	for _, c in ipairs(form) do
+		local s = upright.formSaved[c]
+		local y = top + (s.y - top) * f
+		if c.classname == "editbox" then
+			c:SetPos(nil, math.floor(y), nil, math.floor(s.h * grow))
+		else -- (its words as far from the grown box's middle as before)
+			c:SetPos(nil, math.floor(y + 35 * (grow - 1) / 2))
+		end
+	end
+	Spring.Echo(string.format("[bardroid-lobby] a popup's %d form rows %.2f times as far apart", #form, f)) -- (tools)
+end
 function upright.widenInputs(win)
 	local function walk(o, depth)
 		if not o or depth > 12 or o.disposed then
 			return
 		end
+		upright.spreadForm(o)
 		for _, ch in ipairs(o.children or {}) do
 			local c = real(ch)
 			if c and c.classname == "editbox" and not upright.widened[c] and (c.width or 0) > 0 then

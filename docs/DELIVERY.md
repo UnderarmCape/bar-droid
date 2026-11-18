@@ -740,6 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The official engine checked over; the login dialog's rows for a finger** (hardening, 2026-11-18 ~10:45, dev
+      phone with the launcher's Phone engine off, as the Fold7 runs now): a sideways skirmish's infolog has no warning
+      or error from the app's widgets (BAR's own load-time ones only), lobby-phone-test ALL PASS on that engine.
+      The menu copies' patches all apply to the laptop's BAR (test-31943; the Fold7's test-31992 is on no machine
+      here: its own remake of the Build menu copy, the new ViewResize patch included, shows in its launcher.log, and a
+      patch that misses keeps the shipped copy, which carries the same change). VoiceChat read again: every start comes
+      on the main thread (touch, the dock's PING, the pad's post), a past session's late callbacks are dropped, the
+      permission and screen-gone paths hold; nothing to change. UI polish: Chobby's login dialog (Login and Register
+      tabs) had rows 40 apart with 35-high boxes, under 3 mm a row upright and its lower half empty; `upright.spreadForm`
+      spreads a popup panel's text-box rows and the note under them up to 1.5 times as far as the room down to its next
+      control allows (Chobby's error line, the checkboxes), the boxes up to 1.3 times taller, their words centred
+      beside them; Recover/Change (a box with a button in its row) is left alone. Dev phone upright: Register 11 rows,
+      Login 5, both 1.5 times; sideways the same, nothing overlapping (screenshots). lobby-phone-test and
+      touch-phone-test ALL PASS on the new build. The Fold7 still unreachable.
 - [x] **The folded turn's fix broke the turn on BAR's official engine, which the Fold7 runs** (hardening, 2026-11-18
       ~10:15, dev phone sideways with the launcher's Phone engine off, then on): since BAR's 2026.09.03 the Fold7 runs
       BAR's official engine (the entry "BAR moved to engine 2026.09.02, then 2026.09.03"), where the app's widgets are
