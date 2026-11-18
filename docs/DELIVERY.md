@@ -740,6 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The Fold7's evening game read; the touch tests after the cancel fix** (hardening, 2026-11-17 ~21:50): his
+      23-minute game (folded and upright, 100 units at the end) held 30.1-30.2 fps every minute (slowest frame
+      50-118 ms, Lua 257-307 MB), no Lua error, no app warning; he saved from the top bar (said in BAR's message
+      line) and left the app, which was gone before 461b299f went on at 21:27. Two Chobby warnings ("Trying to remove
+      row which doesn't exist, ID 514") are BAR's lobby removing a closed battle its list had filtered out, not the
+      app's; launcher.log's "Failed to load: tf_*.lua" lines are BAR's own. Seen: twice (at 1 and 6 minutes) the game
+      turned sideways and back within 5 s, each turn reloading the interface (about 3.5 s): his phone turned with
+      auto-rotate, whether on purpose or not is his to say. touch-phone-test and dock-phone-test ALL PASS on the
+      build with the dock scroll's cancel fix; the swipe-to-tab code read again (sound). UI looked at upright (home,
+      placing, D-gun) and folded sideways (the one-thumb panel): the new share and conversion marks read right on
+      both; nothing else wanted changing this run.
 - [x] **A dock scroll the system takes back settles on whole rows; the share marks on the boxes' bars** (hardening,
       2026-11-17 ~21:20, dev phone sideways at the unfolded Fold7's shape, 1080x1198, three Construction Bots picked):
       after an upward flick on the split dock's right block its orders stayed between two rows (the top row its state
