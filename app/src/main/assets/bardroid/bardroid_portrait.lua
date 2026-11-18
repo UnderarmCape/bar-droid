@@ -5727,6 +5727,11 @@ function widget:Initialize()
 				return SP.resBoxes()
 			end
 		end,
+		gridRect = function() -- (tools/dock-phone-test.ps1: where the home grid, a panel or the teammate picker stands)
+			if active then
+				return homeRect()
+			end
+		end,
 		-- (a screen point on the dock itself: the split dock's band less the game between its blocks, where a building's
 		-- spot or a preset's tap belongs to the game; dock() alone refused both there, review 2026-11-15)
 		onDock = function(x, y)

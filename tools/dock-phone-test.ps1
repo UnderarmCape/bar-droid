@@ -279,6 +279,17 @@ try {
       Touch MOVE (($x0 + $x1) / 2) $y; Touch MOVE $x1 $y
       Start-Sleep -Milliseconds 300; Touch UP $x1 $y; Start-Sleep -Milliseconds 1200
       Stage "slider?"; Start-Sleep 1
+      # 12. SEND ENERGY with stand-in teammates: the teammate picker's rows whole at rest (2026-11-17: at a fixed row
+      # height its fifth row stood cut upright)
+      Stage "sendbtn"; Start-Sleep 1
+      $sd = (Rects "bardroid_docktest.txt")["send"]
+      if ($sd) {
+        $sm = Mid $sd
+        # (the camera pad up again: a first tap only opens the menu)
+        if (-not ("$(InApp "head -n 1 $cfg/bardroid_dock.txt")" -match ' menu')) { Tap $sm[0] $sm[1]; Start-Sleep -Milliseconds 800 }
+        Tap $sm[0] $sm[1]; Start-Sleep -Milliseconds 1200
+        Stage "picker?"; Start-Sleep 1
+      } else { "[docktest] (no SEND ENERGY in the energy panel: the picker's case left out)" }
     } else { "[docktest] (the energy panel's bar not found: that case left out)" }
   } else { "[docktest] (no resource boxes: that case left out)" }
   Stage "end"

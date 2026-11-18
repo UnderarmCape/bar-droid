@@ -18,6 +18,7 @@
 --             metal spot in sight and a point 90 px on;  areamex?  a tap, then a drag between them: mexes queued
 --   resrects  "metal ...", "energy ...": the resource boxes;  slider  "bar ...": the energy panel's bar's cell;
 --             slider?  its share knob dragged to about 40 %: a whole percent, the conversion knob left alone
+--   sendbtn   stand-in teammates; "send ...": SEND ENERGY's cell;  picker?  its picker's rows in sight all whole
 --   end      "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
@@ -29,6 +30,7 @@ local buildDef -- (the build grid's first building, in sight on any screen shape
 local pawns, maxSpeed = {}, nil
 local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
 local camAt -- (the camera before the pan's drag)
+local realTeammates -- (the pad's teammate list, while stand-ins fill the picker: sendbtn, picker?)
 local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
 -- before, the circle's two points in X pixels)
 
@@ -515,6 +517,58 @@ local function onCmd(c)
 				return it.kind == "slider" and it.res == "energy"
 			end)
 			write(line("bar", r))
+		end
+	elseif c == "sendbtn" then -- (stand-in teammates for the picker, the AI's team and two made up, so the energy panel
+		-- has its SEND; its cell; the pad's own list again at "picker?")
+		local Pd, Pt, vsy = WG.BarDroidPad, WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
+		if Pd and Pd.teammates and not realTeammates then
+			realTeammates = Pd.teammates
+			local teams = {}
+			for _, t in ipairs(Spring.GetTeamList() or {}) do
+				if t ~= Spring.GetMyTeamID() and t ~= Spring.GetGaiaTeamID() then
+					teams[#teams + 1] = { teamID = t, name = "ALLY " .. t, color = { 0.9, 0.2, 0.2 } }
+				end
+			end
+			teams[#teams + 1] = { teamID = 98, name = "ALLY 98", color = { 0.2, 0.6, 1 } }
+			teams[#teams + 1] = { teamID = 99, name = "ALLY 99", color = { 0.95, 0.85, 0.1 } }
+			Pd.teammates = function()
+				return teams
+			end
+		end
+		if Pt and Pt.refresh then
+			Pt.refresh()
+		end
+		local r = Pt and Pt.itemCell and Pt.itemCell("right", function(it)
+			return it.kind == "sendres" and it.res == "energy"
+		end)
+		write(r and string.format("send %d %d %d %d\n", r[1], vsy - r[4], r[3], vsy - r[2]) or "send nil nil\n")
+	elseif c == "picker?" then -- (the teammate picker: every row in sight whole, none cut at the grid's edges; at a
+		-- fixed row height 4.8 rows stood in the upright grid, the fifth cut at rest, 2026-11-17)
+		local Pt = WG.BarDroidPortrait
+		local g = Pt and Pt.gridRect and Pt.gridRect()
+		local rows, cut, kinds = 0, 0, {}
+		for n = 1, 40 do
+			local k = 0
+			local r, it = Pt.itemCell("right", function()
+				k = k + 1
+				return k == n
+			end)
+			if not r then
+				break
+			end
+			kinds[it.kind] = true
+			local inside = r[2] >= g[2] - 1 and r[4] <= g[4] + 1
+			local outside = r[4] <= g[2] + 1 or r[2] >= g[4] - 1
+			if inside then
+				rows = rows + 1
+			elseif not outside then
+				cut = cut + 1
+			end
+		end
+		check("SEND ENERGY: the teammate picker, every row in sight whole", kinds.shareto and cut == 0 and rows > 0,
+			string.format("%d cells in sight, %d cut", rows, cut))
+		if realTeammates then
+			WG.BarDroidPad.teammates, realTeammates = realTeammates, nil
 		end
 	elseif c == "slider?" then -- (the share knob dragged to about 40 %: a whole percent, the conversion knob left alone;
 		-- before 2026-11-17 the share went in unrounded at every finger move)
