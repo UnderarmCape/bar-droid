@@ -148,12 +148,20 @@ def read_lines(path, start, take):
     return offset
 
 
-def scan(path, use_cache=True):
+def scan(path, use_cache=True, index=None):
     """One transcript: (title, markers, entries) without parsing JSON unless the project is named often enough.
     Cached in build/worklog-cache (entries slimmed, slim()), each transcript read on from where the last run stopped:
-    they only grow, and today's ran to 3.1 and 1.9 GB of screenshots, 6.5 minutes a run read whole (2026-11-17)."""
+    they only grow, and today's ran to 3.1 and 1.9 GB of screenshots, 6.5 minutes a run read whole (2026-11-17).
+    index: the cache's index.json, {cache name: {size, markers, parsed}}: one not of the project and the same size as
+    last time is not opened at all (nor its cache file): two opens each for ~1450 transcripts took 173 s of a run right
+    after a phone test (2026-11-17), 3 s at other times."""
     cache_file = os.path.join(CACHE, re.sub(r"[^\w.-]", "_", os.path.relpath(path, os.path.dirname(os.path.dirname(path))))
                               + ".json")
+    key = os.path.basename(cache_file)
+    size = os.path.getsize(path)
+    seen = index.get(key) if (use_cache and index is not None) else None
+    if seen and seen.get("v") == CACHE_V and seen.get("size") == size and not seen.get("parsed"):
+        return None, seen.get("markers", 0), []
     with open(path, "rb") as fh:
         head = fh.read(4096)
     c, why = None, None
@@ -173,7 +181,6 @@ def scan(path, use_cache=True):
                 c = None
     # (a big one read whole says why: twice on 2026-11-17 a run took 262 s instead of 20, a 3.3 GB transcript read
     # from the start, the cause not known then)
-    size = os.path.getsize(path)
     if why and size > 200e6:
         print("worklog: %s (%.0f MB) read whole: %s" % (os.path.basename(path), size / 1e6, why), file=sys.stderr)
     before = c and (c.get("offset"), c.get("markers"), c.get("parsed"), c.get("title"))
@@ -215,6 +222,8 @@ def scan(path, use_cache=True):
         with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(state, fh)
         os.replace(tmp, cache_file)
+    if use_cache and index is not None:   # (its size as read: grown since, it is read on next time)
+        index[key] = {"v": CACHE_V, "size": size, "markers": state["markers"], "parsed": state["parsed"]}
     if not state["parsed"] or state["markers"] < MIN_MARKERS:
         return None, state["markers"], []
     return state["title"], state["markers"], state["entries"]
@@ -455,12 +464,27 @@ def main():
     files = glob.glob(os.path.join(args.transcripts, "*", "*.jsonl"))
     found = []
     slowest = (0.0, "")
+    index_file = os.path.join(CACHE, "index.json")
+    index = {}
+    if not args.no_cache:
+        try:
+            with open(index_file, encoding="utf-8") as fh:
+                index = json.load(fh)
+        except (OSError, ValueError):
+            index = {}
+    index_before = json.dumps(index, sort_keys=True)
     for path in files:
         t = time.perf_counter()
-        title, markers, entries = scan(path, not args.no_cache)
+        title, markers, entries = scan(path, not args.no_cache, index)
         slowest = max(slowest, (time.perf_counter() - t, os.path.basename(path)))
         if entries:
             found.append((entries[0]["timestamp"], os.path.basename(path)[:-6], title, entries))
+    if not args.no_cache and json.dumps(index, sort_keys=True) != index_before:   # (whole or not at all, as the caches)
+        os.makedirs(CACHE, exist_ok=True)
+        tmp = index_file + ".%d.tmp" % os.getpid()
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(index, fh)
+        os.replace(tmp, index_file)
     TIMES["scan"] = time.perf_counter() - t0 - TIMES["load"]
     seen = set()
     for first, sid, title, entries in sorted(found):

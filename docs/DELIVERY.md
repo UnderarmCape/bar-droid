@@ -749,6 +749,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       23-minute game): thermal 0 throughout, 42 C, almost every frame held two vsyncs (30 fps), the game closed by
       swiping it from the recent apps; nothing to fix. And the Area Mex tap's hold in RtsTouch read again: a drag
       near it drops the held click, a far touch or a plain second tap sends it first; sound. No UI change this run.
+      The commit's worklog run took 175 s, and the slow-run report named it: the scan 172.9 s with no transcript over
+      2 s, so ~1450 transcripts at two opens each (its head, its cache file), about 60 ms an open right after a phone
+      test, 1 ms at other times. Now build/worklog-cache/index.json keeps each transcript's size, markers and whether it
+      is parsed: one not of the project (1442 of 1457) and the same size as last time is not opened at all. The next
+      run's scan 0.4 s (was 3.5 s warm); the output the same as `--no-cache`'s.
 - [x] **An upright skirmish with a mixed army picked** (hardening, 2026-11-17 ~23:15, dev phone; a probe gave 28 units
       of eight kinds, bots, vehicles, two Peeper scouts and two Construction Bots, and picked all 29): the dock showed
       the builders' grid and the orders ("Pawn, 29 units, 8 of this type" over a Pawn's picture), its rows whole; a tap
