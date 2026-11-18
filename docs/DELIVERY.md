@@ -740,6 +740,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Share logs handed on an online game's join password** (hardening, 2026-11-18 ~08:00): the launcher's Install /
+      Update with no network first (all already done, "Last check ... (no connection)", the set kept: as meant), then
+      its Share logs (the share sheet, a zip of launcher.log, launcher.old.log, infolog.txt, springsettings.cfg, the
+      install and update states, pulse.log and every log in bar/logs; closed with Back, nothing sent). Its files read
+      for secrets, keys only, never a value: none on the dev phone (it never logs in); on the Fold7 `MyPasswd=` lines
+      with values in launcher.old.log and two infologs of online games, 9 in all: the engine logs an online game's
+      start script whole, its join password with it, and the zip went out as it was to whoever is asked to read it.
+      `LogRedact` (pure Java) copies each file line by line, the value replaced by "(removed)", the key and every other
+      byte kept; LogShare zips through it. log-redact-test (7 checks) in laptop-tests and java-checks.sh. Dev phone: a
+      log with a planted fake value, Share logs: the fake value 0 times in the zip, "MyPasswd=(removed)" once, the
+      script's other keys whole, 1971 KB zipped in 660 ms. The logs on the phones themselves stay as they are. The
+      Fold7 (no game running) has this commit's APK (5e099b54, phone engine 2026.07.04) since 08:01; latest-build too.
 - [x] **github-sync's release notes name the APK's own commit** (hardening, 2026-11-18 ~08:00, a review of the night's
       tool): latest-build's notes named this repository's HEAD at upload time, which after a Fold7 install is the
       DELIVERY commit, not the one the APK was built from (07:30: built from ab66c2d7, the notes said 91b45544). The
