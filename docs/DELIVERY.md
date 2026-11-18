@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The share list, first person's save and the voice chat fix checked again** (hardening, 2026-11-17 ~23:50, dev
+      phone): pad-test -Share ALL PASS (16 cases: room at their slider, tax, away, out of the game, 15 teammates), its
+      four screenshots read well (the step strip, ALL THEY CAN TAKE, the teammates' storage bars with their share mark);
+      fp-save-test PASS. VoiceChat's guard read again: close() runs at onStop only, and Android's microphone question
+      only pauses the game screen, so its Allow still starts the waiting session; leaving the game with the question
+      open drops it, as meant. The launcher's screen and the dock's FACTORIES row looked at: FACTORIES larger than
+      LAST PINGS beside it is the 11-17 choice (the rows around it), left. No UI change this run. worklog.py's slow-run
+      report now from 30 s: the last commit's run took 53 s right after a lobby test and said nothing at 60.
 - [x] **The lobby upright, offline; the grid's page arrows solid** (hardening, 2026-11-17 ~23:35, dev phone, the
       login-wait widget in and out again): lobby-phone-test ALL PASS before and after. The lobby's own lines: only the
       dev phone's lack of a network (the bridge's "no connection", Chobby's resource downloads failing, the repeated

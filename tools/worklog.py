@@ -43,7 +43,7 @@ CACHE_V = 1
 # (a run's parts, said when it took over SLOW_S: three runs on 2026-11-17 took ~262 s against 3-25 s the same evening,
 # each after a phone test, the scan's cache sound and no transcript read whole; the slow part not known then)
 TIMES = {}
-SLOW_S = 60
+SLOW_S = 30   # (60 at first: the next slow run, 53 s right after a lobby test, said nothing)
 
 
 def parse_time(ts):
