@@ -2,7 +2,7 @@
 # The Java checks of tools/laptop-tests.ps1 that need no BAR install, for Linux and CI (.github/workflows/build.yml):
 # Downloader.java against a local HTTP server, SettingsMerge.java on the app's springsettings.cfg, Updater.java's
 # rollback on made-up files dirs, PadGame.java's gamepad controls with a made-up pointer and game, StatusText.java's
-# words for players, MapStore.java's map storage limit on made-up map folders. javac and java from JAVA_HOME, else PATH. Prints each check's result; exit 1 on a failure.
+# words for players, MapStore.java's map storage limit on made-up map folders, LogRedact.java's join passwords out of shared logs. javac and java from JAVA_HOME, else PATH. Prints each check's result; exit 1 on a failure.
 #   sh tools/java-checks.sh
 set -eu
 cd "$(dirname "$0")/.."
@@ -44,4 +44,5 @@ check padgame com.underarmcape.bardroid.PadGameTest $(find tools/padgame-test/sr
 check status-text com.underarmcape.bardroid.StatusTextTest tools/status-text-test/StatusTextTest.java "$src/StatusText.java" \
   "$src/DriverWatch.java"
 check map-store com.underarmcape.bardroid.MapStoreTest tools/map-store-test/MapStoreTest.java "$src/MapStore.java"
+check log-redact com.underarmcape.bardroid.LogRedactTest tools/log-redact-test/LogRedactTest.java "$src/LogRedact.java"
 exit $failed

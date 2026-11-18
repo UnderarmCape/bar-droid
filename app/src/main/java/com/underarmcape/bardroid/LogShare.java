@@ -97,7 +97,8 @@ final class LogShare {
     private static void add(ZipOutputStream out, File f, String name) throws IOException {
         if (!f.isFile()) return;
         out.putNextEntry(new ZipEntry(name));
-        try (InputStream in = new FileInputStream(f)) { Installer.copy(in, out); }
+        // (an online game's join password out of them, LogRedact)
+        try (InputStream in = new FileInputStream(f)) { LogRedact.copy(in, out); }
         out.closeEntry();
     }
 }

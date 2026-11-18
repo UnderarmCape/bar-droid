@@ -38,7 +38,7 @@ plays BAR's official engine only.
 ## Checks
 
 `powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1` runs every check that needs no phone (about
-5 minutes): the downloader, settings merge and updater rollback in Java, the lobby bridge and the lobby touch widget
+5 minutes): the downloader, settings merge, updater rollback and Share logs' redaction in Java, the lobby bridge and the lobby touch widget
 in BAR's real lobby, the in-game widgets in a real skirmish, and the Lua lint. The game checks use BAR's Windows
 install (`%LOCALAPPDATA%\Programs\Beyond-All-Reason`, read only, never changed; `BAR_DATA` points elsewhere).
 
