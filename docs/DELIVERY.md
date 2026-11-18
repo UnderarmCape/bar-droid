@@ -1542,7 +1542,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       "in the background" when the app was not in front (GameService.noteLowMemoryExit). Dev phone: the launcher put
       in the background and killed there, started again: "the last run ended ... (force stopped, in the background)";
       the ends with the app in front as before.
-- [ ] **BAR moved to engine 2026.09.02, then 2026.09.03: the Fold7 on the official engine** (hardening, 2026-11-17
+- [x] **BAR moved to engine 2026.09.02, then 2026.09.03: the Fold7 on the official engine** (hardening, 2026-11-17
       ~16:40, the Fold7's launcher.log read while it was idle, then the dev phone): BAR's update moved its engine from
       2026.07.04 to 2026.09.02 (Updater "new engine 2026.09.02 (was 2026.07.04)", about 2026-11-16) and today to
       2026.09.03, and its game to test-31992-e7a6cff (from test-31958); since then every Fold7 start says "BAR's official
@@ -1561,6 +1561,27 @@ Added 2026-11-10 ~05:00 (with screenshots):
       column off the right edge: unusable upright on the Fold7 until this lands (sideways it fits); Game info and the
       Widget Selector the same. A user widget cannot resize it; the fix for BAR is drafted, not posted
       (docs/upstream/bar-windows-upright.patch, Kailil's to post). A folded turn there is a whole reload too.
+      **Closed 2026-11-18 ~16:00 (engine session): the phone engine for 2026.09.03, gated.** The engine branch on the
+      tag: `bardroid/sim-2026.09.03` in `hailmary-work\recoil-0903` (bardroid/sim 528c6a5 as one cherry-picked change,
+      bd104583cd: five conflicts, entt's `storage()` now a pointer in GroundMoveSystem, upstream's own
+      GetProfilerTimeRecord fix kept, nv_dds' ASTC range beside upstream's BPTC, MaxDrawnParticles ported onto the new
+      radix-sorted ProjectileDrawer; 83a8536d37: the sync version from the tag, it had stayed "2026.07.04"), built as
+      gcc-0903 (the official floating-point flags, the PGO profile without the files the tag changed, bar-droid-engine
+      docs/ENGINE-SIM.md "A new BAR engine"). `phone-2026.09.03-83a8536d37` is the only version in `engine-sim\release`
+      (2026.07.04's build in `release-archive`). The gate, `tools/engine-gate.ps1` (new, on the dev phone with an APK
+      carrying only that build: launch line "phone engine: phone-2026.09.03-83a8536d37"; BAR's test-31992-e7a6cff):
+      server replays of 2026.09.03 to their last frame with 0 desync warnings: speedmetal1v1-20261117 as shipped
+      (twice, once after a fresh archive scan), speedmetal2v2-20261117 with every switch of the rewrite at 0 (what an
+      online game runs; twice), isthmus8v8-20261117b with every switch at 0 and as shipped. isthmus8v8-20261117a is not
+      counted: Android's low-memory killer took it four times with the phone engine, and BAR's official 2026.09.03 while
+      loading (the dev phone's 8 GB with Google Play services, the Play Store and the rest running since its Google
+      sign-in; the gate now closes background apps before each replay). The phone tests on an APK from 16fbeb1d:
+      dock-phone-test, touch-phone-test, pad-test, pad-test -Online, pace-test, lobby-phone-test, remake-check, ALL PASS
+      (build\engine-gate-2026.09.03-tests.txt). On the way: touch-phone-test's two void cases failed on both engines
+      alike (BAR's new CamSpringTrackMapHeightMode 2; fixed in af1535eb), remake-check on test-31992 (bc823e8b,
+      6ccedda6). Seen once, not again in some twenty starts after it: a SIGSEGV 3 s into the first start after the update, no stack
+      (after the archive checksums); the Updater's rollback covers a repeat. Next, in the hardening loop: the APK, the
+      folded-turn rescale and the Settings checked on it, the Fold7 install while BAR is not running.
 - [x] **A factory picked upright** (hardening, 2026-11-17 ~16:30, dev phone; a Bot Lab given by a temporary widget,
       removed after): the selection row "Bot Lab" under the wind and the tide's nook, its 8 bots in the grid, its orders
       (Repeat, Fire at will, Hold pos, Low Priority, Factory Guard); three taps on bots queued them (counts 2 and 1 on
