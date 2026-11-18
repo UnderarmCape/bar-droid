@@ -3126,6 +3126,10 @@ local function drawButton(item, r, cap)
 		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
+	elseif lit then -- (the order armed: as BAR's order menu shows its active command, light grey to white, its words dark;
+		-- FlowUI's Selector, used here before, is a drop-down field now: it left a light square at the button's right end,
+		-- Area Mex armed in Kailil's screenshot, 2026-11-17)
+		button(r, { 0.66, 0.66, 0.66, 0.95 }, { 1, 1, 1, 0.95 })
 	elseif item.kind == "order" and item.id == CMD.MANUALFIRE then -- (the D-Gun red, in the gold's shades: Kailil,
 		-- 2026-11-13, "Make the dgun button RED but still fit the ui look and feel")
 		button(r, { 0.42, 0.07, 0.05, 0.9 }, { 0.74, 0.17, 0.12, 0.9 })
@@ -3155,8 +3159,8 @@ local function drawButton(item, r, cap)
 		if cap then -- (an order: its row's size, drawHalf)
 			th = min(th, cap)
 		end
-		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140" or "\255\240\240\240",
-			font, true)
+		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140"
+			or lit and "\255\020\020\020" or "\255\240\240\240", font, true)
 	end
 	if item.color then -- a teammate: their colour along the bottom
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
@@ -3194,9 +3198,6 @@ local function drawButton(item, r, cap)
 			gl.Rect(x, y, x + sw, y + h)
 		end
 		gl.Color(1, 1, 1, 1)
-	end
-	if lit then
-		selector(r)
 	end
 end
 

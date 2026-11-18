@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **An armed order lit as BAR's order menu lights it; area Reclaim by drag** (hardening, 2026-11-17 ~20:05, dev
+      phone upright, 3 Construction Bots by a temporary widget, removed after): Reclaim armed ("draw 2"), a drag over the
+      cacti: BAR's circle, 6 reclaim orders. The armed order's button had a light square at its right end (Kailil's
+      screenshot of Area Mex showed it too): the dock lit it with FlowUI's Selector, which BAR's FlowUI now draws as a
+      drop-down field, its arrow box the button's height at the right end. An armed order is now drawn as BAR's order
+      menu draws its active command: light grey to white, its words near black (dev phone: Area Mex armed, the whole
+      button lit, the square gone); dock-phone-test all pass. The engine session moved its gate build out of
+      engine-sim\release (now release-gate): no more swapping for Fold7 builds, each one's phone engine checked
+      (2026.07.04). The Fold7 still refuses adb at its old port.
 - [x] **Fold7 builds kept off the ungated 2026.09.03 phone engine** (hardening, 2026-11-17 ~19:50): the engine
       session put its new build of 2026.09.03 in engine-sim\release, where local.properties' bardroid.phoneEngine points,
       so this checkout's 19:34 APK carried it (assets/phone-engine/2026.09.03, 45 MB). The Fold7 runs BAR 2026.09.03 and
