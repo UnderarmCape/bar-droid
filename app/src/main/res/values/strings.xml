@@ -10,6 +10,11 @@
     <!-- Output's summary (patch 0010's) without "orientation": its Screen orientation entry is hidden (patch 0018), the
          launcher's Play upright and Turn with the phone set it at every start (KeyboardShortcuts.applyTermuxPrefs) -->
     <string name="lorie_pref_output_summary">Resolution, display scale, filtering, screen timeout</string>
+    <!-- Output's slider, upstream "Display scale, %" with no word of what it does (dev phone screenshot 2026-11-18):
+         in "scaled" mode the X screen is the display's size divided by it (LorieView), within the app's cap
+         (GameActivity.MAX_SCREEN_PIXELS, 2100 x 900's pixels), which most phones reach at 100 already -->
+    <string name="lorie_pref_displayScale">Display scale (%)</string>
+    <string name="lorie_pref_displayScale_summary">Over 100 the game gets fewer pixels, each one larger (150: two thirds as many lines); under 100 more, up to the app\'s limit of 2100 x 900 pixels, which most phones reach at 100</string>
     <!-- Output's Fullscreen, upstream "Toggle immersive mode in your device display": said what it does -->
     <!-- Pointer's "Ignore gamepad input events", upstream "Prevent gamepad and joystick events from being forwarded to X
          server": the app's ControllerBridge takes the sticks and every button it maps first (GameActivity), so the switch
