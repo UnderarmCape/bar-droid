@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
+      everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
+      file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old
+      commits, private terms in old ones: the open "History" item, Kailil's call), so the commits that add or remove
+      one of the seven private terms were listed by date only (git log -S, no term printed): the last on 2026-11-11,
+      none since, none tonight. The one non-noreply e-mail address in the commits is the known note. No UI change.
 - [x] **dock-phone-test checks the teammate picker's rows** (hardening, 2026-11-18 ~00:05, dev phone upright and at
       1080x1198): the picker's fix (d9515a75, its rows sized to fill the grid) had been seen in screenshots only. Case
       12 gives the picker stand-in teammates (WG.BarDroidPad.teammates: the AI's team and two made up; the pad's list
