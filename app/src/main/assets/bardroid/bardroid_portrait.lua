@@ -4218,7 +4218,20 @@ local function drawGroups()
 		else
 			button(gr)
 		end
-		bold:Print("\255\255\200\064" .. g, gr[1] + 6, gr[4] - h * 0.3, h * 0.26, "o")
+		-- (the number on a dark badge in the corner: gold straight on the picture all but vanished on the commander's
+		-- yellow trim and the sand behind it, dev phone screenshot 2026-11-18)
+		local ns, pad = h * 0.26, max(2, floor(h * 0.06))
+		local bx0, by1 = gr[1] + pad * 0.5, gr[4] - pad * 0.5
+		local bx1, by0 = bx0 + bold:GetTextWidth(tostring(g)) * ns + 2 * pad, gr[4] - h * 0.36
+		local f = flow()
+		if f and f.RectRound then
+			f.RectRound(bx0, by0, bx1, by1, pad, 1, 1, 1, 1, { 0, 0, 0, 0.62 }, { 0, 0, 0, 0.62 })
+		else
+			gl.Color(0, 0, 0, 0.62)
+			gl.Rect(bx0, by0, bx1, by1)
+		end
+		resetGL()
+		bold:Print("\255\255\200\064" .. g, bx0 + pad, gr[4] - h * 0.3, ns, "o")
 		bold:Print("\255\255\255\255" .. groups[g], gr[3] - 6, gr[2] + 6, h * 0.2, "ro")
 	end
 	-- the idle builders: right against the remove buttons while all fits, else straight after the groups
