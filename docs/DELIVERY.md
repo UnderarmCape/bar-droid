@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Area Mex by tap, then drag, as Repair and Restore** (Kailil, 2026-11-17 ~19:35: "The other radial commands
+      such as repair restore etc are working when i do the double tap drag on second press. But area mex isn't"; his
+      Fold7 still had the build before the entry below, the install had failed): with Area Mex armed the tap's click
+      gave Area Mex at a point, nothing there, and the order was used up before the drag (dev phone: armed 30100, then
+      nil after the tap, 0 mexes). Repair, Reclaim and Restore take a unit or an area, and a click on bare ground leaves
+      them armed. An area-only order (ICON_AREA) armed now writes "draw 3": a tap on the map holds its click for the
+      double-tap time (RtsTouch.holdAreaTap); a drag that follows draws the circle and drops it, any other touch or none
+      lets it go as before. Tap, then drag with an area order armed also skips the box selection's path now (it swapped
+      the dock's orders for its filters). Dev phone: Area Mex, a tap, then a drag: 9 mexes queued; a lone tap: the
+      click, the order used, as before; dock-phone-test and touch-phone-test all pass.
 - [x] **tools/worklog.py on a 3.1 GB transcript** (2026-11-17 ~19:25): a day of phone screenshots made this session's
       transcript 3.1 GB (another 1.9 GB); worklog.py read each transcript whole into memory before parsing and the
       laptop swapped (the run never ended, a commit waiting on it went out with the previous run's message, amended).

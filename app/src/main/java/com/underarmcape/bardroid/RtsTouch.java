@@ -127,6 +127,7 @@ final class RtsTouch {
         float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
         boolean menu, circle, draw, dgun, dgunAuto;
         boolean area;   // an area order armed (Area Mex, Reclaim...): a drag on the game draws its circle, "draw 2"
+        boolean areaOnly;   // ... one that takes only an area (Area Mex), "draw 3": a tap on the map waits for a drag
     }
     private Dock dockCache;
     private long dockReadAt, dockModified;
@@ -141,6 +142,10 @@ final class RtsTouch {
     private boolean dockSelecting;                   // a menu-mode drag on the game: a box selection
     private boolean shapeDragging;                   // a LINE, GRID or BORDER drag (startShapeDrag)
     private boolean areaDragging;                    // an area order's circle drawn (startAreaDrag)
+    private Runnable areaTapLater;                   // a tap's click held for a drag, Area Mex armed (holdAreaTap)
+    private boolean areaTapHeld;                     // ... and this touch, near it, decides it (startAreaDrag drops it)
+    private float areaTapX, areaTapY;                // (view pixels)
+    private long areaTapAt;
     private static final float PAD_PAN_GAIN = 1.3f;            // the map moves this much more than the finger
     private static final float PAD_ZOOM_PER_SCREEN = 3.0f;     // a drag the screen's height up: e^3 times closer
     private static final float PAD_ROTATE_DEAD = 3f;           // slops a sideways drag goes before it rotates (Kailil:
@@ -592,6 +597,14 @@ final class RtsTouch {
                 }
                 finishWaitingTap();   // (before this touch moves the pointer away from the waiting tap's point)
                 cancelGesture();
+                // (a tap held for Area Mex's drag: this touch, near it and soon, decides it; elsewhere its click goes now)
+                areaTapHeld = false;
+                if (areaTapLater != null) {
+                    ui.removeCallbacks(areaTapLater);
+                    if (e.getEventTime() - areaTapAt <= doubleTapMs
+                            && Math.hypot(e.getX() - areaTapX, e.getY() - areaTapY) <= slop * 4) areaTapHeld = true;
+                    else runAreaTap();
+                }
                 glideStopped = gliding && Math.hypot(flingVx, flingVy) >= minFling;
                 if (gliding) Log.i("touch", String.format(Locale.US, "a touch on the gliding map (%.0f px/s): %s",
                         Math.hypot(flingVx, flingVy), glideStopped ? "it stops it, no tap" : "slow, a tap as any"));
@@ -695,6 +708,7 @@ final class RtsTouch {
                 // (a tap before this touch, held back for a double tap: this one was none, so its building moves now,
                 // not at some later touch)
                 runPlaceTap();
+                if (areaTapHeld) runAreaTap();   // (and a tap held for Area Mex's drag: its click)
                 cancelGesture();
                 break;
             default:
@@ -741,6 +755,14 @@ final class RtsTouch {
                     moveX = downX; moveY = downY;
                     gridTo(curX, curY);
                 } else if (secondTap && !inDock && place() == null) {
+                    // (an area order armed: a tap, then a drag, draws its circle as a plain drag does, no selection; Kailil,
+                    // 2026-11-17: "The other radial commands such as repair restore etc are working when i do the double
+                    // tap drag on second press. But area mex isn't": the selection's drag swapped the dock's orders for its
+                    // filters and made a box selection on release, which Area Mex did not survive)
+                    if (dockArea()) {
+                        startAreaDrag();
+                        return;
+                    }
                     // (from the game only: a dock button tapped, then a sideways drag from it, started a box selection
                     // inside the dock, its filters over the grid; dev phone 2026-11-13, BASE then a drag)
                     Dock d = dock();
@@ -856,6 +878,7 @@ final class RtsTouch {
         ui.removeCallbacks(threeHold);
         curX = e.getX(); curY = e.getY();
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
+        if (areaTapHeld) runAreaTap();   // (this touch drew no circle: the held tap's click first)
         switch (state) {
             case PENDING:
                 if (glideStopped) break;   // (a tap that stopped the gliding map only stops it)
@@ -1015,7 +1038,8 @@ final class RtsTouch {
                 if (d != null) {
                     d.circle = text.contains("\nselect circle");
                     d.draw = text.contains("\ndraw 1");
-                    d.area = text.contains("\ndraw 2");
+                    d.areaOnly = text.contains("\ndraw 3");
+                    d.area = d.areaOnly || text.contains("\ndraw 2");
                     d.dgun = text.contains("\ndgun 1") && d.stickL != null && d.stickR != null && d.fire != null
                             && d.cancel != null;
                     d.dgunAuto = text.contains("\ndgunauto 1");
@@ -1043,8 +1067,46 @@ final class RtsTouch {
      * the vanilla circle thing to expand it"; the drag had panned). Its edge held at the dock's top, as a path's.
      */
     private void startAreaDrag() {
+        if (areaTapHeld) {   // (the tap just before: this drag is what it waited for, its click dropped)
+            areaTapLater = null;
+            areaTapHeld = false;
+        }
         startLeftDrag();
         areaDragging = true;
+    }
+
+    private boolean dockAreaOnly() {
+        Dock d = dock();
+        return d != null && d.areaOnly;
+    }
+
+    /**
+     * A tap on the map with an area-only order armed (Area Mex): its click waits for doubleTapMs, as a tap, then a drag,
+     * draws the circle (Kailil, 2026-11-17: tap then drag drew Repair's and Restore's circles but not Area Mex's: the tap's
+     * click gave Area Mex at a point, nothing there, and the order was used up before the drag). No second touch: the
+     * click as before; a second touch that draws the circle drops it (startAreaDrag); any other, it goes first.
+     */
+    private void holdAreaTap(float vx, float vy) {
+        areaTapX = vx;
+        areaTapY = vy;
+        areaTapAt = SystemClock.uptimeMillis();
+        areaTapLater = () -> {
+            areaTapLater = null;
+            areaTapHeld = false;
+            clickWhenSeen(vx, vy, HOVER_ASKS);
+        };
+        ui.postDelayed(areaTapLater, doubleTapMs);
+    }
+
+    /** The held tap's click now (its touch did not draw the circle). */
+    private void runAreaTap() {
+        Runnable r = areaTapLater;
+        areaTapLater = null;
+        areaTapHeld = false;
+        if (r != null) {
+            ui.removeCallbacks(r);
+            r.run();
+        }
     }
 
     /** A drag on the game with units to order: BAR's right drag from where the finger came down (dockDraw). */
@@ -1893,6 +1955,11 @@ final class RtsTouch {
         }
         if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
         runPlaceTap();
+        // (Area Mex armed, a tap on the map: held for a drag that may follow, holdAreaTap)
+        if (!inDock && place == null && dockAreaOnly() && hoverAt(vx, vy) != HOVER_INTERFACE) {
+            holdAreaTap(vx, vy);
+            return;
+        }
         clickWhenSeen(vx, vy, HOVER_ASKS);
     }
 

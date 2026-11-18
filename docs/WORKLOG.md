@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 24 (2026-10-25 to 2026-11-17) |
 | Claude Code sessions | 15 |
-| Kailil's messages | 520 (25578 words, 99 screenshots) |
-| Kailil's time | 60.8 h in 164 sittings |
-| Claude's time | 416.7 h |
-| Claude's tool calls | 47117 |
+| Kailil's messages | 521 (25601 words, 99 screenshots) |
+| Kailil's time | 61.2 h in 164 sittings |
+| Claude's time | 417.0 h |
+| Claude's tool calls | 47170 |
 | Kailil stopped Claude mid-answer | 9 times |
-| Commits | 1942 |
+| Commits | 1944 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -44,7 +44,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-14](worklog/2026-11-14.md) | 2 | 0.1 | 1.8 | 14 |
 | [2026-11-15](worklog/2026-11-15.md) | 8 | 0.7 | 18.0 | 106 |
 | [2026-11-16](worklog/2026-11-16.md) | 10 | 0.7 | 21.9 | 174 |
-| [2026-11-17](worklog/2026-11-17.md) | 11 | 1.4 | 19.8 | 133 |
+| [2026-11-17](worklog/2026-11-17.md) | 12 | 1.8 | 20.2 | 135 |
 
 ## Sessions
 
@@ -53,7 +53,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-17 19:25 | 406 | 356.1 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-17 19:41 | 407 | 356.4 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
@@ -64,4 +64,4 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | Mobile unit shader and pre-made ASTC textures for phones | 2026-11-06 22:31 | 2026-11-07 06:56 | 0 | 8.4 |
 | BAR Droid without proot and the X server: measure, then prototype | 2026-11-06 22:32 | 2026-11-07 03:11 | 0 | 4.7 |
 | AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb | 2026-11-07 01:44 | 2026-11-14 01:29 | 33 | 7.7 |
-| Phone engine build for BAR's engine 2026.09.03 | 2026-11-17 19:00 | 2026-11-17 19:23 | 0 | 0.4 |
+| Phone engine build for BAR's engine 2026.09.03 | 2026-11-17 19:00 | 2026-11-17 19:28 | 0 | 0.5 |

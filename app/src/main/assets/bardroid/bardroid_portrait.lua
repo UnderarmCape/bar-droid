@@ -644,8 +644,11 @@ local function writeDock(force)
 		-- whether a drag with units picked should pan too: "Pan, hold for paths". Before: picked units without a building
 		-- queued drew a path, 2026-11-11's "very easy to place a move path ... on accident due to the muscle memory of
 		-- grabbing the screen". A preset armed: taps only, a drag pans, Kailil 2026-11-13: "make presets a single tap only")
-		-- (an area order armed, SP.AREA_TYPES: 2, a left drag that draws its circle)
-		local draw = DRAW_CMDS[cmd] and 1 or cmd and SP.AREA_TYPES[cmdType] and 2 or 0
+		-- (an area order armed, SP.AREA_TYPES: 2, a left drag that draws its circle; 3 for an area-only one, ICON_AREA,
+		-- Area Mex: a tap on the map waits for a drag, its click alone would use the order up at a point; Kailil,
+		-- 2026-11-17, tap then drag drew Repair's and Restore's circles but not Area Mex's)
+		local draw = DRAW_CMDS[cmd] and 1 or cmd and SP.AREA_TYPES[cmdType]
+			and (CMDTYPE and cmdType == CMDTYPE.ICON_AREA and 3 or 2) or 0
 		-- (folded, HIDE: the SHOW button alone, a camera pad whose tap brings the dock back, act dock_menu)
 		local lr = SP.hidden and L.dock
 		text = string.format("dock %s %s\nleft %s\nright %s\nselect %s\ndraw %d\n", r(SP.dockAll()), menu and "menu" or "pad",
