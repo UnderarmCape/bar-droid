@@ -740,7 +740,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [ ] **The 2026.09.03 phone engine's APK: on the Fold7, his first game's log to read** (2026-11-18 ~16:05, after
+- [x] **The 2026.09.03 phone engine's APK: on the Fold7, the folded turn quick again** (2026-11-18 ~16:05, after
       the engine session's gate passed; Kailil ~13:30: "do everything required to get that functionality running"):
       the APK from main 1195062c carries only phone-2026.09.03-83a8536d37 (37.9 MB). Dev phone (BAR test-31992):
       launch "phone engine: phone-2026.09.03-83a8536d37"; sideways, a folded turn (wm size 1080x1080 and back) "21
@@ -749,9 +749,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       list, the close button, the screen's width; touch-phone-test (the void's cases with af1535eb), dock-phone-test,
       pad-test ALL PASS. The Fold7 refused its last port (39645) at ~16:05; on Kailil's new port it took the APK at
       17:38 (no game running; --no-streaming, 62 s), github-sync -Release: latest-build e9a3e090, built from 1195062c.
-      Left: its launcher.log and infolog after his first game (the phone engine line, folded turns' "widgets loaded
-      again", the app's Settings, errors; the gate's one SIGSEGV 3 s into the first start after an update, after
-      CAS::GASCB maphelper.sdz, to watch for).
+      His first game (17:40-17:51, the lobby, then a skirmish against an inactive AI, ~9 min, folded): launch "phone
+      engine: phone-2026.09.03-83a8536d37 (not yet proven on this phone)", BAR test-31992; six folded turns in a row
+      (2096x900 ↔ 896x2100) each "21 widgets loaded again in" 561-1010 ms "(no reload)", BAR's own ViewResize after
+      it 237-616 ms; "BAR Droid settings" and "BAR Droid build menu" loaded from the mod (game widgets); 30.1-30.2 fps
+      over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
+      it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
+      Fold7.
 - [x] **The cursors loaded once again; the selection's health bar as the resource bars** (hardening, 2026-11-18
       ~17:40-17:55, dev phone upright, the phone engine on BAR test-31992). A 5-minute skirmish: 30 fps, no warning or
       error from the app's widgets (BAR's own: yardmaps, weapon tags, icons, the area attack cursor). (1) BAR's Cursor
@@ -762,7 +766,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       5.0 s instead of 6.1 s. (BAR's "icexuick_75/cursorareaattack ... has no frames" is BAR's: no cursor set of its
       has that cursor, its own list asks for it.) (2) UI polish: the health bar under the picked unit's name was two
       flat rectangles; now drawn as the resource bars above it, a dark round track with its outline, the fill shaded
-      from its foot with a gloss on its top half, green to yellow to red (screenshot, the commander picked).
+      from its foot with a gloss on its top half, green to yellow to red (screenshot, the commander picked). Built into
+      the APK (18:00, the 2026.09.03 phone engine): dock-phone-test ALL PASS on the dev phone; on the Fold7 at 18:10.
 - [x] **BAR test-31992 for the phone engine on 2026.09.03: the void's camera, a phone patch, the menu copies**
       (2026-11-18 ~15:10-15:35; found by the engine session's gate on the dev phone, now on BAR test-31992 and engine
       2026.09.03). (1) touch-phone-test's drag and pinch over the void failed on both 2026.09.03 engines (311 off after
