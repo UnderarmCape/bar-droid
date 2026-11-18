@@ -118,7 +118,8 @@ its count: tap to pick the nearest and go there (zoomed in, as COMMANDER), tap a
 or a picker are open, the menu stays open: tap the map for the spot (or drag it there: it moves slowly at first, for
 fine placing; hold still for a GRID), ROTATE turns it a quarter, then PLACE (a spot BAR refuses says so). A drag on the
 game pans, units picked or not; hold, then drag to draw the picked units' path (with MOVE, FIGHT or PATROL pressed a
-drag draws it at once).
+drag draws it at once). A tap on metal or energy opens its bar as BAR's top bar has it: the share to your team above
+(red), and energy's conversion to metal (pale).
 A pill shows the wind (its speed, the map's range; before the game starts the range alone, as BAR's top bar) and the
 tide side by side, in a nook sunk into the dock: with units picked at the top of the selection row (the unit's name under
 it, beside QUEUE), with nothing picked in the dock's top edge between metal and energy (unfolded, on the groups between
