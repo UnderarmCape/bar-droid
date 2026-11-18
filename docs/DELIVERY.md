@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **laptop-tests' checks without BAR after the day's changes** (hardening, 2026-11-18 ~12:40, laptop; Kailil at
+      the laptop, so no BAR started): publish-check's self-test, the downloader, the springsettings merge, the updater
+      (its "Update check" words), PadGame, the status words, the map storage limit, LogRedact, the PowerShell syntax of
+      every tool, GameActivity left alone and launch-bar.sh's build menu switching: ALL PASS. luacheck 0 warnings and
+      lua-locals none over earlier today; the BAR-starting checks (lobby bridge, lobby touch, touch widget, spectate)
+      wait for his yes. No UI polish this run. The Fold7 still unreachable.
 - [x] **The sideways dock's three states checked; the README on a folded turn** (hardening, 2026-11-18 ~12:35, dev
       phone sideways): BUILD, ORDERS (a swipe) and nothing picked: each whole, the build tiles' right column with its
       margin at full zoom (a half-size crop looked cut). README: the interface scale was "2.0 folded, 1.0 unfolded",
