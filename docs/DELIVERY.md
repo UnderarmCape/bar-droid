@@ -740,7 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **catchup-test on the laptop** (hardening, 2026-11-18 ~02:35; a headless host, BARb vs BARb, test-31943 on
+- [x] **The folded sideways home grid** (hardening, 2026-11-18 ~02:35, dev phone at 2316x1080, nothing picked): the
+      one-thumb panel's home buttons as upright (LOCAL UNITS, ALL UNITS; FACTORIES, LAST PINGS dimmed with none yet,
+      PING; COMMANDER, BASE; AUTO RETREAT: ON), the minimap, the wind box and the swap button beside them, the idle
+      commander in the groups row. The log clean. Nothing to change.
+- [x] **catchup-test on the laptop** (hardening, 2026-11-18 ~02:28; a headless host, BARb vs BARb, test-31943 on
       engine 2026.09.01, a windowed spectator joining after 300 s): catch-up mode off, the spectator ran x6.6 to x31.3
       while drawing 1-2 frames a second and was caught up after about 20 s; on, "no drawing until caught up" from the
       start and "caught up at 7:01 after 10 s (x41.8 on average)", then 1.0x at 32 draws a second. No error. No UI
