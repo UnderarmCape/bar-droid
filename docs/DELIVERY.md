@@ -746,7 +746,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       failed run (about 15 tonight, the morning's inbox). It asks for platform-tools only now, and the workflow runs on
       demand (Actions, "Run workflow") and on pull requests, no longer on every push: the private repository gets a
       push after every hardening run, and an APK build each time would spend the free Actions minutes in days. A
-      manual run on GitHub: apk, java-checks, lua-lint all passed (run 44260249828), the APK as its artifact.
+      manual run on GitHub: apk, java-checks, lua-lint all passed (run 44260249828), the APK as its artifact. Then
+      the workflow was switched off on GitHub (gh workflow disable build): the other six branches keep the old file
+      with its push trigger, and a sync of new commits there (engine/sim is the engine session's) would have run and
+      mailed a failure again. To run CI: Actions, build, "Enable workflow", then "Run workflow" (or gh workflow
+      enable build, gh workflow run build.yml --ref main). bar-droid-engine has no workflows.
 - [x] **The folded sideways home grid** (hardening, 2026-11-18 ~02:35, dev phone at 2316x1080, nothing picked): the
       one-thumb panel's home buttons as upright (LOCAL UNITS, ALL UNITS; FACTORIES, LAST PINGS dimmed with none yet,
       PING; COMMANDER, BASE; AUTO RETREAT: ON), the minimap, the wind box and the swap button beside them, the idle

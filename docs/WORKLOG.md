@@ -11,9 +11,9 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 | Kailil's messages | 524 (25663 words, 99 screenshots) |
 | Kailil's time | 61.8 h in 166 sittings |
 | Claude's time | 424.3 h |
-| Claude's tool calls | 48162 |
+| Claude's tool calls | 48166 |
 | Kailil stopped Claude mid-answer | 9 times |
-| Commits | 1987 |
+| Commits | 1988 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -45,7 +45,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-15](worklog/2026-11-15.md) | 8 | 0.7 | 18.0 | 106 |
 | [2026-11-16](worklog/2026-11-16.md) | 10 | 0.7 | 21.9 | 174 |
 | [2026-11-17](worklog/2026-11-17.md) | 13 | 1.9 | 24.7 | 163 |
-| [2026-11-18](worklog/2026-11-18.md) | 2 | 0.6 | 2.7 | 15 |
+| [2026-11-18](worklog/2026-11-18.md) | 2 | 0.6 | 2.7 | 16 |
 
 ## Sessions
 
