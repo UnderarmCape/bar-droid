@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's other screens upright; the Keys window fitted; the Fold7 on the night's build** (hardening,
+      2026-11-18 ~07:30, dev phone upright, offline lobby): Replays (rows, teams fitted), Load Game, Downloads, Plugins
+      (offline: its network error) all read clean. The Keys window upright: Chobby's is the screen's height less 100,
+      two thirds of it empty under the keyboard picture; once the picture's size is known it is now as tall as its
+      tabs and the picture, in the middle of the screen (`uprightKeys`; dev phone: Keys and CTRL Keys fit, Close back
+      to the lobby, its grid again); lobby-phone-test ALL PASS. Kailil sent the Fold7's new Wireless debugging port
+      (34107): its LAN address does not answer from the laptop, over Tailscale (100.103.32.18:34107) it does. No game
+      running there (no spring): this commit's APK (phone-engine 2026.07.04, checked) installed at 07:30, over the
+      23:30 build: the night's fixes reach it (the engine's rescans not yet: that waits for the 2026.09.03 phone build),
+      and GitHub's latest-build has this APK.
 - [x] **The lobby tests open a scenario** (hardening, 2026-11-18 ~07:15): the test widget of lobby-touch-test and
       lobby-phone-test now opens Scenarios, picks the list's first (Chobby's "<id>button"), and upright checks that
       each value of its page ends left of the map (the run before's fix). Dev phone upright: ALL PASS ("map from
