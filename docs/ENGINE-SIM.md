@@ -703,7 +703,11 @@ game until the replay and spectating stages below say it computes exactly what t
   git describe finds since then. The PGO profile (`pgo-data`, recorded on 2026.07.04) breaks GCC on files the new
   release changed ("corrupted profile info"): `pgo-data-0903` is a copy without the profiles of every file changed
   between the two tags (143 of 1,086) and `-fprofile-correction` is added to the build's flags (profile data only
-  steer optimization, never floating-point results).
+  steer optimization, never floating-point results). Gated 2026-11-18 (the app's `tools/engine-gate.ps1`, dev phone,
+  BAR test-31992): `phone-2026.09.03-83a8536d37` played 2026.09.03 server replays to their last frame with 0 desync
+  warnings (a 1v1 as shipped, a 2v2 and an 8v8 with every switch at 0, the 8v8 as shipped too; a second 8v8 was taken
+  by the 8 GB phone's low-memory killer with the official engine as well), and the app's seven phone tests passed; it
+  is the release folder's 2026.09.03 (the app's docs/DELIVERY.md, "BAR moved to engine 2026.09.02, then 2026.09.03").
 - **The archive cache written only when a scan changes it** (2026-11-18, the app's hardening loop; unsynced): every
   `ScanAllDirs` took 1.1 s on a phone, because `ScanDirs` marked the cache dirty before scanning and `WriteCacheData`'s
   check of the pool's 20,745 files ran to its 1 s limit under proot. Behind `BARDROID_SIM`: dirty only for a new,
