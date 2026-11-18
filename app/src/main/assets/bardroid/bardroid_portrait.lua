@@ -3463,10 +3463,26 @@ local function drawSelection()
 	if hp and maxHp and maxHp > 0 then
 		local x1 = r[3] - L.pad
 		local frac = max(0, min(1, hp / maxHp))
-		gl.Color(0.12, 0.12, 0.12, 0.9)
-		gl.Rect(x, r[2] + h * 0.13, x1, r[2] + h * 0.25)
-		gl.Color(1 - frac, 0.3 + 0.55 * frac, 0.2, 1)
-		gl.Rect(x, r[2] + h * 0.13, x + (x1 - x) * frac, r[2] + h * 0.25)
+		local y0, y1 = r[2] + h * 0.13, r[2] + h * 0.25
+		local f = flow()
+		if f and f.RectRound and f.RectRoundOutline then
+			-- (as the resource bars above it: a dark round track with its outline, the fill shaded from its foot and a
+			-- gloss on its top half; green to yellow to red)
+			local cr = (y1 - y0) * 0.3
+			f.RectRoundOutline(x - 1, y0 - 1, x1 + 1, y1 + 1, cr, 1, 1, 1, 1, 1, { 0, 0, 0, 0.6 }, { 0, 0, 0, 0.6 })
+			f.RectRound(x, y0, x1, y1, cr, 1, 1, 1, 1, { 0, 0, 0, 0.5 }, { 0.07, 0.07, 0.07, 0.55 })
+			local fx = x + max(cr * 2, (x1 - x) * frac)
+			local cR, cG = frac < 0.5 and 1 or (1 - frac) * 2, 0.85 * min(1, frac * 2)
+			f.RectRound(x, y0, fx, y1, cr, 1, 1, 1, 1, { cR * 0.55, cG * 0.55, 0.08, 1 }, { cR, cG, 0.15, 1 })
+			gl.Blending(GL.SRC_ALPHA, GL.ONE)
+			f.RectRound(x, (y0 + y1) / 2, fx, y1, cr, 1, 1, 0, 0, { 1, 1, 1, 0 }, { 1, 1, 1, 0.16 })
+			gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+		else
+			gl.Color(0.12, 0.12, 0.12, 0.9)
+			gl.Rect(x, y0, x1, y1)
+			gl.Color(1 - frac, 0.3 + 0.55 * frac, 0.2, 1)
+			gl.Rect(x, y0, x + (x1 - x) * frac, y1)
+		end
 		gl.Color(1, 1, 1, 1)
 	end
 end
