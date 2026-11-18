@@ -6,14 +6,14 @@ next tap on the map was taken here and did nothing (dev phone upright, 2026-11-1
 docs/upstream/bar-topbar-buttons-press-hover.patch). The strip as BAR's own check has it: 31958's overStrip (only the
 reveal band while auto-hidden buttons are away), the whole button area before it (test-31723, test-31836). Applied by
 the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+The block ends at MousePress's own end: test-31992 put widget:AllowQuit between it and MouseWheel, which the block's
+place once ran into (remake-check, 2026-11-18); that end alone is found once in 31958 and 31992 alike.
 
 @@@ find
 	if hoveringButtons then
 		return true
 	end
 end
-
-function widget:MouseWheel(up, value) -- up = true/false , value = -1/1
 @@@ with
 	-- BAR Droid (phone): the strip under the press itself, not under the pointer at the last check (a finger moves the
 	-- pointer and presses in one frame: after the quit dialog closed from Quit, a tap on the map was taken here)
@@ -25,6 +25,4 @@ function widget:MouseWheel(up, value) -- up = true/false , value = -1/1
 		end
 	end
 end
-
-function widget:MouseWheel(up, value) -- up = true/false , value = -1/1
 @@@ end
