@@ -752,6 +752,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Left: its launcher.log and infolog after his first game (the phone engine line, folded turns' "widgets loaded
       again", the app's Settings, errors; the gate's one SIGSEGV 3 s into the first start after an update, after
       CAS::GASCB maphelper.sdz, to watch for).
+- [x] **The cursors loaded once again; the selection's health bar as the resource bars** (hardening, 2026-11-18
+      ~17:40-17:55, dev phone upright, the phone engine on BAR test-31992). A 5-minute skirmish: 30 fps, no warning or
+      error from the app's widgets (BAR's own: yardmaps, weapon tags, icons, the area attack cursor). (1) BAR's Cursor
+      widget now loads its 26 animated cursors in its Initialize, in the loading screen ("while pendingCursorDir do"),
+      which bardroid_touch.lua's pre-load had been doing for it since 2026-11-02; the second pass cost the loading
+      screen 631 ms. The pre-load now runs only when BAR's widget does not (an older BAR: a replay's own version):
+      "[bardroid-touch] BAR's cursors loaded by BAR's Cursor widget", the Cursor widget to the touch widget's line
+      5.0 s instead of 6.1 s. (BAR's "icexuick_75/cursorareaattack ... has no frames" is BAR's: no cursor set of its
+      has that cursor, its own list asks for it.) (2) UI polish: the health bar under the picked unit's name was two
+      flat rectangles; now drawn as the resource bars above it, a dark round track with its outline, the fill shaded
+      from its foot with a gloss on its top half, green to yellow to red (screenshot, the commander picked).
 - [x] **BAR test-31992 for the phone engine on 2026.09.03: the void's camera, a phone patch, the menu copies**
       (2026-11-18 ~15:10-15:35; found by the engine session's gate on the dev phone, now on BAR test-31992 and engine
       2026.09.03). (1) touch-phone-test's drag and pinch over the void failed on both 2026.09.03 engines (311 off after
