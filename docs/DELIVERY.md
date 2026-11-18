@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The docs after the night; the chat's typing box sideways** (hardening, 2026-11-18 ~08:40): README's Problems
+      says what Share logs' zip holds and that an online game's join password is taken out first; HANDOFF's Share logs
+      row and ARCHITECTURE's file list name `LogRedact`. Dev phone sideways, a skirmish: Enter, a two-line message
+      wrapped under its text, the box ending well left of BAR's top bar buttons; Escape, nothing sent. No UI polish
+      this run.
 - [x] **The chat's typing box upright; the Keys window through a turn (code read)** (hardening, 2026-11-18 ~08:30, dev
       phone upright, a skirmish): Enter opened the app's typing box under BAR's top bar, "Allies:" in its column; a
       long line ("gl hf all, this is a longer line ...") wrapped onto a second line under its text, not under the tag;
