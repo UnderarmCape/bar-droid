@@ -740,6 +740,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The resource panel's knobs: whole percents, sent only when changed, drawn where the finger put them**
+      (hardening, 2026-11-17 ~22:45, review of the day's share bar, dev phone upright): a drag on the share or
+      conversion knob sent SetShareLevel or conversion's LuaRules message at every finger move (each goes to every
+      player online), the share unrounded; and the knob and its words showed the game's value, which online comes back
+      a round trip later, so they would trail the finger and jump back at the release. BAR's top bar sends at every
+      mouse move too but draws its dragged value. Now setSlider rounds to whole percents (conversion 12-88 as BAR's),
+      sends only a changed one, and sliderValue gives the finger's value until the game's own matches it (3 s at
+      most). Measured with a probe counting the game's value changes over a 1.5 s drag: the share 32 before (unrounded),
+      6 after, landing on 0.880; conversion 75 % to 35 %, one per percent before and after (36, 38); a 2 px drag
+      that keeps the percent sends nothing; the boxes' marks follow. (BAR's widget handler gives each widget its own
+      Spring table, so a probe cannot wrap another widget's calls.) Polish: the box whose panel or teammate picker is
+      open shows BAR's gold along its top and a faint gold over it (nothing had said which box the panel was for);
+      energy then metal opened on the dev phone, each lit in turn. dock-phone-test ALL PASS.
 - [x] **tools/worklog.py: its cache written whole and only when changed; a whole read says why** (hardening,
       2026-11-17 ~22:15): two runs this evening took 262 s instead of ~20. Measured: the cached scan of all 1454
       transcripts takes 12.6 s and a whole uncached run 25 s warm, so the slow runs read the 3.3 GB transcript from its

@@ -1454,18 +1454,43 @@ end
 
 -- what: "share" or "convert" (energy's conversion)
 local function sliderValue(item, what)
+	local v
 	if what == "convert" then
-		return Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75
+		v = Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75
+	else
+		v = select(6, Spring.GetTeamResources(myTeam(), item.res)) or 1
 	end
-	return select(6, Spring.GetTeamResources(myTeam(), item.res)) or 1
+	-- (the value the finger set, until the game's own comes back to it: online the knob and its words ran a round
+	-- trip behind the finger and jumped back at the release; BAR's top bar draws its dragged value too)
+	local key = item.res .. what
+	local set = SP.slidSet and SP.slidSet[key]
+	if set then
+		if abs(v - set.v) < 0.006 or now() - set.t > 3 then
+			SP.slidSet[key] = nil
+		else
+			return set.v
+		end
+	end
+	return v
 end
 
--- a knob set from x along its bar (BAR's own calls: SetShareLevel; conversion, its LuaRules message 12-88 %)
+-- a knob set from x along its bar (BAR's own calls: SetShareLevel; conversion, its LuaRules message 12-88 %), in whole
+-- percents and only when that changed: every finger move had sent it again, to every player online (review
+-- 2026-11-17: 32-36 values a 1.5 s drag on the dev phone, the share's unrounded)
 local function setSlider(item, r, x, what)
 	local b = SP.barArea(r)
 	local v = max(0, min(1, (x - b[1]) / max(1, b[3] - b[1])))
+	v = (what == "convert" and max(12, min(88, floor(v * 100 + 0.5))) or floor(v * 100 + 0.5)) / 100
+	SP.slidSet = SP.slidSet or {}
+	SP.slidSet[item.res .. what] = { v = v, t = now() }
+	if slide and slide.sent == v then
+		return
+	end
+	if slide then
+		slide.sent = v
+	end
 	if what == "convert" then
-		Spring.SendLuaRulesMsg(string.format(string.char(137) .. "%i", max(12, min(88, floor(v * 100 + 0.5)))))
+		Spring.SendLuaRulesMsg(string.format(string.char(137) .. "%i", floor(v * 100 + 0.5)))
 	else
 		Spring.SetShareLevel(item.res, v)
 	end
@@ -3522,6 +3547,15 @@ local function drawResources()
 		local box = i == 1 and mB or eB
 		local x0, x1 = box[1], box[3]
 		panel(box)
+		if resPanel == res or sharing == res then -- (its panel or picker open: BAR's gold along its top and a little over
+			-- it; nothing had said which box the panel below was for, dev phone screenshot 2026-11-17)
+			local lw = max(2, floor(pad * 0.4))
+			gl.Color(1, 0.78, 0.25, 0.07)
+			gl.Rect(x0 + 1, box[2] + 1, x1 - 1, box[4] - 1)
+			gl.Color(1, 0.78, 0.25, 0.9)
+			gl.Rect(x0 + pad * 2, box[4] - lw - 1, x1 - pad * 2, box[4] - 1)
+			gl.Color(1, 1, 1, 1)
+		end
 		if cur and storage then
 			local by0, by1 = r[2] + pad, r[2] + pad + barH
 			local frac = storage > 0 and max(0, min(1, cur / storage)) or 0
@@ -5078,6 +5112,7 @@ function SP.resSignature() -- (its parts in one table kept for it: made each fra
 	-- (the wind and tide: their own boxes now, drawn live, SP.drawWindTide; their nook between metal and energy narrows them)
 	local nk = not SP.windOff() and SP.windRects() and L.windNook
 	parts[8] = nk and nk.kind == "res" and (nk[1] .. "," .. nk[3]) or ""
+	parts[9] = (resPanel or "") .. "/" .. (sharing or "") -- (the open panel's box lit)
 	return table.concat(parts, " ")
 end
 function SP.drawRes()
