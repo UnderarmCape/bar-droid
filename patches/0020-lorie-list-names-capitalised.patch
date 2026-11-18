@@ -1,0 +1,62 @@
+diff --git a/lorie/src/main/res/values/arrays.xml b/lorie/src/main/res/values/arrays.xml
+index b34086f..f02d32c 100644
+--- a/lorie/src/main/res/values/arrays.xml
++++ b/lorie/src/main/res/values/arrays.xml
+@@ -48,6 +48,12 @@
+         <item>exact</item>
+         <item>custom</item>
+     </string-array>
++    <string-array name="displayResolutionEntries">
++        <item>Native</item>
++        <item>Scaled</item>
++        <item>Exact</item>
++        <item>Custom</item>
++    </string-array>
+     <string-array name="displayResolution">
+         <item>320x200</item>
+         <item>320x240</item>
+@@ -78,6 +84,10 @@
+         <item>bilinear</item>
+         <item>nearest</item>
+     </string-array>
++    <string-array name="displayFilteringEntries">
++        <item>Bilinear (smooth)</item>
++        <item>Nearest (sharp pixels)</item>
++    </string-array>
+     <string-array name="userActionsValues">
+         <item>no action</item>
+         <item>toggle soft keyboard</item>
+diff --git a/lorie/src/main/res/values/strings.xml b/lorie/src/main/res/values/strings.xml
+index aababff..2642a71 100644
+--- a/lorie/src/main/res/values/strings.xml
++++ b/lorie/src/main/res/values/strings.xml
+@@ -127,9 +127,9 @@ E.g. <b>META</b> for <i>META key</i>, \n
+     <string name="lorie_pref_notificationButton1Action">Notification second button</string>
+     <string name="lorie_pref_mediaKeysAction">Media keys</string>
+ 
+-    <string name="lorie_pref_summary_requiresExactOrCustom">Needs the display resolution mode “exact” or “custom”</string>
++    <string name="lorie_pref_summary_requiresExactOrCustom">Needs the display resolution mode “Exact” or “Custom”</string>
+     <string name="lorie_pref_summary_requiresIntercepting">Needs system shortcuts intercepted (DeX mode or the Accessibility service)</string>
+-    <string name="lorie_pref_summary_requiresTrackpadAndNative">Needs the touchscreen input mode “Trackpad” and a display resolution mode other than “native”</string>
++    <string name="lorie_pref_summary_requiresTrackpadAndNative">Needs the touchscreen input mode “Trackpad” and a display resolution mode other than “Native”</string>
+     <string name="lorie_pref_summary_screenIdleTimeoutConflict">⚠️ System screen timeout (%s) is longer and takes priority</string>
+     <string name="lorie_pref_screenIdleTimeoutSystem">System (%s)</string>
+ </resources>
+diff --git a/lorie/src/main/res/xml/preferences.xml b/lorie/src/main/res/xml/preferences.xml
+index 3b877eb..2db9a2e 100644
+--- a/lorie/src/main/res/xml/preferences.xml
++++ b/lorie/src/main/res/xml/preferences.xml
+@@ -10,11 +10,11 @@
+         <Preference app:key="version" app:title="@string/lorie_pref_version" />
+     </PreferenceScreen>
+     <PreferenceScreen app:key="output">
+-        <ListPreference app:key="displayResolutionMode" app:defaultValue="native" app:entries="@array/displayResolutionVariants" app:entryValues="@array/displayResolutionVariants"  />
++        <ListPreference app:key="displayResolutionMode" app:defaultValue="native" app:entries="@array/displayResolutionEntries" app:entryValues="@array/displayResolutionVariants"  />
+         <SeekBarPreference app:key="displayScale" app:defaultValue="100" app:min="30" android:max="300" app:seekBarIncrement="10" app:showSeekBarValue="true" app:updatesContinuously="true" />
+         <ListPreference app:key="displayResolutionExact" app:defaultValue="1280x1024" app:entries="@array/displayResolution" app:entryValues="@array/displayResolution" tools:ignore="DuplicateSpeakableTextCheck" />
+         <EditTextPreference app:key="displayResolutionCustom" app:defaultValue="1280x1024" app:useSimpleSummaryProvider="true" />
+-        <ListPreference app:key="displayFilteringMode" app:defaultValue="bilinear" app:entries="@array/displayFilteringVariants" app:entryValues="@array/displayFilteringVariants"  />
++        <ListPreference app:key="displayFilteringMode" app:defaultValue="bilinear" app:entries="@array/displayFilteringEntries" app:entryValues="@array/displayFilteringVariants"  />
+         <SwitchPreferenceCompat app:key="adjustResolution" app:defaultValue="false" />
+         <SwitchPreferenceCompat app:key="displayStretch" app:defaultValue="false" />
+         <SwitchPreferenceCompat app:key="Reseed" app:defaultValue="false" />
