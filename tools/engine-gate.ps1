@@ -52,7 +52,8 @@ function Run-Replay([string]$file, [bool]$switchesOff) {
   $p = @{ Replay = $file; Engine = "default"; Skip = 9000; Seconds = 30; Timeout = 3600; Device = $Device }
   if ($switchesOff) { $p.Settings = $off }
   Take
-  try { $out = & $replayTool @p 2>&1 | ForEach-Object { "$_" } } catch { $out = @("$_") } finally { Free }
+  $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  try { $out = & $replayTool @p 2>&1 | ForEach-Object { "$_" } } catch { $out = @("$_") } finally { $ErrorActionPreference = $eap; Free }
   $out | Select-Object -Last 12 | Out-Host
   $line = $out | Where-Object { $_ -match 'desync warnings' } | Select-Object -Last 1
   $infolog = if ($line -match 'infolog (.+\.txt)$') { $Matches[1] } else { "" }
@@ -74,7 +75,11 @@ function Run-Replay([string]$file, [bool]$switchesOff) {
 function Run-Test([string]$script, [string[]]$extra = @()) {
   $label = "$script $($extra -join ' ')".Trim()
   Take
-  try { $out = & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "$script.ps1") @extra 2>&1 | ForEach-Object { "$_" } } finally { Free }
+  # (a test's stderr line, adb's "1 file pushed", is a NativeCommandError under "Stop": it ended the first gate run
+  # after touch-phone-test)
+  $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  try { $out = & powershell -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot "$script.ps1") @extra 2>&1 | ForEach-Object { "$_" } }
+  catch { $out = @("FAIL $script stopped: $_") } finally { $ErrorActionPreference = $eap; Free }
   $out | Out-Host
   $fails = @($out | Where-Object { $_ -match '\bFAIL(ED)?\b' })
   $ok = ($fails.Count -eq 0) -and ($out | Where-Object { $_ -match '\bPASS\b' })
