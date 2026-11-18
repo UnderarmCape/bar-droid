@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **On the official engine a turn waits 1.5 s before its whole reload** (hardening, 2026-11-18 ~12:20, dev phone
+      sideways, the launcher's Phone engine off then on): a new interface scale there costs the whole reload (5-10 s,
+      the entry below), so the touch widget now takes a new screen size only once it has held for 1.5 s (four reads
+      0.5 s apart) when it has no BAR handler, and after 0.5 s as before with the phone engine's 0.6-1 s rescale. A
+      phone turned and turned back within a second (yesterday's Fold7 game: sideways and upright again inside one
+      reload) costs nothing instead of two reloads. Official engine: a 1 s flick (`wm size 1080x1080; sleep 1; wm size
+      reset`) no reload; a held change reloads 1.35 and 1.45 s after the resize. Phone engine: 21 widgets rescaled 0.3-1.1 s
+      after it, in 0.76-0.99 s. touch-phone-test and dock-phone-test ALL PASS. No UI polish this run (the login dialog's
+      change-username row, ~2 mm, works only logged in and would move Chobby's error line: left).
 - [x] **What a whole reload costs on the official engine** (hardening, 2026-11-18 ~12:10, dev phone sideways with the
       launcher's Phone engine off, as the Fold7 runs): a turn there reloads LuaUI whole, ~9.5 s from "reloading the
       interface" to the last widget loaded: ~5.6 s BAR's handler reading every one of 242 widget files for its GetInfo

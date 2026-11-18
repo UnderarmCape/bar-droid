@@ -1713,14 +1713,22 @@ local function update(dt)
 			if not size or size == lastScreen then
 				uiRescale.seen = nil
 			elseif uiRescale.seen == size then -- the size: the 60/120 Hz switches change the rest
-				lastScreen, uiRescale.seen = size, nil
-				applyUiScale(tonumber(w), tonumber(h))
+				-- (the official engine reloads the whole interface for a new scale, 5-10 s: there the size must hold
+				-- 1.5 s, three more reads, so a phone turned and turned back within a second costs nothing instead of
+				-- two reloads; the phone engine's 0.6-1 s rescale takes it after one)
+				uiRescale.seenN = (uiRescale.seenN or 1) + 1
+				if uiRescale.seenN > (uiRescale.handler() and 1 or 3) then
+					lastScreen, uiRescale.seen = size, nil
+					applyUiScale(tonumber(w), tonumber(h))
+				else
+					screenFast, screenCheck = math.max(screenFast, 1), 0.5
+				end
 			else
 				-- (a new size counts once two reads 0.5 s apart agree: a tilt that auto-rotate turned back at once changes
 				-- nothing. Kailil's Fold7, 2026-11-17: sideways and upright again within one reload, twice in a game, the
 				-- first at its start. BAR's official engine, which his Fold7 runs since BAR's 2026.09.03, reloads the whole
 				-- interface for each: rescaleWidgets needs the phone engine's handler)
-				uiRescale.seen, screenFast, screenCheck = size, math.max(screenFast, 1), 0.5
+				uiRescale.seen, uiRescale.seenN, screenFast, screenCheck = size, 1, math.max(screenFast, 1), 0.5
 			end
 		end
 		zoneEnd()
