@@ -3194,8 +3194,12 @@ local function drawButton(item, r, cap)
 			or lit and "\255\020\020\020" or "\255\240\240\240", font, true)
 	end
 	if item.color then -- a teammate: their colour along the bottom
+		-- (3 pixels at least: the minimum was its top's, so in the split dock's rows, about 70 high, it came out 1 pixel,
+		-- a teammate's colour hard to tell; dev phone screenshot 2026-11-17)
+		local h = r[4] - r[2]
+		local y0 = r[2] + max(3, floor(h * 0.05))
 		gl.Color(item.color[1], item.color[2], item.color[3], 0.95)
-		gl.Rect(r[1] + 8, r[2] + 5, r[3] - 8, r[2] + max(5, (r[4] - r[2]) * 0.09))
+		gl.Rect(r[1] + 8, y0, r[3] - 8, y0 + max(3, floor(h * 0.05)))
 		gl.Color(1, 1, 1, 1)
 	end
 	local fp = item.kind == "factories" and L.factoryPick

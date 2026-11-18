@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The teammate picker sideways and unfolded; a teammate's colour line 3 pixels at least** (hardening,
+      2026-11-17 ~23:20, dev phone with the stand-in teammates): folded sideways (2316x1080) the energy panel and the
+      picker show two whole rows in the one-thumb panel, a flick pages by two, the energy box lit; in the split dock
+      (1080x1198 turned) the panel's three rows fill the right block and the picker's three rows stand whole. There a
+      teammate's colour line under their name was 1 pixel: its minimum (5) was its top's, not its height, so at rows
+      about 70 high it vanished (upright, 130 high, it was 6). Now it stands 5 % of the row up and is 5 % of it thick,
+      3 pixels at least: the split's red line plain on the dev phone. Not a bug of the dock: at 1080x1198 turned
+      sideways every upward drag is taken by the system's pip-resize gesture monitor after about 30 pixels ("stealing
+      input gesture", no picture-in-picture window open), so the split's lists cannot be scrolled up by adb there; the
+      dock settles at rest since 461b299f. Upright and folded sideways upward drags scroll.
 - [x] **The teammate picker's rows whole at rest** (hardening, 2026-11-17 ~23:05, review of the share code, dev phone
       upright): the pad's share list and the dock's giving read sound (dead, away and taxed teammates, the room by
       their share slider, reviewed 11-15). The dock's own picker (a resource panel's SEND, then a teammate) had never
