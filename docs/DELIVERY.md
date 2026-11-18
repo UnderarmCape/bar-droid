@@ -761,7 +761,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       entry "Speak to chat started, cancelled and started again quickly" below). (2) UI polish: the map field for Play
       vs AI drops down the maps installed at a tap, but looked like a plain text box; now Material's drop-down arrow at
       its right end in the secondary text colour (res/drawable/ic_dropdown.xml; dev phone screenshot; a tap on the
-      arrow drops the list down).
+      arrow drops the list down). The APK from ce36964f on the Fold7 at 18:34.
 - [x] **The phone tests' stray widget warning for BAR's manifests.json; the launcher's log box** (hardening,
       2026-11-18 ~18:10-18:20, dev phone). (1) dock-phone-test warned "widgets on the phone that are not the app's ...:
       manifests.json": BAR's lobby writes its community widgets' list (from BAR-Widgets, 25 KB) into LuaUI/Widgets at
