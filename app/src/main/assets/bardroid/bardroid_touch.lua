@@ -137,7 +137,9 @@ end
 -- 0.2-0.3 s in the engine, and a skirmish's first ~8 s stuttered at 2-5 fps (dev phone, 2026-11-02). In a game with no
 -- pregame the same cursors are loaded here, while the game loads (its loading screen ~8 s longer); BAR's own replacements
 -- then find them in place and cost nothing. A game with one (start positions chosen in the game: online) loads them in
--- the pregame as before (Kailil, 2026-11-02: "Yes whatever you recommend").
+-- the pregame as before (Kailil, 2026-11-02: "Yes whatever you recommend"). BAR test-31992 does the same in its own
+-- Initialize ("while pendingCursorDir do"): then a second pass here only cost the loading screen 631 ms (dev phone,
+-- 2026-11-18), so it runs only for a game whose Cursor widget does not (an older BAR: a replay's own version).
 local BAR_DEFERRED_CURSORS = { "cursorareaattack", "cursorattack", "cursorbuildbad", "cursorbuildgood", "cursorcapture",
 	"cursorcentroid", "cursorwait", "cursortime", "cursorunload", "cursordwatch", "cursordgun", "cursorfight",
 	"cursorgather", "cursordefend", "cursorpickup", "cursorrepair", "cursorrevive", "cursorrestore", "cursormove",
@@ -145,6 +147,11 @@ local BAR_DEFERRED_CURSORS = { "cursorareaattack", "cursorattack", "cursorbuildb
 local function preloadCursors()
 	local cursors = WG.cursors
 	if not (cursors and cursors.getcursor) or Spring.GetGameFrame() > 0 or Game.startPosType == 2 then
+		return
+	end
+	local barCursor = VFS.LoadFile("LuaUI/Widgets/gui_cursor.lua")
+	if barCursor and barCursor:find("while pendingCursorDir do", 1, true) then
+		Spring.Echo("[bardroid-touch] BAR's cursors loaded by BAR's Cursor widget")
 		return
 	end
 	-- the set's size as BAR's widget picks it: the nearest of the set's folders to its size for the screen
