@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Sideways: a skirmish, the tab swipe, the lobby; the lobby's notes beside the titles** (hardening, 2026-11-18
+      ~04:05, dev phone sideways, the one-thumb dock): the infolog's warnings BAR's own (its Mission Info and a dozen dev
+      widgets "no GetInfo" outside their games, as on every BAR install), 29.6 fps over the minute; + NEW made group 1,
+      its number's new badge readable at the sideways row's size; a swipe right to left on the build grid opened
+      ORDERS, left to right BUILD again. The lobby sideways (offline): the column, its page strip, Chobby's login window
+      on Register (no account saved: the tests never log in). UI polish: on the Skirmish screen Chobby's "Download
+      Failed" note sat in the middle of the room beside the column, over the step's centred title ("Select Game Type");
+      it now stands at three quarters of that room, short of the panels' Close (`uprightNotes`, sideways branch): the
+      title whole, Close clear (dev phone screenshot); Multiplayer's top row is a search box across that whole room, so
+      the note covers it as before. lobby-phone-test ALL PASS on the rebuilt APK. The Fold7 stayed off adb.
 - [x] **A skirmish's logs; the group tile's number on a badge** (hardening, 2026-11-18 ~03:40, dev phone upright, a
       skirmish against BARb): the infolog's errors and warnings are BAR's own (its load-time yardmaps, unknown weapon
       tags, Terraformer files without GetInfo, `SetConfigInt "AdvSky" is deprecated` right after BAR's LuaIntro: the
