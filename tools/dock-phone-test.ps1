@@ -2,7 +2,8 @@
 # grid's first building (in sight on any screen shape; the dock's itemCell says where) picked on the dock, its spot tapped and PLACE pressed 2.6 s later (the dock's menu must still take it), PLACE on a
 # blocked spot (its note), the D-gun mode's FIRE swiped right (full auto on) and left (off), its MOVE stick held and let
 # go (the commander stops at once), the STRAFE preset picked and dragged onto the map, and the wind's and the tide's
-# boxes tapped with the camera pad up (their details open at the first tap). The test widget
+# boxes tapped with the camera pad up (their details open at the first tap), Area Mex's circle by a tap, then a drag
+# (two Construction Bots, their mexes queued). The test widget
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
 # off after. Nothing on the laptop: it runs any time. About 3 minutes.
@@ -246,6 +247,19 @@ try {
     $wm = Mid $wt["wind"]; Tap $wm[0] $wm[1]; Start-Sleep -Milliseconds 1200
     Stage "wind?"; Start-Sleep 1
   } else { "[docktest] (no wind or tide boxes in sight: that case left out)" }
+  # 10. Area Mex (Kailil, 2026-11-17: its circle drew neither by a drag nor by a tap, then a drag): two Construction Bots
+  # picked, Area Mex armed, a tap, then a drag from a metal spot (the tap's click held for the drag, RtsTouch.holdAreaTap)
+  Stage "areamex"; Start-Sleep 2
+  Stage "areamexpick"; Start-Sleep 2
+  Stage "areamexarm"; Start-Sleep -Milliseconds 1500
+  $mx = Rects "bardroid_docktest.txt"
+  if ($mx["mex0"] -and $mx["mex1"]) {
+    $m0 = $mx["mex0"]; $m1 = $mx["mex1"]
+    TapDown $m0[0] $m0[1]; Start-Sleep -Milliseconds 120
+    Touch MOVE (($m0[0] + $m1[0]) / 2) $m0[1]; Touch MOVE $m1[0] $m1[1]
+    Start-Sleep -Milliseconds 300; Touch UP $m1[0] $m1[1]; Start-Sleep -Milliseconds 1500
+    Stage "areamex?"; Start-Sleep 1
+  } else { "[docktest] (no metal spot in sight: the Area Mex case left out)" }
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

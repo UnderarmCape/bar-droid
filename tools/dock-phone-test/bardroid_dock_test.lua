@@ -13,6 +13,8 @@
 --   pickpanned? (after campos) the Pawns picked, one finger dragged on the game: a pan, no path for them
 --   drawdock? their path drawn (a press held, then a drag) on into the dock: its end at the dock's edge, their repeat off
 --   panned?   (after campos) one finger dragged on the game, the dock's menu open, nothing picked: a pan, no selection
+--   areamex / areamexpick / areamexarm  two Construction Bots given, picked, Area Mex armed; "mex0 x y", "mex1 x y": a
+--             metal spot in sight and a point 90 px on;  areamex?  a tap, then a drag between them: mexes queued
 --   end       "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
@@ -426,6 +428,71 @@ local function onCmd(c)
 		local open = P and P.windOpen and P.windOpen()
 		local kind = c:sub(1, 4)
 		check("the " .. kind .. "'s box, its first tap with the camera pad up: its details open", open == kind, open or "none open")
+	elseif c == "areamex" then -- (Area Mex, Kailil 2026-11-17: two Construction Bots given by the commander)
+		local x, y, z = Spring.GetUnitPosition(com)
+		Spring.SendCommands(string.format("give 2 armck %d @%d,%d,%d", Spring.GetMyTeamID(), x + 120, y, z + 120))
+	elseif c == "areamexpick" then -- (they picked; the metal spot nearest the commander in the middle of the game above
+		-- the dock, the dock's own camera move: SetCameraTarget left it off the screen, the view's middle is the dock's edge)
+		local cks = Spring.GetTeamUnitsByDefs(Spring.GetMyTeamID(), UnitDefNames.armck.id) or {}
+		Spring.SelectUnitArray(cks)
+		local F, P = WG.resource_spot_finder, WG.BarDroidPortrait
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local best, bd
+		for _, s in ipairs(F and F.metalSpotsList or {}) do
+			local d = (s.x - cx) ^ 2 + (s.z - cz) ^ 2
+			if not bd or d < bd then
+				best, bd = s, d
+			end
+		end
+		if best and P and P.cameraTo then
+			P.cameraTo(best.x, Spring.GetGroundHeight(best.x, best.z), best.z)
+		end
+		Spring.Echo("[docktest] area mex: " .. #cks .. " Construction Bots picked, the camera on a spot "
+			.. tostring(best and math.floor(best.x)) .. "," .. tostring(best and math.floor(best.z)))
+	elseif c == "areamexarm" then -- (Area Mex armed; a metal spot in sight: the circle's middle there, its edge 90 px on)
+		local idx
+		for i, d in ipairs(Spring.GetActiveCmdDescs() or {}) do
+			if d.action == "areamex" then
+				idx = i
+			end
+		end
+		if idx then
+			Spring.SetActiveCommand(idx)
+		end
+		local F = WG.resource_spot_finder
+		local vsx = Spring.GetViewGeometry()
+		local sx, sy
+		local list = F and F.metalSpotsList or {}
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		table.sort(list, function(a, b) -- (the nearest the commander first: in sight above the dock)
+			return (a.x - cx) ^ 2 + (a.z - cz) ^ 2 < (b.x - cx) ^ 2 + (b.z - cz) ^ 2
+		end)
+		for _, s in ipairs(list) do
+			if not sx then
+				sx, sy = screenOf(s.x, s.z)
+			end
+		end
+		if not sx and list[1] then
+			local wx, wy = Spring.WorldToScreenCoords(list[1].x, Spring.GetGroundHeight(list[1].x, list[1].z), list[1].z)
+			Spring.Echo(string.format("[docktest] area mex: %d spots, none in sight; the nearest at %d,%d on the screen",
+				#list, wx, wy))
+		end
+		local ex = sx and (sx + 90 < vsx - 60 and sx + 90 or sx - 90)
+		write(sx and string.format("mex0 %d %d\nmex1 %d %d\n", sx, sy, ex, sy) or "mex0 nil nil\n")
+		Spring.Echo(string.format("[docktest] area mex armed: %s, a spot at %s,%s", tostring(idx), tostring(sx), tostring(sy)))
+	elseif c == "areamex?" then -- (a tap, then a drag: the circle drawn, its spots' mexes queued for the bots)
+		local mex = 0
+		for _, u in ipairs(Spring.GetTeamUnitsByDefs(Spring.GetMyTeamID(), UnitDefNames.armck.id) or {}) do
+			for _, q in ipairs(Spring.GetUnitCommands(u, 40) or {}) do
+				local d = q.id < 0 and UnitDefs[-q.id]
+				if d and (d.extractsMetal or 0) > 0 then
+					mex = mex + 1
+				end
+			end
+		end
+		check("Area Mex armed, a tap, then a drag from a metal spot: BAR's circle, its mexes queued", mex > 0,
+			mex .. " mex orders")
+		Spring.SelectUnitArray({})
 	elseif c == "end" then
 		Spring.Echo("[docktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end

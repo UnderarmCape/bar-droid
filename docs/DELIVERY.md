@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **dock-phone-test: Area Mex by a tap, then a drag** (hardening, 2026-11-17 ~20:45): the day's Area Mex fixes get
+      a check: two Construction Bots given and picked, the camera on the metal spot nearest the commander (the dock's
+      cameraTo: SetCameraTarget had left the spots off the screen, the view's middle is the dock's edge upright), Area
+      Mex armed by its command (the dock's "draw 3"), a tap, then a drag from the spot 90 pixels on: "PASS ... its mexes
+      queued: 2 mex orders", upright and at 1080x1198; the rest all pass. CLAUDE.md's line for the test says so.
 - [x] **A sideways skirmish with an army, three minutes** (hardening, 2026-11-17 ~20:30, dev phone; 18 Pawns and
       Rocketeers given by a temporary widget, removed after): the dock sideways with 18 picked ("18 units, 12 of this
       type"), Fight tapped and a map tap twice, the group across the map, the queue's X FIRST / X LAST in the groups row;
