@@ -2141,8 +2141,7 @@ function refreshNow()
 	snapSet(leftScroll, leftRowsN, L.leftRows or 2, lk == leftKind and not newPick)
 	-- (the share list's and a panel's rows in sight, from the place they are drawn, homeRect: the split dock's right
 	-- block is not the left's height, a third row ran 20 pixels under it, review 2026-11-15)
-	local hr = SP.homeLive()
-	local wideRows = max(1, floor((hr[4] - hr[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap)))
+	local wideRows = SP.wideRows()
 	if lk == "spec" then -- (the spectator's 4 or 5 rows; TEAMS: as tall as those, 4 or 5 in sight, more scroll: always 5,
 		-- a 1v1's three rows were small, the unfolded Fold7's 70 pixels)
 		L.homeRows = SP.teams and max(4, min(5, rightRowsN)) or max(1, min(5, rightRowsN))
@@ -2584,6 +2583,13 @@ end
 function SP.homeLive() -- (writeDock's "live" home grid: it comes before homeRect)
 	return homeRect()
 end
+-- the share list's and a panel's rows in sight: about an order and a half tall, the nearest whole number of them filling
+-- the grid (half sizes them to it). At a fixed height 4.8 stood in the upright teammate picker, the fifth cut at rest
+-- (dev phone screenshot 2026-11-17)
+function SP.wideRows()
+	local hr = homeRect()
+	return max(1, floor((hr[4] - hr[2] + L.gap) / (floor(L.btnH * 1.5) + L.gap) + 0.5))
+end
 
 -- a half's geometry: its rect, scroll, items, columns, cell width and height
 local function half(side)
@@ -2601,8 +2607,8 @@ local function half(side)
 		local r = homeRect()
 		local cols = leftKind == "spec" and SP.COLS or 2 -- (spectating: 6 narrow columns, SP)
 		return r, rightScroll, rightItems, cols, floor((r[3] - r[1] - (cols - 1) * L.gap) / cols),
-			(rightKind == "home" or rightKind == "presets") and floor((r[4] - r[2] + L.gap) / (L.homeRows or HOME_ROWS)) - L.gap
-			or floor(L.btnH * 1.5)
+			floor((r[4] - r[2] + L.gap) / ((rightKind == "home" or rightKind == "presets") and (L.homeRows or HOME_ROWS)
+				or SP.wideRows())) - L.gap
 	end
 	if rightKind == "pregame" and (L.split or not L.land) then -- (unfolded: the pregame buttons' rows fill the right
 		-- block; at the orders' height three rows left two empty under them, dev phone 2026-11-15. Upright likewise: their

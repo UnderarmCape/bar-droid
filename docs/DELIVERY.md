@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The teammate picker's rows whole at rest** (hardening, 2026-11-17 ~23:05, review of the share code, dev phone
+      upright): the pad's share list and the dock's giving read sound (dead, away and taxed teammates, the room by
+      their share slider, reviewed 11-15). The dock's own picker (a resource panel's SEND, then a teammate) had never
+      been looked at with teammates: a probe gave it stand-ins (WG.BarDroidPad.teammates: the AI's team, a long name, a
+      short one; the give itself goes by the pad's own list, so it needs a real ally). Its amounts, the teammates in
+      their colours and CANCEL showed well, but its fifth row stood cut at the bottom at rest: the share list's and a
+      panel's rows were a fixed order and a half tall, 4.8 of them in the grid, the scroll counting 4. SP.wideRows now
+      takes the nearest whole number of rows that size (5 there) and half() sizes them to fill the grid, so both agree.
+      Dev phone: the picker's 5 rows whole (KAI with its colour line), scrolled to the end 5 whole ending on CANCEL,
+      the energy panel's rows likewise.
 - [x] **The resource panel's knobs: whole percents, sent only when changed, drawn where the finger put them**
       (hardening, 2026-11-17 ~22:45, review of the day's share bar, dev phone upright): a drag on the share or
       conversion knob sent SetShareLevel or conversion's LuaRules message at every finger move (each goes to every
