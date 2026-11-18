@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **dock-phone-test checks the share knob** (hardening, 2026-11-17 ~23:35, dev phone): the evening's knob fix
+      (a4fd9190: whole percents, sent only when changed) had been measured with a probe only; case 11 now taps the
+      energy box (its panel at the first tap), drags the share knob from near the bar's end to 40 % and checks the
+      game's share is a whole percent and the conversion knob was left at 75 % (the old code stored the finger's
+      fraction unrounded). The dock gives tools its resource boxes (WG.BarDroidPortrait.resBoxes). Dev phone: share
+      0.3900, conversion 0.75, the run ALL PASS. Also read first: Kailil's 21:23 launcher.log (the app's side of his
+      23-minute game): thermal 0 throughout, 42 C, almost every frame held two vsyncs (30 fps), the game closed by
+      swiping it from the recent apps; nothing to fix. And the Area Mex tap's hold in RtsTouch read again: a drag
+      near it drops the held click, a far touch or a plain second tap sends it first; sound. No UI change this run.
 - [x] **An upright skirmish with a mixed army picked** (hardening, 2026-11-17 ~23:15, dev phone; a probe gave 28 units
       of eight kinds, bots, vehicles, two Peeper scouts and two Construction Bots, and picked all 29): the dock showed
       the builders' grid and the orders ("Pawn, 29 units, 8 of this type" over a Pawn's picture), its rows whole; a tap

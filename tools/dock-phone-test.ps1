@@ -3,7 +3,8 @@
 # blocked spot (its note), the D-gun mode's FIRE swiped right (full auto on) and left (off), its MOVE stick held and let
 # go (the commander stops at once), the STRAFE preset picked and dragged onto the map, and the wind's and the tide's
 # boxes tapped with the camera pad up (their details open at the first tap), Area Mex's circle by a tap, then a drag
-# (two Construction Bots, their mexes queued). The test widget
+# (two Construction Bots, their mexes queued), and the energy panel's share knob dragged (a whole percent, the
+# conversion knob left alone). The test widget
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
 # off after. Nothing on the laptop: it runs any time. About 3 minutes.
@@ -260,6 +261,22 @@ try {
     Start-Sleep -Milliseconds 300; Touch UP $m1[0] $m1[1]; Start-Sleep -Milliseconds 1500
     Stage "areamex?"; Start-Sleep 1
   } else { "[docktest] (no metal spot in sight: the Area Mex case left out)" }
+  # 11. the energy panel's share knob (2026-11-17: whole percents, sent only when changed): its box tapped (its panel
+  # at the first tap), the knob dragged from its place near the bar's end to 40 %
+  Stage "resrects"; Start-Sleep 1
+  $rr = Rects "bardroid_docktest.txt"
+  if ($rr["energy"]) {
+    $em = Mid $rr["energy"]; Tap $em[0] $em[1]; Start-Sleep -Milliseconds 1200
+    Stage "slider"; Start-Sleep 1
+    $sb = (Rects "bardroid_docktest.txt")["bar"]
+    if ($sb) {
+      $y = ($sb[1] + $sb[3]) / 2; $x0 = $sb[0] + 0.97 * ($sb[2] - $sb[0]); $x1 = $sb[0] + 0.4 * ($sb[2] - $sb[0])
+      Touch DOWN $x0 $y; Start-Sleep -Milliseconds 120
+      Touch MOVE (($x0 + $x1) / 2) $y; Touch MOVE $x1 $y
+      Start-Sleep -Milliseconds 300; Touch UP $x1 $y; Start-Sleep -Milliseconds 1200
+      Stage "slider?"; Start-Sleep 1
+    } else { "[docktest] (the energy panel's bar not found: that case left out)" }
+  } else { "[docktest] (no resource boxes: that case left out)" }
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }

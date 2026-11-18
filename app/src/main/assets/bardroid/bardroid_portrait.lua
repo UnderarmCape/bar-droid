@@ -5722,6 +5722,11 @@ function widget:Initialize()
 		windOpen = function()
 			return SP.windInfo and SP.windInfo.kind or nil
 		end,
+		resBoxes = function() -- (tools/dock-phone-test.ps1: metal's and energy's boxes, GL pixels)
+			if active and L.res then
+				return SP.resBoxes()
+			end
+		end,
 		-- (a screen point on the dock itself: the split dock's band less the game between its blocks, where a building's
 		-- spot or a preset's tap belongs to the game; dock() alone refused both there, review 2026-11-15)
 		onDock = function(x, y)

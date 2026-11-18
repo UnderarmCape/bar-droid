@@ -15,7 +15,9 @@
 --   panned?   (after campos) one finger dragged on the game, the dock's menu open, nothing picked: a pan, no selection
 --   areamex / areamexpick / areamexarm  two Construction Bots given, picked, Area Mex armed; "mex0 x y", "mex1 x y": a
 --             metal spot in sight and a point 90 px on;  areamex?  a tap, then a drag between them: mexes queued
---   end       "[docktest] done: ALL PASS" or "N FAILED"
+--   resrects  "metal ...", "energy ...": the resource boxes;  slider  "bar ...": the energy panel's bar's cell;
+--             slider?  its share knob dragged to about 40 %: a whole percent, the conversion knob left alone
+--   end      "[docktest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid dock test", desc = "What the touch dock did", author = "BAR Droid", layer = 0, enabled = true }
 end
@@ -493,6 +495,33 @@ local function onCmd(c)
 		check("Area Mex armed, a tap, then a drag from a metal spot: BAR's circle, its mexes queued", mex > 0,
 			mex .. " mex orders")
 		Spring.SelectUnitArray({})
+	elseif c == "resrects" or c == "slider" then -- (metal's and energy's boxes; with the energy panel open, its bar's
+		-- cell: X pixels from the top left)
+		local P, vsy = WG.BarDroidPortrait, select(2, Spring.GetViewGeometry())
+		local function line(name, r)
+			return r and string.format("%s %d %d %d %d\n", name, r[1], vsy - r[4], r[3], vsy - r[2]) or (name .. " nil nil\n")
+		end
+		if c == "resrects" then
+			local mb, eb
+			if P and P.resBoxes then
+				mb, eb = P.resBoxes()
+			end
+			write(line("metal", mb) .. line("energy", eb))
+		else
+			local r = P and P.itemCell and P.itemCell("right", function(it)
+				return it.kind == "slider" and it.res == "energy"
+			end)
+			write(line("bar", r))
+		end
+	elseif c == "slider?" then -- (the share knob dragged to about 40 %: a whole percent, the conversion knob left alone;
+		-- before 2026-11-17 the share went in unrounded at every finger move)
+		local team = Spring.GetMyTeamID()
+		local share = select(6, Spring.GetTeamResources(team, "energy")) or -1
+		local conv = Spring.GetTeamRulesParam(team, "mmLevel") or -1
+		local whole = math.abs(share * 100 - math.floor(share * 100 + 0.5)) < 0.001
+		check("the energy panel's share knob dragged: a whole percent, the conversion knob left alone",
+			whole and share > 0.05 and share < 0.9 and math.abs(conv - 0.75) < 0.001,
+			string.format("share %.4f, conversion %.2f", share, conv))
 	elseif c == "end" then
 		Spring.Echo("[docktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
