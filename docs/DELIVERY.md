@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR's own Settings upright on the official engine; Output's filtering said when it applies** (hardening,
+      2026-11-18 ~11:15, dev phone upright with the launcher's Phone engine off, as the Fold7 runs): the app's Settings
+      copy is parked on that engine, and BAR's own opens ~1770 pixels wide on a 936-wide screen, its values cut off
+      (noted in the open entry "BAR moved to engine 2026.09.02, then 2026.09.03"; nothing a user widget can change). The
+      rest of the upright screen there matches the phone engine's. UI polish: Display settings' "Display filtering
+      mode" changes nothing while the launcher's Sharper upscaling (SGSR) enlarges the picture (renderer.cpp: SGSR filters
+      it itself); it now reads "Display filtering mode (with Sharper upscaling off)", as Pointer's touch mode says "(with
+      BAR touch controls off)" (screenshot). touch-phone-test ALL PASS.
 - [x] **The share list read again: A after a resign; its amount bar as wide as the share** (hardening, 2026-11-18
       ~11:05, dev phone): the dev phone's launcher.log across the day's starts holds no app warning but the lobby's
       downloads with no network (it rotates at ~4 MB). The share list (`bardroid_pad.lua`) read again: dead and away
@@ -1476,6 +1484,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       widget), no Lua error; Phone engine back on. (The Fold7's two other ends read again the next run: neither a game
       killed; see the entry above.) Open: the phone engine for 2026.09.03 (stage 4: the branch
       rebased on the tag, built, the gate, a new APK); the dev phone back on a network for BAR's new release and the gate.
+      Found 2026-11-18 ~11:15 (dev phone upright, Phone engine off): with the copy parked, BAR's own Settings is
+      ~1770 pixels wide on the 936-wide upright screen (it scales by the height alone, 950 x vsy / 1080), its values
+      column off the right edge: unusable upright on the Fold7 until this lands (sideways it fits); Game info and the
+      Widget Selector the same. A user widget cannot resize it; the fix for BAR is drafted, not posted
+      (docs/upstream/bar-windows-upright.patch, Kailil's to post). A folded turn there is a whole reload too.
 - [x] **A factory picked upright** (hardening, 2026-11-17 ~16:30, dev phone; a Bot Lab given by a temporary widget,
       removed after): the selection row "Bot Lab" under the wind and the tide's nook, its 8 bots in the grid, its orders
       (Repeat, Fire at will, Hold pos, Low Priority, Factory Guard); three taps on bots queued them (counts 2 and 1 on

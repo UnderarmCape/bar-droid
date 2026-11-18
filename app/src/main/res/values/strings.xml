@@ -56,6 +56,10 @@
     <!-- Pointer's touch mode, for fingers only with the launcher's BAR touch controls off (RtsTouch.handles takes every
          finger otherwise): it read as live; as Other's swipes say it -->
     <string name="lorie_pref_touchMode">Touchscreen input mode (with BAR touch controls off)</string>
+    <!-- Output's filtering, used only while the launcher's Sharper upscaling is off (or the GPU refuses SGSR, or the
+         picture is not enlarged): SGSR filters the enlarged picture itself (renderer.cpp drawRootUpscaled); it read as
+         live, as the touch mode did -->
+    <string name="lorie_pref_displayFilteringMode">Display filtering mode (with Sharper upscaling off)</string>
     <!-- (Pointer's two switches with no explanation: TouchInputHandler's tap in trackpad mode; renderer.cpp followCursorPan) -->
     <string name="lorie_pref_tapToMove_summary">Trackpad mode only: a tap clicks a moment later, and a tap then a held finger drags</string>
     <string name="lorie_pref_zoomFollowsCursor_summary">With BAR touch controls off, a display zoomed in by a pinch moves along with the pointer</string>
