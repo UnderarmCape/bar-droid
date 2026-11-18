@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A skirmish's logs; the group tile's number on a badge** (hardening, 2026-11-18 ~03:40, dev phone upright, a
+      skirmish against BARb): the infolog's errors and warnings are BAR's own (its load-time yardmaps, unknown weapon
+      tags, Terraformer files without GetInfo, `SetConfigInt "AdvSky" is deprecated` right after BAR's LuaIntro: the
+      app sets no AdvSky); none from the app's widgets; launcher.log only the bridge's offline answers; 29.7 fps over the
+      minute. UI polish, from a screenshot of the groups row after + NEW: the group's gold number sat straight on the
+      unit picture and all but vanished on the commander's yellow trim and the sand behind it; it now stands on a dark
+      badge in the tile's corner (FlowUI's RectRound, `drawGroups`), readable on any picture (dev phone, the dock awake
+      and in camera-pad mode). Testing note: a widget pushed into LuaUI/Widgets is replaced by the APK's at the next
+      start; a dev-env.sh line copying it in after the Installer works for quick looks. dock-phone-test ALL PASS on the
+      rebuilt APK. The Fold7 stayed off adb.
 - [x] **The engine's archive rescans: 1.1 s each on a phone, now ~15 ms** (hardening, 2026-11-18 ~03:15, dev phone,
       offline lobby). The quick skirmish's Select Difficulty page showed its picture late again; the lobby's log said
       why: with no network Chobby asks the bridge for the missing maps (Fallendell, Red Comet Remake) four times each,
