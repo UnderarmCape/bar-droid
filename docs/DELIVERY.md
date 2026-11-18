@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BUILDING.md's checks brought up to date; the README names the test build** (hardening, 2026-11-18 ~02:50):
+      docs/BUILDING.md listed tools\lobby-game-test.ps1, gone since e5342ddc, and not the dock, pad, first-person-save
+      or remake checks; its Checks list now has every tool that exists (lobby-bridge-test in the gone one's place) and
+      says how CI runs now (on demand, switched off between runs on the private repository). The README's developer
+      part names the pre-release latest-build as the newest test build.
 - [x] **GitHub's CI: fixed, and on demand only** (hardening, 2026-11-18 ~02:45): every push tonight ran
       .github/workflows/build.yml, and each run's apk job stopped within 30 s at android-actions/setup-android@v3, whose
       default asks for the old SDK Tools package ("Failed to find package 'tools'"); GitHub mails the owner each

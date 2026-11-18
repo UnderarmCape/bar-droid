@@ -42,13 +42,20 @@ plays BAR's official engine only.
 in BAR's real lobby, the in-game widgets in a real skirmish, and the Lua lint. The game checks use BAR's Windows
 install (`%LOCALAPPDATA%\Programs\Beyond-All-Reason`, read only, never changed; `BAR_DATA` points elsewhere).
 
-On Linux (and in CI): `sh tools/java-checks.sh` runs the Java checks with the JDK on `JAVA_HOME` or the path.
+On Linux (and in CI): `sh tools/java-checks.sh` runs the Java checks with the JDK on `JAVA_HOME` or the path. CI
+(`.github/workflows/build.yml`: the phone APK, the Java checks, the Lua lint) runs on demand and on pull requests, not
+on every push; on the project's private repository it is switched off between runs (Actions, build, "Enable
+workflow", then "Run workflow").
 
-Per widget: `tools\touch-widget-test.ps1`, `tools\spectate-test.ps1 [-Replay <file.sdfz>]`,
-`tools\lobby-touch-test.ps1`, `tools\lobby-game-test.ps1`. On the phone: `tools\pace-test.ps1` (the pace library),
+Per widget: `tools\touch-widget-test.ps1 [-GamepadGame]`, `tools\spectate-test.ps1 [-Replay <file.sdfz>]`,
+`tools\lobby-touch-test.ps1`, `tools\lobby-bridge-test.ps1`. On the phone: `tools\dock-phone-test.ps1` (the upright
+dock by real taps, any screen shape), `tools\pad-test.ps1 [-Online | -Dgun | -Share | -Chat]` (the gamepad),
+`tools\fp-save-test.ps1` (first person through BAR's settings save), `tools\pace-test.ps1` (the pace library),
 `tools\lobby-phone-test.ps1` (the lobby widget, with a virtual pad's Start), `tools\touch-phone-test.ps1` (the touch
-camera at the map's edge, driven through the touch log), `tools\stripes-test.ps1` (skirmishes with Adreno's compressed
-render targets off and on, a screenshot montage), `tools\phone-bench.ps1` (BAR's benchmark scenario or a replay on a hot phone, results in `build\phone-bench.csv`).
+camera at the map's edge, driven through the touch log), `tools\remake-check.ps1` (the phone's remakes of the app's
+copies of BAR's widgets), `tools\stripes-test.ps1` (skirmishes with Adreno's compressed render targets off and on, a
+screenshot montage), `tools\phone-bench.ps1` (BAR's benchmark scenario or a replay on a hot phone, results in
+`build\phone-bench.csv`).
 Profiling on the laptop: `tools\profile-benchmark.ps1`, `tools\profile-big-game.ps1`. The full list with options is
 in [CLAUDE.md](../CLAUDE.md) ("Build / run").
 
