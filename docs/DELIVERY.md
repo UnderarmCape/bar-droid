@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The chat's typing box upright; the Keys window through a turn (code read)** (hardening, 2026-11-18 ~08:30, dev
+      phone upright, a skirmish): Enter opened the app's typing box under BAR's top bar, "Allies:" in its column; a
+      long line ("gl hf all, this is a longer line ...") wrapped onto a second line under its text, not under the tag;
+      Escape closed it, nothing sent (the words not in the infolog). Android 17's "Long press Esc key to close this
+      app" came up with that Escape: the known notice of the keyboard's capture, kept (Kailil; HISTORY "Keyboard
+      shortcuts"). Chobby's Keys window and a turn: its holder's OnResize puts Chobby's own size and place back and the
+      upright fit applies again after (gui_keys_panel.lua read): nothing to change. The Fold7 has not started the app
+      since its 08:01 install. No UI polish this run.
 - [x] **A replay from the lobby's Replays upright** (hardening, 2026-11-18 ~08:20, dev phone upright, offline lobby):
       Replays' first row (the benchmark scenario recorded at 04:17), Start: the game loaded, the spectator dock (PLAYER
       CAM with its arrows, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW), BAR's replay speeds down
