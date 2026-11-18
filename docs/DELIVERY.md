@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **publish-check finds a join password too** (hardening, 2026-11-18 ~08:10): after the Share logs fix, the
+      repository searched for one (git grep, values hidden): none, only DELIVERY's own words. publish-check's private
+      data now has "a join password", `MyPasswd=` with a value of 3 letters or digits or more (a pasted log; "(removed)",
+      an empty one and the docs' `...` pass); its -SelfTest plants one and an allowed pair beside it: ALL PASS. The
+      redaction test's made-up values pieced together so that file holds none (log-redact-test ALL PASS); publish-check
+      on the repository: "no private data in the tracked files" PASS. No UI polish this run.
 - [x] **Share logs handed on an online game's join password** (hardening, 2026-11-18 ~08:00): the launcher's Install /
       Update with no network first (all already done, "Last check ... (no connection)", the set kept: as meant), then
       its Share logs (the share sheet, a zip of launcher.log, launcher.old.log, infolog.txt, springsettings.cfg, the
