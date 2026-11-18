@@ -740,7 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **The share list, first person's save and the voice chat fix checked again** (hardening, 2026-11-17 ~23:50, dev
+- [x] **An upright skirmish with a mixed army picked** (hardening, 2026-11-17 ~23:15, dev phone; a probe gave 28 units
+      of eight kinds, bots, vehicles, two Peeper scouts and two Construction Bots, and picked all 29): the dock showed
+      the builders' grid and the orders ("Pawn, 29 units, 8 of this type" over a Pawn's picture), its rows whole; a tap
+      on the ground let them go, as BAR's left click does; ALL UNITS listed 24 in six type tiles with ALL and MULTI, the
+      builders under idle builders: the Peepers are not in it by design (its combat filter: they move, carry a weapon,
+      build nothing and do not fly; the air goes under AIR). The log: only the engine's own lines (yardmaps, CEG class,
+      icons), nothing of the app's. A large "UNKNOWN" box over the dock after a test key press was Android's own
+      (FocusEventDebugView: the dev phone's developer option that shows key presses), not the app's; left as set. No
+      UI change: nothing wanted one in these screens.
+- [x] **The share list, first person's save and the voice chat fix checked again** (hardening, 2026-11-17 ~23:10, dev
       phone): pad-test -Share ALL PASS (16 cases: room at their slider, tax, away, out of the game, 15 teammates), its
       four screenshots read well (the step strip, ALL THEY CAN TAKE, the teammates' storage bars with their share mark);
       fp-save-test PASS. VoiceChat's guard read again: close() runs at onStop only, and Android's microphone question
@@ -748,7 +757,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       open drops it, as meant. The launcher's screen and the dock's FACTORIES row looked at: FACTORIES larger than
       LAST PINGS beside it is the 11-17 choice (the rows around it), left. No UI change this run. worklog.py's slow-run
       report now from 30 s: the last commit's run took 53 s right after a lobby test and said nothing at 60.
-- [x] **The lobby upright, offline; the grid's page arrows solid** (hardening, 2026-11-17 ~23:35, dev phone, the
+- [x] **The lobby upright, offline; the grid's page arrows solid** (hardening, 2026-11-17 ~23:00, dev phone, the
       login-wait widget in and out again): lobby-phone-test ALL PASS before and after. The lobby's own lines: only the
       dev phone's lack of a network (the bridge's "no connection", Chobby's resource downloads failing, the repeated
       note kept out of sight as meant), BAR's LuaMenu library files without GetInfo, and the lobby test's widget name
@@ -757,7 +766,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       spectator arrows went the same way), dim at the first and last page. Dev phone: page 1's left one dim, the right
       one plain, a tap on it turned to page 2 (Parties, Load Game, Downloads, Login, Replays, Links), both lit there.
 - [x] **The teammate picker sideways and unfolded; a teammate's colour line 3 pixels at least** (hardening,
-      2026-11-17 ~23:20, dev phone with the stand-in teammates): folded sideways (2316x1080) the energy panel and the
+      2026-11-17 ~22:45, dev phone with the stand-in teammates): folded sideways (2316x1080) the energy panel and the
       picker show two whole rows in the one-thumb panel, a flick pages by two, the energy box lit; in the split dock
       (1080x1198 turned) the panel's three rows fill the right block and the picker's three rows stand whole. There a
       teammate's colour line under their name was 1 pixel: its minimum (5) was its top's, not its height, so at rows
@@ -766,7 +775,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       sideways every upward drag is taken by the system's pip-resize gesture monitor after about 30 pixels ("stealing
       input gesture", no picture-in-picture window open), so the split's lists cannot be scrolled up by adb there; the
       dock settles at rest since 461b299f. Upright and folded sideways upward drags scroll.
-- [x] **The teammate picker's rows whole at rest** (hardening, 2026-11-17 ~23:05, review of the share code, dev phone
+- [x] **The teammate picker's rows whole at rest** (hardening, 2026-11-17 ~22:35, review of the share code, dev phone
       upright): the pad's share list and the dock's giving read sound (dead, away and taxed teammates, the room by
       their share slider, reviewed 11-15). The dock's own picker (a resource panel's SEND, then a teammate) had never
       been looked at with teammates: a probe gave it stand-ins (WG.BarDroidPad.teammates: the AI's team, a long name, a
@@ -777,7 +786,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Dev phone: the picker's 5 rows whole (KAI with its colour line), scrolled to the end 5 whole ending on CANCEL,
       the energy panel's rows likewise.
 - [x] **The resource panel's knobs: whole percents, sent only when changed, drawn where the finger put them**
-      (hardening, 2026-11-17 ~22:45, review of the day's share bar, dev phone upright): a drag on the share or
+      (hardening, 2026-11-17 ~22:20, review of the day's share bar, dev phone upright): a drag on the share or
       conversion knob sent SetShareLevel or conversion's LuaRules message at every finger move (each goes to every
       player online), the share unrounded; and the knob and its words showed the game's value, which online comes back
       a round trip later, so they would trail the finger and jump back at the release. BAR's top bar sends at every
@@ -790,7 +799,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       open shows BAR's gold along its top and a faint gold over it (nothing had said which box the panel was for);
       energy then metal opened on the dev phone, each lit in turn. dock-phone-test ALL PASS.
 - [x] **tools/worklog.py: its cache written whole and only when changed; a whole read says why** (hardening,
-      2026-11-17 ~22:15): two runs this evening took 262 s instead of ~20. Measured: the cached scan of all 1454
+      2026-11-17 ~21:55): two runs this evening took 262 s instead of ~20. Measured: the cached scan of all 1454
       transcripts takes 12.6 s and a whole uncached run 25 s warm, so the slow runs read the 3.3 GB transcript from its
       start, cold; its first 4 KB are stable entries (title, agent name, mode). The likeliest cause: every run rewrote
       all ~1450 cache files in place (the big one 30 MB), so a run cut short or two at once could leave one cut off
@@ -800,7 +809,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       cut to 1000 bytes: named on stderr, read whole once (15 s warm), then fast again; output the same as
       `--no-cache`. Polish: the groups row's "NEW n" under its "+" as large as the tiles' counts and bold (it was the
       row's smallest words, about 14 pixels on the folded sideways panel); dev phone screenshot after.
-      The next run's commit (~22:50) took 264 s again with no transcript read whole, and right after it the scan took
+      The next run's commit (~22:20) took 264 s again with no transcript read whole, and right after it the scan took
       3.8 s and a whole run 3.4 s: the three slow runs each came right after a phone test (dock-phone-test), the slow
       part not inside the scan's cache. worklog.py now names its parts when a run takes over a minute (load, scan
       and its slowest transcript, records, git log, markdown); a slow run with no such line was slow outside main
