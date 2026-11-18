@@ -103,6 +103,18 @@
   "title": "Mobile pack of BAR's costliest Lua widgets and effect gadgets",
   "tool_calls": 369
  },
+ "8d5a5993-149c-4e61-bdbe-8c1eb7c3a175": {
+  "claude_by_day": {
+   "2026-11-17": 1419
+  },
+  "claude_s": 1419,
+  "first": "2026-11-18T00:00:17.494000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-18T00:23:56.520000+00:00",
+  "messages": 0,
+  "title": "Phone engine build for BAR's engine 2026.09.03",
+  "tool_calls": 106
+ },
  "9664ca52-74f7-4ff3-97ba-4bfe3528fe0e": {
   "claude_by_day": {
    "2026-11-06": 5272,
@@ -178,15 +190,15 @@
    "2026-11-14": 5914,
    "2026-11-15": 64624,
    "2026-11-16": 79019,
-   "2026-11-17": 68290
+   "2026-11-17": 70014
   },
-  "claude_s": 1280324,
+  "claude_s": 1282048,
   "first": "2026-10-26T04:14:36.131000+00:00",
   "interrupts": 3,
-  "last": "2026-11-17T23:56:58.931000+00:00",
-  "messages": 405,
+  "last": "2026-11-18T00:25:43.129000+00:00",
+  "messages": 406,
   "title": "BAR Android port",
-  "tool_calls": 40958
+  "tool_calls": 41029
  },
  "fe628d0c-b165-4c20-92d3-03ed36ea7d75": {
   "claude_by_day": {

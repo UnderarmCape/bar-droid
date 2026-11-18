@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **tools/worklog.py on a 3.1 GB transcript** (2026-11-17 ~19:25): a day of phone screenshots made this session's
+      transcript 3.1 GB (another 1.9 GB); worklog.py read each transcript whole into memory before parsing and the
+      laptop swapped (the run never ended, a commit waiting on it went out with the previous run's message, amended).
+      It reads line by line now, a line over 100 KB with its base64 image data dropped before parsing (the log counts
+      images, never keeps them): 49 s for all sessions.
 - [x] **Area Mex (and the other area orders) draw their circle again** (Kailil, 2026-11-17 ~19:10, with a screenshot
       of a Construction Bot picked upright: "Area mex command is not working anymore. I cant draw the vanilla circle
       thing to expand it"): since one finger pans whatever is picked (2026-11-13) a drag on the game drew only with

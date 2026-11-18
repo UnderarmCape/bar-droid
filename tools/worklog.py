@@ -36,6 +36,7 @@ SITTING_GAP_S = 30 * 60
 LEAD_IN_S = 5 * 60
 MESSAGE_CHARS = 4000
 ANSWER_CHARS = 700
+BIG_DATA = re.compile(r'"data":"[A-Za-z0-9+/=]{1000,}"')   # (an image's base64, scan)
 
 
 def parse_time(ts):
@@ -110,17 +111,21 @@ def scan(path):
     if markers < MIN_MARKERS:
         return None, markers, []
     title, entries = None, []
+    # (read line by line, a screenshot's base64 dropped before parsing: the log counts images, never keeps them. A
+    # day of phone screenshots made one transcript 3.1 GB, and reading it whole into memory first swapped the laptop for
+    # minutes, the run never ending; 2026-11-17)
     with open(path, encoding="utf-8", errors="replace") as fh:
-        lines = list(fh)
-    for line in lines:
-        try:
-            e = json.loads(line)
-        except ValueError:
-            continue
-        if e.get("type") in ("custom-title", "agent-name"):
-            title = e.get("customTitle") or e.get("agentName") or title
-        elif e.get("timestamp") and e.get("type") in ("user", "assistant", "attachment", "system"):
-            entries.append(e)
+        for line in fh:
+            if len(line) > 100000:
+                line = BIG_DATA.sub('"data":""', line)
+            try:
+                e = json.loads(line)
+            except ValueError:
+                continue
+            if e.get("type") in ("custom-title", "agent-name"):
+                title = e.get("customTitle") or e.get("agentName") or title
+            elif e.get("timestamp") and e.get("type") in ("user", "assistant", "attachment", "system"):
+                entries.append(e)
     return title, markers, entries
 
 
