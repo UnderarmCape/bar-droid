@@ -1,5 +1,5 @@
 -- BAR Droid team stats: BAR's own TeamStats panel (luaui/Widgets/gui_teamstats.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31958-7ffdbab, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
+-- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
 -- upright): on a screen taller than wide the panel is the screen's width, its words and rows at a scale that keeps its
 -- columns in it, and as tall as the game between BAR's top bar and the app's portrait dock. Made by
 -- tools/make-teamstats.py; do not edit by hand, run it again. launch-bar.sh runs it instead of BAR's TeamStats; when an

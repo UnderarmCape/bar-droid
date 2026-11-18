@@ -740,6 +740,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **BAR test-31992 for the phone engine on 2026.09.03: the void's camera, a phone patch, the menu copies**
+      (2026-11-18 ~15:10-15:35; found by the engine session's gate on the dev phone, now on BAR test-31992 and engine
+      2026.09.03). (1) touch-phone-test's drag and pinch over the void failed on both 2026.09.03 engines (311 off after
+      704, 904 off): test-31992's luaintro/springconfig.lua (config version 10, only on engines with
+      Engine.FeatureSupport.smoothCameraHeightTracking) switches CamSpringTrackMapHeightMode from 1 to 2 once, and with
+      the reworked smooth-mesh tracking (engine c9988311ca) the spring camera's focus height is the smoothed surface's.
+      The touch widget's plane for a finger over the void took the ground's height under the camera; now the camera
+      state's py (the ground's only without it), the test's planeAt the same (af1535eb). The Fold7 runs that mode too
+      since its BAR update (the official 2026.09.03 has the feature). Rerun on the phone by the gate, pending. (2)
+      remake-check on test-31992: phone-widget-gui_top_bar_buttons.lua.patch "finds no place" (BAR put widget:AllowQuit
+      between MousePress and MouseWheel, which the block ran into); the block now ends at MousePress's own end, found
+      once in 31958 and 31992 (bc823e8b). (3) The five menu copies made again from the dev phone's test-31992
+      (make-*.py --adb, read-only while the gate held the phone): the build menu takes BAR's changes, the other four only
+      their header's release; all patches applied (27, 17, 7, 7, 15). remake-check: all five copies and the phone
+      patches PASS; luacheck 0 warnings. The build menu copy now has 199 of Lua's 200 top-level locals: BAR's next
+      local there, and the copy will not load (lua-locals catches it; the copy's own locals must then move into its
+      droid table).
 - [x] **The day's fixes on the Fold7** (2026-11-18 12:54, Kailil's new port, Tailscale; BAR not running; the APK's phone
       engine 2026.07.04): the official engine's turn fix (BAR's handler read raw, the whole reload again), the 1.5 s
       settle, the read-ahead and the build menu sized in place, the portrait's raw lookups, the login dialog's rows, the

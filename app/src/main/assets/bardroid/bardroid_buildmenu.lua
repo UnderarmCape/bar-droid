@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31958-7ffdbab, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
@@ -7,7 +7,7 @@
 -- new file (the line below names the one it was made from; Installer, BuildMenuPatches); in the controller game, which keeps its
 -- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
 -- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
--- BARDROID_BUILDMENU_FROM 495f86b19a79abb5f11da2a4ad479c82
+-- BARDROID_BUILDMENU_FROM d184b8eac1f90c8fcb64688adf166e2c
 local widget = widget ---@type Widget
 
 function widget:GetInfo()
@@ -39,7 +39,6 @@ local pairs = pairs
 local ipairs = ipairs
 local tonumber = tonumber
 local string_format = string.format
-local pcall = pcall
 --- CHANGE START ---
 -- Helper function to clear a table without creating garbage, using the standard Lua method.
 local function clearTable(t)
@@ -218,26 +217,59 @@ local activeCmdDescsCacheDelay = 0.05 -- Cache for 50ms
 -------------------------------------------------------------------------------
 
 local unitName = {}
-local unitBuildOptions = {}
+local defBuildOptions = {} -- unitDefID -> the def's build options, shared by every team
+local unitBuildOptions = {} -- unitDefID -> build options for myTeamID; the def list until a change copies it
 local unitBuildOptionSet = {} -- unitDefID -> { buildOptionDefID = true }
 local unitMetal_extractor = {}
 local unitTranslatedHumanName = {}
 local unitTranslatedTooltip = {}
 local iconTypes = {}
-local function refreshUnitDefs()
-	unitName = {}
-	unitBuildOptions = {}
-	unitBuildOptionSet = {}
-	unitMetal_extractor = {}
-	unitTranslatedHumanName = {}
-	unitTranslatedTooltip = {}
-	iconTypes = {}
+
+local function patchBuildOption(builderDefID, builtDefID, added)
+	local buildOptions = unitBuildOptions[builderDefID]
+	if not buildOptions then
+		return
+	end
+	if buildOptions == defBuildOptions[builderDefID] then
+		buildOptions = { unpack(buildOptions) }
+		unitBuildOptions[builderDefID] = buildOptions
+	end
+	dynamicBuildOptions.patch(buildOptions, builtDefID, added)
+	unitBuildOptionSet[builderDefID][builtDefID] = added or nil
+end
+
+-- Resets the builders an earlier team's changes patched, then applies myTeamID's
+local function refreshBuildOptions()
+	for udid, buildOptions in pairs(defBuildOptions) do
+		if unitBuildOptions[udid] ~= buildOptions then
+			unitBuildOptions[udid] = buildOptions
+			local set = {}
+			for i = 1, #buildOptions do
+				set[buildOptions[i]] = true
+			end
+			unitBuildOptionSet[udid] = set
+		end
+	end
+	for builderDefID, options in pairs(dynamicBuildOptions.getChanges(myTeamID)) do
+		for builtDefID, added in pairs(options) do
+			patchBuildOption(builderDefID, builtDefID, added)
+		end
+	end
+end
+
+local function refreshUnitNames()
+	for udid, ud in pairs(UnitDefs) do
+		unitTranslatedHumanName[udid] = ud.translatedHumanName
+		unitTranslatedTooltip[udid] = ud.translatedTooltip
+	end
+end
+
+-- Once: icontypes.lua includes every unit file, and each UnitDefs buildOptions read builds a new table
+local function loadUnitDefs()
 	local orgIconTypes = require("gamedata/icontypes")
 	for udid, ud in pairs(UnitDefs) do
 		unitName[udid] = ud.name
-		unitBuildOptions[udid] = ud.buildOptions
-		unitTranslatedHumanName[udid] = ud.translatedHumanName
-		unitTranslatedTooltip[udid] = ud.translatedTooltip
+		defBuildOptions[udid] = ud.buildOptions
 		if ud.customParams.metal_extractor then
 			unitMetal_extractor[udid] = ud.customParams.metal_extractor
 		end
@@ -245,14 +277,8 @@ local function refreshUnitDefs()
 			iconTypes[ud.name] = orgIconTypes[ud.iconType].bitmap
 		end
 	end
-	dynamicBuildOptions.apply(unitBuildOptions, myTeamID)
-	for udid, buildOptions in pairs(unitBuildOptions) do
-		local set = {}
-		for i = 1, #buildOptions do
-			set[buildOptions[i]] = true
-		end
-		unitBuildOptionSet[udid] = set
-	end
+	refreshUnitNames()
+	refreshBuildOptions()
 end
 
 local spIsUnitSelected = Spring.IsUnitSelected
@@ -471,7 +497,7 @@ function widget:PlayerChanged(playerID)
 	myTeamID = spGetMyTeamID()
 	if myTeamID ~= previousTeamID then
 		-- build options can differ per team
-		refreshUnitDefs()
+		refreshBuildOptions()
 		cachedActiveCmdDescs = nil
 		doUpdate = true
 	end
@@ -1657,7 +1683,7 @@ function widget:ViewResize()
 end
 
 function widget:LanguageChanged()
-	refreshUnitDefs()
+	refreshUnitNames()
 	clear()
 	doUpdate = true
 end
@@ -3279,7 +3305,7 @@ function widget:Initialize()
 		widgetHandler:RegisterUnitCommand(CMD.BUILD)
 		widgetHandler:RegisterUnitCommand(CMD_STOP_PRODUCTION)
 	end
-	refreshUnitDefs()
+	loadUnitDefs()
 	units.loadBlocked()
 
 	-- BAR Droid: BAR's Grid menu is off by launch-bar.sh (a user widget cannot switch widgets)
@@ -3524,11 +3550,7 @@ function widget:BuildOptionsChanged(builderUnitDefID, builtUnitDefID, added, tea
 	if teamID and teamID ~= myTeamID then
 		return
 	end
-	local buildOptions = unitBuildOptions[builderUnitDefID]
-	if buildOptions then
-		dynamicBuildOptions.patch(buildOptions, builtUnitDefID, added)
-		unitBuildOptionSet[builderUnitDefID][builtUnitDefID] = added or nil
-	end
+	patchBuildOption(builderUnitDefID, builtUnitDefID, added)
 	if currentSelBuilderDefs[builderUnitDefID] then
 		cachedActiveCmdDescs = nil
 		doUpdate = true
