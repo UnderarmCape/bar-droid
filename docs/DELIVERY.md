@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby tests open the Keys window** (hardening, 2026-11-18 ~07:40): the test widget opens Keys from the
+      lobby's grid and upright checks the window no taller than its tabs and picture (40 to spare), on the screen; then
+      its Close. Dev phone upright: ALL PASS ("window 50,530 593x431, picture to 417"), the pad's Start and D-pad after
+      it as before; with the widget from before the fit (ab66c2d7~1) put in by dev-env.sh: FAIL ("window 50,50
+      593x1391"). Laptop (sideways, Chobby's own): ALL PASS. CLAUDE.md's line for the test says so. No UI polish this
+      run.
 - [x] **The lobby's other screens upright; the Keys window fitted; the Fold7 on the night's build** (hardening,
       2026-11-18 ~07:30, dev phone upright, offline lobby): Replays (rows, teams fitted), Load Game, Downloads, Plugins
       (offline: its network error) all read clean. The Keys window upright: Chobby's is the screen's height less 100,
