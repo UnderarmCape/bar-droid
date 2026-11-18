@@ -740,15 +740,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [ ] **The 2026.09.03 phone engine's APK: built and tested, the Fold7 install pending** (2026-11-18 ~16:05, after
+- [ ] **The 2026.09.03 phone engine's APK: on the Fold7, his first game's log to read** (2026-11-18 ~16:05, after
       the engine session's gate passed; Kailil ~13:30: "do everything required to get that functionality running"):
       the APK from main 1195062c carries only phone-2026.09.03-83a8536d37 (37.9 MB). Dev phone (BAR test-31992):
       launch "phone engine: phone-2026.09.03-83a8536d37"; sideways, a folded turn (wm size 1080x1080 and back) "21
       widgets loaded again in 1079 ms" and "747 ms (no reload)"; upright the top bar's Settings opens the app's own
       ("Loading widget from mod: BAR Droid settings", BAR's Options not loaded): the tab grid over the full-width
       list, the close button, the screen's width; touch-phone-test (the void's cases with af1535eb), dock-phone-test,
-      pad-test ALL PASS. The Fold7 refused its last port (39645) at ~16:05: install, then github-sync -Release, then
-      its launcher.log after his first game (the gate's one SIGSEGV 3 s into the first start after an update, after
+      pad-test ALL PASS. The Fold7 refused its last port (39645) at ~16:05; on Kailil's new port it took the APK at
+      17:38 (no game running; --no-streaming, 62 s), github-sync -Release: latest-build e9a3e090, built from 1195062c.
+      Left: its launcher.log and infolog after his first game (the phone engine line, folded turns' "widgets loaded
+      again", the app's Settings, errors; the gate's one SIGSEGV 3 s into the first start after an update, after
       CAS::GASCB maphelper.sdz, to watch for).
 - [x] **BAR test-31992 for the phone engine on 2026.09.03: the void's camera, a phone patch, the menu copies**
       (2026-11-18 ~15:10-15:35; found by the engine session's gate on the dev phone, now on BAR test-31992 and engine
