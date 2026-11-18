@@ -657,24 +657,24 @@ local function uprightGrid()
 					end)
 				end
 				local a = obj.height * 0.34 -- (the arrows, dim at the first and the last page)
-				gl.LineWidth(4)
+				-- (solid triangles: drawn as 4 pixel lines they came out about 2 thin on the phone's GLES, faint marks at the
+				-- strip's ends; dev phone screenshot 2026-11-17, as the dock's spectator arrows before them)
 				for side = -1, 1, 2 do
 					local to = upright.page + side
-					gl.Color(1, 1, 1, (to >= 0 and to < upright.pages) and 0.85 or 0.2)
+					gl.Color(1, 1, 1, (to >= 0 and to < upright.pages) and 0.8 or 0.18)
 					local x = side < 0 and obj.height * 0.6 or obj.width - obj.height * 0.6
-					gl.BeginEnd(GL.LINE_STRIP, function()
+					gl.BeginEnd(GL.TRIANGLES, function()
 						if upright.side then -- (pages one under the other: up at the left end, down at the right; Chili y down)
-							gl.Vertex(x - a, cy - side * a * 0.5)
-							gl.Vertex(x, cy + side * a * 0.5)
-							gl.Vertex(x + a, cy - side * a * 0.5)
+							gl.Vertex(x - a * 0.75, cy - side * a * 0.55)
+							gl.Vertex(x, cy + side * a * 0.55)
+							gl.Vertex(x + a * 0.75, cy - side * a * 0.55)
 						else
-							gl.Vertex(x - side * a * 0.5, cy - a)
-							gl.Vertex(x + side * a * 0.5, cy)
-							gl.Vertex(x - side * a * 0.5, cy + a)
+							gl.Vertex(x - side * a * 0.55, cy - a * 0.75)
+							gl.Vertex(x + side * a * 0.55, cy)
+							gl.Vertex(x - side * a * 0.55, cy + a * 0.75)
 						end
 					end)
 				end
-				gl.LineWidth(1)
 				gl.Color(1, 1, 1, 1)
 			end,
 		})

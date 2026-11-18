@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby upright, offline; the grid's page arrows solid** (hardening, 2026-11-17 ~23:35, dev phone, the
+      login-wait widget in and out again): lobby-phone-test ALL PASS before and after. The lobby's own lines: only the
+      dev phone's lack of a network (the bridge's "no connection", Chobby's resource downloads failing, the repeated
+      note kept out of sight as meant), BAR's LuaMenu library files without GetInfo, and the lobby test's widget name
+      left in Chobby's config: nothing of the app's. Polish: the bottom grid's page arrows were 4 pixel lines, which
+      the phone's GLES drew about 2 pixels thin, faint marks at the strip's ends; now solid triangles (the dock's
+      spectator arrows went the same way), dim at the first and last page. Dev phone: page 1's left one dim, the right
+      one plain, a tap on it turned to page 2 (Parties, Load Game, Downloads, Login, Replays, Links), both lit there.
 - [x] **The teammate picker sideways and unfolded; a teammate's colour line 3 pixels at least** (hardening,
       2026-11-17 ~23:20, dev phone with the stand-in teammates): folded sideways (2316x1080) the energy panel and the
       picker show two whole rows in the one-thumb panel, a flick pages by two, the energy box lit; in the split dock
