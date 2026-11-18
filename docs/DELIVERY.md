@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad tests after the day's dock changes; FlowUI's Selector elsewhere** (hardening, 2026-11-17 ~20:15, dev
+      phone): pad-test and pad-test -Dgun all pass (the D-gun sticks' drawing, the area orders' drag, the armed look);
+      the last game's infolog and launcher.log without an error. FlowUI's Selector's other users: the Settings copy's
+      drop-down fields (what it is now made for) and the build grid's picked or last-pressed tile, square, where its
+      arrow box covers the whole tile: left as they are. No UI polish this run. The Fold7 still refuses adb.
 - [x] **An armed order lit as BAR's order menu lights it; area Reclaim by drag** (hardening, 2026-11-17 ~20:05, dev
       phone upright, 3 Construction Bots by a temporary widget, removed after): Reclaim armed ("draw 2"), a drag over the
       cacti: BAR's circle, 6 reclaim orders. The armed order's button had a light square at its right end (Kailil's
