@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **dock-phone-test at the unfolded shape; BAR's music line cut at the corner explained** (hardening, 2026-11-17
+      ~23:58, dev phone, wm size 1080x1198 upright, -Shots): ALL PASS with the evening's cases (the X, Area Mex, the
+      share knob at 0.38); the three pictures in the split dock read well. In the D-gun mode BAR's clock and music lines
+      stand just under AIM's ring and the music title and its eject button are cut at the right edge (noted twice
+      before as BAR's). A probe read the player list's rect they sit on: right 942 on a 936-wide screen, bottom -6.
+      gui_advplayerslist.lua lets its background run up to its margin (8) past the screen's edge (CreateBackground:
+      absRight up to vsx + margin), its outer border off the screen, and the music line follows that rect: BAR's look
+      at any size, not the phone's; left as it is. No UI change.
 - [x] **The sideways tab swipe on the current build** (hardening, 2026-11-17 ~23:49, dev phone folded sideways,
       2316x1080, the commander picked): a right-to-left swipe on the build grid, "swiped to the right tab" (ORDERS); a
       vertical drag on the orders after it, no change; a left-to-right swipe, "swiped to the left tab" (BUILD), and no
