@@ -192,31 +192,39 @@ function droid.tabs()
 	local litGroup = searching and lit and view.lines[lit].group
 	local cols, gap = 3, metrics.inset
 	local w = math.floor((a[3] - a[1] - (cols - 1) * gap) / cols)
-	local n = 0
+	local shown = {}
 	for _, group in ipairs(model.groups) do
 		if
 			group.numOptions > 0
 			and (model.devMode or model.devUI or group.id ~= "dev")
 			and (not searching or view.matches[group])
-			and n < 3 * cols
+			and #shown < 3 * cols
 		then
-			local x = a[1] + (n % cols) * (w + gap)
-			local top = layout.sidebarTop - math.floor(n / cols) * metrics.groupHeight
-			local r = { x, top - metrics.groupHeight + gap, x + w, top }
-			local selected = (not searching and group.id == currentGroupTab) or group == litGroup
-			RectRound(r[1], r[2], r[3], r[4], metrics.csSmall, 1, 1, 1, 1,
-				selected and look.selectedFill or look.sidebarFill, selected and look.selectedFill or look.sidebarFillTop)
-			if selected then -- (a gold line along its foot, as the column marks its section)
-				RectRound(r[1] + metrics.sidePad, r[2] + metrics.inset, r[3] - metrics.sidePad,
-					r[2] + metrics.inset + metrics.accentW, 0, 0, 0, 0, 0, look.sectionAccent)
-			end
-			local count = searching and (look.count .. "  " .. view.matches[group]) or ""
-			local room = w - metrics.sidePad * 2 - (searching and metrics.groupFs * 2 or 0)
-			font:Print((selected and look.groupSelected or look.group) .. text.fit(font, group.name, room, metrics.groupFs)
-				.. count, math.floor((r[1] + r[3]) * 0.5), math.floor((r[2] + r[4]) * 0.5), metrics.groupFs, "cov")
-			layout.sidebar[#layout.sidebar + 1] = { rect = r, group = group, line = view.headingOf[group] }
-			n = n + 1
+			shown[#shown + 1] = group
 		end
+	end
+	-- (the last row's tabs centred under the rows above: Accessibility alone at the left of its row read as one dropped
+	-- there, dev phone screenshot 2026-11-18)
+	local lastRow = math.floor((#shown - 1) / cols)
+	local lastShift = math.floor((cols - (#shown - lastRow * cols)) * (w + gap) / 2)
+	for i, group in ipairs(shown) do
+		local n = i - 1
+		local row = math.floor(n / cols)
+		local x = a[1] + (n % cols) * (w + gap) + (row == lastRow and lastShift or 0)
+		local top = layout.sidebarTop - row * metrics.groupHeight
+		local r = { x, top - metrics.groupHeight + gap, x + w, top }
+		local selected = (not searching and group.id == currentGroupTab) or group == litGroup
+		RectRound(r[1], r[2], r[3], r[4], metrics.csSmall, 1, 1, 1, 1,
+			selected and look.selectedFill or look.sidebarFill, selected and look.selectedFill or look.sidebarFillTop)
+		if selected then -- (a gold line along its foot, as the column marks its section)
+			RectRound(r[1] + metrics.sidePad, r[2] + metrics.inset, r[3] - metrics.sidePad,
+				r[2] + metrics.inset + metrics.accentW, 0, 0, 0, 0, 0, look.sectionAccent)
+		end
+		local count = searching and (look.count .. "  " .. view.matches[group]) or ""
+		local room = w - metrics.sidePad * 2 - (searching and metrics.groupFs * 2 or 0)
+		font:Print((selected and look.groupSelected or look.group) .. text.fit(font, group.name, room, metrics.groupFs)
+			.. count, math.floor((r[1] + r[3]) * 0.5), math.floor((r[2] + r[4]) * 0.5), metrics.groupFs, "cov")
+		layout.sidebar[#layout.sidebar + 1] = { rect = r, group = group, line = view.headingOf[group] }
 	end
 end
 
