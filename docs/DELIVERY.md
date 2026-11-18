@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **pad-test -Share and -Dgun; Display settings' scale said in words** (hardening, 2026-11-18 ~04:15, dev phone):
+      pad-test -Share ALL PASS (the list's tabs, amounts, notes, 15 teammates in sight above the dock; its screenshots
+      all clean) and -Dgun ALL PASS; the logs nothing of the app's. The launcher sideways: the left column scrolls by
+      design (device lines and log under the buttons, faded at its foot). UI polish, from Display & touch settings'
+      screenshots: Output's slider read "Display scale, %" with no word of what it does (and Fullscreen's, cutout's and
+      the others' summaries beside it say theirs). Now "Display scale (%)" with its summary: over 100 fewer pixels,
+      each larger (150: two thirds as many lines), under 100 more, up to the app's 2100 x 900 pixels, which most
+      phones reach at 100 (LorieView's scaled mode, `MAX_SCREEN_PIXELS`; strings.xml, the app's override of
+      Termux:X11's words). Dev phone screenshot. The Fold7 stayed off adb.
 - [x] **touch-phone-test and pace-test; the launcher's log lines wrapped under their words** (hardening, 2026-11-18
       ~04:00, dev phone): touch-phone-test ALL PASS (the camera at the map's edge, the dock and BAR's lobby over the
       game), pace-test ALL PASS; launcher.log and the infolog with nothing of the app's. UI polish, from the launcher's
