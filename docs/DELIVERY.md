@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby's Settings, Chat, Friends and BAR's quit dialog upright** (hardening, 2026-11-18 ~07:50, dev phone
+      upright): the Fold7 has not started the app since its 07:30 install (launcher.log's last start 07:04): no logs of
+      the new build yet. The lobby's Settings (its rows spaced for a finger): "Show Battles with Test Engine Versions"
+      8 pixels from its box, the known trade-off (the box capped at 24 for that line); Chat and Friends offline say a
+      login is needed. In a skirmish BAR's quit dialog upright: the screen's width above the dock, Stay, Resign, Quit;
+      Stay resumed the game ("Phone unpaused the game"). Nothing to change; no UI polish this run.
 - [x] **The lobby tests open the Keys window** (hardening, 2026-11-18 ~07:40): the test widget opens Keys from the
       lobby's grid and upright checks the window no taller than its tabs and picture (40 to spare), on the screen; then
       its Close. Dev phone upright: ALL PASS ("window 50,530 593x431, picture to 417"), the pad's Start and D-pad after
