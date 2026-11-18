@@ -740,6 +740,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **touch-phone-test and pace-test; the launcher's log lines wrapped under their words** (hardening, 2026-11-18
+      ~04:00, dev phone): touch-phone-test ALL PASS (the camera at the map's edge, the dock and BAR's lobby over the
+      game), pace-test ALL PASS; launcher.log and the infolog with nothing of the app's. UI polish, from the launcher's
+      screenshots upright (its header, settings and log read well, the scrolled settings fade under the buttons): in
+      the Log box a long line's rest started at the box's edge, under the times, read as a line of its own ("(force
+      stopped)"). Each line's wrapped rest now stands under its words, past the time (`LauncherActivity.setLog`: one
+      LeadingMarginSpan over the log, its end inclusive, so the lines appended later have it too): checked with the
+      start's lines and a GL check's (the container's long environment line wraps in one column). The Fold7 stayed off
+      adb.
 - [x] **Sideways: a skirmish, the tab swipe, the lobby; the lobby's notes beside the titles** (hardening, 2026-11-18
       ~04:05, dev phone sideways, the one-thumb dock): the infolog's warnings BAR's own (its Mission Info and a dozen dev
       widgets "no GetInfo" outside their games, as on every BAR install), 29.6 fps over the minute; + NEW made group 1,
