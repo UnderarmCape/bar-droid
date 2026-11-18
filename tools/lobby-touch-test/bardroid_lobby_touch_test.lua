@@ -229,6 +229,46 @@ local function quickFootCheck(page)
 	return nb
 end
 
+-- A scenario's page upright: each value (24 % in, bardroid_lobby_touch.lua uprightScenario) ends left of the map; a
+-- long loss condition ran on over it (2026-11-18). Sideways Chobby's own layout, not checked.
+local function scenarioCheck()
+	local mark = findAny(WG.Chili.Screen0, 0, function(o)
+		return o.caption == "Est. Resources" and o.visible ~= false
+	end)
+	local panel = mark and real(mark.parent)
+	if not panel then
+		check("a scenario's page", false, "no Est. Resources label shown")
+		return
+	end
+	local s0 = WG.Chili.Screen0
+	if s0.height <= s0.width * 1.05 then
+		log("a scenario's page: sideways, Chobby's own layout")
+		return
+	end
+	local map
+	for _, ch in ipairs(panel.children or {}) do
+		local c = real(ch)
+		local b = c and c._relativeBounds
+		if b and b.right == "0%" and b.width == "40%" then
+			map = c
+		end
+	end
+	local ok, worst = map ~= nil, ""
+	for _, ch in ipairs(map and panel.children or {}) do
+		local c = real(ch)
+		local b = c and c._relativeBounds
+		if b and b.left == "24%" and type(c.caption) == "string" and c.caption ~= "" then
+			local over = c.x + c.width - map.x
+			if over > 0 then
+				ok = false
+				worst = string.format("%s%q %d over; ", worst, c.caption, over)
+			end
+		end
+	end
+	check("a scenario's page upright: its values end left of the map", ok,
+		map and (worst ~= "" and worst or string.format("map from %d", map.x)) or "no map found")
+end
+
 local function barWindow()
 	for _, c in ipairs(WG.Chili.Screen0.children) do
 		if c.name == "bardroidServerBar" and c.visible ~= false then
@@ -522,6 +562,22 @@ cases = {
 	end,
 	function()
 		quickFootCheck("Select Map, Start hidden")
+		check("the lobby's Scenarios open", clickCaption("Scenarios"))
+		settle(2)
+	end,
+	function() -- (the list's first scenario: Chobby names its button "<id>button")
+		local first = findAny(WG.Chili.Screen0, 0, function(o)
+			return o.classname == "battle_default_button" and type(o.name) == "string" and o.name:sub(-6) == "button"
+				and o.y == 0 and o.visible ~= false
+		end)
+		check("a scenario picked from the list", first ~= nil)
+		if first then
+			first:CallListeners(first.OnClick)
+		end
+		settle(1.5)
+	end,
+	function()
+		scenarioCheck()
 		clickCaption("Welcome") -- (the lobby's first page again)
 		settle()
 	end,
