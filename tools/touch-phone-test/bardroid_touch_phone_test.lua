@@ -34,9 +34,9 @@ end
 -- Where the view ray through X pixel (x, y from the top: GetPixelDir's own way) meets the level plane at height h
 -- (default: the ground the camera looks at), as bardroid_touch.lua's planePoint
 local function planeAt(x, y, h)
-	if not h then
+	if not h then -- (the camera's own focus height, as the widget: smooth-mesh tracking keeps it off the ground)
 		local cs = Spring.GetCameraState()
-		h = Spring.GetGroundHeight(cs.px, cs.pz)
+		h = cs.py or Spring.GetGroundHeight(cs.px, cs.pz)
 	end
 	local dx, dy, dz = Spring.GetPixelDir(x, y)
 	if not dy or dy > -0.01 then

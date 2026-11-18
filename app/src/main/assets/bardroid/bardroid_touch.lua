@@ -281,8 +281,11 @@ local function ground(x, y, h)
 		if kind == "ground" and pos then
 			return pos[1], pos[3], pos[2]
 		end
+		-- (the height the camera itself looks at, its state's py: BAR test-31992 on the 2026.09.03 engines switches the
+		-- spring camera to smooth-mesh height tracking, where that height is the smoothed surface's, not the ground's;
+		-- with the ground's the void's point under a finger drifted as the camera moved, touch-phone-test 311 and 904 off)
 		local cs = spGetCameraState()
-		h = cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz) or 0
+		h = cs.py or (cs.px and cs.pz and Spring.GetGroundHeight(cs.px, cs.pz)) or 0
 	end
 	local px, pz = planePoint(x, y, h)
 	return px, pz
