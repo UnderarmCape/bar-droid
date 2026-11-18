@@ -40,8 +40,8 @@ local function appAct(line)
 	end
 end
 
-local function settle()
-	settleFrom, settleSeconds = Spring.GetTimer(), 0.8
+local function settle(seconds)
+	settleFrom, settleSeconds = Spring.GetTimer(), seconds or 0.8
 end
 
 local function setTags(tags)
@@ -124,6 +124,109 @@ local function clickTotal()
 		n = n + v
 	end
 	return n
+end
+
+-- Chobby's quick Skirmish (its simple skirmish pages): a control anywhere under the screen (shown or not), and the
+-- page shown now: the one with Next and Advanced among its own children
+local function real(o) -- (Chili's children are weak links: the control itself, as bardroid_lobby_touch.lua's real)
+	return o and WG.Chili.UnlinkSafe and WG.Chili.UnlinkSafe(o) or o
+end
+local function findAny(o, depth, test) -- (hidden children too: Chili keeps them in children_hidden)
+	o = real(o)
+	if not o or depth > 30 then
+		return nil
+	end
+	if test(o) then
+		return o
+	end
+	local list = {}
+	for _, ch in ipairs(o.children or {}) do
+		list[#list + 1] = ch
+	end
+	for ch in pairs(o.children_hidden or {}) do
+		list[#list + 1] = ch
+	end
+	for _, ch in ipairs(list) do
+		local r = findAny(ch, depth + 1, test)
+		if r then
+			return r
+		end
+	end
+end
+local function quickPage()
+	local function shown(o, depth)
+		o = real(o)
+		if not o or depth > 30 or o.visible == false then
+			return nil
+		end
+		if o.GetChildByName and o:GetChildByName("nextButton") and o:GetChildByName("advButton") then
+			return o
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local r = shown(ch, depth + 1)
+			if r then
+				return r
+			end
+		end
+	end
+	return shown(WG.Chili.Screen0, 0)
+end
+local function clickCaption(caption) -- (Chobby's own button, or the widget's copy of it: both call Chobby's listeners)
+	local b = findAny(WG.Chili.Screen0, 0, function(o)
+		return o.classname ~= "label" and type(o.caption) == "string" and o.caption:gsub("\255...", "") == caption
+			and o.OnClick ~= nil
+	end)
+	if b then
+		b:CallListeners(b.OnClick)
+	end
+	return b ~= nil
+end
+-- Back and Advanced at the page's foot, both ways up; upright as tall as Next (bardroid_lobby_touch.lua quickFoot). On
+-- Select Map, Start hidden until a map is picked: they went to the panel's top there and the maps shrank to strips
+-- (2026-11-18), so the maps' height too
+local function quickFootCheck(page)
+	local p = quickPage()
+	if not p then
+		check("quick Skirmish, " .. page .. ": the page shown", false, "none")
+		return
+	end
+	local nb, adv, back = real(p:GetChildByName("nextButton")), real(p:GetChildByName("advButton")),
+		real(p:GetChildByName("prevPage"))
+	local s0 = WG.Chili.Screen0
+	local tall = s0.height > s0.width * 1.05
+	local ph = p.clientHeight or p.height
+	local ok, parts, foot = adv ~= nil, {}, {}
+	foot[#foot + 1] = back -- (none on the first page)
+	foot[#foot + 1] = adv
+	for _, b in ipairs(foot) do
+		local bottom = b.y + b.height
+		ok = ok and b.y >= ph * 0.8 and bottom <= ph
+		if tall then
+			ok = ok and b.height == nb.height
+			if nb.visible ~= false then
+				ok = ok and math.abs(bottom - (nb.y + nb.height)) <= 2
+			end
+		end
+		parts[#parts + 1] = string.format("%s %d-%d", b.caption, b.y, bottom)
+	end
+	if back and adv then
+		ok = ok and math.abs((back.y + back.height) - (adv.y + adv.height)) <= 1
+	end
+	parts[#parts + 1] = string.format("%s %s%d-%d", nb.caption, nb.visible == false and "hidden " or "", nb.y, nb.y + nb.height)
+	local nMaps = 0
+	for _, ch in ipairs(p.children or {}) do
+		local c = real(ch)
+		if type(c.tooltip) == "string" and c.tooltip:sub(1, 16) == "minimap_tooltip_" then
+			nMaps = nMaps + 1
+			ok = ok and (not tall or c.height >= ph * 0.15)
+			if nMaps == 1 then
+				parts[#parts + 1] = string.format("maps %d high", c.height)
+			end
+		end
+	end
+	check(string.format("quick Skirmish, %s: Back and Advanced at its foot%s", page, tall and ", as tall as Next" or ""),
+		ok, string.format("page %d high: %s", ph, table.concat(parts, ", ")))
+	return nb
 end
 
 local function barWindow()
@@ -390,6 +493,37 @@ cases = {
 			L.voiceShown() and tostring(cap):find("MICROPHONE", 1, true) and tw > 0 and tw <= pw and lw == pw
 				and math.abs(px * 2 + pw - sw) <= 1,
 			px and string.format("panel %dx%d, words %d wide: %s", pw, ph, tw, tostring(cap)))
+	end,
+	-- the quick Skirmish's four pages, Next after each (Chobby's first choices), its foot each time
+	function()
+		check("the lobby's Skirmish opens", clickCaption("Skirmish"))
+		settle(2) -- (its pages made at the first open; the lobby widget lays them out every half second)
+	end,
+	function()
+		local nb = quickFootCheck("Select Game Type")
+		if nb then
+			nb:CallListeners(nb.OnClick)
+		end
+		settle()
+	end,
+	function()
+		local nb = quickFootCheck("Select Difficulty")
+		if nb then
+			nb:CallListeners(nb.OnClick)
+		end
+		settle()
+	end,
+	function()
+		local nb = quickFootCheck("Select your Faction")
+		if nb then
+			nb:CallListeners(nb.OnClick)
+		end
+		settle()
+	end,
+	function()
+		quickFootCheck("Select Map, Start hidden")
+		clickCaption("Welcome") -- (the lobby's first page again)
+		settle()
 	end,
 	function()
 		check("out of the server: no warning", warningWindow() == nil, warningText())
