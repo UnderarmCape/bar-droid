@@ -740,6 +740,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **github-sync's release notes name the APK's own commit** (hardening, 2026-11-18 ~08:00, a review of the night's
+      tool): latest-build's notes named this repository's HEAD at upload time, which after a Fold7 install is the
+      DELIVERY commit, not the one the APK was built from (07:30: built from ab66c2d7, the notes said 91b45544). The
+      APK carries its commit in Termux:X11's version line ("... from BAR Droid ab66c2d7", patches 0012, 0016, in
+      classes4.dex): the script reads it there and the notes say "built from `ab66c2d7` (its subject)", a build from
+      uncommitted changes said so, HEAD named beside it. And `gh release edit`'s failure now stops the script (only the
+      upload's exit code was checked). Run with -Release on the APK the Fold7 has (the same file, its notes put right).
+      The home grid's LAST PINGS / PING sizes looked at again: already matched on 11-17. No UI polish this run.
 - [x] **The lobby's Settings, Chat, Friends and BAR's quit dialog upright** (hardening, 2026-11-18 ~07:50, dev phone
       upright): the Fold7 has not started the app since its 07:30 install (launcher.log's last start 07:04): no logs of
       the new build yet. The lobby's Settings (its rows spaced for a finger): "Show Battles with Test Engine Versions"
