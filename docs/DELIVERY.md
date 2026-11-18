@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **remake-check, pad-test -Chat and -Online; Settings' last tab centred** (hardening, 2026-11-18 ~05:20, dev
+      phone upright): remake-check ALL PASS, pad-test -Chat ALL PASS, pad-test -Online ALL PASS. The wind box's details
+      (the app's panel) read clean. UI polish, from the phone Settings upright: its seven tabs three across left
+      Accessibility alone at the left of the third row, read as one dropped there; the last row's tabs now centred under
+      the rows above (`tools/make-options.py`'s droid.tabs patch, the copy and its patches made again from the dev
+      phone's test-31958, the same 15 patches). Dev phone: Accessibility centred, a tap on it opens it (its Teamcolors),
+      Graphics again; remake-check after: the phone's remake equals the shipped copy. The Fold7 stayed off adb.
 - [x] **The lobby tests walk the quick Skirmish** (hardening, 2026-11-18 ~05:00): the Select Map regression of the run
       before passed lobby-phone-test, which never opened the Skirmish screen. Its test widget
       (`tools/lobby-touch-test/bardroid_lobby_touch_test.lua`, the laptop's lobby-touch-test and the phone's
