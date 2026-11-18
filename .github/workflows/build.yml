@@ -4,8 +4,10 @@
 # (termux-x11/.github/workflows/debug_build.yml), whose native build this one repeats on the same runner image.
 name: build
 
+# (on demand and on pull requests, not on every push: the private repository gets a push after every hardening run,
+# about 30 a night, and an APK build each time would spend GitHub's free Actions minutes in days and mail a failure
+# each time one failed; 2026-11-18, the night it went on GitHub)
 on:
-  push:
   pull_request:
   workflow_dispatch:
 
@@ -24,6 +26,10 @@ jobs:
           distribution: temurin
           java-version: "21"
       - uses: android-actions/setup-android@v3
+        with:
+          # (its default also asks for "tools", the old SDK Tools package the repository no longer has: "Failed to
+          # find package 'tools'", and the job stopped there; GitHub, 2026-11-18)
+          packages: platform-tools
       - name: Android SDK, NDK and CMake as the project pins them
         run: sdkmanager "platforms;android-34" "build-tools;36.0.0" "ndk;29.0.14206865" "cmake;3.22.1"
       - name: Termux:X11 at the pinned commit, with patches/
