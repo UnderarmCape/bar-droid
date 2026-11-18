@@ -1626,19 +1626,24 @@ function upright.quickKeep(o)
 end
 -- Back and Advanced at a page's foot as tall as Next between them: Chobby's 48 beside Next's own height, 68 pixels on
 -- the dev phone upright, under Android's 48 dp for a finger (dev phone screenshot 2026-11-18); put back sideways with
--- the rest (quickMaps)
+-- the rest (quickMaps). Grown upwards from Chobby's own foot (4 % of the panel from its bottom, as Next's): Next's y is
+-- not to be had while it is hidden, as Start is on Select Map until a map is picked: there the two went to the
+-- panel's top and the maps' room shrank to nothing (dev phone, 2026-11-18)
 function upright.quickFoot(panel)
 	local nextB = panel and panel.GetChildByName and real(panel:GetChildByName("nextButton"))
-	if not (nextB and not nextB.disposed) then
+	local ph = panel and (panel.clientHeight or panel.height) or 0
+	if not (nextB and not nextB.disposed and ph > 0) then
 		return
 	end
+	local bottom = ph - math.floor(ph * 0.04)
 	for _, name in ipairs({ "prevPage", "advButton" }) do
 		local c = real(panel:GetChildByName(name))
 		local was = c and upright.quickSaved[c]
-		if c and not c.disposed and nextB.height > (was and was.h or c.height)
-			and (c.height ~= nextB.height or c.y ~= nextB.y) then
+		local h = nextB.height
+		if c and not c.disposed and h > (was and was.h or c.height) and h < ph * 0.2
+			and (c.height ~= h or c.y ~= bottom - h) then
 			upright.quickKeep(c)
-			c:SetPos(c.x, nextB.y, c.width, nextB.height)
+			c:SetPos(c.x, bottom - h, c.width, h)
 		end
 	end
 end
