@@ -740,7 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
-- [x] **dock-phone-test taps the D-gun mode's X** (hardening, 2026-11-17 ~23:50, dev phone): the test turned the mode
+- [x] **The sideways tab swipe on the current build** (hardening, 2026-11-17 ~23:49, dev phone folded sideways,
+      2316x1080, the commander picked): a right-to-left swipe on the build grid, "swiped to the right tab" (ORDERS); a
+      vertical drag on the orders after it, no change; a left-to-right swipe, "swiped to the left tab" (BUILD), and no
+      tile picked by either swipe (no PLACE panel, nothing lit). As Kailil asked this afternoon. No UI change.
+- [x] **dock-phone-test taps the D-gun mode's X** (hardening, 2026-11-17 ~23:46, dev phone): the test turned the mode
       off by the dock's own act ("dgun_cancel", the presets' stage), never by a finger, so a dead X (RtsTouch's
       "cancel" role) would have passed. After MOVE's stop the script now taps the X from the dock file's cancel rect and
       checks the mode is off ("xoff?"). Dev phone: PASS (active false), the run ALL PASS. No UI change.
