@@ -2698,6 +2698,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       fetches the quick skirmish's maps with the game on Wi-Fi, for players who go offline. (2026-11-11: with no
       network at all a map or game download now fails at once in `LobbyBridge`; the lobby's four asks each started
       proot and pr-downloader before, about a second apiece, to fail on the CDN's name.)
+      (2026-11-18 ~03:00, the dev phone with no network, the lobby upright offline: Skirmish's 2v2 tried Mariposa Island
+      v2.4.1, its 1v1 Red Comet Remake 1.8, neither on that phone, each "Download Failed" in Chobby's corner note; the
+      steps by touch read well upright: game type, difficulty, faction, Back / Next / Advanced. Still Kailil's call.)
 - [x] A map download in the container failed on the dev phone ("Could not resolve host", 2026-11-08 ~14:20): not the
       container's DNS (1.1.1.1, 8.8.8.8, `Installer`). The download ran through `run-as` with the app closed, and
       Android cuts an app's network while it is in the background (no activity shown, no foreground service): a ping
