@@ -3518,7 +3518,7 @@ local function drawResources()
 		end
 	end
 	for i, res in ipairs({ "metal", "energy" }) do
-		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
+		local cur, storage, _, income, expense, share = Spring.GetTeamResources(myTeam(), res)
 		local box = i == 1 and mB or eB
 		local x0, x1 = box[1], box[3]
 		panel(box)
@@ -3533,6 +3533,22 @@ local function drawResources()
 				gl.Color(1, 0.86, 0.15, 1)
 			end
 			gl.Rect(x0 + pad, by0, x0 + pad + (x1 - x0 - 2 * pad) * frac, by1)
+			-- (the levels on the bar as BAR's top bar always shows them: energy's conversion grey, the share red over it;
+			-- the boxes had the fill alone, the knobs only in the panel. Dev phone, 2026-11-17)
+			local mw = max(2, floor(barH * 0.5))
+			for m = res == "energy" and 1 or 2, 2 do
+				local v = m == 1 and (Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75) or share or 1
+				local mx = floor(x0 + pad + (x1 - x0 - 2 * pad) * max(0, min(1, v)) - mw / 2 + 0.5)
+				mx = max(x0 + pad, min(x1 - pad - mw, mx))
+				gl.Color(0, 0, 0, 0.8)
+				gl.Rect(mx - 1, by0 - 1, mx + mw + 1, by1 + 1)
+				if m == 1 then
+					gl.Color(0.62, 0.62, 0.62, 1)
+				else
+					gl.Color(0.85, 0, 0, 1)
+				end
+				gl.Rect(mx, by0 - 1, mx + mw, by1 + 1)
+			end
 			gl.Color(1, 1, 1, 1)
 			local cy = by1 + pad + rowH / 2 -- (the row's middle)
 			local amount = short(cur)
@@ -5051,9 +5067,11 @@ function SP.resSignature() -- (its parts in one table kept for it: made each fra
 	SP.resParts = parts
 	parts[1], parts[2], parts[3], parts[4], parts[5] = L.res[1], L.res[2], L.res[3], L.res[4], tideRelevant() and "t" or ""
 	for i, res in ipairs(SP.RES_KINDS) do
-		local cur, storage, _, income, expense = Spring.GetTeamResources(myTeam(), res)
-		parts[5 + i] = cur and string.format("%s/%s/%s/%s/%d", short(cur), short(income or 0), short(expense or 0),
-			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0) or "-"
+		local cur, storage, _, income, expense, share = Spring.GetTeamResources(myTeam(), res)
+		-- (and the share and conversion marks on the bar, by a hundredth)
+		parts[5 + i] = cur and string.format("%s/%s/%s/%s/%d/%d/%d", short(cur), short(income or 0), short(expense or 0),
+			short(storage or 0), (storage or 0) > 0 and floor(cur / storage * 200) or 0, floor((share or 1) * 100),
+			res == "energy" and floor((Spring.GetTeamRulesParam(myTeam(), "mmLevel") or 0.75) * 100) or 0) or "-"
 	end
 	-- (the wind and tide: their own boxes now, drawn live, SP.drawWindTide; their nook between metal and energy narrows them)
 	local nk = not SP.windOff() and SP.windRects() and L.windNook

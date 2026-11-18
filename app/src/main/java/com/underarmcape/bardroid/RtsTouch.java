@@ -984,6 +984,9 @@ final class RtsTouch {
             releaseAfterCancel(() -> { press(x, y, InputStub.BUTTON_LEFT, false); if (!gridHeld) releaseKeys(); });
         } else if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
         if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
+        // (a dock scroll the system took back, its PiP or edge gesture monitors: let go at rest, or the widget's rows stayed
+        // between two rows until the next touch; dev phone 2026-11-17, the split dock sideways after an upward flick)
+        if (state == State.DOCK_SCROLL) send("dockfling " + dockSide + " 0.0 0.0");
         endDockSelect();
         if (!gridHeld && !shapeCancelled) releaseKeys();
         state = State.IDLE;

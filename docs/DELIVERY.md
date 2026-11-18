@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A dock scroll the system takes back settles on whole rows; the share marks on the boxes' bars** (hardening,
+      2026-11-17 ~21:20, dev phone sideways at the unfolded Fold7's shape, 1080x1198, three Construction Bots picked):
+      after an upward flick on the split dock's right block its orders stayed between two rows (the top row its state
+      lights alone, the bottom one cut) until the next touch. logcat: the system's pip-resize gesture monitor stole
+      the gesture ("input channel stole pointer stream"), so the app got ACTION_CANCEL, and a cancelled DOCK_SCROLL
+      sent no dockfling: the widget's drag stayed open and snapUpdate never settled it. RtsTouch's cancelGesture now
+      lets it go at rest (`dockfling <side> 0.0 0.0`, the groups row's tiles too); four flicks up and down afterwards
+      all rest on whole rows. Polish: the metal and energy boxes' bars now carry BAR's top bar marks, the share red
+      and energy's conversion grey (they showed the fill alone; the knobs were only in the panel); in the boxes'
+      texture signature by a hundredth. dock-phone-test ALL PASS. Not on the Fold7 yet: Kailil was in a game.
 - [x] **The Fold7's last game read (before today's build)** (hardening, 2026-11-17 ~21:05, the Fold7 idle, its
       infolog of 19:08, BAR's official 2026.09.03, the app's widgets as user widgets): no Lua error, no app warning,
       30 fps (Lua 264-288 MB); 18 of its dock lines are the box selection's filters ("right filters (5)"), ten with
