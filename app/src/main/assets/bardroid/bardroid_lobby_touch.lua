@@ -1860,7 +1860,11 @@ local function uprightNotes()
 				else
 					seen[key] = true
 					row = row + 1
-					win:SetPos(col.width + math.floor((screen0.width - col.width - win.width) / 2), 6 + (row - 1) * 110)
+					-- (at three quarters of the room beside the column, short of the panels' Close: in its middle it covered the
+					-- Skirmish steps' centred titles, "Select Game Type" under "Download Failed", dev phone 2026-11-18)
+					local x = col.width + math.floor((screen0.width - col.width) * 0.75 - win.width / 2)
+					x = math.max(col.width + 4, math.min(x, screen0.width - win.width - 140))
+					win:SetPos(x, 6 + (row - 1) * 110)
 				end
 			end
 			return
