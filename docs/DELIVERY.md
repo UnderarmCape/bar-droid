@@ -762,7 +762,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       touch-phone-test ALL PASS (16, the void's drags and pinch, BAR's lobby over the game) after the day's touch widget
       change. UI polish: each teammate's storage bar in the share list was two flat strips; now as the dock's resource
       bars, a dark outlined track and the fill shaded from its foot with a gloss on its top half (bardroid_pad.lua;
-      pad-test -Share again ALL PASS, its screenshots).
+      pad-test -Share again ALL PASS, its screenshots). The APK from ae2badb8 on the Fold7 at 18:52.
 - [x] **Speak to chat's sessions checked on the laptop; the launcher's map field marked as a list** (hardening,
       2026-11-18 ~18:25-18:35). (1) VoiceChat.java read over and `tools/voice-chat-test.ps1` added (19 cases, the
       entry "Speak to chat started, cancelled and started again quickly" below). (2) UI polish: the map field for Play
