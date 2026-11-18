@@ -99,7 +99,7 @@ public class LauncherActivity extends AppCompatActivity {
         explainSettings(findViewById(android.R.id.content), secondaryTextColor());
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
         deviceView.setText(deviceSummary());
-        logView.setText(Log.dump());
+        setLog(Log.dump());
         // (not when Android restores the screen, as it does after ending the app for lack of memory: it hands back the
         // first intent, and the game or benchmark started all over again by itself; removeExtra does not outlive that)
         if (savedInstanceState == null) startFromIntent(getIntent());
@@ -419,10 +419,21 @@ public class LauncherActivity extends AppCompatActivity {
         return color;
     }
 
+    /** The log's lines, each one's wrapped rest under its words past the time ("03:58:18 "): it started at the box's
+     *  edge under the times, read as a line of its own ("(force stopped)", dev phone screenshot 2026-11-18). One
+     *  paragraph span over the whole text, its end inclusive, so the lines appended later have it too. */
+    private void setLog(CharSequence text) {
+        android.text.SpannableStringBuilder s = new android.text.SpannableStringBuilder(text);
+        int indent = Math.round(logView.getPaint().measureText("00:00:00 "));
+        s.setSpan(new android.text.style.LeadingMarginSpan.Standard(0, indent), 0, s.length(),
+                android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE);
+        logView.setText(s, TextView.BufferType.EDITABLE);
+    }
+
     private void appendLog(String line) {
         logFollows = logScroll.getScrollY() + logScroll.getHeight() >= logView.getHeight();
         logView.append(line + "\n");
-        if (logView.getLineCount() > 2500) logView.setText(Log.dump());
+        if (logView.getLineCount() > 2500) setLog(Log.dump());
         // (the service's own lines are its status: the status line follows at once, not at the next 1.5 s tick; it
         // still read "Ready" after Install / Update had begun)
         if (line.contains(" [svc] ")) refresh();
