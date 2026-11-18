@@ -740,6 +740,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The engine's archive rescans: 1.1 s each on a phone, now ~15 ms** (hardening, 2026-11-18 ~03:15, dev phone,
+      offline lobby). The quick skirmish's Select Difficulty page showed its picture late again; the lobby's log said
+      why: with no network Chobby asks the bridge for the missing maps (Fallendell, Red Comet Remake) four times each,
+      rescans the archives after each answer (`VFS.ScanAllDirs`), and every rescan took 1.1 s, the lobby frozen
+      meanwhile. Every rescan, everywhere, took that (three at each lobby start, on the Fold7 too): the engine's
+      `ScanDirs` marks its ArchiveCache changed before it scans, so each scan writes the 5 MB file again and runs its
+      check of the pool's 20,745 files until its 1 s limit (each stat a trapped call under proot); the scan itself is
+      ~15 ms. Engine fix behind `BARDROID_SIM` (bardroid/sim 1b9350a, picked onto bardroid/sim-2026.09.03 as a0365a7,
+      both built): the cache written only when an archive is new, changed or gone. On the dev phone with each build as
+      a test engine (phone-engine.ps1 -Use, removed after): the second lobby start's three scans 14-17 ms (were
+      1,084-1,125 ms) and the cache file untouched; a map moved out of maps/: written once (31 archives), moved back:
+      written once (32, the same size as before). It reaches players with the next phone build (2026.09.03's, after its
+      gate); the shipped 2026.07.04 build is not rebuilt (BAR's servers run 2026.09.03: that build serves only the
+      offline dev phone). Upstream draft for BAR's engine: docs/upstream/recoil-archivecache-rewrite.md and .patch
+      (applies to 2026.07.04 and 2026.09.03 as they are). The Fold7 stayed off adb. No UI polish this run.
 - [x] **HANDOFF.md after the move to GitHub** (hardening, 2026-11-18 ~02:55): its table still had "the push" left for
       Kailil and no word of the private copy; the public-release row names the two private repositories, the
       latest-build pre-release and github-sync.ps1 now, "making it public" staying his; the work log row says the

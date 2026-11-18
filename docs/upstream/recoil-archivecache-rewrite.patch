@@ -1,0 +1,38 @@
+diff --git a/rts/System/FileSystem/ArchiveScanner.cpp b/rts/System/FileSystem/ArchiveScanner.cpp
+index ef176e5..d74e8cf 100644
+--- a/rts/System/FileSystem/ArchiveScanner.cpp
++++ b/rts/System/FileSystem/ArchiveScanner.cpp
+@@ -473,7 +473,8 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
+ 	std::lock_guard<decltype(scannerMutex)> lck(scannerMutex);
+ 	std::deque<std::string> foundArchives;
+ 
+-	isDirty = true;
++	// the cache is rewritten only when this scan changes what it holds (an archive new, changed or gone: below and in
++	// ScanArchive); WriteCacheData's pool check runs up to 1 s whenever it is written
+ 
+ 	// scan for all archives
+ 	for (const std::string& dir: scanDirs) {
+@@ -518,6 +519,8 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
+ 			// Overwrite the info for this archive with a replaced pointer
+ 			ArchiveInfo& ai = GetAddArchiveInfo(lcReplaceName);
+ 
++			// (new, or a real archive's entry until now; "replaced" itself is not read back from the cache file)
++			isDirty |= (ai.origName != replaceName || !ai.path.empty());
+ 			ai.path = "";
+ 			ai.origName = replaceName;
+ 			ai.modified = 1;
+@@ -526,6 +529,14 @@ void CArchiveScanner::ScanDirs(const std::vector<std::string>& scanDirs)
+ 			ai.replaced = lcOriginalName;
+ 		}
+ 	}
++
++	// a cached archive not found on disk: WriteCacheData drops it
++	for (const ArchiveInfo& ai: archiveInfos) {
++		isDirty |= !ai.updated;
++	}
++	for (const BrokenArchive& ba: brokenArchives) {
++		isDirty |= !ba.updated;
++	}
+ }
+ 
+ 
