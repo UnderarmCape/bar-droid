@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **fp-save-test; Statistics, Settings and the home grid sideways** (hardening, 2026-11-18 ~05:30, dev phone
+      sideways, the one-thumb dock): fp-save-test PASS (1st person through BAR's mid-game settings save, its way back
+      kept). Sideways the app's Statistics (BAR's TeamStats copy: the dock aside, twelve graphs), the phone Settings
+      (BAR's sidebar, near the screen's height, the dock aside; the tab grid's centring is upright only) and the home
+      grid with nothing picked: all read clean. BAR pauses a one-player game while its Options are open ("Phone paused
+      the game"), its own setting. No UI polish found worth a change this run. The Fold7 stayed off adb.
 - [x] **remake-check, pad-test -Chat and -Online; Settings' last tab centred** (hardening, 2026-11-18 ~05:20, dev
       phone upright): remake-check ALL PASS, pad-test -Chat ALL PASS, pad-test -Online ALL PASS. The wind box's details
       (the app's panel) read clean. UI polish, from the phone Settings upright: its seven tabs three across left
