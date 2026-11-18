@@ -692,6 +692,18 @@ game until the replay and spectating stages below say it computes exactly what t
   folders `build-gcc-pgo-lse` (its profile data are tied to it), `build-gcc-combined` and `build-gcc-fold7`, every
   binary in `engine-sim\out`. An old build again: `build-engine.ps1 <name> -Source <its recoil-* worktree>` (a full
   build, its `ES_FLAGS` as its entry above says).
+- **A new BAR engine (ENGINE-DEFAULT stage 4), as done for 2026.09.03 on 2026-11-17:** the tag fetched into
+  `recoil-src` (`git fetch origin tag <ver> --no-tags`; the repository is shallow, so `2026.07.04` has no common
+  history with it), the changed submodules' commits fetched into `recoil-src\.git\modules\...`, a worktree on a new
+  branch at the tag (`recoil-0903`, `bardroid/sim-2026.09.03`; its submodules cloned from `recoil-src`'s module folders
+  with `-c submodule.<name>.url=<that folder>`, then the nested ones from GitHub: `rts\lib\lunasvg` (plutovg) and
+  `tools\pr-downloader` (readerwriterqueue), or CMake stops), and the old branch's whole change (`2026.07.04..<branch>`
+  as one commit made with `git commit-tree`) cherry-picked onto it: one 3-way merge, conflicts resolved once. The old
+  branch stays as it was: the source of the build players had. `GameVersion.cpp` takes the sync version from the tag
+  git describe finds since then. The PGO profile (`pgo-data`, recorded on 2026.07.04) breaks GCC on files the new
+  release changed ("corrupted profile info"): `pgo-data-0903` is a copy without the profiles of every file changed
+  between the two tags (143 of 1,086) and `-fprofile-correction` is added to the build's flags (profile data only
+  steer optimization, never floating-point results).
 
 ## Findings on the way
 
