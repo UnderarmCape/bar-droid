@@ -1032,7 +1032,36 @@ local function uprightScenario()
 			c:UpdateClientArea()
 		end
 	end
-	Spring.Echo("[bardroid-lobby] scenario page upright: values clear of their labels, the map narrower") -- (tools)
+	-- (a value wider than the room left of the map ran on over it, "Loss of all your builders and factories", dev phone
+	-- screenshot 2026-11-18: such a one in a smaller size of its font, as fits; the rows stand a line apart, no room for
+	-- a second line)
+	local map, config = nil, WG.Chobby and WG.Chobby.Configuration
+	for _, ch in ipairs(panel.children or {}) do
+		local c = real(ch)
+		local b = c and c._relativeBounds
+		if b and b.right == "0%" and b.width == "40%" then
+			map = c
+		end
+	end
+	local shrunk = 0
+	for _, ch in ipairs(map and config and config.GetFont and panel.children or {}) do
+		local c = real(ch)
+		local b, f = c and c._relativeBounds, c and c.font
+		if b and b.left == "24%" and type(c.caption) == "string" and f and f.GetTextWidth then
+			local room, w = map.x - c.x - 24, f:GetTextWidth(c.caption) -- (24: 12 left it 5 pixels from the map)
+			if room > 40 and w > room then
+				local size = math.max(11, math.floor((f.size or 17) * room / w))
+				local small = config:GetFont(size, "bardroidScenarioValue",
+					{ font = f.font, shadow = f.shadow, outline = f.outline, outlineColor = f.outlineColor }, true)
+				c.objectOverrideFont, c.font = small, small -- (Chobby's shared fonts: never disposed with a label)
+				c:UpdateLayout()
+				c:Invalidate()
+				shrunk = shrunk + 1
+			end
+		end
+	end
+	Spring.Echo("[bardroid-lobby] scenario page upright: values clear of their labels, the map narrower"
+		.. (shrunk > 0 and (", " .. shrunk .. " value(s) smaller to fit beside it") or "")) -- (tools)
 end
 
 -- Chobby's map picker upright (gui_maplist_panel.lua, a skirmish room's Change Map): laid out for a wide window, its
