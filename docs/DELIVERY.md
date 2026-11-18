@@ -773,13 +773,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       controller-game block mission_info and team_stats (11-10, 11-11) since, so five copy-failed cases broke on
       "command not found". It lifts all seven now (one awk helper) and gives Mission Info's and TeamStats' copies their
       marks as made, so they stay quiet as on a phone: 66 cases ALL PASS.
-      **lobby bridge** (~00:55): the test again. It compiles LobbyBridge.java on the laptop against stand-ins for
+      **lobby bridge** (~00:48): the test again. It compiles LobbyBridge.java on the laptop against stand-ins for
       Android (tools/lobby-bridge-test/src), and LobbyBridge has since used Handler/Looper and Toast (StartNewSpring's
       note, 11-17), ConnectivityManager (no network: downloads fail at once, 11-11) and ReplayImportActivity (the
       Replays tab's Add, 11-17): javac stopped on 8 errors. Stand-ins added (a posted Runnable runs at once, a toast
       printed, a network always there, the import activity named in the startActivity line). Run alone: the lobby
       connected, its two web files downloaded, the web link opened, 7 replays read: "[bridgetest] done: 7 replay
       infos", laptop-tests' PASS line.
+      **lobby touch** (~01:10): three speak-to-chat cases (11-08) had passed only on the phone. The test widget writes
+      the app's "act voice_on" into LuaUI/Config/bardroid_touch.txt, and the laptop's isolated write dir has no LuaUI
+      folder (no game ever ran there): the line was never written. The script makes LuaUI\Config now, as a phone has
+      it. And the lobby widget read the touch log from its end at its first open, so a log that first appeared with
+      the app's first line lost that line: a log that was not there at the widget's first look is read from its start
+      now (a phone whose app makes the log after the lobby looked would have lost a first "act" too). Laptop: ALL
+      PASS; dev phone lobby-phone-test: ALL PASS.
 - [x] **publish-check after the evening's ~30 commits** (hardening, 2026-11-18 ~00:15, laptop): the tracked files PASS
       everything (GPL text, no BAR artwork outside the cleared phone versions, no private data, no keys or logins, no
       file over 50 MB, a CHANGELOG entry for 0.2.0). The history check FAILs as before (the owner's icon in 3 old

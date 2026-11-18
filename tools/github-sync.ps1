@@ -66,7 +66,7 @@ if ($Release) {
   $when = (Get-Item $apk).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
   $subject = (& $git -C $App log -1 --format=%s).Trim()
   $notes = @"
-The newest phone build, as installed on the Fold7: built $when from ``$short`` ($subject).
+The newest phone build: the APK built $when; this repository at ``$short`` ($subject) when it went up.
 
 - Phone engine: $engineBuild (source: the bardroid/* branches of $owner/bar-droid-engine)
 - A debug build, signed with the project's public dev key (app/bardroid-debug.jks): it installs over the app built

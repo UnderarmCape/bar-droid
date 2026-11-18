@@ -2440,11 +2440,17 @@ local logFile, logPos
 -- the log's new whole lines since the last call (none the first time: what came before is not replayed). Its size only
 -- every 30 calls (a seek to the end is an fstat, which proot traps: bardroid_touch.lua's newTouchLines); else reads on.
 local logCalls = 0
+local logMissing = false -- (no log at the first look: one that appears after holds only new lines)
 local function appLines()
 	if not logFile then
 		logFile = io.open(TOUCH_LOG, "r")
-		logPos = logFile and logFile:seek("end")
-		return nil
+		-- (a log that was not there before is read from its start: its first line made it, and opened at its end that
+		-- line was lost; laptop lobby-touch-test, 2026-11-18, "act voice_on" written into a log not yet made)
+		logPos = logFile and (logMissing and 0 or logFile:seek("end"))
+		logMissing = logFile == nil
+		if not (logFile and logPos == 0) then
+			return nil
+		end
 	end
 	logCalls = logCalls + 1
 	if logCalls % 30 == 0 then

@@ -15,7 +15,9 @@ if (-not $Engine) { $Engine = (Get-ChildItem (Join-Path $Bar "engine") -Director
 $EngineDir = Get-EngineDir $Engine
 
 Remove-Item -Recurse -Force "$Data\LuaMenu" -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force -Path "$Data\LuaMenu\Config", "$Data\LuaMenu\Widgets" | Out-Null
+# (and LuaUI\Config, where a phone's app writes the touch log the lobby widget reads: in this write dir no game ever
+# made it, so the test's "act voice_on" could not be written and three speak-to-chat cases failed; 2026-11-18)
+New-Item -ItemType Directory -Force -Path "$Data\LuaMenu\Config", "$Data\LuaMenu\Widgets", "$Data\LuaUI\Config" | Out-Null
 $links = foreach ($d in "packages", "pool", "rapid") {
   $link = Join-Path $Data $d
   if (-not (Test-Path $link)) { cmd /c mklink /J "$link" "$(Join-Path $Bar $d)" | Out-Null }
