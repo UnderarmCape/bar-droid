@@ -57,16 +57,38 @@ if ($Release) {
   $head = (& $git -C $App rev-parse HEAD).Trim()
   $short = $head.Substring(0, 8)
   $engineBuild = ""
+  # (the commit the APK was built from: its Termux:X11 version line in its dex, "... from BAR Droid <commit>[ + changes]"
+  # (patches 0012, 0016); HEAD here can be a later commit of docs only, 2026-11-18: built from ab66c2d7, HEAD 91b45544)
+  $builtFrom = ""
   Add-Type -AssemblyName System.IO.Compression.FileSystem
   $z = [IO.Compression.ZipFile]::OpenRead($apk)
   try {
     $e = $z.Entries | Where-Object { $_.FullName -like "assets/phone-engine/*/BUILD.txt" } | Select-Object -First 1
     if ($e) { $r = New-Object IO.StreamReader($e.Open()); $engineBuild = ($r.ReadLine()); $r.Close() }
+    foreach ($d in ($z.Entries | Where-Object { $_.FullName -like "classes*.dex" })) {
+      $ms = New-Object IO.MemoryStream; $s = $d.Open(); $s.CopyTo($ms); $s.Close()
+      $txt = [Text.Encoding]::GetEncoding(28591).GetString($ms.ToArray())
+      $i = $txt.IndexOf("from BAR Droid ")
+      if ($i -ge 0) {
+        $j = $txt.IndexOf([char]0, $i)
+        if ($j -gt $i) { $builtFrom = $txt.Substring($i + 15, $j - $i - 15).Trim(); break }
+      }
+    }
   } finally { $z.Dispose() }
   $when = (Get-Item $apk).LastWriteTime.ToString("yyyy-MM-dd HH:mm")
   $subject = (& $git -C $App log -1 --format=%s).Trim()
+  $from = "this repository at ``$short`` ($subject)"
+  if ($builtFrom) {
+    $b = ($builtFrom -split " ")[0]
+    $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"   # (a commit not here: git's stderr, no stop)
+    $bSubject = (& $git -C $App log -1 --format=%s $b 2>$null)
+    if ($LASTEXITCODE -ne 0) { $bSubject = $null }
+    $ErrorActionPreference = $eap
+    $changes = if ($builtFrom -match "\+ changes") { ", with changes not yet committed" } else { "" }
+    $from = "from ``$b`` ($(if ($bSubject) { $bSubject.Trim() } else { 'not in this repository' })$changes); this repository at ``$short`` when it went up"
+  }
   $notes = @"
-The newest phone build: the APK built $when; this repository at ``$short`` ($subject) when it went up.
+The newest phone build: the APK built $when $from.
 
 - Phone engine: $engineBuild (source: the bardroid/* branches of $owner/bar-droid-engine)
 - A debug build, signed with the project's public dev key (app/bardroid-debug.jks): it installs over the app built
@@ -83,10 +105,11 @@ The newest phone build: the APK built $when; this repository at ``$short`` ($sub
   [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
   if ($exists) {
     & $gh release edit latest-build -R "$owner/bar-droid" --title "Latest build ($when)" --notes-file $notesFile --prerelease | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw "the release's notes did not go up" }   # (the upload's code alone was checked)
     & $gh release upload latest-build $apk -R "$owner/bar-droid" --clobber
   } else {
     & $gh release create latest-build $apk -R "$owner/bar-droid" --title "Latest build ($when)" --notes-file $notesFile --prerelease --verify-tag
   }
   if ($LASTEXITCODE -ne 0) { throw "the release did not go up" }
-  "[github] latest-build: $short, $([math]::Round((Get-Item $apk).Length / 1MB, 1)) MB, engine $engineBuild"
+  "[github] latest-build: $short, built from $(if ($builtFrom) { $builtFrom } else { '?' }), $([math]::Round((Get-Item $apk).Length / 1MB, 1)) MB, engine $engineBuild"
 }
