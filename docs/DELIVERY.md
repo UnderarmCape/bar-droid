@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Select Map upright broken by the run before: Back and Advanced at the panel's top, the maps tiny** (hardening,
+      2026-11-18 ~04:45, dev phone upright, offline lobby, the quick Skirmish walked to its end): on Select Map the
+      four maps stood as small strips with their names over their pictures and only the feet of Back and Advanced
+      showed under the panel's top edge. `quickFoot` (the run before) set them at Next's y, and that page's Start is
+      hidden until a map is picked: no place to copy, the two went up to the top, and quickMaps' room (from Advanced's
+      y) shrank to its minimum. They now grow upwards from Chobby's own foot (4 % of the panel from its bottom, where
+      Next stands too), whatever Next is doing. Dev phone: Select Difficulty as before; Select Map four large maps in
+      two columns, Back and Advanced at the foot as tall as Next; a map picked: Start between them on the same line,
+      Chobby's hint above. lobby-phone-test ALL PASS on the rebuilt APK. (The polish this run: that foot finished.)
+      The Fold7 stayed off adb.
 - [x] **Voice chat and the share sliders reviewed; BAR's benchmark battle; quick Skirmish's Back and Advanced as tall
       as Next** (hardening, 2026-11-18 ~04:35, dev phone): `VoiceChat` read again (a recognizer per session, late
       callbacks dropped by number, the screen gone and the microphone question handled): nothing to change; its live
