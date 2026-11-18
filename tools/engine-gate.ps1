@@ -52,6 +52,9 @@ function Run-Replay([string]$file, [bool]$switchesOff) {
   $p = @{ Replay = $file; Engine = "default"; Skip = 9000; Seconds = 30; Timeout = 3600; Device = $Device }
   if ($switchesOff) { $p.Settings = $off }
   Take
+  # (background apps closed first: an 8v8 of BAR's test-31992 on the 8 GB dev phone was taken by Android's low-memory
+  # killer with either engine, the official one while loading, and played to its end after "am kill-all", 2026-11-18)
+  & $adb -s $Device shell "am kill-all" | Out-Null
   $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
   try { $out = & $replayTool @p 2>&1 | ForEach-Object { "$_" } } catch { $out = @("$_") } finally { $ErrorActionPreference = $eap; Free }
   $out | Select-Object -Last 12 | Out-Host
