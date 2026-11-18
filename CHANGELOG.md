@@ -109,7 +109,8 @@ The first version meant for other people's phones: everything since the first bu
   auto-rotate on, upright or sideways as it is held, at any time; with auto-rotate off, "Play upright" decides.
 - The dock's metal and energy open BAR's own resource bar, drawn as BAR's top bar draws it: the storage's fill
   (metal grey to white, energy yellow), the red share knob and, on energy's bar, the pale conversion knob; a press
-  moves the nearer knob.
+  moves the nearer knob, in whole percents, the knob with the finger at once online too. The small metal and energy
+  boxes show the share and conversion marks on their bars, the open one's box lit in gold.
 - The touch dock sideways too (launcher setting "Touch dock sideways", on), for one thumb: at one side of the bottom
   the units' panel with BUILD | ORDERS tabs (a sideways swipe on the panel changes the tab), and beside it metal,
   energy, BAR's minimap and the unit groups, with HOME
@@ -126,8 +127,10 @@ The first version meant for other people's phones: everything since the first bu
   among its buttons; it was Chobby's wide layout). The lobby upright: its buttons on two pages (Multiplayer, Skirmish,
   Scenarios, Settings, Chat, Friends first), notes at the top left beside the connection state, BAR's Settings drawn
   in full, a scenario's page with its values clear of their labels and its records whole, the Keys window's six tabs
-  in two rows (the three Legacy ones were out of reach), the map picker's details under the map's picture, clear of
-  Preview and Select Map. The lobby sideways: all its buttons, Keys, Website and Login
+  in two rows (the three Legacy ones were out of reach) and the window no taller than its picture, the map picker's
+  details under the map's picture, clear of Preview and Select Map, the quick Skirmish's Back and Advanced as tall as
+  Next, a scenario's long loss or victory line a size smaller beside its map instead of over it. The lobby sideways:
+  its notes ("Download Failed") off the Skirmish steps' titles; all its buttons, Keys, Website and Login
   too, in one column of large buttons down the left, close together, a swipe up or down for the next page; the
   screens beside it take the whole height. Taps on the dock answer
   with a light vibration. The dock's presets (STRAFE: a line abreast with gaps; three formations, the ranged behind the front
@@ -144,7 +147,8 @@ The first version meant for other people's phones: everything since the first bu
   keeps it, the building waiting where it began, and GRID or LINE brings it back; GRID and LINE switch a held one.
   A long press on the dock no longer moves the camera.
 - Settings laid out for the phone (with the engine branch, which runs the app's widgets as the game's): upright the
-  window fills the screen under the top bar, BAR's tabs a grid of buttons over the list, larger rows; sideways as large
+  window fills the screen under the top bar, BAR's tabs a grid of buttons over the list (a short last row centred),
+  larger rows; sideways as large
   as the screen allows; a red close button. Every setting works, the ones that turn BAR's widgets on and off too. With
   BAR's official engine BAR's own Settings stays.
 - Before the start, the dock's UNDO LAST, CLEAR QUEUE and faction buttons are two rows tall where they fit, with PING
@@ -153,7 +157,8 @@ The first version meant for other people's phones: everything since the first bu
   types (the type tiles as tall as the Fight button beside them); the orders on the right stay where they always are.
   The D-Gun button is red.
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
-  the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full. PINGS on the home grid: LAST
+  the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full; a
+  group's number stands on a dark badge (gold on the unit's picture all but vanished). PINGS on the home grid: LAST
   PINGS goes to the last 4 pings from others (their count on it), PING then a map tap pings there; PING held: what you say labels the ping (as BAR's pings with
   words); PING tapped twice: CHAT, speak to chat, with a flip back to PING when it is sent. FACTORIES beside
   them brings the camera to your factories in turn, and picks the one it is on once you stop tapping for 0.75 s (a
@@ -242,10 +247,12 @@ The first version meant for other people's phones: everything since the first bu
   least 5000 and cost ~2 ms a frame in a late 8v8).
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
   its screen is hidden; a floating window when you leave the game.
-- **Share logs** in the launcher, and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
+- **Share logs** in the launcher (an online game's join password, which the game writes into its log, taken out of
+  the zip), and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
   Benchmark show their result in the launcher, and a game that fails to start says so there. The launcher's
   settings show their name first, what they do smaller under it (its text fields and option groups too: the map
-  says it is Play vs AI's); its warnings stand in amber. It shows BAR's game version the last start played
+  says it is Play vs AI's); its warnings stand in amber; its log's long lines go on under their words, past the time;
+  Display settings' scale says what it does. It shows BAR's game version the last start played
   ("Game version test-31836-b250a16"), the one to compare with friends before an online game.
 - A skirmish's first seconds no longer stutter at 2-5 fps (BAR's cursors load with the game), and a game takes about
   400 MB less graphics memory (BAR's unit picture cache off).
