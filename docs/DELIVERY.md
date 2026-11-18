@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The pad tests after the night's changes; the share list's strip dimmed when nothing can go** (hardening,
+      2026-11-18 ~01:50, dev phone): pad-test -Online ALL PASS, -Dgun ALL PASS, pace-test ALL PASS, -Share ALL PASS.
+      Polish from its screenshots: with a teammate's storage full ("THEIR METAL STORAGE IS FULL" in red) or nothing
+      to give, the amount strip under the words stayed lit gold with bright arrows, as if the step still mattered;
+      now its lit steps are grey and its arrows dim then (bardroid_pad.lua shareDraw). Dev phone: the 15-teammate
+      shot with the full storage, the strip grey.
 - [x] **The project on GitHub, private** (Kailil, 2026-11-18 ~00:45: "Get this project fully on github as private and
       make sure that our new builds and work is reflected via github as well. Log our conversation history there if
       possible too as an archive so they can see how the project is supported long term"): two private repositories
@@ -753,7 +759,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       stay private with the repository (going public still needs the fresh-history decision above). The conversation
       archive: the work log's day pages (docs/worklog/), Kailil's every message and Claude's answer, now whole (they
       were cut at 700 characters; tools/worklog.py), linked from the README.
-- [x] **laptop-tests after 2½ weeks: five checks fail, all answered (23 of 23 PASS, 2026-11-18 ~01:55)** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
+- [x] **laptop-tests after 2½ weeks: five checks fail, all answered (23 of 23 PASS, 2026-11-18 ~01:40)** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
       full run on record 10-31, all 15 PASS): 614 s, PASS for lua locals, powershell syntax, GameActivity, the five
       make-*.py patches on the laptop's BAR, publish patterns, downloader, settings merge, updater, PadGame,
       StatusText, MapStore, quit in first person, the pad with unit control off. FAIL: **lua lint** (fixed this run,

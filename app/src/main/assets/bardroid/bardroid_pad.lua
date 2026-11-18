@@ -1807,12 +1807,14 @@ local function shareDraw(vsx, vsy)
 		-- (within the panel: "GIVE 300 METAL (ALL THEY HAVE ROOM FOR)" ran past both its edges, dev phone 2026-11-08)
 		local ls = math.min(size, size * (w - pad * 2) / math.max(1, font:GetTextWidth(line) * size))
 		text(line, mid, ya + amountH * 0.58 + (size - ls) * 0.36, ls, lc, 1, "co")
-		-- the steps between two arrows
+		-- the steps between two arrows; dimmed while nothing can go (none to give, their storage full: the strip still
+		-- lit gold under a red "STORAGE IS FULL" read as a choice that mattered, pad-test -Share screenshot 2026-11-18)
+		local idle = want < 1 or room < 1
 		local tri = math.floor(size * 0.55)
 		local sy = math.floor(ya + amountH * 0.22)
 		local sh = math.max(4, math.floor(size * 0.38))
 		local function arrow(x, dir)
-			local a = (dir < 0 and s.step > 1 or dir > 0 and s.step < #SHARE_STEPS) and 0.95 or 0.3
+			local a = (dir < 0 and s.step > 1 or dir > 0 and s.step < #SHARE_STEPS) and (idle and 0.35 or 0.95) or 0.3
 			gl.Color(1, 1, 1, a)
 			gl.BeginEnd(GL.TRIANGLES, function()
 				gl.Vertex(x + dir * tri, sy + sh / 2)
@@ -1829,7 +1831,8 @@ local function shareDraw(vsx, vsy)
 		for k = 1, n do
 			local a0 = sx0 + (k - 1) * (segW + sg)
 			if k <= s.step then
-				style.fill(a0, sy, a0 + segW, sy + sh, accent, 0.95, math.floor(sh / 2))
+				style.fill(a0, sy, a0 + segW, sy + sh, idle and { 0.4, 0.4, 0.42 } or accent, idle and 0.7 or 0.95,
+					math.floor(sh / 2))
 			else
 				style.fill(a0, sy, a0 + segW, sy + sh, { 0.12, 0.12, 0.14 }, 0.85, math.floor(sh / 2))
 			end
