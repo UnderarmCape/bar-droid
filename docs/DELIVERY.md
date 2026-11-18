@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby tests open a scenario** (hardening, 2026-11-18 ~07:15): the test widget of lobby-touch-test and
+      lobby-phone-test now opens Scenarios, picks the list's first (Chobby's "<id>button"), and upright checks that
+      each value of its page ends left of the map (the run before's fix). Dev phone upright: ALL PASS ("map from
+      389"); with the widget from before that fix put in by dev-env.sh: FAIL, "Loss of all your builders and
+      factories" 46 over. Laptop (sideways, Chobby's own layout, not checked there): ALL PASS. CLAUDE.md's line for the
+      test says so. No UI polish this run. The Fold7 still refuses its old port (on Tailscale, port changed).
 - [x] **laptop-tests after the night's changes; a scenario's long Loss line over its map** (hardening, 2026-11-18
       ~05:25-07:10): laptop-tests 23 of 23 PASS (654 s, the laptop slow at that hour). The lobby upright (dev phone):
       Scenarios' list clean; a scenario's page (Fortress Assault) had its loss condition, "Loss of all your builders and
