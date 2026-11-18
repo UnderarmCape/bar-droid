@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A fold or turn in the lobby: laid out again in place** (hardening, 2026-11-18 ~12:45, dev phone sideways, the
+      lobby offline with tools/lobby-login's widget, removed after): the Welcome screen at 2008x938, then 1080x1080
+      (`wm size`), then back: Chili lays the menu column and the panel out again at once, no LuaMenu reload, no stop and
+      no Lua error; square, the column holds all 15 entries, sideways 13 and its page dots. Nothing to change. The Fold7
+      still unreachable.
 - [x] **laptop-tests' checks without BAR after the day's changes** (hardening, 2026-11-18 ~12:40, laptop; Kailil at
       the laptop, so no BAR started): publish-check's self-test, the downloader, the springsettings merge, the updater
       (its "Update check" words), PadGame, the status words, the map storage limit, LogRedact, the PowerShell syntax of
