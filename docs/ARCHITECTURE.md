@@ -77,7 +77,10 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 - **Map storage.** `MapStore` keeps the downloaded maps under the launcher's limit (3 GB by default): `GameService`
   records each map's last use from the engine's checksum line for its archive as a game loads (`/data` is mounted
   noatime) and, before an engine starts, deletes the maps played longest ago until the rest fit.
-- **In-game widgets** (`app/src/main/assets/bardroid/`): `bardroid_touch.lua` (camera, perf log, catch-up mode),
+- **In-game widgets** (`app/src/main/assets/bardroid/`): `bardroid_touch.lua` (camera, perf log, catch-up mode, BAR's
+  interface scale on a screen change: with the phone engine's handler only the widgets that read the scale at load are
+  loaded again, `rescaleWidgets`; under BAR's official engine the whole interface; a new size counts once it holds,
+  0.5 s, 1.5 s before a whole reload),
   `bardroid_players.lua` (small player list), `bardroid_spectate.lua` (spectating by touch: player cameras, follow,
   presets, 1st person), `bardroid_info.lua`, `bardroid_chat.lua` (chat lines and the typing box),
   `bardroid_minimap.lua` (minimap small until tapped: half size unfolded, upright as tall as the top bar's row, the chat

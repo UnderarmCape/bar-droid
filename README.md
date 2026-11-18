@@ -84,8 +84,8 @@ it to move it, pinch or use the buttons to size it; Done (or three fingers again
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
 build menu is the app's copy of BAR's own Build menu, a 3x3 grid (9 build options a page, the page arrows in a strip
 under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized (in the controller game, the gamepad's own build menu instead); a unit info panel made bigger stops at the order menu, and the build menu keeps clear of it. BAR's top bar, order menu and start countdown can't be moved or sized on their own
-(BAR has no setting for them; their size follows the interface scale: 2.0 folded, 1.0 unfolded). Folded and unfolded
-each keep their own layout.
+(BAR has no setting for them; their size follows the interface scale: 2.0 folded and held sideways, 1.0 folded and
+upright and unfolded). Folded and unfolded each keep their own layout.
 
 **Chat:** Enter (or the keyboard's Enter) opens the typing box at the top of the chat; long messages wrap and get
 smaller so the whole message stays in view. Ctrl, Alt or Shift + Enter switch between everyone, allies and
@@ -237,6 +237,11 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 Tap **Share logs** on the launcher screen and attach the zip to an [issue](../../issues), with the phone model and
 what happened. The zip holds the app's and the game's logs and settings; an online game's join password, which the
 game writes into its log, is taken out of them first.
+
+Known: turning a folded phone between upright and sideways changes BAR's interface scale, and the game stops while
+BAR's panels take the new size: about a second with the phone engine, 5 to 10 seconds with BAR's official engine (it
+loads the whole interface again; the launcher's device lines say which engine runs). Upright, BAR's own Settings is
+wider than the screen with the official engine (the phone engine has the app's Settings): open it sideways.
 
 ## For developers
 

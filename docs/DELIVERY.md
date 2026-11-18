@@ -740,6 +740,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The sideways dock's three states checked; the README on a folded turn** (hardening, 2026-11-18 ~12:35, dev
+      phone sideways): BUILD, ORDERS (a swipe) and nothing picked: each whole, the build tiles' right column with its
+      margin at full zoom (a half-size crop looked cut). README: the interface scale was "2.0 folded, 1.0 unfolded",
+      untrue since folded upright is 1.0; now as it is; its Problems name the stop a folded turn makes (about a second
+      with the phone engine, 5-10 s with BAR's official engine) and BAR's own Settings too wide upright with the
+      official engine (open it sideways). ARCHITECTURE's bardroid_touch.lua line says how it rescales. publish-check
+      (tracked files) PASS. The Fold7 still unreachable.
 - [x] **On the official engine a turn waits 1.5 s before its whole reload** (hardening, 2026-11-18 ~12:20, dev phone
       sideways, the launcher's Phone engine off then on): a new interface scale there costs the whole reload (5-10 s,
       the entry below), so the touch widget now takes a new screen size only once it has held for 1.5 s (four reads
