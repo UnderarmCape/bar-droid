@@ -740,6 +740,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **Every file the docs name, checked** (hardening, 2026-11-18 ~02:55): a scan of README, CLAUDE.md,
+      CONTRIBUTING, HANDOFF and docs/*.md (but the logs) for tools/, app/, docs/ and scripts/ paths found none missing
+      but the engine branch's own (tools/engine-sim/build-engine.ps1, docs/ENGINE-SIM.md), named as such everywhere but
+      one place in ENGINE-DEFAULT.md: now so there too. And ENGINE-DEFAULT.md's opening still said the app ships BAR's
+      official engine only, as when it was planned: it says that was then, and that the APK carries the phone engine
+      and starts it by default since 2026-11-13 (its own Status section).
 - [x] **BUILDING.md's checks brought up to date; the README names the test build** (hardening, 2026-11-18 ~02:50):
       docs/BUILDING.md listed tools\lobby-game-test.ps1, gone since e5342ddc, and not the dock, pad, first-person-save
       or remake checks; its Checks list now has every tool that exists (lobby-bridge-test in the gone one's place) and

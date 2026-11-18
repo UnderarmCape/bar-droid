@@ -1,9 +1,10 @@
 # Plan: the phone engine as the app's default
 
 Kailil, 2026-11-13, after the phone Settings landed on the engine branch: shipping that engine to every player
-("yes plan it"). Today the app ships BAR's official Recoil engine; the engine branch (`engine/sim`,
-`docs/ENGINE-SIM.md`) runs only where `files/bar/dev-env.sh` starts it: the dev phone in tests, and Kailil's Fold7
-since 2026-11-07.
+("yes plan it"). When this was planned the app shipped BAR's official Recoil engine only; the engine branch
+(`engine/sim`, `docs/ENGINE-SIM.md`) ran only where `files/bar/dev-env.sh` started it: the dev phone in tests, and
+Kailil's Fold7 since 2026-11-07. Since 2026-11-13 the APK carries the phone engine and starts it by default (the
+launcher's "Phone engine", on; "Status" below); its source is on the engine/sim and bardroid/* branches.
 
 ## What players gain
 
@@ -75,7 +76,8 @@ binary inside the APK; the engine's source public with the app (his push).
 
 ## Stages
 
-1. **A release build of the phone engine.** `tools/engine-sim/build-engine.ps1` from the tag BAR's servers run
+1. **A release build of the phone engine.** `tools/engine-sim/build-engine.ps1` (on the engine/sim branch, its
+   worktree beside this checkout) from the tag BAR's servers run
    (2026.07.04 today) plus the branch, the official floating-point flags (ENGINE-SIM "Sync rules"), its source commit
    written into the binary's version line and beside it. Debug symbols kept on the laptop for crash reports.
 2. **The gate every build passes before it ships** (a script, `tools/engine-gate.ps1`): the server replays to their
