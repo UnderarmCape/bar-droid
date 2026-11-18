@@ -46,6 +46,9 @@ function widget:GetInfo()
 		-- last of all: IsAbove reaches this widget only where no other widget claims the pointer
 		layer = 1000000,
 		enabled = true,
+		-- (BAR's own widget handler, granted to the game's widgets only (the phone engine): a turn's new interface scale
+		-- loads only the widgets that read it again, rescaleWidgets; a user widget gets none and reloads the interface)
+		handler = true,
 	}
 end
 
@@ -1321,6 +1324,76 @@ end
 -- read ui_scale only when they load, so a fold or unfold that changes it reloads LuaUI, as BAR's own slider does.
 -- launch-bar.sh sets it for the screen a game starts on, so a start needs no reload.
 local UI_SCALE_COVER, UI_SCALE_INNER, UI_SCALE_COVER_UPRIGHT = 2.0, 1.0, 1.0
+-- A turn on the long screen (the folded Fold7, the dev phone) changes the scale, sideways 2.0, upright 1.0, and the
+-- whole interface's reload froze the game ~7.5 s on the dev phone (Kailil, 2026-11-18: "When folded, if I swap between
+-- vertical and landscape ... the game freezes and takes about 10 seconds"). With BAR's own widget handler (the phone
+-- engine runs this as one of the game's widgets: handler = true) only the widgets whose files read ui_scale are loaded
+-- again, FlowUI first (most of BAR's panels take their sizes from it), and the next frame every widget is told the
+-- screen's size again, which the rest size themselves by. Without it (BAR's official engine) the whole reload as before.
+local uiRescale = { pending = nil }
+-- (a widget reading ui_scale only in its ViewResize takes the new one from the sizes sent after: no load needed; the
+-- build menu copy alone took 0.5-1.2 s of 1.5-2.6 s loaded again, dev phone. Any reading outside ViewResize's body,
+-- up to the file's next top-level function, counts as at load: a misread loads one more, never one too few)
+function uiRescale.atLoad(src)
+	local vr = src:find("function widget:ViewResize", 1, true)
+	local vrEnd = vr and (src:find("\nfunction ", vr + 10, true) or #src)
+	local at = 1
+	while true do
+		local i = src:find("ui_scale", at, true)
+		if not i then
+			return false
+		end
+		if not (vr and i > vr and i < vrEnd) then
+			return true
+		end
+		at = i + 8
+	end
+end
+local function rescaleWidgets(screen, want)
+	local wh = widgetHandler
+	if not (wh and type(wh.widgets) == "table" and wh.knownWidgets and type(wh.DisableWidget) == "function"
+		and type(wh.EnableWidget) == "function" and type(wh.ViewResize) == "function") then
+		return false
+	end
+	local me, first, names, seen = widget:GetInfo().name, nil, {}, {}
+	for _, w in ipairs(wh.widgets) do
+		local info = w.whInfo
+		local file, name = info and info.filename, info and info.name
+		if name and file and name ~= me and not seen[name] then
+			seen[name] = true
+			local ok, src = pcall(VFS.LoadFile, file)
+			if ok and type(src) == "string" and uiRescale.atLoad(src) then
+				if file:find("gui_flowui", 1, true) then
+					first = name
+				else
+					names[#names + 1] = name
+				end
+			end
+		end
+	end
+	if first then
+		table.insert(names, 1, first)
+	end
+	local t0 = Spring.GetTimer()
+	for _, name in ipairs(names) do
+		wh:DisableWidget(name)
+		wh:EnableWidget(name)
+	end
+	-- (BAR's handler queues the loads and runs them after this call-in: the sizes go out at the next frame)
+	uiRescale.pending = { t0 = t0, n = #names, screen = screen, want = want, frame = Spring.GetDrawFrame() }
+	return true
+end
+local function rescaleFinish()
+	local p = uiRescale.pending
+	if not p or Spring.GetDrawFrame() <= p.frame then
+		return
+	end
+	uiRescale.pending = nil
+	local vsx, vsy = Spring.GetViewGeometry()
+	pcall(widgetHandler.ViewResize, widgetHandler, vsx, vsy)
+	Spring.Echo(string.format("[bardroid-touch] %s screen: interface scale %.1f, %d widgets loaded again in %d ms (no reload)",
+		p.screen, p.want, p.n, Spring.DiffTimers(Spring.GetTimer(), p.t0) * 1000))
+end
 local function applyUiScale(w, h)
 	local long, short = math.max(w, h), math.min(w, h)
 	if long < 640 then
@@ -1343,6 +1416,9 @@ local function applyUiScale(w, h)
 	end
 	Spring.SetConfigString("bardroid_ui_scale_reload", screen)
 	Spring.SetConfigFloat("ui_scale", want)
+	if rescaleWidgets(screen, want) then
+		return
+	end
 	Spring.Echo(string.format("[bardroid-touch] %s screen: interface scale %.1f, reloading the interface", screen, want))
 	Spring.SendCommands("luarules reloadluaui")
 end
@@ -1600,6 +1676,9 @@ end
 
 function widget:Update(dt)
 	WG.BarDroidOnInterface = pointOnInterface
+	if uiRescale.pending then -- (a new interface scale: the reloaded widgets in, every widget told the screen's size)
+		rescaleFinish()
+	end
 	guarded(update, dt)
 end
 

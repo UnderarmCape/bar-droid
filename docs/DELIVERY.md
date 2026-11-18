@@ -740,6 +740,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A turn of the folded Fold7 froze the game ~10 s** (Kailil, 2026-11-18 ~08:15: "When folded, if I swap
+      between vertical and landscape, or vise versa, the game freezes and takes about 10 seconds to resume ... It's
+      like the lua reset command is being sent when I rotate my phone. This behavior doesn't occur when I rotate my
+      phone in unfolded mode"). He was right: on the long cover screen a turn changes BAR's interface scale (2.0
+      sideways, 1.0 upright), and `bardroid_touch.lua` applied it with `luarules reloadluaui`, every widget again
+      (~7.5 s on the dev phone, ~9 s of frozen frames). Unfolded the screen is near square, 1.0 both ways: no reload.
+      Now the touch widget takes BAR's widget handler (`handler = true`, granted to game widgets, the phone engine)
+      and loads again only the widgets that read `ui_scale` when they load (22: FlowUI first, then the rest; a
+      read only inside ViewResize needs none), then tells every widget the screen's size. Dev phone, sideways ↔
+      square (`wm size`): 22 widgets in 1.2-3.4 s, the frames frozen ~1.5-2.8 s (the first change after a start the
+      longest); upright 1.0 → 2.0 → 1.0 (a test-only trigger: "Play upright" holds the phone upright): BAR's top bar
+      grown, then back to the start's exact picture; no Lua errors. Without the handler (BAR's official engine) the
+      old full reload stays. touch-phone-test, dock-phone-test, pad-test ALL PASS; luacheck 0 warnings; the touch
+      widget 194 of 200 locals. On the Fold7 at 09:03 for his folded turn.
 - [x] **CHANGELOG after the night** (hardening, 2026-11-18 ~08:45): 0.2.0's section (not released yet) had none of the
       night's changes for players. Added where each belongs: the resource bars' whole percents and the small boxes'
       marks; the groups' numbers on a badge; the lobby upright (Keys window no taller than its picture, Back and
