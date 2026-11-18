@@ -35,8 +35,10 @@ MIN_MARKERS = 100
 IDLE_GAP_S = 10 * 60
 SITTING_GAP_S = 30 * 60
 LEAD_IN_S = 5 * 60
-MESSAGE_CHARS = 4000
-ANSWER_CHARS = 700
+# (the day pages are the project's conversation archive, kept on GitHub: Kailil, 2026-11-18, "Log our conversation
+# history there ... as an archive so they can see how the project is supported long term"; answers were cut at 700)
+MESSAGE_CHARS = 20000
+ANSWER_CHARS = 20000
 BIG_DATA = re.compile(r'"data":"[A-Za-z0-9+/=]{1000,}"')   # (an image's base64, scan)
 CACHE = os.path.join(ROOT, "build", "worklog-cache")   # (scan's, per transcript; not in the repository)
 CACHE_V = 1

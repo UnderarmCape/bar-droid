@@ -224,6 +224,7 @@ python -I tools\demo-rate.py <replay.sdfz>                               # game 
 python -I tools\tex-memory.py <launcher.log> [--top 25]                  # the engine's textures and GPU buffers summed (a game run with BARDROID_TEX_LOG=1 in dev-env.sh)
 python -I tools\worklog.py                                               # docs/WORKLOG.md: Kailil's messages, Claude's answers, time spent
 powershell -ExecutionPolicy Bypass -File tools\publish-check.ps1 [-Apk <release.apk>] [-NoHistory] [-SelfTest]   # before anything goes public (docs/DELIVERY.md)
+powershell -ExecutionPolicy Bypass -File tools\github-sync.ps1 [-Release] [-NoEngine]   # after every commit (Kailil, 2026-11-18): every branch to the private UnderarmCape/bar-droid, the engine's bardroid/* to UnderarmCape/bar-droid-engine; -Release after a Fold7 install: the APK as the rolling pre-release latest-build
 "Build APK.bat" phone release                                            # the public build: own icon, release key (local.properties), versioned name
 powershell -ExecutionPolicy Bypass -File tools\phone-bench.ps1 [-Scale 100|85|70] [-Cap 0|30|60] [-Label text] [-Profile widgets|gadgets] [-Settings @{Key=1}] [-DisplayScale 150|120|100] [-WidgetsOff "Name"]
             # BAR's "Benchmark BAR" scenario on the phone, unattended (launcher "Benchmark" button, or
@@ -260,6 +261,12 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
   statistics"): run `python -I tools\worklog.py` before the last commit of every work session and commit
   `docs/WORKLOG.md` and `docs/worklog/` with it. Private terms it must hide go in `..\worklog-redact.txt`, never in
   the repository. The road to a public release: `docs/DELIVERY.md`.
+- GitHub, private (Kailil, 2026-11-18: "Get this project fully on github as private and make sure that our new builds
+  and work is reflected via github as well"): after each commit `tools\github-sync.ps1` (every branch to
+  UnderarmCape/bar-droid, the phone engine's bardroid/* branches to UnderarmCape/bar-droid-engine); after a build goes
+  on the Fold7, `-Release` too (the APK as the rolling pre-release latest-build). Never force a branch; the
+  repositories stay private unless Kailil says otherwise (going public: publish-check and the fresh-history question
+  in docs/DELIVERY.md first). The work log's day pages are the conversation archive there.
 - BAR's game itself (CC-BY-NC-ND) comes from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` only,
   as BAR's launcher fetches it. Kailil, 2026-11-06: BAR's developers cleared him ("full authority to do whatever
   necessary to get this game android ready"; they are bringing him onboard), so content made from BAR's art for

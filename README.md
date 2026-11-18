@@ -242,7 +242,9 @@ what happened.
 [docs/BUILDING.md](docs/BUILDING.md) (build, checks, releasing), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (how it
 works), [CONTRIBUTING.md](CONTRIBUTING.md) (the rules: online play stays BAR's, BAR's content is never bundled),
 [CHANGELOG.md](CHANGELOG.md), [docs/HISTORY.md](docs/HISTORY.md) (measurements and decisions) and
-[docs/WORKLOG.md](docs/WORKLOG.md) (the effort behind it).
+[docs/WORKLOG.md](docs/WORKLOG.md) (the effort behind it). That work log is also the project's conversation archive:
+[docs/worklog/](docs/worklog/) has a page a day with every message of the project's owner to Claude and Claude's
+answer in full, so how the port has been supported can be read from the start.
 
 ## Licences
 

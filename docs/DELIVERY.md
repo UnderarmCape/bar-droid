@@ -740,6 +740,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The project on GitHub, private** (Kailil, 2026-11-18 ~00:45: "Get this project fully on github as private and
+      make sure that our new builds and work is reflected via github as well. Log our conversation history there if
+      possible too as an archive so they can see how the project is supported long term"): two private repositories
+      under UnderarmCape: **bar-droid** (this one, every branch with its whole history, 1975 commits) and
+      **bar-droid-engine** (the phone engine's source: the 11 bardroid/* branches of the Recoil clone in
+      hailmary-work\recoil-src, whose bardroid/combined the APK carries). `tools/github-sync.ps1` pushes both after
+      every commit (no force) and, with -Release after a Fold7 install, puts the APK up as the rolling pre-release
+      latest-build (its tag moved to HEAD, its notes naming the commit and the phone engine). Checked before the first
+      push: the tracked files pass publish-check; the histories hold no login or key but the project's deliberate
+      public debug key (app/bardroid-debug.jks, "anyone can sign with it"); the old commits' private terms and icon
+      stay private with the repository (going public still needs the fresh-history decision above). The conversation
+      archive: the work log's day pages (docs/worklog/), Kailil's every message and Claude's answer, now whole (they
+      were cut at 700 characters; tools/worklog.py), linked from the README.
 - [ ] **laptop-tests after 2½ weeks: five checks fail** (hardening, 2026-11-18 ~00:40, laptop, Kailil away; the last
       full run on record 10-31, all 15 PASS): 614 s, PASS for lua locals, powershell syntax, GameActivity, the five
       make-*.py patches on the laptop's BAR, publish patterns, downloader, settings merge, updater, PadGame,
