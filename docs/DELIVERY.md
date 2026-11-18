@@ -740,6 +740,9 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The launcher's Display & touch preferences looked at** (hardening, 2026-11-17 ~20:20, dev phone upright): the
+      top level (Output, Pointer, Keyboard, Other, the display server's version line) and Pointer read as they should;
+      nothing to change. The Fold7 still refuses adb.
 - [x] **The pad tests after the day's dock changes; FlowUI's Selector elsewhere** (hardening, 2026-11-17 ~20:15, dev
       phone): pad-test and pad-test -Dgun all pass (the D-gun sticks' drawing, the area orders' drag, the armed look);
       the last game's infolog and launcher.log without an error. FlowUI's Selector's other users: the Settings copy's
