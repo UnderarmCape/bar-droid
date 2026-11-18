@@ -1758,9 +1758,26 @@ local function shareDraw(vsx, vsy)
 			local bx0 = bx1 - barW
 			local bh = math.max(3, math.floor(size * 0.32))
 			local by = math.floor(yr + teamH / 2 - bh / 2)
-			style.fill(bx0, by, bx1, by + bh, { 0.08, 0.08, 0.09 }, 0.85, math.floor(bh / 2))
-			if frac > 0 then
-				style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, math.floor(bh / 2))
+			local fl, cs = WG.FlowUI, math.floor(bh / 2)
+			if fl and fl.Draw and fl.Draw.RectRound then
+				-- (as the dock's resource bars: a dark outlined track, the fill shaded from its foot with a gloss on its top
+				-- half; it was two flat strips, pad-test -Share's screenshots 2026-11-18)
+				local rr = fl.Draw.RectRound
+				rr(bx0 - 1, by - 1, bx1 + 1, by + bh + 1, cs + 1, 1, 1, 1, 1, { 0, 0, 0, 0.6 }, { 0, 0, 0, 0.6 })
+				rr(bx0, by, bx1, by + bh, cs, 1, 1, 1, 1, { 0.05, 0.05, 0.06, 0.9 }, { 0.12, 0.12, 0.13, 0.9 })
+				if frac > 0 then
+					local fx = bx0 + math.max(bh, (bx1 - bx0) * frac)
+					rr(bx0, by, fx, by + bh, cs, 1, 1, 1, 1, { accent[1] * 0.55, accent[2] * 0.55, accent[3] * 0.55, 0.95 },
+						{ accent[1], accent[2], accent[3], 0.95 })
+					gl.Blending(GL.SRC_ALPHA, GL.ONE)
+					rr(bx0, by + bh / 2, fx, by + bh, cs, 1, 1, 0, 0, { 1, 1, 1, 0 }, { 1, 1, 1, 0.18 })
+					gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+				end
+			else
+				style.fill(bx0, by, bx1, by + bh, { 0.08, 0.08, 0.09 }, 0.85, cs)
+				if frac > 0 then
+					style.fill(bx0, by, bx0 + math.max(bh, (bx1 - bx0) * frac), by + bh, accent, 0.95, cs)
+				end
 			end
 			-- (their share slider: a mark where their room ends, what BAR lets in; in BAR's share red, as the dock's
 			-- resource bar and BAR's top bar show it (Kailil, 2026-11-17, of the dock's: "red line as the share value"),
