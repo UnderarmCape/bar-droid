@@ -762,6 +762,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       every start, the Fold7 too; it is no widget. toolchain.ps1 Get-StrayWidgets now reports only .lua files (dock-
       and pad-test): none on the dev phone. (2) UI polish: the launcher's log was a square block barely darker than the
       screen under the round buttons; now a round-cornered box a little darker (res/drawable/log_box.xml; screenshot).
+      The APK from 6b9707bf on the Fold7 at 18:23.
       (Looked at and left: the launcher's settings already fade under the buttons; the empty band at the foot of the
       app's Settings is BAR's description strip, which shows the touched option's text.)
 - [x] **The cursors loaded once again; the selection's health bar as the resource bars** (hardening, 2026-11-18
