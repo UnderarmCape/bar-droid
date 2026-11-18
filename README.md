@@ -234,7 +234,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 ## Problems
 
 Tap **Share logs** on the launcher screen and attach the zip to an [issue](../../issues), with the phone model and
-what happened.
+what happened. The zip holds the app's and the game's logs and settings; an online game's join password, which the
+game writes into its log, is taken out of them first.
 
 ## For developers
 

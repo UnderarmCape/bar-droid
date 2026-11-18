@@ -43,7 +43,7 @@ settings at every start), [docs/upstream/](docs/upstream/) (draft reports of bug
 | Upscaling (SGSR) | patch 0007, `assets/sgsr/`, `GameActivity` | The X screen (smaller than the display) is enlarged with Qualcomm's SGSR 1 instead of plain bilinear filtering; plain if the GPU refuses the shader; "Compare upscaling" switches it every 3 s under a label (on until Kailil has compared, then off by default) |
 | Lobby bridge (on) | `LobbyBridge.java` | Stands in for BAR's PC launcher behind the lobby (web links, downloads, replay info); on by default since 2026-10-27 (without it the Replays tab hung on "Loading"); checked against the real lobby on the laptop, first phone check pending (Next steps) |
 | Updates | `Updater`, [docs/UPDATES.md](docs/UPDATES.md) | Every start updates engine, game and lobby like BAR's PC launcher and rolls back a set that fails on its first start |
-| Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb |
+| Share logs | launcher button | Zips the logs into Android's share sheet: phone debugging without adb; an online game's join password (`MyPasswd`) taken out (`LogRedact`) |
 | virgl GPU server (emulator) | `tools/build-virgl.py` | Built from source with the NDK (Termux's binary turns every DXT texture black) |
 | ARM64 AI bug fix | `app/src/main/assets/bardroid/libasarm64.so`, `patches/circuitai-cmake-arm64-linux.patch` | Phone build only; not filed upstream yet |
 | Benchmark | launcher "Benchmark", `tools/phone-bench.ps1`, `tools/profile-benchmark.ps1` | BAR's "Benchmark BAR" scenario unattended on the phone (warmed up, clocks and threads logged, per-run engine settings) and profiled on the laptop (every widget, unsynced gadget and engine timer) |

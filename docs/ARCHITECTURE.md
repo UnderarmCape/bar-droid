@@ -137,7 +137,7 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 
 | Where | What |
 |---|---|
-| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `MapStore`, `KeyboardShortcuts`, `PerfLog`, `LogShare` |
+| `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `MapStore`, `KeyboardShortcuts`, `PerfLog`, `LogShare` (+ `LogRedact`) |
 | `app/src/main/assets/bardroid/` | `setup-container.sh`, `launch-bar.sh`, `springsettings.cfg`, the Lua widgets |
 | `app/src/main/assets/gamepad/` | BAR Controller Support v0.8.5, packed by `tools/build-gamepad-game.py` |
 | `app/src/main/jniLibs/<abi>/` | prebuilt helpers (proot, busybox, talloc, ANGLE, virgl), rebuilt by `tools/` |
