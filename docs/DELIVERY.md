@@ -764,6 +764,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       cut to 1000 bytes: named on stderr, read whole once (15 s warm), then fast again; output the same as
       `--no-cache`. Polish: the groups row's "NEW n" under its "+" as large as the tiles' counts and bold (it was the
       row's smallest words, about 14 pixels on the folded sideways panel); dev phone screenshot after.
+      The next run's commit (~22:50) took 264 s again with no transcript read whole, and right after it the scan took
+      3.8 s and a whole run 3.4 s: the three slow runs each came right after a phone test (dock-phone-test), the slow
+      part not inside the scan's cache. worklog.py now names its parts when a run takes over a minute (load, scan
+      and its slowest transcript, records, git log, markdown); a slow run with no such line was slow outside main
+      (Python's start, the shell).
 - [x] **The Fold7's evening game read; the touch tests after the cancel fix** (hardening, 2026-11-17 ~21:50): his
       23-minute game (folded and upright, 100 units at the end) held 30.1-30.2 fps every minute (slowest frame
       50-118 ms, Lua 257-307 MB), no Lua error, no app warning; he saved from the top bar (said in BAR's message

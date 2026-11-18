@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 from collections import defaultdict
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -39,6 +40,10 @@ ANSWER_CHARS = 700
 BIG_DATA = re.compile(r'"data":"[A-Za-z0-9+/=]{1000,}"')   # (an image's base64, scan)
 CACHE = os.path.join(ROOT, "build", "worklog-cache")   # (scan's, per transcript; not in the repository)
 CACHE_V = 1
+# (a run's parts, said when it took over SLOW_S: three runs on 2026-11-17 took ~262 s against 3-25 s the same evening,
+# each after a phone test, the scan's cache sound and no transcript read whole; the slow part not known then)
+TIMES = {}
+SLOW_S = 60
 
 
 def parse_time(ts):
@@ -296,8 +301,10 @@ def commits_by_day():
         print("worklog: no git (PATH or the toolchain's): commits not counted", file=sys.stderr)
         return None
     try:
+        t = time.perf_counter()
         out = subprocess.run([git, "-C", ROOT, "log", "--format=%aI"], capture_output=True, text=True,
                              check=True).stdout
+        TIMES["git log"] = time.perf_counter() - t
     except (OSError, subprocess.CalledProcessError) as e:
         print("worklog: git log failed (%s): commits not counted" % e, file=sys.stderr)
         return None
@@ -442,13 +449,19 @@ def main():
     ap.add_argument("--no-cache", action="store_true", help="read every transcript whole (build/worklog-cache unused)")
     args = ap.parse_args()
 
+    t0 = time.perf_counter()
     sessions, messages = load_existing()
+    TIMES["load"] = time.perf_counter() - t0
     files = glob.glob(os.path.join(args.transcripts, "*", "*.jsonl"))
     found = []
+    slowest = (0.0, "")
     for path in files:
+        t = time.perf_counter()
         title, markers, entries = scan(path, not args.no_cache)
+        slowest = max(slowest, (time.perf_counter() - t, os.path.basename(path)))
         if entries:
             found.append((entries[0]["timestamp"], os.path.basename(path)[:-6], title, entries))
+    TIMES["scan"] = time.perf_counter() - t0 - TIMES["load"]
     seen = set()
     for first, sid, title, entries in sorted(found):
         msgs, claude_s, tools, interrupts, times = session_records(sid, entries, seen)
@@ -483,7 +496,14 @@ def main():
     with open(os.path.join(DATA, "messages.jsonl"), "w", encoding="utf-8", newline="\n") as fh:
         for m in unique:
             fh.write(json.dumps(m, ensure_ascii=False, sort_keys=True) + "\n")
+    t = time.perf_counter()
+    TIMES["records"] = t - t0 - TIMES["load"] - TIMES["scan"]
     n, kailil_s, claude_s, days = write_markdown(sessions, unique)
+    TIMES["markdown"] = time.perf_counter() - t
+    total = time.perf_counter() - t0
+    if total > SLOW_S:
+        print("worklog: slow, %.0f s: %s; the slowest transcript %s %.1f s" % (
+            total, ", ".join("%s %.1f s" % kv for kv in TIMES.items()), slowest[1], slowest[0]), file=sys.stderr)
     if not args.quiet:
         print("worklog: %d sessions, %d messages, %d days, Kailil %s h, Claude %s h -> docs/WORKLOG.md"
               % (len(sessions), n, days, hours(kailil_s), hours(claude_s)))
