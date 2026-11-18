@@ -740,6 +740,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **laptop-tests after the night's changes; a scenario's long Loss line over its map** (hardening, 2026-11-18
+      ~05:25-07:10): laptop-tests 23 of 23 PASS (654 s, the laptop slow at that hour). The lobby upright (dev phone):
+      Scenarios' list clean; a scenario's page (Fortress Assault) had its loss condition, "Loss of all your builders and
+      factories", running on over the map picture at its right: Chobby's value labels size themselves to their text,
+      so the 36 % they are given upright never held them, and the rows stand a line apart (no room to wrap). A value
+      wider than the room left of the map now takes a smaller size of its own font, as fits, 24 units clear of the map
+      (`uprightScenario`, Chobby's GetFont at a raw size, a shared font never disposed with its label; launcher.log
+      "1 value(s) smaller to fit beside it"). Dev phone: the line whole and clear of the map; lobby-phone-test ALL PASS
+      on the rebuilt APK. The laptop slept from ~05:31 to 07:03 in the middle of the APK build (Gradle stalled, no CPU
+      used): the build stopped and made again. The Fold7 is back on Tailscale (100.103.32.18) but refuses port 33261:
+      its Wireless debugging port changed (nothing in mdns from here), so no install yet; the LAN address of
+      2026-11-17 does not answer.
 - [x] **fp-save-test; Statistics, Settings and the home grid sideways** (hardening, 2026-11-18 ~05:30, dev phone
       sideways, the one-thumb dock): fp-save-test PASS (1st person through BAR's mid-game settings save, its way back
       kept). Sideways the app's Statistics (BAR's TeamStats copy: the dock aside, twelve graphs), the phone Settings
