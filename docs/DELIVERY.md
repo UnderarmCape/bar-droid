@@ -740,6 +740,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **What a whole reload costs on the official engine** (hardening, 2026-11-18 ~12:10, dev phone sideways with the
+      launcher's Phone engine off, as the Fold7 runs): a turn there reloads LuaUI whole, ~9.5 s from "reloading the
+      interface" to the last widget loaded: ~5.6 s BAR's handler reading every one of 242 widget files for its GetInfo
+      (BAR's dev and helper files among them: dbg_*, dev_autocheat, __defs_write, tf_*), ~4 s the loads, the slowest
+      BAR's Cursor (1.2 s) and Command Sounds (0.9 s) and the app's Build menu copy (0.6 s, in BAR's own one's place).
+      LuaUI/Widgets holds the app's 26 files only (1.1 MB, nothing stale). After it 30 fps from the second second, no
+      cursor stutter (the app's cursor preload only before a game starts; BAR's cursors already loaded). Nothing for the
+      app to cut on that engine: the phone engine's partial reload (0.6-1 s) is the cure. UI polish tried and dropped:
+      LAST PINGS beside PING reads a little smaller than FACTORIES on the home grid upright; the pair already has the
+      row's base size and LAST PINGS fits at ~85 % of it, so a change of the 2026-11-13/17 tuning was not worth it
+      (screenshots before/after the same); the split dock's bottom row at 1080x1198 looked cut but has its margin at
+      full zoom. No commit beyond this note.
 - [x] **Ten turns: no Lua memory kept; the official engine's tests and game end; the launcher's "Update check"**
       (hardening, 2026-11-18 ~11:45, dev phone): five sideways ↔ square round trips on the phone engine, each 21
       widgets loaded again (0.98 s the first, then 0.60-0.66 s): Lua 130 MB before, 144 during, then 132, 134, 134, 148
