@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher's log box: a little darker than the screen, light or dark, with round corners as the buttons above it
+     have (it was a square block barely set apart, dev phone screenshot 2026-11-18). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#24000000" />
+    <corners android:radius="6dp" />
+</shape>

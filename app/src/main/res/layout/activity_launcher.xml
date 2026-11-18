@@ -172,7 +172,7 @@
 
             <!-- (the log: under the buttons on a wide screen, LauncherActivity.fitLayout) -->
             <TextView style="@style/LauncherSection" android:id="@+id/logTitle" android:text="@string/log_title" />
-            <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="300dp" android:nestedScrollingEnabled="true" android:background="#11000000">
+            <ScrollView android:id="@+id/logScroll" android:layout_width="match_parent" android:layout_height="300dp" android:nestedScrollingEnabled="true" android:background="@drawable/log_box">
                 <!-- (padding: the lines ran along the box's left edge) -->
                 <TextView android:id="@+id/log" android:layout_width="match_parent" android:layout_height="wrap_content" android:fontFamily="monospace" android:textSize="10sp" android:textIsSelectable="true" android:padding="6dp" />
             </ScrollView>
