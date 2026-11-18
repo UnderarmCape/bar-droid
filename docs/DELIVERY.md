@@ -740,6 +740,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **A sideways skirmish with an army, three minutes** (hardening, 2026-11-17 ~20:30, dev phone; 18 Pawns and
+      Rocketeers given by a temporary widget, removed after): the dock sideways with 18 picked ("18 units, 12 of this
+      type"), Fight tapped and a map tap twice, the group across the map, the queue's X FIRST / X LAST in the groups row;
+      30 fps with 19 units, no Lua error, nothing in launcher.log. (The enemy's army the widget gave did not show: no
+      fight.) No UI polish this run.
 - [x] **The launcher's Display & touch preferences looked at** (hardening, 2026-11-17 ~20:20, dev phone upright): the
       top level (Output, Pointer, Keyboard, Other, the display server's version line) and Pointer read as they should;
       nothing to change. The Fold7 still refuses adb.
