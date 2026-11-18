@@ -740,6 +740,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       replay speeds down the left, the player list bottom right, a tap on it the app's spectator bar (player cams,
       Free, Follow unit, Group) at the bottom left beside it, all on the screen. ("spectator" in a 1 v 1 skirmish is a
       resignation: the awards came up; a replay is the way to see it.)
+- [x] **The lobby tests walk the quick Skirmish** (hardening, 2026-11-18 ~05:00): the Select Map regression of the run
+      before passed lobby-phone-test, which never opened the Skirmish screen. Its test widget
+      (`tools/lobby-touch-test/bardroid_lobby_touch_test.lua`, the laptop's lobby-touch-test and the phone's
+      lobby-phone-test both) now opens Skirmish, goes through its four pages with Next and checks on each that Back
+      and Advanced stand at the page's foot, level with each other, upright as tall as Next (and level with it while it
+      is shown), on Select Map with Start hidden too, its maps a sixth of the page high at least upright. Dev phone
+      upright: ALL PASS ("Start hidden -60-10": the y the old code copied); with the run before's widget put in by
+      dev-env.sh: FAIL on Select Map, "Back -60-10, Advanced -60-10, maps 80 high". Laptop (sideways, Chobby's own 48
+      high): ALL PASS. The Chili tree walked as the lobby widget walks it (its weak links unwrapped, hidden children
+      too). CLAUDE.md's line for the test says so. No UI polish this run. The Fold7 stayed off adb.
 - [x] **Select Map upright broken by the run before: Back and Advanced at the panel's top, the maps tiny** (hardening,
       2026-11-18 ~04:45, dev phone upright, offline lobby, the quick Skirmish walked to its end): on Select Map the
       four maps stood as small strips with their names over their pictures and only the feet of Back and Advanced
