@@ -704,6 +704,15 @@ game until the replay and spectating stages below say it computes exactly what t
   release changed ("corrupted profile info"): `pgo-data-0903` is a copy without the profiles of every file changed
   between the two tags (143 of 1,086) and `-fprofile-correction` is added to the build's flags (profile data only
   steer optimization, never floating-point results).
+- **The archive cache written only when a scan changes it** (2026-11-18, the app's hardening loop; unsynced): every
+  `ScanAllDirs` took 1.1 s on a phone, because `ScanDirs` marked the cache dirty before scanning and `WriteCacheData`'s
+  check of the pool's 20,745 files ran to its 1 s limit under proot. Behind `BARDROID_SIM`: dirty only for a new,
+  changed or missing archive (bardroid/sim 1b9350a, `bardroid/combined` fast-forwarded to it; bardroid/sim-2026.09.03
+  a0365a7, cherry-picked onto 83a8536). Both built incrementally (gcc-combined, gcc-0903; the earlier gcc-0903
+  binary kept as `out\gcc-0903\spring.83a8536`) and checked on the dev phone as test engines: scans 14-29 ms, the
+  cache rewritten only when a map left or came back. Neither is in a release folder: 2026.09.03's next gate build
+  carries it; the shipped 2026.07.04 build stays 528c6a5. Upstream draft: the app's
+  docs/upstream/recoil-archivecache-rewrite.md.
 
 ## Findings on the way
 
