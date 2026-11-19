@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The loading screen's Free memory; the pre-game victory line above the dock** (hardening, 2026-11-19
+      ~01:36-02:00, dev phone; the run's UI polish too). Screenshots of a skirmish's loading: the Free memory button
+      over Recoil's splash and BAR's load screen as meant; tapped while loading it opened Device care, Back returned to
+      the game, which loaded on (launcher.log "loaded"). In the pre-game BAR's Game Type Info line ("Victory
+      condition: Kill all enemy Commanders") lay under the touch dock: sideways behind its left block, "Victory c"
+      showing beside it (and upright under the dock too by its numbers). A third block in
+      phone-widget-gui_game_type_info.lua.patch lifts the lines just above the dock where the dock would cover them
+      (WG.BarDroidPortrait.dock, not aside; the dock across the screen's middle; at most 85 % up) (cc5ed927). The app's
+      skirmish starts as it loads (StartPosType 1), so the line shows ~3 s ("Game starting in 3..."): caught by
+      screenshots taken back to back from GameTypeInfo's load. Dev phone: sideways the line whole just above the
+      dock; upright the same above the pre-game dock (UNDO LAST, ARMADA, CORTEX); the patch's 3 blocks applied. The
+      APK from cc5ed927 on the Fold7 at 2026-11-19 02:00 (BAR not running).
 - [x] **A replay benchmark's result in the launcher, in short** (hardening, 2026-11-19 ~01:13-01:34, dev phone). A
       replay on the dev phone (the bench replay, speedmetal1v1-20261117 from game second 60 for 300 s): played through
       at x1.00, 29-30 fps, up to 656 units, "[replaybench] done (300 s played): ..." in its log, the engine out with 0;
