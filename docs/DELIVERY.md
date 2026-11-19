@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **pace-test on the 2026.09.03 builds; Stop dimmed while the game closes** (hardening, 2026-11-18 ~22:40-22:50,
+      dev phone). pace-test (libbardroid_pace.so in the app's container: the ioctl and socket answers, the frame cap,
+      the floating window's 15 fps, the vsync grid): one FAIL the first time, "frame cap: 30 fps at most" with 9 frames
+      in 601 ms (exactly every other slot; 9 plain sleeps 303 ms), then ALL PASS twice, as it was and with the last
+      game's /tmp/bardroid-vsync (22:36) moved aside (300 and 301 ms; the file put back). Not reproduced: noted, not
+      changed. UI polish: the launcher's Stop stayed lit while "Closing: saving the replay" (a second Stop is not
+      taken); now dimmed then as with nothing running (LauncherActivity.refresh). Dev phone: Stop over a skirmish,
+      dimmed 1.5 s after the tap, the engine's quit 5132 ms, launch-bar.sh ended after it.
 - [x] **A closed game's infolog kept again; Stop over the loading screen** (hardening, 2026-11-18 ~22:20-22:40, dev
       phone). After the engine, launch-bar.sh still runs a moment: the app's widgets' error lines for the launcher
       (layer_miss) and the infolog's copy into files/bar/logs (Share logs sends them). A Stop or a swipe killed it with
