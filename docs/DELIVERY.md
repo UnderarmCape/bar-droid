@@ -756,6 +756,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [ ] **One-finger zoom and turn on the map** (Kailil, 2026-11-19 ~08:37: "we need to figure out a way to zoom out
+      and in with one finger. and rotate. any ideas?"). The dock's camera pad has one (double tap and hold, then slide:
+      up or down zooms, sideways turns; three taps tilt), the D-gun mode's grey space too; on the map every one-finger
+      gesture is taken (drag pans, tap then drag selects, long press orders), so Google Maps' double tap and slide would
+      clash with box select. Offered: a camera knob over the map (hold and slide: zoom, turn; placed with the layout
+      editor), edge rails, or a long press with nothing picked; recommended the knob. His pick pending.
+- [x] **c961de81 on the Fold7; Play upright names the camera pad's zoom and turn** (2026-11-19 ~08:38-08:48, dev
+      phone upright). The Fold7: no game since 08:26; the APK from clean main c961de81 (only
+      phone-2026.09.03-83a8536d37) loaded a skirmish on the dev phone and ended with exit 0, then went on the Fold7 at
+      08:44 (88 s); github-sync -Release: latest-build c961de81. UI polish: the launcher's "Play upright" said only "a
+      camera pad"; it names the one-finger zoom and turn now ("drag to pan; double tap and hold, then slide up or down to
+      zoom, sideways to turn"; c9886b79, dev phone screenshot). No hint on the dock itself (Kailil 2026-11-16 had its
+      label removed).
 - [x] **3ea7c59f on the Fold7; the launcher's map list with the keyboard up** (2026-11-19 ~08:21-08:36, dev phone
       upright; the run's UI polish too). The Fold7: no game since 08:07 (YouTube in front); the APK from clean main
       3ea7c59f (only phone-2026.09.03-83a8536d37) loaded a skirmish on the dev phone and stopped cleanly (exit 0), then
