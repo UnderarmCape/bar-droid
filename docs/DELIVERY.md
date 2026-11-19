@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The launcher's Benchmark and Display** (hardening, 2026-11-19 ~06:07-06:15, dev phone upright; the run's UI
+      polish too). Benchmark from the launcher: BAR's scenario ran 150 s, the engine out with 0, the note "Benchmark,
+      ms per frame: Sim 24.92, Draw 2.83, Update 3.27" as a result (StatusText.benchNote's scenario path on a real
+      run). Display opened the display and touch preferences, its version line "1.03.01, built 2026-11-19 from BAR
+      Droid 97c60896 + changes" (that APK built before its commit: right). UI polish: the note's numbers to a tenth
+      ("Sim 24.9, Draw 2.8, Update 3.3"); the game's log keeps them whole for tools/phone-bench.ps1 (2ef20dca;
+      status-text-test PASS). The Fold7 did not answer.
 - [x] **The launcher's GL check; no Free memory over it** (hardening, 2026-11-19 ~05:57-06:10, dev phone upright;
       the run's UI polish too). GL check from the launcher: "GL check: Adreno 740 (Freedreno), OpenGL 4.3, Mesa
       27.0.0-devel" in the launcher's status, in its own colour. While it ran the loading screen's Free memory button
