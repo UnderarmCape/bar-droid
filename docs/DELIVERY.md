@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A replay from the lobby upright; BAR's speed column is interface** (hardening, 2026-11-19 ~02:54-03:06, dev
+      phone; the run's UI polish too). The lobby offline upright (the login wait in, removed after), Replays, a
+      replay's Start: the spectator dock (PLAYER CAM, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW),
+      BAR's speed column above it, the victory line above the dock (cc5ed927); TEAMS opened the two teams, 4x tapped:
+      "Speed set to 4.0". But 8 s after the tap the pointer still stood on the 4x button: BAR's Replay buttons answer
+      no IsAbove, so the touch widget took the column for map (the pointer stays shown there; a drag from it panned the
+      map). A fifth block in phone-widget-gui_replaybuttons.lua.patch: IsAbove over the column while it is shown
+      (ccdfd0d8). Dev phone: "5 patches", 4x tapped, the pointer gone, the speed 4.0. The APK from ccdfd0d8 on the
+      Fold7 at 2026-11-19 03:05 (BAR not running).
 - [x] **The lobby's Replays with 247 files; Clear Map Marks off Settings' corner** (hardening, 2026-11-19
       ~02:35-02:52, dev phone). The lobby offline upright, Replays: listed within a second, 59 asked of the bridge
       (Chobby: 9 at once, 50 more in the background, "More" for the rest), no bridge failures. Tonight's newest
