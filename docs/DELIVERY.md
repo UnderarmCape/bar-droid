@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The picked server ringed in the server list** (Kailil, 2026-11-19 ~17:03, with a screenshot of the list, a
+      server's details up and the Close / Previous / Next / Join bar: "I need a highlighted selection that tells me
+      where the tap was or when I press next or prev, I want a clear selection of what server is being highlighted").
+      bardroid_lobby_touch.lua placeServerRing: the picked server's row outlined in gold over a light gold, placed each
+      frame on it (the list scrolls, Previous and Next move the pick), cut to the list's edges, over the list and under
+      the details window and the bar, taps going through; gone with Close, a join, the list going away. Dev phone,
+      fake servers in Chobby's own list offline: a tap on "flow | 1v1" ringed it under its details, Next twice moved
+      the ring two rows down to "Duel - Any map - Ranked", Close took it away. lobby-phone-test ALL PASS.
 - [x] **pad-test -Dgun and -Chat on 3f767e95; "Update check today 07:33"** (hardening, 2026-11-19 ~16:56-17:05, dev
       phone upright; the Fold7 still refused port 38389). pad-test -Dgun (v0.8.5's D-gun mode through the app's
       clicks) and -Chat (speak to chat's sends, the touch log for the microphone) ALL PASS. UI polish (the launcher):

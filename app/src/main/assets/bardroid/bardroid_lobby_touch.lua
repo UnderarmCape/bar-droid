@@ -215,6 +215,70 @@ local function pinTooltip(on)
 	end
 end
 
+-- The picked server ringed (Kailil, 2026-11-19: "I need a highlighted selection that tells me where the tap was or
+-- when I press next or prev, I want a clear selection of what server is being highlighted"): its row outlined in gold
+-- over a light gold, kept on it as the list scrolls and as Previous and Next move the pick (placed each frame), cut to
+-- the list's edges, under the details and the bar. Taps go through it.
+local serverRing, serverRingFor
+local function placeServerRing()
+	local b = popupButton
+	local panel = b and not b.disposed and b.LocalToScreen and real(scrollPanelOf(b))
+	local x0, y0, x1, y1
+	if panel and panel.LocalToScreen then
+		local bx, by = b:LocalToScreen(0, 0)
+		local px, py = panel:LocalToScreen(0, 0)
+		x0, y0 = math.max(bx, px), math.max(by, py)
+		x1 = math.min(bx + (b.width or 0), px + (panel.width or 0))
+		y1 = math.min(by + (b.height or 0), py + (panel.height or 0))
+	end
+	if not x0 or x1 - x0 < 4 or y1 - y0 < 4 then
+		if serverRing and serverRing.visible ~= false then
+			serverRing:Hide()
+		end
+		return
+	end
+	if not serverRing then
+		serverRing = Chili.Control:New({
+			name = "bardroidServerRing",
+			parent = screen0,
+			x = 0, y = 0, width = 10, height = 10,
+			padding = { 0, 0, 0, 0 },
+			drawcontrolv2 = true,
+			HitTest = function() return false end,
+			DrawControl = function(obj)
+				local w, h, t = obj.width, obj.height, 3
+				gl.Texture(false)
+				gl.Color(1, 0.78, 0.25, 0.16)
+				gl.Rect(0, 0, w, h)
+				gl.Color(1, 0.78, 0.25, 1)
+				gl.Rect(0, 0, w, t)
+				gl.Rect(0, h - t, w, h)
+				gl.Rect(0, t, t, h - t)
+				gl.Rect(w - t, t, w, h - t)
+				gl.Color(1, 1, 1, 1)
+			end,
+		})
+	end
+	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
+	if serverRing.x ~= x0 or serverRing.y ~= y0 or serverRing.width ~= x1 - x0 or serverRing.height ~= y1 - y0 then
+		serverRing:SetPos(x0, y0, x1 - x0, y1 - y0)
+		serverRing:Invalidate()
+	end
+	if serverRing.visible == false or serverRingFor ~= b then
+		serverRingFor = b
+		serverRing:Show()
+		serverRing:BringToFront() -- (over the list; the details and the bar over it)
+		local tip = screen0.GetObjectByName and real(screen0:GetObjectByName("tooltipWindow"))
+		if tip and tip.BringToFront then
+			tip:BringToFront()
+		end
+		if bar then
+			bar:BringToFront()
+		end
+		Spring.Echo("[bardroid-lobby] the picked server ringed") -- (tools)
+	end
+end
+
 local function closePopup()
 	if popupButton and WG.TooltipHandler and WG.TooltipHandler.TooltipOverrideClear then
 		WG.TooltipHandler.TooltipOverrideClear()
@@ -224,6 +288,10 @@ local function closePopup()
 	if bar then
 		bar:Hide()
 	end
+	if serverRing then
+		serverRing:Hide()
+	end
+	serverRingFor = nil
 end
 
 local function serverRows(panel)
@@ -3790,6 +3858,9 @@ function widget:Update() -- (the lobby's Update has no frame time)
 		closePopup() -- the list went away (another screen, the server closed)
 	elseif popupButton and barSize ~= sideKey() then
 		placeBar() -- folded or unfolded
+	end
+	if popupButton or (serverRing and serverRing.visible ~= false) then
+		placeServerRing() -- (on the picked server as the list scrolls: each frame)
 	end
 	if not warningCheck or Spring.DiffTimers(now, warningCheck) >= WARNING_CHECK_S then
 		warningCheck = now
