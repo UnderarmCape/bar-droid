@@ -974,6 +974,163 @@ end
 -- column goes under them as wide as the left (60 %), the map and Start keep the right; both re-lay their own children as
 -- they resize (their OnResize). Done once to each room's columns (a new room: new columns).
 local roomsLaidOut = setmetatable({}, { __mode = "k" })
+
+-- The room's buttons in the right column (Kailil, 2026-11-19, an online room on the Fold7: "There needs to be wayyyy
+-- more space for the lobby special conditions and rules section (the section that says ranked = 1) ... there's a bunch
+-- of free space on the right side. Can you move the buttons i circle to the right side?"): the middle column's
+-- selectors and buttons (2 Teams, 1 per Team, Change Map, Adv Options, Option Presets) and its game and map lines under
+-- the start boxes, the rules (Chobby's modoptions summary, modoptionsHolder) from the middle column's top, its whole
+-- height; it was a strip of a line under them. Chobby's UpdateBattleMode lays those rows out again at each change (a
+-- team count hidden, the download bar shown): their SetPos and the summary's take our places (Chili's own realigns pass
+-- dontUpdateRelative and keep them). Chobby's rows and steps: gui_battle_room_window.lua SetupInfoButtonsPanel.
+local ROOM_ROWS = { { "teamCountSelect", 38 }, { "teamSizeSelect", 38 }, { "btnPickMap", 38 },
+	{ "btnModoptions", 38, "btnReloadModoptions" }, { "btnOptionPresets", 40 }, { "lblGame", 26 },
+	{ "imHaveGame", 25, "lblHaveGame" }, { "imHaveMap", 30, "lblHaveMap" } }
+local ROOM_LINES = 26 + 25 + 30 -- (lblGame's row to the summary's top in Chobby's layout)
+local ROOM_PROGRESS = 35 -- (Chobby's INLINE_PROGRESS_REFLOW: its download bar's row over the summary)
+local function roomButtonsRight(middle, right)
+	local function childOf(parent, name)
+		for _, ch in ipairs(parent.children or {}) do
+			local c = real(ch)
+			if c and c.name == name then
+				return c
+			end
+		end
+		for ch in pairs(parent.children_hidden or {}) do
+			local c = real(ch)
+			if c and c.name == name then
+				return c
+			end
+		end
+	end
+	local st = { objs = {}, y = {}, orig = {} }
+	local moved = {}
+	for _, row in ipairs(ROOM_ROWS) do
+		for i = 1, 3, 2 do
+			local name = row[i]
+			local o = name and childOf(middle, name)
+			if o then
+				st.objs[name] = o
+				moved[#moved + 1] = o
+			end
+		end
+	end
+	local holder, sb = childOf(middle, "modoptionsHolder"), childOf(right, "startBoxPanel")
+	local lblGame = st.objs.lblGame
+	if not (holder and sb and lblGame and st.objs.btnPickMap) then
+		return false
+	end
+	-- (room for them: from under the start boxes to the right column's buttons at its foot, Playing to Start)
+	local top = (sb.y or 0) + (sb.height or 0) + 8
+	local foot = right.clientArea and right.clientArea[4] or right.height or 0
+	for _, ch in ipairs(right.children or {}) do
+		local c = real(ch)
+		if c and c.visible ~= false and c ~= sb and type(c.y) == "number" and c.y > top
+			and c.name ~= "minimapPanel" and c.name ~= "lblMapName" then
+			foot = math.min(foot, c.y)
+		end
+	end
+	local need = 0
+	for _, row in ipairs(ROOM_ROWS) do
+		local o = st.objs[row[1]]
+		if o and o.visible ~= false then
+			need = need + row[2]
+		end
+	end
+	if top + need > foot - 4 then
+		Spring.Echo(string.format("[bardroid-lobby] battle room upright: its buttons stay in the middle (%d of %d free"
+			.. " in the right column)", need, foot - top)) -- (tools)
+		return false
+	end
+	st.chobbyTop = (lblGame.y or 0) + ROOM_LINES
+	local inline = childOf(middle, "inlineProgressPanel")
+	local downloader
+	for _, ch in ipairs(middle.children or {}) do -- (Chobby's Downloader: the middle's other control, 120 high)
+		local c = real(ch)
+		if c and c ~= holder and c ~= inline and not st.objs[c.name] and c._givenBounds
+			and c._givenBounds.height == 120 then
+			downloader = c
+		end
+	end
+	local busy = false
+	local function stack()
+		busy = true
+		local y = (sb.y or 0) + (sb.height or 0) + 8
+		for _, row in ipairs(ROOM_ROWS) do
+			local o = st.objs[row[1]]
+			if o and o.visible ~= false then
+				st.y[o] = y
+				local o2 = row[3] and st.objs[row[3]]
+				if o2 then
+					st.y[o2] = y
+				end
+				y = y + row[2]
+			end
+		end
+		for o, oy in pairs(st.y) do
+			if not o.disposed then
+				st.orig[o](o, nil, oy)
+			end
+		end
+		st.leftTop = (inline and inline.visible ~= false) and ROOM_PROGRESS or 0
+		if inline and not inline.disposed and inline.y ~= 0 then
+			st.orig[inline](inline, nil, 0)
+		end
+		if downloader and not downloader.disposed and downloader.y ~= st.leftTop then
+			downloader:SetPos(nil, st.leftTop)
+		end
+		busy = false
+	end
+	local function take(o, place)
+		st.orig[o] = o.SetPos
+		o.SetPos = function(_, x, y, w, h, clientArea, dontUpdateRelative, ...)
+			if type(y) == "number" and not dontUpdateRelative and not busy then
+				y, h = place(y, h)
+			end
+			return st.orig[o](o, x, y, w, h, clientArea, dontUpdateRelative, ...)
+		end
+	end
+	for _, o in ipairs(moved) do
+		local hidden = o.visible == false
+		if hidden then
+			o:SetVisibility(true)
+		end
+		local ok = pcall(right.AddChild, right, o) -- (AddChild takes it from the middle)
+		if hidden then
+			o:SetVisibility(false)
+		end
+		if not ok then
+			Spring.Echo("[bardroid-lobby] battle room upright: " .. tostring(o.name) .. " not moved")
+		end
+		take(o, function(y, h)
+			if o == lblGame then -- (Chobby's rows laid out again: its summary's top follows its game line)
+				st.chobbyTop = y + ROOM_LINES
+			end
+			stack()
+			return st.y[o] or y, h
+		end)
+	end
+	if inline then
+		take(inline, function(_, h)
+			return 0, h
+		end)
+	end
+	take(holder, function(y, h) -- (Chobby's top, or 120 under it with the download list shown: from ours)
+		local ny = (st.leftTop or 0) + math.max(0, y - st.chobbyTop)
+		local ca = middle.clientArea
+		return ny, (type(h) == "number" and ca) and math.max(10, ca[4] - ny) or h
+	end)
+	right.OnResize = right.OnResize or {}
+	right.OnResize[#right.OnResize + 1] = function() -- (after Chobby's own: the start boxes where the map's size put them)
+		stack()
+	end
+	stack()
+	holder:SetPos(nil, holder.y, nil, holder.height)
+	right:Invalidate()
+	middle:Invalidate()
+	return true
+end
+
 local function uprightBattleRoom()
 	-- (Chili hands out weak links, a new one each time: the real objects, to compare and to remember)
 	local players, middle, right = real(chobbyObject("playerPanel")), real(chobbyObject("leftInfo")),
@@ -994,7 +1151,12 @@ local function uprightBattleRoom()
 	bounds(players, "0%", "0%", "40%", "50%")
 	bounds(middle, "0%", "50%", "40%", middle._relativeBounds.bottom or 0)
 	bounds(right, "60%", "0%", 0, right._relativeBounds.bottom or 0)
-	Spring.Echo("[bardroid-lobby] battle room upright: the teams over its buttons and states, the map beside them") -- (tools)
+	local ok, movedRight = pcall(roomButtonsRight, middle, right)
+	if not ok then
+		Spring.Echo("[bardroid-lobby] battle room upright: its buttons not moved: " .. tostring(movedRight))
+	end
+	Spring.Echo("[bardroid-lobby] battle room upright: the teams over " .. ((ok and movedRight)
+		and "the rules, the map and its buttons beside them" or "its buttons and states, the map beside them")) -- (tools)
 end
 
 -- A scenario's page upright (Chobby's gui_scenario_window.lua, laid out in shares of its panel for a wide one): its
@@ -1556,6 +1718,122 @@ function upright.saveRows()
 			end
 		end
 	end)
+end
+
+-- Chobby's server list (battle_list_window.lua MakeJoinBattle; Kailil, 2026-11-19, upright on the Fold7: "Can you remove
+-- the padding when on the server browser so there's more room. Because the player numbers saying if its x/16 players
+-- gets cut off"): a row's players right-aligned at its end, the average rank's icon at 90 % of the row and the lock at
+-- 86 %: "16/16" ran over the icon. The list 2 from the window's left side (12) with 2 of padding (4), the rows' own 10
+-- at each side 4; the icon and the lock just left of the widest count ("88/88") and the map's name up to them, wherever
+-- the row's width puts them. Both ways up; each row once (Chobby makes rows as servers come).
+function upright.serverRows()
+	-- (its note over the empty list, "You are not connected to the server.\nPlease wait 30 seconds while we
+	-- automatically reconnect you.", in a box 70 % of the list wide: upright both lines cut at both ends, "re not
+	-- connected to the server", dev phone 2026-11-19; the box 94 % wide. Chobby makes the list once: found, done)
+	local info = upright.serverInfo
+	if not (info and not info.disposed) and (not upright.serverInfoAt
+		or Spring.DiffTimers(Spring.GetTimer(), upright.serverInfoAt) > 2) then
+		upright.serverInfoAt = Spring.GetTimer()
+		local function find(o, depth)
+			for _, ch in ipairs(o.children or {}) do
+				local c = real(ch)
+				local b = c and c._relativeBounds
+				if b and c.classname == "overlay_window" and b.left == "15%" and b.right == "15%" and b.top == "40%"
+					and b.bottom == "40%" then
+					return c
+				end
+				local r = c and depth < 9 and find(c, depth + 1)
+				if r then
+					return r
+				end
+			end
+			for ch in pairs(o.children_hidden or {}) do
+				local c = real(ch)
+				local b = c and c._relativeBounds
+				if b and c.classname == "overlay_window" and b.left == "15%" and b.right == "15%" and b.top == "40%"
+					and b.bottom == "40%" then
+					return c
+				end
+			end
+		end
+		info = find(real(screen0), 0)
+		if info then
+			upright.serverInfo = info
+			info._relativeBounds.left, info._givenBounds.left = "3%", "3%"
+			info._relativeBounds.right, info._givenBounds.right = "3%", "3%"
+			info:UpdateClientArea()
+			Spring.Echo("[bardroid-lobby] server list: its note over an empty list as wide as the list") -- (tools)
+		end
+	end
+	local first = screen0.GetObjectByName and real(screen0:GetObjectByName("battleButton"))
+	local panel = first and battleIdOf(first) and real(scrollPanelOf(first))
+	if not (panel and not panel.disposed and panel.visible ~= false and panel._relativeBounds) then
+		return
+	end
+	upright.serverDone = upright.serverDone or setmetatable({}, { __mode = "k" })
+	local done = upright.serverDone
+	if not done[panel] then
+		done[panel] = true
+		local rb, gb = panel._relativeBounds, panel._givenBounds
+		-- (the right side's 12 and 4 kept: the lobby's frame covers the list's last 16 there, the counts' last digit cut)
+		if gb.left == 12 and rb.right == 12 then -- (Chobby's ListWindow listPanel)
+			panel.x, gb.left = 2, 2
+			local p = panel.padding
+			panel.padding = { 2, p and p[2] or 4, p and p[3] or 4, p and p[4] or 4 }
+			panel:UpdateClientArea()
+		end
+	end
+	local fixed = 0
+	for _, row in ipairs(serverRows(panel)) do
+		local b = real(row.button)
+		if b and not done[b] then
+			done[b] = true
+			local p = b.padding
+			if type(p) == "table" and (p[1] or 0) > 4 then
+				b.padding = { 4, p[2], 4, p[4] }
+			end
+			local kids = {}
+			for _, ch in ipairs(b.children or {}) do
+				kids[#kids + 1] = real(ch)
+			end
+			for ch in pairs(b.children_hidden or {}) do
+				kids[#kids + 1] = real(ch)
+			end
+			local count
+			for _, c in ipairs(kids) do
+				if c and c.name == "playersCaption" then
+					count = c
+				end
+			end
+			local f = count and count.font
+			local w = f and f.GetTextWidth and f:GetTextWidth("88/88") or 44
+			local r = math.ceil(w) + 4
+			local function atRight(c, right, width)
+				c._relativeBounds.left, c._givenBounds.left = false, false
+				c._relativeBounds.right, c._givenBounds.right = right, right
+				c._relativeBounds.width, c._givenBounds.width, c.width = false, width, width
+				c._isRelative = true
+			end
+			for _, c in ipairs(kids) do
+				if c and c._relativeBounds then
+					if c.name == "imgAvgRank" then
+						atRight(c, r, 20)
+					elseif (c.name == "imgLocked" or c.name == "password") and c._relativeBounds.left == "86%" then
+						atRight(c, r + 22, 20)
+					elseif c.name == "mapCaption" then
+						c._relativeBounds.right, c._givenBounds.right = r + 44, r + 44
+					end
+				end
+			end
+			b:UpdateClientArea()
+			b:RequestRealign()
+			fixed = fixed + 1
+		end
+	end
+	if fixed > 0 and not upright.serverSaid then
+		upright.serverSaid = true
+		Spring.Echo("[bardroid-lobby] server list: less padding, the players' count clear of the rank icon") -- (tools)
+	end
 end
 
 -- Chobby's Replays, each row's teams (gui_replay_handler.lua: a column a team from x 346, every 130 or so, each name 115
@@ -2235,6 +2513,7 @@ local function uprightUpdate(now)
 		upright.linkRows() -- (both ways up, as far as the panel has room)
 		upright.downloadRows() -- (both ways up)
 		upright.saveRows() -- (both ways up)
+		upright.serverRows() -- (both ways up)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
