@@ -756,6 +756,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **pad-test -Dgun and -Chat on 3f767e95; "Update check today 07:33"** (hardening, 2026-11-19 ~16:56-17:05, dev
+      phone upright; the Fold7 still refused port 38389). pad-test -Dgun (v0.8.5's D-gun mode through the app's
+      clicks) and -Chat (speak to chat's sends, the touch log for the microphone) ALL PASS. UI polish (the launcher):
+      a check made today reads "Update check today 07:33" (Updater.summary), not a date to compare with the phone's;
+      updater-test has the case, ALL PASS.
 - [x] **touch-phone-test and lobby-phone-test on fcc78899; the Settings copy's long names down to 70 %** (hardening,
       2026-11-19 ~16:34-16:55, dev phone upright; the Fold7 still refused port 38389). Both ALL PASS on the build with
       the RtsTouch watch change. The nudge path read for the dock-edge case: a nudge keeps its spot and draws it where it

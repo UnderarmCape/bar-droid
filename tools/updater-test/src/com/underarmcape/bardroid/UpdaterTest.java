@@ -109,6 +109,10 @@ public final class UpdaterTest {
         Prefs.autoUpdate = true;
         check("  updates on again: the check's result as it was, in brackets as one piece (no-break spaces)",
                 Updater.summary(p).contains("Update check Nov 11 00:57 (automatic updates off)"));
+        String todayDate = new java.text.SimpleDateFormat("MMM d", java.util.Locale.US).format(new java.util.Date());
+        write(new File(p.filesDir, "update/state.properties"), "tags=byar\\:test\ncheck=" + todayDate + " 07\\:33\n");
+        check("  a check made today: \"today 07:33\", not the date", Updater.summary(p).contains("Update check today 07:33")
+                && !Updater.summary(p).contains(todayDate));
         p = setup("enginemissrollback", true, NO_FRAME);
         s = state(p);
         s.setProperty("layer.engine", missB);

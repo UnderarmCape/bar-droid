@@ -158,6 +158,10 @@ public final class Updater {
             // (the reason in brackets as one piece: a narrow screen wrapped "(no" / "connection)", dev phone 2026-11-12)
             int open = check.indexOf(" (");
             if (open >= 0) check = check.substring(0, open + 2) + check.substring(open + 2).replace(' ', ' ');
+            // (a check made today: "today 07:33", the date a reader had to compare with the phone's; UI polish
+            // 2026-11-19)
+            String today = new java.text.SimpleDateFormat("MMM d", java.util.Locale.US).format(new java.util.Date());
+            if (check.startsWith(today + " ")) check = "today " + check.substring(today.length() + 1);
             // ("Update check", not "Last check": the line did not say what was checked; UI polish 2026-11-18)
             sb.append("Update check ").append(check);
             if (!Prefs.autoUpdate) sb.append("\n").append(off);
