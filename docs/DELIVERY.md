@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's panels with no IsAbove scanned; the vote panel on the screen upright** (hardening, 2026-11-19
+      ~03:08-03:30, dev phone; the run's UI polish too). After the speed column (ccdfd0d8) BAR's 330 widgets of
+      test-31992 scanned for a MousePress with no IsAbove: 66, most acting on the map (selection, formations, the
+      editors) or hidden or under the dock on phones (player list, groups, idle builders, the build and order menus the
+      app replaces). Of those a phone player sees over the map, BAR's vote panel (gui_vote_interface: a team's resign,
+      stop, forcestart in online games) brought up on the dev phone by a scratch widget echoing the autohost's line
+      ("Someone called a vote for command "stop""): upright it ran past the screen's right edge, only YES in sight, the
+      title, NO and its close button off the screen. phone-widget-gui_vote_interface.lua.patch: no wider than the screen
+      and moved left until it fits, under the top bar as before (5e9c1a03). Dev phone upright: "Stop?", YES, NO and X
+      whole, NO tapped sent "!vote n"; sideways whole too; the scratch widget removed. The Fold7 did not answer (adb
+      over Tailscale timed out, no mDNS): the build waits for the next run's install.
 - [x] **A replay from the lobby upright; BAR's speed column is interface** (hardening, 2026-11-19 ~02:54-03:06, dev
       phone; the run's UI polish too). The lobby offline upright (the login wait in, removed after), Replays, a
       replay's Start: the spectator dock (PLAYER CAM, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW),
