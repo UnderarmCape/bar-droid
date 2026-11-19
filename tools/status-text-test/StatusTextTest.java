@@ -24,6 +24,7 @@ public class StatusTextTest {
             { "install failed: no network", "Install failed: no network" },   // (a failure keeps its word)
             { "install stopped", "Install stopped" },
             { "game ended with an error (3)", "Game ended with an error (3)" },
+            { "closing: saving the replay", "Closing: saving the replay" },   // (Stop or a swipe: GameService.closeGently)
             { "", "" },
         };
         int failed = 0;

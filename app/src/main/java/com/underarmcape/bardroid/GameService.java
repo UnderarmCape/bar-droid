@@ -210,11 +210,23 @@ public class GameService extends Service {
      * killed game left an empty one, the Fold7 2026-11-18), then everything stopped as before. Off the main thread: the
      * wait is up to ENGINE_QUIT_MS.
      */
+    private volatile boolean closingGently;
     private void closeGently() {
+        // (a second Stop meanwhile: one quit is on its way; a third SIGTERM after the engine has shut SDL down ends it
+        // at once)
+        if (closingGently) return;
+        closingGently = true;
+        // (the launcher said "Skirmish running" for the 5 s of the quit, BAR's quit dialog flashing in its picture-in-
+        // picture: the Stop looked untaken; dev phone 2026-11-18)
+        if (!Proc.enginePids().isEmpty()) setStatus("closing: saving the replay");
         Thread t = new Thread(() -> {
-            Proc.endEngine(ENGINE_QUIT_MS);
-            stopEverything();
-            close();
+            try {
+                Proc.endEngine(ENGINE_QUIT_MS);
+                stopEverything();
+                close();
+            } finally {
+                closingGently = false;
+            }
         }, "svc-close");
         t.start();
     }
