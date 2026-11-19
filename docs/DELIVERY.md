@@ -756,6 +756,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [ ] **Sideways, a drag from the map onto the void loses the point under the finger** (found 2026-11-18 ~21:20 by
+      touch-phone-test sideways on the dev phone, BAR test-31992, the phone engine 2026.09.03): "a drag from the map
+      onto the void holds the point under the finger (target 5606,1162 -> 5447,4511; grabbed 5606,1573, now under the
+      finger 5570,2610): 1037 off after 3353", the same numbers three runs running, with this run's RtsTouch change
+      taken out too (not it). Upright all of it passed at 15:35 and 18:45 (af1535eb's void plane, cs.py); the other two
+      void cases pass sideways. Next: the touch widget's plane for a drag that crosses the map's edge sideways.
+- [x] **The app's Settings used in a game; the pointer hidden after a tap on BAR's interface** (hardening,
+      2026-11-18 ~21:00-21:30, dev phone sideways: it lies on its side now, "Turn with the phone" follows it). The top
+      bar's Settings opened the app's copy sideways (BAR's sidebar, the list), the Interface tab, "Playerlist country
+      flag" off and on again (BAR's description strip at the foot named it), the red X closed it; BAR paused the
+      singleplayer game while it was open ("Phone paused the game", resumed on close, BAR's own); no error. UI polish:
+      the X pointer stood where each tap had been, over Settings' tabs and switches and on the top bar (RtsTouch hid it
+      only after a touch that ended on the dock). Now also after one that ended on BAR's interface by the game widget's
+      fresh answer, asked again 150 ms apart up to five times when it has not answered for the new place yet (at the
+      lift it nearly always had not); on the map it shows as before, BAR's command cursor. Dev phone: no arrow over
+      Settings' tabs, the arrow back after a tap on the map; dock-phone-test ALL PASS (upright, "Turn with the phone"
+      off for it and back on).
 - [x] **The notification's Stop keeps the replay; the notification says the game is closing** (hardening,
       2026-11-18 ~20:50-21:00, dev phone). The third way to close a game, the notification's own Stop: "asked the
       engine to quit", again for BAR's quit dialog, "the engine quit in 5532 ms", the replay 13247 bytes. UI polish:
