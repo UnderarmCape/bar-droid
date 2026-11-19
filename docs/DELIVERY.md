@@ -756,6 +756,29 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The battle room's rules box, its buttons to the right; the server list's counts; no loading screen over the
+      lobby after a game; the camera rails off the replay speed column** (2026-11-19 ~11:39-, dev phone upright;
+      1e4a1918 went on the Fold7 at 11:43, github-sync -Release). Kailil (~12:00, an online room on the Fold7): "There
+      needs to be wayyyy more space for the lobby special conditions and rules section (the section thabsays ranked =
+      1) ... a bunch of free space on the right side. Can yiu love the buttons i circle to the right side?": Chobby's
+      modoptions summary was a strip of one line ("Defend Combat Stance = 1") under the middle column's five buttons and
+      three lines. Upright (bardroid_lobby_touch.lua roomButtonsRight) 2 Teams, 1 per Team, Change Map, Adv Options,
+      Option Presets and the game's and map's lines go to the right column under the start boxes, where it stood empty
+      down to Playing and Spectate; the summary takes the middle column from its top. Chobby's UpdateBattleMode lays
+      those rows out again at each change: their SetPos (and the summary's, the download bar's) take our places, Chili's
+      own realigns pass dontUpdateRelative and keep them; where they would not fit the right column they stay. Kailil:
+      "remove the padding when on the server browser so there's more room. Because the player numbers saying if its x/16
+      players gets cut off": the rank icon (90 %) and the lock (86 %) sat in "16/16"'s place; the list 2 from the
+      window's left side (12; on the right the lobby's frame covers its last 16, the counts' last digit went under it at
+      2 there), the rows' own padding 4 (10), the icon and lock just left of the widest count ("88/88") and the map's
+      name up to them (upright.serverRows, both ways up; checked with fake servers in Chobby's own list offline). Kailil: "When I leave the online game ... I get
+      this loading lula menu and the free memory menu when I return to the lobby": his log (12:03-12:05) had an online
+      game joined, loaded to Game::Load 8, never started, no "finished loading" line, left by autoquit; GameService still
+      counted it as loading, and back in the lobby (the game widget gone) Free memory, the bar ("Loading LuaUI") and the
+      tip came up. The Reload back to the lobby now ends any loading (loadReset), and a game's first frame counts as
+      loaded too. The run's own item: in a replay, left-handed, the zoom rail lay over BAR's speed column (0.5x to 8x,
+      their taps the rail's) and the turn rail over "skip" (dev phone screenshot); the rails and the knob now stand past
+      any of WG.BarDroidTapPanels' panels on that edge (bardroid_camctl.lua edgeInset).
 - [x] **1569f22b on the Fold7; the phone tests on it; dock-phone-test's Area Mex case** (2026-11-19 ~11:06-11:37, dev
       phone upright; the run's UI polish too). The Fold7: no game since 10:58; the APK from clean main 1569f22b loaded a
       skirmish on the dev phone, then went on the Fold7 at 11:10 (72 s); github-sync -Release: latest-build 1569f22b.

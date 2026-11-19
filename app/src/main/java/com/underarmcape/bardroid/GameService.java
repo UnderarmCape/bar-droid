@@ -482,15 +482,24 @@ public class GameService extends Service {
                             if (line.contains("[LuaMenu] Loading") && line.contains("BAR Droid lobby touch")) recording = false;
                             // (a game the lobby started, left: the engine back to the lobby's menu, which stays loaded;
                             // nothing recording there, the notification "Lobby running" again, its time from now)
+                            // (and nothing loads there, whatever the game's log said: an online game joined on the
+                            // Fold7 logged no "finished loading", and its loading screen's Free memory, bar and tip
+                            // came up over the lobby once the game was left, 2026-11-19)
                             if (inGame && line.contains("[SpringApp::Reload]")) {
                                 inGame = false;
                                 recording = false;
                                 playingReplay = false;
+                                if (loading) Log.i("svc", "the game left while counted as loading: not loading now");
+                                loading = false;
+                                loadReset(false);
                                 upSince = System.currentTimeMillis();
                                 Log.i("svc", "the game ended: back in the lobby");
                                 refreshNotification();
                             }
-                            if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
+                            // (or a game's first frame, "[f=0000000]" on: the game is up, should no "finished loading"
+                            // come, as in the online game above; that one never started, the Reload's case)
+                            if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch")
+                                    || (inGame && line.contains("][f=") && !line.contains("][f=-")))) {
                                 loading = false;
                                 upSince = System.currentTimeMillis();
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
