@@ -756,6 +756,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The replay speed column sideways; the pointer after a pan; the notification names what runs** (hardening,
+      2026-11-19 ~06:16-06:41, dev phone sideways, a replay from the lobby offline, the login wait removed after; the
+      run's UI polish too). Sideways the column's tap answers 3 ("67 642 3"), "Speed set to 2.0", the pointer gone. A
+      drag from the column panned the map, but the arrow stayed over its buttons: a pan leaves the pointer where the
+      finger came down, and the lift's check looked where the finger let go, a place the hover file never answered for.
+      RtsTouch looks at the down point after a pan (8b2a2e64): the same drag, the pointer gone; a pan on the map, the
+      pointer shown at its start, the answer 0. UI polish: the notification's line said "Tap to return to the game"
+      over the lobby and a replay alike; StatusText.returnLine names the lobby, a game, the replay, the benchmark or the
+      GL check (a1213fc6; status-text-test PASS). Dev phone: "Lobby running" with "Tap to return to the lobby; Stop
+      ends it", "Replay running" with "... to the replay". touch-phone-test and dock-phone-test ALL PASS. Seen once, not
+      reproduced: the launcher brought forward sideways over the lobby showed "Install /" and "Benchma" cut for a moment
+      (a fresh launcher sideways has them whole). The Fold7 did not answer (offline on Tailscale, last seen 3 hours
+      before).
 - [x] **The launcher's Benchmark and Display** (hardening, 2026-11-19 ~06:07-06:15, dev phone upright; the run's UI
       polish too). Benchmark from the launcher: BAR's scenario ran 150 s, the engine out with 0, the note "Benchmark,
       ms per frame: Sim 24.92, Draw 2.83, Update 3.27" as a result (StatusText.benchNote's scenario path on a real
