@@ -766,7 +766,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       walked only while it is on the screen; the note looked for after a press only. Dev phone: fake servers' rows as
       before, the search box's tap brings up the keyboard. UI polish (screenshot of the lobby's Settings upright):
       "Show Battles with Test Engine Versions" ran up to its box; a checkbox's caption with under 12 before its box in
-      a smaller size of its font, Chobby's back with the rows (settingsRows). lobby-phone-test ALL PASS.
+      a smaller size of its font, Chobby's back with the rows (settingsRows). lobby-phone-test ALL PASS. The APK from
+      clean main 0503b86b went on the Fold7 at 13:36 (107 s; BAR closed), github-sync -Release.
 - [x] **An online room's SPADS strip upright, clear of Playing and Ready; the launcher's log box without the disk
       check's "Error"** (hardening, 2026-11-19 ~13:05-, dev phone upright; the Fold7 not played since 13:02). Kailil's
       screenshot of an online room: BAR's SPADS strip (Autobalance, BalanceMode, Preset over Balance, Lock, Unlock; in
