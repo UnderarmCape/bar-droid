@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Statistics: a percent axis's ticks with one decimal; a chart's title fitted to its chart** (hardening,
+      2026-11-19 ~17:28-17:50, dev phone upright, a skirmish; the Fold7 still refused port 38389). The skirmish's
+      infolog and launcher.log had nothing from the app's widgets, 30 fps a minute in (the second "phone version of"
+      lines at 19 s are bardroid_touch's planned read-ahead of the widget files, uiRescale.readAhead). The top bar's
+      Statistics upright: the Front line and Value efficiency charts' axes read "0% 1% 1%" (BAR's percentFormat prints
+      whole numbers, and 0.5 rounds up; BAR's own, the PC's charts too), and "Activity - Actions per minute" ran past
+      its chart's right edge at three across. The copy loads BAR's Graphs page from its text already (the grids); on
+      the way now its percent ticks under 10 take one decimal where they are not whole, and BAR's chart class
+      (graph.lua, through the page's require) draws a title wider than its chart smaller, down to 70 %, then cut as
+      before (tools/make-teamstats.py, regenerated --adb). Dev phone: the axes 0% 0.5% 1%, the title whole; the
+      Economy page as before; no errors in the infolog; remake-check PASS (teamstats remade byte for byte).
 - [x] **The server list's search box with Android's keyboard; its hint "Search"** (hardening, 2026-11-19
       ~17:13-17:25, dev phone upright, fake servers offline; the Fold7 still refused port 38389). A tap on the search
       box brought up the keyboard, "duel" typed filtered the list to the one Duel server, Back put the keyboard away,

@@ -2483,18 +2483,65 @@ end
 -- its list of grids (PAGES) handed to this copy on the way, so that upright its 12 a page can be laid out three across
 -- (ViewResize); BAR's own require where its text is not as expected or does not load. (Fields, not locals: BAR's file
 -- is at Lua's 200.)
+-- On the way, BAR's chart class (luaui/Include/graph.lua) draws a chart's title wider than its chart smaller, down to
+-- 70 %, then cut as before (upright three across "Activity - Actions per minute" ran past its chart's edge, dev phone
+-- 2026-11-19); and a percent axis over a small range prints its ticks with one decimal (BAR's whole ones read "0% 1%
+-- 1%" for 0 to 1 %). Either left as BAR has it where its text is not found.
+metrics.droidFitTitles = function(Graph)
+	if type(Graph) ~= "table" or type(Graph.drawLegend) ~= "function" or Graph.droidFitTitles then
+		return Graph
+	end
+	local drawLegend = Graph.drawLegend
+	Graph.droidFitTitles = true
+	Graph.drawLegend = function(self, ...)
+		local cfg, plot = self.cfg, self.plot
+		local title = cfg and cfg.title
+		if type(title) ~= "string" or not (plot and plot.right and plot.left and cfg.fontSize) then
+			return drawLegend(self, ...)
+		end
+		local room = plot.right - plot.left
+		local w = self:textWidth(title, cfg.fontSize * 1.15)
+		if not (room > 0 and w > room) then
+			return drawLegend(self, ...)
+		end
+		local scale = math.max(0.7, room / w)
+		local shown = (cfg.look and cfg.look.title or "") .. title
+		local own, text = rawget(self, "text"), self.text
+		self.text = function(g, str, x, y, opts, size, asName)
+			if str == shown then
+				size = (size or cfg.fontSize) * scale
+			end
+			return text(g, str, x, y, opts, size, asName)
+		end
+		local ok, err = pcall(drawLegend, self, ...)
+		self.text = own
+		if not ok then
+			error(err, 0)
+		end
+	end
+	return Graph
+end
 metrics.droidGraphsModule = function()
 	local src = VFS.LoadFile("luaui/Include/teamstats_graphs.lua", VFS.ZIP)
 	local text, n = (src or ""):gsub("local PAGES = (%b{})", "local PAGES = WG.BarDroidStatsPages(%1)", 1)
+	local pct = 'return string.format("%.0f%%", v)'
+	local at = text:find(pct, 1, true)
+	if at then
+		text = text:sub(1, at - 1) .. 'return (math.abs(v) < 10 and math.abs(v - math.floor(v + 0.5)) >= 0.05)'
+			.. ' and string.format("%.1f%%", v) or string.format("%.0f%%", v)' .. text:sub(at + #pct)
+	end
+	text = text:gsub('local Graph = require%("luaui/Include/graph"%)',
+		'local Graph = WG.BarDroidStatsGraph(require("luaui/Include/graph"))', 1)
 	local chunk = n == 1 and loadstring(text, "@luaui/include/teamstats_graphs.lua")
 	if chunk then
 		WG.BarDroidStatsPages = function(pages)
 			metrics.droidPages = pages
 			return pages
 		end
+		WG.BarDroidStatsGraph = metrics.droidFitTitles
 		setfenv(chunk, getfenv(1))
 		local ok, mod = pcall(chunk)
-		WG.BarDroidStatsPages = nil
+		WG.BarDroidStatsPages, WG.BarDroidStatsGraph = nil, nil
 		if ok and type(mod) == "table" then
 			return mod
 		end
