@@ -767,7 +767,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       to end (off the main thread, `GameService.closeGently`), then everything killed as before. Dev phone: a 2-minute
       skirmish swiped away from recent apps: "asked the engine to quit", "asked the engine again (BAR's quit
       dialog)", "the engine quit in 7692 ms", the replay 14373 bytes (it had been 0 three times before; the game's own
-      shutdown, SpringApp::Kill, ~5 s). (The Fold7's empty replay of 17:41 is still in its demos folder.)
+      shutdown, SpringApp::Kill, ~5 s). (The Fold7's empty replay of 17:41 is still in its demos folder.) The APK from
+      789f02d4: the same swipe again 7494 ms, 13703 bytes; on the Fold7 at 20:07. (No UI polish this run.)
 - [x] **The menu copies, the D-gun mode and 1st person on the newest APK; speak to chat's arrows** (hardening,
       2026-11-18 ~19:30-19:45, dev phone): remake-check PASS (the phone's remake of the build menu, order menu, mission
       info, team stats and Settings copies equal to the shipped ones on test-31992, every phone patch applies),
