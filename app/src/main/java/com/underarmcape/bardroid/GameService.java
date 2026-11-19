@@ -431,6 +431,7 @@ public class GameService extends Service {
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
+                                refreshNotification();
                             }
                             // (joining a game hosted elsewhere: the pre-game screen, GameActivity's upright version of it)
                             String server = StatusText.preGameServer(line);
@@ -450,9 +451,11 @@ public class GameService extends Service {
                             // the upright tip and bar with it; before, only the engine's first load had them, Kailil,
                             // 2026-11-11: "Allow free memory button in this loading menu too")
                             if (line.contains("creating LoadScreen")) {
-                                if (!loading) Log.i("svc", "a game loads (from the lobby): the loading screen's buttons again");
+                                boolean was = loading;
+                                if (!was) Log.i("svc", "a game loads (from the lobby): the loading screen's buttons again");
                                 loadReset(true);
                                 loading = true;
+                                if (!was) refreshNotification();
                             }
                             if (loading) loadLine(line);
                             // (a replay that ends before its game began: its game closed by force before the engine
@@ -580,6 +583,12 @@ public class GameService extends Service {
         if (say) setStatus("stopped");
     }
 
+    /** The notification again for the same status (its title says loading or running: notification). */
+    private void refreshNotification() {
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null && !closing) nm.notify(1, notification(status));
+    }
+
     private void setStatus(String s) {
         if (s.equals(status)) return;   // (one Stop passes the action, the game thread and onDestroy: "stopped" three times)
         status = s;
@@ -694,7 +703,9 @@ public class GameService extends Service {
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         return new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
-                .setContentTitle(StatusText.forPlayers(status))
+                // (loading as the launcher says it: the notification said "Skirmish running" over the loading screen,
+                // dev phone 2026-11-18; refreshNotification as the loading ends)
+                .setContentTitle(StatusText.forPlayers(status, loading))
                 // (while a game runs, what the tap and the button do: the title alone left the line under it empty)
                 .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
                 .setContentIntent(pi)
