@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The vote panel as a tap panel; YES and NO a finger's height** (hardening, 2026-11-19 ~05:36-05:55, dev phone
+      upright, the scratch vote widget again, removed after; the run's UI polish too). The vote panel's registration
+      (855f13cf) checked: YES tapped, "!vote y", the pointer hidden (BAR then shrinks the panel to its title, so the
+      later answer under the old buttons is the map, 0). Its YES and NO were 55 % of a panel a 23rd of the screen high,
+      less two margins: about 56 pixels upright, 2.8 mm. The vote patch makes the panel tall enough for buttons of at
+      least 8.5 % of the screen's short side, its words with it (42954d5c). Dev phone: YES and NO about 88 pixels,
+      "Stop?", YES, NO and X whole; NO tapped: "!vote n". The Fold7 did not answer (offline on Tailscale, last seen
+      2 hours before).
 - [x] **BAR's button panels with no IsAbove: the pointer hides after a tap, drags still pan** (hardening, 2026-11-19
       ~05:10-05:40, dev phone upright, lobby games offline, the login wait removed after; the run's UI polish too). A
       third hover answer, 3 (bardroid_touch.lua: a panel a BAR widget draws without an IsAbove, registered by its phone
