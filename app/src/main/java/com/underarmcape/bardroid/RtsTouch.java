@@ -618,7 +618,10 @@ final class RtsTouch {
 
     private void lobbyAskWatch() {
         // (not in a game, unless BAR's lobby is over it: every touch there ran the 3 s of checks for nothing)
-        if (gameWidgetRunning() && !lobbyOverlay()) return;
+        // (overlayLast, as source() last read it: lobbyOverlay() here took its 250 ms read and source() then got the
+        // old answer, the lobby's pointer state one touch late; review 2026-11-19. A touch's UP comes after its DOWN's
+        // source(), so a lobby opened over the game is watched from the first touch's lift)
+        if (gameWidgetRunning() && !overlayLast) return;
         if (lobbyAskSeenAt < 0) {   // (the first touch: what the file holds from before is no request)
             lobbyAskSeenAt = lobbyAskFile.lastModified();
             String t = readSmall(lobbyAskFile);
