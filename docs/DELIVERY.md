@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The lobby and the pad online on the newest APK; the lobby menu's page strip backed** (hardening, 2026-11-18
+      ~19:15-19:30, dev phone, the lobby offline: tools\lobby-login's widget, removed after): lobby-phone-test ALL PASS
+      (38: the server details first, the warnings, the pad's Start scale, speak to chat's panel, the quick Skirmish's
+      pages, a scenario's page, the Keys window) and pad-test -Online ALL PASS (17: user widgets' orders refused, the
+      app's menus in BAR's game). UI polish: the lobby menu's page strip (its arrows and page dots, under the column
+      sideways and the grid upright) lay bare on BAR's background picture, its red and white under the dots; now on a
+      dark backing with cut corners as the lobby's buttons (bardroid_lobby_touch.lua; screenshot sideways, the login
+      dialog cancelled, never logged in).
 - [x] **A sideways skirmish on the newest APK; the minimap framed in the sideways dock** (hardening, 2026-11-18
       ~18:55-19:10, dev phone sideways: "Turn with the phone" off for it, back on after). ~3 minutes, BUILD and ORDERS
       tapped: 30.0 fps, no warning or error from the app's widgets. UI polish: BAR's minimap in the sideways dock's
