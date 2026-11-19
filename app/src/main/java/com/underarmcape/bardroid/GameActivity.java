@@ -878,7 +878,13 @@ public class GameActivity extends MainActivity {
 
     private static void setFlag(java.io.File flag, boolean on, String change) {
         try {
-            if (on ? flag.createNewFile() : flag.delete()) Log.i("display", change);
+            if (on ? flag.createNewFile() : flag.delete()) {
+                // (with no engine running, as after a Stop, it changes nothing for a game: the shared logs only. In
+                // the launcher's box "game screen hidden: the engine stops drawing" stood after "engine exited (0)" at
+                // every Stop; dev phone screenshot 2026-11-19)
+                if (Proc.enginePids().isEmpty()) Log.detail("display", change);
+                else Log.i("display", change);
+            }
         } catch (java.io.IOException e) { Log.e("display", flag.getName() + ": " + e); }
     }
 

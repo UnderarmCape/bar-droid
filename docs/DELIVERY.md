@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **fp-save-test and pace-test on today's build; no stale "game screen hidden" after a Stop** (hardening,
+      2026-11-19 ~14:40-14:55, dev phone upright; the Fold7 still refused port 38389). fp-save-test (a spectator's
+      first person through BAR's mid-game settings save) and pace-test (the frame cap, vsync grid, socket traps) ALL
+      PASS on the build with today's changes (spectate-test is a laptop test: not run). A replay from the lobby looked
+      over upright: the spectator dock, the speed column, the rails and knob on the right as they should be; BAR's
+      console line ("Victory condition: ...") crosses the turn rail for its first seconds, BAR's own text. UI polish
+      (the launcher's box after a Stop): "[display] game screen hidden: the engine stops drawing" came after "engine
+      exited (0)" at every Stop; with no engine running GameActivity.setFlag writes it to the shared logs only.
 - [x] **pad-test and pad-test -Online on today's build; the Settings copy's long names in a smaller size before a
       cut** (hardening, 2026-11-19 ~14:10-14:40, dev phone upright; the Fold7 timed out, then refused its port 38389).
       The lobby long press's words checked by reading (the battle room's chatPanel is the room's alone, each chat
