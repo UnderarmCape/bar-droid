@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Spectating a replay on the 2026.09.03 builds; its Stop says "Closing"** (hardening, 2026-11-18 ~22:50-23:05,
+      dev phone upright, speedmetal1v1-20261117 through the benchmark's replay start, `.bardroid-bench-replay`, removed
+      after): 30 fps, the spectator dock (PLAYER CAM, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW),
+      TEAMS listing Reptor and hrddbb (the watched one lit), the dock's resources the watched team's; one error, BAR's
+      own ("could not find FeatureDef legapollyon_heap", the replay's game). Stop while spectating: no quit dialog for
+      a spectator, so the second ask lands in the shutdown, harmlessly ("spring exited with 0", Kill[9], 4730 ms, the
+      infolog archived). UI polish: stopping a replay being watched said "Closing: saving the replay", though nothing
+      is recorded then; GameService now marks a replay played (its "ReadDataFromDemo" line; "recording demo to" clears
+      it, and each engine start) and says "Closing" (dev phone screenshot; the engine quit in 3823 ms). (Once the
+      replay did not start: right after an install Android restarts the app by itself and the force-stop and the start
+      raced; the next try started. Tooling only.) The laptop's touch-widget-test: a background wait on the launch
+      guard's --wait-idle runs it once Kailil has been away 10 minutes.
 - [x] **pace-test on the 2026.09.03 builds; Stop dimmed while the game closes** (hardening, 2026-11-18 ~22:40-22:50,
       dev phone). pace-test (libbardroid_pace.so in the app's container: the ioctl and socket answers, the frame cap,
       the floating window's 15 fps, the vsync grid): one FAIL the first time, "frame cap: 30 fps at most" with 9 frames
