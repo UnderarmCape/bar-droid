@@ -756,12 +756,28 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
-- [ ] **One-finger zoom and turn on the map** (Kailil, 2026-11-19 ~08:37: "we need to figure out a way to zoom out
-      and in with one finger. and rotate. any ideas?"). The dock's camera pad has one (double tap and hold, then slide:
-      up or down zooms, sideways turns; three taps tilt), the D-gun mode's grey space too; on the map every one-finger
-      gesture is taken (drag pans, tap then drag selects, long press orders), so Google Maps' double tap and slide would
-      clash with box select. Offered: a camera knob over the map (hold and slide: zoom, turn; placed with the layout
-      editor), edge rails, or a long press with nothing picked; recommended the knob. His pick pending.
+- [ ] **One-finger zoom and turn on the map: the camera knob and the edge rails, built, his test pending** (Kailil,
+      2026-11-19 ~08:37: "we need to figure out a way to zoom out and in with one finger. and rotate. any ideas?"; then
+      ~08:50, of the knob and the rails offered: "build both systems fully, then i will test them both. add a settings
+      toggle in settings under controls or camera controlls if possible"). On the map every one-finger gesture was taken
+      (drag pans, tap then drag selects, long press orders), so neither starts from a gesture: bardroid_camctl.lua draws a
+      round knob over the map (upright at the right above the dock and the turn rail; sideways with the corner dock at
+      the left, the other thumb) and two rails while the touch dock is up (one down the map's right edge between the top
+      bar and the dock: zoom; one along the map's foot above the dock, sideways beside the corner dock: turn), and writes
+      their rects to bardroid_camctl.txt; RtsTouch's new CAM state takes a touch that comes down on one: the knob's
+      first slide decides (up or down zooms, down closer; sideways turns, the dock pad's dead zones), a rail its own way,
+      the dock pad's gains and lines; the pointer stays hidden where it was; the part lights gold while held ("camheld"
+      in the touch log). The knob is in the layout editor ("Camera knob": moved, sized). Settings, Control tab: a "Camera
+      with one finger" section after BAR's Camera, "Camera knob" and "Camera edge rails" switches with their
+      descriptions (WG.options.addOptions puts them under BAR's Custom tab; the options copy's droid.regroup, a new
+      make-options.py patch, moves options with droidGroup into their tab after each of the model's rebuilds and drops
+      the Custom tab's heading when nothing is left under it); saved as BarDroidCamKnob / BarDroidCamRails, both on at
+      first. Dev phone upright, a probe reading the camera: the knob down 300 px 5000 -> 3499, up again 4999, sideways ry
+      0 -> 0.66; the zoom rail down 4999 -> 3093, up -> 5690; the turn rail right ry 0.66 -> -0.43; sideways the knob up
+      5000 -> 8413, right ry -0.25, the zoom rail down -> 3445, the turn rail left ry 0.25, a drag on the map still pans.
+      Switching the knob off in Settings took it away at once, the rails stayed, the value saved; on again sideways,
+      the knob at the bottom left. touch-phone-test, dock-phone-test and pad-test ALL PASS with both on. For his test:
+      both on the Fold7, folded and unfolded, upright and sideways; which to keep, the gains, the knob's place.
 - [x] **c961de81 on the Fold7; Play upright names the camera pad's zoom and turn** (2026-11-19 ~08:38-08:48, dev
       phone upright). The Fold7: no game since 08:26; the APK from clean main c961de81 (only
       phone-2026.09.03-83a8536d37) loaded a skirmish on the dev phone and ended with exit 0, then went on the Fold7 at
