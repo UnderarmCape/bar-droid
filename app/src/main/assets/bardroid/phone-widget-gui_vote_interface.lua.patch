@@ -2,7 +2,8 @@ BAR Droid phone version of BAR's Vote interface (luaui/widgets/gui_vote_interfac
 votes bring up (a team's resign, stop, forcestart): on the screen whole. BAR places it right of the top bar's middle,
 under the top bar; upright on a phone the top bar is the screen's right half and the panel a third of the height wide,
 so it ran past the right edge: only YES showed, the title, NO and the close button off the screen (dev phone, upright,
-a "stop" vote, 2026-11-19). No wider than the screen and moved left until it fits, under the top bar as before. And
+a "stop" vote, 2026-11-19). No wider than the screen and moved left until it fits, under the top bar as before; YES
+and NO at least 8.5 % of the screen's short side high (the panel taller, its words with it). And
 its rect for the app's touch widget (WG.BarDroidTapPanels): a tap on it hides the pointer, a drag from it pans.
 Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
 runs.
@@ -36,6 +37,21 @@ function widget:Shutdown()
 		WG.BarDroidTapPanels.vote = nil
 	end
 end
+@@@ end
+
+@@@ find
+		local height = mathFloor((vsy / 23) * ui_scale) * 2 -- *2 so it ensures number can be divided cleanly by 2
+@@@ with
+		local height = mathFloor((vsy / 23) * ui_scale) * 2 -- *2 so it ensures number can be divided cleanly by 2
+		-- BAR Droid (phone): YES and NO a finger's height, at least 8.5 % of the screen's short side (55 % of the panel
+		-- less two margins of a 32nd of its width), its words with it (they go by the panel's height): about 56 pixels
+		-- upright on the dev phone, 2.8 mm (2026-11-19)
+		do
+			local droidNeed = mathFloor((math.min(vsx, vsy) * 0.085 + 2 * mathFloor(width / 32)) / 0.55 / 2 + 1) * 2
+			if height < droidNeed then
+				height = droidNeed
+			end
+		end
 @@@ end
 
 @@@ find
