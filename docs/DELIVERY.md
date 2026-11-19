@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The menu copies, the D-gun mode and 1st person on the newest APK; speak to chat's arrows** (hardening,
+      2026-11-18 ~19:30-19:45, dev phone): remake-check PASS (the phone's remake of the build menu, order menu, mission
+      info, team stats and Settings copies equal to the shipped ones on test-31992, every phone patch applies),
+      pad-test -Dgun ALL PASS (9), fp-save-test PASS (4), pad-test -Chat ALL PASS (5). UI polish: in a game speak to
+      chat's note, "< SPEAK TO ALLIES >", had the font's thin "<" and ">" for the channel's arrows; now solid triangles
+      in the channel's colour with a dark edge, a size each with its gap, as the dock's spectator arrows (style.toast,
+      bardroid_pad.lua; pad-test -Chat's chat-voice.png). The note's text stays the same for the tests; the lobby's own
+      panel keeps its Chili label.
 - [x] **The lobby and the pad online on the newest APK; the lobby menu's page strip backed** (hardening, 2026-11-18
       ~19:15-19:30, dev phone, the lobby offline: tools\lobby-login's widget, removed after): lobby-phone-test ALL PASS
       (38: the server details first, the warnings, the pad's Start scale, speak to chat's panel, the quick Skirmish's
