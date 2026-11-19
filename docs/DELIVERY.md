@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Saving and loading a game by touch on the 2026.09.03 builds** (hardening, 2026-11-18 ~23:08-23:18, dev phone
+      upright): the top bar's Save in a skirmish, "Game saved: the lobby's Load Game opens it" at once (LSH::SaveGame,
+      Saves/20261118_231131.ssf); the save drops the selection for a quarter of a second and gives it back ("0 picked",
+      then "1 picked" 0.27 s later: the engine's, nothing lost). The offline lobby's Load Game (tools\lobby-login's
+      widget, removed after) listed both new saves (01:14 and 00:55 in game, BAR-31992), Load: "a saved game loaded: the
+      commander picked, the camera on it", no error. Nothing to fix; no UI polish this run (looked at: the Load Game
+      list upright, Chobby's own, its version column wraps).
 - [x] **Spectating a replay on the 2026.09.03 builds; its Stop says "Closing"** (hardening, 2026-11-18 ~22:50-23:05,
       dev phone upright, speedmetal1v1-20261117 through the benchmark's replay start, `.bardroid-bench-replay`, removed
       after): 30 fps, the spectator dock (PLAYER CAM, TEAMS, LAST PINGS, HIDE, FOLLOW UNIT, FREE CAM, GROUP, FULL VIEW),
