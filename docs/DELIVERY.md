@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Statistics by touch: a close button** (hardening, 2026-11-18 ~23:18-23:35, dev phone). The top bar's
+      Statistics opens the app's copy of BAR's TeamStats (test-31992's Tables / Graphs, 12 charts three across upright,
+      between the top bar and the dock; sideways as large as fits, the dock aside; BAR pauses a singleplayer game
+      meanwhile), no error. But nothing on it closed it: only the top bar's Statistics again (a phone has no Escape, and
+      upright no room around it to tap). UI polish: `tools/make-teamstats.py` puts a close button at its header's right
+      end, red with a white cross as the app's Settings has, a press on it closing it as BAR's own ways do (closePanel,
+      showOnceMore); two new patches, no new top-level local (BAR's file is at 200), the copy and its .patches made again
+      from the dev phone's release (31992, 49ea8388). Dev phone: upright and sideways the X at the header's right end,
+      clear of the "You" chip and the charts; a tap closed it, the game resumed, the commander still picked;
+      remake-check PASS (the phone's remake of all five copies equal to the shipped ones).
 - [x] **Saving and loading a game by touch on the 2026.09.03 builds** (hardening, 2026-11-18 ~23:08-23:18, dev phone
       upright): the top bar's Save in a skirmish, "Game saved: the lobby's Load Game opens it" at once (LSH::SaveGame,
       Saves/20261118_231131.ssf); the save drops the selection for a quarter of a second and gives it back ("0 picked",
