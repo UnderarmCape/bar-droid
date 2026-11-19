@@ -756,6 +756,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The floating window's log flood; its orientation line** (hardening, 2026-11-19 ~06:44-07:02, dev phone
+      upright, a skirmish; the run's UI polish too). The launcher's cut labels of the last run did not come back (the
+      launcher brought forward over the lobby, five screenshots in its first second and later: whole). The logs of the
+      last lobby, replay and skirmish games: BAR's own warnings only, nothing from the app's widgets. Found in the
+      launcher's log view: with the game in Android's floating window behind the launcher, "[display] X screen 936x2013,
+      display 120 Hz" and "... 60 Hz" by turns about twice a second (322 lines in a minute and a half), each also a
+      bardroid_screen.txt write: the display's rate follows the app in front there. The rate alone changes nothing in
+      the game (bardroid_touch.lua reads the size only); GameActivity skips the display listener in the floating
+      window and gives the rate once as it leaves it (d852fe7f). Dev phone: one line as the window floated, none in the
+      next 48 s, the line on leaving it; Stop then ended the game cleanly ("the engine quit in 5545 ms"). UI polish:
+      the floating window's orientation line read "the phone's (-1)" in the launcher's log; now "free (the floating
+      window, or as the phone lies)" (same commit). Seen on the way: Samsung's floating-window button with a rectangle
+      puts the game in split screen (X screen 1080x1027, the dock laid out wide); it played there, its rate switches
+      every few seconds, left as they are. The Fold7 did not answer (offline on Tailscale).
 - [x] **The replay speed column sideways; the pointer after a pan; the notification names what runs** (hardening,
       2026-11-19 ~06:16-06:41, dev phone sideways, a replay from the lobby offline, the login wait removed after; the
       run's UI polish too). Sideways the column's tap answers 3 ("67 642 3"), "Speed set to 2.0", the pointer gone. A
