@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The share list reviewed; A and GIVE dimmed while A can give nothing** (hardening, 2026-11-19 ~00:43-00:53,
+      dev phone). The share list's code read over (bardroid_pad.lua: teammates, the rules for away and tax, the
+      amount up to the teammate's share slider, the dock's giving): nothing wrong found; BAR's own idle-players gadget
+      counts a hosted AI's team the same way as its "away" check (numActivePlayers), so AI teammates take gifts.
+      pad-test -Share ALL PASS. UI polish from its screenshots: with UNITS and none selected (or nothing to give, or
+      the teammate's storage full) A only says why not, yet its key and GIVE stood lit under "NO UNITS SELECTED"; they
+      dim now, as the amount's steps did (48dd0f66). Dev phone: pad-test -Share ALL PASS again, the key lit on METAL
+      with 300 to give, dimmed on UNITS with none picked. The APK from 48dd0f66 on the Fold7 at 2026-11-19 00:52 (BAR
+      not running; he had only opened the app at 00:38, no game).
 - [x] **No BAR tests on the laptop; the drag hold checked on the dev phone** (hardening, 2026-11-19 ~00:34-00:45).
       Kailil, 00:40: "you are not allowed to run bar tests on my laptopo. use the dev phone." The launch guard had
       reported him idle 10 minutes and the laptop's touch-widget-test had started (00:35:51); stopped within minutes,
