@@ -762,7 +762,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       for those seconds the notification still read "Skirmish running" with its Stop (setStatus leaves the notification
       alone once closing); now `closeGently` shows it as "Closing: saving the replay", and a closing notification has
       no Stop button (one is on its way). Dev phone: the shade read "Closing: saving the replay", no Stop, 1.5 s after
-      the tap; the notification gone with the service after the quit.
+      the tap; the notification gone with the service after the quit. The APK from f8c7c00f on the Fold7 at 20:58.
 - [x] **The lobby swiped away; the notification says "loading" while the game loads** (hardening, 2026-11-18
       ~20:35-20:50, dev phone). The offline lobby (tools\lobby-login's widget, removed after) swiped away from recent
       apps: "asked the engine to quit", the second ask 1 s later, "the engine quit in 1113 ms" (the lobby asks nothing:
