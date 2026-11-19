@@ -756,7 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
-- [ ] **dock-phone-test: the dock's taps slow on the dev phone (2026-11-19 ~03:35)** (hardening; the Fold7 did not
+- [x] **dock-phone-test: the dock's taps slow on the dev phone (2026-11-19 ~03:35): the test's setup, settled ~04:00**
+      The rested dev phone (4 GB free) failed the same way; so did 180070df's own build, which passed at 00:20: not
+      the app. The test turns "Play upright" on but not "Turn with the phone" off; with it on the game follows how the
+      phone lies, and the dev phone lies sideways now, so the upright test ran on the sideways dock, whose taps it does
+      not expect. With "Turn with the phone" off, 5e9c1a03's build: ALL PASS. dock-phone-test now turns it off for the
+      run and back as it was after (on before: ALL PASS, on after). No other phone test sets "Play upright". The
+      Fold7 still did not answer: 5e9c1a03 waits for its install. (The note as first written follows.)
+- [x] **dock-phone-test: the dock's taps slow on the dev phone (2026-11-19 ~03:35)** (hardening; the Fold7 did not
       answer, 5e9c1a03 waits). The regression run before the next Fold7 install: touch-phone-test and
       lobby-phone-test ALL PASS on 5e9c1a03, but dock-phone-test failed twice the same way: a tap on the dock opened
       its menu 4.2-4.3 s after the tap (the test allows 4 s), the tile's tap picked the building 3.3-3.4 s after (3 s),
