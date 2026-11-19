@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's new lobby, Chobby test-4680; the update check says what it updated** (hardening, 2026-11-19
+      ~07:27-07:38, dev phone; the run's UI polish too). Install / Update on the dev phone brought BAR's new lobby
+      (BYAR Chobby test-4679-f4b32fa -> test-4680-214cb3f; the game stays test-31992). lobby-phone-test ALL PASS on it
+      (the lobby widget's scrolling, server details, warnings, scale, quick Skirmish pages, Scenarios, Keys), the
+      Android layer's report empty. A Fold7 with "Update BAR at every start" gets it at its next start. UI polish: the
+      launcher said "Update check Nov 19 07:27 (up to date)" right after that update; Updater.updatedNote says
+      "(updated: lobby)", "(updated: engine, game, lobby)", "(up to date)" only when nothing changed (c746033e;
+      updater-test ALL PASS; dev phone: a check with nothing new still "(up to date)"). The Fold7 did not answer.
 - [x] **pad-test and lobby-phone-test on the newest build; the GPU's model on the launcher** (hardening, 2026-11-19
       ~07:16-07:25, dev phone; the run's UI polish too). pad-test and lobby-phone-test ALL PASS on b9462831 (the touch
       and dock tests passed on a1213fc6; the commits since change no widget and no touch path). UI polish: the
