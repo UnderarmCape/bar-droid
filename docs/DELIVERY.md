@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The launcher's Stop keeps the replay too; it says so while the game closes** (hardening, 2026-11-18
+      ~20:25-20:35, dev phone). The launcher's Stop over a running skirmish (the game in picture-in-picture): "asked the
+      engine to quit", again for BAR's quit dialog, "the engine quit in 5335 ms", the replay 15242 bytes. But for those
+      5 s the launcher still said "Skirmish running", BAR's quit dialog flashing in the picture-in-picture: the Stop
+      looked untaken, and a second Stop would have sent a third SIGTERM (after the engine has shut SDL down that one
+      ends it at once). Now the status is "Closing: saving the replay" from the Stop (or swipe) to the end, and a Stop
+      meanwhile is ignored (`GameService.closeGently`). Dev phone: the launcher read "Closing: saving the replay", a
+      second Stop 2 s in did nothing, quit in 5333 ms, the replay 15545 bytes, then "Ready"; status-text-test ALL PASS
+      (its new case).
 - [x] **The Replays tab after the replay fix; the lobby's speak-to-chat arrows** (hardening, 2026-11-18 ~20:10-20:25,
       dev phone, the lobby offline, never logged in). The Replays tab upright: the two games swiped away on the new
       build listed with their length ("1 minute") and Start lit (this engine); empty replays never reach it
