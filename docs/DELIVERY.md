@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **No BAR tests on the laptop; the drag hold checked on the dev phone** (hardening, 2026-11-19 ~00:34-00:45).
+      Kailil, 00:40: "you are not allowed to run bar tests on my laptopo. use the dev phone." The launch guard had
+      reported him idle 10 minutes and the laptop's touch-widget-test had started (00:35:51); stopped within minutes,
+      no engine left running, its three junctions into BAR's install removed (BAR's pool intact). The launch guard
+      (~/.claude/hooks/bar_launch_guard.py) no longer lets idle through: only headless, or his own ask in chat; its
+      --wait-idle says so. The drag hold of 2026-11-18 21:50 instead by touch-phone-test on the dev phone: ALL PASS (a
+      drag over the void 0 off after 1402, from the map onto the void 0 off, a finger's line a frame 0 off). The same
+      run: lobby-phone-test ALL PASS (offline, the login wait in). No UI change this run.
 - [x] **BAR's windows: no music line peeking out under them** (hardening, 2026-11-19 ~00:05-00:30, dev phone; the
       run's UI polish too). A skirmish upright, Settings open: under the window's bottom right corner, cut by the
       screen's edge, BAR's music line ("♫ Leon Devereux - Lost Directive"). With the dock aside for one of BAR's
