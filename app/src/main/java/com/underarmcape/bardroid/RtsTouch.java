@@ -610,6 +610,7 @@ final class RtsTouch {
                         Math.hypot(flingVx, flingVy), glideStopped ? "it stops it, no tap" : "slow, a tap as any"));
                 gliding = false;
                 ui.removeCallbacks(fling);   // a touch stops a gliding map
+                ui.removeCallbacks(cursorOnInterface);   // (the last touch's late look: this one decides now)
                 Dock dock = dock();
                 // (sideways, layout A: BAR's minimap in the dock's middle takes its touches as the game does, "map")
                 inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()))
@@ -962,6 +963,17 @@ final class RtsTouch {
         Dock endDock = dock();
         cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(curX), toY(curY))
                 && !(endDock.map != null && inside(endDock.map, toX(curX), toY(curY)));
+        // (and on BAR's own interface, its windows and panels by the game widget's fresh answer: the arrow stood where
+        // the last tap was, over Settings' tabs and switches and on the top bar, dev phone screenshots 2026-11-18; on the
+        // map it shows, BAR's command cursor)
+        if (!cursorOnDock && System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS) {
+            int h = hoverAt(curX, curY);
+            if (h == HOVER_INTERFACE || h == HOVER_SCROLL) cursorOnDock = true;
+            else if (h == HOVER_UNKNOWN) {   // (the widget answers for the pointer's new place a frame or so later)
+                upX = curX; upY = curY; upLooks = 0;
+                ui.postDelayed(cursorOnInterface, CURSOR_LOOK_MS);
+            }
+        }
         state = State.IDLE;
         showCursor(true);
         if (velocity != null) { velocity.recycle(); velocity = null; }
@@ -1259,10 +1271,30 @@ final class RtsTouch {
      * while fingers play it (an arrow left where the last tap was, on a touch screen: dev phone screenshots,
      * 2026-11-10); a mouse, keyboard or the pad brings it back at once (source), a game shows it again as before. In a
      * game a finger's touch that ended on the dock leaves it hidden until a finger comes down off the dock (the arrow
-     * lay on the dock's buttons where the last tap was, over Fight: dev phone 2026-11-12); on the map it shows, BAR's
-     * command cursor. The X server keeps a hidden pointer hidden through the taps' mouse events (patch 0014); the first
+     * lay on the dock's buttons where the last tap was, over Fight: dev phone 2026-11-12), and so does one that ended on
+     * BAR's own windows and panels (Settings, the top bar: 2026-11-18); on the map it shows, BAR's command cursor. The X server keeps a hidden pointer hidden through the taps' mouse events (patch 0014); the first
      * call of this screen sets it either way (a hidden one from an earlier screen stays hidden there otherwise).
      */
+    // A touch that ended where the game's widget had not answered yet: looked at again a few times, the pointer hidden
+    // if it was BAR's interface (a new touch cancels it). At the lift the answer was still the old place's nearly always
+    // (Settings' tabs, dev phone 2026-11-18).
+    private static final long CURSOR_LOOK_MS = 150;
+    private static final int CURSOR_LOOKS = 5;
+    private float upX, upY;
+    private int upLooks;
+    private final Runnable cursorOnInterface = new Runnable() {
+        @Override public void run() {
+            if (state != State.IDLE || cursorOnDock) return;
+            int h = hoverAt(upX, upY);
+            if (h == HOVER_INTERFACE || h == HOVER_SCROLL) {
+                cursorOnDock = true;
+                showCursor(cursorWanted);
+            } else if (h == HOVER_UNKNOWN && ++upLooks < CURSOR_LOOKS) {
+                ui.postDelayed(this, CURSOR_LOOK_MS);
+            }
+        }
+    };
+
     private void showCursor(boolean visible) {
         cursorWanted = visible;
         visible &= !firstPerson && !(fingersLast && (!gameWidgetRunning() || cursorOnDock || overlayLast));
