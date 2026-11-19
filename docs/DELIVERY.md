@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A sideways skirmish on the newest APK; the minimap framed in the sideways dock** (hardening, 2026-11-18
+      ~18:55-19:10, dev phone sideways: "Turn with the phone" off for it, back on after). ~3 minutes, BUILD and ORDERS
+      tapped: 30.0 fps, no warning or error from the app's widgets. UI polish: BAR's minimap in the sideways dock's
+      middle sat square-cornered and bare beside the metal, energy and wind boxes; now a dark frame just outside its
+      place, round at the corners as the dock's boxes (SP.holeFrame, in the dock's texture; screenshots before and
+      after).
 - [x] **The share list and the touch camera on the newest APK; the share list's storage bars** (hardening, 2026-11-18
       ~18:40-18:55, dev phone upright, the 2026.09.03 phone engine): pad-test -Share ALL PASS (20 checks: METAL and
       ENERGY given within the teammate's room, the notes, 15 teammates on the screen, a teammate out of the game) and
