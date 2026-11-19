@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **128b8182 on the Fold7; his online game's empty replay** (2026-11-19 ~13:00-13:05). The APK from clean main
+      128b8182 (phone-2026.09.03-83a8536d37) went on the Fold7 at 13:02 (93 s), BAR closed since 12:55; github-sync
+      -Release. His log since 11:43: online games joined and left four times ("the game ended: back in the lobby"),
+      folded turns 562 ms, once 3387 ms (12:36); no error from the app's widgets, no SIGSEGV. His last game (online,
+      12:32-12:55) left a replay of 0 bytes: it never logged "finished loading" either, so GameService counted it as
+      loading for all 23 minutes, and the swipe from recent apps at 12:55 skipped the quit that writes the replay
+      (closeGently: "still loading: stopped at once") and killed it. 5c5fcefb's first-frame check (that game had frames,
+      10183 by 12:40) ends the loading there now, so a swipe or Stop saves such a game's replay.
 - [x] **The lobby's text boxes: a tap for the keyboard, a long press on a chat's box for speak to chat** (Kailil,
       2026-11-19 ~12:42: "Allow double tap or tap on the chat in the lobby to allow you to ooen the android keyboard to
       type. If you long press it shlukd enable voice tts system that we have built"; dev phone upright, ~12:43-13:00).
