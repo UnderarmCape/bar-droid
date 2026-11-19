@@ -67,15 +67,15 @@ public class StatusTextTest {
         }
         // StatusText.returnLine: the notification's line under its title (status, game from the lobby, replay)
         Object[][] lines = {
-            { "running (lobby)", false, false, "Tap to return to the lobby; Stop ends it" },
-            { "running (lobby)", true, false, "Tap to return to the game; Stop ends it" },
-            { "running (lobby)", true, true, "Tap to return to the replay; Stop ends it" },
-            { "running (lobby)", false, true, "Tap to return to the replay; Stop ends it" },
-            { "running (skirmish)", false, false, "Tap to return to the game; Stop ends it" },
-            { "running (bench)", false, false, "Tap to return to the benchmark; Stop ends it" },
-            { "running (bench)", false, true, "Tap to return to the benchmark; Stop ends it" },   // (a replay benchmark)
-            { "running (glcheck)", false, false, "Tap to return to the GL check; Stop ends it" },
-            { "closing: saving the replay", true, false, "Tap to return to the game; Stop ends it" },
+            { "running (lobby)", false, false, "Tap for the lobby; Stop ends it" },
+            { "running (lobby)", true, false, "Tap for the game; Stop ends it" },
+            { "running (lobby)", true, true, "Tap for the replay; Stop ends it" },
+            { "running (lobby)", false, true, "Tap for the replay; Stop ends it" },
+            { "running (skirmish)", false, false, "Tap for the game; Stop ends it" },
+            { "running (bench)", false, false, "Tap for the benchmark; Stop ends it" },
+            { "running (bench)", false, true, "Tap for the benchmark; Stop ends it" },   // (a replay benchmark)
+            { "running (glcheck)", false, false, "Tap for the GL check; Stop ends it" },
+            { "closing: saving the replay", true, false, "Tap for the game; Stop ends it" },
         };
         for (Object[] c : lines) {
             String got = StatusText.returnLine((String) c[0], (Boolean) c[1], (Boolean) c[2]);
