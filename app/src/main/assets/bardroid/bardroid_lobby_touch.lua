@@ -1989,6 +1989,10 @@ function upright.replayTeams(panel)
 				if text ~= c.text then
 					c:SetText(text)
 				end
+			elseif c and c.classname == "textbox" and c.text == "time unknown" then
+				-- (a replay whose length Chobby could not read: under its date and time "time unknown" read as the time
+				-- of day unknown; dev phone screenshot 2026-11-19)
+				c:SetText("length unknown")
 			elseif c then
 				walk(c, depth + 1)
 			end

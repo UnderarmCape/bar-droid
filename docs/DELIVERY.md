@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **dock-phone-test on today's build; a replay's unknown length said so** (hardening, 2026-11-19 ~14:55-15:10,
+      dev phone upright; the Fold7 still refused port 38389). dock-phone-test -Shots ALL PASS on the build with the
+      day's RtsTouch, GameService and GameActivity changes; its screens (PLACE, the D-gun's AUTO, STRAFE armed, Area Mex
+      armed) looked over: the camera knob and rails in each, nothing over the dock. The launcher's Graphics section and
+      a GL check's result read as meant. UI polish (the lobby's Replays upright): a replay whose length Chobby could not
+      read (its file cut off) said "time unknown" under its date and time, as if the time of day were unknown; now
+      "length unknown" (upright.replayTeams, where the minutes' wording is put right already).
 - [x] **fp-save-test and pace-test on today's build; no stale "game screen hidden" after a Stop** (hardening,
       2026-11-19 ~14:40-14:55, dev phone upright; the Fold7 still refused port 38389). fp-save-test (a spectator's
       first person through BAR's mid-game settings save) and pace-test (the frame cap, vsync grid, socket traps) ALL
