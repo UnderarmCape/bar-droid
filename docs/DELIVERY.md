@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **pad-test and pad-test -Online on today's build; the Settings copy's long names in a smaller size before a
+      cut** (hardening, 2026-11-19 ~14:10-14:40, dev phone upright; the Fold7 timed out, then refused its port 38389).
+      The lobby long press's words checked by reading (the battle room's chatPanel is the room's alone, each chat
+      tab's console holds its own input box): nothing wrong. pad-test and pad-test -Online ALL PASS on the build
+      with today's RtsTouch, GameService and camera changes. UI polish (the in-game Settings' Control tab upright,
+      the new "Camera with one finger" options all there below the fold): BAR's "Middle-click toggles camera move" was
+      cut to "Middle-click toggles camera .."; the Settings copy (make-options.py, an 18th and 19th patch on draw.row)
+      prints a name a little too long for its room in a smaller size, down to 80 %, before cutting it (at 85 % still
+      "camera mov.."; scaled to the room exactly, rounding left it a hair over and BAR's text.fit cut it: one pixel
+      less). Dev phone: the name whole; remake-check PASS (the phone's remake of the copy byte for byte). On the way:
+      an install over a running game left the app down and the next start's tap on the home screen (am start without
+      -W returned before the app was up); started again with -W.
 - [x] **A played skirmish read through: nothing from the app's widgets; the log box without BAR's two harmless
       "Error" lines** (bug hunt, 2026-11-19 ~13:58-14:10, dev phone upright; the Fold7 refused its port 38389 at
       13:58, mdns lists nothing: its wireless debugging off or on a new port). Play vs AI upright with the build menu

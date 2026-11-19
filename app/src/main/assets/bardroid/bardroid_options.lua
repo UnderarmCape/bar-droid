@@ -1400,9 +1400,17 @@ function draw.row(option, top, bottom)
 	local markW = option.restart and math.floor(font:GetTextWidth("*") * metrics.rowFs) + metrics.inset or 0
 
 	local label = getOptionLabel(option)
-	local shown = text.fit(font, label, left - metrics.rowPad * 2 - x - markW - countW, metrics.rowFs)
+	-- BAR Droid: a name a little too long for its room in a smaller size, down to 80 %, before it is cut (upright
+	-- "Middle-click toggles camera .."; at 85 % still "camera mov.."; dev phone screenshots 2026-11-19)
+	local room = left - metrics.rowPad * 2 - x - markW - countW
+	local fs = metrics.rowFs
+	local fullW = font:GetTextWidth(label) * fs
+	if fullW > room and fullW * 0.8 <= room - 1 then
+		fs = fs * (room - 1) / fullW -- (to the room exactly, rounding left it a hair over and text.fit cut it)
+	end
+	local shown = text.fit(font, label, room, fs)
 	row.cut = shown ~= label
-	local nameW = math.floor(font:GetTextWidth(shown) * metrics.rowFs)
+	local nameW = math.floor(font:GetTextWidth(shown) * fs)
 	if family then
 		row.chevronX = x - metrics.rowPad - metrics.chevron
 		draw.chevron(row.chevronX, cy, metrics.chevron, folded)
@@ -1425,7 +1433,7 @@ function draw.row(option, top, bottom)
 	else
 		shown = (depth > 0 and subColor or mainColor) .. shown
 	end
-	font:Print(shown, x, cy, metrics.rowFs, "ov")
+	font:Print(shown, x, cy, fs, "ov") -- BAR Droid: in its size (above)
 	if option.restart then
 		font:Print(look.restartMark, x + nameW + metrics.inset, cy, metrics.rowFs, "ov")
 	end
