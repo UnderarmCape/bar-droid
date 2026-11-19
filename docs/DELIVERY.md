@@ -765,7 +765,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Kailil at the laptop.) UI polish: the layout editor (three fingers held) put each panel's name in a tab clear of
       the other panels but not of the other tabs: upright the Chat panel's tab lay under the Minimap's, its name read
       nowhere; now a tab keeps off the tabs drawn before it too (bardroid_layout.lua): "Chat" on its top edge, "Minimap"
-      in its corner (screenshots before and after).
+      in its corner (screenshots before and after). The APK from 1b369ca2 on the Fold7 at 22:13.
 - [x] **Sideways, a drag from the map onto the void loses the point under the finger** (found 2026-11-18 ~21:20 by
       touch-phone-test sideways on the dev phone, BAR test-31992, the phone engine 2026.09.03): "a drag from the map
       onto the void holds the point under the finger (target 5606,1162 -> 5447,4511; grabbed 5606,1573, now under the
