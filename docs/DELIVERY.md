@@ -763,7 +763,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       chat's note, "< SPEAK TO ALLIES >", had the font's thin "<" and ">" for the channel's arrows; now solid triangles
       in the channel's colour with a dark edge, a size each with its gap, as the dock's spectator arrows (style.toast,
       bardroid_pad.lua; pad-test -Chat's chat-voice.png). The note's text stays the same for the tests; the lobby's own
-      panel keeps its Chili label.
+      panel keeps its Chili label. The APK from 9608ded1 on the Fold7 at 19:41.
 - [x] **The lobby and the pad online on the newest APK; the lobby menu's page strip backed** (hardening, 2026-11-18
       ~19:15-19:30, dev phone, the lobby offline: tools\lobby-login's widget, removed after): lobby-phone-test ALL PASS
       (38: the server details first, the warnings, the pad's Start scale, speak to chat's panel, the quick Skirmish's
