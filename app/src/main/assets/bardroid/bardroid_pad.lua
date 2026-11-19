@@ -167,16 +167,16 @@ function style.size(fraction, least)
 	return math.max(least or 10, math.floor(vsy * fraction * scale + 0.5))
 end
 
--- BAR's panel, its alpha times alpha
-function style.panel(x0, y0, x1, y1, alpha)
+-- BAR's panel, its alpha times alpha (least: at least this opaque)
+function style.panel(x0, y0, x1, y1, alpha, least)
 	local f = WG.FlowUI
 	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
 	if f and f.Draw and f.Draw.Element then
-		local o = math.min(1, (f.opacity or 0.7) + 0.1) * (alpha or 1)
+		local o = math.max(least or 0, math.min(1, (f.opacity or 0.7) + 0.1) * (alpha or 1))
 		f.Draw.Element(x0, y0, x1, y1, 1, 1, 1, 1, 1, 1, 1, 1, o, { 0.03, 0.03, 0.03, o }, { 1, 1, 1, o * 0.07 },
 			math.max(1, math.floor((f.elementPadding or 2) * 0.8)))
 	else
-		gl.Color(0.03, 0.03, 0.03, 0.8 * (alpha or 1))
+		gl.Color(0.03, 0.03, 0.03, math.max(least or 0, 0.8 * (alpha or 1)))
 		gl.Rect(x0, y0, x1, y1)
 	end
 end
@@ -1748,7 +1748,9 @@ local function shareDraw(vsx, vsy)
 	-- (as the pad's other panels, BAR's opacity: at 0.8 of it, 0.64, the commander's name and the metal spots' rings lay
 	-- between the tabs and the rows, BAR's GUI blur being off on phones; pad-test -Share's screenshots 2026-11-17. The
 	-- battle still shows faintly)
-	style.panel(x0, y1 - h, x0 + w, y1, 1)
+	-- (and at BAR's 0.8 the commander's name tag still read through a row, "Phone" over "PLAYER 7", pad-test -Share's
+	-- screenshots 2026-11-19: the list, read row by row, at least 0.92)
+	style.panel(x0, y1 - h, x0 + w, y1, 1, 0.92)
 
 	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
 	local tabH = math.floor(size * 1.45)

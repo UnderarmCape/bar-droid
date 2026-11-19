@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The share list's code read over; the list at least 0.92 opaque** (hardening, 2026-11-19 ~15:11-15:20, dev
+      phone upright; the Fold7 still refused port 38389). bardroid_pad.lua's share list and the dock's giving read
+      over (the tax and storage-room arithmetic, the teammates' list with the dead numbered and anonymous mode, the
+      spectator, away and dead-teammate checks, the unit gift's follow-up): nothing wrong; pad-test -Share ALL PASS.
+      UI polish (its screenshots): at BAR's panel opacity (0.8) the commander's name tag read through the list's
+      first row ("Phone" over "PLAYER 7"; BAR's GUI blur is off on phones, its name tags draw in DrawScreenEffects,
+      under the list); style.panel takes a floor and the list is at least 0.92 opaque (the pad's other panels as
+      they were). Rerun: the tag a faint trace, ALL PASS.
 - [x] **dock-phone-test on today's build; a replay's unknown length said so** (hardening, 2026-11-19 ~14:55-15:10,
       dev phone upright; the Fold7 still refused port 38389). dock-phone-test -Shots ALL PASS on the build with the
       day's RtsTouch, GameService and GameActivity changes; its screens (PLACE, the D-gun's AUTO, STRAFE armed, Area Mex
