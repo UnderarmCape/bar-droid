@@ -213,6 +213,8 @@ public class GameService extends Service {
      * wait is up to ENGINE_QUIT_MS.
      */
     private volatile boolean closingGently;
+    /** The engine plays a replay (its "ReadDataFromDemo"), not a game it records ("recording demo to"). */
+    private volatile boolean playingReplay;
     private void closeGently() {
         // (a second Stop meanwhile: one quit is on its way; a third SIGTERM after the engine has shut SDL down ends it
         // at once)
@@ -223,7 +225,7 @@ public class GameService extends Service {
         if (!Proc.enginePids().isEmpty()) {
             // (still loading: no game in it yet, its replay a header only; "saving the replay" over the loading screen,
             // dev phone 2026-11-18; and no quit waited for, below)
-            setStatus(loading ? "closing" : "closing: saving the replay");
+            setStatus(loading || playingReplay ? "closing" : "closing: saving the replay");
             // (setStatus leaves the notification once closing: it said "Skirmish running", Stop and all, for the
             // quit's seconds after a swipe or a Stop; dev phone 2026-11-18)
             NotificationManager nm = getSystemService(NotificationManager.class);
@@ -442,6 +444,7 @@ public class GameService extends Service {
                     try {
                         loadReset(false);
                         loading = true;
+                        playingReplay = false;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
                         boolean[] hangLogged = {false};
@@ -451,6 +454,9 @@ public class GameService extends Service {
                                 hangLogged[0] = true;
                                 HangDump.dumpAsync();
                             }
+                            // (a replay watched records nothing: the quit's status says no "saving the replay" then)
+                            if (line.contains("ReadDataFromDemo")) playingReplay = true;
+                            else if (line.contains("recording demo to")) playingReplay = false;
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
