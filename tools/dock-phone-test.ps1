@@ -74,7 +74,12 @@ function WholeGrid($d) { if ($d["gap"]) { return $d["right"] }; return @($d["lef
 & $adb shell am force-stop $pkg
 $stray = Get-StrayWidgets $adb @("bardroid_dock_test.lua")
 if ($stray) { "[docktest] warning: widgets on the phone that are not the app's (they run in the test's game): $($stray -join ', ')" }
+# ("Turn with the phone" off for the run, back as it was after: on, the game follows how the phone lies, and the dev
+# phone lying sideways ran this upright test on the sideways dock, whose taps it does not expect: the menu "4.3 s"
+# late, no PLACE; 2026-11-19)
+$turnWas = (InApp "grep -o 'name=.turnWithPhone. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'
 AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
+  "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
   "rm -f files/bar/infolog.txt $cfg/bardroid_docktest.txt $cfg/bardroid_docktest_cmd.txt`n" +
   "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg`n")
 Send-AppFile $adb (Join-Path $PSScriptRoot "dock-phone-test\bardroid_dock_test.lua") $widget
@@ -298,5 +303,6 @@ try {
 } finally {
   & $adb shell am force-stop $pkg
   AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
+    $(if ($turnWas) { "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"true`"/' shared_prefs/bardroid.xml`n" } else { "" }) +
     "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_docktest.txt $cfg/bardroid_docktest_cmd.txt`n")
 }
