@@ -1,0 +1,33 @@
+BAR Droid phone version of BAR's draft pre-game UI (luaui/widgets/gui_pregameui_draft.lua, the pre-game when the game
+sets a draft spawn order: start points chosen in turn; gui_pregameui.lua stands down then): its Ready / Lock button a
+finger's height, as phone-widget-gui_pregameui.lua.patch makes BAR's other one. BAR sizes it by its interface scale,
+40 high and words of 24 times it: about 48 pixels on the dev phone upright, 2.5 mm (2026-11-19, a skirmish started from
+the lobby, the start point placed: this widget's button). At least 8.5 % of the screen's short side, its words as much
+larger, and kept left of the screen's right edge where BAR right-aligns it to the spawn order's panel. Applied by the
+engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+	local currentButtonW = mathFloor(orgbuttonW * uiScale / 2) * 2
+	local currentButtonH = mathFloor(orgbuttonH * uiScale / 2) * 2
+@@@ with
+	-- BAR Droid (phone): a finger's height, at least 8.5 % of the screen's short side
+	local droidF = math.max(1, math.min(vsx, vsy) * 0.085 / math.max(1, orgbuttonH * uiScale))
+	local currentButtonW = mathFloor(orgbuttonW * uiScale * droidF / 2) * 2
+	local currentButtonH = mathFloor(orgbuttonH * uiScale * droidF / 2) * 2
+@@@ end
+
+@@@ find
+			(buttonRect[2] + ((buttonRect[4] - buttonRect[2]) / 2)) - (buttonH * 0.16),
+			24 * uiScale,
+@@@ with
+			(buttonRect[2] + ((buttonRect[4] - buttonRect[2]) / 2)) - (buttonH * 0.16),
+			24 * uiScale * math.max(1, math.min(vsx, vsy) * 0.085 / math.max(1, orgbuttonH * uiScale)), -- BAR Droid (phone)
+@@@ end
+
+@@@ find
+		buttonX = mathFloor(vsx * buttonPosX) + max_width / 2
+@@@ with
+		buttonX = mathFloor(vsx * buttonPosX) + max_width / 2
+		-- BAR Droid (phone): on the screen whole, the larger button too
+		buttonX = math.min(buttonX, vsx - mathFloor(buttonW / 2) - (uiPadding or 0) - 2)
+@@@ end

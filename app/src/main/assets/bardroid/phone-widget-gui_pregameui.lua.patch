@@ -1,0 +1,52 @@
+BAR Droid phone version of BAR's pre-game UI (luaui/widgets/gui_pregameui.lua): its Ready button (Lock / Unlock
+position, offer as a substitute) a finger's height, and on the screen. BAR sizes it by its interface scale, 40 high
+and words of 24 times it: on the dev phone upright about 48 pixels, 2.5 mm, the button every online game asks to be
+tapped (2026-11-19, a skirmish started from the lobby, its start point placed). At least 8.5 % of the screen's short
+side now, as the quit dialog's buttons (phone-widget-gui_top_bar_buttons.lua.patch), its words as much larger, moved
+left if it would run past the screen's right edge. BAR's interface scale itself stays (the start countdown's place
+uses it; bardroid_chat.lua keeps its lines clear of it by BAR's numbers). Applied by the engine (BarDroidPhoneLuaDir)
+to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+
+@@@ find
+local buttonDrawn = false
+@@@ with
+local buttonDrawn = false
+local droidButtonFs -- BAR Droid (phone): the button's words, as large as the button (ViewResize)
+@@@ end
+
+@@@ find
+	buttonW = mathFloor(orgbuttonW * uiScale / 2) * 2
+	buttonH = mathFloor(orgbuttonH * uiScale / 2) * 2
+
+	UiElement = WG.FlowUI.Draw.Element
+@@@ with
+	-- BAR Droid (phone): a finger's height, at least 8.5 % of the screen's short side (its words with it)
+	local droidF = math.max(1, math.min(vsx, vsy) * 0.085 / math.max(1, orgbuttonH * uiScale))
+	buttonW = mathFloor(orgbuttonW * uiScale * droidF / 2) * 2
+	buttonH = mathFloor(orgbuttonH * uiScale * droidF / 2) * 2
+	droidButtonFs = 24 * uiScale * droidF
+
+	UiElement = WG.FlowUI.Draw.Element
+@@@ end
+
+@@@ find
+	uiPadding = mathFloor(elementPadding * 4.5)
+
+	createButton()
+end
+@@@ with
+	uiPadding = mathFloor(elementPadding * 4.5)
+	-- BAR Droid (phone): on the screen whole (larger, a long caption ran past the right edge upright)
+	buttonX = math.max(mathFloor(buttonW / 2) + uiPadding, math.min(buttonX, vsx - mathFloor(buttonW / 2) - uiPadding - 2))
+
+	createButton()
+end
+@@@ end
+
+@@@ find
+			(buttonRect[2] + ((buttonRect[4] - buttonRect[2]) / 2)) - (buttonH * 0.16),
+			24 * uiScale,
+@@@ with
+			(buttonRect[2] + ((buttonRect[4] - buttonRect[2]) / 2)) - (buttonH * 0.16),
+			droidButtonFs or 24 * uiScale, -- BAR Droid (phone): as large as the button
+@@@ end
