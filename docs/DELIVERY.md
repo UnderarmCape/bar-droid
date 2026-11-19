@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The gentle close reviewed; Stop in BAR's lobby says "Closing"** (hardening, 2026-11-19 ~02:03-02:13, dev
+      phone; the run's UI polish too). GameService.closeGently and Proc.endEngine read over: the waits, the second
+      SIGTERM, the process match and the loading case as meant; but the status said "Closing: saving the replay"
+      whenever the engine was not loading or playing a replay, so in BAR's lobby with no game too. GameService now
+      notes a game recording ("recording demo to"), cleared at each engine start and as the lobby's menu loads its
+      widget ("[LuaMenu] Loading ... BAR Droid lobby touch"); without one, "Closing" (39ccf5db). Dev phone: the lobby
+      offline (the login wait in, removed after), the launcher's Stop: "Closing" on the launcher, the engine quit in
+      1108 ms; a skirmish's Stop: "Closing: saving the replay", quit in 5740 ms, its replay 9791 bytes. The APK from
+      39ccf5db on the Fold7 at 2026-11-19 02:13 (BAR not running).
 - [x] **The loading screen's Free memory; the pre-game victory line above the dock** (hardening, 2026-11-19
       ~01:36-02:00, dev phone; the run's UI polish too). Screenshots of a skirmish's loading: the Free memory button
       over Recoil's splash and BAR's load screen as meant; tapped while loading it opened Device care, Back returned to
