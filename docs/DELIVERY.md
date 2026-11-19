@@ -756,6 +756,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A closed game's infolog kept again; Stop over the loading screen** (hardening, 2026-11-18 ~22:20-22:40, dev
+      phone). After the engine, launch-bar.sh still runs a moment: the app's widgets' error lines for the launcher
+      (layer_miss) and the infolog's copy into files/bar/logs (Share logs sends them). A Stop or a swipe killed it with
+      the engine ("engine exited (137)"), before today's change too: the Fold7's newest copy was of 11-10, every game
+      Kailil closed since then lost its infolog at the next start. Now `closeGently` gives launch-bar.sh up to 5 s
+      after the engine's quit ("launch-bar.sh ended after the engine"). Over the loading screen the engine's quit waits
+      for the loading's end (RequestQuit while loading only sets globalQuit): 10.4 s once, past the 20 s another time
+      (a first start after an install), and there is nothing to keep yet, so a Stop or swipe while loading stops at once
+      as before. UI polish: that status says "Closing" there, not "Closing: saving the replay" (status-text-test's new
+      case). Dev phone: Stop in a game, "spring exited with 0", "the engine quit in 4534 ms", "engine exited (0)",
+      "launch-bar.sh ended after the engine", files/bar/logs/infolog-20261118-222814.txt made, the replay 11727 bytes;
+      Stop while loading: "closing", stopped in the same second. (The phone engine's "proven" mark is written while it
+      runs, so that was never lost: the Fold7 has it from 17:41.)
 - [x] **The pad's main test on the newest APK** (hardening, 2026-11-18 ~22:15-22:30, dev phone): pad-test ALL PASS
       (first person on the pad: LB + L3 rides a unit, RT targets, the right stick looks round, B ends it; LT's zoom, the
       D-pad's commander, the app's order menu with the pad's orders hidden, the pad gone ends its ways, a unit given away
