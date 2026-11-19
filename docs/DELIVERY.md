@@ -762,7 +762,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       320 x BAR's scale wide), some 3 mm. A second block in phone-widget-gui_top_bar_buttons.lua.patch: the buttons at
       least 8.5 % of the screen's short side, the dialog grown up by the difference. Dev phone: "phone version of
       LuaUI/Widgets/gui_top_bar_buttons.lua (LuaUI): 2 patches", the buttons about 90 pixels, their words centred,
-      Stay closed it and the game went on; remake-check's phone patches PASS.
+      Stay closed it and the game went on; remake-check's phone patches PASS. The APK from 8f7a53e1 on the Fold7 at
+      2026-11-19 00:00.
 - [x] **Game info by touch: larger sideways, opaque, a close button** (hardening, 2026-11-18 ~23:35-23:50, dev phone,
       a replay through the benchmark's replay start, `.bardroid-bench-replay` removed after). The top bar's Info in a
       replay opens BAR's Game info (the phone engine's phone-widget-gui_gameinfo.lua.patch: only "no wider than the
