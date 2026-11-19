@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **fp-save-test; the lobby upright; Statistics' menu rows a finger's height** (hardening, 2026-11-19
+      ~02:16-02:33, dev phone). fp-save-test PASS (1st person through BAR's mid-game settings save). The lobby offline
+      upright (the login wait in, removed after): the login dialog's form spread and its checkboxes enlarged as made
+      before, the home grid and its page strip as meant. UI polish: the Statistics panel upright, its menu (Summary,
+      Overview, Flow, Economy ...) in rows of 29 * s, about 39 pixels, 2 mm on the dev phone. A tenth patch in
+      make-teamstats.py: upright the rows at least 5.5 % of the screen's width (about 59 pixels), their words 15 %
+      larger; where the panes run short of room they scroll (sidebar.fit) (27b67077, regenerated from test-31992
+      49ea8388; remake-check: teamstats and the phone patches PASS). Dev phone upright: all nine of the menu's entries
+      in the panel, Economy tapped opened Economy's charts. The APK from 27b67077 on the Fold7 at 2026-11-19 02:32 (BAR
+      not running).
 - [x] **The gentle close reviewed; Stop in BAR's lobby says "Closing"** (hardening, 2026-11-19 ~02:03-02:13, dev
       phone; the run's UI polish too). GameService.closeGently and Proc.endEngine read over: the waits, the second
       SIGTERM, the process match and the loading case as meant; but the status said "Closing: saving the replay"
