@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A played skirmish read through: nothing from the app's widgets; the log box without BAR's two harmless
+      "Error" lines** (bug hunt, 2026-11-19 ~13:58-14:10, dev phone upright; the Fold7 refused its port 38389 at
+      13:58, mdns lists nothing: its wireless debugging off or on a new port). Play vs AI upright with the build menu
+      (wind picked, a spot on the crater's rim, PLACE: "CAN'T BUILD THERE: PICK ANOTHER SPOT", rightly), the camera
+      knob and both rails dragged, then Stop: infolog.txt's warnings all BAR's content (unknown weapon tags, yardmaps,
+      icons, a CEG class) and the engine's, none from the app's widgets, no widget error from launch-bar.sh; the touch
+      log's knob and rail lines as sent; the quit "asked the engine to quit ... the engine quit in 5235 ms ...
+      launch-bar.sh ended after the engine", the replay 19 KB, the infolog copied to logs/. UI polish (the launcher's
+      box after the Stop): BAR's "Error: [SetConfigInt] key "AdvSky" is deprecated" and "[weapondefs.lua] Error:
+      removed ceg_test_projectile... weaponDef" at every game's end go to launcher.log only (Log.quiet).
 - [x] **The GPU driver's rare fault: the frozen game closed 8 s after it stops, not 30 s; the log box without the
       hang dump** (bug hunt, 2026-11-19 ~13:39-13:55, dev phone upright; the Fold7 not played since 13:36). A Play vs
       AI skirmish on the dev phone hit the driver's known fault 25 s in (Mesa's "submit failed -1 (Resource deadlock

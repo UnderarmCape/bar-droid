@@ -69,10 +69,14 @@ public final class Log {
     /**
      * The engine's own harmless lines that read as faults in the launcher's log box: its disk check, "Warning:
      * [IsPathOnSpinningDisk] Error 'No such file or directory' opening file '/sys/block/dm-0/queue/rotational'", twice
-     * at every start (the container has no such file; dev phone screenshot 2026-11-19). The shared logs keep them.
+     * at every start (the container has no such file; dev phone screenshot 2026-11-19); and BAR's own two at every
+     * game's end, "Error: [SetConfigInt] key "AdvSky" is deprecated" and "[weapondefs.lua] Error: removed
+     * ceg_test_projectile_unit_ceg_test_projectile weaponDef, missing model" (its test weapon; dev phone screenshot, the
+     * same day). The shared logs keep them.
      */
     private static boolean quiet(String msg) {
-        return msg.contains("[IsPathOnSpinningDisk]");
+        return msg.contains("[IsPathOnSpinningDisk]") || msg.contains("key \"AdvSky\" is deprecated")
+                || msg.contains("Error: removed ceg_test_projectile");
     }
 
     private static void line(String tag, String msg, boolean error) {
