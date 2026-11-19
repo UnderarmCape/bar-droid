@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The Replays tab after the replay fix; the lobby's speak-to-chat arrows** (hardening, 2026-11-18 ~20:10-20:25,
+      dev phone, the lobby offline, never logged in). The Replays tab upright: the two games swiped away on the new
+      build listed with their length ("1 minute") and Start lit (this engine); empty replays never reach it
+      (launch-bar.sh removes them at each start); the "time unknown" rows are replays of about 1 KB, games ended while
+      loading, no key frame to tell their length: right as they are. UI polish: the lobby's speak-to-chat panel had the
+      font's thin "<" and ">" round its target, "< SPEAK TO SERVER ROOM >"; now solid triangles either side of the words,
+      as the game's note since the run before (bardroid_lobby_touch.lua; seen with a scratch lobby widget giving it a
+      made-up battle offline, removed after; lobby-phone-test ALL PASS).
 - [x] **A game closed by Stop or a swipe kept no replay: the engine is now asked to quit first** (hardening,
       2026-11-18 ~19:45-20:05; found on both phones: an empty .sdfz for each game a test or the player closed, among
       them Kailil's ~9-minute skirmish of 17:41 on the Fold7, swiped away at 17:51, 0 bytes). Recoil writes the replay
@@ -767,7 +775,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       to end (off the main thread, `GameService.closeGently`), then everything killed as before. Dev phone: a 2-minute
       skirmish swiped away from recent apps: "asked the engine to quit", "asked the engine again (BAR's quit
       dialog)", "the engine quit in 7692 ms", the replay 14373 bytes (it had been 0 three times before; the game's own
-      shutdown, SpringApp::Kill, ~5 s). (The Fold7's empty replay of 17:41 is still in its demos folder.) The APK from
+      shutdown, SpringApp::Kill, ~5 s). (The Fold7's empty replay of 17:41 goes at its next start: launch-bar.sh removes
+      empty replays, "replays: 1 empty ones (games that were stopped) removed".) The APK from
       789f02d4: the same swipe again 7494 ms, 13703 bytes; on the Fold7 at 20:07. (No UI polish this run.)
 - [x] **The menu copies, the D-gun mode and 1st person on the newest APK; speak to chat's arrows** (hardening,
       2026-11-18 ~19:30-19:45, dev phone): remake-check PASS (the phone's remake of the build menu, order menu, mission
