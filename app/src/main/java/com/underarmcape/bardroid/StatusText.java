@@ -58,10 +58,48 @@ final class StatusText {
         return m.find() ? "Adreno " + m.group(1) + " (Freedreno)" : renderer;
     }
 
+    /**
+     * The benchmark in a line from a run's infolog lines: BAR's scenario's results ("Sim 1801 frames, 54.08ms per frame,
+     * ..."; the last of each, as tools/phone-bench.ps1 reads them: the main thread's ms per frame for Sim, Draw and
+     * Update), or a replay benchmark's summary (bardroid_bench.lua's "[replaybench] done (300 s played): speed min x1.00,
+     * ..."; it said "no results in the game's log" over one, dev phone 2026-11-19).
+     */
+    static String benchNote(Iterable<String> lines) {
+        java.util.regex.Pattern line = java.util.regex.Pattern.compile("\\] (Sim|Draw|Update) \\d+ frames, ([\\d.]+)ms per frame");
+        java.util.regex.Pattern replay = java.util.regex.Pattern.compile("\\[replaybench\\] done \\([^)]*\\): (.+)$");
+        java.util.Map<String, String> ms = new java.util.HashMap<>();
+        String replayDone = null;
+        for (String l : lines) {
+            if (l == null) continue;
+            java.util.regex.Matcher m = line.matcher(l);
+            if (m.find()) ms.put(m.group(1), m.group(2));
+            java.util.regex.Matcher r = replay.matcher(l);
+            if (r.find()) replayDone = r.group(1).trim();
+        }
+        if (ms.containsKey("Sim")) {
+            java.util.List<String> parts = new java.util.ArrayList<>();
+            for (String k : new String[]{"Sim", "Draw", "Update"})
+                if (ms.containsKey(k)) parts.add(k + " " + ms.get(k));
+            return "Benchmark, ms per frame: " + String.join(", ", parts);
+        }
+        if (replayDone != null && !replayDone.startsWith("no samples")) {
+            // (its figures shorter: the summary as logged ran over three lines of the launcher's status, dev phone
+            // screenshot 2026-11-19; the whole of it stays in the log)
+            java.util.regex.Matcher f = java.util.regex.Pattern.compile(
+                    "speed min x([\\d.]+), median x([\\d.]+); below x0\\.95 (\\d+)% of the time; units up to (\\d+)").matcher(replayDone);
+            if (f.find()) {
+                return "Benchmark, replay: speed x" + f.group(2) + " (lowest x" + f.group(1) + "), behind "
+                        + f.group(3) + "% of the time, up to " + f.group(4) + " units";
+            }
+            return "Benchmark, replay: " + replayDone;
+        }
+        return "Benchmark: no results in the game's log (it ended before them)";
+    }
+
     static boolean isResultNote(String note) {
         if (note == null) return false;
         return (note.startsWith("GL check: ") && !note.contains("(see the log)"))
-                || note.startsWith("Benchmark, ms per frame");
+                || note.startsWith("Benchmark, ms per frame") || note.startsWith("Benchmark, replay: ");
     }
 
     /**

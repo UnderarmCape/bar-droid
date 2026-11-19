@@ -680,24 +680,13 @@ public class GameService extends Service {
                 + (mesa.find() ? ", Mesa " + mesa.group(1).replace('-', '‑') : "");
     }
 
-    /**
-     * BAR's benchmark in a line, from its results in this run's infolog ("Sim 1801 frames, 54.08ms per frame, ..."; the
-     * last of each, as tools/phone-bench.ps1 reads them): the main thread's ms per frame for Sim, Draw and Update.
-     */
+    /** The benchmark in a line, from this run's infolog (StatusText.benchNote). */
     static String benchNote(Paths paths) {
-        java.util.regex.Pattern line = java.util.regex.Pattern.compile("\\] (Sim|Draw|Update) \\d+ frames, ([\\d.]+)ms per frame");
-        java.util.Map<String, String> ms = new java.util.HashMap<>();
+        java.util.List<String> lines = new java.util.ArrayList<>();
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(paths.bar, "infolog.txt")))) {
-            for (String l; (l = r.readLine()) != null; ) {
-                java.util.regex.Matcher m = line.matcher(l);
-                if (m.find()) ms.put(m.group(1), m.group(2));
-            }
+            for (String l; (l = r.readLine()) != null; ) lines.add(l);
         } catch (java.io.IOException ignored) {}
-        if (!ms.containsKey("Sim")) return "Benchmark: no results in the game's log (it ended before them)";
-        java.util.List<String> parts = new java.util.ArrayList<>();
-        for (String k : new String[]{"Sim", "Draw", "Update"})
-            if (ms.containsKey(k)) parts.add(k + " " + ms.get(k));
-        return "Benchmark, ms per frame: " + String.join(", ", parts);
+        return StatusText.benchNote(lines);
     }
 
     /**

@@ -67,6 +67,31 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "note \"" + n[0] + "\" -> " + (got ? "result" : "warning"));
         }
+        // StatusText.benchNote: BAR's scenario's results, or a replay benchmark's summary (the dev phone's of 2026-11-19)
+        String replayDone = "[t=00:06:17.332015][f=0010813] [replaybench] done (300 s played): speed min x1.00, median x1.00;"
+            + " below x0.95 0% of the time; units up to 656; 29 samples";
+        Object[][] benches = {
+            { new String[]{ "[t=1] Sim 1801 frames, 54.08ms per frame, x", "[t=1] Draw 900 frames, 17.00ms per frame",
+                "[t=2] Sim 1801 frames, 50.00ms per frame", "[t=2] Update 900 frames, 7.97ms per frame" },
+              "Benchmark, ms per frame: Sim 50.00, Draw 17.00, Update 7.97" },
+            { new String[]{ "[t=1] [replaybench] 6:00 x1.00 (wanted x1.00, server x1.00), 656 units, 29 fps", replayDone },
+              "Benchmark, replay: speed x1.00 (lowest x1.00), behind 0% of the time, up to 656 units" },
+            { new String[]{ "[t=1] [replaybench] done (the game ended): speed min x0.62, median x0.91; below x0.95 64% of the time; units up to 1830; 25 samples" },
+              "Benchmark, replay: speed x0.91 (lowest x0.62), behind 64% of the time, up to 1830 units" },
+            { new String[]{ "[t=1] [replaybench] done (x): some other summary" }, "Benchmark, replay: some other summary" },
+            { new String[]{ "[t=1] [replaybench] done (the replay ended): no samples" },
+              "Benchmark: no results in the game's log (it ended before them)" },
+            { new String[]{ "[t=1] nothing", null }, "Benchmark: no results in the game's log (it ended before them)" },
+        };
+        for (Object[] b : benches) {
+            String got = StatusText.benchNote(java.util.Arrays.asList((String[]) b[0]));
+            boolean ok = b[1].equals(got);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "bench -> \"" + got + "\"" + (ok ? "" : " (want \"" + b[1] + "\")"));
+        }
+        boolean okReplay = StatusText.isResultNote(StatusText.benchNote(java.util.Arrays.asList(replayDone)));
+        failed += okReplay ? 0 : 1;
+        System.out.println((okReplay ? "PASS " : "FAIL ") + "a replay benchmark's note is a result, not amber");
         // StatusText.gpuName: the GL check's GPU as players know it
         String[][] gpus = { { "FD740", "Adreno 740 (Freedreno)" }, { "FD830", "Adreno 830 (Freedreno)" },
             { "zink Vulkan 1.3(Turnip Adreno (TM) 740 (MESA_TURNIP))", "zink Vulkan 1.3(Turnip Adreno (TM) 740 (MESA_TURNIP))" },
