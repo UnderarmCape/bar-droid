@@ -128,7 +128,16 @@ try {
   $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE (the building not picked?)"; Tap $p[0] $p[1]
   Start-Sleep -Milliseconds 1500
   Stage "placed?"
-  # 2. PLACE on a blocked spot
+  # 2. PLACE on a blocked spot (the building picked again: without QUEUE PLACE gives it up, as a mouse's click does;
+  # Kailil, 2026-11-19, "placing buildings should overwerite the queue fully and only do the build task")
+  if ($spots["blocked"] -and -not (Rects "bardroid_place.txt")["done"]) {
+    foreach ($try in 1..3) {
+      Tap $tile[0] $tile[1]
+      $until = (Get-Date).AddSeconds(2)
+      while ((Get-Date) -lt $until -and -not (Rects "bardroid_place.txt")["done"]) { Start-Sleep -Milliseconds 200 }
+      if ((Rects "bardroid_place.txt")["done"]) { break }
+    }
+  }
   if ($spots["blocked"]) {
     Tap $spots["blocked"][0] $spots["blocked"][1]; Start-Sleep -Milliseconds 900
     $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE"; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 400

@@ -76,6 +76,20 @@ local function screenOf(x, z)
 	if sz > 1 or sx < 60 or sx > vsx - 60 or sy < top + 80 or sy > vsy - 160 then
 		return nil
 	end
+	-- (nor on the camera knob or an edge rail, bardroid_camctl.lua, with a margin: a tap there is the camera's; Area Mex's
+	-- spot under the knob queued no mex, 2026-11-19)
+	local C = WG.BarDroidCamCtl
+	if C and C.rects then
+		local k, zr, tr = C.rects()
+		if k and (sx - k[1]) ^ 2 + (sy - k[2]) ^ 2 <= (k[3] + 110) ^ 2 then
+			return nil
+		end
+		for _, r in ipairs({ zr or false, tr or false }) do
+			if r and sx >= r[1] - 100 and sx <= r[3] + 100 and sy >= r[2] - 40 and sy <= r[4] + 40 then
+				return nil
+			end
+		end
+	end
 	return math.floor(sx), math.floor(vsy - sy)
 end
 -- a spot for the building near the commander on the screen: buildable (TestBuildOrder 2 or 3: rocks the builder reclaims, or

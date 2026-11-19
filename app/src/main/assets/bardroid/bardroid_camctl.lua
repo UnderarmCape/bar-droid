@@ -4,15 +4,23 @@
 --   the camera knob: a round knob over the map; held, the finger's first slide decides: up or down zooms (down closer,
 --     as the dock's camera pad), sideways turns. Moved and sized in the layout editor (three fingers held, "Camera
 --     knob");
---   the edge rails: a strip down the map's right edge zooms (a finger slid along it, down closer) and one along the
---     map's foot, above the dock, turns. Only with the app's touch dock up (BAR's own screen keeps its panels there).
--- Each has its switch in Settings, Control tab ("Camera knob", "Camera edge rails"; bardroid_options.lua moves them
--- there from BAR's Custom tab); both on at first. The fingers are RtsTouch's: this widget draws the knob and the rails
--- and tells RtsTouch where they are in LuaUI/Config/bardroid_camctl.txt (X screen pixels, top left origin: "knob x0 y0
--- x1 y1", "zoom ...", "turn ..."; "none" when neither shows); RtsTouch sends the dock pad's own "zoom" and "rot" lines
--- to bardroid_touch.lua, and "camheld knob|zoom|turn|none" in the touch log, which lights the part held.
--- WG.BarDroidCamCtl: knob(), rails() (on or off), setKnob(on), setRails(on), rects() (GL pixels: knob, zoom, turn).
--- Installed into LuaUI/Widgets by the app.
+--   the edge rails, with the app's touch dock up: one up the map's side edge zooms (down closer), one along its foot
+--     turns, each half the edge it sits on, from the corner where they meet (Kailil, the same day: "they should only take
+--     up half the space they are sitting in ... so its symmetrical").
+-- Kailil, the same day, after the first build: a switch to put them on the left ("for left handed people too"), drags
+-- whose speed counts ("slower speed means less movement. faster means more. so I can have fine adjustments": RtsTouch
+-- scales each step by the finger's speed, a sensitivity setting on top), and looks to pick from in game ("I'm not a
+-- huge fan of the look ... show me different finished variants and allow them to be selected between in game"); of the
+-- four shown he kept Minimal, "white, or the same color the background of the bottom ui is".
+-- Settings, Control tab, "Camera with one finger" (bardroid_options.lua moves them there from BAR's Custom tab): Camera
+-- knob, Camera edge rails, Controls on the left, Colour (White, Dock grey), Sensitivity. Spring config
+-- BarDroidCamKnob, BarDroidCamRails, BarDroidCamLeft, BarDroidCamLook, BarDroidCamGain (percent).
+-- The fingers are RtsTouch's: this widget draws them and tells it where they are in LuaUI/Config/bardroid_camctl.txt (X
+-- screen pixels, top left origin: "knob x0 y0 x1 y1", "zoom ...", "turn ...", "gain g"; "none" when nothing shows);
+-- RtsTouch sends the dock pad's own "zoom" and "rot" lines to bardroid_touch.lua, and "camheld knob|zoom|turn|none" in
+-- the touch log, which lights the part held.
+-- WG.BarDroidCamCtl: knob(), rails(), left(), look(), gain(), setKnob(on), setRails(on), setLeft(on), setLook(i),
+-- setGain(g), rects() (GL pixels: knob, zoom, turn), LOOKS. Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
@@ -27,30 +35,34 @@ end
 
 local CAM_FILE = "LuaUI/Config/bardroid_camctl.txt"
 local TOUCH_LOG = "LuaUI/Config/bardroid_touch.txt"
-local KNOB_KEY, RAILS_KEY = "BarDroidCamKnob", "BarDroidCamRails"
+local KEYS = { knob = "BarDroidCamKnob", rails = "BarDroidCamRails", left = "BarDroidCamLeft", look = "BarDroidCamLook",
+	gain = "BarDroidCamGain" }
+local LOOKS = { "White", "Dock grey" }
 local KNOB_R = 0.06 -- the knob's radius, of the screen's short side (a 7 mm knob on a phone)
 local RAIL_W = 0.06 -- the rails' width, of the screen's short side (a finger's tip at the edge)
 local LAYOUT_ID = "camknob"
+local GOLD = { 1, 0.78, 0.25 }
 
+local floor, min, max, pi = math.floor, math.min, math.max, math.pi
 local vsx, vsy = Spring.GetViewGeometry()
-local knobOn, railsOn = true, true
+local set = { knob = true, rails = true, left = false, look = 1, gain = 1 }
 local knob, zoomRail, turnRail -- GL pixels: { cx, cy, r } and { x0, y0, x1, y1 }
 local held -- "knob", "zoom", "turn" or nil (RtsTouch's camheld lines)
 local written, writtenAt = nil, -10
-local optionsFor -- the WG.options the switches were added to
+local optionsFor, layoutFor -- the WG.options and WG.BarDroidLayout this widget is known to
 local timer = Spring.GetTimer()
 
 local function now()
 	return Spring.DiffTimers(Spring.GetTimer(), timer)
 end
 
-local function configOn(key)
-	local ok, v = pcall(Spring.GetConfigInt, key, 1)
-	return not ok or v ~= 0
+local function configInt(key, default)
+	local ok, v = pcall(Spring.GetConfigInt, key, default)
+	return ok and tonumber(v) or default
 end
 
-local function saveConfig(key, on)
-	pcall(Spring.SetConfigInt, key, on and 1 or 0)
+local function saveInt(key, v)
+	pcall(Spring.SetConfigInt, key, v)
 end
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -61,12 +73,12 @@ local function portrait()
 	return P and P.active and P.active() and P or nil
 end
 
--- the game's room: the screen less BAR's top bar above and the dock below (GL pixels)
+-- the dock (GL pixels) and the top of the game's room (under BAR's top bar)
 local function room()
 	local top = vsy
 	local tb = WG["topbar"] and WG["topbar"].GetPosition and WG["topbar"].GetPosition()
 	if type(tb) == "table" and tonumber(tb[2]) and tb[2] > vsy * 0.5 then
-		top = math.floor(tb[2])
+		top = floor(tb[2])
 	end
 	local P = portrait()
 	local d = P and P.dock and P.dock()
@@ -78,33 +90,49 @@ local function hiddenNow()
 		return true
 	end
 	local P = WG.BarDroidPortrait
-	if P and P.aside and P.aside() then -- (one of BAR's big windows, BAR's lobby over the game: they have the screen)
-		return true
-	end
-	return false
+	return P and P.aside and P.aside() or false -- (one of BAR's big windows, BAR's lobby over the game: their screen)
 end
 
 local function layout()
-	local short = math.min(vsx, vsy)
-	local pad = math.max(4, math.floor(short * 0.012))
-	local w = math.max(24, math.floor(short * RAIL_W))
+	local short = min(vsx, vsy)
+	local pad = max(4, floor(short * 0.012))
+	local w = max(24, floor(short * RAIL_W))
 	local d, top = room()
+	local left = set.left
 	zoomRail, turnRail = nil, nil
-	-- the rails: only with the dock up (it says where the game's room ends); the zoom rail down the right edge between
-	-- the top bar and the dock (a dock in the right corner, sideways: above it), the turn rail along the foot of the game
-	-- above the dock, from the left edge to the zoom rail (a dock in a corner: beside it, at the screen's foot)
-	if railsOn and d then
-		local wide = d[3] - d[1] >= vsx * 0.9
-		local zoomFoot = (wide or d[3] >= vsx - w) and d[4] + pad or pad
-		zoomRail = { vsx - w, zoomFoot, vsx, top - pad }
-		if wide then
-			turnRail = { 0, d[4] + pad, vsx - w - pad, d[4] + pad + w }
-		elseif d[1] > vsx * 0.3 then -- (the dock in the right corner: the foot left of it)
-			turnRail = { 0, 0, d[1] - pad, w }
-		else -- (in the left corner: right of it, short of the zoom rail)
-			turnRail = { d[3] + pad, 0, vsx - w - pad, w }
+	-- the game's foot: a dock across the bottom (upright, sideways layout A), its top; a dock in a corner (sideways for
+	-- one thumb), the screen's foot beside it. fx0..fx1: the free stretch along it
+	local wide = d and d[3] - d[1] >= vsx * 0.9
+	local footY, fx0, fx1 = 0, 0, vsx
+	if d and wide then
+		footY = d[4] + pad
+	elseif d and d[1] > vsx * 0.3 then
+		fx1 = d[1] - pad
+	elseif d then
+		fx0 = d[3] + pad
+	end
+	-- the hand's edge, and where the zoom rail starts on it: above the dock where the dock is under that edge
+	local edgeUnder = d and (wide or (left and d[1] <= w) or (not left and d[3] >= vsx - w))
+	local zoomFoot = edgeUnder and d[4] + pad or footY
+	-- the L's corner: the zoom rail's foot on the turn rail's line and the turn rail's stretch out to that edge
+	local corner = zoomFoot == footY and ((left and fx0 <= 0) or (not left and fx1 >= vsx))
+	if set.rails and d then
+		local zx0 = left and 0 or vsx - w
+		local zlen = floor((top - pad - zoomFoot) / 2)
+		zoomRail = { zx0, zoomFoot, zx0 + w, zoomFoot + zlen }
+		local tlen = floor((fx1 - fx0) / 2)
+		if corner then -- (beside the zoom rail's foot, along the same line)
+			if left then
+				turnRail = { w + pad, footY, w + pad + tlen - w - pad, footY + w }
+			else
+				turnRail = { vsx - w - pad - (tlen - w - pad), footY, vsx - w - pad, footY + w }
+			end
+		elseif left then -- (from the stretch's end at the hand's side)
+			turnRail = { fx0, footY, fx0 + tlen, footY + w }
+		else
+			turnRail = { fx1 - tlen, footY, fx1, footY + w }
 		end
-		if zoomRail[4] - zoomRail[2] < w * 3 then
+		if zlen < w * 3 then
 			zoomRail = nil
 		end
 		if turnRail[3] - turnRail[1] < w * 3 then
@@ -112,23 +140,30 @@ local function layout()
 		end
 	end
 	knob = nil
-	if knobOn then
+	if set.knob then
 		local Lw = WG.BarDroidLayout
 		local s = Lw and Lw.get and Lw.get(LAYOUT_ID) or {}
-		local r = math.floor(short * KNOB_R * (s.size or 1))
-		local foot = (d and d[3] - d[1] >= vsx * 0.9) and d[4] or 0
-		if turnRail and turnRail[2] >= foot then
+		local r = floor(short * KNOB_R * (s.size or 1))
+		-- at the hand's side, inside the L (above the turn rail, beside the zoom rail); sideways with the dock in a
+		-- corner, at the side away from it: the thumb that is free
+		local onLeft = left
+		if d and not wide then
+			onLeft = d[1] > vsx * 0.3
+		end
+		local foot = footY
+		if turnRail then
 			foot = turnRail[4]
 		end
-		-- (at the thumb's side: the right, above the dock and the turn rail, left of the zoom rail; sideways with the dock
-		-- in the right corner, the left)
-		local right = not (d and d[1] > vsx * 0.3 and d[3] - d[1] < vsx * 0.9)
-		local cx = right and (vsx - (zoomRail and w or 0) - pad * 2 - r) or (pad * 2 + r)
+		if d and not wide and (onLeft == (d[1] <= vsx * 0.3)) then
+			foot = d[4] -- (the dock under this side)
+		end
+		local side = zoomRail and (zoomRail[1] < vsx / 2) == onLeft and w + pad or 0
+		local cx = onLeft and (pad * 2 + side + r) or (vsx - pad * 2 - side - r)
 		local cy = foot + pad * 3 + r
 		cx = cx + (s.dx or 0) * vsx
 		cy = cy + (s.dy or 0) * vsy -- (the editor's drag in GL pixels: up is up)
-		cx = math.max(r + pad, math.min(vsx - r - pad, math.floor(cx)))
-		cy = math.max(r + pad, math.min(top - r - pad, math.floor(cy)))
+		cx = max(r + pad, min(vsx - r - pad, floor(cx)))
+		cy = max(r + pad, min(top - r - pad, floor(cy)))
 		knob = { cx, cy, r }
 	end
 end
@@ -142,7 +177,7 @@ local function writeFile(force)
 		local function r(x0, y0, x1, y1)
 			return string.format("%d %d %d %d", x0, vsy - y1, x1, vsy - y0)
 		end
-		text = ""
+		text = string.format("gain %.2f\n", set.gain)
 		if knob then
 			text = text .. "knob " .. r(knob[1] - knob[3], knob[2] - knob[3], knob[1] + knob[3], knob[2] + knob[3]) .. "\n"
 		end
@@ -167,24 +202,43 @@ local function writeFile(force)
 	written, writtenAt = text, t
 end
 
+local function changed()
+	layout()
+	writeFile(true)
+end
+
+local function setKnob(on)
+	set.knob = on and true or false
+	saveInt(KEYS.knob, set.knob and 1 or 0)
+	changed()
+end
+local function setRails(on)
+	set.rails = on and true or false
+	saveInt(KEYS.rails, set.rails and 1 or 0)
+	changed()
+end
+local function setLeft(on)
+	set.left = on and true or false
+	saveInt(KEYS.left, set.left and 1 or 0)
+	changed()
+end
+local function setLook(i)
+	i = floor(tonumber(i) or 1)
+	set.look = (i >= 1 and i <= #LOOKS) and i or 1
+	saveInt(KEYS.look, set.look)
+end
+local function setGain(g)
+	g = tonumber(g) or 1
+	set.gain = max(0.25, min(3, g))
+	saveInt(KEYS.gain, floor(set.gain * 100 + 0.5))
+	writeFile(true)
+end
+
 ---------------------------------------------------------------------------------------------------------------------
 -- the switches (Settings, Control tab)
 
-local function setKnob(on)
-	knobOn = on and true or false
-	saveConfig(KNOB_KEY, knobOn)
-	layout()
-	writeFile(true)
-end
-
-local function setRails(on)
-	railsOn = on and true or false
-	saveConfig(RAILS_KEY, railsOn)
-	layout()
-	writeFile(true)
-end
-
-local OPTION_IDS = { "bardroid_camctl_label", "bardroid_camknob", "bardroid_camrails" }
+local OPTION_IDS = { "bardroid_camctl_label", "bardroid_camknob", "bardroid_camrails", "bardroid_camleft",
+	"bardroid_camlook", "bardroid_camgain" }
 
 -- (BAR's model puts options another widget adds under its Custom tab; droidGroup asks the app's Settings to show them
 -- under Control: bardroid_options.lua, droid.regroup)
@@ -197,7 +251,7 @@ local function addOptions()
 	pcall(O.addOptions, {
 		{ id = OPTION_IDS[1], droidGroup = "control", name = "Camera with one finger", category = 1 },
 		{
-			id = OPTION_IDS[2], droidGroup = "control", category = 1, type = "bool", value = knobOn,
+			id = OPTION_IDS[2], droidGroup = "control", category = 1, type = "bool", value = set.knob,
 			name = "Camera knob",
 			description = "A round knob over the map: hold it and slide up or down to zoom, sideways to turn. "
 				.. "Move or size it in the layout editor (three fingers held)",
@@ -206,14 +260,59 @@ local function addOptions()
 			end,
 		},
 		{
-			id = OPTION_IDS[3], droidGroup = "control", category = 1, type = "bool", value = railsOn,
+			id = OPTION_IDS[3], droidGroup = "control", category = 1, type = "bool", value = set.rails,
 			name = "Camera edge rails",
-			description = "With the touch dock up: slide a finger along the map's right edge to zoom, along its foot "
-				.. "above the dock to turn",
+			description = "With the touch dock up: slide a finger along the rail at the map's side to zoom, along the "
+				.. "one at its foot to turn",
 			onchange = function(_, value)
 				setRails(value)
 			end,
 		},
+		{
+			id = OPTION_IDS[4], droidGroup = "control", category = 1, type = "bool", value = set.left,
+			name = "Camera controls on the left",
+			description = "The rails and the knob at the left side, for the left hand",
+			onchange = function(_, value)
+				setLeft(value)
+			end,
+		},
+		{
+			id = OPTION_IDS[5], droidGroup = "control", category = 1, type = "select", options = LOOKS, value = set.look,
+			name = "Camera controls colour",
+			description = "Thin lines and a ring, lit gold while held: white, or the touch dock's own grey",
+			onchange = function(_, value)
+				setLook(value)
+			end,
+		},
+		{
+			id = OPTION_IDS[6], droidGroup = "control", category = 1, type = "slider", min = 0.5, max = 2, step = 0.1,
+			value = set.gain,
+			name = "Camera controls sensitivity",
+			description = "How far a drag zooms or turns. The drag's speed counts too: slow for fine steps, fast for "
+				.. "big ones",
+			onchange = function(_, value)
+				setGain(value)
+			end,
+		},
+	})
+end
+
+-- the knob in the layout editor (it may load after this widget: asked again until it is there)
+local function registerLayout()
+	local Lw = WG.BarDroidLayout
+	if not (Lw and Lw.register) or layoutFor == Lw then
+		return
+	end
+	layoutFor = Lw
+	pcall(Lw.register, LAYOUT_ID, {
+		label = "Camera knob",
+		can = { move = true, size = true },
+		rect = function()
+			if knob then
+				return knob[1] - knob[3], knob[2] - knob[3], knob[1] + knob[3], knob[2] + knob[3]
+			end
+		end,
+		relayout = changed,
 	})
 end
 
@@ -251,14 +350,17 @@ local function newLines()
 	return text:sub(1, last)
 end
 
+
 ---------------------------------------------------------------------------------------------------------------------
--- drawing
+-- drawing: Minimal, a thin line with a dot at each end, the knob a thin ring with a dot, lit gold while held; white or
+-- the touch dock's own grey (Kailil, 2026-11-19, of four looks shown: "keep only 3 minimal. but do white, or the same
+-- color the background of the bottom ui is. all the other options are ugly")
 
 local function circle(cx, cy, r, n)
 	gl.BeginEnd(GL.TRIANGLE_FAN, function()
 		gl.Vertex(cx, cy)
 		for i = 0, n do
-			local a = i / n * math.pi * 2
+			local a = i / n * pi * 2
 			gl.Vertex(cx + math.cos(a) * r, cy + math.sin(a) * r)
 		end
 	end)
@@ -267,7 +369,7 @@ end
 local function ring(cx, cy, r, t, n)
 	gl.BeginEnd(GL.TRIANGLE_STRIP, function()
 		for i = 0, n do
-			local a = i / n * math.pi * 2
+			local a = i / n * pi * 2
 			local c, s = math.cos(a), math.sin(a)
 			gl.Vertex(cx + c * r, cy + s * r)
 			gl.Vertex(cx + c * (r - t), cy + s * (r - t))
@@ -275,79 +377,58 @@ local function ring(cx, cy, r, t, n)
 	end)
 end
 
--- a small triangle pointing along (dx, dy) with its tip at (x, y)
-local function arrow(x, y, dx, dy, s)
-	local px, py = -dy, dx
-	gl.BeginEnd(GL.TRIANGLES, function()
-		gl.Vertex(x, y)
-		gl.Vertex(x - dx * s + px * s * 0.75, y - dy * s + py * s * 0.75)
-		gl.Vertex(x - dx * s - px * s * 0.75, y - dy * s - py * s * 0.75)
+-- a bar from (x0, y0) to (x1, y1), t thick
+local function bar(x0, y0, x1, y1, t)
+	local dx, dy = x1 - x0, y1 - y0
+	local len = math.sqrt(dx * dx + dy * dy)
+	if len <= 0 then
+		return
+	end
+	local nx, ny = -dy / len * t / 2, dx / len * t / 2
+	gl.BeginEnd(GL.QUADS, function()
+		gl.Vertex(x0 + nx, y0 + ny)
+		gl.Vertex(x1 + nx, y1 + ny)
+		gl.Vertex(x1 - nx, y1 - ny)
+		gl.Vertex(x0 - nx, y0 - ny)
 	end)
 end
 
-local function drawKnob()
-	local cx, cy, r = knob[1], knob[2], knob[3]
-	local lit = held == "knob"
-	gl.Color(0, 0, 0, 0.35)
-	circle(cx, cy - math.max(1, r * 0.05), r * 1.02, 40) -- (a soft shadow under it)
+-- the colour of a part: gold while held, else the look's (white; the dock's grey, as its panels: about 32 of 255 on
+-- the dev phone's screenshots)
+local LOOK_COLORS = { { 1, 1, 1, 0.6 }, { 0.125, 0.125, 0.125, 0.92 } }
+local function partColor(lit)
 	if lit then
-		gl.Color(0.42, 0.33, 0.12, 0.85)
+		gl.Color(GOLD[1], GOLD[2], GOLD[3], 0.95)
 	else
-		gl.Color(0.12, 0.13, 0.13, 0.72)
+		local c = LOOK_COLORS[set.look] or LOOK_COLORS[1]
+		gl.Color(c[1], c[2], c[3], c[4])
 	end
-	circle(cx, cy, r, 40)
-	gl.Color(lit and 1 or 0.85, lit and 0.82 or 0.85, lit and 0.35 or 0.85, lit and 0.95 or 0.55)
-	ring(cx, cy, r, math.max(1.5, r * 0.06), 40)
-	-- up and down for the zoom, left and right for the turn; a dot in the middle
-	local a = r * 0.62
-	local s = r * 0.2
-	gl.Color(1, 1, 1, lit and 0.95 or 0.8)
-	arrow(cx, cy + a, 0, 1, s)
-	arrow(cx, cy - a, 0, -1, s)
-	gl.Color(1, 0.85, 0.45, lit and 0.95 or 0.75)
-	arrow(cx + a, cy, 1, 0, s)
-	arrow(cx - a, cy, -1, 0, s)
-	gl.Color(1, 1, 1, 0.5)
-	circle(cx, cy, r * 0.09, 16)
 end
 
-local function drawRail(rect, vertical, lit)
-	local x0, y0, x1, y1 = rect[1], rect[2], rect[3], rect[4]
-	if lit then
-		gl.Color(0.5, 0.38, 0.12, 0.55)
-	else
-		gl.Color(0.05, 0.06, 0.06, 0.32)
-	end
-	gl.Rect(x0, y0, x1, y1)
-	local w = vertical and (x1 - x0) or (y1 - y0)
-	local len = vertical and (y1 - y0) or (x1 - x0)
-	-- a groove down its middle and ticks across it: a slider's track
-	gl.Color(1, 1, 1, lit and 0.55 or 0.28)
-	local mid = vertical and math.floor((x0 + x1) / 2) or math.floor((y0 + y1) / 2)
+local function drawRail(r, vertical, lit)
+	local x0, y0, x1, y1 = r[1], r[2], r[3], r[4]
+	local w = vertical and x1 - x0 or y1 - y0
+	local cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+	local base = set.look == 2 and 0.07 or 0.05 -- (the grey a little thicker: dark on a dark map)
+	local t = lit and max(3, w * 0.1) or max(2, w * base)
+	partColor(lit)
+	local e = w * 0.25
 	if vertical then
-		gl.Rect(mid - 1, y0 + w, mid + 1, y1 - w)
+		bar(cx, y0 + e, cx, y1 - e, t)
+		circle(cx, y0 + e, t * 1.6, 16)
+		circle(cx, y1 - e, t * 1.6, 16)
 	else
-		gl.Rect(x0 + w, mid - 1, x1 - w, mid + 1)
+		bar(x0 + e, cy, x1 - e, cy, t)
+		circle(x0 + e, cy, t * 1.6, 16)
+		circle(x1 - e, cy, t * 1.6, 16)
 	end
-	local step = math.max(w * 0.9, 16)
-	local tick = math.floor(w * 0.22)
-	for p = w * 1.5, len - w * 1.5, step do
-		if vertical then
-			gl.Rect(mid - tick, y0 + p, mid + tick, y0 + p + 1)
-		else
-			gl.Rect(x0 + p, mid - tick, x0 + p + 1, mid + tick)
-		end
-	end
-	-- its ends: which way each goes
-	local s = w * 0.28
-	gl.Color(1, lit and 0.85 or 1, lit and 0.4 or 1, lit and 0.95 or 0.6)
-	if vertical then
-		arrow(mid, y1 - w * 0.35, 0, 1, s)
-		arrow(mid, y0 + w * 0.35, 0, -1, s)
-	else
-		arrow(x1 - w * 0.35, mid, 1, 0, s)
-		arrow(x0 + w * 0.35, mid, -1, 0, s)
-	end
+end
+
+local function drawKnob(cx, cy, r, lit)
+	partColor(lit)
+	local base = set.look == 2 and 0.065 or 0.045
+	ring(cx, cy, r * 0.8, lit and max(3, r * 0.08) or max(2, r * base), 40)
+	circle(cx, cy, r * 0.12, 16)
 end
 
 function widget:DrawScreen()
@@ -362,7 +443,7 @@ function widget:DrawScreen()
 		drawRail(turnRail, false, held == "turn")
 	end
 	if knob then
-		drawKnob()
+		drawKnob(knob[1], knob[2], knob[3], held == "knob")
 	end
 	gl.Color(1, 1, 1, 1)
 end
@@ -381,29 +462,6 @@ function widget:IsAbove(x, y)
 		end
 	end
 	return false
-end
-
--- the knob in the layout editor (it may load after this widget: asked again until it is there)
-local layoutFor
-local function registerLayout()
-	local Lw = WG.BarDroidLayout
-	if not (Lw and Lw.register) or layoutFor == Lw then
-		return
-	end
-	layoutFor = Lw
-	pcall(Lw.register, LAYOUT_ID, {
-		label = "Camera knob",
-		can = { move = true, size = true },
-		rect = function()
-			if knob then
-				return knob[1] - knob[3], knob[2] - knob[3], knob[1] + knob[3], knob[2] + knob[3]
-			end
-		end,
-		relayout = function()
-			layout()
-			writeFile(true)
-		end,
-	})
 end
 
 local lastLayout = -10
@@ -426,30 +484,47 @@ end
 
 function widget:ViewResize(x, y)
 	vsx, vsy = x, y
-	layout()
-	writeFile(true)
+	changed()
 end
 
 function widget:Initialize()
-	knobOn, railsOn = configOn(KNOB_KEY), configOn(RAILS_KEY)
+	set.knob = configInt(KEYS.knob, 1) ~= 0
+	set.rails = configInt(KEYS.rails, 1) ~= 0
+	set.left = configInt(KEYS.left, 0) ~= 0
+	local look = configInt(KEYS.look, 1)
+	set.look = (look >= 1 and look <= #LOOKS) and look or 1
+	set.gain = max(0.25, min(3, configInt(KEYS.gain, 100) / 100))
 	vsx, vsy = Spring.GetViewGeometry()
 	registerLayout()
-	layout()
-	writeFile(true)
+	changed()
 	WG.BarDroidCamCtl = {
 		knob = function()
-			return knobOn
+			return set.knob
 		end,
 		rails = function()
-			return railsOn
+			return set.rails
+		end,
+		left = function()
+			return set.left
+		end,
+		look = function()
+			return set.look
+		end,
+		gain = function()
+			return set.gain
 		end,
 		setKnob = setKnob,
 		setRails = setRails,
+		setLeft = setLeft,
+		setLook = setLook,
+		setGain = setGain,
 		rects = function()
 			return knob, zoomRail, turnRail
 		end,
+		LOOKS = LOOKS,
 	}
-	Spring.Echo(string.format("[bardroid-camctl] knob %s, edge rails %s", knobOn and "on" or "off", railsOn and "on" or "off"))
+	Spring.Echo(string.format("[bardroid-camctl] knob %s, edge rails %s, %s, look %s, sensitivity %.1f",
+		set.knob and "on" or "off", set.rails and "on" or "off", set.left and "left" or "right", LOOKS[set.look], set.gain))
 end
 
 function widget:Shutdown()

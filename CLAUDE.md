@@ -111,7 +111,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   (`BARDROID_GAME_WIDGETS=1`, the engine branch) and is parked in `bardroid-parked` otherwise (launch-bar.sh
   `options_copy`, `.bardroid-options`; BAR's own Options then). While a building is picked its page strip is the shape strip (ONE,
   LINE, GRID, BORDER) and a PLACE button (rotate, cancel) covers the order menu; `bardroid_place.txt` tells `RtsTouch`
-  the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a Shift click on the spot, drags hold
+  the shape, PLACE and the spot a map tap picked ("spot" lines back): PLACE is a click on the spot (a Shift click with QUEUE on; without, it replaces the builders' orders and BAR lets go of the building, as a mouse's click, Kailil 2026-11-19), drags hold
   Shift (+Alt, +Ctrl) for BAR's own build drag. With ONE a drag moves the building ("spot", later "nudge"), a held
   finger makes a GRID ("grid start/by"; the file's "grid" corners: PLACE or a double tap replays BAR's build drag with
   Shift+Alt: the left button stays down from the GRID's start to PLACE, the engine draws and places it). `bardroid_pad.lua`'s
@@ -129,8 +129,10 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   2026-11-06, on a BAR developer's advice); `pad-test.ps1 -Engine <build>` tests it. `bardroid_padspeed.lua`: the pad's drawing speed by
   zoom and its tuner; `bardroid_padfp.lua`: first person on the pad (BAR's Set Target fires it, online-safe). `bardroid_retreat.lua`: hurt units
   fall back, a hurt commander retreats with its army covering it (GiveOrder; the dock's AUTO RETREAT, docs/DELIVERY.md).
-  `bardroid_camctl.lua`: the one-finger camera (Kailil, 2026-11-19): a camera knob over the map and edge rails (right
-  edge zooms, the map's foot above the dock turns), each with a switch under Settings' Control tab ("Camera with one
+  `bardroid_camctl.lua`: the one-finger camera (Kailil, 2026-11-19): a camera knob over the map and edge rails (an L at
+  the map's bottom corner, each half its side: the upright one zooms, the foot's one turns; left or right side; Minimal
+  in white or the dock's grey; steps scaled by the finger's speed in RtsTouch, camStepGain, and a sensitivity), each with
+  a switch under Settings' Control tab ("Camera with one
   finger": WG.options.addOptions, which BAR's model puts under Custom; the options copy's droid.regroup moves options
   with `droidGroup` into that tab), Spring config `BarDroidCamKnob` / `BarDroidCamRails`; it writes
   `bardroid_camctl.txt` (knob, zoom, turn rects), RtsTouch's CAM state takes a touch that comes down on one and sends the

@@ -69,7 +69,8 @@ spectate), in amber when unit control widgets are off (only first person stops).
 
 **Building:** pick a building in the build menu; its page strip then shows **ONE · LINE · GRID · BORDER**, and a big
 green **PLACE** button with ↻ and ✕ inside covers the order menu. Tap the map to pick the spot (the building shows
-there), then PLACE to build it; the building stays picked for the next spot. With LINE, GRID or BORDER, drag on the
+there), then PLACE to build it: as with a mouse, it takes the place of the builders' orders and the building is let go;
+with QUEUE on it joins their queue and stays picked for the next spot. With LINE, GRID or BORDER, drag on the
 map for a row, a filled area or a hollow ring of them (BAR's own line and area building, placed at once). ↻ turns the
 building, ✕ puts it away (with LINE, GRID or BORDER a long press too).
 With ONE a drag does not pan the map: the building follows your finger. Once it waits there, a later drag anywhere
@@ -99,11 +100,12 @@ shoulder, table, close, mid. In 1st person, drag to look around; it turns back t
 **Tune** adjusts the camera for the unit type you follow, one setting at a time, and saves it for the other
 factions' matching unit too.
 
-**The camera with one finger** (in a game: Settings, Control tab, "Camera with one finger"; both on at first): the
-**camera knob**, a round knob over the map (upright at the right above the dock; sideways at the thumb's side): hold it
-and slide up or down to zoom (down closer), sideways to turn; it lights gold while held, and the layout editor (three
-fingers held) moves and sizes it. The **edge rails**, with the touch dock up: slide a finger down or up the strip along
-the map's right edge to zoom, sideways along the strip at its foot above the dock to turn.
+**The camera with one finger** (in a game: Settings, Control tab, "Camera with one finger"): the **camera knob**, a
+thin ring over the map: hold it and slide up or down to zoom (down closer), sideways to turn; the layout editor (three
+fingers held) moves and sizes it. The **edge rails**, with the touch dock up: two thin lines in an L at the map's
+bottom corner, each half its side: slide along the upright one to zoom, along the one at the foot to turn. Both light
+gold while held; a slow drag makes fine steps, a fast one big ones. Settings there: each on or off, "on the left" for
+the left hand, white or the dock's grey, and the sensitivity.
 
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways

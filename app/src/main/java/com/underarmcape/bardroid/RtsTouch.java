@@ -109,6 +109,12 @@ final class RtsTouch {
     private int camKind = -1;
     private PadMove camMove = PadMove.NONE;
     private float camX, camY;   // view pixels: the finger at the last camera line
+    // Kailil, the same day: "slower speed means less movement. faster means more. so I can have fine adjustments": each
+    // step scaled by the finger's speed (screen heights a second, smoothed), CAM_SPEED_REF giving the dock pad's own gain,
+    // between CAM_GAIN_MIN and CAM_GAIN_MAX; times the Settings' sensitivity ("gain" in the file)
+    private static final float CAM_SPEED_REF = 0.6f, CAM_GAIN_MIN = 0.12f, CAM_GAIN_MAX = 4f;
+    private float camGain = 1f, camSpeed;
+    private long camT;   // the event time of the last camera line
 
     // The portrait dock (bardroid_portrait.lua writes bardroid_dock.txt: its rects in X screen pixels and its mode).
     // Kailil, 2026-11-09: the dock "function as a camera movement pad to pan and zoom around the map ... double tap hold
@@ -815,7 +821,7 @@ final class RtsTouch {
                 if (i >= 0) scrollTo(curY);
                 return;
             case CAM:   // (the camera knob or an edge rail held: camMoveTo)
-                if (i >= 0) camMoveTo();
+                if (i >= 0) camMoveTo(e.getEventTime());
                 return;
             case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight; a
                 // LINE, GRID or BORDER drag too: dragged into the dock its buildings were queued out of sight)
@@ -1054,10 +1060,15 @@ final class RtsTouch {
         if (mod == camModified) return;
         camModified = mod;
         float[] k = null, z = null, t = null;
+        float gain = 1f;
         String text = readSmall(camFile);
         if (text != null) {
             for (String line : text.split("\n")) {
                 String[] f = line.trim().split(" ");
+                if (f.length == 2 && f[0].equals("gain")) {
+                    try { gain = Math.max(0.25f, Math.min(3f, Float.parseFloat(f[1]))); } catch (NumberFormatException ignored) {}
+                    continue;
+                }
                 if (f.length != 5) continue;
                 try {
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
@@ -1070,6 +1081,20 @@ final class RtsTouch {
         camKnob = k;
         camZoom = z;
         camTurn = t;
+        camGain = gain;
+    }
+
+    /**
+     * How much of a step to make: its share of a second's way at the finger's speed (smoothed over the last steps), so a
+     * slow drag makes fine steps and a fast one large ones; the Settings' sensitivity on top.
+     */
+    private float camStepGain(float stepPx, long t) {
+        float h = Math.max(1, view().getHeight());
+        long dt = Math.max(4, t - camT);
+        float v = Math.abs(stepPx) / h / (dt / 1000f);   // screen heights a second
+        camSpeed = camSpeed <= 0 ? v : camSpeed * 0.55f + v * 0.45f;
+        camT = t;
+        return Math.max(CAM_GAIN_MIN, Math.min(CAM_GAIN_MAX, camSpeed / CAM_SPEED_REF)) * camGain;
     }
 
     /** A touch on the camera knob (its circle) or a rail: the camera's until it lifts (CAM). False: on neither. */
@@ -1106,7 +1131,7 @@ final class RtsTouch {
      * The finger on the knob or a rail moved: the knob's first slide decides (up or down zooms, sideways turns, the dock
      * pad's dead zones), a rail its own way once past the slop; then the dock pad's lines, down closer, as it.
      */
-    private void camMoveTo() {
+    private void camMoveTo(long t) {
         float dx = curX - downX, dy = curY - downY, ax = Math.abs(dx), ay = Math.abs(dy);
         if (camMove == PadMove.NONE) {
             if (camKind == CAM_KNOB) {
@@ -1119,16 +1144,24 @@ final class RtsTouch {
             }
             camX = curX;
             camY = curY;
+            camT = t;
+            camSpeed = 0;
             return;
         }
         float[] c = worldCentre();
         if (camMove == PadMove.ZOOM) {
             float h = view().getHeight();
-            if (h > 0 && curY != camY) send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
-                    Math.exp((curY - camY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
+            if (h > 0 && curY != camY) {
+                float step = curY - camY;
+                send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
+                        Math.exp(step / h * PAD_ZOOM_PER_SCREEN * camStepGain(step, t)), toX(c[0]), toY(c[1])));
+            }
         } else if (camMove == PadMove.ROTATE) {
             float w = view().getWidth();
-            if (w > 0 && curX != camX) send(String.format(Locale.US, "rot %.4f", (curX - camX) / w * PAD_ROTATE_PER_WIDTH));
+            if (w > 0 && curX != camX) {
+                float step = curX - camX;
+                send(String.format(Locale.US, "rot %.4f", step / w * PAD_ROTATE_PER_WIDTH * camStepGain(step, t)));
+            }
         }
         camX = curX;
         camY = curY;
@@ -1905,16 +1938,24 @@ final class RtsTouch {
     }
 
     /**
-     * The building at its spot (Shift click: queued, the building stays picked). fallback: where a tap just put it,
-     * before the game said so.
+     * The building at its spot. With QUEUE on a Shift click: it joins the builders' queue and stays picked. Without, a
+     * plain click: it takes the place of their orders and BAR lets go of it, as a mouse's click does (Kailil,
+     * 2026-11-19: "if queue is not toggled, placing buildings should overwerite the queue fully and only do the build
+     * task. like the vanilla behavior"; it was a Shift click either way, picked again after). fallback: where a tap just
+     * put it, before the game said so.
      */
     private void sendPlaced(Place p, float[] fallback) {
         lastTapX = -1; doubleTapX = -1;
         float[] s = p.spot != null ? p.spot : fallback;
         if (s == null) return;
+        final boolean queued = queueHeld;
         // (the engine reads the keys once a frame: Shift down a frame before the click and after it, or the building
-        // takes the place of the builder's orders instead of joining them)
-        holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        // takes the place of the builder's orders instead of joining them; without QUEUE every key up)
+        if (queued) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT);
+        else {
+            ui.removeCallbacks(keysUp);
+            releaseKeys();
+        }
         // (and the pointer on the spot frames before the click: BAR's Extractor Snap works a mex's place out from where
         // the pointer is in its Update and takes the click only when the pointer last drew over the map; moved there from
         // PLACE and clicked at once, a mex went down unsnapped, off its metal: "very finicky", Kailil 2026-11-10)
@@ -1945,8 +1986,10 @@ final class RtsTouch {
                 ui.postDelayed(keysUp, GRID_KEYS_MS);
                 replayHeldTouches();   // (the game began while it waited: touches held for it, holdTouch)
             }
-            // (the engine lets go of the building as Shift comes up: the build menu picks it again; QUEUE's Shift stays)
-            send(queueHeld ? "spot none" : "spot placed");
+            // (QUEUE's Shift stays: the building stays picked; without QUEUE BAR let go of it with the plain click and it
+            // stays let go, as a mouse's; "spot placed" picked it again after the Shift click. "given": the spot's done
+            // with, and a spot BAR refused is said, bardroid_touch.lua)
+            send("spot given");
             sentSpot = null;
         };
         ui.postDelayed(placedClick, PLACE_SETTLE_MS);

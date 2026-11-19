@@ -13,7 +13,7 @@
 --                                                     pad <lx> <ly> <rx> <ry> <lt> <lb>  (gamepad, when it changes: raw
 --                                                                               sticks -32768..32767 with y down, LT 0..32767, LB 0|1)
 --                                                     act <name>                (a gesture's action: ACTIONS below)
---                                                     spot <x> <y> | spot none | spot placed  (a building's spot for
+--                                                     spot <x> <y> | spot none | spot placed | spot given  (a building's spot for
 --                                                                               the build menu's PLACE button: bardroid_buildmenu.lua)
 --                                                     nudge <dx> <dy>           (the waiting building moved by that many
 --                                                                               pixels, y down)
@@ -642,7 +642,9 @@ local function readTouch(lines)
 			elseif kind == "spot" then
 				flush()
 				local x, y = args:match("^(%S+) (%S+)")
-				if args == "placed" and b.droidPanel then
+				-- ("given": PLACE's click went off and the building is not to be picked again, RtsTouch.sendPlaced: a
+				-- plain click without QUEUE, BAR lets go of it; QUEUE's Shift keeps it picked anyway)
+				if (args == "placed" or args == "given") and b.droidPanel then
 					-- (PLACE on a spot BAR refuses, a slope or a unit's footprint: a word, as the building drawn red and
 					-- nothing queued looked like the place cancelled; Kailil, 2026-11-10, a Bot Lab)
 					local _, spot = b.droidPanel()
