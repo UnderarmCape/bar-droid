@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's button panels with no IsAbove: the pointer hides after a tap, drags still pan** (hardening, 2026-11-19
+      ~05:10-05:40, dev phone upright, lobby games offline, the login wait removed after; the run's UI polish too). A
+      third hover answer, 3 (bardroid_touch.lua: a panel a BAR widget draws without an IsAbove, registered by its phone
+      patch in WG.BarDroidTapPanels as a function giving its rect): RtsTouch takes it as the interface for the pointer
+      (hidden after a tap there) and as the map for drags (a pan); a building picked is not placed there, the tap
+      clicks the panel (855f13cf). Registered: the replay speed column, the vote panel, the pre-game Ready buttons of
+      gui_pregameui and its draft version (each unregistered on its Shutdown). Dev phone: a replay from the lobby, 4x
+      tapped: the pointer gone, the hover file "33 869 3"; a drag from the column panned the map. A 2v2 from the lobby,
+      Ready tapped: "746 481 3", the pointer gone. Found on the way: after Ready the draft button reads "Unlock
+      Position", wider, and ran past the right edge upright (it is sized every frame, the clamp was in the team panel's
+      path only): clamped where it is sized (5e3726e7), whole on the screen. touch-phone-test and dock-phone-test ALL
+      PASS. The Fold7 did not answer (offline on Tailscale, last seen over an hour before).
 - [x] **The replay speed column's IsAbove taken back: drags there pan again** (hardening, 2026-11-19 ~04:55-05:10,
       dev phone upright, a replay from the lobby offline, the login wait removed after). ccdfd0d8's IsAbove made the
       column interface for the touch widget: the pointer hid after a tap on a speed, but a finger's drag that began on
