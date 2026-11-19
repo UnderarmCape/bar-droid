@@ -2635,7 +2635,8 @@ local GOLD = { 1, 0.78, 0.25, 1 }
 
 local voiceOn, voiceTarget = false, nil -- listening; the target picked, by name (kept for the lobby's session)
 local voicePanel, voiceLabel
-local voiceTextW = 0 -- its words' width, as the font measures them
+-- its words' width, as the font measures them; arrows: the target's (the channel steps), drawn either side of the words
+local voiceTextW, voiceArrows = 0, false
 
 local function voiceTargets()
 	local targets = {}
@@ -2699,14 +2700,41 @@ local function voiceShow(say)
 			caption = "",
 			objectOverrideFont = config and config:GetFont(3),
 		})
+		-- (the target's arrows as solid triangles either side of the words, as the game's note draws them: the font's
+		-- "<" and ">" were thin marks; dev phone 2026-11-18)
+		Chili.Control:New({
+			parent = voicePanel,
+			x = 0, y = 0, right = 0, bottom = 0,
+			padding = { 0, 0, 0, 0 },
+			drawcontrolv2 = true,
+			DrawControl = function(obj)
+				if not voiceArrows then
+					return
+				end
+				local h, cx = obj.height, obj.width / 2
+				local cy, a, gap = h / 2, h * 0.17, h * 0.3
+				gl.Texture(false)
+				gl.Color(1, 1, 1, 0.92)
+				for side = -1, 1, 2 do
+					local bx = cx + side * (voiceTextW / 2 + gap) -- (the base by the words, the point away from them)
+					gl.BeginEnd(GL.TRIANGLES, function()
+						gl.Vertex(bx + side * a * 1.2, cy)
+						gl.Vertex(bx, cy - a)
+						gl.Vertex(bx, cy + a)
+					end)
+				end
+				gl.Color(1, 1, 1, 1)
+			end,
+		})
 	end
 	local target = not say and voiceCurrent(voiceTargets())
-	local caption = say or target and ("< SPEAK TO " .. string.upper(target.name) .. " >")
+	voiceArrows = target and true or false
+	local caption = say or target and ("SPEAK TO " .. string.upper(target.name))
 		or "SPEAK TO CHAT: JOIN A SERVER OR OPEN THE CHAT"
 	local font = voiceLabel.font
 	local ok, textW = pcall(function() return font:GetTextWidth(caption) end)
 	voiceTextW = ok and tonumber(textW) or 0
-	local w = math.min(screen0.width - 16, math.max(640, math.ceil(voiceTextW) + 48)) -- (a long name: the panel grows)
+	local w = math.min(screen0.width - 16, math.max(640, math.ceil(voiceTextW) + 48 + (voiceArrows and 60 or 0))) -- (a long name: the panel grows)
 	voicePanel:SetPos(math.floor((screen0.width - w) / 2), 8, w, 56)
 	voiceLabel:SetPos(0, 0, w, 56)
 	voiceLabel:SetCaption(caption)
