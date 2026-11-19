@@ -763,7 +763,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the launcher says "Skirmish loading" (StatusText.forPlayers with the loading flag): its title now takes the same
       words, and it is shown again as the loading ends ("loaded") or a game from the lobby starts loading
       (`GameService.refreshNotification`; the channel is low importance, the update silent). Dev phone: "Skirmish
-      loading" 20 s in, "Skirmish running" after "loaded" (screenshots of the notification shade).
+      loading" 20 s in, "Skirmish running" after "loaded" (screenshots of the notification shade). The APK from 320c7819
+      on the Fold7 at 20:48.
 - [x] **The launcher's Stop keeps the replay too; it says so while the game closes** (hardening, 2026-11-18
       ~20:25-20:35, dev phone). The launcher's Stop over a running skirmish (the game in picture-in-picture): "asked the
       engine to quit", again for BAR's quit dialog, "the engine quit in 5335 ms", the replay 15242 bytes. But for those
