@@ -230,7 +230,10 @@ final class RtsTouch {
 
     // What the game's widget says is under a point (bardroid_hover.txt)
     // (HOVER_SCROLL: one of BAR's windows is open, whose lists and text scroll with the mouse wheel only)
-    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1, HOVER_SCROLL = 2;
+    // (HOVER_TAP: one of BAR's button panels that answer no IsAbove, bardroid_touch.lua's WG.BarDroidTapPanels: a tap
+    // there is a click and hides the pointer as on the interface, a drag pans as on the map, a building picked is not
+    // placed there)
+    private static final int HOVER_UNKNOWN = -1, HOVER_MAP = 0, HOVER_INTERFACE = 1, HOVER_SCROLL = 2, HOVER_TAP = 3;
 
     private static final long GRID_ON_BUILDING_MS = 1000;   // a finger still on the waiting building: a GRID this late
     /** A finger still on the waiting building for GRID_ON_BUILDING_MS: a GRID from it (longPress waits for this). */
@@ -968,7 +971,7 @@ final class RtsTouch {
         // map it shows, BAR's command cursor)
         if (!cursorOnDock && System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS) {
             int h = hoverAt(curX, curY);
-            if (h == HOVER_INTERFACE || h == HOVER_SCROLL) cursorOnDock = true;
+            if (h == HOVER_INTERFACE || h == HOVER_SCROLL || h == HOVER_TAP) cursorOnDock = true;
             else if (h == HOVER_UNKNOWN) {   // (the widget answers for the pointer's new place a frame or so later)
                 upX = curX; upY = curY; upLooks = 0;
                 ui.postDelayed(cursorOnInterface, CURSOR_LOOK_MS);
@@ -1286,7 +1289,7 @@ final class RtsTouch {
         @Override public void run() {
             if (state != State.IDLE || cursorOnDock) return;
             int h = hoverAt(upX, upY);
-            if (h == HOVER_INTERFACE || h == HOVER_SCROLL) {
+            if (h == HOVER_INTERFACE || h == HOVER_SCROLL || h == HOVER_TAP) {
                 cursorOnDock = true;
                 showCursor(cursorWanted);
             } else if (h == HOVER_UNKNOWN && ++upLooks < CURSOR_LOOKS) {
@@ -1991,9 +1994,12 @@ final class RtsTouch {
         if (place != null && tapBuilding(vx, vy, place, hoverAt(vx, vy), HOVER_ASKS)) return;
         runPlaceTap();
         // (Area Mex armed, a tap on the map: held for a drag that may follow, holdAreaTap)
-        if (!inDock && place == null && dockAreaOnly() && hoverAt(vx, vy) != HOVER_INTERFACE) {
-            holdAreaTap(vx, vy);
-            return;
+        if (!inDock && place == null && dockAreaOnly()) {
+            int h = hoverAt(vx, vy);   // (not on BAR's interface, nor on one of its button panels)
+            if (h != HOVER_INTERFACE && h != HOVER_TAP) {
+                holdAreaTap(vx, vy);
+                return;
+            }
         }
         clickWhenSeen(vx, vy, HOVER_ASKS);
     }
@@ -2458,7 +2464,7 @@ final class RtsTouch {
         if (f.length != 3) return HOVER_UNKNOWN;
         try {
             if (Math.abs(Integer.parseInt(f[0]) - toX(vx)) > 2 || Math.abs(Integer.parseInt(f[1]) - toY(vy)) > 2) return HOVER_UNKNOWN;
-            return f[2].equals("0") ? HOVER_MAP : f[2].equals("2") ? HOVER_SCROLL : HOVER_INTERFACE;
+            return f[2].equals("0") ? HOVER_MAP : f[2].equals("2") ? HOVER_SCROLL : f[2].equals("3") ? HOVER_TAP : HOVER_INTERFACE;
         } catch (NumberFormatException e) { return HOVER_UNKNOWN; }
     }
 

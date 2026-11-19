@@ -21,8 +21,10 @@
 --                                                                               PLACE lit)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
---   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2>           (pointer position; 1 = on the interface,
---                                                                               2 = a BAR window open that scrolls)
+--   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2|3>         (pointer position; 1 = on the interface,
+--                                                                               2 = a BAR window open that scrolls,
+--                                                                               3 = a BAR button panel with no IsAbove:
+--                                                                               WG.BarDroidTapPanels)
 --   LuaUI/Config/bardroid_overlay.txt widget:         <0|1>                     (1: BAR's lobby over the game; the app
 --                                                                               hides the pointer for fingers then)
 --   LuaUI/Config/bardroid_game.txt    widget, at start: controller <0|1>        (1: the controller game, v0.8.5 reads
@@ -179,6 +181,7 @@ end
 
 local loadedGame = { pending = false } -- (a saved game loaded: checkLoadedGame; one table for the locals)
 function widget:Initialize()
+	WG.BarDroidTapPanels = WG.BarDroidTapPanels or {} -- (overBarInterface: BAR's button panels with no IsAbove)
 	writeWhole(OVERLAY, "0\n") -- (one left at "1" by a game that ended under the lobby)
 	-- (and BAR's lobby asked whether it is over the game: BAR says so only as it opens or closes, and a fold or turn
 	-- reloads LuaUI between the two; the app's lobby widget answers with BAR's own "LobbyOverlayActive1")
@@ -1596,6 +1599,22 @@ local function overBarInterface(mx, my)
 	if not barAnswer then
 		barAnswer = overGameMenus(mx, my)
 	end
+	-- 3: one of BAR's button panels that answer no IsAbove (the replay speed column, the vote panel, the pre-game Ready
+	-- button; their phone patches put a function giving the panel's rect, GL pixels, in WG.BarDroidTapPanels): a tap
+	-- there hides the pointer as on the interface, but a finger's drag pans as on the map (as interface, a drag that
+	-- began on the replay column was a mouse drag, no pan, along a tall strip of the left edge upright; 2026-11-19)
+	if not barAnswer then
+		local panels = WG.BarDroidTapPanels
+		if type(panels) == "table" then
+			for _, rect in pairs(panels) do
+				local ok, x0, y0, x1, y1 = pcall(rect)
+				if ok and x0 and y1 and mx >= x0 and mx <= x1 and my >= y0 and my <= y1 then
+					barAnswer = 3
+					break
+				end
+			end
+		end
+	end
 	return barAnswer
 end
 
@@ -1633,7 +1652,7 @@ local function updateHover()
 		-- the map)
 		if mx ~= calcX or my ~= calcY or updates - calcAt >= HOVER_RECHECK then
 			local bar = overBarInterface(mx, my)
-			calcAnswer = bar == 2 and 2 or ((spIsAboveMiniMap(mx, my) or bar) and 1 or 0)
+			calcAnswer = (bar == 2 or bar == 3) and bar or ((spIsAboveMiniMap(mx, my) or bar) and 1 or 0)
 			calcX, calcY, calcAt = mx, my, updates
 		end
 		onInterface = calcAnswer

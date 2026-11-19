@@ -7,10 +7,10 @@ right, folded away by HIDE, no dock). The file is the same in every BAR release 
 test-31958), so this fits replays of all of them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI
 loads it; if a block finds no place, BAR's own file runs. Upright the column is also as wide and its words as large as on
 the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, some 35 pixels wide upright, words of 11),
-and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it). (No IsAbove: one
-made the column interface for the touch widget, the pointer then hid after a tap on a speed, but a finger's drag that
-began on the column became a mouse drag, no longer a pan, along a tall strip of the screen's left edge upright; dev
-phone, 2026-11-19. The pointer stays where the tap was, as on the map.)
+and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it). And its rect for
+the app's touch widget (WG.BarDroidTapPanels): after a tap on a speed the pointer hides as over BAR's interface, while a
+finger's drag from the column still pans (2026-11-19: an IsAbove did the first, but made such drags mouse drags along
+a tall strip of the screen's left edge upright).
 
 @@@ find
 function widget:Update(dt)
@@ -50,7 +50,28 @@ function widget:Update(dt)
 		wPos.y = base
 		sceduleUpdate = true
 	end
+	-- BAR Droid (phone): the column for the app's touch widget (bardroid_touch.lua's WG.BarDroidTapPanels): a tap on a
+	-- speed hides the pointer as on the interface, a finger's drag from the column still pans
+	local droidTap = WG.BarDroidTapPanels
+	if droidTap and not droidTap.replaybuttons then
+		droidTap.replaybuttons = function()
+			if not isActive or #buttons < 2 then
+				return nil
+			end
+			local foot, top = buttons[#buttons], buttons[#buttons - 1]
+			return foot.x * vsx, foot.y * vsy, (top.x + bWidth) * vsx, (top.y + bHeight) * vsy
+		end
+	end
 end
+@@@ end
+
+@@@ find
+function widget:Shutdown()
+@@@ with
+function widget:Shutdown()
+	if WG.BarDroidTapPanels then -- BAR Droid (phone): the column no longer the touch widget's
+		WG.BarDroidTapPanels.replaybuttons = nil
+	end
 @@@ end
 
 @@@ find

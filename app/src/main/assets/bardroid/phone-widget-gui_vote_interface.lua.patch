@@ -2,9 +2,41 @@ BAR Droid phone version of BAR's Vote interface (luaui/widgets/gui_vote_interfac
 votes bring up (a team's resign, stop, forcestart): on the screen whole. BAR places it right of the top bar's middle,
 under the top bar; upright on a phone the top bar is the screen's right half and the panel a third of the height wide,
 so it ran past the right edge: only YES showed, the title, NO and the close button off the screen (dev phone, upright,
-a "stop" vote, 2026-11-19). No wider than the screen and moved left until it fits, under the top bar as before.
+a "stop" vote, 2026-11-19). No wider than the screen and moved left until it fits, under the top bar as before. And
+its rect for the app's touch widget (WG.BarDroidTapPanels): a tap on it hides the pointer, a drag from it pans.
 Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
 runs.
+
+@@@ find
+function widget:Initialize()
+	widget:ViewResize()
+end
+@@@ with
+function widget:Initialize()
+	widget:ViewResize()
+	-- BAR Droid (phone): the panel for the app's touch widget (WG.BarDroidTapPanels): a tap on YES or NO hides the pointer
+	-- as on the interface, a drag from it pans as on the map (it answers no IsAbove)
+	WG.BarDroidTapPanels = WG.BarDroidTapPanels or {}
+	WG.BarDroidTapPanels.vote = function()
+		if voteDlist and windowArea then
+			return windowArea[1], windowArea[2], windowArea[3], windowArea[4]
+		end
+	end
+end
+@@@ end
+
+@@@ find
+function widget:Shutdown()
+	CloseVote()
+end
+@@@ with
+function widget:Shutdown()
+	CloseVote()
+	if WG.BarDroidTapPanels then -- BAR Droid (phone): the panel no longer the touch widget's
+		WG.BarDroidTapPanels.vote = nil
+	end
+end
+@@@ end
 
 @@@ find
 		if WG.topbar ~= nil then
