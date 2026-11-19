@@ -763,7 +763,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       game's /tmp/bardroid-vsync (22:36) moved aside (300 and 301 ms; the file put back). Not reproduced: noted, not
       changed. UI polish: the launcher's Stop stayed lit while "Closing: saving the replay" (a second Stop is not
       taken); now dimmed then as with nothing running (LauncherActivity.refresh). Dev phone: Stop over a skirmish,
-      dimmed 1.5 s after the tap, the engine's quit 5132 ms, launch-bar.sh ended after it.
+      dimmed 1.5 s after the tap, the engine's quit 5132 ms, launch-bar.sh ended after it. The APK from 306f7cae on the
+      Fold7 at 22:51.
 - [x] **A closed game's infolog kept again; Stop over the loading screen** (hardening, 2026-11-18 ~22:20-22:40, dev
       phone). After the engine, launch-bar.sh still runs a moment: the app's widgets' error lines for the launcher
       (layer_miss) and the infolog's copy into files/bar/logs (Share logs sends them). A Stop or a swipe killed it with
