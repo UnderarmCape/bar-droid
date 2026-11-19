@@ -1124,6 +1124,80 @@ local function roomButtonsRight(middle, right)
 	return true
 end
 
+-- An online room's SPADS strip upright (gui_battle_room_window.lua SetupSpadsStatusPanel: Autobalance, BalanceMode
+-- and Preset in a row, Balance, Lock and Unlock under them, in shares of a strip 96 high to 67 % of the room): it ran
+-- under the right column's Playing and Ready, which start at 60 % ("custom" under Playing, Unlock under Ready's tick),
+-- and each label under its own box ("Autobalancelvanced"; Kailil's screenshot, 2026-11-19). Upright the strip to 60 %
+-- and half again as tall, in three rows: Autobalance and BalanceMode, Preset, the three buttons; the middle column
+-- (the rules) ends above it. The vote panel in the same place to 60 % too.
+local SPADS_H = 144
+local spadsLaidOut = setmetatable({}, { __mode = "k" })
+local function roomSpads(parent, middle)
+	local function childOf(p, name)
+		for _, ch in ipairs(p.children or {}) do
+			local c = real(ch)
+			if c and c.name == name then
+				return c
+			end
+		end
+		for ch in pairs(p.children_hidden or {}) do
+			local c = real(ch)
+			if c and c.name == name then
+				return c
+			end
+		end
+	end
+	local spads = childOf(parent, "spadsStatusPanel")
+	local mb = middle._relativeBounds
+	if not (spads and spads._relativeBounds and spads._relativeBounds.right == "33%" and mb.bottom == 96) then
+		return false -- (a skirmish: no strip, the middle to the room's foot)
+	end
+	local function rel(c, left, top, width, height)
+		local r, g = c._relativeBounds, c._givenBounds
+		r.left, g.left, r.top, g.top = left, left, top, top
+		r.width, g.width, r.height, g.height = width, width, height, height
+		r.right, g.right, r.bottom, g.bottom = false, false, false, false
+		c._isRelative = true
+	end
+	local rows = { -- (each: its label's place, then its box's; a third of the strip high)
+		{ "stslabel1", "autoBalance", "1%", "1%" }, { "stslabel2", "balanceMode", "51%", "1%" },
+		{ "stslabel3", "preset", "1%", "34%" } }
+	for _, r in ipairs(rows) do
+		local label, box = childOf(spads, r[1]), childOf(spads, r[2])
+		local x = tonumber((r[3]:gsub("%%", "")))
+		if label then
+			rel(label, r[3], r[4], "23%", "31%")
+		end
+		if box then
+			rel(box, (x + 24) .. "%", r[4], "24%", "31%")
+		end
+	end
+	for i, name in ipairs({ "balanceButton", "lockButton", "unlockButton" }) do
+		local b = childOf(spads, name)
+		if b then
+			rel(b, ({ "1%", "34%", "67%" })[i] , "67%", "31%", "32%")
+		end
+	end
+	spads._relativeBounds.right, spads._givenBounds.right = "40%", "40%"
+	spads._givenBounds.height, spads.height = SPADS_H, SPADS_H
+	spads._relativeBounds.height = false
+	spads:UpdateClientArea()
+	local vote = childOf(parent, "votePanel")
+	if vote and vote._relativeBounds and vote._relativeBounds.right == "33%" then
+		vote._relativeBounds.right, vote._givenBounds.right = "40%", "40%"
+		vote:UpdateClientArea()
+	end
+	mb.bottom, middle._givenBounds.bottom = SPADS_H, SPADS_H
+	middle:UpdateClientArea()
+	for _, ch in ipairs(spads.children or {}) do -- (the children at their new shares)
+		local c = real(ch)
+		if c and c.UpdateClientArea then
+			c:UpdateClientArea()
+		end
+	end
+	return true
+end
+
 local function uprightBattleRoom()
 	-- (Chili hands out weak links, a new one each time: the real objects, to compare and to remember)
 	local players, middle, right = real(chobbyObject("playerPanel")), real(chobbyObject("leftInfo")),
@@ -1136,6 +1210,14 @@ local function uprightBattleRoom()
 	-- (the buttons to the right once Chili has laid the new columns out: tried at the checks after, up to 5 s)
 	local tries = roomsLaidOut[middle]
 	if tries then
+		if not spadsLaidOut[middle] then
+			spadsLaidOut[middle] = true
+			local ok, done = pcall(roomSpads, real(middle.parent), middle)
+			if not ok or done then
+				Spring.Echo("[bardroid-lobby] battle room upright: " .. (ok and "its SPADS strip in three rows, left of"
+					.. " Playing and Ready" or ("its SPADS strip left as it was: " .. tostring(done)))) -- (tools)
+			end
+		end
 		if tries >= 0 then
 			local ok, moved = pcall(roomButtonsRight, middle, right)
 			if not ok or moved or tries >= 10 then

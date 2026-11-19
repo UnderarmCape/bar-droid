@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **An online room's SPADS strip upright, clear of Playing and Ready; the launcher's log box without the disk
+      check's "Error"** (hardening, 2026-11-19 ~13:05-, dev phone upright; the Fold7 not played since 13:02). Kailil's
+      screenshot of an online room: BAR's SPADS strip (Autobalance, BalanceMode, Preset over Balance, Lock, Unlock; in
+      shares of a strip 96 high to 67 % of the room) ran under the right column's Playing and Ready from 60 % ("custom"
+      under Playing, Unlock under Ready's tick), each label under its box ("Autobalancelvanced"). Upright
+      (bardroid_lobby_touch.lua roomSpads) the strip ends at 60 % and is 144 high, three rows: Autobalance and
+      BalanceMode, Preset, the three buttons; the middle column (the rules) ends above it, the vote panel to 60 % too.
+      Online rooms only (the strip and the 96 at the foot); checked on the dev phone with a probe that showed the strip
+      in a skirmish room as an online room has it: labels 86 and 94 wide ending before their boxes, the strip to 416 and
+      the right column from 415. UI polish (launcher screenshot): the engine's "Warning: [IsPathOnSpinningDisk] Error
+      'No such file or directory' ..." twice in the log box at every start (its disk check; the container has no such
+      file) goes to launcher.log only (Log.quiet).
 - [x] **128b8182 on the Fold7; his online game's empty replay** (2026-11-19 ~13:00-13:05). The APK from clean main
       128b8182 (phone-2026.09.03-83a8536d37) went on the Fold7 at 13:02 (93 s), BAR closed since 12:55; github-sync
       -Release. His log since 11:43: online games joined and left four times ("the game ended: back in the lobby"),
