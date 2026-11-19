@@ -1,6 +1,7 @@
 -- User widget for tools/touch-phone-test.ps1: the touch camera (bardroid_touch.lua) on the phone, driven by lines this
 -- widget appends to LuaUI/Config/bardroid_touch.txt as the app writes them (pan, zoom: X pixels, top-left origin). A
--- drag holds the map point under the finger: on the map, over the void past its edge (across and up), across the edge;
+-- drag holds the map point under the finger: on the map, over the void past its edge (across and up), across the edge
+-- (as one line, and as a finger sends it, a line a frame);
 -- a pinch over the void zooms about its point; a drag over the sky moves the map; under BAR's lobby over the game the
 -- fingers leave the camera and the dock steps aside. Logs "[touchphone] PASS|FAIL|SKIP <case>" and "[touchphone] done".
 function widget:GetInfo()
@@ -126,6 +127,7 @@ local function overlayIs(case, want)
 end
 
 local before, grab, endX, endY, row, mapRow
+local drip -- pan lines still to send, one a frame (widget:Update): a finger's drag, as RtsTouch sends it
 local function moved()
 	local cs = Spring.GetCameraState()
 	return math.sqrt((cs.px - before.px) ^ 2 + (cs.pz - before.pz) ^ 2)
@@ -232,6 +234,37 @@ local cases = {
 			before.px, before.pz, cs.px, cs.pz, grab[1], grab[2], x and string.format("%.0f,%.0f", x, z) or "nothing")
 		check("a drag from the map onto the void holds the point under the finger (" .. detail .. ")", grab[1], grab[2],
 			x, z, moved())
+	end,
+	-- the same drag as a finger makes it: 24 lines one a frame, each from the last one's end (the one line above missed
+	-- it: line by line the map fell behind the finger by two thirds sideways, 1402 off after 2077; dev phone 2026-11-18)
+	function() camera(Game.mapSizeX / 2, 700, 2500, 1.9, true) end,
+	settle,
+	function()
+		mapRow, row = math.floor(vsy * 0.8), math.floor(vsy * 0.3)
+		local x, z, h = groundAt(cx, mapRow)
+		if not h or groundAt(cx, row) or not planeAt(cx, row) then
+			log("SKIP a finger's drag onto the void: no map at 80% or no void at 30%")
+			step = step + 3 -- (past its wait, settle and check)
+			return
+		end
+		before, grab, endX, endY = Spring.GetCameraState(), { x, z, h }, cx + 40, row
+		local n = 24
+		local function at(k)
+			return math.floor(cx + 40 * k / n + 0.5), math.floor(mapRow + (row - mapRow) * k / n + 0.5)
+		end
+		drip = {}
+		for i = 0, n - 1 do
+			local x0, y0 = at(i)
+			local x1, y1 = at(i + 1)
+			drip[#drip + 1] = string.format("pan %d %d %d %d", x0, y0, x1, y1)
+		end
+	end,
+	function() return not (drip and drip[1]) end, -- (false until the last line is sent)
+	settle,
+	function()
+		local x, z = planeAt(endX, endY, grab[3])
+		check("a finger's drag from the map onto the void (a line a frame) holds the point under the finger", grab[1],
+			grab[2], x, z, moved())
 	end,
 	-- over the sky (the camera tilted up to the horizon): the map moves
 	function() camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.62) end,
@@ -358,6 +391,9 @@ local cases = {
 
 function widget:Update()
 	frames = frames + 1
+	if drip and drip[1] then
+		touch(table.remove(drip, 1))
+	end
 	-- (from 10 s of game: BAR's own camera move to the start position comes in the first seconds)
 	if Spring.GetGameFrame() < 300 or frames < waitUntil then
 		return
