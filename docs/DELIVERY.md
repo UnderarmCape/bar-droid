@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A game closed by Stop or a swipe kept no replay: the engine is now asked to quit first** (hardening,
+      2026-11-18 ~19:45-20:05; found on both phones: an empty .sdfz for each game a test or the player closed, among
+      them Kailil's ~9-minute skirmish of 17:41 on the Fold7, swiped away at 17:51, 0 bytes). Recoil writes the replay
+      only as it ends (CDemoRecorder's destructor; the game is kept in memory until then), and the service's Stop and
+      onTaskRemoved SIGKILLed everything at once. Now `Proc.endEngine` first: SIGTERM to the engine (each process of the
+      app's UID started as "spring"; its comm is "recoil-main"), SDL's quit event, the window's close button. In a
+      running game BAR's top bar buttons veto the first ("quit vetoed by Lua (AllowQuit)": their quit dialog) and quit
+      on a second once the dialog has been up over half a second, so a second follows 1 s later; then up to 20 s for it
+      to end (off the main thread, `GameService.closeGently`), then everything killed as before. Dev phone: a 2-minute
+      skirmish swiped away from recent apps: "asked the engine to quit", "asked the engine again (BAR's quit
+      dialog)", "the engine quit in 7692 ms", the replay 14373 bytes (it had been 0 three times before; the game's own
+      shutdown, SpringApp::Kill, ~5 s). (The Fold7's empty replay of 17:41 is still in its demos folder.)
 - [x] **The menu copies, the D-gun mode and 1st person on the newest APK; speak to chat's arrows** (hardening,
       2026-11-18 ~19:30-19:45, dev phone): remake-check PASS (the phone's remake of the build menu, order menu, mission
       info, team stats and Settings copies equal to the shipped ones on test-31992, every phone patch applies),
