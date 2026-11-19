@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A sideways skirmish; no clock time in the notification while loading** (hardening, 2026-11-19 ~07:36-07:46,
+      dev phone sideways, "Turn with the phone" off for the run and on again after; the run's UI polish too). Play vs
+      AI sideways: the split dock (BUILD | ORDERS, the minimap, the wind 11.9 with NO WATER, the side arrow), ORDERS
+      tapped, the wind's box tapped (its details over the map: average 9.2, 4 to 12, 16.4 % below 6, the graph of the
+      game so far), 29.7 fps over a minute, no error from the app's widgets; the launcher over the game and its Display
+      pages whole; Stop: "the engine quit in 5032 ms". The new lobby (test-4680) is not yet the one to fall back to on
+      the dev phone: its runs today were under two minutes without a game frame, so the Updater has not judged it (as
+      it should). UI polish: while loading the notification showed the clock ("Game loading 07:06"), then a count
+      ("Game running 00:20"); now no time until the count starts ("Skirmish loading", then "Skirmish running 00:24") (GameService
+      notification; dev phone screenshots). The Fold7 did not answer (offline on Tailscale).
 - [x] **BAR's new lobby, Chobby test-4680; the update check says what it updated** (hardening, 2026-11-19
       ~07:27-07:38, dev phone; the run's UI polish too). Install / Update on the dev phone brought BAR's new lobby
       (BYAR Chobby test-4679-f4b32fa -> test-4680-214cb3f; the game stays test-31992). lobby-phone-test ALL PASS on it
