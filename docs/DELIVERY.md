@@ -773,7 +773,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       A drag that begins over the void keeps the old way (held at its first height, touch-phone-test's drag along the
       edge went 500 off). Dev phone: both measured drags 0 off after 3424; touch-phone-test ALL PASS sideways (the drag
       onto the void 0 off after 2318) and upright (0 off after 1911, it had been 367 off), dock-phone-test ALL PASS.
-      Not run: tools/touch-widget-test.ps1 on the laptop (Kailil at it).
+      Not run: tools/touch-widget-test.ps1 on the laptop (Kailil at it). (No UI polish this run.) The APK from
+      ad40d4fd on the Fold7 at 21:56.
 - [x] **The app's Settings used in a game; the pointer hidden after a tap on BAR's interface** (hardening,
       2026-11-18 ~21:00-21:30, dev phone sideways: it lies on its side now, "Turn with the phone" follows it). The top
       bar's Settings opened the app's copy sideways (BAR's sidebar, the list), the Interface tab, "Playerlist country
