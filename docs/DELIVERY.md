@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Today's lobby code, its costs: lobby requests only off a game, the lobby's searches only after a press; a
+      long Settings caption clear of its box** (hardening, 2026-11-19 ~13:20-13:40, dev phone upright; the Fold7 not
+      played since 13:17). A review of the day's code: RtsTouch's lobby requests (lobbyAskWatch) started 3 s of checks
+      every 50 ms at every touch, in a game too, where no lobby box is under a finger: now only with no game widget or
+      BAR's lobby over the game. upright.serverRows looked through the whole lobby for a server row
+      (GetObjectByName) every half second, and for the empty list's note every 2 s, the list never opened: the list is
+      kept once found, looked for every check only for 4 s after a press (tabWake) and every 3 s otherwise, its rows
+      walked only while it is on the screen; the note looked for after a press only. Dev phone: fake servers' rows as
+      before, the search box's tap brings up the keyboard. UI polish (screenshot of the lobby's Settings upright):
+      "Show Battles with Test Engine Versions" ran up to its box; a checkbox's caption with under 12 before its box in
+      a smaller size of its font, Chobby's back with the rows (settingsRows). lobby-phone-test ALL PASS.
 - [x] **An online room's SPADS strip upright, clear of Playing and Ready; the launcher's log box without the disk
       check's "Error"** (hardening, 2026-11-19 ~13:05-, dev phone upright; the Fold7 not played since 13:02). Kailil's
       screenshot of an online room: BAR's SPADS strip (Autobalance, BalanceMode, Preset over Balance, Lock, Unlock; in

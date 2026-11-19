@@ -617,6 +617,8 @@ final class RtsTouch {
     private final Runnable lobbyAskCheck = this::lobbyAskStep;
 
     private void lobbyAskWatch() {
+        // (not in a game, unless BAR's lobby is over it: every touch there ran the 3 s of checks for nothing)
+        if (gameWidgetRunning() && !lobbyOverlay()) return;
         if (lobbyAskSeenAt < 0) {   // (the first touch: what the file holds from before is no request)
             lobbyAskSeenAt = lobbyAskFile.lastModified();
             String t = readSmall(lobbyAskFile);

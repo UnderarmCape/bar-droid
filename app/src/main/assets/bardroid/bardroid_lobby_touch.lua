@@ -1554,6 +1554,27 @@ function upright.settingsRows(tall)
 							if s.box then
 								-- (24: "Show Battles with Test Engine Versions" ran up to a 28 box, the words as wide as before)
 								r.boxsize = f > 1 and math.min(24, math.floor(s.h * f) - 14) or s.box
+								-- (and at 24 its last word still touched the box, dev phone screenshot 2026-11-19: a caption
+								-- with under 12 before its box in a smaller size of its font, as fits; Chobby's back with
+								-- the rows)
+								local font, config = r.font, WG.Chobby and WG.Chobby.Configuration
+								if s.font == nil then
+									s.font, s.font0 = r.objectOverrideFont or false, font
+								end
+								if f > 1 and type(r.caption) == "string" and font and font.GetTextWidth and config
+									and config.GetFont then
+									local room, w = (r.width or 0) - r.boxsize - 12, font:GetTextWidth(r.caption)
+									if room > 60 and w > room then
+										local size = math.max(11, math.floor((font.size or 17) * room / w))
+										local small = config:GetFont(size, "bardroidSettingsCaption",
+											{ font = font.font, shadow = font.shadow, outline = font.outline,
+												outlineColor = font.outlineColor }, true)
+										r.objectOverrideFont, r.font = small, small -- (Chobby's shared fonts: never disposed with it)
+									end
+								elseif f == 1 and s.font0 and r.font ~= s.font0 then
+									r.objectOverrideFont = s.font or nil
+									r.font = s.font0
+								end
 								r:Invalidate()
 							end
 							-- (a list's choices, made as it opens: Chili's 20 high, about 1.6 mm, "Remember Last" over "Always
@@ -1816,9 +1837,13 @@ function upright.serverRows()
 	-- (its note over the empty list, "You are not connected to the server.\nPlease wait 30 seconds while we
 	-- automatically reconnect you.", in a box 70 % of the list wide: upright both lines cut at both ends, "re not
 	-- connected to the server", dev phone 2026-11-19; the box 94 % wide. Chobby makes the list once: found, done)
+	-- (the searches of the whole lobby only for a few seconds after a press, when a tab may have opened, tabWake: they
+	-- ran every check, the list never opened; review 2026-11-19)
+	local now = Spring.GetTimer()
+	local woke = tabWake.at and Spring.DiffTimers(now, tabWake.at) < 4
 	local info = upright.serverInfo
-	if not (info and not info.disposed) and (not upright.serverInfoAt
-		or Spring.DiffTimers(Spring.GetTimer(), upright.serverInfoAt) > 2) then
+	if woke and not (info and not info.disposed) and (not upright.serverInfoAt
+		or Spring.DiffTimers(now, upright.serverInfoAt) > 2) then
 		upright.serverInfoAt = Spring.GetTimer()
 		local function find(o, depth)
 			for _, ch in ipairs(o.children or {}) do
@@ -1851,9 +1876,20 @@ function upright.serverRows()
 			Spring.Echo("[bardroid-lobby] server list: its note over an empty list as wide as the list") -- (tools)
 		end
 	end
-	local first = screen0.GetObjectByName and real(screen0:GetObjectByName("battleButton"))
-	local panel = first and battleIdOf(first) and real(scrollPanelOf(first))
-	if not (panel and not panel.disposed and panel.visible ~= false and panel._relativeBounds) then
+	-- (the list once found: its rows walked from it; Chobby keeps it for the session. Looked for again every check just
+	-- after a press, else every 3 s: servers can come in after the list opened)
+	local panel = upright.serverPanel
+	if not (panel and not panel.disposed and panel.parent) then
+		panel = nil
+		if woke or not upright.serverLookAt or Spring.DiffTimers(now, upright.serverLookAt) > 3 then
+			upright.serverLookAt = now
+			local first = screen0.GetObjectByName and real(screen0:GetObjectByName("battleButton"))
+			panel = first and battleIdOf(first) and real(scrollPanelOf(first))
+			upright.serverPanel = panel or nil
+		end
+	end
+	if not (panel and not panel.disposed and panel.visible ~= false and panel._relativeBounds)
+		or (panel.IsVisibleOnScreen and not panel:IsVisibleOnScreen()) then -- (another tab in front: its rows wait)
 		return
 	end
 	upright.serverDone = upright.serverDone or setmetatable({}, { __mode = "k" })
