@@ -270,7 +270,7 @@ local function addOptions()
 		},
 		{
 			id = OPTION_IDS[4], droidGroup = "control", category = 1, type = "bool", value = set.left,
-			name = "Camera controls on the left",
+			name = "Controls on the left",
 			description = "The rails and the knob at the left side, for the left hand",
 			onchange = function(_, value)
 				setLeft(value)
@@ -278,7 +278,7 @@ local function addOptions()
 		},
 		{
 			id = OPTION_IDS[5], droidGroup = "control", category = 1, type = "select", options = LOOKS, value = set.look,
-			name = "Camera controls colour",
+			name = "Controls colour",
 			description = "Thin lines and a ring, lit gold while held: white, or the touch dock's own grey",
 			onchange = function(_, value)
 				setLook(value)
@@ -287,7 +287,7 @@ local function addOptions()
 		{
 			id = OPTION_IDS[6], droidGroup = "control", category = 1, type = "slider", min = 0.5, max = 2, step = 0.1,
 			value = set.gain,
-			name = "Camera controls sensitivity",
+			name = "Controls sensitivity",
 			description = "How far a drag zooms or turns. The drag's speed counts too: slow for fine steps, fast for "
 				.. "big ones",
 			onchange = function(_, value)
