@@ -1,0 +1,30 @@
+BAR Droid phone version of BAR's Vote interface (luaui/widgets/gui_vote_interface.lua), the panel an online game's
+votes bring up (a team's resign, stop, forcestart): on the screen whole. BAR places it right of the top bar's middle,
+under the top bar; upright on a phone the top bar is the screen's right half and the panel a third of the height wide,
+so it ran past the right edge: only YES showed, the title, NO and the close button off the screen (dev phone, upright,
+a "stop" vote, 2026-11-19). No wider than the screen and moved left until it fits, under the top bar as before.
+Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+runs.
+
+@@@ find
+		if WG.topbar ~= nil then
+			local topbarArea = WG.topbar.GetPosition()
+			xpos = mathFloor(topbarArea[1] + (width / 2) + widgetSpaceMargin + ((topbarArea[3] - topbarArea[1]) / 2))
+			ypos = mathFloor(topbarArea[2] - widgetSpaceMargin - (height / 2))
+		end
+@@@ with
+		if WG.topbar ~= nil then
+			local topbarArea = WG.topbar.GetPosition()
+			xpos = mathFloor(topbarArea[1] + (width / 2) + widgetSpaceMargin + ((topbarArea[3] - topbarArea[1]) / 2))
+			ypos = mathFloor(topbarArea[2] - widgetSpaceMargin - (height / 2))
+		end
+		-- BAR Droid (phone): on the screen whole (upright it ran past the right edge, NO out of sight)
+		do
+			local droidM = math.max(2, widgetSpaceMargin or 2)
+			if width > vsx - 2 * droidM then
+				width = vsx - 2 * droidM
+				buttonMargin = mathFloor(width / 32)
+			end
+			xpos = math.max(mathFloor(width / 2) + droidM, math.min(xpos, vsx - mathFloor(width / 2) - droidM))
+		end
+@@@ end
