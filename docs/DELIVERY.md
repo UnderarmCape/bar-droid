@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's windows: no music line peeking out under them** (hardening, 2026-11-19 ~00:05-00:30, dev phone; the
+      run's UI polish too). A skirmish upright, Settings open: under the window's bottom right corner, cut by the
+      screen's edge, BAR's music line ("♫ Leon Devereux - Lost Directive"). With the dock aside for one of BAR's
+      windows the player list was hidden, its position collapsed onto its foot, and the panels BAR stacks on it (music,
+      unit totals, the clock and fps) stayed there. Aside, the list's position goes far below the screen now, the
+      panels with it (phone-widget-gui_advplayerslist.lua.patch, SetHidden's second argument; left and right kept,
+      BAR's build menu reads the left); folded and under the D-gun mode's sticks they stay as before (180070df). Dev
+      phone: upright and sideways Settings with nothing beside or under it but BAR's Clear Map Marks button, which
+      pins itself to the screen's foot (as before); closed, the dock back; dock-phone-test ALL PASS. The same game's
+      logs: no error or warning from the app's widgets (BAR's "icexuick_75/cursorareaattack ... has no frames" and
+      the yardmap lines as ever); "Idle Constructors" over the map is BAR's notification in the app's chat box. The
+      APK from 180070df on the Fold7 at 2026-11-19 00:31 (BAR not running; he had not played since 00:00).
 - [x] **The quit dialog's buttons a finger can take** (hardening, 2026-11-18 ~23:50-2026-11-19 00:05, dev phone
       upright). The top bar's Quit in a skirmish: BAR's dialog ("Are you sure you want to resign or return to game
       lobby?", Stay / Resign / Quit) above the dock, the game paused; its buttons about 56 pixels high (30 % of a dialog
