@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Game info by touch: larger sideways, opaque, a close button** (hardening, 2026-11-18 ~23:35-23:50, dev phone,
+      a replay through the benchmark's replay start, `.bardroid-bench-replay` removed after). The top bar's Info in a
+      replay opens BAR's Game info (the phone engine's phone-widget-gui_gameinfo.lua.patch: only "no wider than the
+      screen" until now). Sideways it kept BAR's size (the screen's height over 1080): about half the screen, its words
+      some 1.5 mm; the chat's lines read through its header (the GUI shader's blur is off on phones); and nothing on it
+      closed it. The patch now has 6 blocks: as large as fits below BAR's top bar and no wider than the screen (the dock
+      steps aside while it is open, SP.WINDOWS), nearly opaque (0.94, as the app's Settings), and a close button at its
+      header's right end, red with a white cross as Settings and Statistics have, the "Changed only" toggle and the
+      search moved left of it; a press on it closes it as BAR's own ways (closePanel, showOnceMore). Dev phone: "phone
+      version of LuaUI/Widgets/gui_gameinfo.lua (LuaUI): 6 patches"; sideways the window from under the top bar to the
+      screen's foot, the X closing it; upright the screen's width as before, the dock aside, the X closing it and the
+      spectator dock back; no error; remake-check's phone patches PASS (every block once in 31992's file).
 - [x] **Statistics by touch: a close button** (hardening, 2026-11-18 ~23:18-23:35, dev phone). The top bar's
       Statistics opens the app's copy of BAR's TeamStats (test-31992's Tables / Graphs, 12 charts three across upright,
       between the top bar and the dock; sideways as large as fits, the dock aside; BAR pauses a singleplayer game
