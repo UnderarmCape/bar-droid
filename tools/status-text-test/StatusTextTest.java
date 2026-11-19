@@ -201,6 +201,14 @@ public class StatusTextTest {
                 && !w2.onLine(null) && !w2.lost();
         failed += ok4 ? 0 : 1;
         System.out.println((ok4 ? "PASS " : "FAIL ") + "driver watch: another submit error, then the watchdog: nothing");
+        // the sooner close: the refusal in a running game, then the game's widget silent STALL_MS
+        DriverWatch w3 = new DriverWatch();
+        boolean ok5 = !w3.stalled(true, 60000) && !w3.onLine(refused) && !w3.stalled(false, 60000)
+                && !w3.stalled(true, DriverWatch.STALL_MS - 1) && w3.stalled(true, DriverWatch.STALL_MS)
+                && w3.lost() && !w3.stalled(true, 60000) && !w3.onLine(hung);
+        failed += ok5 ? 0 : 1;
+        System.out.println((ok5 ? "PASS " : "FAIL ") + "driver watch: refusal in a game, its widget silent 8 s: closed,"
+                + " once; not without the refusal, nor while loading, nor sooner");
         // the pre-game screen's server: a join's line, the phone's own game, other lines (the dev phone's lines)
         String[][] pre = {
             { "13:39:47 [engine] [t=00:00:01.802620][f=-000001] [CPreGame] using client IP 198.51.100.7 and port 8452",

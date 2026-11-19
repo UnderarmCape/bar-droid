@@ -30,6 +30,19 @@ public final class DriverWatch {
     public synchronized boolean refused() { return refused; }
     public synchronized boolean lost() { return lost; }
 
+    /**
+     * Sooner than the watchdog (the player looked at a frozen, half-drawn picture for its 30 s; dev phone 2026-11-19,
+     * a skirmish 25 s in): the refusal came while the game's own widget was answering (it writes its hover file at
+     * least every 2 s), and that widget has now been silent STALL_MS: the main thread is stuck. A refusal while loading
+     * (no widget yet) still waits for the watchdog. True once, as onLine.
+     */
+    static final long STALL_MS = 8000;
+    public synchronized boolean stalled(boolean widgetAtRefusal, long widgetSilentMs) {
+        if (lost || !refused || !widgetAtRefusal || widgetSilentMs < STALL_MS) return false;
+        lost = true;
+        return true;
+    }
+
     /** What the launcher says afterwards. */
     public static String note() {
         return "The phone's GPU driver stopped the game's graphics (a rare driver fault), so the app closed the frozen"

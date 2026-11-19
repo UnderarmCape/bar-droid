@@ -32,17 +32,19 @@ final class HangDump {
             found++;
             File[] tasks = new File(p, "task").listFiles();
             int n = tasks != null ? tasks.length : 0;
-            Log.i("svc", "[hang] the engine (pid " + p.getName() + ", " + n + " threads), each thread: name, kernel wait, system call, state");
+            // (the shared logs' only, Log.detail: in the launcher's box ~22 lines of "[hang] 20419 ? | ? | ? | ?" stood
+            // under the driver fault's note; dev phone 2026-11-19)
+            Log.detail("svc", "[hang] the engine (pid " + p.getName() + ", " + n + " threads), each thread: name, kernel wait, system call, state");
             for (File t : tasks != null ? tasks : new File[0]) {
                 String sys = read(new File(t, "syscall"));
                 String state = "?";
                 String status = read(new File(t, "status"));
                 if (status != null) for (String l : status.split("\n")) if (l.startsWith("State:")) state = l.substring(6).trim();
-                Log.i("svc", "[hang] " + t.getName() + " " + oneLine(read(new File(t, "comm"))) + " | " + oneLine(read(new File(t, "wchan")))
+                Log.detail("svc", "[hang] " + t.getName() + " " + oneLine(read(new File(t, "comm"))) + " | " + oneLine(read(new File(t, "wchan")))
                         + " | " + syscallName(sys) + " | " + state);
             }
         }
-        if (found == 0) Log.i("svc", "[hang] no engine process found to look at");
+        if (found == 0) Log.detail("svc", "[hang] no engine process found to look at");
     }
 
     /** "98 0x5504d9f464 0x189 ..." as "futex 0x5504d9f464"; "running" as it is. */

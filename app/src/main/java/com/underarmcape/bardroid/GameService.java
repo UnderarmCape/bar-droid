@@ -273,6 +273,33 @@ public class GameService extends Service {
         t.start();
     }
 
+    /**
+     * After the GPU driver's refusal (DriverWatch), the game's own widget watched through its hover file (written at
+     * least every 2 s while a game runs): silent DriverWatch.STALL_MS, the main thread is stuck and the game is closed
+     * then, not at BAR's watchdog 22 s later. A refusal with no game widget answering (loading) leaves it to the
+     * watchdog.
+     */
+    private void watchDriverStall(DriverWatch driver) {
+        java.io.File hover = new java.io.File(paths.bar, "LuaUI/Config/bardroid_hover.txt");
+        boolean widget = System.currentTimeMillis() - hover.lastModified() <= 3000;
+        Log.i("svc", "the GPU driver refused a submit" + (widget
+                ? ": closing the game if its widget stays silent" : " (no game widget answering): BAR's watchdog decides"));
+        if (!widget) return;
+        Thread t = new Thread(() -> {
+            while (!driver.lost() && !Proc.enginePids().isEmpty()) {
+                try { Thread.sleep(500); } catch (InterruptedException e) { return; }
+                if (driver.stalled(true, System.currentTimeMillis() - hover.lastModified())) {
+                    driverLost = true;
+                    Log.e("svc", "the GPU driver refused the game's graphics and its widget stopped answering: closing it");
+                    Proc.killAll();
+                    return;
+                }
+            }
+        }, "svc-driver-stall");
+        t.setDaemon(true);
+        t.start();
+    }
+
     /** Ends this foreground service and its notification. */
     private void close() {
         closing = true;
@@ -468,7 +495,7 @@ public class GameService extends Service {
                         inGame = false;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
-                        boolean[] hangLogged = {false};
+                        boolean[] hangLogged = {false}, stallWatched = {false};
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
                             // (BAR's watchdog: where the engine is stuck, from the kernel's side; once a game, HangDump)
                             if (!hangLogged[0] && line.contains(DriverWatch.HUNG)) {
@@ -550,6 +577,11 @@ public class GameService extends Service {
                                 driverLost = true;
                                 Log.e("svc", "the GPU driver refused the game's graphics and the game stopped responding: closing it");
                                 Proc.killAll();
+                            }
+                            // (or sooner, the game's widget silent after the refusal: DriverWatch.stalled)
+                            if (!stallWatched[0] && driver.refused()) {
+                                stallWatched[0] = true;
+                                watchDriverStall(driver);
                             }
                         });
                         setStatus("running (" + mode + ")");

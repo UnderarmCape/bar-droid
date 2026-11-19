@@ -756,6 +756,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The GPU driver's rare fault: the frozen game closed 8 s after it stops, not 30 s; the log box without the
+      hang dump** (bug hunt, 2026-11-19 ~13:39-13:55, dev phone upright; the Fold7 not played since 13:36). A Play vs
+      AI skirmish on the dev phone hit the driver's known fault 25 s in (Mesa's "submit failed -1 (Resource deadlock
+      avoided)"; the "A replay on the dev phone hung" item below, its ninth time since 11-02): the picture froze
+      half-drawn, the dock cut off over a flat tan band, for the 31 s until BAR's watchdog let DriverWatch close it.
+      Now, when the refusal comes while the game's own widget answers (its hover file, written at least every 2 s),
+      GameService watches that file and closes the game once it has been silent 8 s (DriverWatch.stalled: the main
+      thread stuck), the launcher's note as before; a refusal while loading (no widget yet) still waits for the
+      watchdog. status-text-test: a new case (closed once; not without the refusal, nor while loading, nor sooner). Dev
+      phone: a scratch widget printed the refusal 20 s into a skirmish and held the main thread 15 s: "closing it" 7 s
+      after the refusal line, "engine exited (137)", the note (removed after). UI polish (the launcher after it): the
+      hang dump's ~22 thread lines ("[hang] 20419 ? | ? | ? | ?") filled the log box under the note; they go to the
+      shared logs only (HangDump, Log.detail).
 - [x] **Today's lobby code, its costs: lobby requests only off a game, the lobby's searches only after a press; a
       long Settings caption clear of its box** (hardening, 2026-11-19 ~13:20-13:40, dev phone upright; the Fold7 not
       played since 13:17). A review of the day's code: RtsTouch's lobby requests (lobbyAskWatch) started 3 s of checks
@@ -3580,6 +3593,10 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the watchdog 31 s later; DriverWatch closed the game as built ("engine exited (137)", the launcher's note). None in
       the day's other dev phone runs whose results were read (skirmishes both ways, the lobby, the Settings checks, the
       dock, pad, lobby, touch, fp-save and pace tests).
+      Again 2026-11-19 13:40:50 (Play vs AI upright, 25 s after loading, a cool phone after a day of lobby runs): the
+      driver's refusal, the picture frozen half-drawn (the dock cut off, a flat tan band under it), the watchdog 31 s
+      later, DriverWatch closed the game as built. Since then the app closes such a game 8 s after the game's widget
+      goes silent (DriverWatch.stalled), not at the watchdog: see the 2026-11-19 ~13:39 entry above.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
