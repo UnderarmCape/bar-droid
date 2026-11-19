@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **On the Fold7: dd211bf4** (2026-11-19 ~07:47-07:53). The Fold7 answered on Tailscale (port 37653) after
+      03:30-07:46 offline; nothing running in BAR (YouTube in front), no game since the 03:05 install (infolog of 11-18
+      17:51, launcher.log 00:38), so no logs to read. The APK from clean main dd211bf4 carries only
+      phone-2026.09.03-83a8536d37; on the dev phone it started a skirmish on that engine and stopped cleanly. On the
+      Fold7 at 07:51 (--no-streaming, 91 s); github-sync -Release: latest-build dd211bf4, built from dd211bf4. It brings
+      the replay column's IsAbove taken back (drags there pan again), the tap panels (replay speeds, votes, Ready), the
+      pointer after a pan, the larger vote buttons, the launcher's and notification's wording and the floating
+      window's quieter log. For Kailil's next games: a replay's speed buttons, a vote, Ready in a team game.
 - [x] **A sideways skirmish; no clock time in the notification while loading** (hardening, 2026-11-19 ~07:36-07:46,
       dev phone sideways, "Turn with the phone" off for the run and on again after; the run's UI polish too). Play vs
       AI sideways: the split dock (BUILD | ORDERS, the minimap, the wind 11.9 with NO WATER, the side arrow), ORDERS
