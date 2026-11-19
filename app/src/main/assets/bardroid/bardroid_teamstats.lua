@@ -1402,6 +1402,33 @@ local function drawSidebar()
 	card(metrics.settingsCardTop + metrics.islandGap, cardTop)
 	card(area.y1, metrics.settingsCardTop)
 	queueText(L.titleText, area.x1 + metrics.sidePad, area.y2 - metrics.titleY, metrics.titleFs, "ov")
+	-- BAR Droid: a close button at the header's right end, red with a white cross as the app's Settings has (a phone has
+	-- no Escape at hand, and upright no room around the panel to tap: only the top bar's Statistics again closed it,
+	-- which nothing said; dev phone 2026-11-18). Its rect in metrics for mouseEvent (no new local: BAR's file is at 200)
+	do
+		local h = mathFloor(metrics.headerH * 0.78)
+		local w = mathFloor(h * 1.5)
+		local y2 = area.y2 - mathFloor((metrics.headerH - h) / 2)
+		metrics.droidClose = { area.x2 - metrics.sidePad - w, y2 - h, area.x2 - metrics.sidePad, y2 }
+		local c = metrics.droidClose
+		RectRound(c[1], c[2], c[3], c[4], math.max(2, mathFloor(h * 0.12)), 1, 1, 1, 1, { 0.42, 0.08, 0.06, 0.9 },
+			{ 0.62, 0.16, 0.12, 0.95 })
+		local cx, cy, a = (c[1] + c[3]) / 2, (c[2] + c[4]) / 2, h * 0.2
+		local t = math.max(1.5, a * 0.17)
+		gl.Texture(false)
+		gl.Color(0.95, 0.95, 0.95, 1)
+		gl.BeginEnd(GL.QUADS, function()
+			for _, d in ipairs({ { a, a }, { a, -a } }) do
+				local len = math.sqrt(d[1] * d[1] + d[2] * d[2])
+				local nx, ny = -d[2] / len * t, d[1] / len * t
+				gl.Vertex(cx - d[1] + nx, cy - d[2] + ny)
+				gl.Vertex(cx + d[1] + nx, cy + d[2] + ny)
+				gl.Vertex(cx + d[1] - nx, cy + d[2] - ny)
+				gl.Vertex(cx - d[1] - nx, cy - d[2] - ny)
+			end
+		end)
+		gl.Color(1, 1, 1, 1)
+	end
 
 	for i = 1, #model.entries do
 		local e = model.entries[i]
@@ -2152,6 +2179,17 @@ local function mouseEvent(x, y, button, release)
 		return true
 	end
 
+	-- BAR Droid: the close button (drawn with the title: metrics.droidClose), closed as BAR's own ways close it
+	if metrics.droidClose then
+		local c = metrics.droidClose
+		if x >= c[1] and x <= c[3] and y >= c[2] and y <= c[4] then
+			if release then
+				showOnceMore = true -- (as BAR's own closing: the guishader lags behind)
+				closePanel()
+			end
+			return true
+		end
+	end
 	-- A press on a top bar button is the top bar's to handle: it closes the open windows
 	-- and opens the one that was clicked. Closing (and consuming) here would swallow it.
 	if WG.topbar and WG.topbar.buttonAt and WG.topbar.buttonAt(x, y) then

@@ -103,7 +103,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   BAR's (BAR's widget handler then skips BAR's, and brings it back if the copy is not running; the order list alone did
   not keep a widget BAR had never seen run from starting); launch-bar.sh `mission_info`, `.bardroid-missioninfo`.
   `assets/bardroid/bardroid_teamstats.lua`: BAR's TeamStats panel (its graphs: the awards' Show Graphs, the top bar's
-  Statistics) copied the same way by `tools/make-teamstats.py`: upright the screen's width, between the top bar and the
+  Statistics) copied the same way by `tools/make-teamstats.py` (a red close button at its header's right end): upright the screen's width, between the top bar and the
   dock; sideways on a tall phone as large as fits, the dock aside meanwhile (`bardroid_portrait.lua` SP.windowOpen), above
   the split dock otherwise; launch-bar.sh `team_stats`, `.bardroid-teamstats`. `assets/bardroid/bardroid_options.lua`: BAR's Options
   (Settings) copied the same way by `tools/make-options.py`, laid out for a phone (upright a tab grid over a full-width
