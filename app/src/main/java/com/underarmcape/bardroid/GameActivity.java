@@ -179,7 +179,12 @@ public class GameActivity extends MainActivity {
     private final DisplayManager.DisplayListener displayListener = new DisplayManager.DisplayListener() {
         @Override public void onDisplayAdded(int id) {}
         @Override public void onDisplayRemoved(int id) {}
-        @Override public void onDisplayChanged(int id) { if (screenW > 0) touch.screenSize(screenW, screenH, refreshHz()); }
+        // (not in the floating window: the display's rate follows the app in front there, 60 and 120 Hz by turns about
+        // twice a second, each a log line and a file write, the launcher's log full of them, dev phone 2026-11-19; the
+        // rate alone changes nothing in the game, and the full screen's is taken as the window leaves it)
+        @Override public void onDisplayChanged(int id) {
+            if (screenW > 0 && !isInPictureInPictureMode()) touch.screenSize(screenW, screenH, refreshHz());
+        }
     };
 
     /**
@@ -238,7 +243,10 @@ public class GameActivity extends MainActivity {
         super.setRequestedOrientation(requested);
         Log.i("display", "orientation: " + (requested == ActivityInfo.SCREEN_ORIENTATION_USER ? "turns with the phone (auto-rotate)"
                 : requested == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT ? "upright" : requested
-                == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE ? "sideways" : "the phone's (" + requested + ")"));
+                == ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE ? "sideways"
+                // (Termux:X11's floating window: the launcher's log said "the phone's (-1)", dev phone 2026-11-19)
+                : requested == ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED ? "free (the floating window, or as the phone lies)"
+                : "the phone's (" + requested + ")"));
     }
 
     /** Termux:X11 closes the display with finishAffinity() (game over): also take the task out of recent apps. */
@@ -384,6 +392,7 @@ public class GameActivity extends MainActivity {
         super.onPictureInPictureModeChanged(inPip, newConfig);
         setFlag(BarApp.get().paths().floatingFlag(), inPip, inPip ? "floating window: 15 fps cap" : "full screen: 30 fps cap");
         if (!inPip) holdSizeUntilSettled();
+        if (!inPip && screenW > 0) touch.screenSize(screenW, screenH, refreshHz());   // (the rate the floating window skipped)
     }
 
     /**
