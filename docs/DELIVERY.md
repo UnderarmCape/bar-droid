@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **59dadadc on the Fold7; the camera knob in the layout editor** (2026-11-19 ~10:40-10:55, dev phone upright;
+      the run's UI polish too). The Fold7: no game since 10:30 (Firefox in front); the APK from clean main 59dadadc
+      loaded a skirmish on the dev phone with the camera controls, then went on the Fold7 at 10:44 (84 s); github-sync
+      -Release: latest-build 59dadadc. Then the layout editor (opened by a probe through WG.BarDroidLayout): "Camera
+      knob" outlined with the other panels, but a tap on it to pick it and a drag to move it went to the camera
+      ("camheld knob" in the touch log, the knob unmoved): bardroid_camctl.txt still listed it. While the editor is open
+      the widget draws the knob and rails and tells RtsTouch none (06bf6eca). Dev phone: the knob picked (its bar:
+      Camera knob, Size, Reset, Done), dragged (dx -0.30, dy 0.14), + to 108 %, Reset back to its place; after Done the
+      knob takes the camera's touches again.
 - [x] **76ac3d12 on the Fold7; the knob and rails in a lobby game's pre-game; shorter Settings rows** (2026-11-19
       ~10:26-10:45, dev phone upright). The Fold7: no game since 10:17 (its shade in front); the APK from clean main
       76ac3d12 loaded a skirmish on the dev phone with the camera controls, then went on the Fold7 at 10:30 (70 s);
