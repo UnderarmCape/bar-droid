@@ -4507,6 +4507,17 @@ function SP.landMinimap()
 		m.setExternalFrame()
 	end
 end
+-- a dark frame just outside the minimap's place (sideways), round at its corners as the dock's boxes are: its square
+-- corners stood bare in the panel beside the metal, energy and wind boxes (dev phone screenshot 2026-11-18)
+function SP.holeFrame(h)
+	local f = flow()
+	if not (f and f.RectRoundOutline) or h == SP.NO_MINIMAP then
+		return
+	end
+	local e = max(2, floor((h[4] - h[2]) * 0.012 + 0.5))
+	f.RectRoundOutline(h[1] - e, h[2] - e, h[3] + e, h[4] + e, e * 2, e, 1, 1, 1, 1, { 0, 0, 0, 0.75 }, { 0, 0, 0, 0.75 })
+	gl.Color(1, 1, 1, 1)
+end
 -- the rects of d left around h (h inside d): the dock drawn and dimmed around the minimap
 -- (kept while d and h stay as they are: made twice a frame, five tables each; the callers only read them; review
 -- 2026-11-16)
@@ -5240,6 +5251,7 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 					gl.Rect(hole[1], hole[2], hole[3], hole[4])
 					gl.Blending(true)
 					gl.Color(1, 1, 1, 1)
+					SP.holeFrame(hole)
 				end
 			end, true)
 			dirty = false
@@ -5261,6 +5273,8 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 		drawStill()
 		if L.hole and not L.split then -- (no texture: the minimap drawn again over the dock's panel)
 			gl.DrawMiniMap()
+			resetGL()
+			SP.holeFrame(L.hole)
 		end
 	end
 	resetGL()
