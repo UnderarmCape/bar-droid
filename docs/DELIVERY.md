@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **76ac3d12 on the Fold7; the knob and rails in a lobby game's pre-game; shorter Settings rows** (2026-11-19
+      ~10:26-10:45, dev phone upright). The Fold7: no game since 10:17 (its shade in front); the APK from clean main
+      76ac3d12 loaded a skirmish on the dev phone with the camera controls, then went on the Fold7 at 10:30 (70 s);
+      github-sync -Release: latest-build 76ac3d12. A skirmish from the lobby (Isidis Crack), its pre-game: the dock's
+      pre-game buttons (UNDO LAST, CLEAR QUEUE, the factions, PING) below, the knob and the rails in the map's corner
+      above it, over no panel of BAR's. Seen there: BAR's "Pick a starting location within the green area then click
+      Ready" is drawn over the Settings window (another of BAR's widgets, not gui_pregameui): left. UI polish: under
+      "Camera with one finger" the rows "Camera controls on the left / colour / sensitivity" ran up to their controls
+      upright; now "Controls on the left", "Controls colour", "Controls sensitivity" (3eca354b; dev phone screenshot).
 - [x] **Line, grid and border drags queue as BAR's do; Play upright names the knob and rails** (hardening, 2026-11-19
       ~10:21-10:25). With PLACE now a plain click without QUEUE, the drags still hold Shift: the engine builds a line or
       rectangle only while the queue key is down (recoil 2026.09.03 GuiHandler.cpp GetCommand: GetBuildPositions from the
