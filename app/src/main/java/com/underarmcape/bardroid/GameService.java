@@ -193,10 +193,30 @@ public class GameService extends Service {
         if (c != null && GameActivity.class.getName().equals(c.getClassName()) && !displayClosedByApp) {
             Log.i("svc", "game removed from recent apps: closing");
             closing = true;
-            stopEverything();
-            close();
+            closeGently();
         }
         super.onTaskRemoved(rootIntent);
+    }
+
+    /**
+     * How long the player's Stop or swipe waits for the engine's own quit before the kill (Proc.endEngine): a 2-minute
+     * skirmish took 7.7 s on the dev phone (BAR's quit dialog's second ask 1 s in, its Lua and the rest ~5 s, 2026-11-18);
+     * a long game's replay is compressed as it ends too. Nothing is on the screen meanwhile.
+     */
+    private static final long ENGINE_QUIT_MS = 20000;
+
+    /**
+     * The player's Stop or swipe: the engine asked to quit first, so the game's replay is written (Proc.endEngine; a
+     * killed game left an empty one, the Fold7 2026-11-18), then everything stopped as before. Off the main thread: the
+     * wait is up to ENGINE_QUIT_MS.
+     */
+    private void closeGently() {
+        Thread t = new Thread(() -> {
+            Proc.endEngine(ENGINE_QUIT_MS);
+            stopEverything();
+            close();
+        }, "svc-close");
+        t.start();
     }
 
     /** Ends this foreground service and its notification. */
@@ -227,7 +247,7 @@ public class GameService extends Service {
         if (!busy && ACTION_PLAY.equals(action)) setStatus("starting (" + mode + ")");
         else if (!busy && ACTION_INSTALL.equals(action)) setStatus("installing");
         startForeground(1, notification(status));
-        if (ACTION_STOP.equals(action)) { closing = true; stopEverything(); close(); return START_NOT_STICKY; }
+        if (ACTION_STOP.equals(action)) { closing = true; closeGently(); return START_NOT_STICKY; }
         if (busy) { Log.i("svc", "busy; ignoring " + action); return START_NOT_STICKY; }
         if (ACTION_INSTALL.equals(action)) runAsync(this::install);
         else if (ACTION_PLAY.equals(action)) runAsync(() -> play(mode));

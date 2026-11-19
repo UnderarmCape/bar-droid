@@ -293,7 +293,9 @@ Logcat tags: BarDroid/app svc install x11 engine rootfs virgl proc input, plus L
 - Paths handed to proot must be canonical (`Paths`): in the app's mount namespace `/data/user/0` is a symlink to `/data/data`.
 - Never keep exec'able paths into `nativeLibraryDir` on disk (symlinks, saved paths): it moves on every app update.
 - Child processes go through `Proc`; Stop SIGKILLs every process of the app's UID (proot ignores SIGTERM and orphans
-  its tracees). `XServer`/`VirglServer` inherit the app environment (app_process and EGL need it).
+  its tracees). The player's Stop and a swipe from recent apps first ask the engine to quit (`Proc.endEngine`: SIGTERM
+  to spring, again 1 s later for BAR's quit dialog; up to 20 s): the replay is written only as the engine ends, and a
+  killed game left an empty .sdfz. `XServer`/`VirglServer` inherit the app environment (app_process and EGL need it).
 - No `--kernel-release` for proot on kernels >= 4 (its kompat extension traps every futex: half the render thread).
 - `MaxParticles` stays >= 10000 (BAR's minimum): lower values kill unsynced LuaRules and no unit is drawn.
 - proot's seccomp filter must not trap syscalls proot does not act on (each trap = two ptrace stops; GPU drivers make
