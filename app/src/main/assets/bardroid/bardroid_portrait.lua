@@ -5767,6 +5767,11 @@ function widget:Initialize()
 		windOpen = function()
 			return SP.windInfo and SP.windInfo.kind or nil
 		end,
+		-- (tools/dock-phone-test.ps1: the details closed before the next case: open for 15 s they lay over the metal spot
+		-- Area Mex's tap was for, 2026-11-19)
+		windClose = function()
+			SP.windInfo = nil
+		end,
 		resBoxes = function() -- (tools/dock-phone-test.ps1: metal's and energy's boxes, GL pixels)
 			if active and L.res then
 				return SP.resBoxes()

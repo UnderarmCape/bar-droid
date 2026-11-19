@@ -267,7 +267,7 @@ local function addOptions()
 			id = OPTION_IDS[2], droidGroup = "control", category = 1, type = "bool", value = set.knob,
 			name = "Camera knob",
 			description = "A round knob over the map: hold it and slide up or down to zoom, sideways to turn. "
-				.. "Move or size it in the layout editor (three fingers held)",
+				.. "Move or size it in the layout editor (three fingers held, or /hud in the chat)",
 			onchange = function(_, value)
 				setKnob(value)
 			end,

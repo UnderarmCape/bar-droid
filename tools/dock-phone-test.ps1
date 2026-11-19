@@ -274,9 +274,11 @@ try {
   $mx = Rects "bardroid_docktest.txt"
   if ($mx["mex0"] -and $mx["mex1"]) {
     $m0 = $mx["mex0"]; $m1 = $mx["mex1"]
+    Shot "areamex-armed"
     TapDown $m0[0] $m0[1]; Start-Sleep -Milliseconds 120
     Touch MOVE (($m0[0] + $m1[0]) / 2) $m0[1]; Touch MOVE $m1[0] $m1[1]
     Start-Sleep -Milliseconds 300; Touch UP $m1[0] $m1[1]; Start-Sleep -Milliseconds 1500
+    Shot "areamex-drawn"
     Stage "areamex?"; Start-Sleep 1
   } else { "[docktest] (no metal spot in sight: the Area Mex case left out)" }
   # 11. the energy panel's share knob (2026-11-17: whole percents, sent only when changed): its box tapped (its panel

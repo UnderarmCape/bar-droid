@@ -450,6 +450,11 @@ local function onCmd(c)
 		local kind = c:sub(1, 4)
 		check("the " .. kind .. "'s box, its first tap with the camera pad up: its details open", open == kind, open or "none open")
 	elseif c == "areamex" then -- (Area Mex, Kailil 2026-11-17: two Construction Bots given by the commander)
+		-- (the wind's details of the case before closed: open 15 s, they lay over the metal spot the tap was for)
+		local Pw = WG.BarDroidPortrait
+		if Pw and Pw.windClose then
+			Pw.windClose()
+		end
 		local x, y, z = Spring.GetUnitPosition(com)
 		Spring.SendCommands(string.format("give 2 armck %d @%d,%d,%d", Spring.GetMyTeamID(), x + 120, y, z + 120))
 	elseif c == "areamexpick" then -- (they picked; the metal spot nearest the commander in the middle of the game above
