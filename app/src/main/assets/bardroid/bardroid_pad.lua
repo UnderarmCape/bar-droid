@@ -258,9 +258,15 @@ function style.toast(text, x, y, color, alpha, key, listening)
 	end
 	local vsx, vsy = Spring.GetViewGeometry()
 	local size = style.size(0.02)
+	-- (a channel's arrows, "< SPEAK TO ALLIES >": solid triangles in the words' colour, a size each with its gap, as the
+	-- dock's spectator arrows; the font's "<" and ">" were thin marks, dev phone screenshot 2026-11-18)
+	local arrows = text:sub(1, 2) == "< " and text:sub(-2) == " >"
+	if arrows then
+		text = text:sub(3, -3)
+	end
 	-- (no wider than the screen: upright a long note, "BATTLE LINE: TAP TO SEND, OR DRAW THE FRONT LINE", ran off both
 	-- edges, dev phone screenshot 2026-11-12; the words a size smaller until it fits)
-	local textW = font:GetTextWidth(text)
+	local textW = font:GetTextWidth(text) + (arrows and 2 or 0)
 	local unit = 1.5 + textW + (key and 1.8 or 0) + (listening and 1 or 0) -- (the box's width in sizes, as below)
 	size = math.min(size, (vsx - 16) / unit)
 	local pad = math.floor(size * 0.75)
@@ -288,10 +294,33 @@ function style.toast(text, x, y, color, alpha, key, listening)
 		end)
 		gl.Color(1, 1, 1, 1)
 	end
+	local tx = x0 + pad + dot + dotGap
+	if arrows then
+		local a, cy = size * 0.34, y + h / 2
+		local function tri(px, d) -- (its point at px, d -1 pointing left; a dark edge under it as the words' outline)
+			for pass = 1, 2 do
+				local e = pass == 1 and math.max(1, size * 0.06) or 0
+				if pass == 1 then
+					gl.Color(0, 0, 0, 0.55 * alpha)
+				else
+					gl.Color(color[1], color[2], color[3], alpha)
+				end
+				gl.BeginEnd(GL.TRIANGLES, function()
+					gl.Vertex(px + d * e, cy)
+					gl.Vertex(px - d * (a * 1.2 + e), cy + a + e)
+					gl.Vertex(px - d * (a * 1.2 + e), cy - a - e)
+				end)
+			end
+		end
+		tri(tx, -1)
+		tri(tx + tw, 1)
+		gl.Color(1, 1, 1, 1)
+		tx = tx + size
+	end
 	font:Begin()
 	font:SetTextColor(color[1], color[2], color[3], alpha)
 	font:SetOutlineColor(0, 0, 0, 0.55 * alpha)
-	font:Print(text, x0 + pad + dot + dotGap, y + h / 2 - size * 0.36, size, "o")
+	font:Print(text, tx, y + h / 2 - size * 0.36, size, "o")
 	font:End()
 	if key then
 		style.key(x0 + pad + dot + dotGap + tw + gap, math.floor(y + (h - chip) / 2), chip, key, alpha)
