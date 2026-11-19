@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **3ea7c59f on the Fold7; the launcher's map list with the keyboard up** (2026-11-19 ~08:21-08:36, dev phone
+      upright; the run's UI polish too). The Fold7: no game since 08:07 (YouTube in front); the APK from clean main
+      3ea7c59f (only phone-2026.09.03-83a8536d37) loaded a skirmish on the dev phone and stopped cleanly (exit 0), then
+      went on the Fold7 at 08:26 (97 s); github-sync -Release: latest-build 3ea7c59f. Then the launcher's Play vs AI map
+      field: a tap brought the keyboard up and the list of maps over the field itself (the name being typed hidden under
+      it), and the keyboard's coming re-filtered it by the field's text, so the list then held only the map already
+      picked. The list is a third of the screen high at most now (240 dp), above or below the field, and
+      LauncherActivity.MapAdapter lists every map while the field holds one's exact name, else those with the typed text
+      anywhere in the name (29ffd19c). Dev phone: a tap, every map over the keyboard with the field in sight; "ravine":
+      Seths Ravine Remake 1.3.1; the saved map unchanged after (Starwatcher 1.0, not marked chosen).
 - [x] **2c6efcc7 on the Fold7; the pointer after a scroll in BAR's windows** (2026-11-19 ~08:02-08:24, dev phone
       upright; the run's UI polish too). The Fold7: no game since 07:51 (Reddit in front, nothing in BAR); the APK from
       clean main 2c6efcc7 (only phone-2026.09.03-83a8536d37) loaded a skirmish on the dev phone on that engine, then
