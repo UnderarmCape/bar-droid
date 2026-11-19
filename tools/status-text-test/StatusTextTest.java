@@ -65,6 +65,24 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "lobby game " + c[0] + " " + c[1] + c[2] + c[3] + " -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[4] + "\")"));
         }
+        // StatusText.returnLine: the notification's line under its title (status, game from the lobby, replay)
+        Object[][] lines = {
+            { "running (lobby)", false, false, "Tap to return to the lobby; Stop ends it" },
+            { "running (lobby)", true, false, "Tap to return to the game; Stop ends it" },
+            { "running (lobby)", true, true, "Tap to return to the replay; Stop ends it" },
+            { "running (lobby)", false, true, "Tap to return to the replay; Stop ends it" },
+            { "running (skirmish)", false, false, "Tap to return to the game; Stop ends it" },
+            { "running (bench)", false, false, "Tap to return to the benchmark; Stop ends it" },
+            { "running (bench)", false, true, "Tap to return to the benchmark; Stop ends it" },   // (a replay benchmark)
+            { "running (glcheck)", false, false, "Tap to return to the GL check; Stop ends it" },
+            { "closing: saving the replay", true, false, "Tap to return to the game; Stop ends it" },
+        };
+        for (Object[] c : lines) {
+            String got = StatusText.returnLine((String) c[0], (Boolean) c[1], (Boolean) c[2]);
+            boolean ok = got.equals(c[3]);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "line " + c[0] + " " + c[1] + c[2] + " -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[3] + "\")"));
+        }
         // StatusText.isResultNote: the launcher's note in its own colour (a result) or in amber (a warning)
         Object[][] notes = {
             { "GL check: FD740, OpenGL 4.3, Mesa 27.0.0-devel", true },

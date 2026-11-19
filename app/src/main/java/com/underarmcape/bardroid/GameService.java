@@ -761,7 +761,7 @@ public class GameService extends Service {
                 // dev phone 2026-11-18; refreshNotification as the loading ends)
                 .setContentTitle(StatusText.forPlayers(status, loading, inGame, playingReplay))
                 // (while a game runs, what the tap and the button do: the title alone left the line under it empty)
-                .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
+                .setContentText(game ? StatusText.returnLine(status, inGame, playingReplay) : null)
                 .setContentIntent(pi)
                 .setOngoing(true);
         // (up: how long it has run, counting, where the time it was posted stood; dev phone screenshot 2026-11-19)

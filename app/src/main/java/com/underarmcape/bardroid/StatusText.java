@@ -35,6 +35,20 @@ final class StatusText {
         return t;
     }
 
+    /**
+     * The notification's line under its title while BAR runs: what a tap returns to, and that Stop ends it. It said
+     * "the game" over a replay and over the lobby alike (dev phone screenshot, a replay sideways, 2026-11-19).
+     */
+    static String returnLine(String s, boolean gameFromLobby, boolean replay) {
+        String t = forPlayers(s);
+        String what = "Benchmark running".equals(t) ? "the benchmark"
+                : "GL check running".equals(t) ? "the GL check"
+                : replay ? "the replay"
+                : "Lobby running".equals(t) && !gameFromLobby ? "the lobby"
+                : "the game";
+        return "Tap to return to " + what + "; Stop ends it";
+    }
+
     static String forPlayers(String s) {
         if (s == null || s.isEmpty()) return "";
         java.util.regex.Matcher m = java.util.regex.Pattern.compile("^running \\((\\w+)\\)$").matcher(s);
