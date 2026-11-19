@@ -1842,6 +1842,9 @@ local function shareDraw(vsx, vsy)
 	-- what A gives: the units selected, or the amount (D-pad left / right: a tenth to all of it) as words and steps
 	local ya = y1 - tabRowH - teamH * shown - amountH
 	local mid = x0 + w / 2
+	-- (A able to give: else its key and GIVE dimmed, A then only says why not; they stood lit over "NO UNITS SELECTED",
+	-- pad-test -Share screenshot 2026-11-19)
+	local canGive = not res and count > 0
 	if res then
 		local amount, want, room = shareAmount(s, s.teams[s.index])
 		local line, lc
@@ -1862,6 +1865,7 @@ local function shareDraw(vsx, vsy)
 		-- the steps between two arrows; dimmed while nothing can go (none to give, their storage full: the strip still
 		-- lit gold under a red "STORAGE IS FULL" read as a choice that mattered, pad-test -Share screenshot 2026-11-18)
 		local idle = want < 1 or room < 1
+		canGive = not idle
 		local tri = math.floor(size * 0.55)
 		local sy = math.floor(ya + amountH * 0.22)
 		local sh = math.max(4, math.floor(size * 0.38))
@@ -1908,10 +1912,10 @@ local function shareDraw(vsx, vsy)
 	local hs = size * 0.8
 	local keysW = 2 * (key + pad * 0.4) + (font:GetTextWidth("GIVE") + font:GetTextWidth("CANCEL")) * hs + pad
 	local hx = math.floor(math.max(x0 + pad, mid - keysW / 2))
-	style.key(hx, hy, key, "A", 0.95)
+	style.key(hx, hy, key, "A", canGive and 0.95 or 0.4)
 	font:Begin()
-	font:SetOutlineColor(0, 0, 0, 0.8)
-	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.85)
+	font:SetOutlineColor(0, 0, 0, canGive and 0.8 or 0.35)
+	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], canGive and 0.85 or 0.4)
 	hx = hx + key + pad * 0.4
 	font:Print("GIVE", hx, hy + key / 2 - hs * 0.36, hs, "o")
 	hx = hx + font:GetTextWidth("GIVE") * hs + pad
