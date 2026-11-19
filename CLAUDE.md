@@ -80,6 +80,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   the engine's unread G-buffer passes off: map while `AdvMapShading` is 0, features always); `GameActivity`
   wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
   `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first, a
+  tap on a text box asks for Android's keyboard and a long press (the right button) on a chat's box for speak to chat
+  (`bardroid_lobby_ask.txt`, RtsTouch `lobbyAskStep`), upright the battle room's buttons in its right column (the rules
+  box the middle's height, `roomButtonsRight`) and the server list's counts clear of the rank icon, a
   joined server's settings that stop the app's controls show as a warning, and the pad's Start (Scroll Lock from
   `ControllerBridge`) switches the lobby's scale between 100%, launch-bar.sh's default, and 130%
   (`tools/lobby-touch-test.ps1`). `assets/bardroid/bardroid_players.lua`: BAR's player list small until tapped (WG.advplayerlist_api).

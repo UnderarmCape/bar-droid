@@ -63,7 +63,9 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Three-finger swipe | Up: the whole map; down: the camera to your commander (if it is dead, to the constructor you selected last); left/right: previous/next idle builder |
 | Three fingers held | The layout editor (below) |
 
-In the lobby a drag scrolls lists and a tap on a server shows its details first. A server whose settings stop your
+In the lobby a drag scrolls lists and a tap on a server shows its details first. A tap on a text box (a chat's,
+the server search, the login) brings up Android's keyboard; a long press on a chat's box is speak to chat, the words
+into that chat. A server whose settings stop your
 controls says so when you join it: in red when custom widgets are off (no touch or gamepad controls unless you
 spectate), in amber when unit control widgets are off (only first person stops).
 

@@ -756,6 +756,21 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The lobby's text boxes: a tap for the keyboard, a long press on a chat's box for speak to chat** (Kailil,
+      2026-11-19 ~12:42: "Allow double tap or tap on the chat in the lobby to allow you to ooen the android keyboard to
+      type. If you long press it shlukd enable voice tts system that we have built"; dev phone upright, ~12:43-13:00).
+      In the lobby a finger's tap is a left click and a long press the right button (RtsTouch); bardroid_lobby_touch.lua
+      sees which of them landed on a text box (textBoxAsk) and writes LuaUI/Config/bardroid_lobby_ask.txt, "keyboard
+      <id>" for any box (chat, server search, login) or "voice <id>" for a chat's (Chobby's console input); RtsTouch
+      reads it for 3 s after each touch (lobbyAskStep): LorieView.setKeyboardVisible(true), or speak to chat, whose
+      words then go to that chat (the battle room's box: the server room; a chat tab's: that tab). Dev phone, a
+      skirmish room: the tap brought up the keyboard, "hello" typed went into the box, Back put it away; the long press
+      began speak to chat ("TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS": its microphone stays denied, so the
+      words' target is for Kailil's test). On the way: the room's buttons stayed in the middle on a fresh room ("235 of
+      -58 free": checked the moment Chobby made it, before Chili sized its columns): the move is tried at the checks
+      after (up to 5 s), and rows past the right column's own buttons wait out of sight (the keyboard's shorter screen)
+      and come back. lobby-phone-test ALL PASS. A Google "This prompt has expired" sign-in screen came up on the dev
+      phone during the run (not the app's); closed with Back, nothing on it pressed.
 - [x] **The battle room's rules box, its buttons to the right; the server list's counts; no loading screen over the
       lobby after a game; the camera rails off the replay speed column** (2026-11-19 ~11:39-, dev phone upright;
       1e4a1918 went on the Fold7 at 11:43, github-sync -Release). Kailil (~12:00, an online room on the Fold7): "There

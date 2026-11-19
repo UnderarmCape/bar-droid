@@ -604,8 +604,56 @@ final class RtsTouch {
         return true;
     }
 
+    // The lobby's text boxes (Kailil, 2026-11-19: "Allow double tap or tap on the chat in the lobby to allow you to ooen
+    // the android keyboard to type. If you long press it shlukd enable voice tts system that we have built"): a tap is
+    // a left click and a long press the right button there as everywhere, and bardroid_lobby_touch.lua, which sees
+    // which of them landed on a text box, asks in bardroid_lobby_ask.txt: "keyboard <id>" (Android's keyboard up) or
+    // "voice <id>" (speak to chat). Read for a few seconds after each touch; a new id only (the file outlives a lobby).
+    private static final long LOBBY_ASK_WATCH_MS = 3000, LOBBY_ASK_STEP_MS = 50;
+    private final File lobbyAskFile = new File(widgetDir, "bardroid_lobby_ask.txt");
+    private long lobbyAskUntil, lobbyAskSeenAt = -1;
+    private String lobbyAskDone;
+    private boolean lobbyAskPosted;
+    private final Runnable lobbyAskCheck = this::lobbyAskStep;
+
+    private void lobbyAskWatch() {
+        if (lobbyAskSeenAt < 0) {   // (the first touch: what the file holds from before is no request)
+            lobbyAskSeenAt = lobbyAskFile.lastModified();
+            String t = readSmall(lobbyAskFile);
+            lobbyAskDone = t == null ? "" : t.trim();
+        }
+        lobbyAskUntil = SystemClock.uptimeMillis() + LOBBY_ASK_WATCH_MS;
+        if (!lobbyAskPosted) {
+            lobbyAskPosted = true;
+            ui.postDelayed(lobbyAskCheck, LOBBY_ASK_STEP_MS);
+        }
+    }
+
+    private void lobbyAskStep() {
+        long at = lobbyAskFile.lastModified();
+        if (at != lobbyAskSeenAt) {
+            lobbyAskSeenAt = at;
+            String t = readSmall(lobbyAskFile);
+            t = t == null ? "" : t.trim();
+            if (!t.isEmpty() && !t.equals(lobbyAskDone)) {
+                lobbyAskDone = t;
+                if (t.startsWith("keyboard ")) {
+                    Log.i("touch", "a lobby text box tapped: Android's keyboard");
+                    activity.getLorieView().setKeyboardVisible(true);
+                } else if (t.startsWith("voice ") && voiceChat != null) {
+                    Log.i("touch", "a lobby chat box held: speak to chat");
+                    voiceChat.run();
+                }
+            }
+        }
+        if (SystemClock.uptimeMillis() < lobbyAskUntil) ui.postDelayed(lobbyAskCheck, LOBBY_ASK_STEP_MS);
+        else lobbyAskPosted = false;
+    }
+
     /** @param e in the coordinates of the LorieView's parent (as Termux:X11's own listener gets it) */
     boolean onTouch(MotionEvent e) {
+        int lobbyAskAction = e.getActionMasked();
+        if (lobbyAskAction == MotionEvent.ACTION_DOWN || lobbyAskAction == MotionEvent.ACTION_UP) lobbyAskWatch();
         if (holdTouch(e)) return true;
         if (velocity != null) velocity.addMovement(e);
         if (dgunTouch(e)) return true;

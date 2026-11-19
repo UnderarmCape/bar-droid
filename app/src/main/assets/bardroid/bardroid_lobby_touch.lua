@@ -1020,26 +1020,8 @@ local function roomButtonsRight(middle, right)
 	if not (holder and sb and lblGame and st.objs.btnPickMap) then
 		return false
 	end
-	-- (room for them: from under the start boxes to the right column's buttons at its foot, Playing to Start)
-	local top = (sb.y or 0) + (sb.height or 0) + 8
-	local foot = right.clientArea and right.clientArea[4] or right.height or 0
-	for _, ch in ipairs(right.children or {}) do
-		local c = real(ch)
-		if c and c.visible ~= false and c ~= sb and type(c.y) == "number" and c.y > top
-			and c.name ~= "minimapPanel" and c.name ~= "lblMapName" then
-			foot = math.min(foot, c.y)
-		end
-	end
-	local need = 0
-	for _, row in ipairs(ROOM_ROWS) do
-		local o = st.objs[row[1]]
-		if o and o.visible ~= false then
-			need = need + row[2]
-		end
-	end
-	if top + need > foot - 4 then
-		Spring.Echo(string.format("[bardroid-lobby] battle room upright: its buttons stay in the middle (%d of %d free"
-			.. " in the right column)", need, foot - top)) -- (tools)
+	-- (not yet: a room just made, its columns not laid out by Chili, read "-58 free" there; uprightBattleRoom asks again)
+	if not (right.clientArea and right.clientArea[4] > 300 and (sb.y or 0) > 50) then
 		return false
 	end
 	st.chobbyTop = (lblGame.y or 0) + ROOM_LINES
@@ -1056,13 +1038,24 @@ local function roomButtonsRight(middle, right)
 	local function stack()
 		busy = true
 		local y = (sb.y or 0) + (sb.height or 0) + 8
+		-- (their room: down to the right column's own buttons at its foot, Playing to Start. A row past them waits out of
+		-- sight, as while Android's keyboard is up and the screen shorter, and comes back when there is room)
+		local foot = right.clientArea and right.clientArea[4] or right.height or 0
+		for _, ch in ipairs(right.children or {}) do
+			local c = real(ch)
+			if c and c.visible ~= false and c ~= sb and not st.y[c] and not st.objs[c.name] and type(c.y) == "number"
+				and c.y > y and c.name ~= "minimapPanel" and c.name ~= "lblMapName" then
+				foot = math.min(foot, c.y)
+			end
+		end
 		for _, row in ipairs(ROOM_ROWS) do
 			local o = st.objs[row[1]]
 			if o and o.visible ~= false then
-				st.y[o] = y
+				local at = y + row[2] - 3 <= foot - 4 and y or -10000
+				st.y[o] = at
 				local o2 = row[3] and st.objs[row[3]]
 				if o2 then
-					st.y[o2] = y
+					st.y[o2] = at
 				end
 				y = y + row[2]
 			end
@@ -1135,12 +1128,28 @@ local function uprightBattleRoom()
 	-- (Chili hands out weak links, a new one each time: the real objects, to compare and to remember)
 	local players, middle, right = real(chobbyObject("playerPanel")), real(chobbyObject("leftInfo")),
 		real(chobbyObject("rightInfo"))
-	if not (players and middle and right) or roomsLaidOut[middle] or middle.disposed
+	if not (players and middle and right) or middle.disposed
 		or not (players._relativeBounds and middle._relativeBounds and right._relativeBounds)
 		or real(players.parent) ~= real(middle.parent) or real(middle.parent) ~= real(right.parent) then
 		return
 	end
-	roomsLaidOut[middle] = true
+	-- (the buttons to the right once Chili has laid the new columns out: tried at the checks after, up to 5 s)
+	local tries = roomsLaidOut[middle]
+	if tries then
+		if tries >= 0 then
+			local ok, moved = pcall(roomButtonsRight, middle, right)
+			if not ok or moved or tries >= 10 then
+				roomsLaidOut[middle] = -1
+				Spring.Echo("[bardroid-lobby] battle room upright: " .. ((ok and moved)
+					and "its buttons in the right column, the rules from the middle's top"
+					or ("its buttons left in the middle: " .. tostring(ok and "no room laid out" or moved)))) -- (tools)
+			else
+				roomsLaidOut[middle] = tries + 1
+			end
+		end
+		return
+	end
+	roomsLaidOut[middle] = 0
 	local function bounds(o, left, top, rightEdge, bottom)
 		o._givenBounds.left, o._givenBounds.top = left, top
 		o._relativeBounds.left, o._relativeBounds.top = left, top
@@ -1151,12 +1160,7 @@ local function uprightBattleRoom()
 	bounds(players, "0%", "0%", "40%", "50%")
 	bounds(middle, "0%", "50%", "40%", middle._relativeBounds.bottom or 0)
 	bounds(right, "60%", "0%", 0, right._relativeBounds.bottom or 0)
-	local ok, movedRight = pcall(roomButtonsRight, middle, right)
-	if not ok then
-		Spring.Echo("[bardroid-lobby] battle room upright: its buttons not moved: " .. tostring(movedRight))
-	end
-	Spring.Echo("[bardroid-lobby] battle room upright: the teams over " .. ((ok and movedRight)
-		and "the rules, the map and its buttons beside them" or "its buttons and states, the map beside them")) -- (tools)
+	Spring.Echo("[bardroid-lobby] battle room upright: the teams over the middle column, the map beside them") -- (tools)
 end
 
 -- A scenario's page upright (Chobby's gui_scenario_window.lua, laid out in shares of its panel for a wide one): its
@@ -2711,9 +2715,51 @@ end
 --------------------------------------------------------------------------------
 -- Input
 
+-- Text boxes for fingers (Kailil, 2026-11-19: "Allow double tap or tap on the chat in the lobby to allow you to ooen
+-- the android keyboard to type. If you long press it shlukd enable voice tts system that we have built"): RtsTouch makes
+-- a tap a left click and a long press the right button; on a text box the first asks the app for Android's keyboard
+-- (any box: chat, search, login), the second, on a chat's box, for speak to chat, its words into that chat
+-- (upright.voiceBox, appUpdate's voice_on). The app reads LuaUI/Config/bardroid_lobby_ask.txt (RtsTouch lobbyAskStep).
+local ASK_FILE = "LuaUI/Config/bardroid_lobby_ask.txt"
+-- (each lobby's own ids: the app keeps the last one it acted on, and a new lobby's first "keyboard 1" was the old one's)
+local askSession, askCount = (os and os.time and os.time()) or math.random(100000, 999999), 0
+local function textBoxAsk(x, y, button)
+	local _, _, hx, hy = chiliPoint(x, y)
+	local box = real(screen0:HitTest(hx, hy))
+	for _ = 1, 3 do -- (the box itself, or a part of it)
+		if not box or box.classname == "editbox" or (box.InheritsFrom and box:InheritsFrom("editbox")) then
+			break
+		end
+		box = real(box.parent)
+	end
+	if not (box and (box.classname == "editbox" or (box.InheritsFrom and box:InheritsFrom("editbox")))) then
+		return
+	end
+	local what = "keyboard"
+	if button == 3 then
+		-- (a chat's box: Chobby's console input, 7 from its foot and 31 from its right, the emoji button there)
+		local b = box._relativeBounds
+		if not (b and b.bottom == 7 and b.right == 31) then
+			return
+		end
+		what = "voice"
+		upright.voiceBox, upright.voiceBoxAt = box, Spring.GetTimer()
+	end
+	askCount = askCount + 1
+	local f = io.open(ASK_FILE, "w")
+	if f then
+		f:write(string.format("%s %d-%d\n", what, askSession, askCount))
+		f:close()
+	end
+	Spring.Echo("[bardroid-lobby] a text box " .. (what == "voice" and "held: speak to chat" or "tapped: the keyboard")) -- (tools)
+end
+
 function widget:MousePress(x, y, button)
 	hush = { x = x, y = y } -- (any button: a finger's long press is a right click, and lifted there too)
 	tabWake.at = Spring.GetTimer()
+	if (button == 1 or button == 3) and screen0 and not Spring.IsGUIHidden() then
+		pcall(textBoxAsk, x, y, button)
+	end
 	if button ~= 1 or not screen0 or Spring.IsGUIHidden() then
 		return false
 	end
@@ -2931,7 +2977,7 @@ local function voiceTargets()
 		if console and console.listener then
 			local user = child.name:match("^(.-) messages$")
 			targets[#targets + 1] = { name = user and ("@" .. user) or ("#" .. child.name), tab = child.name,
-				open = tabBar.selected == i, send = console.listener }
+				open = tabBar.selected == i, send = console.listener, console = console }
 		end
 	end
 	return targets
@@ -3240,6 +3286,27 @@ local function appUpdate()
 		for name in lines:gmatch("act (%S+)") do
 			if name == "voice_on" then
 				voiceOn = not gameLoaded -- (in a game: the game's own note and channels)
+				-- (begun by a long press on a chat's box, textBoxAsk: the words into that chat, the server room's
+				-- for the battle room's box)
+				local box = upright.voiceBox
+				upright.voiceBox = nil
+				if voiceOn and box and Spring.DiffTimers(Spring.GetTimer(), upright.voiceBoxAt) < 4 then
+					local o, room = box, real(chobbyObject("chatPanel"))
+					while o and room do
+						if o == room then
+							voiceTarget = "SERVER ROOM"
+							break
+						end
+						o = real(o.parent)
+					end
+					if o ~= room or not room then
+						for _, t in ipairs(voiceTargets()) do
+							if t.console and real(t.console.ebInputText) == box then
+								voiceTarget = t.name
+							end
+						end
+					end
+				end
 				if voiceOn then
 					voiceNoteAt = nil
 					voiceShow()
