@@ -772,7 +772,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       fresh answer, asked again 150 ms apart up to five times when it has not answered for the new place yet (at the
       lift it nearly always had not); on the map it shows as before, BAR's command cursor. Dev phone: no arrow over
       Settings' tabs, the arrow back after a tap on the map; dock-phone-test ALL PASS (upright, "Turn with the phone"
-      off for it and back on).
+      off for it and back on). The APK from acd3fff8 on the Fold7 at 21:31.
 - [x] **The notification's Stop keeps the replay; the notification says the game is closing** (hardening,
       2026-11-18 ~20:50-21:00, dev phone). The third way to close a game, the notification's own Stop: "asked the
       engine to quit", again for BAR's quit dialog, "the engine quit in 5532 ms", the replay 13247 bytes. UI polish:
