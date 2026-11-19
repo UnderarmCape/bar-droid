@@ -487,8 +487,36 @@ local function readTouch(lines)
 	end
 	for x0, y0, x1, y1 in lines:gmatch("pan (%S+) (%S+) (%S+) (%S+)") do
 		x0, y0, x1, y1 = tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1)
+		-- One drag's lines chain, each from the last one's end (RtsTouch panTo, two fingers' middle, a fling): the map point
+		-- its first line grabbed is held. With the
+		-- finger over the void the move left is set outright to bring that point under it from where the camera stands
+		-- now (applyTouch again for a moment after: holdAgain). Line by line the map fell behind the finger there: the
+		-- camera sinks as its target goes in (smooth-mesh tracking: its focus height 236 to 47 over that drag), and a
+		-- step at the far, shallow rows shrinks with it; from the map onto the void sideways, 24 lines one a frame left
+		-- the grabbed point 1402 off after 2077 (dev phone, 2026-11-18)
+		local now = Spring.GetTimer()
+		local chained = p.chainX and x0 and y0 and math.abs(x0 - p.chainX) < 0.6 and math.abs(y0 - p.chainY) < 0.6
+			and Spring.DiffTimers(now, p.chainT) < 1
 		local ax, az, ah = ground(x0, y0)
 		local bx, bz, bh = ground(x1, y1)
+		if not chained then
+			-- (only a map point is held: a drag that begins over the void keeps the void's plane at the camera's focus
+			-- height of the moment, as before; held at its first height it ended 500 off in touch-phone-test's drag along
+			-- the edge, where the camera's height changes under it)
+			p.holdX, p.holdZ, p.holdH = nil, nil, nil
+			if ax and ah then
+				p.holdX, p.holdZ, p.holdH = ax, az, ah
+			end
+		end
+		p.chainX, p.chainY, p.chainT, p.holdVoid = x1, y1, now, nil
+		if bx and not bh and p.holdX then
+			local hx, hz = ground(x1, y1, p.holdH)
+			if hx then -- (the whole move left, from where the camera is: it replaces what was pending)
+				p.dx, p.dz = p.holdX - hx, p.holdZ - hz
+				p.holdVoid = true
+				ax, bx = nil, nil -- (done: not added again below)
+			end
+		end
 		if ax and bx and (ah == nil) ~= (bh == nil) then
 			-- the finger crossed the map's edge: both ends on the level plane at the map end's height (the map point and
 			-- the void's plane point at the height the camera looks at made a jump where the edge's ground stands higher or
@@ -496,7 +524,7 @@ local function readTouch(lines)
 			ax, az = ground(x0, y0, ah or bh)
 			bx, bz = ground(x1, y1, ah or bh)
 		end
-		if x0 and y0 and x1 and y1 and not (ax and bx) then
+		if x0 and y0 and x1 and y1 and not (ax and bx) and not p.holdVoid then
 			-- over the sky (a camera tilted up to the horizon): the same drag as made in the middle of the screen (nothing
 			-- moved there before)
 			local vsx, vsy = spGetViewGeometry()
@@ -689,6 +717,15 @@ end
 
 local function applyTouch(dt)
 	local p = pending
+	-- (a drag held over the void, readTouch: its point brought under the finger again from where the camera is now, for
+	-- half a second after its last line while the camera's height settles; not while a pinch, twist or tilt is under way)
+	if p.holdVoid and p.chainT and p.zoom == 0 and p.rot == 0 and p.tilt == 0
+		and Spring.DiffTimers(Spring.GetTimer(), p.chainT) < 0.5 then
+		local hx, hz = ground(p.chainX, p.chainY, p.holdH)
+		if hx then
+			p.dx, p.dz = p.holdX - hx, p.holdZ - hz
+		end
+	end
 	if p.dx == 0 and p.dz == 0 and p.rot == 0 and p.tilt == 0 and p.zoom == 0 then
 		return
 	end
