@@ -4711,13 +4711,14 @@ function widget:Update(dt)
 	end
 	-- BAR's player list, which the dock covers, hidden where the dock is not: aside for a window (it showed beside or under
 	-- the window, cut by its edge, sideways at the bottom right, upright at 1080x1198 under Settings' corner), folded
-	-- (HIDE), and the D-gun mode's sticks without the dock (sideways in the corner under AIM's stick); dev phone 2026-11-16
-	local listOff = aside or SP.windOff() or false
+	-- (HIDE), and the D-gun mode's sticks without the dock (sideways in the corner under AIM's stick); dev phone 2026-11-16.
+	-- Aside, the panels BAR stacks on it away too (the music line under Settings' corner upright, dev phone 2026-11-19)
+	local listOff = aside and "away" or SP.windOff() and "hidden" or false
 	if listOff ~= SP.listOff then
 		SP.listOff = listOff
 		local api = WG.advplayerlist_api
 		if api and api.SetHidden then
-			api.SetHidden(listOff)
+			api.SetHidden(listOff ~= false, listOff == "away")
 		end
 	end
 	writeDock(false)

@@ -3,7 +3,10 @@ often (every 1.6 s instead of 0.8) and its resource bars a quarter as often (0.6
 with the number of players). Each redraw renders the whole list into its textures: in a late 16-player game the list cost
 0.4-0.5 % of the dev phone's main thread (docs/ENGINE-SIM.md on engine/sim, "BAR's Lua on phones"). And a way to hide the
 list (WG.advplayerlist_api.SetHidden: no drawing, no presses, its position collapsed onto its foot so the panels BAR
-stacks on it stay in place): the app's dock folded while spectating hides it (Kailil, 2026-11-11: "Hide the team list").
+stacks on it stay in place): the app's dock folded while spectating hides it (Kailil, 2026-11-11: "Hide the team list");
+with the dock aside for one of BAR's windows its position goes far below the screen, and the panels stacked on it with
+it (music, unit totals, the clock: upright the music line showed under Settings' bottom right corner, dev phone
+2026-11-19).
 And a press taken by the list under it, not by where the pointer was at the last check (a finger's tap after one on the
 list went to the list).
 Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
@@ -29,19 +32,24 @@ local updateFastRate = 0.6 -- only updates resources -- BAR Droid (phone): 0.15
 	WG.advplayerlist_api.GetPosition = function()
 		-- BAR Droid (phone): hidden, a rect collapsed onto the list's foot (the panels BAR stacks on it stay there); a
 		-- new table only when the list's own changes (as BAR's: the panels ask every frame)
+		-- away (the app's dock aside for one of BAR's windows), far below the screen: the panels go with it (left and
+		-- right kept: BAR's build menu reads the left)
 		local api = WG.advplayerlist_api
 		if api._bardroidHidden then
 			if api._bardroidFrom ~= apiAbsPosition then
 				local p = apiAbsPosition
-				api._bardroidFrom, api._bardroidCollapsed = p, { p[3], p[2], p[3], p[4], p[5], p[6], p[7] }
+				local y = api._bardroidAway and -10000 or p[3]
+				api._bardroidFrom, api._bardroidCollapsed = p, { y, p[2], y, p[4], p[5], p[6], p[7] }
 			end
 			return api._bardroidCollapsed
 		end
 		return apiAbsPosition
 	end
-	-- BAR Droid (phone): the list hidden or shown again (the app's dock folded while spectating)
-	WG.advplayerlist_api.SetHidden = function(hidden)
+	-- BAR Droid (phone): the list hidden or shown again (the app's dock folded while spectating), or hidden with the
+	-- panels stacked on it away too (the dock aside for Settings: the music line showed under the window's corner)
+	WG.advplayerlist_api.SetHidden = function(hidden, away)
 		WG.advplayerlist_api._bardroidHidden = hidden and true or nil
+		WG.advplayerlist_api._bardroidAway = hidden and away and true or nil
 		WG.advplayerlist_api._bardroidFrom = nil
 	end
 	WG.advplayerlist_api.GetHidden = function()
