@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **touch-phone-test drags as a finger does; the layout editor's names off each other** (hardening, 2026-11-18
+      ~22:00-22:20, dev phone). The run before found the drag onto the void through a scratch widget: the test sent each
+      drag as one pan line and had passed it upright at 367 off. It now also makes the drag from the map onto the void
+      as RtsTouch sends a finger's, 24 lines one a frame, each from the last one's end (widget:Update's `drip`). With the
+      touch widget from before the fix: "a finger's drag ... (a line a frame)" FAIL 1571 off after 2037 (the one-line
+      case PASS at 367); with the shipped one ALL PASS, 0 off after 3421. (The laptop's touch-widget-test still waits:
+      Kailil at the laptop.) UI polish: the layout editor (three fingers held) put each panel's name in a tab clear of
+      the other panels but not of the other tabs: upright the Chat panel's tab lay under the Minimap's, its name read
+      nowhere; now a tab keeps off the tabs drawn before it too (bardroid_layout.lua): "Chat" on its top edge, "Minimap"
+      in its corner (screenshots before and after).
 - [x] **Sideways, a drag from the map onto the void loses the point under the finger** (found 2026-11-18 ~21:20 by
       touch-phone-test sideways on the dev phone, BAR test-31992, the phone engine 2026.09.03): "a drag from the map
       onto the void holds the point under the finger (target 5606,1162 -> 5447,4511; grabbed 5606,1573, now under the
