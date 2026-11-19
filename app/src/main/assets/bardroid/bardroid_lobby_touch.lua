@@ -643,6 +643,20 @@ local function uprightGrid()
 				local at = -upright.stripX / math.max(1, upright.pageSize)
 				local cy = obj.height / 2
 				gl.Texture(false)
+				-- (a dark backing with cut corners, as the lobby's buttons: the dots and arrows lay bare on BAR's picture,
+				-- its red and white under them; dev phone screenshot sideways 2026-11-18)
+				local bx0, by0, bx1, by1, c = 2, 1, obj.width - 2, obj.height - 1, 5
+				gl.Color(0, 0, 0, 0.55)
+				gl.BeginEnd(GL.TRIANGLE_FAN, function()
+					gl.Vertex(bx0 + c, by0)
+					gl.Vertex(bx1 - c, by0)
+					gl.Vertex(bx1, by0 + c)
+					gl.Vertex(bx1, by1 - c)
+					gl.Vertex(bx1 - c, by1)
+					gl.Vertex(bx0 + c, by1)
+					gl.Vertex(bx0, by1 - c)
+					gl.Vertex(bx0, by0 + c)
+				end)
 				for p = 0, upright.pages - 1 do
 					local lit = math.max(0, 1 - math.abs(at - p)) -- (lit as the strip passes it)
 					gl.Color(1, 0.78 + 0.2 * (1 - lit), 0.25 + 0.75 * (1 - lit), 0.3 + 0.7 * lit)
