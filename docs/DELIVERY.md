@@ -763,7 +763,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       app's menus in BAR's game). UI polish: the lobby menu's page strip (its arrows and page dots, under the column
       sideways and the grid upright) lay bare on BAR's background picture, its red and white under the dots; now on a
       dark backing with cut corners as the lobby's buttons (bardroid_lobby_touch.lua; screenshot sideways, the login
-      dialog cancelled, never logged in).
+      dialog cancelled, never logged in). The APK from f71b1e9c: lobby-phone-test ALL PASS again; on the Fold7 at
+      19:27.
 - [x] **A sideways skirmish on the newest APK; the minimap framed in the sideways dock** (hardening, 2026-11-18
       ~18:55-19:10, dev phone sideways: "Turn with the phone" off for it, back on after). ~3 minutes, BUILD and ORDERS
       tapped: 30.0 fps, no warning or error from the app's widgets. UI polish: BAR's minimap in the sideways dock's
