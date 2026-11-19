@@ -1,0 +1,29 @@
+BAR Droid phone version of BAR's Clear Map Marks (luaui/widgets/gui_clearmapmarks.lua): not drawn and taking no presses
+while the app's touch dock is aside for one of BAR's windows (the player list's position gone below the screen then,
+WG.advplayerlist_api._bardroidAway: phone-widget-gui_advplayerslist.lua.patch). The panels BAR stacks on the list go
+with it, but this button pins itself to the screen's foot (its y is never under 0), so it stayed in the bottom right
+corner over Settings' frame (dev phone, upright and sideways, 2026-11-19). Otherwise under the dock, as before; with no
+dock, BAR's own place. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no
+place, BAR's own file runs.
+
+@@@ find
+function widget:DrawScreen()
+	if drawlist[1] ~= nil then
+@@@ with
+function widget:DrawScreen()
+	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidAway then -- BAR Droid (phone): the dock aside for a window
+		return
+	end
+	if drawlist[1] ~= nil then
+@@@ end
+
+@@@ find
+function widget:MousePress(mx, my, mb)
+	if mb == 1 and math_isInRect(mx, my, xPos - usedImgSize, yPos, xPos, yPos + usedImgSize) then
+@@@ with
+function widget:MousePress(mx, my, mb)
+	if WG.advplayerlist_api and WG.advplayerlist_api._bardroidAway then -- BAR Droid (phone): not drawn meanwhile
+		return false
+	end
+	if mb == 1 and math_isInRect(mx, my, xPos - usedImgSize, yPos, xPos, yPos + usedImgSize) then
+@@@ end
