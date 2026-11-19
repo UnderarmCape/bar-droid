@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Line, grid and border drags queue as BAR's do; Play upright names the knob and rails** (hardening, 2026-11-19
+      ~10:21-10:25). With PLACE now a plain click without QUEUE, the drags still hold Shift: the engine builds a line or
+      rectangle only while the queue key is down (recoil 2026.09.03 GuiHandler.cpp GetCommand: GetBuildPositions from the
+      press only under GetQueueKeystate(); a single building otherwise), so on a PC too a line joins the queue; left as
+      they are. UI polish: the launcher's "Play upright" adds "Over the map a knob and edge rails zoom and turn with one
+      finger (in a game: Settings, Control)" (c95ef8da; dev phone screenshot). The Fold7: no game since 10:17.
 - [ ] **The one-finger camera's second build: left side, speed-sensitive, half rails, Minimal in white or the dock's
       grey; PLACE without QUEUE replaces the queue: built, his test pending** (Kailil, 2026-11-19 ~09:30: "allow a
       toggle in the settings also to swap the sides of the bars. for left handed people too. ... make the sensitivity
