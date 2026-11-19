@@ -763,7 +763,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       loading, no key frame to tell their length: right as they are. UI polish: the lobby's speak-to-chat panel had the
       font's thin "<" and ">" round its target, "< SPEAK TO SERVER ROOM >"; now solid triangles either side of the words,
       as the game's note since the run before (bardroid_lobby_touch.lua; seen with a scratch lobby widget giving it a
-      made-up battle offline, removed after; lobby-phone-test ALL PASS).
+      made-up battle offline, removed after; lobby-phone-test ALL PASS). The APK from 8ceb1445 on the Fold7 at 20:22.
 - [x] **A game closed by Stop or a swipe kept no replay: the engine is now asked to quit first** (hardening,
       2026-11-18 ~19:45-20:05; found on both phones: an empty .sdfz for each game a test or the player closed, among
       them Kailil's ~9-minute skirmish of 17:41 on the Fold7, swiped away at 17:51, 0 bytes). Recoil writes the replay
