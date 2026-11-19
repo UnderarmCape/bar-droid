@@ -1400,13 +1400,15 @@ function draw.row(option, top, bottom)
 	local markW = option.restart and math.floor(font:GetTextWidth("*") * metrics.rowFs) + metrics.inset or 0
 
 	local label = getOptionLabel(option)
-	-- BAR Droid: a name a little too long for its room in a smaller size, down to 80 %, before it is cut (upright
-	-- "Middle-click toggles camera .."; at 85 % still "camera mov.."; dev phone screenshots 2026-11-19)
+	-- BAR Droid: a name too long for its room in a smaller size, down to 70 %, and cut only if it still does not fit
+	-- (upright "Middle-click toggles camera .."; at 85 % still "camera mov.."; at 80 % "include antinuke units (if
+	-- ab..", "Raptors Soundtrack In Regu.."; one past 70 % was cut at full size beside its shrunk neighbours; dev phone
+	-- screenshots 2026-11-19)
 	local room = left - metrics.rowPad * 2 - x - markW - countW
 	local fs = metrics.rowFs
 	local fullW = font:GetTextWidth(label) * fs
-	if fullW > room and fullW * 0.8 <= room - 1 then
-		fs = fs * (room - 1) / fullW -- (to the room exactly, rounding left it a hair over and text.fit cut it)
+	if fullW > room and room > 1 then
+		fs = fs * math.max(0.7, (room - 1) / fullW) -- (one pixel under the room: rounding left it a hair over)
 	end
 	local shown = text.fit(font, label, room, fs)
 	row.cut = shown ~= label

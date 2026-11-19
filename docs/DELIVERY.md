@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **touch-phone-test and lobby-phone-test on fcc78899; the Settings copy's long names down to 70 %** (hardening,
+      2026-11-19 ~16:34-16:55, dev phone upright; the Fold7 still refused port 38389). Both ALL PASS on the build with
+      the RtsTouch watch change. The nudge path read for the dock-edge case: a nudge keeps its spot and draws it where it
+      is, a building nudged under the dock waits there until nudged back (no change). UI polish (the in-game Settings'
+      tabs upright): at 80 % "include antinuke units (if ab..", "include jammer units (if ab..", "Raptors Soundtrack In
+      Regu.." were still cut, and one too long even for 80 % was cut at full size beside its shrunk neighbours; the
+      copy's draw.row patch now shrinks a long name down to 70 %, then cuts what still does not fit at that size: Game
+      and Control whole, Audio's "Scavengers Soundtrack In Regular Matc.." at the size of its neighbours. On the way:
+      an am start right after adb install sometimes lands in the old process just before the update ends it (Android's
+      home in front): a bench race, not the app's; wait a few seconds after an install.
 - [x] **A building's spot under the camera's turn rail dropped: the rails the map's while a building is picked; a
       4-minute skirmish read; the blocked-spot note 2.5 s** (bug hunt, 2026-11-19 ~15:34-16:20, dev phone upright; the
       Fold7 still refused port 38389). A 4-minute Play vs AI upright with a metal extractor and a wind turbine placed
