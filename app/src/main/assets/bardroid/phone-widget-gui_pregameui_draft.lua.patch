@@ -4,7 +4,8 @@ finger's height, as phone-widget-gui_pregameui.lua.patch makes BAR's other one. 
 40 high and words of 24 times it: about 48 pixels on the dev phone upright, 2.5 mm (2026-11-19, a skirmish started from
 the lobby, the start point placed: this widget's button). At least 8.5 % of the screen's short side, its words as much
 larger, and kept left of the screen's right edge; the spawn order's panel ("Team placement", from 78 % of the screen's
-width, as wide as its names or the button) moved left until it ends on the screen, the button under it. Applied by the
+width, as wide as its names or the button) moved left until it ends on the screen, the button under it; the button's
+rect for the app's touch widget (WG.BarDroidTapPanels: a tap hides the pointer, a drag pans). Applied by the
 engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
 
 @@@ find
@@ -15,6 +16,8 @@ engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds n
 	local droidF = math.max(1, math.min(vsx, vsy) * 0.085 / math.max(1, orgbuttonH * uiScale))
 	local currentButtonW = mathFloor(orgbuttonW * uiScale * droidF / 2) * 2
 	local currentButtonH = mathFloor(orgbuttonH * uiScale * droidF / 2) * 2
+	-- (and on the screen whole: "Unlock Position" after Ready, wider, ran past the right edge upright)
+	buttonX = math.min(buttonX, vsx - mathFloor(currentButtonW / 2) - (uiPadding or 0) - 2)
 @@@ end
 
 @@@ find
@@ -23,6 +26,35 @@ engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds n
 @@@ with
 			(buttonRect[2] + ((buttonRect[4] - buttonRect[2]) / 2)) - (buttonH * 0.16),
 			24 * uiScale * math.max(1, math.min(vsx, vsy) * 0.085 / math.max(1, orgbuttonH * uiScale)), -- BAR Droid (phone)
+@@@ end
+
+@@@ find
+	-- Render the button (this happens every frame but uses cached display lists)
+	if showLockButton and buttonList and buttonHoverList then
+@@@ with
+	-- BAR Droid (phone): the button for the app's touch widget (WG.BarDroidTapPanels): a tap hides the pointer as on the
+	-- interface, a drag from it pans as on the map (it answers no IsAbove)
+	local droidTap = WG.BarDroidTapPanels
+	if droidTap and not droidTap.pregameui_draft then
+		droidTap.pregameui_draft = function()
+			if showLockButton and buttonList then
+				return uiElementRect[1], uiElementRect[2], uiElementRect[3], uiElementRect[4]
+			end
+		end
+	end
+	-- Render the button (this happens every frame but uses cached display lists)
+	if showLockButton and buttonList and buttonHoverList then
+@@@ end
+
+@@@ find
+function widget:Shutdown()
+	glDeleteList(buttonList)
+@@@ with
+function widget:Shutdown()
+	if WG.BarDroidTapPanels then -- BAR Droid (phone): the button no longer the touch widget's
+		WG.BarDroidTapPanels.pregameui_draft = nil
+	end
+	glDeleteList(buttonList)
 @@@ end
 
 @@@ find
