@@ -66,7 +66,17 @@ public final class Log {
         try (FileWriter w = new FileWriter(file, true)) { w.write(s); w.write('\n'); } catch (IOException ignored) {}
     }
 
+    /**
+     * The engine's own harmless lines that read as faults in the launcher's log box: its disk check, "Warning:
+     * [IsPathOnSpinningDisk] Error 'No such file or directory' opening file '/sys/block/dm-0/queue/rotational'", twice
+     * at every start (the container has no such file; dev phone screenshot 2026-11-19). The shared logs keep them.
+     */
+    private static boolean quiet(String msg) {
+        return msg.contains("[IsPathOnSpinningDisk]");
+    }
+
     private static void line(String tag, String msg, boolean error) {
+        if (!error && quiet(msg)) { detail(tag, msg); return; }
         String s = fmt.format(new Date()) + " [" + tag + "] " + msg;
         if (error) android.util.Log.e("BarDroid/" + tag, msg); else android.util.Log.i("BarDroid/" + tag, msg);
         List<Listener> ls;
