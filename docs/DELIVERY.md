@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **remake-check and pad-test on tonight's patches; "Lobby loading"** (hardening, 2026-11-19 ~05:47-06:05, dev
+      phone). remake-check PASS: the five menu copies equal the phone's remakes, and every phone patch finds its place
+      in test-31992, tonight's new ones too (clearmapmarks 2, pregameui 6, pregameui_draft 5, replaybuttons 5,
+      vote_interface 4 blocks); pad-test ALL PASS after the touch change (HOVER_TAP). CLAUDE.md names the tap panels
+      (1764d268). UI polish: while BAR's lobby itself starts the notification said "Lobby running"; now "Lobby loading"
+      until its menu is up, as a skirmish's "Skirmish loading", and the launcher's status line takes the same words as
+      the notification ("Game running" in a game from the lobby; GameService.inGame and playingReplay static as
+      loading) (cb40b425; status-text-test PASS). Dev phone: "Lobby loading" 6 s after the start, "Lobby running" once
+      up. The Fold7 did not answer (offline on Tailscale).
 - [x] **The vote panel as a tap panel; YES and NO a finger's height** (hardening, 2026-11-19 ~05:36-05:55, dev phone
       upright, the scratch vote widget again, removed after; the run's UI polish too). The vote panel's registration
       (855f13cf) checked: YES tapped, "!vote y", the pointer hidden (BAR then shrinks the panel to its title, so the
