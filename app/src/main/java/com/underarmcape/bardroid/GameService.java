@@ -214,13 +214,17 @@ public class GameService extends Service {
      */
     private volatile boolean closingGently;
     /** The engine plays a replay (its "ReadDataFromDemo"), not a game it records ("recording demo to"). */
-    private volatile boolean playingReplay;
+    private static volatile boolean playingReplay;
+    /** A replay plays (the launcher's status, as the notification's title says it). */
+    static boolean playingReplay() { return playingReplay; }
     /** A game records its replay ("recording demo to"); not in BAR's lobby with no game (its widget's load clears it). */
     private volatile boolean recording;
     /** A game or replay loaded in this engine ("creating LoadScreen") and not left: the lobby's games end with the
      *  engine's "[SpringApp::Reload]" back to its menu, which stays loaded (no "[LuaMenu] Loading" again; dev phone,
      *  a skirmish started from the lobby and left by Leave Battle, 2026-11-19). The notification's title. */
-    private volatile boolean inGame;
+    private static volatile boolean inGame;
+    /** A game or replay loaded in the engine and not left (the launcher's status, as the notification's title). */
+    static boolean inGame() { return inGame; }
     /** When the game (or the lobby) last finished loading, epoch ms; 0 while loading: the notification's running time. */
     private volatile long upSince;
     private void closeGently() {

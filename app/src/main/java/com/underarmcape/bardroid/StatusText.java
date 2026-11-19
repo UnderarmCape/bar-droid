@@ -28,7 +28,8 @@ final class StatusText {
         if ("Lobby running".equals(t) && (gameFromLobby || replay)) {
             return (replay ? "Replay" : "Game") + (loading ? " loading" : " running");
         }
-        if (loading && ("Skirmish running".equals(t) || "Benchmark running".equals(t))) {
+        // (the lobby itself starting: "Lobby loading" until its menu is up, as a skirmish's "Skirmish loading")
+        if (loading && ("Skirmish running".equals(t) || "Benchmark running".equals(t) || "Lobby running".equals(t))) {
             return t.replace(" running", " loading");
         }
         return t;

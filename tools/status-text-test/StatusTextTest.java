@@ -40,7 +40,7 @@ public class StatusTextTest {
         String[][] loading = {
             { "running (skirmish)", "Skirmish loading" },
             { "running (bench)", "Benchmark loading" },
-            { "running (lobby)", "Lobby running" },
+            { "running (lobby)", "Lobby loading" },
             { "starting (skirmish)", "Starting" },
         };
         for (String[] c : loading) {
