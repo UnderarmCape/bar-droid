@@ -99,6 +99,24 @@ local function hiddenNow()
 	return P and P.aside and P.aside() or false -- (one of BAR's big windows, BAR's lobby over the game: their screen)
 end
 
+-- how far in from the hand's edge the zoom rail must stand: past BAR's button panels on that edge between y0 and y1
+-- (WG.BarDroidTapPanels, GL pixels: a spectator's replay speed column on the left; left-handed, the rail lay over
+-- 0.5x to 8x and took their taps, the turn rail over "skip"; dev phone 2026-11-19)
+local function edgeInset(left, w, y0, y1, pad)
+	local inset = 0
+	for _, rect in pairs(WG.BarDroidTapPanels or {}) do
+		local ok, x0, ry0, x1, ry1 = pcall(rect)
+		if ok and tonumber(x0) and tonumber(ry1) and ry1 > y0 and ry0 < y1 then
+			if left and x0 <= w then
+				inset = max(inset, floor(x1) + pad)
+			elseif not left and x1 >= vsx - w then
+				inset = max(inset, floor(vsx - x0) + pad)
+			end
+		end
+	end
+	return min(inset, floor(vsx * 0.3))
+end
+
 local function layout()
 	local short = min(vsx, vsy)
 	local pad = max(4, floor(short * 0.012))
@@ -123,15 +141,17 @@ local function layout()
 	-- the L's corner: the zoom rail's foot on the turn rail's line and the turn rail's stretch out to that edge
 	local corner = zoomFoot == footY and ((left and fx0 <= 0) or (not left and fx1 >= vsx))
 	if set.rails and d then
-		local zx0 = left and 0 or vsx - w
 		local zlen = floor((top - pad - zoomFoot) / 2)
+		local inset = edgeInset(left, w, zoomFoot, zoomFoot + zlen, pad)
+		local zx0 = left and inset or vsx - w - inset
 		zoomRail = { zx0, zoomFoot, zx0 + w, zoomFoot + zlen }
 		local tlen = floor((fx1 - fx0) / 2)
 		if corner then -- (beside the zoom rail's foot, along the same line)
+			local s = inset + w + pad
 			if left then
-				turnRail = { w + pad, footY, w + pad + tlen - w - pad, footY + w }
+				turnRail = { s, footY, max(s, tlen), footY + w }
 			else
-				turnRail = { vsx - w - pad - (tlen - w - pad), footY, vsx - w - pad, footY + w }
+				turnRail = { min(vsx - s, vsx - tlen), footY, vsx - s, footY + w }
 			end
 		elseif left then -- (from the stretch's end at the hand's side)
 			turnRail = { fx0, footY, fx0 + tlen, footY + w }
@@ -163,7 +183,10 @@ local function layout()
 		if d and not wide and (onLeft == (d[1] <= vsx * 0.3)) then
 			foot = d[4] -- (the dock under this side)
 		end
-		local side = zoomRail and (zoomRail[1] < vsx / 2) == onLeft and w + pad or 0
+		local side = 0 -- (past the zoom rail on this side, wherever edgeInset put it)
+		if zoomRail and (zoomRail[1] < vsx / 2) == onLeft then
+			side = (onLeft and zoomRail[3] or vsx - zoomRail[1]) + pad
+		end
 		local cx = onLeft and (pad * 2 + side + r) or (vsx - pad * 2 - side - r)
 		local cy = foot + pad * 3 + r
 		cx = cx + (s.dx or 0) * vsx
