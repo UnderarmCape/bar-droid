@@ -125,8 +125,18 @@ local function onCmd(c)
 		local _, vsy = Spring.GetViewGeometry()
 		local top = dock and vsy - dock[4] or 0 -- (X pixels from the top, as the place file's spot)
 		-- (the spot snaps to the build grid: a few pixels past the edge it was held at; unheld it was the dock's middle)
+		-- (the camera controls' rects in the detail: the turn rail stands just above the dock, where the spot is held)
+		local C = WG.BarDroidCamCtl
+		local k, z, t = nil, nil, nil
+		if C and C.rects then
+			k, z, t = C.rects()
+		end
+		local function r(v)
+			return v and table.concat(v, ",") or "-"
+		end
 		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
-			string.format("spot y %d, the dock's top %d", y, top))
+			string.format("spot y %d, the dock's top %d; dock %s, knob %s, zoom %s, turn %s (GL)", y, top, r(dock), r(k),
+				r(z), r(t)))
 	elseif c == "deselect" or c == "deselect-again" then
 		Spring.SelectUnitArray({})
 	elseif c == "circle" then -- (a Pawn given just behind the dock's top edge; nothing picked; the circle style; where

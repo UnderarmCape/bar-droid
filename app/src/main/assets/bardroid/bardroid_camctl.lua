@@ -489,6 +489,14 @@ function widget:IsAbove(x, y)
 	if hiddenNow() then
 		return false
 	end
+	-- (a building picked: under them is the map's. The build menu took a spot under the turn rail, which stands just
+	-- above the dock, for the interface and dropped it: a building dragged to the dock's top edge had no spot and PLACE
+	-- nothing to click, dock-phone-test 4 runs in 5, 2026-11-19. A finger coming down on them is still the camera's,
+	-- RtsTouch; PLACE's click there reaches the map, this widget takes no clicks)
+	local _, cmd = Spring.GetActiveCommand()
+	if cmd and cmd < 0 then
+		return false
+	end
 	if knob and (x - knob[1]) ^ 2 + (y - knob[2]) ^ 2 <= knob[3] ^ 2 then
 		return true
 	end

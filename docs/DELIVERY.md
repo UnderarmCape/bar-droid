@@ -756,6 +756,24 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A building's spot under the camera's turn rail dropped: the rails the map's while a building is picked; a
+      4-minute skirmish read; the blocked-spot note 2.5 s** (bug hunt, 2026-11-19 ~15:34-16:20, dev phone upright; the
+      Fold7 still refused port 38389). A 4-minute Play vs AI upright with a metal extractor and a wind turbine placed
+      by the dock: 29.7-30.0 fps each minute, memory 0.85-1.2 GB free, no warning from the app's widgets; the wind's
+      spot on the crater's rim rightly blocked ("CAN'T BUILD THERE: PICK ANOTHER SPOT"), which was gone before the eyes
+      came back from the dock: the note 2.5 s now (1.3), as the pad's other notes that ask something. Then
+      dock-phone-test failed 4 runs in 5 on its first case ("the building dragged on into the dock: its spot at the
+      dock's top edge": spot y -1), though it passed at 12:30 and 14:58: RtsTouch sent the drag ("spotto 503 1038",
+      held at the dock's top row), and the build menu copy dropped the spot. First suspect, the camera's turn rail
+      just above the dock (GL 985-1041 over a dock to 974): the copy's freeAt takes any pixel an app widget is above
+      for the interface, so a spot under the rails was dropped; their IsAbove is now false while a building is picked
+      (a finger coming down on them is still the camera's in RtsTouch, and PLACE's click there reaches the map, the
+      camera widget takes no clicks). Still 1 run in 3 failed: the real cause was the build grid's snap, which put the
+      building's middle a square down, under the dock, where no click reaches it (the copy rightly drops such a spot:
+      PLACE would build it a square off). bardroid_touch.lua's spotto now tries the spot a few pixels higher, up to
+      48, until PLACE has a pixel to click (none: where it was). dock-phone-test 4 runs in 4 ALL PASS after (spots at
+      1037, 1034, 1037, 1037); the test's detail now names the dock's and the camera controls' rects. Also RtsTouch's
+      lobby-request watch read lobbyOverlay(), which took its 250 ms read from source(): it reads overlayLast now.
 - [x] **VoiceChat read over for the lobby's long press; every lobby tab walked; "(Requires login)" readable**
       (hardening, 2026-11-19 ~15:22-15:35, dev phone upright, offline lobby; the Fold7 still refused port 38389).
       VoiceChat.start while it listens cancels (a toggle, as the three-finger tap): a second long press on a chat's

@@ -619,6 +619,27 @@ local function readTouch(lines)
 				local _, pos = Spring.TraceScreenRay(tx, vy - ty - 1, true)
 				if pos then
 					b.droidSpot(tx, ty, false)
+					-- (held at the dock's top edge: the build grid's snap could put the building's middle a square
+					-- down, under the dock, where no click reaches it, and the build menu dropped the spot, PLACE with
+					-- nothing to click (dock-phone-test, 1 run in 2, 2026-11-19): a few pixels higher, up to 48, until
+					-- PLACE has a pixel; none, the spot where it was)
+					if b.droidSpotPixel and not b.droidSpotPixel() then
+						local found = false
+						for up = 4, 48, 4 do
+							local _, p2 = Spring.TraceScreenRay(tx, vy - (ty - up) - 1, true)
+							if not p2 then
+								break
+							end
+							b.droidSpot(tx, ty - up, false)
+							if b.droidSpotPixel() then
+								found = true
+								break
+							end
+						end
+						if not found then
+							b.droidSpot(tx, ty, false)
+						end
+					end
 				end
 				tx, ty = nil, nil
 			end
@@ -654,7 +675,9 @@ local function readTouch(lines)
 						local bx, by, bz = Spring.Pos2BuildPos(-cmdID, spot[1], spot[2], spot[3], facing)
 						local P = WG.BarDroidPad
 						if bx and Spring.TestBuildOrder(-cmdID, bx, by, bz, facing) == 0 and P and P.say then
-							P.say("CAN'T BUILD THERE: PICK ANOTHER SPOT")
+							-- (2.5 s, as the pad's other notes that ask something of the player: at its 1.3 s it was
+							-- gone before the eyes came back from the dock to the map; dev phone 2026-11-19)
+							P.say("CAN'T BUILD THERE: PICK ANOTHER SPOT", nil, 2.5)
 							Spring.Echo("[bardroid-touch] PLACE on a blocked spot") -- (tools)
 						end
 					end
