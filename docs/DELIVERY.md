@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The lobby's Replays with 247 files; Clear Map Marks off Settings' corner** (hardening, 2026-11-19
+      ~02:35-02:52, dev phone). The lobby offline upright, Replays: listed within a second, 59 asked of the bridge
+      (Chobby: 9 at once, 50 more in the background, "More" for the rest), no bridge failures. Tonight's newest
+      replays were not in it: Chobby's gui_replay_handler drops any replay under a minute but not 0 (CreateReplayEntry,
+      "Filter out replays that are less than a minute long"), and tonight's Stop tests ran about 30 s (the bridge's
+      time from the last key frame); a real game is longer. Not the app's; noted. A replay's Delete asks first (Yes /
+      No, finger-sized upright), No kept it. UI polish: BAR's Clear Map Marks button pins itself to the screen's foot,
+      so with the dock aside for Settings it stayed in the bottom right corner over the window's frame (the panels
+      stacked on the player list go away with it since 180070df). phone-widget-gui_clearmapmarks.lua.patch: not drawn
+      and taking no presses while the list is away (1e3f1280). Dev phone: "phone version of ... gui_clearmapmarks.lua:
+      2 patches"; Settings upright and sideways, the corner clean; closed, the dock over the corner as before. The APK
+      from 1e3f1280 on the Fold7 at 2026-11-19 02:51 (BAR not running).
 - [x] **fp-save-test; the lobby upright; Statistics' menu rows a finger's height** (hardening, 2026-11-19
       ~02:16-02:33, dev phone). fp-save-test PASS (1st person through BAR's mid-game settings save). The lobby offline
       upright (the login wait in, removed after): the login dialog's form spread and its checkboxes enlarged as made
