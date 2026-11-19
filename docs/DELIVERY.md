@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The notification's Stop keeps the replay; the notification says the game is closing** (hardening,
+      2026-11-18 ~20:50-21:00, dev phone). The third way to close a game, the notification's own Stop: "asked the
+      engine to quit", again for BAR's quit dialog, "the engine quit in 5532 ms", the replay 13247 bytes. UI polish:
+      for those seconds the notification still read "Skirmish running" with its Stop (setStatus leaves the notification
+      alone once closing); now `closeGently` shows it as "Closing: saving the replay", and a closing notification has
+      no Stop button (one is on its way). Dev phone: the shade read "Closing: saving the replay", no Stop, 1.5 s after
+      the tap; the notification gone with the service after the quit.
 - [x] **The lobby swiped away; the notification says "loading" while the game loads** (hardening, 2026-11-18
       ~20:35-20:50, dev phone). The offline lobby (tools\lobby-login's widget, removed after) swiped away from recent
       apps: "asked the engine to quit", the second ask 1 s later, "the engine quit in 1113 ms" (the lobby asks nothing:
