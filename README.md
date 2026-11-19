@@ -99,6 +99,12 @@ shoulder, table, close, mid. In 1st person, drag to look around; it turns back t
 **Tune** adjusts the camera for the unit type you follow, one setting at a time, and saves it for the other
 factions' matching unit too.
 
+**The camera with one finger** (in a game: Settings, Control tab, "Camera with one finger"; both on at first): the
+**camera knob**, a round knob over the map (upright at the right above the dock; sideways at the thumb's side): hold it
+and slide up or down to zoom (down closer), sideways to turn; it lights gold while held, and the layout editor (three
+fingers held) moves and sizes it. The **edge rails**, with the touch dock up: slide a finger down or up the strip along
+the map's right edge to zoom, sideways along the strip at its foot above the dock to turn.
+
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
 to turn), triple tap and hold to tilt. The build grid, the orders, QUEUE and INSERT, the buttons with nothing picked (and the

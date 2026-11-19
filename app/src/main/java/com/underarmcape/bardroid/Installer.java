@@ -409,7 +409,7 @@ public final class Installer {
                 "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua",
                 "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua",
                 "bardroid_portrait.lua", "bardroid_missioninfo.lua", "bardroid_retreat.lua", "bardroid_presets.lua", "bardroid_automex.lua", "bardroid_teamstats.lua",
-                "bardroid_topbar.lua", "bardroid_options.lua"})
+                "bardroid_topbar.lua", "bardroid_options.lua", "bardroid_camctl.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
                  OutputStream o = new FileOutputStream(new File(widgets, name))) { copy(in, o); }
         installPhoneLua(assets);

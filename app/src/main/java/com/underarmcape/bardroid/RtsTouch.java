@@ -96,7 +96,19 @@ final class RtsTouch {
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
     private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
-        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DGUN, DONE }
+        TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DGUN, CAM, DONE }
+
+    // The camera knob and edge rails (bardroid_camctl.lua writes bardroid_camctl.txt: "knob", "zoom", "turn" rects in X
+    // screen pixels, "none" when neither shows; Kailil, 2026-11-19: a way "to zoom out and in with one finger. and
+    // rotate", both offered systems built for his test). A touch that comes down on one is the camera's (CAM) until it
+    // lifts: the knob's first slide decides, up or down zooms and sideways turns (the dock pad's dead zones and gains);
+    // the zoom rail zooms by the finger's way along it, the turn rail turns. The pointer stays where it was, hidden.
+    private static final int CAM_KNOB = 0, CAM_ZOOM = 1, CAM_TURN = 2;
+    private float[] camKnob, camZoom, camTurn;   // (the last read; null: not shown)
+    private long camReadAt, camModified;
+    private int camKind = -1;
+    private PadMove camMove = PadMove.NONE;
+    private float camX, camY;   // view pixels: the finger at the last camera line
 
     // The portrait dock (bardroid_portrait.lua writes bardroid_dock.txt: its rects in X screen pixels and its mode).
     // Kailil, 2026-11-09: the dock "function as a camera movement pad to pan and zoom around the map ... double tap hold
@@ -178,6 +190,7 @@ final class RtsTouch {
     private final File hoverFile = new File(widgetDir, "bardroid_hover.txt");
     private final File placeFile = new File(widgetDir, "bardroid_place.txt");
     private final File dockFile = new File(widgetDir, "bardroid_dock.txt");          // the portrait dock (above)
+    private final File camFile = new File(widgetDir, "bardroid_camctl.txt");         // the camera knob and rails (above)
     private int[] heldKeys = {};                     // modifier keys held for a building's tap or drag
     private FileOutputStream log;
     private long logBytes;
@@ -618,6 +631,8 @@ final class RtsTouch {
                 // (sideways, layout A: BAR's minimap in the dock's middle takes its touches as the game does, "map")
                 inDock = dock != null && inside(dock.all, toX(e.getX()), toY(e.getY()))
                         && !(dock.map != null && inside(dock.map, toX(e.getX()), toY(e.getY())));
+                // (the camera knob or one of the edge rails: the camera's, the pointer left where it is; camDown)
+                if (!inDock && camDown(e)) break;
                 if (cursorOnDock != inDock) {   // (the pointer: hidden on the dock, back for a touch on the map)
                     cursorOnDock = inDock;
                     showCursor(cursorWanted);
@@ -799,6 +814,9 @@ final class RtsTouch {
             case SCROLL:
                 if (i >= 0) scrollTo(curY);
                 return;
+            case CAM:   // (the camera knob or an edge rail held: camMoveTo)
+                if (i >= 0) camMoveTo();
+                return;
             case LEFT_DRAG:   // (the open dock's box selection: its corner held at the dock's top, the box in sight; a
                 // LINE, GRID or BORDER drag too: dragged into the dock its buildings were queued out of sight)
                 if (i >= 0) moveCursor(curX, dockSelecting || shapeDragging || areaDragging ? aboveDock(curX, curY) : curY);
@@ -909,6 +927,9 @@ final class RtsTouch {
                 panTo(curX, curY);
                 flingIfFast();
                 break;
+            case CAM:
+                camUp();
+                break;
             case LEFT_DRAG:
                 press(curX, dockSelecting || shapeDragging || areaDragging ? aboveDock(curX, curY) : curY,
                         InputStub.BUTTON_LEFT, false);
@@ -972,7 +993,7 @@ final class RtsTouch {
         boolean atDown = state == State.PAN || state == State.SCROLL || flicked;
         float lookX = atDown ? downX : curX, lookY = atDown ? downY : curY;
         Dock endDock = dock();
-        cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(lookX), toY(lookY))
+        cursorOnDock = state == State.PAD || state == State.CAM || endDock != null && inside(endDock.all, toX(lookX), toY(lookY))
                 && !(endDock.map != null && inside(endDock.map, toX(lookX), toY(lookY)));
         // (and on BAR's own interface, its windows and panels by the game widget's fresh answer: the arrow stood where
         // the last tap was, over Settings' tabs and switches and on the top bar, dev phone screenshots 2026-11-18; on the
@@ -1010,10 +1031,114 @@ final class RtsTouch {
         // (a dock scroll the system took back, its PiP or edge gesture monitors: let go at rest, or the widget's rows stayed
         // between two rows until the next touch; dev phone 2026-11-17, the split dock sideways after an upward flick)
         if (state == State.DOCK_SCROLL) send("dockfling " + dockSide + " 0.0 0.0");
+        if (state == State.CAM) camUp();   // (the knob or rail let go of: no longer lit)
         endDockSelect();
         if (!gridHeld && !shapeCancelled) releaseKeys();
         state = State.IDLE;
         showCursor(true);
+    }
+
+    // ---- the camera knob and edge rails ----------------------------------------------------------------------------
+
+    /** bardroid_camctl.txt as bardroid_camctl.lua last wrote it, read at most every 100 ms; nothing in an old file. */
+    private void readCam() {
+        long now = SystemClock.uptimeMillis();
+        if (now - camReadAt < 100) return;
+        camReadAt = now;
+        long mod = camFile.lastModified();
+        if (mod == 0 || System.currentTimeMillis() - mod > HOVER_STALE_MS || !gameWidgetRunning()) {
+            camKnob = camZoom = camTurn = null;
+            camModified = 0;
+            return;
+        }
+        if (mod == camModified) return;
+        camModified = mod;
+        float[] k = null, z = null, t = null;
+        String text = readSmall(camFile);
+        if (text != null) {
+            for (String line : text.split("\n")) {
+                String[] f = line.trim().split(" ");
+                if (f.length != 5) continue;
+                try {
+                    float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
+                    if (f[0].equals("knob")) k = r;
+                    else if (f[0].equals("zoom")) z = r;
+                    else if (f[0].equals("turn")) t = r;
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+        camKnob = k;
+        camZoom = z;
+        camTurn = t;
+    }
+
+    /** A touch on the camera knob (its circle) or a rail: the camera's until it lifts (CAM). False: on neither. */
+    private boolean camDown(MotionEvent e) {
+        readCam();
+        float x = toX(e.getX()), y = toY(e.getY());
+        int kind = -1;
+        if (camKnob != null) {
+            float cx = (camKnob[0] + camKnob[2]) / 2, cy = (camKnob[1] + camKnob[3]) / 2, r = (camKnob[2] - camKnob[0]) / 2;
+            // (a little past its edge too: a thumb lands off the middle)
+            if (Math.hypot(x - cx, y - cy) <= r * 1.15f) kind = CAM_KNOB;
+        }
+        if (kind < 0 && camZoom != null && inside(camZoom, x, y)) kind = CAM_ZOOM;
+        if (kind < 0 && camTurn != null && inside(camTurn, x, y)) kind = CAM_TURN;
+        if (kind < 0) return false;
+        state = State.CAM;
+        camKind = kind;
+        camMove = PadMove.NONE;
+        firstId = e.getPointerId(0);
+        downX = curX = camX = e.getX();
+        downY = curY = camY = e.getY();
+        downTime = e.getEventTime();
+        starts.clear();
+        starts.put(firstId, new float[]{downX, downY});
+        maxFingers = 1;
+        if (velocity != null) { velocity.recycle(); velocity = null; }
+        cursorOnDock = true;   // (the pointer stays where it was, hidden, as on the dock)
+        showCursor(cursorWanted);
+        send("camheld " + (kind == CAM_KNOB ? "knob" : kind == CAM_ZOOM ? "zoom" : "turn"));
+        return true;
+    }
+
+    /**
+     * The finger on the knob or a rail moved: the knob's first slide decides (up or down zooms, sideways turns, the dock
+     * pad's dead zones), a rail its own way once past the slop; then the dock pad's lines, down closer, as it.
+     */
+    private void camMoveTo() {
+        float dx = curX - downX, dy = curY - downY, ax = Math.abs(dx), ay = Math.abs(dy);
+        if (camMove == PadMove.NONE) {
+            if (camKind == CAM_KNOB) {
+                if (ay > slop && ay >= ax) camMove = PadMove.ZOOM;
+                else if (ax > PAD_ROTATE_DEAD * slop && ax > 1.5f * ay) camMove = PadMove.ROTATE;
+                else return;
+            } else {
+                if (Math.hypot(dx, dy) <= slop) return;
+                camMove = camKind == CAM_ZOOM ? PadMove.ZOOM : PadMove.ROTATE;
+            }
+            camX = curX;
+            camY = curY;
+            return;
+        }
+        float[] c = worldCentre();
+        if (camMove == PadMove.ZOOM) {
+            float h = view().getHeight();
+            if (h > 0 && curY != camY) send(String.format(Locale.US, "zoom %.5f %.1f %.1f",
+                    Math.exp((curY - camY) / h * PAD_ZOOM_PER_SCREEN), toX(c[0]), toY(c[1])));
+        } else if (camMove == PadMove.ROTATE) {
+            float w = view().getWidth();
+            if (w > 0 && curX != camX) send(String.format(Locale.US, "rot %.4f", (curX - camX) / w * PAD_ROTATE_PER_WIDTH));
+        }
+        camX = curX;
+        camY = curY;
+    }
+
+    /** The finger left the knob or rail (or the system took the touch back): no longer lit. */
+    private void camUp() {
+        send("camheld none");
+        camKind = -1;
+        camMove = PadMove.NONE;
     }
 
     // ---- the portrait dock ----------------------------------------------------------------------------------------
