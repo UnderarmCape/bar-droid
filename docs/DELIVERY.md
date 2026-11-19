@@ -761,7 +761,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       tapped: 30.0 fps, no warning or error from the app's widgets. UI polish: BAR's minimap in the sideways dock's
       middle sat square-cornered and bare beside the metal, energy and wind boxes; now a dark frame just outside its
       place, round at the corners as the dock's boxes (SP.holeFrame, in the dock's texture; screenshots before and
-      after).
+      after). The APK from 3c29211c: dock-phone-test ALL PASS; on the Fold7 at 19:11.
 - [x] **The share list and the touch camera on the newest APK; the share list's storage bars** (hardening, 2026-11-18
       ~18:40-18:55, dev phone upright, the 2026.09.03 phone engine): pad-test -Share ALL PASS (20 checks: METAL and
       ENERGY given within the teammate's room, the notes, 15 teammates on the screen, a teammate out of the game) and
