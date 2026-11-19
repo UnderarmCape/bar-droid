@@ -297,8 +297,56 @@ public class LauncherActivity extends AppCompatActivity {
         refreshMapList();
     }
 
-    private android.widget.ArrayAdapter<String> mapsAdapter;
+    private MapAdapter mapsAdapter;
     private long mapsStamp;
+
+    /**
+     * Play vs AI's drop-down of maps: all of them while the field holds one of their names exactly (a tap on the field:
+     * the keyboard coming up re-filtered the list by the field's own text, and it showed that one map, dev phone
+     * 2026-11-19), else those whose name has the typed text anywhere in it.
+     */
+    static final class MapAdapter extends android.widget.ArrayAdapter<String> {
+        private final java.util.List<String> source = new java.util.ArrayList<>();
+
+        MapAdapter(android.content.Context c, java.util.List<String> maps) {
+            super(c, android.R.layout.simple_dropdown_item_1line, new java.util.ArrayList<>(maps));
+            source.addAll(maps);
+        }
+
+        void setMaps(java.util.List<String> maps) {
+            synchronized (source) { source.clear(); source.addAll(maps); }
+            setNotifyOnChange(false);
+            clear();
+            addAll(maps);
+            notifyDataSetChanged();
+        }
+
+        private final android.widget.Filter filter = new android.widget.Filter() {
+            @Override protected FilterResults performFiltering(CharSequence c) {
+                String q = c == null ? "" : c.toString().trim().toLowerCase(java.util.Locale.ROOT);
+                java.util.List<String> maps;
+                synchronized (source) { maps = new java.util.ArrayList<>(source); }
+                boolean exact = false;
+                for (String m : maps) if (m.toLowerCase(java.util.Locale.ROOT).equals(q)) { exact = true; break; }
+                java.util.List<String> out = new java.util.ArrayList<>();
+                for (String m : maps) if (q.isEmpty() || exact || m.toLowerCase(java.util.Locale.ROOT).contains(q)) out.add(m);
+                FilterResults r = new FilterResults();
+                r.values = out;
+                r.count = out.size();
+                return r;
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override protected void publishResults(CharSequence c, FilterResults r) {
+                setNotifyOnChange(false);
+                clear();
+                if (r.values != null) addAll((java.util.List<String>) r.values);
+                notifyDataSetChanged();
+            }
+        };
+
+        @Override public android.widget.Filter getFilter() { return filter; }
+    }
 
     /** The newest engine archive cache's time (0: none): it changes when an engine run scanned the maps again. */
     static long archiveCacheStamp(File bar) {
@@ -319,8 +367,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (mapsAdapter == null || stamp == mapsStamp) return;
         mapsStamp = stamp;
         java.util.List<String> now = installedMaps(bar);
-        mapsAdapter.clear();
-        mapsAdapter.addAll(now);
+        mapsAdapter.setMaps(now);
         Log.i("app", "map list made again: " + now.size() + " maps");   // (tools)
     }
     @Override protected void onStop() { Log.removeListener(logListener); handler.removeCallbacks(ticker); super.onStop(); }
@@ -639,11 +686,20 @@ public class LauncherActivity extends AppCompatActivity {
         mapField.setText(Prefs.mapName);
         // (a tap drops down every map installed, typing narrows them; any other name still goes, and is downloaded)
         mapsStamp = archiveCacheStamp(new Paths(this).bar);
-        android.widget.ArrayAdapter<String> maps = new android.widget.ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, new java.util.ArrayList<>(installedMaps(new Paths(this).bar)));
+        MapAdapter maps = new MapAdapter(this, installedMaps(new Paths(this).bar));
         mapsAdapter = maps;   // (made again in onStart when the engine's archive cache changes: refreshMapList)
         mapField.setAdapter(maps);
-        Runnable all = () -> maps.getFilter().filter(null, n -> { if (n > 0 && mapField.isShown()) mapField.showDropDown(); });
+        // (a few rows to scroll, a third of the screen at most: with the keyboard up the list stood over the field itself,
+        // the name being typed hidden under it, dev phone upright 2026-11-19; now above or below the field)
+        Runnable rows = () -> {
+            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            mapField.setDropDownHeight(Math.min(Math.round(240 * dm.density), dm.heightPixels / 3));
+        };
+        rows.run();
+        Runnable all = () -> {
+            rows.run();   // (a turn changes the screen's height)
+            maps.getFilter().filter(null, n -> { if (n > 0 && mapField.isShown()) mapField.showDropDown(); });
+        };
         mapField.setOnClickListener(v -> all.run());
         mapField.setOnFocusChangeListener((v, focused) -> { if (focused) all.run(); });
         ((EditText) findViewById(R.id.edMesaUrl)).setText(Prefs.mesaUrl);
