@@ -89,6 +89,12 @@ local function hiddenNow()
 	if Spring.IsGUIHidden() then
 		return true
 	end
+	-- (a gamepad or a mouse the input, bardroid_touch.lua's WG.BarDroidInput: BAR's own screen, no fingers to use them;
+	-- the knob stood over BAR's panels there. A finger's touch brings them back)
+	local src = WG.BarDroidInput
+	if src == "pad" or src == "mouse" then
+		return true
+	end
 	local P = WG.BarDroidPortrait
 	return P and P.aside and P.aside() or false -- (one of BAR's big windows, BAR's lobby over the game: their screen)
 end
