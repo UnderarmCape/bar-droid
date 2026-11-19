@@ -883,6 +883,7 @@ final class RtsTouch {
         curX = e.getX(); curY = e.getY();
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
         if (areaTapHeld) runAreaTap();   // (this touch drew no circle: the held tap's click first)
+        boolean flicked = false;   // (a quick scroll: the wheel turned where the finger came down, the pointer there)
         switch (state) {
             case PENDING:
                 if (glideStopped) break;   // (a tap that stopped the gliding map only stops it)
@@ -894,6 +895,7 @@ final class RtsTouch {
                 if (quick == HOVER_SCROLL && Math.abs(curY - downY) >= Math.abs(curX - downX)) {
                     scrollY = downY;   // a quick flick in one of BAR's windows: it scrolls as a slower drag does
                     scrollTo(curY);
+                    flicked = true;
                 } else if (quick == HOVER_INTERFACE || quick == HOVER_SCROLL) {   // a quick drag on the interface
                     press(downX, downY, InputStub.BUTTON_LEFT, true);
                     press(curX, curY, InputStub.BUTTON_LEFT, false);
@@ -965,8 +967,10 @@ final class RtsTouch {
         // keeps no curX of its own)
         // (a pan leaves the pointer where the finger came down, the camera moved under it: it is looked at there, not
         // where the finger let go; a pan from the replay's speed column left the arrow over its buttons, the look at the
-        // lift's place never answered, dev phone sideways 2026-11-19)
-        float lookX = state == State.PAN ? downX : curX, lookY = state == State.PAN ? downY : curY;
+        // lift's place never answered, dev phone sideways 2026-11-19. A scroll in one of BAR's windows too: its wheel
+        // turns at the down point, and the arrow stayed over the Settings list after a drag through it, the same day)
+        boolean atDown = state == State.PAN || state == State.SCROLL || flicked;
+        float lookX = atDown ? downX : curX, lookY = atDown ? downY : curY;
         Dock endDock = dock();
         cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(lookX), toY(lookY))
                 && !(endDock.map != null && inside(endDock.map, toX(lookX), toY(lookY)));
