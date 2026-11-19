@@ -250,7 +250,59 @@ model.onListChanged = function()
 	view.build()
 	view.refresh()
 end
+-- BAR Droid: the app's own options (WG.options.addOptions: BAR's model puts every one under its Custom tab) in the
+-- tab their droidGroup names, the camera knob's and edge rails' switches under Control (Kailil, 2026-11-19: "add a
+-- settings toggle in settings under controls or camera controlls"; bardroid_camctl.lua); the Custom tab's heading goes
+-- with them when nothing else is under it. After each of the model's rebuilds, before the window is made again.
+function droid.regroup()
+	local moved = false
+	for _, option in ipairs(model.allOptions or {}) do
+		if option.droidGroup and option.group ~= option.droidGroup then
+			option.group = option.droidGroup
+			if option.spacer then
+				option.spacer.group = option.droidGroup
+			end
+			moved = true
+		end
+	end
+	-- (the heading BAR's model puts over the options other widgets added: gone when nothing is left under it, user
+	-- widgets' switches above it or not; a later rebuild, which finds them in their tab already, brings it back: gone
+	-- again. Under a user widget's switch the Plugins tab showed an empty "Options" heading, dev phone 2026-11-19)
+	local heading, under = false, false
+	for _, option in ipairs(model.allOptions or {}) do
+		if option.group == "custom" then
+			if option.id == "label_custom_options" then
+				heading = true
+			elseif heading and option.id ~= "label_custom_options_spacer" then
+				under = true
+			end
+		end
+	end
+	local drop = heading and not under
+	if not moved and not drop then
+		return
+	end
+	local rows = {}
+	for _, group in ipairs(model.groups) do
+		rows[group.id] = {}
+	end
+	for _, option in ipairs(model.allOptions) do
+		local gone = drop and (option.id == "label_custom_options" or option.id == "label_custom_options_spacer")
+		if rows[option.group] and not gone then
+			table.insert(rows[option.group], option)
+		end
+	end
+	model.allOptions = {}
+	for _, group in ipairs(model.groups) do
+		group.numOptions = #rows[group.id]
+		for _, option in ipairs(rows[group.id]) do
+			model.allOptions[#model.allOptions + 1] = option
+		end
+	end
+	model.options = model.allOptions
+end
 model.onRebuilt = function()
+	droid.regroup() -- BAR Droid: the app's options under their own tabs
 	view.rebind()
 end
 
