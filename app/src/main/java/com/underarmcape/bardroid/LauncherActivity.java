@@ -329,7 +329,8 @@ public class LauncherActivity extends AppCompatActivity {
         Installer inst = new Installer(this, BarApp.get().paths());
         String s = GameService.status();
         // (nothing to stop: dim, not off: after a crash here "idle" can hide a game's processes, which Stop still ends)
-        stopButton.setAlpha(GameService.busy() ? 1f : 0.5f);
+        // (and while a Stop is already closing the game: the service takes no second one, GameService.closeGently)
+        stopButton.setAlpha(GameService.busy() && !s.startsWith("closing") ? 1f : 0.5f);
         // (and the buttons that start something dim while a game runs: the service takes no start then, and they looked
         // ready, dev phone 2026-11-16; a tap says so, start)
         for (int id : START_BUTTONS) {
