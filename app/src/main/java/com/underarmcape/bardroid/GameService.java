@@ -767,6 +767,9 @@ public class GameService extends Service {
         // (up: how long it has run, counting, where the time it was posted stood; dev phone screenshot 2026-11-19)
         long since = upSince;
         if (game && !loading && since > 0) b.setWhen(since).setUsesChronometer(true).setShowWhen(true);
+        // (no clock time otherwise: "Game loading 07:06" and then "Game running 00:20" read as two kinds of time, dev
+        // phone screenshots of the shade 2026-11-19)
+        else b.setShowWhen(false);
         // (closing: no Stop, one is on its way; closeGently ignores another)
         if (status == null || !status.startsWith("closing")) {
             b.addAction(new Notification.Action.Builder(null, "Stop", stopPi).build());
