@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The launcher's GL check; no Free memory over it** (hardening, 2026-11-19 ~05:57-06:10, dev phone upright;
+      the run's UI polish too). GL check from the launcher: "GL check: Adreno 740 (Freedreno), OpenGL 4.3, Mesa
+      27.0.0-devel" in the launcher's status, in its own colour. While it ran the loading screen's Free memory button
+      stood over the engine's black screen for those seconds, as if a game loaded. GameService notes a GL check (its
+      mode; GameService.glCheck) and GameActivity leaves the button out then (34c2380c). Dev phone: the GL check with no
+      button, the same result; a skirmish's loading with the button as before. The Fold7 did not answer.
 - [x] **remake-check and pad-test on tonight's patches; "Lobby loading"** (hardening, 2026-11-19 ~05:47-06:05, dev
       phone). remake-check PASS: the five menu copies equal the phone's remakes, and every phone patch finds its place
       in test-31992, tonight's new ones too (clearmapmarks 2, pregameui 6, pregameui_draft 5, replaybuttons 5,
