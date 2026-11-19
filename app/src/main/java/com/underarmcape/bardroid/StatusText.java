@@ -90,9 +90,15 @@ final class StatusText {
             if (r.find()) replayDone = r.group(1).trim();
         }
         if (ms.containsKey("Sim")) {
+            // (a tenth of a millisecond: "Sim 24.92, Draw 2.83, Update 3.27" read as more than it says; the log has them
+            // whole, tools/phone-bench.ps1 reads them there)
             java.util.List<String> parts = new java.util.ArrayList<>();
-            for (String k : new String[]{"Sim", "Draw", "Update"})
-                if (ms.containsKey(k)) parts.add(k + " " + ms.get(k));
+            for (String k : new String[]{"Sim", "Draw", "Update"}) {
+                if (!ms.containsKey(k)) continue;
+                String v = ms.get(k);
+                try { v = String.format(java.util.Locale.US, "%.1f", Double.parseDouble(v)); } catch (NumberFormatException ignored) {}
+                parts.add(k + " " + v);
+            }
             return "Benchmark, ms per frame: " + String.join(", ", parts);
         }
         if (replayDone != null && !replayDone.startsWith("no samples")) {

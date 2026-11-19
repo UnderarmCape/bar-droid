@@ -89,7 +89,7 @@ public class StatusTextTest {
         Object[][] benches = {
             { new String[]{ "[t=1] Sim 1801 frames, 54.08ms per frame, x", "[t=1] Draw 900 frames, 17.00ms per frame",
                 "[t=2] Sim 1801 frames, 50.00ms per frame", "[t=2] Update 900 frames, 7.97ms per frame" },
-              "Benchmark, ms per frame: Sim 50.00, Draw 17.00, Update 7.97" },
+              "Benchmark, ms per frame: Sim 50.0, Draw 17.0, Update 8.0" },
             { new String[]{ "[t=1] [replaybench] 6:00 x1.00 (wanted x1.00, server x1.00), 656 units, 29 fps", replayDone },
               "Benchmark, replay: speed x1.00 (lowest x1.00), behind 0% of the time, up to 656 units" },
             { new String[]{ "[t=1] [replaybench] done (the game ended): speed min x0.62, median x0.91; below x0.95 64% of the time; units up to 1830; 25 samples" },
