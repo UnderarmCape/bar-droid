@@ -1,7 +1,8 @@
 BAR Droid phone version of BAR's Game Type Info (luaui/widgets/gui_game_type_info.lua): the "Victory condition: ..."
 line at least 7.5 % of the screen's height above its anchor (docs/upstream/bar-pregame-upright.patch, written for BAR:
 upright its fixed offset left it inside the start position suggestions' tutorial, the two texts over each other).
-Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+And lifted above the app's touch dock where the dock would cover it (sideways it lay behind the dock's left block,
+"Victory c" showing beside it; dev phone 2026-11-19). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
 runs.
 
 @@@ find
@@ -14,4 +15,31 @@ runs.
 		messages[3].x = 40 * widgetScale
 @@@ with
 		messages[3].x = math.max(40 * widgetScale, vsy * 0.075 - 20 * widgetScale) -- BAR Droid (phone): under the first, as before
+@@@ end
+
+@@@ find
+	glPushMatrix()
+	glTranslate((vsx * 0.5), (vsy * y), 0) --has to be below where newbie info appears!
+@@@ with
+	glPushMatrix()
+	-- BAR Droid (phone): above the app's touch dock where the dock would cover the lines (their lowest one's foot under
+	-- its top, the dock across the screen's middle); not past 85 % of the screen's height
+	local droidY = vsy * y
+	local droidP = WG.BarDroidPortrait
+	local droidDock = droidP and droidP.dock and not (droidP.aside and droidP.aside()) and droidP.dock()
+	if droidDock then
+		local low, size
+		for _, message in pairs(messages) do
+			if message.str and message.x and (not low or message.x < low) then
+				low, size = message.x, message.y or 0
+			end
+		end
+		if low then
+			local foot = droidY + 1.5 * (low - size * 0.35)
+			if foot < droidDock[4] and droidDock[1] < vsx * 0.7 and droidDock[3] > vsx * 0.3 then
+				droidY = math.min(droidY + droidDock[4] - foot + math.floor(vsy * 0.015), vsy * 0.85)
+			end
+		end
+	end
+	glTranslate((vsx * 0.5), droidY, 0) --has to be below where newbie info appears!
 @@@ end
