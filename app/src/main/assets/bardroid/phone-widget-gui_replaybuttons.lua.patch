@@ -7,9 +7,10 @@ right, folded away by HIDE, no dock). The file is the same in every BAR release 
 test-31958), so this fits replays of all of them. Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI
 loads it; if a block finds no place, BAR's own file runs. Upright the column is also as wide and its words as large as on
 the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, some 35 pixels wide upright, words of 11),
-and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it). And the column
-answers IsAbove as BAR's other panels do, so the app's touch widget counts it as interface (2026-11-19: after a tap on
-4x the pointer stayed over the button, where it hides over BAR's interface, and a drag from the column panned the map).
+and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it). (No IsAbove: one
+made the column interface for the touch widget, the pointer then hid after a tap on a speed, but a finger's drag that
+began on the column became a mouse drag, no longer a pan, along a tall strip of the screen's left edge upright; dev
+phone, 2026-11-19. The pointer stays where the tap was, as on the map.)
 
 @@@ find
 function widget:Update(dt)
@@ -50,22 +51,6 @@ function widget:Update(dt)
 		sceduleUpdate = true
 	end
 end
-@@@ end
-
-@@@ find
-function widget:GameStart()
-@@@ with
--- BAR Droid (phone): the column under the pointer is interface (the app's touch widget, last in line, hears only where
--- no widget answers): from the pause or skip button at its foot to the fastest speed at its top, while it is shown
-function widget:IsAbove(x, y)
-	if not isActive or #buttons < 2 then
-		return false
-	end
-	local foot, top = buttons[#buttons], buttons[#buttons - 1]
-	return point_in_rect(foot.x, foot.y, top.x + bWidth, top.y + bHeight, x / vsx, y / vsy)
-end
-
-function widget:GameStart()
 @@@ end
 
 @@@ find
