@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's Ready button a finger's height** (hardening, 2026-11-19 ~04:22-04:40, dev phone upright, a skirmish
+      started from the lobby offline, the login wait removed after; the run's UI polish too). The pre-game's Ready /
+      Lock button, which every online game asks to be tapped, is 40 high and its words 24 times BAR's interface scale:
+      about 48 pixels on the dev phone upright, 2.5 mm. BAR draws it in gui_pregameui.lua, or with a draft spawn order
+      set (as in the lobby's skirmish here) in gui_pregameui_draft.lua, the other standing down: a patch for each
+      (phone-widget-gui_pregameui.lua.patch, phone-widget-gui_pregameui_draft.lua.patch): at least 8.5 % of the
+      screen's short side as the quit dialog's buttons, its words as much larger, kept left of the screen's right edge;
+      BAR's interface scale stays (the start countdown's place uses it, and the app's chat keeps clear of that by BAR's
+      numbers) (45053eba). Dev phone: the first patch alone left the button as it was (the draft widget drew it); with
+      both, "4 patches" and "3 patches", the button about 90 pixels with its words, Ready tapped: "Battle, Started".
+      The Fold7 did not answer: 45053eba waits for its install.
 - [x] **A skirmish from the lobby end to end; the notification says "Game running"** (hardening, 2026-11-19
       ~04:00-04:20, dev phone upright, the lobby offline with the login wait, removed after; the run's UI polish too).
       Skirmish, 1v1, Onyx Cauldron, Start: BAR's real pre-game (start box, the start point placed by a tap, BAR's Ready
