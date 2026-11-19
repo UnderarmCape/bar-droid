@@ -767,7 +767,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       it, and each engine start) and says "Closing" (dev phone screenshot; the engine quit in 3823 ms). (Once the
       replay did not start: right after an install Android restarts the app by itself and the force-stop and the start
       raced; the next try started. Tooling only.) The laptop's touch-widget-test: a background wait on the launch
-      guard's --wait-idle runs it once Kailil has been away 10 minutes.
+      guard's --wait-idle runs it once Kailil has been away 10 minutes. The APK from a8f4e9dd on the Fold7 at 23:07.
 - [x] **pace-test on the 2026.09.03 builds; Stop dimmed while the game closes** (hardening, 2026-11-18 ~22:40-22:50,
       dev phone). pace-test (libbardroid_pace.so in the app's container: the ioctl and socket answers, the frame cap,
       the floating window's 15 fps, the vsync grid): one FAIL the first time, "frame cap: 30 fps at most" with 9 frames
