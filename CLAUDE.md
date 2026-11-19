@@ -311,4 +311,7 @@ Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trip
 host RAM left; the low-memory killer once took the app). Phone: RAM (~5–6 GB a match), BAR's UI on the near-square
 inner display, BAR's own panels without an `IsAbove` take a finger drag for a pan (the app's menu copies answer it;
 the top bar and BAR's windows are covered: `bardroid_touch.lua` overBarInterface, `tools/touch-widget-test.ps1`;
-v0.8.5's menus in the controller game are its own), touch-only play (later).
+v0.8.5's menus in the controller game are its own; BAR's button panels a finger taps, the replay speed column, the vote
+panel and the pre-game Ready buttons, register a rect function in `WG.BarDroidTapPanels` from their phone patches: the
+hover file's answer 3, the pointer hidden after a tap as on the interface while a drag still pans as on the map,
+RtsTouch HOVER_TAP; an IsAbove there made drags mouse drags), touch-only play (later).
