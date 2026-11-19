@@ -215,6 +215,8 @@ public class GameService extends Service {
     private volatile boolean closingGently;
     /** The engine plays a replay (its "ReadDataFromDemo"), not a game it records ("recording demo to"). */
     private volatile boolean playingReplay;
+    /** When the game (or the lobby) last finished loading, epoch ms; 0 while loading: the notification's running time. */
+    private volatile long upSince;
     private void closeGently() {
         // (a second Stop meanwhile: one quit is on its way; a third SIGTERM after the engine has shut SDL down ends it
         // at once)
@@ -444,6 +446,7 @@ public class GameService extends Service {
                     try {
                         loadReset(false);
                         loading = true;
+                        upSince = 0;
                         playingReplay = false;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
@@ -459,6 +462,7 @@ public class GameService extends Service {
                             else if (line.contains("recording demo to")) playingReplay = false;
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
+                                upSince = System.currentTimeMillis();
                                 Log.i("svc", "loaded (the loading screen's Free memory button goes)");
                                 refreshNotification();
                             }
@@ -484,6 +488,7 @@ public class GameService extends Service {
                                 if (!was) Log.i("svc", "a game loads (from the lobby): the loading screen's buttons again");
                                 loadReset(true);
                                 loading = true;
+                                upSince = 0;
                                 if (!was) refreshNotification();
                             }
                             if (loading) loadLine(line);
@@ -739,6 +744,9 @@ public class GameService extends Service {
                 .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
                 .setContentIntent(pi)
                 .setOngoing(true);
+        // (up: how long it has run, counting, where the time it was posted stood; dev phone screenshot 2026-11-19)
+        long since = upSince;
+        if (game && !loading && since > 0) b.setWhen(since).setUsesChronometer(true).setShowWhen(true);
         // (closing: no Stop, one is on its way; closeGently ignores another)
         if (status == null || !status.startsWith("closing")) {
             b.addAction(new Notification.Action.Builder(null, "Stop", stopPi).build());
