@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A lobby game's notification, start to leave; one line upright** (hardening, 2026-11-19 ~07:04-07:15, dev
+      phone upright, the lobby offline, the login wait removed after; the run's UI polish too). Skirmish from the lobby
+      (Isidis Crack): the notification "Game loading", then "Game running" with its time; Lobby on the top bar, Leave
+      Battle, Yes: "Lobby running" again, its time from the leave. The game's log: BAR's own warnings only. UI polish:
+      upright the line under the title, "Tap to return to the lobby; Stop ends it", left "it" alone on a second line;
+      now "Tap for the lobby; Stop ends it" (the game, the replay, the benchmark, the GL check alike), one line
+      (status-text-test PASS; dev phone screenshot). The Fold7 did not answer (offline on Tailscale).
 - [x] **The floating window's log flood; its orientation line** (hardening, 2026-11-19 ~06:44-07:02, dev phone
       upright, a skirmish; the run's UI polish too). The launcher's cut labels of the last run did not come back (the
       launcher brought forward over the lobby, five screenshots in its first second and later: whole). The logs of the
