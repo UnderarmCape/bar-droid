@@ -756,6 +756,18 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A skirmish from the lobby end to end; the notification says "Game running"** (hardening, 2026-11-19
+      ~04:00-04:20, dev phone upright, the lobby offline with the login wait, removed after; the run's UI polish too).
+      Skirmish, 1v1, Onyx Cauldron, Start: BAR's real pre-game (start box, the start point placed by a tap, BAR's Ready
+      at the top right, the victory line clear of the dock), the game against SimpleAI, then the lobby over it
+      ("Return to Battle"), its third page's Leave Battle and Yes: back in the lobby. Its log: "recording demo to"
+      before "creating LoadScreen"; leaving, "[Game::~CGame]" and "[SpringApp::Reload]" with the lobby's menu still
+      loaded (no "[LuaMenu] Loading" again). The notification said "Lobby running" all through the game. GameService
+      notes a game loaded in the lobby's engine until "[SpringApp::Reload]": the title "Game loading" / "Game running"
+      ("Replay ..." for a replay) meanwhile (StatusText.forPlayers, 7 new cases pass), and back in the lobby nothing
+      counts as recording, so a Stop there says "Closing" (87df1957). Dev phone: "Lobby running", "Game loading",
+      "Game running", after Leave Battle "Lobby running" ("the game ended: back in the lobby"). (Android's Back in a
+      lobby game opens no quit dialog: the top bar's Lobby and Leave Battle leave it.) The Fold7 did not answer.
 - [x] **dock-phone-test: the dock's taps slow on the dev phone (2026-11-19 ~03:35): the test's setup, settled ~04:00**
       The rested dev phone (4 GB free) failed the same way; so did 180070df's own build, which passed at 00:20: not
       the app. The test turns "Play upright" on but not "Turn with the phone" off; with it on the game follows how the
