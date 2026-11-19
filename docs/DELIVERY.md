@@ -767,7 +767,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       in a skirmish room as an online room has it: labels 86 and 94 wide ending before their boxes, the strip to 416 and
       the right column from 415. UI polish (launcher screenshot): the engine's "Warning: [IsPathOnSpinningDisk] Error
       'No such file or directory' ..." twice in the log box at every start (its disk check; the container has no such
-      file) goes to launcher.log only (Log.quiet).
+      file) goes to launcher.log only (Log.quiet). lobby-phone-test ALL PASS; the APK from clean main 51bc9e30 went
+      on the Fold7 at 13:17 (83 s; BAR closed since 12:55, not played since 13:02), github-sync -Release.
 - [x] **128b8182 on the Fold7; his online game's empty replay** (2026-11-19 ~13:00-13:05). The APK from clean main
       128b8182 (phone-2026.09.03-83a8536d37) went on the Fold7 at 13:02 (93 s), BAR closed since 12:55; github-sync
       -Release. His log since 11:43: online games joined and left four times ("the game ended: back in the lobby"),
