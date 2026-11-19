@@ -768,7 +768,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       case). Dev phone: Stop in a game, "spring exited with 0", "the engine quit in 4534 ms", "engine exited (0)",
       "launch-bar.sh ended after the engine", files/bar/logs/infolog-20261118-222814.txt made, the replay 11727 bytes;
       Stop while loading: "closing", stopped in the same second. (The phone engine's "proven" mark is written while it
-      runs, so that was never lost: the Fold7 has it from 17:41.)
+      runs, so that was never lost: the Fold7 has it from 17:41.) The APK from fce815c6 on the Fold7 at 22:40.
 - [x] **The pad's main test on the newest APK** (hardening, 2026-11-18 ~22:15-22:30, dev phone): pad-test ALL PASS
       (first person on the pad: LB + L3 rides a unit, RT targets, the right stick looks round, B ends it; LT's zoom, the
       D-pad's commander, the app's order menu with the pad's orders hidden, the pad gone ends its ways, a unit given away
