@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The replay speed column's IsAbove taken back: drags there pan again** (hardening, 2026-11-19 ~04:55-05:10,
+      dev phone upright, a replay from the lobby offline, the login wait removed after). ccdfd0d8's IsAbove made the
+      column interface for the touch widget: the pointer hid after a tap on a speed, but a finger's drag that began on
+      the column became a mouse drag (the pointer dragged across, the map still), no longer a pan, along a tall strip
+      of the screen's left edge upright. Taken back (9096c23e; the patch's 4 blocks as before, its note says why):
+      the same drag from the column panned the map. The pointer stays where a tap on a speed was, as on the map. The
+      Fold7's build of 03:05 (ccdfd0d8) has the IsAbove: the next install takes it back. Also read this run: BAR's top
+      bar handles no Escape (Android's Back opens no quit dialog, as on a PC), and in a lobby game its "Lobby" opens the
+      lobby, Resign only in multiplayer, Leave Battle in the lobby: BAR's own ways, left.
 - [x] **The phone tests on 45053eba; the spawn order's panel on the screen upright** (hardening, 2026-11-19
       ~04:40-04:55, dev phone). dock-phone-test, touch-phone-test and pad-test ALL PASS on 45053eba (the patches since
       the last full pass: the pre-game line, Clear Map Marks, the speed column, the vote panel, the Ready button). In
