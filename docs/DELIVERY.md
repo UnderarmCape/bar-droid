@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **5cbc2e9a on the Fold7; the camera controls away while a pad or a mouse is the input** (2026-11-19
+      ~10:54-11:08, dev phone upright; the run's UI polish too). The Fold7: no game since 10:44 (its shade in front);
+      the APK from clean main 5cbc2e9a loaded a skirmish on the dev phone, then went on the Fold7 at 10:58 (83 s);
+      github-sync -Release: latest-build 5cbc2e9a. With a gamepad or a mouse BAR's own screen comes back, and the knob
+      stood over its panels with no finger to use it: bardroid_camctl.lua hides the knob and rails while
+      WG.BarDroidInput (bardroid_touch.lua, the app's "src" lines) is pad or mouse (8ed42fcd). Dev phone: "src pad" in
+      the touch log, bardroid_camctl.txt "none"; the next tap, the knob back.
 - [x] **59dadadc on the Fold7; the camera knob in the layout editor** (2026-11-19 ~10:40-10:55, dev phone upright;
       the run's UI polish too). The Fold7: no game since 10:30 (Firefox in front); the APK from clean main 59dadadc
       loaded a skirmish on the dev phone with the camera controls, then went on the Fold7 at 10:44 (84 s); github-sync
