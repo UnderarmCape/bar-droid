@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The quit dialog's buttons a finger can take** (hardening, 2026-11-18 ~23:50-2026-11-19 00:05, dev phone
+      upright). The top bar's Quit in a skirmish: BAR's dialog ("Are you sure you want to resign or return to game
+      lobby?", Stay / Resign / Quit) above the dock, the game paused; its buttons about 56 pixels high (30 % of a dialog
+      320 x BAR's scale wide), some 3 mm. A second block in phone-widget-gui_top_bar_buttons.lua.patch: the buttons at
+      least 8.5 % of the screen's short side, the dialog grown up by the difference. Dev phone: "phone version of
+      LuaUI/Widgets/gui_top_bar_buttons.lua (LuaUI): 2 patches", the buttons about 90 pixels, their words centred,
+      Stay closed it and the game went on; remake-check's phone patches PASS.
 - [x] **Game info by touch: larger sideways, opaque, a close button** (hardening, 2026-11-18 ~23:35-23:50, dev phone,
       a replay through the benchmark's replay start, `.bardroid-bench-replay` removed after). The top bar's Info in a
       replay opens BAR's Game info (the phone engine's phone-widget-gui_gameinfo.lua.patch: only "no wider than the
