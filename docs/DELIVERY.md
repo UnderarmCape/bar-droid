@@ -775,7 +775,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       place of the builders' orders, BAR lets go of it (RtsTouch.sendPlaced; "spot given" keeps the refused spot's
       word). Dev phone: QUEUE off, PLACE twice: queue 1, then 1 (replaced), the building let go; QUEUE on: 2, 3, still
       picked. dock-phone-test (its blocked spot picks the building again; its spots keep off the knob and rails),
-      touch-phone-test, pad-test ALL PASS. Line, grid and border drags still hold Shift (BAR's build drag).
+      touch-phone-test, pad-test ALL PASS. Line, grid and border drags still hold Shift (BAR's build drag). On the
+      Fold7 (Tailscale, port 38389 now; the 192.168.143.x address he gave is not reachable from the laptop) at 10:17
+      (67 s); github-sync -Release: latest-build 343d7504. His game on the first build (09:30-09:37, the lobby, a
+      skirmish on Death Valley): the phone engine, "BAR Droid camera controls" loaded (knob on, rails on), Stop asked the
+      engine to quit, "the engine quit in 5625 ms", launch-bar.sh ended after it, its replay 51 KB, a new
+      infolog-20261119-093703.txt; no error from the app's widgets, no SIGSEGV.
 - [ ] **One-finger zoom and turn on the map: the camera knob and the edge rails, built, his test pending** (Kailil,
       2026-11-19 ~08:37: "we need to figure out a way to zoom out and in with one finger. and rotate. any ideas?"; then
       ~08:50, of the knob and the rails offered: "build both systems fully, then i will test them both. add a settings
