@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The pad's main test on the newest APK** (hardening, 2026-11-18 ~22:15-22:30, dev phone): pad-test ALL PASS
+      (first person on the pad: LB + L3 rides a unit, RT targets, the right stick looks round, B ends it; LT's zoom, the
+      D-pad's commander, the app's order menu with the pad's orders hidden, the pad gone ends its ways, a unit given away
+      leaves the squad, no render texture with an old picture). The laptop's touch-widget-test still waits (the launch
+      guard: Kailil at the laptop, last input 0 s). Looked at for polish and left: the D-gun mode's cancel X (a soft red
+      cross on grey, the PLACE panel's on purpose), the unit picture's and the build tiles' corners (the same bevel),
+      the gold "on" buttons' words (light on gold; the screenshot measured was dimmed by the share list).
 - [x] **touch-phone-test drags as a finger does; the layout editor's names off each other** (hardening, 2026-11-18
       ~22:00-22:20, dev phone). The run before found the drag onto the void through a scratch widget: the test sent each
       drag as one pan line and had passed it upright at 367 off. It now also makes the drag from the map onto the void
