@@ -168,10 +168,17 @@ local function layout()
 	end
 end
 
+-- the layout editor open: the knob drawn for it, but its touches the editor's (a tap on the knob to pick it, a drag to
+-- move it, went to the camera: "camheld knob", the knob unmoved; dev phone 2026-11-19)
+local function editing()
+	local Lw = WG.BarDroidLayout
+	return Lw and Lw.isOpen and Lw.isOpen() or false
+end
+
 -- RtsTouch's side: X screen pixels, top left origin
 local function writeFile(force)
 	local text
-	if hiddenNow() or not (knob or zoomRail or turnRail) then
+	if hiddenNow() or editing() or not (knob or zoomRail or turnRail) then
 		text = "none\n"
 	else
 		local function r(x0, y0, x1, y1)
