@@ -756,6 +756,26 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [ ] **The one-finger camera's second build: left side, speed-sensitive, half rails, Minimal in white or the dock's
+      grey; PLACE without QUEUE replaces the queue: built, his test pending** (Kailil, 2026-11-19 ~09:30: "allow a
+      toggle in the settings also to swap the sides of the bars. for left handed people too. ... make the sensitivity
+      of the bars relative ... speed of my drag should effect the change I see ... the bars shouldn't span the entire
+      screen ... only take up half the space they are sitting in ... symmetrical ... show me different finished variants
+      and allow them to be selected between in game"; then "also, when I place items in the build queue for
+      constructors, without QUEUE selected, it places buildings in queue instead of overwritng the queue ... like the
+      vanilla behavior"; of four looks shown (Glass, BAR, Minimal, Icons): "keep only 3 minimal. but do white, or the
+      same color the background of the bottom ui is"). Settings, Control tab, "Camera with one finger": Camera knob,
+      Camera edge rails, Camera controls on the left, Camera controls colour (White, Dock grey: about 32 of 255, the
+      dock's panels on the dev phone's screenshots), Camera controls sensitivity (0.5-2; BarDroidCamLeft, ...Look,
+      ...Gain). The rails an L at the map's bottom corner on the chosen side, each half its side (upright zoom 465 of
+      931 X pixels, turn 401 of 869), the knob inside it (sideways with the corner dock, at the free thumb's side).
+      RtsTouch scales each step by the finger's speed (screen heights a second, smoothed; 0.6 a second is the dock pad's
+      gain, 0.12 to 4 times it) and the sensitivity: dev phone, the same 300 px on the zoom rail, slowly (2.5 s) 4 %
+      closer, quickly (0.12 s) 79 %. PLACE: a Shift click only with QUEUE on; without, a plain click, the building in
+      place of the builders' orders, BAR lets go of it (RtsTouch.sendPlaced; "spot given" keeps the refused spot's
+      word). Dev phone: QUEUE off, PLACE twice: queue 1, then 1 (replaced), the building let go; QUEUE on: 2, 3, still
+      picked. dock-phone-test (its blocked spot picks the building again; its spots keep off the knob and rails),
+      touch-phone-test, pad-test ALL PASS. Line, grid and border drags still hold Shift (BAR's build drag).
 - [ ] **One-finger zoom and turn on the map: the camera knob and the edge rails, built, his test pending** (Kailil,
       2026-11-19 ~08:37: "we need to figure out a way to zoom out and in with one finger. and rotate. any ideas?"; then
       ~08:50, of the knob and the rails offered: "build both systems fully, then i will test them both. add a settings
