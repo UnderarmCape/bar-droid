@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Share logs: the last game's log once; its name whole on the sheet** (hardening, 2026-11-19 ~07:53-08:00,
+      dev phone upright; the run's UI polish too). A review of today's changes (the pan's pointer, the floating
+      window's listener, the notification's words and time, the update check's word, the GPU line) found nothing.
+      Share logs on the dev phone: the zip (2 MB, 0.7 s) carried the last game's infolog twice, infolog.txt and
+      launch-bar.sh's copy in logs/ (the same bytes until the next engine starts; after a long game tens of MB more).
+      LogShare leaves out a logs/infolog-* equal to infolog.txt (27 entries, the copy gone). UI polish: on Samsung's
+      share sheet its name read "bardroid-logs-20...1119-075702.zip"; now "bar-logs-20261119-0759.zip", whole (the
+      subject keeps "BAR Droid logs"; the sheet ignores EXTRA_TITLE, tried) (723e4ecb). Nothing was shared: the sheet
+      closed by Back each time. The Fold7: no game since the 07:51 install.
 - [x] **On the Fold7: dd211bf4** (2026-11-19 ~07:47-07:53). The Fold7 answered on Tailscale (port 37653) after
       03:30-07:46 offline; nothing running in BAR (YouTube in front), no game since the 03:05 install (infolog of 11-18
       17:51, launcher.log 00:38), so no logs to read. The APK from clean main dd211bf4 carries only
