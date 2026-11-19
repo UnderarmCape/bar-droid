@@ -218,7 +218,13 @@ public class GameService extends Service {
         closingGently = true;
         // (the launcher said "Skirmish running" for the 5 s of the quit, BAR's quit dialog flashing in its picture-in-
         // picture: the Stop looked untaken; dev phone 2026-11-18)
-        if (!Proc.enginePids().isEmpty()) setStatus("closing: saving the replay");
+        if (!Proc.enginePids().isEmpty()) {
+            setStatus("closing: saving the replay");
+            // (setStatus leaves the notification once closing: it said "Skirmish running", Stop and all, for the
+            // quit's seconds after a swipe or a Stop; dev phone 2026-11-18)
+            NotificationManager nm = getSystemService(NotificationManager.class);
+            if (nm != null) nm.notify(1, notification(status));
+        }
         Thread t = new Thread(() -> {
             try {
                 Proc.endEngine(ENGINE_QUIT_MS);
@@ -701,7 +707,7 @@ public class GameService extends Service {
         PendingIntent pi = PendingIntent.getActivity(this, game ? 2 : 0, open, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
         Intent stop = new Intent(this, GameService.class).setAction(ACTION_STOP);
         PendingIntent stopPi = PendingIntent.getService(this, 1, stop, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
-        return new Notification.Builder(this, CHANNEL)
+        Notification.Builder b = new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
                 // (loading as the launcher says it: the notification said "Skirmish running" over the loading screen,
                 // dev phone 2026-11-18; refreshNotification as the loading ends)
@@ -709,9 +715,12 @@ public class GameService extends Service {
                 // (while a game runs, what the tap and the button do: the title alone left the line under it empty)
                 .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
                 .setContentIntent(pi)
-                .addAction(new Notification.Action.Builder(null, "Stop", stopPi).build())
-                .setOngoing(true)
-                .build();
+                .setOngoing(true);
+        // (closing: no Stop, one is on its way; closeGently ignores another)
+        if (status == null || !status.startsWith("closing")) {
+            b.addAction(new Notification.Action.Builder(null, "Stop", stopPi).build());
+        }
+        return b.build();
     }
 
     @Override
