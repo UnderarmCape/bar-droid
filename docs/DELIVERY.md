@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **pad-test and lobby-phone-test on the newest build; the GPU's model on the launcher** (hardening, 2026-11-19
+      ~07:16-07:25, dev phone; the run's UI polish too). pad-test and lobby-phone-test ALL PASS on b9462831 (the touch
+      and dock tests passed on a1213fc6; the commits since change no widget and no touch path). UI polish: the
+      launcher's GPU line said "Qualcomm Adreno"; it reads the model from the kernel's gpu_model now ("Adreno740v2":
+      "GPU: Qualcomm Adreno 740, supported; driver Freedreno", one line upright; "Adreno" alone where the file cannot
+      be read) (86eb66ab; status-text-test PASS). The Fold7 did not answer (offline on Tailscale).
 - [x] **A lobby game's notification, start to leave; one line upright** (hardening, 2026-11-19 ~07:04-07:15, dev
       phone upright, the lobby offline, the login wait removed after; the run's UI polish too). Skirmish from the lobby
       (Isidis Crack): the notification "Game loading", then "Game running" with its time; Lobby on the top bar, Leave
