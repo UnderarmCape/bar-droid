@@ -505,6 +505,9 @@ function widget:DrawScreen()
 	gl.Rect(0, 0, vsx, vsy)
 	local labelSize = math.floor(math.min(vsy * 0.075, vsx / 18) * 0.36)
 	local th = labelSize * 1.5
+	-- the tabs drawn so far: a tab also keeps off them (upright the chat's tab, above its top edge, lay under the
+	-- Minimap's, which hangs under the minimap; its name read nowhere, dev phone screenshot 2026-11-18)
+	local placed = {}
 	for _, id in ipairs(order) do
 		local x0, y0, x1, y1 = rectOf(id)
 		if x0 then
@@ -530,6 +533,11 @@ function widget:DrawScreen()
 								clear = false
 							end
 						end
+						for _, t in ipairs(placed) do
+							if t[1] < x + w and t[3] > x and t[2] < top and t[4] > top - th then
+								clear = false
+							end
+						end
 						if clear then
 							lx = x
 							return true
@@ -540,6 +548,7 @@ function widget:DrawScreen()
 				local above = free(y1 + th)
 				local below = not above and free(y0)
 				local ly = above and y1 + th or below and y0 or math.min(y1, vsy) -- (the tab's top)
+				placed[#placed + 1] = { lx, ly - th, lx + w, ly }
 				local f = WG.FlowUI
 				if f and f.Draw and f.Draw.RectRound then
 					local cs = f.elementCorner or 4
