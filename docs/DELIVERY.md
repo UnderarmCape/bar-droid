@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **1569f22b on the Fold7; the phone tests on it; dock-phone-test's Area Mex case** (2026-11-19 ~11:06-11:37, dev
+      phone upright; the run's UI polish too). The Fold7: no game since 10:58; the APK from clean main 1569f22b loaded a
+      skirmish on the dev phone, then went on the Fold7 at 11:10 (72 s); github-sync -Release: latest-build 1569f22b.
+      touch-phone-test and pad-test ALL PASS on it; dock-phone-test failed its Area Mex case three runs in four (0 mex
+      orders): with its spots kept off the camera knob, the next metal spot lay under the wind's details, which the case
+      before opens and which stay 15 s, and the tap was theirs (any press closes them; one on them is theirs, as meant).
+      WG.BarDroidPortrait.windClose (tools) and the test widget closes them first; -Shots also takes Area Mex's armed and
+      drawn screens (1b941664): ALL PASS, 2 mex orders. UI polish: the knob's Settings description names "/hud in the
+      chat" beside three fingers held (same commit; dev phone screenshot).
 - [x] **5cbc2e9a on the Fold7; the camera controls away while a pad or a mouse is the input** (2026-11-19
       ~10:54-11:08, dev phone upright; the run's UI polish too). The Fold7: no game since 10:44 (its shade in front);
       the APK from clean main 5cbc2e9a loaded a skirmish on the dev phone, then went on the Fold7 at 10:58 (83 s);
