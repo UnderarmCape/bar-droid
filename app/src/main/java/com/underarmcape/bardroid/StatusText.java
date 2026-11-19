@@ -88,6 +88,16 @@ final class StatusText {
     }
 
     /**
+     * The Adreno's model from the kernel's /sys/class/kgsl/kgsl-3d0/gpu_model ("Adreno740v2", the dev phone's): "Adreno
+     * 740"; null for anything else or nothing. The launcher's GPU line said only "Qualcomm Adreno" (2026-11-19).
+     */
+    static String adrenoModel(String sysfs) {
+        if (sysfs == null) return null;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("^Adreno\\s*(\\d{3,4})").matcher(sysfs.trim());
+        return m.find() ? "Adreno " + m.group(1) : null;
+    }
+
+    /**
      * The benchmark in a line from a run's infolog lines: BAR's scenario's results ("Sim 1801 frames, 54.08ms per frame,
      * ..."; the last of each, as tools/phone-bench.ps1 reads them: the main thread's ms per frame for Sim, Draw and
      * Update), or a replay benchmark's summary (bardroid_bench.lua's "[replaybench] done (300 s played): speed min x1.00,

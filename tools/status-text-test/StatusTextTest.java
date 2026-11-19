@@ -83,6 +83,21 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "line " + c[0] + " " + c[1] + c[2] + " -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[3] + "\")"));
         }
+        // StatusText.adrenoModel: the kernel's gpu_model as the launcher's GPU line names it
+        String[][] models = {
+            { "Adreno740v2", "Adreno 740" },
+            { "Adreno830v2\n", "Adreno 830" },
+            { "Adreno 750", "Adreno 750" },
+            { "Adreno8xx", null },
+            { "", null },
+            { null, null },
+        };
+        for (String[] c : models) {
+            String got = StatusText.adrenoModel(c[0]);
+            boolean ok = java.util.Objects.equals(got, c[1]);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "gpu model \"" + c[0] + "\" -> " + got + (ok ? "" : " (want " + c[1] + ")"));
+        }
         // StatusText.isResultNote: the launcher's note in its own colour (a result) or in amber (a warning)
         Object[][] notes = {
             { "GL check: FD740, OpenGL 4.3, Mesa 27.0.0-devel", true },

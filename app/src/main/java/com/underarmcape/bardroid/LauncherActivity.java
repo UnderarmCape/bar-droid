@@ -465,6 +465,16 @@ public class LauncherActivity extends AppCompatActivity {
         return model.isEmpty() ? m : m + " " + model;
     }
 
+    /** "Adreno 740" from the kernel's gpu_model (StatusText.adrenoModel), or "Adreno" where it cannot be read. */
+    private static String adrenoName() {
+        try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader("/sys/class/kgsl/kgsl-3d0/gpu_model"))) {
+            String m = StatusText.adrenoModel(r.readLine());
+            return m != null ? m : "Adreno";
+        } catch (java.io.IOException | RuntimeException e) {
+            return "Adreno";
+        }
+    }
+
     private CharSequence deviceSummary() {
         StringBuilder sb = new StringBuilder();
         sb.append(phoneName(Build.MANUFACTURER, Build.MODEL)).append(", Android ").append(Build.VERSION.RELEASE)
@@ -481,7 +491,7 @@ public class LauncherActivity extends AppCompatActivity {
               .append("virpipe".equals(Prefs.mesaDriver) ? "on the GPU through Android's GLES (virgl)" : "on the CPU (llvmpipe), slow")
               .append("; ").append(Runtime.getRuntime().availableProcessors()).append(" CPU cores\n");
         else
-            sb.append(adreno ? "GPU: Qualcomm Adreno, supported; " + driver + "\n"
+            sb.append(adreno ? "GPU: Qualcomm " + adrenoName() + ", supported; " + driver + "\n"
                              : "GPU: not a Qualcomm Adreno: BAR's graphics will not work on this phone\n");
         StatFs st = new StatFs(getFilesDir().getAbsolutePath());
         // (one decimal: "75.85 GB" and "6.91 GB" said more than a player reads there; downloads keep two, Downloader.human)
