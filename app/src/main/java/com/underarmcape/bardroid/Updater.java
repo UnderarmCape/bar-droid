@@ -226,12 +226,14 @@ public final class Updater {
                     result = "BAR's current version failed here before; kept the last good one";
                 } else {
                     boolean ok = target != null;
+                    String engineBefore = engine;
+                    Map<String, String> before = localMd5s(tags);
                     if (ok && !target[0].equals(engine)) {
                         ok = installEngine(engine, target[0], target[1], st);
                         if (ok) engine = target[0];
                     }
                     for (String t : tags) { if (cancelled) throw new InterruptedException(); ok &= updateTag(t, remote.get(t), engine, st); }
-                    result = ok ? "up to date" : "not everything updated, see log";
+                    result = ok ? updatedNote(!engine.equals(engineBefore), before, localMd5s(tags)) : "not everything updated, see log";
                 }
             // (the launcher's status line after "Last check <date>": "BAR's launcher config not reachable: started what
             // is installed" wrapped over three lines on an upright phone, at every start away from a network; the
@@ -572,6 +574,29 @@ public final class Updater {
             if (e != null && e.length == 2) return e;
         }
         return null;
+    }
+
+    /**
+     * The check's word for the launcher: "up to date", or what it just updated ("updated: lobby"). It said "up to date"
+     * right after BAR's new lobby came down too (Install / Update on the dev phone, Chobby test-4679 -> test-4680,
+     * 2026-11-19).
+     */
+    static String updatedNote(boolean engineChanged, Map<String, String> before, Map<String, String> after) {
+        // (engine, game, lobby in that order whatever the tags' order: "byar-chobby:" sorts before "byar:")
+        List<String> changed = new ArrayList<>(), others = new ArrayList<>();
+        boolean game = false, lobby = false;
+        for (Map.Entry<String, String> e : after.entrySet()) {
+            if (java.util.Objects.equals(before.get(e.getKey()), e.getValue())) continue;
+            String t = e.getKey();
+            if (t.startsWith("byar-chobby:")) lobby = true;
+            else if (t.startsWith("byar:")) game = true;
+            else others.add(t);
+        }
+        if (engineChanged) changed.add("engine");
+        if (game) changed.add("game");
+        if (lobby) changed.add("lobby");
+        changed.addAll(others);
+        return changed.isEmpty() ? "up to date" : "updated: " + String.join(", ", changed);
     }
 
     private Map<String, String> localMd5s(List<String> tags) {

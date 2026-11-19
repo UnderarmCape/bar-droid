@@ -214,6 +214,16 @@ public final class UpdaterTest {
         String online = "Nov 11 10:10 (no answer from BAR)", local = "Nov 11 10:22 (" + Updater.NOT_CHECKED + ")";
         check("last check: a game start that did not go online keeps the last online check", online.equals(Updater.checkLine(online, false, local)));
         check("  an online one replaces it", "Nov 11 11:00 (up to date)".equals(Updater.checkLine(online, true, "Nov 11 11:00 (up to date)")));
+        // the check's word: what it just updated, or "up to date"
+        java.util.Map<String, String> was = new java.util.TreeMap<>(), got = new java.util.TreeMap<>();
+        was.put("byar:test", MD5_A); was.put("byar-chobby:test", MD5_A);
+        got.putAll(was);
+        check("updated note: nothing new: up to date", "up to date".equals(Updater.updatedNote(false, was, got)));
+        got.put("byar-chobby:test", MD5_B);
+        check("  a new lobby: updated: lobby", "updated: lobby".equals(Updater.updatedNote(false, was, got)));
+        got.put("byar:test", MD5_B);
+        check("  a new engine, game and lobby: all three, the engine first",
+                "updated: engine, game, lobby".equals(Updater.updatedNote(true, was, got)));
         check("  none yet: the start's own", local.equals(Updater.checkLine(null, false, local)));
 
         // the launcher's game version line (Updater.gameRelease on the rapid name the start's check keeps)
