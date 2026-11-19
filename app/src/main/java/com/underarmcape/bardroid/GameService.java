@@ -215,6 +215,8 @@ public class GameService extends Service {
     private volatile boolean closingGently;
     /** The engine plays a replay (its "ReadDataFromDemo"), not a game it records ("recording demo to"). */
     private volatile boolean playingReplay;
+    /** A game records its replay ("recording demo to"); not in BAR's lobby with no game (its widget's load clears it). */
+    private volatile boolean recording;
     /** When the game (or the lobby) last finished loading, epoch ms; 0 while loading: the notification's running time. */
     private volatile long upSince;
     private void closeGently() {
@@ -227,7 +229,8 @@ public class GameService extends Service {
         if (!Proc.enginePids().isEmpty()) {
             // (still loading: no game in it yet, its replay a header only; "saving the replay" over the loading screen,
             // dev phone 2026-11-18; and no quit waited for, below)
-            setStatus(loading || playingReplay ? "closing" : "closing: saving the replay");
+            // (and in BAR's lobby with no game: nothing recorded, so no replay to save)
+            setStatus(loading || playingReplay || !recording ? "closing" : "closing: saving the replay");
             // (setStatus leaves the notification once closing: it said "Skirmish running", Stop and all, for the
             // quit's seconds after a swipe or a Stop; dev phone 2026-11-18)
             NotificationManager nm = getSystemService(NotificationManager.class);
@@ -448,6 +451,7 @@ public class GameService extends Service {
                         loading = true;
                         upSince = 0;
                         playingReplay = false;
+                        recording = false;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
                         boolean[] hangLogged = {false};
@@ -459,7 +463,9 @@ public class GameService extends Service {
                             }
                             // (a replay watched records nothing: the quit's status says no "saving the replay" then)
                             if (line.contains("ReadDataFromDemo")) playingReplay = true;
-                            else if (line.contains("recording demo to")) playingReplay = false;
+                            else if (line.contains("recording demo to")) { playingReplay = false; recording = true; }
+                            // (back in BAR's lobby, its menu loaded again: no game recording)
+                            if (line.contains("[LuaMenu] Loading") && line.contains("BAR Droid lobby touch")) recording = false;
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 upSince = System.currentTimeMillis();
