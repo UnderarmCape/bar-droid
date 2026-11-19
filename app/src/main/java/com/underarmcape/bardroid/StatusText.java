@@ -15,7 +15,19 @@ final class StatusText {
      * keeps its word: its loading also counts a game started from it.
      */
     static String forPlayers(String s, boolean loading) {
+        return forPlayers(s, loading, false, false);
+    }
+
+    /**
+     * The status as the notification's title: in BAR's lobby, a game or a replay it started says so ("Game running",
+     * "Replay loading"; it said "Lobby running" all through an online game, dev phone 2026-11-19), the lobby itself
+     * "Lobby running" (gameFromLobby: a game loaded in the lobby's engine and not left yet; replay: it plays a replay).
+     */
+    static String forPlayers(String s, boolean loading, boolean gameFromLobby, boolean replay) {
         String t = forPlayers(s);
+        if ("Lobby running".equals(t) && (gameFromLobby || replay)) {
+            return (replay ? "Replay" : "Game") + (loading ? " loading" : " running");
+        }
         if (loading && ("Skirmish running".equals(t) || "Benchmark running".equals(t))) {
             return t.replace(" running", " loading");
         }

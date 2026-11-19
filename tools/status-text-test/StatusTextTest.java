@@ -49,6 +49,22 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "loading \"" + c[0] + "\" -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[1] + "\")"));
         }
+        // ... and a game or replay the lobby started (status, loading, game from the lobby, replay)
+        Object[][] lobbyGames = {
+            { "running (lobby)", false, false, false, "Lobby running" },
+            { "running (lobby)", true, true, false, "Game loading" },
+            { "running (lobby)", false, true, false, "Game running" },
+            { "running (lobby)", true, false, true, "Replay loading" },
+            { "running (lobby)", false, true, true, "Replay running" },
+            { "running (skirmish)", false, true, false, "Skirmish running" },
+            { "closing: saving the replay", false, true, false, "Closing: saving the replay" },
+        };
+        for (Object[] c : lobbyGames) {
+            String got = StatusText.forPlayers((String) c[0], (Boolean) c[1], (Boolean) c[2], (Boolean) c[3]);
+            boolean ok = got.equals(c[4]);
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "lobby game " + c[0] + " " + c[1] + c[2] + c[3] + " -> \"" + got + "\"" + (ok ? "" : " (want \"" + c[4] + "\")"));
+        }
         // StatusText.isResultNote: the launcher's note in its own colour (a result) or in amber (a warning)
         Object[][] notes = {
             { "GL check: FD740, OpenGL 4.3, Mesa 27.0.0-devel", true },

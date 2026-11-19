@@ -217,6 +217,10 @@ public class GameService extends Service {
     private volatile boolean playingReplay;
     /** A game records its replay ("recording demo to"); not in BAR's lobby with no game (its widget's load clears it). */
     private volatile boolean recording;
+    /** A game or replay loaded in this engine ("creating LoadScreen") and not left: the lobby's games end with the
+     *  engine's "[SpringApp::Reload]" back to its menu, which stays loaded (no "[LuaMenu] Loading" again; dev phone,
+     *  a skirmish started from the lobby and left by Leave Battle, 2026-11-19). The notification's title. */
+    private volatile boolean inGame;
     /** When the game (or the lobby) last finished loading, epoch ms; 0 while loading: the notification's running time. */
     private volatile long upSince;
     private void closeGently() {
@@ -452,6 +456,7 @@ public class GameService extends Service {
                         upSince = 0;
                         playingReplay = false;
                         recording = false;
+                        inGame = false;
                         DriverWatch driver = new DriverWatch();
                         driverLost = false;
                         boolean[] hangLogged = {false};
@@ -466,6 +471,16 @@ public class GameService extends Service {
                             else if (line.contains("recording demo to")) { playingReplay = false; recording = true; }
                             // (back in BAR's lobby, its menu loaded again: no game recording)
                             if (line.contains("[LuaMenu] Loading") && line.contains("BAR Droid lobby touch")) recording = false;
+                            // (a game the lobby started, left: the engine back to the lobby's menu, which stays loaded;
+                            // nothing recording there, the notification "Lobby running" again, its time from now)
+                            if (inGame && line.contains("[SpringApp::Reload]")) {
+                                inGame = false;
+                                recording = false;
+                                playingReplay = false;
+                                upSince = System.currentTimeMillis();
+                                Log.i("svc", "the game ended: back in the lobby");
+                                refreshNotification();
+                            }
                             if (loading && (line.contains("finished loading") || line.contains("BAR Droid lobby touch"))) {
                                 loading = false;
                                 upSince = System.currentTimeMillis();
@@ -494,8 +509,9 @@ public class GameService extends Service {
                                 if (!was) Log.i("svc", "a game loads (from the lobby): the loading screen's buttons again");
                                 loadReset(true);
                                 loading = true;
+                                inGame = true;
                                 upSince = 0;
-                                if (!was) refreshNotification();
+                                refreshNotification();   // ("Game loading" from the lobby; was it loading already)
                             }
                             if (loading) loadLine(line);
                             // (a replay that ends before its game began: its game closed by force before the engine
@@ -734,7 +750,7 @@ public class GameService extends Service {
                 .setSmallIcon(R.drawable.ic_notification)   // (the app's marker; it was Android's media "play" triangle)
                 // (loading as the launcher says it: the notification said "Skirmish running" over the loading screen,
                 // dev phone 2026-11-18; refreshNotification as the loading ends)
-                .setContentTitle(StatusText.forPlayers(status, loading))
+                .setContentTitle(StatusText.forPlayers(status, loading, inGame, playingReplay))
                 // (while a game runs, what the tap and the button do: the title alone left the line under it empty)
                 .setContentText(game ? "Tap to return to the game; Stop ends it" : null)
                 .setContentIntent(pi)
