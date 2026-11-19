@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [ ] **dock-phone-test: the dock's taps slow on the dev phone (2026-11-19 ~03:35)** (hardening; the Fold7 did not
+      answer, 5e9c1a03 waits). The regression run before the next Fold7 install: touch-phone-test and
+      lobby-phone-test ALL PASS on 5e9c1a03, but dock-phone-test failed twice the same way: a tap on the dock opened
+      its menu 4.2-4.3 s after the tap (the test allows 4 s), the tile's tap picked the building 3.3-3.4 s after (3 s),
+      so "no PLACE" and "the building dragged on into the dock: spot y -1". It passed at 00:20 (180070df's build). The
+      app's changes since touch none of that path (the share list's drawing, the notification's chronometer, the
+      bench note, the stop's status, and phone patches for the pre-game line, Statistics, Clear Map Marks, the replay
+      speed column and the vote panel). The dev phone had run games for hours: 1.5 GB in swap, 834 MB free, its perf
+      line thermal 0 (headroom 0.74), GPU 295 of 615 MHz, at rest afterwards CPU 42-44 C. Next: rerun on a rested
+      phone; still failing, bisect from 180070df before the Fold7 install.
 - [x] **BAR's panels with no IsAbove scanned; the vote panel on the screen upright** (hardening, 2026-11-19
       ~03:08-03:30, dev phone; the run's UI polish too). After the speed column (ccdfd0d8) BAR's 330 widgets of
       test-31992 scanned for a MousePress with no IsAbove: 66, most acting on the map (selection, formations, the
