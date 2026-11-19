@@ -765,7 +765,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       showOnceMore); two new patches, no new top-level local (BAR's file is at 200), the copy and its .patches made again
       from the dev phone's release (31992, 49ea8388). Dev phone: upright and sideways the X at the header's right end,
       clear of the "You" chip and the charts; a tap closed it, the game resumed, the commander still picked;
-      remake-check PASS (the phone's remake of all five copies equal to the shipped ones).
+      remake-check PASS (the phone's remake of all five copies equal to the shipped ones). The APK from d0dc8580 on the
+      Fold7 at 23:32.
 - [x] **Saving and loading a game by touch on the 2026.09.03 builds** (hardening, 2026-11-18 ~23:08-23:18, dev phone
       upright): the top bar's Save in a skirmish, "Game saved: the lobby's Load Game opens it" at once (LSH::SaveGame,
       Saves/20261118_231131.ssf); the save drops the selection for a quarter of a second and gives it back ("0 picked",
