@@ -768,7 +768,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       phone: a scratch widget printed the refusal 20 s into a skirmish and held the main thread 15 s: "closing it" 7 s
       after the refusal line, "engine exited (137)", the note (removed after). UI polish (the launcher after it): the
       hang dump's ~22 thread lines ("[hang] 20419 ? | ? | ? | ?") filled the log box under the note; they go to the
-      shared logs only (HangDump, Log.detail).
+      shared logs only (HangDump, Log.detail). touch-phone-test ALL PASS on the clean build; the APK from main
+      1bdd9823 went on the Fold7 at 13:55 (73 s; BAR closed), github-sync -Release.
 - [x] **Today's lobby code, its costs: lobby requests only off a game, the lobby's searches only after a press; a
       long Settings caption clear of its box** (hardening, 2026-11-19 ~13:20-13:40, dev phone upright; the Fold7 not
       played since 13:17). A review of the day's code: RtsTouch's lobby requests (lobbyAskWatch) started 3 s of checks
