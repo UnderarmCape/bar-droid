@@ -2004,6 +2004,20 @@ function upright.serverRows()
 	local done = upright.serverDone
 	if not done[panel] then
 		done[panel] = true
+		-- (the search box's hint, Chobby's "Search for lobby, map ...", cut at the box's edge upright, "Search for lobby,
+		-- ma"; dev phone screenshot 2026-11-19: "Search" where it does not fit)
+		local win = real(panel.parent)
+		for _, ch in ipairs(win and win.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "editbox" and type(c.hint) == "string" and c.hint ~= "Search" then
+				local f = c.hintFont or c.font
+				local ok, w = pcall(function() return f:GetTextWidth(c.hint) end)
+				if ok and tonumber(w) and w > (c.width or 0) - 12 then
+					c.hint = "Search"
+					c:Invalidate()
+				end
+			end
+		end
 		local rb, gb = panel._relativeBounds, panel._givenBounds
 		-- (the right side's 12 and 4 kept: the lobby's frame covers the list's last 16 there, the counts' last digit cut)
 		if gb.left == 12 and rb.right == 12 then -- (Chobby's ListWindow listPanel)

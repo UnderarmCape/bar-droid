@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The server list's search box with Android's keyboard; its hint "Search"** (hardening, 2026-11-19
+      ~17:13-17:25, dev phone upright, fake servers offline; the Fold7 still refused port 38389). A tap on the search
+      box brought up the keyboard, "duel" typed filtered the list to the one Duel server, Back put the keyboard away,
+      a tap on that row ringed it (the ring of 01712624 in a filtered list), the filter cleared after. UI polish (its
+      screenshots): the box's hint, Chobby's "Search for lobby, map ...", was cut at the box's edge upright, "Search
+      for lobby, ma"; "Search" where it does not fit (upright.serverRows). lobby-phone-test ALL PASS.
 - [x] **The picked server ringed in the server list** (Kailil, 2026-11-19 ~17:03, with a screenshot of the list, a
       server's details up and the Close / Previous / Next / Join bar: "I need a highlighted selection that tells me
       where the tap was or when I press next or prev, I want a clear selection of what server is being highlighted").
