@@ -48,6 +48,10 @@ public class GameService extends Service {
     /** BAR is loading: the engine started, the game ("finished loading") or the lobby (its BAR Droid widget) not up yet
      *  (GameActivity's Free memory button). */
     public static boolean loading() { return loading; }
+    /** The engine runs for the launcher's GL check, a few seconds with no game: GameActivity shows no Free memory then
+     *  (its button stood over the check's black screen, dev phone 2026-11-19). */
+    private static volatile boolean glCheck;
+    public static boolean glCheck() { return glCheck; }
     /** The shape launch-bar.sh was told at the engine's start (BARDROID_PORTRAIT; null: none yet): LoadPictures. */
     static volatile Boolean startedUpright;
     private static volatile boolean loading;
@@ -419,6 +423,7 @@ public class GameService extends Service {
             startActivity(ui);
 
             setStatus("launching engine (" + mode + ")");
+            glCheck = "glcheck".equals(mode);
             boolean upright = Prefs.startsUpright(this);   // (turning with the phone: as it is held now)
             startedUpright = upright;
             SplashPicture.write(this, paths.bar, Prefs.engineVersion, upright);   // (launch-bar.sh: SplashScreenDir)

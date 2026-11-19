@@ -762,7 +762,9 @@ public class GameActivity extends MainActivity {
         // (and gone once the app's game widget runs: BAR's own interface is up then, the faction picker, "Game starting
         // in 3...", while the engine still loads the AIs; the button lay over them for those seconds, dev phone 2026-11-08)
         // (and on the pre-game screen while a game hosted elsewhere is joined, Kailil 2026-11-11: updatePreGame)
+        // (not for the launcher's GL check: a few seconds of the engine's black screen, no game to make room for)
         boolean show = (GameService.loading() || GameService.preGame()) && !isInPictureInPictureMode()
+                && !GameService.glCheck()
                 && (touch == null || !touch.gameWidgetRunning())
                 && (catchupView == null || catchupView.getVisibility() != View.VISIBLE);
         if ((freeMemory.getVisibility() == View.VISIBLE) != show) freeMemory.setVisibility(show ? View.VISIBLE : View.GONE);
