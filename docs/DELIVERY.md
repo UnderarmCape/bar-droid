@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A replay benchmark's result in the launcher, in short** (hardening, 2026-11-19 ~01:13-01:34, dev phone). A
+      replay on the dev phone (the bench replay, speedmetal1v1-20261117 from game second 60 for 300 s): played through
+      at x1.00, 29-30 fps, up to 656 units, "[replaybench] done (300 s played): ..." in its log, the engine out with 0;
+      the game's log only BAR's own lines for that older game (unknown weapon tags, "legapollyon_heap"). But the
+      launcher said "Benchmark: no results in the game's log (it ended before them)": its note read only BAR's
+      scenario's "Sim ... ms per frame" lines. The parsing moved to StatusText.benchNote, which reads the replay's
+      summary too, as a result (not amber), in short (UI polish: the summary as logged ran over three lines of the
+      status; "Benchmark, replay: speed x1.00 (lowest x1.00), behind 0% of the time, up to 71 units", two), the whole
+      still in the log (8d776db6). status-text-test: 7 new cases pass (laptop JDK, no BAR). Dev phone: a 40 s replay
+      bench, the note as said in white. The APK from 8d776db6 on the Fold7 at 2026-11-19 01:34 (BAR not running).
 - [x] **The pad tests after the share list's change; the notification's running time** (hardening, 2026-11-19
       ~00:55-01:10, dev phone). pad-test and pad-test -Dgun ALL PASS; the game's log only BAR's and the engine's usual
       lines. UI polish from a screenshot of the notification shade during a skirmish: "Skirmish running 00:59", the
