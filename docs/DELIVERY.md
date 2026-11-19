@@ -756,12 +756,24 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
-- [ ] **Sideways, a drag from the map onto the void loses the point under the finger** (found 2026-11-18 ~21:20 by
+- [x] **Sideways, a drag from the map onto the void loses the point under the finger** (found 2026-11-18 ~21:20 by
       touch-phone-test sideways on the dev phone, BAR test-31992, the phone engine 2026.09.03): "a drag from the map
       onto the void holds the point under the finger (target 5606,1162 -> 5447,4511; grabbed 5606,1573, now under the
       finger 5570,2610): 1037 off after 3353", the same numbers three runs running, with this run's RtsTouch change
       taken out too (not it). Upright all of it passed at 15:35 and 18:45 (af1535eb's void plane, cs.py); the other two
-      void cases pass sideways. Next: the touch widget's plane for a drag that crosses the map's edge sideways.
+      void cases pass sideways. Fixed the next run (~21:35-22:05): measured with a scratch widget on the dev phone
+      sideways, the same drag as one pan line (the test's way) ended 71 off after 4617, as 24 lines one a frame (a
+      finger's way: RtsTouch panTo) 1402 off after 2077: line by line over the void each step was taken on the plane
+      at the camera's focus height of the moment, and the camera sinks as its target goes in (smooth-mesh tracking: 236
+      to 47 over that drag), so the far, shallow rows' steps shrank and the map fell behind the finger by two thirds. A
+      fixed height alone changed nothing (1413 off). Now bardroid_touch.lua chains a drag's lines (each from the last
+      one's end, within a second) and holds the map point its first line grabbed: with the finger over the void the
+      move left is set outright to bring that point under it from where the camera stands now, and applyTouch does so
+      again for half a second after the last line while the camera's height settles (not during a pinch, twist or tilt).
+      A drag that begins over the void keeps the old way (held at its first height, touch-phone-test's drag along the
+      edge went 500 off). Dev phone: both measured drags 0 off after 3424; touch-phone-test ALL PASS sideways (the drag
+      onto the void 0 off after 2318) and upright (0 off after 1911, it had been 367 off), dock-phone-test ALL PASS.
+      Not run: tools/touch-widget-test.ps1 on the laptop (Kailil at it).
 - [x] **The app's Settings used in a game; the pointer hidden after a tap on BAR's interface** (hardening,
       2026-11-18 ~21:00-21:30, dev phone sideways: it lies on its side now, "Turn with the phone" follows it). The top
       bar's Settings opened the app's copy sideways (BAR's sidebar, the list), the Interface tab, "Playerlist country
