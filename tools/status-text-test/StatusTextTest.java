@@ -25,6 +25,7 @@ public class StatusTextTest {
             { "install stopped", "Install stopped" },
             { "game ended with an error (3)", "Game ended with an error (3)" },
             { "closing: saving the replay", "Closing: saving the replay" },   // (Stop or a swipe: GameService.closeGently)
+            { "closing", "Closing" },   // (the same while the game still loads: no replay to speak of)
             { "", "" },
         };
         int failed = 0;

@@ -204,6 +204,8 @@ public class GameService extends Service {
      * a long game's replay is compressed as it ends too. Nothing is on the screen meanwhile.
      */
     private static final long ENGINE_QUIT_MS = 20000;
+    /** After that, how long launch-bar.sh has to end by itself (its checks and the infolog's copy: well under a second). */
+    private static final long SCRIPT_END_MS = 5000;
 
     /**
      * The player's Stop or swipe: the engine asked to quit first, so the game's replay is written (Proc.endEngine; a
@@ -219,15 +221,30 @@ public class GameService extends Service {
         // (the launcher said "Skirmish running" for the 5 s of the quit, BAR's quit dialog flashing in its picture-in-
         // picture: the Stop looked untaken; dev phone 2026-11-18)
         if (!Proc.enginePids().isEmpty()) {
-            setStatus("closing: saving the replay");
+            // (still loading: no game in it yet, its replay a header only; "saving the replay" over the loading screen,
+            // dev phone 2026-11-18; and no quit waited for, below)
+            setStatus(loading ? "closing" : "closing: saving the replay");
             // (setStatus leaves the notification once closing: it said "Skirmish running", Stop and all, for the
             // quit's seconds after a swipe or a Stop; dev phone 2026-11-18)
             NotificationManager nm = getSystemService(NotificationManager.class);
             if (nm != null) nm.notify(1, notification(status));
         }
+        // (still loading: stopped at once, as before. The engine's quit waits for the loading's end, nothing to keep yet:
+        // a Stop over the loading screen took 10 s once and ran past the 20 s another time, a first start after an
+        // install; dev phone 2026-11-18)
+        boolean whileLoading = loading;
         Thread t = new Thread(() -> {
             try {
-                Proc.endEngine(ENGINE_QUIT_MS);
+                boolean quit = !whileLoading && Proc.endEngine(ENGINE_QUIT_MS);
+                // (and launch-bar.sh after the engine, its last seconds: the app's widgets' error lines to the launcher, the
+                // infolog's copy into logs/ for Share logs; killed with the engine, the Fold7's newest copy was of 11-10,
+                // every game since closed by a swipe or Stop; dev phone 2026-11-18)
+                Proc e = engine;
+                long until = android.os.SystemClock.elapsedRealtime() + SCRIPT_END_MS;
+                while (quit && e != null && e.isAlive() && android.os.SystemClock.elapsedRealtime() < until) {
+                    try { Thread.sleep(100); } catch (InterruptedException x) { Thread.currentThread().interrupt(); break; }
+                }
+                if (quit && e != null) Log.i("svc", e.isAlive() ? "launch-bar.sh still running: stopped" : "launch-bar.sh ended after the engine");
                 stopEverything();
                 close();
             } finally {
