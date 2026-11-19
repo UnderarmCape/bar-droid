@@ -764,7 +764,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       ends it at once). Now the status is "Closing: saving the replay" from the Stop (or swipe) to the end, and a Stop
       meanwhile is ignored (`GameService.closeGently`). Dev phone: the launcher read "Closing: saving the replay", a
       second Stop 2 s in did nothing, quit in 5333 ms, the replay 15545 bytes, then "Ready"; status-text-test ALL PASS
-      (its new case).
+      (its new case). The APK from 879ef763 on the Fold7 at 20:35.
 - [x] **The Replays tab after the replay fix; the lobby's speak-to-chat arrows** (hardening, 2026-11-18 ~20:10-20:25,
       dev phone, the lobby offline, never logged in). The Replays tab upright: the two games swiped away on the new
       build listed with their length ("1 minute") and Start lit (this engine); empty replays never reach it
