@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **VoiceChat read over for the lobby's long press; every lobby tab walked; "(Requires login)" readable**
+      (hardening, 2026-11-19 ~15:22-15:35, dev phone upright, offline lobby; the Fold7 still refused port 38389).
+      VoiceChat.start while it listens cancels (a toggle, as the three-finger tap): a second long press on a chat's
+      box stops listening, nothing new; voice-chat-test (the laptop's pure-Java one) ALL PASS. All three grid pages
+      opened one by one (Scenarios, Settings, Friends, Parties, Load Game, Downloads, Links, the third page): no error
+      in infolog.txt. UI polish (their screenshots): Friends and Parties offline showed Chobby's "(Requires login)" in
+      its smallest grey font in the corner of an empty panel the screen's height; now in font 3, the title's size
+      (upright.loginNotes, looked for only after a press). On the way: an install over a running lobby left Android's
+      home in front of the launcher started right after; Stop BAR before an install on the dev phone.
 - [x] **The share list's code read over; the list at least 0.92 opaque** (hardening, 2026-11-19 ~15:11-15:20, dev
       phone upright; the Fold7 still refused port 38389). bardroid_pad.lua's share list and the dock's giving read
       over (the tax and storage-room arithmetic, the teammates' list with the dead numbered and anonymous mode, the

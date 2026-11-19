@@ -1827,6 +1827,46 @@ function upright.saveRows()
 	end)
 end
 
+-- Chobby's "(Requires login)" over the Friends and Parties panels offline (friend_list_window.lua, party_window.lua:
+-- its smallest font, grey, under the title): a speck in the corner of an empty panel the screen's height (dev phone
+-- screenshots 2026-11-19); in font 3. Both ways up; looked for only a few seconds after a press (tabWake), each label
+-- once (Chobby makes each window once).
+function upright.loginNotes()
+	local config = WG.Chobby and WG.Chobby.Configuration
+	if not (config and config.GetFont and tabWake.at and Spring.DiffTimers(Spring.GetTimer(), tabWake.at) < 4) then
+		return
+	end
+	upright.loginDone = upright.loginDone or setmetatable({}, { __mode = "k" })
+	local done, n = upright.loginDone, 0
+	local function walk(o, depth)
+		if not o or depth > 8 or o.disposed or o.visible == false then
+			return
+		end
+		for _, ch in ipairs(o.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "label" and type(c.caption) == "string"
+				and c.caption:find("(Requires login)", 1, true) then
+				if not done[c] then
+					done[c] = true
+					local f = config:GetFont(3)
+					c.objectOverrideFont, c.font = f, f -- (Chobby's shared fonts: never disposed with it)
+					c:UpdateLayout()
+					c:Invalidate()
+					n = n + 1
+				end
+			elseif c then
+				walk(c, depth + 1)
+			end
+		end
+	end
+	for _, name in ipairs({ "holder_mainWindow", "mainWindow_mainContent", "holder_submenuWindow" }) do
+		walk(real(chobbyObject(name)), 0)
+	end
+	if n > 0 then
+		Spring.Echo("[bardroid-lobby] \"(Requires login)\" in a larger size") -- (tools)
+	end
+end
+
 -- Chobby's server list (battle_list_window.lua MakeJoinBattle; Kailil, 2026-11-19, upright on the Fold7: "Can you remove
 -- the padding when on the server browser so there's more room. Because the player numbers saying if its x/16 players
 -- gets cut off"): a row's players right-aligned at its end, the average rank's icon at 90 % of the row and the lock at
@@ -2640,6 +2680,7 @@ local function uprightUpdate(now)
 		upright.downloadRows() -- (both ways up)
 		upright.saveRows() -- (both ways up)
 		upright.serverRows() -- (both ways up)
+		upright.loginNotes() -- (both ways up)
 	end
 	-- (sideways: the column, upright.side; the upright layouts of the battle room, a scenario and Keys upright only)
 	uprightSet(shown, screen0.height <= screen0.width * UPRIGHT)
