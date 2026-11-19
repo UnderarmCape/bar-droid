@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The phone tests on 45053eba; the spawn order's panel on the screen upright** (hardening, 2026-11-19
+      ~04:40-04:55, dev phone). dock-phone-test, touch-phone-test and pad-test ALL PASS on 45053eba (the patches since
+      the last full pass: the pre-game line, Clear Map Marks, the speed column, the vote panel, the Ready button). In
+      team games with a draft spawn order BAR's draft pre-game draws its "Team placement" panel from 78 % of the
+      screen's width, as wide as its names or the Ready button: upright on a phone past the right edge, wider still
+      with the larger button. phone-widget-gui_pregameui_draft.lua.patch moves it left until it ends on the screen, the
+      button under it as BAR has it (92f3bfea; the patch applies to test-31992's file, luacheck clean). Only human
+      teammates fill it (a 2v2 from the lobby with an AI teammate drew none: the Ready button at its own place, as
+      before), so it shows in online games only: not yet seen in a game, for Kailil's next online team game. The
+      Fold7 did not answer.
 - [x] **BAR's Ready button a finger's height** (hardening, 2026-11-19 ~04:22-04:40, dev phone upright, a skirmish
       started from the lobby offline, the login wait removed after; the run's UI polish too). The pre-game's Ready /
       Lock button, which every online game asks to be tapped, is 40 high and its words 24 times BAR's interface scale:
