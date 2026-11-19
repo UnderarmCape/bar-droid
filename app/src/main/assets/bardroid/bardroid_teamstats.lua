@@ -770,6 +770,13 @@ local function setLayout()
 	metrics.statFs = mathFloor(metrics.rowFs * 0.92)
 	metrics.catRowHeight = mathFloor(29 * s)
 	metrics.catFs = mathFloor(metrics.catRowHeight * 0.55 * 0.85)
+	-- BAR Droid: upright the menu's rows (Summary, Overview, Flow ...) a finger's height, their words a little larger: at
+	-- 29 * s they were about 39 pixels apart, 2 mm on the dev phone (screenshot 2026-11-19); where the panes run short of
+	-- room they scroll (sidebar.fit)
+	if vsx < vsy then
+		metrics.catRowHeight = math.max(metrics.catRowHeight, mathFloor(vsx * 0.055))
+		metrics.catFs = mathFloor(metrics.catFs * 1.15)
+	end
 	metrics.dividerH = mathFloor(14 * s)
 	metrics.sectionH = mathFloor(26 * s)
 	metrics.islandGap = mathFloor(7 * s)

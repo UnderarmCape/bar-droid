@@ -244,6 +244,19 @@ graphs = metrics.droidGraphsModule().new(model.pageContext({
 	end
 	-- A press on a top bar button is the top bar's to handle: it closes the open windows
 '''),
+    ('''	metrics.catRowHeight = mathFloor(29 * s)
+	metrics.catFs = mathFloor(metrics.catRowHeight * 0.55 * 0.85)
+''',
+     '''	metrics.catRowHeight = mathFloor(29 * s)
+	metrics.catFs = mathFloor(metrics.catRowHeight * 0.55 * 0.85)
+	-- BAR Droid: upright the menu's rows (Summary, Overview, Flow ...) a finger's height, their words a little larger: at
+	-- 29 * s they were about 39 pixels apart, 2 mm on the dev phone (screenshot 2026-11-19); where the panes run short of
+	-- room they scroll (sidebar.fit)
+	if vsx < vsy then
+		metrics.catRowHeight = math.max(metrics.catRowHeight, mathFloor(vsx * 0.055))
+		metrics.catFs = mathFloor(metrics.catFs * 1.15)
+	end
+'''),
     ('''function widget:GetInfo()''',
      '''-- BAR Droid: a release without the model this copy is made on (a replay of an older BAR release plays its own files):
 -- nothing registered, so the handler loads BAR's own TeamStats instead (this copy's replaces never takes its place);
