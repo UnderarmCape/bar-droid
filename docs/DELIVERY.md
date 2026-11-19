@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The pad tests after the share list's change; the notification's running time** (hardening, 2026-11-19
+      ~00:55-01:10, dev phone). pad-test and pad-test -Dgun ALL PASS; the game's log only BAR's and the engine's usual
+      lines. UI polish from a screenshot of the notification shade during a skirmish: "Skirmish running 00:59", the
+      time it was posted. While a game (or the lobby) runs it now counts how long since it finished loading (Android's
+      chronometer: "Skirmish running 00:29", counting); loading, the posted time as before (GameService upSince,
+      f2ecffb9). Dev phone: both screenshots as said. (The sideways build grid's gold "more rows" chevron overlaps the
+      tile above by a few pixels: its placement of 2026-11-15, left.) The APK from f2ecffb9 on the Fold7 at 2026-11-19
+      01:10 (BAR not running).
 - [x] **The share list reviewed; A and GIVE dimmed while A can give nothing** (hardening, 2026-11-19 ~00:43-00:53,
       dev phone). The share list's code read over (bardroid_pad.lua: teammates, the rules for away and tax, the
       amount up to the teammate's share slider, the dock's giving): nothing wrong found; BAR's own idle-players gadget
