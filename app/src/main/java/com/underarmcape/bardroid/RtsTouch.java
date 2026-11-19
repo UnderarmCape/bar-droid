@@ -963,17 +963,21 @@ final class RtsTouch {
         }
         // (where the finger let go: on the dock the pointer rests hidden, showCursor; the camera pad is on the dock and
         // keeps no curX of its own)
+        // (a pan leaves the pointer where the finger came down, the camera moved under it: it is looked at there, not
+        // where the finger let go; a pan from the replay's speed column left the arrow over its buttons, the look at the
+        // lift's place never answered, dev phone sideways 2026-11-19)
+        float lookX = state == State.PAN ? downX : curX, lookY = state == State.PAN ? downY : curY;
         Dock endDock = dock();
-        cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(curX), toY(curY))
-                && !(endDock.map != null && inside(endDock.map, toX(curX), toY(curY)));
+        cursorOnDock = state == State.PAD || endDock != null && inside(endDock.all, toX(lookX), toY(lookY))
+                && !(endDock.map != null && inside(endDock.map, toX(lookX), toY(lookY)));
         // (and on BAR's own interface, its windows and panels by the game widget's fresh answer: the arrow stood where
         // the last tap was, over Settings' tabs and switches and on the top bar, dev phone screenshots 2026-11-18; on the
         // map it shows, BAR's command cursor)
         if (!cursorOnDock && System.currentTimeMillis() - hoverFile.lastModified() <= HOVER_STALE_MS) {
-            int h = hoverAt(curX, curY);
+            int h = hoverAt(lookX, lookY);
             if (h == HOVER_INTERFACE || h == HOVER_SCROLL || h == HOVER_TAP) cursorOnDock = true;
             else if (h == HOVER_UNKNOWN) {   // (the widget answers for the pointer's new place a frame or so later)
-                upX = curX; upY = curY; upLooks = 0;
+                upX = lookX; upY = lookY; upLooks = 0;
                 ui.postDelayed(cursorOnInterface, CURSOR_LOOK_MS);
             }
         }
