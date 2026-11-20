@@ -32,6 +32,44 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 
 ## Backlog (in order)
 
+### Kailil's queue (2026-11-20 ~04:30, his message): before everything else, in this order
+Each done in small tested commits on the dev phone, then the Fold7 (as the 2026-11-10 queue below). Then (his next
+message): "After you build all that, conduct hardening loops on those systems over and over and all the other new
+systems we added yesterday" (2026-11-19's: the one-finger camera, the lobby upright, Statistics upright, the replay
+speed column, Settings' search field, Load Game and Replays over a game, the keyboard and speak to chat in the lobby's
+boxes, the GPU driver's fault closing a frozen game).
+- [x] **Line and Border in the build placement menu**: "When i attempt too hold tap after selecting line or border, it
+      doesn't behave properly." (2026-11-20 ~04:30-04:44, dev phone, BAR test-32018.) With a shape other than ONE
+      picked, a press held on the map went on to RtsTouch's right button, a right click, and BAR put the building away;
+      PLACE then had nothing. Now the hold starts that shape there, held as ONE's GRID always was: BAR's build drag with
+      the shape's keys (Shift a line, Shift+Alt a grid, Shift+Alt+Ctrl a border), the finger's way its far corner, the
+      dock lighting the shape, PLACE lets go (a plain drag with a shape picked, BAR's own drag, as before).
+      dock-phone-test's new cases (LINE, then BORDER: picked, a press held on open ground 0.8 s, dragged 220 px; held?
+      then PLACE): on the old build all four FAIL ("picked nil, button false", nothing queued), on e3d35199 ALL PASS
+      with the rest: the line 2 Solar Collectors, the border 4. The APK went on the Fold7 at 04:44 (no game running;
+      --no-streaming, 123 s), github-sync -Release.
+- [ ] **Back in a game is contextual**: from anywhere (the build place menu, a factory's queue, the presets, ...) Android's
+      Back clears the unit selection so the bottom dock's own row shows (Commander, base, pings ...); pressed again
+      there, BAR's leave-battle path with its "are you sure" question.
+- [ ] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the
+      formation growing however many are built.
+- [ ] **Strafe starts at once**: units that arrive at different times begin the strafing repeat as each arrives, not
+      once the whole formation is there.
+- [ ] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
+      the like).
+- [ ] **"Unit under attack" in the last pings**, so a tap goes to the danger.
+- [ ] **Walls around a placed sentry**: a toggle beside the place button's group rotate, on by default: placing a sentry
+      (any builder) also builds a block of walls around it; T1 walls for T1 sentries, T2 for T2 (built before the
+      sentry); a T2 sentry that cannot shoot over a T2 wall gets T1 walls, ordered with INSERT from the T1 builder
+      guarding the T2 builder or the T1-capable builder nearest. No walls for AA, sea sentries (torpedo launchers,
+      coastal torpedo launchers), tactical missile launchers, nuke and anti-nuke silos, long range plasma cannons or
+      anything as tall, jammers or radars that count as sentries. "Be smart about this system."
+- [ ] **The Commander in D-gun mode**: measure whether he walks slower than on a plain move over a medium distance; if
+      not, nothing to do.
+- [ ] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a
+      formation) to put the app's systems to the test, run as often as the data needs.
+- [ ] **The transfer button more pronounced.**
+
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
 Automation is Kailil's and BAR's developers' decision (Kailil, 2026-11-10: touch players must compete fairly with
 keyboard and mouse, "The devs theories consist of automating micro movements ... the decision on balance is up to us"):
