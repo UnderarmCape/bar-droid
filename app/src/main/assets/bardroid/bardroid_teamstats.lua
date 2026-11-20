@@ -1,5 +1,5 @@
 -- BAR Droid team stats: BAR's own TeamStats panel (luaui/Widgets/gui_teamstats.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
+-- Beyond All Reason test-32018-ad135b9, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: the game-end recap and graph fit
 -- upright): on a screen taller than wide the panel is the screen's width, its words and rows at a scale that keeps its
 -- columns in it, and as tall as the game between BAR's top bar and the app's portrait dock. Made by
 -- tools/make-teamstats.py; do not edit by hand, run it again. launch-bar.sh runs it instead of BAR's TeamStats; when an
@@ -2486,10 +2486,37 @@ end
 -- On the way, BAR's chart class (luaui/Include/graph.lua) draws a chart's title wider than its chart smaller, down to
 -- 70 %, then cut as before (upright three across "Activity - Actions per minute" ran past its chart's edge, dev phone
 -- 2026-11-19); and a percent axis over a small range prints its ticks with one decimal (BAR's whole ones read "0% 1%
--- 1%" for 0 to 1 %). Either left as BAR has it where its text is not found.
+-- 1%" for 0 to 1 %). Either left as BAR has it where its text is not found. And a time under the x axis that would run
+-- past the chart's right edge is moved in to end at it (centred on its tick, the last one at the plot's end: "0:30"
+-- cut to "0:3" in the right column, dev phone 2026-11-19).
 metrics.droidFitTitles = function(Graph)
 	if type(Graph) ~= "table" or type(Graph.drawLegend) ~= "function" or Graph.droidFitTitles then
 		return Graph
+	end
+	local drawGrid = type(Graph.drawGrid) == "function" and Graph.drawGrid
+	if drawGrid then
+		Graph.drawGrid = function(self, ...)
+			local cfg = self.cfg
+			local edge = cfg and tonumber(cfg.x) and tonumber(cfg.width) and cfg.x + cfg.width - 2
+			if not edge then
+				return drawGrid(self, ...)
+			end
+			local own, text = rawget(self, "text"), self.text
+			self.text = function(g, str, x, y, opts, size, asName)
+				if opts == "oc" and type(str) == "string" then
+					local half = g:textWidth(str, size) / 2
+					if x + half > edge then
+						x = math.floor(edge - half)
+					end
+				end
+				return text(g, str, x, y, opts, size, asName)
+			end
+			local ok, err = pcall(drawGrid, self, ...)
+			self.text = own
+			if not ok then
+				error(err, 0)
+			end
+		end
 	end
 	local drawLegend = Graph.drawLegend
 	Graph.droidFitTitles = true

@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The dev phone on BAR test-32018; the copies remade for it; Statistics' last time label whole** (hardening,
+      2026-11-19 ~20:52-21:10). The Fold7 (port 44111) not played since the 20:51 install. His 17:08 game's 2 min 48 s
+      load was the other players: the phone loaded in ~30 s (its "[Game::Load]" at 5:04 of the log, the last player's
+      at 5:56). His online game ran BAR test-32010 while the dev phone had test-31992, so the day's remake-check had
+      checked an older BAR: Install / Update on the dev phone took it to test-32018-ad135b9. remake-check then failed
+      all five copies at their header only (the release's name; BAR's five files unchanged, same hashes), the phone
+      patches PASS; the five remade with make-*.py --adb (one header line each), remake-check PASS on 32018. UI polish
+      (its screenshots, a skirmish on 32018): Statistics' time labels are centred on their ticks, so at a game time on
+      the axis's end the right column's "0:30" was cut to "0:3" at the window's edge; the Graphs hook of the copy now
+      also moves a time label that would pass its chart's right edge in to end at it (graph.lua drawGrid,
+      tools/make-teamstats.py). Dev phone: Flow and Combat's right column "0:30" whole, no errors; remake-check PASS.
 - [x] **The Fold7 on today's build again** (2026-11-19 20:51): Kailil gave its new wireless debugging address at
       ~20:48, 192.168.143.159:44111 (a network the laptop is not on: timed out); the port over Tailscale,
       100.103.32.18:44111, answered (SM-F966N). His logs since the 13:55 install: an online game 17:08-17:38 (joined,
