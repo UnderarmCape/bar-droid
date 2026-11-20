@@ -99,6 +99,16 @@ public final class Log {
         return sb.toString();
     }
 
+    /** The last n lines kept, as dump() (the launcher's log box: a few hundred lines laid out, not MAX_LINES). */
+    public static synchronized String tail(int n) {
+        StringBuilder sb = new StringBuilder();
+        int skip = Math.max(0, lines.size() - n), i = 0;
+        for (String l : lines) {
+            if (i++ >= skip) sb.append(l).append('\n');
+        }
+        return sb.toString();
+    }
+
     public static synchronized void addListener(Listener l) { listeners.add(l); }
     public static synchronized void removeListener(Listener l) { listeners.remove(l); }
 }

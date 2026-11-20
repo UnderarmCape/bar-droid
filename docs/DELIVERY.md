@@ -756,6 +756,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The launcher stopped answering in front of a running game: its log box laid out again at every line**
+      (hardening, 2026-11-19 ~23:44-23:55, dev phone; the Fold7 not played since 23:11). Opening the launcher found
+      Android's "Beyond All Reason isn't responding" over it. Its reports (dumpsys dropbox data_app_anr, three: 22:22 and
+      22:33 the night before, 23:39 tonight, each "Broadcast of Intent com.termux.x11.ACTION_STOP" that could not be
+      handled in time) had the main thread 92 s of CPU in LauncherActivity.appendLog -> setLog -> TextView.setText
+      -> DynamicLayout.reflow. The cause: Log keeps 4000 lines; the box was made again from
+      all of them once its laid-out rows (wrapped lines counted) passed 2500, which they still did after, so each line
+      that followed laid the whole spannable box out again. With the launcher in front of a game (the game in its
+      picture-in-picture window, as at 23:38), a few hundred engine lines a second kept the main thread, which the game's
+      screen shares, busy; "Close app" on that dialog would have ended the game. Now the box holds 1500 lines at most,
+      cut back to Log's last 1000 (Log.tail), lines counted not rows, and the lines that come together go in as one
+      append; the box is made from Log's last lines each time the launcher is shown (it heard nothing while hidden).
+      Dev phone: Play vs AI, the launcher brought to the front at once and left there through the game's loading for
+      90 s: no new ANR (3 before, 3 after), the box filling and following with its indent, the launcher answering.
 - [x] **The camera knob in the layout editor, after the day's camera changes: as built** (hardening, 2026-11-19
       ~23:31-23:40, dev phone upright, BAR test-32018; the Fold7 not played since 23:11). One of his test's items,
       checked on the dev phone: /hud typed in the app's chat box opened the layout editor ("Camera knob" outlined, its

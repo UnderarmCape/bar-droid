@@ -34,7 +34,25 @@ public class LauncherActivity extends AppCompatActivity {
     private Button stopButton;
     private boolean logFollows = true;   // the newest line stays in view, unless the reader has scrolled back
     private final Handler handler = new Handler(Looper.getMainLooper());
-    private final Log.Listener logListener = line -> handler.post(() -> appendLog(line));
+    // The log box: the lines that arrive together go in as one append on the main thread (a game's engine writes
+    // hundreds a second while it loads), and the box holds LOG_BOX_MAX lines at most, cut back to the last LOG_BOX_KEEP.
+    // It was made again from all of Log's 4000 kept lines whenever its laid-out rows passed 2500, which they then
+    // still did: every line that followed laid the whole box out again, and with the launcher in front of a running
+    // game (its picture-in-picture window) the app stopped answering ("isn't responding", dev phone 2026-11-19 23:39:
+    // the main thread 92 s in TextView.setText). Lines are counted, not the box's wrapped rows.
+    private static final int LOG_BOX_MAX = 1500, LOG_BOX_KEEP = 1000;
+    private final StringBuilder pendingLog = new StringBuilder();
+    private boolean pendingSvc, logFlushPosted;
+    private int logLines;
+    private final Log.Listener logListener = line -> {
+        synchronized (pendingLog) {
+            pendingLog.append(line).append('\n');
+            if (line.contains(" [svc] ")) pendingSvc = true;
+            if (logFlushPosted) return;
+            logFlushPosted = true;
+        }
+        handler.post(this::flushLog);
+    };
     private final Runnable ticker = new Runnable() { @Override public void run() { refresh(); handler.postDelayed(this, 1500); } };
 
     @Override
@@ -99,7 +117,6 @@ public class LauncherActivity extends AppCompatActivity {
         explainSettings(findViewById(android.R.id.content), secondaryTextColor());
         GameService.noteLowMemoryExit(this);   // (also opened later than that: the long-press shortcut)
         deviceView.setText(deviceSummary());
-        setLog(Log.dump());
         // (not when Android restores the screen, as it does after ending the app for lack of memory: it hands back the
         // first intent, and the game or benchmark started all over again by itself; removeExtra does not outlive that)
         if (savedInstanceState == null) startFromIntent(getIntent());
@@ -304,6 +321,8 @@ public class LauncherActivity extends AppCompatActivity {
 
     @Override protected void onStart() {
         super.onStart();
+        // (the box from Log's last lines each time the launcher is shown: while it was hidden it heard none)
+        setLog(Log.tail(LOG_BOX_KEEP));
         Log.addListener(logListener);
         handler.post(ticker);
         mapCapLabel();   // (the maps' size now: a game since may have downloaded some, its start removed others)
@@ -493,15 +512,36 @@ public class LauncherActivity extends AppCompatActivity {
         s.setSpan(new android.text.style.LeadingMarginSpan.Standard(0, indent), 0, s.length(),
                 android.text.Spanned.SPAN_INCLUSIVE_INCLUSIVE);
         logView.setText(s, TextView.BufferType.EDITABLE);
+        logLines = lineCount(text);
     }
 
-    private void appendLog(String line) {
+    private static int lineCount(CharSequence text) {
+        int n = 0;
+        for (int i = 0; i < text.length(); i++) if (text.charAt(i) == '\n') n++;
+        return n;
+    }
+
+    private void flushLog() {
+        String text;
+        boolean svc;
+        synchronized (pendingLog) {
+            text = pendingLog.toString();
+            pendingLog.setLength(0);
+            svc = pendingSvc;
+            pendingSvc = false;
+            logFlushPosted = false;
+        }
+        if (text.isEmpty()) return;
         logFollows = logScroll.getScrollY() + logScroll.getHeight() >= logView.getHeight();
-        logView.append(line + "\n");
-        if (logView.getLineCount() > 2500) setLog(Log.dump());
+        int n = lineCount(text);
+        if (logLines + n > LOG_BOX_MAX) setLog(Log.tail(LOG_BOX_KEEP));   // (these lines are in Log's already)
+        else {
+            logView.append(text);
+            logLines += n;
+        }
         // (the service's own lines are its status: the status line follows at once, not at the next 1.5 s tick; it
         // still read "Ready" after Install / Update had begun)
-        if (line.contains(" [svc] ")) refresh();
+        if (svc) refresh();
     }
 
     /**
