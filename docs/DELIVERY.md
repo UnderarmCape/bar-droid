@@ -763,7 +763,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       Statistics open bardroid_camctl.txt still named them, and a drag on Statistics' scrollbar, where the zoom rail
       runs, zoomed the camera ("zoom" lines). Now hiddenNow also asks WG.teamstats and WG.missioninfo isvisible().
       Dev phone: Statistics open, the file "none", the same drag no zoom; closed, the knob and rails back;
-      dock-phone-test and touch-phone-test ALL PASS.
+      dock-phone-test and touch-phone-test ALL PASS. On the Fold7 at 22:19 (BAR not running): the APK from clean main
+      ef7bdde8; github-sync -Release.
 - [x] **BAR's quit screen: the camera knob and rails stand aside, its Quit button answers** (hardening, 2026-11-19
       ~21:38-21:55, dev phone upright, BAR test-32018; the Fold7 not played since 21:35). First the rest of the phone
       tests on 32018: pad-test -Dgun, -Chat and pace-test ALL PASS (the whole set green on it). Checked and not a
