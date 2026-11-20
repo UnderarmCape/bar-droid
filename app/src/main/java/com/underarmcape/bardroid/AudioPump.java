@@ -54,15 +54,17 @@ public final class AudioPump {
         try {
             if (!fifo.exists()) Os.mkfifo(fifo.getAbsolutePath(), OsConstants.S_IRUSR | OsConstants.S_IWUSR | OsConstants.S_IRGRP | OsConstants.S_IWGRP);
         } catch (Exception e) { Log.e("audio", "mkfifo failed", e); return; }
+        int failed = 0;
         while (running) {
             // Opening a FIFO for reading blocks until a writer appears; each writer (each OpenAL device) is a stream.
             try (DataInputStream in = new DataInputStream(new FileInputStream(fifo))) {
                 play(in);
             } catch (EOFException e) {
                 // the writer went away (game closed its sound device)
-            } catch (IOException e) {
+            } catch (IOException | RuntimeException e) {
+                // (RuntimeException too: AudioTrack's own, uncaught on this thread, ended the app's process mid-game)
                 if (!running) break;
-                Log.e("audio", "audio stream", e);
+                if (failed++ < 3) Log.e("audio", "audio stream", e);
                 try { Thread.sleep(250); } catch (InterruptedException ie) { break; }
             }
         }
@@ -143,12 +145,19 @@ public final class AudioPump {
         int mask = f.channels == 1 ? AudioFormat.CHANNEL_OUT_MONO : AudioFormat.CHANNEL_OUT_STEREO;
         try {
             int minBuf = AudioTrack.getMinBufferSize(f.rate, mask, encoding);
-            return new AudioTrack.Builder()
+            AudioTrack t = new AudioTrack.Builder()
                     .setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build())
                     .setAudioFormat(new AudioFormat.Builder().setEncoding(encoding).setSampleRate(f.rate).setChannelMask(mask).build())
                     .setBufferSizeInBytes(Math.max(minBuf, bufferBytes))
                     .setTransferMode(AudioTrack.MODE_STREAM)
                     .build();
+            // (a track Android could not set up throws at play(): drained and discarded instead)
+            if (t.getState() != AudioTrack.STATE_INITIALIZED) {
+                t.release();
+                Log.e("audio", "AudioTrack not set up; discarding game audio");
+                return null;
+            }
+            return t;
         } catch (Exception e) {
             // No audio output (e.g. an emulator started with -no-audio): keep draining the FIFO so the game never blocks.
             Log.e("audio", "no AudioTrack; discarding game audio", e);

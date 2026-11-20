@@ -121,6 +121,9 @@ final class LobbyBridge {
                     JSONObject msg = new JSONObject(line);
                     handle(msg.optString("name"), msg.optJSONObject("command"), out);
                 } catch (JSONException e) { Log.e("bridge", "not JSON: " + line); }
+                catch (RuntimeException e) {   // (uncaught on this thread it would end the app's process, the lobby with it)
+                    Log.e("bridge", "a lobby message failed: " + e);
+                }
             }
         } catch (IOException e) { Log.i("bridge", "lobby connection closed: " + e.getMessage()); }
     }
