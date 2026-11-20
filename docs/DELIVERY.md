@@ -756,6 +756,19 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The engine's output read on past a line whose handling throws** (hardening, 2026-11-20 ~01:26-01:40, dev
+      phone, BAR test-32018; the Fold7 not played since 01:01, its Android reports still none for the app). Proc
+      reviewed: its output reader caught only IOException, so a RuntimeException from a line's handling (Log's
+      listeners, GameService's long line callback) would end the reading for good; the pipe then fills and the engine
+      blocks at its next write: a frozen game with no error said anywhere. Now each line's handling is caught, the first
+      three failures logged ("a line's handling failed, reading on"), and the reading goes on. Dev phone: a temporary
+      throw on a marker line and a scratch widget (5 markers at frame 300, then 200 lines of 1 KB, then a last marker):
+      3 failures logged, all 200 lines and the last marker in launcher.log, the game running on (throw and widget
+      removed after). touch-phone-test ALL PASS on the clean build. The runs between 01:05 and 01:24 reviewed AudioPump,
+      PerfLog, SettingsMerge, KeyboardShortcuts, SplashPicture, LoadPictures, XServer, BuildMenuPatches and BarApp's
+      start: nothing to fix. No UI polish this run (the launcher's screens looked over, nothing out of place). The APK
+      from main 9119bd05 (phone engine phone-2026.09.03-83a8536d37) went on the Fold7 at 01:39 (no game running;
+      --no-streaming, 79 s), github-sync -Release.
 - [x] **The hang dump read before the driver's fault closes the game; the map hint in plainer words** (hardening,
       2026-11-20 ~00:47-01:01, dev phone, BAR test-32018; the Fold7 not played since 00:09, its Android reports still
       none for the app). HangDump reviewed: BAR's watchdog line started it on a thread of its own, and after the
