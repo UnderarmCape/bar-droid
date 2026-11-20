@@ -128,6 +128,18 @@ boxes, the GPU driver's fault closing a frozen game).
       the lobby's scale is 1.35, so taps are placed by the screen's width over Chili's). Nothing to fix; no UI polish
       due (its pictures: Replays, Load Game and the game after read right). The Fold7 timed out at 13:41 and 13:45
       (10060), 67b915ef not on it yet.
+- [x] **The one-finger camera tested by real drags** (hardening of 2026-11-19's system, 2026-11-20 14:12-14:20, dev
+      phone upright): tools/camctl-phone-test.ps1 (new): the knob (791,979 r 56), the zoom rail (x 880-936, y 834-1375)
+      and the turn rail (x 468-869) in RtsTouch's file; the knob dragged up: the camera's distance x1.11, down x0.90, no
+      turn; right: turned +0.11 rad, left -0.11, the distance kept; the zoom rail up x1.21 (as the knob's up); the turn
+      rail right -0.34 rad (the other way from the knob's, as Kailil asked); the zoom rail slow (2.4 s) x0.95, as far
+      fast (0.2 s) x0.56-0.58; a tap on the knob: the camera still, nothing picked; Settings open: the file "none", a
+      drag where the knob was: still; left-handed: the zoom rail x 0-56 and the knob on the left, a drag up it x1.20
+      (the setting put back). ALL PASS two runs. Nothing to fix; no UI polish due. Noted: the zoom rail runs along the
+      screen's edge (right, or left left-handed), where Android's back gesture starts under gesture navigation; the dev
+      phone uses the three buttons (navigation_mode 0) and the rail takes up-and-down drags, which the back gesture
+      (sideways) leaves alone, so nothing is changed without a finger on the Fold7: read its navigation_mode when it
+      answers, and if it is 2 (gestures) consider the view's system gesture exclusion for the rail.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
