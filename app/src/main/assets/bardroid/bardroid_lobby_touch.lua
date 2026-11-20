@@ -3807,6 +3807,55 @@ local function saveDates(o, depth)
 	end
 end
 
+-- Chobby's Load Game: a save of another engine (its Saves/<name>.lua's engineVersion, which Chobby compares with
+-- Engine.version before its popup below) cannot open on a phone, yet its Load was as green as the rest (dev phone,
+-- 2026-11-20: two 2026.07.04 saves among 2026.09.03 ones). Its Load greyed: the saves read as Chobby reads them, a row
+-- found by its date (Chobby's "DD/MM/YYYY\nHH:MM:SS" or the app's "YYYY-MM-DD\nHH:MM", saveDates), greyed only where
+-- every save of that minute is another engine's. Walked with saveDates.
+local saveEngine = { greyed = setmetatable({}, { __mode = "k" }) }
+local function saveEngineKeys()
+	local keys = {}
+	local ok, files = pcall(VFS.DirList, "Saves", "*.lua")
+	for _, path in ipairs(ok and files or {}) do
+		local okData, data = pcall(VFS.Include, path)
+		local d = okData and type(data) == "table" and data.date
+		if d and data.engineVersion then
+			local key = string.format("%04d%02d%02d%02d%02d", d.year or 0, d.month or 0, d.day or 0, d.hour or 0, d.min or 0)
+			-- (false: a save of this engine at that minute; the row then stays as it is)
+			keys[key] = keys[key] ~= false and data.engineVersion ~= Engine.version
+		end
+	end
+	return keys
+end
+local function saveEngineMarks(o, depth, keys)
+	if not o or o.disposed or depth > 40 then
+		return
+	end
+	if o.name == "saveDate" and type(o.text) == "string" then
+		local y, m, d, hh, mm = o.text:match("^(%d%d%d%d)%-(%d%d)%-(%d%d)\n(%d%d):(%d%d)")
+		if not y then
+			d, m, y, hh, mm = o.text:match("^(%d%d)/(%d%d)/(%d%d%d%d)\n(%d%d):(%d%d)")
+		end
+		local other = y and keys[y .. m .. d .. hh .. mm]
+		local row = real(o.parent)
+		for _, ch in ipairs(other and row and row.children or {}) do
+			local c = real(ch)
+			if c and c.classname == "action_button" and not saveEngine.greyed[c] then
+				saveEngine.greyed[c] = true
+				-- (the skin's foreground image, tinted by borderColor, is the green: backgroundColor alone left it green)
+				c.backgroundColor, c.focusColor = { 0.3, 0.3, 0.3, 1 }, { 0.42, 0.42, 0.42, 1 }
+				c.borderColor = { 0.42, 0.42, 0.42, 1 }
+				c.tooltip = "Saved with another engine version, which this phone cannot open"
+				c:Invalidate()
+				Spring.Echo("[bardroid-lobby] Load Game: a save of another engine, its Load greyed") -- (tools)
+			end
+		end
+	end
+	for _, c in ipairs(o.children or {}) do
+		saveEngineMarks(real(c), depth + 1, keys)
+	end
+end
+
 -- Chobby's Load Game, a save of another engine version: "it will be opened in a new window", and on a phone none opens
 -- (no second engine; LobbyBridge's toast gives the versions). Its popup says so instead (dev phone, 2026-11-17)
 local NEW_WINDOW = "uses a different engine, so it will be opened in a new window"
@@ -3860,6 +3909,7 @@ function widget:Update() -- (the lobby's Update has no frame time)
 			and not (replaysRow.datesAt and Spring.DiffTimers(now, replaysRow.datesAt) < 1) then
 			replaysRow.datesAt = now
 			saveDates(real(screen0), 0)
+			saveEngineMarks(real(screen0), 0, saveEngineKeys())
 		end
 	end
 	replaysAdded(now)

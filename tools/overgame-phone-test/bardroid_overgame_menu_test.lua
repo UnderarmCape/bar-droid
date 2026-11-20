@@ -295,6 +295,19 @@ local function step()
 			end
 		end
 		check("... each row's Load and Delete apart", rows >= 1 and apart == rows, string.format("%d of %d rows", apart, rows))
+		-- (the saves of another engine, which a phone cannot open: their Load greyed, as many as there are)
+		local other = 0
+		for _, path in ipairs(VFS.DirList("Saves", "*.lua") or {}) do
+			local ok, data = pcall(VFS.Include, path)
+			if ok and type(data) == "table" and data.engineVersion and data.engineVersion ~= Engine.version then
+				other = other + 1
+			end
+		end
+		local greyed = #findAll(function(o)
+			return o.classname == "action_button" and type(o.tooltip) == "string" and o.tooltip:find("another engine", 1, true)
+		end, true)
+		check("... the saves of another engine (" .. tostring(Engine.version) .. " here) with their Load greyed",
+			greyed == other, string.format("%d greyed, %d saves of another engine", greyed, other))
 		ask("shot", 1, 0, "drag")
 	elseif stage == "drag" then -- (a drag over the lobby: the game's camera under it must not move, the LuaUI widget)
 		local w = vsx()

@@ -41,6 +41,10 @@ must be killed. The phone itself recovers (the next start works).
 - 2026-11-20: 5 in 41 game starts (12 %), all 4-112 s into a game, 3 of 5 with the GPU at 615 MHz and ~65 % busy (no
   thermal cap). Tried to set it off on purpose: 591 unit types drawn for the first time in sight (1 in 7 games, that
   one before the first unit), and 360 camera jumps to never-drawn map areas (0 in 4 games): neither reproduces it.
+  Later that afternoon two in a row (15:45 and 15:47, the touch dock's test, 102 s and 115 s into each game, the
+  phone cool: thermal status 0, the chip at 37 °C), then none in the next six games. In both, a finger's held drag
+  for BAR's build ring (the dock test's BORDER) had come to nothing 5-20 s before the driver's first refusal, while
+  the same step passed in the clean runs: perhaps the GPU already stalling before Mesa says so, worth watching.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,

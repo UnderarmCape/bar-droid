@@ -193,6 +193,18 @@ boxes, the GPU driver's fault closing a frozen game).
       either. status-text-test ALL PASS with eight chat/engine line cases; driverwatch-phone-test ALL PASS twice;
       overgame-phone-test ALL PASS and its launcher.log as before ("loaded", "a game loads (from the lobby)",
       "loaded").
+- [x] **Round and round: the dock again at both shapes; Load Game's saves of another engine greyed** (hardening,
+      2026-11-20 15:43-16:16, dev phone). dock-phone-test: at 1080x1198 and upright both runs met the GPU driver's
+      real fault (Mesa's own lines; the guarded close still closed them, 7 s and 6 s after the refusal, with its
+      note), each after BORDER's held drag had failed; upright again ALL PASS (33), at 1080x1198 once 2 FAILED (the
+      GRID's far corner not held at the dock's edge, the held LINE's PLACE nothing queued; no driver fault) and then
+      ALL PASS (33): flaky, nothing in the day's app changes touches the dock (git diff since 728cbc77: the copies,
+      the lobby, DriverWatch, StatusText). factory-preset-test, types-phone-test ALL PASS. The two faults and the
+      failed drags before them in docs/research/mesa-kgsl-submit-deadlock.md. UI polish, the open item: Chobby's Load
+      Game showed a green Load on saves of another engine (two of 2026.07.04 among 2026.09.03 ones), which on a phone
+      only give a popup; now their Load is grey, with a tooltip (bardroid_lobby_touch.lua saveEngineMarks: the saves
+      read as Chobby reads them, a row found by its date, the engine compared as Chobby does; the skin's foreground,
+      tinted by borderColor, is the green). overgame-phone-test checks it: 2 greyed of 2, ALL PASS.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
