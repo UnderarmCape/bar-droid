@@ -224,7 +224,8 @@ boxes, the GPU driver's fault closing a frozen game).
       Android's 200 dp cap on exclusions does not apply. camctl-phone-test checks it: the window manager's exclusion
       (dumpsys window) covers the zoom rail to the last column; ALL PASS, and launcher.log shows the rects follow
       Settings (gone, back) and the left-handed side (x 0-67). The dev phone has three-button navigation, so the swipe
-      itself is Kailil's to feel on the Fold7 (nothing on the phone's settings changed).
+      itself is Kailil's to feel on the Fold7 (nothing on the phone's settings changed). On the Fold7 at 18:04
+      (aa59c6fb's build, BAR closed), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
