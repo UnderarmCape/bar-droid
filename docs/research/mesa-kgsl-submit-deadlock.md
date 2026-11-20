@@ -45,6 +45,10 @@ must be killed. The phone itself recovers (the next start works).
   phone cool: thermal status 0, the chip at 37 °C), then none in the next six games. In both, a finger's held drag
   for BAR's build ring (the dock test's BORDER) had come to nothing 5-20 s before the driver's first refusal, while
   the same step passed in the clean runs: perhaps the GPU already stalling before Mesa says so, worth watching.
+  At 18:08 another (the auto-retreat test, 29 s into a skirmish, 8 s after 16 units of two types never drawn before
+  were spawned): by the engine's own clock the game ran at ~22 frames a second until frame 300 (t=1:07.99), then
+  46 frames in the next 6.6 s, in stalls and bursts (frame 316 at 1:11.04, 331 at 1:11.06, 346 at 1:14.62), the 15 s
+  before Mesa's first refusal, with nothing paused: the stall before Mesa's line again, readable in the game's clock.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,

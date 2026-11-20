@@ -226,6 +226,16 @@ boxes, the GPU driver's fault closing a frozen game).
       Settings (gone, back) and the left-handed side (x 0-67). The dev phone has three-button navigation, so the swipe
       itself is Kailil's to feel on the Fold7 (nothing on the phone's settings changed). On the Fold7 at 18:04
       (aa59c6fb's build, BAR closed), github-sync -Release.
+- [x] **Round and round: the rest of the day's tests again** (hardening, 2026-11-20 17:59-18:31, dev phone, the
+      exclusion's build): attack-ping-test, walls-phone-test, replay-phone-test, stats-phone-test, settings-phone-test,
+      lobbychat-phone-test ALL PASS; dgun-speed-test 99 % of a plain move's speed both through the D-gun mode and the
+      dock's stick (35.6, 35.3, 35.0 elmos/s over 861). retreat-phone-test's first run met the GPU driver's real fault
+      29 s in (the guarded close closed it 7 s after the refusal, with its note; the game's own clock had slowed 15 s
+      before Mesa's first line: docs/research/mesa-kgsl-submit-deadlock.md); the rerun on 8/14 alive against off 6/14
+      (T2 2/2 against 1/2, amphibious 2/2 against 1/2, the lowest health on higher in every kind that lived). -Only
+      hover: 0/6 against 0/6, each Skater fallen back at 50 % and 272 elmos away in 3 s, dead anyway: as at 11:32 (too
+      frail for 14 Grunts; an earlier fall-back cost the Pawns), nothing changed. Pictures (the knob and rails, WALLS
+      lit, the dock): no UI polish due.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
