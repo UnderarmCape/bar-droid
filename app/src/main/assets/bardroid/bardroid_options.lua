@@ -2674,6 +2674,11 @@ function mouseEvent(mx, my, button, release)
 		elseif inWindow and not openSelect then
 			view.pressedInside = true
 			if searchBox:mousePress(mx, my) then
+				-- BAR Droid: a tap on the search field asks for Android's keyboard (bardroid_touch.lua; it had focus, but no
+				-- keyboard came up to type with, dev phone 2026-11-19)
+				if WG.BarDroidAskKeyboard then
+					WG.BarDroidAskKeyboard()
+				end
 				return true
 			end
 			if not pressOnHeader(mx, my) and not pressOnSidebar(mx, my) then

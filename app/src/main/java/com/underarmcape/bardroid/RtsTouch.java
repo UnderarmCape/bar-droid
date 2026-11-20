@@ -609,25 +609,29 @@ final class RtsTouch {
     // a left click and a long press the right button there as everywhere, and bardroid_lobby_touch.lua, which sees
     // which of them landed on a text box, asks in bardroid_lobby_ask.txt: "keyboard <id>" (Android's keyboard up) or
     // "voice <id>" (speak to chat). Read for a few seconds after each touch; a new id only (the file outlives a lobby).
-    private static final long LOBBY_ASK_WATCH_MS = 3000, LOBBY_ASK_STEP_MS = 50;
+    // In a game the game's own text fields ask the same way (the Settings copy's search: bardroid_touch.lua's
+    // WG.BarDroidAskKeyboard), read only for a second after a finger lifts (a tap's click goes out by then).
+    private static final long LOBBY_ASK_WATCH_MS = 3000, GAME_ASK_WATCH_MS = 1000, LOBBY_ASK_STEP_MS = 50;
     private final File lobbyAskFile = new File(widgetDir, "bardroid_lobby_ask.txt");
     private long lobbyAskUntil, lobbyAskSeenAt = -1;
     private String lobbyAskDone;
     private boolean lobbyAskPosted;
     private final Runnable lobbyAskCheck = this::lobbyAskStep;
 
-    private void lobbyAskWatch() {
-        // (not in a game, unless BAR's lobby is over it: every touch there ran the 3 s of checks for nothing)
+    private void lobbyAskWatch(boolean lift) {
+        // (in a game, unless BAR's lobby is over it, only after a lift and for a second: every touch there ran the 3 s
+        // of checks, mostly for nothing)
         // (overlayLast, as source() last read it: lobbyOverlay() here took its 250 ms read and source() then got the
         // old answer, the lobby's pointer state one touch late; review 2026-11-19. A touch's UP comes after its DOWN's
         // source(), so a lobby opened over the game is watched from the first touch's lift)
-        if (gameWidgetRunning() && !overlayLast) return;
+        boolean game = gameWidgetRunning() && !overlayLast;
+        if (game && !lift) return;
         if (lobbyAskSeenAt < 0) {   // (the first touch: what the file holds from before is no request)
             lobbyAskSeenAt = lobbyAskFile.lastModified();
             String t = readSmall(lobbyAskFile);
             lobbyAskDone = t == null ? "" : t.trim();
         }
-        lobbyAskUntil = SystemClock.uptimeMillis() + LOBBY_ASK_WATCH_MS;
+        lobbyAskUntil = SystemClock.uptimeMillis() + (game ? GAME_ASK_WATCH_MS : LOBBY_ASK_WATCH_MS);
         if (!lobbyAskPosted) {
             lobbyAskPosted = true;
             ui.postDelayed(lobbyAskCheck, LOBBY_ASK_STEP_MS);
@@ -643,7 +647,8 @@ final class RtsTouch {
             if (!t.isEmpty() && !t.equals(lobbyAskDone)) {
                 lobbyAskDone = t;
                 if (t.startsWith("keyboard ")) {
-                    Log.i("touch", "a lobby text box tapped: Android's keyboard");
+                    Log.i("touch", t.startsWith("keyboard g") ? "a game's text field tapped: Android's keyboard"
+                            : "a lobby text box tapped: Android's keyboard");
                     activity.getLorieView().setKeyboardVisible(true);
                 } else if (t.startsWith("voice ") && voiceChat != null) {
                     Log.i("touch", "a lobby chat box held: speak to chat");
@@ -658,7 +663,8 @@ final class RtsTouch {
     /** @param e in the coordinates of the LorieView's parent (as Termux:X11's own listener gets it) */
     boolean onTouch(MotionEvent e) {
         int lobbyAskAction = e.getActionMasked();
-        if (lobbyAskAction == MotionEvent.ACTION_DOWN || lobbyAskAction == MotionEvent.ACTION_UP) lobbyAskWatch();
+        if (lobbyAskAction == MotionEvent.ACTION_DOWN || lobbyAskAction == MotionEvent.ACTION_UP)
+            lobbyAskWatch(lobbyAskAction == MotionEvent.ACTION_UP);
         if (holdTouch(e)) return true;
         if (velocity != null) velocity.addMovement(e);
         if (dgunTouch(e)) return true;

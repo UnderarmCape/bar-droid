@@ -228,6 +228,17 @@ function draw.sidebar()
 	end
 	local inWindow = inRect(layout.window, mx, my)
 	local pressedInside = view.pressedInside
+			if searchBox:mousePress(mx, my) then
+				return true
+			end
+			if searchBox:mousePress(mx, my) then
+				-- BAR Droid: a tap on the search field asks for Android's keyboard (bardroid_touch.lua; it had focus, but no
+				-- keyboard came up to type with, dev phone 2026-11-19)
+				if WG.BarDroidAskKeyboard then
+					WG.BarDroidAskKeyboard()
+				end
+				return true
+			end
 function widget:Initialize()
 	upkeep.initialize(self)function widget:Initialize()
 	-- BAR Droid: only as one of the game's widgets (the engine branch's BarDroidGameWidgetsDir), where it has the widget

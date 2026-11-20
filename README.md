@@ -65,7 +65,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 
 In the lobby a drag scrolls lists and a tap on a server shows its details first. A tap on a text box (a chat's,
 the server search, the login) brings up Android's keyboard; a long press on a chat's box is speak to chat, the words
-into that chat. A server whose settings stop your
+into that chat (in a game, a tap on Settings' search field brings it up too). A server whose settings stop your
 controls says so when you join it: in red when custom widgets are off (no touch or gamepad controls unless you
 spectate), in amber when unit control widgets are off (only first person stops).
 

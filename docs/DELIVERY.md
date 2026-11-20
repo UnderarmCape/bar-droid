@@ -756,6 +756,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **In a game, a tap on Settings' search field brings up Android's keyboard** (hardening, 2026-11-19 ~19:56-20:15,
+      dev phone upright, a skirmish; the Fold7 still refused port 38389). touch-phone-test and dock-phone-test ALL PASS
+      on b26cd195 (the turn rail's build). Then Settings' Control tab upright (the "Camera with one finger" rows whole);
+      a tap on its search field gave it focus but no keyboard came up (only the three-finger double tap had one). Now
+      the Settings copy's search field, pressed, asks for it through bardroid_touch.lua's WG.BarDroidAskKeyboard in the
+      lobby's file (bardroid_lobby_ask.txt, "keyboard g<id>"; tools/make-options.py, regenerated --adb), and RtsTouch
+      reads that file in a game too, only for a second after a finger lifts (the lobby's 3 s after each touch as
+      before). Dev phone: the tap, the keyboard up ("a game's text field tapped" in launcher.log), "cam" typed filtered
+      Settings to Interface 1, Game 4, Control 10; Back put the keyboard away and left Settings open, still filtered; no
+      errors. remake-check PASS (options remade byte for byte), lobby-phone-test ALL PASS.
 - [x] **The camera's turn rail turns the other way** (Kailil, 2026-11-19 ~19:45: "swap the horizontal slider direction.
       invert it. the slider that is under the joystick to rotate the camera"): a drag along the turn rail (the L's foot,
       under the knob) sends the dock pad's "rot" with the opposite sign; the knob's own sideways slide is as it was

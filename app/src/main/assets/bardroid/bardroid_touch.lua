@@ -182,6 +182,18 @@ end
 local loadedGame = { pending = false } -- (a saved game loaded: checkLoadedGame; one table for the locals)
 function widget:Initialize()
 	WG.BarDroidTapPanels = WG.BarDroidTapPanels or {} -- (overBarInterface: BAR's button panels with no IsAbove)
+	-- A text field of the game's tapped (the Settings copy's search): Android's keyboard asked for, as the lobby's text
+	-- boxes ask (bardroid_lobby_ask.txt, RtsTouch lobbyAskStep, read for a second after a finger lifts in a game). Each
+	-- ask its own id: the app acts on a new one only.
+	local askSession, askCount = math.random(100000, 999999), 0
+	WG.BarDroidAskKeyboard = function()
+		askCount = askCount + 1
+		local f = io.open("LuaUI/Config/bardroid_lobby_ask.txt", "w")
+		if f then
+			f:write(string.format("keyboard g%d-%d\n", askSession, askCount))
+			f:close()
+		end
+	end
 	writeWhole(OVERLAY, "0\n") -- (one left at "1" by a game that ended under the lobby)
 	-- (and BAR's lobby asked whether it is over the game: BAR says so only as it opens or closes, and a fold or turn
 	-- reloads LuaUI between the two; the app's lobby widget answers with BAR's own "LobbyOverlayActive1")
@@ -1379,6 +1391,7 @@ end
 function widget:Shutdown()
 	writeWhole(OVERLAY, "0\n")
 	WG.BarDroidOnInterface = nil
+	WG.BarDroidAskKeyboard = nil
 	if not queueDrawn then
 		Spring.LoadCmdColorsConfig("alwaysDrawQueue 1")
 	end
