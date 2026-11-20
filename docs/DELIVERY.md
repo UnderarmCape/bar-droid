@@ -168,6 +168,19 @@ boxes, the GPU driver's fault closing a frozen game).
       over BAR's logo at the lobby's top, and the logo's white letters showed through Chili's window behind the words;
       a dark ground (82 %) under them now (bardroid_lobby_touch.lua voiceShow). Noted: the room's chat box is 25 of the
       lobby's units high, some 2.6 mm upright; Chobby's layout, left.
+- [x] **A chat line could close a healthy game as the GPU driver's fault** (hardening of 2026-11-19's system, the GPU
+      driver fault's close, 2026-11-20 14:57-15:10, dev phone): DriverWatch armed on any line of the engine's output
+      holding "submit failed" and "Resource deadlock avoided", and closed the game on any later line holding "Hang
+      detection triggered". A player's chat and a Lua echo are lines of the engine's log too. Reproduced by
+      tools/driverwatch-phone-test.ps1 (new) on the build before: the refusal's words said as chat in a skirmish, the
+      watchdog's 2 s later: "the GPU driver refused a submit", then "closing it", the game killed with the driver note,
+      a healthy game. Online, anyone typing those two lines would have closed every phone player's game. Now the
+      refusal counts only as Mesa's own line on the engine's stderr (no "[t=...][f=...]" log prefix), and the watchdog
+      only as BAR's own line ("Warning: [Watchdog] ..." right after the log prefix, not after a player's name); the
+      hang dump the same (GameService). status-text-test (laptop, pure Java) ALL PASS with two new cases (the words as
+      chat or echo arm nothing; after a real refusal the watchdog's words in chat close nothing, its own line does);
+      driverwatch-phone-test ALL PASS twice on the fix (not armed, the game running, no note). The real fault itself
+      cannot be staged without the driver; its lines are the test's laptop cases.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

@@ -201,6 +201,22 @@ public class StatusTextTest {
                 && !w2.onLine(null) && !w2.lost();
         failed += ok4 ? 0 : 1;
         System.out.println((ok4 ? "PASS " : "FAIL ") + "driver watch: another submit error, then the watchdog: nothing");
+        // the fault's words in the engine's own log lines (a player's chat, a Lua echo) arm nothing; the watchdog's words
+        // in a chat line after a real refusal close nothing (2026-11-20)
+        DriverWatch w4 = new DriverWatch();
+        boolean ok6 = !w4.onLine("19:52:34 [engine] [t=00:00:30.1][f=0000123] <Phone> MESA: error: flush_submit_list:89: "
+                + "submit failed -1 (Resource deadlock avoided)")
+                && !w4.onLine("[t=00:00:30.2][f=0000124] MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)")
+                && !w4.refused() && !w4.onLine(hung) && !w4.lost();
+        failed += ok6 ? 0 : 1;
+        System.out.println((ok6 ? "PASS " : "FAIL ") + "driver watch: the refusal's words as chat or a Lua echo arm nothing");
+        DriverWatch w5 = new DriverWatch();
+        boolean ok7 = !w5.onLine(refused) && w5.refused()
+                && !w5.onLine("[t=00:01:40.0][f=0000700] <Bob> Warning: [Watchdog] Hang detection triggered for Spring main thread.")
+                && !w5.lost() && w5.onLine(hung) && w5.lost();
+        failed += ok7 ? 0 : 1;
+        System.out.println((ok7 ? "PASS " : "FAIL ") + "driver watch: after a refusal, the watchdog's words in chat close nothing,"
+                + " the watchdog's own line does");
         // the sooner close: the refusal in a running game, then the game's widget silent STALL_MS
         DriverWatch w3 = new DriverWatch();
         boolean ok5 = !w3.stalled(true, 60000) && !w3.onLine(refused) && !w3.stalled(false, 60000)

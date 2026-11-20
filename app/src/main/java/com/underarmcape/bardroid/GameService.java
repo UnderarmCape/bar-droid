@@ -499,7 +499,7 @@ public class GameService extends Service {
                         boolean[] hangLogged = {false}, stallWatched = {false};
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
                             // (BAR's watchdog: where the engine is stuck, from the kernel's side; once a game, HangDump)
-                            if (!hangLogged[0] && line.contains(DriverWatch.HUNG)) {
+                            if (!hangLogged[0] && DriverWatch.isHang(line)) {   // (BAR's own line, not a chat's words)
                                 hangLogged[0] = true;
                                 // (after the driver's refusal this same line closes the game, below: read first, here,
                                 // or the threads are gone when read, every one "? | ? | ? | ?"; dev phone 2026-11-19)

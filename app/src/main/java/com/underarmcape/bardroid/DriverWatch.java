@@ -16,14 +16,32 @@ public final class DriverWatch {
 
     private boolean refused, lost;
 
+    // BAR's watchdog line as the engine logs it, "[t=...][f=...] Warning: [Watchdog] Hang detection triggered ...": the
+    // words right after the log line's own prefix, never after a player's name in a chat line ("] <name> Warning: ...")
+    private static final java.util.regex.Pattern HUNG_LINE =
+            java.util.regex.Pattern.compile("(^|\\])\\s*Warning: \\[Watchdog\\] " + HUNG);
+
+    /**
+     * Mesa's own line on the engine's stderr ("MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock
+     * avoided)"), never one of the engine's log lines ("[t=...][f=...] ..."): a chat message or a Lua echo with these
+     * words is one of those, and armed the close, which then killed a game whose widget went quiet for 8 s (2026-11-20).
+     */
+    static boolean isRefusal(String line) {
+        return line.contains("MESA") && line.contains("submit failed") && line.contains(REFUSED) && !line.contains("][f=");
+    }
+
+    static boolean isHang(String line) {
+        return HUNG_LINE.matcher(line).find();
+    }
+
     /** One line of the engine's output; true once, at the line that shows the game is lost. */
     public synchronized boolean onLine(String line) {
         if (lost || line == null) return false;
         if (!refused) {
-            if (line.contains("submit failed") && line.contains(REFUSED)) refused = true;
+            if (isRefusal(line)) refused = true;
             return false;
         }
-        if (line.contains(HUNG)) { lost = true; return true; }
+        if (isHang(line)) { lost = true; return true; }
         return false;
     }
 
