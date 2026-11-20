@@ -850,6 +850,13 @@ local function setLayout()
 	-- to group.
 	---@type number
 	local barX2 = area.x2 - metrics.edgeInset
+	-- BAR Droid: the strip along the top ends short of the close button and its tap area (drawn with the title:
+	-- metrics.droidClose, droidCloseHit); BAR's Group by team switch and the legend's teams, which end here, lay under
+	-- it in a team game
+	do
+		local w = mathFloor(mathFloor(metrics.headerH * 0.88) * 1.8)
+		barX2 = area.x2 - metrics.sidePad * 2 - mathFloor(w * 1.5)
+	end
 	local groupable = model.canGroup()
 	for i = 1, #switches do
 		local sw = switches[i]
@@ -1411,13 +1418,18 @@ local function drawSidebar()
 	queueText(L.titleText, area.x1 + metrics.sidePad, area.y2 - metrics.titleY, metrics.titleFs, "ov")
 	-- BAR Droid: a close button at the header's right end, red with a white cross as the app's Settings has (a phone has
 	-- no Escape at hand, and upright no room around the panel to tap: only the top bar's Statistics again closed it,
-	-- which nothing said; dev phone 2026-11-18). Its rect in metrics for mouseEvent (no new local: BAR's file is at 200)
+	-- which nothing said; dev phone 2026-11-18). Its rect in metrics for mouseEvent (no new local: BAR's file is at 200).
+	-- Upright it was 45 x 30 pixels, some 3.5 x 2 mm on the dev phone (stats-phone-test's picture, 2026-11-20): now as
+	-- tall as the header allows and wider, and a tap takes it anywhere from half its width to its left, and down to the
+	-- top strip's foot, to the panel's corner (metrics.droidCloseHit; the strip ends short of it, barX2)
 	do
-		local h = mathFloor(metrics.headerH * 0.78)
-		local w = mathFloor(h * 1.5)
+		local h = mathFloor(metrics.headerH * 0.88)
+		local w = mathFloor(h * 1.8)
 		local y2 = area.y2 - mathFloor((metrics.headerH - h) / 2)
 		metrics.droidClose = { area.x2 - metrics.sidePad - w, y2 - h, area.x2 - metrics.sidePad, y2 }
 		local c = metrics.droidClose
+		metrics.droidCloseHit = { c[1] - mathFloor(w / 2), math.min(c[2] - mathFloor(h / 2),
+			(metrics.barTop or c[2]) - (metrics.barH or 0)), area.x2, area.y2 }
 		RectRound(c[1], c[2], c[3], c[4], math.max(2, mathFloor(h * 0.12)), 1, 1, 1, 1, { 0.42, 0.08, 0.06, 0.9 },
 			{ 0.62, 0.16, 0.12, 0.95 })
 		local cx, cy, a = (c[1] + c[3]) / 2, (c[2] + c[4]) / 2, h * 0.2
@@ -2188,7 +2200,7 @@ local function mouseEvent(x, y, button, release)
 
 	-- BAR Droid: the close button (drawn with the title: metrics.droidClose), closed as BAR's own ways close it
 	if metrics.droidClose then
-		local c = metrics.droidClose
+		local c = metrics.droidCloseHit or metrics.droidClose
 		if x >= c[1] and x <= c[3] and y >= c[2] and y <= c[4] then
 			if release then
 				showOnceMore = true -- (as BAR's own closing: the guishader lags behind)
@@ -2391,6 +2403,12 @@ function widget:Initialize()
 	end
 	WG.teamstats.isvisible = function()
 		return show
+	end
+	-- BAR Droid: the panel's rect, its close button's and whether its graphs are open, for the app's phone test
+	-- (tools/stats-phone-test.ps1: real taps upright)
+	WG.teamstats.droidRect = function()
+		return { screenX, screenY - screenHeight, screenX + screenWidth, screenY }, metrics.droidClose, graphs.open,
+			metrics.droidCloseHit
 	end
 	-- The graphs, for a key or another widget: opens the panel on the category of graphs last
 	-- shown when needed - or, turned off, on the table last shown.

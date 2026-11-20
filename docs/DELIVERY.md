@@ -82,7 +82,35 @@ boxes, the GPU driver's fault closing a frozen game).
       answer); as a user widget, left to BAR as before. dock-phone-test taps BAR's Quit now (found along the strip with
       WG.topbar.buttonAt): the question up, Back closes it; ALL PASS (33) upright and at 1080x1198.
 - [ ] **dock-phone-test's Area Mex case failed once** (2026-11-20 05:50, 1 run in 2 after the Back cases went in: "0 mex
-      orders"; it passed in every run before and after): find out why.
+      orders"; it passed in every run before and after): find out why. Not again since (2026-11-20 12:11-12:28, three
+      runs on purpose, the third cut short by another test's start; 2 mex orders each time; ~11 passing runs since the
+      failure). The check now logs, if it fails, the spot it used, whether a mex can be built there and the bots' first
+      orders.
+- [x] **walls-phone-test's no-walls cases made sound** (hardening, 2026-11-20 12:40-13:05, dev phone): run 2 of the
+      12:35 tests failed "two Sentries in one placement: no walls: 3 Sentries queued, 7 walls": the check counted 8
+      Dragon's Teeth in the commander's queue, and the commander had finished one meanwhile. The off, Claw, AA and
+      two-at-once checks now take the walls widget's own word (no new ring since the order) and no more walls than
+      before it. And the Claw case had passed on nothing: the commander builds no Dragon's Claw (its order refused, "0
+      Claws queued"); an Armada con bot given with the T2 cases' builders now builds it, on open ground with room for a
+      ring (1 Claw queued, no walls), the AA launcher likewise away from the Sentries. ALL PASS three runs.
+- [x] **Statistics upright, tested by real taps** (hardening of 2026-11-19's system, 2026-11-20 12:45-13:12, dev
+      phone): tools/stats-phone-test.ps1 (new): BAR's Statistics tapped on the top bar, the panel x 9-926 of 936, y
+      839-1884 between the dock (823) and the top bar's buttons (1939), the camera knob and rails "none" while it is
+      open, a real drag over the panel where the knob stands (the camera still, the panel's charts scrolled), its graphs,
+      the red close, Statistics tapped twice (open, closed). ALL PASS three runs. The test steps by real time: a game
+      alone pauses under the panel (its first run stood still after the first tap). The copy answers
+      WG.teamstats.droidRect for it (make-teamstats.py; remake-check PASS). Polish from its picture: the red close was 45
+      x 30 pixels upright, some 3.5 x 2 mm: now 61 x 34, and a tap 105 x 53 around it closes (left of it and down to the
+      top strip's foot); the strip along the top (the legend's teams, BAR's Group by team switch in a team game) now ends
+      short of it: in a team game the button lay over that switch. Seen in the pictures, left for later: at the first
+      open the chart titles lack their " · " ("Damage  Received"), there after a scroll.
+- [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
+      18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
+      app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
+      dock-phone-test ALL PASS (twice, 33), factory-preset-test, types-phone-test, attack-ping-test ALL PASS,
+      retreat-phone-test (on 9/14 alive, off 8/14), walls-phone-test with two failures of its own making (an extra
+      Sentry given over a queued wall, which the engine dropped; no spot found at that start for the last case): the
+      test fixed. github-sync -Release: the APK as latest-build.
 - [x] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the
       formation growing however many are built. (2026-11-20 ~05:56-06:40, dev phone, BAR test-32018, e36aff35.) A
       factory picked (one that builds units that move): PRESETS in its orders; a preset, a tap (or a drawn line) on the

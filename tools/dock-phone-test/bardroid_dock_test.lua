@@ -36,6 +36,7 @@ local buildDef -- (the build grid's first building, in sight on any screen shape
 local pawns, maxSpeed = {}, nil
 local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
 local camAt -- (the camera before the pan's drag)
+local mexSpot -- (the Area Mex case's metal spot)
 local shapeQueued -- (the commander's queued buildings before a held LINE or BORDER's PLACE)
 local realTeammates -- (the pad's teammate list, while stand-ins fill the picker: sendbtn, picker?)
 local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
@@ -374,7 +375,7 @@ local function onCmd(c)
 		write(qx0 and string.format("quitbtn %d %d\n", (qx0 + qx1) / 2, vsy - qy) or "quitbtn nil nil\n")
 		-- (over BAR's hidden resource bars or not: there the app's top bar hands the press to BAR's buttons, elsewhere
 		-- BAR's buttons take it themselves)
-		local tpos, free = tb and tb.GetPosition and tb.GetPosition(), tb and tb.GetFreeArea and tb.GetFreeArea()
+		local free = tb and tb.GetFreeArea and tb.GetFreeArea()
 		Spring.Echo(string.format("[docktest] (BAR's Quit at x %s-%s; BAR's hidden top bar to x %s)", tostring(qx0),
 			tostring(qx1), tostring(free and free[1])))
 	elseif c == "quitbtnshown?" then -- (BAR's Quit tapped in a game not from the lobby: its quit question, 2026-11-20)
@@ -642,6 +643,7 @@ local function onCmd(c)
 		for _, s in ipairs(list) do
 			if not sx then
 				sx, sy = screenOf(s.x, s.z)
+				mexSpot = sx and s or nil
 			end
 		end
 		if not sx and list[1] then
@@ -664,6 +666,19 @@ local function onCmd(c)
 		end
 		check("Area Mex armed, a tap, then a drag from a metal spot: BAR's circle, its mexes queued", mex > 0,
 			mex .. " mex orders")
+		if mex == 0 then -- (why, for the flake of 2026-11-20 05:50: the spot buildable for a mex, the bots' orders,
+			-- the command armed at the check)
+			local s, mexDef = mexSpot, UnitDefNames.armmex and UnitDefNames.armmex.id
+			local orders = {}
+			for _, u in ipairs(Spring.GetTeamUnitsByDefs(Spring.GetMyTeamID(), UnitDefNames.armck.id) or {}) do
+				local q = (Spring.GetUnitCommands(u, 1) or {})[1]
+				orders[#orders + 1] = q and tostring(q.id) or "none"
+			end
+			Spring.Echo(string.format("[docktest] (Area Mex: the spot %s, a mex there %s, the bots' first orders %s, armed %s)",
+				s and (math.floor(s.x) .. "," .. math.floor(s.z)) or "none",
+				s and mexDef and tostring(Spring.TestBuildOrder(mexDef, s.x, Spring.GetGroundHeight(s.x, s.z), s.z, 0)) or "-",
+				table.concat(orders, " "), tostring(select(2, Spring.GetActiveCommand()))))
+		end
 		Spring.SelectUnitArray({})
 	elseif c == "resrects" or c == "slider" then -- (metal's and energy's boxes; with the energy panel open, its bar's
 		-- cell: X pixels from the top left)
