@@ -766,7 +766,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       is up (bardroid_camctl.lua hiddenNow: WG.topbar.showingQuit, as BAR's own panels ask; "none" to RtsTouch). Dev
       phone: the quit screen open, bardroid_camctl.txt "none" and no rails or knob drawn ("GAME PAUSED" clear); Stay,
       back as before; Quit tapped where the knob lies: the game ended ("engine exited (0)"); dock-phone-test and
-      touch-phone-test ALL PASS.
+      touch-phone-test ALL PASS. On the Fold7 at 22:02 (BAR not running): the APK from clean main fb8e68df;
+      github-sync -Release.
 - [x] **The phone tests on BAR test-32018; Load Game's version broken at its hyphen** (hardening, 2026-11-19
       ~21:13-21:35, dev phone upright; the Fold7 not played since 21:10). After the BAR update the run's hunt was the
       phone tests on the new release: dock-phone-test, pad-test, pad-test -Online, pad-test -Share, fp-save-test,
