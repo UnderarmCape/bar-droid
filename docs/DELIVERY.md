@@ -68,11 +68,19 @@ boxes, the GPU driver's fault closing a frozen game).
       line's half-built buildings BAR placed none). The lobby game's "back lobby" not run on the dev phone (no online
       game there; the same showLobby as the app's top bar's Lobby, which works). The Fold7 refused port 44111 at 05:40:
       not installed there yet.
-- [ ] **Found with Back: BAR's Quit button upright in a game not from the lobby** (2026-11-20): a click on it (the dock
+- [x] **Found with Back: BAR's Quit button upright in a game not from the lobby** (2026-11-20): a click on it (the dock
       test's first try at Back clicked it as a finger would) opened no quit question: BAR's Top Bar takes presses over
       its resource bars, hidden upright under the buttons, before Top Bar Buttons, and bardroid_topbar.lua hands the
       Quit button on to BAR only in a game from the lobby (its showLobby). A finger's Quit there likely does nothing:
       check by a tap, then make it ask (as Back does, the engine's quit request, or BAR's own way).
+      Checked by a real tap (2026-11-20 ~11:53-12:20, dev phone): it asks. Quit is the strip's rightmost button, x
+      1023-1079 at the Fold7 unfolded's 1080x1198 where the hidden bars end at x 744, and as far right upright on the
+      tall phone: BAR's own buttons take the tap there, and the earlier click had not been a finger's tap at the button.
+      Where it would lie over the hidden bars (a narrower screen), bardroid_topbar.lua now hands the press to Top Bar
+      Buttons' own MousePress (its applyButtonAction "quit": the quit screen; the widget asks BAR's handler for it as the
+      game's widget, GetInfo handler = true, and its savegame action goes through actionHandler, which both handlers
+      answer); as a user widget, left to BAR as before. dock-phone-test taps BAR's Quit now (found along the strip with
+      WG.topbar.buttonAt): the question up, Back closes it; ALL PASS (33) upright and at 1080x1198.
 - [ ] **dock-phone-test's Area Mex case failed once** (2026-11-20 05:50, 1 run in 2 after the Back cases went in: "0 mex
       orders"; it passed in every run before and after): find out why.
 - [x] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the

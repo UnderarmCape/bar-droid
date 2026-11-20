@@ -12,6 +12,7 @@
 --   linehold? / borderhold?  LINE / BORDER, a press held on the map, a drag: the shape held, the building still picked
 --   lineplaced? / borderplaced?  PLACE: 2+ / 3+ buildings queued;  stopcom  the commander's queue cleared
 --   backhome? / quitshown? / quitclosed?  Android's Back: the building put away, the home grid; BAR's quit question; closed
+--   quitbtn   "quitbtn x y": BAR's Quit on its top bar;  quitbtnshown? / quitbtnclosed?  tapped: the question; Back: closed
 --   presetsback, backpresets?  the Pawns picked, the presets open; Back: closed, nothing picked
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
@@ -357,7 +358,31 @@ local function onCmd(c)
 		local tb = WG.topbar
 		local q = tb and tb.showingQuit and tb.showingQuit()
 		check("Back at the home grid: BAR's leave-battle question", q and true or false, "showing " .. tostring(q))
-	elseif c == "quitclosed?" then -- (Back again: the question closed, Escape's hideWindows)
+	elseif c == "quitbtn" then -- (BAR's own Quit on its top bar, for a finger's tap: its middle, found along the strip)
+		local tb = WG.topbar
+		local pos = tb and tb.GetButtonsPosition and tb.GetButtonsPosition()
+		local vsy = select(2, Spring.GetViewGeometry())
+		local qx0, qx1, qy
+		if pos and tb.buttonAt then
+			qy = math.floor((pos[2] + pos[4]) / 2)
+			for x = math.floor(pos[1]), math.floor(pos[3]), 4 do
+				if tb.buttonAt(x, qy) == "quit" then
+					qx0, qx1 = qx0 or x, x
+				end
+			end
+		end
+		write(qx0 and string.format("quitbtn %d %d\n", (qx0 + qx1) / 2, vsy - qy) or "quitbtn nil nil\n")
+		-- (over BAR's hidden resource bars or not: there the app's top bar hands the press to BAR's buttons, elsewhere
+		-- BAR's buttons take it themselves)
+		local tpos, free = tb and tb.GetPosition and tb.GetPosition(), tb and tb.GetFreeArea and tb.GetFreeArea()
+		Spring.Echo(string.format("[docktest] (BAR's Quit at x %s-%s; BAR's hidden top bar to x %s)", tostring(qx0),
+			tostring(qx1), tostring(free and free[1])))
+	elseif c == "quitbtnshown?" then -- (BAR's Quit tapped in a game not from the lobby: its quit question, 2026-11-20)
+		local tb = WG.topbar
+		local q = tb and tb.showingQuit and tb.showingQuit()
+		check("BAR's Quit tapped upright (a game not from the lobby): its leave-battle question", q and true or false,
+			"showing " .. tostring(q))
+	elseif c == "quitclosed?" or c == "quitbtnclosed?" then -- (Back again: the question closed, Escape's hideWindows)
 		local tb = WG.topbar
 		local q = tb and tb.showingQuit and tb.showingQuit()
 		check("Back with BAR's quit question up: it closes, the game goes on", not q, "showing " .. tostring(q))

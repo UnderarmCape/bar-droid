@@ -21,6 +21,7 @@ function widget:GetInfo()
 		license = "GPL-3.0-or-later",
 		layer = -95500, -- (before BAR's Top Bar and Top Bar Buttons, -95000; after BAR's windows, -99990, which let a press on the top bar through)
 		enabled = true,
+		handler = true, -- (as the game's widget, BAR's widget handler: its Quit handed to Top Bar Buttons, below)
 	}
 end
 
@@ -71,12 +72,14 @@ local function pickAgain()
 	end
 end
 
+-- (through actionHandler, with the widget first: BAR's own handler, which this widget has as the game's, has no
+-- AddAction of its own; the stand-in user widgets get answers the same call the same way)
 function widget:Initialize()
-	widgetHandler:AddAction("savegame", noteSelection, nil, "t")
+	widgetHandler.actionHandler:AddAction(widget, "savegame", noteSelection, nil, "t")
 end
 
 function widget:Shutdown()
-	widgetHandler:RemoveAction("savegame")
+	widgetHandler.actionHandler:RemoveAction(widget, "savegame")
 end
 
 -- where BAR's hidden resource bars and indicators are on its top bar (x0, y0, x1; GL), or nil when none is hidden or the
@@ -143,6 +146,18 @@ function widget:MousePress(x, y, button)
 		Spring.SendCommands("savegame " .. os.date("%Y%m%d_%H%M%S"))
 	elseif name == "quit" and chobby and not gameOver then
 		Spring.SendLuaMenuMsg("showLobby")
+	elseif name == "quit" then -- (a game not from the lobby, or over: BAR's quit screen. Top Bar Buttons opens it only
+		-- from its own MousePress, which BAR's Top Bar, taking the press over its hidden bars, kept it from: the tap did
+		-- nothing, 2026-11-20. As the game's widget this one has BAR's handler and hands it the press; as a user widget,
+		-- not: left to BAR, as before; Android's Back asks the same question)
+		local wh = widgetHandler
+		local tbb = wh and wh.FindWidget and wh:FindWidget("Top Bar Buttons")
+		if not (tbb and tbb.MousePress) then
+			return false
+		end
+		tbb:MousePress(x, y, button) -- (it clicks, as its own button does)
+		Spring.Echo("[bardroid-topbar] quit: pressed over BAR's hidden top bar, handed to Top Bar Buttons") -- (tools)
+		return true
 	else
 		return false -- (BAR's quit dialog and anything new: left to BAR)
 	end

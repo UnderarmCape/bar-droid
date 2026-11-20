@@ -200,6 +200,16 @@ try {
     Shot "back-quit"
     & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
     Stage "quitclosed?"; Start-Sleep 1
+    # (BAR's own Quit on its top bar tapped, upright, in this game not from the lobby: the same question; Back closes it.
+    # The tap did nothing before, BAR's Top Bar taking it over its hidden resource bars; 2026-11-20)
+    Stage "quitbtn"; Start-Sleep -Milliseconds 800
+    $qb = (Rects "bardroid_docktest.txt")["quitbtn"]
+    if ($qb) {
+      Tap $qb[0] $qb[1]; Start-Sleep -Milliseconds 1200
+      Stage "quitbtnshown?"; Start-Sleep 1
+      & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
+      Stage "quitbtnclosed?"; Start-Sleep 1
+    } else { "[docktest] FAIL BAR's Quit button not found on its top bar" }
     Stage "stopcom"; Start-Sleep 1
   }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
