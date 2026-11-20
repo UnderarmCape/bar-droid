@@ -200,7 +200,7 @@ boxes, the GPU driver's fault closing a frozen game).
       (447-593 both); ALL PASS, dock-phone-test ALL PASS (31). And the tests that switch the player's settings now put
       them back whatever happens: a retreat-phone-test run that broke off in its summary had left the dev phone's AUTO
       RETREAT off (restored), so retreat-phone-test and walls-phone-test save AUTO RETREAT and WALLS first.
-- [x] Hardening (2026-11-20 ~11:32-12:05, dev phone): the Skaters, 0/8 alive with the retreat and without. New
+- [x] Hardening (2026-11-20 ~11:32-11:50, dev phone): the Skaters, 0/8 alive with the retreat and without. New
       retreat-phone-test -Only <kind> (its on and off rounds three times, each fall-back's first 3 s logged): every Skater
       fell back within a second and went ~110 elmos a second (262-274 in 3 s), but 14 Grunts' fire took it from half
       health to 1-27 % in those seconds; with the retreat 2/6 and 1/6 alive, without 0/6 twice. Too frail for that pack;
