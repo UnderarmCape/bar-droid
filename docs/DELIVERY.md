@@ -756,6 +756,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The phone tests on the night's last build** (hardening, 2026-11-20 ~00:12-00:30, dev phone, BAR test-32018,
+      the APK from clean main dbb4cb59; the Fold7 not played since 00:09, its Android reports still none for the app).
+      GameService reviewed for main-thread work after the ANR: its installs and starts run on its worker thread, Stop
+      only signals the processes. lobby-phone-test, touch-phone-test, dock-phone-test and pad-test ALL PASS; no new ANR
+      on the dev phone through them (3, all from before 6eebf8b8). No UI polish this run.
 - [x] **The launcher's map list read off the main thread** (hardening, 2026-11-20 ~00:02-00:08, dev phone; the Fold7
       not played since 2026-11-19 23:56, its Android reports still none for the app). After the ANR, the launcher's
       other main-thread work reviewed: the Play vs AI map list read the engine's archive cache (4.4 MB, 65 archives,
