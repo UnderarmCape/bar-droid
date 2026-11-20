@@ -2015,7 +2015,9 @@ function refreshNow()
 			while newRight[at] and newRight[at].h do
 				at = at + 1
 			end
-			table.insert(newRight, at, { kind = "presets", label = "PRESETS" })
+			-- (a factory with a preset: its name, its units joining that formation; bardroid_presets.lua factoryForms)
+			local fp = #sel == 1 and WG.BarDroidPresets.factoryPreset and WG.BarDroidPresets.factoryPreset(sel[1])
+			table.insert(newRight, at, { kind = "presets", label = fp and ("PRESETS: " .. fp) or "PRESETS" })
 		end
 		newRight[#newRight + 1] = style
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }

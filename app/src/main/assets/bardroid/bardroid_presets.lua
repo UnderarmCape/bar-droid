@@ -7,8 +7,9 @@
 -- the units to their places (no repeat), then, once they are there, each one fights side to side across its place on
 -- repeat, the group together. With the dock's QUEUE on the preset stays armed and each tap is the next place (addLeg);
 -- with INSERT on the formation goes to the front of their queues.
+-- A factory picked: its preset is where its units gather from then on, the formation growing (factoryForms).
 -- WG.BarDroidPresets: fits(units), isOpen(), open(), close(), items(), pick(id), drawThumb(id, rect), closeRect(rect),
--- armed(), lastPlan(), side. Installed into LuaUI/Widgets by the app.
+-- armed(), disarm(), factoryPreset(fac), factoryForm(fac), lastPlan(), side. Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()
 	return {
@@ -472,6 +473,181 @@ local function swayCheck(f)
 	end
 end
 
+-- Factory presets (Kailil, 2026-11-20: "Add a way to give factories the preset functionality, where any units that come
+-- out of it, join the formation assigned by the factory and the continuously expand the formation and join into it no
+-- matters how many units are built"): a factory picked, PRESETS, a preset, then a tap (or a line) on the map; from then
+-- on each unit it builds goes to its place in that formation there, the formation growing with them: the places taken
+-- never move (a fixed middle, new places right and left of it in turn along the row, rows behind once a row is full; a
+-- drawn line its width; the formations' brawlers in front, the ranged behind; a place left free taken again first).
+-- Laid out again whole with each new unit, every member moved half a place each time and stood too close to the next
+-- (dev phone, 2026-11-20). Each one, there, goes side to side on its own at once. The factory's own move, fight, patrol
+-- or stop (its rally) ends it; a member the player sends elsewhere leaves it.
+local factoryForms = {} -- [factoryID] = { id, aim, members, slots[u], going[u], place[u], grid, mx, mz, fx, fz, px, pz, W }
+local memberOf = {} -- [unitID] = factoryID
+local joins = {} -- { unit, fac, frame }: the frame after it came out (the factory's own orders reach it first)
+local FORM_THERE = 160 -- elmos from its place: there
+
+-- the picked factories that build units that move
+local function factoriesOf(units)
+	local out = {}
+	for _, u in ipairs(units or {}) do
+		local ud = UnitDefs[spGetUnitDefID(u) or -1]
+		if ud and ud.isFactory then
+			for _, b in ipairs(ud.buildOptions or {}) do
+				if fighter(UnitDefs[b]) then
+					out[#out + 1] = u
+					break
+				end
+			end
+		end
+	end
+	return out
+end
+
+local function setFactoryForm(fac, id, aim)
+	local x, _, z = spGetUnitPosition(fac)
+	if not x then
+		return
+	end
+	local old = factoryForms[fac]
+	for _, u in ipairs(old and old.members or {}) do -- (a new preset: the old one's members keep what they do)
+		memberOf[u] = nil
+	end
+	-- its frame, as plan's: the middle at the tap facing away from the factory, or the drawn line's middle facing away
+	-- from the factory's side of it, as wide
+	local mx, mz, fx, fz, W
+	if aim.bx then
+		mx, mz = (aim.ax + aim.bx) / 2, (aim.az + aim.bz) / 2
+		local ux, uz, len = way(aim.ax, aim.az, aim.bx, aim.bz)
+		fx, fz, W = -uz, ux, len
+		if (mx - x) * fx + (mz - z) * fz < 0 then
+			fx, fz = -fx, -fz
+		end
+	else
+		mx, mz = aim.x, aim.z
+		fx, fz = way(x, z, mx, mz)
+	end
+	factoryForms[fac] = { id = id, aim = aim, members = {}, slots = {}, going = {}, place = {}, grid = {},
+		mx = mx, mz = mz, fx = fx, fz = fz, px = -fz, pz = fx, W = W }
+end
+
+-- the next free place for unit u in a factory's formation (along, across in its frame): by its group's grid, the
+-- lowest free index; index k of a row: 0, then right and left in turn (1, -1, 2, -2 ...), every other row half a place
+-- over; rows behind once full. STRAFE one grid; the formations their brawlers' grid in front and the rest's behind,
+-- as far back as their reach lets them hit past the front's (layout); planes their own, ahead
+local function growPlace(F, u)
+	local style = PRESETS[F.id].style
+	local r = role(spGetUnitDefID(u))
+	local group = (r[1] == "fighter" or r[1] == "air") and "air" or (style == "strafe" or r[1] == "front") and "front"
+		or "back"
+	local g = F.grid[group]
+	if not g then
+		local spread = style == "spread"
+		local sp = math.max(spread and 96 or 64, unitWidth(u) + GAP)
+		local along0 = 0
+		if group == "back" then
+			local front = F.grid.front
+			along0 = -math.max(spread and 120 or 80, math.min(BACK_MAX, r[2] - (front and front.reach or 0) - REACH_AHEAD))
+		elseif group == "air" then
+			along0 = AIR_LEAD
+		end
+		g = { sp = sp, per = F.W and math.max(1, math.floor(F.W / sp) + 1) or ROW_MAX, along0 = along0,
+			rowGap = spread and 120 or 80, taken = {}, reach = r[2] }
+		F.grid[group] = g
+	end
+	g.reach = math.max(g.reach, r[2])
+	local i = 0
+	while g.taken[i] do
+		i = i + 1
+	end
+	g.taken[i] = u
+	local row, k = math.floor(i / g.per), i % g.per
+	local off = k % 2 == 1 and (k + 1) / 2 or -k / 2
+	local across = off * g.sp + (row % 2) * g.sp * 0.5
+	if F.W and math.abs(across) > F.W / 2 + 1 then
+		across = off * g.sp
+	end
+	local along = g.along0 - row * g.rowGap
+	if style == "concave" and group ~= "air" then -- (the ends forward, by a fixed half row: the places do not move)
+		local half = math.max(g.sp, g.per / 2 * g.sp)
+		along = along + (math.min(1, math.abs(across) / half)) ^ 2 * half * 0.5
+	end
+	F.place[u] = { group, i }
+	return along, across
+end
+
+local function freePlace(F, u)
+	local p = F.place[u]
+	if p and F.grid[p[1]] and F.grid[p[1]].taken[p[2]] == u then
+		F.grid[p[1]].taken[p[2]] = nil
+	end
+	F.place[u] = nil
+end
+
+-- a unit out of the factory into its formation: a place of its own, the others where they are
+local function joinForm(fac, unit)
+	local F = factoryForms[fac]
+	if not F or not Spring.ValidUnitID(unit) or Spring.GetUnitIsDead(unit) then
+		return
+	end
+	local live = {}
+	for _, u in ipairs(F.members) do
+		if Spring.ValidUnitID(u) and not Spring.GetUnitIsDead(u) and memberOf[u] == fac then
+			live[#live + 1] = u
+		else
+			freePlace(F, u) -- (gone or sent elsewhere: its place for the next one)
+		end
+	end
+	live[#live + 1] = unit
+	F.members = live
+	memberOf[unit] = fac
+	local along, across = growPlace(F, unit)
+	local wx, wz = onMap(F.mx + F.fx * along + F.px * across, F.mz + F.fz * along + F.pz * across)
+	F.slots[unit] = { wx, wz, along, across }
+	local r = role(spGetUnitDefID(unit))
+	if r[1] == "fighter" or r[1] == "air" then -- (planes: their place, no side to side)
+		Spring.GiveOrderToUnit(unit, CMD.FIGHT, ground(wx, wz), 0)
+	else
+		Spring.GiveOrderArrayToUnitArray({ unit }, { { CMD.REPEAT, { 0 }, {} }, { CMD.FIGHT, ground(wx, wz), {} } })
+		F.going[unit] = Spring.GetGameFrame()
+	end
+	Spring.Echo(string.format("[bardroid-presets] factory %d: %s, %d units", fac, PRESETS[F.id].name, #live)) -- (tools)
+end
+
+-- the members on their way: each one, there, goes side to side across its place at once (no waiting for the rest)
+local function factoryCheck(f)
+	for i = #joins, 1, -1 do
+		if joins[i].frame <= f then
+			local j = table.remove(joins, i)
+			joinForm(j.fac, j.unit)
+		end
+	end
+	for fac, F in pairs(factoryForms) do
+		for u, since in pairs(F.going) do
+			local s = F.slots[u]
+			local x, _, z = spGetUnitPosition(u)
+			if not x or Spring.GetUnitIsDead(u) or memberOf[u] ~= fac then
+				F.going[u] = nil
+			elseif f - since >= 15 and #(Spring.GetUnitCommands(u, 1) or {}) == 0 then
+				F.going[u] = nil
+				if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < FORM_THERE * FORM_THERE then
+					local a = ground(s[1] + F.px * SIDE, s[2] + F.pz * SIDE)
+					local b = ground(s[1] - F.px * SIDE, s[2] - F.pz * SIDE)
+					Spring.GiveOrderArrayToUnitArray({ u }, {
+						{ CMD.REPEAT, { 1 }, {} },
+						{ CMD.FIGHT, a, {} },
+						{ CMD.FIGHT, b, { "shift" } },
+					})
+					swaying[u] = { at = f, a = a, b = b }
+					Spring.Echo(string.format("[bardroid-presets] factory %d: unit %d there, side to side", fac, u)) -- (tools)
+				else -- (stopped short of its place: blocked, or stopped by the player; out of the formation)
+					memberOf[u] = nil
+				end
+			end
+		end
+	end
+end
+
 -- mode "insert" (the dock's INSERT on): each unit straight to its place at the front of its queue, its own orders after
 -- (no side to side, its repeat as it was)
 local function send(id, units, aim, mode)
@@ -670,8 +846,15 @@ end
 
 function widget:Initialize()
 	WG.BarDroidPresets = {
-		fits = function(units)
-			return mayOrder() and #combatUnits(units) > 0
+		fits = function(units) -- (units that move, or a factory that builds them: its units join the preset, factoryForms)
+			return mayOrder() and (#combatUnits(units) > 0 or #factoriesOf(units) > 0)
+		end,
+		factoryPreset = function(fac) -- (the dock: a factory's preset's name, nil without one)
+			local F = factoryForms[fac]
+			return F and PRESETS[F.id] and PRESETS[F.id].name or nil
+		end,
+		factoryForm = function(fac) -- (tools: its members, places and middle)
+			return factoryForms[fac]
 		end,
 		isOpen = function()
 			return opened
@@ -690,13 +873,15 @@ function widget:Initialize()
 		end,
 		pick = function(id)
 			local p = PRESETS[id]
-			local units = combatUnits(Spring.GetSelectedUnits())
+			local sel = Spring.GetSelectedUnits()
+			local units, facs = combatUnits(sel), factoriesOf(sel)
 			opened = false
-			if p and #units > 0 then
-				armedFor = { id = id, units = units }
+			if p and (#units > 0 or #facs > 0) then
+				armedFor = { id = id, units = units, factories = facs }
 				-- (taps only: a drag pans, Kailil 2026-11-13 "make presets a single tap only"; QUEUE on: a tap for each
 				-- place in turn)
-				say(p.name .. (queueMode() and ": TAP EACH PLACE IN TURN" or ": TAP WHERE TO SEND"))
+				say(p.name .. (#units == 0 and ": TAP WHERE ITS UNITS GATHER"
+					or queueMode() and ": TAP EACH PLACE IN TURN" or ": TAP WHERE TO SEND"))
 			end
 			refreshDock()
 		end,
@@ -834,6 +1019,19 @@ function widget:MouseRelease(x, y)
 		end
 	end
 	local p = PRESETS[a.id]
+	if p and a.factories and #a.factories > 0 then -- (a factory picked: its units from now on join the formation there)
+		for _, fac in ipairs(a.factories) do
+			setFactoryForm(fac, a.id, aim)
+		end
+		Spring.Echo(string.format("[bardroid-presets] %s set for %d factories at %.0f,%.0f", p.name, #a.factories,
+			aim.x or (aim.ax + aim.bx) / 2, aim.z or (aim.az + aim.bz) / 2)) -- (tools)
+		if #alive == 0 then
+			armedFor = nil
+			say(p.name .. ": " .. (#a.factories == 1 and "ITS" or "THEIR") .. " NEW UNITS GATHER THERE")
+			refreshDock()
+			return true
+		end
+	end
 	local n, pl = 0, nil
 	local queued, insert = queueMode()
 	local how = " (a tap)"
@@ -871,7 +1069,51 @@ end
 -- while aiming: a tap's pulsing gold ring with dashes from the group, or the drawn line with the way it faces; the
 -- places the units would take (blue rings) and how far the front goes side to side (a faint gold line)
 local preview -- { key, plan }
+-- a picked factory's preset: where its units gather (a gold ring, or its drawn line), a line from the factory to it, and
+-- its members' places (blue rings)
+local function drawFactoryForms()
+	if not next(factoryForms) then
+		return
+	end
+	for _, fac in ipairs(Spring.GetSelectedUnits()) do
+		local F = factoryForms[fac]
+		local fx, fy, fz = spGetUnitPosition(fac)
+		if F and fx then
+			local a = F.aim
+			local mx, mz = F.mx or a.x or (a.ax + a.bx) / 2, F.mz or a.z or (a.az + a.bz) / 2
+			local my = Spring.GetGroundHeight(mx, mz) or 0
+			gl.DepthTest(false)
+			gl.LineWidth(3)
+			gl.Color(1, 0.8, 0.25, 0.8)
+			if a.bx then
+				gl.BeginEnd(GL.LINES, function()
+					gl.Vertex(a.ax, (Spring.GetGroundHeight(a.ax, a.az) or 0) + 8, a.az)
+					gl.Vertex(a.bx, (Spring.GetGroundHeight(a.bx, a.bz) or 0) + 8, a.bz)
+				end)
+			else
+				gl.DrawGroundCircle(mx, my, mz, 60, 40)
+			end
+			gl.LineWidth(2)
+			gl.Color(1, 0.8, 0.25, 0.4)
+			gl.BeginEnd(GL.LINES, function()
+				gl.Vertex(fx, fy + 10, fz)
+				gl.Vertex(mx, my + 8, mz)
+			end)
+			gl.Color(0.55, 0.85, 1, 0.8)
+			for _, u in ipairs(F.members) do
+				local s = memberOf[u] == fac and F.slots[u]
+				if s then
+					gl.DrawGroundCircle(s[1], Spring.GetGroundHeight(s[1], s[2]) or 0, s[2], 18, 12)
+				end
+			end
+			gl.LineWidth(1)
+			gl.Color(1, 1, 1, 1)
+		end
+	end
+end
+
 function widget:DrawWorld()
+	drawFactoryForms()
 	if not (aiming and armedFor) then
 		preview = nil
 		return
@@ -977,6 +1219,9 @@ function widget:GameFrame(f)
 	if #sways > 0 and f % 10 == 0 then
 		swayCheck(f)
 	end
+	if (#joins > 0 or next(factoryForms)) and (f % 10 == 0 or #joins > 0) then
+		factoryCheck(f)
+	end
 	if #groupOrders == 0 or groupOrders[1].frame > f then
 		return
 	end
@@ -999,7 +1244,45 @@ end
 
 -- a unit going side to side given an order of the player's (or any not the sway's own): its repeat off, as it was
 -- before the preset; a queued order (Shift) then comes after the fights in its queue instead of joining their round
+-- (a factory's own move, fight, patrol, guard or stop: its rally, its preset ends; a member the player sends elsewhere
+-- leaves its formation: an order not the formation's own fight to its place, its repeat or its side to side)
+local ENDS_FORM = {}
+for _, c in ipairs({ CMD.MOVE, CMD.FIGHT, CMD.PATROL, CMD.GUARD, CMD.STOP }) do
+	if c then
+		ENDS_FORM[c] = true
+	end
+end
+local function formCommand(unitID, cmdID, p)
+	if factoryForms[unitID] and ENDS_FORM[cmdID] then
+		for _, u in ipairs(factoryForms[unitID].members) do
+			memberOf[u] = nil
+		end
+		factoryForms[unitID] = nil
+		Spring.Echo("[bardroid-presets] factory " .. unitID .. ": its own order, the preset ends") -- (tools)
+		return
+	end
+	local fac = memberOf[unitID]
+	local F = fac and factoryForms[fac]
+	if not F or swaying[unitID] then -- (swaying: UnitCommand's own handling below)
+		return
+	end
+	local s = F.slots[unitID]
+	if cmdID == CMD.REPEAT or (cmdID == CMD.FIGHT and s and p[3] and math.abs(p[1] - s[1]) < 2 and math.abs(p[3] - s[2]) < 2) then
+		return
+	end
+	if cmdID < 0 or ENDS_SWAY[cmdID] then
+		memberOf[unitID], F.going[unitID] = nil, nil
+	end
+end
+
+function widget:UnitFromFactory(unitID, unitDefID, unitTeam, factID)
+	if factID and factoryForms[factID] and unitTeam == Spring.GetMyTeamID() and fighter(UnitDefs[unitDefID]) then
+		joins[#joins + 1] = { unit = unitID, fac = factID, frame = Spring.GetGameFrame() + 1 }
+	end
+end
+
 function widget:UnitCommand(unitID, _, _, cmdID, cmdParams)
+	formCommand(unitID, cmdID, cmdParams or {})
 	local s = swaying[unitID]
 	if not s then
 		return
@@ -1024,15 +1307,20 @@ function widget:UnitCommand(unitID, _, _, cmdID, cmdParams)
 	end
 	if cmdID < 0 or ENDS_SWAY[cmdID] then
 		swaying[unitID] = nil
+		memberOf[unitID] = nil -- (a factory's formation's member: sent elsewhere, out of it)
 		Spring.GiveOrderToUnit(unitID, CMD.REPEAT, { 0 }, 0)
 	end
 end
 
 function widget:UnitDestroyed(unitID)
 	swaying[unitID] = nil
+	memberOf[unitID] = nil
+	factoryForms[unitID] = nil
 end
 function widget:UnitTaken(unitID) -- (given to an ally: theirs to order)
 	swaying[unitID] = nil
+	memberOf[unitID] = nil
+	factoryForms[unitID] = nil
 end
 
 function widget:KeyPress(key)
