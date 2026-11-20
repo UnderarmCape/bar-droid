@@ -155,8 +155,16 @@ boxes, the GPU driver's fault closing a frozen game).
       ignored for 15 frames (it started its walls again each frame); placements kept by frame (a new frame's order
       dropped the last one's unhandled). walls-phone-test (now with real WALLS taps and the T2 cases) ALL PASS twice,
       dock-phone-test ALL PASS (31), remake-check PASS. Not on the Fold7 yet (refusing port 44111). A GPU driver fault (the app's close) once in 8 runs here, not again.
-- [ ] **The Commander in D-gun mode**: measure whether he walks slower than on a plain move over a medium distance; if
-      not, nothing to do.
+- [x] **The Commander in D-gun mode**: measure whether he walks slower than on a plain move over a medium distance; if
+      not, nothing to do. Measured (2026-11-20 ~08:25-08:41, dev phone, BAR test-32018): he is not slower; nothing
+      changed. New tools/dgun-speed-test.ps1: the same 861 elmos of open ground walked three ways, timed from his first
+      step: a plain move order 23.3 s (37.0 elmos/s); the D-gun mode's stick held through the mode 23.7 s (98 %); the
+      dock's stick held by a finger 23.8 s (98 %); mean and top speed 37.5 elmos/s in all three, no frame under half
+      speed (the mode's 143 steps of 56 elmos, one every 0.15 s, never let him slow). The 2 %: half a second getting
+      going. What may feel slower in play, by design: no step for 0.6 s after each shot (DGUN_SHOT_HOLD: the commander
+      turns to fire, full auto included); and where the host forbids widgets' orders each step is a click on a point that
+      must be on the screen and off the dock (none, no step, when it is under the dock). A first try counted the wait
+      for the script's finger as walking (93 %); two test games closed by the GPU driver fault (the app's close) today.
 - [ ] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a
       formation) to put the app's systems to the test, run as often as the data needs.
 - [ ] **The transfer button more pronounced.**
