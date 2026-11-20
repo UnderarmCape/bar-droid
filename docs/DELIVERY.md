@@ -763,7 +763,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       closed; rejoin online games in the lobby." (DriverWatch.note), two lines at the status line's ~50 characters (the
       note is only in memory after a real fault, so its lines are counted, not shown). The launcher's other exit notes
       are a line each. Hunted: the launcher's GL check on the dev phone, "GL check: Adreno 740 (Freedreno), OpenGL 4.3,
-      Mesa 27.0.0-devel" in two lines, the version kept whole. status-text-test ALL PASS.
+      Mesa 27.0.0-devel" in two lines, the version kept whole. status-text-test ALL PASS. On the Fold7 at 23:11 (BAR not
+      running): the APK from clean main cfed1869; github-sync -Release.
 - [x] **The GPU driver's fault met on the dev phone and closed as planned; the game type's line above the turn rail;
       the launcher back without its keyboard** (hardening, 2026-11-19 ~22:36-23:00, dev phone, BAR test-32018; the
       Fold7 not played since 22:19). UI polish: in a replay upright the game type's "Victory condition" line sat on
