@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **His game's "[liblobby] Error: Failed to match command: REMOVESCRIPTTAGS": BAR's lobby, harmless** (hardening,
+      2026-11-19 ~23:28-23:32; the Fold7 not played since 23:11). At his 17:38 game's end the server sent
+      REMOVESCRIPTTAGS with nothing to remove; Chobby's pattern for it wants at least one tag ("([^\t]+)",
+      liblobby interface.lua), so interface_shared.lua logs the error and drops a command that would have done nothing.
+      The same on a PC. Left as BAR has it. The pure-Java checks swept: updater-test and voice-chat-test ALL PASS
+      (status-text-test the run before). The open "Playing with no connection" item stays Kailil's call. No UI polish
+      this run.
 - [x] **BAR's "cursorareaattack has no frames" warning: BAR's own, not the phone's** (hardening, 2026-11-19
       ~23:21-23:27, dev phone, BAR test-32018; the Fold7 not played since 23:11). The dev phone's last game logs had
       two warnings, both in every game: the start position suggestions' (no modoption data) and "[MouseHandler::
