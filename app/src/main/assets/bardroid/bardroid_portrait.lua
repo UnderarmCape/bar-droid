@@ -704,6 +704,7 @@ local function writeDock(force)
 				and (not L.thumb or L.panelOn or rightKind == "pregame")
 				and ("ping " .. r(L.pingBtn) .. "\n") or "")
 			.. (dgunLines and dgunLines() or "")
+			.. SP.backLine() -- (Android's Back at home: BAR's way out, RtsTouch.back)
 	else
 		text = "dock none\n"
 	end
@@ -4458,6 +4459,8 @@ local function dockLines()
 				L.homeOpen = true
 				refresh()
 			end
+		elseif name == "dock_back" and active then -- (Android's Back: RtsTouch.back)
+			SP.back()
 		elseif name == "dock_select_start" and active then
 			selecting = true
 			touched()
@@ -4473,6 +4476,84 @@ local function dockLines()
 			refresh()
 		end
 	end
+end
+
+-- Android's Back in a game (Kailil, 2026-11-20: "make the android back command contextual ... clearing unit selection
+-- ... so I can easily have access to the bottom ui that displays the commander Hotkey, base, pings ... any point I am
+-- in. Build place menu, faculty queue, preset commands ... If I'm at that mode already for the bottom ui, make it does
+-- the leave battle path where it asks you if you are sure"): back to the home grid from anything over it, the pick,
+-- its orders and every menu put away (RtsTouch sends Escape with it: BAR's own command, its chat). Already there, BAR's
+-- own way out, SP.backLine: in a game from the lobby the lobby over it, as BAR's Lobby button (Leave Battle there,
+-- with its question); else BAR's quit question (Stay, Resign, Quit), asked by the engine's quit request as for the
+-- window's close button (RtsTouch: "back quit"). A click on BAR's quit button upright did nothing: BAR's Top Bar, the
+-- resource bars hidden under the buttons, takes the press before Top Bar Buttons (bardroid_topbar.lua; dev phone 2026-11-20)
+SP.chobby = Spring.GetMenuName and string.find(string.lower(Spring.GetMenuName() or ""), "chobby") ~= nil
+function SP.back()
+	if SP.atHome() and SP.chobby and not SP.gameOver then
+		Spring.SendLuaMenuMsg("showLobby")
+		return
+	end
+	if dgunOn() and WG.BarDroidPad and WG.BarDroidPad.act then
+		WG.BarDroidPad.act("dgun_cancel")
+	end
+	local P = WG.BarDroidPresets
+	if P and P.close then
+		P.close()
+	end
+	if P and P.disarm then
+		P.disarm()
+	end
+	sharing, resPanel, factoryItem, typesFrom = nil, nil, nil, nil
+	pingT.cancel()
+	local pb = Spring.GetGameFrame() == 0 and WG["pregame-build"]
+	local putAway = pb and (pb.setPreGamestartDefID or pb.setPreGameDefID)
+	if putAway then
+		putAway(nil)
+	elseif select(2, spGetActiveCommand()) then
+		Spring.SetActiveCommand(0)
+	end
+	Spring.SelectUnitArray({})
+	if SP.hidden then
+		SP.setHidden(false)
+	end
+	setMenu(true)
+	refresh()
+end
+
+-- the home grid with nothing on it to put away: no pick, order, menu, preset, ping armed, D-gun mode, nor BAR's quit
+-- question already up (Back closes that one, Escape)
+function SP.atHome()
+	if rightKind ~= "home" or sharing or resPanel or typesFrom or SP.hidden or dgunOn() or pingT.armed() then
+		return false
+	end
+	if Spring.GetSelectedUnitsCount() > 0 or select(2, spGetActiveCommand()) then
+		return false
+	end
+	local P = WG.BarDroidPresets
+	if P and (P.isOpen() or P.armed()) then
+		return false
+	end
+	local tb = WG.topbar
+	return not (tb and tb.showingQuit and tb.showingQuit())
+end
+
+-- the dock file's "back" line, at home: "back lobby" in a game from the lobby (SP.back shows it; RtsTouch sends no
+-- Escape, which the lobby would take); "back quit" where BAR's quit question comes from the engine's quit request (Top
+-- Bar Buttons' AllowQuit asks only a player in a started game, the interface shown: a spectator's or a finished game's
+-- request quits at once, so then no line, Back stays Escape)
+function SP.backLine()
+	if not SP.atHome() then
+		return ""
+	end
+	if SP.chobby and not SP.gameOver then
+		return "back lobby\n"
+	end
+	local tb = WG.topbar
+	if not (tb and tb.showingQuit) or SP.gameOver or Spring.GetSpectatingState() or Spring.GetGameFrame() <= 0
+		or Spring.IsGUIHidden() then
+		return ""
+	end
+	return "back quit\n"
 end
 
 ---------------------------------------------------------------------------------------------------------------------

@@ -172,17 +172,34 @@ try {
       $cell = (Rects "bardroid_docktest.txt")[$shape]
       if (-not $cell) { "[docktest] FAIL no $shape cell on the dock (the building not picked?)"; continue }
       $c = Mid $cell; Tap $c[0] $c[1]; Start-Sleep -Milliseconds 700
-      $ey = if ($shape -eq "border") { $fs[1] - 130 } else { $fs[1] }
-      Touch DOWN $fs[0] $fs[1]; Start-Sleep -Milliseconds 800
-      Touch MOVE ($fs[0] + $dx / 2) (($fs[1] + $ey) / 2); Touch MOVE ($fs[0] + $dx) $ey
-      Start-Sleep -Milliseconds 300; Touch UP ($fs[0] + $dx) $ey; Start-Sleep -Milliseconds 700
+      # (the line from the free spot; the border on a ring of open ground the widget finds, every spot of it buildable:
+      # begun on the line's half-built buildings, or guessed above them, BAR placed none, 3 runs in 4)
+      $x0 = $fs[0]; $y0 = $fs[1]; $x1 = $fs[0] + $dx; $y1 = $fs[1]
+      if ($shape -eq "border") {
+        Stage "borderspot"; Start-Sleep -Milliseconds 800
+        $bs = (Rects "bardroid_docktest.txt")["bspot"]
+        if ($bs) { $x0 = $bs[0]; $y0 = $bs[1]; $x1 = $bs[2]; $y1 = $bs[3] } else { "[docktest] (no open ring found: the border from the free spot)"; $y1 = $fs[1] - 130 }
+      }
+      Touch DOWN $x0 $y0; Start-Sleep -Milliseconds 800
+      Touch MOVE (($x0 + $x1) / 2) (($y0 + $y1) / 2); Touch MOVE $x1 $y1
+      Start-Sleep -Milliseconds 300; Touch UP $x1 $y1; Start-Sleep -Milliseconds 700
       Stage "$($shape)hold?"; Start-Sleep 1
       $pl = (Rects "bardroid_place.txt")["done"]
       if ($pl) { $p = Mid $pl; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 1200 }
       Stage "$($shape)placed?"; Start-Sleep 1
+      # (the line's buildings off the queue before the border: a border laid over them took them off again, Shift on a
+      # queued building being BAR's way to unqueue it, and its count came out lower)
+      Stage "stopcom"; Start-Sleep 1
     }
-    $place = Rects "bardroid_place.txt"
-    if ($place["cancel"]) { $p = Mid $place["cancel"]; Tap $p[0] $p[1]; Start-Sleep 1 }
+    # (Android's Back, Kailil 2026-11-20: the building still picked, Back puts it away and the dock goes to its home grid;
+    # Back again there, BAR's quit question; again, it closes and the game goes on)
+    & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
+    Stage "backhome?"; Start-Sleep 1
+    & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
+    Stage "quitshown?"; Start-Sleep 1
+    Shot "back-quit"
+    & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
+    Stage "quitclosed?"; Start-Sleep 1
     Stage "stopcom"; Start-Sleep 1
   }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
@@ -252,6 +269,10 @@ try {
   Touch MOVE $s0[0] (($s0[1] + $dp[1]) / 2); Touch MOVE $dp[0] $dp[1]
   Start-Sleep -Milliseconds 300; Touch UP $dp[0] $dp[1]; Start-Sleep -Milliseconds 1200
   Stage "drawdock?"; Start-Sleep 1
+  # (Back with the presets open on the Pawns: closed, nothing picked; Kailil 2026-11-20)
+  Stage "presetsback"; Start-Sleep -Milliseconds 1200
+  & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
+  Stage "backpresets?"; Start-Sleep 1
   # 7. nothing picked, the dock's menu open: a drag on the game pans (Kailil, 2026-11-13: one finger pans, always), then
   # a tap and a drag: a box selection dragged from the map on into the dock, its corner held at the dock's top edge
   Stage "deselect"; Start-Sleep 2

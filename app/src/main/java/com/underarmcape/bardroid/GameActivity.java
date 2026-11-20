@@ -932,17 +932,23 @@ public class GameActivity extends MainActivity {
         }
     }
 
+    private boolean backClicked;   // this Back's press clicked BAR's quit button: no Escape for its release either
+
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (pad != null && pad.onKey(event)) { touch.source("pad"); return true; }
         if (KeyboardShortcuts.isAndroidKey(event.getKeyCode())) return false;   // the window's and the system's handling
-        // The system Back button/gesture (not a keyboard's or a mouse's back key) becomes Escape.
+        // The system Back button/gesture (not a keyboard's or a mouse's back key): with the touch dock contextual (the dock
+        // to its home grid, then BAR's quit button: RtsTouch.back), and Escape as before unless that clicked the button.
         if (event.getKeyCode() == KeyEvent.KEYCODE_BACK && !event.isFromSource(InputDevice.SOURCE_MOUSE)
                 && getLorieView().connected()) {
-            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0)
-                getLorieView().sendKeyEvent(0, KeyEvent.KEYCODE_ESCAPE, true);
-            else if (event.getAction() == KeyEvent.ACTION_UP)
-                getLorieView().sendKeyEvent(0, KeyEvent.KEYCODE_ESCAPE, false);
+            if (event.getAction() == KeyEvent.ACTION_DOWN && event.getRepeatCount() == 0) {
+                backClicked = touch != null && touch.back();
+                if (!backClicked) getLorieView().sendKeyEvent(0, KeyEvent.KEYCODE_ESCAPE, true);
+            } else if (event.getAction() == KeyEvent.ACTION_UP) {
+                if (!backClicked) getLorieView().sendKeyEvent(0, KeyEvent.KEYCODE_ESCAPE, false);
+                backClicked = false;
+            }
             return true;
         }
         return super.dispatchKeyEvent(event);

@@ -143,6 +143,7 @@ final class RtsTouch {
         // (bardroid_portrait.lua, a "live" line each)
         final java.util.List<float[]> live = new java.util.ArrayList<>();
         float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
+        String back;    // the home grid with nothing on it, Android's Back: "quit" or "lobby" (the "back" line, back())
         boolean menu, circle, draw, dgun, dgunAuto;
         boolean area;   // an area order armed (Area Mex, Reclaim...): a drag on the game draws its circle, "draw 2"
         boolean areaOnly;   // ... one that takes only an area (Area Mex), "draw 3": a tap on the map waits for a drag
@@ -1274,6 +1275,7 @@ final class RtsTouch {
                         if (f[0].equals("stickl")) d.stickL = c; else d.stickR = c;
                         continue;
                     }
+                    if (d != null && f.length == 2 && f[0].equals("back")) { d.back = f[1]; continue; }
                     if (f.length < 5) continue;   // (the "select box|circle" line: below)
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("dock") && f.length == 6) {
@@ -2234,6 +2236,31 @@ final class RtsTouch {
      * A game action for the widget (bardroid_touch.lua ACTIONS); in the lobby only speak to chat's and the pad's D-pad
      * ("voice_*", "lobby_*": bardroid_lobby_touch.lua reads the same log).
      */
+    /**
+     * Android's Back in a game with the touch dock (Kailil, 2026-11-20: from anywhere it clears the unit selection, back
+     * to the dock's own row, Commander, base, pings ...; pressed again there, BAR's leave-battle path with its "are you
+     * sure"). At the home grid with nothing to put away (the dock file's "back" line): "quit", BAR's quit question,
+     * asked by the engine's quit request as the window's close button (SIGTERM, Proc.endEngine's first step: Top Bar
+     * Buttons' AllowQuit answers with its Stay / Resign / Quit); "lobby", the dock shows BAR's lobby over the game, no
+     * Escape after it. Else the dock told to go home (bardroid_portrait.lua SP.back).
+     * @return true: done here; false: the caller sends Escape as before (BAR's own command, its chat, its windows)
+     */
+    boolean back() {
+        dockReadAt = 0;   // (read now: a pick made in the last 100 ms is not home)
+        Dock d = dock();
+        if (d == null) return false;   // (no dock: a BAR window over the game, the lobby over it, a pad or a mouse)
+        if ("quit".equals(d.back)) {
+            java.util.List<Integer> pids = Proc.enginePids();
+            for (int pid : pids) {
+                try { android.system.Os.kill(pid, android.system.OsConstants.SIGTERM); } catch (Exception ignored) {}
+            }
+            Log.i("touch", "Back at the dock's home grid: BAR's quit question (the engine's quit request, pid " + pids + ")");
+            return true;
+        }
+        act("dock_back");
+        return "lobby".equals(d.back);
+    }
+
     private void act(String name) {
         if (gameWidgetRunning() || name.startsWith("voice_") || name.startsWith("lobby_")) send("act " + name);
     }

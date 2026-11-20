@@ -700,6 +700,12 @@ function widget:Initialize()
 			end
 			refreshDock()
 		end,
+		disarm = function() -- (Android's Back: the dock's SP.back puts everything away)
+			if armedFor then
+				armedFor = nil
+				refreshDock()
+			end
+		end,
 		armed = function() -- (and the armed preset's name: the dock's PRESETS button shows it, gold)
 			local p = armedFor and PRESETS[armedFor.id]
 			return armedFor ~= nil, p and p.name

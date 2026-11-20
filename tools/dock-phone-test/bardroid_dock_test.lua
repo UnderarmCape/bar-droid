@@ -11,6 +11,8 @@
 --   shapecells the building picked again: "line ...", "border ...": the dock's LINE and BORDER cells
 --   linehold? / borderhold?  LINE / BORDER, a press held on the map, a drag: the shape held, the building still picked
 --   lineplaced? / borderplaced?  PLACE: 2+ / 3+ buildings queued;  stopcom  the commander's queue cleared
+--   backhome? / quitshown? / quitclosed?  Android's Back: the building put away, the home grid; BAR's quit question; closed
+--   presetsback, backpresets?  the Pawns picked, the presets open; Back: closed, nothing picked
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
@@ -339,6 +341,73 @@ local function onCmd(c)
 			or "the held BORDER's PLACE: a ring of buildings queued", n - (shapeQueued or 0) >= want,
 			string.format("%d queued, %d before", n, shapeQueued or 0))
 		shapeQueued = n
+	elseif c == "backhome?" then -- (Android's Back with a building picked: put away, nothing picked, the home grid,
+		-- whose "back" line names BAR's quit button; Kailil, 2026-11-20)
+		local _, cmd = Spring.GetActiveCommand()
+		local n = Spring.GetSelectedUnitsCount()
+		local f = io.open("LuaUI/Config/bardroid_dock.txt", "r")
+		local text = f and f:read("*a") or ""
+		if f then
+			f:close()
+		end
+		check("Back with a building picked: put away, nothing picked, the dock's home grid (BAR's quit question next)",
+			not cmd and n == 0 and text:find("\nback quit", 1, true) ~= nil,
+			string.format("picked %s, %d units, back line %s", tostring(cmd), n, tostring(text:find("\nback quit", 1, true) ~= nil)))
+	elseif c == "quitshown?" then -- (Back again at home: BAR's top bar quit button, its quit question)
+		local tb = WG.topbar
+		local q = tb and tb.showingQuit and tb.showingQuit()
+		check("Back at the home grid: BAR's leave-battle question", q and true or false, "showing " .. tostring(q))
+	elseif c == "quitclosed?" then -- (Back again: the question closed, Escape's hideWindows)
+		local tb = WG.topbar
+		local q = tb and tb.showingQuit and tb.showingQuit()
+		check("Back with BAR's quit question up: it closes, the game goes on", not q, "showing " .. tostring(q))
+		if q and tb.hideWindows then -- (the rest of the test needs the game)
+			tb.hideWindows()
+		end
+	elseif c == "borderspot" then -- (a ring's two corners on open ground, every spot of it buildable and clear of the
+		-- line's buildings, in sight above the dock: "bspot x0 y0 x1 y1"; a ring guessed above the line found none, 2 runs)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local _, vsy = Spring.GetViewGeometry()
+		local top = dock and (vsy - dock[4]) or vsy -- (X pixels from the top)
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local found
+		for r = 250, 1400, 50 do
+			for a = 0, 345, 15 do
+				if not found then
+					local mx, mz = cx + math.cos(math.rad(a)) * r, cz + math.sin(math.rad(a)) * r
+					local ok, corners = true, {}
+					for _, o in ipairs({ { -1, -1 }, { 1, -1 }, { -1, 1 }, { 1, 1 }, { 0, -1 }, { 0, 1 }, { -1, 0 }, { 1, 0 } }) do
+						local x, z = mx + o[1] * 112, mz + o[2] * 112
+						local bx, by, bz = Spring.Pos2BuildPos(buildDef, x, Spring.GetGroundHeight(x, z), z, 0)
+						if Spring.TestBuildOrder(buildDef, bx, by, bz, 0) < 2 then
+							ok = false
+						end
+						local sx, sy = screenOf(bx, bz)
+						if not sx or sy > top - 30 or sy < 120 then
+							ok = false
+						end
+						corners[#corners + 1] = { sx, sy }
+					end
+					if ok then
+						found = { corners[1][1], corners[1][2], corners[4][1], corners[4][2] }
+					end
+				end
+			end
+		end
+		write(found and string.format("bspot %d %d %d %d\n", found[1], found[2], found[3], found[4]) or "bspot nil nil nil nil\n")
+		Spring.Echo("[docktest] the border's corners: " .. (found and table.concat(found, ",") or "none"))
+	elseif c == "presetsback" then -- (the Pawns picked, the presets open over the dock: then Android's Back)
+		Spring.SelectUnitArray(pawns)
+		if WG.BarDroidPresets then
+			WG.BarDroidPresets.open()
+		end
+	elseif c == "backpresets?" then -- (Back with the presets open: closed, nothing picked)
+		local P = WG.BarDroidPresets
+		local open = P and P.isOpen()
+		local n = Spring.GetSelectedUnitsCount()
+		check("Back with the presets open on picked units: closed, nothing picked, the dock's home grid", not open and n == 0,
+			string.format("presets open %s, %d picked", tostring(open), n))
 	elseif c == "stopcom" then -- (the shapes' buildings off the commander's queue: the D-gun mode's walk must not build)
 		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
 	elseif c == "dgun" then -- (the building put away by the dock's cancel first: the script taps it)
@@ -755,5 +824,21 @@ function widget:GameFrame(f)
 			lastCmd = c
 			onCmd(c)
 		end
+	end
+end
+
+-- (and between frames: a paused game has none, and BAR pauses a game alone while its quit question is up, Back's case:
+-- the question's stage waited for the game to go on, after the next Back had closed it; 2026-11-20)
+local cmdAt = 0
+function widget:Update()
+	local t = os.clock()
+	if not ready or t - cmdAt < 0.2 then
+		return
+	end
+	cmdAt = t
+	local c = readCmd()
+	if c and c ~= lastCmd then
+		lastCmd = c
+		onCmd(c)
 	end
 end
