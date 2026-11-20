@@ -45,6 +45,12 @@ try {
   else { "[driverwatchtest] FAIL the words as chat and echo armed the driver watch: $(($armed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
   if ($closed.Count -eq 0 -and $alive) { "[driverwatchtest] PASS the game still running, no driver note" }
   else { "[driverwatchtest] FAIL the game closed or noted: alive $alive, $(($closed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+  # (the engine's state lines said as chat: no state of the app's changed by them)
+  $state = @($run | Select-String -Pattern "back in the lobby|a game loads \(from the lobby\)|joining a game hosted elsewhere|not loading now")
+  if ($state.Count -eq 0) { "[driverwatchtest] PASS the engine's state lines as chat: the app's state unchanged" }
+  else { "[driverwatchtest] FAIL the engine's state lines as chat changed the app's state: $(($state | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+  # (how the chat lines look in the log: for the record)
+  Log 'SpringApp::Reload\] test|creating LoadScreen$|203\.0\.113\.7' 6 | ForEach-Object { "[driverwatchtest] (in the log: $_)" }
   "[driverwatchtest] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"
 } finally {
   & $adb shell am force-stop $pkg

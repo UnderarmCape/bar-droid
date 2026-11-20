@@ -217,6 +217,23 @@ public class StatusTextTest {
         failed += ok7 ? 0 : 1;
         System.out.println((ok7 ? "PASS " : "FAIL ") + "driver watch: after a refusal, the watchdog's words in chat close nothing,"
                 + " the watchdog's own line does");
+        // a player's chat line is told from the engine's own (the dev phone's lines, 2026-11-20)
+        String[][] chat = {
+            { "[t=00:00:51.170276][f=0000241] <Phone> [SpringApp::Reload] test", "true" },
+            { "15:22:46 [engine] [t=00:00:51.170308][f=0000241] <Phone> [CPreGame] using client IP 203.0.113.7 and port 8452", "true" },
+            { "[t=00:01:02.0][f=0000300] <Some Player> Allies: hi", "true" },
+            { "[t=00:00:01.998326][f=-000001] [PreGame::UpdateClientNet] received local player number 0 (team 0, allyteam 0), creating LoadScreen", "false" },
+            { "[t=00:00:02.032345][f=-000001] [CPreGame] using server IP 127.0.0.1 and port 0", "false" },
+            { "MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)", "false" },
+            { "[t=00:00:52.263293][f=0000210] Warning: [Watchdog] Hang detection triggered for Spring main thread.", "false" },
+            { null, "false" },
+        };
+        for (String[] c : chat) {
+            boolean got = StatusText.isChat(c[0]);
+            boolean ok = got == Boolean.parseBoolean(c[1]);
+            failed += ok ? 0 : 1;
+            System.out.println((ok ? "PASS " : "FAIL ") + "chat line " + got + ": " + c[0]);
+        }
         // the sooner close: the refusal in a running game, then the game's widget silent STALL_MS
         DriverWatch w3 = new DriverWatch();
         boolean ok5 = !w3.stalled(true, 60000) && !w3.onLine(refused) && !w3.stalled(false, 60000)

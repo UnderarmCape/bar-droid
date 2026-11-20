@@ -498,6 +498,10 @@ public class GameService extends Service {
                         driverLost = false;
                         boolean[] hangLogged = {false}, stallWatched = {false};
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
+                            // (a player's chat, "[t=...][f=...] <name> words", is none of the engine's own lines read below:
+                            // typed in a game, "[SpringApp::Reload]" ended it in the app's eyes, a "[CPreGame] using client
+                            // IP" line made it a join; online anyone's words reach this log. StatusText.isChat, 2026-11-20)
+                            if (StatusText.isChat(line)) return;
                             // (BAR's watchdog: where the engine is stuck, from the kernel's side; once a game, HangDump)
                             if (!hangLogged[0] && DriverWatch.isHang(line)) {   // (BAR's own line, not a chat's words)
                                 hangLogged[0] = true;

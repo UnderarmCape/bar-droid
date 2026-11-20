@@ -181,6 +181,18 @@ boxes, the GPU driver's fault closing a frozen game).
       chat or echo arm nothing; after a real refusal the watchdog's words in chat close nothing, its own line does);
       driverwatch-phone-test ALL PASS twice on the fix (not armed, the game running, no note). The real fault itself
       cannot be staged without the driver; its lines are the test's laptop cases.
+- [x] **A player's chat could change the app's game state** (hardening, 2026-11-20 15:20-15:39, dev phone): GameService
+      reads its state from the engine's output by words, and a player's chat is a line of it ("[t=...][f=...] <Phone>
+      words", as the log shows a "say"; online every player's words reach every phone's log). driverwatch-phone-test
+      now also says the engine's state lines as real chat; on the build before, "[SpringApp::Reload] test" made the
+      running game "ended: back in the lobby", "[LoadScreen] creating LoadScreen" a load from the lobby, "[CPreGame]
+      using client IP 203.0.113.7 and port 8452" a join hosted elsewhere (the app's notification, launcher status and
+      loading/pre-game flags; the overlays themselves stay hidden while the game's widget answers). Now a chat line is
+      none of the engine's own: GameService skips it before reading any state (StatusText.isChat: a "<name>" right
+      after the log prefix; the line still goes to launcher.log). The fault's words as real chat (say) arm nothing
+      either. status-text-test ALL PASS with eight chat/engine line cases; driverwatch-phone-test ALL PASS twice;
+      overgame-phone-test ALL PASS and its launcher.log as before ("loaded", "a game loads (from the lobby)",
+      "loaded").
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

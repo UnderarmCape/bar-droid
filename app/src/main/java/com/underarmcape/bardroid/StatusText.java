@@ -184,6 +184,19 @@ final class StatusText {
     // 127.0.0.1 and port 0"; dev phone, a client script to an address nothing answers, 2026-11-11)
     private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
 
+    // a player's chat in the engine's log: "[t=00:00:51.170276][f=0000241] <Phone> words" (a name in angle brackets right
+    // after the log line's own prefix; to allies or spectators too, "<Phone> Allies: ...")
+    private static final java.util.regex.Pattern CHAT = java.util.regex.Pattern.compile("\\]\\[f=-?\\d+\\] <[^<>\\s][^<>]*> ");
+
+    /**
+     * A player's chat line, never one of the engine's own lines the app reads its state from: typed in a game, "[SpringApp::
+     * Reload]" ended it in the app's eyes, "[CPreGame] using client IP ..." made it a join and "creating LoadScreen" a load
+     * (dev phone, a skirmish, 2026-11-20); online any player's words reach every phone's log.
+     */
+    static boolean isChat(String line) {
+        return line != null && CHAT.matcher(line).find();
+    }
+
     /**
      * The server an engine line names as a game is joined ("[CPreGame] using client IP 1.2.3.4 and port 8452"):
      * "1.2.3.4:8452"; null: no such line, or the phone's own server (a local game: its pre-game is over in a moment).

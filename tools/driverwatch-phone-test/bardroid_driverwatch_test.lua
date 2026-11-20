@@ -31,7 +31,16 @@ function widget:Update(dt)
 	elseif stage == "hung" and clock - at > 2 then
 		Spring.SendMessage(HUNG)
 		Spring.Echo(HUNG)
-		Spring.Echo("[driverwatchtest] the driver's refusal and the watchdog's words said as chat and echoed")
+		stage, at = "say", clock
+	elseif stage == "say" and clock - at > 1 then
+		-- (and as a player's own chat, "say": the form another player's words take in the log; with them the engine's
+		-- other lines the app reads its state from: a lobby game's end, a load, a join's server)
+		for _, words in ipairs({ REFUSAL, HUNG, "[SpringApp::Reload] test", "[LoadScreen] creating LoadScreen",
+			"[CPreGame] using client IP 203.0.113.7 and port 8452", "recording demo to demos/test.sdfz" }) do
+			Spring.SendCommands("say " .. words)
+		end
+		Spring.Echo("[driverwatchtest] the driver's refusal and the watchdog's words said as chat and echoed, and the"
+			.. " engine's state lines said as chat")
 		write("said\n")
 		stage, at = "watch", clock
 	elseif stage == "watch" and clock - at > 12 then
