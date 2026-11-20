@@ -770,6 +770,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       append; the box is made from Log's last lines each time the launcher is shown (it heard nothing while hidden).
       Dev phone: Play vs AI, the launcher brought to the front at once and left there through the game's loading for
       90 s: no new ANR (3 before, 3 after), the box filling and following with its indent, the launcher answering.
+      On the Fold7 at 23:56 (BAR not running): the APK from clean main 6eebf8b8; github-sync -Release.
 - [x] **The camera knob in the layout editor, after the day's camera changes: as built** (hardening, 2026-11-19
       ~23:31-23:40, dev phone upright, BAR test-32018; the Fold7 not played since 23:11). One of his test's items,
       checked on the dev phone: /hud typed in the app's chat box opened the layout editor ("Camera knob" outlined, its
