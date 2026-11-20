@@ -1,5 +1,5 @@
 -- BAR Droid mission info: BAR's own Mission Info (luaui/Widgets/gui_mission_info.lua, by Floirs, GPL v2 or later), from
--- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: "the game start ui popup needs to fit
+-- Beyond All Reason test-32018-ad135b9, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-10: "the game start ui popup needs to fit
 -- vertical screen"): its window no wider than the screen, the text at its size wrapping to it, and with the app's
 -- portrait dock up in the middle of the game above the dock. Made by tools/make-missioninfo.py; do not edit by hand, run
 -- it again. launch-bar.sh runs it instead of BAR's Mission Info; when an update changes BAR's file the phone makes it

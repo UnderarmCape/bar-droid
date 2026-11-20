@@ -1,5 +1,5 @@
 -- BAR Droid order menu: BAR's own Order menu (luaui/Widgets/gui_ordermenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
+-- Beyond All Reason test-32018-ad135b9, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
 -- offline"): while the app's gamepad controls hide the orders the pad has buttons for, the rest fill the menu evenly,
 -- as in the controller game's (v0.8.5's) order menu, and the menu answers IsAbove (a finger's drag on it no longer pans
 -- the map). Made by tools/make-ordermenu.py; do not edit by hand, run it again.

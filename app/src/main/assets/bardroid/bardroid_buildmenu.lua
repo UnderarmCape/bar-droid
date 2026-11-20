@@ -1,5 +1,5 @@
 -- BAR Droid build menu: BAR's own Build menu (luaui/Widgets/gui_buildmenu.lua, by Floris, GPL v2 or later), from
--- Beyond All Reason test-31992-e7a6cff, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
+-- Beyond All Reason test-32018-ad135b9, unchanged except where marked "BAR Droid:" (Kailil, 2026-10-28: "the vaniallal build menu works fine for
 -- touch. just rebuild the exact same one with the ability for us to resize it freely"): its place and size come from
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.

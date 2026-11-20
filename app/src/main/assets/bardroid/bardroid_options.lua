@@ -1,4 +1,4 @@
--- BAR Droid settings: BAR's own Options (luaui/Widgets/gui_options.lua, by Floris, GPL v2 or later), from Beyond All Reason test-31992-e7a6cff,
+-- BAR Droid settings: BAR's own Options (luaui/Widgets/gui_options.lua, by Floris, GPL v2 or later), from Beyond All Reason test-32018-ad135b9,
 -- unchanged except where marked "BAR Droid:" (Kailil, 2026-11-13: "Fully rebuild the settings menu to fit mobile. Our
 -- vertical and horizontal aspect ratio"): upright the window the screen's size, the tabs a grid of buttons over the
 -- list; sideways as large as the screen allows; larger rows for fingers; a close button. Runs only as one of the game's
