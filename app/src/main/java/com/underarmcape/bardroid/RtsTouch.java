@@ -1154,6 +1154,46 @@ final class RtsTouch {
         camGain = gain;
     }
 
+    // Android's back gesture under gesture navigation (the Fold7: navigation_mode 2) starts at the screen's sides, where
+    // the zoom rail lies (the right edge, the left one left-handed): a finger that set off sideways on it went to
+    // Android's Back, the game's Escape. The knob and the rails are kept out of that gesture while they show (the view's
+    // system gesture exclusion, asked again by GameActivity every 500 ms); three-button navigation has no such gesture.
+    private final java.util.ArrayList<Rect> camExcluded = new java.util.ArrayList<>();
+
+    void updateGestureExclusion() {
+        if (android.os.Build.VERSION.SDK_INT < 29) return;
+        readCam();
+        java.util.ArrayList<Rect> want = new java.util.ArrayList<>();
+        RectF src = view().getInputSourceRect();
+        for (float[] r : new float[][] {camKnob, camZoom, camTurn}) {
+            if (r == null) continue;
+            Rect v = fromXRect(r);
+            // (a rail along the X screen's side out to the view's: the picture can stop a pixel or two short of the
+            // display's edge, where the gesture starts)
+            if (r[0] <= src.left + 1) v.left = Math.min(v.left, 0);
+            if (r[2] >= src.right - 1) v.right = Math.max(v.right, view().getWidth());
+            want.add(v);
+        }
+        if (want.equals(camExcluded)) return;
+        camExcluded.clear();
+        camExcluded.addAll(want);
+        view().setSystemGestureExclusionRects(want);
+        Log.i("touch", want.isEmpty() ? "camera controls gone: the back gesture's edges as Android has them"
+                : "camera controls kept from the back gesture: " + want);
+    }
+
+    /** An X screen rect in the view's own pixels, rounded outwards. */
+    private Rect fromXRect(float[] r) {
+        LorieView v = view();
+        Rect vp = v.getInputViewport();
+        RectF src = v.getInputSourceRect();
+        if (src.width() <= 0 || src.height() <= 0 || vp.width() <= 0)
+            return new Rect((int) r[0], (int) r[1], (int) Math.ceil(r[2]), (int) Math.ceil(r[3]));
+        float sx = vp.width() / src.width(), sy = vp.height() / src.height();
+        return new Rect((int) Math.floor((r[0] - src.left) * sx + vp.left), (int) Math.floor((r[1] - src.top) * sy + vp.top),
+                (int) Math.ceil((r[2] - src.left) * sx + vp.left), (int) Math.ceil((r[3] - src.top) * sy + vp.top));
+    }
+
     /**
      * How much of a step to make: its share of a second's way at the finger's speed (smoothed over the last steps), so a
      * slow drag makes fine steps and a fast one large ones; the Settings' sensitivity on top.

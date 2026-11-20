@@ -139,7 +139,8 @@ boxes, the GPU driver's fault closing a frozen game).
       screen's edge (right, or left left-handed), where Android's back gesture starts under gesture navigation; the dev
       phone uses the three buttons (navigation_mode 0) and the rail takes up-and-down drags, which the back gesture
       (sideways) leaves alone, so nothing is changed without a finger on the Fold7: read its navigation_mode when it
-      answers, and if it is 2 (gestures) consider the view's system gesture exclusion for the rail.
+      answers, and if it is 2 (gestures) consider the view's system gesture exclusion for the rail (it is 2: done at
+      17:50, below).
 - [x] **Statistics' chart titles whole at the first open** (hardening, 2026-11-20 14:21-14:30, dev phone upright): at the
       panel's first open the titles lacked their separator, "Damage  Received", "Value  Value destroyed", there after a
       scroll (stats-phone-test's first picture). BAR's titles join their parts with " · " (U+00B7,
@@ -205,6 +206,25 @@ boxes, the GPU driver's fault closing a frozen game).
       only give a popup; now their Load is grey, with a tooltip (bardroid_lobby_touch.lua saveEngineMarks: the saves
       read as Chobby reads them, a row found by its date, the engine compared as Chobby does; the skin's foreground,
       tinted by borderColor, is the green). overgame-phone-test checks it: 2 greyed of 2, ALL PASS.
+- [x] **On the Fold7** (2026-11-20 17:47, Kailil's wireless debugging port 35305 over Tailscale; it had timed out from
+      13:41 to 16:19): latest-build 60f104df, BAR closed (pidof spring empty), the APK's engine
+      phone-2026.09.03-83a8536d37, installed in 90 s; github-sync -Release. On it since the 13:17 install: Statistics'
+      chart titles, the replay column's and the lobby chat's tests, speak to chat's dark ground, DriverWatch and the app's
+      state no longer moved by chat lines, Load Game's grey Load for saves of another engine. No game played since 13:17
+      (his last: 2026-11-19 17:04-17:38, online, ended normally, no driver fault or watchdog line); dropbox 0 ANRs, 0
+      crashes, the one native crash of 2026-11-18 only. Its navigation_mode is 2 (gesture navigation): the next item.
+- [x] **The camera's edge rail kept out of Android's back gesture** (hardening of 2026-11-19's system, 2026-11-20
+      17:50-18:00, dev phone): the Fold7 uses gesture navigation, whose Back starts with a sideways swipe at the screen's
+      side, where the zoom rail lies (the right edge, the left one left-handed); a finger setting off a little sideways on
+      the rail went to Android's Back, which GameActivity makes the game's Escape. RtsTouch now hands the knob's and the
+      rails' rects from bardroid_camctl.txt to the view as its system gesture exclusion (GameActivity's 500 ms check,
+      only when they change; none while the file reads "none": Settings, BAR's windows, the layout editor), a rail along
+      the X screen's side out to the display's edge (the picture stops 2 px short of it on the dev phone, and the first
+      run left those 2 px, where the swipe starts, to the gesture). The game window hides the bars swipe-to-show, so
+      Android's 200 dp cap on exclusions does not apply. camctl-phone-test checks it: the window manager's exclusion
+      (dumpsys window) covers the zoom rail to the last column; ALL PASS, and launcher.log shows the rects follow
+      Settings (gone, back) and the left-handed side (x 0-67). The dev phone has three-button navigation, so the swipe
+      itself is Kailil's to feel on the Fold7 (nothing on the phone's settings changed).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

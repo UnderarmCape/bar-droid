@@ -444,6 +444,7 @@ public class GameActivity extends MainActivity {
             updateLoadBar();
             updateLowRamLine();
             updateRenderDrop();
+            if (touch != null) touch.updateGestureExclusion();
             catchupHandler.postDelayed(this, 500);
         }
     };

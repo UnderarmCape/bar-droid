@@ -29,6 +29,33 @@ function Pref([string]$name, [bool]$on) {
   "sed -i -E 's/name=.$name. value=.(true|false)./name=`"$name`" value=`"$(if ($on) { 'true' } else { 'false' })`"/' shared_prefs/bardroid.xml`n"
 }
 
+# Android's back gesture kept off the knob and rails (RtsTouch.updateGestureExclusion; under gesture navigation the
+# zoom rail lies in its edge): the window manager's exclusion region (display pixels) covers the zoom rail's rect.
+function ExclusionCheck([double]$k) {
+  $rail = $null
+  for ($i = 0; $i -lt 10 -and -not $rail; $i++) {
+    $cam = "$(InApp "cat $cfg/bardroid_camctl.txt 2>/dev/null")"
+    $z = [regex]::Match($cam, 'zoom (-?[\d.]+) (-?[\d.]+) (-?[\d.]+) (-?[\d.]+)')
+    if ($z.Success) { $rail = @(1..4 | ForEach-Object { [double]$z.Groups[$_].Value * $k }) } else { Start-Sleep -Milliseconds 300 }
+  }
+  if (-not $rail) { "[camctltest] FAIL the back gesture kept off the zoom rail: no zoom rail in bardroid_camctl.txt"; return }
+  # (its corners a few pixels in: the X screen can sit a pixel or two off the display's; and the display's last column,
+  # where the back gesture starts, when the rail lies along that side)
+  $pts = @(@(($rail[0] + 6), ($rail[1] + 6)), @(($rail[2] - 6), ($rail[3] - 6)), @((($rail[0] + $rail[2]) / 2), (($rail[1] + $rail[3]) / 2)))
+  if ($rail[2] -ge $w - 3) { $pts += , @(($w - 1), (($rail[1] + $rail[3]) / 2)) }
+  $missing = $pts.Count; $region = ""
+  for ($i = 0; $i -lt 8 -and $missing -gt 0; $i++) {
+    if ($i -gt 0) { Start-Sleep -Milliseconds 500 }
+    $region = [regex]::Match(((& $adb shell dumpsys window) -join "`n"), 'mSystemGestureExclusion=SkRegion\(([^\r\n]*)\)').Groups[1].Value
+    $rects = @(foreach ($mm in [regex]::Matches($region, '\((\d+),(\d+),(\d+),(\d+)\)')) {
+      , @([int]$mm.Groups[1].Value, [int]$mm.Groups[2].Value, [int]$mm.Groups[3].Value, [int]$mm.Groups[4].Value) })
+    $missing = @($pts | Where-Object { $p = $_; -not ($rects | Where-Object { $p[0] -ge $_[0] -and $p[0] -le $_[2] -and $p[1] -ge $_[1] -and $p[1] -le $_[3] }) }).Count
+  }
+  $r = ($rail | ForEach-Object { [int]$_ }) -join ","
+  if ($missing -eq 0) { "[camctltest] PASS the back gesture kept off the zoom rail: its rect ($r, display pixels) in the window manager's exclusion" }
+  else { "[camctltest] FAIL the back gesture kept off the zoom rail: $missing of $($pts.Count) points of its rect ($r) outside the exclusion ($region)" }
+}
+
 & $adb shell am force-stop $pkg
 $stray = Get-StrayWidgets $adb @("bardroid_camctl_test.lua")
 if ($stray) { "[camctltest] warning: widgets on the phone that are not the app's (they run in the test's game): $($stray -join ', ')" }
@@ -51,6 +78,9 @@ try {
     if ($line -match '^do (\d+) (tap|shot|swipe) (-?\d+) (-?\d+) (\d+)(?: (-?\d+) (-?\d+) (\d+))?' -and [int]$Matches[1] -gt $seen) {
       $n = [int]$Matches[1]; $act = $Matches[2]
       $k = $w / [double]$Matches[5]
+      $m = $Matches.Clone()
+      if (-not $exclChecked) { $exclChecked = $true; ExclusionCheck $k }
+      $Matches = $m
       $x = [int]([double]$Matches[3] * $k); $y = [int]([double]$Matches[4] * $k)
       if ($act -eq "shot") {
         & $adb shell screencap -p /sdcard/bardroid-camctlshot.png
