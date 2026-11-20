@@ -296,7 +296,20 @@ function draw.sidebar()
 				return true
 			end
 ''',
-     '''			if searchBox:mousePress(mx, my) then
+     '''			-- BAR Droid: the search's clear button a finger's target: BAR's is a square inside the field's right end, its
+			-- height less an inset, some 2.4 mm on the dev phone (settings-phone-test's picture, 2026-11-20); a tap on the
+			-- field's last 1.8 heights clears it, as BAR's button does (focus kept, the keyboard asked as below)
+			local fr = searchBox.rect
+			local clearX1 = fr and fr[3] - math.floor((fr[4] - fr[2]) * 1.8)
+			if fr and searchBox:getText() ~= "" and mx >= clearX1 and mx <= fr[3] and my >= fr[2] and my <= fr[4] then
+				searchBox:focus()
+				searchBox:setText("")
+				if WG.BarDroidAskKeyboard then
+					WG.BarDroidAskKeyboard()
+				end
+				return true
+			end
+			if searchBox:mousePress(mx, my) then
 				-- BAR Droid: a tap on the search field asks for Android's keyboard (bardroid_touch.lua; it had focus, but no
 				-- keyboard came up to type with, dev phone 2026-11-19)
 				if WG.BarDroidAskKeyboard then
@@ -469,6 +482,20 @@ end
     ('''	font:Print(shown, x, cy, metrics.rowFs, "ov")
 ''',
      '''	font:Print(shown, x, cy, fs, "ov") -- BAR Droid: in its size (above)
+'''),
+    ('''	WG.options.isvisible = function()
+		return show
+	end
+''',
+     '''	WG.options.isvisible = function()
+		return show
+	end
+	-- BAR Droid: the search field's rect, text and focus, the close button's rect, the list's lines and the field, for
+	-- the app's phone test (tools/settings-phone-test.ps1: real taps upright)
+	WG.options.droidSearch = function()
+		return searchBox and searchBox.rect, searchBox and searchBox:getText(), searchBox and searchBox:isFocused(), droid.close,
+			view.lines, searchBox
+	end
 '''),
     ('''function widget:GetInfo()''',
      '''-- BAR Droid: a release without the model this copy is made on (a replay of an older BAR release plays its own files):

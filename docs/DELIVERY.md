@@ -105,6 +105,17 @@ boxes, the GPU driver's fault closing a frozen game).
       short of it: in a team game the button lay over that switch. Seen in the pictures, left for later: at the first
       open the chart titles lack their " · " ("Damage  Received"), there after a scroll. On the Fold7 2026-11-20 13:17
       (eb3936f5's build, port 39985).
+- [x] **Settings' search field, tested by real taps and keys** (hardening of 2026-11-19's system, 2026-11-20 13:23-13:39,
+      dev phone): tools/settings-phone-test.ps1 (new): BAR's Settings tapped on the top bar; its search field (x 254-795,
+      49 high upright) tapped: focused, Android's keyboard asked (bardroid_lobby_ask.txt "keyboard g...", the app's log
+      "a game's text field tapped") and shown (dumpsys input_method mInputShown); "shadow" typed with adb's input text:
+      the list cut from 15 option lines to 8 (Shadows, Lights, Ally cursors, War), the tabs to the four that match; the
+      field above the keyboard; the clear: empty, focused, 15 again; Back: the keyboard down, Settings open; "radar" typed,
+      Back: the search cleared (BAR's Escape), open; Back: closed; opened again, its red close: closed. ALL PASS three
+      runs (a first run's one failure was the test's: it read mIsInputViewShown, which stays true after the keyboard
+      hides). The copy answers WG.options.droidSearch for it (make-options.py; remake-check PASS). Polish from its
+      picture: the field's clear (BAR's small square inside its right end, some 2.4 mm) clears on a tap anywhere in the
+      field's last 1.8 heights (6.7 mm), as BAR's button does; the test taps beside BAR's button.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
