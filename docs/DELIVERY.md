@@ -771,7 +771,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       game). LauncherActivity.onPause now closes the list and the keyboard and parks the focus on the activity's root
       layout (the settings' scroll view handed it to its first field, the map's, whose focus opens the list). Dev
       phone: the field tapped (keyboard up), Home, the launcher again: no keyboard, no list; a tap on the field brings
-      both back; the settings unchanged (autoUpdate false, Starwatcher).
+      both back; the settings unchanged (autoUpdate false, Starwatcher). On the Fold7 at 23:02 (BAR not running): the
+      APK from clean main b59ef347; github-sync -Release.
 - [x] **A lobby skirmish's pre-game upright with the camera controls: nothing to fix** (hardening, 2026-11-19
       ~22:22-22:33, dev phone, BAR test-32018, the quick Skirmish 1v1 on Onyx Cauldron 2.2.2, draft start positions;
       the Fold7 not played since 22:19, its launcher.log only the app process starting at 22:16). Hunted after the quit
