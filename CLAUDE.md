@@ -81,7 +81,9 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   wires them up. In the lobby `assets/bardroid/bardroid_lobby_touch.lua` (a LuaMenu widget; Chobby's
   `loadLocalWidgets`, set by launch-bar.sh): a drag on a list scrolls it, a tap on a server shows its details first, a
   tap on a text box asks for Android's keyboard and a long press (the right button) on a chat's box for speak to chat
-  (`bardroid_lobby_ask.txt`, RtsTouch `lobbyAskStep`), upright the battle room's buttons in its right column (the rules
+  (`bardroid_lobby_ask.txt`, RtsTouch `lobbyAskStep`; in a game the Settings copy's search field asks the same way
+  through `bardroid_touch.lua`'s `WG.BarDroidAskKeyboard`, "keyboard g<id>", read for a second after a finger lifts),
+  upright the battle room's buttons in its right column (the rules
   box the middle's height, `roomButtonsRight`) and the server list's counts clear of the rank icon, a
   joined server's settings that stop the app's controls show as a warning, and the pad's Start (Scroll Lock from
   `ControllerBridge`) switches the lobby's scale between 100%, launch-bar.sh's default, and 130%
@@ -139,7 +141,11 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   finger": WG.options.addOptions, which BAR's model puts under Custom; the options copy's droid.regroup moves options
   with `droidGroup` into that tab), Spring config `BarDroidCamKnob` / `BarDroidCamRails`; it writes
   `bardroid_camctl.txt` (knob, zoom, turn rects), RtsTouch's CAM state takes a touch that comes down on one and sends the
-  dock pad's "zoom"/"rot" lines ("camheld" lights the part); the knob in the layout editor as "Camera knob".
+  dock pad's "zoom"/"rot" lines ("camheld" lights the part; the turn rail's "rot" the other way from the knob's, Kailil
+  2026-11-19); the knob in the layout editor as "Camera knob". The file reads "none" (no rects, the touches go on to
+  what is under) while hiddenNow: GUI hidden, a pad or mouse the input, BAR's quit screen (WG.topbar.showingQuit), the
+  app's Statistics or Mission Info open (OVER_WINDOWS: upright they lie over the knob and rails), the dock aside for
+  one of BAR's big windows, or the layout editor open.
   `bardroid_presets.lua`: the dock's PRESETS (2 x 2 over its grid, then a map tap: zigzags, formations; WG.BarDroidPresets).
   `bardroid_automex.lua`: the commander picked and an extractor chosen, the free mex spots in its weapon range queued
   (BAR's resource spot API, as its Area Mex). `bardroid_topbar.lua`: upright, BAR's top bar buttons over its hidden
