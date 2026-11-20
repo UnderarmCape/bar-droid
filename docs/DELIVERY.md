@@ -764,7 +764,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       53 ms on the dev phone). Now read on a thread of its own, the list filled when it is read
       (LauncherActivity.loadMapsInBackground, "map list made again: 39 maps (53 ms, off the main thread)"). Dev phone:
       the launcher started, the line in its log, a tap on the map field listed the maps as before; the settings
-      unchanged. The 1.5 s ticker's work (status, installed check, update summary) is small file checks.
+      unchanged. The 1.5 s ticker's work (status, installed check, update summary) is small file checks. On the Fold7
+      at 00:09 (BAR not running): the APK from clean main dbb4cb59; github-sync -Release.
 - [x] **Android's own reports on both phones: no ANR, no crash of the app on the Fold7** (hardening, 2026-11-19
       ~23:59-00:05; the Fold7 not played since 23:56). dumpsys dropbox on the Fold7: data_app_anr none,
       data_app_crash none for the app, data_app_native_crash one, of another app (not BAR Droid). The dev phone: no app
