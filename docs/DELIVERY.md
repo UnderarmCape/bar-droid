@@ -148,6 +148,16 @@ boxes, the GPU driver's fault closing a frozen game).
       three fonts for the dot's width as it sets them (ViewResize: the glyph loaded long before a chart is drawn;
       tools/make-teamstats.py, regenerated --adb, remake-check PASS). Dev phone: the first picture "Damage · Dealt",
       "Damage · Received", "Units · Killed"; stats-phone-test ALL PASS two runs.
+- [x] **The replay speed column tested by real taps** (hardening of 2026-11-19's system, 2026-11-20 14:33-14:40, dev
+      phone upright, offline): tools/replay-phone-test.ps1 (new; spectate-test runs on the laptop, now off limits): the
+      offline lobby starts the newest replay (2026-11-20 10:48, Replays' Start); BAR's column (WG.BarDroidTapPanels.
+      replaybuttons) at x 0-74, y 851-1581, above the dock (its top 843); 4x, 1x, 10x and 0.5x tapped: the replay at
+      each (Spring.GetGameSpeed), the speed on lit gold in the pictures; a drag from 2x across the map: the camera
+      panned (1012), the speed kept; left-handed the zoom rail at x 85-141 and the turn rail at x 152-468, clear of the
+      column (the setting put back). ALL PASS (a first run tapped 1x first, the speed a replay starts at: it proved
+      nothing, so 4x comes first now; the rerun ALL PASS). Nothing to fix; no UI polish due. Seen: a replay of a game
+      with one player shows BAR's Save on the top bar; BAR's own rule (gui_top_bar_buttons.lua: one player and its
+      save widget), the same on a PC, left as BAR has it.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
