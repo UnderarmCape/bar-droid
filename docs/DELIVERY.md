@@ -108,7 +108,19 @@ boxes, the GPU driver's fault closing a frozen game).
       Pawns, two Blitzes, two Maces; real taps and 0.9 s presses): ALL PASS (10), one press landing on the camera pad
       (the types list takes its first touch). Its first run's extra tap to open the menu was itself a press, the test's
       fault. dock-phone-test ALL PASS. Not on the Fold7 yet (refusing port 44111).
-- [ ] **"Unit under attack" in the last pings**, so a tap goes to the danger.
+- [x] **"Unit under attack" in the last pings**, so a tap goes to the danger. (2026-11-20 ~07:55-08:45, dev phone, BAR
+      test-32018.) bardroid_pad.lua's ATTACK: a hit on one of my units is an entry in the pings list the dock's LAST
+      PINGS (and the pad's RB + D-pad up) goes through, the camera going to where that unit is then, "UNDER ATTACK" in
+      red. A fight stays one entry, moved along to each new hit within 900 elmos and 15 s of its last; a new entry at
+      most every 4 s; a hit looked at at most every 8 frames (a late 8v8's thousands a second). LAST PINGS' count turns
+      red while the newest is a fight still going, and the dock now redraws when a ping comes in (the count waited for
+      the next redraw). LuaUI is handed no weapon and no attacker for these hits (both nil on the dev phone): as BAR's
+      own notices, any damage to my units counts, except a known weapon below 0 (a fall, lava, debris) or an allied
+      attacker. New tools/attack-ping-test.ps1 (four Pawns and three enemy Grunts, twice, 2000 elmos apart; a real tap
+      on LAST PINGS with the camera on the first): ALL PASS (6) twice. Before that: no entries at all (the "no weapon,
+      no enemy" rule); the test's tap worked out before its screenshot hit BASE, as the groups row came up meanwhile
+      and lifted the home grid 131 pixels (the test's fault, but a finger reaching for a home button then hits the
+      one below too: a hardening case). dock-phone-test ALL PASS (31). Not on the Fold7 yet (refusing port 44111).
 - [ ] **Walls around a placed sentry**: a toggle beside the place button's group rotate, on by default: placing a sentry
       (any builder) also builds a block of walls around it; T1 walls for T1 sentries, T2 for T2 (built before the
       sentry); a T2 sentry that cannot shoot over a T2 wall gets T1 walls, ordered with INSERT from the T1 builder

@@ -88,8 +88,10 @@ local PING_CYCLE_SECONDS = 2
 local pings = {}
 local pingStep, pingStepAt = 0, nil
 local pingKept = PINGS_KEPT -- (how many the cycle under way goes through: the pad's 5, the dock's 4)
-local function addPing(x, y, z)
-	table.insert(pings, 1, { x, y, z })
+local function addPing(x, y, z, e) -- (e: more about it, an attack on my units: ATTACK)
+	e = e or {}
+	e[1], e[2], e[3] = x, y, z
+	table.insert(pings, 1, e)
 	pings[PINGS_KEPT + 1] = nil
 	if pingStepAt and pingStep > 0 then
 		-- (still the same ping for a press that cycles on; the dock shows its last 4: "PING 5 OF 4" past them, the next
@@ -351,15 +353,28 @@ pingLook = function(kept)
 		end
 		pingStepAt = t
 		local p = pings[pingStep]
+		local x, y, z = p[1], p[2], p[3]
+		if p.attack and p.unit and not Spring.GetUnitIsDead(p.unit) then -- (an attack: where its unit is now)
+			local ux, uy, uz = Spring.GetUnitPosition(p.unit)
+			if ux then
+				x, y, z = ux, uy, uz
+			end
+		end
 		-- (upright the dock's own camera move: the ping in the game's middle above the dock, as its other jumps; the
 		-- screen's middle was at or behind the dock; review 2026-11-16)
 		local P = WG.BarDroidPortrait
 		if P and P.active and P.active() and P.cameraTo then
-			P.cameraTo(p[1], p[2], p[3])
+			P.cameraTo(x, y, z)
 		else
-			Spring.SetCameraTarget(p[1], p[2], p[3], 0.3)
+			Spring.SetCameraTarget(x, y, z, 0.3)
 		end
-		note(n == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, n))
+		Spring.Echo(string.format("[bardroid-pad] the camera to %s, %d of %d, at %d,%d", p.attack and "an attack" or "a ping",
+			pingStep, n, x, z)) -- (tools)
+		if p.attack then
+			note(n == 1 and "UNDER ATTACK" or string.format("UNDER ATTACK, %d OF %d", pingStep, n), { 1, 0.4, 0.32 })
+		else
+			note(n == 1 and "LAST PING" or string.format("PING %d OF %d", pingStep, n))
+		end
 	else
 		Spring.SendCommands("lastmsgpos") -- (none seen: the engine's own jump to the last message's place)
 		note("NO PING FROM OTHERS YET")
@@ -2819,6 +2834,42 @@ function widget:MapDrawCmd(playerID, cmdType, x, y, z)
 	end
 end
 
+-- My units under attack in the same list (Kailil, 2026-11-20: "Alliw unit under attack notification to be tracked via
+-- the last pings system so I can teleoort to the danger area"): an enemy's hit on one of my units (the event BAR's own
+-- "unit under attack" notice comes from) is an entry at that unit, the camera going to where it is then ("UNDER ATTACK"
+-- in red). A fight stays one entry, moved along to each new hit within NEAR elmos and KEEP frames of its last; a new one
+-- at most every GAP frames; a hit looked at no more than every EVERY frames (a late 8v8 has thousands a second).
+-- (One table: under Lua's 200 locals.)
+local ATTACK = { NEAR = 900, KEEP = 30 * 15, GAP = 30 * 4, EVERY = 8, next = 0, lastNew = -1e9 }
+function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID, _, _, _, attackerTeam)
+	local f = Spring.GetGameFrame()
+	if f < ATTACK.next or unitTeam ~= Spring.GetMyTeamID() or not damage or damage <= 0 or paralyzer then
+		return
+	end
+	-- (LuaUI is handed no weapon and no attacker for these hits, dev phone 2026-11-20: as BAR's own notices, any damage
+	-- to my units counts; when they are given, a weapon below 0 (a fall, a crush, lava, debris) or an allied attacker,
+	-- a teammate's or my own fire, does not)
+	if (weaponDefID and weaponDefID < 0) or (attackerTeam and Spring.AreTeamsAllied(attackerTeam, unitTeam))
+		or Spring.GetSpectatingState() then
+		return
+	end
+	local x, y, z = Spring.GetUnitPosition(unitID)
+	if not x then
+		return
+	end
+	ATTACK.next = f + ATTACK.EVERY
+	for _, p in ipairs(pings) do
+		if p.attack and f - p.frame <= ATTACK.KEEP and (p[1] - x) ^ 2 + (p[3] - z) ^ 2 <= ATTACK.NEAR ^ 2 then
+			p[1], p[2], p[3], p.unit, p.frame = x, y, z, unitID, f
+			return
+		end
+	end
+	if f - ATTACK.lastNew >= ATTACK.GAP then
+		ATTACK.lastNew = f
+		addPing(x, y, z, { attack = true, unit = unitID, frame = f })
+	end
+end
+
 -- The area select's circle on the ground
 function widget:DrawWorld()
 	if dgun then
@@ -3013,9 +3064,18 @@ function widget:Initialize()
 			addPing(x, y, z)
 		end,
 		pingLook = pingLook, -- (the portrait dock's PINGS: the last 4)
-		pingCount = function() -- (the pings from others seen; the one the camera went to last, 0 after the cycle's pause)
+		pingCount = function() -- (the pings from others seen; the one the camera went to last, 0 after the cycle's pause;
+			-- the newest an attack on my units still going)
 			local cycling = pingStepAt and Spring.DiffTimers(now(), pingStepAt) <= PING_CYCLE_SECONDS
-			return #pings, cycling and pingStep or 0
+			local p = pings[1]
+			return #pings, cycling and pingStep or 0,
+				p and p.attack and Spring.GetGameFrame() - p.frame <= ATTACK.KEEP or false
+		end,
+		pingAt = function(i) -- (tools: the list's i-th entry: x, z, an attack's or not)
+			local p = pings[i]
+			if p then
+				return p[1], p[3], p.attack or false
+			end
 		end,
 		-- (tools/touch-widget-test.ps1: the order on the pad, its place in the menu, the menu's size; putting the pad on
 		-- one order; pointer moves recorded instead of made)

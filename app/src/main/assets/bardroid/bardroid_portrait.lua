@@ -1550,19 +1550,21 @@ function pingT.look()
 end
 -- (how many pings from others wait, in gold at LAST PINGS' top right as the idle builders' counts: it said nothing of
 -- whether there was one to see)
-function pingT.badge(r, n)
+-- (red while the newest is an attack on my units still going, bardroid_pad.lua's ATTACK: the danger waits there)
+function pingT.badge(r, n, attack)
 	if n > 0 and bold then
 		local h = r[4] - r[2]
-		bold:Print("\255\255\200\064" .. n, r[3] - max(4, h * 0.08), r[4] - h * 0.3, h * 0.24, "ro")
+		bold:Print((attack and "\255\255\090\070" or "\255\255\200\064") .. n, r[3] - max(4, h * 0.08), r[4] - h * 0.3,
+			h * 0.24, "ro")
 	end
 end
-function pingT.state() -- (what the tile shows: "LAST PINGS" or "PING 2 OF 4", PING lit while armed)
+function pingT.state() -- (what the tile shows: "LAST PINGS" or "PING 2 OF 4", PING lit while armed; the newest an attack)
 	local Pd = WG.BarDroidPad
-	local n, step = 0, 0
+	local n, step, attack = 0, 0, false
 	if Pd and Pd.pingCount then
-		n, step = Pd.pingCount()
+		n, step, attack = Pd.pingCount()
 	end
-	return min(n, pingT.KEPT), step, pingT.armed()
+	return min(n, pingT.KEPT), step, pingT.armed(), attack
 end
 -- PING beside its own tap (Kailil, 2026-11-12): held (RtsTouch "dock_voiceping"), what is said labels the ping the map's
 -- next tap drops, "as the vanilla game ... send a ping with words" (pingT.voice while listening, with its spot when the
@@ -3181,8 +3183,8 @@ local function drawButton(item, r, cap)
 	end
 	if item.kind == "pings" then -- (two buttons in one place: the last pings, and a ping of your own)
 		pingT.rect = r
-		local n, step, armed = pingT.state()
-		pingT.drawn = step .. (armed and "a" or "")
+		local n, step, armed, attack = pingT.state()
+		pingT.drawn = n .. ":" .. step .. (armed and "a" or "") .. (attack and "!" or "")
 		local mx = floor((r[1] + r[3]) / 2)
 		local gap = max(2, floor(L.gap / 2))
 		local a, b = { r[1], r[2], mx - gap, r[4] }, { mx + gap, r[2], r[3], r[4] }
@@ -3191,7 +3193,7 @@ local function drawButton(item, r, cap)
 		local th = min((r[4] - r[2]) * 0.34, L.btnH * 0.46)
 		textIn(step > 0 and string.format("%d OF %d", step, n) or "LAST PINGS", a[1], a[2], a[3], a[4], th,
 			n > 0 and "\255\240\240\240" or "\255\140\140\140", font, true)
-		pingT.badge(a, n)
+		pingT.badge(a, n, attack)
 		L.pingBtn = b -- (RtsTouch's "ping": its hold and its double tap; L: writeDock comes before pingT)
 		-- (PING as large as LAST PINGS beside it, unless that breaks over two lines: PING stood larger, 2026-11-17)
 		local last = font and min(th, (a[3] - a[1]) * 0.76 / max(0.01, font:GetTextWidth("LAST PINGS"))) or th
@@ -4783,8 +4785,10 @@ function widget:Update(dt)
 	drawingCursor()
 	if (rightKind == "home" or rightKind == "pregame") and pingT.drawn then -- (PINGS: "2 OF 4" back to LAST PINGS after
 		-- the cycle's pause, TAP MAP back to PING when it runs out; pregame's PING alone draws no step)
-		local _, step, armed = pingT.state()
-		if (rightKind == "pregame" and "0" or step) .. (armed and "a" or "") ~= pingT.drawn then
+		-- (and a new ping's count, an attack's red: the badge waited for the dock's next redraw)
+		local n, step, armed, attack = pingT.state()
+		if (rightKind == "pregame" and ("0" .. (armed and "a" or ""))
+			or (n .. ":" .. step .. (armed and "a" or "") .. (attack and "!" or ""))) ~= pingT.drawn then
 			markDirty()
 		end
 	end
