@@ -2086,6 +2086,12 @@ local ACTIONS = {
 	end,
 	rotate_left = function() Spring.SendCommands("buildfacing dec") end,
 	rotate_right = function() Spring.SendCommands("buildfacing inc") end,
+	walls_toggle = function() -- (a GRID held: the PLACE panel's WALLS, RtsTouch.gridTap; bardroid_walls.lua)
+		local W = WG.BarDroidWalls
+		if W and W.set and W.on then
+			W.set(not W.on())
+		end
+	end,
 	spacing_up = function() Spring.SendCommands("buildspacing inc") end,
 	spacing_down = function() Spring.SendCommands("buildspacing dec") end,
 	lb_a = function() -- builders: repair (picked: A on a unit, or drag an area); else attack the enemy there, or fight

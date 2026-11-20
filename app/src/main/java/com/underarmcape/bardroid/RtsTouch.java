@@ -1763,6 +1763,7 @@ final class RtsTouch {
         else if (p != null && inside(p.gridBtn, x, y)) gridShape("grid");
         else if (p != null && inside(p.line, x, y)) gridShape("line");
         else if (p != null && inside(p.rotate, x, y)) send("act rotate_right");
+        else if (p != null && inside(p.walls, x, y)) send("act walls_toggle");
         else if (p != null && inside(p.done, x, y)) gridPlace();
         else if (nearPlaceTap(vx, vy, downTime)) { placeTapX = -1; placeTapAt = -1; gridPlace(); }
         else { placeTapX = vx; placeTapY = vy; placeTapAt = SystemClock.uptimeMillis(); }
@@ -1928,6 +1929,7 @@ final class RtsTouch {
     private static final class Place {
         String shape;      // one, line, grid or border
         float[] done, rotate, cancel;   // its PLACE, rotate and cancel buttons: x0 y0 x1 y1, X screen pixels
+        float[] walls;     // a sentry's walls on or off, between rotate and cancel upright (bardroid_walls.lua); null: none
         float[] one;       // the dock's ONE (a GRID held: back to ONE, gridToOne)
         float[] line, gridBtn;   // the dock's LINE and GRID (a GRID held: switched, gridShape; one kept: back, restoreGrid)
         float[] stash;     // a GRID kept by ONE: its first and far corner on the screen now (x0 y0 x1 y1)
@@ -1952,10 +1954,12 @@ final class RtsTouch {
                     p = new Place();
                     p.shape = f[1];
                 } else if (p != null && f.length == 5 && (f[0].equals("done") || f[0].equals("rotate") || f[0].equals("cancel")
-                        || f[0].equals("one") || f[0].equals("line") || f[0].equals("gridb") || f[0].equals("stash"))) {
+                        || f[0].equals("one") || f[0].equals("line") || f[0].equals("gridb") || f[0].equals("stash")
+                        || f[0].equals("walls"))) {
                     float[] r = {Float.parseFloat(f[1]), Float.parseFloat(f[2]), Float.parseFloat(f[3]), Float.parseFloat(f[4])};
                     if (f[0].equals("done")) p.done = r;
                     else if (f[0].equals("rotate")) p.rotate = r;
+                    else if (f[0].equals("walls")) p.walls = r;
                     else if (f[0].equals("one")) p.one = r;
                     else if (f[0].equals("line")) p.line = r;
                     else if (f[0].equals("gridb")) p.gridBtn = r;
@@ -2339,9 +2343,9 @@ final class RtsTouch {
     private boolean tapBuilding(float vx, float vy, Place place, int hover, int asks) {
         float x = toX(vx), y = toY(vy);
         float[] d = place.done;
-        // (not on rotate or cancel: upright PLACE is the whole panel around them; the build menu copy's click does those)
+        // (not on rotate, cancel or walls: upright PLACE is the whole panel around them; the build menu copy's click does those)
         if (d != null && x >= d[0] && x <= d[2] && y >= d[1] && y <= d[3]
-                && !inside(place.rotate, x, y) && !inside(place.cancel, x, y)) {
+                && !inside(place.rotate, x, y) && !inside(place.cancel, x, y) && !inside(place.walls, x, y)) {
             // PLACE: the building at the spot, and it stays picked for the next (Shift held)
             lastTapX = -1; doubleTapX = -1;
             runPlaceTap();

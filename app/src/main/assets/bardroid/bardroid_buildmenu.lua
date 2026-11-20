@@ -775,6 +775,7 @@ end
 --   done <x0> <y0> <x1> <y1>    (the PLACE button, without its rotate and cancel)
 --   spot <x> <y> <r>            (where the spot is on the screen now, and the building's size there; only while it is)
 --   rotate, cancel <x0> <y0> <x1> <y1>    (the buttons beside PLACE: a GRID's left button is down, so taps there are the app's)
+--   walls <x0> <y0> <x1> <y1>    (between them upright, a sentry picked: its walls on or off, bardroid_walls.lua)
 -- The strip is drawn again when the building is picked or put away.
 function droid.place()
 	if droid.again then
@@ -830,9 +831,11 @@ function droid.place()
 	local text = "place " .. (armed and droid.shape or "none") .. "\n"
 	local p = droid.panel
 	if p then
-		for _, b in ipairs({ { "done", p.place }, { "rotate", p.rotate }, { "cancel", p.cancel } }) do
+		for _, b in ipairs({ { "done", p.place }, { "rotate", p.rotate }, { "cancel", p.cancel }, { "walls", p.walls } }) do
 			local r = b[2]
-			text = text .. string.format("%s %d %d %d %d\n", b[1], r[1], vsy - r[4], r[3], vsy - r[2])
+			if r then
+				text = text .. string.format("%s %d %d %d %d\n", b[1], r[1], vsy - r[4], r[3], vsy - r[2])
+			end
 		end
 	end
 	-- (the dock's ONE: tapped while a GRID is held it takes the GRID back to ONE, RtsTouch's gridToOne)
@@ -1273,7 +1276,15 @@ function droid.layoutPanel()
 		local h = math_floor(math.min(s * 2, (y1 - y0) * 0.45))
 		local mid = math_floor((x0 + x1) / 2)
 		local rotate, cancel = { x0, y0, mid - 1, y0 + h }, { mid + 1, y0, x1, y0 + h }
-		droid.panel = { all = { x0, y0, x1, y1 }, place = { x0, y0, x1, y1 }, rotate = rotate, cancel = cancel }
+		-- (a sentry picked: its walls' toggle between them, a third each; Kailil, 2026-11-20: "add a toggle in the place
+		-- button next group rotate that is on by default", bardroid_walls.lua)
+		local W, walls = WG.BarDroidWalls, nil
+		if W and W.sentry and droid.defID and W.sentry(droid.defID) then
+			local a, b = math_floor(x0 + (x1 - x0) / 3), math_floor(x0 + (x1 - x0) * 2 / 3)
+			rotate, walls, cancel = { x0, y0, a - 1, y0 + h }, { a + 1, y0, b - 1, y0 + h }, { b + 1, y0, x1, y0 + h }
+		end
+		droid.panel = { all = { x0, y0, x1, y1 }, place = { x0, y0, x1, y1 }, rotate = rotate, cancel = cancel,
+			walls = walls }
 		return
 	end
 	local cancel = { x1 - edge - cs, my, x1 - edge, my + cs }
@@ -1295,9 +1306,12 @@ function droid.drawPanel()
 	UiButton(a[1], a[2], a[3], a[4], 1, 1, 1, 1, 1, 1, 1, 1, nil,
 		ready and { 0.1, 0.5, 0.1, 1 } or { 0.1, 0.25, 0.1, 1 }, ready and { 0.25, 0.8, 0.25, 1 } or { 0.2, 0.35, 0.2, 1 },
 		bgpadding * 0.5) -- (solid: the order menu's buttons are under it)
-	for _, name in ipairs({ "rotate", "cancel" }) do
+	for _, name in ipairs({ "rotate", "cancel", "walls" }) do
 		local r = p[name]
-		UiButton(r[1], r[2], r[3], r[4], 1, 1, 1, 1, 1, 1, 1, 1, nil, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 }, bgpadding * 0.4)
+		if r then
+			UiButton(r[1], r[2], r[3], r[4], 1, 1, 1, 1, 1, 1, 1, 1, nil, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 },
+				bgpadding * 0.4)
+		end
 	end
 	font2:Begin(true)
 	local pl = p.place
@@ -1309,6 +1323,13 @@ function droid.drawPanel()
 	font2:Print("\255\235\235\235\226\134\187", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
 	r = p.cancel -- (its cross a soft red: in the green panel it read as one more way to build)
 	font2:Print("\255\255\150\140\226\156\149", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
+	r = p.walls -- (upright the portrait dock draws its own over it: bardroid_portrait.lua drawPlace)
+	if r then
+		local on = WG.BarDroidWalls and WG.BarDroidWalls.on and WG.BarDroidWalls.on()
+		local ws = math.min(sym * 0.5, (r[3] - r[1]) * 0.8 / math.max(0.01, font2:GetTextWidth("WALLS")))
+		font2:Print((on and "\255\255\215\100" or "\255\140\140\140") .. "WALLS", (r[1] + r[3]) / 2,
+			(r[2] + r[4]) / 2 - ws * 0.3, ws, "co")
+	end
 	font2:End()
 end
 
@@ -1324,6 +1345,11 @@ function droid.pressPanel(x, y)
 	end
 	if inside(p.rotate) then
 		Spring.SendCommands("buildfacing inc")
+	elseif p.walls and inside(p.walls) then -- (the sentry's walls on or off, bardroid_walls.lua)
+		local W = WG.BarDroidWalls
+		if W and W.set and W.on then
+			W.set(not W.on())
+		end
 	elseif inside(p.cancel) then
 		droid.spot, droid.again, droid.stash = nil, nil, nil
 		-- (before the game: BAR's pregame queue's setPreGamestartDefID; its old name setPreGameDefID, which this called,

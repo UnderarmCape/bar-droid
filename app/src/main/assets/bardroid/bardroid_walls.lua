@@ -33,9 +33,10 @@ local spGetUnitDefID = Spring.GetUnitDefID
 
 local enabled = true
 local myTeam = Spring.GetMyTeamID()
--- (the walls' own build orders come back through UnitCommand a frame later: walls are no sentries, so they start nothing)
-local placed = {} -- this frame's sentry placements: key -> { def, x, y, z, facing, builders = { unitID = true } }
-local placedFrame
+-- (the walls' own build orders come back through UnitCommand a frame later: walls are no sentries, so they start nothing;
+-- a builder's queue given again with the walls in it sends its sentry's order again: resent, key -> until which frame)
+local resent = {}
+local placed = {} -- the sentry placements by frame: frame -> key -> { def, x, y, z, facing, builders = { unitID = true } }
 
 local function readConfig()
 	local fh = io.open(CONFIG, "r")
@@ -128,10 +129,17 @@ local function ringSpots(def, x, z, facing, wallDef)
 	if facing == 1 or facing == 3 then
 		hx, hz = hz, hx
 	end
-	local W = wd.xsize * 8
-	-- (the ring's centre line: the sentry's half size up to the wall's half grid, then half a wall)
-	local rx = math.ceil(hx / (W / 2)) * (W / 2) + W / 2
-	local rz = math.ceil(hz / (W / 2)) * (W / 2) + W / 2
+	local W, G = wd.xsize * 8, 16 -- (the wall's width; the build grid a 2x2 wall's middle sits on)
+	-- (the ring on the footprint's edges, which lie on the grid: walls side by side from the near edge; a span that is
+	-- no whole number of walls (a 3x3 sentry's 48 elmos) gets its gap on the far side. Laid out from the sentry's middle
+	-- the Annihilator's and the Viper's walls fell between grid lines, two snapped onto each other and the engine dropped
+	-- one: 11 of 12, dev phone 2026-11-20)
+	local x0, x1 = math.floor((x - hx) / G + 0.5) * G, math.floor((x + hx) / G + 0.5) * G
+	local z0, z1 = math.floor((z - hz) / G + 0.5) * G, math.floor((z + hz) / G + 0.5) * G
+	x1 = x0 + math.ceil((x1 - x0) / W) * W
+	z1 = z0 + math.ceil((z1 - z0) / W) * W
+	local rx, rz = (x1 - x0) / 2 + W / 2, (z1 - z0) / 2 + W / 2
+	x, z = (x0 + x1) / 2, (z0 + z1) / 2
 	local out, seen = {}, {}
 	local function add(px, pz)
 		local bx, by, bz = Spring.Pos2BuildPos(wallDef, px, Spring.GetGroundHeight(px, pz), pz, 0)
@@ -160,11 +168,11 @@ local function mayOrder() -- (as bardroid_retreat.lua: a host may forbid widgets
 	return mayOrderAnswer
 end
 
--- the sentry's place in a builder's queue (0 based), or nil
+-- the sentry's place in a builder's queue (0 based) and its order's tag, or nil
 local function queueIndex(u, def, x, z)
 	for i, c in ipairs(spGetUnitCommands(u, -1) or {}) do
 		if c.id == -def and c.params and math.abs(c.params[1] - x) < 2 and math.abs(c.params[3] - z) < 2 then
-			return i - 1
+			return i - 1, c.tag
 		end
 	end
 end
@@ -215,7 +223,8 @@ local function wallUp(p)
 			local t1, why = t1Builder(p.builders, p.x, p.z)
 			local w1 = t1 and wallOf(t1, 1)
 			if w1 and firesOver(s, w1) then
-				wall, by, mode, how = w1, { t1 }, "front", "by the T1 builder " .. why .. ", at its queue's front"
+				wall, by, mode, how = w1, { t1 }, "front", string.format("by the T1 builder %s (%s %d), at its queue's front",
+					why, UnitDefs[spGetUnitDefID(t1)].name, t1)
 			end
 		end
 	else
@@ -233,23 +242,62 @@ local function wallUp(p)
 	if #spots == 0 then
 		return
 	end
-	if mode == "before" then -- (T2: each builder's walls just before the sentry in its queue)
-		for _, u in ipairs(by) do
-			local i = queueIndex(u, p.def, p.x, p.z)
-			if i then
-				local orders = {}
-				for k, sp in ipairs(spots) do
-					orders[k] = { CMD.INSERT, { i + k - 1, -wall, 0, sp[1], sp[2], sp[3], 0 }, {} }
+	-- (the builder's queue given again with the walls in it: before the command with that tag, or at the front; the
+	-- first order replaces the queue, the rest are queued after it, each with its own options. CMD.INSERT did not do:
+	-- by the queue's index the first wall went missing, on an idle builder's empty queue all of them, and by a tag
+	-- ("alt") they went to the queue's end, dev phone 2026-11-20. The engine's own orders (internal) are left out.)
+	local function before(u, tag)
+		local orders, done = {}, false
+		local function addWalls()
+			for _, sp in ipairs(spots) do
+				orders[#orders + 1] = { -wall, { sp[1], sp[2], sp[3], 0 }, {} }
+			end
+			done = true
+		end
+		if not tag then
+			addWalls()
+		end
+		for _, c in ipairs(spGetUnitCommands(u, -1) or {}) do
+			if tag and c.tag == tag then
+				addWalls()
+			end
+			local o = c.options or {}
+			if not o.internal then
+				local opts = {}
+				for _, k in ipairs({ "alt", "ctrl", "meta", "right" }) do
+					if o[k] then
+						opts[#opts + 1] = k
+					end
 				end
-				Spring.GiveOrderArrayToUnitArray({ u }, orders)
+				orders[#orders + 1] = { c.id, c.params or {}, opts }
 			end
 		end
-	elseif mode == "front" then -- (a T1 builder's own queue: the walls at its front)
-		local orders = {}
-		for k, sp in ipairs(spots) do
-			orders[k] = { CMD.INSERT, { k - 1, -wall, 0, sp[1], sp[2], sp[3], 0 }, {} }
+		if not done then
+			addWalls()
 		end
-		Spring.GiveOrderArrayToUnitArray(by, orders)
+		for i = 2, #orders do
+			local opts = orders[i][3]
+			opts[#opts + 1] = "shift"
+		end
+		-- (the sentry's own order goes again with them: not a new placement, or its walls came again each frame)
+		local f = Spring.GetGameFrame()
+		for _, o in ipairs(orders) do
+			if o[1] < 0 and o[2][3] then
+				resent[-o[1] .. ":" .. math.floor(o[2][1]) .. ":" .. math.floor(o[2][3])] = f + 15
+			end
+		end
+		Spring.GiveOrderArrayToUnitArray({ u }, orders)
+	end
+	if mode == "before" then -- (T2: each builder's walls just before the sentry in its queue)
+		for _, u in ipairs(by) do
+			local _, tag = queueIndex(u, p.def, p.x, p.z)
+			if tag then
+				before(u, tag)
+			end
+		end
+	elseif mode == "front" then -- (a T1 builder's own queue: the walls at its front, before what it does now)
+		local first = (spGetUnitCommands(by[1], 1) or {})[1]
+		before(by[1], first and first.tag)
 	else -- (T1: after the sentry)
 		local orders = {}
 		for k, sp in ipairs(spots) do
@@ -259,6 +307,9 @@ local function wallUp(p)
 	end
 	Spring.Echo(string.format("[bardroid-walls] %s: %d %s around it, %s, %d builder(s)", name, #spots, UnitDefs[wall].name,
 		how, #by)) -- (tools)
+	if WG.BarDroidWalls then
+		WG.BarDroidWalls.last = { def = p.def, wall = wall, n = #spots, spots = spots, x = p.x, z = p.z } -- (tools)
+	end
 end
 
 function widget:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams)
@@ -269,37 +320,41 @@ function widget:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams)
 		return
 	end
 	local f = Spring.GetGameFrame()
-	if placedFrame ~= f then
-		placed, placedFrame = {}, f
-	end
 	local key = -cmdID .. ":" .. math.floor(cmdParams[1]) .. ":" .. math.floor(cmdParams[3])
-	local p = placed[key]
+	if resent[key] then
+		if f <= resent[key] then
+			return
+		end
+		resent[key] = nil
+	end
+	local batch = placed[f] or {}
+	placed[f] = batch
+	local p = batch[key]
 	if not p then
 		p = { def = -cmdID, x = cmdParams[1], y = cmdParams[2], z = cmdParams[3], facing = cmdParams[4] or 0, builders = {} }
-		placed[key] = p
+		batch[key] = p
 	end
 	p.builders[unitID] = true
 end
 
 function widget:GameFrame(f)
-	if not placedFrame or f <= placedFrame then -- (the next frame: the orders in the builders' queues)
-		return
-	end
-	local batch = placed
-	placed, placedFrame = {}, nil
-	if Spring.GetSpectatingState() or not mayOrder() then
-		return
-	end
-	local n = 0
-	for _ in pairs(batch) do
-		n = n + 1
-	end
-	if n > 1 then -- (a line or a grid of sentries: no rings, they would cross)
-		Spring.Echo(string.format("[bardroid-walls] %d sentries in one placement: no walls", n)) -- (tools)
-		return
-	end
-	for _, p in pairs(batch) do
-		wallUp(p)
+	for bf, batch in pairs(placed) do
+		if bf < f then -- (a frame later: the orders in the builders' queues)
+			placed[bf] = nil
+			local n = 0
+			for _ in pairs(batch) do
+				n = n + 1
+			end
+			if Spring.GetSpectatingState() or not mayOrder() then -- luacheck: ignore 542
+				-- (nothing: a spectator, or a host forbidding widgets' orders)
+			elseif n > 1 then -- (a line or a grid of sentries: no rings, they would cross)
+				Spring.Echo(string.format("[bardroid-walls] %d sentries in one placement: no walls", n)) -- (tools)
+			else
+				for _, p in pairs(batch) do
+					wallUp(p)
+				end
+			end
+		end
 	end
 end
 

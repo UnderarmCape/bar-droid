@@ -3440,10 +3440,26 @@ local function drawPlace()
 	local bh = box[4] - box[2]
 	textIn("PLACE", box[1], box[2], box[3], box[4], max(bh * 0.3, min(bh * 0.55, 40)),
 		ready and "\255\255\255\255" or "\255\205\225\205", bold)
-	for _, k in ipairs({ "rotate", "cancel" }) do
+	for _, k in ipairs({ "rotate", "cancel", "walls" }) do
 		local r = p[k]
-		button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
-		if k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
+		if r then
+			button(r, { 0, 0, 0, 0.55 }, { 0.15, 0.15, 0.15, 0.6 })
+		end
+		if not r then -- luacheck: ignore 542 -- (no WALLS: not a sentry)
+			-- nothing
+		elseif k == "walls" then -- (a sentry picked: its walls on, gold and outlined, or off, grey; the host forbidding
+			-- widgets' orders: grey, they cannot be given; bardroid_walls.lua, Kailil 2026-11-20)
+			local W = WG.BarDroidWalls
+			local on = W and W.on() and (not W.allowed or W.allowed())
+			local size = max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30))
+			if bold then
+				size = min(size, (r[3] - r[1]) * 0.7 / max(0.01, bold:GetTextWidth("WALLS")))
+			end
+			textIn("WALLS", r[1], r[2], r[3], r[4], size, on and "\255\255\215\100" or "\255\130\130\130", bold)
+			if on and WG.BarDroidStyle then
+				WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor((r[3] - r[1]) * 0.03)))
+			end
+		elseif k == "rotate" then -- (Kailil, 2026-11-11: its arrow read as a redo button; it turns the building 90 degrees, the
 			-- game's only turn, so no "90°" on it: "its redundant")
 			-- (across half the panel since 2026-11-12: the word at a third of its height, and over 70 % of its width at
 			-- most: at the textIn's 84 % upright it ran nearly edge to edge, as large as PLACE above it, dev phone

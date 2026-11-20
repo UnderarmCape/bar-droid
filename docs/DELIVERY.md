@@ -121,7 +121,7 @@ boxes, the GPU driver's fault closing a frozen game).
       no enemy" rule); the test's tap worked out before its screenshot hit BASE, as the groups row came up meanwhile
       and lifted the home grid 131 pixels (the test's fault, but a finger reaching for a home button then hits the
       one below too: a hardening case). dock-phone-test ALL PASS (31). Not on the Fold7 yet (refusing port 44111).
-- [ ] **Walls around a placed sentry**: a toggle beside the place button's group rotate, on by default: placing a sentry
+- [x] **Walls around a placed sentry**: a toggle beside the place button's group rotate, on by default: placing a sentry
       (any builder) also builds a block of walls around it; T1 walls for T1 sentries, T2 for T2 (built before the
       sentry); a T2 sentry that cannot shoot over a T2 wall gets T1 walls, ordered with INSERT from the T1 builder
       guarding the T2 builder or the T1-capable builder nearest. No walls for AA, sea sentries (torpedo launchers,
@@ -141,10 +141,20 @@ boxes, the GPU driver's fault closing a frozen game).
       On by default, WG.BarDroidWalls.set. New tools/walls-phone-test.ps1 (a Sentry placed by real taps on the map and
       PLACE; then by orders: WALLS off, a Claw, an AA launcher, two Sentries at once): ALL PASS (8), the Sentry first, then
       8 Dragon's Teeth around it. Its first runs: the HLT left out (as tall as an LRPC by its model), every weapon
-      counted as arcing (all report highTrajectory 2), the Claw's refused order given walls. Still to do: the WALLS toggle
-      in the PLACE panel beside ROTATE (make-buildmenu.py's layoutPanel and pressPanel, RtsTouch's place rects), and
-      the T2 cases tested (the Annihilator, 88 tall, beam: T2 walls first; Cortex's Viper, 50, missiles: T1 walls by a
-      T1 builder, inserted).
+      counted as arcing (all report highTrajectory 2), the Claw's refused order given walls.
+      Part 2 done (2026-11-20 ~07:43-08:20, dev phone): WALLS in the PLACE panel, between ROTATE and the X (a third
+      each), only while a sentry is picked: gold and outlined when on, grey when off or when the host forbids widgets'
+      orders (make-buildmenu.py's layoutPanel, pressPanel and drawPanel, the place file's "walls" rect; RtsTouch keeps it
+      out of PLACE's tap and turns a tap there while a GRID is held into "act walls_toggle"; bardroid_portrait.lua's
+      drawPlace). The T2 cases tested: Armada's T2 con bot and an Annihilator, 12 Fortification Walls before it; Cortex's
+      T2 con and a Viper (too low for them) with a T1 con guarding it, 12 Dragon's Teeth at the front of the guard's
+      queue, the guard after them; without a guard, the nearest T1 builder (idle) given them. On the way: the ring laid
+      on the footprint's edges and the build grid (from the middle, a 3x3 sentry's walls fell between grid lines);
+      CMD.INSERT gave up (by index the first wall went missing and an idle builder's empty queue lost all of them; by
+      tag they went to the end): the builder's queue is given again with the walls in it, its sentry's order then
+      ignored for 15 frames (it started its walls again each frame); placements kept by frame (a new frame's order
+      dropped the last one's unhandled). walls-phone-test (now with real WALLS taps and the T2 cases) ALL PASS twice,
+      dock-phone-test ALL PASS (31), remake-check PASS. Not on the Fold7 yet (refusing port 44111). A GPU driver fault (the app's close) once in 8 runs here, not again.
 - [ ] **The Commander in D-gun mode**: measure whether he walks slower than on a plain move over a medium distance; if
       not, nothing to do.
 - [ ] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a

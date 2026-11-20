@@ -14,10 +14,11 @@ local OUT, CMD_FILE = "LuaUI/Config/bardroid_wallstest.txt", "LuaUI/Config/bardr
 local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil
 local com, spot, spot2
+local t2 -- the T2 cases: their builders and spots
 local D = {}
 for _, n in ipairs({ "armllt", "armdrag", "armclaw", "armrl", "armhlt", "armbeamer", "armguard", "armbrtha", "armrad",
 	"armjamt", "armtl", "cortron", "armemp", "armsilo", "armamd", "armvulc", "armanni", "armamb", "armpb", "corvipe",
-	"cortoast", "legacluster", "legapopupdef", "cordoom", "corpun", "legmg", "armfort", "corint", "leglrpc" }) do
+	"cortoast", "legacluster", "legapopupdef", "cordoom", "corpun", "legmg", "armfort", "corint", "leglrpc", "corfort" }) do
 	D[n] = UnitDefNames[n] and UnitDefNames[n].id
 end
 
@@ -108,6 +109,72 @@ local function count(q, def)
 		end
 	end
 	return n
+end
+-- a unit's queue: build orders as { def, x, z }, with others too ("guard" etc.) when all
+local function queueOf(u, all)
+	local out = {}
+	for _, c in ipairs(Spring.GetUnitCommands(u, -1) or {}) do
+		if c.id < 0 then
+			out[#out + 1] = { -c.id, c.params[1], c.params[3] }
+		elseif all then
+			out[#out + 1] = { c.id == CMD.GUARD and "guard" or tostring(c.id) }
+		end
+	end
+	return out
+end
+-- (the last ring's spots not in a unit's queue: where, from the sentry's middle, and whether buildable now)
+local function missing(u)
+	local L = WG.BarDroidWalls.last
+	if not L then
+		return "no ring"
+	end
+	local out = {}
+	for _, s in ipairs(L.spots or {}) do
+		local found = false
+		for _, c in ipairs(Spring.GetUnitCommands(u, -1) or {}) do
+			if c.id == -L.wall and math.abs(c.params[1] - s[1]) < 2 and math.abs(c.params[3] - s[3]) < 2 then
+				found = true
+			end
+		end
+		if not found then
+			out[#out + 1] = string.format("%+d,%+d (test %d)", s[1] - L.x, s[3] - L.z, Spring.TestBuildOrder(L.wall, s[1],
+				s[2], s[3], 0))
+		end
+	end
+	return #out == 0 and "none missing" or ("missing " .. table.concat(out, "; "))
+end
+-- a spot near a unit for a building with room for a ring of walls (not near "avoid"); no need to be in sight
+local function freeNear(def, wallDef, near, avoid, awayFrom)
+	local cx, _, cz = Spring.GetUnitPosition(near)
+	local ax, az
+	if awayFrom then -- (a spot on the far side of "near" from that unit: "near" the nearer builder by far)
+		ax, _, az = Spring.GetUnitPosition(awayFrom)
+	end
+	local ud, wd = UnitDefs[def], UnitDefs[wallDef]
+	local reach = math.max(ud.xsize, ud.zsize) * 4 + wd.xsize * 8 + 16
+	for r = 200, 1000, 60 do
+		for a = 0, 345, 15 do
+			local x, z = cx + math.cos(math.rad(a)) * r, cz + math.sin(math.rad(a)) * r
+			local bx, by, bz = Spring.Pos2BuildPos(def, x, Spring.GetGroundHeight(x, z), z, 0)
+			local far = not avoid or math.abs(bx - avoid[1]) + math.abs(bz - avoid[3]) > 500
+			if ax then
+				far = far and math.sqrt((bx - ax) ^ 2 + (bz - az) ^ 2) > math.sqrt((bx - cx) ^ 2 + (bz - cz) ^ 2) + 400
+			end
+			if far and Spring.TestBuildOrder(def, bx, by, bz, 0) >= 2 then
+				local ok = true
+				for dx = -reach, reach, 16 do
+					for dz = -reach, reach, 16 do
+						if Spring.TestBuildOrder(wallDef, bx + dx, by, bz + dz, 0) < 2 then
+							ok = false
+						end
+					end
+				end
+				if ok then
+					return { bx, by, bz }
+				end
+			end
+		end
+	end
 end
 local function shiftBuild(def, s)
 	Spring.GiveOrderToUnit(com, -def, { s[1], s[2], s[3], 0 }, { "shift" })
@@ -212,10 +279,33 @@ function widget:GameFrame(f)
 		check("then a closed ring of Dragon's Teeth around it (8, side by side)", ring == 8 and off == 0,
 			ring .. " in the ring, " .. off .. " elsewhere")
 		go("shot", f)
-	elseif stage == "shot" then
-		Spring.SetActiveCommand(0)
+	elseif stage == "shot" then -- (the Sentry picked again: the PLACE panel with WALLS, a picture, then WALLS tapped)
 		Spring.SelectUnitArray({ com })
-		ask("shot", 0, 0, "off", f)
+		Spring.SetActiveCommand(Spring.GetCmdDescIndex(-D.armllt) or 0)
+		go("shot2", f)
+	elseif stage == "shot2" and f - stageAt > 20 then
+		ask("shot", 0, 0, "wallsbtn", f)
+	elseif stage == "wallsbtn" or stage == "wallsbtn2" then
+		local B = WG.bardroidBuildmenu
+		local p = B and B.droidPanel and B.droidPanel()
+		if not (p and p.walls) then
+			check("WALLS in the PLACE panel, the Sentry picked", false, p and "no walls button" or "no panel")
+			Spring.SetActiveCommand(0)
+			go("off", f)
+			return
+		end
+		local _, vsy = Spring.GetViewGeometry()
+		ask("tap", (p.walls[1] + p.walls[3]) / 2, vsy - (p.walls[2] + p.walls[4]) / 2,
+			stage == "wallsbtn" and "walls1?" or "walls2?", f)
+	elseif stage == "walls1?" and f - stageAt > 20 then
+		check("WALLS tapped in the PLACE panel: off", WG.BarDroidWalls.on() == false, WG.BarDroidWalls.on())
+		go("wallsbtn2", f)
+	elseif stage == "walls2?" and f - stageAt > 20 then
+		check("WALLS tapped again: on, the Sentry still picked", WG.BarDroidWalls.on() == true
+			and select(2, Spring.GetActiveCommand()) == -D.armllt, tostring(WG.BarDroidWalls.on()) .. ", picked "
+				.. tostring(select(2, Spring.GetActiveCommand())))
+		Spring.SetActiveCommand(0)
+		go("off", f)
 	elseif stage == "off" then
 		WG.BarDroidWalls.set(false)
 		spot2 = freeSpot(spot)
@@ -246,15 +336,113 @@ function widget:GameFrame(f)
 		local q = queue()
 		check("an AA launcher: no walls", count(q, D.armdrag) == 8,
 			count(q, D.armrl) .. " AA queued, " .. count(q, D.armdrag) .. " walls")
-		if spot2 then -- (two Sentries in one placement, as a LINE: none)
-			shiftBuild(D.armllt, { spot2[1], spot2[2], spot2[3] + 200 })
-			shiftBuild(D.armllt, { spot2[1], spot2[2], spot2[3] + 300 })
+		if spot2 then -- (two Sentries in one placement, as a LINE: none; two buildable spots, one fixed pair was blocked)
+			local found = {}
+			for dz = 200, 900, 50 do
+				for _, sz in ipairs({ 1, -1 }) do
+					local x, z = spot2[1], spot2[3] + dz * sz
+					local bx, by, bz = Spring.Pos2BuildPos(D.armllt, x, Spring.GetGroundHeight(x, z), z, 0)
+					local apart = not found[1] or math.abs(bz - found[1][3]) >= 100
+					if #found < 2 and apart and Spring.TestBuildOrder(D.armllt, bx, by, bz, 0) >= 2 then
+						found[#found + 1] = { bx, by, bz }
+					end
+				end
+			end
+			for _, s in ipairs(found) do
+				shiftBuild(D.armllt, s)
+			end
 		end
 		go("two?", f)
 	elseif stage == "two?" and f - stageAt > 30 then
 		local q = queue()
-		check("two Sentries in one placement: no walls", count(q, D.armllt) == 4 and count(q, D.armdrag) == 8,
-			count(q, D.armllt) .. " Sentries, " .. count(q, D.armdrag) .. " walls")
+		-- (the walls only: one of the two orders now and then refused, its spot under one queued before)
+		check("two Sentries in one placement: no walls", count(q, D.armdrag) == 8,
+			count(q, D.armllt) .. " Sentries queued, " .. count(q, D.armdrag) .. " walls")
+		Spring.SendCommands("cheat 1") -- (the T2 cases: builders given, the give a second later)
+		go("t2cheat", f)
+	elseif stage == "t2cheat" and f - stageAt > 30 then
+		local x, y, z = Spring.GetUnitPosition(com)
+		local team = Spring.GetMyTeamID()
+		t2 = { at = { x, y, z } }
+		Spring.SendCommands(string.format("give 1 armack %d @%d,%d,%d", team, x + 400, y, z))
+		Spring.SendCommands(string.format("give 1 corack %d @%d,%d,%d", team, x - 400, y, z))
+		Spring.SendCommands(string.format("give 1 corck %d @%d,%d,%d", team, x - 400, y, z + 120))
+		go("t2given", f)
+	elseif stage == "t2given" and f - stageAt > 45 then
+		for _, u in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+			local d = Spring.GetUnitDefID(u)
+			if d == UnitDefNames.armack.id then
+				t2.armack = u
+			elseif d == UnitDefNames.corack.id then
+				t2.corack = u
+			elseif d == UnitDefNames.corck.id then
+				t2.corck = u
+			end
+		end
+		if not (t2.armack and t2.corack and t2.corck) then
+			check("the T2 cases' builders given", false, tostring(t2.armack) .. " " .. tostring(t2.corack) .. " "
+				.. tostring(t2.corck))
+			go("end", f)
+			return
+		end
+		-- (A) the Annihilator by Armada's T2 con bot: Fortification Walls first, then it
+		t2.anni = freeNear(D.armanni, D.armfort, t2.armack)
+		if t2.anni then
+			Spring.GiveOrderToUnit(t2.armack, -D.armanni, { t2.anni[1], t2.anni[2], t2.anni[3], 0 }, {})
+		end
+		Spring.GiveOrderToUnit(t2.corck, CMD.GUARD, { t2.corack }, {})
+		go("anni?", f)
+	elseif stage == "anni?" and f - stageAt > 30 then
+		local q = queueOf(t2.armack)
+		local walls, last = count(q, D.armfort), q[#q]
+		local before = last and last[1] == D.armanni and walls == #q - 1
+		local L = WG.BarDroidWalls.last or {}
+		check("a T2 sentry (the Annihilator, 88 tall): Fortification Walls round it, all before it in the T2 builder's queue",
+			t2.anni and walls >= 8 and before and walls == L.n, (t2.anni and "" or "no spot; ") .. walls .. " walls of "
+				.. tostring(L.n) .. ", then " .. (last and UnitDefs[last[1]].name or "nothing") .. "; " .. missing(t2.armack))
+		-- (B) the Viper (50 tall, missiles: not over a Fortification Wall) by Cortex's T2 con, a T1 con guarding it
+		t2.viper = freeNear(D.corvipe, UnitDefNames.cordrag.id, t2.corack)
+		if t2.viper then
+			Spring.GiveOrderToUnit(t2.corack, -D.corvipe, { t2.viper[1], t2.viper[2], t2.viper[3], 0 }, {})
+		end
+		go("viper?", f)
+	elseif stage == "viper?" and f - stageAt > 30 then
+		local qa, qc = queueOf(t2.corack), queueOf(t2.corck, true)
+		local drag = UnitDefNames.cordrag.id
+		local front, n = 0, count(qc, drag)
+		for _, o in ipairs(qc) do -- (the walls at the front, the guard after them)
+			if o[1] ~= drag then
+				break
+			end
+			front = front + 1
+		end
+		local guardLast = qc[#qc] and qc[#qc][1] == "guard"
+		local L = WG.BarDroidWalls.last or {}
+		check("a T2 sentry too low for T2 walls (the Viper): Dragon's Teeth by the T1 con guarding it, at its queue's front",
+			t2.viper and n >= 8 and front == n and guardLast and n == L.n, (t2.viper and "" or "no spot; ") .. n
+				.. " walls of " .. tostring(L.n) .. ", " .. front .. " at the front, the guard " .. (guardLast and "after them" or "gone")
+				.. "; " .. missing(t2.corck))
+		check("... and none by the T2 con, its Viper alone", count(qa, D.corvipe) == 1 and count(qa, D.corfort) == 0
+			and count(qa, drag) == 0, #qa .. " orders")
+		-- (C) no guard: the nearest T1 builder (the Cortex con beside the spot, the commander farther off)
+		Spring.GiveOrderToUnit(t2.corck, CMD.STOP, {}, {})
+		Spring.GiveOrderToUnit(t2.corack, CMD.STOP, {}, {})
+		go("viper2", f)
+	elseif stage == "viper2" and f - stageAt > 10 then
+		t2.viper2 = freeNear(D.corvipe, UnitDefNames.cordrag.id, t2.corck, t2.viper, com)
+		if t2.viper2 then
+			Spring.GiveOrderToUnit(t2.corack, -D.corvipe, { t2.viper2[1], t2.viper2[2], t2.viper2[3], 0 }, {})
+		end
+		go("viper2?", f)
+	elseif stage == "viper2?" and f - stageAt > 30 then
+		local qc = queueOf(t2.corck, true)
+		local n = count(qc, UnitDefNames.cordrag.id)
+		local L = WG.BarDroidWalls.last or {}
+		check("no guard: the nearest T1 builder (the Cortex con, idle) given the Dragon's Teeth",
+			t2.viper2 and n >= 8 and n == #qc and n == L.n,
+			(t2.viper2 and "" or "no spot; ") .. n .. " walls of " .. #qc .. " orders; the T2 con's queue: "
+				.. #queueOf(t2.corack, true) .. " orders" .. (t2.viper2 and string.format(", the spot %d,%d test %d",
+				t2.viper2[1], t2.viper2[3], Spring.TestBuildOrder(D.corvipe, t2.viper2[1], t2.viper2[2], t2.viper2[3], 0)) or ""))
 		go("end", f)
 	elseif stage == "end" then
 		Spring.Echo("[wallstest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
