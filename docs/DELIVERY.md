@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's "cursorareaattack has no frames" warning: BAR's own, not the phone's** (hardening, 2026-11-19
+      ~23:21-23:27, dev phone, BAR test-32018; the Fold7 not played since 23:11). The dev phone's last game logs had
+      two warnings, both in every game: the start position suggestions' (no modoption data) and "[MouseHandler::
+      ReplaceMouseCursor] replacement icexuick_75/cursorareaattack ... has no frames, the cursor will draw nothing". As
+      the phone's screen picks the 75 set (BAR's gui_cursor by the screen's size) and a pad's pointer shows it, a
+      probe (a user widget, removed after) listed BAR's sets: icexuick_75, 100, 133, 166 and 200, and none has any
+      cursorareaattack frames (75 has fewer attack frames too, 31 of 61): the same on every screen, PC too. Nothing for
+      the phone to do (bardroid_touch.lua's own cursor pass stands down on 32018, BAR's widget loads them itself). The
+      dock's selection row at full size: fine. No UI polish this run.
 - [x] **Return to Battle from the lobby over a game: nothing to fix** (hardening, 2026-11-19 ~23:14-23:20, dev phone
       upright, BAR test-32018; the Fold7 not played since 23:11). A save loaded from the lobby's Load Game (a 31992 save
       on 32018, fine), the top bar's Lobby: the overlay file "1", Load Game as fixed; the grid's first page, Return to
