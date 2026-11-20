@@ -2958,6 +2958,23 @@ local function drawTile(item, r)
 	end
 end
 
+-- TRANSFER's arrow, handing over to the right, in its button's left part; the x the word starts from
+function SP.transferArrow(r)
+	local w, h = r[3] - r[1], r[4] - r[2]
+	local s = min(h * 0.42, w * 0.14)
+	local x0 = r[1] + max(6, floor(w * 0.07))
+	local cy = (r[2] + r[4]) / 2
+	gl.Color(0.88, 0.95, 1, 0.95)
+	gl.Rect(x0, cy - s * 0.13, x0 + s * 0.58, cy + s * 0.13)
+	gl.BeginEnd(GL.TRIANGLES, function()
+		gl.Vertex(x0 + s * 0.52, cy + s * 0.42)
+		gl.Vertex(x0 + s, cy)
+		gl.Vertex(x0 + s * 0.52, cy - s * 0.42)
+	end)
+	gl.Color(1, 1, 1, 1)
+	return x0 + s * 0.6
+end
+
 -- BAR's order menu's state lights (gui_ordermenu.lua's DrawCell): the first state red, the second yellow (green when
 -- there are only two), the third and on green; "Fire at will" red and "Hold pos" green here before, the other way
 -- round from BAR's (dev phone screenshot 2026-11-11)
@@ -3229,6 +3246,13 @@ local function drawButton(item, r, cap)
 	elseif item.kind == "order" and item.id == CMD.MANUALFIRE then -- (the D-Gun red, in the gold's shades: Kailil,
 		-- 2026-11-13, "Make the dgun button RED but still fit the ui look and feel")
 		button(r, { 0.42, 0.07, 0.05, 0.9 }, { 0.74, 0.17, 0.12, 0.9 })
+	elseif item.kind == "transfer" then -- (Kailil, 2026-11-20: "Make the transfer button more pronounced": the hand-over's
+		-- blue, outlined, an arrow before the word; grey, it read as one more order beside Fire at will, dev phone
+		-- screenshot 2026-11-20)
+		button(r, { 0.04, 0.2, 0.38, 0.95 }, { 0.1, 0.42, 0.74, 0.95 })
+		if WG.BarDroidStyle then
+			WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], { 0.5, 0.8, 1, 0.9 }, 1, max(2, floor((r[4] - r[2]) * 0.04)))
+		end
 	else
 		button(r)
 	end
@@ -3255,8 +3279,10 @@ local function drawButton(item, r, cap)
 		if cap then -- (an order: its row's size, drawHalf)
 			th = min(th, cap)
 		end
-		textIn(label, r[1], r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140"
-			or lit and "\255\020\020\020" or "\255\240\240\240", font, true)
+		-- (TRANSFER: its arrow at the left, the word in the rest)
+		local tx0 = item.kind == "transfer" and SP.transferArrow(r) or r[1]
+		textIn(label, tx0, r[2], r[3], r[4], th, (item.kind == "none" or item.dim) and "\255\140\140\140"
+			or lit and "\255\020\020\020" or "\255\240\240\240", item.kind == "transfer" and bold or font, true)
 	end
 	if item.color then -- a teammate: their colour along the bottom
 		-- (3 pixels at least: the minimum was its top's, so in the split dock's rows, about 70 high, it came out 1 pixel,

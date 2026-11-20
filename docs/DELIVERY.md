@@ -185,7 +185,12 @@ boxes, the GPU driver's fault closing a frozen game).
       edge, the on round's none), the enemy's given units unseen by widgets out of sight (counted near the fight now).
       GPU driver faults closed 2 of these 7 test games (5 today, 3 of them just after new unit types appeared: a give,
       a building picked).
-- [ ] **The transfer button more pronounced.**
+- [x] **The transfer button more pronounced.** (2026-11-20 ~09:59-10:12, dev phone.) TRANSFER (the picked units to a
+      teammate, shown when there are teammates) was the plain grey of the orders beside it, Fire at will and Maneuver;
+      now the hand-over's blue, a light-blue outline, a white arrow pointing right before the word and the word in
+      bold: apart from the gold of a picked button and the D-Gun's red. Judged from dev phone screenshots before and
+      after, upright and at the Fold7 unfolded's 1080x1198 (the split dock), with stand-in teammates. dock-phone-test
+      ALL PASS (31).
 
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
 Automation is Kailil's and BAR's developers' decision (Kailil, 2026-11-10: touch players must compete fairly with
