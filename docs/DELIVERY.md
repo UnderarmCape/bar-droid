@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The camera knob in the layout editor, after the day's camera changes: as built** (hardening, 2026-11-19
+      ~23:31-23:40, dev phone upright, BAR test-32018; the Fold7 not played since 23:11). One of his test's items,
+      checked on the dev phone: /hud typed in the app's chat box opened the layout editor ("Camera knob" outlined, its
+      file "none" while editing, so the editor has the fingers); the knob dragged up and left and one "+" (Size 108%):
+      after Done bardroid_camctl.txt had it at 543 635 663 755 (120 across, 112 before); Reset put it back at 100 %
+      and its own place (735 827 847 939). Seen once and not again: in one skirmish the map view came up turned about
+      30 degrees before the editor was opened; a fresh skirmish started north-up, and /hud and typing in the chat box
+      turn nothing (screenshots between the keys). No UI polish this run.
 - [x] **His game's "[liblobby] Error: Failed to match command: REMOVESCRIPTTAGS": BAR's lobby, harmless** (hardening,
       2026-11-19 ~23:28-23:32; the Fold7 not played since 23:11). At his 17:38 game's end the server sent
       REMOVESCRIPTTAGS with nothing to remove; Chobby's pattern for it wants at least one tag ("([^\t]+)",
