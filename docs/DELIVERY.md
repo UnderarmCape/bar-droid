@@ -75,8 +75,21 @@ boxes, the GPU driver's fault closing a frozen game).
       check by a tap, then make it ask (as Back does, the engine's quit request, or BAR's own way).
 - [ ] **dock-phone-test's Area Mex case failed once** (2026-11-20 05:50, 1 run in 2 after the Back cases went in: "0 mex
       orders"; it passed in every run before and after): find out why.
-- [ ] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the
-      formation growing however many are built.
+- [x] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the
+      formation growing however many are built. (2026-11-20 ~05:56-06:40, dev phone, BAR test-32018, e36aff35.) A
+      factory picked (one that builds units that move): PRESETS in its orders; a preset, a tap (or a drawn line) on the
+      map; from then on each unit it builds goes to a place of its own in that formation there (a frame after it comes
+      out, the factory's own orders in first) and, there, goes side to side on repeat at once. The formation grows
+      without moving anyone: a fixed middle facing away from the factory, new places right and left of it in turn,
+      every other row half a place over, rows behind once full (a drawn line keeps its width); STRAFE one grid, the
+      formations their brawlers in front and the rest behind by reach, planes ahead; a place left free taken again
+      first. The factory's own move, fight, patrol, guard or stop ends it; a member ordered elsewhere leaves it. The
+      dock's button reads "PRESETS: STRAFE" (the factory's preset); picked, the factory shows its gathering place, the
+      line to it and its members' places. New tools/factory-preset-test.ps1 (a Bot Lab given, STRAFE picked, the map
+      tapped for real, five Pawns then three more): ALL PASS, each its own place 76 elmos apart, side to side on
+      arrival, eight 532 wide, the first five's places kept, the lab's own move ending it. The first try laid the
+      formation out again whole with each unit: everyone moved half a place each time and stood 38 apart. dock-phone-test
+      ALL PASS. Not on the Fold7 yet (refusing port 44111).
 - [ ] **Strafe starts at once**: units that arrive at different times begin the strafing repeat as each arrives, not
       once the whole formation is there.
 - [ ] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
