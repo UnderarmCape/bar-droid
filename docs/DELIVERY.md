@@ -756,6 +756,20 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The hang dump read before the driver's fault closes the game; the map hint in plainer words** (hardening,
+      2026-11-20 ~00:47-01:01, dev phone, BAR test-32018; the Fold7 not played since 00:09, its Android reports still
+      none for the app). HangDump reviewed: BAR's watchdog line started it on a thread of its own, and after the
+      driver's refusal that same line closed the game (DriverWatch) right away, so the dump read threads already gone:
+      every one "? | ? | ? | ?", as at 13:39 the day before; the 8 s stall close (DriverWatch.stalled) dumped nothing.
+      Now the dump reads first on the engine's output thread when the refusal came (an unknown hang still on its own
+      thread), and the stall close dumps before it kills. Dev phone: a scratch widget printed the refusal 20 s into a
+      Play vs AI skirmish and held the main thread 15 s: "closing it", 27 thread lines (the main one "recoil-main | 0 |
+      running | R (running)", the others in futex, clock_nanosleep or pselect6 waits), exit 137, the launcher's note
+      (widget removed after). touch-phone-test and status-text-test ALL PASS. UI polish (launcher screenshot): the Play
+      vs AI map's hint "... as BAR lists it, with the version (it is downloaded)" reads "... any map's name and version
+      as BAR lists it: a map not here is downloaded", two lines upright. The APK from main e3ae4ca0 (phone engine
+      phone-2026.09.03-83a8536d37) went on the Fold7 at 01:01 (no game running; --no-streaming, 89 s), github-sync
+      -Release.
 - [x] **The phone tests on the night's last build** (hardening, 2026-11-20 ~00:12-00:20, dev phone, BAR test-32018,
       the APK from clean main dbb4cb59; the Fold7 not played since 00:09, its Android reports still none for the app).
       GameService reviewed for main-thread work after the ANR: its installs and starts run on its worker thread, Stop
