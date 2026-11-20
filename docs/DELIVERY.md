@@ -756,6 +756,27 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The pad's pump, the lobby bridge and the sound pump go on past a RuntimeException** (hardening, 2026-11-20
+      ~01:47-02:05, dev phone, BAR test-32018; the Fold7 not played since 01:39). The pad's pump below, then the rest of
+      the app's long-lived threads: LobbyBridge's per-connection thread caught only JSONException per lobby message,
+      AudioPump's only IOException; a RuntimeException on either (an AudioTrack Android could not set up throws at
+      play()) ended the app's process. Now a lobby message that fails is logged ("a lobby message failed") and the next
+      one read; the sound pump logs (the first three) and opens the stream again; a track not set up is released and
+      the sound drained ("AudioTrack not set up"). HangDump's reads and the replay import already catch theirs; left
+      for a next run, catching only their I/O errors: PerfLog's minute thread, LoadPictures' and LogShare's. Dev phone: lobby-phone-test and touch-phone-test
+      ALL PASS, "stream 48000 Hz, 2 ch, 16-bit" and "lobby connected" as before. The APK from main 5c140dee (phone
+      engine phone-2026.09.03-83a8536d37) went on the Fold7 at 02:05 (no game running; --no-streaming, 87 s; the one
+      from 2b76483d at 01:58 before it), github-sync -Release.
+- [x] **The pad's pump goes on past a tick that throws** (hardening, 2026-11-20 ~01:47-01:58, dev phone, BAR
+      test-32018; the Fold7 not played since 01:39, its Android reports still none for the app). After Proc's reader,
+      the app's other long-lived threads looked over for the same hazard: ControllerBridge's pump (the pad's packets,
+      PadGame's mouse tick, the camera line, 60 times a second with a pad) had no catch, and a RuntimeException there,
+      uncaught on its thread, ends the app's whole process: the game's screen and touch gone mid-game. Now a tick that
+      throws is logged (the first three, "a pad tick failed, going on") and the next one runs (a packet that failed
+      stays due, tried again a tick later). Dev phone: a temporary throw in the first three ticks with a pad: the three
+      lines, then pad-test ALL PASS; the clean build's pad-test ALL PASS. The runs at 01:43-01:47 reviewed
+      ReplayImportActivity and Proot: nothing to fix. No UI polish this run. The APK from main 2b76483d (phone engine
+      phone-2026.09.03-83a8536d37) went on the Fold7 at 01:58 (no game running; --no-streaming, 82 s).
 - [x] **The engine's output read on past a line whose handling throws** (hardening, 2026-11-20 ~01:26-01:40, dev
       phone, BAR test-32018; the Fold7 not played since 01:01, its Android reports still none for the app). Proc
       reviewed: its output reader caught only IOException, so a RuntimeException from a line's handling (Log's
