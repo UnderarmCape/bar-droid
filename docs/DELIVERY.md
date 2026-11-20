@@ -73,7 +73,7 @@ boxes, the GPU driver's fault closing a frozen game).
       its resource bars, hidden upright under the buttons, before Top Bar Buttons, and bardroid_topbar.lua hands the
       Quit button on to BAR only in a game from the lobby (its showLobby). A finger's Quit there likely does nothing:
       check by a tap, then make it ask (as Back does, the engine's quit request, or BAR's own way).
-      Checked by a real tap (2026-11-20 ~11:53-12:20, dev phone): it asks. Quit is the strip's rightmost button, x
+      Checked by a real tap (2026-11-20 ~11:53-12:08, dev phone): it asks. Quit is the strip's rightmost button, x
       1023-1079 at the Fold7 unfolded's 1080x1198 where the hidden bars end at x 744, and as far right upright on the
       tall phone: BAR's own buttons take the tap there, and the earlier click had not been a finger's tap at the button.
       Where it would lie over the hidden bars (a narrower screen), bardroid_topbar.lua now hands the press to Top Bar
