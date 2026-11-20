@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The driver fault's note in two lines; GL check fine** (hardening, 2026-11-19 ~23:05-23:12, dev phone; the
+      Fold7 not played since 23:02). UI polish: after the GPU driver fault at 22:43 the launcher's note ran to four
+      lines and pushed its buttons down ("The phone's GPU driver stopped the game's graphics (a rare driver fault), so
+      the app closed the frozen game. Start it again; ..."); now "A rare GPU driver fault froze the game, so it was
+      closed; rejoin online games in the lobby." (DriverWatch.note), two lines at the status line's ~50 characters (the
+      note is only in memory after a real fault, so its lines are counted, not shown). The launcher's other exit notes
+      are a line each. Hunted: the launcher's GL check on the dev phone, "GL check: Adreno 740 (Freedreno), OpenGL 4.3,
+      Mesa 27.0.0-devel" in two lines, the version kept whole. status-text-test ALL PASS.
 - [x] **The GPU driver's fault met on the dev phone and closed as planned; the game type's line above the turn rail;
       the launcher back without its keyboard** (hardening, 2026-11-19 ~22:36-23:00, dev phone, BAR test-32018; the
       Fold7 not played since 22:19). UI polish: in a replay upright the game type's "Victory condition" line sat on

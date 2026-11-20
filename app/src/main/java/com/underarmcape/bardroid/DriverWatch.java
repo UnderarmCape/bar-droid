@@ -43,9 +43,11 @@ public final class DriverWatch {
         return true;
     }
 
-    /** What the launcher says afterwards. */
+    /**
+     * What the launcher says afterwards: two lines on a phone upright (four before, the launcher's buttons pushed down
+     * under the note; dev phone 2026-11-19).
+     */
     public static String note() {
-        return "The phone's GPU driver stopped the game's graphics (a rare driver fault), so the app closed the frozen"
-                + " game. Start it again; an online game can be rejoined from the lobby.";
+        return "A rare GPU driver fault froze the game, so it was closed; rejoin online games in the lobby.";
     }
 }
