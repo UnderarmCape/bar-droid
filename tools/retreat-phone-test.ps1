@@ -19,6 +19,8 @@ function InApp([string]$command) { & $adb exec-out run-as $pkg sh -c $command }
 function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files/bar/infolog.txt 2>/dev/null | tail -$lines" }
 
 & $adb shell am force-stop $pkg
+# (AUTO RETREAT as the player had it, put back after: the test turns it on and off, and a run that broke off left it off)
+$retreatWas = "$(InApp "cat $cfg/bardroid_retreat.txt 2>/dev/null")".Trim()
 InApp "rm -f files/bar/infolog.txt $cfg/bardroid_retreattest.txt"
 Send-AppFile $adb (Join-Path $PSScriptRoot "retreat-phone-test\bardroid_retreat_test.lua") $widget
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
@@ -32,5 +34,7 @@ try {
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_retreattest.txt"
+  $put = if ($retreatWas -match '^on [01]$') { $retreatWas } else { "on 1" }
+  InApp "echo '$put' > $cfg/bardroid_retreat.txt"
   & $adb shell am force-stop $pkg
 }

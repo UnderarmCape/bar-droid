@@ -191,6 +191,15 @@ boxes, the GPU driver's fault closing a frozen game).
       bold: apart from the gold of a picked button and the D-Gun's red. Judged from dev phone screenshots before and
       after, upright and at the Fold7 unfolded's 1080x1198 (the split dock), with stand-in teammates. dock-phone-test
       ALL PASS (31).
+- [x] Hardening (2026-11-20 ~11:17-11:29, dev phone): the home grid rose 132 pixels when the groups row came up (with
+      the first idle builder or group) and fell when it went (the last one busy): the full-width upright dock stacks
+      from the bottom, groups row, grid, selection, resources. A finger reaching for a home button hit the one below as
+      the row appeared (attack-ping-test's tap landed on BASE, not LAST PINGS). Now the row is kept while a game is
+      played and running (empty or not); the split dock (its groups between its blocks) and the sideways one were not
+      moving. attack-ping-test checks it: LAST PINGS' cell just after the start and at its tap a minute later, the same
+      (447-593 both); ALL PASS, dock-phone-test ALL PASS (31). And the tests that switch the player's settings now put
+      them back whatever happens: a retreat-phone-test run that broke off in its summary had left the dev phone's AUTO
+      RETREAT off (restored), so retreat-phone-test and walls-phone-test save AUTO RETREAT and WALLS first.
 
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
 Automation is Kailil's and BAR's developers' decision (Kailil, 2026-11-10: touch players must compete fairly with

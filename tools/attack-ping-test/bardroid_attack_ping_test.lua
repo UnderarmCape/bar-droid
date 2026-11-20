@@ -16,6 +16,7 @@ local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil
 local fight1, fight2 -- { x, z }
 local tapAt -- LAST PINGS' left half (X pixels, top left origin)
+local firstCell -- LAST PINGS' cell (GL pixels) just after the start, to compare with the one at the tap
 
 local function check(case, ok, detail)
 	if not ok then
@@ -110,6 +111,12 @@ function widget:GameFrame(f)
 		fight1 = { x + 500, z }
 		fightAt(fight1[1], fight1[2])
 		Spring.SelectUnitArray({})
+		go("firstcell", f)
+	elseif stage == "firstcell" and f - stageAt > 10 then -- (where LAST PINGS stands now, the home grid just up)
+		local P = WG.BarDroidPortrait
+		firstCell = P and P.itemCell and P.itemCell("right", function(it)
+			return it.kind == "pings" and not it.pingOnly
+		end)
 		Spring.Echo(string.format("[attacktest] the first fight given at %d,%d (enemy team %s)", fight1[1], fight1[2],
 			tostring(enemyTeam())))
 		go("fight1", f)
@@ -163,6 +170,11 @@ function widget:GameFrame(f)
 		end
 		local _, vsy = Spring.GetViewGeometry()
 		tapAt = { r[1] + (r[3] - r[1]) * 0.25, vsy - (r[2] + r[4]) / 2 }
+		-- (the home grid still where it stood at the start: the groups row coming up with the first idle builder lifted it
+		-- 132 pixels and this tap once hit BASE, 2026-11-20)
+		check("the home grid still where it stood a minute before (LAST PINGS)", firstCell and firstCell[2] == r[2]
+			and firstCell[4] == r[4], firstCell and string.format("then %d-%d, now %d-%d", firstCell[2], firstCell[4], r[2], r[4])
+			or "no cell then")
 		ask("tap", tapAt[1], tapAt[2], "jumped?", f)
 	elseif stage == "jumped?" and f - stageAt > 30 then
 		local vsx, vsy = Spring.GetViewGeometry()

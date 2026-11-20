@@ -35,6 +35,8 @@ AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" 
   "rm -f files/bar/infolog.txt $cfg/bardroid_wallstest.txt $cfg/bardroid_wallstest_cmd.txt`n" +
   "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg`n")
 Send-AppFile $adb (Join-Path $PSScriptRoot "walls-phone-test\bardroid_walls_test.lua") $widget
+# (WALLS as the player had it, put back after: the test turns it off and on, a run that breaks off between left it off)
+$wallsWas = "$(InApp "cat $cfg/bardroid_walls.txt 2>/dev/null")".Trim()
 try {
   Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
@@ -72,6 +74,8 @@ try {
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   & $adb shell am force-stop $pkg
+  $put = if ($wallsWas -match '^on [01]$') { $wallsWas } else { "on 1" }
+  InApp "echo '$put' > $cfg/bardroid_walls.txt"
   AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
     $(if ($turnWas) { "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"true`"/' shared_prefs/bardroid.xml`n" } else { "" }) +
     "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_wallstest.txt $cfg/bardroid_wallstest_cmd.txt`n")

@@ -1830,7 +1830,12 @@ function refreshNow()
 		L.homeOpen = false
 	end
 	idleB.update()
-	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup or #idleB.list > 0) and not dg
+	-- (the full-width upright dock, a game played and running: the groups row kept, empty or not. It came with the
+	-- first idle builder or group and went with the last, and the grid over it rose and fell by its height, 132 pixels
+	-- on the dev phone: a finger reaching for a home button hit the one below; attack-ping-test, 2026-11-20. The split
+	-- dock has its groups between its blocks, the sideways one its own: they do not move)
+	local keepGroups = not L.split and not L.thumb and Spring.GetGameFrame() > 0 and not Spring.GetSpectatingState()
+	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup or #idleB.list > 0 or keepGroups) and not dg
 	if wantSel ~= showSel or wantGroups ~= showGroups then -- (the dock's rows: laid out again)
 		showSel, showGroups = wantSel, wantGroups
 		layout()
