@@ -164,9 +164,18 @@ public final class Proc {
         Thread t = new Thread(() -> {
             try (BufferedReader r = new BufferedReader(new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
                 String line;
+                int failed = 0;
                 while ((line = r.readLine()) != null) {
-                    Log.raw(tag, line);
-                    if (extraSink != null) extraSink.line(line);
+                    // (a line whose handling throws must not stop the reading: the pipe would fill and the engine
+                    // block on its next write, a frozen game; review 2026-11-20)
+                    try {
+                        Log.raw(tag, line);
+                        if (extraSink != null) extraSink.line(line);
+                    } catch (RuntimeException e) {
+                        if (failed++ < 3) {
+                            try { Log.e(tag, "a line's handling failed, reading on", e); } catch (RuntimeException ignored) {}
+                        }
+                    }
                 }
             } catch (IOException ignored) {}
         }, "proc-" + tag);
