@@ -140,6 +140,14 @@ boxes, the GPU driver's fault closing a frozen game).
       phone uses the three buttons (navigation_mode 0) and the rail takes up-and-down drags, which the back gesture
       (sideways) leaves alone, so nothing is changed without a finger on the Fold7: read its navigation_mode when it
       answers, and if it is 2 (gestures) consider the view's system gesture exclusion for the rail.
+- [x] **Statistics' chart titles whole at the first open** (hardening, 2026-11-20 14:21-14:30, dev phone upright): at the
+      panel's first open the titles lacked their separator, "Damage  Received", "Value  Value destroyed", there after a
+      scroll (stats-phone-test's first picture). BAR's titles join their parts with " · " (U+00B7,
+      teamstats_graphs.lua), and graph.lua keeps a chart's first picture in a display list: the dot, first met by the
+      font while that list was made, came out blank in it until a scroll made the chart again. The copy now asks its
+      three fonts for the dot's width as it sets them (ViewResize: the glyph loaded long before a chart is drawn;
+      tools/make-teamstats.py, regenerated --adb, remake-check PASS). Dev phone: the first picture "Damage · Dealt",
+      "Damage · Received", "Units · Killed"; stats-phone-test ALL PASS two runs.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

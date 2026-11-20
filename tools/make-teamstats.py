@@ -336,6 +336,18 @@ graphs = metrics.droidGraphsModule().new(model.pageContext({
 		metrics.catFs = mathFloor(metrics.catFs * 1.15)
 	end
 '''),
+    ('''	metrics.nameFont = WG.fonts.getFont(2)
+''',
+     '''	metrics.nameFont = WG.fonts.getFont(2)
+	-- BAR Droid: the charts' " · " (U+00B7, their titles' separator) loaded into the fonts' glyphs now: a chart's first
+	-- picture is kept in a display list (graph.lua), and the dot, first met while that list was made, came out blank in
+	-- it, "Damage  Received" until a scroll made the chart again (stats-phone-test's first picture, dev phone 2026-11-20)
+	for _, f in ipairs({ font, metrics.numFont, metrics.nameFont }) do
+		if f.GetTextWidth then
+			f:GetTextWidth(" \\194\\183 ")
+		end
+	end
+'''),
     ('''	local barX2 = area.x2 - metrics.edgeInset
 ''',
      '''	local barX2 = area.x2 - metrics.edgeInset
