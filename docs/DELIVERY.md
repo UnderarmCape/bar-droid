@@ -90,8 +90,14 @@ boxes, the GPU driver's fault closing a frozen game).
       arrival, eight 532 wide, the first five's places kept, the lab's own move ending it. The first try laid the
       formation out again whole with each unit: everyone moved half a place each time and stood 38 apart. dock-phone-test
       ALL PASS. Not on the Fold7 yet (refusing port 44111).
-- [ ] **Strafe starts at once**: units that arrive at different times begin the strafing repeat as each arrives, not
-      once the whole formation is there.
+- [x] **Strafe starts at once**: units that arrive at different times begin the strafing repeat as each arrives, not
+      once the whole formation is there. (2026-11-20 ~06:45-07:15, dev phone, BAR test-32018.) bardroid_presets.lua's
+      swayCheck gave the repeat and the two fights across each place only when every unit was there, or 12 s after the
+      first; now each unit gets them as it is on its place (swayOne, the factory formations' too), the group done when
+      none is left on its way (QUEUE's chained legs: still only at the last place, the earlier ones' gathers as
+      before). factory-preset-test's new case: two Pawns at the aim, two ~1100 elmos off, STRAFE to all four: the first
+      two side to side while the far two were still going, then all four; ALL PASS with the factory cases.
+      dock-phone-test ALL PASS (its six Pawns "there, side to side" one by one). Not on the Fold7 yet (refusing).
 - [ ] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
       the like).
 - [ ] **"Unit under attack" in the last pings**, so a tap goes to the danger.
