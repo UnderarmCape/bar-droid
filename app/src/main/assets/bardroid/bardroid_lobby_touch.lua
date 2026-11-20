@@ -3317,6 +3317,20 @@ local function voiceShow(say)
 				gl.Color(1, 1, 1, 1)
 			end,
 		})
+		-- (and a dark ground under the words: the panel stands over BAR's logo at the top, which showed through Chili's
+		-- window and behind "TO SPEAK, ALLOW THE MICROPHONE ...", dev phone upright 2026-11-20; the last child, drawn first)
+		Chili.Control:New({
+			parent = voicePanel,
+			x = 0, y = 0, right = 0, bottom = 0,
+			padding = { 0, 0, 0, 0 },
+			drawcontrolv2 = true,
+			DrawControl = function(obj)
+				gl.Texture(false)
+				gl.Color(0.05, 0.05, 0.06, 0.82)
+				gl.Rect(0, 0, obj.width, obj.height)
+				gl.Color(1, 1, 1, 1)
+			end,
+		})
 	end
 	local target = not say and voiceCurrent(voiceTargets())
 	voiceArrows = target and true or false

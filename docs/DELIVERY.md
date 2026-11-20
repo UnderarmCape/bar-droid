@@ -158,6 +158,16 @@ boxes, the GPU driver's fault closing a frozen game).
       nothing, so 4x comes first now; the rerun ALL PASS). Nothing to fix; no UI polish due. Seen: a replay of a game
       with one player shows BAR's Save on the top bar; BAR's own rule (gui_top_bar_buttons.lua: one player and its
       save widget), the same on a PC, left as BAR has it.
+- [x] **The lobby's keyboard and speak to chat tested by real taps; the speak-to-chat notice readable** (hardening of
+      2026-11-19's system, 2026-11-20 14:44-14:54, dev phone upright, offline): tools/lobbychat-phone-test.ps1 (new; it
+      runs only while the app's microphone permission is denied, as on the dev phone: never a live microphone): Chobby's
+      skirmish room (Skirmish, Advanced), its chat box tapped: "keyboard <id>" asked, the box focused, Android's keyboard
+      shown, the box in sight above it; "hello" typed: in the box; Back: the keyboard down, the room up; the box held:
+      "voice <id>" asked, speak to chat's panel up with "TO SPEAK, ALLOW THE MICROPHONE IN ANDROID'S SETTINGS"; the
+      app's log has both. ALL PASS two runs; lobby-phone-test ALL PASS. UI polish from its picture: that panel stands
+      over BAR's logo at the lobby's top, and the logo's white letters showed through Chili's window behind the words;
+      a dark ground (82 %) under them now (bardroid_lobby_touch.lua voiceShow). Noted: the room's chat box is 25 of the
+      lobby's units high, some 2.6 mm upright; Chobby's layout, left.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
