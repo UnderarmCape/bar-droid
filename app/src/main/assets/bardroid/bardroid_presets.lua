@@ -397,13 +397,13 @@ local function formUp(units, place, pl)
 	return #units
 end
 
--- the side to side fights, once the group is there (Kailil, 2026-11-12: "the repeat commands for all the other presets
+-- the side to side fights on each unit's place (Kailil, 2026-11-12: "the repeat commands for all the other presets
 -- besides strafe should not make it move back to the original move marker then fight marker. Instead, it should make
 -- the units on each row repeat move side to side the formation"): the way there is given without repeat; the repeat
--- and the two fights across each unit's place only when every unit is there, or SWAY_WAIT after the first, so the
--- rows go side to side together. A unit the player sends elsewhere (its queue without the fight to its place, or
--- stopped away from it) is let go.
-local SWAY_WAIT = 12 * 30 -- frames
+-- and the two fights across its place as each unit gets there (Kailil, 2026-11-20: "units that arrive in the location
+-- at different times do not wait to begin the straying repeat. They immediately begin the straying instead original
+-- waiting for they're full formation to arrive"; they waited for every unit, or 12 s after the first). A unit the
+-- player sends elsewhere (its queue without the fight to its place, or stopped away from it) is let go.
 local GIVE_UP = 120 * 30 -- frames: a group never there by then is let go
 local sways = {}
 -- the units going side to side: the player's own next order ends it, their repeat off (left on, a path or a patrol
@@ -419,10 +419,21 @@ for _, c in ipairs({ CMD.MOVE, CMD.FIGHT, CMD.PATROL, CMD.ATTACK, CMD.AREA_ATTAC
 	end
 end
 local lastPlan -- (the last preset sent: its places, for tools/dock-phone-test)
+-- one unit side to side across its place s (x, z), the way across px, pz, on repeat
+local function swayOne(u, s, px, pz, f)
+	local a, b = ground(s[1] + px * SIDE, s[2] + pz * SIDE), ground(s[1] - px * SIDE, s[2] - pz * SIDE)
+	Spring.GiveOrderArrayToUnitArray({ u }, {
+		{ CMD.REPEAT, { 1 }, {} },
+		{ CMD.FIGHT, a, {} },
+		{ CMD.FIGHT, b, { "shift" } },
+	})
+	swaying[u] = { at = f, a = a, b = b }
+end
 local function swayCheck(f)
 	for i = #sways, 1, -1 do
 		local g = sways[i]
-		local keep, there = {}, 0
+		g.swung = g.swung or 0
+		local keep = {}
 		if f - g.since >= 15 then
 			for _, u in ipairs(g.units) do
 				local s = g.slots[u]
@@ -430,9 +441,10 @@ local function swayCheck(f)
 				if x and not Spring.GetUnitIsDead(u) then
 					local q = Spring.GetUnitCommands(u, 40) or {}
 					if #q == 0 then -- (q: a queued chain of legs is long, its last fight far down the queue)
-						if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160 then
-							there = there + 1
-							keep[#keep + 1] = u
+						if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < 160 * 160 then -- (there: side to side at once, on its own)
+							swayOne(u, s, g.px, g.pz, f)
+							g.swung = g.swung + 1
+							Spring.Echo(string.format("[bardroid-presets] %s: unit %d there, side to side", g.name, u)) -- (tools)
 						elseif f - g.since < 90 then -- (its order not come yet, by ping: kept for 3 s; dropped at the first
 							-- look, half a second on, a group could end with nobody swaying, review 2026-11-15)
 							keep[#keep + 1] = u
@@ -448,26 +460,10 @@ local function swayCheck(f)
 				end
 			end
 			g.units = keep
-			if there > 0 and not g.first then
-				g.first = f
-			end
 		end
 		if f - g.since >= 15 and (#keep == 0 or f - g.since > (g.giveUp or GIVE_UP)) then
 			g.done = true
-			table.remove(sways, i)
-		elseif f - g.since >= 15 and (there == #keep or (g.first and f - g.first > SWAY_WAIT)) then
-			g.done = true
-			for _, u in ipairs(keep) do
-				local s = g.slots[u]
-				local a, b = ground(s[1] + g.px * SIDE, s[2] + g.pz * SIDE), ground(s[1] - g.px * SIDE, s[2] - g.pz * SIDE)
-				Spring.GiveOrderArrayToUnitArray({ u }, {
-					{ CMD.REPEAT, { 1 }, {} },
-					{ CMD.FIGHT, a, {} },
-					{ CMD.FIGHT, b, { "shift" } },
-				})
-				swaying[u] = { at = f, a = a, b = b }
-			end
-			Spring.Echo(string.format("[bardroid-presets] %s: %d units there, side to side on repeat", g.name, #keep)) -- (tools)
+			Spring.Echo(string.format("[bardroid-presets] %s: %d units there, side to side on repeat", g.name, g.swung)) -- (tools)
 			table.remove(sways, i)
 		end
 	end
@@ -631,14 +627,7 @@ local function factoryCheck(f)
 			elseif f - since >= 15 and #(Spring.GetUnitCommands(u, 1) or {}) == 0 then
 				F.going[u] = nil
 				if (x - s[1]) ^ 2 + (z - s[2]) ^ 2 < FORM_THERE * FORM_THERE then
-					local a = ground(s[1] + F.px * SIDE, s[2] + F.pz * SIDE)
-					local b = ground(s[1] - F.px * SIDE, s[2] - F.pz * SIDE)
-					Spring.GiveOrderArrayToUnitArray({ u }, {
-						{ CMD.REPEAT, { 1 }, {} },
-						{ CMD.FIGHT, a, {} },
-						{ CMD.FIGHT, b, { "shift" } },
-					})
-					swaying[u] = { at = f, a = a, b = b }
+					swayOne(u, s, F.px, F.pz, f)
 					Spring.Echo(string.format("[bardroid-presets] factory %d: unit %d there, side to side", fac, u)) -- (tools)
 				else -- (stopped short of its place: blocked, or stopped by the player; out of the formation)
 					memberOf[u] = nil
@@ -855,6 +844,9 @@ function widget:Initialize()
 		end,
 		factoryForm = function(fac) -- (tools: its members, places and middle)
 			return factoryForms[fac]
+		end,
+		toolsSend = function(id, units, aim) -- (tools: a preset sent as a tap at aim { x, z } would send it)
+			return send(id, units, aim)
 		end,
 		isOpen = function()
 			return opened

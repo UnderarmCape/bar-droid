@@ -4,6 +4,8 @@
 -- Lab given beside the commander and picked, STRAFE picked for it; "aim x y vsx" in LuaUI/Config/bardroid_factorytest.txt
 -- (X screen pixels, top left origin) for the script's real tap on the map there; then five Pawns built, then three more:
 -- each must join the formation, take a place of its own in it, and on its place go side to side on repeat at once.
+-- Then a sent preset's units arriving apart (two Pawns at the aim, two far off, STRAFE sent to all four): each goes
+-- side to side as it gets there, the first two while the far two are still on their way.
 -- "[factorytest] PASS|FAIL <case>", "[factorytest] done: ALL PASS" or "N FAILED".
 function widget:GetInfo()
 	return { name = "BAR Droid factory preset test", desc = "A factory's preset, its units joining", author = "BAR Droid",
@@ -15,6 +17,7 @@ local fails, stage, stageAt = 0, "wait", 0
 local com, lab, aimX, aimZ
 local out = {} -- the Pawns out of the lab, in order
 local firstPlaces -- the first five's places, [unit] = { x, z }
+local given, strafe = {}, nil -- the strafe case's Pawns (given, not from the lab); { near, far, all }
 local labDef, pawnDef = UnitDefNames.armlab and UnitDefNames.armlab.id, UnitDefNames.armpw and UnitDefNames.armpw.id
 
 local function check(case, ok, detail)
@@ -37,6 +40,9 @@ end
 function widget:UnitCreated(unitID, unitDefID, teamID)
 	if teamID == Spring.GetMyTeamID() and unitDefID == labDef and not lab then
 		lab = unitID
+	end
+	if stage == "strafegive" and teamID == Spring.GetMyTeamID() and unitDefID == pawnDef then
+		given[#given + 1] = unitID
 	end
 end
 function widget:UnitFromFactory(unitID, unitDefID, teamID, factID)
@@ -186,7 +192,59 @@ function widget:GameFrame(f)
 	elseif stage == "rally" and f - stageAt > 30 then
 		local B = WG.BarDroidPresets
 		check("the lab given its own move order: its preset ends", not (B and B.factoryForm(lab)))
-		go("end", f)
+		-- (Kailil, 2026-11-20: a sent preset's units begin the strafing as each arrives, not once all are there: two Pawns
+		-- given at the aim, two ~1100 elmos off, all four sent STRAFE there)
+		local lx, _, lz = Spring.GetUnitPosition(lab)
+		local fx, fz = aimX + (lx - aimX) * 2, aimZ + (lz - aimZ) * 2
+		fx = math.max(100, math.min(Game.mapSizeX - 100, fx))
+		fz = math.max(100, math.min(Game.mapSizeZ - 100, fz))
+		local team = Spring.GetMyTeamID()
+		Spring.SendCommands(string.format("give 2 armpw %d @%d,%d,%d", team, aimX + 60, Spring.GetGroundHeight(aimX, aimZ), aimZ))
+		Spring.SendCommands(string.format("give 2 armpw %d @%d,%d,%d", team, fx, Spring.GetGroundHeight(fx, fz), fz))
+		go("strafegive", f)
+	elseif stage == "strafegive" and f - stageAt > 45 then
+		local near, far = {}, {}
+		for _, u in ipairs(given) do
+			local x, _, z = Spring.GetUnitPosition(u)
+			if x then
+				local d = math.sqrt((x - aimX) ^ 2 + (z - aimZ) ^ 2)
+				if d < 300 then
+					near[#near + 1] = u
+				elseif d > 600 then
+					far[#far + 1] = u
+				end
+			end
+		end
+		strafe = { near = near, far = far, all = given }
+		check("two Pawns at the aim, two far off", #near == 2 and #far == 2, #near .. " near, " .. #far .. " far")
+		local B = WG.BarDroidPresets
+		if B and B.toolsSend then
+			B.toolsSend(1, given, { x = aimX, z = aimZ })
+		end
+		go("strafeearly", f)
+	elseif stage == "strafeearly" and f - stageAt > 30 * 4.5 then
+		local nearOn, farGoing = 0, 0
+		for _, u in ipairs(strafe.near) do
+			nearOn = nearOn + (sway(u) and 1 or 0)
+		end
+		for _, u in ipairs(strafe.far) do
+			local x, _, z = Spring.GetUnitPosition(u)
+			if x and not sway(u) and math.sqrt((x - aimX) ^ 2 + (z - aimZ) ^ 2) > 300 then
+				farGoing = farGoing + 1
+			end
+		end
+		check("STRAFE sent, the first two there: side to side at once, the far two still on their way", nearOn == 2 and farGoing == 2,
+			nearOn .. " near swaying, " .. farGoing .. " far still going")
+		go("strafeall", f)
+	elseif stage == "strafeall" then
+		local on = 0
+		for _, u in ipairs(strafe.all) do
+			on = on + (sway(u) and 1 or 0)
+		end
+		if on == #strafe.all or f - stageAt > 30 * 40 then
+			check("the far two there too: all four side to side", on == #strafe.all and on == 4, on .. " of " .. #strafe.all)
+			go("end", f)
+		end
 	elseif stage == "end" then
 		Spring.Echo(fails == 0 and "[factorytest] done: ALL PASS" or ("[factorytest] done: " .. fails .. " FAILED"))
 		go("over", f)
