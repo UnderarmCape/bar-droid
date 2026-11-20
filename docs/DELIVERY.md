@@ -756,6 +756,22 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The GPU driver's fault met on the dev phone and closed as planned; the game type's line above the turn rail;
+      the launcher back without its keyboard** (hardening, 2026-11-19 ~22:36-23:00, dev phone, BAR test-32018; the
+      Fold7 not played since 22:19). UI polish: in a replay upright the game type's "Victory condition" line sat on
+      the camera's turn rail above the spectator's lower dock; the phone patch of gui_game_type_info.lua now lifts it
+      above the rail too (WG.BarDroidCamCtl.rects), the line then mid-view as in a skirmish (remake-check's phone
+      patches PASS). Testing that, the replay of the evening's Onyx Cauldron skirmish met the rare GPU driver fault 7 s
+      into its playback (35 "flush_submit_list ... submit failed -1 (Resource deadlock avoided)"): "the GPU driver
+      refused a submit: closing the game if its widget stays silent", 7 s later "closing it", the engine killed, the
+      launcher's note given (DriverWatch.stalled working as built, on the dev phone). The same replay again: no fault,
+      so not the map's (its shader validation line above). After it, the launcher's note runs to four lines and moves
+      its buttons down. Found on the way: a map name field left focused (the map's list and Android's keyboard up)
+      came back focused, its list and the keyboard over the settings, each time the launcher was shown again (after a
+      game). LauncherActivity.onPause now closes the list and the keyboard and parks the focus on the activity's root
+      layout (the settings' scroll view handed it to its first field, the map's, whose focus opens the list). Dev
+      phone: the field tapped (keyboard up), Home, the launcher again: no keyboard, no list; a tap on the field brings
+      both back; the settings unchanged (autoUpdate false, Starwatcher).
 - [x] **A lobby skirmish's pre-game upright with the camera controls: nothing to fix** (hardening, 2026-11-19
       ~22:22-22:33, dev phone, BAR test-32018, the quick Skirmish 1v1 on Onyx Cauldron 2.2.2, draft start positions;
       the Fold7 not played since 22:19, its launcher.log only the app process starting at 22:16). Hunted after the quit

@@ -2,7 +2,9 @@ BAR Droid phone version of BAR's Game Type Info (luaui/widgets/gui_game_type_inf
 line at least 7.5 % of the screen's height above its anchor (docs/upstream/bar-pregame-upright.patch, written for BAR:
 upright its fixed offset left it inside the start position suggestions' tutorial, the two texts over each other).
 And lifted above the app's touch dock where the dock would cover it (sideways it lay behind the dock's left block,
-"Victory c" showing beside it; dev phone 2026-11-19). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+"Victory c" showing beside it; dev phone 2026-11-19), and above the camera's turn rail along the dock's top
+(bardroid_camctl.lua, WG.BarDroidCamCtl.rects: a replay upright drew the rail's line through the words, the spectator's
+dock being lower; dev phone 2026-11-19). Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
 runs.
 
 @@@ find
@@ -36,8 +38,14 @@ runs.
 		end
 		if low then
 			local foot = droidY + 1.5 * (low - size * 0.35)
-			if foot < droidDock[4] and droidDock[1] < vsx * 0.7 and droidDock[3] > vsx * 0.3 then
-				droidY = math.min(droidY + droidDock[4] - foot + math.floor(vsy * 0.015), vsy * 0.85)
+			local floorY = droidDock[4] -- (or the camera's turn rail on it, GL pixels { x0, y0, x1, y1 })
+			local droidCam = WG.BarDroidCamCtl
+			local ok, _, _, turn = pcall(function() return droidCam.rects() end)
+			if ok and type(turn) == "table" and tonumber(turn[4]) and turn[2] <= droidDock[4] + vsy * 0.05 then
+				floorY = math.max(floorY, turn[4])
+			end
+			if foot < floorY and droidDock[1] < vsx * 0.7 and droidDock[3] > vsx * 0.3 then
+				droidY = math.min(droidY + floorY - foot + math.floor(vsy * 0.015), vsy * 0.85)
 			end
 		end
 	end

@@ -271,6 +271,22 @@ public class LauncherActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         saveSettings(false);
+        // (and a text field left focused, the map's above all, let go: back in the launcher after a game its list of maps
+        // and Android's keyboard came up over the settings at once; dev phone 2026-11-19. The activity's root layout takes
+        // the focus, before its children, so none of the fields gets it on the way back: the settings' scroll view handed
+        // it on to its first field, the map's, whose focus opens the list)
+        View focused = getCurrentFocus();
+        android.view.ViewGroup content = findViewById(android.R.id.content);
+        View root = content != null && content.getChildCount() > 0 ? content.getChildAt(0) : null;
+        if (focused instanceof EditText && root instanceof android.view.ViewGroup) {
+            if (focused instanceof android.widget.AutoCompleteTextView)
+                ((android.widget.AutoCompleteTextView) focused).dismissDropDown();
+            android.view.inputmethod.InputMethodManager imm = getSystemService(android.view.inputmethod.InputMethodManager.class);
+            if (imm != null) imm.hideSoftInputFromWindow(focused.getWindowToken(), 0);
+            ((android.view.ViewGroup) root).setDescendantFocusability(android.view.ViewGroup.FOCUS_BEFORE_DESCENDANTS);
+            root.setFocusableInTouchMode(true);
+            root.requestFocus();
+        }
         super.onPause();
     }
 
