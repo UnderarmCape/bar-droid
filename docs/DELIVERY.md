@@ -48,9 +48,33 @@ boxes, the GPU driver's fault closing a frozen game).
       then PLACE): on the old build all four FAIL ("picked nil, button false", nothing queued), on e3d35199 ALL PASS
       with the rest: the line 2 Solar Collectors, the border 4. The APK went on the Fold7 at 04:44 (no game running;
       --no-streaming, 123 s), github-sync -Release.
-- [ ] **Back in a game is contextual**: from anywhere (the build place menu, a factory's queue, the presets, ...) Android's
+- [x] **Back in a game is contextual**: from anywhere (the build place menu, a factory's queue, the presets, ...) Android's
       Back clears the unit selection so the bottom dock's own row shows (Commander, base, pings ...); pressed again
-      there, BAR's leave-battle path with its "are you sure" question.
+      there, BAR's leave-battle path with its "are you sure" question. (2026-11-20 ~04:46-05:40, dev phone, BAR
+      test-32018, 8acbde4f.) Back was Escape alone: BAR dropped the selection, the dock's menus stayed, a second press
+      did nothing. Now with the touch dock RtsTouch.back sends "act dock_back" with the Escape: bardroid_portrait.lua
+      SP.back puts away the D-gun mode, the presets and an armed preset, the share picker, a resource panel, a factory's
+      queue, MULTI's types, an armed PING, the building or order picked and the selection, and opens the menu on the
+      home grid. At the home grid with nothing to put away the dock file says "back quit": BAR's quit question ("Are you
+      sure you want to quit?", Stay / Resign / Quit) through the engine's quit request, one SIGTERM as the window's close
+      button, Top Bar Buttons' AllowQuit asking; only for a player in a started game with the interface shown (a
+      spectator's or a finished game's request quits at once: there Back stays Escape). In a game from the lobby "back
+      lobby": the lobby over the game (BAR's Lobby button's showLobby; Leave Battle there), no Escape after it. A third
+      Back closes the question (Escape, BAR's hideWindows). Not BAR's quit button clicked: upright that click did
+      nothing (below). dock-phone-test's new cases ALL PASS twice: Back with a building picked (put away, nothing picked,
+      the home grid), Back again (the question up, BAR pausing a game alone under it), again (closed, the game on), and
+      Back with the presets open on six Pawns (closed, nothing picked); the test widget reads its stages between frames
+      too now (a paused game has none), and the BORDER case lays its ring on open ground the widget finds (begun on the
+      line's half-built buildings BAR placed none). The lobby game's "back lobby" not run on the dev phone (no online
+      game there; the same showLobby as the app's top bar's Lobby, which works). The Fold7 refused port 44111 at 05:40:
+      not installed there yet.
+- [ ] **Found with Back: BAR's Quit button upright in a game not from the lobby** (2026-11-20): a click on it (the dock
+      test's first try at Back clicked it as a finger would) opened no quit question: BAR's Top Bar takes presses over
+      its resource bars, hidden upright under the buttons, before Top Bar Buttons, and bardroid_topbar.lua hands the
+      Quit button on to BAR only in a game from the lobby (its showLobby). A finger's Quit there likely does nothing:
+      check by a tap, then make it ask (as Back does, the engine's quit request, or BAR's own way).
+- [ ] **dock-phone-test's Area Mex case failed once** (2026-11-20 05:50, 1 run in 2 after the Back cases went in: "0 mex
+      orders"; it passed in every run before and after): find out why.
 - [ ] **Factory presets**: a factory given a preset's formation: every unit it builds joins that formation, the
       formation growing however many are built.
 - [ ] **Strafe starts at once**: units that arrive at different times begin the strafing repeat as each arrives, not
