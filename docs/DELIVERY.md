@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Return to Battle from the lobby over a game: nothing to fix** (hardening, 2026-11-19 ~23:14-23:20, dev phone
+      upright, BAR test-32018; the Fold7 not played since 23:11). A save loaded from the lobby's Load Game (a 31992 save
+      on 32018, fine), the top bar's Lobby: the overlay file "1", Load Game as fixed; the grid's first page, Return to
+      Battle: the overlay "0", the camera knob and rails back in bardroid_camctl.txt, a drag on the map panned ("pan"
+      lines), BAR's "Battle, Resumed" after the lobby's pause; in-game Settings' Graphics tab upright fine. Left: the
+      welcome page's news links ("Read the changelog", "Sign Up for Overwatch", Chobby's link_button, 40 high) are
+      about 3 mm tall upright, but Chobby's own layout stacks each news item by the button's height (DoResize), and
+      they are rarely used. No UI polish this run.
 - [x] **The driver fault's note in two lines; GL check fine** (hardening, 2026-11-19 ~23:05-23:12, dev phone; the
       Fold7 not played since 23:02). UI polish: after the GPU driver fault at 22:43 the launcher's note ran to four
       lines and pushed its buttons down ("The phone's GPU driver stopped the game's graphics (a rare driver fault), so
