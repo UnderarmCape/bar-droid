@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A lobby skirmish's pre-game upright with the camera controls: nothing to fix** (hardening, 2026-11-19
+      ~22:22-22:33, dev phone, BAR test-32018, the quick Skirmish 1v1 on Onyx Cauldron 2.2.2, draft start positions;
+      the Fold7 not played since 22:19, its launcher.log only the app process starting at 22:16). Hunted after the quit
+      screen and Statistics: BAR's pre-game Ready button upright comes up beside the placed start spot, well clear of
+      the knob and rails (and its "Unlock Position" after it). The commander at the view's foot just after the start is
+      the engine's own move; the app's start view (bardroid_portrait.lua startFit, frame 40) centres it above the dock
+      1.3 s later (screenshots each 1.5 s from Ready: the 3-2-1 countdown delays frame 40). Noted, not acted on: this
+      map alone logs "[GLSL-PO::Validate] SMFShaderGLSL-Forward-Adv is not valid ... active samplers with a different
+      type refer to the same texture image unit" at frame 7 (Mesa validating before the samplers are set; not on
+      Starwatcher nor in his Supreme Isthmus game, and the ground draws); and BAR's "Game starting in 3" countdown is
+      drawn over the game type's "Victory condition" line for its three seconds. No UI polish this run.
 - [x] **Statistics and Mission Info upright: the camera knob and rails stand aside** (hardening, 2026-11-19
       ~22:05-22:20, dev phone upright, BAR test-32018; the Fold7 not played since 22:02). Following the quit screen:
       the big windows and the game over already put the camera controls aside (the dock's aside()), but upright the
