@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **PerfLog, LoadPictures and Share logs go on past a RuntimeException** (hardening, 2026-11-20 ~02:08-02:14, dev
+      phone, BAR test-32018; the Fold7 not played since 02:05, its Android reports still none for the app). The three
+      left by the run before: PerfLog's minute thread, LoadPictures' executor task and Share logs' zip thread caught
+      only their I/O errors, and a RuntimeException uncaught on them ended the app's process. Now each logs it and goes
+      on ("the minute's line failed", "loading screen pictures: ...", "could not zip the logs" with a toast); Share
+      logs' sheet on the UI thread too ("could not share the logs": no app to share to, the file provider's refusal).
+      With that every background thread the app starts catches what it meets. Dev phone: Share logs zipped (1851 KB in
+      653 ms) and showed its sheet, closed with Back; a Play vs AI skirmish's minute line "[perf] thermal 0, headroom
+      0.66; GPU 295 MHz of 615 ..." at 02:12, its loading pictures set with no error. No UI polish this run (the
+      launcher and the share sheet looked over). The APK from main 8e1136c4 (phone engine phone-2026.09.03-83a8536d37)
+      went on the Fold7 at 02:14 (no game running; --no-streaming, 85 s), github-sync -Release.
 - [x] **The pad's pump, the lobby bridge and the sound pump go on past a RuntimeException** (hardening, 2026-11-20
       ~01:47-02:05, dev phone, BAR test-32018; the Fold7 not played since 01:39). The pad's pump below, then the rest of
       the app's long-lived threads: LobbyBridge's per-connection thread caught only JSONException per lobby message,
