@@ -22,10 +22,13 @@ final class PerfLog {
 
     void start() {
         thread = new Thread(() -> {
+            int failed = 0;
             try {
                 while (true) {
                     Thread.sleep(60_000);
-                    log();
+                    // (uncaught on this thread a RuntimeException ended the app's process mid-game; review 2026-11-20)
+                    try { log(); }
+                    catch (RuntimeException e) { if (failed++ < 3) Log.e("perf", "the minute's line failed", e); }
                 }
             } catch (InterruptedException ignored) {}
         }, "perf-log");

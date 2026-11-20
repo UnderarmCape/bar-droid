@@ -72,7 +72,8 @@ final class LoadPictures {
                 Files.deleteIfExists(ours.toPath());
                 Log.i("app", "loading screen: BAR's own pictures back (the screen turned sideways)");
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
+            // (RuntimeException too: uncaught on the executor's thread it ended the app's process)
             Log.e("app", "loading screen pictures: " + e);
         }
     }

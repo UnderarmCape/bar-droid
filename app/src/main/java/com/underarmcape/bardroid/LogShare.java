@@ -42,12 +42,22 @@ final class LogShare {
         new Thread(() -> {
             long t0 = System.currentTimeMillis();
             File zip = null;
-            try { zip = zip(a); } finally { if (zip == null) zipping.set(false); }
+            try { zip = zip(a); }
+            catch (RuntimeException e) {   // (uncaught on this thread it ended the app's process)
+                Log.e("app", "could not zip the logs", e);
+                a.runOnUiThread(() -> Toast.makeText(a, "Could not zip the logs: " + e.getMessage(), Toast.LENGTH_LONG).show());
+            }
+            finally { if (zip == null) zipping.set(false); }
             if (zip == null) return;
             Log.i("app", "logs zipped: " + zip.length() / 1024 + " KB in " + (System.currentTimeMillis() - t0) + " ms");
             File made = zip;
             a.runOnUiThread(() -> {
-                try { sheet(a, made); } finally { zipping.set(false); }
+                try { sheet(a, made); }
+                catch (RuntimeException e) {   // (no app to share to, the file provider's refusal: said, not a crash)
+                    Log.e("app", "could not share the logs", e);
+                    Toast.makeText(a, "Could not share the logs: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                }
+                finally { zipping.set(false); }
             });
         }, "log-share").start();
     }
