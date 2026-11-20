@@ -99,7 +99,7 @@ boxes, the GPU driver's fault closing a frozen game).
       two side to side while the far two were still going, then all four; ALL PASS with the factory cases.
       dock-phone-test ALL PASS (its six Pawns "there, side to side" one by one). Not on the Fold7 yet (refusing).
 - [x] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
-      the like). (2026-11-20 ~07:20-07:50, dev phone, BAR test-32018.) A long press on a type's picture in the LOCAL /
+      the like). (2026-11-20 ~06:25-06:45, dev phone, BAR test-32018.) A long press on a type's picture in the LOCAL /
       ALL UNITS list leaves it out (bardroid_portrait.lua SP.leftOut): darkened and struck through in red, not in ALL's
       count, not picked by ALL UNITS, LOCAL UNITS or the list's ALL until held again, for the game. A plain tap still
       picks that type alone; the list's last type stays in (else ALL picked nothing and the list closed); LOCAL UNITS
@@ -108,7 +108,7 @@ boxes, the GPU driver's fault closing a frozen game).
       Pawns, two Blitzes, two Maces; real taps and 0.9 s presses): ALL PASS (10), one press landing on the camera pad
       (the types list takes its first touch). Its first run's extra tap to open the menu was itself a press, the test's
       fault. dock-phone-test ALL PASS. Not on the Fold7 yet (refusing port 44111).
-- [x] **"Unit under attack" in the last pings**, so a tap goes to the danger. (2026-11-20 ~07:55-08:45, dev phone, BAR
+- [x] **"Unit under attack" in the last pings**, so a tap goes to the danger. (2026-11-20 ~06:45-07:15, dev phone, BAR
       test-32018.) bardroid_pad.lua's ATTACK: a hit on one of my units is an entry in the pings list the dock's LAST
       PINGS (and the pad's RB + D-pad up) goes through, the camera going to where that unit is then, "UNDER ATTACK" in
       red. A fight stays one entry, moved along to each new hit within 900 elmos and 15 s of its last; a new entry at
