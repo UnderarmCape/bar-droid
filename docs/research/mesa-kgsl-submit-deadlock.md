@@ -38,6 +38,9 @@ must be killed. The phone itself recovers (the next start works).
 - Since: 2026-11-09 15:54 and 16:37 (skirmishes, the phone upright), 2026-11-12 21:25 and 11-13 06:50 (skirmishes);
   2026-11-15 09:58 a recorded 8v8 fast-forwarded at frame 17906 on a hot phone (GPU held at 295-348 MHz by thermal
   limits, 99 % busy), 72 of the lines in one second, the watchdog 31 s later.
+- 2026-11-20: 5 in 41 game starts (12 %), all 4-112 s into a game, 3 of 5 with the GPU at 615 MHz and ~65 % busy (no
+  thermal cap). Tried to set it off on purpose: 591 unit types drawn for the first time in sight (1 in 7 games, that
+  one before the first unit), and 360 camera jumps to never-drawn map areas (0 in 4 games): neither reproduces it.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,

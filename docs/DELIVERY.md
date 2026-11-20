@@ -4146,6 +4146,16 @@ Added 2026-11-10 ~05:00 (with screenshots):
       driver's refusal, the picture frozen half-drawn (the dock cut off, a flat tan band under it), the watchdog 31 s
       later, DriverWatch closed the game as built. Since then the app closes such a game 8 s after the game's widget
       goes silent (DriverWatch.stalled), not at the watchdog: see the 2026-11-19 ~13:39 entry above.
+      2026-11-20, more often: 5 in the 41 engine starts of the day's queue tests 07:11-11:10 (12 %, against ~1 in 25
+      before), all early: 4-112 s into a game (frames ~330-1750), a cool or warm phone (3 of 5 at thermal level 2, the
+      GPU allowed 615 MHz and ~65 % busy; one at level 6, 99 % busy), the dev phone up 11 days (booted 11-09, which had
+      a fault 35 min later). Three came just after new unit types appeared, so two triggers were tested with
+      tools/firstdraw-phone-test.ps1 (new): units drawn for the first time (every unit type with a model, 591, 12 every
+      3 s, to the neutral Gaia team in sight): 1 fault in 7 games, and that one before the first unit, a second after
+      the test jumped the camera across the map; then the camera to unseen ground every 2 s (-Mode jump, 90 jumps a
+      game): 0 in 4 games. Neither sets it off; nor did the heat. Still random, early in a game. The first-draw runs
+      ended early twice, the commander killed by a given geothermal plant's blast off its vent (the test now gives far
+      from every start). The report draft (docs/research/mesa-kgsl-submit-deadlock.md) has the day's numbers.
 - [ ] The dev phone reset itself (2026-11-03, the 33rd game start of the evening, a plain skirmish): launcher.log ends
       at 21:52:24, four seconds after "Player Phone finished loading and is now ingame" (its last `[perf]`: thermal 0,
       GPU 295 of 615 MHz, 52 C), with no error; adb shell commands hung, the phone left USB, and came back at ~21:57
