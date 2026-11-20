@@ -73,11 +73,6 @@ final class StatusText {
     }
 
     /**
-     * Whether the launcher's note under its status (GameService.exitNote) is a result rather than a warning: a GL
-     * check's or the benchmark's answer, unless it failed (those say "(see the log)" / "no results"). The launcher shows
-     * warnings in amber; "GL check: FD740, OpenGL 4.3" in amber read as a problem (2026-11-05).
-     */
-    /**
      * The GPU as players know it from the OpenGL renderer string: Freedreno's "FD740" is the Adreno 740 ("Adreno 740
      * (Freedreno)"); anything else as it is (Zink's string already names the Adreno).
      */
@@ -141,6 +136,11 @@ final class StatusText {
         return "Benchmark: no results in the game's log (it ended before them)";
     }
 
+    /**
+     * Whether the launcher's note under its status (GameService.exitNote) is a result rather than a warning: a GL
+     * check's or the benchmark's answer, unless it failed (those say "(see the log)" / "no results"). The launcher shows
+     * warnings in amber; "GL check: FD740, OpenGL 4.3" in amber read as a problem (2026-11-05).
+     */
     static boolean isResultNote(String note) {
         if (note == null) return false;
         return (note.startsWith("GL check: ") && !note.contains("(see the log)"))
