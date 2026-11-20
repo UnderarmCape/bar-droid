@@ -98,8 +98,16 @@ boxes, the GPU driver's fault closing a frozen game).
       before). factory-preset-test's new case: two Pawns at the aim, two ~1100 elmos off, STRAFE to all four: the first
       two side to side while the far two were still going, then all four; ALL PASS with the factory cases.
       dock-phone-test ALL PASS (its six Pawns "there, side to side" one by one). Not on the Fold7 yet (refusing).
-- [ ] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
-      the like).
+- [x] **ALL UNITS without one unit type, for a while**: a quick way to leave a type out (a triple tap of its icon, or
+      the like). (2026-11-20 ~07:20-07:50, dev phone, BAR test-32018.) A long press on a type's picture in the LOCAL /
+      ALL UNITS list leaves it out (bardroid_portrait.lua SP.leftOut): darkened and struck through in red, not in ALL's
+      count, not picked by ALL UNITS, LOCAL UNITS or the list's ALL until held again, for the game. A plain tap still
+      picks that type alone; the list's last type stays in (else ALL picked nothing and the list closed); LOCAL UNITS
+      with only left-out types in sight brings them all back. Not a triple tap: the list's first tap picks that type
+      alone and closes the list, so the second and third had nothing to land on. New tools/types-phone-test.ps1 (three
+      Pawns, two Blitzes, two Maces; real taps and 0.9 s presses): ALL PASS (10), one press landing on the camera pad
+      (the types list takes its first touch). Its first run's extra tap to open the menu was itself a press, the test's
+      fault. dock-phone-test ALL PASS. Not on the Fold7 yet (refusing port 44111).
 - [ ] **"Unit under attack" in the last pings**, so a tap goes to the danger.
 - [ ] **Walls around a placed sentry**: a toggle beside the place button's group rotate, on by default: placing a sentry
       (any builder) also builds a block of walls around it; T1 walls for T1 sentries, T2 for T2 (built before the

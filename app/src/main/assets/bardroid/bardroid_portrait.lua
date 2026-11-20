@@ -233,6 +233,25 @@ end
 -- columns (the arrows one each); TEAMS lists the players by alliance in the grid's place (BAR's own list, at the
 -- bottom right, is under the dock); HIDE folds the dock to a small SHOW button at the bottom of the screen.
 local SP = { hidden = false, teams = false, COLS = 6 }
+-- Types left out of LOCAL / ALL UNITS for a while (Kailil, 2026-11-20: "a way to exclude a unit type temporarily from
+-- the all units commands when I press all units. it should be a simple triple tap of the unit icon or something"): a long
+-- press on its picture in the list takes it out (dimmed, struck through, the ALL count without it), another brings it
+-- back; a plain tap still picks that type alone. For the game (a new game's widgets start with none). (Not a triple tap:
+-- the list's first tap picks that type alone and the list closes, so a second and third had nothing to land on.)
+SP.leftOut = {} -- defID -> true
+function SP.unitsIn(groups) -- the groups' units but the left-out types', and how many were left out
+	local all, out = {}, 0
+	for _, g in ipairs(groups) do
+		if g.defID and SP.leftOut[g.defID] then
+			out = out + #(g.units or {})
+		else
+			for _, u in ipairs(g.units or {}) do
+				all[#all + 1] = u
+			end
+		end
+	end
+	return all, out
+end
 -- a scissor in screen pixels, also while drawing into the dock's texture (SP.inTex), whose pixels start at the dock's
 -- corner: sideways, one thumb, the dock no longer starts at the screen's left edge, and the halves' rows were cut away
 function SP.scissor(x, y, w, h)
@@ -1861,7 +1880,10 @@ function refreshNow()
 		newLeft = { { kind = "alltypes", label = "ALL", count = 0 } }
 		for _, g in ipairs(types) do
 			newLeft[#newLeft + 1] = g
-			newLeft[1].count = newLeft[1].count + #g.units
+			g.out = SP.leftOut[g.defID] or nil -- (a type left out: dimmed, not in ALL's count)
+			if not g.out then
+				newLeft[1].count = newLeft[1].count + #g.units
+			end
 		end
 		lk = "types:" .. typesFrom
 	elseif #sel == 0 then -- (the split dock: a builder's grid, dimmed, SP.quickBuilds)
@@ -2352,6 +2374,31 @@ local function circleTo(x, y, r)
 	circle = { x = a[1], y = a[2], z = a[3], r = wr }
 end
 
+-- a type in the LOCAL / ALL UNITS list held: out of ALL's picks, or back in (SP.leftOut); ALL lit, the pick follows
+function SP.toggleOut(item)
+	local d = item.defID
+	if not SP.leftOut[d] then -- (the list's last type stays in: else ALL picked nothing and the list closed)
+		local others = 0
+		for _, g in ipairs(leftItems) do
+			if g.defID and g.defID ~= d and not SP.leftOut[g.defID] then
+				others = others + 1
+			end
+		end
+		if others == 0 then
+			Spring.Echo("[bardroid-portrait] the list's last type stays in ALL UNITS") -- (tools)
+			return
+		end
+	end
+	SP.leftOut[d] = not SP.leftOut[d] or nil
+	local ud = UnitDefs[d]
+	Spring.Echo(("[bardroid-portrait] %s %s ALL UNITS"):format(ud and (ud.translatedHumanName or ud.humanName) or d,
+		SP.leftOut[d] and "left out of" or "back in")) -- (tools)
+	if allPicked and not multi then
+		keepTypes = true
+		selectUnits((SP.unitsIn(leftItems)))
+	end
+end
+
 local function pressItem(item, long)
 	if not item then
 		return
@@ -2390,12 +2437,14 @@ local function pressItem(item, long)
 		typesFrom = typesFrom ~= item.from and item.from or nil
 		multi, multiPicked, allPicked = false, {}, false
 		if typesFrom == "local" or typesFrom == "all" then -- (Kailil, 2026-11-10: "default to all and have them selected
-			-- upon first tapping all units or local units": the list stays, its ALL lit, a type still narrows it)
-			local all = {}
-			for _, g in ipairs(byType(typesUnits(), combat)) do
-				for _, u in ipairs(g.units) do
-					all[#all + 1] = u
-				end
+			-- upon first tapping all units or local units": the list stays, its ALL lit, a type still narrows it; the types
+			-- left out not picked, SP.leftOut)
+			local all, out = SP.unitsIn(byType(typesUnits(), combat))
+			if #all == 0 and out > 0 then -- (only left-out types here, LOCAL UNITS say: they all come back in, or the list
+				-- picked nothing, closed at once and never let one be brought back)
+				SP.leftOut = {}
+				all = SP.unitsIn(byType(typesUnits(), combat))
+				Spring.Echo("[bardroid-portrait] every type in the list was left out: all back in") -- (tools)
 			end
 			keepTypes, allPicked = true, #all > 0
 			selectUnits(all)
@@ -2404,16 +2453,11 @@ local function pressItem(item, long)
 		-- toggle. Toggling multi will allow me to select multiple unit types and give them orders instead of everyone
 		-- selected"): MULTI lets everyone go, each type tapped joins; ALL picks the whole list again; the list stays
 		multi, multiPicked = not multi, {}
-		local all = {}
-		if not multi then
-			for _, g in ipairs(leftItems) do
-				for _, u in ipairs(g.units or {}) do
-					all[#all + 1] = u
-				end
-			end
-		end
+		local all = not multi and SP.unitsIn(leftItems) or {} -- (the types left out not picked)
 		keepTypes, allPicked = true, #all > 0
 		selectUnits(all)
+	elseif k == "type" and long then -- (held: that type out of ALL's picks for a while, or back in)
+		SP.toggleOut(item)
 	elseif k == "type" then
 		if multi then
 			multiPicked[item.defID] = not multiPicked[item.defID] or nil
@@ -2886,7 +2930,21 @@ local function drawTile(item, r)
 			gl.Color(1, 1, 1, 1)
 		end
 	else -- a type: its count (on the small tiles, SP.smallTypes, half again as large: "10" and "4" were hard to read)
-		bold:Print("\255\255\255\255" .. #item.units, r[3] - p, r[2] + p, size * (h < L.tile * 0.8 and 2.1 or 1.4), "ro")
+		if item.out then -- (left out of ALL UNITS, SP.leftOut: darkened and struck through corner to corner, red)
+			gl.Color(0, 0, 0, 0.6)
+			gl.Rect(r[1], r[2], r[3], r[4])
+			local t = max(2, floor(w * 0.05))
+			gl.Color(0.9, 0.2, 0.15, 0.95)
+			gl.BeginEnd(GL.QUADS, function()
+				gl.Vertex(r[1], r[4] - t)
+				gl.Vertex(r[1] + t, r[4])
+				gl.Vertex(r[3], r[2] + t)
+				gl.Vertex(r[3] - t, r[2])
+			end)
+			gl.Color(1, 1, 1, 1)
+		end
+		bold:Print((item.out and "\255\150\150\150" or "\255\255\255\255") .. #item.units, r[3] - p, r[2] + p,
+			size * (h < L.tile * 0.8 and 2.1 or 1.4), "ro")
 		if multi and multiPicked[item.defID] then -- (gold, as the toggle's MULTI: FlowUI's selector alone did not show on
 			-- the unit pictures, dev phone 2026-11-13)
 			if WG.BarDroidStyle then
