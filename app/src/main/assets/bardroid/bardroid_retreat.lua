@@ -365,6 +365,9 @@ function widget:Initialize()
 			pending = {}
 			Spring.Echo("[bardroid-retreat] " .. (enabled and "on" or "off")) -- (tools)
 		end,
+		fell = function(u) -- (tools/retreat-phone-test.ps1: this unit fell back, or retreated, and is not yet healed)
+			return fell[u] == true
+		end,
 	}
 end
 

@@ -165,8 +165,26 @@ boxes, the GPU driver's fault closing a frozen game).
       turns to fire, full auto included); and where the host forbids widgets' orders each step is a click on a point that
       must be on the screen and off the dock (none, no step, when it is under the dock). A first try counted the wait
       for the script's finger as walking (93 %); two test games closed by the GPU driver fault (the app's close) today.
-- [ ] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a
-      formation) to put the app's systems to the test, run as often as the data needs.
+- [x] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a
+      formation) to put the app's systems to the test, run as often as the data needs. (2026-11-20 ~08:44-09:56, dev
+      phone, BAR test-32018.) New tools/retreat-phone-test.ps1: a round for each kind, two of it (a squad of four Pawns)
+      given facing 14 enemy Grunts (and 3 T2 Cans for the T2), AUTO RETREAT on, then the same fight at the same place
+      off; every unit watched (hurt under 50 %, fell back by the retreat's own word, got 300 elmos clear, turned back
+      into the fight, died). Four clean runs, alive at the round's end, retreat on against off:
+        T2 (Zeus) 8/8 against 3/8; amphibious (Pincer) 8/8 against 5/8; squad (Pawns) 5/16 against 2/16;
+        bot (Rocketeer) 8/8 against 8/8; vehicle (Stout) 8/8 against 8/8; hover (Skater) 0/8 against 0/8;
+        all 37/56 against 26/56 (runs: 12-5, 8-8, 9-7, 8-6 of 14).
+      Every hurt unit got its fall-back within a second (none later), none turned back into the fight, none died
+      before the order. The Rocketeers and Stouts win their fights either way; the Skaters die either way (a pack of
+      Grunts kills one from half health before it gets clear: its 3 s after falling back to be measured next, the
+      run's summary failed on the new figure). A tried rule, falling back above half when dead in 2 s at the last
+      second's damage rate, kept fewer alive (8/14 with it on, the Pawns chased down after leaving early): taken out.
+      The bardroid_retreat.lua change kept: WG.BarDroidRetreat.fell(u) for the test (a move order counted 14 where the
+      retreat gave 11). The first versions of the test: all kinds in one fight (the enemy shot the Pawns and the hovers,
+      the rest never came under half), on and off at different places (the off round's Pawns all alive by the map's
+      edge, the on round's none), the enemy's given units unseen by widgets out of sight (counted near the fight now).
+      GPU driver faults closed 2 of these 7 test games (5 today, 3 of them just after new unit types appeared: a give,
+      a building picked).
 - [ ] **The transfer button more pronounced.**
 
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
