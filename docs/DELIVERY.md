@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The launcher's map list read off the main thread** (hardening, 2026-11-20 ~00:02-00:08, dev phone; the Fold7
+      not played since 2026-11-19 23:56, its Android reports still none for the app). After the ANR, the launcher's
+      other main-thread work reviewed: the Play vs AI map list read the engine's archive cache (4.4 MB, 65 archives,
+      rewritten by a game, as the evening's 23:51) and parsed it, two regular expressions made per archive, on the main
+      thread at the launcher's start and each time it came back after such a game (~40 ms on the laptop, the same file;
+      53 ms on the dev phone). Now read on a thread of its own, the list filled when it is read
+      (LauncherActivity.loadMapsInBackground, "map list made again: 39 maps (53 ms, off the main thread)"). Dev phone:
+      the launcher started, the line in its log, a tap on the map field listed the maps as before; the settings
+      unchanged. The 1.5 s ticker's work (status, installed check, update summary) is small file checks.
 - [x] **Android's own reports on both phones: no ANR, no crash of the app on the Fold7** (hardening, 2026-11-19
       ~23:59-00:05; the Fold7 not played since 23:56). dumpsys dropbox on the Fold7: data_app_anr none,
       data_app_crash none for the app, data_app_native_crash one, of another app (not BAR Droid). The dev phone: no app

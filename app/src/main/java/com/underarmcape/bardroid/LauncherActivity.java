@@ -401,9 +401,24 @@ public class LauncherActivity extends AppCompatActivity {
         long stamp = archiveCacheStamp(bar);
         if (mapsAdapter == null || stamp == mapsStamp) return;
         mapsStamp = stamp;
-        java.util.List<String> now = installedMaps(bar);
-        mapsAdapter.setMaps(now);
-        Log.i("app", "map list made again: " + now.size() + " maps");   // (tools)
+        loadMapsInBackground(mapsAdapter, bar);
+    }
+
+    /**
+     * The map list read from the archive cache off the main thread: 4.4 MB read and parsed (~40 ms on the laptop, a
+     * phone's first run several times that) each time the launcher came back after a game that rewrote the cache, and
+     * at its start; the list follows when it is read (review 2026-11-20).
+     */
+    private void loadMapsInBackground(MapAdapter adapter, File bar) {
+        new Thread(() -> {
+            long t0 = android.os.SystemClock.elapsedRealtime();
+            java.util.List<String> now = installedMaps(bar);
+            long ms = android.os.SystemClock.elapsedRealtime() - t0;
+            handler.post(() -> {
+                adapter.setMaps(now);
+                Log.i("app", "map list made again: " + now.size() + " maps (" + ms + " ms, off the main thread)");   // (tools)
+            });
+        }, "map list").start();
     }
     @Override protected void onStop() { Log.removeListener(logListener); handler.removeCallbacks(ticker); super.onStop(); }
 
@@ -742,7 +757,8 @@ public class LauncherActivity extends AppCompatActivity {
         mapField.setText(Prefs.mapName);
         // (a tap drops down every map installed, typing narrows them; any other name still goes, and is downloaded)
         mapsStamp = archiveCacheStamp(new Paths(this).bar);
-        MapAdapter maps = new MapAdapter(this, installedMaps(new Paths(this).bar));
+        MapAdapter maps = new MapAdapter(this, new java.util.ArrayList<>());
+        loadMapsInBackground(maps, new Paths(this).bar);
         mapsAdapter = maps;   // (made again in onStart when the engine's archive cache changes: refreshMapList)
         mapField.setAdapter(maps);
         // (a few rows to scroll, a third of the screen at most: with the keyboard up the list stood over the field itself,
