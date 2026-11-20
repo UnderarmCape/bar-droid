@@ -116,6 +116,18 @@ boxes, the GPU driver's fault closing a frozen game).
       hides). The copy answers WG.options.droidSearch for it (make-options.py; remake-check PASS). Polish from its
       picture: the field's clear (BAR's small square inside its right end, some 2.4 mm) clears on a tap anywhere in the
       field's last 1.8 heights (6.7 mm), as BAR's button does; the test taps beside BAR's button.
+- [x] **The lobby over a game, Load Game and Replays there, tested by real taps** (hardening of 2026-11-19's system,
+      2026-11-20 13:45-14:09, dev phone upright, offline): tools/overgame-phone-test.ps1 (new), a LuaMenu and a LuaUI
+      test widget: the offline lobby's Load Game, the newest save (2026-11-19 20:28) loaded; in the game BAR's top bar
+      button (named "quit", its Lobby in a game of the lobby's) tapped: the lobby over the game, the overlay file "1";
+      the lobby's grid swiped to its next page as a finger does (over a game Return to Battle comes first), Replays: Add,
+      no Open Folder; Load Game: 6 rows, dates year first, Load and Delete apart in each; a drag over the lobby: the
+      game's camera still under it; the grid swiped back, Return to Battle: the lobby gone, the overlay "0", the camera
+      knob and rails back, a drag on the map pans the camera. ALL PASS (the runs before it the test's own: the list's
+      first Load is not the newest save, a 2026.07.04 one the phone cannot open; WG.uiScale read 2.0 over the game where
+      the lobby's scale is 1.35, so taps are placed by the screen's width over Chili's). Nothing to fix; no UI polish
+      due (its pictures: Replays, Load Game and the game after read right). The Fold7 timed out at 13:41 and 13:45
+      (10060), 67b915ef not on it yet.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
