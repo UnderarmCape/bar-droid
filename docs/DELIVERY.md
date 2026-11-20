@@ -762,7 +762,8 @@ Added 2026-11-10 ~05:00 (with screenshots):
       touch-phone-test and lobby-phone-test ALL PASS; the share list's screenshots fine. UI polish (its screenshots):
       Load Game's Game Version column upright broke "BAR-31992-e7a6cff" after its last hyphen, "BAR-31992-" over
       "e7a6cff"; now, where the version is wider than its column, it is broken there by the app, "BAR-31992" over
-      "e7a6cff" (upright.saveRows). Dev phone: the rows so; lobby-phone-test ALL PASS.
+      "e7a6cff" (upright.saveRows). Dev phone: the rows so; lobby-phone-test ALL PASS. On the Fold7 at 21:35 (BAR not
+      running): the APK from clean main 1eec91e3; github-sync -Release.
 - [x] **The dev phone on BAR test-32018; the copies remade for it; Statistics' last time label whole** (hardening,
       2026-11-19 ~20:52-21:10). The Fold7 (port 44111) not played since the 20:51 install. His 17:08 game's 2 min 48 s
       load was the other players: the phone loaded in ~30 s (its "[Game::Load]" at 5:04 of the log, the last player's
