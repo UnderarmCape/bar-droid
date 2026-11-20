@@ -3825,12 +3825,11 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	local dt = lastUpdate and math.min(0.1, Spring.DiffTimers(now, lastUpdate)) or 0
 	lastUpdate = now
 	poolCacheCheck(now)
-	if screen0 and not gameLoaded then -- (no walks of the lobby's controls while a game runs)
+	-- (no walks of the lobby's controls while a game runs under it; with BAR's lobby shown over the game, a lobby of its
+	-- own in the game's engine, they run as in the lobby: there Replays kept Open Folder, "1 minutes" and team names cut
+	-- at the edge, Load Game its dates day first, dev phone 2026-11-19. Its tabs woken as it opens, uprightUpdate)
+	if screen0 and lobbyShown() then
 		replaysRowCheck(now)
-	end
-	-- (Load Game's dates in the lobby over a game too, which opens on its last tab: woken as it opens, uprightUpdate;
-	-- over the game they stayed day first, dev phone 2026-11-19)
-	if screen0 and (not gameLoaded or lobbyShown()) then
 		if tabWake.at and Spring.DiffTimers(now, tabWake.at) < 4
 			and not (replaysRow.datesAt and Spring.DiffTimers(now, replaysRow.datesAt) < 1) then
 			replaysRow.datesAt = now

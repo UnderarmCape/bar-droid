@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Replays in the lobby over a game as in the lobby** (hardening, 2026-11-19 ~20:35-20:45, dev phone upright,
+      offline; the Fold7 still refused port 38389). The lobby over a game is a lobby of its own in the game's engine,
+      and the walk that finds Replays' row (Open Folder made Add, its tooltip, upright.replayPanel for the rows' fixes;
+      Links' Game Data and Plugins' Widgets Folder hidden) ran only with no game loaded: over a save loaded from Load
+      Game, Replays showed Open Folder (which opens nothing on a phone), "1 minutes" and Team 2's names cut at the
+      panel's edge. Now that walk, as the dates' of the run before, runs while BAR's lobby is shown over the game
+      (lobbyShown()), still not while it is hidden. Dev phone: a save loaded, Lobby, Replays: Add, "1 minute", the names
+      "BARbaria..", infolog "Open Folder is Add" and "rows' teams fitted"; lobby-phone-test ALL PASS.
 - [x] **Load Game in the lobby over a game: Load and Delete apart, the dates year first** (hardening, 2026-11-19
       ~20:18-20:35, dev phone upright, offline; the Fold7 still refused port 38389). Hunted: the launcher's settings
       (fine), the lobby's Downloads, Links, Parties and Load Game upright (fine), a save loaded from Load Game (the
