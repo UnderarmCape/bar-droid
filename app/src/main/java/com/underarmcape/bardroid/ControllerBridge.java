@@ -242,23 +242,30 @@ public final class ControllerBridge {
     private void run() {
         long lastSend = 0, lastCamera = 0;
         String cameraSent = "pad 0 0 0 0 0 0";
+        int failed = 0;
         while (running) {
             long now = SystemClock.uptimeMillis();
-            String packet = null, cameraLine = null;
-            synchronized (this) {
-                if (dirty || now - lastSend >= HEARTBEAT_MS) { packet = packet(); dirty = false; }
-                if (camera != null && now - lastCamera >= CAMERA_MS) cameraLine = cameraLine(mode == MODE_GAME && !game.reticle());
-            }
-            if (packet != null) {
-                byte[] data = packet.getBytes(StandardCharsets.US_ASCII);
-                try { socket.send(new DatagramPacket(data, data.length, loopback, port)); } catch (IOException ignored) {}
-                lastSend = now;
-            }
-            if (mouse != null) mouseTick(now);
-            if (cameraLine != null && mode != MODE_LOBBY && !cameraLine.equals(cameraSent)) {
-                camera.padLine(cameraLine);
-                cameraSent = cameraLine;
-                lastCamera = now;
+            // (a tick that throws is logged and the next one runs: uncaught on this thread it ended the app's process,
+            // the game's screen and touch with it, mid-game; review 2026-11-20)
+            try {
+                String packet = null, cameraLine = null;
+                synchronized (this) {
+                    if (dirty || now - lastSend >= HEARTBEAT_MS) { packet = packet(); dirty = false; }
+                    if (camera != null && now - lastCamera >= CAMERA_MS) cameraLine = cameraLine(mode == MODE_GAME && !game.reticle());
+                }
+                if (packet != null) {
+                    byte[] data = packet.getBytes(StandardCharsets.US_ASCII);
+                    try { socket.send(new DatagramPacket(data, data.length, loopback, port)); } catch (IOException ignored) {}
+                    lastSend = now;
+                }
+                if (mouse != null) mouseTick(now);
+                if (cameraLine != null && mode != MODE_LOBBY && !cameraLine.equals(cameraSent)) {
+                    camera.padLine(cameraLine);
+                    cameraSent = cameraLine;
+                    lastCamera = now;
+                }
+            } catch (RuntimeException e) {
+                if (failed++ < 3) Log.e("pad", "a pad tick failed, going on", e);
             }
             // No pad: only the heartbeat is due, so the thread wakes 10 times a second instead of 60 (a pad that
             // connects or sends an event wakes it at once)
