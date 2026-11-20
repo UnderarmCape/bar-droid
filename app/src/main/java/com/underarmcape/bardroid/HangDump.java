@@ -10,7 +10,8 @@ import java.nio.file.Files;
  * /proc/<pid>/task/<tid>/status", dev phone, 2026-11-10: three early-game hangs that evening, the cause unknown). The
  * app can read its own processes' /proc: each engine thread's name, kernel wait (wchan), system call (number and first
  * argument: an ioctl is the GPU driver, a futex a lock, "running" a loop) and state go to launcher.log as "[hang]"
- * lines, once a game. Read on its own thread: the engine's output reader must not wait for it.
+ * lines, once a game. Read on its own thread (the engine's output reader must not wait for it), but right there before
+ * the GPU driver's fault closes the game (GameService): read after the kill, every thread was "? | ? | ? | ?".
  */
 final class HangDump {
     private HangDump() {}

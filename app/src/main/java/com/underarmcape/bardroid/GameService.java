@@ -291,6 +291,7 @@ public class GameService extends Service {
                 if (driver.stalled(true, System.currentTimeMillis() - hover.lastModified())) {
                     driverLost = true;
                     Log.e("svc", "the GPU driver refused the game's graphics and its widget stopped answering: closing it");
+                    HangDump.dump();   // (where its threads were stuck: no watchdog line comes before this close)
                     Proc.killAll();
                     return;
                 }
@@ -500,7 +501,9 @@ public class GameService extends Service {
                             // (BAR's watchdog: where the engine is stuck, from the kernel's side; once a game, HangDump)
                             if (!hangLogged[0] && line.contains(DriverWatch.HUNG)) {
                                 hangLogged[0] = true;
-                                HangDump.dumpAsync();
+                                // (after the driver's refusal this same line closes the game, below: read first, here,
+                                // or the threads are gone when read, every one "? | ? | ? | ?"; dev phone 2026-11-19)
+                                if (driver.refused()) HangDump.dump(); else HangDump.dumpAsync();
                             }
                             // (a replay watched records nothing: the quit's status says no "saving the replay" then)
                             if (line.contains("ReadDataFromDemo")) playingReplay = true;
