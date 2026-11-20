@@ -756,6 +756,23 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A download's curl lines kept out of the launcher's log box** (bug hunt and UI polish, 2026-11-20 ~04:02-04:28,
+      dev phone, BAR test-32018; the Fold7 not played since 02:14, an app start at 03:48 only, its Android reports still
+      none for the app). The dev phone's launcher.log scanned for the app's own errors: only the pad's test faults of
+      01:53 and, from every map download, curl's whole account through pr-downloader: each address tried ("* Immediate
+      connect fail for 2606:...: Network is unreachable": the phone has no IPv6 route; the IPv4 one after it connects),
+      the certificates, the request's and the answer's headers, ~50 of a map's ~95 lines, all in the launcher's log box,
+      the unreachable ones reading as a failure. They go to launcher.log and logcat only now (Log.quiet, as the engine's
+      harmless lines), for the download tags (bridge:, setup:, update, bench:); pr-downloader's own lines and its
+      progress stay. Dev phone: lobby-phone-test (a map, Plains and Passes, downloaded as the lobby opened) and a Play vs
+      AI skirmish with its map moved aside (Starwatcher downloaded, 75 MB in 5 s) both downloaded as before; the box
+      itself checked with the real Log.java on the laptop (a logcat stub, the dev phone's 96 lines of that download): 52
+      kept from the box, no curl line in it, all 96 in the file, an engine line starting "* " still shown. The maps moved
+      aside put back. touch-phone-test, lobby-phone-test and status-text-test ALL PASS; BAR's own load warnings in
+      every game since 2026-10-28 (yardmaps, shield.energyupkeep, groundflash_anim) looked into: BAR's content, the
+      official engine's days too. With it StatusText's stray comment back on isResultNote. The APK from main ea8f9f7c
+      (phone engine phone-2026.09.03-83a8536d37) went on the Fold7 at 04:28 (no game running; --no-streaming, 90 s),
+      github-sync -Release.
 - [x] **PerfLog, LoadPictures and Share logs go on past a RuntimeException** (hardening, 2026-11-20 ~02:08-02:14, dev
       phone, BAR test-32018; the Fold7 not played since 02:05, its Android reports still none for the app). The three
       left by the run before: PerfLog's minute thread, LoadPictures' executor task and Share logs' zip thread caught
