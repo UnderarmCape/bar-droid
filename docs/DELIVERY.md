@@ -756,6 +756,13 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The phone tests on BAR test-32018; Load Game's version broken at its hyphen** (hardening, 2026-11-19
+      ~21:13-21:35, dev phone upright; the Fold7 not played since 21:10). After the BAR update the run's hunt was the
+      phone tests on the new release: dock-phone-test, pad-test, pad-test -Online, pad-test -Share, fp-save-test,
+      touch-phone-test and lobby-phone-test ALL PASS; the share list's screenshots fine. UI polish (its screenshots):
+      Load Game's Game Version column upright broke "BAR-31992-e7a6cff" after its last hyphen, "BAR-31992-" over
+      "e7a6cff"; now, where the version is wider than its column, it is broken there by the app, "BAR-31992" over
+      "e7a6cff" (upright.saveRows). Dev phone: the rows so; lobby-phone-test ALL PASS.
 - [x] **The dev phone on BAR test-32018; the copies remade for it; Statistics' last time label whole** (hardening,
       2026-11-19 ~20:52-21:10). The Fold7 (port 44111) not played since the 20:51 install. His 17:08 game's 2 min 48 s
       load was the other players: the phone loaded in ~30 s (its "[Game::Load]" at 5:04 of the log, the last player's

@@ -1890,6 +1890,18 @@ function upright.saveRows()
 	upright.spaceListRows(caption, "Load Game", function(c, s, grow, rowH, baseH)
 		if c.classname == "textbox" or c.name == "minimap" then
 			upright.rowMiddle(c, s, grow)
+			-- (the game's version wider than its column, "BAR-31992-e7a6cff": broken at its last hyphen, the build's
+			-- number over its commit, where Chili broke it after the hyphen, "BAR-31992-" over "e7a6cff"; dev phone upright)
+			local head, tail
+			if c.name == "gameName" and type(c.text) == "string" then
+				head, tail = c.text:match("^(.+%-%d+)%-(%x+)$")
+			end
+			if head and c.SetText then
+				local ok, w = pcall(function() return c.font:GetTextWidth(c.text) end)
+				if ok and tonumber(w) and w > (c.width or 0) then
+					c:SetText(head .. "\n" .. tail)
+				end
+			end
 		elseif (c.classname == "action_button" or c.classname == "negative_button") and s.h then
 			local h = math.floor(s.h * f)
 			-- (at the bottom as anchored, else at the top, or at the bottom as before)
