@@ -127,6 +127,24 @@ boxes, the GPU driver's fault closing a frozen game).
       guarding the T2 builder or the T1-capable builder nearest. No walls for AA, sea sentries (torpedo launchers,
       coastal torpedo launchers), tactical missile launchers, nuke and anti-nuke silos, long range plasma cannons or
       anything as tall, jammers or radars that count as sentries. "Be smart about this system."
+      Part 1 done (2026-11-20 ~07:18-07:40, dev phone, BAR test-32018): new bardroid_walls.lua. A sentry is a land
+      building of BAR's "weapon" or "weaponaa" unit group with no stockpiled weapon (tactical missiles, nukes, Juno, Hive),
+      no weapon reaching 1500 elmos (the LRPCs reach 4650-4950) and no taller than the LRPCs' models (88) with 15 % to
+      spare (the HLT's model is 96, the Doomsday Machine's 119); AA, torpedo, nuke, antinuke, radar and jammer groups never
+      are. Walls are BAR's "objectify" buildings (Dragon's Teeth 18 tall, Fortification Walls 47). A ring of them
+      side by side around the sentry's footprint, each spot buildable; only where the sentry fires over them (a cannon
+      that can arc, a vertical launcher, or a model 1.5 times the wall's height: the Dragon's Claw, 18, gets none); only
+      for one sentry placed alone (a LINE or GRID of them gets none: their rings would cross); only for the builders
+      that took the order (an order a builder cannot carry out still comes to widgets, and its walls went up around
+      nothing). T1: after the sentry; T2: inserted before it in each builder's queue, or, when the T2 walls are too tall
+      for it, T1 walls by the T1 builder guarding it (or the nearest T1 one), at that builder's queue's front (CMD.INSERT).
+      On by default, WG.BarDroidWalls.set. New tools/walls-phone-test.ps1 (a Sentry placed by real taps on the map and
+      PLACE; then by orders: WALLS off, a Claw, an AA launcher, two Sentries at once): ALL PASS (8), the Sentry first, then
+      8 Dragon's Teeth around it. Its first runs: the HLT left out (as tall as an LRPC by its model), every weapon
+      counted as arcing (all report highTrajectory 2), the Claw's refused order given walls. Still to do: the WALLS toggle
+      in the PLACE panel beside ROTATE (make-buildmenu.py's layoutPanel and pressPanel, RtsTouch's place rects), and
+      the T2 cases tested (the Annihilator, 88 tall, beam: T2 walls first; Cortex's Viper, 50, missiles: T1 walls by a
+      T1 builder, inserted).
 - [ ] **The Commander in D-gun mode**: measure whether he walks slower than on a plain move over a medium distance; if
       not, nothing to do.
 - [ ] **Auto retreat for all combat units, actually tested**: a repeatable test scenario (an enemy attacking a unit or a

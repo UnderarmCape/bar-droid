@@ -263,7 +263,7 @@ team_stats() {
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
   bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
-  bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar bardroid_options bardroid_camctl"
+  bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar bardroid_options bardroid_camctl bardroid_walls"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
   mkdir -p "$2"
@@ -858,6 +858,8 @@ presets_err=$(widget_error 'bardroid_presets|BAR Droid presets')
 [ -n "$presets_err" ] && layer_miss "presets widget (bardroid_presets.lua): $presets_err"
 automex_err=$(widget_error 'bardroid_automex|BAR Droid auto mex')
 [ -n "$automex_err" ] && layer_miss "auto mex widget (bardroid_automex.lua): $automex_err"
+walls_err=$(widget_error 'bardroid_walls|BAR Droid walls')
+[ -n "$walls_err" ] && layer_miss "walls widget (bardroid_walls.lua): $walls_err"
 camctl_err=$(widget_error 'bardroid_camctl|BAR Droid camera controls')
 [ -n "$camctl_err" ] && layer_miss "camera knob and rails widget (bardroid_camctl.lua): $camctl_err"
 # A phone version of one of BAR's files (the phone engine's BarDroidPhoneLuaDir: assets/bardroid/phone-*.lua.patch) that

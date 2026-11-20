@@ -147,6 +147,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   app's Statistics or Mission Info open (OVER_WINDOWS: upright they lie over the knob and rails), the dock aside for
   one of BAR's big windows, or the layout editor open.
   `bardroid_presets.lua`: the dock's PRESETS (2 x 2 over its grid, then a map tap: zigzags, formations; WG.BarDroidPresets).
+  `bardroid_walls.lua`: a sentry placed alone, a ring of walls queued around it (T1 after it, T2 before it; WG.BarDroidWalls).
   `bardroid_automex.lua`: the commander picked and an extractor chosen, the free mex spots in its weapon range queued
   (BAR's resource spot API, as its Area Mex). `bardroid_topbar.lua`: upright, BAR's top bar buttons over its hidden
   resource bars and indicators do their action through WG (BAR's Top Bar takes those presses; docs/upstream). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
@@ -231,6 +232,7 @@ powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1              
 powershell -ExecutionPolicy Bypass -File tools\factory-preset-test.ps1            # a factory's preset on the dev phone (a Bot Lab, STRAFE, the map tapped: its units join the formation, each its own place, side to side as each arrives; a sent preset's near and far units), ~4 min
 powershell -ExecutionPolicy Bypass -File tools\types-phone-test.ps1               # a unit type left out of ALL UNITS by a long press on its picture, on the dev phone (real taps and presses; out, still out, back in, the last type kept, a plain tap), ~3 min
 powershell -ExecutionPolicy Bypass -File tools\attack-ping-test.ps1               # my units under attack in the dock's last pings, on the dev phone (two fights given far apart: one entry each, merged, newest first, the badge red; a real tap on LAST PINGS: the newest fight in sight), ~2 min
+powershell -ExecutionPolicy Bypass -File tools\walls-phone-test.ps1               # walls around a placed sentry (bardroid_walls.lua) on the dev phone (a Sentry placed by real taps: then 8 Dragon's Teeth around it; off, a Claw, AA, two at once: none; which defences are sentries), ~2 min
 powershell -ExecutionPolicy Bypass -File tools\touch-phone-test.ps1                # the touch camera at the map's edge on the dev phone (drags on the map, over the void, across the edge (one line, and a finger's: a line a frame), over the sky; a pinch over the void; under BAR's lobby over the game the camera still and the dock aside), driven through the touch log; ~2 min
 powershell -ExecutionPolicy Bypass -File tools\fp-save-test.ps1                    # a spectator's 1st person through BAR's mid-game settings save, on the dev phone, ~1.5 min
 powershell -ExecutionPolicy Bypass -File tools\stripes-test.ps1 [-Pairs 3]         # the interface's stripes: skirmishes on the dev phone alternating launch-bar.sh's UBWC off (FD_MESA_DEBUG=noubwc, the default) and on, screenshots + montage in build\stripes-test (DELIVERY.md), ~3 min a start
