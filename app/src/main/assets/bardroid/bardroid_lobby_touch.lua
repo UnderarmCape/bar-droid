@@ -1841,7 +1841,10 @@ function upright.spaceListRows(caption, tag, place)
 			local c = real(ch)
 			if c then
 				if not saved[c] then
-					saved[c] = { y = c.y, h = c.height }
+					-- (and its bottom anchor as Chobby gave it, before any SetPos here: a new row's own y can still be
+					-- the one of the size it was made at, not yet laid out)
+					local rb = c._relativeBounds
+					saved[c] = { y = c.y, h = c.height, bottom = rb and tonumber(rb.bottom) }
 				end
 				place(c, saved[c], grow, h, base.h)
 			end
@@ -1874,7 +1877,9 @@ end
 -- Chobby's Load Game (gui_loadgame.lua): rows 80 high, Load (y 3) above Delete (bottom 4) at the row's end, each 65 x 35
 -- with 3 pixels between them (dev phone sideways, 2026-11-17; Delete asks first, Load does not). Each row 1.5 times
 -- as tall: Load and Delete as much taller at its top and bottom, now well apart; the map's picture and the words in the
--- row's middle.
+-- row's middle. Delete goes by its anchor (bottom 4): a row Chobby had just added (a new save, the lobby over the game)
+-- was first seen with Delete still at y 26 of the 65 it was made at, taken for a top button, and Load and Delete were
+-- drawn over each other (dev phone, 2026-11-19).
 function upright.saveRows()
 	local caption = "Load saved game"
 	if type(i18n) == "function" then -- (Chobby's words in the lobby's language)
@@ -1887,7 +1892,8 @@ function upright.saveRows()
 			upright.rowMiddle(c, s, grow)
 		elseif (c.classname == "action_button" or c.classname == "negative_button") and s.h then
 			local h = math.floor(s.h * f)
-			local y = s.y < baseH / 2 and s.y or rowH - (baseH - s.y - s.h) - h -- (at the top, or at the bottom as before)
+			-- (at the bottom as anchored, else at the top, or at the bottom as before)
+			local y = s.bottom and rowH - s.bottom - h or s.y < baseH / 2 and s.y or rowH - (baseH - s.y - s.h) - h
 			if c.y ~= y or c.height ~= h then
 				c:SetPos(nil, y, nil, h)
 			end
@@ -2745,6 +2751,9 @@ local function uprightUpdate(now)
 	local shown = lobbyShown() -- (a change at once: Chobby's own layout half a second over the game before)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 and shown == upright.wasShown then
 		return
+	end
+	if shown and upright.wasShown == false and gameLoaded then
+		tabWake.at = now -- (the lobby opened over the game, on the tab it was left at: its fixes as after a press)
 	end
 	upright.checkAt, upright.wasShown = now, shown
 	if not (screen0 and WG.Chobby and WG.Chobby.interfaceRoot) then
@@ -3818,6 +3827,10 @@ function widget:Update() -- (the lobby's Update has no frame time)
 	poolCacheCheck(now)
 	if screen0 and not gameLoaded then -- (no walks of the lobby's controls while a game runs)
 		replaysRowCheck(now)
+	end
+	-- (Load Game's dates in the lobby over a game too, which opens on its last tab: woken as it opens, uprightUpdate;
+	-- over the game they stayed day first, dev phone 2026-11-19)
+	if screen0 and (not gameLoaded or lobbyShown()) then
 		if tabWake.at and Spring.DiffTimers(now, tabWake.at) < 4
 			and not (replaysRow.datesAt and Spring.DiffTimers(now, replaysRow.datesAt) < 1) then
 			replaysRow.datesAt = now

@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Load Game in the lobby over a game: Load and Delete apart, the dates year first** (hardening, 2026-11-19
+      ~20:18-20:35, dev phone upright, offline; the Fold7 still refused port 38389). Hunted: the launcher's settings
+      (fine), the lobby's Downloads, Links, Parties and Load Game upright (fine), a save loaded from Load Game (the
+      commander picked, the camera on it) and the top bar's Save in it ("Game saved: the lobby's Load Game opens it", a
+      new .ssf). Then the top bar's Lobby: over the game Load Game listed the new save, and every row's Load and
+      Delete lay over each other, the dates day first ("19/11/2026 20:21:42"). Chobby's Delete is anchored bottom 4 in
+      a row it makes 65 high; a row first seen before Chili laid it out had Delete at y 26, which the spacing took for
+      a top button. Now each control's bottom anchor is kept as first seen (upright.spaceListRows) and Delete goes by
+      it (upright.saveRows); and the date fix, never run while a game is loaded, runs while the lobby is shown over one,
+      woken as it opens (the tab it was left on). Dev phone: a save loaded, saved again, Lobby: all six rows with Load
+      and Delete apart, the new one too, the dates "2026-11-19 20:28"; lobby-phone-test ALL PASS.
 - [x] **In a game, a tap on Settings' search field brings up Android's keyboard** (hardening, 2026-11-19 ~19:56-20:15,
       dev phone upright, a skirmish; the Fold7 still refused port 38389). touch-phone-test and dock-phone-test ALL PASS
       on b26cd195 (the turn rail's build). Then Settings' Control tab upright (the "Camera with one finger" rows whole);
