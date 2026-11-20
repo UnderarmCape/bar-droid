@@ -756,6 +756,15 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The Fold7 on today's build again** (2026-11-19 20:51): Kailil gave its new wireless debugging address at
+      ~20:48, 192.168.143.159:44111 (a network the laptop is not on: timed out); the port over Tailscale,
+      100.103.32.18:44111, answered (SM-F966N). His logs since the 13:55 install: an online game 17:08-17:38 (joined,
+      Supreme Isthmus, the phone engine 2026.09.03-2-g83a8536 bardroid/sim-2026.09.03), 30.0-30.1 fps every minute to
+      the end at up to ~2,900 units (slowest frames 48-115 ms), no errors or warnings from the app's widgets or the
+      engine, no SIGSEGV; back in the lobby at its end, then swiped away: "asked the engine to quit", "the engine quit
+      in 1407 ms", the replay 3.0 MB, its infolog kept (logs/infolog-20261119-173813.txt); the app opened again at 19:16,
+      nothing after. Nothing to fix. Installed with BAR not running: the APK from clean main 16e48e9e (phone engine
+      phone-2026.09.03-83a8536d37), everything from d44e02dd to 16e48e9e for his test; github-sync -Release.
 - [x] **Replays in the lobby over a game as in the lobby** (hardening, 2026-11-19 ~20:35-20:45, dev phone upright,
       offline; the Fold7 still refused port 38389). The lobby over a game is a lobby of its own in the game's engine,
       and the walk that finds Replays' row (Open Folder made Add, its tooltip, upright.replayPanel for the rows' fixes;
