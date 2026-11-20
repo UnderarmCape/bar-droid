@@ -103,7 +103,8 @@ boxes, the GPU driver's fault closing a frozen game).
       x 30 pixels upright, some 3.5 x 2 mm: now 61 x 34, and a tap 105 x 53 around it closes (left of it and down to the
       top strip's foot); the strip along the top (the legend's teams, BAR's Group by team switch in a team game) now ends
       short of it: in a team game the button lay over that switch. Seen in the pictures, left for later: at the first
-      open the chart titles lack their " · " ("Damage  Received"), there after a scroll.
+      open the chart titles lack their " · " ("Damage  Received"), there after a scroll. On the Fold7 2026-11-20 13:17
+      (eb3936f5's build, port 39985).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
