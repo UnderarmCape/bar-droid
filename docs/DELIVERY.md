@@ -767,6 +767,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the axis's end the right column's "0:30" was cut to "0:3" at the window's edge; the Graphs hook of the copy now
       also moves a time label that would pass its chart's right edge in to end at it (graph.lua drawGrid,
       tools/make-teamstats.py). Dev phone: Flow and Combat's right column "0:30" whole, no errors; remake-check PASS.
+      On the Fold7 at 21:10 (BAR not running): the APK from clean main fbc2d07e; github-sync -Release.
 - [x] **The Fold7 on today's build again** (2026-11-19 20:51): Kailil gave its new wireless debugging address at
       ~20:48, 192.168.143.159:44111 (a network the laptop is not on: timed out); the port over Tailscale,
       100.103.32.18:44111, answered (SM-F966N). His logs since the 13:55 install: an online game 17:08-17:38 (joined,
