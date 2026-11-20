@@ -1213,7 +1213,10 @@ final class RtsTouch {
             float w = view().getWidth();
             if (w > 0 && curX != camX) {
                 float step = curX - camX;
-                send(String.format(Locale.US, "rot %.4f", step / w * PAD_ROTATE_PER_WIDTH * camStepGain(step, t)));
+                // (the turn rail the other way from the knob's sideways slide: Kailil, 2026-11-19, "swap the horizontal
+                // slider direction. invert it. the slider that is under the joystick to rotate the camera")
+                float way = camKind == CAM_TURN ? -1f : 1f;
+                send(String.format(Locale.US, "rot %.4f", way * step / w * PAD_ROTATE_PER_WIDTH * camStepGain(step, t)));
             }
         }
         camX = curX;

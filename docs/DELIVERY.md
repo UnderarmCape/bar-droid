@@ -756,6 +756,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **The camera's turn rail turns the other way** (Kailil, 2026-11-19 ~19:45: "swap the horizontal slider direction.
+      invert it. the slider that is under the joystick to rotate the camera"): a drag along the turn rail (the L's foot,
+      under the knob) sends the dock pad's "rot" with the opposite sign; the knob's own sideways slide is as it was
+      (RtsTouch.camMoveTo). Dev phone upright, a skirmish: a rightward drag on the rail now sends rot -0.004 to -0.006 a
+      step (it was positive) and the map turned; the knob slid right still sends positive rot. For his test on the Fold7.
 - [x] **A replay's speed column shows the speed it runs at** (hardening, 2026-11-19 ~17:46-19:45, dev phone upright,
       the lobby's Replays offline; the Fold7 still refused port 38389). Spectating hunted on the phone, its laptop test
       being blocked: the Replays list, a replay started, TEAMS, 10x to the end and past it, the infolog clean. Not
