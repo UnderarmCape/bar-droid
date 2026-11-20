@@ -74,13 +74,24 @@ public final class Log {
      * ceg_test_projectile_unit_ceg_test_projectile weaponDef, missing model" (its test weapon; dev phone screenshot, the
      * same day). The shared logs keep them.
      */
-    private static boolean quiet(String msg) {
+    private static boolean quiet(String tag, String msg) {
         return msg.contains("[IsPathOnSpinningDisk]") || msg.contains("key \"AdvSky\" is deprecated")
-                || msg.contains("Error: removed ceg_test_projectile");
+                || msg.contains("Error: removed ceg_test_projectile")
+                || (DOWNLOADS.matcher(tag).find() && CURL.matcher(msg).find());
     }
 
+    /**
+     * curl's own account of pr-downloader's downloads (a map the lobby asks for, the game's update): each address tried
+     * ("* Immediate connect fail for 2606:...: Network is unreachable", the phone having no IPv6 route; the IPv4 one after
+     * it connects), the certificates, the request's and the answer's headers: ~70 lines a map in the launcher's box, the
+     * unreachable ones reading as a failure (dev phone 2026-11-20). pr-downloader's own lines and its progress stay.
+     */
+    private static final java.util.regex.Pattern DOWNLOADS = java.util.regex.Pattern.compile("^(bridge|setup|update|bench):?");
+    private static final java.util.regex.Pattern CURL =
+            java.util.regex.Pattern.compile("^(\\* |[<>] |[<>]$|(Host|User-Agent|Accept): |$)");
+
     private static void line(String tag, String msg, boolean error) {
-        if (!error && quiet(msg)) { detail(tag, msg); return; }
+        if (!error && quiet(tag, msg)) { detail(tag, msg); return; }
         String s = fmt.format(new Date()) + " [" + tag + "] " + msg;
         if (error) android.util.Log.e("BarDroid/" + tag, msg); else android.util.Log.i("BarDroid/" + tag, msg);
         List<Listener> ls;
