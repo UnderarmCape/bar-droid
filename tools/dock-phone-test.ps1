@@ -155,6 +155,36 @@ try {
   }
   $place = Rects "bardroid_place.txt"
   if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1; Stage "cancelled?"; Start-Sleep 1 }
+  # (LINE, then BORDER: the building picked again, the shape tapped, a press held on the map past the long press, then
+  # dragged toward the screen's middle: the shape held from there, the building still picked; PLACE lays it out. A
+  # right click before: the building put away; Kailil, 2026-11-20)
+  if ($spots["free"]) {
+    $fs = $spots["free"]; $w = $dock["dock"][2]
+    $dx = if ($fs[0] -lt $w / 2) { 220 } else { -220 }
+    foreach ($shape in @("line", "border")) {
+      foreach ($try in 1..3) {
+        if ((Rects "bardroid_place.txt")["done"]) { break }
+        Tap $tile[0] $tile[1]
+        $until = (Get-Date).AddSeconds(2)
+        while ((Get-Date) -lt $until -and -not (Rects "bardroid_place.txt")["done"]) { Start-Sleep -Milliseconds 200 }
+      }
+      Stage "shapecells"; Start-Sleep -Milliseconds 800
+      $cell = (Rects "bardroid_docktest.txt")[$shape]
+      if (-not $cell) { "[docktest] FAIL no $shape cell on the dock (the building not picked?)"; continue }
+      $c = Mid $cell; Tap $c[0] $c[1]; Start-Sleep -Milliseconds 700
+      $ey = if ($shape -eq "border") { $fs[1] - 130 } else { $fs[1] }
+      Touch DOWN $fs[0] $fs[1]; Start-Sleep -Milliseconds 800
+      Touch MOVE ($fs[0] + $dx / 2) (($fs[1] + $ey) / 2); Touch MOVE ($fs[0] + $dx) $ey
+      Start-Sleep -Milliseconds 300; Touch UP ($fs[0] + $dx) $ey; Start-Sleep -Milliseconds 700
+      Stage "$($shape)hold?"; Start-Sleep 1
+      $pl = (Rects "bardroid_place.txt")["done"]
+      if ($pl) { $p = Mid $pl; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 1200 }
+      Stage "$($shape)placed?"; Start-Sleep 1
+    }
+    $place = Rects "bardroid_place.txt"
+    if ($place["cancel"]) { $p = Mid $place["cancel"]; Tap $p[0] $p[1]; Start-Sleep 1 }
+    Stage "stopcom"; Start-Sleep 1
+  }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
   Stage "dgun"
   if (-not (WaitLog '\[docktest\] dgun on' 10)) { throw "the D-gun mode did not open" }

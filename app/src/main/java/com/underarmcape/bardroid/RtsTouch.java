@@ -281,6 +281,16 @@ final class RtsTouch {
             if (this.voicePing != null) this.voicePing.run();   // (this.: declared further down)
             return;
         }
+        // (LINE, GRID or BORDER picked: a press held on the map starts that shape there, held as ONE's GRID is: the
+        // finger's way its far corner, PLACE lets go. It went on to the right button below, a right click, and BAR put
+        // the building away; Kailil, 2026-11-20: "When i attempt too hold tap after selecting line or border, it doesn't
+        // behave properly")
+        String shape = shapePicked();
+        if (shape != null && hoverAt(downX, downY) == HOVER_MAP) {
+            moveX = curX; moveY = curY;
+            startGrid(shape);
+            return;
+        }
         if (placingOne && hoverAt(downX, downY) == HOVER_MAP) {   // (BAR: a right click would put the building away)
             // (a finger settled on the waiting building is how fine placing starts: a GRID there only after a full
             // GRID_ON_BUILDING_MS still; Kailil, 2026-11-12: "never ever initiate a grid command if im fine tuning")
@@ -1607,7 +1617,17 @@ final class RtsTouch {
      * placed only the last building: the engine reads the modifier keys once a frame). A buzz as for the three-finger
      * gestures, "GRID" over it (bardroid_buildmenu.lua).
      */
-    private void startGrid() {
+    private void startGrid() { startGrid("grid"); }
+
+    /** The building picked with LINE, GRID or BORDER: that shape's name; null with ONE or none. */
+    private String shapePicked() {
+        Place p = place();
+        String s = p == null ? null : p.shape;
+        return s == null || s.equals("one") ? null : s;
+    }
+
+    /** As startGrid, BAR's build drag held as the shape given: "grid", "line" or "border". */
+    private void startGrid(String shape) {
         runPlaceTap();
         float[] spot = spotNow(place());   // (a tap's move just sent: from there, not the place file's older spot)
         boolean atFinger = state == State.PENDING && !waitingAtDown;
@@ -1617,11 +1637,12 @@ final class RtsTouch {
         gridY = dragged ? ptrY : atFinger || spot == null ? toY(curY) : spot[1];
         gridStartX = gridX; gridStartY = gridY;
         send(String.format(Locale.US, "grid held %.0f %.0f", gridStartX, gridStartY));   // (its first corner: ground now)
+        if (!"grid".equals(shape)) send("grid shape " + shape);   // (the dock lights LINE or BORDER, not GRID)
         send("spot none");
         spotSentAt = -1;
         sentSpot = null;
         state = State.GRID_DRAG;
-        holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
+        shapeKeys(shape);
         LorieView v = view();
         v.sendMouseEvent(gridX, gridY, InputStub.BUTTON_UNDEFINED, false, false);
         v.sendMouseEvent(gridX, gridY, InputStub.BUTTON_LEFT, true, false);
@@ -1688,9 +1709,15 @@ final class RtsTouch {
      * line), the drag changes shape where it is; the game's shape strip lights it ("grid shape").
      */
     private void gridShape(String shape) {
-        if ("line".equals(shape)) lineKeys();
-        else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
+        shapeKeys(shape);
         send("grid shape " + shape);
+    }
+
+    /** BAR's build drag keys for a shape: Shift+Alt a filled rectangle, Shift+Alt+Ctrl a hollow one, Shift alone a line. */
+    private void shapeKeys(String shape) {
+        if ("line".equals(shape)) lineKeys();
+        else if ("border".equals(shape)) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_CTRL_LEFT);
+        else holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
     }
 
     /**
@@ -1838,9 +1865,7 @@ final class RtsTouch {
         Place p = place();
         String shape = p == null ? null : p.shape;
         if (shape == null || shape.equals("one")) return false;
-        if (shape.equals("grid")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT);
-        else if (shape.equals("border")) holdKeys(KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_CTRL_LEFT);
-        else lineKeys();
+        shapeKeys(shape);
         startLeftDrag();
         shapeDragging = true;   // (its corner held at the dock's top, as a box selection's: onMove, onUp)
         return true;

@@ -8,6 +8,9 @@
 --   dgun      the D-gun mode on the commander;  auto? / autooff?  full auto on / off by FIRE's swipes
 --   walk      the commander's speed watched;    stopped?  it walked, and stands still soon after the stick is let go
 --   xoff?     the mode's X tapped: the D-gun mode off
+--   shapecells the building picked again: "line ...", "border ...": the dock's LINE and BORDER cells
+--   linehold? / borderhold?  LINE / BORDER, a press held on the map, a drag: the shape held, the building still picked
+--   lineplaced? / borderplaced?  PLACE: 2+ / 3+ buildings queued;  stopcom  the commander's queue cleared
 --   presets   six Pawns given, picked, the presets open; "aim0 x y", "aim1 x y": a drag's ends on open ground
 --   strafe?   STRAFE (its thumbnail tapped, its front line drawn): each Pawn one fight to its place, on one line, apart
 --   sway?     the Pawns there: each two fights across its place, repeat on
@@ -30,6 +33,7 @@ local buildDef -- (the build grid's first building, in sight on any screen shape
 local pawns, maxSpeed = {}, nil
 local edge, aimAt -- (the presets' stage: the map's edge the camera looks at, the frame to find the aims at)
 local camAt -- (the camera before the pan's drag)
+local shapeQueued -- (the commander's queued buildings before a held LINE or BORDER's PLACE)
 local realTeammates -- (the pad's teammate list, while stand-ins fill the picker: sendbtn, picker?)
 local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
 -- before, the circle's two points in X pixels)
@@ -299,6 +303,44 @@ local function onCmd(c)
 		end
 		check("the panel's cancel puts the building away, nothing placed", not (cmd and cmd < 0) and queued <= 1,
 			"picked " .. tostring(cmd) .. ", queued " .. queued)
+	elseif c == "shapecells" then -- (the building picked again: LINE's and BORDER's cells on the dock, the queue so far)
+		local Pt = WG.BarDroidPortrait
+		local _, vsy = Spring.GetViewGeometry()
+		local text = ""
+		for _, s in ipairs({ "line", "border" }) do
+			local r = Pt and Pt.itemCell and Pt.itemCell("right", function(it)
+				return it.kind == "shape" and it.shape == s
+			end)
+			if r and r[3] > 0 then
+				text = text .. string.format("%s %d %d %d %d\n", s, r[1], vsy - r[4], r[3], vsy - r[2])
+			end
+		end
+		write(text)
+		shapeQueued = 0
+		for _, q in ipairs(Spring.GetUnitCommands(com, 50) or {}) do
+			shapeQueued = shapeQueued + (q.id == -buildDef and 1 or 0)
+		end
+		Spring.Echo("[docktest] shape cells: " .. text:gsub("\n", "; ") .. " queued before " .. shapeQueued)
+	elseif c == "linehold?" or c == "borderhold?" then -- (LINE / BORDER picked, a press held on the map, then a drag:
+		-- the shape held from there, the building still picked; it was a right click, the building put away; Kailil,
+		-- 2026-11-20)
+		local _, cmd = Spring.GetActiveCommand()
+		local _, _, held = Spring.GetMouseState()
+		check(c == "linehold?" and "LINE picked, a press held on the map and dragged: the line held, the building still picked"
+			or "BORDER picked, a press held on the map and dragged: the border held, the building still picked",
+			cmd == -buildDef and held, "picked " .. tostring(cmd) .. ", button " .. tostring(held))
+	elseif c == "lineplaced?" or c == "borderplaced?" then -- (PLACE: the shape's buildings queued, several)
+		local n = 0
+		for _, q in ipairs(Spring.GetUnitCommands(com, 50) or {}) do
+			n = n + (q.id == -buildDef and 1 or 0)
+		end
+		local want = c == "lineplaced?" and 2 or 3
+		check(c == "lineplaced?" and "the held LINE's PLACE: a line of buildings queued"
+			or "the held BORDER's PLACE: a ring of buildings queued", n - (shapeQueued or 0) >= want,
+			string.format("%d queued, %d before", n, shapeQueued or 0))
+		shapeQueued = n
+	elseif c == "stopcom" then -- (the shapes' buildings off the commander's queue: the D-gun mode's walk must not build)
+		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
 	elseif c == "dgun" then -- (the building put away by the dock's cancel first: the script taps it)
 		Spring.SelectUnitArray({ com })
 		P.act("dgun")
