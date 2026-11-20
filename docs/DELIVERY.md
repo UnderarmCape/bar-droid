@@ -756,6 +756,12 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Android's own reports on both phones: no ANR, no crash of the app on the Fold7** (hardening, 2026-11-19
+      ~23:59-00:05; the Fold7 not played since 23:56). dumpsys dropbox on the Fold7: data_app_anr none,
+      data_app_crash none for the app, data_app_native_crash one, of another app (not BAR Droid). The dev phone: no app
+      crash or native crash; its three ANRs are the log box's, fixed in 6eebf8b8. Nothing else feeds every log line to
+      the main thread (Log's one listener is the launcher's; the engine's lines are read on their own thread). No UI
+      polish this run.
 - [x] **The launcher stopped answering in front of a running game: its log box laid out again at every line**
       (hardening, 2026-11-19 ~23:44-23:55, dev phone; the Fold7 not played since 23:11). Opening the launcher found
       Android's "Beyond All Reason isn't responding" over it. Its reports (dumpsys dropbox data_app_anr, three: 22:22 and
