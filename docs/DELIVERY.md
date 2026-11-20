@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **A replay's speed column shows the speed it runs at** (hardening, 2026-11-19 ~17:46-19:45, dev phone upright,
+      the lobby's Replays offline; the Fold7 still refused port 38389). Spectating hunted on the phone, its laptop test
+      being blocked: the Replays list, a replay started, TEAMS, 10x to the end and past it, the infolog clean. Not
+      faults: a game under a minute is left off the list (Chobby's gui_replay_handler, on purpose: the 24 s test game of
+      17:40); a replay of a game whose player had Statistics open ends paused (opening Statistics pauses a singleplayer
+      game, BAR's way; the 17:29 game's replay is 2 minutes of game in its 10 of wall time). UI polish (its
+      screenshots): BAR's replay buttons light only the button under the mouse (its active_button is never set), so on
+      a phone the column never showed which speed was on; now the current one is lit gold (a 6th block of
+      phone-widget-gui_replaybuttons.lua.patch, Spring.GetGameSpeed's wanted speed). Dev phone: 1x lit at the start, a
+      tap on 4x lit 4x ("Speed set to 4.0"), no errors; remake-check's phone patches PASS. (An adb install hung for
+      the tool's 10 minutes midway; with --no-streaming it went in at once.)
 - [x] **Statistics: a percent axis's ticks with one decimal; a chart's title fitted to its chart** (hardening,
       2026-11-19 ~17:28-17:50, dev phone upright, a skirmish; the Fold7 still refused port 38389). The skirmish's
       infolog and launcher.log had nothing from the app's widgets, 30 fps a minute in (the second "phone version of"

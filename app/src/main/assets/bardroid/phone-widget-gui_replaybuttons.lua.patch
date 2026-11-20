@@ -10,7 +10,42 @@ the same screen sideways (2026-11-17: BAR sizes them by fractions of the width, 
 and its buttons no taller than the room under BAR's minimap (sideways the fastest three lay under it). And its rect for
 the app's touch widget (WG.BarDroidTapPanels): after a tap on a speed the pointer hides as over BAR's interface, while a
 finger's drag from the column still pans (2026-11-19: an IsAbove did the first, but made such drags mouse drags along
-a tall strip of the screen's left edge upright).
+a tall strip of the screen's left edge upright). And the speed the replay runs at lit, gold: BAR lights only the button
+under the mouse (its active_button is never set), so on a phone nothing showed which speed was on (dev phone,
+2026-11-19, a replay at 10x upright: the column all alike).
+
+@@@ find
+	if buttonsList then
+		gl.CallList(buttonsList)
+	end
+@@@ with
+	if buttonsList then
+		gl.CallList(buttonsList)
+	end
+	-- BAR Droid (phone): the speed the replay runs at lit, gold (BAR lights the button under the mouse only)
+	local droidSpeed = Spring.GetGameSpeed()
+	for i = 1, #speeds do
+		local b = buttons[i]
+		if b and math.abs(speeds[i] - (droidSpeed or 0)) < 0.01 then
+			glBlending(GL_SRC_ALPHA, GL_ONE)
+			RectRound(
+				mathFloor((b.x * vsx) + 0.5),
+				mathFloor((b.y * vsy) + 0.5),
+				mathFloor(((b.x + bWidth) * vsx) + 0.5),
+				mathFloor(((b.y + bHeight) * vsy) + 0.5),
+				bgpadding * 0.5,
+				0,
+				1,
+				1,
+				0,
+				{ 0.45, 0.32, 0.05, 0.45 },
+				{ 1, 0.8, 0.35, 0.35 }
+			)
+			glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+			break
+		end
+	end
+@@@ end
 
 @@@ find
 function widget:Update(dt)
