@@ -85,9 +85,21 @@ local function room()
 	return d, top
 end
 
+-- BAR's windows the app keeps over the map upright, above the dock (its copies of Statistics and a scenario's Mission
+-- Info): over the knob and both rails; a drag on Statistics' scrollbar zoomed the camera instead (dev phone 2026-11-19)
+local OVER_WINDOWS = { "teamstats", "missioninfo" }
 local function hiddenNow()
 	if Spring.IsGUIHidden() then
 		return true
+	end
+	for i = 1, #OVER_WINDOWS do
+		local w = WG[OVER_WINDOWS[i]]
+		if w and type(w.isvisible) == "function" then
+			local ok, shown = pcall(w.isvisible)
+			if ok and shown then
+				return true
+			end
+		end
 	end
 	-- (a gamepad or a mouse the input, bardroid_touch.lua's WG.BarDroidInput: BAR's own screen, no fingers to use them;
 	-- the knob stood over BAR's panels there. A finger's touch brings them back)

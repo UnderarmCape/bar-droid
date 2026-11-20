@@ -756,6 +756,14 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **Statistics and Mission Info upright: the camera knob and rails stand aside** (hardening, 2026-11-19
+      ~22:05-22:20, dev phone upright, BAR test-32018; the Fold7 not played since 22:02). Following the quit screen:
+      the big windows and the game over already put the camera controls aside (the dock's aside()), but upright the
+      app's Statistics (and a scenario's Mission Info) fit above the dock, over the knob and both rails: with
+      Statistics open bardroid_camctl.txt still named them, and a drag on Statistics' scrollbar, where the zoom rail
+      runs, zoomed the camera ("zoom" lines). Now hiddenNow also asks WG.teamstats and WG.missioninfo isvisible().
+      Dev phone: Statistics open, the file "none", the same drag no zoom; closed, the knob and rails back;
+      dock-phone-test and touch-phone-test ALL PASS.
 - [x] **BAR's quit screen: the camera knob and rails stand aside, its Quit button answers** (hardening, 2026-11-19
       ~21:38-21:55, dev phone upright, BAR test-32018; the Fold7 not played since 21:35). First the rest of the phone
       tests on 32018: pad-test -Dgun, -Chat and pace-test ALL PASS (the whole set green on it). Checked and not a
