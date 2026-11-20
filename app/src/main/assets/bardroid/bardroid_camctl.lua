@@ -95,6 +95,15 @@ local function hiddenNow()
 	if src == "pad" or src == "mouse" then
 		return true
 	end
+	-- (BAR's quit screen, asked as BAR's own panels ask it: upright its Quit button lay over the knob, drawn under the
+	-- dialog, and a tap on Quit there turned the camera, the dialog stayed; dev phone 2026-11-19)
+	local tb = WG.topbar
+	if tb and type(tb.showingQuit) == "function" then
+		local ok, q = pcall(tb.showingQuit)
+		if ok and q then
+			return true
+		end
+	end
 	local P = WG.BarDroidPortrait
 	return P and P.aside and P.aside() or false -- (one of BAR's big windows, BAR's lobby over the game: their screen)
 end

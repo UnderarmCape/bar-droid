@@ -756,6 +756,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       over each minute late on; no error or warning from the app's widgets, no SIGSEGV. The game ended as he removed
       it from recent apps (17:51:22, right after two more turns). Kailil's folded-turn freeze (~10 s) is fixed on the
       Fold7.
+- [x] **BAR's quit screen: the camera knob and rails stand aside, its Quit button answers** (hardening, 2026-11-19
+      ~21:38-21:55, dev phone upright, BAR test-32018; the Fold7 not played since 21:35). First the rest of the phone
+      tests on 32018: pad-test -Dgun, -Chat and pace-test ALL PASS (the whole set green on it). Checked and not a
+      fault: the game's keyboard asks (bardroid_touch.lua, math.random ids) differ from game to game (g489294, then
+      g790291), the keyboard came up again. Then the top bar's Quit upright: the camera knob lay under BAR's dialog,
+      just where its Quit button is, and a tap on Quit there was the camera's ("camheld knob"), the dialog stayed; the
+      bottom rail ran through BAR's "GAME PAUSED" under it. Now the knob and rails stand aside while BAR's quit screen
+      is up (bardroid_camctl.lua hiddenNow: WG.topbar.showingQuit, as BAR's own panels ask; "none" to RtsTouch). Dev
+      phone: the quit screen open, bardroid_camctl.txt "none" and no rails or knob drawn ("GAME PAUSED" clear); Stay,
+      back as before; Quit tapped where the knob lies: the game ended ("engine exited (0)"); dock-phone-test and
+      touch-phone-test ALL PASS.
 - [x] **The phone tests on BAR test-32018; Load Game's version broken at its hyphen** (hardening, 2026-11-19
       ~21:13-21:35, dev phone upright; the Fold7 not played since 21:10). After the BAR update the run's hunt was the
       phone tests on the new release: dock-phone-test, pad-test, pad-test -Online, pad-test -Share, fp-save-test,
