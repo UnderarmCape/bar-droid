@@ -200,6 +200,15 @@ boxes, the GPU driver's fault closing a frozen game).
       (447-593 both); ALL PASS, dock-phone-test ALL PASS (31). And the tests that switch the player's settings now put
       them back whatever happens: a retreat-phone-test run that broke off in its summary had left the dev phone's AUTO
       RETREAT off (restored), so retreat-phone-test and walls-phone-test save AUTO RETREAT and WALLS first.
+- [x] Hardening (2026-11-20 ~11:32-12:05, dev phone): the Skaters, 0/8 alive with the retreat and without. New
+      retreat-phone-test -Only <kind> (its on and off rounds three times, each fall-back's first 3 s logged): every Skater
+      fell back within a second and went ~110 elmos a second (262-274 in 3 s), but 14 Grunts' fire took it from half
+      health to 1-27 % in those seconds; with the retreat 2/6 and 1/6 alive, without 0/6 twice. Too frail for that pack;
+      no rule saves them (an earlier fall-back, tried this morning, cost the Pawns more). What was wrong: one of the two
+      logged ways back ended on ground no hover reaches (Spring.TestMoveOrder false). The retreat now takes only a spot
+      the unit can stand on (the same turns of up to 90 degrees, then 60 % of the way, then as before), commanders' too.
+      The full comparison after it: 8/14 alive on and 8/14 off (all five runs: on 45/70, off 34/70); its per-kind travel
+      shows the Stout tank turning: 31 elmos in its first 3 s. The test's on-against-off line now sums -Only's repeats.
 
 ### Kailil's queue (2026-11-10, upright touch play): before the rest, in this order
 Automation is Kailil's and BAR's developers' decision (Kailil, 2026-11-10: touch players must compete fairly with

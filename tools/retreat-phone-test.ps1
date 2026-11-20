@@ -4,7 +4,10 @@
 # unit (a bot, a vehicle, a hover, an amphibious one, a T2 one, a squad of four Pawns), two of it given facing an enemy
 # pack of Grunts (and T2 Cans for the T2); every unit watched: hurt under 50 %, fell back within a second, got clear, turned back into the fight, died
 # before or after falling back; per kind and in all. Nothing on the laptop: it runs any time. About 3 minutes.
-#   powershell -ExecutionPolicy Bypass -File tools\retreat-phone-test.ps1
+#   powershell -ExecutionPolicy Bypass -File tools\retreat-phone-test.ps1 [-Only hover]
+# -Only <kind> (bot, vehicle, hover, amphibious, T2, squad): that kind's on and off rounds three times, each unit's
+# first 3 s after falling back logged (its order, the point reachable for it, its speed, the enemy's distance).
+param([string]$Only = "")
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
@@ -21,7 +24,8 @@ function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files
 & $adb shell am force-stop $pkg
 # (AUTO RETREAT as the player had it, put back after: the test turns it on and off, and a run that broke off left it off)
 $retreatWas = "$(InApp "cat $cfg/bardroid_retreat.txt 2>/dev/null")".Trim()
-InApp "rm -f files/bar/infolog.txt $cfg/bardroid_retreattest.txt"
+InApp "rm -f files/bar/infolog.txt $cfg/bardroid_retreattest.txt $cfg/bardroid_retreattest_only.txt"
+if ($Only) { InApp "echo $Only > $cfg/bardroid_retreattest_only.txt" }
 Send-AppFile $adb (Join-Path $PSScriptRoot "retreat-phone-test\bardroid_retreat_test.lua") $widget
 InApp "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg"   # (the log is late on a phone)
 try {
@@ -33,7 +37,7 @@ try {
   Log '\[retreattest\]|\[bardroid-retreat\] (commander|off|on)|bardroid_retreat.*[Ee]rror|Error in' 60 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
-  InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_retreattest.txt"
+  InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_retreattest.txt $cfg/bardroid_retreattest_only.txt"
   $put = if ($retreatWas -match '^on [01]$') { $retreatWas } else { "on 1" }
   InApp "echo '$put' > $cfg/bardroid_retreat.txt"
   & $adb shell am force-stop $pkg

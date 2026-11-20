@@ -27,6 +27,22 @@ local KINDS = {
 -- each kind twice: AUTO RETREAT on, then off, the same fight (does the retreat keep units alive? 5 of the first run's 8
 -- that fell back died anyway, chased down)
 local ROUNDS = #KINDS * 2
+-- (one kind only, LuaUI/Config/bardroid_retreattest_only.txt "hover": its on and off rounds three times, each unit
+-- that falls back followed for its first 3 s: the Skaters died with and without the retreat, 2026-11-20)
+local only
+local function onlyKind()
+	local fh = io.open("LuaUI/Config/bardroid_retreattest_only.txt", "r")
+	local s = fh and fh:read("*l")
+	if fh then
+		fh:close()
+	end
+	for _, k in ipairs(KINDS) do
+		if s and k[1] == s then
+			KINDS, ROUNDS = { k, k, k }, 6
+			return s
+		end
+	end
+end
 local roundKind -- this round's { name, def, on }
 local minHealth -- this round's lowest health share among mine
 local versus = {} -- kind -> { on = { n, alive, enemies, foes, minH }, off = ... }
@@ -113,7 +129,7 @@ local function watch(f)
 				if not w.fellAt then -- (the retreat's own word: a move order counted 14 where it gave 11)
 					local R = WG.BarDroidRetreat
 					if R and R.fell and R.fell(u) then
-						w.fellAt, w.fellX, w.fellZ = f, x, z
+						w.fellAt, w.fellX, w.fellZ, w.fellH = f, x, z, h / mh
 						s.fell = s.fell + 1
 						if not w.hurtAt then -- (above half: losing health fast, the retreat's DOOMED rule)
 							s.early = s.early + 1
@@ -128,6 +144,18 @@ local function watch(f)
 					w.went = math.sqrt((x - w.fellX) ^ 2 + (z - w.fellZ) ^ 2)
 					s.went = (s.went or 0) + w.went
 					s.wentN = (s.wentN or 0) + 1
+					if only then -- (and how: its order, the point reachable for it, its speed, the enemy's distance)
+						local c = (Spring.GetUnitCommands(u, 1) or {})[1]
+						local tx, tz = c and c.id == CMD.MOVE and c.params[1], c and c.id == CMD.MOVE and c.params[3]
+						local reach = tx and Spring.TestMoveOrder(Spring.GetUnitDefID(u), tx, Spring.GetGroundHeight(tx, tz), tz)
+						local vx, _, vz = Spring.GetUnitVelocity(u)
+						local _, ed = nearestEnemy(x, z)
+						Spring.Echo(string.format("[retreattest] (%s %d: fell back at %.0f %%, %.0f elmos in 3 s, %.0f elmos/s now, "
+							.. "%.0f %% health, the enemy %.0f away, its order %s%s)", w.kind, u, 100 * (w.fellH or 0), w.went,
+							vx and math.sqrt(vx * vx + vz * vz) * 30 or 0, 100 * h / mh, ed, c and tostring(c.id) or "none",
+							tx and string.format(" to %d,%d (%d away, reachable %s)", tx, tz, math.sqrt((tx - x) ^ 2 + (tz - z) ^ 2),
+								tostring(reach)) or ""))
+					end
 				end
 				if w.fellAt and not w.clearAt and f - w.fellAt <= 30 * 10 then -- (the T2 bot walks ~30 elmos a second)
 					local _, d = nearestEnemy(x, z)
@@ -166,6 +194,10 @@ function widget:GameFrame(f)
 			return
 		end
 		R.set(true)
+		only = onlyKind()
+		if only then
+			Spring.Echo("[retreattest] only " .. only .. ": its on and off rounds three times, each fall-back followed")
+		end
 		local hx, _, hz = Spring.GetTeamStartPosition(me)
 		home = { hx, hz }
 		Spring.SendCommands("cheat 1")
@@ -243,7 +275,11 @@ function widget:GameFrame(f)
 		end
 		local v = versus[roundKind.name] or {}
 		versus[roundKind.name] = v
-		v[roundKind.on and "on" or "off"] = { n = n, alive = alive, foes = foes, left = left, minH = minHealth or 1 }
+		local key = roundKind.on and "on" or "off"
+		local was = v[key] or { n = 0, alive = 0, foes = 0, left = 0, minH = 1 } -- (summed over -Only's repeats: the
+		-- last pair alone was shown, 2026-11-20)
+		v[key] = { n = was.n + n, alive = was.alive + alive, foes = was.foes + foes, left = was.left + left,
+			minH = math.min(was.minH, minHealth or 1) }
 		Spring.Echo(string.format("[retreattest] round %d over: %d of %d mine alive, %d of the enemy's %d left, lowest health "
 			.. "%.0f %%", round, alive, n, left, foes, 100 * (minHealth or 1)))
 		go("next", f)

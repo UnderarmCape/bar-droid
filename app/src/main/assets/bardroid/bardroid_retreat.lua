@@ -128,19 +128,24 @@ end
 -- the spot dist elmos out along (dx, dz), turned up to 90 degrees where the map's edge would cut that way short (a
 -- commander in a corner otherwise backs into the edge and stops there, its chasers on it)
 local TURNS = { 0, 30, -30, 60, -60, 90, -90 }
-local function openWay(x, z, dx, dz, dist)
+-- (and a spot the unit can stand on, Spring.TestMoveOrder: a Skater's way back once ended on ground no hover reaches,
+-- tools/retreat-phone-test.ps1 -Only hover, 2026-11-20; then the same turns at 60 % of the way; then as before)
+local function openWay(x, z, dx, dz, dist, defID)
 	local best, bx, bz
-	for _, a in ipairs(TURNS) do
-		local r = math.rad(a)
-		local cx, cz = dx * math.cos(r) - dz * math.sin(r), dx * math.sin(r) + dz * math.cos(r)
-		local tx, tz = x + cx * dist, z + cz * dist
-		local mx, mz = onMap(tx, tz)
-		local cut = math.sqrt((tx - mx) ^ 2 + (tz - mz) ^ 2)
-		if cut < dist * 0.15 then
-			return mx, mz
-		end
-		if not best or cut < best then
-			best, bx, bz = cut, mx, mz
+	for _, k in ipairs(defID and { 1, 0.6 } or { 1 }) do
+		for _, a in ipairs(TURNS) do
+			local r = math.rad(a)
+			local cx, cz = dx * math.cos(r) - dz * math.sin(r), dx * math.sin(r) + dz * math.cos(r)
+			local tx, tz = x + cx * dist * k, z + cz * dist * k
+			local mx, mz = onMap(tx, tz)
+			local cut = math.sqrt((tx - mx) ^ 2 + (tz - mz) ^ 2)
+			local stands = not defID or Spring.TestMoveOrder(defID, mx, Spring.GetGroundHeight(mx, mz), mz)
+			if cut < dist * k * 0.15 and stands then
+				return mx, mz
+			end
+			if k == 1 and (not best or cut < best) then
+				best, bx, bz = cut, mx, mz
+			end
 		end
 	end
 	return bx, bz
@@ -177,7 +182,7 @@ local function fallBack(u)
 	if dx == 0 and dz == 0 then
 		return
 	end
-	local tx, tz = openWay(x, z, dx, dz, FALLBACK)
+	local tx, tz = openWay(x, z, dx, dz, FALLBACK, spGetUnitDefID(u))
 	spGiveOrderToUnit(u, CMD.MOVE, { tx, Spring.GetGroundHeight(tx, tz), tz }, 0)
 	fell[u] = true
 	Spring.Echo(string.format("[bardroid-retreat] unit %d falls back", u)) -- (tools)
@@ -194,7 +199,7 @@ local function commanderRetreat(c, defID, ud)
 	end
 	local r = blast(defID, ud)
 	local go = math.max(FALLBACK, r + 200) -- (past its blast's reach from where it stood: the cover's spot)
-	local tx, tz = openWay(x, z, dx, dz, go)
+	local tx, tz = openWay(x, z, dx, dz, go, defID)
 	spGiveOrderToUnit(c, CMD.MOVE, { tx, Spring.GetGroundHeight(tx, tz), tz }, 0)
 	local cover, helpers = {}, 0
 	local near = Spring.GetUnitsInCylinder(x, z, COVER, myTeam) or {}
