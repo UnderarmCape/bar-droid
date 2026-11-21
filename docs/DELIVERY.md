@@ -464,7 +464,11 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       table's reader compares ids, so a missing one never matches. For BAR: docs/upstream/bar-notifications-missing-
       units.patch. remake-check PASS (2 blocks on test-32018); dev phone: the widget loads, "phone version of
       LuaUI/Widgets/snd_notifications.lua (LuaUI): 2 patches", no "Failed to load". A game with a unit taken out was not
-      staged (BAR's tweakdefs would have to remove it): the block is BAR's own idiom.
+      staged (BAR's tweakdefs would have to remove it): the block is BAR's own idiom. On the Fold7 2026-11-21 03:05
+      (eb319e7d's build; its log last at 01:20, BAR closed), github-sync -Release. Regression round (02:21-02:46, dev
+      phone, the build before these two): dock-phone-test upright and at 1080x1198, factory-preset-test,
+      types-phone-test, overgame-phone-test, touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test ALL
+      PASS.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
