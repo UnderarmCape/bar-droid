@@ -865,6 +865,11 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       Shift, Alt and active command): a building picked on the dock, a GRID held by a long press on the map (all three
       down, the build command active), then the keyboard's Escape (the command gone): HEAD's build kept all three down
       6 s later; this one had let go of them within 3 s.
+- [x] **Item 33: QUEUE's Shift kept when the keyboard's own lets go** (2026-11-21 18:15-18:36): after a keyboard's own
+      Shift, Alt or Ctrl is let go of (GameActivity.handleKey), RtsTouch.reassertKeys presses again what the touch
+      controls hold (a building's drag keys, QUEUE's Shift, QUEUE+INSERT's Alt unless a LINE's drag keeps it up). On the
+      dev phone upright (the same proof widget): QUEUE tapped on the dock (Shift down in the game), then a Shift key press
+      and release (input keyevent): HEAD's build had Shift up after it, QUEUE still lit; this one kept it down.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

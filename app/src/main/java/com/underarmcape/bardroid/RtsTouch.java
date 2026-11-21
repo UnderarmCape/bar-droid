@@ -1960,6 +1960,18 @@ final class RtsTouch {
         for (int k : keys) view().sendKeyEvent(0, k, true);
     }
 
+    /**
+     * A keyboard's own Shift, Alt or Ctrl let go of in X (GameActivity.handleKey): the keys this class holds pressed
+     * again. They share X's keys: the keyboard's Shift let go of QUEUE's, which stayed lit while orders replaced queues
+     * again (release overhaul audit, 2026-11-21). A LINE's drag under QUEUE+INSERT keeps Alt up (lineKeys).
+     */
+    void reassertKeys() {
+        for (int k : heldKeys) view().sendKeyEvent(0, k, true);
+        if (queueHeld) view().sendKeyEvent(0, KeyEvent.KEYCODE_SHIFT_LEFT, true);
+        // (with keys of a building's own held, QUEUE+INSERT's Alt is among them, or up for a LINE)
+        if (altHeld && heldKeys.length == 0) view().sendKeyEvent(0, KeyEvent.KEYCODE_ALT_LEFT, true);
+    }
+
     private void releaseKeys() {
         for (int i = heldKeys.length - 1; i >= 0; i--) view().sendKeyEvent(0, heldKeys[i], false);
         heldKeys = new int[0];

@@ -940,7 +940,11 @@ public class GameActivity extends MainActivity {
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
         e = uncancelled(e);
         boolean sent = super.handleKey(e);
-        if (sent && e.getAction() == KeyEvent.ACTION_UP) BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
+        if (sent && e.getAction() == KeyEvent.ACTION_UP) {
+            BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
+            // (the keyboard's Shift, Alt or Ctrl let go of the same key the touch controls hold: QUEUE's Shift)
+            if (touch != null && KeyEvent.isModifierKey(e.getKeyCode())) touch.reassertKeys();
+        }
         return sent;
     }
 
