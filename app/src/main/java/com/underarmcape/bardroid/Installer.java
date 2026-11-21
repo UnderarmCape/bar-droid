@@ -54,8 +54,15 @@ public final class Installer {
         state.setProperty(step, "done");
         save();
     }
+    // (whole or not at all: written in place, the launcher's read every 1.5 s during an install could find it cut and
+    // say "Not installed", and the app killed mid-write ran the done steps again, the container too; a temp file renamed
+    // over it, as Updater's state; release overhaul audit, 2026-11-21)
     private void save() throws IOException {
-        try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, "bardroid install state"); }
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        state.store(out, "bardroid install state");
+        File tmp = new File(p.stateFile.getPath() + ".tmp");
+        try (FileOutputStream o = new FileOutputStream(tmp)) { o.write(out.toByteArray()); }
+        Updater.replace(tmp, p.stateFile);
     }
     public boolean isDone(String step) { return "done".equals(state.getProperty(step)); }
     /**
@@ -73,7 +80,7 @@ public final class Installer {
         if (!isDone("mesa") || Prefs.mesaUrl.isEmpty()) return false;
         return !Prefs.mesaUrl.equals(state.getProperty("mesaUrl", Prefs.OLD_MESA_URLS[0]));
     }
-    public void reset(String step) throws IOException { state.remove(step); try (FileOutputStream out = new FileOutputStream(p.stateFile)) { state.store(out, ""); } }
+    public void reset(String step) throws IOException { state.remove(step); save(); }
     public void cancel() { cancelled = true; dl.cancel(); }
 
     /** Runs every step that is not done yet. Throws on failure with a readable message. */

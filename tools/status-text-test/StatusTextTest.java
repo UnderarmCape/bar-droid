@@ -263,6 +263,17 @@ public class StatusTextTest {
         failed += ok5 ? 0 : 1;
         System.out.println((ok5 ? "PASS " : "FAIL ") + "driver watch: refusal in a game, its widget silent 8 s: closed,"
                 + " once; not without the refusal, nor while loading, nor sooner");
+        // a refusal the game got past, the game then left for the lobby (the same engine, no hover file there): that
+        // game's watch ended closes nothing, the next game's fresh one is unarmed (audit 2026-11-21)
+        DriverWatch w6 = new DriverWatch();
+        boolean ok8 = !w6.onLine(refused) && w6.refused() && !w6.ended();
+        w6.end();
+        ok8 = ok8 && w6.ended() && !w6.stalled(true, 60000) && !w6.onLine(hung) && !w6.lost();
+        DriverWatch w7 = new DriverWatch();
+        ok8 = ok8 && !w7.refused() && !w7.stalled(true, 60000) && !w7.onLine(hung) && !w7.lost();
+        failed += ok8 ? 0 : 1;
+        System.out.println((ok8 ? "PASS " : "FAIL ") + "driver watch: a refusal, then the game left: its watch ended closes"
+                + " nothing (stall or watchdog), the next game's starts unarmed");
         // the pre-game screen's server: a join's line, the phone's own game, other lines (the dev phone's lines)
         String[][] pre = {
             { "13:39:47 [engine] [t=00:00:01.802620][f=-000001] [CPreGame] using client IP 198.51.100.7 and port 8452",

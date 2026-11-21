@@ -16,7 +16,7 @@ import java.util.Map;
  */
 public final class XServer {
     private final Paths p;
-    private Proc proc;
+    private volatile Proc proc;
 
     public XServer(Paths p) { this.p = p; }
 
@@ -93,8 +93,11 @@ public final class XServer {
         return socket().exists();
     }
 
+    // (read once: the stop thread, the worker's finally and onDestroy stop it within milliseconds of each other, and a
+    // null written between a check and its use threw on a thread with no catch; release overhaul audit, 2026-11-21)
     public void stop() {
-        if (proc != null) proc.kill();
+        Proc p0 = proc;
         proc = null;
+        if (p0 != null) p0.kill();
     }
 }

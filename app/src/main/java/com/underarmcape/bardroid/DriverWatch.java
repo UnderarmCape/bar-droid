@@ -14,7 +14,7 @@ public final class DriverWatch {
     static final String REFUSED = "Resource deadlock avoided";
     static final String HUNG = "Hang detection triggered";
 
-    private boolean refused, lost;
+    private boolean refused, lost, ended;
 
     // BAR's watchdog line as the engine logs it, "[t=...][f=...] Warning: [Watchdog] Hang detection triggered ...": the
     // words right after the log line's own prefix (or alone), never after a player's name in a chat line ("] <name>
@@ -37,7 +37,7 @@ public final class DriverWatch {
 
     /** One line of the engine's output; true once, at the line that shows the game is lost. */
     public synchronized boolean onLine(String line) {
-        if (lost || line == null) return false;
+        if (lost || ended || line == null) return false;
         if (!refused) {
             if (isRefusal(line)) refused = true;
             return false;
@@ -50,6 +50,14 @@ public final class DriverWatch {
     public synchronized boolean lost() { return lost; }
 
     /**
+     * The game it watched is over (left for the lobby, which runs in the same engine): it closes nothing from now on.
+     * A refusal the game got past stayed armed, and in the lobby, which writes no hover file, the stall watch closed it
+     * 8 s later as a driver fault (release overhaul audit, 2026-11-21). GameService starts a fresh one for the next game.
+     */
+    public synchronized void end() { ended = true; }
+    public synchronized boolean ended() { return ended; }
+
+    /**
      * Sooner than the watchdog (the player looked at a frozen, half-drawn picture for its 30 s; dev phone 2026-11-19,
      * a skirmish 25 s in): the refusal came while the game's own widget was answering (it writes its hover file at
      * least every 2 s), and that widget has now been silent STALL_MS: the main thread is stuck. A refusal while loading
@@ -57,7 +65,7 @@ public final class DriverWatch {
      */
     static final long STALL_MS = 8000;
     public synchronized boolean stalled(boolean widgetAtRefusal, long widgetSilentMs) {
-        if (lost || !refused || !widgetAtRefusal || widgetSilentMs < STALL_MS) return false;
+        if (lost || ended || !refused || !widgetAtRefusal || widgetSilentMs < STALL_MS) return false;
         lost = true;
         return true;
     }

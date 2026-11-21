@@ -424,6 +424,19 @@ From a second read-only audit (2026-11-21 07:45-08:10, each finding checked agai
    touch log are written in LuaUI/Config, which BAR's sandbox lets user widgets write: a user widget could make the app
    click or press keys; launch-bar.sh's GL check long press ("shell" mode) and .bardroid-display-scales in release
    builds; the launcher names the engine from dev-env.sh, which a release build ignores.
+From a third read-only audit, the Java side's lifecycle and threads (2026-11-21 10:00-10:25, each finding checked
+against the code before it is worked):
+12. MEDIUM: the GPU driver's watch lived as long as the engine, and in the lobby one engine runs the lobby and every
+   game started from it: a refusal a game got past stayed armed when that game was left, and the stall watch, seeing no
+   hover file in the lobby, closed the lobby 8 s later as a driver fault. LOW: launcher.log's clock (one
+   SimpleDateFormat used from several threads outside its lock: wrong times, rarely an exception on the main thread);
+   XServer, VirglServer and GameService's engine stopped from three threads at once, a field checked then used (a null
+   between them threw on a thread with no catch); the install state written in place (the launcher reading it every
+   1.5 s during an install could find it cut: "Not installed"; killed mid-write, the done steps ran again).
+   COSMETIC, noted, not worked (not reproducible on the phone without a live download to stop): Stop during a
+   skirmish's map download, the install or the X server's start left "No map ... check its name", "Install failed:
+   exit code 137" or "X server did not start" in place of "stopped". LOW, noted: the lobby bridge's stop() leaves its
+   accepted client sockets open (another app connected keeps its thread until it closes).
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
@@ -669,6 +682,26 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       app's: both stopped at "the game did not get to frame 300" while the game ran. pad-test now places it once
       launcher.log says the app's widgets went in as the game's (as the profiler's runner does); the release build's
       cleanup unchanged. Before: both failed; after: -Share and -Chat ALL PASS (09:49-09:52).
+- [x] **Item 12: the Java audit's four fixes** (2026-11-21 10:00-10:54): a read-only audit of the Java side's lifecycle
+      and threads (a subagent; each finding then read against the code). The GPU driver's watch (DriverWatch) is now one
+      a game: at a game's end ([SpringApp::Reload], back in the lobby's engine) the old one is ended (it closes nothing,
+      its stall thread stops) and a fresh one starts, with the watchdog's hang dump armed again; before, a refusal a game
+      got past stayed armed, and the stall watch closed the lobby 8 s later, the lobby writing no hover file.
+      status-text-test's new case (a refusal, the watch ended: no close by the stall or the watchdog; the next one
+      unarmed) ALL PASS with the rest; HEAD's class had no end, the refused watch's stall answer true at once (case ok5).
+      launcher.log's clock: a java.time formatter (thread-safe) for the SimpleDateFormat used outside the log's lock.
+      XServer, VirglServer and GameService's engine: the field read once before it is stopped (volatile). The install
+      state: written to a temp file and renamed over (Updater.replace), reset() through the same save. On the dev phone
+      (the APK with these): driverwatch-phone-test (its lobby and back-in-the-lobby lines), lobby-phone-test,
+      attack-ping-test twice and walls-phone-test ALL PASS; launcher.log's lines timed right. Noted, not worked (see the
+      list): Stop during a map download, the install or the X server's start leaves a failure note; the lobby bridge's
+      stop() leaves accepted sockets open.
+- [x] **Round B, 2026-11-21 09:58-10:54** (dev phone, HEAD 78d5f06a's code): camctl, replay, stats, settings, lobbychat,
+      buildbar ALL PASS; dgun-speed and retreat done. attack-ping-test failed once ("a light fight beside a busy one: its
+      own entry": 4 entries, none at the solar, 18 hits on it), then ALL PASS twice: 1 in 3, the case's timing (each unit
+      looked at once every 2 s, at most 4 a frame) against the busy fight; noted for after the release. walls-phone-test
+      did not finish once: the GPU driver's fault in its game (2 refusals in launcher.log, the game closed); again ALL
+      PASS.
 - [x] **Item 11 (the cheap ones): developer-only switches gated** (2026-11-21 08:50-08:58): the launcher's GL check long
       press (an hour of the X display, a wake lock and a black game screen: "shell" mode) and the game screen's
       .bardroid-display-scales file (the display hardware's scaling in place of SGSR) only in a developer's build; the

@@ -16,7 +16,7 @@ import java.util.Map;
 public final class VirglServer {
     public static final String GUEST_SOCKET = "/tmp/.virgl_test";
     private final Paths p;
-    private Proc proc;
+    private volatile Proc proc;
 
     public VirglServer(Paths p) { this.p = p; }
 
@@ -55,8 +55,9 @@ public final class VirglServer {
         return socket().exists();
     }
 
-    public void stop() {
-        if (proc != null) proc.kill();
+    public void stop() {   // (read once, as XServer.stop: several threads stop it at once)
+        Proc p0 = proc;
         proc = null;
+        if (p0 != null) p0.kill();
     }
 }

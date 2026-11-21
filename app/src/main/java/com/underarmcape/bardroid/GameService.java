@@ -37,7 +37,7 @@ public class GameService extends Service {
     private Paths paths;
     private XServer xserver;
     private VirglServer virgl;
-    private Proc engine;
+    private volatile Proc engine;
     private Installer installer;
     private volatile Updater updater;
     private PowerManager.WakeLock wakeLock;
@@ -286,7 +286,7 @@ public class GameService extends Service {
                 ? ": closing the game if its widget stays silent" : " (no game widget answering): BAR's watchdog decides"));
         if (!widget) return;
         Thread t = new Thread(() -> {
-            while (!driver.lost() && !Proc.enginePids().isEmpty()) {
+            while (!driver.lost() && !driver.ended() && !Proc.enginePids().isEmpty()) {
                 try { Thread.sleep(500); } catch (InterruptedException e) { return; }
                 if (driver.stalled(true, System.currentTimeMillis() - hover.lastModified())) {
                     driverLost = true;
@@ -494,7 +494,7 @@ public class GameService extends Service {
                         playingReplay = false;
                         recording = false;
                         inGame = false;
-                        DriverWatch driver = new DriverWatch();
+                        DriverWatch[] driver = { new DriverWatch() };   // (one a game: a fresh one at a game's end, below)
                         driverLost = false;
                         boolean[] hangLogged = {false}, stallWatched = {false};
                         engine = new Proc("engine").start(proot.command(env, cmd), proot.hostEnv(), paths.filesDir, line -> {
@@ -507,7 +507,7 @@ public class GameService extends Service {
                                 hangLogged[0] = true;
                                 // (after the driver's refusal this same line closes the game, below: read first, here,
                                 // or the threads are gone when read, every one "? | ? | ? | ?"; dev phone 2026-11-19)
-                                if (driver.refused()) HangDump.dump(); else HangDump.dumpAsync();
+                                if (driver[0].refused()) HangDump.dump(); else HangDump.dumpAsync();
                             }
                             // (a replay watched records nothing: the quit's status says no "saving the replay" then)
                             if (line.contains("ReadDataFromDemo")) playingReplay = true;
@@ -527,6 +527,12 @@ public class GameService extends Service {
                                 loading = false;
                                 loadReset(false);
                                 upSince = System.currentTimeMillis();
+                                // (the GPU driver's watch was that game's: a refusal it got past closed the lobby 8 s
+                                // later as a fault, the lobby writing no hover file; a fresh watch for the next game)
+                                driver[0].end();
+                                driver[0] = new DriverWatch();
+                                stallWatched[0] = false;
+                                hangLogged[0] = false;
                                 Log.i("svc", "the game ended: back in the lobby");
                                 refreshNotification();
                             }
@@ -580,15 +586,15 @@ public class GameService extends Service {
                             String mapFile = MapStore.usedIn(line);
                             if (mapFile != null) MapStore.markUsed(paths.bar, mapFile);
                             // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
-                            if (driver.onLine(line)) {
+                            if (driver[0].onLine(line)) {
                                 driverLost = true;
                                 Log.e("svc", "the GPU driver refused the game's graphics and the game stopped responding: closing it");
                                 Proc.killAll();
                             }
                             // (or sooner, the game's widget silent after the refusal: DriverWatch.stalled)
-                            if (!stallWatched[0] && driver.refused()) {
+                            if (!stallWatched[0] && driver[0].refused()) {
                                 stallWatched[0] = true;
-                                watchDriverStall(driver);
+                                watchDriverStall(driver[0]);
                             }
                         });
                         setStatus("running (" + mode + ")");
@@ -689,7 +695,8 @@ public class GameService extends Service {
     private void stopEverything(boolean say) {
         if (installer != null) installer.cancel();
         if (updater != null) updater.cancel();
-        if (engine != null) engine.kill();
+        Proc e = engine;   // (read once: the worker's finally sets it to null meanwhile; XServer.stop)
+        if (e != null) e.kill();
         Proc.killAll();          // container setup steps (proot) started by the installer
         xserver.stop();
         if (worker != null) worker.interrupt();

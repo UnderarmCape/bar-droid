@@ -3,10 +3,10 @@ package com.underarmcape.bardroid;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -21,7 +21,10 @@ public final class Log {
     private static final ArrayDeque<String> lines = new ArrayDeque<>();
     private static final List<Listener> listeners = new ArrayList<>();
     private static File file;
-    private static final SimpleDateFormat fmt = new SimpleDateFormat("HH:mm:ss", Locale.US);
+    // (thread-safe: line() formats outside the lock, from the engine's reader, the service and the pad at once; the
+    // SimpleDateFormat it replaced is not, and its shared calendar can throw; release overhaul audit, 2026-11-21)
+    private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("HH:mm:ss", Locale.US);
+    private static String now() { return LocalTime.now().format(fmt); }
 
     private static final long ROTATE_BYTES = 4L * 1024 * 1024;
     private static int sinceCheck;
@@ -57,7 +60,7 @@ public final class Log {
     /** For the shared logs only (launcher.log, logcat): not in the launcher's log box, where players read. */
     public static void detail(String tag, String msg) {
         android.util.Log.i("BarDroid/" + tag, msg);
-        synchronized (Log.class) { write(fmt.format(new Date()) + " [" + tag + "] " + msg); }
+        synchronized (Log.class) { write(now() + " [" + tag + "] " + msg); }
     }
 
     private static void write(String s) {
@@ -92,7 +95,7 @@ public final class Log {
 
     private static void line(String tag, String msg, boolean error) {
         if (!error && quiet(tag, msg)) { detail(tag, msg); return; }
-        String s = fmt.format(new Date()) + " [" + tag + "] " + msg;
+        String s = now() + " [" + tag + "] " + msg;
         if (error) android.util.Log.e("BarDroid/" + tag, msg); else android.util.Log.i("BarDroid/" + tag, msg);
         List<Listener> ls;
         synchronized (Log.class) {
