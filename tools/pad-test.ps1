@@ -51,7 +51,11 @@ function DriverFault { (FaultCount) -gt $faults0 }
 $testWidget = if ($Chat) { "bardroid_chat_voice_test.lua" } elseif ($Share) { "bardroid_pad_share_test.lua" } elseif ($Dgun) { "bardroid_pad_dgun_test.lua" } elseif ($Online) { "bardroid_pad_online_test.lua" } else { "bardroid_pad_test.lua" }
 $padScript = if ($Dgun) { "pad-dgun.evemu" } elseif ($Online) { "pad-online.evemu" } else { "pad.evemu" }
 function InApp([string]$script) { Invoke-AppScript $adb (Join-Path $PSScriptRoot "pad-test\$script") }
-Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
+# (-Share, -Chat: placed only once launch-bar.sh has moved the app's widgets in, below: its start empties bardroid-ui of
+# everything that is not the app's, release overhaul item 4)
+if (-not $gameDir) { Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget }
+function GameWidgetsCount { [int]("0" + ((& $adb exec-out run-as $pkg sh -c "grep -a -c the.app.s.widgets.as.the.game.s files/logs/launcher.log 2>/dev/null") | Select-Object -First 1)) }
+$gw0 = GameWidgetsCount
 & $adb push (Join-Path $PSScriptRoot "pad-test\$padScript") $evemu | Out-Null
 try {
   if ($Online) { InApp "online-on.sh" }
@@ -67,6 +71,12 @@ try {
   }
   Set-PhoneAwake $adb
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
+  if ($gameDir) {
+    $until = (Get-Date).AddMinutes(3)
+    while ((Get-Date) -lt $until -and (GameWidgetsCount) -le $gw0) { Start-Sleep 1 }
+    if ((GameWidgetsCount) -le $gw0) { throw "launch-bar.sh never put the app's widgets in as the game's (the phone engine's BarDroidGameWidgetsDir): the test widget has no place" }
+    Send-AppFile $adb (Join-Path $PSScriptRoot "pad-test\$testWidget") $widget
+  }
   $until = (Get-Date).AddMinutes(5)
   while ((Get-Date) -lt $until -and -not (Log '\[padtest\] ready' 1)) { Start-Sleep 3 }
   if (-not (Log '\[padtest\] ready' 1)) { throw "the game did not get to frame 300 in 5 minutes" }

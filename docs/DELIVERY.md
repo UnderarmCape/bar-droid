@@ -664,6 +664,11 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       NaN or an endless value is said as Lua says it), bardroid_pad.lua's giveTo with a
       kind it does not know (now nothing given), bardroid_chat.lua's wrap() at a zero or missing width (its loop never
       ended; now the line whole). pad-test, pad-test -Share and -Chat ALL PASS on it.
+- [x] **Item 4's follow-up: pad-test -Share and -Chat placed their widget too early** (2026-11-21 09:40-09:52): they put
+      their recorder in bardroid-ui before the game's start, which item 4's cleanup now empties of everything not the
+      app's: both stopped at "the game did not get to frame 300" while the game ran. pad-test now places it once
+      launcher.log says the app's widgets went in as the game's (as the profiler's runner does); the release build's
+      cleanup unchanged. Before: both failed; after: -Share and -Chat ALL PASS (09:49-09:52).
 - [x] **Item 11 (the cheap ones): developer-only switches gated** (2026-11-21 08:50-08:58): the launcher's GL check long
       press (an hour of the X display, a wake lock and a black game screen: "shell" mode) and the game screen's
       .bardroid-display-scales file (the display hardware's scaling in place of SGSR) only in a developer's build; the
