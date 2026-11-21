@@ -469,9 +469,9 @@ From a sixth read-only audit, the Updater's keep-or-roll-back (2026-11-21 14:35-
    the join; and any end without a game frame after two minutes kept the set as good (a crash while a skirmish loaded
    at 130 s kept a broken set to fall back to). LOW: a Stop before the start's updater existed (the first seconds,
    longer right after an app update) cancelled nothing, its check and downloads ran on after the service had gone.
-   Noted, not worked: a full phone (pr-downloader's exit 5: under 1 GB free) shows only "not everything updated, see
-   log", the reason in launcher.log alone; an engine archive 7z could not unpack for lack of space is blocked 12 h,
-   then downloaded again.
+22. LOW: a full phone (pr-downloader's exit 5: under 1 GB free) showed only "not everything updated, see log", the
+   reason in launcher.log alone; an engine archive 7z could not unpack for lack of space was blocked 12 h, then
+   downloaded again.
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -753,6 +753,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 22: a full phone says so** (2026-11-21 15:15-15:25): the update check's line reads "storage full: BAR needs
+      1 GB free to update" when pr-downloader stopped for space (exit 5) or the new engine could not be unpacked with
+      under 1 GB free; that engine is then not blocked for 12 hours (tried again at the next start). updater-test's
+      new case (pr-downloader ending 5 through the stand-in: the tag not updated, its package kept, the line naming
+      storage; any other failure "not everything updated, see log" as before) ALL PASS with the rest. On the dev phone
+      with it: lobby-phone-test, pad-test, factory-preset-test ALL PASS, the update's start lines as before (round B on
+      725bcba9 before it, 15:13-15:36: ALL PASS, no driver fault).
 - [x] **Item 21: the Updater's judgement of a first start** (2026-11-21 14:35-14:55): launchEnded rolls an update back
       only when the start failed before BAR's lobby or a game came up (the lobby's widgets loading in the run's
       infolog: Updater.lobbyRan), keeps the set on a clean end, a game frame, or a lobby that ran past the two-minute

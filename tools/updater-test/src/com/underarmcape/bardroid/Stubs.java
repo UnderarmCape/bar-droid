@@ -58,8 +58,9 @@ final class Proc {
         if (cmd.size() == 3 && cmd.get(0).endsWith("/rm") && cmd.get(1).equals("-rf")) delete(new File(cmd.get(2)));
         return 0;
     }
+    static int exit = 0;   // (what a started process ends with: pr-downloader's 5 for a full phone)
     Proc start(List<String> cmd, Map<String, String> env, File cwd, LineSink sink) throws IOException { return this; }
-    int waitFor() throws InterruptedException { return 0; }
+    int waitFor() throws InterruptedException { return exit; }
     private static void delete(File f) {
         File[] kids = f.listFiles();
         if (kids != null) for (File k : kids) delete(k);

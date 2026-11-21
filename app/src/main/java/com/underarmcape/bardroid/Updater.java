@@ -237,7 +237,7 @@ public final class Updater {
                         if (ok) engine = target[0];
                     }
                     for (String t : tags) { if (cancelled) throw new InterruptedException(); ok &= updateTag(t, remote.get(t), engine, st); }
-                    result = ok ? updatedNote(!engine.equals(engineBefore), before, localMd5s(tags)) : "not everything updated, see log";
+                    result = ok ? updatedNote(!engine.equals(engineBefore), before, localMd5s(tags)) : failedNote(diskFull);
                 }
             // (the launcher's status line after "Last check <date>": "BAR's launcher config not reachable: started what
             // is installed" wrapped over three lines on an upright phone, at every start away from a network; the
@@ -387,7 +387,10 @@ public final class Updater {
             state.remove(failKey);
         } catch (IOException e) {
             Log.e("update", "!!! engine " + ver + " not installed, staying on " + old + ": " + e.getMessage());
-            if (downloaded) state.setProperty(failKey, System.currentTimeMillis() + "," + appInstalled());
+            // (no room to unpack it is not the archive's fault: not blocked for ENGINE_RETRY_MS, tried again at the next
+            // start, and the launcher's line says why; release overhaul audit, 2026-11-21)
+            if (downloaded && p.bar.getUsableSpace() < LOW_SPACE) diskFull = true;
+            else if (downloaded) state.setProperty(failKey, System.currentTimeMillis() + "," + appInstalled());
             removeTree(tmp);
             // A whole but damaged archive would otherwise be taken as downloaded at every later try (a .part resumes)
             if (z.isFile()) //noinspection ResultOfMethodCallIgnored
@@ -504,8 +507,20 @@ public final class Updater {
         return u != null ? u : "https://repos-cdn.beyondallreason.dev/" + repo;
     }
 
+    /**
+     * The check's line when something did not update: the phone's storage named when that was why (pr-downloader's
+     * exit 5: it wants the download and 1 GB free; before, "not everything updated, see log" alone, the reason in
+     * launcher.log; release overhaul audit, 2026-11-21).
+     */
+    static String failedNote(boolean diskFull) {
+        return diskFull ? "storage full: BAR needs 1 GB free to update" : "not everything updated, see log";
+    }
+    static final long LOW_SPACE = 1L << 30;
+    private boolean diskFull;
+    boolean diskFull() { return diskFull; }
+
     /** pr-downloader on one tag (only missing files); the tag keeps its old package if the download fails (false). */
-    private boolean updateTag(String tag, String remote, String engine, Status st) throws InterruptedException {
+    boolean updateTag(String tag, String remote, String engine, Status st) throws InterruptedException {
         String[] before = local(tag);
         if (remote != null && before != null && remote.equals(before[0]) && sdp(before[0]).exists()) {
             Log.i("update", tag + " is up to date (" + before[1] + ")");
@@ -532,6 +547,7 @@ public final class Updater {
         } catch (IOException e) { Log.e("update", "!!! " + tag + ": " + e); rc = -1; }
         String[] after = local(tag);
         if (rc != 0 || after == null || !sdp(after[0]).exists()) {
+            if (rc == 5) diskFull = true;
             String why = rc == 5 ? "disk too full" : rc != 0 ? "pr-downloader failed (exit " + rc + ")" : "package not complete";
             Log.e("update", "!!! " + tag + ": " + why + "; keeping " + (before != null ? before[1] : "nothing"));
             restore(repo, preDir);

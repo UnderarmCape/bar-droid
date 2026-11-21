@@ -169,6 +169,18 @@ public final class UpdaterTest {
         r = new Updater(p).launchEnded(139, 180_000);
         check("the lobby up 3 minutes, then a crash: kept", r == Updater.Result.PROMOTED && "B".equals(state(p).getProperty("good.engine")));
 
+        // a full phone: pr-downloader's exit 5 (it wants the download and 1 GB free): the tag keeps its package, the
+        // check's line says storage, not "see log" (release overhaul audit, 2026-11-21)
+        p = setup("diskfull", false, NO_FRAME);
+        Proc.exit = 5;
+        Updater full = new Updater(p);
+        boolean updated = full.updateTag("byar:test", MD5_B, "A", d -> {});
+        Proc.exit = 0;
+        check("pr-downloader's exit 5: not updated, the package kept",
+                !updated && MD5_A.equals(tagMd5(new File(p.bar, "rapid/" + HOST + "/byar/versions.gz"))));
+        check("  the check's line says storage", full.diskFull() && Updater.failedNote(full.diskFull()).startsWith("storage full"));
+        check("  another failure: as before", "not everything updated, see log".equals(Updater.failedNote(false)));
+
         // the player closed the game (Stop, or swiped away): closedByPlayer keeps a set that ran, judges a short one later
         p = setup("closedlong", true, NO_FRAME);
         new Updater(p).closedByPlayer(140_000);
