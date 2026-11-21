@@ -87,9 +87,11 @@ try {
     Start-Sleep -Milliseconds 400
   }
   Start-Sleep 2; Collect
-  if (-not ($lines | Where-Object { $_ -match '\[overgame\] game done' })) { "[overgame] FAIL the test did not finish" }
+  # (counted in the summary: it said "ALL PASS" under this line while the lobby never opened, 2026-11-21)
+  $unfinished = -not ($lines | Where-Object { $_ -match '\[overgame\] game done' })
+  if ($unfinished) { "[overgame] FAIL the test did not finish" }
   $lines
-  $fails = @($lines | Where-Object { $_ -match '\[overgame\] FAIL' }).Count
+  $fails = @($lines | Where-Object { $_ -match '\[overgame\] FAIL' }).Count + [int]$unfinished
   "[overgame] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"
 } finally {
   & $adb shell am force-stop $pkg
