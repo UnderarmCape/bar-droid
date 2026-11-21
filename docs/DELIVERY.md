@@ -411,7 +411,15 @@ private one's latest-build pre-release is a debug APK with his icon); the releas
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
 which "his test pending" items must pass on his Fold7 first; the launcher's developer controls (hide in release
 builds?), the Benchmark button, the emulator build, the late-game resolution drop; Releasing step 1's laptop-tests
-(BAR on the laptop is off limits).
+(BAR on the laptop is off limits); the laptop-only tools built on the retired controller game (tools/profile-gamepad-
+game.ps1, tools/build-gamepad-game.py, profile-benchmark.ps1's overlay and its "$VERSION" game, touch-widget-test.ps1's
+and ui-screenshot.ps1's -GamepadGame, laptop-tests.ps1's controller run): left as they are (none can be run here to test
+an edit), out before the repository goes public?
+Item 7's per-frame costs (the info panel hidden but working, the lobby widget during games, camctl's file text built
+each frame, retreat's building hits, unit-ID tables never cleared, log floods) wait for a measurement on the dev phone:
+tools/profile/dbg_bardroid_profile_log.lua (BAR's widget profiler module, every widget's time and garbage to infolog)
+needs BAR's own widget handler, so it goes in as a game widget, put in bardroid-ui after launch-bar.sh's start (item 6's
+stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brightness, which this loop does not.
 - [x] **The developer hooks only in a developer's build** (2026-11-21 01:40-01:43): launch-bar.sh ran
       `$BAR/dev-env.sh` as a shell script and added `dev-springsettings.cfg` at every start, in any build, and `$BAR` is
       the engine's write folder, which BAR's Lua can write (a user widget's io.open): in a public build a widget could
