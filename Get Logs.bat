@@ -32,7 +32,6 @@ adb exec-out run-as %PKG% sh -c "cat files/logs/launcher.old.log 2>/dev/null" > 
 adb exec-out run-as %PKG% cat files/bar/infolog.txt > "%OUT%\infolog.txt"
 adb exec-out run-as %PKG% cat files/install-state.properties > "%OUT%\install-state.properties"
 adb exec-out run-as %PKG% sh -c "cat files/bar/logs/glcheck-*.txt" > "%OUT%\glcheck.txt"
-adb exec-out run-as %PKG% sh -c "cat files/rootfs/tmp/pulse/pulse.log" > "%OUT%\pulse.log"
 adb logcat -d -s BarDroid/app BarDroid/svc BarDroid/install BarDroid/x11 BarDroid/engine BarDroid/rootfs LorieNative CmdEntryPoint AndroidRuntime > "%OUT%\logcat.txt"
 echo.
 echo  Saved to %OUT%

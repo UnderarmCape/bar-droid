@@ -43,7 +43,7 @@ export PRD_RAPID_REPO_MASTER="https://repos-cdn.beyondallreason.dev/repos.gz"
 export PRD_HTTP_SEARCH_URL="https://files-cdn.beyondallreason.dev/find"
 export PRD_RAPID_USE_STREAMER=false
 export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
-# AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see arm64-ai-fix/README.md).
+# AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see docs/arm64-ai-fix.md).
 [ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
 # Frame cap: sleeps after each buffer swap to BARDROID_FPS (from the app's 30/60 fps setting; 0 = none), and the
 # hidden window (screen off, catching up). The emulator build's x86_64 copy (no cap, no Present-fence answer).
@@ -70,8 +70,7 @@ log "X socket present"
 # 2. Audio: the engine's OpenAL Soft writes the mixed sound (a WAV header, then raw PCM) into a FIFO that the app
 #    plays through AudioTrack (springsettings: UseSDLAudio = 0). OpenAL's mixer thread paces itself by the clock and
 #    catches up after a stall, so a busy CPU only delays sound. (SDL + PulseAudio's pipe sink cut a hole into the
-#    sound every time the engine's audio callback was late.)
-pulseaudio --kill >/dev/null 2>&1 || true   # left over from an older BAR Droid
+#    sound every time the engine's audio callback was late; setup-container.sh's slim step purges PulseAudio.)
 if [ "${BARDROID_AUDIO:-1}" = "1" ]; then
   [ -p /tmp/bardroid-audio.fifo ] || mkfifo /tmp/bardroid-audio.fifo 2>/dev/null || true
   # (resampler linear: the sounds' rates to 48 kHz the cheapest smooth way; the default's longer filter cost the mixer

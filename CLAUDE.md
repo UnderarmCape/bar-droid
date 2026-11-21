@@ -224,7 +224,7 @@ newcomer's version of this section. APKs land in `apk\` beside the toolchain fol
 "Build APK.bat"                               # emulator build (x86_64);  "Build APK.bat phone" = arm64
 "Install on Phone.bat"                        # the phone build onto the adb-connected phone ("Pair Phone.bat": wireless)
 "Run in Emulator.bat" [-no-audio|-wipe-data]  # AVD bardroid-x86_64: boot, install, open
-"Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, pulse.log, logcat -> logs\
+"Get Logs.bat" [phone]                        # launcher.log, infolog.txt, glcheck, logcat -> logs\
 powershell -ExecutionPolicy Bypass -File tools\laptop-tests.ps1   # every laptop check, ~5 min (BAR install read only)
 powershell -ExecutionPolicy Bypass -File tools\pace-test.ps1      # the pace library's window events, on the phone
 powershell -ExecutionPolicy Bypass -File tools\pad-test.ps1 [-Online|-Dgun|-Share|-Chat]   # the app's gamepad controls with no gamepad: a virtual Xbox pad on the dev phone, ~2 min; -Online: BAR's released game with user widgets' orders forbidden, as a host can; -Dgun: the same game, v0.8.5's D-gun mode (LB + RB + R3) through the app's clicks and the share list's chord; -Share: the share list's units / metal / energy (the AI's team as a stand-in teammate, BAR's share recorded), screenshots in build\pad-share-*.png; -Chat: what speak to chat sends (BAR's chat sends recorded, no pad)

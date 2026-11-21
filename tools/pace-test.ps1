@@ -17,7 +17,7 @@ foreach ($pair in @(@("pace.c", "libbardroid_pace.so"), @("pace_test.c", "pace_t
     -o (Join-Path $Out $pair[1]) (Join-Path $PSScriptRoot "pace\$($pair[0])")
   if ($LASTEXITCODE -ne 0) { throw "clang failed on $($pair[0])" }
 }
-if ($Shipped) { Copy-Item (Join-Path $App "app\src\main\assets\bardroid\libbardroid_pace.so") (Join-Path $Out "libbardroid_pace.so") -Force }
+if ($Shipped) { Copy-Item (Join-Path $App "app\src\abi-arm64-v8a\assets\bardroid\libbardroid_pace.so") (Join-Path $Out "libbardroid_pace.so") -Force }
 
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"

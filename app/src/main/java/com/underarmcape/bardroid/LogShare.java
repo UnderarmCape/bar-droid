@@ -95,7 +95,6 @@ final class LogShare {
             add(out, p.stateFile, "install-state.properties");
             // (the updater's own: the BAR versions kept off as failed, the last check, the engine's missed settings)
             add(out, new File(p.filesDir, "update/state.properties"), "update-state.properties");
-            add(out, new File(p.rootfsTmp, "pulse/pulse.log"), "pulse.log");
             File[] engineLogs = new File(p.bar, "logs").listFiles();
             File info = new File(p.bar, "infolog.txt");
             // (the last game's copy, launch-bar.sh's at its end, is infolog.txt itself until the next engine starts: the

@@ -1,5 +1,6 @@
-"""Builds app/src/main/assets/bardroid/libbardroid_pace.so (the engine's frame cap and hidden-window events,
-tools/pace/pace.c) for the phone build, and libbardroid_pace-x86_64.so for the emulator build: glibc shared libraries
+"""Builds app/src/abi-arm64-v8a/assets/bardroid/libbardroid_pace.so (the engine's frame cap and hidden-window events,
+tools/pace/pace.c) for the phone build, and app/src/abi-x86_64/assets/bardroid/libbardroid_pace-x86_64.so for the
+emulator build: glibc shared libraries
 made with the NDK's clang, no sysroot (pace.c declares what it uses).
 
   python -I tools/build-pace.py
@@ -14,10 +15,12 @@ if not NDK:
     sys.exit("no NDK under toolchain/android-sdk/ndk")
 CLANG = os.path.join(sorted(NDK)[-1], "toolchains", "llvm", "prebuilt", "windows-x86_64", "bin", "clang.exe")
 SRC = os.path.join(HERE, "pace", "pace.c")
-ASSETS = os.path.join(HERE, "..", "app", "src", "main", "assets", "bardroid")
+# (each ABI's in its own assets folder, which only that ABI's build packs: app/build.gradle)
+ASSETS = {"aarch64-linux-gnu": os.path.join(HERE, "..", "app", "src", "abi-arm64-v8a", "assets", "bardroid"),
+          "x86_64-linux-gnu": os.path.join(HERE, "..", "app", "src", "abi-x86_64", "assets", "bardroid")}
 
 for target, name in (("aarch64-linux-gnu", "libbardroid_pace.so"), ("x86_64-linux-gnu", "libbardroid_pace-x86_64.so")):
-    out = os.path.join(ASSETS, name)
+    out = os.path.join(ASSETS[target], name)
     subprocess.run([CLANG, "--target=" + target, "-O2", "-fPIC", "-shared", "-nostdlib", "-fuse-ld=lld",
                     "-ffreestanding", "-fno-stack-protector", "-Wall", "-Wextra",
                     "-Wl,--hash-style=gnu,--build-id=none,-soname,libbardroid_pace.so,-z,noexecstack",

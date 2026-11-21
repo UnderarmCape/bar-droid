@@ -54,8 +54,6 @@ public final class Prefs {
     public static boolean noSeccomp = false;
     public static boolean verboseX = false;
     public static boolean audio = true;
-    public static String aiName = "BARb";
-    public static String aiDifficulty = "Normal";
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
     /** The game upright: the portrait dock for touch (Kailil, 2026-11-09; bardroid_portrait.lua, RtsTouch's pad). */
@@ -229,8 +227,6 @@ public final class Prefs {
         if (mapCapMb != 0 && mapCapMb != 3072 && mapCapMb != 5120) {
             mapCapMb = MAP_CAP_DEFAULT_MB;
         }
-        aiName = s.getString("aiName", aiName);
-        aiDifficulty = s.getString("aiDifficulty", aiDifficulty);
     }
 
     public static void save(Context ctx) {
@@ -269,8 +265,7 @@ public final class Prefs {
                 .putBoolean("upscaleCompareOn", upscaleCompare)
                 .putBoolean("lateDrop", lateDrop)
                 .putInt("mapCapMb", mapCapMb)
-                .putString("aiName", aiName)
-                .putString("aiDifficulty", aiDifficulty)
+                .remove("aiName").remove("aiDifficulty")   // (stored, never used: the skirmish's AI is BARb, Installer)
                 .apply();
     }
 

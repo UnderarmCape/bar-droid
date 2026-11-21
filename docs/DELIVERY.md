@@ -544,6 +544,27 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       types-phone-test, overgame-phone-test, driverwatch-phone-test (x11-probe in its game: abstract names "no
       listener", the path socket accepted), touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test
       ALL PASS; no driver refusal. The Fold7 still unreachable (04:03, 04:31).
+- [x] **Item 7a: the phone APK 2.1 MB smaller** (2026-11-21 04:52-05:20): Material Components (com.google.android.
+      material 1.12.0, from the first import) went: nothing in the app or Termux:X11 used it, the themes are AppCompat's
+      (Theme.AppCompat.*, LorieAppTheme). The VIBRATE permission went: the touch feedback is View.performHapticFeedback,
+      which needs none. Each build packs only its own ABI's frame pacer (app/src/abi-<abi>/assets, app/build.gradle;
+      tools/build-pace.py writes there, byte for byte the same libraries; pace-test.ps1 reads there): the phone APK had
+      the emulator's libbardroid_pace-x86_64.so too. And arm64-ai-fix-README.md, documentation nothing reads, moved out of
+      the APK's assets to docs/arm64-ai-fix.md. The phone APK 31,670,871 -> 29,540,479 bytes (classes.dex compressed
+      4.65 -> 3.77 MB, resources.arsc 1.15 -> 0.40 MB). Kept: WRITE_SECURE_SETTINGS (Termux:X11's KeyInterceptor
+      fallback uses it). Dev phone on the new build: VIBRATE no longer requested; the launcher, Termux:X11's Display &
+      touch preferences, its Output page and a list dialog look as before, no crash; dock-phone-test (real taps, the
+      touch feedback) ALL PASS with no SecurityException; sound in its game ("[audio] stream 48000 Hz").
+- [x] **Item 7b: retired settings and PulseAudio's leftovers** (2026-11-21 05:00-05:20): Prefs.aiName and aiDifficulty
+      were loaded and saved but read by nothing (the skirmish's AI is BARb, Installer's start script); the save now
+      drops the stored keys. launch-bar.sh ran `pulseaudio --kill` at every start, though setup-container.sh's slim step
+      purges PulseAudio (not in the dev phone's container: a command looked up and not found each start); LogShare and
+      Get Logs.bat still collected a pulse.log nothing writes. All three gone. Dev phone: the two AI keys in
+      bardroid.xml before, none after the launcher's save; games start and play sound (the same run as 7a).
+      Regression round (04:50-05:13, HEAD's build before 7a): attack-ping-test, walls-phone-test, camctl-phone-test,
+      replay-phone-test, stats-phone-test, settings-phone-test, lobbychat-phone-test, buildbar-phone-test ALL PASS;
+      dgun-speed-test done; retreat-phone-test on 10/14 alive against off 6/14; no driver refusal. The Fold7 still
+      unreachable (04:50).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

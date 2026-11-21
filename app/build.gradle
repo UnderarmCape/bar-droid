@@ -90,6 +90,10 @@ android {
         sourceSets.main.assets.srcDir(phoneEngine)
     }
 
+    // Each build carries its own ABI's frame pacer (tools/build-pace.py: libbardroid_pace.so for arm64,
+    // libbardroid_pace-x86_64.so for the emulator), not the other's too (the release audit, 2026-11-21)
+    sourceSets.main.assets.srcDir("src/abi-${rootProject.ext.bardroidAbi}/assets")
+
     compileOptions.sourceCompatibility = JavaVersion.VERSION_17
     compileOptions.targetCompatibility = JavaVersion.VERSION_17
     buildFeatures.buildConfig = true
@@ -111,5 +115,5 @@ dependencies {
     implementation project(':lorie')
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.preference:preference:1.2.1'
-    implementation 'com.google.android.material:material:1.12.0'
+    // (Material Components went 2026-11-21: nothing in the app or Termux:X11 used it; the themes are AppCompat's)
 }

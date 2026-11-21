@@ -9,7 +9,7 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- (no VIBRATE: the touch feedback is View.performHapticFeedback, which needs none; 2026-11-21) -->
     <!-- Android 16.1+ keyboard capture (KeyboardShortcuts): the system's shortcuts reach the focused game screen. A normal
          permission, granted at install; older Android does not know it. -->
     <uses-permission android:name="android.permission.CAPTURE_KEYBOARD" tools:ignore="ProtectedPermissions" />
