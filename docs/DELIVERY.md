@@ -859,6 +859,12 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       the internal display per dumpsys input), a second finger down on the map off the box's line, the box's finger
       lifted first: HEAD's picked nothing (the box ended at the other finger), this one the commander. (A first run put
       the other finger on BAR's top bar and showed nothing; moved onto the map.)
+- [x] **Item 32: a GRID let go of when its building goes another way** (2026-11-21 18:10-18:36): GameActivity's 500 ms
+      look asks RtsTouch.gridCheck, which lets go of a held GRID's left button, Shift and Alt once the game's place file
+      (fresh) names no building. On the dev phone upright (a temporary proof widget logging the game's left button,
+      Shift, Alt and active command): a building picked on the dock, a GRID held by a long press on the map (all three
+      down, the build command active), then the keyboard's Escape (the command gone): HEAD's build kept all three down
+      6 s later; this one had let go of them within 3 s.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

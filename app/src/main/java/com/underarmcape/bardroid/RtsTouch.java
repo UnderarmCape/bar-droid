@@ -1803,6 +1803,16 @@ final class RtsTouch {
         v.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY);
     }
 
+    /**
+     * A GRID held while its building went some other way (the keyboard's Escape, the dock's Back, the pad, the game):
+     * its button and keys let go of (GameActivity's 500 ms look). Only a finger coming down on the map looked before,
+     * and one on the dock in pad mode or on the camera knob did not: meanwhile a mouse move was a drag and every key a
+     * Shift+Alt one (release overhaul audit, 2026-11-21).
+     */
+    void gridCheck() {
+        if (gridHeld && placeGone()) gridLetGo();
+    }
+
     /** Lets go of everything (the building went, the app closes). */
     private void gridLetGo() {
         if (!gridHeld) return;

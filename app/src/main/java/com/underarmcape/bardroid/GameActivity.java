@@ -453,7 +453,10 @@ public class GameActivity extends MainActivity {
             updateLoadBar();
             updateLowRamLine();
             updateRenderDrop();
-            if (touch != null) touch.updateGestureExclusion();
+            if (touch != null) {
+                touch.updateGestureExclusion();
+                touch.gridCheck();   // (a GRID whose building went another way: let go)
+            }
             catchupHandler.postDelayed(this, 500);
         }
     };
