@@ -777,6 +777,7 @@ public class GameService extends Service {
         String found = null;
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(new java.io.File(paths.bar, "infolog.txt")))) {
             for (String l; (l = r.readLine()) != null; ) {
+                if (StatusText.isChat(l)) continue;   // (anyone's words with the engine's fatal line in them: not BAR's message)
                 if (l.contains("[ExitSpringProcess] errorMsg=\"")) {
                     StringBuilder all = new StringBuilder(l);
                     for (int n = 0; n < 20 && all.indexOf("\" msgCaption=") < 0; n++) {

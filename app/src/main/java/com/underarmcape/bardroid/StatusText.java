@@ -184,17 +184,33 @@ final class StatusText {
     // 127.0.0.1 and port 0"; dev phone, a client script to an address nothing answers, 2026-11-11)
     private static final String[] PREGAME_LINES = { "[CPreGame] using client IP ", "[CPreGame] using server IP " };
 
-    // a player's chat in the engine's log: "[t=00:00:51.170276][f=0000241] <Phone> words" (a name in angle brackets right
-    // after the log line's own prefix; to allies or spectators too, "<Phone> Allies: ...")
-    private static final java.util.regex.Pattern CHAT = java.util.regex.Pattern.compile("\\]\\[f=-?\\d+\\] <[^<>\\s][^<>]*> ");
+    // the engine log's own prefix, "[t=00:00:51.170276][f=0000241] "
+    private static final java.util.regex.Pattern LOG_PREFIX = java.util.regex.Pattern.compile("\\[t=[^\\]]*\\]\\[f=-?\\d+\\] ");
+    // the shapes others' words take right after it (Recoil's Game.cpp chat labels, InMapDraw.cpp's ping lines): a player's
+    // "<name> " (to allies or spectators too, "<name> Allies: ..."), a spectator's "[name] " or "[name (replay)] ", a line
+    // with no sender (the host's, repeating players' votes word for word) "> ", a map ping's label "name added point: ".
+    // Names have no spaces and no "::"; clan tags are allowed ("[Crd]Name")
+    private static final java.util.regex.Pattern CHAT_BODY = java.util.regex.Pattern.compile(
+            "^(<[^<>\\s][^<>]*> |\\[[A-Za-z0-9_\\[\\]]+(?: \\(replay\\))?\\] |> |\\S+ added point: )");
+    // (the engine's own sections without "::" the app reads: GameService's join, lobby and loading lines, the fatal message;
+    // every other line it reads has "::" in its section, starts "[~", or starts with words. A spectator by one of these
+    // names is not taken for chat: the price of reading the engine's own lines)
+    private static final java.util.Set<String> ENGINE_SECTIONS = new java.util.HashSet<>(java.util.Arrays.asList(
+            "[CPreGame] ", "[LuaMenu] ", "[LoadFinalize] ", "[ExitSpringProcess] "));
 
     /**
-     * A player's chat line, never one of the engine's own lines the app reads its state from: typed in a game, "[SpringApp::
-     * Reload]" ended it in the app's eyes, "[CPreGame] using client IP ..." made it a join and "creating LoadScreen" a load
-     * (dev phone, a skirmish, 2026-11-20); online any player's words reach every phone's log.
+     * Words another player, a spectator or the host put in the engine's log, never one of the engine's own lines the app
+     * reads its state from: typed in a game, "[SpringApp::Reload]" ended it in the app's eyes, "[CPreGame] using client IP
+     * ..." made it a join and "creating LoadScreen" a load (dev phone, a skirmish, 2026-11-20); online anyone's words reach
+     * every phone's log. A spectator's chat, the host's lines and ping labels got past the first version of this (the
+     * release audit, 2026-11-21).
      */
     static boolean isChat(String line) {
-        return line != null && CHAT.matcher(line).find();
+        if (line == null) return false;
+        java.util.regex.Matcher p = LOG_PREFIX.matcher(line);
+        if (!p.find()) return false;   // (no log prefix: the engine's own stderr, Mesa's lines among it)
+        java.util.regex.Matcher m = CHAT_BODY.matcher(line.substring(p.end()));
+        return m.find() && !ENGINE_SECTIONS.contains(m.group(1));
     }
 
     /**

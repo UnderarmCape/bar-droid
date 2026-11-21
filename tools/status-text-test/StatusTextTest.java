@@ -213,10 +213,12 @@ public class StatusTextTest {
         DriverWatch w5 = new DriverWatch();
         boolean ok7 = !w5.onLine(refused) && w5.refused()
                 && !w5.onLine("[t=00:01:40.0][f=0000700] <Bob> Warning: [Watchdog] Hang detection triggered for Spring main thread.")
+                && !w5.onLine("[t=00:01:40.0][f=0000700] [Spec] Warning: [Watchdog] Hang detection triggered for Spring main thread.")
+                && !w5.onLine("[t=00:01:40.0][f=0000700] > Warning: [Watchdog] Hang detection triggered for Spring main thread.")
                 && !w5.lost() && w5.onLine(hung) && w5.lost();
         failed += ok7 ? 0 : 1;
-        System.out.println((ok7 ? "PASS " : "FAIL ") + "driver watch: after a refusal, the watchdog's words in chat close nothing,"
-                + " the watchdog's own line does");
+        System.out.println((ok7 ? "PASS " : "FAIL ") + "driver watch: after a refusal, the watchdog's words in chat (a player's,"
+                + " a spectator's, the host's) close nothing, the watchdog's own line does");
         // a player's chat line is told from the engine's own (the dev phone's lines, 2026-11-20)
         String[][] chat = {
             { "[t=00:00:51.170276][f=0000241] <Phone> [SpringApp::Reload] test", "true" },
@@ -226,6 +228,25 @@ public class StatusTextTest {
             { "[t=00:00:02.032345][f=-000001] [CPreGame] using server IP 127.0.0.1 and port 0", "false" },
             { "MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)", "false" },
             { "[t=00:00:52.263293][f=0000210] Warning: [Watchdog] Hang detection triggered for Spring main thread.", "false" },
+            // (a spectator's chat, the host's lines and ping labels: Recoil's Game.cpp and InMapDraw.cpp, 2026-11-21)
+            { "[t=00:01:00.0][f=0000300] [Spec] [SpringApp::Reload] test", "true" },
+            { "[t=00:01:00.0][f=0000300] [[Crd]Spec] Warning: [Watchdog] Hang detection triggered for Spring main thread.", "true" },
+            { "[t=00:01:00.0][f=0000300] [Bob (replay)] creating LoadScreen", "true" },
+            { "[t=00:01:00.0][f=0000300] [Spec] Allies: End of demo reached", "true" },
+            { "[t=00:05:04.446601][f=-000001] > Host[EU6][006] * Warning: in-game IP address does not match", "true" },
+            { "[t=00:05:04.4][f=0000900] > [CPreGame] using client IP 203.0.113.7 and port 8452", "true" },
+            { "[t=00:09:28.210327][f=0003765] AKM added point: creating LoadScreen", "true" },
+            // (the engine's own lines the app reads stay its own)
+            { "[t=00:00:02.0][f=-000001] [CPreGame] using client IP 203.0.113.7 and port 8452", "false" },
+            { "[t=00:00:03.4][f=-000001] [LuaMenu] Loading widget:      BAR Droid lobby touch  <bardroid_lobby_touch.lua>", "false" },
+            { "[t=00:00:40.0][f=-000001] [LoadFinalize] finalizing PFS", "false" },
+            { "[t=00:01:20.7][f=-000001] [SpringApp::Reload][10]", "false" },
+            { "[t=00:01:22.1][f=-000001] [PreGame::GameDataReceived] recording demo to \"demos/x.sdfz\"", "false" },
+            { "[t=00:01:22.1][f=-000001] [~ScopedOnceTimer][PreGame::ReadDataFromDemo] 71ms", "false" },
+            { "[t=00:00:54.0][f=-000001] Player Phone finished loading and is now ingame", "false" },
+            { "[t=00:01:28.9][f=0000922] Phone paused the game", "false" },
+            { "[t=00:00:57.9][f=-000001] Fatal: [ExitSpringProcess] errorMsg=\"x\" msgCaption=\"y\"", "false" },
+            { "[t=00:01:21.1][f=-000001] [CAS::GASCB] Archive file=\"speedmetal_bar_v2.sd7\" cs=\"8ce9\"", "false" },
             { null, "false" },
         };
         for (String[] c : chat) {

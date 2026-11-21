@@ -46,6 +46,11 @@ function widget:Update(dt)
 		end
 		Spring.Echo("[driverwatchtest] the driver's refusal and the watchdog's words said as chat and echoed, and the"
 			.. " engine's state lines said as chat")
+		-- (and as map pings' labels, "Phone added point: <label>" in the log, InMapDraw.cpp: a ping's label reaches every
+		-- player; 2026-11-21)
+		local mx, mz = Game.mapSizeX / 2, Game.mapSizeZ / 2
+		Spring.MarkerAddPoint(mx, Spring.GetGroundHeight(mx, mz), mz, "[SpringApp::Reload] test")
+		Spring.MarkerAddPoint(mx + 200, Spring.GetGroundHeight(mx + 200, mz), mz, "creating LoadScreen")
 		write("said\n")
 		-- (Chobby's "the lobby is over the game", sent as any player's widget can, Spring.SendLuaUIMsg: it reaches every
 		-- player's LuaUI; the app's fingers must stay on the game, the overlay file "0"; 2026-11-21)

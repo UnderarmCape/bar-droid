@@ -17,9 +17,10 @@ public final class DriverWatch {
     private boolean refused, lost;
 
     // BAR's watchdog line as the engine logs it, "[t=...][f=...] Warning: [Watchdog] Hang detection triggered ...": the
-    // words right after the log line's own prefix, never after a player's name in a chat line ("] <name> Warning: ...")
+    // words right after the log line's own prefix (or alone), never after a player's name in a chat line ("] <name>
+    // Warning: ...") nor a spectator's ("] [name] Warning: ...", which "any ]" before them let through; 2026-11-21)
     private static final java.util.regex.Pattern HUNG_LINE =
-            java.util.regex.Pattern.compile("(^|\\])\\s*Warning: \\[Watchdog\\] " + HUNG);
+            java.util.regex.Pattern.compile("(^|\\]\\[f=-?\\d+\\])\\s*Warning: \\[Watchdog\\] " + HUNG);
 
     /**
      * Mesa's own line on the engine's stderr ("MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock
