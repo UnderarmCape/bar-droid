@@ -519,6 +519,31 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       camctl-phone-test, replay-phone-test, stats-phone-test, settings-phone-test, lobbychat-phone-test,
       buildbar-phone-test ALL PASS; dgun-speed-test done; retreat-phone-test on 8/14 alive against off 5/14; no driver
       refusal. The Fold7 was unreachable over Tailscale from 03:08 (no install).
+- [x] **Item 6: the v0.8.5 controller game's code out** (2026-11-21 04:04-04:40): the controller game left the app on
+      2026-11-06, but its checks stayed, and four of them took BAR's own developer game (version "$VERSION", BAR played
+      from a checkout, as BAR's developers do) or any game with a controller_socket_bridge.lua for it: bardroid_touch.lua
+      turned the pad's camera off, bardroid_pad.lua gave the pad to v0.8.5 (no reticle, no group list), the build menu
+      copy hid itself until a switch nothing sends any more (no build menu at all), and the order menu copy removed
+      itself. Out: those checks and what hung on them (droid.ctl, the RB-opens menu, WG.BarDroidOwnsBuildMenu, the
+      triple tap's mod_bardroid / mod_v085 and their notes, DrawGenesis's panel switch, bardroid_game.txt and
+      RtsTouch.controllerGame(), which nothing called), in make-buildmenu.py and make-ordermenu.py too (the copies made
+      again with --adb from the dev phone's test-32018: the same md5s, only these parts changed); launch-bar.sh's
+      GAMEPAD_GAME block (an old install's "(controller)" entries are still dropped once) and setup-container.sh's
+      unused "gamepad" step; ControllerBridge's BARCTRL1 UDP stream (a socket and a packet every 100 ms to 127.0.0.1:28777,
+      which nothing read; a socket that failed to open switched the whole pad off), Prefs.controllerPort, GameService's
+      GAMEPAD_GAME; the laptop tests' controller steps (touch-widget-test's 13, ui-screenshot's switch); README,
+      ARCHITECTURE and CLAUDE.md. Kept: Installer.removeGamepadGame (old installs), v0.8.5 as the controls' design
+      (PadGame). 25 files, 670 lines out, 191 in. Proof on the dev phone with a stand-in (an empty
+      controller_socket_bridge.lua put in bardroid-ui after launch-bar.sh's start, so the game's archive has it):
+      HEAD's build "gamepad camera off (the controller game reads the pad)", pad-test FAIL (LT speeds the zoom up: nil);
+      item 6's "gamepad camera on", pad-test ALL PASS. On item 6's build pad-test, -Online and -Dgun, dock-phone-test
+      ALL PASS; remake-check: the phone's remakes of all five copies equal the shipped ones; launch-bar-test.sh (laptop)
+      ALL PASS, padgame-test ALL PASS, lua-locals 0 over, luacheck 0 errors. (The copies' own "$VERSION" checks could
+      not be staged without a developer game on the phone: the same check, gone from the copies.)
+      Regression round (04:03-04:28, HEAD's build): dock-phone-test upright and at 1080x1198, factory-preset-test,
+      types-phone-test, overgame-phone-test, driverwatch-phone-test (x11-probe in its game: abstract names "no
+      listener", the path socket accepted), touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test
+      ALL PASS; no driver refusal. The Fold7 still unreachable (04:03, 04:31).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

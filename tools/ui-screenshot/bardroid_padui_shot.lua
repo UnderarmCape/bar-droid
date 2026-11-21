@@ -54,7 +54,6 @@ local function pickBuilding()
 	end
 end
 
-local controllerGame = Game.gameVersion == "$VERSION"
 local STEPS = {
 	[2] = function() touch("src test") end,
 	[20] = function() Spring.SendCommands("cheat 1") end,
@@ -70,9 +69,6 @@ local STEPS = {
 		local cs = Spring.GetCameraState() -- (the same view each run: the units in the middle, BAR's usual angle)
 		cs.px, cs.pz, cs.dist, cs.rx, cs.ry = x + 150, z + 80, 1600, 2.6, 0
 		Spring.SetCameraState(cs, 0)
-		if controllerGame then
-			touch("act mod_bardroid") -- (the app's controls, its build menu, in the controller game)
-		end
 		touch("src pad")
 		if WG.BarDroidPad then
 			WG.BarDroidPad.setWarp(record)

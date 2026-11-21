@@ -5,8 +5,8 @@
 -- engine spray) the gadget skips all of that and the engine draws the spray, which takes a plain cap
 -- (MaxNanoParticles). The gadget hands the engine a budget of 34% of MaxParticles when it switches (it reads the setting
 -- about once a second), so the cap is put back after it. The switch is made once a game: a player who picks BAR's shapes
--- again in its options keeps them for that game. Older BAR releases without the engine mode (the controller game, old
--- replays) keep their own spray; the cap then touches nothing (their gadget keeps the engine's at 0).
+-- again in its options keeps them for that game. Older BAR releases without the engine mode (old replays) keep their
+-- own spray; the cap then touches nothing (their gadget keeps the engine's at 0).
 -- Installed into LuaUI/Widgets by the app.
 
 function widget:GetInfo()

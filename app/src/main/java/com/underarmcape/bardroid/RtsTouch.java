@@ -2419,8 +2419,7 @@ final class RtsTouch {
         float x = toX(vx), y = toY(vy);
         float tol = slop * 2 * xPerViewPixel();
         long now = SystemClock.uptimeMillis();
-        // A third quick tap: the double click's unit types on the whole map; in the controller game it switches the
-        // controller mod instead (GameActivity). No click (it would select one unit).
+        // A third quick tap: the double click's unit types on the whole map. No click (it would select one unit).
         if (doubleTapX >= 0 && now - doubleTapTime <= doubleTapMs && Math.abs(x - doubleTapX) <= tol
                 && Math.abs(y - doubleTapY) <= tol && gameWidgetRunning()) {
             doubleTapX = -1;
@@ -2531,20 +2530,6 @@ final class RtsTouch {
     private volatile Boolean voiceGameAtStart;
     /** Speak to chat began listening (GameActivity's VoiceChat.Sink): its words' place fixed now. */
     void voiceStarted() { voiceGameAtStart = gameWidgetRunning(); }
-
-    private final File gameFile = new File(widgetDir, "bardroid_game.txt");
-    private volatile long gameFileAt = -1;
-    private volatile boolean controllerGame;
-    /** The game is the controller game (v0.8.5 reads the pad): bardroid_game.txt "controller 1". Any thread. */
-    boolean controllerGame() {
-        long at = gameFile.lastModified();
-        if (at != gameFileAt) {
-            String text = readSmall(gameFile);
-            controllerGame = text != null && text.trim().equals("controller 1");
-            gameFileAt = at;
-        }
-        return controllerGame;
-    }
 
     private final File padFile = new File(widgetDir, "bardroid_pad.txt");
     private volatile String padFocus = "none", armed = "none";

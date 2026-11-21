@@ -1,7 +1,7 @@
 #!/bin/bash
 # BAR Droid — container-side game launcher. Env from the app: ENGINE_VER, MODE (skirmish|lobby|bench|glcheck|shell),
 # BARDROID_GPU (kgsl|zink|llvmpipe) with the matching Mesa variables, MESA_GL_VERSION_OVERRIDE (optional),
-# BARDROID_AUDIO (0/1), GAMEPAD_GAME (0/1: singleplayer plays the controller game), BARDROID_FPS (frame cap), DISPLAY.
+# BARDROID_AUDIO (0/1), BARDROID_FPS (frame cap), DISPLAY.
 set -u
 BAR=/root/bar
 ENGINE="$BAR/engine/recoil_${ENGINE_VER:?}"
@@ -99,14 +99,11 @@ if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
   [ "$MODE" = "glcheck" ] && exit 0
 fi
 
-# Kailil's controller game (v0.8.5 as BAR's developer game, games/BAR-gamepad.sdd) for singleplayer, set up the way
-# its Windows installer does: the lobby's singleplayer game is "Beyond All Reason Dev" (Chobby's byar-dev config), and
-# BAR's Build menu replaces the Grid menu, which v0.8.5 does not drive (LuaUI/Config/BYAR.lua, shared with BAR's
-# released game). In the controller game that is v0.8.5's own ("Build menu (controller)": tools/build-gamepad-game.py
-# renames it), in BAR's released game the app's copy of BAR's Build menu, sized with the layout editor (Kailil,
-# 2026-10-28: "just rebuild the exact same one with the ability for us to resize it freely"; bardroid_buildmenu.lua,
-# tools/make-buildmenu.py), while BAR's file is still the one it was copied from (Installer writes that file's md5 to
-# .bardroid-buildmenu), else BAR's own. Switched off in the app (GAMEPAD_GAME=0): BAR's defaults again.
+# BAR's Grid menu off and a Build menu in its place (LuaUI/Config/BYAR.lua, BAR's widget order): the app's copy of
+# BAR's Build menu, sized with the layout editor (Kailil, 2026-10-28: "just rebuild the exact same one with the ability
+# for us to resize it freely"; bardroid_buildmenu.lua, tools/make-buildmenu.py), while BAR's file is still the one it was
+# copied from (Installer writes that file's md5 to .bardroid-buildmenu), else BAR's own. (Until 2026-11-06 singleplayer
+# played Kailil's controller game, v0.8.5 as BAR's developer game, with its own "(controller)" menus.)
 widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry (the widget's default)
   f="$BAR/LuaUI/Config/BYAR.lua"
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
@@ -217,8 +214,8 @@ build_menu() {
   fi
 }
 # The app's copy of BAR's Order menu in BAR's place, the same way (Kailil, 2026-11-03: online the order menu should
-# "behave like offline": the orders the pad leaves fill the menu, as in the controller game's; bardroid_ordermenu.lua,
-# tools/make-ordermenu.py). It stands down in the controller game, which keeps v0.8.5's ("Order menu (controller)").
+# "behave like offline": the orders the pad leaves fill the menu, as in v0.8.5's; bardroid_ordermenu.lua,
+# tools/make-ordermenu.py).
 order_menu() {
   copied=$(sed -n 's/^-- BARDROID_ORDERMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_ordermenu.lua" 2>/dev/null)
   bars=$(cat "$BAR/.bardroid-ordermenu" 2>/dev/null)
@@ -319,15 +316,7 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   order_menu
   mission_info
   team_stats
-  if [ "${GAMEPAD_GAME:-0}" = 1 ]; then
-    LOBBY_GAME=byar-dev
-    widget_order "Build menu (controller)" 165
-    widget_order "Order menu (controller)" 189
-    grep -q '\["Build menu (controller)"\] *= *165' "$BAR/LuaUI/Config/BYAR.lua" && grep -q '\["Grid menu"\] *= *0' "$BAR/LuaUI/Config/BYAR.lua" \
-      && grep -q '\["Order menu (controller)"\] *= *189' "$BAR/LuaUI/Config/BYAR.lua" \
-      || layer_miss "controller game: Build menu (controller) / Order menu (controller) / Grid menu order not set in LuaUI/Config/BYAR.lua"
-    touch "$BAR/.bardroid-gamepad-menus"
-  elif [ -f "$BAR/.bardroid-gamepad-menus" ]; then
+  if [ -f "$BAR/.bardroid-gamepad-menus" ]; then   # (an install from the controller game's days: its menus' entries)
     widget_order "Build menu (controller)" ""
     widget_order "Order menu (controller)" ""
     rm -f "$BAR/.bardroid-gamepad-menus"
@@ -403,9 +392,9 @@ done
 #   CompressTextures 1     textures compressed on the GPU (~300 MB less GPU memory, which a phone can never swap);
 #                          the two textures the engine draws into come back uncompressed (libbardroid_pace.so,
 #                          BARDROID_FBO_UNCOMPRESS; else unit icons draw as black squares)
-#   cus2 0                 BAR's GL4 unit shaders off (BAR's cus_gl4.lua): the engine's plainer unit shading; the
-#                          controller game would switch them back on, which bardroid_lowmem.lua (BarDroidLowMemory)
-#                          prevents
+#   cus2 0                 BAR's GL4 unit shaders off (BAR's cus_gl4.lua): the engine's plainer unit shading; a
+#                          developer game ("$VERSION") would switch them back on, which bardroid_lowmem.lua
+#                          (BarDroidLowMemory) prevents
 #   BumpWaterShoreWaves 0  no foam along the shores (BAR's water setting; a 4096x4096 half-float texture, 128 MB)
 #   GroundDecals 0         no tracks and scorch marks on the ground (BAR does the same for a low-end GPU in its game)
 #   SMFTextureStreaming, MaxTextureAtlasSize* 2048, AllowDeferred*Rendering 0, HighResInfoTexture 0: smaller map and

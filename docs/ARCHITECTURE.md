@@ -52,12 +52,11 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
   PulseAudio.
 - **Input.** Touch: `RtsTouch` turns gestures into lines in files under `LuaUI/Config`, read by
   `bardroid_touch.lua` (camera, pinch, tilt, "is the finger on BAR's interface"); the widgets answer in small files
-  there (the pointer's answer, the game, the building picked, the pad's menu), each written whole to a `.tmp` and
-  renamed, since the app reads them many times a second. Gamepads: `ControllerBridge`
-  streams `BARCTRL1` packets over UDP 28777 to BAR Controller Support (v0.8.5, the singleplayer game); in BAR's own
-  game `PadGame` rebuilds v0.8.5's controls from X mouse and key events (the pointer held in the middle, the camera
-  through the touch widget's pad lines, the rest as actions to `bardroid_pad.lua`); in the lobby the pad is a mouse, also with BAR's lobby opened over a game.
-  In the controller game a triple tap switches between the two. Mouse and keyboard: Termux:X11's delivery;
+  there (the pointer's answer, the building picked, the pad's menu), each written whole to a `.tmp` and
+  renamed, since the app reads them many times a second. Gamepads: `ControllerBridge` reads Android's gamepad
+  events; in a game `PadGame` rebuilds Kailil's BAR Controller Support v0.8.5 controls from X mouse and key events
+  (the pointer held in the middle, the camera through the touch widget's pad lines, the rest as actions to
+  `bardroid_pad.lua`); in the lobby the pad is a mouse, also with BAR's lobby opened over a game. Mouse and keyboard: Termux:X11's delivery;
   `KeyboardShortcuts` keeps Android's own shortcuts out of the game.
 - **BAR's settings.** `launch-bar.sh` puts the Android layer over BAR's and the lobby's saved settings at every start
   (phone graphics, interface scale per Fold screen, widget orders and switches) and reports `!!! ANDROID LAYER` when

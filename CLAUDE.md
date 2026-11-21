@@ -25,7 +25,7 @@ proot container** (Termux's proot, built by `tools/build-proot.py`, bundled as `
 `GameActivity extends com.termux.x11.MainActivity`. OpenGL: on the emulator,
 Mesa `virpipe` → our virgl server (`VirglServer`, built by `tools/build-virgl.py`) → ANGLE → Vulkan → host GPU, with
 llvmpipe as CPU fallback; on phones, Mesa for Android containers (Freedreno `kgsl` / Turnip+Zink). Content comes from
-BAR's own CDN via `pr-downloader`. Gamepad → UDP `BARCTRL1` packets. Audio: the engine's OpenAL Soft wave writer →
+BAR's own CDN via `pr-downloader`. Gamepad → `ControllerBridge` → `PadGame` (an X mouse and keys). Audio: the engine's OpenAL Soft wave writer →
 FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch: `RtsTouch` ↔ `bardroid_touch.lua`
 (files under `LuaUI/Config`).
 
@@ -96,13 +96,12 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   launch-bar.sh runs it in place of BAR's in every game: the pad's RB is in it. When an update changes BAR's file the phone
   makes the copy again itself (`Installer.remakeBarCopy`, `BuildMenuPatches`, the tool's `bardroid_buildmenu.patches`); if
   a patch finds no place the old copy runs and launch-bar.sh logs `!!! ANDROID LAYER ... build menu`, and only a copy BAR
-  removed in a game gives way to BAR's own (`.bardroid-buildmenu-failed`); the controller game keeps v0.8.5's, renamed "Build menu
-  (controller)" by `tools/build-gamepad-game.py`, in `WG.buildmenu`, and runs the copy beside it as
-  `WG.bardroidBuildmenu`, shown while the app's gamepad controls have the pad (`WG.BarDroidOwnsBuildMenu`).
+  removed in a game, or one that failed to load, gives way to BAR's own (`.bardroid-buildmenu-failed`); the app's
+  widgets find the copy as `WG.bardroidBuildmenu` (and `WG.buildmenu`).
   `assets/bardroid/bardroid_ordermenu.lua`: BAR's Order menu copied the same way by `tools/make-ordermenu.py` (Kailil,
   2026-11-03: online "behave like offline"): v0.8.5's even layout while the pad hides orders (`WG.BarDroidPadOrders`),
   `WG.ordermenu.droidCells`, an IsAbove; launch-bar.sh's `order_menu` runs it in place of BAR's (`.bardroid-ordermenu`,
-  `!!! ANDROID LAYER ... order menu`); it stands down in the controller game, whose v0.8.5 menu is "Order menu (controller)".
+  `!!! ANDROID LAYER ... order menu`).
   `assets/bardroid/bardroid_missioninfo.lua`: BAR's Mission Info (a scenario's briefing) copied the same way by
   `tools/make-missioninfo.py`: no wider than the screen, upright above the portrait dock; its GetInfo `replaces`
   BAR's (BAR's widget handler then skips BAR's, and brings it back if the copy is not running; the order list alone did
@@ -154,8 +153,8 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   toggle is the PLACE panel's WALLS between ROTATE and X while a sentry is picked (the place file's "walls" rect).
   `bardroid_automex.lua`: the commander picked and an extractor chosen, the free mex spots in its weapon range queued
   (BAR's resource spot API, as its Area Mex). `bardroid_topbar.lua`: upright, BAR's top bar buttons over its hidden
-  resource bars and indicators do their action through WG (BAR's Top Bar takes those presses; docs/upstream). In the controller game, once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
-  6 s or the pad goes away: `RtsTouch.source`, `act fingers`), the app's build menu shows only when RB opens it. While the pad is in use
+  resource bars and indicators do their action through WG (BAR's Top Bar takes those presses; docs/upstream). Once the pad is used (`WG.BarDroidPadOnly`, from `src pad` until three taps in
+  6 s or the pad goes away: `RtsTouch.source`, `act fingers`) the pad's ways hold. While the pad is in use
   `bardroid_pad.lua` hides the orders the pad has buttons for (BAR's `setDisabledCmd`, undone at the next start).
   Laptop checks start the engine with `toolchain.ps1` Start-Engine (no focus) and `WindowPosX = $OffScreenX` (off every
   screen): they never take Kailil's keyboard or cover his windows; the checks that move the real mouse pointer run only
@@ -201,10 +200,11 @@ Output's resolution and filtering lists shown in capitalised words (Native, Scal
 - Gamepad: until 2026-11-06 singleplayer played Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game
   (`tools/build-gamepad-game.py` → `assets/gamepad/`); Kailil then: "We can pull out the 0.8.5 gamepad toggleer thing
   now. Since our gamepad controlls are so good now": every game plays BAR's released game with the app's controls,
-  `Installer.removeGamepadGame` deletes an installed `games/BAR-gamepad.sdd`, and the v0.8.5 checks left in the widgets
-  (`bardroid_game.txt`, `modV085`) never fire. `ControllerBridge` still streams BARCTRL1 over UDP 28777;
+  `Installer.removeGamepadGame` deletes an installed `games/BAR-gamepad.sdd`. Its checks left in the widgets and the
+  menu copies, which took BAR's own developer game ("$VERSION") for it and switched the app's pad, camera and menus off
+  there, and `ControllerBridge`'s BARCTRL1 UDP stream for it went on 2026-11-21 (release overhaul item 6);
   in every game `PadGame` rebuilds v0.8.5's controls from an X mouse and keyboard (the pointer held in
-  the middle, the camera through `bardroid_touch.lua`'s pad lines; which game it is: `bardroid_game.txt`) and sends
+  the middle, the camera through `bardroid_touch.lua`'s pad lines) and sends
   the rest as actions to `assets/bardroid/bardroid_pad.lua` (the order menu on the pad, groups, idle units, LB
   orders; it writes `bardroid_pad.txt`: which menu has the pad, pregame, what is picked); in the lobby the pad is a
   mouse (its D-pad from control to control: `bardroid_lobby_touch.lua` reads `lobby_nav_*` from the touch log), BAR's
@@ -350,7 +350,7 @@ Emulator: ~20 fps at best (laptop awake), limited by virgl/ANGLE host round trip
 host RAM left; the low-memory killer once took the app). Phone: RAM (~5–6 GB a match), BAR's UI on the near-square
 inner display, BAR's own panels without an `IsAbove` take a finger drag for a pan (the app's menu copies answer it;
 the top bar and BAR's windows are covered: `bardroid_touch.lua` overBarInterface, `tools/touch-widget-test.ps1`;
-v0.8.5's menus in the controller game are its own; BAR's button panels a finger taps, the replay speed column, the vote
+BAR's button panels a finger taps, the replay speed column, the vote
 panel and the pre-game Ready buttons, register a rect function in `WG.BarDroidTapPanels` from their phone patches: the
 hover file's answer 3, the pointer hidden after a tap as on the interface while a drag still pans as on the map,
 RtsTouch HOVER_TAP; an IsAbove there made drags mouse drags), touch-only play (later).

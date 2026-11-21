@@ -158,15 +158,6 @@ case "$step" in
     log "ok"
     ;;
 
-  gamepad)
-    # The BAR release Kailil's controller build (v0.8.5) was ported to; the app unpacks v0.8.5 on top of it.
-    tag="${1:?rapid tag}"; ver="${2:?engine version}"
-    prd_setup "$ver"
-    log "downloading $tag (only files missing from the pool)"
-    "$prd" --filesystem-writepath "$BAR" --download-game "$tag" || { log "download failed"; exit 51; }
-    log "ok"
-    ;;
-
   rapid)
     # The update check at every start, as BAR's launcher runs pr-downloader on its games; exits with pr-downloader's
     # code (5 = disk too full).

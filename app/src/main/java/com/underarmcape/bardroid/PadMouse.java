@@ -6,7 +6,7 @@ package com.underarmcape.bardroid;
  * (tools/padgame-test).
  */
 interface PadMouse {
-    /** No game widget answers (the lobby, a loading screen) / BAR's released game / the controller game (v0.8.5). */
+    /** No game widget answers (the lobby, a loading screen) / a game / off (catching up with a game). */
     int MODE_LOBBY = 0, MODE_GAME = 1, MODE_OFF = 2;
 
     int mode();                             // MODE_LOBBY, MODE_GAME or MODE_OFF

@@ -1,11 +1,10 @@
 -- BAR Droid order menu: BAR's own Order menu (luaui/Widgets/gui_ordermenu.lua, by Floris, GPL v2 or later), from
 -- {release}, unchanged except where marked "BAR Droid:" (Kailil, 2026-11-03: the order menu online should "behave like
 -- offline"): while the app's gamepad controls hide the orders the pad has buttons for, the rest fill the menu evenly,
--- as in the controller game's (v0.8.5's) order menu, and the menu answers IsAbove (a finger's drag on it no longer pans
--- the map). Made by tools/make-ordermenu.py; do not edit by hand, run it again.
+-- as in v0.8.5's order menu, and the menu answers IsAbove (a finger's drag on it no longer pans the map). Made by
+-- tools/make-ordermenu.py; do not edit by hand, run it again.
 -- launch-bar.sh runs it instead of BAR's Order menu; when an update changes BAR's file the phone makes it again from the
--- new file (the line below names the one it was made from; Installer, BuildMenuPatches). In the controller game, which
--- keeps v0.8.5's own ("Order menu (controller)"), it stands down.
+-- new file (the line below names the one it was made from; Installer, BuildMenuPatches).
 -- BARDROID_ORDERMENU_FROM {md5}
 		name = "Order menu",
 		desc = "",
@@ -23,8 +22,8 @@
 		enabled = false, -- BAR Droid: launch-bar.sh switches it on in place of BAR's Order menu
 		replaces = "Order menu", -- BAR Droid: BAR's handler then knows whose place it took (knownWidgets[...].replacedBy)
 local function setupCellGrid(force)
--- BAR Droid: what the app adds: the even layout's last shape, the WG.ordermenu this copy set (the controller game's
--- own is left alone), and where and since when the pointer rests (tooltipShows)
+-- BAR Droid: what the app adds: the even layout's last shape, the WG.ordermenu this copy set (another's is left
+-- alone at its end), and where and since when the pointer rests (tooltipShows)
 local droid = { evenKey = nil, api = nil, x = nil, y = nil, restsFrom = nil, TOOLTIP_SECONDS = 2.5, two = {} }
 
 -- BAR Droid: with fingers the pointer stays where the last one lifted, and an order's tooltip with it, over the buttons
@@ -51,7 +50,7 @@ local function setupCellGrid(force)
 	cellMargin = (cellMarginOriginal / sizeDivider) * uiScale
 
 	if force or oldCols ~= cols or oldRows ~= rows then
-	-- BAR Droid (Kailil, 2026-10-29, the controller game's order menu; 2026-11-03 online too): while the pad is the
+	-- BAR Droid (Kailil, 2026-10-29 offline, 2026-11-03 online too): while the pad is the
 	-- input the orders it gives with its buttons are hidden (bardroid_pad.lua, through setDisabledCmd) and the rest fill
 	-- the menu evenly, whatever their number: as many rows as make the buttons about twice as wide as tall (BAR's own
 	-- buttons' shape: their words stay readable), each row's buttons sharing its width (WG.BarDroidPadOrders)
@@ -113,13 +112,6 @@ local function setupCellGrid(force)
 function widget:Initialize()
 	widgetHandler:RegisterUnitCommand(CMD.WAIT)
 function widget:Initialize()
-	-- BAR Droid: the controller game keeps v0.8.5's own order menu (its gamepad drives it, and it lays the orders out
-	-- the same way): this copy stands down there
-	if (Game.gameVersion or ""):find("$VERSION", 1, true) or (WG.ordermenu and WG.ordermenu.controllerApiVersion) then
-		Spring.Echo("[bardroid-ordermenu] the controller game: its own order menu")
-		widgetHandler:RemoveWidget()
-		return
-	end
 	-- BAR Droid: an older BAR's handler (a replay of an older release plays its own files) has no RegisterUnitCommand and
 	-- hands every unit command to every widget anyway
 	if widgetHandler.RegisterUnitCommand then
@@ -145,7 +137,7 @@ local function setupCellGrid(force)
 	droid.api = WG.ordermenu
 	WG.ordermenu = nil
 end
-	if WG.ordermenu == droid.api then -- BAR Droid: the controller game's own left alone
+	if WG.ordermenu == droid.api then -- BAR Droid: another's left alone
 		WG.ordermenu = nil
 	end
 end

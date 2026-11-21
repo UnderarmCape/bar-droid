@@ -9,33 +9,20 @@ import android.view.InputDevice;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
 /**
- * The app is the controller companion of Kailil's controller build (BAR Controller Support v0.8.5, the singleplayer
- * game): Android gamepad events become the BARCTRL1 UDP packets its luaui/Widgets/controller_socket_bridge.lua reads,
- * exactly as the Windows companion sends them in its v0.8.5 ("--codex") mode:
- *
- *   BARCTRL1|seq|connected|leftX|leftY|rightX|rightY|leftTrigger|rightTrigger|buttons
- *
- * raw axes -32768..32767 (Y down-positive; v0.8.5 applies its own deadzones), triggers 0..32767, buttons a 21-char
- * string of 0/1 in SDL order, no Guide. Packets go to 127.0.0.1:28777 (proot shares the network namespace). They flow
- * from the moment the game screen opens, a pad or not, so v0.8.5 never sees its companion missing; without changes a
- * packet goes out every 100 ms (v0.8.5 takes the stream for gone after 250 ms), which costs the game next to nothing.
- *
- * BAR's released game (online, spectating) has no v0.8.5 (BAR's sandbox keeps it out: docs/HISTORY.md, 2026-10-28):
- * there {@link PadGame} rebuilds v0.8.5's controls on a mouse and keyboard, which no lobby setting or widget rule can
- * see or block, with the camera through bardroid_touch.lua ({@link CameraSink}, "pad" lines).
+ * The gamepad: Android's gamepad events, read on the UI thread, drive the X pointer and keyboard from a pump thread.
+ * In a game {@link PadGame} rebuilds Kailil's BAR Controller Support v0.8.5 ("Build-First Commander") on a mouse and
+ * keyboard, which no lobby setting or widget rule can see or block, with the camera through bardroid_touch.lua
+ * ({@link CameraSink}, "pad" lines).
  *
  * Where no game runs (the lobby, a loading screen) the pad is a simpler mouse ({@link Mouse}, Kailil 2026-10-26: "just
  * simple mouse movement, scroll and A and B as left and right click"): the left stick moves the pointer, the right
- * stick scrolls, A and B are the left and right buttons. In the controller game v0.8.5 reads the packets and the pad
- * is neither.
+ * stick scrolls, A and B are the left and right buttons.
+ *
+ * (Until 2026-11-21 it also streamed BARCTRL1 UDP packets to 127.0.0.1:28777 every 100 ms for v0.8.5's own socket
+ * bridge widget, which ran only in the controller game, out of the app since 2026-11-06: nothing read them.)
  */
 public final class ControllerBridge {
     // SDL GameController button order, as the Windows companion sends it (PadButtons)
@@ -45,8 +32,8 @@ public final class ControllerBridge {
             BTN_DPAD_UP = PadButtons.DPAD_UP, BTN_DPAD_DOWN = PadButtons.DPAD_DOWN,
             BTN_DPAD_LEFT = PadButtons.DPAD_LEFT, BTN_DPAD_RIGHT = PadButtons.DPAD_RIGHT;
     public static final int BUTTON_COUNT = PadButtons.COUNT;
-    private static final int IGNORED = -2;            // a pad key that is consumed but not sent (Guide, as v0.8.5 mode)
-    private static final long TICK_MS = 16, HEARTBEAT_MS = 100, CAMERA_MS = 33;
+    private static final int IGNORED = -2;            // a pad key that is consumed and does nothing (Guide)
+    private static final long TICK_MS = 16, IDLE_MS = 100, CAMERA_MS = 33;
     private static final int STICK_DEADZONE = 5000, TRIGGER_DEADZONE = 3000;   // v0.8.5's defaults
 
     /** Receives "pad lx ly rx ry lt lb" lines for the camera widget. */
@@ -59,7 +46,6 @@ public final class ControllerBridge {
     private static final int TRIGGER_HELD = 16000;                    // a trigger past this: held
     private static final long MOUSE_CHECK_MS = 250;
 
-    private final int port;
     private final CameraSink camera;
     private Mouse mouse;
     private PadGame game;
@@ -75,14 +61,11 @@ public final class ControllerBridge {
     private final boolean[] pressed = new boolean[BUTTON_COUNT];
     private final InputManager inputs;
     private final Handler main = new Handler(Looper.getMainLooper());
-    private DatagramSocket socket;
-    private InetAddress loopback;
-    private long seq;
     // pad state: written on the main thread, read by the pump (guarded by this)
     private final boolean[] buttons = new boolean[BUTTON_COUNT];
     private int lx, ly, rx, ry, lt, rt;
-    private boolean connected, dirty;
-    private boolean idle;   // the pump sleeps the heartbeat out (no pad); guarded by this
+    private boolean connected;
+    private boolean idle;   // the pump sleeps IDLE_MS (no pad); guarded by this
     private Thread pump;
     private volatile boolean running;
 
@@ -92,8 +75,7 @@ public final class ControllerBridge {
         @Override public void onInputDeviceChanged(int id) { updateConnected(); }
     };
 
-    public ControllerBridge(Context ctx, int port, CameraSink camera) {
-        this.port = port;
+    public ControllerBridge(Context ctx, CameraSink camera) {
         this.camera = camera;
         this.inputs = ctx.getSystemService(InputManager.class);
     }
@@ -109,31 +91,25 @@ public final class ControllerBridge {
 
     public synchronized void start() {
         if (running) return;
-        try {
-            socket = new DatagramSocket();
-            loopback = InetAddress.getByName("127.0.0.1");
-        } catch (IOException e) { Log.e("pad", "udp socket", e); return; }
         if (inputs != null) inputs.registerInputDeviceListener(devices, main);
         updateConnected();
         running = true;
         pump = new Thread(this::run, "pad-pump");
         pump.setDaemon(true);
         pump.start();
-        Log.i("pad", "controller bridge sending to 127.0.0.1:" + port + (connected ? " (pad connected)" : " (no pad yet)"));
+        Log.i("pad", "gamepad bridge on" + (connected ? " (pad connected)" : " (no pad yet)"));
     }
 
     public synchronized void stop() {
         running = false;
         if (inputs != null) inputs.unregisterInputDeviceListener(devices);
         if (pump != null) pump.interrupt();
-        if (socket != null) socket.close();
     }
 
     /** The screen lost input (paused, picture-in-picture): no button stays held. */
     public synchronized void release() {
         java.util.Arrays.fill(buttons, false);
         lx = ly = rx = ry = lt = rt = 0;
-        dirty = true;
         wakeIdle();
     }
 
@@ -150,7 +126,6 @@ public final class ControllerBridge {
             if (any == connected) return;
             if (!any) release();
             connected = any;
-            dirty = true;
             wakeIdle();
         }
         Log.i("pad", any ? "gamepad connected" : "gamepad disconnected");
@@ -173,7 +148,6 @@ public final class ControllerBridge {
                 hat(BTN_DPAD_LEFT, hx < -0.5f); hat(BTN_DPAD_RIGHT, hx > 0.5f);
                 hat(BTN_DPAD_UP, hy < -0.5f); hat(BTN_DPAD_DOWN, hy > 0.5f);
             }
-            dirty = true;
             wakeIdle();
         }
         return true;
@@ -204,7 +178,6 @@ public final class ControllerBridge {
             boolean down = e.getAction() == KeyEvent.ACTION_DOWN;
             if (down && !buttons[idx]) pressed[idx] = true;   // (not on key repeats)
             buttons[idx] = down;
-            dirty = true;
             wakeIdle();
         }
         return true;
@@ -222,7 +195,7 @@ public final class ControllerBridge {
             case KeyEvent.KEYCODE_BUTTON_THUMBR: return BTN_RS;
             case KeyEvent.KEYCODE_BUTTON_START: return BTN_START;
             case KeyEvent.KEYCODE_BUTTON_SELECT: return BTN_BACK;
-            case KeyEvent.KEYCODE_BUTTON_MODE: return IGNORED;   // the v0.8.5 companion never reports Guide
+            case KeyEvent.KEYCODE_BUTTON_MODE: return IGNORED;   // (Guide: Android's own, as v0.8.5's companion left it)
             case KeyEvent.KEYCODE_DPAD_UP: return BTN_DPAD_UP;
             case KeyEvent.KEYCODE_DPAD_DOWN: return BTN_DPAD_DOWN;
             case KeyEvent.KEYCODE_DPAD_LEFT: return BTN_DPAD_LEFT;
@@ -240,7 +213,7 @@ public final class ControllerBridge {
     }
 
     private void run() {
-        long lastSend = 0, lastCamera = 0;
+        long lastCamera = 0;
         String cameraSent = "pad 0 0 0 0 0 0";
         int failed = 0;
         while (running) {
@@ -248,15 +221,9 @@ public final class ControllerBridge {
             // (a tick that throws is logged and the next one runs: uncaught on this thread it ended the app's process,
             // the game's screen and touch with it, mid-game; review 2026-11-20)
             try {
-                String packet = null, cameraLine = null;
+                String cameraLine = null;
                 synchronized (this) {
-                    if (dirty || now - lastSend >= HEARTBEAT_MS) { packet = packet(); dirty = false; }
                     if (camera != null && now - lastCamera >= CAMERA_MS) cameraLine = cameraLine(mode == MODE_GAME && !game.reticle());
-                }
-                if (packet != null) {
-                    byte[] data = packet.getBytes(StandardCharsets.US_ASCII);
-                    try { socket.send(new DatagramPacket(data, data.length, loopback, port)); } catch (IOException ignored) {}
-                    lastSend = now;
                 }
                 if (mouse != null) mouseTick(now);
                 if (cameraLine != null && mode != MODE_LOBBY && !cameraLine.equals(cameraSent)) {
@@ -267,12 +234,12 @@ public final class ControllerBridge {
             } catch (RuntimeException e) {
                 if (failed++ < 3) Log.e("pad", "a pad tick failed, going on", e);
             }
-            // No pad: only the heartbeat is due, so the thread wakes 10 times a second instead of 60 (a pad that
-            // connects or sends an event wakes it at once)
+            // No pad: the thread wakes 10 times a second instead of 60, for the mode's check (a pad that connects or
+            // sends an event wakes it at once)
             try {
                 synchronized (this) {
-                    if (connected || dirty) wait(TICK_MS);
-                    else { idle = true; wait(HEARTBEAT_MS); idle = false; }
+                    if (connected) wait(TICK_MS);
+                    else { idle = true; wait(IDLE_MS); idle = false; }
                 }
             } catch (InterruptedException e) { break; }
         }
@@ -365,19 +332,6 @@ public final class ControllerBridge {
         if (m < STICK_DEADZONE) return 0;
         float n = (float) Math.pow(Math.min(1f, (m - STICK_DEADZONE) / (32767f - STICK_DEADZONE)), MOUSE_CURVE);
         return raw < 0 ? -n : n;
-    }
-
-    /** While the app has the pad (PadGame, also in the controller game when switched) v0.8.5 sees it disconnected. */
-    private String packet() {
-        boolean on = connected && mode != MODE_GAME;
-        int c = on ? 1 : 0;
-        StringBuilder sb = new StringBuilder(96);
-        sb.append("BARCTRL1|").append(seq++ & 0xffffffffL).append('|').append(c)
-          .append('|').append(c * lx).append('|').append(c * ly)    // Android Y is down-positive, as the protocol
-          .append('|').append(c * rx).append('|').append(c * ry)
-          .append('|').append(c * lt).append('|').append(c * rt).append('|');
-        for (boolean b : buttons) sb.append(on && b ? '1' : '0');
-        return sb.toString();
     }
 
     /**

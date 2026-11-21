@@ -56,7 +56,6 @@ public final class Prefs {
     public static boolean audio = true;
     public static String aiName = "BARb";
     public static String aiDifficulty = "Normal";
-    public static int controllerPort = 28777;
     /** Finger gestures for an RTS (RtsTouch) instead of Termux:X11's desktop touch modes. */
     public static boolean rtsTouch = true;
     /** The game upright: the portrait dock for touch (Kailil, 2026-11-09; bardroid_portrait.lua, RtsTouch's pad). */

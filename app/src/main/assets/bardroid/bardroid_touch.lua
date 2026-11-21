@@ -27,17 +27,14 @@
 --                                                                               WG.BarDroidTapPanels)
 --   LuaUI/Config/bardroid_overlay.txt widget:         <0|1>                     (1: BAR's lobby over the game; the app
 --                                                                               hides the pointer for fingers then)
---   LuaUI/Config/bardroid_game.txt    widget, at start: controller <0|1>        (1: the controller game, v0.8.5 reads
---                                                                               the pad; 0: the pad is a mouse and keys)
 --   LuaUI/Config/bardroid_catchup.txt widget:         <frame> <server frame or 0> <speed>  (only while catching up
 --                                                                               with a running game: the engine then
 --                                                                               draws nothing)
 --
--- The gamepad camera is for BAR's released game (online, spectating), with v0.8.5's camera speeds and easing: the
--- app's pad lines say pan (lx, ly), turn (rx), zoom (ry; tilt with lb) and boost (lt). There the app makes the left
--- stick the pointer, so its lines carry the right stick: a pan, or with LB held a turn and a zoom (ControllerBridge).
--- In the controller game (BAR Controller Support v0.8.5, the app's singleplayer game) v0.8.5 reads the pad itself,
--- so this part stays off there.
+-- The gamepad camera, with v0.8.5's camera speeds and easing: the app's pad lines say pan (lx, ly), turn (rx), zoom
+-- (ry; tilt with lb) and boost (lt). With a free pointer the app makes the left stick the pointer, so its lines carry
+-- the right stick: a pan, or with LB held a turn and a zoom (ControllerBridge). (Until 2026-11-21 off in the controller
+-- game, v0.8.5's own: that check took BAR's own developer game, "$VERSION", for it, and the pad moved no camera there.)
 
 function widget:GetInfo()
 	return {
@@ -57,7 +54,6 @@ end
 local TOUCH = "LuaUI/Config/bardroid_touch.txt"
 local SCREEN = "LuaUI/Config/bardroid_screen.txt"
 local HOVER = "LuaUI/Config/bardroid_hover.txt"
-local GAME = "LuaUI/Config/bardroid_game.txt"
 -- BAR's lobby over the game ("LobbyOverlayActive1" / "0", the top bar's Lobby button), for the app: "1" or "0"
 -- (RtsTouch hides the pointer for fingers there, as in the lobby; widget:RecvLuaMsg)
 local OVERLAY = "LuaUI/Config/bardroid_overlay.txt"
@@ -93,7 +89,6 @@ local updates = 0
 local seenX, seenY, seenAt = -1, -1, -1000
 local mouseX, mouseY, mouseSince = -1, -1, 0
 local hoverTimer = nil
-local padCamera = true   -- false in the controller game (until a triple tap gives the pad to the app: mod_bardroid)
 
 -- Long queues of the selected units: the engine draws every building a selected builder has queued once more, one model
 -- at a time (CommandDrawer -> CCursorIcons::DrawBuilds), over BAR's "Show Builder Queue", which has drawn them all
@@ -208,16 +203,12 @@ function widget:Initialize()
 	preloadCursors()
 	touchPos = fileSize(TOUCH) -- old gestures are not replayed
 	pcall(os.remove, "LuaUI/Config/bardroid_catchup.txt") -- left by a reload while catching up: written again if still behind
-	-- the controller game: BAR's developer game ("$VERSION") with v0.8.5's pad bridge
-	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
-	padCamera = not ((ok and found) or Game.gameVersion == "$VERSION")
-	-- for the app: in the controller game the pad is v0.8.5's; in BAR's game a mouse and keys (ControllerBridge)
-	writeWhole(GAME, padCamera and "controller 0\n" or "controller 1\n")
+	pcall(os.remove, "LuaUI/Config/bardroid_game.txt") -- (the controller game's mark, read by no one since 2026-11-21)
 	zoomMinDistance = math.max(Spring.GetConfigFloat("CamSpringMinZoomDistance", 0.1) or 0.1, 0.1)
 	zoomMaxDistance = math.max(Game.mapSizeX, Game.mapSizeZ) * 1.333
 	local cs = spGetCameraState()
-	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s), gamepad camera %s", tostring(cs.name),
-		tostring(cs.rx), tostring(cs.ry), padCamera and "on" or "off (the controller game reads the pad)"))
+	Spring.Echo(string.format("[bardroid-touch] camera %s (rx %s, ry %s), gamepad camera on", tostring(cs.name),
+		tostring(cs.rx), tostring(cs.ry)))
 end
 
 -- Called for the pointer position only when no widget before this one (the whole interface) claimed it.
@@ -442,20 +433,6 @@ local ACTIONS = {
 	end,
 	idle_prev = function()
 		idleBuilder(-1)
-	end,
-	-- the controller game: a triple tap switches the pad between v0.8.5 and the app's controls (GameActivity), the
-	-- camera with it (bardroid_pad.lua shows which)
-	mod_bardroid = function()
-		padCamera = true
-		if WG.BarDroidPad then
-			WG.BarDroidPad.act("mod_bardroid")
-		end
-	end,
-	mod_v085 = function()
-		padCamera = false
-		if WG.BarDroidPad then
-			WG.BarDroidPad.act("mod_v085")
-		end
 	end,
 	hud = function() -- three fingers held: the layout editor (bardroid_layout.lua)
 		if WG.BarDroidLayout then
@@ -1612,11 +1589,11 @@ local BAR_WINDOWS = { "options", "gameinfo", "teamstats", "keybinds", "changelog
 -- left drag there: BAR's Settings did not scroll, dev phone 2026-11-03), so the app sends a vertical drag as the wheel.
 local barX, barY, barAt, barAnswer = nil, nil, -1000, false
 
--- The build and order menus where they answer no IsAbove: v0.8.5's in the controller game (the app's copies in BAR's
--- game answer it themselves). A finger's drag that started on them panned the map (dev phone, 2026-11-03: the order
--- menu, then the build menu, moved the map up). Their rects from their WG functions: the order menu's position (view
--- fractions); the build menu's top and bottom (getSize, view fractions) and the width its code gives it at the left
--- edge, not while it sits at the bottom or the app's own build menu has its place (WG.BarDroidOwnsBuildMenu).
+-- The build and order menus where they answer no IsAbove: BAR's own, where a copy of the app's gave way to it (the
+-- app's copies answer it themselves). A finger's drag that started on them panned the map (dev phone, 2026-11-03: the
+-- order menu, then the build menu, moved the map up). Their rects from their WG functions: the order menu's position
+-- (view fractions); the build menu's top and bottom (getSize, view fractions) and the width its code gives it at the
+-- left edge, not while it sits at the bottom.
 local function overGameMenus(mx, my)
 	local vsx, vsy = spGetViewGeometry()
 	local o = WG.ordermenu
@@ -1632,7 +1609,7 @@ local function overGameMenus(mx, my)
 	local b = WG.buildmenu
 	if type(b) == "table" and b ~= WG.bardroidBuildmenu and type(b.getSize) == "function"
 		and type(b.getIsShowing) == "function" and b.getIsShowing()
-		and not WG.BarDroidOwnsBuildMenu and not (type(b.getBottomPosition) == "function" and b.getBottomPosition()) then
+		and not (type(b.getBottomPosition) == "function" and b.getBottomPosition()) then
 		local top, bottom = b.getSize()
 		if type(top) == "number" and type(bottom) == "number" and top <= 1 then -- (fractions; BAR's grid menu gives pixels)
 			local ui = Spring.GetConfigFloat("ui_scale", 1) or 1
@@ -1747,8 +1724,8 @@ end
 -- The build and order menus' tooltips for fingers: a finger's pointer stays where it lifted, so the tooltip of the cell
 -- or order it tapped stood over the buttons beside it until the next touch (dev phone, 2026-11-03). A build menu's says
 -- what the info panel says: none; an order's goes TOOLTIP_REST seconds after the pointer came to rest. The app's menu
--- copies do that themselves (tools/make-buildmenu.py, make-ordermenu.py); v0.8.5's menus in the controller game, which
--- the app does not change, and BAR's own (a copy's fallback) through BAR's tooltip API: its ShowTooltip wrapped while
+-- copies do that themselves (tools/make-buildmenu.py, make-ordermenu.py); BAR's own (a copy's fallback) through BAR's
+-- tooltip API: its ShowTooltip wrapped while
 -- the fingers are the input; a mouse and the pad keep BAR's way. Wrapped again when BAR's tooltip widget makes a new
 -- API (a reload). (tooltipApi, barShowTooltip, fingersShowTooltip: declared before Shutdown, which unwraps it)
 local TOOLTIP_REST = 2.5 -- (the order menu copy's TOOLTIP_SECONDS)
@@ -1810,9 +1787,7 @@ local function update(dt)
 	wrapTooltips()
 	zoneBegin("W:touch:camera")
 	applyTouch(dt)
-	if padCamera then
-		applyPad(dt)
-	end
+	applyPad(dt)
 	zoneEnd()
 	if lookAt then
 		lookAt = lookAt - 1

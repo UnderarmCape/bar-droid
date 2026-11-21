@@ -65,7 +65,6 @@ local VOICE_NONET_NOTE = "NOTHING SENT: SPEECH NEEDS A CONNECTION"
 local voiceToast = false -- the note showing is the listening one
 local VOICE_PING_SECONDS = 30 -- the ping's place kept this long for the words
 local voicePingAt = nil -- where the spoken ping goes: { x, y, z, at }
-local MOD_NOTE_SECONDS = 2.5 -- the triple tap's mode switch: 1.3 s was mostly gone before the eye found it (dev phone)
 local LEAVE_SECONDS = 0.25 -- the pointer pushed off a menu this long lets go of it (Kailil: "make it a quarter long")
 local HIGHLIGHT = { 1, 0.8, 0.25 }
 
@@ -107,8 +106,6 @@ local padClickAt = nil -- the last one's point if not the middle: { x, y }, frac
 local idleType = nil -- the type of the last idle unit picked (LB + D-pad down)
 local lastIdleMobile = 0
 local mouseMode = false -- Back + Start, as the app's switch (PadGame)
-local controllerGame = false -- v0.8.5's game: the pad is v0.8.5's until a triple tap switches it (modV085)
-local modV085 = false
 -- v0.8.5's area select (A held with nothing picked: PadGame): a circle in the middle of the screen selects the player's
 -- units it passes over while the camera pans; units first (buildings only when there are no units in it, or with RT:
 -- added to the selection, buildings too); the D-pad sizes it, held quickly, the circle easing to its new size in about
@@ -475,7 +472,7 @@ local function ordersLayout()
 	if not (o and o.getPosition and o.getIsShowing and o.getIsShowing()) then
 		return nil
 	end
-	if o.droidCells then -- (the controller game's order menu tells its own cells: its even layout with the pad)
+	if o.droidCells then -- (the app's order menu copy tells its own cells: its even layout with the pad)
 		local rects, list = o.droidCells()
 		local cells, cmds = {}, {}
 		for i, cmd in ipairs(list or {}) do
@@ -566,7 +563,7 @@ local function ordersGo(index)
 	ordersLight(orders.cmdID)
 end
 
--- The D-pad on the order menu, by where the buttons are (rows may hold different numbers of them: the controller game's
+-- The D-pad on the order menu, by where the buttons are (rows may hold different numbers of them: the order menu copy's
 -- even layout): left / right the next button in the row, wrapping round it; up / down the nearest in the row above or
 -- below, staying put at the top or bottom
 local function ordersStep(dx, dy)
@@ -955,10 +952,9 @@ local function cancel()
 	end
 end
 
--- The app's build menu (bardroid_buildmenu.lua, WG.bardroidBuildmenu): RB puts the pointer on it. In the controller
--- game it runs beside v0.8.5's and shows while the app's controls have the pad (WG.BarDroidOwnsBuildMenu; Kailil, of
--- v0.8.5's own focus there: "its doing a weird selector system, i dont want that, i want a mouse cursor, with a stroke
--- just like the orders").
+-- The app's build menu (bardroid_buildmenu.lua, WG.bardroidBuildmenu): RB puts the pointer on it (Kailil, of v0.8.5's
+-- own focus: "its doing a weird selector system, i dont want that, i want a mouse cursor, with a stroke just like the
+-- orders").
 local function buildMenu(name)
 	local b = WG.bardroidBuildmenu
 	if b and b.droidPad then
@@ -2032,30 +2028,6 @@ local ACTIONS = {
 	pad_page_prev = function()
 		buildMenu("pageprev")
 	end,
-	-- the triple tap in the controller game (GameActivity, through bardroid_touch.lua): the app's build menu in place of
-	-- v0.8.5's (DrawGenesis hides v0.8.5's panel). The app tells the app's mode again every 2 s (a LuaUI reload starts
-	-- this widget with v0.8.5's): the note only when it changes
-	mod_bardroid = function()
-		WG.BarDroidOwnsBuildMenu = controllerGame or nil
-		if modV085 then
-			modV085 = false
-			note("CONTROLLER MOD: BAR DROID", nil, MOD_NOTE_SECONDS)
-		end
-	end,
-	mod_v085 = function()
-		WG.BarDroidOwnsBuildMenu = nil
-		if WG.BarDroidPadFP and WG.BarDroidPadFP.active() then -- (v0.8.5 has the pad now: nothing would drive the unit)
-			WG.BarDroidPadFP.stop()
-		end
-		dgunExit()
-		shareClose()
-		if not modV085 then
-			modV085 = true
-			ordersEnd()
-			buildMenu("back")
-			note("CONTROLLER MOD: v0.8.5", nil, MOD_NOTE_SECONDS)
-		end
-	end,
 	pad_back = function()
 		if orders then
 			ordersEnd()
@@ -2548,7 +2520,7 @@ local function padOrders(want)
 	if want == (ordersHidden ~= nil) then
 		return
 	end
-	-- (the controller game's order menu then lays the rest out evenly over the whole menu: gui_ordermenu.lua there)
+	-- (the app's order menu copy then lays the rest out evenly over the whole menu: bardroid_ordermenu.lua)
 	WG.BarDroidPadOrders = want or nil
 	if want then
 		ordersHidden = {}
@@ -2907,16 +2879,6 @@ function widget:DrawWorld()
 	end
 end
 
--- The controller game with the app's controls: v0.8.5's build menu panel hidden through its own switch
--- (controllerSetPanelVisible); v0.8.5's camera widget sets that switch again in each Update, so here, after every
--- Update and before anything is drawn or clicked
-function widget:DrawGenesis()
-	local b = WG.buildmenu
-	if WG.BarDroidOwnsBuildMenu and b and b ~= WG.bardroidBuildmenu and b.controllerSetPanelVisible then
-		b.controllerSetPanelVisible(false)
-	end
-end
-
 -- The reticle in the middle of the screen while the pad is the input (and its pointer is there), and the notes
 function widget:DrawScreen()
 	draws = math.min(draws + 1, 2)
@@ -2926,7 +2888,7 @@ function widget:DrawScreen()
 	local riding = WG.BarDroidPadFP and WG.BarDroidPadFP.active() -- (first person has its own crosshair)
 	-- (not over the share list either: the ring sat on its middle row, a second teammate's name, pad-test -Share's
 	-- screenshots 2026-11-13; the pointer does nothing there)
-	if pad and not riding and not dgun and not share and not modV085 and not orders and not buildFocus()
+	if pad and not riding and not dgun and not share and not orders and not buildFocus()
 		and not freePointer() then
 		-- (a white ring on a dark one: it reads over snow and over water alike)
 		local r = style.size(0.016)
@@ -2948,7 +2910,7 @@ function widget:DrawScreen()
 	if cell then
 		style.outline(cell[1] + 1, cell[2] + 1, cell[3] - 1, cell[4] - 1, style.GOLD, 1)
 	end
-	if not modV085 and not (area.radial and area.on) then -- (the filter radial reaches down to where the strip is)
+	if not (area.radial and area.on) then -- (the filter radial reaches down to where the strip is)
 		drawGroupList(vsx, vsy)
 	end
 	if area.radial and area.on then
@@ -2982,10 +2944,8 @@ function widget:DrawScreen()
 end
 
 function widget:Initialize()
-	-- the controller game (as bardroid_touch.lua finds it): the pad is v0.8.5's until a triple tap switches it
-	local ok, found = pcall(VFS.FileExists, "LuaUI/Widgets/controller_socket_bridge.lua", VFS.ZIP)
-	controllerGame = (ok and found) or Game.gameVersion == "$VERSION"
-	modV085 = controllerGame
+	-- (until 2026-11-21 the controller game, v0.8.5's, took the pad here; that check took BAR's own developer game,
+	-- "$VERSION", for it too, and the app's pad controls stood down there)
 	WG.BarDroidStyle = style -- (the app's build menu: its GRID note and its option on the pad in the same look)
 	WG.BarDroidPadDgun = { -- (bardroid_touch.lua hands the sticks to the D-gun mode)
 		active = function()
@@ -3155,6 +3115,5 @@ function widget:Shutdown()
 	WG.BarDroidPad = nil
 	WG.BarDroidPadDgun = nil
 	WG.BarDroidStyle = nil
-	WG.BarDroidOwnsBuildMenu = nil
 	writeWhole(PAD_FILE, "focus none\npregame 0\narmed none\nqueue 0\nmodal none\n")
 end

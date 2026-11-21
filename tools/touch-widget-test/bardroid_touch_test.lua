@@ -374,12 +374,6 @@ cases = {
 		local selected = Spring.GetSelectedUnits()
 		verify("act commander_view: the commander selected", #selected == 1 and selected[1] == com, tostring(selected[1]))
 	end,
-	function()
-		-- the app's pad: a mouse and keys in BAR's game, v0.8.5's in the controller game (ControllerBridge)
-		local want = Game.gameVersion == "$VERSION" and "controller 1\n" or "controller 0\n"
-		verify("the game told the app who has the pad", readFile("LuaUI/Config/bardroid_game.txt") == want,
-			readFile("LuaUI/Config/bardroid_game.txt"))
-	end,
 	-- the camera's way back from the overview: still for 20 frames before the pad moves it (a fixed wait of 20 frames
 	-- was sometimes too short: "sticks at rest" saw the camera 695 elmos on, 2026-10-28)
 	settle,
@@ -757,22 +751,11 @@ cases = {
 		Spring.SendCommands("screenshot png") -- the build menu for a builder (build\touch-widget-test\data\screenshots)
 		local B, L = WG.buildmenu, WG.BarDroidLayout
 		verify("build menu: shows for a builder", B and B.getIsShowing and B.getIsShowing())
-		if B and B.controllerApiVersion then
-			verify("build menu: the controller game's own (the app's copy hidden beside it)",
-				WG.bardroidBuildmenu ~= nil and not WG.bardroidBuildmenu.getIsShowing())
-			-- the triple tap (GameActivity): the pad to the app's controls, the camera with it
-			before.ctl = Spring.GetCameraState()
-			touch("src pad")
-			touch("act mod_bardroid")
-			touch("pad 32767 0 0 0 0 0")
-			return 0.3
-		end
 		local x0, y0, x1, y1 = L.rect("buildmenu")
 		verify("build menu: the app's copy, known to the editor", x0 ~= nil, x0 and string.format("%d,%d-%d,%d", x0, y0, x1, y1))
 		if not x0 then
 			return
 		end
-		before.ctl = nil
 		before.bm = { x0 = x0, y0 = y0, w = x1 - x0, h = y1 - y0 }
 		-- a 3 x 3 grid, the page arrows in a strip under it (Kailil: "3x3 items on top of the left and right and page
 		-- indicator", the strip half a cell high): 9 options a page
@@ -792,183 +775,6 @@ cases = {
 		L.move(px + 60, py + 40)
 		L.release()
 		return 0.5
-	end,
-	-- the controller game: switched to the app's controls (a triple tap), the app's 3x3 build menu in place of v0.8.5's
-	-- (Kailil: "What happened to my 3x3 build menu grid? its gone"), RB puts the pointer on it as in BAR's game
-	function()
-		if not before.ctl then
-			return
-		end
-		touch("pad 0 0 0 0 0 0")
-		local cs = Spring.GetCameraState()
-		-- (the last note shown: at a few frames a second the 1.3 s note has faded by the next case)
-		verify("controller game switched: the note", select(2, WG.BarDroidPad.note()) == "CONTROLLER MOD: BAR DROID",
-			select(2, WG.BarDroidPad.note()))
-		verify("controller game switched: the pad moves the camera",
-			math.sqrt((cs.px - before.ctl.px) ^ 2 + (cs.pz - before.ctl.pz) ^ 2) > 50)
-		verify("controller game: v0.8.5's build menu kept in BAR's place", WG.buildmenu and WG.buildmenu.controllerApiVersion
-			and WG.bardroidBuildmenu and WG.bardroidBuildmenu ~= WG.buildmenu)
-		-- (Kailil, 2026-10-29: hidden until RB, as v0.8.5's own, to save screen space)
-		verify("controller game switched: the app's build menu hidden until RB", not WG.bardroidBuildmenu.getIsShowing())
-		before.warps = {}
-		if not POINTER then
-			WG.bardroidBuildmenu.droidSetWarp(function(x, y)
-				before.warps[#before.warps + 1] = { x, y }
-			end)
-		end
-		touch("act pad_build")
-		return 1.5 -- (at a throttled laptop's few frames a second the menu takes a while to lay out)
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local B = WG.buildmenu
-		verify("controller game switched: v0.8.5's build menu panel hidden", B.controllerGetPanelVisible() == false)
-		verify("controller game switched: the app's 3x3 menu shows", WG.bardroidBuildmenu.getIsShowing())
-		local _, _, pages = WG.bardroidBuildmenu.droidGrid()
-		local focus, page = WG.bardroidBuildmenu.droidFocus()
-		verify("controller game: RB puts the app's build menu on the pad, the pointer onto it", focus ~= nil
-			and (POINTER or #before.warps >= 1) and (readFile("LuaUI/Config/bardroid_pad.txt") or ""):find("^focus build\n"),
-			readFile("LuaUI/Config/bardroid_pad.txt"))
-		before.ctlFocus, before.ctlPage, before.ctlPages = focus, page, pages
-		touch("act pad_page_next") -- (RB on the menu)
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local focus, page = WG.bardroidBuildmenu.droidFocus()
-		verify("controller game: RB on the menu turns the page", before.ctlPages < 2 or (page == before.ctlPage % before.ctlPages + 1
-			and focus ~= before.ctlFocus), tostring(before.ctlPage) .. " -> " .. tostring(page))
-		touch("act pad_page_prev") -- (LB on the menu)
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local focus, page = WG.bardroidBuildmenu.droidFocus()
-		verify("controller game: LB on the menu turns it back", page == before.ctlPage and focus == before.ctlFocus,
-			tostring(page) .. ", " .. tostring(focus))
-		touch("act pad_back")
-		-- Back + RB there: v0.8.5's order menu (BAR's of the release it was ported to, with v0.8.5's edits); the cells as
-		-- bardroid_pad.lua works them out drawn over its buttons for the screenshot
-		if not POINTER then
-			WG.BarDroidPad.setWarp(function() end)
-		end
-		touch("act pad_orders")
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local cmdID, index, count = WG.BarDroidPad.orders()
-		verify("controller game: Back + RB puts v0.8.5's order menu's first order on the pad", cmdID and index == 1 and count > 1,
-			string.format("%s, %s of %s", tostring(cmdID), tostring(index), tostring(count)))
-		verify("controller game: B closed the app's build menu again", not WG.bardroidBuildmenu.getIsShowing())
-		local cells, cmds = WG.BarDroidPad.ordersCells()
-		padDraw.cells, padDraw.count = cells, cmds and #cmds or 0
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		Spring.SendCommands("screenshot png") -- (build\touch-widget-test\data\screenshots: each outline on one of its buttons)
-		padDraw.cells = nil
-		touch("act pad_back")
-		WG.BarDroidPad.setWarp(nil)
-		touch("src touch") -- (PLACE below is fingers' only)
-		touch("act fingers")
-		touch("act mod_v085")
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		verify("controller game switched back: the note", select(2, WG.BarDroidPad.note()) == "CONTROLLER MOD: v0.8.5",
-			select(2, WG.BarDroidPad.note()))
-		verify("controller game switched back: v0.8.5's panel again, the app's menu hidden",
-			WG.buildmenu.controllerGetPanelVisible() == true and not WG.bardroidBuildmenu.getIsShowing())
-		verify("controller game switched back: the layout editor has no outline for the hidden menu",
-			WG.BarDroidLayout.rect("buildmenu") == nil)
-		WG.bardroidBuildmenu.droidSetWarp(nil)
-		-- touch building with v0.8.5's controls on (Kailil: the PLACE button "not even putting the place box over the
-		-- orders box"): a building picked from v0.8.5's menu, PLACE over the order menu all the same
-		for _, cmd in ipairs(Spring.GetActiveCmdDescs() or {}) do
-			if cmd.id < 0 then
-				Spring.SetActiveCommand(Spring.GetCmdDescIndex(cmd.id))
-				break
-			end
-		end
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local panel = WG.bardroidBuildmenu.droidPanel()
-		local text = readFile("LuaUI/Config/bardroid_place.txt") or ""
-		verify("controller game, v0.8.5's controls: a building picked shows PLACE and tells the app",
-			panel ~= nil and text:match("^place one\ndone %d+ %d+ %d+ %d+\n"), text)
-		touch("act cancel")
-		Spring.SelectUnitArray({})
-		return 1.5 -- (the note gone)
-	end,
-	-- the app tells its mode again every 2 s (a LuaUI reload, as a fold makes, starts the widgets with v0.8.5's): the
-	-- same mode again changes nothing and shows no note
-	function()
-		if not before.ctl then
-			return
-		end
-		touch("act mod_bardroid") -- (a change: the note)
-		return 2.8 -- (the switch's note stays 2.5 s since 1.3 s was gone before the eye found it: MOD_NOTE_SECONDS)
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local showing, last, count = WG.BarDroidPad.note()
-		before.notes = count
-		verify("controller game: the switch noted, the note faded after 2.5 s", last == "CONTROLLER MOD: BAR DROID"
-			and showing == nil, tostring(last) .. ", " .. tostring(showing))
-		touch("act mod_bardroid") -- (the same mode again, as the app's resend)
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		local _, last, count = WG.BarDroidPad.note()
-		verify("controller game: the app's mode told again shows no second note", count == before.notes,
-			tostring(before.notes) .. " -> " .. tostring(count) .. " (" .. tostring(last) .. ")")
-		verify("controller game: ... and the app's menu still in place", WG.BarDroidOwnsBuildMenu == true)
-		-- by touch the menu shows as in BAR's own game, hidden until RB only once the pad is used, back after a few taps
-		Spring.SelectUnitArray({ com })
-		verify("controller game, no pad yet: the build menu shows", WG.BarDroidLayout.rect("buildmenu") ~= nil)
-		touch("src pad")
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		verify("controller game, the pad in use: the build menu hidden until RB", WG.BarDroidLayout.rect("buildmenu") == nil)
-		verify("... v0.8.5's panel stays hidden", WG.buildmenu.controllerGetPanelVisible() == false)
-		touch("act fingers")
-		return 0.3
-	end,
-	function()
-		if not before.ctl then
-			return
-		end
-		verify("controller game, a few taps later: the build menu shows again", WG.BarDroidLayout.rect("buildmenu") ~= nil)
-		Spring.SelectUnitArray({})
-		touch("act mod_v085")
 	end,
 	function()
 		if not before.bm then

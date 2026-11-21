@@ -4,9 +4,8 @@
 -- the app's layout editor (bardroid_layout.lua), and the widget-handler calls go through BAR's stand-in for the handler
 -- that user widgets get. Made by tools/make-buildmenu.py; do not edit by hand, run it again.
 -- launch-bar.sh runs it instead of BAR's Build menu; when an update changes BAR's file the phone makes it again from the
--- new file (the line below names the one it was made from; Installer, BuildMenuPatches); in the controller game, which keeps its
--- own ("Build menu (controller)", v0.8.5's gamepad drives it), this one runs beside it and shows only while the app's
--- gamepad controls have the pad (a triple tap switches; WG.bardroidBuildmenu there, BAR's WG.buildmenu stays v0.8.5's).
+-- new file (the line below names the one it was made from; Installer, BuildMenuPatches). The app's widgets find it as
+-- WG.bardroidBuildmenu (and WG.buildmenu, BAR's place).
 -- BARDROID_BUILDMENU_FROM {md5}
 local maxPosY = 0.74
 local maxPosY = 0.74
@@ -38,7 +37,7 @@ local droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, ga
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	gridHeld = nil, gridShown = nil, gridToast = 1.2, nudgeCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",
-	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false, ctl = false, shared = nil,
+	focus = nil, warped = nil, warpTo = nil, warp = Spring.WarpMouse, fakeWarp = false,
 	wasActive = nil, leave = 0.25, settled = 150, redraw = 900, drawnAt = nil,
 	items = { { "one", "ONE" }, { "line", "LINE" }, { "grid", "GRID" }, { "border", "BORDER" } } }
 	-- adjust grid size when pages are needed
@@ -131,7 +130,7 @@ function droid.register()
 	editor.register("buildmenu", {
 		label = "Build menu",
 		can = { move = true, size = true },
-		rect = function() -- (none while hidden: the controller game with v0.8.5's controls, its own menu in the place)
+		rect = function() -- (none while hidden: upright, the portrait dock's grid in its place)
 			if not droid.active() then
 				return nil
 			end
@@ -157,7 +156,7 @@ function droid.place()
 		droid.pickAgain()
 	end
 	local active = droid.active()
-	if active ~= droid.wasActive then -- (the controller game: shown or hidden with the app's controls)
+	if active ~= droid.wasActive then -- (the portrait dock shown or gone: turning the phone)
 		droid.wasActive = active
 		if not active then
 			droid.endFocus()
@@ -787,35 +786,28 @@ function droid.cellAt(x, y)
 	end
 end
 
--- (the app glides the pointer back to the middle once no menu has the pad: Kailil, "make sure that snap back is smooth";
--- in the controller game the menu goes with the pad)
+-- (the app glides the pointer back to the middle once no menu has the pad: Kailil, "make sure that snap back is smooth")
 function droid.endFocus()
 	droid.focus, droid.warpTo, droid.warped, droid.outSince = nil, nil, nil, nil
-	droid.opened, droid.openedAt = false, nil
 end
 
--- BAR Droid: the menu is shown and takes input (the controller game: only while the app's controls have the pad; then,
--- once the pad is in use (WG.BarDroidPadOnly: until a few taps), only after RB has opened it, as v0.8.5's own; Kailil,
--- 2026-10-29: hidden until RB, "to save screen space"; 2026-10-30, by touch: "open in its usual location. not hide by
--- default like gamepad behavior"; the PLACE button and a building's spot work either way, for fingers)
+-- BAR Droid: the menu is shown and takes input, but upright: the portrait dock has its own grid there (the PLACE button
+-- and a building's spot work either way, for fingers). (Until 2026-11-21 also hidden in the controller game, v0.8.5's
+-- build menu in its place: that check took BAR's own developer game, "$VERSION", for it, and no build menu showed.)
 function droid.active()
 	if WG.BarDroidPortrait and WG.BarDroidPortrait.active() then -- (the portrait dock has its own grid; PLACE stays this one's)
 		return false
 	end
-	return not droid.ctl or (WG.BarDroidOwnsBuildMenu == true and (droid.opened == true or not WG.BarDroidPadOnly))
+	return true
 end
 
 function droid.pad(name)
 	if name == "build" then
-		if droid.focus or droid.openedAt then
+		if droid.focus then
 			droid.endFocus()
 		elseif buildmenuShows and cmdsCount > 0 then
 			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
 			droid.warpTo = droid.focus
-			droid.opened = true -- (a menu fingers left open: it stays, now the pad is in use)
-		elseif droid.ctl and WG.BarDroidOwnsBuildMenu == true then -- (opened: the pad on it once it is laid out)
-			droid.opened, droid.openedAt, droid.openedWait = true, Spring.GetTimer(), 0
-			doUpdate = true
 		end
 	elseif not droid.focus then
 		return
@@ -869,18 +861,6 @@ end
 -- (or half a second on) it is the player's again: the focus follows it over the options and ends off the menu, as
 -- when the menu goes)
 function droid.padFocus()
-	if droid.openedAt then -- (the controller game: RB opened the menu; nothing to build after half a second: closed)
-		if buildmenuShows and cmdsCount > 0 then
-			droid.openedAt = nil
-			droid.focus = math.min(cmdsCount, (currentPage - 1) * colls * rows + 1)
-			droid.warpTo = droid.focus
-		else
-			droid.openedWait = droid.openedWait + 1 -- (and a few frames: a stall outlasts half a second before it is laid out)
-			if droid.openedWait > 8 and Spring.DiffTimers(Spring.GetTimer(), droid.openedAt) > 0.5 then
-				droid.endFocus()
-			end
-		end
-	end
 	if droid.focus then
 		local now = Spring.GetTimer()
 		if not buildmenuShows then
@@ -1052,7 +1032,7 @@ function widget:DrawWorld()
 	glBlending(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 	droid.drawPanel() -- BAR Droid: the PLACE button (over the order menu)
 	droid.drawGridShown() -- BAR Droid: "GRID" over a building for a moment
-	if not droid.active() then -- BAR Droid: the controller game while v0.8.5 has the pad: its own menu shows
+	if not droid.active() then -- BAR Droid: upright, the portrait dock's grid in its place
 		tracy.ZoneEnd()
 		return
 	end
@@ -1091,20 +1071,12 @@ function widget:DrawWorld()
 	if droid.pressPanel(x, y) then -- BAR Droid: the PLACE button
 		return true
 	end
-	if not droid.active() then -- BAR Droid: hidden (the controller game while v0.8.5 has the pad)
+	if not droid.active() then -- BAR Droid: hidden (upright: the portrait dock's grid)
 		return
 	end
 function widget:Initialize()
 	widgetHandler:RegisterUnitCommand(widget, CMD.BUILD)
 	widgetHandler:RegisterUnitCommand(widget, CMD_STOP_PRODUCTION)function widget:Initialize()
-	-- BAR Droid: the controller game keeps v0.8.5's build menu in BAR's place (WG.buildmenu: v0.8.5's gamepad drives
-	-- it); this one runs beside it (WG.bardroidBuildmenu), shown only while the app's controls have the pad (a triple
-	-- tap; bardroid_pad.lua sets WG.BarDroidOwnsBuildMenu and hides v0.8.5's panel then). Kailil, 2026-10-29: "What
-	-- happened to my 3x3 build menu grid? its gone".
-	if (Game.gameVersion or ""):find("$VERSION", 1, true) or (WG.buildmenu and WG.buildmenu.controllerApiVersion) then
-		Spring.Echo("[bardroid-buildmenu] the controller game: beside its own build menu, shown with the app's controls")
-		droid.ctl = true
-	end
 	-- BAR Droid: the handler's stand-in for user widgets; an older BAR's handler (a replay of an older release plays its own
 	-- files) has none and hands every unit command to every widget anyway
 	if widgetHandler.RegisterUnitCommand then
@@ -1123,7 +1095,6 @@ function widget:DrawWorld()
 	widget:SelectionChanged(spGetSelectedUnits())
 
 	droid.register() -- BAR Droid
-	droid.shared = WG.buildmenu -- (the controller game: v0.8.5's, given back at the end of Initialize)
 	WG.buildmenu = {}
 	-- BAR Droid: the grid as laid out (tools/touch-widget-test.ps1)
 	WG.buildmenu.droidGrid = function()
@@ -1176,19 +1147,12 @@ function widget:DrawWorld()
 end	WG.buildmenu.hasHighlight = function(unitDefID)
 		return unitDefID ~= nil and highlights[unitDefID] ~= nil
 	end
-	-- BAR Droid: the app's widgets find this menu as WG.bardroidBuildmenu; in the controller game BAR's place
-	-- (WG.buildmenu) goes back to v0.8.5's (nil if it has not started yet: it sets its own then)
+	-- BAR Droid: the app's widgets find this menu as WG.bardroidBuildmenu
 	WG.bardroidBuildmenu = WG.buildmenu
-	if droid.ctl then
-		WG.buildmenu = droid.shared
-	end
-	droid.shared = nil
 end	WG.buildmenu = nil
 end
 
-function widget:GetConfigData()	if WG.buildmenu and WG.buildmenu.getSize and not WG.buildmenu.controllerApiVersion then
-		WG.buildmenu = nil
-	end
+function widget:GetConfigData()	WG.buildmenu = nil
 	WG.bardroidBuildmenu = nil -- BAR Droid
 	if WG.BarDroidLayout and WG.BarDroidLayout.unregister then -- BAR Droid
 		WG.BarDroidLayout.unregister("buildmenu")

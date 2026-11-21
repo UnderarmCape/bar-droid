@@ -73,9 +73,9 @@ public class GameActivity extends MainActivity {
         touch.setVoiceChat(voiceChat::start);
         touch.setVoicePing(() -> voiceChat.start(true));
         touch.setVoiceListening(voiceChat::listening);
-        pad = new ControllerBridge(this, Prefs.controllerPort, touch::padLine);
+        pad = new ControllerBridge(this, touch::padLine);
         pad.setMouse(lobbyMouse);
-        pad.start();   // for as long as the screen exists: v0.8.5 must never find its companion gone
+        pad.start();   // for as long as the screen exists
         LorieView lorieView = getLorieView();
         View lorieParent = (View) lorieView.getParent();
         TouchInputHandler termux = BarDroidAccess.inputHandler(this);
@@ -127,7 +127,7 @@ public class GameActivity extends MainActivity {
 
     /**
      * The pad as a mouse (and in BAR's game a keyboard too: ControllerBridge); events go to the X server on the UI
-     * thread. The controller game (v0.8.5 reads the pad itself) says so in bardroid_game.txt (bardroid_touch.lua).
+     * thread.
      */
     private final ControllerBridge.Mouse lobbyMouse = new ControllerBridge.Mouse() {
         private final android.os.Handler ui = new android.os.Handler(android.os.Looper.getMainLooper());

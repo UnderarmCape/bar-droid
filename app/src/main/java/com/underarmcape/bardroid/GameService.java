@@ -460,7 +460,6 @@ public class GameService extends Service {
             env.put("MODE", mode);
             env.put("DISPLAY", ":0");
             env.put("LOBBY_TAG", Prefs.lobbyTag);
-            env.put("GAMEPAD_GAME", "0");   // (launch-bar.sh: the v0.8.5 game is gone; its controller game branch never runs)
             Prefs.putGpuEnv(env);
             env.put("BARDROID_AUDIO", Prefs.audio ? "1" : "0");
             env.put("BARDROID_PHONE_ENGINE", Prefs.phoneEngine ? "1" : "0");   // (launch-bar.sh; the launcher's Phone engine)

@@ -1,9 +1,9 @@
 #!/bin/sh
 # launch-bar.sh's switching of BAR's build and order menus in LuaUI/Config/BYAR.lua (the widget list both games share), on
-# the laptop or in CI: its widget_order, build_menu and order_menu functions and its controller-game block, taken from
+# the laptop or in CI: its widget_order, build_menu and order_menu functions and its menus block, taken from
 # launch-bar.sh as they are, run against a scratch BAR write dir (build/launch-bar-test). Cases: the app's copies of BAR's
 # Build and Order menus in, kept when BAR's file is not the one they were made from (an Android-layer miss), BAR's own only
-# after a copy failed in a game, the controller game switched off, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings,
+# after a copy failed in a game, an old install's controller-game entries dropped, and a second start changing nothing. And its low-memory mode: an 8 GB phone's settings,
 # a 12 GB phone's left alone. And the CPU mask its all-CPU loop reads, and the after-game check of the app's widgets.
 # Prints "[launchbartest] PASS|FAIL <case>"; exit 1 on a failure.
 #   sh tools/launch-bar-test.sh          (tools\laptop-tests.ps1 runs it with the portable Git's sh)
@@ -20,7 +20,7 @@ body() { awk -v f="^$1\\\\(\\\\) \\\\{" '$0 ~ f { on = 1 } on { print } on && /^
 fn=$(body widget_order)
 faults=$(body read_faults)
 removed=$(body copy_removed)
-# (copy_failed, mission_info and team_stats came later, 11-10 and 11-11: build_menu and the controller-game block call
+# (copy_failed, mission_info and team_stats came later, 11-10 and 11-11: build_menu and the menus block call
 # them, and this test, which took the first four only, failed five cases on "command not found" until 2026-11-18)
 failedfn=$(body copy_failed)
 menu=$(body build_menu)
@@ -29,7 +29,7 @@ minfo=$(body mission_info)
 tstats=$(body team_stats)
 block=$(awk '/^  widget_order "Grid menu" 0$/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
 for part in "$fn" "$faults" "$removed" "$failedfn" "$menu" "$omenu" "$minfo" "$tstats" "$block"; do
-  [ -n "$part" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, read_faults, copy_removed, copy_failed, build_menu, order_menu, mission_info, team_stats or the controller-game block not found"; exit 1; }
+  [ -n "$part" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, read_faults, copy_removed, copy_failed, build_menu, order_menu, mission_info, team_stats or the menus block not found"; exit 1; }
 done
 
 BAR="$work/bar"; LOGS="$work/logs"
@@ -43,10 +43,9 @@ eval "$menu"
 eval "$omenu"
 eval "$minfo"
 eval "$tstats"
-start() {   # one launch-bar.sh start: start <GAMEPAD_GAME> <build menu md5 Installer found in BAR's release> [<order menu's>]
-  GAMEPAD_GAME=$1
-  printf '%s\n' "$2" > "$BAR/.bardroid-buildmenu"
-  printf '%s\n' "${3-$omade}" > "$BAR/.bardroid-ordermenu"
+start() {   # one launch-bar.sh start: start <build menu md5 Installer found in BAR's release> [<order menu's>]
+  printf '%s\n' "$1" > "$BAR/.bardroid-buildmenu"
+  printf '%s\n' "${2-$omade}" > "$BAR/.bardroid-ordermenu"
   printf '%s\n' "$mmade" > "$BAR/.bardroid-missioninfo"   # (Mission Info's and TeamStats' copies as made: quiet)
   printf '%s\n' "$tmade" > "$BAR/.bardroid-teamstats"
   : > "$LOGS/android-layer.txt"
@@ -83,26 +82,26 @@ check "the order menu copy too" [ -n "$omade" ]
 printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\tdata = {\n\t\t["Build menu"] = {\n\t\t\torder = {\n\t\t\t},\n\t\t},\n\t},\n\torder = {\n\t\t["Build menu"] = 165,\n\t\tEcostats = 0,\n\t\t["Grid menu"] = 0,\n\t},\n}\n' \
   > "$BAR/LuaUI/Config/BYAR.lua"
 
-start 1 "$made"
+start "$made"
 check "same BAR file: BAR's Build menu off" order "Build menu" 0
 check "same BAR file: the app's copy on" order "BAR Droid build menu" 165
-check "same BAR file: the controller game's own on" order "Build menu (controller)" 165
+check "same BAR file: no controller build menu entry (the controller game is gone)" absent "Build menu (controller)"
 check "same BAR file: the Grid menu off" order "Grid menu" 0
 check "same BAR file: no Android-layer miss" quiet
 check "the widgets' own data untouched" grep -q '^		\["Build menu"\] = {$' "$BAR/LuaUI/Config/BYAR.lua"
 check "same BAR file: BAR's Order menu off" order "Order menu" 0
 check "same BAR file: the app's order menu copy on" order "BAR Droid order menu" 189
-check "same BAR file: the controller game's own order menu on" order "Order menu (controller)" 189
+check "same BAR file: no controller order menu entry" absent "Order menu (controller)"
 
-start 1 "$made"
+start "$made"
 check "a second start: each entry once" order "BAR Droid build menu" 165
 
-start 1 "0123456789abcdef0123456789abcdef"
+start "0123456789abcdef0123456789abcdef"
 check "BAR changed its file and no new copy: the old copy runs (the pad's RB is in it)" order "BAR Droid build menu" 165
 check "BAR changed its file and no new copy: BAR's Build menu off" order "Build menu" 0
 check "BAR changed its file and no new copy: an Android-layer miss" missed
 
-start 1 ""
+start ""
 check "BAR's file not found: the copy runs" order "BAR Droid build menu" 165
 
 # (BAR's handler's words in other lines: another player's chat, a spectator's, the host's, a map ping's label, and a
@@ -111,70 +110,72 @@ for said in "<Player> Removed widget: BAR Droid build menu" "[Spec] Removed widg
     "[Spec (replay)] Removed widget: BAR Droid build menu" "> Removed widget: BAR Droid build menu" \
     "Player added point: Removed widget: BAR Droid build menu" "<Player> Failed to load: bardroid_buildmenu.lua  (x)"; do
   infolog "$said"
-  start 1 "fedcba9876543210fedcba9876543210"
+  start "fedcba9876543210fedcba9876543210"
   check "\"$said\" said: the copy runs" order "BAR Droid build menu" 165
   check "\"$said\" said: no mark" [ ! -f "$BAR/.bardroid-buildmenu-failed" ]
 done
 infolog "Error in Shutdown()" 'Error in Shutdown(): [string "LuaUI/Widgets/bardroid_buildmenu.lua"]:9: attempt to index nil' \
   "Removed widget: BAR Droid build menu"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "an error in the copy's Shutdown alone (it ran the whole game): the copy runs" order "BAR Droid build menu" 165
 infolog "Removed widget: BAR Droid build menus" "Removed widget: Build menu"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "another widget removed (a longer name, BAR's own): the copy runs" order "BAR Droid build menu" 165
 infolog "Failed to load: bardroid_missioninfo.lua  (no GetInfo() call)" "Failed to load: bardroid_buildmenu.lua  (duplicate name)"
-start 1 "$made"
+start "$made"
 check "no GetInfo() call (no scenario) and a duplicate name: Mission Info's copy on" order "BAR Droid mission info" 190
 check "... and the build menu's" order "BAR Droid build menu" 165
 check "... no Android-layer miss" quiet
 infolog '<Player> [PreGame::ReadDataFromDemo] pre-scanning demo file' "Removed widget: BAR Droid build menu"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "a replay's line said as chat, the copy removed: BAR's own (no replay)" order "Build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
 infolog 'Failed to load: bardroid_buildmenu.lua  ([string "LuaUI/Widgets/bardroid_buildmenu.lua"]:12: unexpected symbol near ")")'
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "the copy failed to load in the last game (it never ran): BAR's own" order "Build menu" 165
 check "the copy failed to load: the copy off" order "BAR Droid build menu" 0
 rm -f "$BAR/.bardroid-buildmenu-failed"
 infolog "Removed widget: BAR Droid build menu"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "the copy failed in the last game: BAR's own" order "Build menu" 165
 check "the copy failed in the last game: the copy off" order "BAR Droid build menu" 0
 check "the copy failed in the last game: an Android-layer miss" missed
 rm -f "$BAR/infolog.txt"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "the copy failed on this BAR file: still BAR's own" order "BAR Droid build menu" 0
-start 1 "$made"
+start "$made"
 check "another BAR file: the copy runs again" order "BAR Droid build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
 infolog "[PreGame::ReadDataFromDemo] pre-scanning demo file" "Removed widget: BAR Droid build menu"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "the copy removed in a replay (it plays its own BAR release): the copy still runs" order "BAR Droid build menu" 165
 rm -f "$BAR/infolog.txt"
 printf '%s\n' "fedcba9876543210fedcba9876543210" > "$BAR/.bardroid-buildmenu-failed"
-start 1 "fedcba9876543210fedcba9876543210"
+start "fedcba9876543210fedcba9876543210"
 check "a mark from before \"game\" (a replay may have written it): the copy runs" order "BAR Droid build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
 
-start 1 "$made" "0123456789abcdef0123456789abcdef"
+start "$made" "0123456789abcdef0123456789abcdef"
 check "BAR changed its Order menu and no new copy: the old copy runs" order "BAR Droid order menu" 189
 check "BAR changed its Order menu and no new copy: BAR's off" order "Order menu" 0
 check "BAR changed its Order menu and no new copy: an Android-layer miss" omissed
 infolog "Removed widget: BAR Droid order menu"
-start 1 "$made" "fedcba9876543210fedcba9876543210"
+start "$made" "fedcba9876543210fedcba9876543210"
 check "the order menu copy failed in the last game: BAR's own" order "Order menu" 189
 check "the order menu copy failed in the last game: the copy off" order "BAR Droid order menu" 0
 check "the order menu copy failed: the build menu copy keeps running" order "BAR Droid build menu" 165
 rm -f "$BAR/infolog.txt"
-start 1 "$made"
+start "$made"
 check "another BAR Order menu file: the copy runs again" order "BAR Droid order menu" 189
 rm -f "$BAR/.bardroid-ordermenu-failed"
 infolog "[PreGame::ReadDataFromDemo] pre-scanning demo file" "Removed widget: BAR Droid order menu"
-start 1 "$made" "fedcba9876543210fedcba9876543210"
+start "$made" "fedcba9876543210fedcba9876543210"
 check "the order menu copy removed in a replay: the copy still runs" order "BAR Droid order menu" 189
 rm -f "$BAR/infolog.txt"
 
-start 0 "$made"
+# (an install from the controller game's days: its menus' entries and its mark; dropped at the next start)
+widget_order "Build menu (controller)" 165; widget_order "Order menu (controller)" 189; : > "$BAR/.bardroid-gamepad-menus"
+start "$made"
 check "controller game off: the copy still in BAR's place (the pad online)" order "BAR Droid build menu" 165
 check "controller game off: the order menu copy still in BAR's place" order "BAR Droid order menu" 189
 check "controller game off: no controller order menu entry" absent "Order menu (controller)"

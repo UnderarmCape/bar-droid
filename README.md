@@ -86,7 +86,7 @@ panel the touch dock covers whole; with the dock across the bottom its buttons s
 it to move it, pinch or use the buttons to size it; Done (or three fingers again) closes it. The app's own panels
 (chat, unit info, the spectate bar) also take a text size and padding; BAR's minimap and player list take a size. The
 build menu is the app's copy of BAR's own Build menu, a 3x3 grid (9 build options a page, the page arrows in a strip
-under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized (in the controller game, the gamepad's own build menu instead); a unit info panel made bigger stops at the order menu, and the build menu keeps clear of it. BAR's top bar, order menu and start countdown can't be moved or sized on their own
+under them; up to 5 wide on a wide, short screen such as the Fold7 folded), which can be moved and sized; a unit info panel made bigger stops at the order menu, and the build menu keeps clear of it. BAR's top bar, order menu and start countdown can't be moved or sized on their own
 (BAR has no setting for them; their size follows the interface scale: 2.0 folded and held sideways, 1.0 folded and
 upright and unfolded). Folded and unfolded each keep their own layout.
 
@@ -191,7 +191,7 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   | B | Cancel the order or building picked, else clear the selection |
   | RT / RB held | Queue (Shift) / put the order first in the queue (Space; on the build menu a factory's queue: Alt) |
   | RB | The build menu: the pointer onto its first option and kept on the menu (B, or a quarter second of pushing off it, lets go), the D-pad steps (past the left or right edge, or right from the last option: the page before or after), RB / LB the next / previous page, the option drawn bigger with a gold outline; A picks it (factories: queue one, RT + A five), X takes one off (RT + X five); the pointer glides back to the middle |
-  | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A). While the pad is in use the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the menu; in the controller game the rest then fill it evenly |
+  | Back + RB | The order menu, the same way (the pointer at 5/8 speed): A gives the order (one that needs a target: aim it in the middle, A). While the pad is in use the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the menu, and the rest fill it evenly |
   | D-pad | Right / left: next / previous idle builder; down: the commander; up: a camera bookmark, its place and zoom (LT + up: store it) |
   | LB + D-pad | Right / left: next / previous idle unit (not builders); down: all idle units of that type |
   | RB + D-pad | Up tapped: the camera to the last ping from another player; up held: a ping in the middle of the screen; down: all your combat units; right: your combat units on the screen |

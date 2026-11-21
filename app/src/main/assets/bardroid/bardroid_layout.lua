@@ -9,7 +9,7 @@
 -- user widgets out of BAR's code): the minimap's and the player list's size. BAR's top bar (metal, energy, wind) and
 -- its build and order menus have no setting for it: shown as fixed (their size follows the interface scale); BAR's
 -- start countdown neither (the chat keeps clear of it). The editor's first version also put BAR's menus at the bottom
--- or the left (their own setting, setBottomPosition): BAR's older build menu, the controller game's, failed drawing
+-- or the left (their own setting, setBottomPosition): BAR's older build menu (v0.8.5's, then) failed drawing
 -- after the switch (gui_buildmenu.lua:1398, a cell without its command) and BAR removed it until the next start.
 -- A movable HUD for BAR's own panels is BAR's to add (docs/HELP-WANTED.md).
 -- The settings are kept per screen shape (wide: a phone folded; near-square: unfolded; tall: a phone upright) in this
@@ -131,8 +131,8 @@ local function registerBar()
 			end
 		end,
 	})
-	-- (its own id: the app's copy of BAR's Build menu is "buildmenu", sizeable, and outlined only while it shows; the
-	-- controller game with v0.8.5's controls shows v0.8.5's in its place, which had no outline at all)
+	-- (its own id: the app's copy of BAR's Build menu is "buildmenu", sizeable, and outlined only while it shows; BAR's
+	-- own, where the copy gave way to it, is this one)
 	register("barbuildmenu", {
 		label = "Build menu (fixed by BAR)",
 		can = {},
