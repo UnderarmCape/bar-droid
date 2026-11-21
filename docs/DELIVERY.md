@@ -308,7 +308,8 @@ boxes, the GPU driver's fault closing a frozen game).
       a type left out of ALL UNITS elsewhere came back too. types-phone-test's new case (Pawns and Maces left out, two
       Pawns given far off and the camera on them, LOCAL UNITS tapped: the Pawns back in and picked; then ALL UNITS at
       home: the Maces still out) FAILED on the build before (the Maces back: 9 picked); now only the list's types come
-      back (bardroid_portrait.lua), ALL PASS twice (7 picked, the Maces left out).
+      back (bardroid_portrait.lua), ALL PASS twice (7 picked, the Maces left out). On the Fold7 2026-11-20 22:02
+      (1f4ea320's build, BAR closed, not played since 21:27), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
