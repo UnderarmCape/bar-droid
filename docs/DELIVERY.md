@@ -653,6 +653,11 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build with it and item 11's gates: pad-test, pad-test -Dgun and the regression round (dock-phone-test upright and
       at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test, driverwatch-phone-test with x11-probe in
       its game, touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test) ALL PASS.
+- [x] **Item 7f: the info panel idle while the dock replaces it** (2026-11-21 09:00-09:10): upright the portrait dock shows
+      the selection and bardroid_info.lua's DrawScreen stands down, but its Update still picked what to show and built
+      the view every frame (9 kB/s of garbage in the idle skirmish). Now it stands down too, its next pick at once when
+      the dock goes (sideways). Measured the same way (profile-run.ps1 INFO "BAR Droid info"): 9.3 -> 0 kB/s. pad-test
+      ALL PASS on it; the way back sideways not run on the phone (its first pick is the one a new game makes).
 - [x] **Item 11 (the cheap ones): developer-only switches gated** (2026-11-21 08:50-08:58): the launcher's GL check long
       press (an hour of the X display, a wake lock and a black game screen: "shell" mode) and the game screen's
       .bardroid-display-scales file (the display hardware's scaling in place of SGSR) only in a developer's build; the

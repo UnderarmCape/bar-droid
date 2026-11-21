@@ -1172,6 +1172,12 @@ function widget:Update(dt)
 			end,
 		})
 	end
+	-- (the portrait dock shows the selection: nothing picked or built for a panel not drawn, which it went on doing every
+	-- frame, 9 kB/s of garbage upright; the first pick comes at once when the dock goes; release overhaul item 7)
+	if standDown then
+		pickAt = 0
+		return
+	end
 	elapsed = elapsed + dt
 	if elapsed < pickAt then
 		if shown and shown.kind ~= "units" and elapsed >= rebuildAt then
