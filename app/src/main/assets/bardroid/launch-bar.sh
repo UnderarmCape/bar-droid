@@ -293,6 +293,23 @@ app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved
   done
 }
 [ -d "$GAME_WIDGETS" ] && app_widgets_to "$GAME_WIDGETS" "$BAR/LuaUI/Widgets"
+# bardroid-ui is the app's alone: with the phone engine every file in its LuaUI/Widgets loads as one of the game's
+# widgets, past a host's ban on user widgets, and one the app no longer ships (a retired widget, or a file put there by
+# Lua: BAR's handler lets user widgets write in LuaUI/Config and LuaUI/Widgets only since test-31943, an older
+# release's, which a replay plays, in the whole write folder) loaded in every game after. At every start, once the
+# app's own are out (above), everything else in it goes; they alone go back in below (release overhaul item 4).
+game_widgets_only() {
+  [ -d "$BAR/bardroid-ui" ] || return 0
+  gone=$(find "$BAR/bardroid-ui" ! -type d 2>/dev/null | while IFS= read -r f; do
+    keep=0
+    for w in $APP_WIDGETS; do [ "$f" = "$GAME_WIDGETS/$w.lua" ] && keep=1; done   # (one whose move back failed)
+    [ "$keep" = 1 ] && continue
+    rm -f "$f" && printf '%s\n' "${f#"$BAR"/}"
+  done)
+  find "$BAR/bardroid-ui" -mindepth 1 -depth -type d -empty -delete 2>/dev/null
+  [ -z "$gone" ] || log "!!! bardroid-ui: removed what is not the app's widgets (only the app's load as the game's), $(printf '%s\n' "$gone" | wc -l | tr -d ' ') in all: $(printf '%s\n' "$gone" | head -n 3 | tr '\n' ' ' | sed 's/ $//')"
+}
+game_widgets_only
 rm -f "$BAR/LuaUI/Config/bardroid_game_widgets.txt"   # (the lobby's warnings about a host's widget options: shown)
 
 LOBBY_GAME=byar

@@ -482,7 +482,22 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       in one pass. tools/launch-bar-test.sh: 27 new cases (a player's, a spectator's, the host's and a ping's words, a
       chat's replay line, a load failure, a Shutdown error, a longer name, no GetInfo, the exit pass), ALL PASS; HEAD's
       copy_removed on the same lines: the chat and the ping switch the copy off, the load failure is not seen. The dev
-      phone's last 20 games: no fault of the app's widgets, so the wider exit check adds no warnings.
+      phone's last 20 games: no fault of the app's widgets, so the wider exit check adds no warnings. In the dev phone's
+      own container (dash and mawk, as launch-bar.sh runs; and bash) ALL PASS; its starts on the new build: every copy
+      in its place.
+- [x] **Item 4: bardroid-ui holds the app's widgets only** (2026-11-21 03:44-03:57): with the phone engine every file in
+      bardroid-ui/LuaUI/Widgets loads as one of the game's widgets, past a host's ban on user widgets, and launch-bar.sh
+      moved only the app's own out and back: anything else stayed and loaded in every game, a widget the app retired too.
+      (A user widget can no longer put one there itself: BAR's handler lets user widgets write in LuaUI/Config and
+      LuaUI/Widgets only since test-31943, luaui/barwidgets.lua checkUserWritePath; an older release's, which a replay
+      plays, writes anywhere in the write folder.) Now game_widgets_only removes the rest at every start, once the app's
+      own are out, keeps one of the app's whose move back failed, empties the folders, and says what went in
+      launcher.log. tools/launch-bar-test.sh: 10 new cases (a foreign widget, a retired one, a subfolder, another file,
+      the newer copy kept, a stuck app widget kept, quiet with nothing foreign, no folder made for the official engine)
+      and launch-bar.sh's APP_WIDGETS checked against Installer.java's copy list (the same 28), ALL PASS. Dev phone, a
+      widget file put in bardroid-ui: on the build before "[foreign-probe] loaded as one of the game's widgets" (29 in
+      the folder); on the fix "!!! bardroid-ui: removed what is not the app's widgets ..., 1 in all", 28, never loaded;
+      stats-phone-test ALL PASS on both.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

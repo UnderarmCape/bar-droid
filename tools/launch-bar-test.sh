@@ -304,5 +304,43 @@ dev_start 1
 check "a developer's build: dev-env.sh run" [ -f "$work/dev/ran" ]
 check "a developer's build: dev-springsettings.cfg added" [ -n "$(grep LogFlushLevel "$work/dev/springsettings.cfg")" ]
 
+# The game widgets' folder (bardroid-ui) holds the app's widgets only: anything else in it loaded as one of the game's
+# widgets with the phone engine (release overhaul item 4, 2026-11-21)
+apps=$(awk '/^APP_WIDGETS="/ { on = 1 } on { print } on && /"$/ { exit }' "$src")
+gw=$(grep '^GAME_WIDGETS=' "$src")
+to=$(body app_widgets_to)
+only=$(body game_widgets_only)
+[ -n "$apps" ] && [ -n "$gw" ] && [ -n "$to" ] && [ -n "$only" ] ||
+  { echo "[launchbartest] FAIL launch-bar.sh: APP_WIDGETS, GAME_WIDGETS, app_widgets_to or game_widgets_only not found"; exit 1; }
+eval "$apps"; eval "$gw"; eval "$to"; eval "$only"
+log() { printf '%s\n' "$*" >> "$LOGS/launch.txt"; }
+rm -rf "$BAR/bardroid-ui" "$BAR/LuaUI/Widgets"
+mkdir -p "$GAME_WIDGETS/sub" "$BAR/LuaUI/Widgets" "$BAR/bardroid-ui/LuaUI/Config"
+echo new > "$BAR/LuaUI/Widgets/bardroid_touch.lua"; echo old > "$GAME_WIDGETS/bardroid_touch.lua"
+echo app > "$GAME_WIDGETS/bardroid_chat.lua"
+for f in "$GAME_WIDGETS/bardroid_cheat.lua" "$GAME_WIDGETS/sub/gui_x.lua" "$GAME_WIDGETS/bardroid_touch_hud.lua" \
+    "$BAR/bardroid-ui/LuaUI/Config/y.txt"; do echo x > "$f"; done
+: > "$LOGS/launch.txt"
+app_widgets_to "$GAME_WIDGETS" "$BAR/LuaUI/Widgets"; game_widgets_only
+check "bardroid-ui: a widget not the app's gone" [ ! -e "$GAME_WIDGETS/bardroid_cheat.lua" ]
+check "... one the app retired (the touch-only mode's) gone" [ ! -e "$GAME_WIDGETS/bardroid_touch_hud.lua" ]
+check "... one in a subfolder gone" [ ! -e "$GAME_WIDGETS/sub/gui_x.lua" ]
+check "... any other file gone" [ ! -e "$BAR/bardroid-ui/LuaUI/Config/y.txt" ]
+check "... the app's own back in LuaUI/Widgets, the newer kept" [ "$(cat "$BAR/LuaUI/Widgets/bardroid_touch.lua")" = new ]
+check "... and one only there" [ "$(cat "$BAR/LuaUI/Widgets/bardroid_chat.lua" 2>/dev/null)" = app ]
+check "... said in launcher.log" grep -q "bardroid-ui: removed what is not the app's widgets .*, 4 in all: " "$LOGS/launch.txt"
+mkdir -p "$GAME_WIDGETS"; echo stuck > "$GAME_WIDGETS/bardroid_walls.lua"
+: > "$LOGS/launch.txt"; game_widgets_only
+check "an app widget left in the folder (its move back failed): kept" [ -f "$GAME_WIDGETS/bardroid_walls.lua" ]
+check "nothing foreign: nothing said" [ ! -s "$LOGS/launch.txt" ]
+rm -rf "$BAR/bardroid-ui"; game_widgets_only
+check "no bardroid-ui (BAR's official engine): nothing made" [ ! -e "$BAR/bardroid-ui" ]
+log() { :; }
+# The app's widgets are listed twice: launch-bar.sh's APP_WIDGETS and the Installer's copy list
+inst=$(sed -n '/new String\[\]{"bardroid_touch.lua"/,/})/p' "$here/app/src/main/java/com/underarmcape/bardroid/Installer.java" |
+  grep -o 'bardroid_[a-z_]*\.lua' | sed 's/\.lua$//' | sort | tr '\n' ' ')
+mine=$(for w in $APP_WIDGETS; do echo "$w"; done | sort | tr '\n' ' ')
+check "the app's widgets: launch-bar.sh's list is the Installer's ($(echo $mine | wc -w))" [ -n "$inst" ] && [ "$inst" = "$mine" ]
+
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]
