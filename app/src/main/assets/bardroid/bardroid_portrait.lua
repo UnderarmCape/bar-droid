@@ -3974,6 +3974,33 @@ function SP.drawPill(wb, tb, cache)
 	end
 	resetGL()
 end
+-- The nook's and the pill's shapes, the same few hundred vertices every frame (0.2 ms of the boxes' 0.4-0.6 a frame on
+-- the dev phone, release overhaul item 7): a display list, the same calls played back, made again when the layout makes
+-- their rects anew (wb, with the nook) or another box is lit
+function SP.windBack(nk, wb, tb)
+	local kind = SP.windInfo and SP.windInfo.kind or ""
+	local B = SP.windBackDL
+	if not (B and B.wb == wb and B.kind == kind) then
+		if B and B.id then
+			gl.DeleteList(B.id)
+		end
+		B = { wb = wb, kind = kind, id = gl.CreateList(function()
+			if nk then
+				SP.drawNook(nk, wb, tb)
+			else
+				SP.drawPill(wb, tb, wb)
+			end
+		end) }
+		SP.windBackDL = B
+	end
+	if B.id then
+		gl.CallList(B.id)
+	elseif nk then -- (no list: drawn as they are)
+		SP.drawNook(nk, wb, tb)
+	else
+		SP.drawPill(wb, tb, wb)
+	end
+end
 -- Drawn live: a few rectangles and words; the box whose details are open lit gold
 function SP.drawWindTide()
 	local wb, tb = SP.windRects()
@@ -3982,10 +4009,8 @@ function SP.drawWindTide()
 	end
 	local nk = L.windNook
 	local pill = nk or L.windPill
-	if nk then
-		SP.drawNook(nk, wb, tb)
-	elseif pill then
-		SP.drawPill(wb, tb, wb)
+	if pill then
+		SP.windBack(nk, wb, tb)
 	end
 	for i, box in ipairs({ wb, tb }) do
 		local hh, bw = box[4] - box[2], box[3] - box[1]
@@ -6084,6 +6109,9 @@ function widget:Shutdown()
 	end
 	if L.resTex then
 		gl.DeleteTexture(L.resTex)
+	end
+	if SP.windBackDL and SP.windBackDL.id then
+		gl.DeleteList(SP.windBackDL.id)
 	end
 	if SP.tipOwner and SP.tipOwner.ShowTooltip == SP.tipWrap then -- (BAR's tooltip widget as it was)
 		SP.tipOwner.ShowTooltip = SP.tipInner

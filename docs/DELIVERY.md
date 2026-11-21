@@ -696,6 +696,25 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       attack-ping-test twice and walls-phone-test ALL PASS; launcher.log's lines timed right. Noted, not worked (see the
       list): Stop during a map download, the install or the X server's start leaves a failure note; the lobby bridge's
       stop() leaves accepted sockets open.
+- [x] **Item 7h: the dock's redraws measured; the wind and tide boxes' shapes in a display list** (2026-11-21
+      10:05-11:55): a temporary build (toolchain\tmp\edit_docktrace.py, never committed) recorded every GL and font
+      call of each redraw of the dock's texture and timed its parts. In an idle upright skirmish 222-225 redraws a
+      minute were asked by the refresh alone, and 217-224 of them drew the same calls as the one before (97-99 %; 202-204
+      of 222 through dock-phone-test, factory-preset-test, types-phone-test); one redraw costs ~3.3 ms (the halves
+      0.8-1.0 ms each, the selection row 0.65, the groups row 0.5, the panel 0.36) and the redraws ~117 kB/s of the dock's
+      262. Not done: a redraw skipped when nothing changed would need a signature of everything drawStill reads (a
+      picked unit's health, the groups and their counts, the presets, the place panel, timers): too wide to prove before
+      the release; noted for after it. The wind and tide boxes, drawn live every frame: 0.39-0.59 ms a frame, of it
+      the nook's and pill's shapes (vertex fans) ~0.2 ms. Now those shapes are a display list (SP.windBack), made again
+      when the layout makes their rects anew or another box is lit. Proof: a temporary build (edit_windcheck.py)
+      compared each frame's dry run of the same drawing with the one right after the list was made: 0 stale in ~5,400
+      frames (idle, dock-phone-test, types-phone-test), each list's calls as many as its dry run's (293; 340 with a box
+      lit); screenshots of the idle game before and after show the same nook. The dock 1.595 -> 1.400 ms a frame (all
+      widgets 5.80 -> 5.50; BAR's profiler, the same idle skirmish back to back; 1.652 in a third run before).
+      dock-phone-test upright and at 1080x1198, factory-preset-test, types-phone-test, pad-test -Online ALL PASS on it.
+      The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
+      dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
+      by its stall watch 8 s after the refusal.
 - [x] **Round B, 2026-11-21 09:58-10:54** (dev phone, HEAD 78d5f06a's code): camctl, replay, stats, settings, lobbychat,
       buildbar ALL PASS; dgun-speed and retreat done. attack-ping-test failed once ("a light fight beside a busy one: its
       own entry": 4 entries, none at the solar, 18 hits on it), then ALL PASS twice: 1 in 3, the case's timing (each unit
