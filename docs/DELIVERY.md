@@ -344,6 +344,22 @@ boxes, the GPU driver's fault closing a frozen game).
       save (deleted after): on the build before "Game saved" twice; now only a line that begins with the engine's
       words counts, once, the real save's, ALL PASS twice. On the Fold7 2026-11-20 23:44 (56ff79fe's build, BAR
       closed, not played since 22:02), github-sync -Release.
+- [x] **Chat could fake the chat box's system lines and BAR's Autoquit countdown** (hardening, 2026-11-20 23:47 to
+      2026-11-21 00:27, dev phone): the round first: dock-phone-test upright and at 1080x1198, factory-preset-test,
+      types-phone-test, overgame-phone-test, touch-phone-test, lobby-phone-test, pad-test -Online ALL PASS, no driver
+      fault, no floating window. Every console-line reader in the app's widgets read: bardroid_bench.lua's ("Benchmark
+      ended", the offline benchmark only) fine; bardroid_chat.lua's had the 23:36 kink twice: a line holding " paused
+      the game", " left the game", " is lagging behind" or "Sync error for" anywhere was shown again as the game's own
+      line, and "<autoquit> Automatically exiting in N seconds" anywhere counted a "Leaving the game in N s" down. A
+      player's chat is such a line ("<name> ...", a spectator's "[name] ...", Game.cpp), so online anyone could put a
+      leaving countdown on every phone. Now a chat-shaped line is none of them (names have no spaces, clan tags allowed:
+      "<[Crd]Name> ", "[[Crd]Name] "; the engine's own pause, left, lag and sync lines begin with a name or a word,
+      MsgStrings.h), and the countdown only once the game is over (BAR's Autoquit counts only then); a tools line says
+      each shown. driverwatch-phone-test says a pause line and the Autoquit line as chat, then pauses and unpauses for
+      real: on the build before (with the tools lines only) 3 system lines and a countdown; now the real 2 and none,
+      ALL PASS twice. A third run met the GPU driver's real fault (Mesa's own lines, 47 s in, 30 s after the test's real
+      pause and save), which the test blamed on chat: it now says a real fault plainly. The lobby widget's other Chobby
+      wraps (the popup's words, the drop-down's height) act on nothing a player types.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

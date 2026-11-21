@@ -286,6 +286,17 @@ local function processor(_, lineType, name, nameText, text, _, ignore)
 end
 
 local SYSTEM_LINES = { " paused the game", " unpaused the game", " left the game", " is lagging behind", "Sync error for" }
+-- (a player's chat holding those words is no system line: the engine begins one with "<name> ", a spectator's with
+-- "[name] ", one without a sender with "> " (Game.cpp); none of the lines above begins so. The words as chat were shown
+-- a second time as the game's own, and "<autoquit> ..." as chat counted a game down to a quit that never came; BAR's
+-- Autoquit counts only once the game is over. driverwatch-phone-test, 2026-11-21)
+local function chatShaped(line) -- (names have no spaces, but may have a clan tag: "<[Crd]Name> ", "[[Crd]Name] ")
+	return line:find("^<%S+> ") or line:find("^%[%S+%] ") or line:find("^%[%S+ %(replay%)%] ") or line:find("^> ")
+end
+local gameOver = false
+function widget:GameOver()
+	gameOver = true
+end
 local WARNING_COLOR = "\255\255\220\120"
 -- that line, where the pointer was (it goes once the pointer moves: Update), how to keep the game, the seconds shown
 local quitNote, quitX, quitY, quitHow, quitShown
@@ -299,8 +310,9 @@ function widget:AddConsoleLine(line)
 	-- BAR's Autoquit leaves an ended game after 12 s unless the pointer moves, and says so in the console only: on a
 	-- phone the game closed with no word 12 s after a lost skirmish (dev phone, 2026-11-03). Said here for that time,
 	-- counting down; a finger's tap moves the pointer, and then the line goes (BAR waits a minute after each move).
-	local secs = line:match("<autoquit> Automatically exiting in (%d+) seconds")
+	local secs = gameOver and line:match("^<autoquit> Automatically exiting in (%d+) seconds")
 	if secs then
+		Spring.Echo("[bardroid-chat] (tools) the autoquit countdown shown")
 		-- (BAR's Autoquit waits only for the pointer to move: the pad holds it in the middle, so with the pad too it is a
 		-- tap on the screen; "move the mouse" was said to pad players, 2026-11-08)
 		quitHow = WG.BarDroidInput == "mouse" and "move the mouse" or "tap the screen"
@@ -309,9 +321,13 @@ function widget:AddConsoleLine(line)
 		quitX, quitY = Spring.GetMouseState()
 		return
 	end
+	if chatShaped(line) then
+		return
+	end
 	for _, s in ipairs(SYSTEM_LINES) do
 		if line:find(s, 1, true) then
 			add("", WHITE, SYSTEM_COLOR .. line:gsub("%s+", " "))
+			Spring.Echo("[bardroid-chat] (tools) a console line shown as the game's own")
 			return
 		end
 	end

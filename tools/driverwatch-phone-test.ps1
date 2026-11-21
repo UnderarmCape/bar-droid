@@ -41,10 +41,17 @@ try {
   $alive = [bool](& $adb shell pidof spring)
   Log '\[driverwatchtest\]|Error in' 10 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
   if ($state -ne "end") { "[driverwatchtest] FAIL the test did not finish (the widget's file: '$state', spring $(if ($alive) { 'running' } else { 'gone' }))"; $fails++ }
-  if ($armed.Count -eq 0) { "[driverwatchtest] PASS the words as chat and echo: the driver watch not armed" }
-  else { "[driverwatchtest] FAIL the words as chat and echo armed the driver watch: $(($armed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
-  if ($closed.Count -eq 0 -and $alive) { "[driverwatchtest] PASS the game still running, no driver note" }
-  else { "[driverwatchtest] FAIL the game closed or noted: alive $alive, $(($closed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+  # (Mesa's own refusal, with no log prefix, is the driver's real fault: the close is right then, and the run says nothing
+  # about chat; 2026-11-21 00:20, 47 s into a run)
+  $real = @($run | Select-String -Pattern '\[engine\] MESA: error: .*submit failed')
+  if ($real.Count -gt 0) {
+    "[driverwatchtest] FAIL the game met the GPU driver's real fault ($($real.Count) of Mesa's own lines; the close was right): not the chat, run it again"; $fails++
+  } else {
+    if ($armed.Count -eq 0) { "[driverwatchtest] PASS the words as chat and echo: the driver watch not armed" }
+    else { "[driverwatchtest] FAIL the words as chat and echo armed the driver watch: $(($armed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+    if ($closed.Count -eq 0 -and $alive) { "[driverwatchtest] PASS the game still running, no driver note" }
+    else { "[driverwatchtest] FAIL the game closed or noted: alive $alive, $(($closed | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+  }
   # (the engine's state lines said as chat: no state of the app's changed by them)
   $state = @($run | Select-String -Pattern "back in the lobby|a game loads \(from the lobby\)|joining a game hosted elsewhere|not loading now")
   if ($state.Count -eq 0) { "[driverwatchtest] PASS the engine's state lines as chat: the app's state unchanged" }
@@ -56,6 +63,12 @@ try {
   if ($realSave.Count -eq 0) { "[driverwatchtest] FAIL the real save: none written (its line not in the log)"; $fails++ }
   elseif ($savedSaid.Count -eq 1) { "[driverwatchtest] PASS the save's words as chat: no 'Game saved'; the real save: one" }
   else { "[driverwatchtest] FAIL the save's words as chat and a real save: 'Game saved' $($savedSaid.Count) times (one wanted)"; $fails++ }
+  # (the chat box: a pause line and BAR's Autoquit countdown said as chat are not the game's own; the real pause and
+  # unpause are: two system lines, no countdown; bardroid_chat.lua's tools lines say each)
+  $sys = @(Log 'bardroid-chat\] .tools. a console line shown' 10)
+  $quit = @(Log 'bardroid-chat\] .tools. the autoquit countdown' 5)
+  if ($sys.Count -eq 2 -and $quit.Count -eq 0) { "[driverwatchtest] PASS the chat box: the pause and Autoquit's words as chat not the game's; the real pause and unpause two system lines" }
+  else { "[driverwatchtest] FAIL the chat box: $($sys.Count) system lines (2 wanted: the real pause and unpause), $($quit.Count) Autoquit countdowns (0 wanted)"; $fails++ }
   # (how the chat lines look in the log: for the record)
   Log 'SpringApp::Reload\] test|creating LoadScreen$|203\.0\.113\.7' 6 | ForEach-Object { "[driverwatchtest] (in the log: $_)" }
   "[driverwatchtest] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"

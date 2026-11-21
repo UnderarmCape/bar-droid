@@ -39,7 +39,9 @@ function widget:Update(dt)
 		-- (and as a player's own chat, "say": the form another player's words take in the log; with them the engine's
 		-- other lines the app reads its state from: a lobby game's end, a load, a join's server)
 		for _, words in ipairs({ REFUSAL, HUNG, "[SpringApp::Reload] test", "[LoadScreen] creating LoadScreen",
-			"[CPreGame] using client IP 203.0.113.7 and port 8452", "recording demo to demos/test.sdfz", SAVED }) do
+			"[CPreGame] using client IP 203.0.113.7 and port 8452", "recording demo to demos/test.sdfz", SAVED,
+			-- (and the lines bardroid_chat.lua shows as the game's own: a pause, BAR's Autoquit countdown; 2026-11-21)
+			"Phone paused the game", "<autoquit> Automatically exiting in 9 seconds" }) do
 			Spring.SendCommands("say " .. words)
 		end
 		Spring.Echo("[driverwatchtest] the driver's refusal and the watchdog's words said as chat and echoed, and the"
@@ -49,6 +51,13 @@ function widget:Update(dt)
 	elseif stage == "save" and clock - at > 3 then
 		Spring.Echo("[driverwatchtest] a real save now")
 		Spring.SendCommands("savegame bardroid_dwtest")
+		stage, at = "pause", clock
+	elseif stage == "pause" and clock - at > 4 then -- (a real pause and unpause: the chat box's two system lines)
+		Spring.Echo("[driverwatchtest] a real pause and unpause now")
+		Spring.SendCommands("pause 1")
+		stage, at = "unpause", clock
+	elseif stage == "unpause" and clock - at > 1.5 then
+		Spring.SendCommands("pause 0")
 		stage, at = "watch", clock
 	elseif stage == "watch" and clock - at > 12 then
 		Spring.Echo(string.format("[driverwatchtest] the game still running %.0f s after (frame %d)", clock - at,
