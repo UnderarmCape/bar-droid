@@ -2,9 +2,9 @@
 # skirmish, by real taps: the phone version (phone-widget-gui_buildbar.lua.patch) takes a press by the icon under the
 # press, not by the one the pointer was over at the last Update. The test widget (tools\buildbar-phone-test\
 # bardroid_buildbar_test.lua) gives a Bot Lab and asks, three times, for a tap on the map, a tap on the lab's icon (the
-# lab picked) and a tap on the map (the press reaches the map). For the run: BAR's BuildBar on in LuaUI/Config/BYAR.lua
-# (the file put back after), the camera knob and rails off (dev-springsettings.cfg: the zoom rail lies over the bar's
-# icons at the right edge), "Play upright" on and "Turn with the phone" off (put back). Pictures in
+# lab picked) and a tap on the map (the press reaches the map); the one-finger camera's zoom rail clear of the bar's
+# icons. For the run: BAR's BuildBar on in LuaUI/Config/BYAR.lua (the file put back after), the camera knob and rails
+# on, right-handed (dev-springsettings.cfg, gone after), "Play upright" on and "Turn with the phone" off (put back). Pictures in
 # build\buildbar-<n>.png. Nothing on the laptop: it runs any time. About 2 minutes.
 #   powershell -ExecutionPolicy Bypass -File tools\buildbar-phone-test.ps1
 $ErrorActionPreference = "Stop"
@@ -40,7 +40,7 @@ AppScript ((Pref "portrait" $true) + (Pref "turnWithPhone" $false) +
   "cp $cfg/BYAR.lua $cfg/BYAR.lua.buildbartest`n" +
   "sed -i 's/^\([[:space:]]*\)BuildBar = 0,/\1BuildBar = 999,/' $cfg/BYAR.lua`n" +
   "rm -f files/bar/infolog.txt $cfg/bardroid_buildbartest.txt $cfg/bardroid_buildbartest_cmd.txt`n" +
-  "printf 'LogFlushLevel = 0\nBarDroidCamKnob = 0\nBarDroidCamRails = 0\n' > files/bar/dev-springsettings.cfg`n")
+  "printf 'LogFlushLevel = 0\nBarDroidCamKnob = 1\nBarDroidCamRails = 1\nBarDroidCamLeft = 0\n' > files/bar/dev-springsettings.cfg`n")
 "[buildbartest] (BYAR.lua: $("$(InApp "grep -a -E 'BuildBar = ' $cfg/BYAR.lua")".Trim()))"
 Send-AppFile $adb (Join-Path $PSScriptRoot "buildbar-phone-test\bardroid_buildbar_test.lua") $widget
 try {

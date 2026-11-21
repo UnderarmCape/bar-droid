@@ -253,6 +253,22 @@ boxes, the GPU driver's fault closing a frozen game).
       allows such an entry older than its three newest pings: ALL PASS. Seen meanwhile, not a cause: from ~20 s into
       every game bardroid_touch.lua reads BAR's widget files ahead (uiRescale.readAhead, a file or more a frame for some
       6 s; the engine logs each phone-patched one), in the passing runs over the same steps too.
+- [x] **Round and round again; the zoom rail clear of BAR's Build Bar** (hardening, 2026-11-20 19:29-19:57, dev phone):
+      attack-ping-test, walls-phone-test, camctl-phone-test, replay-phone-test, stats-phone-test, settings-phone-test,
+      lobbychat-phone-test ALL PASS; dgun-speed-test 99 % and 99 %; retreat-phone-test on 11/14 alive against off 12/14
+      this time (a Pawn lost after falling back; T2, amphibious, bot and vehicle 2/2 both ways; the day's runs 8-6, 8-8,
+      11-12), no driver fault in any. The open item noted at 19:22, upright BAR's Build Bar icons (x 831-936) under the
+      one-finger camera's zoom rail (880-936), which took their taps when a player turns the bar on:
+      buildbar-phone-test now runs with the knob and rails on and checks the rail clear of the icons, FAILED on the
+      build before (rail 880,563-936,1028 over icons 831,902-936,1007). The Build Bar's phone version now puts its
+      factory column among the app's tap panels (WG.BarDroidTapPanels, from its Update: bardroid_touch.lua makes that
+      table after BAR's widgets start), as the replay column does: bardroid_camctl.lua's layout moves the zoom rail in
+      past it (edgeInset, every 0.25 s, so a factory built later moves it too), a tap there hides the pointer as on the
+      interface, a drag from it still pans. 4 blocks, their anchors in 31723, 31836 and 32018. ALL PASS twice (rail
+      764,563-820,1028, the icons' taps still picking the lab with the knob on), camctl-phone-test ALL PASS; its picture:
+      the rail's line left of the icon, the knob clear. The two other open items next in line stay as they are: the
+      dock's texture redraw (its 2026-11-17 verdict: only if a measured late game shows the dock's cost) and RB on the
+      dock's grid with a pad upright (Kailil's call, not asked for).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

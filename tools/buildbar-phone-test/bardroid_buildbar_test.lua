@@ -14,6 +14,7 @@ function widget:GetInfo()
 end
 
 local OUT, CMD_FILE = "LuaUI/Config/bardroid_buildbartest.txt", "LuaUI/Config/bardroid_buildbartest_cmd.txt"
+local CAM_FILE = "LuaUI/Config/bardroid_camctl.txt" -- (the one-finger camera's rects for RtsTouch: X pixels, top left)
 local ROUNDS = 3
 local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil
@@ -79,6 +80,20 @@ local function mapSpot()
 	local vsx, vsy = Spring.GetViewGeometry()
 	return vsx * 0.22, vsy * 0.3
 end
+-- the zoom rail's rect in RtsTouch's file (X pixels, top left origin), or nil and the file's text
+local function zoomRail()
+	local f = io.open(CAM_FILE, "r")
+	if not f then
+		return nil, "no file"
+	end
+	local s = f:read("*a") or ""
+	f:close()
+	local x0, y0, x1, y1 = s:match("zoom (%-?[%d%.]+) (%-?[%d%.]+) (%-?[%d%.]+) (%-?[%d%.]+)")
+	if not x0 then
+		return nil, s:gsub("\n", "; ")
+	end
+	return { tonumber(x0), tonumber(y0), tonumber(x1), tonumber(y1) }
+end
 local function picked()
 	local sel = Spring.GetSelectedUnits()
 	return #sel == 1 and sel[1] == lab, #sel
@@ -118,6 +133,13 @@ local function step(f)
 			go("end", f)
 			return
 		end
+		-- (the one-finger camera on for the run: its zoom rail along the right edge stands clear of the bar's icons, which
+		-- the phone version lists among the app's tap panels; upright it lay over them, 2026-11-20)
+		local z, why = zoomRail()
+		local bx0, by0, bx1, by1 = rect[1], vsy - rect[2], rect[3], vsy - rect[4]
+		check("the camera's zoom rail clear of the bar's icons", z and (z[3] <= bx0 or z[1] >= bx1 or z[4] <= by0
+			or z[2] >= by1), z and string.format("rail %d,%d-%d,%d, icons %d,%d-%d,%d", z[1], z[2], z[3], z[4], bx0, by0,
+			bx1, by1) or ("no zoom rail: " .. tostring(why)))
 		Spring.SelectUnitArray({})
 		ask("shot", 0, 0, "round", f)
 	elseif stage == "round" then

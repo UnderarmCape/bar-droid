@@ -6,7 +6,9 @@ on the bar was taken by it, and a first tap on a factory went through to the map
 and the player list's; the scan of 2026-11-16, docs/DELIVERY.md; for BAR docs/upstream/bar-buildbar-press-hover.patch).
 The Build Bar is off on phones as the app sets them up; this is for a player who turns it on. Applied by the engine
 (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs. The first two
-blocks give the app's phone test the icons' places (WG.BarDroidBuildBar.rects; tools/buildbar-phone-test.ps1).
+blocks give the app's phone test the icons' places (WG.BarDroidBuildBar.rects; tools/buildbar-phone-test.ps1); the
+third puts the factory column among the app's tap panels (WG.BarDroidTapPanels), so the one-finger camera's zoom rail
+stands clear of it (upright, x 831-936 on the dev phone, under the rail's 880-936; 2026-11-20).
 
 @@@ find
 	widget:ViewResize()
@@ -26,7 +28,28 @@ function widget:Shutdown()
 @@@ with
 function widget:Shutdown()
 	WG.BarDroidBuildBar = nil
+	if WG.BarDroidTapPanels then -- BAR Droid (phone): the column no longer the touch widget's
+		WG.BarDroidTapPanels.buildbar = nil
+	end
 	for i = 1, #dlists do
+@@@ end
+
+@@@ find
+function widget:Update(dt)
+@@@ with
+function widget:Update(dt)
+	-- BAR Droid (phone): the factory column for the app's touch widget (bardroid_touch.lua's WG.BarDroidTapPanels, made
+	-- after this widget starts): a tap on an icon hides the pointer as on the interface, a finger's drag from it still
+	-- pans, and the one-finger camera's zoom rail stands clear of it (upright it lay over the icons and took their taps)
+	local droidTap = WG.BarDroidTapPanels
+	if droidTap and not droidTap.buildbar then
+		droidTap.buildbar = function()
+			if #facs < 1 or facRect[3] <= facRect[1] then
+				return nil
+			end
+			return facRect[1], facRect[4], facRect[3], facRect[2]
+		end
+	end
 @@@ end
 
 @@@ find
