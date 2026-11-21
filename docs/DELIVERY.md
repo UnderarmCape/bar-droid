@@ -280,7 +280,8 @@ boxes, the GPU driver's fault closing a frozen game).
       (RtsTouch's gesture exclusion, the Build Bar's blocks); the widget files read ahead ~20 s into each game
       (uiRescale.readAhead) cost nothing visible in the per-second frame rates of five games (28-31 in those seconds,
       one dip to 26). Every open item left waits on Kailil (his test or his call), on a live microphone (speak to chat's
-      restart race), or is parked (see 19:57).
+      restart race), or is parked (see 19:57). On the Fold7 2026-11-20 20:37 (ecebf1e0's build, BAR closed, not played
+      since 20:02), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
