@@ -488,7 +488,9 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       blocks, made from BAR's file by a script so its text matches): each entry looked up that way, and the Scavengers'
       copy of the table, which read entry [1] for every entry, reads each one's own and only units the game has; the
       table's reader compares ids, so a missing one never matches. For BAR: docs/upstream/bar-notifications-missing-
-      units.patch. remake-check PASS (2 blocks on test-32018); dev phone: the widget loads, "phone version of
+      units.patch. (The same game's "Error in PlayerChanged(): snd_notifications_addon_playerstatus.lua:152: attempt to
+      index field 'notifications'" at 16:30, which removed Player Status Notifications, came from it: the addon calls
+      WG.notifications unchecked, and the main widget had not loaded.) remake-check PASS (2 blocks on test-32018); dev phone: the widget loads, "phone version of
       LuaUI/Widgets/snd_notifications.lua (LuaUI): 2 patches", no "Failed to load". A game with a unit taken out was not
       staged (BAR's tweakdefs would have to remove it): the block is BAR's own idiom. On the Fold7 2026-11-21 03:05
       (eb319e7d's build; its log last at 01:20, BAR closed), github-sync -Release. Regression round (02:21-02:46, dev
