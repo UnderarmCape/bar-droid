@@ -342,7 +342,8 @@ boxes, the GPU driver's fault closing a frozen game).
       BAR's message line on any console line holding the engine's save words, and a player's chat is one (online
       every phone in the game would show it). driverwatch-phone-test now says those words as chat, then makes a real
       save (deleted after): on the build before "Game saved" twice; now only a line that begins with the engine's
-      words counts, once, the real save's, ALL PASS twice.
+      words counts, once, the real save's, ALL PASS twice. On the Fold7 2026-11-20 23:44 (56ff79fe's build, BAR
+      closed, not played since 22:02), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
