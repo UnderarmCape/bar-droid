@@ -27,6 +27,9 @@ android {
     // proot, busybox and friends live in jniLibs and must be real files on disk so that they can be
     // exec'd (Android 10+ only allows executing files from the app's native library directory).
     packaging.jniLibs.useLegacyPackaging = true
+    // The dex files compressed in the APK: from minSdk 28 they were stored as they are, 12.9 MB of the download that
+    // compress to 4.6 MB (the release audit, 2026-11-21); Android unpacks them once at install.
+    packaging.dex.useLegacyPackaging = true
     // The prebuilt binaries (Termux proot + friends, patchelf'd; static busybox) ship as published: llvm-strip
     // re-lays them out. Only our own build output (libXlorie.so) gets stripped.
     packaging.jniLibs.keepDebugSymbols += ['**/libproot.so', '**/libproot-loader.so', '**/libtalloc.so',

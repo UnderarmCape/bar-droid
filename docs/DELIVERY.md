@@ -394,6 +394,9 @@ findings are worked here one tested change at a time; the owner's decisions are 
       both files without it, saying so in launcher.log; the launcher ignores the extra. tools/launch-bar-test.sh runs the
       block against a scratch folder both ways (release: nothing run or added; developer's: both), ALL PASS; dev phone
       (debug): "appended dev-springsettings.cfg" as before, buildbar-phone-test ALL PASS (its settings come that way).
+- [x] **The download 8 MB smaller: the dex compressed** (2026-11-21 01:44-01:49): from minSdk 28 the build stored the
+      ten dex files as they are, 12.9 MB; `packaging.dex.useLegacyPackaging = true` (app/build.gradle) compresses them to
+      5.4 MB. The phone APK 39.9 MB -> 31.7 MB. Dev phone: installed, types-phone-test and lobby-phone-test ALL PASS.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
