@@ -295,7 +295,8 @@ boxes, the GPU driver's fault closing a frozen game).
       the build before: no entry at the solar in 2 of 2 (18 and 27 hits on it, the busy fight still on). Now each of my
       units is looked at no more than once every 2 s, at most 4 a frame (ATTACK.LOOK, BUDGET; the units seen forgotten
       once a minute): a busy fight's units are each looked at now and then, the light fight's first hit gets its turn.
-      The fix: its own entry 2 of 2 (27 and 30 hits, the busy fight still on); the rest of the test ALL PASS.
+      The fix: its own entry 2 of 2 (27 and 30 hits, the busy fight still on); the rest of the test ALL PASS. On the
+      Fold7 2026-11-20 21:27 (5fcad075's build, BAR closed, not played since 20:37), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
