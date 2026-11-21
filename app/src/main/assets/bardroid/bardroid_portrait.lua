@@ -813,7 +813,40 @@ local HIDDEN_TYPE = { [CMDTYPE.CUSTOM] = true, [CMDTYPE.PREV] = true, [CMDTYPE.N
 
 -- the selection's build options (builders, factories) and its orders in the order menu's order (states, Wait, the
 -- rest), from the engine's own list
+-- The engine's command list read again only when it says it changed (widget:CommandsChanged: a pick, a state toggled, a
+-- factory's queue) or after a second, else the last read's items in new lists (refreshNow adds to them): read four times
+-- a second, its copy of every command was ~50 kB of tables each time, three quarters of the dock's garbage in an idle
+-- skirmish (dev phone; release overhaul item 7, 2026-11-21)
+SP.cmds = { at = -10, stale = true }
 local function readCommands()
+	local c = SP.cmds
+	local t = now()
+	if not c.stale and c.builds and t - c.at < 1 then
+		local b, s = {}, {}
+		for i = 1, #c.builds do
+			b[i] = c.builds[i]
+		end
+		for i = 1, #c.states do
+			local it = c.states[i]
+			it.w, it.h = nil, nil -- (as a fresh read's: refreshNow sizes the big orders again)
+			s[i] = it
+		end
+		return b, s
+	end
+	local builds, states = SP.readCommandsNow()
+	-- (an empty list stays stale: right after a pick the engine's list is empty for a frame until it is made again,
+	-- refreshNow; small to read again)
+	c.builds, c.states, c.at, c.stale = builds, states, t, #builds == 0 and #states == 0
+	local b, s = {}, {}
+	for i = 1, #builds do
+		b[i] = builds[i]
+	end
+	for i = 1, #states do
+		s[i] = states[i]
+	end
+	return b, s
+end
+function SP.readCommandsNow()
 	local builds, states, others, wait = {}, {}, {}, nil
 	for _, cmd in ipairs(spGetActiveCmdDescs() or {}) do
 		if type(cmd) == "table" and cmd.action and not cmd.disabled and not HIDDEN[cmd.id] and not HIDDEN_TYPE[cmd.type] then
@@ -4933,6 +4966,7 @@ function widget:Update(dt)
 end
 
 function widget:CommandsChanged()
+	SP.cmds.stale = true -- (readCommands: the engine's list read again)
 	if active and not press then
 		refresh()
 	end

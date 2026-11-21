@@ -406,6 +406,24 @@ The list, in order (each item moves to its own [x] entry below when done):
    during games, camctl's text each frame, retreat's building hits, unit-ID tables never cleared, log floods).
 8. NOTICE.md: busybox, proot, talloc, android-shmem, libXlorie, AngelScript, BAR's copied widgets and patches; the
    retired gamepad game out. publish-check: fail on a debuggable or x86_64 APK. CHANGELOG 0.2.0.
+From a second read-only audit (2026-11-21 07:45-08:10, each finding checked against the code before it is worked):
+9. MEDIUM: launch-bar.sh trusts the write folder (files/bar, which the game's Lua can write with io.open: BAR's
+   sandbox keeps user widgets to LuaUI/Config and LuaUI/Widgets since test-31943, but not LuaMenu, an older
+   release's handler in a replay, or game code): LD_PRELOAD of libasarm64.so and libbardroid_pace.so from it exported
+   to every program the script starts (sleep, pidof, taskset every 3 s; a library written mid-game ran within 3 s);
+   the benchmark's files (.bardroid-bench-settings pasted unescaped into a sed command, .bardroid-bench-replay's name
+   unchecked, .springsettings.pre-bench) honoured in release builds; any LuaMenu widget there loaded in every lobby
+   (loadLocalWidgets is on for the app's lobby widget); .bardroid-loadpictures-ours' lines deleted as paths, ".." and
+   all (LoadPictures.java too). (The engines themselves live in the write folder, as on BAR's PC install: that class
+   rests on BAR's Lua sandbox.)
+10. MEDIUM (Android 9-10): the PC import folder (Android/data/<pkg>/files/import, which other apps with storage
+   permission can write there) is moved over the write folder at every Install/Update, pool files included, which
+   pr-downloader then trusts: a developer's path, off in release builds. LOW: ReplayImportActivity takes a picker
+   result's null Uri into a thread that does not catch it.
+11. LOW (noted, not worked: no user widget can reach a release phone today): bardroid_pad.txt's click/key lines and the
+   touch log are written in LuaUI/Config, which BAR's sandbox lets user widgets write: a user widget could make the app
+   click or press keys; launch-bar.sh's GL check long press ("shell" mode) and .bardroid-display-scales in release
+   builds; the launcher names the engine from dev-env.sh, which a release build ignores.
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
@@ -607,6 +625,22 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build): dock-phone-test upright and at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test,
       driverwatch-phone-test (x11-probe in its game: abstract names no listener, the path socket accepted),
       touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test ALL PASS; no driver refusal.
+- [x] **Item 7d: the touch dock's garbage found and cut by 37 %** (2026-11-21 07:21-08:30): a temporary build (never
+      committed; toolchain\tmp\edit_dockprof.py, edit_refreshprof.py) timed every call in the dock's Update and drawDock
+      and counted its garbage, Lua's collector paused per call-in, in an idle upright skirmish on the dev phone: of the
+      Update's 291 kB/s, refresh() (four times a second) made 287, and in it readCommands() 213: each call copied the
+      engine's whole command list (GetActiveCmdDescs, ~53 kB of tables); the texture's redraw after each refresh
+      (drawStill) 117 kB/s and 0.38 ms a frame; the wind and tide boxes, drawn live for their turning blades, 0.55 ms a
+      frame. Now readCommands keeps its last read and reads again only when the engine says the list changed
+      (widget:CommandsChanged: a pick, a state, a factory's queue) or after a second, an empty read never kept (the
+      engine's list is empty for a frame after a pick); refreshNow gets new lists of the same items (it adds to them),
+      the orders' sizes cleared as a fresh read's. Proof: a build comparing every cached answer with a fresh read
+      (toolchain\tmp\edit_cmdcheck.py): 0 stale in 700 through dock-phone-test upright and at 1080x1198,
+      factory-preset-test and types-phone-test (pad-test and walls-phone-test ALL PASS too). The dock 430 -> 270 kB/s of
+      garbage (Update 292 -> 132), its time unchanged at 1.62 ms (mostly drawing; the refresh's redraw and the wind
+      boxes are what is left, with the gamepad widget's 66 kB/s). Not done: skipping the redraw when a refresh changed
+      nothing (what the texture draws beyond the items is not all known to the refresh), moving the wind boxes' panels
+      into the texture (a visual change).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
