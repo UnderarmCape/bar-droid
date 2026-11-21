@@ -5223,6 +5223,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       so the stale hover does not show through them; the block is a guard for input that moves and presses in one frame,
       as its three siblings. Seen: upright the bar's icons (x 831-936) lie under the one-finger camera's zoom rail
       (x 880-936), which takes those touches: worth moving the rail off them if a player turns the Build Bar on.
+      On the Fold7 2026-11-20 19:25 (dd0dd231's build, BAR closed, not played since 18:04), github-sync -Release.
 - [x] **The lobby's Settings upright: rows for a finger** (hardening, 2026-11-16 ~22:30, dev phone, offline lobby; the
       layout editor checked first at 1080x1198: the hint above the split dock, no player list outline): Chobby's
       Settings (gui_settings_window.lua) lists its rows 36 apart, their checkboxes, sliders and lists 30 high, thirty

@@ -10,10 +10,10 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 | Claude Code sessions | 15 |
 | Kailil's messages | 561 (27011 words, 104 screenshots) |
 | Kailil's time | 65.6 h in 181 sittings |
-| Claude's time | 494.2 h |
-| Claude's tool calls | 57845 |
+| Claude's time | 495.3 h |
+| Claude's tool calls | 57964 |
 | Kailil stopped Claude mid-answer | 9 times |
-| Commits | 2461 |
+| Commits | 2463 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -47,7 +47,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | [2026-11-17](worklog/2026-11-17.md) | 13 | 1.9 | 24.8 | 163 |
 | [2026-11-18](worklog/2026-11-18.md) | 13 | 1.5 | 24.0 | 193 |
 | [2026-11-19](worklog/2026-11-19.md) | 17 | 2.1 | 22.8 | 212 |
-| [2026-11-20](worklog/2026-11-20.md) | 9 | 0.7 | 25.7 | 84 |
+| [2026-11-20](worklog/2026-11-20.md) | 9 | 0.7 | 26.8 | 86 |
 
 ## Sessions
 
@@ -56,7 +56,7 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-20 18:32 | 435 | 420.4 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-20 19:26 | 435 | 421.2 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
@@ -66,5 +66,5 @@ Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 mi
 | Mobile pack of BAR's costliest Lua widgets and effect gadgets | 2026-11-06 22:31 | 2026-11-07 06:11 | 0 | 7.7 |
 | Mobile unit shader and pre-made ASTC textures for phones | 2026-11-06 22:31 | 2026-11-07 06:56 | 0 | 8.4 |
 | BAR Droid without proot and the X server: measure, then prototype | 2026-11-06 22:32 | 2026-11-07 03:11 | 0 | 4.7 |
-| AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb | 2026-11-07 01:44 | 2026-11-20 17:54 | 40 | 18.1 |
+| AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb | 2026-11-07 01:44 | 2026-11-20 19:25 | 40 | 18.5 |
 | Phone engine build for BAR's engine 2026.09.03 | 2026-11-17 19:00 | 2026-11-18 15:56 | 5 | 3.1 |
