@@ -315,6 +315,9 @@ public class LauncherActivity extends AppCompatActivity {
     private void startFromIntent(Intent intent) {
         String start = intent == null ? null : intent.getStringExtra("start");
         if (!"bench".equals(start) && !"skirmish".equals(start)) return;
+        // (a developer's build only: the launcher is exported, and any app on the phone could start a game or the
+        // benchmark this way; 2026-11-21)
+        if (!Prefs.developer(this)) return;
         intent.removeExtra("start");   // (not again when the screen is recreated)
         GameService.start(this, GameService.ACTION_PLAY, start);
     }

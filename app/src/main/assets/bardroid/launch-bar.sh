@@ -604,14 +604,20 @@ else
   [ "$(cat "$BAR/.bardroid-phone-ok" 2>/dev/null)" = "$PHONE_BUILD" ] || PHONE_FIRST=1
   log "phone engine: $PHONE_BUILD$([ "$PHONE_FIRST" = 1 ] && echo ' (not yet proven on this phone)')"
 fi
-# Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win).
-[ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
+# Developer overrides, never created by the app: extra environment, extra springsettings lines (later keys win). Only in a
+# developer's (debuggable) build, BARDROID_DEV=1 from GameService: $BAR is the engine's write folder, which BAR's Lua can
+# write, and a dev-env.sh there runs here as a shell script (2026-11-21)
+if [ "${BARDROID_DEV:-0}" = 1 ]; then
+  [ -f "$BAR/dev-env.sh" ] && . "$BAR/dev-env.sh" && log "applied $BAR/dev-env.sh"
+elif [ -f "$BAR/dev-env.sh" ] || [ -f "$BAR/dev-springsettings.cfg" ]; then
+  log "!!! dev-env.sh or dev-springsettings.cfg in the write folder: ignored (a release build)"
+fi
 # (the phone engine's defaults, unless dev-env.sh set its own)
 if [ "$ENGINE" = "$PHONE_ENGINE" ]; then
   BARDROID_GAME_WIDGETS=${BARDROID_GAME_WIDGETS:-1}
   BARDROID_PHONE_LUA=${BARDROID_PHONE_LUA:-1}
 fi
-if [ -f "$BAR/dev-springsettings.cfg" ]; then
+if [ "${BARDROID_DEV:-0}" = 1 ] && [ -f "$BAR/dev-springsettings.cfg" ]; then
   sed -n 's/^ *\([A-Za-z0-9_]*\) *=.*/\1/p' "$BAR/dev-springsettings.cfg" > "$DEV_KEYS"
   : > "$DEV_ORIG"
   while read -r k; do [ -n "$k" ] && grep "^$k *=" "$BAR/springsettings.cfg" >> "$DEV_ORIG"; done < "$DEV_KEYS"

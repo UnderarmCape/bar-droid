@@ -380,6 +380,20 @@ boxes, the GPU driver's fault closing a frozen game).
       the lobby widget's file too). The test's chat-box count follows: BAR pauses a singleplayer game while the lobby is
       over it, so its check is that no line shown as the game's own begins like chat (the tools line names its first
       word). On the Fold7 2026-11-21 01:38 (6604ab43's build, BAR closed, not played since 00:33), github-sync -Release.
+
+#### The release overhaul (Kailil, 2026-11-21 ~01:20: "Conduct massive overhaul loops on the entire bar android port. Look for things to Harden. Deprecated things we have sunset. Bloat, etc. We are releasing this in the next 4 days.")
+Four read-only audits of the whole port (2026-11-21 01:25-01:40): the Java app's retired code, the Lua and scripts'
+retired code, what the APK ships and what a release needs, and every way another player or app reaches the app. Their
+findings are worked here one tested change at a time; the owner's decisions are listed for Kailil.
+- [x] **The developer hooks only in a developer's build** (2026-11-21 01:40-01:43): launch-bar.sh ran
+      `$BAR/dev-env.sh` as a shell script and added `dev-springsettings.cfg` at every start, in any build, and `$BAR` is
+      the engine's write folder, which BAR's Lua can write (a user widget's io.open): in a public build a widget could
+      have planted a script the next start ran in the container. And the exported launcher's "start" extra (skirmish,
+      bench) let any app on the phone start a game. Now both only in a debuggable build (the debug APK the tools
+      install): GameService passes BARDROID_DEV (Prefs.developer, Android's debuggable flag) and launch-bar.sh ignores
+      both files without it, saying so in launcher.log; the launcher ignores the extra. tools/launch-bar-test.sh runs the
+      block against a scratch folder both ways (release: nothing run or added; developer's: both), ALL PASS; dev phone
+      (debug): "appended dev-springsettings.cfg" as before, buildbar-phone-test ALL PASS (its settings come that way).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

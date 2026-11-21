@@ -466,6 +466,7 @@ public class GameService extends Service {
             env.put("BARDROID_PHONE_ENGINE", Prefs.phoneEngine ? "1" : "0");   // (launch-bar.sh; the launcher's Phone engine)
             env.put("BARDROID_PORTRAIT", upright ? "1" : "0");   // (launch-bar.sh: BAR's loading tips off upright)
             env.put("BARDROID_LAND_DOCK", Prefs.landDock ? "1" : "0");   // (launch-bar.sh: the touch dock sideways)
+            env.put("BARDROID_DEV", Prefs.developer(this) ? "1" : "0");   // (launch-bar.sh: dev-env.sh and dev-springsettings.cfg)
             env.put("BARDROID_FPS", Prefs.EMULATOR_BUILD ? "0" : String.valueOf(Prefs.fpsCap));   // libbardroid_pace.so; 0 = none
             // (the explicit Present fence is for the phone's lfdevs Mesa on KGSL; the emulator's virgl keeps Mesa's own path)
             if (Prefs.EMULATOR_BUILD) env.put("BARDROID_PRESENT_FENCE", "0");

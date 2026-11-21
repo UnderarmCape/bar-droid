@@ -223,5 +223,25 @@ check "UBWC: added to other Freedreno flags" [ "$(ubwc_for kgsl nolrz)" = nolrz,
 check "UBWC: not twice" [ "$(ubwc_for kgsl noubwc,nolrz)" = noubwc,nolrz ]
 check "UBWC: Turnip + Zink untouched" [ -z "$(ubwc_for zink '')" ]
 
+# The developer hooks only in a developer's (debuggable) build, BARDROID_DEV=1: in a release build a dev-env.sh in the
+# write folder, which BAR's Lua can write, is not run, and dev-springsettings.cfg is not added (2026-11-21)
+dev=$(awk '/^# Developer overrides, never created by the app/ { on = 1 } /^# The app.s Settings: BAR.s Options/ { exit } on { print }' "$src")
+[ -n "$dev" ] || { echo "[launchbartest] FAIL launch-bar.sh: the developer overrides block not found"; exit 1; }
+dev_start() {   # dev_start <BARDROID_DEV>: the block against a write folder holding both developer files
+  rm -rf "$work/dev"; mkdir -p "$work/dev"
+  ( BAR="$work/dev"; DEV_KEYS="$BAR/.dev-springsettings-keys"; DEV_ORIG="$BAR/.dev-springsettings-orig"
+    ENGINE=official; PHONE_ENGINE=phone; BARDROID_DEV=$1
+    printf 'touch "%s/ran"\n' "$BAR" > "$BAR/dev-env.sh"
+    printf 'LogFlushLevel = 0\n' > "$BAR/dev-springsettings.cfg"
+    printf 'XResolution = 1\n' > "$BAR/springsettings.cfg"
+    eval "$dev" )
+}
+dev_start 0
+check "a release build: dev-env.sh not run" [ ! -f "$work/dev/ran" ]
+check "a release build: dev-springsettings.cfg not added" [ -z "$(grep LogFlushLevel "$work/dev/springsettings.cfg")" ]
+dev_start 1
+check "a developer's build: dev-env.sh run" [ -f "$work/dev/ran" ]
+check "a developer's build: dev-springsettings.cfg added" [ -n "$(grep LogFlushLevel "$work/dev/springsettings.cfg")" ]
+
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]

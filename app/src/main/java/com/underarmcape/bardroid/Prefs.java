@@ -75,6 +75,16 @@ public final class Prefs {
     }
 
     /**
+     * A developer's build (debuggable: the debug APK the tools install): only then do the developer hooks work, a
+     * dev-env.sh or dev-springsettings.cfg in the engine's write folder (launch-bar.sh, BARDROID_DEV) and the launcher's
+     * "start" extra. A public release build ignores them: that folder is the engine's, which BAR's Lua can write, and a
+     * dev-env.sh there runs as a shell script (2026-11-21).
+     */
+    static boolean developer(android.content.Context c) {
+        return (c.getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0;
+    }
+
+    /**
      * Whether a lobby or game starting now starts upright (its loading picture, launch-bar.sh's upright tweaks): the
      * setting, or turning with the phone, the screen's shape now (taller than 1.05 times its width, as
      * bardroid_portrait.lua's dock).
