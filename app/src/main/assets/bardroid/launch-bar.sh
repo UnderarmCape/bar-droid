@@ -169,15 +169,35 @@ fi
 # A replay does not count: it plays the BAR release it was recorded with, whose widgets an older one's copy may not fit
 # (a replay from 2026-10-01 removed both copies, and every game after ran BAR's own menus: dev phone, 2026-11-04). The
 # mark says "game" since then; an older one, which a replay may have written, no longer counts.
-copy_removed() {   # copy_removed <widget name>: BAR removed it in the last run, and that run was not a replay
-  grep -aq "Removed widget: $1" "$BAR/infolog.txt" 2>/dev/null && ! grep -aq 'PreGame::ReadDataFromDemo' "$BAR/infolog.txt" 2>/dev/null
+# BAR's widget handler's own words in an engine run's infolog (luaui/barwidgets.lua): "Failed to load: <file>  (<why>)"
+# as a file loads, "Error in <call-in>(): ..." (or "Sandbox error in") and "Removed widget: <name>" for an error in a
+# running one. A line counts only as the whole body after the engine's log prefix ("[t=...][f=...] "): another player's
+# chat with those words is "<name> Removed widget: ..." there, a spectator's "[name] ...", a map ping's label
+# "<name> added point: ...", and a chat line could switch the app's menu copies off until an app update (release
+# overhaul item 3, 2026-11-21). "(no GetInfo() call)" is a file that is no widget in this game (BAR's tools, a copy
+# outside a scenario) and "(duplicate name)" a second copy of one that runs: nothing failed. A replay plays the BAR
+# release it was recorded with, whose widgets an older copy may not fit: REPLAY 1, its faults not the copies'.
+read_faults() {   # read_faults: FAULTS (the lines' bodies, in order) and REPLAY from $BAR/infolog.txt
+  FAULTS=$(grep -aE '^\[t=[^]]*\]\[f=-?[0-9]+\] (Failed to load: |(Sandbox )?[Ee]rror in |Removed widget: )' "$BAR/infolog.txt" 2>/dev/null \
+    | sed -E 's/^\[t=[^]]*\]\[f=-?[0-9]+\] //' | grep -avE '^Failed to load: [^ ]+  \((no GetInfo\(\) call|duplicate name)\)$')
+  REPLAY=0
+  grep -aqE '^\[t=[^]]*\]\[f=-?[0-9]+\] \[PreGame::ReadDataFromDemo\] ' "$BAR/infolog.txt" 2>/dev/null && REPLAY=1
+}
+read_faults   # (the last run's, for the copies below)
+# copy_removed <widget name> <its file>: in the last run, not a replay, BAR removed it for an error (one in its Shutdown
+# alone, after a whole game, does not count) or its file failed to load (the widget never ran: BAR's own then had its
+# place switched off too, no build menu at all)
+copy_removed() {
+  [ "$REPLAY" = 0 ] && [ -n "$FAULTS" ] || return 1
+  printf '%s\n' "$FAULTS" | awk -v gone="Removed widget: $1" -v failed="Failed to load: ${2##*/}  (" '
+    ($0 == gone && prev !~ /^Error in Shutdown\(\): /) || index($0, failed) == 1 { hit = 1 } { prev = $0 } END { exit !hit }'
 }
 # The mark names BAR's file and the copy (its md5): a new copy, from an app update, gets another try. With BAR's file
 # alone, the Fold7's order menu copy, removed in one game on 2026-11-05, gave way to BAR's own through every app update
 # after it (its launcher: "1 of the app's adjustments to BAR did not apply", 2026-11-10).
 copy_failed() {   # copy_failed <widget name> <mark file> <BAR's file md5> <the copy>: true while it gives way
   key="$3 game $(md5sum "$4" 2>/dev/null | cut -c1-32)"
-  copy_removed "$1" && printf '%s\n' "$key" > "$2"
+  copy_removed "$1" "$4" && printf '%s\n' "$key" > "$2"
   [ -f "$2" ] && [ "$(cat "$2")" = "$key" ]
 }
 build_menu() {
@@ -839,42 +859,29 @@ if [ "$PHONE_FIRST" = 1 ] && [ "$ENGINE" = "$PHONE_ENGINE" ]; then
     log "!!! phone engine: $PHONE_BUILD exited with $rc after $(( $(date +%s) - ENGINE_STARTED )) s without running; BAR's official engine from the next start"
   fi
 fi
-# an error line of one of the app's widgets (the dev profiler's [simdraw] lines name every widget's timers, such as
-# W:VisibleUnitRemoved:BAR Droid touch: not errors; three false warnings in the launcher, 2026-11-05)
-widget_error() { grep -iE "$1" "$BAR/infolog.txt" 2>/dev/null | grep -v '\[simdraw\]' | grep -iE 'error|fail|removed' | head -n 1; }
-touch_err=$(widget_error 'bardroid_touch|BAR Droid touch')
-[ -n "$touch_err" ] && layer_miss "touch widget (bardroid_touch.lua): $touch_err"
-queue_err=$(widget_error 'bardroid_queue|BAR Droid builder queue')
-[ -n "$queue_err" ] && layer_miss "builder queue widget (bardroid_queue.lua): $queue_err"
-chat_err=$(widget_error 'bardroid_chat|BAR Droid chat')
-[ -n "$chat_err" ] && layer_miss "chat widget (bardroid_chat.lua): $chat_err"
-info_err=$(widget_error 'bardroid_info|BAR Droid info')
-[ -n "$info_err" ] && layer_miss "info panel widget (bardroid_info.lua): $info_err"
-spec_err=$(widget_error 'bardroid_spectate|BAR Droid spectate')
-[ -n "$spec_err" ] && layer_miss "spectating widget (bardroid_spectate.lua): $spec_err"
-range_err=$(widget_error 'bardroid_buildrange|BAR Droid build ranges')
-[ -n "$range_err" ] && layer_miss "build ranges widget (bardroid_buildrange.lua): $range_err"
-sensors_err=$(widget_error 'bardroid_sensors|BAR Droid sensor ranges')
-[ -n "$sensors_err" ] && layer_miss "sensor ranges widget (bardroid_sensors.lua): $sensors_err"
-nano_err=$(widget_error 'bardroid_nano|BAR Droid nano spray')
-[ -n "$nano_err" ] && layer_miss "nano spray widget (bardroid_nano.lua): $nano_err"
-retreat_err=$(widget_error 'bardroid_retreat|BAR Droid retreat')
-[ -n "$retreat_err" ] && layer_miss "retreat widget (bardroid_retreat.lua): $retreat_err"
-presets_err=$(widget_error 'bardroid_presets|BAR Droid presets')
-[ -n "$presets_err" ] && layer_miss "presets widget (bardroid_presets.lua): $presets_err"
-automex_err=$(widget_error 'bardroid_automex|BAR Droid auto mex')
-[ -n "$automex_err" ] && layer_miss "auto mex widget (bardroid_automex.lua): $automex_err"
-walls_err=$(widget_error 'bardroid_walls|BAR Droid walls')
-[ -n "$walls_err" ] && layer_miss "walls widget (bardroid_walls.lua): $walls_err"
-camctl_err=$(widget_error 'bardroid_camctl|BAR Droid camera controls')
-[ -n "$camctl_err" ] && layer_miss "camera knob and rails widget (bardroid_camctl.lua): $camctl_err"
+# The app's widgets' faults in this run, BAR's handler's own lines only (read_faults), the first of each widget: by its
+# file (bardroid_<x>.lua in "Error in <call-in>(): [string ".../bardroid_<x>.lua"]:..." and in "Failed to load:"), or by
+# its name in a "Removed widget: BAR Droid ..." whose error line just before named no file of the app's (an error in
+# BAR's code that it called). Every widget of the app's, the lobby's too, in one pass (13 greps of the infolog for 13
+# widgets until 2026-11-21). The dev profiler's [simdraw] lines, which name every widget's timers ("W:VisibleUnitRemoved:
+# BAR Droid touch"), are no handler line (three false launcher warnings, 2026-11-05).
+app_widget_faults() {   # app_widget_faults: one "<file or name>|<line>" per widget, from FAULTS
+  printf '%s\n' "$FAULTS" | awk '
+    { key = "" }
+    match($0, /bardroid_[A-Za-z0-9_]+\.lua/) { key = substr($0, RSTART, RLENGTH) }
+    key == "" && index($0, "Removed widget: BAR Droid ") == 1 && !named { key = substr($0, 17) }
+    key != "" && !seen[key]++ { print key "|" $0 }
+    { named = key != "" && index($0, "Removed widget: ") != 1 }'
+}
+read_faults   # (this run's)
+app_widget_faults | while IFS='|' read -r key line; do layer_miss "the app's widget $key: $line"; done
 # A phone version of one of BAR's files (the phone engine's BarDroidPhoneLuaDir: assets/bardroid/phone-*.lua.patch) that
 # no longer fits BAR's file after an update: the engine loaded BAR's own file instead ("[BarDroid] phone version of
 # <file> (<state>): patch N finds no place: the game's own file loads"), so its fixes and savings are gone until the
 # patch is made again (tools/phone-lua-check.py). A replay plays the BAR release it was recorded with, whose files may
 # differ: not counted, as for the menu copies (copy_removed).
-if ! grep -aq 'PreGame::ReadDataFromDemo' "$BAR/infolog.txt" 2>/dev/null; then
-  grep -a "\[BarDroid\] phone version of .*: the game's own file loads" "$BAR/infolog.txt" 2>/dev/null \
+if [ "$REPLAY" = 0 ]; then
+  grep -aE "^\[t=[^]]*\]\[f=-?[0-9]+\] \[BarDroid\] phone version of .*: the game's own file loads" "$BAR/infolog.txt" 2>/dev/null \
     | sed -e 's/^.*\[BarDroid\] phone version of //' -e 's/ ([^)]*): /: /' -e "s/: the game's own file loads\$//" | sort -u \
     | while read -r miss; do layer_miss "phone Lua: $miss, BAR's own file ran (assets/bardroid/phone-*.lua.patch)"; done
 fi

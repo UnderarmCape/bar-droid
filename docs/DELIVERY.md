@@ -469,6 +469,20 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       phone, the build before these two): dock-phone-test upright and at 1080x1198, factory-preset-test,
       types-phone-test, overgame-phone-test, touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test ALL
       PASS.
+- [x] **Item 3: the app's widget checks read BAR's own lines only** (2026-11-21 03:08-03:25): launch-bar.sh gave a
+      menu copy's place back to BAR's own when the last game's infolog held "Removed widget: BAR Droid build menu"
+      anywhere, so another player's chat or a ping label with those words switched the copy off (no PLACE, no pad's RB)
+      until the next app update; a copy that failed to load ("Failed to load: bardroid_buildmenu.lua  (...)", it never
+      ran) was not counted at all, and BAR's own stayed switched off: no build menu. And the after-game check was 13
+      greps of the whole infolog for 13 of the app's widgets. Now read_faults takes BAR's handler's lines once
+      (luaui/barwidgets.lua: "Failed to load:", "Error in"/"Sandbox error in", "Removed widget:"), each only as the whole
+      text after the log prefix, "(no GetInfo() call)" and "(duplicate name)" not failures, the replay line anchored the
+      same way; copy_removed counts a removal (not one after an error in Shutdown alone: the copy ran the whole game) or
+      the copy's file failing to load; app_widget_faults reports every widget of the app's, the lobby's too, once each,
+      in one pass. tools/launch-bar-test.sh: 27 new cases (a player's, a spectator's, the host's and a ping's words, a
+      chat's replay line, a load failure, a Shutdown error, a longer name, no GetInfo, the exit pass), ALL PASS; HEAD's
+      copy_removed on the same lines: the chat and the ping switch the copy off, the load failure is not seen. The dev
+      phone's last 20 games: no fault of the app's widgets, so the wider exit check adds no warnings.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

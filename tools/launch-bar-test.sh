@@ -18,6 +18,7 @@ fails=0
 
 body() { awk -v f="^$1\\\\(\\\\) \\\\{" '$0 ~ f { on = 1 } on { print } on && /^}/ { exit }' "$src"; }
 fn=$(body widget_order)
+faults=$(body read_faults)
 removed=$(body copy_removed)
 # (copy_failed, mission_info and team_stats came later, 11-10 and 11-11: build_menu and the controller-game block call
 # them, and this test, which took the first four only, failed five cases on "command not found" until 2026-11-18)
@@ -27,14 +28,15 @@ omenu=$(body order_menu)
 minfo=$(body mission_info)
 tstats=$(body team_stats)
 block=$(awk '/^  widget_order "Grid menu" 0$/ { on = 1 } on { print } on && /^  fi$/ { exit }' "$src")
-for part in "$fn" "$removed" "$failedfn" "$menu" "$omenu" "$minfo" "$tstats" "$block"; do
-  [ -n "$part" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, copy_removed, copy_failed, build_menu, order_menu, mission_info, team_stats or the controller-game block not found"; exit 1; }
+for part in "$fn" "$faults" "$removed" "$failedfn" "$menu" "$omenu" "$minfo" "$tstats" "$block"; do
+  [ -n "$part" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_order, read_faults, copy_removed, copy_failed, build_menu, order_menu, mission_info, team_stats or the controller-game block not found"; exit 1; }
 done
 
 BAR="$work/bar"; LOGS="$work/logs"
 log() { :; }
 layer_miss() { echo "$*" >> "$LOGS/android-layer.txt"; }
 eval "$fn"
+eval "$faults"
 eval "$removed"
 eval "$failedfn"
 eval "$menu"
@@ -48,7 +50,12 @@ start() {   # one launch-bar.sh start: start <GAMEPAD_GAME> <build menu md5 Inst
   printf '%s\n' "$mmade" > "$BAR/.bardroid-missioninfo"   # (Mission Info's and TeamStats' copies as made: quiet)
   printf '%s\n' "$tmade" > "$BAR/.bardroid-teamstats"
   : > "$LOGS/android-layer.txt"
+  read_faults   # (launch-bar.sh reads the last run's infolog once, before the copies)
   eval "$block"
+}
+infolog() {   # infolog <body>...: the last run's infolog, each line after the engine's log prefix
+  : > "$BAR/infolog.txt"
+  for b in "$@"; do printf '[t=00:01:02.345678][f=0001234] %s\n' "$b" >> "$BAR/infolog.txt"; done
 }
 check() {   # check <case> <condition...>
   name=$1; shift
@@ -62,7 +69,6 @@ absent() { ! grep -q "\[\"$1\"\] = -\?[0-9][0-9]*,$" "$BAR/LuaUI/Config/BYAR.lua
 missed() { grep -q "build menu" "$LOGS/android-layer.txt"; }
 omissed() { grep -q "order menu" "$LOGS/android-layer.txt"; }
 quiet() { [ ! -s "$LOGS/android-layer.txt" ]; }
-widget_error_found() { widget_error "$1" | grep -q 'attempt to index nil'; }
 
 rm -rf "$work"
 mkdir -p "$BAR/LuaUI/Config" "$BAR/LuaUI/Widgets" "$LOGS"
@@ -99,7 +105,38 @@ check "BAR changed its file and no new copy: an Android-layer miss" missed
 start 1 ""
 check "BAR's file not found: the copy runs" order "BAR Droid build menu" 165
 
-echo "[t=0] Removed widget: BAR Droid build menu" > "$BAR/infolog.txt"
+# (BAR's handler's words in other lines: another player's chat, a spectator's, the host's, a map ping's label, and a
+# replay's line in a chat; none is BAR's own: 2026-11-21)
+for said in "<Player> Removed widget: BAR Droid build menu" "[Spec] Removed widget: BAR Droid build menu" \
+    "[Spec (replay)] Removed widget: BAR Droid build menu" "> Removed widget: BAR Droid build menu" \
+    "Player added point: Removed widget: BAR Droid build menu" "<Player> Failed to load: bardroid_buildmenu.lua  (x)"; do
+  infolog "$said"
+  start 1 "fedcba9876543210fedcba9876543210"
+  check "\"$said\" said: the copy runs" order "BAR Droid build menu" 165
+  check "\"$said\" said: no mark" [ ! -f "$BAR/.bardroid-buildmenu-failed" ]
+done
+infolog "Error in Shutdown()" 'Error in Shutdown(): [string "LuaUI/Widgets/bardroid_buildmenu.lua"]:9: attempt to index nil' \
+  "Removed widget: BAR Droid build menu"
+start 1 "fedcba9876543210fedcba9876543210"
+check "an error in the copy's Shutdown alone (it ran the whole game): the copy runs" order "BAR Droid build menu" 165
+infolog "Removed widget: BAR Droid build menus" "Removed widget: Build menu"
+start 1 "fedcba9876543210fedcba9876543210"
+check "another widget removed (a longer name, BAR's own): the copy runs" order "BAR Droid build menu" 165
+infolog "Failed to load: bardroid_missioninfo.lua  (no GetInfo() call)" "Failed to load: bardroid_buildmenu.lua  (duplicate name)"
+start 1 "$made"
+check "no GetInfo() call (no scenario) and a duplicate name: Mission Info's copy on" order "BAR Droid mission info" 190
+check "... and the build menu's" order "BAR Droid build menu" 165
+check "... no Android-layer miss" quiet
+infolog '<Player> [PreGame::ReadDataFromDemo] pre-scanning demo file' "Removed widget: BAR Droid build menu"
+start 1 "fedcba9876543210fedcba9876543210"
+check "a replay's line said as chat, the copy removed: BAR's own (no replay)" order "Build menu" 165
+rm -f "$BAR/.bardroid-buildmenu-failed"
+infolog 'Failed to load: bardroid_buildmenu.lua  ([string "LuaUI/Widgets/bardroid_buildmenu.lua"]:12: unexpected symbol near ")")'
+start 1 "fedcba9876543210fedcba9876543210"
+check "the copy failed to load in the last game (it never ran): BAR's own" order "Build menu" 165
+check "the copy failed to load: the copy off" order "BAR Droid build menu" 0
+rm -f "$BAR/.bardroid-buildmenu-failed"
+infolog "Removed widget: BAR Droid build menu"
 start 1 "fedcba9876543210fedcba9876543210"
 check "the copy failed in the last game: BAR's own" order "Build menu" 165
 check "the copy failed in the last game: the copy off" order "BAR Droid build menu" 0
@@ -110,7 +147,7 @@ check "the copy failed on this BAR file: still BAR's own" order "BAR Droid build
 start 1 "$made"
 check "another BAR file: the copy runs again" order "BAR Droid build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
-printf '%s\n' "[t=0] [PreGame::ReadDataFromDemo] pre-scanning demo file" "[t=1] Removed widget: BAR Droid build menu" > "$BAR/infolog.txt"
+infolog "[PreGame::ReadDataFromDemo] pre-scanning demo file" "Removed widget: BAR Droid build menu"
 start 1 "fedcba9876543210fedcba9876543210"
 check "the copy removed in a replay (it plays its own BAR release): the copy still runs" order "BAR Droid build menu" 165
 rm -f "$BAR/infolog.txt"
@@ -123,7 +160,7 @@ start 1 "$made" "0123456789abcdef0123456789abcdef"
 check "BAR changed its Order menu and no new copy: the old copy runs" order "BAR Droid order menu" 189
 check "BAR changed its Order menu and no new copy: BAR's off" order "Order menu" 0
 check "BAR changed its Order menu and no new copy: an Android-layer miss" omissed
-echo "[t=0] Removed widget: BAR Droid order menu" > "$BAR/infolog.txt"
+infolog "Removed widget: BAR Droid order menu"
 start 1 "$made" "fedcba9876543210fedcba9876543210"
 check "the order menu copy failed in the last game: BAR's own" order "Order menu" 189
 check "the order menu copy failed in the last game: the copy off" order "BAR Droid order menu" 0
@@ -132,7 +169,7 @@ rm -f "$BAR/infolog.txt"
 start 1 "$made"
 check "another BAR Order menu file: the copy runs again" order "BAR Droid order menu" 189
 rm -f "$BAR/.bardroid-ordermenu-failed"
-printf '%s\n' "[t=0] [PreGame::ReadDataFromDemo] pre-scanning demo file" "[t=1] Removed widget: BAR Droid order menu" > "$BAR/infolog.txt"
+infolog "[PreGame::ReadDataFromDemo] pre-scanning demo file" "Removed widget: BAR Droid order menu"
 start 1 "$made" "fedcba9876543210fedcba9876543210"
 check "the order menu copy removed in a replay: the copy still runs" order "BAR Droid order menu" 189
 rm -f "$BAR/infolog.txt"
@@ -203,15 +240,39 @@ check "CPU mask: a thread's Cpus_allowed (not its _list)" [ "$mask" = 5f ]
 cpus_allowed "$work/no-such-status"
 check "CPU mask: none for a thread that has exited" [ -z "$mask" ]
 
-# The after-game check of the app's widgets (widget_error): an error line counts, the dev profiler's timer lines (which
-# name every widget, "W:VisibleUnitRemoved:BAR Droid touch") do not (three false launcher warnings, 2026-11-05)
-werr=$(grep '^widget_error() {' "$src")
-[ -n "$werr" ] || { echo "[launchbartest] FAIL launch-bar.sh: widget_error not found"; exit 1; }
-eval "$werr"
-printf '%s\n' '[t=1][f=9] [simdraw] timers: W:VisibleUnitRemoved:BAR Droid touch 0.1%, W:Update:BAR Droid chat 0.2%' \
-  '[t=2][f=9] Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_chat.lua"]:12: attempt to index nil' > "$BAR/infolog.txt"
-check "widget check: a profiler line is no error" [ -z "$(widget_error 'bardroid_touch|BAR Droid touch')" ]
-check "widget check: a widget's error still is" widget_error_found 'bardroid_chat|BAR Droid chat'
+# The after-game check of the app's widgets (app_widget_faults, one pass over read_faults' lines): BAR's handler's
+# lines count, one entry a widget; the dev profiler's timer lines (which name every widget, "W:VisibleUnitRemoved:BAR
+# Droid touch": three false launcher warnings, 2026-11-05) and chat with the handler's words do not (2026-11-21)
+wfaults=$(body app_widget_faults)
+[ -n "$wfaults" ] || { echo "[launchbartest] FAIL launch-bar.sh: app_widget_faults not found"; exit 1; }
+eval "$wfaults"
+infolog '[simdraw] timers: W:VisibleUnitRemoved:BAR Droid touch 0.1%, W:Update:BAR Droid chat 0.2%' \
+  'Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_chat.lua"]:12: attempt to index nil' \
+  'Removed widget: BAR Droid chat' \
+  'Error in Update(): [string "LuaUI/Widgets/gui_buildmenu.lua"]:40: attempt to call a nil value' \
+  'Removed widget: BAR Droid pad' \
+  'Error in Initialize(): [string "luaui/widgets/gui_pip.lua"]:9: attempt to call field' 'Removed widget: Picture-in-Picture Minimap' \
+  '<Player> Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_touch.lua"]:1: said' \
+  '[Spec] Removed widget: BAR Droid walls' \
+  'Failed to load: bardroid_missioninfo.lua  (no GetInfo() call)' \
+  'Failed to load: bardroid_retreat.lua  ([string "LuaUI/Widgets/bardroid_retreat.lua"]:3: unexpected symbol)' \
+  'Error in Shutdown()' 'Error in Shutdown(): [string "LuaUI/Widgets/bardroid_queue.lua"]:45: attempt to call field' \
+  'Removed widget: BAR Droid builder queue' \
+  'Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_chat.lua"]:13: again' \
+  'Error in Update(): [string "LuaMenu/Widgets/bardroid_lobby_touch.lua"]:7: attempt to index nil'
+read_faults
+found=$(app_widget_faults)
+has() { printf '%s\n' "$found" | grep -qxF -e "$1"; }
+check "widget check: a widget's error, by its file" has 'bardroid_chat.lua|Error in DrawScreen(): [string "LuaUI/Widgets/bardroid_chat.lua"]:12: attempt to index nil'
+check "widget check: an error in BAR's code a widget called, by its name" has 'BAR Droid pad|Removed widget: BAR Droid pad'
+check "widget check: a load failure" has 'bardroid_retreat.lua|Failed to load: bardroid_retreat.lua  ([string "LuaUI/Widgets/bardroid_retreat.lua"]:3: unexpected symbol)'
+check "widget check: an error in Shutdown, by its file" has 'bardroid_queue.lua|Error in Shutdown(): [string "LuaUI/Widgets/bardroid_queue.lua"]:45: attempt to call field'
+check "widget check: the lobby's widget" has 'bardroid_lobby_touch.lua|Error in Update(): [string "LuaMenu/Widgets/bardroid_lobby_touch.lua"]:7: attempt to index nil'
+check "widget check: five widgets, each once (no profiler line, chat, BAR's own widget, Removed after its error line, no GetInfo)" \
+  [ "$(printf '%s\n' "$found" | grep -c .)" = 5 ]
+infolog '[simdraw] timers: W:VisibleUnitRemoved:BAR Droid touch 0.1%'
+read_faults
+check "widget check: a profiler line alone is no fault" [ -z "$(app_widget_faults | grep .)" ]
 
 # Adreno's compressed render targets off for Freedreno (the stripes, 2026-11-05): added once to what is there, never
 # for Turnip + Zink
