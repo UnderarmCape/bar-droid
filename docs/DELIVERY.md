@@ -842,6 +842,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       ms, then a 103-474 elmo jump in one frame (a frame's step otherwise 50 at most); these: all 8 one smooth move of
       1.40-1.51 s, the biggest step 57. The build with this and item 29 (18:05-18:21): touch-phone-test, dock-phone-test
       upright, camctl-phone-test, lobby-phone-test, factory-preset-test, pad-test and -Online ALL PASS.
+- [x] **Item 29: keys let go of when Android cancels their release** (2026-11-21 17:58-18:05): GameActivity hands a
+      key's cancelled release (the window losing focus with the key held) on as a plain one, in handleKey and
+      dispatchKeyEvent: Termux:X11 drops a cancelled release, and the key stayed down in X. On the dev phone (a temporary
+      proof widget logging the camera and Shift every 15 frames, a virtual keyboard holding Shift and the left arrow, the
+      notification shade down 2 s later, both let go under it, the shade up, the keyboard gone 10 s after): HEAD's build
+      scrolled on for 10 s after the let-go (to the map's edge) and kept Shift down after the keyboard had gone; this one
+      stopped as the shade came down, Shift up with it. Item 28's round ran on the same build.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

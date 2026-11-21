@@ -935,6 +935,7 @@ public class GameActivity extends MainActivity {
         if (touch != null && e.getAction() == KeyEvent.ACTION_DOWN && fromKeyboard(e)) touch.source("keyboard");
         // the system Back: Escape in dispatchKeyEvent, after the soft keyboard (if shown) has closed on it
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK && !e.isFromSource(InputDevice.SOURCE_MOUSE)) return false;
+        e = uncancelled(e);
         boolean sent = super.handleKey(e);
         if (sent && e.getAction() == KeyEvent.ACTION_UP) BarDroidAccess.keyReleaseSent(getLorieView(), e.getKeyCode());
         return sent;
@@ -976,6 +977,17 @@ public class GameActivity extends MainActivity {
             }
             return true;
         }
-        return super.dispatchKeyEvent(event);
+        return super.dispatchKeyEvent(uncancelled(event));
+    }
+
+    /**
+     * A key's release Android cancelled (the window lost focus with the key held: the notification shade, another
+     * window under DeX) as a plain release: Termux:X11 drops a cancelled one, and the key stayed down in X (a held arrow
+     * went on scrolling the map; a held Shift made every finger tap after it a Shift click). Release overhaul audit,
+     * 2026-11-21.
+     */
+    private static KeyEvent uncancelled(KeyEvent e) {
+        if (e.getAction() != KeyEvent.ACTION_UP || (e.getFlags() & KeyEvent.FLAG_CANCELED) == 0) return e;
+        return KeyEvent.changeFlags(e, e.getFlags() & ~KeyEvent.FLAG_CANCELED);
     }
 }
