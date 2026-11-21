@@ -408,6 +408,13 @@ public class GameService extends Service {
             catch (java.io.IOException e) { Log.e("svc", "the controller game's files", e); }
             inst.slimContainer((step, detail, percent) -> setStatus("container: making room"));
             Updater up = "lobby".equals(mode) || "skirmish".equals(mode) ? update(Prefs.autoUpdate) : null;
+            // (the map by its exact name before the start script: Installer.exactMapName)
+            String exactMap = "skirmish".equals(mode) ? Installer.exactMapName(paths.bar, Prefs.mapName) : null;
+            if (exactMap != null && !exactMap.equals(Prefs.mapName)) {
+                Log.i("svc", "the map \"" + Prefs.mapName + "\" is \"" + exactMap + "\": started by that name");
+                Prefs.mapName = exactMap;
+                Prefs.save(this);
+            }
             inst.writeGameFiles();                          // refresh settings + start script
             if (up != null) up.applyLauncherSettings();
             // The benchmark (BAR's "Benchmark BAR" scenario, unattended) runs what is installed, no update first, so

@@ -534,6 +534,21 @@ public final class Installer {
     /** The benchmark's map (benchmark.template.txt). */
     public static final String BENCH_MAP = "Starwatcher 1.0";
 
+    /**
+     * The installed map a typed name means, by the exact name the engine looks it up under, or null: case, and
+     * underscores for spaces, set aside (the launcher's field is free text; "starwatcher 1.0" counted as on the phone by
+     * hasMap, and the engine, whose lookup is exact, ended the skirmish within seconds: on the first start after an
+     * update that fast exit rolled the update back; release overhaul audit, 2026-11-21).
+     */
+    static String exactMapName(File bar, String typed) {
+        if (typed == null) return null;
+        String want = typed.trim().replace('_', ' ').toLowerCase(Locale.ROOT);
+        for (String name : LauncherActivity.installedMaps(bar)) {
+            if (name.replace('_', ' ').toLowerCase(Locale.ROOT).equals(want)) return name;
+        }
+        return null;
+    }
+
     /** On the phone? BAR's map files are named after their map: Starwatcher 1.0 is maps/starwatcher_1.0.sd7. */
     public boolean hasMap(String name) {
         String file = "maps/" + name.toLowerCase(Locale.ROOT).replace(' ', '_');

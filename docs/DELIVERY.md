@@ -739,6 +739,15 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 17: a map name typed in another case starts the map** (2026-11-21 14:00-14:25): the launcher's map field is
+      free text; "starwatcher_1.0" counted as on the phone (Installer.hasMap lowercases and joins with "_"), the start
+      script took it as typed, and the engine, whose lookup is exact, ended the skirmish within seconds (on the first
+      start after an update that fast exit rolls the update back). Now a skirmish's start resolves the name to the
+      installed map's own (Installer.exactMapName, from the engine's archive cache, case and "_" for " " set aside),
+      saves it and logs it. On the dev phone, the map setting "starwatcher_1.0" (the app stopped; put back after):
+      HEAD's build wrote MapName=starwatcher_1.0, the engine quit in 9 s ("Dependent archive "starwatcher_1.0" ... not
+      found", exit 21); this build said "the map "starwatcher_1.0" is "Starwatcher 1.0": started by that name" and the
+      game loaded.
 - [x] **Items 18-20: the shell audit's smaller install faults** (2026-11-21 14:00-14:22): setup-container.sh's content
       step goes on when its one map does not download (a warning: a skirmish fetches its map at its start, the lobby
       its own; before, a mistyped map name failed the whole install after 3.4 GB, exit 43). launch-bar.sh's
