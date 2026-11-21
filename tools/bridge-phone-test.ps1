@@ -35,6 +35,9 @@ try {
   & $adb forward "tcp:$local" "tcp:$port" | Out-Null
   $out = @(& $py -I (Join-Path $PSScriptRoot "bridge-phone-test\bridge_client.py") $local)
   $r = @{}; foreach ($l in $out) { $p = "$l".Split(' ', 2); if ($p.Count -eq 2) { $r[$p[0]] = $p[1].Trim() } }
+  # (the import windows the double Add opened, then the pickers closed: one at a time since 2026-11-21)
+  $pickers = [int]("$(& $adb shell "dumpsys activity activities 2>/dev/null | grep -c -e 'Hist.*ReplayImportActivity'")".Trim() + "")
+  for ($i = 0; $i -lt 2; $i++) { & $adb shell input keyevent KEYCODE_BACK; Start-Sleep 1 }
   $evil = "$(InApp 'ls files/bar/LuaUI/Widgets/bardroid_bridge_evil.lua files/bar/dev-env.sh 2>/dev/null')".Trim()
   # (the longest of the bridge's last 40 "not JSON" lines, this run's: the client's 200 KB lines are clipped before they
   # are logged; across launcher.old.log too, as 40 such lines whole rotated the log at the next start)
@@ -48,7 +51,8 @@ try {
     @("a third connection: closed", ($r.third -eq "closed"), $r.third),
     @("the plugin manifest the lobby downloads: allowed", ($r.manifest -eq "success"), $r.manifest),
     @("40 lines of 200 KB from another app: logged clipped", ($longest -gt 0 -and $longest -lt 2000), "$longest characters"),
-    @("a message nested 100,000 deep: the app lives, a new connection's download answered", ($r.afterdeep -eq "success"), $r.afterdeep))
+    @("a message nested 100,000 deep: the app lives, a new connection's download answered", ($r.afterdeep -eq "success"), $r.afterdeep),
+    @("Add tapped twice: one import window", ($pickers -eq 1), "$pickers"))
   foreach ($c in $cases) {
     if ($c[1]) { "[bridgetest] PASS $($c[0]) ($($c[2]))" } else { "[bridgetest] FAIL $($c[0]) ($($c[2]); files: '$evil')"; $fails++ }
   }

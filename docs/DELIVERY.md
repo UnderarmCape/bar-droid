@@ -805,6 +805,11 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build turned first person on at frame 500 and kept it after "gamepad disconnected"; this one on at frame 520,
       off at frame 610 right after the pad went, "pad only" cleared. pad-test, -Dgun, -Online, dock-phone-test upright
       and lobby-phone-test ALL PASS on it (17:05-17:16; round B on b0533e07 before it, 16:34-16:56: ALL PASS).
+- [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
+      import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
+      Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it
+      copies. bridge-phone-test's new case (Add twice, 100 ms apart: the import windows counted, then closed) on the
+      dev phone: HEAD's build opened 2, this one 1; the rest of the test and lobby-phone-test ALL PASS.
 - [x] **Item 24: cut-off map downloads cleared; the redaction's quick test in any case** (2026-11-21 16:20-16:35):
       MapStore.dropCutDownloads deletes maps/*.sd7.tmp and *.sdz.tmp older than an hour (a download still running is
       younger) before every engine start, with or without a map limit, a line each in launcher.log. LogRedact's quick

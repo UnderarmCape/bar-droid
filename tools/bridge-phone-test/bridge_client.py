@@ -84,3 +84,15 @@ try:
     s2.close()
 except OSError:
     print("afterdeep", "no bridge")
+# the Replays tab's Add twice, 100 ms apart (a double tap): the script counts the import windows (one at a time,
+# release overhaul audit 2026-11-21)
+try:
+    s3 = conn()
+    for _ in range(2):
+        send(s3, "OpenFile", {"path": "file:///root/bar/demos/"})
+        time.sleep(0.1)
+    time.sleep(3)
+    print("pickers", "sent")
+    s3.close()
+except OSError:
+    print("pickers", "no bridge")

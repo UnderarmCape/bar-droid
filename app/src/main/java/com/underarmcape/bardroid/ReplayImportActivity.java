@@ -36,8 +36,22 @@ public class ReplayImportActivity extends Activity {
     private static final long MAX_BYTES = 512L << 20;   // (a 10-minute 1v1 is about 1 MB; an 8v8 hour some tens)
     private static final Uri DOWNLOADS = Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload");
 
+    /**
+     * One import at a time: a second Add while this one's picker or copy is up opened a second picker after it (a double
+     * tap; release overhaul audit, 2026-11-21). LobbyBridge asks before it starts one. When it began (0: none), stale
+     * after 10 minutes so a start Android never made cannot hold Add off for good.
+     */
+    static volatile long openedAt;
+    static boolean busy() { return openedAt != 0 && System.currentTimeMillis() - openedAt < 600_000; }
+
+    @Override protected void onDestroy() {
+        super.onDestroy();
+        if (isFinishing()) openedAt = 0;
+    }
+
     @Override protected void onCreate(Bundle saved) {
         super.onCreate(saved);
+        openedAt = System.currentTimeMillis();
         if (saved != null) return;   // (recreated while the picker is up: its answer still comes to onActivityResult)
         // (opened in Downloads, where a browser puts a replay: it opened on Recent, the folder a few taps away down its
         // side menu, dev phone 2026-11-17; a hint only, the picker may keep its own)
@@ -75,6 +89,10 @@ public class ReplayImportActivity extends Activity {
         }
         ContentResolver cr = getContentResolver();
         File bar = BarApp.get().paths().bar;
+        // (said at once: this window, see-through, takes the screen's touches until the copy ends, a file in the cloud
+        // downloaded first, and nothing showed meanwhile; release overhaul audit, 2026-11-21)
+        Toast.makeText(this, picked.size() == 1 ? "Adding the replay..." : "Adding " + picked.size() + " replays...",
+                Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             String said = importAll(cr, picked, bar);
             runOnUiThread(() -> {

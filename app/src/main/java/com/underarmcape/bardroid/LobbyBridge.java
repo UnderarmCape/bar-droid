@@ -170,9 +170,18 @@ final class LobbyBridge {
                         Log.i("bridge", BridgeRules.clip("opened " + path));
                     } catch (Exception e) { Log.e("bridge", BridgeRules.clip("could not open " + path + ": " + e)); }
                 } else if (path.matches("file://.*/demos/?")) {   // (the Replays tab's Open Folder, "Add" on a phone)
+                    if (ReplayImportActivity.busy()) {   // (one import at a time: a double tap opened two pickers)
+                        Log.i("bridge", "replay import: one is open already");
+                        break;
+                    }
+                    // (set before the activity's own onCreate: the double tap's second message comes right after)
+                    ReplayImportActivity.openedAt = System.currentTimeMillis();
                     try {
                         ctx.startActivity(new Intent(ctx, ReplayImportActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                    } catch (Exception e) { Log.e("bridge", "replay import: " + e); }
+                    } catch (Exception e) {
+                        ReplayImportActivity.openedAt = 0;
+                        Log.e("bridge", "replay import: " + e);
+                    }
                 } else Log.i("bridge", BridgeRules.clip("not opened (no file manager here): " + path));
                 break;
             }
