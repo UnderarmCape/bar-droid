@@ -365,6 +365,27 @@ check "... the lobby's settings untouched" [ "$(cat "$BAR/LuaMenu/Config/IGL_dat
 check "... said in launcher.log" grep -q "LuaMenu/Widgets: removed what is not the app's lobby widget, 2 in all" "$LOGS/launch.txt"
 lobby_start 1
 check "a developer's build: the tools' test widgets kept" [ -f "$BAR/LuaMenu/Widgets/evil.lua" ] && [ -f "$BAR/LuaMenu/Widgets/sub/more.lua" ]
+# The lobby's saved settings made when there are none yet (a fresh install's first lobby: no lobby widget before,
+# release overhaul audit 2026-11-21), in the layout the settings blocks after it match; a player's own left alone
+seed=$(body lobby_settings_seed)
+[ -n "$seed" ] || { echo "[launchbartest] FAIL launch-bar.sh: lobby_settings_seed not found"; exit 1; }
+eval "$seed"
+rm -rf "$BAR/LuaMenu"; : > "$LOGS/launch.txt"
+lobby_settings_seed "$BAR/LuaMenu/Config/IGL_data.lua"
+igl="$BAR/LuaMenu/Config/IGL_data.lua"
+tab=$(printf '\t')
+check "no lobby settings yet: made, loadLocalWidgets on" grep -q "^$tab${tab}loadLocalWidgets = true,$" "$igl"
+check "... in Chobby's layout (the scale block's pattern)" grep -q "^$tab\[\"Chili lobby\"\] = {\$" "$igl"
+check "... the once-only fields there for their blocks" grep -q 'drawAtFullSpeed = false' "$igl" && grep -q 'doNotDisturb = false' "$igl" && grep -q 'enableCacheRapidPool = true' "$igl"
+check "... no temp file left, said in launcher.log" [ ! -e "$igl.tmp" ] && grep -q "lobby: its settings file made" "$LOGS/launch.txt"
+sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tgameConfigName = \"byar\",/" "$igl"
+check "... launch-bar.sh's gameConfigName insert finds its place" grep -q 'gameConfigName = "byar",' "$igl"
+echo 'return { ["Chili lobby"] = { panel_layout = 2, }, }' > "$igl"; : > "$LOGS/launch.txt"
+lobby_settings_seed "$igl"
+check "a player's lobby settings: left alone" [ "$(cat "$igl")" = 'return { ["Chili lobby"] = { panel_layout = 2, }, }' ] && [ ! -s "$LOGS/launch.txt" ]
+: > "$igl"
+lobby_settings_seed "$igl"
+check "an empty one (cut off): made again" grep -q 'loadLocalWidgets = true' "$igl"
 log() { :; }
 lp=$(awk '/^  while read -r rel; do$/ { on = 1 } on { print } on && /^  done < "\$LP_OURS"$/ { exit }' "$src")
 [ -n "$lp" ] || { echo "[launchbartest] FAIL launch-bar.sh: the load pictures' removal loop not found"; exit 1; }

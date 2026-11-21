@@ -326,8 +326,21 @@ lobby_widgets_only() {
   [ -z "$gone" ] || log "!!! LuaMenu/Widgets: removed what is not the app's lobby widget, $(printf '%s\n' "$gone" | wc -l | tr -d ' ') in all: $(printf '%s\n' "$gone" | head -n 3 | tr '\n' ' ' | sed 's/ $//')"
 }
 
+# The lobby's saved settings (LuaMenu/Config/IGL_data.lua) are Chobby's to write, at its first exit: until then every
+# setting below found no file and was skipped without a word, loadLocalWidgets with them, so a fresh install's first
+# lobby ran without the app's lobby widget (no keyboard for its text boxes, no finger scrolling, no pad), its scale and
+# panels BAR's (release overhaul audit, 2026-11-21). Missing or empty: the few fields the app sets, in Chobby's own
+# layout (a tab, then two), which it merges with its defaults; the blocks below then set them as on every start.
+lobby_settings_seed() {
+  [ -s "$1" ] && return 0
+  mkdir -p "$(dirname "$1")"
+  printf 'return {\n\t["Chili lobby"] = {\n\t\tdoNotDisturb = false,\n\t\tdrawAtFullSpeed = false,\n\t\tenableCacheRapidPool = true,\n\t\tloadLocalWidgets = true,\n\t},\n}\n' > "$1.tmp" &&
+    mv -f "$1.tmp" "$1" && log "lobby: its settings file made (none yet: a first lobby)"
+}
+
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
+  lobby_settings_seed "$BAR/LuaMenu/Config/IGL_data.lua"
   widget_order "Grid menu" 0
   build_menu
   order_menu

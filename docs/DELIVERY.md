@@ -449,6 +449,18 @@ From a fourth read-only audit, bloat and the sunset controller game's leftovers 
    launch-bar.sh's .bardroid-gamepad-menus, Prefs' retired keys: once the Fold7's launcher.log shows it ran); the
    emulator APK's unused libfeature_support_angle.so (353 KB; the emulator build is the owner's); code shrinking
    (minifyEnabled: the dex is 10.4 MB unpacked; keep rules for the reflection calls; the owner's call).
+From a fifth read-only audit, launch-bar.sh and setup-container.sh on a fresh or interrupted install (2026-11-21
+12:50-13:20; launch-bar-test.sh run, each finding checked against the code):
+14. HIGH: a fresh install's first lobby ran without the app's lobby widget: every lobby setting launch-bar.sh makes
+   (loadLocalWidgets with them) waits for Chobby's saved settings file, which Chobby writes only at its first exit, and
+   each block skipped without a word: no keyboard for the login boxes, no finger scrolling, no pad, BAR's scale.
+15. HIGH: the apt step cut short in dpkg (Stop, Android's low-memory kill) left dpkg's journal, and every retry's apt-get
+   install refused ("dpkg was interrupted"): the install failed at that step for good, short of clearing the storage.
+Noted, not worked: a map name typed in another case or with underscores counts as on the phone (Installer.hasMap
+lowercases it), the engine's exact lookup then ends the skirmish in seconds, and on the first start after an update
+that fast exit rolls the update back; a fresh install's content step fails whole when its one map does not download
+(after 3.4 GB); a BYAR.lua left without its order table (BAR's widget list reset, then a killed session) makes ~30
+widget orders miss for one start; the first start's GL probe (glxinfo ten times) is kept even when Stop cut it short.
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
@@ -727,6 +739,15 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 14: a fresh install's first lobby gets the app's lobby widget** (2026-11-21 13:00-13:35): launch-bar.sh's
+      lobby_settings_seed writes the lobby's settings file when there is none (or an empty one): the four fields the
+      app sets, in Chobby's own layout, which it merges with its defaults; the blocks after it then set loadLocalWidgets,
+      the scale and panels, as on every start. launch-bar-test.sh's new cases (made with loadLocalWidgets on, the scale
+      block's pattern and the gameConfigName insert matching, a player's file left alone, an empty one made again) ALL
+      PASS; the seeded file luacheck-clean. On the dev phone, its lobby settings set aside (put back after, byte for
+      byte) as on a fresh install: HEAD's build opened the lobby without the lobby widget (local widgets off; Chobby
+      then saved loadLocalWidgets = false); this one made the file and the lobby loaded "BAR Droid lobby touch", which
+      laid out the first-run login popup (panel_layout 3, loadLocalWidgets true).
 - [x] **A factory's PRESETS button big** (Kailil, 2026-11-21 ~13:00: "Make the preset button for factories big"; 13:00-13:29,
       dev phone): a factory picked alone had its PRESETS ("PRESETS: STRAFE" once it has one) as a small button among
       the states, under REPEAT. Now it is as big as the units' PRESETS (one column, MOVE's height), right after FIGHT,
