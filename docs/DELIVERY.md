@@ -297,6 +297,18 @@ boxes, the GPU driver's fault closing a frozen game).
       once a minute): a busy fight's units are each looked at now and then, the light fight's first hit gets its turn.
       The fix: its own entry 2 of 2 (27 and 30 hits, the busy fight still on); the rest of the test ALL PASS. On the
       Fold7 2026-11-20 21:27 (5fcad075's build, BAR closed, not played since 20:37), github-sync -Release.
+- [x] **LOCAL UNITS over only left-out types brought every left-out type back** (hardening of the day's ALL UNITS
+      left-out types, 2026-11-20 21:29-21:57, dev phone): the round first: dock-phone-test upright and at 1080x1198,
+      factory-preset-test, overgame-phone-test, driverwatch-phone-test, touch-phone-test, lobby-phone-test, pad-test
+      -Online ALL PASS, no driver fault. Read against their tests meanwhile, nothing to change: bardroid_walls.lua
+      (rings on the build grid, T2 walls before the sentry, none for a line or grid of sentries, a host's ban on
+      widgets' orders kept) and bardroid_retreat.lua (once until healed past 60 %, the commander's cover let go when it
+      is out or the player takes it, nothing while catching up). The kink: when every type in LOCAL UNITS' list was
+      left out, the list would pick nothing and close, so those types come back in; but SP.leftOut was emptied whole,
+      a type left out of ALL UNITS elsewhere came back too. types-phone-test's new case (Pawns and Maces left out, two
+      Pawns given far off and the camera on them, LOCAL UNITS tapped: the Pawns back in and picked; then ALL UNITS at
+      home: the Maces still out) FAILED on the build before (the Maces back: 9 picked); now only the list's types come
+      back (bardroid_portrait.lua), ALL PASS twice (7 picked, the Maces left out).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

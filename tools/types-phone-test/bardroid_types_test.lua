@@ -6,7 +6,9 @@
 -- bardroid_typestest_cmd.txt once done. Checked: ALL UNITS picks all seven; the Blitzes held: out of the pick, dimmed
 -- in the list, not in ALL's count; ALL UNITS again (nothing picked first): still without them; held again: back in; the
 -- Pawns and the Maces held out: the list's last type (the Blitzes) stays in when held; a plain tap on a left-out type
--- (the Pawns) picks that type alone. "[typestest] done: ALL PASS" or "N FAILED" at the end.
+-- (the Pawns) picks that type alone. Then LOCAL UNITS where only a left-out type stands (two Pawns given far off, the
+-- camera on them): that type back in and picked, the other left-out type (the Maces) still out under ALL UNITS (it
+-- brought every left-out type back, 2026-11-20). "[typestest] done: ALL PASS" or "N FAILED" at the end.
 function widget:GetInfo()
 	return { name = "BAR Droid types test", desc = "ALL UNITS without a type", author = "BAR Droid", layer = 0, enabled = true }
 end
@@ -69,6 +71,12 @@ local function allUnitsCell()
 		return it.kind == "units" and it.from == "all"
 	end)
 end
+local function localUnitsCell()
+	return cellOf(function(it)
+		return it.kind == "units" and it.from == "local"
+	end)
+end
+local home, far -- { x, z }: beside the commander; two Pawns far off
 local function allCount()
 	local _, it = cellOf(function(it)
 		return it.kind == "alltypes"
@@ -123,6 +131,7 @@ function widget:GameFrame(f)
 		local team = Spring.GetMyTeamID()
 		local com = (Spring.GetTeamUnits(team) or {})[1]
 		local x, y, z = Spring.GetUnitPosition(com)
+		home = { x, z }
 		Spring.SendCommands(string.format("give 3 armpw %d @%d,%d,%d", team, x + 200, y, z))
 		Spring.SendCommands(string.format("give 2 armflash %d @%d,%d,%d", team, x + 260, y, z + 90))
 		Spring.SendCommands(string.format("give 2 armham %d @%d,%d,%d", team, x + 200, y, z + 180))
@@ -176,6 +185,36 @@ function widget:GameFrame(f)
 	elseif stage == "pawntap?" and f - stageAt > WAIT then
 		local n = picked()
 		check("a left-out type tapped: that type alone picked", n.pawn == 3 and n.total == 3, pickText(n))
+		-- (now the Pawns and the Maces are left out: two Pawns far off, the map's other side, and the camera on them)
+		local mx, mz = Game.mapSizeX, Game.mapSizeZ
+		far = { home[1] > mx / 2 and math.max(400, home[1] - 3500) or math.min(mx - 400, home[1] + 3500),
+			home[2] > mz / 2 and math.max(400, home[2] - 2500) or math.min(mz - 400, home[2] + 2500) }
+		local team = Spring.GetMyTeamID()
+		Spring.SendCommands(string.format("give 2 armpw %d @%d,%d,%d", team, far[1], Spring.GetGroundHeight(far[1], far[2]),
+			far[2]))
+		Spring.SelectUnitArray({})
+		go("farpawns", f)
+	elseif stage == "farpawns" and f - stageAt > 45 then
+		local Pt = WG.BarDroidPortrait
+		Pt.cameraTo(far[1], Spring.GetGroundHeight(far[1], far[2]), far[2])
+		go("localtap", f)
+	elseif stage == "localtap" and f - stageAt > 45 then
+		Spring.Echo(string.format("[typestest] two Pawns given far off at %d,%d, the camera on them", far[1], far[2]))
+		ask("tap", (localUnitsCell()), "local?", f)
+	elseif stage == "local?" and f - stageAt > WAIT then
+		local n = picked()
+		check("LOCAL UNITS with only a left-out type there: that type back in, picked", n.pawn == 2 and n.total == 2
+			and not outOf(DEF.pawn), pickText(n) .. ", Pawns left out " .. tostring(outOf(DEF.pawn)))
+		Spring.SelectUnitArray({})
+		local Pt = WG.BarDroidPortrait
+		Pt.cameraTo(home[1], Spring.GetGroundHeight(home[1], home[2]), home[2])
+		go("home3", f)
+	elseif stage == "home3" and f - stageAt > 45 then
+		ask("tap", (allUnitsCell()), "macesstill?", f)
+	elseif stage == "macesstill?" and f - stageAt > WAIT then
+		local n = picked()
+		check("... and ALL UNITS after it: the Maces, not in that list, still left out", outOf(DEF.ham) and n.ham == 0
+			and n.pawn == 5 and n.flash == 2, pickText(n) .. ", Maces left out " .. tostring(outOf(DEF.ham)))
 		go("end", f)
 	elseif stage == "end" then
 		Spring.Echo("[typestest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))

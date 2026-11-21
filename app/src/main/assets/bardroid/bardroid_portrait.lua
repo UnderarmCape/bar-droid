@@ -2446,12 +2446,18 @@ local function pressItem(item, long)
 		if typesFrom == "local" or typesFrom == "all" then -- (Kailil, 2026-11-10: "default to all and have them selected
 			-- upon first tapping all units or local units": the list stays, its ALL lit, a type still narrows it; the types
 			-- left out not picked, SP.leftOut)
-			local all, out = SP.unitsIn(byType(typesUnits(), combat))
-			if #all == 0 and out > 0 then -- (only left-out types here, LOCAL UNITS say: they all come back in, or the list
-				-- picked nothing, closed at once and never let one be brought back)
-				SP.leftOut = {}
-				all = SP.unitsIn(byType(typesUnits(), combat))
-				Spring.Echo("[bardroid-portrait] every type in the list was left out: all back in") -- (tools)
+			local groups = byType(typesUnits(), combat)
+			local all, out = SP.unitsIn(groups)
+			if #all == 0 and out > 0 then -- (only left-out types here, LOCAL UNITS say: they come back in, or the list
+				-- picked nothing, closed at once and never let one be brought back; only this list's, the others stay out:
+				-- every one came back, a type out of ALL UNITS too, types-phone-test 2026-11-20)
+				for _, g in ipairs(groups) do
+					if g.defID then
+						SP.leftOut[g.defID] = nil
+					end
+				end
+				all = SP.unitsIn(groups)
+				Spring.Echo("[bardroid-portrait] every type in the list was left out: those back in") -- (tools)
 			end
 			keepTypes, allPicked = true, #all > 0
 			selectUnits(all)
