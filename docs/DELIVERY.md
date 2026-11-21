@@ -653,6 +653,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build with it and item 11's gates: pad-test, pad-test -Dgun and the regression round (dock-phone-test upright and
       at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test, driverwatch-phone-test with x11-probe in
       its game, touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test) ALL PASS.
+- [x] **Item 11 (the cheap ones): developer-only switches gated** (2026-11-21 08:50-08:58): the launcher's GL check long
+      press (an hour of the X display, a wake lock and a black game screen: "shell" mode) and the game screen's
+      .bardroid-display-scales file (the display hardware's scaling in place of SGSR) only in a developer's build; the
+      launcher names an engine from dev-env.sh only there too (a release build ignores dev-env.sh and named an engine it
+      did not start). bardroid_pad.txt's click and key lines stay as they are (a user widget could write them; none can
+      reach a release phone today): raised, not redesigned. On the dev phone's debug build the gates stay open; the
+      regression round ALL PASS on it (with 7e, above).
 - [x] **Item 9: launch-bar.sh trusts the write folder less** (2026-11-21 08:12-08:40): the preloads (the AI's ARM64
       stub, the frame pacer) on the engine's four ./spring lines alone, not exported (a developer's dev-env.sh may still
       set its own); the benchmark's files (.springsettings.pre-bench, .bardroid-bench-settings, -profile, -replay) only

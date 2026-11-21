@@ -44,8 +44,9 @@ public class GameActivity extends MainActivity {
         LorieView.maxScaledViewPixels = Math.round(MAX_SCREEN_PIXELS * r * r);
         LorieView.maxScaledShortSide = Math.round(MAX_SCREEN_LINES * r);
         // (dev, docs/CONTAINER-COST.md: files/bar/.bardroid-display-scales: the display hardware enlarges the X screen,
-        // no upscaling pass on the GPU)
-        LorieView.surfaceAtScreenSize = new java.io.File(BarApp.get().paths().bar, ".bardroid-display-scales").exists();
+        // no upscaling pass on the GPU; a developer's build only: the write folder is the game's Lua's to write too)
+        LorieView.surfaceAtScreenSize = Prefs.developer(this)
+                && new java.io.File(BarApp.get().paths().bar, ".bardroid-display-scales").exists();
         KeyboardShortcuts.applyTermuxPrefs(this);
         super.onCreate(savedInstanceState);
         if (!GameService.busy()) {

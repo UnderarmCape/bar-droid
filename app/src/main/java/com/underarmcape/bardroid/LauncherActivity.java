@@ -91,8 +91,11 @@ public class LauncherActivity extends AppCompatActivity {
         lobby.setOnClickListener(v -> start(GameService.ACTION_PLAY, "lobby"));
         glcheck.setOnClickListener(v -> start(GameService.ACTION_PLAY, "glcheck"));
         // Developer hook: long-press keeps the X display (and GPU server) up for an hour without starting the game,
-        // so GL programs can be tried inside the container with tools\container-shell.bat.
-        glcheck.setOnLongClickListener(v -> { GameService.start(this, GameService.ACTION_PLAY, "shell"); return true; });
+        // so GL programs can be tried inside the container with tools\container-shell.bat. A developer's build only (a
+        // player's long press had an hour of a black screen and a wake lock; release overhaul item 11, 2026-11-21).
+        if (Prefs.developer(this)) {
+            glcheck.setOnLongClickListener(v -> { GameService.start(this, GameService.ACTION_PLAY, "shell"); return true; });
+        }
         stopButton.setOnClickListener(v -> GameService.start(this, GameService.ACTION_STOP, null));
         prefs.setOnClickListener(v -> startActivity(new Intent(this, com.termux.x11.LoriePreferences.class)));
         save.setOnClickListener(v -> saveSettings(true));
@@ -702,6 +705,8 @@ public class LauncherActivity extends AppCompatActivity {
     }
 
     private String engineBranchBuild() {
+        // (launch-bar.sh runs dev-env.sh in a developer's build only: a release build named an engine it does not start)
+        if (!Prefs.developer(this)) return null;
         java.io.File f = new java.io.File(new Paths(this).bar, "dev-env.sh");
         if (!f.isFile()) return null;
         try (java.io.BufferedReader r = new java.io.BufferedReader(new java.io.FileReader(f))) {
