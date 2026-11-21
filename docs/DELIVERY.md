@@ -379,7 +379,7 @@ boxes, the GPU driver's fault closing a frozen game).
       the game: "1", then "0"), dock-phone-test and touch-phone-test ALL PASS (its stand-in for BAR's lobby now writes
       the lobby widget's file too). The test's chat-box count follows: BAR pauses a singleplayer game while the lobby is
       over it, so its check is that no line shown as the game's own begins like chat (the tools line names its first
-      word).
+      word). On the Fold7 2026-11-21 01:38 (6604ab43's build, BAR closed, not played since 00:33), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
