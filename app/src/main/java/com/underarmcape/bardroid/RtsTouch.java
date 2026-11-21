@@ -1086,7 +1086,17 @@ final class RtsTouch {
         showCursor(true);
         if (velocity != null) { velocity.recycle(); velocity = null; }
         ui.postDelayed(applyQueue, QUEUE_LOOK_MS);   // (a tap on QUEUE: the game has it by then)
-        io.post(() -> { if (logBytes > LOG_RESTART_BYTES) restartLog(); });   // between gestures only
+        ui.removeCallbacks(restartLater);
+        ui.postDelayed(restartLater, LOG_RESTART_DELAY_MS);   // between gestures only
+    }
+
+    // The touch log begun anew a moment after a lift, if no finger is down by then: at once, the lift's own lines went
+    // before the widgets' next frame read them (a CIRCLE that never selected, the knob left lit; release overhaul audit,
+    // 2026-11-21).
+    private static final long LOG_RESTART_DELAY_MS = 500;
+    private final Runnable restartLater = this::restartLogIfIdle;
+    private void restartLogIfIdle() {
+        if (state == State.IDLE) io.post(() -> { if (logBytes > LOG_RESTART_BYTES) restartLog(); });
     }
 
     private void cancelGesture() {

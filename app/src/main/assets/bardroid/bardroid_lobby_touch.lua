@@ -3211,7 +3211,9 @@ local function appLines()
 		end
 	end
 	logCalls = logCalls + 1
-	if logCalls % 30 == 0 then
+	-- (and every call once past 256 KB, RtsTouch.LOG_RESTART_BYTES, where the app begins the log anew after a lift: a
+	-- second's lines were held back till the 30th call; release overhaul audit, 2026-11-21)
+	if logCalls % 30 == 0 or logPos >= 262144 then
 		local size = logFile:seek("end")
 		if not size then
 			logFile:close()

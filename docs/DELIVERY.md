@@ -514,6 +514,24 @@ From a ninth read-only audit, the gamepad's devices (2026-11-21 16:35-17:00; pad
 27. MEDIUM (from the ninth): a stick or trigger held while the window lost focus without a pause (the notification
    shade, split screen's other half) read as held until it moved again: ControllerBridge ignored ACTION_CANCEL and
    GameActivity had no onWindowFocusChanged (the stick's release went to the shade).
+From a tenth read-only audit, the fingers' and the keyboard's input (RtsTouch, the touch log, KeyboardShortcuts,
+GameActivity's keys; 2026-11-21 17:25-17:52):
+28. MEDIUM, the touch log's restart (every 256 KB of the app's lines, some 35-70 s of finger movement) emptied it right
+   after a lift: the lift's own lines were gone before the widgets read them (a CIRCLE that never selected, the knob
+   left lit, the dock's rows between rows), and the next gesture's lines waited for the widgets' 30th look at its size
+   (up to a second), then came at once: the camera still, then a jump.
+29. MEDIUM, stuck keys: Termux:X11 drops a key release Android cancels (the window losing focus with a key held: the
+   notification shade, another window under DeX), and GameActivity then took LorieView's backup release away: a held
+   arrow went on scrolling, a held Shift, Ctrl or Alt stayed down in X (every finger tap after it a Shift click).
+30. LOW, the first finger lifting first: a box, a circle or a path ended at the other finger (onLastUp took the
+   remaining finger's point; the documented gesture: a box drawn with a dock filter held).
+31. LOW, rare: a drag the system cancels (the power key, a fold, a call) let go at its start: a box a click there (the
+   selection cleared), Area Mex's circle no radius, a path's order back to its start.
+32. LOW, a GRID's held left button, Shift and Alt outlived a building put away another way (the keyboard's Escape, the
+   dock's Back, the pad) until a finger came down on the map (a touch on the dock in pad mode or the camera knob skips
+   that check): meanwhile a mouse move was a drag and every key a Shift+Alt one.
+33. LOW, keyboards: QUEUE's sticky Shift (and QUEUE+INSERT's Alt) let go of in X by the keyboard's own Shift, QUEUE
+   still lit (orders replaced queues until it was tapped again).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -814,6 +832,16 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       the pad gone 10 s after the let-go): HEAD's build kept turning the camera for 15 s after the let-go (0.4 to 29.0,
       until the pad went); this one stopped as the shade came down (4.286 from then on). Round A on HEAD 4f09daef before it
       (17:24-17:53): ALL PASS.
+- [x] **Item 28: the touch log begun anew without losing a gesture** (2026-11-21 17:52-18:20): RtsTouch makes the new
+      log 500 ms after a lift, and only if no finger is down by then (the widgets have read the lift's lines), and the
+      four readers (bardroid_touch.lua, the dock, the camera knob, the lobby's widget) look at its size every frame once
+      they are past 256 KB, where the app may begin it anew (before: every 30th frame only). Proof: temporary builds of
+      HEAD's files and of these with the restart at 4 KB and a line at each (toolchain\tmp\edit_logtest.py, never
+      committed), a proof widget logging every frame's camera move, eight pairs of 500 ms pans by real swipes ~0.2 s
+      apart on the dev phone: HEAD's files split 5 of the 8 pairs (one after each restart): the camera still for 470-710
+      ms, then a 103-474 elmo jump in one frame (a frame's step otherwise 50 at most); these: all 8 one smooth move of
+      1.40-1.51 s, the biggest step 57. The build with this and item 29 (18:05-18:21): touch-phone-test, dock-phone-test
+      upright, camctl-phone-test, lobby-phone-test, factory-preset-test, pad-test and -Online ALL PASS.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

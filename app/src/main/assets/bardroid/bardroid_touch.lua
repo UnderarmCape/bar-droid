@@ -240,7 +240,10 @@ local function newTouchLines()
 	-- for it with fstat, which proot traps to fake the file's owner, two ptrace stops: every frame that was 0.6 % of a
 	-- late 8v8's real time on the dev phone with nothing written (2026-11-06). Each frame only reads on from where the
 	-- last read ended (a seek there clears the end-of-file mark; neither is trapped).
-	if updates % TOUCH_SIZE_EVERY == 0 then
+	-- And every update once past 256 KB (RtsTouch.LOG_RESTART_BYTES): the app begins the log anew there, after a lift,
+	-- and the next gesture's first second waited for the 30th update, then came at once (a frozen camera, then a jump;
+	-- release overhaul audit, 2026-11-21).
+	if updates % TOUCH_SIZE_EVERY == 0 or touchPos >= 262144 then
 		local size = f:seek("end")
 		if not size then -- (the handle went bad: open it again next time)
 			f:close()
