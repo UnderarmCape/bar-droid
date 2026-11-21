@@ -95,6 +95,16 @@ public final class MapStoreTest {
                 && new File(maps, "e_new.sd7").exists() && new File(maps, "starwatcher_1.0.sd7").exists(),
                 "never the one played last nor the kept one: " + more);
 
+        // a cut-off download's .tmp (pr-downloader renames it at its end): an old one goes, a fresh one (a download that
+        // may still be running) stays, the maps stay (release overhaul audit, 2026-11-21)
+        File oldPart = map(bar, "f_cut.sd7.tmp", 60, now - 2 * 3_600_000L);
+        File freshPart = map(bar, "g_running.sdz.tmp", 40, now - 60_000L);
+        long mapsBefore = MapStore.usage(bar)[1];
+        List<String> parts = MapStore.dropCutDownloads(bar);
+        check(parts.size() == 1 && parts.get(0).startsWith("f_cut.sd7.tmp (60 MB)") && !oldPart.exists() && freshPart.exists()
+                && MapStore.usage(bar)[1] == mapsBefore, "a cut-off download's old .tmp removed, a fresh one and the maps kept: " + parts);
+        check(MapStore.dropCutDownloads(new File(bar, "nothing-here")).isEmpty(), "no maps folder: nothing");
+
         delete(bar.getParentFile());
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);

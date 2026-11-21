@@ -23,8 +23,17 @@ final class LogRedact {
 
     /** One line, its join password's value gone. */
     static String line(String s) {
-        if (s.indexOf("sswd") < 0 && s.indexOf("SSWD") < 0) return s;   // (a cheap test first: logs run to tens of MB)
+        // (a cheap test first, logs run to tens of MB; any case, as the pattern: "MyPassWd" got past "sswd"/"SSWD";
+        // release overhaul audit, 2026-11-21)
+        if (!hasPasswd(s)) return s;
         return SECRET.matcher(s).replaceAll("$1(removed)");
+    }
+
+    private static boolean hasPasswd(String s) {
+        if (s.indexOf('=') < 0) return false;   // (the pattern needs one)
+        for (int i = 0; i + 6 <= s.length(); i++)
+            if (s.regionMatches(true, i, "passwd", 0, 6)) return true;
+        return false;
     }
 
     /** A log copied line by line, its bytes as they were (Latin-1 both ways) but a join password's value; lines end in

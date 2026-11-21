@@ -380,6 +380,11 @@ public class GameService extends Service {
 
     /** The downloaded maps kept under the launcher's limit (MapStore): before an engine starts, never under one. */
     private void pruneMaps(String keep) {
+        try {   // (with or without a limit: MapStore.dropCutDownloads)
+            for (String gone : MapStore.dropCutDownloads(paths.bar)) Log.i("maps", "a cut-off map download removed: " + gone);
+        } catch (RuntimeException e) {
+            Log.e("maps", "cut-off downloads", e);
+        }
         if (Prefs.mapCapMb <= 0) return;
         try {
             for (String gone : MapStore.prune(paths.bar, (long) Prefs.mapCapMb << 20, keep)) {

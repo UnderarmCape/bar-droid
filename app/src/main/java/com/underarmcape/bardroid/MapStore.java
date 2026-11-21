@@ -97,6 +97,27 @@ final class MapStore {
         return removed;
     }
 
+    /**
+     * pr-downloader writes a map to maps/<file>.sd7.tmp and renames it at its end: a download cut off (Stop, the lobby's
+     * end, Android's low-memory kill) left the .tmp, 20-150 MB, which the limit never counted or removed. One older than
+     * PART_AGE_MS is no download still running: deleted. Returns a line for each (release overhaul audit, 2026-11-21).
+     */
+    static synchronized List<String> dropCutDownloads(File bar) {
+        List<String> removed = new ArrayList<>();
+        File[] parts = new File(bar, "maps").listFiles((d, n) -> {
+            String l = n.toLowerCase(Locale.ROOT);
+            return l.endsWith(".sd7.tmp") || l.endsWith(".sdz.tmp");
+        });
+        if (parts == null) return removed;
+        for (File f : parts) {
+            long size = f.length();
+            if (f.isFile() && System.currentTimeMillis() - f.lastModified() > PART_AGE_MS && f.delete())
+                removed.add(String.format(Locale.ROOT, "%s (%d MB)", f.getName(), size >> 20));
+        }
+        return removed;
+    }
+    static final long PART_AGE_MS = 3_600_000;
+
     private static long lastUse(Properties used, File f) {
         String t = used.getProperty(f.getName());
         if (t != null) {

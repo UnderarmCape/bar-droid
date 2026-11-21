@@ -28,6 +28,8 @@ public final class LogRedactTest {
         check(s.equals("09:00:51 [engine] \tMyPasswd = (removed)"), "spaces round '=' and no ';' (launcher.log's copy)", s);
         s = LogRedact.line("\tmypasswd=QQQ;");
         check(!s.contains("QQQ"), "any case", s);
+        s = LogRedact.line("\tMyPass" + "Wd=RRR;");   // (the quick test before the pattern took "sswd"/"SSWD" only; 2026-11-21)
+        check(!s.contains("RRR"), "mixed case past the quick test too", s);
         s = LogRedact.line("\tMyPasswd=;");
         check(s.equals("\tMyPasswd=(removed);"), "an empty one (a skirmish) stays harmless", s);
         String plain = "[t=00:00:02] [bardroid-perf] 29.7 fps over 60 s, slowest frame 320 ms";

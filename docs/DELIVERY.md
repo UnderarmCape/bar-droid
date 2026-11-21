@@ -483,6 +483,23 @@ From a seventh read-only audit, the lobby bridge against another app on the phon
    without end; resource downloads to any name under plugins/ and data_export/ with no total cap; OpenFile opens any
    https link (and the replay picker) over the game, StartNewSpring's Toast says a client's words; two idle connections
    made before the lobby connects lock the lobby out (CLIENTS_MAX).
+   The key looked at (2026-11-21 16:00, Chobby test-4674's libs/spring-launcher api_spring_launcher.lua, read only):
+   WG.Connector.Send queues every message made before the socket connects and sends the queue in order once it
+   does, so a hello the lobby widget sends first arrives first, but other widgets' sends queued before it (a download
+   at the lobby's start) would arrive unkeyed; the same connector also runs in a game's LuaUI (lobby and game: the two
+   connections CLIENTS_MAX allows), so the game's side would need its own hello (bardroid_touch.lua); and the
+   widgets' start order decides whether WG.Connector exists yet. The bridge would hold an unkeyed connection's
+   messages until its hello comes (or a few seconds). Left for after the release: a mistake there stalls the lobby's
+   downloads and Replays tab, and the crashes above are closed already.
+From an eighth read-only audit, Share logs, Add (replays) and the map storage limit (2026-11-21 16:00-16:20): no
+personal data in the shared zip beyond the player's name (in the start scripts, as in BAR's public replays); the
+join password redacted.
+24. LOW: a map download cut off (Stop, the lobby's end, Android's kill) left pr-downloader's maps/<file>.sd7.tmp,
+   20-150 MB, which the map limit never counted or removed; LogRedact's quick test before its pattern took "sswd" and
+   "SSWD" only, so a "MyPassWd" would have passed (every writer today writes MyPasswd).
+   Noted, not worked (cosmetic): Add's see-through window takes the screen's input while a replay copies (a cloud
+   file downloads first) with nothing shown; a double tap on Add opens two pickers; the same replay under another
+   name ("x (1).sdfz") is added twice.
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -764,6 +781,15 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 24: cut-off map downloads cleared; the redaction's quick test in any case** (2026-11-21 16:20-16:35):
+      MapStore.dropCutDownloads deletes maps/*.sd7.tmp and *.sdz.tmp older than an hour (a download still running is
+      younger) before every engine start, with or without a map limit, a line each in launcher.log. LogRedact's quick
+      test is now any case (regionMatches), as its pattern. map-store-test's new cases (an old .tmp removed, a fresh one
+      and the maps kept; no maps folder) and log-redact-test's ("MyPassWd"): HEAD's LogRedact failed the mixed case, its
+      MapStore had nothing to clear; this one ALL PASS. On the dev phone, a 5 MB maps/zz_cut_test.sd7.tmp six hours
+      old planted, then a skirmish started: HEAD's build left it; this one removed it ("a cut-off map download removed:
+      zz_cut_test.sd7.tmp (5 MB)"). (Round A on 4f65e229 before it, 15:58-16:27, bridge-phone-test's new cases
+      included: ALL PASS, no driver fault.)
 - [x] **Item 23: the lobby bridge survives another app's messages** (2026-11-21 15:30-15:45): a line nested deeper than
       32 (BridgeRules.depth: its { and [ outside strings; the lobby's own nest 3) is refused before org.json sees it,
       and a StackOverflowError is caught as well; every log line with a client's words is clipped (BridgeRules.clip:
