@@ -137,6 +137,10 @@ public final class ControllerBridge {
     /** @return true if the event was a gamepad event and has been consumed. */
     public boolean onMotion(MotionEvent e) {
         if (!e.isFromSource(InputDevice.SOURCE_JOYSTICK) && !e.isFromSource(InputDevice.SOURCE_GAMEPAD)) return false;
+        if (e.getActionMasked() == MotionEvent.ACTION_CANCEL) {   // (the stream taken away: its last values are no hold)
+            release();
+            return true;
+        }
         synchronized (this) {
             connected = true;
             lx = axis(e, MotionEvent.AXIS_X); ly = axis(e, MotionEvent.AXIS_Y);

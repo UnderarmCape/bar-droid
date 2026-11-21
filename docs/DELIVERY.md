@@ -508,11 +508,12 @@ From a ninth read-only audit, the gamepad's devices (2026-11-21 16:35-17:00; pad
    it with).
 26. COSMETIC (from the eighth): a double tap on Add opened two pickers; Add's see-through window showed nothing while
    it copied.
-   Noted, not worked: a stick or trigger held while the window loses focus without a pause (the notification shade,
-   split screen) reads as held until it moves again (onMotion ignores ACTION_CANCEL; no onWindowFocusChanged); with
-   two gamepad-class devices one's removal releases nothing and both share one state; in the lobby over a game the
-   zero camera line is never sent (a tilted stick pans behind the lobby); USB XInput clones read their triggers as the
-   right stick at rest (Z/RZ at -1).
+   Noted, not worked: with two gamepad-class devices one's removal releases nothing and both share one state; in the
+   lobby over a game the zero camera line is never sent (a tilted stick pans behind the lobby); USB XInput clones read
+   their triggers as the right stick at rest (Z/RZ at -1).
+27. MEDIUM (from the ninth): a stick or trigger held while the window lost focus without a pause (the notification
+   shade, split screen's other half) read as held until it moved again: ControllerBridge ignored ACTION_CANCEL and
+   GameActivity had no onWindowFocusChanged (the stick's release went to the shade).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -805,6 +806,14 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build turned first person on at frame 500 and kept it after "gamepad disconnected"; this one on at frame 520,
       off at frame 610 right after the pad went, "pad only" cleared. pad-test, -Dgun, -Online, dock-phone-test upright
       and lobby-phone-test ALL PASS on it (17:05-17:16; round B on b0533e07 before it, 16:34-16:56: ALL PASS).
+- [x] **Item 27: the pad let go of when the window loses focus** (2026-11-21 17:20-17:57): GameActivity's
+      onWindowFocusChanged releases the pad when the window loses focus without a pause (the notification shade, split
+      screen's other half: the stick's own release goes to the window that has focus), and ControllerBridge takes a
+      cancelled joystick stream as a let-go. On the dev phone (a temporary proof widget logging the camera's heading, a
+      virtual pad holding the right stick, the shade down 2.5 s later, the stick let go under it, the shade up again,
+      the pad gone 10 s after the let-go): HEAD's build kept turning the camera for 15 s after the let-go (0.4 to 29.0,
+      until the pad went); this one stopped as the shade came down (4.286 from then on). Round A on HEAD 4f09daef before it
+      (17:24-17:53): ALL PASS.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

@@ -258,6 +258,13 @@ public class GameActivity extends MainActivity {
     }
 
     @Override public void onPause() { if (pad != null) pad.release(); super.onPause(); }
+    // (and when the window loses focus without a pause: the notification shade, split screen's other half. A stick or
+    // trigger let go meanwhile went to the other window, and the pad read as held: the camera turned on by itself until
+    // the stick moved again; release overhaul audit, 2026-11-21)
+    @Override public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus && pad != null) pad.release();
+    }
     @Override protected void onDestroy() {
         if (pad != null) {   // (null: a screen that closed itself in onCreate, no game behind it)
             getSystemService(DisplayManager.class).unregisterDisplayListener(displayListener);
