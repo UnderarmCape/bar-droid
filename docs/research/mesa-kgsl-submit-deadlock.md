@@ -49,6 +49,8 @@ must be killed. The phone itself recovers (the next start works).
   were spawned): by the engine's own clock the game ran at ~22 frames a second until frame 300 (t=1:07.99), then
   46 frames in the next 6.6 s, in stalls and bursts (frame 316 at 1:11.04, 331 at 1:11.06, 346 at 1:14.62), the 15 s
   before Mesa's first refusal, with nothing paused: the stall before Mesa's line again, readable in the game's clock.
+  At 22:48 one more (the touch camera test, 10 s after its start view, frame 40 the last stamped line: nothing to read
+  a slowdown by); that evening's other 40-odd test games had none.
 
 **What we know**
 - EDEADLK from the KGSL submit ioctl usually means the context was invalidated after a GPU fault; the kernel's log,

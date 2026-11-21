@@ -321,6 +321,14 @@ boxes, the GPU driver's fault closing a frozen game).
       15 s after the newest attack entry's last hit, so 21:23's slower look at one unit cannot make it flicker). No UI
       polish due (the replay's picture: the left-handed rails clear of the speed column). The Fold7 not played on since
       22:02 (the app started once, 21:32, no game).
+- [x] **Round and round; the grey Load, TRANSFER and SEND ENERGY read** (hardening, 2026-11-20 22:29-22:54, dev phone):
+      dock-phone-test upright and at 1080x1198, factory-preset-test, types-phone-test (with 21:57's LOCAL case),
+      overgame-phone-test, driverwatch-phone-test, lobby-phone-test, pad-test -Online ALL PASS. touch-phone-test met the
+      GPU driver's real fault 10 s after its start view (the guarded close closed it, its note; the game's clock had no
+      line in those seconds to read a slowdown by), the rerun ALL PASS. Read against their tests, nothing to change:
+      the Load Game greying (walked only for 4 s after a press, both date forms, a row greyed only where every save of
+      that minute is another engine's), TRANSFER and SEND ENERGY's teammate picker (real teammates or NO TEAMMATES; the
+      share knob sends whole-percent changes only). The D-gun stick needed no read beyond its measured 98-99 %.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
