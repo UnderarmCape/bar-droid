@@ -2635,23 +2635,25 @@ local function drawQueue()
 	font:Print("QUEUE", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - size * 0.36, size, "co")
 	font:End()
 end
+-- (no tables made: IsAbove asks it every frame, and the lists of rects it built were three quarters of this widget's
+-- garbage in an idle skirmish, 50 of 66 kB/s on the dev phone; release overhaul item 7, 2026-11-21)
+local function inRectXY(r, x, y)
+	return r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4]
+end
 local function inQueueButton(x, y)
 	-- (not on the wind's or the tide's box, in the upright dock's selection row since 2026-11-17: a tap there opens its
 	-- details, bardroid_portrait.lua, and left QUEUE as it was)
 	local P = queue.dock and WG.BarDroidPortrait
 	if P and P.windRects then
 		local wb, tb = P.windRects()
-		for _, r in ipairs({ wb or false, tb or false }) do
-			if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
-				return nil
-			end
+		if inRectXY(wb, x, y) or inRectXY(tb, x, y) then
+			return nil
 		end
 	end
-	for _, b in ipairs({ { queue.rect, "queue" }, { queue.insertRect, "insert" } }) do
-		local r = b[1]
-		if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
-			return b[2]
-		end
+	if inRectXY(queue.rect, x, y) then
+		return "queue"
+	elseif inRectXY(queue.insertRect, x, y) then
+		return "insert"
 	end
 	return nil
 end

@@ -5258,9 +5258,14 @@ end
 -- bardroid_pad.lua's QUEUE (a sticky Shift) and INSERT (BAR's CommandInsert: the front of the queue) take the presses;
 -- here their words, gold and a gold edge while one is on, drawn live over the row
 local function queueZones()
+	-- (made once per selection row: layout makes L.sel anew, never changes it in place; asked several times a frame,
+	-- here and by bardroid_pad.lua, each answer was two new tables; release overhaul item 7, 2026-11-21)
 	local s = L.sel
-	local third = s[1] + floor((s[3] - s[1]) / 3)
-	return { s[1], s[2], third, s[4] }, { third, s[2], s[3], s[4] }
+	if L.qzFor ~= s then
+		local third = s[1] + floor((s[3] - s[1]) / 3)
+		L.qzFor, L.qz = s, { { s[1], s[2], third, s[4] }, { third, s[2], s[3], s[4] } }
+	end
+	return L.qz[1], L.qz[2]
 end
 local function drawQueueZones()
 	if not showSel then

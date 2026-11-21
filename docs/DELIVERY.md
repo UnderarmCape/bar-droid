@@ -643,6 +643,16 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       boxes are what is left, with the gamepad widget's 66 kB/s). Not done: skipping the redraw when a refresh changed
       nothing (what the texture draws beyond the items is not all known to the refresh), moving the wind boxes' panels
       into the texture (a visual change).
+- [x] **Item 7e: the gamepad widget's garbage gone** (2026-11-21 08:46-08:58): profiled with no pad in an idle upright
+      skirmish (toolchain\tmp\profile-run.ps1 PAD "BAR Droid gamepad"): 65.9 kB/s, of it IsAbove 50.5 and DrawScreen 15.0.
+      IsAbove asks inQueueButton every frame, which built a list of the wind and tide rects and a list of two {rect, name}
+      pairs at each call; DrawScreen's QUEUE place asked the dock's queueRect and insertRect, and the dock's queueZones()
+      made two new rects for each. Now inQueueButton checks each rect without a list, and queueZones keeps its two rects
+      per selection row (layout makes L.sel anew, never changes it in place). Measured the same way: the gamepad widget
+      65.9 -> 0.4 kB/s and 0.170 -> 0.147 ms a frame, the dock 270 -> 262 kB/s, all widgets 424 -> 357 kB/s. On a
+      build with it and item 11's gates: pad-test, pad-test -Dgun and the regression round (dock-phone-test upright and
+      at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test, driverwatch-phone-test with x11-probe in
+      its game, touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test) ALL PASS.
 - [x] **Item 9: launch-bar.sh trusts the write folder less** (2026-11-21 08:12-08:40): the preloads (the AI's ARM64
       stub, the frame pacer) on the engine's four ./spring lines alone, not exported (a developer's dev-env.sh may still
       set its own); the benchmark's files (.springsettings.pre-bench, .bardroid-bench-settings, -profile, -replay) only
