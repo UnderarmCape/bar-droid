@@ -417,7 +417,7 @@ public final class Installer {
         for (String name : new String[]{"bardroid_touch.lua", "bardroid_queue.lua", "bardroid_chat.lua", "bardroid_info.lua",
                 "bardroid_players.lua", "bardroid_bench.lua", "bardroid_spectate.lua", "bardroid_minimap.lua",
                 "bardroid_layout.lua", "bardroid_buildmenu.lua", "bardroid_ordermenu.lua", "bardroid_pad.lua", "bardroid_padspeed.lua",
-                "bardroid_padfp.lua", "bardroid_lowmem.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua",
+                "bardroid_padfp.lua", "bardroid_buildrange.lua", "bardroid_sensors.lua", "bardroid_nano.lua",
                 "bardroid_portrait.lua", "bardroid_missioninfo.lua", "bardroid_retreat.lua", "bardroid_presets.lua", "bardroid_automex.lua", "bardroid_teamstats.lua",
                 "bardroid_topbar.lua", "bardroid_options.lua", "bardroid_camctl.lua", "bardroid_walls.lua"})
             try (InputStream in = new FileInputStream(new File(assets, name));
@@ -448,8 +448,11 @@ public final class Installer {
         try (InputStream in = new FileInputStream(new File(assets, "bardroid_lobby_touch.lua"));
              OutputStream o = new FileOutputStream(new File(menuWidgets, "bardroid_lobby_touch.lua"))) { copy(in, o); }
         writeNoWakes();
-        // Widgets of the removed touch-only mode (Kailil, 2026-10-25): gone from earlier installs too.
-        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua"})
+        // Widgets of the removed touch-only mode (Kailil, 2026-10-25), and the low-memory widget (it kept BAR's GL4 unit
+        // shaders off against the controller game's Options; BAR's own game never switches them on on a phone, dev
+        // phone 2026-11-21): gone from earlier installs too, where they would load as user widgets.
+        for (String name : new String[]{"bardroid_touch_hud.lua", "bardroid_touch_dock.lua", "bardroid_touch_build.lua",
+                "bardroid_lowmem.lua"})
             //noinspection ResultOfMethodCallIgnored
             new File(widgets, name).delete();
         // springsettings.cfg: kept and completed (SettingsMerge), the Android keys and the user's knobs set

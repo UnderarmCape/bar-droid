@@ -35,7 +35,7 @@ FIFO → `AudioPump` → `AudioTrack` (`UseSDLAudio = 0`, no PulseAudio). Touch:
   (display + gamepad), `Prefs` (`EMULATOR_BUILD`, URLs per ABI, `putGpuEnv`), `ControllerBridge`, `AudioPump`.
 - `app/src/main/assets/bardroid/` — `setup-container.sh` (apt/mesa/engine/content/import), `launch-bar.sh` (GPU env,
   glcheck, the Android layer over BAR's and the lobby's saved settings at every start: phone graphics `PHONE_GFX`,
-  the low-memory mode under 9.5 GB of RAM `LOW_MEMORY` (with `bardroid_lowmem.lua`), interface scale, widget orders;
+  the low-memory mode under 9.5 GB of RAM `LOW_MEMORY`, interface scale, widget orders;
   spring), `springsettings.cfg` (preset; emulator overrides in
   `Installer.EMULATOR_GRAPHICS`), `libbardroid_pace.so` (`tools/pace/pace.c`, `tools/build-pace.py`; LD_PRELOADed
   into the engine: the frame cap on the display's vsync grid (the swap waits for its slot, a frame starts as late as

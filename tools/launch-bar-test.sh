@@ -221,7 +221,6 @@ phone 7242340
 check "8 GB: Lua memory pools off" setting UseLuaMemPools 0
 check "8 GB: compressed textures (set over the 0)" setting CompressTextures 1
 check "8 GB: BAR's GL4 unit shaders off" setting cus2 0
-check "8 GB: the low-memory widget told" setting BarDroidLowMemory 1
 check "8 GB: the other settings untouched" setting XResolution 1200
 check "8 GB: the lobby's copy too" grep -q '^    cus2 = 0,$' "$BAR/LuaMenu/Config/IGL_data.lua"
 check "8 GB: framebuffer textures uncompressed" [ "${BARDROID_FBO_UNCOMPRESS:-}" = 1 ]

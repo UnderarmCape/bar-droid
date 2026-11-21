@@ -283,7 +283,7 @@ team_stats() {
 # every start finds them (Installer puts new ones there: a newer one there wins), and moved again after dev-env.sh.
 APP_WIDGETS="bardroid_touch bardroid_queue bardroid_chat bardroid_info bardroid_players bardroid_bench bardroid_spectate
   bardroid_minimap bardroid_layout bardroid_buildmenu bardroid_ordermenu bardroid_pad bardroid_padspeed bardroid_padfp
-  bardroid_lowmem bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
+  bardroid_buildrange bardroid_sensors bardroid_nano bardroid_portrait bardroid_missioninfo bardroid_retreat
   bardroid_presets bardroid_automex bardroid_teamstats bardroid_topbar bardroid_options bardroid_camctl bardroid_walls"
 GAME_WIDGETS="$BAR/bardroid-ui/LuaUI/Widgets"
 app_widgets_to() { # app_widgets_to <from dir> <to dir>: the app's widgets moved; one already there stays (the newer)
@@ -425,16 +425,16 @@ done
 #   CompressTextures 1     textures compressed on the GPU (~300 MB less GPU memory, which a phone can never swap);
 #                          the two textures the engine draws into come back uncompressed (libbardroid_pace.so,
 #                          BARDROID_FBO_UNCOMPRESS; else unit icons draw as black squares)
-#   cus2 0                 BAR's GL4 unit shaders off (BAR's cus_gl4.lua): the engine's plainer unit shading; a
-#                          developer game ("$VERSION") would switch them back on, which bardroid_lowmem.lua
-#                          (BarDroidLowMemory) prevents
+#   cus2 0                 BAR's GL4 unit shaders off (BAR's cus_gl4.lua): the engine's plainer unit shading; BAR's
+#                          Options switch them back on only in a developer game or for a GPU it knows (the phone's
+#                          Mesa it counts as low-end: cus2 stays 0 for the whole game, dev phone 2026-11-21)
 #   BumpWaterShoreWaves 0  no foam along the shores (BAR's water setting; a 4096x4096 half-float texture, 128 MB)
 #   GroundDecals 0         no tracks and scorch marks on the ground (BAR does the same for a low-end GPU in its game)
 #   SMFTextureStreaming, MaxTextureAtlasSize* 2048, AllowDeferred*Rendering 0, HighResInfoTexture 0: smaller map and
 #                          atlas textures, no G-buffers (nothing on the phone reads them: lights and decals are off)
 mem_kb=$(sed -n 's/^MemTotal:[[:space:]]*\([0-9]*\).*/\1/p' /proc/meminfo)
 if [ "${mem_kb:-0}" -gt 0 ] && [ "$mem_kb" -lt 9277343 ]; then
-  LOW_MEMORY="UseLuaMemPools=0 TextureMemPoolSize=0 CompressTextures=1 cus2=0 BarDroidLowMemory=1
+  LOW_MEMORY="UseLuaMemPools=0 TextureMemPoolSize=0 CompressTextures=1 cus2=0
     BumpWaterShoreWaves=0 GroundDecals=0 SMFTextureStreaming=1 MaxTextureAtlasSizeX=2048 MaxTextureAtlasSizeY=2048
     AllowDeferredMapRendering=0 AllowDeferredModelRendering=0 HighResInfoTexture=0"
   for kv in $LOW_MEMORY; do

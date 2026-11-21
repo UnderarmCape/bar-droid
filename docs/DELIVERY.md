@@ -755,6 +755,17 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       dpkg --configure -a (exit 0) and the same install went through ("bash is already the newest version"), dpkg
       --audit clean. (The real apt step was not rerun on the dev phone: on an installed container apt-get install can
       take Debian's Mesa over the phone Mesa.)
+- [x] **Item 16: bardroid_lowmem.lua out** (2026-11-21 13:13-13:35): it kept BAR's GL4 unit shaders off in the
+      low-memory mode by setting cus2 back to 1 during a game, against BAR's Options switching them on in the
+      controller game's developer game. BAR's own game counts the phone's Mesa as a low-end GPU (its hardware.lua:
+      neither NVidia, Intel, AMD nor Apple) and never switches them on outside dev mode. On the dev phone (low-memory
+      mode automatic), a skirmish with the widget and one with it taken out after launch-bar.sh's start: CUS GL4 never
+      started in either (no "[CUS GL4] Init" line, 60 s after loading), and without the widget cus2 stayed 0 for the
+      whole game (with it the settings file read 1 meanwhile). Out of the APK, launch-bar.sh's list, the low-memory
+      settings (BarDroidLowMemory) and the Installer's copy list; the Installer deletes an installed copy (in
+      LuaUI/Widgets it would load as a user widget). launch-bar-test.sh ALL PASS (27 app widgets). On the dev phone
+      with the APK without it (13:35-13:48): both installed copies gone, a skirmish's cus2 0 and CUS GL4 not started;
+      dock-phone-test, types-phone-test, lobby-phone-test, pad-test -Online, factory-preset-test ALL PASS.
 - [x] **A factory's PRESETS button big** (Kailil, 2026-11-21 ~13:00: "Make the preset button for factories big"; 13:00-13:29,
       dev phone): a factory picked alone had its PRESETS ("PRESETS: STRAFE" once it has one) as a small button among
       the states, under REPEAT. Now it is as big as the units' PRESETS (one column, MOVE's height), right after FIGHT,
