@@ -2079,7 +2079,11 @@ function refreshNow()
 			end
 			-- (a factory with a preset: its name, its units joining that formation; bardroid_presets.lua factoryForms)
 			local fp = #sel == 1 and WG.BarDroidPresets.factoryPreset and WG.BarDroidPresets.factoryPreset(sel[1])
-			table.insert(newRight, at, { kind = "presets", label = fp and ("PRESETS: " .. fp) or "PRESETS" })
+			-- (a factory's as big as the units' PRESETS, one column and MOVE's height, after FIGHT, MOVE, PATROL and
+			-- REPEAT, MOVE kept: Kailil, 2026-11-21, "Make the preset button for factories big")
+			local big = fac and not mobilePicked
+			table.insert(newRight, at, { kind = "presets", label = fp and ("PRESETS: " .. fp) or "PRESETS",
+				w = big and 1 or nil, h = big and ((L.rightRows or 3) >= 4 and not L.split and 2 or 1) or nil })
 		end
 		newRight[#newRight + 1] = style
 		newRight[#newRight + 1] = { kind = "filterpick", label = "FILTER: " .. selFilter:upper() }

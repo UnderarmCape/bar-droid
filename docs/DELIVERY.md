@@ -727,6 +727,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **A factory's PRESETS button big** (Kailil, 2026-11-21 ~13:00: "Make the preset button for factories big"; 13:00-13:29,
+      dev phone): a factory picked alone had its PRESETS ("PRESETS: STRAFE" once it has one) as a small button among
+      the states, under REPEAT. Now it is as big as the units' PRESETS (one column, MOVE's height), right after FIGHT,
+      MOVE, PATROL and REPEAT; MOVE stays big (the units' PRESETS took MOVE's place, Kailil 2026-11-13; a factory's MOVE
+      is where its units go). Its words in two lines, as large as the button allows (textIn). Pictures of a Bot Lab with
+      STRAFE before and after (toolchain\tmp\presets-before.png, -after.png: the button 2 rows tall beside Fire at will
+      and Hold pos). factory-preset-test before and after, dock-phone-test upright and at 1080x1198 ALL PASS.
 - [x] **Item 13: bloat and the controller game's leftovers** (2026-11-21 11:20-11:55): English only in the APK
       (androidResources localeFilters: 29,543,895 -> 29,326,543 bytes, resources.arsc 401 -> 184 KB); the three dead
       methods out; the stale comments, setup-container.sh's usage and pad-test's -Online scripts (they flipped a
