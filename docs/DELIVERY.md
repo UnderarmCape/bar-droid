@@ -385,6 +385,33 @@ boxes, the GPU driver's fault closing a frozen game).
 Four read-only audits of the whole port (2026-11-21 01:25-01:40): the Java app's retired code, the Lua and scripts'
 retired code, what the APK ships and what a release needs, and every way another player or app reaches the app. Their
 findings are worked here one tested change at a time; the owner's decisions are listed for Kailil.
+
+The list, in order (each item moves to its own [x] entry below when done):
+1. HIGH: LobbyBridge takes any local app (no handshake on 127.0.0.1): its resource downloads can write any file in
+   the write folder (a widget into LuaUI/Widgets or bardroid-ui), ReadReplayInfo reads any path, a thread per
+   connection and no line limit. Only the real lobby in (a token), downloads only where the lobby needs them, replays
+   only from demos/.
+2. MEDIUM: engine-line readers in Java (StatusText.isChat, GameService, DriverWatch, ExitSpringProcess) miss a
+   spectator's "[name] ", the host's "> " and ping labels "name added point: ".
+3. MEDIUM: launch-bar.sh's copy_removed and the exit checks grep the infolog for "Removed widget: X" anywhere: a chat
+   line switches the app's menu copies off for weeks; anchor to BAR's own line, and count "Failed to load:" too.
+4. MEDIUM (fair play online): bardroid-ui/LuaUI/Widgets keeps files not on the app's list, so a user widget could
+   copy itself there and load as a game widget past a host's ban: keep the app's list only.
+5. LOW: a widget's "LobbyOverlayActive0" still believed at once; Device care opened by action only; X server -ac and
+   its abstract socket (check /proc/net/unix); Properties.load's uncaught IllegalArgumentException at app start.
+6. The v0.8.5 controller game's code (Java, Lua, the menu generators, launch-bar.sh, setup-container.sh): its
+   "$VERSION" check also fires in BAR's own dev game (no build or order menu there): remove.
+7. Bloat: PulseAudio leftovers, unused Prefs and members, the VIBRATE permission, the x86_64 pace library and a stray
+   README in the phone APK, the Material dependency; per-frame costs (info panel hidden but working, the lobby widget
+   during games, camctl's text each frame, retreat's building hits, unit-ID tables never cleared, log floods).
+8. NOTICE.md: busybox, proot, talloc, android-shmem, libXlorie, AngelScript, BAR's copied widgets and patches; the
+   retired gamepad game out. publish-check: fail on a debuggable or x86_64 APK. CHANGELOG 0.2.0.
+Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
+private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
+public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
+which "his test pending" items must pass on his Fold7 first; the launcher's developer controls (hide in release
+builds?), the Benchmark button, the emulator build, the late-game resolution drop; Releasing step 1's laptop-tests
+(BAR on the laptop is off limits).
 - [x] **The developer hooks only in a developer's build** (2026-11-21 01:40-01:43): launch-bar.sh ran
       `$BAR/dev-env.sh` as a shell script and added `dev-springsettings.cfg` at every start, in any build, and `$BAR` is
       the engine's write folder, which BAR's Lua can write (a user widget's io.open): in a public build a widget could
@@ -397,6 +424,18 @@ findings are worked here one tested change at a time; the owner's decisions are 
 - [x] **The download 8 MB smaller: the dex compressed** (2026-11-21 01:44-01:49): from minSdk 28 the build stored the
       ten dex files as they are, 12.9 MB; `packaging.dex.useLegacyPackaging = true` (app/build.gradle) compresses them to
       5.4 MB. The phone APK 39.9 MB -> 31.7 MB. Dev phone: installed, types-phone-test and lobby-phone-test ALL PASS.
+- [x] **Item 1: the lobby bridge only does what BAR's lobby needs, whoever connects** (2026-11-21 01:50-02:12): it
+      listens on 127.0.0.1 and Android cannot say which app connects, so any app on the phone could ask it to download
+      a file to any path in the write folder. Reproduced by tools/bridge-phone-test.ps1 (new: adb's port forward
+      connects as another user would, against the real lobby): on the build before, a widget written into
+      LuaUI/Widgets (bardroid_bridge_evil.lua) and a dev-env.sh, a third connection kept open. Now BridgeRules (new, pure
+      Java): a resource only over https from *.beyondallreason.dev into the places BAR's lobby downloads plain files to
+      (read in Chobby: plugins_window.lua's LuaUI/Widgets/manifests.json and plugins/<id>_*.png|md,
+      gui_open_skill_snapshot.lua's data-processing-main/data_export/*.csv), no "..", no hidden files, at most 64 MB; a
+      replay only from demos/; at most two connections, a line at most 1 MB. Archives to unpack were refused already.
+      status-text-test (laptop, pure Java) checks 23 rule cases, ALL PASS; bridge-phone-test ALL PASS twice (both files
+      refused and not written, the replay refused, the third connection closed, the lobby's manifest download allowed);
+      the real lobby: replay-phone-test, lobby-phone-test, overgame-phone-test ALL PASS, its manifest downloads "done".
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

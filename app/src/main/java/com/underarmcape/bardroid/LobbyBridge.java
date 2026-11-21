@@ -85,7 +85,17 @@ final class LobbyBridge {
             while (!server.isClosed()) {
                 try {
                     Socket s = server.accept();
-                    new Thread(() -> serve(s), "lobby-bridge-client").start();
+                    // (at most BridgeRules.CLIENTS_MAX at once: the lobby keeps one; any app on the phone can reach this
+                    // port, and a thread each without a limit could run the phone out of memory)
+                    if (clients.incrementAndGet() > BridgeRules.CLIENTS_MAX) {
+                        clients.decrementAndGet();
+                        Log.e("bridge", "a connection refused: " + BridgeRules.CLIENTS_MAX + " already open");
+                        try { s.close(); } catch (IOException ignored) {}
+                        continue;
+                    }
+                    new Thread(() -> {
+                        try { serve(s); } finally { clients.decrementAndGet(); }
+                    }, "lobby-bridge-client").start();
                 } catch (IOException e) { if (!server.isClosed()) Log.e("bridge", "accept: " + e); }
             }
         }, "lobby-bridge");
@@ -102,6 +112,19 @@ final class LobbyBridge {
     }
 
     private volatile boolean connected;
+    private final java.util.concurrent.atomic.AtomicInteger clients = new java.util.concurrent.atomic.AtomicInteger();
+
+    /** A line of at most BridgeRules.LINE_MAX_CHARS (null at the end; an IOException past the limit: a line with no end
+     *  would grow without one). */
+    private static String readLine(java.io.Reader in) throws IOException {
+        StringBuilder b = new StringBuilder();
+        for (int c; (c = in.read()) >= 0; ) {
+            if (c == '\n') return b.toString();
+            if (c != '\r') b.append((char) c);
+            if (b.length() > BridgeRules.LINE_MAX_CHARS) throw new IOException("a line over " + BridgeRules.LINE_MAX_CHARS + " characters");
+        }
+        return b.length() > 0 ? b.toString() : null;
+    }
 
     void stop() {
         removeConnectionFile(p);
@@ -115,7 +138,7 @@ final class LobbyBridge {
         Log.i("bridge", "lobby connected");
         try (Socket sock = s; BufferedReader in = new BufferedReader(new InputStreamReader(sock.getInputStream(), StandardCharsets.UTF_8))) {
             OutputStream out = sock.getOutputStream();
-            for (String line; (line = in.readLine()) != null; ) {
+            for (String line; (line = readLine(in)) != null; ) {
                 if (line.trim().isEmpty()) continue;
                 try {
                     JSONObject msg = new JSONObject(line);
@@ -222,6 +245,11 @@ final class LobbyBridge {
             Log.e("bridge", "resource not supported here: " + res);
             return false;
         }
+        String refused = BridgeRules.resource(url, dest);   // (https from BAR's hosts, into the lobby's own places only)
+        if (refused != null) {
+            Log.e("bridge", "resource refused (" + refused + "): " + dest + " from " + url);
+            return false;
+        }
         File target = new File(p.bar, dest).getCanonicalFile();
         if (!target.getPath().startsWith(p.bar.getCanonicalPath() + File.separator)) {
             Log.e("bridge", "resource destination outside the write dir: " + dest);
@@ -239,7 +267,12 @@ final class LobbyBridge {
             if (c.getResponseCode() != 200) { Log.e("bridge", url + ": HTTP " + c.getResponseCode()); return false; }
             try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[65536];
-                for (int n; (n = in.read(buf)) > 0; ) o.write(buf, 0, n);
+                long total = 0;
+                for (int n; (n = in.read(buf)) > 0; ) {
+                    total += n;
+                    if (total > BridgeRules.RESOURCE_MAX_BYTES) throw new IOException("over " + (BridgeRules.RESOURCE_MAX_BYTES >> 20) + " MB");
+                    o.write(buf, 0, n);
+                }
             }
             done = tmp.renameTo(target) || (target.delete() && tmp.renameTo(target));
             return done;
@@ -255,7 +288,12 @@ final class LobbyBridge {
     private static final int HEADER_FIXED = 16 + 4 + 4 + 256 + 16 + 8 + 12 * 4;   // demofile.h DemoFileHeader, packed
 
     private void replayInfo(String rel, OutputStream out) {
-        File f = new File(p.bar, rel);
+        File f;
+        try { f = BridgeRules.replay(p.bar, rel); } catch (IOException e) { f = null; }
+        if (f == null) {   // (only from demos/: any app can reach the bridge)
+            Log.e("bridge", "replay refused (not in demos/): " + rel);
+            return;
+        }
         try (DataInputStream in = new DataInputStream(new GZIPInputStream(new FileInputStream(f), 65536))) {
             byte[] h = new byte[HEADER_FIXED];
             in.readFully(h);

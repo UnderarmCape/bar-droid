@@ -257,6 +257,47 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "pre-game server: " + c[1] + " -> " + got);
         }
+        // the lobby bridge's rules (BridgeRules, 2026-11-21): any app on the phone can reach the bridge, so a resource only
+        // over https from BAR's hosts into the lobby's own places, as data; a replay only from demos/
+        String[][] res = {
+            { "https://widget-hub.beyondallreason.dev/manifests.json?t=1", "LuaUI/Widgets/manifests.json", "ok" },
+            { "https://widget-hub.beyondallreason.dev/x/y_325x100.png", "plugins/unit_tracker_325x100.png", "ok" },
+            { "https://widget-hub.beyondallreason.dev/x/y_README.md", "plugins/unit_tracker_README.md", "ok" },
+            { "https://data-marts.beyondallreason.dev/player_skill_snapshot.csv",
+                "data-processing-main/data_export/player_skill_snapshot.csv", "ok" },
+            { "https://widget-hub.beyondallreason.dev/manifests.json", "LuaUI/Widgets/evil.lua", "no" },
+            { "https://widget-hub.beyondallreason.dev/manifests.json", "dev-env.sh", "no" },
+            { "https://widget-hub.beyondallreason.dev/manifests.json", "bardroid-ui/LuaUI/Widgets/x.lua", "no" },
+            { "https://widget-hub.beyondallreason.dev/a.png", "plugins/../LuaUI/Widgets/evil.png", "no" },
+            { "https://widget-hub.beyondallreason.dev/a.png", "plugins/.hidden.png", "no" },
+            { "https://widget-hub.beyondallreason.dev/a.png", "plugins/sub/a.png", "no" },
+            { "https://widget-hub.beyondallreason.dev/a.png", "/plugins/a.png", "no" },
+            { "https://widget-hub.beyondallreason.dev/a.png", "plugins/a.lua", "no" },
+            { "http://widget-hub.beyondallreason.dev/manifests.json", "LuaUI/Widgets/manifests.json", "no" },
+            { "https://evil.example/manifests.json", "LuaUI/Widgets/manifests.json", "no" },
+            { "https://beyondallreason.dev.evil.example/m.json", "LuaUI/Widgets/manifests.json", "no" },
+            { "https://user@widget-hub.beyondallreason.dev/m.json", "LuaUI/Widgets/manifests.json", "no" },
+            { "file:///data/data/x", "LuaUI/Widgets/manifests.json", "no" },
+        };
+        for (String[] c : res) {
+            String why = BridgeRules.resource(c[0], c[1]);
+            boolean ok = (why == null) == "ok".equals(c[2]);
+            failed += ok ? 0 : 1;
+            System.out.println((ok ? "PASS " : "FAIL ") + "bridge resource " + (why == null ? "allowed" : "refused (" + why + ")")
+                    + ": " + c[1] + " from " + c[0]);
+        }
+        java.io.File base = new java.io.File(System.getProperty("java.io.tmpdir"), "bridge-rules");
+        String[][] rep = {
+            { "demos/2026-11-21_06-11-36-498_Starwatcher 1.0_2026.09.03.sdfz", "ok" },
+            { "demos/../files/secret", "no" }, { "../demos/x.sdfz", "no" }, { "maps/x.sdfz", "no" },
+            { "demos/", "no" }, { null, "no" } };
+        for (String[] c : rep) {
+            java.io.File f;
+            try { f = BridgeRules.replay(base, c[0]); } catch (java.io.IOException e) { f = null; }
+            boolean ok = (f != null) == "ok".equals(c[1]);
+            failed += ok ? 0 : 1;
+            System.out.println((ok ? "PASS " : "FAIL ") + "bridge replay " + (f != null ? "read" : "refused") + ": " + c[0]);
+        }
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);
     }

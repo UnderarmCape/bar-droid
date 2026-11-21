@@ -13,7 +13,8 @@ $java = Join-Path (Split-Path $javac) "java.exe"
 $env:JAVA_TOOL_OPTIONS = "-Duser.home=$(Join-Path $TC 'home') -Djava.io.tmpdir=$Work"
 & $javac -nowarn -d $classes (Join-Path $PSScriptRoot "status-text-test\StatusTextTest.java") `
   (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\StatusText.java") `
-  (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\DriverWatch.java")
+  (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\DriverWatch.java") `
+  (Join-Path $App "app\src\main\java\com\underarmcape\bardroid\BridgeRules.java")
 if ($LASTEXITCODE -ne 0) { throw "javac failed" }
 & $java -cp $classes com.underarmcape.bardroid.StatusTextTest
 exit $LASTEXITCODE
