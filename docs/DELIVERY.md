@@ -437,7 +437,34 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       refused and not written, the replay refused, the third connection closed, the lobby's manifest download allowed);
       the real lobby: replay-phone-test, lobby-phone-test, overgame-phone-test ALL PASS, its manifest downloads "done".
       On the Fold7 2026-11-21 02:17 (513c0cd2's build with the dev hooks, the compressed dex and the bridge; 31.7 MB; BAR
-      closed, not played since 00:33), github-sync -Release.
+      closed), github-sync -Release. (Correction, 02:20: the notes of the 01:38 and 02:17 installs said "not played since
+      00:33"; Kailil played 01:02-01:20 on dae3578c: BAR updated test-32010 -> test-32018 at the lobby's start, then a
+      15-minute online game, SpeedMetal BAR V2, ended normally; no driver fault, watchdog or app error. One BAR error: its
+      Notifications widget failed to load, below. Only pidof had been read before those installs: the log now first.)
+- [x] **Item 2: others' words in the engine's log, every shape** (2026-11-21 02:20-02:59): StatusText.isChat knew a
+      player's "<name> " only; a spectator's "[name] " (or "[name (replay)] "), the host's "> " (it repeats players'
+      votes word for word) and a map ping's "name added point: <label>" (Recoil's Game.cpp, InMapDraw.cpp) reached
+      GameService's state reading, and DriverWatch's hang line took any "]" before "Warning: [Watchdog]", a spectator's
+      bracket too. Now isChat reads the text after the log prefix and knows all four shapes (names: letters, digits,
+      _ and clan brackets, no "::"; the engine's own sections without "::" the app reads, CPreGame, LuaMenu, LoadFinalize
+      and ExitSpringProcess, are never a spectator), the hang line must follow the prefix itself, and the fatal-message
+      reader skips chat. Every engine line the app reads was checked on the dev phone's logs for its form.
+      status-text-test (laptop): 18 new cases (the four shapes as chat, eleven of the engine's own lines not, a
+      spectator's and the host's watchdog words closing nothing after a refusal), ALL PASS. driverwatch-phone-test now
+      also places two map pings labelled "[SpringApp::Reload] test" and "creating LoadScreen": on the build before
+      "the game ended: back in the lobby" and "a game loads (from the lobby)" (that run also met the driver's real fault,
+      named as such), on the fix ALL PASS twice.
+- [x] **BAR's Notifications failed to load in Kailil's online game** (2026-11-21 02:30-02:59; his Fold7, 01:04, BAR
+      test-32018): "snd_notifications.lua:322: attempt to index field 'corjugg' (a nil value)": BAR's table of "unit is
+      ready" voice lines reads UnitDefNames.<name>.id for 18 units, and the host's options had taken the Behemoth out,
+      so the whole widget failed: no voice notifications that game (on a PC too: BAR's own bug; its Legion lines in the
+      same table already ask "UnitDefNames.x and UnitDefNames.x.id"). phone-widget-snd_notifications.lua.patch (new, 2
+      blocks, made from BAR's file by a script so its text matches): each entry looked up that way, and the Scavengers'
+      copy of the table, which read entry [1] for every entry, reads each one's own and only units the game has; the
+      table's reader compares ids, so a missing one never matches. For BAR: docs/upstream/bar-notifications-missing-
+      units.patch. remake-check PASS (2 blocks on test-32018); dev phone: the widget loads, "phone version of
+      LuaUI/Widgets/snd_notifications.lua (LuaUI): 2 patches", no "Failed to load". A game with a unit taken out was not
+      staged (BAR's tweakdefs would have to remove it): the block is BAR's own idiom.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

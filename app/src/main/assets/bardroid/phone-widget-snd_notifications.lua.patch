@@ -1,0 +1,86 @@
+BAR Droid phone version of BAR's Notifications (luaui/widgets/snd_notifications.lua): its table of "unit is ready"
+voice lines read each unit's id as UnitDefNames.<name>.id, and a game whose options take a unit out (an online host's
+restriction: no Behemoth, corjugg, on Kailil's Fold7 2026-11-21 01:04) has no such entry: "attempt to index field
+'corjugg' (a nil value)", and the whole widget failed to load, no voice notifications that game (BAR's own Legion lines
+in the same table already ask "UnitDefNames.x and UnitDefNames.x.id"). Each looked up that way now; and the Scavengers'
+copy of the table read entry [1] for every entry and failed the same way on a unit taken out. Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs.
+For BAR: docs/upstream/bar-notifications-missing-units.patch.
+
+@@@ find
+local unitIsReadyTab = {
+	{ UnitDefNames.armvulc.id, "UnitReady/RagnarokIsReady" },
+	{ UnitDefNames.armbanth.id, "UnitReady/TitanIsReady" },
+	{ UnitDefNames.armepoch.id, "UnitReady/FlagshipIsReady" },
+	{ UnitDefNames.armthor.id, "UnitReady/ThorIsReady" },
+	{ UnitDefNames.armfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armckfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armuwfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.armsilo.id, "UnitReady/NuclearSiloIsReady" },
+
+	{ UnitDefNames.corbuzz.id, "UnitReady/CalamityIsReady" },
+	{ UnitDefNames.corkorg.id, "UnitReady/JuggernautIsReady" },
+	{ UnitDefNames.corjugg.id, "UnitReady/BehemothIsReady" },
+	{ UnitDefNames.corblackhy.id, "UnitReady/FlagshipIsReady" },
+	{ UnitDefNames.corfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.coruwfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.corafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.corsilo.id, "UnitReady/NuclearSiloIsReady" },
+
+	{ UnitDefNames.legstarfall and UnitDefNames.legstarfall.id, "UnitReady/StarfallIsReady" },
+	{ UnitDefNames.legelrpcmech and UnitDefNames.legelrpcmech.id, "UnitReady/AstraeusIsReady" },
+	{ UnitDefNames.legeheatraymech and UnitDefNames.legeheatraymech.id, "UnitReady/SolinvictusIsReady" },
+	{ UnitDefNames.legfus and UnitDefNames.legfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.leganavalfusion and UnitDefNames.leganavalfusion.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.legafus and UnitDefNames.legafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.legsilo and UnitDefNames.legsilo.id, "UnitReady/NuclearSiloIsReady" },
+}
+@@@ with
+local unitIsReadyTab = {
+	{ UnitDefNames.armvulc and UnitDefNames.armvulc.id, "UnitReady/RagnarokIsReady" },
+	{ UnitDefNames.armbanth and UnitDefNames.armbanth.id, "UnitReady/TitanIsReady" },
+	{ UnitDefNames.armepoch and UnitDefNames.armepoch.id, "UnitReady/FlagshipIsReady" },
+	{ UnitDefNames.armthor and UnitDefNames.armthor.id, "UnitReady/ThorIsReady" },
+	{ UnitDefNames.armfus and UnitDefNames.armfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armckfus and UnitDefNames.armckfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armuwfus and UnitDefNames.armuwfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.armafus and UnitDefNames.armafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.armsilo and UnitDefNames.armsilo.id, "UnitReady/NuclearSiloIsReady" },
+
+	{ UnitDefNames.corbuzz and UnitDefNames.corbuzz.id, "UnitReady/CalamityIsReady" },
+	{ UnitDefNames.corkorg and UnitDefNames.corkorg.id, "UnitReady/JuggernautIsReady" },
+	{ UnitDefNames.corjugg and UnitDefNames.corjugg.id, "UnitReady/BehemothIsReady" },
+	{ UnitDefNames.corblackhy and UnitDefNames.corblackhy.id, "UnitReady/FlagshipIsReady" },
+	{ UnitDefNames.corfus and UnitDefNames.corfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.coruwfus and UnitDefNames.coruwfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.corafus and UnitDefNames.corafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.corsilo and UnitDefNames.corsilo.id, "UnitReady/NuclearSiloIsReady" },
+
+	{ UnitDefNames.legstarfall and UnitDefNames.legstarfall.id, "UnitReady/StarfallIsReady" },
+	{ UnitDefNames.legelrpcmech and UnitDefNames.legelrpcmech.id, "UnitReady/AstraeusIsReady" },
+	{ UnitDefNames.legeheatraymech and UnitDefNames.legeheatraymech.id, "UnitReady/SolinvictusIsReady" },
+	{ UnitDefNames.legfus and UnitDefNames.legfus.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.leganavalfusion and UnitDefNames.leganavalfusion.id, "UnitReady/FusionIsReady" },
+	{ UnitDefNames.legafus and UnitDefNames.legafus.id, "UnitReady/AdvancedFusionIsReady" },
+	{ UnitDefNames.legsilo and UnitDefNames.legsilo.id, "UnitReady/NuclearSiloIsReady" },
+}
+@@@ end
+
+@@@ find
+	for i = 1, #unitIsReadyTab do
+		if UnitDefNames[UnitDefs[unitIsReadyTab[1][1]].name .. "_scav"].id then
+			unitIsReadyScavAppend[#unitIsReadyScavAppend + 1] =
+				{ UnitDefNames[UnitDefs[unitIsReadyTab[i][1]].name .. "_scav"].id, unitIsReadyTab[i][2] }
+		end
+	end
+@@@ with
+	for i = 1, #unitIsReadyTab do
+		-- BAR Droid (phone): each entry's own unit ([i], it read [1] for every one), and only units this game has
+		local ud = unitIsReadyTab[i][1] and UnitDefs[unitIsReadyTab[i][1]]
+		local scav = ud and UnitDefNames[ud.name .. "_scav"]
+		if scav then
+			unitIsReadyScavAppend[#unitIsReadyScavAppend + 1] = { scav.id, unitIsReadyTab[i][2] }
+		end
+	end
+@@@ end

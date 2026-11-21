@@ -1,0 +1,56 @@
+--- a/luaui/Widgets/snd_notifications.lua
++++ b/luaui/Widgets/snd_notifications.lua
+@@ -308,22 +308,22 @@
+ 
+ local unitIsReadyTab = {
+-	{ UnitDefNames.armvulc.id, "UnitReady/RagnarokIsReady" },
+-	{ UnitDefNames.armbanth.id, "UnitReady/TitanIsReady" },
+-	{ UnitDefNames.armepoch.id, "UnitReady/FlagshipIsReady" },
+-	{ UnitDefNames.armthor.id, "UnitReady/ThorIsReady" },
+-	{ UnitDefNames.armfus.id, "UnitReady/FusionIsReady" },
+-	{ UnitDefNames.armckfus.id, "UnitReady/FusionIsReady" },
+-	{ UnitDefNames.armuwfus.id, "UnitReady/FusionIsReady" },
+-	{ UnitDefNames.armafus.id, "UnitReady/AdvancedFusionIsReady" },
+-	{ UnitDefNames.armsilo.id, "UnitReady/NuclearSiloIsReady" },
+-
+-	{ UnitDefNames.corbuzz.id, "UnitReady/CalamityIsReady" },
+-	{ UnitDefNames.corkorg.id, "UnitReady/JuggernautIsReady" },
+-	{ UnitDefNames.corjugg.id, "UnitReady/BehemothIsReady" },
+-	{ UnitDefNames.corblackhy.id, "UnitReady/FlagshipIsReady" },
+-	{ UnitDefNames.corfus.id, "UnitReady/FusionIsReady" },
+-	{ UnitDefNames.coruwfus.id, "UnitReady/FusionIsReady" },
+-	{ UnitDefNames.corafus.id, "UnitReady/AdvancedFusionIsReady" },
+-	{ UnitDefNames.corsilo.id, "UnitReady/NuclearSiloIsReady" },
++	{ UnitDefNames.armvulc and UnitDefNames.armvulc.id, "UnitReady/RagnarokIsReady" },
++	{ UnitDefNames.armbanth and UnitDefNames.armbanth.id, "UnitReady/TitanIsReady" },
++	{ UnitDefNames.armepoch and UnitDefNames.armepoch.id, "UnitReady/FlagshipIsReady" },
++	{ UnitDefNames.armthor and UnitDefNames.armthor.id, "UnitReady/ThorIsReady" },
++	{ UnitDefNames.armfus and UnitDefNames.armfus.id, "UnitReady/FusionIsReady" },
++	{ UnitDefNames.armckfus and UnitDefNames.armckfus.id, "UnitReady/FusionIsReady" },
++	{ UnitDefNames.armuwfus and UnitDefNames.armuwfus.id, "UnitReady/FusionIsReady" },
++	{ UnitDefNames.armafus and UnitDefNames.armafus.id, "UnitReady/AdvancedFusionIsReady" },
++	{ UnitDefNames.armsilo and UnitDefNames.armsilo.id, "UnitReady/NuclearSiloIsReady" },
++
++	{ UnitDefNames.corbuzz and UnitDefNames.corbuzz.id, "UnitReady/CalamityIsReady" },
++	{ UnitDefNames.corkorg and UnitDefNames.corkorg.id, "UnitReady/JuggernautIsReady" },
++	{ UnitDefNames.corjugg and UnitDefNames.corjugg.id, "UnitReady/BehemothIsReady" },
++	{ UnitDefNames.corblackhy and UnitDefNames.corblackhy.id, "UnitReady/FlagshipIsReady" },
++	{ UnitDefNames.corfus and UnitDefNames.corfus.id, "UnitReady/FusionIsReady" },
++	{ UnitDefNames.coruwfus and UnitDefNames.coruwfus.id, "UnitReady/FusionIsReady" },
++	{ UnitDefNames.corafus and UnitDefNames.corafus.id, "UnitReady/AdvancedFusionIsReady" },
++	{ UnitDefNames.corsilo and UnitDefNames.corsilo.id, "UnitReady/NuclearSiloIsReady" },
+ 
+ 	{ UnitDefNames.legstarfall and UnitDefNames.legstarfall.id, "UnitReady/StarfallIsReady" },
+@@ -339,7 +339,9 @@
+ 	local unitIsReadyScavAppend = {}
+ 	for i = 1, #unitIsReadyTab do
+-		if UnitDefNames[UnitDefs[unitIsReadyTab[1][1]].name .. "_scav"].id then
+-			unitIsReadyScavAppend[#unitIsReadyScavAppend + 1] =
+-				{ UnitDefNames[UnitDefs[unitIsReadyTab[i][1]].name .. "_scav"].id, unitIsReadyTab[i][2] }
++		-- each entry's own unit ([i], it read [1] for every one), and only units this game has
++		local ud = unitIsReadyTab[i][1] and UnitDefs[unitIsReadyTab[i][1]]
++		local scav = ud and UnitDefNames[ud.name .. "_scav"]
++		if scav then
++			unitIsReadyScavAppend[#unitIsReadyScavAppend + 1] = { scav.id, unitIsReadyTab[i][2] }
+ 		end
+ 	end
