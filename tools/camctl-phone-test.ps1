@@ -68,6 +68,7 @@ AppScript ((Pref "portrait" $true) + (Pref "turnWithPhone" $false) +
 Send-AppFile $adb (Join-Path $PSScriptRoot "camctl-phone-test\bardroid_camctl_test.lua") $widget
 try {
   Set-PhoneAwake $adb
+  $logLines = [int]"$(InApp 'wc -l < files/logs/launcher.log 2>/dev/null')".Trim()   # (this run's lines: after these)
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $size = (& $adb shell wm size) -join " "
   $w = [double][regex]::Match($size, '(\d+)x(\d+)\s*$').Groups[1].Value
@@ -104,6 +105,10 @@ try {
   }
   if (-not (Log '\[camctltest\] done' 1)) { Start-Sleep 3 }
   if (-not (Log '\[camctltest\] done' 1)) { "[camctltest] FAIL the test did not finish" }
+  # (the game made a floating window mid-run, 2026-11-20 23:10, cause unknown: its view a third the size, the script's
+  # drags missed the knob and six cases failed; said plainly, not as the camera's)
+  $float = @(InApp "tail -n +$($logLines + 1) files/logs/launcher.log" | Select-String -SimpleMatch "floating window")
+  if ($float.Count -gt 0) { "[camctltest] FAIL the game left full screen mid-run (a floating window: $($float[0].Line.Trim())): the drags missed; not the camera, run it again" }
   Log '\[camctltest\]|bardroid_camctl.*[Ee]rror|bardroid_touch.*[Ee]rror|Error in' 50 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {

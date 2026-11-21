@@ -194,9 +194,11 @@ end
 
 -- A save said nothing: the game stood still ~3 s and went on (dev phone, 2026-11-12). The engine's line for a written
 -- save (ILoadSaveHandler::CreateSave; a user widget's VFS does not see Saves/) puts BAR's message up (WG.messages: the
--- app's chat box shows it, else BAR's own), with where the save opens again.
+-- app's chat box shows it, else BAR's own), with where the save opens again. Only the engine's own line, which begins with
+-- those words: a player's chat holding them begins with the player's name, and put "Game saved" up on every phone in the
+-- game (driverwatch-phone-test, 2026-11-20).
 function widget:AddConsoleLine(line)
-	if line:find("[ILoadSaveHandler::CreateSave] saved game to file", 1, true) then
+	if line:find("[ILoadSaveHandler::CreateSave] saved game to file", 1, true) == 1 then
 		local m = WG.messages
 		if m and m.addMessage then
 			m.addMessage("Game saved: the lobby's Load Game opens it")

@@ -329,6 +329,20 @@ boxes, the GPU driver's fault closing a frozen game).
       the Load Game greying (walked only for 4 s after a press, both date forms, a row greyed only where every save of
       that minute is another engine's), TRANSFER and SEND ENERGY's teammate picker (real teammates or NO TEAMMATES; the
       share knob sends whole-percent changes only). The D-gun stick needed no read beyond its measured 98-99 %.
+- [x] **A chat line could put "Game saved" up on every phone** (hardening, 2026-11-20 22:57-23:36, dev phone): the round
+      first: attack-ping-test, walls-phone-test, replay-phone-test, stats-phone-test, settings-phone-test,
+      lobbychat-phone-test, buildbar-phone-test ALL PASS; dgun-speed-test 98 % and 98 %; retreat-phone-test on 10/14
+      against off 6/14. camctl-phone-test 6 FAILED: 4 s into it the game became a floating window (launcher.log
+      "[display] floating window: 15 fps cap", its view a third the size: the camera controls' rects in view pixels
+      shrank from the rail's 1013-1080 to 304-324), so the script's drags missed the knob; the cause is gone with the
+      log (logcat reached back to 23:17 only), the reruns ALL PASS three times; the test now says it plainly when the
+      game leaves full screen mid-run. Read against their tests: bardroid_automex.lua (free spots in the commander's
+      weapon range, nearest and richest first, appended; none in range, the extractor stays) clean; bardroid_topbar.lua
+      showed the afternoon's chat kink once more: its AddConsoleLine put "Game saved: the lobby's Load Game opens it" in
+      BAR's message line on any console line holding the engine's save words, and a player's chat is one (online
+      every phone in the game would show it). driverwatch-phone-test now says those words as chat, then makes a real
+      save (deleted after): on the build before "Game saved" twice; now only a line that begins with the engine's
+      words counts, once, the real save's, ALL PASS twice.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

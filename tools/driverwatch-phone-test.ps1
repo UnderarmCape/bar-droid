@@ -49,10 +49,17 @@ try {
   $state = @($run | Select-String -Pattern "back in the lobby|a game loads \(from the lobby\)|joining a game hosted elsewhere|not loading now")
   if ($state.Count -eq 0) { "[driverwatchtest] PASS the engine's state lines as chat: the app's state unchanged" }
   else { "[driverwatchtest] FAIL the engine's state lines as chat changed the app's state: $(($state | ForEach-Object { $_.Line.Trim() }) -join ' | ')"; $fails++ }
+  # (the engine's line for a written save said as chat: no "Game saved" from bardroid_topbar.lua; the real save after it:
+  # one; the topbar's own log line says each time it put the message up)
+  $savedSaid = @(Log 'bardroid-topbar\] the save said' 5)
+  $realSave = @(Log 'saved game to file.*bardroid_dwtest' 2)
+  if ($realSave.Count -eq 0) { "[driverwatchtest] FAIL the real save: none written (its line not in the log)"; $fails++ }
+  elseif ($savedSaid.Count -eq 1) { "[driverwatchtest] PASS the save's words as chat: no 'Game saved'; the real save: one" }
+  else { "[driverwatchtest] FAIL the save's words as chat and a real save: 'Game saved' $($savedSaid.Count) times (one wanted)"; $fails++ }
   # (how the chat lines look in the log: for the record)
   Log 'SpringApp::Reload\] test|creating LoadScreen$|203\.0\.113\.7' 6 | ForEach-Object { "[driverwatchtest] (in the log: $_)" }
   "[driverwatchtest] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"
 } finally {
   & $adb shell am force-stop $pkg
-  InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_driverwatchtest.txt"
+  InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_driverwatchtest.txt files/bar/Saves/bardroid_dwtest.*"
 }
