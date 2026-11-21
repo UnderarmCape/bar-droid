@@ -19,8 +19,46 @@ final class BridgeRules {
     private BridgeRules() {}
 
     static final long RESOURCE_MAX_BYTES = 64L << 20;
-    static final int LINE_MAX_CHARS = 1 << 20;
+    // (256 KB: the lobby's lines are short, a replay's path, a download's name, a second engine's start script)
+    static final int LINE_MAX_CHARS = 256 << 10;
     static final int CLIENTS_MAX = 2;
+    static final int DEPTH_MAX = 32;
+    static final int LOG_MAX_CHARS = 300;
+
+    /** How deep a JSON line nests: its { and [ outside strings (the lobby's messages: three or four). */
+    static int depth(String line) {
+        int d = 0, max = 0;
+        boolean str = false, esc = false;
+        for (int i = 0; i < line.length(); i++) {
+            char c = line.charAt(i);
+            if (str) {
+                if (esc) esc = false;
+                else if (c == '\\') esc = true;
+                else if (c == '"') str = false;
+            } else if (c == '"') str = true;
+            else if (c == '{' || c == '[') max = Math.max(max, ++d);
+            else if (c == '}' || c == ']') d--;
+        }
+        return max;
+    }
+
+    /**
+     * A log line with a client's words in it, fit for launcher.log: at most LOG_MAX_CHARS, control characters (a JSON
+     * escape's newline among them, which wrote lines of its own) as "?". Every client string had gone into the log
+     * whole, and the log keeps its last 4,000 lines in memory: a few hundred lines of 1 MB from another app ran the
+     * app out of memory (release overhaul audit, 2026-11-21).
+     */
+    static String clip(String s) {
+        if (s == null) return "null";
+        int n = Math.min(s.length(), LOG_MAX_CHARS);
+        StringBuilder b = new StringBuilder(n + 3);
+        for (int i = 0; i < n; i++) {
+            char c = s.charAt(i);
+            b.append(c < 0x20 || c == 0x7f ? '?' : c);
+        }
+        if (s.length() > n) b.append("...");
+        return b.toString();
+    }
 
     /** Null when the resource download is allowed, else why not. */
     static String resource(String url, String dest) {

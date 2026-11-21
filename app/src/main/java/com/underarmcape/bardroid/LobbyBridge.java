@@ -140,12 +140,20 @@ final class LobbyBridge {
             OutputStream out = sock.getOutputStream();
             for (String line; (line = readLine(in)) != null; ) {
                 if (line.trim().isEmpty()) continue;
+                // (nested past any message of the lobby's: org.json parses depth by recursion, and a line of 100,000
+                // "[" overflowed this thread's stack, an Error no catch below took, the app's process ended with it;
+                // release overhaul audit, 2026-11-21)
+                if (BridgeRules.depth(line) > BridgeRules.DEPTH_MAX) {
+                    Log.e("bridge", "a message nested deeper than " + BridgeRules.DEPTH_MAX + ": refused");
+                    continue;
+                }
                 try {
                     JSONObject msg = new JSONObject(line);
                     handle(msg.optString("name"), msg.optJSONObject("command"), out);
-                } catch (JSONException e) { Log.e("bridge", "not JSON: " + line); }
-                catch (RuntimeException e) {   // (uncaught on this thread it would end the app's process, the lobby with it)
-                    Log.e("bridge", "a lobby message failed: " + e);
+                } catch (JSONException e) { Log.e("bridge", BridgeRules.clip("not JSON: " + line)); }
+                catch (RuntimeException | StackOverflowError e) {   // (uncaught on this thread it would end the app's
+                    // process, the lobby with it)
+                    Log.e("bridge", BridgeRules.clip("a lobby message failed: " + e));
                 }
             }
         } catch (IOException e) { Log.i("bridge", "lobby connection closed: " + e.getMessage()); }
@@ -159,13 +167,13 @@ final class LobbyBridge {
                 if (path.startsWith("http://") || path.startsWith("https://")) {
                     try {
                         ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(path)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                        Log.i("bridge", "opened " + path);
-                    } catch (Exception e) { Log.e("bridge", "could not open " + path + ": " + e); }
+                        Log.i("bridge", BridgeRules.clip("opened " + path));
+                    } catch (Exception e) { Log.e("bridge", BridgeRules.clip("could not open " + path + ": " + e)); }
                 } else if (path.matches("file://.*/demos/?")) {   // (the Replays tab's Open Folder, "Add" on a phone)
                     try {
                         ctx.startActivity(new Intent(ctx, ReplayImportActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
                     } catch (Exception e) { Log.e("bridge", "replay import: " + e); }
-                } else Log.i("bridge", "not opened (no file manager here): " + path);
+                } else Log.i("bridge", BridgeRules.clip("not opened (no file manager here): " + path));
                 break;
             }
             case "Download": {
@@ -183,7 +191,7 @@ final class LobbyBridge {
                 String why = engine.isEmpty() || engine.equals(Prefs.engineVersion)
                         ? "no second game window here"
                         : "needs engine " + engine + " (app: " + Prefs.engineVersion + ")";
-                Log.i("bridge", "StartNewSpring (" + cmd.optString("Engine") + "): not possible on Android, " + why);
+                Log.i("bridge", BridgeRules.clip("StartNewSpring (" + cmd.optString("Engine") + "): not possible on Android, " + why));
                 new android.os.Handler(android.os.Looper.getMainLooper()).post(() ->
                         android.widget.Toast.makeText(ctx, "Can't open on a phone: " + why, android.widget.Toast.LENGTH_LONG).show());
                 break;
@@ -195,7 +203,7 @@ final class LobbyBridge {
                 break;
             }
             default:
-                Log.i("bridge", "not handled on Android: " + name);
+                Log.i("bridge", BridgeRules.clip("not handled on Android: " + name));
         }
     }
 
@@ -215,13 +223,13 @@ final class LobbyBridge {
                 ok = rc == 0;
             } else if ("resource".equals(type)) {
                 ok = downloadResource(cmd.optJSONObject("resource"));
-            } else Log.e("bridge", "download type " + type + " is not supported: " + name);
+            } else Log.e("bridge", BridgeRules.clip("download type " + type + " is not supported: " + name));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } catch (java.net.UnknownHostException e) {
             why = "no connection (" + e.getMessage() + ")";
         } catch (Exception e) { why = e.toString(); }
-        Log.i("bridge", "download " + type + " " + name + (ok ? " done" : " failed" + (why != null ? ": " + why : "")));
+        Log.i("bridge", BridgeRules.clip("download " + type + " " + name + (ok ? " done" : " failed" + (why != null ? ": " + why : ""))));
         JSONObject r = new JSONObject();
         try { r.put("name", name).put("isSuccess", ok).put("isAborted", false); } catch (JSONException ignored) {}
         send(out, "DownloadFinished", r);
@@ -242,17 +250,17 @@ final class LobbyBridge {
         if (res == null) return false;
         String url = res.optString("url"), dest = res.optString("destination");
         if (url.isEmpty() || dest.isEmpty() || res.optBoolean("extract")) {
-            Log.e("bridge", "resource not supported here: " + res);
+            Log.e("bridge", BridgeRules.clip("resource not supported here: " + res));
             return false;
         }
         String refused = BridgeRules.resource(url, dest);   // (https from BAR's hosts, into the lobby's own places only)
         if (refused != null) {
-            Log.e("bridge", "resource refused (" + refused + "): " + dest + " from " + url);
+            Log.e("bridge", BridgeRules.clip("resource refused (" + refused + "): " + dest + " from " + url));
             return false;
         }
         File target = new File(p.bar, dest).getCanonicalFile();
         if (!target.getPath().startsWith(p.bar.getCanonicalPath() + File.separator)) {
-            Log.e("bridge", "resource destination outside the write dir: " + dest);
+            Log.e("bridge", BridgeRules.clip("resource destination outside the write dir: " + dest));
             return false;
         }
         //noinspection ResultOfMethodCallIgnored
@@ -264,7 +272,7 @@ final class LobbyBridge {
         c.setRequestProperty("User-Agent", "BARDroid/" + BuildConfig.VERSION_NAME);
         boolean done = false;
         try {
-            if (c.getResponseCode() != 200) { Log.e("bridge", url + ": HTTP " + c.getResponseCode()); return false; }
+            if (c.getResponseCode() != 200) { Log.e("bridge", BridgeRules.clip(url + ": HTTP " + c.getResponseCode())); return false; }
             try (InputStream in = c.getInputStream(); OutputStream o = new FileOutputStream(tmp)) {
                 byte[] buf = new byte[65536];
                 long total = 0;
@@ -291,7 +299,7 @@ final class LobbyBridge {
         File f;
         try { f = BridgeRules.replay(p.bar, rel); } catch (IOException e) { f = null; }
         if (f == null) {   // (only from demos/: any app can reach the bridge)
-            Log.e("bridge", "replay refused (not in demos/): " + rel);
+            Log.e("bridge", BridgeRules.clip("replay refused (not in demos/): " + rel));
             return;
         }
         try (DataInputStream in = new DataInputStream(new GZIPInputStream(new FileInputStream(f), 65536))) {
@@ -335,7 +343,7 @@ final class LobbyBridge {
                     .put("players", players(sections)).put("winningAllyTeamIds", winners);
             send(out, "ReplayInfo", r);
         } catch (Exception e) {
-            Log.i("bridge", "replay " + rel + " not read: " + e.getMessage());   // e.g. a game the app was closed in
+            Log.i("bridge", BridgeRules.clip("replay " + rel + " not read: " + e.getMessage()));   // e.g. a game the app was closed in
         }
     }
 

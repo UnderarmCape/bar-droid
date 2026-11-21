@@ -331,6 +331,31 @@ public class StatusTextTest {
             failed += ok ? 0 : 1;
             System.out.println((ok ? "PASS " : "FAIL ") + "bridge replay " + (f != null ? "read" : "refused") + ": " + c[0]);
         }
+        // a message's depth before it is parsed (org.json recurses: 100,000 "[" ended the app), and a client's words
+        // clipped for the log (release overhaul audit, 2026-11-21)
+        StringBuilder deep = new StringBuilder("{\"name\":\"x\",\"command\":");
+        for (int i = 0; i < 100000; i++) deep.append('[');
+        String lobbyLine = "{\"name\":\"Download\",\"command\":{\"name\":\"m\",\"type\":\"resource\",\"resource\":"
+                + "{\"url\":\"https://a/b\",\"destination\":\"plugins/a.png\",\"extract\":false}}}";
+        Object[][] depths = {
+            { deep.toString(), 100001, "100,000 [ refused" }, { lobbyLine, 3, "the lobby's Download: 3" },
+            { "{\"a\":\"[[[[{{{{\"}", 1, "brackets inside a string do not count" },
+            { "{\"a\":\"x\\\"[[[\"}", 1, "nor after an escaped quote" }, { "", 0, "empty" } };
+        for (Object[] c : depths) {
+            int got = BridgeRules.depth((String) c[0]);
+            boolean ok = got == (Integer) c[1] && (got > BridgeRules.DEPTH_MAX) == ((Integer) c[1] > BridgeRules.DEPTH_MAX);
+            failed += ok ? 0 : 1;
+            System.out.println((ok ? "PASS " : "FAIL ") + "bridge depth " + got + ": " + c[2]);
+        }
+        StringBuilder big = new StringBuilder();
+        for (int i = 0; i < 1 << 20; i++) big.append('a');
+        String clipped = BridgeRules.clip("not JSON: " + big);
+        boolean okClip = clipped.length() == BridgeRules.LOG_MAX_CHARS + 3 && clipped.endsWith("...")
+                && "fake?[engine] line".equals(BridgeRules.clip("fake\n[engine] line")) && "null".equals(BridgeRules.clip(null))
+                && "short".equals(BridgeRules.clip("short"));
+        failed += okClip ? 0 : 1;
+        System.out.println((okClip ? "PASS " : "FAIL ") + "bridge log clip: 1 MB to " + clipped.length()
+                + " characters, a newline shown as ?, short words as they are");
         System.out.println(failed == 0 ? "ALL PASS" : failed + " FAILED");
         System.exit(failed == 0 ? 0 : 1);
     }

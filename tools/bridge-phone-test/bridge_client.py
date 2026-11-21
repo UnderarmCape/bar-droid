@@ -67,4 +67,20 @@ except socket.timeout:
 except OSError:
     print("third", "closed")
 third.close()
+# 40 lines of 200 KB that are no JSON: each went into launcher.log whole (and the log's 4,000 lines in memory); the
+# script measures the log's longest line (release overhaul audit, 2026-11-21)
+for _ in range(40):
+    s.sendall(b"a" * (200 << 10) + b"\n")
+time.sleep(3)
+print("flood", "sent")
+# a message nested 100,000 deep (org.json recurses: it ended the app's process), then a manifest download on a new
+# connection: answered while the app lives
+s.sendall(b'{"name":"x","command":' + b"[" * 100000 + b"\n")
+time.sleep(3)
 s.close()
+try:
+    s2 = conn()
+    print("afterdeep", download(s2, "LuaUI/Widgets/manifests.json"))
+    s2.close()
+except OSError:
+    print("afterdeep", "no bridge")

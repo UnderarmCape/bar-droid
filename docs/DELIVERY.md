@@ -472,6 +472,17 @@ From a sixth read-only audit, the Updater's keep-or-roll-back (2026-11-21 14:35-
 22. LOW: a full phone (pr-downloader's exit 5: under 1 GB free) showed only "not everything updated, see log", the
    reason in launcher.log alone; an engine archive 7z could not unpack for lack of space was blocked 12 h, then
    downloaded again.
+From a seventh read-only audit, the lobby bridge against another app on the phone (2026-11-21 15:15-15:30):
+23. HIGH: any app with the internet permission can reach the bridge's port on 127.0.0.1. One line nested 100,000
+   deep overflowed the client thread's stack (org.json parses depth by recursion), an Error no catch took: the app's
+   process ended, a game running with it, online too; and every client string went into launcher.log whole (and the
+   log's last 4,000 lines in memory): a few hundred lines of 1 MB ran the app out of memory.
+   Noted, not worked (after the release; the real fix for all of them is a key per start in sl-connection.json, which
+   other apps cannot read, the lobby widget sending it first: Chobby's connector to be checked for that): a client that
+   never reads its socket and sends thousands of Download lines stalls the one download thread and grows its queue
+   without end; resource downloads to any name under plugins/ and data_export/ with no total cap; OpenFile opens any
+   https link (and the replay picker) over the game, StartNewSpring's Toast says a client's words; two idle connections
+   made before the lobby connects lock the lobby out (CLIENTS_MAX).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -753,6 +764,18 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 23: the lobby bridge survives another app's messages** (2026-11-21 15:30-15:45): a line nested deeper than
+      32 (BridgeRules.depth: its { and [ outside strings; the lobby's own nest 3) is refused before org.json sees it,
+      and a StackOverflowError is caught as well; every log line with a client's words is clipped (BridgeRules.clip:
+      300 characters, control characters as "?", so a JSON newline writes no line of its own); a line over 256 KB (was
+      1 MB) closes the connection. status-text-test's new cases (100,000 [ refused, the lobby's Download at 3, brackets
+      in strings and after escaped quotes not counted; 1 MB clipped to 303 characters, a newline as "?") ALL PASS.
+      bridge-phone-test's new cases (40 lines of 200 KB that are no JSON: launcher.log's longest new line; a line
+      nested 100,000 deep, then a new connection's manifest download) on the dev phone: HEAD's build FAILED both (a
+      204,828-character line in launcher.log; no answer after the deep line), this one ALL PASS (the flood's lines
+      logged at 321 characters, the app alive and the manifest downloaded), with the rest of the test and
+      lobby-phone-test. (HEAD's 8 MB of logged lines rotated launcher.log at the next start: the test now reads its
+      "not JSON" lines across launcher.old.log too.)
 - [x] **Item 22: a full phone says so** (2026-11-21 15:15-15:25): the update check's line reads "storage full: BAR needs
       1 GB free to update" when pr-downloader stopped for space (exit 5) or the new engine could not be unpacked with
       under 1 GB free; that engine is then not blocked for 12 hours (tried again at the next start). updater-test's
