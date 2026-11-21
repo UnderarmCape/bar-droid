@@ -436,6 +436,8 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       status-text-test (laptop, pure Java) checks 23 rule cases, ALL PASS; bridge-phone-test ALL PASS twice (both files
       refused and not written, the replay refused, the third connection closed, the lobby's manifest download allowed);
       the real lobby: replay-phone-test, lobby-phone-test, overgame-phone-test ALL PASS, its manifest downloads "done".
+      On the Fold7 2026-11-21 02:17 (513c0cd2's build with the dev hooks, the compressed dex and the bridge; 31.7 MB; BAR
+      closed, not played since 00:33), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
