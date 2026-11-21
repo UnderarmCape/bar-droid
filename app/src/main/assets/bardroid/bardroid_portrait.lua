@@ -2937,16 +2937,18 @@ local function drawTile(item, r)
 			gl.Color(1, 1, 1, 1)
 		end
 	else -- a type: its count (on the small tiles, SP.smallTypes, half again as large: "10" and "4" were hard to read)
-		if item.out then -- (left out of ALL UNITS, SP.leftOut: darkened and struck through corner to corner, red)
+		if item.out then -- (left out of ALL UNITS, SP.leftOut: darkened and struck through corner to corner, red; from
+			-- the bottom left to the top right, clear of the count in the bottom right corner, which the other diagonal
+			-- ran through: dev phone picture, 2026-11-20)
 			gl.Color(0, 0, 0, 0.6)
 			gl.Rect(r[1], r[2], r[3], r[4])
 			local t = max(2, floor(w * 0.05))
 			gl.Color(0.9, 0.2, 0.15, 0.95)
 			gl.BeginEnd(GL.QUADS, function()
-				gl.Vertex(r[1], r[4] - t)
-				gl.Vertex(r[1] + t, r[4])
-				gl.Vertex(r[3], r[2] + t)
-				gl.Vertex(r[3] - t, r[2])
+				gl.Vertex(r[1], r[2] + t)
+				gl.Vertex(r[1] + t, r[2])
+				gl.Vertex(r[3], r[4] - t)
+				gl.Vertex(r[3] - t, r[4])
 			end)
 			gl.Color(1, 1, 1, 1)
 		end

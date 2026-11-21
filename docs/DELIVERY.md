@@ -270,6 +270,17 @@ boxes, the GPU driver's fault closing a frozen game).
       dock's texture redraw (its 2026-11-17 verdict: only if a measured late game shows the dock's cost) and RB on the
       dock's grid with a pad upright (Kailil's call, not asked for). On the Fold7 2026-11-20 20:02 (5e915ca7's build,
       BAR closed, not played since 19:25), github-sync -Release.
+- [x] **Round and round; a left-out type's strike clear of its count** (hardening, 2026-11-20 20:05-20:34, dev phone):
+      dock-phone-test upright and at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test,
+      driverwatch-phone-test, touch-phone-test, lobby-phone-test, pad-test -Online ALL PASS, no driver fault. UI polish
+      from types-phone-test's picture: a type left out of ALL UNITS is struck through in red corner to corner, and the
+      stroke ran from the top left into the bottom right corner, through the type's count there ("2" with a red bar
+      over it); it now runs from the bottom left to the top right, the count clear (bardroid_portrait.lua; the picture
+      again: the "2" whole; types-phone-test ALL PASS). Checked on the way, nothing to change: today's code read over
+      (RtsTouch's gesture exclusion, the Build Bar's blocks); the widget files read ahead ~20 s into each game
+      (uiRescale.readAhead) cost nothing visible in the per-second frame rates of five games (28-31 in those seconds,
+      one dip to 26). Every open item left waits on Kailil (his test or his call), on a live microphone (speak to chat's
+      restart race), or is parked (see 19:57).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
