@@ -56,8 +56,8 @@ camera presets, 1st person). Code: `RtsTouch.java` (Android gestures to X mouse 
 Not solved:
 - **Playing (not spectating) by touch is basic.** BAR's build and order menus have no "is the pointer over me"
   answer, so the app runs its own copies of both (`bardroid_buildmenu.lua`, `bardroid_ordermenu.lua`, patched copies
-  remade on the phone after BAR updates), which answer it: a drag there no longer pans the map. In the controller
-  game the menus are v0.8.5's own. Placing buildings by finger works through the build menu copy: while a building is
+  remade on the phone after BAR updates), which answer it: a drag there no longer pans the map. Placing buildings by
+  finger works through the build menu copy: while a building is
   picked its page strip offers ONE, LINE, GRID and BORDER and a PLACE button (rotate, cancel) covers the order menu;
   a tap picks the spot, a drag moves it, PLACE confirms it, and `RtsTouch` holds Shift (and Alt, Ctrl) for the click
   or drag so BAR's own building does the rest. What is still missing is a touch design for the rest of play: picking
@@ -88,15 +88,14 @@ Not solved:
 
 ## Gamepad
 
-What works ([README.md](../README.md) "Gamepad, mouse and keyboard"): skirmish runs the author's BAR Controller
-Support v0.8.5 (radials, a reticle, its own build and order menus) as BAR's developer game, the pad's state sent to it
-by the app (`ControllerBridge`, BARCTRL1 over UDP). Online that game cannot run (BAR's sandbox removes `socket`, BAR's
-own widgets lack its hooks, `GiveOrder` needs `allowunitcontrolwidgets`), so in BAR's own game `PadGame.java` rebuilds
-v0.8.5's controls from X mouse and key events, which no lobby setting or widget rule can see or block: the pointer
-held in the middle, the left stick panning the map under it, A a click, X BAR's right click, RT Shift, RB and
-Back + RB putting the build and order menus on the pad (`bardroid_pad.lua`, the build menu copy), groups, idle units,
-area select. In the controller game a triple tap switches between the two to compare them. `tools/padgame-test.ps1`
-runs `PadGame` against a made-up pointer (laptop and CI).
+What works ([README.md](../README.md) "Gamepad, mouse and keyboard"): every game, skirmish and online, plays BAR's
+released game, and `PadGame.java` rebuilds the author's BAR Controller Support v0.8.5 controls from X mouse and key
+events, which no lobby setting or widget rule can see or block: the pointer held in the middle, the left stick panning
+the map under it, A a click, X BAR's right click, RT Shift, RB and Back + RB putting the build and order menus on the
+pad (`bardroid_pad.lua`, the build menu copy), groups, idle units, area select. (Until 2026-11-06 skirmish ran v0.8.5
+itself as BAR's developer game; online it cannot run: BAR's sandbox removes `socket`, BAR's own widgets lack its
+hooks, `GiveOrder` needs `allowunitcontrolwidgets`.) `tools/padgame-test.ps1` runs `PadGame` against a made-up pointer
+(laptop and CI).
 
 Not solved:
 - Without unit-control widgets allowed in a lobby, the LB shortcuts fall back to picking the order (A gives it) and
@@ -132,8 +131,7 @@ Not solved:
   drafted in [upstream/](upstream/recoil-compresstextures-fbo.md); the app works around it (the pace library stores
   such a texture uncompressed when it is attached to a framebuffer). Phones under 9.5 GB now get a low-memory mode
   (docs/HISTORY.md "Fitting BAR into an 8 GB phone"): the engine's Lua memory pools off (nine pools of 128 MB, every
-  page written at the start, ~1.1 GB), compression, BAR's GL4 unit shaders (which BAR's Options switch back on in a
-  developer game), shore waves and ground decals off. On the S23 Ultra 4 of 6 five-minute skirmishes ran through, the
+  page written at the start, ~1.1 GB), compression, BAR's GL4 unit shaders, shore waves and ground decals off. On the S23 Ultra 4 of 6 five-minute skirmishes ran through, the
   phone's free memory always at 550-650 MB. What is left is BAR's or the engine's: two projectile texture atlases of
   8176x6056 and 6616x6152 that `MaxTextureAtlasSize*` does not limit, the map's textures, the pathfinder (379 MB),
   ~2.35 GB of live engine data in mimalloc, mostly swapped out. Smaller atlases, lower texture detail for low-memory

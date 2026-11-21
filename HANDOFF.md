@@ -39,7 +39,7 @@ settings at every start), [docs/upstream/](docs/upstream/) (draft reports of bug
 | Public release | [docs/DELIVERY.md](docs/DELIVERY.md), `tools/publish-check.ps1`, `Build APK.bat phone release`, `.github/` | The project's own icon in public builds (Kailil's BAR-derived icon only in his debug builds, from outside the repository), LICENSE, personal data out of tracked files, release signing with the publisher's key, CI, players' README, CHANGELOG, CONTRIBUTING; on GitHub, private, since 2026-11-18 (UnderarmCape/bar-droid, every branch; the phone engine's source in UnderarmCape/bar-droid-engine; the newest build as the pre-release latest-build; `tools/github-sync.ps1` after every commit); left for Kailil: the release key, the app's public name, a fresh or rewritten history, making it public |
 | Work log | `tools/worklog.py` → [docs/WORKLOG.md](docs/WORKLOG.md), `docs/worklog/` | Kailil's messages, Claude's answers (whole since 2026-11-18: the project's conversation archive) and both sides' hours from the Claude Code transcripts, kept in the repository; rerun after every work session |
 | Catch-up | `bardroid_touch.lua`, `GameActivity`, `libbardroid_pace.so` | Joining a running game: a black screen with "Catching up 12:30 of 41:10 x2.5", the engine not drawing (a 17-minute game caught up in 164 s); a game too big to catch up draws again after a minute |
-| Gamepad | `tools/build-gamepad-game.py` → `assets/gamepad/`, `Installer.installGamepadGame`, `ControllerBridge`, `bardroid_touch.lua` | Singleplayer plays Kailil's BAR Controller Support v0.8.5 1:1 as BAR's developer game; online games get a gamepad camera; the pad is a mouse in the lobby (see "Gamepad" below) |
+| Gamepad | `ControllerBridge`, `PadGame`, `assets/bardroid/bardroid_pad.lua`, `bardroid_touch.lua`, `tools/pad-test.ps1` | Every game plays BAR's released game with the app's pad controls: v0.8.5's rebuilt from an X mouse and keys (`PadGame`), the rest as actions for `bardroid_pad.lua`; the pad is a mouse in the lobby. Until 2026-11-06 singleplayer played Kailil's BAR Controller Support v0.8.5 as BAR's developer game; its code left the app on 2026-11-21 ("Gamepad" below is its record) |
 | Upscaling (SGSR) | patch 0007, `assets/sgsr/`, `GameActivity` | The X screen (smaller than the display) is enlarged with Qualcomm's SGSR 1 instead of plain bilinear filtering; plain if the GPU refuses the shader; "Compare upscaling" switches it every 3 s under a label (on until Kailil has compared, then off by default) |
 | Lobby bridge (on) | `LobbyBridge.java` | Stands in for BAR's PC launcher behind the lobby (web links, downloads, replay info); on by default since 2026-10-27 (without it the Replays tab hung on "Loading"); checked against the real lobby on the laptop, first phone check pending (Next steps) |
 | Updates | `Updater`, [docs/UPDATES.md](docs/UPDATES.md) | Every start updates engine, game and lobby like BAR's PC launcher and rolls back a set that fails on its first start |
@@ -65,8 +65,8 @@ so the socket is the container's `/tmp/.X11-unix/X0`; `GameActivity` (extends Te
 display and handles touch/mouse/keyboard; `launch-bar.sh` runs inside proot: waits for the socket, points OpenAL
 Soft's wave writer at the FIFO (→ `AudioPump` → `AudioTrack`), runs a one-time `glxinfo` probe, then
 `spring --isolation --write-dir /root/bar skirmish.txt` (or `--menu rapid://byar-chobby:test`). Gamepad events are
-intercepted in `GameActivity` and sent as `BARCTRL1|...` UDP packets to 127.0.0.1:28777 (UnderarmCape's controller
-companion protocol).
+intercepted in `GameActivity`: `ControllerBridge` → `PadGame` (an X mouse and keys, and actions for
+`bardroid_pad.lua`); the BARCTRL1 UDP stream of the controller game's days went on 2026-11-21.
 
 ## Build / run (Windows laptop)
 
@@ -112,6 +112,11 @@ One ABI per APK.
   last 8v8 (docs/HISTORY.md): late games with ~1300 units run ~19 fps on a hot phone, GPU-bound at its thermal cap.
 
 ## Gamepad (2026-10-26)
+> Retired: since 2026-11-06 every game plays BAR's released game with the app's own pad controls (`PadGame`,
+> `bardroid_pad.lua`; CLAUDE.md "Gamepad"), and the controller game's code (assets/gamepad, `Installer`'s install of it,
+> the BARCTRL1 stream, the launcher's checkbox) left the app on 2026-11-21 (docs/DELIVERY.md, release overhaul item 6).
+> This section is the record of how it worked; the pad as a mouse in the lobby and the online pad camera below stay.
+
 Kailil (2026-10-26): "Do v0.8.5 1:1 as the developer game for skirmish and the lobby, plus the pad camera for online
 and spectating"; no "controller not connected" indicator on Android; keep it cheap.
 

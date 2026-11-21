@@ -133,14 +133,5 @@ try {
   & $adb exec-out run-as $pkg sh -c "find files/bar/screenshots -name 'screen_*.png' -newer files/padtest-start -delete >/dev/null 2>&1; rm -f files/padtest-start"
   & $adb shell rm -f $evemu
   if ($Engine -and -not $Online) { & $adb exec-out run-as $pkg rm -f files/bar/dev-env.sh }
-  if ($Online) {   # (again while its marker stays: the setting must read as before)
-    for ($i = 0; $i -lt 3; $i++) {
-      InApp "online-off.sh"
-      if (-not (& $adb exec-out run-as $pkg sh -c "ls files/padtest-gamepad-was-on 2>/dev/null")) { break }
-      Start-Sleep 2
-    }
-    if (& $adb exec-out run-as $pkg sh -c "ls files/padtest-gamepad-was-on 2>/dev/null") {
-      "[padtest] FAIL the controller game setting was not switched back on (files/padtest-gamepad-was-on)"
-    }
-  }
+  if ($Online) { InApp "online-off.sh" }
 }

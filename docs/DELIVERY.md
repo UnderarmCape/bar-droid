@@ -437,6 +437,18 @@ against the code before it is worked):
    skirmish's map download, the install or the X server's start left "No map ... check its name", "Install failed:
    exit code 137" or "X server did not start" in place of "stopped". LOW, noted: the lobby bridge's stop() leaves its
    accepted client sockets open (another app connected keeps its thread until it closes).
+From a fourth read-only audit, bloat and the sunset controller game's leftovers (2026-11-21 10:55-11:20):
+13. The APK: AppCompat's and Preference's translations (85 of 108 resource configurations; the app is English only).
+   Code: Installer.reset, Downloader.closeQuietly and GameService.fgsType with no callers; comments still telling of
+   the UDP stream, the Windows companion and PulseAudio; setup-container.sh's usage naming a "gamepad" step;
+   pad-test -Online switching the retired controller-game setting off and on. Docs describing the controller game as
+   current: HANDOFF.md, docs/UPDATES.md, docs/HELP-WANTED.md, docs/ARCHITECTURE.md, CLAUDE.md. Noted, not worked:
+   Termux:X11's own launcher icons (25 files, 119 KB, for an activity never shown: a new termux-x11 patch);
+   bardroid_lowmem.lua (its header says only the controller game turned BAR's GL4 shaders back on: needs a low-memory
+   proof on the dev phone before it goes); the controller game's one-time cleanup (Installer.removeGamepadGame,
+   launch-bar.sh's .bardroid-gamepad-menus, Prefs' retired keys: once the Fold7's launcher.log shows it ran); the
+   emulator APK's unused libfeature_support_angle.so (353 KB; the emulator build is the owner's); code shrinking
+   (minifyEnabled: the dex is 10.4 MB unpacked; keep rules for the reflection calls; the owner's call).
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
@@ -715,6 +727,18 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 13: bloat and the controller game's leftovers** (2026-11-21 11:20-11:55): English only in the APK
+      (androidResources localeFilters: 29,543,895 -> 29,326,543 bytes, resources.arsc 401 -> 184 KB); the three dead
+      methods out; the stale comments, setup-container.sh's usage and pad-test's -Online scripts (they flipped a
+      setting nothing reads) mended; HANDOFF.md, UPDATES.md, HELP-WANTED.md, ARCHITECTURE.md and CLAUDE.md no longer
+      describe the controller game as current. On the build with it (and 7h): settings-phone-test, pad-test -Online,
+      dock-phone-test upright, lobby-phone-test and overgame-phone-test ALL PASS (12:00-12:36). lobby-phone-test and
+      overgame-phone-test first failed: the dev phone's "Open the lobby when the app starts" was off, so the icon opened
+      the launcher. It was on at 10:47 (lobby-phone-test passed); most likely the GPU driver's fault at 11:18 closed a
+      dock-phone-test game, the launcher came up, and the test's taps meant for the dock landed on its checkboxes.
+      Set back on (the app stopped, its settings file), both ALL PASS. Noted for the tests: the ones that tap by hand
+      could check GameActivity is in front before each tap. overgame-phone-test's summary now counts "the test did not
+      finish" (it said "ALL PASS" under that line).
 - [x] **Round B, 2026-11-21 09:58-10:54** (dev phone, HEAD 78d5f06a's code): camctl, replay, stats, settings, lobbychat,
       buildbar ALL PASS; dgun-speed and retreat done. attack-ping-test failed once ("a light fight beside a busy one: its
       own entry": 4 entries, none at the solar, 18 hits on it), then ALL PASS twice: 1 in 3, the case's timing (each unit

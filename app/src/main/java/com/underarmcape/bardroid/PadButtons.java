@@ -1,8 +1,8 @@
 package com.underarmcape.bardroid;
 
 /**
- * The gamepad's buttons in SDL GameController order, as Kailil's Windows companion sends them in BARCTRL1 packets
- * (ControllerBridge) and as PadGame reads them: 15..20 misc/paddles (unused), 21 in all. No Android classes: PadGame
+ * The gamepad's buttons in SDL GameController order (v0.8.5's, which the app's pad controls rebuild), as
+ * ControllerBridge fills them and PadGame reads them: 15..20 misc/paddles (unused), 21 in all. No Android classes: PadGame
  * is checked on the laptop (tools/padgame-test).
  */
 final class PadButtons {

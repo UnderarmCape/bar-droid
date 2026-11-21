@@ -1,7 +1,6 @@
 package com.underarmcape.bardroid;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
@@ -124,7 +123,4 @@ public final class Downloader {
         if (bytes < 1024L * 1024 * 1024) return String.format(Locale.US, "%.1f MB", bytes / 1048576.0);
         return String.format(Locale.US, "%.2f GB", bytes / 1073741824.0);
     }
-
-    @SuppressWarnings("unused")
-    private static void closeQuietly(FileOutputStream o) { try { if (o != null) o.close(); } catch (IOException ignored) {} }
 }

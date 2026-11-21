@@ -25,7 +25,7 @@ import java.util.Locale;
  * bridge widget, which ran only in the controller game, out of the app since 2026-11-06: nothing read them.)
  */
 public final class ControllerBridge {
-    // SDL GameController button order, as the Windows companion sends it (PadButtons)
+    // SDL GameController button order (PadButtons)
     public static final int BTN_A = PadButtons.A, BTN_B = PadButtons.B, BTN_X = PadButtons.X, BTN_Y = PadButtons.Y,
             BTN_BACK = PadButtons.BACK, BTN_GUIDE = PadButtons.GUIDE, BTN_START = PadButtons.START,
             BTN_LS = PadButtons.LS, BTN_RS = PadButtons.RS, BTN_LB = PadButtons.LB, BTN_RB = PadButtons.RB,

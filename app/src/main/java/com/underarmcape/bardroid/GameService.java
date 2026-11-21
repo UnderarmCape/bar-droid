@@ -7,7 +7,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
@@ -844,7 +843,4 @@ public class GameService extends Service {
         if (mode != null) i.putExtra(EXTRA_MODE, mode);
         if (Build.VERSION.SDK_INT >= 26) ctx.startForegroundService(i); else ctx.startService(i);
     }
-
-    @SuppressWarnings("unused")
-    private static int fgsType() { return Build.VERSION.SDK_INT >= 34 ? ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE : 0; }
 }

@@ -5,7 +5,6 @@
 #   setup-container.sh slim                                (what the game never loads, out of the container)
 #   setup-container.sh engine  /root/downloads/engine.7z  2026.07.04
 #   setup-container.sh content byar:test byar-chobby:test "Supreme Isthmus v2.1"  2026.07.04
-#   setup-container.sh gamepad byar:git:<commit> 2026.07.04
 #   setup-container.sh rapid   byar:test 2026.07.04          (Updater: one rapid tag, docs/UPDATES.md; lobby bridge games)
 #   setup-container.sh map     "Supreme Isthmus v2.1" 2026.07.04   (lobby bridge)
 #   setup-container.sh import  2026.07.04

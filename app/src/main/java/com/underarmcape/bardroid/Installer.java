@@ -80,7 +80,6 @@ public final class Installer {
         if (!isDone("mesa") || Prefs.mesaUrl.isEmpty()) return false;
         return !Prefs.mesaUrl.equals(state.getProperty("mesaUrl", Prefs.OLD_MESA_URLS[0]));
     }
-    public void reset(String step) throws IOException { state.remove(step); save(); }
     public void cancel() { cancelled = true; dl.cancel(); }
 
     /** Runs every step that is not done yet. Throws on failure with a readable message. */

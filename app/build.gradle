@@ -24,6 +24,12 @@ android {
         buildConfigField "String", "TARGET_ABI", "\"${rootProject.ext.bardroidAbi}\""
     }
 
+    // English only, as the app's own words are: AppCompat's and Preference's translations of their few strings, 85 of
+    // the APK's 108 resource configurations, went with every APK (release overhaul bloat audit, 2026-11-21)
+    androidResources {
+        localeFilters += ['en']
+    }
+
     // proot, busybox and friends live in jniLibs and must be real files on disk so that they can be
     // exec'd (Android 10+ only allows executing files from the app's native library directory).
     packaging.jniLibs.useLegacyPackaging = true

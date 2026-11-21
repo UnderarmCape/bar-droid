@@ -21,7 +21,8 @@ import com.termux.x11.input.TouchInputHandler;
  * {@link RtsTouch}; mouse, stylus, touchpad and keyboard go to the X server exactly as in Termux:X11 (its preferences
  * screen controls scaling etc.); Android's keyboard shortcuts stay out of the game ({@link KeyboardShortcuts}). The Back
  * button is Escape (BAR's menu, cancel the current command).
- * Gamepad/joystick events are intercepted here and sent to the engine's Lua over UDP instead.
+ * Gamepad/joystick events are intercepted here instead: ControllerBridge, PadGame (an X mouse and keys, and actions
+ * for bardroid_pad.lua).
  */
 public class GameActivity extends MainActivity {
     private ControllerBridge pad;

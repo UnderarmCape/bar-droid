@@ -153,12 +153,12 @@ install). Only the local integrity check runs (a tag whose `.sdp` is missing goe
 | `files/bar/bitmaps/projectiletextures/wakegrey.tga` (transparent: no ship wakes) | `Installer.writeNoWakes` | every launch | - |
 | `LuaMenu/Widgets/bardroid_lobby_touch.lua`; `loadLocalWidgets = true` in `LuaMenu/Config/IGL_data.lua` | `Installer.writeGameFiles`; `launch-bar.sh` | every launch; every lobby/skirmish start | not set afterwards = miss |
 | `bardroid_touch.lua`, `bardroid_queue.lua`, `bardroid_chat.lua` and `bardroid_info.lua` widgets (BAR's "Info" off in `BYAR.lua`) | `Installer.writeGameFiles` | every launch | after a game, `launch-bar.sh` greps infolog for errors of the widget |
-| `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`/`byar-dev`; no `"game"` key = miss |
+| `chobby_config.json` | `launch-bar.sh` (lobby) | every lobby start | from BAR's `json_files` (saved by the update check as `.bardroid-chobby_config.json`), `"game"` set to `byar`; no `"game"` key = miss |
 | Resolution limiter off | `launch-bar.sh`, `LuaMenu/Config/IGL_order.lua` | every lobby start | entry missing → inserted; still not `= 0` = miss |
 | `drawAtFullSpeed` on (once) | `launch-bar.sh`, `LuaMenu/Config/IGL_data.lua` | until done | no `drawAtFullSpeed` in the file = miss (marker not set) |
 | `gameConfigName` | `launch-bar.sh`, `IGL_data.lua` | every lobby/skirmish start | not set afterwards = miss |
-| Build menu / Grid menu order (controller game) | `launch-bar.sh`, `LuaUI/Config/BYAR.lua` | every start | not set afterwards = miss |
-| The app's copy of BAR's Build menu (`bardroid_buildmenu.lua`, sizeable) in place of BAR's, the controller game's "Build menu (controller)" | `launch-bar.sh` (orders), `Installer` (`.bardroid-buildmenu`: the md5 of BAR's gui_buildmenu.lua) | every start, after the update | BAR's file changed: the copy is made again on the phone (`Installer.remakeBuildMenu`). A patch with no place = miss, the old copy runs (fix it in `tools/make-buildmenu.py`). A copy BAR removed in a game = miss, BAR's own for that file |
+| Grid menu off | `launch-bar.sh`, `LuaUI/Config/BYAR.lua` | every start | not set afterwards = miss |
+| The app's copy of BAR's Build menu (`bardroid_buildmenu.lua`, sizeable) in place of BAR's | `launch-bar.sh` (orders), `Installer` (`.bardroid-buildmenu`: the md5 of BAR's gui_buildmenu.lua) | every start, after the update | BAR's file changed: the copy is made again on the phone (`Installer.remakeBarCopy`). A patch with no place = miss, the old copy runs (fix it in `tools/make-buildmenu.py`). A copy BAR removed in a game = miss, BAR's own for that file |
 | Container environment (Mesa, SDL, OpenAL wave writer, `PRD_*`, `libasarm64.so` preload) | `launch-bar.sh`, `Prefs.putGpuEnv` | every launch | none to check; a new engine that breaks it fails fast and rolls back |
 | The phone versions of BAR's files (`assets/bardroid/phone-*.lua.patch`: the top bar, the pregame texts, Game info, the Widget Selector, BAR's costliest Lua), applied by the phone engine as BAR's files load | `Installer.installPhoneLua` (`bardroid-phone/`), the engine (`BarDroidPhoneLuaDir`) | every launch | after a game (not a replay: it plays its own older release), `launch-bar.sh` lists the infolog's "phone version of ... the game's own file loads" as misses: a block found no place in BAR's new file and BAR's own file ran (make the patch again: `tools/phone-lua-check.py`) |
 
@@ -168,9 +168,6 @@ the launcher's status line until a launch has no miss. Nothing is skipped silent
 
 ## Not automated, on purpose
 
-- **The controller game** (BAR Controller Support v0.8.5 on BAR `byar:git:a61703336e`, `Installer.installGamepadGame`)
-  stays pinned: the updater never touches it. It runs on whatever engine is current; if a new engine breaks it, the
-  failure shows (it is not rolled back unless the launch was the first one after the update).
 - The PC launcher's `pool` seed (`pool-init…/data.7z`, optional) and `default_springsettings` (PC graphics defaults
   that would overload a phone): skipped.
 - Mesa, the Debian container and the APK itself: they change with app builds, not with BAR.

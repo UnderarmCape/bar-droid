@@ -141,7 +141,6 @@ behind each part, [UPDATES.md](UPDATES.md) what the app changes in BAR's setting
 |---|---|
 | `app/src/main/java/com/underarmcape/bardroid/` | `LauncherActivity`, `Installer` (first run), `Proot`, `XServer`, `VirglServer`, `GameService`, `GameActivity`, `Prefs`, `RtsTouch`, `ControllerBridge`, `PadGame` (+ `PadMouse`, `PadButtons`), `AudioPump`, `Updater`, `LobbyBridge`, `MapStore`, `KeyboardShortcuts`, `PerfLog`, `LogShare` (+ `LogRedact`) |
 | `app/src/main/assets/bardroid/` | `setup-container.sh`, `launch-bar.sh`, `springsettings.cfg`, the Lua widgets |
-| `app/src/main/assets/gamepad/` | BAR Controller Support v0.8.5, packed by `tools/build-gamepad-game.py` |
 | `app/src/main/jniLibs/<abi>/` | prebuilt helpers (proot, busybox, talloc, ANGLE, virgl), rebuilt by `tools/` |
 | `patches/` | the Termux:X11 changes, applied to `termux-x11/` by `tools/fetch-termux-x11.*` |
 | `tools/` | native builds, laptop checks, phone benchmark, profilers, the 1st person tuner, the copies of BAR's menus (`make-*menu.py`, `make-missioninfo.py`, `make-teamstats.py`), the upright pictures from BAR's (`make-loadpictures.ps1`, `make-loadscreen-upright.ps1`), `worklog.py`, `publish-check.ps1` |

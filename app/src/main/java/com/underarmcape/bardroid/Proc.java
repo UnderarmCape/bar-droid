@@ -32,8 +32,8 @@ public final class Proc {
 
     /**
      * SIGKILLs every other process running under this app's UID. Needed because proot ignores SIGTERM (what
-     * Process.destroy* sends on Android) and, when it is SIGKILLed, leaves its tracees (the engine, a daemonized
-     * PulseAudio) running. Everything the app launches runs under its UID, so this takes down the whole tree.
+     * Process.destroy* sends on Android) and, when it is SIGKILLed, leaves its tracees (the engine, launch-bar.sh's
+     * helpers) running. Everything the app launches runs under its UID, so this takes down the whole tree.
      */
     static void killStrays() {
         int me = android.os.Process.myPid(), uid = android.os.Process.myUid();

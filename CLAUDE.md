@@ -211,8 +211,8 @@ Output's resolution and filtering lists shown in capitalised words (Native, Scal
   lobby over a game too (`bardroid_overlay.txt`, `RtsTouch.lobbyOverGame`).
   `PadGame` runs on the laptop
   against a made-up pointer (`tools/padgame-test.ps1`, `PadMouse`/`PadButtons` keep it free of Android classes). Change v0.8.5 itself only in `C:\Tools\BARGAMEPAD`.
-  Packaged from BARGAMEPAD branch `controller/codex-v085-perf` (performance work, same behaviour; HANDOFF.md
-  "Gamepad"); measure with `tools/profile-gamepad-game.ps1` on the laptop before and after any change to it.
+  (The controller game was packaged from BARGAMEPAD branch `controller/codex-v085-perf` until it left the app;
+  HANDOFF.md "Gamepad" is its record.)
 - `tools/container-shell.bat` — root shell (or one command) in the device's container via `files/container.sh`;
   long-press **GL check** in the app keeps X + GPU server up without the game.
 
