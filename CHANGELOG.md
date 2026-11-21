@@ -283,7 +283,9 @@ The first version meant for other people's phones: everything since the first bu
 - Other apps on the phone can no longer reach into the game: the lobby's helper only downloads what BAR's lobby needs,
   to the places it needs them, and reads replays only from the replay folder; the display server takes no connection
   from outside the app; the Free memory button opens only the system's own Device care; the developer switches (scripts
-  and a start command for testing) work only in developer builds.
+  and a start command for testing, the benchmark's settings files, the PC content import) work only in developer
+  builds. Files the game itself writes are trusted less: the app's frame-pacing libraries go into the game alone, and
+  only the app's own lobby widget loads in the lobby.
 - Other players' words can no longer change what the app does: chat, a spectator's or the host's lines, or a map
   ping's label with the right words no longer close the game as a "GPU driver fault", put up "Game saved", show a fake
   countdown, take your fingers off the game or onto it under BAR's lobby, or switch the app's build and order menus off
