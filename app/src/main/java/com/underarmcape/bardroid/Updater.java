@@ -680,9 +680,15 @@ public final class Updater {
         }
         // A crash once a game ran (loading one of Kailil's saves crashes the engine on every platform, ~70 s after the
         // app started) is not the update failing to start: it must not roll BAR back to a version online games reject.
-        boolean fast = rc != 0 && ms < FAST_FAIL_MS && !gameFrameRan();
+        boolean frame = gameFrameRan(), lobby = lobbyRan();
+        boolean fast = rc != 0 && ms < FAST_FAIL_MS && !frame;
         Result result = Result.NONE;
-        if (!launched.equals(good) && fast) {
+        // (rolled back only when the start failed before BAR's lobby or a game came up: a lobby that came up and then
+        // ended, an online join the host refused or that lost its connection (the engine's error box, exit 21), had
+        // rolled a good update back and lost the join. Kept only on a clean end, a game frame, or a lobby that ran past
+        // the fast window: a crash while a skirmish loaded at 130 s had kept a broken set as the one to fall back to.
+        // Anything else is judged at its next start; release overhaul audit, 2026-11-21)
+        if (!launched.equals(good) && fast && !lobby) {
             Log.e("update", "!!! the update to " + launched + " failed to start (exit " + rc + " after " + ms / 1000
                     + " s): back to " + good + ". Online battles on BAR's newer engine cannot be joined until this is fixed.");
             List<String> bad = new ArrayList<>();
@@ -702,8 +708,11 @@ public final class Updater {
             for (String t : tags) recordLaunched(t);   // (the launcher's game version too: the failed update's name went)
             setEngine(engine);
             result = Result.ROLLED_BACK;
-        } else if (!fast) {
+        } else if (rc == 0 || frame || lobby && ms >= FAST_FAIL_MS) {
             result = keepLaunched(tags, launched, good);
+        } else if (!launched.equals(good)) {
+            Log.i("update", launched + " ended (exit " + rc + " after " + ms / 1000 + " s" + (lobby ? ", its lobby up" : "")
+                    + ") without a game: judged at its next start");
         }
         save();
         if (result == Result.PROMOTED) cleanupEngines();
@@ -814,6 +823,14 @@ public final class Updater {
     private boolean gameFrameRan() {
         try (BufferedReader r = new BufferedReader(new FileReader(new File(p.bar, "infolog.txt")))) {
             for (String l; (l = r.readLine()) != null; ) if (GAME_FRAME.matcher(l).find()) return true;
+        } catch (IOException ignored) {}
+        return false;
+    }
+
+    /** Whether the engine's log of this run shows BAR's lobby up (its widgets loading: "[LuaMenu] Loading ..."). */
+    private boolean lobbyRan() {
+        try (BufferedReader r = new BufferedReader(new FileReader(new File(p.bar, "infolog.txt")))) {
+            for (String l; (l = r.readLine()) != null; ) if (l.contains("[LuaMenu] Loading")) return true;
         } catch (IOException ignored) {}
         return false;
     }

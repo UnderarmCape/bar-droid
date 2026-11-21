@@ -148,6 +148,27 @@ public final class UpdaterTest {
                     && s.getProperty("bad.0") == null && "B".equals(Prefs.engineVersion));
         }
 
+        // the lobby came up, then an online join failed (the host refused it, or the connection dropped: the engine's error
+        // box, exit 21) within the fast window: the update started, undecided, no rollback; a crash while a skirmish
+        // loaded past the fast window, no game frame: undecided, not kept; a lobby that ran 3 minutes, then a crash: kept
+        // (release overhaul audit, 2026-11-21)
+        String lobbyUp = NO_FRAME + "[t=00:00:09.000000][f=-000001] [LuaMenu] Loading API widget:  BAR Droid lobby touch\n"
+                + "[t=00:00:50.000000][f=-000001] Fatal: [ExitSpringProcess] errorMsg=\"invalid GameData received\"\n";
+        p = setup("lobbyjoin", true, lobbyUp);
+        r = new Updater(p).launchEnded(21, 60_000);
+        s = state(p);
+        check("the lobby up, then a join failed in 60 s (exit 21): undecided, no rollback", r == Updater.Result.NONE
+                && "B".equals(s.getProperty("launched.engine")) && "A".equals(s.getProperty("good.engine"))
+                && s.getProperty("bad.0") == null && "B".equals(Prefs.engineVersion));
+        p = setup("slowcrash", true, NO_FRAME);
+        r = new Updater(p).launchEnded(139, 130_000);
+        s = state(p);
+        check("a crash while a skirmish loaded, 130 s, no game frame: undecided, not kept as good", r == Updater.Result.NONE
+                && "A".equals(s.getProperty("good.engine")) && s.getProperty("bad.0") == null);
+        p = setup("lobbylong", true, lobbyUp);
+        r = new Updater(p).launchEnded(139, 180_000);
+        check("the lobby up 3 minutes, then a crash: kept", r == Updater.Result.PROMOTED && "B".equals(state(p).getProperty("good.engine")));
+
         // the player closed the game (Stop, or swiped away): closedByPlayer keeps a set that ran, judges a short one later
         p = setup("closedlong", true, NO_FRAME);
         new Updater(p).closedByPlayer(140_000);

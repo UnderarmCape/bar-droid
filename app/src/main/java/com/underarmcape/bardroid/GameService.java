@@ -371,6 +371,9 @@ public class GameService extends Service {
     /** BAR's PC launcher's update, then the Android layer on top (docs/UPDATES.md); its status shows on the splash. */
     private Updater update(boolean online) throws InterruptedException {
         Updater u = updater = new Updater(paths);
+        // (a Stop before this updater existed cancelled nothing: its check ran on after the service had gone, the
+        // network's requests and a download with it; release overhaul audit, 2026-11-21)
+        if (closing || Thread.currentThread().isInterrupted()) throw new InterruptedException();
         u.check(online, detail -> setStatus("update: " + detail));
         return u;
     }

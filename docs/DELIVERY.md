@@ -463,6 +463,18 @@ From a fifth read-only audit, launch-bar.sh and setup-container.sh on a fresh or
    without its order table (BAR's widget list reset, then a killed session) makes ~30 widget orders miss for one
    start; the first start's GL probe is kept even when Stop cut it short. Noted, not worked: that probe runs glxinfo
    ten times (once would do; first start only).
+From a sixth read-only audit, the Updater's keep-or-roll-back (2026-11-21 14:35-14:55; tools\updater-test run):
+21. MEDIUM: a lobby that came up and then failed an online join (the host refused it, or the connection dropped: the
+   engine's error box, exit 21) within two minutes of an update's first start rolled the good update back and lost
+   the join; and any end without a game frame after two minutes kept the set as good (a crash while a skirmish loaded
+   at 130 s kept a broken set to fall back to). LOW: a Stop before the start's updater existed (the first seconds,
+   longer right after an app update) cancelled nothing, its check and downloads ran on after the service had gone.
+   Noted, not worked: a full phone (pr-downloader's exit 5: under 1 GB free) shows only "not everything updated, see
+   log", the reason in launcher.log alone; an engine archive 7z could not unpack for lack of space is blocked 12 h,
+   then downloaded again.
+Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
+neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
+or a delete step outside the patches: not worth 0.4 % of the APK before the release.
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
@@ -741,6 +753,16 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 21: the Updater's judgement of a first start** (2026-11-21 14:35-14:55): launchEnded rolls an update back
+      only when the start failed before BAR's lobby or a game came up (the lobby's widgets loading in the run's
+      infolog: Updater.lobbyRan), keeps the set on a clean end, a game frame, or a lobby that ran past the two-minute
+      window, and leaves anything else to the next start (logged: "... without a game: judged at its next start").
+      closedByPlayer and judgeLastRun (a swipe, the next start) are as before. GameService.update stops at once when a
+      Stop came before its updater existed. updater-test's new cases (the lobby up then a join failed at 60 s, exit
+      21: undecided; a crash while a skirmish loaded at 130 s with no frame: undecided; the lobby up 3 minutes then a
+      crash: kept): HEAD's Updater failed the first two (rolled back; kept as good), this one ALL PASS with the rest.
+      On the dev phone with it: lobby-phone-test, pad-test, factory-preset-test ALL PASS, the update's start lines as
+      before. (Round A on 2a2ae0fe before it, 14:32-15:00: ALL PASS, no driver fault.)
 - [x] **Item 17: a map name typed in another case starts the map** (2026-11-21 14:00-14:25): the launcher's map field is
       free text; "starwatcher_1.0" counted as on the phone (Installer.hasMap lowercases and joins with "_"), the start
       script took it as typed, and the engine, whose lookup is exact, ended the skirmish within seconds (on the first
