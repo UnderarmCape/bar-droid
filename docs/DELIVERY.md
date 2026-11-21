@@ -359,7 +359,8 @@ boxes, the GPU driver's fault closing a frozen game).
       real: on the build before (with the tools lines only) 3 system lines and a countdown; now the real 2 and none,
       ALL PASS twice. A third run met the GPU driver's real fault (Mesa's own lines, 47 s in, 30 s after the test's real
       pause and save), which the test blamed on chat: it now says a real fault plainly. The lobby widget's other Chobby
-      wraps (the popup's words, the drop-down's height) act on nothing a player types.
+      wraps (the popup's words, the drop-down's height) act on nothing a player types. On the Fold7 2026-11-21 00:33
+      (dae3578c's build, BAR closed, not played since 23:44), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
