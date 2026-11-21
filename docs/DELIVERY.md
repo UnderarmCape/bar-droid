@@ -268,7 +268,8 @@ boxes, the GPU driver's fault closing a frozen game).
       764,563-820,1028, the icons' taps still picking the lab with the knob on), camctl-phone-test ALL PASS; its picture:
       the rail's line left of the icon, the knob clear. The two other open items next in line stay as they are: the
       dock's texture redraw (its 2026-11-17 verdict: only if a measured late game shows the dock's cost) and RB on the
-      dock's grid with a pad upright (Kailil's call, not asked for).
+      dock's grid with a pad upright (Kailil's call, not asked for). On the Fold7 2026-11-20 20:02 (5e915ca7's build,
+      BAR closed, not played since 19:25), github-sync -Release.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
