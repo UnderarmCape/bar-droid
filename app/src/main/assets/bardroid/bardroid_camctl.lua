@@ -49,6 +49,9 @@ local set = { knob = true, rails = true, left = false, look = 1, gain = 1 }
 local knob, zoomRail, turnRail -- GL pixels: { cx, cy, r } and { x0, y0, x1, y1 }
 local held -- "knob", "zoom", "turn" or nil (RtsTouch's camheld lines)
 local written, writtenAt = nil, -10
+-- what was last drawn into the display list and written to the file: the parts' numbers, the look, the lit part
+-- (layout() makes new tables four times a second, so their numbers are compared, not the tables)
+local drawn = { list = nil, draw = {}, file = {} }
 local optionsFor, layoutFor -- the WG.options and WG.BarDroidLayout this widget is known to
 local timer = Spring.GetTimer()
 
@@ -225,12 +228,35 @@ local function editing()
 	return Lw and Lw.isOpen and Lw.isOpen() or false
 end
 
--- RtsTouch's side: X screen pixels, top left origin
+-- the parts as they stand against what a cache keeps (c.k, c.z, c.t: copies of knob, zoomRail, turnRail; c.extra: one
+-- more value): true while nothing moved. sameParts(c, x, true) keeps them as they stand now
+local function same(a, b)
+	if a == nil or b == nil then
+		return a == b
+	end
+	return a[1] == b[1] and a[2] == b[2] and a[3] == b[3] and a[4] == b[4]
+end
+local function copy(a)
+	return a and { a[1], a[2], a[3], a[4] } or nil
+end
+local function sameParts(c, extra, keep)
+	if keep then
+		c.k, c.z, c.t, c.extra, c.vsy = copy(knob), copy(zoomRail), copy(turnRail), extra, vsy
+		return
+	end
+	return c.vsy == vsy and c.extra == extra and same(c.k, knob) and same(c.z, zoomRail) and same(c.t, turnRail)
+end
+
+-- RtsTouch's side: X screen pixels, top left origin (the text made again only when the parts move or the gain changes:
+-- string.format and ".." every frame were garbage; release overhaul item 7, 2026-11-21)
 local function writeFile(force)
 	local text
 	if hiddenNow() or editing() or not (knob or zoomRail or turnRail) then
 		text = "none\n"
+	elseif written and written ~= "none\n" and sameParts(drawn.file, set.gain) then
+		text = written
 	else
+		sameParts(drawn.file, set.gain, true)
 		local function r(x0, y0, x1, y1)
 			return string.format("%d %d %d %d", x0, vsy - y1, x1, vsy - y0)
 		end
@@ -488,11 +514,7 @@ local function drawKnob(cx, cy, r, lit)
 	circle(cx, cy, r * 0.12, 16)
 end
 
-function widget:DrawScreen()
-	if hiddenNow() or not (knob or zoomRail or turnRail) then
-		return
-	end
-	gl.Texture(false)
+local function drawParts()
 	if zoomRail then
 		drawRail(zoomRail, true, held == "zoom")
 	end
@@ -502,6 +524,25 @@ function widget:DrawScreen()
 	if knob then
 		drawKnob(knob[1], knob[2], knob[3], held == "knob")
 	end
+end
+
+-- (in a display list made again only when the parts move, the look changes or one is lit: drawn vertex by vertex every
+-- frame, through a new function for each shape, they took 0.44 ms a frame and 79 kB/s of garbage upright on the dev
+-- phone, the most of the app's widgets after the dock; release overhaul item 7, 2026-11-21)
+function widget:DrawScreen()
+	if hiddenNow() or not (knob or zoomRail or turnRail) then
+		return
+	end
+	gl.Texture(false)
+	local key = set.look * 10 + (held == "zoom" and 1 or held == "turn" and 2 or held == "knob" and 3 or 0)
+	if not drawn.list or not sameParts(drawn.draw, key) then
+		if drawn.list then
+			gl.DeleteList(drawn.list)
+		end
+		drawn.list = gl.CreateList(drawParts)
+		sameParts(drawn.draw, key, true)
+	end
+	gl.CallList(drawn.list)
 	gl.Color(1, 1, 1, 1)
 end
 
@@ -521,12 +562,9 @@ function widget:IsAbove(x, y)
 	if knob and (x - knob[1]) ^ 2 + (y - knob[2]) ^ 2 <= knob[3] ^ 2 then
 		return true
 	end
-	for _, r in ipairs({ zoomRail, turnRail }) do
-		if r and x >= r[1] and x <= r[3] and y >= r[2] and y <= r[4] then
-			return true
-		end
-	end
-	return false
+	local z, t = zoomRail, turnRail -- (no table for the two: IsAbove runs every frame)
+	return (z and x >= z[1] and x <= z[3] and y >= z[2] and y <= z[4])
+		or (t and x >= t[1] and x <= t[3] and y >= t[2] and y <= t[4]) or false
 end
 
 local lastLayout = -10
@@ -593,6 +631,10 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	if drawn.list then
+		gl.DeleteList(drawn.list)
+		drawn.list = nil
+	end
 	local f = io.open(CAM_FILE, "w")
 	if f then
 		f:write("none\n")

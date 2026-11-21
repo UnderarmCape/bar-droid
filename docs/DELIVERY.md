@@ -589,6 +589,24 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       a user part (written in two pieces; status-text-test ALL PASS, publish-check -SelfTest ALL PASS). CHANGELOG 0.2.0:
       the release overhaul's player-facing results ("Safety and size"), the APK's size corrected (~30 MB). What still
       fails for a release is the owner's: the release key, the phone engine's source line.
+- [x] **Item 7c: the app's per-frame costs measured; the camera knob and rails fixed** (2026-11-21 05:27-07:12): BAR's
+      widget profiler module (tools/profile/dbg_bardroid_profile_log.lua) as a game widget, put in bardroid-ui after
+      launch-bar.sh's start, in a skirmish on the dev phone (upright, 30 fps, 60 s warm-up, 90 s measured; settings
+      through dev-springsettings.cfg, removed after; toolchain\tmp\profile-run.ps1). Of all widgets' 5.98 ms a frame
+      and 656 kB/s of garbage: BAR Droid portrait 1.62 ms and 430 kB/s (its Update 292 kB/s, DrawScreen 138 kB/s),
+      camera controls 0.43 ms and 79 kB/s, gamepad 0.17 ms and 66 kB/s with no pad, info 0.06 ms and 9 kB/s; the rest
+      of the app's under 0.21 ms each. bardroid_camctl.lua drew its knob and rails vertex by vertex every frame, each shape
+      through a new function, and built its file's text every frame: now a display list made again only when a part
+      moves, the look changes or one lights, the text made again only when they move or the gain changes, IsAbove
+      without a table: 0.432 -> 0.258 ms a frame, 78.8 -> 2.0 kB/s (the same run otherwise: all widgets 5.98 -> 5.86 ms).
+      camctl-phone-test, dock-phone-test, replay-phone-test (the rails left-handed) ALL PASS on it. Tried and taken back:
+      the dock's file text from cached parts (bardroid_portrait.lua writeDock): a build with the old and the new text
+      side by side compared 12,900 texts through dock-phone-test upright and at 1080x1198, factory-preset-test and
+      types-phone-test, 0 different, but the dock's numbers did not move (1.64 ms, 429 kB/s): its garbage is elsewhere
+      in Update and DrawScreen; to find next, with the gamepad widget's 66 kB/s. Regression round (05:34-05:59, HEAD's
+      build): dock-phone-test upright and at 1080x1198, factory-preset-test, types-phone-test, overgame-phone-test,
+      driverwatch-phone-test (x11-probe in its game: abstract names no listener, the path socket accepted),
+      touch-phone-test, lobby-phone-test, pad-test -Online, bridge-phone-test ALL PASS; no driver refusal.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

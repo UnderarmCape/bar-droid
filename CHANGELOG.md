@@ -295,7 +295,8 @@ The first version meant for other people's phones: everything since the first bu
 - BAR's voice notifications work in games whose host took a unit out (BAR's own Notifications failed to load there,
   on a PC too).
 - A settings file cut short (a phone switched off mid-write) no longer stops the app from starting.
-- A smaller download (39.9 -> 29.5 MB) and less work every frame for the touch dock and the camera knob.
+- A smaller download (39.9 -> 29.5 MB), and the camera knob and rails take 40% less time a frame and make almost no
+  garbage for Lua to collect (0.43 -> 0.26 ms, 79 -> 2 kB a second).
 
 ## 0.1.0 (2026-10-25)
 
