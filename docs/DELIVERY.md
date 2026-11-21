@@ -85,7 +85,8 @@ boxes, the GPU driver's fault closing a frozen game).
       orders"; it passed in every run before and after): find out why. Not again since (2026-11-20 12:11-12:28, three
       runs on purpose, the third cut short by another test's start; 2 mex orders each time; ~11 passing runs since the
       failure). The check now logs, if it fails, the spot it used, whether a mex can be built there and the bots' first
-      orders.
+      orders. By 19:20 nine more runs (15:43-19:19, upright and 1080x1198): 2 mex orders in each; left open for the
+      logging to catch the next one.
 - [x] **walls-phone-test's no-walls cases made sound** (hardening, 2026-11-20 12:40-13:05, dev phone): run 2 of the
       12:35 tests failed "two Sentries in one placement: no walls: 3 Sentries queued, 7 walls": the check counted 8
       Dragon's Teeth in the commander's queue, and the commander had finished one meanwhile. The off, Claw, AA and
