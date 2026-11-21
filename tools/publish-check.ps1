@@ -104,7 +104,7 @@ try {
   # pictures: only the ones known to be the project's own or third parties' with a licence (NOTICE.md), and the phone
   # versions made on the laptop from BAR's own pictures, which BAR's developers cleared to ship with the app (Kailil,
   # 2026-11-06; NOTICE.md credits them: make-loadpictures.ps1's and make-loadscreen-upright.ps1's)
-  $allowedImages = '^(app/src/main/assets/gamepad/|termux-x11/|app/src/main/assets/bardroid/(loadpicture-upright_[^/]+\.jpg|loadscreen-upright\.png)$)'
+  $allowedImages = '^(termux-x11/|app/src/main/assets/bardroid/(loadpicture-upright_[^/]+\.jpg|loadscreen-upright\.png)$)'
   $images = @($files | Where-Object { $_ -match '\.(png|jpe?g|webp|gif|bmp|ico|dds|tga)$' -and $_ -notmatch $allowedImages })
   Result ($images.Count -eq 0) "no pictures outside the allowed places (BAR's artwork only as its cleared phone versions, NOTICE.md)" $images
 
@@ -150,11 +150,20 @@ try {
     $signed = ($certs | Select-String 'certificate SHA-256 digest: ([0-9a-f]+)') | ForEach-Object { $_.Matches[0].Groups[1].Value }
     if (-not $debugCert) { $certs = @("(could not read the debug key's certificate from app\bardroid-debug.jks)") + $certs }
     Result ($debugCert -and $signed -and -not ($signed -contains $debugCert)) "the APK is signed, and not with the public debug key" $certs
+    # a release build: not debuggable (a debuggable APK gives any adb user run-as into the app's files, and the app's
+    # developer hooks switch on with it: dev-env.sh, the launcher's start extra; Prefs.developer) (2026-11-21)
+    $badging = @(& (Join-Path $bt.FullName "aapt2.exe") dump badging $Apk 2>$null)
+    $debuggable = @($badging | Select-String "application-debuggable" | ForEach-Object { $_.Line.Trim() })
+    Result ($badging.Count -gt 0 -and $debuggable.Count -eq 0) "the APK is not debuggable (a release build)" $debuggable
     # the phone engine (GPL-2.0-or-later): its source public before the binary goes out (NOTICE.md, docs/ENGINE-DEFAULT.md)
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip = [IO.Compression.ZipFile]::OpenRead((Resolve-Path $Apk).Path)
-    try { $eng = @($zip.Entries | Where-Object { $_.FullName -like 'assets/phone-engine/*/BUILD.txt' } | ForEach-Object { $_.FullName }) }
-    finally { $zip.Dispose() }
+    try {
+      $eng = @($zip.Entries | Where-Object { $_.FullName -like 'assets/phone-engine/*/BUILD.txt' } | ForEach-Object { $_.FullName })
+      $abis = @($zip.Entries | Where-Object { $_.FullName -like 'lib/*/*' } | ForEach-Object { $_.FullName.Split('/')[1] } | Sort-Object -Unique)
+    } finally { $zip.Dispose() }
+    # the phone build (arm64) only: the emulator build (x86_64) is a bench for the laptop, not for players (2026-11-21)
+    Result (($abis -contains 'arm64-v8a') -and -not ($abis -contains 'x86_64')) "the APK is the phone build (arm64-v8a, no x86_64)" @("ABIs: $($abis -join ', ')")
     if ($eng.Count) {
       $src = Select-String -Path (Join-Path $App "NOTICE.md") -Pattern '^Phone engine source: (https://\S+)' | Select-Object -First 1
       Result ($null -ne $src) "the APK's phone engine has its public source in NOTICE.md (a line 'Phone engine source: https://...')" $eng

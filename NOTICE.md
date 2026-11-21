@@ -34,13 +34,33 @@ public as a fork of RecoilEngine together with the app (Kailil's push, 2026-11-1
 before that (`tools/publish-check.ps1 -Apk` fails until a line "Phone engine source: https://..." here names it). Without `bardroid.phoneEngine` in `local.properties` an APK has no phone engine and plays BAR's official
 one.
 
-**Controller game (`app/src/main/assets/gamepad/`):** Kailil's BAR Controller Support v0.8.5 (UnderarmCape, branch
-`controller/codex-v085-release` of the BAR game repository): new Lua widgets and modified copies of ten of BAR's
-interface widgets, GPL-2.0-or-later like BAR's own Lua code, and controller glyph atlases made for it
-(GPL-2.0-or-later OR CC0-1.0, `luaui/images/controller-glyphs/LICENSE.md` inside the zip). The three BAR icons it shows
-are copied from BAR's downloaded release on the phone, not shipped. Its build and order menus' widget names are "Build
-menu (controller)" and "Order menu (controller)" in the package (`tools/build-gamepad-game.py`), nothing else of it
-changed.
+**The display server (`lib/<abi>/libXlorie.so` and its Java part, `com.termux.x11`):** Termux:X11
+(https://github.com/termux/termux-x11, 1.03.01, GPL-3.0), the `termux-x11/` checkout with the app's changes in
+`patches/0*.patch`. It carries the X.Org server and libraries built into the same library: xserver, libX11, libXau,
+libXdmcp, xtrans, libxkbfile, libXfont, libfontenc, libxcvt, libxshmfence, xkbcomp, xorgproto (X.Org's MIT/X11-style
+licences, each in its folder under `termux-x11/lorie/src/main/cpp/`), pixman (MIT), libepoxy (MIT), libtirpc
+(BSD-3-Clause) and bzip2 (its own BSD-style licence).
+
+**The container's helpers (`lib/<abi>/`):** PRoot (`libproot.so`, `libproot-loader.so`; https://github.com/termux/proot
+at commit b27d81a6, GPL-2.0-or-later) built by `tools/build-proot.py` with the app's ioctl filter; talloc
+(`libtalloc.so`, from Samba via Termux's package 2.5.0; LGPL-3.0-or-later upstream, Termux lists GPL-3.0) and
+libandroid-shmem (`libandroid-shmem.so`, https://github.com/termux/libandroid-shmem 0.7, BSD-3-Clause), both from
+Termux's packages (`tools/fetch-prebuilts.py`); BusyBox (`libbusybox.so`, Debian's busybox-static, GPL-2.0-only,
+https://busybox.net/). The emulator build also carries virglrenderer (MIT) and libepoxy (MIT), built by
+`tools/build-virgl.py` with Termux's patches, and ANGLE (BSD-3-Clause) from Termux's packages.
+
+**AngelScript's ARM64 call stub (`app/src/main/assets/bardroid/libasarm64.so`):** the hand-written AArch64 calling
+code of the AngelScript library (https://www.angelcode.com/angelscript/, zlib licence), which the official arm64 build
+of BAR's AI lacks; preloaded for it in the container (docs/arm64-ai-fix.md).
+
+**AndroidX and Kotlin's standard library** (the app's and Termux:X11's Java dependencies): Apache-2.0.
+
+**Downloaded on the phone, not shipped:** Debian's packages for the container (each its own licence, as Debian lists),
+Mesa for Android containers (MIT), BAR's engine, game, lobby and maps from BAR's own servers (their own terms), and
+pr-downloader (GPL-2.0, with BAR's engine).
+
+(Kailil's BAR Controller Support v0.8.5, the singleplayer controller game, is no longer in the app since 2026-11-06,
+and its last checks left it on 2026-11-21.)
 
 **Build menu (`app/src/main/assets/bardroid/bardroid_buildmenu.lua`):** BAR's Build menu widget
 (`luaui/Widgets/gui_buildmenu.lua` of the BAR game, https://github.com/beyond-all-reason/Beyond-All-Reason, by Floris,
@@ -52,6 +72,16 @@ pictures it draws come from BAR's downloaded release on the phone.
 (`luaui/Widgets/gui_ordermenu.lua` of the BAR game, by Floris, GPL-2.0-or-later), copied from a BAR release by
 `tools/make-ordermenu.py` with its changes marked "BAR Droid:" (the even layout of v0.8.5's order menu while the app's
 gamepad controls hide orders, an IsAbove). Code only.
+
+**Mission Info, TeamStats and Options (`bardroid_missioninfo.lua`, `bardroid_teamstats.lua`, `bardroid_options.lua` in
+`app/src/main/assets/bardroid/`):** BAR's own widgets of those names (`luaui/Widgets/gui_mission_info.lua`,
+`gui_teamstats.lua`, `gui_options.lua` of the BAR game, GPL-2.0-or-later, by their authors named in each file's
+GetInfo), copied the same way by `tools/make-missioninfo.py`, `make-teamstats.py` and `make-options.py`, the changes
+marked "BAR Droid:". Code only.
+
+**Phone versions of BAR's Lua (`app/src/main/assets/bardroid/phone-*.lua.patch`):** changes to BAR's own widget and
+gadget files (GPL-2.0-or-later, the BAR game), each a set of find-and-replace blocks the phone engine applies to BAR's
+file as it loads; the patched lines come from BAR's code. Upstream versions of several are in `docs/upstream/`.
 
 **Upscaling shader (`app/src/main/assets/sgsr/`):** Snapdragon Game Super Resolution 1
 (`sgsr/v1/include/glsl/sgsr1_shader_mobile.frag` in https://github.com/SnapdragonGameStudios/snapdragon-gsr),

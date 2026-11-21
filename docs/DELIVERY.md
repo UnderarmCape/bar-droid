@@ -573,6 +573,22 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       replay-phone-test, stats-phone-test, settings-phone-test, lobbychat-phone-test, buildbar-phone-test ALL PASS;
       dgun-speed-test done; retreat-phone-test on 10/14 alive against off 6/14; no driver refusal. The Fold7 still
       unreachable (04:50).
+- [x] **Item 8: NOTICE, publish-check, CHANGELOG** (2026-11-21 05:40-05:52): NOTICE.md named BAR's copied menus and
+      the shader but none of what the APK's native code carries; now Termux:X11 (GPL-3.0) and the X.Org server and
+      libraries built into libXlorie.so (MIT/X11-style, pixman, libepoxy, libtirpc BSD-3-Clause, bzip2), PRoot
+      (GPL-2.0-or-later, the commit), talloc (LGPL-3.0-or-later upstream; Termux lists GPL-3.0), libandroid-shmem
+      (BSD-3-Clause), BusyBox (GPL-2.0-only), the emulator build's virglrenderer, libepoxy and ANGLE, AngelScript's ARM64
+      stub (zlib), AndroidX and Kotlin (Apache-2.0), what is downloaded rather than shipped, BAR's Mission Info, TeamStats
+      and Options copies and the phone Lua patches; the retired controller game's section out (the licences as
+      termux-packages' build.sh files declare them). publish-check -Apk now also fails a debuggable APK and one that is
+      not the phone build (x86_64), and its picture list no longer allows assets/gamepad/: on the dev phone's debug APK
+      and the old emulator APK HEAD's check said nothing of either; now "not debuggable" FAIL on both, "phone build" FAIL
+      on the emulator's (ABIs: x86_64); an unsigned public release build (-PbardroidPublic, never published) passes both
+      and the icon. The tracked files' private-data check failed on two lines: a 2026-11-19 entry here with a phone's
+      home-network address (masked; it stays in the history: the fresh-history question) and status-text-test's URL with
+      a user part (written in two pieces; status-text-test ALL PASS, publish-check -SelfTest ALL PASS). CHANGELOG 0.2.0:
+      the release overhaul's player-facing results ("Safety and size"), the APK's size corrected (~30 MB). What still
+      fails for a release is the owner's: the release key, the phone engine's source line.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
@@ -1662,7 +1678,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       tools/make-teamstats.py). Dev phone: Flow and Combat's right column "0:30" whole, no errors; remake-check PASS.
       On the Fold7 at 21:10 (BAR not running): the APK from clean main fbc2d07e; github-sync -Release.
 - [x] **The Fold7 on today's build again** (2026-11-19 20:51): Kailil gave its new wireless debugging address at
-      ~20:48, 192.168.143.159:44111 (a network the laptop is not on: timed out); the port over Tailscale,
+      ~20:48, an address on a home network the laptop is not on (timed out); the port over Tailscale,
       100.103.32.18:44111, answered (SM-F966N). His logs since the 13:55 install: an online game 17:08-17:38 (joined,
       Supreme Isthmus, the phone engine 2026.09.03-2-g83a8536 bardroid/sim-2026.09.03), 30.0-30.1 fps every minute to
       the end at up to ~2,900 units (slowest frames 48-115 ms), no errors or warnings from the app's widgets or the

@@ -13,7 +13,7 @@ The first version meant for other people's phones: everything since the first bu
   engine version built from the project's engine branch. The touch dock, the pad and presets load as part of the game
   in every game (a host's user-widget options no longer stop them), BAR's Settings laid out for the phone, phone
   versions of BAR's costliest Lua. Its exact simulation rewrite (game speed +4-5 %) runs in skirmishes and replays;
-  online the engine keeps BAR's stock simulation code. A build the phone cannot run gives way to the official engine. The APK grows from ~20 to ~39 MB.
+  online the engine keeps BAR's stock simulation code. A build the phone cannot run gives way to the official engine. The APK grows from ~20 to ~30 MB.
 - BAR's own lobby, online games, skirmish against AI and spectating on a Snapdragon phone (tested on a Galaxy Z
   Fold7), about 30 fps; the frame cap is 30 by default (30 / 60 / no cap in the launcher). The game draws at about 900
   lines on a wide screen and 1080 on a near-square one (the Fold7: 2100x900 folded, 1198x1080 unfolded), upscaled to
@@ -278,6 +278,24 @@ The first version meant for other people's phones: everything since the first bu
   compressed textures, BAR's GL4 unit shaders, shore foam and ground scorch marks off), and skirmish on a smaller map
   (Starwatcher) until you pick one. On a Galaxy S23 Ultra BAR's benchmark battle and skirmishes on that map play
   through (13 of 13 and 3 of 3); close other apps first. 12 GB phones are unchanged.
+
+**Safety and size (the release overhaul, 2026-11-21)**
+- Other apps on the phone can no longer reach into the game: the lobby's helper only downloads what BAR's lobby needs,
+  to the places it needs them, and reads replays only from the replay folder; the display server takes no connection
+  from outside the app; the Free memory button opens only the system's own Device care; the developer switches (scripts
+  and a start command for testing) work only in developer builds.
+- Other players' words can no longer change what the app does: chat, a spectator's or the host's lines, or a map
+  ping's label with the right words no longer close the game as a "GPU driver fault", put up "Game saved", show a fake
+  countdown, take your fingers off the game or onto it under BAR's lobby, or switch the app's build and order menus off
+  until the next update. Only the app's own widgets load as part of the game.
+- A build or order menu copy that fails to load now gives way to BAR's own menu (before: no menu at all), and every one
+  of the app's widgets that fails is named in the launcher.
+- BAR's own developer game (a game played from BAR's source, as BAR's developers do) plays with the app's pad, camera
+  and menus; the retired controller game's checks had switched them off there.
+- BAR's voice notifications work in games whose host took a unit out (BAR's own Notifications failed to load there,
+  on a PC too).
+- A settings file cut short (a phone switched off mid-write) no longer stops the app from starting.
+- A smaller download (39.9 -> 29.5 MB) and less work every frame for the touch dock and the camera knob.
 
 ## 0.1.0 (2026-10-25)
 

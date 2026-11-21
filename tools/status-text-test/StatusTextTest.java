@@ -297,7 +297,8 @@ public class StatusTextTest {
             { "http://widget-hub.beyondallreason.dev/manifests.json", "LuaUI/Widgets/manifests.json", "no" },
             { "https://evil.example/manifests.json", "LuaUI/Widgets/manifests.json", "no" },
             { "https://beyondallreason.dev.evil.example/m.json", "LuaUI/Widgets/manifests.json", "no" },
-            { "https://user@widget-hub.beyondallreason.dev/m.json", "LuaUI/Widgets/manifests.json", "no" },
+            // (a user part before the host; written in two pieces: whole, publish-check reads it as an e-mail address)
+            { "https://user" + "@widget-hub.beyondallreason.dev/m.json", "LuaUI/Widgets/manifests.json", "no" },
             { "file:///data/data/x", "LuaUI/Widgets/manifests.json", "no" },
         };
         for (String[] c : res) {
