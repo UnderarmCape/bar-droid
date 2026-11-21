@@ -107,8 +107,10 @@ public final class Installer {
         step("mesa", st, () -> { installMesa(st); state.setProperty("mesaUrl", Prefs.mesaUrl); });
         slimContainer(st);
         step("engine", st, () -> installEngine(st));
-        // import is optional: only when the user pushed content from a PC
-        if (hasImport()) runSetup("import", st, "import", Prefs.engineVersion);
+        // import is optional: only when the user pushed content from a PC. A developer's build only (release overhaul
+        // item 10, 2026-11-21): the folder is in Android/data, which on Android 9-10 other apps with storage access can
+        // write, and its pool files, moved over BAR's, are trusted by pr-downloader (it fetches only what is missing)
+        if (hasImport() && Prefs.developer(ctx)) runSetup("import", st, "import", Prefs.engineVersion);
         step("content", st, () -> runSetup("content", st, "content", Prefs.gameTag, Prefs.lobbyTag, Prefs.mapName, Prefs.engineVersion));
         step("files", st, () -> writeGameFiles());
         installPhoneEngine();   // (refreshHostFiles ran before the official engine was there)

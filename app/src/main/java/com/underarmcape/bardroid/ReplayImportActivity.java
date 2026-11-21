@@ -60,8 +60,13 @@ public class ReplayImportActivity extends Activity {
         List<Uri> picked = new ArrayList<>();
         if (result == RESULT_OK && data != null) {
             ClipData clip = data.getClipData();
-            if (clip != null) for (int i = 0; i < clip.getItemCount(); i++) picked.add(clip.getItemAt(i).getUri());
-            else if (data.getData() != null) picked.add(data.getData());
+            // (an item without a Uri skipped: the import thread took a null one down with the app; release overhaul 10)
+            if (clip != null) {
+                for (int i = 0; i < clip.getItemCount(); i++) {
+                    Uri u = clip.getItemAt(i).getUri();
+                    if (u != null) picked.add(u);
+                }
+            } else if (data.getData() != null) picked.add(data.getData());
         }
         if (picked.isEmpty()) {
             Log.i("bridge", "replay import: nothing picked");
@@ -204,7 +209,7 @@ public class ReplayImportActivity extends Activity {
         try (Cursor c = cr.query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
             if (c != null && c.moveToFirst() && !c.isNull(0)) return c.getString(0);
         } catch (RuntimeException e) { Log.e("bridge", "replay import: the file's name: " + e); }
-        String last = uri.getLastPathSegment();
+        String last = uri == null ? null : uri.getLastPathSegment();
         return last == null ? null : last.substring(last.lastIndexOf('/') + 1);
     }
 }
