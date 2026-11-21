@@ -1596,6 +1596,11 @@ end
 -- metal and energy sent from the resource panel): the share list's teammates, rules and notes. what: "units",
 -- "metal" or "energy"; fraction: of what this team holds (resources)
 local function giveTo(teamID, what, fraction)
+	-- (only these: a teammate's row tapped just as the dock let the share list go handed nil, and string.upper(nil)
+	-- below would have removed the dock with this widget's error; review 2026-11-21)
+	if what ~= "units" and what ~= "metal" and what ~= "energy" then
+		return
+	end
 	local team
 	for _, t in ipairs(teammates()) do
 		if t.teamID == teamID then

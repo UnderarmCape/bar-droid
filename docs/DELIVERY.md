@@ -658,6 +658,12 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       the view every frame (9 kB/s of garbage in the idle skirmish). Now it stands down too, its next pick at once when
       the dock goes (sideways). Measured the same way (profile-run.ps1 INFO "BAR Droid info"): 9.3 -> 0 kB/s. pad-test
       ALL PASS on it; the way back sideways not run on the phone (its first pick is the one a new game makes).
+- [x] **Item 7g: three faults from the Lua audit guarded** (2026-11-21 09:10-09:52): a read-only audit of the app's
+      widgets for errors and hangs found three a player could meet: bardroid_info.lua's price() given an endless value
+      (a weapon with no reload time: its DPS) called itself until Lua's stack ran out and the panel was removed (now a
+      NaN or an endless value is said as Lua says it), bardroid_pad.lua's giveTo with a
+      kind it does not know (now nothing given), bardroid_chat.lua's wrap() at a zero or missing width (its loop never
+      ended; now the line whole). pad-test, pad-test -Share and -Chat ALL PASS on it.
 - [x] **Item 11 (the cheap ones): developer-only switches gated** (2026-11-21 08:50-08:58): the launcher's GL check long
       press (an hour of the X display, a wake lock and a black game screen: "shell" mode) and the game screen's
       .bardroid-display-scales file (the display hardware's scaling in place of SGSR) only in a developer's build; the

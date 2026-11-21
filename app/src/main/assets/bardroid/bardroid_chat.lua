@@ -96,6 +96,11 @@ local function lastColorCode(s)
 end
 
 local function wrap(text, width, size)
+	-- (no room at all, a box moved off the screen's edge: one line as it is; each cut below adds the colour code back,
+	-- and with no width it never ended; review 2026-11-21)
+	if not (width and width > 0) then
+		return { text }
+	end
 	local lines, line, color = {}, "", ""
 	local function push()
 		lines[#lines + 1] = line

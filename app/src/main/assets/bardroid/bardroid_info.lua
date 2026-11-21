@@ -44,6 +44,11 @@ end
 
 -- A price as BAR's build menu beside the panel prints it: a space every three digits ("1 150", "26 000"; its AddSpaces)
 local function price(v)
+	-- (not a number or endless: as it is; a weapon with no reload time gives an endless DPS, and the grouping below
+	-- called itself on it until Lua's stack ran out, the panel removed; review 2026-11-21)
+	if v ~= v or v == math.huge or v == -math.huge then
+		return tostring(v)
+	end
 	v = math.floor(v + 0.5)
 	if v >= 1000 then
 		return string.format("%s %03d", price(math.floor(v / 1000)), v % 1000)
