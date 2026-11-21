@@ -78,6 +78,7 @@ try {
     if ($line -eq "end") { break }
     if ($line -match '^do (\d+) (tap|shot|swipe) (-?\d+) (-?\d+) (\d+)(?: (-?\d+) (-?\d+) (\d+))?' -and [int]$Matches[1] -gt $seen) {
       $n = [int]$Matches[1]; $act = $Matches[2]
+      if ($act -ne "shot") { Assert-GameInFront $adb }   # (no taps on the launcher: toolchain.ps1)
       $k = $w / [double]$Matches[5]
       $m = $Matches.Clone()
       if (-not $exclChecked) { $exclChecked = $true; ExclusionCheck $k }

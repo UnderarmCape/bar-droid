@@ -766,6 +766,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       LuaUI/Widgets it would load as a user widget). launch-bar-test.sh ALL PASS (27 app widgets). On the dev phone
       with the APK without it (13:35-13:48): both installed copies gone, a skirmish's cus2 0 and CUS GL4 not started;
       dock-phone-test, types-phone-test, lobby-phone-test, pad-test -Online, factory-preset-test ALL PASS.
+- [x] **The tests that tap by hand ask first** (2026-11-21 13:30-13:35): toolchain.ps1's Assert-GameInFront (the
+      resumed activity is GameActivity: a game or the lobby) before each tap, drag, finger down and typed key in the
+      thirteen tests that drive the dev phone by hand; with the launcher in front it throws "[guard] FAIL ...", so a
+      game closed under a test (the GPU driver's fault at 11:18 today) never turns its taps into launcher settings.
+      On the dev phone: the launcher in front, it refused ("topResumedActivity ... LauncherActivity"); a game in front,
+      5 of 5 let through, 107 ms a check; dock-phone-test, types-phone-test, factory-preset-test (guarded) ALL PASS.
+      dumpsys's "Broken pipe" (head closing the pipe) kept on the phone.
 - [x] **A factory's PRESETS button big** (Kailil, 2026-11-21 ~13:00: "Make the preset button for factories big"; 13:00-13:29,
       dev phone): a factory picked alone had its PRESETS ("PRESETS: STRAFE" once it has one) as a small button among
       the states, under REPEAT. Now it is as big as the units' PRESETS (one column, MOVE's height), right after FIGHT,

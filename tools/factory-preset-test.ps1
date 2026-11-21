@@ -37,6 +37,7 @@ try {
     $size = (& $adb shell wm size) -join " "
     $m = [regex]::Match($size, '(\d+)x(\d+)\s*$')
     $k = [double]$m.Groups[1].Value / [double]$aim[3]
+    Assert-GameInFront $adb
     & $adb shell input tap ([int]([double]$aim[1] * $k)) ([int]([double]$aim[2] * $k))
   }
   $until = (Get-Date).AddMinutes(5)

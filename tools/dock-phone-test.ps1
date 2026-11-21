@@ -49,11 +49,12 @@ function Rects([string]$file) {
 }
 # X screen pixels to the display's (adb input): the X screen is the display scaled down
 $script:k = 1.0
-function Tap([double]$x, [double]$y) { & $adb shell input tap ([int]($x * $script:k)) ([int]($y * $script:k)) }
-function Touch([string]$what, [double]$x, [double]$y) { & $adb shell input motionevent $what ([int]($x * $script:k)) ([int]($y * $script:k)) }
+function Tap([double]$x, [double]$y) { Assert-GameInFront $adb; & $adb shell input tap ([int]($x * $script:k)) ([int]($y * $script:k)) }
+function Touch([string]$what, [double]$x, [double]$y) { if ($what -eq "DOWN") { Assert-GameInFront $adb }; & $adb shell input motionevent $what ([int]($x * $script:k)) ([int]($y * $script:k)) }
 # a tap, then a finger down at the same point within the double tap's time (one adb call): a drag after it selects
 function TapDown([double]$x, [double]$y) {
   $px = [int]($x * $script:k); $py = [int]($y * $script:k)
+  Assert-GameInFront $adb
   & $adb shell "input tap $px $py; input motionevent DOWN $px $py"
 }
 function Shot([string]$name) {
@@ -237,6 +238,7 @@ try {
   # 4. MOVE held up 1.5 s, let go
   Stage "walk"; Start-Sleep 1
   $s = $dock["stickl"]
+  Assert-GameInFront $adb
   & $adb shell input swipe ([int]($s[0] * $script:k)) ([int]($s[1] * $script:k)) ([int]($s[0] * $script:k)) ([int](($s[1] - $s[2] * 0.9) * $script:k)) 1800
   Start-Sleep -Milliseconds 700
   Stage "stopped?"; Start-Sleep 1

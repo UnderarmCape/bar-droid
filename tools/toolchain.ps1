@@ -117,6 +117,18 @@ function Set-PhoneAwake([string]$adb, [string]$device = "") {
   $on = if ($device) { @("-s", $device) } else { @() }
   & $adb @on shell "input keyevent KEYCODE_WAKEUP; wm dismiss-keyguard" | Out-Null
 }
+# The game screen (GameActivity: a game, or the lobby, which it shows too) in front before a test's tap by hand: a game
+# closed under a test (the GPU driver's fault brings the launcher up with its result) took the test's next taps, and
+# they switched the launcher's "Open the lobby when the app starts" off (2026-11-21). Throws instead, the line starting
+# "[guard] FAIL" so the rounds' filters show it; no device: ANDROID_SERIAL's.
+function Assert-GameInFront([string]$adb, [string]$device = "") {
+  $on = if ($device) { @("-s", $device) } else { @() }
+  # (dumpsys's own "Broken pipe" once head has its line: on the phone's stderr, not here)
+  $top = "$(& $adb @on shell "dumpsys activity activities 2>/dev/null | grep -e topResumedActivity -e ResumedActivity: | head -n 1")".Trim()
+  if ($top -notmatch 'com\.underarmcape\.bardroid/\.GameActivity') {
+    throw "[guard] FAIL the game screen is not in front, no tap: $top"
+  }
+}
 # A shell script run on a device (adb quoting through PowerShell is fragile, and a pipe into adb can start with a
 # byte-order mark, which broke the script's first line): written as ASCII with LF endings, pushed, run; its output
 function Invoke-PhoneScript([string]$adb, [string]$device, [string]$script, [string]$name = "bardroid-x.sh") {
