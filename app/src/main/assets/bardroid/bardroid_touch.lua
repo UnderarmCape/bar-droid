@@ -1384,8 +1384,9 @@ local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrappe
 -- BAR's lobby over the game or gone again: told to the app (OVERLAY) and the app's widgets (WG.BarDroidLobbyOver).
 -- Chobby's "LobbyOverlayActive1" reaches LuaUI from any player's Spring.SendLuaUIMsg online too, and one sent by a
 -- player's widget took every phone's fingers off the game (driverwatch-phone-test, 2026-11-21): believed only once the
--- app's lobby widget, in this phone's own LuaMenu, says the lobby is shown (bardroid_menushown.txt), within 2 s; "0" at
--- once (it only gives the game back)
+-- app's lobby widget, in this phone's own LuaMenu, says the same (bardroid_menushown.txt), within 2 s. "0" the same way
+-- (release overhaul item 5): a widget's "0" while the lobby was over the game gave the fingers to the game under it,
+-- the dock back over the lobby (overgame-phone-test)
 local overlayCheck = { file = "LuaUI/Config/bardroid_menushown.txt" }
 function overlayCheck.set(on)
 	lobbyOver = on
@@ -1393,7 +1394,7 @@ function overlayCheck.set(on)
 	writeWhole(OVERLAY, on and "1\n" or "0\n")
 end
 function overlayCheck.step()
-	if not overlayCheck.asked then
+	if not overlayCheck.want then
 		return
 	end
 	local f = io.open(overlayCheck.file, "r")
@@ -1401,23 +1402,20 @@ function overlayCheck.step()
 	if f then
 		f:close()
 	end
-	if said == "1" then
-		overlayCheck.asked = nil
-		overlayCheck.set(true)
+	if said == overlayCheck.want then
+		overlayCheck.want = nil
+		overlayCheck.set(said == "1")
 	elseif Spring.DiffTimers(Spring.GetTimer(), overlayCheck.asked) > 2 then
-		overlayCheck.asked = nil
-		Spring.Echo("[bardroid-touch] a LobbyOverlayActive1 not from this phone's lobby: left alone") -- (tools)
+		Spring.Echo("[bardroid-touch] a LobbyOverlayActive" .. overlayCheck.want
+			.. " not from this phone's lobby: left alone") -- (tools)
+		overlayCheck.want = nil
 	end
 end
 function widget:RecvLuaMsg(msg)
 	if msg:sub(1, 18) == "LobbyOverlayActive" then
-		if msg:sub(1, 19) == "LobbyOverlayActive1" then
-			overlayCheck.asked = Spring.GetTimer()
-			overlayCheck.step()
-		else
-			overlayCheck.asked = nil
-			overlayCheck.set(false)
-		end
+		overlayCheck.want = msg:sub(19, 19) == "1" and "1" or "0"
+		overlayCheck.asked = Spring.GetTimer()
+		overlayCheck.step()
 	end
 end
 

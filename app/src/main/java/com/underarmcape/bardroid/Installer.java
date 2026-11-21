@@ -46,7 +46,9 @@ public final class Installer {
     }
 
     private void load() {
-        if (p.stateFile.exists()) try (FileInputStream in = new FileInputStream(p.stateFile)) { state.load(in); } catch (IOException ignored) {}
+        // (IllegalArgumentException: a file cut short in the middle of a backslash-u escape; its steps then run again)
+        if (p.stateFile.exists()) try (FileInputStream in = new FileInputStream(p.stateFile)) { state.load(in); }
+        catch (IOException | IllegalArgumentException e) { Log.e("install", "install state unread: " + e); }
     }
     private void mark(String step) throws IOException {
         state.setProperty(step, "done");

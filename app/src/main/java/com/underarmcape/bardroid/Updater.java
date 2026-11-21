@@ -992,7 +992,9 @@ public final class Updater {
     }
 
     private static void load(File f, Properties into) {
-        if (f.exists()) try (InputStream in = new FileInputStream(f)) { into.load(in); } catch (IOException ignored) {}
+        // (IllegalArgumentException: a file cut short in half a backslash-u escape, at the app's start: the build's pinned set then)
+        if (f.exists()) try (InputStream in = new FileInputStream(f)) { into.load(in); }
+        catch (IOException | IllegalArgumentException e) { Log.e("update", f.getName() + " unread: " + e); }
     }
 
     private void save() {

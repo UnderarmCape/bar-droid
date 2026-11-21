@@ -119,7 +119,10 @@ final class MapStore {
         Properties p = new Properties();
         File f = new File(bar, USED);
         if (f.isFile()) {
-            try (InputStream in = new FileInputStream(f)) { p.load(in); } catch (IOException e) { Log.e("maps", "record unread", e); }
+            // (a file cut short mid-write can end in half a backslash-u escape: Properties.load throws IllegalArgumentException
+            // for it, which took the app down at its start; release overhaul item 5, 2026-11-21)
+            try (InputStream in = new FileInputStream(f)) { p.load(in); }
+            catch (IOException | IllegalArgumentException e) { Log.e("maps", "record unread", e); }
         }
         return p;
     }

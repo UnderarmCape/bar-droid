@@ -498,6 +498,27 @@ builds?), the Benchmark button, the emulator build, the late-game resolution dro
       widget file put in bardroid-ui: on the build before "[foreign-probe] loaded as one of the game's widgets" (29 in
       the folder); on the fix "!!! bardroid-ui: removed what is not the app's widgets ..., 1 in all", 28, never loaded;
       stats-phone-test ALL PASS on both.
+- [x] **Item 5: the four small ones** (2026-11-21 03:28-03:58):
+      the X server listened, besides its socket in the app's own folder, on an abstract one (Xtrans "local":
+      @<rootfs>/tmp/.X11-unix/X0, no file and so no file permissions), and with -ac it took any client unasked
+      (tools/x11-probe.ps1, new: the app's container perl connects and sends the X setup; "accepted without
+      authorization" on both). Whether Android's SELinux would let another app reach it was not tried; the container's
+      clients never use it (Xlib's own abstract name is @/tmp/.X11-unix/X0, then the path). XServer now starts it with
+      -nolisten local: the abstract names "no listener", the path socket accepted, the game draws.
+      A widget's "LobbyOverlayActive0" was still believed at once: sent while BAR's lobby is over the game it gave the
+      fingers to the game under the lobby and the dock back over it. Now "0" waits for the app's lobby widget's
+      bardroid_menushown.txt as "1" does. overgame-phone-test sends one there (new check): the build before "overlay
+      0" and two later steps failed with it (the lobby's page turns, the pan after Return to Battle); the fix ALL PASS;
+      driverwatch-phone-test and touch-phone-test ALL PASS.
+      Free memory opened Device care by its action alone, so any app declaring the action could take the tap: now its
+      component, a system app's only (com.samsung.android.lool here); the button shows while BAR loads as before.
+      Properties.load throws IllegalArgumentException on half a backslash-u escape (a file cut short), which nothing
+      caught: the app went down at its start. MapStore, Installer and Updater catch it; dev phone, a malformed line added
+      to update/state.properties: the app starts, "state.properties unread: ... Malformed \uxxxx encoding", file restored.
+      Regression round (03:10-03:32, dev phone, the build before items 3-5): attack-ping-test, walls-phone-test,
+      camctl-phone-test, replay-phone-test, stats-phone-test, settings-phone-test, lobbychat-phone-test,
+      buildbar-phone-test ALL PASS; dgun-speed-test done; retreat-phone-test on 8/14 alive against off 5/14; no driver
+      refusal. The Fold7 was unreachable over Tailscale from 03:08 (no install).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

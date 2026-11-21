@@ -461,9 +461,24 @@ public class GameActivity extends MainActivity {
     private CharSequence freeMemoryFull, freeMemoryShort;
     private boolean freeMemoryCompact;
 
-    private void addFreeMemoryButton() {
+    /**
+     * Device care's page by its own component: the action alone let any installed app that declares it take the tap
+     * (a page of its own over the loading game). Only a system app's (com.samsung.android.lool on the dev phone's
+     * One UI 9), or null. Release overhaul item 5, 2026-11-21.
+     */
+    private android.content.Intent deviceCare() {
         android.content.Intent care = new android.content.Intent(DEVICE_CARE);
-        if (care.resolveActivity(getPackageManager()) == null) return;
+        for (android.content.pm.ResolveInfo r : getPackageManager().queryIntentActivities(care, 0)) {
+            android.content.pm.ActivityInfo a = r.activityInfo;
+            if (a != null && (a.applicationInfo.flags & android.content.pm.ApplicationInfo.FLAG_SYSTEM) != 0)
+                return care.setClassName(a.packageName, a.name);
+        }
+        return null;
+    }
+
+    private void addFreeMemoryButton() {
+        android.content.Intent care = deviceCare();
+        if (care == null) return;
         android.widget.TextView v = new android.widget.TextView(this);
         float dp = getResources().getDisplayMetrics().density;
         // (the name bold, what a tap does smaller under it, as the launcher's settings: it leaves the game for a moment)

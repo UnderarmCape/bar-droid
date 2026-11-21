@@ -58,6 +58,11 @@ public final class XServer {
         cmd.add("com.termux.x11.CmdEntryPoint");
         cmd.add(":0");
         cmd.add("-ac");                 // standard Xorg flag: no xauth inside the container
+        // (Xtrans also listened on an abstract socket, "local": @<rootfs>/tmp/.X11-unix/X0, which has no file and so
+        // no file permissions, and with -ac it took any client unasked. The container's clients connect to the path
+        // socket in the app's own folder, which no other app can reach: tools/x11-probe.ps1, release overhaul item 5)
+        cmd.add("-nolisten");
+        cmd.add("local");
         proc =new Proc("x11").start(cmd, env, p.filesDir, null);
     }
 

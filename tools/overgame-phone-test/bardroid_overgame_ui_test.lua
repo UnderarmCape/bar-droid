@@ -102,6 +102,13 @@ local function step()
 		ask("tap", lobbyAt[1], lobbyAt[2], "over?")
 	elseif stage == "over?" and clock - stageAt > 2 then
 		check("... the overlay file \"1\" (the app's touch in the lobby)", readLine(OVERLAY) == "1", tostring(readLine(OVERLAY)))
+		-- (Chobby's "the lobby is gone", sent by a widget while the lobby is over the game, as any player's can online:
+		-- the fingers must stay on the lobby; the app believes it only with its lobby widget's file, 2026-11-21)
+		Spring.SendLuaUIMsg("LobbyOverlayActive0")
+		go("spoof0?")
+	elseif stage == "spoof0?" and clock - stageAt > 3 then
+		check("a widget's \"LobbyOverlayActive0\" over the lobby: the overlay file still \"1\"", readLine(OVERLAY) == "1",
+			tostring(readLine(OVERLAY)))
 		go("dragwait")
 	elseif stage == "dragwait" then
 		local m = readLine(MENU_FILE)
