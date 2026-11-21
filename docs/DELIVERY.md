@@ -310,6 +310,17 @@ boxes, the GPU driver's fault closing a frozen game).
       home: the Maces still out) FAILED on the build before (the Maces back: 9 picked); now only the list's types come
       back (bardroid_portrait.lua), ALL PASS twice (7 picked, the Maces left out). On the Fold7 2026-11-20 22:02
       (1f4ea320's build, BAR closed, not played since 21:27), github-sync -Release.
+- [x] **Round and round; factory presets, camctl and the attack badge read** (hardening, 2026-11-20 22:05-22:27, dev
+      phone): attack-ping-test (with its busy and light fights), walls-phone-test, camctl-phone-test, replay-phone-test,
+      stats-phone-test, settings-phone-test, lobbychat-phone-test, buildbar-phone-test ALL PASS; dgun-speed-test 98 %
+      and 98 %; retreat-phone-test on 8/14 alive against off 6/14 (T2 2/2 against 0/2); no driver fault. Read against
+      their tests, nothing to change: bardroid_presets.lua's factory presets (a unit out of the factory joins the frame
+      after, its own place, the others unmoved; the factory's own move, fight, patrol, guard or stop ends the preset; a
+      member sent elsewhere leaves it, its place taken by the next), bardroid_camctl.lua (its file rewritten at least
+      once a second and replaced whole, the sensitivity's slider within its clamp), the dock's LAST PINGS badge (red for
+      15 s after the newest attack entry's last hit, so 21:23's slower look at one unit cannot make it flicker). No UI
+      polish due (the replay's picture: the left-handed rails clear of the speed column). The Fold7 not played on since
+      22:02 (the app started once, 21:32, no game).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
