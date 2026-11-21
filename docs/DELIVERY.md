@@ -500,6 +500,19 @@ join password redacted.
    Noted, not worked (cosmetic): Add's see-through window takes the screen's input while a replay copies (a cloud
    file downloads first) with nothing shown; a double tap on Add opens two pickers; the same replay under another
    name ("x (1).sdfz") is added twice.
+From a ninth read-only audit, the gamepad's devices (2026-11-21 16:35-17:00; padgame-test run):
+25. MEDIUM, stuck input once the pad is gone: a drag the pad latched (a tap-started drag, a grid: LB + A with a
+   building, a path) outlived a disconnect or the screen's pause, the X left button, Shift and Alt held and every
+   finger tap after it a Shift+Alt click (ControllerBridge.release zeroed the pad, PadGame's latches stayed); and the
+   pad's first person never ended when the pad went (the selection cleared every frame, nothing a finger could end
+   it with).
+26. COSMETIC (from the eighth): a double tap on Add opened two pickers; Add's see-through window showed nothing while
+   it copied.
+   Noted, not worked: a stick or trigger held while the window loses focus without a pause (the notification shade,
+   split screen) reads as held until it moves again (onMotion ignores ACTION_CANCEL; no onWindowFocusChanged); with
+   two gamepad-class devices one's removal releases nothing and both share one state; in the lobby over a game the
+   zero camera line is never sent (a tilted stick pans behind the lobby); USB XInput clones read their triggers as the
+   right stick at rest (Z/RZ at -1).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -781,6 +794,17 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Item 25: nothing stays held when the pad goes** (2026-11-21 16:40-17:16): ControllerBridge.release (the pad
+      gone, the screen paused) now has the pump let go of what PadGame latched too, before the zeroed pad's next tick:
+      PadGame.cancelDrag puts the order or building away first (act "cancel", then the button after 250 ms, as B does,
+      so the half-drawn row is not placed), then lets go of every button and key. bardroid_touch.lua's "fingers" (sent
+      when the pad goes, or after three finger taps) ends the pad's first person. padgame-test's new cases (a grid
+      under way: the zeroed pad's ticks alone, the old release, let go of nothing in a second; cancelDrag: cancel, then
+      the left button, Shift and Alt up; nothing pressed after) ALL PASS with the rest. On the dev phone (a temporary
+      proof widget picking the commander and logging first person, a virtual pad holding LB + L3, then gone): HEAD's
+      build turned first person on at frame 500 and kept it after "gamepad disconnected"; this one on at frame 520,
+      off at frame 610 right after the pad went, "pad only" cleared. pad-test, -Dgun, -Online, dock-phone-test upright
+      and lobby-phone-test ALL PASS on it (17:05-17:16; round B on b0533e07 before it, 16:34-16:56: ALL PASS).
 - [x] **Item 24: cut-off map downloads cleared; the redaction's quick test in any case** (2026-11-21 16:20-16:35):
       MapStore.dropCutDownloads deletes maps/*.sd7.tmp and *.sdz.tmp older than an hour (a download still running is
       younger) before every engine start, with or without a map limit, a line each in launcher.log. LogRedact's quick

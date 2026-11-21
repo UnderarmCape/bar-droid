@@ -106,12 +106,14 @@ public final class ControllerBridge {
         if (pump != null) pump.interrupt();
     }
 
-    /** The screen lost input (paused, picture-in-picture): no button stays held. */
+    /** The screen lost input (paused, picture-in-picture) or the pad went: no button stays held. */
     public synchronized void release() {
         java.util.Arrays.fill(buttons, false);
         lx = ly = rx = ry = lt = rt = 0;
+        releaseWanted = true;   // (and what PadGame latched, on the pump: mouseTick)
         wakeIdle();
     }
+    private boolean releaseWanted;
 
     public static boolean isGamepad(InputDevice d) {
         if (d == null || d.isVirtual()) return false;
@@ -262,9 +264,11 @@ public final class ControllerBridge {
         float dt = lastMouseTick == 0 ? 0 : Math.min(0.1f, (now - lastMouseTick) / 1000f);
         lastMouseTick = now;
         boolean[] held = new boolean[BUTTON_COUNT], tapped = new boolean[BUTTON_COUNT];
-        boolean rtHeld, ltHeld, active;
+        boolean rtHeld, ltHeld, active, letGo;
         float x, y, scroll;
         synchronized (this) {
+            letGo = releaseWanted;
+            releaseWanted = false;
             System.arraycopy(buttons, 0, held, 0, BUTTON_COUNT);
             System.arraycopy(pressed, 0, tapped, 0, BUTTON_COUNT);
             java.util.Arrays.fill(pressed, false);
@@ -273,6 +277,10 @@ public final class ControllerBridge {
             ltHeld = lt > TRIGGER_DEADZONE;
             active = x != 0 || y != 0 || scroll != 0 || stick(rx) != 0 || ltHeld || rt > TRIGGER_DEADZONE;
             for (int i = 0; i < BUTTON_COUNT && !active; i++) active = held[i] || tapped[i];
+        }
+        if (letGo) {   // (the pad gone or the screen paused: a drag PadGame latched let go too, before the zeroed pad ticks)
+            if (mode == MODE_GAME) game.cancelDrag();
+            releaseAll();
         }
         if (mode == MODE_OFF) return;
         if (mode == MODE_GAME) {   // v0.8.5's controls (PadGame)

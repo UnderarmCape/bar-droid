@@ -300,6 +300,24 @@ public final class PadGameTest {
         check("B in a grid: cancel first", t.has("act cancel") && !t.has("left up"), t.m.out);
         t.wait(300);
         check("then the button let go (nothing placed: the building was put away)", t.has("left up"), t.m.out);
+        // the pad gone (or the screen paused) mid-grid: the building put away, then the button, Shift and Alt let go; the
+        // zeroed pad's ticks after it press nothing (release overhaul audit, 2026-11-21: the bridge's release had left
+        // them held)
+        t.tick(LB);
+        t.tap(A);
+        t.up(LB);
+        t.m.out.clear();
+        t.wait(1000);   // (the old way: the bridge zeroed the pad and the ticks went on)
+        check("the zeroed pad's ticks alone (the bridge's old release) let go of nothing in a second",
+                !t.has("left up") && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up"), t.m.out);
+        t.m.out.clear();
+        t.g.cancelDrag();
+        int cancel = t.m.out.indexOf("act cancel"), letGo = t.m.out.indexOf("left up");
+        check("the pad gone mid-grid: cancel, then the left button, Shift and Alt up", cancel >= 0 && letGo > cancel
+                && t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " up") && t.has("key " + KeyEvent.KEYCODE_ALT_LEFT + " up"), t.m.out);
+        t.m.out.clear();
+        t.wait(500);
+        check("  and the zeroed pad after it presses nothing", !t.has("left down") && !t.has("key " + KeyEvent.KEYCODE_SHIFT_LEFT + " down"), t.m.out);
 
         t = new PadGameTest();
         t.m.armed = "area";

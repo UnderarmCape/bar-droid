@@ -393,6 +393,12 @@ end
 local ACTIONS = {
 	fingers = function() -- a few taps since the pad was last used (RtsTouch.source): the menus as without a pad
 		WG.BarDroidPadOnly = nil
+		-- (and the pad's first person ends with it: the pad gone (its battery, Bluetooth) left the ride on, the selection
+		-- cleared every frame, nothing a finger could end it with; release overhaul audit, 2026-11-21)
+		local rider = WG.BarDroidPadFP
+		if rider and rider.active() then
+			rider.stop()
+		end
 	end,
 	type_all = function() -- a triple tap: the types of the selection (a double tap's) on the whole map
 		Spring.SendCommands("select AllMap+_InPrevSel+_ClearSelection_SelectAll+")

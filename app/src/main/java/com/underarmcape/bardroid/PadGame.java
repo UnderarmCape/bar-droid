@@ -152,6 +152,20 @@ final class PadGame {
     /** The left stick picks a side of the area select's filter radial: it does not pan meanwhile. */
     boolean stickTaken() { return filterOpen; }
 
+    /**
+     * The pad gone or the screen paused with a drag under way (a tap-started drag, a grid, a path being drawn): the
+     * order or building put away first, as B does, so letting go of the button places nothing; then release(). Before,
+     * the bridge's release zeroed the pad and left these latched: the X left button, Shift and Alt held, every finger tap
+     * after it a Shift+Alt click (release overhaul audit, 2026-11-21). Pump thread.
+     */
+    void cancelDrag() {
+        if (sticky || drawing || pathDrawing || gridLatched || aPending) {
+            mouse.act("cancel");
+            try { Thread.sleep(CANCEL_RELEASE_MS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+        }
+        release();
+    }
+
     /** Lets go of every button and key the pad holds (a mode change, a pause). */
     void release() {
         if (leftDown) { leftDown = false; mouse.button(true, false); }
