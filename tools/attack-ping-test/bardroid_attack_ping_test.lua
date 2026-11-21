@@ -5,7 +5,10 @@
 -- seconds on (its hits merged), the LAST PINGS badge red; the second fight a second entry, the newest. Then the camera
 -- on the first fight and the script's real tap on LAST PINGS (asked for by "do <n> tap|shot <x> <y> <vsx>" in
 -- LuaUI/Config/bardroid_attacktest.txt, answered "<n>" in bardroid_attacktest_cmd.txt): the second fight in sight above
--- the dock. "[attacktest] done: ALL PASS" or "N FAILED" at the end.
+-- the dock. Then a busy fight beside a light one (2026-11-20 ~20:50): thirty Pawns against thirty Grunts, hits every
+-- frame, and 4.5 s later far off one Grunt shooting a solar of mine: the light fight still gets its own entry (the hits
+-- were looked at once every 8 frames, the first of a frame, so the busy fight's nearly always). "[attacktest] done: ALL
+-- PASS" or "N FAILED" at the end.
 function widget:GetInfo()
 	return { name = "BAR Droid attack ping test", desc = "Under attack in the last pings", author = "BAR Droid", layer = 0,
 		enabled = true }
@@ -85,7 +88,14 @@ local function attacks()
 end
 -- (the first hits on my units as LuaUI hands them over: what bardroid_pad.lua's ATTACK sees)
 local hitsLogged = 0
+local lightAt, lightHits, lightUnit = nil, 0, nil -- (the light fight's place once given; hits on my units there)
 function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID, _, attackerID, _, attackerTeam)
+	if lightAt and unitTeam == Spring.GetMyTeamID() then
+		local x, _, z = Spring.GetUnitPosition(unitID)
+		if x and (x - lightAt[1]) ^ 2 + (z - lightAt[2]) ^ 2 < 500 ^ 2 then
+			lightHits, lightUnit = lightHits + 1, unitID
+		end
+	end
 	if hitsLogged < 4 and unitTeam == Spring.GetMyTeamID() then
 		hitsLogged = hitsLogged + 1
 		Spring.Echo(string.format("[attacktest] a hit: unit %d, damage %s, paralyzer %s, weapon %s, attacker %s of team %s",
@@ -94,6 +104,32 @@ function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID,
 end
 local function dist(p, q)
 	return p and q and math.sqrt((p[1] - q[1]) ^ 2 + (p[2] - q[2]) ^ 2) or math.huge
+end
+-- a place on the map as far as can be from the given ones (on a grid of candidates a quarter of the map apart), where
+-- the named building can stand if one is named (a solar given on a slope came to nothing: no fight there, 2026-11-20)
+local function farFrom(places, building)
+	local mx, mz = Game.mapSizeX, Game.mapSizeZ
+	local def = building and UnitDefNames[building]
+	local best, bestD
+	for i = 1, 4 do
+		for j = 1, 4 do
+			local p = { mx * (i - 0.5) / 4, mz * (j - 0.5) / 4 }
+			local d = math.huge
+			for _, q in ipairs(places) do
+				d = math.min(d, dist(p, q))
+			end
+			local y = Spring.GetGroundHeight(p[1], p[2])
+			local stands = not def or (Spring.TestBuildOrder(def.id, p[1], y, p[2], 0) or 0) > 0
+			if y > 0 and stands and (not bestD or d > bestD) then
+				best, bestD = p, d
+			end
+		end
+	end
+	return best, bestD
+end
+local busy, light -- { x, z } of the busy fight and the light one
+local function alive(team, x, z)
+	return #(Spring.GetUnitsInCylinder(x, z, 700, team) or {})
 end
 
 function widget:GameFrame(f)
@@ -188,6 +224,48 @@ function widget:GameFrame(f)
 			string.format("at %d,%d of %dx%d, the dock's top %d; the camera's point %s,%s, %d units picked", sx, sy, vsx,
 				vsy, dock and dock[4] or 0, tostring(cs.px and math.floor(cs.px)), tostring(cs.pz and math.floor(cs.pz)),
 				Spring.GetSelectedUnitsCount()))
+		go("busy", f)
+	elseif stage == "busy" and f - stageAt > 30 then -- (a busy fight far from the first two)
+		busy = farFrom({ fight1, fight2 })
+		local me, foe = Spring.GetMyTeamID(), enemyTeam()
+		local y = Spring.GetGroundHeight(busy[1], busy[2])
+		Spring.SendCommands(string.format("give 30 armpw %d @%d,%d,%d", me, busy[1], y, busy[2]))
+		Spring.SendCommands(string.format("give 30 corak %d @%d,%d,%d", foe, busy[1] + 200, y, busy[2]))
+		Spring.Echo(string.format("[attacktest] a busy fight given at %d,%d", busy[1], busy[2]))
+		go("light", f)
+	elseif stage == "light" and f - stageAt > 135 then -- (past the 4 s between new entries; then a light one far off)
+		local d
+		light, d = farFrom({ fight1, fight2, busy }, "armsolar")
+		local me, foe = Spring.GetMyTeamID(), enemyTeam()
+		local y = Spring.GetGroundHeight(light[1], light[2])
+		Spring.SendCommands(string.format("give 1 armsolar %d @%d,%d,%d", me, light[1], y, light[2]))
+		Spring.SendCommands(string.format("give 1 corak %d @%d,%d,%d", foe, light[1] + 150, y, light[2]))
+		Spring.Echo(string.format("[attacktest] a light fight given at %d,%d (%d elmos from the nearest other)", light[1],
+			light[2], d))
+		lightAt = light
+		go("light?", f)
+	elseif stage == "light?" and f - stageAt > 150 then
+		local a, near = attacks(), nil
+		for _, p in ipairs(a) do
+			if dist(p, light) < 500 then
+				near = p
+			end
+		end
+		local me, foe = Spring.GetMyTeamID(), enemyTeam()
+		local busyMine, busyFoe = alive(me, busy[1], busy[2]), alive(foe, busy[1], busy[2])
+		local hp, maxHp
+		if lightUnit then
+			hp, maxHp = Spring.GetUnitHealth(lightUnit)
+		end
+		local why = string.format("%d attack entries, %s; %d hits on mine there (%s); the busy fight still on: %d of mine, "
+			.. "%d of theirs near it", #a, near and ("one " .. math.floor(dist(near, light)) .. " elmos from it") or
+			"none at it", lightHits, hp and string.format("its health %d of %d", hp, maxHp or 0) or "gone or never hit",
+			busyMine, busyFoe)
+		if lightHits == 0 then -- (no fight there: nothing to tell; the test's own, its place)
+			check("a light fight beside a busy one: hits there to judge by", false, why)
+		else
+			check("a light fight beside a busy one: its own entry", near ~= nil, why)
+		end
 		go("end", f)
 	elseif stage == "end" then
 		Spring.Echo("[attacktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))

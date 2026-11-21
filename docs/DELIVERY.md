@@ -282,6 +282,20 @@ boxes, the GPU driver's fault closing a frozen game).
       one dip to 26). Every open item left waits on Kailil (his test or his call), on a live microphone (speak to chat's
       restart race), or is parked (see 19:57). On the Fold7 2026-11-20 20:37 (ecebf1e0's build, BAR closed, not played
       since 20:02), github-sync -Release.
+- [x] **Under attack: a light fight beside a busy one got no entry** (hardening of the day's attack pings, 2026-11-20
+      20:40-21:23, dev phone): the round first: attack-ping-test, walls-phone-test, camctl-phone-test,
+      replay-phone-test, stats-phone-test, settings-phone-test, lobbychat-phone-test, buildbar-phone-test ALL PASS;
+      dgun-speed-test 99 % and 99 %; retreat-phone-test on 10/14 alive against off 7/14; no driver fault. Then, reading
+      bardroid_pad.lua's attack entries against their test: the hits on my units were looked at once every 8 frames for
+      the whole game, the first hit of such a frame. With a fight hitting every frame, its hits came first nearly every
+      time, and a fight elsewhere with a hit now and then was almost never looked at: the outlying building under a lone
+      raider while the army fights, the very case the entries are for (Kailil: "so I can teleoort to the danger area").
+      attack-ping-test's new case: thirty Pawns against thirty Grunts, and 4.5 s later far off one Grunt shooting a solar
+      of mine (on ground a solar can stand on: on a slope the give came to nothing, no fight, the case says so now). On
+      the build before: no entry at the solar in 2 of 2 (18 and 27 hits on it, the busy fight still on). Now each of my
+      units is looked at no more than once every 2 s, at most 4 a frame (ATTACK.LOOK, BUDGET; the units seen forgotten
+      once a minute): a busy fight's units are each looked at now and then, the light fight's first hit gets its turn.
+      The fix: its own entry 2 of 2 (27 and 30 hits, the busy fight still on); the rest of the test ALL PASS.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

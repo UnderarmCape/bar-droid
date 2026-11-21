@@ -2844,14 +2844,30 @@ end
 -- the last pings system so I can teleoort to the danger area"): an enemy's hit on one of my units (the event BAR's own
 -- "unit under attack" notice comes from) is an entry at that unit, the camera going to where it is then ("UNDER ATTACK"
 -- in red). A fight stays one entry, moved along to each new hit within NEAR elmos and KEEP frames of its last; a new one
--- at most every GAP frames; a hit looked at no more than every EVERY frames (a late 8v8 has thousands a second).
--- (One table: under Lua's 200 locals.)
-local ATTACK = { NEAR = 900, KEEP = 30 * 15, GAP = 30 * 4, EVERY = 8, next = 0, lastNew = -1e9 }
+-- at most every GAP frames. Each of my units looked at no more than every LOOK frames, at most BUDGET a frame (a late
+-- 8v8 has thousands of hits a second). (One hit every 8 frames for the whole game, the first of its frame, left a light
+-- fight unseen beside a busy one, whose hits came first nearly every time: one Grunt on a far solar while thirty Pawns
+-- fought thirty Grunts, attack-ping-test, 2026-11-20.) (One table: under Lua's 200 locals.)
+local ATTACK = { NEAR = 900, KEEP = 30 * 15, GAP = 30 * 4, LOOK = 30 * 2, BUDGET = 4, seen = {}, seenFrom = 0,
+	frame = -1, looked = 0, lastNew = -1e9 }
 function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID, _, _, _, attackerTeam)
-	local f = Spring.GetGameFrame()
-	if f < ATTACK.next or unitTeam ~= Spring.GetMyTeamID() or not damage or damage <= 0 or paralyzer then
+	if unitTeam ~= Spring.GetMyTeamID() or not damage or damage <= 0 or paralyzer then
 		return
 	end
+	local f = Spring.GetGameFrame()
+	if f - ATTACK.seenFrom > 30 * 60 then -- (the units looked at, forgotten once a minute: dead ones' ids)
+		ATTACK.seen, ATTACK.seenFrom = {}, f
+	end
+	if f - (ATTACK.seen[unitID] or -1e9) < ATTACK.LOOK then
+		return
+	end
+	if ATTACK.frame ~= f then
+		ATTACK.frame, ATTACK.looked = f, 0
+	end
+	if ATTACK.looked >= ATTACK.BUDGET then
+		return
+	end
+	ATTACK.looked = ATTACK.looked + 1
 	-- (LuaUI is handed no weapon and no attacker for these hits, dev phone 2026-11-20: as BAR's own notices, any damage
 	-- to my units counts; when they are given, a weapon below 0 (a fall, a crush, lava, debris) or an allied attacker,
 	-- a teammate's or my own fire, does not)
@@ -2863,7 +2879,7 @@ function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID,
 	if not x then
 		return
 	end
-	ATTACK.next = f + ATTACK.EVERY
+	ATTACK.seen[unitID] = f
 	for _, p in ipairs(pings) do
 		if p.attack and f - p.frame <= ATTACK.KEEP and (p[1] - x) ^ 2 + (p[3] - z) ^ 2 <= ATTACK.NEAR ^ 2 then
 			p[1], p[2], p[3], p.unit, p.frame = x, y, z, unitID, f
