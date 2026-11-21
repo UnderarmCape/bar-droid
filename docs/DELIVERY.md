@@ -849,6 +849,16 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       notification shade down 2 s later, both let go under it, the shade up, the keyboard gone 10 s after): HEAD's build
       scrolled on for 10 s after the let-go (to the map's edge) and kept Shift down after the keyboard had gone; this one
       stopped as the shade came down, Shift up with it. Item 28's round ran on the same build.
+- [x] **Items 30-31: a drag ends where its own finger is** (2026-11-21 18:05-18:36): a lift takes the drawing finger's
+      own last point (the first finger lifting first ended a box, circle or path at the other finger), and a drag the
+      system cancels lets go there too, as a lift does (at its start: a box was a click there, Area Mex's circle had no
+      radius, a path's order went back to its start). On the dev phone upright (a temporary proof widget emptying the
+      selection and saying where the commander is; HEAD's build, then this one): a tap and a second press dragged over
+      the commander, cancelled by the system (input motionevent CANCEL): HEAD's picked nothing (a click at the start),
+      this one the commander (the box as drawn); the same box by a virtual touchscreen (uinput, a direct touchscreen on
+      the internal display per dumpsys input), a second finger down on the map off the box's line, the box's finger
+      lifted first: HEAD's picked nothing (the box ended at the other finger), this one the commander. (A first run put
+      the other finger on BAR's top bar and showed nothing; moved onto the map.)
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

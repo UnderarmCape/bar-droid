@@ -974,7 +974,10 @@ final class RtsTouch {
         ui.removeCallbacks(hoverTimeout);
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
-        curX = e.getX(); curY = e.getY();
+        // (the drawing finger's own last point: when it lifted first, a box, a circle or a path ended at the other
+        // finger, a dock filter held by it; release overhaul audit, 2026-11-21)
+        int first = e.findPointerIndex(firstId);
+        if (first >= 0) { curX = e.getX(first); curY = e.getY(first); }
         if (state != State.PENDING) runPlaceTap();   // (not a double tap: the tap before moves its building now)
         if (areaTapHeld) runAreaTap();   // (this touch drew no circle: the held tap's click first)
         boolean flicked = false;   // (a quick scroll: the wheel turned where the finger came down, the pointer there)
@@ -1105,6 +1108,7 @@ final class RtsTouch {
         ui.removeCallbacks(twoHold);
         ui.removeCallbacks(threeHold);
         boolean shapeCancelled = state == State.LEFT_DRAG && shapeDragging;
+        boolean area = areaDragging;
         shapeDragging = false;
         areaDragging = false;
         if (shapeCancelled) {
@@ -1112,8 +1116,13 @@ final class RtsTouch {
             // the button up with its keys; let go at once it queued one at the drag's start, review 2026-11-15)
             final float x = downX, y = downY;
             releaseAfterCancel(() -> { press(x, y, InputStub.BUTTON_LEFT, false); if (!gridHeld) releaseKeys(); });
-        } else if (state == State.LEFT_DRAG) press(downX, downY, InputStub.BUTTON_LEFT, false);
-        if (state == State.RIGHT_HOLD) press(downX, downY, InputStub.BUTTON_RIGHT, false);
+        } else if (state == State.LEFT_DRAG) {
+            // (let go where the finger was, as a lift does: at the drag's start a box was a click there, the selection
+            // cleared, Area Mex's circle had no radius and a path's order went back to its start; release overhaul audit,
+            // 2026-11-21)
+            press(curX, dockSelecting || area ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
+        }
+        if (state == State.RIGHT_HOLD) press(curX, rightHoldY(curX, curY), InputStub.BUTTON_RIGHT, false);
         // (a dock scroll the system took back, its PiP or edge gesture monitors: let go at rest, or the widget's rows stayed
         // between two rows until the next touch; dev phone 2026-11-17, the split dock sideways after an upward flick)
         if (state == State.DOCK_SCROLL) send("dockfling " + dockSide + " 0.0 0.0");
