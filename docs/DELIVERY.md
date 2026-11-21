@@ -739,6 +739,17 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       The GPU driver's rare fault came twice on the dev phone today (10:00 in walls-phone-test on HEAD's build, 11:18 in a
       dock-phone-test game on this one; four times 2026-11-02 to 11-05): both closed by DriverWatch, the second
       by its stall watch 8 s after the refusal.
+- [x] **Items 18-20: the shell audit's smaller install faults** (2026-11-21 14:00-14:22): setup-container.sh's content
+      step goes on when its one map does not download (a warning: a skirmish fetches its map at its start, the lobby
+      its own; before, a mistyped map name failed the whole install after 3.4 GB, exit 43). launch-bar.sh's
+      widget_order adds BYAR.lua's top-level order table when the file has none (BAR's widget list reset, then a killed
+      session) and sets aside, then makes anew, a file BAR cannot read either (no "return {", or cut short: its last
+      line not "}"); HEAD's widget_order on such a file missed both orders it was given. The GL probe is written to a
+      temp file and kept only whole (a probe cut short by Stop was kept for good); on the dev phone its file deleted,
+      the next start made it again, no temp file left. launch-bar-test.sh: new cases (the content step with a stub
+      pr-downloader failing the map, the game's failing still exit 42; HEAD's script exit 43 on the same; the BYAR.lua
+      cases); and its ten checks with a compound condition (check "x" A && B tested A alone, B ran after, uncounted)
+      now each one function: the cut-short BYAR.lua case failed there until the fix, the other nine pass. ALL PASS.
 - [x] **Item 14: a fresh install's first lobby gets the app's lobby widget** (2026-11-21 13:00-13:35): launch-bar.sh's
       lobby_settings_seed writes the lobby's settings file when there is none (or an empty one): the four fields the
       app sets, in Chobby's own layout, which it merges with its defaults; the blocks after it then set loadLocalWidgets,

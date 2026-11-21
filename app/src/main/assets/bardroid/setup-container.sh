@@ -157,7 +157,11 @@ case "$step" in
     "$prd" --filesystem-writepath "$BAR" --download-game "$lobby" || log "lobby download failed (continuing)"
     if ! ls "$BAR"/maps/*.sd7 "$BAR"/maps/*.sdz >/dev/null 2>&1; then
       log "downloading map $map"
-      "$prd" --filesystem-writepath "$BAR" --download-map "$map" || { log "map download failed"; exit 43; }
+      # (not fatal: the whole install failed here after 3.4 GB when the launcher's map name was mistyped or BAR had
+      # removed the map; a skirmish fetches its map at its start and says so when it cannot, the lobby fetches its own;
+      # release overhaul audit, 2026-11-21)
+      "$prd" --filesystem-writepath "$BAR" --download-map "$map" ||
+        log "map download failed (continuing: a skirmish fetches its map at its start, the lobby its own)"
     fi
     log "ok"
     ;;

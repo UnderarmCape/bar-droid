@@ -340,7 +340,7 @@ log() { :; }
 inst=$(sed -n '/new String\[\]{"bardroid_touch.lua"/,/})/p' "$here/app/src/main/java/com/underarmcape/bardroid/Installer.java" |
   grep -o 'bardroid_[a-z_]*\.lua' | sed 's/\.lua$//' | sort | tr '\n' ' ')
 mine=$(for w in $APP_WIDGETS; do echo "$w"; done | sort | tr '\n' ' ')
-check "the app's widgets: launch-bar.sh's list is the Installer's ($(echo $mine | wc -w))" [ -n "$inst" ] && [ "$inst" = "$mine" ]
+all_1() { [ -n "$inst" ] && [ "$inst" = "$mine" ]; }; check "the app's widgets: launch-bar.sh's list is the Installer's ($(echo $mine | wc -w))" all_1
 
 # The write folder trusted less (release overhaul item 9, 2026-11-21): the lobby's widgets in a release build only the
 # app's own; .bardroid-loadpictures-ours' lines never outside bitmaps/loadpictures; the benchmark's profile file only in a
@@ -363,7 +363,7 @@ check "... the app's own lobby widget kept" [ "$(cat "$BAR/LuaMenu/Widgets/bardr
 check "... the lobby's settings untouched" [ "$(cat "$BAR/LuaMenu/Config/IGL_data.lua")" = cfg ]
 check "... said in launcher.log" grep -q "LuaMenu/Widgets: removed what is not the app's lobby widget, 2 in all" "$LOGS/launch.txt"
 lobby_start 1
-check "a developer's build: the tools' test widgets kept" [ -f "$BAR/LuaMenu/Widgets/evil.lua" ] && [ -f "$BAR/LuaMenu/Widgets/sub/more.lua" ]
+all_2() { [ -f "$BAR/LuaMenu/Widgets/evil.lua" ] && [ -f "$BAR/LuaMenu/Widgets/sub/more.lua" ]; }; check "a developer's build: the tools' test widgets kept" all_2
 # The lobby's saved settings made when there are none yet (a fresh install's first lobby: no lobby widget before,
 # release overhaul audit 2026-11-21), in the layout the settings blocks after it match; a player's own left alone
 seed=$(body lobby_settings_seed)
@@ -375,13 +375,13 @@ igl="$BAR/LuaMenu/Config/IGL_data.lua"
 tab=$(printf '\t')
 check "no lobby settings yet: made, loadLocalWidgets on" grep -q "^$tab${tab}loadLocalWidgets = true,$" "$igl"
 check "... in Chobby's layout (the scale block's pattern)" grep -q "^$tab\[\"Chili lobby\"\] = {\$" "$igl"
-check "... the once-only fields there for their blocks" grep -q 'drawAtFullSpeed = false' "$igl" && grep -q 'doNotDisturb = false' "$igl" && grep -q 'enableCacheRapidPool = true' "$igl"
-check "... no temp file left, said in launcher.log" [ ! -e "$igl.tmp" ] && grep -q "lobby: its settings file made" "$LOGS/launch.txt"
+all_3() { grep -q 'drawAtFullSpeed = false' "$igl" && grep -q 'doNotDisturb = false' "$igl" && grep -q 'enableCacheRapidPool = true' "$igl"; }; check "... the once-only fields there for their blocks" all_3
+all_4() { [ ! -e "$igl.tmp" ] && grep -q "lobby: its settings file made" "$LOGS/launch.txt"; }; check "... no temp file left, said in launcher.log" all_4
 sed -i "0,/\[\"Chili lobby\"\] *= *{/s//&\n\t\tgameConfigName = \"byar\",/" "$igl"
 check "... launch-bar.sh's gameConfigName insert finds its place" grep -q 'gameConfigName = "byar",' "$igl"
 echo 'return { ["Chili lobby"] = { panel_layout = 2, }, }' > "$igl"; : > "$LOGS/launch.txt"
 lobby_settings_seed "$igl"
-check "a player's lobby settings: left alone" [ "$(cat "$igl")" = 'return { ["Chili lobby"] = { panel_layout = 2, }, }' ] && [ ! -s "$LOGS/launch.txt" ]
+all_5() { [ "$(cat "$igl")" = 'return { ["Chili lobby"] = { panel_layout = 2, }, }' ] && [ ! -s "$LOGS/launch.txt" ]; }; check "a player's lobby settings: left alone" all_5
 : > "$igl"
 lobby_settings_seed "$igl"
 check "an empty one (cut off): made again" grep -q 'loadLocalWidgets = true' "$igl"
@@ -401,9 +401,36 @@ pf=$(grep -A1 '^prof=""$' "$src")
 echo widgets > "$BAR/.bardroid-bench-profile"
 check "a release build: the benchmark's profile file ignored" [ -z "$(BARDROID_DEV=0; eval "$pf"; echo "$prof")" ]
 check "a developer's build: honoured" [ "$(BARDROID_DEV=1; eval "$pf"; echo "$prof")" = widgets ]
-check "the preload on the engine's lines alone, not exported" [ -z "$(grep -n 'export LD_PRELOAD' "$src")" ] &&
+all_6() { [ -z "$(grep -n 'export LD_PRELOAD' "$src")" ] &&
   [ "$(grep -c 'LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation' "$src")" = 4 ] &&
-  [ "$(grep -c '^ *\./spring ' "$src")" = 0 ]
+  [ "$(grep -c '^ *\./spring ' "$src")" = 0 ]; }; check "the preload on the engine's lines alone, not exported" all_6
+
+# BYAR.lua without its top-level order table (BAR's widget list reset, then a killed session): widget_order adds one
+# instead of missing every order; one with no "return {" at all set aside and made anew (release overhaul audit,
+# 2026-11-21)
+byar="$BAR/LuaUI/Config/BYAR.lua"; mkdir -p "$BAR/LuaUI/Config"
+printf -- '-- Widget Custom data and order\nreturn {\n\tallowUserWidgets = true,\n}\n' > "$byar"; : > "$LOGS/android-layer.txt"
+widget_order "Grid menu" 0; widget_order "Build menu" 165
+all_7() { grep -q '\["Grid menu"\] = 0,' "$byar" && grep -q '\["Build menu"\] = 165,' "$byar"; }; check "BYAR.lua with no order table: the orders set" all_7
+all_8() { grep -q 'allowUserWidgets = true,' "$byar" && [ ! -s "$LOGS/android-layer.txt" ]; }; check "... the player's other settings kept, nothing missed" all_8
+printf -- 'return { [cut' > "$byar"; : > "$LOGS/android-layer.txt"
+widget_order "Grid menu" 0
+all_9() { grep -q '\["Grid menu"\] = 0,' "$byar" &&
+  [ "$(cat "$byar.bardroid-unread")" = 'return { [cut' ] && grep -q "unreadable, made anew" "$LOGS/android-layer.txt"; }; check "BYAR.lua cut short: made anew, the order set, the old one kept" all_9
+rm -f "$byar" "$byar.bardroid-unread"
+
+# setup-container.sh's content step (a fresh install's download) with its map's download failing (a mistyped name, a
+# map BAR removed): the install goes on, the skirmish start fetches the map; the game's failing still fails it
+# (release overhaul audit, 2026-11-21). A copy on a scratch BAR folder, pr-downloader a stub.
+sc="$work/sc"; rm -rf "$sc"; mkdir -p "$sc/bar/engine/recoil_9.9/maps" "$sc/bar/maps"
+sed "s#^BAR=/root/bar\$#BAR=$sc/bar#" "$here/app/src/main/assets/bardroid/setup-container.sh" > "$sc/setup.sh"
+printf '#!/bin/sh\ncase "$*" in *--download-map*) exit 1 ;; *--download-game*nogame*) exit 2 ;; esac\nexit 0\n' \
+  > "$sc/bar/engine/recoil_9.9/pr-downloader"
+chmod +x "$sc/bar/engine/recoil_9.9/pr-downloader"
+out=$(sh "$sc/setup.sh" content byar:test byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
+all_10() { [ "$rc" = 0 ] && echo "$out" | grep -q "map download failed (continuing"; }; check "content: the map's download failing, the install goes on" all_10
+out=$(sh "$sc/setup.sh" content nogame byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
+check "content: the game's failing still stops it" [ "$rc" = 42 ]
 
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]

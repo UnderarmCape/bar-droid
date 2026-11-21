@@ -98,7 +98,10 @@ if [ "$MODE" = "glcheck" ] || [ ! -f "$LOGS/glcheck-$GPU.txt" ]; then
       glxinfo 2>/dev/null | grep -q "$e" && echo "yes $e" || echo "NO  $e"
     done
     echo "--- vulkan"; vulkaninfo --summary 2>&1 | grep -E "deviceName|apiVersion|driverName" | head -n 6
-  } > "$LOGS/glcheck-$GPU.txt" 2>&1
+  } > "$LOGS/glcheck-$GPU.txt.tmp" 2>&1
+  # (kept only once whole: a probe cut short by Stop was kept for good, as the file's being there is all that is asked;
+  # release overhaul audit, 2026-11-21)
+  mv -f "$LOGS/glcheck-$GPU.txt.tmp" "$LOGS/glcheck-$GPU.txt"
   cat "$LOGS/glcheck-$GPU.txt"
   [ "$MODE" = "glcheck" ] && exit 0
 fi
@@ -111,6 +114,19 @@ fi
 widget_order() {   # widget_order <widget name> <order>, or "" to drop the entry (the widget's default)
   f="$BAR/LuaUI/Config/BYAR.lua"
   [ -f "$f" ] || { mkdir -p "$BAR/LuaUI/Config"; printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"; }
+  # (a file without its top-level order table: BAR's widget list "Factory reset" writes allowUserWidgets alone, and a
+  # session killed after it kept it so; every order then found no place, ~30 misses for a start. One added after
+  # "return {"; a file without even that, or cut short (its last line not the closing "}"), BAR's unreadable too, set
+  # aside and made anew; release overhaul audit, 2026-11-21)
+  if ! grep -q "^$(printf '\t')order *= *{" "$f"; then
+    if grep -q '^return *{' "$f" && [ "$(sed -n '/[^[:space:]]/h; ${x;p;}' "$f" | tr -d '[:space:]')" = "}" ]; then
+      sed -i '0,/^return *{/s//&\n\torder = {\n\t},/' "$f"
+    else
+      cp -f "$f" "$f.bardroid-unread"
+      printf -- '-- Widget Custom data and order, order = 0 disabled widget\nreturn {\n\torder = {\n\t},\n}\n' > "$f"
+      layer_miss "widget order: LuaUI/Config/BYAR.lua unreadable, made anew (the old one: BYAR.lua.bardroid-unread)"
+    fi
+  fi
   # the name as a regex and as replacement text ("Keybind/Mouse Info": a / would end the sed expression)
   re=$(printf '%s' "$1" | sed 's/[][\/.*^$]/\\&/g'); rep=$(printf '%s' "$1" | sed 's/[\/&]/\\&/g')
   # BAR writes a name that is a Lua identifier as a plain key ("Ecostats = 164,"), others in brackets
