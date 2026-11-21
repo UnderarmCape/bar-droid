@@ -456,11 +456,13 @@ From a fifth read-only audit, launch-bar.sh and setup-container.sh on a fresh or
    each block skipped without a word: no keyboard for the login boxes, no finger scrolling, no pad, BAR's scale.
 15. HIGH: the apt step cut short in dpkg (Stop, Android's low-memory kill) left dpkg's journal, and every retry's apt-get
    install refused ("dpkg was interrupted"): the install failed at that step for good, short of clearing the storage.
-Noted, not worked: a map name typed in another case or with underscores counts as on the phone (Installer.hasMap
-lowercases it), the engine's exact lookup then ends the skirmish in seconds, and on the first start after an update
-that fast exit rolls the update back; a fresh install's content step fails whole when its one map does not download
-(after 3.4 GB); a BYAR.lua left without its order table (BAR's widget list reset, then a killed session) makes ~30
-widget orders miss for one start; the first start's GL probe (glxinfo ten times) is kept even when Stop cut it short.
+17. a map name typed in another case or with underscores counts as on the phone (Installer.hasMap lowercases it), the
+   engine's exact lookup then ends the skirmish in seconds, and on the first start after an update that fast exit
+   rolls the update back.
+18-20. a fresh install's content step fails whole when its one map does not download (after 3.4 GB); a BYAR.lua left
+   without its order table (BAR's widget list reset, then a killed session) makes ~30 widget orders miss for one
+   start; the first start's GL probe is kept even when Stop cut it short. Noted, not worked: that probe runs glxinfo
+   ten times (once would do; first start only).
 Owner's decisions (Kailil): the app's name; a fresh history or filter-repo, and which repository goes public (the
 private one's latest-build pre-release is a debug APK with his icon); the release key; the phone engine's source made
 public (GPL: NOTICE needs its link, or release without it); his name and the worklog archive in what goes public;
