@@ -70,6 +70,7 @@ case "$step" in
       log "keeping$keep"
       [ -n "$keep" ] && apt-mark manual $keep >/dev/null 2>&1
       log "removing$gone and what only they need"
+      dpkg --configure -a >/dev/null 2>&1   # (a dpkg run cut short before: apt refuses until it is finished, as in apt)
       apt-get purge -y -q --autoremove $gone >/dev/null 2>&1 || log "warning: apt-get purge failed (continuing)"
     fi
     if [ -f /etc/bardroid/mesa-installed ]; then
@@ -102,6 +103,10 @@ case "$step" in
     echo 'APT::Install-Recommends "false";' > /etc/apt/apt.conf.d/99bardroid
     echo 'Acquire::Retries "3";' >> /etc/apt/apt.conf.d/99bardroid
     slim_excludes
+    # (an install cut short in dpkg, Stop or Android's low-memory kill, leaves its journal, and every apt-get install
+    # after refused with "dpkg was interrupted": the install failed at this step for good, short of clearing the app's
+    # storage; release overhaul audit, 2026-11-21)
+    dpkg --configure -a >/dev/null 2>&1 || log "warning: dpkg --configure -a failed (continuing)"
     log "apt-get update"
     apt-get update -q || { log "apt-get update failed"; exit 11; }
     log "installing runtime libraries"

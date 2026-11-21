@@ -748,6 +748,13 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       byte) as on a fresh install: HEAD's build opened the lobby without the lobby widget (local widgets off; Chobby
       then saved loadLocalWidgets = false); this one made the file and the lobby loaded "BAR Droid lobby touch", which
       laid out the first-run login popup (panel_layout 3, loadLocalWidgets true).
+- [x] **Item 15: an install cut short in dpkg recovers** (2026-11-21 13:00-13:29): setup-container.sh's apt step runs
+      dpkg --configure -a first (and slim before its purge). On the dev phone's container (the app stopped, apt's lists
+      gone as the apt step leaves them, so nothing could change): an empty journal entry, as a dpkg run cut short
+      leaves one, and apt-get install refused, "dpkg was interrupted, you must manually run 'dpkg --configure -a'";
+      dpkg --configure -a (exit 0) and the same install went through ("bash is already the newest version"), dpkg
+      --audit clean. (The real apt step was not rerun on the dev phone: on an installed container apt-get install can
+      take Debian's Mesa over the phone Mesa.)
 - [x] **A factory's PRESETS button big** (Kailil, 2026-11-21 ~13:00: "Make the preset button for factories big"; 13:00-13:29,
       dev phone): a factory picked alone had its PRESETS ("PRESETS: STRAFE" once it has one) as a small button among
       the states, under REPEAT. Now it is as big as the units' PRESETS (one column, MOVE's height), right after FIGHT,
