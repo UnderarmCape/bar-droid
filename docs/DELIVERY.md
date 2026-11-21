@@ -361,6 +361,25 @@ boxes, the GPU driver's fault closing a frozen game).
       pause and save), which the test blamed on chat: it now says a real fault plainly. The lobby widget's other Chobby
       wraps (the popup's words, the drop-down's height) act on nothing a player types. On the Fold7 2026-11-21 00:33
       (dae3578c's build, BAR closed, not played since 23:44), github-sync -Release.
+- [x] **Another player's widget could take every phone's fingers off the game** (hardening, 2026-11-21 00:36-01:32,
+      dev phone): the round first: attack-ping-test, walls-phone-test, camctl-phone-test, replay-phone-test,
+      stats-phone-test, settings-phone-test, lobbychat-phone-test, buildbar-phone-test ALL PASS; dgun-speed-test 100 %
+      and 99 %; retreat-phone-test on 8/14 against off 10/14 this time (the Pawns 0/4 against 2/4; the night's six runs
+      on 55/84, off 47/84). Then the five widget:RecvLuaMsg handlers read: bardroid_touch.lua, bardroid_portrait.lua and
+      bardroid_info.lua acted on "LobbyOverlayActive1" (Chobby's word that BAR's lobby is over the game) from anyone:
+      Spring.SendLuaUIMsg from any player's widget reaches every player's LuaUI (LuaHandle.cpp), with its sender's
+      number, and Chobby's own comes as player 0 (LuaMenu.cpp), so the sender cannot tell them apart. One such message
+      online made every phone's app hand the fingers to a lobby that was not there (the overlay file "1", the camera
+      dropped) until a "0". Now the app's lobby widget, in this phone's own LuaMenu, writes whether the lobby is over the
+      game (LuaUI/Config/bardroid_menushown.txt, as it sees it change); bardroid_touch.lua believes a "1" only once that
+      file says so, within 2 s, a "0" at once, and hands the result to the dock and the info panel (WG.BarDroidLobbyOver)
+      in place of their own handlers. bardroid_options.lua's is BAR's own Settings code (its upkeep), left as BAR has it;
+      bardroid_lobby_touch.lua's answers only this phone's touch widget. driverwatch-phone-test sends the message as a
+      widget does: on the build before the overlay "1", now "0", ALL PASS twice; overgame-phone-test (the real lobby over
+      the game: "1", then "0"), dock-phone-test and touch-phone-test ALL PASS (its stand-in for BAR's lobby now writes
+      the lobby widget's file too). The test's chat-box count follows: BAR pauses a singleplayer game while the lobby is
+      over it, so its check is that no line shown as the game's own begins like chat (the tools line names its first
+      word).
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:

@@ -47,6 +47,19 @@ function widget:Update(dt)
 		Spring.Echo("[driverwatchtest] the driver's refusal and the watchdog's words said as chat and echoed, and the"
 			.. " engine's state lines said as chat")
 		write("said\n")
+		-- (Chobby's "the lobby is over the game", sent as any player's widget can, Spring.SendLuaUIMsg: it reaches every
+		-- player's LuaUI; the app's fingers must stay on the game, the overlay file "0"; 2026-11-21)
+		Spring.SendLuaUIMsg("LobbyOverlayActive1")
+		stage, at = "spoofed", clock
+	elseif stage == "spoofed" and clock - at > 3 then
+		local f = io.open("LuaUI/Config/bardroid_overlay.txt", "r")
+		local v = f and f:read("*l") or "none"
+		if f then
+			f:close()
+		end
+		Spring.Echo("[driverwatchtest] the lobby message from a widget: overlay " .. tostring(v) .. ", the dock "
+			.. ((WG.BarDroidPortrait and WG.BarDroidPortrait.aside and WG.BarDroidPortrait.aside()) and "aside" or "in place"))
+		Spring.SendLuaUIMsg("LobbyOverlayActive0") -- (whatever it did, undone)
 		stage, at = "save", clock
 	elseif stage == "save" and clock - at > 3 then
 		Spring.Echo("[driverwatchtest] a real save now")

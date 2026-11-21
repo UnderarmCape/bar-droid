@@ -4823,6 +4823,14 @@ end
 
 function widget:Update(dt)
 	checkActive()
+	-- BAR's lobby over the game (the top bar's Lobby button), as bardroid_touch.lua has checked it with this phone's own
+	-- lobby (WG.BarDroidLobbyOver): the dock out of RtsTouch's way under it (writeDock), back with the game. Chobby's
+	-- message itself reaches LuaUI from any player online too (2026-11-21)
+	local over = WG.BarDroidLobbyOver == true
+	if over ~= (SP.lobbyOver == true) then
+		SP.lobbyOver = over
+		writeDock(true)
+	end
 	SP.guardTooltips()
 	dockLines()
 	topbarBars(active or upright())
@@ -5615,15 +5623,6 @@ end
 -- The game over (BAR's Awards up): the dock steps aside for good (SP.windowOpen)
 function widget:GameOver()
 	SP.gameOver = true
-end
-
--- BAR's lobby over the game (its "LobbyOverlayActive1" / "0" to the widgets: the top bar's Lobby button): the dock out
--- of RtsTouch's way under it (writeDock), back with the game
-function widget:RecvLuaMsg(msg)
-	if msg:sub(1, 18) == "LobbyOverlayActive" then
-		SP.lobbyOver = msg:sub(1, 19) == "LobbyOverlayActive1"
-		writeDock(true)
-	end
 end
 
 function widget:GetConfigData()

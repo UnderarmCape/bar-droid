@@ -1110,12 +1110,6 @@ function widget:MousePress(x, y, button)
 	return true -- the panel takes the tap: no order to the map under it
 end
 
-function widget:RecvLuaMsg(msg)
-	if msg:sub(1, 18) == "LobbyOverlayActive" then
-		overlay = msg:sub(1, 19) == "LobbyOverlayActive1"
-	end
-end
-
 --------------------------------------------------------------------------------
 -- Life cycle
 
@@ -1126,6 +1120,9 @@ function widget:SelectionChanged()
 end
 
 function widget:Update(dt)
+	-- (BAR's lobby over the game, as bardroid_touch.lua has checked it with this phone's own lobby: Chobby's message
+	-- itself reaches LuaUI from any player online too, 2026-11-21)
+	overlay = WG.BarDroidLobbyOver == true
 	if WG.info and WG.info ~= stub then -- BAR's own Info widget runs: it is the panel
 		standDown = true
 		return

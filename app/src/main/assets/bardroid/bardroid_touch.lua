@@ -195,6 +195,7 @@ function widget:Initialize()
 		end
 	end
 	writeWhole(OVERLAY, "0\n") -- (one left at "1" by a game that ended under the lobby)
+	WG.BarDroidLobbyOver = false
 	-- (and BAR's lobby asked whether it is over the game: BAR says so only as it opens or closes, and a fold or turn
 	-- reloads LuaUI between the two; the app's lobby widget answers with BAR's own "LobbyOverlayActive1")
 	if Spring.SendLuaMenuMsg then
@@ -1380,16 +1381,49 @@ end
 
 local tooltipApi, barShowTooltip, fingersShowTooltip -- BAR's tooltip API wrapped for fingers (wrapTooltips)
 
--- BAR's lobby over the game or gone again: told to the app (OVERLAY)
+-- BAR's lobby over the game or gone again: told to the app (OVERLAY) and the app's widgets (WG.BarDroidLobbyOver).
+-- Chobby's "LobbyOverlayActive1" reaches LuaUI from any player's Spring.SendLuaUIMsg online too, and one sent by a
+-- player's widget took every phone's fingers off the game (driverwatch-phone-test, 2026-11-21): believed only once the
+-- app's lobby widget, in this phone's own LuaMenu, says the lobby is shown (bardroid_menushown.txt), within 2 s; "0" at
+-- once (it only gives the game back)
+local overlayCheck = { file = "LuaUI/Config/bardroid_menushown.txt" }
+function overlayCheck.set(on)
+	lobbyOver = on
+	WG.BarDroidLobbyOver = on
+	writeWhole(OVERLAY, on and "1\n" or "0\n")
+end
+function overlayCheck.step()
+	if not overlayCheck.asked then
+		return
+	end
+	local f = io.open(overlayCheck.file, "r")
+	local said = f and f:read("*l")
+	if f then
+		f:close()
+	end
+	if said == "1" then
+		overlayCheck.asked = nil
+		overlayCheck.set(true)
+	elseif Spring.DiffTimers(Spring.GetTimer(), overlayCheck.asked) > 2 then
+		overlayCheck.asked = nil
+		Spring.Echo("[bardroid-touch] a LobbyOverlayActive1 not from this phone's lobby: left alone") -- (tools)
+	end
+end
 function widget:RecvLuaMsg(msg)
 	if msg:sub(1, 18) == "LobbyOverlayActive" then
-		lobbyOver = msg:sub(1, 19) == "LobbyOverlayActive1"
-		writeWhole(OVERLAY, lobbyOver and "1\n" or "0\n")
+		if msg:sub(1, 19) == "LobbyOverlayActive1" then
+			overlayCheck.asked = Spring.GetTimer()
+			overlayCheck.step()
+		else
+			overlayCheck.asked = nil
+			overlayCheck.set(false)
+		end
 	end
 end
 
 function widget:Shutdown()
 	writeWhole(OVERLAY, "0\n")
+	WG.BarDroidLobbyOver = nil
 	WG.BarDroidOnInterface = nil
 	WG.BarDroidAskKeyboard = nil
 	if not queueDrawn then
@@ -1852,6 +1886,7 @@ end
 
 function widget:Update(dt)
 	WG.BarDroidOnInterface = pointOnInterface
+	overlayCheck.step() -- (a "LobbyOverlayActive1" waiting for this phone's lobby to say so)
 	if uiRescale.pending then -- (a new interface scale: the reloaded widgets in, every widget told the screen's size)
 		rescaleFinish()
 	elseif uiRescale.ahead then

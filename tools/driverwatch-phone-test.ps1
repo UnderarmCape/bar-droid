@@ -65,10 +65,17 @@ try {
   else { "[driverwatchtest] FAIL the save's words as chat and a real save: 'Game saved' $($savedSaid.Count) times (one wanted)"; $fails++ }
   # (the chat box: a pause line and BAR's Autoquit countdown said as chat are not the game's own; the real pause and
   # unpause are: two system lines, no countdown; bardroid_chat.lua's tools lines say each)
-  $sys = @(Log 'bardroid-chat\] .tools. a console line shown' 10)
+  # (the lobby's message the test sends below makes BAR pause and unpause a singleplayer game too: real lines, so the
+  # lines are told apart by their first word, none of them a chat's "<name>" or "[name]")
+  $sys = @(Log 'bardroid-chat\] .tools. a console line shown' 12)
+  $chatty = @($sys | Where-Object { $_ -match "game's own: [<\[>]" })
   $quit = @(Log 'bardroid-chat\] .tools. the autoquit countdown' 5)
-  if ($sys.Count -eq 2 -and $quit.Count -eq 0) { "[driverwatchtest] PASS the chat box: the pause and Autoquit's words as chat not the game's; the real pause and unpause two system lines" }
-  else { "[driverwatchtest] FAIL the chat box: $($sys.Count) system lines (2 wanted: the real pause and unpause), $($quit.Count) Autoquit countdowns (0 wanted)"; $fails++ }
+  if ($sys.Count -ge 2 -and $chatty.Count -eq 0 -and $quit.Count -eq 0) { "[driverwatchtest] PASS the chat box: the pause and Autoquit's words as chat not the game's; $($sys.Count) real system lines (the test's pause and unpause, and BAR's)" }
+  else { "[driverwatchtest] FAIL the chat box: $($sys.Count) system lines ($($chatty.Count) of them chat's), $($quit.Count) Autoquit countdowns (0 wanted)"; $fails++ }
+  # (Chobby's lobby message sent as a widget's: the fingers stay on the game, the overlay file "0")
+  $spoof = "$(Log 'driverwatchtest\] the lobby message from a widget' 1)"
+  if ($spoof -match 'overlay 0') { "[driverwatchtest] PASS the lobby's message sent by a widget: the overlay file stays 0 ($(($spoof -replace '^.*widget: ', '').Trim()))" }
+  else { "[driverwatchtest] FAIL the lobby's message sent by a widget took the game: $(if ($spoof) { ($spoof -replace '^.*widget: ', '').Trim() } else { 'no answer' })"; $fails++ }
   # (how the chat lines look in the log: for the record)
   Log 'SpringApp::Reload\] test|creating LoadScreen$|203\.0\.113\.7' 6 | ForEach-Object { "[driverwatchtest] (in the log: $_)" }
   "[driverwatchtest] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"

@@ -327,7 +327,8 @@ function widget:AddConsoleLine(line)
 	for _, s in ipairs(SYSTEM_LINES) do
 		if line:find(s, 1, true) then
 			add("", WHITE, SYSTEM_COLOR .. line:gsub("%s+", " "))
-			Spring.Echo("[bardroid-chat] (tools) a console line shown as the game's own")
+			-- (its first word for the tools: a chat-shaped one, "<name>" or "[name]", must never be here)
+			Spring.Echo("[bardroid-chat] (tools) a console line shown as the game's own: " .. (line:match("^(%S+)") or ""))
 			return
 		end
 	end

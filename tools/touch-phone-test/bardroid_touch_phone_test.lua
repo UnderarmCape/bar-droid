@@ -339,9 +339,16 @@ local cases = {
 	function() return hoverAnswer("the pointer on the map answers map", 0) end,
 	-- BAR's lobby over the game (the top bar's Lobby): BAR tells the widgets "LobbyOverlayActive1" / "0", sent here the
 	-- same way. The app is told (bardroid_overlay.txt), the dock steps aside ("dock none"), and the fingers' camera lines
-	-- leave the game behind the lobby; with the lobby gone they pan again (2026-11-17)
+	-- leave the game behind the lobby; with the lobby gone they pan again (2026-11-17). Since 2026-11-21 the app believes
+	-- the message only with its own lobby widget saying the lobby is shown (bardroid_menushown.txt): the test stands in
+	-- for that too (a widget's message alone takes nothing: driverwatch-phone-test)
 	function()
 		camera(Game.mapSizeX / 2, Game.mapSizeZ / 2, 2500, 1.9)
+		local f = io.open("LuaUI/Config/bardroid_menushown.txt", "w")
+		if f then
+			f:write("1\n")
+			f:close()
+		end
 		Spring.SendLuaUIMsg("LobbyOverlayActive1")
 	end,
 	function() return overlayIs("the app is told BAR's lobby is over the game", "1") end,
@@ -369,6 +376,11 @@ local cases = {
 		local ok = m < 1
 		fails = fails + (ok and 0 or 1)
 		log(string.format("%s a drag and a pinch on BAR's lobby leave the game's camera: %.1f", ok and "PASS" or "FAIL", m))
+		local f = io.open("LuaUI/Config/bardroid_menushown.txt", "w")
+		if f then
+			f:write("0\n")
+			f:close()
+		end
 		Spring.SendLuaUIMsg("LobbyOverlayActive0")
 	end,
 	function() return overlayIs("the app is told BAR's lobby is gone", "0") end,

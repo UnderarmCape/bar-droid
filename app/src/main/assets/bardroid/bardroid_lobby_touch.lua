@@ -2759,8 +2759,25 @@ function widget:RecvLuaMsg(msg)
 	end
 end
 
+-- The lobby over a game as this phone's own LuaMenu sees it, for the game's widgets (bardroid_touch.lua): Chobby's
+-- "LobbyOverlayActive1" reaches LuaUI from any player's Spring.SendLuaUIMsg online too (its sender's number, Chobby's
+-- own comes as 0, as a player's can), so LuaUI believes it only with this file saying so (2026-11-21)
+local menuShown = { file = "LuaUI/Config/bardroid_menushown.txt" }
+function menuShown.write(on)
+	if menuShown.last == on then
+		return
+	end
+	menuShown.last = on
+	local f = io.open(menuShown.file, "w")
+	if f then
+		f:write(on and "1\n" or "0\n")
+		f:close()
+	end
+end
+
 local function uprightUpdate(now)
 	local shown = lobbyShown() -- (a change at once: Chobby's own layout half a second over the game before)
+	menuShown.write(shown and gameLoaded)
 	if upright.checkAt and Spring.DiffTimers(now, upright.checkAt) < 0.5 and shown == upright.wasShown then
 		return
 	end
