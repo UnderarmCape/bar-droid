@@ -44,11 +44,16 @@ export PRD_HTTP_SEARCH_URL="https://files-cdn.beyondallreason.dev/find"
 export PRD_RAPID_USE_STREAMER=false
 export PRD_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
 # AngelScript ARM64 call stub missing from the official arm64 BARb/CircuitAI build (see docs/arm64-ai-fix.md).
-[ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && export LD_PRELOAD="$BAR/libasarm64.so"
+# Preloaded into the engine alone (LD_PRELOAD on its ./spring lines below, not exported): they live in the write folder,
+# which the game's Lua can write, and exported every sleep, pidof and taskset this script starts loaded them as well, a
+# library written mid-game within 3 s (release overhaul item 9, 2026-11-21). A developer's dev-env.sh may set its own.
+PRELOAD=""
+[ "$(uname -m)" = aarch64 ] && [ -f "$BAR/libasarm64.so" ] && PRELOAD="$BAR/libasarm64.so"
 # Frame cap: sleeps after each buffer swap to BARDROID_FPS (from the app's 30/60 fps setting; 0 = none), and the
 # hidden window (screen off, catching up). The emulator build's x86_64 copy (no cap, no Present-fence answer).
 if [ -f "$BAR/libbardroid_pace.so" ]; then
-  export LD_PRELOAD="${LD_PRELOAD:+$LD_PRELOAD:}$BAR/libbardroid_pace.so" BARDROID_FPS="${BARDROID_FPS:-30}"
+  PRELOAD="${PRELOAD:+$PRELOAD:}$BAR/libbardroid_pace.so"
+  export BARDROID_FPS="${BARDROID_FPS:-30}"
   # New textures start as zeros: Mesa's recycled GPU buffers hold old pictures, which BAR's panels showed as noise.
   [ "$(uname -m)" = aarch64 ] && export BARDROID_TEX_ZERO=1
 fi
@@ -308,6 +313,19 @@ game_widgets_only() {
 game_widgets_only
 rm -f "$BAR/LuaUI/Config/bardroid_game_widgets.txt"   # (the lobby's warnings about a host's widget options: shown)
 
+# With loadLocalWidgets on (below: the app's own lobby widget needs it) the lobby loads every LuaMenu widget in the write
+# folder, with no sandbox. In a release build only the app's own stays there: a file put there by the game's Lua would
+# have run in every lobby (release overhaul item 9, 2026-11-21). A developer's build keeps the tools' test widgets.
+lobby_widgets_only() {
+  [ "${BARDROID_DEV:-0}" = 1 ] && return 0
+  [ -d "$BAR/LuaMenu/Widgets" ] || return 0
+  gone=$(find "$BAR/LuaMenu/Widgets" ! -type d 2>/dev/null | while IFS= read -r f; do
+    [ "$f" = "$BAR/LuaMenu/Widgets/bardroid_lobby_touch.lua" ] && continue
+    rm -f "$f" && printf '%s\n' "${f#"$BAR"/}"
+  done)
+  [ -z "$gone" ] || log "!!! LuaMenu/Widgets: removed what is not the app's lobby widget, $(printf '%s\n' "$gone" | wc -l | tr -d ' ') in all: $(printf '%s\n' "$gone" | head -n 3 | tr '\n' ' ' | sed 's/ $//')"
+}
+
 LOBBY_GAME=byar
 if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
   widget_order "Grid menu" 0
@@ -337,13 +355,16 @@ if [ "$MODE" = skirmish ] || [ "$MODE" = lobby ] || [ "$MODE" = bench ]; then
     fi
     grep -q 'loadLocalWidgets = true' "$igl" || layer_miss "lobby touch: loadLocalWidgets not set in LuaMenu/Config/IGL_data.lua"
   fi
+  lobby_widgets_only
   log "singleplayer game: $LOBBY_GAME"
 fi
 
 # A benchmark's own engine settings (tools/phone-bench.ps1 -Settings, the file .bardroid-bench-settings: key = value
 # lines) change springsettings.cfg for that run only: the file as it was before goes back at the next start, before
-# anything else here touches it (and phone-bench.ps1 puts it back after its run).
-if [ -f "$BAR/.springsettings.pre-bench" ]; then
+# anything else here touches it (and phone-bench.ps1 puts it back after its run). The benchmark's files, which the
+# developer's tools write over adb, count only in a developer's build (BARDROID_DEV): the write folder is the game's Lua's
+# to write too, and .bardroid-bench-settings went into a sed command as it was (release overhaul item 9, 2026-11-21).
+if [ "${BARDROID_DEV:-0}" = 1 ] && [ -f "$BAR/.springsettings.pre-bench" ]; then
   mv "$BAR/.springsettings.pre-bench" "$BAR/springsettings.cfg" && log "settings from before the benchmark put back"
 fi
 
@@ -503,13 +524,14 @@ fi
 # A profiling run (tools/phone-bench.ps1 -Profile, the file .bardroid-bench-profile): BAR's Widget Profiler (LuaUI CPU
 # per widget) or the gadget profiler (game logic CPU per gadget, "luarules profile") on, their tables caught by the
 # benchmark's own screenshot at frame 2015.
-prof=$(cat "$BAR/.bardroid-bench-profile" 2>/dev/null)
+prof=""
+[ "${BARDROID_DEV:-0}" = 1 ] && prof=$(cat "$BAR/.bardroid-bench-profile" 2>/dev/null)
 if [ "$MODE" = bench ]; then
   widget_order "Mission Info" 0; echo 1 > "$BAR/LuaUI/Config/bardroid_bench.txt"
   if [ "$prof" = widgets ]; then widget_order "Widget Profiler" 1; else widget_order "Widget Profiler" ""; fi
   [ "$prof" = gadgets ] && sed -i 's/|20:vsync 0|/|20:vsync 0|40:luarules profile|/' "$BAR/bench.txt"
   log "benchmark${prof:+, profiling $prof}"
-  if [ -s "$BAR/.bardroid-bench-settings" ]; then
+  if [ "${BARDROID_DEV:-0}" = 1 ] && [ -s "$BAR/.bardroid-bench-settings" ]; then
     [ -f "$BAR/.springsettings.pre-bench" ] || cp "$BAR/springsettings.cfg" "$BAR/.springsettings.pre-bench"
     while IFS='=' read -r k v; do
       k=$(echo $k); v=$(echo $v); [ -n "$k" ] || continue
@@ -589,7 +611,12 @@ if [ "${BARDROID_PORTRAIT:-0}" = 1 ] && [ -d "$BAR/.bardroid-loadpictures-uprigh
     cp -f "$f" "$BAR/bitmaps/loadpictures/$rel" && echo "$rel" >> "$LP_OURS"
   done
 elif [ -f "$LP_OURS" ]; then
-  while read -r rel; do [ -n "$rel" ] && rm -f "$BAR/bitmaps/loadpictures/$rel"; done < "$LP_OURS"
+  # (a line with "..", or from the root, is no picture of ours: the file is in the write folder, which the game's Lua can
+  # write, and its lines are deleted; release overhaul item 9)
+  while read -r rel; do
+    case "$rel" in "" | /* | *..*) continue ;; esac
+    rm -f "$BAR/bitmaps/loadpictures/$rel"
+  done < "$LP_OURS"
   rmdir "$BAR/bitmaps/loadpictures/manual/scavengers" "$BAR/bitmaps/loadpictures/manual" "$BAR/bitmaps/loadpictures" 2>/dev/null || :
   rm -f "$LP_OURS"
 fi
@@ -754,19 +781,22 @@ fi
 case "$MODE" in
   skirmish)
     log "spring skirmish: $BAR/skirmish.txt"
-    ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
+    LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation --write-dir "$BAR" "$BAR/skirmish.txt"; rc=$? ;;
   bench)
     # A replay benchmark (tools/phone-bench.ps1 -Replay): .bardroid-bench-replay says "<game second> <seconds> <replay
     # in demos/>"; bardroid_bench.lua fast-forwards to that second and measures the game's speed for that long.
     rep="$BAR/.bardroid-bench-replay"
-    if [ -s "$rep" ] && read -r skip secs file < "$rep" && [ -f "$BAR/demos/$file" ]; then
+    [ "${BARDROID_DEV:-0}" = 1 ] || rep="/nonexistent"   # (a developer's build only, as the benchmark's other files)
+    # (a replay in demos/ itself: no "/" in its name, so no "..")
+    if [ -s "$rep" ] && read -r skip secs file < "$rep" && [ -n "$file" ] && [ "$file" = "${file##*/}" ] \
+        && [ -f "$BAR/demos/$file" ]; then
       echo "replay $skip $secs" > "$BAR/LuaUI/Config/bardroid_bench.txt"
       log "spring replay benchmark: demos/$file from game second $skip, $secs s"
-      ./spring --isolation --write-dir "$BAR" "$BAR/demos/$file"; rc=$?
+      LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation --write-dir "$BAR" "$BAR/demos/$file"; rc=$?
     else
       [ -s "$rep" ] && log "replay benchmark: no demos/$(cut -d' ' -f3- "$rep"); BAR's benchmark instead"
       log "spring benchmark: $BAR/bench.txt"
-      ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$?
+      LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation --write-dir "$BAR" "$BAR/bench.txt"; rc=$?
     fi ;;
   lobby)
     # Written by BAR's launcher before every start (launcher config "json_files"); without it Chobby picks no game
@@ -846,7 +876,7 @@ case "$MODE" in
       fi
     fi
     log "spring lobby: rapid://${LOBBY_TAG:-byar-chobby:test}"
-    ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
+    LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation --write-dir "$BAR" --menu "rapid://${LOBBY_TAG:-byar-chobby:test}"; rc=$? ;;
   shell)
     log "shell mode: sleeping; use the app log to inspect"; sleep 3600; rc=0 ;;
   *) log "unknown MODE=$MODE"; rc=2 ;;

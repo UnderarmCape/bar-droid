@@ -61,7 +61,10 @@ final class LoadPictures {
                 Log.i("app", "loading screen: BAR's pictures for the upright screen in place (the screen turned)");
             } else if (!upright && ours.isFile()) {
                 for (String rel : Files.readAllLines(ours.toPath(), StandardCharsets.UTF_8)) {
-                    if (!rel.isEmpty()) Files.deleteIfExists(new File(pics, rel).toPath());
+                    // (a line with "..", or from the root, is no picture of ours: the list is in the write folder, which
+                    // the game's Lua can write, and its lines are deleted; release overhaul item 9, 2026-11-21)
+                    if (rel.isEmpty() || rel.startsWith("/") || rel.contains("..")) continue;
+                    Files.deleteIfExists(new File(pics, rel).toPath());
                 }
                 // (the folders only when empty, as launch-bar.sh's rmdir)
                 for (String d : new String[]{"manual/scavengers", "manual", ""}) {

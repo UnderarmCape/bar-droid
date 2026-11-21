@@ -343,5 +343,47 @@ inst=$(sed -n '/new String\[\]{"bardroid_touch.lua"/,/})/p' "$here/app/src/main/
 mine=$(for w in $APP_WIDGETS; do echo "$w"; done | sort | tr '\n' ' ')
 check "the app's widgets: launch-bar.sh's list is the Installer's ($(echo $mine | wc -w))" [ -n "$inst" ] && [ "$inst" = "$mine" ]
 
+# The write folder trusted less (release overhaul item 9, 2026-11-21): the lobby's widgets in a release build only the
+# app's own; .bardroid-loadpictures-ours' lines never outside bitmaps/loadpictures; the benchmark's profile file only in a
+# developer's build; the engine preloaded with the app's libraries on its own command line, not exported
+lw=$(body lobby_widgets_only)
+[ -n "$lw" ] || { echo "[launchbartest] FAIL launch-bar.sh: lobby_widgets_only not found"; exit 1; }
+eval "$lw"
+log() { printf '%s\n' "$*" >> "$LOGS/launch.txt"; }
+lobby_start() {   # lobby_start <BARDROID_DEV>
+  rm -rf "$BAR/LuaMenu"; mkdir -p "$BAR/LuaMenu/Widgets/sub" "$BAR/LuaMenu/Config"
+  echo app > "$BAR/LuaMenu/Widgets/bardroid_lobby_touch.lua"; echo x > "$BAR/LuaMenu/Widgets/evil.lua"
+  echo x > "$BAR/LuaMenu/Widgets/sub/more.lua"; echo cfg > "$BAR/LuaMenu/Config/IGL_data.lua"
+  : > "$LOGS/launch.txt"
+  ( BARDROID_DEV=$1; lobby_widgets_only )
+}
+lobby_start 0
+check "a release build's lobby: a widget not the app's gone" [ ! -e "$BAR/LuaMenu/Widgets/evil.lua" ]
+check "... one in a subfolder too" [ ! -e "$BAR/LuaMenu/Widgets/sub/more.lua" ]
+check "... the app's own lobby widget kept" [ "$(cat "$BAR/LuaMenu/Widgets/bardroid_lobby_touch.lua")" = app ]
+check "... the lobby's settings untouched" [ "$(cat "$BAR/LuaMenu/Config/IGL_data.lua")" = cfg ]
+check "... said in launcher.log" grep -q "LuaMenu/Widgets: removed what is not the app's lobby widget, 2 in all" "$LOGS/launch.txt"
+lobby_start 1
+check "a developer's build: the tools' test widgets kept" [ -f "$BAR/LuaMenu/Widgets/evil.lua" ] && [ -f "$BAR/LuaMenu/Widgets/sub/more.lua" ]
+log() { :; }
+lp=$(awk '/^  while read -r rel; do$/ { on = 1 } on { print } on && /^  done < "\$LP_OURS"$/ { exit }' "$src")
+[ -n "$lp" ] || { echo "[launchbartest] FAIL launch-bar.sh: the load pictures' removal loop not found"; exit 1; }
+mkdir -p "$BAR/bitmaps/loadpictures/manual" "$BAR/demos"
+echo p > "$BAR/bitmaps/loadpictures/manual/x.jpg"; echo keep > "$BAR/demos/game.sdfz"; echo keep > "$work/outside.txt"
+LP_OURS="$work/lp-ours"
+printf '%s\n' "manual/x.jpg" "../../demos/game.sdfz" "/$work/outside.txt" "" > "$LP_OURS"
+eval "$lp"
+check "load pictures: ours removed" [ ! -e "$BAR/bitmaps/loadpictures/manual/x.jpg" ]
+check "load pictures: a line with .. removes nothing outside" [ -f "$BAR/demos/game.sdfz" ]
+check "load pictures: a line from the root removes nothing" [ -f "$work/outside.txt" ]
+pf=$(grep -A1 '^prof=""$' "$src")
+[ -n "$pf" ] || { echo "[launchbartest] FAIL launch-bar.sh: the benchmark profile's lines not found"; exit 1; }
+echo widgets > "$BAR/.bardroid-bench-profile"
+check "a release build: the benchmark's profile file ignored" [ -z "$(BARDROID_DEV=0; eval "$pf"; echo "$prof")" ]
+check "a developer's build: honoured" [ "$(BARDROID_DEV=1; eval "$pf"; echo "$prof")" = widgets ]
+check "the preload on the engine's lines alone, not exported" [ -z "$(grep -n 'export LD_PRELOAD' "$src")" ] &&
+  [ "$(grep -c 'LD_PRELOAD="${LD_PRELOAD:-$PRELOAD}" ./spring --isolation' "$src")" = 4 ] &&
+  [ "$(grep -c '^ *\./spring ' "$src")" = 0 ]
+
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]

@@ -641,6 +641,28 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       boxes are what is left, with the gamepad widget's 66 kB/s). Not done: skipping the redraw when a refresh changed
       nothing (what the texture draws beyond the items is not all known to the refresh), moving the wind boxes' panels
       into the texture (a visual change).
+- [x] **Item 9: launch-bar.sh trusts the write folder less** (2026-11-21 08:12-08:40): the preloads (the AI's ARM64
+      stub, the frame pacer) on the engine's four ./spring lines alone, not exported (a developer's dev-env.sh may still
+      set its own); the benchmark's files (.springsettings.pre-bench, .bardroid-bench-settings, -profile, -replay) only
+      in a developer's build, the replay's name without a "/"; in a release build the lobby's widget folder keeps only the
+      app's own (lobby_widgets_only, before every lobby or game); .bardroid-loadpictures-ours' lines with ".." or from
+      the root skipped (here and in LoadPictures.java). launch-bar-test.sh: 12 new cases (a foreign and a subfolder
+      lobby widget gone, the app's kept, the settings untouched, said in launcher.log, a developer's build keeping the
+      test widgets; the load pictures' "../../demos/..." and root lines removing nothing; the profile file ignored in a
+      release build, honoured in a developer's; the preload on the four engine lines, none exported) ALL PASS; HEAD's
+      script on the same file deleted demos/game.sdfz through "../../demos/game.sdfz" and exported both preloads. Dev
+      phone: the running engine's environment has both libraries, launch-bar.sh's sleep none (before: every program it
+      started); the skirmish AI still initialises ("BARbarIAn 1.6.29 Initialized!", the ARM64 stub), the pacer still
+      loads ([pace] lines); types-phone-test, lobby-phone-test, replay-phone-test, pad-test -Online, dock-phone-test ALL
+      PASS on it. (The engines themselves stay in the write folder, as on BAR's PC install: that class rests on BAR's Lua
+      sandbox; item 11's notes stay unworked.)
+- [x] **Item 10: the PC import in developer builds only; the picker's null Uri** (2026-11-21 08:20-08:40):
+      Installer's import step (Android/data/<pkg>/files/import moved over the write folder at every Install/Update)
+      runs only in a debuggable build (Prefs.developer): on Android 9-10 other apps with storage access can write that
+      folder, and pr-downloader trusts pool files it finds. ReplayImportActivity skips a picked item without a Uri and
+      names it without one safely. (The second audit's crash sweep found nothing else on the player's path: the pad
+      pump, AudioPump, the process readers, PerfLog, LogShare, LoadPictures, LobbyBridge and the import threads catch
+      what they run, and the Android calls that can return null are checked.)
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
