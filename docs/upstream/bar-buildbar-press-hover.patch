@@ -1,0 +1,12 @@
+diff --git a/luaui/Widgets/gui_buildbar.lua b/luaui/Widgets/gui_buildbar.lua
+--- a/luaui/Widgets/gui_buildbar.lua
++++ b/luaui/Widgets/gui_buildbar.lua
+@@ -1687,4 +1687,8 @@ local function buildHandler(button)
+ function widget:MousePress(x, y, button)
++	-- the icon under the click itself, not under the pointer at the last check in Update: a touch screen moves the
++	-- pointer and presses in the same frame
++	hoveredFac = mouseOverIcon(x, y)
++	hoveredBOpt = mouseOverSubIcon(x, y)
+ 	pressedFac = hoveredFac
+ 	pressedBOpt = hoveredBOpt
+

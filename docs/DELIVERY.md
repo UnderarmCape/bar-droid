@@ -236,6 +236,22 @@ boxes, the GPU driver's fault closing a frozen game).
       hover: 0/6 against 0/6, each Skater fallen back at 50 % and 272 elmos away in 3 s, dead anyway: as at 11:32 (too
       frail for 14 Grunts; an earlier fall-back cost the Pawns), nothing changed. Pictures (the knob and rails, WALLS
       lit, the dock): no UI polish due.
+- [x] **Round and round: the dock, factory, types, overgame, driverwatch, touch, lobby, pad; two tests' own faults**
+      (hardening, 2026-11-20 18:34-19:19, dev phone): dock-phone-test upright, factory-preset-test, types-phone-test,
+      overgame-phone-test, driverwatch-phone-test, touch-phone-test, lobby-phone-test ALL PASS. dock-phone-test at
+      1080x1198 2 FAILED, the same two steps as at 15:55 (a GRID dragged into the dock: its corner at y 131, not held at
+      the dock's top 313; the held LINE's PLACE: nothing queued), and both failing runs had the same start spot (free
+      631,219, blocked 534,203), the passing one another (275,549). The test's own: straight down from x 631 the GRID's
+      corner went over the gap between the split dock's two blocks, where by design it is the game's own place, not
+      held (RtsTouch.aboveDock; the box drag already steered into the right block); and the LINE, drawn 220 px left,
+      ran over the blocked spot. Now the GRID goes into the right block on a split dock and the LINE away from a blocked
+      spot along its way; reruns at 1080x1198 ALL PASS twice, the first from that very spot (corner y 313, 10 queued),
+      upright ALL PASS. pad-test -Online 2 FAILED: its ping round met "UNDER ATTACK, 4 OF 5" among its four pings, its
+      own self-destruct step's blast having hurt the units beside it (LuaUI is not told whose the damage was, so the
+      app's attack entries count any damage to my units, as BAR's own notice does: left as designed); the test now
+      allows such an entry older than its three newest pings: ALL PASS. Seen meanwhile, not a cause: from ~20 s into
+      every game bardroid_touch.lua reads BAR's widget files ahead (uiRescale.readAhead, a file or more a frame for some
+      6 s; the engine logs each phone-patched one), in the passing runs over the same steps too.
 - [x] **On the Fold7** (2026-11-20 12:35, Kailil's new wireless debugging port 39985 over Tailscale, a relay): latest-build
       18e85202, the day's ten queue items and the hardening since (no game played on it since the 04:44 install: two
       app starts, no error lines, 0 ANRs and crashes). Tested first on the dev phone with the same app code:
@@ -5185,7 +5201,7 @@ Added 2026-11-10 ~05:00 (with screenshots):
       picture for the names: three of four drew nothing; Chili draws a child added last first, so the label is brought
       to the front instead.) Dev phone upright: four large named tiles, a tap picks one ("Selected map: Isidis crack
       1.1"), Start under them; sideways Chobby's own layout with the names; lobby-phone-test ALL PASS.
-- [ ] **The same stale hover in BAR's player list and Build Bar** (hardening, 2026-11-16; the scan above rerun on all
+- [x] **The same stale hover in BAR's player list and Build Bar** (hardening, 2026-11-16; the scan above rerun on all
       325 widgets of test-31958): gui_advplayerslist's MousePress reads `hoverPlayerlist` and gui_buildbar's
       `hoveredBOpt` / `hoveredFac`, both set in Update from the pointer's last place. Neither shows on phones as the app
       sets them up (the player list hidden while the dock is up or folded for spectating, the Build Bar BAR's "Factory
@@ -5196,6 +5212,17 @@ Added 2026-11-10 ~05:00 (with screenshots):
       the press by the list's rect under it; for BAR, docs/upstream/bar-playerlist-press-hover.patch. Dev phone sideways
       with the sideways dock off (BAR's own screen): a tap on the list, then one on the ground, three times: the ground's
       tap reached the last probe each time (the state before not measured). The Build Bar left: off on phones.
+      The Build Bar done 2026-11-20 18:40-19:22 (hardening of DELIVERY's open items, dev phone upright):
+      phone-widget-gui_buildbar.lua.patch (new, 3 blocks: MousePress works out the factory and build option under the
+      press itself, mouseOverIcon/mouseOverSubIcon; WG.BarDroidBuildBar.rects for the test; its anchors in test-31723,
+      31836 and 32018 alike, remake-check PASS); for BAR, docs/upstream/bar-buildbar-press-hover.patch.
+      tools/buildbar-phone-test.ps1 (new: BAR's BuildBar on in BYAR.lua for the run and the file put back, the camera
+      knob and rails off for it; a Bot Lab given; three times a map tap, a first tap on the lab's icon: the lab picked,
+      a map tap with the pointer left on the bar: the press reaches the last widget) ALL PASS twice on the fix, and ALL
+      PASS on the build without it too: the app's finger taps let a frame pass between moving the pointer and pressing,
+      so the stale hover does not show through them; the block is a guard for input that moves and presses in one frame,
+      as its three siblings. Seen: upright the bar's icons (x 831-936) lie under the one-finger camera's zoom rail
+      (x 880-936), which takes those touches: worth moving the rail off them if a player turns the Build Bar on.
 - [x] **The lobby's Settings upright: rows for a finger** (hardening, 2026-11-16 ~22:30, dev phone, offline lobby; the
       layout editor checked first at 1080x1198: the hint above the split dock, no player list outline): Chobby's
       Settings (gui_settings_window.lua) lists its rows 36 apart, their checkboxes, sliders and lists 30 high, thirty

@@ -1,0 +1,44 @@
+BAR Droid phone version of BAR's Build Bar (luaui/widgets/gui_buildbar.lua, the "Factory dock"): a press taken by the
+icon under the press itself, not by the one the pointer was over at the last Update. Its MousePress reads hoveredFac
+and hoveredBOpt, set in Update from where the pointer was, and Update leaves them alone while a button is down and no
+factory's menu is open; a finger moves the pointer and presses in one frame, so a tap elsewhere after the pointer rested
+on the bar was taken by it, and a first tap on a factory went through to the map (the same fault as the top bar's two
+and the player list's; the scan of 2026-11-16, docs/DELIVERY.md; for BAR docs/upstream/bar-buildbar-press-hover.patch).
+The Build Bar is off on phones as the app sets them up; this is for a player who turns it on. Applied by the engine
+(BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file runs. The first two
+blocks give the app's phone test the icons' places (WG.BarDroidBuildBar.rects; tools/buildbar-phone-test.ps1).
+
+@@@ find
+	widget:ViewResize()
+
+	myTeamID = spGetMyTeamID()
+@@@ with
+	widget:ViewResize()
+	-- BAR Droid (phone): where its icons are, for the app's phone test (GL coordinates, as the widget keeps them)
+	WG.BarDroidBuildBar = { rects = function() return facRect, boptRect, openedMenu, #facs end }
+
+	myTeamID = spGetMyTeamID()
+@@@ end
+
+@@@ find
+function widget:Shutdown()
+	for i = 1, #dlists do
+@@@ with
+function widget:Shutdown()
+	WG.BarDroidBuildBar = nil
+	for i = 1, #dlists do
+@@@ end
+
+@@@ find
+function widget:MousePress(x, y, button)
+	pressedFac = hoveredFac
+	pressedBOpt = hoveredBOpt
+@@@ with
+function widget:MousePress(x, y, button)
+	-- BAR Droid (phone): the icon under the press itself, not under the pointer at the last Update (a finger moves the
+	-- pointer and presses in one frame)
+	hoveredFac = mouseOverIcon(x, y)
+	hoveredBOpt = mouseOverSubIcon(x, y)
+	pressedFac = hoveredFac
+	pressedBOpt = hoveredBOpt
+@@@ end

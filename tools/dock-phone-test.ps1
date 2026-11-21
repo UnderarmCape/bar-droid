@@ -148,9 +148,12 @@ try {
   # pointer held down for BAR's build drag, stays at the dock's top edge; the cancel below lets it go, nothing placed)
   if ($spots["free"]) {
     $fr = $spots["free"]; $dmg = DockMid $dock
+    # (on the split dock into its right block, as the box below: over the gap between its blocks the corner is the
+    # game's own, not held, by design; straight down from a free spot in the middle went there, 1080x1198 twice)
+    $gx = if ($dock["gap"]) { $dock["right"][0] + 12 } else { $fr[0] }
     Touch DOWN $fr[0] $fr[1]; Start-Sleep -Milliseconds 1000
-    Touch MOVE $fr[0] (($fr[1] + $dmg[1]) / 2); Touch MOVE $fr[0] $dmg[1]
-    Start-Sleep -Milliseconds 300; Touch UP $fr[0] $dmg[1]; Start-Sleep -Milliseconds 600
+    Touch MOVE (($fr[0] + $gx) / 2) (($fr[1] + $dmg[1]) / 2); Touch MOVE $gx $dmg[1]
+    Start-Sleep -Milliseconds 300; Touch UP $gx $dmg[1]; Start-Sleep -Milliseconds 600
     Stage "griddock?"; Start-Sleep 1
   }
   $place = Rects "bardroid_place.txt"
@@ -161,6 +164,13 @@ try {
   if ($spots["free"]) {
     $fs = $spots["free"]; $w = $dock["dock"][2]
     $dx = if ($fs[0] -lt $w / 2) { 220 } else { -220 }
+    # (away from the blocked spot when it lies along that way and the other way fits: from 631,219 the line ran over
+    # the blocked 534,203 and none was queued, 1080x1198 twice)
+    $bl = $spots["blocked"]
+    if ($bl -and [Math]::Abs($bl[1] - $fs[1]) -lt 120 -and [Math]::Abs($bl[0] - $fs[0]) -lt 260 -and
+        [Math]::Sign($bl[0] - $fs[0]) -eq [Math]::Sign($dx) -and ($fs[0] - $dx) -ge 40 -and ($fs[0] - $dx) -le ($w - 40)) {
+      $dx = -$dx
+    }
     foreach ($shape in @("line", "border")) {
       foreach ($try in 1..3) {
         if ((Rects "bardroid_place.txt")["done"]) { break }

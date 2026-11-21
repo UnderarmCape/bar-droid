@@ -13,6 +13,7 @@ local com, lab
 local counts, patrol, focus, allCombat, onScreen, selfD, myPing, jumped, labQueued, labCleared = {}, false, false, 0, 0, false, false, false, false, false
 local lastCount, seenPad, done = nil, false, false
 local pauseFrom -- (the ping round's pause: from when)
+local pingTotal = 0 -- (the entries in the ping round: the test's four, and any under attack)
 local labStep, lastTrace, centred = 0, nil, false
 local solar, solarStep, solarAt, solarKept, solarNote, solarNotes, solarHeld = nil, 0, 0, false, nil, 0, false
 local evenOrders = 0 -- the most orders seen laid out evenly in the app's order menu while the pad hid its own
@@ -77,14 +78,26 @@ local function finish()
 	for i = 1, 3 do
 		WG.BarDroidPad.setPing(PING[1] + 300 * i, 0, PING[2])
 	end
+	-- (the list may also hold an entry for my units under attack, "UNDER ATTACK, i OF n", older than the three: the
+	-- self-destruct above hurts the units beside it, and LuaUI is not told whose the damage was; 2026-11-20)
 	local seen = {}
-	for _ = 1, 5 do
+	WG.BarDroidPad.act("ping_look")
+	seen[1] = select(2, WG.BarDroidPad.note())
+	pingTotal = tonumber(tostring(seen[1]):match(" OF (%d+)$")) or 0
+	for _ = 2, pingTotal + 1 do
 		WG.BarDroidPad.act("ping_look")
-		local _, n = WG.BarDroidPad.note()
-		seen[#seen + 1] = n
+		seen[#seen + 1] = select(2, WG.BarDroidPad.note())
+	end
+	local pingsSeen, inOrder = 0, pingTotal >= 4
+	for i = 1, pingTotal do
+		local s = tostring(seen[i])
+		local isPing = s == string.format("PING %d OF %d", i, pingTotal)
+		pingsSeen = pingsSeen + (isPing and 1 or 0)
+		inOrder = inOrder and (isPing or (i > 3 and s == string.format("UNDER ATTACK, %d OF %d", i, pingTotal)))
 	end
 	check("RB + D-pad up pressed on: the last pings, newest first, round again",
-		table.concat(seen, ",") == "PING 1 OF 4,PING 2 OF 4,PING 3 OF 4,PING 4 OF 4,PING 1 OF 4", table.concat(seen, ","))
+		inOrder and pingsSeen == 4 and seen[pingTotal + 1] == string.format("PING 1 OF %d", pingTotal),
+		table.concat(seen, ","))
 	pauseFrom = Spring.GetTimer() -- (the pause: widget:Update, which then says done)
 end
 
@@ -96,7 +109,7 @@ function widget:Update()
 	WG.BarDroidPad.act("ping_look") -- (2: the next older after the round's first)
 	WG.BarDroidPad.act("ping_look")
 	local _, n = WG.BarDroidPad.note()
-	check("... and after a pause the newest first again, then the next", n == "PING 2 OF 4", n)
+	check("... and after a pause the newest first again, then the next", n == string.format("PING 2 OF %d", pingTotal), n)
 	say("[padtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 end
 
