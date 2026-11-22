@@ -942,6 +942,12 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       build said "first start of engine 2026.09.03 ... (last good: engine 2026.07.04 ...); rolled back if it fails
       within 120 s", good 2026.07.04; the first-check change alone (old pin) "starting engine 2026.09.03", good
       2026.09.03; both the same with no engine step. updater-test ALL PASS.
+      Round A on HEAD 80562d9f (items 27-35, 39; 2026-11-21 19:57-20:26): ALL PASS.
+- [x] **Item 44: Install / Update ends its service and notification** (2026-11-21 19:58-20:28): GameService closes the
+      service after Install / Update as after a game (a Stop meanwhile closes through closeGently), and a start whose
+      install failed closes it too (play returned before its try/finally). On the dev phone (the launcher's Install /
+      Update tapped, found in the view hierarchy, a screenshot first; the check run to its end): HEAD's build still had
+      its foreground service and notification 13 s after the check ended; this one had neither 3 s after.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

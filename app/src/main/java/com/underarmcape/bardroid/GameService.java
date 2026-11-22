@@ -330,7 +330,9 @@ public class GameService extends Service {
         startForeground(1, notification(status));
         if (ACTION_STOP.equals(action)) { closing = true; closeGently(); return START_NOT_STICKY; }
         if (busy) { Log.i("svc", "busy; ignoring " + action); return START_NOT_STICKY; }
-        if (ACTION_INSTALL.equals(action)) runAsync(this::install);
+        // (Install / Update ends the service and its notification as a game does: they stayed up, "Installed" or "Install
+        // failed: ...", until Stop; release overhaul audit, 2026-11-21. A Stop meanwhile closes through closeGently.)
+        if (ACTION_INSTALL.equals(action)) runAsync(() -> { install(); if (!closing) close(); });
         else if (ACTION_PLAY.equals(action)) runAsync(() -> play(mode));
         return START_NOT_STICKY;
     }
@@ -406,7 +408,8 @@ public class GameService extends Service {
             inst = new Installer(this, paths);
             // (Stop during it ends the start: the older Mesa still counts as installed, and the game went on after Stop,
             // the service already gone; review 2026-11-16)
-            if (closing || Thread.currentThread().isInterrupted() || !inst.isInstalled()) return;
+            if (closing || Thread.currentThread().isInterrupted()) return;   // (Stop: closeGently closes)
+            if (!inst.isInstalled()) { close(); return; }   // (the install failed: its words stay, the service goes)
         }
         boolean showLauncher = true;
         try {
