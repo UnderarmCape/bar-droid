@@ -161,7 +161,9 @@ Kailil's calls, with the defaults the sessions use meanwhile (nothing waits on h
 - Item 40 (phones BAR cannot run): a plain warning before Install, no refusal.
 - QUEUE making taps on units add-selects, the one-finger drag nudging a picked building, a Move dropping the
   commander's queue, factory Repeat repeating constructors: kept (BAR's behaviour, as on PC).
-- ALL UNITS / LOCAL UNITS: aircraft added, constructors kept out.
+- ALL UNITS / LOCAL UNITS: aircraft added, constructors kept out. In (fixer, 2026-11-22): bardroid_portrait.lua
+  SP.army, every armed unit that moves, flying or not, builders out; types-phone-test's last case (two Falcons in, a
+  Construction Aircraft and a Construction Bot out, ALL and LOCAL) PASS on the dev phone.
 - Walls on, auto mex, auto retreat during a Fight, the D-gun as a mode: kept as designed.
 - The Mesa KGSL report upstream: after the release.
 

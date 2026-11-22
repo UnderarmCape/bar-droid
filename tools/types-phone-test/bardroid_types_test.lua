@@ -8,7 +8,9 @@
 -- Pawns and the Maces held out: the list's last type (the Blitzes) stays in when held; a plain tap on a left-out type
 -- (the Pawns) picks that type alone. Then LOCAL UNITS where only a left-out type stands (two Pawns given far off, the
 -- camera on them): that type back in and picked, the other left-out type (the Maces) still out under ALL UNITS (it
--- brought every left-out type back, 2026-11-20). "[typestest] done: ALL PASS" or "N FAILED" at the end.
+-- brought every left-out type back, 2026-11-20). Last, two Falcons, a Construction Aircraft and a Construction Bot given:
+-- ALL UNITS and LOCAL UNITS pick the Falcons, not the constructors (RC 0.2.0, Kailil's calls' default).
+-- "[typestest] done: ALL PASS" or "N FAILED" at the end.
 function widget:GetInfo()
 	return { name = "BAR Droid types test", desc = "ALL UNITS without a type", author = "BAR Droid", layer = 0, enabled = true }
 end
@@ -20,6 +22,10 @@ local DEF = {
 	pawn = UnitDefNames.armpw and UnitDefNames.armpw.id,
 	flash = UnitDefNames.armflash and UnitDefNames.armflash.id,
 	ham = UnitDefNames.armham and UnitDefNames.armham.id,
+	-- (the last case: aircraft in ALL / LOCAL UNITS, constructors out; RC 0.2.0, Kailil's calls' default)
+	fig = UnitDefNames.armfig and UnitDefNames.armfig.id,
+	ca = UnitDefNames.armca and UnitDefNames.armca.id,
+	ck = UnitDefNames.armck and UnitDefNames.armck.id,
 }
 
 local function check(case, ok, detail)
@@ -101,7 +107,7 @@ end
 
 -- what is picked: { pawn = n, flash = n, ham = n, total = n }
 local function picked()
-	local n = { pawn = 0, flash = 0, ham = 0, total = 0 }
+	local n = { pawn = 0, flash = 0, ham = 0, fig = 0, ca = 0, ck = 0, total = 0 }
 	for _, u in ipairs(Spring.GetSelectedUnits() or {}) do
 		local d = Spring.GetUnitDefID(u)
 		for k, id in pairs(DEF) do
@@ -215,6 +221,33 @@ function widget:GameFrame(f)
 		local n = picked()
 		check("... and ALL UNITS after it: the Maces, not in that list, still left out", outOf(DEF.ham) and n.ham == 0
 			and n.pawn == 5 and n.flash == 2, pickText(n) .. ", Maces left out " .. tostring(outOf(DEF.ham)))
+		-- (aircraft in ALL and LOCAL UNITS, constructors kept out: two Falcons, a Construction Aircraft and a Construction
+		-- Bot given beside the commander)
+		local team = Spring.GetMyTeamID()
+		local y = Spring.GetGroundHeight(home[1], home[2])
+		Spring.SendCommands(string.format("give 2 armfig %d @%d,%d,%d", team, home[1] - 200, y, home[2]))
+		Spring.SendCommands(string.format("give 1 armca %d @%d,%d,%d", team, home[1] - 200, y, home[2] + 120))
+		Spring.SendCommands(string.format("give 1 armck %d @%d,%d,%d", team, home[1] - 120, y, home[2] + 200))
+		Spring.SelectUnitArray({})
+		go("airgiven", f)
+	elseif stage == "airgiven" and f - stageAt > 60 then
+		Spring.SelectUnitArray({})
+		go("home4", f)
+	elseif stage == "home4" and f - stageAt > 15 then
+		ask("tap", (allUnitsCell()), "airall?", f)
+	elseif stage == "airall?" and f - stageAt > WAIT then
+		local n = picked()
+		check("ALL UNITS: the Falcons in, the Construction Aircraft and Bot out", n.fig == 2 and n.ca == 0 and n.ck == 0
+			and n.pawn == 5 and n.flash == 2, string.format("%s; %d Falcons, %d Construction Aircraft, %d Construction Bots",
+				pickText(n), n.fig, n.ca, n.ck))
+		Spring.SelectUnitArray({})
+		go("home5", f)
+	elseif stage == "home5" and f - stageAt > 15 then
+		ask("tap", (localUnitsCell()), "airlocal?", f)
+	elseif stage == "airlocal?" and f - stageAt > WAIT then
+		local n = picked()
+		check("LOCAL UNITS: the Falcons in, the Construction Aircraft and Bot out", n.fig == 2 and n.ca == 0 and n.ck == 0,
+			string.format("%s; %d Falcons, %d Construction Aircraft, %d Construction Bots", pickText(n), n.fig, n.ca, n.ck))
 		go("end", f)
 	elseif stage == "end" then
 		Spring.Echo("[typestest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))

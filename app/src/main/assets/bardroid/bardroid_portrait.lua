@@ -10,7 +10,7 @@
 --   top row   the units picked (picture, name, count, health)
 --   left      a builder or factory: its build options, 3 wide, 2-4 rows in sight, scrolled by whole rows; units that
 --             build nothing: the selection by type (a tap keeps that type); nothing picked, after LOCAL UNITS or ALL
---             UNITS: the combat units by type (a tap picks them; MULTI picks several types)
+--             UNITS: the army by type, combat units and armed aircraft (a tap picks them; MULTI picks several types)
 --   right     the orders, 2 wide, scrolled by whole rows; a building picked: ONE / LINE / GRID / BORDER and the PLACE
 --             panel (the build menu copy's, in placeRect); a factory's option pressed: its queue buttons; nothing
 --             picked: LOCAL UNITS / ALL UNITS; a box selection being dragged: the unit filters
@@ -898,6 +898,11 @@ end
 -- combat units: they move, carry a weapon, build nothing and do not fly
 local function combat(ud)
 	return ud and ud.canMove and not ud.isBuilder and not ud.isFactory and not ud.canFly and ud.weapons and #ud.weapons > 0
+end
+-- LOCAL / ALL UNITS: the army, the combat units and the armed aircraft; constructors kept out (RC 0.2.0, Kailil's
+-- calls' default: "aircraft added, constructors kept out")
+function SP.army(ud)
+	return ud and ud.canMove and not ud.isBuilder and not ud.isFactory and ud.weapons and #ud.weapons > 0
 end
 local FILTERS = {
 	{ key = "all", label = "ALL" },
@@ -1918,8 +1923,8 @@ function refreshNow()
 	local pregame = #sel == 0 and not typesFrom and pregameStart()
 	if pregame then
 		newLeft, lk = pregameItems(pregame), "pregame"
-	elseif typesFrom then -- LOCAL / ALL UNITS: the combat units by type, ALL first (IDLE: every idle unit)
-		local types = byType(typesUnits(), combat)
+	elseif typesFrom then -- LOCAL / ALL UNITS: the army by type (SP.army), ALL first (IDLE: every idle unit)
+		local types = byType(typesUnits(), SP.army)
 		newLeft = { { kind = "alltypes", label = "ALL", count = 0 } }
 		for _, g in ipairs(types) do
 			newLeft[#newLeft + 1] = g
@@ -2510,7 +2515,7 @@ local function pressItem(item, long)
 		if typesFrom == "local" or typesFrom == "all" then -- (Kailil, 2026-11-10: "default to all and have them selected
 			-- upon first tapping all units or local units": the list stays, its ALL lit, a type still narrows it; the types
 			-- left out not picked, SP.leftOut)
-			local groups = byType(typesUnits(), combat)
+			local groups = byType(typesUnits(), SP.army)
 			local all, out = SP.unitsIn(groups)
 			if #all == 0 and out > 0 then -- (only left-out types here, LOCAL UNITS say: they come back in, or the list
 				-- picked nothing, closed at once and never let one be brought back; only this list's, the others stay out:
