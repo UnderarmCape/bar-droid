@@ -1259,6 +1259,33 @@ local function dgunAuto(d)
 	end
 end
 
+-- An enemy tapped in the dock's D-gun mode (bardroid_portrait.lua, aimAtUnit): the aim kept on it, led by its speed as
+-- full auto leads its pick, until the stick or a ground tap takes the aim, or it is lost. The touch playtest's game 9,
+-- 2026-11-22: the camera follows the commander, so a moving enemy tapped as a ground point was elsewhere by FIRE.
+local function dgunTrack(d)
+	local u = d.track
+	local ux, _, uz = Spring.GetUnitPosition(u)
+	if not ux or Spring.GetUnitIsDead(u) ~= false then
+		d.track = nil
+		note("D-GUN: TARGET LOST")
+		return
+	end
+	local cx, _, cz = Spring.GetUnitPosition(d.unitID)
+	if not cx then
+		return
+	end
+	local dist = math.sqrt((ux - cx) ^ 2 + (uz - cz) ^ 2)
+	if d.speed and d.speed > 0 then
+		local vx, _, vz = Spring.GetUnitVelocity(u)
+		ux, uz = ux + (vx or 0) * dist / d.speed, uz + (vz or 0) * dist / d.speed
+	end
+	local dx, dz = ux - cx, uz - cz
+	local len = math.sqrt(dx * dx + dz * dz)
+	if len > 10 then
+		d.aimX, d.aimZ = dx / len, dz / len
+	end
+end
+
 local function dgunUpdate()
 	local d = dgun
 	local unitID = selectedCommander()
@@ -1283,6 +1310,10 @@ local function dgunUpdate()
 	end
 	if ax and not d.auto then
 		d.aimX, d.aimZ = ax, az
+		d.track = nil -- (the stick takes the aim back from a tapped enemy)
+	end
+	if d.track and not d.auto then
+		dgunTrack(d)
 	end
 	if not dgunTarget(d) then
 		dgunExit("D-GUN OFF")
@@ -1419,6 +1450,13 @@ local function dgunDraw()
 		gl.Color(1, 0, 0, 0.8)
 		gl.DrawGroundCircle(d.x, d.y, d.z, 32, 24)
 		gl.DrawGroundCircle(d.x, d.y, d.z, 8, 12)
+		local tx, ty, tz -- (a tapped enemy the aim follows: a ring round it, dgunTrack)
+		if d.track then
+			tx, ty, tz = Spring.GetUnitPosition(d.track)
+		end
+		if tx then
+			gl.DrawGroundCircle(tx, ty, tz, (Spring.GetUnitRadius(d.track) or 20) + 12, 24)
+		end
 		gl.BeginEnd(GL.LINE_STRIP, function()
 			gl.Vertex(cx, cy + 12, cz)
 			gl.Vertex(d.x, d.y + 2, d.z)
@@ -3043,7 +3081,7 @@ function widget:Initialize()
 			if touch and not d.auto then
 				local ax, az = screenHeading(d.unitID, rx, ry, DGUN_TOUCH_AIM_DEADZONE)
 				if ax then
-					d.aimX, d.aimZ = ax, az
+					d.aimX, d.aimZ, d.track = ax, az, nil
 					dgunTarget(d)
 				end
 			end
@@ -3061,9 +3099,23 @@ function widget:Initialize()
 			if len < 10 then
 				return false
 			end
-			d.aimX, d.aimZ = dx / len, dz / len
+			d.aimX, d.aimZ, d.track = dx / len, dz / len, nil
 			dgunTarget(d)
 			return true
+		end,
+		-- (an enemy tapped in the dock's D-gun mode: the aim follows it, led, dgunTrack; false: not an enemy, or none)
+		aimAtUnit = function(u)
+			local d = dgun
+			if not (d and u) or d.auto or Spring.IsUnitAllied(u) ~= false or Spring.GetUnitIsDead(u) ~= false then
+				return false
+			end
+			d.track = u
+			dgunTrack(d)
+			dgunTarget(d)
+			return d.track == u
+		end,
+		tracking = function() -- (tools: the enemy the aim follows, or nil)
+			return dgun and dgun.track or nil
 		end,
 	}
 	WG.BarDroidPad = {

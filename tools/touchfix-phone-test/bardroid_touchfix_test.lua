@@ -149,6 +149,15 @@ local function queueText(q)
 	end
 	return table.concat(t, " ")
 end
+-- a wind of mine standing (built or being built) at a spot
+local function builtAt(p)
+	for _, u in ipairs(p and Spring.GetUnitsInCylinder(p[1], p[3], 40, Spring.GetMyTeamID()) or {}) do
+		if Spring.GetUnitDefID(u) == D.armwin then
+			return true
+		end
+	end
+	return false
+end
 local function near(o, p)
 	return o and p and math.abs(o[2] - p[1]) < 48 and math.abs(o[3] - p[3]) < 48
 end
@@ -347,16 +356,21 @@ local function onCmd(c)
 	elseif c == "insert2?" then
 		local q = queueOf(com)
 		local qOn, iOn = P.queueState()
+		-- (INSERT's first wind may be built already: the commander stands by it; while it builds its order stays)
+		local firstBuilt = builtAt(spots.s1) and not (q[2] and near(q[2], spots.s1))
 		check("QUEUE+INSERT on a builder: the wind at the queue's front (it went to the end with Shift+Alt)",
-			q[1] and q[1][1] == D.armwin and near(q[1], spots.s2) and #q == #solars + 2,
-			queueText(q) .. string.format(" (QUEUE %s, INSERT %s)", tostring(qOn), tostring(iOn)))
+			q[1] and q[1][1] == D.armwin and near(q[1], spots.s2) and #q == #solars + (firstBuilt and 1 or 2),
+			queueText(q) .. string.format(" (QUEUE %s, INSERT %s%s)", tostring(qOn), tostring(iOn),
+				firstBuilt and ", INSERT's first built" or ""))
 	elseif c == "insert3?" then
 		local q = queueOf(com)
 		-- (the two QUEUE+INSERT ones in either order: the held key's repeats start CommandInsert's count again or not)
 		local top = q[1] and q[2] and ((near(q[1], spots.s3) and near(q[2], spots.s2)) or (near(q[1], spots.s2)
 			and near(q[2], spots.s3)))
+		local firstBuilt = builtAt(spots.s1) and not (q[3] and near(q[3], spots.s1))
 		check("QUEUE+INSERT again: the next one at the front too, before INSERT's first and the far Solars",
-			top and q[3] and near(q[3], spots.s1) and #q == #solars + 3, queueText(q))
+			top and (firstBuilt and #q == #solars + 2 or q[3] and near(q[3], spots.s1) and #q == #solars + 3), queueText(q)
+			.. (firstBuilt and " (INSERT's first built)" or ""))
 		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
 		Spring.SetActiveCommand(0)
 	elseif c == "dgun" then
@@ -397,6 +411,86 @@ local function onCmd(c)
 	elseif c == "unpause" then
 		pausedHere = false
 		Spring.SendCommands("pause 0")
+	elseif c == "enemy" then -- (an enemy wind turbine given beside the commander, in sight above the dock, for the tap:
+		-- one that stands still, so the real tap finds it)
+		local gaia = Spring.GetGaiaTeamID()
+		local foe
+		for _, t in ipairs(Spring.GetTeamList() or {}) do
+			if t ~= gaia and not Spring.AreTeamsAllied(t, Spring.GetMyTeamID()) then
+				foe = foe or t
+			end
+		end
+		local cx, cy, cz = Spring.GetUnitPosition(com)
+		local ax, az = aimNow()
+		local at
+		for _, turn in ipairs({ -90, 90, -135, 135, 180 }) do
+			local r = math.rad(turn)
+			local hx, hz = ax * math.cos(r) - az * math.sin(r), ax * math.sin(r) + az * math.cos(r)
+			local x, z = cx + hx * 230, cz + hz * 230
+			if not at and screenOf(x, z) then
+				at = { x, z }
+			end
+		end
+		if foe and at then
+			Spring.SendCommands(string.format("give 1 corwin %d @%d,%d,%d", foe, at[1], cy, at[2]))
+			spots.foeAt, spots.foeTeam = at, foe
+		else
+			check("an enemy given beside the commander", false, "team " .. tostring(foe) .. ", spot " .. tostring(at ~= nil))
+		end
+	elseif c == "enemy2" then
+		local best, bestD
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local seen = Spring.GetUnitsInCylinder(cx, cz, 900, spots.foeTeam) or {}
+		local all, near1 = 0, nil
+		for _, u in ipairs(Spring.GetAllUnits() or {}) do
+			if Spring.GetUnitDefID(u) == UnitDefNames.corwin.id then
+				all = all + 1
+				local ux, _, uz = Spring.GetUnitPosition(u)
+				near1 = ux and string.format("%d,%d team %s", ux, uz, tostring(Spring.GetUnitTeam(u))) or near1
+			end
+		end
+		Spring.Echo(string.format("[fixtest] note: %d units of team %s near the commander (at %d,%d); Cortex winds seen: %d, %s; asked at %d,%d",
+			#seen, tostring(spots.foeTeam), cx, cz, all, tostring(near1), spots.foeAt[1], spots.foeAt[2]))
+		for _, u in ipairs(seen) do
+			if Spring.GetUnitDefID(u) == UnitDefNames.corwin.id then
+				local ux, _, uz = Spring.GetUnitPosition(u)
+				local d = (ux - spots.foeAt[1]) ^ 2 + (uz - spots.foeAt[2]) ^ 2
+				if not bestD or d < bestD then
+					best, bestD = u, d
+				end
+			end
+		end
+		spots.foe = best
+		local ux, _, uz
+		if best then
+			ux, _, uz = Spring.GetUnitPosition(best)
+		end
+		local sx, sy
+		if ux then
+			sx, sy = Spring.WorldToScreenCoords(ux, Spring.GetGroundHeight(ux, uz), uz)
+		end
+		Spring.Echo(string.format("[fixtest] note: the enemy %s at %s,%s, on the screen %s,%s, in sight %s", tostring(best),
+			tostring(ux and math.floor(ux)), tostring(uz and math.floor(uz)), tostring(sx and math.floor(sx)),
+			tostring(sy and math.floor(sy)), tostring(ux and screenOf(ux, uz) ~= nil)))
+		write(spotLine("foe", ux and { ux, 0, uz }))
+	elseif c == "trackaim?" then
+		local foe = spots.foe
+		local tracked = WG.BarDroidPadDgun and WG.BarDroidPadDgun.tracking and WG.BarDroidPadDgun.tracking()
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local ux, _, uz
+		if foe then
+			ux, _, uz = Spring.GetUnitPosition(foe)
+		end
+		local ax, az = aimNow()
+		local off = 180
+		if ux and ax then
+			local dx, dz = ux - cx, uz - cz
+			local l = math.max(1, math.sqrt(dx * dx + dz * dz))
+			off = angleBetween(ax, az, dx / l, dz / l)
+		end
+		check("a tap on an enemy in the D-gun mode: the aim follows it (2 s on)", tracked == foe
+			and foe ~= nil and off <= 15, string.format("following %s (the enemy wind %s), %.0f degrees off",
+			tostring(tracked), tostring(foe), off))
 	elseif c == "tapat" then
 		local cx, _, cz = Spring.GetUnitPosition(com)
 		local ax, az = aimNow()
@@ -421,9 +515,11 @@ local function onCmd(c)
 		local off = ax and angleBetween(ax, az, dx / len, dz / len) or 180
 		local Dg = WG.BarDroidPadDgun
 		local sel = Spring.GetSelectedUnits()
-		check("a map tap in the D-gun mode: the shot towards it, the mode on, the commander picked", off <= 12
-			and Dg and Dg.active() and #sel == 1 and sel[1] == com,
-			string.format("%.0f degrees off, mode %s, %d picked", off, tostring(Dg and Dg.active()), #sel))
+		local still = Dg and Dg.tracking and Dg.tracking()
+		check("a map tap in the D-gun mode: the shot towards it (no enemy followed), the mode on, the commander picked",
+			off <= 12 and Dg and Dg.active() and #sel == 1 and sel[1] == com and not still,
+			string.format("%.0f degrees off, mode %s, %d picked, following %s", off, tostring(Dg and Dg.active()), #sel,
+				tostring(still)))
 	elseif c == "dgunoff" then
 		P.act("dgun_cancel")
 	elseif c == "end" then
@@ -431,8 +527,13 @@ local function onCmd(c)
 	end
 end
 
+local cheated = false
 function widget:Update()
 	local f = Spring.GetGameFrame()
+	if f > 60 and not cheated then -- (the enemy case's give)
+		cheated = true
+		Spring.SendCommands("cheat 1")
+	end
 	if f > 0 and not pausedHere and select(3, Spring.GetGameSpeed()) then
 		local t = Spring.GetTimer()
 		if not unpausedAt or Spring.DiffTimers(t, unpausedAt) > 2 then

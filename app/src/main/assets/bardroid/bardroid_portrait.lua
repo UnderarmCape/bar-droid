@@ -2231,6 +2231,9 @@ function refreshNow()
 		Spring.Echo(string.format("[bardroid-portrait] %d picked: left %s (%d), right %s (%d)", #sel, lk, #leftItems, rk,
 			#rightItems)) -- (tools: what the dock shows)
 	end
+	if rk ~= rightKind then
+		SP.rightSince = now() -- (the right half's buttons new under a finger: pressItem's faction guard)
+	end
 	leftKind, rightKind = lk, rk
 	if rk ~= "home" and rk ~= "pregame" and pingT.armed() then -- (PING armed, then units picked: the next map tap is
 		-- theirs, not a ping; listening for its words too)
@@ -2649,6 +2652,29 @@ local function pressItem(item, long)
 	elseif k == "panelclose" then
 		resPanel = nil
 	elseif k == "faction" and Spring.GetGameFrame() == 0 then
+		-- (not a tap meant for PLACE, which stood there until the building was put away: the faction buttons take the
+		-- place panel's room, and a tap a moment late switched Armada to Cortex, the queue with it; the touch playtest's
+		-- game 9, 2026-11-22. Taps on them in the first 0.8 s are dropped, and with buildings queued a switch is tapped
+		-- twice)
+		local t = now()
+		if SP.rightSince and Spring.DiffTimers(t, SP.rightSince) < 0.8 then
+			Spring.Echo("[bardroid-portrait] a faction tap just after the panel changed: dropped") -- (tools)
+			return
+		end
+		local pb = WG["pregame-build"]
+		local queued = pb and pb.getBuildQueue and #(pb.getBuildQueue() or {}) or 0
+		local current = Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
+		local asked = SP.factionAsk
+		if not current and queued > 0 and not (asked and asked.unit == item.startUnit
+			and Spring.DiffTimers(t, asked.at) < 3) then
+			SP.factionAsk = { unit = item.startUnit, at = t }
+			local P = WG.BarDroidPad
+			if P and P.say then
+				P.say("TAP " .. tostring(item.label) .. " AGAIN TO SWITCH: THE QUEUE CHANGES WITH IT", nil, 3)
+			end
+			return
+		end
+		SP.factionAsk = nil
 		Spring.SendLuaRulesMsg("changeStartUnit" .. tostring(item.startUnit))
 	elseif k == "pregame" or k == "pregameundo" or k == "pregameclear" then
 		local pb = WG["pregame-build"]
@@ -3584,10 +3610,16 @@ local function drawSelection()
 		local sx, _, sz = Spring.GetTeamStartPosition(myTeam())
 		local pregameText = pregameStart() and ((sx or 0) <= 0 and (sz or 0) <= 0
 			and "START SPOT:  tap the map for yours" or "Start spot picked: queue buildings, then Ready")
-		-- (before the start left of the row's QUEUE, drawQueueZones)
+		-- (before the start left of the row's QUEUE, drawQueueZones; and under the wind's and the tide's nook, which the
+		-- row has then too: the hint ran under it, the touch playtest's game 9, 2026-11-22)
+		local nk = pregameText and not SP.windOff() and SP.windRects() and L.windNook
+		local y0, y1 = r[2] + h * 0.3, r[4]
+		if nk then
+			y0, y1 = r[2] + h * 0.05, max(r[2] + h * 0.3, nk[2] - L.pad)
+		end
 		textIn(selecting and ((selStyle == "circle" and "CIRCLE" or "BOX") .. " SELECTION:  a second finger picks a filter")
 			or pregameText or "No units picked",
-			r[1], r[2] + h * 0.3, pregameText and r[3] - floor((r[3] - r[1]) * 0.24) or r[3], r[4], h * 0.2,
+			r[1], y0, pregameText and r[3] - floor((r[3] - r[1]) * 0.24) or r[3], y1, h * 0.2,
 			"\255\175\175\175") -- (above the camera pad's hint, drawMode)
 		return
 	end
@@ -5805,10 +5837,18 @@ function widget:MousePress(x, y, btn)
 	-- "a tap on the map as the D-gun's target"). Not over an order armed: the mode's own click for a shot or a step where
 	-- the host forbids user widgets' orders (dgunOrder) arms BAR's D-gun or Move first, and that click is BAR's
 	if active and btn == 1 and dgunOn() and not onMap and not inRect(x, y, L.dock) and not select(2, spGetActiveCommand()) then
-		local _, pos = Spring.TraceScreenRay(x, y, true)
+		-- (on an enemy: the aim follows it, led by its speed, until the stick or a ground tap takes the aim; the camera
+		-- follows the commander, so a moving enemy tapped as a ground point was elsewhere by FIRE: the touch playtest's game
+		-- 9, 2026-11-22)
 		local D = WG.BarDroidPadDgun
-		if pos and D and D.aimAt and D.aimAt(pos[1], pos[3]) then
-			Spring.Echo("[bardroid-portrait] the D-gun aimed by a tap at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
+		local kind, hit = Spring.TraceScreenRay(x, y)
+		if kind == "unit" and D and D.aimAtUnit and D.aimAtUnit(hit) then
+			Spring.Echo("[bardroid-portrait] the D-gun follows the enemy tapped, unit " .. tostring(hit)) -- (tools)
+		else
+			local _, pos = Spring.TraceScreenRay(x, y, true)
+			if pos and D and D.aimAt and D.aimAt(pos[1], pos[3]) then
+				Spring.Echo("[bardroid-portrait] the D-gun aimed by a tap at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
+			end
 		end
 		pingT.eat = true -- (its release too: not the map's)
 		return true

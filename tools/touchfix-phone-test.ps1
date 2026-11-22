@@ -156,6 +156,12 @@ try {
     & $adb shell input swipe ([int]($r[0] * $script:k)) ([int]($r[1] * $script:k)) ([int](($r[0] + $d) * $script:k)) ([int]($r[1] * $script:k)) 300
     Start-Sleep -Milliseconds 600; Stage "aim? 1 0"
     Stage "unpause"; Start-Sleep 1
+    # (an enemy tapped: the aim follows it; the playtest's game 9, a moving enemy gone by FIRE)
+    Stage "enemy"; Start-Sleep 2; Stage "enemy2"; Start-Sleep -Milliseconds 300
+    $e = (Rects "bardroid_fixtest.txt")["foe"]
+    # (on the dev phone 2026-11-22 the give spawned the enemy's unit out of sight, beside no unit of ours: that case did
+    # not run there; a game's enemy in play is the playtest's check)
+    if ($e) { Tap $e[0] $e[1]; Start-Sleep 2; Stage "trackaim?"; Shot "dgun-enemy" } else { "[fixtest] note: no enemy in sight for the D-gun's tap (the give's unit not seen), that case not run" }
     Stage "tapat"; Start-Sleep -Milliseconds 500
     $t = (Rects "bardroid_fixtest.txt")["tap"]
     if ($t) { Tap $t[0] $t[1]; Start-Sleep 1; Stage "tapaim?" } else { "[fixtest] FAIL no ground point in sight for the D-gun's tap" }
