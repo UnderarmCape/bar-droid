@@ -1994,13 +1994,21 @@ function refreshNow()
 			{ kind = "commander", label = "COMMANDER" },
 			{ kind = "base", label = "BASE" },
 		}
+		-- (PAUSE beside it in a game of one player: BAR's own pause, lit while paused; online, with another player or a
+		-- spectator, none. The touch playtest: no pause on the touch interface, NB1 21:48; RC 0.2.0 item 4)
+		local solo = SP.solo()
 		if WG.BarDroidRetreat then -- (across the dock under them: hurt units fall back, bardroid_retreat.lua; where the
 			-- host forbids widgets' orders it cannot, and says so)
 			local R = WG.BarDroidRetreat
 			local allowed = not R.allowed or R.allowed()
-			newRight[#newRight + 1] = { kind = "retreat", w = 2, on = allowed and R.on(),
-				label = not allowed and "AUTO RETREAT: OFF IN THIS GAME" or R.on() and "AUTO RETREAT: ON"
-					or "AUTO RETREAT: OFF" }
+			local word = solo and "RETREAT" or "AUTO RETREAT" -- (half the row beside PAUSE)
+			newRight[#newRight + 1] = { kind = "retreat", w = solo and 1 or 2, on = allowed and R.on(),
+				label = not allowed and word .. ": OFF IN THIS GAME" or R.on() and word .. ": ON" or word .. ": OFF" }
+		end
+		if solo then
+			local paused = select(3, Spring.GetGameSpeed()) and true or false
+			newRight[#newRight + 1] = { kind = "pause", w = WG.BarDroidRetreat and 1 or 2, on = paused,
+				label = paused and "PAUSED" or "PAUSE" }
 		end
 		rk = "home"
 	elseif building and not selectedFactory() then -- a building picked: its shapes, and PLACE under them (the build
@@ -2622,6 +2630,11 @@ local function pressItem(item, long)
 		local x, y, z = Spring.GetTeamStartPosition(myTeam())
 		if x and (x > 0 or z > 0) then
 			cameraTo(x, y, z, true)
+		end
+	elseif k == "pause" then -- (BAR's own pause, a game of one player only: SP.solo)
+		if SP.solo() then
+			Spring.SendCommands("pause")
+			Spring.Echo("[bardroid-portrait] PAUSE tapped") -- (tools)
 		end
 	elseif k == "retreat" and WG.BarDroidRetreat then -- (bardroid_retreat.lua: hurt units fall back, on or off)
 		if WG.BarDroidRetreat.allowed and not WG.BarDroidRetreat.allowed() then
@@ -3316,6 +3329,7 @@ local function drawButton(item, r, cap)
 		or item.kind == "shape" and currentShape() == item.shape or item.kind == "filter" and selFilter == item.key
 		or item.kind == "faction" and Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
 		or item.kind == "sharestep" and shareFraction == item.value or item.kind == "retreat" and item.on
+		or item.kind == "pause" and item.on
 	if on then -- (picked: BAR's gold)
 		button(r, { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 })
 	elseif lit then -- (the order armed: as BAR's order menu shows its active command, light grey to white, its words dark;
@@ -4970,6 +4984,13 @@ function widget:Update(dt)
 		end
 	end
 	pingT.update() -- (CHAT's flips, a spoken ping's end)
+	if rightKind == "home" then -- (PAUSE lit and named by the game's state: paused by it, the Pause key or a window)
+		local paused = select(3, Spring.GetGameSpeed()) and true or false
+		if paused ~= SP.pausedWas then
+			SP.pausedWas = paused
+			refresh()
+		end
+	end
 	local fp = L.factoryPick -- (FACTORIES at rest: the factory it came to picked; something picked meanwhile: dropped)
 	if fp and (now() >= fp.at or Spring.GetSelectedUnitsCount() > 0) then
 		L.factoryPick = nil
@@ -5651,6 +5672,22 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	SP.drawWindInfo() -- (over the camera pad's dimming: it is open, it reads as such)
 end
 
+-- A game of one player (the home grid's PAUSE): no other player or spectator connected, not a replay, not spectating.
+-- BAR's own test is its one human player (teamfunctions IsSinglePlayer); a spectator watching counts here too, as the
+-- pause would stop that game for them
+function SP.solo()
+	if Spring.IsReplay() or Spring.GetSpectatingState() then
+		return false
+	end
+	local me = Spring.GetMyPlayerID()
+	for _, pid in ipairs(Spring.GetPlayerList() or {}) do
+		if pid ~= me and select(2, Spring.GetPlayerInfo(pid, false)) then -- (active: connected)
+			return false
+		end
+	end
+	return true
+end
+
 -- A dock tile held (a building or a unit to make: the build grid, a factory's): its name and BAR's one line on what it
 -- does, as BAR's build menu says them, over the dock's top edge above the finger, only while the finger stays down; no
 -- word stays on the dock (its rule: big buttons, no hint text). The night's touch playtest, 2026-11-22: the dock named
@@ -6223,6 +6260,9 @@ function widget:Initialize()
 		end,
 		menu = function()
 			return menu
+		end,
+		menuOpen = function(on) -- (tools: the dock's menu open, as its first touch does, or closed)
+			setMenu(on and true or false)
 		end,
 		refresh = refresh, -- (bardroid_presets.lua: its presets opened or closed)
 		voicePing = pingT.voicePing, -- (bardroid_touch.lua: words said for PING held; true: taken)

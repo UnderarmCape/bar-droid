@@ -67,7 +67,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
      until the finger lifts; nothing permanent (Kailil's dock rule: no hint text); [x] DONE: the build and factory
      grids' tiles (the PLACE panel has no picture), over the dock's top edge, from the long press's right button to
      its release; touchfix-phone-test's held tile (Wind Turbine, "Produces Energy. Depends on wind strength.");
-   - a PAUSE button, singleplayer only (no remote host, no other players), lit while paused;
+   - a PAUSE button, singleplayer only (no remote host, no other players), lit while paused; [x] DONE: on the home
+     grid beside AUTO RETREAT (then "RETREAT: ON/OFF"), only with no other player or spectator connected and not a
+     replay, "PAUSED" lit gold while paused (by it, the Pause key or a window); BAR's own pause;
    - a touch on the camera knob or a rail that lifts without moving goes to the map under it; [x] DONE: lifted
      within 30 px and before a long press's time it is RtsTouch's ordinary tap there (a building's spot, a pick);
      camctl-phone-test's knob tap picks the Pawn under it, the camera still;
