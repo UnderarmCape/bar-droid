@@ -54,9 +54,11 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    touch-phone, bridge-phone, remake-check) and the full set, the lock per set, one rerun of a run a GPU driver fault
    or a low-memory kill ended, one PASS/FAIL/FLAKY line per test in `build\phone-round\`. Done: a baseline on HEAD in
    which every smoke test passes or carries a classified flake. (coordinator)
-3. [ ] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
+3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
-   (coordinator)
+   (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
+   (`playenv.py`), `play.py setup`/`teardown` put the player's settings back; publish-check -NoHistory "Ready to
+   publish" (a mailing list's message id in a research note's link was its one hit).
 4. [ ] Touch batch A, each its own commit and phone case (fixer):
    - holding a dock tile (build grid, factory grid, PLACE panel's picture) shows its name and BAR's one-line role
      until the finger lifts; nothing permanent (Kailil's dock rule: no hint text);

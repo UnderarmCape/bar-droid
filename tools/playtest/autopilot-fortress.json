@@ -1,0 +1,1 @@
+{"mode": "fortress", "range": 1000, "base_r": 700, "push_at": 30, "push_every": 180, "defs": [["armhlt", 1300, 3930], ["armllt", 1230, 3990], ["armbeamer", 1360, 4010], ["armhlt", 1620, 4290], ["armllt", 1560, 4370], ["armbeamer", 1650, 4380]], "defs2": [["armpb", 1300, 3870], ["armpb", 1680, 4260]], "alab_at": [560, 4560], "rally": [1400, 4100]}
