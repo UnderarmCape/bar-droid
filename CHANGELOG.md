@@ -192,6 +192,11 @@ The first version meant for other people's phones: everything since the first bu
   late tap and the hint clear of the wind/tide box; the quick Skirmish's maps in name order. Holding a dock tile
   shows its name and role until the finger lifts; a tap on the camera knob or a rail (no drag) goes to the map
   under it; slow drags on the zoom rail move it at least a set step.
+- A PAUSE button on the dock's home grid in a game of your own (gold "PAUSED" while paused, whoever paused it); not
+  there online with others in the game. A tap on the dock just as its buttons change (the selection gone, say) is
+  dropped for a moment rather than landing on the button that took the old one's place. Android's Back with units
+  picked lets them go and no longer opens BAR's lobby over the game. ALL UNITS and LOCAL UNITS pick armed aircraft
+  too; builders stay out.
 
 **Controllers, mouse and keyboard**
 - Gamepads: a mouse in the lobby, where Start switches its size between 100% and 130%; in every game (skirmish,
@@ -300,7 +305,11 @@ The first version meant for other people's phones: everything since the first bu
   countdown, take your fingers off the game or onto it under BAR's lobby, or switch the app's build and order menus off
   until the next update. Only the app's own widgets load as part of the game.
 - A build or order menu copy that fails to load now gives way to BAR's own menu (before: no menu at all), and every one
-  of the app's widgets that fails is named in the launcher.
+  of the app's widgets that fails is named in the launcher. A build menu copy that fails mid-game brings BAR's own back
+  at once, for the lobby session's later games too; a phone version of one of BAR's widgets that errs in a game is
+  named in launcher.log.
+- When the app crashes, its stack goes into launcher.log; at the next start launcher.log says how the last run ended
+  (a crash, low memory, a force stop) and what it was doing then (the mode, the map, the screen), for a bug report.
 - BAR's own developer game (a game played from BAR's source, as BAR's developers do) plays with the app's pad, camera
   and menus; the retired controller game's checks had switched them off there.
 - BAR's voice notifications work in games whose host took a unit out (BAR's own Notifications failed to load there,
