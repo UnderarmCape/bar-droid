@@ -956,6 +956,16 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       pr-downloader fetched them again; Install / Update tapped; the install state put back after, the pool whole by the
       download): HEAD's status said "running container setup: content" through the step; this one "downloading BAR's
       game (91%)", "downloading BAR's lobby", "downloading the map Starwatcher 1.0 (5%)" ... "(79%)".
+- [x] **Item 41: an install's failure in a player's words, with what to do** (2026-11-21 20:10-20:33): StatusText
+      .installFailure names storage full (ENOSPC, the content step's new exit 45 for pr-downloader's 5, a free-space
+      check under 1 GB before the content download), no connection (a host name lookup, a connect timeout) and the game's
+      download failing, each with "tap Install / Update to carry on where it stopped" (others: their words, the same,
+      and Share logs); the player's own Stop during the download says "install stopped", not a failure; the launcher's
+      first line while not installed is StatusText.notInstalled ("Not installed: tap Install / Update", or what the
+      install does in the notification's words). status-text-test's and launch-bar-test's new cases ALL PASS; HEAD's
+      setup-container.sh exits 42 for a full disk. On the dev phone (the install's content step marked not done, the
+      state put back after, the launcher opened): HEAD's build said "Not installed, idle", this one "Not installed: tap
+      Install / Update".
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

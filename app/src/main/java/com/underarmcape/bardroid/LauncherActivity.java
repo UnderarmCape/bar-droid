@@ -445,7 +445,7 @@ public class LauncherActivity extends AppCompatActivity {
         if (android.os.SystemClock.elapsedRealtime() - android.os.Process.getStartElapsedRealtime() < 20_000)
             GameService.noteLowMemoryExit(this);
         String note = GameService.exitNote();
-        String head = !inst.isInstalled() ? "Not installed, " + s
+        String head = !inst.isInstalled() ? StatusText.notInstalled(s)   // (in a player's words, what to do: StatusText)
                 // (a failure says so and where to look, not "Installed, game ended with an error (3)")
                 // (with a note under it, the engine's own message, that note says why)
                 : !GameService.busy() && s.startsWith("game ended with an error") ? StatusText.forPlayers(s) + (note != null ? "" : ": the log below says why")

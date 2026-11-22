@@ -438,13 +438,15 @@ rm -f "$byar" "$byar.bardroid-unread"
 # (release overhaul audit, 2026-11-21). A copy on a scratch BAR folder, pr-downloader a stub.
 sc="$work/sc"; rm -rf "$sc"; mkdir -p "$sc/bar/engine/recoil_9.9/maps" "$sc/bar/maps"
 sed "s#^BAR=/root/bar\$#BAR=$sc/bar#" "$here/app/src/main/assets/bardroid/setup-container.sh" > "$sc/setup.sh"
-printf '#!/bin/sh\ncase "$*" in *--download-map*) exit 1 ;; *--download-game*nogame*) exit 2 ;; esac\nexit 0\n' \
+printf '#!/bin/sh\ncase "$*" in *--download-map*) exit 1 ;; *--download-game*nogame*) exit 2 ;; *--download-game*fullgame*) exit 5 ;; esac\nexit 0\n' \
   > "$sc/bar/engine/recoil_9.9/pr-downloader"
 chmod +x "$sc/bar/engine/recoil_9.9/pr-downloader"
 out=$(sh "$sc/setup.sh" content byar:test byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
 all_10() { [ "$rc" = 0 ] && echo "$out" | grep -q "map download failed (continuing"; }; check "content: the map's download failing, the install goes on" all_10
 out=$(sh "$sc/setup.sh" content nogame byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
 check "content: the game's failing still stops it" [ "$rc" = 42 ]
+out=$(sh "$sc/setup.sh" content fullgame byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
+check "content: the game's download out of storage (pr-downloader 5): its own exit, 45" [ "$rc" = 45 ]
 
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]

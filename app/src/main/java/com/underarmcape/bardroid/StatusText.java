@@ -10,6 +10,33 @@ final class StatusText {
     private StatusText() {}
 
     /**
+     * An install's failure in a player's words, and what to do: the launcher showed the exception's own words ("container
+     * step 'content' failed with exit code 42 (see log)", a host name lookup, "write failed: ENOSPC") with no way forward
+     * (release overhaul audit, 2026-11-21). Install / Update carries on where the install stopped.
+     */
+    static String installFailure(String msg) {
+        String m = msg == null ? "" : msg;
+        String again = "tap Install / Update to carry on where it stopped";
+        if (m.contains("ENOSPC") || m.contains("No space left") || m.contains("exit code 45") || m.startsWith("storage full"))
+            return "storage full: free some space on the phone (the game needs about 5 GB), then " + again;
+        if (m.contains("Unable to resolve host") || m.contains("No address associated") || m.contains("UnknownHost")
+                || m.contains("Network is unreachable") || m.contains("failed to connect") || m.contains("timeout")
+                || m.contains("timed out") || m.contains("Connection reset") || m.contains("Software caused connection abort"))
+            return "no connection: connect to the internet, then " + again;
+        if (m.contains("container step 'content'") && m.contains("exit code 42"))
+            return "BAR's game did not download (the connection or BAR's servers): " + again;
+        if (m.isEmpty()) return "something went wrong: " + again + "; Share logs if it keeps failing";
+        return m + ": " + again + "; Share logs if it keeps failing";
+    }
+
+    /** The launcher's first line while BAR is not installed: what to do, or what the install does now. */
+    static String notInstalled(String s) {
+        if (s == null || s.isEmpty() || s.equals("idle") || s.equals("stopped") || s.equals("game ended"))
+            return "Not installed: tap Install / Update";
+        return "Not installed. " + forPlayers(s);
+    }
+
+    /**
      * What a first install's content step fetches and how far it is, from setup-container.sh's "[setup:content]
      * downloading ..." lines and pr-downloader's "[Progress] ... done/total": the 3.4 GB read "running container setup:
      * content" for tens of minutes, and a player could take it for stuck (release overhaul audit, 2026-11-21).

@@ -152,7 +152,14 @@ case "$step" in
     game="${1:?game tag}"; lobby="${2:?lobby tag}"; map="${3:?map name}"; ver="${4:?engine version}"
     prd_setup "$ver"
     log "downloading game $game (3.4 GB uncompressed; only missing files are fetched)"
-    "$prd" --filesystem-writepath "$BAR" --download-game "$game" || { log "game download failed"; exit 42; }
+    # (pr-downloader's 5, the disk too full, as its own exit: 45, the launcher's "storage full"; release overhaul
+    # audit, 2026-11-21)
+    "$prd" --filesystem-writepath "$BAR" --download-game "$game"; rc=$?
+    if [ $rc -ne 0 ]; then
+      log "game download failed (pr-downloader exited with $rc)"
+      [ $rc -eq 5 ] && exit 45
+      exit 42
+    fi
     log "downloading lobby $lobby"
     "$prd" --filesystem-writepath "$BAR" --download-game "$lobby" || log "lobby download failed (continuing)"
     if ! ls "$BAR"/maps/*.sd7 "$BAR"/maps/*.sdz >/dev/null 2>&1; then

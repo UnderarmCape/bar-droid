@@ -366,7 +366,9 @@ public class GameService extends Service {
             Thread.currentThread().interrupt();   // (the start that called it stops too: play)
         } catch (Exception e) {
             Log.e("install", "failed", e);
-            setStatus("install failed: " + e.getMessage());
+            // (the player's own Stop cuts the download: "install stopped", not a failure; and a failure in plain words
+            // with what to do, StatusText.installFailure; release overhaul audit, 2026-11-21)
+            setStatus(closing ? "install stopped" : "install failed: " + StatusText.installFailure(e.getMessage()));
         }
     }
 

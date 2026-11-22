@@ -183,6 +183,28 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "exit " + c[0] + " -> " + got);
         }
+        // StatusText.installFailure / notInstalled: an install's failure in a player's words with what to do (release
+        // overhaul audit, 2026-11-21: the launcher showed the exception's own)
+        Object[][] fails = {
+            { "write failed: ENOSPC (No space left on device)", "storage full: free some space" },
+            { "container step 'content' failed with exit code 45 (see log)", "storage full: free some space" },
+            { "storage full: 712 MB free", "storage full: free some space" },
+            { "Unable to resolve host \"github.com\": No address associated with hostname", "no connection: connect to the internet" },
+            { "failed to connect to github.com/140.82.121.4 (port 443) after 15000ms", "no connection" },
+            { "container step 'content' failed with exit code 42 (see log)", "BAR's game did not download" },
+            { "container step 'apt' failed with exit code 100 (see log)", "container step 'apt' failed with exit code 100 (see log): tap Install / Update to carry on" },
+            { null, "something went wrong: tap Install / Update" } };
+        for (Object[] f : fails) {
+            String got = StatusText.installFailure((String) f[0]);
+            boolean ok = got.startsWith((String) f[1]) && got.contains("tap Install / Update to carry on where it stopped");
+            if (!ok) failed++;
+            System.out.println((ok ? "PASS " : "FAIL ") + "install failure: " + f[0] + " -> " + got);
+        }
+        boolean ni = StatusText.notInstalled("idle").equals("Not installed: tap Install / Update")
+                && StatusText.notInstalled("install content: downloading BAR's game (45%)").equals("Not installed. Installing: downloading BAR's game (45%)")
+                && StatusText.notInstalled("install failed: no connection: x").equals("Not installed. Install failed: no connection: x");
+        failed += ni ? 0 : 1;
+        System.out.println((ni ? "PASS " : "FAIL ") + "not installed: what to do, or what the install does now");
         // StatusText.SetupProgress: a first install's content step, what it fetches and how far (release overhaul audit,
         // 2026-11-21: it read "running container setup: content" for tens of minutes)
         StatusText.SetupProgress sp = new StatusText.SetupProgress();

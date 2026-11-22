@@ -117,7 +117,13 @@ public final class Installer {
         // item 10, 2026-11-21): the folder is in Android/data, which on Android 9-10 other apps with storage access can
         // write, and its pool files, moved over BAR's, are trusted by pr-downloader (it fetches only what is missing)
         if (hasImport() && Prefs.developer(ctx)) runSetup("import", st, "import", Prefs.engineVersion);
-        step("content", st, () -> runSetup("content", st, "content", Prefs.gameTag, Prefs.lobbyTag, Prefs.mapName, Prefs.engineVersion));
+        step("content", st, () -> {
+            // (under 1 GB free the game's download can only fail partway, in pr-downloader's words: said before it
+            // starts; release overhaul audit, 2026-11-21)
+            long free = p.filesDir.getUsableSpace();
+            if (free < Updater.LOW_SPACE) throw new IOException("storage full: " + (free >> 20) + " MB free");
+            runSetup("content", st, "content", Prefs.gameTag, Prefs.lobbyTag, Prefs.mapName, Prefs.engineVersion);
+        });
         step("files", st, () -> writeGameFiles());
         installPhoneEngine();   // (refreshHostFiles ran before the official engine was there)
         try { removeGamepadGame(); } catch (IOException e) { Log.e("install", "the controller game's files", e); }
