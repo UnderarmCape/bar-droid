@@ -6,3 +6,5 @@ gradlew text eol=lf
 *.lua   text eol=lf
 *.java  text eol=lf
 *.patch -text
+# the menu copies' patches the phone applies to BAR's files (BuildMenuPatches): a CRLF checkout found no place in them
+*.patches text eol=lf

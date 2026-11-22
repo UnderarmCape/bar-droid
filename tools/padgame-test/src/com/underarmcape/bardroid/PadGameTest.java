@@ -152,6 +152,26 @@ public final class PadGameTest {
             try { BuildMenuPatches.apply(bad, patches, "BAR 1", "abc"); } catch (IllegalArgumentException e) { refused = true; }
             check("... a patch with no one place: refused, the last copy stays", refused, bad);
         }
+        // (release overhaul audit, 2026-11-21: patches checked out with CRLF found no place; a copy over Lua's 200
+        // top-level locals was written and did not load, that game without a build menu)
+        check("... patches with Windows line endings and a byte order mark: the same copy",
+                BuildMenuPatches.apply("one\ntwo\nthree\n", "﻿" + patches.replace("\n", "\r\n"), "BAR 1", "abc")
+                        .equals("made from BAR 1 abc\nONE\ntwo\nTHREE\n"), "");
+        check("... the top-level locals counted as tools/lua-locals.py does",
+                BuildMenuPatches.topLevelLocals("local a, b = 1, 2\nlocal function f() end\n\tlocal inner = 1\n--[[\nlocal x\n]]\n"
+                        + "local c -- note\nlocal d <const> = 4\nfunction g() local e end\n") == 5,
+                BuildMenuPatches.topLevelLocals("local a, b = 1, 2\nlocal function f() end\n\tlocal inner = 1\n--[[\nlocal x\n]]\n"
+                        + "local c -- note\nlocal d <const> = 4\nfunction g() local e end\n"));
+        StringBuilder full = new StringBuilder();
+        for (int i = 0; i < 199; i++) full.append("local v").append(i).append(" = ").append(i).append('\n');
+        String addOne = "made\n\u001elocal v0 = 0\n\u001elocal v0 = 0\nlocal droidAdded = 1\n";
+        check("... a copy at Lua's 200 locals: made",
+                BuildMenuPatches.topLevelLocals(BuildMenuPatches.apply(full.toString(), addOne, "BAR 1", "abc")) == 200, "");
+        full.append("local v199 = 199\n");
+        boolean overRefused = false;
+        try { BuildMenuPatches.apply(full.toString(), addOne, "BAR 1", "abc"); }
+        catch (IllegalArgumentException e) { overRefused = e.getMessage().contains("201 top-level locals"); }
+        check("... one over (BAR's file grew to 200): refused, the last copy stays", overRefused, "");
 
         t = new PadGameTest();
         t.tick(); t.m.out.clear();

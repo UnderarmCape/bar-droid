@@ -94,7 +94,9 @@ local maxPosY = 0.74
 -- and a finger held still (or a drag from the building) makes it the first corner of a GRID: the app holds BAR's own
 -- build drag down with Shift+Alt, the engine draws it, and PLACE or a double tap lets go (droid.gridHeld: PLACE lit;
 -- "GRID" shown for a moment, droid.gridShown).
-local droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
+-- (no local: a field of the widget's own environment, as BAR's file stands at 198 of the 200 and the phone makes
+-- this copy again from BAR's next one)
+droid = { colls = 3, maxColls = 5, rows = 3, strip = 0.5, pageText = 2, gap = 0, registered = false,
 	shape = "one", armed = false, defID = nil, spot = nil, panel = nil, written = nil, writtenAt = nil, shapeRects = {},
 	gridHeld = nil, gridShown = nil, gridToast = 1.2, nudgeCarry = { 0, 0 },
 	file = "LuaUI/Config/bardroid_place.txt",

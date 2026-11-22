@@ -532,6 +532,53 @@ GameActivity's keys; 2026-11-21 17:25-17:52):
    that check): meanwhile a mouse move was a drag and every key a Shift+Alt one.
 33. LOW, keyboards: QUEUE's sticky Shift (and QUEUE+INSERT's Alt) let go of in X by the keyboard's own Shift, QUEUE
    still lit (orders replaced queues until it was tapped again).
+   Noted, not worked: the pad alone never restarts the touch log (its lines are sent on change only); a palm One UI
+   marks cancelled may count as a second finger (not seen on the dev phone). The gamepad audit's lobby camera line (a
+   stick held as BAR's lobby comes up over a game pans the game behind it): its fix (ControllerBridge sends the line at
+   rest once in lobby mode; toolchain\tmp\lobbycam.diff) is parked unproven: a skirmish started from the launcher has
+   no LuaMenu, so the proof needs the lobby-first start of overgame-phone-test.
+From an eleventh read-only audit, BAR's update path for the menu copies (Installer.remakeBarCopy, BuildMenuPatches,
+launch-bar.sh's marks; 2026-11-21 18:45-19:00):
+34. HIGH, the build menu copy stood at 199 of Lua 5.1's 200 top-level locals (BAR's file 198, the patch's `local
+   droid` one more; BAR's was 196 in October): two more in BAR's file and the phone's remake would ship a copy that
+   does not load ("more than 200 local variables"), that game with no build menu at all, online too (BAR's own is off
+   while the copy is on), and every later BAR change one more such game. And the .patches files were not covered by
+   .gitattributes: with the toolchain's core.autocrlf a checkout writes them CRLF, and every phone remake would find no
+   place (latent: the shipped files are LF).
+35. HIGH, the failed copy's mark was keyed to this start's files, not to those that ran: the lobby fetches a newer BAR
+   release mid-session (to join a battle), the old copy fails in it, Installer makes the copy again at the next start,
+   and launch-bar.sh marked that new copy, never run, so BAR's own menu ran until BAR's next change.
+36. MEDIUM-HIGH: within a lobby session nothing falls back to BAR's own menu (launch-bar.sh runs once per engine
+   process; a copy that errors is removed in every game of the session, BAR's own still off); a release the lobby
+   fetches mid-session gets no remake.
+37. MEDIUM: a phone patch of one of BAR's widgets that applies but errors (BAR renamed something it uses) is never
+   noticed (app_widget_faults looks at the app's own widgets only) and never falls back to BAR's unpatched file.
+38. MEDIUM: one replay in a lobby session hides every live game's faults in it (REPLAY covers the whole infolog), and
+   an error the copy causes in a caller's unprotected call removes the caller, not the copy.
+   LOW: two byar hosts' indexes (which one a remake compares with); invalid UTF-8 replaced silently; an
+   OutOfMemoryError in the remake not caught.
+From a twelfth read-only audit, a new player's first run and its failures (StartActivity, LauncherActivity, Installer,
+GameService, Updater's first start, StatusText, setup-container.sh; 2026-11-21 19:25-19:35):
+39. HIGH, a fresh install's first start was an update's: the app pinned engine 2026.07.04, the install's first check
+   recorded it as the set to fall back to, then updated to BAR's 2026.09.03; a first start failing fast (a phone the
+   phone engine does not run on) rolled back to 2026.07.04, which BAR's servers no longer run, and marked BAR's current
+   version bad: online play gone until BAR moved on. (A fresh install also fetched an engine it replaced at once.)
+40. HIGH, owner's call: phones BAR cannot run on (Mali, Xclipse, PowerVR, Adreno 5xx and older; 4-6 GB of RAM) download
+   ~5 GB anyway: the only hint is the launcher's grey device line. A support check before Install (with plain words,
+   or a question) is the fix; which phones to refuse or warn about is Kailil's.
+41. MEDIUM: install failures in developer words with no way forward ("container step 'content' failed with exit code
+   42 (see log)", a host name lookup, ENOSPC); storage full never named (pr-downloader's 5 becomes 42), no free-space
+   check before; nothing says Install / Update carries on where it stopped.
+42. MEDIUM: the 3.4 GB content download shows no progress for tens of minutes ("install content: running container
+   setup: content").
+43. MEDIUM, a guess: a game started after an install while the player has left the app may start with no screen
+   (Android blocks activity starts from the background).
+44. MEDIUM: the install's notification and service stay after Install / Update ends (install() never close()s).
+   MEDIUM-LOW: the container's DNS fixed to 1.1.1.1 and 8.8.8.8 (networks that block outside DNS fail apt,
+   pr-downloader and the lobby); no warning before ~5 GB over mobile data. LOW: "Not installed, idle" with no
+   instruction; developer words under the icon ("Downloading byar:test 45%", "Container: making room"); "A game is
+   running" toasted during an install; the player's own Stop during the download read as a failure; the Debian base
+   image from a moving branch (a resume across an upstream update fails its checksum).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -870,6 +917,17 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       controls hold (a building's drag keys, QUEUE's Shift, QUEUE+INSERT's Alt unless a LINE's drag keeps it up). On the
       dev phone upright (the same proof widget): QUEUE tapped on the dock (Shift down in the game), then a Shift key press
       and release (input keyevent): HEAD's build had Shift up after it, QUEUE still lit; this one kept it down.
+      HEAD 4a99fcd8 (items 27-33) on the dev phone: round B (18:41-19:04) and touch, dock upright, camctl, lobby,
+      factory, pad and pad -Online (19:28-19:43) ALL PASS. (A first run of the latter, 19:08-19:28, overlapped another
+      round on the phone: both took the lock under one name, which lets its holder in; rerun alone.)
+- [x] **Item 34: the menu copies' remake stays within Lua's 200 locals** (2026-11-21 19:00-19:52): the build menu
+      copy's `droid` table is a field of the widget's own environment (198 top-level locals, from 199); BuildMenuPatches
+      refuses a remade copy over 200 (counted as tools/lua-locals.py does: the last copy stays, launch-bar.sh names it),
+      takes CRLF patches and a byte order mark, and the .patches files are LF in every checkout (.gitattributes).
+      padgame-test's new cases ALL PASS; HEAD's BuildMenuPatches (a one-off check, never committed) refused the CRLF
+      patches ("no one place for: one") and wrote a 201-local copy. On the dev phone: remake-check, all five copies
+      remade from BAR test-32018-ad135b9 equal the shipped ones byte for byte, the phone patches PASS; the build with
+      them: dock-phone-test upright, pad-test and -Online ALL PASS, the build menu copy loaded and running.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it
