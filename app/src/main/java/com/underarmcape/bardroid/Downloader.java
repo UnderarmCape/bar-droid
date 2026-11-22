@@ -15,7 +15,16 @@ public final class Downloader {
     public interface Progress { void onProgress(long done, long total); }
 
     private volatile boolean cancelled;
-    public void cancel() { cancelled = true; }
+    // (the connection in use, cut by cancel(): the flag alone was read only after read() returned, so Stop on a
+    // stalled download left the service busy for the 60 s read timeout, Play and Lobby saying "A game is running";
+    // release overhaul audit, 2026-11-21)
+    private volatile HttpURLConnection live;
+
+    public void cancel() {
+        cancelled = true;
+        HttpURLConnection c = live;
+        if (c != null) c.disconnect();
+    }
 
     public static String fetchText(String url) throws IOException {
         HttpURLConnection c = open(url, 0);
@@ -26,9 +35,19 @@ public final class Downloader {
     }
 
     private static HttpURLConnection open(String url, long rangeStart) throws IOException {
+        return open(url, rangeStart, null);
+    }
+
+    /** The same, each hop's connection shown to owner (its live one, cancel() cuts it); a cancel between hops ends it. */
+    private static HttpURLConnection open(String url, long rangeStart, Downloader owner) throws IOException {
         String current = url;
         for (int hop = 0; hop < 8; hop++) {
+            if (owner != null && owner.cancelled) throw new IOException("cancelled");
             HttpURLConnection c = (HttpURLConnection) new URL(current).openConnection();
+            if (owner != null) {
+                owner.live = c;
+                if (owner.cancelled) { c.disconnect(); throw new IOException("cancelled"); }   // (cancel() just before)
+            }
             c.setInstanceFollowRedirects(false);
             c.setConnectTimeout(30000);
             c.setReadTimeout(60000);
@@ -60,9 +79,20 @@ public final class Downloader {
             return dest;
         }
         Log.i("dl", "GET " + url + (have > 0 ? " (resume at " + have + ")" : ""));
+        try {
+            return fetch(url, dest, part, have, expectedSha256, progress);
+        } catch (IOException e) {
+            if (cancelled) throw new IOException("cancelled");   // (the cut connection's own error: the player's Stop)
+            throw e;
+        } finally {
+            live = null;
+        }
+    }
+
+    private File fetch(String url, File dest, File part, long have, String expectedSha256, Progress progress) throws IOException {
         HttpURLConnection c;
         try {
-            c = open(url, have);
+            c = open(url, have, this);
         } catch (IOException e) {
             // 416: the .part is already whole (the app was killed before the rename) or longer than the file now.
             if (have == 0 || !String.valueOf(e.getMessage()).startsWith("HTTP 416")) throw e;
@@ -70,7 +100,7 @@ public final class Downloader {
             //noinspection ResultOfMethodCallIgnored
             part.delete();
             have = 0;
-            c = open(url, 0);
+            c = open(url, 0, this);
         }
         boolean resumed = have > 0 && c.getResponseCode() == 206;
         if (!resumed) { have = 0; }

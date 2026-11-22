@@ -1040,6 +1040,12 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       nothing read after it, the game on without sound (frame 1745); this one "AudioTrack failed ... the stream goes
       on", "a new AudioTrack" a second later, 16.9 MB to 26.3 MB read over the next 50 s. Round A on HEAD 96d4c0cb
       (21:07-21:36): ALL PASS.
+- [x] **Item 54: Stop ends a stalled download at once** (2026-11-21 21:33-21:44): Downloader keeps the connection in
+      use and cancel() disconnects it (a cancel between redirect hops ends it too; the cut connection's error reads
+      "cancelled"). Before, the flag was read only after read() returned. On the dev phone (the app's Mesa URL pointed
+      at a laptop socket that accepts and never answers, toolchain\tmp\stall_server.py through adb reverse; Install /
+      Update tapped, its Mesa download stalled, then Stop tapped; the settings file backed up and put back): HEAD's
+      install worker ended at the download's 60 s read timeout, 47 s after Stop; this one's in the same second.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it
