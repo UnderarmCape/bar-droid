@@ -1,0 +1,76 @@
+BAR Droid phone version of BAR's Context Build (luaui/widgets/cmd_context_build.lua): a building's sea twin (Solar ->
+Tidal Generator, Bot Lab -> Shipyard, Sentry -> Harpoon, ...) armed only by where the pointer really points. BAR's
+widget swaps the picked building for its twin whenever the ground under the pointer is at the water's level, every frame
+while one is picked. On a phone the pointer stays where the last tap left it: often the void past the map's edge,
+which traces to the water's plane, or water tapped for something else, so the dock's Bot Lab armed a Shipyard ghost
+until the building's spot was tapped (the night's touch playtest, 2026-11-22, docs/PLAYTEST.md "sea twin"). Here:
+- no swap with the pointer on the app's dock or BAR's interface (bardroid_portrait.lua's onDock, bardroid_touch.lua's
+  WG.BarDroidOnInterface), nor past the map's edge (no building stands there);
+- with fingers (not the pad: WG.BarDroidPadOnly), a building just picked stays the one picked until the pointer moves:
+  a map tap ("spot": bardroid_touch.lua warps the pointer there) or the build menu copy keeping the pointer on the
+  waiting building after a pan; each move is tested once, where the pointer then is. The pad's pointer stays in the
+  middle while the camera moves under it: BAR's every-frame test there, as on a PC.
+Applied by the engine (BarDroidPhoneLuaDir) to BAR's file as LuaUI loads it; if a block finds no place, BAR's own file
+runs.
+
+@@@ find
+-- DrawWorld because update doesn't run pregame
+function widget:DrawWorld()
+@@@ with
+-- BAR Droid (phone): whether the pointer's place says nothing this frame (above): on the app's dock or BAR's
+-- interface, past the map's edge, or with fingers a building just picked or a pointer that has not moved since the last
+-- test (the building it was picked as, or the twin that test chose, kept)
+local droidDef, droidX, droidY
+local function droidPointerStale(unitDefID, pos)
+	local mx, my = spGetMouseState()
+	local picked = unitDefID ~= droidDef
+	local moved = mx ~= droidX or my ~= droidY
+	droidDef, droidX, droidY = unitDefID, mx, my
+	local P = WG.BarDroidPortrait
+	local onUi = WG.BarDroidOnInterface
+	if (P and P.onDock and P.onDock(mx, my)) or (onUi and onUi(mx, my)) then
+		return true
+	end
+	if pos[1] < 0 or pos[3] < 0 or pos[1] > Game.mapSizeX or pos[3] > Game.mapSizeZ then
+		return true
+	end
+	if WG.BarDroidPadOnly then
+		return false
+	end
+	return picked or not moved
+end
+
+-- DrawWorld because update doesn't run pregame
+function widget:DrawWorld()
+@@@ end
+
+@@@ find
+	local unitDefID = isBuilding()
+	if not unitDefID then
+		return
+	end
+
+	local pos = getCursorWorldPosition()
+	if not pos then
+		return
+	end
+
+	local _, _, lmb, _, _ = spGetMouseState()
+@@@ with
+	local unitDefID = isBuilding()
+	if not unitDefID then
+		droidDef = nil -- BAR Droid (phone): the next building picked is a new pick, wherever the pointer went meanwhile
+		return
+	end
+
+	local pos = getCursorWorldPosition()
+	if not pos then
+		return
+	end
+	-- BAR Droid (phone): the pointer's place says nothing now (above)
+	if droidPointerStale(unitDefID, pos) then
+		return
+	end
+
+	local _, _, lmb, _, _ = spGetMouseState()
+@@@ end
