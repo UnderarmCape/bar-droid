@@ -178,6 +178,9 @@ local function step()
 		local s, f = d.slow, measured("fast")
 		check("the zoom rail slow, then as far fast: the fast one moves more", math.abs(f[1]) > math.abs(s[1]) * 1.3
 			and s[1] * f[1] > 0, "slow " .. said(s) .. "; fast " .. said(f))
+		-- (the slow drag's floor, RC 0.2.0 item 4: at the old one it zoomed x0.946, "the rail is broken", NB2-5)
+		check("... the slow one still zooms a good step (the rail's floor): over 15 %", math.abs(s[1]) >= math.log(1 / 0.86),
+			"slow " .. said(s))
 		-- (a Pawn of mine on the ground under the knob: a tap on the knob that does not move is the map's tap there, so it
 		-- picks the Pawn; RC 0.2.0 item 4, the playtest's converter taps on the knob, NB3-4)
 		local _, pos = Spring.TraceScreenRay(knob[1], knob[2], true)

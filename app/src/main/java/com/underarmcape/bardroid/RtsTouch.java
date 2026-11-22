@@ -113,6 +113,9 @@ final class RtsTouch {
     // step scaled by the finger's speed (screen heights a second, smoothed), CAM_SPEED_REF giving the dock pad's own gain,
     // between CAM_GAIN_MIN and CAM_GAIN_MAX; times the Settings' sensitivity ("gain" in the file)
     private static final float CAM_SPEED_REF = 0.6f, CAM_GAIN_MIN = 0.12f, CAM_GAIN_MAX = 4f;
+    // the zoom rail's floor: half the dock pad's gain (on the dev phone a slow drag over 60 % of the rail, 2.4 s, zoomed
+    // x0.946 at the old floor; the fast one, x0.56, stays the larger)
+    private static final float CAM_ZOOM_GAIN_MIN = 0.5f;
     private static final float CAM_TAP_PX = 30;   // a touch on the knob or a rail that moved no more: a tap on the map
     private float camGain = 1f, camSpeed;
     private long camT;   // the event time of the last camera line
@@ -1233,7 +1236,10 @@ final class RtsTouch {
         float v = Math.abs(stepPx) / h / (dt / 1000f);   // screen heights a second
         camSpeed = camSpeed <= 0 ? v : camSpeed * 0.55f + v * 0.45f;
         camT = t;
-        return Math.max(CAM_GAIN_MIN, Math.min(CAM_GAIN_MAX, camSpeed / CAM_SPEED_REF)) * camGain;
+        // (the zoom rail never under the dock pad's own gain: three slow full-length drags zoomed out a fifth, "the rail
+        // is broken"; the touch playtest NB2-5, RC 0.2.0 item 4. Fast drags still go further, the sensitivity on top)
+        float min = camKind == CAM_ZOOM ? CAM_ZOOM_GAIN_MIN : CAM_GAIN_MIN;
+        return Math.max(min, Math.min(CAM_GAIN_MAX, camSpeed / CAM_SPEED_REF)) * camGain;
     }
 
     /** A touch on the camera knob (its circle) or a rail: the camera's until it lifts (CAM). False: on neither. */

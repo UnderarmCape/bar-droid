@@ -70,7 +70,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
      camctl-phone-test's knob tap picks the Pawn under it, the camera still;
    - dock taps ignored for a moment after the dock's layout changes (selection change, energy bar in QUEUE's place),
      as 3104771e's faction guard;
-   - a floor on the zoom rail's slow-drag step (the sensitivity setting stays).
+   - a floor on the zoom rail's slow-drag step (the sensitivity setting stays). [x] DONE: the zoom rail's step never
+     under half the dock pad's gain; camctl-phone-test: a slow drag over 60 % of the rail x0.946 before, x0.794 now,
+     the fast one still x0.560.
 5. [ ] Android Back with units selected in a lobby-started game (PLAYTEST NB3-6) reproduced on the real Back path:
    fixed, or closed as the driver's with the evidence; check-only cases: a two-finger pan with a building picked, a
    minimap tap with Fight armed. (fixer)
