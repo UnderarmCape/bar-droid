@@ -65,7 +65,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
      grids' tiles (the PLACE panel has no picture), over the dock's top edge, from the long press's right button to
      its release; touchfix-phone-test's held tile (Wind Turbine, "Produces Energy. Depends on wind strength.");
    - a PAUSE button, singleplayer only (no remote host, no other players), lit while paused;
-   - a touch on the camera knob or a rail that lifts without moving goes to the map under it;
+   - a touch on the camera knob or a rail that lifts without moving goes to the map under it; [x] DONE: lifted
+     within 30 px and before a long press's time it is RtsTouch's ordinary tap there (a building's spot, a pick);
+     camctl-phone-test's knob tap picks the Pawn under it, the camera still;
    - dock taps ignored for a moment after the dock's layout changes (selection change, energy bar in QUEUE's place),
      as 3104771e's faction guard;
    - a floor on the zoom rail's slow-drag step (the sensitivity setting stays).

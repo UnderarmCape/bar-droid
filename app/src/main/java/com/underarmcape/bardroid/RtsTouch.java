@@ -113,6 +113,7 @@ final class RtsTouch {
     // step scaled by the finger's speed (screen heights a second, smoothed), CAM_SPEED_REF giving the dock pad's own gain,
     // between CAM_GAIN_MIN and CAM_GAIN_MAX; times the Settings' sensitivity ("gain" in the file)
     private static final float CAM_SPEED_REF = 0.6f, CAM_GAIN_MIN = 0.12f, CAM_GAIN_MAX = 4f;
+    private static final float CAM_TAP_PX = 30;   // a touch on the knob or a rail that moved no more: a tap on the map
     private float camGain = 1f, camSpeed;
     private long camT;   // the event time of the last camera line
 
@@ -1006,9 +1007,18 @@ final class RtsTouch {
                 panTo(curX, curY);
                 flingIfFast();
                 break;
-            case CAM:
+            case CAM: {
+                // (a touch on the knob or a rail that lifts without moving, before a long press's time: a tap on the map
+                // under it. The touch playtest's converter taps hit the knob and did nothing, NB3-4; RC 0.2.0 item 4)
+                boolean still = camMove == PadMove.NONE && Math.hypot(curX - downX, curY - downY) <= CAM_TAP_PX
+                        && e.getEventTime() - downTime < LONG_PRESS_MS;
                 camUp();
+                if (still) {
+                    send("camtap");   // (tools: camctl-phone-test)
+                    tap(downX, downY);
+                }
                 break;
+            }
             case LEFT_DRAG:
                 press(curX, dockSelecting || shapeDragging || areaDragging ? aboveDock(curX, curY) : curY,
                         InputStub.BUTTON_LEFT, false);

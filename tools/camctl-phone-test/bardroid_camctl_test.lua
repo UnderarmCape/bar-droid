@@ -3,7 +3,7 @@
 -- then down (the camera's distance one way, then back the other), right, then left (it turns one way, then the other);
 -- the zoom rail dragged up (as the knob's up), the turn rail dragged right (the other way from the knob's right, Kailil:
 -- "invert it"); the zoom rail slow, then as far fast (the fast one moves more: "slower speed means less movement");
--- a tap on the knob (the camera still, nothing picked); Settings open: the knob and rails gone from RtsTouch's file, a
+-- a tap on the knob (the camera still, the map's tap under it: a Pawn given there picked); Settings open: the knob and rails gone from RtsTouch's file, a
 -- drag where the knob was leaves the camera; left-handed (BarDroidCamLeft, put back after): the rails on the left, a
 -- drag up the left zoom rail zooms as the right one. Drags asked for by "do <n> swipe|tap|shot <x> <y> <vsx> [<x2> <y2>
 -- <ms>]" (X pixels, top left origin) in LuaUI/Config/bardroid_camctltest.txt, answered "<n>". Steps in Update by real
@@ -109,6 +109,7 @@ local function step()
 			return
 		end
 		Spring.SelectUnitArray({})
+		Spring.SendCommands("cheat 1") -- (the knob tap's Pawn, given later: a give in the cheat's own frame is ignored)
 		leftWas = C.left()
 		if leftWas then
 			C.setLeft(false)
@@ -177,13 +178,25 @@ local function step()
 		local s, f = d.slow, measured("fast")
 		check("the zoom rail slow, then as far fast: the fast one moves more", math.abs(f[1]) > math.abs(s[1]) * 1.3
 			and s[1] * f[1] > 0, "slow " .. said(s) .. "; fast " .. said(f))
+		-- (a Pawn of mine on the ground under the knob: a tap on the knob that does not move is the map's tap there, so it
+		-- picks the Pawn; RC 0.2.0 item 4, the playtest's converter taps on the knob, NB3-4)
+		local _, pos = Spring.TraceScreenRay(knob[1], knob[2], true)
+		if pos then
+			Spring.SendCommands(string.format("give 1 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), pos[1], pos[2], pos[3]))
+		end
+		go("pawn")
+	elseif stage == "pawn" and clock - stageAt > 1.5 then
+		Spring.SelectUnitArray({})
 		before = camNow()
-		d.selBefore = Spring.GetSelectedUnitsCount()
 		ask("tap", knob[1], vsy - knob[2], "tap?")
 	elseif stage == "tap?" and clock - stageAt > SETTLE then
 		local c = change(before, camNow())
-		check("a tap on the knob: the camera still, nothing picked", math.abs(c[1]) < 0.01 and math.abs(c[2]) < 0.01
-			and Spring.GetSelectedUnitsCount() == d.selBefore, said(c) .. ", " .. Spring.GetSelectedUnitsCount() .. " picked")
+		local sel = Spring.GetSelectedUnits()
+		local ud = sel[1] and UnitDefs[Spring.GetUnitDefID(sel[1]) or -1]
+		check("a tap on the knob that does not move: the camera still, the map's tap under it (the Pawn there picked)",
+			math.abs(c[1]) < 0.01 and math.abs(c[2]) < 0.01 and #sel == 1 and ud and ud.name == "armpw",
+			said(c) .. ", " .. #sel .. " picked" .. (ud and (": " .. ud.name) or ""))
+		Spring.SelectUnitArray({})
 		d.knobAt = { knob[1], knob[2] }
 		WG.options.toggle(true)
 		go("settings")
