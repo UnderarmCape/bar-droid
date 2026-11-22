@@ -230,6 +230,8 @@ public class GameService extends Service {
     static boolean inGame() { return inGame; }
     /** When the game (or the lobby) last finished loading, epoch ms; 0 while loading: the notification's running time. */
     private volatile long upSince;
+    /** The map the exit record's state summary names (ExitRecord.summary; play() clears it): set once per map. */
+    private volatile String summaryMap;
     private void closeGently() {
         // (a second Stop meanwhile: one quit is on its way; a third SIGTERM after the engine has shut SDL down ends it
         // at once)
@@ -402,6 +404,7 @@ public class GameService extends Service {
     private void play(String mode) {
         updater = null;
         exitNote = null;
+        summaryMap = null;
         // (for the process's exit record if it dies in this game: what ran, on which map, the screen; ExitRecord)
         ExitRecord.summary(this, mode + ", map " + ("skirmish".equals(mode) ? Prefs.mapName : "?") + ", screen "
                 + ExitRecord.screen(this));
@@ -608,8 +611,13 @@ public class GameService extends Service {
                             String mapFile = MapStore.usedIn(line);
                             if (mapFile != null) {
                                 MapStore.markUsed(paths.bar, mapFile);
-                                ExitRecord.summary(GameService.this, "game, map " + mapFile + ", screen "
-                                        + ExitRecord.screen(GameService.this));
+                                // (the engine's own archives, springcontent.sdz and the like, are no map; a load names
+                                // its map ~10 times: the summary once)
+                                if (!mapFile.equals(summaryMap) && new java.io.File(new java.io.File(paths.bar, "maps"), mapFile).isFile()) {
+                                    summaryMap = mapFile;
+                                    ExitRecord.summary(GameService.this, "game, map " + mapFile + ", screen "
+                                            + ExitRecord.screen(GameService.this));
+                                }
                             }
                             // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
                             if (driver[0].onLine(line)) {

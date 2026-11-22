@@ -67,9 +67,12 @@ if ($EngineCrash) {
     "[exitrec] --- the app's process: $(if ("$(& $adb shell pidof $pkg)".Trim()) { 'alive (the engine is a child process: no exit record of the app)' } else { 'gone' })"
   }
   # (a death the app does not see coming, as a swipe from recent apps: its record and the state summary read back)
+  InApp "rm -f files/bar/infolog.txt"   # (the crashed game's: its "Archive file=" lines ended the wait at once)
+  $at = LogSize
   & $adb shell am start -n "$pkg/.LauncherActivity" --es start skirmish | Out-Null
   $until = (Get-Date).AddMinutes(4)
-  while ((Get-Date) -lt $until -and -not ("$(InApp "grep -a -c 'Archive file=' files/bar/infolog.txt 2>/dev/null")".Trim() -gt 0)) { Start-Sleep 3 }
+  # (the game running: a frame of its own in the new infolog, so the map is loaded)
+  while ((Get-Date) -lt $until -and -not ("$(InApp "grep -a -o '\[f=0[0-9]*\]' files/bar/infolog.txt 2>/dev/null | tail -n 1")".Trim())) { Start-Sleep 3 }
   Start-Sleep 5
   & $adb shell am force-stop $pkg
   $at = LogSize

@@ -90,10 +90,24 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    "show the lobby". Now the dock's file says "back dock" then and Back is the dock's alone (Escape stays for BAR's quit
    question and the chat boxes); overgame-phone-test's new case: 0 picked, overlay "0". The check-only cases: open (in
    dock-phone-test, not yet committed: the two-finger gesture and the minimap point still to be made reliable).
-6. [ ] Item 53: a default uncaught-exception handler that writes the stack to launcher.log (Share logs); one
+6. [x] Item 53: a default uncaught-exception handler that writes the stack to launcher.log (Share logs); one
    deliberate engine crash (SIGSEGV) on the dev phone, recorded here: what launcher.log, infolog.txt and Android's
    exit record hold; `setProcessStateSummary` with the screen and map, read back after a death. Done: a forced
    exception leaves its stack in launcher.log. (fixer, after 4-5)
+   DONE (ExitRecord, b736e9f3; tools/exitrecord-phone-test.ps1 [-EngineCrash] ALL PASS on the dev phone, 2026-11-22).
+   The engine's SIGSEGV (`kill -SEGV` at frame 5626 of a skirmish on the phone engine) leaves:
+   - launcher.log: the engine's CrashHandler lines with the frame and engine version ("Segmentation fault in Spring
+     2026.09.03-2-g83a8536 bardroid/sim-2026.09.03", "Halted Stacktrace ... (SIGSEGV) using libunwind:"), then
+     "sh: 1: addr2line: not found": no stack frames at all, the container has no addr2line (binutils); "spring exited
+     with 21", `[svc] game ended with an error (21)` and BAR's own message to the player, which reads only
+     "/root/bar/infolog.txt." (the engine's crash text cut to its last line);
+   - infolog.txt: the same CrashHandler lines and the engine's shut-down (archives closed, SpringApp::Kill), no frames;
+   - Android's exit records: none for it: the engine is the app's child process (proot), the app stays alive and its
+     process never dies. A death of the app itself is recorded: the crash test's "crashed (an exception in Java)" with
+     its state "app started, screen 1080x2078 upright", and a force stop in a game "stopped by the user (force stop, a
+     swipe away)", its state "game, map starwatcher_1.0.sd7, screen 2078x1080 sideways" (the summary once per map; the
+     engine's own archives, springcontent.sdz and the like, are no map).
+   Open (not in this item): addr2line in the container for the engine's frames; a plainer crash message than the path.
 7. [ ] Items 36/37: BAR's own build menu back in the next game of the same lobby session after the copy failed; a
    phone patch that applies but errors noticed and logged. Done: a copy broken on purpose gives BAR's menu in the
    next game. (fixer)
