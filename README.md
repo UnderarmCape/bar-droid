@@ -248,7 +248,16 @@ Tap **Share logs** on the launcher screen and attach the zip to an [issue](../..
 what happened. The zip holds the app's and the game's logs and settings; an online game's join password, which the
 game writes into its log, is taken out of them first.
 
-Known: turning a folded phone between upright and sideways changes BAR's interface scale, and the game stops while
+Known:
+- Now and then, early in a game, the phone's GPU driver freezes the picture (on the S23 Ultra used for testing, about
+  1 game start in 10 to 25). The app closes the frozen game and says why; start it again.
+- In big online games (8v8) a hot phone can run short of memory late in the game, and Android closes the app; the
+  launcher says so at its next start. Close other apps before a big game.
+- If BAR's servers move to an engine version the APK has no phone build of, every game runs BAR's official engine
+  until a new APK: the limits of that engine below apply, and a few of the phone fixes (such as the sea version of a
+  building picked only where the finger points) are not in it.
+
+Turning a folded phone between upright and sideways changes BAR's interface scale, and the game stops while
 BAR's panels take the new size: about a second with the phone engine, 5 to 10 seconds with BAR's official engine (it
 loads the whole interface again; the launcher's device lines say which engine runs). Upright, BAR's own Settings is
 wider than the screen with the official engine (the phone engine has the app's Settings): open it sideways.
