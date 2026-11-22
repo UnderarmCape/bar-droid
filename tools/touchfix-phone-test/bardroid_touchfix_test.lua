@@ -317,6 +317,21 @@ local function onCmd(c)
 		check("WALLS' cost for a Sentry: 8 Dragon's Teeth's metal", cost == want, tostring(cost) .. ", want " .. want)
 		local none = W and W.cost and W.cost(D.armsolar)
 		check("no WALLS cost for a Solar", none == nil, tostring(none))
+	elseif c == "holdsetup" then -- (a build tile held: its name and role up while held, RC 0.2.0 item 4)
+		Spring.SetActiveCommand(0)
+		Spring.SelectUnitArray({ com })
+	elseif c == "holdsetup2" then
+		local cell = Pt and Pt.itemCell and Pt.itemCell("left", function(it)
+			return it.defID == D.armwin
+		end)
+		write(rectLine("htile", cell and cell[3] > cell[1] and cell or nil))
+	elseif c == "holdtip?" then
+		local held = Pt and Pt.holdTip and Pt.holdTip()
+		check("a build tile held: its name and role up while the finger stays", held == D.armwin, "held " .. nameOf(held))
+	elseif c == "holdgone?" then
+		local held = Pt and Pt.holdTip and Pt.holdTip()
+		check("the finger lifted: the name and role gone", held == nil, "held " .. nameOf(held))
+		Spring.SetActiveCommand(0)
 	elseif c == "insertsetup" then
 		Spring.SetActiveCommand(0)
 		local cx, _, cz = Spring.GetUnitPosition(com)

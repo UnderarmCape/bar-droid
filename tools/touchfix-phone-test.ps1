@@ -123,6 +123,21 @@ try {
   } else { "[fixtest] FAIL no water or land spot in sight: $(InApp "cat $cfg/bardroid_fixtest.txt")" }
   # 2. WALLS' cost
   Stage "walls?"; Shot "walls"; Start-Sleep 1
+  # 3a. a build tile held: its name and role while the finger stays (the grid's first touch opens the dock's menu)
+  Stage "holdsetup"; Start-Sleep 1; Stage "holdsetup2"; Start-Sleep -Milliseconds 300
+  $ht = (Rects "bardroid_fixtest.txt")["htile"]
+  if ($ht) {
+    $hx = ($ht[0] + $ht[2]) / 2; $hy = ($ht[1] + $ht[3]) / 2
+    if (-not ("$(InApp "head -n 1 $cfg/bardroid_dock.txt")" -match ' menu')) {
+      Tap $hx $hy; $until = (Get-Date).AddSeconds(4)
+      while ((Get-Date) -lt $until -and -not ("$(InApp "head -n 1 $cfg/bardroid_dock.txt")" -match ' menu')) { Start-Sleep -Milliseconds 200 }
+    }
+    Assert-GameInFront $adb
+    & $adb shell input motionevent DOWN ([int]($hx * $script:k)) ([int]($hy * $script:k))
+    Start-Sleep -Milliseconds 1100; Stage "holdtip?"; Shot "holdtip"
+    & $adb shell input motionevent UP ([int]($hx * $script:k)) ([int]($hy * $script:k))
+    Start-Sleep -Milliseconds 600; Stage "holdgone?"
+  } else { "[fixtest] FAIL no wind tile on the dock's build grid" }
   # 3. INSERT on a builder
   Stage "insertsetup"; Start-Sleep 1; Stage "insertsetup2"; Start-Sleep -Milliseconds 500
   $s = Rects "bardroid_fixtest.txt"

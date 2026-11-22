@@ -5651,6 +5651,43 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	SP.drawWindInfo() -- (over the camera pad's dimming: it is open, it reads as such)
 end
 
+-- A dock tile held (a building or a unit to make: the build grid, a factory's): its name and BAR's one line on what it
+-- does, as BAR's build menu says them, over the dock's top edge above the finger, only while the finger stays down; no
+-- word stays on the dock (its rule: big buttons, no hint text). The night's touch playtest, 2026-11-22: the dock named
+-- nothing, a long press showed nothing (NB2-114; RC 0.2.0 item 4). SP.holdTip from MousePress's long press (the right
+-- button RtsTouch gives a held finger), gone at its release.
+function SP.drawHoldTip()
+	local tip = SP.holdTip
+	if tip and now() - tip.at > 10 then -- (a release that never came: not left up)
+		SP.holdTip, tip = nil, nil
+	end
+	local ud = tip and UnitDefs[tip.defID]
+	if not (ud and font and bold) then
+		return
+	end
+	local name = ud.translatedHumanName or ud.humanName or ud.name or ""
+	local role = ud.translatedTooltip or ud.tooltip or ""
+	local d, pad = L.dock, max(4, L.pad or 6)
+	local size = max(14, floor((L.btnH or 60) * 0.34))
+	local rs = floor(size * 0.72)
+	local room = vsx - 6 * pad
+	size = min(size, room / max(0.01, bold:GetTextWidth(name)))
+	rs = min(rs, room / max(0.01, font:GetTextWidth(role)))
+	local w = min(vsx - 2 * pad, max(bold:GetTextWidth(name) * size, role ~= "" and font:GetTextWidth(role) * rs or 0)
+		+ 4 * pad)
+	local h = size + (role ~= "" and rs + pad or 0) + 3 * pad
+	local x0 = max(pad, min(vsx - pad - w, floor(tip.x - w / 2)))
+	local y0 = d[4] + pad
+	if y0 + h > vsy - pad then -- (a dock reaching the top: inside it, over the tile)
+		y0 = max(pad, tip.y + pad * 4)
+	end
+	panel({ x0, y0, x0 + w, y0 + h }, 1, 1, 1, 1, true)
+	bold:Print("\255\255\255\255" .. name, x0 + 2 * pad, y0 + h - 1.5 * pad - size * 0.8, size, "o")
+	if role ~= "" then
+		font:Print("\255\210\210\210" .. role, x0 + 2 * pad, y0 + 1.5 * pad + rs * 0.15, rs, "o")
+	end
+end
+
 function widget:DrawScreen()
 	if not active or L.aside then
 		return
@@ -5665,10 +5702,12 @@ function widget:DrawScreen()
 	end
 	if not PROF.on then
 		drawDock()
+		SP.drawHoldTip()
 		return
 	end
 	local t0 = spGetTimer()
 	drawDock()
+	SP.drawHoldTip()
 	PROF.sum, PROF.n = PROF.sum + spDiffTimers(spGetTimer(), t0) * 1000, PROF.n + 1
 	if now() - PROF.at >= 10 then
 		Spring.Echo(string.format("[bardroid-portrait] drawing %.2f ms a frame (%d frames), %d refreshes taking %.2f ms each, "
@@ -5913,6 +5952,13 @@ function widget:MousePress(x, y, btn)
 	-- (sideways with BUILD | ORDERS: a sideways swipe on the panel changes the tab; Kailil, 2026-11-17, "in horizontal
 	-- landscape mode, allow me to change tabs out of the build tab/orders by swiping right to left". RtsTouch hands a
 	-- sideways drag on the dock over as a mouse drag; before, its release pressed the tile it began on)
+	if btn == 3 and side and side ~= "over" then -- (a finger held on a tile: its name and role while it stays, drawHoldTip)
+		local it = itemAt(side, x, y)
+		if it and it.defID and UnitDefs[it.defID] and (it.kind == "build" or it.kind == "pregame" or it.kind == "quickbuild") then
+			SP.holdTip = { defID = it.defID, x = x, y = y, at = now() }
+			Spring.Echo("[bardroid-portrait] held: " .. tostring(UnitDefs[it.defID].name)) -- (tools)
+		end
+	end
 	local swipeOk = L.land and L.tabsOn and not L.split and not L.dgun and (side == "left" or side == "right"
 		or showSel and inRect(x, y, L.sel) or L.tabs and (inRect(x, y, L.tabs.left) or inRect(x, y, L.tabs.right)))
 	press = { side = side, x = x, y = y, button = btn, lastY = y, lastT = now(), vel = 0, empty = empty,
@@ -5964,6 +6010,7 @@ function widget:MouseMove(x, y)
 end
 
 function widget:MouseRelease(x, _, btn)
+	SP.holdTip = nil -- (the held tile's name and role: only while the finger stays)
 	if pingT.eat then -- (the ping's tap: not the map's)
 		pingT.eat = false
 		return true
@@ -6154,6 +6201,9 @@ function widget:Initialize()
 			return not (h and x >= h[1] and x <= h[3] and y >= h[2] and y <= h[4])
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
+		holdTip = function() -- (tools: the held tile's unit, its name and role up; nil: none)
+			return SP.holdTip and SP.holdTip.defID or nil
+		end,
 		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the selection row's right two
 			-- thirds; none while nothing is picked; before the start the whole row, SP.pregameRow)
 			if not (active and showSel) then

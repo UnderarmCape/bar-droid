@@ -61,7 +61,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    publish" (a mailing list's message id in a research note's link was its one hit).
 4. [ ] Touch batch A, each its own commit and phone case (fixer):
    - holding a dock tile (build grid, factory grid, PLACE panel's picture) shows its name and BAR's one-line role
-     until the finger lifts; nothing permanent (Kailil's dock rule: no hint text);
+     until the finger lifts; nothing permanent (Kailil's dock rule: no hint text); [x] DONE: the build and factory
+     grids' tiles (the PLACE panel has no picture), over the dock's top edge, from the long press's right button to
+     its release; touchfix-phone-test's held tile (Wind Turbine, "Produces Energy. Depends on wind strength.");
    - a PAUSE button, singleplayer only (no remote host, no other players), lit while paused;
    - a touch on the camera knob or a rail that lifts without moving goes to the map under it;
    - dock taps ignored for a moment after the dock's layout changes (selection change, energy bar in QUEUE's place),
