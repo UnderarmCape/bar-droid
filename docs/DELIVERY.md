@@ -579,6 +579,27 @@ GameService, Updater's first start, StatusText, setup-container.sh; 2026-11-21 1
    instruction; developer words under the icon ("Downloading byar:test 45%", "Container: making room"); "A game is
    running" toasted during an install; the player's own Stop during the download read as a failure; the Debian base
    image from a moving branch (a resume across an upstream update fails its checksum).
+   Item 43 looked at (2026-11-21 20:40): a game whose screen Android does not let start from the background still runs,
+   and its notification ("Skirmish running", a tap returns to it) and the app icon (StartActivity) bring it in; the
+   limit bites only after a download longer than Android's grace period, which the dev phone's connection does not
+   reach (a 75 MB map in ~5 s): left noted. Also seen: the content step's map check `ls maps/*.sd7 maps/*.sdz` fails
+   when either kind is missing, so a content step run again fetches its map again (pr-downloader: the same file).
+From a thirteenth read-only audit, AudioPump, VoiceChat, PerfLog and the launcher's settings (2026-11-21 20:40-20:55; no
+CRITICAL or HIGH):
+45. MEDIUM: the game's sound ~0.45 s late, not the 0.2 s AudioPump means (a streaming AudioTrack starts when its
+   400 ms buffer is full), and maybe later for the rest of a game after a long stall (a guess: OpenAL's writer catches
+   up into the queue); no underrun lines in the saved logs.
+46. MEDIUM, rare: AudioTrack's write() result unchecked (a dead track after Android's audio service restarts: the rest
+   of the game silent), and the pump's catch closes the FIFO's read end under the engine (OpenAL marks the device
+   lost for good; before Lua loads, a SIGPIPE crash).
+47. MEDIUM: settings changed in the launcher mid-game half apply: the late-game drop switched off or Native picked
+   leaves a drop in force for the session; a render resolution picked mid-game feeds the next drop step; frame cap
+   None mid-game moves the display to 120 Hz at the next fold while the engine keeps its cap.
+48. LOW: the FIFO's setup and shutdown (mkfifo racing launch-bar.sh's; a regular file at its path replayed in a spin;
+   stop() not joining its thread).
+49. LOW, a guess: no audio focus or ducking (speak to chat listens next to the game's sound; other apps mix in).
+50. LOW, latent: Prefs saves mesaUrl at every launcher pause, so every phone keeps today's default as "chosen": the next
+   Mesa update would be ignored on existing installs unless today's URL joins OLD_MESA_URLS.
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -966,6 +987,14 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       setup-container.sh exits 42 for a full disk. On the dev phone (the install's content step marked not done, the
       state put back after, the launcher opened): HEAD's build said "Not installed, idle", this one "Not installed: tap
       Install / Update".
+      The Fold7 (Wireless debugging's new port 36899 from Kailil, over Tailscale; its last game, a lobby session,
+      ended 12:07 with exit 0; no game running) has HEAD 54cba210's build since 20:41 (items 27-35, 39, 41, 42, 44; its
+      first since 08:41's 9768b8f1); latest-build too. Round B on HEAD 54cba210 (20:37-21:00): ALL PASS.
+- [x] **Item 50: the build's Mesa is not saved as the player's choice** (2026-11-21 20:55-21:01): Prefs.save leaves the
+      Mesa URL out when it is the build's default (DEFAULT_MESA_URL; one saved before, as on every phone today, goes at
+      the next save), so the next app's newer Mesa is not pinned away; a note at the default says the old one joins
+      OLD_MESA_URLS when it changes (phones that saved it before this). On the dev phone (the launcher opened and left:
+      its pause saves): HEAD's build kept the mesaUrl entry, this one removed it, the other settings kept.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

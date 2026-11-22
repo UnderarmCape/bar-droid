@@ -28,7 +28,10 @@ public final class Prefs {
      * the first release with the KGSL Present wait fence (lfdevs PR #96): older ones flash black frames under
      * Termux:X11 because the X server reads frames before the GPU has finished them.
      */
-    public static String mesaUrl = EMULATOR_BUILD ? "" : "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-27.0.0-devel-20261025/mesa-for-android-container_27.0.0-devel-20261025_debian_trixie_arm64.tar.gz";
+    // (when the default changes, the old one goes into OLD_MESA_URLS: phones from before 2026-11-21 saved it as if
+    // chosen; since then the default is never saved, save)
+    static final String DEFAULT_MESA_URL = EMULATOR_BUILD ? "" : "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-27.0.0-devel-20261025/mesa-for-android-container_27.0.0-devel-20261025_debian_trixie_arm64.tar.gz";
+    public static String mesaUrl = DEFAULT_MESA_URL;
     /** Earlier defaults: a saved one of these follows the build's default instead of pinning the old Mesa. */
     static final String[] OLD_MESA_URLS = {
             "https://github.com/lfdevs/mesa-for-android-container/releases/download/mesa-26.2.0-devel-20260709/mesa-for-android-container_26.2.0-devel-20260709_debian_trixie_arm64.tar.gz",
@@ -232,8 +235,12 @@ public final class Prefs {
     }
 
     public static void save(Context ctx) {
-        ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit()
-                .putString("mesaUrl", mesaUrl)
+        SharedPreferences.Editor e = ctx.getSharedPreferences(FILE, Context.MODE_PRIVATE).edit();
+        // (the build's default is not the player's choice: saved, it pinned today's Mesa through the next app's newer
+        // one, as every launcher pause saved it; release overhaul audit, 2026-11-21)
+        if (mesaUrl.equals(DEFAULT_MESA_URL)) e.remove("mesaUrl");
+        else e.putString("mesaUrl", mesaUrl);
+        e
                 .putString("gameTag", gameTag)
                 .putString("lobbyTag", lobbyTag)
                 .putString("mapName", mapName)
