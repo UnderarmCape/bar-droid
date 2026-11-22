@@ -281,8 +281,23 @@ UX, bugs and QOL from game 2:
   the extractor, the next spot's tap moved the commander's start onto that metal spot.
 - 06:00 UX good: the factory's ORDERS page has Repeat and the factory's own Fight/Move: Repeat On plus a Fight point
   in the middle kept the lab busy and sent every Centurion to the front with no further touch.
-- 06:14 To check: the game's end goes back to the lobby by itself 12 seconds later (BAR's autoquit: "Move mouse to
-  postpone the quit"); the driver was not looking at the screen then, so whether the end screen and awards stay long
-  enough on a phone, and whether a touch postpones the quit, is untested. A player who looks away for 12 seconds
-  may miss the result.
+- 06:14 The game's end goes back to the lobby by itself 12 seconds later (BAR's autoquit). Checked in game 3: the
+  screen shows "Victory!", BAR's Awards over the map and the app's own "Leaving the game in 4 s, tap the screen to
+  stay longer" in the chat lines: clear enough, though 12 seconds is short for a phone put down after the last fight.
+
+### 2026-11-22, skirmish 1v1 against BARb Medium, game 3: WON at 12:25 (Avalanche 3.4, Armada vs Armada)
+
+- 06:40 The same plan as game 2, with the lab's constructors taken off its repeat once four were out (the factory's
+  CLEAR on the constructor), a second Bot Lab at 7:38 when metal banked, Beamers at the outposts.
+- BARb Medium raided with Flashes (fast tanks) from 2:41 on: one Flash alone took the east extractor, a Sentry, two
+  constructors (one by one, the north-east one twice) and a dozen wind turbines over the game; Centurions never caught
+  it. 8 extractors held, +21-25 metal from 7:00.
+- game 10:46 the push: 21 Centurions and 6 Rocketeers by Fight orders to (2700, 2700), (2900, 2900), then BARb's
+  Vehicle Plant at (3104, 3248); BARb's commander died at 12:25 (the push lost 6 Centurions to its death explosion).
+  The dev widget's GameOver said "won".
+- game 12:25 UX good: the end screen: "Victory!", the Awards (Show Graphs, Leave) and the tap-to-stay line.
+- UX: the factory's Repeat repeats the whole queue, constructors included: four constructors queued first come back
+  every cycle unless taken off (tap the constructor, CLEAR). QOL idea: Repeat only for combat units, or a mark per
+  entry.
+
 
