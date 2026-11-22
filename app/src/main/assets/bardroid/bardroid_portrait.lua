@@ -2687,8 +2687,9 @@ local function pressItem(item, long)
 		-- place panel's room, and a tap a moment late switched Armada to Cortex, the queue with it; the touch playtest's
 		-- game 9, 2026-11-22. Taps on them in the first 0.8 s are dropped, and with buildings queued a switch is tapped
 		-- twice)
-		local t = now()
-		if SP.rightSince and Spring.DiffTimers(t, SP.rightSince) < 0.8 then
+		local t = now() -- (seconds, as SP.rightSince: not a timer for Spring.DiffTimers, which erred at every tap here
+		-- and left the faction buttons dead, the in-play tour 2026-11-22)
+		if SP.rightSince and t - SP.rightSince < 0.8 then
 			Spring.Echo("[bardroid-portrait] a faction tap just after the panel changed: dropped") -- (tools)
 			return
 		end
@@ -2697,7 +2698,7 @@ local function pressItem(item, long)
 		local current = Spring.GetTeamRulesParam(myTeam(), "startUnit") == item.startUnit
 		local asked = SP.factionAsk
 		if not current and queued > 0 and not (asked and asked.unit == item.startUnit
-			and Spring.DiffTimers(t, asked.at) < 3) then
+			and t - asked.at < 3) then
 			SP.factionAsk = { unit = item.startUnit, at = t }
 			local P = WG.BarDroidPad
 			if P and P.say then
