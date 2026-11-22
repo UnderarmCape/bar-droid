@@ -268,13 +268,32 @@ local function onCmd(c)
 	elseif c == "twinspots" then
 		Spring.SetActiveCommand(0)
 		arm(D.armsolar) -- (a new pick: the taps below are the pointer's moves)
-		-- (the camera further in: the shore's water at the top of the game's part, land below it)
+		-- (the land nearest the water that takes a Solar, anywhere, and the camera between the two: both in sight. Looked
+		-- for in the camera's view alone, some start spots had none, their shore all under the water's level; the train's
+		-- runs at 02347f64, 2026-11-22)
 		local w = spots.water
-		local cx, _, cz = Spring.GetUnitPosition(com)
-		local dx, dz = cx - w[1], cz - w[2]
-		local d = math.max(1, math.sqrt(dx * dx + dz * dz))
-		local k = math.min(d, 700) / d
-		Spring.SetCameraTarget(w[1] + dx * k, 0, w[2] + dz * k, 0)
+		local land
+		for r = 48, 2400, 48 do
+			for a = 0, 345, 15 do
+				local x, z = w[1] + math.cos(math.rad(a)) * r, w[2] + math.sin(math.rad(a)) * r
+				if not land and x > 64 and z > 64 and x < Game.mapSizeX - 64 and z < Game.mapSizeZ - 64
+					and Spring.GetGroundHeight(x, z) > 2 then
+					local bx, by, bz = Spring.Pos2BuildPos(D.armsolar, x, Spring.GetGroundHeight(x, z), z, 0)
+					if Spring.GetGroundHeight(bx, bz) > 2 and Spring.TestBuildOrder(D.armsolar, bx, by, bz, 0) >= 2 then
+						land = { bx, by, bz }
+					end
+				end
+			end
+			if land then
+				break
+			end
+		end
+		spots.land = land
+		local tx, tz = w[1], w[2]
+		if land then
+			tx, tz = (w[1] + land[1]) / 2, (w[2] + land[3]) / 2
+		end
+		Spring.SetCameraTarget(tx, 0, tz, 0)
 	elseif c == "twincloser" then -- (no water in sight from there: the camera nearer the water, the twinvoid case's)
 		local w = spots.water
 		local cx, _, cz = Spring.GetUnitPosition(com)
@@ -283,18 +302,23 @@ local function onCmd(c)
 		local k = math.min(d, 250) / d
 		Spring.SetCameraTarget(w[1] + dx * k, 0, w[2] + dz * k, 0)
 	elseif c == "twinspots2" then
-		-- (a water point in sight, and the land nearest it that takes a Solar; else any in sight around the camera)
+		-- (the water and the land found in twinspots, where in sight; else a water point in sight and the land nearest it)
 		local wp
-		local px = waterPixel()
-		if px then
-			local _, pos = Spring.TraceScreenRay(px[1], px[2], true, false)
-			wp = pos and { pos[1], 0, pos[3] }
+		local w = spots.water
+		if w and Spring.GetGroundHeight(w[1], w[2]) < -12 and screenOf(w[1], w[2]) then
+			wp = { w[1], 0, w[2] }
+		else
+			local px = waterPixel()
+			if px then
+				local _, pos = Spring.TraceScreenRay(px[1], px[2], true, false)
+				wp = pos and { pos[1], 0, pos[3] }
+			end
 		end
-		local tx, _, tz = Spring.GetCameraPosition()
-		local _, cpos = Spring.TraceScreenRay(math.floor(Spring.GetViewGeometry() / 2), math.floor(select(2,
-			Spring.GetViewGeometry()) * 0.6), true, false)
-		landSpot = wp and freeSpot(D.armsolar, wp[1], wp[3], nil, 160)
-			or cpos and freeSpot(D.armsolar, cpos[1], cpos[3], nil, 0) or freeSpot(D.armsolar, tx, tz, nil, 0)
+		local L = spots.land
+		landSpot = L and screenOf(L[1], L[3]) and L or wp and freeSpot(D.armsolar, wp[1], wp[3], nil, 160)
+		Spring.Echo(string.format("[fixtest] note: water %s, the land found %s (%s), in sight %s", tostring(wp ~= nil),
+			L and string.format("%d,%d", L[1], L[3]) or "none", L and spots.water and string.format("%d elmos from the water",
+			math.sqrt((L[1] - spots.water[1]) ^ 2 + (L[3] - spots.water[2]) ^ 2)) or "-", tostring(landSpot ~= nil)))
 		write(spotLine("water", wp) .. spotLine("land", landSpot))
 		Spring.Echo("[fixtest] spots: water " .. tostring(wp ~= nil) .. ", land " .. tostring(landSpot ~= nil))
 	elseif c == "tide?" then
@@ -317,6 +341,56 @@ local function onCmd(c)
 		check("WALLS' cost for a Sentry: 8 Dragon's Teeth's metal", cost == want, tostring(cost) .. ", want " .. want)
 		local none = W and W.cost and W.cost(D.armsolar)
 		check("no WALLS cost for a Solar", none == nil, tostring(none))
+	elseif c == "pausesetup" then -- (nothing picked: the home grid's PAUSE, a game of one player; RC 0.2.0 item 4)
+		pausedHere = true -- (this case pauses: not unpaused by this widget meanwhile)
+		Spring.SetActiveCommand(0)
+		Spring.SelectUnitArray({})
+	elseif c == "pausesetup2" then
+		if Pt and Pt.menuOpen then -- (the home grid's first touch would only open the menu)
+			Pt.menuOpen(true)
+		end
+		local cell = Pt and Pt.itemCell and Pt.itemCell("right", function(it)
+			return it.kind == "pause"
+		end)
+		write(rectLine("pause", cell and cell[3] > cell[1] and cell or nil))
+		if not cell then
+			check("PAUSE on the home grid in a game of one player", false, "no PAUSE among the home grid's buttons")
+		end
+	elseif c == "paused?" then
+		local _, item = Pt.itemCell("right", function(it)
+			return it.kind == "pause"
+		end)
+		check("PAUSE tapped: the game paused, the button lit (PAUSED)", select(3, Spring.GetGameSpeed()) == true
+			and item and item.on == true and item.label == "PAUSED", "paused " .. tostring(select(3, Spring.GetGameSpeed()))
+			.. ", button " .. tostring(item and item.label))
+	elseif c == "unpaused?" then
+		local _, item = Pt.itemCell("right", function(it)
+			return it.kind == "pause"
+		end)
+		check("PAUSED tapped: the game runs again, the button PAUSE", not select(3, Spring.GetGameSpeed())
+			and item and item.on == false, "paused " .. tostring(select(3, Spring.GetGameSpeed())) .. ", button "
+			.. tostring(item and item.label))
+		pausedHere = false
+		Spring.SelectUnitArray({ com })
+	elseif c == "guardsetup" then -- (a tap as the dock changes under it: dropped; RC 0.2.0 item 4, NB3-5)
+		Spring.SetActiveCommand(0)
+		Spring.SelectUnitArray({ com })
+	elseif c == "guardsetup2" then
+		if Pt and Pt.menuOpen then -- (open, as in the playtest: nothing picked, the energy bar takes a tap)
+			Pt.menuOpen(true)
+		end
+		write(rectLine("qrect", Pt and Pt.queueRect and Pt.queueRect()))
+	elseif c == "guarddrop" then -- (the finger down on QUEUE: nothing picked now, the energy bar in its place)
+		Spring.SelectUnitArray({})
+		spots.guardAt = Spring.GetTimer()
+	elseif c == "guard?" then
+		local open = Pt and Pt.resPanel and Pt.resPanel()
+		check("a tap lifted on QUEUE's place just after the selection went (the energy bar there now): dropped",
+			open == nil, "panel " .. tostring(open))
+	elseif c == "guardlater?" then
+		local open = Pt and Pt.resPanel and Pt.resPanel()
+		check("... the same place tapped a moment later: the bar there takes it (its panel open)", open ~= nil,
+			"panel " .. tostring(open))
 	elseif c == "holdsetup" then -- (a build tile held: its name and role up while held, RC 0.2.0 item 4)
 		Spring.SetActiveCommand(0)
 		Spring.SelectUnitArray({ com })
@@ -537,6 +611,19 @@ local function onCmd(c)
 				tostring(still)))
 	elseif c == "dgunoff" then
 		P.act("dgun_cancel")
+	elseif c == "breakmenu" then -- (the app's build menu copy broken on purpose: BAR removes it; RC 0.2.0 item 7)
+		local B = WG.bardroidBuildmenu
+		spots.menuWas = B
+		if B and B.droidBreak then
+			B.droidBreak()
+		else
+			check("the build menu copy can be broken on purpose (droidBreak)", false, "no copy, or no droidBreak")
+		end
+	elseif c == "menuback?" then
+		local B, M = WG.bardroidBuildmenu, WG.buildmenu
+		check("the build menu copy removed for its error: BAR's own build menu on in its place (the menu watch)",
+			B == nil and M ~= nil and M ~= spots.menuWas, string.format("copy %s, WG.buildmenu %s", tostring(B ~= nil),
+				M == nil and "none" or M == spots.menuWas and "the copy's" or "BAR's"))
 	elseif c == "end" then
 		Spring.Echo("[fixtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end

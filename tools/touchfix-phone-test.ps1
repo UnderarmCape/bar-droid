@@ -123,6 +123,30 @@ try {
   } else { "[fixtest] FAIL no water or land spot in sight: $(InApp "cat $cfg/bardroid_fixtest.txt")" }
   # 2. WALLS' cost
   Stage "walls?"; Shot "walls"; Start-Sleep 1
+  # 2b. PAUSE on the home grid (nothing picked; a game of one player): tapped, paused and lit; tapped again, running
+  Stage "pausesetup"; Start-Sleep 1; Stage "pausesetup2"; Start-Sleep -Milliseconds 300
+  $pz = (Rects "bardroid_fixtest.txt")["pause"]
+  if ($pz) {
+    $pm = Mid $pz   # (the dock's menu opened by the widget: pausesetup2)
+    Tap $pm[0] $pm[1]; Start-Sleep 1; Stage "paused?"; Shot "pause"
+    Tap $pm[0] $pm[1]; Start-Sleep 1; Stage "unpaused?"
+  }
+  # 2c. a tap as the dock changes under the finger: down on QUEUE, the selection cleared (the energy bar comes to that
+  # place), up: dropped; a tap there a moment later opens the bar's panel, and another closes it
+  Stage "guardsetup"; Start-Sleep 1; Stage "guardsetup2"; Start-Sleep -Milliseconds 300
+  $gq = (Rects "bardroid_fixtest.txt")["qrect"]
+  if ($gq) {
+    # (QUEUE's lower right: with nothing picked the dock is lower and the energy bar lies there; its middle is the wind
+    # and tide nook's place then)
+    $gm = @(($gq[0] + 0.85 * ($gq[2] - $gq[0])), ($gq[1] + 0.82 * ($gq[3] - $gq[1])))
+    $gx = [int]($gm[0] * $script:k); $gy = [int]($gm[1] * $script:k)
+    $script:stageN++
+    Assert-GameInFront $adb
+    & $adb shell "input motionevent DOWN $gx $gy; run-as $pkg sh -c 'echo guarddrop \#$($script:stageN) > $cfg/bardroid_fixtest_cmd.txt'; input motionevent UP $gx $gy"
+    Start-Sleep 1; Stage "guard?"
+    Tap $gm[0] $gm[1]; Start-Sleep 1; Stage "guardlater?"; Shot "guard-later"
+    Tap $gm[0] $gm[1]; Start-Sleep -Milliseconds 600
+  } else { "[fixtest] FAIL no QUEUE row for the dock-change case" }
   # 3a. a build tile held: its name and role while the finger stays (the grid's first touch opens the dock's menu)
   Stage "holdsetup"; Start-Sleep 1; Stage "holdsetup2"; Start-Sleep -Milliseconds 300
   $ht = (Rects "bardroid_fixtest.txt")["htile"]
@@ -182,8 +206,14 @@ try {
     if ($t) { Tap $t[0] $t[1]; Start-Sleep 1; Stage "tapaim?" } else { "[fixtest] FAIL no ground point in sight for the D-gun's tap" }
     Stage "dgunoff"
   } else { "[fixtest] FAIL no AIM stick in the dock's file" }
+  # 5. the build menu copy broken on purpose: BAR removes it, the menu watch puts BAR's own on (last: no copy after it)
+  Stage "breakmenu"; Start-Sleep 6; Stage "menuback?"; Shot "menuback"
   Stage "end"; Start-Sleep 1
   Report
+  # (this game's infolog names the copy as removed: gone, or launch-bar.sh's next start would give the copy's place
+  # to BAR's own for these files, for every game after this test)
+  & $adb shell am force-stop $pkg
+  InApp "rm -f files/bar/infolog.txt"
 } finally {
   & $adb shell am force-stop $pkg
   AppScript ((SetPref bool portrait $(if ($was.portrait) { $was.portrait } else { "false" })) +

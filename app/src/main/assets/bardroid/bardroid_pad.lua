@@ -2752,6 +2752,11 @@ function widget:MousePress(x, y)
 		return true
 	end
 	local b = inQueueButton(x, y)
+	local P = b and queue.dock and WG.BarDroidPortrait
+	if P and P.settling and P.settling() then -- (the dock's row just moved under the finger: not this button's tap)
+		Spring.Echo("[bardroid-pad] a tap on QUEUE or INSERT just after the dock changed: dropped") -- (tools)
+		return true
+	end
 	if b == "queue" then -- (each on its own; both on: Shift and Alt held, the app's "alt" line)
 		queue.on = not queue.on
 		return true

@@ -2242,6 +2242,19 @@ function refreshNow()
 	if rk ~= rightKind then
 		SP.rightSince = now() -- (the right half's buttons new under a finger: pressItem's faction guard)
 	end
+	-- (the buttons on the dock other than they were, or its rows moved (the selection row in or out: the energy bar where
+	-- QUEUE was): taps dropped for a moment, SP.settling. The touch playtest: a tap meant for an order took the factory's
+	-- +1 drawn a moment before the new selection's buttons, NB45-3; one meant for QUEUE opened the energy panel, NB3-5)
+	local sig = { lk, rk, tostring(showSel) }
+	for _, list in ipairs({ newLeft, newRight }) do
+		for _, it in ipairs(list) do
+			sig[#sig + 1] = tostring(it.kind) .. ":" .. tostring(it.id or it.defID or it.label or it.from)
+		end
+	end
+	sig = table.concat(sig, "|")
+	if sig ~= SP.layoutSig then
+		SP.layoutSig, SP.layoutAt = sig, now()
+	end
 	leftKind, rightKind = lk, rk
 	if rk ~= "home" and rk ~= "pregame" and pingT.armed() then -- (PING armed, then units picked: the next map tap is
 		-- theirs, not a ping; listening for its words too)
@@ -5681,6 +5694,13 @@ local function drawDock(post) -- (post: drawn again over a band, DrawScreenPost;
 	SP.drawWindInfo() -- (over the camera pad's dimming: it is open, it reads as such)
 end
 
+-- The dock's buttons or rows changed a moment ago (refreshNow's SP.layoutAt): a tap now was aimed at what stood there
+-- before; MousePress drops it, bardroid_pad.lua's QUEUE and INSERT too (RC 0.2.0 item 4)
+SP.SETTLE = 0.4
+function SP.settling()
+	return SP.layoutAt ~= nil and now() - SP.layoutAt < SP.SETTLE
+end
+
 -- A game of one player (the home grid's PAUSE): no other player or spectator connected, not a replay, not spectating.
 -- BAR's own test is its one human player (teamfunctions IsSinglePlayer); a spectator watching counts here too, as the
 -- pause would stop that game for them
@@ -5940,6 +5960,10 @@ function widget:MousePress(x, y, btn)
 	end
 	if not (active and inRect(x, y, L.dock)) or onMap then
 		return false
+	end
+	if SP.settling() then -- (the dock's buttons just changed under the finger: this tap was meant for the ones before)
+		Spring.Echo("[bardroid-portrait] a tap just after the dock changed: dropped") -- (tools)
+		return true
 	end
 	if SP.hidden then -- (the SHOW button clicked with a mouse: fingers have it through act dock_menu)
 		SP.setHidden(false)
@@ -6247,6 +6271,12 @@ function widget:Initialize()
 			return not (h and x >= h[1] and x <= h[3] and y >= h[2] and y <= h[4])
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
+		settling = function() -- (bardroid_pad.lua's QUEUE and INSERT: the row just moved, a tap there is dropped)
+			return SP.settling()
+		end,
+		resPanel = function() -- (tools: the metal or energy panel open, or nil)
+			return resPanel
+		end,
 		holdTip = function() -- (tools: the held tile's unit, its name and role up; nil: none)
 			return SP.holdTip and SP.holdTip.defID or nil
 		end,

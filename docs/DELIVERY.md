@@ -62,7 +62,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
    (`playenv.py`), `play.py setup`/`teardown` put the player's settings back; publish-check -NoHistory "Ready to
    publish" (a mailing list's message id in a research note's link was its one hit).
-4. [ ] Touch batch A, each its own commit and phone case (fixer):
+4. [x] Touch batch A, each its own commit and phone case (fixer):
    - holding a dock tile (build grid, factory grid, PLACE panel's picture) shows its name and BAR's one-line role
      until the finger lifts; nothing permanent (Kailil's dock rule: no hint text); [x] DONE: the build and factory
      grids' tiles (the PLACE panel has no picture), over the dock's top edge, from the long press's right button to
@@ -74,7 +74,10 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
      within 30 px and before a long press's time it is RtsTouch's ordinary tap there (a building's spot, a pick);
      camctl-phone-test's knob tap picks the Pawn under it, the camera still;
    - dock taps ignored for a moment after the dock's layout changes (selection change, energy bar in QUEUE's place),
-     as 3104771e's faction guard;
+     as 3104771e's faction guard; [x] DONE: for 0.4 s after the dock's layout changes (its grids' kinds, the
+     selection's row, any tile's kind, unit, label or source) a tap on the dock is dropped, QUEUE and INSERT's too
+     (bardroid_pad.lua); touchfix-phone-test's new case: a tap lifted on QUEUE's place as the selection goes, HEAD:
+     the energy panel opened, now dropped, the same place tapped 1 s later opens it;
    - a floor on the zoom rail's slow-drag step (the sensitivity setting stays). [x] DONE: the zoom rail's step never
      under half the dock pad's gain; camctl-phone-test: a slow drag over 60 % of the rail x0.946 before, x0.794 now,
      the fast one still x0.560.
