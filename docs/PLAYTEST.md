@@ -410,6 +410,19 @@ UX, bugs and QOL from game 2:
 - Driver: with QUEUE on and an order armed, a drag on the map draws the order's line instead of panning; the driver
   now lets go (QUEUE off) before a pan and puts QUEUE back after.
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, games 10 and 11 (Ravaged Remake): stopped at 10:51 and 10:14
+
+- Game 10: the driver built each outpost's Sentry before its extractor and sent the labs' Patrol rallies out over the
+  outposts (Centurions east, a Pawn squad north): Ticks and Pawns still took every outpost; 2 extractors at 10:51.
+- Game 11, a "fortress" (no outposts; the four extractors inside the plateau; Overwatch, Sentry and Beamer at each
+  way in; the Advanced Bot Lab next): the first Pawn raid (7) came in at 5:31 before any defence stood, a dozen more
+  at 10:12; the constructors' Overwatch at the north-east way in failed to place several times in a row; 1 extractor
+  at 10:14.
+- Where this leaves Hard: BARb Hard's cheap fast raiders arrive from 2-3 minutes on and keep coming in packs of 5-12;
+  every agent-driven defence so far came a step late. The touch controls did each thing asked; the gap is the
+  agent's own macro. The playtest goes on with Medium games (late game, T2, big armies: controls not yet exercised)
+  between new attempts at Hard.
+
 ### Skirmish summary (2026-11-22)
 
 - BARb Easy: game 1 lost, game 2 WON at 12:14. BARb Medium: game 3 WON at 12:25 (first try with the game-2 build).
