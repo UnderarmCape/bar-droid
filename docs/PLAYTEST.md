@@ -337,4 +337,21 @@ UX, bugs and QOL from game 2:
 - 07:50 UX (lobby): the quick Skirmish's four map tiles changed places between two visits (Avalanche top left, then
   bottom left); a player who picks by place gets the wrong map.
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 6: Ravaged Remake, given up at 12:26
+
+- 08:40 The base plateau's ways out found by the engine's path finder (a dev-widget probe): north-east by
+  (1300, 3950) and east along the map's south edge by (1600, 4280). An Overwatch and Sentries at each, the army on a
+  Patrol loop over both and the east line: the base held (no raid reached the labs this time), 10 extractors at
+  10:05, an Advanced Bot Lab started at 10:05. But BARb Hard had fortified the north spots (Overwatch, Beamer,
+  Sentry, three construction vehicles) before we got there, its Janus/Stumpy groups and Rovers kept taking
+  outposts and constructors, and the Advanced Bot Lab sat at 33 % at 12:26 with metal at 0. Given up.
+- game 7:02 UX bug: BAR's build menu arms a building's sea twin while the pointer last stood over water (Solar ->
+  Tidal Generator, Energy Converter -> Naval Energy Converter, Bot Lab -> Shipyard, Sentry -> Harpoon), and the dock
+  keeps showing the land picture and name, so the player picks "Bot Lab" and gets a Shipyard ghost. On a phone the
+  pointer stays where the last tap was (here the void at the map's edge). The tap on a land spot swaps it back and
+  the land building is queued, so it places right; the ghost before that tap is the wrong one. QOL: the dock's tile
+  should follow BAR's swap (show the twin), or the app should move the pointer onto the map when a tile is tapped.
+- game 0:13 UX: QUEUE turned off by something other than the player (here the dev tools' LuaUI reload) makes the next
+  placement replace the commander's whole queue; QUEUE's state is easy to miss on the dock.
+
 
