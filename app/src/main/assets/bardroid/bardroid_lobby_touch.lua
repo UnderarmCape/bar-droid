@@ -2247,6 +2247,74 @@ function upright.quickFoot(panel)
 		end
 	end
 end
+-- a quick Skirmish map button's map (its tooltip: "minimap_tooltip_<map>|<words>")
+function upright.quickName(b)
+	return b.tooltip:sub(17):match("^(.-)|") or b.tooltip:sub(17)
+end
+-- The four maps in the same places at every visit: Chobby shuffles each game type's four when the lobby loads
+-- (singleplayerquickskirmish.lua, table.shuffle), so after a game they stood elsewhere and a player who picks by place
+-- got another map (the night's touch playtest, 2026-11-22: Avalanche top left, then bottom left). In order of their
+-- names, in Chobby's own four places (top left, top right, then the second row), once for each page's buttons, before
+-- the upright layout keeps those places (quickKeep) and lays them out in this order; a button's tap is its own map
+-- still (Chobby's OnClick keeps its index). found: sorted by name here
+function upright.quickOrder(found)
+	local name = upright.quickName
+	table.sort(found, function(a, b)
+		return name(a) < name(b)
+	end)
+	upright.quickOrdered = upright.quickOrdered or setmetatable({}, { __mode = "k" })
+	local done = upright.quickOrdered
+	if #found < 2 or done[found[1]] then
+		return
+	end
+	local slots = {}
+	for _, b in ipairs(found) do
+		local was = upright.quickSaved[b] -- (Chobby's place, where the upright layout has moved it already)
+		local rb, gb = {}, {}
+		for k, v in pairs(was and was.rb or b._relativeBounds or {}) do
+			rb[k] = v
+		end
+		for k, v in pairs(was and was.gb or b._givenBounds or {}) do
+			gb[k] = v
+		end
+		slots[#slots + 1] = { rb = rb, gb = gb, x = was and was.x or b.x, y = was and was.y or b.y,
+			w = was and was.w or b.width, h = was and was.h or b.height }
+	end
+	table.sort(slots, function(a, b)
+		if a.y ~= b.y then
+			return a.y < b.y
+		end
+		return a.x < b.x
+	end)
+	local moved = 0
+	for i, b in ipairs(found) do
+		done[b] = true
+		local s = slots[i]
+		if b.x ~= s.x or b.y ~= s.y or upright.quickSaved[b] then
+			if upright.quickSaved[b] then -- (moved upright: its kept place is this slot now; the layout below does the rest)
+				upright.quickSaved[b] = { rb = s.rb, gb = s.gb, x = s.x, y = s.y, w = s.w, h = s.h }
+			else
+				for k in pairs(b._relativeBounds or {}) do
+					b._relativeBounds[k] = nil
+				end
+				for k, v in pairs(s.rb) do
+					b._relativeBounds[k] = v
+				end
+				for k in pairs(b._givenBounds or {}) do
+					b._givenBounds[k] = nil
+				end
+				for k, v in pairs(s.gb) do
+					b._givenBounds[k] = v
+				end
+				b:SetPosRelative(s.x, s.y, s.w, s.h, nil, true)
+				b:UpdateClientArea()
+			end
+			moved = moved + 1
+		end
+	end
+	Spring.Echo("[bardroid-lobby] quick skirmish maps in name order: " .. name(found[1]) .. " first, " .. moved
+		.. " moved") -- (tools)
+end
 function upright.quickMaps(tall)
 	upright.quickSaved = upright.quickSaved or setmetatable({}, { __mode = "k" })
 	upright.quickLabels = upright.quickLabels or setmetatable({}, { __mode = "k" })
@@ -2272,13 +2340,14 @@ function upright.quickMaps(tall)
 			walk(real(chobbyObject(name)), 0)
 		end
 	end
+	upright.quickOrder(found)
 	local config = WG.Chobby and WG.Chobby.Configuration
 	local font = config and config:GetFont(1)
 	local labelH = math.floor(((font and font.size) or 16) * 2.4) + 4
 	local keep = upright.quickKeep
 	local panel
 	for i, b in ipairs(found) do
-		local name = b.tooltip:sub(17):match("^(.-)|") or b.tooltip:sub(17)
+		local name = upright.quickName(b)
 		local have = VFS.HasArchive(name)
 		local caption = name .. (have and "" or "\n\255\160\160\160not downloaded")
 		local label = labels[b]
