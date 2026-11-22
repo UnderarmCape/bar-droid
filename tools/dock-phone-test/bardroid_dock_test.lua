@@ -390,6 +390,42 @@ local function onCmd(c)
 		if q and tb.hideWindows then -- (the rest of the test needs the game)
 			tb.hideWindows()
 		end
+	elseif c == "linespot" then -- (a line's two ends on open ground, every spot of it buildable, in sight above the dock:
+		-- "lspot x0 y0 x1 y1"; from the free spot sideways it ran over the crater's rim on Starwatcher and BAR placed none,
+		-- 4 runs on 2026-11-22)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local _, vsy = Spring.GetViewGeometry()
+		local top = dock and (vsy - dock[4]) or vsy -- (X pixels from the top)
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local found
+		for r = 250, 1400, 50 do
+			for a = 0, 345, 15 do
+				if not found then
+					local mx, mz = cx + math.cos(math.rad(a)) * r, cz + math.sin(math.rad(a)) * r
+					local ok, ends = true, {}
+					for o = -160, 160, 40 do
+						local x, z = mx + o, mz
+						local bx, by, bz = Spring.Pos2BuildPos(buildDef, x, Spring.GetGroundHeight(x, z), z, 0)
+						if Spring.TestBuildOrder(buildDef, bx, by, bz, 0) < 2 then
+							ok = false
+						end
+						local sx, sy = screenOf(bx, bz)
+						if not sx or sy > top - 30 or sy < 120 then
+							ok = false
+						end
+						if o == -160 or o == 160 then
+							ends[#ends + 1] = { sx, sy }
+						end
+					end
+					if ok then
+						found = { ends[1][1], ends[1][2], ends[2][1], ends[2][2] }
+					end
+				end
+			end
+		end
+		write(found and string.format("lspot %d %d %d %d\n", found[1], found[2], found[3], found[4]) or "lspot nil nil nil nil\n")
+		Spring.Echo("[docktest] the line's ends: " .. (found and table.concat(found, ",") or "none"))
 	elseif c == "borderspot" then -- (a ring's two corners on open ground, every spot of it buildable and clear of the
 		-- line's buildings, in sight above the dock: "bspot x0 y0 x1 y1"; a ring guessed above the line found none, 2 runs)
 		local Pt = WG.BarDroidPortrait
@@ -759,6 +795,73 @@ local function onCmd(c)
 		check("the energy panel's share knob dragged: a whole percent, the conversion knob left alone",
 			whole and share > 0.05 and share < 0.9 and math.abs(conv - 0.75) < 0.001,
 			string.format("share %.4f, conversion %.2f", share, conv))
+	elseif c == "twopan" or c == "minifight" then -- (check only, RC 0.2.0 item 5: the commander picked; its orders a
+		-- frame later, so armed at the next stage)
+		Spring.SelectUnitArray({ com })
+		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
+	elseif c == "twopanarm" then -- (two fingers dragged with a building picked)
+		local index = Spring.GetCmdDescIndex(-UnitDefNames.armsolar.id)
+		if index then
+			Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+		end
+		camAt = Spring.GetCameraState()
+		local vsx, vsy = Spring.GetViewGeometry()
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local top = dock and dock[4] or 0
+		write(string.format("pan %d %d\n", math.floor(vsx * 0.5), math.floor(vsy - (top + (vsy - top) * 0.55))))
+	elseif c == "twopan?" then
+		local cs = Spring.GetCameraState()
+		local moved = math.abs((cs.px or 0) - (camAt.px or 0)) + math.abs((cs.pz or 0) - (camAt.pz or 0))
+			+ math.abs((cs.dist or cs.height or 0) - (camAt.dist or camAt.height or 0))
+		local _, id = Spring.GetActiveCommand()
+		local queued = #(Spring.GetUnitCommands(com, 5) or {})
+		check("check only: two fingers dragged with a Solar picked: the camera moves, the Solar still picked, nothing queued",
+			moved > 20 and id == -UnitDefNames.armsolar.id and queued == 0,
+			string.format("camera moved %.0f, picked %s, %d orders", moved, tostring(id), queued))
+		Spring.SetActiveCommand(0)
+	elseif c == "minifightarm" then -- (Fight armed; the minimap small, as upright it is until touched: "open x y", its
+		-- middle: a player's first tap only opens it, bardroid_minimap.lua, Kailil 2026-10-28)
+		local index = Spring.GetCmdDescIndex(CMD.FIGHT)
+		if index then
+			Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+		end
+		local M = WG.BarDroidMinimap
+		local px, py, sx, sy = Spring.GetMiniMapGeometry()
+		local _, vsy = Spring.GetViewGeometry()
+		local x, y = math.floor(px + sx * 0.5), math.floor(py + sy * 0.5)
+		if not Spring.IsAboveMiniMap(x, y) then
+			y = math.floor(vsy - py - sy * 0.5)
+		end
+		write(M and M.small() and Spring.IsAboveMiniMap(x, y) and string.format("open %d %d\n", x, vsy - y) or "")
+	elseif c == "minifightpt" then -- (the minimap open: a place on it, "mini x y")
+		local M = WG.BarDroidMinimap
+		local px, py, sx, sy = Spring.GetMiniMapGeometry()
+		local _, vsy = Spring.GetViewGeometry()
+		local x, y = math.floor(px + sx * 0.7), math.floor(py + sy * 0.35)
+		if not Spring.IsAboveMiniMap(x, y) then -- (its y from the top: the other way round)
+			y = math.floor(vsy - py - sy * 0.65)
+		end
+		local _, pos = Spring.TraceScreenRay(x, y, true, true)
+		mexSpot = { mini = pos, tol = math.max(Game.mapSizeX / math.max(1, sx), Game.mapSizeZ / math.max(1, sy)) * 12 }
+		local _, armed = Spring.GetActiveCommand()
+		Spring.Echo(string.format("[docktest] the minimap %s,%s %sx%s (small %s), the tap %d,%d (above it %s), the place %s, armed %s",
+			tostring(px), tostring(py), tostring(sx), tostring(sy), tostring(M and M.small()), x, y,
+			tostring(Spring.IsAboveMiniMap(x, y)), pos and string.format("%.0f,%.0f", pos[1], pos[3]) or "nil", tostring(armed)))
+		write(Spring.IsAboveMiniMap(x, y) and pos and string.format("mini %d %d\n", x, vsy - y) or "")
+	elseif c == "minifight?" then
+		local _, armed = Spring.GetActiveCommand()
+		local mx, my = Spring.GetMouseState()
+		Spring.Echo(string.format("[docktest] after the minimap's tap: armed %s, the pointer %d,%d, %d picked", tostring(armed),
+			mx, my, Spring.GetSelectedUnitsCount()))
+		local q = Spring.GetUnitCommands(com, 2) or {}
+		local f, m = q[1], mexSpot and mexSpot.mini
+		local off = f and m and f.params and f.params[3] and math.sqrt((f.params[1] - m[1]) ^ 2 + (f.params[3] - m[3]) ^ 2)
+		check("check only: Fight armed, BAR's minimap tapped open, then a place on it: the Fight goes there", f and f.id == CMD.FIGHT
+			and off and off <= mexSpot.tol, string.format("first order %s, %s elmos from the place (within %d)",
+				tostring(f and f.id), tostring(off and math.floor(off)), math.floor(mexSpot and mexSpot.tol or 0)))
+		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
+		Spring.SetActiveCommand(0)
 	elseif c == "end" then
 		Spring.Echo("[docktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end

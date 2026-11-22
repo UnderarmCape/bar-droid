@@ -186,6 +186,11 @@ try {
       # (the line from the free spot; the border on a ring of open ground the widget finds, every spot of it buildable:
       # begun on the line's half-built buildings, or guessed above them, BAR placed none, 3 runs in 4)
       $x0 = $fs[0]; $y0 = $fs[1]; $x1 = $fs[0] + $dx; $y1 = $fs[1]
+      if ($shape -eq "line") {   # (open ground the widget finds, every spot of the line buildable)
+        Stage "linespot"; Start-Sleep -Milliseconds 800
+        $ls = (Rects "bardroid_docktest.txt")["lspot"]
+        if ($ls) { $x0 = $ls[0]; $y0 = $ls[1]; $x1 = $ls[2]; $y1 = $ls[3] } else { "[docktest] (no open line found: the line from the free spot)" }
+      }
       if ($shape -eq "border") {
         Stage "borderspot"; Start-Sleep -Milliseconds 800
         $bs = (Rects "bardroid_docktest.txt")["bspot"]
@@ -194,7 +199,7 @@ try {
       Touch DOWN $x0 $y0; Start-Sleep -Milliseconds 800
       Touch MOVE (($x0 + $x1) / 2) (($y0 + $y1) / 2); Touch MOVE $x1 $y1
       Start-Sleep -Milliseconds 300; Touch UP $x1 $y1; Start-Sleep -Milliseconds 700
-      Stage "$($shape)hold?"; Start-Sleep 1
+      Stage "$($shape)hold?"; Shot "$($shape)-held"; Start-Sleep 1
       $pl = (Rects "bardroid_place.txt")["done"]
       if ($pl) { $p = Mid $pl; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 1200 }
       Stage "$($shape)placed?"; Start-Sleep 1
@@ -381,6 +386,42 @@ try {
       } else { "[docktest] (no SEND ENERGY in the energy panel: the picker's case left out)" }
     } else { "[docktest] (the energy panel's bar not found: that case left out)" }
   } else { "[docktest] (no resource boxes: that case left out)" }
+  # 13. check only (RC 0.2.0 item 5): two fingers dragged with a building picked, through a virtual touchscreen as a
+  # hand's (Android's uinput; adb's input has one finger only); Fight armed and BAR's minimap tapped
+  Stage "twopan"; Start-Sleep 1; Stage "twopanarm"; Start-Sleep 1
+  $tp = (Rects "bardroid_docktest.txt")["pan"]
+  if ($tp) {
+    # (sideways, to the left: two fingers moved up or down together are RtsTouch's tilt; the left keeps clear of the
+    # zoom rail at the right edge)
+    $px = [int]($tp[0] * $script:k); $py = [int]($tp[1] * $script:k); $dx = [int](-200 * $script:k)
+    $mw = [int][regex]::Match($size, '(\d+)x(\d+)\s*$').Groups[1].Value; $mh = [int][regex]::Match($size, '(\d+)x(\d+)\s*$').Groups[2].Value
+    $j = New-Object System.Collections.Generic.List[string]
+    $j.Add('{"id":7,"command":"register","name":"Docktest Fingers","vid":4660,"pid":22139,"bus":"usb","configuration":[{"type":"UI_SET_EVBIT","data":[1,3]},{"type":"UI_SET_KEYBIT","data":[330]},{"type":"UI_SET_ABSBIT","data":[47,48,53,54,57,58]},{"type":"UI_SET_PROPBIT","data":[1]}],"abs_info":[{"code":47,"info":{"value":0,"minimum":0,"maximum":9,"fuzz":0,"flat":0,"resolution":0}},{"code":48,"info":{"value":0,"minimum":0,"maximum":255,"fuzz":0,"flat":0,"resolution":0}},{"code":53,"info":{"value":0,"minimum":0,"maximum":' + ($mw - 1) + ',"fuzz":0,"flat":0,"resolution":0}},{"code":54,"info":{"value":0,"minimum":0,"maximum":' + ($mh - 1) + ',"fuzz":0,"flat":0,"resolution":0}},{"code":57,"info":{"value":0,"minimum":0,"maximum":65535,"fuzz":0,"flat":0,"resolution":0}},{"code":58,"info":{"value":0,"minimum":0,"maximum":255,"fuzz":0,"flat":0,"resolution":0}}]}')
+    $j.Add('{"id":7,"command":"delay","duration":800}')
+    $x0 = $px - 120; $x1 = $px + 120
+    $j.Add('{"id":7,"command":"inject","events":[3,47,0,3,57,501,3,53,' + $x0 + ',3,54,' + $py + ',3,48,6,3,58,40,3,47,1,3,57,502,3,53,' + $x1 + ',3,54,' + $py + ',3,48,6,3,58,40,1,330,1,0,0,0]}')
+    for ($i = 1; $i -le 25; $i++) {
+      $d = [int]($dx * $i / 25)
+      $j.Add('{"id":7,"command":"delay","duration":16}')
+      $j.Add('{"id":7,"command":"inject","events":[3,47,0,3,53,' + ($x0 + $d) + ',3,54,' + $py + ',3,47,1,3,53,' + ($x1 + $d) + ',3,54,' + $py + ',0,0,0]}')
+    }
+    $j.Add('{"id":7,"command":"inject","events":[3,47,0,3,57,-1,3,47,1,3,57,-1,1,330,0,0,0,0]}')
+    $j.Add('{"id":7,"command":"delay","duration":300}')
+    $jf = Join-Path $TC "tmp\docktest-twofingers.json"
+    [IO.File]::WriteAllText($jf, ($j -join "`n") + "`n", (New-Object Text.ASCIIEncoding))
+    & $adb push $jf /data/local/tmp/bardroid-twofingers.json | Out-Null
+    Assert-GameInFront $adb
+    & $adb shell uinput /data/local/tmp/bardroid-twofingers.json | Out-Null
+    & $adb shell rm -f /data/local/tmp/bardroid-twofingers.json
+    Start-Sleep -Milliseconds 800; Stage "twopan?"; Start-Sleep 1
+  } else { "[docktest] (no point for the two-finger drag: that case left out)" }
+  Stage "minifight"; Start-Sleep 1; Stage "minifightarm"; Start-Sleep 1
+  $mo = (Rects "bardroid_docktest.txt")["open"]
+  if ($mo) { Tap $mo[0] $mo[1]; Start-Sleep -Milliseconds 1500 }   # (the small minimap: a first tap opens it)
+  Stage "minifightpt"; Start-Sleep 1
+  $mm = (Rects "bardroid_docktest.txt")["mini"]
+  if ($mm) { Shot "minifight-armed"; Tap $mm[0] $mm[1]; Start-Sleep -Milliseconds 1200; Stage "minifight?"; Shot "minifight"; Start-Sleep 1 }
+  else { "[docktest] (BAR's minimap not in sight: that case left out)" }
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
