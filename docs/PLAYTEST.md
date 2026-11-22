@@ -363,6 +363,32 @@ UX, bugs and QOL from game 2:
 - By 4:33 a single Cortex scout car had killed a base extractor, a Sentry and the north constructor: the same early
   bleed as games 4-6. Stopped; the Hard win needs more than this driver's reaction loop gives (below).
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 8 (Ravaged Remake), stopped at 21:57
+
+- 10:05 Kailil asked for play, logging and fixing to run side by side: a second session ("playtest-fixes") fixes the
+  findings while this one plays; the dev phone is shared through its lock, screen at minimum brightness again.
+- The driver got standing rules (toolchain\tmp\play\autopilot.py, all by the same touches): an idle or new
+  constructor claims the nearest free metal spot with a Sentry, else builds energy; the commander rebuilds the base's
+  extractors, then energy or a second Bot Lab; an idle factory goes back to Centurions on Repeat with a Patrol rally
+  between the base's two ways out; under two constructors a lab puts two at its queue's front (INSERT); the army
+  pushes at 22. It held 11 extractors at 9:23 (the best yet against Hard) and two labs by 12:56.
+- game 12:56 the game saved by the top bar's Save ("Game saved: the lobby's Load Game opens it"), the phone handed to
+  the fixer session, then loaded from Load Game on its new build at 12:58: save and load work by touch.
+- Checked in play on the fixer's build (uncommitted, 10:52): FIXED: the sea twins (Solar and Converter picked with the
+  camera over the map's edge armed armsolar/armmakr, the right tile lit); the D-gun mode's map tap aims the shot
+  (paused too); "+ QUEUE" on PLACE; "WALLS +64" (small type). NOT YET: the AIM stick paused (a quick flick moved
+  nothing) and with a turned camera (a flick right aimed screen down-right: world axes, not the view's); sent back.
+- game 17:17 the army would not leave: solars, winds and converters the rules had put "by the base" walled in both
+  Bot Labs' exits; the engine's path finder found no way out from where the Centurions stood. Reclaiming four
+  converters and a Sentry opened it. Energy now goes to a field behind the base, away from the factories.
+- game 21:34 a Cortex assault (Thugs, a Can, Morty artillery, Graverobbers) took the second Bot Lab; the army held
+  the base but the push never went out: a Fight order to the far side of the map needs its point on the screen, and
+  the camera pan could not bring it there ("cannot bring 4152,816 onto the screen"). Stopped at 21:57 (4
+  extractors, 17 Centurions).
+- UX: an order's target point far off the screen cannot be given by touch without first panning there; the
+  minimap (top left) is too small to tap a far point on the upright layout. QOL: a larger minimap to tap, or the
+  dock's PING/LAST PINGS places as order targets.
+
 ### Skirmish summary (2026-11-22)
 
 - BARb Easy: game 1 lost, game 2 WON at 12:14. BARb Medium: game 3 WON at 12:25 (first try with the game-2 build).
