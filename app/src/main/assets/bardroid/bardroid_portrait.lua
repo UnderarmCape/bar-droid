@@ -1868,7 +1868,10 @@ function refreshNow()
 	-- on the dev phone: a finger reaching for a home button hit the one below; attack-ping-test, 2026-11-20. The split
 	-- dock has its groups between its blocks, the sideways one its own: they do not move)
 	local keepGroups = not L.split and not L.thumb and Spring.GetGameFrame() > 0 and not Spring.GetSpectatingState()
-	local wantSel, wantGroups = #sel > 0 and not dg, (#sel > 0 or anyGroup or #idleB.list > 0 or keepGroups) and not dg
+	-- (before the start the row is QUEUE alone, nothing being picked then: every PLACE had replaced BAR's pregame queue, one
+	-- building before the start; the night's touch playtest, 2026-11-22. queueRect, drawQueueZones)
+	local wantSel = (#sel > 0 or pregameStart() ~= nil) and not dg
+	local wantGroups = (#sel > 0 or anyGroup or #idleB.list > 0 or keepGroups) and not dg
 	if wantSel ~= showSel or wantGroups ~= showGroups then -- (the dock's rows: laid out again)
 		showSel, showGroups = wantSel, wantGroups
 		layout()
@@ -3516,6 +3519,13 @@ local function drawPlace()
 	local bh = box[4] - box[2]
 	textIn("PLACE", box[1], box[2], box[3], box[4], max(bh * 0.3, min(bh * 0.55, 40)),
 		ready and "\255\255\255\255" or "\255\205\225\205", bold)
+	-- (QUEUE on: said on PLACE itself, where the eyes are while placing, "+ QUEUE" in its top left corner. The selection
+	-- row's gold was missed and a placement replaced a long queue; the night's touch playtest, 2026-11-22)
+	local Pd = WG.BarDroidPad
+	if Pd and Pd.queueState and Pd.queueState() and bold then
+		local ts = max(10, floor(min(bh * 0.16, 22)))
+		bold:Print("\255\255\200\064+ QUEUE", p.all[1] + L.pad, p.all[4] - L.pad - ts, ts, "o")
+	end
 	for _, k in ipairs({ "rotate", "cancel", "walls" }) do
 		local r = p[k]
 		if r then
@@ -3527,11 +3537,17 @@ local function drawPlace()
 			-- widgets' orders: grey, they cannot be given; bardroid_walls.lua, Kailil 2026-11-20)
 			local W = WG.BarDroidWalls
 			local on = W and W.on() and (not W.allowed or W.allowed())
+			-- (and what the ring adds, "WALLS +64": the night's touch playtest, 2026-11-22, 64 metal on a Sentry's 85
+			-- unasked, nothing said so; bardroid_walls.lua's cost, the walls it would pick for the builders picked)
+			local building = activeBuild()
+			local pb = not building and WG["pregame-build"]
+			local cost = W and W.cost and W.cost(building and -building or pb and pb.getPreGameDefID and pb.getPreGameDefID())
+			local label = cost and cost > 0 and ("WALLS +" .. cost) or "WALLS"
 			local size = max((r[4] - r[2]) * 0.34, min((r[4] - r[2]) * 0.5, 30))
 			if bold then
-				size = min(size, (r[3] - r[1]) * 0.7 / max(0.01, bold:GetTextWidth("WALLS")))
+				size = min(size, (r[3] - r[1]) * 0.7 / max(0.01, bold:GetTextWidth(label)))
 			end
-			textIn("WALLS", r[1], r[2], r[3], r[4], size, on and "\255\255\215\100" or "\255\130\130\130", bold)
+			textIn(label, r[1], r[2], r[3], r[4], size, on and "\255\255\215\100" or "\255\130\130\130", bold)
 			if on and WG.BarDroidStyle then
 				WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor((r[3] - r[1]) * 0.03)))
 			end
@@ -3568,9 +3584,11 @@ local function drawSelection()
 		local sx, _, sz = Spring.GetTeamStartPosition(myTeam())
 		local pregameText = pregameStart() and ((sx or 0) <= 0 and (sz or 0) <= 0
 			and "START SPOT:  tap the map for yours" or "Start spot picked: queue buildings, then Ready")
+		-- (before the start left of the row's QUEUE, drawQueueZones)
 		textIn(selecting and ((selStyle == "circle" and "CIRCLE" or "BOX") .. " SELECTION:  a second finger picks a filter")
 			or pregameText or "No units picked",
-			r[1], r[2] + h * 0.3, r[3], r[4], h * 0.2, "\255\175\175\175") -- (above the camera pad's hint, drawMode)
+			r[1], r[2] + h * 0.3, pregameText and r[3] - floor((r[3] - r[1]) * 0.24) or r[3], r[4], h * 0.2,
+			"\255\175\175\175") -- (above the camera pad's hint, drawMode)
 		return
 	end
 	local best, bestN = nil, 0
@@ -4591,8 +4609,8 @@ local function dockLines()
 		if a then -- the D-gun mode's sticks from the dock (RtsTouch): to it, and the knobs drawn
 			DG.stick = { tonumber(a) or 0, tonumber(b) or 0, tonumber(c) or 0, tonumber(d) or 0 }
 			local D = WG.BarDroidPadDgun
-			if D and D.sticks then
-				D.sticks(DG.stick[1], DG.stick[2], DG.stick[3], DG.stick[4])
+			if D and D.sticks then -- ("true": the touch AIM, each line's way at once; bardroid_pad.lua)
+				D.sticks(DG.stick[1], DG.stick[2], DG.stick[3], DG.stick[4], true)
 			end
 		end
 		local slidWord = line:match("^dgunslide (%S+)")
@@ -5298,6 +5316,10 @@ local function queueZones()
 	end
 	return L.qz[1], L.qz[2]
 end
+-- (the selection row before the start: QUEUE alone, nothing picked; drawSelection, queueRect)
+function SP.pregameRow()
+	return Spring.GetSelectedUnitsCount() == 0 and pregameStart() ~= nil
+end
 local function drawQueueZones()
 	if not showSel then
 		return
@@ -5306,6 +5328,23 @@ local function drawQueueZones()
 	local qOn, iOn = false, false
 	if Pd and Pd.queueState then
 		qOn, iOn = Pd.queueState()
+	end
+	if SP.pregameRow() then -- (QUEUE over the whole row: lit gold while on, its word at the right as in the game)
+		local r, e = L.sel, max(2, floor(L.pad * 0.3))
+		if qOn then
+			gl.Color(1, 0.78, 0.25, 0.14)
+			gl.Rect(r[1], r[2], r[3], r[4])
+			gl.Color(1, 0.78, 0.25, 0.95)
+			gl.Rect(r[1], r[2], r[3], r[2] + e)
+			gl.Rect(r[1], r[4] - e, r[3], r[4])
+			gl.Rect(r[1], r[2], r[1] + e, r[4])
+			gl.Rect(r[3] - e, r[2], r[3], r[4])
+			gl.Color(1, 1, 1, 1)
+		end
+		local size = (r[4] - r[2]) * 0.2
+		bold:Print((qOn and "\255\255\200\064" or "\255\235\235\235") .. "QUEUE", r[3] - L.pad,
+			(r[2] + r[4]) / 2 - size * 0.35, size, "ro")
+		return
 	end
 	local ins, que = queueZones()
 	local h = ins[4] - ins[2]
@@ -5761,6 +5800,19 @@ function widget:MousePress(x, y, btn)
 		pingT.eat = true
 		return true
 	end
+	-- The dock's D-gun mode: a map tap aims the D-gun towards the ground there (bardroid_pad.lua aimAt; FIRE fires it). It
+	-- had been a plain click that deselected the commander and so ended the mode (the night's touch playtest, 2026-11-22:
+	-- "a tap on the map as the D-gun's target"). Not over an order armed: the mode's own click for a shot or a step where
+	-- the host forbids user widgets' orders (dgunOrder) arms BAR's D-gun or Move first, and that click is BAR's
+	if active and btn == 1 and dgunOn() and not onMap and not inRect(x, y, L.dock) and not select(2, spGetActiveCommand()) then
+		local _, pos = Spring.TraceScreenRay(x, y, true)
+		local D = WG.BarDroidPadDgun
+		if pos and D and D.aimAt and D.aimAt(pos[1], pos[3]) then
+			Spring.Echo("[bardroid-portrait] the D-gun aimed by a tap at " .. floor(pos[1]) .. " " .. floor(pos[3])) -- (tools)
+		end
+		pingT.eat = true -- (its release too: not the map's)
+		return true
+	end
 	if not (active and inRect(x, y, L.dock)) or onMap then
 		return false
 	end
@@ -6063,15 +6115,18 @@ function widget:Initialize()
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
 		queueRect = function() -- (bardroid_pad.lua's QUEUE, the fingers' sticky Shift: the selection row's right two
-			-- thirds; none while nothing is picked)
+			-- thirds; none while nothing is picked; before the start the whole row, SP.pregameRow)
 			if not (active and showSel) then
 				return nil
+			end
+			if SP.pregameRow() then
+				return L.sel
 			end
 			local _, q = queueZones()
 			return q
 		end,
-		insertRect = function() -- (its INSERT, BAR's CommandInsert: the row's left third)
-			if not (active and showSel) then
+		insertRect = function() -- (its INSERT, BAR's CommandInsert: the row's left third; none before the start)
+			if not (active and showSel) or SP.pregameRow() then
 				return nil
 			end
 			return (queueZones())

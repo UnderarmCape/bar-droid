@@ -312,6 +312,63 @@ local function wallUp(p)
 	end
 end
 
+-- The metal a sentry's whole ring would cost with the builders picked now (the place panel's WALLS, "WALLS +64"; the
+-- night's touch playtest, 2026-11-22: 64 metal on top of a Sentry's 85 in the first minutes, and nothing said so), or
+-- nil: no walls for it. The walls wallUp would pick (a T2 sentry's T2 walls where it fires over them, else T1 ones), as
+-- many as a closed ring on open ground holds (ringSpots' sides; rocks or a slope leave out some). Worked out once a
+-- second at most per sentry and pick: the panel asks every frame.
+local costCache = { key = nil, at = nil, value = nil }
+local function wallFor(s, builders)
+	local w1
+	for _, u in ipairs(builders) do
+		if s.tech >= 2 then
+			local w2 = wallOf(u, 2)
+			if w2 and firesOver(s, w2) then
+				return w2
+			end
+		end
+		w1 = w1 or wallOf(u, 1)
+	end
+	if not w1 and s.tech >= 2 then -- (T1 walls by another builder of mine, as wallUp's t1Builder)
+		for _, u in ipairs(Spring.GetTeamUnits(myTeam) or {}) do
+			local ud = UnitDefs[spGetUnitDefID(u) or -1]
+			w1 = ud and ud.canMove and ud.isBuilder and wallOf(u, 1)
+			if w1 then
+				break
+			end
+		end
+	end
+	return w1 and firesOver(s, w1) and w1 or nil
+end
+local function ringCost(defID)
+	local s = defID and sentryOf(defID)
+	if not s then
+		return nil
+	end
+	local sel = Spring.GetSelectedUnits() or {}
+	local key = defID .. ":" .. (sel[1] or 0) .. ":" .. #sel
+	local t = Spring.GetTimer()
+	if costCache.key == key and Spring.DiffTimers(t, costCache.at) < 1 then
+		return costCache.value
+	end
+	local wall = wallFor(s, sel)
+	local value
+	if wall then
+		local ud, wd = UnitDefs[defID], UnitDefs[wall]
+		local W, G = wd.xsize * 8, 16
+		local function span(half) -- (as ringSpots: the footprint's edges on the grid, whole walls along it)
+			local a, b = math.floor(-half / G + 0.5) * G, math.floor(half / G + 0.5) * G
+			return math.ceil((b - a) / W) * W
+		end
+		local sx, sz = span(ud.xsize * 4), span(ud.zsize * 4)
+		local rx, rz = sx / 2 + W / 2, sz / 2 + W / 2
+		local n = 2 * (math.floor(2 * rz / W) + 1) + 2 * math.max(0, math.floor((2 * rx - 2 * W) / W) + 1)
+		value = math.floor(n * (wd.metalCost or 0) + 0.5)
+	end
+	costCache.key, costCache.at, costCache.value = key, t, value
+	return value
+end
+
 function widget:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams)
 	if not enabled or cmdID >= 0 or unitTeam ~= myTeam or not cmdParams or #cmdParams < 3 then
 		return
@@ -376,6 +433,7 @@ function widget:Initialize()
 		sentry = function(defID) -- (the place panel: WALLS shown for a sentry only)
 			return sentryOf(defID) ~= nil
 		end,
+		cost = ringCost, -- (the place panel's WALLS: "WALLS +64", what the ring adds)
 		allowed = mayOrder,
 	}
 end

@@ -785,9 +785,13 @@ function droid.drawPanel()
 	font2:Print("\\255\\255\\150\\140\\226\\156\\149", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - sym * 0.3, sym, "co")
 	r = p.walls -- (upright the portrait dock draws its own over it: bardroid_portrait.lua drawPlace)
 	if r then
-		local on = WG.BarDroidWalls and WG.BarDroidWalls.on and WG.BarDroidWalls.on()
-		local ws = math.min(sym * 0.5, (r[3] - r[1]) * 0.8 / math.max(0.01, font2:GetTextWidth("WALLS")))
-		font2:Print((on and "\\255\\255\\215\\100" or "\\255\\140\\140\\140") .. "WALLS", (r[1] + r[3]) / 2,
+		local W = WG.BarDroidWalls
+		local on = W and W.on and W.on()
+		-- (and what the ring adds, "WALLS +64", as the portrait dock's: bardroid_walls.lua's cost)
+		local cost = W and W.cost and droid.defID and W.cost(droid.defID)
+		local label = cost and cost > 0 and ("WALLS +" .. cost) or "WALLS"
+		local ws = math.min(sym * 0.5, (r[3] - r[1]) * 0.8 / math.max(0.01, font2:GetTextWidth(label)))
+		font2:Print((on and "\\255\\255\\215\\100" or "\\255\\140\\140\\140") .. label, (r[1] + r[3]) / 2,
 			(r[2] + r[4]) / 2 - ws * 0.3, ws, "co")
 	end
 	font2:End()

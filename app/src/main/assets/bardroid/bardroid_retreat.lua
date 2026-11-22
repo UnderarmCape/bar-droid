@@ -392,15 +392,39 @@ local function catchingUp()
 	return f and f() or false
 end
 
-function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer)
-	if enabled and playing and unitTeam == myTeam and not paralyzer and damage > 0 and not fell[unitID]
-		and not catchingUp() then
+-- A commander that retreated once and is back under the player's own orders (theirs to keep there: "Once only", above)
+-- gets no second retreat, but under CRITICAL a word on the dock, once until it heals above REARM (the night's touch
+-- playtest, 2026-11-22: the commander at 23 % on the player's Fight, nothing said; no order, so online and on any host)
+local CRITICAL = 0.3
+local warned = {} -- commander unitID -> true: told, until it heals
+local function warnCommander(u, defID)
+	local ud = UnitDefs[defID or -1]
+	if warned[u] or coms[u] or not (ud and isCommander(ud)) or healthy(u, CRITICAL) then
+		return
+	end
+	local h, mh = spGetUnitHealth(u)
+	if not (h and mh and mh > 0) then
+		return
+	end
+	warned[u] = true
+	say(string.format("COMMANDER AT %d %%: PULL IT BACK", math.max(1, math.floor(100 * h / mh))))
+	Spring.Echo(string.format("[bardroid-retreat] commander %d at %d %% on the player's orders: told", u,
+		math.floor(100 * h / mh))) -- (tools)
+end
+
+function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer)
+	if not (enabled and playing and unitTeam == myTeam and not paralyzer and damage > 0) or catchingUp() then
+		return
+	end
+	if not fell[unitID] then
 		pending[unitID] = true
+	else
+		warnCommander(unitID, unitDefID)
 	end
 end
 
 function widget:UnitDestroyed(unitID)
-	pending[unitID], fell[unitID] = nil, nil
+	pending[unitID], fell[unitID], warned[unitID] = nil, nil, nil
 end
 
 function widget:UnitGiven(unitID)
@@ -434,7 +458,7 @@ function widget:GameFrame(f)
 		watchCommanders(f)
 		for u in pairs(fell) do
 			if not coms[u] and (not spValidUnitID(u) or healthy(u, REARM)) then
-				fell[u] = nil
+				fell[u], warned[u] = nil, nil
 			end
 		end
 	end

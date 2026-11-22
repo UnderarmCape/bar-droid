@@ -737,8 +737,10 @@ end
 -- order given while its key is down at the front of the queue (Space in BAR's keys, which also shows unit stats, picks
 -- idle units in a box and more): the app holds numpad*, which BAR leaves unbound, given the same action.
 -- (Any+: QUEUE's Shift held, the dock's remove buttons still reach them)
+-- (prepend_queue, 2026-11-22: alone the same as prepend_between, the order at the queue's front; under QUEUE's Shift at
+-- the front too, where prepend_between put it where the walk was shortest, often the end)
 local QUEUE_KEYS = { { "Any+insert", "command_skip_current" }, { "Any+numpad/", "command_cancel_last" },
-	{ "Any+numpad*", "commandinsert prepend_between" } }
+	{ "Any+numpad*", "commandinsert prepend_queue" } }
 local keysLookedAt = nil
 local function bindQueueKeys()
 	for _, k in ipairs(QUEUE_KEYS) do
@@ -1024,6 +1026,7 @@ end
 -- v0.8.5; where it does not, BAR's Move or D-gun is picked and the app clicks on the point (it has to be on the screen
 -- and off the interface: a shot aimed off it goes to the farthest point of the aim that is on it, the same way).
 local DGUN_AIM_DEADZONE, DGUN_MOVE_DEADZONE = 0.5, 0.4
+local DGUN_TOUCH_AIM_DEADZONE = 0.2 -- (the dock's touch AIM: its ring's fifth; a thumb's short flick aims)
 -- (the walk's step: 150 ahead walked on for 4 s after the stick was let go; Kailil, 2026-11-10: "move commands to be
 -- way shorter so if I stop moving my analog, the commander almost stops walking immediately": 56 ahead, given more
 -- often, and a stop as the stick comes to rest, dgunUpdate)
@@ -2588,8 +2591,11 @@ function widget:SelectionChanged()
 	factoriesPicked = nil
 end
 local function queueShows()
+	-- (before the start, nothing picked: on the portrait dock, its selection row is QUEUE then, bardroid_portrait.lua)
+	local P = Spring.GetGameFrame() == 0 and WG.BarDroidPortrait
 	return queue.on or queue.insert or (WG.BarDroidPadOnly ~= true and WG.BarDroidInput ~= "mouse"
-		and not Spring.GetSpectatingState() and Spring.GetSelectedUnitsCount() > 0)
+		and not Spring.GetSpectatingState()
+		and (Spring.GetSelectedUnitsCount() > 0 or (P and P.active and P.active() and true or false)))
 end
 local function queueLayout(vsx, vsy)
 	if not queueShows() then
@@ -2694,7 +2700,9 @@ function widget:Update(dt)
 		queue.on, queue.insert = false, false
 	end
 	-- (nothing picked: both off; Kailil, 2026-11-13: "remove queue and insert toggle if the unit is not selected")
-	if (queue.on or queue.insert) and Spring.GetSelectedUnitsCount() == 0 then
+	-- (before the start nothing is ever picked: the pre-game dock's own QUEUE, bardroid_portrait.lua, keeps it on there)
+	if (queue.on or queue.insert) and Spring.GetSelectedUnitsCount() == 0
+		and not (queue.on and Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState()) then
 		queue.on, queue.insert = false, false
 	end
 	if area.radius ~= area.target then
@@ -2785,11 +2793,13 @@ function widget:Update(dt)
 		end
 		insertKey = not factoriesPicked
 	end
-	-- (QUEUE and INSERT both on: Shift and Alt held, BAR's own with them, in place of the CommandInsert key)
-	local both = queue.on and queue.insert
-	if both then
-		insertKey = false
-	end
+	-- (QUEUE and INSERT both on, factories: Shift and Alt held, BAR's own with them (a factory's Alt is its queue's front).
+	-- Builders keep the CommandInsert key under QUEUE's Shift, its prepend_queue: each building at the queue's front, after
+	-- the ones placed so before it or, once the held key's repeats start CommandInsert's count again, first (dev phone,
+	-- touchfix-phone-test: either way ahead of the rest of the queue). With
+	-- Shift and Alt a builder's building went to its queue's end, Alt is nothing to a builder's build order: the night's
+	-- touch playtest, 2026-11-22, "INSERT on a builder ... did not put a placed building at the queue's front")
+	local both = queue.on and queue.insert and factoriesPicked == true
 	local text = "focus " .. focus .. "\npregame " .. (pregame and 1 or 0) .. "\narmed " .. armed .. "\ndrawspeed "
 		.. string.format("%.2f", WG.BarDroidDrawSpeed or 1) .. "\nqueue " .. (queue.on and 1 or 0)
 		.. "\ninsert " .. (insertKey and 1 or 0) .. "\nalt " .. (both and 1 or 0) .. "\nkey " .. padKeys .. " " .. padKeyName .. "\nfp " .. ((WG.BarDroidPadFP and WG.BarDroidPadFP.active()) and 1 or 0) .. "\nclick " .. padClicks
@@ -2985,10 +2995,40 @@ function widget:Initialize()
 			end
 			return true, math.max(0, Spring.DiffTimers(now(), dgun.autoOn or now())) -- (never under 0 nor NaN: dgunDraw)
 		end,
-		sticks = function(lx, ly, rx, ry)
-			if dgun then
-				dgun.lx, dgun.ly, dgun.rx, dgun.ry = lx, ly, rx, ry
+		sticks = function(lx, ly, rx, ry, touch)
+			local d = dgun
+			if not d then
+				return
 			end
+			d.lx, d.ly, d.rx, d.ry = lx, ly, rx, ry
+			-- (the dock's touch AIM, bardroid_portrait.lua's dgunsticks lines: each line's way at once, from a fifth of the
+			-- ring out. The night's touch playtest, 2026-11-22: a quick drag did nothing and a D-gun went the old way, as the
+			-- drag's lines and its let-go's zeros came in the same frame's read and only the zeros were left for the next
+			-- Update; paused, with fewer frames drawn, every drag went so. The pad's sticks keep dgunUpdate's half way)
+			if touch and not d.auto then
+				local ax, az = stickHeading(rx, ry, DGUN_TOUCH_AIM_DEADZONE)
+				if ax then
+					d.aimX, d.aimZ = ax, az
+					dgunTarget(d)
+				end
+			end
+		end,
+		-- (a map tap in the dock's D-gun mode, bardroid_portrait.lua: the shot's way towards the ground tapped, FIRE then
+		-- fires it, BAR's own D-gun is a click on a target; the tap had deselected the commander and ended the mode)
+		aimAt = function(x, z)
+			local d = dgun
+			if not (d and x and z) or d.auto then
+				return false
+			end
+			local cx, _, cz = Spring.GetUnitPosition(d.unitID)
+			local dx, dz = cx and x - cx or 0, cz and z - cz or 0
+			local len = math.sqrt(dx * dx + dz * dz)
+			if len < 10 then
+				return false
+			end
+			d.aimX, d.aimZ = dx / len, dz / len
+			dgunTarget(d)
+			return true
 		end,
 	}
 	WG.BarDroidPad = {
