@@ -300,4 +300,41 @@ UX, bugs and QOL from game 2:
   every cycle unless taken off (tap the constructor, CLEAR). QOL idea: Repeat only for combat units, or a mark per
   entry.
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 4: given up at 7:37 (Avalanche 3.4, Armada vs Cortex)
+
+- 07:05 The game-3 build lost from the first minute: a Grunt in the base at 1:46, Thugs and Aggravators from 5:00 on,
+  from the east, south and north at once. The lab's Centurions (3,100 energy, 270 metal each) and the constructors'
+  extractors drew on the same +6 metal and energy +30-90, so neither got anywhere: at 4:40 two extractors and two
+  Centurions. Clearing the lab's queue let the constructors build, but every extractor past the core (1632,704 three
+  times, 1024,720, 416,2160) and five Sentries fell to groups of 3-4 raiders; two constructors died. 7:37: three
+  extractors, two Centurions. Stopped to try a map with defensible ramps.
+- Lessons for Hard: energy first (the commander's first queue: winds before far extractors; solars cost no energy
+  and fixed the stall), no army until 4-5 extractors stand, Sentries in pairs or a Beamer, and everything compact
+  around the commander until a Centurion group exists.
+- 07:20 UX: INSERT on a builder (its top-left switch) did not put a placed building at the queue's front (twice: the
+  solars and a Construction Turret went to the end or nowhere); on a factory it works.
+- 07:25 UX: a Move given to the commander drops its build queue (as a mouse's click does in BAR); on a phone, where
+  QUEUE is a separate switch, it is easy to wipe a long queue by pulling the commander out of danger.
+
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 5: Ravaged Remake v1.2, given up at 17:28
+
+- 07:45 Ravaged Remake (5120 x 5120; our start the south-west plateau, four extractors in the start box, the map's
+  edge behind it): 9 extractors at 4:44 and 10 at 5:48, a second Bot Lab at 7:08, 18 Centurions at 11:04. BARb Hard
+  (Armada) raided from 2:44 on with Rovers, then packs of 5, 7, 10 and 11 Flashes, then Stumpies with Janus rocket
+  tanks and Shellshocker artillery: every outpost fell (north, south-east, east line), Sentries and Beamers alone
+  did not stop a pack, and BARb built its own extractors on our north spots.
+- game 14:16 the push (24 Centurions, three Fight points to the north-east) stalled in the middle while Flashes and
+  Janus went through the base: the second Bot Lab fell and the commander dropped to 13 % before it got away and two
+  constructors repaired it. The army came home; 17:28: two extractors, +10 metal. Given up.
+- Next: walls on (Dragon's Teeth slow raiders), turrets in groups, the army on a Patrol loop that answers raids by
+  itself (the agent's own reaction is the slow part against BARb Hard), the T2 lab earlier.
+- game 14:50 UX bug: in the dock's D-gun mode a drag of the AIM stick did not turn the aim line, paused or for the 2
+  seconds the game ran, and FIRE then shot along the old line (south, at nothing) while ten Flashes stood east of the
+  commander. The D-gun was wasted. (In New Beginning game 3 a drag aimed well with the game running.) To check: does
+  the aim move only while the stick is held, at a fixed speed? A quick drag-and-release then does almost nothing.
+- game 14:59 UX: the commander at 23 % still had an order from me (Fight) and AUTO RETREAT did not take it out: the
+  player's own order wins. QOL idea: a hurt commander's retreat over the player's Fight, or a warning.
+- 07:50 UX (lobby): the quick Skirmish's four map tiles changed places between two visits (Avalanche top left, then
+  bottom left); a player who picks by place gets the wrong map.
+
 
