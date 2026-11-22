@@ -313,7 +313,17 @@ public final class Installer {
         installScripts();
         st.status(step, "running container setup: " + step, -1);
         Map<String, String> env = new HashMap<>();
-        int rc = proot.runScript("setup:" + step, "/opt/bardroid/setup-container.sh", env, Arrays.asList(args));
+        // (what it downloads and how far, at most once a second: StatusText.SetupProgress)
+        StatusText.SetupProgress progress = new StatusText.SetupProgress();
+        long[] shown = {0};
+        int rc = proot.runScript("setup:" + step, "/opt/bardroid/setup-container.sh", env, Arrays.asList(args), line -> {
+            boolean changed = progress.line(step, line);
+            long now = android.os.SystemClock.elapsedRealtime();
+            if (changed && (progress.percent() < 0 || now - shown[0] >= 1000)) {
+                shown[0] = now;
+                st.status(step, progress.what(), progress.percent());
+            }
+        });
         if (rc != 0) throw new IOException("container step '" + step + "' failed with exit code " + rc + " (see log)");
     }
 

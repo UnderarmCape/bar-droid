@@ -169,11 +169,17 @@ public final class Proot {
 
     /** Runs a shell script that lives inside the rootfs, as root, with output streamed to the log. */
     public int runScript(String tag, String guestScriptPath, Map<String, String> guestEnv, List<String> args) throws IOException, InterruptedException {
+        return runScript(tag, guestScriptPath, guestEnv, args, null);
+    }
+
+    /** The same, each line of its output to sink too (null: the log only). */
+    public int runScript(String tag, String guestScriptPath, Map<String, String> guestEnv, List<String> args,
+                         Proc.LineSink sink) throws IOException, InterruptedException {
         List<String> cmd = new ArrayList<>();
         cmd.add("/bin/bash");
         cmd.add(guestScriptPath);
         if (args != null) cmd.addAll(args);
-        return Proc.run(tag, command(guestEnv, cmd), hostEnv(), p.filesDir);
+        return new Proc(tag).start(command(guestEnv, cmd), hostEnv(), p.filesDir, sink).waitFor();
     }
 
     /**

@@ -948,6 +948,14 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       install failed closes it too (play returned before its try/finally). On the dev phone (the launcher's Install /
       Update tapped, found in the view hierarchy, a screenshot first; the check run to its end): HEAD's build still had
       its foreground service and notification 13 s after the check ended; this one had neither 3 s after.
+- [x] **Item 42: the first install's download says what and how far** (2026-11-21 20:05-20:30): Installer's container
+      steps pass their output to StatusText.SetupProgress (Proot.runScript with a line sink), which names the content
+      step's part from setup-container.sh's "downloading game|lobby|map" lines and its percent from pr-downloader's
+      [Progress] lines, at most once a second: "Installing: downloading BAR's game (45%)". status-text-test's new cases
+      ALL PASS. On the dev phone (the install's content step marked not done and the pool's 00 folder removed, so
+      pr-downloader fetched them again; Install / Update tapped; the install state put back after, the pool whole by the
+      download): HEAD's status said "running container setup: content" through the step; this one "downloading BAR's
+      game (91%)", "downloading BAR's lobby", "downloading the map Starwatcher 1.0 (5%)" ... "(79%)".
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

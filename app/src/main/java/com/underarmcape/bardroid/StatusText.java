@@ -10,6 +10,45 @@ final class StatusText {
     private StatusText() {}
 
     /**
+     * What a first install's content step fetches and how far it is, from setup-container.sh's "[setup:content]
+     * downloading ..." lines and pr-downloader's "[Progress] ... done/total": the 3.4 GB read "running container setup:
+     * content" for tens of minutes, and a player could take it for stuck (release overhaul audit, 2026-11-21).
+     */
+    static final class SetupProgress {
+        private static final java.util.regex.Pattern PROGRESS = java.util.regex.Pattern.compile("\\[Progress\\].*?(\\d+)/(\\d+)");
+        private String what;
+        private int percent = -1;
+
+        /** One line of the step's output: true when what to show changed. */
+        boolean line(String step, String line) {
+            String head = "[setup:" + step + "] downloading ";
+            if (line.startsWith(head)) {
+                String rest = line.substring(head.length());
+                String w = rest.startsWith("game ") ? "downloading BAR's game"
+                        : rest.startsWith("lobby ") ? "downloading BAR's lobby"
+                        : rest.startsWith("map ") ? "downloading the map " + rest.substring(4).trim() : null;
+                if (w == null || w.equals(what)) return false;
+                what = w;
+                percent = -1;
+                return true;
+            }
+            java.util.regex.Matcher m = PROGRESS.matcher(line);
+            if (what == null || !m.find()) return false;
+            long done, total;
+            try { done = Long.parseLong(m.group(1)); total = Long.parseLong(m.group(2)); }
+            catch (NumberFormatException e) { return false; }
+            if (total <= 0) return false;
+            int p = (int) Math.max(0, Math.min(100, done * 100 / total));
+            if (p == percent) return false;
+            percent = p;
+            return true;
+        }
+
+        String what() { return what; }
+        int percent() { return percent; }
+    }
+
+    /**
      * The same, with the engine still on its loading screen (GameService.loading): a skirmish or benchmark is "loading"
      * until it is in, as the launcher said "Skirmish running" over the loading screen (dev phone, 2026-11-16). The lobby
      * keeps its word: its loading also counts a game started from it.

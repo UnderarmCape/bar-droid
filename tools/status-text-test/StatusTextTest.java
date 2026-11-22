@@ -183,6 +183,25 @@ public class StatusTextTest {
             if (!ok) failed++;
             System.out.println((ok ? "PASS " : "FAIL ") + "exit " + c[0] + " -> " + got);
         }
+        // StatusText.SetupProgress: a first install's content step, what it fetches and how far (release overhaul audit,
+        // 2026-11-21: it read "running container setup: content" for tens of minutes)
+        StatusText.SetupProgress sp = new StatusText.SetupProgress();
+        boolean sp1 = !sp.line("content", "[Progress]  10% [==   ] 10/100") && sp.what() == null;   // (before a part: nothing)
+        boolean sp2 = sp.line("content", "[setup:content] downloading game byar:test (3.4 GB uncompressed; only missing files are fetched)")
+                && "downloading BAR's game".equals(sp.what()) && sp.percent() == -1;
+        boolean sp3 = sp.line("content", "[Progress]  45% [=========          ] 1528823808/3397386240") && sp.percent() == 45
+                && !sp.line("content", "[Progress]  45% [=========          ] 1528823900/3397386240");   // (the same: no change)
+        boolean sp4 = sp.line("content", "[setup:content] downloading lobby byar-chobby:test") && "downloading BAR's lobby".equals(sp.what())
+                && sp.percent() == -1 && sp.line("content", "[Progress] 100% [====] 52/52") && sp.percent() == 100;
+        boolean sp5 = sp.line("content", "[setup:content] downloading map Supreme Isthmus v2.1")
+                && "downloading the map Supreme Isthmus v2.1".equals(sp.what())
+                && !sp.line("content", "[setup:apt] downloading game x") && !sp.line("content", "[Progress] 3/0") && !sp.line("content", "Fetching x");
+        for (Object[] c : new Object[][]{ { sp1, "setup progress: a progress line before any part shows nothing" },
+                { sp2, "setup progress: the game's part named" }, { sp3, "setup progress: its percent, once each" },
+                { sp4, "setup progress: the lobby's part, from 0 again" }, { sp5, "setup progress: the map; another step's lines and junk ignored" } }) {
+            failed += (Boolean) c[0] ? 0 : 1;
+            System.out.println(((Boolean) c[0] ? "PASS " : "FAIL ") + c[1]);
+        }
         // DriverWatch: the game is closed only after the driver's refusal and then BAR's watchdog (dev phone's lines)
         String refused = "19:52:34 [engine] MESA: error: flush_submit_list:89: submit failed -1 (Resource deadlock avoided)";
         String hung = "19:53:14 [engine] [t=00:01:44.048302][f=0000741] Warning: [Watchdog] Hang detection triggered for Spring 2026.07.04.";
