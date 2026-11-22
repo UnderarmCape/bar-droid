@@ -50,13 +50,17 @@ Sessions: the coordinator (the playtest session: trains, tours, soak, docs, the 
 ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devphone-lock.ps1` under its own name.
 
 1. [x] This list; the Hard ladder stopped. (coordinator)
-2. [ ] `tools/phone-round.ps1`: the smoke set (dock, touchfix, lobby-phone, pad, pad -Online, overgame, camctl,
+2. [x] `tools/phone-round.ps1`: the smoke set (dock, touchfix, lobby-phone, pad, pad -Online, overgame, camctl,
    touch-phone, bridge-phone, remake-check) and the full set, the lock per set, one rerun of a run a GPU driver fault
    or a low-memory kill ended, one PASS/FAIL/FLAKY line per test in `build\phone-round\`. Done: a baseline on HEAD in
    which every smoke test passes or carries a classified flake. (coordinator) 2026-11-22: written; a train builds
    the commit in a clean worktree (`C:\Tools\BARANDROID\train\bar-droid-app`, `-Build <commit>`), installs it and runs
    that commit's own tests. Baseline 02347f64 (the app as 3104771e): 9 of 10 PASS; touchfix-phone-test's sea-twin
    case "no water or land spot in sight" FAIL twice in a row (the fixer's). Still open: the baseline all green.
+   DONE: cb78d317 (every RC fix of items 4-7 and the ALL UNITS default; the sea twin's setup mended in b484c032)
+   smoke ALL PASS, 10 of 10, no flakes (16:59-17:20, build\phone-round\20261122-1659-smoke-cb78d317.txt). On the
+   Fold7 17:21 (the APK's engine phone-2026.09.03-83a8536d37, no game running); latest-build is that APK
+   (github-sync.ps1 -Release -Apk, new: a train build goes up under the usual name). The full set: next, nightly.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`

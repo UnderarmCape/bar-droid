@@ -9,8 +9,9 @@
 # "latest-build", its tag moved to this repository's HEAD, its notes naming the commit and the phone engine.
 # Never forces a branch (a rejected push stops with its message); only latest-build's own tag moves. Git through the
 # portable GitHub CLI's credential helper, per command: no global git config, nothing stored.
-#   powershell -ExecutionPolicy Bypass -File tools\github-sync.ps1 [-Release] [-NoEngine]
-param([switch]$Release, [switch]$NoEngine)
+#   powershell -ExecutionPolicy Bypass -File tools\github-sync.ps1 [-Release [-Apk <file.apk>]] [-NoEngine]
+# -Apk: the APK that went on the Fold7 (a train build, tools\phone-round.ps1), else apk\bar-droid-phone-debug.apk.
+param([switch]$Release, [switch]$NoEngine, [string]$Apk)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Root = Split-Path -Parent $App
@@ -52,7 +53,7 @@ if (-not $NoEngine -and (Test-Path (Join-Path $engine ".git"))) {
 
 # 3. the build, as the rolling pre-release
 if ($Release) {
-  $apk = Join-Path $Root "apk\bar-droid-phone-debug.apk"
+  $apk = if ($Apk) { $Apk } else { Join-Path $Root "apk\bar-droid-phone-debug.apk" }
   if (-not (Test-Path $apk)) { throw "no APK at ${apk}: build it first" }
   $head = (& $git -C $App rev-parse HEAD).Trim()
   $short = $head.Substring(0, 8)
@@ -101,14 +102,22 @@ The newest phone build: the APK built $when $from.
   & $gh release view latest-build -R "$owner/bar-droid" 2>$null | Out-Null
   $exists = $LASTEXITCODE -eq 0
   $ErrorActionPreference = $eap
-  $notesFile = Join-Path $env:TEMP "bardroid-release-notes.md"
+  $notesFile = Join-Path $Root "toolchain\tmp\bardroid-release-notes.md"
   [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
+  # (the asset takes the file's name: a train build goes up as a copy under the usual name, so --clobber replaces it)
+  $upload = $apk
+  if ((Split-Path -Leaf $apk) -ne "bar-droid-phone-debug.apk") {
+    $dir = Join-Path $Root "toolchain\tmp\release"
+    New-Item -ItemType Directory -Force $dir | Out-Null
+    $upload = Join-Path $dir "bar-droid-phone-debug.apk"
+    Copy-Item $apk $upload -Force
+  }
   if ($exists) {
     & $gh release edit latest-build -R "$owner/bar-droid" --title "Latest build ($when)" --notes-file $notesFile --prerelease | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "the release's notes did not go up" }   # (the upload's code alone was checked)
-    & $gh release upload latest-build $apk -R "$owner/bar-droid" --clobber
+    & $gh release upload latest-build $upload -R "$owner/bar-droid" --clobber
   } else {
-    & $gh release create latest-build $apk -R "$owner/bar-droid" --title "Latest build ($when)" --notes-file $notesFile --prerelease --verify-tag
+    & $gh release create latest-build $upload -R "$owner/bar-droid" --title "Latest build ($when)" --notes-file $notesFile --prerelease --verify-tag
   }
   if ($LASTEXITCODE -ne 0) { throw "the release did not go up" }
   "[github] latest-build: $short, built from $(if ($builtFrom) { $builtFrom } else { '?' }), $([math]::Round((Get-Item $apk).Length / 1MB, 1)) MB, engine $engineBuild"
