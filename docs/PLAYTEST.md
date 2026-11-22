@@ -169,12 +169,94 @@ touch controls; nothing is given to the engine directly.
 - 00:40 UX good: the commander's D-gun mode (the dock turns into MOVE and AIM sticks with FIRE and an X): the aim
   line is drawn on the map from the commander, a drag of the AIM stick set it on two Pyros and FIRE killed both. The
   first try had aimed at my own Aircraft Plant; the line made that visible before firing. [nb3-036]
+- 00:00 LOST the first Liche to Vampire fighters over the north edge before it reached the Vehicle Plant. Enemy air
+  (Hailstorm bombers, Wasp gunships, Vampires) has picked off 6 extractors, 8 Nettles, 2 advanced and 2 T1
+  constructors so far; Nettles do not stop Hailstorms before they drop.
 - 01:20 GAME 3 given up at 22:01 (not lost): turtled with 3 Sharpshooters, 2 Fatboys, 4 Welders, 4 Overwatch,
   income +26 metal, 7-8 Vampires over the base killing an Arbalest the moment it was finished and the Advanced Fusion
   site; 4 Liches built, all shot down before a factory came into sight. Restarted as game 4 with the plan in
   toolchain\tmp\play\strategy.md (economy on converters and fusions inside flak, no expansions, a Sharpshooter army
   along the west and north edges).
-- 00:00 LOST the first Liche to Vampire fighters over the north edge before it reached the Vehicle Plant. Enemy air
-  (Hailstorm bombers, Wasp gunships, Vampires) has picked off 6 extractors, 8 Nettles, 2 advanced and 2 T1
-  constructors so far; Nettles do not stop Hailstorms before they drop.
+### 2026-11-22, New Beginning (Normal), games 4 and 5
+
+- 03:00 GAME 4 (the plan in strategy.md): Advanced Bot Lab at 3:02, three fusions by 12:50, the Advanced Fusion at
+  21:07, +120 metal at best; Hailstorm bomber waves (2-4 every ~2 minutes from ~4:00) took 48 converters, a fusion, two
+  Advanced Fusion sites and 5 Archangels at once; a Fatboy push at 26:22 was bombed to pieces on the west edge.
+  Given up at 31:48. GAME 5 (air first): a single Pyro walked through the base at 9:49 and destroyed the Bot Lab and
+  the Advanced Bot Lab; given up at 10:20.
+- 03:10 UX good: "tap then drag selects" (the launcher's own hint) draws a box that takes units, not buildings: the
+  only way that reliably selected constructors standing between converters and turrets; a double tap on one of them
+  selected the turret or the converters beside it three times out of four.
+- 03:12 UX: LOCAL UNITS and ALL UNITS take combat units only (no constructors, no aircraft), with no hint of that;
+  a player looking for "my builders" has the idle-builder icons on the bottom row or a box.
+- 03:15 UX good: a long press on an enemy unit gives the attack order (the commander killed the Pyro that way at
+  once), and with QUEUE on a long press on the ground queues a move: the bomber route of game 3 was laid that way.
+- 03:20 UX: the dock's order buttons are drawn for the selection a moment after it changes; a tap in that moment
+  lands on the previous selection's button (twice the factory's +1 panel took a tap meant for an order).
+
+### 2026-11-22, New Beginning (Beginner), game 6: the same build with +50 % resources
+
+- 03:05 Game 6 on Beginner (the scenario's lowest difficulty: +50 % resources for the player, the same AI and
+  defences; whether a Beginner win counts is Kailil's call, not decided here) to find out whether the build can win
+  at all. Best economy of the night: +60 metal at 6:44, three fusions and the Advanced Aircraft Plant by 9:52, the
+  Advanced Fusion by ~17:00 (+6,900 energy), metal full from then on.
+- 03:50 The push (12 Fatboys, 6 Archangels, 2 Crossbows on 7 queued Fight waypoints, west edge then north edge) was
+  met by 8 Wasp gunships near the north-west lake and lost every Fatboy within two minutes; Pyros, a Goliath and
+  Hailstorms kept killing the fusions and the Aircraft Plant at home. Stopped at 19:58.
+- 03:50 UX: the D-gun's AIM stick turns the aim line by an amount that does not follow the stick's direction while
+  the game is paused (three drags: 65 deg, -12 deg, then no change); unpaused in game 3 it aimed well.
+- 03:55 UX: the lobby's Difficulty list (scenario page) ignores a quick tap on an entry (80 ms) and takes a held
+  one (200 ms); the scenario list's drag keeps its fling, so the same drag stops at a different scenario each time
+  (three wrong scenarios opened tonight).
+- 03:55 SUMMARY of New Beginning: 6 games, no win. The build that worked best (Nettles at once, Bot Lab inside them,
+  Advanced Bot Lab ~3:00, fusions and converters, Advanced Fusion) survives but does not outgrow BARb's steady raids
+  (Hailstorm waves every ~2 minutes from ~4:00 on the economy, Wasps on anything that leaves the base, Pyro/Reaper/
+  Goliath/Banisher raids); no Liche reached a factory (7 built), no ground army got past the north-west lake. The
+  touch controls held up for all of it; the slow part is the agent's own reaction loop, which a human does not have.
+
+### 2026-11-22, skirmish 1v1 against BARb Easy, game 1: Avalanche 3.4, Armada, dev phone upright
+
+- 03:56 Start: Armada vs BARb (profile Easy, the lobby's Simple Skirmish), map 4096 x 4096, our start (508, 369)
+  in the north-west, theirs presumably mirrored in the south-east. Commander: extractors, winds (wind 3-19 here,
+  often 15+), a Bot Lab; the lab 3 constructors, Maces and Rocketeers.
+- From ~5:00 on, Grunts (BARb's fast infantry bot, 5 to 18 at a time) raided from the south (800, 1216), the north
+  edge (1250, 200), the east (2560, 1350) and later the west edge; every extractor outside the base was lost at least
+  once (1632,704 twice, 2112,1232 twice, 3104,208, 1024,720, 800,240). Most of our income came from 3-5 extractors;
+  BARb held the middle (extractors, solars, a Sentry-class tower at 2336,2016) by ~9:00.
+- game 10:30: a 13-Mace push toward the south-east lost 8 Maces to Grunts in 15 seconds near (2650, 2950): plasma is the
+  wrong answer to fast swarms. Switched the lab to Centurions ("Anti-Swarm Bot"), which held the base well after.
+- game 13:00-16:00: BARb's Graverobbers raised our dead Maces, Rocketeers and a constructor: its army had our own units in
+  it. Up to 40 radar contacts by 15:00.
+- game 19:20: Area Reclaim on the fight's wrecks gave +52 metal a second for a while (income otherwise +12): the best
+  metal of the game, and wrecks reclaimed are wrecks BARb cannot raise.
+- game 20:40: one Aggravator in the base killed one energy converter and the explosions took all nine (they stood side by
+  side): converters need gaps.
+- game 21:50, 05:25: last throw: 24 units toward the south-east met BARb's commander beside a heavy laser tower at (2900, 2800);
+  an Attack order on the commander lost the army (auto retreat had already sent the hurt ones home one by one).
+  Game given up at 22:15: 1 extractor, +5 metal.
+- What to change (game 2): 3-4 constructors before any army, every extractor in our quarter at once with a Sentry each,
+  Centurions from the first army unit, the army kept home as a mobile defence between the three ways in, converters
+  apart, reclaim after every fight, and no attack until the army clearly outnumbers what BARb shows.
+
+UX, bugs and QOL from this game:
+- game 6:55, UX: a Sentry placed alone gets its ring of 8 Dragon's Teeth (bardroid_walls.lua) by default: 64 metal on top
+  of the Sentry's 85, in the first minutes, unasked; the WALLS switch is only on the place panel while a Sentry is
+  picked, and nothing says what the walls cost. QOL: show the cost on the switch ("WALLS +64"), or start it off.
+- game 7:03, UX: with the commander selected, picking the Metal Extractor queues the free spots in its weapon range at once
+  (bardroid_automex.lua, by design) and puts the extractor away, so a tap meant for a farther spot lands nowhere: the
+  player has to pick it again. A spot already covered by an extractor standing off its middle is not free for BAR's
+  snap: an extractor tapped there is put on the nearest really free spot (600 elmos away, twice); the ghost shows it,
+  so it is visible before PLACE, but easy to miss.
+- game 13:21, UX: Guard on a factory: a tap on the factory's middle hits the unit being built in its yard, so the commander
+  guarded a half-built Centurion (and would have followed it out); the factory's back edge takes it.
+- game 19:06, UX: the D-Gun button opens the D-gun mode (MOVE and AIM sticks, FIRE) instead of arming a target tap as every
+  other order does; there is no quick "D-gun that unit" by a tap or a long press.
+- game 19:20, UX good: an area order works by arming it (Reclaim) and dragging out from the middle: BAR's circle. With
+  QUEUE on the order stays armed after the drag (Shift held), so the next map tap gives another one; QUEUE off ends it.
+- game 13:40, UX good: the factory panel's +1 / +5 / +20 / -1 / CLEAR act on the unit last tapped; INSERT (top left) puts
+  the next ones at the queue's front: two constructors went first that way.
+- game 21:20, UX: AUTO RETREAT (on) sends hurt units home one at a time during an attack: the push thinned on the way and
+  the units walking home alone were picked off. QOL idea: during a Fight order the hurt fall back to the group, not home.
+- game 22:00, UX: a tap on a unit a unit that stands on top of a finished building badly: a tap on a constructor
+  next to a new Sentry or wind selected the building (three times); "tap then drag" boxes were the reliable way.
 
