@@ -17,8 +17,10 @@ public final class Prefs {
 
     // Pinned content versions for a first install. The engine must match what BAR's servers run for online play:
     // after the install, Updater follows BAR's launcher config (engine and rapid tags, docs/UPDATES.md).
-    public static String engineVersion = "2026.07.04";
-    public static String engineUrl = "https://github.com/beyond-all-reason/RecoilEngine/releases/download/2026.07.04/recoil_2026.07.04_" + ENGINE_ARCH + ".7z";
+    // (2026.09.03 since BAR's servers moved to it, 2026-11: the phone engine in the APK is built for it, and a first
+    // install no longer fetches an engine it replaces before the first start)
+    public static String engineVersion = "2026.09.03";
+    public static String engineUrl = "https://github.com/beyond-all-reason/RecoilEngine/releases/download/2026.09.03/recoil_2026.09.03_" + ENGINE_ARCH + ".7z";
     public static String rootfsManifestUrl = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-" + DEBIAN_ARCH + "/trixie/oci/blobs/image-manifest.json";
     public static String rootfsBlobUrl = "https://github.com/debuerreotype/docker-debian-artifacts/raw/dist-" + DEBIAN_ARCH + "/trixie/oci/blobs/rootfs.tar.gz";
     /**

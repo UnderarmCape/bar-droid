@@ -202,7 +202,8 @@ public final class Updater {
             installEngine(engine, engine, Prefs.engineUrl, st);
         }
         List<String> tags = tags();
-        if (state.getProperty("good.engine") == null) {
+        boolean firstCheck = state.getProperty("good.engine") == null;
+        if (firstCheck) {
             // First check: what is installed (and plays) is the version to fall back to.
             state.setProperty("good.engine", engine);
             for (String t : tags) {
@@ -247,6 +248,17 @@ public final class Updater {
             } else result = nameLookupFailed ? "no connection" : "no answer from BAR";
         }
         verifyTags(tags);
+        // A fresh install's first check: the set it updated to is the one to fall back to, not the app's pinned one it
+        // replaced before anything had run. That first start counted as an update's: a fast failure (a phone the phone
+        // engine does not run on) rolled back to an engine BAR's servers no longer run and marked BAR's current version
+        // bad (release overhaul audit, 2026-11-21).
+        if (firstCheck) {
+            state.setProperty("good.engine", engine);
+            for (String t : tags) {
+                String[] l = local(t);
+                if (l != null && sdp(l[0]).exists()) { state.setProperty("good." + t, l[0]); snapshot(repo(t), goodDir); }
+            }
+        }
         // The set that starts now; launchEnded judges it. (When: a run's log older than this is not its own, ranSince.)
         state.setProperty("launched.engine", engine);
         state.setProperty("launched.at", String.valueOf(System.currentTimeMillis()));

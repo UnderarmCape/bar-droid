@@ -934,6 +934,14 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       copy fails on a newer BAR file, the copy made again): HEAD's launch-bar.sh marked the new copy, this one runs it and
       marks it once it fails itself; two cases now start with the files that ran; ALL PASS. The menus round above ran
       launch-bar.sh with it.
+- [x] **Item 39: a fresh install's first start is not an update's** (2026-11-21 19:35-19:56): Updater.check records a
+      fresh install's set to fall back to after its first check has updated (the set that starts), not the app's pinned
+      one it replaced before anything ran; and the pin is 2026.09.03, the engine BAR's servers run (a first install no
+      longer fetches 2026.07.04 to replace it at once). On the dev phone (its update folder backed up, the state file
+      removed as on a fresh install, "Update BAR at every start" on, a skirmish started; all put back after): HEAD's
+      build said "first start of engine 2026.09.03 ... (last good: engine 2026.07.04 ...); rolled back if it fails
+      within 120 s", good 2026.07.04; the first-check change alone (old pin) "starting engine 2026.09.03", good
+      2026.09.03; both the same with no engine step. updater-test ALL PASS.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it
