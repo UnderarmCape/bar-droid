@@ -389,6 +389,27 @@ UX, bugs and QOL from game 2:
   minimap (top left) is too small to tap a far point on the upright layout. QOL: a larger minimap to tap, or the
   dock's PING/LAST PINGS places as order targets.
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 9 (Ravaged Remake, BARb Armada): lost at 6:02
+
+- 12:00 On the fixer's build e952aae4: the quick Skirmish's maps now stand in name order (Avalanche, Onyx Cauldron,
+  Ravaged Remake, Shallow Straits) at every visit: FIXED. The pre-game dock has a QUEUE row ("START SPOT: tap the map
+  for yours" ... QUEUE): with it on, the Bot Lab and an extractor stayed queued before the start: FIXED.
+- 12:02 UX: in the pre-game dock PLACE stands where ARMADA / CORTEX stand once the place panel closes; a tap meant
+  for PLACE a moment late switched the faction to Cortex (the queue's buildings became Cortex's). QOL: keep the
+  faction buttons away from PLACE's place, or ask before switching with a queue. Also the wind/tide box lies over the
+  QUEUE row's hint text ("START SPOT: tap the map...").
+- BARb Hard (Armada) sent Ticks at 2:56: three extractors and a Sentry lost before the first Centurions, again.
+- 12:20 A commander raid instead (the D-gun map tap now aims): the commander walked the path finder's way in Move
+  hops and reached BARb's base at 5:43 (99 %), met its commander "Arquebus (AI)" at 5:48 ~360 elmos off, and fired
+  two D-guns, each aimed by a tap on it in the dock's D-gun mode: the aim line went onto it, FIRE fired ("D-GUN FIRED",
+  500 energy each), but the shot flew to where it had stood and it had walked on; with Pawns, a Sentry and its laser
+  on ours (100 % -> 0 in ~20 s), energy too low for a third shot, ours died at 6:01; its death blast missed BARb's.
+  Next: energy storage for 3-4 shots, an escort, and the shot from point-blank.
+- UX: in the D-gun mode the camera follows the commander, so a target tapped a moment before has moved on the screen;
+  a moving enemy is easy to miss. QOL idea: a tap on an enemy unit (not the ground) aims at the unit and leads it.
+- Driver: with QUEUE on and an order armed, a drag on the map draws the order's line instead of panning; the driver
+  now lets go (QUEUE off) before a pan and puts QUEUE back after.
+
 ### Skirmish summary (2026-11-22)
 
 - BARb Easy: game 1 lost, game 2 WON at 12:14. BARb Medium: game 3 WON at 12:25 (first try with the game-2 build).
