@@ -59,12 +59,15 @@ try {
     foreach ($who in "menu", "ui") {
       $line = "$(InApp "cat $cfg/bardroid_overgame_$who.txt 2>/dev/null")".Trim()
       if ($who -eq "ui" -and $line -eq "end") { $done = $true }
-      if ($line -match '^do (\d+) (tap|shot|swipe) (-?\d+) (-?\d+) (\d+)(?: (-?\d+) (-?\d+))?' -and [int]$Matches[1] -gt $seen[$who]) {
+      if ($line -match '^do (\d+) (tap|shot|swipe|back) (-?\d+) (-?\d+) (\d+)(?: (-?\d+) (-?\d+))?' -and [int]$Matches[1] -gt $seen[$who]) {
         $n = [int]$Matches[1]; $act = $Matches[2]
         if ($act -ne "shot") { Assert-GameInFront $adb }   # (no taps on the launcher: toolchain.ps1)
         $k = $w / [double]$Matches[5]
         $x = [int]([double]$Matches[3] * $k); $y = [int]([double]$Matches[4] * $k)
-        if ($act -eq "shot") {
+        if ($act -eq "back") {   # (Android's Back, the real one: GameActivity, RtsTouch.back)
+          & $adb shell input keyevent 4
+          "[overgame] ($who $($n): Android's Back)"
+        } elseif ($act -eq "shot") {
           & $adb shell screencap -p /sdcard/bardroid-overgameshot.png
           $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"   # (adb pull's progress line on stderr)
           try { $null = & $adb pull /sdcard/bardroid-overgameshot.png (Join-Path $build "overgame-$who-$n.png") 2>&1 }

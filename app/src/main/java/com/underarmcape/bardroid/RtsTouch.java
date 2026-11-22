@@ -147,7 +147,7 @@ final class RtsTouch {
         // (bardroid_portrait.lua, a "live" line each)
         final java.util.List<float[]> live = new java.util.ArrayList<>();
         float[] ping;   // the home grid's PING: held, a spoken ping's label; tapped twice, speak to chat (pingTap)
-        String back;    // the home grid with nothing on it, Android's Back: "quit" or "lobby" (the "back" line, back())
+        String back;    // Android's Back (the "back" line, back()): at the home grid "quit" or "lobby"; "dock": the dock puts away
         boolean menu, circle, draw, dgun, dgunAuto;
         boolean area;   // an area order armed (Area Mex, Reclaim...): a drag on the game draws its circle, "draw 2"
         boolean areaOnly;   // ... one that takes only an area (Area Mex), "draw 3": a tap on the map waits for a drag
@@ -2359,7 +2359,9 @@ final class RtsTouch {
             return true;
         }
         act("dock_back");
-        return "lobby".equals(d.back);
+        // ("dock": the dock put something away (units picked, an order, a menu): no Escape after it, which opened BAR's
+        // lobby over a lobby game with units picked; the touch playtest NB3-6, RC 0.2.0 item 5)
+        return "lobby".equals(d.back) || "dock".equals(d.back);
     }
 
     private void act(String name) {

@@ -4788,7 +4788,16 @@ end
 -- request quits at once, so then no line, Back stays Escape)
 function SP.backLine()
 	if not SP.atHome() then
-		return ""
+		-- ("back dock": something of the dock's to put away (units picked, an order or a building armed, a menu, a
+		-- panel): Back is SP.back's alone, no Escape after it. With units picked it cleared them and its Escape then
+		-- opened BAR's lobby over a lobby game, twice out of the battle: the touch playtest NB3-6, RC 0.2.0 item 5. Not
+		-- while BAR's quit question, its chat box or the app's typing is up: Escape closes those)
+		local tb = WG.topbar
+		local quitUp = tb and tb.showingQuit and tb.showingQuit()
+		local chat = WG.chat
+		local typing = (chat and chat.isInputActive and chat.isInputActive())
+			or (WG.bardroidChat and WG.bardroidChat.typing and WG.bardroidChat.typing())
+		return (quitUp or typing) and "" or "back dock\n"
 	end
 	if SP.chobby and not SP.gameOver then
 		return "back lobby\n"

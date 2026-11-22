@@ -143,6 +143,28 @@ local function step()
 	elseif stage == "pan?" and clock - stageAt > 1.5 then
 		local moved = camMoved(cam0, Spring.GetCameraState())
 		check("... a drag on the map pans the camera", moved >= 1, string.format("moved %.2f", moved))
+		-- (Android's Back, the real one, with units picked in a game from the lobby: the pick cleared, no lobby over the
+		-- game; it had cleared the pick and its Escape opened the lobby, the touch playtest NB3-6; RC 0.2.0 item 5)
+		local mine = {}
+		for _, u in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
+			local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+			if ud and ud.canMove and #mine < 3 then
+				mine[#mine + 1] = u
+			end
+		end
+		Spring.SelectUnitArray(mine)
+		Spring.Echo("[overgame] (" .. #mine .. " units picked for Back)")
+		go("backpick")
+	elseif stage == "backpick" and clock - stageAt > 1.5 then
+		ask("back", 0, 0, "backpicked?")
+	elseif stage == "backpicked?" and clock - stageAt > 2 then
+		local n = Spring.GetSelectedUnitsCount()
+		check("Android's Back with units picked (a lobby game): the pick cleared, no lobby over the game",
+			n == 0 and readLine(OVERLAY) ~= "1" and WG.BarDroidLobbyOver ~= true,
+			string.format("%d picked, the overlay file %s", n, tostring(readLine(OVERLAY))))
+		if readLine(OVERLAY) == "1" or WG.BarDroidLobbyOver == true then
+			Spring.SendLuaMenuMsg("hideLobby") -- (back to the game for the picture)
+		end
 		ask("shot", 2, 0, "end")
 	elseif stage == "end" then
 		Spring.Echo("[overgame] game done")

@@ -81,6 +81,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
 5. [ ] Android Back with units selected in a lobby-started game (PLAYTEST NB3-6) reproduced on the real Back path:
    fixed, or closed as the driver's with the evidence; check-only cases: a two-finger pan with a building picked, a
    minimap tap with Fight armed. (fixer)
+   Back FIXED: reproduced on the real Back (adb's KEYCODE_BACK) in a game started from the lobby with 3 units picked:
+   the pick cleared and the lobby came over the game (HEAD: overlay "1"). The cause: with something of the dock's to
+   put away RtsTouch.back() cleared it and still let GameActivity send Escape, which a lobby game's interface takes as
+   "show the lobby". Now the dock's file says "back dock" then and Back is the dock's alone (Escape stays for BAR's quit
+   question and the chat boxes); overgame-phone-test's new case: 0 picked, overlay "0". The check-only cases: open (in
+   dock-phone-test, not yet committed: the two-finger gesture and the minimap point still to be made reliable).
 6. [ ] Item 53: a default uncaught-exception handler that writes the stack to launcher.log (Share logs); one
    deliberate engine crash (SIGSEGV) on the dev phone, recorded here: what launcher.log, infolog.txt and Android's
    exit record hold; `setProcessStateSummary` with the screen and map, read back after a death. Done: a forced
