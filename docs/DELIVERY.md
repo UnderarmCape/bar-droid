@@ -141,6 +141,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
 12. [ ] README known limits, KNOWN_ISSUES (the GPU driver fault, low memory in big online games, the official engine
     if BAR's servers move off 2026.09.03), CHANGELOG 0.2.0, HANDOFF.md's staleness note; the laptop's non-BAR checks.
     (coordinator)
+    2026-11-22: README "Problems" lists the three known issues (6a0ba69b; no separate KNOWN_ISSUES file), and Back's
+    new behaviour; CHANGELOG 0.2.0 has every RC fix so far (4abffa07, 536988d1); HANDOFF.md opens with a staleness note
+    pointing at DELIVERY, CHANGELOG, CLAUDE.md and PLAYTEST. The laptop's non-BAR checks (laptop-tests.ps1 itself is
+    stopped by the no-BAR guard, so each was run on its own): luacheck 0 warnings once 18 were mended (unused
+    arguments, shadowed names: bardroid_walls.lua and five test widgets, none changing behaviour), lua-locals 0 over,
+    PowerShell syntax, GameActivity left alone, launch-bar-test.sh, the five make-*.py --check, publish-check
+    -SelfTest, downloader, settings merge, updater, PadGame, StatusText, MapStore, LogRedact, VoiceChat: all PASS.
+    Open: more CHANGELOG lines as fixes land.
 - Each morning: BAR's launcher config still names 2026.09.03 (RecoilEngine 2026.11.04 is out since 2026-11-19);
   remake-check against BAR's newest release. 2026-11-22 15:00: manual-win/linux and dev-lobby on 2026.09.03, BAR's
   test-engine setups on 2026.11.02; remake-check PASS against test-32018-ad135b9.

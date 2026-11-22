@@ -465,8 +465,8 @@ local function onCmd(c)
 			WG.BarDroidPresets.open()
 		end
 	elseif c == "backpresets?" then -- (Back with the presets open: closed, nothing picked)
-		local P = WG.BarDroidPresets
-		local open = P and P.isOpen()
+		local PR = WG.BarDroidPresets
+		local open = PR and PR.isOpen()
 		local n = Spring.GetSelectedUnitsCount()
 		check("Back with the presets open on picked units: closed, nothing picked, the dock's home grid", not open and n == 0,
 			string.format("presets open %s, %d picked", tostring(open), n))

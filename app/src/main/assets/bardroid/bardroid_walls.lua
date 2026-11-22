@@ -369,7 +369,7 @@ local function ringCost(defID)
 	return value
 end
 
-function widget:UnitCommand(unitID, unitDefID, unitTeam, cmdID, cmdParams)
+function widget:UnitCommand(unitID, _, unitTeam, cmdID, cmdParams)
 	if not enabled or cmdID >= 0 or unitTeam ~= myTeam or not cmdParams or #cmdParams < 3 then
 		return
 	end

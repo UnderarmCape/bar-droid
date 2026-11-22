@@ -56,7 +56,7 @@ local function ask(action, x, y, nextStage, f)
 end
 
 -- (the last in the press order: a press that reaches it was taken by no widget before it)
-function widget:MousePress(x, y, button)
+function widget:MousePress()
 	presses = presses + 1
 	return false
 end

@@ -219,7 +219,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
   power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back is
-  Escape in the game. On Android 17 each Escape shows Android's own notice "Long press Esc key to close this app"
+  Escape in the game, once the touch dock has nothing left to put away (units picked, an order or building armed, a
+  panel open: Back puts that away first). On Android 17 each Escape shows Android's own notice "Long press Esc key to close this app"
   (while the game gets the keyboard shortcuts): a short press is Escape for BAR, as on a PC; holding Escape down
   (3 seconds in a test) closes the game, as the notice says, so never hold it in a game you want to keep.
 - Before Android 16.1, Android takes its shortcuts before any app; the optional accessibility service sends them to

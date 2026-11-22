@@ -45,7 +45,7 @@ function widget:UnitCreated(unitID, unitDefID, teamID)
 		given[#given + 1] = unitID
 	end
 end
-function widget:UnitFromFactory(unitID, unitDefID, teamID, factID)
+function widget:UnitFromFactory(unitID, unitDefID, _, factID)
 	if factID == lab and unitDefID == pawnDef then
 		out[#out + 1] = unitID
 	end

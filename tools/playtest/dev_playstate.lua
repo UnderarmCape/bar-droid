@@ -112,8 +112,7 @@ function widget:UnitFinished(unitID, unitDefID, unitTeam)
 	end
 end
 
-function widget:UnitDamaged(unitID, unitDefID, unitTeam, damage, paralyzer, weaponDefID, projectileID, attackerID,
-							attackerDefID, attackerTeam)
+function widget:UnitDamaged(unitID, unitDefID, unitTeam, _, _, _, _, _, attackerDefID)
 	if unitTeam == myTeam and commander[unitDefID] and now() - lastComHit > 10 then
 		lastComHit = now()
 		event("comhit", UnitDefs[unitDefID].name .. " #" .. unitID .. " by " ..
@@ -131,7 +130,7 @@ local function nearMine(x, z)
 	return false
 end
 
-function widget:UnitEnteredLos(unitID, unitTeam)
+function widget:UnitEnteredLos(unitID)
 	if Spring.GetUnitAllyTeam(unitID) ~= myAlly and not seenEnemy[unitID] then
 		local x, _, z = Spring.GetUnitPosition(unitID)
 		if x and nearMine(x, z) then
@@ -218,7 +217,7 @@ local function write()
 	if dock and dock.itemCell then
 		local seen = {}
 		for _, side in ipairs({"left", "right"}) do
-			for i = 1, 60 do
+			for _ = 1, 60 do
 				local r, it = dock.itemCell(side, function(it)
 					local key = tostring(it.kind) .. ":" .. tostring(it.defID or it.label or it.id)
 					if seen[side .. key] then
@@ -323,17 +322,17 @@ local function write()
 				local md = UnitDefNames.armwar.moveDef and UnitDefNames.armwar.moveDef.name
 				local path = md and Spring.RequestPath(md, wx1, Spring.GetGroundHeight(wx1, wz1), wz1, wx2,
 					Spring.GetGroundHeight(wx2, wz2), wz2, 32)
-				local out = {}
+				local wp = {}
 				if path then
 					local pts = path:GetPathWayPoints() or {}
 					for i = 1, #pts, 4 do
-						out[#out + 1] = string.format("%d,%d", pts[i][1], pts[i][3])
+						wp[#wp + 1] = string.format("%d,%d", pts[i][1], pts[i][3])
 					end
 					if #pts > 0 then
-						out[#out + 1] = string.format("%d,%d", pts[#pts][1], pts[#pts][3])
+						wp[#wp + 1] = string.format("%d,%d", pts[#pts][1], pts[#pts][3])
 					end
 				end
-				add("w " .. table.concat(out, " "))
+				add("w " .. table.concat(wp, " "))
 			end
 			local kinds = line:match("^autopause (%S+)")
 			if kinds then
@@ -365,23 +364,23 @@ local function write()
 				for ring = 0, 30 do
 					for k = 0, math.max(0, ring * 8 - 1) do
 						local a = ring == 0 and 0 or (k / (ring * 8)) * 2 * math.pi
-						local x = fx + math.cos(a) * ring * fgap
-						local z = fz + math.sin(a) * ring * fgap
-						x, z = math.floor(x / 16 + 0.5) * 16, math.floor(z / 16 + 0.5) * 16
+						local px = fx + math.cos(a) * ring * fgap
+						local pz = fz + math.sin(a) * ring * fgap
+						px, pz = math.floor(px / 16 + 0.5) * 16, math.floor(pz / 16 + 0.5) * 16
 						local ok = true
 						for _, p in ipairs(found) do
-							if (p[1] - x) ^ 2 + (p[2] - z) ^ 2 < fgap * fgap then
+							if (p[1] - px) ^ 2 + (p[2] - pz) ^ 2 < fgap * fgap then
 								ok = false
 							end
 						end
 						local mine = math.max(UnitDefs[udid].xsize or 4, UnitDefs[udid].zsize or 4) * 4
 						for _, p in ipairs(planned) do
-							if math.abs(p[1] - x) < p[3] + mine and math.abs(p[2] - z) < p[3] + mine then
+							if math.abs(p[1] - px) < p[3] + mine and math.abs(p[2] - pz) < p[3] + mine then
 								ok = false
 							end
 						end
-						if ok and Spring.TestBuildOrder(udid, x, Spring.GetGroundHeight(x, z), z, 0) == 2 then
-							found[#found + 1] = {x, z}
+						if ok and Spring.TestBuildOrder(udid, px, Spring.GetGroundHeight(px, pz), pz, 0) == 2 then
+							found[#found + 1] = {px, pz}
 						end
 						if #found >= fn then
 							break
@@ -391,11 +390,11 @@ local function write()
 						break
 					end
 				end
-				local s = {}
+				local fs = {}
 				for _, p in ipairs(found) do
-					s[#s + 1] = p[1] .. "," .. p[2]
+					fs[#fs + 1] = p[1] .. "," .. p[2]
 				end
-				add("f " .. ftag .. " " .. table.concat(s, " "))
+				add("f " .. ftag .. " " .. table.concat(fs, " "))
 			end
 			local r = line:match("^near (%d+)")
 			if r then

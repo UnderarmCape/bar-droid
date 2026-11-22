@@ -1,5 +1,14 @@
 # BAR Droid — hand-off (updated 2026-10-28)
 
+> **Stale in parts (note of 2026-11-22).** Much of this file was written by 2026-10-28; the sections dated so are kept
+> as the record of that time. What holds now: [docs/DELIVERY.md](docs/DELIVERY.md) (the release candidate 0.2.0 list,
+> the open blockers, Kailil's calls), [CHANGELOG.md](CHANGELOG.md) (what 0.2.0 changes for players),
+> [CLAUDE.md](CLAUDE.md) (every file and tool), [docs/PLAYTEST.md](docs/PLAYTEST.md) (the touch playtest's findings).
+> Where they disagree with this file, they win. Known changes since: the upright touch dock (bardroid_portrait.lua)
+> is the main touch interface; Android's Back puts the dock's picks and panels away before it is Escape; the lobby
+> bridge is phone-tested (tools/bridge-phone-test.ps1); BAR checks run on the dev phone only (the phone suites,
+> tools/phone-round.ps1), never on the laptop.
+
 Beyond All Reason on Android. An Android app ("BAR Droid") that runs **BAR's Recoil engine** (since 2026-11-13 by
 default the app's phone build of the version BAR's servers run, docs/ENGINE-DEFAULT.md; else the official one)
 inside a Debian container with an **embedded X server** (Termux:X11's `lorie` library) and Mesa for desktop OpenGL.
