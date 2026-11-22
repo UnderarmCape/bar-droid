@@ -183,6 +183,15 @@ The first version meant for other people's phones: everything since the first bu
   lobby's first BAR picture sharper.
 - A game alone (a replay, or no other active player) pauses while the app is out of sight and goes on when you come
   back. The launcher's map field lists the maps you have, again after a game downloaded or removed some.
+- From the touch playtest (an agent playing seventeen games by touch, 2026-11-21/22; docs/PLAYTEST.md): a building
+  picked with the pointer resting over water stays the land building (BAR's sea version only where the finger
+  taps water; phone engine); the D-gun's AIM stick aims from a short flick, along the screen on a turned camera, a
+  map tap aims the shot there and a tap on an enemy keeps the aim on it, led; QUEUE and INSERT on a builder put the
+  building at its queue's front; "+ QUEUE" on the PLACE panel while QUEUE is on; WALLS shows the walls' metal; a
+  warning when the commander is under 30 %; before the start the dock's QUEUE row, the faction buttons safe from a
+  late tap and the hint clear of the wind/tide box; the quick Skirmish's maps in name order. Holding a dock tile
+  shows its name and role until the finger lifts; a tap on the camera knob or a rail (no drag) goes to the map
+  under it; slow drags on the zoom rail move it at least a set step.
 
 **Controllers, mouse and keyboard**
 - Gamepads: a mouse in the lobby, where Start switches its size between 100% and 130%; in every game (skirmish,
