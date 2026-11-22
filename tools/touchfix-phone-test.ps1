@@ -146,8 +146,15 @@ try {
     Flick $r[0] $r[1] 0 (-$d); Start-Sleep -Milliseconds 600; Stage "aim? 0 -1"
     # (a short drag, a third of the ring: under the old half-way dead zone it did nothing)
     Flick $r[0] $r[1] 0 ([double]$r[2] * 0.35); Start-Sleep -Milliseconds 600; Stage "aim? 0 1"
+    # (the camera turned, as the rail turns it: the playtest's flick right then aimed down and right, 2026-11-22)
+    Stage "turn"; Start-Sleep 1
+    Flick $r[0] $r[1] $d 0; Start-Sleep -Milliseconds 600; Stage "aim? 1 0"; Shot "dgun-turned"
+    Flick $r[0] $r[1] 0 (-$d); Start-Sleep -Milliseconds 600; Stage "aim? 0 -1"
     Stage "pause"; Start-Sleep 1
     Flick $r[0] $r[1] (-$d) 0; Start-Sleep -Milliseconds 600; Stage "aim? -1 0"; Shot "dgun-paused"
+    # (and paused, a 300 ms drag, as the playtest's: right again)
+    & $adb shell input swipe ([int]($r[0] * $script:k)) ([int]($r[1] * $script:k)) ([int](($r[0] + $d) * $script:k)) ([int]($r[1] * $script:k)) 300
+    Start-Sleep -Milliseconds 600; Stage "aim? 1 0"
     Stage "unpause"; Start-Sleep 1
     Stage "tapat"; Start-Sleep -Milliseconds 500
     $t = (Rects "bardroid_fixtest.txt")["tap"]

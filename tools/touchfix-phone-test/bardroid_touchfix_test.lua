@@ -35,6 +35,7 @@ local landSpot, spots, solars, tapPoint
 -- (paused by this test's own case only: another session's dev widget on the phone may pause the game on its events, and
 -- orders given while paused are not in the queues yet; unpaused again at once, at most every 2 s)
 local pausedHere, unpausedAt = false, nil
+local turned = false -- (the camera turned for the D-gun's flicks)
 
 local function check(case, ok, detail)
 	if not ok then
@@ -113,7 +114,9 @@ local function freeSpot(def, cx, cz, avoid, minR)
 			for _, o in ipairs(avoid or {}) do
 				far = far and math.abs(bx - o[1]) + math.abs(bz - o[3]) > 140
 			end
-			if far and by > 0.5 and Spring.TestBuildOrder(def, bx, by, bz, 0) >= 2 and screenOf(bx, bz) then
+			-- (above the water's level: BAR's swap tests that; a Solar's build test alone took a low shore)
+			if far and Spring.GetGroundHeight(bx, bz) > 0.05 and Spring.TestBuildOrder(def, bx, by, bz, 0) >= 2
+				and screenOf(bx, bz) then
 				return { bx, by, bz }
 			end
 		end
@@ -148,18 +151,6 @@ local function queueText(q)
 end
 local function near(o, p)
 	return o and p and math.abs(o[2] - p[1]) < 48 and math.abs(o[3] - p[3]) < 48
-end
--- the camera's heading on the ground and the stick's way as bardroid_pad.lua's stickHeading
-local function stickWay(x, y)
-	local cx, _, cz = Spring.GetCameraDirection()
-	local len = math.sqrt(cx * cx + cz * cz)
-	local fx, fz = 0, -1
-	if len > 0.001 then
-		fx, fz = cx / len, cz / len
-	end
-	local hx, hz = x * -fz - y * fx, x * fx - y * fz
-	len = math.sqrt(hx * hx + hz * hz)
-	return hx / len, hz / len
 end
 local function angleBetween(ax, az, bx, bz)
 	local dot = math.max(-1, math.min(1, ax * bx + az * bz))
@@ -373,14 +364,33 @@ local function onCmd(c)
 		Spring.SetActiveCommand(0)
 		P.act("dgun")
 		Spring.Echo("[fixtest] dgun on: " .. tostring(WG.BarDroidPadDgun and WG.BarDroidPadDgun.active()))
+	elseif c == "turn" then -- (the camera turned, as the rail turns it: the stick's ways are the screen's still)
+		local cs = Spring.GetCameraState()
+		if cs.ry then
+			cs.ry = cs.ry + 2.3
+			Spring.SetCameraState(cs, 0)
+			turned = true
+		else
+			Spring.Echo("[fixtest] note: this camera has no turn (" .. tostring(cs.name) .. ")")
+		end
 	elseif c:match("^aim%? ") then
 		local dx, dy = c:match("^aim%? (%S+) (%S+)")
 		dx, dy = tonumber(dx), tonumber(dy)
-		local wx, wz = stickWay(dx, dy)
+		-- (on the screen: the commander's place and a point along the shot's way, as the player sees the aim line)
 		local ax, az = aimNow()
-		local off = ax and angleBetween(ax, az, wx, wz) or 180
-		check(string.format("a quick flick of AIM (%s%s, %s): the shot that way", select(3, Spring.GetGameSpeed())
-			and "paused, " or "", dx, dy), off <= 20, string.format("%.0f degrees off", off))
+		local off = 180
+		local ux, uy, uz = Spring.GetUnitPosition(com)
+		if ax and ux then
+			local sx, sy = Spring.WorldToScreenCoords(ux, uy, uz)
+			local px, pz = ux + ax * 150, uz + az * 150
+			local tx, ty = Spring.WorldToScreenCoords(px, Spring.GetGroundHeight(px, pz), pz)
+			local vx, vy = tx - sx, ty - sy
+			local l = math.max(0.001, math.sqrt(vx * vx + vy * vy))
+			local sl = math.sqrt(dx * dx + dy * dy)
+			off = angleBetween(vx / l, vy / l, dx / sl, -dy / sl) -- (the stick's y runs down, GL's up)
+		end
+		check(string.format("a quick flick of AIM (%s%s%s, %s): the shot that way on the screen", turned and "camera turned, "
+			or "", select(3, Spring.GetGameSpeed()) and "paused, " or "", dx, dy), off <= 20, string.format("%.0f degrees off", off))
 	elseif c == "pause" then
 		pausedHere = true
 		Spring.SendCommands("pause 1")

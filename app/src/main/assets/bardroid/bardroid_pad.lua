@@ -1066,6 +1066,31 @@ local function stickHeading(x, y, deadzone)
 	return hx / len, hz / len
 end
 
+-- The touch sticks (the dock's MOVE and AIM): the way the stick points on the screen, from the unit's own place there,
+-- found on the ground under that pixel: what the player sees, whatever the camera's turn and tilt. The camera's heading
+-- above gave the world's axes on a camera turned by the rail (the night's touch playtest, in play 2026-11-22: a flick
+-- to the right aimed down and right). The heading above where the unit is off the screen or the pixel is sky.
+local function screenHeading(unitID, x, y, deadzone)
+	local len = math.sqrt(x * x + y * y)
+	if len <= deadzone then
+		return nil
+	end
+	local ux, uy, uz = Spring.GetUnitPosition(unitID)
+	if ux then
+		local sx, sy, sz = Spring.WorldToScreenCoords(ux, uy, uz)
+		local reach = math.max(60, math.floor(Spring.GetViewGeometry() * 0.12))
+		if sz <= 1 then -- (y down on the stick, up in GL pixels)
+			local _, pos = Spring.TraceScreenRay(math.floor(sx + x / len * reach + 0.5), math.floor(sy - y / len * reach + 0.5), true)
+			local dx, dz = pos and pos[1] - ux or 0, pos and pos[3] - uz or 0
+			local d = math.sqrt(dx * dx + dz * dz)
+			if d > 1 then
+				return dx / d, dz / d
+			end
+		end
+	end
+	return stickHeading(x, y, deadzone)
+end
+
 local function dgunTarget(d)
 	local cx, cy, cz = Spring.GetUnitPosition(d.unitID)
 	if not cx then
@@ -1250,7 +1275,12 @@ local function dgunUpdate()
 		dgunExit("D-GUN OFF")
 		return
 	end
-	local ax, az = stickHeading(d.rx, d.ry, DGUN_AIM_DEADZONE)
+	local ax, az
+	if d.touch then -- (the dock's sticks: their ways on the screen, the AIM from a fifth of its ring; sticks() above)
+		ax, az = screenHeading(d.unitID, d.rx, d.ry, DGUN_TOUCH_AIM_DEADZONE)
+	else
+		ax, az = stickHeading(d.rx, d.ry, DGUN_AIM_DEADZONE)
+	end
 	if ax and not d.auto then
 		d.aimX, d.aimZ = ax, az
 	end
@@ -1261,7 +1291,12 @@ local function dgunUpdate()
 	if d.auto then
 		dgunAuto(d)
 	end
-	local mx, mz = stickHeading(d.lx, d.ly, DGUN_MOVE_DEADZONE)
+	local mx, mz
+	if d.touch then
+		mx, mz = screenHeading(d.unitID, d.lx, d.ly, DGUN_MOVE_DEADZONE)
+	else
+		mx, mz = stickHeading(d.lx, d.ly, DGUN_MOVE_DEADZONE)
+	end
 	local t = now()
 	-- (no step just after a shot is ordered: the step's move took the shot's place in the queue before the commander
 	-- had turned to it)
@@ -3001,12 +3036,12 @@ function widget:Initialize()
 				return
 			end
 			d.lx, d.ly, d.rx, d.ry = lx, ly, rx, ry
+			d.touch = touch and true or false -- (dgunUpdate: the touch sticks' ways from the screen, screenHeading)
 			-- (the dock's touch AIM, bardroid_portrait.lua's dgunsticks lines: each line's way at once, from a fifth of the
-			-- ring out. The night's touch playtest, 2026-11-22: a quick drag did nothing and a D-gun went the old way, as the
-			-- drag's lines and its let-go's zeros came in the same frame's read and only the zeros were left for the next
-			-- Update; paused, with fewer frames drawn, every drag went so. The pad's sticks keep dgunUpdate's half way)
+			-- ring out (a short drag did nothing under the pad's half way: the night's touch playtest, 2026-11-22), the way
+			-- on the screen. The pad's sticks keep dgunUpdate's half way and the camera's heading)
 			if touch and not d.auto then
-				local ax, az = stickHeading(rx, ry, DGUN_TOUCH_AIM_DEADZONE)
+				local ax, az = screenHeading(d.unitID, rx, ry, DGUN_TOUCH_AIM_DEADZONE)
 				if ax then
 					d.aimX, d.aimZ = ax, az
 					dgunTarget(d)
