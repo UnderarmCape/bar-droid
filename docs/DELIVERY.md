@@ -32,6 +32,85 @@ in `C:\Tools\BARANDROID\discord-post.md` (outside the repository; Kailil posts i
 
 ## Backlog (in order)
 
+### Release candidate 0.2.0 (2026-11-22, the plan Kailil asked for): the sessions' only menu until the release
+Kailil, 2026-11-22: "hault your current tasks on the dev phone. Them cunduct a research on what the best move forward
+for hardening and bug fixing should be and ux and ui improvement. Then automatically proceed with thise decisions
+autonomously." The research: `reports/BAR Droid hardening and UX plan.md` (notes in `research_notes/`). Feature
+freeze: no new features, no new read-only audits, no new phone engine builds, no BARb Hard attempts; the work log
+once before a session's last commit, not on every change. Every fix: reproduced on HEAD first, one finding per commit,
+each with its own new test case. Fold7: Kailil's rule stands (builds that need his test go on right away, never while
+he plays); the coordinator installs the train builds that passed the smoke set, not every commit.
+
+Blockers (only these halt the release): a crash or hang on launch, in the lobby, at a match start or in a normal game;
+anything that breaks online play; a core control (select, move, attack, build, camera) lost by touch or pad; a state
+the player cannot leave; lost settings, saves or replays. Everything else: severity x frequency x reach, fixed only
+if the fix is small and lands with a test.
+
+Sessions: the coordinator (the playtest session: trains, tours, soak, docs, the Fold7), the fixer (`playtest-fixes`:
+ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devphone-lock.ps1` under its own name.
+
+1. [x] This list; the Hard ladder stopped. (coordinator)
+2. [ ] `tools/phone-round.ps1`: the smoke set (dock, touchfix, lobby-phone, pad, pad -Online, overgame, camctl,
+   touch-phone, bridge-phone, remake-check) and the full set, the lock per set, one rerun of a run a GPU driver fault
+   or a low-memory kill ended, one PASS/FAIL/FLAKY line per test in `build\phone-round\`. Done: a baseline on HEAD in
+   which every smoke test passes or carries a classified flake. (coordinator)
+3. [ ] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
+   `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
+   (coordinator)
+4. [ ] Touch batch A, each its own commit and phone case (fixer):
+   - holding a dock tile (build grid, factory grid, PLACE panel's picture) shows its name and BAR's one-line role
+     until the finger lifts; nothing permanent (Kailil's dock rule: no hint text);
+   - a PAUSE button, singleplayer only (no remote host, no other players), lit while paused;
+   - a touch on the camera knob or a rail that lifts without moving goes to the map under it;
+   - dock taps ignored for a moment after the dock's layout changes (selection change, energy bar in QUEUE's place),
+     as 3104771e's faction guard;
+   - a floor on the zoom rail's slow-drag step (the sensitivity setting stays).
+5. [ ] Android Back with units selected in a lobby-started game (PLAYTEST NB3-6) reproduced on the real Back path:
+   fixed, or closed as the driver's with the evidence; check-only cases: a two-finger pan with a building picked, a
+   minimap tap with Fight armed. (fixer)
+6. [ ] Item 53: a default uncaught-exception handler that writes the stack to launcher.log (Share logs); one
+   deliberate engine crash (SIGSEGV) on the dev phone, recorded here: what launcher.log, infolog.txt and Android's
+   exit record hold; `setProcessStateSummary` with the screen and map, read back after a death. Done: a forced
+   exception leaves its stack in launcher.log. (fixer, after 4-5)
+7. [ ] Items 36/37: BAR's own build menu back in the next game of the same lobby session after the copy failed; a
+   phone patch that applies but errors noticed and logged. Done: a copy broken on purpose gives BAR's menu in the
+   next game. (fixer)
+8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
+   enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
+   reopened in PLAYTEST.md with touch-log rows. (coordinator)
+9. [ ] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
+   minutes and GB recorded for the release notes. (coordinator)
+10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
+    low-memory kills and thermal steps counted, no new fault class. (coordinator)
+11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
+    pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
+    (coordinator)
+12. [ ] README known limits, KNOWN_ISSUES (the GPU driver fault, low memory in big online games, the official engine
+    if BAR's servers move off 2026.09.03), CHANGELOG 0.2.0, HANDOFF.md's staleness note; the laptop's non-BAR checks.
+    (coordinator)
+- Each morning: BAR's launcher config still names 2026.09.03 (RecoilEngine 2026.11.04 is out since 2026-11-19);
+  remake-check against BAR's newest release.
+
+RC done: its commit passes the smoke set (classified flakes rerun green) and the full set within 24 hours, no open
+blocker, every fixed-but-unchecked item confirmed in play or reopened, the soak with no new fault class, remake-check
+green, the launcher config on 2026.09.03, the Fold7 on the RC with the checklist waiting for him. Releasing step 1's
+"laptop-tests passes" cannot be met under the no-BAR-on-the-laptop rule: its non-BAR checks plus the phone smoke set
+stand in for it.
+
+Kailil's calls, with the defaults the sessions use meanwhile (nothing waits on him; the release itself is his):
+- Release scope (this list's brief: private ~11-25; this file: public GitHub + Discord): a private group first.
+- The testers' APK: the project-icon build (his own icon never ships).
+- Release key: made before the first hand-out (a later key means an uninstall and a fresh ~5 GB download).
+- The phone engine's source (GPL; the repositories stay private): given to the testers with the APK, or the official
+  engine shipped.
+- Which "his test pending" features must pass on the Fold7 first: online play, fold/unfold, the pre-game flow.
+- Item 40 (phones BAR cannot run): a plain warning before Install, no refusal.
+- QUEUE making taps on units add-selects, the one-finger drag nudging a picked building, a Move dropping the
+  commander's queue, factory Repeat repeating constructors: kept (BAR's behaviour, as on PC).
+- ALL UNITS / LOCAL UNITS: aircraft added, constructors kept out.
+- Walls on, auto mex, auto retreat during a Fight, the D-gun as a mode: kept as designed.
+- The Mesa KGSL report upstream: after the release.
+
 ### Kailil's queue (2026-11-20 ~04:30, his message): before everything else, in this order
 Each done in small tested commits on the dev phone, then the Fold7 (as the 2026-11-10 queue below). Then (his next
 message): "After you build all that, conduct hardening loops on those systems over and over and all the other new
