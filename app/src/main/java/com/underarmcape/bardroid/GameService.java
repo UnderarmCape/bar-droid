@@ -402,6 +402,9 @@ public class GameService extends Service {
     private void play(String mode) {
         updater = null;
         exitNote = null;
+        // (for the process's exit record if it dies in this game: what ran, on which map, the screen; ExitRecord)
+        ExitRecord.summary(this, mode + ", map " + ("skirmish".equals(mode) ? Prefs.mapName : "?") + ", screen "
+                + ExitRecord.screen(this));
         Installer inst = new Installer(this, paths);
         if ((!inst.isInstalled() || inst.mesaOutdated()) && !"shell".equals(mode)) {
             // A first install, or a step an app update added or changed (e.g. a newer Mesa: fetched when it can be, the
@@ -603,7 +606,11 @@ public class GameService extends Service {
                             }
                             // (the map a game loads on: its last use, for the map storage limit, MapStore)
                             String mapFile = MapStore.usedIn(line);
-                            if (mapFile != null) MapStore.markUsed(paths.bar, mapFile);
+                            if (mapFile != null) {
+                                MapStore.markUsed(paths.bar, mapFile);
+                                ExitRecord.summary(GameService.this, "game, map " + mapFile + ", screen "
+                                        + ExitRecord.screen(GameService.this));
+                            }
                             // (the GPU driver's rare fault freezes the game for good: closed, and the launcher says why)
                             if (driver[0].onLine(line)) {
                                 driverLost = true;

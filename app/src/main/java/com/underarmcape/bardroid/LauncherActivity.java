@@ -317,6 +317,16 @@ public class LauncherActivity extends AppCompatActivity {
      */
     private void startFromIntent(Intent intent) {
         String start = intent == null ? null : intent.getStringExtra("start");
+        // ("start crashtest", a developer's build only: an exception no code catches, so that its stack in
+        // launcher.log can be checked, ExitRecord; RC 0.2.0 item 6)
+        if ("crashtest".equals(start) && Prefs.developer(this)) {
+            intent.removeExtra("start");
+            Log.i("app", "crash test asked for: an exception thrown on purpose");
+            new android.os.Handler(android.os.Looper.getMainLooper()).post(() -> {
+                throw new IllegalStateException("BAR Droid crash test (start crashtest): thrown on purpose");
+            });
+            return;
+        }
         if (!"bench".equals(start) && !"skirmish".equals(start)) return;
         // (a developer's build only: the launcher is exported, and any app on the phone could start a game or the
         // benchmark this way; 2026-11-21)

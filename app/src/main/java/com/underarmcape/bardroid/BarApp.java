@@ -22,6 +22,9 @@ public class BarApp extends LorieApp {
             Updater.appInstalledAt = getPackageManager().getPackageInfo(getPackageName(), 0).lastUpdateTime;
         } catch (Exception ignored) {}
         Log.init(paths.logs);
+        ExitRecord.install();               // (an uncaught exception's stack into launcher.log; RC 0.2.0 item 6)
+        ExitRecord.readBack(this, paths.logs);   // (how the app's process ended last time, and its state then)
+        ExitRecord.summary(this, "app started, screen " + ExitRecord.screen(this));
         Prefs.load(this);
         Updater.useInstalled(paths);   // the engine and tags of the last BAR update
         Log.i("app", "BAR Droid " + BuildConfig.VERSION_NAME + " starting");
