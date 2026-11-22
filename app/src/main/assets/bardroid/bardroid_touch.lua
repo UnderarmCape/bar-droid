@@ -1866,8 +1866,37 @@ local function guarded(fn, ...)
 	end
 end
 
+-- The app's copy of BAR's Build menu failed in this game (its file did not load, or BAR's handler removed it for an
+-- error): BAR's own switched on at once, through BAR's handler (this widget has it as one of the game's widgets, the
+-- phone engine), which saves it on, so the next games of the same lobby session have it too; launch-bar.sh's start
+-- check covers the next engine start (RC 0.2.0 item 7, release overhaul item 36: within a session BAR's stayed off and
+-- every game after had no build menu at all). Looked at every 2 s from the game's 3rd second.
+local menuWatch = { at = nil, seen = false, done = false }
+function menuWatch.step()
+	if menuWatch.done or Spring.GetGameFrame() < 90 or Spring.IsReplay() then
+		return
+	end
+	local t = Spring.GetTimer()
+	if menuWatch.at and Spring.DiffTimers(t, menuWatch.at) < 2 then
+		return
+	end
+	menuWatch.at = t
+	local copy = WG.bardroidBuildmenu
+	menuWatch.seen = menuWatch.seen or copy ~= nil
+	local buildmenu = WG.buildmenu
+	if copy == nil and (buildmenu == nil or buildmenu == menuWatch.copyWas) then
+		menuWatch.done = true
+		local wh = widgetHandler
+		local ok = wh and wh.EnableWidget and pcall(wh.EnableWidget, wh, "Build menu")
+		Spring.Echo("[bardroid-touch] the app's build menu copy " .. (menuWatch.seen and "was removed" or "did not run")
+			.. ": BAR's own build menu " .. (ok and "switched on" or "could not be switched on (no widget handler)"))
+	end
+	menuWatch.copyWas = copy or menuWatch.copyWas
+end
+
 function widget:Update(dt)
 	WG.BarDroidOnInterface = pointOnInterface
+	menuWatch.step()
 	overlayCheck.step() -- (a "LobbyOverlayActive1" waiting for this phone's lobby to say so)
 	if uiRescale.pending then -- (a new interface scale: the reloaded widgets in, every widget told the screen's size)
 		rescaleFinish()

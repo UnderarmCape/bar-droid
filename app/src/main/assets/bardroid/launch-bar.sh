@@ -950,6 +950,18 @@ app_widget_faults() {   # app_widget_faults: one "<file or name>|<line>" per wid
 }
 read_faults   # (this run's)
 app_widget_faults | while IFS='|' read -r key line; do layer_miss "the app's widget $key: $line"; done
+# A phone version of one of BAR's widgets that applied but erred in a game: BAR's handler's error lines name the
+# patched file ('[string "LuaUI/Widgets/<file>"]'); it was never noticed, the app's own widgets alone were looked at
+# (RC 0.2.0 item 7, release overhaul item 37). Named once each (tools/launch-bar-test.sh).
+phone_patch_faults() {
+  for p in "$BAR/bardroid-phone/LuaUI/Widgets/"*.patch; do
+    [ -f "$p" ] && [ -n "$FAULTS" ] || continue
+    f=${p##*/}; f=${f%.patch}
+    hit=$(printf '%s\n' "$FAULTS" | grep -F "/$f\"]" | head -n 1)
+    [ -n "$hit" ] && layer_miss "phone Lua: $f applied but erred in a game: $hit (assets/bardroid/phone-widget-$f.patch)"
+  done
+  return 0
+}
 # A phone version of one of BAR's files (the phone engine's BarDroidPhoneLuaDir: assets/bardroid/phone-*.lua.patch) that
 # no longer fits BAR's file after an update: the engine loaded BAR's own file instead ("[BarDroid] phone version of
 # <file> (<state>): patch N finds no place: the game's own file loads"), so its fixes and savings are gone until the
@@ -959,6 +971,7 @@ if [ "$REPLAY" = 0 ]; then
   grep -aE "^\[t=[^]]*\]\[f=-?[0-9]+\] \[BarDroid\] phone version of .*: the game's own file loads" "$BAR/infolog.txt" 2>/dev/null \
     | sed -e 's/^.*\[BarDroid\] phone version of //' -e 's/ ([^)]*): /: /' -e "s/: the game's own file loads\$//" | sort -u \
     | while read -r miss; do layer_miss "phone Lua: $miss, BAR's own file ran (assets/bardroid/phone-*.lua.patch)"; done
+  phone_patch_faults
 fi
 cp -f "$BAR/infolog.txt" "$LOGS/infolog-$(date +%Y%m%d-%H%M%S).txt" 2>/dev/null || true
 # the newest 20 copies (one per engine run; a long game's is several MB, 23 of them were 19 MB)

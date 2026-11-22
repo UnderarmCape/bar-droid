@@ -94,6 +94,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
 7. [ ] Items 36/37: BAR's own build menu back in the next game of the same lobby session after the copy failed; a
    phone patch that applies but errors noticed and logged. Done: a copy broken on purpose gives BAR's menu in the
    next game. (fixer)
+   DONE in code: bardroid_touch.lua's menu watch (it has BAR's widget handler as one of the game's widgets, the
+   phone engine) switches BAR's "Build menu" on in the same game once the copy is gone (removed for an error, or never
+   loaded), and BAR's handler saves it on for the session's next games; launch-bar.sh's start check covers the next
+   engine start as before. The copy's droidBreak (tools) errors it on purpose: touchfix-phone-test's new last case,
+   BAR's own build menu on in its place, PASS on the dev phone (the test removes that game's infolog after, so the next
+   start does not mark the copy failed). Not seen yet: a lobby session's next game (no lobby-session test drives two
+   games). The phone patch that erred: launch-bar.sh phone_patch_faults names it after the run ("phone Lua: <file>
+   applied but erred in a game: <BAR's error line>"); launch-bar-test.sh's three new cases PASS on the laptop.
 8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
    enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
    reopened in PLAYTEST.md with touch-log rows. (coordinator)

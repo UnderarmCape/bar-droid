@@ -1709,6 +1709,10 @@ end
 
 local sec = 0
 function widget:Update(dt)
+	if droid.breakNow then -- BAR Droid: broken on purpose (droidBreak: the menu watch's phone test)
+		droid.breakNow = nil
+		error("BAR Droid build menu: broken on purpose (a test)")
+	end
 	droid.register() -- BAR Droid
 	droid.place()
 	if not stickToBottom and droid.infoTall() ~= droid.infoHeight then -- BAR Droid: the unit panel's height changed
@@ -3535,6 +3539,11 @@ function widget:Initialize()
 	end
 	-- BAR Droid: the app's widgets find this menu as WG.bardroidBuildmenu
 	WG.bardroidBuildmenu = WG.buildmenu
+	-- BAR Droid: (tools: an error in this menu's next Update, so that BAR removes it, as a real fault would; the menu
+	-- watch in bardroid_touch.lua then switches BAR's own on: RC 0.2.0 item 7's phone test)
+	WG.buildmenu.droidBreak = function()
+		droid.breakNow = true
+	end
 end
 
 function widget:UnitBlocked(unitDefID, reasons, builderUnitDefID)

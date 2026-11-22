@@ -448,5 +448,23 @@ check "content: the game's failing still stops it" [ "$rc" = 42 ]
 out=$(sh "$sc/setup.sh" content fullgame byar-chobby:test "No Such Map 1.0" 9.9 2>&1); rc=$?
 check "content: the game's download out of storage (pr-downloader 5): its own exit, 45" [ "$rc" = 45 ]
 
+# A phone version of one of BAR's widgets that applied but erred in a game: named (RC 0.2.0 item 7, release overhaul
+# item 37); an error in a widget with no phone version, and none at all: nothing
+ppf=$(body phone_patch_faults)
+[ -n "$ppf" ] || { echo "[launchbartest] FAIL launch-bar.sh: phone_patch_faults not found"; exit 1; }
+eval "$ppf"
+mkdir -p "$BAR/bardroid-phone/LuaUI/Widgets"; : > "$BAR/bardroid-phone/LuaUI/Widgets/gui_top_bar.lua.patch"
+infolog 'Error in DrawScreen(): [string "LuaUI/Widgets/gui_top_bar.lua"]:567: attempt to index a nil value' \
+  "Removed widget: Top Bar"
+: > "$LOGS/android-layer.txt"; read_faults; phone_patch_faults
+check "a phone version that erred in a game: named" grep -q "phone Lua: gui_top_bar.lua applied but erred in a game" "$LOGS/android-layer.txt"
+infolog 'Error in DrawScreen(): [string "LuaUI/Widgets/gui_awards.lua"]:12: attempt to index a nil value'
+: > "$LOGS/android-layer.txt"; read_faults; phone_patch_faults
+check "an error in a widget with no phone version: nothing named" quiet
+infolog "nothing went wrong"
+: > "$LOGS/android-layer.txt"; read_faults; phone_patch_faults
+check "no errors: nothing named" quiet
+rm -rf "$BAR/bardroid-phone"
+
 echo "[launchbartest] done: $([ "$fails" = 0 ] && echo "ALL PASS" || echo "$fails FAILED")"
 [ "$fails" = 0 ]
