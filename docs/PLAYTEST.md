@@ -257,6 +257,32 @@ UX, bugs and QOL from this game:
   the next ones at the queue's front: two constructors went first that way.
 - game 21:20, UX: AUTO RETREAT (on) sends hurt units home one at a time during an attack: the push thinned on the way and
   the units walking home alone were picked off. QOL idea: during a Fight order the hurt fall back to the group, not home.
-- game 22:00, UX: a tap on a unit a unit that stands on top of a finished building badly: a tap on a constructor
-  next to a new Sentry or wind selected the building (three times); "tap then drag" boxes were the reliable way.
+- game 22:00, UX: a tap on a constructor next to a new Sentry or wind selected the building (three times); "tap then
+  drag" boxes and the dock's COMMANDER button were the reliable ways.
+
+### 2026-11-22, skirmish 1v1 against BARb Easy, game 2: WON at 12:14 (Avalanche 3.4, Armada; BARb played Armada)
+
+- 05:30 The plan from game 1: Bot Lab first (the pre-game queue), the commander's three extractors and winds, the lab
+  4 constructors and Centurions on repeat with a Fight rally in the middle (1250, 900); constructors to every
+  extractor in our quarter with a Sentry each (walls off); converters 110 elmos apart; a Construction Turret on the
+  lab; solars and energy storage when the wind fell to 4 (Centurions cost 3,100 energy each).
+- game 5:01: 8 extractors (game 1: 3-5 at that time), +16 metal; 9 extractors by 7:00. BARb's Pawns and Maces still
+  took outlying extractors, solars and two constructors one at a time, but the army lost nothing to them: 17
+  Centurions and 6 Rocketeers by 11:16, the commander on Patrol through the base against raiders.
+- game 11:16 the push (Fight 2700,2700, then 3150,3150): at 12:14 BARb's commander died near (3150, 3150) and its
+  death explosion took 10 Centurions in the same second; the game ended ("Kill all enemy Commanders"), BARb's AI was
+  removed and the engine went back to the lobby 12 seconds later. First win against the AI by touch.
+
+UX, bugs and QOL from game 2:
+- 05:27 UX bug: before the start the dock has no QUEUE, and BAR's pre-game queue is replaced by every placement made
+  without Shift: one building can be queued before the start, not a build order (the commander's first minute is
+  queued only after it starts). QOL: QUEUE (or "add to queue" as the default) on the pre-game dock.
+- 05:27 UX: before the start, a map tap with no building picked moves the start position: after a placement let go of
+  the extractor, the next spot's tap moved the commander's start onto that metal spot.
+- 06:00 UX good: the factory's ORDERS page has Repeat and the factory's own Fight/Move: Repeat On plus a Fight point
+  in the middle kept the lab busy and sent every Centurion to the front with no further touch.
+- 06:14 To check: the game's end goes back to the lobby by itself 12 seconds later (BAR's autoquit: "Move mouse to
+  postpone the quit"); the driver was not looking at the screen then, so whether the end screen and awards stay long
+  enough on a phone, and whether a touch postpones the quit, is untested. A player who looks away for 12 seconds
+  may miss the result.
 
