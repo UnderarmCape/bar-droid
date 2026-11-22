@@ -354,4 +354,29 @@ UX, bugs and QOL from game 2:
 - game 0:13 UX: QUEUE turned off by something other than the player (here the dev tools' LuaUI reload) makes the next
   placement replace the commander's whole queue; QUEUE's state is easy to miss on the dock.
 
+### 2026-11-22, skirmish 1v1 against BARb Hard, game 7: stopped at 4:33
+
+- 09:45 game 0:06 UX: the D-gun mode's AIM stick turns the shot at about 30 degrees a second while it is held and
+  the game runs (a 1.5 s hold to the right turned it 45 degrees; paused it does not turn at all): it is a rate, not
+  a direction, so a quick flick does nothing and aiming at a raider beside the commander takes seconds. QOL: aim
+  where the stick points (an absolute direction), or a tap on the map as the D-gun's target (BAR's own way).
+- By 4:33 a single Cortex scout car had killed a base extractor, a Sentry and the north constructor: the same early
+  bleed as games 4-6. Stopped; the Hard win needs more than this driver's reaction loop gives (below).
+
+### Skirmish summary (2026-11-22)
+
+- BARb Easy: game 1 lost, game 2 WON at 12:14. BARb Medium: game 3 WON at 12:25 (first try with the game-2 build).
+  BARb Hard: games 4-7 not won (given up at 7:37, 17:28, 12:26, 4:33).
+- What beat Easy and Medium: the Bot Lab first, four constructors claiming every extractor in our quarter with a
+  Sentry each, Centurions on factory Repeat with a Fight rally, converters apart, solars when the wind fell, the
+  commander at home (Patrol), one push of ~20 Centurions at 11-12 minutes along Fight points to BARb's base.
+- Why Hard was not beaten: BARb Hard raids from the second minute with fast single units and packs (scouts,
+  Flashes, Rovers, then Stumpy/Janus/artillery groups) at every outpost and constructor at once; the driver reacts
+  at the speed of a person reading the state and deciding each move (the game paused meanwhile, but every reaction
+  is one place at a time), so outposts and constructors fell one by one and BARb out-expanded us every game.
+  The touch controls themselves did everything asked of them; the gap is the agent's macro and reaction.
+- To try next for Hard: the driver's own standing rules (constructors escorted by the first Centurions, lost
+  extractors rebuilt by whichever constructor is nearest, new units joining a Patrol loop by themselves), Overwatch
+  pairs at the base's ways out from the first minutes, and the Advanced Bot Lab earlier.
+
 
