@@ -928,6 +928,12 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       patches ("no one place for: one") and wrote a 201-local copy. On the dev phone: remake-check, all five copies
       remade from BAR test-32018-ad135b9 equal the shipped ones byte for byte, the phone patches PASS; the build with
       them: dock-phone-test upright, pad-test and -Online ALL PASS, the build menu copy loaded and running.
+- [x] **Item 35: a copy's failure mark names the files that ran** (2026-11-21 19:05-19:52): launch-bar.sh's copy_failed
+      writes which BAR file and copy it switched in (<mark>.ran), and a fault in the last run marks the copy only if
+      they are still this start's (no record, an install from before: as before). launch-bar-test's new case (the old
+      copy fails on a newer BAR file, the copy made again): HEAD's launch-bar.sh marked the new copy, this one runs it and
+      marks it once it fails itself; two cases now start with the files that ran; ALL PASS. The menus round above ran
+      launch-bar.sh with it.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

@@ -212,10 +212,21 @@ copy_removed() {
 # The mark names BAR's file and the copy (its md5): a new copy, from an app update, gets another try. With BAR's file
 # alone, the Fold7's order menu copy, removed in one game on 2026-11-05, gave way to BAR's own through every app update
 # after it (its launcher: "1 of the app's adjustments to BAR did not apply", 2026-11-10).
+# A fault counts against the copy only if BAR's file and the copy are still the ones that ran (<mark>.ran, written as
+# the copy is switched in): a release the lobby fetched mid-session, or another release's online game, ran the old copy
+# on a newer BAR file, Installer made the copy again at the next start, and that new copy, never run, was marked and
+# gave way until BAR's next change (release overhaul audit, 2026-11-21). No record (an install from before it): this
+# start's files, as before.
 copy_failed() {   # copy_failed <widget name> <mark file> <BAR's file md5> <the copy>: true while it gives way
   key="$3 game $(md5sum "$4" 2>/dev/null | cut -c1-32)"
-  copy_removed "$1" "$4" && printf '%s\n' "$key" > "$2"
-  [ -f "$2" ] && [ "$(cat "$2")" = "$key" ]
+  ran=$(cat "$2.ran" 2>/dev/null)
+  copy_removed "$1" "$4" && [ "${ran:-$key}" = "$key" ] && printf '%s\n' "$key" > "$2"
+  if [ -f "$2" ] && [ "$(cat "$2")" = "$key" ]; then
+    rm -f "$2.ran"
+    return 0
+  fi
+  printf '%s\n' "$key" > "$2.ran"
+  return 1
 }
 build_menu() {
   copied=$(sed -n 's/^-- BARDROID_BUILDMENU_FROM //p' "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" 2>/dev/null)

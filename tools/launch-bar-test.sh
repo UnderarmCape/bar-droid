@@ -127,7 +127,7 @@ check "no GetInfo() call (no scenario) and a duplicate name: Mission Info's copy
 check "... and the build menu's" order "BAR Droid build menu" 165
 check "... no Android-layer miss" quiet
 infolog '<Player> [PreGame::ReadDataFromDemo] pre-scanning demo file' "Removed widget: BAR Droid build menu"
-start "fedcba9876543210fedcba9876543210"
+start "$made"   # (the same files as the run that failed: a fault counts against them only, 2026-11-21)
 check "a replay's line said as chat, the copy removed: BAR's own (no replay)" order "Build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
 infolog 'Failed to load: bardroid_buildmenu.lua  ([string "LuaUI/Widgets/bardroid_buildmenu.lua"]:12: unexpected symbol near ")")'
@@ -154,13 +154,27 @@ printf '%s\n' "fedcba9876543210fedcba9876543210" > "$BAR/.bardroid-buildmenu-fai
 start "fedcba9876543210fedcba9876543210"
 check "a mark from before \"game\" (a replay may have written it): the copy runs" order "BAR Droid build menu" 165
 rm -f "$BAR/.bardroid-buildmenu-failed"
+# (the lobby fetched a newer BAR release mid-session and the old copy failed in it; Installer made the copy again at
+# this start: that fault is not the new copy's, release overhaul audit 2026-11-21)
+start "$made"
+cp "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua" "$work/buildmenu-kept.lua"
+printf -- '-- made again\n' >> "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua"
+infolog "Removed widget: BAR Droid build menu"
+start "fedcba9876543210fedcba9876543210"
+check "the old copy failed on a newer BAR file, the copy made again since: the new copy runs" order "BAR Droid build menu" 165
+check "... and is not marked" [ ! -f "$BAR/.bardroid-buildmenu-failed" ]
+infolog "Removed widget: BAR Droid build menu"
+start "fedcba9876543210fedcba9876543210"
+check "... the new copy failed too (the files that ran): BAR's own" order "Build menu" 165
+cp "$work/buildmenu-kept.lua" "$BAR/LuaUI/Widgets/bardroid_buildmenu.lua"
+rm -f "$BAR/.bardroid-buildmenu-failed" "$BAR/.bardroid-buildmenu-failed.ran" "$BAR/infolog.txt"
 
 start "$made" "0123456789abcdef0123456789abcdef"
 check "BAR changed its Order menu and no new copy: the old copy runs" order "BAR Droid order menu" 189
 check "BAR changed its Order menu and no new copy: BAR's off" order "Order menu" 0
 check "BAR changed its Order menu and no new copy: an Android-layer miss" omissed
 infolog "Removed widget: BAR Droid order menu"
-start "$made" "fedcba9876543210fedcba9876543210"
+start "$made" "0123456789abcdef0123456789abcdef"   # (the files that ran)
 check "the order menu copy failed in the last game: BAR's own" order "Order menu" 189
 check "the order menu copy failed in the last game: the copy off" order "BAR Droid order menu" 0
 check "the order menu copy failed: the build menu copy keeps running" order "BAR Droid build menu" 165
