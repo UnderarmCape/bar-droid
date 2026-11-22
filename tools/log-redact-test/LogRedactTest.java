@@ -36,6 +36,15 @@ public final class LogRedactTest {
         check(LogRedact.line(plain) == plain, "a line without one: the same string, no work", LogRedact.line(plain));
         s = LogRedact.line("\tMyPlayerName=Phone;");
         check(s.equals("\tMyPlayerName=Phone;"), "the script's other keys left as they are", s);
+        // (a battle's password as BAR's lobby logs it after an autohost takes the player in; release overhaul audit,
+        // 2026-11-21: Share logs handed it on. Pieced together and made up, as K)
+        String got = "22:03:33 [engine] [t=00:00:32.358818][f=-000001] Got the " + "password:, ";
+        s = LogRedact.line(got + "Zx8" + "Qp2");
+        check(s.equals(got + "(removed)") && !s.contains("Zx8"), "a battle's password (\"Got the password:, ...\")", s);
+        s = LogRedact.line("[LuaMenu] room PASSWORD = " + "hun" + "ter2 set");
+        check(s.equals("[LuaMenu] room PASSWORD = (removed) set"), "any \"password = x\", any case, the next word only", s);
+        String android = "I/LockSettingsService: Unwrapping synthetic password for unsecured user 0";
+        check(LogRedact.line(android).equals(android), "a password named without a value (no ':' or '='): left", LogRedact.line(android));
 
         byte[] in = ("line one\n\t" + K + "=secret123;\nnaïve été\r\nlast").getBytes(StandardCharsets.ISO_8859_1);
         ByteArrayOutputStream out = new ByteArrayOutputStream();

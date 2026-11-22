@@ -20,19 +20,22 @@ final class LogRedact {
     private LogRedact() {}
 
     private static final Pattern SECRET = Pattern.compile("(?i)(MyPasswd\\s*=\\s*)[^;\\r\\n]*");
+    // (a battle's password as BAR's lobby logs it after an autohost takes the player in, "Got the password:, <value>",
+    // and any "password: x" or "password = x": 4 in one Fold7 launcher.log, 2026-10-29, which Share logs handed on
+    // whole; release overhaul audit, 2026-11-21)
+    private static final Pattern PASSWORD = Pattern.compile("(?i)(password\\s*[:=][,\\s]*)[^\\s;,]+");
 
-    /** One line, its join password's value gone. */
+    /** One line, its passwords' values gone. */
     static String line(String s) {
         // (a cheap test first, logs run to tens of MB; any case, as the pattern: "MyPassWd" got past "sswd"/"SSWD";
         // release overhaul audit, 2026-11-21)
-        if (!hasPasswd(s)) return s;
-        return SECRET.matcher(s).replaceAll("$1(removed)");
+        if (!hasPassw(s)) return s;
+        return PASSWORD.matcher(SECRET.matcher(s).replaceAll("$1(removed)")).replaceAll("$1(removed)");
     }
 
-    private static boolean hasPasswd(String s) {
-        if (s.indexOf('=') < 0) return false;   // (the pattern needs one)
-        for (int i = 0; i + 6 <= s.length(); i++)
-            if (s.regionMatches(true, i, "passwd", 0, 6)) return true;
+    private static boolean hasPassw(String s) {
+        for (int i = 0; i + 5 <= s.length(); i++)
+            if (s.regionMatches(true, i, "passw", 0, 5)) return true;
         return false;
     }
 

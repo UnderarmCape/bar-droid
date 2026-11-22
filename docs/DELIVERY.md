@@ -598,8 +598,37 @@ CRITICAL or HIGH):
 48. LOW: the FIFO's setup and shutdown (mkfifo racing launch-bar.sh's; a regular file at its path replayed in a spin;
    stop() not joining its thread).
 49. LOW, a guess: no audio focus or ducking (speak to chat listens next to the game's sound; other apps mix in).
+   Looked at and left (2026-11-21 21:10-21:20): 45 is a trade-off, not a slip: a 200 ms start threshold halves the
+   cushion against the engine's stalls (more underruns, and the latency then grows back to the 400 ms buffer), so it
+   wants underrun counts from real games first (the 30 s "underruns:" line; none in the saved logs); 47 only reaches a
+   player who turned the late-game drop on (off by default; the drop is the owner's) and changes it mid-game. The
+   first-run audit's third fix for item 39 (BAR's official engine in the same run when the phone build dies before its
+   first line) would also have to undo the phone engine's setup (the app's widgets in the game's folder, the Settings
+   copy, its springsettings lines) in the start path; since item 39 that first failure no longer rolls anything back,
+   and the next start runs the official engine: left noted.
 50. LOW, latent: Prefs saves mesaUrl at every launcher pause, so every phone keeps today's default as "chosen": the next
    Mesa update would be ignored on existing installs unless today's URL joins OLD_MESA_URLS.
+From a fourteenth read-only audit, StartActivity, BarApp, Share logs, Downloader and the manifest (2026-11-21 21:12-21:27;
+no CRITICAL or HIGH):
+51. MEDIUM, privacy: Share logs handed on a battle's password: BAR's lobby logs "Got the password:, <value>" after an
+   autohost takes the player in (4 in one Fold7 launcher.log of 2026-10-29), and LogRedact knew only the start
+   script's MyPasswd.
+52. MEDIUM, partly a guess: the splash keeps no screen on, so a long update outlasts the screen timeout, its onStop
+   finishes the task, and the game screen then starts from the background (Android likely blocks it): the lobby runs
+   hidden.
+53. MEDIUM: a crash in the app's process during a lobby start is not remembered (only the engine's fast exit and the
+   low-memory kill are) and no default uncaught-exception handler writes its stack to launcher.log.
+54. MEDIUM: Downloader.cancel() cannot interrupt a stalled connection (the flag is read after read() returns): Stop on a
+   stalled download leaves the service busy up to 60 s, Play and Lobby answering "A game is running".
+55. LOW: Share logs carries the player's and others' names, every chat line and up to 20 old infologs (size).
+56. LOW: a resumed download sends no If-Range (rootfs.tar.gz's URL moves: two versions spliced, caught by the checksum
+   when the manifest was fetched); a tgz that failed to extract is kept and fails every retry.
+57. LOW: redirects to plain http followed; Mesa and the engine downloaded without a checksum; no Accept-Encoding:
+   identity in Downloader.
+58. LOW: downloads/*.part never cleaned (an engine download cut short, then a newer engine: ~100 MB for good).
+59. LOW: the splash's 30 s give-up clock resets on every "update:" tick, so a hung update step keeps it up forever.
+60. LOW, the public APK's look: Termux:X11's manifest merges WRITE_SECURE_SETTINGS and a com.termux package query
+   (neither granted nor used here).
 Also looked at and left: Termux:X11's own launcher icons (28 files, 119 KB of the APK) are its library's resources;
 neither the manifest nor the resource ignore pattern drops them, only a binary git patch (~150 KB in the repository)
 or a delete step outside the patches: not worth 0.4 % of the APK before the release.
@@ -995,6 +1024,11 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       the next save), so the next app's newer Mesa is not pinned away; a note at the default says the old one joins
       OLD_MESA_URLS when it changes (phones that saved it before this). On the dev phone (the launcher opened and left:
       its pause saves): HEAD's build kept the mesaUrl entry, this one removed it, the other settings kept.
+- [x] **Item 51: Share logs keeps a battle's password out** (2026-11-21 21:27-21:31): LogRedact also takes the value
+      after any "password:" or "password =" (BAR's lobby's "Got the password:, <value>"), its quick test now any
+      "passw" (no '=' needed); publish-check looks for a battle's password too (its self-test plants one). log-redact-
+      test's new cases (the lobby's line, "PASSWORD = x", a password named without a value left alone) ALL PASS; HEAD's
+      LogRedact left both values in; publish-check -SelfTest ALL PASS and the repository holds none.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

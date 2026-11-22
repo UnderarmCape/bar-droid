@@ -25,6 +25,8 @@ $patterns = @{
   # (an online game's start script as the engine logs it, its join password with it: a pasted log; LogRedact keeps them
   # out of Share logs' zips, 2026-11-18)
   'a join password'        = 'MyPasswd *= *[A-Za-z0-9]{3,}'
+  # (and a battle's password as BAR's lobby logs it, "Got the password:, <value>", 2026-11-21)
+  'a battle password'      = 'Got the password:,? *[A-Za-z0-9]{3,}'
 }
 $allowedMail = 'noreply@|@example\.|@users\.noreply\.github\.com|@gnu\.org|@fsf\.org'
 $allowed = @{
@@ -32,6 +34,7 @@ $allowed = @{
   'a user profile path'    = '(?!)'
   'an e-mail address'      = $allowedMail
   'a join password'        = '(?!)'
+  'a battle password'      = '(?!)'
 }
 function Find-PrivateData([string[]]$terms) {
   $hits = @()
@@ -64,15 +67,16 @@ if ($SelfTest) {
       'mixed.txt'     = "noreply" + "@example.com and player" + "@mail.test"
       'term.txt'      = "on the Wi-Fi " + "PlantedNet"
       'passwd.txt'    = "`tMy" + "Passwd=" + "Ab3" + "xY9;"
+      'battle.txt'    = "[engine] Got the " + "password:, " + "Zx8" + "Qp2"
       'allowed.txt'   = "emulator host 10.0.2" + ".2, Claude <noreply" + "@anthropic.com>, $([char]0x40)d and 192.168.d.d," +
-        " My" + "Passwd=(removed); My" + "Passwd=;"
+        " My" + "Passwd=(removed); My" + "Passwd=; Got the " + "password:, (removed)"
     }
     foreach ($f in $plant.Keys) { [IO.File]::WriteAllText((Join-Path $dir $f), $plant[$f] + "`n") }
     & $git add -A 2>$null
     $found = Find-PrivateData @("plantednet")
     $want = @('address.txt: a home-network address', 'address10.txt: a home-network address',
       'mail.txt: an e-mail address', 'mixed.txt: an e-mail address', 'profile.txt: a user profile path',
-      'term.txt: a private term', 'passwd.txt: a join password')
+      'term.txt: a private term', 'passwd.txt: a join password', 'battle.txt: a battle password')
     $missing = @($want | Where-Object { $found -notcontains $_ })
     $extra = @($found | Where-Object { $want -notcontains $_ })
   } finally { Pop-Location; Remove-Item -Recurse -Force $dir }
