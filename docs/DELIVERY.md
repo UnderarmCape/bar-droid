@@ -1029,6 +1029,17 @@ stand-in way), in a skirmish; phone-bench.ps1 -Profile changes the screen's brig
       "passw" (no '=' needed); publish-check looks for a battle's password too (its self-test plants one). log-redact-
       test's new cases (the lobby's line, "PASSWORD = x", a password named without a value left alone) ALL PASS; HEAD's
       LogRedact left both values in; publish-check -SelfTest ALL PASS and the repository holds none.
+- [x] **Item 46: the game's sound survives a failed AudioTrack** (2026-11-21 21:05-21:42): AudioPump checks each
+      write's result and catches the track's exceptions inside the stream: a failed track is released, the FIFO keeps
+      being read (never closed under the engine) and a new track is tried a second later (up to 5 failures a stream,
+      then the stream drains without sound). Before, the exception closed the FIFO's read end under the engine (OpenAL
+      lost its device for the rest of the game; before Lua loaded, a SIGPIPE crash) and a failed write was ignored.
+      Proof: temporary builds of HEAD's AudioPump and of this one (toolchain\tmp\edit_audiofail.py, never committed),
+      each throwing once from the track after 16 MB of sound (~85 s, in the game) and logging the FIFO's bytes read
+      every 10 s, a skirmish each on the dev phone: HEAD's ended its stream at the failure, a new one opened with
+      nothing read after it, the game on without sound (frame 1745); this one "AudioTrack failed ... the stream goes
+      on", "a new AudioTrack" a second later, 16.9 MB to 26.3 MB read over the next 50 s. Round A on HEAD 96d4c0cb
+      (21:07-21:36): ALL PASS.
 - [x] **Item 26: one replay import at a time, said while it copies** (2026-11-21 16:40-17:02): LobbyBridge starts the
       import only when none is open (ReplayImportActivity.busy: its start time, stale after 10 minutes so a start
       Android never made cannot hold Add off), and the import says "Adding the replay..." (or "N replays") before it

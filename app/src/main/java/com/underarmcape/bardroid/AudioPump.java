@@ -85,30 +85,63 @@ public final class AudioPump {
         AudioTrack track = openTrack(f, cushion * 2);
         Log.i("audio", "stream " + f.rate + " Hz, " + f.channels + " ch, " + f.bits + (f.isFloat ? "-bit float" : "-bit")
                 + (track == null ? ", discarded" : ""));
-        long queued = 0, nextLog = android.os.SystemClock.uptimeMillis() + UNDERRUN_LOG_MS;
-        int underruns = 0;
+        long queued = 0, nextLog = android.os.SystemClock.uptimeMillis() + UNDERRUN_LOG_MS, reopenAt = 0;
+        int underruns = 0, failures = 0;
         boolean playing = false;
         try {
             int n;
             while (running && (n = in.read(buf, carry, buf.length - carry)) > 0) {
                 int len = carry + n, whole = len - len % frame;   // whole frames only; keep the rest for next time
+                long now = android.os.SystemClock.uptimeMillis();
+                if (track == null && reopenAt > 0 && now >= reopenAt) {
+                    track = openTrack(f, cushion * 2);
+                    if (track != null) { reopenAt = 0; Log.i("audio", "a new AudioTrack: the game's sound goes on"); }
+                    else reopenAt = ++failures <= MAX_FAILURES ? now + REOPEN_MS : 0;
+                }
                 if (track != null && whole > 0) {
-                    track.write(ByteBuffer.wrap(buf, 0, whole), whole, AudioTrack.WRITE_BLOCKING);
-                    // MODE_STREAM: what is written before play() is played first, so playback starts on the cushion
-                    if (!playing && (queued += whole) >= cushion) { track.play(); playing = true; }
+                    int written;
+                    RuntimeException failure = null;
+                    try {
+                        written = track.write(ByteBuffer.wrap(buf, 0, whole), whole, AudioTrack.WRITE_BLOCKING);
+                        // MODE_STREAM: what is written before play() is played first, so playback starts on the cushion
+                        if (written >= 0 && !playing && (queued += whole) >= cushion) { track.play(); playing = true; }
+                    } catch (RuntimeException e) { written = AudioTrack.ERROR; failure = e; }
+                    if (written < 0) {
+                        // (the track failed: a dead one after Android's audio service restarted, a refused play(). The
+                        // stream goes on without it and a new one is tried: the FIFO closed under the engine, as the
+                        // exception did, OpenAL took for a lost device for the rest of the game, and before Lua loaded
+                        // the engine died of SIGPIPE; a failed write was ignored, the game silent; release overhaul
+                        // audit, 2026-11-21)
+                        Log.e("audio", "AudioTrack failed (" + written + (failure != null ? ", " + failure : "") + "): the stream goes on");
+                        release(track, playing);
+                        track = null;
+                        playing = false;
+                        queued = 0;
+                        if (++failures <= MAX_FAILURES) reopenAt = now + REOPEN_MS;
+                    }
                 }
                 carry = len - whole;
                 System.arraycopy(buf, whole, buf, 0, carry);
-                if (playing && android.os.SystemClock.uptimeMillis() >= nextLog) {
-                    nextLog += UNDERRUN_LOG_MS;
-                    int u = track.getUnderrunCount();
-                    if (u != underruns) Log.i("audio", "underruns: " + u);
-                    underruns = u;
+                if (playing && track != null && now >= nextLog) {
+                    nextLog = now + UNDERRUN_LOG_MS;
+                    try {
+                        int u = track.getUnderrunCount();
+                        if (u != underruns) Log.i("audio", "underruns: " + u);
+                        underruns = u;
+                    } catch (RuntimeException ignored) {}
                 }
             }
         } finally {
-            if (track != null) { if (playing) track.stop(); track.release(); }
+            if (track != null) release(track, playing);
         }
+    }
+
+    private static final long REOPEN_MS = 1000;
+    private static final int MAX_FAILURES = 5;   // (a stream's tracks failing over and over: drained without sound)
+
+    private static void release(AudioTrack t, boolean playing) {
+        try { if (playing) t.stop(); } catch (RuntimeException ignored) {}
+        try { t.release(); } catch (RuntimeException ignored) {}
     }
 
     /**
