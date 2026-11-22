@@ -402,11 +402,11 @@ UX, bugs and QOL from game 2:
 - 12:20 A commander raid instead (the D-gun map tap now aims): the commander walked the path finder's way in Move
   hops and reached BARb's base at 5:43 (99 %), met its commander "Arquebus (AI)" at 5:48 ~360 elmos off, and fired
   two D-guns, each aimed by a tap on it in the dock's D-gun mode: the aim line went onto it, FIRE fired ("D-GUN FIRED",
-  500 energy each), but the shot flew to where it had stood and it had walked on; with Pawns, a Sentry and its laser
-  on ours (100 % -> 0 in ~20 s), energy too low for a third shot, ours died at 6:01; its death blast missed BARb's.
-  Next: energy storage for 3-4 shots, an escort, and the shot from point-blank.
-- UX: in the D-gun mode the camera follows the commander, so a target tapped a moment before has moved on the screen;
-  a moving enemy is easy to miss. QOL idea: a tap on an enemy unit (not the ground) aims at the unit and leads it.
+  500 energy each); it lived on, and ours died at 6:01 to Pawns, a Sentry and its laser (100 % -> 0 in ~20 s).
+  Kailil, afterwards: "You cannot dgun another commander. Commanders are immune." The raid was a dead end by design;
+  the map tap's aiming itself worked.
+- UX: in the D-gun mode the camera follows the commander, so a unit tapped a moment before has moved on the screen;
+  a moving raider is easy to miss. QOL idea: a tap on an enemy unit (not the ground) aims at the unit and leads it.
 - Driver: with QUEUE on and an order armed, a drag on the map draws the order's line instead of panning; the driver
   now lets go (QUEUE off) before a pan and puts QUEUE back after.
 
