@@ -78,6 +78,17 @@ function Get-PhoneDevice([string]$adb) {
 # Auto-rotate off in every mode: the app's "Turn with the phone" would turn its games with however it lies; the tests
 # pick upright or sideways with "Play upright".
 $PhoneScreen = @{
+  # (the agents playing the game by touch: a quarter brightness, Extra dim off; devphone.ps1 play, held by
+  # ..\devphone-play.hold. Kailil, 2026-11-21: "Keep phone brightness at 25 percent for these runs")
+  play = @'
+s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
+s system screen_brightness_mode 0
+s system screen_brightness 64
+s secure reduce_bright_colors_activated 0
+s global stay_on_while_plugged_in 15
+s system accelerometer_rotation 0
+dumpsys power 2>/dev/null | grep -q 'mWakefulness=Awake' || { input keyevent KEYCODE_WAKEUP; echo "woken"; }
+'@
   # (Kailil watching the dev phone's games: half brightness, Extra dim off; devphone.ps1 view, held by ..\devphone-view.hold)
   view = @'
 s() { [ "$(settings get $1 $2)" = "$3" ] || { settings put $1 $2 $3; echo "$2=$3"; }; }
@@ -180,7 +191,8 @@ function Set-PhoneScreen([string]$adb, [string]$device, [string]$mode) {
   # (while Kailil watches, ..\devphone-view.hold: the benchmarks' and tests' bench and dark leave the screen at half
   # brightness too; devphone.ps1 dark removes the hold first. Kailil, 2026-11-07: "set screen to 50 percent brightness
   # for this benchmark")
-  if ($mode -ne "view" -and (Test-Path (Join-Path (Split-Path $TC) "devphone-view.hold"))) { $mode = "view" }
+  if (Test-Path (Join-Path (Split-Path $TC) "devphone-play.hold")) { $mode = "play" }   # (an agent playing: 25 %)
+  elseif ($mode -ne "view" -and (Test-Path (Join-Path (Split-Path $TC) "devphone-view.hold"))) { $mode = "view" }
   Invoke-PhoneScript $adb $device $PhoneScreen[$mode] "bardroid-screen.sh"
 }
 

@@ -10,7 +10,9 @@
 #   watch    connect and dark again every minute (a phone restart, a lost Wi-Fi link, a setting changed), except while a
 #            benchmark holds ..\phone-bench.lock; tools\devphone-watch.bat runs it in a window of its own
 #   view     half brightness, Extra dim off, for Kailil to watch its games; held (watch leaves it) until "dark" runs
-param([ValidateSet("status", "connect", "dark", "bench", "watch", "view")][string]$Do = "status")
+#   play     a quarter brightness, Extra dim off, while an agent plays the game by touch (Kailil, 2026-11-21: "Keep phone
+#            brightness at 25 percent for these runs"); held over every other mode until "dark" runs
+param([ValidateSet("status", "connect", "dark", "bench", "watch", "view", "play")][string]$Do = "status")
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $adb = Join-Path $TC "android-sdk\platform-tools\adb.exe"
 $mine = Get-PhoneDevices
@@ -19,6 +21,7 @@ $usb = @($mine | Where-Object { $_ -notmatch ":" })[0]
 $wifi = @($mine | Where-Object { $_ -match ":\d+$" })[0]
 $lock = Join-Path (Split-Path $TC) "phone-bench.lock"
 $hold = Join-Path (Split-Path $TC) "devphone-view.hold"
+$playHold = Join-Path (Split-Path $TC) "devphone-play.hold"
 
 function Listed { @(& $adb devices | Select-Object -Skip 1 | Where-Object { $_ -match "^(\S+)\s+device$" } | ForEach-Object { $Matches[1] }) }
 function Target { $l = Listed; foreach ($d in @($usb, $wifi)) { if ($d -and $l -contains $d) { return $d } }; "" }
@@ -66,7 +69,8 @@ function Screen([string]$mode) {
 switch ($Do) {
   "status" { Status }
   "connect" { Connect; Status }
-  "dark" { Remove-Item -LiteralPath $hold -ErrorAction SilentlyContinue; Screen "dark" }
+  "dark" { Remove-Item -LiteralPath $hold, $playHold -ErrorAction SilentlyContinue; Screen "dark" }
+  "play" { Set-Content -LiteralPath $playHold -Value "an agent plays the game by touch ($(Get-Date -Format 'yyyy-MM-dd HH:mm')); devphone.ps1 dark ends it"; Screen "play" }
   "bench" { Screen "bench" }
   "view" { Set-Content -LiteralPath $hold -Value "Kailil watches the dev phone's games ($(Get-Date -Format 'yyyy-MM-dd HH:mm')); devphone.ps1 dark ends it"; Screen "view" }
   "watch" {
@@ -75,6 +79,7 @@ switch ($Do) {
       try {
         Connect
         if (Test-Path $lock) { Write-Host "[devphone] $(Get-Date -Format HH:mm) a benchmark runs: the screen left to it" }
+        elseif (Test-Path $playHold) { Screen "play" }
         elseif (Test-Path $hold) { Screen "view" }
         else { Screen "dark" }
       } catch { Write-Host "[devphone] $(Get-Date -Format HH:mm) $_" }
