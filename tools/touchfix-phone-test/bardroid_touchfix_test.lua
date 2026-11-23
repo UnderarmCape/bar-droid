@@ -82,8 +82,8 @@ local function arm(def)
 	end
 end
 -- X pixels (top left origin) of a ground point in sight above the dock, clear of the camera's knob and rails; or nil
-local function screenOf(x, z)
-	local sx, sy, sz = Spring.WorldToScreenCoords(x, Spring.GetGroundHeight(x, z), z)
+local function screenOf(x, z, y) -- (y: the height to see it at, the ground's if none)
+	local sx, sy, sz = Spring.WorldToScreenCoords(x, y or Spring.GetGroundHeight(x, z), z)
 	local vsx, vsy = Spring.GetViewGeometry()
 	local P = WG.BarDroidPortrait
 	local dock = P and P.dock and P.dock()
@@ -309,15 +309,31 @@ local function onCmd(c)
 		Spring.SetCameraTarget(w[1] + dx * k, 0, w[2] + dz * k, 0)
 	elseif c == "twinspots2" then
 		-- (the water and the land found in twinspots, where in sight; else a water point in sight and the land nearest it)
-		local wp
+		-- (the water's pixel where a tap sees it: its surface, not the sea floor, and the ray from there on the water. From
+		-- the sea floor's pixel, in the lower view another test's camera left, the ray met the shore first: the tap took
+		-- land 290 elmos off and the Solar stayed, the build train 2026-11-22)
+		local _, vsy = Spring.GetViewGeometry()
+		local function onWater(sx, ty) -- (a top-left-origin pixel: the ray from it on water deeper than a Tidal needs)
+			local _, pos = Spring.TraceScreenRay(sx, vsy - ty, true, false)
+			return pos and Spring.GetGroundHeight(pos[1], pos[3]) < -12 and pos or nil
+		end
+		local wp, wx, wy
 		local w = spots.water
-		if w and Spring.GetGroundHeight(w[1], w[2]) < -12 and screenOf(w[1], w[2]) then
-			wp = { w[1], 0, w[2] }
-		else
-			local px = waterPixel()
+		if w and Spring.GetGroundHeight(w[1], w[2]) < -12 then
+			wx, wy = screenOf(w[1], w[2], 0)
+			if wx and onWater(wx, wy) then
+				wp = { w[1], 0, w[2] }
+			else
+				wx, wy = nil, nil
+			end
+		end
+		if not wp then
+			local px = waterPixel() -- (a pixel whose ray is on the water, GL's bottom-left origin)
 			if px then
-				local _, pos = Spring.TraceScreenRay(px[1], px[2], true, false)
-				wp = pos and { pos[1], 0, pos[3] }
+				local pos = onWater(px[1], vsy - px[2])
+				if pos then
+					wp, wx, wy = { pos[1], 0, pos[3] }, px[1], vsy - px[2]
+				end
 			end
 		end
 		local L = spots.land
@@ -325,9 +341,20 @@ local function onCmd(c)
 		Spring.Echo(string.format("[fixtest] note: water %s, the land found %s (%s), in sight %s", tostring(wp ~= nil),
 			L and string.format("%d,%d", L[1], L[3]) or "none", L and spots.water and string.format("%d elmos from the water",
 			math.sqrt((L[1] - spots.water[1]) ^ 2 + (L[3] - spots.water[2]) ^ 2)) or "-", tostring(landSpot ~= nil)))
-		write(spotLine("water", wp) .. spotLine("land", landSpot))
+		write((wx and string.format("water %d %d\n", wx, wy) or "") .. spotLine("land", landSpot))
+		spots.camAt = Spring.GetCameraState()
+		Spring.Echo(string.format("[fixtest] note: the water at %s on the screen %s,%s",
+			wp and string.format("%d,%d", wp[1], wp[3]) or "nil", tostring(wx), tostring(wy)))
 		Spring.Echo("[fixtest] spots: water " .. tostring(wp ~= nil) .. ", land " .. tostring(landSpot ~= nil))
 	elseif c == "tide?" then
+		-- (where the tap went: the pointer, the ground under it, and the camera's motion since the spots were named)
+		local mx, my = Spring.GetMouseState()
+		local _, pos = Spring.TraceScreenRay(mx, my, true)
+		local cs, ca = Spring.GetCameraState(), spots.camAt or {}
+		Spring.Echo(string.format("[fixtest] note: the water tap: the pointer %d,%d on %s (ground %s); the camera %s,%s then, "
+			.. "%s,%s now", mx, my, pos and string.format("%d,%d", pos[1], pos[3]) or "nil",
+			pos and string.format("%.0f", Spring.GetGroundHeight(pos[1], pos[3])) or "-", tostring(ca.px and math.floor(ca.px)),
+			tostring(ca.pz and math.floor(ca.pz)), tostring(cs.px and math.floor(cs.px)), tostring(cs.pz and math.floor(cs.pz))))
 		check("a real tap on the water: its Tidal twin picked (BAR's own swap still works)", armedDef() == D.armtide,
 			"picked " .. nameOf(armedDef()))
 	elseif c == "solar?" then
