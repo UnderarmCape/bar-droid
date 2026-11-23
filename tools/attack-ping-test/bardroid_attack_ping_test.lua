@@ -89,7 +89,15 @@ end
 -- (the first hits on my units as LuaUI hands them over: what bardroid_pad.lua's ATTACK sees)
 local hitsLogged = 0
 local lightAt, lightHits, lightUnit = nil, 0, nil -- (the light fight's place once given; hits on my units there)
+local f1Hits -- (hits on my units by the first fight while its merge is watched: none, nothing to merge)
+local fight2SeenBefore -- (the second fight in sight before LAST PINGS' tap)
 function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID, _, attackerID, _, attackerTeam)
+	if f1Hits and unitTeam == Spring.GetMyTeamID() then
+		local x, _, z = Spring.GetUnitPosition(unitID)
+		if x and (x - fight1[1]) ^ 2 + (z - fight1[2]) ^ 2 < 500 ^ 2 then
+			f1Hits = f1Hits + 1
+		end
+	end
 	if lightAt and unitTeam == Spring.GetMyTeamID() then
 		local x, _, z = Spring.GetUnitPosition(unitID)
 		if x and (x - lightAt[1]) ^ 2 + (z - lightAt[2]) ^ 2 < 500 ^ 2 then
@@ -162,10 +170,14 @@ function widget:GameFrame(f)
 		check("the first fight: one entry, at the fight", #a == 1 and dist(a[1], fight1) < 500,
 			#a .. " entries, " .. (a[1] and math.floor(dist(a[1], fight1)) or "-") .. " elmos off")
 		check("the first fight: LAST PINGS' badge red (the newest an attack going on)", red == true, red)
+		f1Hits = 0
 		go("fight1b", f)
 	elseif stage == "fight1b" and f - stageAt > 90 then
 		local a = attacks()
-		check("the first fight 3 s on: still one entry (its hits merged)", #a == 1, #a .. " entries")
+		-- (and hits landed meanwhile: a fight already over also left one entry; vacuous-pass audit, 2026-11-23)
+		check("the first fight 3 s on: still one entry (its hits merged)", #a == 1 and f1Hits > 0,
+			#a .. " entries, " .. f1Hits .. " hits on mine there in those 3 s")
+		f1Hits = nil
 		-- (the second fight far off: the map's other side from the first, 1500+ elmos)
 		local mx, mz = Game.mapSizeX, Game.mapSizeZ
 		local x = fight1[1] > mx / 2 and fight1[1] - 1800 or fight1[1] + 1800
@@ -204,8 +216,12 @@ function widget:GameFrame(f)
 			go("end", f)
 			return
 		end
-		local _, vsy = Spring.GetViewGeometry()
+		local vsx, vsy = Spring.GetViewGeometry()
 		tapAt = { r[1] + (r[3] - r[1]) * 0.25, vsy - (r[2] + r[4]) / 2 }
+		-- (the second fight out of sight before the tap: in sight already, the tap's jump proved nothing)
+		local dock = P and P.dock and P.dock()
+		local sx, sy, sz = Spring.WorldToScreenCoords(fight2[1], Spring.GetGroundHeight(fight2[1], fight2[2]), fight2[2])
+		fight2SeenBefore = sz < 1 and sx > 0 and sx < vsx and sy > (dock and dock[4] or 0) and sy < vsy
 		-- (the home grid still where it stood at the start: the groups row coming up with the first idle builder lifted it
 		-- 132 pixels and this tap once hit BASE, 2026-11-20)
 		check("the home grid still where it stood a minute before (LAST PINGS)", firstCell and firstCell[2] == r[2]
@@ -220,10 +236,11 @@ function widget:GameFrame(f)
 		local sx, sy, sz = Spring.WorldToScreenCoords(x, Spring.GetGroundHeight(x, z), z)
 		local inSight = sz < 1 and sx > 0 and sx < vsx and sy > (dock and dock[4] or 0) and sy < vsy
 		local cs = Spring.GetCameraState()
-		check("LAST PINGS tapped: the camera on the second fight, in sight above the dock", inSight,
-			string.format("at %d,%d of %dx%d, the dock's top %d; the camera's point %s,%s, %d units picked", sx, sy, vsx,
-				vsy, dock and dock[4] or 0, tostring(cs.px and math.floor(cs.px)), tostring(cs.pz and math.floor(cs.pz)),
-				Spring.GetSelectedUnitsCount()))
+		check("LAST PINGS tapped: the camera on the second fight, in sight above the dock", inSight
+			and fight2SeenBefore == false, string.format("at %d,%d of %dx%d, the dock's top %d; the camera's point %s,%s, %d "
+				.. "units picked; in sight before the tap %s", sx, sy, vsx, vsy, dock and dock[4] or 0,
+				tostring(cs.px and math.floor(cs.px)), tostring(cs.pz and math.floor(cs.pz)), Spring.GetSelectedUnitsCount(),
+				tostring(fight2SeenBefore)))
 		go("busy", f)
 	elseif stage == "busy" and f - stageAt > 30 then -- (a busy fight far from the first two)
 		busy = farFrom({ fight1, fight2 })
@@ -263,8 +280,8 @@ function widget:GameFrame(f)
 			busyMine, busyFoe)
 		if lightHits == 0 then -- (no fight there: nothing to tell; the test's own, its place)
 			check("a light fight beside a busy one: hits there to judge by", false, why)
-		else
-			check("a light fight beside a busy one: its own entry", near ~= nil, why)
+		else -- (and the busy fight still on: with its give dropped the light one stood alone)
+			check("a light fight beside a busy one: its own entry", near ~= nil and busyMine > 0 and busyFoe > 0, why)
 		end
 		go("end", f)
 	elseif stage == "end" then
