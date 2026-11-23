@@ -7,7 +7,11 @@
 #   powershell -ExecutionPolicy Bypass -File tools\retreat-phone-test.ps1 [-Only hover]
 # -Only <kind> (bot, vehicle, hover, amphibious, T2, squad): that kind's on and off rounds three times, each unit's
 # first 3 s after falling back logged (its order, the point reachable for it, its speed, the enemy's distance).
-param([string]$Only = "")
+# -Commander: the commander's case alone (the coordinator's tour, 2026-11-22): the D-gun mode entered and left, a 12 s
+# pause, two enemy Bulldogs and the fight in 1 s steps between 6 s pauses: not read as catching up after the pause, the
+# retreat within a second of going under half; then the player's Fight back: under 30 % the dock's warning. ~3 min.
+param([string]$Only = "", [switch]$Commander)
+if ($Commander) { $Only = "commander" }
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
@@ -34,7 +38,7 @@ try {
   $until = (Get-Date).AddMinutes(9)
   while ((Get-Date) -lt $until -and -not (Log '\[retreattest\] done' 1)) { Start-Sleep 3 }
   if (-not (Log '\[retreattest\] done' 1)) { "[retreattest] FAIL the test did not finish" }
-  Log '\[retreattest\]|\[bardroid-retreat\] (commander|off|on)|bardroid_retreat.*[Ee]rror|Error in' 60 |
+  Log '\[retreattest\]|\[bardroid-retreat\] (commander|off|on)|\[bardroid-catchup\]|bardroid_retreat.*[Ee]rror|Error in' 60 |
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   InApp "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_retreattest.txt $cfg/bardroid_retreattest_only.txt"

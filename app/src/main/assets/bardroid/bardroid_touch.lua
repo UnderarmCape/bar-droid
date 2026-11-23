@@ -1141,6 +1141,24 @@ function widget:GameProgress(frame)
 	serverFrame, serverFrameAt = frame, spGetTimer()
 end
 
+-- A pause stops the server's frames too: the time paused is no ground lost. The server's frame as it stood at the
+-- pause kept, and its clock started again at the end (the time since the last GameProgress counted the pause: after
+-- 5 s paused the game read as catching up until the next one, up to 5 game-seconds, AUTO RETREAT dropping every hit
+-- meanwhile; after 30 s the catch-up mode blanked the picture; the coordinator's tour played in steps between pauses,
+-- 2026-11-22: the commander died with no retreat)
+function widget:GamePaused(playerID, paused)
+	if not serverFrame then
+		return
+	end
+	local now = spGetTimer()
+	if paused then
+		local speed = Spring.GetGameSpeed() or 1
+		serverFrame = serverFrame + speed * 30 * spDiffTimers(now, serverFrameAt)
+	end
+	serverFrameAt = now
+	catchupChecked = nil -- (the next second's rate measured from the next frame, not across the pause)
+end
+
 local function updateCatchup(now, frame, rate)
 	-- (springsettings bardroid_catchup = 0: the engine's own balance, for comparisons)
 	if Spring.IsReplay() or Spring.GetConfigInt("bardroid_catchup", 1) == 0 then

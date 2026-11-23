@@ -180,7 +180,142 @@ local function watch(f)
 	end
 end
 
+-- The commander's case (bardroid_retreattest_only.txt "commander", retreat-phone-test.ps1 -Commander), as the
+-- coordinator's tour played it (2026-11-22): the D-gun mode entered and left (the dock's X: the pad's dgun_cancel), the
+-- commander let go, the game paused 12 s, then two enemy Bulldogs and the fight in 1 s steps between 6 s pauses. Checked:
+-- not read as catching up after a pause (WG.BarDroidCatchingUp; the pause counted as ground lost dropped every hit);
+-- the commander retreats within a second of going under half; then the player's Fight back into them: under 30 % the
+-- dock's note "COMMANDER AT n %: PULL IT BACK" (and the infolog's "told").
+local cm -- the commander case's state
+local function pass(case, ok, detail)
+	cm.fails = cm.fails + (ok and 0 or 1)
+	Spring.Echo("[retreattest] " .. (ok and "PASS " or "FAIL ") .. case .. (detail and (": " .. detail) or ""))
+end
+local function healthOf(u)
+	local h, mh = Spring.GetUnitHealth(u)
+	return h and mh and mh > 0 and h / mh or nil
+end
+local function pauseNow(on)
+	local _, _, paused = Spring.GetGameSpeed()
+	if (paused and true or false) ~= on then
+		Spring.SendCommands("pause")
+	end
+end
+local function commanderFrame(f)
+	local R, Pd = WG.BarDroidRetreat, WG.BarDroidPad
+	if cm.stage == "start" then
+		for _, u in ipairs(Spring.GetTeamUnits(me) or {}) do
+			local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+			if ud and ud.customParams and ud.customParams.iscommander then
+				cm.com = u
+			end
+		end
+		if not (cm.com and Pd and Pd.act and Pd.modal) then
+			pass("the commander and the pad's D-gun mode", false, "commander " .. tostring(cm.com))
+			cm.stage = "done"
+			return
+		end
+		Spring.SelectUnitArray({ cm.com })
+		cm.stage, cm.at = "enter", f
+	elseif cm.stage == "enter" and f - cm.at > 15 then
+		Pd.act("dgun")
+		cm.stage, cm.at = "leave", f
+	elseif cm.stage == "leave" and f - cm.at > 30 then
+		local mode = Pd.modal()
+		Pd.act("dgun_cancel")
+		Spring.SelectUnitArray({})
+		Spring.Echo(string.format("[retreattest] the D-gun mode entered (%s) and left (%s), the commander let go", tostring(mode),
+			tostring(Pd.modal())))
+		cm.stage, cm.at = "pause", f
+	elseif cm.stage == "pause" and f - cm.at > 15 then
+		cm.pausedAt, cm.pauseFor, cm.after = Spring.GetTimer(), 12, "fightstart"
+		cm.stage = "paused"
+		pauseNow(true)
+	elseif cm.stage == "resumed" then
+		cm.stage, cm.at = cm.after, f
+		if cm.after == "fightstart" then
+			cm.stage, cm.firstAt = "fight", f
+		end
+	elseif cm.stage == "fight" and cm.firstAt and f - cm.firstAt >= 40 then -- (past the touch widget's next second's check)
+		local C = WG.BarDroidCatchingUp
+		local up = C and C()
+		pass("12 s paused, then running: not read as catching up", C ~= nil and not up, "catching up " .. tostring(up))
+		cm.firstAt = nil
+		local x, _, z = Spring.GetUnitPosition(cm.com)
+		local ex, ez = x + 260, z
+		cm.ex, cm.ez = ex, ez
+		Spring.SendCommands(string.format("give 2 armbull %d @%d,%d,%d", foe, ex, Spring.GetGroundHeight(ex, ez), ez))
+		Spring.Echo(string.format("[retreattest] two Bulldogs given to the enemy by the commander at %d %%, the fight in 1 s "
+			.. "steps between 6 s pauses", math.floor(100 * (healthOf(cm.com) or 0))))
+		cm.stepAt, cm.steps = f, 0
+	elseif cm.stage == "fight" and cm.stepAt then
+		local h = healthOf(cm.com)
+		if not h then
+			pass("the commander retreats within a second of going under half (the fight in steps)", false, "it died first")
+			cm.stage = "done"
+			return
+		end
+		if h < 0.5 and not cm.halfAt then
+			cm.halfAt = f
+		end
+		if R.fell(cm.com) and not cm.fellAt then
+			cm.fellAt = f
+			pass("the commander retreats within a second of going under half (the fight in steps)", cm.halfAt ~= nil
+				and f - cm.halfAt <= 30, string.format("under half at frame %s, retreated at %d, %d steps",
+					tostring(cm.halfAt), f, cm.steps))
+			cm.stage, cm.at = "back", f
+			return
+		end
+		if cm.halfAt and f - cm.halfAt > 30 * 8 then
+			pass("the commander retreats within a second of going under half (the fight in steps)", false,
+				string.format("not in 8 s, %.0f %% now, %d steps", 100 * h, cm.steps))
+			cm.stage = "done"
+			return
+		end
+		if f - cm.stepAt >= 30 then -- (a step: 1 s played, then 6 s paused)
+			cm.steps, cm.stepAt = cm.steps + 1, f
+			cm.pausedAt, cm.pauseFor, cm.after = Spring.GetTimer(), 6, "fight"
+			cm.stage = "paused"
+			pauseNow(true)
+		end
+	elseif cm.stage == "back" and f - cm.at > 100 then -- (past the retreat's 3 s watch: the player's own Fight back in)
+		Spring.GiveOrderToUnit(cm.com, CMD.FIGHT, { cm.ex, Spring.GetGroundHeight(cm.ex, cm.ez), cm.ez }, 0)
+		local _, last = Pd.note()
+		cm.noteBefore = last
+		Spring.Echo(string.format("[retreattest] the player's Fight back into the Bulldogs at %d %%",
+			math.floor(100 * (healthOf(cm.com) or 0))))
+		cm.stage, cm.at = "warn", f
+	elseif cm.stage == "warn" then
+		local h = healthOf(cm.com)
+		local _, last = Pd.note()
+		local told = last and last ~= cm.noteBefore and tostring(last):find("PULL IT BACK", 1, true)
+		if told or not h or f - cm.at > 30 * 25 then
+			pass("the player's Fight back, the commander under 30 %: the dock's note says so", told and true or false,
+				string.format("note %q at %s", tostring(last), h and string.format("%.0f %%", 100 * h) or "its death"))
+			cm.stage = "done"
+		end
+	elseif cm.stage == "done" then
+		pauseNow(false)
+		Spring.Echo("[retreattest] commander case: " .. (cm.fails == 0 and "ALL PASS" or (cm.fails .. " FAILED")))
+		Spring.Echo("[retreattest] done")
+		cm.stage = "over"
+	end
+end
+
+function widget:Update()
+	if cm and cm.stage == "paused" and Spring.DiffTimers(Spring.GetTimer(), cm.pausedAt) >= cm.pauseFor then
+		cm.stage = "resumed"
+		pauseNow(false)
+	end
+end
+
 function widget:GameFrame(f)
+	if cm then
+		if cm.stage ~= "over" then
+			commanderFrame(f)
+		end
+		return
+	end
 	if stage ~= "wait" and stage ~= "over" then
 		watch(f)
 	end
@@ -194,6 +329,18 @@ function widget:GameFrame(f)
 			return
 		end
 		R.set(true)
+		local fh = io.open("LuaUI/Config/bardroid_retreattest_only.txt", "r")
+		local which = fh and fh:read("*l")
+		if fh then
+			fh:close()
+		end
+		if which == "commander" then -- (the commander's case alone, above)
+			Spring.SendCommands("cheat 1")
+			cm = { stage = "start", fails = 0 }
+			Spring.Echo("[retreattest] the commander's case: D-gun mode in and out, a pause, a fight in steps, the warning")
+			go("over", f)
+			return
+		end
 		only = onlyKind()
 		if only then
 			Spring.Echo("[retreattest] only " .. only .. ": its on and off rounds three times, each fall-back followed")
