@@ -49,9 +49,15 @@ try {
   # 1. the backup: a tar of what exists (binary through cmd's redirection; PowerShell's would re-encode it)
   $have = @($keep | Where-Object { "$(InApp "[ -e $_ ] && echo yes")".Trim() -eq "yes" })
   cmd /c "$adb -s $Device exec-out run-as $pkg tar -cf - $($have -join ' ') > $tarFile"   # (no spaces in these paths)
-  $entries = @(& tar.exe -tf $tarFile 2>$null).Count
+  $listing = @(& tar.exe -tf $tarFile 2>$null)
+  $entries = $listing.Count
   $mb = [math]::Round((Get-Item $tarFile).Length / 1MB, 1)
-  if ($entries -lt 1) { throw "the backup is empty ($tarFile): nothing cleared" }
+  # (every path kept must be in it, and the phone's file count matched: a tar cut short clears nothing)
+  $missing = @($have | Where-Object { $p = $_; -not ($listing | Where-Object { $_ -eq $p -or $_ -like "$p/*" } | Select-Object -First 1) })
+  $phoneCount = 0; [void][int]::TryParse("$(InApp "find $($have -join ' ') 2>/dev/null | wc -l")".Trim(), [ref]$phoneCount)
+  if ($entries -lt 1 -or $missing -or [math]::Abs($phoneCount - $entries) -gt 2) {
+    throw "the backup is incomplete (${tarFile}: $entries entries, the phone $phoneCount, missing $($missing -join ', ')): nothing cleared"
+  }
   $perms = @(Granted)
   Set-Content -Encoding utf8 (Join-Path $back "permissions.txt") $perms
   Say "backup: $($have -join ', ') - $entries entries, $mb MB; permissions granted: $($perms -join ', '); the app's data before: $before GB"
