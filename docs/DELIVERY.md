@@ -119,7 +119,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
 6. [x] Item 53: a default uncaught-exception handler that writes the stack to launcher.log (Share logs); one
    deliberate engine crash (SIGSEGV) on the dev phone, recorded here: what launcher.log, infolog.txt and Android's
    exit record hold; `setProcessStateSummary` with the screen and map, read back after a death. Done: a forced
-   exception leaves its stack in launcher.log. (fixer, after 4-5)
+   exception leaves its stack in launcher.log (a developer build's "start crashtest": 11 stack lines). (fixer, after 4-5)
    DONE (ExitRecord, b736e9f3; tools/exitrecord-phone-test.ps1 [-EngineCrash] ALL PASS on the dev phone, 2026-11-22).
    The engine's SIGSEGV (`kill -SEGV` at frame 5626 of a skirmish on the phone engine) leaves:
    - launcher.log: the engine's CrashHandler lines with the frame and engine version ("Segmentation fault in Spring
@@ -145,12 +145,6 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    start does not mark the copy failed). Not seen yet: a lobby session's next game (no lobby-session test drives two
    games). The phone patch that erred: launch-bar.sh phone_patch_faults names it after the run ("phone Lua: <file>
    applied but erred in a game: <BAR's error line>"); launch-bar-test.sh's three new cases PASS on the laptop.
-   (Item 6, so far: ExitRecord.java. An exception no code catches: its stack in launcher.log before Android's own
-   handler ends the app; the process's state summary (what runs, the map, the screen) kept with Android's exit record;
-   the records since the last start read back into launcher.log at the next start. tools/exitrecord-phone-test.ps1:
-   a developer build's "start crashtest" leaves 11 stack lines in launcher.log, and the next start writes "the app's
-   process ended ...: crashed (an exception in Java) ...; its state then: app started, screen 1080x2078 upright", ALL
-   PASS. Still to record here: the deliberate engine SIGSEGV, -EngineCrash.)
 8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
    enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
    reopened in PLAYTEST.md with touch-log rows. (coordinator)
