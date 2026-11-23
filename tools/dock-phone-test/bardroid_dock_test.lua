@@ -147,6 +147,16 @@ local function onCmd(c)
 				r(z), r(t)))
 	elseif c == "deselect" or c == "deselect-again" then
 		Spring.SelectUnitArray({})
+	elseif c == "circlecam" then -- (the circle's camera: up to 700 elmos towards the map's middle across, put back after
+		-- the case; the earlier cases leave it by the map's edge, and off the turn rail the circle's start, the screen's
+		-- left, lay past the edge, no ground for the Pawn; dev phone, 2026-11-23)
+		local vsx, vsy = Spring.GetViewGeometry()
+		circ = { camWas = Spring.GetCameraState() }
+		local _, p = Spring.TraceScreenRay(math.floor(vsx / 2), math.floor(vsy / 2), true)
+		if p then
+			local nx = p[1] + math.max(-700, math.min(700, Game.mapSizeX / 2 - p[1]))
+			Spring.SetCameraTarget(nx, Spring.GetGroundHeight(nx, p[3]), p[3], 0)
+		end
 	elseif c == "circle" then -- (a Pawn given just behind the dock's top edge; nothing picked; the circle style; where
 		-- to draw the circle: its middle just above the edge, its edge at the dock's middle)
 		local Pt = WG.BarDroidPortrait
@@ -170,6 +180,46 @@ local function onCmd(c)
 				hx = math.floor((a + (b or vsx - 1)) / 2)
 			end
 		end
+		-- (the circle's start off the one-finger camera's knob and rails: the turn rail lies just above the dock from the
+		-- screen's middle out, and the touch that came down on its edge was the camera's, the dock drew no circle, every
+		-- run since the rails, 2026-11-19; dev phone, 2026-11-23. The middle of the longest stretch of that line clear of
+		-- them, the Pawn behind the dock there)
+		local C = WG.BarDroidCamCtl
+		local kn, zr, tr
+		if C and C.rects then
+			kn, zr, tr = C.rects()
+		end
+		local yc, M = dock[4] + 60, 32
+		local function clear(x)
+			for _, r in ipairs({ zr or false, tr or false }) do
+				if r and x >= r[1] - M and x <= r[3] + M and yc >= r[2] - M and yc <= r[4] + M then
+					return false
+				end
+			end
+			if kn and math.sqrt((x - kn[1]) ^ 2 + (yc - kn[2]) ^ 2) <= kn[3] + M then
+				return false
+			end
+			if Pt.onDock and not Pt.onDock(x, dock[4] - 80) then
+				return false
+			end
+			-- (ground under the circle's start and under the Pawn's place)
+			local _, g1 = Spring.TraceScreenRay(x, yc, true)
+			local _, g2 = Spring.TraceScreenRay(x, dock[4] - 80, true)
+			return g1 ~= nil and g2 ~= nil
+		end
+		if not clear(hx) then
+			local best, from = 0, nil
+			for x = M, vsx - M, 4 do
+				if clear(x) then
+					from = from or x
+					if x - from > best then
+						best, hx = x - from, math.floor((from + x) / 2)
+					end
+				else
+					from = nil
+				end
+			end
+		end
 		local _, pos = Spring.TraceScreenRay(hx, dock[4] - 80, true)
 		if pos then
 			hideAt = pos
@@ -178,11 +228,16 @@ local function onCmd(c)
 		Spring.SelectUnitArray({})
 		styleWas = Pt.selectStyle()
 		Pt.selectStyle("circle")
+		local camWas = circ and circ.camWas
 		circ = { hx, vsy - (dock[4] + 60), hx, vsy - math.floor((dock[2] + dock[4]) / 2) }
+		circ.cam, circ.top, circ.camWas = { Spring.GetCameraPosition() }, dock[4], camWas -- (the check's detail: what moved since)
 		write(string.format("circle0 %d %d\ncircle1 %d %d\n", circ[1], circ[2], circ[3], circ[4]))
 		Spring.Echo("[docktest] circle: a Pawn behind the dock at " .. tostring(pos and math.floor(pos[1])) .. ","
-			.. tostring(pos and math.floor(pos[3])) .. ", the style was " .. tostring(styleWas))
-	elseif c == "circledock?" then -- (the circle drawn on into the dock: the Pawn it hides not picked)
+			.. tostring(pos and math.floor(pos[3])) .. ", the style was " .. tostring(styleWas) .. "; the circle's start "
+			.. hx .. "," .. yc .. " (GL), the turn rail " .. (tr and table.concat(tr, ",") or "none"))
+	elseif c:match("^circledock%?") then -- (the circle drawn on into the dock: the Pawn it hides not picked; the number:
+		-- the dock's circle picks since the drag began, from the infolog: none, and no circle was drawn)
+		local picks = tonumber(c:match("(%d+)$")) or 0
 		local picked = false
 		for _, u in ipairs(Spring.GetSelectedUnits() or {}) do
 			picked = picked or u == hidden
@@ -200,10 +255,40 @@ local function onCmd(c)
 				inside = math.sqrt((hx - a[1]) ^ 2 + (hz - a[3]) ^ 2) <= math.sqrt((b[1] - a[1]) ^ 2 + (b[3] - a[3]) ^ 2)
 			end
 		end
-		check("a circle selection drawn on into the dock: the unit it hides (inside the circle) not picked",
-			hidden ~= nil and inside and not picked, string.format("hidden Pawn %s, inside %s, picked %s, %d picked",
-				tostring(hidden), tostring(inside), tostring(picked), Spring.GetSelectedUnitsCount()))
+		-- (what moved since the Pawn was given: the Pawn itself, pushed by my other units, the camera, the dock's top;
+		-- the ccb4f0cc train picked it once, 2026-11-22, the rerun not)
+		local why = ""
+		if circ and circ.cam and hidden and hideAt then
+			local hx, hy, hz = Spring.GetUnitPosition(hidden)
+			local Pt = WG.BarDroidPortrait
+			local dock = Pt and Pt.dock and Pt.dock()
+			local cx, _, cz = Spring.GetCameraPosition()
+			local near, nearMoving = nil, 0
+			if hx then
+				for _, u in ipairs(Spring.GetUnitsInCylinder(hx, hz, 160, Spring.GetMyTeamID()) or {}) do
+					if u ~= hidden then
+						local ux, _, uz = Spring.GetUnitPosition(u)
+						local d = math.sqrt((ux - hx) ^ 2 + (uz - hz) ^ 2)
+						near = near and math.min(near, d) or d
+						nearMoving = nearMoving + (speedOf(u) > 4 and 1 or 0)
+					end
+				end
+			end
+			local _, sy = Spring.WorldToScreenCoords(hx or 0, hy or 0, hz or 0)
+			why = string.format("; the Pawn moved %d elmos since given, at y %d (the dock's top %d, %d when given); the "
+				.. "camera moved %d; my other units within 160: nearest %s, %d moving", hx and math.floor(math.sqrt((hx
+				- hideAt[1]) ^ 2 + (hz - hideAt[3]) ^ 2)) or -1, math.floor(sy), dock and dock[4] or -1, circ.top,
+				math.floor(math.sqrt((cx - circ.cam[1]) ^ 2 + (cz - circ.cam[3]) ^ 2)), near and math.floor(near) or "none",
+				nearMoving)
+		end
+		check("a circle selection drawn on into the dock: the dock's circle, the unit it hides (inside it) not picked",
+			hidden ~= nil and inside and picks > 0 and not picked, string.format("%d circle picks, hidden Pawn %s, inside "
+				.. "%s, picked %s, %d picked%s", picks, tostring(hidden), tostring(inside), tostring(picked),
+				Spring.GetSelectedUnitsCount(), why))
 		WG.BarDroidPortrait.selectStyle(styleWas or "box")
+		if circ and circ.camWas then -- (the camera back for the cases after)
+			Spring.SetCameraState(circ.camWas, 0)
+		end
 	elseif c:match("^pathend") then -- (the drawn path's end: the first of the script's columns with ground on the line
 		-- just above the dock, where RtsTouch holds the end: the camera at the map's edge, panned since the aims, had it
 		-- over no ground once, and the path gave no order; dev phone, the split dock at 1080x1198, 2026-11-15)

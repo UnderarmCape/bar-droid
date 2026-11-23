@@ -319,20 +319,30 @@ try {
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $bx $dm[1]
   Start-Sleep -Milliseconds 300; Touch UP $bx $dm[1]; Start-Sleep -Milliseconds 800
   Stage "boxdock?"; Start-Sleep 1
-  # 8. the circle style: a circle drawn from just above the dock on into it; a Pawn just behind the dock's edge,
-  # inside the circle on the ground, is not picked (the style put back after)
+  # 8. the circle style: a circle drawn from just above the dock on into it, its start off the camera's knob and rails;
+  # a Pawn just behind the dock's edge, inside the circle on the ground, is not picked (the style put back after)
   # (nothing picked first: the dock is lower without its selection row, and the Pawn must be behind the dock as it is
   # while the circle is drawn)
   Stage "deselect-again"; Start-Sleep 2
+  Stage "circlecam"; Start-Sleep 1   # (the camera towards the map's middle for the case, back after)
   Stage "circle"; Start-Sleep 2
   $cs = Rects "bardroid_docktest.txt"
+  $picks = 0
   if ($cs["circle0"] -and $cs["circle1"]) {
     $c0 = $cs["circle0"]; $c1 = $cs["circle1"]
+    $picksWas = [int]("0" + "$(InApp "grep -a -c '\[bardroid-portrait\] circle:' files/bar/infolog.txt")".Trim())
     TapDown $c0[0] $c0[1]; Start-Sleep -Milliseconds 120   # (a tap, then the drag: the dock's circle selects)
     Touch MOVE $c0[0] (($c0[1] + $c1[1]) / 2); Touch MOVE $c1[0] $c1[1]
     Start-Sleep -Milliseconds 300; Touch UP $c1[0] $c1[1]; Start-Sleep -Milliseconds 1000
+    # (the dock's own pick, its line in the infolog: without it the case proved nothing. The circle's start lay on the
+    # camera's turn rail, which took the touches, and the case passed with no circle drawn, every run since the rails,
+    # 2026-11-19; the touch log's last lines say whose the touch was)
+    $picks = [int]("0" + "$(InApp "grep -a -c '\[bardroid-portrait\] circle:' files/bar/infolog.txt")".Trim()) - $picksWas
+    $pk = "$(Log '\[bardroid-portrait\] circle:' 1)" -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', ''
+    $tl = @(InApp "grep -a -E 'dockcircle|dock_select|camheld|camtap' $cfg/bardroid_touch.txt 2>/dev/null | tail -4")
+    "[docktest] (the circle's touch: $(if ($tl) { $tl -join ' | ' } else { 'no lines' }); the dock's pick: $(if ($picks -gt 0) { $pk } else { 'none' }))"
   } else { "[docktest] note: no circle's points" }
-  Stage "circledock?"; Start-Sleep 1
+  Stage "circledock? $picks"; Start-Sleep 1
   # 9. the wind's and the tide's boxes: the first tap on each, the dock's camera pad up again, opens its details (the
   # tide's "live" line once fell past the 320 bytes RtsTouch read of the dock file and its tap moved the pad; 2026-11-16)
   Stage "windrects"; Start-Sleep 1
