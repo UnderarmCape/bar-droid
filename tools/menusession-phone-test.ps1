@@ -79,10 +79,13 @@ try {
   $lines = @($raw | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' })
   $lines
   $watch = @($lines | Where-Object { $_ -match '\[bardroid-touch\] the app.s build menu' }).Count
-  "[menusession] (the menu watch's line $watch times in the session: game 1's alone expected)"
+  # (game 2 is looked at past frame 90, when the menu watch would already have switched BAR's own on had the session
+  # lost it: a second watch line is that rescue, not BAR's own from the start; vacuous-pass audit, 2026-11-23)
+  $rescued = $watch -ne 1
+  "[menusession] $(if ($rescued) { 'FAIL' } else { 'PASS' }) the menu watch acted in game 1 alone: $watch times in the session"
   $unfinished = -not ($lines | Where-Object { $_ -match '\[menusession\] game2 done' })
   if ($unfinished) { "[menusession] FAIL the test did not finish (both games)" }
-  $fails = @($lines | Where-Object { $_ -match '\[menusession\] FAIL' }).Count + [int]$unfinished
+  $fails = @($lines | Where-Object { $_ -match '\[menusession\] FAIL' }).Count + [int]$unfinished + [int]$rescued
   "[menusession] done: $(if ($fails -eq 0) { 'ALL PASS' } else { "$fails FAILED" })"
 } finally {
   & $adb shell am force-stop $pkg
