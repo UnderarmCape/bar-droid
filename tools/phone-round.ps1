@@ -44,6 +44,14 @@ $Nightly = @(
   @("pad-test", @("-Dgun"), 2), @("pad-test", @("-Share"), 2), @("pad-test", @("-Chat"), 2),
   @("fp-save-test", @(), 1.5), @("pace-test", @(), 2), @("dgun-speed-test", @(), 3),
   @("retreat-phone-test", @("-Commander"), 3), @("exitrecord-phone-test", @(), 2))
+# Tests that measure rather than check: no PASS line; their end line is the pass, with no FAIL (the first full set,
+# 2026-11-22, read both as "no PASS line": retreat every kind fell back, the D-gun walk 98 % of a plain move's speed)
+$DoneIsPass = @{ "retreat-phone-test" = '\[retreattest\] done'; "dgun-speed-test" = '\[dguntest\] done'
+  "x11-probe" = '\[x11probe\] path .*: connected' }   # (x11-probe: the app's own socket answers ...)
+$FailToo = @{ "x11-probe" = '\[x11probe\] (abstract .*: connected|the X server is not running)' }   # (... and no other)
+# Tests that look at a running game: the launcher's skirmish started first and its engine up ("the X server is not
+# running", the same night)
+$NeedsGame = @("x11-probe")
 # Known flakes: a fail whose every FAIL line matches is FLAKY, not FAIL (each with the day it was seen).
 $Quarantine = @{
   "dock-phone-test" = @('FAIL Area Mex armed')   # (2026-11-20 05:50 "0 mex orders" once; ~20 passing runs since)
@@ -132,14 +140,22 @@ function Run-One($t) {
   $since = PhoneNow
   $faults = FaultCount
   $start = Get-Date
+  if ($NeedsGame -contains $t[0]) {
+    Phone "input keyevent KEYCODE_WAKEUP; am start -n $pkg/.LauncherActivity --es start skirmish" | Out-Null
+    $until = (Get-Date).AddMinutes(3)
+    while ((Get-Date) -lt $until -and -not "$(Phone 'pidof spring')".Trim()) { Start-Sleep 5 }
+    Start-Sleep 30   # (the engine's window and the app's X server up, the game loading)
+  }
   $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
   # (a test's stderr line, adb's "1 file pushed", is a NativeCommandError under "Stop"; engine-gate.ps1)
   try { $out = & powershell -ExecutionPolicy Bypass -File (Join-Path $testsDir "$($t[0]).ps1") @($t[1]) 2>&1 | ForEach-Object { "$_" } }
   catch { $out = @("FAIL $name stopped: $_") } finally { $ErrorActionPreference = $eap }
   $out | Out-Host
   # (case-sensitive: bridge-phone-test's "PASS ... refused, no file (failed)" is a pass; -match ignores case)
-  $fails = @($out | Where-Object { $_ -cmatch '\bFAIL(ED)?\b' })
-  $pass = ($fails.Count -eq 0) -and ($out | Where-Object { $_ -cmatch '\bPASS\b' })
+  $fails = @($out | Where-Object { $_ -cmatch '\bFAIL(ED)?\b' -or ($FailToo[$t[0]] -and $_ -match $FailToo[$t[0]]) })
+  $done = $DoneIsPass[$t[0]]
+  $pass = ($fails.Count -eq 0) -and (($out | Where-Object { $_ -cmatch '\bPASS\b' }) -or ($done -and ($out -match $done)))
+  if ($NeedsGame -contains $t[0]) { Phone "am force-stop $pkg" | Out-Null }
   $why = ""
   if (-not $pass) {
     if ((FaultCount) -gt $faults -or ($out -match "GPU driver's rare fault")) { $why = "the GPU driver's fault" }
