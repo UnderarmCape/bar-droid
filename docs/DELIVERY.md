@@ -61,6 +61,8 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    smoke ALL PASS, 10 of 10, no flakes (16:59-17:20, build\phone-round\20261122-1659-smoke-cb78d317.txt). On the
    Fold7 17:21 (the APK's engine phone-2026.09.03-83a8536d37, no game running); latest-build is that APK
    (github-sync.ps1 -Release -Apk, new: a train build goes up under the usual name). The full set: next, nightly.
+   6646611f (86012f7f's faction fix, item 8) smoke ALL PASS 10 of 10 (19:08, 20261122-1908-smoke-6646611f.txt); on
+   the Fold7 19:29 in place of cb78d317 (no game running, engine phone-2026.09.03-83a8536d37), latest-build updated.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
