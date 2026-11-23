@@ -69,6 +69,11 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    started first: dea503f5). Real: factory-preset-test (STRAFE's place 3987 elmos off, no sway; first run since before
    the RC fixes; with the fixer) and overgame-phone-test once (a drag over the lobby moved the camera 11 elmos; it
    passed in both smoke runs that day; rerun in dea503f5's smoke).
+   dea503f5 (+ a5b70023, 861a505f, 62ed4996): smoke 10 of 11 (overgame PASS: the 715761ed fail was a flake), the three
+   reclassified tests PASS (x11-probe with a game up, retreat, dgun-speed); touchfix's sea-twin "a real tap on the water:
+   its Tidal twin picked" FAIL twice (with the fixer; not a blocker, the Tidal has its own tile). factory-preset-test:
+   the phone's state (five tests turned Play upright off: bd25173a), ALL PASS after. dea503f5 on the Fold7 21:41,
+   latest-build updated.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
