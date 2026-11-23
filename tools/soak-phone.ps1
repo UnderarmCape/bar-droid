@@ -66,6 +66,9 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     $now = Lines "files/logs/launcher.log"
     $start = if ($now -lt $from) { 1 } else { $from + 1 }
     $log = @(InApp "tail -n +$start files/logs/launcher.log")
+    # (which engine played: the phone engine unless launch-bar.sh set it aside, which is a fault of its own)
+    $setAside = @($log | Where-Object { $_ -match '\[launch\] !!! phone engine' }).Count
+    $engine = if ($setAside) { "the phone engine SET ASIDE" } elseif (@($log | Where-Object { $_ -match '\[launch\] phone engine:' })) { "phone engine" } else { "official engine" }
     $faults = @($log | Where-Object { $_ -match 'GPU driver refused' }).Count
     $errors = @($log | Where-Object { $_ -match 'engine exited \([1-9]|game ended with an error' }).Count
     $thermal = @($log | ForEach-Object { if ($_ -match '\[perf\] thermal (\d+)') { [int]$Matches[1] } })
@@ -83,9 +86,9 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     # (known classes: the driver's refusal, a low-memory kill; anything else that ended a chunk early is new)
     $known = $ended -in @("time", "replay done") -or $ended -match 'for memory' -or ($ended -eq "the app gone" -and $lowmem -gt 0) -or
       ($ended -match 'error exit' -and $faults -gt 0)
-    $verdict = if ($known) { "PASS" } else { $total.fails++; "FAIL" }
-    Say ("{0}  chunk {1} ({2}): {3} min, {4}; driver refusals {5}, low-memory kills {6}, engine errors {7}; thermal max {8}, {9} steps; {10}" -f
-      $verdict, ($i + 1), $replay, $minutes, $ended, $faults, $lowmem, $errors, $tmax, $steps, $fpsText)
+    $verdict = if ($known -and -not $setAside) { "PASS" } else { $total.fails++; "FAIL" }
+    Say ("{0}  chunk {1} ({2}, {11}): {3} min, {4}; driver refusals {5}, low-memory kills {6}, engine errors {7}; thermal max {8}, {9} steps; {10}" -f
+      $verdict, ($i + 1), $replay, $minutes, $ended, $faults, $lowmem, $errors, $tmax, $steps, $fpsText, $engine)
   } finally {
     InApp "rm -f files/bar/.bardroid-bench-replay" | Out-Null
     & $adb -s $Device shell am force-stop $pkg
