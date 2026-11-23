@@ -43,7 +43,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 
 1. Download `bar-droid-phone-<version>.apk` from the [Releases](../../releases) page and open it on the phone (allow
    installing from your browser or file manager when Android asks).
-2. Open **Beyond All Reason**, tap **Install / Update**: about 4 GB from BAR's servers, around 10 minutes.
+2. Open **Beyond All Reason**, tap **Install / Update**: about 4 GB from BAR's servers, around 12 minutes on home Wi-Fi (about 2.7 GB on the phone after).
 3. Then the lobby (log in with your BAR account), or **Play vs AI**. The app updates BAR at every start, like the PC
    launcher; the launcher screen shows the game version the last start played.
 

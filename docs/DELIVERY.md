@@ -160,7 +160,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    nothing; fixed in 86012f7f and FIXED+PLAY on that build. Still open: the commander warning (asked of the fixer as a
    retreat-phone-test case) and an AUTO RETREAT that did not fire once (after the dock's D-gun mode; the fixer
    reproduces).
-9. [ ] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
+9. [x] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
    minutes and GB recorded for the release notes. (coordinator)
    2026-11-22 22:02 (tools/fresh-install-phone-test.ps1, d3586410/88bca5e9; dea503f5's APK): the backup 459 entries,
    3.0 GB, put back whole after. Installed (container, Mesa, engine, BAR's game 3.4 GB, the lobby, the first map) in
@@ -169,7 +169,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    The apt step never named libatomic1; older containers had it through packages the slim step removes. Fixed in
    ccb4f0cc (the apt step installs it; a container without it gets it once at the next start, setup-container.sh "libs",
    and the phone engine set aside for it runs again). Space after: the app's data 2.69 GB (container 0.37 GB, BAR
-   2.31 GB), the APK 34 MB. To do: the run again on ccb4f0cc's build.
+   2.31 GB), the APK 34 MB.
+   DONE on ccb4f0cc (2026-11-22 23:44, 20261122-2344-fresh.txt; the test now also fails a first game the phone engine
+   did not play, 5e9a6d25): installed after 11.7 min, the first game's first frame after 13.4 min, on the phone engine;
+   the space after: the app's data 2.69 GB (container 0.37 GB, BAR 2.32 GB: the game 3.4 GB packed, the lobby, the
+   first map), the APK 34 MB; the backup (459 entries, 3.0 GB) put back, the permissions as before. For the release
+   notes: about 12 minutes and 3 GB on home Wi-Fi before the first game, about 2.7 GB on the phone after.
 10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
     low-memory kills and thermal steps counted, no new fault class. (coordinator)
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
