@@ -89,6 +89,11 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    FLAKY, with the fixer if it comes back. Not on the Fold7 yet: it did not answer at 06:45 (adb over Tailscale timed
    out, no ping); installed when it is back and no game runs. On the Fold7 09:04 (back on Tailscale, Wireless
    debugging on a new port; screen off, no game; engine phone-2026.09.03-83a8536d37), latest-build updated.
+   2026-11-23 (fixer): the vacuous-pass audit of 11 suites (dock, touchfix, factory-preset, menusession, pregame, types,
+   camctl, attack-ping, overgame, walls, retreat; 0efe1023 to a249e6fa), each a commit after a dev-phone PASS: a check
+   that read nothing or found no setup now FAILs or says NOT RUN (counted in the last line), every result line printed
+   (the dock's last-20 print had hidden three FAILs). Tests only: 379e98bc stays the RC. PLAYTEST 464 was the driver's
+   aim (9b8154f5).
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
