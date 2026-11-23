@@ -226,6 +226,13 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
     Fold7 was offline from 06:45 as well: most likely both went with Kailil. Once the phone is back: its uptime says
     whether it reset at ~07:12 (a new fault class if so; the 2026-11-03 reset was a plain skirmish), then the two
     replays again.
+    Back 08:31: its battery had run out (booted 07:53 from charging, "reboot,lpm", 12 %): a game draws more than the
+    laptop's USB gives (-1.3 A), and the night's ~7.5 h of chunks and trains emptied it. Not the app's; the tools now
+    wait for 45 % when under 30 % (Wait-PhoneCharge, 513622b9). What the first replay gave before (All That Glitters,
+    8v8, phone engine, 379e98bc; loaded in 3.5 min): the game kept up at 1x all 26 minutes (x0.99-1.01, never under
+    x0.95), fps mean 15.9, 8-11 from minute ~22 with ~2,570 units; the GPU at its thermal cap (295-348 MHz, levels 6-7,
+    96-99 % busy), thermal status 2, 660 MB available, no driver refusal or low-memory kill. The two replays again once
+    charged.
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
     pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
     (coordinator)
