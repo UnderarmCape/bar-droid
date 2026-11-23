@@ -185,6 +185,20 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
     other chunks with BARb against BARb, watched (b7a788ba): the server replays need their BAR version and maps fetched
     through the app first (the lobby's Replays tab) to count. Running from 00:44: six AI chunks on Starwatcher, the
     phone engine, 29-30 fps in the first minutes.
+    The AI part, 00:44-05:16 on ccb4f0cc (build\phone-round\20261123-0044-soak.txt): six 40-min games of BARb against
+    BARb, watched, each to its time, all on the phone engine with the start script applied; driver refusals 0,
+    low-memory kills 0, engine errors 0, thermal status 2 throughout (two steps in the first minutes of chunk 1, none
+    after); fps mean 28.2, 26.5, 26.2, 27.3, 24.4, 24.6, min 16-22. No new fault class. Chunk 4 was written down as a FAIL
+    ("official engine, the AI start script not applied") by the soak's own read of a launcher.log the app rotated
+    mid-game: its whole 40 minutes in launcher.old.log + launcher.log have the phone engine, the script applied, no
+    refusal or error (fixed in b794947a). The mean fps fell ~4 over the four hours with the thermal status unchanged (the
+    same map and AIs each game, BARb's games differ): to watch in the replay chunks. The phone left clean (no
+    dev-env.sh, widget or bench file). The server replays: BAR's own of the phone's engine and game exist again
+    (BAR's servers run test-32018-ad135b9 on 2026.09.03 today); tools/soak-fetch.ps1 (30697212) downloads the newest
+    on the laptop with their maps and copies them in, and soak-phone closes background apps before a replay chunk and
+    says whether the phone kept up at 1x (2ddb7aab). Two 8v8s (Bismuth Valley 34 min, Hyperion Shale 44 min) are queued
+    after the full set on 379e98bc; "a long Medium game": the BARb-against-BARb games stand in (heavier: two armies
+    the phone draws and simulates, no player).
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
     pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
     (coordinator)
