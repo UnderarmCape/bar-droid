@@ -44,7 +44,7 @@ $Nightly = @(
   @("driverwatch-phone-test", @(), 4), @("x11-probe", @(), 0.5), @("retreat-phone-test", @(), 7),
   @("pad-test", @("-Dgun"), 2), @("pad-test", @("-Share"), 2), @("pad-test", @("-Chat"), 2),
   @("fp-save-test", @(), 1.5), @("pace-test", @(), 2), @("dgun-speed-test", @(), 3),
-  @("retreat-phone-test", @("-Commander"), 3), @("exitrecord-phone-test", @(), 2))
+  @("retreat-phone-test", @("-Commander"), 3), @("exitrecord-phone-test", @(), 2), @("menusession-phone-test", @(), 5))
 # Tests that measure rather than check: no PASS line; their end line is the pass, with no FAIL (the first full set,
 # 2026-11-22, read both as "no PASS line": retreat every kind fell back, the D-gun walk 98 % of a plain move's speed)
 $DoneIsPass = @{ "retreat-phone-test" = '\[retreattest\] done'; "dgun-speed-test" = '\[dguntest\] done'

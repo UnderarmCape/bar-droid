@@ -310,8 +310,8 @@ The first version meant for other people's phones: everything since the first bu
   until the next update. Only the app's own widgets load as part of the game.
 - A build or order menu copy that fails to load now gives way to BAR's own menu (before: no menu at all), and every one
   of the app's widgets that fails is named in the launcher. A build menu copy that fails mid-game brings BAR's own back
-  at once, for the lobby session's later games too; a phone version of one of BAR's widgets that errs in a game is
-  named in launcher.log.
+  at once, for the lobby session's later games too, and those games no longer load the failed copy again beside BAR's
+  own (two build menus); a phone version of one of BAR's widgets that errs in a game is named in launcher.log.
 - When the app crashes, its stack goes into launcher.log; at the next start launcher.log says how the last run ended
   (a crash, low memory, a force stop) and what it was doing then (the mode, the map, the screen), for a bug report.
 - BAR's own developer game (a game played from BAR's source, as BAR's developers do) plays with the app's pad, camera

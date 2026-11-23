@@ -1146,7 +1146,7 @@ end
 -- 5 s paused the game read as catching up until the next one, up to 5 game-seconds, AUTO RETREAT dropping every hit
 -- meanwhile; after 30 s the catch-up mode blanked the picture; the coordinator's tour played in steps between pauses,
 -- 2026-11-22: the commander died with no retreat)
-function widget:GamePaused(playerID, paused)
+function widget:GamePaused(_, paused)
 	if not serverFrame then
 		return
 	end
@@ -1906,8 +1906,12 @@ function menuWatch.step()
 		menuWatch.done = true
 		local wh = widgetHandler
 		local ok = wh and wh.EnableWidget and pcall(wh.EnableWidget, wh, "Build menu")
+		-- (and the copy off in BAR's saved order: BAR's handler keeps a widget it removed for an error at its place there,
+		-- so the session's next game loaded the copy again beside BAR's own; menusession-phone-test)
+		local off = ok and wh.DisableWidget and pcall(wh.DisableWidget, wh, "BAR Droid build menu")
 		Spring.Echo("[bardroid-touch] the app's build menu copy " .. (menuWatch.seen and "was removed" or "did not run")
-			.. ": BAR's own build menu " .. (ok and "switched on" or "could not be switched on (no widget handler)"))
+			.. ": BAR's own build menu " .. (ok and "switched on" or "could not be switched on (no widget handler)")
+			.. (off and ", the copy off for the session's next games" or ""))
 	end
 	menuWatch.copyWas = copy or menuWatch.copyWas
 end

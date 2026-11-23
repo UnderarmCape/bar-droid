@@ -134,7 +134,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
      swipe away)", its state "game, map starwatcher_1.0.sd7, screen 2078x1080 sideways" (the summary once per map; the
      engine's own archives, springcontent.sdz and the like, are no map).
    Open (not in this item): addr2line in the container for the engine's frames; a plainer crash message than the path.
-7. [ ] Items 36/37: BAR's own build menu back in the next game of the same lobby session after the copy failed; a
+7. [x] Items 36/37: BAR's own build menu back in the next game of the same lobby session after the copy failed; a
    phone patch that applies but errors noticed and logged. Done: a copy broken on purpose gives BAR's menu in the
    next game. (fixer)
    DONE in code: bardroid_touch.lua's menu watch (it has BAR's widget handler as one of the game's widgets, the
@@ -145,6 +145,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    start does not mark the copy failed). Not seen yet: a lobby session's next game (no lobby-session test drives two
    games). The phone patch that erred: launch-bar.sh phone_patch_faults names it after the run ("phone Lua: <file>
    applied but erred in a game: <BAR's error line>"); launch-bar-test.sh's three new cases PASS on the laptop.
+   2026-11-23 (fixer): the next game seen, and it had two build menus. New tools/menusession-phone-test.ps1 (nightly
+   set): the offline lobby starts two skirmishes in one engine through its own start (Chobby's StartGameFromString,
+   Spring.Reload; Spring.Reload("") back between them, as BAR's Leave), the copy broken in the first. On ccb4f0cc as
+   installed: game 1 PASS (the copy, then BAR's own on in its place), game 2 FAIL "copy running, WG.buildmenu BAR's":
+   BAR's handler keeps a widget it removed for an error at its place in the saved order, so the next game loaded the
+   copy again beside BAR's own. Fixed: the menu watch also switches the copy off (DisableWidget, saved); the same run
+   with it: game 2 BAR's own alone, showing the commander's options, ALL PASS. Seen meanwhile (not changed): sideways on
+   a wide phone the dock has its own build grid, and BAR's own menu, once switched on, shows beside it.
 8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
    enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
    reopened in PLAYTEST.md with touch-log rows. (coordinator)
