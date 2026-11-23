@@ -88,7 +88,7 @@ local function name(defID)
 	return ud and ud.name or tostring(defID)
 end
 
-local target, firstAt
+local target
 function widget:Update()
 	if Spring.GetGameFrame() > 0 and stage ~= "over" then
 		check("still before the start", false, "the game started")

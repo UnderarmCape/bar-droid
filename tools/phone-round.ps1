@@ -55,7 +55,8 @@ $FailToo = @{ "x11-probe" = '\[x11probe\] (abstract .*: connected|the X server i
 $NeedsGame = @("x11-probe")
 # Known flakes: a fail whose every FAIL line matches is FLAKY, not FAIL (each with the day it was seen).
 $Quarantine = @{
-  "dock-phone-test" = @('FAIL Area Mex armed')   # (2026-11-20 05:50 "0 mex orders" once; ~20 passing runs since)
+  # (none now: dock-phone-test's 'FAIL Area Mex armed', "0 mex orders" once on 2026-11-20 05:50, lifted 2026-11-23 after
+  # ~20 passing runs and 3 of 3 that morning on ccb4f0cc, with f6eeee24's circle case drawn every time)
 }
 
 $tests = if ($Set -eq "full") { $Smoke + $Nightly } else { $Smoke }
