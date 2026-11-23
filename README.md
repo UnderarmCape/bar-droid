@@ -35,8 +35,9 @@ A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Ge
 RAM and about 6 GB free. Tested on a Galaxy Z Fold7 (Android 17). 8 GB phones get a low-memory mode (plainer unit
 shading, no shore foam or ground scorch marks, skirmish on a smaller map until you pick one): on a Galaxy S23 Ultra
 (8 GB) BAR's own benchmark battle runs through every time (slowly: about 12 fps), and so do skirmishes on that map; on
-a big map about 1 in 3 is closed by Android for lack of memory, so close other apps first. Online games there are
-untested. Phones with Mali,
+a big map about 1 in 3 is closed by Android for lack of memory, so close other apps first. A replay of an online 8v8
+kept pace with the game there for the 26 minutes measured, at about 16 fps (8-11 late, the GPU held back by heat);
+joining online games on it is untested. Phones with Mali,
 Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check says so.
 
 ## Install
@@ -234,6 +235,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   as a PC does), but the game keeps pace, so you stay caught up (a spectated 8v8 with ~3,600 units ran at x0.97-1.02
   of real time). The frame cap is 30 fps by default (launcher: 30 / 60 / no cap).
 - A match uses about 5–6 GB of memory; close other big apps first.
+- A game draws more power than a computer's USB port gives: over hours of play the battery runs down even while
+  plugged in there (an S23 Ultra emptied in a night of back-to-back games). Use a wall charger for long sessions.
 - Maps downloaded for games are kept under 3 GB by default (launcher: Map storage, 3 / 5 GB or no limit): before
   a game starts, the maps played longest ago are deleted, and they download again when a game needs them. BAR itself
   stays about 2.3 GB across its updates.
