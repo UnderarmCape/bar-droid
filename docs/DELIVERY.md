@@ -74,6 +74,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    its Tidal twin picked" FAIL twice (with the fixer; not a blocker, the Tidal has its own tile). factory-preset-test:
    the phone's state (five tests turned Play upright off: bd25173a), ALL PASS after. dea503f5 on the Fold7 21:41,
    latest-build updated.
+   ccb4f0cc (item 9's libatomic fix, + 82ae55a5, bd25173a): smoke 11 of 11 with one FLAKY (dock-phone-test's circle
+   drawn into the dock picked the Pawn behind it once, 23:17; its rerun 23:40 PASS; with the fixer), touchfix's sea twin
+   PASS. The dev phone's container (new from item 9's run, without libatomic1) repaired at the train's first start:
+   "installing libatomic1", 0 upgraded, "the phone engine runs again", every game after on the phone engine. On the
+   Fold7 23:46 (no game running, engine phone-2026.09.03-83a8536d37; its container has libatomic1, the step a no-op
+   there), latest-build updated.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
