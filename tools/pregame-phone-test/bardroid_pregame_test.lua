@@ -88,7 +88,7 @@ local function name(defID)
 	return ud and ud.name or tostring(defID)
 end
 
-local target
+local target, noteFrom
 function widget:Update()
 	if Spring.GetGameFrame() > 0 and stage ~= "over" then
 		check("still before the start", false, "the game started")
@@ -137,16 +137,22 @@ function widget:Update()
 		check("a building queued, the other faction tapped once: not switched, the dock asks for a second tap",
 			startUnit() ~= target and t and tostring(t):find("AGAIN TO SWITCH", 1, true) ~= nil,
 			"start unit " .. name(startUnit()) .. ", note " .. tostring(t))
-		ask((otherFaction(startUnit())), "switched2?")
-	elseif stage == "switched2?" and now() - stageAt > 1 then
+		noteFrom = stageAt -- (the first tap answered: its note up from about then, for 3 s)
+		ask((otherFaction(startUnit())), "notegone?")
+	elseif stage == "notegone?" and now() - stageAt > 0.4 then
+		-- (looked at soon after the second tap, while the note's own 3 s still run: later it was gone by itself, the
+		-- check passing without the switch taking it away; vacuous-pass audit, 2026-11-23)
+		local t, since = note(), now() - noteFrom
+		check("... tapped again: its note gone with the switch, before its own 3 s were up",
+			since < 2.7 and not (t and tostring(t):find("AGAIN TO SWITCH", 1, true)),
+			string.format("note %s, %.1f s after the first tap", tostring(t), since))
+		go("switched2?")
+	elseif stage == "switched2?" and now() - stageAt > 0.6 then
 		local q = queue()
 		local qd = q[1] and q[1][1]
 		local prefix = name(target):sub(1, 3)
 		check("... tapped again: switched, the queue with it", startUnit() == target and #q == 1
 			and name(qd):sub(1, 3) == prefix, "start unit " .. name(startUnit()) .. ", queue " .. #q .. " (" .. name(qd) .. ")")
-		local t = note()
-		check("... and its note gone with the switch", not (t and tostring(t):find("AGAIN TO SWITCH", 1, true)),
-			"note " .. tostring(t))
 		local pb = WG["pregame-build"]
 		if pb and pb.setBuildQueue then
 			pb.setBuildQueue({})
