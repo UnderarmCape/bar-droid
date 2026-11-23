@@ -15,6 +15,7 @@ end
 local OUT = "LuaUI/Config/bardroid_factorytest.txt"
 local fails, stage, stageAt = 0, "wait", 0
 local com, lab, aimX, aimZ
+local camAim -- (the camera when the aim was named)
 local out = {} -- the Pawns out of the lab, in order
 local firstPlaces -- the first five's places, [unit] = { x, z }
 local given, strafe = {}, nil -- the strafe case's Pawns (given, not from the lab); { near, far, all }
@@ -135,6 +136,7 @@ function widget:GameFrame(f)
 			tostring(armed) .. " " .. tostring(name))
 		local x, z, sx, sy, vsx = aimPoint()
 		aimX, aimZ = x, z
+		camAim = Spring.GetCameraState()
 		write(sx and string.format("aim %d %d %d\n", sx, sy, vsx) or "aim nil nil nil\n")
 		Spring.Echo("[factorytest] aim: " .. tostring(sx) .. "," .. tostring(sy) .. " of " .. tostring(vsx))
 		go("aim", f)
@@ -148,6 +150,16 @@ function widget:GameFrame(f)
 			local a = F.aim
 			local d = a.x and math.sqrt((a.x - aimX) ^ 2 + (a.z - aimZ) ^ 2) or 999
 			check("the map tapped: the lab's preset STRAFE there", F.id == 1 and d < 120, string.format("%.0f elmos off", d))
+			-- (where it went, and the camera then against the aim's: a camera that moved between the aim and the tap)
+			local cs, ca = Spring.GetCameraState(), camAim or {}
+			local mx, my = Spring.GetMouseState()
+			local _, pos = Spring.TraceScreenRay(mx, my, true)
+			Spring.Echo(string.format("[factorytest] (the preset at %s,%s, the aim %d,%d; the pointer %d,%d on %s; camera at "
+				.. "the aim %s,%s dist %s ry %s, now %s,%s dist %s ry %s)", tostring(a.x and math.floor(a.x)),
+				tostring(a.z and math.floor(a.z)), aimX, aimZ, mx, my, pos and string.format("%d,%d", pos[1], pos[3]) or "nil",
+				tostring(ca.px and math.floor(ca.px)), tostring(ca.pz and math.floor(ca.pz)),
+				tostring(ca.dist and math.floor(ca.dist) or ca.height), tostring(ca.ry), tostring(cs.px and math.floor(cs.px)),
+				tostring(cs.pz and math.floor(cs.pz)), tostring(cs.dist and math.floor(cs.dist) or cs.height), tostring(cs.ry)))
 			for _ = 1, 5 do
 				Spring.GiveOrderToUnit(lab, -pawnDef, {}, 0)
 			end

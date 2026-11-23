@@ -7,7 +7,7 @@
 # conversion knob left alone). The test widget
 # (tools\dock-phone-test\bardroid_dock_test.lua) finds the spots and checks each case; the taps' places come from the
 # dock's own file (bardroid_dock.txt) and the build menu's (bardroid_place.txt). "Play upright" is on for the run and
-# off after. Nothing on the laptop: it runs any time. About 3 minutes.
+# put back after. Nothing on the laptop: it runs any time. About 3 minutes.
 #   powershell -ExecutionPolicy Bypass -File tools\dock-phone-test.ps1 [-Shots]
 # -Shots: screenshots of the placing panel, the D-gun mode and a preset armed, build\dock-*.png (to judge the dock's look)
 param([switch]$Shots)
@@ -78,6 +78,7 @@ if ($stray) { "[docktest] warning: widgets on the phone that are not the app's (
 # ("Turn with the phone" off for the run, back as it was after: on, the game follows how the phone lies, and the dev
 # phone lying sideways ran this upright test on the sideways dock, whose taps it does not expect: the menu "4.3 s"
 # late, no PLACE; 2026-11-19)
+$portraitWas = (InApp "grep -o 'name=.portrait. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'   # (put back after, as the player had it: forced off after, it left factory-preset-test sideways, 2026-11-22)
 $turnWas = (InApp "grep -o 'name=.turnWithPhone. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'
 AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
   "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
@@ -427,7 +428,7 @@ try {
   Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   & $adb shell am force-stop $pkg
-  AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
+  AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"$(if ($portraitWas) { 'true' } else { 'false' })`"/' shared_prefs/bardroid.xml`n" +
     $(if ($turnWas) { "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"true`"/' shared_prefs/bardroid.xml`n" } else { "" }) +
     "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_docktest.txt $cfg/bardroid_docktest_cmd.txt`n")
 }

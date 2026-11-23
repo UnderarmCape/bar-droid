@@ -4,7 +4,7 @@
 # stick held through WG.BarDroidPadDgun; the D-gun mode with the dock's stick held by a finger (this script's adb motion
 # events, "do <n> stick <x> <y> <vsx>": the way to push it, thousandths). It logs each run's time, mean and top speed,
 # the frames under half speed and the move orders, and each D-gun run's speed as a share of the plain move's.
-# "Play upright" on for the run, off after. Nothing on the laptop: it runs any time. About 3 minutes.
+# "Play upright" on for the run, put back after. Nothing on the laptop: it runs any time. About 3 minutes.
 #   powershell -ExecutionPolicy Bypass -File tools\dgun-speed-test.ps1
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
@@ -30,6 +30,7 @@ function MenuOpen { return "$(InApp "head -n 1 $cfg/bardroid_dock.txt 2>/dev/nul
 $stray = Get-StrayWidgets $adb @("bardroid_dgun_speed_test.lua")
 if ($stray) { "[dguntest] warning: widgets on the phone that are not the app's (they run in the test's game): $($stray -join ', ')" }
 # ("Turn with the phone" off for the run, as dock-phone-test.ps1: the dev phone lying sideways would run it sideways)
+$portraitWas = (InApp "grep -o 'name=.portrait. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'   # (put back after, as the player had it: forced off after, it left factory-preset-test sideways, 2026-11-22)
 $turnWas = (InApp "grep -o 'name=.turnWithPhone. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'
 AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
   "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
@@ -87,7 +88,7 @@ try {
     ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
 } finally {
   & $adb shell am force-stop $pkg
-  AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
+  AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"$(if ($portraitWas) { 'true' } else { 'false' })`"/' shared_prefs/bardroid.xml`n" +
     $(if ($turnWas) { "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"true`"/' shared_prefs/bardroid.xml`n" } else { "" }) +
     "rm -f $widget files/bar/dev-springsettings.cfg $cfg/bardroid_dguntest.txt $cfg/bardroid_dguntest_cmd.txt`n")
 }
