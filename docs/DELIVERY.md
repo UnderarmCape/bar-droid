@@ -177,6 +177,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    notes: about 12 minutes and 3 GB on home Wi-Fi before the first game, about 2.7 GB on the phone after.
 10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
     low-memory kills and thermal steps counted, no new fault class. (coordinator)
+    2026-11-23 00:28: the first try ended each chunk at once (error 21): the server replays' map was gone after item 9's
+    run and the bench mode downloads nothing; the container cannot download from adb either (run-as has no network).
+    tools/soak-phone.ps1 now plays only the replays the phone has the content for (tools/demo-info.py), and fills the
+    other chunks with BARb against BARb, watched (b7a788ba): the server replays need their BAR version and maps fetched
+    through the app first (the lobby's Replays tab) to count. Running from 00:44: six AI chunks on Starwatcher, the
+    phone engine, 29-30 fps in the first minutes.
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
     pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
     (coordinator)
