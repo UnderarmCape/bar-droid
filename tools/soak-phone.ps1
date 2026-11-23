@@ -172,6 +172,7 @@ $total = @{ fault = 0; lowmem = 0; errors = 0; fails = 0 }
 try {
 for ($i = 0; $i -lt $Chunks; $i++) {
   $kind = $plan[$i]
+  $bat0 = Wait-PhoneCharge $adb $Device   # (the battery: a night of chunks emptied it, 2026-11-23 07:10)
   $taken = & $lockTool take $Who -Minutes ($ChunkMinutes + 5)
   if ("$(& $adb -s $Device get-state 2>$null)".Trim() -ne "device") {
     $total.fails++; Say "FAIL  chunk $($i + 1): the phone not on adb, $(Get-Date -Format 'HH:mm'): the soak stopped"
@@ -238,6 +239,7 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     # (a replay's: whether the phone kept up with the game at 1x, bardroid_bench.lua's summary at its end)
     $keptUp = "$(InApp "grep -a -o 'speed min x[0-9.]*, median x[0-9.]*; below x0.95 [0-9]*%' files/bar/infolog.txt 2>/dev/null | tail -1")".Trim()
     if ($keptUp) { $fpsText += "; $keptUp of the time" }
+    $fpsText += "; battery $bat0 -> $(Wait-PhoneCharge $adb $Device -Low 0) %"
     $lowmem = LowMemorySince $since
     $total.fault += $faults; $total.lowmem += $lowmem; $total.errors += $errors
     # (known classes: the driver's refusal, a low-memory kill; anything else that ended a chunk early is new)

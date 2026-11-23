@@ -128,6 +128,24 @@ function Set-PhoneAwake([string]$adb, [string]$device = "") {
   $on = if ($device) { @("-s", $device) } else { @() }
   & $adb @on shell "input keyevent KEYCODE_WAKEUP; wm dismiss-keyguard" | Out-Null
 }
+# The dev phone's battery before a long run: a game draws more than the laptop's USB gives (-1.3 A at 12 % on USB), and
+# after ~7.5 hours of soak and trains the phone ran out mid-replay (2026-11-23 07:10; it came back at 07:53 from charging,
+# "reboot,lpm"). Under $Low % it waits, the phone idle and charging (~+0.65 A: ~4 % in 15 min), until $Resume %, with
+# a line every 15 minutes; call it before taking the lock, never while holding it. Its level, or -1 when unknown.
+function Wait-PhoneCharge([string]$adb, [string]$device = "", [int]$Low = 30, [int]$Resume = 45) {
+  $on = if ($device) { @("-s", $device) } else { @() }
+  $level = { $v = -1; foreach ($l in (& $adb @on shell dumpsys battery 2>$null)) { if ("$l" -match '^\s*level:\s*(\d+)') { $v = [int]$Matches[1] } }; $v }
+  $now = & $level
+  if ($now -lt 0 -or $now -ge $Low) { return $now }
+  Write-Host "[battery] the dev phone at $now %: charging to $Resume % before the run (a game drains it faster than USB fills it)"
+  $since = Get-Date
+  while ($now -ge 0 -and $now -lt $Resume) {
+    Start-Sleep 60
+    $now = & $level
+    if (((Get-Date) - $since).TotalMinutes -ge 15) { Write-Host "[battery] $now %"; $since = Get-Date }
+  }
+  $now
+}
 # The game screen (GameActivity: a game, or the lobby, which it shows too) in front before a test's tap by hand: a game
 # closed under a test (the GPU driver's fault brings the launcher up with its result) took the test's next taps, and
 # they switched the launcher's "Open the lobby when the app starts" off (2026-11-21). Throws instead, the line starting

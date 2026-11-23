@@ -90,7 +90,7 @@ function LowMemorySince([string]$since) {   # (Android's exit records, newest fi
   $false
 }
 $held = $false
-function Take { if (-not $script:held) { & powershell -ExecutionPolicy Bypass -File $lockTool take $Who -Minutes 50 | Out-Host; $script:held = $true; $script:heldSince = Get-Date } }
+function Take { if (-not $script:held) { Wait-PhoneCharge $adb $Device | Out-Null; & powershell -ExecutionPolicy Bypass -File $lockTool take $Who -Minutes 50 | Out-Host; $script:held = $true; $script:heldSince = Get-Date } }
 function Free { if ($script:held) { & powershell -ExecutionPolicy Bypass -File $lockTool free $Who | Out-Host; $script:held = $false } }
 
 # ------------------------------------------------------------------------------------------------ the train's build
