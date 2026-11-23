@@ -18,6 +18,7 @@ local com, lab, aimX, aimZ
 local camAim -- (the camera when the aim was named)
 local out = {} -- the Pawns out of the lab, in order
 local firstPlaces -- the first five's places, [unit] = { x, z }
+local hadForm -- (the lab's preset before its own move order: its end proves nothing without one)
 local given, strafe = {}, nil -- the strafe case's Pawns (given, not from the lab); { near, far, all }
 local labDef, pawnDef = UnitDefNames.armlab and UnitDefNames.armlab.id, UnitDefNames.armpw and UnitDefNames.armpw.id
 
@@ -189,21 +190,26 @@ function widget:GameFrame(f)
 		end
 		check("the formation grew with them: eight abreast", hi - lo > 64 * 6, string.format("%.0f elmos wide", hi - lo))
 		-- (and grew around the first five: their places where they were)
-		local moved = 0
+		local moved, had = 0, 0
 		for u, p in pairs(firstPlaces or {}) do
+			had = had + 1
 			local s = F and F.slots[u]
 			if not s or math.abs(s[1] - p[1]) + math.abs(s[2] - p[2]) > 1 then
 				moved = moved + 1
 			end
 		end
-		check("the first five's places kept as three more joined", moved == 0, moved .. " moved")
+		-- (five places to compare: none read 0 moved; vacuous-pass audit, 2026-11-23)
+		check("the first five's places kept as three more joined", had == 5 and moved == 0, moved .. " of " .. had .. " moved")
 		-- (the lab's own move order: its preset ends, its next units do as BAR does)
+		local B = WG.BarDroidPresets
+		hadForm = B and B.factoryForm(lab) ~= nil or false
 		local lx, ly, lz = Spring.GetUnitPosition(lab)
 		Spring.GiveOrderToUnit(lab, CMD.MOVE, { lx + 100, ly, lz + 100 }, 0)
 		go("rally", f)
 	elseif stage == "rally" and f - stageAt > 30 then
 		local B = WG.BarDroidPresets
-		check("the lab given its own move order: its preset ends", not (B and B.factoryForm(lab)))
+		check("the lab given its own move order: its preset ends", hadForm and B and not B.factoryForm(lab) or false,
+			"a preset before the order " .. tostring(hadForm))
 		-- (Kailil, 2026-11-20: a sent preset's units begin the strafing as each arrives, not once all are there: two Pawns
 		-- given at the aim, two ~1100 elmos off, all four sent STRAFE there)
 		local lx, _, lz = Spring.GetUnitPosition(lab)
@@ -239,9 +245,11 @@ function widget:GameFrame(f)
 		for _, u in ipairs(strafe.near) do
 			nearOn = nearOn + (sway(u) and 1 or 0)
 		end
-		for _, u in ipairs(strafe.far) do
+		for _, u in ipairs(strafe.far) do -- (on their way: moving, not idle where they were given)
 			local x, _, z = Spring.GetUnitPosition(u)
-			if x and not sway(u) and math.sqrt((x - aimX) ^ 2 + (z - aimZ) ^ 2) > 300 then
+			local vx, _, vz = Spring.GetUnitVelocity(u)
+			if x and not sway(u) and math.sqrt((x - aimX) ^ 2 + (z - aimZ) ^ 2) > 300 and vx
+				and math.sqrt(vx * vx + vz * vz) * 30 > 10 then
 				farGoing = farGoing + 1
 			end
 		end
@@ -250,8 +258,9 @@ function widget:GameFrame(f)
 		go("strafeall", f)
 	elseif stage == "strafeall" then
 		local on = 0
-		for _, u in ipairs(strafe.all) do
-			on = on + (sway(u) and 1 or 0)
+		for _, u in ipairs(strafe.all) do -- (swaying there: at the aim, not on the way)
+			local x, _, z = Spring.GetUnitPosition(u)
+			on = on + ((sway(u) and x and math.sqrt((x - aimX) ^ 2 + (z - aimZ) ^ 2) < 400) and 1 or 0)
 		end
 		if on == #strafe.all or f - stageAt > 30 * 40 then
 			check("the far two there too: all four side to side", on == #strafe.all and on == 4, on .. " of " .. #strafe.all)
