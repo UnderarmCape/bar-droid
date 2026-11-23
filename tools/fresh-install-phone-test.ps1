@@ -77,7 +77,8 @@ try {
     if (-not $installedAt -and "$(InApp "grep -a -c '\[svc\] installed' files/logs/launcher.log 2>/dev/null")".Trim() -ne "0") {
       $installedAt = Get-Date
     }
-    $fail = "$(InApp "grep -a -E '\[svc\] (install failed|launch failed|no map|X server did not|virgl server did not)' files/logs/launcher.log 2>/dev/null | tail -1")".Trim()
+    # (an engine that ended before its first frame too: the first run waited out its minutes after one, 2026-11-22)
+    $fail = "$(InApp "grep -a -E '\[svc\] (install failed|launch failed|no map|X server did not|virgl server did not|game ended with an error)' files/logs/launcher.log 2>/dev/null | tail -1")".Trim()
     if ($fail) { $failed = $fail; break }
     if ("$(InApp "grep -a -m1 -E '\[f=0*[1-9][0-9]*\]' files/bar/infolog.txt 2>/dev/null")".Trim()) { $frameAt = Get-Date; break }
   }
@@ -91,9 +92,16 @@ try {
   $extGb = if ($ext -match '^(\d+)') { [math]::Round([long]$Matches[1] / 1MB, 2) } else { "?" }
   $apkKb = "$(& $adb -s $Device shell "du -sk `$(dirname `$(pm path $pkg | head -1 | cut -d: -f2)) 2>/dev/null | tail -1")".Trim()
   $apkMb = if ($apkKb -match '^(\d+)') { [math]::Round([long]$Matches[1] / 1KB, 0) } else { "?" }
+  # which engine played the first game: the phone engine the APK carries, unless launch-bar.sh set it aside (a new
+  # container once lacked a library it links: the first game ended in 127, the official engine ran from then on)
+  $phoneLine = "$(InApp "grep -a -E '\[launch\] (phone engine:|!!! phone engine)' files/logs/launcher.log 2>/dev/null | tail -1")".Trim()
+  $setAside = "$(InApp "cat files/bar/.bardroid-phone-failed 2>/dev/null")".Trim()
+  $hasPhone = "$(InApp "ls -d files/bar/engine/*-phone 2>/dev/null")".Trim()
   if ($failed) { Say "FAIL the first run: $failed" }
   elseif (-not $frameAt) { Say "FAIL the first run: no game frame within $($Minutes - 10) min (last: $lastStatus)" }
   else { Say "PASS the first run: installed after $installMin min, the first game's first frame after $gameMin min" }
+  if ($hasPhone -and ($setAside -or $phoneLine -match '!!!')) { Say "FAIL the phone engine set aside: $phoneLine" }
+  elseif ($hasPhone) { Say "PASS the first game on the phone engine: $phoneLine" }
   Say "space after: the app's data $files GB (container $rootfs GB, BAR $bar GB), shared storage $extGb GB, the APK $apkMb MB"
 } finally {
   # 3. the player's things back, whatever happened above
