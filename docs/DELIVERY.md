@@ -220,6 +220,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
     says whether the phone kept up at 1x (2ddb7aab). Two 8v8s (Bismuth Valley 34 min, Hyperion Shale 44 min) are queued
     after the full set on 379e98bc; "a long Medium game": the BARb-against-BARb games stand in (heavier: two armies
     the phone draws and simulates, no player).
+    The replay part, 06:41 on 379e98bc (All That Glitters 57 min, Supreme Isthmus 30 min, both 8v8 of 2026-11-23): NOT
+    DONE. The dev phone left adb (USB and Wi-Fi, no ping) ~07:12, 30 min into the first; the soak wrote both chunks
+    down as PASS from empty answers (fixed: 567e9915; build\phone-round\20261123-0640-soak.txt marked INVALID). The
+    Fold7 was offline from 06:45 as well: most likely both went with Kailil. Once the phone is back: its uptime says
+    whether it reset at ~07:12 (a new fault class if so; the 2026-11-03 reset was a plain skirmish), then the two
+    replays again.
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
     pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
     (coordinator)
