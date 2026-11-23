@@ -264,7 +264,9 @@ The first version meant for other people's phones: everything since the first bu
   back in the next smaller game. Builders' nano spray is the engine's, at most 1000 particles (BAR's 3D spray kept at
   least 5000 and cost ~2 ms a frame in a late 8v8).
 - Joining a running game catches up without drawing, with an estimate of the time left; the game stops drawing while
-  its screen is hidden; a floating window when you leave the game.
+  its screen is hidden; a floating window when you leave the game. A paused game no longer counts the pause as time
+  behind: after a pause of half a minute or more the screen no longer goes black "catching up", and AUTO RETREAT no
+  longer ignores the first seconds of hits after any pause.
 - **Share logs** in the launcher (an online game's join password, which the game writes into its log, taken out of
   the zip), and a Benchmark button (BAR's "Benchmark BAR" scenario); GL check and the
   Benchmark show their result in the launcher, and a game that fails to start says so there. The launcher's
