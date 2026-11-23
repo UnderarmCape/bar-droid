@@ -154,6 +154,9 @@ local function write()
 		pausedBy = nil
 	end
 	add(string.format("t %d %d %.2f", now(), paused and 1 or 0, speed or 0))
+	-- (what the app's widgets take for a catch-up: bardroid_retreat.lua gives no order while it says so)
+	local cu = WG.BarDroidCatchingUp
+	add("catchup " .. (cu and (cu() and "1" or "0") or "-"))
 	local vsx, vsy = Spring.GetViewGeometry()
 	add("scr " .. vsx .. " " .. vsy)
 	local mc, ms, _, mi, me = Spring.GetTeamResources(myTeam, "metal")
