@@ -21,15 +21,15 @@
    "2026-11-19": 1377,
    "2026-11-20": 40128,
    "2026-11-21": 19875,
-   "2026-11-22": 6594
+   "2026-11-22": 12845
   },
-  "claude_s": 95602,
+  "claude_s": 101854,
   "first": "2026-11-07T06:44:27.694000+00:00",
   "interrupts": 0,
-  "last": "2026-11-22T14:15:17.832000+00:00",
-  "messages": 44,
+  "last": "2026-11-22T22:27:48.972000+00:00",
+  "messages": 47,
   "title": "AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb",
-  "tool_calls": 3420
+  "tool_calls": 3589
  },
  "24199e1e-f507-4f63-aa76-60dec850a08c": {
   "claude_by_day": {
@@ -67,6 +67,19 @@
   "messages": 0,
   "title": "Mouse and keyboard support (Bluetooth, USB-C dock)",
   "tool_calls": 227
+ },
+ "5405baf6-6017-4d7b-a18b-ee62d940c64a": {
+  "claude_by_day": {
+   "2026-11-22": 30233,
+   "2026-11-23": 11232
+  },
+  "claude_s": 41465,
+  "first": "2026-11-22T14:50:47.291000+00:00",
+  "interrupts": 0,
+  "last": "2026-11-23T12:21:25.651000+00:00",
+  "messages": 0,
+  "title": "BAR Droid: fix the touch playtest's findings",
+  "tool_calls": 1538
  },
  "55a0bad9-91de-4300-8b4d-d28ae8504547": {
   "claude_by_day": {
@@ -200,15 +213,16 @@
    "2026-11-19": 80572,
    "2026-11-20": 70901,
    "2026-11-21": 77503,
-   "2026-11-22": 35288
+   "2026-11-22": 68213,
+   "2026-11-23": 11610
   },
-  "claude_s": 1640903,
+  "claude_s": 1685438,
   "first": "2026-10-26T04:14:36.131000+00:00",
-  "interrupts": 3,
-  "last": "2026-11-22T14:47:53.799000+00:00",
-  "messages": 444,
+  "interrupts": 4,
+  "last": "2026-11-23T12:21:25.641000+00:00",
+  "messages": 452,
   "title": "BAR Android port",
-  "tool_calls": 53374
+  "tool_calls": 54471
  },
  "fe628d0c-b165-4c20-92d3-03ed36ea7d75": {
   "claude_by_day": {
