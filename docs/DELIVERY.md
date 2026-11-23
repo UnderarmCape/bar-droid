@@ -153,7 +153,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    copy again beside BAR's own. Fixed: the menu watch also switches the copy off (DisableWidget, saved); the same run
    with it: game 2 BAR's own alone, showing the commander's options, ALL PASS. Seen meanwhile (not changed): sideways on
    a wide phone the dock has its own build grid, and BAR's own menu, once switched on, shows beside it.
-8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
+8. [x] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
    enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
    reopened in PLAYTEST.md with touch-log rows. (coordinator)
    2026-11-22 (PLAYTEST.md "in-play tours"): FIXED+PLAY: the pre-game hint, QUEUE row and "+ QUEUE", INSERT on the
@@ -172,6 +172,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    0-19 %, the commander dead first in 2 runs): they are now removed for the retreat's watch (god mode for a moment:
    the engine's /remove takes the picked units, whatever its arguments) and fresh ones met by the Fight; 06:02-06:06
    two runs ALL PASS, the Fight back at 42 %, "COMMANDER AT 28 %: PULL IT BACK" on the dock at the first hit under 30 %.
+   DONE (coordinator, 2026-11-23): every one FIXED+PLAY in PLAYTEST.md's tour table, the commander warning and AUTO
+   RETREAT by retreat-phone-test -Commander's runs (a real game on the dev phone, the dock as players see it; the one
+   late retreat in nine is watched by the case's per-hit lines in the nightly set). None reopened.
 9. [x] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
    minutes and GB recorded for the release notes. (coordinator)
    2026-11-22 22:02 (tools/fresh-install-phone-test.ps1, d3586410/88bca5e9; dea503f5's APK): the backup 459 entries,
