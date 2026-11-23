@@ -173,6 +173,10 @@ try {
 for ($i = 0; $i -lt $Chunks; $i++) {
   $kind = $plan[$i]
   $taken = & $lockTool take $Who -Minutes ($ChunkMinutes + 5)
+  if ("$(& $adb -s $Device get-state 2>$null)".Trim() -ne "device") {
+    $total.fails++; Say "FAIL  chunk $($i + 1): the phone not on adb, $(Get-Date -Format 'HH:mm'): the soak stopped"
+    & $lockTool free $Who | Out-Null; break
+  }
   if ("$taken" -notmatch '^taken') { Say "chunk $($i + 1): the dev phone busy ($taken): waiting 5 min"; Start-Sleep 300; $i--; continue }
   try {
     & $adb -s $Device shell am force-stop $pkg
@@ -194,17 +198,26 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     }
     & $adb -s $Device shell "input keyevent KEYCODE_WAKEUP" | Out-Null
     & $adb -s $Device shell "am start -n $pkg/.LauncherActivity --es start $start" | Out-Null
-    $t0 = Get-Date; $ended = "time"
+    $t0 = Get-Date; $ended = "time"; $gone = $false
     while (((Get-Date) - $t0).TotalMinutes -lt $ChunkMinutes) {
       Start-Sleep 20
+      # (the phone gone from adb: every read below comes back empty, and an empty count once read as "replay done",
+      # 2026-11-23 07:12: two chunks written down as PASS with no engine, fps or thermal line)
+      if ("$(& $adb -s $Device get-state 2>$null)".Trim() -ne "device") { $ended = "the phone gone from adb"; $gone = $true; break }
       $new = "$(@(SinceStart 'engine exited|game ended|lack of memory|no map') | Select-Object -Last 1)".Trim()
-      if ("$(InApp "grep -a -c 'replaybench\] done' files/bar/infolog.txt 2>/dev/null")".Trim() -ne "0") { $ended = "replay done"; break }
-      if ($kind -eq "ai" -and "$(InApp "grep -a -c '\[soak\] game over' files/bar/infolog.txt 2>/dev/null")".Trim() -ne "0") { $ended = "game over"; break }
+      if ("$(InApp "grep -a -c 'replaybench\] done' files/bar/infolog.txt 2>/dev/null")".Trim() -match '^[1-9]') { $ended = "replay done"; break }
+      if ($kind -eq "ai" -and "$(InApp "grep -a -c '\[soak\] game over' files/bar/infolog.txt 2>/dev/null")".Trim() -match '^[1-9]') { $ended = "game over"; break }
       if ($new -match 'lack of memory') { $ended = "Android ended the app for memory"; break }
       if ($new -match 'engine exited \(([1-9]\d*)\)|game ended with an error|no map') { $ended = "the engine's error exit: $new"; break }
       if (-not "$(& $adb -s $Device shell pidof $pkg)".Trim()) { $ended = "the app gone"; break }
     }
     $minutes = [math]::Round(((Get-Date) - $t0).TotalMinutes, 1)
+    if ($gone) {   # (nothing to read: the chunk a FAIL, the soak over)
+      $total.fails++
+      Say ("FAIL  chunk {0} ({1}): the phone gone from adb after {2} min, {3} (unplugged, or the phone reset: its uptime says which once back)" -f
+        ($i + 1), $label, $minutes, (Get-Date -Format 'HH:mm'))
+      break
+    }
     $log = @(SinceStart)
     # (which engine played: the phone engine unless launch-bar.sh set it aside, which is a fault of its own)
     $setAside = @($log | Where-Object { $_ -match '\[launch\] !!! phone engine' }).Count
