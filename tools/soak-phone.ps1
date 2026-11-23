@@ -32,6 +32,16 @@ $result = Join-Path $resultDir "$(Get-Date -Format 'yyyyMMdd-HHmm')-soak.txt"
 function Say([string]$line) { Write-Host $line; Add-Content -Encoding utf8 $result $line }
 function InApp([string]$command) { & $adb -s $Device exec-out run-as $pkg sh -c $command }
 function Lines([string]$file) { $n = 0; [void][int]::TryParse("$(InApp "wc -l < $file 2>/dev/null")".Trim(), [ref]$n); $n }
+# launcher.log's lines since the chunk's start ($from lines then, its first line $head0), [-E filter]: the app puts a
+# full log aside as launcher.old.log at its start and every 2000 lines, so a chunk's start can be in that one (2026-11-23
+# chunk 4 read a log begun mid-game: "official engine, the AI start script not applied" for a game the phone engine
+# played as BARb against BARb)
+function SinceStart([string]$filter = "") {
+  $rotated = "$(InApp "head -1 files/logs/launcher.log 2>/dev/null")".Trim() -ne $head0
+  $cmd = if ($rotated) { "{ tail -n +$($from + 1) files/logs/launcher.old.log; cat files/logs/launcher.log; }" } else { "tail -n +$($from + 1) files/logs/launcher.log" }
+  if ($filter) { $cmd += " | grep -a -E '$filter'" }
+  @(InApp "$cmd 2>/dev/null")
+}
 function LowMemorySince([string]$since) {   # (Android's exit records, newest first; as tools\phone-round.ps1)
   $ts = ""; $n = 0
   foreach ($l in (& $adb -s $Device shell dumpsys activity exit-info $pkg)) {
@@ -168,6 +178,7 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     & $adb -s $Device shell am force-stop $pkg
     $since = "$(& $adb -s $Device shell "date '+%Y-%m-%d %H:%M:%S'")".Trim()   # (one string: adb split the format at its space)
     $from = Lines "files/logs/launcher.log"
+    $head0 = "$(InApp "head -1 files/logs/launcher.log 2>/dev/null")".Trim()
     InApp "rm -f files/bar/infolog.txt files/bar/.bardroid-bench-settings files/bar/.bardroid-bench-replay" | Out-Null
     if ($kind -eq "ai") {
       Send-AppFile $adb $devEnv "files/bar/dev-env.sh" $Device
@@ -186,9 +197,7 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     $t0 = Get-Date; $ended = "time"
     while (((Get-Date) - $t0).TotalMinutes -lt $ChunkMinutes) {
       Start-Sleep 20
-      $now = Lines "files/logs/launcher.log"
-      $st = if ($now -lt $from) { 1 } else { $from + 1 }   # (the log put aside as launcher.old.log meanwhile: all of it)
-      $new = "$(InApp "tail -n +$st files/logs/launcher.log | grep -a -E 'engine exited|game ended|lack of memory|no map' | tail -1")".Trim()
+      $new = "$(@(SinceStart 'engine exited|game ended|lack of memory|no map') | Select-Object -Last 1)".Trim()
       if ("$(InApp "grep -a -c 'replaybench\] done' files/bar/infolog.txt 2>/dev/null")".Trim() -ne "0") { $ended = "replay done"; break }
       if ($kind -eq "ai" -and "$(InApp "grep -a -c '\[soak\] game over' files/bar/infolog.txt 2>/dev/null")".Trim() -ne "0") { $ended = "game over"; break }
       if ($new -match 'lack of memory') { $ended = "Android ended the app for memory"; break }
@@ -196,9 +205,7 @@ for ($i = 0; $i -lt $Chunks; $i++) {
       if (-not "$(& $adb -s $Device shell pidof $pkg)".Trim()) { $ended = "the app gone"; break }
     }
     $minutes = [math]::Round(((Get-Date) - $t0).TotalMinutes, 1)
-    $now = Lines "files/logs/launcher.log"
-    $st = if ($now -lt $from) { 1 } else { $from + 1 }
-    $log = @(InApp "tail -n +$st files/logs/launcher.log")
+    $log = @(SinceStart)
     # (which engine played: the phone engine unless launch-bar.sh set it aside, which is a fault of its own)
     $setAside = @($log | Where-Object { $_ -match '\[launch\] !!! phone engine' }).Count
     $engine = if ($setAside) { "the phone engine SET ASIDE" } elseif (@($log | Where-Object { $_ -match '\[launch\] phone engine:' })) { "phone engine" } else { "official engine" }
