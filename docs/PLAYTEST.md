@@ -462,5 +462,8 @@ cb78d317 and 86012f7f, dev phone upright, by the driver's touches (tools/playtes
 Small findings (not blockers): the "TAP CORTEX AGAIN" note stays its 3 s after the switch went through; PLACE shows
 "+ QUEUE" but nothing for INSERT; the D-gun ring stands at its reach on the line through a tapped enemy, not on it; a
 map tap with the dock's home grid open did not pick the commander under it (COMMANDER did).
+The first three fixed (62ed4996, a5b70023). The fourth is not the dock's: dock-phone-test now taps the commander's
+body with the home grid open and it is picked (a87c97ad, dev phone 12:40); the tour's own tap, 16 display pixels left
+of and 31 below the feet (the driver aims at the feet, with noise), picks nothing there either: the driver's aim.
 
 
