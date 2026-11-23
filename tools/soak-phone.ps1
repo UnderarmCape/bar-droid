@@ -238,7 +238,20 @@ for ($i = 0; $i -lt $Chunks; $i++) {
     $fpsText = if ($fps) { "fps min $([math]::Round(($fps | Measure-Object -Minimum).Minimum, 1)), mean $([math]::Round(($fps | Measure-Object -Average).Average, 1)) over $($fps.Count) lines" } else { "no fps lines" }
     # (a replay's: whether the phone kept up with the game at 1x, bardroid_bench.lua's summary at its end)
     $keptUp = "$(InApp "grep -a -o 'speed min x[0-9.]*, median x[0-9.]*; below x0.95 [0-9]*%' files/bar/infolog.txt 2>/dev/null | tail -1")".Trim()
-    if ($keptUp) { $fpsText += "; $keptUp of the time" }
+    $clockText = ""
+    if (-not $keptUp -and $kind -ne "ai") {
+      # (a chunk ended by its time before the replay did has no summary: the same figures from the bench's own lines,
+      # the settling ones left out, and the game clock it reached)
+      $lines = @(InApp "grep -a -E '^.*\[replaybench\] [0-9:]+ x[0-9.]+ ' files/bar/infolog.txt 2>/dev/null | grep -a -v settling" |
+        ForEach-Object { if ("$_" -match '\[replaybench\] ([0-9:]+) x([0-9.]+) ') { [pscustomobject]@{ Clock = $Matches[1]; Speed = [double]$Matches[2] } } })
+      if ($lines) {
+        $sorted = @($lines.Speed | Sort-Object)
+        $below = @($sorted | Where-Object { $_ -lt 0.95 }).Count
+        $keptUp = "speed min x{0:0.00}, median x{1:0.00}; below x0.95 {2}%" -f $sorted[0], $sorted[[math]::Floor(($sorted.Count - 1) / 2)], [math]::Round(100 * $below / $sorted.Count)
+        $clockText = "; the game clock at $($lines[-1].Clock) when the chunk ended"
+      }
+    }
+    if ($keptUp) { $fpsText += "; $keptUp of the time$clockText" }
     $fpsText += "; battery $bat0 -> $(Wait-PhoneCharge $adb $Device -Low 0) %"
     $lowmem = LowMemorySince $since
     $total.fault += $faults; $total.lowmem += $lowmem; $total.errors += $errors

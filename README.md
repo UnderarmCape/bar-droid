@@ -35,9 +35,9 @@ A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Ge
 RAM and about 6 GB free. Tested on a Galaxy Z Fold7 (Android 17). 8 GB phones get a low-memory mode (plainer unit
 shading, no shore foam or ground scorch marks, skirmish on a smaller map until you pick one): on a Galaxy S23 Ultra
 (8 GB) BAR's own benchmark battle runs through every time (slowly: about 12 fps), and so do skirmishes on that map; on
-a big map about 1 in 3 is closed by Android for lack of memory, so close other apps first. A replay of an online 8v8
-kept pace with the game there for the 26 minutes measured, at about 16 fps (8-11 late, the GPU held back by heat);
-joining online games on it is untested. Phones with Mali,
+a big map about 1 in 3 is closed by Android for lack of memory, so close other apps first. Replays of online 8v8s
+play there at about 15-20 fps (under 10 in the late fights, the GPU held back by heat); one kept pace with the game,
+another fell behind it about a third of the time late on. Joining online games on it is untested. Phones with Mali,
 Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check says so.
 
 ## Install

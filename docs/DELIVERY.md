@@ -199,7 +199,7 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    the space after: the app's data 2.69 GB (container 0.37 GB, BAR 2.32 GB: the game 3.4 GB packed, the lobby, the
    first map), the APK 34 MB; the backup (459 entries, 3.0 GB) put back, the permissions as before. For the release
    notes: about 12 minutes and 3 GB on home Wi-Fi before the first game, about 2.7 GB on the phone after.
-10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
+10. [x] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
     low-memory kills and thermal steps counted, no new fault class. (coordinator)
     2026-11-23 00:28: the first try ended each chunk at once (error 21): the server replays' map was gone after item 9's
     run and the bench mode downloads nothing; the container cannot download from adb either (run-as has no network).
@@ -234,6 +234,18 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
     x0.95), fps mean 15.9, 8-11 from minute ~22 with ~2,570 units; the GPU at its thermal cap (295-348 MHz, levels 6-7,
     96-99 % busy), thermal status 2, 660 MB available, no driver refusal or low-memory kill. The two replays again once
     charged.
+    The replay part, about 10:25-11:48 on 379e98bc (build\phone-round\20261123-0833-soak.txt; the soak waited from 21 % to
+    45 %): both PASS on the phone engine, driver refusals 0, low-memory kills 0, engine errors 0. All That Glitters ran
+    its 40 minutes (the chunk's time before the replay's 57), fps mean 19.7, min 7.4, thermal status 2, battery 45 ->
+    41 %. Supreme Isthmus played to its end (replay done at 39.7 min): fps mean 15.4, min 4, thermal status 3 once,
+    battery 41 -> 37 %; the phone did not keep up with the 30-minute game at 1x all through: median x1.00, but under
+    x0.95 34 % of the time and down to x0.17 at its worst (the late fights; a spectator falls behind and catches up
+    after, a player in such a game would feel it). A performance limit already in README's Known list, not a new fault
+    class. A chunk that ends by its time has no summary of its own: soak-phone now reads the same figures from the
+    bench's lines and says the game clock it reached.
+    DONE: eight chunks (six AI games, two server 8v8 replays), 0 driver refusals, 0 low-memory kills, 0 engine errors,
+    thermal status 2-3; no new fault class. The phone left clean (no dev-env.sh, widget or bench file; its battery 37 %,
+    41 °C at the end).
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
     pre-game QUEUE and faction, a D-gun flick and an enemy tap, the camera knob; his launcher.log read after.
     (coordinator)
