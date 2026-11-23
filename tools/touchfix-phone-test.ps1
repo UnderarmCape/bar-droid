@@ -130,7 +130,7 @@ try {
     $pm = Mid $pz   # (the dock's menu opened by the widget: pausesetup2)
     Tap $pm[0] $pm[1]; Start-Sleep 1; Stage "paused?"; Shot "pause"
     Tap $pm[0] $pm[1]; Start-Sleep 1; Stage "unpaused?"
-  }
+  } else { "[fixtest] FAIL no PAUSE cell to tap on the home grid: $(InApp "grep '^pause' $cfg/bardroid_fixtest.txt")" }
   # 2c. a tap as the dock changes under the finger: down on QUEUE, the selection cleared (the energy bar comes to that
   # place), up: dropped; a tap there a moment later opens the bar's panel, and another closes it
   Stage "guardsetup"; Start-Sleep 1; Stage "guardsetup2"; Start-Sleep -Milliseconds 300
@@ -210,6 +210,8 @@ try {
   Stage "breakmenu"; Start-Sleep 6; Stage "menuback?"; Shot "menuback"
   Stage "end"; Start-Sleep 1
   Report
+  # (a game that ended early, or the test widget removed for an error, stops every stage after it with no FAIL line)
+  if (-not (Log '\[fixtest\] done' 1)) { "[fixtest] FAIL the test did not finish (no done line: the game ended or the widget erred)" }
   # (this game's infolog names the copy as removed: gone, or launch-bar.sh's next start would give the copy's place
   # to BAR's own for these files, for every game after this test)
   & $adb shell am force-stop $pkg

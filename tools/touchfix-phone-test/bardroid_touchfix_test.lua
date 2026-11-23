@@ -415,11 +415,13 @@ local function onCmd(c)
 		write(rectLine("qrect", Pt and Pt.queueRect and Pt.queueRect()))
 	elseif c == "guarddrop" then -- (the finger down on QUEUE: nothing picked now, the energy bar in its place)
 		Spring.SelectUnitArray({})
-		spots.guardAt = Spring.GetTimer()
-	elseif c == "guard?" then
+		spots.dropSeen = false
+	elseif c == "guard?" then -- (the dock's own word that it dropped the tap: no panel alone was also a tap that never came,
+		-- or one QUEUE took before the selection went; vacuous-pass audit, 2026-11-23)
 		local open = Pt and Pt.resPanel and Pt.resPanel()
 		check("a tap lifted on QUEUE's place just after the selection went (the energy bar there now): dropped",
-			open == nil, "panel " .. tostring(open))
+			open == nil and spots.dropSeen == true, "panel " .. tostring(open) .. ", the dock's drop "
+				.. (spots.dropSeen and "said" or "not said"))
 	elseif c == "guardlater?" then
 		local open = Pt and Pt.resPanel and Pt.resPanel()
 		check("... the same place tapped a moment later: the bar there takes it (its panel open)", open ~= nil,
@@ -468,6 +470,10 @@ local function onCmd(c)
 		write(rectLine("qrect", Pt and Pt.queueRect and Pt.queueRect()) .. rectLine("irect", Pt and Pt.insertRect
 			and Pt.insertRect()) .. spotLine("spot1", s1) .. spotLine("spot2", s2) .. spotLine("spot3", s3))
 		Spring.Echo("[fixtest] insert: " .. #solars .. " far Solars queued: " .. queueText(queueOf(com)))
+		-- (with none, a plain click, INSERT doing nothing, also left the wind first: the queue's rest proves the insert)
+		if #solars == 0 then
+			check("INSERT's setup: far Solars in the commander's queue", false, "no buildable spot 700-1600 elmos off")
+		end
 	elseif c == "armwind" then
 		arm(D.armwin)
 	elseif c == "mark1?" or c == "mark2?" then -- (PLACE's corner says what the placement does: the in-play tour)
@@ -478,7 +484,9 @@ local function onCmd(c)
 	elseif c == "insert1?" then
 		local q = queueOf(com)
 		local qOn, iOn = P.queueState()
-		check("INSERT alone on a builder: the wind at the queue's front", q[1] and q[1][1] == D.armwin and near(q[1], spots.s1),
+		check("INSERT alone on a builder: the wind at the queue's front, the far Solars still after it", q[1]
+			and q[1][1] == D.armwin and near(q[1], spots.s1) and #solars > 0 and #q == #solars + 1 and q[2]
+			and q[2][1] == D.armsolar,
 			queueText(q) .. string.format(" (QUEUE %s, INSERT %s)", tostring(qOn), tostring(iOn)))
 	elseif c == "insert2?" then
 		local q = queueOf(com)
@@ -511,8 +519,8 @@ local function onCmd(c)
 			cs.ry = cs.ry + 2.3
 			Spring.SetCameraState(cs, 0)
 			turned = true
-		else
-			Spring.Echo("[fixtest] note: this camera has no turn (" .. tostring(cs.name) .. ")")
+		else -- (the turned-camera AIM cases would run unturned and pass)
+			check("the camera turned for the AIM cases", false, "this camera has no turn (" .. tostring(cs.name) .. ")")
 		end
 	elseif c:match("^aim%? ") then
 		local dx, dy = c:match("^aim%? (%S+) (%S+)")
@@ -694,6 +702,12 @@ local function onCmd(c)
 				M == nil and "none" or M == spots.menuWas and "the copy's" or "BAR's"))
 	elseif c == "end" then
 		Spring.Echo("[fixtest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
+	end
+end
+
+function widget:AddConsoleLine(line)
+	if spots and spots.dropSeen == false and line:find("a tap just after the dock changed: dropped", 1, true) then
+		spots.dropSeen = true
 	end
 end
 
