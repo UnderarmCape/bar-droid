@@ -1284,6 +1284,17 @@ local function dgunTrack(d)
 	if len > 10 then
 		d.aimX, d.aimZ = dx / len, dz / len
 	end
+	-- (the aim's rings drawn there, where the shot meets it, while it is within reach; the shot still goes to the reach
+	-- on that line, through it. They stood at the reach beyond it: the in-play tour, 2026-11-22)
+	d.leadX, d.leadZ, d.leadIn = ux, uz, len <= (d.range or 0)
+end
+
+-- where the aim's rings stand: on a tapped enemy within reach (its led place), else at the reach on the aim's line
+local function dgunRing(d)
+	if d.track and d.leadIn and d.leadX then
+		return d.leadX, Spring.GetGroundHeight(d.leadX, d.leadZ) or d.y, d.leadZ
+	end
+	return d.x, d.y, d.z
 end
 
 local function dgunUpdate()
@@ -1448,8 +1459,9 @@ local function dgunDraw()
 		-- pointed at a spot it ignores, dev phone screenshot 2026-11-11)
 		gl.LineWidth(2.5)
 		gl.Color(1, 0, 0, 0.8)
-		gl.DrawGroundCircle(d.x, d.y, d.z, 32, 24)
-		gl.DrawGroundCircle(d.x, d.y, d.z, 8, 12)
+		local rx, ry, rz = dgunRing(d)
+		gl.DrawGroundCircle(rx, ry, rz, 32, 24)
+		gl.DrawGroundCircle(rx, ry, rz, 8, 12)
 		local tx, ty, tz -- (a tapped enemy the aim follows: a ring round it, dgunTrack)
 		if d.track then
 			tx, ty, tz = Spring.GetUnitPosition(d.track)
@@ -3121,6 +3133,12 @@ function widget:Initialize()
 		end,
 		tracking = function() -- (tools: the enemy the aim follows, or nil)
 			return dgun and dgun.track or nil
+		end,
+		ring = function() -- (tools: where the aim's rings stand, x and z)
+			if dgun and dgun.x then
+				local x, _, z = dgunRing(dgun)
+				return x, z
+			end
 		end,
 	}
 	WG.BarDroidPad = {

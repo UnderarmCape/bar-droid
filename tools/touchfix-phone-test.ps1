@@ -168,9 +168,9 @@ try {
   if ($s["irect"] -and $s["qrect"] -and $s["spot1"] -and $s["spot2"] -and $s["spot3"]) {
     $i = Mid $s["irect"]; $q = Mid $s["qrect"]
     Tap $i[0] $i[1]; Start-Sleep -Milliseconds 800   # INSERT on
-    Stage "armwind"; Tap $s["spot1"][0] $s["spot1"][1]; Start-Sleep -Milliseconds 700; PlaceNow; Stage "insert1?"
+    Stage "armwind"; Tap $s["spot1"][0] $s["spot1"][1]; Start-Sleep -Milliseconds 700; Stage "mark1?"; PlaceNow; Stage "insert1?"
     Tap $q[0] $q[1]; Start-Sleep -Milliseconds 800   # QUEUE on (INSERT still on)
-    Stage "armwind"; Tap $s["spot2"][0] $s["spot2"][1]; Start-Sleep -Milliseconds 700; PlaceNow; Stage "insert2?"
+    Stage "armwind"; Tap $s["spot2"][0] $s["spot2"][1]; Start-Sleep -Milliseconds 700; Stage "mark2?"; PlaceNow; Stage "insert2?"
     Tap $s["spot3"][0] $s["spot3"][1]; Start-Sleep -Milliseconds 700; PlaceNow; Stage "insert3?"
     Tap $q[0] $q[1]; Start-Sleep -Milliseconds 500; Tap $i[0] $i[1]; Start-Sleep -Milliseconds 500   # both off
   } else { "[fixtest] FAIL INSERT's case: no rects or spots: $(InApp "cat $cfg/bardroid_fixtest.txt")" }

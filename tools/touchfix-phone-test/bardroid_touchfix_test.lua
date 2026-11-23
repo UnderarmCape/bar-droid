@@ -293,7 +293,13 @@ local function onCmd(c)
 		if land then
 			tx, tz = (w[1] + land[1]) / 2, (w[2] + land[3]) / 2
 		end
-		Spring.SetCameraTarget(tx, 0, tz, 0)
+		-- (between the two in the middle of the map above the dock: the screen's middle, SetCameraTarget's, is the dock's
+		-- top upright, and the land 147 elmos off lay under it, "in sight false", 2026-11-22)
+		if Pt and Pt.cameraTo then
+			Pt.cameraTo(tx, Spring.GetGroundHeight(tx, tz), tz)
+		else
+			Spring.SetCameraTarget(tx, 0, tz, 0)
+		end
 	elseif c == "twincloser" then -- (no water in sight from there: the camera nearer the water, the twinvoid case's)
 		local w = spots.water
 		local cx, _, cz = Spring.GetUnitPosition(com)
@@ -437,6 +443,11 @@ local function onCmd(c)
 		Spring.Echo("[fixtest] insert: " .. #solars .. " far Solars queued: " .. queueText(queueOf(com)))
 	elseif c == "armwind" then
 		arm(D.armwin)
+	elseif c == "mark1?" or c == "mark2?" then -- (PLACE's corner says what the placement does: the in-play tour)
+		local want = c == "mark1?" and "+ INSERT" or "+ QUEUE  + INSERT"
+		local m = Pt and Pt.placeMark and Pt.placeMark()
+		check("PLACE up with " .. (c == "mark1?" and "INSERT" or "QUEUE and INSERT") .. " on: its corner says " .. want,
+			m == want, "mark " .. tostring(m))
 	elseif c == "insert1?" then
 		local q = queueOf(com)
 		local qOn, iOn = P.queueState()
@@ -512,15 +523,27 @@ local function onCmd(c)
 		local cx, cy, cz = Spring.GetUnitPosition(com)
 		local ax, az = aimNow()
 		local at
-		for _, turn in ipairs({ -90, 90, -135, 135, 180 }) do
-			local r = math.rad(turn)
-			local hx, hz = ax * math.cos(r) - az * math.sin(r), ax * math.sin(r) + az * math.cos(r)
-			local x, z = cx + hx * 230, cz + hz * 230
-			if not at and screenOf(x, z) then
-				at = { x, z }
+		-- (on land a Cortex wind can stand on: by the sea the spot was water now and then, nothing came of the give and
+		-- the case never ran, 2026-11-22)
+		local wind = UnitDefNames.corwin.id
+		for _, dist in ipairs({ 150, 130, 170 }) do -- (well within the D-gun's reach: the rings' check tells the enemy from
+			-- the reach, ~250; at 230 the reach was 22 elmos off it)
+			for _, turn in ipairs({ -90, 90, -135, 135, 180, -45, 45 }) do
+				local r = math.rad(turn)
+				local hx, hz = ax * math.cos(r) - az * math.sin(r), ax * math.sin(r) + az * math.cos(r)
+				local x, z = cx + hx * dist, cz + hz * dist
+				local bx, by, bz = Spring.Pos2BuildPos(wind, x, Spring.GetGroundHeight(x, z), z, 0)
+				if not at and screenOf(x, z) and Spring.GetGroundHeight(x, z) > 2
+					and Spring.TestBuildOrder(wind, bx, by, bz, 0) >= 2 then
+					at = { bx, bz }
+				end
 			end
 		end
 		if foe and at then
+			-- (the commander on hold fire meanwhile: it shot the wind before the tap, 0 seen, the case never ran; put back
+			-- at dgunoff)
+			spots.fireWas = Spring.GetUnitStates(com) and Spring.GetUnitStates(com).firestate
+			Spring.GiveOrderToUnit(com, CMD.FIRE_STATE, { 0 }, 0)
 			Spring.SendCommands(string.format("give 1 corwin %d @%d,%d,%d", foe, at[1], cy, at[2]))
 			spots.foeAt, spots.foeTeam = at, foe
 		else
@@ -580,6 +603,21 @@ local function onCmd(c)
 		check("a tap on an enemy in the D-gun mode: the aim follows it (2 s on)", tracked == foe
 			and foe ~= nil and off <= 15, string.format("following %s (the enemy wind %s), %.0f degrees off",
 			tostring(tracked), tostring(foe), off))
+		-- (the aim's rings on it, within reach; they stood at the reach beyond it: the in-play tour)
+		local Dg = WG.BarDroidPadDgun
+		local rx, rz
+		if Dg and Dg.ring then
+			rx, rz = Dg.ring()
+		elseif Dg and Dg.range and WG.BarDroidPad and WG.BarDroidPad.modal then -- (a build before the rings moved: at the
+			-- reach on the aim's line)
+			local _, _, aimX, aimZ = WG.BarDroidPad.modal()
+			if aimX and Dg.range() then
+				rx, rz = cx + aimX * Dg.range(), cz + aimZ * Dg.range()
+			end
+		end
+		local ringOff = rx and ux and math.sqrt((rx - ux) ^ 2 + (rz - uz) ^ 2)
+		check("... the aim's rings on the enemy, not at the reach beyond it", ringOff ~= nil and ringOff <= 40,
+			string.format("%s elmos from it", tostring(ringOff and math.floor(ringOff))))
 	elseif c == "tapat" then
 		local cx, _, cz = Spring.GetUnitPosition(com)
 		local ax, az = aimNow()
@@ -611,6 +649,9 @@ local function onCmd(c)
 				tostring(still)))
 	elseif c == "dgunoff" then
 		P.act("dgun_cancel")
+		if spots.fireWas then
+			Spring.GiveOrderToUnit(com, CMD.FIRE_STATE, { spots.fireWas }, 0)
+		end
 	elseif c == "breakmenu" then -- (the app's build menu copy broken on purpose: BAR removes it; RC 0.2.0 item 7)
 		local B = WG.bardroidBuildmenu
 		spots.menuWas = B

@@ -3585,10 +3585,16 @@ local function drawPlace()
 		ready and "\255\255\255\255" or "\255\205\225\205", bold)
 	-- (QUEUE on: said on PLACE itself, where the eyes are while placing, "+ QUEUE" in its top left corner. The selection
 	-- row's gold was missed and a placement replaced a long queue; the night's touch playtest, 2026-11-22)
+	-- INSERT the same way (the queue's front: the in-play tour, 2026-11-22, saw "+ QUEUE" and no word for INSERT)
 	local Pd = WG.BarDroidPad
-	if Pd and Pd.queueState and Pd.queueState() and bold then
+	local q, ins = false, false
+	if Pd and Pd.queueState then
+		q, ins = Pd.queueState()
+	end
+	SP.placeMark = (q or ins) and ((q and "+ QUEUE" or "") .. (q and ins and "  " or "") .. (ins and "+ INSERT" or "")) or nil
+	if SP.placeMark and bold then
 		local ts = max(10, floor(min(bh * 0.16, 22)))
-		bold:Print("\255\255\200\064+ QUEUE", p.all[1] + L.pad, p.all[4] - L.pad - ts, ts, "o")
+		bold:Print("\255\255\200\064" .. SP.placeMark, p.all[1] + L.pad, p.all[4] - L.pad - ts, ts, "o")
 	end
 	for _, k in ipairs({ "rotate", "cancel", "walls" }) do
 		local r = p[k]
@@ -6287,6 +6293,9 @@ function widget:Initialize()
 		end,
 		resPanel = function() -- (tools: the metal or energy panel open, or nil)
 			return resPanel
+		end,
+		placeMark = function() -- (tools: the words in PLACE's corner as last drawn, "+ QUEUE", "+ INSERT", both, or nil)
+			return SP.placeMark
 		end,
 		holdTip = function() -- (tools: the held tile's unit, its name and role up; nil: none)
 			return SP.holdTip and SP.holdTip.defID or nil
