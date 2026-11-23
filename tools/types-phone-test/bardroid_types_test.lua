@@ -18,6 +18,13 @@ end
 local OUT, CMD_FILE = "LuaUI/Config/bardroid_typestest.txt", "LuaUI/Config/bardroid_typestest_cmd.txt"
 local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil -- the last action asked of the script; the stage once it is done
+local lastSaid -- (the last-type case: the dock said it kept the type in; nil before the case)
+
+function widget:AddConsoleLine(line)
+	if lastSaid == false and line:find("the list's last type stays in ALL UNITS", 1, true) then
+		lastSaid = true
+	end
+end
 local DEF = {
 	pawn = UnitDefNames.armpw and UnitDefNames.armpw.id,
 	flash = UnitDefNames.armflash and UnitDefNames.armflash.id,
@@ -182,11 +189,15 @@ function widget:GameFrame(f)
 	elseif stage == "hamout?" and f - stageAt > WAIT then
 		local n = picked()
 		check("the Maces held: out, only the Blitzes picked", n.ham == 0 and n.pawn == 0 and n.flash == 2, pickText(n))
+		lastSaid = false
 		ask("hold", (typeCell(DEF.flash)), "laststays?", f)
 	elseif stage == "laststays?" and f - stageAt > WAIT then
+		-- (the dock's own word that it kept the last type in: unchanged alone was also a hold that never reached the dock;
+		-- vacuous-pass audit, 2026-11-23)
 		local n = picked()
-		check("the list's last type held: it stays in, still picked", not outOf(DEF.flash) and n.flash == 2 and n.total == 2,
-			pickText(n) .. ", left out " .. tostring(outOf(DEF.flash)))
+		check("the list's last type held: it stays in, still picked", lastSaid and not outOf(DEF.flash) and n.flash == 2
+			and n.total == 2, pickText(n) .. ", left out " .. tostring(outOf(DEF.flash)) .. ", the dock's keep "
+			.. (lastSaid and "said" or "not said"))
 		ask("tap", (typeCell(DEF.pawn)), "pawntap?", f)
 	elseif stage == "pawntap?" and f - stageAt > WAIT then
 		local n = picked()
