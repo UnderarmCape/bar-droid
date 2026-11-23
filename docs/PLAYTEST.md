@@ -439,4 +439,28 @@ UX, bugs and QOL from game 2:
   extractors rebuilt by whichever constructor is nearest, new units joining a Patrol loop by themselves), Overwatch
   pairs at the base's ways out from the first minutes, and the Advanced Bot Lab earlier.
 
+### 2026-11-22, in-play tours of the fixes (RC 0.2.0 item 8; the Hard ladder stopped)
+
+Short tours, not matches: the lobby's quick Skirmish (1v1, Beginner, Armada, Ravaged Remake) on the train builds
+cb78d317 and 86012f7f, dev phone upright, by the driver's touches (tools/playtest); enemies given with BAR's /cheat and
+/give where a fix needs one in sight.
+
+| Fix | Result | How |
+| --- | --- | --- |
+| Pre-game faction buttons (3104771e: late taps dropped, a switch with buildings queued tapped twice) | REOPENED, then FIXED+PLAY (86012f7f) | On cb78d317 every faction tap erred ("bardroid_portrait.lua:2691: Incorrect arguments to DiffTimers()"): ARMADA, CORTEX and RANDOM did nothing in any pre-game. Fixed; on 86012f7f: one tap with an empty queue switches, the grid Cortex's; with a Solar queued one tap says "TAP CORTEX AGAIN TO SWITCH: THE QUEUE CHANGES WITH IT", the second within 3 s switches and the Solar becomes Cortex's; X then a tap 0.25 s later on CORTEX's place: dropped ("a tap just after the dock changed"), still Armada |
+| Pre-game hint under the wind/tide box | FIXED+PLAY | "START SPOT: tap the map for yours", then "Start spot picked: queue buildings, then Ready", clear of the box |
+| Pre-game QUEUE row | FIXED+PLAY | QUEUE in the selection row, gold when on; two Solars placed with it on: both queued ("2" on the tile, two ghosts) |
+| "+ QUEUE" on PLACE | FIXED+PLAY | In the pre-game and in the game |
+| INSERT on builders | FIXED+PLAY | Commander, QUEUE on, two Solars queued, INSERT on, a Wind placed: queue "armwin, armsolar, armsolar" |
+| Back with units picked (item 5) | FIXED+PLAY | Android's Back with the commander picked: none picked, the home grid, the overlay file "0" |
+| PAUSE (item 4b) | FIXED+PLAY | Home grid: "PAUSED" gold while the dev widget held the game; tapped: running, "PAUSE"; tapped: paused |
+| D-gun tap on an enemy | FIXED+PLAY | D-gun mode, an enemy Pawn tapped: the aim line through it (the Pawn lit green), the ring at the D-gun's reach beyond it; FIRE and 3 s: the Pawn dead, ~460 energy spent |
+| D-gun AIM on a turned camera | FIXED+PLAY | Camera turned ~60 degrees by the turn rail: a flick up put the ring straight above the commander on the screen; a 300 ms flick right, right (7.6 degrees down: the finger ended 16 px below the stick's centre) |
+| Commander warning under 30 % | NOT SEEN | It needs a retreat first, then the player's Fight back; asked of the fixer as a retreat-phone-test case |
+| AUTO RETREAT (not a fix of the playtest) | OPEN, with the fixer | First game: RETREAT: ON, two Bulldogs took the commander from 67 % to 23 % to dead and no retreat came (no "[bardroid-retreat]" line); the commander had used the dock's D-gun mode and left it by X just before, and the game ran in 1 s steps between pauses. A fresh game without either: the retreat at 50 % as designed |
+
+Small findings (not blockers): the "TAP CORTEX AGAIN" note stays its 3 s after the switch went through; PLACE shows
+"+ QUEUE" but nothing for INSERT; the D-gun ring stands at its reach on the line through a tapped enemy, not on it; a
+map tap with the dock's home grid open did not pick the commander under it (COMMANDER did).
+
 

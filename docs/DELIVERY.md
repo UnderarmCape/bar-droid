@@ -135,6 +135,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
 8. [ ] In play, the six fixes not yet confirmed in a game: the pre-game faction guard and hint, the D-gun tap on an
    enemy, the AIM stick on a turned camera, INSERT on builders, the commander warning. Done: each FIXED+PLAY or
    reopened in PLAYTEST.md with touch-log rows. (coordinator)
+   2026-11-22 (PLAYTEST.md "in-play tours"): FIXED+PLAY: the pre-game hint, QUEUE row and "+ QUEUE", INSERT on the
+   commander, Back with units picked, PAUSE, the D-gun tap on an enemy, the AIM stick on a turned camera. The faction
+   guard REOPENED as a BLOCKER: every faction tap of every pre-game erred (DiffTimers on seconds) and the buttons did
+   nothing; fixed in 86012f7f and FIXED+PLAY on that build. Still open: the commander warning (asked of the fixer as a
+   retreat-phone-test case) and an AUTO RETREAT that did not fire once (after the dock's D-gun mode; the fixer
+   reproduces).
 9. [ ] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
    minutes and GB recorded for the release notes. (coordinator)
 10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
