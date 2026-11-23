@@ -63,6 +63,12 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    (github-sync.ps1 -Release -Apk, new: a train build goes up under the usual name). The full set: next, nightly.
    6646611f (86012f7f's faction fix, item 8) smoke ALL PASS 10 of 10 (19:08, 20261122-1908-smoke-6646611f.txt); on
    the Fold7 19:29 in place of cb78d317 (no game running, engine phone-2026.09.03-83a8536d37), latest-build updated.
+   The first full set, 715761ed (19:40-20:58, 20261122-1940-full-715761ed.txt): 25 PASS, 1 FLAKY (driverwatch: the
+   GPU driver's fault, its rerun PASS), 5 FAIL. Three were the runner's: retreat-phone-test and dgun-speed-test report
+   measurements with no PASS line (every kind fell back; the D-gun walk 98 %), x11-probe needs a running game (now
+   started first: dea503f5). Real: factory-preset-test (STRAFE's place 3987 elmos off, no sway; first run since before
+   the RC fixes; with the fixer) and overgame-phone-test once (a drag over the lobby moved the camera 11 elmos; it
+   passed in both smoke runs that day; rerun in dea503f5's smoke).
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
