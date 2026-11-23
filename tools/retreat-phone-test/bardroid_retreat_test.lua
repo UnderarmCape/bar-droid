@@ -15,12 +15,14 @@ end
 local ROUND_SECONDS = 20
 -- one kind a round, the first of each list this game has (all kinds at once: the enemy shot the Pawns and the hovers,
 -- the rest never came under half, dev phone 2026-11-20); n of it, and the enemy pack against it
--- (14 Grunts: at 10 the Rocketeers won at range unhurt, lowest health 78 %)
+-- (14 Grunts: at 10 the Rocketeers won at range unhurt, lowest health 78 %; the Pincers two Cans too: against 14 Grunts
+-- they won with 56 and 80 % left, against 24 none came under half either, the round proving nothing; the Rocketeers and
+-- Stumpies a Can too: 59 and 81 % left on one run, 36 and 70 % on another, 2026-11-23)
 local KINDS = {
-	{ "bot", { "armrock", "armham" }, 2, { corak = 14 } },
-	{ "vehicle", { "armstump", "armflash" }, 2, { corak = 14 } },
+	{ "bot", { "armrock", "armham" }, 2, { corak = 14, corcan = 1 } },
+	{ "vehicle", { "armstump", "armflash" }, 2, { corak = 14, corcan = 1 } },
 	{ "hover", { "armsh", "armanac", "armmh" }, 2, { corak = 14 } },
-	{ "amphibious", { "armpincer", "armcroc" }, 2, { corak = 14 } },
+	{ "amphibious", { "armpincer", "armcroc" }, 2, { corak = 14, corcan = 2 } },
 	{ "T2", { "armzeus", "armfido", "armbull" }, 2, { corak = 14, corcan = 3 } },
 	{ "squad", { "armpw" }, 4, { corak = 14 } },
 }
@@ -158,8 +160,9 @@ local function watch(f)
 					end
 				end
 				if w.fellAt and not w.clearAt and f - w.fellAt <= 30 * 10 then -- (the T2 bot walks ~30 elmos a second)
-					local _, d = nearestEnemy(x, z)
-					if d >= (w.enemyDist or 0) + 300 or d > 1500 then
+					local e, d = nearestEnemy(x, z)
+					-- (no enemy in sight is no way to tell: it counted as clear at once; vacuous-pass audit, 2026-11-23)
+					if e and (d >= (w.enemyDist or 0) + 300 or d > 1500) then
 						w.clearAt = f
 						s.clear = s.clear + 1
 					end
@@ -236,8 +239,8 @@ local function commanderFrame(f)
 		local mode = Pd.modal()
 		Pd.act("dgun_cancel")
 		Spring.SelectUnitArray({})
-		Spring.Echo(string.format("[retreattest] the D-gun mode entered (%s) and left (%s), the commander let go", tostring(mode),
-			tostring(Pd.modal())))
+		pass("the D-gun mode entered and left, the commander let go (the tour's way in)", mode == "dgun" and Pd.modal() == nil,
+			string.format("entered %s, left %s", tostring(mode), tostring(Pd.modal())))
 		cm.stage, cm.at = "pause", f
 	elseif cm.stage == "pause" and f - cm.at > 15 then
 		cm.pausedAt, cm.pauseFor, cm.after = Spring.GetTimer(), 12, "fightstart"
@@ -251,7 +254,9 @@ local function commanderFrame(f)
 	elseif cm.stage == "fight" and cm.firstAt and f - cm.firstAt >= 40 then -- (past the touch widget's next second's check)
 		local C = WG.BarDroidCatchingUp
 		local up = C and C()
-		pass("12 s paused, then running: not read as catching up", C ~= nil and not up, "catching up " .. tostring(up))
+		-- (and the game really paused: a pause that never took left nothing to catch up from)
+		pass("12 s paused, then running: not read as catching up", C ~= nil and not up and cm.pausedSeen == true,
+			"catching up " .. tostring(up) .. ", paused seen " .. tostring(cm.pausedSeen))
 		cm.firstAt = nil
 		local x, _, z = Spring.GetUnitPosition(cm.com)
 		local ex, ez = x + 260, z
@@ -312,15 +317,18 @@ local function commanderFrame(f)
 			end
 			if onlyThem then -- (never the commander: /remove takes whatever is picked)
 				Spring.SendCommands("remove")
+				cm.removed = #picked
 			end
 		end
 		cm.stage, cm.at2 = "rid2", f
 	elseif cm.stage == "rid2" and f - cm.at2 >= 6 then
+		local left = #enemyBulldogs() -- (still in god mode: every unit in view)
 		Spring.SelectUnitArray({})
 		Spring.SendCommands("godmode 0")
 		local h = healthOf(cm.com)
-		Spring.Echo(string.format("[retreattest] the retreat seen: the Bulldogs removed for its watch (%d left), the "
-			.. "commander at %d %%, now %s", #enemyBulldogs(), math.floor(100 * cm.hp), h and math.floor(100 * h) .. " %" or "dead"))
+		pass("the retreat seen: the enemy's Bulldogs removed for its watch", (cm.removed or 0) > 0 and left == 0,
+			string.format("%d picked and removed, %d left; the commander at %d %%, now %s", cm.removed or 0, left,
+				math.floor(100 * cm.hp), h and math.floor(100 * h) .. " %" or "dead"))
 		cm.stage = "back" -- (cm.at: the retreat's frame)
 	elseif cm.stage == "back" and f - cm.at > 100 then -- (past the retreat's 3 s watch: the player's own Fight back in,
 		-- into two fresh Bulldogs 260 elmos ahead of it)
@@ -333,16 +341,18 @@ local function commanderFrame(f)
 		Spring.GiveOrderToUnit(cm.com, CMD.FIGHT, { cm.ex, Spring.GetGroundHeight(cm.ex, cm.ez), cm.ez }, 0)
 		local _, last = Pd.note()
 		cm.noteBefore = last
-		Spring.Echo(string.format("[retreattest] the player's Fight back into the Bulldogs at %d %%",
-			math.floor(100 * (healthOf(cm.com) or 0))))
+		cm.fightHp = healthOf(cm.com) or 0
+		Spring.Echo(string.format("[retreattest] the player's Fight back into the Bulldogs at %d %%", math.floor(100 * cm.fightHp)))
 		cm.stage, cm.at = "warn", f
 	elseif cm.stage == "warn" then
 		local h = healthOf(cm.com)
 		local _, last = Pd.note()
 		local told = last and last ~= cm.noteBefore and tostring(last):find("PULL IT BACK", 1, true)
 		if told or not h or f - cm.at > 30 * 25 then
-			pass("the player's Fight back, the commander under 30 %: the dock's note says so", told and true or false,
-				string.format("note %q at %s", tostring(last), h and string.format("%.0f %%", 100 * h) or "its death"))
+			-- (the Fight given above 30 % and the word under it: at 1 % as the commander died it once passed all the same)
+			pass("the player's Fight back, the commander under 30 %: the dock's note says so", told and cm.fightHp >= 0.3
+				and h ~= nil and h < 0.3 or false, string.format("note %q at %s, the Fight given at %.0f %%", tostring(last),
+					h and string.format("%.0f %%", 100 * h) or "its death", 100 * cm.fightHp))
 			cm.stage = "done"
 		end
 	elseif cm.stage == "done" then
@@ -368,6 +378,9 @@ function widget:UnitDamaged(unitID)
 end
 
 function widget:Update()
+	if cm and cm.stage == "paused" and select(3, Spring.GetGameSpeed()) then
+		cm.pausedSeen = true
+	end
 	if cm and cm.stage == "paused" and Spring.DiffTimers(Spring.GetTimer(), cm.pausedAt) >= cm.pauseFor then
 		cm.stage = "resumed"
 		pauseNow(false)
@@ -443,7 +456,7 @@ function widget:GameFrame(f)
 			end
 		end
 		if not defName then
-			Spring.Echo("[retreattest] (no " .. k[1] .. " in this game: its round left out)")
+			Spring.Echo("[retreattest] FAIL no " .. k[1] .. " in this game (" .. table.concat(k[2], ", ") .. "): its round not run")
 			go("next", f)
 			return
 		end
@@ -498,7 +511,7 @@ function widget:GameFrame(f)
 	elseif stage == "end" then
 		local all = { units = 0, hurt = 0, fell = 0, clear = 0, turned = 0, diedFirst = 0, diedAfter = 0, slow = 0, early = 0,
 			went = 0, wentN = 0 }
-		local kinds = {}
+		local kinds, hurtKinds = {}, 0
 		for k in pairs(stats) do
 			kinds[#kinds + 1] = k
 		end
@@ -512,6 +525,28 @@ function widget:GameFrame(f)
 				.. "late; %s elmos in the 3 s after), %d got clear, %d turned back, %d died before falling back, %d after", k,
 				s.units, s.hurt, s.fell, s.early, s.slow, s.wentN and string.format("%.0f", s.went / s.wentN) or "-", s.clear,
 				s.turned, s.diedFirst, s.diedAfter))
+			-- (the checks: the kind given, a fight that hurt it, and no unit under half that lived a second more without
+			-- falling back; before, nothing here could fail, a dropped give or a retreat that never acted read "done";
+			-- vacuous-pass audit, 2026-11-23. On against off alive is a measurement: it varies run to run)
+			local missed = 0
+			for _, w in pairs(watched) do
+				if w.kind == k and w.hurtAt and not w.fellAt and (not w.died or w.died - w.hurtAt > 30) then
+					missed = missed + 1
+				end
+			end
+			-- (a kind whose fight brought none under half: NOT RUN, said; the same fight's lowest health went from 0 to 77 %
+			-- between runs, a FAIL there was the fight's luck, 2026-11-23; too few such kinds in a run FAIL below)
+			local verdict = s.units == 0 and "FAIL" or missed > 0 and "FAIL" or s.hurt == 0 and "NOT RUN" or "PASS"
+			hurtKinds = hurtKinds + ((s.units > 0 and s.hurt > 0) and 1 or 0)
+			Spring.Echo(string.format("[retreattest] %s %s with AUTO RETREAT on: given, in a fight, every unit under half that "
+				.. "lived a second fell back: %d given, %d under half, %d fell back, %d never did%s", verdict, k, s.units, s.hurt,
+				s.fell, missed, verdict == "NOT RUN" and " (none came under half: the fight too light this time)" or ""))
+		end
+		if #kinds == 0 then
+			Spring.Echo("[retreattest] FAIL no round with AUTO RETREAT on was played")
+		elseif hurtKinds < math.min(4, #kinds) then
+			Spring.Echo(string.format("[retreattest] FAIL the fights hurt too few kinds to say the retreat acts: %d of %d kinds "
+				.. "had a unit under half (%d needed)", hurtKinds, #kinds, math.min(4, #kinds)))
 		end
 		Spring.Echo(string.format("[retreattest] ALL: %d units, %d hurt alive, %d fell back (%d slow), %d got clear, %d turned "
 			.. "back, %d died before falling back, %d after", all.units, all.hurt, all.fell, all.slow, all.clear, all.turned,
