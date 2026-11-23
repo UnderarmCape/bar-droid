@@ -113,7 +113,7 @@ case "$step" in
     apt-get install -y -q --no-install-recommends \
       bash coreutils ca-certificates curl p7zip-full xz-utils procps \
       libsdl2-2.0-0 libx11-6 libxcursor1 libxext6 libxrandr2 libxi6 libxss1 libxxf86vm1 libxkbcommon0 \
-      libopenal1 libsndio7.0 \
+      libopenal1 libsndio7.0 libatomic1 \
       fontconfig fonts-dejavu-core xkb-data xfonts-base xfonts-utils \
       libgl1 libegl1 libegl-mesa0 libgbm1 libglx-mesa0 libgl1-mesa-dri mesa-libgallium mesa-vulkan-drivers \
       libvulkan1 vulkan-tools mesa-utils \
@@ -122,6 +122,36 @@ case "$step" in
     rm -rf /var/lib/apt/lists/*
     # Fonts for the X server (lorie looks under <rootfs>/usr/share/fonts/X11/{misc,...}).
     ls /usr/share/fonts/X11/misc >/dev/null 2>&1 || log "warning: no misc X11 fonts installed"
+    log "ok"
+    ;;
+
+  libs)
+    # The libraries the engines link that the apt step's list did not name: a container set up before it named them
+    # gets them here, once (Installer.containerLibs). libatomic1, the phone engine's, came only with packages the slim
+    # step removes: a new player's container lacked it, the phone engine's first start ended in "libatomic.so.1: cannot
+    # open shared object file" (127) and BAR's official engine ran from then on (the fresh-install run, 2026-11-22).
+    # Nothing installed upgraded (--no-upgrade: the phone Mesa lies over Debian's packages).
+    export DEBIAN_FRONTEND=noninteractive
+    missing=""
+    for p in libatomic1; do dpkg -s "$p" >/dev/null 2>&1 || missing="$missing $p"; done
+    if [ -n "$missing" ]; then
+      phone_unlinked=""
+      for e in "$BAR"/engine/*-phone/spring; do
+        [ -x "$e" ] && ldd "$e" 2>/dev/null | grep -q 'not found' && phone_unlinked=yes
+      done
+      dpkg --configure -a >/dev/null 2>&1
+      log "installing$missing"
+      apt-get update -q || { log "apt-get update failed"; exit 11; }
+      apt-get install -y -q --no-install-recommends --no-upgrade $missing || { log "apt-get install failed"; exit 12; }
+      apt-mark manual $missing >/dev/null 2>&1
+      apt-get clean
+      rm -rf /var/lib/apt/lists/*
+      # (the phone engine set aside because a library was missing: it runs again, launch-bar.sh sets it aside again
+      # if it still cannot run)
+      if [ -n "$phone_unlinked" ] && [ -f "$BAR/.bardroid-phone-failed" ]; then
+        rm -f "$BAR/.bardroid-phone-failed"; log "the phone engine runs again"
+      fi
+    fi
     log "ok"
     ;;
 

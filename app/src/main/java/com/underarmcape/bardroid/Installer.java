@@ -90,6 +90,7 @@ public final class Installer {
             // A rootfs from before the completion marker existed (or a damaged one): redo it and everything on top.
             Log.e("install", "rootfs has no completion marker; reinstalling the container");
             for (String s : STEPS) state.remove(s);
+            state.remove("slim"); state.remove("libs");   // (the new container's own: not in STEPS)
             save();
         }
         step("rootfs", st, () -> installRootfs(st));
@@ -336,9 +337,11 @@ public final class Installer {
     /**
      * What the game never loads, out of the container, once (setup-container.sh "slim": ~300 MB on a phone). Not one
      * of {@link #STEPS}: an install from before it stays installed (the icon still opens the lobby) and gets it at
-     * its next start (GameService.play). Never fails a start: the files then stay where they were.
+     * its next start (GameService.play). Never fails a start: the files then stay where they were. The container's
+     * missing libraries first (containerLibs).
      */
     public void slimContainer(Status st) {
+        containerLibs(st);
         if (isDone("slim") || !isDone("mesa")) return;
         try {
             Log.i("install", "==== step slim");
@@ -346,6 +349,22 @@ public final class Installer {
             mark("slim");
         } catch (Exception e) {
             Log.e("install", "slim: " + e.getMessage());
+        }
+    }
+
+    /**
+     * The libraries the engines link that a container set up before the apt step named them lacks (setup-container.sh
+     * "libs": libatomic1, the phone engine's; the fresh-install run, 2026-11-22). Once; offline it is tried again at the
+     * next start. Never fails a start.
+     */
+    private void containerLibs(Status st) {
+        if (isDone("libs") || !isDone("apt")) return;
+        try {
+            Log.i("install", "==== step libs");
+            runSetup("libs", st, "libs");
+            mark("libs");
+        } catch (Exception e) {
+            Log.e("install", "libs: " + e.getMessage());
         }
     }
 
