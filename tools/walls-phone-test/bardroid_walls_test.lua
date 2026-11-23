@@ -14,6 +14,7 @@ local OUT, CMD_FILE = "LuaUI/Config/bardroid_wallstest.txt", "LuaUI/Config/bardr
 local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil
 local com, spot, spot2
+local twoGiven = 0 -- (the two-Sentries case: how many were placed)
 local clawAt, aaAt -- (the Claw's and the AA launcher's spots)
 local t2 -- the T2 cases: their builders and spots
 local D = {}
@@ -246,8 +247,10 @@ function widget:GameFrame(f)
 		local _, vsy = Spring.GetViewGeometry()
 		if r and dock and r[2] >= dock[2] and r[4] <= dock[4] then
 			ask("tap", (r[1] + r[3]) / 2, vsy - (r[2] + r[4]) / 2, "tile", f)
-		else
-			Spring.Echo("[wallstest] (the Sentry's tile out of sight: picked as the build menu does)")
+		else -- (said as not run: picked by the test itself, the dock's pick proves nothing, the walls' checks still do; the
+			-- dock's grid taps are dock-phone-test's; vacuous-pass audit, 2026-11-23)
+			Spring.Echo("[wallstest] NOT RUN the Sentry's tile tapped on the dock's build grid (scrolled out of sight): picked "
+				.. "as the build menu does")
 			Spring.SetActiveCommand(Spring.GetCmdDescIndex(-D.armllt) or 0)
 			go("tile", f)
 		end
@@ -350,7 +353,8 @@ function widget:GameFrame(f)
 		local q = queue()
 		local n = count(q, D.armrl)
 		check("an AA launcher: queued, no walls", n >= 1 and noNewRing(), n .. " AA queued, " .. ringSaid())
-		before = { last = WG.BarDroidWalls.last, walls = count(queue(), D.armdrag) }
+		before = { last = WG.BarDroidWalls.last, walls = count(queue(), D.armdrag), sentries = count(queue(), D.armllt) }
+		twoGiven = 0
 		if spot2 then -- (two Sentries in one placement, as a LINE: none; two buildable spots, one fixed pair was blocked)
 			local found = {}
 			for dz = 200, 900, 50 do
@@ -372,13 +376,16 @@ function widget:GameFrame(f)
 			for _, s in ipairs(found) do
 				shiftBuild(D.armllt, s)
 			end
+			twoGiven = #found
 		end
 		go("two?", f)
 	elseif stage == "two?" and f - stageAt > 30 then
 		local q = queue()
 		-- (the walls widget's own word: no new ring; one of the two orders now and then refused, its spot under one queued
-		-- before)
-		check("two Sentries in one placement: no walls", noNewRing(), count(q, D.armllt) .. " Sentries queued, " .. ringSaid())
+		-- before. Two placed and at least one more Sentry queued: with none given "no ring" passed by itself)
+		local more = count(q, D.armllt) - (before.sentries or 0)
+		check("two Sentries in one placement: no walls", twoGiven == 2 and more >= 1 and noNewRing(), string.format(
+			"%d placed, %d more Sentries queued, %s", twoGiven, more, ringSaid()))
 		Spring.SendCommands("cheat 1") -- (the T2 cases: builders given, the give a second later)
 		go("t2cheat", f)
 	elseif stage == "t2cheat" and f - stageAt > 30 then
