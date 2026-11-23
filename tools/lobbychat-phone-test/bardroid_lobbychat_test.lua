@@ -13,6 +13,7 @@ end
 
 local OUT, CMD_FILE = "LuaUI/Config/bardroid_lobbychat.txt", "LuaUI/Config/bardroid_lobbychat_cmd.txt"
 local ASK_FILE = "LuaUI/Config/bardroid_lobby_ask.txt"
+local NOHOLD_FILE = "LuaUI/Config/bardroid_lobbychat_nohold.txt"
 local stage, stageAt, clock, fails = "wait", 0, 0, 0
 local asked, after, answer, readAt = 0, nil, nil, nil
 local box, askBefore
@@ -160,6 +161,13 @@ local function step()
 			box.text = ""
 		end
 		box = chatBox() or box
+		if readLine(NOHOLD_FILE) then
+			-- (the script's: the app's microphone not denied for good on this phone, a hold would bring up Android's
+			-- "Allow ... to record audio?" over the lobby, 2026-11-23 after a pm clear; never a prompt a tap could allow)
+			log("SKIP the chat box held: Android would ask for the microphone (its permission not denied for good here)")
+			ask("shot", 1, 0, "end")
+			return
+		end
 		askBefore = readLine(ASK_FILE)
 		local x, y = middle(box, 0.4)
 		ask("hold", x, y, "hold?")

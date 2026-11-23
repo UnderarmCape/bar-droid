@@ -37,6 +37,9 @@ function Granted() {   # the app's runtime permissions granted now (dumpsys pack
     elseif ($inRuntime -and $l -notmatch '^\s+[\w.]+: granted=') { $inRuntime = $false }
   }
 }
+function MicLine() {   # the microphone's permission line, its flags with it (USER_FIXED: denied for good)
+  "$(& $adb -s $Device shell dumpsys package $pkg | Select-String -Pattern 'android\.permission\.RECORD_AUDIO: granted=' | Select-Object -Last 1)".Trim()
+}
 function Kb([string]$path) { $v = "$(InApp "du -sk $path 2>/dev/null | tail -1")".Trim(); if ($v -match '^(\d+)') { [long]$Matches[1] } else { 0 } }
 
 $taken = & $lockTool take $Who -Minutes $Minutes
@@ -59,6 +62,7 @@ try {
     throw "the backup is incomplete (${tarFile}: $entries entries, the phone $phoneCount, missing $($missing -join ', ')): nothing cleared"
   }
   $perms = @(Granted)
+  $micBefore = MicLine
   Set-Content -Encoding utf8 (Join-Path $back "permissions.txt") $perms
   Say "backup: $($have -join ', ') - $entries entries, $mb MB; permissions granted: $($perms -join ', '); the app's data before: $before GB"
 
@@ -118,6 +122,10 @@ try {
       if ($p -and $p -ne "android.permission.RECORD_AUDIO" -and $now -notcontains $p) { & $adb -s $Device shell pm grant $pkg $p 2>$null }
     }
     Say $(if ($restored) { "put back: the backup unpacked, the permissions as before (the microphone's untouched)" } else { "FAIL put back: the backup did not unpack ($tarFile)" })
+    # (pm clear resets the microphone's too: 2026-11-23 its "denied for good" was gone after the first run, and speak to
+    # chat brought up Android's "Allow ... to record audio?" in lobbychat-phone-test; the test never touches it)
+    $micAfter = MicLine
+    if ($micBefore -and $micAfter -ne $micBefore) { Say "NOTE the microphone's permission, never touched here: before '$micBefore', now '$micAfter' (pm clear reset it)" }
   } finally {
     & $adb -s $Device shell am force-stop $pkg
     & (Join-Path $PSScriptRoot "devphone.ps1") dark | Out-Null

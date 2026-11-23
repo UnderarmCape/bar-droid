@@ -17,7 +17,7 @@ $pkg = "com.underarmcape.bardroid"
 $menuWidgets = "files/bar/LuaMenu/Widgets"
 $cfg = "files/bar/LuaUI/Config"
 $build = Join-Path (Split-Path $PSScriptRoot) "build"
-$files = "$cfg/bardroid_lobbychat.txt $cfg/bardroid_lobbychat_cmd.txt"
+$files = "$cfg/bardroid_lobbychat.txt $cfg/bardroid_lobbychat_cmd.txt $cfg/bardroid_lobbychat_nohold.txt"
 
 function InApp([string]$command) { & $adb exec-out run-as $pkg sh -c $command }
 function Log([string]$pattern, [int]$lines) { InApp "grep -a -E '$pattern' files/bar/infolog.txt 2>/dev/null | tail -$lines" }
@@ -41,12 +41,18 @@ if ($mic -match 'android\.permission\.RECORD_AUDIO: granted=true') {
   "[lobbychat] the app holds the microphone permission on this phone: not run (speak to chat would listen)"
   exit 1
 }
+# Speak to chat's panel says the microphone is denied only when Android answers "denied" at once: the permission denied
+# for good (USER_FIXED). Otherwise the hold brings up Android's "Allow ... to record audio?" over the lobby (2026-11-23:
+# the fresh-install run's pm clear had reset it); the hold is then left out, never a prompt a tap could allow.
+$micFixed = $mic -match 'android\.permission\.RECORD_AUDIO: granted=false, flags=\[[^\]]*USER_FIXED'
+if (-not $micFixed) { "[lobbychat] the app's microphone is not denied for good on this phone: the chat box's hold left out (Android would ask)" }
 & $adb shell am force-stop $pkg
 $prefs = "$(InApp "cat shared_prefs/bardroid.xml")"
 $portraitWas = $prefs -match 'name=.portrait. value=.true.'
 $turnWas = $prefs -match 'name=.turnWithPhone. value=.true.'
 AppScript ((Pref "portrait" $true) + (Pref "turnWithPhone" $false) +
   "rm -f files/bar/infolog.txt $files`n" +
+  $(if (-not $micFixed) { "mkdir -p $cfg && echo nohold > $cfg/bardroid_lobbychat_nohold.txt`n" } else { "" }) +
   "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg`n")
 Send-AppFile $adb (Join-Path $PSScriptRoot "lobby-login\bardroid_login_wait.lua") "$menuWidgets/bardroid_login_wait.lua"
 Send-AppFile $adb (Join-Path $PSScriptRoot "lobbychat-phone-test\bardroid_lobbychat_test.lua") "$menuWidgets/bardroid_lobbychat_test.lua"
@@ -83,7 +89,10 @@ try {
         }
         "type" { & $adb shell input text $arg; "[lobbychat] ($($n): typed $arg)" }
         "key" { & $adb shell input keyevent $arg; "[lobbychat] ($($n): key $arg)" }
-        "hold" { & $adb shell input swipe $x $y $x $y 900; "[lobbychat] ($($n): held at $x,$y)" }
+        "hold" {
+          if ($micFixed) { & $adb shell input swipe $x $y $x $y 900; "[lobbychat] ($($n): held at $x,$y)" }
+          else { "[lobbychat] FAIL ($($n): a hold asked with the microphone not denied for good: not done)" }
+        }
         default { & $adb shell input tap $x $y; "[lobbychat] ($($n): a tap at $x,$y)" }
       }
       InApp "echo $reply > $cfg/bardroid_lobbychat_cmd.txt"
