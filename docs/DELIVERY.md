@@ -80,6 +80,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    "installing libatomic1", 0 upgraded, "the phone engine runs again", every game after on the phone engine. On the
    Fold7 23:46 (no game running, engine phone-2026.09.03-83a8536d37; its container has libatomic1, the step a no-op
    there), latest-build updated.
+   379e98bc (item 7's menu watch, + the fixer's tests to b5cba4f7's parent): the full set 04:43-06:37
+   (20261123-0443-full-379e98bc.txt), 32 of 34 PASS, the smoke set within it 12 of 12 (remake-check PASS: the morning
+   check). lobbychat-phone-test FAIL: the chat box held brought up Android's "Allow ... to record audio?" over the
+   lobby, not speak to chat's panel: item 9's pm clear had reset the microphone's "denied for good" (still not granted;
+   the test now leaves the hold out in that state, 40b205af; rerun PASS 06:09). pad-test -Chat FAIL once ("launch-bar.sh
+   never put the app's widgets in as the game's", 3.1 min, right after -Dgun and -Share passed); rerun 06:38 PASS:
+   FLAKY, with the fixer if it comes back. Not on the Fold7 yet: it did not answer at 06:45 (adb over Tailscale timed
+   out, no ping); installed when it is back and no game runs.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
