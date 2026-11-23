@@ -162,6 +162,16 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    nothing; fixed in 86012f7f and FIXED+PLAY on that build. Still open: the commander warning (asked of the fixer as a
    retreat-phone-test case) and an AUTO RETREAT that did not fire once (after the dock's D-gun mode; the fixer
    reproduces).
+   2026-11-23 (fixer): both in 861a505f (2026-11-22 19:36, not noted here then). The retreat that did not fire was the
+   pauses, not the D-gun mode (the dock's X clears the pad's mode): the catch-up estimate counted paused time, so after
+   5 s paused the game read as catching up and AUTO RETREAT dropped every hit (widget:GamePaused now keeps the server's
+   frame). retreat-phone-test -Commander (nightly set) plays the tour's case: the D-gun mode in and out, 12 s paused,
+   two Bulldogs in 1 s steps between 6 s pauses, then the player's Fight back for the warning. On ccb4f0cc, nine runs:
+   the retreat 0-11 frames after half in eight, 60 frames once (02:45, its cause not kept: the case now lists the hits
+   from 55 % and whether each was read as catching up). The warning check raced the Bulldogs (the Fight came back at
+   0-19 %, the commander dead first in 2 runs): they are now removed for the retreat's watch (god mode for a moment:
+   the engine's /remove takes the picked units, whatever its arguments) and fresh ones met by the Fight; 06:02-06:06
+   two runs ALL PASS, the Fight back at 42 %, "COMMANDER AT 28 %: PULL IT BACK" on the dock at the first hit under 30 %.
 9. [x] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
    minutes and GB recorded for the release notes. (coordinator)
    2026-11-22 22:02 (tools/fresh-install-phone-test.ps1, d3586410/88bca5e9; dea503f5's APK): the backup 459 entries,

@@ -9,7 +9,8 @@
 # first 3 s after falling back logged (its order, the point reachable for it, its speed, the enemy's distance).
 # -Commander: the commander's case alone (the coordinator's tour, 2026-11-22): the D-gun mode entered and left, a 12 s
 # pause, two enemy Bulldogs and the fight in 1 s steps between 6 s pauses: not read as catching up after the pause, the
-# retreat within a second of going under half; then the player's Fight back: under 30 % the dock's warning. ~3 min.
+# retreat within a second of going under half; the Bulldogs removed for the retreat's watch, then the player's Fight
+# back into two fresh ones: under 30 % the dock's warning. ~3 min.
 param([string]$Only = "", [switch]$Commander)
 if ($Commander) { $Only = "commander" }
 $ErrorActionPreference = "Stop"

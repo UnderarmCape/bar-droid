@@ -184,8 +184,9 @@ end
 -- coordinator's tour played it (2026-11-22): the D-gun mode entered and left (the dock's X: the pad's dgun_cancel), the
 -- commander let go, the game paused 12 s, then two enemy Bulldogs and the fight in 1 s steps between 6 s pauses. Checked:
 -- not read as catching up after a pause (WG.BarDroidCatchingUp; the pause counted as ground lost dropped every hit);
--- the commander retreats within a second of going under half; then the player's Fight back into them: under 30 % the
--- dock's note "COMMANDER AT n %: PULL IT BACK" (and the infolog's "told").
+-- the commander retreats within a second of going under half; the Bulldogs then removed for the retreat's watch, and
+-- the player's Fight back into two fresh ones: under 30 % the dock's note "COMMANDER AT n %: PULL IT BACK" (and the
+-- infolog's "told"). A late retreat says why: the hits from 55 % on, each with "(catching up)" when read so.
 local cm -- the commander case's state
 local function pass(case, ok, detail)
 	cm.fails = cm.fails + (ok and 0 or 1)
@@ -194,6 +195,17 @@ end
 local function healthOf(u)
 	local h, mh = Spring.GetUnitHealth(u)
 	return h and mh and mh > 0 and h / mh or nil
+end
+local function enemyBulldogs() -- (the enemy's Bulldogs within 2500 of the commander)
+	local x, _, z = Spring.GetUnitPosition(cm.com)
+	local ids = {}
+	for _, u in ipairs(x and Spring.GetUnitsInCylinder(x, z, 2500) or {}) do
+		local d = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		if d and d.name == "armbull" and Spring.GetUnitTeam(u) == foe then
+			ids[#ids + 1] = u
+		end
+	end
+	return ids
 end
 local function pauseNow(on)
 	local _, _, paused = Spring.GetGameSpeed()
@@ -258,12 +270,23 @@ local function commanderFrame(f)
 		if h < 0.5 and not cm.halfAt then
 			cm.halfAt = f
 		end
+		local C = WG.BarDroidCatchingUp
+		if cm.halfAt and C and C() then
+			cm.upFrames = (cm.upFrames or 0) + 1
+		end
 		if R.fell(cm.com) and not cm.fellAt then
 			cm.fellAt = f
-			pass("the commander retreats within a second of going under half (the fight in steps)", cm.halfAt ~= nil
-				and f - cm.halfAt <= 30, string.format("under half at frame %s, retreated at %d, %d steps",
-					tostring(cm.halfAt), f, cm.steps))
-			cm.stage, cm.at = "back", f
+			local late = not (cm.halfAt ~= nil and f - cm.halfAt <= 30)
+			pass("the commander retreats within a second of going under half (the fight in steps)", not late,
+				string.format("under half at frame %s, retreated at %d, %d steps%s", tostring(cm.halfAt), f, cm.steps,
+					late and string.format("; read as catching up %d frames since; its hits from 55 %%: %s", cm.upFrames or 0,
+						table.concat(cm.hitLog or {}, " ")) or ""))
+			-- (the Bulldogs out while the retreat's 3 s watch runs: they chased it, and the player's Fight came back at 0-19 %,
+			-- the commander dead before any hit could warn, 2 of 4 runs on 2026-11-23; fresh ones with the Fight below. The
+			-- engine's /remove takes the selected units, whatever its arguments: god mode for a moment to pick the enemy's)
+			cm.hp = h
+			Spring.SendCommands("godmode 3")
+			cm.stage, cm.at = "rid", f
 			return
 		end
 		if cm.halfAt and f - cm.halfAt > 30 * 8 then
@@ -278,7 +301,35 @@ local function commanderFrame(f)
 			cm.stage = "paused"
 			pauseNow(true)
 		end
-	elseif cm.stage == "back" and f - cm.at > 100 then -- (past the retreat's 3 s watch: the player's own Fight back in)
+	elseif cm.stage == "rid" and f - cm.at >= 6 then -- (god mode on by now: the enemy's Bulldogs picked and removed)
+		local ids = enemyBulldogs()
+		if #ids > 0 then
+			Spring.SelectUnitArray(ids)
+			local picked = Spring.GetSelectedUnits() or {}
+			local onlyThem = #picked > 0
+			for _, u in ipairs(picked) do
+				onlyThem = onlyThem and u ~= cm.com and Spring.GetUnitTeam(u) == foe
+			end
+			if onlyThem then -- (never the commander: /remove takes whatever is picked)
+				Spring.SendCommands("remove")
+			end
+		end
+		cm.stage, cm.at2 = "rid2", f
+	elseif cm.stage == "rid2" and f - cm.at2 >= 6 then
+		Spring.SelectUnitArray({})
+		Spring.SendCommands("godmode 0")
+		local h = healthOf(cm.com)
+		Spring.Echo(string.format("[retreattest] the retreat seen: the Bulldogs removed for its watch (%d left), the "
+			.. "commander at %d %%, now %s", #enemyBulldogs(), math.floor(100 * cm.hp), h and math.floor(100 * h) .. " %" or "dead"))
+		cm.stage = "back" -- (cm.at: the retreat's frame)
+	elseif cm.stage == "back" and f - cm.at > 100 then -- (past the retreat's 3 s watch: the player's own Fight back in,
+		-- into two fresh Bulldogs 260 elmos ahead of it)
+		local x, _, z = Spring.GetUnitPosition(cm.com)
+		if x then
+			cm.ex, cm.ez = x + 260 < Game.mapSizeX - 64 and x + 260 or x - 260, z
+			Spring.SendCommands(string.format("give 2 armbull %d @%d,%d,%d", foe, cm.ex,
+				Spring.GetGroundHeight(cm.ex, cm.ez), cm.ez))
+		end
 		Spring.GiveOrderToUnit(cm.com, CMD.FIGHT, { cm.ex, Spring.GetGroundHeight(cm.ex, cm.ez), cm.ez }, 0)
 		local _, last = Pd.note()
 		cm.noteBefore = last
@@ -299,6 +350,20 @@ local function commanderFrame(f)
 		Spring.Echo("[retreattest] commander case: " .. (cm.fails == 0 and "ALL PASS" or (cm.fails .. " FAILED")))
 		Spring.Echo("[retreattest] done")
 		cm.stage = "over"
+	end
+end
+
+-- (the commander case's hits from 55 % on, each "frame:health" and "(catching up)" when the touch widget read the game
+-- so: why a retreat came late)
+function widget:UnitDamaged(unitID)
+	if cm and unitID == cm.com and cm.stage == "fight" and cm.stepAt and not cm.fellAt then
+		local h = healthOf(unitID)
+		local C = WG.BarDroidCatchingUp
+		if h and h < 0.55 and #(cm.hitLog or {}) < 12 then
+			cm.hitLog = cm.hitLog or {}
+			cm.hitLog[#cm.hitLog + 1] = string.format("%d:%.0f%%%s", Spring.GetGameFrame(), 100 * h,
+				C and C() and "(catching up)" or "")
+		end
 	end
 end
 
