@@ -20,6 +20,7 @@ local stage, stageAt = "wait", 0
 local asked, after = 0, nil
 local readAt
 local gameOn = false -- (the engine's ActivateGame: a game loaded)
+local hiddenSeen = false -- (the game shown with the lobby away, before the game widget's tap on Lobby)
 local clock = 0
 
 local function log(s)
@@ -244,9 +245,12 @@ local function step()
 		end
 		loads[1]:CallListeners(loads[1].OnClick)
 		go("overwait")
+	elseif stage == "overwait" and readLine(UI_CMD) ~= "1" and gameOn and not lobbyOver() then
+		hiddenSeen = true -- (the game shown, the lobby away, before the tap: else "over it" was the lobby never gone)
 	elseif stage == "overwait" and readLine(UI_CMD) == "1" and lobbyOver() then -- (after the game widget's tap only:
 		-- the lobby shows while the game loads)
-		check("BAR's Lobby tapped in the game: the lobby over it", true, "shown")
+		check("BAR's Lobby tapped in the game: the lobby over it", hiddenSeen == true,
+			"shown; hidden before the tap " .. tostring(hiddenSeen))
 		go("replays")
 	elseif stage == "overwait" and clock - stageAt > 180 then
 		check("the lobby over the game", false, "not shown in 3 min")
@@ -306,8 +310,12 @@ local function step()
 		local greyed = #findAll(function(o)
 			return o.classname == "action_button" and type(o.tooltip) == "string" and o.tooltip:find("another engine", 1, true)
 		end, true)
-		check("... the saves of another engine (" .. tostring(Engine.version) .. " here) with their Load greyed",
-			greyed == other, string.format("%d greyed, %d saves of another engine", greyed, other))
+		if other > 0 then
+			check("... the saves of another engine (" .. tostring(Engine.version) .. " here) with their Load greyed",
+				greyed == other, string.format("%d greyed, %d saves of another engine", greyed, other))
+		else -- (none on the phone: 0 greyed of 0 passed by itself; vacuous-pass audit, 2026-11-23)
+			log("NOT RUN the saves of another engine with their Load greyed: none on the phone (" .. greyed .. " greyed)")
+		end
 		ask("shot", 1, 0, "drag")
 	elseif stage == "drag" then -- (a drag over the lobby: the game's camera under it must not move, the LuaUI widget)
 		local w = vsx()

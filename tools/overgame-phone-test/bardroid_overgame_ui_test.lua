@@ -17,6 +17,13 @@ local asked, after = 0, nil
 local readAt
 local clock, t0 = 0, nil
 local cam0, lobbyAt
+local spoofSeen, pickedBefore -- (the spoofed message seen going round; units picked just before Back)
+
+function widget:RecvLuaMsg(msg)
+	if spoofSeen == false and msg == "LobbyOverlayActive0" then
+		spoofSeen = true
+	end
+end
 local chobby = Spring.GetMenuName and string.find(string.lower(Spring.GetMenuName() or ""), "chobby") ~= nil
 
 local function check(case, ok, detail)
@@ -104,17 +111,22 @@ local function step()
 		check("... the overlay file \"1\" (the app's touch in the lobby)", readLine(OVERLAY) == "1", tostring(readLine(OVERLAY)))
 		-- (Chobby's "the lobby is gone", sent by a widget while the lobby is over the game, as any player's can online:
 		-- the fingers must stay on the lobby; the app believes it only with its lobby widget's file, 2026-11-21)
+		spoofSeen = false
 		Spring.SendLuaUIMsg("LobbyOverlayActive0")
 		go("spoof0?")
 	elseif stage == "spoof0?" and clock - stageAt > 3 then
-		check("a widget's \"LobbyOverlayActive0\" over the lobby: the overlay file still \"1\"", readLine(OVERLAY) == "1",
-			tostring(readLine(OVERLAY)))
+		-- (and the message went round: one never sent also left the file "1"; vacuous-pass audit, 2026-11-23)
+		check("a widget's \"LobbyOverlayActive0\" over the lobby: the overlay file still \"1\"", spoofSeen
+			and readLine(OVERLAY) == "1", tostring(readLine(OVERLAY)) .. ", the message seen " .. tostring(spoofSeen))
 		go("dragwait")
 	elseif stage == "dragwait" then
 		local m = readLine(MENU_FILE)
-		if m == "dragged" or m == "menu done" then
+		if m == "dragged" then
 			local moved = camMoved(cam0, Spring.GetCameraState())
 			check("a drag over the lobby: the game's camera under it still", moved < 1, string.format("moved %.2f", moved))
+			go("backwait")
+		elseif m == "menu done" then -- (the lobby's steps ended before its drag: the camera still proves nothing then)
+			check("a drag over the lobby: the game's camera under it still", false, "the lobby's steps ended before the drag")
 			go("backwait")
 		elseif clock - stageAt > 90 then
 			check("the lobby's drag", false, "no word from the lobby in 90 s")
@@ -132,7 +144,9 @@ local function step()
 		local C = WG.BarDroidCamCtl
 		local on = C and ((C.knob and C.knob()) or (C.rails and C.rails()))
 		check("back in the game: the overlay file \"0\"", readLine(OVERLAY) == "0", tostring(readLine(OVERLAY)))
-		check("... the camera knob and rails back", not on or (cam ~= nil and cam ~= "none"), tostring(cam))
+		-- (the knob or rails on for the run: with neither, or no camera widget, "back" passed by itself)
+		check("... the camera knob and rails back", C ~= nil and on and cam ~= nil and cam ~= "none" or false,
+			tostring(cam) .. ", the camera's controls on " .. tostring(on))
 		cam0 = Spring.GetCameraState()
 		-- (a drag on the map, well above the dock and clear of the rails: the camera pans)
 		local P = WG.BarDroidPortrait
@@ -156,12 +170,13 @@ local function step()
 		Spring.Echo("[overgame] (" .. #mine .. " units picked for Back)")
 		go("backpick")
 	elseif stage == "backpick" and clock - stageAt > 1.5 then
+		pickedBefore = Spring.GetSelectedUnitsCount() -- (units picked for Back: none, and "cleared" proved nothing)
 		ask("back", 0, 0, "backpicked?")
 	elseif stage == "backpicked?" and clock - stageAt > 2 then
 		local n = Spring.GetSelectedUnitsCount()
 		check("Android's Back with units picked (a lobby game): the pick cleared, no lobby over the game",
-			n == 0 and readLine(OVERLAY) ~= "1" and WG.BarDroidLobbyOver ~= true,
-			string.format("%d picked, the overlay file %s", n, tostring(readLine(OVERLAY))))
+			(pickedBefore or 0) > 0 and n == 0 and readLine(OVERLAY) ~= "1" and WG.BarDroidLobbyOver ~= true,
+			string.format("%d picked (%d before Back), the overlay file %s", n, pickedBefore or 0, tostring(readLine(OVERLAY))))
 		if readLine(OVERLAY) == "1" or WG.BarDroidLobbyOver == true then
 			Spring.SendLuaMenuMsg("hideLobby") -- (back to the game for the picture)
 		end
