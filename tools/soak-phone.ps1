@@ -215,6 +215,9 @@ for ($i = 0; $i -lt $Chunks; $i++) {
         ForEach-Object { if ("$_" -match ', (\d+) fps') { [double]$Matches[1] } })
     }
     $fpsText = if ($fps) { "fps min $([math]::Round(($fps | Measure-Object -Minimum).Minimum, 1)), mean $([math]::Round(($fps | Measure-Object -Average).Average, 1)) over $($fps.Count) lines" } else { "no fps lines" }
+    # (a replay's: whether the phone kept up with the game at 1x, bardroid_bench.lua's summary at its end)
+    $keptUp = "$(InApp "grep -a -o 'speed min x[0-9.]*, median x[0-9.]*; below x0.95 [0-9]*%' files/bar/infolog.txt 2>/dev/null | tail -1")".Trim()
+    if ($keptUp) { $fpsText += "; $keptUp of the time" }
     $lowmem = LowMemorySince $since
     $total.fault += $faults; $total.lowmem += $lowmem; $total.errors += $errors
     # (known classes: the driver's refusal, a low-memory kill; anything else that ended a chunk early is new)
