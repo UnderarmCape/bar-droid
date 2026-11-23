@@ -125,7 +125,8 @@ local function step()
 		go("ready")
 	elseif stage == "ready" and clock - stageAt > 1 then
 		local camLine = readLine(CAM_FILE)
-		check("the knob and both rails up, in RtsTouch's file", knob and zoom and turn and camLine ~= "none",
+		check("the knob and both rails up, in RtsTouch's file", knob and zoom and turn and camLine ~= nil
+			and camLine ~= "none",
 			string.format("knob %s, zoom rail %s, turn rail %s; the file \"%s\"", knob and "yes" or "no", zoom and "yes" or "no",
 				turn and "yes" or "no", tostring(camLine)))
 		if not (knob and zoom and turn) then
