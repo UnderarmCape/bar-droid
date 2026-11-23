@@ -2699,12 +2699,17 @@ local function pressItem(item, long)
 		local asked = SP.factionAsk
 		if not current and queued > 0 and not (asked and asked.unit == item.startUnit
 			and t - asked.at < 3) then
-			SP.factionAsk = { unit = item.startUnit, at = t }
+			local text = "TAP " .. tostring(item.label) .. " AGAIN TO SWITCH: THE QUEUE CHANGES WITH IT"
+			SP.factionAsk = { unit = item.startUnit, at = t, text = text }
 			local P = WG.BarDroidPad
 			if P and P.say then
-				P.say("TAP " .. tostring(item.label) .. " AGAIN TO SWITCH: THE QUEUE CHANGES WITH IT", nil, 3)
+				P.say(text, nil, 3)
 			end
 			return
+		end
+		local P = WG.BarDroidPad
+		if asked and P and P.unsay then -- (the switch went through: its ask gone with it, not its full 3 s; the tour)
+			P.unsay(asked.text)
 		end
 		SP.factionAsk = nil
 		Spring.SendLuaRulesMsg("changeStartUnit" .. tostring(item.startUnit))

@@ -3126,6 +3126,11 @@ function widget:Initialize()
 	WG.BarDroidPad = {
 		act = act,
 		say = note, -- (bardroid_padfp.lua's notes)
+		unsay = function(text) -- (that note gone if it still shows: the portrait dock's "TAP ... AGAIN" once it is done)
+			if toast and toast == text then
+				toast = nil
+			end
+		end,
 		teammates = teammates, -- (the portrait dock's teammate picker)
 		give = giveTo,
 		queueState = function() -- (the portrait dock draws QUEUE and INSERT: on or off)
