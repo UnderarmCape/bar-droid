@@ -248,7 +248,9 @@ local function write()
 	end
 	for _, id in ipairs(Spring.GetTeamUnits(myTeam)) do
 		local udid = Spring.GetUnitDefID(id)
-		local x, y, z = Spring.GetUnitPosition(id)
+		-- (the screen point is the body's middle, not the feet: a tap at the feet plus touchd's noise missed the
+		-- commander, PLAYTEST 464, a87c97ad; the world x, z stay the base's)
+		local x, _, z, mx, my, mz = Spring.GetUnitPosition(id, true)
 		if udid and x then
 			local hp, maxhp, _, _, built = Spring.GetUnitHealth(id)
 			local ud = UnitDefs[udid]
@@ -258,7 +260,7 @@ local function write()
 			else
 				qn = #(Spring.GetUnitCommands(id, 30) or {})
 			end
-			local sx, sy = scr(x, y, z)
+			local sx, sy = scr(mx, my, mz)
 			add(string.format("u %d %s %d %d %s %s %d %d %d %d", id, ud.name, x, z, sx, sy,
 				maxhp and maxhp > 0 and math.floor(100 * hp / maxhp) or 0, qn == 0 and 1 or 0,
 				math.floor(100 * (built or 1)), qn))
@@ -268,11 +270,11 @@ local function write()
 		if Spring.GetUnitAllyTeam(id) ~= myAlly then
 			local los = Spring.GetUnitLosState(id, myAlly)
 			if los and (los.los or los.radar) then
-				local x, y, z = Spring.GetUnitPosition(id)
+				local x, _, z, mx, my, mz = Spring.GetUnitPosition(id, true)
 				if x then
 					local udid = los.los and Spring.GetUnitDefID(id)
 					local hp, maxhp = Spring.GetUnitHealth(id)
-					local sx, sy = scr(x, y, z)
+					local sx, sy = scr(mx, my, mz)
 					add(string.format("e %d %s %d %d %s %s %d", id, udid and UnitDefs[udid].name or "?", x, z, sx, sy,
 						(hp and maxhp and maxhp > 0) and math.floor(100 * hp / maxhp) or -1))
 				end
