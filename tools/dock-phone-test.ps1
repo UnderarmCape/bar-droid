@@ -30,6 +30,9 @@ function AppScript([string]$text) {
   Invoke-AppScript $adb $f
 }
 function Stage([string]$name) { InApp "echo '$name' > $cfg/bardroid_docktest_cmd.txt" }
+# a case the screen gave no place for: said, and counted in the last line (a silent skip read ALL PASS)
+$script:notRun = New-Object System.Collections.Generic.List[string]
+function NotRun([string]$what) { $script:notRun.Add($what); "[docktest] NOT RUN $what" }
 function WaitLog([string]$pattern, [int]$seconds) {
   $until = (Get-Date).AddSeconds($seconds)
   while ((Get-Date) -lt $until) { $l = Log $pattern 1; if ($l) { return $l }; Start-Sleep 1 }
@@ -122,8 +125,8 @@ try {
     Touch MOVE $f0[0] (($f0[1] + $dm0[1]) / 2); Touch MOVE $dm0[0] $dm0[1]
     Start-Sleep -Milliseconds 300; Touch UP $dm0[0] $dm0[1]; Start-Sleep -Milliseconds 700
     $spot = (Rects "bardroid_place.txt")["spot"]
-    Stage "spotdock? $(if ($spot) { [int]$spot[1] } else { -1 })"; Start-Sleep 1
-  }
+    Stage "spotdock? $(if ($spot) { [int]$spot[1] } else { -1 }) $([int]$f0[1])"; Start-Sleep 1
+  } else { "[docktest] FAIL no free spot for the building on the screen: its spot, GRID, LINE, BORDER, Back and quit cases not run" }
   if ($spots["free"]) { Tap $spots["free"][0] $spots["free"][1] }
   Shot "place"
   Start-Sleep -Milliseconds 3200   # (past the dock menu's 2.6 s: once PLACE's tap after its time-out only opened it again)
@@ -142,9 +145,11 @@ try {
   }
   if ($spots["blocked"]) {
     Tap $spots["blocked"][0] $spots["blocked"][1]; Start-Sleep -Milliseconds 900
-    $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE"; Tap $p[0] $p[1]; Start-Sleep -Milliseconds 400
+    $p = Mid (Rects "bardroid_place.txt")["done"] "PLACE"
+    Stage "blockedpre"; Start-Sleep -Milliseconds 300
+    Tap $p[0] $p[1]; Start-Sleep -Milliseconds 400
     Stage "blocked?"
-  } else { "[docktest] (no blocked spot on the screen: that case left out)" }
+  } else { NotRun "PLACE on a blocked spot (no blocked spot on the screen)" }
   Start-Sleep 1
   # (a GRID: a finger held on the map with the building picked, then dragged on into the dock: its far corner, the
   # pointer held down for BAR's build drag, stays at the dock's top edge; the cancel below lets it go, nothing placed)
@@ -159,7 +164,11 @@ try {
     Stage "griddock?"; Start-Sleep 1
   }
   $place = Rects "bardroid_place.txt"
-  if ($place["cancel"]) { $p = Mid $place["cancel"] "the building's cancel"; Tap $p[0] $p[1]; Start-Sleep 1; Stage "cancelled?"; Start-Sleep 1 }
+  if ($place["cancel"]) {
+    $p = Mid $place["cancel"] "the building's cancel"
+    Stage "cancelpre"; Start-Sleep -Milliseconds 300
+    Tap $p[0] $p[1]; Start-Sleep 1; Stage "cancelled?"; Start-Sleep 1
+  } else { "[docktest] FAIL no cancel on the building's panel (the building not picked?)" }
   # (LINE, then BORDER: the building picked again, the shape tapped, a press held on the map past the long press, then
   # dragged toward the screen's middle: the shape held from there, the building still picked; PLACE lays it out. A
   # right click before: the building put away; Kailil, 2026-11-20)
@@ -229,6 +238,26 @@ try {
     } else { "[docktest] FAIL BAR's Quit button not found on its top bar" }
     Stage "stopcom"; Start-Sleep 1
   }
+  # (a map tap on the commander with the home grid open, nothing picked: picked; PLAYTEST 2026-11-22's tour: it was not,
+  # the dock's COMMANDER was)
+  Stage "comcam"; Start-Sleep -Milliseconds 800
+  Stage "comspot"; Start-Sleep -Milliseconds 800
+  $cs = (Rects "bardroid_docktest.txt")["comspot"]
+  if ($cs) {
+    Tap $cs[0] $cs[1]; Start-Sleep -Milliseconds 1200
+    Stage "comtapped?"; Start-Sleep 1
+    "[docktest] (the tap's touch: $((InApp "tail -n 40 $cfg/bardroid_touch.txt" | Select-String -Pattern 'tap|click|cam|act ' | Select-Object -Last 3 | ForEach-Object { $_.Line }) -join ' | '))"
+    # (the tour's tap: the driver aims at a unit's feet, and its finger's spread put it 16 display pixels left and 31
+    # below them, 2.5 sigma; a record of what that tap picks)
+    $cf = (Rects "bardroid_docktest.txt")["comfeet"]
+    if ($cf) { Tap ($cf[0] - 16 / $script:k) ($cf[1] + 31 / $script:k); Start-Sleep -Milliseconds 1200 }
+    Stage "comfeet?"; Start-Sleep 1
+    Log '\[docktest\] \(the (commander|tour)' 2
+  } else {
+    Stage "comfeet?"; Start-Sleep 1   # (the camera put back)
+    Log '\[docktest\] \(the commander' 1
+    NotRun "a map tap on the commander with the home grid open (its body not in sight above the dock, or not what a click there picks)"
+  }
   # 3. the D-gun mode: FIRE swiped right to the grid's edge, AUTO swiped left to the cancel corner
   Stage "dgun"
   if (-not (WaitLog '\[docktest\] dgun on' 10)) { throw "the D-gun mode did not open" }
@@ -263,6 +292,7 @@ try {
   # (first a drag from the map down onto the dock: with a preset armed a finger's drag pans (taps only, Kailil
   # 2026-11-13: "make presets a single tap only"), nothing sent, STRAFE still armed)
   $dm = DockMid $dock
+  Stage "campos"; Start-Sleep -Milliseconds 300   # (the drag must pan: one that never landed also sent nothing)
   Touch DOWN $a0[0] $a0[1]; Start-Sleep -Milliseconds 150
   Touch MOVE $a0[0] (($a0[1] + $dm[1]) / 2); Touch MOVE $dm[0] $dm[1]
   Start-Sleep -Milliseconds 200; Touch UP $dm[0] $dm[1]; Start-Sleep -Milliseconds 800
@@ -299,6 +329,7 @@ try {
   Stage "drawdock?"; Start-Sleep 1
   # (Back with the presets open on the Pawns: closed, nothing picked; Kailil 2026-11-20)
   Stage "presetsback"; Start-Sleep -Milliseconds 1200
+  Stage "presetsopen"; Start-Sleep -Milliseconds 300
   & $adb shell input keyevent 4; Start-Sleep -Milliseconds 1200
   Stage "backpresets?"; Start-Sleep 1
   # 7. nothing picked, the dock's menu open: a drag on the game pans (Kailil, 2026-11-13: one finger pans, always), then
@@ -315,10 +346,16 @@ try {
   # (on the split dock its end on the right block's inner edge: 80 pixels right of the aim point fell between the blocks
   # when the aim point lay in the middle, the game's own place, no hold, the case failed; 2026-11-15)
   $bx = if ($dock["gap"]) { $dock["right"][0] + 12 } else { $a1[0] + 80 }
+  # (the box's starts in the touch log across the drag: a drag the camera's rail took drew no box, the pointer stayed
+  # above the edge and the case passed; vacuous-pass audit, 2026-11-23)
+  $bs0 = [int]"$(InApp "grep -c 'act dock_select_start' $cfg/bardroid_touch.txt 2>/dev/null")".Trim()
   TapDown $a1[0] $a1[1]; Start-Sleep -Milliseconds 120
   Touch MOVE $a1[0] (($a1[1] + $dm[1]) / 2); Touch MOVE $bx $dm[1]
-  Start-Sleep -Milliseconds 300; Touch UP $bx $dm[1]; Start-Sleep -Milliseconds 800
-  Stage "boxdock?"; Start-Sleep 1
+  Start-Sleep -Milliseconds 300
+  $heldDock = (Rects "bardroid_dock.txt")["dock"]   # (the dock's top the corner is held at; its menu may close meanwhile)
+  Touch UP $bx $dm[1]; Start-Sleep -Milliseconds 800
+  $bs1 = [int]"$(InApp "grep -c 'act dock_select_start' $cfg/bardroid_touch.txt 2>/dev/null")".Trim()
+  Stage "boxdock? $(if ($bs1 -ge $bs0) { $bs1 - $bs0 } else { $bs1 }) $(if ($heldDock) { $heldDock[1] } else { -1 })"; Start-Sleep 1
   # 8. the circle style: a circle drawn from just above the dock on into it, its start off the camera's knob and rails;
   # a Pawn just behind the dock's edge, inside the circle on the ground, is not picked (the style put back after)
   # (nothing picked first: the dock is lower without its selection row, and the Pawn must be behind the dock as it is
@@ -341,7 +378,7 @@ try {
     $pk = "$(Log '\[bardroid-portrait\] circle:' 1)" -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', ''
     $tl = @(InApp "grep -a -E 'dockcircle|dock_select|camheld|camtap' $cfg/bardroid_touch.txt 2>/dev/null | tail -4")
     "[docktest] (the circle's touch: $(if ($tl) { $tl -join ' | ' } else { 'no lines' }); the dock's pick: $(if ($picks -gt 0) { $pk } else { 'none' }))"
-  } else { "[docktest] note: no circle's points" }
+  } else { "[docktest] FAIL the circle's start not found (no stretch of its line clear of the camera's controls with ground)" }
   Stage "circledock? $picks"; Start-Sleep 1
   # 9. the wind's and the tide's boxes: the first tap on each, the dock's camera pad up again, opens its details (the
   # tide's "live" line once fell past the 320 bytes RtsTouch read of the dock file and its tap moved the pad; 2026-11-16)
@@ -354,7 +391,7 @@ try {
     Stage "tide?"; Start-Sleep 1
     $wm = Mid $wt["wind"]; Tap $wm[0] $wm[1]; Start-Sleep -Milliseconds 1200
     Stage "wind?"; Start-Sleep 1
-  } else { "[docktest] (no wind or tide boxes in sight: that case left out)" }
+  } else { NotRun "the wind and tide boxes' first tap (no boxes in sight)" }
   # 10. Area Mex (Kailil, 2026-11-17: its circle drew neither by a drag nor by a tap, then a drag): two Construction Bots
   # picked, Area Mex armed, a tap, then a drag from a metal spot (the tap's click held for the drag, RtsTouch.holdAreaTap)
   Stage "areamex"; Start-Sleep 2
@@ -369,7 +406,7 @@ try {
     Start-Sleep -Milliseconds 300; Touch UP $m1[0] $m1[1]; Start-Sleep -Milliseconds 1500
     Shot "areamex-drawn"
     Stage "areamex?"; Start-Sleep 1
-  } else { "[docktest] (no metal spot in sight: the Area Mex case left out)" }
+  } else { NotRun "Area Mex (no metal spot in sight)" }
   # 11. the energy panel's share knob (2026-11-17: whole percents, sent only when changed): its box tapped (its panel
   # at the first tap), the knob dragged from its place near the bar's end to 40 %
   Stage "resrects"; Start-Sleep 1
@@ -394,9 +431,9 @@ try {
         if (-not ("$(InApp "head -n 1 $cfg/bardroid_dock.txt")" -match ' menu')) { Tap $sm[0] $sm[1]; Start-Sleep -Milliseconds 800 }
         Tap $sm[0] $sm[1]; Start-Sleep -Milliseconds 1200
         Stage "picker?"; Start-Sleep 1
-      } else { "[docktest] (no SEND ENERGY in the energy panel: the picker's case left out)" }
-    } else { "[docktest] (the energy panel's bar not found: that case left out)" }
-  } else { "[docktest] (no resource boxes: that case left out)" }
+      } else { NotRun "SEND ENERGY's teammate picker (no SEND ENERGY in the energy panel)" }
+    } else { NotRun "the energy panel's share knob (its bar not found)" }
+  } else { NotRun "the energy panel (no resource boxes)" }
   # 13. check only (RC 0.2.0 item 5): two fingers dragged with a building picked, through a virtual touchscreen as a
   # hand's (Android's uinput; adb's input has one finger only); Fight armed and BAR's minimap tapped
   Stage "twopan"; Start-Sleep 1; Stage "twopanarm"; Start-Sleep 1
@@ -425,17 +462,21 @@ try {
     & $adb shell uinput /data/local/tmp/bardroid-twofingers.json | Out-Null
     & $adb shell rm -f /data/local/tmp/bardroid-twofingers.json
     Start-Sleep -Milliseconds 800; Stage "twopan?"; Start-Sleep 1
-  } else { "[docktest] (no point for the two-finger drag: that case left out)" }
+  } else { NotRun "two fingers dragged with a Solar picked (no point for the drag)" }
   Stage "minifight"; Start-Sleep 1; Stage "minifightarm"; Start-Sleep 1
   $mo = (Rects "bardroid_docktest.txt")["open"]
   if ($mo) { Tap $mo[0] $mo[1]; Start-Sleep -Milliseconds 1500 }   # (the small minimap: a first tap opens it)
   Stage "minifightpt"; Start-Sleep 1
   $mm = (Rects "bardroid_docktest.txt")["mini"]
   if ($mm) { Shot "minifight-armed"; Tap $mm[0] $mm[1]; Start-Sleep -Milliseconds 1200; Stage "minifight?"; Shot "minifight"; Start-Sleep 1 }
-  else { "[docktest] (BAR's minimap not in sight: that case left out)" }
+  else { NotRun "Fight on BAR's minimap (the minimap not in sight)" }
   Stage "end"
   if (-not (WaitLog '\[docktest\] done' 10)) { "[docktest] FAIL the widget did not finish" }
-  Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 20 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
+  # (every line: the last 20 alone left three of a run's four FAILs unprinted, 2026-11-23)
+  Log '\[docktest\] (PASS|FAIL|done)|Error in|Removed widget' 400 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
+  # (the widget's "done" counts its own checks: the cases this script could not set up, and its own FAIL lines above,
+  # are not in it)
+  "[docktest] (not run: $($script:notRun.Count)$(if ($script:notRun.Count) { ': ' + ($script:notRun -join '; ') }))"
 } finally {
   & $adb shell am force-stop $pkg
   AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"$(if ($portraitWas) { 'true' } else { 'false' })`"/' shared_prefs/bardroid.xml`n" +

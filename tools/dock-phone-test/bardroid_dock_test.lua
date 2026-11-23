@@ -41,6 +41,7 @@ local shapeQueued -- (the commander's queued buildings before a held LINE or BOR
 local realTeammates -- (the pad's teammate list, while stand-ins fill the picker: sendbtn, picker?)
 local hideAt, hidden, styleWas, circ -- (the circle's case: where its Pawn behind the dock is given, the Pawn, the style
 -- before, the circle's two points in X pixels)
+local notesWere, queuedWas, dgunWas, presetsWere -- (the cases' states before their gesture: blocked, cancel, X, Back)
 
 function widget:UnitCreated(unitID, unitDefID, teamID)
 	if hideAt and not hidden and teamID == Spring.GetMyTeamID() and unitDefID == UnitDefNames.armpw.id then
@@ -127,7 +128,10 @@ end
 local function onCmd(c)
 	local P, D = WG.BarDroidPad, WG.BarDroidPadDgun
 	if c:match("^spotdock%?") then -- (the picked building dragged on into the dock: its spot at the dock's top edge)
-		local y = tonumber(c:match("(%-?%d+)$")) or -1
+		-- (the spot's y and the free spot's it was dragged from: the spot must have moved down to the edge, an upper bound
+		-- alone passed a spot the drag never moved; vacuous-pass audit, 2026-11-23)
+		local ys, fys = c:match("^spotdock%? (%-?%d+) (%-?%d+)")
+		local y, fy = tonumber(ys) or -1, tonumber(fys) or -1
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()
 		local _, vsy = Spring.GetViewGeometry()
@@ -142,10 +146,72 @@ local function onCmd(c)
 		local function r(v)
 			return v and table.concat(v, ",") or "-"
 		end
-		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40,
-			string.format("spot y %d, the dock's top %d; dock %s, knob %s, zoom %s, turn %s (GL)", y, top, r(dock), r(k),
-				r(z), r(t)))
+		check("the building dragged on into the dock: its spot at the dock's top edge, in sight", y >= 0 and y < top + 40
+			and y >= top - 40 and y > fy + 20, string.format("spot y %d (from %d), the dock's top %d; dock %s, knob %s, zoom %s, "
+				.. "turn %s (GL)", y, fy, top, r(dock), r(k), r(z), r(t)))
 	elseif c == "deselect" or c == "deselect-again" then
+		Spring.SelectUnitArray({})
+	elseif c == "comcam" then -- (nothing picked, the dock's home grid: the camera on the commander, a stage before its
+		-- point is read: WorldToScreenCoords in the same call still had the old camera's matrices, 2026-11-23)
+		Spring.SelectUnitArray({})
+		circ = { camWas = Spring.GetCameraState() }
+		local bx, by, bz = Spring.GetUnitPosition(com)
+		Spring.SetCameraTarget(bx, by, bz, 0)
+	elseif c == "comspot" then -- (the commander's body in the screen's middle, as a player taps it; PLAYTEST
+		-- 2026-11-22's tour: such a tap did not pick it, the dock's COMMANDER did)
+		circ = circ or { camWas = Spring.GetCameraState() }
+		local bx, by, bz, mx, my, mz = Spring.GetUnitPosition(com, true)
+		local vsx, vsy = Spring.GetViewGeometry()
+		local sx, sy, sz = Spring.WorldToScreenCoords(mx, my, mz)
+		local Pt = WG.BarDroidPortrait
+		local dock = Pt and Pt.dock and Pt.dock()
+		local kind, under = Spring.TraceScreenRay(math.floor(sx), math.floor(sy))
+		local fx, fy = Spring.WorldToScreenCoords(bx, by, bz)
+		local onCam = "no"
+		local C = WG.BarDroidCamCtl
+		if C and C.rects then
+			local k, zr, tr = C.rects()
+			if k and (sx - k[1]) ^ 2 + (sy - k[2]) ^ 2 <= k[3] ^ 2 then
+				onCam = "the knob"
+			end
+			for _, r in ipairs({ zr or false, tr or false }) do
+				if r and sx >= r[1] and sx <= r[3] and sy >= r[2] and sy <= r[4] then
+					onCam = "a rail"
+				end
+			end
+		end
+		-- (and the ray there on the commander, off the camera's knob and rails: a point the click would not pick it at
+		-- proves nothing)
+		local ok = sz <= 1 and sx > 60 and sx < vsx - 60 and sy > (dock and dock[4] or 0) + 80 and sy < vsy - 160
+			and kind == "unit" and under == com and onCam == "no"
+		circ.at = { math.floor(sx), math.floor(sy) }
+		-- (and its feet, which the playtest's driver aims at: its tap there, 31 pixels low by its finger's spread, missed)
+		write((ok and string.format("comspot %d %d\n", sx, vsy - sy) or "comspot nil nil\n")
+			.. string.format("comfeet %d %d\n", fx, vsy - fy))
+		Spring.Echo(string.format("[docktest] (the commander %s: its body at %d,%d GL, the ray there %s %s, on the camera's "
+			.. "controls %s; its feet %d,%d)", tostring(com), sx, sy, tostring(kind), tostring(under), onCam, fx, fy))
+	elseif c == "comtapped?" then
+		local sel = Spring.GetSelectedUnits() or {}
+		-- (where the click went: the pointer, what lies under it, the commander's body now)
+		local px, py = Spring.GetMouseState()
+		local pk, pu = Spring.TraceScreenRay(px, py)
+		local _, _, _, mx, my, mz = Spring.GetUnitPosition(com, true)
+		local cx, cy = Spring.WorldToScreenCoords(mx, my, mz)
+		local at = circ and circ.at or { -1, -1 }
+		check("a map tap on the commander with the dock's home grid open, nothing picked: it is picked",
+			#sel == 1 and sel[1] == com, string.format("%d picked%s; the pointer at %d,%d GL (aimed %d,%d), under it %s %s; "
+				.. "the commander's body now at %d,%d", #sel, sel[1] and (sel[1] == com and " (the commander)"
+				or " (another unit)") or "", px, py, at[1], at[2], tostring(pk), tostring(pu), cx, cy))
+		Spring.SelectUnitArray({}) -- (the tour's own tap next: below the feet)
+	elseif c == "comfeet?" then -- (PLAYTEST 2026-11-22's tap, 18:56: the driver's aim, the feet, then 16 and 31 display
+		-- pixels off; a record, not a check: whether a finger that far below the model picks it)
+		local sel = Spring.GetSelectedUnits() or {}
+		Spring.Echo(string.format("[docktest] (the tour's tap, below the commander's feet: %d picked%s)", #sel,
+			sel[1] == com and ", the commander" or ""))
+		if circ and circ.camWas then
+			Spring.SetCameraState(circ.camWas, 0)
+		end
+		circ = nil
 		Spring.SelectUnitArray({})
 	elseif c == "circlecam" then -- (the circle's camera: up to 700 elmos towards the map's middle across, put back after
 		-- the case; the earlier cases leave it by the map's edge, and off the turn rail the circle's start, the screen's
@@ -358,20 +424,32 @@ local function onCmd(c)
 		local n = Spring.GetSelectedUnitsCount()
 		check("units picked, one finger dragged on the game: it pans, no path drawn", moved > 30 and moves == 0 and n > 0,
 			string.format("camera moved %.0f, %d moves, %d picked", moved, moves, n))
-	elseif c == "boxdock?" then -- (a box selection dragged on into the dock: let go at the dock's top edge)
+	elseif c:match("^boxdock%?") then -- (a box selection dragged on into the dock: let go at the dock's top edge; the
+		-- number: the touch log's box starts across the drag, from the script: a drag the camera's rail took drew no box and
+		-- the pointer stayed above, passing; vacuous-pass audit, 2026-11-23)
+		-- (and the dock's top as its file had it while the finger was on the dock, X screen y down: the menu opened for the
+		-- case closes on its own 2.6 s later, so the top read now was the lower one, 151 pixels under the held corner;
+		-- 2026-11-23)
+		local starts = tonumber(c:match("^boxdock%? (%d+)")) or 0
+		local fileTop = tonumber(c:match("^boxdock%? %d+ (%-?[%d.]+)"))
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()
 		local top = dock and dock[4] or 0
+		local _, vsy = Spring.GetViewGeometry()
+		local heldTop = fileTop and fileTop > 0 and vsy - fileTop or top
 		local _, my = Spring.GetMouseState()
-		check("a box selection dragged on into the dock: let go at the dock's top edge, the box in sight", my >= top - 2,
-			string.format("let go at y %d, the dock's top %d, %d picked", my, top, Spring.GetSelectedUnitsCount()))
+		local function atEdge(t) return my >= t - 2 and my <= t + 12 end
+		check("a box selection dragged on into the dock: let go at the dock's top edge, the box in sight", starts > 0
+			and (atEdge(top) or atEdge(heldTop)), string.format("%d box starts, let go at y %d, the dock's top %d (%d while " ..
+				"the finger was on it), %d picked", starts, my, top, heldTop, Spring.GetSelectedUnitsCount()))
 	elseif c == "griddock?" then -- (a GRID dragged on into the dock: its far corner, the pointer, at the dock's top edge)
 		local Pt = WG.BarDroidPortrait
 		local dock = Pt and Pt.dock and Pt.dock()
 		local top = dock and dock[4] or 0
 		local _, my, held = Spring.GetMouseState()
 		check("a GRID dragged on into the dock: its far corner held at the dock's top edge, in sight",
-			held and my >= top - 2, string.format("button %s, corner y %d, the dock's top %d", tostring(held), my, top))
+			held and my >= top - 2 and my <= top + 12, string.format("button %s, corner y %d, the dock's top %d",
+				tostring(held), my, top))
 	elseif c == "placed?" then
 		local found, words = false, {}
 		for _, cmd in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
@@ -381,17 +459,32 @@ local function onCmd(c)
 		local _, _, _, active = Spring.GetActiveCommand()
 		check("a building picked on the dock, its spot tapped, PLACE 2.6 s later: queued at once", found,
 			"queue [" .. table.concat(words, " ") .. "], picked " .. tostring(active))
+	elseif c == "blockedpre" then -- (the notes said so far: an earlier one of the same words passed it, the pad's last)
+		notesWere = select(3, P.note()) or 0
 	elseif c == "blocked?" then
-		local _, note = P.note()
-		check("PLACE on a blocked spot says so", note == "CAN'T BUILD THERE: PICK ANOTHER SPOT", note)
+		local _, note, notes = P.note()
+		check("PLACE on a blocked spot says so", note == "CAN'T BUILD THERE: PICK ANOTHER SPOT" and (notes or 0) > (notesWere or 0),
+			tostring(note) .. string.format(" (%d notes, %d before)", notes or 0, notesWere or 0))
+	elseif c == "cancelpre" then -- (the commander's queued buildings before the cancel's tap: their places)
+		queuedWas = {}
+		for _, q in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
+			if q.id < 0 and q.params and q.params[3] then
+				queuedWas[string.format("%d,%d", q.params[1], q.params[3])] = true
+			end
+		end
 	elseif c == "cancelled?" then -- (upright PLACE is the whole panel around rotate and cancel: cancel must not place)
 		local _, cmd = Spring.GetActiveCommand()
-		local queued = 0
+		-- (no building at a new place: "1 at most" passed a cancel that placed, PLACE replacing the queue by one; and
+		-- "as many as before" failed one the commander finished meanwhile, 1 before, 0 after, 2026-11-23)
+		local new, queued = 0, 0
 		for _, q in ipairs(Spring.GetUnitCommands(com, 20) or {}) do
-			queued = queued + (q.id == -buildDef and 1 or 0)
+			if q.id < 0 and q.params and q.params[3] then
+				queued = queued + 1
+				new = new + ((queuedWas or {})[string.format("%d,%d", q.params[1], q.params[3])] and 0 or 1)
+			end
 		end
-		check("the panel's cancel puts the building away, nothing placed", not (cmd and cmd < 0) and queued <= 1,
-			"picked " .. tostring(cmd) .. ", queued " .. queued)
+		check("the panel's cancel puts the building away, nothing placed", queuedWas ~= nil and not (cmd and cmd < 0)
+			and new == 0, string.format("picked %s, %d queued, %d of them new", tostring(cmd), queued, new))
 	elseif c == "shapecells" then -- (the building picked again: LINE's and BORDER's cells on the dock, the queue so far)
 		local Pt = WG.BarDroidPortrait
 		local _, vsy = Spring.GetViewGeometry()
@@ -549,12 +642,17 @@ local function onCmd(c)
 		if WG.BarDroidPresets then
 			WG.BarDroidPresets.open()
 		end
+	elseif c == "presetsopen" then -- (just before Back: the presets open on the picked units, else Back proved nothing)
+		local PR = WG.BarDroidPresets
+		presetsWere = { PR and PR.isOpen() or false, Spring.GetSelectedUnitsCount() }
 	elseif c == "backpresets?" then -- (Back with the presets open: closed, nothing picked)
 		local PR = WG.BarDroidPresets
 		local open = PR and PR.isOpen()
 		local n = Spring.GetSelectedUnitsCount()
-		check("Back with the presets open on picked units: closed, nothing picked, the dock's home grid", not open and n == 0,
-			string.format("presets open %s, %d picked", tostring(open), n))
+		local was = presetsWere or { false, 0 }
+		check("Back with the presets open on picked units: closed, nothing picked, the dock's home grid", was[1] == true
+			and was[2] > 0 and not open and n == 0, string.format("presets open %s, %d picked; before Back open %s, %d picked",
+				tostring(open), n, tostring(was[1]), was[2]))
 	elseif c == "stopcom" then -- (the shapes' buildings off the commander's queue: the D-gun mode's walk must not build)
 		Spring.GiveOrderToUnit(com, CMD.STOP, {}, 0)
 	elseif c == "dgun" then -- (the building put away by the dock's cancel first: the script taps it)
@@ -572,8 +670,10 @@ local function onCmd(c)
 		check("MOVE held: the commander walks; let go: it stands still at once", (maxSpeed or 0) > 15 and now < 4,
 			string.format("top %.0f, now %.0f", maxSpeed or 0, now))
 		maxSpeed = nil
+		dgunWas = D.active() -- (on before the X: a mode already off passed the X's case)
 	elseif c == "xoff?" then -- (the X tapped by a finger)
-		check("the D-gun mode's X tapped: the mode off", D.active() == false, "active " .. tostring(D.active()))
+		check("the D-gun mode's X tapped: the mode off", dgunWas == true and D.active() == false,
+			"active " .. tostring(D.active()) .. ", before the tap " .. tostring(dgunWas))
 	elseif c == "presets" then
 		P.act("dgun_cancel")
 		local x, y, z = Spring.GetUnitPosition(com)
@@ -586,8 +686,11 @@ local function onCmd(c)
 			end
 		end
 		local armed = WG.BarDroidPresets and WG.BarDroidPresets.armed()
-		check("STRAFE's drag lifted over the dock: not sent, the preset still armed", fights == 0 and armed == true,
-			string.format("%d fights, armed %s", fights, tostring(armed)))
+		-- (and the drag reached the game: it pans with a preset armed; a drag that never landed also sent nothing)
+		local x, _, z = Spring.GetCameraPosition()
+		local moved = camAt and math.sqrt((x - camAt[1]) ^ 2 + (z - camAt[3]) ^ 2) or 0
+		check("STRAFE's drag lifted over the dock: not sent, the preset still armed", fights == 0 and armed == true
+			and moved > 30, string.format("%d fights, armed %s, the camera moved %.0f", fights, tostring(armed), moved))
 		-- (that drag panned the camera, a finger's drag with a preset armed since 2026-11-13: back where the aims were
 		-- found, so the next tap's point is on the ground again)
 		if edge then
@@ -611,7 +714,8 @@ local function onCmd(c)
 		-- the units' spacing past its end, so goals may lie a little beyond it)
 		local _, my = Spring.GetMouseState()
 		Spring.Echo("[docktest] the drawn path's goals (GL x,y): " .. table.concat(ys, " "))
-		check("a path drawn on into the dock: let go at the dock's top edge, the path in sight", n > 0 and my >= top - 2,
+		check("a path drawn on into the dock: let go at the dock's top edge, the path in sight", n > 0 and my >= top - 2
+			and my <= top + 12,
 			string.format("%d moves, let go at y %d, the dock's top %d, lowest goal y %s", n, my, top,
 				tostring(lowest and math.floor(lowest))))
 		-- (the Pawns were going side to side on the preset's repeat: the player's own order ends it, or the path ran
@@ -624,7 +728,8 @@ local function onCmd(c)
 			end
 		end
 		local on = table.concat(rep):find("R") ~= nil
-		check("the path given to the Pawns on the preset's repeat: their repeat off", #rep > 0 and not on, table.concat(rep, " "))
+		check("the path given to the Pawns on the preset's repeat: their repeat off", #rep > 0 and not on and n > 0,
+			table.concat(rep, " ") .. string.format(" (%d moves)", n))
 	elseif c == "strafe?" then -- (a tap sent it, taps only since 2026-11-13: each Pawn one fight to its place, no
 		-- repeat yet, or already there; the places in rows abreast (80 elmos apart when more than a row), the front row
 		-- at the tap, a Pawn's width or more apart; a drawn line's width only with a mouse)
