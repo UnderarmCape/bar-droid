@@ -33,9 +33,10 @@ $Smoke = @(
   @("dock-phone-test", @(), 3), @("touchfix-phone-test", @(), 4), @("lobby-phone-test", @(), 1),
   @("pad-test", @(), 2), @("pad-test", @("-Online"), 2), @("overgame-phone-test", @(), 3),
   @("camctl-phone-test", @(), 2), @("touch-phone-test", @(), 2), @("bridge-phone-test", @(), 1.5),
-  @("pregame-phone-test", @(), 2), @("remake-check", @(), 1))
+  @("pregame-phone-test", @(), 2), @("remake-check", @(), 1), @("container-libs-phone-test", @(), 0.2))
 # (pregame-phone-test in the smoke set: the dead faction buttons of 3104771e reached the Fold7 because no smoke test
-# reached a pre-game, the in-play tour 2026-11-22)
+# reached a pre-game, the in-play tour 2026-11-22; container-libs: a new container without libatomic1 ran the phone
+# engine into 127, the fresh-install run the same night)
 $Nightly = @(
   @("factory-preset-test", @(), 4), @("types-phone-test", @(), 3), @("attack-ping-test", @(), 2),
   @("walls-phone-test", @(), 3), @("stats-phone-test", @(), 2), @("settings-phone-test", @(), 2),
