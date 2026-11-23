@@ -33,14 +33,17 @@ $Smoke = @(
   @("dock-phone-test", @(), 3), @("touchfix-phone-test", @(), 4), @("lobby-phone-test", @(), 1),
   @("pad-test", @(), 2), @("pad-test", @("-Online"), 2), @("overgame-phone-test", @(), 3),
   @("camctl-phone-test", @(), 2), @("touch-phone-test", @(), 2), @("bridge-phone-test", @(), 1.5),
-  @("remake-check", @(), 1))
+  @("pregame-phone-test", @(), 2), @("remake-check", @(), 1))
+# (pregame-phone-test in the smoke set: the dead faction buttons of 3104771e reached the Fold7 because no smoke test
+# reached a pre-game, the in-play tour 2026-11-22)
 $Nightly = @(
   @("factory-preset-test", @(), 4), @("types-phone-test", @(), 3), @("attack-ping-test", @(), 2),
   @("walls-phone-test", @(), 3), @("stats-phone-test", @(), 2), @("settings-phone-test", @(), 2),
   @("replay-phone-test", @(), 2), @("lobbychat-phone-test", @(), 1.5), @("buildbar-phone-test", @(), 2),
   @("driverwatch-phone-test", @(), 4), @("x11-probe", @(), 0.5), @("retreat-phone-test", @(), 7),
   @("pad-test", @("-Dgun"), 2), @("pad-test", @("-Share"), 2), @("pad-test", @("-Chat"), 2),
-  @("fp-save-test", @(), 1.5), @("pace-test", @(), 2), @("dgun-speed-test", @(), 3))
+  @("fp-save-test", @(), 1.5), @("pace-test", @(), 2), @("dgun-speed-test", @(), 3),
+  @("retreat-phone-test", @("-Commander"), 3), @("exitrecord-phone-test", @(), 2))
 # Known flakes: a fail whose every FAIL line matches is FLAKY, not FAIL (each with the day it was seen).
 $Quarantine = @{
   "dock-phone-test" = @('FAIL Area Mex armed')   # (2026-11-20 05:50 "0 mex orders" once; ~20 passing runs since)
