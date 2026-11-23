@@ -3,7 +3,8 @@
 # - a server replay through the launcher's bench mode (files/bar/.bardroid-bench-replay "0 <seconds> <replay>":
 #   bardroid_bench.lua plays it and quits after), for each replay in files/bar/demos the phone can play as it is: its
 #   engine the phone's, its game the one installed (skirmish.txt's), its map in maps/ (tools/demo-info.py reads them; the
-#   bench mode downloads nothing, and the container's downloads need the app's own process: adb's run-as has no network);
+#   bench mode downloads nothing, and the container's downloads need the app's own process: adb's run-as has no network;
+#   tools\soak-fetch.ps1 copies BAR's newest online games of the phone's engine and game in, with their maps);
 # - then, to fill the chunks, a long game of BARb against BARb that the phone watches as a spectator: the launcher's
 #   skirmish (its map, BAR's game as installed), the start script made AI against AI by a dev-env.sh for the run
 #   (removed after; a developer's own put back), until one side's commander dies or the chunk's time is up.
@@ -175,6 +176,9 @@ for ($i = 0; $i -lt $Chunks; $i++) {
       $start = "skirmish"; $label = "BARb against BARb"
     } else {
       InApp "rm -f files/bar/dev-env.sh; echo '0 $($ChunkMinutes * 60 - 120) $kind' > files/bar/.bardroid-bench-replay" | Out-Null
+      # (background apps closed first, as tools\engine-gate.ps1: an 8v8 replay on the 8 GB dev phone was taken by
+      # Android's low-memory killer while loading with either engine, and played to its end after "am kill-all")
+      & $adb -s $Device shell "am kill-all" | Out-Null
       $start = "bench"; $label = $kind
     }
     & $adb -s $Device shell "input keyevent KEYCODE_WAKEUP" | Out-Null
