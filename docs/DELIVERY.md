@@ -156,6 +156,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    reproduces).
 9. [ ] First run end to end on the dev phone from empty storage (its saves and replays backed up and put back):
    minutes and GB recorded for the release notes. (coordinator)
+   2026-11-22 22:02 (tools/fresh-install-phone-test.ps1, d3586410/88bca5e9; dea503f5's APK): the backup 459 entries,
+   3.0 GB, put back whole after. Installed (container, Mesa, engine, BAR's game 3.4 GB, the lobby, the first map) in
+   11.8 min on the home Wi-Fi; then a BLOCKER: the phone engine's first start ended in "libatomic.so.1: cannot open
+   shared object file" (127), the first game failed and BAR's official engine ran from then on (.bardroid-phone-failed).
+   The apt step never named libatomic1; older containers had it through packages the slim step removes. Fixed in
+   ccb4f0cc (the apt step installs it; a container without it gets it once at the next start, setup-container.sh "libs",
+   and the phone engine set aside for it runs again). Space after: the app's data 2.69 GB (container 0.37 GB, BAR
+   2.31 GB), the APK 34 MB. To do: the run again on ccb4f0cc's build.
 10. [ ] Overnight soak in chunks of 45 minutes or less: server replays at 1x and a long Medium game; driver faults,
     low-memory kills and thermal steps counted, no new fault class. (coordinator)
 11. [ ] The RC on the Fold7 (never while he plays), with his checklist: an online game, fold and unfold mid-game, the
