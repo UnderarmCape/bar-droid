@@ -811,6 +811,8 @@ The unit info panel shows BAR's numbers for what you picked, as BAR's own Info p
 
 ![Unfolded: the unit info panel in the dock's middle, above the wind and tide pill](guide/img/info-unfolded-commander.jpg)
 
+![Sideways: the unit info panel on top of the dock's panel, clear of the camera's zoom rail at the edge](guide/img/info-sideways-commander.jpg)
+
 **What it shows:**
 
 - **One unit:** its picture, name, health and stats.

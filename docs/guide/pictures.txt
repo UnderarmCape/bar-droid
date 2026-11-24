@@ -63,3 +63,4 @@ pad-ui\after-upright-note.png pad-note
 pad-ui\after-sideways-dgun.png pad-dgun
 pad-ui\after-sideways-share.png pad-share
 pad-ui\after-sideways-share-units.png pad-share-units
+guide\info-sideways-commander.png info-sideways-commander top=0.3
