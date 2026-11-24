@@ -146,17 +146,39 @@ local function freePointer()
 	return mouseMode ~= (Spring.GetGameFrame() == 0 and not Spring.GetSpectatingState())
 end
 
--- The app's controller interface, one look (Kailil, 2026-10-30: "make them look more polished. not extravagant"): BAR's
--- own panels (WG.FlowUI's Element: its dark glass, corners and padding) and font, sizes from BAR's interface scale (the
--- phone sets it per Fold screen, so a note is about as big on the cover screen as on the inner one), and two accents:
--- gold where the pad is (the focus on a menu, a lit choice), v0.8.5's blue for placing and filters. The app's build
--- menu draws with it too (WG.BarDroidStyle).
+-- The app's controller interface, one look with the touch dock (Kailil, 2026-10-30: "make them look more polished. not
+-- extravagant"; 2026-11-23: "bring the gamepad support side of the phone mod in sync visually and kinda functionally with
+-- our super optimized touch ui and ux. make the gamepad ui cohesive with that"): bardroid_portrait.lua's look, its values
+-- copied here (that file is the dock's): BAR's panels (WG.FlowUI's Element) and buttons (its Button: plain, BAR's gold
+-- for the one picked, the D-gun's red), unit pictures as the dock's tiles, its round pill (its own round corners:
+-- FlowUI's RectRound cuts them straight), its white, grey and gold words, BAR's font and its bold, sizes from BAR's
+-- interface scale for words (the phone sets it per Fold screen) and from the screen's short side for tiles and gaps, as
+-- the dock's; gold where the pad is (the focus on a menu), v0.8.5's blue for placing and filters. The app's build menu,
+-- first person and the speed tuner draw with it too (WG.BarDroidStyle).
 local style = {
 	GOLD = { 1, 0.78, 0.25 },
 	BLUE = { 0.2, 0.8, 1 },
-	TEXT = { 0.96, 0.92, 0.8 },
+	TEXT = { 0.94, 0.94, 0.94 }, -- (the dock's words, \240)
+	WHITE = { 1, 1, 1 }, -- (on a coloured button: FIRE's)
+	LACK = { 0.78, 0.63, 0.59 }, -- (FIRE without a shot's energy: \200\160\150)
+	SOFT = { 0.78, 0.78, 0.78 }, -- (a count, a second line: \200)
+	DIM = { 0.55, 0.55, 0.55 }, -- (nothing to do there: \140)
 	-- the pad's face buttons in their Xbox colours (a note naming one at its end, "REPAIR: A", shows it as a key)
 	KEYS = { A = { 0.33, 0.66, 0.24 }, B = { 0.82, 0.24, 0.2 }, X = { 0.2, 0.44, 0.88 }, Y = { 0.9, 0.7, 0.1 } },
+	-- the dock's buttons (FlowUI Button's two colours, its foot's and its top's): BAR's gold for the one picked, the
+	-- D-gun's red, an open place, + NEW
+	LIT = { { 0.38, 0.3, 0.04, 0.9 }, { 0.66, 0.53, 0.12, 0.9 } },
+	RED = { { 0.5, 0.06, 0.05, 1 }, { 0.86, 0.14, 0.11, 1 } },
+	AUTO = { { 0.55, 0.2, 0.02, 1 }, { 0.95, 0.48, 0.07, 1 } },
+	BLANK = { { 0, 0, 0, 0.25 }, { 0.12, 0.12, 0.12, 0.3 } },
+	NEW = { { 0.2, 0.2, 0.2, 0.8 }, { 0.32, 0.32, 0.32, 0.8 } },
+	PLAIN = { { 0, 0, 0, 1 }, { 1, 1, 1, 0.1 } }, -- (FlowUI Button's own)
+	GLOW = { { 1, 0.85, 0.2, 0.08 }, { 1, 0.85, 0.2, 0.28 } }, -- (BAR's gold light over a picked cell: style.lit)
+	-- the dock's pill (SP.NOOK_C): its top lit, dark from its foot up, a gold tint on the one open
+	PILL = { edge = { 1, 1, 1, 0.16 }, c0 = { 0.075, 0.08, 0.09, 1 }, c1 = { 0.165, 0.17, 0.185, 1 },
+		gold0 = { 1, 0.78, 0.25, 0.06 }, gold1 = { 1, 0.78, 0.25, 0.22 }, shade = { 0, 0, 0, 0.4 } },
+	fade1 = { 0, 0, 0, 0 }, fade2 = { 0, 0, 0, 0 }, -- (a button's colours faded: reused, no table a frame)
+	drawn = {}, -- (tools: each piece's rect as drawn last, and the draw frame: drawnRect)
 }
 
 -- a size from BAR's interface scale: this fraction of the screen's height at scale 1; least: the smallest (10: text)
@@ -166,18 +188,228 @@ function style.size(fraction, least)
 	return math.max(least or 10, math.floor(vsy * fraction * scale + 0.5))
 end
 
--- BAR's panel, its alpha times alpha (least: at least this opaque)
+-- the dock's sizes by the screen (bardroid_portrait.lua layout: its pad and gap from the short side, 0.008 of it on a
+-- near-square screen, else 0.012; a build tile 0.075 of it, the groups row's tiles as tall)
+function style.dock()
+	local vsx, vsy = Spring.GetViewGeometry()
+	local d = style.dockSizes
+	if not d or d.vsx ~= vsx or d.vsy ~= vsy then
+		local short = math.min(vsx, vsy)
+		local pad = math.max(4, math.floor(short * (math.max(vsx, vsy) < short * 1.5 and 0.008 or 0.012)))
+		d = { vsx = vsx, vsy = vsy, pad = pad, gap = math.max(3, math.floor(pad * 0.6)), tile = math.floor(short * 0.075) }
+		style.dockSizes = d
+	end
+	return d
+end
+
+-- BAR's font and its bold (the dock's numbers, QUEUE, the keys' letters)
+function style.font()
+	return WG.fonts and WG.fonts.getFont()
+end
+function style.bold()
+	return WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
+end
+
+-- (tools: a piece's rect as drawn, for tools/pad-test.ps1 -Shots; one table each, reused)
+function style.mark(name, x0, y0, x1, y1)
+	local r = style.drawn[name]
+	if not r then
+		r = {}
+		style.drawn[name] = r
+	end
+	r[1], r[2], r[3], r[4], r.at = x0, y0, x1, y1, Spring.GetDrawFrame()
+end
+
+-- BAR's panel, as the dock's (FlowUI's Element, its own colours and padding), its alpha times alpha (least: at least
+-- this opaque; 0.9 or more, whole: the dock's opaque panel)
 function style.panel(x0, y0, x1, y1, alpha, least)
 	local f = WG.FlowUI
 	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
 	if f and f.Draw and f.Draw.Element then
 		local o = math.max(least or 0, math.min(1, (f.opacity or 0.7) + 0.1) * (alpha or 1))
-		f.Draw.Element(x0, y0, x1, y1, 1, 1, 1, 1, 1, 1, 1, 1, o, { 0.03, 0.03, 0.03, o }, { 1, 1, 1, o * 0.07 },
-			math.max(1, math.floor((f.elementPadding or 2) * 0.8)))
+		f.Draw.Element(x0, y0, x1, y1, 1, 1, 1, 1, 1, 1, 1, 1, o, nil, nil, nil, (least or 0) >= 0.9 and (alpha or 1) >= 1)
 	else
-		gl.Color(0.03, 0.03, 0.03, math.max(least or 0, 0.8 * (alpha or 1)))
+		gl.Color(0.04, 0.04, 0.04, math.max(least or 0, 0.8 * (alpha or 1)))
 		gl.Rect(x0, y0, x1, y1)
 	end
+	gl.Color(1, 1, 1, 1) -- (a unit picture right after an Element came out dark: the state it leaves; the dock's panel)
+	gl.Texture(false)
+end
+
+-- a button as the dock's (FlowUI's Button, its padding a third of the dock's pad): c its two colours (style.LIT, RED,
+-- BLANK, NEW; nil: BAR's plain one), faded by alpha
+function style.button(x0, y0, x1, y1, c, alpha)
+	local f = WG.FlowUI
+	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
+	local c1, c2 = c and c[1], c and c[2]
+	local a = alpha or 1
+	if a < 1 then
+		local b1, b2 = c1 or style.PLAIN[1], c2 or style.PLAIN[2]
+		c1, c2 = style.fade1, style.fade2
+		c1[1], c1[2], c1[3], c1[4] = b1[1], b1[2], b1[3], b1[4] * a
+		c2[1], c2[2], c2[3], c2[4] = b2[1], b2[2], b2[3], b2[4] * a
+	end
+	if f and f.Draw and f.Draw.Button then
+		f.Draw.Button(x0, y0, x1, y1, 1, 1, 1, 1, 1, 1, 1, 1, nil, c1, c2, math.max(1, math.floor(style.dock().pad * 0.35)))
+	else
+		local k = c1 or style.PLAIN[1]
+		gl.Color(math.max(0.15, k[1]), math.max(0.15, k[2]), math.max(0.15, k[3]), 0.9 * a)
+		gl.Rect(x0, y0, x1, y1)
+	end
+	-- (a unit picture drawn right after a FlowUI button came out dark: the state it leaves; the dock's resetGL)
+	gl.Color(1, 1, 1, 1)
+	gl.Texture(false)
+	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+end
+
+-- a button over the game, on the dock's own dark ground (its opaque panel's colours under it: FlowUI's button alone is
+-- clear at its top, the map showed through the filter radial's, dev phone shots 2026-11-24)
+function style.float(x0, y0, x1, y1, c, alpha)
+	local f = WG.FlowUI and WG.FlowUI.Draw
+	local a = alpha or 1
+	if f and f.RectRound then
+		local g1, g2 = style.fade1, style.fade2
+		g1[1], g1[2], g1[3], g1[4] = 0.04, 0.04, 0.04, 0.92 * a
+		g2[1], g2[2], g2[3], g2[4] = 0.12, 0.12, 0.12, 0.92 * a
+		f.RectRound(math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1),
+			math.max(2, math.floor(math.min(x1 - x0, y1 - y0) * 0.12)), 1, 1, 1, 1, g1, g2)
+	end
+	style.button(x0, y0, x1, y1, c, alpha)
+end
+
+-- a unit type's picture as the dock's tiles (its unitTile: FlowUI's Unit; in use, the picture closer and BAR's gold
+-- light over it, as BAR's build menu shows its picked cell)
+function style.unit(defID, x0, y0, x1, y1, inUse, alpha)
+	local f = WG.FlowUI and WG.FlowUI.Draw
+	local a = alpha or 1
+	local cs = math.max(2, math.floor((x1 - x0) * 0.06))
+	if f and f.Unit then
+		local zoom = inUse and 0.135 or 0.04
+		gl.Color(1, 1, 1, a)
+		f.Unit(x0, y0, x1, y1, cs, 1, 1, 1, 1, zoom, nil, nil, "#" .. defID)
+		if inUse then
+			gl.Blending(GL.SRC_ALPHA, GL.ONE)
+			gl.Color(1, 0.85, 0.2, 0.25 * a)
+			gl.Texture("#" .. defID)
+			f.Unit(x0, y0, x1, y1, cs, 1, 1, 1, 1, zoom)
+			gl.Texture(false)
+			gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+		end
+	else
+		gl.Color(1, 1, 1, a)
+		gl.Texture("#" .. defID)
+		gl.TexRect(x0, y0, x1, y1)
+		gl.Texture(false)
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
+-- words in the middle of a rect as the dock's buttons have them (textIn: no wider than 76 % of it, the outline is not in
+-- the font's width), in BAR's font or the bold one
+function style.words(text, x0, y0, x1, y1, size, color, alpha, bold)
+	local font = bold and style.bold() or style.font()
+	if not font then
+		return
+	end
+	local room = (x1 - x0) * 0.76
+	local w = font:GetTextWidth(text) * size
+	if w > room then
+		size = size * room / w
+	end
+	local a = alpha or 1
+	font:Begin()
+	font:SetOutlineColor(0, 0, 0, 0.6 * a)
+	font:SetTextColor(color[1], color[2], color[3], a)
+	font:Print(text, (x0 + x1) / 2, (y0 + y1) / 2 - size * 0.32, size, "co")
+	font:End()
+end
+
+-- a rounded rect as a fan from its middle, from c0 at its foot to c1 at its top, its corners' radius r, drawn dy lower,
+-- faded by a: the dock's own round corners (SP.roundPath, SP.fan), its vertices made here (gl.BeginEnd's function: no
+-- table a frame)
+function style.roundFan(x0, y0, x1, y1, r, c0, c1, a, dy)
+	local span = math.max(1, y1 - y0)
+	local t = 0.5
+	gl.Color(c0[1] + (c1[1] - c0[1]) * t, c0[2] + (c1[2] - c0[2]) * t, c0[3] + (c1[3] - c0[3]) * t,
+		(c0[4] + (c1[4] - c0[4]) * t) * a)
+	gl.Vertex((x0 + x1) / 2, (y0 + y1) / 2 - dy)
+	local q = math.pi / 2
+	for k = 0, 4 do -- (the four corners, top right first, round to its first point again)
+		local c = k % 4
+		local cx = (c == 0 or c == 3) and x1 - r or x0 + r
+		local cy = c <= 1 and y1 - r or y0 + r
+		for i = 0, k < 4 and 8 or 0 do
+			local ang = (c + i / 8) * q
+			local x, y = cx + r * math.cos(ang), cy + r * math.sin(ang)
+			t = math.max(0, math.min(1, (y - y0) / span))
+			gl.Color(c0[1] + (c1[1] - c0[1]) * t, c0[2] + (c1[2] - c0[2]) * t, c0[3] + (c1[3] - c0[3]) * t,
+				(c0[4] + (c1[4] - c0[4]) * t) * a)
+			gl.Vertex(x, y - dy)
+		end
+	end
+end
+
+-- the dock's pill (SP.drawPill): round corners, its top lit, dark from its foot up, a soft shade under it over the game;
+-- tint: BAR's gold over it (the one open)
+function style.pill(x0, y0, x1, y1, alpha, tint)
+	x0, y0, x1, y1 = math.floor(x0), math.floor(y0), math.floor(x1), math.floor(y1)
+	local a = alpha or 1
+	local r = math.floor(math.min(y1 - y0, x1 - x0) * 0.3)
+	local P = style.PILL
+	gl.Texture(false)
+	local fan, TF = style.roundFan, GL.TRIANGLE_FAN
+	gl.BeginEnd(TF, fan, x0 - 1, y0 - 1, x1 + 1, y1, r + 1, P.shade, P.shade, a, 2)
+	gl.BeginEnd(TF, fan, x0, y0, x1, y1, r, P.edge, P.edge, a, -1)
+	gl.BeginEnd(TF, fan, x0, y0, x1, y1, r, P.c0, P.c1, a, 0)
+	if tint then
+		gl.BeginEnd(TF, fan, x0, y0, x1, y1, r, P.gold0, P.gold1, a, 0)
+	end
+	gl.Color(1, 1, 1, 1)
+end
+
+-- BAR's gold light over a rect, from its foot up (the dock's lit tile: the gold BAR's build menu lays over its picked
+-- cell), its corners cut as BAR's cells' are
+function style.lit(x0, y0, x1, y1)
+	local f = WG.FlowUI and WG.FlowUI.Draw
+	gl.Texture(false)
+	gl.Blending(GL.SRC_ALPHA, GL.ONE)
+	if f and f.RectRound then
+		f.RectRound(x0, y0, x1, y1, math.max(2, math.floor(math.min(x1 - x0, y1 - y0) * 0.1)), 1, 1, 1, 1, style.GLOW[1],
+			style.GLOW[2])
+	else
+		gl.Color(1, 0.85, 0.2, 0.18)
+		gl.Rect(x0, y0, x1, y1)
+	end
+	gl.Blending(GL.SRC_ALPHA, GL.ONE_MINUS_SRC_ALPHA)
+	gl.Color(1, 1, 1, 1)
+end
+
+-- a key's name on a small dark chip ("LB", "RT": the pad's other buttons, beside the face buttons' coloured keys)
+function style.chip(x0, y0, h, label, alpha)
+	local bold = style.bold()
+	if not bold then
+		return 0
+	end
+	local a = alpha or 1
+	local size = h * 0.5
+	local w = math.ceil(bold:GetTextWidth(label) * size + h * 0.7)
+	local f = WG.FlowUI and WG.FlowUI.Draw
+	local cs = math.max(2, math.floor(h * 0.22))
+	local c = style.fade1
+	c[1], c[2], c[3], c[4] = 0.2, 0.2, 0.22, 0.95 * a
+	if f and f.RectRound then
+		f.RectRound(x0, y0, x0 + w, y0 + h, cs, 1, 1, 1, 1, c, c)
+	else
+		gl.Color(c[1], c[2], c[3], c[4])
+		gl.Rect(x0, y0, x0 + w, y0 + h)
+	end
+	bold:Begin()
+	bold:SetOutlineColor(0, 0, 0, 0.5 * a)
+	bold:SetTextColor(1, 1, 1, 0.95 * a)
+	bold:Print(label, x0 + w / 2, y0 + h / 2 - size * 0.34, size, "co")
+	bold:End()
+	gl.Color(1, 1, 1, 1)
+	return w
 end
 
 -- (a rounded rect, filled; BAR's own when it is there)
@@ -279,7 +511,9 @@ function style.toast(text, x, y, color, alpha, key, listening)
 	y = math.min(math.floor(y), vsy - h - 2)
 	-- (the box fades ahead of its words: at the same alpha its light rim outlasted the words, an empty box over the game
 	-- for a moment as a note went, dev phone screenshot 2026-11-12)
-	style.panel(x0, y, x0 + w, y + h, alpha * alpha)
+	-- (the dock's pill, round, 2026-11-23: one look with the touch dock)
+	style.pill(x0, y, x0 + w, y + h, alpha * alpha)
+	style.mark("note", x0, y, x0 + w, y + h)
 	if listening then
 		local pulse = 0.55 + 0.45 * math.cos(listening * math.pi * 2.4)
 		local mx, my, r = x0 + pad + dot / 2, y + h / 2, dot / 2 -- (a round dot: style.fill's corners made a diamond)
@@ -327,7 +561,7 @@ function style.toast(text, x, y, color, alpha, key, listening)
 end
 
 local lastNote, notes = nil, 0 -- (tools/touch-widget-test.ps1: the last note, also once it has faded, and how many)
-local GOLD, BLUE = style.TEXT, style.BLUE -- (notes warm white; blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
+local GOLD, BLUE = style.TEXT, style.BLUE -- (notes in the dock's white; blue: v0.8.5's placement notes, "SLOW PAN", "GRID")
 local toastColor = GOLD
 local toastFor = TOAST_SECONDS
 local function note(text, color, seconds)
@@ -1797,18 +2031,21 @@ local function shareDraw(vsx, vsy)
 		labels[i] = (t == "UNITS" and count > 0) and (t .. " " .. count) or t
 	end
 	local tabPad, gap = math.floor(size * 0.7), math.floor(size * 0.35)
-	local chipW = math.ceil(font:GetTextWidth("RB") * small) + tabPad
+	local chipH = math.floor(math.floor(size * 1.45) * 0.7) -- (style.chip's: LB and RB)
+	local chipW = math.ceil((style.bold() or font):GetTextWidth("RB") * chipH * 0.5 + chipH * 0.7)
 	local tabsW = chipW * 2 + gap * 4
 	for _, l in ipairs(labels) do
-		tabsW = tabsW + math.ceil(font:GetTextWidth(l) * small) + tabPad * 2
+		tabsW = tabsW + math.ceil(font:GetTextWidth(l) * small / 0.76) + tabPad
 	end
 	local nameW = 0
 	for _, team in ipairs(s.teams) do
-		nameW = math.max(nameW, font:GetTextWidth(team.name) * size)
+		nameW = math.max(nameW, font:GetTextWidth(string.upper(team.name)) * size)
 	end
 	local barW, numW = math.floor(size * 5), math.ceil(font:GetTextWidth("00.0k") * small)
-	local rowW = nameW + pad + (res and (numW + pad * 0.5 + barW) or 0)
-	local lineW = font:GetTextWidth("GIVE 00.0k ENERGY (100%)") * size + size * 3
+	local rowW = nameW + pad * 2 + (res and (numW + pad * 0.5 + barW) or 0)
+	-- (the amount's five steps as the dock's buttons, "100%" at 76 % of one at most)
+	local stepsW = 5 * math.ceil(font:GetTextWidth("100%") * small / 0.7) + 4 * gap + size * 3
+	local lineW = math.max(font:GetTextWidth("SEND 00.0k ENERGY") * size + size * 3, stepsW)
 	local w = math.ceil(math.max(rowW, tabsW, lineW, size * 14)) + pad * 2
 	local tabRowH, amountH = math.floor(rowH * 1.15), res and math.floor(rowH * 1.6) or rowH
 	-- the teammates' rows on the screen: closer together, then a window that follows the one picked (a co-op game
@@ -1856,36 +2093,44 @@ local function shareDraw(vsx, vsy)
 	-- screenshots 2026-11-19: the list, read row by row, at least 0.92)
 	style.panel(x0, y1 - h, x0 + w, y1, 1, 0.92)
 
-	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, the one given lit in its colour
+	-- the tab strip: LB [UNITS] [METAL] [ENERGY] RB, as the dock's buttons (2026-11-23: one look with it): the one given in
+	-- BAR's gold, each with its colour along its foot
 	local tabH = math.floor(size * 1.45)
 	local ty = math.floor(y1 - tabRowH / 2 - tabH / 2)
 	local tx = math.floor(x0 + (w - tabsW) / 2)
 	local function chip(label)
-		style.fill(tx, ty + tabH * 0.1, tx + chipW, ty + tabH * 0.9, { 0.22, 0.22, 0.25 }, 0.9)
-		text(label, tx + chipW / 2, ty + tabH / 2 - small * 0.36, small, { 1, 1, 1 }, 0.9, "co")
-		tx = tx + chipW + gap
+		local cw = style.chip(tx, math.floor(ty + tabH * 0.15), math.floor(tabH * 0.7), label, 0.95)
+		tx = tx + math.max(cw, chipW) + gap
 	end
 	chip("LB")
 	for i, l in ipairs(labels) do
-		local tw = math.ceil(font:GetTextWidth(l) * small) + tabPad * 2
+		local tw = math.ceil(font:GetTextWidth(l) * small / 0.76) + tabPad
 		local c = SHARE_COLORS[SHARE_TABS[i]]
-		if i == s.tab then
-			style.fill(tx, ty, tx + tw, ty + tabH, c, 0.92)
-			text(l, tx + tw / 2, ty + tabH / 2 - small * 0.36, small, { 0.07, 0.07, 0.07 }, 1, "c")
-		else
-			style.fill(tx, ty, tx + tw, ty + tabH, { 0.16, 0.16, 0.18 }, 0.65)
-			text(l, tx + tw / 2, ty + tabH / 2 - small * 0.36, small, c, 0.7, "co")
-		end
+		local on = i == s.tab
+		style.button(tx, ty, tx + tw, ty + tabH, on and style.LIT or nil)
+		local e = math.max(2, math.floor(tabH * 0.07))
+		gl.Color(c[1], c[2], c[3], on and 0.95 or 0.6)
+		gl.Rect(tx + e * 3, ty + e, tx + tw - e * 3, ty + e * 2)
+		gl.Color(1, 1, 1, 1)
+		style.words(l, tx, ty + e, tx + tw, ty + tabH, small, on and style.TEXT or style.SOFT, 1)
 		tx = tx + tw + gap
 	end
 	chip("RB")
 
-	-- the teammates, each in their colour; for a resource, how much of it they hold (a bar of their storage)
+	-- the teammates as the dock's teammate picker has them (its SEND's rows): a button each, the name in capitals, their
+	-- colour along its foot; the one picked in BAR's gold; for a resource, how much of it they hold (a bar of their storage)
 	for k = 1, shown do
 		local team = s.teams[first + k - 1]
 		local yr = y1 - tabRowH - teamH * k
 		local c = team.color
-		text(team.name, x0 + pad, yr + (teamH - nameSize) / 2 + nameSize * 0.14, nameSize, c, 1)
+		local picked = first + k - 1 == s.index
+		local rx0, ry0, rx1, ry1 = x0 + math.floor(pad * 0.4), yr + 2, x0 + w - math.floor(pad * 0.4), yr + teamH - 2
+		style.button(rx0, ry0, rx1, ry1, picked and style.LIT or nil)
+		local cb = math.max(3, math.floor((ry1 - ry0) * 0.07))
+		gl.Color(c[1], c[2], c[3], 0.95)
+		gl.Rect(rx0 + 8, ry0 + cb, rx1 - 8, ry0 + cb * 2)
+		gl.Color(1, 1, 1, 1)
+		text(string.upper(team.name), x0 + pad, yr + (teamH - nameSize) / 2 + nameSize * 0.2, nameSize, style.TEXT, 1)
 		if res then
 			local theirs, storage, _, _, _, slider = Spring.GetTeamResources(team.teamID, res)
 			local frac = (theirs and storage and storage > 0) and math.min(1, theirs / storage) or 0
@@ -1926,8 +2171,6 @@ local function shareDraw(vsx, vsy)
 			text(shareFmt(theirs), bx0 - pad * 0.5, yr + teamH / 2 - small * 0.36, small, style.TEXT, 0.75, "ro")
 		end
 	end
-	local ry = y1 - tabRowH - teamH * (s.index - first + 1)
-	style.outline(x0 + pad * 0.4, ry + 2, x0 + w - pad * 0.4, ry + teamH - 2, style.GOLD, 0.9)
 	-- (rows out of the window: a small arrow at its top or bottom edge)
 	local function more(y, dir)
 		local t = math.floor(size * 0.3)
@@ -1956,25 +2199,27 @@ local function shareDraw(vsx, vsy)
 		local line, lc
 		lc = accent
 		if want < 1 then
-			line, lc = "NO " .. tabName .. " TO GIVE", { 0.7, 0.7, 0.7 }
+			line, lc = "NO " .. tabName .. " TO SEND", style.SOFT
 		elseif room < 1 then
 			line, lc = "THEIR " .. tabName .. " STORAGE IS FULL", { 1, 0.45, 0.35 }
 		elseif amount < want then
-			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY CAN TAKE)"
+			line = "SEND " .. shareFmt(amount) .. " " .. tabName .. " (ALL THEY CAN TAKE)"
 		else
-			-- ("50%" as the app's other percentages: "(50 %)" was the one with a space, dev phone 2026-11-12)
-			line = "GIVE " .. shareFmt(amount) .. " " .. tabName .. " (" .. math.floor(SHARE_STEPS[s.step] * 100 + 0.5) .. "%)"
+			-- (the dock's words: its SEND METAL, SEND ENERGY; the share as its step buttons below say it)
+			line = "SEND " .. shareFmt(amount) .. " " .. tabName
 		end
 		-- (within the panel: "GIVE 300 METAL (ALL THEY HAVE ROOM FOR)" ran past both its edges, dev phone 2026-11-08)
 		local ls = math.min(size, size * (w - pad * 2) / math.max(1, font:GetTextWidth(line) * size))
-		text(line, mid, ya + amountH * 0.58 + (size - ls) * 0.36, ls, lc, 1, "co")
-		-- the steps between two arrows; dimmed while nothing can go (none to give, their storage full: the strip still
-		-- lit gold under a red "STORAGE IS FULL" read as a choice that mattered, pad-test -Share screenshot 2026-11-18)
+		text(line, mid, ya + amountH * 0.62 + (size - ls) * 0.36, ls, lc, 1, "co")
+		-- the steps as the dock's teammate picker has them (10%, 25%, 50%, 100% buttons, the one in use in BAR's gold;
+		-- the pad's five, D-pad left and right, between two arrows); dimmed while nothing can go (none to give, their
+		-- storage full: the strip still lit gold under a red "STORAGE IS FULL" read as a choice that mattered, pad-test
+		-- -Share screenshot 2026-11-18)
 		local idle = want < 1 or room < 1
 		canGive = not idle
-		local tri = math.floor(size * 0.55)
-		local sy = math.floor(ya + amountH * 0.22)
-		local sh = math.max(4, math.floor(size * 0.38))
+		local tri = math.floor(size * 0.45)
+		local sh = math.floor(amountH * 0.42)
+		local sy = math.floor(ya + amountH * 0.08)
 		local function arrow(x, dir)
 			local a = (dir < 0 and s.step > 1 or dir > 0 and s.step < #SHARE_STEPS) and (idle and 0.35 or 0.95) or 0.3
 			gl.Color(1, 1, 1, a)
@@ -1983,48 +2228,45 @@ local function shareDraw(vsx, vsy)
 				gl.Vertex(x, sy + sh / 2 + tri * 0.8)
 				gl.Vertex(x, sy + sh / 2 - tri * 0.8)
 			end)
+			gl.Color(1, 1, 1, 1)
 		end
-		local sx0, sx1 = x0 + pad * 2 + tri, x0 + w - pad * 2 - tri
-		arrow(x0 + pad + tri, -1)
-		arrow(x0 + w - pad - tri, 1)
-		-- (each step's segment as wide as the share it adds: five equal ones lit three of five at 50 %, which read as
-		-- 60 %; now the lit part is the share given, UI polish 2026-11-18)
+		local sx0, sx1 = x0 + pad + tri * 2, x0 + w - pad - tri * 2
+		arrow(x0 + pad * 0.5 + tri, -1)
+		arrow(x0 + w - pad * 0.5 - tri, 1)
 		local n = #SHARE_STEPS
-		local sg = math.max(2, math.floor(size * 0.2))
-		local span = sx1 - sx0 - sg * (n - 1)
-		local a0 = sx0
+		local bw = math.floor((sx1 - sx0 - gap * (n - 1)) / n)
 		for k = 1, n do
-			local segW = span * (SHARE_STEPS[k] - (SHARE_STEPS[k - 1] or 0))
-			if k <= s.step then
-				style.fill(a0, sy, a0 + segW, sy + sh, idle and { 0.4, 0.4, 0.42 } or accent, idle and 0.7 or 0.95,
-					math.floor(sh / 2))
-			else
-				style.fill(a0, sy, a0 + segW, sy + sh, { 0.12, 0.12, 0.14 }, 0.85, math.floor(sh / 2))
-			end
-			a0 = a0 + segW + sg
+			local bx = sx0 + (k - 1) * (bw + gap)
+			local on = k == s.step
+			style.button(bx, sy, bx + bw, sy + sh, on and not idle and style.LIT or nil, idle and 0.5 or 1)
+			style.words(math.floor(SHARE_STEPS[k] * 100 + 0.5) .. "%", bx, sy, bx + bw, sy + sh, small,
+				idle and style.DIM or on and style.TEXT or style.SOFT, 1)
 		end
-	elseif count > 0 then
-		text(count .. (count == 1 and " UNIT SELECTED" or " UNITS SELECTED"), mid,
+	elseif count > 0 then -- (the dock's word for units: its TRANSFER)
+		text("TRANSFER " .. count .. (count == 1 and " UNIT" or " UNITS"), mid,
 			ya + (amountH - size) / 2 + size * 0.14, size, accent, 1, "co")
-	else -- (as the count reads; A's note says what to do: "SELECT UNITS FIRST" here repeated it under the note)
-		text("NO UNITS SELECTED", mid, ya + (amountH - size) / 2 + size * 0.14, size, { 0.7, 0.7, 0.7 }, 0.9, "co")
+	else -- (as the count reads; A's note says what to do: "SELECT UNITS FIRST" here repeated it under the note; the dock
+		-- says "No units picked")
+		text("NO UNITS PICKED", mid, ya + (amountH - size) / 2 + size * 0.14, size, style.DIM, 1, "co")
 	end
 
-	-- the keys: A gives, B cancels; centred, as the tabs and the amount above them (at the left they read as stray)
+	-- the keys: A sends (the dock's SEND, TRANSFER), B cancels; centred, as the tabs and the amount above them (at the
+	-- left they read as stray)
 	local key = math.floor(size * 1.2)
 	-- (in the middle of their band, rowH + pad under the amount: half a pad over the panel's foot they sat low, a wide
 	-- empty band over them; dev phone screenshots 2026-11-12)
 	local hy = math.floor(y1 - h + (rowH + pad - key) / 2)
 	local hs = size * 0.8
-	local keysW = 2 * (key + pad * 0.4) + (font:GetTextWidth("GIVE") + font:GetTextWidth("CANCEL")) * hs + pad
+	local give = res and "SEND" or "TRANSFER"
+	local keysW = 2 * (key + pad * 0.4) + (font:GetTextWidth(give) + font:GetTextWidth("CANCEL")) * hs + pad
 	local hx = math.floor(math.max(x0 + pad, mid - keysW / 2))
 	style.key(hx, hy, key, "A", canGive and 0.95 or 0.4)
 	font:Begin()
 	font:SetOutlineColor(0, 0, 0, canGive and 0.8 or 0.35)
 	font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], canGive and 0.85 or 0.4)
 	hx = hx + key + pad * 0.4
-	font:Print("GIVE", hx, hy + key / 2 - hs * 0.36, hs, "o")
-	hx = hx + font:GetTextWidth("GIVE") * hs + pad
+	font:Print(give, hx, hy + key / 2 - hs * 0.36, hs, "o")
+	hx = hx + font:GetTextWidth(give) * hs + pad
 	font:End()
 	style.key(hx, hy, key, "B", 0.95)
 	font:Begin()
@@ -2433,8 +2675,14 @@ local function groupSlots()
 	return slots
 end
 
--- (where BAR's interface at the bottom of the screen ends: the order menu's top, else a tenth of the screen)
+-- (where the interface at the bottom of the screen ends: upright the touch dock's top (the pad's panels lay over it),
+-- else the order menu's, else a tenth of the screen)
 local function bottomInterfaceTop(vsy)
+	local P = WG.BarDroidPortrait
+	local dock = P and P.active and P.active() and P.dock and P.dock()
+	if dock then
+		return math.floor(dock[4])
+	end
 	local o = WG.ordermenu
 	if o and o.getPosition and o.getIsShowing and o.getIsShowing() then
 		local _, y = o.getPosition()
@@ -2445,9 +2693,32 @@ local function bottomInterfaceTop(vsy)
 	return math.floor(vsy * 0.1)
 end
 
--- The group strip: one of BAR's panels in the middle just above its interface at the bottom, a box for each group with
--- units (the unit type's picture, its key at the top left, how many at the bottom right) and the slot in use outlined
--- in gold (dim while it is empty)
+-- The group strip, as the touch dock's groups row (bardroid_portrait.lua drawGroups; 2026-11-23, one look with it): one
+-- of BAR's panels in the middle just above the interface at the bottom, a tile for each group with units, as tall as the
+-- dock's (the picture of its most numerous type, its number in gold on a dark badge at the top left, how many at the
+-- bottom right, in bold), the slot in use as the dock's group in use (the picture closer, BAR's gold light) and outlined
+-- in gold, the pad's place; empty, an open place with its number, or with units picked the dock's "+ NEW": Start + D-pad
+-- left held puts them there
+local function groupBadge(bold, n, x0, y1, h, alpha)
+	local ns, pad = h * 0.26, math.max(2, math.floor(h * 0.06))
+	local bx0, by1 = x0 + pad * 0.5, y1 - pad * 0.5
+	local bx1, by0 = bx0 + bold:GetTextWidth(tostring(n)) * ns + 2 * pad, y1 - h * 0.36
+	local f = WG.FlowUI and WG.FlowUI.Draw
+	local c = style.fade1
+	c[1], c[2], c[3], c[4] = 0, 0, 0, 0.62 * alpha
+	if f and f.RectRound then
+		f.RectRound(bx0, by0, bx1, by1, pad, 1, 1, 1, 1, c, c)
+	else
+		gl.Color(0, 0, 0, c[4])
+		gl.Rect(bx0, by0, bx1, by1)
+	end
+	gl.Color(1, 1, 1, 1)
+	bold:Begin()
+	bold:SetOutlineColor(0, 0, 0, 0.6 * alpha)
+	bold:SetTextColor(style.GOLD[1], style.GOLD[2], style.GOLD[3], alpha)
+	bold:Print(tostring(n), bx0 + pad, y1 - h * 0.3, ns, "o")
+	bold:End()
+end
 local function drawGroupList(vsx, vsy)
 	local shown = groupList.held or (groupList.untilAt and Spring.DiffTimers(now(), groupList.untilAt) < GROUP_LIST_SECONDS)
 	if not shown then
@@ -2456,90 +2727,162 @@ local function drawGroupList(vsx, vsy)
 	end
 	local alpha = groupList.held and 1 or math.min(1, (GROUP_LIST_SECONDS - Spring.DiffTimers(now(), groupList.untilAt)) / 0.3)
 	local slots = groupSlots()
-	local size = style.size(0.048)
-	local gap = math.max(2, math.floor(size * 0.12))
-	local pad = math.max(3, math.floor(size * 0.16))
+	local D = style.dock()
+	local size, gap, pad = D.tile, D.gap, D.pad
 	local width = #slots * size + (#slots - 1) * gap
 	local x0 = math.floor((vsx - width) / 2)
 	local y0 = bottomInterfaceTop(vsy) + pad * 3
 	style.panel(x0 - pad, y0 - pad, x0 + width + pad, y0 + size + pad, alpha)
-	local font = WG.fonts and WG.fonts.getFont()
+	style.mark("groups", x0 - pad, y0 - pad, x0 + width + pad, y0 + size + pad)
+	local bold = style.bold()
+	if not bold then
+		return
+	end
+	local picked = Spring.GetSelectedUnitsCount() > 0
 	for i, s in ipairs(slots) do
 		local x = x0 + (i - 1) * (size + gap)
+		local x1, y1 = x + size, y0 + size
 		local active = s.n == groupList.slot
-		local empty = #s.units == 0
-		style.fill(x, y0, x + size, y0 + size, { 0.12, 0.12, 0.12, 0.9 }, alpha)
-		local defID = s.units[1] and Spring.GetUnitDefID(s.units[1])
-		if defID then
-			local inset = math.max(2, math.floor(size * 0.06))
-			gl.Color(1, 1, 1, (active and 1 or 0.8) * alpha)
-			gl.Texture("#" .. defID)
-			gl.TexRect(x + inset, y0 + inset, x + size - inset, y0 + size - inset)
-			gl.Texture(false)
-		end
-		if active then
-			style.outline(x, y0, x + size, y0 + size, style.GOLD, (empty and 0.6 or 1) * alpha)
-		else
-			style.outline(x, y0, x + size, y0 + size, { 1, 1, 1 }, 0.14 * alpha, 1)
-		end
-		if font then
-			local ts = math.floor(size * 0.3)
-			font:Begin()
-			font:SetOutlineColor(0, 0, 0, 0.8 * alpha)
-			if empty then -- (no unit's picture to share the box with: the slot's number big, in the middle)
-				local big = math.floor(size * 0.46)
-				font:SetTextColor(1, 1, 1, (active and 0.8 or 0.5) * alpha)
-				font:Print(tostring(s.n), x + size / 2, y0 + size / 2 - big * 0.36, big, "co")
-			else
-				font:SetTextColor(1, 1, 1, alpha)
-				font:Print(tostring(s.n), x + size * 0.1, y0 + size - ts * 1.05, ts, "o")
-				font:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], alpha)
-				font:Print(tostring(#s.units), x + size * 0.92, y0 + size * 0.08, ts, "ro")
+		local best, bestN = nil, 0
+		if #s.units > 0 then
+			for d, c in pairs(Spring.GetGroupUnitsCounts(s.n) or {}) do
+				if type(d) == "number" and c > bestN then -- (the counts carry their total as "n")
+					best, bestN = d, c
+				end
 			end
-			font:End()
+			best = best or Spring.GetUnitDefID(s.units[1])
+		end
+		if best then
+			style.unit(best, x, y0, x1, y1, active, alpha)
+			groupBadge(bold, s.n, x, y1, size, alpha)
+			bold:Begin()
+			bold:SetOutlineColor(0, 0, 0, 0.7 * alpha)
+			bold:SetTextColor(1, 1, 1, alpha)
+			bold:Print(tostring(#s.units), x1 - 6, y0 + 6, size * 0.2, "ro")
+			bold:End()
+		elseif active and picked then -- (the dock's + NEW: the next free group for the units picked)
+			style.button(x, y0, x1, y1, style.NEW, alpha)
+			style.words("+", x, y0 + size * 0.3, x1, y1, size * 0.42, style.GOLD, alpha, true)
+			style.words("NEW " .. s.n, x, y0, x1, y0 + size * 0.4, size * 0.25, style.TEXT, alpha, true)
+		else
+			style.button(x, y0, x1, y1, style.BLANK, alpha)
+			groupBadge(bold, s.n, x, y1, size, alpha)
+		end
+		if active then -- (the pad's place, as the dock outlines its picked tile)
+			style.outline(x, y0, x1, y1, style.GOLD, alpha, math.max(2, math.floor(size * 0.04)))
 		end
 	end
 	gl.Color(1, 1, 1, 1)
 end
 
--- v0.8.5's filter radial around the area select's middle: the four filters in BAR's panels, each with its colour's dot;
--- the one the stick points at outlined in gold, the one in use outlined faintly
-local FILTER_PLACES = { { "All Mobile", 0, 1, { 0.35, 0.75, 1 } }, { "Combat", 0, -1, { 1, 0.4, 0.25 } },
-	{ "Builders", -1, 0, { 1, 0.75, 0.15 } }, { "Air", 1, 0, { 0.55, 0.95, 0.55 } } }
+-- The D-gun mode's panel while no dock is up (sideways with the pad; upright the dock shows its own sticks and FIRE):
+-- the dock's FIRE (bardroid_portrait.lua drawDgun, 2026-11-23: one look with it): the D-gun's red, AUTO's orange in full
+-- auto, a thin bar along its foot while it reloads (white) or the team lacks a shot's energy (amber, the word dimmed);
+-- beside it the pad's keys, RT fires, B leaves
+local function dgunPanel(vsx, vsy)
+	local d = dgun
+	local bold = style.bold()
+	if not (d and bold) then
+		return
+	end
+	local loaded, energy = 1, 1
+	local D = WG.BarDroidPadDgun
+	if D and D.ready then
+		loaded, energy = D.ready()
+		loaded, energy = loaded or 1, energy or 1
+	end
+	local lacking = energy < 1
+	local part = lacking and energy or loaded
+	local size = style.size(0.02)
+	local pad, gap = style.dock().pad, math.floor(size * 0.6)
+	local h = math.floor(size * 2.6)
+	local bw = math.floor(h * 3)
+	local key = math.floor(size * 1.3)
+	local hs = size * 0.85
+	local fireW, leaveW = bold:GetTextWidth("FIRE") * hs, bold:GetTextWidth("LEAVE") * hs
+	local rtW = math.ceil(bold:GetTextWidth("RT") * key * 0.5 + key * 0.7) -- (style.chip's width)
+	-- (the button, two gaps, RT and a fifth of one, FIRE, a gap and a half, B and a fifth, LEAVE, and a gap as a margin)
+	local w = math.ceil(bw + gap * 2 + rtW + gap * 0.4 + fireW + gap * 1.5 + key + gap * 0.4 + leaveW + gap)
+	local x0 = math.floor((vsx - w) / 2)
+	local y0 = bottomInterfaceTop(vsy) + pad * 3
+	style.panel(x0 - pad, y0 - pad, x0 + w + pad, y0 + h + pad, 1)
+	style.mark("dgunhud", x0 - pad, y0 - pad, x0 + w + pad, y0 + h + pad)
+	local x1, y1 = x0 + bw, y0 + h
+	style.button(x0, y0, x1, y1, d.auto and style.AUTO or style.RED)
+	if part < 1 then
+		local e = math.max(2, math.floor(pad * 0.35))
+		local bh = math.max(3, math.floor(h * 0.07))
+		local bx0, bx1 = x0 + e * 2, x1 - e * 2
+		gl.Color(0, 0, 0, 0.45)
+		gl.Rect(bx0, y0 + e * 2, bx1, y0 + e * 2 + bh)
+		if lacking then
+			gl.Color(1, 0.7, 0.2, 0.95)
+		else
+			gl.Color(1, 1, 1, 0.9)
+		end
+		gl.Rect(bx0, y0 + e * 2, bx0 + (bx1 - bx0) * part, y0 + e * 2 + bh)
+		gl.Color(1, 1, 1, 1)
+	end
+	style.words(d.auto and "AUTO" or "D-GUN", x0, y0, x1, y1, h * 0.42, lacking and style.LACK or style.WHITE, 1, true)
+	local kx, ky = x1 + gap * 2, math.floor(y0 + (h - key) / 2)
+	kx = kx + style.chip(kx, ky, key, "RT", 1) + gap * 0.4
+	bold:Begin()
+	bold:SetOutlineColor(0, 0, 0, 0.7)
+	bold:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.9)
+	bold:Print("FIRE", kx, ky + key / 2 - hs * 0.34, hs, "o")
+	bold:End()
+	kx = kx + fireW + gap * 1.5
+	style.key(kx, ky, key, "B", 0.95)
+	bold:Begin()
+	bold:SetOutlineColor(0, 0, 0, 0.7)
+	bold:SetTextColor(style.TEXT[1], style.TEXT[2], style.TEXT[3], 0.9)
+	bold:Print("LEAVE", kx + key + gap * 0.4, ky + key / 2 - hs * 0.34, hs, "o")
+	bold:End()
+	gl.Color(1, 1, 1, 1)
+end
+
+-- v0.8.5's filter radial around the area select's middle: the four filters as the touch dock's FILTERS page has them
+-- (2026-11-23, one look with it: its buttons, the filter in use in BAR's gold, the words in its white), the one the
+-- stick points at outlined in gold, the pad's place
+local FILTER_PLACES = { { "All Mobile", 0, 1, "ALL MOBILE" }, { "Combat", 0, -1, "COMBAT" },
+	{ "Builders", -1, 0, "BUILDERS" }, { "Air", 1, 0, "AIR" } }
 local function drawFilterRadial(cx, cy, vsy)
-	local font = WG.fonts and WG.fonts.getFont()
+	local font = style.font()
 	if not font then
 		return
 	end
 	local size = style.size(0.019)
-	local pad = math.floor(size * 0.7)
-	local dot = math.floor(size * 0.5)
 	local w = 0
 	for _, p in ipairs(FILTER_PLACES) do
-		w = math.max(w, font:GetTextWidth(string.upper(p[1])) * size)
+		w = math.max(w, font:GetTextWidth(p[4]) * size)
 	end
-	w = math.ceil(w) + dot + pad * 3
-	local h = math.floor(size * 2)
+	-- (the words at 76 % of the button at most, as the dock's)
+	w = math.ceil(w / 0.7)
+	local h = math.floor(size * 2.3)
 	local r = math.max(h * 2.2, vsy * 0.13)
+	local edge = math.max(2, math.floor(h * 0.06))
+	-- (all four clear of the interface at the bottom and on the screen: over a tall order menu COMBAT lay on its top row;
+	-- upright the middle is at the dock's top, COMBAT lay on the dock and BUILDERS and AIR ran off both edges; dev phone
+	-- shots 2026-11-24)
+	local vsx = Spring.GetViewGeometry()
+	local gap = style.dock().gap
+	local bottom = bottomInterfaceTop(vsy)
+	local down = math.max(math.floor(h * 1.2), math.min(r, cy - bottom - gap * 2 - h / 2))
+	cy = math.max(cy, bottom + gap * 2 + h / 2 + down)
+	local rx0, ry0, rx1, ry1 = cx, cy, cx, cy
 	for _, p in ipairs(FILTER_PLACES) do
 		local lit, inUse = area.highlight == p[1], area.filter == p[1]
 		local x = math.floor(cx + p[2] * (r * 0.9 + w / 2) - w / 2)
-		local y = math.floor(cy + p[3] * r - h / 2)
-		style.panel(x, y, x + w, y + h, 1)
+		x = math.max(gap, math.min(vsx - gap - w, x))
+		local y = math.floor(cy + p[3] * (p[3] < 0 and down or r) - h / 2)
+		style.float(x, y, x + w, y + h, inUse and style.LIT or nil)
 		if lit then
-			style.outline(x, y, x + w, y + h, style.GOLD, 1)
-		elseif inUse then
-			style.outline(x, y, x + w, y + h, { 1, 1, 1 }, 0.35, 1)
+			style.outline(x, y, x + w, y + h, style.GOLD, 1, edge)
 		end
-		local c = p[4]
-		style.disc(x + pad + dot / 2, y + h / 2, dot / 2, c, lit and 1 or 0.8)
-		font:Begin()
-		font:SetOutlineColor(0, 0, 0, 0.6)
-		local t = lit and style.GOLD or style.TEXT
-		font:SetTextColor(t[1], t[2], t[3], (lit or inUse) and 1 or 0.8)
-		font:Print(string.upper(p[1]), x + pad * 2 + dot, y + h / 2 - size * 0.36, size, "o")
-		font:End()
+		style.words(p[4], x, y, x + w, y + h, size, (lit or inUse) and style.TEXT or style.SOFT, 1)
+		rx0, ry0, rx1, ry1 = math.min(rx0, x), math.min(ry0, y), math.max(rx1, x + w), math.max(ry1, y + h)
 	end
+	style.mark("radial", rx0, ry0, rx1, ry1)
 	gl.Color(1, 1, 1, 1)
 end
 
@@ -2712,24 +3055,26 @@ local function queueLayout(vsx, vsy)
 end
 local function drawQueue()
 	local r = queue.rect
-	-- (BAR's order menu's font, the buttons right under it; the plain one read thin and large beside them)
-	local font = WG.fonts and (WG.fonts.getFont(2) or WG.fonts.getFont())
-	if not (r and font) or queue.dock then
+	if not r or queue.dock then
 		return
 	end
-	style.panel(r[1], r[2], r[3], r[4], 1)
-	if queue.on then -- (it stays on until tapped off: plain to see)
-		style.fill(r[1], r[2], r[3], r[4], style.GOLD, 0.22)
-		style.outline(r[1], r[2], r[3], r[4], style.GOLD, 1)
+	-- (as the dock's QUEUE (drawQueueZones, 2026-11-23): a button, on it lit gold with a gold edge, its word bold as BAR's
+	-- order menu's right under it, gold while on; it stays on until tapped off: plain to see)
+	style.float(r[1], r[2], r[3], r[4])
+	if queue.on then
+		local e = math.max(2, math.floor(style.dock().pad * 0.3))
+		gl.Color(1, 0.78, 0.25, 0.14)
+		gl.Rect(r[1], r[2], r[3], r[4])
+		gl.Color(1, 0.78, 0.25, 0.95)
+		gl.Rect(r[1], r[2], r[3], r[2] + e)
+		gl.Rect(r[1], r[4] - e, r[3], r[4])
+		gl.Rect(r[1], r[2], r[1] + e, r[4])
+		gl.Rect(r[3] - e, r[2], r[3], r[4])
+		gl.Color(1, 1, 1, 1)
 	end
-	local size = math.floor((r[4] - r[2]) * 0.42)
-	-- (off: the white of the order menu's words right under it, \255\240\240\240; the notes' warm white stood apart)
-	local c = queue.on and style.GOLD or { 0.94, 0.94, 0.94 }
-	font:Begin()
-	font:SetOutlineColor(0, 0, 0, 0.6)
-	font:SetTextColor(c[1], c[2], c[3], 1)
-	font:Print("QUEUE", (r[1] + r[3]) / 2, (r[2] + r[4]) / 2 - size * 0.36, size, "co")
-	font:End()
+	style.words("QUEUE", r[1], r[2], r[3], r[4], math.floor((r[4] - r[2]) * 0.42), queue.on and style.GOLD or style.TEXT,
+		1, true)
+	style.mark("queue", r[1], r[2], r[3], r[4])
 end
 -- (no tables made: IsAbove asks it every frame, and the lists of rects it built were three quarters of this widget's
 -- garbage in an idle skirmish, 50 of 66 kB/s on the dev phone; release overhaul item 7, 2026-11-21)
@@ -3012,10 +3357,13 @@ function widget:DrawScreen()
 		gl.LineWidth(1)
 		gl.Color(1, 1, 1, 1)
 	end
-	-- the order on the pad: outlined in gold over BAR's own highlight, as the build menu's option on the pad
+	-- the order on the pad: BAR's gold light over it (the dock's lit tile, 2026-11-23) and outlined in gold over BAR's own
+	-- highlight, as the build menu's option on the pad
 	local cell = orders and orders.layout and orders.layout.cells[orders.index]
 	if cell then
+		style.lit(cell[1] + 1, cell[2] + 1, cell[3] - 1, cell[4] - 1)
 		style.outline(cell[1] + 1, cell[2] + 1, cell[3] - 1, cell[4] - 1, style.GOLD, 1)
+		style.mark("orders", cell[1], cell[2], cell[3], cell[4])
 	end
 	if not (area.radial and area.on) then -- (the filter radial reaches down to where the strip is)
 		drawGroupList(vsx, vsy)
@@ -3027,6 +3375,12 @@ function widget:DrawScreen()
 	drawQueue()
 	if share then
 		shareDraw(vsx, vsy)
+	end
+	if dgun then
+		local P = WG.BarDroidPortrait -- (upright the dock's own sticks and FIRE)
+		if not (P and P.dock and P.dock()) then
+			dgunPanel(vsx, vsy)
+		end
 	end
 	if toast then
 		local age = Spring.DiffTimers(now(), toastAt)
@@ -3195,6 +3549,11 @@ function widget:Initialize()
 		end,
 		toastRect = function()
 			return toastDrawnAt
+		end,
+		-- (tools/pad-test.ps1 -Shots: a piece's rect as drawn in the last few frames, GL pixels; nil: not drawn lately)
+		drawnRect = function(name)
+			local r = style.drawn[name]
+			return r and Spring.GetDrawFrame() - r.at <= 5 and r or nil
 		end,
 		shareGiven = function(units, teamID) -- (tools/pad-test.ps1 -Share: units just given, checked at the next update)
 			given[#given + 1] = { units = units, teamID = teamID, from = Spring.GetMyTeamID(), at = now(), checkNow = true }
