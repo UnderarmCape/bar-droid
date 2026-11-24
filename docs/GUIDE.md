@@ -10,7 +10,7 @@ BAR Droid is a fan project. It is not made by the Beyond All Reason team. BAR it
 
 1. Check your phone: a Snapdragon 8 Gen 2 or newer (Adreno 7xx or 8xx GPU), 12 GB of RAM (8 GB phones work in a low-memory mode) and about 6 GB of free storage.
 2. Download `bar-droid-phone-<version>.apk` from the project's Releases page on GitHub and open it on the phone. Allow installing from your browser or file manager when Android asks.
-3. Open **Beyond All Reason**. On the launcher screen, tap **Install / Update**. It downloads about 4 GB from BAR's own servers, around 12 minutes on home Wi-Fi.
+3. Open **Beyond All Reason**. On the launcher screen, tap **Install / Update**. It downloads about 4 GB (a small Linux system and the GPU driver, then BAR from its own servers), around 12 minutes on home Wi-Fi.
 4. Tap **Play vs AI** for a game against the computer, or **Lobby** to log in and play online.
 5. In the game: drag to pan, pinch to zoom, tap to select, long press to send units. Held upright, use the touch dock at the bottom of the screen.
 6. Hold three fingers on the screen to open the layout editor, where you move and size panels.
@@ -79,8 +79,8 @@ BAR Droid plays Beyond All Reason on an Android phone. You get BAR's own lobby, 
 
 How it works, in short:
 
-- The app runs BAR's real engine (Recoil), built for ARM, on the phone's own CPU and GPU. It runs inside a small Linux environment that the app carries. There is no emulation and no translation.
-- Nothing of BAR's game is inside the app. Like BAR's PC launcher, the app downloads the game, its maps and the engine from BAR's own servers.
+- The app runs BAR's real engine (Recoil), built for ARM, on the phone's own CPU and GPU. It runs inside a small Linux environment (Debian) that the app downloads and sets up on the first install. There is no emulation and no translation.
+- Apart from the phone engine (below) and upright copies of BAR's loading pictures, nothing of BAR's game is inside the app. Like BAR's PC launcher, the app downloads the game, its maps and BAR's official engine from BAR's own servers.
 - The engine is at the same version BAR's servers run, so your online games stay in step with players on PCs.
 
 What the app adds to BAR:
@@ -125,7 +125,7 @@ The app was tested on a Galaxy Z Fold7 (Android 17) and a Galaxy S23 Ultra (8 GB
 
 A match uses about 5 to 6 GB of memory. Close other big apps before you play.
 
-**8 GB phones.** The app switches to a low-memory mode by itself. It uses plainer unit shading, leaves out shore foam and ground scorch marks, and starts skirmishes on a smaller map (Starwatcher) until you pick another one. On a Galaxy S23 Ultra (8 GB), BAR's own benchmark battle runs through every time, at about 12 fps, and so do skirmishes on that map. On a big map about 1 game in 3 is closed by Android for lack of memory. Replays of online 8v8 games play at about 15-20 fps there. Joining online games on an 8 GB phone has not been tested.
+**8 GB phones.** The app switches to a low-memory mode by itself. It uses plainer unit shading, leaves out shore foam and ground scorch marks, and sets Play vs AI to a smaller map (Starwatcher) until you pick another one. On a Galaxy S23 Ultra (8 GB), BAR's own benchmark battle runs through every time, at about 12 fps, and so do skirmishes on that map. On a big map about 1 game in 3 is closed by Android for lack of memory. Replays of online 8v8 games play at about 15-20 fps there. Joining online games on an 8 GB phone has not been tested.
 
 > **Tip:** The launcher's device lines tell you what the app found: your phone, the GPU and whether it is supported, free storage, RAM and whether the low-memory mode is on.
 
@@ -137,7 +137,7 @@ A match uses about 5 to 6 GB of memory. Close other big apps before you play.
 2. Open the file. When Android asks, allow installing apps from your browser or file manager.
 3. Open the new app. It is called **Beyond All Reason**.
 4. The first time, the launcher screen opens. Tap **Install / Update**.
-5. Wait. The app downloads about 4 GB from BAR's servers: the engine, the game and the lobby. This takes around 12 minutes on home Wi-Fi. When it is done, BAR takes about 2.7 GB on the phone.
+5. Wait. The app downloads about 4 GB: a small Linux system and the GPU driver, then the engine, the game and the lobby from BAR's servers. This takes around 12 minutes on home Wi-Fi. When it is done, BAR takes about 2.7 GB on the phone.
 6. Tap **Play vs AI** for a skirmish against the AI, or **Lobby** to open BAR's lobby.
 
 ![The launcher screen: the status line, the start buttons and the device lines](guide/img/launcher-main.jpg)
@@ -232,7 +232,7 @@ In BAR's skirmish room you can add AI players with **Add AI**, pick another map 
 
 Tap **Multiplayer** to see the servers. Tap a server to see its details, then join it. Joining a game that is already running catches up first: the screen shows how long that has left.
 
-Some hosts change settings that affect the app's controls. The lobby tells you when you join such a server: in red when custom widgets are off (no touch or gamepad controls unless you spectate), in amber when unit control widgets are off (only the gamepad's first person stops). With the phone engine, the app's controls load as part of the game, so a host's "no user widgets" option no longer turns them off.
+Some hosts change settings that affect the app's controls. With BAR's official engine, the lobby tells you when you join such a server: in red when custom widgets are off or Anonymous Mode is on (no touch or gamepad controls unless you spectate), in amber when unit control widgets are off (first person, auto retreat and presets stop). With the phone engine, the app's controls load as part of the game, so neither setting turns them off and no warning shows.
 
 > **Tip:** Upright, the "Waiting for server response" screen fits the phone and has a **Free memory** button (on Galaxy phones). Use it before a big online game.
 
@@ -309,16 +309,16 @@ Sideways, a gamepad or a mouse brings back BAR's own screen layout. Touch the sc
 | Drag | Pan the map |
 | Double tap and hold, then move up or down | Zoom |
 | Double tap and hold, then move sideways | Turn the camera |
-| Triple tap and hold, then move | Tilt the camera |
+| Triple tap and hold, then move up or down | Tilt the camera |
 | Tap | Open the menu |
 
-**First-tap buttons.** Many parts act on the first tap, without opening the menu first: the build grid, the orders, QUEUE and INSERT, the home buttons (and the spectator's), metal and energy, and the groups row. Everywhere else, the first tap opens the menu.
+**First-tap buttons.** Many parts act on the first tap, without opening the menu first: the build grid, the orders, QUEUE and INSERT, the home buttons (and the spectator's), metal and energy, the wind and tide pill, the groups row, and sideways the tabs and the arrow. Everywhere else, the first tap opens the menu.
 
 **Feedback.** Taps on the dock answer with a light vibration. Hold your finger on a tile and its name and role show until you lift it.
 
 **Scrolling.** The build grid and the orders scroll up and down by whole rows. A quick flick brings the next page. A slow drag settles on the nearest row. No row is ever left half in sight.
 
-**Android's Back** puts away what is open first: units picked, an order or building armed, a panel. When nothing is left, Back is Escape for BAR, which opens BAR's quit question.
+**Android's Back** puts away what is open first: units picked, an order or building armed, a panel. When nothing is left, Back opens BAR's quit question. In a game you started from the lobby, it opens the lobby over the game instead.
 
 ![Android's Back with nothing left to put away: BAR's quit question with Stay, Resign and Quit](guide/img/quit-question.jpg)
 
@@ -408,7 +408,7 @@ BAR's interface scale follows the screen: 2.0 on a folded phone held sideways, 1
 
 - QUEUE and INSERT can be on together: that is Shift and Alt held, as in BAR. Both turn off once nothing is picked.
 - A tap on the dock just as its buttons change (the selection gone, say) is dropped for a moment, so it does not land on a different button.
-- Upright, the idle builders row scrolls sideways when it is full.
+- The groups row scrolls sideways when your groups and idle builders do not fit.
 - On the unfolded dock, the dimmed build grid is the fastest way to start a building: one tap picks the builder and the building together.
 
 ---
@@ -447,7 +447,7 @@ With the dock up, a one-finger drag on the game pans the map even with units pic
 - **Zoom:** pinch with two fingers. The zoom is smooth, centred on your fingers.
 - **Turn:** twist two fingers.
 - **Tilt:** move two fingers up or down together.
-- **Jump:** tap BAR's minimap. Unfolded and upright, the minimap is half size until you tap it; then it opens to its full size for 7 seconds.
+- **Jump:** tap BAR's minimap. Upright, the minimap waits small, as tall as BAR's top bar; unfolded and held sideways, at half size. The first tap only opens it to full size; it shrinks again 7 seconds after your last tap on it.
 - **The whole map:** swipe up with three fingers.
 - **Your commander:** swipe down with three fingers, or tap **COMMANDER**.
 - **Your start:** tap **BASE**.
@@ -466,7 +466,7 @@ The one-finger camera gives you zoom and turn without a second finger. It has tw
 
 Both light up gold while you hold them. The speed of your finger counts: a slow drag makes fine steps, a fast one makes big ones. A tap on the knob or a rail, with no drag, goes to the map under it.
 
-**Settings.** In a game, open BAR's **Settings**, tab **Control**, section **Camera with one finger**:
+**Settings.** In a game, open BAR's **Settings**, tab **Control** (tab **Custom** with the phone engine off), section **Camera with one finger**:
 
 | Setting | What it does |
 |---|---|
@@ -484,7 +484,7 @@ The knob and the rails hide while they would be in the way: with BAR's Statistic
 
 ### For pros: the camera
 
-- Move or resize the knob in the layout editor. It is listed there as "Camera knob". Put it where your thumb rests and away from where you place buildings: in the touch playtest, taps meant for the map near the dock's top edge went to the knob.
+- Move or resize the knob in the layout editor. It is listed there as "Camera knob". Put it where your thumb rests and away from where you place buildings.
 - Raise **Controls sensitivity** if you play on big maps and zoom out often. Lower it for fine control.
 - Turn the rails off if you never use them. The knob alone is enough for many players.
 - Three-finger swipes up and down are the fastest way between the overview and your commander.
@@ -516,7 +516,7 @@ Tap, then drag on the map to select. With the dock up, two switches change how t
 - **SELECT: BOX** or **SELECT: CIRCLE**: tap it to switch between a box and a circle.
 - **FILTER: ALL**: tap it to step through the filters for the next selection: ALL, BUILDERS, COMBAT, AIR, NAVAL.
 
-While you drag a selection, the dock shows the filters. Touch one with a second finger to pick it for this selection.
+While you drag a selection, the dock shows the filters. Touch one with a second finger to pick it; it stays picked for your next selections too.
 
 > **Tip:** A box picks units, not buildings. That makes it the most reliable way to pick constructors that stand between buildings.
 
@@ -543,7 +543,7 @@ The groups row at the bottom of the dock shows your control groups as pictures: 
 
 ### Idle builders
 
-At the right end of the groups row, each type of idle builder has a tile with its count. Tap one: the nearest idle builder of that type is picked and the camera goes to it, zoomed in. Tap again for the next one. A three-finger swipe left or right does the same for the previous or next idle builder.
+At the right end of the groups row, each type of idle builder has a tile with its count. Tap one: the nearest idle builder of that type is picked and the camera goes to it, zoomed in. Tap again for the next one. A three-finger swipe left or right steps through all your idle builders, any type, and moves the camera to each.
 
 ![Two Construction Bots picked: their build grid and orders](guide/img/dock-upright-constructors.jpg)
 
@@ -591,14 +591,14 @@ With units picked, the dock's right half shows their orders. They are BAR's own 
 
 To give an order that needs a target: tap the order, then tap the map or a unit. With **Move**, **Fight** or **Patrol** pressed, a drag on the map draws the path at once.
 
-**Area orders** (Area Mex, Reclaim, Repair, Restore, Capture, Load units): tap the order, then drag on the map from the middle outwards to draw BAR's circle. For Area Mex, tap the map first, then drag. With QUEUE on, the order stays armed after the drag, so you can draw another circle.
+**Area orders** (Area Mex, Reclaim, Repair, Restore, Capture, Load units): tap the order, then drag on the map from the middle outwards to draw BAR's circle. A tap on the map, then a drag, works too. With QUEUE on, the order stays armed after the drag, so you can draw another circle.
 
 ### QUEUE and INSERT
 
 The selection row has two switches:
 
 - **QUEUE** (right): the next order joins the end of the units' queue. It is a sticky Shift key for your fingers.
-- **INSERT** (left): the next order goes to the front of the queue. It is BAR's Alt.
+- **INSERT** (left): the next order goes to the front of the queue. It is BAR's Space key (Command Insert).
 
 Both can be on together. Both turn off once nothing is picked. While a building is picked, the PLACE button says "+ QUEUE" or "+ INSERT" in its corner when they are on.
 
@@ -627,7 +627,7 @@ PRESETS sends the picked units in a formation. It shows in MOVE's big place when
 
 In the formations, the units form up where they stand, facing the destination, then move there as one at the slowest unit's speed, so the artillery stays at the back. Aircraft form their own group, fighters ahead of bombers and transports.
 
-Once they arrive, every preset does the same: each unit moves side to side across its place on repeat, fighting, the group together. That makes them harder to hit.
+Once each unit reaches its place, it moves side to side across it on repeat, fighting, without waiting for the others. That makes them harder to hit. Aircraft only go to their places.
 
 **To send a preset:**
 
@@ -668,7 +668,7 @@ Without QUEUE, PLACE works like a mouse click: the building replaces the builder
 
 **Fine placing with ONE.** With ONE, a drag on the map does not pan. The building follows your finger, slowly at first for fine placing. Once it waits on the map:
 
-- A later drag anywhere nudges it, half as far as your finger moves.
+- A later drag anywhere nudges it: slowly at first, faster as your finger moves farther.
 - A tap elsewhere moves it there.
 - A double tap sends it, like PLACE.
 - With none waiting, a double tap places one there and sends it at once.
@@ -676,7 +676,7 @@ Without QUEUE, PLACE works like a mouse click: the building replaces the builder
 Two fingers still pan and zoom while you place.
 
 - **ROTATE** turns the building a quarter turn.
-- **X** puts the building away. With LINE, GRID or BORDER, a long press does too.
+- **X** puts the building away. With LINE, GRID or BORDER, a long press on the map starts that shape there: drag to its far corner, then tap PLACE.
 - If BAR refuses the spot, the dock says "CAN'T BUILD THERE: PICK ANOTHER SPOT".
 
 > **Tip:** Not sure which tile is which? Hold your finger on a tile: its name and role show until you lift it.
@@ -697,7 +697,7 @@ They are placed at once, with BAR's own line and area building.
 
 ![BORDER: a hollow ring of buildings](guide/img/place-border.jpg)
 
-**A GRID from ONE.** With ONE, hold your finger still on the waiting building for a full second (or start a drag on it). "GRID" pops up with a buzz, and your drag now draws a grid of them from there. PLACE or a double tap sends the grid. ONE during a GRID keeps it, the building waiting where the grid began; GRID or LINE brings the grid back.
+**A GRID from ONE.** With ONE, hold your finger still on the waiting building for a full second (a drag on it only nudges it). "GRID" pops up with a buzz, and your drag now draws a grid of them from there. PLACE or a double tap sends the grid. ONE during a GRID keeps it, the building waiting where the grid began; GRID or LINE brings the grid back.
 
 > **Note:** A building's sea version (a Tidal Generator for a Solar Collector, say) is used only where your finger really taps water. This needs the phone engine.
 
@@ -706,7 +706,7 @@ They are placed at once, with BAR's own line and area building.
 When you place a sentry on its own, the app queues a ring of walls around it. It picks the wall by tech level:
 
 - A T1 sentry gets the builder's own T1 wall (Dragon's Teeth), built after the sentry.
-- A T2 sentry gets the T2 wall (Fortification Walls), built before the sentry.
+- A T2 sentry gets the T2 wall (Fortification Walls), built before the sentry. One too low to fire over those gets Dragon's Teeth instead, from a T1 builder, at the front of its queue.
 
 Only real sentries get walls: land defence towers that fire over the walls. Anti-air, sea defences, long-range artillery, missile and nuke silos, radar and jammers never get walls, and neither do the low pop-up turrets. A line or grid of sentries placed together gets none, because their rings would cross.
 
@@ -720,7 +720,7 @@ While a sentry is picked, a **WALLS** switch sits between ROTATE and X. It shows
 
 > **Tip:** To place an extractor farther away after auto mex, pick the Metal Extractor again, then tap the far spot.
 
-**Area Mex** is BAR's own order for builders. Tap **Area Mex** among the orders, tap the map, then drag out a circle. The free metal spots in it are queued.
+**Area Mex** is BAR's own order for builders. Tap **Area Mex** among the orders, then drag out a circle on the map. The free metal spots in it are queued.
 
 ![Area Mex: the circle drawn on the map, and × FIRST and × LAST in the groups row](guide/img/area-mex.jpg)
 
@@ -750,7 +750,7 @@ With **INSERT** on, new units go to the front of the factory's queue.
 - **Build orders before the start:** turn QUEUE on in the pre-game dock and queue your whole opening. UNDO LAST fixes a mistake.
 - **INSERT on a builder** puts the building at the front of its queue. Use it for an urgent anti-air tower.
 - **Builders on Fight or Patrol** repair and reclaim on the way.
-- **Converters in a row:** LINE them with gaps. A row of converters touching each other can chain-explode.
+- **Converters:** leave gaps between them. A row of converters touching each other can chain-explode.
 - Keep factory exits clear. Buildings placed around a factory can wall in its units.
 
 ---
@@ -785,7 +785,7 @@ The small metal and energy boxes show the share and conversion marks on their ba
 
 The pill shows the wind's speed and the map's range (before the game starts, the range alone), and the tide. On a map without water it says NO WATER.
 
-Tap a half of the pill for BAR's own details: the average, lowest and highest wind, how much of the time it is under 6, BAR's advice on solar against wind, and the last five minutes as a graph. Any tap closes them.
+Tap the wind's half for BAR's own wind details: the average, lowest and highest wind, how much of the time it is under 6, BAR's advice on solar against wind, and the last five minutes as a graph. Tap the tide's half for the tide's strength. Any tap closes them.
 
 ![The wind's details: average, minimum and maximum speed, time below 6, and the solar advice](guide/img/dock-upright-wind.jpg)
 
@@ -887,16 +887,16 @@ Where the host has turned off unit control widgets, the button says "AUTO RETREA
 
 ### Pings and under-attack alerts
 
-**LAST PINGS** brings the camera to the last 4 pings from other players. Tap it again within 2 seconds for the one before. Its badge shows how many there are, and the tile shows "PING 2 OF 4" as you step back.
+**LAST PINGS** brings the camera to the last 4 pings from other players. Tap it again within 2 seconds for the one before. Its badge shows how many there are, and as you step back the tile shows "2 OF 4" and the note "PING 2 OF 4".
 
-Your own units under attack are in the same list. A fight is one entry, moved along as it goes on, even when it spreads out. A new fight in another place gets its own entry within a second, however busy the first one is. When the newest entry is an attack on your units, the badge is red and the note says "UNDER ATTACK". BAR's own messages, such as "Units Under Attack" or "Commander, Taking Heavy Damage!", show in the chat box for 15 seconds.
+Your own units under attack are in the same list. A fight is one entry, moved along as it goes on, even when it spreads out. A new fight in another place gets its own entry within a second, however busy the first one is. When the newest entry is an attack on your units, the badge is red; tap LAST PINGS and the note says "UNDER ATTACK". BAR's own messages, such as a commander under attack, show in the chat box for 15 seconds.
 
 ![Units under attack: BAR's message in the chat box, and LAST PINGS with a red badge](guide/img/last-pings.jpg)
 
 **PING** places your own ping:
 
 - Tap PING, then tap the map: a ping there ("TAP THE MAP TO PING"; tap PING again to cancel).
-- Hold PING and speak: a ping with your words as its label.
+- Hold PING and speak, then tap the map: a ping there with your words as its label.
 - Tap PING twice: it turns to **CHAT**, speak to chat.
 
 ---
@@ -932,7 +932,7 @@ In the lobby, tap a chat's text box for the keyboard, or long-press it for speak
 
 ### The chat box
 
-The app lays out BAR's chat for a phone: player names at the box's left edge, the message filling the rest. BAR's own messages ("Battle Started", a commander under attack, the tutorial's lines) show in the chat box for 15 seconds. When a game ends, the chat says that BAR will leave it in 12 seconds and that a tap keeps it open.
+The app lays out BAR's chat for a phone: player names at the box's left edge, the message filling the rest. BAR's own messages ("Battle Started", a commander under attack, the tutorial's lines) show in the chat box for 15 seconds. When a game ends, the chat counts down the 12 seconds before BAR leaves it; a tap on the screen keeps it open longer.
 
 > **Tip:** You can move the chat, size it and change its text size and padding in the layout editor.
 
@@ -968,7 +968,7 @@ While you follow a unit, its camera views show: **1st person**, **Shoulder**, **
 - Double tap a unit to follow it. Double tap the ground to stop.
 - Following sticks: a pan moves the camera off the unit a little, and pinch, twist and tilt work as always. Only a pan that takes the unit far off the screen lets it go.
 - In 1st person, drag to look around. The view turns back to the unit's by itself.
-- **Tune** changes the camera for the unit type you follow, one setting at a time. It saves it for the other factions' matching unit too.
+- **Tune** changes the view you are on, one setting at a time: 1st person and Shoulder for the unit type you follow, Table, Close and Mid for every unit. **Save** keeps it, and gives a unit type's views to the other factions' matching unit too.
 
 ### Replays
 
@@ -1011,11 +1011,11 @@ A scenario's briefing is no wider than the screen; upright it sits above the doc
 
 ### Save and load
 
-The top bar's **Save** saves the game. The units you had picked stay picked, and the chat box says "Game saved". Load it later from the lobby's **Load Game**.
+The top bar's **Save** saves the game. The units you had picked stay picked, and the chat box says "Game saved: the lobby's Load Game opens it". Load it later from the lobby's **Load Game**.
 
 ### Quit
 
-The top bar's **Quit**, or Android's Back with nothing left to put away, shows BAR's question: **Stay**, **Resign** or **Quit**.
+The top bar's **Quit** shows BAR's question: **Stay**, **Resign** or **Quit**. Android's Back with nothing left to put away shows BAR's lobby over the game in a game started from the lobby, else the same question.
 
 ---
 
@@ -1068,7 +1068,7 @@ The pad's panels share the touch dock's look: its tiles, gold on what is picked,
 
 ![The pad's D-gun mode sideways: D-GUN, RT FIRE and B LEAVE](guide/img/pad-dgun.jpg)
 
-**The share list** (LB + D-pad up, tapped then held): your teammates, each name in the player's colour. LB and RB switch between UNITS, METAL and ENERGY. Each row shows how much of it the teammate holds. D-pad up and down picks the teammate, D-pad left and right how much to give, never more than BAR lets them take. A gives, B cancels. With no unit selected it opens on the resources.
+**The share list** (LB + D-pad up, tapped then held): your teammates, each name in capitals with the player's colour along its row's foot. LB and RB switch between UNITS, METAL and ENERGY. Each row shows how much of it the teammate holds. D-pad up and down picks the teammate, D-pad left and right how much to give (10 % to 100 %), never more than BAR lets them take. A sends (TRANSFER for units), B cancels. With units selected it opens on UNITS, else on the resource you used last.
 
 ![The share list: METAL, the teammates, and the amount to send](guide/img/pad-share.jpg)
 
@@ -1082,7 +1082,7 @@ A squad takes orders meanwhile (the unit you look at, else the units nearby): A 
 
 ### Pad and touch together
 
-Once you use the pad, the build menu shows only when RB opens it, as in v0.8.5. Three taps on the screen within 6 seconds bring back the menus that open by themselves for fingers. While the pad is in use, the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the order menu, and the rest fill it with bigger buttons. They come back in later games played by touch.
+Once you use the pad, the build menu shows only when RB opens it, as in v0.8.5. Three taps on the screen within 6 seconds bring back the menus that open by themselves for fingers. While the pad is in use, the orders it has buttons for (Stop, Wait, Attack, Repeat, Move, Reclaim, Repair, Fight, Patrol) are hidden from the order menu, and the rest fill it with bigger buttons. They come back when the three taps hand the game back to your fingers, and at the next game's start.
 
 ### For pros: gamepad
 
@@ -1099,7 +1099,7 @@ A Bluetooth or USB-C mouse and keyboard (or a USB-C dock) work as on a PC: with 
 
 - While BAR is in front, Android's, One UI's and DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space and the keyboard's language switch. The launcher setting "Keyboard shortcuts go to the game" (on by default) does this.
 - Android keeps the Home, Recents, power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe).
-- Back is Escape in the game, once the touch dock has nothing left to put away.
+- Back first puts away what the touch dock has open. At the dock's home it brings up BAR's lobby over the game, or BAR's quit question in a game not started from the lobby. Without the dock (a gamepad or mouse sideways), and while BAR's quit question or the chat is open, Back is Escape.
 - Sideways, a mouse brings back BAR's own screen layout. Touch the screen and the dock returns.
 
 > **Note:** On Android 17, each Escape shows Android's notice "Long press Esc key to close this app". A short press is Escape for BAR, as on a PC. Holding Escape down (about 3 seconds) closes the game. Never hold Escape in a game you want to keep.
@@ -1169,7 +1169,7 @@ A panel the touch dock covers whole has no outline: there is nothing of it to se
 
 ### The control bar
 
-The control bar is the row of dark buttons in the middle of the screen. With the dock across the bottom (upright, unfolded), it sits in the middle of the room above the dock. It keeps clear of the panels at the screen's edges, and moves above or below the panel you picked if it would cover it. If it does not fit in one row, it wraps to two.
+The control bar is the row of dark buttons in the middle of the screen. With the dock across the bottom (upright, unfolded), it sits in the middle of the room above the dock. It keeps clear of the panels at the screen's edges, and moves above or below the panel you picked if it would cover it. If it does not fit in one row, it wraps onto more.
 
 **With no panel picked,** the bar shows:
 
@@ -1230,7 +1230,7 @@ What each change means for each panel:
 - **Spectate bar.** All four, for the bar of spectator buttons.
 - **Build menu.** The app's copy of BAR's own Build menu: a 3 x 3 grid, 9 build options a page, the page arrows in a strip under them. On a wide, short screen (such as a folded Fold held sideways) it is up to 5 wide. Move and Size place and scale it.
 - **Camera knob.** Move places the knob; Size makes the ring bigger or smaller. The rails are not in the editor.
-- **Minimap.** Size scales BAR's minimap: it is your own BAR minimap size times this. Where the minimap is small until tapped (unfolded and upright), the small one is half of that.
+- **Minimap.** Size scales BAR's minimap: it is your own BAR minimap size times this. Unfolded, where the minimap is small until tapped, the small one is half of that; upright the small one is as tall as BAR's top bar.
 - **Player list.** Size scales BAR's player list, both the small list and the open one. Its outline takes in the rows BAR stacks on it (the music, unit totals, the clock), with its name tab above them.
 
 ### Layouts per screen shape
@@ -1297,7 +1297,7 @@ The touch dock changes what the editor shows:
 - The size, text and padding steps are about 8 % for Size and Text. Five taps of + is about 1.5 times.
 - The Text setting of the unit info panel is a ceiling, not a fixed size: the panel still shrinks its text to fit. Raise Size together with Text for bigger words.
 - With a mouse and keyboard, `/hud` opens the editor, the mouse wheel sizes the picked panel, and Escape closes it.
-- A movable top bar, order menu and start countdown would need a setting in BAR itself. The editor shows them in grey so you know they are fixed.
+- A movable top bar, order menu and start countdown would need a setting in BAR itself. The editor shows the top bar and the order menu in grey so you know they are fixed.
 
 ---
 
@@ -1309,7 +1309,7 @@ Each setting shows its name and what it does on the launcher screen. The start b
 
 | Setting | Default | What it does |
 |---|---|---|
-| Map for Play vs AI | Starwatcher on 8 GB phones until you pick one | The map Play vs AI starts on. Tap for the maps installed, or type any map's name and version as BAR lists it: a map not on the phone is downloaded |
+| Map for Play vs AI | Supreme Isthmus v2.1 (Starwatcher 1.0 on 8 GB phones, until you pick one) | The map Play vs AI starts on. Tap for the maps installed, or type any map's name and version as BAR lists it: a map not on the phone is downloaded |
 | Sound | On | The game's sound |
 | Open the lobby when the app starts | On | The app icon opens the lobby straight away. Long-press the app icon, then Launcher, for this screen |
 | Update BAR at every start | On | Like BAR's PC launcher: engine, game and lobby update at every start, and go back to the last working version if an update fails to start. Off: only Install / Update updates BAR |
@@ -1330,10 +1330,10 @@ Each setting shows its name and what it does on the launcher screen. The start b
 | Setting | Default | What it does |
 |---|---|---|
 | Frame cap | 30 fps | The most frames drawn a second: 30 fps, 60 fps or No cap. 30 keeps the phone cooler and the picture steady; no cap runs it hot |
-| Game resolution | 100% | 100%, 85%, 70% or Native. The game's picture is up to about 900 lines, enlarged to the screen. Lower runs cooler. Native is the screen's own resolution, the heaviest |
+| Game resolution | 100% | 100%, 85%, 70% or Native. The game's picture is up to 2100 x 900 pixels (900 lines folded sideways, 1080 unfolded), enlarged to the screen. Lower runs cooler. Native is the screen's own resolution, the heaviest |
 | Sharper upscaling (Qualcomm SGSR) | On | The game is drawn smaller than the screen and enlarged. SGSR keeps edges sharp where plain enlarging blurs them |
 | Compare upscaling (diagnostic) | Off | SGSR on and off every 3 seconds, with a label, to see the difference |
-| Lower the resolution when fps drops | Off | Under 27 fps the game is drawn smaller a step at a time (85 %, then 70 % of the render resolution), never under 70 %, kept only while each step helps |
+| Lower the resolution when fps drops | Off | From the third game minute, under 27 fps the game is drawn smaller a step at a time (85 %, then 70 %), never under 70 % of the full picture, kept only while each step helps. Nothing changes at Native or 70 % |
 
 ![The launcher's Graphics settings](guide/img/launcher-graphics.jpg)
 
@@ -1371,7 +1371,7 @@ These are for testing and comparison. Most players never change them.
 | Goal | Do this |
 |---|---|
 | A cooler phone | Keep Frame cap at 30. Lower Game resolution to 85 % or 70 % |
-| Fewer drops in big fights | Turn on "Lower the resolution when fps drops". It steps down to 85 %, then 70 %, only while each step helps |
+| Fewer drops in big fights | Turn on "Lower the resolution when fps drops". It steps down to 85 %, then 70 %, only while each step helps (at a Game resolution of 100 % or 85 %) |
 | A sharp picture at a lower resolution | Keep "Sharper upscaling (Qualcomm SGSR)" on |
 | Enough memory | Close other apps before a game. On Galaxy phones, use Free memory while BAR loads |
 | Room on the phone | Set Map storage to 3 GB |
@@ -1412,7 +1412,7 @@ The launcher's log also says how the last run ended (a crash, low memory, a forc
 | A start hangs for up to 45 seconds | A weak connection: BAR's update check waits. Turn off "Update BAR at every start" |
 | A map will not start offline | Offline, only maps already on the phone work. Pick one in the lobby's map list |
 | No touch or pad controls in an online game | The host turned off custom widgets. The lobby warns in red when you join. With the phone engine on, this no longer stops the controls |
-| Auto retreat or full-auto D-gun is off | The host turned off unit control widgets ("OFF IN THIS GAME") |
+| Auto retreat or full-auto D-gun is off | You run BAR's official engine and the host turned off unit control widgets ("OFF IN THIS GAME"). With the Phone engine on, they work |
 | Turning the phone freezes the game for a moment | BAR's panels take the new size: about a second with the phone engine, 5 to 10 seconds with the official engine |
 | BAR's Settings is wider than the screen upright | You run BAR's official engine. Open Settings sideways, or turn the Phone engine back on |
 | The game closed when you held Escape | Android 17 closes an app when Escape is held. Use short presses |
@@ -1483,7 +1483,7 @@ Its author does not plan to keep developing it. It updates BAR itself at every s
 | Factory | A building that makes units, such as a Bot Lab |
 | Fight | Attack-move: move and attack what is on the way |
 | Home buttons | The dock's buttons with nothing picked |
-| INSERT | The dock's switch that puts the next order at the front of the queue (BAR's Alt) |
+| INSERT | The dock's switch that puts the next order at the front of the queue (BAR's Space key) |
 | Interface scale | BAR's size for its interface; the app sets it per screen shape |
 | Knob | The camera knob: a ring over the map that zooms and turns with one finger |
 | Layout editor | The app's tool to move and size panels (three fingers held) |
@@ -1507,7 +1507,7 @@ Its author does not plan to keep developing it. It updates BAR itself at every s
 
 ## Credits
 
-- **Beyond All Reason** and its game content are by the Beyond All Reason team: [beyondallreason.info](https://www.beyondallreason.info/). BAR's content is never bundled with the app; it downloads from BAR's own servers.
+- **Beyond All Reason** and its game content are by the Beyond All Reason team: [beyondallreason.info](https://www.beyondallreason.info/). BAR's game, maps and engine are not bundled with the app; they download from BAR's own servers. The app ships upright copies of BAR's load screen and lobby pictures, with BAR's developers' clearance.
 - **The Recoil engine** by the Spring and Recoil developers.
 - **Termux:X11** (the display server), **PRoot** and other parts from the Termux project.
 - **Mesa for Android containers** (the graphics driver).

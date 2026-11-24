@@ -3,7 +3,7 @@
 Paste the block below into the Nexus Mods page's description (it is Nexus BBCode). Before you paste it, fill in:
 
 - `{IMG_BASE}`: the web address of the folder that holds the guide's pictures (the files made into `docs/guide/img/`), with no slash at the end. Every picture below is one that `docs/guide/pictures.txt` makes.
-- `{GUIDE_URL}`: the web address of the full guide (the wiki page made from `docs/GUIDE.md`). The web version is
+- `{GUIDE_URL}`: the web address of the full guide (the web page `python -I tools\guide-html.py` makes from `docs/GUIDE.md`). The web version is
   published at https://claude.ai/artifact/Rfyx83QDHcCBHTUikuTGvd (`python -I tools\guide-html.py` makes it); it is
   private until its owner shares it from the page's Share menu. Once this repository is public, `docs/GUIDE.md` on
   GitHub works too.
@@ -45,7 +45,7 @@ The app runs BAR's real engine on the phone and downloads the game from BAR's ow
 From your first game to the layout editor, the gamepad and every setting.[/center]
 
 [size=4][b]Credits[/b][/size]
-Beyond All Reason and its game content are by the Beyond All Reason team: [url=https://www.beyondallreason.info/]beyondallreason.info[/url]. Nothing of BAR's game is in the app: it downloads from BAR's own servers.
+Beyond All Reason and its game content are by the Beyond All Reason team: [url=https://www.beyondallreason.info/]beyondallreason.info[/url]. BAR's game, maps and engine are not in the app: they download from BAR's own servers.
 
 BAR Droid is a fan project, not made by the Beyond All Reason team.
 ```
