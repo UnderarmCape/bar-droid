@@ -52,6 +52,11 @@ The first version meant for other people's phones: everything since the first bu
   picked: their totals (count, summed health and DPS, costs, buildpower, metal and energy made and used, kills). A tap
   on it folds it to an INFO tab; a tap on the tab opens it again (kept for the next game). It steps aside while a
   building, an order or a preset is armed, as the next tap on the map is its place.
+- A build option on the dock, a builder's or a factory's, shows its numbers in the unit info panel at the first tap
+  (its tile lit gold); a second tap on it picks it to place, or in a factory queues one.
+- A long press needs no pixel-perfect aim: within about 6 mm of a unit, a metal wreck or a free metal spot it goes
+  onto that, as BAR's right click there (guard, repair, attack, reclaim; on a free spot the builders' best extractor is
+  queued), with a gold ring on the target while the finger holds. Dragged on, it is the path or formation line as before.
 - Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and
   sends what you said as a chat message, no keyboard (nothing said, nothing sent); a three-finger double tap shows the
   keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say. In a game the

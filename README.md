@@ -73,7 +73,7 @@ Xclipse or Tensor GPUs cannot run it (no driver path); the app's device check sa
 | Tap | Click: select, buttons, place a building. Double tap: that unit type on screen; triple: on the whole map |
 | Drag | Pan the map (a flick glides); on BAR's minimap and sliders it drags them instead; up or down in BAR's Settings, Statistics and other windows it scrolls them |
 | Tap, then drag | Box select |
-| Long press | Right click (move/attack order); keep dragging for a path (one unit) or a formation line (more) |
+| Long press | Right click (move/attack order); within about 6 mm of a unit, a metal wreck or a free metal spot it goes onto that (guard, repair, attack, reclaim; on a free spot a mex is queued), a gold ring on it while you hold; keep dragging for a path (one unit) or a formation line (more) |
 | Two-finger tap | Right click |
 | Two fingers | Move to pan, pinch to zoom, twist to rotate; both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units; down: deselect; left: stop; right: fight |
@@ -131,7 +131,8 @@ the left hand, white or the dock's grey, and the sensitivity.
 **Playing upright** (launcher setting "Play upright"): hold the phone upright; the game is on top and a touch dock
 below it. The dock is a camera pad at rest: drag to pan, double tap and hold then move up or down to zoom (sideways
 to turn), triple tap and hold to tilt. The build grid, the orders, QUEUE and INSERT, the buttons with nothing picked (and the
-spectator's), metal and energy and the groups row act on the first tap; elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
+spectator's), metal and energy and the groups row act on the first tap (a build option's first tap shows its numbers
+in the unit info panel, its tile lit gold; a second tap on it picks it, or in a factory queues one); elsewhere a tap opens its menu for 2.6 seconds (while a building is being placed it stays
 open): the build grid on the left, the picked
 units' orders on the right (Fight, PRESETS, Patrol first and largest, the D-Gun red; a state's lights as BAR's, red
 left, green right; units that build nothing: the orders that would need scrolling go under their types on the left,

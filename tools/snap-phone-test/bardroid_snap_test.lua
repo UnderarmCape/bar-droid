@@ -174,6 +174,22 @@ local function onCmd(c)
 		end
 		Spring.SetCameraState(st, 0)
 		Spring.SetCameraTarget(scene[1], scene[2], scene[3], 0)
+	elseif c == "spotcam" then -- (the mex case: the camera over the free metal spot nearest the commander)
+		local finder, rb = WG.resource_spot_finder, WG.resource_spot_builder
+		local x, _, z = Spring.GetUnitPosition(com)
+		local bestD
+		spot = nil
+		for _, s in ipairs(finder and finder.metalSpotsList or {}) do
+			local free = rb and rb.ExtractorCanBeBuiltOnSpot and rb.ExtractorCanBeBuiltOnSpot(s, UnitDefNames.armmex.id)
+			local d = (s.x - x) ^ 2 + (s.z - z) ^ 2
+			if free and #(Spring.GetUnitsInCylinder(s.x, s.z, 200) or {}) == 0 and (not bestD or d < bestD) then
+				spot, bestD = s, d
+			end
+		end
+		if spot then
+			scene = { spot.x, spot.y or Spring.GetGroundHeight(spot.x, spot.z), spot.z }
+			Spring.SetCameraTarget(scene[1], scene[2], scene[3], 0)
+		end
 	elseif c == "camera2" and scene then -- (the scene where the free middle is, not under the dock)
 		local mx, my = freeMiddle()
 		local _, hit = Spring.TraceScreenRay(mx, my, true)
@@ -233,29 +249,26 @@ local function onCmd(c)
 				break
 			end
 		end
-		-- beside a free metal spot on the screen: its circle's edge plus OFF
-		local finder, rb = WG.resource_spot_finder, WG.resource_spot_builder
-		local best, bestD
-		for _, s in ipairs(finder and finder.metalSpotsList or {}) do
-			local sx, sy = Spring.WorldToScreenCoords(s.x, s.y or Spring.GetGroundHeight(s.x, s.z), s.z)
-			local free = rb and rb.ExtractorCanBeBuiltOnSpot and rb.ExtractorCanBeBuiltOnSpot(s, UnitDefNames.armmex.id)
-			if sx and free and #(Spring.GetUnitsInCylinder(s.x, s.z, 200) or {}) == 0 then
-				local rpx = UnitDefs[UnitDefNames.armmex.id].radius / scaleAt(sx, sy) -- (the snap's size of a spot)
-				local ok = clear(sx + rpx + OFF, sy) and Spring.TraceScreenRay(sx + rpx + OFF, sy) == "ground"
-				local d = (sx - vsx / 2) ^ 2 + (sy - mid) ^ 2
-				if ok and (not bestD or d < bestD) then
-					best, bestD = { s = s, x = sx + rpx + OFF, y = sy }, d
+		write(table.concat(out, "\n") .. "\n")
+		Spring.Echo(string.format("[snaptest] aimed: %s (%.2f elmos a pixel)", table.concat(out, "; "), per or 0))
+	elseif c == "aimmex" then -- beside the spot spotcam looked at: the extractor's edge plus OFF, away from other spots
+		local out = {}
+		if spot then
+			local sx, sy = Spring.WorldToScreenCoords(spot.x, spot.y or Spring.GetGroundHeight(spot.x, spot.z), spot.z)
+			local rpx = UnitDefs[UnitDefNames.armmex.id].radius / scaleAt(sx, sy) -- (the snap's size of a spot)
+			for _, dir in ipairs({ { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 } }) do
+				local px, py = sx + dir[1] * (rpx + OFF), sy + dir[2] * (rpx + OFF)
+				if clear(px, py) and Spring.TraceScreenRay(px, py) == "ground" then
+					point("mex", px, py, out)
+					break
 				end
 			end
 		end
-		if best then
-			spot = best.s
-			point("mex", best.x, best.y, out)
-		else
-			Spring.Echo("[snaptest] NOT RUN mex: no free metal spot in the map's free part")
+		if #out == 0 then
+			Spring.Echo("[snaptest] NOT RUN mex: no free metal spot " .. (spot and "with a clear point beside it" or "near the commander"))
 		end
 		write(table.concat(out, "\n") .. "\n")
-		Spring.Echo(string.format("[snaptest] aimed: %s (%.2f elmos a pixel)", table.concat(out, "; "), per or 0))
+		Spring.Echo(string.format("[snaptest] aimed for the mex: %s", table.concat(out, "; ")))
 	elseif c == "guard?" or c == "on?" then
 		local o = firstOrder()
 		check(c == "guard?" and "held a finger's width beside the Pawn: the Construction Bot guards it"

@@ -365,7 +365,7 @@ On a near-square screen, such as an unfolded Galaxy Fold held either way up, the
 
 ![Unfolded: the split dock, with the home buttons in the right block and a dimmed build grid in the left](guide/img/unfolded-overview.jpg)
 
-With nothing picked, the left block keeps the build grid of the builder you picked last (or your commander's), dimmed. Tap a building there and that builder is picked and its placing starts at once. The right block holds the home buttons.
+With nothing picked, the left block keeps the build grid of the builder you picked last (or your commander's), dimmed. Tap a building there to see its numbers in the unit info panel; tap it again and that builder is picked and its placing starts at once. The right block holds the home buttons.
 
 ![The split dock with the commander picked](guide/img/dock-unfolded-commander.jpg)
 
@@ -424,7 +424,7 @@ These gestures work on the game itself (the map), in every screen shape.
 | Triple tap on a unit | Pick every unit of that type on the whole map |
 | Drag | Pan the map. A flick glides. On BAR's minimap and sliders it drags them. Up or down in BAR's Settings, Statistics and other windows it scrolls them |
 | Tap, then drag | Box select |
-| Long press | Right click: move, attack, the smart order. Keep dragging for a path (one unit) or a formation line (more units) |
+| Long press | Right click: move, attack, the smart order. Within a finger's width of a unit, a wreck or a free metal spot it goes onto that (a gold ring shows it). Keep dragging for a path (one unit) or a formation line (more units) |
 | Two-finger tap | Right click |
 | Two fingers | Move to pan, pinch to zoom, twist to turn. Move both up or down together to tilt |
 | Two fingers held, then swipe | Up: select all your units. Down: deselect. Left: stop. Right: fight |
@@ -566,7 +566,8 @@ At the right end of the groups row, each type of idle builder has a tile with it
 
 A long press on the map is BAR's right click: the smart order. On the ground, the picked units move there. On an enemy, they attack it. On a damaged unit, builders repair it.
 
-- Keep your finger down and drag: one unit follows the path you draw, more units spread along the line you draw.
+- You do not need to hit a unit exactly. Within about 6 mm (a finger's width) of a unit, a wreck with metal or a free metal spot, the order goes onto it, and a gold ring shows the target while you hold. Let go: builders guard that unit, repair it or reclaim the wreck, an army attacks an enemy, and on a free metal spot builders queue a metal extractor there.
+- Keep your finger down and drag: one unit follows the path you draw, more units spread along the line you draw. This also works after the gold ring shows: drag on and it is a path again.
 - With **QUEUE** on, a long press on the ground queues a move after the units' other orders.
 - A two-finger tap is a right click too.
 - Hold two fingers, then swipe left to stop, right to fight.
@@ -656,7 +657,7 @@ To cancel, tap the X in the corner, or press Android's Back ("PRESET CANCELLED")
 ### Placing one building
 
 1. Pick a builder (for example your commander).
-2. Tap a building in the build grid. The picked building is framed in gold. The right half shows **ONE · LINE · GRID · BORDER** and a big green **PLACE** button with **ROTATE** and **X** under it.
+2. Tap a building in the build grid. The first tap shows its numbers in the unit info panel (cost, health, what it makes), its tile lit gold. Tap it again to pick it. The picked building is framed in gold. The right half shows **ONE · LINE · GRID · BORDER** and a big green **PLACE** button with **ROTATE** and **X** under it.
 3. Tap the map where it should go. The building shows there, and PLACE turns bright green.
 4. Tap **PLACE**.
 
@@ -730,7 +731,7 @@ While a sentry is picked, a **WALLS** switch sits between ROTATE and X. It shows
 
 **Queue units:**
 
-1. Tap a unit picture: one more is queued. A long press takes one off.
+1. Tap a unit picture: the first tap shows its numbers in the unit info panel. Tap it again: one more is queued (after that each tap queues one). A long press takes one off.
 2. The right half then shows that unit's queue buttons: **+1**, **+5**, **+20**, **-1**, **CLEAR** (all of that unit) and **ORDERS** (back to the factory's orders).
 3. The count shows on the picture.
 

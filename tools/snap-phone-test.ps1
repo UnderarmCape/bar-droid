@@ -88,7 +88,7 @@ try {
   Stage "aim"; Start-Sleep 1
   $p = Rects "bardroid_snaptest.txt"
   Shot "scene"
-  $cases = @(@("guard", "guard?"), @("on", "on?"), @("far", "far?"), @("mex", "mex?"))
+  $cases = @(@("guard", "guard?"), @("on", "on?"), @("far", "far?"))
   foreach ($c in $cases) {
     $pt = $p[$c[0]]
     if (-not $pt) { "[snaptest] NOT RUN $($c[0]): no point"; continue }
@@ -100,6 +100,16 @@ try {
     HoldDrag $p["guard"][0] $p["guard"][1] $p["away"][0] $p["away"][1]; Start-Sleep -Milliseconds 700
     Stage "drag?"; Start-Sleep 1
   } else { "[snaptest] NOT RUN drag: no point" }
+  # (the mex case on its own camera: the free metal spot nearest the commander, in the map's free middle)
+  Stage "spotcam"; Start-Sleep 2
+  Stage "camera2"; Start-Sleep 2
+  Stage "aimmex"; Start-Sleep 1
+  $pm = (Rects "bardroid_snaptest.txt")["mex"]
+  if ($pm) {
+    Hold $pm[0] $pm[1]; Start-Sleep -Milliseconds 700
+    Shot "mex"
+    Stage "mex?"; Start-Sleep 1
+  }
   Stage "end"
   if (-not (WaitLog '\[snaptest\] done' 10)) { "[snaptest] FAIL the widget did not finish" }
   Log '\[snaptest\] (PASS|FAIL|NOT RUN|aimed|done)|\[bardroid-snap\]|Error in|Removed widget' 200 | ForEach-Object { $_ -replace '^\[t=[^\]]+\]\[f=[^\]]+\] ', '' }
