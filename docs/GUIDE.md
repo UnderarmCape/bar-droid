@@ -889,7 +889,7 @@ Where the host has turned off unit control widgets, the button says "AUTO RETREA
 
 **LAST PINGS** brings the camera to the last 4 pings from other players. Tap it again within 2 seconds for the one before. Its badge shows how many there are, and the tile shows "PING 2 OF 4" as you step back.
 
-Your own units under attack are in the same list. A fight is one entry, moved along as it goes on. When the newest entry is an attack on your units, the badge is red and the note says "UNDER ATTACK". BAR's own messages, such as "Units Under Attack" or "Commander, Taking Heavy Damage!", show in the chat box for 15 seconds.
+Your own units under attack are in the same list. A fight is one entry, moved along as it goes on, even when it spreads out. A new fight in another place gets its own entry within a second, however busy the first one is. When the newest entry is an attack on your units, the badge is red and the note says "UNDER ATTACK". BAR's own messages, such as "Units Under Attack" or "Commander, Taking Heavy Damage!", show in the chat box for 15 seconds.
 
 ![Units under attack: BAR's message in the chat box, and LAST PINGS with a red badge](guide/img/last-pings.jpg)
 
