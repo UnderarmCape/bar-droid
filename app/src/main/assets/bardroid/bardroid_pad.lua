@@ -3267,13 +3267,18 @@ end
 -- My units under attack in the same list (Kailil, 2026-11-20: "Alliw unit under attack notification to be tracked via
 -- the last pings system so I can teleoort to the danger area"): an enemy's hit on one of my units (the event BAR's own
 -- "unit under attack" notice comes from) is an entry at that unit, the camera going to where it is then ("UNDER ATTACK"
--- in red). A fight stays one entry, moved along to each new hit within NEAR elmos and KEEP frames of its last; a new one
--- at most every GAP frames. Each of my units looked at no more than every LOOK frames, at most BUDGET a frame (a late
--- 8v8 has thousands of hits a second). (One hit every 8 frames for the whole game, the first of its frame, left a light
--- fight unseen beside a busy one, whose hits came first nearly every time: one Grunt on a far solar while thirty Pawns
--- fought thirty Grunts, attack-ping-test, 2026-11-20.) (One table: under Lua's 200 locals.)
-local ATTACK = { NEAR = 900, KEEP = 30 * 15, GAP = 30 * 4, LOOK = 30 * 2, BUDGET = 4, seen = {}, seenFrom = 0,
-	frame = -1, looked = 0, lastNew = -1e9 }
+-- in red). A fight stays one entry, moved along to each new hit within NEAR elmos and KEEP frames of its last, and kept
+-- going where it is by hits within SPREAD (1.6 x NEAR: at 2 x NEAR a fight 2000 elmos off, the entry having followed its
+-- own 460 elmos that way, was taken in, attack-ping-test 2026-11-24). A hit farther from every live entry is a new
+-- fight: within 3 x NEAR of one (the same battle spreading) an entry at most every GAP frames, farther (a new place) at
+-- most every FAR frames. Each of my units looked at no more than every LOOK frames, at most BUDGET a frame (a late 8v8 has thousands of
+-- hits a second). (One hit every 8 frames for the whole game, the first of its frame, left a light fight unseen beside a
+-- busy one, whose hits came first nearly every time: one Grunt on a far solar while thirty Pawns fought thirty Grunts,
+-- attack-ping-test, 2026-11-20.) (One GAP for every new entry, the hits within NEAR alone merged: a busy fight spreading
+-- past NEAR opened entries of its own every 4 s and its far hits took each gap first, the light fight far off never got
+-- one: attack-ping-test's full set on 912e7b2a, 2026-11-24.) (One table: under Lua's 200 locals.)
+local ATTACK = { NEAR = 900, SPREAD = 1440, KEEP = 30 * 15, GAP = 30 * 4, FAR = 30, LOOK = 30 * 2, BUDGET = 4,
+	seen = {}, seenFrom = 0, frame = -1, looked = 0, lastNew = -1e9 }
 function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID, _, _, _, attackerTeam)
 	if unitTeam ~= Spring.GetMyTeamID() or not damage or damage <= 0 or paralyzer then
 		return
@@ -3304,13 +3309,24 @@ function widget:UnitDamaged(unitID, _, unitTeam, damage, paralyzer, weaponDefID,
 		return
 	end
 	ATTACK.seen[unitID] = f
+	local best, bestD2 = nil, nil -- (the nearest live entry)
 	for _, p in ipairs(pings) do
-		if p.attack and f - p.frame <= ATTACK.KEEP and (p[1] - x) ^ 2 + (p[3] - z) ^ 2 <= ATTACK.NEAR ^ 2 then
-			p[1], p[2], p[3], p.unit, p.frame = x, y, z, unitID, f
-			return
+		if p.attack and f - p.frame <= ATTACK.KEEP then
+			local d2 = (p[1] - x) ^ 2 + (p[3] - z) ^ 2
+			if not bestD2 or d2 < bestD2 then
+				best, bestD2 = p, d2
+			end
 		end
 	end
-	if f - ATTACK.lastNew >= ATTACK.GAP then
+	local near = ATTACK.NEAR
+	if best and bestD2 <= near ^ 2 then -- (the same fight: its entry follows it)
+		best[1], best[2], best[3], best.unit, best.frame = x, y, z, unitID, f
+		return
+	elseif best and bestD2 <= ATTACK.SPREAD ^ 2 then -- (its spread: kept going where it is)
+		best.frame = f
+		return
+	end
+	if f - ATTACK.lastNew >= ((best and bestD2 <= (3 * near) ^ 2) and ATTACK.GAP or ATTACK.FAR) then
 		ATTACK.lastNew = f
 		addPing(x, y, z, { attack = true, unit = unitID, frame = f })
 	end

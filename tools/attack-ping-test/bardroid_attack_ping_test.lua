@@ -7,8 +7,9 @@
 -- LuaUI/Config/bardroid_attacktest.txt, answered "<n>" in bardroid_attacktest_cmd.txt): the second fight in sight above
 -- the dock. Then a busy fight beside a light one (2026-11-20 ~20:50): thirty Pawns against thirty Grunts, hits every
 -- frame, and 4.5 s later far off one Grunt shooting a solar of mine: the light fight still gets its own entry (the hits
--- were looked at once every 8 frames, the first of a frame, so the busy fight's nearly always). "[attacktest] done: ALL
--- PASS" or "N FAILED" at the end.
+-- were looked at once every 8 frames, the first of a frame, so the busy fight's nearly always). The busy fight sprawls
+-- (2026-11-24): five parts of ten against ten in a line, 1200 elmos apart: half as many entries as parts at most, and
+-- the light one not kept out by the busy one's new entries. "[attacktest] done: ALL PASS" or "N FAILED" at the end.
 function widget:GetInfo()
 	return { name = "BAR Droid attack ping test", desc = "Under attack in the last pings", author = "BAR Droid", layer = 0,
 		enabled = true }
@@ -135,7 +136,13 @@ local function farFrom(places, building)
 	end
 	return best, bestD
 end
-local busy, light -- { x, z } of the busy fight and the light one
+local busy, light -- { x, z } of the busy fight (its middle part) and the light one
+-- (elmos between the busy fight's parts: past ATTACK.NEAR, 900, by more than a part's own size, within its SPREAD, 1440.
+-- At 1100 the old rule's entries hopped from part to part and the light fight got its entry before the fix too; five
+-- parts keep the old rule opening entries past the check, each gap's first look a part's nearly always, 2026-11-24)
+local SPRAWL, PARTS = 1200, 5
+local parts -- the busy fight's parts, { x, z } each
+local lightFar -- (the light fight's distance from the nearest other)
 local function alive(team, x, z)
 	return #(Spring.GetUnitsInCylinder(x, z, 700, team) or {})
 end
@@ -178,11 +185,13 @@ function widget:GameFrame(f)
 		check("the first fight 3 s on: still one entry (its hits merged)", #a == 1 and f1Hits > 0,
 			#a .. " entries, " .. f1Hits .. " hits on mine there in those 3 s")
 		f1Hits = nil
-		-- (the second fight far off: the map's other side from the first, 1500+ elmos)
+		-- (the second fight far off: the map's other side from the first, about 2460 elmos, past the first fight's SPREAD
+		-- (1350) by more than its entry may follow it: 2000 off, it was taken in once the first's entry had moved 460
+		-- elmos that way, 2026-11-24)
 		local mx, mz = Game.mapSizeX, Game.mapSizeZ
-		local x = fight1[1] > mx / 2 and fight1[1] - 1800 or fight1[1] + 1800
+		local x = fight1[1] > mx / 2 and fight1[1] - 2200 or fight1[1] + 2200
 		x = math.max(300, math.min(mx - 300, x))
-		local z = fight1[2] > mz / 2 and fight1[2] - 900 or fight1[2] + 900
+		local z = fight1[2] > mz / 2 and fight1[2] - 1100 or fight1[2] + 1100
 		z = math.max(300, math.min(mz - 300, z))
 		fight2 = { x, z }
 		fightAt(x, z)
@@ -194,10 +203,16 @@ function widget:GameFrame(f)
 		local a = attacks()
 		check("the second fight: a second entry, the newest, at it", #a == 2 and a[1][3] == 1 and dist(a[1], fight2) < 500,
 			#a .. " entries, the newest " .. (a[1] and math.floor(dist(a[1], fight2)) or "-") .. " elmos off")
-		-- the camera on the first fight, then LAST PINGS tapped (its left half)
+		-- the camera past the first fight, away from the second, then LAST PINGS tapped (its left half). (On the first
+		-- fight itself the second was in sight already with some start places, the tap's jump proving nothing: the
+		-- check's guard failed, 2026-11-24)
 		local P = WG.BarDroidPortrait
 		if P and P.cameraTo then
-			P.cameraTo(fight1[1], Spring.GetGroundHeight(fight1[1], fight1[2]), fight1[2])
+			local dx, dz = fight1[1] - fight2[1], fight1[2] - fight2[2]
+			local len = math.max(1, math.sqrt(dx * dx + dz * dz))
+			local cx = math.max(300, math.min(Game.mapSizeX - 300, fight1[1] + dx / len * 1500))
+			local cz = math.max(300, math.min(Game.mapSizeZ - 300, fight1[2] + dz / len * 1500))
+			P.cameraTo(cx, Spring.GetGroundHeight(cx, cz), cz)
 		end
 		go("cell", f)
 	elseif stage == "cell" and f - stageAt > 20 then
@@ -242,17 +257,40 @@ function widget:GameFrame(f)
 				tostring(cs.px and math.floor(cs.px)), tostring(cs.pz and math.floor(cs.pz)), Spring.GetSelectedUnitsCount(),
 				tostring(fight2SeenBefore)))
 		go("busy", f)
-	elseif stage == "busy" and f - stageAt > 30 then -- (a busy fight far from the first two)
+	elseif stage == "busy" and f - stageAt > 30 then -- (a busy fight far from the first two, sprawling: PARTS parts of
+		-- ten Pawns against ten Grunts in a line, SPRAWL elmos apart, farther than ATTACK.NEAR (900) from each other. A
+		-- 30 v 30 in one place spread past NEAR by itself now and then and opened entries of its own every 4 s, the
+		-- light fight's looks missing the gap: the full set on 912e7b2a, 2026-11-24; this makes it every run)
 		busy = farFrom({ fight1, fight2 })
+		local mx, mz = Game.mapSizeX, Game.mapSizeZ
+		local alongX = mx >= mz
+		local span = (alongX and mx or mz) - 600
+		local n = math.max(3, math.min(PARTS, math.floor(span / SPRAWL) + 1)) -- (fewer on a small map)
+		local half = (n - 1) / 2
+		local c = alongX and busy[1] or busy[2]
+		c = math.max(300 + half * SPRAWL, math.min(300 + span - half * SPRAWL, c))
+		parts = {}
 		local me, foe = Spring.GetMyTeamID(), enemyTeam()
-		local y = Spring.GetGroundHeight(busy[1], busy[2])
-		Spring.SendCommands(string.format("give 30 armpw %d @%d,%d,%d", me, busy[1], y, busy[2]))
-		Spring.SendCommands(string.format("give 30 corak %d @%d,%d,%d", foe, busy[1] + 200, y, busy[2]))
-		Spring.Echo(string.format("[attacktest] a busy fight given at %d,%d", busy[1], busy[2]))
+		for k = -half, half do
+			local p = alongX and { c + k * SPRAWL, busy[2] } or { busy[1], c + k * SPRAWL }
+			parts[#parts + 1] = p
+			local y = Spring.GetGroundHeight(p[1], p[2])
+			Spring.SendCommands(string.format("give 10 armpw %d @%d,%d,%d", me, p[1], y, p[2]))
+			Spring.SendCommands(string.format("give 10 corak %d @%d,%d,%d", foe, p[1] + (alongX and 0 or 200), y,
+				p[2] + (alongX and 200 or 0)))
+		end
+		busy = parts[math.ceil(#parts / 2)]
+		Spring.Echo(string.format("[attacktest] a busy sprawling fight given: %d parts %d elmos apart from %d,%d to %d,%d "
+			.. "(map %dx%d)", #parts, SPRAWL, parts[1][1], parts[1][2], parts[#parts][1], parts[#parts][2], mx, mz))
 		go("light", f)
 	elseif stage == "light" and f - stageAt > 135 then -- (past the 4 s between new entries; then a light one far off)
 		local d
-		light, d = farFrom({ fight1, fight2, busy }, "armsolar")
+		local others = { fight1, fight2 }
+		for _, p in ipairs(parts) do
+			others[#others + 1] = p
+		end
+		light, d = farFrom(others, "armsolar")
+		lightFar = d
 		local me, foe = Spring.GetMyTeamID(), enemyTeam()
 		local y = Spring.GetGroundHeight(light[1], light[2])
 		Spring.SendCommands(string.format("give 1 armsolar %d @%d,%d,%d", me, light[1], y, light[2]))
@@ -278,11 +316,32 @@ function widget:GameFrame(f)
 			.. "%d of theirs near it", #a, near and ("one " .. math.floor(dist(near, light)) .. " elmos from it") or
 			"none at it", lightHits, hp and string.format("its health %d of %d", hp, maxHp or 0) or "gone or never hit",
 			busyMine, busyFoe)
+		-- (the busy fight's entries: those within NEAR of one of its parts)
+		local front = 0
+		for _, p in ipairs(a) do
+			for _, q in ipairs(parts) do
+				if dist(p, q) <= 900 then
+					front = front + 1
+					break
+				end
+			end
+		end
+		why = why .. string.format("; %d of the entries on the busy fight's parts; the light one %d elmos from the nearest "
+			.. "other", front, lightFar or -1)
 		if lightHits == 0 then -- (no fight there: nothing to tell; the test's own, its place)
 			check("a light fight beside a busy one: hits there to judge by", false, why)
+		elseif (lightFar or 0) <= 2700 then -- (a map too small to put it past 3 x NEAR from the rest: it may wait 4 s)
+			Spring.Echo("[attacktest] NOT RUN a light fight beside a busy, sprawling one: its own entry (the map leaves it "
+				.. "within 2700 elmos of the rest): " .. why)
 		else -- (and the busy fight still on: with its give dropped the light one stood alone)
-			check("a light fight beside a busy one: its own entry", near ~= nil and busyMine > 0 and busyFoe > 0, why)
+			check("a light fight beside a busy, sprawling one: its own entry", near ~= nil and busyMine > 0 and busyFoe > 0,
+				why)
 		end
+		-- (a fight spreading past NEAR: each entry takes in its neighbours within SPREAD, so half its parts' entries at
+		-- most: before, each part far from the entries opened its own, one every 4 s)
+		local most = math.ceil(#parts / 2)
+		check("the busy sprawling fight: " .. most .. " entries at most for its " .. #parts .. " parts", front >= 1
+			and front <= most, why)
 		go("end", f)
 	elseif stage == "end" then
 		Spring.Echo("[attacktest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))

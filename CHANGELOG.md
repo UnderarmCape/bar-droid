@@ -169,6 +169,10 @@ The first version meant for other people's phones: everything since the first bu
 - Units that build nothing picked: the orders that would need scrolling move to the empty left side under their
   types (the type tiles as tall as the Fight button beside them); the orders on the right stay where they always are.
   The D-Gun button is red.
+- Your units under attack are in the last pings too (the dock's LAST PINGS, the pad's RB + D-pad up; the badge red
+  while the newest is a fight going on): one entry a fight, following it, its spread (up to 1440 elmos) kept as the
+  same fight; a new fight far from the others gets its own entry within about a second, also beside a big battle (one
+  spreading had opened entries of its own every 4 s and kept a distant fight out of the list).
 - Upright, the idle builders sit at the right of the unit groups row, one tile per type with its count (a tap picks
   the nearest and goes there zoomed in as COMMANDER does, again for the next); the row scrolls sideways when full; a
   group's number stands on a dark badge (gold on the unit's picture all but vanished). PINGS on the home grid: LAST
