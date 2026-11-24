@@ -95,8 +95,21 @@ final class RtsTouch {
     private static final long GRID_CANCEL_MS = 250;            // a GRID cancelled: the button let go this much later
     private static final long QUEUE_LOOK_MS = 150;             // after a touch: QUEUE looked up again
 
-    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
+    private enum State { IDLE, PENDING, DRAG_WAIT, PAN, LEFT_DRAG, RIGHT_HOLD, SNAP_HOLD, MULTI_PENDING, TWO_FINGER, TILT,
         TWO_HOLD, THREE, PLACE_DRAG, NUDGE, GRID_DRAG, SCROLL, VOICE_SWIPE, PAD, DOCK_SCROLL, CIRCLE, DGUN, CAM, DONE }
+
+    // The long press's forgiving aim (Kailil, 2026-11-24: "if im not pixel perfect with my single finger hold on the
+    // unit, it just issues a move command close to the unit i want guarded"). Each touch on the map asks the widget what
+    // lies within a finger's reach ("snapask <n> <x> <y> <r>", bardroid_touch.lua SNAP), which answers in
+    // bardroid_snap.txt ("<n> <sx> <sy> unit|feature|mex" or "<n> none"). A long press with a target holds it
+    // (SNAP_HOLD, a gold ring on it, "snap on"): let go there, the right click goes onto the target (BAR's own smart
+    // order: guard, repair, attack, reclaim) or a mex is queued on the free spot ("snapmex"); moved on past SNAP_DRAG
+    // slops, it is BAR's right drag from the finger as before (a path). (snapFile: with the other files below)
+    private static final float SNAP_MM = 6f;     // a finger's reach: this far (on the display) from a target's edge
+    private static final float SNAP_DRAG = 2f;   // slops the finger goes before a held target becomes a path
+    private int snapSeq;                         // this touch's question
+    private float snapX, snapY;                  // X screen pixels: the held target
+    private boolean snapMex;                     // ... a free metal spot: a mex queued on the lift
 
     // The camera knob and edge rails (bardroid_camctl.lua writes bardroid_camctl.txt: "knob", "zoom", "turn" rects in X
     // screen pixels, "none" when neither shows; Kailil, 2026-11-19: a way "to zoom out and in with one finger. and
@@ -202,6 +215,7 @@ final class RtsTouch {
     private final File placeFile = new File(widgetDir, "bardroid_place.txt");
     private final File dockFile = new File(widgetDir, "bardroid_dock.txt");          // the portrait dock (above)
     private final File camFile = new File(widgetDir, "bardroid_camctl.txt");         // the camera knob and rails (above)
+    private final File snapFile = new File(widgetDir, "bardroid_snap.txt");          // the long press's aim (above)
     private int[] heldKeys = {};                     // modifier keys held for a building's tap or drag
     private FileOutputStream log;
     private long logBytes;
@@ -307,10 +321,49 @@ final class RtsTouch {
             startGrid();
             return;
         }
+        float[] snap = !inDock && hoverAt(downX, downY) == HOVER_MAP ? snapTarget() : null;
+        if (snap != null) {   // (a unit, wreck or free metal spot within a finger's reach: held, given on the lift)
+            state = State.SNAP_HOLD;
+            snapX = snap[0]; snapY = snap[1]; snapMex = snap[2] > 0;
+            view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
+            view().sendMouseEvent(snapX, snapY, InputStub.BUTTON_UNDEFINED, false, false);   // (BAR's cursor on it)
+            send("snap on");
+            return;
+        }
         state = State.RIGHT_HOLD;
         view().performHapticFeedback(HapticFeedbackConstants.LONG_PRESS);
         press(downX, downY, InputStub.BUTTON_RIGHT, true);
     };
+
+    /** This touch's question to the widget: what lies within a finger's reach of where it came down (SNAP_MM). */
+    private void askSnap() {
+        snapSeq++;
+        float r = SNAP_MM * view().getResources().getDisplayMetrics().xdpi / 25.4f * xPerViewPixel();
+        send(String.format(Locale.US, "snapask %d %.0f %.0f %.0f", snapSeq, toX(downX), toY(downY), r));
+    }
+
+    /** The widget's answer to this touch's question: {x, y (X screen pixels), 1 for a free metal spot else 0}, or null. */
+    private float[] snapTarget() {
+        String t = readSmall(snapFile);
+        String[] f = t == null ? new String[0] : t.trim().split(" ");
+        if (f.length != 4 || !f[0].equals(Integer.toString(snapSeq))) return null;
+        try {
+            return new float[]{Float.parseFloat(f[1]), Float.parseFloat(f[2]), f[3].equals("mex") ? 1 : 0};
+        } catch (NumberFormatException e) { return null; }
+    }
+
+    /** A held target let go of: the right click onto it, or the mex on its spot. */
+    private void giveSnap() {
+        if (snapMex) {
+            send(String.format(Locale.US, "snapmex %d %d", snapSeq, queueWanted ? 1 : 0));
+        } else {
+            LorieView v = view();
+            v.sendMouseEvent(snapX, snapY, InputStub.BUTTON_UNDEFINED, false, false);
+            v.sendMouseEvent(snapX, snapY, InputStub.BUTTON_RIGHT, true, false);
+            v.sendMouseEvent(snapX, snapY, InputStub.BUTTON_RIGHT, false, false);
+        }
+        send("snap go");
+    }
 
     /** Two fingers held still: the next swipe picks an action (twoHoldSwipe). */
     private final Runnable twoHold = () -> {
@@ -752,6 +805,7 @@ final class RtsTouch {
                 velocity = VelocityTracker.obtain();
                 velocity.addMovement(e);
                 if (!gridHeld) moveCursor(downX, downY);   // the widget reports whether this point is on the game's interface
+                if (!gridHeld && !inDock) askSnap();   // (and what lies near it, for a long press: SNAP_HOLD)
                 ui.postDelayed(longPress, LONG_PRESS_MS);
                 break;
             }
@@ -904,6 +958,13 @@ final class RtsTouch {
             case RIGHT_HOLD:   // (begun on the dock: the pointer stays with the finger, rightHoldY)
                 if (i >= 0) moveCursor(curX, rightHoldY(curX, curY));
                 return;
+            case SNAP_HOLD:   // (a held target, moved on: the path from the finger, as without one)
+                if (i < 0 || Math.hypot(curX - downX, curY - downY) <= slop * SNAP_DRAG) return;
+                send("snap off");
+                state = State.RIGHT_HOLD;
+                press(downX, downY, InputStub.BUTTON_RIGHT, true);
+                moveCursor(curX, rightHoldY(curX, curY));
+                return;
             case PLACE_DRAG:
             case NUDGE:
                 if (i < 0) return;
@@ -1052,6 +1113,9 @@ final class RtsTouch {
             case RIGHT_HOLD:
                 press(curX, rightHoldY(curX, curY), InputStub.BUTTON_RIGHT, false);
                 break;
+            case SNAP_HOLD:
+                giveSnap();
+                break;
             case VOICE_SWIPE:
                 if (Math.abs(curX - downX) >= 3 * slop) act(curX > downX ? "voice_channel_next" : "voice_channel_prev");
                 break;
@@ -1136,6 +1200,7 @@ final class RtsTouch {
             press(curX, dockSelecting || area ? aboveDock(curX, curY) : curY, InputStub.BUTTON_LEFT, false);
         }
         if (state == State.RIGHT_HOLD) press(curX, rightHoldY(curX, curY), InputStub.BUTTON_RIGHT, false);
+        if (state == State.SNAP_HOLD) send("snap off");   // (taken back before the lift: no order)
         // (a dock scroll the system took back, its PiP or edge gesture monitors: let go at rest, or the widget's rows stayed
         // between two rows until the next touch; dev phone 2026-11-17, the split dock sideways after an upward flick)
         if (state == State.DOCK_SCROLL) send("dockfling " + dockSide + " 0.0 0.0");

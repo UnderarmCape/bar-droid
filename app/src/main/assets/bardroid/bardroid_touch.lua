@@ -20,6 +20,9 @@
 --                                                     grid held | grid free     (the app holds a GRID's build drag down:
 --                                                                               PLACE lit)
 --                                                     src <touch|mouse|keyboard|pad>  (the input used, when it changes)
+--                                                     snapask <n> <x> <y> <r> | snapmex <n> <0|1> | snap on|off|go
+--                                                                               (the long press's aim: SNAP below)
+--   LuaUI/Config/bardroid_snap.txt    widget:         <n> <sx> <sy> <unit|feature|mex> | <n> none   (SNAP's answer)
 --   LuaUI/Config/bardroid_screen.txt  app, replaced:  <w> <h> <hz> <fps>        (X screen size, display Hz; fps 0)
 --   LuaUI/Config/bardroid_hover.txt   widget:         <x> <y> <0|1|2|3>         (pointer position; 1 = on the interface,
 --                                                                               2 = a BAR window open that scrolls,
@@ -450,6 +453,169 @@ local ACTIONS = {
 	end,
 }
 
+-- The long press's forgiving aim (Kailil, 2026-11-24: "if im not pixel perfect with my single finger hold on the unit,
+-- it just issues a move command close to the unit i want guarded"). RtsTouch asks at each touch on the map ("snapask
+-- <n> <x> <y> <r>": X screen pixels, y down, r a finger's reach in pixels) and this answers in bardroid_snap.txt
+-- ("<n> <sx> <sy> unit|feature|mex", or "<n> none"): the nearest of the units, the free metal spots (a builder of
+-- extractors picked) and the metal wrecks (a builder that reclaims picked) whose edge on the screen lies within r of
+-- the finger. None with nothing picked, an order armed (a right click puts it away), or the ray on a unit or a wreck
+-- already (BAR's own right click there). A press held then clicks the right button on the target, BAR's own smart
+-- order (guard, repair, attack, reclaim, load), or for a spot queues the builders' best extractor on it ("snapmex <n>
+-- <queue 0|1>", through BAR's resource spot builder as its Area Mex). "snap on" / "snap off" / "snap go": a ring on the
+-- target while the press is held, and a moment after it is given.
+local SNAP = { FILE = "LuaUI/Config/bardroid_snap.txt", last = nil, held = false, fadeAt = nil, FADE = 0.6 }
+function SNAP.find(x, y, r)
+	local sel = spGetSelectedUnits()
+	local _, active = Spring.GetActiveCommand()
+	local presets = WG.BarDroidPresets
+	if not sel or #sel == 0 or (active and active ~= 0) or Spring.GetSpectatingState()
+		or (presets and presets.armed and presets.armed()) then -- (a preset armed: its own tap)
+		return nil
+	end
+	local vsx, vsy = spGetViewGeometry()
+	local ex, ey = x, vsy - y - 1 -- (the engine's pixels, y up)
+	local kind, hit = spTraceScreenRay(ex, ey)
+	local function wreck(f) -- (a feature worth reclaiming: metal in it; trees and rocks without are never aimed at)
+		local fd = FeatureDefs[Spring.GetFeatureDefID(f) or -1]
+		return fd and fd.reclaimable ~= false and (fd.metal or 0) > 0
+	end
+	if kind == "unit" or (kind == "feature" and wreck(hit)) then
+		return nil
+	end
+	local _, g = spTraceScreenRay(ex, ey, true)
+	if not g then
+		return nil
+	end
+	-- elmos per pixel at the finger (a trace r pixels beside it), for the search's reach and the targets' sizes
+	local per
+	for _, dx in ipairs({ r, -r }) do
+		local _, g2 = spTraceScreenRay(ex + dx, ey, true)
+		if g2 and not per then
+			per = math.sqrt((g2[1] - g[1]) ^ 2 + (g2[3] - g[3]) ^ 2) / r
+		end
+	end
+	local reach = per and (r * per * 2 + 200) or 2500
+	local picked, reclaims = {}, false
+	for _, u in ipairs(sel) do
+		picked[u] = true
+		local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+		reclaims = reclaims or (ud and ud.canReclaim) or false
+	end
+	local best
+	local function consider(wx, wy, wz, size, what, extra)
+		local sx, sy = Spring.WorldToScreenCoords(wx, wy, wz)
+		if not sx or sx < 0 or sy < 0 or sx > vsx or sy > vsy then
+			return
+		end
+		local d = math.max(0, math.sqrt((sx - ex) ^ 2 + (sy - ey) ^ 2) - math.min(size / (per or 1), r))
+		if d <= r and (not best or d < best.d) then
+			best = { d = d, sx = sx, sy = sy, kind = what, x = wx, y = wy, z = wz, size = size, unit = extra and extra.unit,
+				spot = extra and extra.spot }
+		end
+	end
+	for _, u in ipairs(Spring.GetUnitsInCylinder(g[1], g[3], reach) or {}) do
+		if not picked[u] then
+			local _, _, _, mx, my, mz = Spring.GetUnitPosition(u, true)
+			local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+			if mx then
+				consider(mx, my, mz, ud and ud.radius or 16, "unit", { unit = u })
+			end
+		end
+	end
+	local rb, finder = WG.resource_spot_builder, WG.resource_spot_finder
+	local ext = rb and finder and finder.metalSpotsList and not finder.isMetalMap and SNAP.extractor(sel)
+	if ext then
+		for _, spot in ipairs(finder.metalSpotsList) do
+			if (spot.x - g[1]) ^ 2 + (spot.z - g[3]) ^ 2 <= reach * reach and rb.ExtractorCanBeBuiltOnSpot(spot, ext)
+				and not (rb.SpotHasExtractorQueued and rb.SpotHasExtractorQueued(spot)) then
+				consider(spot.x, spot.y or Spring.GetGroundHeight(spot.x, spot.z), spot.z, Game.extractorRadius or 32, "mex",
+					{ spot = spot })
+			end
+		end
+	end
+	if reclaims then
+		for _, f in ipairs(Spring.GetFeaturesInCylinder(g[1], g[3], reach) or {}) do
+			if wreck(f) then
+				local fx, fy, fz = Spring.GetFeaturePosition(f)
+				local fd = FeatureDefs[Spring.GetFeatureDefID(f)]
+				if fx then
+					consider(fx, fy, fz, fd and fd.radius or 16, "feature")
+				end
+			end
+		end
+	end
+	return best
+end
+-- the builders' best extractor (a positive unit def id), nil if none of the picked can build one
+function SNAP.extractor(sel)
+	local rb = WG.resource_spot_builder
+	local cons = rb and rb.GetMexConstructors and rb.GetMexConstructors()
+	if not cons then
+		return nil
+	end
+	if rb.GetBestExtractorFromBuilders and rb.GetMexBuildings then
+		return rb.GetBestExtractorFromBuilders(sel, cons, rb.GetMexBuildings())
+	end
+	for _, u in ipairs(sel) do -- (an older BAR without that entry: the first builder's first extractor)
+		local c = cons[u]
+		if c and c.building and c.building[1] then
+			return -c.building[1]
+		end
+	end
+end
+function SNAP.ask(n, x, y, r)
+	local t = (x and y and r and r > 0) and SNAP.find(x, y, r) or nil
+	SNAP.last = t and { n = n, t = t } or nil
+	SNAP.held, SNAP.fadeAt = false, nil
+	local _, vsy = spGetViewGeometry()
+	writeWhole(SNAP.FILE, t and string.format("%s %d %d %s\n", n, math.floor(t.sx + 0.5), math.floor(vsy - t.sy - 1 + 0.5),
+		t.kind) or (n .. " none\n"))
+end
+function SNAP.mex(n, queue)
+	local s = SNAP.last
+	local rb = WG.resource_spot_builder
+	if not (s and s.n == n and s.t.kind == "mex" and rb) then
+		return
+	end
+	local sel = spGetSelectedUnits() or {}
+	local ext = SNAP.extractor(sel)
+	local cmd = ext and rb.PreviewExtractorCommand({ s.t.spot.x, s.t.spot.y, s.t.spot.z }, ext, s.t.spot)
+	if cmd then
+		rb.ApplyPreviewCmds({ cmd }, rb.GetMexConstructors(), queue)
+	end
+	Spring.Echo(string.format("[bardroid-snap] mex on the spot at %d,%d: %s", s.t.spot.x, s.t.spot.z,
+		cmd and (UnitDefs[ext].name .. " queued") or "no order")) -- (tools: snap-phone-test)
+end
+function SNAP.draw()
+	local s = SNAP.last
+	if not (s and (SNAP.held or SNAP.fadeAt)) then
+		return
+	end
+	local a = 1
+	if not SNAP.held then
+		a = 1 - spDiffTimers(spGetTimer(), SNAP.fadeAt) / SNAP.FADE
+		if a <= 0 then
+			SNAP.fadeAt = nil
+			return
+		end
+	end
+	local t = s.t
+	local x, y, z = t.x, t.y, t.z
+	if t.unit then -- (a unit moves on: the ring with it)
+		local ux, uy, uz = Spring.GetUnitPosition(t.unit)
+		if not ux then
+			return
+		end
+		x, y, z = ux, uy, uz
+	end
+	gl.DepthTest(false)
+	gl.LineWidth(3)
+	gl.Color(1, 0.78, 0.25, 0.9 * a) -- (the dock's gold)
+	gl.DrawGroundCircle(x, y, z, math.max(t.size * 1.15, 24), 40)
+	gl.LineWidth(1)
+	gl.Color(1, 1, 1, 1)
+end
+
 -- bardroid_spectate.lua's 1st person: the fingers look around instead of moving the camera (pan: screen pixels;
 -- pinch: the FOV; twist and tilt as they are)
 local function readLook(lines, L)
@@ -602,6 +768,23 @@ local function readTouch(lines)
 			action()
 		elseif WG.BarDroidPad then
 			WG.BarDroidPad.act(name)
+		end
+	end
+	-- the long press's aim (SNAP): asked at a touch, a mex given on the lift, the ring held and let go; in the order sent
+	-- (a lift's mex and the next touch's question can share a frame)
+	if lines:find("snap", 1, true) then
+		for line in lines:gmatch("snap[^\n]*") do
+			local n, x, y, r = line:match("^snapask (%S+) (%S+) (%S+) (%S+)")
+			local mn, q = line:match("^snapmex (%S+) (%S+)")
+			local what = line:match("^snap (%a+)")
+			if n then
+				SNAP.ask(n, tonumber(x), tonumber(y), tonumber(r))
+			elseif mn then
+				SNAP.mex(mn, q == "1")
+			elseif what then
+				SNAP.held = what == "on"
+				SNAP.fadeAt = what == "go" and spGetTimer() or nil
+			end
 		end
 	end
 	-- a building picked: the spot a tap or a drag picked for the build menu's PLACE button, a nudge of it, a GRID held
@@ -1936,6 +2119,7 @@ end
 function widget:DrawWorld()
 	guarded(logPerf)
 	guarded(trimDeferred)
+	guarded(SNAP.draw)
 end
 
 -- once per simulated frame, drawn or not (Update stops while the engine does not draw): the catch-up check, about once
