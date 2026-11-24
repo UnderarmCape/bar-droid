@@ -13,23 +13,23 @@ guide\upright-03-commander.png dock-upright-commander top=0.51 bottom=1
 guide\upright-04-energy-panel.png dock-upright-energy top=0.51 bottom=0.76
 guide\upright-05-metal-panel.png dock-upright-metal top=0.51 bottom=0.76
 guide\upright-06-wind-details.png dock-upright-wind top=0.32 bottom=0.62
-guide\upright-07-building-picked.png dock-upright-place top=0.51 bottom=1
-guide\upright-08-army.png dock-upright-army top=0.51 bottom=1
-guide\upright-09-group.png dock-upright-groups top=0.88 bottom=1
-guide\upright-11-constructors.png dock-upright-constructors top=0.51 bottom=1
-guide\upright-12-presets.png dock-upright-presets top=0.51 bottom=1
-guide\upright-13-dgun-mode.png dgun-upright top=0.08 bottom=1
-guide\upright-14-layout-editor.png editor-upright top=0 bottom=0.52
-guide\upright-15-quit-question.png quit-question top=0.34 bottom=0.54
+guide\upright-08-building-picked.png dock-upright-place top=0.51 bottom=1
+guide\upright-09-army.png dock-upright-army top=0.51 bottom=1
+guide\upright-10-group.png dock-upright-groups top=0.88 bottom=1
+guide\upright-12-constructors.png dock-upright-constructors top=0.51 bottom=1
+guide\upright-13-presets.png dock-upright-presets top=0.51 bottom=1
+guide\upright-14-dgun-mode.png dgun-upright top=0.08 bottom=1
+guide\upright-15-layout-editor.png editor-upright top=0 bottom=0.52
+guide\upright-16-quit-question.png quit-question top=0.34 bottom=0.54
 guide\unfolded-01-start.png unfolded-overview
 guide\unfolded-03-commander.png dock-unfolded-commander top=0.73 bottom=1
-guide\unfolded-13-dgun-mode.png dgun-unfolded top=0.3 bottom=1
-guide\unfolded-14-layout-editor.png editor-unfolded
+guide\unfolded-14-dgun-mode.png dgun-unfolded top=0.3 bottom=1
+guide\unfolded-15-layout-editor.png editor-unfolded
 guide\sideways-03-commander.png sideways-overview
 guide\sideways-02-home-buttons.png dock-sideways-home top=0.58 bottom=1
-guide\sideways-08-army.png dock-sideways-orders top=0.58 bottom=1
-guide\sideways-13-dgun-mode.png dgun-sideways top=0.6 bottom=1
-guide\sideways-14-layout-editor.png editor-sideways
+guide\sideways-09-army.png dock-sideways-orders top=0.58 bottom=1
+guide\sideways-14-dgun-mode.png dgun-sideways top=0.6 bottom=1
+guide\sideways-15-layout-editor.png editor-sideways
 info-upright-commander.png info-upright-commander top=0.39 bottom=0.6
 info-upright-folded.png info-upright-folded top=0.42 bottom=0.6
 info-upright-mixed.png info-upright-mixed top=0.39 bottom=0.6
