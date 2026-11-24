@@ -730,13 +730,16 @@ local function onCmd(c)
 		end
 		Spring.Echo(string.format("[fixtest] note: %d of my units near the commander, %d clear places for full auto's case",
 			#friends, #places))
-		-- (two places at least 90 degrees apart: the commander on one, the wind on the other)
-		local a, b
+		-- (the two places farthest apart, 60 degrees at least: the commander on one, the wind on the other; an aim within 20
+		-- degrees of the wind is then 40 or more off the commander. 90 at least found no pair once, 4 clear places close
+		-- together, 2026-11-24)
+		local a, b, wide = nil, nil, 0
 		for i = 1, #places do
 			for j = i + 1, #places do
 				local d = math.abs(places[i][3] - places[j][3]) % 360
-				if not a and math.min(d, 360 - d) >= 90 then
-					a, b = places[i], places[j]
+				d = math.min(d, 360 - d)
+				if d >= 60 and d > wide then
+					a, b, wide = places[i], places[j], d
 				end
 			end
 		end
@@ -745,8 +748,12 @@ local function onCmd(c)
 			Spring.SendCommands(string.format("give 1 corwin %d @%d,%d,%d", foe, b[1], cy, b[2]))
 			spots.comAt, spots.windAt = a, b
 		else
-			check("an enemy commander and a cheap enemy given in the D-gun's reach", false, string.format("team %s, %d places",
-				tostring(foe), #places))
+			local turns = {}
+			for _, p in ipairs(places) do
+				turns[#turns + 1] = tostring(p[3])
+			end
+			check("an enemy commander and a cheap enemy given in the D-gun's reach", false, string.format(
+				"team %s, %d places (%s degrees), none 60 apart", tostring(foe), #places, table.concat(turns, " ")))
 		end
 	elseif c == "autopick2" then -- (both given by now: full auto on)
 		P.act("dgun_auto")
