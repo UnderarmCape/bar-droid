@@ -99,6 +99,13 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    01:19-02:05, build\phone-round\20261124-*-smoke-912e7b2a.txt). Kailil the same night: "do not require my zfold
    for any of this ... it will not be avialble" and "after you make big changes ... treat it as a release": not on the
    Fold7; latest-build is that APK (engine phone-2026.09.03-83a8536d37). It is the RC now; item 11's checklist on it.
+   Its full set 01:58-03:10 (20261124-0158-full-912e7b2a.txt): 36 of 37 PASS; attack-ping-test FAIL once ("a light
+   fight beside a busy one: its own entry": 4 entries, none at it, 18 hits there), PASS on 6e74d7d8's run at 03:48 with
+   no change to the pings' code between: a flake, watched (its rerun "one 0 elmos from it").
+   6e74d7d8 (the fixer's controller restyle, Kailil 2026-11-23: "bring the gamepad support side ... in sync visually
+   and kinda functionally with our super optimized touch ui"): smoke ALL PASS 14 of 14 (overgame FLAKY: the GPU
+   driver's fault, its rerun PASS), with attack-ping-test, pad-test -Dgun, -Share and -Chat PASS (03:14-03:56).
+   latest-build is that APK (engine phone-2026.09.03-83a8536d37); not on the Fold7 (Kailil away). It is the RC now.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
