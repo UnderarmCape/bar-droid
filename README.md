@@ -188,7 +188,8 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
   to the front of their orders.
 - **D-Gun** (the commander picked): MOVE and AIM sticks and a big FIRE; the camera follows the commander. Let go of
   MOVE and it stops. Swipe FIRE to the right for full auto (it fires at the enemy in range most worth a shot, never
-  through your own units; where the host allows unit control widgets), swipe AUTO to the left to end it. The empty
+  at a commander, which the D-gun cannot kill, never through your own units; with BAR's official engine only where the
+  host allows unit control widgets), swipe AUTO to the left to end it. The empty
   space zooms (up and down) or turns (sideways); ✕ leaves.
 - The lobby upright: its buttons in pages of six under the screen (swipe or tap the arrows), notes above them.
   Sideways: all its buttons (Keys, Website and Login too) in one column of large buttons on the left, a swipe up or

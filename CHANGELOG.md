@@ -133,8 +133,9 @@ The first version meant for other people's phones: everything since the first bu
   thumb fires), either FIRE swiped towards the middle turns full auto on, or off again, and ✕ at the left leaves.
 - Playing upright (launcher setting "Play upright"): the game on top, a touch dock below. Its D-gun mode keeps the
   commander in the middle of the screen, hides the rows it does not need, fires on FIRE's release, and FIRE swiped to
-  the right switches on full auto (the enemy in range most worth a shot, a commander first, never through a friendly unit; only where the
-  host allows unit control widgets), with its
+  the right switches on full auto (the enemy in range most worth a shot, never a commander, which the D-gun cannot
+  kill (it had aimed at one first and spent every shot on it), never through a friendly unit; with BAR's official
+  engine only where the host allows unit control widgets), with its
   own animation; the dock's empty space zooms or turns the camera. The chat takes the full row under the top bar, the
   minimap shrunk to the top bar's height. A game's Lobby button shows the phone lobby too (Return to Battle first
   among its buttons; it was Chobby's wide layout). The lobby upright: its buttons on two pages (Multiplayer, Skirmish,

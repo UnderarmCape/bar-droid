@@ -19,7 +19,9 @@
 --   pause / unpause        the game paused / running again (BAR's pause)
 --   tapat / tapaim?        "tapat x y": a ground point beside the commander; after the script's tap there: the shot's
 --                          way towards it, the mode still on, the commander still picked
---   end                    "[fixtest] done: ALL PASS" or "N FAILED"
+--   autopick / autopick2 / autopick?   an enemy commander and a cheap enemy (a wind) given in the D-gun's reach on two
+--                          sides, full auto on: aimed at the cheap one, never the commander (commanders are immune)
+--   end                   "[fixtest] done: ALL PASS" or "N FAILED"
 function widget:GetInfo()
 	return { name = "BAR Droid touch fix test", desc = "The touch playtest's fixes", author = "BAR Droid", layer = 0,
 		enabled = true }
@@ -682,6 +684,99 @@ local function onCmd(c)
 			off <= 12 and Dg and Dg.active() and #sel == 1 and sel[1] == com and not still,
 			string.format("%.0f degrees off, mode %s, %d picked, following %s", off, tostring(Dg and Dg.active()), #sel,
 				tostring(still)))
+	elseif c == "autopick" then -- (full auto with an enemy commander and a cheap enemy both in reach, on two sides:
+		-- commanders are immune to the D-gun, its pick must be the other; it took the commander first, 2026-11-24)
+		local cx, cy, cz = Spring.GetUnitPosition(com)
+		local ax, az = aimNow()
+		ax, az = ax or 1, az or 0
+		local foe = spots.foeTeam
+		for _, t in ipairs(Spring.GetTeamList() or {}) do
+			if not foe and t ~= Spring.GetGaiaTeamID() and not Spring.AreTeamsAllied(t, Spring.GetMyTeamID()) then
+				foe = t
+			end
+		end
+		spots.foeTeam = foe
+		-- (each on a line clear of my own units out to past the D-gun's reach, as full auto keeps its shots: the case first
+		-- passed before the fix, the line to the commander crossing one of my Solars, 2026-11-24)
+		local friends = {}
+		for _, u in ipairs(Spring.GetUnitsInCylinder(cx, cz, 420) or {}) do
+			if u ~= com and Spring.IsUnitAllied(u) then
+				friends[#friends + 1] = u
+			end
+		end
+		local function clear(hx, hz)
+			for _, u in ipairs(friends) do
+				local fx, _, fz = Spring.GetUnitPosition(u)
+				if fx then
+					local along = (fx - cx) * hx + (fz - cz) * hz
+					local side = math.abs((fx - cx) * hz - (fz - cz) * hx)
+					if along > -40 and along < 360 and side < 60 + (Spring.GetUnitRadius(u) or 16) then
+						return false
+					end
+				end
+			end
+			return true
+		end
+		local places = {}
+		for turn = 0, 345, 15 do
+			local r = math.rad(turn)
+			local hx, hz = ax * math.cos(r) - az * math.sin(r), ax * math.sin(r) + az * math.cos(r)
+			local x, z = cx + hx * 160, cz + hz * 160
+			local bx, by, bz = Spring.Pos2BuildPos(UnitDefNames.corwin.id, x, Spring.GetGroundHeight(x, z), z, 0)
+			if clear(hx, hz) and Spring.GetGroundHeight(x, z) > 2
+				and Spring.TestBuildOrder(UnitDefNames.corwin.id, bx, by, bz, 0) >= 2 then
+				places[#places + 1] = { bx, bz, turn }
+			end
+		end
+		Spring.Echo(string.format("[fixtest] note: %d of my units near the commander, %d clear places for full auto's case",
+			#friends, #places))
+		-- (two places at least 90 degrees apart: the commander on one, the wind on the other)
+		local a, b
+		for i = 1, #places do
+			for j = i + 1, #places do
+				local d = math.abs(places[i][3] - places[j][3]) % 360
+				if not a and math.min(d, 360 - d) >= 90 then
+					a, b = places[i], places[j]
+				end
+			end
+		end
+		if foe and a and UnitDefNames.corcom then
+			Spring.SendCommands(string.format("give 1 corcom %d @%d,%d,%d", foe, a[1], cy, a[2]))
+			Spring.SendCommands(string.format("give 1 corwin %d @%d,%d,%d", foe, b[1], cy, b[2]))
+			spots.comAt, spots.windAt = a, b
+		else
+			check("an enemy commander and a cheap enemy given in the D-gun's reach", false, string.format("team %s, %d places",
+				tostring(foe), #places))
+		end
+	elseif c == "autopick2" then -- (both given by now: full auto on)
+		P.act("dgun_auto")
+		Spring.Echo("[fixtest] full auto: " .. tostring(WG.BarDroidPadDgun and WG.BarDroidPadDgun.auto()))
+	elseif c == "autopick?" then
+		local cx, _, cz = Spring.GetUnitPosition(com)
+		local ax, az = aimNow()
+		local function off(x, z)
+			local dx, dz = x - cx, z - cz
+			local l = math.max(1, math.sqrt(dx * dx + dz * dz))
+			return ax and angleBetween(ax, az, dx / l, dz / l) or 180
+		end
+		-- (the aim on a killable enemy: the wind given, alive or shot already, or another in reach, the earlier case's wind)
+		local enemyCom, offCom = nil, nil
+		local offKill = spots.windAt and off(spots.windAt[1], spots.windAt[2]) or 180
+		for _, u in ipairs(Spring.GetUnitsInCylinder(cx, cz, 400, spots.foeTeam) or {}) do
+			local ud = UnitDefs[Spring.GetUnitDefID(u) or -1]
+			local ux, _, uz = Spring.GetUnitPosition(u)
+			if ud and ux and ud.customParams and ud.customParams.iscommander then
+				enemyCom, offCom = u, off(ux, uz)
+			elseif ud and ux and not ud.canFly then
+				offKill = math.min(offKill, off(ux, uz))
+			end
+		end
+		local Dg = WG.BarDroidPadDgun
+		check("full auto with an enemy commander and a cheap enemy in reach: aimed at the cheap one, never the commander "
+			.. "(immune to the D-gun)", enemyCom ~= nil and Dg and Dg.auto() and offCom > 30 and offKill <= 20,
+			string.format("the commander %s %s degrees off the aim, the nearest killable enemy %.0f degrees off; full auto %s",
+				tostring(enemyCom), offCom and string.format("%.0f", offCom) or "-", offKill, tostring(Dg and Dg.auto())))
+		P.act("dgun_auto_off")
 	elseif c == "dgunoff" then
 		P.act("dgun_cancel")
 		if spots.fireWas then

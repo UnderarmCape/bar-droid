@@ -857,7 +857,7 @@ The commander stays in the middle of the screen and the camera follows it. A red
 
 ![A tap on an enemy: the aim stays on it](guide/img/dgun-enemy.jpg)
 
-**Full auto.** Swipe **FIRE** to the right. It turns to **AUTO** and the commander fires by itself at the enemy in range most worth a shot, never through your own units. Swipe AUTO to the left to end it. Full auto works only where the host allows unit control widgets.
+**Full auto.** Swipe **FIRE** to the right. It turns to **AUTO** and the commander fires by itself at the enemy in range most worth a shot, never through your own units. It leaves enemy commanders alone: the D-gun cannot kill them. Swipe AUTO to the left to end it. With BAR's official engine, full auto works only where the host allows unit control widgets.
 
 ![Full auto: AUTO, and AIM: AUTO](guide/img/dgun-auto.jpg)
 

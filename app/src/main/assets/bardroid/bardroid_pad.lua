@@ -1415,9 +1415,11 @@ end
 
 -- Full auto (Kailil, 2026-11-10: "add an dgun full auto mode by holding fire button then swiping to the right"; on the
 -- portrait dock, RtsTouch's "act dgun_auto"; FIRE again turns it off): whenever the D-gun is loaded and the energy is
--- there, it fires at the best enemy in its range seen (a commander first, then the dearest, the nearer the better; no
--- aircraft), led by the target's speed, and never where the shot's path (out to its full range: it goes through
--- everything) passes one of our or our allies' units. Only where the host lets user widgets give orders (BAR's "Allow
+-- there, it fires at the best enemy in its range seen (the dearest, the nearer the better; no aircraft, and no
+-- commanders: BAR's commanders are immune to the D-gun (Kailil: no D-gun snipes on the enemy commander), and full auto
+-- had scored one 1e6, its shots all at a target that cannot die, 2026-11-24; the shot goes through everything, so what
+-- stands behind a commander is hit by aiming at it), led by the target's speed, and never where the shot's path (out to
+-- its full range) passes one of our or our allies' units. Only where the host lets user widgets give orders (BAR's "Allow
 -- Custom 'Unit Control' Widgets"): it aims and fires on its own, which that rule is there to forbid, so the app's clicks
 -- never stand in for its shots (bardroid_retreat.lua stands down the same way; the D-gun by hand still works there).
 local DGUN_AUTO_EVERY, DGUN_AUTO_SAFE = 0.1, 40 -- seconds between looks; elmos kept between the path and a friend
@@ -1450,7 +1452,8 @@ local function dgunAuto(d)
 	local energy = Spring.GetTeamResources(Spring.GetMyTeamID(), "energy") or 0
 	for _, u in ipairs(Spring.GetUnitsInCylinder(cx, cz, d.range * 0.95) or {}) do
 		local def = not Spring.IsUnitAllied(u) and UnitDefs[Spring.GetUnitDefID(u) or -1]
-		if def and not def.canFly and Spring.GetUnitIsDead(u) == false then
+		if def and not def.canFly and not (def.customParams and def.customParams.iscommander)
+			and Spring.GetUnitIsDead(u) == false then
 			local ux, _, uz = Spring.GetUnitPosition(u)
 			local dist = ux and math.sqrt((ux - cx) ^ 2 + (uz - cz) ^ 2) or 0
 			if ux and dist > 10 then
@@ -1473,8 +1476,7 @@ local function dgunAuto(d)
 						end
 					end
 				end
-				local value = def.customParams and def.customParams.iscommander and 1e6
-					or (def.metalCost or 0) + (def.energyCost or 0) / 60
+				local value = (def.metalCost or 0) + (def.energyCost or 0) / 60
 				local score = value / (1 + dist / d.range)
 				if clear and score > bestScore then
 					best, bestScore, bx, bz = u, score, dx / len, dz / len

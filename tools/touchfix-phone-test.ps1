@@ -204,7 +204,9 @@ try {
     Stage "tapat"; Start-Sleep -Milliseconds 500
     $t = (Rects "bardroid_fixtest.txt")["tap"]
     if ($t) { Tap $t[0] $t[1]; Start-Sleep 1; Stage "tapaim?" } else { "[fixtest] FAIL no ground point in sight for the D-gun's tap" }
-    Stage "dgunoff"
+    # (full auto's pick: an enemy commander and a cheap enemy in reach; the commander, immune to the D-gun, never its pick)
+Stage "autopick"; Start-Sleep 2; Stage "autopick2"; Start-Sleep 2; Stage "autopick?"
+Stage "dgunoff"
   } else { "[fixtest] FAIL no AIM stick in the dock's file" }
   # 5. the build menu copy broken on purpose: BAR removes it, the menu watch puts BAR's own on (last: no copy after it)
   Stage "breakmenu"; Start-Sleep 6; Stage "menuback?"; Shot "menuback"
