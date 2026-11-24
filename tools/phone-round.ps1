@@ -34,7 +34,7 @@ $Smoke = @(
   @("pad-test", @(), 2), @("pad-test", @("-Online"), 2), @("overgame-phone-test", @(), 3),
   @("camctl-phone-test", @(), 2), @("touch-phone-test", @(), 2), @("bridge-phone-test", @(), 1.5),
   @("pregame-phone-test", @(), 2), @("remake-check", @(), 1), @("container-libs-phone-test", @(), 0.2),
-  @("info-phone-test", @(), 2), @("info-phone-test", @("-Unfolded"), 2))
+  @("info-phone-test", @(), 2), @("info-phone-test", @("-Unfolded"), 2), @("info-phone-test", @("-Sideways"), 2))
 # (info-phone-test, both shapes: the unit info panel in the dock's place, 2026-11-24; it sits over the map, so its
 # place and its stepping aside are release-blocking)
 # (pregame-phone-test in the smoke set: the dead faction buttons of 3104771e reached the Fold7 because no smoke test

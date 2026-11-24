@@ -279,7 +279,8 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
     Open: more CHANGELOG lines as fixes land.
 - Each morning: BAR's launcher config still names 2026.09.03 (RecoilEngine 2026.11.04 is out since 2026-11-19);
   remake-check against BAR's newest release. 2026-11-22 15:00: manual-win/linux and dev-lobby on 2026.09.03, BAR's
-  test-engine setups on 2026.11.02; remake-check PASS against test-32018-ad135b9.
+  test-engine setups on 2026.11.02; remake-check PASS against test-32018-ad135b9. 2026-11-24 04:00: the same (manual and
+  dev-lobby 2026.09.03, test-engine 2026.11.02); remake-check PASS in both trains of the night (test-32018-ad135b9).
 
 RC done: its commit passes the smoke set (classified flakes rerun green) and the full set within 24 hours, no open
 blocker, every fixed-but-unchecked item confirmed in play or reopened, the soak with no new fault class, remake-check

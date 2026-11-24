@@ -5,10 +5,11 @@
 # and all picked (their totals: count, DPS, cost, buildpower, the health summed), the Pawns alone (their stats, their
 # health summed). The test widget (tools\info-phone-test\bardroid_info_test.lua) checks each case and says where to tap.
 # Pictures of each case in build\info-<shape>-<case>.png. "Play upright" is on for the run and put back after.
-#   powershell -ExecutionPolicy Bypass -File tools\info-phone-test.ps1 [-Unfolded]
+#   powershell -ExecutionPolicy Bypass -File tools\info-phone-test.ps1 [-Unfolded | -Sideways]
 # -Unfolded: the display at 1080x1198 for the run (wm size; the Fold7 unfolded's shape: the split dock), reset after.
+# -Sideways: "Play upright" off for the run (the one-thumb dock: the panel on the dock's panel, clear of the zoom rail).
 # Take the dev phone's lock around it (devphone-lock.ps1 take/free). About 2 minutes.
-param([switch]$Unfolded)
+param([switch]$Unfolded, [switch]$Sideways)
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot "toolchain.ps1")
 $env:USERPROFILE = Join-Path $TC "home"; $env:ANDROID_USER_HOME = Join-Path $env:USERPROFILE ".android"
@@ -18,7 +19,7 @@ if (-not $env:ANDROID_SERIAL) { throw "No phone: connect one over adb, or name i
 $pkg = "com.underarmcape.bardroid"
 $widget = "files/bar/LuaUI/Widgets/bardroid_info_test.lua"
 $cfg = "files/bar/LuaUI/Config"
-$shape = if ($Unfolded) { "unfolded" } else { "upright" }
+$shape = if ($Unfolded) { "unfolded" } elseif ($Sideways) { "sideways" } else { "upright" }
 $shots = Join-Path (Split-Path $PSScriptRoot) "build"
 New-Item -ItemType Directory -Force $shots | Out-Null
 
@@ -64,7 +65,7 @@ if ($stray) { "[infotest] warning: widgets on the phone that are not the app's (
 $portraitWas = (InApp "grep -o 'name=.portrait. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'
 $turnWas = (InApp "grep -o 'name=.turnWithPhone. value=.[a-z]*.' shared_prefs/bardroid.xml") -match 'value=.true.'
 $sizeWas = "$(& $adb shell wm size)"
-AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"true`"/' shared_prefs/bardroid.xml`n" +
+AppScript ("sed -i -E 's/name=.portrait. value=.(true|false)./name=`"portrait`" value=`"$(if ($Sideways) { 'false' } else { 'true' })`"/' shared_prefs/bardroid.xml`n" +
   "sed -i -E 's/name=.turnWithPhone. value=.(true|false)./name=`"turnWithPhone`" value=`"false`"/' shared_prefs/bardroid.xml`n" +
   "rm -f files/bar/infolog.txt $cfg/bardroid_infotest.txt $cfg/bardroid_infotest_cmd.txt`n" +
   "echo 'LogFlushLevel = 0' > files/bar/dev-springsettings.cfg`n")
@@ -78,7 +79,10 @@ try {
   $size = (& $adb shell wm size) -join " "
   $m = [regex]::Match($size, '(\d+)x(\d+)\s*$')
   $dock = Rects "bardroid_dock.txt"
-  $script:k = [double]$m.Groups[1].Value / $dock["dock"][2]   # (the display's width over the X screen's)
+  # (the display's width over the X screen's; sideways the display's long side is the game's width)
+  $dispW = if ($Sideways) { [Math]::Max([double]$m.Groups[1].Value, [double]$m.Groups[2].Value) } else { [double]$m.Groups[1].Value }
+  $xw = if ($dock["dock"][2] -gt 0) { $dock["dock"][2] } else { 1 }
+  $script:k = $dispW / $xw
   "[infotest] $shape, display $($m.Groups[1].Value)x$($m.Groups[2].Value), X screen width $($dock["dock"][2])"
   $p = Rects "bardroid_infotest.txt"
   if ($p["folded"] -and $p["folded"][0] -eq 1 -and $p["tab"]) {   # (folded by the player before: open it first)
