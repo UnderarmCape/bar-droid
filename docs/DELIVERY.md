@@ -5421,8 +5421,11 @@ Added 2026-11-10 ~05:00 (with screenshots):
 - [x] README rewritten for players first: what works (lobby, online, skirmish, spectating, gamepad, keyboard and
       mouse), which phones, download from Releases, install, first start (4 GB from BAR's servers), touch controls,
       known limits, where the logs are, how to report a problem. Developers' material moved to docs/BUILDING.md.
-- [ ] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
-      `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. Candidates from the
+- [x] Screenshots for the README (the touch bar while spectating, 1st person, the lobby), from the phone or
+      `tools/ui-screenshot.ps1`: Kailil picks; screenshots of the game only, no other BAR artwork. DONE 2026-11-24
+      (ec4fa42c; Kailil 2026-11-23: a full guide with screenshots, "proceed fully autonomously"): the README's Quick
+      start has three pictures, docs/GUIDE.md sixty-five, all from the dev phone (tools/guide-shots.ps1, the test
+      suites' pictures), made by tools/guide-images.ps1 from docs/guide/pictures.txt; his to swap any. Candidates from the
       dev phone (2026-11-02, not tracked): `build/readme-candidates/` (placing a building by touch, the touch HUD, the
       lobby's Skirmish screens, the launcher, an army on the map, spectating a replay with the touch bar, 1st person).
       Added 2026-11-08: the pad's share list giving metal (`9-`, its teammates the test's stand-ins), speak to chat
