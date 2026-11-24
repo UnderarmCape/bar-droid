@@ -3,8 +3,9 @@
 Play [Beyond All Reason](https://www.beyondallreason.info/) on an Android phone: BAR's own lobby, online games,
 skirmish against AI and spectating, at about 30 fps on a Snapdragon 8 Elite phone, with touch controls, gamepads, or a
 mouse and keyboard. The app plays BAR's engine at the version BAR's servers run, so you play online with everyone
-else: by default its phone build (below), or BAR's official one. Nothing of BAR's game is in the app: it downloads the
-game, its maps and the official engine from BAR's own servers, as BAR's PC launcher does.
+else: by default its phone build (below), or BAR's official one. BAR's game, its maps and the official engine are not in
+the app: it downloads them from BAR's own servers, as BAR's PC launcher does. (The one piece of BAR's art inside is an
+upright version of the lobby's first picture, made for phones with BAR's developers' clearance: NOTICE.md.)
 
 **The phone engine.** The app carries a build of BAR's engine (Recoil) made for phones, from the same source as BAR's
 plus the project's engine branch: the app's touch and gamepad controls load as part of the game, so a host's "no user
@@ -19,8 +20,8 @@ from the lobby to the end. Late games chug in big battles but run well, and you 
 mouse and keyboard support: with a Bluetooth or USB-C mouse and keyboard it plays like BAR on a PC.
 
 It is not a native port: the app runs BAR's Linux engine for ARM, natively on the phone's CPU and GPU (no emulation, no
-translation), inside a small Linux environment the app carries. That is what keeps online play in step with everyone
-else's.
+translation), inside a small Linux environment the app sets up at its first run (downloaded with the game, the GPU
+driver with it). That is what keeps online play in step with everyone else's.
 
 BAR Droid is a fan project, not made by the Beyond All Reason team.
 
@@ -243,9 +244,10 @@ seconds to redraw at the new shape). With auto-rotate off, "Play upright" decide
 - **Mouse and keyboard** (Bluetooth, or a USB-C dock): full support, as on a PC. While BAR is in front, Android's, One UI's and
   DeX's own keyboard shortcuts go to the game instead: Alt+Tab, the Windows key, Ctrl+Space, the keyboard's language
   switch (launcher setting "Keyboard shortcuts go to the game", on by default). Android keeps the Home, Recents,
-  power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back is
-  Escape in the game, once the touch dock has nothing left to put away (units picked, an order or building armed, a
-  panel open: Back puts that away first). On Android 17 each Escape shows Android's own notice "Long press Esc key to close this app"
+  power, volume, brightness and media keys, and the swipe gestures (in the game they take a second swipe). Back first
+  puts away what the touch dock has open (units picked, an order or building armed, a panel); at the dock's home it
+  brings up BAR's lobby over the game, or BAR's quit question in a game not started from the lobby. Without the dock (a
+  gamepad or mouse sideways), and while BAR's quit question or the chat is open, Back is Escape. On Android 17 each Escape shows Android's own notice "Long press Esc key to close this app"
   (while the game gets the keyboard shortcuts): a short press is Escape for BAR, as on a PC; holding Escape down
   (3 seconds in a test) closes the game, as the notice says, so never hold it in a game you want to keep.
 - Before Android 16.1, Android takes its shortcuts before any app; the optional accessibility service sends them to
@@ -305,5 +307,6 @@ answer in full, so how the port has been supported can be read from the start.
 ## Licences
 
 The app's own code and widgets: GPL-3.0-or-later ([LICENSE](LICENSE); it embeds Termux:X11's GPL-3 `lorie` module).
-Third-party parts are listed in [NOTICE.md](NOTICE.md). BAR's game content (CC BY-NC-ND) is never bundled or
-re-encoded: it is downloaded from `repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` on the device.
+Third-party parts are listed in [NOTICE.md](NOTICE.md). BAR's game content (CC BY-NC-ND) is downloaded from
+`repos-cdn.beyondallreason.dev` / `files-cdn.beyondallreason.dev` on the device, never bundled; the one exception is the
+lobby's first picture made upright for phones with BAR's developers' clearance (NOTICE.md).
