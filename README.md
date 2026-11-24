@@ -136,6 +136,12 @@ tide side by side, in a nook sunk into the dock: with units picked at the top of
 it, beside QUEUE), with nothing picked in the dock's top edge between metal and energy (unfolded, on the groups between
 the dock's two blocks); tap a half for BAR's own details: the average, lowest and highest wind, how much of the time it
 is under 6, the solar advice and the last five minutes as a graph (any tap closes them).
+The **unit info panel** shows BAR's numbers for what you picked, as BAR's Info panel does: the name, a health bar, DPS,
+range, reload, speed, sight, buildpower, metal and energy made and used, the cost. Upright on a tall phone it sits on
+top of the dock, on the half away from the one-finger camera's knob and rails; unfolded in the dock's middle, above the
+wind and tide pill; folded sideways on top of the panel.
+Several types picked: their totals (count, health and DPS summed, costs, buildpower, kills). Tap it to fold it to an
+INFO tab, tap the tab to open it again; tap the unit's picture to bring the camera to it.
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
 which folds the dock to a SHOW button at the bottom.

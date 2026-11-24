@@ -8,6 +8,11 @@
 --   one unit (selected, or under the pointer with nothing selected): picture, name, description, health, stats
 --   a building or unit to build (the build menu under the pointer, a building being placed): the same for its type
 --   several units selected: their types in a grid with counts; tap a type to keep only it, long-press to drop it
+-- With the touch dock up (bardroid_portrait.lua) the panel stands in the place the dock gives it (Kailil, 2026-11-23:
+-- "I need a way to see my unit selection info ... when unfolded, that info can go in the middle bar section above the
+-- Wind and tidal speeds"; WG.BarDroidPortrait.infoRect): the selection's numbers only, as the dock's own rows show its
+-- types (several types: BAR's selection totals with their health and DPS summed); a tap on it folds it to an INFO tab,
+-- a tap on the tab opens it again (kept with the widget's settings).
 -- launch-bar.sh switches BAR's Info widget off; this one stands down if BAR's runs anyway (WG.info is BAR's then).
 -- Installed into LuaUI/Widgets by the app.
 
@@ -580,6 +585,9 @@ local function dropContent() -- (the panel moved or changed its size or fonts: e
 end
 local stub -- our WG.info
 local standDown, overlay = false, false
+-- in the touch dock's place (docked: its rect), folded to its tab (tabRect) or open
+local docked, folded, tabRect, tabList = false, false, nil, nil
+local dockSeen -- the dock's rect the panel was last placed in
 
 -- The layout editor's settings for the panel (bardroid_layout.lua): moved by dx, dy (of the screen), size, the largest
 -- text size (the text still fits the panel), padding
@@ -619,6 +627,31 @@ local function layout()
 	font = WG.fonts and WG.fonts.getFont() or font
 	bold = WG.fonts and WG.fonts.getFont(2) or font
 	pad = (WG.FlowUI and WG.FlowUI.elementPadding or 4) * e.pad
+	if background then
+		gl.DeleteList(background)
+		background = nil
+	end
+	dropContent()
+	fitKey = nil
+end
+
+-- The dock's place for the panel (SP.infoRect): the panel there, its INFO tab at the place's foot (the split dock's
+-- middle: in its middle over the wind's and the tide's pill; held to the dock elsewhere: at its left). BAR's own place
+-- (layout above) stays what WG.info.getPosition answers: BAR's widgets lay themselves out around that one.
+local function useDockRect(r)
+	rect = { r[1], r[2], r[3], r[4] }
+	font = WG.fonts and WG.fonts.getFont() or font
+	bold = WG.fonts and WG.fonts.getFont(2) or font
+	pad = (WG.FlowUI and WG.FlowUI.elementPadding or 4) * edits().pad
+	local w, h = r[3] - r[1], r[4] - r[2]
+	local th = max(24, floor(min(h * 0.26, 46)))
+	local tw = min(w, floor(th * 3.4))
+	local tx = r.mid and floor((r[1] + r[3] - tw) / 2) or r[1]
+	tabRect = { tx, r[2], tx + tw, r[2] + th }
+	if tabList then
+		gl.DeleteList(tabList)
+		tabList = nil
+	end
 	if background then
 		gl.DeleteList(background)
 		background = nil
@@ -792,9 +825,10 @@ local function pick()
 	elseif count > 1 then
 		local types = selectedTypes()
 		if #types == 1 then -- (one type: its name and stats, the count on its picture; as a grid it was one big picture)
-			return { kind = "def", id = types[1].defID, count = #types[1].units }
+			return { kind = "def", id = types[1].defID, count = #types[1].units, units = types[1].units }
 		end
-		return { kind = "units", types = types }
+		-- (in the dock, whose rows show the types: their totals; a grid there was the dock's list twice)
+		return { kind = docked and "totals" or "units", types = types }
 	end
 	local mx, my = Spring.GetMouseState()
 	local what, unitID = Spring.TraceScreenRay(mx, my)
@@ -813,7 +847,7 @@ local function sameShown(a, b)
 	if not (a and b) or a.kind ~= b.kind then
 		return a == b
 	end
-	if a.kind == "units" then
+	if a.kind == "units" or a.kind == "totals" then
 		if #a.types ~= #b.types then
 			return false
 		end
@@ -827,6 +861,97 @@ local function sameShown(a, b)
 	return a.id == b.id and a.unitID == b.unitID and a.count == b.count and a.featureID == b.featureID
 end
 
+-- Units' health summed (a whole selection or one type's units): the health, the maximum
+local function healthSum(lists)
+	local h, mh = 0, 0
+	for _, units in ipairs(lists) do
+		for _, u in ipairs(units) do
+			local a, b = Spring.GetUnitHealth(u)
+			if a and b then
+				h, mh = h + max(0, a), mh + b
+			end
+		end
+	end
+	return h, mh
+end
+
+-- Several types picked, in the dock: BAR's selection totals (gui_info.lua drawSelection: the count, metal and energy made
+-- and used, the costs, buildpower, kills; made, used and kills from the first 50 units, scaled up past them, as BAR's) with
+-- the health and the DPS summed (Kailil, 2026-11-23: "the vanilla health details dps and all that info")
+local SUMMED = 50
+local function totalsView(types)
+	local count, metal, energy, power, lo, hi = 0, 0, 0, 0, 0, 0
+	local lists = {}
+	for i, t in ipairs(types) do
+		local info, n = defInfo(t.defID), #t.units
+		count = count + n
+		metal, energy = metal + (info.metalCost or 0) * n, energy + (info.energyCost or 0) * n
+		power = power + (info.buildSpeed or 0) * n
+		lo, hi = lo + (info.mindps or info.maxdps or 0) * n, hi + (info.maxdps or info.mindps or 0) * n
+		lists[i] = t.units
+	end
+	local mMake, mUse, eMake, eUse, kills, seen = 0, 0, 0, 0, 0, 0
+	for _, units in ipairs(lists) do
+		for _, u in ipairs(units) do
+			if seen >= SUMMED then
+				break
+			end
+			seen = seen + 1
+			local a, b, c, d = Spring.GetUnitResources(u)
+			if a then
+				mMake, mUse, eMake, eUse = mMake + a, mUse + b, eMake + c, eUse + d
+			end
+			kills = kills + (Spring.GetUnitRulesParam(u, "kills") or 0)
+		end
+	end
+	if seen > 0 and seen < count then
+		local k = count / seen
+		mMake, mUse, eMake, eUse, kills = mMake * k, mUse * k, eMake * k, eUse * k, floor(kills * k)
+	end
+	local parts = {}
+	local function add(label, value)
+		parts[#parts + 1] = (LABEL .. label .. VALUE .. " " .. value):gsub(" ", KEEP)
+	end
+	if hi > 0 then
+		add(L("ui.info.dps", "DPS"), lo == hi and price(hi) or (price(lo) .. "-" .. price(hi)))
+	end
+	local function flow(make, use)
+		local sides = {}
+		if make > 0.05 then
+			sides[#sides + 1] = "\255\180\255\180+" .. num(make, make < 10 and 1 or 0)
+		end
+		if use > 0.05 then
+			sides[#sides + 1] = "\255\255\180\180-" .. num(use, use < 10 and 1 or 0)
+		end
+		return table.concat(sides, " ")
+	end
+	if mMake > 0.05 or mUse > 0.05 then
+		add(L("ui.info.metal", "metal"):gsub("^%l", string.upper), flow(mMake, mUse))
+	end
+	if eMake > 0.05 or eUse > 0.05 then
+		add(L("ui.info.energy", "energy"):gsub("^%l", string.upper), flow(eMake, eUse))
+	end
+	local cost = {}
+	if metal > 0 then
+		cost[#cost + 1] = "\255\235\235\235" .. price(metal)
+	end
+	if energy > 0 then
+		cost[#cost + 1] = "\255\255\255\150" .. price(energy)
+	end
+	if #cost > 0 then
+		add("Cost", table.concat(cost, "   "))
+	end
+	if power > 0 then
+		add(L("ui.info.buildpower", "buildpower"):gsub("^%l", string.upper), price(power))
+	end
+	if kills > 0 then
+		add(L("ui.info.kills", "kills"):gsub("^%l", string.upper), price(kills))
+	end
+	local h, mh = healthSum(lists)
+	return { name = count .. " " .. L("ui.info.unitsselected", "units selected"), description = "",
+		stats = table.concat(parts, LABEL .. ",  "), health = mh > 0 and h or nil, maxHealth = mh > 0 and mh or nil }
+end
+
 local function buildView()
 	if not shown or shown.kind == "units" then
 		view, laidOut, fitKey, staticKey, staticId, staticText = nil, nil, nil, nil, nil, nil
@@ -835,6 +960,8 @@ local function buildView()
 	local v
 	if shown.kind == "feature" then
 		v = featureView(shown.id, shown.featureID)
+	elseif shown.kind == "totals" then
+		v = totalsView(shown.types)
 	else
 		local info = defInfo(shown.id)
 		v = { name = info.name, description = info.description, stats = statsText(shown.id, shown.unitID), picture = shown.id }
@@ -843,6 +970,11 @@ local function buildView()
 		local health, maxHealth, _, _, build = Spring.GetUnitHealth(shown.unitID)
 		if health and maxHealth and maxHealth > 0 then
 			v.health, v.maxHealth, v.build = health, maxHealth, build
+		end
+	elseif shown.units and docked then -- (several of one type in the dock: their health summed, as the totals')
+		local h, mh = healthSum({ shown.units })
+		if mh > 0 then
+			v.health, v.maxHealth = h, mh
 		end
 	end
 	view = v
@@ -853,7 +985,8 @@ local function buildView()
 		fitKey, laidOut = key, fit(v)
 	end
 	-- (a feature's def numbers are not unit defs': its own key)
-	local id = shown.kind == "feature" and ("f" .. shown.id) or shown.count and (shown.id .. "x" .. shown.count) or shown.id
+	local id = shown.kind == "feature" and ("f" .. shown.id) or shown.kind == "totals" and "totals"
+		or shown.count and (shown.id .. "x" .. shown.count) or shown.id
 	if id ~= staticId or key ~= staticText then
 		staticId, staticText = id, key
 		staticKey = id .. "\n" .. key
@@ -897,7 +1030,9 @@ local function drawBackground()
 	if not background then
 		background = gl.CreateList(function()
 			if WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.Element then
-				WG.FlowUI.Draw.Element(rect[1], rect[2], rect[3], rect[4], 0, 1, 0, 0)
+				-- (in BAR's corner one round corner, as BAR's; in the dock's place all four, as the dock's panels)
+				local c = docked and 1 or 0
+				WG.FlowUI.Draw.Element(rect[1], rect[2], rect[3], rect[4], c, 1, c, c)
 			else
 				gl.Color(0, 0, 0, 0.6)
 				gl.Rect(rect[1], rect[2], rect[3], rect[4])
@@ -1013,11 +1148,39 @@ local function drawGrid()
 	bold:End()
 end
 
+-- The folded panel's tab in the dock's place: INFO (recorded, tabList; made again with the place)
+local function drawTab()
+	if not tabList then
+		tabList = gl.CreateList(function()
+			local t = tabRect
+			if WG.FlowUI and WG.FlowUI.Draw and WG.FlowUI.Draw.Element then
+				WG.FlowUI.Draw.Element(t[1], t[2], t[3], t[4], 1, 1, 1, 1)
+			else
+				gl.Color(0, 0, 0, 0.6)
+				gl.Rect(t[1], t[2], t[3], t[4])
+			end
+			gl.Color(1, 1, 1, 1)
+			gl.Texture(false)
+			local h = t[4] - t[2]
+			local s = min(h * 0.5, (t[3] - t[1]) * 0.7 / max(0.01, bold:GetTextWidth("INFO")))
+			bold:Begin()
+			bold:Print(VALUE .. "INFO", (t[1] + t[3]) / 2, t[2] + (h - s) / 2 + s * 0.2, s, "oc")
+			bold:End()
+		end)
+	end
+	gl.CallList(tabList)
+end
+
 function widget:DrawScreen()
 	if standDown or overlay or not shown or Spring.IsGUIHidden() or not font then
 		return
 	end
 	gl.Color(1, 1, 1, 1)
+	if docked and folded then
+		drawTab()
+		gl.Color(1, 1, 1, 1)
+		return
+	end
 	drawBackground()
 	if shown.kind == "units" then
 		if not content then
@@ -1067,11 +1230,21 @@ local function inRect(x, y, r)
 end
 
 function widget:IsAbove(x, y)
-	return not standDown and not overlay and shown ~= nil and inRect(x, y, rect)
+	return not standDown and not overlay and shown ~= nil and inRect(x, y, (docked and folded) and tabRect or rect)
 end
 
 function widget:MousePress(x, y, button)
-	if standDown or overlay or not shown or not inRect(x, y, rect) then
+	if standDown or overlay or not shown then
+		return false
+	end
+	if docked and folded then -- (the INFO tab: open)
+		if not inRect(x, y, tabRect) then
+			return false
+		end
+		folded = false
+		return true
+	end
+	if not inRect(x, y, rect) then
 		return false
 	end
 	if shown.unitID and laidOut then -- the unit's picture: the camera to the unit (as BAR's panel)
@@ -1112,6 +1285,9 @@ function widget:MousePress(x, y, button)
 			end
 		end
 	end
+	if docked then -- (in the dock's place: folded to its tab, the game under it free)
+		folded = true
+	end
 	return true -- the panel takes the tap: no order to the map under it
 end
 
@@ -1132,16 +1308,30 @@ function widget:Update(dt)
 		standDown = true
 		return
 	end
-	-- the portrait dock (bardroid_portrait.lua) shows the selection itself, in its top row
-	standDown = WG.BarDroidPortrait ~= nil and WG.BarDroidPortrait.active()
 	if not WG.info then
 		WG.info = stub
 	end
 	if not font then
 		layout()
 	end
+	-- the touch dock (bardroid_portrait.lua) up: the panel in the place it gives (SP.infoRect; none now: not shown)
+	local P = WG.BarDroidPortrait
+	local dockUp = P ~= nil and P.active()
+	local r = dockUp and P.infoRect and P.infoRect() or nil
+	standDown = dockUp and r == nil
+	if r then
+		if not docked or r ~= dockSeen then -- (the same table while the place stays)
+			docked, dockSeen = true, r
+			useDockRect(r)
+			rebuildAt, pickAt = 0, 0
+		end
+	elseif docked then
+		docked, dockSeen = false, nil
+		layout()
+		rebuildAt, pickAt = 0, 0
+	end
 	local o = WG.ordermenu -- (its place since the last layout: moved after a fold, or by its own setting)
-	if o and o.getPosition and o.getBottomPosition then
+	if not docked and o and o.getPosition and o.getBottomPosition then
 		local ox, oy
 		if o.getBottomPosition() then
 			ox, oy = o.getPosition()
@@ -1163,13 +1353,14 @@ function widget:Update(dt)
 			-- (none while the portrait dock shows the selection: the editor outlined a panel not drawn, the bottom left's
 			-- open map, dev phone sideways 2026-11-13)
 			rect = function()
-				if standDown then
+				if standDown or docked then -- (in the dock's place the dock places it)
 					return nil
 				end
 				return rect[1], rect[2], rect[3], rect[4]
 			end,
 			relayout = function()
 				layout()
+				dockSeen = nil -- (in the dock's place: placed there again at the next update)
 				rebuildAt = 0
 				if shown and shown.kind == "units" then
 					layoutGrid(shown.types)
@@ -1211,6 +1402,7 @@ end
 
 function widget:ViewResize()
 	layout()
+	dockSeen = nil -- (in the dock's place: placed there again at the next update)
 	rebuildAt = 0
 	if shown and shown.kind == "units" then
 		layoutGrid(shown.types)
@@ -1230,7 +1422,7 @@ function widget:Initialize()
 		displayUnitDefID = function(defID) cfgDef = defID end,
 		clearDisplayUnitDefID = function() cfgDef = nil end,
 		getPosition = function() return widthFrac, heightFrac end,
-		getIsShowing = function() return shown ~= nil and not standDown end,
+		getIsShowing = function() return shown ~= nil and not standDown and not docked end, -- (BAR's place)
 		setCustomHover = function(kind, data) customType, customData = kind, data end,
 		clearCustomHover = function() customType, customData = nil, nil end,
 	}
@@ -1241,6 +1433,7 @@ function widget:Initialize()
 end
 
 function widget:Shutdown()
+	WG.BarDroidInfoState = nil
 	if registered and WG.BarDroidLayout then
 		WG.BarDroidLayout.unregister("info")
 	end
@@ -1252,5 +1445,28 @@ function widget:Shutdown()
 	if background then
 		gl.DeleteList(background)
 	end
+	if tabList then
+		gl.DeleteList(tabList)
+	end
 	dropContent()
+end
+
+-- the dock's panel folded to its tab or open, kept from game to game
+function widget:GetConfigData()
+	return { folded = folded }
+end
+
+function widget:SetConfigData(data)
+	if type(data) == "table" and type(data.folded) == "boolean" then
+		folded = data.folded
+	end
+end
+
+-- (tools/info-phone-test.ps1: what the panel shows and where; nil: nothing shown)
+WG.BarDroidInfoState = function()
+	if standDown or overlay or not shown then
+		return nil
+	end
+	return { kind = shown.kind, docked = docked, folded = folded, rect = rect, tab = tabRect,
+		name = view and view.name, stats = view and view.stats, health = view and view.health, maxHealth = view and view.maxHealth }
 end

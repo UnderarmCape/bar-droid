@@ -45,6 +45,12 @@ The first version meant for other people's phones: everything since the first bu
   Saved games load from the lobby's Load Game, the commander picked and the camera on it as at a game's start.
 
 **Touch**
+- The unit info panel with the touch dock: BAR's numbers for what you have picked (name, health bar, DPS, range,
+  speed, costs, buildpower and the rest, as BAR's own Info panel shows them). Unfolded it stands in the dock's middle
+  above the wind and tide pill; on a tall phone upright on top of the dock, on the half away from the one-finger
+  camera's knob and rails; folded sideways on top of the dock's panel. Several types
+  picked: their totals (count, summed health and DPS, costs, buildpower, metal and energy made and used, kills). A tap
+  on it folds it to an INFO tab; a tap on the tab opens it again (kept for the next game).
 - Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and
   sends what you said as a chat message, no keyboard (nothing said, nothing sent); a three-finger double tap shows the
   keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say. In a game the
@@ -226,9 +232,14 @@ The first version meant for other people's phones: everything since the first bu
   menu with bigger buttons, online too (the app's copy of BAR's Order menu runs in BAR's released game), and a
   finger's drag on the order menu no longer pans the map. The hidden orders come back after a game played with the pad
   (they had stayed hidden in later games, by touch too).
-- The app's controller interface in one look with BAR's own: notes, the filter radial and the group strip in BAR's
-  panels and font, sized by the interface scale (about the same on both Fold screens); the pad's place on the build
-  and order menus a thin gold line; a pad button named in a note shown as its coloured key.
+- The app's controller interface in one look with the touch dock: its panels and buttons, BAR's gold on what is
+  picked, the dock's round pill for notes, its white words and bold numbers, tiles sized as the dock's. The group strip
+  reads as the dock's groups row (each group's most numerous unit, its number on a dark badge, how many; the slot in use
+  lit and outlined in gold, "+ NEW" on an empty one while units are picked) and stays above the upright dock; the
+  filter radial's buttons show the filter in use in gold; the share list's tabs, teammates (names in capitals, their
+  colour along the foot) and amounts (10% to 100% as buttons) are the dock's teammate picker's, A says SEND or TRANSFER;
+  sideways the D-gun mode shows the dock's red FIRE (its reload and energy bar) with RT FIRE and B LEAVE; the order on
+  the pad gets BAR's gold light under its gold line; a pad button named in a note shown as its coloured key.
 - Both controller modes (Kailil's Fold7 notes): the camera pans 30% slower; A held then X opens the area select's
   filter radial (all mobile, combat, builders, air), and builders are never selected together with combat units; LB
   grid shows "GRID" and draws with LB alone; X (and A with an order picked) needs a quarter-second hold before it

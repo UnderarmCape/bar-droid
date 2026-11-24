@@ -6228,6 +6228,88 @@ function widget:ViewResize()
 	checkActive()
 end
 
+-- The unit info panel's place (Kailil, 2026-11-23: "I need a way to see my unit selection info. so the vanilla health
+-- details dps and all that info. when unfolded, that info can go in the middle bar section above the Wind and tidal
+-- speeds, and for vertical idk know where it can go"): unfolded (the split dock) between the blocks, from over the wind's
+-- and the tide's pill up to the blocks' top; upright on a tall phone held to the dock's top across the screen; sideways
+-- folded held to the panel's top, as wide as the panel. bardroid_info.lua draws BAR's numbers in it (WG.BarDroidPortrait
+-- .infoRect). Nil: no place now (the dock hidden or aside, spectating, the D-gun mode, the wind's details or a held
+-- tile's name up where it would stand). The same table while the place stays (asked each frame).
+function SP.infoRect()
+	if not active or L.aside or SP.hidden or SP.on() or rightKind == "dgun" or L.dgFloat or SP.windInfo or SP.holdTip then
+		return nil
+	end
+	local d, pad = L.dock, L.pad or 4
+	if not d then
+		return nil
+	end
+	local x0, y0, x1, y1
+	if L.split then
+		local g = L.groups
+		if not g then
+			return nil
+		end
+		local wb = not SP.windOff() and SP.windRects()
+		x0, x1 = g[1], g[3]
+		y0, y1 = (wb and wb[4] or g[4]) + pad, d[4] - pad
+	else
+		local s = L.sel
+		local top = SP.dockAll()[4]
+		local C = WG.BarDroidCamCtl
+		x0, x1 = pad, vsx - pad
+		if L.thumb then -- (the panel's side; closed, it is off the screen: nothing picked to show)
+			if not (s and s[1] >= 0 and s[3] <= vsx) then
+				return nil
+			end
+			x0, x1 = s[1], s[3]
+		elseif C and (C.knob() or C.rails()) then
+			-- (upright: the half away from the one-finger camera's hand, bardroid_camctl.lua: its knob and its turn rail
+			-- stand on the dock's top at that side)
+			local mid = floor(vsx / 2)
+			if C.left() then
+				x0 = mid + floor(pad / 2)
+			else
+				x1 = mid - floor(pad / 2)
+			end
+		end
+		y0 = top + pad + max(2, floor(pad * 0.5)) -- (a gap over the dock's edge, as the wind's boxes there)
+		y1 = y0 + floor(min(vsy * (L.thumb and 0.2 or 0.11), (x1 - x0) * 0.42))
+		if y1 > vsy - floor(vsy * 0.08) then -- (a dock up to the top bar: no room)
+			return nil
+		end
+		-- (and clear of the camera's controls where one still crosses it: folded sideways its zoom rail up the hand's
+		-- edge, a knob the layout editor moved: the panel narrower, away from it)
+		if C and C.rects then
+			local kn, zr, trn = C.rects()
+			for i = 1, 3 do
+				local o = i == 1 and zr or i == 2 and trn or nil
+				local ox0, oy0, ox1, oy1
+				if o then
+					ox0, oy0, ox1, oy1 = o[1], o[2], o[3], o[4]
+				elseif i == 3 and kn then
+					ox0, oy0, ox1, oy1 = kn[1] - kn[3], kn[2] - kn[3], kn[1] + kn[3], kn[2] + kn[3]
+				end
+				if ox0 and ox0 < x1 and ox1 > x0 and oy0 < y1 and oy1 > y0 then
+					if (ox0 + ox1) / 2 > (x0 + x1) / 2 then
+						x1 = floor(ox0) - pad
+					else
+						x0 = floor(ox1) + pad
+					end
+				end
+			end
+		end
+	end
+	if x1 - x0 < 60 or y1 - y0 < 40 then
+		return nil
+	end
+	local c = L.infoR
+	if not (c and c[1] == x0 and c[2] == y0 and c[3] == x1 and c[4] == y1) then
+		c = { x0, y0, x1, y1, mid = L.split or nil } -- (mid: its INFO tab in its middle, over the pill; else at its left)
+		L.infoR = c
+	end
+	return c
+end
+
 function widget:Initialize()
 	do -- (the launcher's "Touch dock sideways": launch-bar.sh leaves this file while it is on)
 		local f = io.open("LuaUI/Config/bardroid_landdock.txt", "r")
@@ -6288,6 +6370,7 @@ function widget:Initialize()
 			return not (h and x >= h[1] and x <= h[3] and y >= h[2] and y <= h[4])
 		end,
 		placeRect = placeRect, -- (the build menu copy's PLACE panel goes there while a building is picked)
+		infoRect = SP.infoRect, -- (bardroid_info.lua: the unit info panel's place, x0, y0, x1, y1; nil: none now)
 		settling = function() -- (bardroid_pad.lua's QUEUE and INSERT: the row just moved, a tap there is dropped)
 			return SP.settling()
 		end,
