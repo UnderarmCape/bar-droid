@@ -34,6 +34,12 @@ local REFRESH = 0.25 -- seconds between rebuilding a shown unit's text (health, 
 -- a feature's: only its reclaim figure changes, every frame while it is reclaimed, and each new text is a new recording
 -- of the panel (~27 ms on the phone): once a second
 local FEATURE_REFRESH = 1
+-- several types' totals (the dock's panel): their made and used figures move with every unit's work, and each new text
+-- is a new recording of the panel: once a second too, their summed health with them
+local TOTALS_REFRESH = 1
+local function refreshOf(kind)
+	return (kind == "feature" and FEATURE_REFRESH) or (kind == "totals" and TOTALS_REFRESH) or REFRESH
+end
 local PICK_EVERY = 0.1 -- seconds between looking again at what to show (and at once when the selection changes)
 local LABEL, VALUE, DIM = "\255\175\175\175", "\255\255\255\255", "\255\200\200\200"
 local KEEP = "\1" -- a space inside one stat, its label and value (wrap breaks lines only between stats)
@@ -1377,7 +1383,7 @@ function widget:Update(dt)
 	elapsed = elapsed + dt
 	if elapsed < pickAt then
 		if shown and shown.kind ~= "units" and elapsed >= rebuildAt then
-			rebuildAt = elapsed + (shown.kind == "feature" and FEATURE_REFRESH or REFRESH)
+			rebuildAt = elapsed + refreshOf(shown.kind)
 			buildView()
 		end
 		return
@@ -1395,7 +1401,7 @@ function widget:Update(dt)
 		layoutGrid(shown.types)
 	end
 	if shown and shown.kind ~= "units" and elapsed >= rebuildAt then
-		rebuildAt = elapsed + (shown.kind == "feature" and FEATURE_REFRESH or REFRESH)
+		rebuildAt = elapsed + refreshOf(shown.kind)
 		buildView()
 	end
 end
