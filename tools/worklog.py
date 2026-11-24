@@ -13,7 +13,12 @@ Times:
 - Kailil's time: his sittings, messages less than SITTING_GAP_S apart, each from LEAD_IN_S before its first
   message to its last one.
 Redacted before anything is written: e-mail and IP addresses, user profile paths, and every line of
-../worklog-redact.txt (beside the checkout; private terms such as network names, never committed)."""
+../worklog-redact.txt (beside the checkout; private terms such as network names, never committed).
+
+Earlier attempts (Kailil, 2026-11-24: "include these old attempts at making bar gamepad and bar android ... as efforts
+towards my achievement too. Since they directly led to the finish line"): docs/worklog/data/earlier.json, his earlier
+repositories and the phone engine's, read from GitHub by hand (gh api) with chats and hours estimated from their
+commit times, is rendered under the totals; this script never changes it."""
 import argparse
 import datetime
 import glob
@@ -340,6 +345,65 @@ def hours(seconds):
     return "%.1f" % (seconds / 3600.0)
 
 
+def earlier_section(sessions_n, kailil_s, claude_s, app_commits):
+    """The lines of "Earlier attempts that led here" from data/earlier.json (none without it). Its chats and hours
+    are estimates; a repository whose work this log has already (in_log: the phone engine's) adds its commits to the
+    total, not its chats or hours."""
+    try:
+        with open(os.path.join(DATA, "earlier.json"), encoding="utf-8") as fh:
+            earlier = json.load(fh)
+    except (OSError, ValueError) as e:
+        if os.path.exists(os.path.join(DATA, "earlier.json")):
+            print("worklog: data/earlier.json unreadable (%s): no earlier attempts" % e, file=sys.stderr)
+        return []
+    repos, method = earlier.get("repositories", []), earlier.get("method", {})
+    if not repos:
+        return []
+    lines = [
+        "## Earlier attempts that led here",
+        "",
+        "Before BAR Droid, Kailil made two attempts at gamepad controls for BAR and one at BAR on Android; they led"
+        " to this app. The phone engine's source is listed too. Commits are Kailil's and his AI assistants' only:"
+        " BAR's and Recoil's own are left out, and a change on several branches counts once.",
+        "",
+        "| Repository | What it was | Dates | Commits | Chats | Kailil h | AI h | Chats and hours |",
+        "|---|---|---|---:|---:|---:|---:|---|",
+    ]
+    for r in repos:
+        what = "%s. %s" % (r["kind"][:1].upper() + r["kind"][1:], r["summary"])
+        if r.get("assistants"):
+            names = r["assistants"]
+            what += " With %s." % (names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1])
+        est = r.get("estimated", {})
+        basis = "estimated" if est.get("chats") or est.get("hours") else "counted"
+        if r.get("in_log"):
+            basis += ", already in this log"
+        lines.append("| [%s](%s) | %s | %s to %s | %d | %d | %.1f | %.1f | %s |" % (
+            r["name"], r["url"], what, r["first"], r["last"], r["commits"], r["chats"], r["kailil_h"], r["ai_h"],
+            basis))
+    lines += [
+        "",
+        "Chats and hours are estimates from the commit times: a gap of over %g hours starts a new work session, one"
+        " chat each; the AI's hours are each session's span plus %g minutes. Kailil drove each of the earlier"
+        " attempts' chats himself, so his hours there are the sessions' own; the phone engine's are %.3f of them,"
+        " his share of the time in this log on %s, where Claude's loops run on their own." % (
+            method.get("session_gap_h", 2), method.get("session_pad_min", 30), method.get("kailil_share", 0),
+            earlier.get("as_of", "-")),
+        "",
+    ]
+    added = [r for r in repos if not r.get("in_log")]
+    commits = sum(r["commits"] for r in repos) + (app_commits or 0)
+    lines.append(
+        "**All together**, BAR Droid and the earlier attempts: %d commits%s, %d chats, Kailil %s h, AI %s h (Claude"
+        " %s h of it). The earlier attempts' chats and hours are estimates; the phone engine's are in this log"
+        " already, so only its commits are added." % (
+            commits, "" if app_commits is not None else " (this repository's not counted: no git)",
+            sessions_n + sum(r["chats"] for r in added),
+            hours(kailil_s + 3600 * sum(r["kailil_h"] for r in added)),
+            hours(claude_s + 3600 * sum(r["ai_h"] for r in added)), hours(claude_s)))
+    return lines + [""]
+
+
 def quote(text, limit):
     text = text.strip()
     if len(text) > limit:
@@ -421,6 +485,10 @@ def write_markdown(sessions, messages):
         " transcript entries, each up to %d minutes; sessions that ran side by side add up."
         % (SITTING_GAP_S // 60, LEAD_IN_S // 60, IDLE_GAP_S // 60),
         "",
+    ]
+    lines += earlier_section(len(sessions), total_kailil, total_claude,
+                             None if commits is None else sum(commits.values()))
+    lines += [
         "## By day",
         "",
         "| Day | Kailil's messages | Kailil h | Claude h | Commits |",

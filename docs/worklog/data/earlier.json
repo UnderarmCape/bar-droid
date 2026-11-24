@@ -1,0 +1,646 @@
+{
+ "about": "Kailil's earlier attempts at BAR gamepad controls and at BAR on Android, which led to BAR Droid, and the phone engine's source repository. Read from GitHub (gh api, read only) on 2026-11-24. Commits are Kailil's and his AI assistants' only, upstream's left out. Chats and hours are estimated from the commit times (method). tools/worklog.py renders it into docs/WORKLOG.md.",
+ "as_of": "2026-11-24",
+ "method": {
+  "session_gap_h": 2.0,
+  "session_pad_min": 30.0,
+  "kailil_share": 0.1194,
+  "kailil_share_from": "docs/WORKLOG.md on 2026-11-24: Kailil 68.9 h, Claude 577.0 h",
+  "kailil_h_of_log": 68.9,
+  "claude_h_of_log": 577.0,
+  "kailil_share_attempts": 1.0,
+  "kailil_share_attempts_why": "the earlier attempts were chats he drove himself with Codex, Gemini and Antigravity: he was there for each session, so his hours are the session hours; the 0.119 share is the Claude era's, whose loops run on their own"
+ },
+ "repositories": [
+  {
+   "name": "underarmcape-bar-controller-support-attempt-01",
+   "url": "https://github.com/UnderarmCape/underarmcape-bar-controller-support-attempt-01",
+   "kind": "earlier attempt",
+   "summary": "Gamepad controls for BAR, made in a copy of BAR's game: radial menus, Smart X, command layers and the camera, up to the released Controller Support v0.8.5. BAR Droid's pad controls are rebuilt from v0.8.5.",
+   "assistants": [
+    "Codex",
+    "Gemini"
+   ],
+   "assistants_from": "Codex the author of 31 commits, 4 others marked [GEMINI]",
+   "first": "2026-05-20",
+   "last": "2026-07-24",
+   "active_days": 23,
+   "commits": 290,
+   "commits_with_copies": 291,
+   "commits_by_ai_identity": 31,
+   "sessions": 33,
+   "chats": 33,
+   "ai_h": 101.7,
+   "kailil_h": 101.7,
+   "estimated": {
+    "dates": false,
+    "commits": false,
+    "chats": true,
+    "hours": true
+   },
+   "in_log": false,
+   "commits_counted": "BAR's own history left out: every branch compared with BAR's master on GitHub, only the commits ahead (branch controller-ui-live-defaults shares no history with BAR's and was read whole)",
+   "work_sessions": [
+    [
+     "2026-05-20T18:05-04:00",
+     "2026-05-20T18:27-04:00",
+     2
+    ],
+    [
+     "2026-05-21T04:37-04:00",
+     "2026-05-21T04:37-04:00",
+     1
+    ],
+    [
+     "2026-05-21T22:15-04:00",
+     "2026-05-22T13:25-04:00",
+     34
+    ],
+    [
+     "2026-05-22T21:07-04:00",
+     "2026-05-23T00:23-04:00",
+     5
+    ],
+    [
+     "2026-05-24T03:22-04:00",
+     "2026-05-24T03:31-04:00",
+     2
+    ],
+    [
+     "2026-05-26T08:47-04:00",
+     "2026-05-26T08:47-04:00",
+     1
+    ],
+    [
+     "2026-05-28T19:01-04:00",
+     "2026-05-28T19:01-04:00",
+     1
+    ],
+    [
+     "2026-05-29T04:03-04:00",
+     "2026-05-29T12:49-04:00",
+     26
+    ],
+    [
+     "2026-05-30T02:27-04:00",
+     "2026-05-30T09:10-04:00",
+     16
+    ],
+    [
+     "2026-05-30T21:14-04:00",
+     "2026-05-31T01:02-04:00",
+     5
+    ],
+    [
+     "2026-05-31T04:08-04:00",
+     "2026-05-31T09:50-04:00",
+     11
+    ],
+    [
+     "2026-06-02T07:30-04:00",
+     "2026-06-02T08:12-04:00",
+     2
+    ],
+    [
+     "2026-06-03T05:57-04:00",
+     "2026-06-03T08:43-04:00",
+     10
+    ],
+    [
+     "2026-06-03T23:22-04:00",
+     "2026-06-03T23:22-04:00",
+     1
+    ],
+    [
+     "2026-06-04T07:35-04:00",
+     "2026-06-04T08:36-04:00",
+     3
+    ],
+    [
+     "2026-06-05T03:35-04:00",
+     "2026-06-05T06:57-04:00",
+     7
+    ],
+    [
+     "2026-06-05T22:58-04:00",
+     "2026-06-06T01:29-04:00",
+     10
+    ],
+    [
+     "2026-06-07T03:26-04:00",
+     "2026-06-07T08:37-04:00",
+     16
+    ],
+    [
+     "2026-06-14T01:54-04:00",
+     "2026-06-14T03:36-04:00",
+     3
+    ],
+    [
+     "2026-07-19T19:33-04:00",
+     "2026-07-20T02:34-04:00",
+     20
+    ],
+    [
+     "2026-07-20T07:20-04:00",
+     "2026-07-20T09:19-04:00",
+     14
+    ],
+    [
+     "2026-07-20T20:17-04:00",
+     "2026-07-20T21:58-04:00",
+     8
+    ],
+    [
+     "2026-07-21T06:28-04:00",
+     "2026-07-21T06:46-04:00",
+     4
+    ],
+    [
+     "2026-07-21T18:06-04:00",
+     "2026-07-22T00:09-04:00",
+     21
+    ],
+    [
+     "2026-07-22T04:02-04:00",
+     "2026-07-22T04:04-04:00",
+     4
+    ],
+    [
+     "2026-07-22T07:18-04:00",
+     "2026-07-22T08:25-04:00",
+     22
+    ],
+    [
+     "2026-07-22T10:52-04:00",
+     "2026-07-22T10:52-04:00",
+     4
+    ],
+    [
+     "2026-07-22T18:37-04:00",
+     "2026-07-22T20:19-04:00",
+     13
+    ],
+    [
+     "2026-07-22T23:08-04:00",
+     "2026-07-22T23:20-04:00",
+     10
+    ],
+    [
+     "2026-07-23T06:22-04:00",
+     "2026-07-23T09:39-04:00",
+     5
+    ],
+    [
+     "2026-07-23T18:11-04:00",
+     "2026-07-23T18:11-04:00",
+     1
+    ],
+    [
+     "2026-07-23T20:12-04:00",
+     "2026-07-23T20:15-04:00",
+     2
+    ],
+    [
+     "2026-07-24T01:00-04:00",
+     "2026-07-24T01:33-04:00",
+     6
+    ]
+   ]
+  },
+  {
+   "name": "controllersupport-RecoilEngine-attempt-01",
+   "url": "https://github.com/UnderarmCape/controllersupport-RecoilEngine-attempt-01",
+   "kind": "earlier attempt",
+   "summary": "Gamepad input inside BAR's engine, Recoil: SDL controller support, a Lua API to read the pad, Windows build workflows and a branch for a pull request to Recoil.",
+   "assistants": [],
+   "assistants_from": "no assistant named in its commits",
+   "first": "2026-05-20",
+   "last": "2026-06-02",
+   "active_days": 8,
+   "commits": 34,
+   "commits_with_copies": 42,
+   "commits_by_ai_identity": 0,
+   "sessions": 15,
+   "chats": 15,
+   "ai_h": 18.2,
+   "kailil_h": 18.2,
+   "estimated": {
+    "dates": false,
+    "commits": false,
+    "chats": true,
+    "hours": true
+   },
+   "in_log": false,
+   "commits_counted": "Recoil's own history left out: every branch compared with Recoil's master on GitHub, only Kailil's commits among those ahead (the rest are Recoil developers' branches); 42 commits, 34 changes once the copies on several branches are counted once",
+   "work_sessions": [
+    [
+     "2026-05-20T18:43-04:00",
+     "2026-05-20T22:39-04:00",
+     5
+    ],
+    [
+     "2026-05-21T02:03-04:00",
+     "2026-05-21T02:03-04:00",
+     1
+    ],
+    [
+     "2026-05-21T05:11-04:00",
+     "2026-05-21T09:22-04:00",
+     11
+    ],
+    [
+     "2026-05-21T11:39-04:00",
+     "2026-05-21T12:56-04:00",
+     2
+    ],
+    [
+     "2026-05-21T19:43-04:00",
+     "2026-05-21T20:29-04:00",
+     2
+    ],
+    [
+     "2026-05-22T23:04-04:00",
+     "2026-05-22T23:04-04:00",
+     1
+    ],
+    [
+     "2026-05-25T02:16-04:00",
+     "2026-05-25T02:16-04:00",
+     2
+    ],
+    [
+     "2026-05-25T05:07-04:00",
+     "2026-05-25T05:07-04:00",
+     1
+    ],
+    [
+     "2026-05-25T07:53-04:00",
+     "2026-05-25T07:53-04:00",
+     1
+    ],
+    [
+     "2026-05-26T04:36-04:00",
+     "2026-05-26T04:46-04:00",
+     2
+    ],
+    [
+     "2026-05-26T08:14-04:00",
+     "2026-05-26T08:14-04:00",
+     1
+    ],
+    [
+     "2026-05-27T07:01-04:00",
+     "2026-05-27T07:24-04:00",
+     2
+    ],
+    [
+     "2026-06-01T03:17-04:00",
+     "2026-06-01T03:17-04:00",
+     1
+    ],
+    [
+     "2026-06-01T05:39-04:00",
+     "2026-06-01T05:39-04:00",
+     1
+    ],
+    [
+     "2026-06-02T20:37-04:00",
+     "2026-06-02T20:37-04:00",
+     1
+    ]
+   ]
+  },
+  {
+   "name": "RecoilEngine-Android-Port",
+   "url": "https://github.com/UnderarmCape/RecoilEngine-Android-Port",
+   "kind": "earlier attempt",
+   "summary": "A native Android ARM64 build of BAR's engine, Recoil, in an APK. It brought the engine up on a phone, then its HUD, models, reflections, camera and minimap, one checked piece at a time.",
+   "assistants": [
+    "Codex",
+    "Antigravity"
+   ],
+   "assistants_from": "commits that archive a Codex thread and hand over to Antigravity",
+   "first": "2026-06-17",
+   "last": "2026-07-07",
+   "active_days": 15,
+   "commits": 451,
+   "commits_with_copies": 451,
+   "commits_by_ai_identity": 0,
+   "sessions": 39,
+   "chats": 39,
+   "ai_h": 122.7,
+   "kailil_h": 122.7,
+   "estimated": {
+    "dates": false,
+    "commits": false,
+    "chats": true,
+    "hours": true
+   },
+   "in_log": false,
+   "commits_counted": "not a GitHub fork: each branch read newest first until past Kailil's oldest commit, Recoil developers' commits left out",
+   "work_sessions": [
+    [
+     "2026-06-17T03:09-04:00",
+     "2026-06-17T03:09-04:00",
+     1
+    ],
+    [
+     "2026-06-17T09:30-04:00",
+     "2026-06-17T12:20-04:00",
+     16
+    ],
+    [
+     "2026-06-17T17:16-04:00",
+     "2026-06-17T19:38-04:00",
+     8
+    ],
+    [
+     "2026-06-18T04:00-04:00",
+     "2026-06-18T08:21-04:00",
+     8
+    ],
+    [
+     "2026-06-18T11:39-04:00",
+     "2026-06-18T14:33-04:00",
+     8
+    ],
+    [
+     "2026-06-18T16:45-04:00",
+     "2026-06-18T17:03-04:00",
+     3
+    ],
+    [
+     "2026-06-18T20:04-04:00",
+     "2026-06-19T01:30-04:00",
+     19
+    ],
+    [
+     "2026-06-19T08:38-04:00",
+     "2026-06-19T11:09-04:00",
+     4
+    ],
+    [
+     "2026-06-19T16:48-04:00",
+     "2026-06-19T16:48-04:00",
+     1
+    ],
+    [
+     "2026-06-19T19:08-04:00",
+     "2026-06-19T19:08-04:00",
+     1
+    ],
+    [
+     "2026-06-19T21:36-04:00",
+     "2026-06-19T22:40-04:00",
+     3
+    ],
+    [
+     "2026-06-20T01:38-04:00",
+     "2026-06-20T05:48-04:00",
+     7
+    ],
+    [
+     "2026-06-20T09:01-04:00",
+     "2026-06-20T13:50-04:00",
+     23
+    ],
+    [
+     "2026-06-20T19:05-04:00",
+     "2026-06-20T20:50-04:00",
+     14
+    ],
+    [
+     "2026-06-21T00:17-04:00",
+     "2026-06-21T05:57-04:00",
+     36
+    ],
+    [
+     "2026-06-21T08:23-04:00",
+     "2026-06-21T10:39-04:00",
+     18
+    ],
+    [
+     "2026-06-21T13:32-04:00",
+     "2026-06-21T13:32-04:00",
+     1
+    ],
+    [
+     "2026-06-21T20:37-04:00",
+     "2026-06-21T23:04-04:00",
+     16
+    ],
+    [
+     "2026-06-22T07:42-04:00",
+     "2026-06-22T09:28-04:00",
+     10
+    ],
+    [
+     "2026-06-23T06:21-04:00",
+     "2026-06-23T07:51-04:00",
+     5
+    ],
+    [
+     "2026-06-28T08:25-04:00",
+     "2026-06-28T10:30-04:00",
+     16
+    ],
+    [
+     "2026-06-28T21:27-04:00",
+     "2026-06-29T04:16-04:00",
+     18
+    ],
+    [
+     "2026-06-29T07:21-04:00",
+     "2026-06-29T09:36-04:00",
+     13
+    ],
+    [
+     "2026-06-29T19:15-04:00",
+     "2026-06-30T00:35-04:00",
+     21
+    ],
+    [
+     "2026-06-30T05:58-04:00",
+     "2026-06-30T10:21-04:00",
+     14
+    ],
+    [
+     "2026-06-30T18:00-04:00",
+     "2026-06-30T20:31-04:00",
+     18
+    ],
+    [
+     "2026-07-01T02:43-04:00",
+     "2026-07-01T06:44-04:00",
+     29
+    ],
+    [
+     "2026-07-01T09:37-04:00",
+     "2026-07-01T11:15-04:00",
+     12
+    ],
+    [
+     "2026-07-01T20:20-04:00",
+     "2026-07-02T06:01-04:00",
+     28
+    ],
+    [
+     "2026-07-02T08:55-04:00",
+     "2026-07-02T10:44-04:00",
+     5
+    ],
+    [
+     "2026-07-02T18:47-04:00",
+     "2026-07-02T21:45-04:00",
+     6
+    ],
+    [
+     "2026-07-03T01:36-04:00",
+     "2026-07-03T04:09-04:00",
+     8
+    ],
+    [
+     "2026-07-03T06:13-04:00",
+     "2026-07-03T06:13-04:00",
+     1
+    ],
+    [
+     "2026-07-03T11:56-04:00",
+     "2026-07-03T13:02-04:00",
+     6
+    ],
+    [
+     "2026-07-03T21:07-04:00",
+     "2026-07-04T02:29-04:00",
+     27
+    ],
+    [
+     "2026-07-04T07:03-04:00",
+     "2026-07-04T09:29-04:00",
+     12
+    ],
+    [
+     "2026-07-04T13:57-04:00",
+     "2026-07-04T14:03-04:00",
+     2
+    ],
+    [
+     "2026-07-04T19:30-04:00",
+     "2026-07-04T21:21-04:00",
+     11
+    ],
+    [
+     "2026-07-07T07:06-04:00",
+     "2026-07-07T07:18-04:00",
+     2
+    ]
+   ]
+  },
+  {
+   "name": "bar-droid-engine",
+   "url": "https://github.com/UnderarmCape/bar-droid-engine",
+   "kind": "the phone engine's source",
+   "summary": "BAR's engine, Recoil, with the `bardroid/*` branches: memory cuts, mobile models and shaders, and an exact rewrite of the busiest simulation code. The app carries its build.",
+   "assistants": [
+    "Claude"
+   ],
+   "assistants_from": "every commit co-authored by Claude",
+   "first": "2026-11-04",
+   "last": "2026-11-18",
+   "active_days": 7,
+   "commits": 85,
+   "commits_with_copies": 86,
+   "commits_by_ai_identity": 2,
+   "sessions": 15,
+   "chats": 15,
+   "ai_h": 32.4,
+   "kailil_h": 3.9,
+   "estimated": {
+    "dates": false,
+    "commits": false,
+    "chats": true,
+    "hours": true
+   },
+   "in_log": true,
+   "commits_counted": "the bardroid/* branches only, each read newest first until past Kailil's oldest commit; Recoil's own history left out; one change on several branches counted once",
+   "work_sessions": [
+    [
+     "2026-11-04T13:12-05:00",
+     "2026-11-04T13:12-05:00",
+     1
+    ],
+    [
+     "2026-11-04T18:34-05:00",
+     "2026-11-04T18:34-05:00",
+     1
+    ],
+    [
+     "2026-11-04T21:15-05:00",
+     "2026-11-04T22:56-05:00",
+     4
+    ],
+    [
+     "2026-11-05T01:03-05:00",
+     "2026-11-05T12:33-05:00",
+     15
+    ],
+    [
+     "2026-11-05T16:05-05:00",
+     "2026-11-05T16:05-05:00",
+     1
+    ],
+    [
+     "2026-11-06T03:04-05:00",
+     "2026-11-06T03:34-05:00",
+     2
+    ],
+    [
+     "2026-11-06T12:27-05:00",
+     "2026-11-06T12:27-05:00",
+     1
+    ],
+    [
+     "2026-11-06T15:33-05:00",
+     "2026-11-06T15:33-05:00",
+     1
+    ],
+    [
+     "2026-11-06T21:03-05:00",
+     "2026-11-07T01:19-05:00",
+     10
+    ],
+    [
+     "2026-11-07T03:52-05:00",
+     "2026-11-07T03:52-05:00",
+     1
+    ],
+    [
+     "2026-11-07T06:13-05:00",
+     "2026-11-07T06:55-05:00",
+     3
+    ],
+    [
+     "2026-11-07T10:30-05:00",
+     "2026-11-07T16:30-05:00",
+     40
+    ],
+    [
+     "2026-11-13T22:47-05:00",
+     "2026-11-13T23:01-05:00",
+     2
+    ],
+    [
+     "2026-11-17T19:10-05:00",
+     "2026-11-17T19:11-05:00",
+     2
+    ],
+    [
+     "2026-11-18T03:06-05:00",
+     "2026-11-18T03:06-05:00",
+     1
+    ]
+   ]
+  }
+ ]
+}
