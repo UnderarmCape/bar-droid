@@ -804,22 +804,34 @@ local function pick()
 	if WG.BarDroidSpectating then -- spectating by touch (bardroid_spectate.lua): no unit panel
 		return nil
 	end
+	if docked then -- (in the dock's place, over the map: away while the next tap on the map is an order's, a building's
+		-- spot or a preset's; back when it is done)
+		local _, cmdID = Spring.GetActiveCommand()
+		local PR = WG.BarDroidPresets
+		if (cmdID and cmdID ~= 0) or (PR and PR.armed and PR.armed()) then
+			return nil
+		end
+	end
 	if customType == "unit" and customData and spGetUnitDefID(customData) then
 		return { kind = "unit", id = spGetUnitDefID(customData), unitID = customData }
 	end
 	if cfgUnit and spGetUnitDefID(cfgUnit) then
 		return { kind = "unit", id = spGetUnitDefID(cfgUnit), unitID = cfgUnit }
 	end
-	if cfgDef and UnitDefs[cfgDef] then
-		return { kind = "def", id = cfgDef }
-	end
-	local hover = WG.buildmenu and WG.buildmenu.hoverID
-	if hover and UnitDefs[hover] then
-		return { kind = "def", id = hover }
-	end
-	local _, cmdID = Spring.GetActiveCommand()
-	if cmdID and cmdID < 0 and UnitDefs[-cmdID] then
-		return { kind = "def", id = -cmdID }
+	-- (a building picked or under the pointer: its type's numbers; not in the dock's place, which stands over the map
+	-- where the finger taps the building's spot, and whose build tiles show their costs)
+	if not docked then
+		if cfgDef and UnitDefs[cfgDef] then
+			return { kind = "def", id = cfgDef }
+		end
+		local hover = WG.buildmenu and WG.buildmenu.hoverID
+		if hover and UnitDefs[hover] then
+			return { kind = "def", id = hover }
+		end
+		local _, cmdID = Spring.GetActiveCommand()
+		if cmdID and cmdID < 0 and UnitDefs[-cmdID] then
+			return { kind = "def", id = -cmdID }
+		end
 	end
 	local count = spGetSelectedUnitsCount()
 	if count == 1 then

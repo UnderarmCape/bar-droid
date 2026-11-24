@@ -158,7 +158,8 @@ range, reload, speed, sight, buildpower, metal and energy made and used, the cos
 top of the dock, on the half away from the one-finger camera's knob and rails; unfolded in the dock's middle, above the
 wind and tide pill; folded sideways on top of the panel.
 Several types picked: their totals (count, health and DPS summed, costs, buildpower, kills). Tap it to fold it to an
-INFO tab, tap the tab to open it again; tap the unit's picture to bring the camera to it.
+INFO tab, tap the tab to open it again; tap the unit's picture to bring the camera to it. While a building, an order
+or a preset is armed (your next tap on the map is its place) the panel steps aside, and comes back after.
 Spectating upright, the dock has the spectator's tools as big buttons: the player cameras, TEAMS (every team; tap one
 to watch it), LAST PINGS, follow a unit (its camera views while following), FREE CAM, GROUP, FULL VIEW, and HIDE,
 which folds the dock to a SHOW button at the bottom.

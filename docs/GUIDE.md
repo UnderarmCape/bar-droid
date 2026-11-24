@@ -830,7 +830,7 @@ The unit info panel shows BAR's numbers for what you picked, as BAR's own Info p
 
 **Camera to the unit.** Tap the unit's picture in the panel to bring the camera to it.
 
-The panel hides while you spectate, in the D-gun mode, while the wind's details are open, and while a tile's name shows.
+The panel hides while you spectate, in the D-gun mode, while the wind's details are open, and while a tile's name shows. It also steps aside while a building, an order or a preset is armed, because your next tap on the map is its place. It comes back as soon as that is done.
 
 **Without the dock** (sideways with "Touch dock sideways" off, or with a gamepad or mouse sideways), the panel sits at the bottom left, where BAR's own Info panel would be. With several types picked it shows them in a grid with counts: tap a type to keep only it, long-press a type to drop it. There you can move and size it in the layout editor. Made bigger, it stops at the order menu.
 

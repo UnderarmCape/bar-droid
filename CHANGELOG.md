@@ -50,7 +50,8 @@ The first version meant for other people's phones: everything since the first bu
   above the wind and tide pill; on a tall phone upright on top of the dock, on the half away from the one-finger
   camera's knob and rails; folded sideways on top of the dock's panel. Several types
   picked: their totals (count, summed health and DPS, costs, buildpower, metal and energy made and used, kills). A tap
-  on it folds it to an INFO tab; a tap on the tab opens it again (kept for the next game).
+  on it folds it to an INFO tab; a tap on the tab opens it again (kept for the next game). It steps aside while a
+  building, an order or a preset is armed, as the next tap on the map is its place.
 - Speak to chat: a three-finger tap (on the pad: LB held, RB twice) listens through the phone's speech recognition and
   sends what you said as a chat message, no keyboard (nothing said, nothing sent); a three-finger double tap shows the
   keyboard. LB held and RB three times: a ping in the middle of the screen labelled with what you say. In a game the

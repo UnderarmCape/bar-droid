@@ -95,6 +95,9 @@ try {
     if ($p["tab"]) { $t = Mid $p["tab"]; Tap $t[0] $t[1]; Start-Sleep -Milliseconds 1200 }
     Stage "opened?"; Start-Sleep 1
   } else { "[infotest] FAIL no panel to tap (nothing shown with the commander picked)" }
+  Stage "arm"; Start-Sleep 1
+  Stage "armed?"; Start-Sleep 1
+  Stage "disarmed?"; Start-Sleep 1
   Stage "give"; Start-Sleep 6
   Stage "mixed"; Start-Sleep 2
   Stage "mixed?"; Start-Sleep 1

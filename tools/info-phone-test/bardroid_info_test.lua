@@ -8,6 +8,7 @@
 --   commander?  the panel in the dock's place (where the split dock's middle is, over the wind's and the tide's pill; else
 --               on the dock's top), the commander's name, its health and a DPS
 --   folded? / opened?  a tap on the text folds it to its tab; a tap on the tab opens it again
+--   arm, armed? / disarmed?  a Solar Collector picked: the panel away (the next map tap is its spot); put away: back
 --   give        three Pawns and two Construction Bots given by the commander
 --   mixed?      all picked: their totals (the count, DPS, cost, buildpower, the health summed)
 --   onetype?    the Pawns alone: the Pawn's stats, their health summed
@@ -132,6 +133,19 @@ local function onCmd(c)
 	elseif c == "opened?" then
 		check("a tap on the tab opens it", s and s.folded == false, s and ("folded " .. tostring(s.folded)) or "nothing")
 		writePoints()
+	elseif c == "arm" then -- (a Solar Collector picked from the commander's build options)
+		local index = Spring.GetCmdDescIndex(-UnitDefNames.armsolar.id)
+		if index then
+			Spring.SetActiveCommand(index, 1, true, false, false, false, false, false)
+		end
+	elseif c == "armed?" then
+		local _, id = Spring.GetActiveCommand()
+		check("a building picked: the panel steps aside (the map tap is the building's spot)",
+			id == -UnitDefNames.armsolar.id and s == nil,
+			string.format("picked %s, panel %s", tostring(id), s and s.kind or "away"))
+		Spring.SetActiveCommand(0)
+	elseif c == "disarmed?" then
+		check("the building put away: the panel back", s ~= nil and s.kind == "unit", s and s.kind or "nothing shown")
 	elseif c == "give" then
 		local x, y, z = Spring.GetUnitPosition(com)
 		Spring.SendCommands(string.format("give 3 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), x + 100, y, z + 100))
