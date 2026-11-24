@@ -36,7 +36,8 @@ function WaitLog([string]$pattern, [int]$seconds) {
 $script:n = 0
 function Stage([string]$name, [double]$wait = 1.5) {
   InApp "echo '$name' > $cfg/bardroid_guideshots_cmd.txt"
-  $null = WaitLog "\[guideshots\] $name ok" 10
+  if (-not (WaitLog "\[guideshots\] $name (ok|failed)" 10)) { "[guideshots] NOTE: the stage $name was not set up (the helper did not answer)" }
+  $f = Log "\[guideshots\] $name failed" 1; if ($f) { "[guideshots] NOTE: $f" }
   Start-Sleep -Milliseconds ([int]($wait * 1000))
 }
 function Rects() {

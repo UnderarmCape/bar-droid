@@ -29,6 +29,23 @@ BAR for Android. It is 100% vibe coded: an AI assistant (Claude Code) wrote all 
 direction ([docs/WORKLOG.md](docs/WORKLOG.md)). Help is wanted most with engine-side performance and touch controls:
 [docs/HELP-WANTED.md](docs/HELP-WANTED.md).
 
+## Quick start
+
+1. Check the phone: Snapdragon 8 Gen 2 or newer (Adreno 7xx/8xx), 12 GB of RAM (8 GB in a low-memory mode), about 6 GB free.
+2. Download `bar-droid-phone-<version>.apk` from [Releases](../../releases) and open it (allow installing when Android asks).
+3. Open **Beyond All Reason** and tap **Install / Update**: about 4 GB from BAR's servers, around 12 minutes on home Wi-Fi.
+4. Tap **Play vs AI** for a skirmish, or **Lobby** to log in and play online.
+5. Drag to pan, pinch to zoom, tap to select, long press to send units. Upright, the touch dock at the bottom has the build grid, the orders and your resources.
+6. Hold three fingers on the screen to move and size panels (the layout editor).
+
+![The launcher screen: the status line, the start buttons and the device lines](docs/guide/img/launcher-main.jpg)
+
+![Upright: the game on top, the touch dock below](docs/guide/img/upright-overview.jpg)
+
+![Sideways: the one-thumb dock in the bottom corner](docs/guide/img/sideways-overview.jpg)
+
+Everything else, from your first game to the layout editor and every setting: [the full guide](docs/GUIDE.md).
+
 ## Phones
 
 A Qualcomm Snapdragon phone with an Adreno 7xx/8xx GPU (Snapdragon 8 Gen 2, 8 Gen 3, 8s Gen 3, 8 Elite), 12 GB of

@@ -51,7 +51,7 @@ local function camOn(u)
 	if x then
 		local P = WG.BarDroidPortrait
 		if P and P.cameraTo then
-			P.cameraTo(x, z)
+			P.cameraTo(x, y, z)
 		else
 			Spring.SetCameraTarget(x, y, z, 0)
 		end
@@ -185,6 +185,11 @@ function widget:Update()
 	local c = readCmd()
 	if c and c ~= lastCmd then
 		lastCmd = c
-		onCmd(c)
+		-- (a stage that fails says so and the next ones still run: one error had BAR remove this widget, and every
+		-- picture after it showed the stage before)
+		local ok, err = pcall(onCmd, c)
+		if not ok then
+			Spring.Echo("[guideshots] " .. c .. " failed: " .. tostring(err))
+		end
 	end
 end

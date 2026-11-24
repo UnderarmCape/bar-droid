@@ -1,0 +1,65 @@
+guide\launcher-01-main.png launcher-main top=0.035 bottom=0.47
+guide\launcher-01-main.png launcher-game-settings top=0.46 bottom=0.93
+guide\launcher-02-settings.png launcher-touch-settings top=0.36 bottom=0.93
+guide\launcher-03-settings.png launcher-graphics top=0.37 bottom=0.95
+guide\launcher-04-settings.png launcher-advanced top=0.37 bottom=0.99
+guide\lobby-upright.png lobby-register top=0 bottom=0.78
+lobbychat-7.png lobby-skirmish-room top=0.08 bottom=1
+overgame-menu-3.png lobby-over-game-replays
+overgame-menu-5.png lobby-load-game top=0.1 bottom=1
+guide\upright-03-commander.png upright-overview
+guide\upright-01-start.png dock-upright-home top=0.58 bottom=1
+guide\upright-03-commander.png dock-upright-commander top=0.51 bottom=1
+guide\upright-04-energy-panel.png dock-upright-energy top=0.51 bottom=0.76
+guide\upright-05-metal-panel.png dock-upright-metal top=0.51 bottom=0.76
+guide\upright-06-wind-details.png dock-upright-wind top=0.32 bottom=0.62
+guide\upright-07-building-picked.png dock-upright-place top=0.51 bottom=1
+guide\upright-08-army.png dock-upright-army top=0.51 bottom=1
+guide\upright-09-group.png dock-upright-groups top=0.88 bottom=1
+guide\upright-11-constructors.png dock-upright-constructors top=0.51 bottom=1
+guide\upright-12-presets.png dock-upright-presets top=0.51 bottom=1
+guide\upright-13-dgun-mode.png dgun-upright top=0.08 bottom=1
+guide\upright-14-layout-editor.png editor-upright top=0 bottom=0.52
+guide\upright-15-quit-question.png quit-question top=0.34 bottom=0.54
+guide\unfolded-01-start.png unfolded-overview
+guide\unfolded-03-commander.png dock-unfolded-commander top=0.73 bottom=1
+guide\unfolded-13-dgun-mode.png dgun-unfolded top=0.3 bottom=1
+guide\unfolded-14-layout-editor.png editor-unfolded
+guide\sideways-03-commander.png sideways-overview
+guide\sideways-02-home-buttons.png dock-sideways-home top=0.58 bottom=1
+guide\sideways-08-army.png dock-sideways-orders top=0.58 bottom=1
+guide\sideways-13-dgun-mode.png dgun-sideways top=0.6 bottom=1
+guide\sideways-14-layout-editor.png editor-sideways
+info-upright-commander.png info-upright-commander top=0.39 bottom=0.6
+info-upright-folded.png info-upright-folded top=0.42 bottom=0.6
+info-upright-mixed.png info-upright-mixed top=0.39 bottom=0.6
+info-upright-onetype.png info-upright-onetype top=0.39 bottom=0.6
+info-unfolded-commander.png info-unfolded-commander top=0.72 bottom=1
+info-unfolded-mixed.png info-unfolded-mixed top=0.72 bottom=1
+dock-place.png place-spot top=0.2 bottom=0.92
+dock-line-held.png place-line top=0.18 bottom=0.75
+dock-border-held.png place-border top=0.3 bottom=0.75
+walls-ring.png walls-ring top=0.25 bottom=0.94
+touchfix-holdtip.png hold-tip top=0.44 bottom=0.78
+dock-areamex-drawn.png area-mex top=0.15 bottom=1
+factory-tap.png factory-preset top=0.25 bottom=1
+types-out.png types-out top=0.51 bottom=1
+dock-preset-armed.png preset-armed top=0.33 bottom=0.95
+dock-dgun-auto.png dgun-auto top=0.1 bottom=1
+touchfix-dgun-enemy.png dgun-enemy top=0.08 bottom=1
+attack-pings.png last-pings top=0 bottom=0.8
+camctl-1.png camera-knob-rails top=0.3 bottom=0.66
+camctl-12.png camera-left-handed top=0.3 bottom=0.66
+camctl-minimal.png camera-looks
+dock-minifight-armed.png send-picker top=0.51 bottom=0.88
+stats-2.png statistics top=0 bottom=0.6
+settings-2.png settings-upright top=0 bottom=0.88
+replay-2.png replay-speed
+chat-voice.png speak-to-chat
+pad-ui\after-upright-groups-new.png pad-groups
+pad-ui\after-upright-radial.png pad-filters
+pad-ui\after-sideways-orders.png pad-orders
+pad-ui\after-upright-note.png pad-note
+pad-ui\after-sideways-dgun.png pad-dgun
+pad-ui\after-sideways-share.png pad-share
+pad-ui\after-sideways-share-units.png pad-share-units

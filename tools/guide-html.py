@@ -20,6 +20,10 @@ OUT = os.path.join(ROOT, "build", "guide-site")
 REPO_URL = "https://github.com/UnderarmCape/bar-droid/blob/main"
 if "--repo-url" in sys.argv:
     REPO_URL = sys.argv[sys.argv.index("--repo-url") + 1].rstrip("/")
+if "--src" in sys.argv:  # (another Markdown file, for trying the converter)
+    SRC = os.path.abspath(sys.argv[sys.argv.index("--src") + 1])
+if "--out" in sys.argv:
+    OUT = os.path.abspath(sys.argv[sys.argv.index("--out") + 1])
 
 slugs = {}
 
@@ -90,6 +94,13 @@ def convert(md):
             body.append('<div class="scroll"><pre><code>%s</code></pre></div>' % html.escape("\n".join(code)))
             continue
         m = re.match(r"^(#{1,4})\s+(.*)$", s)
+        if m and re.match(r"^(table of )?contents$", m.group(2).strip(), re.I):
+            # (the guide's own contents list, for GitHub: the web page has its contents beside the text)
+            flush()
+            i += 1
+            while i < len(lines) and not re.match(r"^#{1,4}\s", lines[i].strip()):
+                i += 1
+            continue
         if m:
             flush()
             level, text = len(m.group(1)), m.group(2).strip()
