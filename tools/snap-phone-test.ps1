@@ -83,6 +83,9 @@ try {
   $xw = if ($dock["dock"] -and $dock["dock"][2] -gt 0) { $dock["dock"][2] } else { 1 }
   $script:k = [double]$m.Groups[1].Value / $xw   # (the display's width over the X screen's)
   Stage "give"; Start-Sleep 4
+  # (twice: the game's own camera move at the start can come after the first; one run aimed at 1.81 elmos a pixel)
+  Stage "camera"; Start-Sleep 2
+  Stage "camera2"; Start-Sleep 2
   Stage "camera"; Start-Sleep 2
   Stage "camera2"; Start-Sleep 2
   Stage "aim"; Start-Sleep 1
@@ -102,6 +105,8 @@ try {
   } else { "[snaptest] NOT RUN drag: no point" }
   # (the mex case on its own camera: the free metal spot nearest the commander, in the map's free middle)
   Stage "spotcam"; Start-Sleep 2
+  Stage "camera2"; Start-Sleep 2
+  Stage "spotcam"; Start-Sleep 1
   Stage "camera2"; Start-Sleep 2
   Stage "aimmex"; Start-Sleep 1
   $pm = (Rects "bardroid_snaptest.txt")["mex"]

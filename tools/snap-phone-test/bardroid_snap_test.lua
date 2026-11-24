@@ -138,7 +138,9 @@ local function point(name, x, y, out)
 	out[#out + 1] = string.format("%s %d %d", name, math.floor(x + 0.5), math.floor(vsy - y + 0.5))
 end
 
+local checked = {} -- the cases checked (end)
 local function onCmd(c)
+	checked[c] = true
 	if c == "give" then
 		local x, y, z = Spring.GetUnitPosition(com)
 		local px, pz = clearOfSpots(x, z)
@@ -195,6 +197,14 @@ local function onCmd(c)
 		local _, hit = Spring.TraceScreenRay(mx, my, true)
 		if hit then
 			local st = Spring.GetCameraState()
+			-- (the zoom again: a run whose camera stood at 1.81 elmos a pixel had the game's own start move after
+			-- "camera"; the script runs both twice)
+			if st.dist then
+				st.dist = 1100
+			end
+			if st.height then
+				st.height = 1100
+			end
 			local tx, tz = scene[1] + (scene[1] - hit[1]), scene[3] + (scene[3] - hit[3])
 			if st.px then
 				st.px, st.pz = st.px + (scene[1] - hit[1]), st.pz + (scene[3] - hit[3])
@@ -295,7 +305,12 @@ local function onCmd(c)
 		check("held beside the Pawn, then dragged on: the path, no Guard", o and o.id == CMD.MOVE,
 			string.format("%s (the answer '%s')", orderText(o), snapAnswer()))
 		stopCon()
-	elseif c == "end" then
+	elseif c == "end" then -- (a case with no point to press is a FAIL too: a run with one case read ALL PASS)
+		for _, case in ipairs({ "guard?", "on?", "far?", "drag?", "mex?" }) do
+			if not checked[case] then
+				check(case:sub(1, -2) .. " checked", false, "not run: no point to press")
+			end
+		end
 		Spring.Echo("[snaptest] done: " .. (fails == 0 and "ALL PASS" or (fails .. " FAILED")))
 	end
 end
