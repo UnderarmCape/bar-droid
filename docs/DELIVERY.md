@@ -94,6 +94,11 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    that read nothing or found no setup now FAILs or says NOT RUN (counted in the last line), every result line printed
    (the dock's last-20 print had hidden three FAILs). Tests only: 379e98bc stays the RC. PLAYTEST 464 was the driver's
    aim (9b8154f5).
+   912e7b2a (Kailil 2026-11-23's asks: the unit info panel in the dock, a5506ad3 to b3af18df; the user guide,
+   ec4fa42c): smoke ALL PASS 14 of 14 with info-phone-test upright and unfolded added to the set (2026-11-24
+   01:19-02:05, build\phone-round\20261124-*-smoke-912e7b2a.txt). Kailil the same night: "do not require my zfold
+   for any of this ... it will not be avialble" and "after you make big changes ... treat it as a release": not on the
+   Fold7; latest-build is that APK (engine phone-2026.09.03-83a8536d37). It is the RC now; item 11's checklist on it.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
