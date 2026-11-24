@@ -45,13 +45,36 @@ local function write(text)
 	end
 end
 
--- the map's free middle: above the dock, below the top bar
+-- the map's free middle: above the dock and the unit info panel on it, below the top bar (a press on the panel is the
+-- panel's: the first run's press beside the Pawn folded it)
 local function freeMiddle()
 	local vsx, vsy = Spring.GetViewGeometry()
 	local P = WG.BarDroidPortrait
 	local d = P and P.dock and P.dock()
 	local foot = d and d[4] or 0
+	local info = P and P.infoRect and P.infoRect()
+	if info then
+		foot = math.max(foot, info[4])
+	end
 	return vsx / 2, (foot + vsy * 0.94) / 2, foot
+end
+
+-- a place near the commander at least 260 elmos from every metal spot (a Pawn there is aimed at alone: on the first
+-- run it stood by a spot, and the spot was nearer the finger)
+local function clearOfSpots(x, z)
+	local finder = WG.resource_spot_finder
+	for _, a in ipairs({ 0, 45, 90, 135, 180, 225, 270, 315 }) do
+		local r = math.rad(a)
+		local px, pz = x + math.cos(r) * 300, z + math.sin(r) * 300
+		local ok = px > 100 and pz > 100 and px < Game.mapSizeX - 100 and pz < Game.mapSizeZ - 100
+		for _, s in ipairs(finder and finder.metalSpotsList or {}) do
+			ok = ok and (s.x - px) ^ 2 + (s.z - pz) ^ 2 >= 260 * 260
+		end
+		if ok then
+			return px, pz
+		end
+	end
+	return x + 220, z + 60
 end
 
 -- a GL point clear of the dock and of the camera's knob and rails
@@ -118,8 +141,10 @@ end
 local function onCmd(c)
 	if c == "give" then
 		local x, y, z = Spring.GetUnitPosition(com)
-		Spring.SendCommands(string.format("give 1 armck %d @%d,%d,%d", Spring.GetMyTeamID(), x - 140, y, z + 60))
-		Spring.SendCommands(string.format("give 1 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), x + 220, y, z + 60))
+		local px, pz = clearOfSpots(x, z)
+		Spring.SendCommands(string.format("give 1 armck %d @%d,%d,%d", Spring.GetMyTeamID(), x - (px - x) * 0.5, y,
+			z - (pz - z) * 0.5))
+		Spring.SendCommands(string.format("give 1 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), px, Spring.GetGroundHeight(px, pz), pz))
 	elseif c == "camera" then
 		for _, u in ipairs(Spring.GetTeamUnits(Spring.GetMyTeamID()) or {}) do
 			local d = Spring.GetUnitDefID(u)
@@ -137,7 +162,8 @@ local function onCmd(c)
 		Spring.GiveOrderToUnit(pawn, CMD.STOP, {}, 0)
 		Spring.GiveOrderToUnit(pawn, CMD.MOVE_STATE, { 0 }, 0) -- (hold position: it stays where it is aimed at)
 		local x, y, z = Spring.GetUnitPosition(com)
-		scene = { x + 40, y, z + 60 }
+		local ux, _, uz = Spring.GetUnitPosition(pawn)
+		scene = { (x + ux) / 2, y, (z + uz) / 2 }
 		Spring.SelectUnitArray({ con })
 		local st = Spring.GetCameraState()
 		if st.dist then
@@ -213,8 +239,8 @@ local function onCmd(c)
 		for _, s in ipairs(finder and finder.metalSpotsList or {}) do
 			local sx, sy = Spring.WorldToScreenCoords(s.x, s.y or Spring.GetGroundHeight(s.x, s.z), s.z)
 			local free = rb and rb.ExtractorCanBeBuiltOnSpot and rb.ExtractorCanBeBuiltOnSpot(s, UnitDefNames.armmex.id)
-			if sx and free and #(Spring.GetUnitsInCylinder(s.x, s.z, 140) or {}) == 0 then
-				local rpx = (Game.extractorRadius or 32) / scaleAt(sx, sy)
+			if sx and free and #(Spring.GetUnitsInCylinder(s.x, s.z, 200) or {}) == 0 then
+				local rpx = UnitDefs[UnitDefNames.armmex.id].radius / scaleAt(sx, sy) -- (the snap's size of a spot)
 				local ok = clear(sx + rpx + OFF, sy) and Spring.TraceScreenRay(sx + rpx + OFF, sy) == "ground"
 				local d = (sx - vsx / 2) ^ 2 + (sy - mid) ^ 2
 				if ok and (not bestD or d < bestD) then

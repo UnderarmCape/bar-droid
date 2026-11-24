@@ -525,11 +525,13 @@ function SNAP.find(x, y, r)
 	local rb, finder = WG.resource_spot_builder, WG.resource_spot_finder
 	local ext = rb and finder and finder.metalSpotsList and not finder.isMetalMap and SNAP.extractor(sel)
 	if ext then
+		-- (a spot as big as the extractor on it, what the player aims at: BAR's extractor radius, the reach of one
+		-- extractor's pull, is several times that)
+		local mexSize = UnitDefs[ext] and UnitDefs[ext].radius or 24
 		for _, spot in ipairs(finder.metalSpotsList) do
 			if (spot.x - g[1]) ^ 2 + (spot.z - g[3]) ^ 2 <= reach * reach and rb.ExtractorCanBeBuiltOnSpot(spot, ext)
 				and not (rb.SpotHasExtractorQueued and rb.SpotHasExtractorQueued(spot)) then
-				consider(spot.x, spot.y or Spring.GetGroundHeight(spot.x, spot.z), spot.z, Game.extractorRadius or 32, "mex",
-					{ spot = spot })
+				consider(spot.x, spot.y or Spring.GetGroundHeight(spot.x, spot.z), spot.z, mexSize, "mex", { spot = spot })
 			end
 		end
 	end
