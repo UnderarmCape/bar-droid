@@ -102,6 +102,20 @@ try {
   Stage "arm"; Start-Sleep 1
   Stage "armed?"; Start-Sleep 1
   Stage "disarmed?"; Start-Sleep 1
+  # (a build option's first tap shows its numbers, the second builds: the commander's grid, then a Bot Lab's; Kailil,
+  # 2026-11-24)
+  foreach ($who in @("tile", "lab")) {
+    if ($who -eq "lab") { Stage "lab"; Start-Sleep 3; Stage "labpick"; Start-Sleep 2 }
+    Stage "$($who)cell"; Start-Sleep 1
+    $bt = (Rects "bardroid_infotest.txt")["btile"]
+    if (-not $bt) { "[infotest] FAIL no build option on the dock for the $who case"; continue }
+    $m2 = Mid $bt
+    Tap $m2[0] $m2[1]; Start-Sleep -Milliseconds 1200
+    Stage "$($who)1?"; Start-Sleep 1
+    Shot "$who-shown"
+    Tap $m2[0] $m2[1]; Start-Sleep -Milliseconds 1200
+    Stage "$($who)2?"; Start-Sleep 1
+  }
   Stage "give"; Start-Sleep 6
   Stage "mixed"; Start-Sleep 2
   Stage "mixed?"; Start-Sleep 1

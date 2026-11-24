@@ -20,6 +20,7 @@ end
 local OUT, CMD_FILE = "LuaUI/Config/bardroid_infotest.txt", "LuaUI/Config/bardroid_infotest_cmd.txt"
 local com, ready, fails, lastCmd = nil, false, 0, nil
 local given = {} -- unitID -> true (the given Pawns and Construction Bots)
+local tileDef, lab -- (the build tile's unit type tapped; the Bot Lab given)
 
 local function check(case, ok, detail)
 	if not ok then
@@ -115,6 +116,7 @@ end
 
 local function onCmd(c)
 	local s = state()
+	local P = WG.BarDroidPortrait
 	if c == "commander?" then
 		local ok, why = false, nil
 		if s and s.docked then
@@ -146,6 +148,46 @@ local function onCmd(c)
 		Spring.SetActiveCommand(0)
 	elseif c == "disarmed?" then
 		check("the building put away: the panel back", s ~= nil and s.kind == "unit", s and s.kind or "nothing shown")
+	elseif c == "tilecell" or c == "labcell" then -- (the build grid's first option, for two real taps)
+		local cell, item
+		if P and P.itemCell then
+			cell, item = P.itemCell("left", function(it)
+				return it.kind == "build"
+			end)
+		end
+		tileDef = item and item.defID
+		local vsy = select(2, Spring.GetViewGeometry())
+		write(cell and string.format("btile %d %d %d %d\n", cell[1], vsy - cell[4], cell[3], vsy - cell[2]) or "none\n")
+	elseif c == "tile1?" or c == "lab1?" then -- (the first tap: its numbers in the panel, nothing built)
+		local _, cmd = Spring.GetActiveCommand()
+		local name = tileDef and (UnitDefs[tileDef].translatedHumanName or UnitDefs[tileDef].humanName)
+		local queued = c == "lab1?" and lab and #(Spring.GetFactoryCommands(lab, 10) or {}) or 0
+		check(c == "tile1?" and "a builder's option tapped once: its numbers shown, not picked"
+			or "a factory's option tapped once: its numbers shown, nothing queued",
+			s and s.kind == "def" and s.name == name and cmd ~= -tileDef and queued == 0,
+			string.format("panel %s '%s' (the option %s), picked %s, queued %d", s and s.kind or "none", s and tostring(s.name)
+				or "", tostring(name), tostring(cmd), queued))
+	elseif c == "tile2?" then -- (the second: picked to be placed, the panel away meanwhile)
+		local _, cmd = Spring.GetActiveCommand()
+		check("tapped again: picked to be placed", cmd == -tileDef, string.format("picked %s", tostring(cmd)))
+		Spring.SetActiveCommand(0)
+	elseif c == "lab" then -- (a Bot Lab of mine, picked)
+		local x, y, z = Spring.GetUnitPosition(com)
+		Spring.SendCommands(string.format("give 1 armlab %d @%d,%d,%d", Spring.GetMyTeamID(), x + 260, y, z - 200))
+	elseif c == "labpick" then
+		for _, u in ipairs(Spring.GetTeamUnitsByDefs(Spring.GetMyTeamID(), UnitDefNames.armlab.id) or {}) do
+			lab = u
+		end
+		if lab then
+			Spring.SelectUnitArray({ lab })
+		end
+	elseif c == "lab2?" then
+		local queued = lab and #(Spring.GetFactoryCommands(lab, 10) or {}) or 0
+		check("tapped again: one queued", queued == 1, string.format("queued %d", queued))
+		if lab then
+			Spring.GiveOrderToUnit(lab, CMD.WAIT, {}, 0) -- (nothing built for the rest of the run)
+		end
+		Spring.SelectUnitArray({ com })
 	elseif c == "give" then
 		local x, y, z = Spring.GetUnitPosition(com)
 		Spring.SendCommands(string.format("give 3 armpw %d @%d,%d,%d", Spring.GetMyTeamID(), x + 100, y, z + 100))

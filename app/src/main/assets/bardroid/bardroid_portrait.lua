@@ -2475,6 +2475,52 @@ function SP.toggleOut(item)
 	end
 end
 
+-- A build option's first tap shows its unit in the info panel, the second on the same tile builds (Kailil, 2026-11-24:
+-- "When selecting things to build in there constructors options, populate the selection info for options I tap on.
+-- Same for factories. When first tapping on the unit icons, give there unit details and dont build initially on the
+-- first tap unless i tap the image again"): a builder's, a factory's, before the start and the dimmed grid's. The tile
+-- shown is lit; its taps act as before while it stays shown (a factory's next taps one more each). It goes after
+-- PREVIEW_KEEP s without a tap on it, with another kind of press, a new pick, or once its building was placed or put away.
+SP.PREVIEW_KEEP = 10
+function SP.previewKey(item)
+	local k = item and item.kind
+	if (k == "build" or k == "pregame" or k == "quickbuild") and item.defID then
+		return k .. ":" .. item.defID
+	end
+end
+function SP.previewSet(key, defID)
+	SP.preview = { key = key, defID = defID, at = now() }
+	local I = WG.info
+	if I and I.displayUnitDefID then
+		I.displayUnitDefID(defID)
+	end
+	markDirty()
+end
+function SP.previewClear()
+	if not SP.preview then
+		return
+	end
+	SP.preview = nil
+	local I = WG.info
+	if I and I.clearDisplayUnitDefID then
+		I.clearDisplayUnitDefID()
+	end
+	markDirty()
+end
+-- (the shown tile's timeout, and its building placed or put away: the panel back on the pick; widget:Update)
+function SP.previewTick()
+	local pv = SP.preview
+	if not pv then
+		return
+	end
+	local _, cmd = Spring.GetActiveCommand()
+	if cmd == -pv.defID then
+		pv.armed, pv.at = true, now()
+	elseif pv.armed or now() - pv.at > SP.PREVIEW_KEEP then
+		SP.previewClear()
+	end
+end
+
 local function pressItem(item, long)
 	if not item then
 		return
@@ -2482,6 +2528,18 @@ local function pressItem(item, long)
 	local k = item.kind
 	if item.home then -- (the home grid under the resource panel)
 		resPanel = nil
+	end
+	local pkey = SP.previewKey(item)
+	if pkey and not long then -- (a build option: shown first, built on the second tap; SP.preview)
+		local pv = SP.preview
+		if not (pv and pv.key == pkey) then
+			SP.previewSet(pkey, item.defID)
+			refresh()
+			return
+		end
+		pv.at = now()
+	elseif not pkey then
+		SP.previewClear()
 	end
 	if k == "build" then
 		if selectedFactory() then -- a factory: one more (a long press: one less), and its queue buttons
@@ -3022,8 +3080,10 @@ local function drawTile(item, r)
 	-- (the building PLACE will build: BAR's picked cell (the picture closer, gold light) and the gold line of the build
 	-- menu copy's picked cell; FlowUI's selector alone was a faint border nobody saw, dev phone screenshot 2026-11-11)
 	local picked = item.kind == "build" and item.id and activeBuild() == item.id
-	unitTile(item.defID, r, picked or (pb and pb.getPreGameDefID and pb.getPreGameDefID() == item.defID) or false)
-	if picked and WG.BarDroidStyle then
+	-- (the option shown in the info panel, a second tap to build: lit and outlined as picked, SP.preview)
+	local shown = SP.preview and SP.preview.key == SP.previewKey(item)
+	unitTile(item.defID, r, picked or shown or (pb and pb.getPreGameDefID and pb.getPreGameDefID() == item.defID) or false)
+	if (picked or shown) and WG.BarDroidStyle then
 		WG.BarDroidStyle.outline(r[1], r[2], r[3], r[4], WG.BarDroidStyle.GOLD, 1, max(2, floor(w * 0.04)))
 	end
 	local p, size = max(2, floor(w * 0.05)), h * 0.15
@@ -4988,6 +5048,11 @@ function SP.guardTooltips()
 	T.ShowTooltip = SP.tipWrap
 end
 
+-- a new pick: the build option shown goes (SP.preview), the panel back on what is picked
+function widget:SelectionChanged()
+	SP.previewClear()
+end
+
 function widget:Update(dt)
 	checkActive()
 	-- BAR's lobby over the game (the top bar's Lobby button), as bardroid_touch.lua has checked it with this phone's own
@@ -5001,7 +5066,9 @@ function widget:Update(dt)
 	SP.guardTooltips()
 	dockLines()
 	topbarBars(active or upright())
+	SP.previewTick()
 	if not active then
+		SP.previewClear()
 		return
 	end
 	startFit()

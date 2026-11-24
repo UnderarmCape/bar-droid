@@ -14,6 +14,7 @@ local OUT, CMD_FILE = "LuaUI/Config/bardroid_wallstest.txt", "LuaUI/Config/bardr
 local stage, stageAt, fails = "wait", 0, 0
 local asked, after = 0, nil
 local com, spot, spot2
+local tileAt -- (the Sentry's tile on the dock, X pixels from the top left: tapped twice)
 local twoGiven = 0 -- (the two-Sentries case: how many were placed)
 local clawAt, aaAt -- (the Claw's and the AA launcher's spots)
 local t2 -- the T2 cases: their builders and spots
@@ -246,7 +247,9 @@ function widget:GameFrame(f)
 		local dock = P and P.dock and P.dock()
 		local _, vsy = Spring.GetViewGeometry()
 		if r and dock and r[2] >= dock[2] and r[4] <= dock[4] then
-			ask("tap", (r[1] + r[3]) / 2, vsy - (r[2] + r[4]) / 2, "tile", f)
+			-- (two taps: the first shows the Sentry in the info panel, the second picks it; Kailil, 2026-11-24)
+			tileAt = { (r[1] + r[3]) / 2, vsy - (r[2] + r[4]) / 2 }
+			ask("tap", tileAt[1], tileAt[2], "tileshown", f)
 		else -- (said as not run: picked by the test itself, the dock's pick proves nothing, the walls' checks still do; the
 			-- dock's grid taps are dock-phone-test's; vacuous-pass audit, 2026-11-23)
 			Spring.Echo("[wallstest] NOT RUN the Sentry's tile tapped on the dock's build grid (scrolled out of sight): picked "
@@ -254,6 +257,10 @@ function widget:GameFrame(f)
 			Spring.SetActiveCommand(Spring.GetCmdDescIndex(-D.armllt) or 0)
 			go("tile", f)
 		end
+	elseif stage == "tileshown" and f - stageAt > 20 then
+		local _, cmd = Spring.GetActiveCommand()
+		check("the Sentry's first tap: not picked yet (its numbers shown)", cmd ~= -D.armllt, cmd)
+		ask("tap", tileAt[1], tileAt[2], "tile", f)
 	elseif stage == "tile" and f - stageAt > 20 then
 		local _, cmd = Spring.GetActiveCommand()
 		check("the Sentry picked on the dock", cmd == -D.armllt, cmd)

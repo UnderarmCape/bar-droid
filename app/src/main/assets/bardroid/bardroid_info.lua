@@ -818,12 +818,14 @@ local function pick()
 	if cfgUnit and spGetUnitDefID(cfgUnit) then
 		return { kind = "unit", id = spGetUnitDefID(cfgUnit), unitID = cfgUnit }
 	end
+	-- (a type asked for: the dock's build option tapped once, SP.preview: "give there unit details and dont build
+	-- initially on the first tap", Kailil 2026-11-24; BAR's widgets' WG.info.displayUnitDefID)
+	if cfgDef and UnitDefs[cfgDef] then
+		return { kind = "def", id = cfgDef }
+	end
 	-- (a building picked or under the pointer: its type's numbers; not in the dock's place, which stands over the map
 	-- where the finger taps the building's spot, and whose build tiles show their costs)
 	if not docked then
-		if cfgDef and UnitDefs[cfgDef] then
-			return { kind = "def", id = cfgDef }
-		end
 		local hover = WG.buildmenu and WG.buildmenu.hoverID
 		if hover and UnitDefs[hover] then
 			return { kind = "def", id = hover }
@@ -1166,6 +1168,12 @@ local function drawGrid()
 	bold:End()
 end
 
+-- folded to its tab: unless a build option tapped in the dock asks for its numbers (SP.preview), shown over the fold
+-- (its first tap's whole point; Kailil, 2026-11-24)
+local function tabOnly()
+	return folded and not (shown and shown.kind == "def" and cfgDef ~= nil and shown.id == cfgDef)
+end
+
 -- The folded panel's tab in the dock's place: INFO (recorded, tabList; made again with the place)
 local function drawTab()
 	if not tabList then
@@ -1194,7 +1202,7 @@ function widget:DrawScreen()
 		return
 	end
 	gl.Color(1, 1, 1, 1)
-	if docked and folded then
+	if docked and tabOnly() then
 		drawTab()
 		gl.Color(1, 1, 1, 1)
 		return
@@ -1248,14 +1256,14 @@ local function inRect(x, y, r)
 end
 
 function widget:IsAbove(x, y)
-	return not standDown and not overlay and shown ~= nil and inRect(x, y, (docked and folded) and tabRect or rect)
+	return not standDown and not overlay and shown ~= nil and inRect(x, y, (docked and tabOnly()) and tabRect or rect)
 end
 
 function widget:MousePress(x, y, button)
 	if standDown or overlay or not shown then
 		return false
 	end
-	if docked and folded then -- (the INFO tab: open)
+	if docked and tabOnly() then -- (the INFO tab: open)
 		if not inRect(x, y, tabRect) then
 			return false
 		end
