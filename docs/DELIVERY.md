@@ -112,6 +112,14 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    (04:36-05:11). latest-build is that APK. On the Fold7 05:52 (Kailil sent its Wireless debugging port at 05:50;
    over Tailscale, no game running, the APK's engine phone-2026.09.03-83a8536d37; it had 379e98bc). It is the RC now;
    item 11's checklist on it.
+   ae0e6b0b (Kailil 2026-11-24's asks: the long press's forgiving aim, da36fc4d to ae0e6b0b, snap-phone-test in the
+   smoke set; a build option's first tap shows its numbers, 5d555d38; the fixer's D-gun full auto never on a commander,
+   19510b4f): the full set 17:40-18:52 (20261124-1740-full-ae0e6b0b.txt): 36 of 37 PASS, snap-phone-test's five
+   cases in one run for the first time; touchfix-phone-test FAIL in full auto's case, its setup (4 clear places, none
+   90 degrees apart: no enemies given), the test's pick made the widest pair, 60 degrees at least (c93e9aa3), then ALL
+   PASS alone on the same APK. Kailil: "I want a full release after you finish these corrections": release
+   build-2026.11.24-ae0e6b0b and latest-build. Not on the Fold7 yet: Wireless debugging off (36641 refused, the scan
+   found only 47820, not adb); it goes on when he is back on it. It is the RC now; item 11's checklist on it.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`

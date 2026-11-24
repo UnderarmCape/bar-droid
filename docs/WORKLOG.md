@@ -8,12 +8,12 @@ The effort behind BAR Droid: every message Kailil sent Claude (Claude Code) whil
 |---|---|
 | Days | 31 (2026-10-25 to 2026-11-24) |
 | Claude Code sessions | 16 |
-| Kailil's messages | 594 (28015 words, 105 screenshots) |
-| Kailil's time | 68.9 h in 200 sittings |
-| Claude's time | 577.2 h |
-| Claude's tool calls | 65934 |
+| Kailil's messages | 595 (28018 words, 105 screenshots) |
+| Kailil's time | 69.0 h in 201 sittings |
+| Claude's time | 580.4 h |
+| Claude's tool calls | 66189 |
 | Kailil stopped Claude mid-answer | 11 times |
-| Commits | 2673 |
+| Commits | 2680 |
 
 Kailil's time: his sittings, messages less than 30 minutes apart, each from 5 minutes before its first message (reading, testing on the phone, writing) to its last. Claude's time: the gaps between its transcript entries, each up to 10 minutes; sessions that ran side by side add up.
 
@@ -30,7 +30,7 @@ Before BAR Droid, Kailil made two attempts at gamepad controls for BAR and one a
 
 Chats and hours are estimates from the commit times: a gap of over 2 hours starts a new work session, one chat each; the AI's hours are each session's span plus 30 minutes. Kailil drove each of the earlier attempts' chats himself, so his hours there are the sessions' own; the phone engine's are 0.119 of them, his share of the time in this log on 2026-11-24, where Claude's loops run on their own.
 
-**All together**, BAR Droid and the earlier attempts: 3533 commits, 103 chats, Kailil 311.5 h, AI 819.8 h (Claude 577.2 h of it). The earlier attempts' chats and hours are estimates; the phone engine's are in this log already, so only its commits are added.
+**All together**, BAR Droid and the earlier attempts: 3540 commits, 103 chats, Kailil 311.6 h, AI 823.0 h (Claude 580.4 h of it). The earlier attempts' chats and hours are estimates; the phone engine's are in this log already, so only its commits are added.
 
 ## By day
 
@@ -66,7 +66,7 @@ Chats and hours are estimates from the commit times: a gap of over 2 hours start
 | [2026-11-21](worklog/2026-11-21.md) | 12 | 1.2 | 27.0 | 78 |
 | [2026-11-22](worklog/2026-11-22.md) | 11 | 0.8 | 30.9 | 57 |
 | [2026-11-23](worklog/2026-11-23.md) | 6 | 0.9 | 11.0 | 40 |
-| [2026-11-24](worklog/2026-11-24.md) | 4 | 0.5 | 9.0 | 21 |
+| [2026-11-24](worklog/2026-11-24.md) | 5 | 0.5 | 12.2 | 28 |
 
 ## Sessions
 
@@ -75,7 +75,7 @@ Chats and hours are estimates from the commit times: a gap of over 2 hours start
 | BAR Android port | 2026-10-25 02:41 | 2026-10-25 20:02 | 29 | 9.9 |
 | BAR Android port | 2026-10-25 20:07 | 2026-10-26 00:13 | 45 | 4.0 |
 | BAR Droid: touch-only controls and UI | 2026-10-25 21:14 | 2026-10-25 23:45 | 1 | 1.8 |
-| BAR Android port | 2026-10-26 00:14 | 2026-11-24 06:23 | 460 | 474.4 |
+| BAR Android port | 2026-10-26 00:14 | 2026-11-24 18:59 | 461 | 476.2 |
 | BAR Droid: follow BAR's PC updates automatically | 2026-10-26 00:16 | 2026-10-26 01:36 | 0 | 0.7 |
 | Hail-mary research build: slash BAR's sim time | 2026-10-27 14:31 | 2026-10-28 02:29 | 0 | 7.9 |
 | Mouse and keyboard support (Bluetooth, USB-C dock) | 2026-10-27 20:26 | 2026-10-27 21:22 | 0 | 0.9 |
@@ -87,4 +87,4 @@ Chats and hours are estimates from the commit times: a gap of over 2 hours start
 | BAR Droid without proot and the X server: measure, then prototype | 2026-11-06 22:32 | 2026-11-07 03:11 | 0 | 4.7 |
 | AIRDROP TO PHONE: send files to the Fold7 over Wi-Fi adb | 2026-11-07 01:44 | 2026-11-22 17:27 | 47 | 28.3 |
 | Phone engine build for BAR's engine 2026.09.03 | 2026-11-17 19:00 | 2026-11-18 15:56 | 5 | 3.1 |
-| BAR Droid: fix the touch playtest's findings | 2026-11-22 09:50 | 2026-11-24 06:22 | 1 | 18.9 |
+| BAR Droid: fix the touch playtest's findings | 2026-11-22 09:50 | 2026-11-24 07:44 | 1 | 20.3 |
