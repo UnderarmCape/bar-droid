@@ -9,13 +9,18 @@
 # "latest-build", its tag moved to this repository's HEAD, its notes naming the commit and the phone engine.
 # Never forces a branch (a rejected push stops with its message); only latest-build's own tag moves. Git through the
 # portable GitHub CLI's credential helper, per command: no global git config, nothing stored.
-#   powershell -ExecutionPolicy Bypass -File tools\github-sync.ps1 [-Release [-Apk <file.apk>]] [-NoEngine]
+#   powershell -ExecutionPolicy Bypass -File tools\github-sync.ps1 [-Release [-Apk <file.apk>] [-WhatsNew <text>] [-NoLatest]] [-NoEngine]
 # -Apk: the APK that went on the Fold7 (a train build, tools\phone-round.ps1), else apk\bar-droid-phone-debug.apk.
-param([switch]$Release, [switch]$NoEngine, [string]$Apk)
+# Each -Release also keeps that build as a release of its own (Kailil, 2026-11-24: "why is there only 1 release in
+# github"; the rolling latest-build had replaced every checkpoint's APK): tag build-<yyyy.MM.dd>-<commit> on the commit
+# the APK was built from, titled with its date and what changed (-WhatsNew, a line or a few for players), the APK as
+# bar-droid-<tag>.apk. -NoLatest: only that release (an older build kept after the fact; latest-build left as it is).
+param([switch]$Release, [switch]$NoEngine, [string]$Apk, [string]$WhatsNew = "", [switch]$NoLatest)
 $ErrorActionPreference = "Stop"
 $App = Split-Path -Parent $PSScriptRoot
 $Root = Split-Path -Parent $App
-$gh = "C:\Tools\GitHubCLI\gh.bat"
+$gh = "C:\Tools\GitHubCLI\gh\bin\gh.exe"   # (gh.bat's own settings, set here: through cmd a release title with "|" or quotes broke the call)
+$env:GH_CONFIG_DIR = "C:\Tools\GitHubCLI\config"; $env:GH_NO_UPDATE_NOTIFIER = "1"
 $git = Join-Path $Root "toolchain\git\cmd\git.exe"
 if (-not (Test-Path $git)) { $git = (Get-Command git -ErrorAction Stop).Source }
 $owner = "UnderarmCape"
@@ -97,13 +102,45 @@ The newest phone build: the APK built $when $from.
 - What changed: the commits up to ``$short``; docs/DELIVERY.md, newest first; the conversation archive in
   docs/WORKLOG.md and docs/worklog/.
 "@
+  if ($WhatsNew) { $notes = "**What's new:** $WhatsNew`n`n" + $notes }
+  $notesFile = Join-Path $Root "toolchain\tmp\bardroid-release-notes.md"
+  [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
+
+  # 3a. this build kept as a release of its own: its tag on the commit it was built from (never moved once made)
+  $bc = if ($builtFrom) { ($builtFrom -split " ")[0] } else { $short }
+  $bc = $bc.Substring(0, [Math]::Min(8, $bc.Length))
+  $tag = "build-" + (Get-Item $apk).LastWriteTime.ToString("yyyy.MM.dd") + "-" + $bc
+  $full = "$(& $git -C $App rev-parse --verify --quiet "$bc^{commit}" 2>$null)".Trim()
+  if (-not $full) { $full = $head }   # (built from a commit not here: the tag on HEAD as it went up)
+  $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+  & $git -C $App ls-remote --exit-code --tags origin "refs/tags/$tag" 2>$null | Out-Null
+  $tagThere = $LASTEXITCODE -eq 0
+  & $gh release view $tag -R "$owner/bar-droid" 2>$null | Out-Null
+  $relThere = $LASTEXITCODE -eq 0
+  $ErrorActionPreference = $eap
+  if (-not $tagThere) { Git $App @("push", "origin", "${full}:refs/tags/$tag") | Out-Null }
+  $dir = Join-Path $Root "toolchain\tmp\release"
+  New-Item -ItemType Directory -Force $dir | Out-Null
+  $named = Join-Path $dir "bar-droid-$tag.apk"
+  Copy-Item $apk $named -Force
+  $bSubj = "$(& $git -C $App log -1 --format=%s $full 2>$null)".Trim()
+  $title = "Build " + (Get-Item $apk).LastWriteTime.ToString("yyyy-MM-dd HH:mm") + " ($bc)" + $(if ($WhatsNew) { ": " + ($WhatsNew -split '[.;]')[0].Trim() } elseif ($bSubj) { ": $bSubj" } else { "" })
+  if ($title.Length -gt 120) { $title = $title.Substring(0, 117) + "..." }
+  if ($relThere) {
+    & $gh release edit $tag -R "$owner/bar-droid" --title $title --notes-file $notesFile --prerelease | Out-Null
+    & $gh release upload $tag $named -R "$owner/bar-droid" --clobber
+  } else {
+    & $gh release create $tag $named -R "$owner/bar-droid" --title $title --notes-file $notesFile --prerelease --verify-tag --latest=false
+  }
+  if ($LASTEXITCODE -ne 0) { throw "the build's own release ($tag) did not go up" }
+  "[github] $tag`: its own release, $title"
+  if ($NoLatest) { return }
+
   Git $App @("push", "--force", "origin", "${head}:refs/tags/latest-build") | Out-Null   # (this tag alone moves)
   $eap = $ErrorActionPreference; $ErrorActionPreference = "Continue"
   & $gh release view latest-build -R "$owner/bar-droid" 2>$null | Out-Null
   $exists = $LASTEXITCODE -eq 0
   $ErrorActionPreference = $eap
-  $notesFile = Join-Path $Root "toolchain\tmp\bardroid-release-notes.md"
-  [IO.File]::WriteAllText($notesFile, $notes, (New-Object Text.UTF8Encoding $false))
   # (the asset takes the file's name: a train build goes up as a copy under the usual name, so --clobber replaces it)
   $upload = $apk
   if ((Split-Path -Leaf $apk) -ne "bar-droid-phone-debug.apk") {
