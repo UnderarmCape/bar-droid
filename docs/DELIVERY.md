@@ -109,7 +109,9 @@ ranks 4-7, in phone slots of 20 minutes or less), each phone hold through `devph
    3b6936bb (the fixer's under-attack fix: attack-ping-test's flake was real, a sprawling fight's own new entries took
    the one 4 s gap and a far fight went unalerted; the sprawl case FAIL 2 of 2 before, PASS 3 of 3 after): smoke ALL
    PASS 15 of 15 (info-phone-test -Sideways added, 1d13c3d4), attack-ping-test and pad-test -Dgun, -Share, -Chat PASS
-   (04:36-05:11). latest-build is that APK; not on the Fold7. It is the RC now.
+   (04:36-05:11). latest-build is that APK. On the Fold7 05:52 (Kailil sent its Wireless debugging port at 05:50;
+   over Tailscale, no game running, the APK's engine phone-2026.09.03-83a8536d37; it had 379e98bc). It is the RC now;
+   item 11's checklist on it.
 3. [x] The touch playtest's driver (`dev_playstate.lua`, `play.py`, `touchd.py`, `autopilot.py`, `assign.py`) from
    `toolchain\tmp\play` into `tools/playtest/`, dev-only. Done: tracked; publish-check finds none of it in the APK.
    (coordinator) 2026-11-22: its run files stay in `toolchain\tmp\play`, the phone from `..\phone-device.txt`
